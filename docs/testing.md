@@ -805,7 +805,7 @@ is 30 seconds and the sample count is 20 per file.
 
 `make test-compiler-mutants` (tier `test-compiler-mutants`,
 `tests/runner/compilermutants.sml`; never part of `make check`: it takes
-hours, about a quarter of an hour of CPU a mutant) asks which check
+about an hour and a quarter at eight jobs, 7.6 hours of CPU) asks which check
 catches which bug seeded in the compiler (plans/correctness/linting.md, E3
 and M4). Each of its 68 mutants (`tests/runner/compilermutantlist.sml`) is
 one or more exact edits of the compiler's sources -- a type substitution

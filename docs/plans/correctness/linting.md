@@ -95,10 +95,13 @@ What it rests on:
 | M11 | Node ids, witnesses and `SourceTy` | A | done (2026-10-26) |
 | M12 | AstLint of the Core | A | done (2026-10-26); at level 2, and G1 is next |
 | G1 | How AstLint goes on (the owner's) | A | decided (2026-10-26): M13 in two steps; AstLint stays at level 2 |
-| M13 | AstLint of the module language | A | not started |
+| M13 | AstLint of the module language | A | done (2026-10-31); only what is imported stays an axiom |
 | M14 | The editor's types | A | done (2026-10-27) |
 | M15 | Overloading's context and free type variables, as options | A | done (2026-10-26) |
-| M16 | Retire | | not started |
+| M16 | Retire | | done (2026-10-31) |
+
+All sixteen milestones are done. *At the close* has the last checks, the
+bugs found and what is left open.
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
 (*Decisions*). The two calls left to the owner are made:
@@ -120,6 +123,162 @@ The tracks do not wait for each other, after M1:
   and gives the editor a type at every node. It also makes overloading's
   context and the treatment of free type variables options (M15). Gate
   G1, after AstLint of the Core, is the owner's.
+
+## At the close
+
+M0 to M16 are done (2026-10-31). This section gathers what a later review
+needs: the last checks, what the roadmap promised and gave, the bugs found
+and where they went, and what is left open. The campaign's logs, scripts
+and raw results are in the drafts (`~/.cache/claude-rune-drafts/linting`,
+`impl/` and `results/`).
+
+### The last checks
+
+- **`make check`** at M16's last change of code (`4546b7fcd`): 21,901
+  passed, 3 skipped, every compile at level 2. What came after it is this
+  record and `docs/testing.md`, which `docs-consistency` passes.
+- **`make check-cross`** at the same commit: 627 of 627, and at M13's
+  (`728d95e0e`), 627 of 627 in the worktree whose paths set off SML/NJ's
+  32-bit crash.
+- **All six hosts** build the compiler at `e0b992180`.
+- **The output:** at every level, each compile of *The final measurements*
+  has the bytes of `--lint=off`, and HaMLet and the compiler's sources
+  compile at `728d95e0e` to the bytes of `689e6cd1e`.
+- **MLton's 606 files** at level 2, whole and `--units --whole`: no alarm.
+- **HOL4** to `hol.state` at `bde446af8`, at level 2: no alarm, 393 s,
+  2,073G instructions, +3.8% on M12's. The commits after it rename one word
+  of AstLint's and change tests.
+- **`make test-compiler-mutants`** in full at `728d95e0e`, for the first
+  time since M4 added it: 85 of 85 jobs, and E05 and K01 again at
+  `4546b7fcd`. Of the 68 mutants:
+
+  | Verdict | Mutants |
+  |---|---:|
+  | caught by a lint | 54 |
+  | caught by another check alone | 9 |
+  | caught by nothing | 3 |
+  | not exercised | 2 |
+
+  - **All 27 a lint caught in E3 are still caught,** and the lints now
+    catch twice as many. `astlint` is the
+    first to fire on 10, `lower` on 7, `translate` on 6, `shapes` on 5,
+    `regverify` on 4, `expand` on 4, `code-rt` on 3 and `regverify-link`
+    on 1; the rest are spread over the passes on Mid, and two stop the
+    compile (E04 with a type error, K02 at the link's interfaces).
+  - **The nine:** T04, M03, M04, M06, M13, M14, R04, S01 and S02, well-typed
+    changes of meaning, seen by comparing outputs, as *What nothing
+    catches but comparison* says.
+  - **The three:** E08 still refuses its program, as a second site gives
+    the same error. M17 has no program that shows it, and R05 only holds a
+    register one instruction longer. E3 had M17 and R05 uncaught too.
+  - **The two:** E09 and E11, which no program of the corpus reaches, as
+    in E3.
+
+### What the roadmap promised, and what it gave
+
+Against the brief's asks, with the numbers of *Measuring*, *The final
+measurements*:
+- **Types on the syntax** (M11): every node has an id, seven tables of
+  witnesses say what the elaborator chose, and `SourceTy` reads them. Mid
+  and the bytes did not change, and the bootstrap paid 0.29%.
+- **AstLint, a checker independent of the inferencer** (M12, M13): 1,957
+  lines that call nothing of `Unify`, `SigMatch` or `Types`. It reads the
+  Core by chapter 4 and the module language by chapter 5, and only what is
+  imported stays an axiom. It found no bug of the elaborator in any corpus.
+  Its prototype found the one that existed (the value restriction), and it
+  catches the seeded bugs nothing else sees.
+- **Better error messages, as groundwork:** ids, spans, a declaration's
+  status and a printer (`plans/errror-messages.md`). No message changed,
+  and messages do not use `SourceTy`'s printer yet.
+- **More types for the LSP** (M14): hover answers at every node of E12's
+  sample, the heaviest first hover in 55-91 ms.
+- **Types and verification of the bytecode, in SML** (M7 to M10): the
+  register instructions are described for checking, `RegVerify` is generated
+  from that and catches eleven kinds of corruption against the loader's
+  one, and the stack code has `RbcCheck`. The types are reps under a
+  directed order with shapes in Low (D8 A). They find a compiler's
+  mistakes. They do not make an untrusted `.rbc` safe, which stays the VM
+  roadmap's.
+- **Lint in the right places:** between passes (MidLint after each, and
+  inside `simplify` per definition), after linking (interfaces at every
+  level, the whole program at level 2), in the cache (entries marked with
+  their level, imported schemes), on `lib/cache`, and on the register
+  target in `check-levels`.
+- **Costly checks behind `--lint`, cheap ones always on** (M2, M3): four
+  levels. Level 0 is 0.15-0.51% and meets D13's threshold. `RegVerify` did
+  not reach it, at 4.2% of the compiler's sources, so it runs at level 1,
+  with the REPL and the compiler library, not in a plain `rune`.
+- **A negative test for every rule** (M4, M6, M12, M13): `RUNE_FAULT`,
+  `RUNE_ASTLINT_FAULT`, `RUNE_REGVERIFY_INJECT`, `RUNE_RBCCHECK_INJECT` and
+  `compiler/lint-rules`.
+- **The owner's direction** (M15): `--overloading` and `--free-tyvars`,
+  with `--overloading=declaration` the default, Appendix E's bound.
+- **The literature and the other compilers** (E11), read before the
+  design.
+
+### Bugs found in Rune
+
+| Bug | Found | Fixed |
+|---|---|---|
+| The value restriction refused `(conexp : ty) atexp`: a valid program rejected | E6 | M1 (`78e29e130`) |
+| `--mid-roundtrip` under `--units` changed a unit's basis, and the cache gave builds without it entries made with it | E9 | M1 (`1835c1da7`) |
+| A check could move the compiler's counters, which hid a seeded bug | E3 | M1 (`1835c1da7`): `Pass.checkAt` refuses it |
+| `--pass-stats` hid the lint of a build in units | E1 | M1 (`1835c1da7`) |
+| `check-levels` compared only the stack target | E9 | M1 (`6e09be6bc`) |
+| `lib/cache` was never linted; its 768 entries proved clean | E9 | M1 (`eb976d841`) |
+| The split on `*` misread 20 primitives' types | M7 | M7 (`ac2e7e2ad`) |
+| `MkExn`'s payload went unchecked after a pass copied code | E10 | M4 (`f297abdcc`) |
+| Lift left type variables unbound in Mid | E10 | M5 (`5fa556034`) |
+| ToMid's output was not well scoped in its type variables, and `val (id, constant) = ...` at top level re-generalised a lambda's parameter | E10, M5 | M5 (`5fa556034`) |
+| `val x : ty = e` bound a temporary that was not generalised, whose type named its scheme's variables | M5 | M5 (`9dda1ba70`) |
+| `Rbc.validate` took a `List.length` per primitive operand | M10 | M10 (`0579ac644`) |
+| The compiler's mutants went stale unseen after M5: `prepare` failed outright | M13 | `e0b992180` |
+| The check of the whole linked program ran only under a switch no test set, so a global misnumbered at the link reached no lint | M16, K01 | M16 (`4546b7fcd`) |
+| E05 had not compiled since M11 gave `DVal` an id, so that mutant seeded nothing | M16 | M16 (`4546b7fcd`) |
+
+### Found elsewhere
+
+| What | Found | Where it went |
+|---|---|---|
+| A `.rbc` the loader accepts and tier 2 runs into a segfault | E7 | The recipe is in `plans/correctness/vm-verifier.md` |
+| One abort of `runevm`, glibc's check of the C heap | E3 | `docs/bugreport/runevm/heap-corruption-once`, not reproduced |
+| SML/NJ 110.99.9 for 32 bits stops with "bogus overflow fault" | M14 | `docs/bugreport/smlnj/GC/bogus-overflow-fault`; a `HOST-FLAKY` deviation of `check-cross` |
+| Four terminal tests fail now and then under `make check`: three races | M11 on | `docs/bugreport/rune` on master, and fixed there by the owner (`423dcf7d1`, 2026-10-29). This branch does not have the fix until it merges master |
+| The REPL "dies" on `mod.functor.functions_review` | M8 | No bug: the test's own false cast (*M8*) |
+| SML/NJ and Moscow ML on `(conexp : ty)`, SML/NJ's dummy types, MLKit's internal error | E6, E13 | *Found while writing this roadmap*; not reported |
+
+### Left open
+
+- **The owner's:** whether the test of `CALL`'s function index lands in the
+  VM now or with the VM roadmap (D8).
+- **`linting` is not merged with master,** which is 28 commits ahead of
+  where this branch left it. A trial merge conflicts in 14 files: the
+  compiler library's API and its generated docs, `unitbasis.sml`, the
+  REPL's `front.sml` and `repl.sml`, `docs/ir.md`, `docs/repl.md`, the
+  incremental tests' fixtures, and the two copies of the `heap-corruption-once`
+  report. This roadmap's file itself merges cleanly: master has the review
+  at that path, and the owner's brief is no longer in the main tree (its
+  text is in *The request*). The budgets are to be measured again after
+  that merge.
+- **AstLint stays at level 2.** At level 1 it would cost `rune` 15-18% of a
+  compile, and MLton more than three compiles and over 4 GB. M13's walks of
+  the module language, mostly zonking each value on each walk, are the
+  place to look first.
+- **What AstLint cannot see:** a use of a signature or functor name that a
+  run declares again later, since the elaborator keeps only the last
+  binding. It also skips a declaration past `SourceTy`'s budget of steps
+  and counts it, but the count is shown nowhere; none was seen.
+- **What the other checks cannot see:** in units, LowShapes' rules across
+  functions see one unit (M6). The REPL's dynamic loading has no interface
+  check (M9). The compiler library runs no check of stack code (M10).
+- **`make test-compiler-mutants` is not part of `make check`,** which is how
+  five of its mutants went stale for several milestones. Its `prepare`
+  alone takes little and would catch four of them. E05 still applied, but
+  no longer compiled, which only building it shows.
+- **HOL4** builds with `--overloading=toplevel` until the seven annotations
+  in `docs/plans/hol4-overloading-declaration.patch` land in its tree.
+- **The snapshots** `.worktrees/lint-*` (about 4.4 GB) and the agents'
+  worktrees `.worktrees/li-{a,b,p}` await the owner.
 
 ## The implementation so far
 
@@ -300,7 +459,9 @@ passes on its exact commit.
   - **Found on the way:** the REPL dies printing the results of
     `tests/lang/mod.functor.functions_review.sml` ("fatal error …
     expected tuple"), with or without the lint, and in the main tree's
-    `rune-repl` too. It is not this roadmap's.
+    `rune-repl` too. At the close this proved no bug: the test declares
+    `val weird : (unit * unit) * (unit * unit) = RuneDynamic.cast ()` on
+    purpose, and the REPL's printer reads `()` at that type.
 
 - **M9** (`dec6663d6`, `bba401d0a` and merges, tip `1a9f6b138`; merged
   `a0511d3ac`; `make check` 21,697 of 21,697).
@@ -595,6 +756,106 @@ passes on its exact commit.
   - **A departure:** LowShapes is its own file after `lower.sml`, since
     LowLint is built before Lower and cannot read the kept types. `check
     lower`'s line shows the downcasts through a new `Pass.tally`.
+
+- **M13** (`994c8e202`, `bde446af8`, `e0b992180`, `728d95e0e`; merged
+  `906197c03`; `make check` 21,901 of 21,901, `make check-cross` 627 of
+  627).
+  - **The elaborator records,** at level 2 only and as schemes, not stamps:
+    what each signature expression gave and the type counter before it
+    (`sigRecords`), the counter before each construct that makes names
+    (`freshFrom`), the names an application made for the body's
+    (`appliedNames`), and each functor's signature and where its body
+    began (`functorRecords`). `Ty.realizations` gives what an opaque name
+    stands for. The editor's typer reads none of this.
+  - **AstLint reads the module language as chapter 5 has it:**
+    - **Signature expressions** (rules 62-84): every specification against
+      the result, one new name for each class of the sharing equations
+      (`[78 sharing]`, `[65 signature]`, `[65 instance]`, `[64 where]`,
+      `[79 val]`).
+    - **Matches:** the realisation by paths, enrichment by one-way matching
+      (`[5.6 match]`, `[5.5 enrichment]`).
+    - **Results,** each what its rule says: a transparent ascription's, an
+      opaque one's (`[53 opaque]`), an application's (`[54 application]`),
+      a dynamic module's and an export's, and what each value is from the
+      structure (`[5.5 identity]`).
+    - **Functors:** the parameter against its signature, the functor's
+      signature against what its body gave, T' included (`[86 functor]`).
+  - **What stays an axiom:** what is imported, which is the environment of
+    a top-level declaration and the signatures and functors of the units
+    before it. `_overload`'s classes and `_prim`'s annotation stay as M12
+    left them.
+  - **Found:** no bug of the elaborator. MLton's sources found two false
+    alarms of AstLint, fixed: a nested signature must be read against the
+    enclosing signature's result, since a later sharing of the enclosing
+    one realises names of its context; and sharing raises equality under
+    the same stamp, so a function's equality reads the name's own
+    attribute.
+  - **Mutants:**
+    - E12 and E13, invisible while the module language was axioms, are
+      caught by `lint after astlint`. E13 changed no byte of the corpus
+      until `tests/errors/err.sig_val_less_general` was added for it.
+    - The harness's `prepare` was failing outright: E04, T04, T09 and R02
+      had gone stale against M5 and earlier merges, unseen because the
+      harness is not part of `make check`. `e0b992180` fixes them.
+    - Five more seeded by hand, outside the harness, are each caught at
+      level 2: instantiating without fresh names (`[65 instance]`), opaque
+      ascription without fresh names and with its realisation dropped
+      (`[53 opaque]`), a result taking the specification's stamps (`[5.5
+      identity]`), T' empty (`[86 functor]`), `where` equality off (`[64
+      where]`). Three others the elaborator refuses anyway, so they show
+      nothing.
+    - `compiler/astlint-faults` holds 20 corruptions, eight new.
+  - **The corpora are clean:** `tests/lang`, the modes of the options, the
+    compiler's sources, the Basis and the compiler library in units,
+    HaMLet, MLton's 606 files, and HOL4 to `hol.state` (at `bde446af8`, on
+    the code before the rename of `axiom` to `recorded`).
+  - **What it costs,** only at level 2, in `check astlint`'s instructions,
+    the same sources before and after:
+
+    | Corpus | Before | After |
+    |---|---:|---:|
+    | the compiler's sources | 359.9M | 388.2M |
+    | HaMLet | 102.0M | 182.8M |
+    | MLton's sources, in units | 1.95G | 78.3G |
+
+    HaMLet and the bootstrap compile to the same bytes before and after.
+    MLton grows 40 times: 234 s of its 275 s are AstLint, against 5.6 s of
+    57 s. The first step visited 245,000 structures and 5.9 million values
+    there; the second walks each several times, zonking on every walk.
+    Memoising took it from 98G to 78G. HOL4's whole build grows 3.8%. This
+    is the number to weigh if AstLint ever moves to level 1.
+  - **What it cannot see:** where a run declares a signature or functor
+    name again after a use, that use is left unchecked, because the
+    elaborator keeps only the last binding. The `eqtype` case of a
+    transparent match is now demanded by code, but no mutant was run for
+    that path.
+
+- **M16** (`4546b7fcd`; `make check` 21,901 of 21,901, `make check-cross`
+  627 of 627).
+  - **The final measurements** are in *Measuring*, and *At the close*
+    gathers the campaign.
+  - **The compiler's mutants ran in full,** for the first time since M4 added
+    them. The verdicts are in *At the close*.
+  - **What that run found:**
+    - **K01 reached no lint.** M8's check of the whole linked program
+      caught it, but M9 left that check to `RUNE_REGVERIFY_LINK`, "for
+      tests", and no test set it. So nothing in `make check` ran it, and
+      interfaces cannot see a global misnumbered at the same rep. It now
+      runs at level 2 (`regverify-link`) and catches K01 on 12 of 27
+      programs.
+    - **E05 was stillborn,** its edit no longer fitting `DVal` after M11.
+      Brought up to the sources, it is caught by AstLint.
+  - **A departure:** D15 A checks interfaces at the link. It still does at
+    levels 0 and 1, so a plain compile pays nothing new. At level 2 the
+    whole program is checked as well, which is D15 B for the level that
+    tests run. It costs 102M of a warm build of the compiler in units
+    (10%), 50M of HaMLet in units (2.2%), and no visible time in
+    `make check`.
+  - **M8's REPL failure was no bug:** see its entry.
+  - **The docs:** `docs/ir.md` (the levels' costs, the link), `docs/units.md`,
+    `docs/testing.md` and `plans/errror-messages.md`. `docs/architecture.md`,
+    `plans/type-checker.md` and `docs/language-server.md` were brought up
+    to date by the milestones that changed them.
 
 ## Found while writing this roadmap
 
@@ -3989,6 +4250,7 @@ own, which is half its cost.
 | a unit stored in the cache | its Mid linted, its code verified, the entry marked | as the compile's level |
 | a unit taken from the cache | the entry's marks; its schemes against the exporting basis | 0 |
 | the link | interfaces: arities, reps, globals | 0 |
+| the link | the whole program (M16) | 2 |
 | the next unit's passes | functor bodies decoded | 0 |
 | `lib/cache` | built at level 2 | -- |
 | `check-levels` | the register target, and true `--units` | -- |
@@ -4730,6 +4992,86 @@ Not this roadmap's:
 - **D13's threshold** decides level 0.
 - **The budgets** (`tests/perf`) count the compiler as shipped, so a check
   at level 0 shows there and is re-based in the milestone that adds it.
+
+### The final measurements (M16, 2026-10-31)
+
+At `4546b7fcd`, MLton at `728d95e0e` (the change between them does not
+touch a compile that links no units), by `impl/m16/final.sh` in the drafts,
+in instructions of `runevm --count`. At every level, every compile below
+has the bytes of the same compile at `--lint=off`.
+
+| Compile, `-O1` | `off` | 0 | 1 | 2 |
+|---|---:|---:|---:|---:|
+| `examples/hello.sml` | 2.17M | +0.04% | +35.3% | +37.9% |
+| `tests/lang/basis.listpair_ops.sml` | 27.2M | +0.06% | +37.8% | +98.7% |
+| HaMLet | 1,205M | +0.15% | +20.2% | +57.3% |
+| the compiler's sources | 2,131M | +0.51% | +37.1% | +97.2% |
+| HaMLet `--units` | 2,245M | +0.44% | +14.5% | +47.4% |
+| MLton, whole | 23.8G | | +8.6% | +346% |
+| MLton, `--units --whole` | 75.1G | | +5.3% | +117% |
+
+Level 3 is +902% of HaMLet. Level 0 meets D13's threshold: `results` is
+0.10% of MLton, so at most 1% of each and under 2% in all. At the start
+(E1) `--lint` cost +83% of HaMLet, +148% of the bootstrap, +39.5% of MLton
+whole and +16.3% in units, with far fewer rules. Without AstLint, level 2
+is +42%, +79%, +18.5% and +12.6% of the same.
+
+**Each check at level 2,** against the compile at `off`:
+
+| Check | HaMLet | the compiler's sources | MLton, whole |
+|---|---:|---:|---:|
+| `astlint` | 15.2% | 18.2% | 328% |
+| `translate` (LambdaLint) | 6.2% | 8.1% | 2.0% |
+| `mid` | 3.0% | 4.8% | 1.3% |
+| `midcanon`, the renaming | 2.5% | 4.0% | 1.2% |
+| MidLint after the six optional passes | 21.0% | 39.4% | 9.3% |
+| `simplify-def` | 2.9% | 7.5% | 1.5% |
+| `lower` (LowLint) | 2.2% | 5.2% | 1.1% |
+| `shapes` | 2.0% | 3.9% | 0.9% |
+| `regverify` | 1.6% | 4.2% | 0.8% |
+| `results` | 0.15% | 0.51% | 0.10% |
+
+**One changed unit:** the compiler's sources in units, each level on a
+cache filled at that level, since a compile takes only entries checked at
+its level or above (M9):
+
+| Build | `off` | 1 | 2 |
+|---|---:|---:|---:|
+| cold, the Basis from `lib/cache` | 1,158M | +5.6% | +28.4% |
+| warm, nothing changed | 996M | +1.0% | +11.3% |
+| warm, `shake.sml` changed | 1,003M | +1.5% | +12.2% |
+| warm, `main.sml` changed | 1,048M | +2.7% | +18.3% |
+
+About 10 points of level 2's are `regverify-link`, 102M a link.
+
+**A REPL line** (E1's 19 lines; `perf stat`, machine instructions, as the
+image has no `--count`): 17.6M a line at `off`, 4.6M more at level 1, the
+REPL's default, and 9.0M more at level 2.
+
+**Memory:** MLton whole peaks at 5.96 GB at `off`, 6.03 GB at level 1 and
+10.3 GB at level 2, where it needs a heap limit above 5 GiB; in units, 3.5,
+3.8 and 4.4 GB.
+
+**The compiler did not get slower; it got larger.** With the lint off:
+- HaMLet takes 1,205M, against E1's 1,243M.
+- The compiler's sources as they stood at the start (E1's frozen copy)
+  take 1,575M, against E1's 1,556M, +1.2%.
+- Those sources grew 31%, 1.70 MB to 2.23 MB, and the compiler's image
+  29%, 3.48 MB to 4.49 MB. So the bootstrap's growth lies in what it
+  compiles, not in how fast, and that is the likely home of the 86M M14
+  left unsplit.
+
+**The bootstrap's budgets** are not re-based, as both pass:
+
+| Target | At M3 | Now | Budget |
+|---|---:|---:|---:|
+| register | 1,697M | 2,111M | 2,224M |
+| stack | 2,832M | 3,483M | 3,607M |
+
+**`make check`:** 21,901 tests, 2,134 s wall and 16,527 s of CPU at
+`4546b7fcd`, on a quiet machine, and 18,799 s at `728d95e0e` on a busier
+one, so differences of 10% are the load's. M1 took 19,341 s for 21,307
+tests. It has not grown.
 
 ## References
 
