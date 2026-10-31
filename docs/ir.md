@@ -232,7 +232,11 @@ The module language is taken as given: the environment a declaration at
 top level was elaborated in, and what the elaborator records, only at
 level 2, of the results of ascriptions, functor applications, dynamic
 modules and exports, and of functor parameters (`Elaborate.tops`,
-`moduleResults`, `functorParams`), are axioms; signatures and
+`moduleResults`, `functorParams`), are axioms. A transparent ascription's
+structure must enrich its result, by one-way matching of schemes and with
+the identities the result says it holds (`[5.5 enrichment]`, `[5.5
+identity]`), and a functor's argument the signature of its parameter, its
+flexible names realised by paths (`[5.6 match]`). Signatures and
 `_overload` are not read, and `_prim`'s annotation is trusted. Where Rune
 reads the book otherwise it is read as Rune reads it, by runespec's names
 of the readings: the modes of `--overloading`, `--flex-records` and
@@ -246,8 +250,8 @@ type at every node (`CompilerNodeTypes`, [language-server.md](language-server.md
 `RUNE_ASTLINT_FAULT=KIND`, for the tests, corrupts the first datum of a
 kind as `AstLint` reads it -- `instance`, `wildcard`, `raise`, `nil`,
 `constant`, `select`, `flex`, `binder`, `scope`, `generalise`, `equality`,
-`result` -- and `compiler/astlint-faults` holds each to its rule's
-message. The thirteen mutants of the elaborator that the roadmap's E3 and
+`result`, `enrich`, `identity`, `match` -- and `compiler/astlint-faults`
+holds each to its rule's message. The thirteen mutants of the elaborator that the roadmap's E3 and
 E6 found nothing else catching, or catching late, each accepting what the
 Definition rejects or recording a wrong instance, are all caught by it.
 

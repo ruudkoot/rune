@@ -20,9 +20,12 @@
    environment a declaration at top level was elaborated in (the Basis and
    the units before), and the results of ascriptions (rules 52, 53),
    functor applications (rule 54), dynamic modules and exports, and a
-   functor's parameter as its body sees it (rule 86). Signatures are not
-   read; nor is _overload (its classes, Overload.table, are an axiom), and
-   _prim's annotation is trusted.
+   functor's parameter as its body sees it (rule 86). But a transparent
+   ascription's structure must enrich its result (5.5), and a functor's
+   argument its parameter's signature, realised by paths (5.6): M13's first
+   step, matching schemes one way. Signatures are not read; nor is
+   _overload (its classes, Overload.table, are an axiom), and _prim's
+   annotation is trusted.
 
    Where Rune reads the book otherwise, it is read as Rune reads it, by
    runespec's names of the readings (spec/notes/M10-deviations.md on branch
@@ -221,6 +224,33 @@ struct
               (tops : {dec : dec, env : Env.env, delta : Env.env} list) : {checked : int, skipped : int, alarms : int} =
     let
       fun note (n : node) = case observe of SOME f => f n | NONE => ()
+      (* the functors the run declares, how many times each (total) and
+         how many of them the check has met (seen): Elaborate.funs holds a
+         functor's last binding, which an application refers to only where
+         the run declares it never, or once and before the application *)
+      fun functorsOfDec (d, m) =
+        case d of
+          DFunctor (binds, _, _) =>
+            List.foldl (fn (b : funbind, m) => functorsOfStr (#body b, StringMap.insert (m, #name b, 1 + getOpt (StringMap.find (m, #name b), 0))))
+                       m binds
+        | DLocal (a, b, _, _) => List.foldl functorsOfDec (List.foldl functorsOfDec m a) b
+        | DStructure (binds, _, _) => List.foldl (fn (b : strbind, m) => functorsOfStr (#strexp b, m)) m binds
+        | _ => m
+      and functorsOfStr (se, m) =
+        case se of
+          StrStruct (decs, _, _) => List.foldl functorsOfDec m decs
+        | StrAscribe (se, _, _, _, _) => functorsOfStr (se, m)
+        | StrApp (_, arg, _, _) => functorsOfStr (arg, m)
+        | StrLet (decs, body, _, _) => functorsOfStr (body, List.foldl functorsOfDec m decs)
+        | StrExport (_, _, body, _, _, _) => functorsOfStr (body, m)
+        | _ => m
+      val functorsTotal = List.foldl (fn ({dec, ...}, m) => functorsOfDec (dec, m)) StringMap.empty tops
+      val functorsSeen : int StringMap.map ref = ref StringMap.empty
+      fun lastBinding funid =
+        case (StringMap.find (functorsTotal, funid), StringMap.find (!functorsSeen, funid)) of
+          (NONE, _) => true
+        | (SOME 1, SOME 1) => true
+        | _ => false
       val alarms : (string * Source.span * string) list ref = ref []
       val nalarms = ref 0
       fun alarm (rule, sp, msg) = (nalarms := !nalarms + 1; if !nalarms <= 20 then alarms := (rule, sp, msg) :: !alarms else ())
@@ -513,6 +543,158 @@ struct
             (case findTy (#env c, longid) of
                SOME (TS {fcn, ...}) => applyFcn (sp, fcn, List.map (fn a => elabTy (c, a)) args)
              | NONE => stop ("49 type", sp, "unbound type constructor " ^ longidToString longid))
+
+      (* ---- the module language (5.5, 5.6): enrichment, one way ---- *)
+      (* a type function's arity, and two equal as functions: applied to
+         the same variables of AstLint's own, equal *)
+      fun fcnArity (FName {arity, ...}) = arity
+        | fcnArity (FAbbrev (ps, _)) = List.length ps
+      fun sameFcn (sp, fa, fs) =
+        fcnArity fa = fcnArity fs andalso
+        (let val vs = List.tabulate (fcnArity fa, fn _ => #2 (ownVar false))
+         in S.same (applyFcn (sp, fa, vs), applyFcn (sp, fs, vs)) end)
+      (* a realisation (5.2) of type names by stamp, applied *)
+      fun realise (phi : tyfcn IntMap.map) (t : S.ty) : S.ty =
+        if IntMap.isEmpty phi then t
+        else
+          let
+            val memo = IntTable.table 16
+            fun go t =
+              case IntTable.find (memo, S.id t) of
+                SOME r => r
+              | NONE =>
+                  let val r = case S.node t of
+                                S.Var _ => t
+                              | S.Con {stamp, name, args} =>
+                                  (case IntMap.find (phi, stamp) of
+                                     SOME fcn => applyFcn (Source.noSpan, fcn, List.map go args)
+                                   | NONE => S.con (stamp, name, List.map go args))
+                              | S.Record fs => S.record (List.map (fn (l, a) => (l, go a)) fs)
+                              | S.Arrow (a, b) => S.arrow (go a, go b)
+                              | S.Flex {tv, eq, generic, fields} =>
+                                  S.mk (S.Flex {tv = tv, eq = eq, generic = generic, fields = List.map (fn (l, a) => (l, go a)) fields})
+                  in IntTable.insert (memo, S.id t, r); r end
+          in go t end
+      fun realiseFcn phi fcn =
+        case fcn of
+          FName {stamp, ...} => (case IntMap.find (phi, stamp) of SOME f => f | NONE => fcn)
+        | FAbbrev (ps, body) => FAbbrev (ps, realise phi body)
+      (* rule 2's instance of 4.5, one way: the structure's scheme at least
+         as general as the specification's, whose bound variables stand for
+         themselves *)
+      fun asGeneral (sp, what, actual : scheme, spec : scheme) =
+        if matchScheme (sp, what, actual, #ty spec) then ()
+        else alarm ("5.5 enrichment", sp, what ^ ": " ^ show (#ty actual) ^ " in the structure is not as general as "
+                                         ^ show (#ty spec))
+      fun schemeOfV (v : vstat) : scheme =
+        case v of
+          LVal {scheme, ...} => scheme | LCon {scheme, ...} => scheme | LPrim {scheme, ...} => scheme
+        | LConAsVal {scheme, ...} => scheme | LExn {ty, ...} => {bound = [], ty = ty} | LExnAsVal {ty, ...} => {bound = [], ty = ty}
+      (* 5.5: the structure (actual, AstLint's own) enriches the
+         specification (spec, the elaborator's environment, its type names
+         realised by phi): every type there, with the same function and
+         constructors; every value, its scheme at least as general, of its
+         status, a constructor's or exception's the same; every structure,
+         again. The identity of what the elaborator's result says it holds
+         (its stamps, a constructor's information) is the structure's *)
+      fun enrich (sp, path : string list, phi : tyfcn IntMap.map, spec : Env.env, actual : env, identity : bool) : unit =
+        let
+          fun name n = String.concatWith "." (path @ [n])
+          val r = realise phi
+          fun rs ({bound, ty} : scheme) : scheme = {bound = bound, ty = r ty}
+          val () =
+            StringMap.appi
+              (fn (n, ts) =>
+                  let val TS {fcn = fs, cons = cs} = convTy ts
+                  in
+                    case findTyIn (actual, n) of
+                      NONE => alarm ("5.5 enrichment", sp, "type " ^ name n ^ " is not in the structure")
+                    | SOME (TS {fcn = fa, cons = ca}) =>
+                        (if sameFcn (sp, fa, realiseFcn phi fs) then ()
+                         else alarm ("5.5 enrichment", sp, "type " ^ name n ^ " is another type in the structure");
+                         if List.null cs orelse List.map #1 (sortLabels cs) = List.map #1 (sortLabels ca) then ()
+                         else alarm ("5.5 enrichment", sp, "datatype " ^ name n ^ " has other constructors in the structure"))
+                  end)
+              (Env.tys spec)
+          val () =
+            StringMap.appi
+              (fn (n, sv) =>
+                  case findValIn (actual, n) of
+                    NONE => alarm ("5.5 enrichment", sp, "value " ^ name n ^ " is not in the structure")
+                  | SOME av =>
+                      (case (convVal sv, av) of
+                         (LVal {stamp, scheme, ...}, _) =>
+                           (asGeneral (sp, name n, schemeOfV av, rs (if faulty "enrich" then {bound = [], ty = other (#ty scheme)} else scheme));
+                            case av of
+                              LVal {stamp = s, ...} => if not identity orelse (s = stamp andalso not (faulty "identity")) then ()
+                                                        else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another variable")
+                            | _ => ())
+                       | (LConAsVal {scheme, info}, LCon {scheme = sa, info = ia}) =>
+                           (asGeneral (sp, name n, sa, rs scheme);
+                            if sameCon (info, ia) then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another constructor"))
+                       | (LExnAsVal {ty, info}, LExn {ty = ta, info = ia}) =>
+                           (asGeneral (sp, name n, {bound = [], ty = ta}, {bound = [], ty = r ty});
+                            if sameExn (info, ia) then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another exception"))
+                       | (LPrim {scheme, name = pn}, LPrim {scheme = sa, name = pa}) =>
+                           (asGeneral (sp, name n, sa, rs scheme);
+                            if pn = pa then () else alarm ("5.5 identity", sp, "value " ^ name n ^ ": another primitive"))
+                       | (LConAsVal {scheme, ...}, _) => asGeneral (sp, name n, schemeOfV av, rs scheme)
+                       | (LExnAsVal {ty, ...}, _) => asGeneral (sp, name n, schemeOfV av, {bound = [], ty = r ty})
+                       | (LPrim {scheme, ...}, _) => asGeneral (sp, name n, schemeOfV av, rs scheme)
+                       | (LCon {scheme, info}, LCon {scheme = sa, info = ia}) =>
+                           (asGeneral (sp, name n, sa, rs scheme); asGeneral (sp, name n, rs scheme, sa);
+                            if sameCon (info, ia) then () else alarm ("5.5 identity", sp, "constructor " ^ name n ^ ": another"))
+                       | (LExn {ty, info}, LExn {ty = ta, info = ia}) =>
+                           (if S.same (r ty, ta) then () else alarm ("5.5 enrichment", sp, "exception " ^ name n ^ ": another type");
+                            if not identity orelse sameExn (info, ia) then ()
+                            else alarm ("5.5 identity", sp, "exception " ^ name n ^ ": another exception"))
+                       | (LCon _, _) => alarm ("5.5 enrichment", sp, name n ^ " is a constructor in the specification, not in the structure")
+                       | (LExn _, _) => alarm ("5.5 enrichment", sp, name n ^ " is an exception in the specification, not in the structure")))
+              (Env.vals spec)
+          val () =
+            StringMap.appi
+              (fn (n, se) =>
+                  case findStrIn (actual, n) of
+                    NONE => alarm ("5.5 enrichment", sp, "structure " ^ name n ^ " is not in the structure")
+                  | SOME st => enrich (sp, path @ [n], phi, se, layersOf st, identity))
+              (Env.strs spec)
+        in () end
+      (* 5.6: the realisation of a signature's bound names that its match
+         against a structure finds, by paths: each bound name the type the
+         structure has at the path the signature has it *)
+      fun phiByPaths (sp, bound : Types.tycon list, sigEnv : Env.env, actual : env) : tyfcn IntMap.map =
+        let
+          val boundSet = List.foldl (fn (c : Types.tycon, m) => IntMap.insert (m, #stamp c, c)) IntMap.empty bound
+          fun walk (path : string list, e : Env.env, layers : env, phi) =
+            let
+              val phi =
+                StringMap.foldli
+                  (fn (n, Env.TyStr {fcn = Types.TName c, ...}, phi) =>
+                      (case IntMap.find (boundSet, #stamp c) of
+                         SOME bc =>
+                           if IntMap.member (phi, #stamp c) then phi
+                           else (case findTyIn (layers, n) of
+                                   SOME (TS {fcn, ...}) =>
+                                     (if (#eq bc orelse faulty "match") andalso not (fcnAdmitsEq fcn)
+                                      then alarm ("5.6 match", sp, "type " ^ String.concatWith "." (path @ [n])
+                                                                    ^ " must admit equality")
+                                      else ();
+                                      IntMap.insert (phi, #stamp c, fcn))
+                                 | NONE => (alarm ("5.6 match", sp, "type " ^ String.concatWith "." (path @ [n])
+                                                                     ^ " is not in the structure"); phi))
+                       | NONE => phi)
+                    | (_, _, phi) => phi)
+                  phi (Env.tys e)
+            in
+              StringMap.foldli (fn (n, sub, phi) =>
+                                   case findStrIn (layers, n) of
+                                     SOME st => walk (path @ [n], sub, layersOf st, phi)
+                                   | NONE => phi) phi (Env.strs e)
+            end
+        in walk ([], sigEnv, actual, IntMap.empty) end
+      and fcnAdmitsEq fcn =
+        let val vs = List.tabulate (fcnArity fcn, fn _ => #2 (ownVar true))
+        in admitsEq (applyFcn (Source.noSpan, fcn, vs)) end
 
       (* ---- 4.6: the scope of a value declaration ---- *)
       fun valScope (c : ctx, explicit : tyvarseq, d : dec, sp) : ctx * int list =
@@ -1139,7 +1321,9 @@ struct
                   strs = List.foldl (fn (b : strbind, m) => StringMap.insert (m, #name b, checkStrexp (c, #strexp b, made))) StringMap.empty binds}]
         | DSignature _ => []
         | DFunctor (binds, _, _) =>
-            (List.app (fn (b : funbind) =>
+            (List.app (fn (b : funbind) => functorsSeen := StringMap.insert (!functorsSeen, #name b,
+                                                           1 + getOpt (StringMap.find (!functorsSeen, #name b), 0))) binds;
+             List.app (fn (b : funbind) =>
                           let
                             val pe = case entry (#functorParam reader, #id b) of
                                        SOME e => e
@@ -1158,8 +1342,34 @@ struct
             (case findPath (#env c, path @ [name]) of
                SOME e => SOwn e
              | NONE => stop ("51 structure", sp, "structure " ^ longidToString (path, name) ^ " is not in the context"))
-        | StrAscribe (se, _, _, sp, n) => (ignore (checkStrexp (c, se, made)); axiom (n, sp, "an ascription"))
-        | StrApp (_, arg, sp, n) => (ignore (checkStrexp (c, arg, made)); axiom (n, sp, "a functor's application"))
+        | StrAscribe (se, _, false, sp, n) =>
+            (* rule 52: the structure enriches the result the elaborator
+               made of the signature, which its types and identities are *)
+            let val actual = checkStrexp (c, se, made)
+                val result = axiom (n, sp, "an ascription")
+            in
+              (case (observe, result) of
+                 (NONE, SBase e) => enrich (sp, [], IntMap.empty, e, layersOf actual, true)
+               | _ => ());
+              result
+            end
+        | StrAscribe (se, _, true, sp, n) => (ignore (checkStrexp (c, se, made)); axiom (n, sp, "an ascription"))
+        | StrApp (funid, arg, sp, n) =>
+            (* rule 54's match: the argument enriches the parameter's
+               signature, its bound names realised by paths (5.6); the
+               application's result is taken as given *)
+            let val actual = checkStrexp (c, arg, made)
+            in
+              (case (observe, StringMap.find (!Elaborate.funs, funid)) of
+                 (NONE, SOME (Elaborate.FunInfo {paramSig = {bound, env = pEnv, ...}, ...})) =>
+                   if not (lastBinding funid) then ()
+                   else
+                     let val layers = layersOf actual
+                         val phi = phiByPaths (sp, bound, pEnv, layers)
+                     in enrich (sp, [], phi, pEnv, layers, false) end
+               | _ => ());
+              axiom (n, sp, "a functor's application")
+            end
         | StrLet (decs, body, _, _) => let val delta = checkDecs (c, decs, made) in checkStrexp (extend (c, delta), body, made) end
         | StrDynamic (_, _, _, sp, n) => axiom (n, sp, "a dynamic module")
         | StrExport (_, _, body, _, sp, n) => (ignore (checkStrexp (c, body, made)); axiom (n, sp, "an export"))
