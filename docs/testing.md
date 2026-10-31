@@ -330,9 +330,20 @@ A category means one of four things:
 | quarantine | `QUARANTINE`, with `until YYYY-MM-DD:` | the test runs, and its failure fails nothing until the date; after it the line is stale |
 
 The files stay where they are: `tests/opt-skip.txt`, `tests/windows-skip.txt`,
-`tests/portability-skip.txt`, `tests/external/mlton-skip.txt` and
-`tests/lib/deviations.txt` are in this format, and `make check` holds each
-to parse and to name programs that exist (`expectations/*`).
+`tests/portability-skip.txt`, `tests/external/mlton-skip.txt`,
+`tests/lib/deviations.txt` and `tests/cross/deviations.txt` are in this
+format, and `make check` holds each to parse and to name programs that
+exist (`expectations/*`). `tests/cross/deviations.txt` is check-cross's
+(`crossCheck` of `tests/runner/oracles.sml`): `HOST | CHECK | HOST-FLAKY |
+reason`, a build of check-cross and the name of a check of `cross/*`, for a
+host compiler's fault that comes and goes (SML/NJ's 32-bit collector), since
+Rune's sources are not changed for one host ([building.md](building.md)).
+Such a build may fail the check, which says so on a line `HOST-FLAKY`, not
+a failure, and still compares every other build's bytes; where the build
+compiles, its bytes must be the others' as any build's. Only `HOST-FLAKY`
+lines are deviations there, and a line that names no build or no check
+fails `expectations/cross-deviations`; `runner/cross-deviations` holds the
+rules to planted lines.
 `tests/basis/deviations.txt` is read by the engine for the Basis suite in
 Rune's configurations (`tests/runner/basis.sml`, with run-matrix.sh's rule
 that any line explains a failure and a line that explains none is stale),

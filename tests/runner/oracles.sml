@@ -717,6 +717,48 @@ struct
   val hostBuilds = ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"]
   fun builds tool = hostBuilds @ (if exists ("bin/" ^ tool ^ "-boot") then ["boot"] else [])
 
+  (* A host's build that may fail a check now and then, where the fault is
+     the host's and Rune's sources are not changed for one host
+     (docs/building.md): tests/cross/deviations.txt, in the form of
+     tests/lib/deviations.txt -- HOST | CHECK | HOST-FLAKY | reason, HOST a
+     build of hostBuilds (or boot) and CHECK the name of a check of
+     cross/*, each a glob. A build with a line may fail the check, which
+     then says so on a line that is not a FAIL; where it succeeds its bytes
+     are compared as any build's. *)
+  val crossDeviationsFile = "tests/cross/deviations.txt"
+  fun crossFlaky (ls : Expectations.line list, c, n) =
+    List.find (fn l => #category l = "HOST-FLAKY") (List.filter (fn l => isSome (Expectations.find ([l], {way = c, path = n, label = NONE}))) ls)
+
+  (* What a check says of its builds' results: each build, whether it
+     compiled, and whether its bytes are the reference's -- the mlton
+     build's, or the first build's that compiled where mlton's did not --
+     with the deviations; the lines it prints, FAIL ones for what fails.
+     mayFail: a program that every build refuses is refused alike, by the
+     reference's message (refusedAlike) *)
+  fun crossVerdict {n, results : (string * bool) list, sameBytes : string -> bool, refusedAlike : string -> bool,
+                    why : string -> string, mayFail, deviations} : string list =
+    let
+      val failed = List.filter (not o #2) results
+      fun tolerated (c, _) = isSome (crossFlaky (deviations, c, n))
+      val (flaky, hard) = List.partition tolerated failed
+      fun flakyLine (c, _) =
+        case crossFlaky (deviations, c, n) of
+          SOME l => "HOST-FLAKY " ^ n ^ ": rune-" ^ c ^ " failed (" ^ why c ^ "), which " ^ #file l ^ ":"
+                    ^ Int.toString (#number l) ^ " tolerates"
+        | NONE => ""
+    in
+      if mayFail andalso not (null failed) andalso length failed = length results then
+        List.mapPartial (fn (c, _) => if refusedAlike c then NONE
+                                      else SOME ("FAIL " ^ n ^ ": the mlton and " ^ c ^ " builds reject the program differently"))
+                        hard
+      else if not (null hard) then List.map (fn (c, _) => "FAIL " ^ n ^ ": rune-" ^ c ^ " failed: " ^ why c) hard @ List.map flakyLine flaky
+      else
+        List.map flakyLine flaky
+        @ List.mapPartial (fn (c, ok) => if ok andalso not (sameBytes c)
+                                         then SOME ("FAIL " ^ n ^ ": bytecode differs between the mlton and " ^ c ^ " builds") else NONE)
+                          results
+    end
+
   (* check NAME ARGS: compiled by every build; when MAY_FAIL, a program that
      every build refuses is refused alike *)
   fun crossCheck (n, target, args, mayFail) =
@@ -733,23 +775,35 @@ struct
       val results = List.map (fn c => (c, exec {cmd = ["bin/rune-" ^ c] @ target @ args @ ["-o", f (c, ".rbc")], dir = NONE,
                                                 stdin = "", stdout = "", stderr = f (c, ".err"), timeout = 0} = 0))
                              (List.filter (fn c => not inUnits orelse c <> "smlnj32") (builds "rune"))
-      val failed = List.filter (not o #2) results
+      (* the reference: mlton's, or the first build's that compiled *)
+      val reference = case List.find (fn (c, ok) => ok andalso c = "mlton") results of
+                        SOME (c, _) => c
+                      | NONE => (case List.find #2 results of SOME (c, _) => c | NONE => "mlton")
+      fun why c = case firstLine (f (c, ".err")) of "" => "it says nothing (is bin/rune-" ^ c ^ " there?)" | l => l
+      val said = crossVerdict {n = n, results = results, sameBytes = fn c => same (f (reference, ".rbc"), f (c, ".rbc")),
+                               refusedAlike = fn c => same (f ("mlton", ".err"), f (c, ".err")), why = why, mayFail = mayFail,
+                               deviations = Expectations.read crossDeviationsFile}
     in
-      if not (null failed) then
-        if mayFail andalso length failed = length results then
-          List.app (fn (c, _) => if same (f ("mlton", ".err"), f (c, ".err")) then ()
-                                 else say ("FAIL " ^ n ^ ": the mlton and " ^ c ^ " builds reject the program differently\n"))
-                   results
-        else List.app (fn (c, _) => say ("FAIL " ^ n ^ ": rune-" ^ c ^ " failed: "
-                                         ^ (case firstLine (f (c, ".err")) of
-                                              "" => "it says nothing (is bin/rune-" ^ c ^ " there?)"
-                                            | l => l) ^ "\n")) failed
-      else
-        case List.find (fn (c, _) => not (same (f ("mlton", ".rbc"), f (c, ".rbc")))) results of
-          SOME (c, _) => say ("FAIL " ^ n ^ ": bytecode differs between the mlton and " ^ c ^ " builds\n")
-        | NONE => ()
+      List.app (fn l => say (l ^ "\n")) said
     end
 
+  (* The checks of cross/* by name, and the deviations' lines that name no
+     build or no check, or are of another category: what is wrong with the
+     file, which fails `expectations/cross-deviations` *)
+  fun crossCheckNames () =
+    ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all"]
+    @ List.map name (glob ("tests/lang", ".sml") @ ExampleProjects.programs ())
+    @ List.map (fn t => "basis-" ^ t) (List.filter (fn t => t <> "harness" andalso t <> "finish") (List.map basename (glob ("tests/basis", ".sml"))))
+  fun crossDeviationErrors (ls : Expectations.line list, hosts : string list, checks : string list) : string list =
+    List.mapPartial (fn l =>
+                       if #category l <> "HOST-FLAKY" then SOME (Expectations.describe l ^ ": only HOST-FLAKY is a deviation of check-cross")
+                       else if not (List.exists (fn h => Expectations.glob (#way l, h)) hosts) then
+                         SOME (Expectations.describe l ^ ": no build " ^ #way l ^ " (" ^ String.concatWith ", " hosts ^ ")")
+                       else if not (List.exists (fn c => Expectations.glob (#path l, c)) checks) then
+                         SOME (Expectations.describe l ^ ": no check " ^ #path l ^ " of cross/*")
+                       else if isSome (#label l) then SOME (Expectations.describe l ^ ": a check of cross/* has no labels")
+                       else NONE)
+                    ls
 
   fun crossOne x =
     case x of
@@ -1017,6 +1071,55 @@ struct
          in if status=0 andalso same (file,expected) then ()
             else say ("FAIL int64 " ^ name ^ ": " ^ vm ^ "/" ^ mode ^ " differs or exits unsuccessfully\n") end) int64Programs end
 
+  (* the deviations' rules on planted lines (the runner's own check,
+     runner/cross-deviations): a build's failure that no line names fails;
+     a flaky build that fails is told, not failed, and every other build is
+     still compared; a flaky build that compiles is compared as any; and a
+     line that names no build or no check, or of another category, is an
+     error *)
+  fun crossDeviationChecks () =
+    let
+      val planted = Expectations.parse ("planted", "smlnj32 | basis-word | HOST-FLAKY | planted\n")
+      val builds = ["mlton", "smlnj-legacy", "smlnj32", "polyml"]
+      fun verdict (n, results, sameBytes, refusedAlike, mayFail) =
+        crossVerdict {n = n, results = results, sameBytes = sameBytes, refusedAlike = refusedAlike, why = fn _ => "planted",
+                      mayFail = mayFail, deviations = planted}
+      fun fails ls = List.exists (String.isPrefix "FAIL ") ls
+      fun told ls = List.exists (String.isPrefix "HOST-FLAKY ") ls
+      fun check (what, ok) = say ((if ok then "PASS" else "FAIL") ^ " cross deviations: " ^ what ^ "\n")
+      fun all f = List.map (fn c => (c, f c)) builds
+      val yes = fn _ => true
+    in
+      check ("a flaky build that fails is told, not failed",
+             let val v = verdict ("basis-word", all (fn c => c <> "smlnj32"), yes, yes, false) in not (fails v) andalso told v end);
+      check ("a failure that no line names fails", fails (verdict ("basis-word", all (fn c => c <> "polyml"), yes, yes, false)));
+      check ("a flaky build's failure beside another's fails",
+             fails (verdict ("basis-word", all (fn c => c <> "polyml" andalso c <> "smlnj32"), yes, yes, false)));
+      check ("another check's failure of the flaky build fails",
+             fails (verdict ("basis-int", all (fn c => c <> "smlnj32"), yes, yes, false)));
+      check ("a flaky build that compiles other bytes fails",
+             fails (verdict ("basis-word", all yes, fn c => c <> "smlnj32", yes, false)));
+      check ("another build's other bytes fail beside a flaky failure",
+             fails (verdict ("basis-word", all (fn c => c <> "smlnj32"), fn c => c <> "polyml", yes, false)));
+      check ("a flaky build that compiles the same passes", null (verdict ("basis-word", all yes, yes, yes, false)));
+      check ("a program every build refuses alike passes", null (verdict ("basis-word", all (fn _ => false), yes, yes, true)));
+      check ("a program refused otherwise by one build fails",
+             fails (verdict ("basis-word", all (fn _ => false), yes, fn c => c <> "polyml", true)));
+      check ("lines that name no build, no check, a label or another category are errors",
+             length (crossDeviationErrors
+                       (Expectations.parse ("planted", "nohost | basis-word | HOST-FLAKY | x\nsmlnj32 | nocheck | HOST-FLAKY | x\n"
+                                                       ^ "smlnj32 | basis-word | HOST-BUG | x\nsmlnj32 | basis-word::l | HOST-FLAKY | x\n"
+                                                       ^ "smlnj* | basis-w* | HOST-FLAKY | x\n"),
+                        hostBuilds @ ["boot"], ["basis-word", "rune"])) = 4)
+    end
+
+  (* tests/cross/deviations.txt parses, and names builds and checks that
+     exist (expectations/cross-deviations) *)
+  fun crossDeviations () =
+    List.app (fn e => say ("FAIL " ^ e ^ "\n"))
+             (crossDeviationErrors (Expectations.read crossDeviationsFile, hostBuilds @ ["boot"], crossCheckNames ()))
+    handle Expectations.Parse m => say ("FAIL " ^ m ^ "\n")
+
   (* the commands of bin/rune-test that are these checks *)
   fun command args =
     case args of
@@ -1042,6 +1145,8 @@ struct
     | ["units-one", variant, rune, vm, src] => SOME (fn () => unitsOne (variant, rune, vm, src))
     | ["positions-one", src] => SOME (fn () => positionsOne src)
     | ["cross-one", x] => SOME (fn () => crossOne x)
+    | ["cross-deviation-checks"] => SOME crossDeviationChecks
+    | ["cross-deviations"] => SOME crossDeviations
     | ["example-project-inventory"] => SOME ExampleProjects.audit
     | ["doc-cross"] => SOME docCross
     | ["opt-cross"] => SOME optCross
@@ -1134,6 +1239,10 @@ struct
                                        ["cross-one", x], [], 1, 1000, 3600))
                         crossSrcs
              @ [job ("@doc", ["doc-cross"], [], 1, 2000, 3600), job ("@opt", ["opt-cross"], [], 1, 2000, 3600)]))),
+       tagged ["check", "quick", "covers:tests/cross/*", "covers:tests/runner/oracles.sml"]
+         (Test.describe "runner" [job ("cross-deviations", ["cross-deviation-checks"], [], 1, 256, 120)]),
+       tagged ["check", "covers:tests/cross/*", "covers:tests/lang/*", "covers:tests/basis/*", "covers:examples/*"]
+         (Test.describe "expectations" [job ("cross-deviations", ["cross-deviations"], [], 1, 256, 120)]),
        tagged ["check", "check-reproducible", "covers:examples/hello.sml"]
          (Test.describe "reproducible"
             (job ("copy", ["repro-copy"], [], 1, 100, 600)
