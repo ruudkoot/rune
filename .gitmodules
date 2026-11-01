@@ -1,3 +1,6 @@
-[submodule "corpus/HOL"]
+[submodule "corpus/hol4/HOL"]
 	path = corpus/hol4/HOL
 	url = https://github.com/ruudkoot/HOL.git
+[submodule "corpus/mlton/mlton"]
+	path = corpus/mlton/mlton
+	url = https://github.com/ruudkoot/mlton.git
