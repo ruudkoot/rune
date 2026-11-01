@@ -371,7 +371,8 @@ when the scenarios above were all green
   added to `s.sml` compiles it alone; then `ELT` gains `val y : t`, and
   `u.sml` is compiled again and fails, as a build without the cache does.
 * **S80, a unit linked against an import that changed.** `b.sml` calls
-  `a.sml`'s `A.add` and reads its `A.r`. Built, then `b.sml` edited and
+  `a.sml`'s `A.add`, which does more than apply a primitive so that it is
+  not copied into `b.sml` (*The cache*, `inlv`), and reads its `A.r`. Built, then `b.sml` edited and
   compiled again as against another `a.sml`, by `RUNE_REGVERIFY_INJECT`:
   `arity` has its code call `A.add` with one argument more, and what the
   unit expects of its imports say so; `import-arg`, `import-result` and

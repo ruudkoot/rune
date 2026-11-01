@@ -5,7 +5,7 @@ struct
     Pass.stage {name = "clock-probe", showIn = NONE, show = Int.toString,
                 check = fn _ => PassClock.checks := !PassClock.checks + 1,
                 size = fn _ => (PassClock.sizes := !PassClock.sizes + 1; 1)} f
-  val () = Pass.lint := true
+  val () = Pass.lintGiven := SOME 2
   val result = stage (fn x => stage (fn y => y + 1) x) 41
   val () = require (result = 42 andalso !PassClock.checks = 2,
                     "untimed stages must run and check their results")
