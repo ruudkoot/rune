@@ -282,7 +282,7 @@ Definition rejects or recording a wrong instance, are all caught by it.
 What it costs (`--pass-stats`'s `check astlint`, instructions, each against
 the compile with the lint off): 0.26 million of `examples/hello.sml`'s 2.2
 million, 13.3 million of `compile-sigs`' 38 million, 183 million of HaMLet's
-1.21 billion (15%), 388 million of the compiler's 2.13 billion (18%), and
+1.21 billion (15%), 396 million of the compiler's 2.18 billion (18%), and
 77.8 billion of MLton's 606 files' 23.8 billion, more than three compiles:
 it walks each structure and value of the module language several times.
 MLton compiled whole at level 2 peaks at 10.3 GB against 6.0 GB at level 1,
@@ -1129,7 +1129,7 @@ of the program's file, the file made included, 0.59G for MLton's 6.7 MB
 stack target.
 
 **`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
-code from level 1 of the lint, the boundaries (*Levels*), by its cost: 4.4%
+code from level 1 of the lint, the boundaries (*Levels*), by its cost: 4.2%
 of compiling the compiler, 1.6% of HaMLet, 0.8% of MLton. It runs after
 `registers` (`regverify`), so each unit once, when it is compiled
 ([plans/correctness/linting.md](plans/correctness/linting.md), M8); a unit

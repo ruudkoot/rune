@@ -104,11 +104,12 @@ All sixteen milestones are done. *At the close* has the last checks, the
 bugs found and what is left open.
 
 The owner took every recommendation, D1 to D19, on 2026-10-26
-(*Decisions*). The two calls left to the owner are made:
+(*Decisions*). The calls left to the owner are made:
 - **gate G1** (2026-10-26): the module language is checked, in M13's two
   steps, and AstLint stays at level 2 for now;
 - **the move of `--overloading`'s default** (D18): moved to
-  `declaration`, with HOL4's build passing `--overloading=toplevel`.
+  `declaration`, with HOL4's build passing `--overloading=toplevel`;
+- **`CALL`'s function index** (D8, 2026-10-31): tested always, in tier 2.
 
 The tracks do not wait for each other, after M1:
 - **P, placement and cost,** puts lint where it does not run and makes it
@@ -132,40 +133,88 @@ and where they went, and what is left open. The campaign's logs, scripts
 and raw results are in the drafts (`~/.cache/claude-rune-drafts/linting`,
 `impl/` and `results/`).
 
+### What the owner asked for at the end (2026-10-31)
+
+- **master merged in** (`7b8dde76e`). The owner chose a merge over a rebase,
+  which keeps every commit id this roadmap cites. master was 28 commits
+  ahead: functors-units' M10 and M11, the REPL's terminal fixes, compiler
+  determinism, the distribution's bootstrap and the corpus. Fourteen files
+  conflicted:
+  - master retired `--inline-functor` where this branch added
+    `--overloading` and `--free-tyvars` beside it, and both changes stand;
+  - both branches numbered scenarios S78 and S79. master's stay, and this
+    branch's S78, S79 and S80 are now S80, S81 and S82, here and in the
+    docs. Commits and the drafts' reports from before the merge have the
+    old numbers.
+
+  `make check` of the merge found what a merge of text cannot (`b23d9fbc2`,
+  neither in the compiler): master's clock contract set `Pass.lint`, which
+  levels replaced, and the `A.add` of S80 and S82 only applied a primitive,
+  which master now copies into the units that name it, so that `b.sml` no
+  longer called it.
+- **The nightly's failure** (`fdee912cb`). Every nightly since functors-units
+  merged stopped in `ffi/sdl/win32-contract` with "a datatype of a parameter
+  realised by no type name", so the tier nightly was skipped too. `where
+  type` realises a name by an abbreviation, and `descriptors` took only a
+  plain name, for a datatype with a constructor of the parameter's abstract
+  type. `Types.fcnIsName` is the reduction it lacked, and
+  `mod.functor.functions_where` the regression test. The mock's contract is
+  the same program and needs no SDL, so `lib/ffi/win32/mock/contract` puts
+  it in `make check`, which had no compile of `Win32ContractFn`.
+- **`CALL`'s function index** (`1488435c1`), the owner's call on D8: tier 2
+  tests it even in a register it trusts. `register/@call-index`, a tuple
+  called as a function, segfaulted before and stops with "bad function
+  index" now. Measured again on the merged tree, it is a median of +0.06% of
+  instructions (-0.07 to +2.7) on 24 benchmarks at tier 2, every output the
+  same; cycles are too noisy on programs this short to say more. It gives no
+  safety for untrusted code.
+- **The mutants in `make check`** (`1c4d9eaee`). The full harness is 7.6
+  hours of CPU, and CI's `make check` has two cores and 180 minutes, about 66
+  of them taken. So the owner chose:
+  - in `make check`, `compiler-mutants/prepare` and a `built-ID` job for each
+    mutant, 8.4 minutes of CPU, which is what the five stale mutants lacked;
+  - the harness in full as a job of its own in the nightly workflow,
+    `compiler-mutants`;
+  - a mutant that no longer compiles is a FAIL, and so is one of the 54 a
+    lint catches that a lint no longer does.
+
 ### The last checks
 
-- **`make check`** at M16's last change of code (`4546b7fcd`): 21,901
-  passed, 3 skipped, every compile at level 2. What came after it is this
-  record and `docs/testing.md`, which `docs-consistency` passes.
-- **`make check-cross`** at the same commit: 627 of 627, and at M13's
+- **`make check`** at the last change of code (`b23d9fbc2`): 22,025 passed,
+  3 skipped, every compile at level 2. What came after it is this record,
+  which `docs-consistency` passes.
+- **`make check-cross`** at the same commit: 628 of 628, and at M13's
   (`728d95e0e`), 627 of 627 in the worktree whose paths set off SML/NJ's
   32-bit crash.
-- **All six hosts** build the compiler at `e0b992180`.
+- **All six hosts** build the compiler at `b23d9fbc2`, in `make check`.
 - **The output:** at every level, each compile of *The final measurements*
   has the bytes of `--lint=off`, and HaMLet and the compiler's sources
   compile at `728d95e0e` to the bytes of `689e6cd1e`.
 - **MLton's 606 files** at level 2, whole and `--units --whole`: no alarm.
-- **HOL4** to `hol.state` at `bde446af8`, at level 2: no alarm, 393 s,
-  2,073G instructions, +3.8% on M12's. The commits after it rename one word
-  of AstLint's and change tests.
-- **`make test-compiler-mutants`** in full at `728d95e0e`, for the first
-  time since M4 added it: 85 of 85 jobs, and E05 and K01 again at
-  `4546b7fcd`. Of the 68 mutants:
+- **HOL4** to `hol.state` at `b23d9fbc2`, at level 2 and with
+  `RUNE_VERIFY_CACHE=1`: no alarm, 457 s beside other jobs, 2,160G
+  instructions, +4.2% on M13's 2,073G.
+- **`make test-compiler-mutants`** in full at `b23d9fbc2`, from a fresh tree
+  as the nightly's job does: 85 of 85 jobs. It had not run in full before
+  this close. Of the 68 mutants:
 
   | Verdict | Mutants |
   |---|---:|
-  | caught by a lint | 54 |
-  | caught by another check alone | 9 |
+  | caught by a lint | 55 |
+  | caught by another check alone | 8 |
   | caught by nothing | 3 |
   | not exercised | 2 |
 
   - **All 27 a lint caught in E3 are still caught,** and the lints now
-    catch twice as many. `astlint` is the
-    first to fire on 10, `lower` on 7, `translate` on 6, `shapes` on 5,
-    `regverify` on 4, `expand` on 4, `code-rt` on 3 and `regverify-link`
-    on 1; the rest are spread over the passes on Mid, and two stop the
-    compile (E04 with a type error, K02 at the link's interfaces).
-  - **The nine:** T04, M03, M04, M06, M13, M14, R04, S01 and S02, well-typed
+    catch twice as many. `astlint` is the first to fire on 9, `lower` on 7,
+    `translate` on 6, `shapes` on 5, `regverify` on 5, `expand` on 4,
+    `code-rt` on 3 and `regverify-link` on 1. The rest are spread over the
+    passes on Mid, and three stop the compile: E04 and E05 with a type error,
+    K02 at the link's interfaces.
+  - **R04,** a parallel move in the wrong order, is new among them, on one
+    program of the sample of 160 that master's merge shifted. So it is left
+    out of `lintCaught`, which holds the 54 that do not hang on the sample.
+  - **The eight:** T04, M03, M04, M06, M13, M14, S01 and S02, well-typed
     changes of meaning, seen by comparing outputs, as *What nothing
     catches but comparison* says.
   - **The three:** E08 still refuses its program, as a second site gives
@@ -235,6 +284,8 @@ measurements*:
 | The compiler's mutants went stale unseen after M5: `prepare` failed outright | M13 | `e0b992180` |
 | The check of the whole linked program ran only under a switch no test set, so a global misnumbered at the link reached no lint | M16, K01 | M16 (`4546b7fcd`) |
 | E05 had not compiled since M11 gave `DVal` an id, so that mutant seeded nothing | M16 | M16 (`4546b7fcd`) |
+| A parameter's datatype with an open constructor, its argument through `where type`, stopped the compiler (from functors-units) | the nightly's SDL contract | `fdee912cb` |
+| Under a wrong representation, tier 2's `CALL` jumped to an address read at an index the program chose | E7b | `1488435c1` (D8) |
 
 ### Found elsewhere
 
@@ -243,23 +294,21 @@ measurements*:
 | A `.rbc` the loader accepts and tier 2 runs into a segfault | E7 | The recipe is in `plans/correctness/vm-verifier.md` |
 | One abort of `runevm`, glibc's check of the C heap | E3 | `docs/bugreport/runevm/heap-corruption-once`, not reproduced |
 | SML/NJ 110.99.9 for 32 bits stops with "bogus overflow fault" | M14 | `docs/bugreport/smlnj/GC/bogus-overflow-fault`; a `HOST-FLAKY` deviation of `check-cross` |
-| Four terminal tests fail now and then under `make check`: three races | M11 on | `docs/bugreport/rune` on master, and fixed there by the owner (`423dcf7d1`, 2026-10-29). This branch does not have the fix until it merges master |
+| Four terminal tests fail now and then under `make check`: three races | M11 on | `docs/bugreport/rune`, fixed by the owner (`423dcf7d1`, 2026-10-29), here since the merge |
 | The REPL "dies" on `mod.functor.functions_review` | M8 | No bug: the test's own false cast (*M8*) |
 | SML/NJ and Moscow ML on `(conexp : ty)`, SML/NJ's dummy types, MLKit's internal error | E6, E13 | *Found while writing this roadmap*; not reported |
 
 ### Left open
 
-- **The owner's:** whether the test of `CALL`'s function index lands in the
-  VM now or with the VM roadmap (D8).
-- **`linting` is not merged with master,** which is 28 commits ahead of
-  where this branch left it. A trial merge conflicts in 14 files: the
-  compiler library's API and its generated docs, `unitbasis.sml`, the
-  REPL's `front.sml` and `repl.sml`, `docs/ir.md`, `docs/repl.md`, the
-  incremental tests' fixtures, and the two copies of the `heap-corruption-once`
-  report. This roadmap's file itself merges cleanly: master has the review
-  at that path, and the owner's brief is no longer in the main tree (its
-  text is in *The request*). The budgets are to be measured again after
-  that merge.
+- **The nightly has not run this work.** Its tier was skipped from
+  2026-10-27 until the fix above, and the `compiler-mutants` job is new. Both
+  first run after this branch lands, so either may find something. The job's
+  limit of 350 minutes is sized by CPU time here, not by a run on CI: 7.6
+  hours of CPU on two cores is about four hours if CI's cores match this
+  machine's, and it fits by less if they are slower.
+- **The stack bootstrap's budget has 1.2% left** (3,565M of 3,607M), the
+  register one's 3.0%. Neither is re-based, as both pass. The next growth of
+  the compiler will need it, measured + 10%.
 - **AstLint stays at level 2.** At level 1 it would cost `rune` 15-18% of a
   compile, and MLton more than three compiles and over 4 GB. M13's walks of
   the module language, mostly zonking each value on each walk, are the
@@ -271,10 +320,6 @@ measurements*:
 - **What the other checks cannot see:** in units, LowShapes' rules across
   functions see one unit (M6). The REPL's dynamic loading has no interface
   check (M9). The compiler library runs no check of stack code (M10).
-- **`make test-compiler-mutants` is not part of `make check`,** which is how
-  five of its mutants went stale for several milestones. Its `prepare`
-  alone takes little and would catch four of them. E05 still applied, but
-  no longer compiled, which only building it shows.
 - **HOL4** builds with `--overloading=toplevel` until the seven annotations
   in `docs/plans/hol4-overloading-declaration.patch` land in its tree.
 - **The snapshots** `.worktrees/lint-*` (about 4.4 GB) and the agents'
@@ -3718,8 +3763,8 @@ What any design here must keep.
 - **The VM is not this roadmap's.** The brief leaves verification in the
   VM, for untrusted code, to a later roadmap. Here the VM changes only
   where the compiler's output needs it to. What tier 2 trusts (*Where we
-  are*) is measured (E7b) and handed on, not changed, unless the owner
-  lands C-call (D8).
+  are*) is measured (E7b) and handed on, not changed, but for C-call, which
+  the owner landed (D8).
 - **Errors stay where they are.** Better error messages are a later
   roadmap. What this one lays for it (D6) must not change any message the
   suites expect (`tests/errors`, `tests/diagnostics`).
@@ -4171,8 +4216,8 @@ The brief asks for groundwork only; the error-message roadmap comes later.
   tests costs a median 15% at tier 2, the kind test alone 10.5%, and the
   test of `CALL`'s function index alone nothing (E7b). That is the VM's
   roadmap. This one hands it the measures, and the free part, the test of
-  `CALL`'s function index alone (E7b's C-call), which may land at any
-  time.
+  `CALL`'s function index alone (E7b's C-call), which landed at the close
+  (`1488435c1`).
 
 Function signatures with variables of rep, so that `CALLK` instantiates
 them, would check the 99% of closures' functions whose register 0 is
@@ -4884,9 +4929,9 @@ Not this roadmap's:
 - **What the owner decides:** the owner took D1 to D19 as recommended
   (2026-10-26), and made the two calls left to it the same day: the
   default of `--overloading` moves (D18), and gate G1 goes on to M13 in
-  two steps with AstLint at level 2. What stays the owner's:
-  - whether the test of `CALL`'s function index (E7b's C-call) lands in
-    the VM now or with the VM roadmap (D8).
+  two steps with AstLint at level 2. The last, on 2026-10-31: the test of
+  `CALL`'s function index (E7b's C-call) lands now (D8). Nothing stays the
+  owner's.
 
 ## Relation to the other plans
 
@@ -4928,8 +4973,8 @@ Not this roadmap's:
   M15 rewrites the first, which under D18's default is no longer a
   deviation. It moves the check of rules 87-89 out of the second, and adds
   rows for the two options. `tests/flexrec` is the model for M15's suite.
-- **A future roadmap: the VM's verifier.** It gets E7b's measures and the
-  test of `CALL`'s function index (E7b's C-call, D8), E7's reproducer, and the tables M7 generates from `src/isa`. Its
+- **A future roadmap: the VM's verifier.** It gets E7b's measures, E7's
+  reproducer and the tables M7 generates from `src/isa`. Its
   verifier must be sound by design (*What the literature says*).
 
 ## Risks
@@ -4995,36 +5040,35 @@ Not this roadmap's:
 
 ### The final measurements (M16, 2026-10-31)
 
-At `4546b7fcd`, MLton at `728d95e0e` (the change between them does not
-touch a compile that links no units), by `impl/m16/final.sh` in the drafts,
+At `b23d9fbc2`, with master merged in, by `impl/m16/final.sh` in the drafts,
 in instructions of `runevm --count`. At every level, every compile below
 has the bytes of the same compile at `--lint=off`.
 
 | Compile, `-O1` | `off` | 0 | 1 | 2 |
 |---|---:|---:|---:|---:|
-| `examples/hello.sml` | 2.17M | +0.04% | +35.3% | +37.9% |
-| `tests/lang/basis.listpair_ops.sml` | 27.2M | +0.06% | +37.8% | +98.7% |
+| `examples/hello.sml` | 2.19M | +0.04% | +35.6% | +37.6% |
+| `tests/lang/basis.listpair_ops.sml` | 27.2M | +0.06% | +37.8% | +98.6% |
 | HaMLet | 1,205M | +0.15% | +20.2% | +57.3% |
-| the compiler's sources | 2,131M | +0.51% | +37.1% | +97.2% |
-| HaMLet `--units` | 2,245M | +0.44% | +14.5% | +47.4% |
+| the compiler's sources | 2,178M | +0.51% | +37.1% | +97.2% |
+| HaMLet `--units` | 2,255M | +0.54% | +14.4% | +47.2% |
 | MLton, whole | 23.8G | | +8.6% | +346% |
-| MLton, `--units --whole` | 75.1G | | +5.3% | +117% |
+| MLton, `--units --whole` | 57.0G | | +7.0% | +154% |
 
-Level 3 is +902% of HaMLet. Level 0 meets D13's threshold: `results` is
+Level 3 is +903% of HaMLet. Level 0 meets D13's threshold: `results` is
 0.10% of MLton, so at most 1% of each and under 2% in all. At the start
 (E1) `--lint` cost +83% of HaMLet, +148% of the bootstrap, +39.5% of MLton
 whole and +16.3% in units, with far fewer rules. Without AstLint, level 2
-is +42%, +79%, +18.5% and +12.6% of the same.
+is +42%, +79%, +18.5% and +17% of the same.
 
 **Each check at level 2,** against the compile at `off`:
 
 | Check | HaMLet | the compiler's sources | MLton, whole |
 |---|---:|---:|---:|
 | `astlint` | 15.2% | 18.2% | 328% |
-| `translate` (LambdaLint) | 6.2% | 8.1% | 2.0% |
+| `translate` (LambdaLint) | 6.2% | 8.2% | 2.0% |
 | `mid` | 3.0% | 4.8% | 1.3% |
 | `midcanon`, the renaming | 2.5% | 4.0% | 1.2% |
-| MidLint after the six optional passes | 21.0% | 39.4% | 9.3% |
+| MidLint after the six optional passes | 21.0% | 39.3% | 9.3% |
 | `simplify-def` | 2.9% | 7.5% | 1.5% |
 | `lower` (LowLint) | 2.2% | 5.2% | 1.1% |
 | `shapes` | 2.0% | 3.9% | 0.9% |
@@ -5037,27 +5081,27 @@ its level or above (M9):
 
 | Build | `off` | 1 | 2 |
 |---|---:|---:|---:|
-| cold, the Basis from `lib/cache` | 1,158M | +5.6% | +28.4% |
-| warm, nothing changed | 996M | +1.0% | +11.3% |
-| warm, `shake.sml` changed | 1,003M | +1.5% | +12.2% |
-| warm, `main.sml` changed | 1,048M | +2.7% | +18.3% |
+| cold, the Basis from `lib/cache` | 1,233M | +5.5% | +28.2% |
+| warm, nothing changed | 1,061M | +1.0% | +11.2% |
+| warm, `shake.sml` changed | 1,069M | +1.4% | +12.1% |
+| warm, `main.sml` changed | 1,117M | +2.7% | +18.3% |
 
-About 10 points of level 2's are `regverify-link`, 102M a link.
+About 10 points of level 2's are `regverify-link`, 109M a link.
 
 **A REPL line** (E1's 19 lines; `perf stat`, machine instructions, as the
-image has no `--count`): 17.6M a line at `off`, 4.6M more at level 1, the
-REPL's default, and 9.0M more at level 2.
+image has no `--count`): 17.7M a line at `off`, 4.8M more at level 1, the
+REPL's default, and 9.1M more at level 2.
 
-**Memory:** MLton whole peaks at 5.96 GB at `off`, 6.03 GB at level 1 and
+**Memory:** MLton whole peaks at 6.0 GB at `off` and at level 1 and at
 10.3 GB at level 2, where it needs a heap limit above 5 GiB; in units, 3.5,
-3.8 and 4.4 GB.
+3.9 and 4.2 GB.
 
 **The compiler did not get slower; it got larger.** With the lint off:
 - HaMLet takes 1,205M, against E1's 1,243M.
 - The compiler's sources as they stood at the start (E1's frozen copy)
   take 1,575M, against E1's 1,556M, +1.2%.
-- Those sources grew 31%, 1.70 MB to 2.23 MB, and the compiler's image
-  29%, 3.48 MB to 4.49 MB. So the bootstrap's growth lies in what it
+- Those sources grew 34%, 1.70 MB to 2.28 MB, master's share included, and
+  the compiler's image 32%, 3.48 MB to 4.59 MB. So the bootstrap's growth lies in what it
   compiles, not in how fast, and that is the likely home of the 86M M14
   left unsplit.
 
@@ -5065,13 +5109,15 @@ REPL's default, and 9.0M more at level 2.
 
 | Target | At M3 | Now | Budget |
 |---|---:|---:|---:|
-| register | 1,697M | 2,111M | 2,224M |
-| stack | 2,832M | 3,483M | 3,607M |
+| register | 1,697M | 2,158M | 2,224M |
+| stack | 2,832M | 3,565M | 3,607M |
 
 **`make check`:** 21,901 tests, 2,134 s wall and 16,527 s of CPU at
-`4546b7fcd`, on a quiet machine, and 18,799 s at `728d95e0e` on a busier
-one, so differences of 10% are the load's. M1 took 19,341 s for 21,307
-tests. It has not grown.
+`4546b7fcd` on a quiet machine, and 18,799 s at `728d95e0e` on a busier one,
+so differences of 10% are the load's. M1 took 19,341 s for 21,307 tests.
+With master, the mock's contract and the mutants' builds it is 22,025 tests,
+timed only beside other jobs (27,300 s), so no figure on a quiet machine
+exists for the last commit.
 
 ## References
 
