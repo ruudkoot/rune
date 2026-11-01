@@ -69,13 +69,49 @@ its load, but at least half of them, and its available memory), keeps
 apart the jobs that name one pool, and starts a job only after those it
 waits for.
 
-Every compile a test makes is linted: `bin/rune-test` sets `RUNE_LINT=1`
-for itself and its jobs unless it is set already, and the compiler, the
-REPL and the compiler library then check what every pass makes as `--lint`
-does ([ir.md](ir.md), *Options*), and stop at the first breach, which is a
-bug of the compiler. `RUNE_LINT=` (empty) runs the tests without it. The
-budgets (`bin/rune-budget`) count the compiler as it is shipped, and clear
-it for what they count.
+Every compile a test makes is linted at level 2, every pass
+([ir.md](ir.md), *Levels*): `bin/rune-test` sets `RUNE_LINT=2` for itself
+and its jobs unless it is set already, and the compiler, the REPL and the
+compiler library then check what every pass makes as `--lint` does, and
+stop at the first breach, which is a bug of the compiler. That includes
+the check of the register code (`RegVerify`, at level 1; [ir.md](ir.md),
+*The register target*), whose own negative tests are
+`register/@regverify-*`: the eleven corruptions its switch
+`RUNE_REGVERIFY_INJECT` makes, each refused with its own message;
+`register/@call-index` holds tier 2 to testing `CALL`'s function index in a
+register it trusts; the link's check of the units' interfaces is held to its refusals by S80 of
+`tests/incremental/SCENARIOS.md`, and a compile takes from a cache only
+the entries checked at its level (S81; [units.md](units.md), *The cache*);
+the check of the stack code's, at level 2, are `stack/@rbccheck-*`, six
+corruptions `RUNE_RBCCHECK_INJECT` makes and one at a link of units, each
+refused with its own message ([ir.md](ir.md), *The stack target*); and
+`AstLint`, the check of the elaborated Core (level 2; [ir.md](ir.md),
+*AstLint*), whose are `compiler/astlint-faults`: the twenty corruptions
+`RUNE_ASTLINT_FAULT` makes of what it reads.
+`RUNE_LINT=1` lints at the boundaries alone, `RUNE_LINT=0` runs only what
+is always on, and `RUNE_LINT=` (empty) what each program runs by itself:
+level 0 in `rune`, 1 in the REPL and the compiler library. One tier lints
+deepest, at level 3, Mid's text read back after every stage: `make
+test-ir` (`ir/*`). The budgets (`bin/rune-budget`) count the compiler as
+it is shipped, at level 0, and clear `RUNE_LINT` for what they count. A
+check never changes what the compiler makes, so that a test linted tests
+the compiler a user runs: `levels/*` compiles every program of
+`tests/lang` and `tests/perf` to the register bytecode at level 2 and at
+level 0, at `-O2` and in units, and fails where the two differ by a byte,
+a unit's files and their bases too; `compiler/*` compares a program's
+units with `--mid-roundtrip` and without; and `Pass.checkAt` stops a
+compile whose check moved a counter of the compiler's names
+([ir.md](ir.md), *Options*). Every rule of every lint has a negative
+test ([ir.md](ir.md), *Tests*): `faults/STAGE:KIND` (tier `test-ir`)
+compiles `tests/compiler/faults.sml` with a fault made on purpose after
+the stage (`RUNE_FAULT=STAGE:KIND[@N]`, for the tests alone) and wants that
+stage's lint to refuse it with the rule's message, and `compiler/lint-rules`
+compiles the compiler's internals with `tests/compiler/lint-rules.sml`,
+which gives each rule no fault reaches -- of LambdaLint, MidLint, LowLint,
+`midcanon`'s renaming, the guard of the counters, the levels, LowLint's
+ways and the invariant of results in globals -- what breaks it, by hand.
+The Basis and the compiler library of `lib/cache` are compiled with
+`--lint` (`make basis-cache`).
 
 * `bin/rune-test list [FILTER]` lists the tests (`make/*`,
   `tag:check & !runner/*`), and `explain FILTER` shows each one's command,
@@ -159,7 +195,7 @@ hosts (`levels/*`, `register/*`, `jit/*`, `units/*`, `units-stack/*`,
 `positions/*`, `cross/*`, `reproducible/*`, `bootstrap/*`, and the
 generated programs of functors, `functors/*`, below;
 `tests/runner/oracles.sml`), and the tools' suites (`ir/*`, `doc/*`, `lib/*`,
-`flexrec/*`, `compiler/*`, `limits/*`, `gc-log/*`, `colour/*`, and the scenarios of
+`flexrec/*`, `overloading/*`, `compiler/*`, `limits/*`, `gc-log/*`, `colour/*`, and the scenarios of
 `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
 `scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
 `diagnostics/*`, `serve/*`, `repl-protocol/*`, `dap/*`, `kernel/*`,
@@ -295,9 +331,20 @@ A category means one of four things:
 | quarantine | `QUARANTINE`, with `until YYYY-MM-DD:` | the test runs, and its failure fails nothing until the date; after it the line is stale |
 
 The files stay where they are: `tests/opt-skip.txt`, `tests/windows-skip.txt`,
-`tests/portability-skip.txt`, `tests/external/mlton-skip.txt` and
-`tests/lib/deviations.txt` are in this format, and `make check` holds each
-to parse and to name programs that exist (`expectations/*`).
+`tests/portability-skip.txt`, `tests/external/mlton-skip.txt`,
+`tests/lib/deviations.txt` and `tests/cross/deviations.txt` are in this
+format, and `make check` holds each to parse and to name programs that
+exist (`expectations/*`). `tests/cross/deviations.txt` is check-cross's
+(`crossCheck` of `tests/runner/oracles.sml`): `HOST | CHECK | HOST-FLAKY |
+reason`, a build of check-cross and the name of a check of `cross/*`, for a
+host compiler's fault that comes and goes (SML/NJ's 32-bit collector), since
+Rune's sources are not changed for one host ([building.md](building.md)).
+Such a build may fail the check, which says so on a line `HOST-FLAKY`, not
+a failure, and still compares every other build's bytes; where the build
+compiles, its bytes must be the others' as any build's. Only `HOST-FLAKY`
+lines are deviations there, and a line that names no build or no check
+fails `expectations/cross-deviations`; `runner/cross-deviations` holds the
+rules to planted lines.
 `tests/basis/deviations.txt` is read by the engine for the Basis suite in
 Rune's configurations (`tests/runner/basis.sml`, with run-matrix.sh's rule
 that any line explains a failure and a line that explains none is stale),
@@ -435,7 +482,9 @@ and artifact names include their directory, so root `hello.sml` and SDL's
 members fail the inventory audit.
 
 `check-cross` and `check-positions` compile the Win32 mock application through
-`examples/win32/mock.build`. The generated providers have focused compilation
+`examples/win32/mock.build`, and `lib/ffi/win32/mock/contract` compiles the
+shared Win32 contract against the mock and runs it, which needs no SDL. The
+generated providers have focused compilation
 gates: `make test-sdl-hosts` generates the complete SDL binding and compares
 bytecode for both SDL examples across all seven Rune compiler builds;
 `make test-win32-hosts` does the same for the native Win32 application using
@@ -778,6 +827,46 @@ this stricter exit behavior makes the adequacy result usable in automation.
 bytecode, controller crash or failure before the first law fails the job.
 The property seed and environment are inherited; the default law idle limit
 is 30 seconds and the sample count is 20 per file.
+
+### Mutants of the compiler
+
+`make test-compiler-mutants` (tier `test-compiler-mutants`,
+`tests/runner/compilermutants.sml`) takes about an hour and a quarter at eight
+jobs, 7.6 hours of CPU, so it runs as a job of its own in the nightly
+workflow and not in `make check`. It asks which check
+catches which bug seeded in the compiler (plans/correctness/linting.md, E3
+and M4). Each of its 68 mutants (`tests/runner/compilermutantlist.sml`) is
+one or more exact edits of the compiler's sources -- a type substitution
+dropped, a representation swapped, a fix reverted -- built with
+`bin/rune.rbc` into a compiler of its own. It compiles a fixed corpus as
+`bin/rune.rbc` did, at level 0: `tests/lang` and `tests/perf` at `-O0` and
+`-O2`, 24 tests of the Basis, a sample of `tests/lang` on the stack target
+and in units (`--units`, and `--units --whole -O2`), `tests/errors` for the
+mutants of the elaborator and Translate, a dynamic module and the program
+that loads it (`tests/compiler/mutants`), a functor of an earlier unit
+inlined (`tests/units/functor-earlier`), a functor's function kept in its
+unit (`mod.functor.functions_capture`, in units), and the bootstrap. An
+item whose bytes differ exercises the mutant; up to 160 of those are
+compiled again at level 2 and run in each of their ways against
+`bin/rune.rbc`'s runs (run twice; an unstable run gives no verdict). Where
+no byte differs, a quarter of that sample of the corpus and its extra items
+are compiled at level 2 still, for a mutant only a lint sees. Each mutant's job says what saw
+it -- `LINT` (which lint, after which stage), `OTHER` (the compiler
+stopping, a program of `tests/errors` accepted, the VM's loader or checks,
+the output, `-O0` against `-O2`, the bootstrap's stage two), `UNCAUGHT`,
+or `UNEXERCISED` -- and the summary, with how many of the 27 a lint caught in
+E3 one still catches, is in `tests/out/compiler-mutants`.
+A controller that breaks is a FAIL, never a verdict; the good compiler's
+lint refusing an item it compiles is one too, and so are a mutant that no
+longer compiles, which seeds nothing, and a mutant of `lintCaught`, the 54 a
+lint catches, that a lint no longer does (add one a lint comes to catch). `COMPILER_MUTANTS=E01,M02`
+runs those mutants alone, and `COMPILER_MUTANTS_QUICK=N` keeps the first N
+items of each part of the corpus, to try the harness.
+
+`make check` holds the mutants to the sources between those runs, as they
+went stale unseen when nothing did: `compiler-mutants/prepare` applies every
+mutant's edits, and `compiler-mutants/built-ID` builds each one, about 7
+minutes of CPU in all. It says nothing of what catches them.
 
 Benchmark correctness and deterministic-budget drivers use
 `bin/rune-bench-check` and `bin/rune-budget`. `suite NAME` selects the typed

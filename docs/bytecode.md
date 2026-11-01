@@ -163,7 +163,7 @@ check-units`).
 
 ```
 magic       4 bytes   "RUNU"
-version     u32       2
+version     u32       4
 fingerprint u32       of the instruction set its code is of
 kind        u32       0: bytecode of that set (native code later)
 identity    len u32, bytes   the unit's identity (below)
@@ -178,9 +178,29 @@ imports     nimports × { index u32, key }   a function of a unit before it, by 
                                             the unit's own place and number -1: the next unit's top level
 nexports    u32
 exports     nexports × { number u32, index u32 }   its functions another unit may call by name
+ndeclared   u32       its functions where the representations section has them, else 0
+declared    ndeclared × { result u8, ncaptures u32, captures ncaptures × u8 }
+                      what each function returns and each slot of its closures holds
+nglobalreps u32       nglobals for the register bytecode, else 0
+globalreps  nglobalreps × u8   what each global it names holds, where the unit sets it
+ncalls      u32       the functions of other units it calls
+calls       ncalls × { index u32, arity i32, nmasks u32, masks nmasks × u32, result u32 }
+                      by its index here: the arguments it passes (-1: calls of two arities),
+                      the representations of each and of what it takes the result as
+nreads      u32       nglobals for the register bytecode, else 0
+reads       nreads × u32   the representations it reads each global it names as
 key         { place u32, number i32 }   a unit's place among those named, 0 being the unit itself,
                                         and the name's number there
 ```
+
+What the unit *declares*, from Lower (version 3), is for the check of the
+register code (`RegVerify`; [ir.md](ir.md), *The register target*):
+representations by the numbers of *The representations* below, `0` where
+nothing is said, as for a global another unit sets. What it *expects*
+(version 4) is for the link's check of the interfaces
+([units.md](units.md), *Linking*): a mask has bit `r` set for each
+representation `r` it was seen at, `0` where none was. A program's file has
+none of it; the VM's loader skips both.
 
 A unit names what units declared by a *key*: the identity of the unit that
 declared it and the number the unit's basis gave it
@@ -468,7 +488,24 @@ refuses the other's file and image.
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
   an image finds its result where `RESULT` takes it; so is `rt_link`, which
   grows the program, so that the loop and compiled code hand the VM to the
-  driver after it and the JIT's view of the program is made again.
+  driver after it and the JIT's view of the program is made again. These
+  are the primitives whose effects say they save an image or may make the
+  world another (`Isa.imagePrimitive`), and the compiler's list of them
+  (`RegCodes.imagePrims`) is generated from that.
+* **The description says more than the loader checks**
+  (`src/isa/regs.sml`): of each register operand, whether the instruction
+  reads or writes it and what it holds -- a representation, or what the
+  program says of what another operand names (a global's, a constant's, a
+  primitive's result, a known callee's parameters); what it does beside its
+  operands, above the registers (a primitive's arguments pushed, a call's
+  result left for `RESULT`, the exception `CATCH` takes) and to the
+  closure (`ENV`, `SELF`); what must come after it (`RESULT` after `CALL`,
+  `CALLK` and `PRIMPUSH`, a `SWITCH`'s table of `JUMP`s, `CATCH` at a
+  handler's start); and which primitives it may name. `runeisa` writes
+  this into the compiler's `RegCodes`, for a check of the code the
+  compiler makes ([plans/correctness/linting.md](plans/correctness/linting.md),
+  D10); none of it is in the fingerprint, since none of it changes what a
+  file means.
 * **The JIT** (`docs/plans/jit.md`; `runtime/register/README.md`, The driver
   and Tier 1): `--jit=off|baseline|opt|all` says which functions get
   native code (`RUNEVM_JIT=MODE` in the environment where no `--jit=` is

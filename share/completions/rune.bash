@@ -23,7 +23,7 @@ _rune() {
     if [[ $cur == -* ]]; then
         COMPREPLY=($(compgen -W '-o -i --lib --no-prelude --basis --basis-deps --basis-check --allow-prim --or-patterns
             --default-type=int --default-type=int64 --default-type=word --default-type=word64
-            --typecheck-only --flex-records= --units --emit-units --cache-dir --no-cache --explain-rebuild --color=always --color=never --color=auto --diagnostics=full --diagnostics=short --diagnostics-json -j --jobs --serve --verify-cache --whole --build --build-list --path --basis-index --deps --deps-dot -I --no-warnings --dump-tokens --dump-ast
+            --typecheck-only --flex-records= --overloading= --free-tyvars= --units --emit-units --cache-dir --no-cache --explain-rebuild --color=always --color=never --color=auto --diagnostics=full --diagnostics=short --diagnostics-json -j --jobs --serve --verify-cache --whole --build --build-list --path --basis-index --deps --deps-dot -I --no-warnings --dump-tokens --dump-ast --dump-witnesses
             --dump-lambda --dump-code --target=registers --target=stack --version --help' -- "$cur"))
         return
     fi

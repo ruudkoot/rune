@@ -53,7 +53,7 @@ struct
         fun head (from,{pats,body,...}:Ast.clause) =
           let val found=case pats of [] => [] | first::_ =>
                 (case matches (from,#start (Ast.spanOfPat first)) of [] =>
-                   (case first of Ast.PTuple ([left,right],_) => matches (#stop (Ast.spanOfPat left),#start (Ast.spanOfPat right)) | _ => [])
+                   (case first of Ast.PTuple ([left,right],_, _) => matches (#stop (Ast.spanOfPat left),#start (Ast.spanOfPat right)) | _ => [])
                  | found => found)
           in (case found of span::_ => SOME span | [] => NONE,#stop (Ast.spanOfExp body)) end
         fun clauses (_,[])=[] | clauses (from,clause::rest)=

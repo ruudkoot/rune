@@ -27,7 +27,9 @@ struct
   structure P = Pickle
 
   val magic = "RCE"
-  val version = 9
+  (* 10: an entry's mark, the lint it was checked by, and the schemes of
+     the globals of other units its code names (the linting roadmap's M9) *)
+  val version = 10
 
   (* what a unit's entry holds: its usages, the warnings its compile gave,
      which a compile that takes it from the cache gives again, the name its
@@ -36,9 +38,27 @@ struct
      (UnitBasis.sourcesOf), its basis and the identity the basis gives,
      which loading need not work out from the bytes again (functors-units,
      F2), its code's file, and its Mid (UnitMid), for a whole program made
-     of the units' *)
+     of the units'; and what checked it: its mark, the level of the lint its
+     compile ran (level), and the schemes of the globals of other units its
+     code names, as its compile had them (UnitBasis.importedSchemes), which a
+     compile that takes it holds the units it names now to *)
   type entry = {usages : (string * string) list, warnings : string list, file : string,
-                others : (string * string) list, pickle : string, identity : string, code : string, mid : string}
+                others : (string * string) list, pickle : string, identity : string, code : string, mid : string,
+                level : int, schemes : (string * (int * string) list) list}
+
+  (* The mark of what a compile checks of a unit: the level of its lint
+     (Pass.lintLevel; the linting roadmap's D12 and D13), off ~1 to 2 --
+     level 3's round trips of Mid's text are not asked of an entry -- and
+     no more than 0 where RUNE_REGVERIFY=0 leaves the register code
+     unchecked at the levels that check it. An entry serves a compile whose
+     level is at most its own: one made at a lower level is, for a compile
+     at a higher, an entry not there, and the unit is compiled again at
+     that level and the entry stored marked, where the cache can be
+     written. The frozen libraries are made at level 2 (make basis-cache),
+     so that a compile at any level takes their entries. *)
+  fun level () : int =
+    let val l = Int.min (Pass.lintLevel (), 2)
+    in if l >= 1 andalso not (isSome (RegVerify.level ())) then 0 else l end
 
   (* an entry found, or why there is none *)
   datatype found = Found of entry | Missed of string
@@ -106,6 +126,8 @@ struct
      ("unitfile", Int.toString UnitFile.version), ("isa", Int.toString (Pipeline.fingerprint ())),
      ("level", Int.toString (!Pass.level)), ("passes", case !Pass.only of NONE => "-" | SOME ps => String.concatWith "," ps),
      ("intbits", Int.toString (!Target.intBits)), ("flex", Elaborate.flexModeName (!Elaborate.flexRecords)),
+     ("overloading", Elaborate.overloadModeName (!Elaborate.overloading)),
+     ("freetyvars", Elaborate.freeModeName (!Elaborate.freeTyvars)),
      ("fuel", case !Pass.fuel of NONE => "-" | SOME n => Int.toString n), ("hash", P.probe ())]
     (* the functors inlined across units: what a unit's basis keeps *)
     @ (if not (StringMap.isEmpty (!Elaborate.inlineFunctors))
@@ -224,11 +246,14 @@ struct
            val identity = P.rstring r
            val code = P.rstring r
            val mid = P.rstring r
+           val lvl = P.rint r
+           val schemes = P.rlist (fn r => let val u = P.rstring r
+                                          in (u, P.rlist (fn r => let val n = P.rnat r in (n, P.rstring r) end) r) end) r
          in
            if not (P.atEnd r) orelse UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("read", String.extract (s, at, NONE))) <> h
            then Missed "a damaged entry"
            else Found {usages = us, warnings = warnings, file = file, others = others, pickle = pickle, identity = identity,
-                       code = code, mid = mid}
+                       code = code, mid = mid, level = lvl, schemes = schemes}
          end
          handle P.Bad why => Missed ("a damaged entry: " ^ why)
               | Overflow => Missed "a damaged entry"
@@ -260,12 +285,18 @@ struct
              | NONE => Missed why)
         | try (n :: rest, why, byFingerprint) =
             case read (OS.Path.joinDirFile {dir = d, file = n}) of
-              Found (e as {usages, ...}) =>
-                (case UnitBasis.broken usages of
-                   NONE => if UnitBasis.exact usages then Found e
-                           else try (rest, why, case byFingerprint of NONE => SOME e | some => some)
-                 | SOME u => try (rest, if why = "no entry" then "its entries used " ^ u ^ ", which is another now" else why,
-                                  byFingerprint))
+              Found (e as {usages, level = l, ...}) =>
+                (* one checked at a lower level of the lint than the
+                   compile's: none (level) *)
+                if l < level ()
+                then try (rest, if why = "no entry" then "its entry was checked at a lower level of the lint (" ^ Int.toString l ^ ")"
+                                else why, byFingerprint)
+                else
+                  (case UnitBasis.broken usages of
+                     NONE => if UnitBasis.exact usages then Found e
+                             else try (rest, why, case byFingerprint of NONE => SOME e | some => some)
+                   | SOME u => try (rest, if why = "no entry" then "its entries used " ^ u ^ ", which is another now" else why,
+                                    byFingerprint))
             | Missed w => try (rest, if why = "no entry" then w else why, byFingerprint)
       (* in an order of their own, whatever the directory's: any whose usages
          hold is the same *)
@@ -363,7 +394,9 @@ struct
      its usages, beside the key's others; a cache that cannot be written is
      a cache that is not there *)
   fun store (dir : string, config : string, k : string,
-             {usages = us, warnings, file, others, pickle, identity, code, mid} : entry) : unit =
+             {usages = us, warnings, file, others, pickle, identity, code, mid, level = lvl, schemes} : entry) : unit =
+    (* code a test switch corrupted (RUNE_REGVERIFY_INJECT) is not kept *)
+    if RegVerify.injecting () then () else
     UnitBasis.during "cache" (fn () =>
     let
       val d = keyDir (dir, config, k)
@@ -373,7 +406,9 @@ struct
       val body = P.writer ()
       val () = (usages (body, us); P.list P.string (body, warnings); P.string (body, file);
                 usages (body, others); P.string (body, pickle); P.string (body, identity); P.string (body, code);
-                P.string (body, mid))
+                P.string (body, mid); P.int (body, lvl);
+                P.list (fn (w, (u, ns)) => (P.string (w, u); P.list (fn (w, (n, t)) => (P.nat (w, n); P.string (w, t))) (w, ns)))
+                       (body, schemes))
       val b = P.contents body
       val w = P.writer ()
       val () = (P.bytes (w, magic); P.nat (w, version); P.string (w, UnitBasis.hashAt ("store", b)); P.bytes (w, b))

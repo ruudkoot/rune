@@ -221,23 +221,31 @@ struct
      variables are never generalized. A flexible record variable is, together
      with its field types; its instances stay linked to it through the group,
      so the record's labels are shared by all uses once determined. *)
-  fun generalize (level : int, t : ty) : unit =
-    case prune t of
-      TVar r =>
-        (case !r of
-           Unbound {id, level = l, kind = KPlain, eq} =>
-             if l > level then r := Unbound {id = id, level = genericLevel, kind = KPlain, eq = eq} else ()
-         | Unbound {id, level = l, kind = kind as KRigid _, eq} =>
-             if l > level then r := Unbound {id = id, level = genericLevel, kind = kind, eq = eq} else ()
-         | Unbound {id, level = l, kind = kind as KFlex (fields, _), eq} =>
-             if l > level then
-               (r := Unbound {id = id, level = genericLevel, kind = kind, eq = eq};
-                List.app (fn (_, a) => generalize (level, a)) fields)
-             else ()
-         | _ => ())
-    | TCon (_, args) => List.app (fn a => generalize (level, a)) args
-    | TRecord fields => List.app (fn (_, a) => generalize (level, a)) fields
-    | TArrow (a, b) => (generalize (level, a); generalize (level, b))
+  (* note is given each variable as it is marked generic, once (a variable
+     already generic, met again, is not given again): what a binding
+     generalised, which the elaborator records (Witness) *)
+  fun generalizeWith (note : tvar ref -> unit) (level : int, t : ty) : unit =
+    let
+      fun mark (r, l, v) = (r := v; if l = genericLevel then () else note r)
+      fun go t =
+        case prune t of
+          TVar r =>
+            (case !r of
+               Unbound {id, level = l, kind = KPlain, eq} =>
+                 if l > level then mark (r, l, Unbound {id = id, level = genericLevel, kind = KPlain, eq = eq}) else ()
+             | Unbound {id, level = l, kind = kind as KRigid _, eq} =>
+                 if l > level then mark (r, l, Unbound {id = id, level = genericLevel, kind = kind, eq = eq}) else ()
+             | Unbound {id, level = l, kind = kind as KFlex (fields, _), eq} =>
+                 if l > level then
+                   (mark (r, l, Unbound {id = id, level = genericLevel, kind = kind, eq = eq});
+                    List.app (fn (_, a) => go a) fields)
+                 else ()
+             | _ => ())
+        | TCon (_, args) => List.app go args
+        | TRecord fields => List.app (fn (_, a) => go a) fields
+        | TArrow (a, b) => (go a; go b)
+    in go t end
+  fun generalize (level : int, t : ty) : unit = generalizeWith (fn _ => ()) (level, t)
 
   (* Copy a scheme replacing generic variables with fresh ones at `level`. *)
   fun instantiate (level : int, scheme : scheme) : ty =

@@ -590,7 +590,7 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     Program *p = &vm->prog;
     if (!need(&r, 8) || memcmp(data, "RUNU", 4) != 0) { fail(err, errlen, "not a unit of Rune bytecode"); return -1; }
     r.pos = 4;
-    if (rd_u32(&r) != 2) { fail(err, errlen, "unsupported unit version"); return -1; }
+    if (rd_u32(&r) != 4) { fail(err, errlen, "unsupported unit version"); return -1; }
     if (rd_u32(&r) != isa_fingerprint) { fail(err, errlen, "a unit of another instruction set"); return -1; }
     if (rd_u32(&r) != 0) { fail(err, errlen, "a unit of another kind of code"); return -1; }
     /* its identity, then those of the units it names, each key's unit being
@@ -692,6 +692,35 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     for (uint32_t i = 0; i < nexports; i++) {
         (void)rd_u32(&r);
         if (rd_u32(&r) >= u.nfuncs) FAIL("bad table of exports");
+    }
+    /* what the compiler declares of the code, for its own check at a link
+       (version 3; docs/bytecode.md, Units): each function's result and its
+       closures' slots, each global's representation; and what the code
+       expects of the units before it (version 4): each call of an import,
+       each global's reads; passed over here */
+    {
+        uint32_t ndeclared = rd_u32(&r);
+        if (r.error || (ndeclared != 0 && ndeclared != u.nfuncs)) FAIL("bad declarations of the unit");
+        for (uint32_t i = 0; i < ndeclared && !r.error; i++) {
+            (void)rd_u8(&r);
+            uint32_t ncaptures = rd_u32(&r);
+            if (r.error || !need(&r, ncaptures)) FAIL("bad declarations of the unit");
+            r.pos += ncaptures;
+        }
+        uint32_t nreps = rd_u32(&r);
+        if (r.error || (nreps != 0 && nreps != nglobals) || !need(&r, nreps)) FAIL("bad declarations of the unit");
+        r.pos += nreps;
+        uint32_t ncalls = rd_u32(&r);
+        if (r.error || ncalls > 10000000) FAIL("bad declarations of the unit");
+        for (uint32_t i = 0; i < ncalls && !r.error; i++) {
+            (void)rd_u32(&r); (void)rd_u32(&r);
+            uint32_t nmasks = rd_u32(&r);
+            if (r.error || nmasks > 1000000 || !need(&r, 4 * (size_t)nmasks + 4)) FAIL("bad declarations of the unit");
+            r.pos += 4 * (size_t)nmasks + 4;
+        }
+        uint32_t nreads = rd_u32(&r);
+        if (r.error || (nreads != 0 && nreads != nglobals) || !need(&r, 4 * (size_t)nreads)) FAIL("bad declarations of the unit");
+        r.pos += 4 * (size_t)nreads;
     }
     if (r.error || r.pos != size) FAIL("bad tables of the unit");
 

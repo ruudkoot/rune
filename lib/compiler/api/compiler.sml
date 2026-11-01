@@ -27,9 +27,18 @@ struct
       (* --no-inline-functors, as rune takes it (docs/build.md, Inline
          functors and functions) *)
       val noInline=ref false
+      (* --overloading=MODE and --free-tyvars=MODE, as rune takes them
+         (docs/language.md) *)
+      val overloading=ref Elaborate.OverDeclaration val freeTyvars=ref Elaborate.FreeRefuse
+      fun choice (prefix,named,cell) flag =
+        String.isPrefix prefix flag andalso
+        (case named (String.extract (flag,size prefix,NONE)) of
+           SOME m => (cell:=m;true)
+         | NONE => invalid ("unsupported compiler-library flag: " ^ flag))
       fun prototype flag =
         if flag="--no-inline-functors" then (noInline:=true;true)
-        else false
+        else choice ("--overloading=",Elaborate.overloadModeOf,overloading) flag
+             orelse choice ("--free-tyvars=",Elaborate.freeModeOf,freeTyvars) flag
       fun options ([],target,allow,mode,libraries) = (target,allow,mode,List.rev libraries)
         | options ("--target=registers" :: rest,_,allow,mode,libraries) = options (rest,"registers",allow,mode,libraries)
         | options ("--target=stack" :: rest,_,allow,mode,libraries) = options (rest,"stack",allow,mode,libraries)
@@ -43,7 +52,8 @@ struct
             else invalid ("unsupported compiler-library flag: " ^ flag)
       val (target,allow,mode,libraries)=options (flags,"registers",false,Source.Ascii,[])
     in Session {compiler=C.session ({target=target,allowPrim=allow,lib=lib,libraries=libraries,
-                                     functors={noInline= !noInline}},
+                                     functors={noInline= !noInline},
+                                     language={overloading= !overloading,freeTyvars= !freeTyvars}},
       {link=CompilerApiPlatform.link,inherited=CompilerApiPlatform.inherited,
        prepare=CompilerApiPlatform.prepare,current=CompilerApiPlatform.current}),mode=mode} end
   fun close (Session {compiler,...}) = C.close compiler

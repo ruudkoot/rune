@@ -1,0 +1,18 @@
+# The builds that may fail a check of check-cross now and then, where the
+# fault is the host compiler's (tests/runner/oracles.sml, crossCheck), in the
+# form of tests/lib/deviations.txt:
+#
+#   HOST | CHECK | HOST-FLAKY | reason
+#
+# HOST is a build of check-cross (mlton, smlnj-legacy, smlnj32, smlnj-dev,
+# polyml, mlkit, boot) and CHECK the name of a check of cross/* (basis-word,
+# rune, ...), each a glob. Such a build may fail the check: the check then
+# says so on a line that is not a FAIL, and compares every other build's
+# bytes; where the build succeeds, its bytes must be the others' as any
+# build's. Only HOST-FLAKY lines are deviations here, and a line that names
+# no build or no check that exists fails expectations/cross-deviations. Rune's
+# sources are never changed to work around one host's bug (docs/building.md):
+# the fault is reported in docs/bugreport.
+
+# ---- SML/NJ 110.99.9 built for 32 bits: its collector's stale pointer.
+smlnj32 | basis-word | HOST-FLAKY | SML/NJ 110.99.9 for 32 bits stops now and then with "bogus overflow fault" (signal 11): a stale pointer to a collected object, depending on when collections fall (the default 512k allocation area; none at 128k to 8M); still there with the fixes of GC/real-corrupted-on-64-bit and GC/spilled-word64-argument (docs/bugreport/smlnj/GC/bogus-overflow-fault)

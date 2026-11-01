@@ -42,7 +42,7 @@ struct
             let val parent=OS.Path.dir file
             in if parent=file orelse parent="" then file else OS.Path.concat (loop parent (depth+1),OS.Path.file file) end
     in loop absolute 0 end
-  fun sorted xs=sort (op <) xs
+  fun sorted (xs : string list)=sort (op <) xs
   fun unique xs=List.foldl (fn (v,old) => if List.exists (fn x => x=v) old then old else old @ [v]) [] xs
   fun tree path=if isDir path andalso not (isLink path) then List.concat (List.map (fn name => tree (OS.Path.concat (path,name))) (sorted (entries path))) else [path]
   fun hash file=

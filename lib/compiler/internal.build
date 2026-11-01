@@ -3,6 +3,7 @@ use frontend.build
 files
   settings.sml
   core/lambda.sml
+  core/irrules.sml
   core/lambdalint.sml
   core/matchcomp.sml
   core/translate.sml
@@ -25,9 +26,12 @@ files
   backend/lowlint.sml
   backend/rep.sml
   backend/lower.sml
+  backend/lowshapes.sml
+  backend/fault.sml
   backend/stack.sml
   backend/regcodes.sml
   backend/regs.sml
+  backend/regverify.sml
   backend/emit.sml
   backend/link.sml
   backend/unitfile.sml

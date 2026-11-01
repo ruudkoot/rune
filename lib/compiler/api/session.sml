@@ -14,7 +14,14 @@ struct
      to inline across units are left out (docs/build.md, Inline functors
      and functions) *)
   type functors = {noInline : bool}
-  type config = {target : string, allowPrim : bool, lib : string option, libraries : string list, functors : functors}
+  (* language: the contexts of overloading and of free type variables at
+     top level (--overloading, --free-tyvars; docs/language.md) *)
+  type language = {overloading : Elaborate.overloadMode, freeTyvars : Elaborate.freeMode}
+  type config = {target : string, allowPrim : bool, lib : string option, libraries : string list, functors : functors,
+                 language : language}
+  (* the language's choices of config, set in the compiler of an attempt *)
+  fun language (config : config) : unit =
+    (Elaborate.overloading := #overloading (#language config); Elaborate.freeTyvars := #freeTyvars (#language config))
   type platform = {link : string -> unit -> unit, inherited : (string * string option) list,
                    prepare : bool -> unit, current : unit -> (string * string) list}
   datatype session = Session of {token : unit ref, namespace : string, config : config, sources : input list ref,
@@ -44,9 +51,13 @@ struct
       fun work () =
         let
           val () = UnitBasis.startSession ()
+          (* the library lints at the boundaries where RUNE_LINT says
+             nothing else (docs/ir.md, Levels) *)
+          val () = Pass.lintDefault := 1
           val () = (Pass.whole:=false; Pipeline.keepMid:=true; CompilerSettings.target:= #target config;
                     Error.keep:=true;Error.silent:=true;Elaborate.recover:=true)
           val () = CompilerSettings.libDir:= #lib config
+          val () = language config
           (* the functors to inline, set in this attempt's own compiler as
              rune's options set them *)
           val {noInline} = #functors config
@@ -82,9 +93,12 @@ struct
               val start = UnitBasis.begin (!env,!fixity)
               val (decs,outgoing) = Parser.parseTokensWith (Lexer.tokenize input,!fixity)
               val () = Elaborate.allowPrim:=allow
+              (* AstLint at level 2, as rune runs it (docs/ir.md, AstLint) *)
+              val () = Elaborate.lintRecords:=Pass.linting' 2
               val () = Elaborate.elabTop (env,decs)
               val () = Elaborate.finish ()
               val () = if !Error.errors=0 then () else raise Failed (List.map sourceError (List.rev (!Error.kept)))
+              val () = Pass.checkAt ("astlint",2) AstLint.check ()
               val result = Pipeline.unitThrough {start=start,name=name,file=file,text=fn () => text,mode=mode,
                 decs=decs,delta= !Elaborate.lastDelta,fixity=outgoing,used=[],fresh=false}
               val code = #code result
@@ -93,8 +107,11 @@ struct
               val loaded = #loaded result
               val () = (env:=Env.plus (#env start,#delta loaded);
                         fixity:=Fixity.extend (#fixity start,#directives loaded);UnitBasis.bind loaded)
+              val bytes = String.concat (UnitFile.chunks (fingerprint,code))
+              (* its code read back, at level 2 *)
+              val () = Pass.checkAt ("code-rt",2) (Pipeline.codeRoundTrip (fingerprint,bytes)) code
               val artifact = {identity= #identity code,fingerprint=fingerprint,code=code,
-                bytes=String.concat (UnitFile.chunks (fingerprint,code)),pickle= #pickle (#exported result),
+                bytes=bytes,pickle= #pickle (#exported result),
                 mid=mid,source=source,library=library}
             in (ordinal+1,artifact :: artifacts) end
           fun compile (Text source,(ordinal,artifacts)) =
@@ -181,6 +198,9 @@ struct
               | UnitCache.Found entry =>
                   ((let
                       val (fingerprint,code)=UnitFile.read (#code entry)
+                      (* the schemes of what it names of other units, as its
+                         compile had them, against those units now *)
+                      val ()=UnitBasis.checkSchemes (#schemes entry)
                       val moved=UnitBasis.movedTo (#file entry,file,#others entry)
                       val code=UnitBasis.relocate (code,#file entry,file,#others entry)
                       val mid=if #mid entry="" then "" else UnitMid.relocate (#mid entry,moved)
@@ -188,7 +208,8 @@ struct
                         bytes=String.concat (UnitFile.chunks (fingerprint,code)),pickle= #pickle entry,mid=mid,source=source,library=true}
                       val result=compile (Loaded artifact,state)
                     in cacheHits:= !cacheHits+1;result end)
-                   handle UnitFile.Bad _ => raise CachedLoad | Pickle.Bad _ => raise CachedLoad | UnitBasis.Missing _ => raise CachedLoad)
+                   handle UnitFile.Bad _ => raise CachedLoad | Pickle.Bad _ => raise CachedLoad | UnitBasis.Missing _ => raise CachedLoad
+                        | UnitBasis.SchemeChanged _ => raise CachedLoad)
             end
           fun group (entries,state) =
             let val prior=context ()
@@ -353,7 +374,10 @@ struct
     in List.filter (fn a : artifact => List.exists (fn identity => identity= #identity a) wanted) catalog end
   fun owned action =
     let val owner=CompilerState.session ()
-        val result=CompilerState.withSession (owner,action) handle e => (CompilerState.close owner;raise e)
+        (* the library lints at the boundaries where RUNE_LINT says nothing
+           else (docs/ir.md, Levels) *)
+        val result=CompilerState.withSession (owner,fn () => (Pass.lintDefault:=1;action ()))
+                   handle e => (CompilerState.close owner;raise e)
     in CompilerState.close owner;result end
   fun writeProgram (compiled,path) = owned (fn () =>
     let
@@ -373,9 +397,10 @@ struct
       val fingerprint = #fingerprint (hd artifacts)
       val () = if List.all (fn a : artifact => #fingerprint a=fingerprint) artifacts then () else raise Domain
       val code =
-        if fingerprint=RegCodes.fingerprint then
-          (Code.opcodeNames:=RegCodes.names;Link.program (Regs.program,RegCodes.linked,List.map #code artifacts))
-        else Link.program (Stack.program,Opcodes.linked,List.map #code artifacts)
+        (if fingerprint=RegCodes.fingerprint then
+           (Code.opcodeNames:=RegCodes.names;Link.program (Regs.program,RegCodes.linked,List.map #code artifacts))
+         else Link.program (Stack.program,Opcodes.linked,List.map #code artifacts))
+        handle Link.Mismatch why => raise Fail ("the units do not fit together: " ^ why)
       val prior = !Emit.trailer
       val () = Emit.trailer:=Emit.unitsSection (!Link.lastExports)
       val () = Emit.writeFileAs (fingerprint,path,code) handle e => (Emit.trailer:=prior;raise e)

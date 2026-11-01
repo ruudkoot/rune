@@ -2,7 +2,9 @@
    primitive's number is its place in this list, from 0, so a new one goes
    at the end. lib/basis binds each with `_prim "name" : ty`, and its C is
    `p_<name>` in runtime/prims.c. `ty` is the type the library gives it, for
-   documentation and for the hosts' RUNE_PRIM (tests/basis/host). Primitives
+   documentation, for the hosts' RUNE_PRIM (tests/basis/host), and for the
+   compiler, which has it read as an SML type (Isa.primType: a function's,
+   of as many arguments as `arity`; PrimTys, Prims.repsOf). Primitives
    that return an option rely on the prelude declaring
    `datatype 'a option = NONE | SOME of 'a` (NONE = tag 0, SOME = tag 1), and
    those that return an order on `datatype order = LESS | EQUAL | GREATER`.
@@ -876,9 +878,11 @@ struct
           doc = "Identities of successfully linked units in first-link order, each once; the reserved top-level export is the marker. Does not imply execution of initializers."}]]
 
   (* The compiler's own primitives, which Translate makes for the code of
-     functors and Lower makes others of (unsafe_cast, imm_eq, a
-     constant): no VM has them, so they have no number and are in no
-     fingerprint; they have no effect, and Simplify and Shake may drop one
-     nothing uses (Prims.removable) *)
-  val compilerOwn = ["functor_cast", "functor_marker", "open_boxed", "open_layout"]
+     functors, of dynamic modules' slots and of open constructors, and
+     Lower makes others of (unsafe_cast, imm_eq, a constant): no VM has
+     them, so they have no number and are in no fingerprint; they have no
+     effect, and Simplify and Shake may drop one nothing uses
+     (Prims.removable). A cast of its own, each by its origin, is checked
+     by its origin's rule (IrRules.cast), the program's unsafe_cast not *)
+  val compilerOwn = ["functor_cast", "functor_marker", "open_boxed", "open_layout", "dynamic_cast", "open_cast"]
 end

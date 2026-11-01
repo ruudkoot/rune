@@ -1,0 +1,11 @@
+# gdb -batch -x gdb-32.cmds --args .../smlnj32-110.99.9/bin/.run/run.x86-linux @SMLcmdname=.../bin/sml
+#   @SMLload=bin/rune-smlnj32.heap --lib bin/../lib tests/basis/harness.sml ... -o RUN/cross/basis-word.smlnj32.rbc
+# (the runtime as bin/sml starts it, in repro-32.sh's environment): stops at the fault, shows the
+# registers and the code before it, and lists the mappings (BUGREPORT.md, On 32 bits)
+set pagination off
+handle SIGSEGV stop nopass
+run
+info registers
+x/24i $pc-40
+x/16wx $esp+0x40
+info proc mappings

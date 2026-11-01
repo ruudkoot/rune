@@ -31,14 +31,31 @@ struct
      (docs/bytecode.md, The representations; docs/plans/jit.md, M8): its
      arity, what each of its registers holds (Low.repCode, nlocals of
      them), its blocks -- each by its label and the registers of its
-     parameters -- and the labels of its loop heads. The stack target says
-     nothing (NONE). *)
-  type meta = {arity : int, reps : int list, blocks : (int * int list) list, loops : int list}
+     parameters -- and the labels of its loop heads; and, for a check of
+     the code (RegVerify), what Lower declares of it: what it returns, and
+     what each slot of the environment of a closure of it holds. The stack
+     target says nothing (NONE). A program's file has the first four
+     (Emit); a unit's file all of them (UnitFile). *)
+  type meta = {arity : int, reps : int list, blocks : (int * int list) list, loops : int list,
+               result : int, captures : int list}
   type func = {id : int, nlocals : int, code : item list, name : string, meta : meta option}
 
-  (* nlabels: the labels of the program are numbered from 0 up to it. *)
+  (* What a unit's code expects of the units before it, which the link
+     holds them to (the register target's; empty where not): of each
+     function it calls and has not -- an import, by its index here -- how
+     many arguments it passes, the representations it passes at each place
+     and those it takes the result as; of each global, the representations
+     it reads it as (nglobals of them, or none). A representation set is a
+     mask, bit r for Low.repCode r. *)
+  type expects = {calls : (int * int * int list * int) list, reads : int list}
+  val expectsNothing : expects = {calls = [], reads = []}
+
+  (* nlabels: the labels of the program are numbered from 0 up to it;
+     globalReps: what each global holds, as Lower declares it (Low.repCode,
+     nglobals of them), where the register target says ([] where not). *)
   type program = {consts : const list, nglobals : int, funcs : func list, files : string list,
-                  inlines : (string * int * int * int * int) list, nlabels : int}
+                  inlines : (string * int * int * int * int) list, nlabels : int, globalReps : int list,
+                  expects : expects}
 
   (* ---------------------------------------------------------------- *)
   (* The tables of the program being made.                              *)

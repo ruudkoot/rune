@@ -59,6 +59,39 @@ written. `bin/hol` proves and evaluates, and starts in 1.08 s (Poly/ML
 0.43 s); it shows a term or a theorem as `?`, since it has no printers
 (*What is left*), so `print (thm_to_string th)` shows one.
 
+### Overloading's context (2026-10-26)
+
+Rune now defaults an overloaded operator or constant where the declaration
+at structure level around it ends (`--overloading=declaration`, Appendix
+E's bound: [correctness/linting.md](correctness/linting.md), D18, M15;
+[../language.md](../language.md), *Deviations*, Overloading). Before, it
+did so where the declaration at top level ended, a whole structure
+(`--overloading=toplevel`). HOL4's tree has seven constants that a later
+declaration of their structure, or its signature, determines to be
+`IntInf.int`, and that the new default makes `int`:
+
+* `tools/Holmake/poly/MB_Monitor.sml:37`, `val time_units = [("m", 60), ...]`,
+  which `compact_time` divides a `LargeInt.int` by;
+* `src/portableML/poly/Arbnumcore.sml:15-17` and `Arbintcore.sml:10-12`
+  (which `src/portableML/rune` links to), `val zero = 0`, `val one = 1`
+  and `val two = 2` after `open IntInf`, which the opaque signatures make
+  `IntInf.int`.
+
+So `tools-rune/configure.sh` fails at Holmake. **Until the annotations land
+in the HOL4 tree, HOL4 builds with `--overloading=toplevel`**, given to both
+the compiler and the REPL that `configure.sh` takes from `RUNE` (the
+directory of `rune`, `runevm` and `rune-repl`): a `rune` there that ends
+`exec "$d/runevm" ... rune.rbc --lib "$d/../lib" --overloading=toplevel "$@"`,
+and a `rune-repl` that ends `exec "$d/runevm" ... --restore
+"$d/rune-repl.img" -- --overloading=toplevel "$@"`, so that every tool, every
+`polyc` program and every heap is compiled in the context it was written
+for. The annotations are
+[hol4-overloading-declaration.patch](hol4-overloading-declaration.patch)
+(three files of `trindemossen-2-rune` at `3d15b18a8`); with them HOL4
+configures and builds to `hol.state` under the default, and they are valid
+on Poly/ML too. That is how it was measured: the count of what the new
+default breaks is in the linting roadmap's M15.
+
 ## What it costs
 
 Measured on 2026-10-09 on one machine, Rune and Poly/ML 5.9.2 side by

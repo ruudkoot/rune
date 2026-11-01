@@ -29,7 +29,7 @@ struct
   fun expectedPhases wanted measured=
     let val actual=List.map(fn row=>text(field "phase" row))measured
     in need(length actual=length wanted andalso List.all(fn phase=>List.exists(fn value=>value=phase)actual)wanted,"missing, duplicate or unexpected phases") end
-  fun insert x []=[x] | insert x (y::ys)=if x<y then x::y::ys else y::insert x ys
+  fun insert (x : real) []=[x] | insert x (y::ys)=if x<y then x::y::ys else y::insert x ys
   fun distribution []=Json.Null | distribution values=
     let val ordered=List.foldl(fn(x,xs)=>insert x xs)[]values val count=length values
         fun rank p=List.nth(ordered,Int.max(0,Real.ceil(p*Real.fromInt count)-1))

@@ -15,48 +15,48 @@ struct
         then Option.app (fn t => matches:=(#stop span- #start span,t) :: !matches) ty else ()
       fun pat p =
         (case p of
-           PVar (_,slot,span) => (case !slot of SOME (PIVar (stamp,_)) => add (span,IntTable.find (Ty.binders,stamp)) | _ => ())
-         | PScon (_,slot,span) => add (span,!slot)
-         | PRecord (fields,_,slot,span) => (add (span,!slot);List.app (pat o #2) fields)
-         | PTuple (ps,_) => List.app pat ps | PList (ps,_) => List.app pat ps
-         | PApp (_,_,p,_) => pat p | PTyped (p,_,_) => pat p
-         | PLayered (_,_,p,slot,span) =>
+           PVar (_,slot,span, _) => (case !slot of SOME (PIVar (stamp,_)) => add (span,IntTable.find (Ty.binders,stamp)) | _ => ())
+         | PScon (_,slot,span, _) => add (span,!slot)
+         | PRecord (fields,_,slot,span, _) => (add (span,!slot);List.app (pat o #2) fields)
+         | PTuple (ps,_, _) => List.app pat ps | PList (ps,_, _) => List.app pat ps
+         | PApp (_,_,p,_, _) => pat p | PTyped (p,_,_, _) => pat p
+         | PLayered (_,_,p,slot,span, _) =>
              ((case !slot of SOME (PIVar (stamp,_)) => add (span,IntTable.find (Ty.binders,stamp)) | _ => ());pat p)
-         | POr (ps,_) => List.app pat ps | _ => ())
+         | POr (ps,_, _) => List.app pat ps | _ => ())
       fun rule (p,e) = (pat p;exp e)
       and exp e =
         case e of
-          EScon (_,slot,span) => add (span,!slot)
-        | EVar (_,slot,span) => add (span,Option.map infoType (!slot))
-        | ERecord (fields,_) => List.app (exp o #2) fields
-        | ETuple (es,_) => List.app exp es
-        | EList (es,slot,span) => (add (span,!slot);List.app exp es)
-        | ESeq (es,_) => List.app exp es
-        | ELet (ds,e,_) => (List.app dec ds;exp e)
-        | EApp (a,b,_) => (exp a;exp b)
-        | ETyped (e,_,_) => exp e
-        | EAndalso (a,b,_) => (exp a;exp b) | EOrelse (a,b,_) => (exp a;exp b)
-        | EHandle (e,rs,_) => (exp e;List.app rule rs)
-        | ERaise (e,_) => exp e | EIf (a,b,c,_) => (exp a;exp b;exp c)
-        | EWhile (a,b,_) => (exp a;exp b)
-        | ECase (e,rs,_) => (exp e;List.app rule rs)
-        | EFn (rs,slot,span) => (add (span,!slot);List.app rule rs)
-        | EPrim (_,_,slot,span) => add (span,!slot)
+          EScon (_,slot,span, _) => add (span,!slot)
+        | EVar (_,slot,span, _) => add (span,Option.map infoType (!slot))
+        | ERecord (fields,_, _) => List.app (exp o #2) fields
+        | ETuple (es,_, _) => List.app exp es
+        | EList (es,slot,span, _) => (add (span,!slot);List.app exp es)
+        | ESeq (es,_, _) => List.app exp es
+        | ELet (ds,e,_, _) => (List.app dec ds;exp e)
+        | EApp (a,b,_, _) => (exp a;exp b)
+        | ETyped (e,_,_, _) => exp e
+        | EAndalso (a,b,_, _) => (exp a;exp b) | EOrelse (a,b,_, _) => (exp a;exp b)
+        | EHandle (e,rs,_, _) => (exp e;List.app rule rs)
+        | ERaise (e,_, _) => exp e | EIf (a,b,c,_, _) => (exp a;exp b;exp c)
+        | EWhile (a,b,_, _) => (exp a;exp b)
+        | ECase (e,rs,_, _) => (exp e;List.app rule rs)
+        | EFn (rs,slot,span, _) => (add (span,!slot);List.app rule rs)
+        | EPrim (_,_,slot,span, _) => add (span,!slot)
         | _ => ()
       and dec d =
         case d of
-          DVal (_,bs,_) => List.app rule bs | DValRec (_,bs,_) => List.app rule bs
-        | DFun (_,fs,_) => List.app (fn f =>
+          DVal (_,bs,_, _) => List.app rule bs | DValRec (_,bs,_, _) => List.app rule bs
+        | DFun (_,fs,_, _) => List.app (fn f =>
             ((case !(#info f) of SOME (PIVar (stamp,_)) => add (#span f,IntTable.find (Ty.binders,stamp)) | _ => ());
              List.app (fn {pats,body,...} => (List.app pat pats;exp body)) (#clauses f))) fs
-        | DLocal (a,b,_) => List.app dec (a@b) | DAbstype (_,_,ds,_) => List.app dec ds
-        | DStructure (bs,_) => List.app (str o #strexp) bs
-        | DFunctor (bs,_) => List.app (str o #body) bs | _ => ()
+        | DLocal (a,b,_, _) => List.app dec (a@b) | DAbstype (_,_,ds,_, _) => List.app dec ds
+        | DStructure (bs,_, _) => List.app (str o #strexp) bs
+        | DFunctor (bs,_, _) => List.app (str o #body) bs | _ => ()
       and str e =
         case e of
-          StrStruct (ds,_) => List.app dec ds | StrAscribe (e,_,_,_) => str e
-        | StrApp (_,arg,_) => str arg
-        | StrLet (ds,e,_) => (List.app dec ds;str e) | StrExport (_,_,e,_,_) => str e | _ => ()
+          StrStruct (ds,_, _) => List.app dec ds | StrAscribe (e,_,_,_, _) => str e
+        | StrApp (_,arg,_, _) => str arg
+        | StrLet (ds,e,_, _) => (List.app dec ds;str e) | StrExport (_,_,e,_,_, _) => str e | _ => ()
       val ()=List.app dec decs
       fun best ((width,ty),NONE) = SOME (width,ty)
         | best ((width,ty),prior as SOME (size,_)) = if width<size then SOME (width,ty) else prior
@@ -68,6 +68,7 @@ struct
         val ()=CompilerSession.checked session
         (* types only: no copy of a functor's body (D15) *)
         val ()=(Error.silent:=true;Error.keep:=true;Elaborate.recover:=true;Elaborate.makesCode:=false)
+        val ()=CompilerSession.language config
         val env=ref Env.initial
         val fixity=ref Fixity.initial
         val syntax=ref [] : Ast.program list ref
@@ -98,6 +99,8 @@ struct
                 val narrowed=LibraryScope.restrict (prior,current,exports)
             in env:= #env narrowed;Elaborate.sigs:= #sigs narrowed;Elaborate.funs:= #funs narrowed;fixity:=incoming end end
         val ()=List.app library (#groups plan)
+        (* the user's declarations recorded for their node types (CompilerNodeTypes) *)
+        val ()=(Elaborate.forgetLintRecords ();Elaborate.lintRecords:=true)
         fun user input =
           let val ds=parse input
               val ()=Elaborate.allowPrim:= #allowPrim config
@@ -107,7 +110,9 @@ struct
         val ()=Elaborate.finish ()
         val ()=if !Error.errors=0 then () else raise CompilerSession.Failed
           (List.map CompilerSession.sourceError (List.rev (!Error.kept)))
-        val found=List.mapPartial (fn ds => at (ds,file,offset)) (!syntax)
-      in case found of [] => NONE | ty :: _ =>
+        val tops=List.rev (!Elaborate.tops)
+        val () = Elaborate.lintRecords:=false
+      in case CompilerNodeTypes.typeAtNow (tops,!env,file,offset) of SOME ty => SOME ty | NONE =>
+         case List.mapPartial (fn ds => at (ds,file,offset)) (!syntax) of [] => NONE | ty :: _ =>
            SOME (Types.toStringNamed (fn c => Env.qualifiedName (!env,c),Types.newPrinter ()) ty) end)
 end

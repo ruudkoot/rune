@@ -25,8 +25,14 @@
      that takes it (Prims.repsOf, from the primitive's type), a field of a
      tuple or a constructor made in the function, a block's or a known
      function's parameter it is passed to, what a closure's function reads
-     of a value it captures, and an exception. Two agree where a value can
-     be both: any with every one, con with con0 and ptr.
+     of a value it captures, and an exception. A value goes from where it
+     is made to where it is taken, under the order x <= x, x <= any,
+     con0 <= con, ptr <= con: what is below is right; what is above, a
+     downcast -- any into a typed representation, con into con0 or ptr --
+     which only ML's types justify, trusted and counted (--pass-stats,
+     "downcasts" on the line of `lower`); anything else a breach (the
+     linting roadmap's D8 and M6).
+   The shapes of the values, a layout across functions, are LowShapes'.
    A breach is a bug of the compiler, raised as Error.Bug. *)
 structure LowLint =
 struct
@@ -61,7 +67,7 @@ struct
         | (SOME n, _) => bug (where' ^ ": a closure of f" ^ Int.toString f ^ ", which has " ^ Int.toString n ^ " parameters")
         | (NONE, _) => bug (where' ^ ": a closure of no function f" ^ Int.toString f)
 
-      fun func ({id, params, ncaptured, nvars, blocks, ...} : func) =
+      fun func (f as {id, params, ncaptured, nvars, blocks, ...} : func) =
         let
           val where' = "function f" ^ Int.toString id
           val defined = Array.array (Int.max (nvars, 1), false)
@@ -81,69 +87,110 @@ struct
             | NONE => bug (where' ^ ": a jump to no block b" ^ Int.toString l)
           val bv = Vector.fromList blocks
           val n = Vector.length bv
-          (* what reaches each block: the variables defined on every way to
-             it, and the handlers pushed; NONE where nothing has yet *)
-          val into : (unit IntMap.map * int) option array = Array.array (n, NONE)
-          fun arrive (from, i, avail, depth) =
+          (* What is defined on every way to a place, by dominance (linting
+             roadmap, M2; a map of what is available, filtered at every
+             join, grew with blocks times variables): a block's code is
+             segments, one up to each push and one after the last, each
+             entered from the one before it -- and a handler's block from
+             the segment its push ends, since its region may raise anywhere
+             after it. Every way into a segment goes forward, in the order of
+             the blocks, but a jump back to the head of a loop, which is
+             checked apart; so a segment's dominators are numbered below it,
+             and its immediate one is where the segments it is entered from
+             meet in the tree. A variable, defined once, is defined on every
+             way to a use where the segment of its definition dominates the
+             use's, and it is defined before the use in its own. *)
+          val nsegs = n + List.foldl (fn ({instrs, ...} : block, k) =>
+                                        List.foldl (fn (Push _, k) => k + 1 | (_, k) => k) k instrs) 0 blocks
+          val idom = Array.array (Int.max (nsegs, 1), 0)
+          val defines = Array.array (Int.max (nsegs, 1), ~1)   (* a variable the segment defines, or ~1 *)
+          val segs = ref 0
+          fun segment (up : int) = let val s = !segs in segs := s + 1; Array.update (idom, s, up); s end
+          fun dominates (a, s) = s = a orelse (s > a andalso dominates (a, Array.sub (idom, s)))
+          fun meet (a, b) =
+            if a = b then a else if a > b then meet (Array.sub (idom, a), b) else meet (a, Array.sub (idom, b))
+          val defSeg = Array.array (Int.max (nvars, 1), ~1)
+          fun defineIn (s, x) =
+            (define x; Array.update (defSeg, x, s); if Array.sub (defines, s) < 0 then Array.update (defines, s, x) else ())
+          (* what enters each block forward: the segments it is entered from,
+             and the handlers pushed; NONE where nothing has yet *)
+          val into : (int list * int) option array = Array.array (n, NONE)
+          (* each block's first segment, once it is reached *)
+          val entry = Array.array (n, ~1)
+          fun arrive (from, i, seg, depth) =
             if i <= from then
               let val here = where' ^ ": a jump backward, to b" ^ Int.toString (#label (Vector.sub (bv, i)))
               in
-                case Array.sub (into, i) of
-                  NONE => bug (here ^ ", which nothing reached before")
-                | SOME (a, d) =>
+                case (Array.sub (into, i), Array.sub (entry, i)) of
+                  (SOME (_, d), e) =>
                     if d <> depth then bug (here ^ ", with " ^ Int.toString depth ^ " handlers where it has " ^ Int.toString d)
                     else
-                      case List.find (fn x => not (IntMap.member (avail, x))) (IntMap.listKeys a) of
-                        SOME x => bug (here ^ ", which has v" ^ Int.toString x ^ ", which the jump has not")
-                      | NONE => ()
+                      (* what reaches the head: what its first segment's
+                         dominators define, each of which must dominate the
+                         jump; one that does, does for all above it *)
+                      let
+                        fun up a =
+                          if a < 0 orelse dominates (a, seg) then ()
+                          else if Array.sub (defines, a) >= 0 then
+                            bug (here ^ ", which has v" ^ Int.toString (Array.sub (defines, a)) ^ ", which the jump has not")
+                          else if a = 0 then ()
+                          else up (Array.sub (idom, a))
+                      in up (if e > 0 then Array.sub (idom, e) else ~1) end
+                | (NONE, _) => bug (here ^ ", which nothing reached before")
               end
             else
               case Array.sub (into, i) of
-                NONE => Array.update (into, i, SOME (avail, depth))
-              | SOME (a, d) =>
+                NONE => Array.update (into, i, SOME ([seg], depth))
+              | SOME (froms, d) =>
                   if d <> depth then
                     bug (where' ^ ": b" ^ Int.toString (#label (Vector.sub (bv, i))) ^ " is reached with "
                          ^ Int.toString d ^ " and with " ^ Int.toString depth ^ " handlers")
-                  else Array.update (into, i, SOME (IntMap.filteri (fn (x, _) => IntMap.member (avail, x)) a, d))
-          val () = Array.update (into, 0, SOME (List.foldl (fn (x, m) => IntMap.insert (m, x, ())) IntMap.empty params, 0))
+                  else Array.update (into, i, SOME (seg :: froms, d))
+          (* the function's parameters, defined where it is entered *)
+          val () = Array.update (into, 0, SOME ([], 0))
           fun block (i, {label, params, instrs, transfer} : block) =
             case Array.sub (into, i) of
               NONE => ()        (* not reached: dead code is allowed *)
-            | SOME (avail, depth) =>
+            | SOME (froms, depth) =>
                 let
                   val here = where' ^ ", b" ^ Int.toString label
-                  fun needs (avail, x) =
-                    if IntMap.member (avail, x) then ()
+                  val first = segment (case froms of [] => 0 | f :: fs => List.foldl meet f fs)
+                  val () = Array.update (entry, i, first)
+                  val () = if i = 0 then List.app (fn x => Array.update (defSeg, x, first)) (#params (f : func)) else ()
+                  val () = if i = 0 then (case #params f of x :: _ => Array.update (defines, first, x) | [] => ()) else ()
+                  fun needs (seg, x) =
+                    if x >= 0 andalso x < nvars andalso Array.sub (defSeg, x) >= 0 andalso dominates (Array.sub (defSeg, x), seg)
+                    then ()
                     else bug (here ^ ": v" ^ Int.toString x ^ " is used where it is not defined on every way")
-                  val avail = List.foldl (fn (x, m) => (define x; IntMap.insert (m, x, ()))) avail params
-                  fun step (ins, (avail, depth, pushed)) =
+                  val () = List.app (fn x => defineIn (first, x)) params
+                  fun step (ins, (seg, depth, pushed)) =
                     case ins of
                       Def (x, oper) =>
-                        (List.app (fn y => needs (avail, y)) (uses oper); define x;
+                        (List.app (fn y => needs (seg, y)) (uses oper); defineIn (seg, x);
                          case oper of
                            CallK (f, args) => known (here, f, args)
                          | Closure (f, vs) => closure (here, f, vs)
                          | _ => ();
-                         (IntMap.insert (avail, x, ()), depth, pushed))
+                         (seg, depth, pushed))
                     | Push h =>
                         let val hi = blockOf h
                         in
                           case #params (Vector.sub (bv, hi)) of
                             [_] => ()
                           | _ => bug (here ^ ": the handler b" ^ Int.toString h ^ " has other than one parameter");
-                          arrive (i, hi, avail, depth);
-                          (avail, depth + 1, pushed + 1)
+                          arrive (i, hi, seg, depth);
+                          (segment seg, depth + 1, pushed + 1)
                         end
-                    | Pop => if depth = 0 then bug (here ^ ": a pop with no handler") else (avail, depth - 1, pushed)
-                    | At _ => (avail, depth, pushed)
-                  val (avail, depth, _) = List.foldl step (avail, depth, 0) instrs
-                  val () = List.app (fn y => needs (avail, y)) (transferUses transfer)
+                    | Pop => if depth = 0 then bug (here ^ ": a pop with no handler") else (seg, depth - 1, pushed)
+                    | At _ => (seg, depth, pushed)
+                  val (seg, depth, _) = List.foldl step (first, depth, 0) instrs
+                  val () = List.app (fn y => needs (seg, y)) (transferUses transfer)
                   fun goto (l, args) =
                     let val j = blockOf l
                     in
                       if List.length (#params (Vector.sub (bv, j))) <> List.length args then
                         bug (here ^ ": b" ^ Int.toString l ^ " given " ^ Int.toString (List.length args) ^ " arguments")
-                      else arrive (i, j, avail, depth)
+                      else arrive (i, j, seg, depth)
                     end
                 in
                   case transfer of
@@ -176,12 +223,9 @@ struct
       (* ---- representations ---- *)
 
       fun repIn (rs : rep vector, x : var) = if x >= 0 andalso x < Vector.length rs then Vector.sub (rs, x) else RAny
-      (* two agree where a value can be both: any with every one, con with
-         con0 and ptr *)
-      fun agree (a, b) =
-        a = RAny orelse b = RAny orelse a = b
-        orelse (a = RCon andalso (b = RCon0 orelse b = RPtr))
-        orelse (b = RCon andalso (a = RCon0 orelse a = RPtr))
+      (* where a value of representation a may be taken as b: a <= b *)
+      fun below (a, b) = a = b orelse b = RAny orelse (b = RCon andalso (a = RCon0 orelse a = RPtr))
+      val downcasts = ref 0
       (* what an operation makes, where it alone says *)
       fun makes (oper : operation) : rep =
         case oper of
@@ -229,9 +273,17 @@ struct
             List.foldl (fn ({label, params, ...} : block, m) => IntMap.insert (m, label, params)) IntMap.empty blocks
           (* what made each variable, for those whose parts are read back *)
           val made : operation IntTable.table = IntTable.table 64
+          (* a value of representation a goes where b is: right, a downcast,
+             or a breach *)
+          fun goes (a, b, breach) =
+            if below (a, b) then ()
+            else if below (b, a) then downcasts := !downcasts + 1
+            else bug (breach ())
+          (* r into x, and x into where r is *)
+          fun into (here, x, r, what) =
+            goes (r, repOf x, fn () => here ^ ": v" ^ Int.toString x ^ " is " ^ repName (repOf x) ^ " where " ^ what ^ " is " ^ repName r)
           fun want (here, x, r, what) =
-            if agree (repOf x, r) then ()
-            else bug (here ^ ": v" ^ Int.toString x ^ " is " ^ repName (repOf x) ^ " where " ^ what ^ " is " ^ repName r)
+            goes (repOf x, r, fn () => here ^ ": v" ^ Int.toString x ^ " is " ^ repName (repOf x) ^ " where " ^ what ^ " is " ^ repName r)
           fun args (here, xs, rs, what) =
             let
               fun go (k, x :: xs, r :: rs) = (want (here, x, r, what k); go (k + 1, xs, rs))
@@ -247,12 +299,12 @@ struct
           fun field (here, x, v, parts, i) =
             if i < List.length parts then
               let val y = List.nth (parts, i)
-              in want (here, x, repOf y, "field " ^ Int.toString i ^ " of v" ^ Int.toString v ^ ", v" ^ Int.toString y ^ ",") end
+              in into (here, x, repOf y, "field " ^ Int.toString i ^ " of v" ^ Int.toString v ^ ", v" ^ Int.toString y ^ ",") end
             else ()
           fun instr here i =
             case i of
               Def (x, oper) =>
-                (want (here, x, makes oper, "what makes it");
+                (into (here, x, makes oper, "what makes it");
                  case oper of
                    Prim (name, xs) =>
                      (case Prims.repsOf name of
@@ -271,7 +323,7 @@ struct
                  IntTable.insert (made, x, oper))
             | Push h =>
                 (case IntMap.find (paramsOf, h) of
-                   SOME [e] => want (here, e, RPtr, "the exception")
+                   SOME [e] => into (here, e, RPtr, "the exception")
                  | _ => ())
             | _ => ()
           fun block ({label, instrs, transfer, ...} : block) =
@@ -291,6 +343,91 @@ struct
         end
     in
       List.app func p;
-      List.app representations p
+      List.app representations p;
+      Pass.tally ("downcasts", !downcasts)
+    end
+
+  (* What Lower keeps of results in globals (performance M8; docs/ir.md,
+     Low), checked after every lower, --lint or not: a function of the top
+     level that returns n fields, or a datatype's constructor, returns its
+     first field, or the constructor's tag, and leaves the rest in globals
+     that its call reads at once.
+   * a read of such a global (Slot) follows, in its block, a known call
+     (CallK) of a function that leaves it, with only other such reads and
+     positions between;
+   * a function of n fields returns, in each block, either what the
+     block's last call gave, a call of another function of n, or a value
+     after which, since the block's last call, it has set each global of
+     its fields that some call reads;
+   * it calls in tail position only a function of n, and never through a
+     closure.
+   Lower says which functions these are, by their globals, and Low names a
+     known call's function by its id: `global` is the function's global
+     (the inverse of Lower.globalFids), `fields` a function's n, `slots`
+     the globals of fields 1 to n - 1 of n, `needed (n, i)` whether a call
+     reads field i, and `sum` the globals of a function's datatype. *)
+  type results = {global : int -> int option, fields : int -> int option, slots : int -> int list,
+                  needed : int * int -> bool, sum : int -> int list option}
+
+  fun results ({global, fields, slots, needed, sum} : results) (p : program) : unit =
+    let
+      fun bug msg = Error.bug msg
+      fun fieldsOf f = case global f of SOME g => fields g | NONE => NONE
+      (* the globals a call of f leaves its results in *)
+      fun leaves f =
+        case global f of
+          NONE => NONE
+        | SOME g => (case fields g of SOME n => SOME (slots n) | NONE => sum g)
+      fun mem (x, l) = List.exists (fn y => y = x) l
+      fun func ({id, blocks, ...} : func) =
+        let
+          val where' = "function f" ^ Int.toString id
+          val own = fieldsOf id
+          fun block ({label, instrs, transfer, ...} : block) =
+            let
+              val here = where' ^ ", b" ^ Int.toString label
+              fun g s = "g" ^ Int.toString s
+              (* the instructions in order: what the call just before
+                 leaves (with only reads and positions between), the last
+                 call (a variable, and its function where it is known),
+                 and the globals set since *)
+              fun scan ([], _, last, sets) = (last, sets)
+                | scan (i :: rest, after, last, sets) =
+                    case i of
+                      At _ => scan (rest, after, last, sets)
+                    | Def (_, Slot s) =>
+                        (case after of
+                           SOME (f, ss) =>
+                             if mem (s, ss) then scan (rest, after, last, sets)
+                             else bug (here ^ ": " ^ g s ^ " read after a call of f" ^ Int.toString f ^ ", which leaves no result in it")
+                         | NONE => bug (here ^ ": " ^ g s ^ " read where no call of a function that leaves results comes just before"))
+                    | Def (x, CallK (f, _)) => scan (rest, Option.map (fn ss => (f, ss)) (leaves f), SOME (x, SOME f), [])
+                    | Def (x, Call _) => scan (rest, NONE, SOME (x, NONE), [])
+                    | Def (_, SetGlobal (s, _)) => scan (rest, NONE, last, s :: sets)
+                    | _ => scan (rest, NONE, last, sets)
+              val (last, sets) = scan (instrs, NONE, NONE, [])
+              fun setsAll n =
+                List.app (fn (i, s) => if not (needed (n, i)) orelse mem (s, sets) then ()
+                                       else bug (here ^ ": a return that has not set " ^ g s ^ ", field " ^ Int.toString i
+                                                 ^ " of " ^ Int.toString n))
+                         (ListPair.zip (List.tabulate (n - 1, fn i => i + 1), slots n))
+            in
+              case (own, transfer) of
+                (NONE, _) => ()
+              | (SOME n, Return v) =>
+                  (case last of
+                     SOME (x, SOME f) => if x = v andalso fieldsOf f = SOME n then () else setsAll n
+                   | _ => setsAll n)
+              | (SOME n, TailCallK (f, _)) =>
+                  if fieldsOf f = SOME n then ()
+                  else bug (here ^ ": a tail call of f" ^ Int.toString f ^ ", which returns no " ^ Int.toString n ^ " fields")
+              | (SOME _, TailCall _) => bug (here ^ ": a tail call through a closure")
+              | _ => ()
+            end
+        in
+          List.app block blocks
+        end
+    in
+      List.app func p
     end
 end

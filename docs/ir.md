@@ -8,18 +8,19 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 
 | Stage | From | To | Lint |
 |---|---|---|---|
+| `elaborate` | the syntax | the elaborated syntax: its slots filled, its witnesses recorded (`lib/compiler/elab/elaborate.sml`, `witness.sml`) | `AstLint` (*AstLint* below) |
 | `translate` | the elaborated syntax | `Lambda` (`lib/compiler/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`lib/compiler/core/mid.sml`, by `ToMid`) | `MidLint` |
-| `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | `MidLint` |
+| `midcanon` | `Mid` | `Mid` numbered canonically (`lib/compiler/core/midcanon.sml`), as one made of its units' `Mid` is; a whole program only | its renaming (`MidCanon.checkRenaming`); `MidLint` of the units' `Mid` it concatenates (`midconcat`) |
 | `expand` | `Mid` | `Mid`, functors' applications copied (`lib/compiler/core/expand.sml`; *Functors compiled once* below), from `-O1` | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`lib/compiler/core/shake.sml`), from `-O1` | `MidLint` |
 | `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`lib/compiler/core/lift.sml`), from `-O1` | `MidLint` |
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`lib/compiler/core/workers.sml`), from `-O1` | `MidLint` |
 | `simplify` | `Mid` | `Mid`, shrunk (`lib/compiler/core/simplify.sml`), from `-O1` | `MidLint` |
 | `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
-| `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint` |
-| `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | none yet |
-| `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | none yet |
+| `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint`, `LowShapes` |
+| `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | the loader's checks and `RbcCheck` (`StackCheck`) |
+| `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | `RegVerify` |
 | `emit` | instruction lists | the `.rbc` (`lib/compiler/backend/emit.sml`) | |
 
 `-O0` is the same stages with no optional pass; `-O0` and `-O2` must give
@@ -47,16 +48,43 @@ of results in globals (see *Low*).
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
 | `--passes=P,...` | run these optional passes, whatever the level |
 | `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
-| `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach; `RUNE_LINT` set and not empty does the same where no flag reaches (the REPL, the compiler library), and every test sets it ([testing.md](testing.md), *Running the tests*) |
+| `--lint`, `--lint=LEVEL` | check what the passes make, at the level given (*Levels*, below; a bare `--lint` is 2, every pass), and stop with `Error.Bug`, which names the check, at the first breach; `RUNE_LINT=LEVEL` does the same where no flag reaches (the REPL, the compiler library), and every test sets `RUNE_LINT=2` ([testing.md](testing.md), *Running the tests*). A check changes nothing of what the compiler makes, the same bytes at every level, units and their bases too (`make check-levels`), and moves none of its counters of names -- stamps, type names, functions, labels -- which `Pass.checkAt` holds every check to, since one that took fresh names hid a bug it should have caught |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
-| `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then `total: T s processor time, S s in the stages (P%)` (below) |
+| `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then each check, at every depth, as `check KEY: N runs, T s, I instructions` (the instructions where the runtime counts them, as Rune's own build does); then `total: T s processor time, S s in the stages (P%)` (below) |
 | `--pass-stats=elab` | `--pass-stats`, and a line for each top-level declaration elaborated: where its processor time went, by context and operation, and what the elaborator counted (*The elaborator's counters* below) |
 | `--pass-stats=expand` | `--pass-stats`, and after the expansion a line `expand: N applications expanded, M left calls (B past the budget), P copies not all definitions; at most S nodes copied for a top-level application` (*Functors compiled once* below) |
 | `--pass-stats=hash` | `--pass-stats`, and at the end what the compile hashed: a line `hash PHASE:SITE: B bytes, N hashes` for each part of a compile in units (`usages`, `find`, `export`, `load`, `cache`) and place that hashed, and `memo PHASE: H hits, M misses` for the memo of fingerprints (*What a compile in units hashes* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
 | `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
-| `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same |
+| `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same, after `mid` (the check `mid-roundtrip`); what it reads is numbered by counters of its own, so that a unit's basis is what it is without it |
 | `--functor-budget=N` | the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
+
+### Levels
+
+The checks of a compile run by level (`Pass.checkAt (KEY, LEVEL)`; the
+linting roadmap, D12 and D13), each from its level up:
+
+| Level | What runs | What it costs, in instructions (HaMLet `-O1`; the compiler `-O1`) |
+|---|---|---|
+| `off` | none of level 0's; the passes' own assertions, the decoders and the loader, as always | -- |
+| 0 | always on, where nothing says otherwise in `rune`: the invariant of results in globals after every `lower` (`results`), the functor bodies a unit's basis decoded, linted at the next unit's passes (`functor-body`), the units' interfaces at a link (`link`), and the imported schemes of an entry the cache gives (`schemes`) | 0.15%; 0.51% |
+| 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` and `LowShapes` after `lower`, `RegVerify` after `registers` (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 20.2%; 37.1% |
+| 2 | every pass: `AstLint` after elaboration (`astlint`, *AstLint* below), `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again), and the whole program a link makes (`regverify-link`, *The register target*); what `--lint` runs, and every test | 57.3%; 97.2%, of which `AstLint` 15.2%; 18.2% (*AstLint*), and in units 11% more of a compile for `code-rt` and 2-10% for `regverify-link` |
+| 3 | and Mid's text read back after every stage of Mid (`KEY-roundtrip`), as `--mid-roundtrip` does after `mid` alone from level 1; one tier of `make check` (`make test-ir`) | about 10 times the compile |
+
+`--lint=LEVEL` gives the level; else `RUNE_LINT` (a level, `off`, or
+anything else not empty, 2; empty or unset, the program's own); else 0 in
+`rune`, and 1 in the REPL and the compiler library. A check that is always
+on and finds a breach says so: it is the compiler's bug, not the
+program's, `--lint=2` names the pass that made it, and `--lint=off` turns
+the check off. A breach that a check at level 1 finds names the check, the
+boundary that found it; `rune` then compiles again at level 2, from the
+state its options left (`CompilerState`'s baseline, sealed before the
+first compile), and names the pass that made it, since a compile is
+deterministic and no check changes it. The seal costs about 300,000
+instructions, a seventh of compiling `examples/hello.sml`, so `rune` takes
+it at level 1 and not at 0. The REPL and the library name the boundary,
+and that `--lint=2` would name the pass.
 
 Without `--pass-stats`, stages do not read clocks, count their results'
 nodes, or update timing totals. A unit's elapsed time is sampled only
@@ -81,6 +109,20 @@ stages of the pipeline above, the compile's stages are:
   the outermost stages are added up;
 * `stats`, the sizes `--pass-stats` counted, and `checks`, what `--lint` and
   the dumps took, apart from the stages they checked or printed.
+
+After them, a line `check KEY` for each check that ran, at whatever depth,
+by its key (`Pass.checkAt`; *Levels* above): the stage it follows
+(`translate`, `mid`, `midcanon`, ..., `lower`), `midconcat`, `prelower`,
+`mid-roundtrip` and the other round trips, `results`, which runs inside
+`lower`, `simplify-def`, inside `simplify`, `functor-body`, `code-rt`,
+`shapes` (level 1), `rbccheck`, the check of the stack code (level 2), and in units `link`, the
+check of the units' interfaces at the link, and `schemes`, of a cache
+entry's imported schemes where it is taken, both at level 0
+([units.md](units.md)). They are counted in the stages' times already, `checks`
+or a unit's `unit-passes`, so they show what a compile in units lints,
+which `checks` does not, and are not added to the total again. A check's
+line ends with what it counted (`Pass.tally`): `lower`'s `downcasts`,
+`shapes`' `shaped` and `unshaped`.
 
 **A dump** (`Lambda.show`) prints one node to a line, its parts indented
 below it unless they are all atoms, and leaves positions out. Variables
@@ -152,6 +194,102 @@ records -- have a line of their own, `elab - deferred - ...`.
 `bin/rune-measure elab-stats` adds the lines up into a table of contexts and
 operations, and names the declarations that took longest.
 
+### AstLint
+
+`AstLint` (`lib/compiler/elab/astlint.sml`; the linting roadmap's M12)
+checks, at level 2 (`astlint`), the derivation the elaborator found for the
+Core against the Definition's chapter 4: after `Elaborate.finish` and
+before `translate`, each declaration at top level that elaborated, in the
+environment it was elaborated in, in a batch of `SourceTy`'s of its own.
+It is a checker, not an inferencer. The choices the Definition leaves open
+the elaborator recorded by node id (`Witness`: the instance at a
+constructor pattern, the type of a wildcard, of a `raise` and of a `[]`
+pattern, the names a datatype declaration made, the explicit type
+variables a value declaration scopes, what each binding generalised), or
+are in the slots `translate` reads (an identifier's instance, a constant's
+type, `#lab`'s record, a flexible record's, a `fn`'s) and in `Ty.binders`
+(a variable's type). Read as `SourceTy`, every node's type follows
+bottom-up, by equality and one-way matching of a scheme against an
+instance; `AstLint` never unifies, and calls nothing of `Unify`,
+`SigMatch` or `Types` but the zonk. It works out `Clos` (rule 15),
+non-expansiveness (4.7, the derived forms read as what they stand for) and
+the scope of explicit type variables (4.6) itself, and checks against what
+the elaborator recorded:
+
+* the instances of rule 2 and of constructors in patterns (35, 41), an
+  equality type variable's image admitting equality, an overloaded one's of
+  its class (4.5, Appendix E);
+* `Clos` and the value restriction, against what each binding generalised,
+  and rule 15's side condition;
+* the explicit type variables each value declaration scopes;
+* datatypes' equality, maximised (4.9);
+* constants' classes;
+* a type name a `let` declares, which may not escape into its type or its
+  context (rule 4, where Rune checks it);
+* the identity and status the slots give, and each slot against its node;
+* each declaration's result against the elaborator's, its schemes and
+  their bound variables, and that it leaves no free type variable (rules
+  87-89).
+
+An alarm names the rule it breaks (`[15 Clos]`, `[4.9 equality]`, `[2
+instance]`) and stops the compile as every check does (`Pass.checkAt`).
+The module language is read as chapter 5 has it, from what the elaborator
+records, only at level 2, of what it chose (`Elaborate.moduleResults`,
+`functorParams`, `sigRecords`, `freshFrom`, `appliedNames`,
+`functorRecords`; schemes rather than stamps, as one stamp carries several
+schemes after an ascription):
+
+* each signature expression against what it gave (rules 62-84): every
+  specification against the result, the flexible names the classes of the
+  specified types by the sharing equations, one name for each (`[78
+  sharing]`), new (`[65 signature]`, `[65 instance]`), and `where type`
+  (`[64 where]`);
+* a match: the realisation by paths (`[5.6 match]`, an `eqtype` admitting
+  equality among it), then enrichment by one-way matching of schemes (`[5.5
+  enrichment]`);
+* a result against what the rule says: a transparent ascription's the
+  signature so realised, an opaque one's the signature with new names
+  (`[53 opaque]`), each standing for what the match found (`Ty.realizations`),
+  both with what each value is from the structure (`[5.5 identity]`); an
+  application's the functor's, with the argument's types and new names
+  for those the body made (`[54 application]`); a dynamic module's an
+  instance of its signature; an export's as an opaque ascription's;
+* a functor's parameter against its signature, and what the body gave
+  against the functor's (`[86 functor]`).
+
+What stays an axiom is what is imported: the environment a declaration at
+top level was elaborated in, with the signatures and functors of the
+units before it. So is `_overload`'s class, and `_prim`'s annotation is
+trusted. Where Rune
+reads the book otherwise it is read as Rune reads it, by runespec's names
+of the readings: the modes of `--overloading`, `--flex-records` and
+`--free-tyvars` by their results after `finish` (`E.topdec`,
+`4.11.program`, `87.free`), `4.4.scoped`, an abstype's names the same
+stamps without equality outside, and `ref` and `array` admitting equality
+whatever their argument. `rune`, the REPL (each input's declarations) and
+the compiler library's compiles run it; its typer also gives the editor a
+type at every node (`CompilerNodeTypes`, [language-server.md](language-server.md)).
+
+`RUNE_ASTLINT_FAULT=KIND`, for the tests, corrupts the first datum of a
+kind as `AstLint` reads it -- `instance`, `wildcard`, `raise`, `nil`,
+`constant`, `select`, `flex`, `binder`, `scope`, `generalise`, `equality`,
+`result`, `enrich`, `identity`, `match`, `signature`, `sharing`, `fresh`,
+`apply`, `functor` -- and `compiler/astlint-faults` holds each to its
+rule's message. The thirteen mutants of the elaborator that the roadmap's E3 and
+E6 found nothing else catching, or catching late, each accepting what the
+Definition rejects or recording a wrong instance, are all caught by it.
+
+What it costs (`--pass-stats`'s `check astlint`, instructions, each against
+the compile with the lint off): 0.26 million of `examples/hello.sml`'s 2.2
+million, 13.3 million of `compile-sigs`' 38 million, 183 million of HaMLet's
+1.21 billion (15%), 396 million of the compiler's 2.18 billion (18%), and
+77.8 billion of MLton's 606 files' 23.8 billion, more than three compiles:
+it walks each structure and value of the module language several times.
+MLton compiled whole at level 2 peaks at 10.3 GB against 6.0 GB at level 1,
+and stops in the elaborator under a heap limit of 5 GiB, which level 1
+passes. At levels 0 and 1 it costs nothing: the elaborator keeps its
+records for it only at 2.
+
 ## What a `Lambda` keeps
 
 `LambdaLint` checks, after `translate`:
@@ -171,6 +309,30 @@ operations, and names the declarations that took longest.
   match compiled as a decision tree makes them (below).
 * **`LetRec`:** every right-hand side is a function.
 * **Types:** it is well typed, as below.
+* **What its types alone do not say** (`IrRules`, which `MidLint` shares;
+  plans/correctness/linting.md, M4):
+  - a constant is of its type's kind -- an `int`'s `CInt`, a `word`'s
+    `CWord`, ... -- and in its range: an `int`'s 63 bits, an `Int64.int`'s
+    64, a `word`'s and a `Word64.word`'s from 0, a `char`'s 8;
+  - a primitive's type at a use is an instance of its description
+    (`PrimTys`, which `runeisa` makes of `src/isa/prims.sml`): each type
+    variable one type throughout, a type the compiler builds in itself,
+    `unit` the empty tuple, and a name it does not (`option`, `order`,
+    `Word32.word`) any type; the compiler's own primitives are checked by
+    their own rules;
+  - an exception's payload (`MkExn`) has its argument's type, by the
+    constructor's stamp (`Ty.exnArgOf`): the elaborator's, or a copy's
+    that the pass which copied it registered at the copy's types
+    (`Ty.copyExn`: `Expand` and `Simplify` with their substitutions, `Lift`,
+    `MidCanon` with its renaming), or the one `Simplify` gave it where it
+    put the body of a function called once at the call's types
+    (`Ty.retypeExn`), each from level 1, where a lint will look:
+    `exception E of 'a` in a function is checked at `'a` in the function
+    and at the types of each copy made of it;
+  - a cast the compiler makes is of its origin's kind (below): a
+    `functor_cast` or a `dynamic_cast` is to `unit` or from it, an
+    `open_cast` to or from a flat type (`unit`, a tuple of units,
+    `Ty.flat n`); the program's own `unsafe_cast` is anything.
 
 A breach is a bug of the compiler, never of the program.
 
@@ -218,7 +380,7 @@ not give it:
 | Node | Carries | Checked |
 |---|---|---|
 | `Fn (x, t, b)` | `t`, an arrow; `x` has its domain | `b` has its codomain |
-| `Inst (e, t)` | the instance a polymorphic variable is used at | `t` is an instance of `e`'s scheme (`Ty.match`) |
+| `Inst (e, t)` | the instance a polymorphic variable is used at | `t` is an instance of `e`'s scheme (`Ty.match`) that gives each type variable fixed where the variable is bound -- one of a variable a `Fn` or a `Join` around it binds, or of a `LetRec`'s own function in its right-hand side -- as itself (plans/correctness/linting.md, M5) |
 | `LetRec` | each function's type | its right-hand side has it |
 | `Const`, `Con0`, `Con` | the type made | a constructor is one of the datatype's, and its argument fits |
 | `Decon (tag, e)` | the constructor's tag | `e`'s datatype has it; the result is its argument |
@@ -307,7 +469,8 @@ gives one is refused as for any option it does not know.
   `open_boxed`, a primitive of its own), and otherwise calls the
   body's functions for it (`Translate.openFuns`), which see the object
   through `Ty.flat n`, a datatype of the basis whose constructors have `n`
-  fields. Simplify's equality functions leave such a datatype to
+  fields, by a cast of their own (`open_cast`, which Lower makes an
+  `unsafe_cast`, and the lints hold to a flat side). Simplify's equality functions leave such a datatype to
   `poly_eq`. Only the constructors the body uses get the functions.
 * **Layouts** (D5). A datatype a body declares has the layout its declared
   types give it there, a parameter's type boxed; an instance an
@@ -454,12 +617,25 @@ call's frame does. The line table carries them (the frames of
 [bytecode.md](bytecode.md)), so that a trace shows the frames the calls
 would have left.
 
-**Types.** Every binder says its type, and a polymorphic one the type
-variables it abstracts over; every use of a variable gives the types it is
-used at, one for each. A binder abstracts over the generic variables of its
-type that no binder around it abstracts over, where the elaborator could
-have generalised them: a variable of the program or a function; a variable
-`ToMid` makes never. `Lambda`'s `Inst` gives the types a use is at.
+**Types.** Mid is System F (plans/correctness/linting.md, D17, M5): every
+binder says its type, and a polymorphic one the type variables it
+abstracts over; every use of a variable gives the types it is used at, one
+for each; and every type variable a type names is bound by a binder around
+it -- a `Let`'s scheme over its type and its step, a function's over its
+parameters, result and body, a global's over its definition. A binder
+abstracts over the generic variables of its type that no binder around it
+abstracts over, where the elaborator could have generalised them: a
+variable of the program, a function, and a variable `ToMid` makes for a
+step that is a value (a tuple, a constructor, a field or argument taken
+out of one, an atom), which its uses then give as themselves. A
+declaration's globals bind their variables over all of it, as a `Val`'s
+do; a typed pattern binds as its pattern does (`val f : ('a -> 'a) = ...`
+binds `f` to the value, not to a variable bound to it). A type variable
+that no binder around a type binds -- of a value nothing generalises
+(`let val [] = [] in ... end`), of an expression's type left open, or given
+where a use needs no particular type (the `int` of `val (f, n) = (fn x =>
+x, 1)`) -- is made `unit` there (`ToMid.ground`), which is as good a type as
+any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 
 ### What a `Mid` keeps
 
@@ -474,15 +650,39 @@ have generalised them: a variable of the program or a function; a variable
   -- the function's result, the global's type, `unit` for a `Do` -- and each
   step's type is found from its atoms, so nothing is inferred. A use of a
   variable gives as many types as its binder abstracts over, and has the
-  type of its scheme at them. A type variable where nothing abstracts over
-  it is a type of its own, equal only to itself: the lint does not check
-  that type variables are in scope.
+  type of its scheme at them.
+* **Type variables in scope** (Mid is System F, above): a type names only
+  the type variables of the binders around it, and no binder binds one
+  again where it is in scope.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
+* **What its types alone do not say:** constants, primitives, exceptions'
+  payloads and the casts the compiler makes, as in `Lambda` (`IrRules`;
+  above). An exception's copies keep their argument's type through every
+  pass that copies code, so the payload's rule holds after the first.
+* **A `Do`** sets each global it lists on every way of it that returns:
+  one that always raises sets none (after `simplify`, a `Do` whose
+  expression raises still lists them), and a handler's way is the
+  handler's alone. A global a function sets is the exception: a dynamic
+  module's slots are set by the function the runtime is given, at the load
+  and at each reload (`Translate`, `RuneDynamic.take`; a `dynamic_cast` of
+  each slot from `unit`), which `Lift` may take out of the `Do`.
 * **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
   ground types that differ is a bug of the expansion.
+
+It keeps its tables in hash tables, and what is in scope in one table,
+entered and left as it walks: stamps' being unique, which it checks, makes
+that the same as a map for each scope, at about 40% of its cost
+(plans/correctness/linting.md, M2). After `midcanon` it is not run again:
+`MidCanon.checkRenaming` checks that what `midcanon` made is what it was
+given with each name of each kind renamed by a bijection -- stamps, type
+names that are not built in, type variables -- node for node, and each
+datatype entered again under its new name, its constructors, layout and
+openness the old one's; so it keeps what `MidLint` checked after `mid`. The
+units' `Mid` that `--units --whole` concatenates is linted by `MidLint`
+(`midconcat`), since a unit taken from the cache was not.
 
 ### Mid as text
 
@@ -571,9 +771,10 @@ does.
   before its own, and every call passes it on; what a function of another
   lifted group is given counts as captured. What it is given must abstract
   over no type variables; the lifted functions abstract over the type
-  variables of the functions around them that they name, and every call
-  gives them as themselves. No closure of them is made, and every call of
-  them is a known call.
+  variables of the functions around them that they name free -- not those
+  a scheme or a function inside them binds -- and those of a lifted
+  function they call, and every call gives them as themselves. No closure
+  of them is made, and every call of them is a known call.
 * **`workers`** (workers and wrappers, decision D9): a function of the top
   level with a parameter that is a tuple it only takes apart, or whose
   body only makes a function and returns it, n deep (curried), becomes a
@@ -767,7 +968,22 @@ leaves implicit is explicit.
 
 ### What a `Low` keeps
 
-`LowLint` checks, after `lower`:
+After every `lower`, at level 0, always on (*Levels*), `LowLint.results` checks what results
+in globals keep, from what `Lower` says of which functions return so
+(`Pipeline.lowered`): a read of such a global (`Slot`) follows, in its
+block, a known call of a function that leaves its results there, with
+only other such reads and positions between; a function of n fields
+returns, in each block, what the block's last call gave, a call of
+another of n, or a value after which it has set, since that call, each
+global of its fields that some call reads; and it calls in tail position
+only another of n, never through a closure. It costs 0.1 to 0.6% of a
+compile (plans/correctness/linting.md, E9).
+
+`LowLint` checks, after `lower` (what is defined on every way to a use by
+dominance, over a function's blocks cut at each push, a walk up the tree
+of dominators from each use, where a map of what is available, filtered at
+every join, cost blocks times variables: 26M instructions on HaMLet's Low
+against 234M; plans/correctness/linting.md, M2):
 
 * **SSA:** every variable is defined once in its function and on every way
   to each of its uses; a handler's block sees only what was defined where
@@ -788,11 +1004,50 @@ leaves implicit is explicit.
 * **Representations:** a variable holds what its representation says,
   where something else says too: the operation that makes it, a primitive
   that takes it (`Prims.repsOf`, made from the primitive's type in
-  `src/isa/prims.sml`), a field of a tuple or a constructor made in the
+  `src/isa/prims.sml`, which `runeisa` reads as an SML type: `PrimTys`),
+  a field of a tuple or a constructor made in the
   function, a block's or a known function's parameter it is passed to,
   what a closure's function reads of a value it captures, and an
-  exception. Two agree where a value can be both: any with every one, con
-  with con0 and ptr.
+  exception. A value goes from where it is made to where it is taken,
+  under the order x <= x, x <= any, con0 <= con, ptr <= con: what is
+  below is right; what is above is a downcast -- any into a typed
+  representation, con into con0 or ptr -- which only ML's types justify,
+  trusted and counted (`--pass-stats`: `, N downcasts` on the line of
+  `lower`); anything else is a breach (plans/correctness/linting.md, D8
+  and M6).
+
+`LowShapes` (`lib/compiler/backend/lowshapes.sml`), after `lower` at
+the same level (`shapes`; plans/correctness/linting.md, D14 and M6),
+checks the shapes of the values: a tuple of n fields, a value of a
+datatype (by its stamp), a closure, an object of another kind, no object,
+or unknown. Each variable has the one its Mid type says, which `Lower`
+keeps where the check runs (`Lower.lastTys`), but for one it shares
+between types on purpose (`defAny`), or else the one the operation that
+makes it says:
+
+* what makes a variable agrees with its type, and what a jump, a known
+  call, a closure's captured value or a field read of a tuple or
+  constructor made in the function passes with where it goes;
+* a `Select` is of a tuple of more fields than its index, a `Call` of a
+  closure, `ConTag`, `IfTag` and `Switch` of a datatype's value;
+* a `Field` and a `Decon` are of a datatype's value; every `Con` of one
+  constructor in the program has one number of fields, which every
+  `Field` of it is below, two or more, and every `Decon` is 1 of: the
+  layout's producers held to its consumers, wherever they are -- what a
+  constructor built boxed in one function and taken apart flat in another
+  breaks -- and each field a `Con` makes, a `Field` reads or a `Decon`
+  takes agrees with what the datatype declares of it;
+* a `Field` and a `Decon` of a datatype of more than one constructor are
+  of a value whose tag is known to be theirs where they are: a test of its
+  tag comes first on every way there (`IfTag`, `Switch`, or `ConTag`
+  compared with a constant or with another's `ConTag`), or that
+  constructor made it, or every jump to the block's parameter it is passes
+  such a value; a datatype whose layout a functor's argument gives is left
+  out.
+
+`--pass-stats` counts what it checked against a known shape and what it
+did not (`, N shaped, M unshaped`); `RUNE_SHAPES=1` runs it at every
+level, `0` at none.
 
 Low carries no types, but what each variable holds, as a representation
 (`Low.rep`, from Mid's types in `Lower.repOfTy`; plans/jit.md, M8): an
@@ -826,6 +1081,27 @@ middle end may ask of it):
   was made at. A position's frames are a row of the program's table of
   inlined frames, each made once (`Code.inlineIdx`).
 
+**The check of the stack code** (`StackCheck`, `src/driver/stackcheck.sml`;
+[plans/correctness/linting.md](plans/correctness/linting.md), D11 and M10)
+runs from level 2 of the lint (*Levels*), after `stack` on a whole program
+and on the program `Link` makes of units of stack code, or at every level
+where `RUNE_RBCCHECK=1` says (`0`: at none): the code as its file has it (`Emit.serialize`), read back
+as `runevm-stack`'s loader reads it, which refuses what the loader refuses
+with its message (`Rbc.read`), and held to what `runeopt` relies on
+(`RbcCheck`; [native.md](native.md), *What the translation relies on*):
+the stack's height and the handlers' depth agree on every path into an
+instruction, no path underflows, leaves its function or runs off its end,
+no `RET` or `TAILCALL` has a handler of its function installed, and every
+function is given one arity. `Rbc` and `RbcCheck` are `runeopt`'s, built
+with the driver (`rune.build`) and not with the compiler library, which
+runs no check of the stack code. A refusal is a bug of the compiler, "lint
+after rbccheck: ..."; `--pass-stats` counts it as `rbccheck`.
+`RUNE_RBCCHECK_INJECT=KIND` corrupts the code the check is given in one of
+six ways, which its tests (`stack/@rbccheck-*`) hold it to refusing. Its
+cost is linear in the code: about 85 of the VM's instructions for each byte
+of the program's file, the file made included, 0.59G for MLton's 6.7 MB
+(+14% of a compile of the bootstrap for the stack target).
+
 ### The register target
 
 `Regs` makes the register bytecode of `runtime/register` from the same Low
@@ -852,24 +1128,97 @@ middle end may ask of it):
 [plans/middle-end.md](plans/middle-end.md), M5, for how it compares with the
 stack target.
 
+**`RegVerify`** (`lib/compiler/backend/regverify.sml`) checks the register
+code from level 1 of the lint, the boundaries (*Levels*), by its cost: 4.2%
+of compiling the compiler, 1.6% of HaMLet, 0.8% of MLton. It runs after
+`registers` (`regverify`), so each unit once, when it is compiled
+([plans/correctness/linting.md](plans/correctness/linting.md), M8); a unit
+taken from the cache was checked when its entry was made, which the
+entry's mark says, and `Link` checks the units' interfaces against each
+other at every level (M9; [units.md](units.md), *Linking*). The whole
+program a link makes is checked again only at level 2, or where
+`RUNE_REGVERIFY_LINK` is set and not empty (`regverify-link`, M16): an
+interface does not see a global misnumbered. Its
+rules are the tables `runeisa` writes from `src/isa/regs.sml` (`RegCodes`:
+what each instruction reads and writes, what it leaves and takes, what
+must follow it, which primitives it names), what Lower declares of the
+program (each function's result and its closures' captures, each global's
+representation, carried in `Code.meta`, `Code.program` and the unit's file),
+and a dataflow, one pass over each function:
+
+* **Representations:** a register holds its representation under the order
+  x ≤ x, x ≤ any, con0 ≤ con, ptr ≤ con. A write of what is below the
+  register's representation is right; of what is above it, a downcast,
+  trusted and counted, since only ML's types say what a value read from the
+  heap or returned by a polymorphic function is; of anything else, a
+  breach. A read that wants a representation is judged the same.
+* **Unset:** nothing reads a register not set on every way to the read; at a
+  function's entry its parameters are set, and the scratch holds nothing at
+  a label.
+* **Labels:** a label's state is the meet of the ways in; a jump back goes to a
+  loop head of the meta and sets what the head has set; at a loop head and
+  a handler's block the registers are what they are declared; the handlers
+  pushed are as many on every way in, and none where the frame is left.
+* **The order the VM relies on:** `RESULT` right after `CALL`, `CALLK` and
+  `PRIMPUSH`, `CATCH` at a handler's start, a `SWITCH`'s table of `JUMP`s,
+  only image primitives in `PRIMPUSH` and none in `PRIM`.
+* **Calls and closures:** a known call passes the callee's parameters, and
+  a known tail call returns what its caller does; a closure is of a function
+  of one parameter and captures what its closures do; `ENV` and `SELF` are
+  only in a function closures are made of and no known call calls; a
+  primitive's arguments and result are what its type says.
+* **Tags:** a register's constructor, where a constructor made or a tag
+  tested says, and a `FIELD` or `DECON` of another tag is a breach; a tag
+  test whose answer is known leaves the other way untaken.
+
+It checks `Regs` and `Link`, not that the code is safe for an untrusted
+`.rbc`: that is the VM's ([plans/correctness/vm-verifier.md](plans/correctness/vm-verifier.md)).
+`RUNE_REGVERIFY=1` runs it at every level, `off` too, `0` not at all, and `census`
+prints what it counted; `RUNE_REGVERIFY_INJECT=KIND` corrupts the code
+`Regs` made, before the check, in one of eleven ways, which its tests
+(`register/@regverify-*`) hold it to refusing, or in three more what the
+unit expects of its imports, which S80 of `tests/incremental/SCENARIOS.md`
+holds the link to refusing; a unit so made is not stored in the cache.
+
 ## Tests
 
 * **`make test-ir`** (`ir/*` of `tests/runner/tools.sml`): each `tests/ir/NAME.sml`
   is compiled without the Basis Library, and each `tests/ir/NAME.mid` read
-  as Mid, with the lint on. The first line asks for a dump
+  as Mid, with the lint at level 3, Mid's text read back after every stage. The first line asks for a dump
   (`(* dump: --dump-after=PASS *)`), which is compared with `NAME.expected`
   and reviewed line by line like any `.expected` file, or says with what
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
   refuse.
 * **`make check-levels`** (the oracle `levels` of `tests/runner/oracles.sml`): every program of
-  `tests/lang` and `tests/perf` compiled at `-O0` and at `-O2`, with the
-  lint on and Mid's text checked against itself (`--mid-roundtrip`). Both
-  run under `runevm-stack --checked` (a `DECON` of another constructor than it
-  names stops the program), and must print and exit the same, on both
-  streams: traces too, where inlining has moved code into another
-  function (`tests/lang/rt.trace_inlined.sml`).
+  `tests/lang` and `tests/perf` compiled to both bytecodes at `-O0` and at
+  `-O2`, whole and whole of its units' Mid (`--units --whole`), and to the
+  register bytecode in units linked by `Link` (`--units`, its unit files
+  kept), with the lint at level 2, and on the stack bytecode Mid's text
+  checked against itself (`--mid-roundtrip`). The register bytecode's
+  builds at `-O2` and in units are compiled again at level 0: the two must
+  be the same bytes, a unit's files and their bases too. Each runs under
+  `--checked` (a `DECON` of another constructor than it names stops the
+  program), the register bytecode's at tier 2 of the JIT too
+  (`--jit=all --jit-tier=2`), and must print and exit as the stack
+  bytecode's at `-O0` does, on both streams: traces too, where inlining has
+  moved code into another function (`tests/lang/rt.trace_inlined.sml`).
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
+* **The lints' negative tests** (plans/correctness/linting.md, M4): each
+  rule of each lint refuses what breaks it. A fault made on purpose after a
+  stage (`RUNE_FAULT=STAGE:KIND[@N]`, `lib/compiler/backend/fault.sml`, for
+  the tests alone: the identity where it is unset) corrupts what the stage
+  made, at the `N`-th place of the kind, before the stage's checks see it,
+  and says on standard error what it did; the jobs `faults/STAGE:KIND` of
+  `tests/runner/tools.sml` (tier `test-ir`) compile `tests/compiler/faults.sml`
+  (or, built in units, `faults-dynamic.sml`) at level 2 and want the
+  stage's lint to refuse it with the rule's message: a variable out of
+  scope, a stamp bound twice, a jump given one argument more, a constant
+  of another kind, a payload of another type, a cast of another kind, a
+  `Do` that no longer sets a global, ... The rules no fault reaches, and
+  the invariant of results, are refused on IR made by hand
+  (`compiler/lint-rules`, `tests/compiler/lint-rules.sml`); `RegVerify`'s
+  by its own switch (`register/@regverify-*`).
 * **`bin/rune-measure bisect-fuel PROGRAM.sml`**: where a program runs otherwise
   at `-O2` than at `-O0`, halving `--fuel` finds the first rewrite that
   breaks it (after Whalley, "Automatic isolation of compiler errors").

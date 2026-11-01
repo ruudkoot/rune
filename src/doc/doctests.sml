@@ -64,23 +64,23 @@ struct
      appended, or `lab` applied to one of those. SOME (label, relative). *)
   fun labelOf (e : Ast.exp) : (label * bool) option =
     case e of
-      Ast.EScon (Ast.SString s, _, _) => SOME (Literal s, false)
-    | Ast.EApp (Ast.EVar (([], "^"), _, _), Ast.ETuple ([a, _], _), _) =>
+      Ast.EScon (Ast.SString s, _, _, _) => SOME (Literal s, false)
+    | Ast.EApp (Ast.EVar (([], "^"), _, _, _), Ast.ETuple ([a, _], _, _), _, _) =>
         (case labelOf a of
            SOME (l, relative) => SOME (Prefix (text l), relative)
          | NONE => NONE)
-    | Ast.EApp (Ast.EVar (([], "lab"), _, _), arg, _) =>
+    | Ast.EApp (Ast.EVar (([], "lab"), _, _, _), arg, _, _) =>
         (case labelOf arg of
            SOME (l, _) => SOME (l, true)
          | NONE => NONE)
-    | Ast.ESeq ([e'], _) => labelOf e'
+    | Ast.ESeq ([e'], _, _) => labelOf e'
     | _ => NONE
 
   (* ---- what a check is called with ---- *)
   fun headOf (e : Ast.exp) : string option =
     case e of
-      Ast.EApp (f, _, _) => headOf f
-    | Ast.EVar (longid, _, _) => SOME (Ast.longidToString longid)
+      Ast.EApp (f, _, _, _) => headOf f
+    | Ast.EVar (longid, _, _, _) => SOME (Ast.longidToString longid)
     | _ => NONE
 
   fun kindOfChecker (name : string) : string option =
@@ -92,7 +92,7 @@ struct
   (* the exception that a predicate of the harness expects: T.isSubscript *)
   fun exnOf (e : Ast.exp) : string option =
     case e of
-      Ast.EVar ((["T"], p), _, _) =>
+      Ast.EVar ((["T"], p), _, _, _) =>
         if String.isPrefix "is" p then SOME (String.extract (p, 2, NONE)) else if p = "anyExn" then SOME "any" else NONE
     | _ => NONE
 
@@ -104,71 +104,71 @@ struct
       fun rules ms = List.app (fn (_, body) => w body) ms
     in
       case e of
-        Ast.EApp (f, arg, _) =>
+        Ast.EApp (f, arg, _, _) =>
           ((case (f, arg) of
-              (Ast.EVar (([], "^"), _, _), _) => ()      (* a label being put together, not a check *)
-            | (_, Ast.ETuple (first :: rest, _)) =>
+              (Ast.EVar (([], "^"), _, _, _), _) => ()      (* a label being put together, not a check *)
+            | (_, Ast.ETuple (first :: rest, _, _)) =>
                 (case labelOf first of
                    SOME (l, relative) => found (f, rest, l, relative)
                  | NONE => ())
             | _ => ());
            w f; w arg)
-      | Ast.ERecord (fields, _) => List.app (fn (_, x) => w x) fields
-      | Ast.ETuple (es, _) => List.app w es
+      | Ast.ERecord (fields, _, _) => List.app (fn (_, x, _) => w x) fields
+      | Ast.ETuple (es, _, _) => List.app w es
         (* a table of checks: every row begins with the beginning of its
            labels, "Structure.member/" *)
-      | Ast.EList (es, _, _) =>
+      | Ast.EList (es, _, _, _) =>
           List.app (fn row =>
                       ((case row of
-                          Ast.ETuple (first :: _, _) =>
+                          Ast.ETuple (first :: _, _, _) =>
                             (case labelOf first of
                                SOME (l as Literal s, relative) =>
-                                 if String.isSuffix "/" s then found (Ast.ETuple ([], Source.noSpan), [], l, relative) else ()
+                                 if String.isSuffix "/" s then found (Ast.ETuple ([], Source.noSpan, Ast.noId), [], l, relative) else ()
                              | _ => ())
                         | _ => ());
                        w row)) es
-      | Ast.ESeq (es, _) => List.app w es
-      | Ast.ELet (decs, body, _) => (List.app (walkDec found) decs; w body)
-      | Ast.ETyped (x, _, _) => w x
-      | Ast.EAndalso (a, b, _) => (w a; w b)
-      | Ast.EOrelse (a, b, _) => (w a; w b)
-      | Ast.EHandle (x, ms, _) => (w x; rules ms)
-      | Ast.ERaise (x, _) => w x
-      | Ast.EIf (a, b, c, _) => (w a; w b; w c)
-      | Ast.EWhile (a, b, _) => (w a; w b)
-      | Ast.ECase (x, ms, _) => (w x; rules ms)
-      | Ast.EFn (ms, _, _) => rules ms
+      | Ast.ESeq (es, _, _) => List.app w es
+      | Ast.ELet (decs, body, _, _) => (List.app (walkDec found) decs; w body)
+      | Ast.ETyped (x, _, _, _) => w x
+      | Ast.EAndalso (a, b, _, _) => (w a; w b)
+      | Ast.EOrelse (a, b, _, _) => (w a; w b)
+      | Ast.EHandle (x, ms, _, _) => (w x; rules ms)
+      | Ast.ERaise (x, _, _) => w x
+      | Ast.EIf (a, b, c, _, _) => (w a; w b; w c)
+      | Ast.EWhile (a, b, _, _) => (w a; w b)
+      | Ast.ECase (x, ms, _, _) => (w x; rules ms)
+      | Ast.EFn (ms, _, _, _) => rules ms
       | _ => ()
     end
 
   and walkDec found (d : Ast.dec) : unit =
     case d of
-      Ast.DVal (_, binds, _) => List.app (fn (_, e) => walkExp found e) binds
-    | Ast.DValRec (_, binds, _) => List.app (fn (_, e) => walkExp found e) binds
-    | Ast.DFun (_, defs, _) => List.app (fn {clauses, ...} => List.app (fn {body, ...} => walkExp found body) clauses) defs
-    | Ast.DAbstype (_, _, decs, _) => List.app (walkDec found) decs
-    | Ast.DLocal (a, b, _) => (List.app (walkDec found) a; List.app (walkDec found) b)
-    | Ast.DStructure (binds, _) => List.app (fn {strexp, ...} => walkStrexp found strexp) binds
+      Ast.DVal (_, binds, _, _) => List.app (fn (_, e) => walkExp found e) binds
+    | Ast.DValRec (_, binds, _, _) => List.app (fn (_, e) => walkExp found e) binds
+    | Ast.DFun (_, defs, _, _) => List.app (fn {clauses, ...} => List.app (fn {body, ...} => walkExp found body) clauses) defs
+    | Ast.DAbstype (_, _, decs, _, _) => List.app (walkDec found) decs
+    | Ast.DLocal (a, b, _, _) => (List.app (walkDec found) a; List.app (walkDec found) b)
+    | Ast.DStructure (binds, _, _) => List.app (fn {strexp, ...} => walkStrexp found strexp) binds
     | _ => ()
 
   and walkStrexp found (e : Ast.strexp) : unit =
     case e of
-      Ast.StrStruct (decs, _) => List.app (walkDec found) decs
-    | Ast.StrAscribe (e', _, _, _) => walkStrexp found e'
-    | Ast.StrLet (decs, e', _) => (List.app (walkDec found) decs; walkStrexp found e')
+      Ast.StrStruct (decs, _, _) => List.app (walkDec found) decs
+    | Ast.StrAscribe (e', _, _, _, _) => walkStrexp found e'
+    | Ast.StrLet (decs, e', _, _) => (List.app (walkDec found) decs; walkStrexp found e')
     | _ => ()
 
   (* The aliases of the checkers that some declarations define: `val eqI =
      T.eq T.int`. *)
   fun aliases (decs : Ast.dec list) : (string * string) list =
     List.concat
-      (List.map (fn Ast.DVal (_, binds, _) =>
-                      List.mapPartial (fn (Ast.PVar (([], x), _, _), rhs) =>
+      (List.map (fn Ast.DVal (_, binds, _, _) =>
+                      List.mapPartial (fn (Ast.PVar (([], x), _, _, _), rhs) =>
                                             Option.map (fn k => (x, k)) (Option.mapPartial kindOfChecker (headOf rhs))
                                         | _ => NONE) binds
-                  | Ast.DLocal (a, b, _) => aliases a @ aliases b
-                  | Ast.DStructure (binds, _) =>
-                      List.concat (List.map (fn {strexp = Ast.StrStruct (ds, _), ...} => aliases ds | _ => []) binds)
+                  | Ast.DLocal (a, b, _, _) => aliases a @ aliases b
+                  | Ast.DStructure (binds, _, _) =>
+                      List.concat (List.map (fn {strexp = Ast.StrStruct (ds, _, _), ...} => aliases ds | _ => []) binds)
                   | _ => [])
                 decs)
 
@@ -224,9 +224,9 @@ struct
      declarations of its argument. *)
   fun nameOf (arg : Ast.strexp) : string option =
     case arg of
-      Ast.StrStruct (decs, _) =>
-        List.foldl (fn (Ast.DVal (_, binds, _), acc) =>
-                        List.foldl (fn ((Ast.PVar (([], "name"), _, _), Ast.EScon (Ast.SString s, _, _)), _) => SOME s
+      Ast.StrStruct (decs, _, _) =>
+        List.foldl (fn (Ast.DVal (_, binds, _, _), acc) =>
+                        List.foldl (fn ((Ast.PVar (([], "name"), _, _, _), Ast.EScon (Ast.SString s, _, _, _)), _) => SOME s
                                      | (_, acc) => acc) acc binds
                      | (_, acc) => acc)
                    NONE decs
@@ -242,12 +242,12 @@ struct
         List.app (fn n =>
                     let val file = dir ^ "/fn/" ^ n
                     in
-                      List.app (fn Ast.DFunctor (binds, _) =>
+                      List.app (fn Ast.DFunctor (binds, _, _) =>
                                      List.app (fn {name, body, ...} =>
                                                  let
                                                    val decs = case body of
-                                                                Ast.StrStruct (ds, _) => ds
-                                                              | Ast.StrAscribe (Ast.StrStruct (ds, _), _, _, _) => ds
+                                                                Ast.StrStruct (ds, _, _) => ds
+                                                              | Ast.StrAscribe (Ast.StrStruct (ds, _, _), _, _, _, _) => ds
                                                               | _ => []
                                                  in
                                                    functors := (name, file,
@@ -259,11 +259,11 @@ struct
                  (filesOf (dir ^ "/fn"))
       fun applications (file, decs) : site list =
         List.concat
-          (List.map (fn Ast.DStructure (binds, _) =>
+          (List.map (fn Ast.DStructure (binds, _, _) =>
                           List.concat
                             (List.map (fn {strexp, ...} =>
                                          (case strexp of
-                                            Ast.StrApp (f, arg, _) =>
+                                            Ast.StrApp (f, arg, _, _) =>
                                               (case (List.find (fn (n, _, _) => n = f) (!functors), nameOf arg) of
                                                  (SOME (_, ffile, sites), SOME name) =>
                                                    List.map (fn s : site =>
@@ -271,10 +271,10 @@ struct
                                                                 case' = #case' s, computed = #computed s, kind = #kind s,
                                                                 exn = #exn s, file = file, via = SOME ffile}) sites
                                                | _ => [])
-                                          | Ast.StrStruct (ds, _) => applications (file, ds)
+                                          | Ast.StrStruct (ds, _, _) => applications (file, ds)
                                           | _ => []))
                                       binds)
-                      | Ast.DLocal (a, b, _) => applications (file, a) @ applications (file, b)
+                      | Ast.DLocal (a, b, _, _) => applications (file, a) @ applications (file, b)
                       | _ => [])
                     decs)
     in

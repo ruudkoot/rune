@@ -1,0 +1,26 @@
+(* The compiler's internals and a test of the rules of its checks on IR made by hand
+   (tests/runner/tools.sml, compiler/lint-rules). *)
+../../build/config.sml
+files
+  ../../lib/unicode/utf8_sig.sml
+  ../../lib/unicode/utf8.sml
+  ../../lib/unicode/width_data.sml
+  ../../lib/unicode/display_width_sig.sml
+  ../../lib/unicode/display_width.sml
+  ../../lib/unicode/grapheme_data.sml
+  ../../lib/unicode/grapheme_sig.sml
+  ../../lib/unicode/grapheme.sml
+  ../../lib/unicode/normalize_data.sml
+  ../../lib/unicode/normalize_sig.sml
+  ../../lib/unicode/normalize.sml
+  ../../lib/unicode/identifier_data.sml
+  ../../lib/unicode/identifier_sig.sml
+  ../../lib/unicode/identifier.sml
+  ../../lib/unicode/security_data.sml
+  ../../lib/unicode/security_sig.sml
+  ../../lib/unicode/security.sml
+  ../../lib/json/json_sig.sml
+  ../../lib/json/json.sml
+end
+use ../../lib/compiler/internal.build
+files ../../tests/compiler/lint-rules.sml end

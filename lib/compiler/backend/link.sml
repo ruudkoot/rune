@@ -67,12 +67,31 @@ struct
 
   fun bug msg = Error.bug ("link: " ^ msg)
 
+  (* Units whose interfaces do not fit: a unit calls a function of another,
+     or reads a global of it, as other than that unit declares it (Code.expects
+     against Code.meta and Code.program's globalReps; the linting roadmap's
+     D15) *)
+  exception Mismatch of string
+
+  (* RUNE_LINK_CHECK=0: the interfaces not checked, to measure what the
+     check costs *)
+  fun checking () = OS.Process.getEnv "RUNE_LINK_CHECK" <> SOME "0"
+
+  (* whether a value of one representation may be where another is wanted:
+     one is the other's, or a downcast the types justify (RegVerify) *)
+  fun fits (a : int, b : int) : bool = RegVerify.le (a, b) orelse RegVerify.le (b, a)
+  fun repName r = Low.repName (Low.repOfCode r)
+  (* the representations a mask holds *)
+  fun repsIn (mask : int) : int list =
+    let fun go (r, m) = if m = 0 then [] else if m mod 2 = 1 then r :: go (r + 1, m div 2) else go (r + 1, m div 2)
+    in go (0, mask) end
+
   (* The function the last unit's top level goes to, made by the target
      from Low as every other function is: it returns its argument. *)
   fun endFunction (target : Low.program -> Code.program) : Code.program =
     target [{id = 0, name = "<toplevel>", params = [0], ncaptured = 0, nvars = 1,
              blocks = [{label = 0, params = [], instrs = [], transfer = Low.Return 0}], pos = NONE,
-             reps = Vector.fromList [Low.RUnit]}]
+             reps = Vector.fromList [Low.RUnit], result = Low.RUnit, captures = []}]
 
   (* What each unit of the last program linked exports, by its numbers, as
      the program has it -- a function (0) or a global (1), its number in the
@@ -142,6 +161,16 @@ struct
       val nconsts = ref 0
       val nglobals = ref 0
       val globalOf : int IntMap.map ref = ref IntMap.empty
+      (* what each global holds, as the unit that sets it declares, by its
+         number in the program *)
+      val globalReps : (int * int) list ref = ref []
+      (* what each unit expects of the units before it, by their numbers in
+         the program, checked once every unit is linked: a call (the unit,
+         the callee's key, its function, the arity, the masks of what is
+         passed and of what the result is taken as) and a read of a global
+         (the unit, the global's key, its number, the mask) *)
+      val calls : (string * key * int * int * int list * int) list ref = ref []
+      val reads : (string * key * int * int) list ref = ref []
       val nlabels = ref 0
       fun linkUnit (i, u : unitCode) : Code.func list =
         let
@@ -172,6 +201,17 @@ struct
                                           SOME g => g
                                         | NONE => bug ("a global is set by no unit before (" ^ Int.toString st ^ ")")
                                      end)
+          val () =
+            case #globalReps code of
+              [] => ()
+            | rs =>
+                let val rv = Vector.fromList rs
+                in
+                  List.app (fn (k : key, ix) =>
+                              if #unit k = #identity u andalso ix >= 0 andalso ix < Vector.length rv
+                              then globalReps := (Array.sub (globalMap, ix), Vector.sub (rv, ix)) :: !globalReps else ())
+                           (#globals u)
+                end
           val importMap = List.foldl (fn ((ix, k), m) => IntMap.insert (m, ix, keyId k)) IntMap.empty (#imports u)
           fun func f =
             if f < nown then fbase + f
@@ -183,6 +223,33 @@ struct
                            | NONE => bug ("a function is exported by no unit before (" ^ Int.toString s ^ ")"))
                  | NONE => bug ("function " ^ Int.toString f ^ " of a unit is neither its own nor imported")
           fun global g = Array.sub (globalMap, g)
+          val () =
+            if not (checking ()) then ()
+            else
+              let
+                val keyOf = List.foldl (fn ((ix, k), m) => IntMap.insert (m, ix, k)) IntMap.empty (#imports u)
+                val {calls = cs, reads = rs} = #expects code
+              in
+                List.app (fn (fid, n, masks, rm) =>
+                            if fid < nown then ()
+                            else
+                              case IntMap.find (keyOf, fid) of
+                                SOME k => calls := (#identity u, k, func fid, n, masks, rm) :: !calls
+                              | NONE => ())
+                         cs;
+                case rs of
+                  [] => ()
+                | _ =>
+                    let val rv = Vector.fromList rs
+                    in
+                      List.app (fn (k : key, ix) =>
+                                  if #unit k = #identity u orelse ix < 0 orelse ix >= Vector.length rv then ()
+                                  else
+                                    let val m = Vector.sub (rv, ix)
+                                    in if m = 0 then () else reads := (#identity u, k, global ix, m) :: !reads end)
+                               (#globals u)
+                    end
+              end
           fun renumber (kind, v) =
             case kind of
               0 => func v
@@ -212,9 +279,9 @@ struct
             | Lab l => Lab (lbase + l)
             | Pos (f, line, col, j) => Pos (file f, line, col, inline j)
           fun meta NONE = NONE
-            | meta (SOME {arity, reps, blocks, loops} : meta option) =
+            | meta (SOME {arity, reps, blocks, loops, result, captures} : meta option) =
                 SOME {arity = arity, reps = reps, blocks = List.map (fn (l, ps) => (lbase + l, ps)) blocks,
-                      loops = List.map (fn l => lbase + l) loops}
+                      loops = List.map (fn l => lbase + l) loops, result = result, captures = captures}
           val () =
             List.app (fn (name, f, line, col, parent) =>
                         (inlines := (name, if line = 0 then f else file f, line, col, inline parent) :: !inlines;
@@ -266,8 +333,76 @@ struct
           (case StringMap.find (sourceHashes,identity) of NONE => [] | SOME hash =>
             [(sourceName (identity,hash),
               List.filter (fn (kind,number,_) => kind=0 andalso number= ~1) exports)])) (!lastExports))
+      val greps = Array.array (!nglobals, 0)
+      val () = List.app (fn (g, r) => Array.update (greps, g, r)) (!globalReps)
+      val prog : Code.program =
+        {consts = List.rev (!consts), nglobals = !nglobals, funcs = funcs, files = List.rev (!files),
+         inlines = List.rev (!inlines), nlabels = !nlabels,
+         globalReps = if List.null (!globalReps) then [] else Array.foldr (op ::) [] greps,
+         expects = expectsNothing}
+      (* the interfaces: what each unit expects of the units before it,
+         against what they declare -- in time linear in the imports, where a
+         check of the whole program took a fifth of a warm build (the linting
+         roadmap's D15); a check of level 0, always on but where --lint=off
+         says, which --pass-stats counts as "link" and which moves none of
+         the compiler's counters (Pass.checkAt; the roadmap's D12) *)
+      val () =
+        if List.null (!calls) andalso List.null (!reads) then ()
+        else Pass.checkAt ("link", 0) (fn () =>
+          let
+            val metas = Array.array (List.length funcs, NONE)
+            val () = List.app (fn ({id, meta, name, ...} : func) =>
+                                 if id >= 0 andalso id < Array.length metas then Array.update (metas, id, SOME (name, meta)) else ())
+                              funcs
+            val wrong : string list ref = ref []
+            fun no msg = wrong := msg :: !wrong
+            fun named what ({unit, number} : key) =
+              if unit = "" then "the next unit's top level" else unit ^ "'s " ^ what ^ " " ^ Int.toString number
+            fun call (importer, k, g, n, masks, rm) =
+              case (if g >= 0 andalso g < Array.length metas then Array.sub (metas, g) else NONE) of
+                SOME (name, SOME {arity, reps, result, ...}) =>
+                  let
+                    val what = importer ^ " calls " ^ name ^ " (" ^ named "function" k ^ ")"
+                    val rv = Vector.fromList reps
+                  in
+                    if n <> arity then no (what ^ (if n < 0 then " with two counts of arguments" else " with " ^ Int.toString n ^ " arguments")
+                                           ^ ", where it takes " ^ Int.toString arity)
+                    else
+                      (ignore (List.foldl (fn (mask, j) =>
+                                             let val q = if j < Vector.length rv then Vector.sub (rv, j) else 0
+                                             in
+                                               List.app (fn r => if fits (r, q) then ()
+                                                                 else no (what ^ " with " ^ repName r ^ " for its argument "
+                                                                          ^ Int.toString j ^ ", where it takes " ^ repName q))
+                                                        (repsIn mask);
+                                               j + 1
+                                             end) 0 masks);
+                       List.app (fn e => if fits (result, e) then ()
+                                         else no (what ^ " and takes its result as " ^ repName e ^ ", where it returns " ^ repName result))
+                                (repsIn rm))
+                  end
+              | SOME (_, NONE) => ()
+              | NONE => no (importer ^ " calls " ^ named "function" k ^ ", which is no function of the program")
+            fun read (importer, k, g, mask) =
+              let val q = if g >= 0 andalso g < Array.length greps then Array.sub (greps, g) else 0
+              in
+                List.app (fn r => if fits (q, r) then ()
+                                  else no (importer ^ " reads " ^ named "global" k ^ " as " ^ repName r ^ ", where it holds " ^ repName q))
+                         (repsIn mask)
+              end
+          in
+            List.app call (List.rev (!calls));
+            if List.null (!globalReps) then () else List.app read (List.rev (!reads));
+            case List.rev (!wrong) of
+              [] => ()
+            | ws => raise Mismatch (String.concatWith "; " (List.take (ws, Int.min (3, List.length ws)))
+                                    ^ (if List.length ws > 3 then "; and " ^ Int.toString (List.length ws - 3) ^ " more" else ""))
+          end) ()
+      (* the program checked whole too, at level 2 or where
+         RUNE_REGVERIFY_LINK says (docs/plans/correctness/linting.md, M9
+         and M16) *)
+      val () = RegVerify.linked prog
     in
-      {consts = List.rev (!consts), nglobals = !nglobals, funcs = funcs, files = List.rev (!files),
-       inlines = List.rev (!inlines), nlabels = !nlabels}
+      prog
     end
 end

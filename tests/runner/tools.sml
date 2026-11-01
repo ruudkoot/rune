@@ -35,7 +35,9 @@ struct
       fun marker m = if String.isPrefix ("(* " ^ m ^ ": ") line1 andalso String.isSuffix " *)" line1
                      then SOME (String.substring (line1, size m + 5, size line1 - size m - 8)) else NONE
       val input = if String.isSuffix ".mid" src then ["--read-mid", src] else ["--no-prelude", "-o", f ".rbc", src]
-      fun rune flags = exec {cmd = ["bin/rune-stack", "--lint", "--mid-roundtrip"] @ flags @ input, dir = NONE, stdin = "",
+      (* at level 3, every stage's Mid read back: the tier of make check
+         that lints deepest (docs/ir.md, Levels) *)
+      fun rune flags = exec {cmd = ["bin/rune-stack", "--lint=3"] @ flags @ input, dir = NONE, stdin = "",
                              stdout = f ".out", stderr = f ".err", timeout = 0}
       val expected = "tests/ir/" ^ n ^ ".expected"
     in
@@ -398,6 +400,110 @@ struct
              andalso not (List.exists (fn l => String.isSubstring "error" l) ls)
     in if ok then () else fail ("flexrec.repl." ^ p) end
 
+  (* ---- tests/overloading: E13's programs (docs/plans/correctness/linting.md)
+     under every mode of --overloading and --free-tyvars, each held to what
+     the implementation the mode follows did with it: compiled and run
+     printing a line (Prints), the same with the warning of a new type
+     (Warns), or refused for a free type variable (Free) or for a type
+     mismatch (Mismatch) *)
+  datatype outcome = Prints of string | Warns of string | Free | Mismatch
+  val overloadPrograms = ["o_structure", "o_local", "o_next_dec", "o_after_semicolon", "o_let_fun", "o_let_val",
+                          "o_same_val", "o_abstype", "o_functor_body", "o_across_functor"]
+  val overloadModes =
+    let val (a, r) = (Prints "4", Mismatch)
+    in
+      [("binding", [r, r, r, r, r, r, a, r, r, r]),          (* HaMLet *)
+       ("declaration", [r, r, r, r, a, a, a, a, r, r]),      (* SML/NJ, MLKit *)
+       ("toplevel", [a, a, r, r, a, a, a, a, r, r]),         (* Moscow ML *)
+       ("topdec", [a, a, a, r, a, a, a, a, r, a])]           (* MLton, Poly/ML *)
+    end
+  val freePrograms = ["f_ref_alone", "f_ref_next_dec", "f_ref_after_semicolon", "f_ref_in_structure", "f_append_alone",
+                      "f_functor_result", "f_functor_two"]
+  val freeModes =
+    let val (f, m) = (Free, Mismatch)
+    in
+      [("refuse", [f, Prints "1", f, Prints "1", f, f, f]),                                   (* HaMLet *)
+       ("monotype", [Warns "ok", Prints "1", m, Prints "1", Warns "0", m, m]),                 (* Poly/ML *)
+       ("dummy", [Warns "ok", m, m, m, Warns "0", m, m]),                                      (* SML/NJ *)
+       ("later", [f, Prints "1", Prints "1", Prints "1", f, Prints "1", m]),                    (* MLKit, Moscow ML *)
+       ("later-monotype", [Warns "ok", Prints "1", Prints "1", Prints "1", Warns "0", Prints "1", m])]  (* MLton *)
+    end
+
+  fun overloadingOne (option, mode, p, how) =
+    let
+      val out = run ^ "/overloading"
+      val () = mkdirs out
+      val (programs, modes) = if option = "overloading" then (overloadPrograms, overloadModes) else (freePrograms, freeModes)
+      val want = case List.find (fn (m, _) => m = mode) modes of
+                   SOME (_, ws) => Option.map #2 (List.find (fn (q, _) => q = p) (ListPair.zip (programs, ws)))
+                 | NONE => NONE
+      val rbc = out ^ "/" ^ p ^ "." ^ mode ^ "." ^ how ^ ".rbc"
+      val err = out ^ "/" ^ p ^ "." ^ mode ^ "." ^ how ^ ".err"
+      val code = exec {cmd = ["bin/rune", "--" ^ option ^ "=" ^ mode] @ (if how = "units" then ["--units", "--no-cache"] else [])
+                             @ ["tests/overloading/" ^ p ^ ".sml", "-o", rbc], dir = NONE, stdin = "", stdout = err, stderr = err,
+                       timeout = 0}
+      val name = option ^ "." ^ mode ^ "." ^ p ^ " (" ^ how ^ ")"
+      fun runs (line, warned) =
+        if code <> 0 then fail (name ^ ": refused: " ^ firstLine err)
+        else if warned <> contains (err, "it is made a new type") then
+          fail (name ^ (if warned then ": no warning of a new type" else ": a warning: " ^ firstLine err))
+        else
+          let
+            val printed = rbc ^ ".out"
+            val _ = exec {cmd = ["bin/runevm", rbc], dir = NONE, stdin = "", stdout = printed, stderr = "", timeout = 0}
+            val got = String.concatWith "\n" (lines (read printed))
+          in if got = line then () else fail (name ^ ": printed " ^ got) end
+      fun refused reasons =
+        if code <> 0 andalso List.exists (fn r => contains (err, r)) reasons then ()
+        else fail (name ^ ": not refused with " ^ String.concatWith " or " reasons ^ ": " ^ firstLine err)
+    in
+      case want of
+        SOME (Prints line) => runs (line, false)
+      | SOME (Warns line) => runs (line, true)
+      | SOME Free => refused ["cannot be generalised", "nothing after it determines"]
+      | SOME Mismatch => refused ["type mismatch"]
+      | NONE => fail (name ^ ": no such mode or program")
+    end
+
+  (* the REPL: a topdec compiled at once (--overloading=topdec), and the end
+     of each input the end of what --free-tyvars=later waits for *)
+  fun overloadingRepl (option, mode, p) =
+    let
+      val out = run ^ "/overloading"
+      val () = mkdirs out
+      val f = out ^ "/" ^ p ^ "." ^ mode ^ ".repl"
+      val () = write (out ^ "/" ^ p ^ ".in", "use \"tests/overloading/" ^ p ^ ".sml\";\n")
+      val _ = exec {cmd = ["/bin/sh", "-c", "RUNE_CACHE= exec bin/rune-repl --no-init --" ^ option ^ "=" ^ mode], dir = NONE,
+                    stdin = out ^ "/" ^ p ^ ".in", stdout = f, stderr = f, timeout = 120}
+      val ls = lines (read f)
+      fun printed s = List.exists (fn l => String.isSuffix s l) ls andalso not (List.exists (fn l => String.isSubstring "error" l) ls)
+      val ok =
+        case (option, mode, p) of
+          ("overloading", "topdec", "o_next_dec") => printed "4"
+        | ("free-tyvars", "later", "f_ref_next_dec") => printed "1"
+        (* refused at the end of the input: the inputs after it do not determine it *)
+        | ("free-tyvars", "later", "f_ref_after_semicolon") => contains (f, "nothing after it determines")
+        | ("free-tyvars", "monotype", "f_ref_alone") => contains (f, "it is made a new type") andalso contains (f, "?.X1 list ref")
+        | _ => false
+    in if ok then () else fail ("overloading.repl." ^ option ^ "." ^ mode ^ "." ^ p) end
+
+  (* the cache: each mode is a configuration of its own, so that a unit
+     compiled under one is not taken under another *)
+  fun overloadingCache () =
+    let
+      val out = run ^ "/overloading/cache"
+      val () = (rmTree out; mkdirs out)
+      fun compile (option, p) =
+        exec {cmd = ["bin/rune", "--units", "--cache-dir", out ^ "/cache", option, "tests/overloading/" ^ p ^ ".sml",
+                     "-o", out ^ "/" ^ p ^ ".rbc"], dir = NONE, stdin = "", stdout = out ^ "/err", stderr = out ^ "/err", timeout = 0}
+      fun check (what, ok) = if ok then () else fail ("overloading.cache: " ^ what ^ ": " ^ firstLine (out ^ "/err"))
+    in
+      check ("topdec accepts", compile ("--overloading=topdec", "o_next_dec") = 0);
+      check ("toplevel refuses after it", compile ("--overloading=toplevel", "o_next_dec") <> 0);
+      check ("later accepts", compile ("--free-tyvars=later", "f_ref_after_semicolon") = 0);
+      check ("refuse refuses after it", compile ("--free-tyvars=refuse", "f_ref_after_semicolon") <> 0)
+    end
+
   (* ---- tests/compiler: the compiler's output and its budgets *)
   fun compilerProtection rune =
     let
@@ -572,6 +678,40 @@ struct
       val () = check ("pass-stats=elab: another kind refused",
                       r (["--no-prelude", "--typecheck-only", "--pass-stats=types", "input.sml"], NONE) <> 0
                       andalso contains (f "err", "--pass-stats= requires elab"))
+      (* no check changes what the compiler makes, a unit's basis among it:
+         --mid-roundtrip read Mid back with stamps from the elaborator's
+         counter, which a unit's basis then counted (linting roadmap, M1) *)
+      val () = write (f "a.sml", "datatype shape = Circle of int | Square of int * int\n"
+                                 ^ "fun area (Circle r) = 3 * r * r | area (Square (w, h)) = w * h\n"
+                                 ^ "val shapes = [Circle 2, Square (3, 4)]\n")
+      val () = write (f "b.sml", "structure S = struct datatype t = A | B of shape fun f A = 0 | f (B s) = area s end\n"
+                                 ^ "fun sum [] = 0 | sum (s :: ss) = area s + sum ss\n"
+                                 ^ "val total = sum shapes + S.f (S.B (Circle 1))\n")
+      fun emitted (d, flags) =
+        (rmTree (f d);
+         r (["--units", "--no-prelude", "--no-cache", "--emit-units", d] @ flags @ ["-o", d ^ ".rbc", "a.sml", "b.sml"], NONE) = 0)
+      fun unitFiles d = sort (List.filter (fn x => x <> "units") (if isDir (f d) then entries (f d) else []))
+      val () = check ("lint: the same units, bases and all",
+                      emitted ("plain", []) andalso emitted ("roundtrip", ["--lint", "--mid-roundtrip"])
+                      andalso unitFiles "plain" = ["0000-a.rbi", "0000-a.rbu", "0001-b.rbi", "0001-b.rbu", "sources"]
+                      andalso unitFiles "plain" = unitFiles "roundtrip"
+                      andalso List.all (fn x => same (f ("plain/" ^ x), f ("roundtrip/" ^ x))) (unitFiles "plain")
+                      andalso same (f "plain.rbc", f "roundtrip.rbc"))
+      (* --pass-stats counts each check at every depth, a line `check KEY: N
+         runs, T s` (and its instructions on Rune's own build), the stages of
+         a unit, and their checks, running inside unit-passes *)
+      fun checkLine l =
+        case String.tokens (fn c => c = #" " orelse c = #":" orelse c = #",") l of
+          "check" :: key :: runs :: _ => Option.map (fn n => (key, n)) (Int.fromString runs)
+        | _ => NONE
+      val () = check ("pass-stats: the checks at every depth",
+                      r (["--units", "--no-prelude", "--no-cache", "--lint", "--mid-roundtrip", "--pass-stats", "-o", "checks.rbc",
+                          "a.sml", "b.sml"], NONE) = 0
+                      andalso
+                      let val checked = List.mapPartial checkLine (lines (read (f "err")))
+                      in List.all (fn k => List.exists (fn (k', n) => k' = k andalso n = 2) checked)
+                                  ["translate", "mid", "mid-roundtrip", "lower", "results"]
+                      end)
       (* --pass-stats accounts for the whole compile (docs/plans/performance.md, M1):
          a line `pass NAME: N nodes, T s` per stage, then
          `total: T s processor time, S s in the stages (P%)`, the process's
@@ -611,6 +751,7 @@ struct
       val process = children () - start
       val ls = lines (read (f "err"))
       val stages = List.mapPartial stage (if null ls then [] else List.take (ls, length ls - 1))
+      val checks = List.filter (String.isPrefix "check ") ls
       val names = List.map #1 stages
       val added = List.foldl (fn ((_, t), s) => s + t) 0.0 stages
       val n = real (length stages)
@@ -620,7 +761,7 @@ struct
         | _ => (NONE, NONE)
     in
       check ("pass-stats: compiled", code = 0);
-      check ("pass-stats: a stage per line", length stages = length ls - 1);
+      check ("pass-stats: a stage or a check per line", length stages + length checks = length ls - 1);
       check ("pass-stats: the stages",
              List.all (fn w => List.exists (fn x => x = w) names)
                       ["startup", "lex", "select", "parse", "elaborate", "translate", "mid", "midcanon", "lower", "stack", "emit",
@@ -634,6 +775,157 @@ struct
            check ("pass-stats: the process took no more than the total", process <= 1.10 * total + 0.05))
       | _ => check ("pass-stats: the last line is the total", false)
     end
+
+  (* ---- tests/compiler: AstLint's rules, each refused where the datum it
+     checks is corrupted (RUNE_ASTLINT_FAULT, the linting roadmap's M12):
+     tests/compiler/astlint-faults.sml compiles at --lint=2, and with each
+     fault stops with its rule's message *)
+  val astlintFaults =
+    [("instance", "[41 instance] constructor B at"), ("wildcard", "[41 instance] constructor B's argument"),
+     ("raise", "[13 match] a clause of g"), ("nil", "[35 instance] [] at"), ("constant", "[E constant]"),
+     ("select", "[38 record] #1 of"), ("flex", "[38 record] a flexible record left open"),
+     ("binder", "[13 match] a clause of f: exn expected"), ("scope", "[4.6 scope]"), ("generalise", "[15 Clos]"),
+     ("equality", "[4.9 equality] datatype t"), ("result", "[result] f: its scheme"), ("enrich", "[5.5 enrichment] v: int in the structure"),
+     ("identity", "[5.5 identity] value v: another variable"), ("match", "[5.6 match] type u must admit equality"),
+     ("signature", "[79 val] value v:"), ("sharing", "[78 sharing] type"), ("fresh", "[65 instance] type p: its name is not new"),
+     ("apply", "[5.5 enrichment] type u is not in the structure"), ("functor", "[86 functor] functor F: a type its body made")]
+  fun astlintFaultTests () =
+    let
+      val dir = run ^ "/compiler/astlint"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun compile fault =
+        exec {cmd = ["/bin/sh", "-c", "RUNE_LINT=2 RUNE_ASTLINT_FAULT=" ^ fault
+                                     ^ " exec bin/rune --no-prelude --typecheck-only tests/compiler/astlint-faults.sml"],
+              dir = NONE, stdin = "", stdout = f (fault ^ ".err"), stderr = f (fault ^ ".err"), timeout = 300}
+    in
+      if compile "" = 0 then () else fail ("astlint-faults: the program is refused: " ^ firstLine (f ".err"));
+      List.app (fn (fault, msg) =>
+                  if compile fault = 0 then fail ("astlint-faults: " ^ fault ^ ": compiled")
+                  else if contains (f (fault ^ ".err"), "lint after astlint") andalso contains (f (fault ^ ".err"), msg) then ()
+                  else fail ("astlint-faults: " ^ fault ^ ": not refused with " ^ msg ^ ": " ^ firstLine (f (fault ^ ".err"))))
+               astlintFaults
+    end
+
+  (* ---- tests/compiler: the rules of a check that no program the compiler
+     makes breaks, each refused on IR made by hand (lint-tests.build) *)
+  fun lintRules () =
+    let
+      val dir = run ^ "/compiler/lint-rules"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+    in
+      if exec {cmd = ["bin/rune", "--build", "tests/compiler/lint-tests.build", "-o", f "lint-tests.rbc"], dir = NONE, stdin = "",
+               stdout = f "cerr", stderr = f "cerr", timeout = 600} <> 0
+      then fail ("compiler.lint-rules: does not compile: " ^ firstLine (f "cerr"))
+      else
+        let
+          val code = exec {cmd = ["bin/runevm", f "lint-tests.rbc"], dir = NONE, stdin = "", stdout = f "out", stderr = f "err",
+                           timeout = 120}
+          val ls = lines (read (f "out"))
+        in
+          List.app (fn l => if String.isPrefix "FAIL " l then say (l ^ "\n") else ()) ls;
+          if code = 0 andalso List.length (List.filter (String.isPrefix "PASS ") ls) >= 175 then ()
+          else fail ("compiler.lint-rules: exit " ^ Int.toString code ^ ", " ^ Int.toString (List.length ls) ^ " lines: "
+                     ^ firstLine (f "err"))
+        end
+    end
+
+  (* ---- the lints' negative tests (docs/testing.md; the linting roadmap,
+     M4): a fault made in a program after a stage (RUNE_FAULT,
+     lib/compiler/backend/fault.sml), which the check of that stage refuses
+     with its message, at level 2, where every pass is checked. Each rule
+     of LambdaLint (after translate), MidLint (after mid and each pass),
+     the renaming (after midcanon), LowLint and LowShapes (after lower) that a fault
+     reaches; the others, and the results', are compiler/lint-rules', and
+     RegVerify's register/@regverify-*. E10's faults are among them. *)
+  val faultPrograms =
+    [("faults", (["-O2"], "tests/compiler/faults.sml")),
+     ("dynamic", (["--units", "-O2"], "tests/compiler/faults-dynamic.sml"))]
+  (* the stage and kind, the program, what the refusal says *)
+  val faults : (string * string * string) list =
+    let
+      fun at (stage, prog) = List.map (fn (kind, msg) => (stage ^ ":" ^ kind, prog, msg))
+      val notInScope = "variable v999999937 is not in scope"
+      val payload = "an exception's payload has type"
+      val word = "which is no instance of its description"
+      val range = "out of the range of int"
+      val unset = "which a way of it that returns does not set"
+      (* a type variable no binder binds (Mid is System F: M5) *)
+      val poly = ("poly", "which no binder around it binds")
+      val rebind = ("rebind", "again, where it is in scope")
+    in
+      at ("translate", "faults")
+        [("scope", notInScope), ("twice", "is bound twice"), ("jump", "arguments"),
+         ("jump-out", "that is not in tail position of its scope"), ("con", "has no constructor"),
+         ("select", "of a tuple of"), ("const-type", "a constant 1 of type string"), ("const-kind", "a constant 0w"),
+         ("const-range", range), ("mkexn", payload), ("prim-name", word),
+         ("functor-cast", "a functor_cast from string to int, neither unit"), ("open-cast", "neither unit nor flat"),
+         ("inst", "a use at exn of what has type"), ("fail", "a Fail is not in tail position of a Try"),
+         ("letrec", "binds what is no function"), ("global", "has no type")]
+      @ at ("translate", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
+      @ at ("mid", "faults")
+          [("scope", notInScope), ("twice", "is bound twice"), ("jump", "arguments"),
+           ("jump-out", "join point j999999937 is not in scope"), ("type", "where string is wanted"),
+           poly, rebind, ("tyargs", "abstracts over"), ("select", "of a tuple of"),
+           ("con", "has no constructor"), ("mkexn", payload), ("prim-name", word), ("const-kind", "a constant 0w"),
+           ("const-range", range), ("do-drop", "is not defined"), ("do-unset", unset),
+           ("functor-cast", "neither unit"), ("open-cast", "neither unit nor flat")]
+      @ at ("mid", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
+      @ at ("midcanon", "faults")
+          [("scope", "renamed to"), ("twice", "is the new name of"), ("jump", "a list of another length"),
+           ("type", "the built-in type name"), ("select", "a field changed"), ("con", "a tag changed"),
+           ("mkexn", "an atom of another kind"), ("prim-name", "a primitive changed"), ("const-kind", "a constant changed"),
+           ("do-unset", "a right-hand side of another kind"), ("functor-cast", "renamed two ways")]
+      @ at ("expand", "faults")
+          [("scope", notInScope), ("mkexn-copy", payload), ("functor-cast", "neither unit"),
+           ("open-cast", "neither unit nor flat"), poly, ("do-unset", unset)]
+      @ at ("expand", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
+      @ at ("shake", "faults") [("scope", notInScope), poly]
+      @ at ("lift", "faults") [("scope", notInScope), ("mkexn-copy", payload), ("nary", "used as a value")]
+      @ at ("workers", "faults") [("nary", "used as a value"), ("tyargs", "abstracts over")]
+      @ at ("simplify", "faults")
+          [("scope", notInScope), ("type", "where string is wanted"), ("jump", "arguments"), ("mkexn", payload),
+           ("mkexn-copy", payload), ("const-kind", "a constant 0w"), ("const-range", range), ("nary", "used as a value"),
+           poly, rebind, ("tyargs", "abstracts over"), ("do-unset", unset),
+           ("select", "of a tuple of"), ("con", "has no constructor"), ("prim-name", word)]
+      @ at ("refs", "faults") [("scope", notInScope), ("type", "where string is wanted")]
+      @ at ("lower", "faults")
+          [("twice", "is defined twice"), ("undef", "is used where it is not defined on every way"), ("jump", "arguments"),
+           ("nojump", "a jump to no block b999999937"), ("pop", "a pop with no handler"),
+           ("push", "a return with a handler pushed"), ("callk", "parameters given"), ("closure", "values, given"),
+           ("env", "env 7 of a function that captures"), ("rep", "is ptr where what makes it is int"),
+           ("select", "which is a tuple of")]
+    end
+  (* the check that refuses a fault where it is not the stage's own: a
+     Select past its tuple's arity is LowShapes', after lower (M6) *)
+  val faultChecks = [("lower:select", "shapes")]
+  fun faultOne spec =
+    case (List.find (fn (s, _, _) => s = spec) faults) of
+      NONE => fail ("faults." ^ spec ^ ": no such fault")
+    | SOME (_, prog, msg) =>
+        let
+          val (flags, src) = valOf (Option.map #2 (List.find (fn (p, _) => p = prog) faultPrograms))
+          val out = run ^ "/faults"
+          val () = mkdirs out
+          val name = String.map (fn #":" => #"." | c => c) spec
+          val err = out ^ "/" ^ name ^ ".err"
+          val status = execEnv (setEnv ("RUNE_FAULT", spec))
+                               {cmd = ["bin/rune", "--lint=2"] @ flags @ [src, "-o", out ^ "/" ^ name ^ ".rbc"], dir = NONE,
+                                stdin = "", stdout = err, stderr = err, timeout = 0}
+          val text = read err
+          val stage = case List.find (fn (s, _) => s = spec) faultChecks of
+                        SOME (_, check) => check
+                      | NONE => hd (String.fields (fn c => c = #":") spec)
+          val placed = List.exists (fn l => String.isPrefix ("fault " ^ spec ^ ": ") l andalso not (String.isSuffix "no place found" l))
+                                   (lines text)
+          val refusal = case List.filter (String.isSubstring "error") (lines text) of l :: _ => l | [] => firstNonEmpty err
+        in
+          if not placed then fail ("faults." ^ spec ^ ": no place to corrupt in " ^ src)
+          else if status = 0 then fail ("faults." ^ spec ^ ": not refused")
+          else if String.isSubstring ("lint after " ^ stage ^ ": internal compiler error: ") text andalso String.isSubstring msg text then ()
+          else fail ("faults." ^ spec ^ ": refused otherwise: " ^ refusal)
+        end
 
   (* ---- tests/runtime: limits saved with an image and stricter on restore *)
   fun limits (rune, vm) =
@@ -903,6 +1195,12 @@ struct
     | ["lib-toy"] => SOME libToy
     | ["lib-random-kat"] => SOME libRandomKat
     | ["lib-check", kind, n, lib, src] => SOME (fn () => libCheck (kind, n, ["--library", lib], src))
+    (* the Win32 contract against the mock, which needs no SDL: the only
+       compile of Win32ContractFn that make check has *)
+    | ["lib-win32-contract"] =>
+        SOME (fn () => libCheck ("passes", "ffi-win32-mock-contract",
+                                 ["--library", "ffi/win32/mock", "--library", "test/unit", "tests/ffi/win32/contract.sml"],
+                                 "tests/ffi/win32/mock-contract-main.sml"))
     | ["lib-basis-check", lib] => SOME (fn () => libBasisCheck lib)
     | ["lib-examples", lib, guarded] => SOME (fn () => libExamples (lib, guarded = "guarded"))
     | ["lib-laws"] => SOME libLaws
@@ -910,7 +1208,13 @@ struct
     | ["lib-interop", lib] => SOME (fn () => libInterop lib)
     | ["flexrec-one", mode, p, how] => SOME (fn () => flexrecOne (mode, p, how))
     | ["flexrec-repl", p] => SOME (fn () => flexrecRepl p)
+    | ["overloading-one", option, mode, p, how] => SOME (fn () => overloadingOne (option, mode, p, how))
+    | ["overloading-repl", option, mode, p] => SOME (fn () => overloadingRepl (option, mode, p))
+    | ["overloading-cache"] => SOME overloadingCache
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
+    | ["compiler-lint-rules"] => SOME lintRules
+    | ["fault-one", spec] => SOME (fn () => faultOne spec)
+    | ["compiler-astlint-faults"] => SOME astlintFaultTests
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
     | ["colour-contrast"] => SOME (fn () => contrast false)
@@ -957,6 +1261,7 @@ struct
               job ("runner-props", ["lib-check", "passes", "runner-props", "test/runner", "tests/lib/runner/props.sml"], [], 300, 600)]
              @ [job ("compiler/api", ["lib-suite", "compiler", "tests/lib/compiler/api.sml"], [], 500, 600),
                 job ("compiler/@check", ["lib-basis-check", "compiler"], [], 500, 600),
+                job ("ffi/win32/mock/contract", ["lib-win32-contract"], [], 500, 600),
                 job ("compiler/@examples", ["lib-examples", "compiler", "guarded"], [], 500, 600)]
              @ List.concat (List.map (fn lib => let val t = String.translate (fn #"/" => "-" | c => str c) lib
                                                 in [job (t ^ "-check", ["lib-basis-check", lib], [], 300, 600),
@@ -980,9 +1285,27 @@ struct
                                                             flexPrograms))
                                    flexModes)
              @ List.map (fn p => job ("repl." ^ p, ["flexrec-repl", p], [], 500, 600)) ["next_dec", "two_types", "after_semicolon"])),
+       tagged ["check", "test-incremental", "covers:tests/overloading/*"]
+         (Test.describe "overloading"
+            (List.concat (List.map (fn (option, programs, modes) =>
+                                      List.concat (List.map (fn (mode, _) =>
+                                        List.concat (List.map (fn p =>
+                                          List.map (fn how => job (option ^ "." ^ mode ^ "." ^ p ^ "." ^ how,
+                                                                   ["overloading-one", option, mode, p, how], [], 300, 600))
+                                                   ["whole", "units"]) programs)) modes))
+                                   [("overloading", overloadPrograms, overloadModes), ("free-tyvars", freePrograms, freeModes)])
+             @ List.map (fn (option, mode, p) => job ("repl." ^ option ^ "." ^ mode ^ "." ^ p, ["overloading-repl", option, mode, p],
+                                                       [], 500, 600))
+                        [("overloading", "topdec", "o_next_dec"), ("free-tyvars", "later", "f_ref_next_dec"),
+                         ("free-tyvars", "later", "f_ref_after_semicolon"), ("free-tyvars", "monotype", "f_ref_alone")]
+             @ [job ("cache", ["overloading-cache"], [], 500, 600)])),
+       tagged ["check", "test-ir", "covers:tests/compiler/*"]
+         (Test.describe "faults" (List.map (fn (spec, _, _) => job (spec, ["fault-one", spec], [], 600, 600)) faults)),
        tagged ["check", "covers:tests/compiler/*"]
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))
+             :: tagged ["test"] (job ("lint-rules", ["compiler-lint-rules"], [], 800, 900))
+             :: tagged ["test"] (job ("astlint-faults", ["compiler-astlint-faults"], [], 500, 600))
              :: List.map (fn h => Test.requires [h] (tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600))))
                          ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"])),
        tagged ["check", "covers:tests/runtime/*"]

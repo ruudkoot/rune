@@ -1393,18 +1393,18 @@ static void called(Jit *j, uint32_t pc) {
 /* obj := the closure in register a; r11 := the index of its function,
    checked; rcx := that Function */
 /* obj := the closure in register a; r11 := the word of its function
-   (2f + 1), checked against the number of functions where the section
-   does not vouch for the closure; rcx := the table of calls (CallInfo,
-   M6), read from the VM, which a unit loaded grows and may move */
+   (2f + 1), checked against the number of functions even where the section
+   vouches for the closure: it costs next to nothing, and without it a wrong
+   representation would choose the address a call jumps to (the linting
+   roadmap's D8); rcx := the table of calls (CallInfo, M6), read from the
+   VM, which a unit loaded grows and may move */
 static void closure_function(Jit *j, int32_t a, int obj) {
     ms_load_obj(M, obj, a, K_CLOSURE, jit_fatal(j, FATAL_CALL, 0, 0, 0));
     ms_load_field_bits(M, R_S6, obj, 0);   /* field 0: the function, its word */
-    if (!ms_trusts(M, a, K_CLOSURE)) {
-        as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
-        as_lea(A, R_S3, R_S3, R_S3, 1, 1);   /* the word of the number of functions */
-        as_cmp_rr(A, R_S6, R_S3);
-        as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
-    }
+    as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
+    as_lea(A, R_S3, R_S3, R_S3, 1, 1);   /* the word of the number of functions */
+    as_cmp_rr(A, R_S6, R_S3);
+    as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
     as_ld64(A, R_S1, VMR, OFF(jit_calls));
 }
 /* the callee's entry from the table (rcx) by its function's word (r11) */

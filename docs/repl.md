@@ -295,9 +295,18 @@ user uses again -- in order, with their texts and their times
 
 The REPL follows Chapter 8 of the Definition, a top-level declaration at a
 time: the declarations to a `;`, or to the end of a file `use`d, compiled
-and run as one, as Poly/ML does (in the default mode of `--flex-records`,
-which settles flexible records there; in the others, each declaration
-alone). What follows says "a declaration" for it:
+and run as one, as Poly/ML does, wherever something is settled there: in
+the modes of `--flex-records` that settle flexible records there (the
+default among them), under `--overloading=topdec`, and in every mode of
+`--free-tyvars` but `dummy` (the default, `refuse`, among them); else each
+declaration alone ([language.md](language.md), *Deviations*). Under
+`--free-tyvars=later` and `later-monotype` the end of an input is the end
+of the program: a type variable an input leaves free is refused, or made
+a new type, there, and not kept open for the inputs after it, as OCaml's
+weak type variables are, which would need its binding by an input that
+fails undone and a unit's basis that holds a variable. `rune-repl` takes
+`--overloading=MODE` and `--free-tyvars=MODE` as `rune` does. What follows
+says "a declaration" for it:
 
 * A declaration that does not elaborate is reported, with its file, line and
   column, and the session is as it was before it: nothing it declared is
@@ -581,7 +590,9 @@ the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
   image keeps for every session started from it: the Basis Library's
   marked functors and functions are inlined across units unless
   `--no-inline-functors` is given there, and `--lint` makes every session from the image check
-  what each pass makes, as `rune --lint` does.
+  what each pass makes, as `rune --lint` does (`--lint=LEVEL` lints at
+  that level, [ir.md](ir.md), *Levels*). Where neither it nor `RUNE_LINT`
+  says otherwise, the REPL lints at level 1, the boundaries.
 * A declaration is a unit of its own: elaborated against the session,
   translated with its printer, made into the bytes of a unit's file and
   appended to the running program by `Runtime.link`

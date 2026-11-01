@@ -30,12 +30,44 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
-  (* the primitives that save or restore an image (Isa.effect), grow the
-     program (rt_link, rt_debug_hook), or put the debugger's debug mode on
-     (rt_debug_mode, rt_debug_step): a PRIMPUSH, so that the loop takes the
-     program again after them, or gives it to the driver, and their result
-     comes back through RESULT *)
-  val imagePrims = ["posix_fork", "rt_save", "rt_restore", "rt_link", "rt_debug_hook", "rt_debug_mode", "rt_debug_step"]
+  (* the primitives that save or restore an image, grow the program
+     (rt_link, rt_debug_hook), or put the debugger's debug mode on
+     (rt_debug_mode, rt_debug_step), as their effects say (Isa.imagePrimitive):
+     a PRIMPUSH, so that the loop takes the program again after them, or
+     gives it to the driver, and their result comes back through RESULT *)
+  val imagePrims = R.imagePrims
+
+  (* What the code expects of the units before it (Code.expects), gathered
+     as it is made: the functions of the program being made, the calls of
+     the others -- arity, the representations passed at each place and
+     taken back, as masks -- and the representations each global is read
+     as, by its index. *)
+  val ownFuncs : unit IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Regs.ownFuncs", ownFuncs)
+  val importCalls : (int * int list * int) IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Regs.importCalls", importCalls)
+  val globalReads : int IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Regs.globalReads", globalReads)
+  val bits = Vector.tabulate (11, fn r => List.foldl (op * ) 1 (List.tabulate (r, fn _ => 2)))
+  fun bit (r : L.rep) : int = Vector.sub (bits, L.repCode r)
+  (* a mask with the bit b, one of bits', set too *)
+  fun orMask (a : int, b : int) : int = if (a div b) mod 2 = 1 then a else a + b
+  (* a call of fid, an import, passing values of reps and taking back r *)
+  fun expectCall (fid : int, reps : L.rep list, r : L.rep) : unit =
+    if IntMap.member (!ownFuncs, fid) then ()
+    else
+      let
+        val n = List.length reps
+        val e =
+          case IntMap.find (!importCalls, fid) of
+            NONE => (n, List.map bit reps, bit r)
+          | SOME (m, masks, rm) =>
+              (* calls of one function with two arities: the link refuses ~1 *)
+              if m <> n then (~1, masks, rm)
+              else (m, ListPair.map (fn (mask, r) => orMask (mask, bit r)) (masks, reps), orMask (rm, bit r))
+      in importCalls := IntMap.insert (!importCalls, fid, e) end
+  fun expectRead (ix : int, r : L.rep) : unit =
+    globalReads := IntMap.insert (!globalReads, ix, orMask (case IntMap.find (!globalReads, ix) of SOME m => m | NONE => 0, bit r))
 
   fun func (f : L.func) : C.func =
     let
@@ -180,6 +212,8 @@ struct
       fun labelOf i = Vector.sub (labels, i)
       fun op' (opc, args) = emit (C.Op (opc, args))
 
+      (* what the register of x holds: the scratch, where x has none, anything *)
+      fun regRepOf x = if Array.sub (regs, x) < 0 then L.RAny else repOf x
       fun operation (x, oper) =
         let val d = reg x
         in
@@ -190,13 +224,15 @@ struct
           | L.Const c => op' (R.CONST, [d, C.constIdx c])
           | L.Unit => op' (R.UNIT, [d])
           | L.Con0 t => op' (R.CON0, [d, t])
-          | L.Global g => op' (R.GLOBAL, [d, C.globalIdx g])
-          | L.Slot g => op' (R.GLOBAL, [d, C.globalIdx g])
+          | L.Global g => (expectRead (C.globalIdx g, regRepOf x); op' (R.GLOBAL, [d, C.globalIdx g]))
+          | L.Slot g => (expectRead (C.globalIdx g, regRepOf x); op' (R.GLOBAL, [d, C.globalIdx g]))
           | L.SetGlobal (g, v) => (op' (R.SETGLOBAL, [C.globalIdx g, reg v]); if usesOf x > 0 then op' (R.UNIT, [d]) else ())
           | L.Env i => op' (R.ENV, [d, i])
           | L.Self => op' (R.SELF, [d])
           | L.Call (fv, a) => (op' (R.CALL, [reg fv, reg a]); op' (R.RESULT, [d]))
-          | L.CallK (fid, vs) => (op' (R.CALLK, fid :: List.length vs :: List.map reg vs); op' (R.RESULT, [d]))
+          | L.CallK (fid, vs) =>
+              (expectCall (fid, List.map repOf vs, regRepOf x);
+               op' (R.CALLK, fid :: List.length vs :: List.map reg vs); op' (R.RESULT, [d]))
           | L.Prim (p, vs) =>
               if List.exists (fn q => q = p) imagePrims then
                 (op' (R.PRIMPUSH, C.primIdx p :: List.map reg vs); op' (R.RESULT, [d]))
@@ -300,7 +336,9 @@ struct
              end
          | L.Return v => op' (R.RET, [reg v])
          | L.TailCall (fv, a) => op' (R.TAILCALL, [reg fv, reg a])
-         | L.TailCallK (fid, vs) => op' (R.TAILCALLK, fid :: List.length vs :: List.map reg vs)
+         | L.TailCallK (fid, vs) =>
+             (expectCall (fid, List.map repOf vs, #result f);
+              op' (R.TAILCALLK, fid :: List.length vs :: List.map reg vs))
          | L.Raise v => op' (R.RAISE, [reg v]))
       val () = Vector.appi block blocks
       (* -g: each variable's register, and the byte where it has been set *)
@@ -331,18 +369,31 @@ struct
                                                                  (L.succs (#transfer bl))
                                                      andalso blockIndex (#label bl) >= i)
                                                   blocks
-                                 then labelOf i else ~1))}}
+                                 then labelOf i else ~1)),
+                    (* what Lower declares it returns and its closures capture *)
+                    result = L.repCode (#result f),
+                    captures = List.map L.repCode (#captures f)}}
     end
 
   fun program (p : L.program) : C.program =
     let
       val () = C.reset ()
       val () = Lower.debugRegs := []
+      val () = (ownFuncs := List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, ())) IntMap.empty p;
+                importCalls := IntMap.empty; globalReads := IntMap.empty)
       val funcs = List.map func p
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
+      (* what each global holds, as Lower declares it, by its index here *)
+      val greps = Array.array (!C.nglobals, L.repCode L.RAny)
+      val () = IntMap.appi (fn (g, ix) => case IntMap.find (!Lower.globalReps, g) of
+                                            SOME r => Array.update (greps, ix, L.repCode r)
+                                          | NONE => ())
+                           (!C.globals)
     in
       {consts = List.rev (!C.consts), nglobals = !C.nglobals, funcs = sorted, files = List.rev (!C.files),
        inlines = List.rev (!C.inlines),
-       nlabels = !C.nextLabel}
+       nlabels = !C.nextLabel, globalReps = Array.foldr (op ::) [] greps,
+       expects = {calls = IntMap.foldri (fn (fid, (n, masks, rm), acc) => (fid, n, masks, rm) :: acc) [] (!importCalls),
+                  reads = List.tabulate (!C.nglobals, fn ix => case IntMap.find (!globalReads, ix) of SOME m => m | NONE => 0)}}
     end
 end

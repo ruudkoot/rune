@@ -13,6 +13,8 @@ files
   frontend/lexer.sml
   elab/elabstats.sml
   elab/types.sml
+  elab/sourcety.sml
+  elab/witness.sml
   core/ty.sml
   elab/overload.sml
   frontend/ast.sml
@@ -25,6 +27,7 @@ files
   backend/opcodes.sml
   backend/prims.sml
   elab/elaborate.sml
+  elab/astlint.sml
   driver/basismanifest.sml
   driver/libraryscope.sml
   driver/buildfile.sml

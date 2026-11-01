@@ -333,7 +333,7 @@ struct
       val hit =
         case if UnitCache.verifying () then NONE else found of
           NONE => NONE
-        | SOME {pickle, identity, code, warnings, file = was, others, ...} =>
+        | SOME {pickle, identity, code, warnings, file = was, others, schemes, ...} =>
           let val at = UnitBasis.counters ()
           in
             (let
@@ -345,6 +345,9 @@ struct
                            | NONE => []
                val u = UnitBasis.remapKeys (u, remap)
                val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+               (* the schemes of what it names of other units, against those
+                  units now (UnitBasis.schemesHold) *)
+               val () = if List.null remap then UnitBasis.checkSchemes schemes else ()
                (* a file used again, the same text against the same units:
                   loaded and linked under an identity of its own, that what
                   named the first's globals still does (UnitBasis.unused) *)
@@ -363,6 +366,7 @@ struct
              end)
             handle Pickle.Bad _ => (UnitBasis.abandon at; NONE)
                  | UnitBasis.Missing _ => (UnitBasis.abandon at; NONE)
+                 | UnitBasis.SchemeChanged _ => (UnitBasis.abandon at; NONE)
                  | UnitFile.Bad _ => (UnitBasis.abandon at; NONE)
                  | Fail _ => (UnitBasis.abandon at; NONE)
           end
@@ -388,10 +392,17 @@ struct
                   val errors = !Error.errors
                   val recovering = !Elaborate.recover
                   val () = Elaborate.recover := true
-                  val () = Elaborate.elabTop (here, decs) handle e => (Elaborate.recover := recovering; raise e)
+                  (* AstLint at level 2, as rune runs it (docs/ir.md, AstLint):
+                     the input's declarations, not the echo's *)
+                  val () = Elaborate.lintRecords := Pass.linting' 2
+                  val () = Elaborate.elabTop (here, decs)
+                           handle e => (Elaborate.recover := recovering; Elaborate.lintRecords := false; raise e)
                   val () = Elaborate.recover := recovering
-                  val () = if !Error.errors > errors then (Error.warnings := []; raise Reported) else ()
+                  val () = if !Error.errors > errors then (Error.warnings := []; Elaborate.lintRecords := false;
+                                                            Elaborate.forgetLintRecords (); raise Reported) else ()
                   val () = Elaborate.finish ()
+                  val () = Pass.checkAt ("astlint", 2) AstLint.check () handle e => (Elaborate.lintRecords := false; raise e)
+                  val () = Elaborate.lintRecords := false
                   val delta = !Elaborate.lastDelta
                   val () = warnings := map Error.formatWarning (List.rev (!Error.warnings))
                   val () = Error.flushWarnings ()
@@ -421,6 +432,8 @@ struct
            Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text, mode = srcMode,
                                  decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used, fresh = true}
          val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
+         (* its code read back, at level 2 *)
+         val () = Pass.checkAt ("code-rt", 2) (Pipeline.codeRoundTrip (Pipeline.fingerprint (), bytes)) code
          (* linked as it was loaded, under an identity of its own where it
             is a file used again (Pipeline.unitThrough's fresh) *)
          val linked = if #identity (#unit loaded) = #identity code then bytes
@@ -440,7 +453,8 @@ struct
              SOME (d, c, key) =>
                UnitCache.store (d, c, key, {usages = usages, warnings = !warnings, file = file,
                                             others = UnitBasis.sourcesOf (code, file), pickle = #pickle exported,
-                                            identity = #identity exported, code = bytes, mid = ""})
+                                            identity = #identity exported, code = bytes, mid = "",
+                                            level = UnitCache.level (), schemes = UnitBasis.importedSchemes code})
            | NONE => ()
        in
          Source.unregister echoName;

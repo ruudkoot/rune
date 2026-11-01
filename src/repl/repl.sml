@@ -153,14 +153,21 @@ struct
     (Lexer.report name; runGroups (topdecs decs, name, text, cached, stopping))
 
   (* The declarations as units: a top-level declaration each -- those to a
-     `;` or the end -- where flexible records are settled there, as Poly/ML
-     compiles and runs a topdec at once (--flex-records, docs/repl.md);
-     else each declaration *)
+     `;` or the end -- where flexible records, overloading or the free type
+     variables are settled there, as Poly/ML compiles and runs a topdec at
+     once (--flex-records, --overloading, --free-tyvars; docs/repl.md);
+     else each declaration. Under --free-tyvars=later and later-monotype
+     the end of the input is the end of what is elaborated together: a
+     variable is not kept open for the inputs after it, which would need
+     its binding by a later input undone where that input fails, and a
+     unit's basis that holds a variable *)
   and topdecs (decs : Ast.dec list) : Ast.dec list list =
-    case !Elaborate.flexRecords of
-      Elaborate.FlexTopdec => groupTopdecs decs
-    | Elaborate.FlexTopdecMono => groupTopdecs decs
-    | _ => List.map (fn d => [d]) decs
+    case (!Elaborate.flexRecords, !Elaborate.overloading, !Elaborate.freeTyvars) of
+      (Elaborate.FlexTopdec, _, _) => groupTopdecs decs
+    | (Elaborate.FlexTopdecMono, _, _) => groupTopdecs decs
+    | (_, Elaborate.OverTopdec, _) => groupTopdecs decs
+    | (_, _, Elaborate.FreeDummy) => List.map (fn d => [d]) decs
+    | _ => groupTopdecs decs
   and groupTopdecs decs =
     let
       fun go ([], [], acc) = List.rev acc
@@ -644,10 +651,10 @@ struct
 
   (* The compiler's settings for what the session compiles, before the
      REPL's own arguments (rune-repl.load.rbc LIST OPTION... [--make-image
-     IMAGE]): --no-inline-functors and --lint. They are the image's: they
-     hold for every session started from the image. The functors and
-     functions the Basis Library's build file marks to be inlined are, but
-     with --no-inline-functors. *)
+     IMAGE]): --no-inline-functors and --lint (--lint=LEVEL). They are the
+     image's: they hold for every session started from the image. The
+     functors and functions the Basis Library's build file marks to be
+     inlined are, but with --no-inline-functors. *)
   fun configure (args : string list, lib : string) : string list =
     let
       val noInline = ref false
@@ -656,8 +663,12 @@ struct
               (noInline := true; Elaborate.inlineFunctors := StringMap.empty; Elaborate.inlineValues := StringMap.empty; go rest)
             (* every pass's output checked, as rune --lint checks it (the
                globals of the units before a declaration typed for the lint
-               by UnitBasis.startSession, as in a build in units) *)
-            else if a = "--lint" then (Pass.lint := true; go rest)
+               by UnitBasis.startSession, as in a build in units); the
+               REPL's own level is 1, the boundaries *)
+            else if a = "--lint" then (Pass.lintGiven := SOME 2; go rest)
+            else if String.isPrefix "--lint=" a andalso
+                    List.exists (fn l => l = String.extract (a, 7, NONE)) ["off", "0", "1", "2", "3"]
+            then (Pass.lintGiven := Pass.levelOf (String.extract (a, 7, NONE)); go rest)
             else a :: rest
         | go [] = []
       val rest = go args

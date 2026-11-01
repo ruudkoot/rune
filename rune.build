@@ -23,6 +23,11 @@ files
 end
 use lib/compiler/internal.build
 files
+  src/isa/isa.sml
+  src/isa/stack.sml
+  src/opt/rbc.sml
+  src/opt/rbccheck.sml
+  src/driver/stackcheck.sml
   src/driver/options.sml
   src/driver/parallel.sml
   src/driver/main.sml

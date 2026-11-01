@@ -348,6 +348,40 @@ struct
         val ()=check ("signature selects the lexical function rather than a same-name outer binding",case localCall of
           SOME call => #arguments call=[["bool"]] | NONE => false)
     in A.close context;C.close parent end
+  (* the editor's types (the linting roadmap's M14): a type at every node,
+     the application where an infix application and its tuple share a
+     span, a binder's own generalised variables marked, one printer for the
+     unit, and the batch query agreeing *)
+  fun nodeTypes () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="node-types"})
+        val text="fun id x=x\nfun pair x=(x,x)\nval p=pair 1\nval q=let val r=p in #1 r end\n"
+          ^ "datatype t=C of int*int\nfun f (C (a,b))=a+b\nval s=1 + 2\nval g=fn y=>id y\n"
+        val snapshot=analyze (context,[input ("nodes.sml",text,"1")])
+        (* the offset of the k-th occurrence of a piece of the text, and some *)
+        fun at (piece,k)=
+          let fun go (from,k)=let val (prefix,rest)=Substring.position piece (Substring.extract (text,from,NONE))
+                                  val here=from+Substring.size prefix
+                              in if Substring.isEmpty rest then raise Fail ("no " ^ piece) else if k=1 then here else go (here+1,k-1) end
+          in go (0,k) end
+        fun hover offset=A.typeAtOccurrence (snapshot,{ordinal=0,offset=offset})
+        val ()=check ("node types: no diagnostic",null (A.diagnostics snapshot))
+        val ()=check ("a binder shows its own generalised variables marked",hover (at ("id",1))=SOME "'a. 'a -> 'a")
+        val ()=check ("a lambda's variable is not marked",hover (at ("x=x",1))=SOME "'a")
+        val ()=check ("one printer for the unit: the next variable named after the first",
+          hover (at ("x,x",1))=SOME "'b" andalso hover (at ("pair",1))=SOME "'b. 'b -> 'b * 'b")
+        val ()=check ("a tuple's type",hover (at ("(x,x)",1))=SOME "'b * 'b")
+        val ()=check ("a let's type at its keyword",hover (at ("let",1))=SOME "int")
+        val ()=check ("a constructor pattern's type",hover (at ("C (a",1))=SOME "t")
+        val ()=check ("the application, not its tuple, where they share a span",hover (at (" + 2",1))=SOME "int")
+        val ()=check ("an operator's own type",hover (at ("+ 2",1))=SOME "int * int -> int")
+        val _=C.compileText (parent,{file="nodes.sml",text=text})
+        (* where no type variable is shown: a query of its own names its first 'a *)
+        val ()=check ("the batch query agrees",List.all (fn (piece,k) =>
+          C.typeAt (parent,{file="nodes.sml",offset=at (piece,k)})=hover (at (piece,k)))
+          [("let",1),("C (a",1),(" + 2",1),("+ 2",1),("p=",1)]
+          andalso C.typeAt (parent,{file="nodes.sml",offset=at ("(x,x)",1)})=SOME "'a * 'a")
+    in A.close context;C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -366,6 +400,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "batch-compiler-oracle" CompilerAnalysisTests.batchOracle,
      Test.it "repeated-source-contexts" CompilerAnalysisTests.repeatedSources,
      Test.it "lexical-visibility" CompilerAnalysisTests.lexicalVisibility,
-     Test.it "call-signatures" CompilerAnalysisTests.signatures]
+     Test.it "call-signatures" CompilerAnalysisTests.signatures,
+     Test.it "node-types" CompilerAnalysisTests.nodeTypes]
 end)
 val ()=CompilerAnalysisTestMain.main ()

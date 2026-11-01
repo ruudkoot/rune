@@ -10,9 +10,15 @@
      point, in the same function, with an argument of each parameter's type;
    * every right-hand side of a letrec is a function;
    * it is well typed (Ty): every node has the type its parts give it, a use
-     of a variable at an instance (Inst) is one of its scheme, a
+     of a variable at an instance (Inst) is one of its scheme, which gives
+     each type variable fixed where the variable is bound (one of a
+     variable a Fn or a Join binds around it, monomorphic) as itself, a
      constructor is one of the datatype it builds, and an argument, a
-     binding and a branch have the type they must.
+     binding and a branch have the type they must;
+   * a constant is of its type's kind and range, a primitive's type is an
+     instance of its description, an exception's payload has its
+     argument's type, and a cast the compiler makes is of its origin's
+     kind (IrRules; linting roadmap, M4).
    A breach is a bug of the compiler, raised as Error.Bug. *)
 structure LambdaLint =
 struct
@@ -56,6 +62,25 @@ struct
          is in tail position of a Try's body, and the join points a Jump here
          is in tail position of the scope of, with their parameters' types *)
       val no : bool * Ty.ty list IntMap.map = (false, IntMap.empty)
+      (* the generic variables fixed here -- those of the types of the
+         variables a Fn or a Join binds around it, which are monomorphic --
+         and where each variable was bound, with its own where a Fn binds it
+         and, in its own right-hand side, a LetRec's: a use of a variable at
+         an instance gives each of those as itself (the linting roadmap's
+         E10, M5) *)
+      val fixed : unit IntMap.map ref = ref IntMap.empty
+      val fixedAt : unit IntMap.map IntTable.table = IntTable.table 256
+      fun addGens (m, t) = List.foldl (fn (g, m) => IntMap.insert (m, g, ())) m (Ty.gens t)
+      fun fixedIn (m, f) = let val saved = !fixed in fixed := m; f () before fixed := saved end
+      fun unfixed (x, s, t, sigma) =
+        case IntTable.find (fixedAt, x) of
+          NONE => ()
+        | SOME fx =>
+            case List.find (fn (g, u) => IntMap.member (fx, g) andalso not (Ty.equal (u, Ty.gen g))) (IntMap.listItemsi sigma) of
+              NONE => ()
+            | SOME (g, u) =>
+                Error.bug ("v" ^ Int.toString x ^ " of type " ^ Ty.toString s ^ " used at " ^ Ty.toString t ^ ", which makes 'a"
+                           ^ Int.toString g ^ ", fixed where v" ^ Int.toString x ^ " is bound, " ^ Ty.toString u)
       fun go (e, scope : Ty.ty IntMap.map, tail : bool * Ty.ty list IntMap.map) : found =
         case e of
           Var x =>
@@ -65,17 +90,22 @@ struct
         | Global g => T (globalTy g)
         | Inst (a, t) =>
             (case go (a, scope, no) of
-               T s => if isSome (Ty.match (s, t)) then T t
-                      else Error.bug ("a use at " ^ Ty.toString t ^ " of what has type " ^ Ty.toString s)
+               T s =>
+                 (case Ty.match (s, t) of
+                    SOME sigma => ((case unmark a of Var x => unfixed (x, s, t, sigma) | _ => ()); T t)
+                  | NONE => Error.bug ("a use at " ^ Ty.toString t ^ " of what has type " ^ Ty.toString s))
              | Never => T t)
-        | Const (_, t) => T t
+        | Const (c, t) => (Option.app Error.bug (IrRules.const (c, t)); T t)
         | Unit => T Ty.unit
         | Fn (x, t, b) =>
             (case Ty.view t of
                Ty.Arrow (d, r) =>
-                 (bind x;
-                  expect ("the body of a function", go (b, IntMap.insert (scope, x, d), no), r);
-                  T t)
+                 let val fx = addGens (!fixed, d)
+                 in
+                   bind x; IntTable.insert (fixedAt, x, fx);
+                   fixedIn (fx, fn () => expect ("the body of a function", go (b, IntMap.insert (scope, x, d), no), r));
+                   T t
+                 end
              | _ => Error.bug ("a function of type " ^ Ty.toString t))
         | App (f, a) =>
             (case go (f, scope, no) of
@@ -86,7 +116,7 @@ struct
              | Never => (ignore (go (a, scope, no)); Never))
         | Let (x, a, b) =>
             (case go (a, scope, no) of
-               T t => (bind x; go (b, IntMap.insert (scope, x, t), tail))
+               T t => (bind x; IntTable.insert (fixedAt, x, !fixed); go (b, IntMap.insert (scope, x, t), tail))
              | Never =>
                  (* nothing after it runs, but it is checked with the type the
                     variable was declared with, where it was *)
@@ -98,11 +128,15 @@ struct
             let
               val () = List.app (fn (x, _, _) => bind x) bs
               val scope' = List.foldl (fn ((x, t, _), m) => IntMap.insert (m, x, t)) scope bs
+              (* monomorphic in their own right-hand sides *)
+              val () = List.app (fn (x, t, _) => IntTable.insert (fixedAt, x, addGens (!fixed, t))) bs
+              val () =
+                List.app (fn (x, t, r) =>
+                            if isFn r then expect ("the letrec of v" ^ Int.toString x, go (r, scope', no), t)
+                            else Error.bug ("the letrec of v" ^ Int.toString x ^ " binds what is no function"))
+                         bs
+              val () = List.app (fn (x, _, _) => IntTable.insert (fixedAt, x, !fixed)) bs
             in
-              List.app (fn (x, t, r) =>
-                          if isFn r then expect ("the letrec of v" ^ Int.toString x, go (r, scope', no), t)
-                          else Error.bug ("the letrec of v" ^ Int.toString x ^ " binds what is no function"))
-                       bs;
               go (b, scope', tail)
             end
         | Seq (a, b) => (ignore (go (a, scope, no)); go (b, scope, tail))
@@ -153,7 +187,9 @@ struct
             (bind j;
              List.app (fn (x, _) => bind x) ps;
              let
-               val found = go (b, List.foldl (fn ((x, t), m) => IntMap.insert (m, x, t)) scope ps, tail)
+               val fx = List.foldl (fn ((_, t), m) => addGens (m, t)) (!fixed) ps
+               val () = List.app (fn (x, _) => IntTable.insert (fixedAt, x, fx)) ps
+               val found = fixedIn (fx, fn () => go (b, List.foldl (fn ((x, t), m) => IntMap.insert (m, x, t)) scope ps, tail))
                val inScope = go (sc, scope, (#1 tail, IntMap.insert (#2 tail, j, List.map #2 ps)))
              in join ("a join point and its scope", found, inScope) end)
         | Jump (j, args) =>
@@ -173,13 +209,21 @@ struct
         | BuiltinExn _ => T Ty.exnCon
         | MkExn (c, p) =>
             (expect ("an exception constructor", go (c, scope, no), Ty.exnCon);
-             ignore (go (p, scope, no));
+             case (unmark c, go (p, scope, no)) of
+               (Var x, T t) => Option.app Error.bug (IrRules.payload (x, t))
+             | (Global g, T t) => Option.app Error.bug (IrRules.payload (g, t))
+             | _ => ();
              T Ty.exn)
         | ExnCon a => (expect ("an exception", go (a, scope, no), Ty.exn); T Ty.exnCon)
         | ExnArg (t, a) => (expect ("an exception", go (a, scope, no), Ty.exn); T t)
         | Prim (p, SOME t, args) =>
             let
-              val found = List.map (fn e => go (e, scope, no)) args
+              (* open_layout's descriptor is a CInt given its datatype *)
+              val layout = p = "open_layout"
+              val found = List.map (fn e => case (layout, unmark e) of
+                                              (true, Const (_, t)) => T t
+                                            | _ => go (e, scope, no)) args
+              val () = Option.app Error.bug (IrRules.use (p, t))
             in
               case Ty.view t of
                 Ty.Arrow (d, r) =>

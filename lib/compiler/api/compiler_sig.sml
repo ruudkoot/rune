@@ -24,10 +24,12 @@ sig
 
      Supported flags are `--target=registers`, `--target=stack`,
      `--allow-prim`, `--unicode`, `--unicode=utf8`, `--unicode=latin1` and
-     `--library NAME` and `--no-inline-functors` (docs/build.md, Inline
-     functors and functions). Unknown flags
-     raise `Failed`. The defaults are register bytecode, ASCII source and
-     no additional libraries. *)
+     `--library NAME`, `--no-inline-functors` (docs/build.md, Inline
+     functors and functions), `--overloading=MODE` and `--free-tyvars=MODE`
+     (docs/language.md, Overloading and Free type variables). Unknown flags
+     and modes raise `Failed`. The defaults are register bytecode, ASCII
+     source, no additional libraries, `--overloading=declaration` and
+     `--free-tyvars=refuse`. *)
   val session : {lib : string option, flags : string list} -> session
   (* `close session` releases its retained compilation history.
 

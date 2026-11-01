@@ -180,7 +180,21 @@ struct
         case IntTable.find (t, x) of
           SOME y => y
         | NONE => let val y = base + !n in IntTable.insert (t, x, y); n := !n + 1; y end
-      val stamp = number (stamps, nstamps)
+      (* the exceptions renamed, whose arguments are registered under their
+         new names once the types are (Ty.copyExn), so that MidLint checks
+         MkExn in the program renamed too *)
+      val exns : (int * int) list ref = ref []
+      val registering = Pass.linting' 1
+      fun stamp x =
+        case IntTable.find (stamps, x) of
+          SOME y => y
+        | NONE =>
+            let val y = number (stamps, nstamps) x
+            in
+              if registering andalso (isSome (IntTable.find (Ty.exnArgs, x)) orelse isSome (IntTable.find (Ty.exnCopies, x)))
+              then exns := (x, y) :: !exns else ();
+              y
+            end
       val tvar = number (tvars, ntvars)
       (* the datatypes met, in the order met, to be entered again *)
       val met : (int * int) list ref = ref []
@@ -195,6 +209,7 @@ struct
       val p' = rename {stamp = stamp, tycon = tycon, tvar = tvar} p
       (* after p's, which calls tycon first for what p names *)
       val ty = renamer {tycon = tycon, tvar = tvar}
+      val () = List.app (fn (x, y) => Ty.copyExn (x, y, ty)) (List.rev (!exns))
       (* each datatype met entered under its new name, its constructors'
          types renamed too: which may meet more, until none comes. They are
          entered once all are met: entering one makes Ty work out the extra
@@ -230,5 +245,129 @@ struct
       Elaborate.stampCounter := base + !nstamps;
       nextTycon := base + !ntycons;
       p'
+    end
+
+  (* What midcanon made, checked as a renaming of what it was given
+     (linting roadmap, M2), in place of linting it again: p' is p with each
+     name of each kind renamed by a bijection -- a stamp for a variable,
+     global or join point, a type name that is not built in, a type
+     variable -- node for node, and each datatype met entered again under
+     its new name, its parameters and constructors renamed, its layout
+     fixed and opened as the old one's. So p' keeps what p kept, which
+     MidLint checked of p after mid (or after the concatenation of units'
+     Mid). It costs about a third of MidLint (E2). *)
+  fun checkRenaming (p : program) (p' : program) : unit =
+    let
+      fun bug m = Error.bug ("midcanon's renaming: " ^ m)
+      fun bij (fwd : int IntTable.table, back : int IntTable.table, what) (x : int, y : int) =
+        case IntTable.find (fwd, x) of
+          SOME y0 =>
+            if y0 = y then ()
+            else bug (what ^ " " ^ Int.toString x ^ " renamed to " ^ Int.toString y0 ^ " and to " ^ Int.toString y)
+        | NONE =>
+            (case IntTable.find (back, y) of
+               SOME x0 => bug (what ^ " " ^ Int.toString y ^ " is the new name of " ^ Int.toString x0 ^ " and of " ^ Int.toString x)
+             | NONE => (IntTable.insert (fwd, x, y); IntTable.insert (back, y, x)))
+      val stamp = bij (IntTable.table 4096, IntTable.table 4096, "stamp")
+      val tvar = bij (IntTable.table 256, IntTable.table 256, "type variable")
+      val tyconF : int IntTable.table = IntTable.table 256
+      val tycon0 = bij (tyconF, IntTable.table 256, "type name")
+      (* the type names met, whose datatypes are compared after *)
+      val met : (int * int) list ref = ref []
+      fun tycon (s, s') =
+        if builtin s then (if s = s' then () else bug ("the built-in type name " ^ Int.toString s ^ " renamed"))
+        else ((if isSome (IntTable.find (tyconF, s)) then () else met := (s, s') :: !met); tycon0 (s, s'))
+      fun lists f (a, a') = if List.length a = List.length a' then ListPair.app f (a, a') else bug "a list of another length"
+      (* each node of a type once *)
+      val tyDone : int IntTable.table = IntTable.table 256
+      fun ty (t, t') =
+        case IntTable.find (tyDone, Ty.id t) of
+          SOME i => if i = Ty.id t' then () else bug ("type " ^ Ty.toString t ^ " renamed two ways")
+        | NONE =>
+            ((case (Ty.view t, Ty.view t') of
+                (Ty.Gen i, Ty.Gen j) => tvar (i, j)
+              | (Ty.Var i, Ty.Var j) => tvar (i, j)
+              | (Ty.Con (s, n, a), Ty.Con (s', n', a')) =>
+                  (tycon (s, s'); if n = n' then () else bug ("type name " ^ n ^ " renamed " ^ n'); tys (a, a'))
+              | (Ty.Tuple a, Ty.Tuple a') => tys (a, a')
+              | (Ty.Arrow (a, b), Ty.Arrow (a', b')) => (ty (a, a'); ty (b, b'))
+              | (Ty.ExnCon, Ty.ExnCon) => ()
+              | _ => bug ("type " ^ Ty.toString t ^ " made " ^ Ty.toString t'));
+             IntTable.insert (tyDone, Ty.id t, Ty.id t'))
+      and tys (a, a') = lists ty (a, a')
+      fun same (a, b) what = if a = b then () else bug what
+      fun scheme ((vs, t), (vs', t')) = (lists tvar (vs, vs'); ty (t, t'))
+      fun atom (a, a') =
+        case (a, a') of
+          (Var (x, ts), Var (x', ts')) => (stamp (x, x'); tys (ts, ts'))
+        | (Global (x, ts), Global (x', ts')) => (stamp (x, x'); tys (ts, ts'))
+        | (Const (c, t), Const (c', t')) => (same (c, c') "a constant changed"; ty (t, t'))
+        | (Con0 (tag, t), Con0 (tag', t')) => (same (tag, tag') "a tag changed"; ty (t, t'))
+        | (Unit, Unit) => ()
+        | _ => bug "an atom of another kind"
+      val atoms = lists atom
+      fun rhs (r, r') =
+        case (r, r') of
+          (Atom a, Atom a') => atom (a, a')
+        | (App (f, xs), App (f', xs')) => (atom (f, f'); atoms (xs, xs'))
+        | (Prim (n, t, xs), Prim (n', t', xs')) => (same (n, n') "a primitive changed"; ty (t, t'); atoms (xs, xs'))
+        | (Tuple xs, Tuple xs') => atoms (xs, xs')
+        | (Select (i, a), Select (i', a')) => (same (i, i') "a field changed"; atom (a, a'))
+        | (Con (tag, t, a), Con (tag', t', a')) => (same (tag, tag') "a tag changed"; ty (t, t'); atom (a, a'))
+        | (Decon (tag, t, a), Decon (tag', t', a')) => (same (tag, tag') "a tag changed"; ty (t, t'); atom (a, a'))
+        | (ConTag a, ConTag a') => atom (a, a')
+        | (NewExn x, NewExn x') => same (x, x') "an exception's name changed"
+        | (BuiltinExn i, BuiltinExn i') => same (i, i') "a built-in exception changed"
+        | (MkExn (a, b), MkExn (a', b')) => (atom (a, a'); atom (b, b'))
+        | (ExnCon a, ExnCon a') => atom (a, a')
+        | (ExnArg (t, a), ExnArg (t', a')) => (ty (t, t'); atom (a, a'))
+        | (SetGlobal (g, a), SetGlobal (g', a')) => (stamp (g, g'); atom (a, a'))
+        | _ => bug "a right-hand side of another kind"
+      fun params (ps, ps') = lists (fn ((x, t), (x', t')) => (stamp (x, x'); ty (t, t'))) (ps, ps')
+      fun fundef (f : fundef, f' : fundef) =
+        (stamp (#name f, #name f'); lists tvar (#tyvars f, #tyvars f'); params (#params f, #params f');
+         ty (#result f, #result f'); exp (#body f, #body f'))
+      and exp (e, e') =
+        case (e, e') of
+          (Let (x, s, r, b), Let (x', s', r', b')) => (stamp (x, x'); scheme (s, s'); rhs (r, r'); exp (b, b'))
+        | (Fun (fs, b), Fun (fs', b')) => (lists fundef (fs, fs'); exp (b, b'))
+        | (Join (j, ps, b, sc), Join (j', ps', b', sc')) => (stamp (j, j'); params (ps, ps'); exp (b, b'); exp (sc, sc'))
+        | (Jump (j, xs), Jump (j', xs')) => (stamp (j, j'); atoms (xs, xs'))
+        | (If (a, t, f), If (a', t', f')) => (atom (a, a'); exp (t, t'); exp (f, f'))
+        | (Handle (b, x, h), Handle (b', x', h')) => (exp (b, b'); stamp (x, x'); exp (h, h'))
+        | (Raise a, Raise a') => atom (a, a')
+        | (Return r, Return r') => rhs (r, r')
+        | (Mark (pos, b), Mark (pos', b')) => (same (pos, pos') "a position changed"; exp (b, b'))
+        | _ => bug "an expression of another kind"
+      fun def (d, d') =
+        case (d, d') of
+          (Val (g, s, e), Val (g', s', e')) => (stamp (g, g'); scheme (s, s'); exp (e, e'))
+        | (Funs fs, Funs fs') => lists fundef (fs, fs')
+        | (Do (gs, e), Do (gs', e')) => (lists (fn ((g, s), (g', s')) => (stamp (g, g'); scheme (s, s'))) (gs, gs'); exp (e, e'))
+        | _ => bug "a definition of another kind"
+      val () = lists def (p, p')
+      (* each datatype met, under its new name, which may meet more *)
+      fun datatypes () =
+        case !met of
+          [] => ()
+        | (s, s') :: rest =>
+            (met := rest;
+             case (Ty.datatypeOf s, Ty.datatypeOf s') of
+               (SOME {params = ps, cons}, SOME {params = ps', cons = cons'}) =>
+                 (lists tvar (ps, ps');
+                  lists (fn ((tag, n, a), (tag', n', a')) =>
+                           (same (tag, tag') "a constructor's tag changed"; same (n, n') "a constructor's name changed";
+                            case (a, a') of
+                              (SOME t, SOME t') => ty (t, t')
+                            | (NONE, NONE) => ()
+                            | _ => bug ("constructor " ^ n ^ "'s argument came or went"))) (cons, cons'))
+             | (NONE, NONE) => ()
+             | _ => bug ("the datatype of type name " ^ Int.toString s ^ " not entered again as " ^ Int.toString s');
+             if IntMap.find (!Ty.pinned, s) = IntMap.find (!Ty.pinned, s') then ()
+             else bug ("the layout of type name " ^ Int.toString s ^ " not fixed again for " ^ Int.toString s');
+             if Ty.isOpen s = Ty.isOpen s' then () else bug ("type name " ^ Int.toString s ^ " opened otherwise than " ^ Int.toString s');
+             datatypes ())
+    in
+      datatypes ()
     end
 end

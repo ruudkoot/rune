@@ -59,6 +59,21 @@ struct
   exception Reported
   fun failIfReported () = if !Error.errors > 0 then raise Reported else ()
 
+  (* --dump-witnesses: what the elaborator recorded of the input files'
+     nodes, once Elaborate.finish has run; nothing where an error was found *)
+  fun dumpWitnesses () =
+    if not (!Options.dumpWitnesses) orelse !Error.errors > 0 then ()
+    else Witness.dump (fn f => List.exists (fn i => i = f) (!Options.inputs), print)
+
+  (* AstLint (elab/astlint.sml), at --lint=2 and above: what was elaborated
+     checked, once Elaborate.finish has run and before Translate; nothing
+     where an error was found. The elaborator keeps what it reads from the
+     start of the elaboration (lintWanted) *)
+  fun lintWanted () = Elaborate.lintRecords := Pass.linting' 2
+  fun astlint () =
+    if !Error.errors > 0 then Elaborate.forgetLintRecords ()
+    else Pass.checkAt ("astlint", 2) AstLint.check ()
+
   (* the syntax of the program's units, elaborated, when wanted (Serve) *)
   val keepSyntax = ref false
   val keptSyntax : (string * Ast.dec list) list ref = ref []
@@ -141,10 +156,10 @@ struct
           val (prog, fx) = Parser.parseTokensWith (toks, !fixity)
           val () = fixity := fx
           val declared =
-            List.concat (List.map (fn Ast.DStructure (binds, _) => List.map #name binds
-                                    | Ast.DSignature (binds, _) => List.map #name binds
-                                    | Ast.DFunctor (binds, _) => List.map #name binds
-                                    | Ast.DType (binds, _) => List.map #name binds
+            List.concat (List.map (fn Ast.DStructure (binds, _, _) => List.map #name binds
+                                    | Ast.DSignature (binds, _, _) => List.map #name binds
+                                    | Ast.DFunctor (binds, _, _) => List.map #name binds
+                                    | Ast.DType (binds, _, _) => List.map #name binds
                                     | _ => []) prog)
           val () = if sorted declared = sorted (#provides e) then ()
                    else complain (e, "provides " ^ show (sorted (#provides e)) ^ " but declares " ^ show (sorted declared))
@@ -729,6 +744,10 @@ struct
                                    | NONE => []
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
+                       (* the schemes of what it names of other units, as its
+                          compile had them, against those units now, where it
+                          holds by their identities *)
+                       val () = if List.null remap then UnitBasis.checkSchemes (#schemes e) else ()
                        val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at},
                                                                                    SOME identity, remap))
                        (* its source, and those of the functors' bodies it
@@ -750,6 +769,8 @@ struct
                          | Pickle.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
                          | UnitFile.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
                          | UnitBasis.Missing u => (UnitBasis.abandon at; (Miss ("its entry names " ^ u), NONE))
+                         | UnitBasis.SchemeChanged k =>
+                             (UnitBasis.abandon at; (Miss ("its entry had another scheme of " ^ k ^ " than its unit has"), NONE))
                   end
             end
           fun bindHit (l, u, pickle, {warnings, ...} : UnitCache.entry) =
@@ -793,7 +814,8 @@ struct
                    (* a unit's flexible records are settled at its end, and its
                       matches reported (docs/units.md) *)
                    frontStage "elaborate"
-                              (fn () => (Elaborate.allowPrim := allow; Elaborate.elabTop (env, decs); Elaborate.finish (); decs))
+                              (fn () => (Elaborate.allowPrim := allow; lintWanted (); Elaborate.elabTop (env, decs);
+                                         Elaborate.finish (); dumpWitnesses (); astlint (); decs))
                               ()
                  end)
           val () = if !keepSyntax then keptSyntax := (name, decs) :: !keptSyntax else ()
@@ -810,6 +832,8 @@ struct
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text (name, mode), mode = mode, decs = decs,
                                       delta = !Elaborate.lastDelta, fixity = !fixity, used = names, fresh = false}
               val bytes = timed "unit-chunks" (fn () => String.concat (UnitFile.chunks (Pipeline.fingerprint (), code)))
+              (* its code read back, at level 2 *)
+              val () = Pass.checkAt ("code-rt", 2) (Pipeline.codeRoundTrip (Pipeline.fingerprint (), bytes)) code
               (* --pass-stats with RUNE_MEM set: the bytes of its basis and
                  its code (issue 14) *)
               val () = if !Pass.stats andalso isSome (OS.Process.getEnv "RUNE_MEM")
@@ -849,7 +873,8 @@ struct
                      UnitCache.store (dir, config, k,
                                       {usages = usages, warnings = warnings, file = name,
                                        others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
-                                       identity = #identity exported, code = bytes, mid = midBytes}))
+                                       identity = #identity exported, code = bytes, mid = midBytes,
+                                       level = UnitCache.level (), schemes = UnitBasis.importedSchemes code}))
                | _ => ());
               (code, keptPickle (#pickle exported)) :: acc
             end
@@ -992,7 +1017,7 @@ struct
         (* one program of the units' Mid, with the passes of a whole one *)
         let
           val () = refuseDynamic ()
-          val prog = Pass.stage {name = "midcanon", showIn = NONE, show = MidText.show, check = MidLint.check,
+          val prog = Pass.stage {name = "midcanon", showIn = NONE, show = MidText.show, check = fn p => (Pass.checkAt ("midconcat", 1) MidLint.check p; Pipeline.roundTrip "midconcat" p),
                                  size = Mid.size}
                                 MidCanon.concat (List.rev (!mids))
           val () = Pass.whole := true
@@ -1009,7 +1034,11 @@ struct
     let
       val prog = if fingerprint = RegCodes.fingerprint then (Code.opcodeNames := RegCodes.names;
                                                              Link.program (Regs.program, RegCodes.linked, units))
-                 else Link.program (Stack.program, Opcodes.linked, units)
+                 else
+                   (* the stack code linked, checked at level 2 as a whole
+                      program's is after its stack stage (StackCheck) *)
+                   let val p = Link.program (Stack.program, Opcodes.linked, units)
+                   in Pipeline.checkStack p; p end
       (* the units' exports, for a unit loaded into the program later,
          where it may load one *)
       val () = Emit.trailer := (if !keepExports then Emit.unitsSection (!Link.lastExports) else "")
@@ -1144,7 +1173,8 @@ struct
                 val () = Elaborate.elabTop (env,ds)
             in restore prior end
       fun elaborate (progs as (b, l, u, fin)) =
-        (Elaborate.allowPrim := true;
+        (lintWanted ();
+         Elaborate.allowPrim := true;
          Elaborate.elabTop (env, b);
          Elaborate.allowPrim := false;
          List.app elabLibrary (!syntaxGroups);
@@ -1157,6 +1187,8 @@ struct
          Elaborate.wordDefault := Types.wordTy;
          List.app elabFinal (!finalSyntax);
          Elaborate.finish ();
+         dumpWitnesses ();
+         astlint ();
          progs)
       val () = Elaborate.recover := true
       val _ = frontStage "elaborate" elaborate (basisProg, libraryProg, userProg, finalProg)
@@ -1165,9 +1197,9 @@ struct
     in
       if !Options.typecheckOnly then NONE
       else
-        SOME (Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = LambdaLint.check,
+        SOME (Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = Pass.checkAt ("translate", 1) LambdaLint.check,
                           size = Lambda.size}
-                         Translate.transProgram (preludeProg @ userProg @ finalProg))
+                         (fn decs => Fault.lambda ("translate", Translate.transProgram decs)) (preludeProg @ userProg @ finalProg))
     end
 
   (* -O0 is the same stages with no optional pass *)
@@ -1210,6 +1242,40 @@ struct
       OS.Process.success
     end
 
+  (* A breach that a check at a boundary found, at level 1, names where it
+     was found; the compile is then made again at level 2, from the state
+     the options left (CompilerState's baseline, sealed before the first),
+     to name the pass that made it: a compile is deterministic, and no check
+     changes it (docs/ir.md, Levels). Units the first compile stored in the
+     cache are taken from there, linted as they were; a breach in a child
+     of -j is not made again. At level 0 the seal would cost a small
+     compile a seventh (300,000 instructions, budgets compile-hello and
+     compile-expo), so a breach of a check that is always on says to
+     compile at --lint=2 instead (Pass.checkAt). *)
+  fun diagnosed (compile : unit -> OS.Process.status) : OS.Process.status =
+    let val level = Pass.lintLevel ()
+    in
+      if level <> 1 then compile ()
+      else
+        (CompilerState.seal ();
+         compile ()
+         handle Error.Bug msg =>
+           case !Pass.breach of
+             NONE => raise Error.Bug msg
+           | SOME (key, _) =>
+               let
+                 val () = eprintln ("rune: " ^ msg)
+                 val () = eprintln ("rune: found at --lint=" ^ Int.toString level ^ ", after " ^ key
+                                    ^ "; compiling again at --lint=2 to find the pass that made it")
+                 val again = CompilerState.session ()
+               in
+                 (CompilerState.withSession (again, fn () => (Pass.lintGiven := SOME 2; Pass.breach := NONE; compile ()));
+                  eprintln "rune: the compile at --lint=2 found no breach";
+                  OS.Process.failure)
+                 handle Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
+               end)
+    end
+
   fun main (name : string, args : string list) : OS.Process.status =
     let val status = main' (name, args)
     in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
@@ -1229,10 +1295,13 @@ struct
        (List.app println (filesOf (#1 (planOf (valOf (!Options.build))))); OS.Process.success)
      else if !Options.lexCount > 0 then lexCount ()
      else if !Options.dumpTokens then dumpTokens ()
-     else if isSome (!Options.readMid) then readMid (valOf (!Options.readMid))
-     else compile ())
+     else if isSome (!Options.readMid) then diagnosed (fn () => readMid (valOf (!Options.readMid)))
+     else diagnosed compile)
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
+         (* units whose interfaces do not fit at the link, which unit files
+            from other compiles can be (Link.Mismatch) *)
+         | Link.Mismatch msg => (eprintln ("rune: the units do not fit together: " ^ msg); OS.Process.failure)
          | Error.CompileError (sp, msg) => (eprintln (!Error.show ("error", sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
          | Reported => OS.Process.failure
          | Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)

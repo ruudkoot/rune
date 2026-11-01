@@ -96,7 +96,21 @@ struct
           in projections:= !projected;serial:=IntInf.+ (!serial,1);snapshot end
         val result=work () handle error => (busy:=false;raise error)
     in busy:=false;result end
-  fun typeIn (snapshot:snapshot,{file,unit,offset}) =
+  (* the type at a position from its unit's node types (CompilerNodeTypes),
+     worked out in a compiler state of its own; NONE where the unit has
+     none (a library's, a cached analysis's before them) or no node is
+     there *)
+  fun typedAt (snapshot:snapshot,{file,unit,offset}) =
+    let fun mine (entry:E.entry)=case unit of SOME unit => #name entry=unit
+          | NONE => isSome (#typing entry) andalso
+              (let val CompilerSyntax.Syntax {file=name,...}= #syntax entry in name=file end)
+    in case List.find mine (#cache snapshot) of
+         SOME entry => (case #typing entry of
+                          SOME typing => C.owned (fn () => CompilerNodeTypes.typeAt (typing,file,offset))
+                        | NONE => NONE)
+       | NONE => NONE end
+  fun typeIn (snapshot:snapshot,position as {file,unit,offset}) =
+    case typedAt (snapshot,position) of SOME ty => SOME ty | NONE =>
     let fun candidate (fact:fact)= #file fact=file andalso (case unit of NONE => true | SOME unit => #unit fact=unit)
           andalso #start fact<=offset andalso offset< #stop fact
         fun best (fact:fact,NONE)=SOME fact
