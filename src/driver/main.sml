@@ -493,6 +493,31 @@ struct
     in BasisManifest.boundaryNames (toks, List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) names (#free f)) end
     handle Error.CompileError _ => namesOf (toks, names)
 
+  (* What the files of a program name of the libraries that provide names to
+     mention (entries). A name a file uses is one of its tokens, so a file none
+     of whose tokens is a name to mention that the files before it did not
+     mention cannot change the selection, and is not parsed: in a large
+     program most are not, which is most of what this costs a warm build. *)
+  fun usedByAll (entries : entry list, inputs : string list, toks : Lexer.item vector list) : names =
+    case (inputs, toks) of
+      ([path], [tokens]) => usedBy (path, tokens, StringMap.empty)
+    | _ =>
+        let
+          val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.public e))
+                                    StringMap.empty entries
+          fun usable names n = StringMap.member (provided, n) andalso not (StringMap.member (names, n))
+          fun anything names =
+            fn (Token.ID s, _) => usable names s
+             | (Token.LONGID (s :: _, _), _) => usable names s
+             | (Token.DYNAMIC, _) => usable names "RuneDynamic"
+             | (Token.EXPORT, _) => usable names "RuneDynamic"
+             | (Token.VIRTUAL, _) => usable names "RuneDynamic"
+             | _ => false
+        in
+          ListPair.foldl (fn (path, tokens, names) => if Vector.exists (anything names) tokens then usedBy (path, tokens, names) else names)
+                         StringMap.empty (inputs, toks)
+        end
+
   fun compile () : OS.Process.status =
     let
       (* what a compile begins with that is not one of the compiler's roots,
@@ -584,7 +609,7 @@ struct
         else
           let
             val entries = readManifest () @ List.concat (List.map #2 (libraryManifests ()))
-            val mentioned = ListPair.foldl usedBy StringMap.empty (inputs, userToks)
+            val mentioned = usedByAll (entries, inputs, userToks)
             val () = namesLoading := List.exists BasisManifest.namesLoading userToks
             (* A library beside the basis library sees the basis library as a
                program does, through its seals: what the chosen files of the
