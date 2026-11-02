@@ -12,6 +12,19 @@ Open an `.sml`, `.sig` or Rune `.build` file to start the server. Use the
 Server** to restart it. Project discovery and context selection use Rune's
 build files; sources are checked statically, never executed.
 
+Two items in the `{ }` menu beside the language mode show what the server is
+doing:
+
+- **Rune Language Server**, on SML and build files: a spinner while it finds
+  build contexts, checks or sweeps; what it is doing, and the context and units
+  checked and reused. It turns to an error after a worker fails, until a check
+  succeeds. Its link opens the output channel.
+- **Rune Build Context**, on SML files: the context the active file is checked
+  in, how many it has, or that it has none. A file with several has a link,
+  **Rune: Choose Build Context**, to pick another at any time; it shows a warning
+  until one is chosen, also after the prompt is dismissed. A choice lasts until
+  the file is closed or the settings change.
+
 ## Developing Rune and its libraries
 
 The bundled Basis is a fallback. To analyze against a checkout's current
