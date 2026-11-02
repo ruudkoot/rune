@@ -421,7 +421,7 @@ when the scenarios above were all green
   directory or in `units/`, is removed when a compile looks there; a newer
   one, which a compile may be writing, stays.
 * **S87 to S90, a program that does not load units, and one that does.**
-  S87 is the project of `results/E13/bugs/mention-runtime`: `other.sml`
+  S87 is the build-system roadmap's E13, `mention-runtime`: `other.sml`
   declares a structure `Runtime` of its own, and an edit that adds a member
   to `a.sml` takes `b.sml` from the cache, across it. S88 is the same with
   the Basis Library's `Runtime` named for `collect` and `stats`, directly
