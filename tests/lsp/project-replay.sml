@@ -39,7 +39,15 @@ struct
               val ()=C.notify(client,"initialized",object[])
               val ()=C.notify(client,"textDocument/didOpen",object[("textDocument",object[("uri",Json.String(uri source)),
                 ("languageId",Json.String "sml"),("version",Json.int 1),("text",Json.String(read source))])])
-              val params=object[("textDocument",document),("position",object[("line",Json.int 2),("character",Json.int 10)])]
+              (* Positions are found in the text, which grows, as the place of a name. *)
+              fun after (name,offset)=
+                let val text=read source
+                    val (prefix,found)=Substring.position name (Substring.full text)
+                    val ()=if Substring.isEmpty found then raise Fail ("replay source no longer names " ^ name) else ()
+                    val lines=String.fields (fn c=>c= #"\n")(Substring.string prefix)
+                in object[("textDocument",document),("position",object[("line",Json.int(length lines-1)),
+                  ("character",Json.int(size(List.last lines)+offset))])] end
+              val params=after("OS.Process.exit",2)
               val requests=[(10,"textDocument/diagnostic",object[("textDocument",document)]),
                 (11,"textDocument/hover",params),(12,"textDocument/documentSymbol",object[("textDocument",document)]),
                 (13,"textDocument/documentLink",object[("textDocument",document)])]
@@ -49,7 +57,7 @@ struct
               val ()=if List.all(fn answer=>not(isSome(Json.member("error",answer))))answers then () else raise Fail "project replay contains failed requests"
               val hover=timed("warm-hover",fn()=>(C.request(client,20,"textDocument/hover",params);C.result(response 20)))
               val ()=if hover=Json.Null then raise Fail "project hover is empty" else ()
-              val navigation=object[("textDocument",document),("position",object[("line",Json.int 1),("character",Json.int 15)])]
+              val navigation=after("Pass.liveBytes",6)
               val _=timed("warm-hover-navigation",fn()=>(C.request(client,23,"textDocument/hover",navigation);C.result(response 23)))
               val definition=timed("warm-definition",fn()=>(C.request(client,21,"textDocument/definition",navigation);C.result(response 21)))
               fun definitionOk value=case value of Json.Array targets=>List.exists(fn target=>

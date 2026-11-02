@@ -21,7 +21,7 @@ struct
   fun unsettings value : W.settings={targets=List.map untarget (V.array (V.field (value,"targets"))),
     flags=unstrings (V.field (value,"flags")),variables=unpairs (V.field (value,"variables")),
     activeContext=unoptional (V.field (value,"activeContext")),libraryRoot=unoptional (V.field (value,"libraryRoot"))}
-  fun capture (W.Workspace {platform,lib,roots,settings=global,scoped,generation,inputGeneration,choices},documents) =
+  fun capture (W.Workspace {platform,lib,roots,settings=global,scoped,index=_,generation,inputGeneration,choices},documents) =
     V.Object [("platform",V.Bytes (if platform=LspUri.Windows then "windows" else "posix")),("lib",V.Bytes lib),
       ("roots",strings (!roots)),("settings",settings (!global)),("choices",pairs (!choices)),("generation",V.Integer (!generation)),
       ("inputGeneration",V.Integer(!inputGeneration)),
@@ -39,7 +39,7 @@ struct
           settings=ref (unsettings (V.field (value,"settings"))),choices=ref (unpairs (V.field (value,"choices"))),
           generation=ref (V.integer (V.field (value,"generation"))),inputGeneration=ref(V.integer(V.field(value,"inputGeneration"))),scoped=ref (List.map (fn value =>
             case V.array value of [uri,value] => (V.bytes uri,unsettings value) | _ => raise V.Invalid "invalid worker scope")
-            (V.array (V.field (value,"scoped"))))}
+            (V.array (V.field (value,"scoped")))),index=ref NONE}
         val documents=D.new (LspProtocol.Utf8,{maxDocuments=512,maxDocumentBytes=4*1024*1024,maxTotalBytes=64*1024*1024,
           maxDocumentLines=200000,maxTotalLines=500000})
         val ()=List.app (fn value =>

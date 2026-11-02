@@ -54,9 +54,50 @@ struct
         val generation=W.generation workspace
         val rejected=((W.configure (workspace,Json.Object [("sourceMode",Json.String "invalid")]);false) handle W.Invalid _ => true)
     in check ("configuration is atomic",rejected andalso W.generation workspace=generation) end)
+  fun shortNames ()=List.app (fn (name,short) => check (name ^ " shows as " ^ short,W.shortName (U.Posix,name)=short))
+    [("file:///project/one.build","one.build"),("file:///a%20b/two%20words.build","two words.build"),
+     ("rune","rune"),("loose source","loose source"),("untitled:note","untitled:note")]
+  val plain=W.defaults
+  fun named name:W.settings={targets=[],flags=[],variables=[],activeContext=SOME name,libraryRoot=NONE}
+  fun active (workspace,address)= #activeContext (W.configurationFor (workspace,address))
+  fun scopes () =
+    let val workspace=W.new {platform=U.Posix,lib="lib"}
+        val ()=W.assign (workspace,[("file:///a",named "a"),("file:///a/b/",named "b"),("file:///a/b/c",named "c"),
+          ("untitled:note",named "note")])
+        val ()=check ("a scope's own URI",active (workspace,"file:///a/b/c")=SOME "c")
+        val ()=check ("a scope with no native key, by URI",active (workspace,"untitled:note")=SOME "note")
+        val ()=check ("the nearest directory wins",active (workspace,"file:///a/b/d.sml")=SOME "b")
+        val ()=check ("a directory with no slash",active (workspace,"file:///a/z.sml")=SOME "a")
+        val ()=check ("a longer name is not below a directory",active (workspace,"file:///ab/z.sml")=NONE
+          andalso active (workspace,"file:///a/bb")=SOME "a")
+        val ()=check ("outside every scope",active (workspace,"file:///other.sml")=NONE
+          andalso active (workspace,"untitled:other")=NONE)
+        val ()=W.assign (workspace,[("file:///a/./b/",named "older"),("file:///a/b/./",named "newest")])
+        val ()=check ("of two spellings of a directory, the newest",active (workspace,"file:///a/b/d.sml")=SOME "newest")
+        val ()=W.forget (workspace,"file:///a/b/./")
+        val ()=check ("forgetting a spelling leaves the one before it",active (workspace,"file:///a/b/d.sml")=SOME "older")
+        val ()=W.forget (workspace,"file:///a/./b/")
+        val ()=W.forget (workspace,"file:///a/b/")
+        val ()=check ("forgetting a scope goes to the one above it",active (workspace,"file:///a/b/d.sml")=SOME "a")
+        val ()=W.configureAt (workspace,"file:///a/b/d.sml",Json.Object [("activeContext",Json.String "set")])
+        val ()=check ("a scope set alone is found",active (workspace,"file:///a/b/d.sml")=SOME "set")
+        val ()=W.configureAt (workspace,"file:///a/b/d.sml",Json.Null)
+    in check ("a scope cleared alone is gone",active (workspace,"file:///a/b/d.sml")=SOME "a") end
+  (* E20: at 1,001 scopes a call parsed 1,001 URIs and allocated 27 MB. *)
+  fun scopeCost () =
+    let fun cost count =
+          let val workspace=W.new {platform=U.Posix,lib="lib"}
+              val ()=W.assign (workspace,List.tabulate (count,fn i => (uri ("/project/src/file" ^ Int.toString i ^ ".sml"),plain)))
+              val ()=check ("the index is made before it is measured",active (workspace,uri "/project/src/file0.sml")=NONE)
+              val files=List.tabulate (200,fn i => uri ("/project/lib/deep/file" ^ Int.toString i ^ ".sml"))
+              val (_,{bytes,...})=Runtime.profile (fn () => List.app (fn file => ignore (active (workspace,file))) files)
+          in bytes end
+    in check ("a file's configuration does not cost the number of scopes",cost 8000<2*cost 500) end
 end
 structure RuneLspWorkspaceTestMain = Main (struct
   val name="lsp-workspace"
-  val tests=Test.describe "lsp-workspace" [Test.it "contexts" RuneLspWorkspaceTests.contexts]
+  val tests=Test.describe "lsp-workspace" [Test.it "contexts" RuneLspWorkspaceTests.contexts,
+    Test.it "scopes" RuneLspWorkspaceTests.scopes,Test.it "scope-cost" RuneLspWorkspaceTests.scopeCost,
+    Test.it "short-names" RuneLspWorkspaceTests.shortNames]
 end)
 val ()=RuneLspWorkspaceTestMain.main ()

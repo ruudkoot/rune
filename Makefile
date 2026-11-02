@@ -422,10 +422,14 @@ bin/rune-lsp-service-tests.rbc: $(RUNE) $(LSP_SRCS) tests/lsp/service-tests.sml 
 test-lsp-service: bin/rune-lsp-service-tests.rbc
 	bin/runevm bin/rune-lsp-service-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-service-tests.rbc
-test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker test-lsp-service
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker test-lsp-service test-lsp-replay
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
 	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc
+.PHONY: test-lsp-replay
+test-lsp-replay: bin/runelsp bin/rune-lsp-project-replay.rbc
+	@mkdir -p build/lsp
+	bin/runevm bin/rune-lsp-project-replay.rbc "$(abspath bin/runevm)" "$(abspath bin/runelsp.rbc)" "$(CURDIR)" "$(abspath build/lsp/project-replay.json)"
 
 manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/compiler/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
 lib/compiler/MANIFEST: lib/compiler/library.build $(wildcard lib/compiler/*.build lib/compiler/*.sml lib/compiler/*/*.sml) lib/json/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)

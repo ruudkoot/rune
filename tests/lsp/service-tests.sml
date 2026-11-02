@@ -9,14 +9,15 @@ struct
   structure V=RuneLspWorkerWire
   structure R=JsonRpc
   val check=Expect.that
-  fun fixture action =
+  val inlayClient=Json.Object [("textDocument",Json.Object [("inlayHint",Json.Object [("resolveSupport",Json.Object [("properties",Json.Array [Json.String "tooltip"])])])])]
+  val statusClient=Json.Object [("experimental",Json.Object [("rune",Json.Object [("status",Json.Bool true)])])]
+  fun fixtureWith capabilities action =
     let val documents=D.new (LspProtocol.Utf16,{maxDocuments=1,maxDocumentBytes=1000,maxTotalBytes=1000,
           maxDocumentLines=100,maxTotalLines=100})
         val initial=D.openDocument (documents,{uri="untitled:race",languageId="sml",version=1,text="val x=1\n"})
         val workspace=W.new {platform=LspUri.Posix,lib="lib"}
         val output=ref [] : R.message list ref
-        val service=S.new {workspace=workspace,documents=documents,caps=valOf (LspProtocol.capabilities (Json.Object
-          [("textDocument",Json.Object [("inlayHint",Json.Object [("resolveSupport",Json.Object [("properties",Json.Array [Json.String "tooltip"])])])])])),
+        val service=S.new {workspace=workspace,documents=documents,caps=valOf (LspProtocol.capabilities capabilities),
           command="unused-worker",args=[],send=fn value => output:= !output @ [value],log=fn _ => (),discovered=fn _ => (),
           watchedRoots=fn () => []}
         fun request method : S.request={id=R.Number 1,method=method,params=Json.Object [],uri= #uri initial,
@@ -24,6 +25,7 @@ struct
         fun change ()=ignore (D.changeDocument (documents,{uri= #uri initial,version=2,changes=[D.Replace "val x=2\n"]}))
         fun work ()=action {service=service,request=request,change=change,dirty=fn () => W.dirty workspace,output=output}
     in (work () before S.close service) handle error => (S.close service;raise error) end
+  fun fixture action=fixtureWith inlayClient action
   fun changed () = List.app (fn method => fixture (fn {service,request,change,output,...} =>
     let val request=request method
         val ()=change ()
@@ -107,6 +109,76 @@ struct
         val ()=S.handleEvent(service,J.Done(task,V.Object[("snapshot",V.Bytes "shared"),("reports",V.Array [])]))
     in check("queries stay separate from pending workspace pulls",case (!queue,!background) of
       ([first],[second])=> (case (#data first,#data second) of (S.Query _,S.Workspace _)=>true | _=>false) | _=>false) end)
+  fun statuses output=List.mapPartial (fn R.Notification {method="rune/status",params=SOME value} => SOME value | _ => NONE) (!output)
+  fun field (value,name)=valOf (Json.member (name,value))
+  fun failedStatus ()=fixtureWith statusClient (fn {service,request,output,...}=>
+    let val S.Service {statusAt,...}=service
+        fun report ()=(statusAt:=Time.zeroTime;S.reportStatus service)
+        val ()=report ()
+        val pending=request "textDocument/hover"
+        val task=S.Check {uri= #uri pending,revision= #revision pending,generation= #generation pending,request=NONE}
+        val ()=S.handleEvent (service,J.Failed (task,"analysis worker exceeded its deadline\n  worker PID 1"))
+        val ()=report ()
+        val failed=List.last (statuses output)
+        val ()=check ("a worker's failure is an error, with its reason",field (failed,"severity")=Json.String "error"
+          andalso field (failed,"detail")=Json.String "analysis worker exceeded its deadline")
+        val ()=S.handleEvent (service,J.Done (S.Query (request "textDocument/hover"),V.json Json.Null))
+        val ()=report ()
+        val ()=check ("a query does not clear it",field (List.last (statuses output),"severity")=Json.String "error")
+        val ()=S.handleEvent (service,J.Failed (task,"a second failure\n  worker PID 2"))
+        val ()=report ()
+        val ()=check ("the latest failure shows",field (List.last (statuses output),"detail")=Json.String "a second failure")
+        val ()=S.handleEvent (service,J.Done (task,V.Object [("snapshot",V.Bytes "s"),("reports",V.Array [])]))
+        val ()=report ()
+    in check ("a check that succeeds clears it",field (List.last (statuses output),"severity")=Json.String "information") end)
+  fun lostWorker ()=fixtureWith statusClient (fn {service,output,...}=>
+    let val S.Service {statusAt,jobs=J.Jobs {queue,...},...}=service
+        fun hover id=ignore (S.request (service,{id=R.Number id,method="textDocument/hover",params=SOME (Json.Object
+          [("textDocument",Json.Object [("uri",Json.String "untitled:race")])])}))
+        val ()=hover 1
+        val task= #data (hd (!queue))
+        val ()=queue:=[]
+        val ()=S.handleEvent (service,J.Done (task,V.Object [("snapshot",V.Bytes "s"),("reports",V.Array [])]))
+        val ()=check ("a query is waiting",case !queue of [job] => (case #data job of S.Query _ => true | _ => false) | _ => false)
+        fun failed ()=List.exists (fn status => field (status,"severity")=Json.String "error") (statuses output)
+        fun settle n=if n=0 orelse failed () then () else
+          (statusAt:=Time.zeroTime;S.pump (service,OS.IO.poll (S.descriptors service,SOME (Time.fromMilliseconds 20)));settle (n-1))
+        val ()=settle 500
+    in check ("a worker lost during a query is an error",failed ()
+         andalso field (List.last (statuses output),"text")=Json.String "Analysis failed") end)
+  fun queryFailure ()=fixtureWith statusClient (fn {service,request,output,...}=>
+    let val S.Service {statusAt,...}=service
+        val ()=S.handleEvent (service,J.Failed (S.Query (request "textDocument/semanticTokens/full"),"semantic token response budget exceeded"))
+        val ()=statusAt:=Time.zeroTime
+        val ()=S.reportStatus service
+    in check ("a query's own failure is not the server's",field (List.last (statuses output),"severity")=Json.String "information") end)
+  fun throttledStatus ()=fixtureWith statusClient (fn {service,output,...}=>
+    let val S.Service {statusAt,...}=service
+        fun count ()=length (statuses output)
+        fun hover id=ignore (S.request (service,{id=R.Number id,method="textDocument/hover",params=SOME (Json.Object
+          [("textDocument",Json.Object [("uri",Json.String "untitled:race")])])}))
+        val ()=S.reportStatus service
+        val ()=check ("the first status goes at once",count ()=1 andalso field (hd (statuses output),"busy")=Json.Bool false)
+        val ()=hover 1
+        val ()=S.reportStatus service
+        val ()=check ("a change inside the interval waits",count ()=1)
+        val ()=statusAt:=Time.zeroTime
+        val ()=S.reportStatus service
+        val ()=check ("it goes when the interval is over",count ()=2 andalso field (List.last (statuses output),"busy")=Json.Bool true)
+        val ()=statusAt:=Time.zeroTime
+        val ()=S.reportStatus service
+    in check ("no change, no message",count ()=2) end)
+  fun quietStatus ()=fixture (fn {service,output,...}=>
+    let val ()=ignore (S.request (service,{id=R.Number 1,method="textDocument/hover",params=SOME (Json.Object
+          [("textDocument",Json.Object [("uri",Json.String "untitled:race")])])}))
+        val S.Service {statusAt,...}=service
+        val ()=statusAt:=Time.zeroTime
+        val ()=S.reportStatus service
+    in check ("a client that did not ask gets no status",null (statuses output)) end)
+  fun sweepStatus ()=fixtureWith statusClient (fn {service,output,...}=>
+    let val ()=ignore (S.request (service,{id=R.Number 1,method="workspace/diagnostic",params=SOME (Json.Object [])}))
+        val ()=S.reportStatus service
+    in check ("a workspace poll is not busy before it plans a sweep",field (hd (statuses output),"busy")=Json.Bool false) end)
 end
 structure RuneLspServiceTestMain=Main (struct
   val name="lsp-service"
@@ -116,6 +188,12 @@ structure RuneLspServiceTestMain=Main (struct
     Test.it "invalid-hint-resolution" RuneLspServiceTests.invalidResolution,
     Test.it "shared-check-cancellation" RuneLspServiceTests.sharedChecks,
     Test.it "failed-check-backoff" RuneLspServiceTests.failedChecks,
-    Test.it "foreground-isolated-from-workspace-pull" RuneLspServiceTests.workspacePriority]
+    Test.it "foreground-isolated-from-workspace-pull" RuneLspServiceTests.workspacePriority,
+    Test.it "status-failure" RuneLspServiceTests.failedStatus,
+    Test.it "status-lost-worker" RuneLspServiceTests.lostWorker,
+    Test.it "status-query-failure" RuneLspServiceTests.queryFailure,
+    Test.it "status-throttled" RuneLspServiceTests.throttledStatus,
+    Test.it "status-unasked" RuneLspServiceTests.quietStatus,
+    Test.it "status-workspace-poll" RuneLspServiceTests.sweepStatus]
 end)
 val ()=RuneLspServiceTestMain.main ()

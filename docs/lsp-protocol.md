@@ -185,6 +185,53 @@ queries. Build ambiguity uses `window/showMessageRequest` actions tied to
 the current document revision and workspace generation; stale choices are
 discarded. Dismissed or unavailable UI never chooses an arbitrary target.
 
+## Status for a client that asks
+
+Three methods of Rune's own, for a client that sets
+`capabilities.experimental.rune.status` or `.context` to `true` in `initialize`.
+The result's `capabilities.experimental.rune` repeats those it will serve.
+A client that sets neither gets no `rune/` message, and `rune/setContext` is an
+unknown method to it.
+
+`rune/status`, a notification, with `status`:
+
+```json
+{"busy": true, "severity": "information", "text": "Checking main.sml",
+ "detail": "application: 12 units checked, 233 reused"}
+```
+
+`severity` is `information` or `error`. The server looks every 250 ms and sends
+this when it differs from the last sent.
+
+`rune/context`, a notification, with `context`, for each open SML document:
+
+```json
+{"uri": "file:///project/shared.sml", "state": "selected",
+ "context": {"id": "...", "label": "one (unit 2)", "name": "one"},
+ "contexts": [{"id": "...", "label": "one (unit 2)", "name": "one"},
+              {"id": "...", "label": "two (unit 2)", "name": "two"}]}
+```
+
+`state` is `selected`, with the context the file is checked in; `unresolved`,
+where it is waiting for a choice; or `none`, for a file in no build, which has
+no contexts. `context` is `null` but when selected. `label` is what a prompt
+shows; `name` is short: a target's name, or the last part of a build's URI. It
+is sent after discovery when the report differs from the last for that URI, and
+at once after a choice. Closing the document ends its reports. A prompt goes to
+such a client as to any other, once.
+
+`rune/setContext`, a request, with `context`:
+
+```json
+{"uri": "file:///project/shared.sml", "context": "..."}
+```
+
+`context` is an `id` from the last `rune/context` for an open `uri`; anything
+else is `InvalidParams`. The result is `null`. The server then treats it as a
+prompt's answer: the choice stands, pending document diagnostics are cancelled
+with `retriggerRequest`, the file is checked and the client's diagnostics and
+presentations refresh.
+
 ## Reusable wire values and inventory
 
 `lib/lsp` has portable integer, position/range, envelope, capability and

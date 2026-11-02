@@ -48,11 +48,11 @@ What it rests on:
 
 ## Status
 
-Decided, and not started. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). The win32 work is out of this roadmap, and is migrated later (D15). Nothing is implemented.
+Decided, and being implemented on this branch. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). The win32 work is out of this roadmap, and is migrated later (D15). *The implementation so far* says what has landed.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
-| M1. The fixes found, and guards | F | M | | not started |
+| M1. The fixes found, and guards | F | M | | the editor's three and the replay landed; the rest in progress |
 | M2. Independent checks of the cache | F | M | D20 | not started |
 | M3. Logical names and the workspace | U | L | D3, D4 | not started |
 | M4. Layers | U | L | D1 | not started |
@@ -70,13 +70,23 @@ Decided, and not started. The owner took every recommendation, D1 to D29, on 202
 | M16. The restriction | S | M | D17 | not started |
 | M17. Keeping what is computed | A | L | D27 | not started |
 | M18. Sidecars and the shared layer | A | L | D1, D27 | not started |
-| M19. Contexts, and the end of the prompt | A | L | D26 | not started |
+| M19. Contexts, and the end of the prompt | A | L | D26 | the two status items landed; the rest not started |
 | M20. The target, in CI | A | M | D28 | not started |
 | M21. Functor signatures | S | L | D22 | not started |
 | M22. Virtual libraries | S | M | D22 | not started |
 | M23. Retire | | S | | not started |
 
 Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no milestone behind it: *Gates*.
+
+### The implementation so far
+
+`make check` on `6fce5270d`, this branch before the first milestone: 22,025 of 22,025, 3 of them skipped, 63 minutes at `JOBS=8`. Each line below is checked the same way on its exact commit.
+
+- **M1's three editor items, and M19's two status items** (`defba4d61`, `make check` 22,025 of 22,025).
+  - `Env.plus` is linear, a token key is compared without structural `=`, and the settings index is scoped, so `configurationFor` is no longer quadratic. `tests/lsp/project-replay.sml` is fixed, and is the target `test-lsp-replay`. The project replay's cost fell from 73.35G to 33.93G instructions, and `enrich` at 1,000 files from 13.07G to 0.041G.
+  - `rune/status`, `rune/context` and `rune/setContext` go only to a client that asks under `experimental`. The extension has both items, `runelsp.chooseContext` and `runelsp.showOutput`. The editor suite ran on 1.106.0 in bubblewrap. Neither a VSIX nor Windows was exercised.
+  - Two narrowings of D26: status is sampled every 250 ms, so shorter work may not show busy, and `docs/language-server.md` says so; a query's own failure does not set Error severity, only a worker's.
+  - Found: `vscode-languageclient` 10.1.2 stops pulling a document after a cancellation with `retriggerRequest: false`, so the extension carries middleware (`editors/vscode/src/status.js:45`). Document symbols are quadratic, which is in M17's free fixes.
 
 ## Found while writing this roadmap
 
@@ -5211,7 +5221,7 @@ The brief: "i don't like the lsp currently asks under which build files it needs
 - **Progress,** on `sml` and `rune-build` files. `busy` while the server discovers, checks or sweeps; `text` what it is doing; `detail` the context and the units checked and reused, which a failure's report already holds (`docs/language-server.md:147-148`). Error severity after a worker fails. Its command opens the output channel. A foreground check shows nowhere else today: `$/progress` goes only to a request that brought a `workDoneToken` (`src/lsp/service.sml:166`, `:283`), and the rest goes to `window/logMessage` (`:275`).
 - **Context,** on `sml` files. `text` the context the active file is checked in, or that it has none; `detail` how many it has. A file with one has no command. A file with several has `runelsp.chooseContext`, a quick pick of them, whose answer takes the path a prompt's answer takes (`src/lsp/controller.sml:161`). An unresolved file shows Warning severity and the same command. A choice lasts as long as it does today.
 - **Why, when there is a prompt:** it shows once. `context` skips a file in `asked` (`src/lsp/controller.sml:46`). A dismissal leaves it there (`controller.sml:157`), unresolved, with nothing on screen. A chosen file is `Selected` from then on (`src/lsp/workspace.sml:197-203`). Only closing it (`controller.sml:107`) or changing settings (`controller.sml:111`) goes back. The prompt stays, for the first ask and for other clients.
-- **The protocol:** `rune/status` and `rune/context` notifications and a request that sets a context, only for a client that asks for them under `experimental` in `initialize`. Other editors see what they see today. Status is throttled, so that it adds no cost a budget can see.
+- **The protocol:** `rune/status` and `rune/context` notifications and a request that sets a context, only for a client that asks for them under `experimental` in `initialize`. Other editors see what they see today. Status is sampled every 250 ms, so that it adds no cost a budget can see (+0.06%), and shorter work may not show busy.
 
 ### D27. The editor's storage
 
@@ -5445,7 +5455,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 ### M17. Keeping what is computed (A; L, about 800; after M1, M3)
 
-* **What:** D27's first step: the prototype's letters `nkfswd`, less the store. The free fixes first: `discover` running `enrich` before every check (`src/lsp/worker.sml:45-48`), completion in an early file re-elaborating every later unit, one progress message per input per check, hover filtering all occurrences, `syntaxAt` per input, `register` quadratic in units. Then names by file, units held between checks, an input elaborated at its own position, usages deciding reuse past a change, a memo of plan and discovery, a query at a position. Origins out of the identity: by reference, resolved at read, is unbuilt, so bindings stay stale under a reused client until it is. Closed units drop syntax and typing, and a request into one opens it first, until M18's sidecars answer it. A compaction for a tree that keeps units loaded (E23: 385 to 472 MiB over 225 edits).
+* **What:** D27's first step: the prototype's letters `nkfswd`, less the store. The free fixes first: `discover` running `enrich` before every check (`src/lsp/worker.sml:45-48`), completion in an early file re-elaborating every later unit, one progress message per input per check, hover filtering all occurrences, `syntaxAt` per input, `register` quadratic in units, and document symbols, quadratic in declarations (`RuneLspOutline.prepare` and `nested`, `src/lsp/outline.sml:8`, `:59`): 1.4 s at 1,000 declarations, 5.2 s at 2,000, past the 30 s deadline at 6,000, so E20's 28,000-line reproducer checks in 3.1 s and then dies on `textDocument/documentSymbol`. Then names by file, units held between checks, an input elaborated at its own position, usages deciding reuse past a change, a memo of plan and discovery, a query at a position. Origins out of the identity: by reference, resolved at read, is unbuilt, so bindings stay stale under a reused client until it is. Closed units drop syntax and typing, and a request into one opens it first, until M18's sidecars answer it. A compaction for a tree that keeps units loaded (E23: 385 to 472 MiB over 225 edits).
 * **Why here, and not after M4:** it needs D3's names, and of D1 only origins out of the identity, which needs no M4 (E23). It is most of what the editor wants, and it should not wait for the rest. E23's order.
 * **Done when:** a leaf comment's p95 is at most 250 ms on `rune.build`, HOL4's closure and the 351k fixture at 512 MiB, a target HOL4 is over today at 0.275 s, and a body edit costs that unit's elaboration, with a replay that measures one; a fresh-analysis oracle over every path stands as a tier, MLton's included; cancellation mid-walk is tested.
 * **Touches:** `lib/compiler/api/{analysis-engine,analysis}.sml`, `lib/compiler/driver/unitbasis.sml`, `src/lsp/{worker,worker-analysis,workspace,projects,service}.sml`, `tests/lsp/`, `tools/lsp/`.
@@ -5544,7 +5554,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
   - declared steps and preprocessors (M15);
   - a canonical plan: `rune --plan FILE` (M9);
   - `--build-list` gives the closure (M1);
-  - `rune/status`, `rune/context` and `runelsp.chooseContext` (M19);
+  - `rune/status`, `rune/context`, `rune/setContext`, `runelsp.chooseContext` and `runelsp.showOutput` (M19);
   - `functor F = _virtual (X : A) : B`, `functor F = _dynamic "path" (X : A) : B` and `_export functor` (M21);
   - virtual modules in a library's header (M22).
 - **What goes:** `group`, `local`, `cache`, the program-level `library` block (M9); `make manifests`, `--basis-index` and `--basis-check` as user-facing steps (M12); `lib/*/MANIFEST`.
