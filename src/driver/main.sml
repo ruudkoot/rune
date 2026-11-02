@@ -890,6 +890,12 @@ struct
       fun deltaOf (before',after)=CompilerBuildContext.delta (buildContext,before',after)
       fun apply (before',change,exports)=CompilerBuildContext.apply (buildContext,before',change,exports)
       val libraryContexts : (string * snapshot) list ref = ref []
+      (* a boundary's exports held to what is inside it; not after an error,
+         or in a child of -j, which skips units, where they may be missing *)
+      fun checkExports (boundary, change, exports) =
+        if !failedBefore orelse isSome (!Parallel.child) then ()
+        else Option.app (fn message => raise Options.Usage message)
+                        (CompilerBuildContext.exportProblem (buildContext, boundary, change, exports))
       fun restoreContext (b : snapshot) =
         (env := #env b; fixity := #fixity b; Elaborate.sigs := #sigs b;
          Elaborate.funs := #funs b; UnitBasis.binders := #binders b)
@@ -913,7 +919,6 @@ struct
                   val acc = List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group
               in restoreContext prior; acc end) acc (entryGroups es)
       val implemented : string list ref = ref []
-      val used : (string * delta) list ref = ref []
       fun elabSteps (steps : step list, acc) = List.foldl elabStep acc steps
       and elabStep (SUnit (p, anns), acc) =
             let
@@ -927,23 +932,33 @@ struct
         | elabStep (SLocal (a, b), acc) =
             let
               val b0 = snap ()
+              val boundary = CompilerBuildContext.enter buildContext
               val acc = elabSteps (a, acc)
+              val () = CompilerBuildContext.pause (buildContext, boundary)
               val b1 = snap ()
               val acc = elabSteps (b, acc)
-            in apply (b0, deltaOf (b1, snap ()), NONE); acc end
+            in
+              CompilerBuildContext.leave (buildContext, boundary, []);
+              apply (b0, deltaOf (b1, snap ()), NONE); acc
+            end
         | elabStep (SLibrary (exports, ds), acc) =
             let
               val b0 = snap ()
+              val boundary = CompilerBuildContext.enter buildContext
               val acc = elabSteps (ds, acc)
-            in apply (b0, deltaOf (b0, snap ()), SOME exports); acc end
+              val change = deltaOf (b0, snap ())
+            in
+              checkExports (boundary, change, exports);
+              CompilerBuildContext.leave (buildContext, boundary, exports);
+              apply (b0, change, SOME exports); acc
+            end
         | elabStep (SUse (p, ds), acc) =
-            (case List.find (fn (q, _) => q = p) (!used) of
-               SOME (_, d) => (apply (snap (), d, NONE); acc)
-             | NONE =>
-                 let
-                   val b1 = snap ()
-                   val acc = elabSteps (ds, acc)
-                 in used := (p, deltaOf (b1, snap ())) :: !used; acc end)
+            if CompilerBuildContext.replay (buildContext, p) then acc
+            else
+              let
+                val b1 = snap ()
+                val acc = elabSteps (ds, acc)
+              in CompilerBuildContext.record (buildContext, p, deltaOf (b1, snap ())); acc end
         | elabStep (SImplements (x, ds), acc) =
             if List.exists (fn y => y = x) (!implemented)
             then raise Options.Usage ("the build gives the virtual module " ^ x ^ " two implementations")
@@ -954,8 +969,12 @@ struct
               let
                 val () = implemented := x :: !implemented
                 val b0 = snap ()
+                val boundary = CompilerBuildContext.enter buildContext
                 val acc = elabSteps (ds, acc)
-              in apply (b0, deltaOf (b0, snap ()), SOME []); acc end
+              in
+                CompilerBuildContext.leave (buildContext, boundary, []);
+                apply (b0, deltaOf (b0, snap ()), SOME []); acc
+              end
       (* -j N: the units before the final ones, each with what it declares
          and uses -- a Basis file's by its MANIFEST, a program's by Deps --
          for Parallel to start children in an order that works *)

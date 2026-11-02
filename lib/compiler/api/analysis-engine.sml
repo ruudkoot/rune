@@ -239,7 +239,6 @@ struct
             let val current:LibraryScope.basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
                 val visible=LibraryScope.restrict (prior,current,exports)
             in env:= #env visible;fixity:=incoming;Elaborate.sigs:= #sigs visible;Elaborate.funs:= #funs visible end end
-        val used=ref [] : (string*CompilerBuildContext.delta) list ref
         val implemented=ref [] : string list ref
         val remaining=ref sources
         val ordinal=ref 0
@@ -255,18 +254,34 @@ struct
                  unit (source,unitName (file,!ordinal),allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true)))
         | CompilerProject.SLocal (a,b) =>
             let val before'=snap ()
+                val boundary=CompilerBuildContext.enter scopes
                 val ()=walk a
+                val ()=CompilerBuildContext.pause (scopes,boundary)
                 val hidden=snap ()
                 val ()=walk b
+                val ()=CompilerBuildContext.leave (scopes,boundary,[])
             in apply (before',delta (hidden,snap ()),NONE) end
         | CompilerProject.SLibrary (exports,children) =>
-            let val before'=snap () val ()=walk children in apply (before',delta (before',snap ()),SOME exports) end
+            let val before'=snap ()
+                val boundary=CompilerBuildContext.enter scopes
+                val ()=walk children
+                val change=delta (before',snap ())
+                val ()=case CompilerBuildContext.exportProblem (scopes,boundary,change,exports) of
+                    NONE => ()
+                  | SOME message => raise Error.CompileError ({file=case sources of source :: _ => #file source | [] => "",
+                                                               start=0,stop=0},message)
+                val ()=CompilerBuildContext.leave (scopes,boundary,exports)
+            in apply (before',change,SOME exports) end
         | CompilerProject.SUse (file,children) =>
-            (case List.find (fn (name,_) => name=file) (!used) of SOME (_,change) => apply (snap (),change,NONE)
-             | NONE => let val before'=snap () val ()=walk children in used:=(file,delta (before',snap ())) :: !used end)
+            if CompilerBuildContext.replay (scopes,file) then () else
+              let val before'=snap () val ()=walk children
+              in CompilerBuildContext.record (scopes,file,delta (before',snap ())) end
         | CompilerProject.SImplements (name,children) =>
             if List.exists (fn prior => prior=name) (!implemented) then raise Fail "duplicate virtual implementation" else
-              let val before'=snap () val ()=implemented:=name :: !implemented val ()=walk children
+              let val before'=snap ()
+                  val boundary=CompilerBuildContext.enter scopes
+                  val ()=implemented:=name :: !implemented val ()=walk children
+                  val ()=CompilerBuildContext.leave (scopes,boundary,[])
               in apply (before',delta (before',snap ()),SOME []) end
         val error=(List.app library (#groups plan);walk steps;
           if null (!remaining) then () else raise Fail "extra ordered project input";NONE) handle Error.CompileError (span,message) =>

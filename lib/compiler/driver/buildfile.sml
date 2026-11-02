@@ -71,6 +71,12 @@ struct
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
                   "libraries", "inline"]
 
+  (* the words `annotate` takes (docs/build.md, Annotations, and A library's
+     build file) *)
+  fun knownAnnotation (a : string) : bool =
+    List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no"]
+    orelse isSome (Source.modeNamed a)
+
   fun parseUsing {path,text,recover,pathAt,wanted} : dec list =
     let
       val ws = ref (lexemes (path,text,recover))
@@ -135,7 +141,12 @@ struct
             in Implements (n, ds) end
         | W "annotate" =>
             let
-              fun anns () = case peek () of SOME (S a) => (ignore (next ()); a :: anns ()) | _ => []
+              fun anns () =
+                case peek () of
+                  SOME (S a) => (ignore (next ());
+                                 if knownAnnotation a orelse recover then () else error ("unknown annotation \"" ^ a ^ "\"");
+                                 a :: anns ())
+                | _ => []
               val a = anns ()
               val () = expect "in"
               val ds = decsUntil ["end"]
