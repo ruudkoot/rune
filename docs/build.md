@@ -268,11 +268,11 @@ byte for byte.
 lib/json/library.build: warning: this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)
 ```
 
-That is the only place it shows. A client cannot act on it, and 26 of this
-tree's libraries have no header yet, which would be a line in every compile
-of a program that uses one and in the output of the tests that hold those
-compiles to what they print; the index runs when the library changes, for the
-person changing it. `--no-warnings` silences it.
+That is the only place it shows. A client cannot act on it, and 31 of this
+tree's libraries have no header yet, 26 written by hand and the 5 generated
+sets, which would be a line in every compile of a program that uses one; the
+index runs when the library changes, for the person changing it.
+`--no-warnings` silences it.
 
 Such a library may keep a boundary of its own in the older form, a `library`
 block around its files, which leaves the rest of its meaning as it is:

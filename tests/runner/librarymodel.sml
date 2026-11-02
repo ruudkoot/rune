@@ -470,6 +470,7 @@ struct
       val seed = ref 7
       fun next n = (seed := (!seed * 1103 + 12345) mod 65536; !seed mod n)
       val agreed = ref 0
+      val built = ref 0
       fun step 0 = ()
         | step k =
             let
@@ -481,9 +482,13 @@ struct
               val agree = (s1 = 0) = (s2 = 0) andalso (s1 <> 0 orelse same (dir ^ "/edited.rbc", dir ^ "/edited-plain.rbc"))
             in
               need (agree, "the cache disagrees after an edit of " ^ file ^ " with " ^ Int.toString k ^ " to go: " ^ log);
-              agreed := !agreed + 1; step (k - 1)
+              agreed := !agreed + 1; if s2 = 0 then built := !built + 1 else (); step (k - 1)
             end
-    in step 40; say ("library model: " ^ Int.toString (!agreed) ^ " edits agree with no cache\n") end
+    in
+      step 40;
+      need (!built >= 10 andalso !built < !agreed, "the edits do not exercise both outcomes");
+      say ("library model: " ^ Int.toString (!agreed) ^ " edits agree with no cache, " ^ Int.toString (!built) ^ " of them a program\n")
+    end
 
   fun run' () =
     (tree (); manifests (); requires (); noHeader (); boundary (); views (); friends (); clashes (); malformed (); holes ();

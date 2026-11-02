@@ -456,6 +456,9 @@ struct
         case names of
           SOME es => List.mapPartial (fn (kind, n) => if kind = "fixity" then NONE else SOME n) es
         | NONE => List.concat (List.map #provides (entriesOf dir))
+      (* in the order they are compiled, which is the order they shadow in *)
+      val dirs = List.foldl (fn (e : entry, ds) => if List.exists (fn d => d = #dir e) ds then ds else ds @ [#dir e]) [] entries
+      val ordered = List.mapPartial (fn d => List.find (fn {dir, ...} => dir = d) imports) dirs
       fun visit (import as {dir, ...} : import, (seen, found)) =
         List.foldl (fn (n, (seen, found)) =>
                        case StringMap.find (seen, n) of
@@ -466,5 +469,5 @@ struct
                            (StringMap.insert (seen, n, dir),
                             if headed dir andalso StringMap.member (basisNames, n) then (n, "", dir) :: found else found))
                    (seen, found) (offered import)
-    in List.rev (#2 (List.foldl visit (StringMap.empty, []) imports)) end
+    in List.rev (#2 (List.foldl visit (StringMap.empty, []) ordered)) end
 end
