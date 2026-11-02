@@ -773,10 +773,9 @@ struct
                              (UnitBasis.abandon at; (Miss ("its entry had another scheme of " ^ k ^ " than its unit has"), NONE))
                   end
             end
-          fun bindHit (l, u, pickle, {warnings, ...} : UnitCache.entry) =
+          fun bindHit (l, u, pickle, {warnings, file = was, ...} : UnitCache.entry) =
             ((* the warnings its compile gave, again *)
-             if !Options.noWarnings then ()
-             else List.app (fn w => TextIO.output (TextIO.stdErr, Diagnostic.showCached w ^ "\n")) warnings;
+             if !Options.noWarnings then () else UnitCache.giveWarnings (warnings, was, name);
              env := Env.plus (!env, #delta l);
              fixity := Fixity.extend (!fixity, #directives l);
              UnitBasis.bind l;
@@ -821,7 +820,7 @@ struct
           val () = if !keepSyntax then keptSyntax := (name, decs) :: !keptSyntax else ()
           (* after an error, the units are only elaborated, for their errors *)
           val failed = !Error.errors > 0
-          val warnings = map Error.formatWarning (List.rev (!Error.warnings))
+          val warnings = List.rev (!Error.warnings)
           val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
         in
           if failed then (failedBefore := true; acc)

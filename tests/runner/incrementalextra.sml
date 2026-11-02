@@ -215,6 +215,33 @@ struct
           edit s "a.sml" "fun other x = x * 2" "fun other x = x * 2 + 0";
           bld "a.sml" "43 6"
         end
+    | "S83" =>
+        (* an edit that keeps every offset and moves a line (a space made a
+           newline): a unit that copied the marked function has its line in
+           its line table, from the source of the unit that declares it *)
+        let
+          val () = own s ""
+          fun declaring gap = put s "a.sml" ("structure A = struct val pad = 0" ^ gap
+                                             ^ "fun inc (x : int) = if x > 2 then raise Fail \"boom\" else x + 1 end")
+          val () = declaring " "
+          val () = put s "b.sml" "val () = print (Int.toString (A.inc 5) ^ \"\\n\")"
+          val () = put s "p.build" "inline val A.inc end\nfiles a.sml b.sml end"
+          fun bld expected =
+            let
+              val r = command s "" [#compiler s, "--build", "p.build", "--units", "--cache-dir", "cache", "--explain-rebuild",
+                                    "-o", "p.rbc"]
+              val () = #result s := r
+              val got = compiled s
+              val () = check s ("compiled [" ^ String.concatWith " " got ^ "], wanted [" ^ expected ^ "]")
+                             (#status r = 0 andalso got = String.tokens Char.isSpace expected)
+              val plain = command s "" [#compiler s, "--build", "p.build", "--units", "--no-cache", "-o", "nocache.rbc"]
+            in check s "cached program differs from uncached compilation"
+                     (#status plain = 0 andalso same (path s "p.rbc", path s "nocache.rbc")) end
+        in
+          bld "a.sml b.sml";
+          declaring "\n";
+          bld "a.sml b.sml"
+        end
     | "S58" => parallel s
     | _ => simple s
     end

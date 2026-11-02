@@ -12,7 +12,10 @@ struct
   structure P = Pickle
   open Mid
 
-  type namer = {stamp : int -> unit, tycon : int -> unit, tvar : int -> unit, file : string -> unit}
+  (* position: told of every span written, which the file and the offsets of
+     the bytes do not place on a line without the source *)
+  type namer = {stamp : int -> unit, tycon : int -> unit, tvar : int -> unit, file : string -> unit,
+                position : Source.span -> unit}
   type unnamer = {stamp : unit -> int, tycon : unit -> int, tvar : unit -> int, file : unit -> string, local' : int -> int}
 
   exception Bad of string
@@ -34,7 +37,7 @@ struct
         | _ => ()
     in List.app (bind o #1) (#params f); exp (#body f); t end
 
-  fun write (w : P.writer, {stamp = global, tycon, tvar, file} : namer) (f : fundef) : unit =
+  fun write (w : P.writer, {stamp = global, tycon, tvar, file, position} : namer) (f : fundef) : unit =
     let
       val own = binders f
       val locals : int IntTable.table = IntTable.table 256
@@ -74,7 +77,7 @@ struct
         | Lambda.CReal s => (P.byte (w, 4); P.string (w, s))
         | Lambda.CString s => (P.byte (w, 5); P.string (w, s))
         | Lambda.CChar n => (P.byte (w, 6); P.nat (w, n))
-      fun span ({file = f, start, stop} : Source.span) = (file f; P.nat (w, start); P.nat (w, stop))
+      fun span (sp as {file = f, start, stop} : Source.span) = (position sp; file f; P.nat (w, start); P.nat (w, stop))
       fun atom a =
         case a of
           Var (x, ts) => (P.byte (w, 0); stamp x; list ty ts)

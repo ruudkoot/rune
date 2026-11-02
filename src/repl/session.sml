@@ -361,7 +361,7 @@ struct
                val run = linkFor (code, IntMap.empty)
              in
                (* the warnings its compile gave, again *)
-               List.app (fn w => TextIO.output (TextIO.stdErr, Diagnostic.showCached w ^ "\n")) warnings;
+               UnitCache.giveWarnings (warnings, was, file);
                SOME (result (l, run))
              end)
             handle Pickle.Bad _ => (UnitBasis.abandon at; NONE)
@@ -370,7 +370,7 @@ struct
                  | UnitFile.Bad _ => (UnitBasis.abandon at; NONE)
                  | Fail _ => (UnitBasis.abandon at; NONE)
           end
-      val warnings : string list ref = ref []
+      val warnings : (Source.span * string) list ref = ref []
       (* the source of the printer, which nothing names once it is compiled:
          one name for every declaration's, which are compiled one at a time,
          so that a declaration's code does not depend on how many the session
@@ -404,7 +404,7 @@ struct
                   val () = Pass.checkAt ("astlint", 2) AstLint.check () handle e => (Elaborate.lintRecords := false; raise e)
                   val () = Elaborate.lintRecords := false
                   val delta = !Elaborate.lastDelta
-                  val () = warnings := map Error.formatWarning (List.rev (!Error.warnings))
+                  val () = warnings := List.rev (!Error.warnings)
                   val () = Error.flushWarnings ()
                   val pdecs =
                     case ReplShow.echoes (!here, bound delta, delta, (Usage.use ("echo", "on"); echoing ())) of

@@ -28,12 +28,13 @@ struct
 
   val magic = "RCE"
   (* 10: an entry's mark, the lint it was checked by, and the schemes of
-     the globals of other units its code names (the linting roadmap's M9) *)
-  val version = 10
+     the globals of other units its code names (the linting roadmap's M9);
+     11: its warnings as spans and messages, not as lines *)
+  val version = 11
 
   (* what a unit's entry holds: its usages, the warnings its compile gave,
-     which a compile that takes it from the cache gives again, the name its
-     source had in the compile, which its code's files name it by, the other
+     which a compile that takes it from the cache gives again as its own
+     (giveWarnings), the name its source had in the compile, which its code's files name it by, the other
      files its code names with the unit each is the source of
      (UnitBasis.sourcesOf), its basis and the identity the basis gives,
      which loading need not work out from the bytes again (functors-units,
@@ -42,7 +43,7 @@ struct
      compile ran (level), and the schemes of the globals of other units its
      code names, as its compile had them (UnitBasis.importedSchemes), which a
      compile that takes it holds the units it names now to *)
-  type entry = {usages : (string * string) list, warnings : string list, file : string,
+  type entry = {usages : (string * string) list, warnings : (Source.span * string) list, file : string,
                 others : (string * string) list, pickle : string, identity : string, code : string, mid : string,
                 level : int, schemes : (string * (int * string) list) list}
 
@@ -62,6 +63,25 @@ struct
 
   (* an entry found, or why there is none *)
   datatype found = Found of entry | Missed of string
+
+  (* an entry's warnings, its compile having named its source was, given
+     again as a compile of its source, now named name, gives them, in every
+     form it may be asked for (Error.show) *)
+  fun giveWarnings (warnings : (Source.span * string) list, was : string, name : string) : unit =
+    (List.app (fn ({file, start, stop}, message) =>
+                 Error.warn ({file = if file = was then name else file, start = start, stop = stop}, message)) warnings;
+     Error.flushWarnings ())
+
+  fun warningBytes (({file, start, stop}, message) : Source.span * string) : string =
+    let val w = P.writer ()
+    in P.string (w, file); P.int (w, start); P.int (w, stop); P.string (w, message); P.contents w end
+  fun warningOf (s : string) : Source.span * string =
+    let
+      val r = P.reader s
+      val file = P.rstring r
+      val start = P.rint r
+      val stop = P.rint r
+    in ({file = file, start = start, stop = stop}, P.rstring r) end
 
   (* --verify-cache, or RUNE_VERIFY_CACHE set and not empty (for a compile
      that takes no flags, the REPL's use): each unit found is compiled all
@@ -128,7 +148,11 @@ struct
      ("intbits", Int.toString (!Target.intBits)), ("flex", Elaborate.flexModeName (!Elaborate.flexRecords)),
      ("overloading", Elaborate.overloadModeName (!Elaborate.overloading)),
      ("freetyvars", Elaborate.freeModeName (!Elaborate.freeTyvars)),
-     ("fuel", case !Pass.fuel of NONE => "-" | SOME n => Int.toString n), ("hash", P.probe ())]
+     ("fuel", case !Pass.fuel of NONE => "-" | SOME n => Int.toString n), ("hash", P.probe ()),
+     (* what a limit gives is what the compile gives: --functor-budget
+        changes the code, --type-work and --match-work whether there is any *)
+     ("functor-budget", Int.toString (!Expand.budget)), ("type-work", Int.toString (!Types.workLimit)),
+     ("match-work", Int.toString (!Exhaust.workLimit))]
     (* the functors inlined across units: what a unit's basis keeps *)
     @ (if not (StringMap.isEmpty (!Elaborate.inlineFunctors))
        then [("inline", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineFunctors)))] else [])
@@ -239,7 +263,7 @@ struct
            val h = P.rstring r
            val at = !(#pos r)
            val us = P.rlist (fn r => let val k = P.rstring r in (k, P.rstring r) end) r
-           val warnings = P.rlist P.rstring r
+           val warnings = List.map warningOf (P.rlist P.rstring r)
            val file = P.rstring r
            val others = P.rlist (fn r => let val f = P.rstring r in (f, P.rstring r) end) r
            val pickle = P.rstring r
@@ -259,6 +283,15 @@ struct
               | Overflow => Missed "a damaged entry"
               | Subscript => Missed "a damaged entry")
 
+  (* A name with .tmp- in it is a file being written, or one that a compile
+     that died left there, which nothing takes (withTemporary). None is
+     written for long: an hour old, it is the second, and it is removed where
+     a compile comes across it. What a time decides here is whether a file
+     that no compile reads stays, and no compile's result. *)
+  fun sweep (path : string) : unit =
+    if Time.< (Time.now (), Time.+ (OS.FileSys.modTime path, Time.fromSeconds 3600)) then ()
+    else OS.FileSys.remove path handle OS.SysErr _ => ()
+
   (* The entries of a key whose usages hold: the first found, or why there
      is none *)
   fun find (dir : string, config : string, k : string) : found =
@@ -269,7 +302,10 @@ struct
            val s = OS.FileSys.openDir d
            fun go acc = case OS.FileSys.readDir s of
                           NONE => acc
-                        | SOME n => go (if String.isSubstring ".tmp-" n then acc else n :: acc)
+                        | SOME n =>
+                            if String.isSubstring ".tmp-" n
+                            then ((sweep (OS.Path.joinDirFile {dir = d, file = n}) handle OS.SysErr _ => ()); go acc)
+                            else go (n :: acc)
          in (go [] before OS.FileSys.closeDir s) end)
         handle OS.SysErr _ => []
       (* an entry whose usages hold by their binders before one whose hold
@@ -367,10 +403,31 @@ struct
       (write temporary; clean ()) handle ex => (clean (); raise ex)
     end
 
+  (* The directory of what is kept by identity, swept of what a compile left
+     (sweep), by the first compile to write there: no key leads a compile to
+     it, as one leads to an entry's directory. *)
+  val swept = ref false
+  val () = CompilerState.cellRoot ("UnitCache.swept", swept)
+  fun sweepUnits (units : string) : unit =
+    if !swept then ()
+    else
+      (swept := true;
+       (let
+          val s = OS.FileSys.openDir units
+          fun go () =
+            case OS.FileSys.readDir s of
+              NONE => ()
+            | SOME n => ((if String.isSubstring ".tmp-" n
+                          then (sweep (OS.Path.joinDirFile {dir = units, file = n}) handle OS.SysErr _ => ()) else ());
+                         go ())
+        in go (); OS.FileSys.closeDir s end)
+       handle OS.SysErr _ => ())
+
   (* storePaths: a unit's paths kept by its identity, whole or not at all *)
   fun storePaths (dir : string, config : string, identity : string, ps : (int * int * string) list) : unit =
     let
       val p = pathsFile (dir, config, identity)
+      val () = sweepUnits (OS.Path.dir p)
       val body = P.writer ()
       val () = (P.string (body, identity);
                 P.list (fn (w, (k, n, path)) => (P.nat (w, k); P.nat (w, n); P.string (w, path))) (body, ps))
@@ -404,7 +461,7 @@ struct
       val () = usages (u, us)
       val p = OS.Path.joinDirFile {dir = d, file = UnitBasis.hashAt ("store", P.contents u)}
       val body = P.writer ()
-      val () = (usages (body, us); P.list P.string (body, warnings); P.string (body, file);
+      val () = (usages (body, us); P.list P.string (body, List.map warningBytes warnings); P.string (body, file);
                 usages (body, others); P.string (body, pickle); P.string (body, identity); P.string (body, code);
                 P.string (body, mid); P.int (body, lvl);
                 P.list (fn (w, (u, ns)) => (P.string (w, u); P.list (fn (w, (n, t)) => (P.nat (w, n); P.string (w, t))) (w, ns)))

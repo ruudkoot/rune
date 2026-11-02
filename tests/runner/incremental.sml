@@ -247,6 +247,39 @@ struct
                  check s ("the build did not say the schemes differ: " ^ #errors (!(#result s)))
                    (String.isSubstring "b.sml: its entry had another scheme of " (#errors (!(#result s))));
                  b [] "")
+    | "S84" => (fresh s; b [] all; b ["--functor-budget=0"] all; b [] "";
+                 build s ["--type-work=1"]; fails s; build s ["--match-work=1"]; fails s; b [] "")
+    | "S85" =>
+        let val () = own s "w.sml"
+            val () = put s "w.sml" "fun f 0 = 1  val () = print (Int.toString (f 0) ^ \"\\n\")"
+            fun shown () = List.filter (not o String.isPrefix "rune: ") (lines (#errors (!(#result s))))
+            val () = b ["--diagnostics=full"] "w.sml"
+            val cold = shown ()
+            val () = check s "--diagnostics=full shows the source" (List.exists (String.isSubstring "^") cold)
+            val () = b ["--diagnostics=full"] ""
+            val () = check s ("warm warnings differ from cold's: " ^ String.concatWith "\n" (shown ()))
+                           (shown () = cold)
+            val () = b ["--diagnostics-json", "d.json"] ""
+        in check s "a warning from the cache is not in the JSON" (String.isSubstring "match is not exhaustive" (read (path s "d.json"))) end
+    | "S86" =>
+        let val () = own s "a.sml b.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString A.x ^ \"\\n\")"
+            val () = b [] "a.sml b.sml"
+            val entry = only (selectedEntry s "b.sml")
+            val units = OS.Path.dir (OS.Path.dir entry) ^ "/units"
+            fun plant p = write (p, "")
+            fun old p = (plant p; OS.FileSys.setTime (p, SOME (Time.fromSeconds 1000)))
+            val left = [OS.Path.dir entry ^ "/x.tmp-old", units ^ "/x.tmp-old"]
+            val fresh' = [OS.Path.dir entry ^ "/x.tmp-new", units ^ "/x.tmp-new"]
+            val () = (List.app old left; List.app plant fresh')
+        in
+          (* an entry looked for sweeps its key, a unit compiled the units *)
+          edit s "a.sml" "val x = 1" "val x = 2";
+          b [] "a.sml";
+          check s "a file an old compile left stays" (not (List.exists exists left));
+          check s "a file a compile may be writing is gone" (List.all exists fresh')
+        end
     | _ => raise Failed ("not a simple scenario: " ^ #name s)
     end
 end

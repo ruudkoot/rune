@@ -94,7 +94,7 @@ struct
     rewrite file unit (fn (rest, (_, p, n)) =>
                          String.substring (rest, 0, p) ^ encoded (IntInf.fromInt (size probe)) ^ probe ^ String.extract (rest, n, NONE))
   (* the schemes an entry keeps of what its code names of other units
-     (UnitCache.version 10), after its warnings, file, others, basis,
+     (UnitCache.version 11), after its warnings, file, others, basis,
      identity, code, Mid and mark -- by unit, the number and the text of
      each -- each text edited: how many there are *)
   fun schemes file edit =

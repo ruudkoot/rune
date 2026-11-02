@@ -41,7 +41,7 @@ struct
      its compile had (importedSchemes, schemesHold) *)
   exception SchemeChanged of string
 
-  val version = 14
+  val version = 15
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -1957,6 +1957,16 @@ struct
   (* A functor of this unit's, written whole the first time and then by
      the global of its function (a functor declared again leaves the
      first in the basis of those declared between) *)
+  (* A body kept for a later unit to copy has its positions by offset, and
+     the line table of the copy names them by line, from the source of this
+     unit (Code): what the offsets do not say, which an edit that keeps every
+     offset moves. The hash of the lines and columns is kept with the body, so
+     that the unit's identity and the usages "inl" and "inlv" hold them. *)
+  fun linePosition (lines : P.writer) (sp : Source.span) : unit =
+    case Source.lineColOf sp of
+      SOME (_, line, column) => (P.nat (lines, line); P.nat (lines, column))
+    | NONE => ()
+
   fun funref (e : enc, f as Elaborate.FunInfo {code, ...}) : unit =
     let val w = #w e
     in
@@ -1994,6 +2004,7 @@ struct
                        name (e, kStamp, s))
                     fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
                                   P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
+                    val lines = P.writer ()
                   in
                     (* a position in the unit's own source by nothing but
                        that, which a unit taken from the cache names where
@@ -2001,7 +2012,8 @@ struct
                        the path the compile was given it by *)
                     MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
                                         tvar = fn v => name (e, kTvar, v),
-                                        file = fn f => P.option P.string (w, if f = #file e then NONE else SOME f)}) f;
+                                        file = fn f => P.option P.string (w, if f = #file e then NONE else SOME f),
+                                        position = linePosition lines}) f;
                     P.list (fn (_, c) => name (e, kTycon, c))
                            (w, List.filter Ty.isOpen (List.map #stamp (#bound paramSig)));
                     (* what the copies a later unit makes take of the globals
@@ -2016,6 +2028,7 @@ struct
                                P.bool (w, IntMap.member (!Lower.knownBefore, g));
                                P.option P.string (w, inlineHash g)))
                            (w, List.rev (!named));
+                    P.string (w, P.hash (P.contents lines));
                     IntTable.insert (!inlineHashes, code,
                                      ref (Hash (P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))))
                   end)
@@ -2024,7 +2037,8 @@ struct
 
   (* A function marked to be inlined (functors-units M10): its global, and
      its Mid as a marked functor's function is written, with what it takes
-     of the globals it names, and the hash over both (the usage "inlv") *)
+     of the globals it names, the hash of its lines (linePosition), and the
+     hash over all of it (the usage "inlv") *)
   fun inlineValue (e : enc, s : int, f : Mid.fundef) : unit =
     let
       val w = #w e
@@ -2046,16 +2060,19 @@ struct
         else case List.find (fn (l : loaded) => #file l = f) (!units) of
                SOME l => SOME ("\001" ^ #name l)
              | NONE => SOME f
+      val lines = P.writer ()
     in
       MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
                           tvar = fn v => name (e, kTvar, v),
-                          file = fn f => P.option P.string (w, fileName f)}) f;
+                          file = fn f => P.option P.string (w, fileName f),
+                          position = linePosition lines}) f;
       P.list (fn (w, g) =>
                 (prim g;
                  P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
                  P.bool (w, IntMap.member (!Lower.knownBefore, g));
                  P.option P.string (w, inlineHash g)))
              (w, List.rev (!named));
+      P.string (w, P.hash (P.contents lines));
       IntTable.insert (!inlineHashes, s,
                        ref (Hash (P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))))
     end
@@ -2182,7 +2199,8 @@ struct
          result is the global's type *)
       val () = P.list (fn (w, (g, (vs, t))) =>
                          MidCodec.write (w, {stamp = fn s => name (e, kStamp, s), tycon = fn c => name (e, kTycon, c),
-                                             tvar = fn v => name (e, kTvar, v), file = fn _ => P.option P.string (w, NONE)})
+                                             tvar = fn v => name (e, kTvar, v), file = fn _ => P.option P.string (w, NONE),
+                                             position = fn _ => ()})
                                         {name = g, tyvars = vs, params = [], result = t, body = Mid.Return (Mid.Atom Mid.Unit)})
                       (w, !Expand.declaredSchemes)
       val before' = #overloads (#snapshot start)
@@ -2781,6 +2799,7 @@ struct
                   fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
                   val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
                                             P.rbool r; P.roption P.rstring r)) r
+                  val _ = P.rstring r
                   val p1 = !(#pos r)
                 in
                   privateNext := base - !most - 1;
@@ -2821,6 +2840,7 @@ struct
                      fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
                      val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
                                                P.rbool r; P.roption P.rstring r)) r
+                     val _ = P.rstring r
                      val p1 = !(#pos r)
                    in
                      privateNext := base - !most - 1;
