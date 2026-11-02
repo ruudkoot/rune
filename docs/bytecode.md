@@ -214,13 +214,15 @@ an import.
 
 ### The units section of a program
 
-A program that `rune --units` linked from units ends, after its
-representations section, with what each of its units exports, so that a
-unit loaded into it while it runs (`Runtime.load`, a dynamic module:
-[units.md](units.md), *Dynamic modules*) can name them by the units'
-identities, as it names those of units loaded before it. A program
-compiled whole has none, and its file ends with the representations
-section; a VM that reads one stops there too.
+A program that `rune --units` linked from units, and that loads units
+([units.md](units.md), *Dynamic modules*), ends, after its representations
+section, with what each of its units exports, so that a unit loaded into it
+while it runs (`Runtime.load`, a dynamic module) can name them by the units'
+identities, as it names those of units loaded before it. Linked from unit
+files (`rune -o P.rbc A.rbu ...`), a program has it where it holds Runtime's
+file or a dynamic module's. Any other program has none, a program compiled
+whole among them, and its file ends with the representations section; a VM
+that reads one stops there too.
 
 ```
 nunits      u32

@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S82. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S90. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -68,10 +68,10 @@ exactly the units X and nothing else.
   content, not replaced.
 * **S6, touch.** Change a file's time and nothing else. Compiles nothing:
   nothing in the cache is a time.
-* **S7, the same text twice.** Two files with the same contents at
-  different paths, or one file in two projects with the same units before
-  it. One entry serves both, and each program's traces name its own path
-  (S29).
+* **S7, the same text twice.** One file in two projects with the same units
+  before it. One entry serves both, and each program's traces name its own
+  path (S29). Two files with the same contents at different paths are two
+  units: the name is in the key, and neither takes the other's entry.
 
 ## What a unit depends on that is not a value
 
@@ -244,7 +244,8 @@ when the scenarios above were all green
   then, through the same cache, without it is refused the second time, as
   a compile without the cache refuses it.
 * **S61, a program that keeps its units' identities.** `main.sml` names
-  `Runtime`, so the program keeps its units' identities; `b.sml` declares
+  `Runtime.linkedUnits`, so the program loads units, by the definition of
+  docs/units.md, and keeps its units' identities; `b.sml` declares
   a functor whose body uses `A.x`, and `a.sml` gains a value while `A.x`
   stays. `b.sml` is compiled again, not taken by `A.x`'s fingerprint, and
   the program is the bytes of a build without the cache
@@ -398,6 +399,39 @@ when the scenarios above were all green
   M9). A unit's identity is the hash of its basis, so an entry of the
   binders it holds by can differ so only where the cache or the hash
   failed.
+* **S83, a marked function moved a line.** `a.sml` declares a function
+  marked `inline val`, which `b.sml` copies, and an edit makes a space before
+  it a newline: every offset stays, so its Mid and its signature are the
+  same, and the line a trace names of it is another. The copy's line table
+  comes from `a.sml`'s source, so `a.sml`'s basis holds the hash of the body's
+  lines and columns, its identity moves, the usage `inlv` does not hold, and
+  `b.sml` is compiled again (the build-system roadmap's M1). Before, `b.sml`
+  kept the old line, and the program was not the bytes of a build without
+  the cache.
+* **S84, the limits.** `--functor-budget`, `--type-work` and `--match-work`
+  are in the configuration: built without them and then with each, a build
+  with `--functor-budget=0` compiles every unit, and one with `--type-work=1`
+  or `--match-work=1` fails as it does without a cache, where the entries
+  of a build without them would have served it.
+* **S85, warnings as a compile gives them.** A unit's warning from the cache
+  under `--diagnostics=full` is what compiling it prints, source and carets
+  included; an entry holds its warnings' spans and messages, not a line of
+  text. It reaches `--diagnostics-json` too.
+* **S86, a compile that died.** A `.tmp-` file an hour old, in a key's
+  directory or in `units/`, is removed when a compile looks there; a newer
+  one, which a compile may be writing, stays.
+* **S87 to S90, a program that does not load units, and one that does.**
+  S87 is the project of `results/E13/bugs/mention-runtime`: `other.sml`
+  declares a structure `Runtime` of its own, and an edit that adds a member
+  to `a.sml` takes `b.sml` from the cache, across it. S88 is the same with
+  the Basis Library's `Runtime` named for `collect` and `stats`, directly
+  and by an alias: the same, the bytes those of a build without the cache,
+  which keep no units section. S89 reads `linkedUnits` by the alias: its
+  first build keeps the section, and after the edit `b.sml` has been
+  taken across it before `other.sml` shows the program loads units, so the
+  program is compiled again, `b.sml` with it. S90 names `Runtime.load`
+  directly: known from the start, and no unit is taken across the edit
+  (docs/units.md, *Dynamic modules*).
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
   which do not use each other. Built after them in one order and then in
   the other through one cache, `c.sml`'s entry is taken, and compiled

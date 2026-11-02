@@ -55,8 +55,9 @@ t.sml:3:9: error: unbound variable or constructor: lenght
   U+2066 to U+2069, U+200E, U+200F, U+061C) are shown escaped, as
   `\u{202E}`, so a line cannot read otherwise than it is. A byte that is
   not UTF-8 is shown as `\xNN`.
-* When the source's text is gone (a warning replayed from the cache, a
-  file the REPL `use`d), only the first line is printed.
+* When the source's text is gone (a file the REPL `use`d), only the first
+  line is printed. A warning from the cache is shown as its compile shows
+  it: an entry keeps its span and its message.
 
 ## Columns
 

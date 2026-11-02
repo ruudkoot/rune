@@ -7,11 +7,14 @@ unit may do (the incremental roadmap's M10; D16). `rune --build FILE`
 compiles what a build file says, in units (docs/units.md), through the
 cache. The file's extension is `.build`.
 
-Its semantics is MLB's (MLton's ML Basis system): a *basis* -- the
+Its model is that of MLB (MLton's ML Basis system): a *basis* -- the
 structures, signatures, functors, types, values and fixity in scope -- is a
 value; a file is compiled in the basis before it and adds what it declares
-to it; `local`, export lists and renaming say what of a basis the files
-after it see; each build file is elaborated once. Its syntax is Rune's own.
+to it; `local` and export lists say what of a basis the files after it see;
+each build file is elaborated once. It differs from MLB in one thing: `use`
+elaborates a build file in the basis of its caller, where an `.mlb` starts
+from an empty one, so a file used sees what comes before the `use`. There
+is no renaming. Its syntax is Rune's own.
 
 ## The language
 
@@ -42,14 +45,22 @@ dec      ::= path                            a file, compiled in the basis befor
 exports  ::= "(" export "," ... ")"          export ::= kind id
 kind     ::= "structure" | "signature" | "functor" | "type"
 path     ::= a file's path, relative to the build file's directory, in which
-             $(NAME) is the path variable NAME (--path NAME=DIR)
+             $(NAME) is the path variable NAME (--path NAME=DIR, below)
 name     ::= a long name of a value, as a word, or as a string where it holds
              characters a path does not ("Word32.>>")
 string   ::= "..."
 ```
 
-Comments are SML's, `(* ... *)`. A path is a word of letters, digits and `/
-. _ - $ ( )`, or a string.
+Comments are SML's, `(* ... *)`. A path is a word of letters, digits and
+`/ . _ - + ~`, with `$(NAME)` anywhere in it, or a string, which holds any
+other character.
+
+A path that begins with a variable whose value is relative is relative to
+the directory of the build file given to `--build`, so that one value serves
+every build file the build uses, whatever directory it is in, and no path of
+the machine need enter a build. An absolute value is used as it is; so is
+a relative value in the middle of a path, which is relative to the build
+file that names it, as any other path is.
 
 ## Units and bases
 
@@ -57,8 +68,17 @@ Every file is a unit. A build file elaborates to the list of its units in
 order, each with the basis it is compiled in, which is what `rune --build`
 compiles: the cache serves each unit whose usages hold, in that basis
 (docs/units.md, The cache), and `--whole` makes one program of them all
-(M7). `rune --build-list FILE` prints the files in order, which is what the
-hosts' build files are made from (`scripts/gen-build-files.sh`).
+(M7).
+
+`rune --build-list FILE` prints the build's closure in order: the files of
+the libraries it names and of those they are written on, each library's in
+its load order and each before what is written on it, then the build's own
+files, then the libraries' `final` files. A whole library is listed, all a
+program may name: `--basis-deps` says which of its files a compile takes.
+The Basis Library is every program's and is not listed. The other SML
+systems' build files do not come from here: `scripts/gen-build-files.sh`
+makes them from the `files ... end` blocks of the build files, through
+`scripts/build-files.sh`, which needs no compiler.
 
 * A sequence of declarations elaborates each in the basis the ones before
   it leave.
@@ -66,9 +86,15 @@ hosts' build files are made from (`scripts/gen-build-files.sh`).
   after it see what was before it and what B declared.
 * `library (structure X, signature S) = D end`: the files after it see X
   and S of what D declared, and nothing else of D.
-* `use FILE`: the declarations of another build file, in place; a build
-  file used twice is elaborated once, the second use adding what the first
-  declared.
+* `use FILE`: the declarations of another build file, in place, in the
+  basis of the `use`; a build file used twice is elaborated once, the second
+  use adding what the first declared, as far as the files after the second
+  use may see it. A boundary that has closed around the first use -- a
+  `library`, an `implements`, the first part of a `local` -- stands between
+  the two: the second use adds what that boundary lets out, and nothing
+  more. Inside the same boundary, it adds all of it. (A first `use` of a
+  build file under another library's boundary is another matter: that
+  reaches in, below.)
 
 ## Annotations
 
@@ -80,11 +106,41 @@ hosts' build files are made from (`scripts/gen-build-files.sh`).
 | `noWarnings` | their warnings are not printed |
 | `ascii`, `unicode` (or `unicode=utf8`), `unicode=latin1` | the mode the units are read in, over the command line's `--unicode[=ENC]`; the last such annotation in force wins ([units.md](units.md), *Source modes*) |
 
+An annotation that is none of these, or of a library's below, is an error.
+
 Annotations also apply through a `use` edge. For example,
 `annotate "unicode" "allowPrim" in use implementation.build end` gives
 those annotations to the included units; annotations inside the included
 build can override their source mode. Repeated `use` still elaborates
 the build once, in its first occurrence's context.
+
+## Exports
+
+`library (...)` exports what the declarations inside it declare, from a file
+or from a build file used there. An export that names nothing they declare
+is an error, of a build as of a library (`--basis-index`). `type t` exports
+a type abbreviation. A datatype is not exported so: it would keep its
+constructors, which a replication (`datatype u = datatype t`) gets back
+past the boundary; export a structure that holds it, or the abbreviation of
+a type behind a signature.
+
+## Reaching in
+
+A directory with a `library.build` is a library, and the deepest over a
+path is the one it is in. A library is reached through its interface,
+`libraries NAME end` and what it exports. A build file that names a path
+under a library it is not in reaches in, and the compiler warns of it once
+per build file and library, unless `--no-warnings` is given:
+
+```
+rune.build: warning: this build reaches into the library lib/compiler (1 path), which is reached through its interface
+```
+
+The compiler's own programs and the tests of its internals do this today
+(the build-system roadmap's D10), so it is a warning and changes nothing
+that is compiled. A path that a variable gives is not counted, and neither
+is a generated pointer: a `current.build` naming what is under `sets/` beside
+it, which nobody wrote and whose generator cannot be told otherwise yet.
 
 The compiler library's `RuneCompiler.Project` API uses this same scoped
 planner. It can discover ordered files without parsing their programs;
@@ -97,10 +153,11 @@ its command line.
 
 ## A library's build file
 
-A library of `--lib` -- the Basis Library (`lib/basis/library.build`),
-`lib/random`, `lib/test/property`, `lib/test/property/basis` -- has a
-build file `library.build` that lists its files in load order, each in an
-`annotate` block that says what it is to a program:
+A library of `--lib` -- a directory under `lib` with a `library.build`, 33
+of them in this tree: the Basis Library (`lib/basis/library.build`), 27 more
+written by hand and 5 generated sets of `lib/ffi` -- has a build file that
+lists its files in load order, each in an `annotate` block that says what it
+is to a program:
 
 | Annotation | What it does |
 |---|---|
@@ -134,8 +191,10 @@ whole-program compilation, compilation in units and cache reuse. Private
 fixity declarations stay inside the library, and its final files are
 elaborated in its private context. An export must be declared before the
 program; `--basis-index` and `--basis-check` reject missing exports or the
-wrong kind of declaration. An invalid index leaves the existing manifest
-intact.
+wrong kind of declaration. `--basis-index` also rejects a file that uses a
+name a library it is written on does not export, which would otherwise show
+only when a client failed to compile. An invalid index leaves the existing
+manifest intact.
 
 The generated manifest records the complete boundary in an optional sixth
 column, using words such as `structure:Api signature:API`. Every row of
@@ -238,7 +297,7 @@ against the virtual module name nothing of the implementation, and another
 implementation compiles none of them again: `examples/virtual/bigint` has two,
 the Basis Library's `IntInf` (`intinf.build`) and lists of digits
 (`digits.build`), and the second build through the first one's cache
-compiles `digits.sml` alone (`tests/buildfile/run.sh`). A program has one
+compiles `digits.sml` alone (`virtual-cache` of `tests/runner/scenarios.sml`). A program has one
 implementation of each virtual module: two are refused. One without any is
 compiled, and raises `Dynamic.Mismatch` when the declaration runs. Unlike a
 loaded module, a virtual module is part of the program, which can be

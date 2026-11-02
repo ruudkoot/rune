@@ -1,6 +1,6 @@
 # Building HOL on Rune
 
-Build the `corpus/HOL` checkout on branch `rune-build`. The port lives in
+Build the `corpus/hol4/HOL` checkout on branch `rune-build`. The port lives in
 `tools-rune/`; this file is the build to run and what that build contains.
 The tree is built in place. Leave it in this directory afterwards.
 
@@ -16,7 +16,7 @@ the build then writes the theory graph.
 From the Rune repository:
 
 ```sh
-cd corpus/HOL
+cd corpus/hol4/HOL
 sh tools-rune/configure.sh
 bin/build -j"$(nproc)" --selftest=3
 ```

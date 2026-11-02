@@ -344,7 +344,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   is not read (S70). The configuration's `units/about` lists what it is
   made of
   (`-O`, `--passes`, `--int-bits`, `--fuel`, `--flex-records`,
-  `--overloading`, `--free-tyvars`). A compiler built from other
+  `--overloading`, `--free-tyvars`, and the limits `--functor-budget`,
+  `--type-work` and `--match-work`, which change what a compile gives;
+  S84). A compiler built from other
   sources, or another level, finds none of another's entries, and two
   configurations live side by side;
 * in that, a directory per *key*, the hash of the unit's name, its source
@@ -392,9 +394,11 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   (the usage `funat IDENTITY`);
 * a function marked to be inlined, or that only applies a primitive, is
   copied into a unit that names it, which uses its Mid too (`inlv NAME`,
-  by the name the unit used, held by the hash of the Mid): an edit of its
-  body compiles the units that copied it again, and an edit beside it
-  does not (S78); which functions the libraries mark is in the cache's
+  by the name the unit used, held by the hash of the Mid and of the lines
+  and columns of its positions, which a copy's line table takes from the
+  source of the unit that declares it): an edit of its body compiles the
+  units that copied it again, and so does one that moves it a line, and an
+  edit beside it does not (S78, S83); which functions the libraries mark is in the cache's
   configuration, as which functors they do;
 * in the REPL, what a declaration of a file used echoes is compiled with
   it: two usages more say what that was compiled by, `echo on` whether it
@@ -404,8 +408,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * an entry whose code names a unit the session has not -- one its usages
   should have found changed -- is no entry, and the unit is compiled
   rather than the link finding nothing to take the name from;
-* an entry keeps the warnings its compile gave, which a compile that takes
-  it from the cache gives again;
+* an entry keeps the warnings its compile gave, as spans and messages,
+  which a compile that takes it from the cache gives again as its own, in
+  whatever form it was asked for (S85);
 * an entry is marked with the level of the lint its compile ran
   (`UnitCache.level`: `--lint=N` or `RUNE_LINT`, else the program's own,
   0 for `rune`; at most 2, level 3's round trips not being asked of an
@@ -432,7 +437,10 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   two compiles at once never see half of one. One that cannot be read, or
   does not hold what its hash says, is no entry, and the unit is compiled
   and the entry written again. A cache that cannot be written is one that
-  is not there. Nothing in a key is a time. Temporary publication names
+  is not there. Nothing in a key is a time. A `.tmp-` file an hour old is
+  one a compile that died left, and a compile removes it where it comes
+  across it: in the directory of a key it looks in, and in `units/` when
+  it writes there (S86). Temporary publication names
   come from an OS reservation held until the write finishes, as for
   bytecode output; generating them does not format clocks or process ids.
 
@@ -631,10 +639,30 @@ naming both. The module's code names what it uses of the program's units by
 their identities, which a program linked from units keeps (*The units
 section of a program*, [bytecode.md](bytecode.md)): so a program compiled
 whole, whose units are one, cannot load a module, and is refused one at
-compile time. Two modules compiled against one library share its types
+compile time.
+
+A program compiled in units keeps that section where it *loads units*: it has
+a dynamic module (`lib/basis/dynamic.sml` is among its units), or a unit of
+it names one of `Runtime.load`, `link`, `linkedUnits` and
+`linkedUnitSources`. So does every client of `RuneCompiler`, through the
+library's own file that links compiled code. The members are told apart by
+the keys a unit's code names, so an alias, an `open` or a functor's argument
+counts where a member is used and not where it is not, and a program that
+names `Runtime` for its counters, or has a structure `Runtime` of its own,
+does not load units. Such a program keeps no section, so nothing in its file
+depends on a unit's identity, and an entry taken from the cache across a unit
+that changed gives it the bytes a build from source gives (*The cache*). A
+program that loads units takes no such entry, since a unit loaded into it
+names the identities of a build from source. Where that shows only once
+such an entry has been taken -- the first unit to name a member does so by
+an alias, after the edit -- the program is compiled again as what it is, and
+`--explain-rebuild` says so. `--emit-units`, which gives the units'
+identities to whoever reads the files, takes no such entry either for a
+program that has `Runtime`.
+ Two modules compiled against one library share its types
 with each other and with the program. `Dynamic.load file` is the untyped
 form, for a unit that registers what it offers through a structure of the
-program. `tests/dynamic/run.sh` (`make test-dynamic`) is each of these. A
+program. The scenarios `dynamic` of `tests/runner/scenarios.sml` (`make test-dynamic`) are each of these. A
 virtual module (`structure X = _virtual : SIG`, [build.md](build.md),
 *Virtual modules*) is the same boundary inside one program, its
 implementation chosen by the build file.
@@ -701,7 +729,7 @@ needs, a declaration at a time (Chapter 8 of the Definition).
 and wants the same output on both streams, traces included, and the same
 exit status. It is to separate compilation what `make check-levels` is to
 the optimisations. Those programs are of one file; `tests/units`
-(`tests/units/run.sh`) has programs of several, each built whole and in
+(the scenarios `units` of `tests/runner/scenarios.sml`) has programs of several, each built whole and in
 units for both bytecodes and held to what it expects: functions, workers,
 datatypes, exceptions, a functor and fixity used across files, a
 structure shadowed by a later file, the trace of an exception raised in
