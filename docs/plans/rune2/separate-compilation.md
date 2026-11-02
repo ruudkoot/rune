@@ -36,7 +36,7 @@ It rests on that roadmap's experiments and adds none of its own. Each number nam
 
 **A unit declares what it expects.** Its header says what it imports, by logical name, and its body, what it exports. A unit compiles against the static layer, and by default the ABI layer, of what it names, and only those: it depends on nothing else, not on another unit's name, position or order.
 
-**Compiling before a dependency exists.** Structures have this already (`_virtual`, `_dynamic`). Rune 2 makes it the normal case: a unit against an interface file, or an interface a unit carries. A functor needs a specification: `functor F = _virtual (X : A) : B` (E10, on paper). Its ABI fingerprint holds record shape, slot order, descriptors and the calling convention.
+**Compiling before a dependency exists.** Structures have this already (`_virtual`, `_dynamic`), and Rune 1 gives it to functors: `functor F = _virtual (X : A) : B` (D22, M21). Rune 2 makes it the normal case: a unit against an interface file, or an interface a unit carries. A functor's ABI fingerprint holds record shape, slot order, descriptors and the calling convention.
 
 **Incremental against separate.** Rune 1 is incremental, by incremental's D2: a unit is compiled against the actual bases before it. Rune 2 offers both:
 - **Separate:** against interfaces alone. A client's compile needs no implementation, and a change behind an unchanged interface recompiles nothing.

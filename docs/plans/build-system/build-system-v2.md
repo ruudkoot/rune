@@ -14,7 +14,7 @@ This roadmap plans seven things:
 - **A unit model** (track U): logical names, and an interface in layers, so that the compiler and the editor can share one.
 - **One store, and a warm path** (track C): `.rune` and `lib/cache` as layers of one thing. A no-op falls below 5% of today.
 - **Libraries as abstract packages** (track L): declared imports, boundaries with their holes closed, clash errors and renaming, friends for tests and the compiler's drivers, Basis views, MANIFEST gone, 76 of 88 build files migrated by a tool and 12 by decision, with no flag day.
-- **A separately compilable restriction** (track S): three classes of unit, as a warning. Rune, MLton and HOL4's library code all fit it.
+- **A separately compilable restriction, and functor signatures** (track S): three classes of unit, as a warning, which Rune, MLton and HOL4's library code all fit; and a client compiled against a functor's signature alone, with virtual libraries, by the owner's decision (D22).
 - **An editor at scale** (track A): an edit that costs its own unit's elaboration and little else, cold in about a second from a store on ordinary code to 200k lines (11-12 s on MLton until signatures are shared), and a question about the build only where contexts really differ. The evidence stops at 1.17M lines, and M20 runs only planning at 10M.
 - **Rune 2's plan,** in [`docs/plans/rune2/separate-compilation.md`](../rune2/separate-compilation.md): what changes once Rune no longer aims to be SML '97.
 
@@ -22,7 +22,7 @@ This roadmap plans seven things:
 - **Compiling a library to one unit:** once the warm path is fixed it gains nothing, and costs 1.4 to 3.2 times on a one-file edit.
 - **A term language for composing modules, as a compiler feature:** the idea is right at its smallest, and needs no feature. A program can print a `.build`.
 - **A firewall:** only 31 of 4,048 rebuilt units are ones a firewall alone could avoid, and it costs at least 2.4 times at run time on `checksum`, the worst of six; layouts behind an opaque type unmeasured, no firewall prototyped.
-- **Compiling against a functor's signature now:** the incremental benefit is there already.
+- **Compiling against a functor's signature now:** the incremental benefit is there already. **The owner decided otherwise:** it is done now (D22, M21, M22).
 
 It also makes a fifth, the restriction, a warning rather than a rule.
 
@@ -30,7 +30,7 @@ It also makes a fifth, the restriction, a warning rather than a rule.
 
 Writing it found 37 defects on master (Appendix D), among them: alpha-renaming changing a program's output (E3); a program that merely names `Runtime` losing every remap hit, without which E13's replay rebuilds 54% fewer units (E13); warm differing from cold (E18); `install.sh` reporting success with no Basis installed (E28); analysis quadratic in a unit's declarations (E20).
 
-It was written on 2026-11-01 against master `b12141ecc`. It lives in a worktree, on branch `build-system-v2`.
+It was written on 2026-11-01 against master `b12141ecc`, and decided on 2026-11-02. It lives in a worktree, on branch `build-system-v2`.
 
 What it rests on:
 - **The code:** a reading of the build language, MANIFEST, units, the caches and the language server (*Where we are*).
@@ -48,7 +48,7 @@ What it rests on:
 
 ## Status
 
-Written, and undecided. Nothing is implemented. The decisions are the owner's: see the table at the head of *Decisions*.
+Decided, and not started. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). Nothing is implemented.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
@@ -70,11 +70,13 @@ Written, and undecided. Nothing is implemented. The decisions are the owner's: s
 | M16. The restriction | S | M | D17 | not started |
 | M17. Keeping what is computed | A | L | D27 | not started |
 | M18. Sidecars and the shared layer | A | L | D1, D27 | not started |
-| M19. Contexts, and the end of the prompt | A | M | D26 | not started |
+| M19. Contexts, and the end of the prompt | A | L | D26 | not started |
 | M20. The target, in CI | A | M | D28 | not started |
-| M21. Retire | | S | | not started |
+| M21. Functor signatures | S | L | D22 | not started |
+| M22. Virtual libraries | S | M | D22 | not started |
+| M23. Retire | | S | | not started |
 
-Gates G1 (aggregates) and G2 (the term layer) have no milestone behind them: *Gates*.
+Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no milestone behind it: *Gates*.
 
 ## Found while writing this roadmap
 
@@ -184,6 +186,11 @@ The owner's brief, as written. It is `docs/plans/build-system/build-system-v2.md
 - **The plan:** approved as proposed, with the defaults of the last two campaigns: on a new branch `build-system-v2`, in `.worktrees/build-system-v2`, committed as M0 and not pushed; a hybrid of measurements and throwaway prototypes; the form of `docs/plans/correctness/linting.md`; heavy runs under the usual rules; cut only what is fluff.
 - **HOL4:** "rune-enabled hol is now under rune/corpus/hol4/HOL". Nothing was built in that tree. Experiments used a clone at `65ab0d8e6` with `docs/plans/hol4-overloading-declaration.patch` applied, since the seven annotations are not on `rune-build`.
 
+**The decisions (2026-11-02):** "i take all decisions as recommended with one exception (D22) and one expanded request (D26)".
+- **D22:** "we do now not later - the first client is an example program under examples/virtual".
+- **D26:** "please also use LanguageStatusItem in the vs code extension for the lsp to add two items to the { } menu: one to show the progress of the lsp and a second to show the context a file is checked in and allow users to rechoose the context for the few files that have multiple contexts (the current popup only shows once)".
+- **rhc:** the recommendations taken include those made the same day for the Haskell 98 roadmap: a clause on each of D5, D6, D8, D14, D24 and D25, imports by name out of M3, and rhc's `mid.build` as a view (*Relation to the other plans*).
+
 | The brief asks | Answered in |
 |---|---|
 | a roadmap for building SML code via `.build` files; the Makefile bootstrap out of scope, except the `.build` that builds rune | this document; D14 says where that line cannot hold, W4 |
@@ -219,7 +226,7 @@ The owner's brief, as written. It is `docs/plans/build-system/build-system-v2.md
 | `.rune` against `lib/cache`: investigate, explain, propose | *`.rune` and `lib/cache`, explained*; D24; M7 |
 | research on build systems, namespaces; `~/reference`; dune, Backpack, smackage, cabal, cargo, holbuild | *What the literature says*; *What the implementations do* (E25-E27); W3 |
 | not a package manager, but foundations for one | D3 (a version in the name); *Later* |
-| compiling against a functor's signature alone | D22, E10: later |
+| compiling against a functor's signature alone | D22, E10; M21, M22 |
 
 ## What the brief gets wrong, leaves open, or makes dangerous
 
@@ -262,7 +269,7 @@ Held to the code, as the other roadmaps' briefs were. The brief is a list of ide
 
 ### Where this roadmap recommends otherwise than the brief
 
-The head names the four things it recommends against and the fifth it makes a warning; D17, D18, D19, D22 and D29 argue them.
+The head names the four things it recommends against and the fifth it makes a warning; D17, D18, D19, D22 and D29 argue them. The owner took all of these but D22.
 
 ## Where we are
 
@@ -4554,7 +4561,7 @@ The recipe is: rebase, take the branch's text on any `.build` conflict, run the 
 
 ## Constraints
 
-**The language does not change.** What Rune accepts stays what `docs/language.md` says. Nothing here refuses a correct SML '97 program, under `--build` or anywhere else (D17). A change to what the language accepts is a change for Rune 2's document, not this one.
+**The language does not change.** What Rune accepts stays what `docs/language.md` says. Nothing here refuses a correct SML '97 program, under `--build` or anywhere else (D17). A change to what the language accepts is a change for Rune 2's document, not this one. The one exception is the owner's: D22's functor signatures, an extension beside `structure X = _virtual : SIG`, which refuses nothing.
 
 **Bytes.** These hold after every milestone:
 - **S41:** a warm build gives the bytes of a cold one.
@@ -4578,6 +4585,7 @@ The recipe is: rebase, take the branch's text on any `.build` conflict, run the 
 | Mid kept after expand (Rune 2) | fine | bytes on 3 of 14, otherwise up to function order | fine | 14 programs, no gain (E14). Rune 2 keeps today's capture |
 | Mid kept after simplify (Rune 2) | fine | ends, by construction | fine | Run 1.41 on HaMLet, 1.50 on MLton, 1.03 on the compiler (E14) |
 | A build program (D29) | fine | fine | never needed for `rune.build` | Not built |
+| Functor signatures (D22) | holds, if the fingerprint covers what a client compiled from | holds, as for a virtual structure | the fingerprint must agree on the five; `Pickle.hash` differs on `smlnj32` (E10) | Not built; E10 is on paper |
 
 **Five hosts and Rune.** The compiler's sources still compile on MLton, Poly/ML, SML/NJ and MLKit, from a list that needs no Rune (D14). The hosts cannot read `.build` and need not. Speed and correctness of the compiler's own code are decided on Rune at tier 2; the hosts are measured for information (the owner's rule of 2026-10-21). A host's bug is marked `HOST-BUG`, not worked around.
 
@@ -4737,24 +4745,24 @@ Bases come from the store, written by the compiler or by analysis through one wr
 
 ## Decisions
 
-Twenty-nine decisions, each with its options, the evidence and a recommendation. None is decided yet: they are the owner's. Where a decision reverses something earlier, or something the brief expects, it says so.
+Twenty-nine decisions, each with its options, the evidence and a recommendation. The owner took every recommendation on 2026-11-02 but D22's, and added to D26. Each decision says so under its heading, and the table gives the choice. Where a decision reverses something earlier, or something the brief expects, it says so.
 
-| | Decision | Recommended | Rests on |
+| | Decision | Decided (2026-11-02) | Rests on |
 |---|---|---|---|
 | D1 | What a unit's interface is | C: static, ABI and implementation layers, a hash per export | E13, E15, E17-E20, E23-E25, L1 |
 | D2 | A unit's environment | B: the prefix in meaning, loaded by need; a library starts empty but for the Basis | E5, E6, E9, E15, E18, E24 |
 | D3 | A unit's identity | C: logical names | E9, E10, E13, E16, E22, E23 |
 | D4 | The workspace | B: one explicit root file | E1, E22, E25-E27 |
-| D5 | The form of the build language | C: the plan is the contract; `.build` its normal form | E12, the review |
-| D6 | The one way | B: fewer constructs, written order, the command line makes a plan | E1, E3, E5, E6, E9 |
+| D5 | The form of the build language | C: the plan is the contract; `.build` its normal form; the plan is Rune's | E12, the review |
+| D6 | The one way | B: fewer constructs, written order, per language, the command line makes a plan | E1, E3, E5, E6, E9 |
 | D7 | What importing a library means | B: declared, not transitive; available is not loaded | E1, E3, E6, E9, E13, E18, E28 |
-| D8 | What a boundary is | B: a filter in a library's header, with its holes closed | E3, E28 |
+| D8 | What a boundary is | B: a filter in a library's header, with its holes closed; kinds of export are the language's | E3, E28 |
 | D9 | Namespaces | B: clash errors and renaming at import | E1, E25 |
 | D10 | `src`, `lib`, nesting, reaching in | B: a library is a directory; warn, then refuse | E1, E3, E28 |
 | D11 | Tests against abstraction | A: a friend list, for tests and drivers | E3, E27 |
 | D12 | Basis views | A: seal sets after the libraries | E4 |
 | D13 | MANIFEST's end | B: a derived entry in the store | E2, E18, E28 |
-| D14 | Hosts' lists and the compiler's identity | A: a committed canonical plan | E12 |
+| D14 | Hosts' lists and the compiler's identity | A: a committed canonical plan; one identity per compiler | E12 |
 | D15 | Migration | A: mechanical, no flag day | E3, E28 |
 | D16 | Generated sources and preprocessors | B: declared steps before planning | E9, E12, E20, E28 |
 | D17 | The restriction | B: three classes; a warning; it enables planning from syntax | E5-E8, E25 |
@@ -4762,16 +4770,18 @@ Twenty-nine decisions, each with its options, the evidence and a recommendation.
 | D19 | Aggregates | A: dropped | E11, E14, E15 |
 | D20 | The footing | B: stated obligations, independent checks in `make check` | E7, E18, E25, L1 |
 | D21 | Codecs | B: generated after D1, table reads by hand | E19 |
-| D22 | Virtual libraries and functor signatures | B: later | E10 |
+| D22 | Virtual libraries and functor signatures | **A: now,** the first client under `examples/virtual`; against the recommendation, B | E10 |
 | D23 | Higher-order modules and applicative functors | A: not now | The review, E10 |
-| D24 | One store | B: one layout, layers, keys by layer, eviction | E13-E17, E24 |
-| D25 | The warm path | A: in the order below | E13, E15, E21 |
-| D26 | The editor's context model | B: one owner; a prompt only on real divergence | E20, E22-E24, E27 |
+| D24 | One store | B: one layout, layers, keys by layer, a head the client defines, eviction | E13-E17, E24 |
+| D25 | The warm path | A: in the order below; a hit may read a head | E13, E15, E21 |
+| D26 | The editor's context model | B: one owner; a prompt only on real divergence; **and two language status items,** the owner's addition | E20, E22-E24, E27 |
 | D27 | The editor's storage | B: keep, then store, then share | E15, E17, E20, E23, E24, E27 |
 | D28 | The editor's caps and scale target | B: a stated target, as cost functions | E20, E21, E23, E24, E27 |
 | D29 | Phase separation of a term layer | A: not built; if ever, a pure function to a plan | The review, E12 |
 
 ### D1. What a unit's interface is
+
+**Decided: C** (2026-11-02), as recommended.
 
 Five things in this roadmap ask for an answer to this one question: identity, firewalls, aggregates, the editor's share of the cache and generated codecs. Today a unit has one pickle, one identity and one fingerprint stream, in which types and back-end facts lie side by side (`lib/compiler/driver/unitbasis.sml:2090-2112`, `:507-521`).
 
@@ -4801,6 +4811,8 @@ Five things in this roadmap ask for an answer to this one question: identity, fi
 
 ### D2. A unit's environment
 
+**Decided: B** (2026-11-02), as recommended.
+
 `.build` says a unit sees what the steps before it leave. While a compile *loads* that whole prefix, a warm build, `-j`'s floor and opening one file at 100k units all stay O(prefix).
 
 - **A. The prefix, loaded eagerly.** Today.
@@ -4815,6 +4827,8 @@ Five things in this roadmap ask for an answer to this one question: identity, fi
 
 ### D3. A unit's identity
 
+**Decided: C** (2026-11-02), as recommended.
+
 A unit's name is its path as spelt, and it is in the key and the identity. 149 of 826 files have 2-5 spellings (E22); `./ty.sml` for `ty.sml` changes a `_dynamic` client's bytes (E10).
 
 | Policy | `worker.build` spelt `../../` | `rune.build` spelt `./` | move `lib/unicode` | rename `parallel.sml` | Random edits, disagreeing with no cache |
@@ -4826,9 +4840,11 @@ A unit's name is its path as spelt, and it is in the key and the identity. 149 o
 Units compiled (E16).
 
 - **B. Name-free** is what "content-addressed" first suggests, and **it is wrong**. Two identical files merge their generative state. Remapping takes the wrong unit silently (warm prints 2, no cache prints 1). It gains 2-57 units on a move, of 248.
-- **C. Logical names.** **Recommended.** `LIBRARY:PATH`, within the workspace (D4), with room for a version (`LIBRARY@1.2:PATH`), since a package manager is to build on this; and a rank for a file given twice, so that issue 22 closes in batch (E16's `same-file-twice`). Anchors need no change, and remapping none for logical names alone (E16). Names rather than numbers in imports are a further step, not run in E16: they change `Link.key`, `remapKeys` and `.rbu`, and remove most of the difference between E13's C1 and C2.
+- **C. Logical names.** **Recommended.** `LIBRARY:PATH`, within the workspace (D4), with room for a version (`LIBRARY@1.2:PATH`), since a package manager is to build on this; and a rank for a file given twice, so that issue 22 closes in batch (E16's `same-file-twice`). Anchors need no change, and remapping none for logical names alone (E16). Names rather than numbers in imports are a further step, not run in E16: they change `Link.key`, `remapKeys` and `.rbu`, and remove most of the difference between E13's C1 and C2. That step is not in M3. It waits in *Later*, to be decided with rhc in view.
 
 ### D4. The workspace
+
+**Decided: B** (2026-11-02), as recommended.
 
 `libraries NAME` resolves under one `--lib` root or by path. A monorepo of 1000 builds needs something logical names can stand on, a place for the store and roots for the editor.
 
@@ -4837,6 +4853,8 @@ Units compiled (E16).
 - **C. Environment variables.** Machine state in what must be reproducible.
 
 ### D5. The form of the build language
+
+**Decided: C** (2026-11-02), as recommended, with a clause for a second language below.
 
 The review of the ideation is *The ideation, reviewed*, and it decides this. In short: planning that needs the elaborator cannot serve the LSP, `--build-list` or the hosts, who need a plan without running anything.
 
@@ -4849,7 +4867,11 @@ The review of the ideation is *The ideation, reviewed*, and it decides this. In 
 
 The schema needs `requires` on the plan, `inline` and `inlineValues` on a library, `inputs` outside the compared body, and `replay` or its replacement; `caches` goes (E12).
 
+**The plan is Rune's.** Nothing in the store reads it, and rhc scans imports (rhc's D46). The schema leaves room for discovered edges and SCC groups and builds neither: Rune 2's plan, computed from a scan of headers, wants the same room.
+
 ### D6. The one way
+
+**Decided: B** (2026-11-02), as recommended, with a clause for a second language below.
 
 Brief, line 6: "the build language should have one way of doing things".
 
@@ -4863,7 +4885,11 @@ Brief, line 6: "the build language should have one way of doing things".
   - **Unknown words are errors,** including annotations: `annotate "demnad"` means demand today.
 - **C. Dependency order everywhere.** The owner's "one way" read strongly. `group` has no users in the 88 tracked files, and a wrong parse of a file gives a wrong graph (`Deps` parses with `Fixity.initial`, E5). No.
 
+**Written order is per language.** Its reason above is SML's: effects whose order cannot be derived. A Haskell module's place comes from its imports, and the Report's own libraries hold an 11-module cycle, which `Deps` refuses (`lib/compiler/driver/deps.sml:270`). rhc scans imports and uses neither `Deps` nor `group`, so nothing here changes for it.
+
 ### D7. What importing a library means
+
+**Decided: B** (2026-11-02), as recommended.
 
 - **A. Global and flat, as today.** `libraries` is transitive and not positional. 12 edges are used but only reached transitively (E1).
 - **B. Declared, not transitive, and available is not loaded.** **Recommended.**
@@ -4875,6 +4901,8 @@ Brief, line 6: "the build language should have one way of doing things".
 - **C. Whole libraries always.** The brief's "imports as a whole" read strictly. On the Basis, the one large case with `lib/compiler`, loading all of it makes hello 12 times slower to compile and start-up 20 times longer in a whole build, and 2.8 MB in `--units`. A library loaded whole was not measured. "As a whole" is right for *names and meaning*, wrong for *what links*.
 
 ### D8. What a boundary is
+
+**Decided: B** (2026-11-02), as recommended, with a clause for a second language below.
 
 - **A. A filter, as today, by a sixth column of MANIFEST.** Its cost: test/property/basis's table goes from 12.8 KB to 124.8 KB, and the repeated column is the only cost boundaries have (E3).
 - **B. A filter in a library's header, with its holes closed.** **Recommended.** Export lists on 31 libraries changed no byte in 159 programs (E3): the boundary is a pure filter, and it is sound as one.
@@ -4889,7 +4917,11 @@ Brief, line 6: "the build language should have one way of doing things".
 
 The Basis is not a library in this sense: `library (...)` has no values, fixity or datatypes, and whole builds ignore a boundary on it (E3). It stays what it is, with a prelude's status (D17).
 
+**Kinds of export are the language's.** `structure`, `signature`, `functor` and `type` are SML's (`lib/compiler/driver/buildfile.sml:115-116`). If a `.build` ever names a Haskell library, `module M` is that language's kind, and a boundary, a view or a hash per filter cannot hide an instance: "Instance declarations cannot be explicitly named on import or export lists" (Haskell 98 Report, 5.4, as the rhc roadmap quotes it). rhc stays out of `.build`, so nothing is built for this.
+
 ### D9. Namespaces
+
+**Decided: B** (2026-11-02), as recommended.
 
 Only three names really clash, of 15 public in two or more libraries; the rest are generated alternatives never loaded together (E1). `History`/`HISTORY` is the serious one: once test/runner is in a closure, no order reaches terminal's. `RuneCompiler` clashes with the Basis's. `COMPILER` does not clash at all.
 
@@ -4898,6 +4930,8 @@ Only three names really clash, of 15 public in two or more libraries; the rest a
 - **C. Wrapping, as dune does.** It cannot be copied: structures hold neither signatures nor functors (SMLSC, Elsman). This is what bounds D9, and why a language change belongs to Rune 2.
 
 ### D10. `src`, `lib`, nesting and reaching in
+
+**Decided: B** (2026-11-02), as recommended.
 
 - **A. Conventions only.**
 - **B. A library is a directory.** **Recommended.**
@@ -4909,6 +4943,8 @@ Only three names really clash, of 15 public in two or more libraries; the rest a
 
 ### D11. Tests against abstraction
 
+**Decided: A** (2026-11-02), as recommended.
+
 No test defeats an ascription: tests need **names, not representation** (E3). Of 68 names exported only for tests, 59 are the test libraries' own API.
 
 - **A. A friend list in `library.build`.** **Recommended.** It names the builds that see the unfiltered view: `InternalsVisibleTo`, in the library's own hands. That is the 4 tests and D10's 5 drivers: a compiler's driver is what `lib/compiler/library.build:1` already says uses internals, and the library naming its friends is the honest form of that; a public `internal` view would open to anyone what a friend list names. One keyword, 35 lines. It compiles 1 unit against 97, at 36% of the instructions, because it reuses the frozen layer, and it costs the cache key nothing (E3). A non-friend is refused. A friend still cannot see through `:>`: where that matters, the convention is `structure FooImpl` with `structure Foo :> FOO = FooImpl` (Haskell's `.Internal`).
@@ -4916,6 +4952,8 @@ No test defeats an ascription: tests need **names, not representation** (E3). Of
 - **C. Keep reaching in.** A back door open to anyone, and 2.8 times the cost.
 
 ### D12. Basis views
+
+**Decided: A** (2026-11-02), as recommended.
 
 The brief's `BASIS_2024` does not exist: SML/NJ has `basis-2004.cm` with `LIST_2004`, MLton `basis-1997.mlb` and `basis-2002.mlb`. Both are the same code under other signatures, as Rune's seals are, with the newest as the default.
 
@@ -4929,6 +4967,8 @@ The brief's `BASIS_2024` does not exist: SML/NJ has `basis-2004.cm` with `LIST_2
 
 ### D13. MANIFEST's end
 
+**Decided: B** (2026-11-02), as recommended.
+
 Brief: "the .build files should be all we need". Every column but `provides` and `requires` is a projection of `library.build`. It exists because `select` must map a name to a file it has not loaded (E2).
 
 - **A. Recompute the index on every compile.** 622.93M instructions against 6.44M, 97 times a read; a compile doing it would cost 3.1 times hello's (E2). No.
@@ -4939,6 +4979,8 @@ Brief: "the .build files should be all we need". Every column but `provides` and
 
 ### D14. How hosts get their lists, and what the compiler's identity hashes
 
+**Decided: A** (2026-11-02), as recommended, with a clause for a second language below.
+
 **This must be settled before `rune.build` moves.** `scripts/gen-version.sh:51` hashes the awk's list into `Config.identity`. Through `libraries`, the awk loses 19 files, an edit of `lib/unicode` leaves the identity unchanged, and **compiler B, with a real edit, takes compiler A's cache entry and prints 233 where the same compiler cold prints 234** (E12, the lead read the raw output). A host fails loudly with 69 errors, and the obvious repair, `--library unicode --library json`, compiles: that is how the hole goes silent.
 
 - **A. A committed canonical plan for the five host-built roots.** **Recommended.** 8.6 KB per root; `identity.sh` is 4 lines; a host checks `input` hashes with `sha256sum`, and `gen-version.sh:53-55`'s fallbacks to `shasum` and `cksum` stay, though E12's `identity.sh` dropped them; no host was run (E12); `print | cmp` in `make check` catches a hand edit. It cannot silently lose a library, and it knows no grammar. The cost: a regenerated file on 3% of commits, and hash lines that can conflict on 10 of E12's 33 live branches.
@@ -4947,7 +4989,11 @@ Brief: "the .build files should be all we need". Every column but `provides` and
 
 Either way the identity hashes the **closure**, excluding the two generated files that hold the identity, `build/config.sml` and `lib/compiler/config.sml`. E12's prototype did not meet the second, since it kept `use lib/compiler/internal.build`. `Config.identity` has never covered the main file, `build/config.sml` or, by reading, `lib/basis`. `bootstrap.md`'s runemake should adopt the same plan when it comes.
 
+**One identity per compiler.** The hole is the same for a compiler that is not host-built, as rhc will be (its D42). On its toy, a tool edited with `Config.identity` the same printed `MINE` warm where cold prints 7, and the hash of the tool's own sources as a setting closed it. So a second compiler has its own identity, over its own closure, and that setting is rhc's stopgap until M11. rhc asked for this per root, which is too fine: `rune`, `runelsp`, `runedoc` and the REPL all link one `build/config.sml`, and `runelsp` must keep `rune`'s identity for analysis to load batch's entries (D27).
+
 ### D15. Migration
+
+**Decided: A** (2026-11-02), as recommended.
 
 `win32-desktop` alone changes 24 build files, among 34 refs ahead of master.
 
@@ -4961,6 +5007,8 @@ Either way the identity hashes the **closure**, excluding the two generated file
 
 ### D16. Generated sources and per-file preprocessors
 
+**Decided: B** (2026-11-02), as recommended.
+
 The brief does not mention these. What "as would be build via the build system" can mean for HOL4 depends on them. HOL4's graph is **static as far as `Holdep` goes** (E9): `Holdep.sml:45-58` maps `fooTheory` to `fooScript.sml` by name, and the parser finds no `load` or `use` in 1,252 scripts. Recipes stay in 86 of 108 Holmakefiles in `src`, 5 scripts touch files or processes, and 31 are unresolved by a regex. So nothing here needs a monadic build.
 
 - **A. Left outside,** as Holmake does today. `.build` compiles what exists.
@@ -4972,6 +5020,8 @@ The brief does not mention these. What "as would be build via the build system" 
 - **C. Dynamic dependencies.** Must earn their place, and nothing here earns it. A static graph keeps planning without running.
 
 ### D17. The restriction
+
+**Decided: B** (2026-11-02), as recommended.
 
 The brief wants "the separately compilable restriction". The literature changes what it is for. Blume's restrictions serve **inferring dependencies**, not separate compilation as such (SMLSC says so), and Appel & MacQueen's units are "any sequence of ML declarations". With written order, a unit that fails a rule costs **speed, never correctness** (*What the literature says*). The 1990 Definition had such a subset, §3.6 *Closure Restrictions*, and the 1997 revision removed it: a source comment says "implementors never exploited them" (*What the Definition says*).
 
@@ -5005,6 +5055,8 @@ The brief wants "the separately compilable restriction". The literature changes 
 
 ### D18. Firewalls
 
+**Decided: A** (2026-11-02), as recommended.
+
 Does an opaque library boundary stop recompilation? The brief's rune 2 goal, and incremental's D2 reopened.
 
 - **A. No firewall.** **Recommended.** Mid stays see-through.
@@ -5018,6 +5070,8 @@ Does an opaque library boundary stop recompilation? The brief's rune 2 goal, and
 What firewalls were wanted for, the rest gives: fix `loadsUnits`, then D3, then, if it passes H3's check, a smaller ABI layer.
 
 ### D19. Aggregates
+
+**Decided: A** (2026-11-02), as recommended.
 
 The brief's "hierachical unit compilation", a library compiled to one open unit, "expected to be faster". **It is not, and the recommendation is to drop it.** R separated two things, and E11 measured both, on today's tree and on E15's.
 
@@ -5037,6 +5091,8 @@ If a form is ever built, Mid is held at ToMid or after expand, never after simpl
 
 ### D20. The footing
 
+**Decided: B** (2026-11-02), as recommended.
+
 *What a cache hit must satisfy* states the claim and its nine obligations.
 
 - **A. More tests of the same kind.**
@@ -5051,6 +5107,8 @@ If a form is ever built, Mid is held at ToMid or after expand, never after simpl
 
 ### D21. Codecs
 
+**Decided: B** (2026-11-02), as recommended.
+
 - **A. Hand-written, as today:** about 4,600 lines, four traversals. Writer, reader and fingerprint have diverged (issues 8, 16-18).
 - **B. Generated after D1, from one description with field marks.** **Recommended.** The fingerprint is the hash of canonical bytes of the fields marked for a layer, so it is no longer a traversal of its own: every system read does this (SML/NJ's `pickle2hash`, MLKit's `pu`, GHC). A spike on one type: 7 description lines and 66 of generator against 64 by hand, same bytes on 31 entries, -0.002% (E19). 15 lines stay by hand, the table reads: `fpVal`'s weak spot needs tables declared too. `ty` and references are not field lists, so the full generator is real work. The output is committed, or host-buildable (S43).
 - **C. Now, before D1.** It would be done twice.
@@ -5059,18 +5117,31 @@ The cache needs no schema hash: `Config.identity` is in its config, so UnitCache
 
 ### D22. Virtual libraries and functor signatures
 
+**Decided: A** (2026-11-02), against the recommendation: "we do now not later - the first client is an example program under examples/virtual".
+
 *The section added to the brief.* Compiling a client against a functor's signature alone.
 
 - **A. Now,** while the machinery is fresh, as the section argues.
 - **B. Later, when a client appears.** **Recommended.** The incremental benefit is there already: a body edit recompiles no client (E10). What it adds is compiling before a body exists, choosing an implementation per build, and functors as plugins, and nothing in this roadmap needs those. It is small when wanted: `functor F = _virtual (X : A) : B` matches `_virtual`, needs no new keyword, and costs about what M9's structure half did (+1,033 lines). An ABI fingerprint must add record shape and slot order, which specifications carry a descriptor, a version tag and the calling convention. `Pickle.hash` agrees on Rune and four hosts; smlnj32 differs, so a fingerprint on it is not stable across the five (E10). The fingerprint's text was not run on hosts. MLKit's 2005 bug is the trap: a body hash belongs in the layer that exposes it.
 
-Virtual modules at library level, as dune's, wait likewise. `where type` between virtual modules stays unbuilt.
+**What A means.** Neither half was prototyped: E10 is on paper, with two probes, and the sizes come from the structure half.
+- **Functor signatures (M21).** `functor F = _virtual (X : A) : B` is bound at link: the build's `implements F = ... end` names files that end with `_export functor F (X : A) : B = ...`, as for a structure. `functor F = _dynamic "path" (X : A) : B` is bound at load, the plugin. A mismatch is an error at link or load. There is no new keyword, and the extension gets its `sml97-extensions.md` entry and `docs/language.md` rows.
+- **A client's code.** An application is a call over functors-units' nested records, with no expansion, so nothing of the body reaches a client. That is a firewall at a seam the program chose. D18's answer for libraries stands.
+- **The ABI fingerprint** lives in M4's ABI layer. It holds the parameter's and result's signatures, record shape and slot order, the descriptors a caller works out for its argument's datatypes, a version tag and the calling convention (E10). The brief wants it stable on the five hosts, and `Pickle.hash` differs on `smlnj32` today, so M21 must fix that or compute it another way.
+- **The first client** is an example program, `examples/virtual/table`, beside `bigint`, the structures' example. A table functor, `functor Table = _virtual (K : KEY) : TABLE where type key = K.t`, on an association list and on a balanced tree, one build each, applied to two kinds of key. The client compiles against the signature alone, the second build through the first one's cache compiles the implementation alone, and a `_dynamic` variant takes an implementation as a plugin. It tests what `bigint` cannot: two applications give two generative types, and a result type is tied to the parameter.
+- **Virtual libraries (M22).** One library declares a virtual module and another implements it, in their headers, with one implementation per program and no new public modules, as dune's. `ffi/win32`'s `native`, `sdl` and `mock` are the real case: one virtual `Win32`, three implementations, `use`d as sub-builds today.
+
+`where type` between virtual modules stays unbuilt: M21's client does not need it.
 
 ### D23. Higher-order modules and applicative functors
+
+**Decided: A, not now** (2026-11-02), as recommended.
 
 The brief: "unless you think you need them now". **Not now.** Nothing in E5-E12 needs more than first-order application: ideation2's decorators all reduce, and an applicative functor adds no store hit: memoising an instantiation is a store key, and it does not need applicative semantics (the review; Yang). Rune 2's document keeps them as an open question.
 
 ### D24. One store
+
+**Decided: B** (2026-11-02), as recommended, with a clause for a second language below.
 
 *`.rune` and `lib/cache`, explained* says what exists. One mechanism, with two policies. *Layer* has two senses here: the static, ABI and implementation layers are an interface's; the frozen layer and the overlay are the store's.
 
@@ -5078,13 +5149,15 @@ The brief: "unless you think you need them now". **Not now.** Nothing in E5-E12 
 - **B. One layout, in layers.** **Recommended.**
   - **Location:** `<workspace>/.rune/`, one per workspace (D4), not beside the first input. `RUNE_CACHE` overrides it, which is how a store is shared across worktrees, and `--cache-dir` (`src/driver/options.sml:253`) stays above that. A user-level default was rejected by incremental's D14, and nothing here reopens it: across-root gains are small (E16).
   - **Layers:** an ordered list, read-only layers under one writable overlay. The frozen `lib/cache` is such a layer, per config, built at install, and **dist ships it**, so a dist user's first `--units` compile stops building the Basis.
-  - **Keys:** logical name (D3), text and settings to a cache entry, whose sections are hashed per layer (D1). An action to manifest map, as Go's and holbuild's.
-  - **A cache entry splits** into head and sections, so that a lookup reads heads. Usages go in the head, since `find` checks each candidate's (`lib/compiler/driver/unitcache.sml:264-307`). The `units/` paths that remapping reads (`:322-329`) stay by identity, beside the entries. Reading and hashing whole entries costs 2-11% of a no-op today (E15), and stale entries cost more: MLton's warm went from 83.9G to 116.2G, +38%, after about 15 edits, one observation with the cause not isolated (E13).
+  - **Keys:** logical name (D3), text and settings to a cache entry, whose sections are hashed per layer (D1). An action to manifest map, as Go's and holbuild's. What a key covers is the client's: rhc's covers every member of an SCC of modules.
+  - **A cache entry splits** into head and sections, so that a lookup reads heads. **The head belongs to the client:** the store holds its bytes and never reads them, and a `holds` callback says whether a candidate stands. Rune's head holds usages, since `find` checks each candidate's (`lib/compiler/driver/unitcache.sml:264-307`), and rhc's its level and export digests. On rhc's toy, 17 entries under one key went from 9.12M to 7.89M VM instructions, for +66 lines in the store (its E13). The `units/` paths that remapping reads (`:322-329`) stay by identity, beside the entries. Reading and hashing whole entries costs 2-11% of a no-op today (E15), and stale entries cost more: MLton's warm went from 83.9G to 116.2G, +38%, after about 15 edits, one observation with the cause not isolated (E13).
   - **Eviction:** by age and size, refreshing an entry's time at most hourly (Go), never during a build, and any failure is a miss. The owner's HOL4 tree holds the worst case on this machine, read-only: 1.9 GB, 205,450 files, 87,914 keys, in one config (`results/store-census/hol4.txt`). It holds REPL declarations through `use` (`docs/units.md:550`), so it is a worst case and not a growth model.
   - **`.tmp-` files swept;** `make clean` clears the overlay.
 - **C. Content-addressed by name-free keys.** D3 B, and wrong.
 
 ### D25. The warm path
+
+**Decided: A** (2026-11-02), as recommended, with a clause for a second language below.
 
 Up to date costs 20-53% of cold on real corpora and 39-40% at every size of the fixture, and a small edit costs what a no-op costs (E15, E21). Where it goes differs by corpus: on MLton the basis load is 62% of the wall and GC 40% of the instructions, a 1.76 GB heap from 22 MB of pickles; on HOL4 and `rune.build` the load is 3-4%, and link and code decode are 48-59% (E15).
 
@@ -5101,9 +5174,13 @@ Up to date costs 20-53% of cold on real corpora and 39-40% at every size of the 
   - **A leaf's floor is code decode plus link,** 70% of today on HOL4 and `rune.build`. A link from bytes, or a relocation table, is the item after, and it is unmeasured.
   - **`checkSchemes` cannot run on a light hit:** it reads ToMid's tables, and S82 fails by design. A binder's identity covers what it checks, and a fingerprint hit is the one case it cannot check (`unitbasis.sml:1444-1446`), so it goes, or moves to `--verify-cache`, and S82 changes with it.
   - **A stat memo is not a key,** so "nothing in a key is a time" stands. It needs ctime, inode and the racy guard.
+  - **A hit may read a head (D24).** "No basis" is a rule about SML's basis, not about what a client's check may read. For rhc a hit reads its imports' exports and the closure's instances through the head, inferred and not measured: its model counts 713 wrong answers in 15,750 edits with no instance read, and 298 with direct imports' alone (its E13).
+  - **Memos go in `lib/compiler/driver`,** not `src/driver/main.sml`: 276 of the 321 `main.sml` additions in E15's patch name no compiler state, and a second driver then has them.
 - **B. `-j` first.** `-j` gives no speed-up: the parent's linear pass is the floor, and `-j 4` makes a no-op slower, 12.75G against 9.71G, since it parses every input. `parallel.sml` treats a hit as a completed node once light hits make the parent's pass cheap, and not before.
 
 ### D26. The editor's context model
+
+**Decided: B** (2026-11-02), as recommended, and two language status items, the owner's addition below.
 
 The brief: "i don't like the lsp currently asks under which build files it needs to analyze an sml files. in a properly modular language i would expect this not to matter?" It should not, and in nearly every case it does not.
 
@@ -5118,7 +5195,15 @@ The brief: "i don't like the lsp currently asks under which build files it needs
 
 **Zero-build files are the common case:** 3,131 of 3,955 tracked SML files, 79%, are in no readable build (E22). `use` is not the answer: a top-level `use` appears in 1 of 3,955 files. Nor is the nearest build's context, which E20 proposed and E24 tested: clean files go from 251 to 262 of 726. E24's figures show where the first unbound name lives, for 369 of 408 files: in the same directory for 154, in the same two top directories for 41, elsewhere in the repo for 174. For 17 it is nowhere, and 22 messages name nothing to look up. So the direction is **an implicit library over a directory, and a name-to-file index read from syntax,** which well-formed units make possible, with analysis going on past the first error and no prompt. That is M19's use of M16, and the answer to the brief's line 33. It is untested: E24's loose run crashed with `Domain` after 12 files. A name-to-file index says where a name is declared, and M19 builds it; a global index of analysis results is what waits for *Later*.
 
+**Two language status items** (the owner's addition, 2026-11-02). The VS Code extension gains two items in the `{ }` menu beside the language mode, through `vscode.languages.createLanguageStatusItem`, which is stable at the extension's minimum, 1.106.0 (`editors/vscode/package.json:11`). It shows neither today: `editors/vscode/src/extension.js` is 36 lines.
+- **Progress,** on `sml` and `rune-build` files. `busy` while the server discovers, checks or sweeps; `text` what it is doing; `detail` the context and the units checked and reused, which a failure's report already holds (`docs/language-server.md:147-148`). Error severity after a worker fails. Its command opens the output channel. A foreground check shows nowhere else today: `$/progress` goes only to a request that brought a `workDoneToken` (`src/lsp/service.sml:166`, `:283`), and the rest goes to `window/logMessage` (`:275`).
+- **Context,** on `sml` files. `text` the context the active file is checked in, or that it has none; `detail` how many it has. A file with one has no command. A file with several has `runelsp.chooseContext`, a quick pick of them, whose answer takes the path a prompt's answer takes (`src/lsp/controller.sml:161`). An unresolved file shows Warning severity and the same command. A choice lasts as long as it does today.
+- **Why, when there is a prompt:** it shows once. `context` skips a file in `asked` (`src/lsp/controller.sml:46`). A dismissal leaves it there (`controller.sml:157`), unresolved, with nothing on screen. A chosen file is `Selected` from then on (`src/lsp/workspace.sml:197-203`). Only closing it (`controller.sml:107`) or changing settings (`controller.sml:111`) goes back. The prompt stays, for the first ask and for other clients.
+- **The protocol:** `rune/status` and `rune/context` notifications and a request that sets a context, only for a client that asks for them under `experimental` in `initialize`. Other editors see what they see today. Status is throttled, so that it adds no cost a budget can see.
+
 ### D27. The editor's storage
+
+**Decided: B** (2026-11-02), as recommended.
 
 The brief wants the LSP on an on-disk cache shared with the compiler, and a compile to benefit from what the LSP did.
 
@@ -5149,6 +5234,8 @@ Leaf comments through the server; leaf bodies and cold in process; stock cold in
 
 ### D28. The editor's caps and scale target
 
+**Decided: B** (2026-11-02), as recommended.
+
 The LSP plan states no scale target. E20 found the caps in the order they break: the 30 s deadline at 1,000 files, the 512 MiB heap at 40-60k lines of ordinary code, the equality-work limit at one declaration of 14-28k lines, and only then the 10,000 inputs. Planning a check is the worst of it: `enrich` re-reads every target on every check, 21 s at 1k files and past 590 s at 10k, though `Project.read` itself is linear.
 
 - **A. Raise the caps.** 10M lines at measured density is 88 GB: it does not fit (E20).
@@ -5173,6 +5260,8 @@ The LSP plan states no scale target. E20 found the caps in the order they break:
 
 ### D29. Phase separation of a term layer
 
+**Decided: A** (2026-11-02), as recommended.
+
 *The ideation, reviewed* gives the argument and Gate G2's test.
 
 - **A. Not built.** **Recommended.** Test 1 fails: 6 plans, 2 axes and no derived axis against 12, 3 and 1, and test 6 fails on the one workload run: 462 ms against 250 ms (E12). If a real project ever passes, a build program is a pure function of declared parameters to a plan, with no clock, no environment and no file reads, stored under its text and parameters, and it never runs for `rune.build`, on a host or in a reader. Because the plan is the contract, nothing is foreclosed.
@@ -5190,9 +5279,9 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 | U, the unit model | M3, M4 |
 | C, caches | M6, M7 |
 | L, libraries and the language | M8 to M15 |
-| S, separate compilation | M16 |
+| S, separate compilation | M16, M21, M22 |
 | A, the editor | M17 to M20 |
-| All | M21 |
+| All | M23 |
 
 ### M1. The fixes found, and the guards that cost nothing (F; M, about 500)
 
@@ -5240,13 +5329,13 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 ### M3. Logical names and the workspace (U; L, about 900)
 
-* **What:** D3 and D4. A root file. `library:path`, with a rank for a file given twice. A key, an identity and an anchor hold the logical name. Spelling no longer reaches them. Imports in code by logical name, not number, a further step E16 did not run. The LSP's `file#rank` goes. `RuneCompiler.Project` takes the workspace.
+* **What:** D3 and D4. A root file. `library:path`, with a rank for a file given twice. A key, an identity and an anchor hold the logical name. Spelling no longer reaches them. The LSP's `file#rank` goes. `RuneCompiler.Project` takes the workspace.
 * **Why now:** before layers and the store, whose keys it fixes. Doing it after them does them twice.
 * **Done when:**
   - E16's table: `worker.build` spelt `../../` compiles 1 unit, `rune.build` spelt `./` none, a moved library none;
   - E16's `same-file-twice` prints the same in whole and `--units`;
   - no disagreement over random edits.
-* **Touches:** `lib/compiler/driver/{project,unitcache,unitbasis}.sml`, `src/driver/main.sml`, `lib/compiler/backend/link.sml`, `lib/compiler/api/`, `src/lsp/workspace.sml`, `docs/units.md`.
+* **Touches:** `lib/compiler/driver/{project,unitcache,unitbasis}.sml`, `src/driver/main.sml`, `lib/compiler/api/`, `src/lsp/workspace.sml`, `docs/units.md`.
 
 ### M4. Layers (U; L, about 1,200; after M3)
 
@@ -5274,16 +5363,16 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 * **Done when:** the same bytes on the Basis, `rune.build` and MLton; what the description covers replaced; table reads stay by hand; a change to a type cannot leave a traversal behind.
 * **Touches:** `lib/compiler/driver/{unitbasis,unitmid}.sml`, `lib/compiler/core/midcodec.sml`, a generator under `tools/`, the `Makefile`.
 
-### M6. The warm path (C; L, about 800)
+### M6. The warm path (C; L, about 900)
 
-* **What:** D25, in its order: binders-only hits and lazy closures (`a`, `d`); the stat shortcut and plan memo (`b`, `c`); the link memo (`l`); nothing changed, exit (`u`). `checkSchemes`' fate decided. `-j` stops parsing every input on a no-op; its cost on small units stays open (D25's B).
+* **What:** First the store's split: `lib/compiler/driver/unitstore.sml`, with the head and sections opaque to it and `holds` passed in (D24), since 130 of the 138 `unitcache.sml` additions in E15's patch are the store's. It starts from rhc's `E13-1-store.patch` (+338 -231, bytes unchanged, in the Haskell 98 drafts). Then D25, in its order: binders-only hits and lazy closures (`a`, `d`); the stat shortcut and plan memo (`b`, `c`); the link memo (`l`); nothing changed, exit (`u`). Memos go in `lib/compiler/driver`. `checkSchemes`' fate decided. `-j` stops parsing every input on a no-op; its cost on small units stays open (D25's B).
 * **Why here:** it does not need M3 or M4, and it can go earlier. It is here because M2's mask lands with it, and because E15 measured it on today's format; re-measure on M4's.
-* **Done when:** a no-op on MLton, HOL4's closure and `rune.build` is under 5% of today, with E15's verification as a test: unit by unit, S41, `--verify-cache`, the racy cases.
-* **Touches:** `src/driver/main.sml`, `src/driver/parallel.sml`, `src/repl/session.sml`, `lib/compiler/driver/{unitbasis,unitcache}.sml`, `lib/compiler/util/source.sml`, `lib/compiler/backend/unitfile.sml`.
+* **Done when:** a no-op on MLton, HOL4's closure and `rune.build` is under 5% of today, with E15's verification as a test: unit by unit, S41, `--verify-cache`, the racy cases; the store has a test that links no compiler.
+* **Touches:** `src/driver/main.sml`, `src/driver/parallel.sml`, `src/repl/session.sml`, `lib/compiler/driver/{unitbasis,unitcache,unitstore}.sml`, `lib/compiler/internal.build`, `lib/compiler/util/source.sml`, `lib/compiler/backend/unitfile.sml`.
 
 ### M7. One store (C; M, about 600; after M3, M4)
 
-* **What:** D24. Layout, location, layers, keys, head and sections, eviction, dist. *`.rune` and `lib/cache`, explained* becomes a page of `docs/units.md`.
+* **What:** D24. Layout, location, layers, keys, a head the client defines and sections, eviction, dist. *`.rune` and `lib/cache`, explained* becomes a page of `docs/units.md`.
 * **Done when:** `build/.rune` and `src/lsp/.rune` are gone; a dist's first `--units` compile builds no Basis; HOL4's store stays bounded under eviction with no loss of correctness; warm cost does not grow with stale entries (E13's +38%).
 * **Touches:** `lib/compiler/driver/unitcache.sml`, `src/driver/main.sml`, `tools/builder/dist.sml`, `scripts/install.sh`, the `Makefile`, `tests/incremental/`.
 
@@ -5308,8 +5397,8 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 ### M11. Hosts' lists and the compiler's identity (L; S, about 200; after M9)
 
-* **What:** D14. **Before any root moves.** Committed plans for the five host-built roots, `identity.sh` in `gen-version.sh`, `print | cmp` in `make check`, and the identity over the closure, less the two generated files that hold it.
-* **Done when:** E12's experiment fails to go wrong: an edit of `lib/unicode` through `libraries` changes the identity, B does not take A's entry, and two makes with no edit give one identity.
+* **What:** D14. **Before any root moves.** Committed plans for the five host-built roots, `identity.sh` in `gen-version.sh`, `print | cmp` in `make check`, and the identity over the closure, less the two generated files that hold it. `rune`, `runelsp`, `runedoc` and the REPL keep one identity; a second compiler has its own, over its own closure.
+* **Done when:** E12's experiment fails to go wrong: an edit of `lib/unicode` through `libraries` changes the identity, B does not take A's entry, and two makes with no edit give one identity; an edit in a second compiler's own sources changes its identity and not `rune`'s, shown on a toy until rhc lands.
 * **Touches:** `scripts/gen-version.sh`, `scripts/build-files.sh`, `scripts/gen-build-files.sh`, the `Makefile`, `tests/runner/`.
 
 ### M12. MANIFEST's end (L; L, about 900; after M1, M7, M9)
@@ -5327,7 +5416,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 ### M14. Reaching in, runedoc (L; M, about 500; after M13)
 
 * **What:** D10. Reaching in becomes an error, after the window. runedoc reads exports.
-* **Done when:** the 4 test builds and the drivers D11 names are friends; a non-friend is refused; `make docs` passes on every library.
+* **Done when:** the 4 test builds and the drivers D11 names are friends; a non-friend is refused; rhc's `mid.build`, if it has landed, is a named view of `lib/compiler` (D8); `make docs` passes on every library.
 * **Touches:** `lib/compiler/driver/`, `src/doc/`, `tests/compiler/*.build`, `tests/lsp/syntax-tests.build`, `docs/doc-comments.md`.
 
 ### M15. Generated sources and preprocessors (L; M, about 400; after M9)
@@ -5355,11 +5444,14 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 * **Done when:** cold from a store is about a second on HOL4's closure and seconds at 1M lines, eagerly; at most 2 KB a line resident; analysis over batch's entries keeps its usages through an edit (E24: 55 of 79 break without this); go-to-definition and hover work into a closed unit; sidecars survive a compiler upgrade as stale hints; an oracle compares every unit, not the open one. Lazy load goes on in analysis only when that oracle passes on interface edits, on HOL4 and MLton: E24's false type errors are its first tests.
 * **Touches:** as M17, with `lib/compiler/driver/{unitbasis,unitcache}.sml`, `lib/compiler/elab/env.sml`.
 
-### M19. Contexts, and the end of the prompt (A; M, about 500; after M3, M8, M16)
+### M19. Contexts, and the end of the prompt (A; L, about 800; after M3, M8, M16; the status items after nothing)
 
-* **What:** D26. One owning library per file. Candidates that cannot reach a file dropped. Contexts compared by canonical binder, a prompt only on real divergence. A zero-build file gets an implicit library over its directory and a name-to-file index read from syntax, which well-formed units make possible: this is M19's use of M16, and it is untested. Analysis goes on past the first error.
-* **Done when:** E22's count holds: at most 4 prompts in this repo; workspace sweeps cover every file; E24's sample of 726 improves, with the name index; two builds over one library share their units, measured.
-* **Touches:** `src/lsp/{workspace,projects,controller}.sml`, `lib/compiler/api/analysis-engine.sml`, `docs/language-server.md`.
+* **What:** D26. First the two language status items, which need no other milestone: the server's progress, and the context a file is checked in, with a way to choose again. Then one owning library per file. Candidates that cannot reach a file dropped. Contexts compared by canonical binder, a prompt only on real divergence. A zero-build file gets an implicit library over its directory and a name-to-file index read from syntax, which well-formed units make possible: this is M19's use of M16, and it is untested. Analysis goes on past the first error.
+* **Done when:**
+  - E22's count holds: at most 4 prompts in this repo; workspace sweeps cover every file; E24's sample of 726 improves, with the name index; two builds over one library share their units, measured;
+  - the editor suite, on 1.106.0: a file with several contexts shows the one it is checked in; a dismissed prompt leaves a Warning and a way to choose; choosing again changes the file's diagnostics; a file with one context offers no choice; progress is busy during a check and idle after it;
+  - a client that did not ask gets no `rune/` message.
+* **Touches:** `src/lsp/{workspace,projects,controller,service}.sml`, `lib/compiler/api/analysis-engine.sml`, `editors/vscode/`, `tests/lsp/`, `docs/language-server.md`.
 
 ### M20. The target, in CI (A; M, about 400; after M17, M18)
 
@@ -5367,21 +5459,42 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 * **Done when:** D28's table holds at the sizes CI can run, with the 10M planning bench at `--no-text`; `docs/language-server.md` states the target.
 * **Touches:** `tools/lsp/`, `src/lsp/`, `tests/lsp/`, CI.
 
-### M21. Retire (S)
+### M21. Functor signatures (S; L, about 1,000; after M3, M4)
+
+* **What:** D22's first half. `functor F = _virtual (X : A) : B`, `functor F = _dynamic "path" (X : A) : B` and `_export functor`, in both parsers. `implements` takes a functor. An application typed by the signature alone and compiled as a call over nested records. The ABI fingerprint in M4's ABI layer, with a mismatch an error at link or load. `examples/virtual/table`, the first client, with its builds. The `sml97-extensions.md` entry and the rows of `docs/language.md`.
+* **Why here:** spelling reaches a `_dynamic` client's bytes (E10) and the fingerprint lives in the ABI layer, so before M3 and M4 it would be done twice. It needs nothing of track L, so it can follow M4 at once.
+* **Done when:**
+  - `examples/virtual/table`'s client compiles with no implementation in the build, and with none it raises `Dynamic.Mismatch` when the declaration runs, as a structure's does;
+  - the second build through the first one's cache compiles the implementation alone;
+  - each implementation gives the same output and S42's bytes through `--units --whole`, and two implementations are refused;
+  - a `_dynamic` functor loads as a plugin, and every field of the fingerprint has a mutant refused at link or load;
+  - a body edit compiles no client, and an edit of either signature compiles every client (E10's probes, as tests);
+  - the fingerprint agrees on the five hosts, and the scenario beside `bigint`'s runs in `make check`;
+  - no disagreement over random edits.
+* **Touches:** `lib/compiler/frontend/{ast,parser}.sml`, `lib/compiler/syntax/parser.sml`, `lib/compiler/elab/elaborate.sml`, `lib/compiler/driver/unitbasis.sml`, `lib/compiler/util/pickle.sml`, `lib/basis/dynamic.sml`, `src/driver/main.sml`, `examples/virtual/`, `tests/runner/scenarios.sml`, `tests/dynamic/`, `docs/language.md`, `docs/build.md`, `docs/units.md`, `docs/plans/sml97-extensions.md`.
+
+### M22. Virtual libraries (S; M, about 400, not prototyped; after M8, M9, M21)
+
+* **What:** D22's second half. A library's header declares a virtual module, structure or functor, and an implementing library's header names it. One implementation per program; no new public modules. The plan carries it.
+* **Why here:** it needs M8's headers, M9's plan and M21's functors.
+* **Done when:** `examples/virtual/table` also builds from libraries, its client's units compiled once across both implementations; two implementations in one program are refused; `ffi/win32`'s three fit the form, shown on a copy until `win32-desktop` has merged.
+* **Touches:** `lib/compiler/driver/{buildfile,project,basismanifest}.sml`, `src/driver/main.sml`, `examples/virtual/`, `docs/build.md`.
+
+### M23. Retire (S)
 
 * **What:** final measurements against *Measuring*; `docs/build.md`, `docs/units.md`, `docs/language-server.md`, `docs/architecture.md`, `docs/language.md`; *At the close*; the worktrees named in it removed with the owner's word.
 
 ### Gates
 
-**Gate G1: aggregates (the owner's).** The brief proposes them; E11 says no; D19 recommends dropping them. There is no milestone behind the gate. If the owner goes on, the packaging form goes after M7, and the optimising form holds member Mid at ToMid or after expand, with `workers` run once.
+**Gate G1: aggregates (closed).** The brief proposes them; E11 says no; the owner dropped them with D19 on 2026-11-02. There is no milestone behind the gate. If the owner ever reopens it, the packaging form goes after M7, and the optimising form holds member Mid at ToMid or after expand, with `workers` run once.
 
-**Gate G2: the term layer (the owner's).** *The ideation, reviewed* gives seven tests. Test 1 fails today, and test 6 on the one workload run. There is no milestone behind the gate. If a real project passes, the layer goes on top of M9 with no reader changing.
+**Gate G2: the term layer (the owner's).** D29 decided it is not built now. *The ideation, reviewed* gives seven tests. Test 1 fails today, and test 6 on the one workload run. There is no milestone behind the gate. If a real project passes, the layer goes on top of M9 with no reader changing.
 
 ### Later
 
 - **A global index of analysis results,** which the brief defers. A name-to-file index is not this: it is M19's.
 - **A package manager,** on D3's version and D4's workspace.
-- **Virtual libraries and functor signatures** (D22).
+- **Imports in code by logical name, not number:** a step E16 did not run, out of M3 since 2026-11-02. It changes `Link.key`, `remapKeys` and `.rbu`, and rhc's link numbers, hashed by name with collisions unchecked, stand on today's form, so it is decided with rhc in view. No target here rests on it: remapping already takes a shifted number.
 - **Higher-order modules** (D23), and memoised functor applications.
 - **The term layer,** behind Gate G2.
 - **A run step,** for a true HOL4 build (D16).
@@ -5403,7 +5516,9 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 - **M1's guard before M12:** H2.
 - **M10 before M13,** or files migrate twice.
 - **Friends before M13, the error after it:** reaching in cannot be an error while builds do it.
-- **M8 and M16 before M19:** ownership needs libraries, and the restriction is what makes names readable from syntax.
+- **M8 and M16 before M19:** ownership needs libraries, and the restriction is what makes names readable from syntax. M19's status items need neither.
+- **M3 and M4 before M21:** names and the ABI layer are what a functor's fingerprint is built from.
+- **M8, M9 and M21 before M22:** a virtual library needs headers, a plan that carries it, and functors.
 
 ## Prerequisites and flags
 
@@ -5415,10 +5530,13 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
   - `prelude` and `strict` in a build (M16);
   - declared steps and preprocessors (M15);
   - a canonical plan: `rune --plan FILE` (M9);
-  - `--build-list` gives the closure (M1).
+  - `--build-list` gives the closure (M1);
+  - `rune/status`, `rune/context` and `runelsp.chooseContext` (M19);
+  - `functor F = _virtual (X : A) : B`, `functor F = _dynamic "path" (X : A) : B` and `_export functor` (M21);
+  - virtual modules in a library's header (M22).
 - **What goes:** `group`, `local`, `cache`, the program-level `library` block (M9); `make manifests`, `--basis-index` and `--basis-check` as user-facing steps (M12); `lib/*/MANIFEST`.
-- **Files whose formats change:** the cache entry, the `.rbi` and the `.rbm` (M4, M7); `.rbu`'s imports (M3). The `.rbc` and the image do not.
-- **What the owner decides:** D1 to D29, and Gates G1 and G2. **Worth deciding first:** D18, D19, D22 and D29, which recommend against what the brief proposes or expects; D14, since a committed generated file is a matter of taste; and D17's warning against an error.
+- **Files whose formats change:** the cache entry, the `.rbi` and the `.rbm` (M4, M7). The `.rbc` and the image do not, unless M21's binding needs it: the structure half added 28 lines of C loader.
+- **What the owner decided:** D1 to D29, on 2026-11-02. Gate G1 closed with D19, and Gate G2 stays the owner's, with nothing behind it.
 
 ## Relation to the other plans
 
@@ -5427,12 +5545,17 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 - **`language-server-dist.md`:** dist's file list moves with D13.
 - **`compiler-library.md`.** Its M2, library names and export lists, is what D8 finishes. Its D6 half that "it fills the Basis's `Compiler.use` and `Compiler.compile`" is still not there. `RuneCompiler.Project` takes the workspace and the plan.
 - **`incremental-compilation.md`.** This roadmap reopens or completes its D1 and D2 for Rune 2 (and records that they deferred B there), D8 (the single library file never built: D19 says leave it), D14 (a user-level cache, still rejected as a default), D15 (the discipline, now D17's), D16 (the build language), D17 (compiling against a signature: D22; its "no functor in a virtual signature" is stale since functors-units).
-- **`functors-units.md`.** Its *Later* item is D22. Its G1 target of 1.5 is not reopened. Its published warm figures are corrected: 88.89G, not 105.0G.
+- **`functors-units.md`.** Its *Later* item is D22, done here (M21). Its G1 target of 1.5 is not reopened. Its published warm figures are corrected: 88.89G, not 105.0G.
 - **`build-cache-issues.md`.** Issues 15 and 22's batch case close here (M4, M3); new issues from E18 enter it with M1. Issue 11's text is stale: code reads and writes the same bytes.
 - **`correctness/linting.md`.** Its D18 and D19 modes stay; `--free-tyvars=later` and `--flex-records=program` stay outside builds. Its lint levels apply to every new check.
-- **`sml97-extensions.md`:** nothing here extends the language. `_virtual` for functors would, under D22.
+- **`sml97-extensions.md`:** one extension, `_virtual` and `_dynamic` for functors (D22, M21), with its entry there. Nothing else here extends the language.
 - **`specification.md`, `formal-verification.md`.** D20's obligations are the statement a proof would start from.
 - **`hol4.md`, `corpus/hol4.md`.** The seven annotations are still not on `rune-build`. M15 gives HOL4 a way through `.build`; a true build needs the run step (*Later*).
+- **`language/haskell98.md`** (on branch `haskell98`). rhc, a Haskell 98 compiler on Rune's back end, needs no milestone here. Neither roadmap waits on the other, and run one at a time this one goes first, as an order of convenience (its D46).
+  - It asked that six decisions keep a second language in view, and each has its clause: D5 (the plan is Rune's), D6 (written order is per language), D8 (kinds of export are the language's, and a boundary cannot hide an instance), D14 (a second compiler has its own identity), D24 (a head the client defines), D25 (a hit may read a head; memos in `lib/compiler/driver`).
+  - M6's first step is its M20, which then falls away.
+  - Imports by name left M3 for *Later*, since its D46 names them as what would reopen the order.
+  - Its `lib/compiler/mid.build` (its D41) is reaching in by D10. It becomes a named view of `lib/compiler` (D8), not a friend, and M14 holds it to that.
 - **`docs/plans/rune2/separate-compilation.md`:** this roadmap's sequel, written with it.
 
 ## Risks
@@ -5454,6 +5577,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 | A library elaborated from a basis empty but for the Basis breaks a build that relied on the caller's | M8 | E9 met exactly one, and hoisted it; the migrator reports them |
 | Editor memory stays too high for MLton-shaped code | M4, M18 | D1's sharing of signatures; the stated interim target |
 | Generated codecs make a compile slower | M5 | -0.002% on one type; re-measured per type; stop at the types that pay |
+| A functor's fingerprint misses what a client compiled from | M21 | A mutant per field; E10's probes as tests; MLKit's bug of 2005 is the case to keep |
 
 ## Testing
 
