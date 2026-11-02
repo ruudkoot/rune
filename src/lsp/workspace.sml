@@ -8,7 +8,7 @@ struct
   structure C=RuneCompiler
   type target={name:string,build:string,flags:string list,variables:(string*string) list,libraryRoot:string option}
   type settings={targets:target list,flags:string list,variables:(string*string) list,activeContext:string option,libraryRoot:string option}
-  type context={id:string,label:string,target:string,build:string,ordinal:int,project:C.Project.t,source:C.Project.source}
+  type context={id:string,label:string,name:string,target:string,build:string,ordinal:int,project:C.Project.t,source:C.Project.source}
   datatype selection=Loose | Selected of context | Ambiguous of context list
   (* A table of chains, in which a name's first entry is the one a search of the
      list it was made from finds. *)
@@ -19,6 +19,10 @@ struct
   exception Invalid of string
   val defaults:settings={targets=[],flags=[],variables=[],activeContext=NONE,libraryRoot=NONE}
   fun invalid message=raise Invalid message
+  (* What a status shows of a file or a target: the last part of a file URI, or
+     the name as it stands. *)
+  fun shortName (platform,name)=case (U.native (platform,U.parse name) handle U.Invalid => NONE) of NONE => name
+    | SOME {path,...} => (case String.tokens (fn c => c= #"/" orelse c= #"\\") path of [] => name | parts => List.last parts)
   fun strings value = case value of Json.Array values => List.map J.string values
     | _ => invalid "expected an array of strings"
   fun optional (object,key,decode,fallback)=case J.member (object,key) of NONE => fallback | SOME value => decode value
@@ -209,7 +213,8 @@ struct
               val sources=List.filter (fn source:C.Project.source => sameFile platform (#file source,path)) (C.Project.sources project)
           in List.map (fn source:C.Project.source =>
             {id= #build target ^ "#" ^ #name target ^ ":" ^ Int.toString (#ordinal source),
-             label= #name target ^ " (unit " ^ Int.toString (#ordinal source+1) ^ ")",build= #build target,
+             label= #name target ^ " (unit " ^ Int.toString (#ordinal source+1) ^ ")",
+             name=shortName (platform,#name target),build= #build target,
              target= #name target,ordinal= #ordinal source,project=project,source=source}:context) sources end
         val found=List.concat (List.map (fn candidate =>
           if null (#targets config) then (target candidate handle C.Failed _ => []) else target candidate) targets)
@@ -219,16 +224,18 @@ struct
        else let val location=U.fromPath(platform,build) handle U.Invalid=>U.fromPath(platform,OS.FileSys.fullPath build)
             in target {name="basis",build=U.original location,flags= #flags config,
               variables=[],libraryRoot= #libraryRoot config} end handle C.Failed _=>found end
-  fun select (workspace as Workspace {platform,lib,settings=stored,choices,...},documents,uri) =
+  fun resolve (workspace as Workspace {platform,lib,settings=stored,choices,...},documents,uri) =
     let val contexts=contexts (workspace,documents,uri)
         val active=case List.find (fn (document,_) => document=uri) (!choices) of SOME (_,id) => SOME id
           | NONE => #activeContext (configurationFor (workspace,uri))
-    in case active of SOME id =>
+        val selection=case active of SOME id =>
          (case List.filter (fn context:context => #id context=id orelse #target context=id) contexts of
            [context] => Selected context
           | _ => case contexts of []=>Loose | [context]=>
               if isBasisBuild platform(getOpt(#libraryRoot(configurationFor(workspace,uri)),lib),filePath platform(#build context))
               then Selected context else Ambiguous contexts
             | _=>Ambiguous contexts)
-       | NONE => case contexts of [] => Loose | [context] => Selected context | _ => Ambiguous contexts end
+       | NONE => case contexts of [] => Loose | [context] => Selected context | _ => Ambiguous contexts
+    in (selection,contexts) end
+  fun select arguments= #1 (resolve arguments)
 end

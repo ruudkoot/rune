@@ -54,6 +54,9 @@ struct
         val generation=W.generation workspace
         val rejected=((W.configure (workspace,Json.Object [("sourceMode",Json.String "invalid")]);false) handle W.Invalid _ => true)
     in check ("configuration is atomic",rejected andalso W.generation workspace=generation) end)
+  fun shortNames ()=List.app (fn (name,short) => check (name ^ " shows as " ^ short,W.shortName (U.Posix,name)=short))
+    [("file:///project/one.build","one.build"),("file:///a%20b/two%20words.build","two words.build"),
+     ("rune","rune"),("loose source","loose source"),("untitled:note","untitled:note")]
   val plain=W.defaults
   fun named name:W.settings={targets=[],flags=[],variables=[],activeContext=SOME name,libraryRoot=NONE}
   fun active (workspace,address)= #activeContext (W.configurationFor (workspace,address))
@@ -94,6 +97,7 @@ end
 structure RuneLspWorkspaceTestMain = Main (struct
   val name="lsp-workspace"
   val tests=Test.describe "lsp-workspace" [Test.it "contexts" RuneLspWorkspaceTests.contexts,
-    Test.it "scopes" RuneLspWorkspaceTests.scopes,Test.it "scope-cost" RuneLspWorkspaceTests.scopeCost]
+    Test.it "scopes" RuneLspWorkspaceTests.scopes,Test.it "scope-cost" RuneLspWorkspaceTests.scopeCost,
+    Test.it "short-names" RuneLspWorkspaceTests.shortNames]
 end)
 val ()=RuneLspWorkspaceTestMain.main ()

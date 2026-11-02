@@ -443,6 +443,109 @@ struct
               C.field(report,"items")<>Json.Array[])reports | _=>false)
       in () end)
     end)
+  (* The two language status items (D26): rune/status, rune/context, rune/setContext. *)
+  fun notice name value=Json.member("method",value)=SOME(Json.String name)
+  fun runeMessage value=case Json.member("method",value) of SOME(Json.String name)=>String.isPrefix "rune/" name | _=>false
+  fun statusCapabilities asked=object[("textDocument",object[("diagnostic",object[])]),
+    ("experimental",object[("rune",object(List.map(fn name=>(name,Json.Bool true))asked))])]
+  (* shared.sml's type depends on its context: 1 in one, true in two. *)
+  fun contextProject capabilities action=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        fun path name=OS.Path.concat(root,name)
+        val ()=List.app write[(path "one.build","files one.sml shared.sml end\n"),
+          (path "two.build","files two.sml shared.sml end\n"),(path "solo.build","files solo.sml end\n"),
+          (path "one.sml","val input=1\n"),(path "two.sml","val input=true\n"),
+          (path "shared.sml","val result:int=input\n"),(path "solo.sml","val alone=1\n")]
+        val targets=Json.Array(List.map(fn name=>object[("name",Json.String name),
+          ("build",Json.String(uri(path(name ^ ".build"))))])["one","two","solo"])
+        val options=object[("libraryRoot",Json.String(uri lib)),("targets",targets)]
+    in fixtureInitializedResult(object[("capabilities",capabilities),("initializationOptions",options)])
+         (fn (client,result)=>action{client=client,result=result,source=uri o path}) end)
+  fun answerPrompt(client,value)=
+    let val prompt=C.receive(client,notice "window/showMessageRequest")
+    in C.send(client,object[("jsonrpc",Json.String "2.0"),("id",C.field(prompt,"id")),("result",value)]) end
+  fun contextStatus ()=contextProject(statusCapabilities["context"])(fn {client,result,source}=>
+    let val ()=check("the server says which it will send",
+          C.field(C.field(C.field(result,"capabilities"),"experimental"),"rune")=object[("context",Json.Bool true)])
+        fun report file=C.field(C.receive(client,fn value=>notice "rune/context" value andalso
+          C.field(C.field(value,"params"),"uri")=Json.String file),"params")
+        fun pull(id,file)=(C.request(client,id,"textDocument/diagnostic",object[("textDocument",document file)]);C.response(client,id))
+        fun setContext(id,file,context)=(C.request(client,id,"rune/setContext",
+          object[("uri",Json.String file),("context",context)]);C.response(client,id))
+        val shared=source "shared.sml"
+        val ()=openDocument(client,shared,"val result:int=input\n")
+        val unresolved=report shared
+        val alternatives=case C.field(unresolved,"contexts") of Json.Array values=>values | _=>raise Fail "missing contexts"
+        val ()=check("a file with several contexts has none until one is chosen",C.field(unresolved,"state")=Json.String "unresolved"
+          andalso C.field(unresolved,"context")=Json.Null andalso length alternatives=2)
+        fun idOf name=C.field(valOf(List.find(fn context=>C.field(context,"name")=Json.String name)alternatives),"id")
+        val ()=answerPrompt(client,Json.Null)
+        val ()=check("a dismissed prompt leaves it unresolved",C.field(C.field(pull(700,shared),"error"),"code")=Json.int(~32802))
+        val ()=check("a context the file does not have is refused",
+          C.field(C.field(setContext(701,shared,Json.String "none"),"error"),"code")=Json.int(~32602))
+        val ()=check("a document not open has none",
+          C.field(C.field(setContext(702,source "one.sml",idOf "one"),"error"),"code")=Json.int(~32602))
+        fun choose(id,name)=
+          let val ()=check("a choice is answered",C.result(setContext(id,shared,idOf name))=Json.Null)
+              val chosen=report shared
+          in check("the file is checked in " ^ name,C.field(chosen,"state")=Json.String "selected" andalso
+               C.field(C.field(chosen,"context"),"name")=Json.String name andalso C.field(chosen,"contexts")=Json.Array alternatives) end
+        val ()=choose(703,"one")
+        val ()=check("after a dismissal a choice checks the file",C.field(C.result(pull(704,shared)),"items")=Json.Array[])
+        val ()=choose(705,"two")
+        val ()=check("choosing again changes the diagnostics",case C.field(C.result(pull(706,shared)),"items") of
+          Json.Array(_::_)=>true | _=>false)
+        val ()=C.notify(client,"textDocument/didChange",object[("textDocument",object[("uri",Json.String shared),("version",Json.int 2)]),
+          ("contentChanges",Json.Array[object[("text",Json.String "val result:int=input\n\n")]])])
+        val ()=check("a choice lasts through an edit",case C.field(C.result(pull(707,shared)),"items") of
+          Json.Array(_::_)=>true | _=>false)
+        val ()=choose(708,"one")
+        val ()=check("and back",C.field(C.result(pull(709,shared)),"items")=Json.Array[])
+        val solo=source "solo.sml"
+        val ()=openDocument(client,solo,"val alone=1\n")
+        val single=report solo
+        val ()=check("a file with one context has that one and no other",C.field(single,"state")=Json.String "selected"
+          andalso (case C.field(single,"contexts") of Json.Array[_]=>true | _=>false))
+        val ()=C.notify(client,"textDocument/didClose",object[("textDocument",document solo)])
+        val ()=openDocument(client,solo,"val alone=2\n")
+        val ()=check("a file opened again is reported again",C.field(report solo,"state")=Json.String "selected")
+        val loose="untitled:no-context"
+        val ()=openDocument(client,loose,"val free=1\n")
+        val none=report loose
+        val C.Client{messages,...}=client
+    in check("a loose file has none",C.field(none,"state")=Json.String "none" andalso C.field(none,"contexts")=Json.Array[]);
+       check("a client that asked for context hears no status",not(List.exists(notice "rune/status")(!messages))) end)
+  fun progressStatus ()=fixtureWith(statusCapabilities["status"])(fn client=>
+    let fun status predicate=C.field(C.receive(client,fn value=>notice "rune/status" value andalso
+          predicate(C.field(value,"params"))),"params")
+        fun busy params=C.field(params,"busy")=Json.Bool true
+        val _=status(not o busy)
+        val uri="untitled:status"
+        val ()=openDocument(client,uri,String.concat(List.tabulate(20000,fn i=>"val x" ^ Int.toString i ^ "=" ^ Int.toString i ^ "\n")))
+        val checking=status(fn params=>busy params andalso String.isPrefix "Checking" (textValue(C.field(params,"text"))))
+        val ()=check("a check says what it checks",textValue(C.field(checking,"text"))="Checking untitled:status")
+        val idle=status(not o busy)
+        val C.Client{messages,...}=client
+    in check("idle after it, with its units",C.field(idle,"severity")=Json.String "information"
+         andalso C.field(idle,"text")=Json.String "Idle" andalso String.isSubstring " checked, " (textValue(C.field(idle,"detail"))));
+       check("a client that asked for status hears no context",not(List.exists(notice "rune/context")(!messages))) end)
+  fun unasked ()=contextProject(object[("textDocument",object[("diagnostic",object[])])])(fn {client,result,source}=>
+    let val ()=check("nothing is promised",not(isSome(Json.member("experimental",C.field(result,"capabilities")))))
+        val shared=source "shared.sml"
+        val ()=openDocument(client,shared,"val result:int=input\n")
+        val ()=answerPrompt(client,Json.Null)
+        val solo=source "solo.sml"
+        val ()=openDocument(client,solo,String.concat(List.tabulate(5000,fn i=>"val x" ^ Int.toString i ^ "=1\n")))
+        val ()=C.request(client,720,"textDocument/diagnostic",object[("textDocument",document solo)])
+        val ()=check("the file checks",C.field(C.result(C.response(client,720)),"items")=Json.Array[])
+        val ()=C.request(client,721,"rune/setContext",object[("uri",Json.String shared),("context",Json.String "one")])
+        val ()=check("the request does not exist",C.field(C.field(C.response(client,721),"error"),"code")=Json.int(~32601))
+        val ()=ignore(OS.IO.poll([],SOME(Time.fromMilliseconds 400)))
+        val ()=C.request(client,722,"textDocument/hover",object[("textDocument",document solo),
+          ("position",object[("line",Json.int 0),("character",Json.int 4)])])
+        val _=C.response(client,722)
+        val C.Client{messages,...}=client
+    in check("a client that did not ask gets no rune/ message",not(List.exists runeMessage(!messages))) end)
   fun analysisProgress ()=temporaryTree(fn {root,uri,write}=>
     let fun path name=OS.Path.concat(root,name)
         val ()=write(path "left.build","left.sml\n")
@@ -1343,6 +1446,9 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "workspace-diagnostics" RuneLspSemanticProtocolTests.workspaceDiagnostics,
     Test.it "workspace-context-reporting" RuneLspSemanticProtocolTests.workspaceContexts,
     Test.it "live-analysis-progress" RuneLspSemanticProtocolTests.analysisProgress,
+    Test.it "status-context" RuneLspSemanticProtocolTests.contextStatus,
+    Test.it "status-progress" RuneLspSemanticProtocolTests.progressStatus,
+    Test.it "status-unasked" RuneLspSemanticProtocolTests.unasked,
     Test.it "idle-workspace-polls" RuneLspSemanticProtocolTests.idleWorkspacePolls,
     Test.it "eviction-refresh-loop" RuneLspSemanticProtocolTests.evictionRefreshLoop,
     Test.it "watched-workspace-cache" RuneLspSemanticProtocolTests.watchedWorkspaceCache,

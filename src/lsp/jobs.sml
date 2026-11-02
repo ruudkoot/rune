@@ -10,17 +10,26 @@ struct
   type 'a job={id:IntInf.int,key:string option,priority:int,data:'a,payload:V.value}
   datatype phase=Starting of Time.time | Idle | Working of Time.time | Cancelling of Time.time | AwaitReady
   type progress={phase:string,file:string,checked:IntInf.int,reused:IntInf.int,at:Time.time}
+  type finished={context:string option,checked:IntInf.int,reused:IntInf.int}
   datatype 'a t=Jobs of {command:string,args:string list,timeout:Time.time,cancelGrace:Time.time,maxPending:int,
     worker:P.t option ref,retired:P.t list ref,phase:phase ref,queue:'a job list ref,active:'a job option ref,
     serial:IntInf.int ref,events:'a event list ref,closed:bool ref,started:Time.time option ref,
     progress:progress option ref,context:(string*string) option ref,planned:IntInf.int option ref,
-    contextNumber:IntInf.int ref,reported:Time.time option ref}
+    contextNumber:IntInf.int ref,reported:Time.time option ref,finished:finished option ref,loss:string option ref}
   exception Full
   fun new {command,args,timeout,cancelGrace,maxPending} =
     if maxPending<1 then raise Domain else Jobs {command=command,args=args,timeout=timeout,cancelGrace=cancelGrace,
       maxPending=maxPending,worker=ref NONE,retired=ref [],phase=ref Idle,queue=ref [],active=ref NONE,
       serial=ref 0,events=ref [],closed=ref false,started=ref NONE,progress=ref NONE,context=ref NONE,
-      planned=ref NONE,contextNumber=ref 0,reported=ref NONE}
+      planned=ref NONE,contextNumber=ref 0,reported=ref NONE,finished=ref NONE,loss=ref NONE}
+  (* What a status shows: the work, the running job's progress, and the units of
+     the last job that reported any. *)
+  fun activity (Jobs {active,queue,progress,context,...})={active=Option.map #data (!active),
+    queued=List.map #data (!queue),context=Option.map #1 (!context),progress= !progress}
+  fun finished (Jobs {finished,...})= !finished
+  (* Why the worker was lost since this was last asked, unless a cancellation
+     ended it. A job that fails in a worker that goes on is a Failed event alone. *)
+  fun takeLoss (Jobs {loss,...})= !loss before loss:=NONE
   (* Only bounded metadata reaches logs: never the captured source/state. *)
   fun preview text =
     let val text=if size text<=256 then text else String.substring(text,0,96) ^ "..." ^ String.extract(text,size text-160,NONE)
@@ -111,8 +120,9 @@ struct
     in queue:=insert (!queue);id end
   fun retire (Jobs {worker,retired,...}) = case !worker of NONE => () | SOME process =>
     (P.terminate process;retired:=process :: !retired;worker:=NONE)
-  fun lost (jobs as Jobs {active,phase,queue,...},message) =
+  fun lost (jobs as Jobs {active,phase,queue,loss,...},message) =
     let val message=explain(jobs,message)
+        val ()=case !phase of Cancelling _ => () | _ => loss:=SOME message
     in (case !active of NONE => (case (!phase,!queue) of (Starting _,job::rest) =>
          (queue:=rest;emit (jobs,Failed (#data job,message))) | _ => ()) | SOME job =>
        (case !phase of Cancelling _ => () | _ => emit (jobs,Failed (#data job,message)));
@@ -131,7 +141,7 @@ struct
            planned:=NONE;contextNumber:=0;reported:=NONE;
            phase:=Working (Time.+ (Time.now (),timeout));P.enqueue (process,#payload job))
         | _ => ()
-  fun message (jobs as Jobs {active,phase,progress,context,started,timeout,planned,contextNumber,reported,...},value) =
+  fun message (jobs as Jobs {active,phase,progress,context,started,timeout,planned,contextNumber,reported,finished,...},value) =
     let val opName=textField(value,"op")
         val ready=opName=SOME "ready"
     in if ready then
@@ -165,7 +175,10 @@ struct
               val fields=V.object value
               fun optional name=case List.find (fn (key,_) => key=name) fields of NONE => NONE | SOME (_,value) => SOME value
               val ()=if cancelling then () else case optional "result" of SOME result =>
-                  (if isSome(!reported) then reportProgress(jobs,true,true) else ();emit (jobs,Done (#data job,result)))
+                  (if isSome(!reported) then reportProgress(jobs,true,true) else ();
+                   Option.app(fn update=>finished:=SOME{context=Option.map #1 (!context),checked= #checked update,
+                     reused= #reused update})(!progress);
+                   emit (jobs,Done (#data job,result)))
                 | NONE => (case optional "cancelled" of SOME (V.Bool true) => emit (jobs,Cancelled (#data job))
                   | _ => (case optional "error" of SOME (error as V.Object _) =>
                       emit (jobs,Rejected (#data job,{code=V.integer (V.field (error,"code")),

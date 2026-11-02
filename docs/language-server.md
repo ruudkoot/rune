@@ -93,6 +93,8 @@ file and phase, checked/reused unit counts, and elapsed time. Document checks
 start reporting after two seconds. Completion is logged for reported work.
 Clients supplying a work-done token receive these intermediate reports through
 `$/progress` as well. Progress updates do not extend deadlines or cancellation.
+A client that asks for it hears what the server is doing as well, whether or
+not a request brought a token: *Status for a client that asks*, below.
 The background worker retains at most one diagnostic report cache, bounded
 to 4 MiB of encoded reports. Unchanged workspace polls reuse those JSON
 reports without retaining analysis snapshots or logging another sweep.
@@ -322,6 +324,28 @@ it does not select by enumeration order. A configured target name or the
 returned context identifier can also select one. Dismissal or unsupported
 client UI leaves the context unresolved. Document synchronization remains
 available while semantic analysis awaits an explicit selection.
+The prompt is shown once: a file whose prompt was dismissed is not asked about
+again until it is closed or the settings change. A choice lasts as long.
+
+## Status for a client that asks
+
+A client can ask, under `experimental` in `initialize`, to be told what the
+server is doing and which context each file is checked in, and can then choose
+a file's context at any time. The VS Code extension does, for its two items in
+the `{ }` menu. Other clients see nothing of this: they get no `rune/` message,
+and the prompt stays theirs. [The protocol](lsp-protocol.md#status-for-a-client-that-asks)
+gives the messages.
+
+`rune/status` says that the server is busy while it discovers, checks or sweeps,
+what it is doing and the context and units checked and reused, and after a
+check the same of the last one. A hover or other query does not count as busy,
+and nor does a workspace poll that its cache answers. Severity is an error from
+a worker's failure until a check in that worker succeeds. At most one message
+goes each 250 ms, and nothing while nothing changes. `rune/context` goes when a
+file's context changes: the one it is checked in, or that it has none or is
+waiting for a choice, and those it could have. `rune/setContext` takes the path
+a prompt's answer takes, for a context the last `rune/context` of that file
+offered.
 
 ## Editor syntax
 
