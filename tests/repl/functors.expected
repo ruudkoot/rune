@@ -13,4 +13,5 @@ structure A
 val it = () : unit
 - structure C
 - val it = 8 : int
+- - - structure D
 - 

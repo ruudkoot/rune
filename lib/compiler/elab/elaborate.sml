@@ -1217,7 +1217,15 @@ struct
     let
       val boundSet = List.foldl (fn (b : tycon, m) => IntMap.insert (m, #stamp b, ())) IntMap.empty bound
       fun isBound (c : tycon) = IntMap.member (boundSet, #stamp c)
-      fun isDatatype (c : tycon) = IntMap.member (!Ty.datatypes, #stamp c)
+      (* the datatypes the signature itself specifies: not Ty.datatypes, which
+         only a compile that makes code fills with them (specDatatypes), so
+         that a compile that makes none judges as one that makes it *)
+      fun specified (Env {tys, strs, ...}, m) =
+        StringMap.foldl specified
+          (StringMap.foldl (fn (TyStr {fcn = TName c, cons = _ :: _}, m) => IntMap.insert (m, #stamp c, ()) | (_, m) => m) m tys)
+          strs
+      val datatypes = specified (pe, IntMap.empty)
+      fun isDatatype (c : tycon) = IntMap.member (datatypes, #stamp c)
       fun opens (c, cs) =
         List.mapPartial (fn (_, Con {scheme, info}) =>
                               (case prune scheme of
@@ -2056,6 +2064,11 @@ struct
              which takes the parameter's record (functorCode) *)
           fun function (b : funbind) =
             let
+              (* what the body has in reach -- its parameter, what it binds --
+                 is out of reach where it ends: not for a functor after it in
+                 the same `and`, which would name another function's
+                 parameter by a record of the same slots, as of no slots *)
+              val outside = (!records, !inReach)
               val sigma = elabSigexp (env, #paramSig b)
               (* what only the code needs (the function, its records, the
                  parameter's datatypes in the code's tables): not in a
@@ -2141,6 +2154,7 @@ struct
                                                 {func = func, param = param, paramRecord = paramRecord, result = resultRecord,
                                                  opens = opens})
                   end
+              val () = (records := #1 outside; inReach := #2 outside)
             in
               (#name b, FunInfo {param = #param b, paramSig = sigma, binding = Env.originAt ("functor", #name b, #span b),
                                  summary = summary, code = func})

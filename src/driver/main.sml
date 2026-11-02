@@ -824,7 +824,13 @@ struct
           val warnings = map Error.formatWarning (List.rev (!Error.warnings))
           val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
         in
-          if !Options.typecheckOnly orelse failed then (if failed then failedBefore := true else (); acc)
+          if failed then (failedBefore := true; acc)
+          else if !Options.typecheckOnly then
+            (* no unit is made, whose basis would say what it declares: the
+               signatures and functors of a boundary's exports, from its syntax *)
+            let val declared = #declares (Deps.analyse (name, decs))
+                fun named kind = List.mapPartial (fn (k, n) => if k = kind then SOME n else NONE) declared
+            in CompilerBuildContext.noteNames (buildContext, named Deps.Fun, named Deps.Sig); acc end
           else
             let
               val usages = timed "unit-usages" (fn () => UnitBasis.usagesOf names)
