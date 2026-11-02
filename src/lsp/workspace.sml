@@ -10,7 +10,11 @@ struct
   type settings={targets:target list,flags:string list,variables:(string*string) list,activeContext:string option,libraryRoot:string option}
   type context={id:string,label:string,target:string,build:string,ordinal:int,project:C.Project.t,source:C.Project.source}
   datatype selection=Loose | Selected of context | Ambiguous of context list
+  (* A table of chains, in which a name's first entry is the one a search of the
+     list it was made from finds. *)
+  type 'a table=(string*'a) list array
   datatype t=Workspace of {platform:U.platform,lib:string,roots:string list ref,settings:settings ref,scoped:(string*settings) list ref,
+    index:{uris:settings table,keys:settings table} option ref,
     generation:IntInf.int ref,inputGeneration:IntInf.int ref,choices:(string*string) list ref}
   exception Invalid of string
   val defaults:settings={targets=[],flags=[],variables=[],activeContext=NONE,libraryRoot=NONE}
@@ -58,7 +62,7 @@ struct
           | SOME value => SOME (filePath platform (J.string value))
     in {targets=targets,flags=common,variables=vars,activeContext=active,libraryRoot=libraryRoot} end
     handle J.Invalid message => raise Invalid message | U.Invalid => raise Invalid "invalid file URI"
-  fun new {platform,lib} = Workspace {platform=platform,lib=lib,roots=ref [],settings=ref defaults,scoped=ref [],
+  fun new {platform,lib} = Workspace {platform=platform,lib=lib,roots=ref [],settings=ref defaults,scoped=ref [],index=ref NONE,
     generation=ref 0,inputGeneration=ref 0,choices=ref []}
   fun generation (Workspace {generation,...})= !generation
   fun inputGeneration (Workspace {inputGeneration,...})= !inputGeneration
@@ -74,28 +78,49 @@ struct
   fun configure (workspace as Workspace {platform,settings=stored,...},value) =
     let val parsed=settings platform value
     in if parsed= !stored then () else (stored:=parsed;invalidate workspace) end
-  fun forget (Workspace {scoped,choices,...},uri) =
-    (scoped:=List.filter (fn (scope,_) => scope<>uri) (!scoped);
+  fun table count : 'a table=Array.array (2*count+1,[])
+  fun slot (chains:'a table,name)=CharVector.foldl (fn (c,hash) => (hash*31+Char.ord c) mod 1048573) 0 name mod Array.length chains
+  fun lookup (chains,name)=Option.map #2 (List.find (fn (other,_) => other=name) (Array.sub (chains,slot (chains,name))))
+  fun add (chains,name,value)=let val at=slot (chains,name) in Array.update (chains,at,(name,value) :: Array.sub (chains,at)) end
+  (* Scoped settings by URI and by native key, made after a change to them, so
+     that a file's configuration costs its depth and not the number of scopes. *)
+  fun indexed (Workspace {platform,scoped,index,...}) =
+    case !index of SOME tables => tables | NONE =>
+      let val uris=table (length (!scoped)) val keys=table (length (!scoped))
+          val ()=List.app (fn (uri,value) => (add (uris,uri,value);
+            Option.app (fn key => add (keys,key,value)) (nativeKey platform uri))) (List.rev (!scoped))
+          val tables={uris=uris,keys=keys}
+      in index:=SOME tables;tables end
+  fun scopedAt (workspace,uri)=lookup (#uris (indexed workspace),uri)
+  (* The longest key that holds a file's: itself, or a directory above it, with
+     or without the slash that ends it. *)
+  fun nearest (keys,key) =
+    let fun prefix count=lookup (keys,String.substring (key,0,count))
+        fun above at=if at<0 then NONE else if String.sub (key,at)<> #"/" then above (at-1) else
+          case prefix (at+1) of SOME value => SOME value | NONE =>
+            (case prefix at of SOME value => SOME value | NONE => above (at-1))
+    in case prefix (size key) of SOME value => SOME value | NONE => above (size key-1) end
+  fun forget (Workspace {scoped,index,choices,...},uri) =
+    (scoped:=List.filter (fn (scope,_) => scope<>uri) (!scoped);index:=NONE;
      choices:=List.filter (fn (document,_) => document<>uri) (!choices))
-  fun configurationFor (Workspace {platform,settings,scoped,...},uri) =
-    case List.find (fn (scope,_) => scope=uri) (!scoped) of SOME (_,settings) => settings
-    | NONE =>
-        let val key=nativeKey platform uri
-            fun contains scope = case (nativeKey platform scope,key) of
-              (SOME root,SOME file) => root=file orelse String.isPrefix (if String.isSuffix "/" root then root else root ^ "/") file
-            | _ => false
-            val roots=List.filter (fn (scope,_) => contains scope) (!scoped)
-            fun nearest (current as (scope,_),NONE)=SOME current
-              | nearest (current as (scope,_),old as SOME (prior,_))=
-                  if size (valOf (nativeKey platform scope))>size (valOf (nativeKey platform prior)) then SOME current else old
-        in case List.foldl nearest NONE roots of SOME (_,settings) => settings | NONE => !settings end
-  fun configureAt (workspace as Workspace {platform,scoped,...},uri,value) =
+  fun configurationFor (workspace as Workspace {platform,settings,scoped,...},uri) =
+    if null (!scoped) then !settings else
+    let val {uris,keys}=indexed workspace
+    in case lookup (uris,uri) of SOME settings => settings
+       | NONE => getOpt (Option.mapPartial (fn key => nearest (keys,key)) (nativeKey platform uri),!settings) end
+  fun configureAt (workspace as Workspace {platform,scoped,index,...},uri,value) =
     let val previous=configurationFor(workspace,uri)
         val rest=List.filter(fn (scope,_)=>scope<>uri)(!scoped)
     in case value of Json.Null=>
-        (scoped:=rest;if previous=configurationFor(workspace,uri) then () else dirty workspace)
+        (scoped:=rest;index:=NONE;if previous=configurationFor(workspace,uri) then () else dirty workspace)
       | _=>let val parsed=settings platform value
-           in if parsed=previous then () else (scoped:=(uri,parsed)::rest;dirty workspace) end end
+           in if parsed=previous then () else (scoped:=(uri,parsed)::rest;index:=NONE;dirty workspace) end end
+  (* Settings for many documents at once, each as one configureAt would leave
+     them, the last in the list the newest. A worker's plan, so no generation moves. *)
+  fun assign (Workspace {scoped,index,...},entries) =
+    let val fresh=table (length entries)
+        val ()=List.app (fn (uri,value) => add (fresh,uri,value)) entries
+    in scoped:=List.rev entries @ List.filter (fn (uri,_) => not (isSome (lookup (fresh,uri)))) (!scoped);index:=NONE end
   fun choose (Workspace {choices,generation,...},uri,id) =
     (choices:=(uri,id) :: List.filter (fn (document,_) => document<>uri) (!choices);
      generation:=IntInf.+(!generation,1))
