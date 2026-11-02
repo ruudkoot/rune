@@ -57,7 +57,7 @@ struct
       binding=binding definition,definition=location definition,declaration=location declaration,
       isDefinition=isDefinition,derived=derived} end
   fun check (context as Analysis {parent,context=name,namespace,engine,serial,busy,projections,...},
-             {inputs:input list,steps,project,libraries,cancelled}) : snapshot =
+             {inputs:input list,steps,project,libraries,building,cancelled}) : snapshot =
     let val ()=checked context
         val C.Session {config,...}=parent
         val ()=if length inputs>10000 then raise Fail "too many analysis inputs" else ()
@@ -71,7 +71,7 @@ struct
         fun poll ()=let val result=cancelled () in C.checked parent;result end
         val ()=busy:=true
         fun work () =
-          let val result=E.checkSteps (engine,sources,steps,libraries,poll)
+          let val result=E.checkSteps (engine,sources,steps,libraries,poll,building)
               val E.Session{observer,...}=engine
               fun phase name items=Option.app(fn f=>f {phase=name,file="",checked= #checked result,reused= #reused result,items=items})(!observer)
               val ()=phase "occurrences-start" (length(#uses result))
@@ -196,7 +196,7 @@ struct
         fun query (sources,at)= E.checkWith
           (engine,sources,#steps snapshot,#libraries snapshot,fn () => false,
            SOME {unit=E.unitName (#file input,ordinal+1),file= #file input,offset=at,path=path},
-           List.map source (#dependencies snapshot),SOME (#prelude snapshot))
+           List.map source (#dependencies snapshot),SOME (#prelude snapshot),NONE)
         val original=List.map source (#inputs snapshot)
         fun retry []=NONE
           | retry ((text,at)::rest)=

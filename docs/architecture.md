@@ -278,7 +278,11 @@ them together, by path. A library's requires column names what it uses of
 the basis library, so that a program that names only the library loads what
 the library needs. The driver elaborates the basis library with `_prim`
 allowed, then the other libraries without, then the program; runedoc
-elaborates a library on the same terms (`DocElab.library`).
+elaborates a library on the same terms (`DocElab.library`). A library with
+a header (docs/build.md) is compiled in the basis library and what it
+requires alone, and a program sees what it names: `BasisManifest.scopes` says
+what each scope sees, `select` chooses by it, and `LibraryScope`'s walk puts
+each file in its scope, for each of the compiler's ways through the libraries.
 
 ## Adding a language feature (checklist)
 

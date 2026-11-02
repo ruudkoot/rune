@@ -267,6 +267,7 @@ struct
     | command ["build-jit-deep",name]=SOME (fn () => deep name)
     | command ["build-compiler-layout"]=SOME compilerLayout
     | command ["build-library-exports"]=SOME libraryExports
+    | command ["build-library-model"]=SOME LibraryModel.run'
     | command ["build-compiler-api"]=SOME compilerApi
     | command _=NONE
   val vm=Test.it "vm-refusals"
@@ -277,6 +278,8 @@ struct
        (job "compiler-layout" ["build-compiler-layout"] []),
      tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:tests/lib/exports/*"]
        (job "library-exports" ["build-library-exports"] []),
+     tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:src/driver/*","covers:tests/runner/librarymodel.sml"]
+       (job "library-model" ["build-library-model"] []),
      tagged ["check","test-compiler-api","test-lib","covers:lib/compiler/*","covers:tests/compiler/api*.sml"]
        (job "compiler-api" ["build-compiler-api"] []),
      tagged ["check","test","test-low-level","covers:tests/compiler/*","covers:tests/runtime/*"]

@@ -136,6 +136,10 @@ struct
                 | BuildFile.Annotate (more,declarations) => steps (annotations @ more,declarations)
                 | BuildFile.Cache cache => (caches:=path cache :: !caches;[])
                 | BuildFile.Libraries names => (libraries:= !libraries @ names;[])
+                | BuildFile.Header {requires,...} =>
+                    if List.last (String.fields (fn c => c = #"/") file)="library.build"
+                    then (libraries:= !libraries @ requires;[])
+                    else raise Invalid (file ^ ": a header belongs to a library's library.build")
                 | BuildFile.Inline names => (inline:= !inline @ names;[])
                 | BuildFile.InlineVal names => (inlineValues:= !inlineValues @ names;[])
               val result=steps (annotations,declarations)

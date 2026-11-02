@@ -24,7 +24,7 @@ struct
   fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false,observer=ref NONE,names=ref StringMap.empty}
   fun close (Session {closed,stored,names,...})=(closed:=true;stored:=[];names:=StringMap.empty)
   fun checkWith (Session {stored,plan=savedPlan,config,closed,observer,names=savedNames},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
-                 frozen:source list,frozenPlan:CompilerPrelude.plan option) : snapshot = CompilerSession.owned (fn () =>
+                 frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option) : snapshot = CompilerSession.owned (fn () =>
     let val {lib,libraries,target,allowPrim,...}=config
         val ()=CompilerSettings.target:=target
         val ()=CompilerSettings.libDir:=lib
@@ -97,7 +97,7 @@ struct
           CompilerProject.SUnit (file,annotations) => (Pickle.byte (w,0);Pickle.string (w,file);Pickle.list Pickle.string (w,annotations))
         | CompilerProject.SLocal (a,b) => (Pickle.byte (w,1);Pickle.list encode (w,a);Pickle.list encode (w,b))
         | CompilerProject.SLibrary (exports,children) => (Pickle.byte (w,2);
-            Pickle.list (fn (w,(kind,name)) => (Pickle.byte (w,case kind of BuildFile.Str => 0 | BuildFile.Sig => 1 | BuildFile.Fun => 2 | BuildFile.Ty => 3);
+            Pickle.list (fn (w,(kind,name)) => (Pickle.byte (w,case kind of BuildFile.Str => 0 | BuildFile.Sig => 1 | BuildFile.Fun => 2 | BuildFile.Ty => 3 | BuildFile.Fix => 4);
               Pickle.string (w,name))) (w,exports);Pickle.list encode (w,children))
         | CompilerProject.SUse (file,children) => (Pickle.byte (w,3);Pickle.string (w,file);Pickle.list encode (w,children))
         | CompilerProject.SImplements (name,children) => (Pickle.byte (w,4);Pickle.string (w,name);Pickle.list encode (w,children))
@@ -222,23 +222,18 @@ struct
               val ()=sourceNames:=StringMap.insert(!sourceNames,#file source,(#mode source,#text source,found))
           in StringMap.foldli(fn (name,(),all)=>StringMap.insert(all,name,()))mentioned found end
         val plan=case frozenPlan of SOME plan => plan | NONE =>
-          CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=List.foldl names StringMap.empty sources}
+          CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=List.foldl names StringMap.empty sources,building=building}
         val librarySources=List.map (fn entry:BasisManifest.entry =>
           (poll ();(entry,#text (Source.readFile (Source.Ascii,BasisManifest.path entry))))) (List.concat (#groups plan))
         val ()=observe "prelude-selected" "" (length librarySources)
         val ()=Source.overlays:=List.foldl (fn ((entry,text),overlays) => StringMap.insert
           (overlays,BasisManifest.path entry,text)) (!Source.overlays) librarySources
+        val libraryWalk=LibraryScope.walk (CompilerBuildContext.site scopes,#scopes plan)
         fun library entries =
-          let val prior:LibraryScope.basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
-              val incoming= !fixity
-              fun one (entry:BasisManifest.entry)=
+          let fun one (entry:BasisManifest.entry)=
                 unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},BasisManifest.path entry,
                   case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false)
-              val ()=List.app one entries
-          in case BasisManifest.scopeOf entries of NONE => () | SOME exports =>
-            let val current:LibraryScope.basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
-                val visible=LibraryScope.restrict (prior,current,exports)
-            in env:= #env visible;fixity:=incoming;Elaborate.sigs:= #sigs visible;Elaborate.funs:= #funs visible end end
+          in LibraryScope.group (libraryWalk,entries,fn () => List.app one entries) end
         val implemented=ref [] : string list ref
         val remaining=ref sources
         val ordinal=ref 0
@@ -283,7 +278,7 @@ struct
                   val ()=implemented:=name :: !implemented val ()=walk children
                   val ()=CompilerBuildContext.leave (scopes,boundary,[])
               in apply (before',delta (before',snap ()),SOME []) end
-        val error=(List.app library (#groups plan);walk steps;
+        val error=(List.app library (#groups plan);LibraryScope.program libraryWalk;walk steps;
           if null (!remaining) then () else raise Fail "extra ordered project input";NONE) handle Error.CompileError (span,message) =>
           SOME (CompilerSession.sourceError ("error",span,message))
         val ()=poll ()
@@ -329,5 +324,5 @@ struct
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
       uses=List.concat (List.rev (!uses)),candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
       cache= !stored,syntaxes=List.rev (!syntaxes),plan=planKey,prelude=plan} end)
-  fun checkSteps (session,sources,steps,libraries,cancelled)=checkWith (session,sources,steps,libraries,cancelled,NONE,[],NONE)
+  fun checkSteps (session,sources,steps,libraries,cancelled,building)=checkWith (session,sources,steps,libraries,cancelled,NONE,[],NONE,building)
 end

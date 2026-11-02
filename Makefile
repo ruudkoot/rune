@@ -2036,7 +2036,7 @@ check test test-all test-opt test-native test-register test-register-jit test-st
 RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
                tests/runner/hosts.sml tests/runner/libhosts.sml tests/runner/hostchecks.sml \
                tests/runner/migration.sml \
-               tests/runner/children.sml tests/runner/buildchecks.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
+               tests/runner/children.sml tests/runner/librarymodel.sml tests/runner/buildchecks.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
                tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml tests/runner/matrixfaults.sml \
                tests/runner/docchecks.sml tests/runner/mutants.sml tests/runner/docfaults.sml \
                tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml \

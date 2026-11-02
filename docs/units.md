@@ -444,6 +444,20 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   come from an OS reservation held until the write finishes, as for
   bytecode output; generating them does not format clocks or process ids.
 
+**What a boundary does to a key.** A client's usages are by name, so what
+its entry holds of a library is what it could see and did name: a boundary
+needs no hash of its own, as SML/NJ's filter does, whose clients depend on a
+unit's one hash (D8 asks for "what would have been pickled for the smaller
+environment"; a usage is finer than that). A name a boundary hides is bound
+in no client's scope: `UnitBasis.binders` follows the filter, so a usage of it
+does not hold there, and a build that is no friend compiles the unit again and
+is refused rather than served. An edit behind a boundary compiles no client,
+whichever unit it is in, unless the client is a program that keeps its units'
+identities: the usage holds by its fingerprint, across the unit that changed
+(`keys` of `tests/runner/librarymodel.sml`). What it did not name it does not
+depend on. A library's own files are keyed the same way, in the scope its
+header gives them, so a unit is one entry whatever else a program loads.
+
 **Fingerprints** (GHC's rule; the incremental roadmap's M6, the third
 part). A usage keeps, beside the unit that bound the name, the
 fingerprint of what the name named: the hash of an entry -- a value's
