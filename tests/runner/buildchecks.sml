@@ -139,15 +139,6 @@ struct
       val () = need (String.isSubstring "structure:Api signature:API functor:Make type:exposed" manifest,"missing export metadata")
       val (status,log) = invoke "check" ["--library","scoped","--basis-check"]
       val () = need (status=0,"scoped manifest check: " ^ log)
-      (* a library that uses what a boundary it is written on hides fails at
-         its own index, not at a client's compile (E28) *)
-      val client = lib ^ "/client"
-      val () = mkdirs client
-      val () = write (client ^ "/library.build","libraries scoped end\nannotate \"demand\" in client.sml end\n")
-      val () = write (client ^ "/client.sml","structure Client = struct val x = Hidden.value end\n")
-      val (status,log) = invoke "hidden-index" ["--basis-index",client]
-      val () = need (status<>0 andalso String.isSubstring "uses Hidden, which the boundary of" log,
-                     "the index did not notice a name a boundary hides: " ^ log)
       (* --typecheck-only keeps what a library's boundary exports *)
       val program = dir ^ "/program.build"
       val () = write (program,"libraries scoped end\n\"" ^ fromRoot (fixture ^ "/use.sml") ^ "\"\n")
@@ -202,8 +193,12 @@ struct
         in need (status=0,"public dependency cannot be used: " ^ log) end
       val () = List.app consumerMode modes
       val () = write (consumer ^ "/consumer.sml","structure Consumer = struct val public = Api.value val private = Hidden.value end\n")
-      val (status,_) = invoke "private-consumer-index" ["--basis-index",consumer]
-      val () = need (status=0,"cannot index private-reference rejection fixture")
+      (* a library that uses what a boundary it is written on hides fails at
+         its own index, and not only at its client's compile (E28); the
+         manifest stays as it was, and that compile fails as well *)
+      val (status,log) = invoke "private-consumer-index" ["--basis-index",consumer]
+      val () = need (status<>0 andalso String.isSubstring "uses Hidden, which the boundary of" log,
+                     "the index did not notice a name a boundary hides: " ^ log)
       fun privateConsumer (label,flags) =
         let val (status,log) = invoke (label ^ "-private-consumer")
               (flags @ ["--library","consumer",dir ^ "/consumer-use.sml","-o",dir ^ "/rejected.rbc"])
