@@ -112,8 +112,9 @@ exports.run = async () => {
   });
   await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
   console.log('PASS vscode/editor/activation-hover-diagnostics-restart');
-  await languageStatus(extension.exports);
   const root = process.env.RUNE_VSCODE_PROJECT_ROOT;
+  // With a project its settings name its targets, and discovery does not run.
+  if (!root) await languageStatus(extension.exports);
   if (root) {
     const config = vscode.workspace.getConfiguration('runelsp');
     await config.update('libraryRoot', vscode.Uri.file(`${root}/lib`).toString(), vscode.ConfigurationTarget.Workspace);
