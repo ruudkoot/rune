@@ -201,8 +201,11 @@ struct
       (* the top level: what the file declares, and where it breaks the
          discipline *)
       val declares : name list ref = ref []
+      val declared : unit StringMap.map ref = ref StringMap.empty
       val breaks : (span * string) list ref = ref []
-      fun declare (k, n) = if List.exists (fn x => x = (k, n)) (!declares) then () else declares := (k, n) :: !declares
+      fun declare (k, n) =
+        if StringMap.member (!declared, key (k, n)) then ()
+        else (declared := StringMap.insert (!declared, key (k, n), ()); declares := (k, n) :: !declares)
       fun broken (d, what) = breaks := (spanOfDec d, what) :: !breaks
       fun top (sc, d, exported) =
         case d of
@@ -226,14 +229,13 @@ struct
         | DInfixr _ => (broken (d, "a fixity directive"); dec (sc, d))
         | DNonfix _ => (broken (d, "a fixity directive"); dec (sc, d))
       val _ = List.foldl (fn (d, sc) => top (sc, d, true)) empty prog
-      val declared = List.map key (!declares)
       fun parse k = case String.fields (fn c => c = #" ") k of
                       [kn, n] => (case kn of "structure" => (Str, n) | "signature" => (Sig, n) | "functor" => (Fun, n)
                                              | _ => (Tycon, n))
                     | _ => (Str, k)
     in
       {path = path, declares = List.rev (!declares),
-       uses = List.map parse (List.filter (fn k => not (List.exists (fn d => d = k) declared)) (StringMap.listKeys (!uses))),
+       uses = List.map parse (List.filter (fn k => not (StringMap.member (!declared, k))) (StringMap.listKeys (!uses))),
        free = List.map parse (StringMap.listKeys (!uses)),
        breaks = List.rev (!breaks)}
     end

@@ -118,8 +118,18 @@ struct
            ("boundary/implements.build", "implements Foo = use x.build end\nuse x.build\npriv.sml"),
            ("boundary/nothing.build", "library (structure Nope, structure Pub) = use x.build end\npub.sml"),
            ("boundary/signature-nothing.build", "library (signature NOPE, structure Pub) = use x.build end\npub.sml"),
+           (* a build file with a boundary of its own, which two libraries share *)
+           ("boundary/shared.sml", "structure Shared = struct val s = \"shared\" end\nstructure Own = struct val v = \"own\" end"),
+           ("boundary/shared.build", "library (structure Shared) = shared.sml end"),
+           ("boundary/uses-shared.sml", "structure Other = struct val v = Shared.s end"),
+           ("boundary/first.sml", "structure First = struct val v = Shared.s end"),
+           ("boundary/shows.sml", "val () = print (First.v ^ \" \" ^ Other.v ^ \"\\n\")"),
+           ("boundary/uses-own.sml", "val () = print Own.v"),
+           ("boundary/diamond.build", "library (structure First) = use shared.build first.sml end\nlibrary (structure Other) = use shared.build uses-shared.sml end\nshows.sml"),
+           ("boundary/diamond-hidden.build", "library (structure First) = use shared.build first.sml end\nuse shared.build\nuses-own.sml"),
            (* a name of the Basis Library in scope inside it, as MLton's build exports CharArray *)
-           ("boundary/outside.build", "library (structure Pub, structure List) = use x.build pub.sml end"),
+           ("boundary/lists.sml", "val () = print (Int.toString (List.length [Pub.v]) ^ \"\\n\")"),
+           ("boundary/outside.build", "library (structure Pub, structure List) = use x.build lists.sml end"),
            ("boundary/datatype.sml", "datatype t = A | B of int\nstructure Show = struct fun show A = \"A\" | show (B n) = \"B\" end"),
            ("boundary/replicate.sml", "datatype u = datatype t\nval () = print (Show.show (B 3) ^ \"\\n\")"),
            ("boundary/datatype.build", "library (type t, structure Show) = datatype.sml end\nreplicate.sml"),
@@ -212,6 +222,8 @@ struct
     | "use-through-boundary" => builds c which "boundary/second" [] "pub\n"
     | "use-through-boundary-hidden" => buildRefused c "boundary/second-hidden" "unbound variable or constructor: Priv.v"
     | "use-across-builds" => buildRefused c "boundary/across" "unbound variable or constructor: Priv.v"
+    | "use-diamond" => builds c which "boundary/diamond" [] "shared shared\n"
+    | "use-diamond-hidden" => buildRefused c "boundary/diamond-hidden" "unbound variable or constructor: Own.v"
     | "use-first-open" => builds c which "boundary/open" [] "private\n"
     | "use-inside-boundary" => builds c which "boundary/inside" [] "private\npub\n"
     | "use-sibling-boundary" => buildRefused c "boundary/sibling" "exports structure Priv, and nothing of that name is in scope"
@@ -220,7 +232,7 @@ struct
     | "use-after-implements" => buildRefused c "boundary/implements" "unbound variable or constructor: Priv.v"
     | "export-nothing" => buildRefused c "boundary/nothing" "exports structure Nope, and nothing of that name is in scope"
     | "export-no-signature" => buildRefused c "boundary/signature-nothing" "exports signature NOPE, and nothing of that name is in scope"
-    | "export-from-outside" => builds c which "boundary/outside" [] "pub\n"
+    | "export-from-outside" => builds c which "boundary/outside" [] "1\n"
     | "export-datatype" => buildRefused c "boundary/datatype" "exports type t, which is a datatype"
     | "export-abbreviation" => builds c which "boundary/abbreviation" [] "3\n"
     | "typecheck-exports" =>
@@ -313,7 +325,7 @@ struct
     | _ => raise Failed "unknown buildfile scenario"
   val buildCases = ["list", "local", "local-hidden", "library", "library-hidden", "group", "use-twice", "prim", "prim-allowed",
                     "path-variable", "missing-variable", "path-variable-nested", "build-list", "build-list-closure", "unknown-annotation",
-                    "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-first-open", "use-inside-boundary",
+                    "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-diamond", "use-diamond-hidden", "use-first-open", "use-inside-boundary",
                     "use-sibling-boundary", "use-after-local", "use-inside-local", "use-after-implements", "export-nothing",
                     "export-no-signature", "export-from-outside", "export-datatype", "export-abbreviation", "typecheck-exports", "reach-in", "reach-in-pointer",
                     "selection-by-uses", "install-no-basis", "clean-overlay",

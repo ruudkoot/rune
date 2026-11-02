@@ -145,6 +145,9 @@ struct
     in {steps=steps,caches=List.rev (!caches),libraries= !libraries,inputs=List.rev (!inputs),inline= !inline,
         inlineValues= !inlineValues,references=List.rev (!references)} end
     handle BuildFile.Error message => raise Invalid message | Deps.Graph message => raise Invalid message
+  (* whether all that steps declare stands behind a boundary of their own *)
+  fun bounded steps=List.all (fn SUnit _ => false | SLibrary _ => true | SImplements _ => true
+    | SLocal (_,second) => bounded second | SUse (_,inner) => bounded inner) steps
   (* Reaching in (docs/build.md, D10): a directory with a library.build is a
      library, the deepest over a path being its own, and a library is reached
      through its interface. What each build file names under a library not its

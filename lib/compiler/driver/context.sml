@@ -64,8 +64,13 @@ struct
        if List.exists (fn other => other=id) within
        then {file=file,change=change,within=List.filter (fn other => other<>id) within,through=exports :: through}
        else u) (!used))
-  fun record ({used,boundaries,...}:t,file,change)=
-    used:={file=file,change=change,within= !boundaries,through=[]} :: !used
+  (* A build file with a boundary of its own is seen as that boundary shows
+     it, by every `use` of it: the boundaries around its first use are the
+     first user's business, and a library that shares it with another would
+     otherwise see what depends on which came first. Only one without leans on
+     the boundary around it to hide what it declares. *)
+  fun record ({used,boundaries,...}:t,file,change,steps)=
+    used:={file=file,change=change,within=if CompilerProject.bounded steps then [] else !boundaries,through=[]} :: !used
   (* a build file used again: what its first use declared, through the
      boundaries that have closed around that use; false where it is the first *)
   fun replay (t as {used,...}:t,file) : bool =

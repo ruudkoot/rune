@@ -275,7 +275,7 @@ struct
         | CompilerProject.SUse (file,children) =>
             if CompilerBuildContext.replay (scopes,file) then () else
               let val before'=snap () val ()=walk children
-              in CompilerBuildContext.record (scopes,file,delta (before',snap ())) end
+              in CompilerBuildContext.record (scopes,file,delta (before',snap ()),children) end
         | CompilerProject.SImplements (name,children) =>
             if List.exists (fn prior => prior=name) (!implemented) then raise Fail "duplicate virtual implementation" else
               let val before'=snap ()

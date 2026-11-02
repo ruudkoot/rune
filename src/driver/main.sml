@@ -497,11 +497,12 @@ struct
      mention (entries). A name a file uses is one of its tokens, so a file none
      of whose tokens is a name to mention that the files before it did not
      mention cannot change the selection, and is not parsed: in a large
-     program most are not, which is most of what this costs a warm build. *)
+     program most are not, which is most of what this costs a warm build. A
+     small program is parsed: the table of the names costs more than that. *)
   fun usedByAll (entries : entry list, inputs : string list, toks : Lexer.item vector list) : names =
-    case (inputs, toks) of
-      ([path], [tokens]) => usedBy (path, tokens, StringMap.empty)
-    | _ =>
+    if List.foldl (fn (t, n) => n + Vector.length t) 0 toks < 4096
+    then ListPair.foldl usedBy StringMap.empty (inputs, toks)
+    else
         let
           val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.public e))
                                     StringMap.empty entries
@@ -1096,7 +1097,7 @@ struct
               let
                 val b1 = snap ()
                 val acc = elabSteps (ds, acc)
-              in CompilerBuildContext.record (buildContext, p, deltaOf (b1, snap ())); acc end
+              in CompilerBuildContext.record (buildContext, p, deltaOf (b1, snap ()), ds); acc end
         | elabStep (SImplements (x, ds), acc) =
             if List.exists (fn y => y = x) (!implemented)
             then raise Options.Usage ("the build gives the virtual module " ^ x ^ " two implementations")

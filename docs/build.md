@@ -89,12 +89,14 @@ makes them from the `files ... end` blocks of the build files, through
 * `use FILE`: the declarations of another build file, in place, in the
   basis of the `use`; a build file used twice is elaborated once, the second
   use adding what the first declared, as far as the files after the second
-  use may see it. A boundary that has closed around the first use -- a
-  `library`, an `implements`, the first part of a `local` -- stands between
-  the two: the second use adds what that boundary lets out, and nothing
-  more. Inside the same boundary, it adds all of it. (A first `use` of a
-  build file under another library's boundary is another matter: that
-  reaches in, below.)
+  use may see it. A build file with a boundary of its own adds what that
+  boundary exports at every use, so that libraries can share it whatever
+  order they come in. Of one without, a boundary that has closed around the
+  first use -- a `library`, an `implements`, the first part of a `local` --
+  stands between the two: the second use adds what that boundary lets out,
+  and nothing more. Inside the same boundary, it adds all of it. (A first
+  `use` of a build file under another library's boundary is another matter:
+  that reaches in, below.)
 
 ## Annotations
 
