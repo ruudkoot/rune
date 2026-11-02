@@ -1,15 +1,91 @@
 'use strict';
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const vscode = require('vscode');
+const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 async function until(action) {
   const end = Date.now() + 30000;
   while (Date.now() < end) {
     const result = await action();
     if (result) return result;
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await sleep(100);
   }
   throw new Error('Timed out waiting for editor language service');
 }
+// The two language status items, in a folder of its own whose builds discovery
+// finds: shared.sml types in one.build and not in two.build.
+async function languageStatus({ progress, build, reports }) {
+  const { Information, Warning } = vscode.LanguageStatusSeverity;
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'rune-status-'));
+  const files = {
+    'one.build': 'files one.sml shared.sml end\n', 'two.build': 'files two.sml shared.sml end\n',
+    'solo.build': 'files solo.sml end\n', 'long.build': 'files long.sml end\n',
+    'one.sml': 'val input=1\n', 'two.sml': 'val input=true\n', 'shared.sml': 'val result:int=input\n',
+    'solo.sml': 'val alone=1\n',
+    'long.sml': `val long=[${'0,0,0,0,0,0,0,0,0,0,\n'.repeat(20000)}0]\n`
+  };
+  for (const [name, text] of Object.entries(files)) fs.writeFileSync(path.join(folder, name), text);
+  const open = async name => {
+    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(folder, name)));
+    await vscode.window.showTextDocument(document);
+    return document;
+  };
+  const errors = document => vscode.languages.getDiagnostics(document.uri)
+    .filter(item => item.severity === vscode.DiagnosticSeverity.Error);
+
+  await open('solo.sml');
+  await until(() => build.text === 'solo.build');
+  assert.equal(build.severity, Information);
+  assert.equal(build.command, undefined);
+  console.log('PASS vscode/editor/status-one-context-offers-no-choice');
+
+  await until(() => !progress.busy);
+  await open('long.sml');
+  await until(() => progress.busy && progress.text === 'Checking long.sml');
+  await until(() => !progress.busy && progress.text === 'Idle');
+  assert.match(progress.detail, / checked, /);
+  assert.equal(progress.command.command, 'runelsp.showOutput');
+  console.log('PASS vscode/editor/status-progress-busy-then-idle');
+
+  const shared = await open('shared.sml');
+  await until(() => build.severity === Warning);
+  assert.equal(build.text, 'No build context chosen');
+  assert.equal(build.command?.command, 'runelsp.chooseContext');
+  await sleep(500);
+  await vscode.commands.executeCommand('notifications.clearAll');
+  await sleep(500);
+  assert.equal(build.severity, Warning);
+  assert.equal(build.command?.command, 'runelsp.chooseContext');
+  console.log('PASS vscode/editor/status-dismissed-prompt-leaves-warning-and-choice');
+
+  const { contexts } = reports.get(shared.uri.toString());
+  assert.deepEqual(contexts.map(context => context.name), ['one.build', 'two.build']);
+  const chooseId = name => vscode.commands.executeCommand('runelsp.chooseContext', contexts.find(context => context.name === name).id);
+  await chooseId('two.build');
+  await until(() => build.text === 'two.build' && build.severity === Information);
+  assert.match(build.detail, /^2 build contexts/);
+  assert.equal(build.command?.command, 'runelsp.chooseContext');
+  await until(() => errors(shared).length > 0);
+  console.log('PASS vscode/editor/status-shows-the-context-it-is-checked-in');
+
+  await chooseId('one.build');
+  await until(() => build.text === 'one.build');
+  await until(() => errors(shared).length === 0);
+  await chooseId('two.build');
+  await until(() => errors(shared).length > 0);
+  const picking = vscode.commands.executeCommand('runelsp.chooseContext');
+  await sleep(1000);
+  await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
+  await picking;
+  await until(() => build.text === 'one.build');
+  await until(() => errors(shared).length === 0);
+  console.log('PASS vscode/editor/status-choosing-again-changes-diagnostics');
+  await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+  fs.rmSync(folder, { recursive: true, force: true });
+}
+
 exports.run = async () => {
   const extension = vscode.extensions.getExtension('ruudkoot.rune-language-server');
   assert.ok(extension);
@@ -37,6 +113,8 @@ exports.run = async () => {
   await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
   console.log('PASS vscode/editor/activation-hover-diagnostics-restart');
   const root = process.env.RUNE_VSCODE_PROJECT_ROOT;
+  // With a project its settings name its targets, and discovery does not run.
+  if (!root) await languageStatus(extension.exports);
   if (root) {
     const config = vscode.workspace.getConfiguration('runelsp');
     await config.update('libraryRoot', vscode.Uri.file(`${root}/lib`).toString(), vscode.ConfigurationTarget.Workspace);

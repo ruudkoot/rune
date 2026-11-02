@@ -129,10 +129,12 @@ struct
     in putOrigin (bindStr (env,name,value),"s",name,origin) end
   fun plus (Env e1,Env e2)=
     let val origins=if StringMap.isEmpty (#origins e1) andalso StringMap.isEmpty (#origins e2) then StringMap.empty else
-          StringMap.unionWith #2 (StringMap.filteri (fn (key,_) => case String.fields (fn c => c= #" ") key of
-            ["v",name] => not (StringMap.member (#vals e2,name))
-          | ["t",name] => not (StringMap.member (#tys e2,name))
-          | ["s",name] => not (StringMap.member (#strs e2,name)) | _ => true) (#origins e1),#origins e2)
+          let fun drop kind (name,_,kept)=
+                let val key=kind ^ name in if StringMap.member (kept,key) then StringMap.remove (kept,key) else kept end
+              val kept=StringMap.foldli (drop "v ") (#origins e1) (#vals e2)
+              val kept=StringMap.foldli (drop "t ") kept (#tys e2)
+              val kept=StringMap.foldli (drop "s ") kept (#strs e2)
+          in StringMap.unionWith #2 (kept,#origins e2) end
     in Env {vals=StringMap.unionWith #2 (#vals e1,#vals e2),tys=StringMap.unionWith #2 (#tys e1,#tys e2),
       strs=StringMap.unionWith #2 (#strs e1,#strs e2),origins=origins} end
 

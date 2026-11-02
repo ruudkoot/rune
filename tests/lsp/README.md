@@ -12,6 +12,8 @@ for opening `src/main/rune-main.sml` in the complete `rune.build` project.
 It explicitly supplies the source/library root and target, then sends the
 diagnostic/hover/symbol/link burst before waiting for any response. Latencies
 start at dispatch and include queue time. Any failed response fails the run.
+`make test-lsp-replay`, part of `make test-lsp`, runs it on this tree. It finds
+its positions by name in the source, which grows.
 
 ```
 bin/runevm bin/rune-lsp-project-replay.rbc /absolute/VM /absolute/runelsp.rbc \

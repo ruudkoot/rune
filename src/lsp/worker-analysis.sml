@@ -72,11 +72,14 @@ struct
             (A.close (#analysis context);C.close (#compiler context))) (List.drop (all,4))
       in contexts:=List.take (all,Int.min (4,length all));context end
   fun descriptor (context:W.context)=V.Object [("id",V.Bytes (#id context)),("label",V.Bytes (#label context)),
-    ("target",V.Bytes (#target context)),("build",V.Bytes (#build context)),("ordinal",V.Integer (IntInf.fromInt (#ordinal context)))]
-  fun discovery (workspace,documents,uri) = case W.select (workspace,documents,uri) of
-    W.Loose => V.Object [("kind",V.Bytes "loose")]
-  | W.Selected context => V.Object [("kind",V.Bytes "selected"),("context",descriptor context)]
-  | W.Ambiguous contexts => V.Object [("kind",V.Bytes "ambiguous"),("contexts",V.Array (List.map descriptor contexts))]
+    ("name",V.Bytes (#name context)),("target",V.Bytes (#target context)),("build",V.Bytes (#build context)),
+    ("ordinal",V.Integer (IntInf.fromInt (#ordinal context)))]
+  fun discovery (workspace,documents,uri) =
+    let val (selection,contexts)=W.resolve (workspace,documents,uri)
+        val all=("contexts",V.Array (List.map descriptor contexts))
+    in case selection of W.Loose => V.Object [("kind",V.Bytes "loose"),all]
+       | W.Selected context => V.Object [("kind",V.Bytes "selected"),("context",descriptor context),all]
+       | W.Ambiguous _ => V.Object [("kind",V.Bytes "ambiguous"),all] end
   fun readFile (file,mode) =
     let val input=BinIO.openIn file
         val bytes=(Byte.bytesToString (BinIO.inputAll input) before BinIO.closeIn input)

@@ -19,6 +19,8 @@ struct
   type flight={uri:string,revision:IntInf.int,generation:IntInf.int,job:IntInf.int}
   type failed={uri:string,revision:IntInf.int,generation:IntInf.int,code:IntInf.int,message:string,data:Json.value option}
   type publication={uri:string,revision:IntInf.int,generation:IntInf.int,reportId:string,report:Json.value option,bytes:int}
+  type status={busy:bool,failed:bool,text:string,detail:string}
+  val statusInterval=Time.fromMilliseconds 250
   val reportByteBudget=4*1024*1024
   fun retainPublications (generation,entries)=
     let fun loop([],_,_,kept)=List.rev kept
@@ -32,7 +34,8 @@ struct
   datatype t=Service of {workspace:W.t,documents:D.t,caps:P.capabilities,jobs:task J.t,basisJobs:task J.t,workspaceJobs:task J.t,
     results:result list ref,requests:request list ref,flights:flight list ref,failures:failed list ref,
     refresh:unit Q.t,refreshPending:bool ref,refreshAgain:bool ref,published:publication list ref,send:R.message->unit,log:string->unit,
-    discovered:string*V.value->unit,watchedRoots:unit->string list}
+    discovered:string*V.value->unit,watchedRoots:unit->string list,
+    wantsStatus:bool,statusSent:status option ref,statusAt:Time.time ref,failing:(int*string) list ref,lastUnits:string ref}
   fun new {workspace,documents,caps,command,args,send,log,discovered,watchedRoots} =
     Service {workspace=workspace,documents=documents,caps=caps,jobs=J.new {command=command,args=args,
       timeout=Time.fromSeconds 30,cancelGrace=Time.fromMilliseconds 250,maxPending=128},results=ref [],requests=ref [],
@@ -42,7 +45,9 @@ struct
         cancelGrace=Time.fromMilliseconds 250,maxPending=128},
       flights=ref [],failures=ref [],refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
       refreshAgain=ref false,published=ref [],
-      send=send,log=log,discovered=discovered,watchedRoots=watchedRoots}
+      send=send,log=log,discovered=discovered,watchedRoots=watchedRoots,
+      wantsStatus=P.supports (caps,["experimental","rune","status"]),statusSent=ref NONE,statusAt=ref Time.zeroTime,
+      failing=ref [],lastUnits=ref ""}
   fun current (Service {workspace,documents,...},{uri,revision,generation}) =
     (if uri="" then W.inputGeneration workspace else W.generation workspace)=generation andalso (uri="" orelse (D.healthy (documents,uri) andalso
       (case D.snapshot (documents,uri) of SOME snapshot => #revision snapshot=revision | NONE => false)))
@@ -269,7 +274,60 @@ struct
           then failures:=List.take(all,Int.min(64,length all)) else ()
     in if null pending then (if code=P.serverCancelled then () else log message)
        else List.app(fn request=>failure(service,request,code,message,data))pending end
+  (* rune/status, for a client that asked: what the server is doing, what it
+     last checked, and whether a worker was lost or a check failed since a check
+     last succeeded. A sweep shows once it has planned, so that a poll answered
+     from its cache does not; queries never do, and a query's own failure, such as
+     a response over its budget, is that query's. It looks once in each
+     statusInterval, since a worker's progress wakes the loop far more often, and
+     sends what changed. *)
+  fun taskLane (service,task)=case task of Discover {uri,...} => lane (service,"",uri) | Check {uri,...} => lane (service,"",uri)
+    | Build {uri,...} => lane (service,"",uri) | Query (request:request) => lane (service,#method request,#uri request)
+    | Workspace (request:request) => lane (service,#method request,#uri request)
+  fun laneJobs (Service {jobs,basisJobs,workspaceJobs,...},lane)=case lane of 2=>workspaceJobs | 1=>basisJobs | _=>jobs
+  fun unitCounts (platform,context,checked,reused)=(case context of NONE=>"" | SOME name=>W.shortName (platform,name) ^ ": ") ^
+    IntInf.toString checked ^ (if checked=1 then " unit" else " units") ^ " checked, " ^ IntInf.toString reused ^ " reused"
+  fun noteFailure (Service {failing,...},lane,message)=failing:=(lane,hd (String.fields (fn c => c= #"\n") message)) ::
+    List.filter (fn (other,_) => other<>lane) (!failing)
+  fun noteOutcome (service as Service {workspace=W.Workspace {platform,...},failing,lastUnits,...},event) =
+    let fun checked task=
+          (failing:=List.filter (fn (other,_) => other<>taskLane (service,task)) (!failing);
+           Option.app (fn {context,checked,reused} => lastUnits:=unitCounts (platform,context,checked,reused))
+             (J.finished (laneJobs (service,taskLane (service,task)))))
+    in case event of J.Failed (Query _,_) => ()
+       | J.Failed (task,message) => noteFailure (service,taskLane (service,task),message)
+       | J.Done (task as Check _,_) => checked task | J.Done (task as Build _,_) => checked task
+       | J.Done (task as Workspace _,_) => checked task | _ => () end
+  fun working (Service {workspace=W.Workspace {platform,...},...},jobs) =
+    let val {active,queued,context,progress}=J.activity jobs
+        fun name uri=W.shortName (platform,uri)
+        fun doing live task=case task of Discover {uri,...} => SOME ("Finding the build contexts of " ^ name uri)
+          | Check {uri,...} => SOME ("Checking " ^ name uri) | Build {uri,...} => SOME ("Checking " ^ name uri)
+          | Workspace _ => if live andalso isSome progress then SOME "Checking the workspace" else NONE
+          | Query _ => NONE
+        val units=case progress of NONE=>"" | SOME {checked,reused,...} => unitCounts (platform,context,checked,reused)
+    in case Option.mapPartial (doing true) active of SOME text => SOME (text,units)
+       | NONE => Option.map (fn text => (text,"")) (List.foldr (fn (task,found) =>
+           case doing false task of NONE => found | some => some) NONE queued) end
+  fun currentStatus (service as Service {failing,lastUnits,...}):status =
+    let val busy=List.mapPartial (fn lane => working (service,laneJobs (service,lane))) [0,1,2]
+        val failure=case !failing of []=>NONE | (_,message)::_=>SOME message
+    in case (busy,failure) of ((text,detail)::_,_) => {busy=true,failed=isSome failure,text=text,detail=detail}
+       | ([],SOME message) => {busy=false,failed=true,text="Analysis failed",detail=message}
+       | ([],NONE) => {busy=false,failed=false,text="Idle",detail= !lastUnits} end
+  fun reportStatus (service as Service {wantsStatus,send,statusSent,statusAt,...}) =
+    if not wantsStatus then () else
+    let val now=Time.now ()
+    in if Time.< (now,Time.+ (!statusAt,statusInterval)) then () else
+      let val status=currentStatus service
+          val ()=statusAt:=now
+      in if !statusSent=SOME status then () else
+        (statusSent:=SOME status;
+         send (R.Notification {method="rune/status",params=SOME (Json.Object [("busy",Json.Bool (#busy status)),
+           ("severity",Json.String (if #failed status then "error" else "information")),
+           ("text",Json.String (#text status)),("detail",Json.String (#detail status))])})) end end
   fun handleEvent (service as Service {results,discovered,log,send,requests,...},event) =
+    (noteOutcome (service,event);
     case event of J.Restarted => results:=[]
     | J.Progress (task,message) =>
         let val ()=send(R.Notification{method="window/logMessage",params=SOME(Json.Object
@@ -330,14 +388,15 @@ struct
     | J.Cancelled (Check ticket) => List.app(fn request=>if !(#done request) then () else
         failure (service,request,R.requestCancelled,"request cancelled",NONE))(waiters(service,ticket))
     | J.Cancelled (Build {request=SOME request,...}) => if !(#done request) then () else failure (service,request,R.requestCancelled,"request cancelled",NONE)
-    | J.Cancelled _ => ()
+    | J.Cancelled _ => ())
   fun descriptors (Service {jobs,basisJobs,workspaceJobs,...})=J.descriptors jobs @ J.descriptors basisJobs @ J.descriptors workspaceJobs
   fun pump (service as Service {jobs,basisJobs,workspaceJobs,results,log,...},ready) =
     let fun receive (queue,owner)=List.app(fn J.Restarted=>
-          (if owner=2 then () else results:=List.filter(fn result:result=>
+          (Option.app(fn reason=>noteFailure(service,owner,reason))(J.takeLoss queue);
+           if owner=2 then () else results:=List.filter(fn result:result=>
             lane(service,"",#uri result)<>owner)(!results))
           | event=>handleEvent(service,event) handle V.Invalid message=>log message)(J.pump(queue,ready))
-    in receive(jobs,0);receive(basisJobs,1);receive(workspaceJobs,2) end
+    in receive(jobs,0);receive(basisJobs,1);receive(workspaceJobs,2);reportStatus service end
   fun close (service as Service {jobs,basisJobs,workspaceJobs,requests,refresh,...}) =
     (List.app (fn request => failure (service,request,R.requestCancelled,"server shutting down",NONE)) (!requests);
      ignore (Q.clear refresh);J.close jobs;J.close basisJobs;J.close workspaceJobs)

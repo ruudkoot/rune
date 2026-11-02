@@ -91,6 +91,8 @@ struct
                  ("textDocumentSync", Json.Object [("openClose",Json.Bool true),("change",Json.int 2),
                    ("willSave",Json.Bool true),("save",Json.Object [("includeText",Json.Bool true)])]),
                  ("workspace",Json.Object [("workspaceFolders",Json.Object [("supported",Json.Bool true),("changeNotifications",Json.Bool true)])])] @
+                (case List.filter (fn name => P.supports (caps,["experimental","rune",name])) ["status","context"] of [] => []
+                  | asked => [("experimental",Json.Object [("rune",Json.Object (List.map (fn name => (name,Json.Bool true)) asked))])]) @
                 (if RuneLspService.inlineClient caps then [("inlineCompletionProvider",Json.Object [])] else []) @
                 (if RuneLspBuild.linkClient (P.rawCapabilities caps) then
                   [("documentLinkProvider",Json.Object [("resolveProvider",Json.Bool true)])] else []) @
@@ -111,7 +113,9 @@ struct
         then failure (SOME id) P.serverNotInitialized "server is not initialized"
         else if method = "shutdown" then (clear ();state := Shutdown; result id Json.Null)
         else if (case !service of SOME service => RuneLspService.request (service,{id=id,method=method,params=params}) | NONE => false)
-        then () else
+        then ()
+        else if (case !controller of SOME controller => RuneLspController.request (controller,{id=id,method=method,params=params}) | NONE => false)
+        then Option.app RuneLspService.changed (!service) else
           (case LspMethods.find method of
              SOME descriptor => if #kind descriptor = LspMethods.Notification
                then failure (SOME id) R.invalidRequest "method is a notification"

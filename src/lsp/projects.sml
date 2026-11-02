@@ -7,7 +7,7 @@ struct
   structure U=LspUri
   structure C=RuneCompiler
   type problem={uri:string,message:string}
-  fun enrich (workspace as W.Workspace {platform,lib,roots,settings,scoped,...},documents,cancelled) =
+  fun enrich (workspace as W.Workspace {platform,lib,roots,settings,...},documents,cancelled) =
     let val memberships=ref [] : (string*W.target) list ref
         val problems=ref [] : problem list ref
         val builds=ref [] : W.target list ref
@@ -45,15 +45,18 @@ struct
         val ()=List.app root (!roots)
         val global= !settings
         val ()=List.app (fn candidate => target (global,candidate)) (#targets global)
-        val uris=List.foldl (fn ((uri,_),all) => if List.exists (fn prior => prior=uri) all then all else uri::all) [] (!memberships)
+        val owners=W.table (length (!memberships)) : W.target list ref W.table
+        val uris=List.foldl (fn ((uri,target),all) => case W.lookup (owners,uri) of
+            NONE => (W.add (owners,uri,ref [target]);uri::all)
+          | SOME targets => (if List.exists (fn prior => prior=target) (!targets) then () else targets:= !targets @ [target];all))
+          [] (!memberships)
         fun apply uri =
           let val original=W.configurationFor (workspace,uri)
-              val candidates=List.foldl (fn ((_,target),all) => if List.exists (fn prior => prior=target) all then all else all @ [target]) []
-                (List.filter (fn (file,_) => file=uri) (!memberships))
-              val exact=List.exists (fn (scope,settings:W.settings) => scope=uri andalso not (null (#targets settings))) (!scoped)
-              val config={targets=candidates,flags= #flags original,variables=[],activeContext= #activeContext original,
-                libraryRoot= #libraryRoot original}:W.settings
-          in if exact then () else scoped:=(uri,config) :: List.filter (fn (scope,_) => scope<>uri) (!scoped) end
-        val ()=List.app apply uris
+              val config={targets= !(valOf (W.lookup (owners,uri))),flags= #flags original,variables=[],
+                activeContext= #activeContext original,libraryRoot= #libraryRoot original}:W.settings
+          in case W.scopedAt (workspace,uri) of SOME (settings:W.settings) =>
+               if null (#targets settings) then SOME (uri,config) else NONE
+             | NONE => SOME (uri,config) end
+        val ()=W.assign (workspace,List.mapPartial apply uris)
     in {uris=List.rev uris,problems=List.rev (!problems)} end
 end

@@ -5,6 +5,8 @@ struct
   structure W=RuneLspWorkspace
   structure D=RuneLspDocuments
   structure M=RuneLspWorkerModel
+  structure C=RuneCompiler
+  structure A=C.Analysis
   val check=Expect.that
   fun run () =
     let val (vm,worker)=case CommandLine.arguments () of [vm,worker] => (vm,worker) | _ => raise Fail "worker paths required"
@@ -114,9 +116,27 @@ struct
               handle V.Invalid _ => false) end
         val result=(work () handle error => (stop (!process);raise error))
     in stop (!process);result end
+  (* E20: Env.plus filtered every origin on every declaration, so that twice the
+     declarations in a unit allocated and took four times as much. *)
+  fun linear () =
+    let fun cost count =
+          let val text="structure Big=struct\n" ^ String.concat (List.tabulate (count,fn i =>
+                "  fun f" ^ Int.toString i ^ " (x:int):int=x+" ^ Int.toString i ^ "\n")) ^ "end\n"
+              val compiler=C.session {lib=NONE,flags=[]}
+              val analysis=A.create (compiler,{context="linear"})
+              val input={file="big.sml",text=text,revision="1",mode="ascii",annotations=[]}:A.input
+              val (snapshot,{bytes,...})=Runtime.profile (fn () =>
+                A.check (analysis,{project=NONE,inputs=[input],cancelled=fn () => false}))
+              val ()=check ("the unit checks",null (A.diagnostics snapshot))
+          in A.close analysis;C.close compiler;bytes end
+        val small=cost 2000
+        val large=cost 8000
+    in check ("analysis is linear in a unit's declarations: 4 times the declarations, " ^
+        Int.toString small ^ " to " ^ Int.toString large ^ " bytes",large<6*small) end
 end
 structure RuneLspWorkerAnalysisTestMain=Main (struct
   val name="lsp-worker-analysis"
-  val tests=Test.describe "lsp-worker-analysis" [Test.it "snapshots-diagnostics-cancellation" RuneLspWorkerAnalysisTests.run]
+  val tests=Test.describe "lsp-worker-analysis" [Test.it "snapshots-diagnostics-cancellation" RuneLspWorkerAnalysisTests.run,
+    Test.it "linear-in-declarations" RuneLspWorkerAnalysisTests.linear]
 end)
 val ()=RuneLspWorkerAnalysisTestMain.main ()

@@ -89,6 +89,16 @@ struct
       fun at i=Vector.sub (toks,Int.min (ntoks-1,i))
       fun key (i,count,base)=List.tabulate (Int.min (ntoks-i,count+3),fn j =>
         let val (token,span)=at (i+j) in (token,#start span-base,#stop span-base) end)
+      (* One token at a time: `=` on a large declaration's key is one comparison,
+         and past the VM's budget for one comparison the process aborts. *)
+      fun sameKey (expected,i,count,base) =
+        let val wanted=Int.min (ntoks-i,count+3)
+            fun loop ([],j)=j=wanted
+              | loop ((token,start,stop)::rest,j)=j<wanted andalso
+                  let val (actual,span)=at (i+j)
+                  in token=actual andalso start= #start span-base andalso stop= #stop span-base
+                     andalso loop (rest,j+1) end
+        in loop (expected,0) end
       val old=case previous of NONE => [] | SOME (Syntax {chunks,...}) => chunks
       fun relocated (chunk:chunk) = case change of NONE => NONE
         | SOME {start,stop,text} => if #base chunk<=start then SOME (#base chunk,chunk)
@@ -108,7 +118,7 @@ struct
         let val base= #start (#2 (at i))
         in case IntMap.find (!memo,base) of NONE => NONE | SOME node =>
           if #context node=context andalso #incoming node=StringMap.listItemsi (#table incoming)
-            andalso #key node=key (i,#consumed node,base) then
+            andalso sameKey (#key node,i,#consumed node,base) then
             (reused:= !reused+1;SOME (hd (SyntaxAst.copy ([#syntax node],base- #origin node)),
               Fixity.extend (incoming,#directives node),i+ #consumed node)) else NONE end
       fun remember (context,i,next,incoming:Fixity.env,outgoing:Fixity.env,syntax) =
@@ -123,7 +133,7 @@ struct
         let val base= #start (#2 (at i))
             val incomingKey=StringMap.listItemsi (#table incoming)
             val cached=case IntMap.find (cache,base) of SOME chunk =>
-              if null (#problems chunk) andalso #incoming chunk=incomingKey andalso #key chunk=key (i,#consumed chunk,base)
+              if null (#problems chunk) andalso #incoming chunk=incomingKey andalso sameKey (#key chunk,i,#consumed chunk,base)
               then SOME chunk else NONE | NONE => NONE
             val (chunk,outgoing)=case cached of SOME chunk =>
                 (reused:= !reused+length (#syntax chunk);
@@ -144,7 +154,7 @@ struct
       val (chunks,fixity)=loop (0,initial,[])
       val starts=IntMap.fromList (List.tabulate (ntoks,fn i => (#start (#2 (at i)),i)))
       val nested=IntMap.foldli (fn (base,node,all) => case IntMap.find (starts,base) of NONE => all | SOME i =>
-        if #key node=key (i,#consumed node,base) then node :: all else all) [] (!memo)
+        if sameKey (#key node,i,#consumed node,base) then node :: all else all) [] (!memo)
     in Syntax {file=file,text=text,mode=mode,orPatterns=orPatterns,initial=initial,fixity=fixity,lexemes=lexemes,chunks=chunks,nested=nested,
       work={lexedBytes=lexedBytes,reusedTokens=reusedTokens,parsedDeclarations= !parsed,reusedDeclarations= !reused}} end
   fun parse {file,text,mode,orPatterns,fixity} =

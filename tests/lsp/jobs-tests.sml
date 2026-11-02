@@ -72,6 +72,7 @@ struct
         val ()=J.tick jobs
         val message=case List.find(fn J.Failed("deadline",_)=>true | _=>false)(!events) of
           SOME(J.Failed(_,message))=>message | _=>raise Fail "deadline did not fail despite progress"
+        val ()=check("a lost worker says why, once",isSome(J.takeLoss jobs) andalso not(isSome(J.takeLoss jobs)))
     in check("deadline identifies worker, job, request, source, project and last phase",
       List.all(fn text=>String.isSubstring text message)["analysis worker exceeded its deadline",
         "worker PID " ^ Int.toString pid,"job " ^ IntInf.toString id,"textDocument/completion",uri,
