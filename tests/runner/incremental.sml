@@ -280,6 +280,57 @@ struct
           check s "a file an old compile left stays" (not (List.exists exists left));
           check s "a file a compile may be writing is gone" (List.all exists fresh')
         end
+    | "S87" =>
+        let val () = own s "a.sml b.sml other.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
+            val () = put s "other.sml" "structure Runtime = struct val mine = 3 end"
+            val () = b [] "a.sml b.sml other.sml"
+        in
+          edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
+          b [] "a.sml"; prints s "3";
+          check s "the client was not taken across the edit"
+            (String.isSubstring "from the cache b.sml, across a.sml changed" (#errors (!(#result s))))
+        end
+    | "S88" =>
+        let val () = own s "a.sml b.sml other.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
+            val () = put s "other.sml" ("structure R = Runtime\nval () = R.collect ()\n"
+                                        ^ "val () = if #instructions (Runtime.stats ()) > 0 then print \"counted\\n\" else ()")
+            val () = b [] "a.sml b.sml other.sml"
+        in
+          edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
+          b [] "a.sml"; prints s "3\ncounted";
+          check s "the client was not taken across the edit"
+            (String.isSubstring "from the cache b.sml, across a.sml changed" (#errors (!(#result s))))
+        end
+    | "S89" =>
+        let val () = own s "a.sml b.sml other.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
+            val () = put s "other.sml" ("structure R = Runtime\nval () = print (if List.null (R.linkedUnits ()) "
+                                        ^ "then \"no units\\n\" else \"units\\n\")")
+            val () = b [] "a.sml b.sml other.sml"
+            val () = prints s "3\nunits"
+        in
+          edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
+          b [] "a.sml b.sml"; prints s "3\nunits";
+          check s "the build did not say why it compiled again"
+            (String.isSubstring "other.sml loads units" (#errors (!(#result s))))
+        end
+    | "S90" =>
+        let val () = own s "a.sml b.sml other.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
+            val () = put s "other.sml" "val load = Runtime.load"
+            val () = b [] "a.sml b.sml other.sml"
+        in
+          edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
+          b [] "a.sml b.sml"; prints s "3";
+          check s "a program that loads units took a client across an edit"
+            (String.isSubstring "b.sml: its entries hold across a unit that changed" (#errors (!(#result s))))
+        end
     | _ => raise Failed ("not a simple scenario: " ^ #name s)
     end
 end

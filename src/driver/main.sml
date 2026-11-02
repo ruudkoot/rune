@@ -227,6 +227,9 @@ struct
   (* whether the program being linked keeps its units' exports in its file
      (compileUnits) *)
   val keepExports = ref false
+  (* whether the files of the program say that it loads units, by name
+     (BasisManifest.namesLoading), which selecting its libraries finds out *)
+  val namesLoading = ref false
   (* a program found to load units only once a unit was taken across a unit
      that changed, and the unit that showed it: compileUnits leaves it to be
      compiled again, knowing (compiledAgain) *)
@@ -480,8 +483,21 @@ struct
       OS.Process.success
     end
 
+  (* What a file of the program names of the libraries: the names it uses
+     (Deps), and not every identifier, or alpha-renaming a bound variable
+     could change what links and what runs (D7). A file that does not parse
+     under the initial basis's fixity, which a file may not be read in, has
+     no syntax until the compile's own parse: its tokens. *)
+  fun usedBy (path : string, toks : Lexer.item vector, names : names) : names =
+    let val f = Deps.analyse (path, #1 (Parser.parseTokensWith (toks, Fixity.initial)))
+    in BasisManifest.boundaryNames (toks, List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) names (#free f)) end
+    handle Error.CompileError _ => namesOf (toks, names)
+
   fun compile () : OS.Process.status =
     let
+      (* what a compile begins with that is not one of the compiler's roots,
+         for one made again (diagnosed, compiledAgain) *)
+      val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false)
       (* --build: the inputs are the build file's files, its plan what the
          units driver follows *)
       val () =
@@ -542,7 +558,7 @@ struct
         case (!Options.includeDirs, !Options.inputs) of
           ([], _) => ()
         | (_, [main]) => Options.inputs := entryFiles main
-        | _ => raise Options.Usage "-I wants one input, the entry point"
+        | _ => if !knownToLoad then () else raise Options.Usage "-I wants one input, the entry point"
       val inputs = !Options.inputs
       val () = if List.null inputs then raise Options.Usage "no input files" else ()
     in
@@ -568,14 +584,20 @@ struct
         else
           let
             val entries = readManifest () @ List.concat (List.map #2 (libraryManifests ()))
-            val mentioned = List.foldl namesOf StringMap.empty userToks
+            val mentioned = ListPair.foldl usedBy StringMap.empty (inputs, userToks)
+            val () = namesLoading := List.exists BasisManifest.namesLoading userToks
             (* A library beside the basis library sees the basis library as a
                program does, through its seals: what the chosen files of the
                libraries name counts as mentioned, and the choice is made
                again with it. *)
             val chosenLibrary = List.filter (not o inBasis) (select (entries, mentioned))
             val mentioned =
-              List.foldl (fn (e, m) => namesOf (loadTokens (Source.Ascii, BasisManifest.path e), m)) mentioned chosenLibrary
+              List.foldl (fn (e, m) =>
+                            let val toks = loadTokens (Source.Ascii, BasisManifest.path e)
+                            in
+                              if BasisManifest.namesLoading toks then namesLoading := true else ();
+                              namesOf (toks, m)
+                            end) mentioned chosenLibrary
           in
             if !Options.basisAll then entries
             else select (entries, mentioned)
@@ -633,16 +655,53 @@ struct
       val sources = basisPart @ userPart @ finalPart
       val buildContext=CompilerBuildContext.new (env,fixity)
       fun logDeclared result=CompilerBuildContext.note (buildContext,result)
-      (* a program that may load units while it runs -- it has Runtime's
-         loading or a dynamic module's: their files are among its units --
-         keeps in its file what its units export, under the identities a
-         build from source gives them, which a unit loaded into it names: so
-         it takes no unit from the cache across a unit that changed
-         (UnitBasis.remapAllowed; docs/units.md, Dynamic modules) *)
-      val loadsUnits = List.exists (fn (_, _, _, ident, _) => ident = "lib/basis/runtime.sml" orelse ident = "lib/basis/dynamic.sml")
-                                   sources
-      val () = UnitBasis.remapAllowed := not loadsUnits
-      val () = keepExports := loadsUnits
+      (* A program that loads units while it runs -- a unit of it names a
+         member of Runtime that loads one or reads what is kept for that
+         (BasisManifest.loading), or it has a dynamic module -- keeps in its
+         file what its units export, under the identities a build from source
+         gives them, which a unit loaded into it names: so it takes no unit
+         from the cache across a unit that changed (UnitBasis.remapAllowed;
+         docs/units.md, Dynamic modules). A program that names Runtime for
+         its counters, or has a Runtime of its own, is none of these.
+
+         Where the files say so, by name or by holding dynamic.sml, that is
+         known here. Any other program with Runtime's file is judged a unit
+         at a time, by the keys its code names, however it came to them (an
+         alias, an open, a functor's argument). The program is known to load
+         units only once it reaches such a unit: if none was taken across a
+         unit that changed by then, the rest are kept from it, and it is what
+         a build knowing it from the start makes; if one was, it is compiled
+         again (compiledAgain), from the state sealed here.
+
+         --emit-units gives the units' identities to whoever reads them, as
+         a loader might: a program with Runtime's file takes no unit across
+         a change then either, and is the same program. *)
+      fun holds file = List.exists (fn (_, _, _, ident, _) => ident = file) sources
+      val runtimeFile = "lib/basis/runtime.sml"
+      val known = !knownToLoad orelse !namesLoading orelse holds "lib/basis/dynamic.sml"
+      val judged = holds runtimeFile andalso not known andalso not (!Options.typecheckOnly)
+      val () = keepExports := known
+      val () = UnitBasis.remapAllowed := not (known orelse (holds runtimeFile andalso isSome (!Options.emitUnits)))
+      val () = UnitCache.across := false
+      val () = if judged andalso !UnitBasis.remapAllowed andalso isSome (UnitCache.directory ())
+               then CompilerState.seal () else ()
+      val loadingKeys : Link.key list ref = ref []
+      fun loads (u : Link.unitCode) =
+        let
+          fun names ({unit, number} : Link.key) =
+            List.exists (fn ({unit = u', number = n'} : Link.key) => number = n' andalso unit = u') (!loadingKeys)
+        in List.exists (names o #1) (#globals u) orelse List.exists (names o #2) (#imports u) end
+      fun judge (name, ident, acc) =
+        if not judged orelse !keepExports then ()
+        else if ident = runtimeFile then
+          loadingKeys := UnitBasis.keysAt (ident, List.map (fn n => "RuneRuntime." ^ n) BasisManifest.loading)
+        else
+          case acc of
+            (u, _) :: _ =>
+              if not (loads u) then ()
+              else if !UnitCache.across andalso not (isSome (!Parallel.child)) then raise LoadsUnits name
+              else (UnitBasis.remapAllowed := false; keepExports := true)
+          | [] => ()
       (* the front end's stages, for --pass-stats; their size is the number of
          top-level declarations *)
       fun frontStage name f =
@@ -719,11 +778,14 @@ struct
       (* a unit: from the cache, or compiled; with -j, by a child where it
          is likely to be compiled, or skipped in a child that does not need
          it (Parallel) *)
-      fun unit (src as (name, _, _, _, _), acc) =
-        case Parallel.at name of
-          Parallel.Skip => acc
-        | Parallel.Run {quiet} => timedUnit (src, acc, quiet)
-        | Parallel.Compile => timedUnit (src, acc, false)
+      fun unit (src as (name, _, _, ident, _), acc) =
+        let
+          val acc =
+            case Parallel.at name of
+              Parallel.Skip => acc
+            | Parallel.Run {quiet} => timedUnit (src, acc, quiet)
+            | Parallel.Compile => timedUnit (src, acc, false)
+        in judge (name, ident, acc); acc end
       (* --pass-stats: what each unit took, start to end *)
       and timedUnit (src as (name, _, _, _, _), acc, quiet) =
         let
@@ -1171,8 +1233,9 @@ struct
                                 then StringMap.insert (seen, #identity u, ())
                                 else raise Options.Usage ("the unit " ^ #identity u ^ " names a unit not linked before it")
                               end) StringMap.empty read)
-      (* a program that may load units keeps their exports, as compileUnits
-         says *)
+      (* a program that may load units keeps their exports: here, any that
+         holds Runtime's file or a dynamic module's, what a unit's code names
+         of them being a session's to say (compileUnits) *)
       val () = keepExports := List.exists (fn (_, u : Link.unitCode) =>
                                              List.exists (fn n => String.isPrefix (n ^ "@") (#identity u))
                                                          ["lib/basis/runtime.sml", "lib/basis/dynamic.sml"]) read
@@ -1352,6 +1415,28 @@ struct
                end)
     end
 
+  (* A program found to load units only once a unit was taken across a unit
+     that changed (LoadsUnits): that unit's identity in the program would not
+     be a build from source's, which a unit loaded into it names. It is
+     compiled again, as what it is, from the state sealed before the first
+     unit. A warning the first compile gave is given again: an alias of
+     Runtime that loads is rare, and an entry taken across a change rarer. *)
+  fun compiledAgain () : OS.Process.status =
+    compile ()
+    handle LoadsUnits name =>
+      let
+        val () = if !Options.explainRebuild
+                 then eprintln ("rune: " ^ name ^ " loads units, which a unit taken from the cache across a unit that "
+                                ^ "changed does not allow: compiling again")
+                 else ()
+        val () = knownToLoad := true
+        val again = CompilerState.session ()
+        val diagnostics = ref []
+        val status = CompilerState.withSession (again, fn () =>
+                       (compile () before diagnostics := !Diagnostic.collected)
+                       handle e => (diagnostics := !Diagnostic.collected; raise e))
+      in Diagnostic.collected := !diagnostics; status end
+
   fun main (name : string, args : string list) : OS.Process.status =
     let val status = main' (name, args)
     in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
@@ -1371,7 +1456,7 @@ struct
      else if !Options.lexCount > 0 then lexCount ()
      else if !Options.dumpTokens then dumpTokens ()
      else if isSome (!Options.readMid) then diagnosed (fn () => readMid (valOf (!Options.readMid)))
-     else diagnosed compile)
+     else diagnosed compiledAgain)
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          (* units whose interfaces do not fit at the link, which unit files

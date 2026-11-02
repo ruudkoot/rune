@@ -11,9 +11,10 @@ struct
      provides: the structures, signatures and functors the file declares;
      requires: those of other files that it names. (host is for the
      cross-check of tests/basis.) A program is compiled after the always
-     files, the files that provide a name it mentions, and what those require:
-     the scan below looks at identifiers only, so it may load a file the
-     program does not need, never miss one it does. A name can have several
+     files, the files that provide a name it mentions, and what those require.
+     A file of a program mentions the names it uses (Deps; Main.usedBy), and a
+     file of a library those of its identifiers (namesOf), so a selection may
+     load a file a program does not need, never miss one it does. A name can have several
      files, as IO and OS do (the structure and the signature of the
      specification); naming it loads them all. A seal file binds structures
      again as their signatures show them; it is loaded for a program that
@@ -120,6 +121,31 @@ struct
                    | ((Token.EXPORT, _), acc) => StringMap.insert (acc, "RuneDynamic", ())
                    | ((Token.VIRTUAL, _), acc) => StringMap.insert (acc, "RuneDynamic", ())
                    | (_, acc) => acc) acc toks
+
+  (* what a dynamic module's boundary mentions, which is in no name of it *)
+  fun boundaryNames (toks : Lexer.item vector, acc : names) : names =
+    Vector.foldl (fn ((Token.DYNAMIC, _), acc) => StringMap.insert (acc, "RuneDynamic", ())
+                   | ((Token.EXPORT, _), acc) => StringMap.insert (acc, "RuneDynamic", ())
+                   | ((Token.VIRTUAL, _), acc) => StringMap.insert (acc, "RuneDynamic", ())
+                   | (_, acc) => acc) acc toks
+
+  (* What of RuneRuntime (lib/basis/runtime.sml) makes a program one that
+     loads units (docs/units.md, Dynamic modules): the members that append a
+     unit to it, and those that read what its file keeps for that, the units'
+     identities *)
+  val loading = ["load", "link", "linkedUnits", "linkedUnitSources"]
+
+  (* Whether a file's tokens say that the program loads units: one of those
+     members by name, or the primitives under them. A name can get there
+     without this, through an alias of the structure (Main, judged). *)
+  fun namesLoading (toks : Lexer.item vector) : bool =
+    let
+      fun member n = List.exists (fn m => m = n) loading
+    in
+      Vector.exists (fn (Token.LONGID ([s], n), _) => (s = "Runtime" orelse s = "RuneRuntime") andalso member n
+                      | (Token.STRING s, _) => s = "rt_link" orelse s = "rt_linked_units"
+                      | _ => false) toks
+    end
 
   (* name -> the files that provide it, as paths, in MANIFEST order *)
   fun providers (entries : entry list) : string list StringMap.map =

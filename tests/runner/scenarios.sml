@@ -95,7 +95,68 @@ struct
            ("prim.build", "prim.sml main.sml"),
            ("prim-allowed.build", "annotate \"allowPrim\" in prim.sml end a.sml b.sml main.sml"),
            ("vars.build", "$(VENDOR)/a.sml $(VENDOR)/b.sml main.sml"),
-           ("bad.build", "local a.sml"), ("self.build", "use self.build")]
+           ("bad.build", "local a.sml"), ("self.build", "use self.build"),
+           (* one value of a variable serves every build file a build uses *)
+           ("nested/part.build", "$(VENDOR)/a.sml"),
+           ("vars-nested.build", "use nested/part.build $(VENDOR)/b.sml main.sml"),
+           ("libs.build", "libraries json end a.sml b.sml main.sml"),
+           ("demnad.build", "annotate \"demnad\" in a.sml end"),
+           (* what a boundary hides stays hidden, by any way back to it *)
+           ("boundary/x.sml", "structure Pub = struct val v = \"pub\" end\nstructure Priv = struct val v = \"private\" end"),
+           ("boundary/x.build", "x.sml"),
+           ("boundary/lib.build", "library (structure Pub) = use x.build end"),
+           ("boundary/priv.sml", "val () = print (Priv.v ^ \"\\n\")"),
+           ("boundary/pub.sml", "val () = print (Pub.v ^ \"\\n\")"),
+           ("boundary/second.build", "library (structure Pub) = use x.build end\nuse x.build\npub.sml"),
+           ("boundary/second-hidden.build", "library (structure Pub) = use x.build end\nuse x.build\npriv.sml"),
+           ("boundary/across.build", "use lib.build\nuse x.build\npriv.sml"),
+           ("boundary/open.build", "use x.build\nlibrary (structure Pub) = use x.build end\npriv.sml"),
+           ("boundary/inside.build", "library (structure Pub) = use x.build use x.build priv.sml end\npub.sml"),
+           ("boundary/sibling.build", "library (structure Pub) = use x.build end\nlibrary (structure Priv) = use x.build end\npub.sml"),
+           ("boundary/local.build", "local use x.build in end\nuse x.build\npriv.sml"),
+           ("boundary/local-second.build", "local use x.build in use x.build priv.sml end\n"),
+           ("boundary/implements.build", "implements Foo = use x.build end\nuse x.build\npriv.sml"),
+           ("boundary/nothing.build", "library (structure Nope, structure Pub) = use x.build end\npub.sml"),
+           ("boundary/signature-nothing.build", "library (signature NOPE, structure Pub) = use x.build end\npub.sml"),
+           ("boundary/datatype.sml", "datatype t = A | B of int\nstructure Show = struct fun show A = \"A\" | show (B n) = \"B\" end"),
+           ("boundary/replicate.sml", "datatype u = datatype t\nval () = print (Show.show (B 3) ^ \"\\n\")"),
+           ("boundary/datatype.build", "library (type t, structure Show) = datatype.sml end\nreplicate.sml"),
+           ("boundary/abbreviation.sml", "type t = int"),
+           ("boundary/abbreviated.sml", "val () = print (Int.toString (3 : t) ^ \"\\n\")"),
+           ("boundary/abbreviation.build", "library (type t) = abbreviation.sml end\nabbreviated.sml"),
+           (* --typecheck-only keeps what a boundary exports *)
+           ("exports/a.sml", "signature S = sig val x : int end\nfunctor F (X : S) = struct val y = X.x + 1 end\nstructure Z = F (struct val x = 1 end)"),
+           ("exports/b.sml", "structure Q : S = struct val x = 2 end\nstructure R = F (Q)\nval () = print (Int.toString (R.y + Z.y) ^ \"\\n\")"),
+           ("exports/all.build", "library (signature S, functor F, structure Z) = a.sml end\nb.sml"),
+           ("exports/hidden.build", "library (structure Z) = a.sml end\nb.sml"),
+           (* reaching into a library from outside it *)
+           ("reach/lib/thing/library.build", "annotate \"demand\" in inner.sml end"),
+           ("reach/lib/thing/inner.sml", "structure Inner = struct val x = 1 end"),
+           ("reach/lib/thing/own.build", "inner.sml"),
+           ("reach/uses.sml", "val () = print (Int.toString Inner.x ^ \"\\n\")"),
+           ("reach/in.build", "lib/thing/inner.sml uses.sml"),
+           ("reach/use.build", "use lib/thing/own.build uses.sml"),
+           ("reach/plain.sml", "val () = print \"plain\\n\""),
+           ("reach/out.build", "plain.sml"),
+           ("reach/lib/gen/current.build", "use sets/abc/set.build"),
+           ("reach/lib/gen/sets/abc/library.build", "annotate \"demand\" in set.sml end"),
+           ("reach/lib/gen/sets/abc/set.build", "set.sml"),
+           ("reach/lib/gen/sets/abc/set.sml", "structure Inner = struct val x = 2 end"),
+           ("reach/pointer.build", "use lib/gen/current.build uses.sml"),
+           (* selection, by what a file uses *)
+           ("select/lib/m/library.build", "annotate \"demand\" in e.sml end"),
+           ("select/lib/m/e.sml", "structure E = struct val () = print \"(initialiser of E ran)\\n\" val v = 5 end"),
+           ("select/a.sml", "val f = fn F => F + 1 val () = print (Int.toString (f 1) ^ \"\\n\")"),
+           ("select/b.sml", "val f = fn E => E + 1 val () = print (Int.toString (f 1) ^ \"\\n\")"),
+           ("select/c.sml", "val f = fn x => x + 1 val () = print (Int.toString (f 1) ^ \"\\n\") (* E *)"),
+           ("select/d.sml", "val f = fn x => x + 1 val () = print (Int.toString (f 1) ^ \"\\n\") val _ = {E = 1}"),
+           ("select/uses.sml", "val () = print (Int.toString E.v ^ \"\\n\")"),
+           ("select/a.build", "libraries m end\na.sml"),
+           ("select/b.build", "libraries m end\nb.sml"),
+           (* a file that does not parse under the initial basis's fixity keeps its tokens as its mentions *)
+           ("select/fix.sml", "infix 5 ++\ndatatype t = ++ of int * int"),
+           ("select/needs-fix.sml", "fun f (a ++ b) = E.v + a + b\nval () = print (Int.toString (f (1 ++ 2)) ^ \"\\n\")"),
+           ("select/fix.build", "libraries m end\nfix.sml\nneeds-fix.sml")]
         val dir = #directory c
         fun copy source destination = write (destination, read source)
         val () = copy (dir ^ "/counted.sml") (dir ^ "/lib/counted.sml")
@@ -106,6 +167,8 @@ struct
         val () = List.app (fn file => if isDir (original ^ "/" ^ file) then () else copy (original ^ "/" ^ file) (dir ^ "/bigint/" ^ file)) (entries original)
         val () = put c "bigint/none.build" "bigint_sig.sml bigint.sml main.sml"
         val () = put c "bigint/two.build" "bigint_sig.sml implements BigInt = intinf.sml end implements BigInt = digits.sml end bigint.sml main.sml"
+        val () = Posix.FileSys.symlink {old = fromRoot "lib/basis", new = dir ^ "/select/lib/basis"}
+        val () = success (compiler c "select-index" "select" ["--lib", "lib", "--basis-index", "lib/m"])
     in () end
   fun builds c label source flags expected =
     let val target = #directory c ^ "/" ^ source ^ ".rbc"
@@ -130,7 +193,89 @@ struct
     | "prim-allowed" => builds c which "prim-allowed" [] "42\n"
     | "path-variable" => builds c which "vars" ["--path", "VENDOR=vendor"] "42\n"
     | "missing-variable" => buildRefused c "vars" "no path variable VENDOR"
+    | "path-variable-nested" => builds c which "vars-nested" ["--path", "VENDOR=vendor"] "42\n"
     | "build-list" => output (compiler c which "" ["--build-list", "group.build"]) "a.sml\nb.sml\nmain-mod.sml\nmain.sml\n"
+    | "build-list-closure" =>
+        let val r = compiler c which "" ["--build-list", "libs.build"]
+            val () = success r
+        in case List.rev (lines (#output r)) of
+             (* json is written on unicode, which comes before it *)
+             main :: b :: a :: json :: json_sig :: security :: _ =>
+               need (String.isSuffix "lib/json/json_sig.sml" json_sig andalso String.isSuffix "lib/json/json.sml" json
+                     andalso String.isSuffix "lib/unicode/security.sml" security
+                     andalso [a, b, main] = ["a.sml", "b.sml", "main.sml"], "the closure's files are not those of the build: " ^ #output r)
+           | _ => raise Failed ("the closure of a build differs: " ^ #output r)
+        end
+    | "unknown-annotation" => buildRefused c "demnad" "unknown annotation \"demnad\""
+    | "use-through-boundary" => builds c which "boundary/second" [] "pub\n"
+    | "use-through-boundary-hidden" => buildRefused c "boundary/second-hidden" "unbound variable or constructor: Priv.v"
+    | "use-across-builds" => buildRefused c "boundary/across" "unbound variable or constructor: Priv.v"
+    | "use-first-open" => builds c which "boundary/open" [] "private\n"
+    | "use-inside-boundary" => builds c which "boundary/inside" [] "private\npub\n"
+    | "use-sibling-boundary" => buildRefused c "boundary/sibling" "exports structure Priv, which nothing in it declares"
+    | "use-after-local" => buildRefused c "boundary/local" "unbound variable or constructor: Priv.v"
+    | "use-inside-local" => builds c which "boundary/local-second" [] "private\n"
+    | "use-after-implements" => buildRefused c "boundary/implements" "unbound variable or constructor: Priv.v"
+    | "export-nothing" => buildRefused c "boundary/nothing" "exports structure Nope, which nothing in it declares"
+    | "export-no-signature" => buildRefused c "boundary/signature-nothing" "exports signature NOPE, which nothing in it declares"
+    | "export-datatype" => buildRefused c "boundary/datatype" "exports type t, which is a datatype"
+    | "export-abbreviation" => builds c which "boundary/abbreviation" [] "3\n"
+    | "typecheck-exports" =>
+        (output (compiler c which "" ["--build", "exports/all.build", "--typecheck-only", "--no-cache"]) "";
+         refused (compiler c (which ^ "-hidden") "" ["--build", "exports/hidden.build", "--typecheck-only", "--no-cache"])
+                 "unbound signature: S")
+    | "reach-in" =>
+        let fun warns build library files =
+              let val r = compiler c (which ^ "-" ^ build) "reach" ["--build", build ^ ".build", "--no-cache", "-o", build ^ ".rbc"]
+                  val () = success r
+              in need (String.isSubstring (build ^ ".build: warning: this build reaches into the library " ^ library
+                                           ^ " (" ^ files ^ ")") (#errors r),
+                       "no warning of reaching in: " ^ #errors r) end
+            val quiet = compiler c (which ^ "-quiet") "reach"
+                                 ["--build", "in.build", "--no-cache", "--no-warnings", "-o", "quiet.rbc"]
+        in warns "in" "lib/thing" "1 path";
+           warns "use" "lib/thing" "1 path";
+           output quiet "";
+           output (compiler c (which ^ "-out") "reach" ["--build", "out.build", "--no-cache", "-o", "out.rbc"]) ""
+        end
+    | "reach-in-pointer" =>
+        output (compiler c which "reach" ["--build", "pointer.build", "--no-cache", "-o", "pointer.rbc"]) ""
+    | "selection-by-uses" =>
+        let fun selected name flags sources expected =
+              let val () = success (compiler c ("select-" ^ name) "select" (["--lib", "lib", "--no-warnings"] @ flags @ ["-o", name ^ ".rbc"] @ sources))
+              in output (program c ("select-" ^ name ^ "-run") "select" [name ^ ".rbc"]) expected end
+            val library = ["--library", "m"]
+        in
+          (* a name no structure is: not a bound variable, a comment or a label *)
+          List.app (fn name => selected name library [name ^ ".sml"] "2\n") ["a", "b", "c", "d"];
+          selected "ab" ["--no-cache", "--build", "a.build"] [] "2\n";
+          selected "bb" ["--no-cache", "--build", "b.build"] [] "2\n";
+          (* a name used is *)
+          selected "uses" library ["uses.sml"] "(initialiser of E ran)\n5\n";
+          (* a file that does not parse under the initial fixity, by its tokens *)
+          selected "fix" ["--no-cache", "--build", "fix.build"] [] "(initialiser of E ran)\n8\n"
+        end
+    | "install-no-basis" =>
+        let val dir = #directory c ^ "/installroot"
+            val () = rmTree dir
+            val () = List.app (fn file => (mkdirs (OS.Path.dir (dir ^ "/" ^ file)); write (dir ^ "/" ^ file, "")))
+                              ["bin/runevm-stack", "bin/runevm", "bin/rune.rbc", "build/gmp/native-build.json"]
+            val () = mkdirs (dir ^ "/scripts")
+            val () = write (dir ^ "/scripts/install.sh", read (fromRoot "scripts/install.sh"))
+            val r = execute c which "" ["sh", dir ^ "/scripts/install.sh", "--prefix", dir ^ "/prefix"]
+        in refused r "lib/basis/MANIFEST"; need (not (exists (dir ^ "/prefix/bin/rune")), "installed with no Basis") end
+    | "clean-overlay" =>
+        let val dir = #directory c ^ "/cleanroot"
+            val () = rmTree dir
+            fun plant file = (mkdirs (OS.Path.dir (dir ^ "/" ^ file)); write (dir ^ "/" ^ file, ""))
+            val gone = [".rune/x", "src/lsp/.rune/x"]
+            val kept = ["lib/cache/made", "corpus/mlton/.rune/x", ".worktrees/other/.rune/x"]
+            val () = List.app plant (gone @ kept)
+            val () = write (dir ^ "/Makefile", read (fromRoot "Makefile"))
+            val r = execute c which "cleanroot" ["make", "--no-print-directory", "clean"]
+            val () = success r
+        in need (not (List.exists (fn file => exists (dir ^ "/" ^ file)) gone), "make clean left a cache");
+           need (List.all (fn file => exists (dir ^ "/" ^ file)) kept, "make clean took what is not its own") end
     | "virtual-intinf" => builds c which "bigint/intinf" [] factorial
     | "virtual-digits" => builds c which "bigint/digits" [] factorial
     | "virtual-cache" =>
@@ -164,8 +309,12 @@ struct
     | "self" => buildRefused c "self" "uses itself"
     | _ => raise Failed "unknown buildfile scenario"
   val buildCases = ["list", "local", "local-hidden", "library", "library-hidden", "group", "use-twice", "prim", "prim-allowed",
-                    "path-variable", "missing-variable", "build-list", "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole",
-                    "virtual-none", "virtual-two", "bad", "self"]
+                    "path-variable", "missing-variable", "path-variable-nested", "build-list", "build-list-closure", "unknown-annotation",
+                    "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-first-open", "use-inside-boundary",
+                    "use-sibling-boundary", "use-after-local", "use-inside-local", "use-after-implements", "export-nothing",
+                    "export-no-signature", "export-datatype", "export-abbreviation", "typecheck-exports", "reach-in", "reach-in-pointer",
+                    "selection-by-uses", "install-no-basis", "clean-overlay",
+                    "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two", "bad", "self"]
   fun copy source destination =
     let val input = BinIO.openIn source
         val output = BinIO.openOut destination

@@ -26,8 +26,11 @@ struct
   fun kindName k = case k of Str => "structure" | Sig => "signature" | Fun => "functor" | Tycon => "type"
   fun key ((k, n) : name) = kindName k ^ " " ^ n
 
-  (* what a file is to the graph *)
-  type file = {path : string, declares : name list, uses : name list, breaks : (span * string) list}
+  (* what a file is to the graph; free is uses with what the file declares
+     left in, a name it uses before it declares it, or outside what declares
+     it: what it needs of the files before it, as the graph's uses are what
+     it needs of the others *)
+  type file = {path : string, declares : name list, uses : name list, free : name list, breaks : (span * string) list}
 
   (* ---- the names of a file ---- *)
 
@@ -67,6 +70,27 @@ struct
         | PLayered (_, t, p, _, _, _) => (Option.app (fn t => ty (sc, t)) t; pat (sc, p))
         | POr (ps, _, _) => List.app (fn p => pat (sc, p)) ps
         | _ => ()
+      (* what a declaration binds, in the scope after it *)
+      fun binds (d : dec, sc : scope) : scope =
+        case d of
+          DType (tbs, _, _) => List.foldl (fn (b : typbind, sc) => bindTy (sc, #name b)) sc tbs
+        | DDatatype (dbs, tbs, _, _) =>
+            List.foldl (fn (b : typbind, sc) => bindTy (sc, #name b))
+                       (List.foldl (fn (b : datbind, sc) => bindTy (sc, #name b)) sc dbs) tbs
+        | DDatatypeRepl (n, _, _, _) => bindTy (sc, n)
+        | DAbstype (dbs, tbs, ds, sp, n) => List.foldl binds (binds (DDatatype (dbs, tbs, sp, n), sc)) ds
+        | DLocal (_, b, _, _) => List.foldl binds sc b
+        | DStructure (bs, _, _) => List.foldl (fn (b : strbind, sc) => bindStr (sc, #name b)) sc bs
+        | _ => sc
+      (* the scope after `local a in b end`, from before it and from the end
+         of b: what a alone bound is out of scope again *)
+      fun afterLocal (sc : scope, inner : scope, b : dec list) : scope =
+        let
+          val bound = List.foldl binds empty b
+          fun keep (old, new) m = StringMap.filteri (fn (n, _) => StringMap.member (old, n) orelse StringMap.member (new, n)) m
+        in
+          {strs = keep (#strs sc, #strs bound) (#strs inner), tys = keep (#tys sc, #tys bound) (#tys inner)}
+        end
       fun exp (sc, e) =
         case e of
           EVar (id, _, _, _) => longStr (sc, id)
@@ -115,7 +139,7 @@ struct
         | DException (bs, _, _) =>
             (List.app (fn ExnDecl (_, t, _, _, _) => Option.app (fn t => ty (sc, t)) t | ExnRepl (_, id, _, _, _) => longStr (sc, id)) bs;
              sc)
-        | DLocal (a, b, _, _) => decs (decs (sc, a), b)
+        | DLocal (a, b, _, _) => afterLocal (sc, decs (decs (sc, a), b), b)
         | DOpen (ids, _, _) => (List.app (fn (p, n) => longStr (sc, (p @ [n], ""))) ids; sc)
         | DOverload {strid, ...} => (case strid of s :: _ => longStr (sc, ([s], "")) | [] => (); sc)
         | DStructure (bs, _, _) =>
@@ -189,7 +213,7 @@ struct
         | DOverload _ => dec (sc, d)
         | DLocal (a, b, _, _) =>
             let val sc' = List.foldl (fn (d, sc) => top (sc, d, false)) sc a
-            in List.foldl (fn (d, sc) => top (sc, d, exported)) sc' b end
+            in afterLocal (sc, List.foldl (fn (d, sc) => top (sc, d, exported)) sc' b, b) end
         | DVal _ => (broken (d, "a value"); dec (sc, d))
         | DValRec _ => (broken (d, "a value"); dec (sc, d))
         | DFun _ => (broken (d, "a function"); dec (sc, d))
@@ -210,6 +234,7 @@ struct
     in
       {path = path, declares = List.rev (!declares),
        uses = List.map parse (List.filter (fn k => not (List.exists (fn d => d = k) declared)) (StringMap.listKeys (!uses))),
+       free = List.map parse (StringMap.listKeys (!uses)),
        breaks = List.rev (!breaks)}
     end
 

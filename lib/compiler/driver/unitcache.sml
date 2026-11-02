@@ -292,6 +292,10 @@ struct
     if Time.< (Time.now (), Time.+ (OS.FileSys.modTime path, Time.fromSeconds 3600)) then ()
     else OS.FileSys.remove path handle OS.SysErr _ => ()
 
+  (* whether find has given an entry that holds across a unit that changed *)
+  val across = ref false
+  val () = CompilerState.cellRoot ("UnitCache.across", across)
+
   (* The entries of a key whose usages hold: the first found, or why there
      is none *)
   fun find (dir : string, config : string, k : string) : found =
@@ -316,7 +320,7 @@ struct
          (docs/plans/build-cache-issues.md, issue 15) *)
       fun try ([], why, byFingerprint) =
             (case byFingerprint of
-               SOME e => if !UnitBasis.remapAllowed then Found e
+               SOME e => if !UnitBasis.remapAllowed then (across := true; Found e)
                          else Missed "its entries hold across a unit that changed, which a program that keeps its units' identities takes none across"
              | NONE => Missed why)
         | try (n :: rest, why, byFingerprint) =
