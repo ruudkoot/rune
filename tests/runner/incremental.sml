@@ -318,7 +318,10 @@ struct
           edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
           b [] "a.sml b.sml"; prints s "3\nunits";
           check s "the build did not say why it compiled again"
-            (String.isSubstring "other.sml loads units" (#errors (!(#result s))))
+            (String.isSubstring "other.sml loads units" (#errors (!(#result s))));
+          (* and with children, which the first compile leaves running *)
+          edit s "a.sml" "val added = 2" "val added = 2 val third = 3";
+          b ["-j", "2"] "a.sml b.sml"; prints s "3\nunits"
         end
     | "S90" =>
         let val () = own s "a.sml b.sml other.sml"

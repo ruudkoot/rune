@@ -429,7 +429,7 @@ when the scenarios above were all green
   which keep no units section. S89 reads `linkedUnits` by the alias: its
   first build keeps the section, and after the edit `b.sml` has been
   taken across it before `other.sml` shows the program loads units, so the
-  program is compiled again, `b.sml` with it. S90 names `Runtime.load`
+  program is compiled again, `b.sml` with it, also under `-j`. S90 names `Runtime.load`
   directly: known from the start, and no unit is taken across the edit
   (docs/units.md, *Dynamic modules*).
 * **S59, one unit in two sessions.** `c.sml` uses `a.sml` and `b.sml`,
