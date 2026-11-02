@@ -702,8 +702,8 @@ struct
          a loader might: a program with Runtime's file takes no unit across
          a change then either, and is the same program. *)
       fun holds file = List.exists (fn (_, _, _, ident, _) => ident = file) sources
-      val runtimeFile = "lib/basis/runtime.sml"
-      val known = !knownToLoad orelse !namesLoading orelse holds "lib/basis/dynamic.sml"
+      val runtimeFile = BasisManifest.runtimeFile
+      val known = !knownToLoad orelse !namesLoading orelse holds BasisManifest.dynamicFile
       val judged = holds runtimeFile andalso not known andalso not (!Options.typecheckOnly)
       val () = keepExports := known
       val () = UnitBasis.remapAllowed := not (known orelse (holds runtimeFile andalso isSome (!Options.emitUnits)))
@@ -711,19 +711,13 @@ struct
       val () = if judged andalso !UnitBasis.remapAllowed andalso isSome (UnitCache.directory ())
                then CompilerState.seal () else ()
       val loadingKeys : Link.key list ref = ref []
-      fun loads (u : Link.unitCode) =
-        let
-          fun names ({unit, number} : Link.key) =
-            List.exists (fn ({unit = u', number = n'} : Link.key) => number = n' andalso unit = u') (!loadingKeys)
-        in List.exists (names o #1) (#globals u) orelse List.exists (names o #2) (#imports u) end
       fun judge (name, ident, acc) =
         if not judged orelse !keepExports then ()
-        else if ident = runtimeFile then
-          loadingKeys := UnitBasis.keysAt (ident, List.map (fn n => "RuneRuntime." ^ n) BasisManifest.loading)
         else
           case acc of
             (u, _) :: _ =>
-              if not (loads u) then ()
+              if ident = runtimeFile then loadingKeys := Link.functionKeys (u, BasisManifest.loadingFunctions)
+              else if not (Link.namesKey (u, !loadingKeys)) then ()
               else if !UnitCache.across andalso not (isSome (!Parallel.child)) then raise LoadsUnits name
               else (UnitBasis.remapAllowed := false; keepExports := true)
           | [] => ()
@@ -1036,10 +1030,10 @@ struct
       val libraryContexts : (string * snapshot) list ref = ref []
       (* a boundary's exports held to what is inside it; not after an error,
          or in a child of -j, which skips units, where they may be missing *)
-      fun checkExports (boundary, change, exports) =
+      fun checkExports (change, exports) =
         if !failedBefore orelse isSome (!Parallel.child) then ()
         else Option.app (fn message => raise Options.Usage message)
-                        (CompilerBuildContext.exportProblem (buildContext, boundary, change, exports))
+                        (CompilerBuildContext.exportProblem (buildContext, change, exports))
       fun restoreContext (b : snapshot) =
         (env := #env b; fixity := #fixity b; Elaborate.sigs := #sigs b;
          Elaborate.funs := #funs b; UnitBasis.binders := #binders b)
@@ -1092,7 +1086,7 @@ struct
               val acc = elabSteps (ds, acc)
               val change = deltaOf (b0, snap ())
             in
-              checkExports (boundary, change, exports);
+              checkExports (change, exports);
               CompilerBuildContext.leave (buildContext, boundary, exports);
               apply (b0, change, SOME exports); acc
             end
@@ -1258,12 +1252,17 @@ struct
                                 then StringMap.insert (seen, #identity u, ())
                                 else raise Options.Usage ("the unit " ^ #identity u ^ " names a unit not linked before it")
                               end) StringMap.empty read)
-      (* a program that may load units keeps their exports: here, any that
-         holds Runtime's file or a dynamic module's, what a unit's code names
-         of them being a session's to say (compileUnits) *)
-      val () = keepExports := List.exists (fn (_, u : Link.unitCode) =>
-                                             List.exists (fn n => String.isPrefix (n ^ "@") (#identity u))
-                                                         ["lib/basis/runtime.sml", "lib/basis/dynamic.sml"]) read
+      (* a program that loads units keeps their exports, as compileUnits
+         says, the same bytes that a compile in units gives *)
+      fun unitOf file = List.find (fn (_, u : Link.unitCode) => String.isPrefix (file ^ "@") (#identity u)) read
+      val () =
+        keepExports :=
+          (isSome (unitOf BasisManifest.dynamicFile)
+           orelse (case unitOf BasisManifest.runtimeFile of
+                     NONE => false
+                   | SOME (_, runtime) =>
+                       let val keys = Link.functionKeys (runtime, BasisManifest.loadingFunctions)
+                       in List.exists (fn (_, u : Link.unitCode) => #identity u <> #identity runtime andalso Link.namesKey (u, keys)) read end))
     in
       linkUnits (fingerprint, inputs, List.map #2 read)
     end

@@ -266,7 +266,7 @@ struct
                 val boundary=CompilerBuildContext.enter scopes
                 val ()=walk children
                 val change=delta (before',snap ())
-                val ()=case CompilerBuildContext.exportProblem (scopes,boundary,change,exports) of
+                val ()=case CompilerBuildContext.exportProblem (scopes,change,exports) of
                     NONE => ()
                   | SOME message => raise Error.CompileError ({file=case sources of source :: _ => #file source | [] => "",
                                                                start=0,stop=0},message)

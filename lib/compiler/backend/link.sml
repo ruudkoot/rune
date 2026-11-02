@@ -50,6 +50,25 @@ struct
                    imports : (int * key) list,         (* index here, key *)
                    exports : (int * int) list}         (* number, index here *)
 
+  (* The keys of a unit's functions that other units may call by name, of
+     the names given *)
+  fun functionKeys (u : unitCode, names : string list) : key list =
+    let
+      val funcs = Vector.fromList (#funcs (#code u))
+      fun named index = index < Vector.length funcs
+                        andalso List.exists (fn n => n = #name (Vector.sub (funcs, index))) names
+    in
+      List.mapPartial (fn (number, index) => if named index then SOME {unit = #identity u, number = number} else NONE)
+                      (#exports u)
+    end
+
+  (* whether a unit's code names one of the keys *)
+  fun namesKey (u : unitCode, keys : key list) : bool =
+    let
+      fun names ({unit, number} : key) =
+        List.exists (fn ({unit = unit', number = number'} : key) => number = number' andalso unit = unit') keys
+    in List.exists (names o #1) (#globals u) orelse List.exists (names o #2) (#imports u) end
+
   (* the stamp a unit's top level names the next unit's by, and its key *)
   val next = Lower.nextUnit
   val nextKey : key = {unit = "", number = ~1}

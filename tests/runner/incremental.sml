@@ -296,7 +296,8 @@ struct
         let val () = own s "a.sml b.sml other.sml"
             val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
             val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
-            val () = put s "other.sml" ("structure R = Runtime\nval () = R.collect ()\n"
+            (* a string that spells a primitive is a string *)
+            val () = put s "other.sml" ("structure R = Runtime\nval () = R.collect ()\nval table = [\"rt_link\"]\n"
                                         ^ "val () = if #instructions (Runtime.stats ()) > 0 then print \"counted\\n\" else ()")
             val () = b [] "a.sml b.sml other.sml"
         in

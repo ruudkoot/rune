@@ -219,10 +219,9 @@ A program that `rune --units` linked from units, and that loads units
 section, with what each of its units exports, so that a unit loaded into it
 while it runs (`Runtime.load`, a dynamic module) can name them by the units'
 identities, as it names those of units loaded before it. Linked from unit
-files (`rune -o P.rbc A.rbu ...`), a program has it where it holds Runtime's
-file or a dynamic module's. Any other program has none, a program compiled
-whole among them, and its file ends with the representations section; a VM
-that reads one stops there too.
+files (`rune -o P.rbc A.rbu ...`), a program has it by the same test. Any
+other program has none, a program compiled whole among them, and its file
+ends with the representations section; a VM that reads one stops there too.
 
 ```
 nunits      u32

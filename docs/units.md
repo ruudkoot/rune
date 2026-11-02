@@ -646,7 +646,8 @@ a dynamic module (`lib/basis/dynamic.sml` is among its units), or a unit of
 it names one of `Runtime.load`, `link`, `linkedUnits` and
 `linkedUnitSources`. So does every client of `RuneCompiler`, through the
 library's own file that links compiled code. The members are told apart by
-the keys a unit's code names, so an alias, an `open` or a functor's argument
+the keys a unit's code names, of the functions those members are in
+`lib/basis/runtime.sml`'s code, so an alias, an `open` or a functor's argument
 counts where a member is used and not where it is not, and a program that
 names `Runtime` for its counters, or has a structure `Runtime` of its own,
 does not load units. Such a program keeps no section, so nothing in its file

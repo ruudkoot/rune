@@ -134,18 +134,31 @@ struct
      unit to it, and those that read what its file keeps for that, the units'
      identities *)
   val loading = ["load", "link", "linkedUnits", "linkedUnitSources"]
+  val runtimeFile = "lib/basis/runtime.sml"
+  val dynamicFile = "lib/basis/dynamic.sml"
+  (* those members, as the functions of Runtime's file are named *)
+  val loadingFunctions = List.map (fn n => "RuneRuntime." ^ n) loading
 
   (* Whether a file's tokens say that the program loads units: one of those
-     members by name, or the primitives under them. A name can get there
-     without this, through an alias of the structure (Main, judged). *)
+     members by name, or the primitives under them, by _prim: not the string
+     alone, which a table of the primitives holds (the compiler's own). A name
+     can get there without this, through an alias of the structure (Main,
+     judged). *)
   fun namesLoading (toks : Lexer.item vector) : bool =
     let
-      fun member n = List.exists (fn m => m = n) loading
-    in
-      Vector.exists (fn (Token.LONGID ([s], n), _) => (s = "Runtime" orelse s = "RuneRuntime") andalso member n
-                      | (Token.STRING s, _) => s = "rt_link" orelse s = "rt_linked_units"
-                      | _ => false) toks
-    end
+      val n = Vector.length toks
+      fun at i = #1 (Vector.sub (toks, i))
+      fun member m = List.exists (fn l => l = m) loading
+      fun says i =
+        case at i of
+          Token.LONGID ([s], m) => (s = "Runtime" orelse s = "RuneRuntime") andalso member m
+        | Token.PRIM =>
+            i + 1 < n andalso (case at (i + 1) of
+                                 Token.STRING s => s = "rt_link" orelse s = "rt_linked_units"
+                               | _ => false)
+        | _ => false
+      fun go i = i < n andalso (says i orelse go (i + 1))
+    in go 0 end
 
   (* name -> the files that provide it, as paths, in MANIFEST order *)
   fun providers (entries : entry list) : string list StringMap.map =

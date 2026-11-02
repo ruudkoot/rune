@@ -11,13 +11,10 @@ struct
      that are open, and the exports of those that have closed, which is what
      a later use outside them sees of it (replay) *)
   type used={file:string,change:delta,within:int list,through:exports list}
-  (* boundaries: the open ones, the innermost first; replayed: every use
-     replayed, the last first, with what it let through *)
+  (* boundaries: the open ones, the innermost first *)
   type t={env:Env.env ref,fixity:Fixity.env ref,declared:(string*string) list ref,boundaries:int list ref,
-    next:int ref,used:used list ref,replayed:(delta*exports option) list ref}
-  (* a boundary entered, and how many uses had been replayed by then *)
-  type boundary={id:int,replays:int}
-  fun new (env,fixity):t={env=env,fixity=fixity,declared=ref [],boundaries=ref [],next=ref 0,used=ref [],replayed=ref []}
+    next:int ref,used:used list ref}
+  fun new (env,fixity):t={env=env,fixity=fixity,declared=ref [],boundaries=ref [],next=ref 0,used=ref []}
   fun noteNames ({declared,...}:t,funs,sigs)=
     declared:=List.map (fn n => ("fun",n)) funs @ List.map (fn n => ("sig",n)) sigs @ !declared
   fun note (t,result:UnitBasis.result)=noteNames (t,#funs result,#sigs result)
@@ -54,15 +51,15 @@ struct
   (* ---- boundaries, and what a second use sees through them (docs/build.md,
      D8) ---- *)
 
-  fun enter ({boundaries,next,replayed,...}:t):boundary =
-    let val id= !next in next:=id+1;boundaries:=id :: !boundaries;{id=id,replays=length (!replayed)} end
+  fun enter ({boundaries,next,...}:t):int =
+    let val id= !next in next:=id+1;boundaries:=id :: !boundaries;id end
   (* out of the first part of a `local`: a use first seen in the second part
      is not behind it, and one first seen in the first part is still seen *)
-  fun pause ({boundaries,...}:t,{id,...}:boundary)=boundaries:=List.filter (fn other => other<>id) (!boundaries)
+  fun pause ({boundaries,...}:t,id:int)=boundaries:=List.filter (fn other => other<>id) (!boundaries)
   (* the boundary over: a build file first used inside it is seen outside it
      through its exports *)
-  fun leave (t as {used,...}:t,boundary as {id,...}:boundary,exports)=
-    (pause (t,boundary);
+  fun leave (t as {used,...}:t,id:int,exports)=
+    (pause (t,id);
      used:=List.map (fn u as {file,change,within,through} =>
        if List.exists (fn other => other=id) within
        then {file=file,change=change,within=List.filter (fn other => other<>id) within,through=exports :: through}
@@ -71,7 +68,7 @@ struct
     used:={file=file,change=change,within= !boundaries,through=[]} :: !used
   (* a build file used again: what its first use declared, through the
      boundaries that have closed around that use; false where it is the first *)
-  fun replay (t as {used,replayed,...}:t,file) : bool =
+  fun replay (t as {used,...}:t,file) : bool =
     case List.find (fn u:used => #file u=file) (!used) of
       NONE => false
     | SOME {change,through,...} =>
@@ -79,34 +76,30 @@ struct
               [] => NONE
             | first :: rest => SOME (List.foldl (fn (more,kept) =>
                 List.filter (fn e => List.exists (fn x => x=e) more) kept) first rest)
-        in replayed:=(change,exports) :: !replayed;apply (t,snap t,change,exports);true end
+        in apply (t,snap t,change,exports);true end
 
   (* what is wrong with a boundary's exports, if anything, change being what
-     its inside declared. An export names what is declared inside it, a file
-     or a build file used there, as --basis-index asks; and `type` is a type
-     abbreviation's, as there: through a datatype's it would lend its
-     constructors to a replication, which the boundary hides *)
-  fun exportProblem ({replayed,...}:t,{replays,...}:boundary,change:delta,exports:exports) : string option =
+     its inside declared. An export names what its inside sees: what it
+     declares, or what was in scope before it, which stays so. And `type` is a
+     type abbreviation's, as --basis-index asks: through a datatype's it would
+     lend its constructors to a replication, which the boundary hides *)
+  fun exportProblem ({env,...}:t,change:delta,exports:exports) : string option =
     let
-      val inside=(change,NONE) :: List.take (!replayed,length (!replayed)-replays)
       fun kindName k=case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
                              | BuildFile.Fun => "functor" | BuildFile.Ty => "type"
-      fun declares ((c:delta,through),(kind,name))=
-        (case through of NONE => true | SOME es => List.exists (fn e => e=(kind,name)) es) andalso
-        (case kind of
-           BuildFile.Str => StringMap.member (Env.strs (#env c),name)
-         | BuildFile.Ty => StringMap.member (Env.tys (#env c),name)
-         | BuildFile.Sig => List.exists (fn d => d=("sig",name)) (#declared c)
-         | BuildFile.Fun => List.exists (fn d => d=("fun",name)) (#declared c))
-      fun datatypeBy (c:delta,_) name=
-        case StringMap.find (Env.tys (#env c),name) of
-          SOME (Env.TyStr {cons=_ :: _,...}) => true
-        | _ => false
+      fun inScope (kind,name)=
+        case kind of
+          BuildFile.Str => StringMap.member (Env.strs (!env),name)
+        | BuildFile.Ty => StringMap.member (Env.tys (!env),name)
+        | BuildFile.Sig => StringMap.member (!Elaborate.sigs,name)
+        | BuildFile.Fun => StringMap.member (!Elaborate.funs,name)
       fun problem (kind,name)=
-        if not (List.exists (fn d => declares (d,(kind,name))) inside)
-        then SOME ("a library exports " ^ kindName kind ^ " " ^ name ^ ", which nothing in it declares")
-        else if kind=BuildFile.Ty andalso List.exists (fn d => datatypeBy d name) inside
-        then SOME ("a library exports type " ^ name ^ ", which is a datatype: a `type` export is a type abbreviation's")
-        else NONE
+        if not (inScope (kind,name))
+        then SOME ("a library exports " ^ kindName kind ^ " " ^ name ^ ", and nothing of that name is in scope")
+        else
+          case (kind,StringMap.find (Env.tys (#env change),name)) of
+            (BuildFile.Ty,SOME (Env.TyStr {cons=_ :: _,...})) =>
+              SOME ("a library exports type " ^ name ^ ", which is a datatype: a `type` export is a type abbreviation's")
+          | _ => NONE
     in List.foldl (fn (e,found) => case found of SOME _ => found | NONE => problem e) NONE exports end
 end

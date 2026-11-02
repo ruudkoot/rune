@@ -117,8 +117,11 @@ the build once, in its first occurrence's context.
 ## Exports
 
 `library (...)` exports what the declarations inside it declare, from a file
-or from a build file used there. An export that names nothing they declare
-is an error, of a build as of a library (`--basis-index`). `type t` exports
+or from a build file used there. An export that names nothing in scope at
+the end of it is an error. One that names what was in scope before it, a
+structure of the Basis Library say, is allowed and changes nothing: that name
+stays in scope. A library's own build file is held to more: `--basis-index`
+wants each export declared by one of its files. `type t` exports
 a type abbreviation. A datatype is not exported so: it would keep its
 constructors, which a replication (`datatype u = datatype t`) gets back
 past the boundary; export a structure that holds it, or the abbreviation of

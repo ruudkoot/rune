@@ -245,14 +245,6 @@ struct
       List.app (fn (n, sg) => unitSigs := StringMap.insert (!unitSigs, #identity u ^ "\000" ^ n, sg)) sigs
     end
 
-  (* The keys of values of a unit of the session, by their paths in it *)
-  fun keysAt (name : string, ps : string list) : Link.key list =
-    case List.find (fn (l : loaded) => #name l = name) (!units) of
-      NONE => []
-    | SOME l =>
-        List.mapPartial (fn p => Option.map (fn s => {unit = #identity l, number = s - Vector.sub (#base l, kStamp)})
-                                            (StringMap.find (!byPath, pathKey (#identity l, kStamp, p)))) ps
-
   (* What the cache keeps of a unit by its identity, for a unit compiled
      against it to be loaded against another of the same name (remapping):
      the path to each of its own names of each kind, by its number there *)
