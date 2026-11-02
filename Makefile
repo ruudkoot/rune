@@ -2139,9 +2139,13 @@ CHECK_MAKE := $(MAKE)
 check: check-tools
 	$(RUNE_TEST) --tier check
 
+# The caches compiles write (.rune; the frozen lib/cache stays until the next
+# make basis-cache, docs/units.md), not those of the corpus trees or of other
+# worktrees, which nothing here builds.
 clean:
 	rm -rf bin build tests/out dist
-	find . -type d \( -name .cm -o -name MLB \) -prune -exec rm -rf {} +
+	find . \( -path ./corpus -o -path ./.worktrees \) -prune -o \
+	  -type d \( -name .cm -o -name MLB -o -name .rune \) -prune -exec rm -rf {} +
 
 .PHONY: test-intinf
 test-intinf: $(RUNE) bin/runevm bin/runevm-stack bin/rune-intinf bin/rune-test

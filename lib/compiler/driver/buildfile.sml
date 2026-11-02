@@ -2,9 +2,9 @@
    syntax, read into declarations, and their elaboration to what a build
    compiles -- each unit with the basis it is compiled in, given as a plan
    of steps that the units driver (Main) follows, a unit's basis being what
-   the steps before it leave. The semantics is MLB's: a basis is a value, a
-   file adds what it declares to the basis before it, `local` and export
-   lists say what the files after see. *)
+   the steps before it leave. A basis is a value, as in MLB: a file adds what
+   it declares to the basis before it, `local` and export lists say what the
+   files after see. Unlike MLB, a `use` elaborates in its caller's basis. *)
 structure BuildFile =
 struct
   (* ---- syntax ---- *)
@@ -180,8 +180,11 @@ struct
   val variables : string StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("BuildFile.variables", variables)
 
-  (* a path of a build file in dir, its variables given *)
-  fun expandUsing {isAbsolute,concat} (dir : string, p : string) : string =
+  (* A path of a build file in dir, its variables given. A path that begins
+     with a variable whose value is relative is relative to root, the
+     directory of the build file the compile was given, so that one value
+     serves every build file a build uses; any other relative path, to dir *)
+  fun expandFrom {isAbsolute,concat,root} (dir : string, p : string) : string =
     let
       val n = String.size p
       fun scan (i, acc) =
@@ -198,9 +201,13 @@ struct
           in scan (j + 1, v :: acc) end
         else scan (i + 1, String.str (String.sub (p, i)) :: acc)
       val q = scan (0, [])
+      val base = if String.isPrefix "$(" p then root else dir
     in
-      if isAbsolute q orelse dir = "" orelse dir = "." then q else concat (dir, q)
+      if isAbsolute q orelse base = "" orelse base = "." then q else concat (base, q)
     end
+  (* where the build given is not known -- an editor's look at one file --
+     that file's directory stands for it *)
+  fun expandUsing {isAbsolute,concat} (dir,p)=expandFrom {isAbsolute=isAbsolute,concat=concat,root=dir} (dir,p)
   fun expandWith isAbsolute args=expandUsing {isAbsolute=isAbsolute,concat=OS.Path.concat} args
   fun expand args = expandWith OS.Path.isAbsolute args
 end

@@ -139,6 +139,20 @@ struct
       val () = need (String.isSubstring "structure:Api signature:API functor:Make type:exposed" manifest,"missing export metadata")
       val (status,log) = invoke "check" ["--library","scoped","--basis-check"]
       val () = need (status=0,"scoped manifest check: " ^ log)
+      (* a library that uses what a boundary it is written on hides fails at
+         its own index, not at a client's compile (E28) *)
+      val client = lib ^ "/client"
+      val () = mkdirs client
+      val () = write (client ^ "/library.build","libraries scoped end\nannotate \"demand\" in client.sml end\n")
+      val () = write (client ^ "/client.sml","structure Client = struct val x = Hidden.value end\n")
+      val (status,log) = invoke "hidden-index" ["--basis-index",client]
+      val () = need (status<>0 andalso String.isSubstring "uses Hidden, which the boundary of" log,
+                     "the index did not notice a name a boundary hides: " ^ log)
+      (* --typecheck-only keeps what a library's boundary exports *)
+      val program = dir ^ "/program.build"
+      val () = write (program,"libraries scoped end\n\"" ^ fromRoot (fixture ^ "/use.sml") ^ "\"\n")
+      val (status,log) = invoke "typecheck-library" ["--no-cache","--typecheck-only","--build",program]
+      val () = need (status=0,"--typecheck-only lost a library's exports: " ^ log)
       val modes = [("whole",["--no-cache"]),("units",["--units","--no-cache"]),
                    ("whole-units",["--units","--whole","--no-cache"])]
       fun mode (label,flags) =

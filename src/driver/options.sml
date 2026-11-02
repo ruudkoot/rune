@@ -126,8 +126,9 @@ struct
     \  -I DIR            with one input, an entry point: compile before it the files\n\
     \                    of its directory and of each -I DIR that it needs\n\
     \  --build FILE      compile in units what the build file FILE says\n\
-    \                    (docs/build.md); --build-list prints its files in order\n\
-    \  --path NAME=DIR   the path variable $(NAME) of build files\n\
+    \                    (docs/build.md); --build-list prints its closure in order\n\
+    \  --path NAME=DIR   the path variable $(NAME) of build files, a relative DIR\n\
+    \                    from the directory of the build file given\n\
     \  --basis-index DIR write DIR/MANIFEST, what a library's files provide and\n\
     \                    require, from its build file DIR/library.build\n\
     \  --typecheck-only  stop after type checking\n\

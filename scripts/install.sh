@@ -98,6 +98,9 @@ need() { [ -e "$1" ] || missing="$missing $1"; }
 need "$root/bin/runevm-stack"
 need "$root/bin/runevm"
 need "$root/build/gmp/native-build.json"
+# what says which files of each library are installed: with none, no Basis is,
+# and the rune installed compiles nothing
+need "$root/lib/basis/MANIFEST"
 if [ -z "$host" ]; then
   need "$root/bin/rune.rbc"
 elif sml_for_host "$host" > /dev/null; then

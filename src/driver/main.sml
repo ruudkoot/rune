@@ -227,6 +227,11 @@ struct
   (* whether the program being linked keeps its units' exports in its file
      (compileUnits) *)
   val keepExports = ref false
+  (* a program found to load units only once a unit was taken across a unit
+     that changed, and the unit that showed it: compileUnits leaves it to be
+     compiled again, knowing (compiledAgain) *)
+  exception LoadsUnits of string
+  val knownToLoad = ref false
 
   (* ---- the graph (Deps; the incremental roadmap's M8) ---- *)
 
@@ -315,10 +320,12 @@ struct
      directory, the variables given), each build file it uses read in its
      place, each group put in the order its files' modules give (Deps), the
      annotations given to each unit; and the cache directories it names *)
+  fun onWindows () : bool =
+    List.exists (fn (key,value) => key="sysname" andalso value="Windows") (Posix.ProcEnv.uname ())
+    handle OS.SysErr _ => false
   fun projectOf (file : string) : CompilerProject.plan =
     let
-      val windows=List.exists (fn (key,value) => key="sysname" andalso value="Windows")
-                    (Posix.ProcEnv.uname ()) handle OS.SysErr _ => false
+      val windows=onWindows ()
       fun read path =
         let val text=readText path handle IO.Io _ => raise CompilerProject.Invalid ("cannot read the build file " ^ path)
         in {text=text,revision=Pickle.hash text} end
@@ -392,6 +399,10 @@ struct
                                                     (BasisManifest.libraries (libRoot (), !libs)))
       val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.public e))
                                 StringMap.empty outside
+      (* and what a boundary of one of those hides *)
+      val hidden = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => if StringMap.member (provided, n) then m
+                                                                             else StringMap.insert (m, n, #dir e)) m (#provides e))
+                              StringMap.empty outside
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       val providers = List.foldl (fn ((_, _, f : Deps.file), m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
                                                                                (#declares f))
@@ -416,6 +427,15 @@ struct
                                           else raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^
                                                                     ", which only a file after it provides"))
                                  requires
+               (* a client would fail on it, and this library not (E28) *)
+               val () = List.app (fn (kind, n) =>
+                                    case StringMap.find (hidden, n) of
+                                      SOME library =>
+                                        if kind = Deps.Tycon orelse StringMap.member (providers, n) then ()
+                                        else raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^ ", which the boundary of "
+                                                                  ^ library ^ " does not export")
+                                    | NONE => ())
+                                 (#uses f)
                val line = p ^ " | " ^ classOf anns ^ " | " ^ hostOf anns ^ " | " ^ String.concatWith " " provides ^ " | "
                           ^ String.concatWith " " requires ^ scopeColumn
              in (line :: acc, List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier provides) end)
@@ -439,6 +459,27 @@ struct
   val unitsOf = CompilerProject.units
   val filesOf = CompilerProject.files
 
+  (* --build-list FILE: the closure of a build: the files of the libraries it
+     names and of those they are written on, each library before what is
+     written on it, then its own, then the libraries' final files. Whole
+     libraries, of what a program may name: which of their files one compile
+     takes is --basis-deps. The Basis Library is every program's, and not
+     in the list. *)
+  fun buildList (file : string) : OS.Process.status =
+    let
+      val project = projectOf file
+      val names = List.foldl (fn (library, all) => if List.exists (fn present => present = library) all then all else all @ [library])
+                             (!Options.libraries) (#libraries project)
+      val entries =
+        if List.null names then []
+        else List.concat (List.map BasisManifest.readManifest (BasisManifest.libraries (libRoot (), names)))
+      val (final, library) = List.partition (fn e : entry => #when e = Final) entries
+      fun paths es = List.map (OS.Path.mkCanonical o BasisManifest.path) es
+    in
+      List.app println (paths library @ filesOf (#steps project) @ paths final);
+      OS.Process.success
+    end
+
   fun compile () : OS.Process.status =
     let
       (* --build: the inputs are the build file's files, its plan what the
@@ -450,6 +491,17 @@ struct
             let val project=projectOf f
                 val plan= #steps project
                 val caches= #caches project
+                (* reaching into a library, which a later roadmap's milestone
+                   refuses (docs/build.md, Reaching in) *)
+                val ()=if !Options.noWarnings orelse !knownToLoad then () else
+                  (List.app (fn (build,library,paths) =>
+                     Error.warn ({file=build,start=0,stop=0},
+                       "this build reaches into the library " ^ library ^ " (" ^ Int.toString paths
+                       ^ (if paths=1 then " path" else " paths") ^ "), which is reached through its interface"))
+                     (CompilerProject.reaches {references= #references project,windows=onWindows (),
+                        isLibrary=fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir=dir,file="library.build"},[])
+                                            handle OS.SysErr _ => false});
+                   Error.flushWarnings ())
                 val ()=Options.libraries:=List.foldl (fn (library,all) =>
                   if List.exists (fn present => present=library) all then all else all @ [library])
                   (!Options.libraries) (#libraries project)
@@ -1315,8 +1367,7 @@ struct
      else if !Options.basisCheck then checkManifest ()
      else if !Options.deps orelse !Options.depsDot orelse !Options.depsUses then depsCommand ()
      else if isSome (!Options.basisIndex) then basisIndex (valOf (!Options.basisIndex))
-     else if !Options.buildList then
-       (List.app println (filesOf (#1 (planOf (valOf (!Options.build))))); OS.Process.success)
+     else if !Options.buildList then buildList (valOf (!Options.build))
      else if !Options.lexCount > 0 then lexCount ()
      else if !Options.dumpTokens then dumpTokens ()
      else if isSome (!Options.readMid) then diagnosed (fn () => readMid (valOf (!Options.readMid)))
