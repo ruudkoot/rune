@@ -247,7 +247,8 @@ struct
                 | NONE => readFile (#file source,#mode source),mode= #mode source,annotations= #annotations source,
               revision=case opened of NONE => "disk" | SOME snapshot => IntInf.toString (#revision snapshot)} end
         val project=case selected of NONE => NONE | SOME selected => SOME (C.Project.read (#compiler context,
-          {file=W.filePath platform (#build selected),variables=variables,overlays=overlays,windows=platform=U.Windows}))
+          {file=W.filePath platform (#build selected),workspace=W.rootFile platform (W.filePath platform (#build selected)),
+           variables=variables,overlays=overlays,windows=platform=U.Windows}))
         val inputs=case project of SOME project => List.map input (C.Project.sources project)
           | NONE =>
               let val snapshot=case D.snapshot (documents,uri) of SOME snapshot => snapshot | NONE => raise Fail "document is not open"

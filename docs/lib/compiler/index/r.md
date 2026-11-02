@@ -7,6 +7,7 @@
 - `readMid` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-readmid)
 - `readUnit` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-readunit)
 - `run` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-run)
+- `Workspace.root` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.root)
 
 ---
 

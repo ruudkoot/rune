@@ -8,6 +8,7 @@
 - `Project.fingerprint` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.fingerprint)
 - `Syntax.fixities` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.fixities)
 - `Syntax.fixities` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.fixities)
+- `Workspace.find` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.find)
 
 ---
 

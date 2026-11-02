@@ -16,7 +16,8 @@ struct
   type snapshot={id:string,context:string,project:string option,inputs:input list,dependencies:input list,
     diagnostics:C.diagnostic list,occurrences:occurrence list,types:typeDefinition list,facts:fact list,reused:int,checked:int,
     config:C.config,cache:E.entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,
-    steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan}
+    steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan,
+    scope:Workspace.scope,units:string list}
   datatype t=Analysis of {parent:C.session,context:string,namespace:string,engine:E.session,
     token:unit ref,serial:IntInf.int ref,busy:bool ref,closed:bool ref,projections:occurrence list StringMap.map ref}
   datatype checkpoint=Checkpoint of {token:unit ref,entries:E.entry list,plan:string}
@@ -57,7 +58,7 @@ struct
       binding=binding definition,definition=location definition,declaration=location declaration,
       isDefinition=isDefinition,derived=derived} end
   fun check (context as Analysis {parent,context=name,namespace,engine,serial,busy,projections,...},
-             {inputs:input list,steps,project,libraries,cancelled}) : snapshot =
+             {inputs:input list,steps,project,libraries,scope,cancelled}) : snapshot =
     let val ()=checked context
         val C.Session {config,...}=parent
         val ()=if length inputs>10000 then raise Fail "too many analysis inputs" else ()
@@ -71,7 +72,7 @@ struct
         fun poll ()=let val result=cancelled () in C.checked parent;result end
         val ()=busy:=true
         fun work () =
-          let val result=E.checkSteps (engine,sources,steps,libraries,poll)
+          let val result=E.checkSteps (engine,scope,sources,steps,libraries,poll)
               val E.Session{observer,...}=engine
               fun phase name items=Option.app(fn f=>f {phase=name,file="",checked= #checked result,reused= #reused result,items=items})(!observer)
               val ()=phase "occurrences-start" (length(#uses result))
@@ -91,7 +92,7 @@ struct
                 occurrences=occurrences,types=types,facts= #facts result,
                 reused= #reused result,checked= #checked result,config=config,cache= #cache result,
                 syntaxes= #syntaxes result,plan= #plan result,
-                steps=steps,libraries=libraries,prelude= #prelude result}:snapshot
+                steps=steps,libraries=libraries,prelude= #prelude result,scope=scope,units= #units result}:snapshot
               val ()=phase "snapshot-published" (length(#occurrences snapshot))
           in projections:= !projected;serial:=IntInf.+ (!serial,1);snapshot end
         val result=work () handle error => (busy:=false;raise error)
@@ -124,7 +125,7 @@ struct
     else typeIn (snapshot,{file=file,unit=NONE,offset=offset})
   fun unitAt (snapshot:snapshot,{ordinal}) =
     if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
-      SOME (E.unitName (#file (List.nth (#inputs snapshot,ordinal)),ordinal+1))
+      SOME (List.nth (#units snapshot,ordinal))
   fun syntaxAt (snapshot:snapshot,position) = Option.mapPartial (fn unit =>
     Option.map #2 (List.find (fn (name,_) => name=unit) (#syntaxes snapshot))) (unitAt (snapshot,position))
   fun typeAtOccurrence (snapshot:snapshot,{ordinal,offset}) =
@@ -194,8 +195,8 @@ struct
           observer=ref NONE,names=ref StringMap.empty}
         fun source (input:input):E.source={file= #file input,text= #text input,mode=valOf (Source.modeNamed (#mode input))}
         fun query (sources,at)= E.checkWith
-          (engine,sources,#steps snapshot,#libraries snapshot,fn () => false,
-           SOME {unit=E.unitName (#file input,ordinal+1),file= #file input,offset=at,path=path},
+          (engine,#scope snapshot,sources,#steps snapshot,#libraries snapshot,fn () => false,
+           SOME {unit=List.nth (#units snapshot,ordinal),file= #file input,offset=at,path=path},
            List.map source (#dependencies snapshot),SOME (#prelude snapshot))
         val original=List.map source (#inputs snapshot)
         fun retry []=NONE

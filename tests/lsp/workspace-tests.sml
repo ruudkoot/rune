@@ -54,6 +54,26 @@ struct
         val generation=W.generation workspace
         val rejected=((W.configure (workspace,Json.Object [("sourceMode",Json.String "invalid")]);false) handle W.Invalid _ => true)
     in check ("configuration is atomic",rejected andalso W.generation workspace=generation) end)
+  (* A root file's targets come first, named, and what discovery finds beside
+     them stays; a folder inside a workspace goes by discovery alone. *)
+  fun namedTargets () = fixture (fn root =>
+    let val ()=List.app OS.FileSys.mkDir [root ^ "/src",root ^ "/src/inner"]
+        val a=root ^ "/src/a.sml"
+        val ()=List.app write
+          [(root ^ "/rune.workspace","roots lib end\ntarget main = src/main.build \"--target=stack\" end\n"),
+           (root ^ "/src/main.build","files a.sml end\n"),(root ^ "/src/other.build","files a.sml end\n"),
+           (root ^ "/src/inner/b.sml","val b=1\n"),(root ^ "/src/inner/b.build","files b.sml end\n"),(a,"val a=1\n")]
+        val workspace=W.new {platform=U.Posix,lib="lib"}
+        val documents=D.new (LspProtocol.Utf16,{maxDocuments=3,maxDocumentBytes=10000,maxTotalBytes=20000,maxDocumentLines=1000,maxTotalLines=2000})
+        val ()=W.setRoots (workspace,[uri root])
+        val found=W.contexts (workspace,documents,uri a)
+        val ()=check ("a root file's target, then the build it does not name",
+          List.map #target found=["main",uri (root ^ "/src/other.build")])
+        val ()=check ("a target's options",case found of first :: _ => #build first=uri (root ^ "/src/main.build") | [] => false)
+        val inner=W.new {platform=U.Posix,lib="lib"}
+        val ()=W.setRoots (inner,[uri (root ^ "/src/inner")])
+    in check ("a root file above a folder names no target of it",
+         List.map #target (W.contexts (inner,documents,uri (root ^ "/src/inner/b.sml")))=[uri (root ^ "/src/inner/b.build")]) end)
   fun shortNames ()=List.app (fn (name,short) => check (name ^ " shows as " ^ short,W.shortName (U.Posix,name)=short))
     [("file:///project/one.build","one.build"),("file:///a%20b/two%20words.build","two words.build"),
      ("rune","rune"),("loose source","loose source"),("untitled:note","untitled:note")]
@@ -98,6 +118,7 @@ structure RuneLspWorkspaceTestMain = Main (struct
   val name="lsp-workspace"
   val tests=Test.describe "lsp-workspace" [Test.it "contexts" RuneLspWorkspaceTests.contexts,
     Test.it "scopes" RuneLspWorkspaceTests.scopes,Test.it "scope-cost" RuneLspWorkspaceTests.scopeCost,
+    Test.it "named-targets" RuneLspWorkspaceTests.namedTargets,
     Test.it "short-names" RuneLspWorkspaceTests.shortNames]
 end)
 val ()=RuneLspWorkspaceTestMain.main ()

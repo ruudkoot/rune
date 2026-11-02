@@ -18,6 +18,7 @@ the signature names and no others.
 | [`RuneCompiler.Analysis`](str/RuneCompiler.Analysis.md) | *in* | [`RUNE_COMPILER`](sig/RUNE_COMPILER.md) |  |  | [lib/compiler/api/compiler.sml](../../../lib/compiler/api/compiler.sml) |
 | [`RuneCompiler.Project`](str/RuneCompiler.Project.md) | *in* | [`RUNE_COMPILER`](sig/RUNE_COMPILER.md) |  |  | [lib/compiler/api/compiler.sml](../../../lib/compiler/api/compiler.sml) |
 | [`RuneCompiler.Syntax`](str/RuneCompiler.Syntax.md) | *in* | [`RUNE_COMPILER`](sig/RUNE_COMPILER.md) |  |  | [lib/compiler/api/compiler.sml](../../../lib/compiler/api/compiler.sml) |
+| [`RuneCompiler.Workspace`](str/RuneCompiler.Workspace.md) | *in* | [`RUNE_COMPILER`](sig/RUNE_COMPILER.md) |  |  | [lib/compiler/api/compiler.sml](../../../lib/compiler/api/compiler.sml) |
 
 ---
 

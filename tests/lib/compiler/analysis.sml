@@ -234,7 +234,7 @@ struct
         fun work () =
           let val parent=compiler ()
               val context=A.create (parent,{context="scoped"})
-              val project=C.Project.read (parent,{file=dir ^ "/scope.build",variables=[],overlays=[],windows=false})
+              val project=C.Project.read (parent,{file=dir ^ "/scope.build",workspace=NONE,variables=[],overlays=[],windows=false})
               val inputs=List.map (fn source:C.Project.source =>
                 let val name=OS.Path.file (#file source)
                     val text= #2 (valOf (List.find (fn (file,_) => file=name) files))
@@ -245,6 +245,15 @@ struct
               val cached=run inputs
               val bad=List.take (inputs,2) @ [input (dir ^ "/final.sml","val wrong=Hidden.x\n","2")]
               val rejected=run bad
+              (* a unit's name is rune's: no rank of its place, no spelling *)
+              val ()=check ("a unit is named as rune names it",A.unitAt (valid,{ordinal=2})=SOME "final.sml")
+              val twice=A.create (parent,{context="twice"})
+              fun loose file=input (file,"val x=1\n","1")
+              val snapshot=A.check (twice,{project=NONE,inputs=[loose (dir ^ "/hidden.sml"),loose (dir ^ "/./hidden.sml")],
+                cancelled=fn () => false})
+              val ()=check ("a file given twice has a rank, however it is spelt",
+                A.unitAt (snapshot,{ordinal=0})=SOME "hidden.sml" andalso A.unitAt (snapshot,{ordinal=1})=SOME "hidden.sml#2")
+              val ()=A.close twice
               val ()=check ("project scopes are shared with the compiler",null (A.diagnostics valid)
                 andalso A.project valid=SOME (C.Project.fingerprint project) andalso same (valid,cached)
                 andalso #checked (A.work cached)=0 andalso not (null (A.diagnostics rejected)))

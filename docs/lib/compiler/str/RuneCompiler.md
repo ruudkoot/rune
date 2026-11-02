@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) |
 | Status | required |
-| Members | 20 |
+| Members | 21 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -44,6 +44,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | structure | [`Analysis`](../str/RuneCompiler.Analysis.md) |  |
 | structure | [`Project`](../str/RuneCompiler.Project.md) |  |
 | structure | [`Syntax`](../str/RuneCompiler.Syntax.md) |  |
+| structure | [`Workspace`](../str/RuneCompiler.Workspace.md) |  |
 
 ---
 

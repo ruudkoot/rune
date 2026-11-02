@@ -4,6 +4,7 @@
 
 - `Analysis.location` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.location)
 - `Project.libraries` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.libraries)
+- `Workspace.libraryRoots` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.libraryroots)
 
 ---
 

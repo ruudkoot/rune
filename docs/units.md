@@ -580,6 +580,11 @@ their usages hold, which they do but for the seals of structures the
 program does not name. It is made with the lint at level 2, so its entries
 are marked 2 and a compile at any level takes them.
 
+An analysis names its units as a build does (*Names*, above), `file#rank`
+being gone: `RuneCompiler.Project.read` takes the workspace, and the same
+source in a build and in the editor has one name. So far only the name is the
+same: an analysis's basis holds origins, which a build's does not.
+
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source
 companion is a `Pickle` encoding: `RCS`, version 2, then strings containing

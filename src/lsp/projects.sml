@@ -24,8 +24,10 @@ struct
               val seen=List.exists (fn prior => prior=normalized) (!builds)
               val ()=if seen then () else builds:=normalized :: !builds
               val parent=C.session {lib=SOME libraryRoot,flags= #flags target}
-              val project=(if seen then NONE else SOME (C.Project.read (parent,{file=W.filePath platform (#build target),variables= #variables normalized,
-                overlays=overlays,windows=platform=U.Windows})) before C.close parent) handle error => (C.close parent;raise error)
+              val build=W.filePath platform (#build target)
+              val project=(if seen then NONE else SOME (C.Project.read (parent,{file=build,workspace=W.rootFile platform build,
+                variables= #variables normalized,overlays=overlays,windows=platform=U.Windows})) before C.close parent)
+                handle error => (C.close parent;raise error)
               fun source (source:C.Project.source) =
                 let val uri=fileUri (#file source)
                     val aliases=List.map #uri (List.filter (fn snapshot:D.snapshot =>
@@ -39,8 +41,9 @@ struct
           let val config=W.configurationFor (workspace,uri)
               val targets=if not (null (#targets config)) then #targets config else
                 case U.native (platform,U.parse uri) of NONE => [] | SOME {path,...} =>
-                  List.map (fn file => {name=fileUri file,build=fileUri file,flags= #flags config,
-                    variables=[],libraryRoot=NONE}:W.target) (W.buildFiles platform path)
+                  W.withNamed (workspace,W.join platform (path,"file"),#flags config,
+                    List.map (fn file => {name=fileUri file,build=fileUri file,flags= #flags config,
+                      variables=[],libraryRoot=NONE}:W.target) (W.buildFiles platform path))
           in List.app (fn candidate => target (config,candidate)) targets end
         val ()=List.app root (!roots)
         val global= !settings

@@ -29,7 +29,8 @@ Each input's text is decoded UTF-8, including Latin-1 overlays. Source
 modes still control literal semantics and representability.
 
 For a project, call `RuneCompiler.Project.read` with the same compiler
-session and supply its source occurrences in order, with matching modes
+session, and the workspace `RuneCompiler.Workspace.find` gives above its
+build, and supply its source occurrences in order, with matching modes
 and annotations. Group-discovery text must still match the captured plan.
 The library validates these conditions instead of silently analyzing a
 different build. Project library headers supplement configured libraries.

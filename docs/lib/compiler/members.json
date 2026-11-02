@@ -230,6 +230,55 @@
     },
     {
      "kind": "structure",
+     "name": "Workspace",
+     "spec": "structure Workspace : sig ... end",
+     "doc": "A workspace: the directory of a root file, rune.workspace, that names\nwhere libraries are found, and the named targets (docs/build.md).\n\n",
+     "page": "sig/RUNE_COMPILER.md#str-workspace"
+    },
+    {
+     "kind": "type",
+     "name": "Workspace.t",
+     "spec": "type t",
+     "doc": "A root file, read.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-workspace.t"
+    },
+    {
+     "kind": "type",
+     "name": "Workspace.target",
+     "spec": "type target = {name : string, build : string, options : string list}",
+     "doc": "A named target: a build file, its path whole, and the options of a\ncompiler session for it.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-workspace.target"
+    },
+    {
+     "kind": "val",
+     "name": "Workspace.find",
+     "spec": "val find : {file : string, windows : bool} -> t option",
+     "doc": "`find {file, windows}` reads the nearest root file above file, or\ngives `NONE` where there is none.\n\nwindows selects Windows drive/UNC syntax. A root file that is not\nwell formed is reported through Failed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-workspace.find"
+    },
+    {
+     "kind": "val",
+     "name": "Workspace.root",
+     "spec": "val root : t -> string",
+     "doc": "`root workspace` is the directory of its root file, which a build's\nunits are named from.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-workspace.root"
+    },
+    {
+     "kind": "val",
+     "name": "Workspace.libraryRoots",
+     "spec": "val libraryRoots : t -> string list",
+     "doc": "`libraryRoots workspace` lists the directories it finds libraries\nunder, in order, whole.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-workspace.libraryroots"
+    },
+    {
+     "kind": "val",
+     "name": "Workspace.targets",
+     "spec": "val targets : t -> target list",
+     "doc": "`targets workspace` lists its named targets in order.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-workspace.targets"
+    },
+    {
+     "kind": "structure",
      "name": "Project",
      "spec": "structure Project : sig ... end",
      "doc": "The compiler's immutable project model, shared with the CLI.\n\n",
@@ -301,8 +350,8 @@
     {
      "kind": "val",
      "name": "Project.read",
-     "spec": "val read : session * {file : string, variables : (string * string) list,\n                      overlays : {file : string, text : string} list, windows : bool} -> t",
-     "doc": "`read (session, request)` resolves a build through compiler rules,\npreserving scopes, order, annotations, virtual implementations and use.\n\nVariables are path-variable bindings. Overlays are already decoded\nUTF-8, also for Latin-1 source files. windows selects Windows drive/UNC\nsyntax independently of the host operating system. No user declarations execute and no cache\nfiles are written. Failure is reported through Failed.\n\n",
+     "spec": "val read : session * {file : string, workspace : Workspace.t option, variables : (string * string) list,\n                      overlays : {file : string, text : string} list, windows : bool} -> t",
+     "doc": "`read (session, request)` resolves a build through compiler rules,\npreserving scopes, order, annotations, virtual implementations and use.\n\nworkspace is what its units are named from and its libraries found\nunder (`Workspace.find`); with none, the build's directory stands for\nits root. Variables are path-variable bindings. Overlays are already decoded\nUTF-8, also for Latin-1 source files. windows selects Windows drive/UNC\nsyntax independently of the host operating system. No user declarations execute and no cache\nfiles are written. Failure is reported through Failed.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-project.read"
     },
     {
