@@ -385,7 +385,12 @@ outside the cache that the last section lists.
   function, which names the units it uses as any code does. The rest is
   as above: MLton's S48, which compiled six units because four held only
   across `profile.fun` changed, compiles `profile.fun` alone, since an edit
-  of a body no longer changes its unit's identity.
+  of a body no longer changes its unit's identity. Since the build-system
+  roadmap's M2 `--verify-cache` compares such an entry: loaded with its names
+  remapped, its basis written again and its code read and written, against
+  the same made of the unit compiled, identities and what only a hash reads
+  left out (`src/driver/cachecheck.sml`, S91). The issue closes with that
+  roadmap's M4, step 2, when a basis written again is the same bytes.
 
 * **17. A functor's or a signature's usage was fingerprinted after the
   unit's own declarations.** Found by the functors-units roadmap (E5 and

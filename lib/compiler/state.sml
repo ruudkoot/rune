@@ -35,6 +35,11 @@ struct
         val _ = List.foldl check StringMap.empty (!roots)
       in baseline := SOME (capture true) end
 
+  fun blank i =
+    case !baseline of
+      SOME saved => List.nth (saved, i) ()
+    | NONE => raise Fail "compiler roots blanked before sealing"
+
   fun refRoot (name, cell, clone) =
     root (name, fn copying =>
       let val saved = if copying then clone (!cell) else !cell

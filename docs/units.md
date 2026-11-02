@@ -321,10 +321,17 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   unit; `--explain-rebuild` says of each unit whether it was taken from the
   cache or why it was compiled; `--verify-cache`, or `RUNE_VERIFY_CACHE`
   set and not empty (for the REPL's `use`, which takes no flags), compiles
-  each unit the cache has too, and fails where the cache's is not the same
-  bytes as what compiling it gives -- an entry whose usages hold by binder;
-  one that holds by fingerprint alone names the old unit it was compiled
-  against, and is compiled again rather than compared (issue 15); `RUNE_VERIFY_DUMP=DIR` writes the
+  each unit the cache has too, and fails where the cache's is not what
+  compiling it gives: the same bytes, for an entry whose usages hold by
+  binder. One that holds by fingerprint alone names the old unit it was
+  compiled against, so it is loaded with its names remapped, as a build
+  would load it, and its basis written again and its code read and written
+  are compared with the same made of the unit compiled, a unit's identity
+  left out and what only a hash reads (build-cache issue 15, which closes
+  when a basis written again is the same bytes). Its Mid is not compared.
+  One that does not load there is what a build would miss, and is compiled
+  and says so (`src/driver/cachecheck.sml`; the REPL's `use` compiles such an
+  entry again without comparing it); `RUNE_VERIFY_DUMP=DIR` writes the
   entry of each unit that does not verify, and what compiling it gave, to
   DIR (`NAME.cached.pickle`, `NAME.fresh.code`, ...) to compare. A unit's
   code lists the names it uses of other units in the order of their places
@@ -723,6 +730,23 @@ is parsed whole before it is elaborated. This is the rollback the REPL
 needs, a declaration at a time (Chapter 8 of the Definition).
 
 ## Checking it
+
+**What a hit claims.** A compile takes a configuration, a unit's text and the
+environment before it to code and exports; an entry is kept under a key of the
+first two, with usages that say what the compile read of the third. If every
+usage holds in another environment, compiling the unit there gives the entry's
+code and exports, up to a renaming of imports. The argument is one line, a
+compile that reads only that much cannot tell the two apart, and everything
+hard is in its premises: that the compile is a function of those inputs, and
+that the usages and fingerprints cover what it reads, which are two pieces of
+code with nothing but tests between them. `tests/incremental/model.sml` is a
+model of this, and not Rune's code: three units, six policies, every edit
+between 54 projects. Each policy that reads more than its key holds breaks
+S41 silently and looks like an improvement from the rebuilds alone; one that
+reads no more is sound whatever its key holds. `make test-incremental` holds
+its output to `tests/incremental/model.expected`, and
+[testing.md](testing.md), *The checks of the cache*, says how each premise
+is checked.
 
 `make check-units` (the oracle `units` of `tests/runner/oracles.sml`) compiles every program of
 `tests/lang` and `tests/perf` whole and with `--units` at `-O0`, `-O1` and
