@@ -10,9 +10,8 @@ For Linux isolation, use a private copy of the Rune project in a bubblewrap
 mount/user/PID/network/IPC namespace, read-only editor/runtime files and a
 private Xvfb display. Do not map the host home, Windows drives, WSL interop
 socket or desktop display. Keep test profiles and output in a dedicated
-writable directory. The 1.143.1 acceptance recipe and its mount policy are
-retained in `build/lsp-debug/acceptance`; see
-[the debugging record](../../../docs/plans/language-server-debug.md).
+writable directory. [The debugging record](../../../docs/plans/language-server-debug.md)
+tells how this came to be.
 
 ## Windows Sandbox
 
