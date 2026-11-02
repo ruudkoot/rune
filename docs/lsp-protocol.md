@@ -200,8 +200,8 @@ unknown method to it.
  "detail": "application: 12 units checked, 233 reused"}
 ```
 
-`severity` is `information` or `error`. It is sent when one of these changes, at
-most once in 250 ms, the latest state last.
+`severity` is `information` or `error`. The server looks every 250 ms and sends
+this when it differs from the last sent.
 
 `rune/context`, a notification, with `context`, for each open SML document:
 

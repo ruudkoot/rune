@@ -140,7 +140,9 @@ of that failed document revision and workspace generation return the same
 failure until an edit, dependency/configuration change, close/reopen or
 `Rune: Restart Language Server` permits another attempt.
 An unresolved build-context choice is a quiet server cancellation, rather
-than an infrastructure failure. Selecting a context invalidates foreground
+than an infrastructure failure. (The VS Code extension takes it as an empty
+report: `vscode-languageclient` 10.1.2 stops pulling a document after such a
+cancellation, so a later choice would show nothing.) Selecting a context invalidates foreground
 providers and their cached cancellation without an edit or restart. It does
 not invalidate unchanged closed-project inputs or other pending context prompts.
 
@@ -340,8 +342,9 @@ gives the messages.
 what it is doing and the context and units checked and reused, and after a
 check the same of the last one. A hover or other query does not count as busy,
 and nor does a workspace poll that its cache answers. Severity is an error from
-a worker's failure until a check in that worker succeeds. At most one message
-goes each 250 ms, and nothing while nothing changes. `rune/context` goes when a
+a worker's failure until a check in that worker succeeds. The server looks
+every 250 ms and sends what changed, so work shorter than that may not show.
+`rune/context` goes when a
 file's context changes: the one it is checked in, or that it has none or is
 waiting for a choice, and those it could have. `rune/setContext` takes the path
 a prompt's answer takes, for a context the last `rune/context` of that file

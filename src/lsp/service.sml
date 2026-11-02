@@ -278,8 +278,9 @@ struct
      last checked, and whether a worker was lost or a check failed since a check
      last succeeded. A sweep shows once it has planned, so that a poll answered
      from its cache does not; queries never do, and a query's own failure, such as
-     a response over its budget, is that query's. At most one message for each
-     statusInterval. *)
+     a response over its budget, is that query's. It looks once in each
+     statusInterval, since a worker's progress wakes the loop far more often, and
+     sends what changed. *)
   fun taskLane (service,task)=case task of Discover {uri,...} => lane (service,"",uri) | Check {uri,...} => lane (service,"",uri)
     | Build {uri,...} => lane (service,"",uri) | Query (request:request) => lane (service,#method request,#uri request)
     | Workspace (request:request) => lane (service,#method request,#uri request)
@@ -319,8 +320,9 @@ struct
     let val now=Time.now ()
     in if Time.< (now,Time.+ (!statusAt,statusInterval)) then () else
       let val status=currentStatus service
+          val ()=statusAt:=now
       in if !statusSent=SOME status then () else
-        (statusSent:=SOME status;statusAt:=now;
+        (statusSent:=SOME status;
          send (R.Notification {method="rune/status",params=SOME (Json.Object [("busy",Json.Bool (#busy status)),
            ("severity",Json.String (if #failed status then "error" else "information")),
            ("text",Json.String (#text status)),("detail",Json.String (#detail status))])})) end end
