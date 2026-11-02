@@ -254,6 +254,16 @@ struct
               val ()=check ("a file given twice has a rank, however it is spelt",
                 A.unitAt (snapshot,{ordinal=0})=SOME "hidden.sml" andalso A.unitAt (snapshot,{ordinal=1})=SOME "hidden.sml#2")
               val ()=A.close twice
+              (* Windows syntax, whatever the host: from the root, with ../
+                 beside it, and whole on another drive, which nothing reaches *)
+              val drives=C.Project.read (parent,{file="C:/project/root.build",workspace=NONE,variables=[("DEP","D:/dep")],
+                overlays=[{file="C:/project/root.build",text="files sub/b.sml $(DEP)/a.sml ../up.sml end\n"}],windows=true})
+              val windows=A.create (parent,{context="windows"})
+              val snapshot=A.check (windows,{project=SOME drives,cancelled=fn () => false,
+                inputs=List.map (fn source:C.Project.source => input (#file source,"val x=1\n","1")) (C.Project.sources drives)})
+              val ()=check ("a unit's name on Windows",List.map (fn ordinal => A.unitAt (snapshot,{ordinal=ordinal})) [0,1,2]=
+                [SOME "sub/b.sml",SOME "D:/dep/a.sml",SOME "../up.sml"])
+              val ()=A.close windows
               val ()=check ("project scopes are shared with the compiler",null (A.diagnostics valid)
                 andalso A.project valid=SOME (C.Project.fingerprint project) andalso same (valid,cached)
                 andalso #checked (A.work cached)=0 andalso not (null (A.diagnostics rejected)))
