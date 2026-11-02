@@ -45,6 +45,23 @@ struct
           ("position",object [("line",Json.int 0),("character",Json.int 4)])])
         val hover=C.result (C.response (client,4))
     in check ("hover uses checked snapshot",C.field (C.field (hover,"contents"),"value")=Json.String "int") end)
+  (* E20: one declaration of 4,000 functions aborted the worker, uncatchably. *)
+  fun largeDeclaration () = fixtureWith (object [("textDocument",object [("publishDiagnostics",object [("versionSupport",Json.Bool true)])])]) (fn client =>
+    let val uri="untitled:large-declaration"
+        fun function i="  fun f" ^ Int.toString i ^ " (x : int) : int =\n    let\n      val a = x * 3 + " ^ Int.toString i ^
+          "\n      val b = List.foldl (fn (y, acc) => y + acc) a [a, x, " ^ Int.toString (i mod 100) ^
+          "]\n    in\n      if b > 100 then b mod 7 else b + " ^ (if i=0 then "1" else "f" ^ Int.toString (i-1) ^ " a") ^ "\n    end\n"
+        val ()=openDocument (client,uri,"structure Big =\nstruct\n" ^ String.concat (List.tabulate (4000,function)) ^ "end\n")
+        fun published version=C.field (C.receiveWithin (client,fn value =>
+          Json.member ("method",value)=SOME (Json.String "textDocument/publishDiagnostics") andalso
+          Json.member ("version",C.field (value,"params"))=SOME (Json.int version),Time.fromSeconds 90),"params")
+        val ()=check ("a large declaration checks",C.field (published 1,"diagnostics")=Json.Array [])
+        val line=2+7*2000+2
+        fun place character=object [("line",Json.int line),("character",Json.int character)]
+        val start=size "      val a = x * 3 + "
+        val ()=C.notify (client,"textDocument/didChange",object [("textDocument",object [("uri",Json.String uri),("version",Json.int 2)]),
+          ("contentChanges",Json.Array [object [("range",object [("start",place start),("end",place (start+4))]),("text",Json.String "true")]])])
+    in check ("an edit inside it checks",case C.field (published 2,"diagnostics") of Json.Array (_::_) => true | _ => false) end)
   fun cancellation () = fixture (fn client =>
     let val uri="untitled:cancel-protocol"
         val text=String.concat (List.tabulate (10000,fn i => "val x" ^ Int.toString i ^ "=" ^ Int.toString i ^ "\n"))
@@ -1316,6 +1333,7 @@ end
 structure RuneLspSemanticProtocolTestMain=Main (struct
   val name="lsp-semantic-protocol"
   val tests=Test.describe "lsp-semantic-protocol" [Test.it "diagnostics-and-hover" (fn () => RuneLspSemanticProtocolTests.diagnostics ()),
+    Test.it "large-declaration" RuneLspSemanticProtocolTests.largeDeclaration,
     Test.it "cancellation" RuneLspSemanticProtocolTests.cancellation,
     Test.it "pull-refresh" RuneLspSemanticProtocolTests.pullRefresh,
     Test.it "progress-cancellation" RuneLspSemanticProtocolTests.progressCancellation,
