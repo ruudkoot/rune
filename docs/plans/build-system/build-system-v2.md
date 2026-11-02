@@ -13,7 +13,7 @@ This roadmap plans seven things:
 - **The fixes found, and independent checks of the cache** (track F): a statement of what a cache hit must satisfy, and checks that hold the compiler to it.
 - **A unit model** (track U): logical names, and an interface in layers, so that the compiler and the editor can share one.
 - **One store, and a warm path** (track C): `.rune` and `lib/cache` as layers of one thing. A no-op falls below 5% of today.
-- **Libraries as abstract packages** (track L): declared imports, boundaries with their holes closed, clash errors and renaming, friends for tests and the compiler's drivers, Basis views, MANIFEST gone, 76 of 88 build files migrated by a tool and 12 by decision, with no flag day.
+- **Libraries as abstract packages** (track L): declared imports, boundaries with their holes closed, clash errors and renaming, friends for tests and the compiler's drivers, Basis views, MANIFEST gone, 21 of 88 build files migrated by a tool and 12 by decision, with no flag day. The win32 work's 27 stay as they are, and are migrated after that work lands (D15).
 - **A separately compilable restriction, and functor signatures** (track S): three classes of unit, as a warning, which Rune, MLton and HOL4's library code all fit; and a client compiled against a functor's signature alone, with virtual libraries, by the owner's decision (D22).
 - **An editor at scale** (track A): an edit that costs its own unit's elaboration and little else, cold in about a second from a store on ordinary code to 200k lines (11-12 s on MLton until signatures are shared), and a question about the build only where contexts really differ. The evidence stops at 1.17M lines, and M20 runs only planning at 10M.
 - **Rune 2's plan,** in [`docs/plans/rune2/separate-compilation.md`](../rune2/separate-compilation.md): what changes once Rune no longer aims to be SML '97.
@@ -48,7 +48,7 @@ What it rests on:
 
 ## Status
 
-Decided, and not started. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). Nothing is implemented.
+Decided, and not started. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). The win32 work is out of this roadmap, and is migrated later (D15). Nothing is implemented.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
@@ -189,6 +189,7 @@ The owner's brief, as written. It is `docs/plans/build-system/build-system-v2.md
 **The decisions (2026-11-02):** "i take all decisions as recommended with one exception (D22) and one expanded request (D26)".
 - **D22:** "we do now not later - the first client is an example program under examples/virtual".
 - **D26:** "please also use LanguageStatusItem in the vs code extension for the lsp to add two items to the { } menu: one to show the progress of the lsp and a second to show the context a file is checked in and allow users to rechoose the context for the few files that have multiple contexts (the current popup only shows once)".
+- **The win32 work:** "another agent is still woring on win32-desktop so we cannot touch it as part of this roadmap (has to be done later)" (D15).
 - **rhc:** the recommendations taken include those made the same day for the Haskell 98 roadmap: a clause on each of D5, D6, D8, D14, D24 and D25, imports by name out of M3, and rhc's `mid.build` as a view (*Relation to the other plans*).
 
 | The brief asks | Answered in |
@@ -265,7 +266,7 @@ Held to the code, as the other roadmaps' briefs were. The brief is a list of ide
 - **H4. A boundary added on master merges cleanly into a branch and hides what the branch added** (E28). D15.
 - **H5. Lazy load fills stamp-keyed tables on demand, so a missed read is silently wrong code.** E15 found one: the text of another unit. D2 and D20 keep the mask and per-unit verification in `make check` for this reason.
 - **H6. An error for the restriction would refuse correct programs.** See C2.
-- **H7. Migrating a live repository.** 34 refs are ahead of master. D15's recipe costs one rebase each, shown on `win32-desktop`.
+- **H7. Migrating a live repository.** 34 refs are ahead of master. D15's recipe costs one rebase each, shown on `win32-desktop` in E28. This roadmap runs it on no win32 branch: that work is left alone, and migrated after it lands (D15).
 
 ### Where this roadmap recommends otherwise than the brief
 
@@ -4602,7 +4603,7 @@ The recipe is: rebase, take the branch's text on any `.build` conflict, run the 
 
 **Libraries are of Rune's own making.** Generic code goes into `lib/`, well tested (the owner's rule of 2026-10-10). A library's documentation stays complete (`AGENTS.md`), and `make check-docs` keeps every library's signatures documented through the migration.
 
-**Live branches.** 34 refs are ahead of master, about 25 worktrees of win32 among them. No milestone asks more of a branch than one rebase and a mechanical step, shown on `win32-desktop` (D15).
+**Live branches.** 34 refs are ahead of master, about 25 worktrees of win32 among them. No milestone touches a win32 branch, or migrates a `.build` file that one changes (D15). When that work has landed it pays one rebase and a mechanical step, as E28 showed on `win32-desktop`.
 
 ## The architecture
 
@@ -4642,7 +4643,7 @@ The one language has few constructs: paths in written order, `implements`, `anno
 
 ### Libraries (D7-D12)
 
-A library is a directory with a `library.build`, whose header says what it exports, what it requires, who its friends are and which views it offers. The deepest `library.build` owns a file. A library is elaborated from its declared imports alone, in a basis empty but for the Basis.
+A library is a directory with a `library.build`, whose header says what it exports, what it requires, who its friends are and which views it offers. A library with no header keeps today's meaning until D15's window closes. The deepest `library.build` owns a file. A library is elaborated from its declared imports alone, in a basis empty but for the Basis.
 
 `requires` says what may be named, and is not transitive. What links is the closure of what a program names, from `Deps`' uses, never its tokens. A boundary is a filter with a hash of its own, so a client's key holds what it could see. The claim rule, in the compiler, makes a public structure's signature public. Fixity crosses a boundary. Two imports of one name in one scope are an error, and a rename at import resolves it; identity carries the library, so private names never clash.
 
@@ -4893,7 +4894,7 @@ Brief, line 6: "the build language should have one way of doing things".
 
 - **A. Global and flat, as today.** `libraries` is transitive and not positional. 12 edges are used but only reached transitively (E1).
 - **B. Declared, not transitive, and available is not loaded.** **Recommended.**
-  - **Declared:** the migration is 7 additions, 1 removal and 7 program edges (E28). Nothing in the repo uses a name outside its declared closure (E1).
+  - **Declared:** the migration is 7 additions, 1 removal and 7 program edges (E28), of which 4 additions and 4 program edges are the win32 work's and wait (D15). Nothing in the repo uses a name outside its declared closure (E1).
   - **Available is not loaded:** `libraries` says what may be named; the closure of what is named is what links. Every small program depends on this: hello is 2 files by mention, 278 with `--basis all`, 295M to 3,551M instructions (E3).
   - **Selection reads Deps' uses, not tokens.** Today alpha-renaming a bound variable changes a program's output, `fn F => F + 1` against `fn E => E + 1`, and an unused record label takes a compile from 2 files to 68 (E3; the lead reproduced it). Selecting from uses is about 15 lines, closes that, and regressed nothing on 146 programs and 623 language files, none of them HOL4 or MLton, so M1 keeps tokens for a file `Fixity.initial` cannot parse. This belongs in the first milestone.
   - **Initialisers** run once, in dependency order. A unit with a top-level effect in a library comes with the library's selection only through its names, as today. Only the Basis has file-level values or exceptions (E1); initialisers inside a structure's body are common (`CompilerState`'s roots in `lib/compiler`) and come with a unit's selection the same way.
@@ -4937,7 +4938,7 @@ Only three names really clash, of 15 public in two or more libraries; the rest a
 - **B. A library is a directory.** **Recommended.**
   - A directory with a `library.build` is one library. The deepest wins, and a parent never owns a nested one, so `lib/test/property/basis` stands and `lib/test` keeps its grouping. Nesting is a name, as today.
   - `lib` holds libraries, reached through their interface; `src` holds programs. Private by default is a declared property of a library, and the path supplies only the default (Bazel's advice).
-  - Reaching in is a warning first (M1): 12 hand-written builds, of which 4 are tests, 5 are drivers and tools on `lib/compiler`'s internals (`rune`, `runedoc`, `tools/compiler/state-audit`, `tools/lsp/bench`, `tools/lsp/syntax-bench`) and 3 have partial lists (`runeffi`, `runeisa`, `runeopt`). Friends answer the first two groups (D11), named views the third (D8). M13 moves them, and it becomes an error afterwards (M14), which needs a window (D15). A `.sml` under a `library.build` may be named by that library and its friends.
+  - Reaching in is a warning first (M1): 12 hand-written builds, of which 4 are tests, 5 are drivers and tools on `lib/compiler`'s internals (`rune`, `runedoc`, `tools/compiler/state-audit`, `tools/lsp/bench`, `tools/lsp/syntax-bench`) and 3 have partial lists (`runeffi`, `runeisa`, `runeopt`). Friends answer the first two groups (D11), named views the third (D8). M13 moves them, and it becomes an error afterwards (M14) for a library with a header. D15's window holds the rest. A `.sml` under a `library.build` may be named by that library and its friends.
   - runedoc reads exports, not `Rune*` prefixes, so a library's header says which docs to generate: the help the brief's line 9 hoped for. On migrated libraries it gives 0 claim errors over 27 (E28).
 - **C. Enforce by path alone,** Go's `internal/`. One sentence of rule, but it cannot express a test elsewhere.
 
@@ -4993,7 +4994,7 @@ Either way the identity hashes the **closure**, excluding the two generated file
 
 ### D15. Migration
 
-**Decided: A** (2026-11-02), as recommended.
+**Decided: A** (2026-11-02), as recommended, with the win32 work left out below.
 
 `win32-desktop` alone changes 24 build files, among 34 refs ahead of master.
 
@@ -5004,6 +5005,17 @@ Either way the identity hashes the **closure**, excluding the two generated file
   - **Enforcement rules are the only thing that needs a window.**
 - **B. A flag day.** No reason to pay for it.
 - **C. Versioned `.build` files** (`(lang dune x)`, `cabal-version`). Unnecessary for this migration, since the target is today's grammar, less what is dropped. A version line costs little and may earn its place for a package manager; it can wait for one.
+
+**The win32 work is left out** (the owner, 2026-11-02: "another agent is still woring on win32-desktop so we cannot touch it as part of this roadmap (has to be done later)"). The win32 work means `win32-desktop` and its 18 working branches. No milestone rebases, edits or merges one of them, or migrates a `.build` file that one changes.
+- **What stays as it is:** 27 of E28's 88 files.
+  - 8 boundaries: `ffi/model`, `ffi/win32/common`, `ffi/win32/mock`, `ffi/win32/model`, `ffi/win32/native`, `ffi/win32/sdldriver`, `sdl` and `unicode`. Their 4 declared additions go with them.
+  - 4 program edges: `ffi/win32/{mock,native,sdl}.build` and `tests/ffi/win32/native/contract.build`.
+  - All 15 generated files, so no set is rehashed.
+  - A win32 branch changes 12 of these today: all of those `library.build` files but `ffi/win32/mock`'s, and the 5 generated `current.build`. `win32-desktop` itself changes 7. M13 recomputes the set when it starts, since that work goes on.
+- **What a branch pays for this:** nothing. On a master that leaves these alone, `win32-desktop`'s rebase is E28's control, 2 conflicts and no `.build`, where a migrated master adds up to 6. And the trap above cannot spring, since these libraries gain no boundary.
+- **A library with no header keeps today's meaning:** everything public, `libraries` transitive, with a warning. Every enforcement rule needs a header, so this is the window: no list and no flag, and a file shows by its own form whether it has migrated.
+- **What waits:** `runeffi`'s 2 of 17 files of `lib/unicode` stay a reach-in with a warning, since a view needs a header.
+- **The window closes** with that migration, in *Later*, by the recipe above. Then the old form is refused.
 
 ### D16. Generated sources and per-file preprocessors
 
@@ -5129,7 +5141,7 @@ The cache needs no schema hash: `Config.identity` is in its config, so UnitCache
 - **A client's code.** An application is a call over functors-units' nested records, with no expansion, so nothing of the body reaches a client. That is a firewall at a seam the program chose. D18's answer for libraries stands.
 - **The ABI fingerprint** lives in M4's ABI layer. It holds the parameter's and result's signatures, record shape and slot order, the descriptors a caller works out for its argument's datatypes, a version tag and the calling convention (E10). The brief wants it stable on the five hosts, and `Pickle.hash` differs on `smlnj32` today, so M21 must fix that or compute it another way.
 - **The first client** is an example program, `examples/virtual/table`, beside `bigint`, the structures' example. A table functor, `functor Table = _virtual (K : KEY) : TABLE where type key = K.t`, on an association list and on a balanced tree, one build each, applied to two kinds of key. The client compiles against the signature alone, the second build through the first one's cache compiles the implementation alone, and a `_dynamic` variant takes an implementation as a plugin. It tests what `bigint` cannot: two applications give two generative types, and a result type is tied to the parameter.
-- **Virtual libraries (M22).** One library declares a virtual module and another implements it, in their headers, with one implementation per program and no new public modules, as dune's. `ffi/win32`'s `native`, `sdl` and `mock` are the real case: one virtual `Win32`, three implementations, `use`d as sub-builds today.
+- **Virtual libraries (M22).** One library declares a virtual module and another implements it, in their headers, with one implementation per program and no new public modules, as dune's. `ffi/win32`'s `native`, `sdl` and `mock` are the real case: one virtual `Win32`, three implementations, `use`d as sub-builds today. They move with the win32 work's migration, in *Later*, not in M22.
 
 `where type` between virtual modules stays unbuilt: M21's client does not need it.
 
@@ -5378,8 +5390,8 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 ### M8. The library model (L; M, about 600)
 
-* **What:** D7, D8 and D11. `requires` declared and not transitive, a library elaborated in a basis empty but for the Basis, a warning on a clash (M10 makes it an error, with renaming), fixity across a boundary, a boundary in the header, a hash per filter, named views, `friends` in the header.
-* **Done when:** the 7 additions, 1 removal and 7 program edges are in; a library's name used undeclared is an error; E3's holes have tests.
+* **What:** D7, D8 and D11. `requires` declared and not transitive, a library elaborated in a basis empty but for the Basis, a warning on a clash (M10 makes it an error, with renaming), fixity across a boundary, a boundary in the header, a hash per filter, named views, `friends` in the header. A library with no header keeps today's meaning, with a warning (D15).
+* **Done when:** the 3 additions, 1 removal and 3 program edges outside the win32 work are in; in a library with a header, a library's name used undeclared is an error; a library with no header builds as it does today; E3's holes have tests.
 * **Touches:** `lib/compiler/driver/{basismanifest,context,libraryscope,buildfile}.sml`, `src/driver/main.sml`, `docs/build.md`.
 
 ### M9. One planner, and the plan (L; M, about 700; after M8)
@@ -5409,21 +5421,21 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 ### M13. Migration (L; M, mechanical; after M8-M12)
 
-* **What:** D15. The migrator and `rehash` ship, and run: declared dependencies, boundaries on the 26 libraries that lack one, with the claim rule (D8), the root builds through `libraries`, with the recipe in `docs/build.md`. The sub-build uses from outside `lib/compiler` become friends or a declared view.
-* **Done when:** 159 of 159 programs byte-equal, or their successors; `win32-desktop` has rebased by the recipe.
-* **Touches:** the 88 build files; 5 generated sets rehashed; `lib/compiler/driver/`, for the claim rule; `tools/`.
+* **What:** D15. The migrator and `rehash` ship. They run on everything but the win32 work, whose set is recomputed first: declared dependencies, boundaries on 18 of the 26 libraries that lack one, with the claim rule (D8), the root builds through `libraries`, with the recipe in `docs/build.md`. A boundary keeps what master's clients use and what the win32 work's use, read from a copy of its commit and never its worktree, so that none hides a name that work needs. The sub-build uses from outside `lib/compiler` become friends or a declared view.
+* **Done when:** 159 of 159 programs byte-equal, or their successors; no `.build` file of the win32 work has changed, and no win32 branch.
+* **Touches:** the 33 build files outside the win32 work, 21 by tool and 12 by decision; `lib/compiler/driver/`, for the claim rule; `tools/`.
 
 ### M14. Reaching in, runedoc (L; M, about 500; after M13)
 
-* **What:** D10. Reaching in becomes an error, after the window. runedoc reads exports.
+* **What:** D10. Reaching into a library with a header becomes an error. Into a library with no header it stays a warning until D15's window closes, which leaves `runeffi`'s 2 files of `lib/unicode`. runedoc reads exports, and keeps today's path for a library with no header.
 * **Done when:** the 4 test builds and the drivers D11 names are friends; a non-friend is refused; rhc's `mid.build`, if it has landed, is a named view of `lib/compiler` (D8); `make docs` passes on every library.
 * **Touches:** `lib/compiler/driver/`, `src/doc/`, `tests/compiler/*.build`, `tests/lsp/syntax-tests.build`, `docs/doc-comments.md`.
 
 ### M15. Generated sources and preprocessors (L; M, about 400; after M9)
 
-* **What:** D16. Declared steps before planning, `build/config.sml` as the first, a per-file preprocessor class, `runeffi`'s rehash mode, and a Win32 generate driver that accepts or removes an old set.
+* **What:** D16. Declared steps before planning, `build/config.sml` as the first, a per-file preprocessor class, and `runeffi`'s rehash mode.
 * **Done when:** HOL4's `src/boss` closure builds from its unfiltered sources with a declared filter; `build/config.sml` is in the plan.
-* **Touches:** `lib/compiler/driver/{buildfile,project}.sml`, `src/driver/main.sml`, `src/ffi/`, `tests/ffi/win32/`.
+* **Touches:** `lib/compiler/driver/{buildfile,project}.sml`, `src/driver/main.sml`, `src/ffi/`.
 
 ### M16. The restriction (S; M, about 500; after M8)
 
@@ -5477,7 +5489,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 * **What:** D22's second half. A library's header declares a virtual module, structure or functor, and an implementing library's header names it. One implementation per program; no new public modules. The plan carries it.
 * **Why here:** it needs M8's headers, M9's plan and M21's functors.
-* **Done when:** `examples/virtual/table` also builds from libraries, its client's units compiled once across both implementations; two implementations in one program are refused; `ffi/win32`'s three fit the form, shown on a copy until `win32-desktop` has merged.
+* **Done when:** `examples/virtual/table` also builds from libraries, its client's units compiled once across both implementations; two implementations in one program are refused; `ffi/win32`'s three fit the form, shown on a private copy of master's, with nothing under `ffi/win32` changed.
 * **Touches:** `lib/compiler/driver/{buildfile,project,basismanifest}.sml`, `src/driver/main.sml`, `examples/virtual/`, `docs/build.md`.
 
 ### M23. Retire (S)
@@ -5494,6 +5506,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 - **A global index of analysis results,** which the brief defers. A name-to-file index is not this: it is M19's.
 - **A package manager,** on D3's version and D4's workspace.
+- **The win32 work's migration,** once that work has landed (D15), by D15's recipe. Its 8 boundaries, 4 additions and 4 program edges; the 5 generated sets rehashed; `runeffi`'s view of `lib/unicode`; the Win32 generate driver accepting or removing an old set (Appendix D); `ffi/win32`'s three as a virtual library (M22). Then the old form is refused, which closes the window.
 - **Imports in code by logical name, not number:** a step E16 did not run, out of M3 since 2026-11-02. It changes `Link.key`, `remapKeys` and `.rbu`, and rhc's link numbers, hashed by name with collisions unchecked, stand on today's form, so it is decided with rhc in view. No target here rests on it: remapping already takes a shifted number.
 - **Higher-order modules** (D23), and memoised functor applications.
 - **The term layer,** behind Gate G2.
@@ -5570,7 +5583,8 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 | The compiler's identity misses a source | M11, M13 | M11 precedes M13; `identity.sh` over the closure; the version constants are a last defence |
 | An empty install from a green build | M12 | M1's guard; the order in Appendix E |
 | A boundary hides what a live branch added | M13 | The index warns; the migrator recomputes; the recipe |
-| Migration collides with the win32 work | M13 | One rebase and a mechanical step, shown on `win32-desktop`; M13 can wait for a quiet moment, since nothing else needs it |
+| Migration collides with the win32 work | M13 | No win32 branch is touched, and no `.build` file one changes is migrated; the set is recomputed when M13 starts (D15) |
+| Shared tooling moves under the win32 work | M9, M12, M14 | `tools/generate/`, `tools/builder/`, `scripts/install.sh`, `src/doc/docsite.sml`, `tests/runner/` and the Makefile are also changed on those branches: ordinary conflicts at that work's next rebase, none in `lib/compiler`, `src/driver` or `src/lsp` |
 | Stored plans go stale | M11 | Hash lines on a host; `print | cmp` in `make check` |
 | The canonical writer of the static layer changes bytes for the Basis | M4 | The frozen layer is rebuilt; S41, S42 and the bootstrap's budgets |
 | The warning of M16 is ignored | M16 | `strict` per library, on Rune's own from the start |
@@ -5606,8 +5620,8 @@ Instruction counts at tier 2 are the claims: `perf stat -e instructions:u` and `
 | A no-op against cold, at 1M lines | 39-40% | under 5% | E21 |
 | A cold build at 10M lines | about 50 minutes and 48 GB, extrapolated | not answered (*Later*) | E21 |
 | Stale files in the tree that generate work | 33 MANIFESTs | 0 | E2 |
-| Reach-in builds | 12 | 0, an error | E1 |
-| Libraries with a boundary | 1 | all but the Basis | E1 |
+| Reach-in builds | 12 | 0, an error, but for `runeffi` into `lib/unicode`, a warning until D15's window closes | E1, D15 |
+| Libraries with a boundary | 1 | all but the Basis and the win32 work's 8, until its migration | E1, D15 |
 | `make dist`'s first `--units` compile | builds the Basis | builds nothing | *`.rune` and `lib/cache`, explained*, D24 |
 | Hello's compile | 296M | no more | E2 |
 | Prompts in this repo | 210 | 4 or fewer | E22 |
