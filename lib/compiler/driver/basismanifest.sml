@@ -134,8 +134,8 @@ struct
      unit to it, and those that read what its file keeps for that, the units'
      identities *)
   val loading = ["load", "link", "linkedUnits", "linkedUnitSources"]
-  val runtimeFile = "lib/basis/runtime.sml"
-  val dynamicFile = "lib/basis/dynamic.sml"
+  val runtimeFile = "basis:runtime.sml"
+  val dynamicFile = "basis:dynamic.sml"
   (* those members, as the functions of Runtime's file are named *)
   val loadingFunctions = List.map (fn n => "RuneRuntime." ^ n) loading
 
@@ -215,13 +215,26 @@ struct
      a line
        # library: NAME ...
      and are loaded before it. A NAME is a directory under the directory of
-     the libraries (--lib), test/property for LIBDIR/test/property, unless it
+     the libraries (--lib), test/property for LIBDIR/test/property, or where
+     that has none, under one of those a workspace names (roots), unless it
      is an absolute host path or begins with ., when it is a path. *)
 
   fun isLibraryPath name = OS.Path.isAbsolute name orelse String.isPrefix "." name
 
+  (* the directories of libraries the workspace names (Workspace), in order *)
+  val roots : string list ref = ref []
+  val () = CompilerState.cellRoot ("BasisManifest.roots", roots)
+
   fun libraryDir (libDir : string, name : string) : string =
-    if isLibraryPath name then name else libDir ^ "/" ^ name
+    if isLibraryPath name then name
+    else
+      let
+        val first = libDir ^ "/" ^ name
+        fun holds dir = OS.FileSys.access (dir ^ "/MANIFEST", []) handle OS.SysErr _ => false
+      in
+        if List.null (!roots) orelse holds first then first
+        else getOpt (List.find holds (List.map (fn root => root ^ "/" ^ name) (!roots)), first)
+      end
 
   (* The words of a MANIFEST's header lines that begin with key: the
      comments --basis-index writes before the first file's line, which is

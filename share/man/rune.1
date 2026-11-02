@@ -598,6 +598,11 @@ rune \-\-lib ~/rune/lib hello.sml
 .TP
 .I <libdir>/basis/MANIFEST
 The ordered list of basis library sources compiled before the inputs.
+.TP
+.I rune.workspace
+The root of a workspace, the nearest above a build file: the directories its
+libraries are found under, and its named targets. A build's units are named
+from it.
 .SH SEE ALSO
 .BR runevm (1),
 .BR runevm\-stack (1)

@@ -32,6 +32,16 @@ struct
      the files' encoding (docs/plans/utf8.md, D1) *)
   val mode : Source.mode ref = ref Source.Ascii
   fun typedMode () : Source.mode = case !mode of Source.Ascii => Source.Ascii | Source.Unicode _ => Source.Unicode Source.Utf8
+  (* What a file a session uses is named by, its unit's stem (docs/units.md,
+     Names): its path from where the session began, however it was spelt, so
+     that two files never have one name in a session. *)
+  val began : string option ref = ref NONE
+  fun stem (file : string) : string =
+    let
+      val windows = Workspace.onWindows ()
+      val here = Workspace.here ()
+      val root = case !began of SOME root => root | NONE => (began := SOME here; here)
+    in Workspace.relative windows (Workspace.keyOf (windows, root) root, Workspace.keyOf (windows, here) file) end
   (* the mode the source named file was read in, where it was registered
      (the REPL's parse); else the files' *)
   fun modeOf (file : string) : Source.mode =

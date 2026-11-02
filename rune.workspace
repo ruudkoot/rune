@@ -1,0 +1,9 @@
+(* The root of this workspace (docs/build.md, The workspace): where its
+   libraries are found, and the targets an editor offers. *)
+roots lib end
+target rune = rune.build end
+target runedoc = runedoc.build end
+target runeffi = runeffi.build end
+target runeisa = runeisa.build end
+target runelsp = runelsp.build end
+target runeopt = runeopt.build end

@@ -7,8 +7,8 @@
 
    The configuration is the compiler's identity (Config.identity, a hash of
    its sources), the versions of the files, the instruction set, and every
-   option that changes what it makes. A unit is keyed by its name, the hash
-   of its source, whether it may use _prim, and the settings that hold for
+   option that changes what it makes. A unit is keyed by its logical name
+   (Workspace), the hash of its source, whether it may use _prim, and the settings that hold for
    the input files and not the libraries (--default-type, --or-patterns),
    where it is an input file's; under the key are its
    entries, one for each set of *usages* it was compiled with: every name

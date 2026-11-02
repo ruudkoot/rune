@@ -64,8 +64,8 @@ file that names it, as any other path is.
 
 ## Units and bases
 
-Every file is a unit. A build file elaborates to the list of its units in
-order, each with the basis it is compiled in, which is what `rune --build`
+Every file is a unit, and a file given twice is two ([units.md](units.md),
+*Names*). A build file elaborates to the list of its units in order, each with the basis it is compiled in, which is what `rune --build`
 compiles: the cache serves each unit whose usages hold, in that basis
 (docs/units.md, The cache), and `--whole` makes one program of them all
 (M7).
@@ -97,6 +97,46 @@ makes them from the `files ... end` blocks of the build files, through
   and nothing more. Inside the same boundary, it adds all of it. (A first
   `use` of a build file under another library's boundary is another matter:
   that reaches in, below.)
+
+## The workspace
+
+A workspace is the directory of a root file, `rune.workspace`, the nearest
+above the build file (or above the first file given, for what it says of
+libraries). It says two things:
+
+```
+(* The root file of this tree. *)
+roots lib vendor end
+target rune = rune.build end
+target tools = tools/tools.build "--target=stack" end
+```
+
+```
+workspace ::= item ...
+item      ::= "roots" path ... "end"             directories libraries are found under
+            | "target" name "=" path string ... "end"
+                                                 a named target: a build and its options
+```
+
+The words and comments are a build file's. Paths are relative to the root
+file, and one that is absolute or holds a variable is refused: a root file
+says nothing of a machine. An unknown word, a list that does not end, a target
+with no build file and two targets of one name are refused too.
+
+* **Roots.** `libraries NAME` and `--library NAME` find a library under
+  `--lib`, then under each root, in order. (A library that `--lib` has is
+  taken from there.)
+* **Names.** A build's units are named from the root, so one file has one
+  name in every build of the workspace, however each spells it; without a
+  root file, from the build file's directory ([units.md](units.md), *Names*).
+* **Targets.** An editor offers them ([language-server.md](language-server.md),
+  *Workspaces and build contexts*). A target's options are those of a
+  compiler session: `--target=`, `--unicode`, `--library NAME` and the rest
+  of `RuneCompiler.session`.
+
+Nothing else is in the compiler's identity for it: one compiler has one
+`Config.identity` in every workspace, and a root file is no input of a unit
+but through the names it gives.
 
 ## Annotations
 

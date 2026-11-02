@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S90. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S97. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -32,12 +32,13 @@ what it does, and says so:
   to be inlined holds by its function's Mid too, `inl F`); an overloading
   holds by its binder alone, so S28o compiles every unit that resolved the
   overloading;
-* a unit is known by its name, which is in its identity: two files of the
-  same text and different names are two units (S7 is run as one project
-  in two directories), a file renamed is another unit, and the units that
-  used it compile again (S21 compiles `c2.sml` and `d.sml`), and a source
-  reached through a link to it is named by the link (S22 is run as a link
-  to the project's directory).
+* a unit is known by its logical name (`docs/units.md`, *Names*), which is
+  in its identity: two files of the same text and different names are two
+  units (S7 is run as one project in two directories, which has one name for
+  each of its files, being named from the directory of the first), a file
+  renamed is another unit, and the units that used it compile again (S21
+  compiles `c2.sml` and `d.sml`), and a source reached through a link to it
+  is named by the link (S22 is run as a link to the project's directory).
 
 Not run: S27 wants a second build of the compiler to other bytes, and S37
 a disk that fills, which a user cannot make here (`ulimit -f` would stop
@@ -150,6 +151,31 @@ exactly the units X and nothing else.
   the positions an object carries are patched at link, or relative.
 * **S30, debug and release.** Two configurations in one `.rune/`; neither
   evicts the other.
+
+* **S91, a file given twice.** `a.sml keep.sml a.sml main.sml`, where
+  `a.sml` makes a `ref`: two units, by a rank, each with its own globals, so
+  it prints `0 10` in units as it does whole (build-cache issue 22, in
+  batch), through the cache and from it, with `-j`, from a build file, and
+  `--units --whole` is the whole program's bytes.
+* **S92, spellings.** The project again as `./a.sml`, `sub/../c.sml`,
+  `.//d.sml`, then by whole paths: nothing is compiled, and the program names
+  each file as it was spelt. A `_dynamic` client of `./ty.sml` is the bytes of
+  one of `ty.sml` (the build-system roadmap's E10).
+* **S93, a library moved.** `old/foo` with a `library.build` moved to
+  `new/foo`: nothing is compiled, and the warning and the program name where
+  the file is now. Renamed to `new/bar`, it is another library.
+* **S94, two libraries of one name.** `x/util` and `y/util`, a file of one
+  path and one text in each: two units, by a rank, which print `0 10`; and a
+  client taken across an edit of the first is taken to the first, where the
+  second declares the same path to another value (E16's `remap`).
+* **S95, the root file.** A build in `tests/` that spells `../src/a.sml`
+  compiles its own file alone after the root's build that spells `src/a.sml`;
+  a root file nearer than the top is its own root; `roots` find a library;
+  each form of root file refused says so.
+* **S96, a file outside the root.** Reached by `../`, it is named by that path
+  from the root, so a tree that moves keeps its entries.
+* **S97, `use`.** `use "./a.sml"` after `use "a.sml"` in another session
+  writes no entry.
 
 ## Failure and concurrency
 
