@@ -71,8 +71,10 @@ struct
      identity worked out with what they are, not with the units' identities;
      19: the static layer, written whole before the ABI layer; 20: an
      environment with origins may be a reference, as one with none; 21: a
-     reference's stamps and flags as runs *)
-  val version = 21
+     reference's stamps and flags as runs; 22: a reference's unit by its place
+     among those the static layer refers to; the origins of a reference only
+     where they are not its structure's *)
+  val version = 22
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -1694,6 +1696,8 @@ struct
               importList : (int * int * int) list ref vector, (* per kind, newest first: the name, its unit's place, its number *)
               records : T.tycon IntTable.table,        (* type names of other units written, by stamp *)
               targets : (loaded * string) list ref,    (* signatures of other units referred to, newest first *)
+              sigUnits : int StringMap.map ref,        (* the units of those, by their place in the static layer *)
+              sigUnitList : string list ref,           (* the same, newest first *)
               tycons : int IntTable.table, ntycons : int ref,
               keys : (int list * string list * int) list IntTable.table,   (* each type's key, by what it is made of (intern) *)
               nkeys : int ref,
@@ -1747,6 +1751,17 @@ struct
     else (P.byte (w, 2); P.nat (w, importOf (e, k, v)))
 
   fun name (e : enc, k : int, v : int) : unit = nameTo (#w e, e, k, v)
+
+  (* a unit whose signature the static layer refers to, by its place among
+     those: the header's list of units is in the order both layers met them,
+     which a compile and an analysis meet otherwise *)
+  fun sigUnit (e : enc, identity : string) : int =
+    case StringMap.find (!(#sigUnits e), identity) of
+      SOME i => i
+    | NONE =>
+        let val i = StringMap.numItems (!(#sigUnits e))
+        in ignore (unitRef (e, identity)); #sigUnits e := StringMap.insert (!(#sigUnits e), identity, i);
+           #sigUnitList e := identity :: !(#sigUnitList e); i end
 
   fun tycon (e : enc, c : T.tycon) : unit =
     let val w = #w e
@@ -1985,7 +2000,7 @@ struct
                      (candidateAt (q, st))
 
   fun basisReference (e : enc, en : Env.env)
-      : (target * string * string list * int list * renaming) option =
+      : (target * string * string list * int list * renaming * Env.env) option =
     let
       fun check (tg, n, path, cl, c) =
         let
@@ -1993,7 +2008,7 @@ struct
                         Here => localOrder (cl, c)
                       | Earlier u => orderOf (#identity u ^ "\000" ^ n ^ "\000" ^ String.concatWith "." path, cl, c)
           val m = renaming (cl, c, en)
-        in if List.all (fn st => IntMap.member (#phi m, st)) order then SOME (tg, n, path, order, m) else NONE end
+        in if List.all (fn st => IntMap.member (#phi m, st)) order then SOME (tg, n, path, order, m, c) else NONE end
         handle NoMatch => NONE
     in
       case basisCandidate (e, en) of
@@ -2050,22 +2065,29 @@ struct
     (P.list (fn (_, (key, origin)) => (P.string (#side e, key); writeOrigin (e, origin))) (#side e, StringMap.listItemsi origins);
      List.app (fn (_, s) => originTree (e, s)) (StringMap.listItemsi strs))
 
+  (* whether two environments of one shape have the same origins throughout *)
+  fun sameOrigins (Env.Env {strs = s1, origins = o1, ...}, Env.Env {strs = s2, origins = o2, ...}) : bool =
+    StringMap.listItemsi o1 = StringMap.listItemsi o2
+    andalso ListPair.allEq (fn ((_, a), (_, b)) => sameOrigins (a, b)) (StringMap.listItemsi s1, StringMap.listItemsi s2)
+
   (* an environment: a byte, 0 and the environment whole, or 1 and a
      reference (above) *)
   fun env (e : enc, en as Env.Env {vals, tys, strs,origins}) : unit =
     let val w = #w e
     in
       case (if !refsOK then basisReference (e, en) else NONE) of
-        SOME (tg, n, path, order, {phi, stamps, globals, cStamps, cGlobals}) =>
+        SOME (tg, n, path, order, {phi, stamps, globals, cStamps, cGlobals}, c) =>
           (P.byte (w, 1);
            (case tg of
               Here => P.nat (w, 0)
-            | Earlier u => (P.nat (w, 1 + unitRef (e, #identity u)); #targets e := (u, n) :: !(#targets e)));
+            | Earlier u => (P.nat (w, 1 + sigUnit (e, #identity u)); #targets e := (u, n) :: !(#targets e)));
            P.string (w, n); P.list P.string (w, path);
            P.list (fn (_, st) => tyfcn (e, valOf (IntMap.find (phi, st)))) (w, order);
            if stamps = cStamps then P.byte (#a e, 0) else (P.byte (#a e, 1); nameRuns (#a e, e, kStamp, stamps));
            if globals = cGlobals then P.byte (#a e, 0) else (P.byte (#a e, 1); flagRuns (#a e, globals));
-           originTree (e, en))
+           (* its origins, where they are not those of the structure it is,
+              which a signature's copies of its specifications keep *)
+           if sameOrigins (c, en) then P.byte (#side e, 0) else (P.byte (#side e, 1); originTree (e, en)))
       | NONE =>
           (P.byte (w, 0);
            P.list (fn (w, (n, v)) => (P.string (w, n); valstatus (e, v))) (w, StringMap.listItemsi vals);
@@ -2478,7 +2500,8 @@ struct
                      nnames = ref 0, refs = IntTable.table 64,
                      nameList = ref [], imports = Vector.tabulate (3, fn _ => IntTable.table 256),
                      nimports = Vector.tabulate (3, fn _ => ref 0), importList = Vector.tabulate (3, fn _ => ref []),
-                     records = IntTable.table 64, targets = ref [], tycons = IntTable.table 256, ntycons = ref 0,
+                     records = IntTable.table 64, targets = ref [], sigUnits = ref StringMap.empty, sigUnitList = ref [],
+                     tycons = IntTable.table 256, ntycons = ref 0,
                      keys = IntTable.table 1024, nkeys = ref 0,
                      types = ref IntMap.empty, ntypes = ref 0, cons = ref StringMap.empty, ncons = ref 0,
                      sibs = ref StringMap.empty, nsibs = ref 0, funsDone = IntTable.table 16,
@@ -2518,7 +2541,8 @@ struct
       val ea : enc = {w = a, a = a, side = #side e, spans = #spans e, start = #start e, own = #own e, count = #count e,
                       queue = #queue e, names = #names e, nnames = #nnames e, refs = #refs e, nameList = #nameList e,
                       imports = #imports e, nimports = #nimports e, importList = #importList e, records = #records e,
-                      targets = #targets e, tycons = #tycons e, ntycons = #ntycons e, keys = #keys e, nkeys = #nkeys e,
+                      targets = #targets e, sigUnits = #sigUnits e, sigUnitList = #sigUnitList e,
+                      tycons = #tycons e, ntycons = #ntycons e, keys = #keys e, nkeys = #nkeys e,
                       types = #types e, ntypes = #ntypes e, cons = #cons e, ncons = #ncons e, sibs = #sibs e, nsibs = #nsibs e,
                       funsDone = #funsDone e, bodies = #bodies e, sTycons = #sTycons e, file = #file e}
       val () = List.app (functorBody (ea, k)) (List.rev (!(#bodies e)))
@@ -2553,6 +2577,7 @@ struct
       val () = (P.bytes (r, magic); P.nat (r, version); P.string (r, P.probe ()); P.string (r, uname); P.string (r, digest);
                 P.string (r, staticDigest); P.list P.string (r, List.rev (!(#nameList e)));
                 Vector.app (fn l => P.list (fn (w, (_, u, n)) => (P.nat (w, u); P.nat (w, n))) (r, List.rev (!l))) (#importList e);
+                P.list (fn (w, i) => P.nat (w, valOf (StringMap.find (!(#names e), i)))) (r, List.rev (!(#sigUnitList e)));
                 Vector.app (fn c => P.nat (r, c)) counts; P.nat (r, String.size static))
       val hashed = P.contents r ^ static ^ abi
       (* what the compile used of each kind, which loading puts aside
@@ -2657,6 +2682,7 @@ struct
               ncons : int ref, cons : Ast.coninfo array ref,
               nsibs : int ref, sibs : (string * bool) list array ref,
               imports : int vector vector,            (* per kind, the session's names of its imports *)
+              sigUnits : int vector,                   (* the units the static layer refers to, by their places in units *)
               (* its signatures read so far, which a reference may name,
                  and the templates of their structures (renamedEnv) *)
               sigsRead : SigMatch.sigma StringMap.map ref, hereTemplates : template StringMap.map ref}
@@ -2870,10 +2896,9 @@ struct
           (case StringMap.find (!(#sigsRead d), n) of SOME sg => (sg, NONE) | NONE => raise P.Bad "a reference to a signature not read")
         else
           let
-            val i = u - 1
-            val () = if i >= Vector.length (#units d) then raise P.Bad "a unit out of range" else ()
+            val () = if u - 1 >= Vector.length (#sigUnits d) then raise P.Bad "a unit out of range" else ()
             (* the unit, or the one loaded in its place (remapping) *)
-            val lu = Vector.sub (#units d, i)
+            val lu = Vector.sub (#units d, Vector.sub (#sigUnits d, u - 1))
           in
             case StringMap.find (!unitSigs, #identity lu ^ "\000" ^ n) of
               SOME sg => (sg, SOME (#identity lu ^ "\000" ^ n))
@@ -2935,7 +2960,13 @@ struct
       fun empty (l : 'a list ref option) = case l of NONE => true | SOME x => List.null (!x)
     in
       if not (empty stamps andalso empty globals) then raise P.Bad "a reference's names left over"
-      else case #side d of SOME side => withOrigins (side, en) | NONE => en
+      else
+        case #side d of
+          SOME side => (case P.rbyte side of
+                          0 => en
+                        | 1 => withOrigins (side, en)
+                        | _ => raise P.Bad "not a reference's origins")
+        | NONE => en
     end
 
   fun rsigma (d : dec) : SigMatch.sigma =
@@ -3203,6 +3234,8 @@ struct
               else Vector.sub (#base lu, k) + i
         end
       val imports = Vector.tabulate (3, fn k => Vector.fromList (P.rlist (import k) r))
+      val sigUnits = Vector.fromList (P.rlist (fn r => let val i = P.rnat r
+                                                       in if i >= Vector.length us then raise P.Bad "a unit out of range" else i end) r)
       val counts = Vector.tabulate (3, fn _ => P.rnat r)
       val base = Vector.tabulate (3, fn k => Vector.sub (at, k) + Vector.sub (used, k))
       val () = List.app (fn k => counter k := Vector.sub (base, k) + Vector.sub (counts, k)) [kStamp, kTycon, kTvar]
@@ -3213,11 +3246,12 @@ struct
       val shared = {side = side, base = base, units = us, ntycons = ref 0, tycons = ref (Array.fromList []),
                     ntypes = ref 0, types = ref (Array.fromList []), ncons = ref 0, cons = ref (Array.fromList []),
                     nsibs = ref 0, sibs = ref (Array.fromList []),
-                    imports = imports, sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
+                    imports = imports, sigUnits = sigUnits, sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
       fun over (r : P.reader) : dec =
         {r = r, a = a, side = #side shared, base = #base shared, units = #units shared, ntycons = #ntycons shared,
          tycons = #tycons shared, ntypes = #ntypes shared, types = #types shared, ncons = #ncons shared, cons = #cons shared,
-         nsibs = #nsibs shared, sibs = #sibs shared, imports = #imports shared, sigsRead = #sigsRead shared,
+         nsibs = #nsibs shared, sibs = #sibs shared, imports = #imports shared, sigUnits = #sigUnits shared,
+         sigsRead = #sigsRead shared,
          hereTemplates = #hereTemplates shared}
       val d = over r
       val da = over a
