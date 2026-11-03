@@ -1072,10 +1072,15 @@ struct
          ("libraries/clock-zero/zero.sml", "_export structure Clock : CLOCK = struct fun now () = 0 val name = \"zero\" end\n"),
          ("libraries/stamp/library.build", "requires clock end\nexports (structure Stamp)\nstamp.sml\n"),
          ("libraries/stamp/stamp.sml", "structure Stamp = struct fun show () = Clock.name ^ \" \" ^ Int.toString (Clock.now ()) end\n"),
+         (* an implementation of another signature, refused when the declaration takes it *)
+         ("libraries/clock-other/library.build", "requires clock end\nimplements (structure Clock)\nother.sml\n"),
+         ("libraries/clock-other/other.sml",
+          "_export structure Clock : sig val now : unit -> int end = struct fun now () = 7 end\n"),
+         ("other.build", "libraries clock-other stamp end\nstamp.sml\n"),
          ("stamp.sml", "val () = print (Stamp.show () ^ \"\\n\")\n"),
          ("fixed.build", "libraries stamp clock-fixed end\nstamp.sml\n"),
          ("zero.build", "libraries clock-zero stamp end\nstamp.sml\n")]
-      val () = List.app index ["clock", "ticks", "clock-fixed", "clock-zero", "stamp"]
+      val () = List.app index ["clock", "ticks", "clock-fixed", "clock-zero", "clock-other", "stamp"]
       val cache = dir ^ "/clock-cache"
       val fixed = ok "fixed" ["--build", "fixed.build", "--cache-dir", cache, "-o", dir ^ "/fixed.rbc"]
       val zero = ok "zero" ["--build", "zero.build", "--cache-dir", cache, "--explain-rebuild", "-o", dir ^ "/zero.rbc"]
@@ -1087,7 +1092,11 @@ struct
       prints (dir ^ "/fixed.rbc") "fixed 42\n";
       prints (dir ^ "/zero.rbc") "zero 0\n";
       need (List.map OS.Path.file (mine zero) = ["zero.sml"], "another clock compiled " ^ String.concatWith " " (mine zero));
-      need (same (dir ^ "/zero-whole.rbc", dir ^ "/zero-units-whole.rbc"), "S42 of a virtual structure differs")
+      need (same (dir ^ "/zero-whole.rbc", dir ^ "/zero-units-whole.rbc"), "S42 of a virtual structure differs");
+      ignore (ok "other" ["--build", "other.build", "--no-cache", "-o", dir ^ "/other.rbc"]);
+      let val (status, output) = runProgram (dir ^ "/other.rbc")
+      in need (status <> 0 andalso has "the implementation of the virtual module Clock implements another signature" output,
+               "an implementation of another signature ran: " ^ output) end
     end
 
   (* random edits of the example's sources and libraries, each build through
