@@ -82,7 +82,10 @@ string   ::= "..."
 Comments are SML's, `(* ... *)`. A path is a word of letters, digits and
 `/ . _ - + ~ #`, with `$(NAME)` anywhere in it, or a string, which holds any
 other character. A word the language does not know is an error, an annotation
-included, and so are the words it no longer has (*What is gone*, below).
+included, and so are the words it no longer has (*What is gone*, below). The
+words that begin a construct are no path's; a step's own, `inputs`, `closure`,
+`stamp` and `outputs`, are words only inside a step, so a file or a library may
+be called by one of them.
 
 A path that begins with a variable whose value is relative is relative to
 the directory of the build file given to `--build`, so that one value serves

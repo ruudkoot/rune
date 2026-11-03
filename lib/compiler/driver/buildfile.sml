@@ -87,9 +87,12 @@ struct
   fun words (path,text)=List.map #word (lexemes (path,text,false))
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
+  (* The words that begin a construct, which no path may be. A step's own
+     words, inputs, closure, stamp and outputs, are known only where a step
+     reads them, so that a file or a library may still be called stamp *)
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
                   "libraries", "inline", "requires", "exports", "friends", "view", "shadows", "strict", "virtual",
-                  "generate", "preprocessor", "inputs", "closure", "stamp", "outputs"]
+                  "generate", "preprocessor"]
 
   (* the words that were the language's and are not now, which no path may
      be: what to write instead (docs/build.md, What is gone; D6) *)
