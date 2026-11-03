@@ -20,7 +20,7 @@ struct
      no typing and no facts, and of its uses those whose definition is not
      their declaration, which an implementation is looked for among; it can
      be opened at its place (open') *)
-  type entry={key:string,name:string,file:string,text:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,
+  type entry={key:string,name:string,file:string,text:string,allow:bool,mode:Source.mode,pickle:string,sidecar:string,facts:fact list,
     types:typeDefinition list,syntax:CompilerSyntax.t option,uses:use list,typing:CompilerNodeTypes.t option}
   (* the place a unit was reached at *)
   type position={env:Env.env,fixity:Fixity.env,sigs:SigMatch.sigma StringMap.map,funs:Elaborate.funinfo StringMap.map,
@@ -85,7 +85,7 @@ struct
     focus:=Option.map (List.foldl (fn (file,all) => StringMap.insert (all,file,())) StringMap.empty) files
   fun closedEntry (entry:entry):entry=
     {key= #key entry,name= #name entry,file= #file entry,text= #text entry,allow= #allow entry,mode= #mode entry,pickle= #pickle entry,
-     facts=[],types= #types entry,syntax=NONE,typing=NONE,
+     sidecar= #sidecar entry,facts=[],types= #types entry,syntax=NONE,typing=NONE,
      uses=List.filter (fn (_,_,_,origin,_) => Env.primary origin<>Env.declaration origin) (#uses entry)}
   fun isOpen (entry:entry)=isSome (#syntax entry)
   (* every origin of what a unit declares, by its key *)
@@ -358,7 +358,7 @@ struct
                      (definitions (!Elaborate.lastDelta,declared (!Elaborate.insertedSigs,!Elaborate.sigs),declared (!Elaborate.insertedFuns,!Elaborate.funs)))) end
               val uses=List.foldl (fn ((role,id,span,origin,derived),all) => (role,id,span,holding origin,derived)::all) [] (!unitUses)
               val ()=UnitBasis.undo start
-              val whole={key=key,name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle exported,facts=frozenFacts,
+              val whole={key=key,name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle exported,sidecar= #sidecar exported,facts=frozenFacts,
                 types=typeDefinitions,syntax=SOME syntaxTree,uses=uses,typing=typing}:entry
           in checked:= !checked+1;(if keepOpen then whole else closedEntry whole,held,exported,defined) end
           handle error => (UnitBasis.undo start;raise error)
@@ -390,7 +390,7 @@ struct
                     | NONE => elaborate (source,name,allow,keepFacts,start,prior,key,asked)
                     fun fresh ()=
                       let val ()=exposed:=true
-                          val result=UnitBasis.loadKnown ({pickle= #pickle entry,file=file,at= #counters start},SOME (#identity exported),[])
+                          val result=UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at= #counters start},SOME (#identity exported),[])
                       in exposed:=false;(entry,result,!UnitBasis.lastBindings,usages,ref NONE,ref NONE) end
                 in case prior of
                      SOME (k:kept) =>
@@ -409,7 +409,7 @@ struct
                    else
                      let val at=UnitBasis.counters ()
                          val ()=exposed:=true
-                         val tried=(SOME (UnitBasis.loadKnown ({pickle= #pickle entry,file=file,at=at},SOME (identityOf k),
+                         val tried=(SOME (UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at=at},SOME (identityOf k),
                              UnitBasis.remappingBasis (#pickle entry,fn identity => StringMap.find (!paths,identity)))))
                            handle UnitBasis.Missing _ => (UnitBasis.abandon at;NONE) | Pickle.Bad _ => (UnitBasis.abandon at;NONE)
                      in exposed:=false;case tried of

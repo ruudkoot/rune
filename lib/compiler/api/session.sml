@@ -135,7 +135,7 @@ struct
                 val code = #code artifact
                 val () = if List.all (known o #1) (#globals code) andalso List.all (known o #2) (#imports code)
                          then () else raise Fail "unit dependency is not imported"
-                val loaded = UnitBasis.load {pickle= #pickle artifact,file=file,at=UnitBasis.counters ()}
+                val loaded = UnitBasis.load {pickle= #pickle artifact,sidecar="",file=file,at=UnitBasis.counters ()}
                 val () = if #identity (#unit loaded) = #identity artifact then () else raise Fail "unit and basis identities differ"
                 val () = (env:=Env.plus (!env,#delta loaded);
                           fixity:=Fixity.extend (!fixity,#directives loaded);UnitBasis.bind loaded)
@@ -144,7 +144,7 @@ struct
               let
                 val {file,text,mode}=source
                 val ()=Source.register (Source.fromStringIn (mode,file,text))
-                val loaded=UnitBasis.load {pickle=pickle,file=file,at=UnitBasis.counters ()}
+                val loaded=UnitBasis.load {pickle=pickle,sidecar="",file=file,at=UnitBasis.counters ()}
                 val unit= #unit loaded
                 val um=UnitMid.read (mid,unit,[],fn f => f)
                 val lo=Vector.sub (#base unit,UnitBasis.kStamp)
@@ -161,7 +161,7 @@ struct
                       val ()=List.app (fn i => IntTable.insert (table,Vector.sub (#base unit,k)+i,i))
                         (List.tabulate (Vector.sub (#count unit,k),fn i => i))
                   in table end)
-                val exported : UnitBasis.exported={pickle=pickle,identity= #identity unit,own=own,counts= #count unit,
+                val exported : UnitBasis.exported={pickle=pickle,sidecar="",identity= #identity unit,own=own,counts= #count unit,
                   provenance=Link.provenance (#target config,mode,Pickle.hash text)}
                 val code=UnitBasis.relative (exported,sc)
                 val fingerprint=Pipeline.fingerprint ()

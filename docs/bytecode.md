@@ -269,7 +269,7 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    14 (UnitBasis.version)
+version     varint    16 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
@@ -288,6 +288,16 @@ counts      3 × varint   its own names of each kind
                 kind written as built in, the unit's own (a number), or
                 another unit's (its place, a number) ...
 ```
+
+Version 16 (the build-system roadmap's M4) moves the origins version 7
+added out of the basis, into a sidecar that `UnitBasis.export` gives beside
+it and `UnitBasis.load` reads beside it, in the order the basis meets them:
+an environment's list of origins after its structures, a signature's and a
+functor's origin, and each type name's. No hash covers the sidecar, so a
+comment that moves a span moves no identity. A batch compile records no
+origin, its sidecar is empty, and `--emit-units` and a cache entry hold
+none. A body kept for a later unit to copy stays in the basis with its
+positions, since the copy's line table is in that unit's code.
 
 Version 14 (functors-units' M11) begins each environment with a byte: 0
 and the environment whole, as before, or 1 and a reference to a structure
@@ -336,7 +346,8 @@ local names (docs/plans/build-cache-issues.md, issue 16), so an entry made
 before is not trusted, and its unit is compiled again.
 
 Version 7 added optional lexical binding origins to environments,
-signatures, functors and type-constructor tables. Static analysis records
+signatures, functors and type-constructor tables (since version 16 in a
+sidecar). Static analysis records
 source definitions, signature constraints and the lexical owner of copied
 functor bodies separately from runtime stamps. Ordinary batch compilation
 leaves tracking disabled. Earlier bases are rejected and caches rebuilt;

@@ -108,7 +108,8 @@ struct
         val ()=check ("and checks that unit alone",#checked (A.work changed)=1 andalso #reused (A.work changed)=2)
         val comment=[edited (library,"(* moved *)\n" ^ #text library),client,other]
         val moved=analyze (context,comment)
-        val ()=check ("a comment that moves a definition equals fresh, bindings and all",same (moved,freshly (parent,comment)))
+        val ()=routed ("a comment that moves a definition moves no identity",moved,false,0,0,1,0)
+        val ()=check ("and equals fresh, bindings and all",same (moved,freshly (parent,comment)))
         val ()=check ("and elaborates that unit alone",#checked (A.work moved)=1)
         val added=[around ("fun area","val extra=1\nfun area") library,client,other]
         val held=analyze (context,added)
@@ -515,6 +516,40 @@ struct
           [("let",1),("C (a",1),(" + 2",1),("+ 2",1),("p=",1)]
           andalso C.typeAt (parent,{file="nodes.sml",offset=at ("(x,x)",1)})=SOME "'a * 'a")
     in A.close context;C.close parent end
+  (* A comment that moves every span moves no identity: where a name was bound
+     is in a sidecar, outside what an identity hashes (build-system M4, step
+     1), and a unit read back still says where. *)
+  fun spansMoveNoIdentity () =
+    let val parent=compiler ()
+        val body="datatype t=C of int\nsignature S=sig type u val v:u end\n"
+          ^ "functor F (X:S)=struct type w=X.u val y=X.v end\n"
+          ^ "structure M=struct datatype d=D val z=D end\n"
+        val comment="(* a comment of some length *)\n\n"
+        fun check' text=
+          let val context=A.create (parent,{context="spans"})
+              val result=analyze (context,[input ("spans.sml",text,"1"),
+                input ("client.sml","structure N=F (struct type u=t val v=C 1 end)\nval q=N.y\nval r=M.z\n","1")])
+          in A.close context;result end
+        val first=check' body
+        val second=check' (comment ^ body)
+        val moved=size comment
+        fun ids result=List.map (fn definition:A.typeDefinition => #id definition) (A.types result)
+        fun spots result=List.mapPartial (fn definition:A.typeDefinition =>
+          Option.map (fn location:A.location => #start location) (#implementation definition)) (A.types result)
+        val ()=check ("the analysis reads the program",null (A.diagnostics first) andalso null (A.diagnostics second))
+        val ()=check ("a type's identity holds its unit's: a comment does not move it",
+          not (null (ids first)) andalso ids first=ids second)
+        val ()=check ("and the sidecar still says where it is",length (spots first)=length (ids first)
+          andalso List.map (fn start => start+moved) (spots first)=spots second)
+        (* a client's use of a name of the first unit, its origin read from the sidecar *)
+        fun uses result=List.filter (fn occurrence:A.occurrence => #file occurrence="client.sml") (A.occurrences result)
+        fun targets result=List.mapPartial (fn occurrence:A.occurrence =>
+          case #definition occurrence of
+            SOME (location:A.location) => if #file location="spans.sml" then SOME (#start location) else NONE
+          | NONE => NONE) (uses result)
+        val ()=check ("a client finds the moved definitions",not (null (targets first))
+          andalso List.map (fn start => start+moved) (targets first)=targets second)
+    in C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -537,6 +572,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "repeated-source-contexts" CompilerAnalysisTests.repeatedSources,
      Test.it "lexical-visibility" CompilerAnalysisTests.lexicalVisibility,
      Test.it "call-signatures" CompilerAnalysisTests.signatures,
-     Test.it "node-types" CompilerAnalysisTests.nodeTypes]
+     Test.it "node-types" CompilerAnalysisTests.nodeTypes,
+     Test.it "spans-move-no-identity" CompilerAnalysisTests.spansMoveNoIdentity]
 end)
 val ()=CompilerAnalysisTestMain.main ()
