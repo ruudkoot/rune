@@ -25,6 +25,7 @@
 structure UnitCache =
 struct
   structure P = Pickle
+  structure S = UnitStore
 
   val magic = "RCE"
   (* 10: an entry's mark, the lint it was checked by, and the schemes of
@@ -161,46 +162,12 @@ struct
        then [("inline-val", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineValues)))] else [])
 
   (* The hash of the configuration of this compile *)
-  fun configuration () : string =
-    UnitBasis.hashAt ("configuration", String.concatWith "\000" (List.map #2 (settings ())))
-
-  (* A configuration's directory says what it is made of, in units/about (a
-     line "NAME VALUE" a setting), written with its first entry, so that a
-     compile that finds none of its own but one that differs from it in the
-     hash alone can say so (--explain-rebuild) *)
-  fun aboutText () : string = String.concat (List.map (fn (n, v) => n ^ " " ^ v ^ "\n") (settings ()))
-  fun aboutFile (dir : string, config : string) : string =
-    OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = dir, file = config}, file = "units"},
-                         file = "about"}
+  fun configuration () : string = S.configuration (UnitBasis.hashAt, settings ())
 
   (* The probe of another configuration of dir that is this one but for the
-     hash, where dir has none of this one's *)
-  fun otherHash (dir : string, config : string) : string option =
-    if (OS.FileSys.isDir (OS.Path.joinDirFile {dir = dir, file = config}) handle OS.SysErr _ => false) then NONE
-    else
-      let
-        val mine = List.filter (fn (n, _) => n <> "hash") (settings ())
-        fun lines t = List.mapPartial (fn l => case String.fields (fn c => c = #" ") l of
-                                                 n :: rest => SOME (n, String.concatWith " " rest)
-                                               | [] => NONE)
-                                      (String.tokens (fn c => c = #"\n") t)
-        fun theirs c =
-          let
-            val ins = TextIO.openIn (aboutFile (dir, c))
-            val ls = lines (TextIO.inputAll ins) before TextIO.closeIn ins
-          in
-            if List.filter (fn (n, _) => n <> "hash") ls = mine
-            then Option.map #2 (List.find (fn (n, _) => n = "hash") ls) else NONE
-          end
-          handle IO.Io _ => NONE
-        val ds = (let
-                    val s = OS.FileSys.openDir dir
-                    fun go acc = case OS.FileSys.readDir s of NONE => acc | SOME n => go (n :: acc)
-                  in go [] before OS.FileSys.closeDir s end)
-                 handle OS.SysErr _ => []
-        fun insert (n, []) = [n]
-          | insert (n, m :: rest) = if n < m then n :: m :: rest else m :: insert (n, rest)
-      in List.foldl (fn (c, found) => case found of SOME _ => found | NONE => theirs c) NONE (List.foldl insert [] ds) end
+     hash, where dir has none of this one's: entries made by a compiler
+     whose hash differs (--explain-rebuild) *)
+  fun otherHash (dir : string, config : string) : string option = S.otherBut "hash" (settings (), dir, config)
 
   (* The directory of the cache: --cache-dir, else RUNE_CACHE, else .rune in
      the directory of the first input; NONE with --no-cache *)
@@ -231,6 +198,9 @@ struct
           let val d = OS.Path.joinDirFile {dir = lib, file = "cache"}
           in if (OS.FileSys.isDir d handle OS.SysErr _ => false) then SOME d else NONE end
 
+  (* every hash of the cache's files, counted under "cache" *)
+  fun hash (site : string, text : string) : string = UnitBasis.during "cache" (fn () => UnitBasis.hashAt (site, text))
+
   (* the key of a unit *)
   (* settings: what the unit was compiled under that the configuration does
      not say, because it holds for the input files and not the libraries
@@ -238,124 +208,90 @@ struct
      had before there were such settings *)
   fun key {name : string, text : string, allow : bool, settings : string} : string =
     UnitBasis.during "cache" (fn () =>
-      UnitBasis.hashAt ("key", String.concatWith "\000" ([name, UnitBasis.hashAt ("source", text), if allow then "1" else "0"]
-                                                           @ (if settings = "" then [] else [settings]))))
+      S.key (UnitBasis.hashAt, [name, UnitBasis.hashAt ("source", text), if allow then "1" else "0"]
+                               @ (if settings = "" then [] else [settings])))
 
-  fun keyDir (dir : string, config : string, k : string) : string =
-    OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = dir, file = config}, file = k}
+  fun readFile (p : string) : string = S.readFile p
 
-  fun readFile (p : string) : string =
-    let val ins = BinIO.openIn p
-    in Byte.bytesToString (BinIO.inputAll ins) before BinIO.closeIn ins end
+  (* ---- an entry in the store (UnitStore): its head, the usages, which
+     name it among its key's; its sections, the rest ---- *)
+
+  type sections = {warnings : (Source.span * string) list, file : string, others : (string * string) list, pickle : string,
+                   identity : string, code : string, mid : string, level : int, schemes : (string * (int * string) list) list}
+
+  fun whole ({head = usages, sections = {warnings, file, others, pickle, identity, code, mid, level, schemes}}
+             : ((string * string) list, sections) S.entry) : entry =
+    {usages = usages, warnings = warnings, file = file, others = others, pickle = pickle, identity = identity, code = code,
+     mid = mid, level = level, schemes = schemes}
 
   fun usages (w : P.writer, us : (string * string) list) =
     P.list (fn (w, (k, i)) => (P.string (w, k); P.string (w, i))) (w, us)
 
+  val format : ((string * string) list, sections) S.format =
+    {magic = magic, version = version, hash = hash,
+     writeHead = usages, readHead = P.rlist (fn r => let val k = P.rstring r in (k, P.rstring r) end),
+     writeSections = fn (body, {warnings, file, others, pickle, identity, code, mid, level = lvl, schemes}) =>
+       (P.list P.string (body, List.map warningBytes warnings); P.string (body, file);
+        usages (body, others); P.string (body, pickle); P.string (body, identity); P.string (body, code);
+        P.string (body, mid); P.int (body, lvl);
+        P.list (fn (w, (u, ns)) => (P.string (w, u); P.list (fn (w, (n, t)) => (P.nat (w, n); P.string (w, t))) (w, ns)))
+               (body, schemes)),
+     readSections = fn r =>
+       let
+         val warnings = List.map warningOf (P.rlist P.rstring r)
+         val file = P.rstring r
+         val others = P.rlist (fn r => let val f = P.rstring r in (f, P.rstring r) end) r
+         val pickle = P.rstring r
+         val identity = P.rstring r
+         val code = P.rstring r
+         val mid = P.rstring r
+         val lvl = P.rint r
+         val schemes = P.rlist (fn r => let val u = P.rstring r
+                                        in (u, P.rlist (fn r => let val n = P.rnat r in (n, P.rstring r) end) r) end) r
+       in
+         {warnings = warnings, file = file, others = others, pickle = pickle, identity = identity, code = code, mid = mid,
+          level = lvl, schemes = schemes}
+       end}
+
   (* an entry's file read: the entry, or why it is none *)
   fun read (p : string) : found =
-    case (SOME (readFile p) handle IO.Io _ => NONE) of
-      NONE => Missed "an entry that cannot be read"
-    | SOME s =>
-        (let
-           val r = P.reader s
-           val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not an entry"
-           val () = if P.rnat r = version then () else raise P.Bad "an entry of another version"
-           val h = P.rstring r
-           val at = !(#pos r)
-           val us = P.rlist (fn r => let val k = P.rstring r in (k, P.rstring r) end) r
-           val warnings = List.map warningOf (P.rlist P.rstring r)
-           val file = P.rstring r
-           val others = P.rlist (fn r => let val f = P.rstring r in (f, P.rstring r) end) r
-           val pickle = P.rstring r
-           val identity = P.rstring r
-           val code = P.rstring r
-           val mid = P.rstring r
-           val lvl = P.rint r
-           val schemes = P.rlist (fn r => let val u = P.rstring r
-                                          in (u, P.rlist (fn r => let val n = P.rnat r in (n, P.rstring r) end) r) end) r
-         in
-           if not (P.atEnd r) orelse UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("read", String.extract (s, at, NONE))) <> h
-           then Missed "a damaged entry"
-           else Found {usages = us, warnings = warnings, file = file, others = others, pickle = pickle, identity = identity,
-                       code = code, mid = mid, level = lvl, schemes = schemes}
-         end
-         handle P.Bad why => Missed ("a damaged entry: " ^ why)
-              | Overflow => Missed "a damaged entry"
-              | Subscript => Missed "a damaged entry")
-
-  (* A name with .tmp- in it is a file being written, or one that a compile
-     that died left there, which nothing takes (withTemporary). None is
-     written for long: an hour old, it is the second, and it is removed where
-     a compile comes across it. What a time decides here is whether a file
-     that no compile reads stays, and no compile's result. *)
-  fun sweep (path : string) : unit =
-    if Time.< (Time.now (), Time.+ (OS.FileSys.modTime path, Time.fromSeconds 3600)) then ()
-    else OS.FileSys.remove path handle OS.SysErr _ => ()
+    case S.read format p of
+      S.Read e => Found (whole e)
+    | S.Unread why => Missed why
 
   (* whether find has given an entry that holds across a unit that changed *)
   val across = ref false
   val () = CompilerState.cellRoot ("UnitCache.across", across)
 
+  (* Whether an entry stands for this compile: one checked at a lower level
+     of the lint than the compile's does not (level); one whose usages hold
+     by their binders stands before one whose hold only by fingerprint, which
+     needs units remapped to load. This format keeps the level and the basis
+     its exactness reads among the sections (D24: the build-system roadmap's
+     M7 moves what a lookup judges into the head) *)
+  fun holds ({head = usages, sections = {level = l, pickle, ...}} : ((string * string) list, sections) S.entry) : S.verdict =
+    if l < level () then S.Refused ("its entry was checked at a lower level of the lint (" ^ Int.toString l ^ ")")
+    else
+      case UnitBasis.broken usages of
+        NONE => if UnitBasis.exactEntry (usages, pickle) then S.Stands else S.StandsBehind
+      | SOME u => S.Refused ("its entries used " ^ u ^ ", which is another now")
+
   (* The entries of a key whose usages hold: the first found, or why there
-     is none *)
+     is none. One that holds by fingerprint alone, never for a program that
+     keeps its units' identities (UnitBasis.remapAllowed): the entry names
+     the units it was compiled against, which are others now
+     (docs/plans/build-cache-issues.md, issue 15) *)
   fun find (dir : string, config : string, k : string) : found =
-    let
-      val d = keyDir (dir, config, k)
-      val names =
-        (let
-           val s = OS.FileSys.openDir d
-           fun go acc = case OS.FileSys.readDir s of
-                          NONE => acc
-                        | SOME n =>
-                            if String.isSubstring ".tmp-" n
-                            then ((sweep (OS.Path.joinDirFile {dir = d, file = n}) handle OS.SysErr _ => ()); go acc)
-                            else go (n :: acc)
-         in (go [] before OS.FileSys.closeDir s) end)
-        handle OS.SysErr _ => []
-      (* an entry whose usages hold by their binders before one whose hold
-         only by fingerprint, which needs units remapped to load *)
-      (* one that holds by fingerprint alone, never for a program that keeps
-         its units' identities (UnitBasis.remapAllowed): the entry names
-         the units it was compiled against, which are others now
-         (docs/plans/build-cache-issues.md, issue 15) *)
-      fun try ([], why, byFingerprint) =
-            (case byFingerprint of
-               SOME e => if !UnitBasis.remapAllowed then (across := true; Found e)
-                         else Missed "its entries hold across a unit that changed, which a program that keeps its units' identities takes none across"
-             | NONE => Missed why)
-        | try (n :: rest, why, byFingerprint) =
-            case read (OS.Path.joinDirFile {dir = d, file = n}) of
-              Found (e as {usages, pickle, level = l, ...}) =>
-                (* one checked at a lower level of the lint than the
-                   compile's: none (level) *)
-                if l < level ()
-                then try (rest, if why = "no entry" then "its entry was checked at a lower level of the lint (" ^ Int.toString l ^ ")"
-                                else why, byFingerprint)
-                else
-                  (case UnitBasis.broken usages of
-                     NONE => if UnitBasis.exactEntry (usages, pickle) then Found e
-                             else try (rest, why, case byFingerprint of NONE => SOME e | some => some)
-                   | SOME u => try (rest, if why = "no entry" then "its entries used " ^ u ^ ", which is another now" else why,
-                                    byFingerprint))
-            | Missed w => try (rest, if why = "no entry" then w else why, byFingerprint)
-      (* in an order of their own, whatever the directory's: any whose usages
-         hold is the same *)
-      fun insert (n, []) = [n]
-        | insert (n, m :: rest) = if n < m then n :: m :: rest else m :: insert (n, rest)
-    in
-      try (List.foldl insert [] names, "no entry", NONE)
-    end
+    case S.find (format, holds) (dir, config, k) of
+      S.Found e => Found (whole e)
+    | S.FoundBehind e =>
+        if !UnitBasis.remapAllowed then (across := true; Found (whole e))
+        else Missed "its entries hold across a unit that changed, which a program that keeps its units' identities takes none across"
+    | S.Missed why => Missed why
 
   (* whether a key has an entry, whatever its usages: a unit likely found,
      which a parallel build leaves to the parent (Parallel) *)
-  fun hasEntry (dir : string, config : string, k : string) : bool =
-    (let
-       val s = OS.FileSys.openDir (keyDir (dir, config, k))
-       fun go () = case OS.FileSys.readDir s of
-                     NONE => false
-                   | SOME n => not (String.isSubstring ".tmp-" n) orelse go ()
-     in go () before OS.FileSys.closeDir s end)
-    handle OS.SysErr _ => false
+  val hasEntry = S.hasEntry
 
   (* ---- what the cache keeps of a unit by its identity ---- *)
 
@@ -363,93 +299,18 @@ struct
      beside the entries, in units/ of the configuration's directory: what an
      entry compiled against the unit needs to be loaded against another
      unit of its name (UnitBasis.remapping) *)
-  val pathsMagic = "RCP"
-  fun pathsFile (dir : string, config : string, identity : string) : string =
-    OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = dir, file = config}, file = "units"},
-                         file = UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("paths", identity))}
-
-  fun readPaths (dir : string, config : string, identity : string) : (int * int * string) list option =
-    (let
-       val s = readFile (pathsFile (dir, config, identity))
-       val r = P.reader s
-       val () = if P.rbytes (r, 3) = pathsMagic andalso P.rnat r = version then () else raise P.Bad "not paths"
-       val h = P.rstring r
-       val at = !(#pos r)
-       val i = P.rstring r
-       val ps = P.rlist (fn r => let val k = P.rnat r val n = P.rnat r in (k, n, P.rstring r) end) r
-     in
-       if i = identity andalso P.atEnd r
-          andalso UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("paths", String.extract (s, at, NONE))) = h
-       then SOME ps else NONE
-     end)
-    handle IO.Io _ => NONE | P.Bad _ => NONE | Overflow => NONE | Subscript => NONE
+  val paths : (int * int * string) list S.side =
+    {magic = "RCP", version = version, hash = fn (_, text) => hash ("paths", text),
+     write = P.list (fn (w, (k, n, path)) => (P.nat (w, k); P.nat (w, n); P.string (w, path))),
+     read = P.rlist (fn r => let val k = P.rnat r val n = P.rnat r in (k, n, P.rstring r) end)}
 
   (* in the cache, else in the frozen Basis, else none *)
   fun pathsIn (dirs : string list, config : string) (identity : string) : (int * int * string) list option =
-    List.foldl (fn (d, found) => case found of SOME _ => found | NONE => readPaths (d, config, identity)) NONE dirs
-
-  (* every directory of a path, made where it is not there *)
-  fun mkdirs (d : string) : unit =
-    if d = "" orelse d = "." orelse d = "/" orelse (OS.FileSys.isDir d handle OS.SysErr _ => false) then ()
-    else (mkdirs (OS.Path.dir d); OS.FileSys.mkDir d handle OS.SysErr _ => ())
-
-  (* The system reserves a name; the file to publish is beside its
-     destination so that rename stays on one filesystem. Keep the
-     reservation until publication finishes, as Emit does. Clock readings
-     and process ids never enter the compiler's arithmetic or its cache. *)
-  fun withTemporary (path : string) (write : string -> unit) : unit =
-    let
-      val reservation = OS.FileSys.tmpName ()
-      val temporary = path ^ ".tmp-" ^ OS.Path.file reservation
-      fun remove p = OS.FileSys.remove p handle OS.SysErr _ => ()
-      fun clean () = (remove temporary; remove reservation)
-    in
-      (write temporary; clean ()) handle ex => (clean (); raise ex)
-    end
-
-  (* The directory of what is kept by identity, swept of what a compile left
-     (sweep), by the first compile to write there: no key leads a compile to
-     it, as one leads to an entry's directory. *)
-  val swept = ref false
-  val () = CompilerState.cellRoot ("UnitCache.swept", swept)
-  fun sweepUnits (units : string) : unit =
-    if !swept then ()
-    else
-      (swept := true;
-       (let
-          val s = OS.FileSys.openDir units
-          fun go () =
-            case OS.FileSys.readDir s of
-              NONE => ()
-            | SOME n => ((if String.isSubstring ".tmp-" n
-                          then (sweep (OS.Path.joinDirFile {dir = units, file = n}) handle OS.SysErr _ => ()) else ());
-                         go ())
-        in go (); OS.FileSys.closeDir s end)
-       handle OS.SysErr _ => ())
+    S.sideIn paths (dirs, config) identity
 
   (* storePaths: a unit's paths kept by its identity, whole or not at all *)
   fun storePaths (dir : string, config : string, identity : string, ps : (int * int * string) list) : unit =
-    let
-      val p = pathsFile (dir, config, identity)
-      val () = sweepUnits (OS.Path.dir p)
-      val body = P.writer ()
-      val () = (P.string (body, identity);
-                P.list (fn (w, (k, n, path)) => (P.nat (w, k); P.nat (w, n); P.string (w, path))) (body, ps))
-      val b = P.contents body
-      val w = P.writer ()
-      val () = (P.bytes (w, pathsMagic); P.nat (w, version);
-                P.string (w, UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("paths", b))); P.bytes (w, b))
-    in
-      (mkdirs (OS.Path.dir p);
-       withTemporary p (fn tmp =>
-         (let val out = BinIO.openOut tmp
-          in
-            (BinIO.output (out, Byte.stringToBytes (P.contents w)); BinIO.closeOut out)
-            handle ex => (BinIO.closeOut out handle _ => (); raise ex)
-          end;
-          OS.FileSys.rename {old = tmp, new = p})))
-      handle IO.Io _ => () | OS.SysErr _ => ()
-    end
+    S.storeSide paths (dir, config, identity, ps)
 
   (* store: the entry of a key written, whole or not at all, by the hash of
      its usages, beside the key's others; a cache that cannot be written is
@@ -459,40 +320,8 @@ struct
     (* code a test switch corrupted (RUNE_REGVERIFY_INJECT) is not kept *)
     if RegVerify.injecting () then () else
     UnitBasis.during "cache" (fn () =>
-    let
-      val d = keyDir (dir, config, k)
-      val u = P.writer ()
-      val () = usages (u, us)
-      val p = OS.Path.joinDirFile {dir = d, file = UnitBasis.hashAt ("store", P.contents u)}
-      val body = P.writer ()
-      val () = (usages (body, us); P.list P.string (body, List.map warningBytes warnings); P.string (body, file);
-                usages (body, others); P.string (body, pickle); P.string (body, identity); P.string (body, code);
-                P.string (body, mid); P.int (body, lvl);
-                P.list (fn (w, (u, ns)) => (P.string (w, u); P.list (fn (w, (n, t)) => (P.nat (w, n); P.string (w, t))) (w, ns)))
-                       (body, schemes))
-      val b = P.contents body
-      val w = P.writer ()
-      val () = (P.bytes (w, magic); P.nat (w, version); P.string (w, UnitBasis.hashAt ("store", b)); P.bytes (w, b))
-      val about = aboutFile (dir, config)
-    in
-      (mkdirs d;
-       if (OS.FileSys.access (about, []) handle OS.SysErr _ => false) then ()
-       else ((mkdirs (OS.Path.dir about);
-              withTemporary about (fn t =>
-                (let val out = TextIO.openOut t
-                 in
-                   (TextIO.output (out, aboutText ()); TextIO.closeOut out)
-                   handle ex => (TextIO.closeOut out handle _ => (); raise ex)
-                 end;
-                 OS.FileSys.rename {old = t, new = about})))
-             handle IO.Io _ => () | OS.SysErr _ => ());
-       withTemporary p (fn tmp =>
-         (let val out = BinIO.openOut tmp
-          in
-            (BinIO.output (out, Byte.stringToBytes (P.contents w)); BinIO.closeOut out)
-            handle ex => (BinIO.closeOut out handle _ => (); raise ex)
-          end;
-          OS.FileSys.rename {old = tmp, new = p})))
-      handle IO.Io _ => () | OS.SysErr _ => ()
-    end)
+      S.store (format, settings ())
+              (dir, config, k,
+               {head = us, sections = {warnings = warnings, file = file, others = others, pickle = pickle, identity = identity,
+                                       code = code, mid = mid, level = lvl, schemes = schemes}}))
 end

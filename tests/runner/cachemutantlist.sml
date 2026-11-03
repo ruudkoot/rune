@@ -16,6 +16,7 @@ struct
 
   val ub = "lib/compiler/driver/unitbasis.sml"
   val uc = "lib/compiler/driver/unitcache.sml"
+  val us = "lib/compiler/driver/unitstore.sml"
   val el = "lib/compiler/elab/elaborate.sml"
   val en = "lib/compiler/elab/env.sml"
   val fx = "lib/compiler/frontend/fixity.sml"
@@ -128,8 +129,8 @@ struct
     m ("K2", "key: a unit's settings dropped", "", false, "",
        [("S62", "expected compilation failure"), ("flag-or-patterns", "exit 0 through the cache, 1 without")],
        uc,
-       "[name, UnitBasis.hashAt (\"source\", text), if allow then \"1\" else \"0\"]\n                                                           @ (if settings = \"\" then [] else [settings]))))",
-       "[name, UnitBasis.hashAt (\"source\", text), if allow then \"1\" else \"0\"]\n                                                           @ [])))"),
+       "[name, UnitBasis.hashAt (\"source\", text), if allow then \"1\" else \"0\"]\n                               @ (if settings = \"\" then [] else [settings])))",
+       "[name, UnitBasis.hashAt (\"source\", text), if allow then \"1\" else \"0\"]\n                               @ []))"),
     m ("K3", "configuration: intbits dropped", "", false, "",
        [("S26", "compiled [], wanted"), ("flag-int-bits-64", "compiled nothing")],
        uc,
@@ -187,19 +188,19 @@ struct
        "    ()"),
     m ("C5", "an entry's hash not checked", "", false, "",
        [("S33", "corrupted entry was reused")],
-       uc,
-       "           if not (P.atEnd r) orelse UnitBasis.during \"cache\" (fn () => UnitBasis.hashAt (\"read\", String.extract (s, at, NONE))) <> h",
+       us,
+       "           if not (P.atEnd r) orelse hash (\"read\", String.extract (s, at, NONE)) <> h",
        "           if not (P.atEnd r)"),
     m ("C6", "a unit that keeps identities taken across a change", "15", false, "",
        [("S61", "refused for no reason it gives")],
        uc,
-       "               SOME e => if !UnitBasis.remapAllowed then (across := true; Found e)\n                         else Missed \"its entries hold across a unit that changed, which a program that keeps its units' identities takes none across\"",
-       "               SOME e => (across := true; Found e)"),
+       "        if !UnitBasis.remapAllowed then (across := true; Found (whole e))\n        else Missed \"its entries hold across a unit that changed, which a program that keeps its units' identities takes none across\"",
+       "        (across := true; Found (whole e))"),
     m ("C7", "an entry of a lower level of the lint taken", "", false, "",
        [("S81", "compiled [], wanted [a.sml b.sml]")],
        uc,
-       "                if l < level ()\n                then try",
-       "                if false\n                then try"),
+       "    if l < level () then S.Refused",
+       "    if false then S.Refused"),
     m ("C8", "code not relocated", "9", false, "",
        [("S1", "cached program differs from uncached compilation")],
        ub,
