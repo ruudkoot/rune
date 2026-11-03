@@ -167,7 +167,7 @@ struct
                     val ()=poll ()
                     in (syntaxTree,syntax,outgoing) end)
                     val exported=UnitBasis.export {start=start,name=name,file=file,text=fn () => text,
-                      mode=mode,delta= !Elaborate.lastDelta,fixity=outgoing,used=usages}
+                      mode=mode,delta= !Elaborate.lastDelta,fixity=outgoing}
                     fun typeId stamp=case IntTable.find (Vector.sub (#own exported,UnitBasis.kTycon),stamp) of
                       SOME index => #identity exported ^ "#" ^ Int.toString index
                     | NONE => getOpt (UnitBasis.stableName (UnitBasis.kTycon,stamp),

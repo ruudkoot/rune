@@ -49,8 +49,9 @@ struct
      its compile had (importedSchemes, schemesHold) *)
   exception SchemeChanged of string
 
-  (* 16: origins in a sidecar of their own, outside the bytes an identity hashes *)
-  val version = 16
+  (* 16: origins in a sidecar of their own, outside the bytes an identity
+     hashes; 17: of a copied body the hash alone of what only a hash reads *)
+  val version = 17
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -113,20 +114,13 @@ struct
   (* each usage's fingerprint, by its binder and key, once worked out
      (fingerprintAt) *)
   (* M6b: the hash of each inlined functor's Mid, by its function's global
-     (the usage "inl NAME"); and the names a read function's own names get,
-     below 0, each read its own *)
-  datatype inlineHash = Hash of string | Bytes of string
-  val inlineHashes : inlineHash ref IntTable.table ref = ref (IntTable.table 16)
+     (the usage "inl NAME"), which its basis keeps: what makes it is the body
+     and what the copies take of the globals it names, and that a reader
+     would only throw away (bodyHash); and the names a read function's own
+     names get, below 0, each read its own *)
+  val inlineHashes : string IntTable.table ref = ref (IntTable.table 16)
   val () = CompilerState.refRoot ("UnitBasis.inlineHashes", inlineHashes, IntTable.copy)
-  (* a functor's hash, a read one's worked out from the bytes of its Mid when
-     it is first asked for: only where a later unit expands it (functors-units
-     M8; hashing them all as they were read cost 0.9M instructions a compile
-     in units of a program that loads the I/O stack) *)
-  fun inlineHash (g : int) : string option =
-    case IntTable.find (!inlineHashes, g) of
-      NONE => NONE
-    | SOME (ref (Hash h)) => SOME h
-    | SOME (r as ref (Bytes b)) => let val h = P.hash b in r := Hash h; SOME h end
+  fun inlineHash (g : int) : string option = IntTable.find (!inlineHashes, g)
   val privateNext = ref ~2
   val () = CompilerState.cellRoot ("UnitBasis.privateNext", privateNext)
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
@@ -1554,6 +1548,7 @@ struct
       IntTable.removeRange (!Expand.primGlobals, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (!Expand.importedValues, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (!ToMid.importedSchemes, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
+      IntTable.removeRange (!inlineHashes, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.realizations, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
       Ty.datatypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.datatypes);
       Ty.pinned := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.pinned);
@@ -1566,6 +1561,16 @@ struct
     end
 
   (* ---- writing ---- *)
+
+  (* What a basis is written from that is not in the environment: the names
+     of the signatures and functors the unit declared, in their order, the
+     functions it declares that are copied where they are named and the
+     schemes those name, a marked functor's function's body, the name of a
+     function a body binds, and whether a kept body's hash is to be written
+     as it was read (exportAgain) rather than worked out *)
+  type writing = {sigs : string list, funs : string list, values : (int * Mid.fundef) list,
+                  schemes : (int * (int list * Ty.ty)) list, body : int -> Mid.fundef option,
+                  funName : int -> string option, again : bool}
 
   type enc = {w : P.writer,
               side : P.writer,                         (* the sidecar: origins, in the order they are met *)
@@ -1981,11 +1986,46 @@ struct
       SOME (_, line, column) => (P.nat (lines, line); P.nat (lines, column))
     | NONE => ()
 
-  fun funref (e : enc, f as Elaborate.FunInfo {code, ...}) : unit =
+  (* A body's name for a hash, not for a reader: a built-in or an earlier
+     unit's by its anchor, and the unit's own by its number, which numbers it
+     as a reader will find it *)
+  fun nameText (e : enc, k : int, v : int) : string =
+    if v >= Vector.sub (#start e, k) then "#" ^ Int.toString (ownNumber (e, k, v)) else anchor (k, v)
+
+  (* The hash of a body kept for a later unit to copy, whose Mid is in bytes:
+     that Mid, what the copies a later unit makes take of each global the
+     body names, which a change of makes the body another, and the lines of
+     its positions (linePosition). Each one's primitive, the global it is and
+     that one's, whether it is a function known by name, and the hash of a
+     marked functor's function's body it calls. None of this is the
+     basis's: no reader keeps it, so that a basis written again from what
+     loading it left is the same bytes (exportAgain). *)
+  fun bodyHash (e : enc, bytes : string, named : int list, lines : P.writer) : string =
+    let
+      val t = P.writer ()
+      fun prim h = (P.option P.string (t, IntMap.find (!Translate.primAliases, h));
+                    P.option P.string (t, IntTable.find (!Expand.primGlobals, h)))
+    in
+      P.string (t, bytes);
+      P.list (fn (_, g) =>
+                (P.string (t, nameText (e, kStamp, g)); prim g;
+                 P.option (fn (_, h) => (P.string (t, nameText (e, kStamp, h)); prim h)) (t, IntTable.find (!Expand.globalAliases, g));
+                 P.bool (t, IntMap.member (!Lower.knownBefore, g));
+                 P.option P.string (t, inlineHash g)))
+             (t, named);
+      P.string (t, P.hash (P.contents lines));
+      P.hash (P.contents t)
+    end
+
+  (* the bytes of w from p0 *)
+  fun bytesFrom (w : P.writer, p0 : int) : string =
+    CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))
+
+  fun funref (e : enc, k : writing, f as Elaborate.FunInfo {code, ...}) : unit =
     let val w = #w e
     in
       if IntTable.find (#funsDone e, code) = NONE then
-        (IntTable.insert (#funsDone e, code, ()); P.byte (w, 1); funcode (e, f))
+        (IntTable.insert (#funsDone e, code, ()); P.byte (w, 1); funcode (e, k, f))
       else (P.byte (w, 0); name (e, kStamp, code))
     end
 
@@ -1993,7 +2033,7 @@ struct
      parameter's, and its summary -- and the global of its function:
      nothing of its body, so that a unit whose body changed and whose
      signature did not keeps its identity *)
-  and funcode (e : enc, Elaborate.FunInfo {param, paramSig, summary = {generated, result}, binding, code}) : unit =
+  and funcode (e : enc, k : writing, Elaborate.FunInfo {param, paramSig, summary = {generated, result}, binding, code}) : unit =
     let
       val w = #w e
     in
@@ -2006,8 +2046,8 @@ struct
       name (e, kStamp, code);
       (* a functor marked to be inlined: its function's Mid, its
          globals and type names named as the basis names them, which makes
-         every one a name a later unit may name; and its parameter's open
-         datatypes *)
+         every one a name a later unit may name; its parameter's open
+         datatypes; and the hash of it all *)
       P.option (fn (w, f) =>
                   let
                     val p0 = !(#used w)
@@ -2016,8 +2056,6 @@ struct
                     fun global s =
                       (if isSome (IntTable.find (seen, s)) then () else (IntTable.insert (seen, s, ()); named := s :: !named);
                        name (e, kStamp, s))
-                    fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
-                                  P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
                     val lines = P.writer ()
                   in
                     (* a position in the unit's own source by nothing but
@@ -2027,33 +2065,33 @@ struct
                     MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
                                         tvar = fn v => name (e, kTvar, v),
                                         file = fn f => P.option P.string (w, if f = #file e then NONE else SOME f),
-                                        position = linePosition lines}) f;
+                                        position = linePosition lines, funName = #funName k}) f;
                     P.list (fn (_, c) => name (e, kTycon, c))
                            (w, List.filter Ty.isOpen (List.map #stamp (#bound paramSig)));
-                    (* what the copies a later unit makes take of the globals
-                       the body names, which a change of makes the body
-                       another (its hash, the usage "inl F"): each one's
-                       primitive, the global it is and that one's, whether
-                       it is a function known by name, and the hash of a
-                       marked functor's function's body it calls *)
-                    P.list (fn (w, g) =>
-                              (prim g;
-                               P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
-                               P.bool (w, IntMap.member (!Lower.knownBefore, g));
-                               P.option P.string (w, inlineHash g)))
-                           (w, List.rev (!named));
-                    P.string (w, P.hash (P.contents lines));
-                    IntTable.insert (!inlineHashes, code,
-                                     ref (Hash (P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))))
+                    keepHash (e, k, code, p0, List.rev (!named), lines)
                   end)
-               (w, IntTable.find (!Expand.declaredBodies, code))
+               (w, #body k code)
     end
 
+  (* a copied body's hash, kept in the basis; written again as it was read
+     (exportAgain) *)
+  and keepHash (e : enc, k : writing, g : int, p0 : int, named : int list, lines : P.writer) : unit =
+    let
+      val w = #w e
+      (* the unit's own globals those are, numbered here however the hash
+         comes, for a basis written again to number its names as this does *)
+      val () = List.app (fn g => case IntTable.find (!Expand.globalAliases, g) of
+                                   SOME h => if h >= Vector.sub (#start e, kStamp) then ignore (ownNumber (e, kStamp, h)) else ()
+                                 | NONE => ()) named
+      val h = case (#again k, inlineHash g) of
+                (true, SOME h) => h
+              | _ => bodyHash (e, bytesFrom (w, p0), named, lines)
+    in P.string (w, h); IntTable.insert (!inlineHashes, g, h) end
+
   (* A function marked to be inlined (functors-units M10): its global, and
-     its Mid as a marked functor's function is written, with what it takes
-     of the globals it names, the hash of its lines (linePosition), and the
-     hash over all of it (the usage "inlv") *)
-  fun inlineValue (e : enc, s : int, f : Mid.fundef) : unit =
+     its Mid as a marked functor's function is written, and its hash (the
+     usage "inlv") *)
+  fun inlineValue (e : enc, k : writing, s : int, f : Mid.fundef) : unit =
     let
       val w = #w e
       val () = name (e, kStamp, s)
@@ -2063,8 +2101,6 @@ struct
       fun global g =
         (if isSome (IntTable.find (seen, g)) then () else (IntTable.insert (seen, g, ()); named := g :: !named);
          name (e, kStamp, g))
-      fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
-                    P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
       (* a position's file: the unit's own by nothing, another unit's source
          (a functor's whose copy the function is) by that unit's name, which
          the reader makes where its source is then, so that the bytes do not
@@ -2079,16 +2115,8 @@ struct
       MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
                           tvar = fn v => name (e, kTvar, v),
                           file = fn f => P.option P.string (w, fileName f),
-                          position = linePosition lines}) f;
-      P.list (fn (w, g) =>
-                (prim g;
-                 P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
-                 P.bool (w, IntMap.member (!Lower.knownBefore, g));
-                 P.option P.string (w, inlineHash g)))
-             (w, List.rev (!named));
-      P.string (w, P.hash (P.contents lines));
-      IntTable.insert (!inlineHashes, s,
-                       ref (Hash (P.hash (CharArraySlice.vector (CharArraySlice.slice (!(#bytes w), p0, SOME (!(#used w) - p0)))))))
+                          position = linePosition lines, funName = #funName k}) f;
+      keepHash (e, k, s, p0, List.rev (!named), lines)
     end
 
   (* ---- overloading ---- *)
@@ -2155,13 +2183,12 @@ struct
   type exported = {pickle : string, sidecar : string, identity : string, provenance : string,
                    own : int IntTable.table vector, counts : int vector}
 
-  (* export {start, name, file, text, mode, delta, fixity, used}: the basis
-     of the unit compiled since start, which declared delta and left the
-     fixity given; name is how it is known, file how its spans name its
-     source, text the source and mode how it was read, used the names its
-     compile looked up (Usage) *)
-  fun export {start : start, name = uname : string, file : string, text : unit -> string, mode : Source.mode,
-              delta : Env.env, fixity : Fixity.env, used : string list} : exported = during "export" (fn () =>
+  (* write (k, {start, name, file, text, mode, delta, fixity}): the basis of
+     the unit compiled since start, which declared delta and left the fixity
+     given; name is how it is known, file how its spans name its source,
+     text the source and mode how it was read *)
+  fun write (k : writing, {start : start, name = uname : string, file : string, text : unit -> string, mode : Source.mode,
+                           delta : Env.env, fixity : Fixity.env}) : exported = during "export" (fn () =>
     let
       val w = P.writer ()
       val e : enc = {w = w, side = P.writer (), spans = ref false, start = #counters start,
@@ -2182,13 +2209,6 @@ struct
                                          | Fixity.Infixr p => (P.byte (w, 2); P.nat (w, p))))
                       (w, directives)
       val () = env (e, delta)
-      (* signatures and functors, in the order the unit declared them, the
-         last of each name *)
-      (* names newest first, each once, at its newest *)
-      fun distinct names =
-        List.rev (List.foldl (fn (n, acc) => if List.exists (fn m => m = n) acc then acc else n :: acc) [] names)
-      val sigNames = List.rev (distinct (!Elaborate.insertedSigs))
-      val funNames = List.rev (distinct (!Elaborate.insertedFuns))
       (* its signatures and functors, where an environment may be a
          reference to one written before *)
       val () = (refsOK := true; ownSigs := StringMap.empty; ownPaths := IntTable.table 64; ownLocals := StringMap.empty;
@@ -2198,27 +2218,25 @@ struct
       val () = (P.list (fn (w, n) => (P.string (w, n);
                                       case StringMap.find (!Elaborate.sigs, n) of
                                         SOME s => (sigma (e, s); noteOwnSig (e, n, s))
-                                      | NONE => bug ("no signature " ^ n))) (w, sigNames);
+                                      | NONE => bug ("no signature " ^ n))) (w, #sigs k);
                 P.list (fn (w, n) => (P.string (w, n);
                                       case StringMap.find (!Elaborate.funs, n) of
-                                        SOME f => funref (e, f)
-                                      | NONE => bug ("no functor " ^ n))) (w, funNames);
+                                        SOME f => funref (e, k, f)
+                                      | NONE => bug ("no functor " ^ n))) (w, #funs k);
                 aside ())
                handle x => (aside (); raise x)
       (* the functions it declares that are marked to be inlined, as its
          expansion left them *)
-      val () = P.list (fn (_, (s, f)) => inlineValue (e, s, f))
-                      (w, List.mapPartial (fn s => Option.map (fn f => (s, f)) (IntTable.find (!Expand.declaredValues, s)))
-                                          (!Expand.declaredOrder))
+      val () = P.list (fn (_, (s, f)) => inlineValue (e, k, s, f)) (w, #values k)
       (* the schemes of the unit's globals those name that nothing else
          types (a copy's own): each as a function of no parameter whose
          result is the global's type *)
       val () = P.list (fn (w, (g, (vs, t))) =>
                          MidCodec.write (w, {stamp = fn s => name (e, kStamp, s), tycon = fn c => name (e, kTycon, c),
                                              tvar = fn v => name (e, kTvar, v), file = fn _ => P.option P.string (w, NONE),
-                                             position = fn _ => ()})
+                                             position = fn _ => (), funName = fn _ => NONE})
                                         {name = g, tyvars = vs, params = [], result = t, body = Mid.Return (Mid.Atom Mid.Unit)})
-                      (w, !Expand.declaredSchemes)
+                      (w, #schemes k)
       val before' = #overloads (#snapshot start)
       val () = P.list (fn (_, x) => overload (e, x))
                       (w, IntMap.listItemsi (IntMap.filteri (fn (s, _) => not (IntMap.member (before', s))) (!Overload.table)))
@@ -2247,6 +2265,24 @@ struct
       {pickle = P.contents u ^ hashed, sidecar = if !(#spans e) then P.contents (#side e) else "", identity = identity,
        provenance=Link.provenance (!CompilerSettings.target,mode,sourceHash),own = #own e, counts = counts}
     end)
+
+  (* export {start, name, file, text, mode, delta, fixity}: the basis of the
+     unit just compiled *)
+  fun export (a as {start : start, name : string, file : string, text : unit -> string, mode : Source.mode,
+                    delta : Env.env, fixity : Fixity.env}) : exported =
+    let
+      (* names newest first, each once, at its newest *)
+      fun distinct names =
+        List.rev (List.foldl (fn (n, acc) => if List.exists (fn m => m = n) acc then acc else n :: acc) [] names)
+    in
+      (* signatures and functors, in the order the unit declared them, the
+         last of each name *)
+      write ({sigs = List.rev (distinct (!Elaborate.insertedSigs)), funs = List.rev (distinct (!Elaborate.insertedFuns)),
+              values = List.mapPartial (fn s => Option.map (fn f => (s, f)) (IntTable.find (!Expand.declaredValues, s)))
+                                       (!Expand.declaredOrder),
+              schemes = !Expand.declaredSchemes, body = fn g => IntTable.find (!Expand.declaredBodies, g),
+              funName = fn x => IntMap.find (!Translate.funNames, x), again = false}, a)
+    end
 
   (* ---- a unit's code, by keys ---- *)
 
@@ -2580,7 +2616,8 @@ struct
      fixity directives, newest first, which the caller adds to the start;
      and the names of the signatures and functors it declared *)
   type result = {unit : loaded, delta : Env.env, directives : (string * Fixity.fixity) list,
-                 sigs : string list, funs : string list, overloads : int list}
+                 sigs : string list, funs : string list, overloads : int list,
+                 values : int list, schemes : int list}
 
   (* What the unit of r declared is the session's: the names it bound, by
      the unit, for the usages of the units after it. The caller says when:
@@ -2591,7 +2628,7 @@ struct
   val bindLog : string list ref = ref []
   val () = CompilerState.cellRoot ("UnitBasis.bindLog", bindLog)
 
-  fun bind ({unit, delta, directives, sigs, funs, overloads} : result) : unit =
+  fun bind ({unit, delta, directives, sigs, funs, overloads, ...} : result) : unit =
     let
       val id = #identity unit
       fun put (kind, names) = List.app (fn n => (binders := StringMap.insert (!binders, kind ^ " " ^ n, id);
@@ -2805,7 +2842,6 @@ struct
               0 => ()
             | 1 =>
                 let
-                  val p0 = !(#pos r)
                   val base = !privateNext
                   val most = ref 0
                   fun local' i = (if i > !most then most := i else (); base - i)
@@ -2817,18 +2853,14 @@ struct
                   (* linted at the next unit's passes, always on (Pipeline.functorBodies) *)
                   val () = if Pass.linting' 0 then MidLint.pendingBodies := body :: !MidLint.pendingBodies else ()
                   val opens = P.rlist (fn _ => rname (d, kTycon)) r
-                  fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
-                  val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
-                                            P.rbool r; P.roption P.rstring r)) r
-                  val _ = P.rstring r
-                  val p1 = !(#pos r)
+                  val h = P.rstring r
                 in
                   privateNext := base - !most - 1;
                   IntTable.insert (!Expand.importedNames, code, names);
                   List.app Ty.markOpen opens;
                   IntTable.insert (!Expand.imported, code, body);
                   IntTable.insert (!Elaborate.inlinedFunctions, code, ());
-                  IntTable.insert (!inlineHashes, code, ref (Bytes (String.substring (#s r, p0, p1 - p0))))
+                  IntTable.insert (!inlineHashes, code, h)
                 end
             | _ => raise P.Bad "not an option"
           val f = Elaborate.FunInfo {param = param, paramSig = paramSig, summary = summary, binding = binding, code = code}
@@ -2836,11 +2868,10 @@ struct
       val funs = P.rlist (fn r => let val n = P.rstring r in (n, rfunref r) end) r
       (* its functions marked to be inlined: what a later unit that names
          one copies (Expand.withInlined) *)
-      val _ =
+      val values =
         P.rlist (fn r =>
                    let
                      val s = rname (d, kStamp)
-                     val p0 = !(#pos r)
                      val base = !privateNext
                      val most = ref 0
                      fun local' i = (if i > !most then most := i else (); base - i)
@@ -2858,19 +2889,16 @@ struct
                                           tvar = fn () => rname (d, kTvar),
                                           file = fn () => fileOf (P.roption P.rstring r), local' = local'})
                        handle MidCodec.Bad m => raise P.Bad m
-                     fun prim () = (P.roption P.rstring r; P.roption P.rstring r; ())
-                     val _ = P.rlist (fn _ => (prim (); P.roption (fn _ => (rname (d, kStamp); prim ())) r;
-                                               P.rbool r; P.roption P.rstring r)) r
-                     val _ = P.rstring r
-                     val p1 = !(#pos r)
+                     val h = P.rstring r
                    in
                      privateNext := base - !most - 1;
                      IntTable.insert (!Expand.importedValueNames, s, names);
                      IntTable.insert (!Expand.importedValues, s, body);
                      Expand.anyImported := true;
-                     IntTable.insert (!inlineHashes, s, ref (Bytes (String.substring (#s r, p0, p1 - p0))))
+                     IntTable.insert (!inlineHashes, s, h);
+                     s
                    end) r
-      val _ =
+      val schemes =
         P.rlist (fn r =>
                    let
                      val ({name = g, tyvars, result, ...}, _) =
@@ -2878,7 +2906,7 @@ struct
                                           tvar = fn () => rname (d, kTvar), file = fn () => (P.roption P.rstring r; file),
                                           local' = fn i => ~1 - i})
                        handle MidCodec.Bad m => raise P.Bad m
-                   in IntTable.insert (!ToMid.importedSchemes, g, (tyvars, result)) end) r
+                   in IntTable.insert (!ToMid.importedSchemes, g, (tyvars, result)); g end) r
       val overloads =
         P.rlist (fn r =>
                    let
@@ -2963,7 +2991,7 @@ struct
       register u;
       notePaths (u, delta, sigs);
       {unit = u, delta = delta, directives = directives, sigs = List.map #1 sigs, funs = List.map #1 funs,
-       overloads = List.map #1 overloads}
+       overloads = List.map #1 overloads, values = values, schemes = schemes}
     end
     handle Overflow => raise P.Bad "a number out of range"
          | Subscript => raise P.Bad "out of range"
@@ -2971,4 +2999,53 @@ struct
   fun loadKnown (args, known : string option, remap : remap) : result = during "load" (fn () => load' (args, known, remap))
   fun loadAgainst (args, remap : remap) : result = loadKnown (args, NONE, remap)
   fun load args : result = loadKnown (args, NONE, [])
+
+  (* The basis of the unit just loaded (l), written again from what loading it
+     left in the session: export of load. It leaves the session as it found
+     it. A basis holds what its readers keep and nothing else, so of a unit
+     compiled against the session this is the bytes it was loaded from
+     (sameAgain); of an entry loaded across a unit that changed it names the
+     new unit, and is what compiling it would give. *)
+  fun exportAgain ({start : start, name : string, file : string, mode : Source.mode}, l : result) : exported =
+    let
+      val names : string IntTable.table = IntTable.table 64
+      fun named table key =
+        Option.app (List.app (fn (x, n) => IntTable.insert (names, x, n))) (IntTable.find (table, key))
+      val () = List.app (named (!Expand.importedValueNames)) (#values l)
+      val () = List.app (fn n => case StringMap.find (!Elaborate.funs, n) of
+                                   SOME (Elaborate.FunInfo {code, ...}) => named (!Expand.importedNames) code
+                                 | NONE => ()) (#funs l)
+    in
+      write ({sigs = #sigs l, funs = #funs l,
+              values = List.map (fn s => (s, valOf (IntTable.find (!Expand.importedValues, s)))) (#values l),
+              schemes = List.map (fn g => (g, valOf (IntTable.find (!ToMid.importedSchemes, g)))) (#schemes l),
+              body = fn g => IntTable.find (!Expand.imported, g),
+              funName = fn x => IntTable.find (names, x), again = true},
+             {start = start, name = name, file = file, text = fn () => "", mode = mode, delta = #delta l,
+              fixity = Fixity.extend (#fixity start, #directives l)})
+    end
+
+  (* a pickle's basis, past what its compile counted and its source's hash *)
+  fun basisOf (pickle : string) : string =
+    let
+      val r = P.reader pickle
+      val _ = Vector.tabulate (3, fn _ => P.rnat r)
+      val _ = P.rstring r
+      val _ = P.rstring r
+    in String.extract (pickle, !(#pos r), NONE) end
+
+  (* a level 2 check: a unit's basis is what writing what it loads as gives *)
+  fun sameAgain (a, l : result) (pickle : string) : unit =
+    let
+      val bytes = basisOf pickle
+      val again = basisOf (#pickle (exportAgain (a, l)))
+    in
+      if bytes = again then ()
+      else
+        let
+          fun first i = if i >= size bytes orelse i >= size again orelse String.sub (bytes, i) <> String.sub (again, i) then i
+                        else first (i + 1)
+        in Error.bug ("a basis written again from what it loads as differs at byte " ^ Int.toString (first 0) ^ " of "
+                      ^ Int.toString (size bytes) ^ " and " ^ Int.toString (size again) ^ ": " ^ #name a) end
+    end
 end

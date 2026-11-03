@@ -127,7 +127,10 @@ named by placeholders, which are no names of the unit's. A functor marked
 to be inlined ([build.md](build.md), *Inline functors*) has its
 function's Mid written too, its positions in the unit's own source by
 nothing but that, and a unit that expands it depends on it (the usage
-`inl F`). A function marked to be inlined ([build.md](build.md), *Inline
+`inl F`), by the hash kept beside it: of the Mid, of what the copies take
+of the globals it names, and of its lines, of which the basis keeps only
+the hash, so that a basis written again from what it loads as is the same
+bytes. A function marked to be inlined ([build.md](build.md), *Inline
 functions*), and every function that only applies a primitive to its
 parameter, has its Mid written too, as the expansion leaves it, with the
 functions of the unit it calls while the group is under 400 Mid nodes,

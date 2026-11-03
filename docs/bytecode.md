@@ -269,7 +269,7 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    16 (UnitBasis.version)
+version     varint    17 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
@@ -280,14 +280,22 @@ counts      3 × varint   its own names of each kind
             ... the fixity directives, the environment, the signatures,
                 functors (each its signature: its parameter's and its
                 body's summary; the global of its function; and the
-                function's Mid where it is marked to be inlined), its
-                functions copied into the units that name them (each its
-                global and its Mid), the schemes of the globals those name
+                function's Mid and hash where it is marked to be inlined),
+                its functions copied into the units that name them (each
+                its global, its Mid and its hash), the schemes of the globals those name
                 that nothing else types, and the overloading it
                 declared, and the tables of its own names, each name of a
                 kind written as built in, the unit's own (a number), or
                 another unit's (its place, a number) ...
 ```
+
+Version 17 (the build-system roadmap's M4) keeps of a body a later unit
+copies its Mid, a marked functor's parameter's open datatypes and one hash,
+the one the usages `inl` and `inlv` compare: what the copies take of the
+globals the body names, and its lines, went only into that hash, and no
+reader kept them. So a basis written again from what loading it left is the
+same bytes (`UnitBasis.exportAgain`), which every unit compiled at lint level
+2 is held to (`basis-rt`).
 
 Version 16 (the build-system roadmap's M4) moves the origins version 7
 added out of the basis, into a sidecar that `UnitBasis.export` gives beside

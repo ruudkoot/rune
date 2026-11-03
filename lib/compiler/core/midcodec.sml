@@ -13,9 +13,10 @@ struct
   open Mid
 
   (* position: told of every span written, which the file and the offsets of
-     the bytes do not place on a line without the source *)
+     the bytes do not place on a line without the source; funName: the name
+     of a function the body binds, by its first parameter *)
   type namer = {stamp : int -> unit, tycon : int -> unit, tvar : int -> unit, file : string -> unit,
-                position : Source.span -> unit}
+                position : Source.span -> unit, funName : int -> string option}
   type unnamer = {stamp : unit -> int, tycon : unit -> int, tvar : unit -> int, file : unit -> string, local' : int -> int}
 
   exception Bad of string
@@ -37,7 +38,7 @@ struct
         | _ => ()
     in List.app (bind o #1) (#params f); exp (#body f); t end
 
-  fun write (w : P.writer, {stamp = global, tycon, tvar, file, position} : namer) (f : fundef) : unit =
+  fun write (w : P.writer, {stamp = global, tycon, tvar, file, position, funName} : namer) (f : fundef) : unit =
     let
       val own = binders f
       val locals : int IntTable.table = IntTable.table 256
@@ -123,10 +124,10 @@ struct
       (* the function's name is the caller's (a global), its parameters its own *)
       global (#name f);
       list tvar (#tyvars f); params (#params f); ty (#result f); exp (#body f);
-      (* the names of the functions it binds (Translate.funNames, by their
-         first parameter), by its own numbers *)
+      (* the names of the functions it binds, by their first parameter, by
+         its own numbers *)
       list (fn (x, n) => (stamp x; P.string (w, n)))
-           (List.mapPartial (fn x => Option.map (fn n => (x, n)) (IntMap.find (!Translate.funNames, x))) (List.rev (!met)))
+           (List.mapPartial (fn x => Option.map (fn n => (x, n)) (funName x)) (List.rev (!met)))
     end
 
   (* the function, its own names given by local' (from their numbers), and
