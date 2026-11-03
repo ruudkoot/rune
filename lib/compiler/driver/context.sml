@@ -91,12 +91,12 @@ struct
   fun replay (t as {used,declared,...}:t,file) : bool =
     case List.find (fn u:used => #file u=file) (!used) of
       NONE => false
-    | SOME {change,through,...} =>
-        let val exports=case through of
+    | SOME ({change,through,...}:used) =>
+        let val exports : exports option=case through of
               [] => NONE
             | first :: rest => SOME (List.foldl (fn (more,kept) =>
                 List.filter (fn e => List.exists (fn x => x=e) more) kept) first rest)
-            fun shown (key,name)=case (exports,keyKind key) of
+            fun shown (key : string,name : string)=case (exports,keyKind key) of
                 (NONE,_) => true
               | (SOME es,SOME kind) => List.exists (fn e => e=(kind,name)) es
               | _ => false
