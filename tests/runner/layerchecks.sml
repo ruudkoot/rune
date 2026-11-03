@@ -49,6 +49,14 @@ struct
                                else if s = t then () else note (k ^ " of " ^ file))) (#exports x, #exports y)
             end
       val () = List.app one a
+      (* a unit of the build that one names and the other does not is not
+         compared at all: the two must name the same, all but the Basis's,
+         which each loads its own of *)
+      fun own (d : (string * unitDump) list) = List.filter (fn f => not (String.isPrefix "basis:" f)) (List.map #1 d)
+      fun missing (x, y) = List.filter (fn f => not (List.exists (fn g => g = f) (own y))) (own x)
+      val () = need (null (missing (a, b)) andalso null (missing (b, a)),
+                     what ^ ": units one names and the other does not: "
+                     ^ String.concatWith ", " (List.take (missing (a, b) @ missing (b, a), Int.min (8, length (missing (a, b) @ missing (b, a))))))
       val () = need (!units > 0, what ^ ": no unit in both")
       val () = need (null (!wrong), what ^ ": differ: " ^ String.concatWith "; " (List.rev (!wrong)))
     in what ^ ": " ^ Int.toString (!units) ^ " units, " ^ Int.toString (!exports) ^ " exports, the static layer the same" end
