@@ -1,7 +1,7 @@
 (* Negotiated presentation of lexical classes and checked binding namespaces. *)
 structure RuneLspTokens =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure P=LspProtocol
   structure L=LspPosition
   structure J=RuneLspSync

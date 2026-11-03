@@ -8,7 +8,7 @@
    reads it (docs/language-server.md, Contexts). *)
 structure RuneLspImplicit =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure W=RuneLspWorkspace
   type name={kind:string,name:string}
   (* what a scan of a file's text found, a superset of what it declares at its

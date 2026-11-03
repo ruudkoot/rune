@@ -29,9 +29,7 @@ struct
       "this scope has " ^ name ^ " from both "
       ^ (if first = "" then "the Basis Library" else "the library " ^ libraryShown (root, first))
       ^ " and the library " ^ libraryShown (root, second) ^ ": rename one where it is imported, as "
-      ^ imported ^ " (KIND " ^ name ^ " as OTHER) does"
-      ^ (if first = "" then ", or the library's header says shadows (KIND " ^ name ^ ")" else "")
-      ^ " (docs/build.md, Clashes)"
+      ^ imported ^ " (KIND " ^ name ^ " as OTHER) does (docs/build.md, Clashes)"
     end
 
   fun readText (f : string) : string =
@@ -202,18 +200,6 @@ struct
       val () = List.app (fn (v, es) => List.app (fn e as (k, n) =>
                  if List.exists (fn x => x = e) (getOpt (exports, [])) then ()
                  else raise Usage (file ^ ": the view " ^ v ^ " has " ^ k ^ " " ^ n ^ ", which the library does not export")) es) views
-      (* what it shadows of the Basis Library is an export of a name the
-         Basis Library has (D9) *)
-      val shadows = case header of NONE => [] | SOME {shadows, ...} => List.map (fn (k, n) => (kindName k, n)) shadows
-      val basisNames = if isBasis then []
-                       else List.concat (List.map BasisManifest.public
-                                                  (List.filter (fn e : entry => #dir e = libDir andalso not (isSome (#view e))) outside))
-      val () = List.app (fn e as (k, n) =>
-                 if not (List.exists (fn x => x = e) (getOpt (exports, [])))
-                 then raise Usage (file ^ ": shadows " ^ k ^ " " ^ n ^ ", which the library does not export")
-                 else if not (List.exists (fn b => b = n) basisNames)
-                 then raise Usage (file ^ ": shadows " ^ k ^ " " ^ n ^ ", which the Basis Library does not have")
-                 else ()) shadows
       (* Virtual libraries (docs/build.md, Virtual libraries; D22): a
          virtual module is a header's, exported, declared _virtual at the top
          level of a file the library's build lists itself, and nothing before
@@ -330,7 +316,6 @@ struct
             if List.null virtuals then () else put ("# virtual: " ^ exportWords virtuals ^ "\n");
             if List.null implements then () else put ("# implements: " ^ exportWords implements ^ "\n");
             if List.null friends then () else put ("# friends: " ^ String.concatWith " " friends ^ "\n");
-            if List.null shadows then () else put ("# shadows: " ^ exportWords shadows ^ "\n");
             List.app (fn (v, es) => put ("# view: " ^ v ^ " " ^ exportWords es ^ "\n")) views;
             List.app (fn (n, f) => put ("# fixity: " ^ (case f of Fixity.Infix p => "infix " ^ Int.toString p
                                                                 | Fixity.Infixr p => "infixr " ^ Int.toString p

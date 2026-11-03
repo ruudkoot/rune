@@ -240,8 +240,8 @@ struct
     in need (status <> 0, "a friend saw through an ascription: " ^ log) end
 
   (* D9: two imports of one name in one scope are an error, which a rename at
-     import answers; a library takes a name of the Basis Library only where
-     its header says it shadows it *)
+     import answers; a library with a header that exports a name of the Basis
+     Library clashes with it like any other *)
   fun clashes () =
     let
       val source = "val () = print (Int.toString Same.v ^ \"\\n\")\n"
@@ -267,14 +267,11 @@ struct
       (* a rename onto a name of the Basis Library is a clash too *)
       val () = refused "renamed-onto-basis" ["same1 (structure Same as List)"] source
                        "this scope has List from both the Basis Library and the library lib/same1"
-      (* or where its header says it shadows the Basis Library's *)
+      (* a header has no part that lets a library take a name of the Basis
+         Library (M10's shadows, dropped): the word is a file's *)
       val () = put ("lib/shadowing/library.build", "exports (structure Math)\nshadows (structure Math)\nannotate \"demand\" in math.sml end\n")
       val () = put ("lib/shadowing/math.sml", "structure Math = struct val pi = 3 end\n")
-      val () = ignore (index "shadowing")
-      val () = need (has "# shadows: structure:Math\n" (read (lib ^ "/shadowing/MANIFEST")), "no shadows in the manifest")
-      val () = prints "shadowed" ["shadowing"] "val () = print (Int.toString Math.pi ^ \"\\n\")\n" "3\n"
-      val () = prints "shadowed-renamed" ["shadowing (structure Math as Mine)"]
-                      "val () = print (Int.toString Mine.pi ^ \" \" ^ Int.toString (Real.round (Math.sqrt 4.0)) ^ \"\\n\")\n" "3 2\n"
+      val () = indexRefused "shadowing" "cannot read lib/shadowing/shadows"
       (* where the library requires both: at its index, and a rename there *)
       val () = put ("lib/both/library.build", "requires same1 same2 end\nexports (structure Uses)\nannotate \"demand\" in uses.sml end\n")
       val () = put ("lib/both/uses.sml", "structure Uses = struct val v = Same.v end\n")
@@ -358,7 +355,9 @@ struct
      in need (status <> 0 andalso has "Priv" log, "a second use: " ^ log) end)
 
   (* the compiler library's ways through a library: a session's compile, and
-     an analysis of a project, whose friends it knows from its build file *)
+     an analysis of a project, whose friends it knows from its build file;
+     and its client has its CompilerApi and the Basis Library's RuneCompiler
+     (Compiler), the REPL's controls, with no rename and no clash *)
   fun library () =
     let
       val () = put ("p/analysed.sml", "val () = print (Int.toString (Lower.show (Lower.make 2) + LowerPrivate.n) ^ \"\\n\")\n")
@@ -366,7 +365,7 @@ struct
       val () = put ("p/stranger.build", "libraries lower end\nanalysed.sml\n")
       val () = put ("p/transitive.build", "libraries upper end\nanalysed.sml\n")
       val () = put ("p/api.sml",
-        "structure C = RuneCompiler\n\
+        "structure C = CompilerApi\n\
         \structure A = C.Analysis\n\
         \fun read f = let val i = TextIO.openIn f in TextIO.inputAll i before TextIO.closeIn i end\n\
         \fun diagnosed file =\n\
@@ -385,11 +384,13 @@ struct
         \fun show b = if b then \"yes\" else \"no\"\n\
         \val () = print (show (diagnosed \"p/friend.build\") ^ \" \" ^ show (diagnosed \"p/stranger.build\") ^ \" \"\n\
         \                ^ show (diagnosed \"p/transitive.build\") ^ \" \" ^ show (compiled \"val x = Upper.value\\n\") ^ \" \"\n\
-        \                ^ show (compiled \"val x = Lower.make 1\\n\") ^ \"\\n\")\n")
+        \                ^ show (compiled \"val x = Lower.make 1\\n\") ^ \"\\n\")\n\
+        \val () = RuneCompiler.printDepth := 7\n\
+        \val () = print (Int.toString (!Compiler.printDepth) ^ \" \" ^ !RuneCompiler.feedback ^ \"\\n\")\n")
       val (status, log) = runeWith (libraries ["compiler"] @ ["--no-warnings", "p/api.sml", "-o", dir ^ "/api.rbc"])
       val () = need (status = 0, "the API's program: " ^ log)
       val (status, output) = runProgram (dir ^ "/api.rbc")
-    in need (status = 0 andalso output = "yes no no yes no\n", "the compiler library's scopes: " ^ output) end
+    in need (status = 0 andalso output = "yes no no yes no\n7 normal\n", "the compiler library's scopes: " ^ output) end
 
   (* S41, S42, S58, --verify-cache, through scopes *)
   val everything = ["upper", "mixed", "twin1", "twin2", "deep", "plain"]

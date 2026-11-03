@@ -1,12 +1,12 @@
 # Static compiler analysis
 
-`RuneCompiler.Analysis` checks captured source snapshots through the public
+`CompilerApi.Analysis` checks captured source snapshots through the public
 compiler library. It never calls `run`, executes initializers, evaluates
 `use`, or loads user dynamic modules. The CLI and analysis share scoped
 build visibility through `CompilerBuildContext`.
 
 ```sml
-structure C = RuneCompiler
+structure C = CompilerApi
 structure A = C.Analysis
 val compiler = C.session {lib = NONE, flags = []}
 val context = A.create (compiler, {context = "application"})
@@ -28,8 +28,8 @@ fingerprint and unique result ID identify the analysis that produced it.
 Each input's text is decoded UTF-8, including Latin-1 overlays. Source
 modes still control literal semantics and representability.
 
-For a project, call `RuneCompiler.Project.read` with the same compiler
-session, and the workspace `RuneCompiler.Workspace.find` gives above its
+For a project, call `CompilerApi.Project.read` with the same compiler
+session, and the workspace `CompilerApi.Workspace.find` gives above its
 build, and supply its source occurrences in order, with matching modes
 and annotations. Group-discovery text must still match the captured plan.
 The library validates these conditions instead of silently analyzing a
@@ -164,7 +164,7 @@ syntax, including infix desugaring; its domains and types are frozen data.
 `documentationAt` reads the leading comment of the owning declaration from
 captured syntax/source, including dependencies whose disk files are gone.
 
-Build-document queries belong to `RuneCompiler.Project.buildSyntax` and
+Build-document queries belong to `CompilerApi.Project.buildSyntax` and
 `pathCompletions`. They share the batch build lexer/parser and preserve path
 roles, token ranges and required quoting. Strict parsing returns located
 diagnostics; recovery retains unfinished paths and variables. Completion queries

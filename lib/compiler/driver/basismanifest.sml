@@ -25,12 +25,11 @@ struct
   (* What a library's header says beside its exports, which are scope, and
      what it requires, which are its # library: lines; a library with none
      has NONE, whose files see all before them and whose `libraries` are
-     transitive (docs/build.md, A library's header; D7, D15). shadows are
-     the names of the Basis Library its exports take the place of (D9).
-     virtuals are the virtual modules it declares and implements those of a
-     library it requires that it implements, KIND and NAME each (D22;
-     docs/build.md, Virtual libraries). *)
-  type header = {friends : string list, views : (string * (string * string) list) list, shadows : string list,
+     transitive (docs/build.md, A library's header; D7, D15). virtuals are
+     the virtual modules it declares and implements those of a library it
+     requires that it implements, KIND and NAME each (D22; docs/build.md,
+     Virtual libraries). *)
+  type header = {friends : string list, views : (string * (string * string) list) list,
                  virtuals : (string * string) list, implements : (string * string) list}
   (* requires is read from the text when it is asked for: most programs need
      it of few files. dir is the directory of the library the file is in.
@@ -107,11 +106,10 @@ struct
       val headed = ref NONE : (string * string) list option ref
       val friends = ref [] : string list ref
       val views = ref [] : (string * (string * string) list) list ref
-      val shadows = ref [] : string list ref
       val virtuals = ref [] : (string * string) list ref
       val implements = ref [] : (string * string) list ref
       fun comment (i, f, e) =
-        if f + 3 >= e orelse not (Char.contains "efvs" (at (f + 2)) orelse at (f + 2) = #"i" andalso at (f + 3) = #"m") then ()
+        if f + 3 >= e orelse not (Char.contains "efv" (at (f + 2)) orelse at (f + 2) = #"i" andalso at (f + 3) = #"m") then ()
         else
           let
             val line = String.substring (text, f, e - f)
@@ -119,7 +117,6 @@ struct
           in
             if String.isPrefix "# exports:" line then headed := SOME (exports (i, e, after "# exports:", e))
             else if String.isPrefix "# friends:" line then friends := !friends @ words (after "# friends:", e)
-            else if String.isPrefix "# shadows:" line then shadows := !shadows @ List.map #2 (exports (i, e, after "# shadows:", e))
             else if String.isPrefix "# virtual:" line then virtuals := !virtuals @ exports (i, e, after "# virtual:", e)
             else if String.isPrefix "# implements:" line then implements := !implements @ exports (i, e, after "# implements:", e)
             else if String.isPrefix "# view:" line then
@@ -159,7 +156,7 @@ struct
                    when=(case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final
                                     | _ => if isSome view then Seal else bad (i,e)),
                    provides=words (b3+1,b4),requires=fn () => words (b4+1,last),scope=scope,
-                   header=Option.map (fn _ => {friends= !friends,views=List.rev (!views),shadows= !shadows,
+                   header=Option.map (fn _ => {friends= !friends,views=List.rev (!views),
                                                virtuals= !virtuals,implements= !implements}) (!headed),
                    view=view}
                 end
@@ -754,9 +751,9 @@ struct
      and the one that shadows that; "" for the Basis Library. Each is an
      error (D9), which a rename at import answers. Two libraries with no
      header have always shadowed each other, and that stays so until they
-     have headers, unless a rename gives the name. A library shadows a name
-     of the Basis Library only where its header says so (shadows), and a
-     rename never does. A name is compared without its kind: no name of this
+     have headers, unless a rename gives the name. A library with a header,
+     or a rename, that gives a name of the Basis Library clashes with it
+     like any other. A name is compared without its kind: no name of this
      tree crosses kinds (D9), and a false error is all that could come of
      one that did, which a rename answers too. *)
   fun clashes (imports : import list, entries : entry list, basis : string) : (string * string * string) list =
@@ -764,7 +761,6 @@ struct
       fun entriesOf dir = List.filter (fn e : entry => #dir e = dir) entries
       fun headerOf dir = case entriesOf dir of e :: _ => #header e | [] => NONE
       fun headed dir = isSome (headerOf dir)
-      fun shadowed (dir, n) = case headerOf dir of SOME {shadows, ...} => List.exists (fn s => s = n) shadows | NONE => false
       val basisNames =
         List.foldl (fn (e : entry, m) => if #dir e = basis andalso not (isSome (#view e))
                                          then List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (public e) else m)
@@ -788,7 +784,6 @@ struct
                        | NONE =>
                            (StringMap.insert (seen, n, (dir, byRename)),
                             if (headed dir orelse byRename) andalso StringMap.member (basisNames, n)
-                               andalso (byRename orelse not (shadowed (dir, n)))
                             then (n, "", dir) :: found else found))
                    (seen, found) (offered import)
     in List.rev (#2 (List.foldl visit (StringMap.empty, []) ordered)) end

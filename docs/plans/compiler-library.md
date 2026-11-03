@@ -182,7 +182,9 @@ Recommended: (a).
 ## The API
 
 The public signature and complete operation contracts are documented in
-[RUNE_COMPILER](../lib/compiler/sig/RUNE_COMPILER.md). Compilation and
+[COMPILER_API](../lib/compiler/sig/COMPILER_API.md), the signature this plan
+calls `RUNE_COMPILER`: the build-system roadmap's M10 named the API
+`CompilerApi :> COMPILER_API`, apart from the Basis's `RuneCompiler`. Compilation and
 queries are static; execution with libraries requires a RuneVM host built
 with `--units`, so its library identities can be shared. Native hosts
 support compilation and artifact output. M4's initial implementation uses

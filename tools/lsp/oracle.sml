@@ -41,7 +41,7 @@
    shared. *)
 structure RuneLspOracle =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure A=C.Analysis
   fun read file=let val input=BinIO.openIn file
     in Byte.bytesToString (BinIO.inputAll input) before BinIO.closeIn input end

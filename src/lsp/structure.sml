@@ -1,7 +1,7 @@
 (* Structural ranges use the compiler's captured syntax and lossless pieces. *)
 structure RuneLspStructure =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure P=LspProtocol
   structure L=LspPosition
   structure J=RuneLspSync

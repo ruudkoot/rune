@@ -2,11 +2,11 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [i](i.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
-- `Analysis.dependencies` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.dependencies)
-- `Analysis.diagnostics` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.diagnostics)
-- `Analysis.documentationAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.documentationat)
-- `diagnostic` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-diagnostic)
-- `Syntax.diagnostics` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.diagnostics)
+- `Analysis.dependencies` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.dependencies)
+- `Analysis.diagnostics` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.diagnostics)
+- `Analysis.documentationAt` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.documentationat)
+- `diagnostic` (type): [COMPILER_API](../sig/COMPILER_API.md#type-diagnostic)
+- `Syntax.diagnostics` (val): [COMPILER_API](../sig/COMPILER_API.md#val-syntax.diagnostics)
 
 ---
 

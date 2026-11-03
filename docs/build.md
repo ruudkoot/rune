@@ -59,7 +59,6 @@ header   ::= ( "requires" import ... "end"    what a library's build file says
              | "exports" exports              first (A library's header, below)
              | "friends" path ... "end"
              | "view" id exports              a named subset of its exports
-             | "shadows" exports              Basis Library names its exports take
              | "strict"                       its units held to be well-formed
              | "virtual" modules              the virtual modules it declares
              | "implements" modules ) ...     those of a library it requires that
@@ -164,7 +163,7 @@ with no build file and two targets of one name are refused too.
 * **Targets.** An editor offers them ([language-server.md](language-server.md),
   *Workspaces and build contexts*). A target's options are those of a
   compiler session: `--target=`, `--unicode`, `--library NAME` and the rest
-  of `RuneCompiler.session`.
+  of `CompilerApi.session`.
 
 Nothing else is in the compiler's identity for it: one compiler has one
 `Config.identity` in every workspace, and a root file is no input of a unit
@@ -230,7 +229,7 @@ that is compiled. A path that a variable gives is not counted, and neither
 is a generated pointer: a `current.build` naming what is under `sets/` beside
 it, which nobody wrote and whose generator cannot be told otherwise yet.
 
-The compiler library's `RuneCompiler.Project` API uses this same scoped
+The compiler library's `CompilerApi.Project` API uses this same scoped
 planner, which reads build files and never a source. Windows project
 resolution handles absolute drive and UNC paths explicitly, including
 expanded path variables.
@@ -292,8 +291,6 @@ it once ([units.md](units.md), *Well-formed units*). An `always` file is a
 prelude and a `final` file an entry unit, which they need not keep.
 `requires` is what a program's build calls `libraries`, renames included
 (*Clashes*, below); a library with a header does not write `libraries`.
-`shadows (structure RuneCompiler)` says which names of the Basis Library its
-exports take the place of (*Clashes*), as `lib/compiler`'s does.
 
 * **`requires` says what may be named, and is not transitive.** The files of
   a library with a header are compiled in the Basis Library and what it
@@ -334,8 +331,8 @@ exports take the place of (*Clashes*), as `lib/compiler`'s does.
 
 `--basis-index` writes a header to the manifest's comment lines, `# library:`
 for what is required, as the readers of a manifest have always read it, and
-`# exports:`, `# friends:`, `# view:`, `# shadows:`, `# virtual:`,
-`# implements:` and `# fixity:` for the rest, with words such as
+`# exports:`, `# friends:`, `# view:`, `# virtual:`, `# implements:`
+and `# fixity:` for the rest, with words such as
 `structure:Api signature:API`, and `-` for none. A library required
 with renames is one word on its `# library:` line, `same(structure:Same=One)`,
 which is how every reader of a list of libraries keeps it. `runedoc` uses the boundary when
@@ -421,15 +418,14 @@ argument, `--library 'test/runner (structure History as RunnerHistory)'`.
   a rename gives the name, which is held to the rule. A library with no header
   renames nothing it is written on: its files see all that comes before them.
 
-The Basis Library cannot be renamed, since nothing imports it by name. A library
-takes a name of it only where its header says so, `shadows (structure
-RuneCompiler)`: then a scope that imports the library has the library's in
-place of the Basis Library's, and no clash. `lib/compiler` does this, so that
-`RuneCompiler` is the compiler's API in its clients and the REPL's controls
-(`lib/basis/compiler.sml`) everywhere else; a client that wants both renames
-the library's, `compiler (structure RuneCompiler as Api)`. `--basis-index`
-refuses a `shadows` that names no export, or no name of the Basis Library; a
-rename onto a name of the Basis Library is a clash.
+The Basis Library cannot be renamed, since nothing imports it by name. A
+library with a header that exports one of its names clashes with it in every
+scope that imports the library, as a rename onto one of its names does, and a
+client renames the library's at import: `geometry (structure Math as
+Geometry)`. So the compiler library's API is `CompilerApi : COMPILER_API`,
+which the Basis Library does not have: a client of the compiler library has it
+and the Basis Library's `RuneCompiler`, the REPL's controls
+(`lib/basis/compiler.sml`, `Compiler` to a program), with no rename.
 
 Clashes are compared by name, not by kind: no name of this tree is two kinds.
 `--no-warnings` does not silence a clash, which is an error.
@@ -548,7 +544,7 @@ last there.
 | `library NAME DIR` ... `end` | each library the program names, with those they are written on, each before what is written on it: its name, as a unit's name begins, and its directory |
 | `form F` | `header`, `block` (the older form) or `open` (no boundary) |
 | `requires L` | the libraries it is written on, as written, in order: `requires` or `libraries`, a library with renames as one word, `same(structure:Same=One)` |
-| `export KIND NAME`, `view V` ... `end`, `friend PATH`, `shadow KIND NAME` | its boundary, its views, its friends and what it shadows of the Basis Library, sorted |
+| `export KIND NAME`, `view V` ... `end`, `friend PATH` | its boundary, its views and its friends, sorted |
 | `virtual KIND NAME`, `implements KIND NAME` | the virtual modules a library declares, and those of another that it implements, sorted (*Virtual libraries*, below) |
 | `continue NAME` ... `end` | a virtual library's steps from the first file that declares a virtual module on, after the last library that implements one |
 | `program` ... `end` | the program, with what it `requires` (`libraries` and `--library`) |
@@ -669,7 +665,7 @@ Each is an error now, which says what to write:
 | `library (...) = ... end` in a program's build | a library's own `library.build`, with a header, used where the block was: `use DIR/library.build` |
 
 A `library.build` with a `library` block keeps it (*A library with no
-header*, above). `RuneCompiler.Project` has no cache directories, and its
+header*, above). `CompilerApi.Project` has no cache directories, and its
 inputs are the build files alone.
 
 ## Functors inlined across units

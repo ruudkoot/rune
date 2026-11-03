@@ -5,7 +5,7 @@ struct
   structure J=RuneLspSync
   structure U=LspUri
   structure D=RuneLspDocuments
-  structure C=RuneCompiler
+  structure C=CompilerApi
   type target={name:string,build:string,flags:string list,variables:(string*string) list,libraryRoot:string option}
   type settings={targets:target list,flags:string list,variables:(string*string) list,activeContext:string option,libraryRoot:string option}
   type context={id:string,label:string,name:string,target:string,build:string,ordinal:int,project:C.Project.t,source:C.Project.source}

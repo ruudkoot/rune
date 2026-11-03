@@ -2862,7 +2862,7 @@ struct
       (* what the compile used of each kind, which loading puts aside
          first, and the hash of the source and the mode it was read in, by
          which the compiler library checks a source it is given against
-         the basis (RuneCompiler.readUnit, readMid): none is the basis's,
+         the basis (CompilerApi.readUnit, readMid): none is the basis's,
          nor in its identity *)
       val used = Vector.tabulate (3, fn k => !(counter k) - Vector.sub (#counters start, k))
       val sourceHash = hashAt ("source", text ())

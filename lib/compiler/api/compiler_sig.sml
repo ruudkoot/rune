@@ -1,6 +1,6 @@
 (* The reusable Rune compiler. Compilation and queries are static;
    execution is an explicit operation on a compiled unit. *)
-signature RUNE_COMPILER =
+signature COMPILER_API =
 sig
   (* An independent ordered compilation context. *)
   type session
