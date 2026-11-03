@@ -13,7 +13,8 @@ struct
      through only where it is named (docs/build.md, A library's header) *)
   datatype kind = Str | Sig | Fun | Ty | Fix
   (* a library's header, but for its exports: the Library after it *)
-  type header = {requires : string list, friends : string list, views : (string * (kind * string) list) list}
+  type header = {requires : string list, friends : string list, views : (string * (kind * string) list) list,
+                 strict : bool}
   datatype dec =
       File of string                              (* a path, relative to the build file's directory *)
     | Files of string list
@@ -74,12 +75,12 @@ struct
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
-                  "libraries", "inline", "requires", "exports", "friends", "view"]
+                  "libraries", "inline", "requires", "exports", "friends", "view", "strict"]
 
   (* the words `annotate` takes (docs/build.md, Annotations, and A library's
      build file) *)
   fun knownAnnotation (a : string) : bool =
-    List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no"]
+    List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no", "prelude"]
     orelse isSome (Source.modeNamed a)
 
   fun parseUsing {path,text,recover,pathAt,wanted} : dec list =
@@ -177,33 +178,37 @@ struct
         | word as S _ => File (reference ("source",word))
       (* A header's parts, in any order, each once but for its views: what
          comes before the first declaration of the file *)
-      fun header (requires, exports, friends, views) =
+      fun header (requires, exports, friends, views, strict) =
         let
           fun once (seen, what) = if isSome seen then error ("a header says " ^ what ^ " once") else ()
         in
           case peek () of
             SOME (W "requires") =>
-              (ignore (next ()); once (requires, "requires"); header (SOME (paths "library"), exports, friends, views))
+              (ignore (next ()); once (requires, "requires"); header (SOME (paths "library"), exports, friends, views, strict))
           | SOME (W "exports") =>
-              (ignore (next ()); once (exports, "exports"); header (requires, SOME (exportList ()), friends, views))
+              (ignore (next ()); once (exports, "exports"); header (requires, SOME (exportList ()), friends, views, strict))
           | SOME (W "friends") =>
-              (ignore (next ()); once (friends, "friends"); header (requires, exports, SOME (paths "build"), views))
+              (ignore (next ()); once (friends, "friends"); header (requires, exports, SOME (paths "build"), views, strict))
           | SOME (W "view") =>
               let
                 val () = ignore (next ())
                 val n = case next () of W n => n | S n => n
                 val () = if List.exists (fn (m, _) => m = n) views then error ("a header has two views " ^ n) else ()
-              in header (requires, exports, friends, (n, exportList ()) :: views) end
-          | _ => (requires, exports, friends, List.rev views)
+              in header (requires, exports, friends, (n, exportList ()) :: views, strict) end
+          | SOME (W "strict") =>
+              (ignore (next ()); if strict then error "a header says strict once" else ();
+               header (requires, exports, friends, views, true))
+          | _ => (requires, exports, friends, List.rev views, strict)
         end
       (* a header's exports are a boundary around all the file declares after
          it, in one word the Library that a build reads *)
       fun body () =
-        case header (NONE, NONE, NONE, []) of
-          (NONE, NONE, NONE, []) => decsUntil []
-        | (requires, SOME es, friends, views) =>
+        case header (NONE, NONE, NONE, [], false) of
+          (NONE, NONE, NONE, [], false) => decsUntil []
+        | (requires, SOME es, friends, views, strict) =>
             let val ds = decsUntil []
-            in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views}, Library (es, ds)] end
+            in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views, strict = strict},
+                Library (es, ds)] end
         | _ => error "a library's header says what it exports"
     in
       let val ds = body ()

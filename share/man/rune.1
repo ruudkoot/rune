@@ -383,8 +383,15 @@ writes each entry that does not verify, and what compiling it gave, to
 .TP
 .B \-\-deps
 Print the inputs in an order where each comes after the files that declare
-the modules it uses, or name a cycle, a module declared twice or a file
-that declares something other than modules and type abbreviations.
+the modules it uses, each read in the fixity the files before it leave, or
+name a cycle. A file that is not a well-formed unit, one others depend on
+that binds a value, an exception, a datatype or a fixity at its top level,
+opens a structure there, or declares a module another of its scope declares,
+stays where it is written, with a warning for each break (docs/units.md,
+Well-formed units). With
+.BR \-\-build ,
+the build's files in its order, read as the build reads them, its preludes
+and its scopes the build's.
 .TP
 .B \-\-deps\-dot
 The same, as a graph in DOT.

@@ -42,13 +42,47 @@ struct
        ("cycle/x.sml", "structure X = struct val a = Y.b end"),
        ("cycle/y.sml", "structure Y = struct val b = 1 val c = X.a end"),
        ("twice/p.sml", "structure P = struct end"), ("twice/q.sml", "structure P = struct val again = 1 end"),
+       ("twice/r.sml", "structure R = struct val r = P.again end"),
        ("broken/m.sml", "structure M = struct end\nval top = 1"),
+       ("broken/n.sml", "structure N = struct val n = top + 1 end"),
+       (* a unit that is not well-formed stays where it is written *)
+       ("stays/c.sml", "structure C = struct val z = A.x end"),
+       ("stays/m.sml", "val top = 1"),
+       ("stays/a.sml", "structure A = struct val x = top end"),
+       ("stays/b.sml", "structure B = struct val y = A.x end"),
+       (* what breaks no rule: an effect, a local's head, a bare expression *)
+       ("relaxed/r0.sml", "structure R0 = struct val v = R1.x end"),
+       ("relaxed/r1.sml", "local val hidden = 1 open List in structure R1 = struct val x = hidden end end\nval _ = print \"\"\nval () = ()\n;print \"\""),
+       (* a fixity a file before leaves, which a file after needs to parse *)
+       ("fixity/p.sml", "infixr 5 :::\ndatatype t = E | ::: of int * t"),
+       ("fixity/u.sml", "structure U = struct fun first (x ::: _) = x | first E = 0 end"),
+       ("fixity/plain.build", "p.sml u.sml"),
+       ("fixity/prelude.build", "annotate \"prelude\" in p.sml end\nu.sml"),
+       ("fixity/group.build", "annotate \"prelude\" in p.sml end\ngroup v.sml u.sml end"),
+       ("fixity/v.sml", "structure V = struct val v = U.first (1 ::: E) end"),
+       (* a library's own: strict, and told once *)
+       ("lib/lax/library.build", "exports (structure Lax)\nannotate \"demand\" in lax.sml end"),
+       ("lib/lax/lax.sml", "structure Lax = struct val v = 1 end\nval leaked = 2"),
+       ("lib/strict/library.build", "exports (structure Strict)\nstrict\nannotate \"demand\" in strict.sml end"),
+       ("lib/strict/strict.sml", "structure Strict = struct val v = 1 end\nval leaked = 2"),
+       ("lib/fine/library.build", "exports (structure Fine)\nstrict\nannotate \"always\" in ops.sml end\nannotate \"demand\" in fine.sml end\nannotate \"final\" in last.sml end"),
+       ("lib/fine/ops.sml", "infix 5 <+>\nfun a <+> b = a + b"),
+       ("lib/fine/fine.sml", "structure Fine = struct val v = 1 <+> 2 end"),
+       ("lib/fine/last.sml", "val () = ()\nval checked = Fine.v"),
        ("entry/main.sml", "val () = print (Int.toString B.y ^ \"\\n\")"),
        ("entry/lib/a.sml", "structure A = struct val x = 40 end"),
        ("entry/lib/b.sml", "structure B = struct val y = A.x + 2 end"),
        ("entry/lib/u.sml", "structure U = struct val nothing = () end"),
        ("entry/lib/z.sml", "structure Z = struct end\nval zero = 0"),
-       ("entry/needs-z.sml", "structure Use = Z")])
+       ("entry/needs-z.sml", "structure Use = Z")];
+     Posix.FileSys.symlink {old = fromRoot "lib/basis", new = #directory c ^ "/lib/basis"})
+  (* a command that succeeds, with its output and the warnings that begin so *)
+  fun warned (r : result) expected (warnings : string list) =
+    (success r;
+     need (#output r = expected, "expected output " ^ String.toString expected ^ ", got " ^ String.toString (#output r));
+     need (List.length (lines (#errors r)) = List.length warnings
+           andalso ListPair.all (fn (line, w) => String.isPrefix w line) (lines (#errors r), warnings),
+           "expected the warnings " ^ String.concatWith " | " warnings ^ ", got " ^ #errors r))
   fun deps c which () =
     case which of
       "order" => output (compiler c which "order" ["--deps", "c.sml", "b.sml", "a.sml"]) "a.sml\nb.sml\nc.sml\n"
@@ -56,9 +90,42 @@ struct
                in success r; need (String.isSubstring "\"c.sml\" -> \"b.sml\"" (#output r)
                          andalso String.isSubstring "\"b.sml\" -> \"a.sml\"" (#output r), "incorrect dependency graph") end
     | "cycle" => refused (compiler c which "cycle" ["--deps", "x.sml", "y.sml"]) "a cycle: x.sml -> y.sml -> x.sml"
-    | "duplicate" => refused (compiler c which "twice" ["--deps", "p.sml", "q.sml"]) "structure P is declared by p.sml and by q.sml"
-    | "discipline" => refused (compiler c which "broken" ["--deps", "m.sml"])
-          "m.sml:2:1: error: a file of a group declares modules and type abbreviations only, and this is a value"
+    | "duplicate" =>
+        warned (compiler c which "twice" ["--deps", "p.sml", "q.sml", "r.sml"]) "p.sml\nq.sml\nr.sml\n"
+          ["q.sml:1:1: warning: this unit is not well-formed, and others depend on it: this is structure P, which p.sml declares too"]
+    | "duplicate-unused" => output (compiler c which "twice" ["--deps", "p.sml", "q.sml"]) "p.sml\nq.sml\n"
+    | "discipline" =>
+        warned (compiler c which "broken" ["--deps", "m.sml", "n.sml"]) "m.sml\nn.sml\n"
+          ["m.sml:2:1: warning: this unit is not well-formed, and others depend on it: this is a value (docs/units.md, Well-formed units)"]
+    | "entry-unit" =>
+        (output (compiler c which "broken" ["--deps", "m.sml"]) "m.sml\n";
+         (* nothing after it names what it binds *)
+         output (compiler c (which ^ "-after") "broken" ["--deps", "n.sml", "m.sml"]) "n.sml\nm.sml\n")
+    | "quiet" => output (compiler c which "broken" ["--deps", "--no-warnings", "m.sml", "n.sml"]) "m.sml\nn.sml\n"
+    | "stays" =>
+        warned (compiler c which "stays" ["--deps", "c.sml", "m.sml", "b.sml", "a.sml"]) "c.sml\nm.sml\na.sml\nb.sml\n"
+          ["m.sml:1:1: warning: this unit is not well-formed"]
+    | "relaxed" => output (compiler c which "relaxed" ["--deps", "r0.sml", "r1.sml"]) "r1.sml\nr0.sml\n"
+    | "fixity" =>
+        warned (compiler c which "fixity" ["--deps", "p.sml", "u.sml"]) "p.sml\nu.sml\n"
+          ["p.sml:1:1: warning: this unit is not well-formed, and others depend on it: this is a fixity directive",
+           "p.sml:2:1: warning: this unit is not well-formed, and others depend on it: this is a datatype"]
+    | "fixity-build" => warned (compiler c which "fixity" ["--deps", "--build", "plain.build"]) "p.sml\nu.sml\n"
+                               ["p.sml:1:1: warning: this unit is not well-formed", "p.sml:2:1: warning: this unit is not well-formed"]
+    | "prelude" => output (compiler c which "fixity" ["--deps", "--build", "prelude.build"]) "p.sml\nu.sml\n"
+    | "prelude-group" =>
+        let val r = compiler c which "fixity" ["--build", "group.build", "--typecheck-only", "--no-cache"]
+        in success r; need (#errors r = "", "a group after a prelude: " ^ #errors r) end
+    | "library-warned" =>
+        let val r = compiler c which "" ["--lib", "lib", "--basis-index", "lib/lax"]
+        in success r;
+           need (lines (#errors r) = ["lib/lax/library.build: warning: this library has a unit that is not well-formed, at lib/lax/lax.sml:2:1, which is a value (docs/units.md, Well-formed units)"],
+                 "a library told once: " ^ #errors r)
+        end
+    | "library-strict" =>
+        refused (compiler c which "" ["--lib", "lib", "--basis-index", "lib/strict"])
+          "lib/strict/library.build: a strict library's units are well-formed, and one is not"
+    | "library-strict-classes" => output (compiler c which "" ["--lib", "lib", "--basis-index", "lib/fine"]) ""
     | "entry" =>
         let val target = #directory c ^ "/entry/p.rbc"
             val () = rmTree target
@@ -69,9 +136,11 @@ struct
             val () = need (compiled = ["lib/a.sml", "lib/b.sml", "main.sml"], "incorrect entry-point dependency closure")
         in output (program c "entry-run" "entry" ["p.rbc"]) "42\n" end
     | "broken-required-file" => refused (compiler c which "entry" ["-I", "lib", "needs-z.sml", "-o", "z.rbc"])
-          "lib/z.sml declares a module needs-z.sml names, and breaks the discipline"
+          "lib/z.sml declares a module needs-z.sml names, and is not well-formed"
     | _ => raise Failed "unknown dependency scenario"
-  val depsCases = ["order", "dot", "cycle", "duplicate", "discipline", "entry", "broken-required-file"]
+  val depsCases = ["order", "dot", "cycle", "duplicate", "duplicate-unused", "discipline", "entry-unit", "quiet", "stays",
+                   "relaxed", "fixity", "fixity-build", "prelude", "prelude-group", "library-warned", "library-strict",
+                   "library-strict-classes", "entry", "broken-required-file"]
   val factorial = "265252859812191058636308480000000\n~2\n16158687986375067893760000\nequal\n"
   fun buildPrepare c () =
     let val () = reset c
@@ -87,6 +156,10 @@ struct
            ("library-hidden.build", "library (structure B) = a.sml b.sml end uses-a.sml"),
            ("main-mod.sml", "structure M = struct val z = B.y end"),
            ("group.build", "group main-mod.sml b.sml a.sml end main.sml"),
+           (* a group whose unit is not well-formed keeps it where it is written *)
+           ("gm.sml", "structure GM = struct end\nval top = 40"),
+           ("gn.sml", "val () = print (Int.toString (top + 2) ^ \"\\n\")"),
+           ("group-wf.build", "group gm.sml gn.sml end"),
            ("counted.sml", "structure C = struct val () = print \"once\\n\" val c = 1 end"),
            ("lib/counted.build", "counted.sml"),
            ("use-twice.build", "use lib/counted.build use lib/counted.build use-c.sml"),
@@ -168,7 +241,15 @@ struct
            (* a file that does not parse under the initial basis's fixity keeps its tokens as its mentions *)
            ("select/fix.sml", "infix 5 ++\ndatatype t = ++ of int * int"),
            ("select/needs-fix.sml", "fun f (a ++ b) = E.v + a + b\nval () = print (Int.toString (f (1 ++ 2)) ^ \"\\n\")"),
-           ("select/fix.build", "libraries m end\nfix.sml\nneeds-fix.sml")]
+           ("select/fix.build", "libraries m end\nfix.sml\nneeds-fix.sml"),
+           (* nor one that parses in the fixity of the file before it: a label is no use *)
+           ("select/fix-label.sml", "fun f (a ++ b) = a + b\nval _ = {E = 1}\nval () = print (Int.toString (f (1 ++ 2)) ^ \"\\n\")"),
+           ("select/fix-label.build", "libraries m end\nfix.sml\nfix-label.sml"),
+           (* but one whose fixity a library with no header gives is read by its tokens *)
+           ("select/lib/ops/library.build", "annotate \"always\" in ops.sml end"),
+           ("select/lib/ops/ops.sml", "infix 5 +++\ndatatype t = +++ of int * int"),
+           ("select/ops-label.sml", "fun f (a +++ b) = a + b\nval _ = {E = 1}\nval () = print (Int.toString (f (1 +++ 2)) ^ \"\\n\")"),
+           ("select/ops-label.build", "libraries m ops end\nops-label.sml")]
         val dir = #directory c
         fun copy source destination = write (destination, read source)
         val () = copy (dir ^ "/counted.sml") (dir ^ "/lib/counted.sml")
@@ -181,6 +262,7 @@ struct
         val () = put c "bigint/two.build" "bigint_sig.sml implements BigInt = intinf.sml end implements BigInt = digits.sml end bigint.sml main.sml"
         val () = Posix.FileSys.symlink {old = fromRoot "lib/basis", new = dir ^ "/select/lib/basis"}
         val () = success (compiler c "select-index" "select" ["--lib", "lib", "--basis-index", "lib/m"])
+        val () = success (compiler c "select-index-ops" "select" ["--lib", "lib", "--no-warnings", "--basis-index", "lib/ops"])
     in () end
   fun builds c label source flags expected =
     let val target = #directory c ^ "/" ^ source ^ ".rbc"
@@ -200,6 +282,13 @@ struct
     | "library" => builds c which "library" [] "42\n"
     | "library-hidden" => buildRefused c which "unbound variable or constructor: A.x"
     | "group" => builds c which "group" [] "42\n"
+    | "group-not-well-formed" =>
+        let val r = compiler c which "" ["--build", "group-wf.build", "--no-cache", "-o", "group-wf.rbc"]
+        in success r;
+           need (lines (#errors r) = ["group-wf.build: warning: a group of this build has a unit that is not well-formed, at gm.sml:2:1, which is a value (docs/units.md, Well-formed units)"],
+                 "a group told once: " ^ #errors r);
+           output (program c (which ^ "-run") "" ["group-wf.rbc"]) "42\n"
+        end
     | "use-twice" => builds c which "use-twice" [] "once\n1\n"
     | "prim" => buildRefused c which "_prim"
     | "prim-allowed" => builds c which "prim-allowed" [] "42\n"
@@ -267,8 +356,11 @@ struct
           selected "bb" ["--no-cache", "--build", "b.build"] [] "2\n";
           (* a name used is *)
           selected "uses" library ["uses.sml"] "(initialiser of E ran)\n5\n";
-          (* a file that does not parse under the initial fixity, by its tokens *)
-          selected "fix" ["--no-cache", "--build", "fix.build"] [] "(initialiser of E ran)\n8\n"
+          (* a file that needs the fixity of the file before it is read in it *)
+          selected "fix" ["--no-cache", "--build", "fix.build"] [] "(initialiser of E ran)\n8\n";
+          selected "fix-label" ["--no-cache", "--build", "fix-label.build"] [] "3\n";
+          (* and one that needs what a library with no header leaves, by its tokens *)
+          selected "ops-label" ["--no-cache", "--build", "ops-label.build"] [] "(initialiser of E ran)\n3\n"
         end
     | "install-no-basis" =>
         let val dir = #directory c ^ "/installroot"
@@ -323,7 +415,7 @@ struct
     | "bad" => buildRefused c "bad" "unexpected end of the file"
     | "self" => buildRefused c "self" "uses itself"
     | _ => raise Failed "unknown buildfile scenario"
-  val buildCases = ["list", "local", "local-hidden", "library", "library-hidden", "group", "use-twice", "prim", "prim-allowed",
+  val buildCases = ["list", "local", "local-hidden", "library", "library-hidden", "group", "group-not-well-formed", "use-twice", "prim", "prim-allowed",
                     "path-variable", "missing-variable", "path-variable-nested", "build-list", "build-list-closure", "unknown-annotation",
                     "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-diamond", "use-diamond-hidden", "use-first-open", "use-inside-boundary",
                     "use-sibling-boundary", "use-after-local", "use-inside-local", "use-after-implements", "export-nothing",

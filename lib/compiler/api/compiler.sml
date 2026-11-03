@@ -161,11 +161,12 @@ struct
           fun build path =
             let val source=load (Source.Ascii,path)
             in {text= #text source,revision=Pickle.hash ("ascii:" ^ #text source)} end
-          fun syntax (mode,path) =
+          (* a source the plan reads, in the fixity its place gives it *)
+          fun syntax (mode,path,fixity) =
             let val source=load (mode,path)
                 val revision=Pickle.hash (Source.modeName mode ^ ":" ^ #text source)
                 val ()=sourceInputs:={file=path,text= #text source,mode=Source.modeName mode,kind="source",revision=revision} :: !sourceInputs
-            in #1 (Parser.parseTokensWith (Lexer.tokenize source,Fixity.initial)) end
+            in Parser.parseTokensWith (Lexer.tokenize source,fixity) end
           val plan=P.plan {file=file,defaultMode=mode,windows=windows,readBuild=build,syntax=syntax}
           val inputs=List.map (fn {path,text,revision} =>
             {file=path,text=text,revision=revision,mode="ascii",kind="build"}) (#inputs plan) @ List.rev (!sourceInputs)

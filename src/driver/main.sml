@@ -249,45 +249,43 @@ struct
 
   (* ---- the graph (Deps; the incremental roadmap's M8) ---- *)
 
-  (* a file's syntax, for the names it declares and uses: the fixity of the
-     initial basis, as a file of a group's has no other (D15) *)
-  fun syntaxOf (mode : Source.mode, path : string) : Ast.program =
-    #1 (Parser.parseTokensWith (loadTokens (mode, path), Fixity.initial))
+  (* a file's syntax, for the names it declares and uses, in a fixity *)
+  fun syntaxIn (mode : Source.mode, path : string, fx : Fixity.env) : Ast.program * Fixity.env =
+    Parser.parseTokensWith (loadTokens (mode, path), fx)
+  (* in the initial basis's, for a file of no known place *)
+  fun syntaxOf (mode : Source.mode, path : string) : Ast.program = #1 (syntaxIn (mode, path, Fixity.initial))
 
-  (* where a file breaks the discipline, as errors *)
-  fun breaksOf (f : Deps.file) : string list =
-    List.map (fn (sp, what) => Error.format (sp, "a file of a group declares modules and type abbreviations only, and this is " ^ what))
-             (#breaks f)
+  (* the files given, each read in the fixity those before it leave, as a
+     compile reads them *)
+  fun analysedInOrder (analyse : string * Ast.program -> Deps.file) (paths : string list) : Deps.file list =
+    List.rev (#1 (List.foldl (fn (p, (acc, fx)) =>
+                                let val (prog, fx') = syntaxIn (inputMode p, p, fx)
+                                in (analyse (p, prog) :: acc, fx') end)
+                             ([], Fixity.initial) paths))
 
-  (* --deps, --deps-dot: the inputs in an order the modules they declare and
-     use give, or as the graph *)
-  fun depsCommand () : OS.Process.status =
-    if !Options.depsUses then
-      (* the names, whatever they are of: what a MANIFEST's requires
-         column is made of (scripts/gen-basis-sigs.sh) *)
-      let
-        val names = List.foldl (fn (p, m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
-                                                        (#uses (Deps.analyse (p, syntaxOf (inputMode p, p)))))
-                               StringMap.empty (!Options.inputs)
-      in List.app println (StringMap.listKeys names); OS.Process.success end
-    else
-    let
-      val files = List.map (fn p => Deps.analyse (p, syntaxOf (inputMode p, p))) (!Options.inputs)
-      val broken = List.concat (List.map breaksOf files)
-    in
-      if not (List.null broken) then (List.app eprintln broken; OS.Process.failure)
-      else
-        (let val (ordered, edges) = Deps.order files
-         in
-           if !Options.depsDot then print (Deps.dot edges) else List.app (fn (f : Deps.file) => println (#path f)) ordered;
-           OS.Process.success
-         end)
-        handle Deps.Graph msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
-    end
+  (* where a build breaks the rules, for those who asked *)
+  fun warnIllFormed (findings : (Source.span * string) list) : unit =
+    if !Options.noWarnings then ()
+    else (List.app (fn (sp, what) => Error.warn (sp, Deps.notWellFormed what)) findings; Error.flushWarnings ())
+
+  (* the same in a line, for those who did not (docs/units.md, Well-formed
+     units): a build file or a library's, what it holds, and the first *)
+  fun warnIllFormedOnce (file : string, holder : string, findings : (Source.span * string) list) : unit =
+    case findings of
+      [] => ()
+    | (sp, what) :: rest =>
+        if !Options.noWarnings then ()
+        else
+          (Error.warn ({file = file, start = 0, stop = 0},
+                       holder ^ (if List.null rest then " has a unit that is not well-formed, at "
+                                 else " has " ^ Int.toString (1 + List.length rest) ^ " units that are not well-formed, the first at ")
+                       ^ Source.describe sp ^ ", which is " ^ what ^ " (docs/units.md, Well-formed units)");
+           Error.flushWarnings ())
 
   (* -I DIR: the one input an entry point, and before it the files of its
      directory and of each DIR that it needs, in the graph's order. A file
-     that breaks the discipline cannot be ordered, and is none of them *)
+     that is not well-formed has no place there, with no written order to
+     keep it, and is none of them *)
   fun entryFiles (main : string) : string list =
     let
       fun smlFiles d =
@@ -309,8 +307,8 @@ struct
       val () =
         List.app (fn (f : Deps.file) =>
                     if List.exists (fn d => List.exists (fn u => u = d) (#uses program)) (#declares f)
-                    then eprintln ("rune: " ^ #path f ^ " declares a module " ^ main ^ " names, and breaks the discipline: "
-                                   ^ hd (breaksOf f))
+                    then eprintln ("rune: " ^ #path f ^ " declares a module " ^ main ^ " names, and is not well-formed: "
+                                   ^ Error.format (hd (#breaks f)))
                     else ())
                  broken
     in
@@ -359,10 +357,54 @@ struct
       fun read path =
         let val text=readText path handle IO.Io _ => raise CompilerProject.Invalid ("cannot read the build file " ^ path)
         in {text=text,revision=Pickle.hash text} end
-      val plan=CompilerProject.plan {file=file,defaultMode= !Options.sourceMode,windows=windows,readBuild=read,syntax=syntaxOf}
+      val plan=CompilerProject.plan {file=file,defaultMode= !Options.sourceMode,windows=windows,readBuild=read,syntax=syntaxIn}
         handle CompilerProject.Invalid message => raise Options.Usage message
     in plan end
   fun planOf file = let val plan=projectOf file in (#steps plan,#caches plan) end
+
+  (* --deps --build: what the build compiles, in its order, and where it
+     breaks the rules *)
+  fun depsOfBuild (file : string) : Deps.file list =
+    let
+      val () = findWorkspace file
+      val project = projectOf file
+      val imported = List.concat (List.map BasisManifest.fixities (BasisManifest.libraries (libRoot (), #libraries project)))
+                     handle BasisManifest.Usage why => raise Options.Usage why
+      val layout = CompilerProject.layout {steps = #steps project, defaultMode = !Options.sourceMode,
+                                           library = OS.Path.file file = "library.build", syntax = syntaxIn,
+                                           fixity = Fixity.extend (Fixity.initial, imported)}
+      val () = warnIllFormed (Deps.illFormed layout)
+      fun filesIn (Deps.Unit (f, _)) = [Deps.declared f]
+        | filesIn (Deps.Scope ls) = List.concat (List.map filesIn ls)
+    in List.concat (List.map filesIn layout) end
+
+  (* --deps, --deps-dot: the inputs in an order the modules they declare and
+     use give, or as the graph; with --build, the build's order, which a
+     build file writes *)
+  fun depsCommand () : OS.Process.status =
+    if !Options.depsUses then
+      (* the names, whatever they are of: what a MANIFEST's requires
+         column is made of (scripts/gen-basis-sigs.sh) *)
+      let
+        val names = List.foldl (fn (f : Deps.file, m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m (#uses f))
+                               StringMap.empty (analysedInOrder Deps.analyse (!Options.inputs))
+      in List.app println (StringMap.listKeys names); OS.Process.success end
+    else
+    let
+      val files =
+        case !Options.build of
+          SOME file => depsOfBuild file
+        | NONE =>
+            let val files = analysedInOrder Deps.analyseUnit (!Options.inputs)
+            in warnIllFormed (Deps.illFormed (List.map (fn f => Deps.Unit (f, NONE)) files)); files end
+    in
+      (let val (ordered, edges) = Deps.order files
+       in
+         if !Options.depsDot then print (Deps.dot edges) else List.app (fn (f : Deps.file) => println (#path f)) ordered;
+         OS.Process.success
+       end)
+      handle Deps.Graph msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
+    end
 
   (* a library's directory as a message names it: by where it is in the
      libraries, wherever those are *)
@@ -482,6 +524,16 @@ struct
                       in ((p, anns, Deps.analyse (p, prog)) :: acc, fx') end)
                    ([], Fixity.extend (Fixity.initial, imported)) listed
       val analysed = List.rev analysedRev
+      (* the rules (docs/units.md, Well-formed units): a strict library is held
+         to them, and another is told of them once *)
+      val () =
+        case (Deps.illFormed (List.map (fn (_, anns, f) => Deps.unitOf (true, anns, f)) analysed), !header) of
+          ([], _) => ()
+        | (findings, SOME {strict = true, ...}) =>
+            (List.app (fn (sp, what) => eprintln (Error.format (sp, Deps.notWellFormed what))) findings;
+             raise Options.Usage (file ^ ": a strict library's units are well-formed, and "
+                                  ^ (case findings of [_] => "one is not" | _ => Int.toString (List.length findings) ^ " are not")))
+        | (findings, _) => warnIllFormedOnce (file, "this library", findings)
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       val providers = List.foldl (fn ((_, _, f : Deps.file), m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
                                                                                (#declares f))
@@ -586,13 +638,18 @@ struct
 
   (* What a file of the program names of the libraries: the names it uses
      (Deps), and not every identifier, or alpha-renaming a bound variable
-     could change what links and what runs (D7). A file that does not parse
-     under the initial basis's fixity, which a file may not be read in, has
-     no syntax until the compile's own parse: its tokens. *)
-  fun usedBy (path : string, toks : Lexer.item vector, names : names) : names =
-    let val f = Deps.analyse (path, #1 (Parser.parseTokensWith (toks, Fixity.initial)))
-    in BasisManifest.boundaryNames (toks, List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) names (#free f)) end
-    handle Error.CompileError _ => namesOf (toks, names)
+     could change what links and what runs (D7). A file is read in the
+     fixity the files before it leave, as the compile reads it, from what the
+     libraries export: a prelude's, and any other's, which the graph knows
+     (docs/units.md, Well-formed units). One that does not parse in it has no
+     syntax until the compile's own parse, which says why: a syntax error, or
+     a fixity of a library with no header, which no manifest holds. Its
+     tokens, then. *)
+  fun usedBy (path : string, toks : Lexer.item vector, (names : names, fx : Fixity.env)) : names * Fixity.env =
+    let val (prog, fx') = Parser.parseTokensWith (toks, fx)
+        val f = Deps.analyse (path, prog)
+    in (BasisManifest.boundaryNames (toks, List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) names (#free f)), fx') end
+    handle Error.CompileError _ => (namesOf (toks, names), fx)
 
   (* What the files of a program name of the libraries that provide names to
      mention (entries). A name a file uses is one of its tokens, so a file none
@@ -600,24 +657,30 @@ struct
      mention cannot change the selection, and is not parsed: in a large
      program most are not, which is most of what this costs a warm build. A
      small program is parsed: the table of the names costs more than that. *)
-  fun usedByAll (scopes : BasisManifest.scopes, entries : entry list, inputs : string list, toks : Lexer.item vector list) : names =
+  fun usedByAll (scopes : BasisManifest.scopes, entries : entry list, inputs : string list, toks : Lexer.item vector list,
+                 fixity : Fixity.env) : names =
     if List.foldl (fn (t, n) => n + Vector.length t) 0 toks < 4096
-    then ListPair.foldl usedBy StringMap.empty (inputs, toks)
+    then #1 (ListPair.foldl usedBy (StringMap.empty, fixity) (inputs, toks))
     else
         let
           val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.forProgram (scopes, e)))
                                     StringMap.empty entries
           fun usable names n = StringMap.member (provided, n) andalso not (StringMap.member (names, n))
+          (* a file that may direct a fixity is read for it, whatever it names *)
           fun anything names =
             fn (Token.ID s, _) => usable names s
              | (Token.LONGID (s :: _, _), _) => usable names s
              | (Token.DYNAMIC, _) => usable names "RuneDynamic"
              | (Token.EXPORT, _) => usable names "RuneDynamic"
              | (Token.VIRTUAL, _) => usable names "RuneDynamic"
+             | (Token.INFIX, _) => true
+             | (Token.INFIXR, _) => true
+             | (Token.NONFIX, _) => true
              | _ => false
         in
-          ListPair.foldl (fn (path, tokens, names) => if Vector.exists (anything names) tokens then usedBy (path, tokens, names) else names)
-                         StringMap.empty (inputs, toks)
+          #1 (ListPair.foldl (fn (path, tokens, state as (names, _)) =>
+                                if Vector.exists (anything names) tokens then usedBy (path, tokens, state) else state)
+                             (StringMap.empty, fixity) (inputs, toks))
         end
 
   fun compile () : OS.Process.status =
@@ -646,6 +709,9 @@ struct
                         isLibrary=fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir=dir,file="library.build"},[])
                                             handle OS.SysErr _ => false});
                    Error.flushWarnings ())
+                (* a group whose order fell back where a unit is not well-formed *)
+                val ()=if !knownToLoad then () else
+                  List.app (fn (build,findings) => warnIllFormedOnce (build,"a group of this build",findings)) (#illFormed project)
                 val ()=Options.libraries:=List.foldl (fn (library,all) =>
                   if List.exists (fn present => present=library) all then all else all @ [library])
                   (!Options.libraries) (#libraries project)
@@ -731,7 +797,10 @@ struct
               else
                 (List.app (warnClash (getOpt (!Options.build, hd inputs))) (BasisManifest.clashes (#program scopes, entries, libDir ()));
                  Error.flushWarnings ())
-            val mentioned = usedByAll (scopes, entries, inputs, userToks)
+            (* the fixity a program's files are read in: the initial basis's,
+               and what the libraries it sees export (docs/build.md) *)
+            val imported = List.concat (List.map (fn (dir, _) => BasisManifest.fixities dir) libraries)
+            val mentioned = usedByAll (scopes, entries, inputs, userToks, Fixity.extend (Fixity.initial, imported))
             val () = namesLoading := List.exists BasisManifest.namesLoading userToks
             (* A library beside the basis library sees the basis library as a
                program does, through its seals: what the chosen files of the

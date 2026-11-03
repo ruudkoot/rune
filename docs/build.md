@@ -23,7 +23,8 @@ build    ::= dec ...
 dec      ::= path                            a file, compiled in the basis before it
            | "files" path ... "end"          files, in the order given
            | "group" path ... "end"          files, in the order the modules they
-                                             declare and use give (docs/units.md, The graph)
+                                             declare and use give (docs/units.md, The graph);
+                                             one that is not well-formed stays where it is
            | "local" dec ... "in" dec ... "end"
                                              the second part sees the first; what
                                              follows sees the second part only
@@ -46,7 +47,8 @@ dec      ::= path                            a file, compiled in the basis befor
 header   ::= ( "requires" name ... "end"      what a library's build file says
              | "exports" exports              first (A library's header, below)
              | "friends" path ... "end"
-             | "view" id exports ) ...
+             | "view" id exports
+             | "strict" ) ...
 exports  ::= "(" export "," ... ")"          export ::= kind id
 kind     ::= "structure" | "signature" | "functor" | "type" | "fixity"
 path     ::= a file's path, relative to the build file's directory, in which
@@ -151,6 +153,7 @@ but through the names it gives.
 |---|---|
 | `allowPrim` | the units may use `_prim` and `_overload` (the Basis Library's) |
 | `noWarnings` | their warnings are not printed |
+| `prelude` | the units define the language for what follows: what they leave, a fixity among it, is everyone's after them, and they need not be well-formed ([units.md](units.md), *Well-formed units*) |
 | `ascii`, `unicode` (or `unicode=utf8`), `unicode=latin1` | the mode the units are read in, over the command line's `--unicode[=ENC]`; the last such annotation in force wins ([units.md](units.md), *Source modes*) |
 
 An annotation that is none of these, or of a library's below, is an error.
@@ -200,8 +203,9 @@ it, which nobody wrote and whose generator cannot be told otherwise yet.
 
 The compiler library's `RuneCompiler.Project` API uses this same scoped
 planner. It can discover ordered files without parsing their programs;
-`group` uses the compiler's dependency discipline and records the source
-inputs needed to determine its order. Windows project resolution handles
+`group` orders by the rules of a well-formed unit, its files read in the
+fixity the preludes before it leave, and records the source inputs needed
+to determine its order. Windows project resolution handles
 absolute drive and UNC paths explicitly, including expanded path variables.
 
 Levels per unit (`O0` ... `O2`) are not built: a build has the level of
@@ -249,6 +253,10 @@ end
 
 Its parts come in any order, each once but for `view`, and `exports` is the
 one a header must have. A `use`d build file and a program have no header.
+`strict` holds the library's units to the rules of a well-formed unit:
+`--basis-index` refuses one that breaks them, where another library is warned of
+it once ([units.md](units.md), *Well-formed units*). An `always` file is a
+prelude and a `final` file an entry unit, which they need not keep.
 `requires` is what a program's build calls `libraries`; a library with a
 header does not write `libraries`.
 
