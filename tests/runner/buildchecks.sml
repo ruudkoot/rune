@@ -285,6 +285,186 @@ struct
       if !failed = 0 then say ("plan-round-trip: OK (" ^ Int.toString (length all) ^ " build files)\n") else ()
     end
 
+  (* The plans the other SML systems read their lists from (docs/building.md,
+     How a host gets its list; the build-system roadmap's M11): each plan
+     committed at the top is what the compiler prints of its build, byte for
+     byte, so that a plan edited by hand, or one a build file has changed
+     since, is caught; and what a host reads of it is what --build-list
+     gives. *)
+  fun plans () =
+    let
+      val dir = run ^ "/plans"
+      val () = (rmTree dir; mkdirs dir)
+      val rune = fromRoot (env ("RUNE", "bin/rune"))
+      fun invoke label args =
+        let val output = dir ^ "/" ^ label ^ ".out"
+            val errors = dir ^ "/" ^ label ^ ".err"
+            val status = exec {cmd = args, dir = SOME root, stdin = "", stdout = output, stderr = errors, timeout = 120}
+        in (status, read output, read errors) end
+      val committed = sort (List.filter (String.isSuffix ".plan") (entries root))
+      val () = List.app (fn p => if List.exists (fn c => c = p) committed then () else say ("FAIL plans: no " ^ p ^ "\n"))
+                 ["rune.plan", "runedoc.plan", "runeopt.plan", "runeisa.plan", "runeffi.plan"]
+      (* what is wrong with TEXT as the plan of BUILD *)
+      fun wrong (label, build, text) =
+        let val (status, printed, errors) = invoke label [rune, "--plan", build]
+        in if status <> 0 then SOME ("no plan of " ^ build ^ ": " ^ errors)
+           else if printed <> text then SOME ("not what rune --plan " ^ build ^ " prints; `make plans` prints it again")
+           else NONE end
+      fun one plan =
+        let
+          val build = String.substring (plan, 0, size plan - size ".plan") ^ ".build"
+          val () = case wrong (plan, build, read (fromRoot plan)) of
+                     NONE => () | SOME why => say ("FAIL plans: " ^ plan ^ ": " ^ why ^ "\n")
+          val (hosted, listed, errors) = invoke (plan ^ "-host") ["sh", fromRoot "scripts/plan-files.sh", plan]
+          val (status, compiled, _) = invoke (plan ^ "-list") [rune, "--build-list", build]
+        in
+          if hosted = 0 andalso status = 0 andalso listed = compiled then ()
+          else say ("FAIL plans: what a host reads of " ^ plan ^ " is not what rune --build-list " ^ build ^ " gives " ^ errors ^ "\n")
+        end
+      val () = List.app one committed
+      (* the check catches a hand edit: a unit taken out of rune.plan *)
+      val text = read (fromRoot "rune.plan")
+      val edited = String.concatWith "\n" (List.filter (fn l => not (String.isSubstring "/pickle.sml " l)) (String.fields (fn c => c = #"\n") text))
+    in
+      if edited <> text andalso isSome (wrong ("hand-edit", "rune.build", edited)) then
+        say ("plans: " ^ Int.toString (length committed) ^ " plans as the compiler prints them\n")
+      else say "FAIL plans: a hand edit of rune.plan was not caught\n"
+    end
+
+  (* The compiler's identity (docs/building.md, How a host gets its list; the
+     build-system roadmap's D14 and M11), in a tree of the test's own in which
+     rune.build reaches lib/unicode, lib/json and lib/digest through
+     `libraries`, as E12 had it. An edit of lib/unicode gives another identity,
+     and compiler B, so edited, takes none of compiler A's entries: it prints
+     234 for U+00E9, as it does with no cache, where with the identity of the
+     awk's list, which lost the libraries, it took A's and printed 233. Two
+     makes with no edit give one identity, though the closure holds the file
+     that holds it; and a plan that a build file has changed since is refused.
+     A second compiler, on a toy, has its own identity, over its own closure:
+     an edit of its own source changes its identity and not rune's, and it
+     takes none of its old self's entries. *)
+  fun identity () =
+    let
+      val dir = run ^ "/identity"
+      val tree = dir ^ "/tree"
+      val () = (rmTree dir; List.app (fn d => mkdirs (tree ^ "/" ^ d)) ["lib/unicode", "lib/compiler", "runtime", "toy"])
+      fun need (true, _) = () | need (false, message) = raise Fail ("identity: " ^ message)
+      (* what the test is about: said, and the test goes on *)
+      val failed = ref 0
+      fun check (true, _) = () | check (false, message) = (failed := !failed + 1; say ("FAIL identity: " ^ message ^ "\n"))
+      fun link path = Posix.FileSys.symlink {old = fromRoot path, new = tree ^ "/" ^ path}
+      (* the tree's own: its build files, lib/unicode/utf8.sml, which it
+         edits, and lib/compiler/config.sml, which gen-version.sh writes; the
+         rest is the checkout's, its scripts among them *)
+      val () = List.app link ["scripts", "src", "lib/basis", "lib/json", "lib/digest"]
+      val () = List.app (fn (d, own) => List.app (fn f => if f = own then () else link (d ^ "/" ^ f)) (entries (fromRoot d)))
+                 [("lib/unicode", "utf8.sml"), ("lib/compiler", "config.sml")]
+      val utf8 = read (fromRoot "lib/unicode/utf8.sml")
+      val () = write (tree ^ "/lib/unicode/utf8.sml", utf8)
+      val written = String.fields (fn c => c = #"\n") (read (fromRoot "rune.build"))
+      val through =
+        if List.exists (String.isPrefix "libraries ") written then written
+        else "libraries unicode json digest end" ::
+             List.filter (fn l => not (List.exists (fn p => String.isPrefix p l) ["  lib/unicode/", "  lib/json/", "  lib/digest/"])) written
+      val () = write (tree ^ "/rune.build", String.concatWith "\n" through)
+      val () = need (List.exists (fn l => l = "build/config.sml") through, "rune.build names build/config.sml on no line of its own")
+      val () = write (tree ^ "/toy.build", String.concatWith "\n"
+                        (List.concat (List.map (fn l => if l = "build/config.sml" then ["toy/config.sml", "toy/toy.sml"] else [l]) through)))
+      val toy = "structure Toy = struct val name = \"toy\" end\n"
+      val () = write (tree ^ "/toy/toy.sml", toy)
+      fun invoke (label, cmd) =
+        let val output = dir ^ "/" ^ label ^ ".out"
+            val errors = dir ^ "/" ^ label ^ ".err"
+            val status = execEnv (setEnv ("GIT_CEILING_DIRECTORIES", dir))
+                           {cmd = cmd, dir = SOME tree, stdin = "", stdout = output, stderr = errors, timeout = 900}
+        in (status, read output, read errors) end
+      fun rune (label, args) = invoke (label, [fromRoot (env ("RUNE", "bin/rune")), "--lib", tree ^ "/lib"] @ args)
+      fun planned name =
+        let val (status, text, errors) = rune (name ^ "-plan", ["--plan", name ^ ".build"])
+        in need (status = 0, "no plan of " ^ name ^ ".build: " ^ errors); write (tree ^ "/" ^ name ^ ".plan", text) end
+      fun generate (label, args) =
+        let val (status, _, errors) = invoke (label, ["sh", "scripts/gen-version.sh"] @ args)
+        in need (status = 0, "gen-version.sh " ^ String.concatWith " " args ^ ": " ^ errors) end
+      fun identityIn file =
+        case List.find (String.isPrefix "  val identity = ") (lines (read (tree ^ "/" ^ file))) of
+          SOME line => line | NONE => raise Fail ("identity: none in " ^ file)
+      fun compiler (name, build) =
+        let val (status, _, errors) = rune (name, ["--units", "--cache-dir", dir ^ "/building", "--build", build, "-o", dir ^ "/" ^ name ^ ".rbc"])
+        in need (status = 0, "compiler " ^ name ^ " is not built: " ^ errors) end
+      val program = dir ^ "/p.sml"
+      val () = write (program, "val () = print (Int.toString (WideChar.ord #\"\195\169\") ^ \"\\n\")\n")
+      (* what compiler NAME's program prints, compiled in units, with the
+         cache CACHE or none *)
+      fun prints (name, cache) =
+        let
+          val label = name ^ "-" ^ (case cache of SOME c => OS.Path.file c | NONE => "cold")
+          val (status, _, errors) =
+            invoke (label, [fromRoot "bin/runevm", dir ^ "/" ^ name ^ ".rbc", "--lib", tree ^ "/lib", "--unicode", "--units"]
+                           @ (case cache of SOME c => ["--cache-dir", c, "--explain-rebuild"] | NONE => ["--no-cache"])
+                           @ [program, "-o", dir ^ "/" ^ label ^ ".rbc"])
+          val () = need (status = 0, label ^ ": " ^ errors)
+          val (_, output, _) = invoke (label ^ "-run", [fromRoot "bin/runevm", dir ^ "/" ^ label ^ ".rbc"])
+        in output end
+      (* Utf8.decode, last, giving U+00EA for U+00E9 *)
+      val decode = "  val decode = fn a => case decode a of SOME (233, k) => SOME (234, k) | r => r\n"
+
+      (* E12 *)
+      val () = planned "rune"
+      val () = need (String.isSubstring "\nlibrary unicode lib/unicode\n" (read (tree ^ "/rune.plan")),
+                     "rune.build does not reach lib/unicode through libraries")
+      fun configs () = (read (tree ^ "/build/config.sml"), read (tree ^ "/lib/compiler/config.sml"))
+      val () = generate ("make-1", [])
+      val first = configs ()
+      val () = generate ("make-2", [])
+      val () = check (configs () = first, "two makes with no edit gave two identities")
+      val a = identityIn "build/config.sml"
+      val () = compiler ("A", "rune.build")
+      val body = Substring.string (Substring.dropr Char.isSpace (Substring.full utf8))
+      val () = need (String.isSuffix "\nend" body, "lib/unicode/utf8.sml does not end with its structure's end")
+      val () = write (tree ^ "/lib/unicode/utf8.sml", String.substring (body, 0, size body - 3) ^ decode ^ "end\n")
+      val () = generate ("make-B", [])
+      val () = check (identityIn "build/config.sml" <> a, "an edit of lib/unicode, reached through libraries, left the identity as it was")
+      val () = compiler ("B", "rune.build")
+      val shared = SOME (dir ^ "/cache")
+      val () = need (prints ("A", shared) = "233\n", "compiler A does not print 233")
+      val () = need (prints ("B", NONE) = "234\n", "compiler B with no cache does not print 234")
+      val () = check (prints ("B", shared) = "234\n", "compiler B took compiler A's entry: it prints 233, what A compiled, where it prints 234 with no cache")
+
+      (* a plan that a build file has changed since is refused, and nothing is written *)
+      val kept = configs ()
+      val runeBuild = read (tree ^ "/rune.build")
+      val () = write (tree ^ "/rune.build", runeBuild ^ "\n(* an edit *)\n")
+      val (status, _, errors) = invoke ("stale", ["sh", "scripts/gen-version.sh"])
+      val () = check (status <> 0 andalso String.isSubstring "rune.plan is stale" errors andalso String.isSubstring "make plans" errors,
+                      "a stale plan was not refused: " ^ errors)
+      val () = check (configs () = kept, "the identity of a stale plan was written")
+      val () = write (tree ^ "/rune.build", runeBuild)
+
+      (* a second compiler: Rune's driver with a source of its own,
+         toy/toy.sml, whose Config gen-version.sh --config writes *)
+      val () = write (tree ^ "/lib/unicode/utf8.sml", utf8)
+      val () = generate ("make-toy-A", [])
+      val () = check (identityIn "build/config.sml" = a, "lib/unicode as it was does not give the identity it gave")
+      val () = planned "toy"
+      val config = ["--config", "toy.plan", "toy/config.sml"]
+      val () = generate ("toy-1", config)
+      val t = identityIn "toy/config.sml"
+      val () = generate ("toy-2", config)
+      val () = check (identityIn "toy/config.sml" = t, "two makes of the toy with no edit gave two identities")
+      val () = check (t <> a, "the toy has rune's identity")
+      val () = compiler ("toyA", "toy.build")
+      val () = write (tree ^ "/toy/toy.sml", toy ^ "structure Utf8 = struct open Utf8\n" ^ decode ^ "end\n")
+      val () = generate ("toy-B", config)
+      val () = generate ("make-toy-B", [])
+      val () = check (identityIn "toy/config.sml" <> t, "an edit of the toy's own source left its identity as it was")
+      val () = check (identityIn "build/config.sml" = a, "an edit of the toy's own source changed rune's identity")
+      val () = compiler ("toyB", "toy.build")
+      val toys = SOME (dir ^ "/toy-cache")
+      val () = need (prints ("toyA", toys) = "233\n", "toy A does not print 233")
+      val () = need (prints ("toyB", NONE) = "234\n", "toy B with no cache does not print 234")
+      val () = check (prints ("toyB", toys) = "234\n", "toy B took toy A's entry: it prints 233, what A compiled, where it prints 234 with no cache")
+    in if !failed = 0 then say "identity: the closure's, one per compiler\n" else () end
+
   fun compilerApi () =
     let
       val dir=run ^ "/compiler-api"
@@ -363,6 +543,8 @@ struct
     | command ["build-library-exports"]=SOME libraryExports
     | command ["build-library-model"]=SOME LibraryModel.run'
     | command ["build-plan-round-trip"]=SOME planRoundTrip
+    | command ["build-plans"]=SOME plans
+    | command ["build-identity"]=SOME identity
     | command ["build-compiler-api"]=SOME compilerApi
     | command _=NONE
   val vm=Test.it "vm-refusals"
@@ -377,6 +559,11 @@ struct
        (job "library-model" ["build-library-model"] []),
      tagged ["check","test-build","covers:lib/compiler/*","covers:src/driver/*","covers:*.build"]
        (job "plan-round-trip" ["build-plan-round-trip"] []),
+     tagged ["check","quick","test-build","covers:*.build","covers:*.plan","covers:scripts/plan-files.sh","covers:lib/compiler/*"]
+       (job "plans" ["build-plans"] []),
+     tagged ["check","test-build","test-incremental","covers:*.build","covers:*.plan","covers:scripts/gen-version.sh",
+             "covers:scripts/plan-files.sh","covers:lib/compiler/*","covers:src/driver/*"]
+       (job "identity" ["build-identity"] []),
      tagged ["check","test-compiler-api","test-lib","covers:lib/compiler/*","covers:tests/compiler/api*.sml"]
        (job "compiler-api" ["build-compiler-api"] []),
      tagged ["check","test","test-low-level","covers:tests/compiler/*","covers:tests/runtime/*"]
