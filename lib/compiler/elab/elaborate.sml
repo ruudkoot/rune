@@ -2250,6 +2250,10 @@ struct
                    val _ = noteModule (freshFrom, n, !tyconCounter)
                    val fresh = noteModule (appliedNames, n, List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated)
                    val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) phi fresh
+                   (* the names made fresh as a compile makes them, with their
+                      constructors, layouts and realisations, which what
+                      names them reads *)
+                   val () = List.app (fn (c, c') => instance (phi, c, c')) fresh
                  in freshExceptions (realizeEnv (phi, result)) end
              in
                (* --pass-stats=elab: the match and the call are the application's *)
