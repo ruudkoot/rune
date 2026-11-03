@@ -81,7 +81,7 @@ struct
           let val source=case input of CompilerSession.Text source => source
                 | CompilerSession.Loaded a => #source a
                 | CompilerSession.MidInput {source,...} => source
-          in (source,BasisManifest.namesOf (Lexer.tokenize (Source.fromStringIn (#mode source,#file source,#text source)),mentioned)) end
+          in (source,CompilerPrelude.usedBy (#file source,Lexer.tokenize (Source.fromStringIn (#mode source,#file source,#text source)),mentioned)) end
         val inputs=List.map (fn input => #1 (source (input,StringMap.empty))) (!sources)
         val mentioned=List.foldl (fn (input,m) => #2 (source (input,m))) StringMap.empty (!sources)
         val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,mentioned=mentioned,building=NONE}

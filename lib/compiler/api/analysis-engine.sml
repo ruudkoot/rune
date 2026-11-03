@@ -219,7 +219,7 @@ struct
               val ()=observe "names-start" (#file source) (size(#text source))
               fun scan ()=let val (lexemes,_,_)=CompilerSyntax.lexical
                     {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
-                in BasisManifest.namesOf(CompilerSyntax.tokens lexemes (#file source),StringMap.empty) end
+                in CompilerPrelude.usedBy(#file source,CompilerSyntax.tokens lexemes (#file source),StringMap.empty) end
               val found=case StringMap.find(!savedNames,#file source) of SOME(mode,text,names)=>
                   if mode= #mode source andalso text= #text source then names else scan() | NONE=>scan()
               val ()=sourceNames:=StringMap.insert(!sourceNames,#file source,(#mode source,#text source,found))

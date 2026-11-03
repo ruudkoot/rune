@@ -14,7 +14,6 @@ struct
   datatype when = datatype BasisManifest.when
   type entry = BasisManifest.entry
   type names = BasisManifest.names
-  val namesOf = BasisManifest.namesOf
   val providers = BasisManifest.providers
   fun readManifest () = BasisManifest.readManifest (libDir ())
   (* what each scope of this compile sees (BasisManifest), which choosing its
@@ -30,17 +29,9 @@ struct
 
   fun inBasis (e : entry) : bool = #dir e = libDir ()
 
-  (* Manifest entries are already ordered by library dependency. Preserve
-     contiguous library groups so their private bases can be hidden. *)
-  fun entryGroups (entries : entry list) : entry list list =
-    let
-      fun take (_,[],acc) = (List.rev acc,[])
-        | take (dir,e :: rest,acc) =
-            if #dir (e : entry) = dir then take (dir,rest,e :: acc) else (List.rev acc,e :: rest)
-      fun groups [] = []
-        | groups (e :: rest) =
-            let val (group,rest) = take (#dir e,rest,[e]) in group :: groups rest end
-    in groups entries end
+  (* Manifest entries are already ordered by library dependency. Contiguous
+     library groups stay so, that their private bases can be hidden. *)
+  val entryGroups = CompilerPrelude.groups
 
   fun defaultOutput (first : string) : string =
     let
@@ -584,42 +575,6 @@ struct
       OS.Process.success
     end
 
-  (* What a file of the program names of the libraries: the names it uses
-     (Deps), and not every identifier, or alpha-renaming a bound variable
-     could change what links and what runs (D7). A file that does not parse
-     under the initial basis's fixity, which a file may not be read in, has
-     no syntax until the compile's own parse: its tokens. *)
-  fun usedBy (path : string, toks : Lexer.item vector, names : names) : names =
-    let val f = Deps.analyse (path, #1 (Parser.parseTokensWith (toks, Fixity.initial)))
-    in BasisManifest.boundaryNames (toks, List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) names (#free f)) end
-    handle Error.CompileError _ => namesOf (toks, names)
-
-  (* What the files of a program name of the libraries that provide names to
-     mention (entries). A name a file uses is one of its tokens, so a file none
-     of whose tokens is a name to mention that the files before it did not
-     mention cannot change the selection, and is not parsed: in a large
-     program most are not, which is most of what this costs a warm build. A
-     small program is parsed: the table of the names costs more than that. *)
-  fun usedByAll (scopes : BasisManifest.scopes, entries : entry list, inputs : string list, toks : Lexer.item vector list) : names =
-    if List.foldl (fn (t, n) => n + Vector.length t) 0 toks < 4096
-    then ListPair.foldl usedBy StringMap.empty (inputs, toks)
-    else
-        let
-          val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.forProgram (scopes, e)))
-                                    StringMap.empty entries
-          fun usable names n = StringMap.member (provided, n) andalso not (StringMap.member (names, n))
-          fun anything names =
-            fn (Token.ID s, _) => usable names s
-             | (Token.LONGID (s :: _, _), _) => usable names s
-             | (Token.DYNAMIC, _) => usable names "RuneDynamic"
-             | (Token.EXPORT, _) => usable names "RuneDynamic"
-             | (Token.VIRTUAL, _) => usable names "RuneDynamic"
-             | _ => false
-        in
-          ListPair.foldl (fn (path, tokens, names) => if Vector.exists (anything names) tokens then usedBy (path, tokens, names) else names)
-                         StringMap.empty (inputs, toks)
-        end
-
   fun compile () : OS.Process.status =
     let
       (* what a compile begins with that is not one of the compiler's roots,
@@ -719,11 +674,9 @@ struct
         if !Options.noPrelude then []
         else
           let
-            val libraries = libraryManifests ()
-            val entries = readManifest () @ List.concat (List.map #2 libraries)
-            val scopes = BasisManifest.scopes {root = libRoot (), building = !Options.build, names = !Options.libraries,
-                                               headed = false, libraries = libraries}
-                         handle BasisManifest.Usage why => raise Options.Usage why
+            val found = CompilerPrelude.candidates {root = libRoot (), libraries = !Options.libraries, building = !Options.build}
+                        handle BasisManifest.Usage why => raise Options.Usage why
+            val {entries, scopes, ...} = found
             val () = librariesScoped := scopes
             (* two imports of one name: an error once a rename can answer it *)
             val () =
@@ -731,23 +684,14 @@ struct
               else
                 (List.app (warnClash (getOpt (!Options.build, hd inputs))) (BasisManifest.clashes (#program scopes, entries, libDir ()));
                  Error.flushWarnings ())
-            val mentioned = usedByAll (scopes, entries, inputs, userToks)
+            val mentioned = CompilerPrelude.usedByAll (scopes, entries, inputs, userToks)
             val () = namesLoading := List.exists BasisManifest.namesLoading userToks
-            (* A library beside the basis library sees the basis library as a
-               program does, through its seals: what the chosen files of the
-               libraries name counts as mentioned, and the choice is made
-               again with it. *)
-            val chosenLibrary = List.filter (not o inBasis) (BasisManifest.select (scopes, entries, mentioned))
-            val mentioned =
-              List.foldl (fn (e, m) =>
-                            let val toks = loadTokens (Source.Ascii, BasisManifest.path e)
-                            in
-                              if BasisManifest.namesLoading toks then namesLoading := true else ();
-                              namesOf (toks, m)
-                            end) mentioned chosenLibrary
+            fun tokens (e : entry) =
+              let val toks = loadTokens (Source.Ascii, BasisManifest.path e)
+              in if BasisManifest.namesLoading toks then namesLoading := true else (); toks end
+            val selected = CompilerPrelude.choose (found, mentioned, tokens)
           in
-            if !Options.basisAll then entries
-            else BasisManifest.select (scopes, entries, mentioned)
+            if !Options.basisAll then entries else selected
           end) ()
     in
       if !Options.basisDeps

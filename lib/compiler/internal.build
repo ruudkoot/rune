@@ -43,4 +43,5 @@ files
   driver/project.sml
   driver/workspace.sml
   driver/context.sml
+  driver/prelude.sml
 end

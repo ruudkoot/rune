@@ -173,7 +173,7 @@ struct
             let val {file,text,mode}=sourceOf input
                 val source=Source.fromStringIn (mode,file,text)
                 val ()=Source.register source
-            in BasisManifest.namesOf (Lexer.tokenize source,known) end
+            in CompilerPrelude.usedBy (file,Lexer.tokenize source,known) end
           val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,
             mentioned=List.foldl mentioned StringMap.empty sources,building=NONE}
           type context={basis : LibraryScope.basis,fixity : Fixity.env,binders : string StringMap.map}

@@ -256,6 +256,19 @@ struct
       val ()=need (status=0 andalso output="PASS CLI unit import\n" andalso errors="","CLI unit import failed: " ^ output ^ errors)
       val (status,output,errors)=invoke "imported" [fromRoot "bin/runevm",dir ^ "/imported.rbc"]
       val ()=need (status=0 andalso output="42 imported\n" andalso errors="","imported program differs: " ^ output ^ errors)
+      (* selection by uses, through the API: a library that fails where a
+         selection takes it (tests/compiler/api-selection.sml) *)
+      val selection=dir ^ "/selection"
+      val ()=mkdirs (selection ^ "/m")
+      val ()=write (selection ^ "/m/library.build","annotate \"demand\" in e.sml end\n")
+      val ()=write (selection ^ "/m/e.sml","structure E = struct val v = 1 + \"not an int\" end\n")
+      val ()=Posix.FileSys.symlink {old=fromRoot "lib/basis",new=selection ^ "/basis"}
+      val (status,_,errors)=invoke "selection-index"
+        [fromRoot (env ("RUNE","bin/rune")),"--lib",selection,"--no-warnings","--basis-index",selection ^ "/m"]
+      val ()=need (status=0,"selection fixture: " ^ errors)
+      val ()=compile ("selection",[],"tests/compiler/api-selection.sml")
+      val (status,output,errors)=invoke "selection" [fromRoot "bin/runevm",dir ^ "/selection.rbc",selection]
+      val ()=need (status=0 andalso output="PASS API selection\n" andalso errors="","API selection differs: " ^ output ^ errors)
       val private=dir ^ "/private.sml"
       val ()=write (private,"val private=Ast.decToString\n")
       val (status,_,errors)=invoke "private"
