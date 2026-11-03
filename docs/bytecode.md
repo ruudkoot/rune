@@ -269,7 +269,7 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    22 (UnitBasis.version)
+version     varint    23 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
@@ -301,6 +301,11 @@ size        varint    the bytes of the static layer
                 A name of a kind is written as built in, the unit's own (a
                 number), or another unit's (its place in imports) ...
 ```
+
+Version 23 (the build-system roadmap's M4) writes a reference's stamps that
+an earlier reference of the unit has as a byte 2 and that one's place among
+the references whose stamps were written, in the order written: MLton's
+functors refer to the same structures again and again.
 
 Version 22 (the build-system roadmap's M4) names the unit of a reference by
 its place in `referred`, in the order the static layer meets them: units

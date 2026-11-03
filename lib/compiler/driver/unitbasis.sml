@@ -73,8 +73,9 @@ struct
      environment with origins may be a reference, as one with none; 21: a
      reference's stamps and flags as runs; 22: a reference's unit by its place
      among those the static layer refers to; the origins of a reference only
-     where they are not its structure's *)
-  val version = 22
+     where they are not its structure's; 23: a reference's stamps that an
+     earlier reference of the unit has by the place of that one's *)
+  val version = 23
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -1707,6 +1708,8 @@ struct
               funsDone : unit IntTable.table,          (* own functors written, by their functions *)
               bodies : (int * SigMatch.sigma) list ref,  (* the same with their parameters, newest first *)
               sTycons : int list ref,                  (* own type names the static layer entered, newest first *)
+              stampLists : (int list * int) list IntTable.table,  (* references' stamps written, by a hash: the list, its place *)
+              nstampLists : int ref,
               file : string}                           (* the unit's source, as its spans name it *)
 
   fun ownNumber (e : enc, k, v) : int =
@@ -2046,6 +2049,27 @@ struct
             in runs (left, (t, n, m) :: acc) end
     in P.list (fn (a, (t, n, m)) => (P.byte (a, t); P.int (a, n); P.nat (a, m))) (a, runs (names, [])) end
 
+  (* A reference's stamps that are not its structure's: an earlier
+     reference's of the unit by its place among those, 2 and the place, or 1
+     and the runs. MLton's functors refer to the same structures over and
+     over: of 9.25 million stamps in 9,616 such lists, 1.80 million are in
+     lists the unit has not written before *)
+  fun stampList (e : enc, stamps : int list) : unit =
+    let
+      val a = #a e
+      val h = List.foldl (fn (x, h) => (h * 31 + x mod 1000003) mod 1000003) (List.length stamps) stamps
+      val bucket = getOpt (IntTable.find (#stampLists e, h), [])
+    in
+      case List.find (fn (l, _) => l = stamps) bucket of
+        SOME (_, i) => (P.byte (a, 2); P.nat (a, i))
+      | NONE =>
+          let val i = !(#nstampLists e)
+          in
+            IntTable.insert (#stampLists e, h, (stamps, i) :: bucket); #nstampLists e := i + 1;
+            P.byte (a, 1); nameRuns (a, e, kStamp, stamps)
+          end
+    end
+
   (* flags, the same way *)
   fun flagRuns (a : P.writer, flags : bool list) : unit =
     let
@@ -2083,7 +2107,7 @@ struct
             | Earlier u => (P.nat (w, 1 + sigUnit (e, #identity u)); #targets e := (u, n) :: !(#targets e)));
            P.string (w, n); P.list P.string (w, path);
            P.list (fn (_, st) => tyfcn (e, valOf (IntMap.find (phi, st)))) (w, order);
-           if stamps = cStamps then P.byte (#a e, 0) else (P.byte (#a e, 1); nameRuns (#a e, e, kStamp, stamps));
+           if stamps = cStamps then P.byte (#a e, 0) else stampList (e, stamps);
            if globals = cGlobals then P.byte (#a e, 0) else (P.byte (#a e, 1); flagRuns (#a e, globals));
            (* its origins, where they are not those of the structure it is,
               which a signature's copies of its specifications keep *)
@@ -2505,7 +2529,7 @@ struct
                      keys = IntTable.table 1024, nkeys = ref 0,
                      types = ref IntMap.empty, ntypes = ref 0, cons = ref StringMap.empty, ncons = ref 0,
                      sibs = ref StringMap.empty, nsibs = ref 0, funsDone = IntTable.table 16,
-                     bodies = ref [], sTycons = ref [], file = file}
+                     bodies = ref [], sTycons = ref [], stampLists = IntTable.table 64, nstampLists = ref 0, file = file}
       (* the static layer: fixity, the directives the unit added, newest first *)
       val directives = List.take (#list fixity, List.length (#list fixity) - List.length (#list (#fixity start)))
       val () = P.list (fn (w, (n, f)) => (P.string (w, n);
@@ -2544,7 +2568,8 @@ struct
                       targets = #targets e, sigUnits = #sigUnits e, sigUnitList = #sigUnitList e,
                       tycons = #tycons e, ntycons = #ntycons e, keys = #keys e, nkeys = #nkeys e,
                       types = #types e, ntypes = #ntypes e, cons = #cons e, ncons = #ncons e, sibs = #sibs e, nsibs = #nsibs e,
-                      funsDone = #funsDone e, bodies = #bodies e, sTycons = #sTycons e, file = #file e}
+                      funsDone = #funsDone e, bodies = #bodies e, sTycons = #sTycons e, stampLists = #stampLists e,
+                      nstampLists = #nstampLists e, file = #file e}
       val () = List.app (functorBody (ea, k)) (List.rev (!(#bodies e)))
       (* the functions it declares that are marked to be inlined, as its
          expansion left them *)
@@ -2683,6 +2708,7 @@ struct
               nsibs : int ref, sibs : (string * bool) list array ref,
               imports : int vector vector,            (* per kind, the session's names of its imports *)
               sigUnits : int vector,                   (* the units the static layer refers to, by their places in units *)
+              stampLists : int list array ref, nstampLists : int ref,   (* references' stamps read, by their places *)
               (* its signatures read so far, which a reference may name,
                  and the templates of their structures (renamedEnv) *)
               sigsRead : SigMatch.sigma StringMap.map ref, hereTemplates : template StringMap.map ref}
@@ -2950,7 +2976,21 @@ struct
         in go (P.rnat a, []) end
       val stamps = case P.rbyte a of
                      0 => NONE
-                   | 1 => SOME (ref (runs nameRun))
+                   | 1 =>
+                       let
+                         val l = runs nameRun
+                         val arr = #stampLists d
+                         val n = #nstampLists d
+                       in
+                         if !n >= Array.length (!arr) then
+                           arr := Array.tabulate (2 * Array.length (!arr) + 16,
+                                                  fn i => if i < Array.length (!arr) then Array.sub (!arr, i) else [])
+                         else ();
+                         Array.update (!arr, !n, l); n := !n + 1; SOME (ref l)
+                       end
+                   | 2 => let val i = P.rnat a
+                          in if i < !(#nstampLists d) then SOME (ref (Array.sub (!(#stampLists d), i)))
+                             else raise P.Bad "a reference's stamps out of range" end
                    | _ => raise P.Bad "not a reference's stamps"
       val globals = case P.rbyte a of
                       0 => NONE
@@ -3246,11 +3286,13 @@ struct
       val shared = {side = side, base = base, units = us, ntycons = ref 0, tycons = ref (Array.fromList []),
                     ntypes = ref 0, types = ref (Array.fromList []), ncons = ref 0, cons = ref (Array.fromList []),
                     nsibs = ref 0, sibs = ref (Array.fromList []),
-                    imports = imports, sigUnits = sigUnits, sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
+                    imports = imports, sigUnits = sigUnits, stampLists = ref (Array.fromList []), nstampLists = ref 0,
+                    sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
       fun over (r : P.reader) : dec =
         {r = r, a = a, side = #side shared, base = #base shared, units = #units shared, ntycons = #ntycons shared,
          tycons = #tycons shared, ntypes = #ntypes shared, types = #types shared, ncons = #ncons shared, cons = #cons shared,
          nsibs = #nsibs shared, sibs = #sibs shared, imports = #imports shared, sigUnits = #sigUnits shared,
+         stampLists = #stampLists shared, nstampLists = #nstampLists shared,
          sigsRead = #sigsRead shared,
          hereTemplates = #hereTemplates shared}
       val d = over r
