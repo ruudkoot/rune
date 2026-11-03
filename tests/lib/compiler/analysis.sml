@@ -220,6 +220,17 @@ struct
         val ()=check ("a closed unit keeps its types",A.types focused=A.types oracle)
         val ()=check ("a closed unit opens at its place",A.occurrencesIn (focused,unit)=A.occurrencesIn (oracle,unit)
           andalso A.factsIn (focused,unit)=A.factsIn (oracle,unit))
+        (* go-to-definition and hover into a closed unit: the open unit's
+           occurrence of a name the closed one defines, and the closed
+           unit's own, from its notes *)
+        fun definitionOf (snapshot,unit,name)=Option.mapPartial #definition (List.find (fn occurrence:A.occurrence =>
+          #name occurrence=name andalso not (#isDefinition occurrence)) (A.occurrencesIn (snapshot,unit)))
+        val ()=check ("a definition in a closed unit is found from an open one",
+          isSome (definitionOf (focused,open',"make")) andalso definitionOf (focused,open',"make")=definitionOf (oracle,open',"make")
+          andalso Option.map #file (definitionOf (focused,open',"make"))=SOME "library.sml")
+        val ()=check ("and its type is the closed unit's own",
+          A.typeAtOccurrence (focused,{ordinal=1,offset=size "val made=L.ma"})=A.typeAtOccurrence (oracle,{ordinal=1,offset=size "val made=L.ma"})
+          andalso isSome (A.typeAtOccurrence (focused,{ordinal=1,offset=size "val made=L.ma"})))
         val ()=check ("and gives its syntax and its types",isSome (A.syntaxAt (focused,{ordinal=0})) andalso
           A.typeAtOccurrence (focused,{ordinal=0,offset=0})=A.typeAtOccurrence (oracle,{ordinal=0,offset=0}))
         val ()=A.focus (context,SOME ["library.sml"])

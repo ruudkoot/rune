@@ -138,6 +138,11 @@ struct
   fun openUnit (snapshot:snapshot,unit,whole) =
     case List.find (fn entry:E.entry => #name entry=unit andalso (not whole orelse E.isOpen entry)) (!(#opened snapshot)) of
       SOME entry => SOME entry | NONE =>
+    (* from its notes, with no check, where the snapshot is its context's latest *)
+    case (if whole then NONE else case #engine snapshot of engine as E.Session {state,closed,...} =>
+            if not (!closed) andalso #serial (!state)= #serial (#state snapshot) then E.opened (engine,unit) else NONE) of
+      SOME entry => (#opened snapshot:=List.take (entry:: !(#opened snapshot),Int.min (16,1+length (!(#opened snapshot))));SOME entry)
+    | NONE =>
     case ordinalOf (snapshot,unit) of NONE => NONE | SOME ordinal =>
       let val input=Vector.sub (#ordered snapshot,ordinal)
           val result=answering (snapshot,fn engine => E.checkWith (engine,#scope snapshot,List.map source (#inputs snapshot),

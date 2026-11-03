@@ -58,12 +58,19 @@ says how to run it). One context lives through the edits of `oracle/*.tsv`, and
 after each a fresh context analyses the same inputs; a difference in a fact, an
 occurrence with its binding and locations, a type, a diagnostic or a query fails
 the run. `--require` names the paths a run must have taken, of `placed walked
-rebound loaded cutoff broken failed cancelled query opened shared`, so that a change
-that stops a path being taken fails too. `--focus` closes what is not edited, as an
-editor does, and the sample of units it compares opens them. `--share` has the kept
-context take the libraries' units from another context first, as the server's
-contexts do (`docs/language-server.md`, *Two builds over one library*); the fresh
-ones never share.
+rebound loaded cutoff broken failed cancelled query opened shared stored`, so that a
+change that stops a path being taken fails too. Every unit is compared, but with
+`--sample N`. `--focus` closes what is not edited, as an editor does, and the units
+it compares are opened, from their notes where those hold; a fresh context keeps
+every file open, but against a record. `--share` has the kept context take the
+libraries' units from another context first, as the server's contexts do
+(`docs/language-server.md`, *Two builds over one library*); the fresh ones never
+share. `--store DIR` has the kept context read the store in DIR, which a compile
+made: another context checks first and writes the sidecars, and the kept one,
+cold, takes the units whose entries and sidecars hold from the store
+(`docs/language-server.md`, *The store*); the fresh ones read none. `make
+test-lsp-oracle` makes its store with a compile of `rune.build` at `-O0`, so that
+the run takes entries of another configuration than its own.
 
 `bin/rune-lsp-contexts` (`tools/lsp/contexts.sml`) asks the server's own code what it
 makes of a tree's files: `--builds` the contexts and prompts of every source of the

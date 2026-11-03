@@ -141,6 +141,27 @@ struct
     in if Pickle.atEnd r then {compiler=compiler,identity=identity,mode=mode,allow=allow,mentions=mentions,binders=binders,
          origins=origins,closed=closed}
        else raise Pickle.Bad "more than a sidecar" end
+  (* a unit's notes in the store, by the hash of its source, of its identity *)
+  fun storedNotes (dir,source,identity)=
+    case UnitCache.readSidecar (dir,notesFormat,"notes",source) of NONE => NONE
+    | SOME bytes => (let val r=Pickle.reader bytes
+                         val written=Pickle.rstring r
+                         val notes=Pickle.rstring r
+                     in if written=identity andalso Pickle.atEnd r then SOME notes else NONE end)
+                    handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE
+  (* A closed unit opened from its notes (bytes), where they hold where it
+     stands: its environment before it (place), which with what it declared
+     its facts print in as they did, and the units whose places its
+     occurrences hold by span, whose texts' keys keyOf says, as they were *)
+  fun fromNotes (entry:entry,bytes,place,result:UnitBasis.result,keyOf)=
+    case (SOME (decodeNotes (#name entry,bytes)) handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE) of
+      NONE => NONE
+    | SOME notes =>
+        if printsSo (Env.plus (place,#delta result),#printed notes) andalso List.all (fn (unit,key) => keyOf unit=SOME key) (#spans notes)
+        then SOME ({key= #key entry,name= #name entry,file= #file entry,text= #text entry,allow= #allow entry,mode= #mode entry,
+               pickle= #pickle entry,sidecar= #sidecar entry,facts= #facts notes,types= #types notes,syntax=NONE,
+               uses= #uses notes,typing=NONE,printed= #printed notes,notes=bytes}:entry)
+        else NONE
   (* a usage's binder, from "IDENTITY FINGERPRINT", the identity a name that
      may have spaces in it *)
   fun binderOfValue value=
@@ -536,13 +557,7 @@ struct
                    closed=closedOf notes}) end
         (* a unit's notes: what it holds, else the store's, of its identity *)
         fun notesOf' (entry:entry,identity)=if #notes entry<>"" then SOME (#notes entry) else
-          case storeDir of NONE => NONE | SOME dir =>
-            case UnitCache.readSidecar (dir,notesFormat,"notes",hashOf (#file entry,#text entry)) of NONE => NONE
-            | SOME bytes => (let val r=Pickle.reader bytes
-                                 val written=Pickle.rstring r
-                                 val notes=Pickle.rstring r
-                             in if written=identity andalso Pickle.atEnd r then SOME notes else NONE end)
-                            handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE
+          case storeDir of NONE => NONE | SOME dir => storedNotes (dir,hashOf (#file entry,#text entry),identity)
         (* A unit no session has held, from the store: a compile's entry whose
            usages hold here, by their binders, loaded as an analysis loads
            (UnitBasis.staticOnly) under its static identity, with its
@@ -756,16 +771,11 @@ struct
               val ()=case (asked andalso opening=Open,prior) of
                   (true,SOME (k:kept)) =>
                     if not known then () else
-                      (case (!(#live k),Option.map (fn bytes => decodeNotes (name,bytes)) (notesOf' (#entry k,identityOf k))
-                              handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE) of
-                         (SOME {result,...},SOME notes) =>
-                           if printsSo (Env.plus (!env,#delta result),#printed notes) andalso List.all spanHolds (#spans notes) then
-                             let val e= #entry k
-                             in openedEntry:=SOME {key= #key e,name= #name e,file= #file e,text= #text e,allow= #allow e,mode= #mode e,
-                                  pickle= #pickle e,sidecar= #sidecar e,facts= #facts notes,types= #types notes,syntax=NONE,
-                                  uses= #uses notes,typing=NONE,printed= #printed notes,notes= #notes e};
-                                raise Answered end
-                           else ()
+                      (case (!(#live k),notesOf' (#entry k,identityOf k)) of
+                         (SOME {result,...},SOME bytes) =>
+                           (case fromNotes (#entry k,bytes,!env,result,keyOf) of
+                              SOME opened => (openedEntry:=SOME opened;raise Answered)
+                            | NONE => ())
                        | _ => ())
                 | _ => ()
               (* A unit past a moved identity is taken by its usages. An open one's
@@ -1081,6 +1091,20 @@ struct
       candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
       state=current,entries=entries,order=order,attempted= !attempted,prelude=plan,units=inputNames,opened= !openedEntry,
       route={walked=not (isSome fast),rebound= !rebound,loaded= !loaded,cutoff= !cutoff,broken= !broken,stored= !stored}} end)
+  (* A closed unit of the session's latest state opened from its notes, where
+     it stays loaded and they hold: what a question of its facts or
+     occurrences reads, with no check (opened). NONE where they do not, which
+     a check at its place answers *)
+  fun opened (session as Session {state,world,store,...},name)=
+    case !world of NONE => NONE | SOME _ => inWorld (session,fn _ =>
+      case StringMap.find (#kept (!state),name) of NONE => NONE | SOME (k:kept) =>
+        case !(#live k) of NONE => NONE | SOME {result,position,...} =>
+          if not (UnitBasis.isLoaded (identityOf k)) orelse isOpen (#entry k) then NONE else
+          let val e= #entry k
+              fun keyOf unit=Option.map (fn k:kept => #key (#entry k)) (StringMap.find (#kept (!state),unit))
+              val bytes=if #notes e<>"" then SOME (#notes e) else
+                case !store of NONE => NONE | SOME dir => storedNotes (dir,UnitCache.sourceHash (#text e),identityOf k)
+          in Option.mapPartial (fn bytes => fromNotes (e,bytes,#env position,result,keyOf)) bytes end)
   fun checkSteps (session as Session {walks,...},scope,sources,steps,libraries,cancelled,building,view)=
     let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,building,view,Probe)
     in if !walks>=walksToCompact then compact session else ();result end

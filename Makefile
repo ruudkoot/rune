@@ -471,9 +471,14 @@ test-lsp-oracle: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
 test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
-	  --scenarios tests/lsp/oracle/hol4.tsv --focus --sample 12 --out build/lsp/oracle-hol4.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
+	  --scenarios tests/lsp/oracle/hol4.tsv --focus --out build/lsp/oracle-hol4.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
+	rm -rf build/lsp/store-hol4
+	$(RUNE) --units --build "$(RUNE_ORACLE_HOL4)" --cache-dir build/lsp/store-hol4 -o build/lsp/store-hol4.rbc 2>/dev/null
+	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
+	  --scenarios tests/lsp/oracle/hol4.tsv --focus --store build/lsp/store-hol4 --out build/lsp/oracle-hol4-store.jsonl \
+	  --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,stored
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
-	  --scenarios tests/lsp/oracle/mlton.tsv --focus --sample 8 --out build/lsp/oracle-mlton.jsonl \
+	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton.jsonl \
 	  --record build/lsp/oracle-mlton.record --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
 	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton-against.jsonl --against build/lsp/oracle-mlton.record
