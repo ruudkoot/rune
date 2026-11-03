@@ -18,5 +18,5 @@ Select a target with the existing explicit `.build` variable, for example
 `--path SDL_GENERATED="$PWD/lib/ffi/sdl/generated/native"`. Generation and
 native compilation never execute inside `.build`. Compile the selected set's
 `shims.c` separately with the original headers and `SDL_MAIN_HANDLED=1`; no
-native DLL, object file, compiler cache or generated `MANIFEST` is committed.
+native DLL, object file or compiler cache is committed.
 See `docs/ffi/sdl.md` and the dated `tests/ffi/evidence/sdl-generated.md` receipt.

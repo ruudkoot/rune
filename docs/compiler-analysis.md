@@ -76,7 +76,8 @@ text, mode and path, and an input lexed only where its text is new; a plan of
 libraries stands while the build checked is the same (a library's friend sees
 more), its view of the Basis Library is the same (D12; a build's `view` is
 selected as a compile selects it), no input's set of names moved and no
-MANIFEST or library file changed. A file's stamp is its time and size, and is
+file a library's index rests on -- its build files and its sources --
+changed. A file's stamp is its time and size, and is
 trusted only of a file older than the time's grain when it was stamped.
 
 `share (context, true)` lets contexts take a library's units from one another.

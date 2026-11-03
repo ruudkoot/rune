@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 107 of 107 entries documented |
+| Documentation | 108 of 108 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -93,6 +93,7 @@ sig
     val <a href="#val-project.sources">sources</a> : t -&gt; source list
     val <a href="#val-project.inputs">inputs</a> : t -&gt; input list
     val <a href="#val-project.libraries">libraries</a> : t -&gt; string list
+    val <a href="#val-project.exports">exports</a> : t -&gt; {<a href="#fld-project.exports.kind">kind</a> : string, <a href="#fld-project.exports.name">name</a> : string} list option
     val <a href="#val-project.fingerprint">fingerprint</a> : t -&gt; string
   end
   structure <a href="#str-analysis">Analysis</a> :
@@ -874,6 +875,23 @@ val libraries : t -> string list
 ```
 
 `libraries project` lists library-header dependencies in source order.
+
+#### <a name="val-project.exports"></a>`exports`
+
+```sml
+val exports : t -> {kind : string, name : string} list option
+```
+
+`exports project` is what a library's build file lets a client name.
+
+Each export has its kind: the header's exports, or its library
+block's. NONE where it has neither, and a client sees all its files
+declare (docs/build.md, A library's header).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.exports.kind"></a>`kind` | `string` |  |
+| <a name="fld-project.exports.name"></a>`name` | `string` |  |
 
 #### <a name="val-project.fingerprint"></a>`fingerprint`
 

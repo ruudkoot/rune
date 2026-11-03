@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`COMPILER_API`](../sig/COMPILER_API.md) specifies it inside [`CompilerApi`](../str/CompilerApi.md) |
 | Status | required |
-| Members | 14 |
+| Members | 15 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -24,6 +24,7 @@ What each means is on [`COMPILER_API`](../sig/COMPILER_API.md); the types are th
 | type | [`t`](../sig/COMPILER_API.md#type-project.t) | *a type of its own* |
 | val | [`buildLinks`](../sig/COMPILER_API.md#val-project.buildlinks) | `CompilerApi.session * {file : string, text : string, variables : (string * string) list, windows : bool} -> buildLink list` |
 | val | [`buildSyntax`](../sig/COMPILER_API.md#val-project.buildsyntax) | `{file : string, text : string} -> {diagnostics : {column : int, file : string, line : int, message : string, severity : string, start : int, stop : int} list, references : buildReference list}` |
+| val | [`exports`](../sig/COMPILER_API.md#val-project.exports) | `t -> {kind : string, name : string} list option` |
 | val | [`fingerprint`](../sig/COMPILER_API.md#val-project.fingerprint) | `t -> string` |
 | val | [`inputs`](../sig/COMPILER_API.md#val-project.inputs) | `t -> input list` |
 | val | [`libraries`](../sig/COMPILER_API.md#val-project.libraries) | `t -> string list` |

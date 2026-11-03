@@ -36,7 +36,7 @@ one intermediate representation to the next, `--dump-before=PASS` and
 | Stack target | `lib/compiler/backend/target.sml`, `code.sml`, `stack.sml` | Low → per-function instruction lists (`Code`) | A value used once stays on the stack; the others get locals shared by linear scan; jumps fall through or become returns where they can. `Code` holds the instruction lists and the tables of the program (constants, globals, files, inlined frames) that both targets fill and Emit writes. |
 | Register target | `lib/compiler/backend/regs.sml`, `regcodes.sml` (generated) | Low → register bytecode | Every variable a register, shared by linear scan; `CALL` then `RESULT`; with `--target=registers`, for `runtime/register` ([bytecode.md](bytecode.md), The register bytecode). |
 | Emission | `lib/compiler/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `TextIO`. |
-| Driver | `lib/compiler/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
+| Driver | `lib/compiler/driver/basismanifest.sml`, `libraryindex.sml`, `options.sml`, `main.sml` | CLI | `LibraryIndex` derives a library's index from its `library.build` and its sources and keeps it in the store; `BasisManifest` takes it and chooses the files a program loads (the documentation generator uses both). The driver tokenizes the user files, picks the files of the basis library they need by its index (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the index against the sources; `--basis-index` prints it. |
 
 Shared utilities: `lib/compiler/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
 applied as `StringMap`/`IntMap`), `inttable.sml` (mutable hash tables of
@@ -167,7 +167,7 @@ release compiles the current sources against the Basis it ships, and that
 image runs on the release's `runevm`; Poly/ML and MLton compile them against
 their own Basis. Each of those compilers emits this tree's bytecode.
 `bin/rune-bootstrap` runs that image on `bin/runevm` and compiles the same
-sources into `bin/rune.rbc`; it also writes every library `MANIFEST`.
+sources into `bin/rune.rbc`.
 `runevm` executes `bin/rune.rbc` as
 `bin/rune-boot`, and `bin/rune` names that. The host builds
 `bin/rune-mlton`, `bin/rune-smlnj-legacy`,
@@ -243,8 +243,9 @@ run reproducible, and where the platform shows through.
 
 `lib/basis/*.sml` is ordinary SML compiled before a program that needs it; the
 order is in `lib/basis/library.build` (docs/build.md), and what each file
-provides and requires is worked out from the sources into
-`lib/basis/MANIFEST` (`make manifests`, `rune --basis-index`). A
+provides and requires is worked out from the sources, the library's index,
+which a compile derives and keeps in its store (`LibraryIndex`;
+`rune --basis-index` prints it). A
 file that is loaded on demand declares modules and types only, all listed in
 its provides column, so that the top-level
 environment of a program does not depend on which files it happens to load. Two
@@ -268,11 +269,10 @@ the files it requires are loaded already. Primitives are bound with
 primitives that construct options.
 
 Other libraries sit beside the basis library under the `--lib` directory
-(`lib/test/property`), each with a `library.build` and a generated `MANIFEST` of the same form
-(`BasisManifest`, `lib/compiler/driver/basismanifest.sml`). `rune --library NAME` adds
+(`lib/test/property`), each with a `library.build` and an index of the same form
+(`LibraryIndex`, `BasisManifest`). `rune --library NAME` adds
 a library's entries after the basis library's, with those of the libraries
-its `# library:` lines name before it (those and its `# inline:` lines are
-its header, before the first file's line, where reading them stops), and
+its build file requires before it, and
 the files are chosen from all of
 them together, by path. A library's requires column names what it uses of
 the basis library, so that a program that names only the library loads what

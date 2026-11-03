@@ -2,7 +2,7 @@
    D12). Extraction works on syntax; what only the static semantics knows is
    asked here: whether a structure matches the signature it claims to
    implement. The library is elaborated as the compiler's driver elaborates
-   it, every file of the MANIFEST in order with the fixity threaded through,
+   it, every file of its index in order with the fixity threaded through,
    and a claim `Implements: SIG where type ...` of a structure S is checked by
    elaborating `structure Claim : SIG where type ... = S` on top of that: what
    the compiler says against it is the diagnostic. A library other than the
@@ -12,9 +12,18 @@ struct
   type library = {env : Env.env, fixity : Fixity.env}
 
   (* What a library is written on: the Basis Library, for every library but
-     itself, and the libraries its MANIFEST names (docs/plans/quickcheck.md,
+     itself, and the libraries its build file requires (docs/plans/quickcheck.md,
      D1), in the order they are elaborated. *)
   type prelude = {root : string option, basis : string option, libraries : string list}
+
+  (* The directory of the libraries (--lib), which a library's index is made
+     in (LibraryIndex), and the entries of one: of a library given by its
+     path alone, in its parent, whose Basis Library it has if any *)
+  val libRoot : string option ref = ref NONE
+  fun entriesOf (dir : string) : BasisManifest.entry list =
+    LibraryIndex.entries {root = getOpt (!libRoot, OS.Path.dir dir), dir = dir}
+  fun requiresOf (dir : string) : string list =
+    #libraries (LibraryIndex.index {root = getOpt (!libRoot, OS.Path.dir dir), dir = dir})
 
   (* NONE when the library does not elaborate; the compiler's error is
      reported, and the documentation is still made. The prelude is elaborated
@@ -30,15 +39,15 @@ struct
       val env = ref Env.initial
       (* the library's scope and those of what it is written on, as a compile
          of a program of it has them *)
-      val written = List.map (fn d => (d, BasisManifest.readManifest d)) (#libraries prelude @ [dir])
+      val written = List.map (fn d => (d, entriesOf d)) (#libraries prelude @ [dir])
       val scopes =
         case #root prelude of
           NONE => BasisManifest.noScopes ""
-        | SOME root => BasisManifest.scopes {root = root, building = NONE, names = [], headed = false, libraries = written, view = NONE}
+        | SOME root => LibraryIndex.scopes {root = root, building = NONE, names = [], headed = false, libraries = written, view = NONE}
       val walk = LibraryScope.walk (env, fixity, ref StringMap.empty, scopes)
       (* the Basis Library as a program sees it in no view (D12) *)
       fun elaborate d =
-        case List.filter (fn e : BasisManifest.entry => not (isSome (#view e))) (BasisManifest.readManifest d) of
+        case List.filter (fn e : BasisManifest.entry => not (isSome (#view e))) (entriesOf d) of
           [] => ()
         | entries =>
             LibraryScope.libraries (walk, [entries],
@@ -548,7 +557,7 @@ struct
   datatype law = Quantified of variable list * variable option | NotSml of string
 
   (* The structures of lib/test/property that are arbitraries (`XArb`, read
-     from its MANIFEST), where that library is there: an instance is then
+     from its index), where that library is there: an instance is then
      resolved for every variable of a law, and a variable with none is an
      error at its comment. NONE: the library is not there, and nothing is
      resolved. *)

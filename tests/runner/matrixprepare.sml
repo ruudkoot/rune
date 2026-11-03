@@ -11,7 +11,7 @@ struct
   fun treeFiles path = if OS.Path.file path = "MLB" then [] else if OS.FileSys.isLink path andalso isDir path then [] else if isDir path then
         List.concat (List.map (fn name => treeFiles (path ^ "/" ^ name)) (sort (entries path))) else [path]
   fun key (config : MatrixModel.config) =
-    let val sourceFiles = glob (fromRoot "lib/basis", ".sml") @ [fromRoot "lib/basis/MANIFEST", fromRoot "runtime/prims.def"]
+    let val sourceFiles = glob (fromRoot "lib/basis", ".sml") @ [fromRoot "lib/basis/library.build", fromRoot "runtime/prims.def"]
         val generator = List.filter exists [fromRoot "bin/rune-generate", fromRoot "bin/rune-generate.rbc"]
         val generatorData = treeFiles (fromRoot "tools/generate/data")
         val helpers = List.filter (fn path => not (String.isSubstring "/MLB/" path))

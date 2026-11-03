@@ -263,7 +263,7 @@ struct
     let val lib=OS.Path.concat(root,"lib") val basis=OS.Path.concat(lib,"basis")
         val ()=(OS.FileSys.mkDir lib;OS.FileSys.mkDir basis)
         val ()=write(OS.Path.concat(basis,"initial.sml"),"val preludeValue=0\n")
-        val ()=write(OS.Path.concat(basis,"MANIFEST"),"initial.sml | always | yes | | \n")
+        val ()=write(OS.Path.concat(basis,"library.build"),"annotate \"always\" in initial.sml end\n")
     in lib end
   fun watchedWorkspaceCache ()=temporaryTree(fn {root,uri,write}=>
     let val lib=minimalLibrary(root,write)
@@ -409,8 +409,8 @@ struct
         val lib=path "lib" val basis=OS.Path.concat(lib,"basis")
         val ()=(OS.FileSys.mkDir lib;OS.FileSys.mkDir basis)
         val initial=OS.Path.concat(basis,"initial.sml")
-        val manifest=OS.Path.concat(basis,"MANIFEST")
-        val manifestText="initial.sml | always | yes | | \n"
+        val manifest=OS.Path.concat(basis,"library.build")
+        val manifestText="annotate \"always\" in initial.sml end\n"
         val ()=write(initial,"val libraryValue=1\n")
         val ()=write(manifest,manifestText)
         val ()=write(path "main.build","main.sml\n")
@@ -445,9 +445,9 @@ struct
           val ()=write(initial,"val libraryValue=true\n")
           val _=pull(293,[])
           val ()=check("saved library source edits invalidate the cache without watched-file notifications",plans()=count+1)
-          val ()=write(manifest,manifestText ^ "# regenerated\n")
+          val ()=write(manifest,manifestText ^ "(* edited *)\n")
           val _=pull(294,[])
-          val ()=check("regenerated manifests invalidate the cache",plans()=count+2)
+          val ()=check("an edited library build invalidates the cache",plans()=count+2)
           val ()=write(path "main.build","files main.sml extra.sml end\n")
           val ()=check("build changes invalidate membership",case pull(295,[]) of Json.Array reports=>length reports=2 andalso plans()=count+3 | _=>false)
           val ()=write(path "other.build","other.sml\n")
@@ -626,9 +626,9 @@ struct
     let val lib=root ^ "/lib" val basis=lib ^ "/basis"
         val ()=List.app OS.FileSys.mkDir [lib,basis]
         val text="structure Runtime=struct val add=primitive end\n"
-        val ()=List.app write [(basis ^ "/library.build","files initial.sml runtime.sml end\n"),
+        val ()=List.app write [(basis ^ "/library.build","annotate \"always\" in initial.sml end\nruntime.sml\n"),
           (basis ^ "/initial.sml","val primitive = _prim \"int_add\" : int * int -> int\n"),
-          (basis ^ "/runtime.sml",text),(basis ^ "/MANIFEST","initial.sml | always | yes | | \nruntime.sml | demand | yes | Runtime | \n"),
+          (basis ^ "/runtime.sml",text),
           (root ^ "/program.build","main.sml\n"),(root ^ "/main.sml","val userPrimitive = _prim \"int_add\" : int * int -> int\n")]
         val runtime=uri(basis ^ "/runtime.sml")
         val options=object[("libraryRoot",Json.String(uri lib)),("targets",Json.Array

@@ -66,8 +66,8 @@ struct
               List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
                 (case (noInline,#lib config) of
                    (false,SOME root) =>
-                     List.concat (List.map BasisManifest.inlineFunctors
-                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                     List.concat (List.map (fn dir => LibraryIndex.inlineFunctors {root=root,dir=dir})
+                       (root ^ "/basis" :: (LibraryIndex.libraries (root,#libraries config)
                                             handle BasisManifest.Usage _ => [])))
                  | _ => [])
           (* and the functions (functors-units M10) *)
@@ -76,8 +76,8 @@ struct
               List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
                 (case (noInline,#lib config) of
                    (false,SOME root) =>
-                     List.concat (List.map BasisManifest.inlineValues
-                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                     List.concat (List.map (fn dir => LibraryIndex.inlineValues {root=root,dir=dir})
+                       (root ^ "/basis" :: (LibraryIndex.libraries (root,#libraries config)
                                             handle BasisManifest.Usage _ => [])))
                  | _ => [])
           val cacheHits=ref 0

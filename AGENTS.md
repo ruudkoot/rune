@@ -38,10 +38,10 @@ keep these invariants:
 * When adding a basis structure, add a `basis.<name>` row listing its members
   and add the file to `lib/basis/library.build` in a block of its class
   (`docs/build.md`). What it provides and requires is worked out from the
-  source: `make manifests` writes `lib/basis/MANIFEST`, which is generated
-  and never committed or edited (`rune --basis-check`, part of `make
-  check-docs`, verifies that a file loaded on demand declares modules and
-  types only). A signature of the
+  source: the library's index, which every compile derives and keeps in its
+  store, and which is never a file in the tree (`rune --basis-index
+  lib/basis` prints it; `rune --basis-check`, part of `make check-docs`,
+  verifies that a file loaded on demand declares modules and types only). A signature of the
   specification is transcribed in `tests/basis/spec-sigs` first;
   `bin/rune-generate basis-signatures` then makes `lib/basis/sig_<sig>.sml` and its
   line in the build file, and from there on the library's file is edited by hand
@@ -416,8 +416,8 @@ keep these invariants:
 * A library beside the basis library (`lib/NAME`, compiled with `rune --library
   NAME`) has a `library.build` in the basis library's form, whose
   `libraries` declaration names the libraries it is written on; its
-  generated `MANIFEST` records what each file uses of the basis library as
-  well (`rune --basis-check --library NAME` checks it). It may not use `_prim`,
+  index records what each file uses of the basis library as well (`rune
+  --basis-check --library NAME` checks it). It may not use `_prim`,
   and what it exports is ASCII, so that a program in every mode can name it
   (docs/build.md, *A library's build file*). The mechanism's tests are in
   `tests/lib` (`make test-lib`), and a library's own tests, `tests/lib/NAME`, are suites on

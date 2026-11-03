@@ -129,17 +129,17 @@ struct
               ["lower", "upper", "deep", "plain", "mixed", "loose", "isolated", "twin1", "twin2", "same1", "same2", "mathy",
                "both1", "both2", "h1", "h2"])
 
-  (* the header in the manifest: no sixth column *)
+  (* the header in the index, as --basis-index prints it: no sixth column *)
   fun manifests () =
     let
-      val text = read (lib ^ "/lower/MANIFEST")
+      val text = index "lower"
     in
       need (has "# exports: structure:Lower signature:LOWER fixity:+++\n" text, "no exports in the header: " ^ text);
       need (has "# friends: ../../p/friend.build ../../p/sealed.build\n" text, "no friends in the header");
       need (has "# view: small structure:Lower\n" text, "no view in the header");
       need (has "# fixity: infix 6 +++\n" text andalso not (has "***" text), "the exported fixity alone: " ^ text);
       need (not (has "| structure:Lower" text), "a sixth column beside a header");
-      need (has "# library: lower\n" (read (lib ^ "/upper/MANIFEST")), "requires is not what readers read");
+      need (has "# library: lower\n" (index "upper"), "requires is not what readers read");
       let val (status, log) = rune (libraries ["upper", "mixed"] @ ["--basis-check"])
       in need (status = 0, "--basis-check: " ^ log) end
     end
@@ -152,8 +152,7 @@ struct
      put ("lib/undeclared/library.build", "requires upper end\nexports (structure Undeclared)\nannotate \"demand\" in undeclared.sml end\n");
      put ("lib/undeclared/undeclared.sml", "structure Undeclared = struct val v = Lower.show (Lower.make 1) end\n");
      indexRefused "undeclared" "undeclared.sml uses Lower, of the library lib/lower, which its header does not require";
-     (* and by its compile, whatever the index said *)
-     put ("lib/undeclared/MANIFEST", "# library: upper\n# exports: structure:Undeclared\nundeclared.sml | demand | yes | Undeclared | \n");
+     (* and by its compile, whose index is made the same way *)
      refused "undeclared" ["undeclared"] "val () = print (Int.toString Undeclared.v ^ \"\\n\")\n" "Lower";
      (* a library's name that nothing it requires leads to, in a program that
         has that library: the header sees nothing of it *)
@@ -173,7 +172,7 @@ struct
      let
        val log = index "deep"
        val (status, quiet) = rune ["--no-warnings", "--basis-index", "lib/deep"]
-       val () = need (status = 0 andalso quiet = "", "--no-warnings: " ^ quiet)
+       val () = need (status = 0 andalso not (has "warning" quiet) andalso has "deep.sml | demand" quiet, "--no-warnings: " ^ quiet)
        val () = need (has "lib/deep/library.build: warning: this library has no header" log, "no warning of no header: " ^ log)
        val () = need (not (has "no header" (index "lower")), "a warning of no header on a header")
        val (status, log) = rune (libraries ["plain"] @ ["--no-cache", "p/transitive-plain.sml", "-o", dir ^ "/quiet.rbc"])
@@ -279,9 +278,9 @@ struct
       val () = put ("lib/both/library.build",
                     "requires same1 (structure Same as One) same2 end\nexports (structure Uses)\nannotate \"demand\" in uses.sml end\n")
       val () = put ("lib/both/uses.sml", "structure Uses = struct val v = One.v * 10 + Same.v end\n")
-      val () = ignore (index "both")
-      val () = need (has "# library: same1(structure:Same=One)\n# library: same2\n" (read (lib ^ "/both/MANIFEST")),
-                     "the renames are not in the manifest: " ^ read (lib ^ "/both/MANIFEST"))
+      val both = index "both"
+      val () = need (has "# library: same1(structure:Same=One)\n# library: same2\n" both,
+                     "the renames are not in the index: " ^ both)
       val () = prints "scoped-clash" ["both"] "val () = print (Int.toString Uses.v ^ \"\\n\")\n" "12\n"
       val (status, log) = rune (libraries ["both"] @ ["--no-cache", "p/scoped-clash.sml", "-o", dir ^ "/clash.rbc"])
       val () = need (status = 0 andalso log = "", "a client was told of its library's imports: " ^ log)
@@ -762,7 +761,7 @@ struct
   fun views () =
     let
       val () = viewTree ()
-      val () = need (has "| seal@narrow |" (read (vlib ^ "/basis/MANIFEST")), "no view in the manifest")
+      val () = need (has "| seal@narrow |" (#2 (runeWith ["--lib", vlib, "--basis-index", vlib ^ "/basis"])), "no view in the index")
       val getItem = "val () = print (case List.getItem [1, 2] of SOME (x, _) => Int.toString x ^ \"\\n\" | NONE => \"\\n\")\n"
       val mapped = "val () = print (Int.toString (List.foldl op+ 0 (List.map (fn x => x * 2) [1, 2, 3])) ^ \"\\n\")\n"
       (* the default sees all; the view hides a member *)
@@ -890,7 +889,7 @@ struct
       fun copy path =
         let val from = original ^ "/" ^ path
         in if isDir from then List.app (fn e => copy (path ^ "/" ^ e)) (entries from)
-           else if OS.Path.file path = "MANIFEST" orelse String.isPrefix "." (OS.Path.file path) then ()
+           else if String.isPrefix "." (OS.Path.file path) then ()
            else put (path, read from)
         end
     in

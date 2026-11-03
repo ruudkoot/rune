@@ -1,0 +1,3 @@
+(* A library that uses _prim, which only the basis library may
+   (tests/runner/tools.sml, lib.toy). *)
+prim.sml

@@ -233,7 +233,7 @@ name the tools to check.
 | `make test-serve` | the compiler as a service, a prototype: `rune --serve` driven over its standard streams -- the diagnostics of a buffer with errors and without, the type of a function and of a variable at an offset, an unknown method, shutdown -- and what a request takes (`serve/*` of `tests/runner/protocols.sml`; the incremental roadmap's M12) |
 | `make check-reproducible` | the compiler built from `rune.build` the same bytes in units and whole, without the cache, through a cold cache and warm, by one process and with `-j`, and from a copy of its sources elsewhere; the whole builds `bin/rune.rbc` (the oracle `reproducible` of `tests/runner/oracles.sml`; [units.md](units.md), *Parallel builds*) |
 | `make test-build` | build files: a list, a library's exports, the words the language no longer has refused, a build file used twice and elaborated once, the plan of every build file read back as it is printed, the five committed plans as the compiler prints them and as a host reads them, the compiler's identity over its closure, an edit of `lib/unicode` through `libraries` giving another and compiler B taking none of A's entries, one per compiler (a second, on a toy, with its own), a stale plan refused, an annotation, a path variable, a virtual module with either implementation and the other's units from the cache, and the errors (`bin/rune-scenarios buildfile`; [build.md](build.md)) |
-| `make test-install` | `make install` staged with `DESTDIR` under another prefix, for the bytecode compiler and for the MLton and SML/NJ host builds: every file each library's `MANIFEST` names is installed, the man pages carry the version, the installed `rune`, `runevm`, `runevm-stack`, `runeopt`, `runedoc`, `rune-repl` (with `--dap`) and `rune-kernel --install` work from where they landed without naming the tree, and `make uninstall` with the same options leaves no file (`bin/rune-scenarios install`) |
+| `make test-install` | `make install` staged with `DESTDIR` under another prefix, for the bytecode compiler and for the MLton and SML/NJ host builds: every build file and source of each library is installed, and a Basis Library is or the install refuses, the man pages carry the version, the installed `rune`, `runevm`, `runevm-stack`, `runeopt`, `runedoc`, `rune-repl` (with `--dap`) and `rune-kernel --install` work from where they landed without naming the tree, and `make uninstall` with the same options leaves no file (`bin/rune-scenarios install`) |
 | `make test-layers` | a compile and an analysis of `rune.build` the same static layer, by its hash and each export's, with and without the ABI layer loaded, and five edits that keep the static layer and move the ABI layer each rebuilding the client (`bin/rune-incremental layers`; [units.md](units.md), *The export basis*). `RUNE_LAYER_TREES` adds builds that are not in the tree, MLton's and HOL4's |
 | `make test-incremental` | the cache's scenarios: a project edited, reverted, broken, built at two levels, its cache damaged or shared by two compiles, each build holding to what it must compile again (`tests/incremental/SCENARIOS.md`), and a project edited mechanically, each warm build the bytes of compiling everything (`bin/rune-incremental mutate`), and the independent checks of the cache ([testing.md](testing.md), *The checks of the cache*) |
 | `make test-cache-random` | the random edits at length, every warm build verified: what a change to a key runs |
@@ -531,7 +531,7 @@ $PREFIX/lib/rune/runeopt.rbc         the native code generator
 $PREFIX/lib/rune/rune-repl.img        the REPL, saved once started (docs/repl.md)
 $PREFIX/lib/rune/runtime/            librune.a and rune-offsets.s, what
                                      runeopt links a program with
-$PREFIX/lib/rune/basis/              MANIFEST and the basis library sources,
+$PREFIX/lib/rune/basis/              library.build and the basis library sources,
                                      README.md, the overview runedoc reads
 $PREFIX/share/man/man1/              rune.1, runevm.1, runevm-stack.1, runedoc.1, runeopt.1
 $PREFIX/share/bash-completion/completions/rune, runedoc, runeopt
@@ -596,8 +596,11 @@ pinned release.
 `dist/rune-language-server-<version>.vsix` for VS Code. `<version>` is the version in
 `runtime/version.h`. Each archive holds the register VM for every machine
 of that system, under `runtime/<arch>/`, the compiler `lib/rune/rune.rbc`,
-the REPL image, and every library under `lib`: its `MANIFEST`, the files
-that names, and `README.md` where the library has one. The Linux machines
+the REPL image, and every library under `lib`: its build files, its
+sources, and `README.md` where the library has one, from which a compile
+derives its index ([build.md](build.md), *A library's index*), and the
+frozen layer, `lib/rune/cache`, which holds the indexes of the libraries
+it holds. The Linux machines
 are `x86_64`, `i686`, `aarch64` and big-endian `ppc64`. The Windows
 machines are `x86_64` and `i686`.
 
@@ -791,10 +794,9 @@ the result is the compiler you get:
    shipped in the release, and that image (`build/bootstrap/rune-host.rbc`)
    runs on the release's `runevm`. Poly/ML and MLton compile them against
    their own Basis. The resulting compiler reads a private copy of this
-   tree's Basis under `build/bootstrap/lib`, so it does not write the
-   `MANIFEST` files that ship, and it emits this tree's bytecode.
-2. `bin/rune-bootstrap` runs stage 0 on `bin/runevm`. It writes
-   every library `MANIFEST` (`rune --basis-index`) and compiles the same
+   tree's Basis under `build/bootstrap/lib`, links to its files, and it
+   emits this tree's bytecode.
+2. `bin/rune-bootstrap` runs stage 0 on `bin/runevm`. It compiles the same
    sources into `bin/rune.rbc` (stage 1, register bytecode). `make boot`
    then writes `bin/rune-boot`, a wrapper that runs
    `runevm --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
@@ -874,8 +876,9 @@ Absolute Windows drive and UNC paths are accepted directly, including paths
 returned by `OS.FileSys.fullPath`. `runedoc --library` uses the same rule.
 It has a `library.build` in
 the basis library's form, whose `libraries NAME ... end` names the
-libraries it is written on, and the `MANIFEST` that `make manifests` makes
-of it (`rune --basis-index DIR`); those are compiled first, and the files of all of them are
+libraries it is written on, from which a compile derives its index
+([build.md](build.md), *A library's index*; `rune --basis-index DIR`
+prints it); those are compiled first, and the files of all of them are
 chosen as the basis library's are, by what the program names
 (`lib/*` of `tests/runner/tools.sml`, `make test-lib`). A library other than the
 basis library may not use `_prim`.

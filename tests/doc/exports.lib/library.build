@@ -1,0 +1,4 @@
+(* Hand-written fixture: the library exports its public interface only. *)
+library (signature API, structure Api) =
+  ../exports.sml
+end

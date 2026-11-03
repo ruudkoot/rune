@@ -1,7 +1,7 @@
 # Libraries
 
 The libraries that come with Rune, grouped by what they are for. Each is a
-directory of `lib/` with a MANIFEST, documented from the signatures it is
+directory of `lib/` with a library.build, documented from the signatures it is
 built from. A program asks for one by name, `rune --library NAME`; the Basis
 Library is what every program starts with.
 

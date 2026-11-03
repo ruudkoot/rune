@@ -371,13 +371,15 @@ struct
               val output=TextIO.openOut path
           in TextIO.output (output,text);TextIO.closeOut output;
              if List.exists (fn other => other=path) (!made) then () else made:=path:: !made end
-        fun exporting names=write ("inner/MANIFEST","# exports: " ^ names ^ "\n" ^
-          String.concat (List.map (fn friend => "# friends: " ^ friend ^ "\n") friends) ^
-          "inner.sml | always | yes | Hidden Public | \n")
+        (* names: KIND:NAME each, as a header's exports say KIND NAME *)
+        fun exporting names=write ("inner/library.build","exports (" ^
+          String.concatWith ", " (List.map (String.map (fn #":" => #" " | c => c)) (String.tokens Char.isSpace names)) ^ ")\n" ^
+          (if null friends then "" else "friends " ^ String.concatWith " " friends ^ " end\n") ^
+          "annotate \"always\" in inner.sml end\n")
         fun settle ()=List.app (fn path => OS.FileSys.setTime (path,SOME (Time.- (Time.now (),Time.fromSeconds 60)))) (!made)
         val ()=List.app (fn name => (OS.FileSys.mkDir (dir ^ "/" ^ name);dirs:=(dir ^ "/" ^ name):: !dirs)) ["basis","inner","proj"]
         val ()=write ("basis/basis.sml","structure Base=struct val one=1 end\n")
-        val ()=write ("basis/MANIFEST","basis.sml | always | yes | Base | \n")
+        val ()=write ("basis/library.build","annotate \"always\" in basis.sml end\n")
         val ()=write ("inner/inner.sml","structure Hidden=struct val x=1 end\nstructure Public=struct val y=Hidden.x end\n")
         val ()=exporting exports
         val ()=write ("proj/client.sml","val seen=Hidden.x\n")
@@ -429,9 +431,9 @@ struct
         fun write (name,text)=let val output=TextIO.openOut (dir ^ "/basis/" ^ name)
           in TextIO.output (output,text);TextIO.closeOut output end
         val ()=write ("captured.sml","structure Captured=struct (* Frozen member documentation. *) val member=1 end\n")
-        val ()=write ("MANIFEST","captured.sml | always | yes | Captured | \n")
+        val ()=write ("library.build","annotate \"always\" in captured.sml end\n")
         fun clean ()=(List.app (fn path => OS.FileSys.remove path handle _ => ())
-          [dir ^ "/basis/captured.sml",dir ^ "/basis/MANIFEST"];
+          [dir ^ "/basis/captured.sml",dir ^ "/basis/library.build"];
           OS.FileSys.rmDir (dir ^ "/basis") handle _ => ();OS.FileSys.rmDir dir handle _ => ())
         fun work () =
           let val parent=C.session {lib=SOME dir,flags=[]}
@@ -754,7 +756,7 @@ struct
     let fun write (name,text)=let val output=TextIO.openOut (dir ^ "/" ^ name) in TextIO.output (output,text);TextIO.closeOut output end
         val ()=write ("basis/basis.sml","structure Base=struct val one=1 val two=2 end\n")
         val ()=write ("basis/narrow.sml","structure Base:sig val one:int end=Base\n")
-        val ()=write ("basis/MANIFEST","basis.sml | always | yes | Base | \nnarrow.sml | seal@narrow | yes | Base | \n")
+        val ()=write ("basis/library.build","annotate \"always\" in basis.sml end\nannotate \"seal\" \"view=narrow\" in narrow.sml end\n")
         val ()=write ("proj/viewed.build","view narrow\nfiles client.sml end\n")
         val ()=write ("proj/whole.build","files client.sml end\n")
         val ()=settle ()

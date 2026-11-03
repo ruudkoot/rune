@@ -934,8 +934,8 @@ was changed, or written within the second of its stat and not the same
 bytes, is.
 
 **Up to date.** A compile in units keeps what it read once its plan was made
--- every source, every MANIFEST, every file its declared steps and
-preprocessors read, with the stat each had when it was read, and whether
+-- every source, every build file and source each library's index rests on,
+every file its declared steps and preprocessors read, with the stat each had when it was read, and whether
 each `library.build` it asked of was there -- with what its steps made and
 its output, each held as an output is, and the warnings it gave, under a key
 of all its plan rests on: the command line, the directory, every `RUNE_`
@@ -1019,11 +1019,12 @@ written order to fall back on, so a file that is not well-formed is none of
 them, and a name two of them declare is refused; where a file left out
 declares a module the program names, the compiler says so.
 
-**The Basis Library's MANIFEST** says what each of its files provides and
-requires (`lib/basis/MANIFEST`). It is made from the library's build file
-(`lib/basis/library.build`, docs/build.md) by `rune --basis-index DIR`:
-the provides column is what a file declares and the requires column what
-`Deps` derives, so neither is written by hand.
+**The Basis Library's index** says what each of its files provides and
+requires. It is derived from the library's build file
+(`lib/basis/library.build`, docs/build.md) and its sources, and kept in the
+store, never in the tree (docs/build.md, *A library's index*): what a file
+provides is what it declares and what it requires what `Deps` derives, so
+neither is written by hand, and `rune --basis-index DIR` prints it.
 
 ## Well-formed units
 
@@ -1075,7 +1076,7 @@ fixity the files before it leave, a prelude's among them, so a unit that needs
 it parses and shows its uses. So does choosing what of the libraries a program
 loads, by the names its files use (`--basis-deps` shows the choice), from what
 the libraries it sees export. A file that does not parse even so, because its
-fixity comes from a library with no header, which no manifest holds, is taken
+fixity comes from a library with no header, which no index holds, is taken
 there by its tokens, and `rune --deps --build` keeps it where it is written;
 its compile has the last word. A prelude stays where it is written too.
 
@@ -1238,7 +1239,7 @@ text is big enough to be worth a process (`RUNE_PARALLEL_MIN` bytes, 16384
 if not set). A unit the parent reaches and misses it compiles itself,
 unless a child has it, whose end it waits for. A unit needs the units
 before it that declare a name it uses (*The graph*; a Basis file by its
-MANIFEST); a unit that is not well-formed, and an `always` file of the
+index); a unit that is not well-formed, and an `always` file of the
 Basis, is needed by every unit after it. `RUNE_PARALLEL_DEBUG` set prints
 each child's start and end.
 

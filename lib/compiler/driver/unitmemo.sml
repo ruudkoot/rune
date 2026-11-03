@@ -19,8 +19,8 @@
    that is what it wrote is not made again.
 
    Up to date: of a compile in units, everything it read after its plan was
-   made -- every source, every MANIFEST, what its declared steps and
-   preprocessors read (Steps) -- with the stat each had when it was read;
+   made -- every source, every file a library's index rests on (LibraryIndex),
+   what its declared steps and preprocessors read (Steps) -- with the stat each had when it was read;
    what its steps made, and its output, each an output as above; and the
    warnings it gave; under a key of all the plan rests on: the command line,
    the directory, the RUNE_ variables, the compiler, the build files' text,

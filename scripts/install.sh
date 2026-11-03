@@ -98,9 +98,10 @@ need() { [ -e "$1" ] || missing="$missing $1"; }
 need "$root/bin/runevm-stack"
 need "$root/bin/runevm"
 need "$root/build/gmp/native-build.json"
-# what says which files of each library are installed: with none, no Basis is,
-# and the rune installed compiles nothing
-need "$root/lib/basis/MANIFEST"
+# the Basis Library, which every compile reads: with none, the rune installed
+# compiles nothing
+need "$root/lib/basis/library.build"
+[ -n "$(find "$root/lib/basis" -name '*.sml' 2> /dev/null | head -1)" ] || missing="$missing $root/lib/basis/*.sml"
 if [ -z "$host" ]; then
   need "$root/bin/rune.rbc"
 elif sml_for_host "$host" > /dev/null; then
@@ -298,28 +299,31 @@ if [ -e "$root/build/librune.a" ] && [ -e "$root/build/rune-offsets.s" ]; then
   fi
 fi
 
-# every library: lib/basis and each directory of lib with a MANIFEST, such as
-# lib/test/property (docs/plans/quickcheck.md, D1), under the same name
-for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
-  l=$(dirname "$manifest" | sed 's|^\./||')
-  mkdir -p "$libdir/$l"
-  copy "$root/lib/$l/MANIFEST" "$libdir/$l/MANIFEST" 644
-  # the first column of a line is the file, which may be in a subdirectory
-  # (lib/test/property/basis/sized/int8.sml)
-  while IFS='|' read -r f _; do
-    f=$(echo $f)
-    case "$f" in ""|\#*) continue ;; esac
+# every library: lib/basis and each directory of lib with a library.build, such
+# as lib/test/property (docs/plans/quickcheck.md, D1), under the same name: its
+# build files and its sources, which may be in a subdirectory
+# (lib/test/property/basis/sized/int8.sml), and its README. Its index is
+# derived from them where it is compiled (docs/build.md), so no list says which
+for build in $(cd "$root/lib" && find . -name library.build | sort); do
+  l=$(dirname "$build" | sed 's|^\./||')
+  for f in $(cd "$root/lib/$l" && find . -type f \( -name '*.sml' -o -name '*.build' \) | sed 's|^\./||' | sort); do
     mkdir -p "$(dirname "$libdir/$l/$f")"
     copy "$root/lib/$l/$f" "$libdir/$l/$f" 644
-  done < "$root/lib/$l/MANIFEST"
+  done
   # what runedoc reads besides the sources: the overview
   for f in README.md; do
     if [ -e "$root/lib/$l/$f" ]; then copy "$root/lib/$l/$f" "$libdir/$l/$f" 644; fi
   done
 done
+# and never success with no Basis Library: the rune installed would compile
+# nothing (the build-system roadmap's H2)
+if [ ! -e "$libdir/basis/library.build" ] || [ -z "$(find "$libdir/basis" -name '*.sml' | head -1)" ]; then
+  echo "install.sh: no Basis Library was installed in $libdir/basis" >&2
+  exit 1
+fi
 
 # The generated FFI sets also carry current/API pointers, .build files, C
-# shims and declaration provenance, which are not entries in an SML MANIFEST.
+# shims and declaration provenance, which are no library's sources.
 for generated in ffi/sdl ffi/win32/generated; do
   if [ -d "$root/lib/$generated" ]; then
     parent=$(dirname "$generated")

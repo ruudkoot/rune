@@ -77,11 +77,11 @@ struct
   type candidates = {libraries : (string * entry list) list, entries : entry list, scopes : BasisManifest.scopes}
   fun candidates {root : string, libraries : string list, building : string option, view : string option} : candidates =
     let
-      val read = List.map (fn dir => (dir,BasisManifest.readManifest dir)) (BasisManifest.libraries (root,libraries))
+      val read = List.map (fn dir => (dir,LibraryIndex.entries {root=root,dir=dir})) (LibraryIndex.libraries (root,libraries))
       val _ = BasisManifest.virtualModules read
     in
-      {libraries=read,entries=BasisManifest.readManifest (root ^ "/basis") @ BasisManifest.arrange read,
-       scopes=BasisManifest.scopes {root=root,building=building,names=libraries,headed=false,libraries=read,view=view}}
+      {libraries=read,entries=LibraryIndex.entries {root=root,dir=root ^ "/basis"} @ BasisManifest.arrange read,
+       scopes=LibraryIndex.scopes {root=root,building=building,names=libraries,headed=false,libraries=read,view=view}}
     end
 
   (* What a program that mentions these names loads. A library beside the
@@ -105,6 +105,9 @@ struct
       NONE => if null libraries then {groups=[],final=[],scopes=BasisManifest.noScopes ""} else raise Fail "libraries require a library root"
     | SOME root =>
         let
+          (* each library's index as it is now, whatever an earlier
+             selection of the session knew (LibraryIndex) *)
+          val () = LibraryIndex.forget ()
           val found = candidates {root=root,libraries=libraries,building=building,view=view}
           val scopes = #scopes found
           (* a clash is an error here as in a compile (D9) *)

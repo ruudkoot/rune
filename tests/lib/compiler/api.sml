@@ -202,10 +202,10 @@ struct
         val ()=(OS.FileSys.mkDir basis;OS.FileSys.mkDir library)
         fun write (file,text)=let val output=TextIO.openOut file
           in TextIO.output (output,text);TextIO.closeOut output end
-        val basisManifest=OS.Path.concat (basis,"MANIFEST")
-        val libraryManifest=OS.Path.concat (library,"MANIFEST")
+        val basisManifest=OS.Path.concat (basis,"library.build")
+        val libraryManifest=OS.Path.concat (library,"library.build")
         val source=OS.Path.concat (library,"native.sml")
-        val ()=(write (basisManifest,"");write (libraryManifest,"native.sml | demand | rune | NativeLibrary | -\n");
+        val ()=(write (basisManifest,"");write (libraryManifest,"native.sml\n");
           write (source,"structure NativeLibrary=struct val value=42 end\n"))
         fun clean ()=(List.app remove [basisManifest,libraryManifest,source];OS.FileSys.rmDir basis;OS.FileSys.rmDir library)
         fun work () =
