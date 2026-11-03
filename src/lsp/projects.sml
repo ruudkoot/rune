@@ -53,7 +53,7 @@ struct
                 case U.native (platform,U.parse uri) of NONE => [] | SOME {path,...} =>
                   W.withNamed (workspace,W.join platform (path,"file"),#flags config,
                     List.map (fn file => {name=fileUri file,build=fileUri file,flags= #flags config,
-                      variables=[],libraryRoot=NONE}:W.target) (W.buildFiles platform path))
+                      variables=[],libraryRoot=NONE}:W.target) (W.buildFiles platform path),true)
               val ()=case U.native (platform,U.parse uri) of NONE => ()
                 | SOME {path,...} => directories:=path:: !directories
           in List.app (fn candidate => target (config,candidate)) targets end
@@ -67,7 +67,7 @@ struct
           [] (!memberships)
         fun apply uri =
           let val original=W.configurationFor (workspace,uri)
-              val config={targets= !(valOf (W.lookup (owners,uri))),flags= #flags original,variables=[],
+              val config={targets=List.rev (!(valOf (W.lookup (owners,uri)))),flags= #flags original,variables=[],
                 activeContext= #activeContext original,libraryRoot= #libraryRoot original}:W.settings
           in case W.scopedAt (workspace,uri) of SOME (settings:W.settings) =>
                if null (#targets settings) then SOME (uri,config) else NONE

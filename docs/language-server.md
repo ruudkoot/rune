@@ -343,7 +343,8 @@ context through a list of edits, and after each compares every fact, occurrence,
 type, diagnostic and query with a fresh analysis of the same inputs, on the
 units named; it fails a run that did not take each path it is told to.
 `make test-lsp-oracle`, part of `make check`, runs it on the compiler's own build,
-with every file open and with one; `make test-lsp-oracle-corpora`, in the
+with every file open, and with one and the Basis Library's units taken from
+another context (`--share`); `make test-lsp-oracle-corpora`, in the
 nightly tier, on HOL4's closure and MLton (`tests/lsp/README.md`).
 
 ## Workspaces and build contexts
@@ -374,23 +375,122 @@ file URI; path-variable values are directory file URIs. Targets may
 override compiler settings, libraries, path variables and the library root.
 
 Without explicit targets, a root file (`rune.workspace`,
-[build.md](build.md), *The workspace*) inside one of the client's folders
-gives its named targets, with their options after the settings' flags. One
-above every folder gives none, and discovery alone serves such a folder.
-Beside those, discovery examines the document directory and its ancestors up
-to an owning workspace root, following build `use` edges. It does not
-recursively scan descendants. A loose file without a workspace checks its own
-directory. Project source order, scopes and annotations come
-from `RuneCompiler.Project`, which is given the root file above each build, so
-that a unit has the name it has in a build ([units.md](units.md), *Names*).
+[build.md](build.md), *The workspace*) gives a file its named targets, with
+their options after the settings' flags, whether the root file is inside the
+client's folder or above it; a workspace sweep of a folder inside a workspace
+reads the folder's own builds alone. The root file read is the one on disk: an
+unsaved edit of it counts once it is saved. Beside those, discovery examines
+the document directory and its ancestors up to an owning workspace root,
+following build `use` edges. It does not recursively scan descendants.
+Project source order, scopes and annotations come from `RuneCompiler.Project`,
+which is given the root file above each build, so that a unit has the name it
+has in a build ([units.md](units.md), *Names*).
 
-When several targets contain a file, the server requests a context choice;
-it does not select by enumeration order. A configured target name or the
-returned context identifier can also select one. Dismissal or unsupported
-client UI leaves the context unresolved. Document synchronization remains
-available while semantic analysis awaits an explicit selection.
-The prompt is shown once: a file whose prompt was dismissed is not asked about
-again until it is closed or the settings change. A choice lasts as long.
+### A file's context
+
+A file has one context where it can (the build-system roadmap's D26), and a
+choice is asked for only where its contexts really differ.
+
+* **One owner.** A file of a library, below the deepest directory above it
+  with a `library.build`, as its unit's name says, is checked in that library's
+  build, whatever else names it: a program that reaches into the library, or a
+  test's build, gives it no other context. Where the library's build does not
+  hold the file, the others stand. A setting's `activeContext` is taken as it
+  says.
+* **Several contexts.** Where a file still has several, the server checks it in
+  each. A context whose check stops before the file, at an earlier unit's error,
+  is dropped. The rest are compared by what each occurrence of the file's names
+  resolves to, the place of its definition and its declaration, by paths whole,
+  and by the file's own errors, never by a printed type, which depends on what
+  was selected (`SML90.instream` or `TextIO.instream`). Where they agree the file
+  is checked in the first, and nothing is asked; the file still has them all, and
+  a client that asks can choose another (*Status for a client that asks*). The
+  comparison is made once while the file's plan holds, and its first discovery
+  pays a check of each context: in this repository, 18 s for
+  `build/config.sml`, in five builds, and about 7 s for a file in three.
+* **A real choice.** Where they differ, the server requests a context choice,
+  of those that reach the file; it does not select by enumeration order. A
+  configured target name or the returned context identifier can also select one.
+  Dismissal or unsupported client UI leaves the context unresolved. Document
+  synchronization remains available while semantic analysis awaits an explicit
+  selection. The prompt is shown once: a file whose prompt was dismissed is not
+  asked about again until it is closed or the settings change. A choice lasts as
+  long.
+* **Sweeps.** A workspace sweep asks no one: a file with several contexts is
+  checked in its first, so that a sweep covers every file of the builds it reads.
+
+In this repository (`tools/lsp/contexts.sml --builds`, the 834 sources of its 76
+readable builds, as a client whose folder is its root sees them), 715 files are
+a library's, 18 have several contexts, and 1 asks for a choice:
+`tests/ffi/win32/native/config.sml`, whose builds are for 32 and 64 bits. Before
+these rules the same files asked 124 times, and a sweep covered 153 of the 220
+files its builds hold, against 220 now.
+
+### A file in no build
+
+Most SML files are in no build: a test, a script, a bug report. Such a file has
+an implicit library over its directory. The server reads the names the file
+uses from its syntax (`RuneCompiler.Syntax.names`, what `rune --deps` reads;
+[units.md](units.md), *Well-formed units*) and looks for each where it is
+declared: in the file's own directory, then anywhere in its workspace (the root
+file's directory, else the client's folder that holds the file, else its own
+directory), the nearest first by the directories they share. A file found in a
+library that lets the name out is not taken: the library is imported, as a
+build would import it. A name the Basis Library provides is its; a library none
+of whose files was read is imported by its `MANIFEST`. What is found is looked
+through in turn, and the file is checked after it all, as a build no file holds,
+beside it, read through an overlay. It is analysis only: no batch build reads it.
+
+The index is of every SML file under the workspace, but those of a hidden
+directory and of one with a root file or a repository of its own: a scan of each
+file's text for the names after `structure`, `signature` and `functor`, which a
+parse of the file confirms where one is looked up; both are kept while the
+file's stamp stands. A type or a value at the top level is not looked up, and
+nor is a name a file reaches only through an `open`. The tree is walked again
+at most every 30 seconds, since the worker has no file events; a file a name
+is found in is read by its stamp in any case. The first walk and scan of this
+repository's 3,983 files take about 2 s.
+
+On the build-system roadmap's sample of 726 files in no build (E22, E24), the
+same files on this tree, each checked as the server checks it
+(`tools/lsp/contexts.sml --zero`):
+
+| Each file checked | Clean | An unbound name | Another error |
+|---|---:|---:|---:|
+| Alone with the Basis Library, before (E22) | 251 | 416 | 59 |
+| In the nearest build (E24) | 262 | 390 | 74 |
+| Alone with the Basis Library, on this tree | 251 | 420 | 53 |
+| In its implicit library | 517 | 145 | 62 |
+
+Two files fail both ways: one is not UTF-8, and one makes the analysis fail
+rather than report. A file's plan and check take a median of 0.06 s and 0.48 s
+at the 95th percentile, in one process after the index is built; a context
+holds a median of 2 files, and 107 at most.
+Of the 145 whose first unbound name remains, the name is declared nowhere as a
+structure, signature or functor for 45, and the rest are mostly what syntax
+cannot know: a host's own structures (`MLton.Signal`), a test whose command line
+imports the compiler's `RuneCompiler` over the Basis Library's, and error tests
+meant to fail.
+
+### Past the first error
+
+A unit that fails reports each top-level declaration that does not elaborate,
+as a compile does ([units.md](units.md), *Errors*), and each syntax error;
+what it declares past them is checked, and answers hover, completion and the
+rest. The units after it are not reached: a file among them reports that an
+earlier source could not be checked.
+
+### Two builds over one library
+
+A unit of a library is the same unit in every build over it, so the server's
+contexts share them (`RuneCompiler.Analysis.share`): a context that reaches a
+library's unit it has not held takes the one another context checked last,
+under the same compiler configuration, by its usages, as a compile takes an
+entry of its cache, and elaborates it where they do not hold. In this
+repository, `tools/lsp/oracle.build` checked after `runelsp.build` takes 254 of
+its 257 units and elaborates 3: 0.49G instructions and 2.2 s, against 1.98G
+and 5.6 s alone (`tools/lsp/contexts.sml --share`). `make test-lsp-oracle` holds
+a context that shares to fresh ones that do not.
 
 ## Status for a client that asks
 

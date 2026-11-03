@@ -439,12 +439,16 @@ test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rb
 LSP_ORACLE_SRCS := tools/lsp/oracle.sml src/main/lsp-oracle-main.sml
 bin/rune-lsp-oracle.rbc: $(RUNE) $(LSP_ORACLE_SRCS) tools/lsp/oracle.build manifests
 	$(RUNE) --build tools/lsp/oracle.build -o $@
+# What the server makes of a tree's files: contexts, prompts, implicit libraries
+# and two builds over one library (tools/lsp/contexts.sml, tests/lsp/README.md)
+bin/rune-lsp-contexts.rbc: $(RUNE) tools/lsp/contexts.sml src/main/lsp-contexts-main.sml tools/lsp/contexts.build $(wildcard src/lsp/*.sml) manifests
+	$(RUNE) --build tools/lsp/contexts.build -o $@
 bin/rune-lsp-replay.rbc: $(RUNE) tests/lsp/client.sml tools/lsp/replay.sml tools/lsp/replay.build manifests
 	$(RUNE) --build tools/lsp/replay.build -o $@
 ORACLE = bin/runevm --jit=opt --equality-work 1000000000 --heap-limit
 ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
 .PHONY: test-lsp-oracle test-lsp-oracle-corpora
-test-lsp-oracle: bin/rune-lsp-oracle.rbc
+test-lsp-oracle: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --sample 12 --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
