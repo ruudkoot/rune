@@ -13,24 +13,27 @@ struct
   type candidate={name:string,kind:string,detail:string option,arguments:string list list,definition:location option}
   type call={name:string,path:string list,detail:string,arguments:string list list,argument:int,parameter:int}
   type typeHint={name:string,position:int,ty:string,binding:string,location:location}
-  type snapshot={id:string,context:string,project:string option,inputs:input list,dependencies:input list,
-    diagnostics:C.diagnostic list,occurrences:occurrence list,types:typeDefinition list,facts:fact list,reused:int,checked:int,
-    config:C.config,cache:E.entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,
+  (* entries: each unit's by its name. projections: a unit's occurrences once
+     asked for. flat: every unit's, in the units' order, once asked for. *)
+  type snapshot={id:string,context:string,project:string option,inputs:input list,ordered:input vector,dependencies:input list,
+    diagnostics:C.diagnostic list,reused:int,checked:int,
+    config:C.config,cache:E.entry list,entries:E.entry StringMap.map,syntaxes:CompilerSyntax.t StringMap.map,plan:string,
     steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan,
-    scope:Workspace.scope,units:string list}
+    scope:Workspace.scope,units:string vector,projections:occurrence list StringMap.map ref,
+    flat:{occurrences:occurrence list,facts:fact list,types:typeDefinition list} option ref}
   datatype t=Analysis of {parent:C.session,context:string,namespace:string,engine:E.session,
-    token:unit ref,serial:IntInf.int ref,busy:bool ref,closed:bool ref,projections:occurrence list StringMap.map ref}
+    token:unit ref,serial:IntInf.int ref,busy:bool ref,closed:bool ref}
   datatype checkpoint=Checkpoint of {token:unit ref,entries:E.entry list,plan:string}
   exception Cancelled=E.Cancelled
   exception Busy
   type observation=E.observation
   fun new (parent as C.Session {config,...},context) =
     (C.checked parent;Analysis {parent=parent,context=context,namespace="analysis-" ^ Int.toString (CompilerState.freshIdentity ()),
-      engine=E.new config,token=ref (),serial=ref 0,busy=ref false,closed=ref false,projections=ref StringMap.empty})
+      engine=E.new config,token=ref (),serial=ref 0,busy=ref false,closed=ref false})
   fun checked (Analysis {parent,busy,closed,...}) =
     (C.checked parent;if !closed then raise C.Closed else if !busy then raise Busy else ())
-  fun close (Analysis {engine,busy,closed,projections,...}) =
-    if !busy then raise Busy else (closed:=true;projections:=StringMap.empty;E.close engine)
+  fun close (Analysis {engine,busy,closed,...}) =
+    if !busy then raise Busy else (closed:=true;E.close engine)
   fun observe (context as Analysis {engine=E.Session{observer,...},...},value)=
     (checked context;observer:=value)
   fun checkpoint (context as Analysis {engine=E.Session {stored,plan,...},token,...}) =
@@ -57,7 +60,7 @@ struct
     in {unit=unit,file= #file span,start= #start span,stop= #stop span,kind=kind,name=name,path=path,
       binding=binding definition,definition=location definition,declaration=location declaration,
       isDefinition=isDefinition,derived=derived} end
-  fun check (context as Analysis {parent,context=name,namespace,engine,serial,busy,projections,...},
+  fun check (context as Analysis {parent,context=name,namespace,engine,serial,busy,...},
              {inputs:input list,steps,project,libraries,scope,cancelled}) : snapshot =
     let val ()=checked context
         val C.Session {config,...}=parent
@@ -75,37 +78,46 @@ struct
           let val result=E.checkSteps (engine,scope,sources,steps,libraries,poll)
               val E.Session{observer,...}=engine
               fun phase name items=Option.app(fn f=>f {phase=name,file="",checked= #checked result,reused= #reused result,items=items})(!observer)
-              val ()=phase "occurrences-start" (length(#uses result))
-              val projected=ref StringMap.empty
-              fun projectEntry (entry:E.entry)=
-                let val uses=case StringMap.find(!projections,#key entry) of SOME uses=>uses | NONE=>
-                      List.rev(List.foldl(fn (use,all)=>freeze(#name entry,use)::all)[](#uses entry))
-                in projected:=StringMap.insert(!projected,#key entry,uses);uses end
-              val occurrences=List.concat(List.map projectEntry (#cache result))
               fun dependency (source:E.source):input={file= #file source,text= #text source,
                 mode=Source.modeName (#mode source),annotations=[],revision=Pickle.hash (#text source)}
-              val types=List.map (fn {id,origin}:E.typeDefinition =>
-                {id=id,definition=location (Env.declaration origin),declaration=location (Env.declaration origin),
-                 implementation=location (Env.primary origin)}:typeDefinition) (#types result)
               val snapshot={id=namespace ^ ":" ^ IntInf.toString (!serial),context=name,project=project,inputs=inputs,
-                dependencies=List.map dependency (#dependencies result),diagnostics= #diagnostics result,
-                occurrences=occurrences,types=types,facts= #facts result,
-                reused= #reused result,checked= #checked result,config=config,cache= #cache result,
+                ordered=Vector.fromList inputs,dependencies=List.map dependency (#dependencies result),
+                diagnostics= #diagnostics result,reused= #reused result,checked= #checked result,config=config,cache= #cache result,
+                entries=List.foldl (fn (entry:E.entry,all) => StringMap.insert (all,#name entry,entry)) StringMap.empty (#cache result),
                 syntaxes= #syntaxes result,plan= #plan result,
-                steps=steps,libraries=libraries,prelude= #prelude result,scope=scope,units= #units result}:snapshot
-              val ()=phase "snapshot-published" (length(#occurrences snapshot))
-          in projections:= !projected;serial:=IntInf.+ (!serial,1);snapshot end
+                steps=steps,libraries=libraries,prelude= #prelude result,scope=scope,units=Vector.fromList (#units result),
+                projections=ref StringMap.empty,flat=ref NONE}:snapshot
+              val ()=phase "snapshot-published" (length (#cache result))
+          in serial:=IntInf.+ (!serial,1);snapshot end
         val result=work () handle error => (busy:=false;raise error)
     in busy:=false;result end
+  fun projection (entry:E.entry)=List.rev (List.foldl (fn (use,all) => freeze (#name entry,use)::all) [] (#uses entry))
+  fun typeDefinition ({id,origin}:E.typeDefinition):typeDefinition=
+    {id=id,definition=location (Env.declaration origin),declaration=location (Env.declaration origin),
+     implementation=location (Env.primary origin)}
+  (* what a unit holds, by its name, without a walk of the others *)
+  fun occurrencesIn (snapshot:snapshot,unit)=case StringMap.find (!(#projections snapshot),unit) of SOME uses => uses
+    | NONE => case StringMap.find (#entries snapshot,unit) of NONE => [] | SOME entry =>
+        let val uses=projection entry
+        in #projections snapshot:=StringMap.insert (!(#projections snapshot),unit,uses);uses end
+  fun factsIn (snapshot:snapshot,unit)=case StringMap.find (#entries snapshot,unit) of NONE => [] | SOME entry => #facts entry
+  fun flat (snapshot:snapshot)=case !(#flat snapshot) of SOME all => all | NONE =>
+    let val all={occurrences=List.concat (List.map (fn entry:E.entry => occurrencesIn (snapshot,#name entry)) (#cache snapshot)),
+          facts=List.concat (List.map #facts (#cache snapshot)),
+          types=List.map typeDefinition (List.concat (List.map #types (#cache snapshot)))}
+    in #flat snapshot:=SOME all;all end
+  fun occurrences snapshot= #occurrences (flat snapshot)
+  fun facts snapshot= #facts (flat snapshot)
+  fun types snapshot= #types (flat snapshot)
   (* the type at a position from its unit's node types (CompilerNodeTypes),
      worked out in a compiler state of its own; NONE where the unit has
      none (a library's, a cached analysis's before them) or no node is
      there *)
   fun typedAt (snapshot:snapshot,{file,unit,offset}) =
-    let fun mine (entry:E.entry)=case unit of SOME unit => #name entry=unit
-          | NONE => isSome (#typing entry) andalso
-              (let val CompilerSyntax.Syntax {file=name,...}= #syntax entry in name=file end)
-    in case List.find mine (#cache snapshot) of
+    let fun mine (entry:E.entry)=isSome (#typing entry) andalso
+          (let val CompilerSyntax.Syntax {file=name,...}= #syntax entry in name=file end)
+        val found=case unit of SOME unit => StringMap.find (#entries snapshot,unit) | NONE => List.find mine (#cache snapshot)
+    in case found of
          SOME entry => (case #typing entry of
                           SOME typing => C.owned (fn () => CompilerNodeTypes.typeAt (typing,file,offset))
                         | NONE => NONE)
@@ -119,33 +131,34 @@ struct
               if (#derived previous andalso not (#derived fact)) orelse
                  #derived previous= #derived fact andalso #stop fact- #start fact< #stop previous- #start previous
               then SOME fact else old
-    in Option.map #ty (List.foldl best NONE (List.filter candidate (#facts snapshot))) end
+        val all=case unit of SOME unit => factsIn (snapshot,unit) | NONE => facts snapshot
+    in Option.map #ty (List.foldl best NONE (List.filter candidate all)) end
   fun typeAt (snapshot:snapshot,{file,offset}) =
     if length (List.filter (fn input:input => #file input=file) (#inputs snapshot))>1 then NONE
     else typeIn (snapshot,{file=file,unit=NONE,offset=offset})
   fun unitAt (snapshot:snapshot,{ordinal}) =
-    if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
-      SOME (List.nth (#units snapshot,ordinal))
+    if ordinal<0 orelse ordinal>=Vector.length (#units snapshot) then NONE else
+      SOME (Vector.sub (#units snapshot,ordinal))
   fun syntaxAt (snapshot:snapshot,position) = Option.mapPartial (fn unit =>
-    Option.map #2 (List.find (fn (name,_) => name=unit) (#syntaxes snapshot))) (unitAt (snapshot,position))
+    StringMap.find (#syntaxes snapshot,unit)) (unitAt (snapshot,position))
   fun typeAtOccurrence (snapshot:snapshot,{ordinal,offset}) =
-    if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
-      let val input=List.nth (#inputs snapshot,ordinal)
+    if ordinal<0 orelse ordinal>=Vector.length (#ordered snapshot) then NONE else
+      let val input=Vector.sub (#ordered snapshot,ordinal)
       in typeIn (snapshot,{file= #file input,unit=unitAt (snapshot,{ordinal=ordinal}),offset=offset}) end
   (* Only checked variable patterns supply hints. Exact frozen facts and
      lexical identities exclude constructors, copied bodies and guessed types. *)
   fun typeHints (snapshot:snapshot,{ordinal,start,stop}) : typeHint list =
     case (unitAt (snapshot,{ordinal=ordinal}),syntaxAt (snapshot,{ordinal=ordinal})) of
       (SOME unit,SOME syntax) =>
-        let val input=List.nth (#inputs snapshot,ordinal)
+        let val input=Vector.sub (#ordered snapshot,ordinal)
             fun localFact (fact:fact,map)=if #unit fact=unit andalso #file fact= #file input andalso not (#derived fact) then
                   IntMap.insert (map,#start fact,fact::getOpt (IntMap.find (map,#start fact),[])) else map
-            val facts=List.foldl localFact IntMap.empty (#facts snapshot)
+            val facts=List.foldl localFact IntMap.empty (factsIn (snapshot,unit))
             fun localDefinition (occurrence:occurrence,map)=
               if #unit occurrence=unit andalso #file occurrence= #file input andalso #isDefinition occurrence andalso #kind occurrence="value"
                 andalso not (#derived occurrence) andalso isSome (#binding occurrence) then
                 IntMap.insert (map,#start occurrence,occurrence::getOpt (IntMap.find (map,#start occurrence),[])) else map
-            val definitions=List.foldl localDefinition IntMap.empty (#occurrences snapshot)
+            val definitions=List.foldl localDefinition IntMap.empty (occurrencesIn (snapshot,unit))
             fun event ((kind,span:Source.span,values),(patterns,typed)) =
               let val start= #start span val stop= #stop span
               in if kind="PTyped" orelse kind="PLayered" andalso
@@ -189,14 +202,14 @@ struct
         in if start<0 orelse stop<start then [] else collect (IntMap.listItemsi patterns,IntMap.listItemsi typed,~1,[]) end
     | _ => []
   fun queryAt (snapshot:snapshot,{ordinal,offset,path},accept:E.snapshot->bool) =
-    if ordinal<0 orelse ordinal>=length (#inputs snapshot) then NONE else
-    let val input=List.nth (#inputs snapshot,ordinal)
+    if ordinal<0 orelse ordinal>=Vector.length (#ordered snapshot) then NONE else
+    let val input=Vector.sub (#ordered snapshot,ordinal)
         val engine=E.Session {stored=ref (#cache snapshot),plan=ref (#plan snapshot),config= #config snapshot,closed=ref false,
           observer=ref NONE,names=ref StringMap.empty}
         fun source (input:input):E.source={file= #file input,text= #text input,mode=valOf (Source.modeNamed (#mode input))}
         fun query (sources,at)= E.checkWith
           (engine,#scope snapshot,sources,#steps snapshot,#libraries snapshot,fn () => false,
-           SOME {unit=List.nth (#units snapshot,ordinal),file= #file input,offset=at,path=path},
+           SOME {unit=Vector.sub (#units snapshot,ordinal),file= #file input,offset=at,path=path},
            List.map source (#dependencies snapshot),SOME (#prelude snapshot))
         val original=List.map source (#inputs snapshot)
         fun retry []=NONE

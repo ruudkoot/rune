@@ -12,14 +12,15 @@ struct
      (CompilerNodeTypes), for a unit of the inputs *)
   type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list,
     typing:CompilerNodeTypes.t option}
-  type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,
-    uses:(string*(string*(string list*string)*Source.span*Env.origin*bool)) list,
+  type snapshot={diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,dependencies:source list,
     candidates:candidate list,role:string,fields:(string*string) list,application:application option,
-    cache:entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,prelude:CompilerPrelude.plan,units:string list}
+    cache:entry list,syntaxes:CompilerSyntax.t StringMap.map,plan:string,prelude:CompilerPrelude.plan,units:string list}
   type observation={phase:string,file:string,checked:int,reused:int,items:int}
   datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref,
     observer:(observation->unit) option ref,names:(Source.mode*string*unit StringMap.map) StringMap.map ref}
   exception Cancelled
+  (* a query has what it asked for once its unit is elaborated *)
+  exception Answered
   fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false,observer=ref NONE,names=ref StringMap.empty}
   fun close (Session {closed,stored,names,...})=(closed:=true;stored:=[];names:=StringMap.empty)
   (* units: the logical name of each of sources, as rune gives them
@@ -84,11 +85,8 @@ struct
         val fixity=ref Fixity.initial
         val scopes=CompilerBuildContext.new (env,fixity)
         val staged=ref [] : entry list ref
-        val facts=ref [] : fact list list ref
-        val types=ref [] : typeDefinition list list ref
-        val uses=ref []
         val unitUses=ref []
-        val syntaxes=ref [] : (string*CompilerSyntax.t) list ref
+        val syntaxes=ref StringMap.empty : CompilerSyntax.t StringMap.map ref
         val ()=Env.tracking:=true
         val ()=Env.observe:=(fn event => unitUses:=event :: !unitUses)
         val reused=ref 0
@@ -124,7 +122,6 @@ struct
         fun unit (source:source,name,allow,keepFacts) =
           let val {file,text,mode}=source
               val ()=poll ()
-              val ()=observe "unit-start" file (size text)
               val ()=(Env.currentUnit:=name;unitUses:=[])
               val ()=Source.register (Source.fromStringIn (mode,file,text))
               val key=Pickle.hash (!chain ^ ":" ^ name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ text)
@@ -135,9 +132,9 @@ struct
               val cached=case previous of SOME entry =>
                 if !prefix andalso not (case query of SOME query => #unit query=name | NONE => false) andalso #name entry=name andalso #allow entry=allow andalso #mode entry=mode
                   andalso CompilerSyntax.text (#syntax entry)=text then SOME entry else NONE | NONE => NONE
-              fun remember syntax=if keepFacts then syntaxes:=(name,syntax):: !syntaxes else ()
+              fun remember syntax=if keepFacts then syntaxes:=StringMap.insert (!syntaxes,name,syntax) else ()
               val entry=case cached of SOME entry => (remember (#syntax entry);reused:= !reused+1;entry)
-              | NONE => (prefix:=false;
+              | NONE => (prefix:=false;observe "unit-start" file (size text);
                 let val ((syntaxTree,syntax,outgoing),usages)=Usage.record (fn () =>
                     let val ()=List.app (fn name => Usage.use ("fix",name)) (StringMap.listKeys (#table (!fixity)))
                       val syntaxTree=case StringMap.find (oldSyntax,name) of
@@ -164,6 +161,7 @@ struct
                     val ()=Elaborate.finish ()
                     val ()=observe "unit-elaborated" file (length(!unitUses))
                     val ()=Env.noteScope ({file=file,start=0,stop=size text+1},!env)
+                    val ()=case query of SOME query => if #unit query=name then raise Answered else () | NONE => ()
                     val ()=poll ()
                     in (syntaxTree,syntax,outgoing) end)
                     val exported=UnitBasis.export {start=start,name=name,file=file,text=fn () => text,
@@ -200,9 +198,8 @@ struct
                       SOME (CompilerNodeTypes.capture {tops=List.rev (!Elaborate.tops),ids=(firstId,!Ast.nextId),
                         stamps=(Vector.sub (#counters start,UnitBasis.kStamp),!Elaborate.stampCounter),env= !env})
                     val ()=Elaborate.forgetLintRecords ()
-                    val typeDefinitions=IntMap.foldli (fn (stamp,origin,all) =>
-                      if stamp<Vector.sub (#counters start,UnitBasis.kTycon) then all else
-                        {id=typeId stamp,origin=origin} :: all) [] (!Env.typeOrigins)
+                    val typeDefinitions=IntMap.foldRange (fn (stamp,origin,all) => {id=typeId stamp,origin=origin} :: all) []
+                      (Vector.sub (#counters start,UnitBasis.kTycon),!Types.tyconCounter) (!Env.typeOrigins)
                     val ()=UnitBasis.undo start
                 in checked:= !checked+1;{key=key,name=name,allow=allow,mode=mode,pickle= #pickle exported,facts=frozen,types=typeDefinitions,
                   syntax=syntaxTree,uses=List.rev (!unitUses),typing=typing}:entry end)
@@ -211,13 +208,12 @@ struct
               val ()=fixity:=Fixity.extend (#fixity start,#directives loaded)
               val ()=UnitBasis.bind loaded
               val ()=CompilerBuildContext.note (scopes,loaded)
-          in observe "unit-frozen" file (length(#uses entry));poll ();chain:=key;staged:=entry :: !staged;types:= #types entry :: !types;
-             facts:= #facts entry :: !facts;uses:=List.map (fn event => (name,event)) (#uses entry) :: !uses end
+          in observe "unit-frozen" file (length(#uses entry));poll ();chain:=key;staged:=entry :: !staged end
         val sourceNames=ref StringMap.empty
         fun names (source:source,mentioned)=
           let val ()=poll()
-              val ()=observe "names-start" (#file source) (size(#text source))
-              fun scan ()=let val (lexemes,_,_)=CompilerSyntax.lexical
+              fun scan ()=let val ()=observe "names-start" (#file source) (size(#text source))
+                    val (lexemes,_,_)=CompilerSyntax.lexical
                     {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
                 in BasisManifest.namesOf(CompilerSyntax.tokens lexemes (#file source),StringMap.empty) end
               val found=case StringMap.find(!savedNames,#file source) of SOME(mode,text,names)=>
@@ -295,8 +291,9 @@ struct
         val error=(List.app library (#groups plan);walk steps;
           if null (!remaining) then () else raise Fail "extra ordered project input";NONE) handle Error.CompileError (span,message) =>
           SOME (CompilerSession.sourceError ("error",span,message))
+          | Answered => NONE
         val ()=poll ()
-        val ()=observe "analysis-frozen" "" (List.foldl(fn(xs,n)=>n+length xs)0(!uses))
+        val ()=observe "analysis-frozen" "" (List.foldl(fn(entry:entry,n)=>n+length (#uses entry))0(!staged))
         val ()=(stored:=List.rev (!staged);savedPlan:=planKey;
           case frozenPlan of NONE=>savedNames:= !sourceNames | SOME _=>())
         fun candidates ()=case (!scopeEnv,query) of (SOME (_,env,sigs,funs),SOME query) =>
@@ -333,10 +330,9 @@ struct
                   fun show ty=case !scopeEnv of NONE => Types.toStringNamed (fn _ => NONE,printer) ty
                     | SOME (_,env,_,_) => Types.toStringNamed (fn c => Env.qualifiedName (env,c),printer) ty
               in List.map (fn (name,ty) => (name,show ty)) fields end | _ => []
-    in {facts=List.concat (List.rev (!facts)),diagnostics=case error of NONE => [] | SOME error => [error],
-      reused= !reused,checked= !checked,types=List.concat (List.rev (!types)),
+    in {diagnostics=case error of NONE => [] | SOME error => [error],reused= !reused,checked= !checked,
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
-      uses=List.concat (List.rev (!uses)),candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
-      cache= !stored,syntaxes=List.rev (!syntaxes),plan=planKey,prelude=plan,units=inputNames} end)
+      candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
+      cache= !stored,syntaxes= !syntaxes,plan=planKey,prelude=plan,units=inputNames} end)
   fun checkSteps (session,scope,sources,steps,libraries,cancelled)=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE)
 end

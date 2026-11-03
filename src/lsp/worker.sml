@@ -42,10 +42,7 @@ struct
               val ()=E.onProgress(engine,fn report=>send(V.Object
                 (("op",V.Bytes "progress")::("id",V.Integer id)::V.object report)))
               fun work () = case opName of
-                "discover" =>
-                  let val (workspace,documents)=RuneLspWorkerModel.restore (V.field (value,"state"))
-                      val _=RuneLspProjects.enrich (workspace,documents,fn () => cancelled id)
-                  in E.discovery (workspace,documents,V.bytes (V.field (value,"uri"))) end
+                "discover" => E.discover (engine,V.field (value,"state"),V.bytes (V.field (value,"uri")),fn () => cancelled id)
               | "check" =>
                   let val encoding=case V.bytes (V.field (value,"encoding")) of "utf-8" => LspProtocol.Utf8
                         | "utf-16" => LspProtocol.Utf16 | "utf-32" => LspProtocol.Utf32

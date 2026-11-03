@@ -88,6 +88,13 @@ struct
     in parse {file=file,text=text,windows=windows} end
     handle IO.Io _ => raise Invalid ("cannot read the workspace " ^ file)
 
+  (* where a root file above a file would be, the nearest first *)
+  fun candidates {file : string, windows : bool} : string list =
+    let fun up dir =
+          P.concat windows (dir,rootFile) ::
+          (let val parent = P.directory windows dir in if parent=dir then [] else up parent end)
+    in up (P.directory windows (keyOf (windows,here ()) file)) end
+
   (* the nearest root file above a file, read *)
   fun find {file : string, windows : bool} : t option =
     let

@@ -32,6 +32,7 @@ sig
   val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+  val foldRange : (key * 'a * 'b -> 'b) -> 'b -> key * key -> 'a map -> 'b
   val app : ('a -> unit) -> 'a map -> unit
   val appi : (key * 'a -> unit) -> 'a map -> unit
   val map : ('a -> 'b) -> 'a map -> 'b map
@@ -161,6 +162,19 @@ struct
   fun listItemsi m = foldri (fn (k, v, acc) => (k, v) :: acc) [] m
   fun listItems m = foldri (fn (_, v, acc) => v :: acc) [] m
   fun listKeys m = foldri (fn (k, _, acc) => k :: acc) [] m
+  (* foldli over the keys from lo up to but not including hi: the cost of
+     those keys and the height, not of the map *)
+  fun foldRange f acc (lo, hi) m =
+    let
+      fun go (E, acc) = acc
+        | go (T (_, l, k, v, r), acc) =
+            let
+              val above = Key.compare (k, lo) <> LESS
+              val below = Key.compare (k, hi) = LESS
+              val acc = if above then go (l, acc) else acc
+              val acc = if above andalso below then f (k, v, acc) else acc
+            in if below then go (r, acc) else acc end
+    in go (m, acc) end
   fun firsti E = NONE
     | firsti (T (_, E, k, v, _)) = SOME (k, v)
     | firsti (T (_, l, _, _, _)) = firsti l

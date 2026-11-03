@@ -104,6 +104,7 @@ struct
     type t=W.t
     type target=W.target
     fun find (request as {file,...})=guard file (fn () => W.find request)
+    val candidates=W.candidates
     fun root (workspace : t)= #root workspace
     fun libraryRoots (workspace : t)= #libraryRoots workspace
     fun targets (workspace : t)= #targets workspace
@@ -245,9 +246,11 @@ struct
     val syntaxAt=A.syntaxAt
     fun dependencies (snapshot:snapshot)= #dependencies snapshot
     fun diagnostics (snapshot:snapshot)= #diagnostics snapshot
-    fun occurrences (snapshot:snapshot)= #occurrences snapshot
-    fun types (snapshot:snapshot)= #types snapshot
-    fun facts (snapshot:snapshot)= #facts snapshot
+    val occurrences=A.occurrences
+    val occurrencesIn=A.occurrencesIn
+    val types=A.types
+    val facts=A.facts
+    val factsIn=A.factsIn
     fun work (snapshot:snapshot)={checked= #checked snapshot,reused= #reused snapshot}
     val typeAt=A.typeAt
     val typeAtOccurrence=A.typeAtOccurrence

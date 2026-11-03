@@ -68,9 +68,36 @@ struct
   (* every name below these is built in *)
   val builtin : int vector ref = ref (Vector.fromList [0, 0, 0])
   val () = CompilerState.cellRoot ("UnitBasis.builtin", builtin)
-  (* per kind, the ranges of the units by base, for writing: (base, count, unit) *)
-  val ranges : (int * int * loaded) vector array = Array.array (3, Vector.fromList [])
+  (* per kind, the ranges of the units by base, for writing: (base, count,
+     unit), in pieces whose lengths are powers of two, the newest and shortest
+     first, so that a unit added costs the log of the units and not their
+     number *)
+  val ranges : (int * int * loaded) vector list array = Array.array (3, [])
   val () = CompilerState.arrayRoot ("UnitBasis.ranges", ranges)
+  fun addRange (pieces, range) =
+    let fun carry (piece, older :: rest) =
+              if Vector.length older <= Vector.length piece then carry (Vector.concat [older, piece], rest)
+              else piece :: older :: rest
+          | carry (piece, []) = [piece]
+    in carry (Vector.fromList [range], pieces) end
+  (* the unit whose range of kind k holds v *)
+  fun rangeOf (k, v) : (int * loaded) option =
+    let
+      fun search (rs, lo, hi) =
+        if lo >= hi then NONE
+        else
+          let
+            val mid = (lo + hi) div 2
+            val (b, c, u) = Vector.sub (rs, mid)
+          in
+            if v < b then search (rs, lo, mid)
+            else if v >= b + c then search (rs, mid + 1, hi)
+            else SOME (b, u)
+          end
+      fun piece [] = NONE
+        | piece (rs :: older) =
+            if v >= #1 (Vector.sub (rs, 0)) then search (rs, 0, Vector.length rs) else piece older
+    in piece (Array.sub (ranges, k)) end
   (* the type variables of the units loaded, by their ids: one cell for each *)
   val tvars : T.tvar ref IntTable.table ref = ref (IntTable.table 1024)
   val () = CompilerState.refRoot ("UnitBasis.tvars", tvars, IntTable.copy)
@@ -88,9 +115,8 @@ struct
   fun stableName (k : int, n : int) : string option =
     if n < Vector.sub (!builtin, k) then SOME ("b" ^ Int.toString n)
     else
-      case List.find (fn ({base, count, ...} : loaded) =>
-                        n >= Vector.sub (base, k) andalso n < Vector.sub (base, k) + Vector.sub (count, k)) (!units) of
-        SOME {identity, base, ...} => SOME (identity ^ "#" ^ Int.toString (n - Vector.sub (base, k)))
+      case rangeOf (k, n) of
+        SOME (b, {identity, ...}) => SOME (identity ^ "#" ^ Int.toString (n - b))
       | NONE => NONE
   val () = Translate.printerKey := (fn s => stableName (kTycon, s))
   (* overloading resolved at a type is a usage of the type's registration,
@@ -153,7 +179,7 @@ struct
      the globals of the units before them, which ToMid keeps *)
   fun startSession () =
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
-     Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
+     Array.modify (fn _ => []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
      fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty; schemeMemo := IntMap.empty;
      sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
      MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
@@ -164,27 +190,9 @@ struct
     (units := u :: !units;
      byIdentity := StringMap.insert (!byIdentity, #identity u, u);
      List.app (fn k => if Vector.sub (#count u, k) = 0 then ()
-                       else Array.update (ranges, k, Vector.concat [Array.sub (ranges, k),
-                                                                     Vector.fromList [(Vector.sub (#base u, k),
-                                                                                       Vector.sub (#count u, k), u)]]))
+                       else Array.update (ranges, k, addRange (Array.sub (ranges, k),
+                                                               (Vector.sub (#base u, k), Vector.sub (#count u, k), u))))
               [kStamp, kTycon, kTvar])
-
-  (* the unit whose range of kind k holds v *)
-  fun rangeOf (k, v) : (int * loaded) option =
-    let
-      val rs = Array.sub (ranges, k)
-      fun search (lo, hi) =
-        if lo >= hi then NONE
-        else
-          let
-            val mid = (lo + hi) div 2
-            val (b, c, u) = Vector.sub (rs, mid)
-          in
-            if v < b then search (lo, mid)
-            else if v >= b + c then search (mid + 1, hi)
-            else SOME (b, u)
-          end
-    in search (0, Vector.length rs) end
 
   (* ---- fingerprints (the incremental roadmap's M6, the third part) ---- *)
 
@@ -1515,6 +1523,7 @@ struct
       fun range k = (Vector.sub (#counters s, k), Vector.sub (now, k))
       val (s0, s1) = range kStamp
       val (t0, t1) = range kTycon
+      fun withoutRange m = IntMap.foldRange (fn (stamp, _, kept) => IntMap.remove (kept, stamp)) m (t0, t1) m
     in
       Elaborate.restore (#snapshot s); Translate.primAliases := #primAliases s; Lower.knownBefore := #knownBefore s;
       IntTable.removeRange (Ty.binders, s0, s1);
@@ -1525,9 +1534,9 @@ struct
       IntTable.removeRange (!ToMid.importedSchemes, s0, s1);
       IntTable.removeRange (!inlineHashes, s0, s1);
       IntTable.removeRange (Ty.realizations, t0, t1);
-      Ty.pinned := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.pinned);
-      Ty.openTypes := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.openTypes);
-      Env.typeOrigins:=IntMap.filteri (fn (stamp,_) => stamp<t0 orelse stamp>=t1) (!Env.typeOrigins)
+      Ty.pinned := withoutRange (!Ty.pinned);
+      Ty.openTypes := withoutRange (!Ty.openTypes);
+      Env.typeOrigins := withoutRange (!Env.typeOrigins)
     end
 
   (* A load that failed part of the way undone: what it entered in the

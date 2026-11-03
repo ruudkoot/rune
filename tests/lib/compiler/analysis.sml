@@ -20,6 +20,8 @@ struct
         val ()=check("observations preserve frozen semantic results",same(initial,measured))
         val ()=check("observations include publication and cache reuse",List.exists(fn event=>
           #phase event="snapshot-published" andalso #reused event>0)(!events))
+        val ()=check("a reused unit sends no message per input (E23)",not(List.exists(fn event=>
+          #phase event="names-start" orelse #phase event="unit-start")(!events)))
         val ()=A.observe(context,NONE)
         val count=length(!events) val _=analyze(context,[source])
         val ()=check("disabled observer receives no phases",length(!events)=count)

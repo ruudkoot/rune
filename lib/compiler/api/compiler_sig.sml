@@ -165,6 +165,9 @@ sig
        windows selects Windows drive/UNC syntax. A root file that is not
        well formed is reported through Failed. *)
     val find : {file : string, windows : bool} -> t option
+    (* `candidates {file, windows}` lists where a root file above file would
+       be, the nearest first, each path whole. *)
+    val candidates : {file : string, windows : bool} -> string list
     (* `root workspace` is the directory of its root file, which a build's
        units are named from. *)
     val root : t -> string
@@ -351,10 +354,16 @@ sig
     val diagnostics : snapshot -> diagnostic list
     (* `occurrences snapshot` returns frozen lexical binding relationships. *)
     val occurrences : snapshot -> occurrence list
+    (* `occurrencesIn (snapshot, unit)` returns those of the unit unitAt
+       names, without a walk of the others. *)
+    val occurrencesIn : snapshot * string -> occurrence list
     (* `types snapshot` returns semantic constructor identities and sources. *)
     val types : snapshot -> typeDefinition list
     (* `facts snapshot` returns inferred types without mutable compiler refs. *)
     val facts : snapshot -> fact list
+    (* `factsIn (snapshot, unit)` returns those of the unit unitAt names,
+       without a walk of the others. *)
+    val factsIn : snapshot * string -> fact list
     (* `work snapshot` reports checked and replayed units, including libraries. *)
     val work : snapshot -> {checked:int,reused:int}
     (* `typeAt (snapshot, position)` returns its innermost original-source type.
