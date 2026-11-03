@@ -1359,6 +1359,31 @@ struct
                                      handle e => (anchorValues := true; raise e)
                          in anchorValues := true; f end)
 
+  (* The fingerprint of a virtual or dynamic functor's ABI (the build-system
+     roadmap's D22; Elaborate, functor F = _virtual (X : A) : B and _export
+     functor): the ABI's version, its calling convention and its records'
+     slots, as Elaborate gives them (Elaborate.functorShape), then A and B,
+     their own type names by their places among both lists -- B names A's
+     where the result's types are the parameter's (where type key = K.t)
+     -- and every other type name by its unit's name and path, with what
+     defines it, as the ABI layer's fingerprints have it (a realisation
+     too): nothing of where the signatures were written, and nothing of an
+     implementation. Pickle.hash gives every host the same (D22) *)
+  val () = Elaborate.functorFingerprint :=
+             (fn (param : SigMatch.sigma, result : SigMatch.sigma, shape : string) =>
+                if (Usage.use ("whole", "on"); !wholeFingerprints) then "whole"
+                else
+                  let
+                    val () = (anchorValues := false; scratch := IntTable.table 16)
+                    val local' = localsOf (#bound param @ #bound result)
+                    val f = labelled "funabi"
+                              (fn () => hashed "funabi"
+                                          (fn w => (P.string (w, shape);
+                                                    fpBound (w, #bound param); fpEnvInto (w, local', #env param);
+                                                    fpBound (w, #bound result); fpEnvInto (w, local', #env result))))
+                            handle e => (anchorValues := true; raise e)
+                  in anchorValues := true; f end)
+
   (* of a functor: its signature, the parameter's own type names and those
      its body made local to it, its values specifications *)
   fun fpFunctor (Elaborate.FunInfo {paramSig = {bound, env = pe,...}, summary = {generated, result}, ...}) : string option =
