@@ -198,7 +198,7 @@ struct
     let
       val () = (OS.FileSys.mkDir dir handle OS.SysErr _ => ())
       val pickled = fn (w, r) => {write = "P." ^ w ^ " ({w}, {x})", read = "P." ^ r ^ " ({r})", same = "{x} = {y}",
-                                  fp = "P." ^ w ^ " (w, {x})", key = "P." ^ w ^ " ({k}, {x})", layers = [Static, Abi], default = "",
+                                  fp = "P." ^ w ^ " (w, {x})", key = "", layers = [Static, Abi], default = "",
                                   other = "", static = true}
       val fam : family =
         {name = "toy", wparam = "e : enc", warg = "e", wstream = fn Abi => "#a e" | _ => "#w e",

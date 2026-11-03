@@ -136,28 +136,28 @@ struct
           subst (#once fam, [("t", t), ("e", #warg fam), ("w", s), ("key", keyExp (cx, c, x)), ("body", wexp (cx, c, l, x))])
     end
 
-  (* a value's key: its bytes, every field written plainly *)
+  (* A value's key, by which a value written once is found again: a text of
+     every field, prefix-free -- a string by its length, a number ended by
+     ";", a list by its length -- so that two values have one key exactly
+     where they are the same *)
   and keyExp (cx : cx, cd : codec, x : string) : string =
-    let val k = fresh "k"
-    in "let val " ^ k ^ " = P.writer () in " ^ kexp (cx, cd, k, x) ^ "; P.contents " ^ k ^ " end" end
-
-  and kexp (cx : cx, cd : codec, k : string, x : string) : string =
     case cd of
       Leaf n => (case #key (leaf (cx, n)) of
                    "" => refuse ("the codec " ^ n ^ " has no key, and a value written once must")
-                 | t => subst (t, [("k", k), ("x", x)]))
-    | Type t => nameOf (cx, t, Key) ^ " (" ^ k ^ ", " ^ x ^ ")"
-    | List c => let val y = fresh "x" in "P.list (fn (_, " ^ y ^ ") => " ^ kexp (cx, c, k, y) ^ ") (" ^ k ^ ", " ^ x ^ ")" end
-    | Option c => let val y = fresh "x" in "P.option (fn (_, " ^ y ^ ") => " ^ kexp (cx, c, k, y) ^ ") (" ^ k ^ ", " ^ x ^ ")" end
+                 | t => subst (t, [("x", x)]))
+    | Type t => nameOf (cx, t, Key) ^ " " ^ x
+    | List c => let val y = fresh "x"
+                in "(Int.toString (List.length " ^ x ^ ") ^ \";\" ^ String.concat (List.map (fn " ^ y ^ " => " ^ keyExp (cx, c, y) ^ ") " ^ x ^ "))" end
+    | Option c => let val y = fresh "x" in "(case " ^ x ^ " of NONE => \"0\" | SOME " ^ y ^ " => \"1\" ^ " ^ keyExp (cx, c, y) ^ ")" end
     | Tuple cs =>
         let val ys = List.map (fn _ => fresh "x") cs
-        in "(case " ^ x ^ " of (" ^ String.concatWith ", " ys ^ ") => "
-           ^ seq (ListPair.map (fn (c, y) => kexp (cx, c, k, y)) (cs, ys)) ^ ")" end
+        in "(case " ^ x ^ " of (" ^ String.concatWith ", " ys ^ ") => String.concat ["
+           ^ String.concatWith ", " (ListPair.map (fn (c, y) => keyExp (cx, c, y)) (cs, ys)) ^ "])" end
     | Map c =>
         let val n = fresh "n" val y = fresh "x"
-        in "P.list (fn (_, (" ^ n ^ ", " ^ y ^ ")) => (P.string (" ^ k ^ ", " ^ n ^ "); " ^ kexp (cx, c, k, y) ^ ")) ("
-           ^ k ^ ", StringMap.listItemsi " ^ x ^ ")" end
-    | Shared (_, c) => kexp (cx, c, k, x)
+        in "(Int.toString (StringMap.numItems " ^ x ^ ") ^ \";\" ^ String.concat (List.map (fn (" ^ n ^ ", " ^ y ^ ") => Int.toString (size "
+           ^ n ^ ") ^ \":\" ^ " ^ n ^ " ^ " ^ keyExp (cx, c, y) ^ ") (StringMap.listItemsi " ^ x ^ ")))" end
+    | Shared (_, c) => keyExp (cx, c, x)
 
   fun rexp (cx : cx, cd : codec, r : string) : string =
     let val fam = #fam cx
@@ -490,10 +490,10 @@ struct
       val () = counter := 0
       fun arm (n, p : part) =
         (pattern (p, SOME o var),
-         seqTop ((if #sum t then ["P.byte (k, " ^ Int.toString n ^ ")"] else [])
-              @ List.map (fn (f : field) => kexp (cx, #codec f, "k", var (#name f))) (#fields p)))
+         "String.concat\001[" ^ String.concatWith ",\001 " ((if #sum t then ["\"" ^ Int.toString n ^ ";\""] else [])
+                                                         @ List.map (fn (f : field) => keyExp (cx, #codec f, var (#name f))) (#fields p)) ^ "]")
     in
-      header (kw, nameIn (i, Key), "k : P.writer, v : " ^ #sml t, "unit") ^ "\n"
+      header (kw, nameIn (i, Key), "v : " ^ #sml t, "string") ^ "\n"
       ^ cases (viewOf (t, "v"), List.map arm (List.filter (fn (n, _) => n >= 0) (numbered t)), NONE)
     end
 

@@ -2030,17 +2030,18 @@ struct
          P.bool (#w e, hasArg');
          P.nat (#w e, ncons');
          P.bool (#w e, isRef');
-         once (#sibs e, #nsibs e, #w e, let val k_1 = P.writer () in P.list (fn (_, x_2) => (case x_2 of (x_3, x_4) => (P.string (k_1, x_3); P.bool (k_1, x_4)))) (k_1, siblings'); P.contents k_1 end, fn () => P.list (fn (_, x_5) => (case x_5 of (x_6, x_7) => (P.string (#w e, x_6); P.bool (#w e, x_7)))) (#w e, siblings')))
+         once (#sibs e, #nsibs e, #w e, (Int.toString (List.length siblings') ^ ";" ^ String.concat (List.map (fn x_1 => (case x_1 of (x_2, x_3) => String.concat [Int.toString (size x_2) ^ ":" ^ x_2, (if x_3 then "+" else "-")])) siblings')), fn () => P.list (fn (_, x_4) => (case x_4 of (x_5, x_6) => (P.string (#w e, x_5); P.bool (#w e, x_6)))) (#w e, siblings')))
 
-  and keyConinfo (k : P.writer, v : Ast.coninfo) : unit =
+  and keyConinfo (v : Ast.coninfo) : string =
     case v of
       {name = name', tag = tag', hasArg = hasArg', ncons = ncons', isRef = isRef', siblings = siblings'} =>
-        (P.string (k, name');
-         P.nat (k, tag');
-         P.bool (k, hasArg');
-         P.nat (k, ncons');
-         P.bool (k, isRef');
-         P.list (fn (_, x_1) => (case x_1 of (x_2, x_3) => (P.string (k, x_2); P.bool (k, x_3)))) (k, siblings'))
+        String.concat
+         [Int.toString (size name') ^ ":" ^ name',
+          Int.toString tag' ^ ";",
+          (if hasArg' then "+" else "-"),
+          Int.toString ncons' ^ ";",
+          (if isRef' then "+" else "-"),
+          (Int.toString (List.length siblings') ^ ";" ^ String.concat (List.map (fn x_1 => (case x_1 of (x_2, x_3) => String.concat [Int.toString (size x_2) ^ ":" ^ x_2, (if x_3 then "+" else "-")])) siblings'))]
 
   and exninfo (e : enc, v : Ast.exninfo) : unit =
     case v of
@@ -2061,13 +2062,13 @@ struct
     | Env.Con {scheme = scheme', info = info'} =>
         (P.byte (#w e, 1);
          ty (e, scheme');
-         once (#cons e, #ncons e, #w e, let val k_1 = P.writer () in keyConinfo (k_1, info'); P.contents k_1 end, fn () => coninfo (e, info')))
+         once (#cons e, #ncons e, #w e, keyConinfo info', fn () => coninfo (e, info')))
     | Env.Exn {ty = ty', info = info'} => (P.byte (#w e, 2); ty (e, ty'); exninfo (e, info'))
     | Env.Prim {scheme = scheme', name = name'} => (P.byte (#w e, 3); ty (e, scheme'); P.string (#w e, name'))
     | Env.ConAsVal {scheme = scheme', info = info'} =>
         (P.byte (#w e, 4);
          ty (e, scheme');
-         once (#cons e, #ncons e, #w e, let val k_2 = P.writer () in keyConinfo (k_2, info'); P.contents k_2 end, fn () => coninfo (e, info')))
+         once (#cons e, #ncons e, #w e, keyConinfo info', fn () => coninfo (e, info')))
     | Env.ExnAsVal {ty = ty', info = info'} => (P.byte (#w e, 5); ty (e, ty'); exninfo (e, info'))
 
   and tystatus (e : enc, v : Env.tystatus) : unit =

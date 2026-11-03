@@ -274,7 +274,13 @@ struct
   fun others (other, static) ({write, read, same, fp, key, layers, default, ...} : leaf) : leaf =
     {write = write, read = read, same = same, fp = fp, key = key, layers = layers, default = default, other = other, static = static}
   val any = [Static, Abi, Side]
-  fun pickled (w, r, fp) = leaf ("P." ^ w ^ " ({w}, {x})", "P." ^ r ^ " ({r})", "{x} = {y}", fp, "P." ^ w ^ " ({k}, {x})", any)
+  (* a codec of Pickle's, and its key (CodecEmit.keyExp) *)
+  fun keyOf w =
+    case w of
+      "string" => "Int.toString (size {x}) ^ \":\" ^ {x}"
+    | "bool" => "(if {x} then \"+\" else \"-\")"
+    | _ => "Int.toString {x} ^ \";\""
+  fun pickled (w, r, fp) = leaf ("P." ^ w ^ " ({w}, {x})", "P." ^ r ^ " ({r})", "{x} = {y}", fp, keyOf w, any)
 
   val basis : family =
     {name = "basis",
