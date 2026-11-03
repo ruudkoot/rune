@@ -52,7 +52,7 @@ Decided, and being implemented on this branch. The owner took every recommendati
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
-| M1. The fixes found, and guards | F | M | | the editor's three and the replay landed; the rest in progress |
+| M1. The fixes found, and guards | F | M | | done |
 | M2. Independent checks of the cache | F | M | D20 | not started |
 | M3. Logical names and the workspace | U | L | D3, D4 | not started |
 | M4. Layers | U | L | D1 | not started |
@@ -87,6 +87,15 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
   - `rune/status`, `rune/context` and `rune/setContext` go only to a client that asks under `experimental`. The extension has both items, `runelsp.chooseContext` and `runelsp.showOutput`. The editor suite ran on 1.106.0 in bubblewrap. Neither a VSIX nor Windows was exercised.
   - Two narrowings of D26: status is sampled every 250 ms, so shorter work may not show busy, and `docs/language-server.md` says so; a query's own failure does not set Error severity, only a worker's.
   - Found: `vscode-languageclient` 10.1.2 stops pulling a document after a cancellation with `retriggerRequest: false`, so the extension carries middleware (`editors/vscode/src/status.js:45`). Document symbols are quadratic, which is in M17's free fixes.
+- **M1, the rest** (`e94330df8`, with the line above merged, `make check` 22,196 of 22,196).
+  - All 16 items are in, each bug with its reproducer: S83 to S90, 22 `buildfile` scenarios, 3 `tests/lang` files, `tests/repl/functors`.
+  - **A program loads units** if a unit's code names `Runtime.load`, `link`, `linkedUnits` or `linkedUnitSources`, or it holds `lib/basis/dynamic.sml`. Tokens catch the direct names, and each unit is judged by the keys its code names, which catches aliases, `open` and functors' arguments. A program found to load only after a unit was taken across a change compiles again, in a fresh `CompilerState` session (`src/driver/main.sml`, `compiledAgain`). A warning of the first compile then prints twice on stderr.
+  - **S41 on program bytes** holds on HOL4's closure (293 units taken across a change, 13.3 MB) and MLton (195, 13.0 MB). Random edits: 477 builds, no disagreement.
+  - **E13's replay** gives 1,978 rebuilds, not 1,874: MLton 678 against 684, HOL4 852 against 852, `lint31` 243 against 187 and `fu31` 205 against 151, none refused. E13's 187 and 151 had a frozen layer, whose first step compiled 69 and 58 of 235 units; with `--type-work` in the key, as M1 requires, that layer no longer applies to the replay. The base under the same conditions gives 609 and 427. Instructions on those two chains fall 22.2% and 17.4%. The 3,270G total is not comparable with 4,373G and 3,506G.
+  - **Selection's parse:** hello +0.88%, warm hello in units +1.01%, a `rune.build` no-op unmeasurable, since a file whose tokens cannot add a name is not parsed; parsing all of them cost +9.2%. `compile-share` and `compile-sharenest` re-based for bytes, +4.5% and +5.9%.
+  - **Reach-in warnings:** the 12 hand-written builds. The 5 generated pointers are exempted: nobody wrote them, and their generator goes with the win32 work's migration.
+  - **Departures:** D8's replay rule is narrower, and D8 says how and why. D6's export rule is D6's, "nothing of that name is in scope"; `--basis-index` keeps its stricter one, which M9 must settle.
+  - **Left:** selection by uses is batch only, which M9 takes. A program calling `_prim "rt_link"` directly and linked from `.rbu` files gets no units section; `--units` handles it. `--type-work` drops the frozen Basis for that compile. A `rune.build` no-op measured 10.39G with a matching frozen layer against 9.75G without, on one compiler, cause unknown: M6 and M7 should look.
 
 ## Found while writing this roadmap
 
@@ -4893,7 +4902,7 @@ Brief, line 6: "the build language should have one way of doing things".
   - **Move:** a library's boundary into a header of `library.build` (D8).
   - **Written order stays the semantics,** as in MLB and SMLSC, since effect order is not derivable (E6). Dependency order is derived for `-j`, never trusted for meaning.
   - **The command line** (`--library`, `--basis`, `-I`, file lists) is a second build language. It synthesises a plan, so there is one.
-  - **Unknown words are errors,** including annotations: `annotate "demnad"` means demand today.
+  - **Unknown words are errors,** including annotations: `annotate "demnad"` means demand today. An export naming nothing is one too: a program-level `library` block's export must name something in scope, which lets E9's MLton build export the Basis's `CharArray`, and such an export changes nothing. `--basis-index` asks more, that a source declares it. M9 settles one rule when the block goes: whether a header may re-export a Basis name.
 - **C. Dependency order everywhere.** The owner's "one way" read strongly. `group` has no users in the 88 tracked files, and a wrong parse of a file gives a wrong graph (`Deps` parses with `Fixity.initial`, E5). No.
 
 **Written order is per language.** Its reason above is SML's: effects whose order cannot be derived. A Haskell module's place comes from its imports, and the Report's own libraries hold an 11-module cycle, which `Deps` refuses (`lib/compiler/driver/deps.sml:270`). rhc scans imports and uses neither `Deps` nor `group`, so nothing here changes for it.
@@ -4920,7 +4929,7 @@ Brief, line 6: "the build language should have one way of doing things".
   - **A library hides names, not representation.** A boundary decides what a client can name; representation stays behind a structure's own `:>`.
   - **No closure check.** A private type behind an exported signature is usable, not nameable, and sound (E3). CM and MLB have no check either, and `local datatype t = A in val x = A end` has no source signature at all. A lint at most.
   - **One rule, moved from runedoc into the compiler:** a public structure's ascribed signature is public (the **claim** rule). runedoc refuses 21 of 22 wrapped libraries today for lacking it. It needs a new fact in the index: which name ascribes to which signature. It lands with M13's boundaries, or it refuses nothing (E28).
-  - **Close the bypass.** A second `use` replays the raw delta (`src/driver/main.sml:939-946`), so a boundary is gone after it; `library (...) = use x.build end  use x.build` gives private names, also across build files (E3). Replay through the boundary it was first seen under. A *first* `use` of a sub-build beneath another library is the same bypass, and it is how the compiler builds: that closes with friends (D11) and migration (D15), not sooner.
+  - **Close the bypass.** A second `use` replays the raw delta (`src/driver/main.sml:939-946`), so a boundary is gone after it; `library (...) = use x.build end  use x.build` gives private names, also across build files (E3). A build with a boundary of its own replays as that boundary shows it, at every `use`; one with none replays through the boundaries closed around its first use. M1 found the first half: replaying everything through the first boundary, which this line first said, breaks a diamond. Two libraries sharing a bounded build then see its names or not by which comes first, and E9's MLton build fails with `unbound signature: WRAPPED`. An unbounded build shared by two libraries still depends on order, and is refused, not miscompiled, until it gains a boundary. A *first* `use` of a sub-build beneath another library is the same bypass, and it is how the compiler builds: that closes with friends (D11) and migration (D15), not sooner.
   - **Fixity crosses a boundary,** activated on import (SMLSC). Today it cannot, so a library cannot export an infix.
   - **Named subsets:** a library may declare a view, a named subset of its exports, whose files are the `requires` closure of those exports. No new loading primitive (E3). D10's three partial lists use these.
   - **A hash per filter,** as SML/NJ's: what a client's key holds is what would have been pickled for the smaller environment. It was not prototyped, so it passes H3's check before it lands.
@@ -5406,7 +5415,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 ### M9. One planner, and the plan (L; M, about 700; after M8)
 
-* **What:** D5 and D6. One reader in place of four, one site in place of six, the plan's canonical text, the constructs dropped, the command line through a plan. E9's translator moves to headers or nested libraries. The index moves to a module the driver and runedoc both reach.
+* **What:** D5 and D6. One reader in place of four, one site in place of six, the plan's canonical text, the constructs dropped, the command line through a plan. E9's translator moves to headers or nested libraries, which settles D6's two export rules. The index moves to a module the driver and runedoc both reach. Selection by uses reaches what M1 left on tokens: `lib/compiler/api/analysis-engine.sml:219`, `session.sml:173`, `query.sml:84` and `prelude.sml:22`, so that analysis and the API select as batch does.
 * **Done when:** all 90 builds round-trip; `basisIndex` is gone; `tools/generate`'s text rewriting uses the plan.
 * **Touches:** `lib/compiler/driver/{buildfile,project}.sml`, `src/driver/main.sml`, `lib/compiler/api/{compiler,session,query,analysis-engine}.sml`, `src/doc/docelab.sml`, `tools/generate/`.
 
