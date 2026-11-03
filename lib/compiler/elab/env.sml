@@ -15,8 +15,12 @@ struct
      its constructors (in declaration order). *)
   datatype tystatus = TyStr of {fcn : tyfcn, cons : (string * valstatus) list}
 
+  (* Held: a definition of another unit, by the key that outlasts its span
+     (the compiler library's analysis, Keeping what is computed), with the
+     place it had *)
   datatype origin = Unknown | Named of {unit:string,kind:string,name:string,span:Source.span}
     | Constrained of origin * origin
+    | Held of {unit:string,key:string,last:origin}
   fun primary (Constrained (actual,_))=primary actual | primary origin=origin
   fun declaration (Constrained (_,spec))=declaration spec | declaration origin=origin
   fun constrain (actual,Unknown)=actual

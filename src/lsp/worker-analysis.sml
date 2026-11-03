@@ -16,7 +16,8 @@ struct
   type text={file:string,mode:string,stamp:string,id:OS.FileSys.file_id option,text:string}
   type context={key:string,compiler:C.session,analysis:A.t,bytes:int ref,
     projects:(int*C.Project.t) list ref,texts:text option array ref}
-  type source={file:string,uri:string,text:string,mode:string,ordinal:int option,syntax:C.Syntax.t option,
+  (* syntax: asks the snapshot, which opens a closed unit *)
+  type source={file:string,uri:string,text:string,mode:string,ordinal:int option,syntax:unit->C.Syntax.t option,
     slot:int,version:IntInf.int option,revision:IntInf.int option,index:L.t option,
     tokens:(C.Syntax.piece list * C.Syntax.piece vector) option ref}
   type scope={role:string,fields:(string*string) list,candidates:A.candidate list}
@@ -112,7 +113,7 @@ struct
     (uri<> #uri view orelse #ordinal source=SOME (getOpt (#ordinal view,0)))) (#sources view)
   fun sourceFor (view:view,file)=List.find (fn source:source => #file source=file) (#sources view)
   fun tokenData (source:source) = case !(#tokens source) of SOME tokens => tokens | NONE =>
-    let val parsed=case #syntax source of SOME syntax => syntax | NONE =>
+    let val parsed=case #syntax source () of SOME syntax => syntax | NONE =>
           C.Syntax.parse {file= #file source,text= #text source,mode= #mode source,orPatterns=true,fixity=C.Syntax.initial}
         val pieces=C.Syntax.pieces parsed
         val tokens=(pieces,Vector.fromList pieces)
@@ -196,7 +197,7 @@ struct
           SOME{identity=getOpt(#binding occurrence,"span:" ^ Int.toString start),name= #name occurrence,
             category= #kind occurrence,start=start,stop=stop}:RuneLspOutline.entry option
         val facts=List.filter(fn fact:A.fact=> #file fact= #file source)(ownFacts view)
-    in RuneLspOutline.prepare{entries=List.mapPartial entry definitions,events=RuneLspStructure.events(#syntax source),
+    in RuneLspOutline.prepare{entries=List.mapPartial entry definitions,events=RuneLspStructure.events(#syntax source ()),
       pieces=tokens source,facts=facts} end
   fun symbols (view:view,source:source)=RuneLspOutline.flat(symbolNodes(view,source),#uri source,
     fn(start,stop)=>range(source,#encoding view,start,stop))
@@ -345,6 +346,9 @@ struct
               if #key prior=key then n else !(#bytes prior)+n)0(!contexts)<=retainedSourceBudget then () else
           (List.app release (List.filter(fn prior:context=> #key prior<>key)(!contexts));
            contexts:=[context];views:=List.filter(fn view:view=>A.context(#snapshot view)=key)(!views))
+        (* what the editor has open keeps what a question needs; the rest closes *)
+        val ()=A.focus (#analysis context,SOME (List.mapPartial (fn (snapshot:D.snapshot,_,_) =>
+          Option.map #path (native (#uri snapshot))) opened @ (case native uri of NONE => [uri] | SOME {path,...} => [path])))
         val snapshot=A.check (#analysis context,{project=project,inputs=inputs,cancelled=cancelled})
         val ()= #bytes context:=snapshotBytes snapshot
         val kept=retain (fn context:context=> !(#bytes context)) (!contexts)
@@ -378,7 +382,7 @@ struct
                    ("reused",V.Integer(IntInf.fromInt(#reused(A.work snapshot))))]);
                  SOME(L.make(#text input)) handle L.Invalid=>NONE)
               val pieces=case prior of SOME source=> #tokens source | NONE=>ref NONE
-              val syntax=Option.mapPartial (fn ordinal => A.syntaxAt (snapshot,{ordinal=ordinal})) ordinal
+              fun syntax ()=Option.mapPartial (fn ordinal => A.syntaxAt (snapshot,{ordinal=ordinal})) ordinal
           in List.map (fn (uri,version,revision) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,
             syntax=syntax,slot=slot,version=version,revision=revision,
             index=index,tokens=pieces}:source) uris end
@@ -721,9 +725,9 @@ struct
        | "textDocument/declaration" => target (fn occurrence:A.occurrence => #declaration occurrence)
        | "textDocument/documentHighlight" => (case offset () of NONE => Json.Array []
            | SOME offset => highlights (view,source,offset))
-       | "textDocument/foldingRange" => RuneLspStructure.folding {text= #text source,syntax= #syntax source,
+       | "textDocument/foldingRange" => RuneLspStructure.folding {text= #text source,syntax= #syntax source (),
            pieces=tokens source,index= #index source,encoding= #encoding view,capabilities= #capabilities view}
-       | "textDocument/selectionRange" => RuneLspStructure.selection {text= #text source,syntax= #syntax source,
+       | "textDocument/selectionRange" => RuneLspStructure.selection {text= #text source,syntax= #syntax source (),
            pieces=tokens source,index= #index source,encoding= #encoding view,positions=J.required (params,"positions")}
        | "textDocument/typeDefinition" =>
            let val constructors=case offset () of NONE => [] | SOME offset => List.concat (List.map #constructors
@@ -734,9 +738,7 @@ struct
                 Option.mapPartial (fn target => location (view,target)) (#definition definition)) definitions)) end
        | "textDocument/implementation" =>
            let val declaration=case occurrence () of NONE => NONE | SOME (occurrence,_) => #declaration occurrence
-               val implementations=List.filter (fn occurrence:A.occurrence => #declaration occurrence=declaration andalso isSome declaration
-                 andalso #definition occurrence<>declaration)
-                 (A.occurrences (#snapshot view))
+               val implementations=case declaration of NONE => [] | SOME declared => A.implementationsOf (#snapshot view,declared)
                val typeImplementations=List.filter (fn definition:A.typeDefinition => #declaration definition=declaration
                  andalso isSome declaration andalso #implementation definition<>declaration) (A.types (#snapshot view))
            in Json.Array (unique (List.mapPartial (fn occurrence:A.occurrence =>

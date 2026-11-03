@@ -308,6 +308,14 @@ sig
        the current attempt; observation never executes the checked program.
        Timing and host-specific memory counters belong to the callback. *)
     val observe : t * (observation->unit) option -> unit
+    (* `focus (context, files)` says which files to keep open for the checks
+       after it.
+
+       A check keeps the syntax, the facts and the occurrences of an open
+       file's unit. Another's are dropped, and worked out again at its place
+       when a query asks for them. NONE, the default, keeps every file open;
+       while some are closed, occurrences and facts hold no closed unit's. *)
+    val focus : t * string list option -> unit
     (* `check (context, request)` checks captured inputs in compiler order.
 
        A project must come from the same compiler session; inputs must match
@@ -357,6 +365,9 @@ sig
     (* `occurrencesIn (snapshot, unit)` returns those of the unit unitAt
        names, without a walk of the others. *)
     val occurrencesIn : snapshot * string -> occurrence list
+    (* `implementationsOf (snapshot, location)` returns the occurrences of every
+       unit, open or closed, declared at location and defined elsewhere. *)
+    val implementationsOf : snapshot * location -> occurrence list
     (* `types snapshot` returns semantic constructor identities and sources. *)
     val types : snapshot -> typeDefinition list
     (* `facts snapshot` returns inferred types without mutable compiler refs. *)
@@ -366,6 +377,12 @@ sig
     val factsIn : snapshot * string -> fact list
     (* `work snapshot` reports checked and replayed units, including libraries. *)
     val work : snapshot -> {checked:int,reused:int}
+    (* `route snapshot` reports how the check went: walked, from the start,
+       rather than each change at its own place; rebound, units taken as they
+       stood; loaded, taken again from their pickles; cutoff, elaborated to the
+       identity they had; broken, a usage refused a unit. It says nothing of
+       the results, which are a fresh analysis's whichever the route. *)
+    val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int}
     (* `typeAt (snapshot, position)` returns its innermost original-source type.
 
        Copied-body facts are used only where no original fact is available.

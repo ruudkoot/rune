@@ -220,19 +220,13 @@ struct
      by kind and stamp: the first, in the order of the names *)
   val paths : string IntTable.table vector = Vector.tabulate (3, fn _ => IntTable.table 64)
   val () = CompilerState.tableVectorRoot ("UnitBasis.paths", paths)
-  (* and the other way: the name of each kind that a path reaches in a
-     loaded unit, by its identity, kind and path *)
-  val byPath : int StringMap.map ref = ref StringMap.empty
+  (* and the other way: by a loaded unit's identity, the name of each kind that
+     a path reaches in it, by kind and path *)
+  val byPath : int StringMap.map StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.byPath", byPath)
-  fun pathKey (identity : string, k : int, p : string) = identity ^ "\000" ^ Int.toString k ^ "\000" ^ p
-  fun notePaths (u : loaded, delta : Env.env, sigs : (string * SigMatch.sigma) list) : unit =
+  fun pathKey (k : int, p : string) = Int.toString k ^ "\000" ^ p
+  fun walkPaths (delta : Env.env, sigs : (string * SigMatch.sigma) list, put : int * int * string -> unit) : unit =
     let
-      fun own (k, s) = s >= Vector.sub (#base u, k) andalso s < Vector.sub (#base u, k) + Vector.sub (#count u, k)
-      fun put (k, s, p) =
-        if not (own (k, s)) then ()
-        else
-          (byPath := StringMap.insert (!byPath, pathKey (#identity u, k, p), s);
-           if isSome (IntTable.find (Vector.sub (paths, k), s)) then () else IntTable.insert (Vector.sub (paths, k), s, p))
       fun walk (prefix, Env.Env {vals, tys, strs,...}) =
         (StringMap.appi (fn (n, v) =>
                            case v of
@@ -247,11 +241,33 @@ struct
       walk ("", delta);
       (* a signature's specifications, which a unit that matched or applied
          it names, by sig:NAME and the path in it *)
-      List.app (fn (n, sg : SigMatch.sigma) => walk ("sig:" ^ n ^ ".", #env sg)) sigs;
+      List.app (fn (n, sg : SigMatch.sigma) => walk ("sig:" ^ n ^ ".", #env sg)) sigs
+    end
+  fun notePaths (u : loaded, delta : Env.env, sigs : (string * SigMatch.sigma) list) : unit =
+    let
+      fun own (k, s) = s >= Vector.sub (#base u, k) andalso s < Vector.sub (#base u, k) + Vector.sub (#count u, k)
+      val reached = ref StringMap.empty
+      fun put (k, s, p) =
+        if not (own (k, s)) then ()
+        else
+          (reached := StringMap.insert (!reached, pathKey (k, p), s);
+           if isSome (IntTable.find (Vector.sub (paths, k), s)) then () else IntTable.insert (Vector.sub (paths, k), s, p))
+    in
+      walkPaths (delta, sigs, put);
+      byPath := StringMap.insert (!byPath, #identity u, !reached);
       (* and the signatures themselves, where a fingerprint finds the
          structure a specification's stamp is in (fpChild) *)
       List.app (fn (n, sg) => unitSigs := StringMap.insert (!unitSigs, #identity u ^ "\000" ^ n, sg)) sigs
     end
+  (* the same paths, of the type names of a unit not loaded: by each the path
+     notePaths would give it, which an entry names a type by while its
+     identity moves (the compiler library's analysis) *)
+  fun typePaths (delta : Env.env, sigs : (string * SigMatch.sigma) list) : string IntTable.table =
+    let
+      val found = IntTable.table 64
+      fun put (k, s, p) =
+        if k <> kTycon orelse isSome (IntTable.find (found, s)) then () else IntTable.insert (found, s, p)
+    in walkPaths (delta, sigs, put); found end
 
   (* What the cache keeps of a unit by its identity, for a unit compiled
      against it to be loaded against another of the same name (remapping):
@@ -276,6 +292,9 @@ struct
                              SOME p => p
                            | NONE => "#" ^ Int.toString (s - b))
       | NONE => "?" ^ Int.toString s
+  (* a type name's anchor, where it is built in or a loaded unit's *)
+  fun typeAnchor (s : int) : string option =
+    if s < Vector.sub (!builtin, kTycon) orelse isSome (rangeOf (kTycon, s)) then SOME (anchor (kTycon, s)) else NONE
 
   (* what a type name is, by stamp, once worked out: its anchor and what
      defines it, so that a change of the definition shows in every
@@ -1533,6 +1552,7 @@ struct
       IntTable.removeRange (!Expand.importedValues, s0, s1);
       IntTable.removeRange (!ToMid.importedSchemes, s0, s1);
       IntTable.removeRange (!inlineHashes, s0, s1);
+      IntTable.removeRange (Env.stampOrigins, s0, s1);
       IntTable.removeRange (Ty.realizations, t0, t1);
       Ty.pinned := withoutRange (!Ty.pinned);
       Ty.openTypes := withoutRange (!Ty.openTypes);
@@ -1761,6 +1781,7 @@ struct
     | Env.Named {unit,kind,name,span} => (P.byte (w,1);P.string (w,unit);P.string (w,kind);P.string (w,name);
         P.string (w,#file span);P.nat (w,#start span);P.nat (w,#stop span))
     | Env.Constrained (actual,spec) => (P.byte (w,2);writeOrigin (w,actual);writeOrigin (w,spec))
+    | Env.Held {last,...} => writeOrigin (w,last)
 
   (* ---- environments by reference (functors-units M11, part 2) ----
 
@@ -2571,6 +2592,16 @@ struct
      and the names of the signatures and functors it declared *)
   type result = {unit : loaded, delta : Env.env, directives : (string * Fixity.fixity) list,
                  sigs : string list, funs : string list, overloads : int list}
+  (* what a load declared, which a walk over units that stay loaded declares
+     again (the compiler library's analysis) *)
+  type bindings = {sigs : (string * SigMatch.sigma) list, funs : (string * Elaborate.funinfo) list,
+                   overloads : (int * Overload.entry) list}
+  val lastBindings : bindings ref = ref {sigs = [], funs = [], overloads = []}
+  val () = CompilerState.cellRoot ("UnitBasis.lastBindings", lastBindings)
+  fun rebind ({sigs, funs, overloads} : bindings) : unit =
+    (List.app (fn (n, s) => Elaborate.sigs := StringMap.insert (!Elaborate.sigs, n, s)) sigs;
+     List.app (fn (n, f) => Elaborate.funs := StringMap.insert (!Elaborate.funs, n, f)) funs;
+     List.app (fn (s, x) => Overload.table := IntMap.insert (!Overload.table, s, x)) overloads)
 
   (* What the unit of r declared is the session's: the names it bound, by
      the unit, for the usages of the units after it. The caller says when:
@@ -2648,7 +2679,7 @@ struct
 
   (* the remapping that loads an entry -- its basis pickle, its code u -- in
      the session, or Missing: of every unit either names *)
-  fun remapping (pickle : string, u : Link.unitCode, oldPaths : string -> (int * int * string) list option) : remap =
+  fun remappingOf (named : string list, oldPaths : string -> (int * int * string) list option) : remap =
     if not (!remapAllowed) then [] else
     List.mapPartial
       (fn i =>
@@ -2662,12 +2693,17 @@ struct
              val ps = case oldPaths i of SOME ps => ps | NONE => raise Missing (i ^ " (nothing kept of it)")
              val maps = Array.array (3, IntMap.empty)
              fun add (k, n, p) =
-               case StringMap.find (!byPath, pathKey (#identity new, k, p)) of
+               case Option.mapPartial (fn reached => StringMap.find (reached, pathKey (k, p))) (StringMap.find (!byPath, #identity new)) of
                  SOME s => Array.update (maps, k, IntMap.insert (Array.sub (maps, k), n, s))
                | NONE => ()
            in List.app add ps; SOME (i, new, Array.vector maps) end)
-      (List.foldl (fn (i, acc) => if List.exists (fn j => j = i) acc then acc else acc @ [i])
-                  (namedBy pickle) (namedByCode u))
+      named
+  fun remapping (pickle : string, u : Link.unitCode, oldPaths : string -> (int * int * string) list option) : remap =
+    remappingOf (List.foldl (fn (i, acc) => if List.exists (fn j => j = i) acc then acc else acc @ [i])
+                            (namedBy pickle) (namedByCode u), oldPaths)
+  (* the same, of an entry with a basis and no code *)
+  fun remappingBasis (pickle : string, oldPaths : string -> (int * int * string) list option) : remap =
+    remappingOf (namedBy pickle, oldPaths)
 
   (* an entry's code, its keys of a remapped unit's names made the new
      unit's, or Missing where one has no new name *)
@@ -2945,6 +2981,7 @@ struct
       val () = List.app (fn (s, x) => Overload.table := IntMap.insert (!Overload.table, s, x)) overloads
       val u : loaded = {identity = identity, name = uname, file = file, base = base, count = counts}
     in
+      lastBindings := {sigs = sigs, funs = funs, overloads = overloads};
       register u;
       notePaths (u, delta, sigs);
       {unit = u, delta = delta, directives = directives, sigs = List.map #1 sigs, funs = List.map #1 funs,
@@ -2956,4 +2993,36 @@ struct
   fun loadKnown (args, known : string option, remap : remap) : result = during "load" (fn () => load' (args, known, remap))
   fun loadAgainst (args, remap : remap) : result = loadKnown (args, NONE, remap)
   fun load args : result = loadKnown (args, NONE, [])
+
+  (* ---- a session whose units stay loaded between checks ---- *)
+
+  fun isLoaded (identity : string) : bool = StringMap.member (!byIdentity, identity)
+
+  (* The units named out of the session: what the tables hold of their names
+     goes, and the counters stay, since a name is never used twice. What the
+     session had of each, for the entries that name them: pathsOf. *)
+  fun truncate (gone : string list) : (string * (int * int * string) list) list =
+    let
+      val dead = List.foldl (fn (i, m) => StringMap.insert (m, i, ())) StringMap.empty gone
+      fun isGone (u : loaded) = StringMap.member (dead, #identity u)
+      val leaving = List.filter isGone (!units)
+      val kept = List.map (fn u => (#identity u, pathsOf u)) leaving
+      val top = counters ()
+      val low = List.foldl (fn (u : loaded, low) => Vector.tabulate (3, fn k => Int.min (Vector.sub (low, k), Vector.sub (#base u, k)))) top leaving
+      fun stays (rs : (int * int * loaded) vector list) =
+        List.foldl (fn ((b, c, u), pieces) => if isGone u then pieces else addRange (pieces, (b, c, u))) []
+          (List.concat (List.rev (List.map (fn piece => Vector.foldr (op ::) [] piece) rs)))
+    in
+      units := List.filter (not o isGone) (!units);
+      List.app (fn u => byIdentity := StringMap.remove (!byIdentity, #identity u)) leaving;
+      List.app (fn k => Array.update (ranges, k, stays (Array.sub (ranges, k)))) [kStamp, kTycon, kTvar];
+      List.app (fn u => byPath := StringMap.remove (!byPath, #identity u)) leaving;
+      if List.null leaving then ()
+      else (IntTable.removeRange (Vector.sub (paths, kStamp), Vector.sub (low, kStamp), Vector.sub (top, kStamp));
+            IntTable.removeRange (Vector.sub (paths, kTycon), Vector.sub (low, kTycon), Vector.sub (top, kTycon));
+            abandon low; setCounters top);
+      fpMemo := StringMap.empty; refMemo := StringMap.empty; schemeMemo := IntMap.empty;
+      sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
+      kept
+    end
 end

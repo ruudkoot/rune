@@ -214,6 +214,7 @@ struct
       Analysis {analysis=A.new (compiler,context),mode=mode,owner=token,lib= #lib config}
     fun close (Analysis {analysis,...})=A.close analysis
     fun observe (Analysis {analysis,...},callback)=A.observe(analysis,callback)
+    fun focus (Analysis {analysis,...},files)=A.focus(analysis,files)
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))
     fun check (Analysis {analysis,mode,owner,lib},{project,inputs,cancelled}) = guard "" (fn () =>
@@ -248,10 +249,12 @@ struct
     fun diagnostics (snapshot:snapshot)= #diagnostics snapshot
     val occurrences=A.occurrences
     val occurrencesIn=A.occurrencesIn
+    val implementationsOf=A.implementationsOf
     val types=A.types
     val facts=A.facts
     val factsIn=A.factsIn
     fun work (snapshot:snapshot)={checked= #checked snapshot,reused= #reused snapshot}
+    fun route (snapshot:snapshot)= #route snapshot
     val typeAt=A.typeAt
     val typeAtOccurrence=A.typeAtOccurrence
     val typeHints=A.typeHints
