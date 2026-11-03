@@ -135,8 +135,9 @@ struct
     \  --deps-uses       print the module names the inputs use, one per line\n\
     \  -I DIR            with one input, an entry point: compile before it the files\n\
     \                    of its directory and of each -I DIR that it needs\n\
-    \  --build FILE      compile in units what the build file FILE says\n\
-    \                    (docs/build.md); --build-list prints its closure in order\n\
+    \  --build FILE      compile in units what the build file FILE says, after the\n\
+    \                    steps it declares (docs/build.md); --build-list prints its\n\
+    \                    closure in order\n\
     \  --plan            print the plan of what the rest of the command line says,\n\
     \                    a build file's or the files and libraries given, as text\n\
     \                    any program can read (docs/build.md, The plan); given a\n\

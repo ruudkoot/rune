@@ -1,5 +1,11 @@
-rune-plan 1
+rune-plan 2
 basis demand
+generate scripts/gen-version.sh .
+  argument --config
+  argument rune.plan
+  argument build/config.sml
+  writes build/config.sml
+end
 program
   unit build/config.sml build/config.sml ascii
   unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii
@@ -86,7 +92,7 @@ program
   unit src/main/runedoc-rune-main.sml src/main/runedoc-rune-main.sml ascii
 end
 provenance
-  input runedoc.build 57aa69a9a1c063e427dedda20af53024de004d143af4880dbb8f8e5e2dc09715
+  input runedoc.build 0913f7d407a8e57da0c410419089df1b7dd9b17993f3878ad43066cf251aaac7
   input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
 end

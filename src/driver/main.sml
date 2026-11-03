@@ -352,6 +352,10 @@ struct
     let
       val () = findWorkspace file
       val project = projectOf file
+      (* a file is read as a compile reads it, through its preprocessor; a
+         step is not run (docs/build.md, Generated sources) *)
+      val () = Steps.preprocess {windows = onWindows (), cache = UnitCache.directory (), explain = fn _ => ()}
+                                (#preprocessors project) (CompilerProject.units (#steps project))
       val imported = List.concat (List.map BasisManifest.fixities (BasisManifest.libraries (libRoot (), #libraries project)))
                      handle BasisManifest.Usage why => raise Options.Usage why
       val layout = CompilerProject.layout {steps = #steps project, defaultMode = !Options.sourceMode,
@@ -523,6 +527,11 @@ struct
       val () = buildModes := List.foldl (fn ((p, anns), m) => if StringMap.member (m, p) then m
                                                               else StringMap.insert (m, p, modeOf anns))
                                         StringMap.empty (unitsOf (!buildPlan))
+      (* what the build runs before a unit is read: its steps, and its
+         preprocessors, whose output each unit of theirs compiles (Steps;
+         docs/build.md, Generated sources) *)
+      val () = Steps.prepare {project = project, cache = UnitCache.directory (), windows = onWindows (),
+                              explain = fn message => if !Options.explainRebuild then eprintln message else ()}
       val () =
         case (!Options.build,!entryFile,!Options.libraries) of
           (NONE,SOME first,_ :: _) => findWorkspace first
@@ -1439,6 +1448,7 @@ struct
          | Link.Mismatch msg => (eprintln ("rune: the units do not fit together: " ^ msg); OS.Process.failure)
          | Error.CompileError (sp, msg) => (eprintln (!Error.show ("error", sp, msg)); Error.note ("error", sp, msg); OS.Process.failure)
          | Reported => OS.Process.failure
+         | Steps.Refused msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
          | Error.Bug msg => (eprintln ("rune: " ^ msg); OS.Process.failure)
          | IO.Io {name, ...} => (eprintln ("rune: I/O error on " ^ name); OS.Process.failure)
 end

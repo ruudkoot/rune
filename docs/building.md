@@ -757,6 +757,16 @@ the compiler that built it. The compiler is held to make the same bytes
 whichever of these it runs on (`make check-cross`, S43), and a unit's entry
 names the Basis units it used by their own identities.
 
+`build/config.sml` is a declared output of the first step of `rune.build`
+and `runedoc.build` ([build.md](build.md), *Generated sources*):
+`generate scripts/gen-version.sh (--config, rune.plan, build/config.sml)`,
+which `rune --build` runs before it reads a source, and which writes what a
+make writes. The hosts read the plan as files (`scripts/plan-files.sh`), and
+make runs `scripts/gen-version.sh` for them. The step reads git and every
+file of the closure, so it declares no inputs and runs on every build. The
+step is in the plan's text, and so in what the identity hashes; its output is
+not.
+
 `rune`, `runelsp`, `runedoc` and the REPL link `build/config.sml`, or
 `lib/compiler/config.sml`, the same, and have one identity: `runelsp` takes
 the batch compiler's entries. Another compiler built on the compiler's
