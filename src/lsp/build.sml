@@ -2,7 +2,7 @@
    Standard ML semantic snapshots. All operations are static and read-only. *)
 structure RuneLspBuild =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure D=RuneLspDocuments
   structure W=RuneLspWorkspace
   structure M=RuneLspWorkerModel

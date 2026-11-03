@@ -1,7 +1,7 @@
 (* Resident static analysis and frozen views inside the supervised worker. *)
 structure RuneLspWorkerAnalysis =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure A=C.Analysis
   structure V=RuneLspWorkerWire
   structure M=RuneLspWorkerModel

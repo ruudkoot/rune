@@ -183,7 +183,7 @@ struct
      indexes must give *)
   structure Reference=
   struct
-    structure C=RuneCompiler
+    structure C=CompilerApi
     structure RuneLspStructure=RuneLspStructure
     type entry=RuneLspOutline.entry
     type symbol=RuneLspOutline.symbol
@@ -260,7 +260,7 @@ struct
               ("children",Json.Array(List.map emit(children(SOME i))))] end
       in List.map emit (children NONE) end
   end
-  structure C=RuneCompiler
+  structure C=CompilerApi
   fun outlineOf (compiler,name,text)=
     let val analysis=C.Analysis.create (compiler,{context=name})
         val snapshot=C.Analysis.check (analysis,{project=NONE,cancelled=fn () => false,

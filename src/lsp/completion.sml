@@ -3,7 +3,7 @@
    compiler. Every returned edit replaces the captured identifier prefix. *)
 structure RuneLspCompletion =
 struct
-  structure A=RuneCompiler.Analysis
+  structure A=CompilerApi.Analysis
   val keywords=["abstype","and","andalso","as","case","datatype","do","else","end","eqtype",
     "exception","fn","fun","functor","handle","if","in","include","infix","infixr","let",
     "local","nonfix","of","op","open","orelse","raise","rec","sharing","sig","signature",
@@ -23,7 +23,7 @@ struct
     in {start=from,word=String.substring (text,from,offset-from),path=path} end
   fun kind name=case name of "function" => 3 | "constructor" => 4 | "exception" => 4
     | "value" => 6 | "type" => 25 | "structure" => 9 | "signature" => 8 | "functor" => 3 | _ => 1
-  fun blocked (pieces:RuneCompiler.Syntax.piece list,offset)=List.exists
+  fun blocked (pieces:CompilerApi.Syntax.piece list,offset)=List.exists
     (fn piece => #start piece<=offset andalso offset< #stop piece andalso
       List.exists (fn kind => kind= #kind piece) ["comment","string","character"]) pieces
   fun allowed (role,kind)=case role of "type" => kind="type" orelse kind="structure"

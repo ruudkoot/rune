@@ -12,9 +12,9 @@ val () = (ignore (Compiler.compileIn "unicode" {read = fn () => NONE, file = "no
 val () = print (Int.toString (!Compiler.printDepth) ^ " [" ^ !Compiler.prompt1 ^ "] [" ^ !Compiler.prompt2 ^ "]\n")
 val () = (Compiler.printDepth := 3; Compiler.prompt1 := "> ")
 val () = print (Int.toString (!Compiler.printDepth) ^ " [" ^ !Compiler.prompt1 ^ "]\n")
-(* Compiler is RuneReplControls, the REPL's controls, whose refs are the same;
-   it has the controls that COMPILER does not name, printNodes and feedback,
-   which the REPL reads too (docs/repl.md) *)
-val () = RuneReplControls.printDepth := 7
-val () = print (Int.toString (!Compiler.printDepth) ^ " " ^ Int.toString (!RuneReplControls.printNodes) ^ " "
-                ^ !RuneReplControls.feedback ^ "\n")
+(* Compiler is RuneCompiler, the REPL's controls, whose refs are the same;
+   RuneCompiler has the controls that COMPILER does not name, printNodes and
+   feedback, which the REPL reads too (docs/repl.md) *)
+val () = RuneCompiler.printDepth := 7
+val () = print (Int.toString (!Compiler.printDepth) ^ " " ^ Int.toString (!RuneCompiler.printNodes) ^ " "
+                ^ !RuneCompiler.feedback ^ "\n")

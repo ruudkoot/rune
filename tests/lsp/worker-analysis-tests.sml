@@ -5,7 +5,7 @@ struct
   structure W=RuneLspWorkspace
   structure D=RuneLspDocuments
   structure M=RuneLspWorkerModel
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure A=C.Analysis
   val check=Expect.that
   fun run () =

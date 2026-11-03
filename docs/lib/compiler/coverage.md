@@ -6,7 +6,7 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`RUNE_COMPILER`](sig/RUNE_COMPILER.md) | 107 | 107 | 100% | 68 | 68 |
+| [`COMPILER_API`](sig/COMPILER_API.md) | 107 | 107 | 100% | 68 | 68 |
 | **all** | 107 | 107 | 100% | 68 | 68 |
 
 ## Members a signature describes

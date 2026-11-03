@@ -1,6 +1,6 @@
 (* The reusable compiler's public boundary. Drivers use internal.build. *)
 requires unicode json end
-exports (structure RuneCompiler, signature RUNE_COMPILER)
+exports (structure CompilerApi, signature COMPILER_API)
 annotate "demand" in
   config.sml
   use api.build

@@ -163,7 +163,7 @@ with no build file and two targets of one name are refused too.
 * **Targets.** An editor offers them ([language-server.md](language-server.md),
   *Workspaces and build contexts*). A target's options are those of a
   compiler session: `--target=`, `--unicode`, `--library NAME` and the rest
-  of `RuneCompiler.session`.
+  of `CompilerApi.session`.
 
 Nothing else is in the compiler's identity for it: one compiler has one
 `Config.identity` in every workspace, and a root file is no input of a unit
@@ -229,7 +229,7 @@ that is compiled. A path that a variable gives is not counted, and neither
 is a generated pointer: a `current.build` naming what is under `sets/` beside
 it, which nobody wrote and whose generator cannot be told otherwise yet.
 
-The compiler library's `RuneCompiler.Project` API uses this same scoped
+The compiler library's `CompilerApi.Project` API uses this same scoped
 planner, which reads build files and never a source. Windows project
 resolution handles absolute drive and UNC paths explicitly, including
 expanded path variables.
@@ -422,10 +422,10 @@ The Basis Library cannot be renamed, since nothing imports it by name. A
 library with a header that exports one of its names clashes with it in every
 scope that imports the library, as a rename onto one of its names does, and a
 client renames the library's at import: `geometry (structure Math as
-Geometry)`. The compiler library's `RuneCompiler` is its own: the Basis
-Library's REPL's controls, `Compiler` to a program, are `RuneReplControls`
-(`lib/basis/compiler.sml`), so that a client of the compiler library has both
-with no rename.
+Geometry)`. So the compiler library's API is `CompilerApi : COMPILER_API`,
+which the Basis Library does not have: a client of the compiler library has it
+and the Basis Library's `RuneCompiler`, the REPL's controls
+(`lib/basis/compiler.sml`, `Compiler` to a program), with no rename.
 
 Clashes are compared by name, not by kind: no name of this tree is two kinds.
 `--no-warnings` does not silence a clash, which is an error.
@@ -689,7 +689,7 @@ Each is an error now, which says what to write:
 | `library (...) = ... end` in a program's build | a library's own `library.build`, with a header, used where the block was: `use DIR/library.build` |
 
 A `library.build` with a `library` block keeps it (*A library with no
-header*, above). `RuneCompiler.Project` has no cache directories, and its
+header*, above). `CompilerApi.Project` has no cache directories, and its
 inputs are the build files alone.
 
 ## Functors inlined across units

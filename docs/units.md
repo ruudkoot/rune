@@ -726,7 +726,7 @@ program does not name. It is made with the lint at level 2, so its entries
 are marked 2 and a compile at any level takes them.
 
 An analysis names its units as a build does (*Names*, above), `file#rank`
-being gone: `RuneCompiler.Project.read` takes the workspace, and the same
+being gone: `CompilerApi.Project.read` takes the workspace, and the same
 source in a build and in the editor has one name. So far only the name is the
 same: an analysis's sidecar holds origins, which a build's does not, and an
 analysis knows no back-end fact, so the bases differ.
@@ -1044,7 +1044,7 @@ compile time.
 A program compiled in units keeps that section where it *loads units*: it has
 a dynamic module (`lib/basis/dynamic.sml` is among its units), or a unit of
 it names one of `Runtime.load`, `link`, `linkedUnits` and
-`linkedUnitSources`. So does every client of `RuneCompiler`, through the
+`linkedUnitSources`. So does every client of `CompilerApi`, through the
 library's own file that links compiled code. The members are told apart by
 the keys a unit's code names, of the functions those members are in
 `lib/basis/runtime.sml`'s code, so an alias, an `open` or a functor's argument

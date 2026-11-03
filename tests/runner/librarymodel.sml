@@ -356,8 +356,8 @@ struct
 
   (* the compiler library's ways through a library: a session's compile, and
      an analysis of a project, whose friends it knows from its build file;
-     and its client has the Basis Library's Compiler, RuneReplControls, as
-     well as its RuneCompiler, with no rename and no clash *)
+     and its client has its CompilerApi and the Basis Library's RuneCompiler
+     (Compiler), the REPL's controls, with no rename and no clash *)
   fun library () =
     let
       val () = put ("p/analysed.sml", "val () = print (Int.toString (Lower.show (Lower.make 2) + LowerPrivate.n) ^ \"\\n\")\n")
@@ -365,7 +365,7 @@ struct
       val () = put ("p/stranger.build", "libraries lower end\nanalysed.sml\n")
       val () = put ("p/transitive.build", "libraries upper end\nanalysed.sml\n")
       val () = put ("p/api.sml",
-        "structure C = RuneCompiler\n\
+        "structure C = CompilerApi\n\
         \structure A = C.Analysis\n\
         \fun read f = let val i = TextIO.openIn f in TextIO.inputAll i before TextIO.closeIn i end\n\
         \fun diagnosed file =\n\
@@ -385,8 +385,8 @@ struct
         \val () = print (show (diagnosed \"p/friend.build\") ^ \" \" ^ show (diagnosed \"p/stranger.build\") ^ \" \"\n\
         \                ^ show (diagnosed \"p/transitive.build\") ^ \" \" ^ show (compiled \"val x = Upper.value\\n\") ^ \" \"\n\
         \                ^ show (compiled \"val x = Lower.make 1\\n\") ^ \"\\n\")\n\
-        \val () = RuneReplControls.printDepth := 7\n\
-        \val () = print (Int.toString (!Compiler.printDepth) ^ \" \" ^ !RuneReplControls.feedback ^ \"\\n\")\n")
+        \val () = RuneCompiler.printDepth := 7\n\
+        \val () = print (Int.toString (!Compiler.printDepth) ^ \" \" ^ !RuneCompiler.feedback ^ \"\\n\")\n")
       val (status, log) = runeWith (libraries ["compiler"] @ ["--no-warnings", "p/api.sml", "-o", dir ^ "/api.rbc"])
       val () = need (status = 0, "the API's program: " ^ log)
       val (status, output) = runProgram (dir ^ "/api.rbc")

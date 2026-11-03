@@ -187,7 +187,7 @@ struct
            (String.isSubstring "val v = <t 3> : t" (session s false ["use \"t.sml\";",
              "Compiler.addPrettyPrinter (fn _ => fn _ => fn (T n) => Compiler.PrettyString (\"<t \" ^ Int.toString n ^ \">\"));", "use \"v.sml\";"])))
     | "S54" =>
-        (custom s "t.sml v.sml"; ignore (session s false ["RuneReplControls.printDepth := 0;", "use \"t.sml\";", "use \"v.sml\";"]);
+        (custom s "t.sml v.sml"; ignore (session s false ["RuneCompiler.printDepth := 0;", "use \"t.sml\";", "use \"v.sml\";"]);
          check s "cached entry did not echo at default depth" (String.isSubstring "val v = T 3 : t" (session s false ["use \"t.sml\";", "use \"v.sml\";"])))
     | "S55" =>
         (functorFixity s; b [] "y.sml a.sml c.sml main.sml";

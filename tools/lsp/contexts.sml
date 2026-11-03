@@ -22,7 +22,7 @@ struct
   structure D=RuneLspDocuments
   structure E=RuneLspWorkerAnalysis
   structure M=RuneLspWorkerModel
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure A=C.Analysis
   structure U=LspUri
   fun read file=let val input=BinIO.openIn file

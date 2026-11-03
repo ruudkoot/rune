@@ -5,7 +5,7 @@ struct
   structure W=RuneLspWorkspace
   structure D=RuneLspDocuments
   structure U=LspUri
-  structure C=RuneCompiler
+  structure C=CompilerApi
   type problem={uri:string,message:string}
   (* the files a plan was read from, what of them are sources a build reads
      (a group's), and the directories that say what builds there are *)

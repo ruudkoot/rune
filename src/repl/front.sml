@@ -191,22 +191,22 @@ struct
      lib/pretty: a block indented from the column it begins at, its breaks
      all or none where it is consistent and each as it must where not, and
      its roles (ContextProperty "role") as annotations *)
-  fun toDoc (p : RuneReplControls.pretty) : string Pretty.doc =
+  fun toDoc (p : RuneCompiler.pretty) : string Pretty.doc =
     case p of
-      RuneReplControls.PrettyString s => Pretty.text s
-    | RuneReplControls.PrettyStringWithWidth (s, w) => Pretty.sized (s, w)
-    | RuneReplControls.PrettyBreak (b, off) => Pretty.break (b, off)
-    | RuneReplControls.PrettyLineBreak => Pretty.hardline
-    | RuneReplControls.PrettyBlock (indent, consistent, context, items) =>
+      RuneCompiler.PrettyString s => Pretty.text s
+    | RuneCompiler.PrettyStringWithWidth (s, w) => Pretty.sized (s, w)
+    | RuneCompiler.PrettyBreak (b, off) => Pretty.break (b, off)
+    | RuneCompiler.PrettyLineBreak => Pretty.hardline
+    | RuneCompiler.PrettyBlock (indent, consistent, context, items) =>
         let
           (* inconsistent: each break grouped with what follows it to the
              next break, so that it breaks where that does not fit after it
              (Oppen's rule) and what follows is then laid out by itself *)
           fun filled [] = []
-            | filled (RuneReplControls.PrettyBreak (b, off) :: rest) =
+            | filled (RuneCompiler.PrettyBreak (b, off) :: rest) =
                 let
                   fun upto (acc, []) = (List.rev acc, [])
-                    | upto (acc, r as RuneReplControls.PrettyBreak _ :: _) = (List.rev acc, r)
+                    | upto (acc, r as RuneCompiler.PrettyBreak _ :: _) = (List.rev acc, r)
                     | upto (acc, q :: r) = upto (toDoc q :: acc, r)
                   val (segment, rest) = upto ([], rest)
                 in Pretty.group (Pretty.concat (Pretty.break (b, off) :: segment)) :: filled rest end
@@ -214,7 +214,7 @@ struct
           val docs = if consistent then List.map toDoc items else filled items
           val body = Pretty.align (Pretty.nest indent (Pretty.concat docs))
         in
-          List.foldr (fn (RuneReplControls.ContextProperty ("role", r), d) => Pretty.annotate (r, d) | (_, d) => d)
+          List.foldr (fn (RuneCompiler.ContextProperty ("role", r), d) => Pretty.annotate (r, d) | (_, d) => d)
                      (if consistent then Pretty.group body else body) context
         end
 
@@ -222,7 +222,7 @@ struct
      entries are edited, else Compiler.lineLength *)
   fun width () : int =
     if !editing then (case Terminal.size () of SOME {columns, ...} => if columns > 1 then columns else 80 | NONE => 80)
-    else Int.max (1, !RuneReplControls.lineLength)
+    else Int.max (1, !RuneCompiler.lineLength)
 
   (* a document laid out, in the palette's styles where there are colours,
      its annotations given their roles by roleOf *)
@@ -244,7 +244,7 @@ struct
   (* what the REPL says of a value a declaration bound: its type on the
      line of the value's end where it fits; `val` and the type coloured as
      they are where they are typed (ReplHighlight) *)
-  fun echoDoc (name : string, shown : RuneReplControls.pretty, ty : string) : string Pretty.doc =
+  fun echoDoc (name : string, shown : RuneCompiler.pretty, ty : string) : string Pretty.doc =
     Pretty.concat [Pretty.annotate ("syn.keyword", Pretty.text "val"), Pretty.text " ",
                    Pretty.annotate ("repl.name", Pretty.text name), Pretty.text " = ",
                    toDoc shown,
@@ -265,8 +265,8 @@ struct
         | piece Pretty.End = "</span>"
     in (String.concat (List.map piece (Pretty.layout (width ()) d)), !used) end
 
-  (* the echo of a value a declaration bound (RuneReplControls.echoHook) *)
-  fun echo (name : string, shown : RuneReplControls.pretty, ty : string) : unit =
+  (* the echo of a value a declaration bound (RuneCompiler.echoHook) *)
+  fun echo (name : string, shown : RuneCompiler.pretty, ty : string) : unit =
     (freshLine (); print (render (echoDoc (name, shown, ty)) ^ "\n"))
 
   (* ---- the terminal while an entry runs (D18) ---- *)
@@ -322,7 +322,7 @@ struct
   fun config (sessionEnv : Env.env, isWhole : string -> bool) : LineEdit.config =
     let val st = ReplHighlight.styleOf
     in
-      {prompt = !RuneReplControls.prompt1, continuation = !RuneReplControls.prompt2,
+      {prompt = !RuneCompiler.prompt1, continuation = !RuneCompiler.prompt2,
        (* the text as it is at Enter: a string open at its end runs into
           the end of a line *)
        isComplete = fn t => CharVector.all Char.isSpace t orelse isCommand t
@@ -366,7 +366,7 @@ struct
       val () = ReplHighlight.theme := Color.decide (color, Posix.FileSys.stdout)
       val canEdit = not basic andalso not (LineEdit.basic LineEdit.defaults)
     in
-      RuneReplControls.echoHook := echo;
+      RuneCompiler.echoHook := echo;
       editing := canEdit;
       if not canEdit then ()
       else

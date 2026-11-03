@@ -383,7 +383,7 @@ it stands, saved or not, and an edit of it plans a file's check again, as an
 edit of a build file does. Beside those, discovery examines
 the document directory and its ancestors up to an owning workspace root,
 following build `use` edges. It does not recursively scan descendants.
-Project source order, scopes and annotations come from `RuneCompiler.Project`,
+Project source order, scopes and annotations come from `CompilerApi.Project`,
 which is given the root file above each build, so that a unit has the name it
 has in a build ([units.md](units.md), *Names*).
 
@@ -431,7 +431,7 @@ files its builds hold, against 220 now.
 
 Most SML files are in no build: a test, a script, a bug report. Such a file has
 an implicit library over its directory. The server reads the names the file
-uses from its syntax (`RuneCompiler.Syntax.names`, what `rune --deps` reads;
+uses from its syntax (`CompilerApi.Syntax.names`, what `rune --deps` reads;
 [units.md](units.md), *Well-formed units*) and looks for each where it is
 declared: in the file's own directory, then anywhere in its workspace (the root
 file's directory, else the client's folder that holds the file, else its own
@@ -470,7 +470,7 @@ holds a median of 2 files, and 107 at most.
 Of the 145 whose first unbound name remains, the name is declared nowhere as a
 structure, signature or functor for 45, and the rest are mostly what syntax
 cannot know: a host's own structures (`MLton.Signal`), a test whose command line
-imports the compiler library's `RuneCompiler`, and error tests meant to fail.
+imports the compiler library's `CompilerApi`, and error tests meant to fail.
 
 ### Past the first error
 
@@ -483,7 +483,7 @@ earlier source could not be checked.
 ### Two builds over one library
 
 A unit of a library is the same unit in every build over it, so the server's
-contexts share them (`RuneCompiler.Analysis.share`): a context that reaches a
+contexts share them (`CompilerApi.Analysis.share`): a context that reaches a
 library's unit it has not held takes the one another context checked last,
 under the same compiler configuration, by its usages, as a compile takes an
 entry of its cache, and elaborates it where they do not hold. In this
@@ -515,7 +515,7 @@ offered.
 
 ## Editor syntax
 
-The compiler library also provides `RuneCompiler.Syntax`, a separate SML
+The compiler library also provides `CompilerApi.Syntax`, a separate SML
 editor parser with immutable snapshots, lossless source pieces, recovery,
 cross-file fixity environments and lexical/declaration reuse. It is tested
 against the batch parser and supplies server analysis. Performance and

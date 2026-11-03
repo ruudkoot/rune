@@ -46,7 +46,7 @@ struct
      (the REPL's parse); else the files' *)
   fun modeOf (file : string) : Source.mode =
     case Source.findFile file of SOME f => #mode f | NONE => !mode
-  fun echoing () = not (!quiet) andalso !RuneReplControls.printDepth > 0 andalso !RuneReplControls.feedback <> "silent"
+  fun echoing () = not (!quiet) andalso !RuneCompiler.printDepth > 0 andalso !RuneCompiler.feedback <> "silent"
   (* what a declaration's echo was compiled by, as the usages of the cache
      see it (UnitBasis.replSetting) *)
   val () = UnitBasis.replSetting :=
@@ -254,7 +254,7 @@ struct
       val exns = StringMap.foldri (fn (n, Env.Exn _, acc) => ("exception " ^ n) :: acc | (_, _, acc) => acc) []
                                   (Env.vals delta)
       (* with feedback verbose, a structure with its signature *)
-      val verbose = !RuneReplControls.feedback = "verbose"
+      val verbose = !RuneCompiler.feedback = "verbose"
       val strs = StringMap.foldri (fn (n, s, acc) =>
                                      if verbose then
                                        String.concatWith "\n" (("structure " ^ n ^ " :") :: "  sig"

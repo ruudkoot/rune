@@ -2,11 +2,11 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [n](n.md) **o** [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
-- `Analysis.observation` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.observation)
-- `Analysis.observe` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.observe)
-- `Analysis.occurrence` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.occurrence)
-- `Analysis.occurrences` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.occurrences)
-- `Analysis.occurrencesIn` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.occurrencesin)
+- `Analysis.observation` (type): [COMPILER_API](../sig/COMPILER_API.md#type-analysis.observation)
+- `Analysis.observe` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.observe)
+- `Analysis.occurrence` (type): [COMPILER_API](../sig/COMPILER_API.md#type-analysis.occurrence)
+- `Analysis.occurrences` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.occurrences)
+- `Analysis.occurrencesIn` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.occurrencesin)
 
 ---
 

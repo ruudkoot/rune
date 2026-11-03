@@ -4,8 +4,8 @@
    so that the back end represents the printer's values as it represents the
    value's own and the printer never reads a value's bits.
 
-   A printer is an expression of type `int -> t -> RuneReplControls.pretty`,
-   the depth left and the value to a document with the roles of its parts,
+   A printer is an expression of type `int -> t -> RuneCompiler.pretty`, the
+   depth left and the value to a document with the roles of its parts,
    built from the pieces of RuneShow (lib/basis/compiler.sml), which the
    REPL lays out (docs/plans/repl.md, D16).
    A datatype gets a function per type it is shown at, all of them one
@@ -227,7 +227,7 @@ struct
       | (NONE, _) => NONE
     end
 
-  (* SML text of an `int -> t -> RuneReplControls.pretty` printer for t *)
+  (* SML text of an `int -> t -> RuneCompiler.pretty` printer for t *)
   fun printer (g : gen, t : ty) : string =
     case prune t of
       TVar _ => "RuneShow.hidden"
@@ -357,7 +357,7 @@ struct
           val g = newGen env
           val lines =
             List.map (fn (n, t, value) =>
-                        "val () = RuneShow.echo (" ^ quote n ^ ", fn () => " ^ printer (g, t) ^ " (!RuneReplControls.printDepth) ("
+                        "val () = RuneShow.echo (" ^ quote n ^ ", fn () => " ^ printer (g, t) ^ " (!RuneCompiler.printDepth) ("
                         ^ value ^ "), " ^ quote (typeIn env t) ^ ")") bound
             @ List.map (fn (path, n, a) =>
                           "val () = RuneShow.addExn (fn d => fn e => case e of " ^ path ^ " a => SOME (RuneShow.con1 d ("

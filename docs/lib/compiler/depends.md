@@ -30,8 +30,8 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-  n0(["RUNE_COMPILER"])
-  n1["RuneCompiler"]
+  n0(["COMPILER_API"])
+  n1["CompilerApi"]
   n1 --> n0
 ```
 
