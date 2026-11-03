@@ -34,15 +34,15 @@ struct
                  else raise Fail ("one of " ^ String.concatWith ", " choices ^ ", not " ^ v))
       fun row (name, help, (get, set)) = (name, help, get, set)
     in
-      [row ("depth", "levels of a value printed (Compiler.printDepth)", int RuneCompiler.printDepth),
-       row ("length", "items of a list, an array or a vector printed (Compiler.printLength)", int RuneCompiler.printLength),
-       row ("string", "characters of a string printed (Compiler.stringLength)", int RuneCompiler.stringLength),
-       row ("width", "columns a value is laid out in without a terminal (Compiler.lineLength)", int RuneCompiler.lineLength),
+      [row ("depth", "levels of a value printed (Compiler.printDepth)", int RuneReplControls.printDepth),
+       row ("length", "items of a list, an array or a vector printed (Compiler.printLength)", int RuneReplControls.printLength),
+       row ("string", "characters of a string printed (Compiler.stringLength)", int RuneReplControls.stringLength),
+       row ("width", "columns a value is laid out in without a terminal (Compiler.lineLength)", int RuneReplControls.lineLength),
        row ("feedback", "what is said of a declaration: normal, concise, verbose or silent",
-            named (RuneCompiler.feedback, ["normal", "concise", "verbose", "silent"])),
-       row ("prompt", "the prompt (Compiler.prompt1)", (fn () => !RuneCompiler.prompt1, fn v => RuneCompiler.prompt1 := v)),
+            named (RuneReplControls.feedback, ["normal", "concise", "verbose", "silent"])),
+       row ("prompt", "the prompt (Compiler.prompt1)", (fn () => !RuneReplControls.prompt1, fn v => RuneReplControls.prompt1 := v)),
        row ("prompt2", "the prompt of a line that continues an entry (Compiler.prompt2)",
-            (fn () => !RuneCompiler.prompt2, fn v => RuneCompiler.prompt2 := v)),
+            (fn () => !RuneReplControls.prompt2, fn v => RuneReplControls.prompt2 := v)),
        row ("time", "the time and memory of each entry (:time)", bool timing),
        row ("watch", "reload at each prompt where a file used has changed", bool ReplLoop.watching),
        row ("debug", "compile what is entered and used for the debugger (:break turns it on)",

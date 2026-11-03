@@ -4,8 +4,12 @@
    The REPL is one program with the code it compiles, and they share this
    library: the REPL puts its `use` and its `compile` into the hooks when
    it starts, and the code it compiles calls `Compiler.use`, which is the
-   same structure. A program compiled by `rune` has nothing in the hooks. *)
-structure RuneCompiler =
+   same structure. A program compiled by `rune` has nothing in the hooks.
+
+   Its name is RuneReplControls, the REPL's controls, and not
+   RuneCompiler, which is the compiler library's (lib/compiler), so that a
+   program has both with no clash (docs/build.md, Clashes). *)
+structure RuneReplControls =
 struct
   val useHook : (string -> unit) ref =
     ref (fn _ => raise Fail "Compiler.use: this program has no compiler beside it (rune-repl has)")
@@ -98,7 +102,7 @@ end
 (* RuneShow: the pieces of the printers the REPL makes for each value it
    shows (src/repl/show.sml): one for each type, given the depth left, at
    which a value prints as `...`, and the value, to a document
-   (RuneCompiler.pretty) that the REPL lays out at the terminal's width
+   (RuneReplControls.pretty) that the REPL lays out at the terminal's width
    (docs/plans/repl.md, D16). A part of a value carries its role of the
    palette -- a number, a string, a constructor -- as a ContextProperty
    ("role", ...), which the REPL styles by and prettyPrint ignores.
@@ -109,13 +113,13 @@ end
    (printNodes). *)
 structure RuneShow =
 struct
-  type pretty = RuneCompiler.pretty
+  type pretty = RuneReplControls.pretty
 
-  fun str (s : string) : pretty = RuneCompiler.PrettyString s
+  fun str (s : string) : pretty = RuneReplControls.PrettyString s
 
   (* text in a role of the palette *)
   fun role (r : string, s : string) : pretty =
-    RuneCompiler.PrettyBlock (0, false, [RuneCompiler.ContextProperty ("role", r)], [str s])
+    RuneReplControls.PrettyBlock (0, false, [RuneReplControls.ContextProperty ("role", r)], [str s])
 
   val dots : pretty = role ("repl.ui", "...")
 
@@ -134,9 +138,9 @@ struct
     let
       fun sep [] = []
         | sep [x] = [x]
-        | sep (x :: rest) = x :: str "," :: RuneCompiler.PrettyBreak (1, 0) :: sep rest
+        | sep (x :: rest) = x :: str "," :: RuneReplControls.PrettyBreak (1, 0) :: sep rest
     in
-      RuneCompiler.PrettyBlock (size opening, consistent, [], str opening :: sep items @ [str closing])
+      RuneReplControls.PrettyBlock (size opening, consistent, [], str opening :: sep items @ [str closing])
     end
   val sequence = sequence' true
   val filled = sequence' false
@@ -144,7 +148,7 @@ struct
   (* the first printLength items, and `...` for the rest *)
   fun limited (n : int, item : int -> pretty) : pretty list =
     let
-      val shown = Int.min (n, Int.max (0, !RuneCompiler.printLength))
+      val shown = Int.min (n, Int.max (0, !RuneReplControls.printLength))
       fun go k =
         if k >= shown then (if n > shown then [dots] else [])
         else if !budget <= 0 then [dots]
@@ -155,11 +159,11 @@ struct
      parentheses as an argument *)
   fun flat (p : pretty) : string =
     case p of
-      RuneCompiler.PrettyString s => s
-    | RuneCompiler.PrettyStringWithWidth (s, _) => s
-    | RuneCompiler.PrettyBreak (b, _) => CharVector.tabulate (b, fn _ => #" ")
-    | RuneCompiler.PrettyLineBreak => " "
-    | RuneCompiler.PrettyBlock (_, _, _, ps) => String.concat (List.map flat ps)
+      RuneReplControls.PrettyString s => s
+    | RuneReplControls.PrettyStringWithWidth (s, _) => s
+    | RuneReplControls.PrettyBreak (b, _) => CharVector.tabulate (b, fn _ => #" ")
+    | RuneReplControls.PrettyLineBreak => " "
+    | RuneReplControls.PrettyBlock (_, _, _, ps) => String.concat (List.map flat ps)
 
   (* an argument of a constructor, or of ref, in parentheses where it is
      itself an application *)
@@ -168,7 +172,7 @@ struct
     in
       if CharVector.exists (fn c => c = #" ") s
          andalso not (CharVector.exists (fn c => c = String.sub (s, 0)) "([{\"#")
-      then RuneCompiler.PrettyBlock (1, false, [], [str "(", p, str ")"]) else p
+      then RuneReplControls.PrettyBlock (1, false, [], [str "(", p, str ")"]) else p
     end
 
   (* a real as it reads back as a real: with a point or an exponent *)
@@ -183,9 +187,9 @@ struct
   fun real (_ : int) (r : real) = role ("syn.number", realText r)
   fun char (_ : int) (c : char) = role ("syn.string", "#\"" ^ Char.toString c ^ "\"")
   fun string (_ : int) (s : string) =
-    if size s <= Int.max (0, !RuneCompiler.stringLength) then role ("syn.string", "\"" ^ String.toString s ^ "\"")
-    else RuneCompiler.PrettyBlock (0, false, [],
-           [role ("syn.string", "\"" ^ String.toString (String.substring (s, 0, Int.max (0, !RuneCompiler.stringLength))) ^ "\""),
+    if size s <= Int.max (0, !RuneReplControls.stringLength) then role ("syn.string", "\"" ^ String.toString s ^ "\"")
+    else RuneReplControls.PrettyBlock (0, false, [],
+           [role ("syn.string", "\"" ^ String.toString (String.substring (s, 0, Int.max (0, !RuneReplControls.stringLength))) ^ "\""),
             dots])
   (* A wide character or string as the REPL shows it (docs/plans/utf8.md,
      D14): its text in UTF-8, as a literal, but for what would not show or
@@ -224,19 +228,19 @@ struct
         else "\\U" ^ StringCvt.padLeft #"0" 8 (Int.fmt StringCvt.HEX c)
   (* text in the string's role, as wide as its characters *)
   fun wideRole (s : string, width : int) : pretty =
-    RuneCompiler.PrettyBlock (0, false, [RuneCompiler.ContextProperty ("role", "syn.string")],
-                              [RuneCompiler.PrettyStringWithWidth (s, width)])
+    RuneReplControls.PrettyBlock (0, false, [RuneReplControls.ContextProperty ("role", "syn.string")],
+                                  [RuneReplControls.PrettyStringWithWidth (s, width)])
   fun wideChar (c : int) : pretty =
     let val t = wideText c in wideRole ("#\"" ^ t ^ "\"", 3 + (if escaped c orelse c < 0x80 then size t else 1)) end
   fun wideString (n : int, at : int -> int) : pretty =
     let
-      val shown = Int.min (n, Int.max (0, !RuneCompiler.stringLength))
+      val shown = Int.min (n, Int.max (0, !RuneReplControls.stringLength))
       val cs = List.tabulate (shown, at)
       val text = "\"" ^ String.concat (List.map wideText cs) ^ "\""
       val width = 2 + List.foldl (fn (c, w) => w + (if escaped c orelse c < 0x80 then size (wideText c) else 1)) 0 cs
     in
       if n <= shown then wideRole (text, width)
-      else RuneCompiler.PrettyBlock (0, false, [], [wideRole (text, width), dots])
+      else RuneReplControls.PrettyBlock (0, false, [], [wideRole (text, width), dots])
     end
   fun unit (_ : int) () = str "()"
   fun function (_ : int) (_ : 'a) = role ("syn.keyword", "fn")
@@ -245,21 +249,21 @@ struct
     cut (d, fn () =>
       let
         val n = List.length xs
-        val v = Vector.fromList (List.take (xs, Int.min (n, Int.max (0, !RuneCompiler.printLength))))
+        val v = Vector.fromList (List.take (xs, Int.min (n, Int.max (0, !RuneReplControls.printLength))))
       in filled ("[", "]", limited (n, fn k => f (d - 1) (Vector.sub (v, k)))) end)
   fun tuple (d : int) (fs : (int -> pretty) list) =
     cut (d, fn () => sequence ("(", ")", List.map (fn f => f (d - 1)) fs))
   fun record (d : int) (fs : (string * (int -> pretty)) list) =
     cut (d, fn () => sequence ("{", "}", List.map (fn (l, f) =>
-                                                    RuneCompiler.PrettyBlock (2, false, [],
-                                                      [str (l ^ " ="), RuneCompiler.PrettyBreak (1, 0), f (d - 1)])) fs))
+                                                    RuneReplControls.PrettyBlock (2, false, [],
+                                                      [str (l ^ " ="), RuneReplControls.PrettyBreak (1, 0), f (d - 1)])) fs))
   fun con0 (name : string) = role ("syn.constructor", name)
   fun con1 (d : int) (name : string, f : int -> pretty) =
-    cut (d, fn () => RuneCompiler.PrettyBlock (2, false, [], [role ("syn.constructor", name), RuneCompiler.PrettyBreak (1, 0),
-                                                              arg (f (d - 1))]))
+    cut (d, fn () => RuneReplControls.PrettyBlock (2, false, [], [role ("syn.constructor", name), RuneReplControls.PrettyBreak (1, 0),
+                                                                  arg (f (d - 1))]))
   fun reference (f : int -> 'a -> pretty) (d : int) (r : 'a ref) =
-    cut (d, fn () => RuneCompiler.PrettyBlock (2, false, [], [role ("syn.constructor", "ref"), RuneCompiler.PrettyBreak (1, 0),
-                                                              arg (f (d - 1) (!r))]))
+    cut (d, fn () => RuneReplControls.PrettyBlock (2, false, [], [role ("syn.constructor", "ref"), RuneReplControls.PrettyBreak (1, 0),
+                                                                  arg (f (d - 1) (!r))]))
   fun array (f : int -> 'a -> pretty) (d : int) (a : 'a array) =
     cut (d, fn () => filled ("fromList[", "]", limited (Array.length a, fn k => f (d - 1) (Array.sub (a, k)))))
   fun vector (f : int -> 'a -> pretty) (d : int) (v : 'a vector) =
@@ -281,24 +285,24 @@ struct
   (* a value bound by a declaration, as the REPL echoes it: the value made
      with a fresh budget *)
   fun echo (name : string, shown : unit -> pretty, ty : string) =
-    (budget := !RuneCompiler.printNodes; !RuneCompiler.echoHook (name, shown (), ty))
+    (budget := !RuneReplControls.printNodes; !RuneReplControls.echoHook (name, shown (), ty))
 
   (* The printers of Compiler.addPrettyPrinter, by the name of their type
      (UnitBasis.stableName), each kept at a type of its own and taken out at
      the one it was put in at: the REPL asks for one by the type it is
      making a printer for. *)
   val cast = _prim "unsafe_cast" : 'a -> 'b
-  val printers : (string * (int -> unit -> unit -> RuneCompiler.pretty)) list ref = ref []
-  fun addPrinterAt (key : string, f : int -> 'a -> 'b -> RuneCompiler.pretty) : unit =
+  val printers : (string * (int -> unit -> unit -> RuneReplControls.pretty)) list ref = ref []
+  fun addPrinterAt (key : string, f : int -> 'a -> 'b -> RuneReplControls.pretty) : unit =
     printers := (key, cast f) :: List.filter (fn (k, _) => k <> key) (!printers)
   fun hasPrinter (key : string) : bool = List.exists (fn (k, _) => k = key) (!printers)
   (* the printer of the type key names, given how to show its arguments *)
   fun installed (key : string, args : 'a) (d : int) (v : 'b) : pretty =
     case List.find (fn (k, _) => k = key) (!printers) of
-      SOME (_, p) => (cast p : int -> 'a -> 'b -> RuneCompiler.pretty) d args v
+      SOME (_, p) => (cast p : int -> 'a -> 'b -> RuneReplControls.pretty) d args v
     | NONE => hidden d v
   (* an argument of the type, as a printer of the type is given it *)
-  fun argument (f : int -> 'a -> pretty) : 'a * int -> RuneCompiler.pretty = fn (v, d) => f d v
+  fun argument (f : int -> 'a -> pretty) : 'a * int -> RuneReplControls.pretty = fn (v, d) => f d v
 end
 
 (* Compiler: what a program can ask of the compiler it runs beside.
@@ -306,4 +310,4 @@ end
    Implements: COMPILER
 
    Status: extension *)
-structure Compiler = RuneCompiler
+structure Compiler = RuneReplControls

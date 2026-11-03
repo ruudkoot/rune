@@ -40,10 +40,10 @@ sig
   val release : int list -> unit
   (* a document laid out at the width, and held for a handle (the
      debugger's variables) *)
-  val shown : RuneCompiler.pretty -> string
-  val hold : RuneCompiler.pretty -> int
+  val shown : RuneReplControls.pretty -> string
+  val hold : RuneReplControls.pretty -> int
   (* whether a document has parts to open (children) *)
-  val more : RuneCompiler.pretty -> bool
+  val more : RuneReplControls.pretty -> bool
 end
 
 structure ReplEngine : ENGINE =
@@ -59,51 +59,51 @@ struct
 
   (* ---- the handles: documents by number, held until released ---- *)
 
-  val handles : RuneCompiler.pretty IntMap.map ref = ref IntMap.empty
+  val handles : RuneReplControls.pretty IntMap.map ref = ref IntMap.empty
   val next = ref 1
 
-  fun hold (p : RuneCompiler.pretty) : int =
+  fun hold (p : RuneReplControls.pretty) : int =
     let val h = !next in next := h + 1; handles := IntMap.insert (!handles, h, p); h end
 
   fun release (hs : int list) : unit =
     List.app (fn h => if IntMap.member (!handles, h) then handles := IntMap.remove (!handles, h) else ()) hs
 
-  fun shown (p : RuneCompiler.pretty) : string = Pretty.render (!width) (ReplFront.toDoc p)
+  fun shown (p : RuneReplControls.pretty) : string = Pretty.render (!width) (ReplFront.toDoc p)
 
   (* the parts of a document a front opens it into: a block's items but
      its breaks and its punctuation; a field of a record by its label; a
      part in a role -- a number, a string, a constructor alone -- has none *)
-  fun parts (p : RuneCompiler.pretty) : (string * RuneCompiler.pretty) list =
+  fun parts (p : RuneReplControls.pretty) : (string * RuneReplControls.pretty) list =
     let
       val punctuation = ["[", "]", "(", ")", "{", "}", ",", "#[", "fromList[", "..."]
       fun isLeaf q =
         case q of
-          RuneCompiler.PrettyBlock (_, _, [RuneCompiler.ContextProperty ("role", _)], _) => true
-        | RuneCompiler.PrettyString _ => true
-        | RuneCompiler.PrettyStringWithWidth _ => true
+          RuneReplControls.PrettyBlock (_, _, [RuneReplControls.ContextProperty ("role", _)], _) => true
+        | RuneReplControls.PrettyString _ => true
+        | RuneReplControls.PrettyStringWithWidth _ => true
         | _ => false
       fun label (k, q) =
         case q of
-          RuneCompiler.PrettyBlock (_, _, [], RuneCompiler.PrettyString l :: RuneCompiler.PrettyBreak _ :: rest) =>
+          RuneReplControls.PrettyBlock (_, _, [], RuneReplControls.PrettyString l :: RuneReplControls.PrettyBreak _ :: rest) =>
             if String.isSuffix " =" l then (String.substring (l, 0, String.size l - 2),
-                                            case rest of [v] => v | _ => RuneCompiler.PrettyBlock (0, false, [], rest))
+                                            case rest of [v] => v | _ => RuneReplControls.PrettyBlock (0, false, [], rest))
             else (Int.toString k, q)
         | _ => (Int.toString k, q)
     in
       case p of
-        RuneCompiler.PrettyBlock (_, _, [RuneCompiler.ContextProperty ("role", _)], _) => []
-      | RuneCompiler.PrettyBlock (_, _, _, items) =>
+        RuneReplControls.PrettyBlock (_, _, [RuneReplControls.ContextProperty ("role", _)], _) => []
+      | RuneReplControls.PrettyBlock (_, _, _, items) =>
           let
-            val kept = List.filter (fn RuneCompiler.PrettyBreak _ => false
-                                     | RuneCompiler.PrettyLineBreak => false
-                                     | RuneCompiler.PrettyString s => not (List.exists (fn x => x = s) punctuation)
+            val kept = List.filter (fn RuneReplControls.PrettyBreak _ => false
+                                     | RuneReplControls.PrettyLineBreak => false
+                                     | RuneReplControls.PrettyString s => not (List.exists (fn x => x = s) punctuation)
                                      | q => not (isLeaf q andalso List.exists (fn x => x = RuneShow.flat q) punctuation))
                                    items
           in #2 (List.foldl (fn (q, (k, acc)) => (k + 1, acc @ [label (k, q)])) (1, []) kept) end
       | _ => []
     end
 
-  fun more (p : RuneCompiler.pretty) : bool = not (List.null (parts p))
+  fun more (p : RuneReplControls.pretty) : bool = not (List.null (parts p))
 
   fun children (h : int) : {label : string, shown : string, id : int, more : bool} list =
     case IntMap.find (!handles, h) of
@@ -125,7 +125,7 @@ struct
       val declared = ref []
       val messages = ref []
       val raised = ref NONE
-      val echo = !RuneCompiler.echoHook
+      val echo = !RuneReplControls.echoHook
       val (declaredWas, uncaughtWas, sayWas) = (!ReplLoop.declaredHook, !ReplLoop.uncaughtHook, !ReplLoop.sayHook)
       val (silentWas, keepWas, keptWas) = (!Error.silent, !Error.keep, !Error.kept)
       val roles = ref []
@@ -138,7 +138,7 @@ struct
           bindings := {name = n, ty = t, shown = shown p, line = Pretty.render (!width) d, html = h, id = hold p}
                       :: !bindings
         end
-      val () = RuneCompiler.echoHook := bound
+      val () = RuneReplControls.echoHook := bound
       val () = ReplLoop.declaredHook := (fn ds => declared := !declared @ ds)
       val () = ReplLoop.uncaughtHook :=
                  SOME (fn e => raised := SOME {name = General.exnName e, message = General.exnMessage e,
@@ -146,7 +146,7 @@ struct
       val () = ReplLoop.sayHook := SOME (fn s => messages := s :: !messages)
       val () = (Error.silent := true; Error.keep := true; Error.kept := [])
       fun restore () =
-        (RuneCompiler.echoHook := echo; ReplLoop.declaredHook := declaredWas; ReplLoop.uncaughtHook := uncaughtWas;
+        (RuneReplControls.echoHook := echo; ReplLoop.declaredHook := declaredWas; ReplLoop.uncaughtHook := uncaughtWas;
          ReplLoop.sayHook := sayWas; Error.silent := silentWas; Error.keep := keepWas; Error.kept := keptWas)
       val ok = (f () handle e => (ReplLoop.uncaught e; false)) handle e => (restore (); raise e)
       val diags = diagnostics ()

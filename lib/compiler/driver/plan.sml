@@ -28,7 +28,6 @@
        export KIND NAME                sorted; a view's are in view NAME ... end
        view NAME ... end
        friend PATH
-       shadow KIND NAME                  a name of the Basis Library an export takes the place of
        virtual KIND NAME               a virtual module it declares, sorted
        implements KIND NAME            one of another's it implements, sorted
        STEP ...
@@ -80,8 +79,7 @@ struct
      come after the last that does (BasisManifest.arrange; D22) *)
   type library = {name : string, dir : string, form : form, requires : string list, inline : string list,
                   inlineValues : string list, views : (string * export list) list, friends : string list,
-                  shadows : export list, virtuals : export list, implements : export list, steps : step list,
-                  tail : step list}
+                  virtuals : export list, implements : export list, steps : step list, tail : step list}
   type input = {path : string, hash : string}
   type preprocessor = {name : string, tool : string, dir : string, arguments : string list, inputs : string list}
   type generate = {tool : string, dir : string, arguments : string list, inputs : string list, closure : string option,
@@ -155,7 +153,7 @@ struct
   fun inlinesText (depth, functors, values) =
     String.concat (List.map (fn n => line (depth, ["inline", "functor", escape n])) functors) ^
     String.concat (List.map (fn n => line (depth, ["inline", "val", escape n])) values)
-  fun libraryText (seen, {name, dir, form, requires, inline, inlineValues, views, friends, shadows, virtuals, implements,
+  fun libraryText (seen, {name, dir, form, requires, inline, inlineValues, views, friends, virtuals, implements,
                            steps, ...} : library) =
     let
       val (word, exports) = case form of Open => ("open", []) | Block es => ("block", es) | Header es => ("header", es)
@@ -164,7 +162,6 @@ struct
       inlinesText (1, inline, inlineValues) ^ exportsText (1, exports) ^
       String.concat (List.map (fn (v, es) => line (1, ["view", escape v]) ^ exportsText (2, es) ^ line (1, ["end"])) views) ^
       String.concat (List.map (fn f => line (1, ["friend", escape f])) friends) ^
-      String.concat (List.map (fn (k, n) => line (1, ["shadow", kindWord k, escape n])) shadows) ^
       String.concat (List.map (fn (k, n) => line (1, ["virtual", kindWord k, escape n])) virtuals) ^
       String.concat (List.map (fn (k, n) => line (1, ["implements", kindWord k, escape n])) implements) ^
       stepsText (seen, 1, steps) ^ line (0, ["end"])
@@ -285,7 +282,6 @@ struct
                                 | _ => raise Bad ("no form of library is " ^ word)
           val vs = views ()
           val fs = collect (fn ["friend", f] => SOME (field f) | _ => NONE, [])
-          val shs = collect (fn ["shadow", k, n] => SOME (kindNamed k, field n) | _ => NONE, [])
           val vms = collect (fn ["virtual", k, n] => SOME (kindNamed k, field n) | _ => NONE, [])
           val ims = collect (fn ["implements", k, n] => SOME (kindNamed k, field n) | _ => NONE, [])
           val () = if version = "1" andalso not (List.null vms andalso List.null ims)
@@ -294,7 +290,7 @@ struct
         in
           usedBy := (name, !used) :: !usedBy;
           {name = name, dir = dir, form = form, requires = rs, inline = inl, inlineValues = inlv,
-           views = vs, friends = fs, shadows = shs, virtuals = vms, implements = ims, steps = ss, tail = []}
+           views = vs, friends = fs, virtuals = vms, implements = ims, steps = ss, tail = []}
         end
       val basis = case next () of ["basis", b] => b | _ => raise Bad "a plan says its basis"
       val view = case peek () of SOME ["view", v] => (ignore (next ()); SOME (field v)) | _ => NONE
@@ -350,7 +346,7 @@ struct
                 else if List.null (#virtuals l) orelse not (List.null (#tail l)) orelse List.null tail
                 then raise Bad ("a continue of " ^ name ^ ", which is no virtual library's, or comes twice")
                 else {name = #name l, dir = #dir l, form = #form l, requires = #requires l, inline = #inline l,
-                      inlineValues = #inlineValues l, views = #views l, friends = #friends l, shadows = #shadows l,
+                      inlineValues = #inlineValues l, views = #views l, friends = #friends l,
                       virtuals = #virtuals l, implements = #implements l, steps = #steps l, tail = tail}
             in
               if List.exists (fn l : library => #name l = name) acc then libraries (List.map continued acc)
@@ -520,12 +516,12 @@ struct
               (SOME _, [P.SLibrary (es, _)]) => Header (sortExports es)
             | (NONE, [P.SLibrary (es, _)]) => Block (sortExports es)
             | _ => Open
-          val {friends, views, shadows, virtuals, implements} =
+          val {friends, views, virtuals, implements} =
             case #header p of
-              SOME {friends, views, shadows, virtuals, implements, ...} =>
+              SOME {friends, views, virtuals, implements, ...} =>
                 {friends = sortStrings friends, views = List.map (fn (v, es) => (v, sortExports es)) views,
-                 shadows = sortExports shadows, virtuals = sortExports virtuals, implements = sortExports implements}
-            | NONE => {friends = [], views = [], shadows = [], virtuals = [], implements = []}
+                 virtuals = sortExports virtuals, implements = sortExports implements}
+            | NONE => {friends = [], views = [], virtuals = [], implements = []}
           val toPlan = convertWith (memoOf dir) (normal, fn _ => Source.Ascii)
           (* the head first, so that a unit is named in the order a compile
              comes to it *)
@@ -533,13 +529,13 @@ struct
         in
           {name = W.libraryName names (W.keyOf (windows, #cwd scope) dir), dir = dir, form = form, requires = #libraries p,
            inline = sortStrings (#inline p), inlineValues = sortStrings (#inlineValues p), views = views, friends = friends,
-           shadows = shadows, virtuals = virtuals, implements = implements, steps = steps, tail = []}
+           virtuals = virtuals, implements = implements, steps = steps, tail = []}
         end
       (* the tails converted in the order they are compiled, after the
          libraries before them *)
       fun withTail (l : library) tail =
         {name = #name l, dir = #dir l, form = #form l, requires = #requires l, inline = #inline l,
-         inlineValues = #inlineValues l, views = #views l, friends = #friends l, shadows = #shadows l,
+         inlineValues = #inlineValues l, views = #views l, friends = #friends l,
          virtuals = #virtuals l, implements = #implements l, steps = #steps l, tail = tail}
       val librariesPlanned =
         let

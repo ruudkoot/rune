@@ -237,13 +237,13 @@ struct
 
   (* the variables of VM frame k as the echoes would show them, taken as
      documents rather than printed (the engine's) *)
-  fun collect (k : int) : (string * RuneCompiler.pretty * string) list =
+  fun collect (k : int) : (string * RuneReplControls.pretty * string) list =
     let
       val got = ref []
-      val echo = !RuneCompiler.echoHook
+      val echo = !RuneReplControls.echoHook
     in
-      RuneCompiler.echoHook := (fn v => got := v :: !got);
-      (show (variables k) before RuneCompiler.echoHook := echo) handle e => (RuneCompiler.echoHook := echo; raise e);
+      RuneReplControls.echoHook := (fn v => got := v :: !got);
+      (show (variables k) before RuneReplControls.echoHook := echo) handle e => (RuneReplControls.echoHook := echo; raise e);
       List.rev (!got)
     end
 

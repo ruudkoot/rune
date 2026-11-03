@@ -214,8 +214,8 @@ struct
                          end
                      | [] => ());
                     (* what is not a value, in feedback normal and verbose *)
-                    if !RuneCompiler.printDepth > 0 andalso not (!ReplSession.quiet)
-                       andalso (!RuneCompiler.feedback = "normal" orelse !RuneCompiler.feedback = "verbose")
+                    if !RuneReplControls.printDepth > 0 andalso not (!ReplSession.quiet)
+                       andalso (!RuneReplControls.feedback = "normal" orelse !RuneReplControls.feedback = "verbose")
                     then (case !uncaughtHook of
                             SOME _ => !declaredHook declared
                           | NONE => (ReplFront.freshLine ();
@@ -553,14 +553,14 @@ struct
      prompt at a stop (ReplDebug) *)
   and basicLoopUntil (done : unit -> bool) : unit =
     let
-      fun again () = if done () then () else read ([], ReplScan.new (), !RuneCompiler.prompt1)
+      fun again () = if done () then () else read ([], ReplScan.new (), !RuneReplControls.prompt1)
       and read (lines : string list, scan : ReplScan.t, prompt : string) =
         ((if null lines then watch () else ());
          print prompt; TextIO.flushOut TextIO.stdOut;
          (* the wait with the mask off: an interrupt drops what has been
             typed of the declaration *)
          case SOME (unmasked (fn () => TextIO.inputLine TextIO.stdIn)) handle SML90.Interrupt => NONE of
-           NONE => (print "\n"; uncaught SML90.Interrupt; read ([], ReplScan.new (), !RuneCompiler.prompt1))
+           NONE => (print "\n"; uncaught SML90.Interrupt; read ([], ReplScan.new (), !RuneReplControls.prompt1))
          | SOME NONE => if null lines then print "\n" else ignore (step (String.concat (List.rev lines) ^ "\n;", true))
          | SOME (SOME line) =>
              if null lines andalso ReplFront.isCommand line then
@@ -572,10 +572,10 @@ struct
              in
                if ReplScan.complete scan andalso #1 (step (String.concat (List.rev lines), false))
                then again ()
-               else read (lines, scan, !RuneCompiler.prompt2)
+               else read (lines, scan, !RuneReplControls.prompt2)
              end)
     in
-      read ([], ReplScan.new (), !RuneCompiler.prompt1)
+      read ([], ReplScan.new (), !RuneReplControls.prompt1)
     end
 
   (* whether the parser takes a text as whole: what the editor asks at
@@ -610,17 +610,17 @@ struct
      until done () or the end of the input *)
   fun nested (prompt : string, done : unit -> bool) : unit =
     let
-      val (p1, p2) = (!RuneCompiler.prompt1, !RuneCompiler.prompt2)
+      val (p1, p2) = (!RuneReplControls.prompt1, !RuneReplControls.prompt2)
       val held = !ReplFront.holding
       (* no file reloads while the program is stopped in one *)
       val watched = !watching
       fun restore () =
-        (RuneCompiler.prompt1 := p1; RuneCompiler.prompt2 := p2; watching := watched;
+        (RuneReplControls.prompt1 := p1; RuneReplControls.prompt2 := p2; watching := watched;
          if held then ReplFront.hold () else ())
     in
       watching := false;
-      RuneCompiler.prompt1 := prompt;
-      RuneCompiler.prompt2 := String.implode (List.map (fn _ => #" ") (String.explode prompt));
+      RuneReplControls.prompt1 := prompt;
+      RuneReplControls.prompt2 := String.implode (List.map (fn _ => #" ") (String.explode prompt));
       ReplFront.release ();
       (masked (fn () => if !ReplFront.editing then editorLoopUntil done else basicLoopUntil done) before restore ())
       handle e => (restore (); raise e)
@@ -738,8 +738,8 @@ struct
       ignore (Runtime.catchInterrupt ());
       ignore (Runtime.maskInterrupt true);
       ReplSession.start {units = units, sources = sources, lib = lib};
-      RuneCompiler.useHook := use;
-      RuneCompiler.compileHook := compileReader;
+      RuneReplControls.useHook := use;
+      RuneReplControls.compileHook := compileReader;
       (* the top level's own: use, and the printers of the Basis's
          exceptions that have an argument (RuneShow.addExn), before the
          image is saved *)

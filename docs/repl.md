@@ -524,9 +524,9 @@ later declaration hid or a `local` declared. Four limits cut a value short
 with `...`: `Compiler.printDepth` (20) levels from the outside in,
 `Compiler.printLength` (100) items of a list, an array or a vector,
 `Compiler.stringLength` (1,000) characters of a string, and 10,000 parts of
-a value in all (`RuneCompiler.printNodes`).
+a value in all (`RuneReplControls.printNodes`).
 
-How much the REPL says of a declaration is `RuneCompiler.feedback`:
+How much the REPL says of a declaration is `RuneReplControls.feedback`:
 `"normal"`; `"concise"`, its values and not the types it declared;
 `"verbose"`, a structure with its signature too; and `"silent"`, nothing.
 
@@ -580,7 +580,7 @@ token (`--engine-connect`, `src/front/engine.sml`).
 The REPL is one program with what it compiles, and they share one Basis
 Library (the incremental roadmap's D8): `TextIO.stdOut` is the same stream
 for the REPL's echo and for a declaration's `print`, and `Compiler.use` is
-the REPL's own `use`, put into `RuneCompiler.useHook` when it starts.
+the REPL's own `use`, put into `RuneReplControls.useHook` when it starts.
 
 * `bin/rune-repl.units/` is the compiler and the REPL compiled a unit per
   file (`rune --units --emit-units`, [units.md](units.md)): the files of the

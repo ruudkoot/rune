@@ -470,8 +470,7 @@ holds a median of 2 files, and 107 at most.
 Of the 145 whose first unbound name remains, the name is declared nowhere as a
 structure, signature or functor for 45, and the rest are mostly what syntax
 cannot know: a host's own structures (`MLton.Signal`), a test whose command line
-imports the compiler's `RuneCompiler` over the Basis Library's, and error tests
-meant to fail.
+imports the compiler library's `RuneCompiler`, and error tests meant to fail.
 
 ### Past the first error
 
