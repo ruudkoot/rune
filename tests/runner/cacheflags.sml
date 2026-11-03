@@ -114,7 +114,7 @@ struct
      apart ("--lib", naming), apart ("--library", naming), apart ("--no-prelude", naming), apart ("-I", naming),
      apart ("--build", naming), apart ("--path", naming),
      apart ("--basis-deps", stopping), apart ("--basis-check", stopping), apart ("--basis-index", stopping),
-     apart ("--build-list", stopping), apart ("--deps", stopping), apart ("--deps-dot", stopping), apart ("--deps-uses", stopping),
+     apart ("--build-list", stopping), apart ("--plan", stopping), apart ("--deps", stopping), apart ("--deps-dot", stopping), apart ("--deps-uses", stopping),
      apart ("--dump-tokens", stopping), apart ("--lex-count", stopping), apart ("--dump-ast", stopping),
      apart ("--read-mid", stopping), apart ("--version", stopping), apart ("--help", stopping), apart ("-h", stopping),
      apart ("--serve", "answers requests, each a build of its own with these rows' options"),
