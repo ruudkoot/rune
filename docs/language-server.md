@@ -415,9 +415,10 @@ its entry from the frozen libraries across a change, by fingerprints a static
 layer does not say; or where its sidecar is another unit's, two files with one
 text, as HOL4's two `Systeml.sig`. MLton misses 2 KB a line: its signatures
 are copied into each unit that loads them, so that loaded eagerly its static
-layers hold 7 KB a line, and its kept world with no store, from its own
-elaboration, 3.5 GiB, 16.5 KB a line; only a load by need (M6's lazy view)
-would leave them unloaded, and the analysis does not load so yet.
+layers hold 7 KB a line, from the store or from its own elaboration (1.58 GiB
+live with its units closed, of which the entries' texts, pickles, origins,
+notes and usages are 0.10 GiB); only a load by need (M6's lazy view) would
+leave them unloaded, and the analysis does not load so yet.
 
 
 ## Workspaces and build contexts
