@@ -21,15 +21,13 @@
    Up to date: of a compile in units, everything it read after its plan was
    made -- every source, every MANIFEST, what its declared steps and
    preprocessors read (Steps) -- with the stat each had when it was read;
-   what its steps made, and its output, each an output as above; the
-   answer of each step's stamp, a command whose output stands
-   for what the step reads that no file names (git's state); and the
+   what its steps made, and its output, each an output as above; and the
    warnings it gave; under a key of all the plan rests on: the command line,
    the directory, the RUNE_ variables, the compiler, the build files' text,
    the inputs, the libraries and the workspace. A compile with the same key
-   whose files all have the stats they had, whose steps' outputs and own
-   output are what were made, and whose stamps answer as they did, runs no
-   step, gives the warnings again and does nothing else. *)
+   whose files all have the stats they had, and whose steps' outputs and own
+   output are what were made, runs no step, gives the warnings again and
+   does nothing else. *)
 structure UnitMemo =
 struct
   structure S = UnitStore
@@ -151,18 +149,15 @@ struct
      Source.probing := (fn (p, there) => probes := StringMap.insert (!probes, p, there)))
   fun stopReads () : unit = (Source.reading := (fn _ => ()); Source.probing := (fn _ => ()))
 
-  (* a stamp by what runs it -- its directory, its tool and its arguments
-     -- and its answer *)
   type record = {files : (string * S.stamp) list, probes : (string * bool) list, at : LargeInt.int, output : output,
-                 made : output list, stamps : (string list * string) list, warnings : (Source.span * string) list}
+                 made : output list, warnings : (Source.span * string) list}
   val records : record S.side =
-    {magic = "RMU", version = 3, hash = fn (_, text) => P.hash text,
-     write = fn (w, {files, probes, at, output, made, stamps, warnings}) =>
+    {magic = "RMU", version = 4, hash = fn (_, text) => P.hash text,
+     write = fn (w, {files, probes, at, output, made, warnings}) =>
        (P.list (fn (w, (p, st)) => (P.string (w, p); wstamp (w, st))) (w, files);
         P.list (fn (w, (p, there)) => (P.string (w, p); P.bool (w, there))) (w, probes);
         P.string (w, LargeInt.toString at); woutput (w, output);
         P.list woutput (w, made);
-        P.list (fn (w, (id, answer)) => (P.list P.string (w, id); P.string (w, answer))) (w, stamps);
         P.list (fn (w, ({file, start, stop}, msg)) => (P.string (w, file); P.int (w, start); P.int (w, stop); P.string (w, msg)))
                (w, warnings)),
      read = fn r =>
@@ -172,10 +167,9 @@ struct
          val at = rlarge r
          val output = routput r
          val made = P.rlist routput r
-         val stamps = P.rlist (fn r => let val id = P.rlist P.rstring r in (id, P.rstring r) end) r
          val warnings = P.rlist (fn r => let val file = P.rstring r val start = P.rint r val stop = P.rint r
                                          in ({file = file, start = start, stop = stop}, P.rstring r) end) r
-       in {files = files, probes = probes, at = at, output = output, made = made, stamps = stamps, warnings = warnings} end}
+       in {files = files, probes = probes, at = at, output = output, made = made, warnings = warnings} end}
   (* The key of a compile's record: all its plan rests on. Every RUNE_
      variable, whatever it is, and the build files by the hashes of their
      text *)
@@ -192,40 +186,34 @@ struct
     end
 
   (* the warnings to give again where nothing a compile of key rests on has
-     changed since it was made, what its steps made and its output are what
-     they were, and each stamp answers as it did, asked last, since it runs
-     a command (ask, Steps.ask, which may raise); NONE where something has *)
-  fun upToDate (dir : string, key : string, ask : string list -> string) : (Source.span * string) list option =
+     changed since it was made, and what its steps made and its output are
+     what they were; NONE where something has *)
+  fun upToDate (dir : string, key : string) : (Source.span * string) list option =
     case S.readSide records (dir, place, key) of
       NONE => NONE
-    | SOME {files, probes, at, output, made, stamps, warnings} =>
+    | SOME {files, probes, at, output, made, warnings} =>
         let
           fun same (p, st) = case S.statOf p of SOME st' => #key st' = #key st andalso S.clean (st, at) | NONE => false
           fun answered (p, there) = (OS.FileSys.access (p, []) handle OS.SysErr _ => false) = there
           fun allHold ([], acc) = SOME (List.rev acc)
             | allHold (o' :: rest, acc) = case holds dir o' of SOME o'' => allHold (rest, o'' :: acc) | NONE => NONE
-          fun asks (id, answer) = (ask id = answer) handle _ => false
         in
           if not (List.all same files andalso List.all answered probes) then NONE
           else
             case (allHold (made, []), holds dir output) of
               (SOME made', SOME out) =>
-                if not (List.all asks stamps) then NONE
-                else
-                  ((if out = output andalso made' = made then ()
-                    else S.storeSide records (dir, place, key, {files = files, probes = probes, at = at, output = out,
-                                                                made = made', stamps = stamps, warnings = warnings}));
-                   SOME warnings)
+                ((if out = output andalso made' = made then ()
+                  else S.storeSide records (dir, place, key, {files = files, probes = probes, at = at, output = out,
+                                                              made = made', warnings = warnings}));
+                 SOME warnings)
             | _ => NONE
         end
 
   (* a compile of key made the output out, with these warnings, from what
-     it read since keepReads, its steps having made what noteMade was told,
-     their stamps answering as stamps says; every file read could be
-     statted. A file a step made is held by its bytes, not by the stat it
-     had when it was read *)
-  fun noteUpToDate (dir : string, key : string, out : output, warnings : (Source.span * string) list,
-                    stamps : (string list * string) list) : unit =
+     it read since keepReads, its steps having made what noteMade was told;
+     every file read could be statted. A file a step made is held by its
+     bytes, not by the stat it had when it was read *)
+  fun noteUpToDate (dir : string, key : string, out : output, warnings : (Source.span * string) list) : unit =
     let
       val files = List.filter (fn (p, _) => not (List.exists (fn o' => #path o' = p) (!made))) (StringMap.listItemsi (!reads))
     in
@@ -233,6 +221,6 @@ struct
       else
         S.storeSide records (dir, place, key, {files = List.map (fn (p, st) => (p, valOf st)) files,
                                                probes = StringMap.listItemsi (!probes), at = !readsFrom,
-                                               output = out, made = !made, stamps = stamps, warnings = warnings})
+                                               output = out, made = !made, warnings = warnings})
     end
 end

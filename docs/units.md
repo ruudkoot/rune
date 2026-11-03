@@ -612,9 +612,8 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * beside the configurations, `steps/` holds what a build's declared steps and
   preprocessors made ([build.md](build.md), *Generated sources*): the key a
   step last ran under, with the hash of each output, and a preprocessor's
-  output of each file, by the tool and the file's bytes, and in
-  `steps/units/` the stat memo of the files the steps' closures name. A unit
-  of a preprocessed file is keyed by that output, as any unit is by its text.
+  output of each file, by the tool and the file's bytes. A unit of a
+  preprocessed file is keyed by that output, as any unit is by its text.
 
 **What a boundary does to a key.** A client's usages are by name, so what
 its entry holds of a library is what it could see and did name: a boundary
@@ -834,36 +833,33 @@ bytes, is.
 -- every source, every MANIFEST, every file its declared steps and
 preprocessors read, with the stat each had when it was read, and whether
 each `library.build` it asked of was there -- with what its steps made and
-its output, each held as an output is, the answer of each step's stamp, and
-the warnings it gave, under a key of all its plan rests on:
-the command line, the directory, every `RUNE_` variable, the compiler's
-identity, the text of its build files, its inputs and its workspace
-(`UnitMemo.upToDate`, `memo/` of the cache). A compile with the same key, all
-of whose files have the stats they had and racily clean, whose questions
-have the same answers, whose steps' outputs and own output are what were
-made, and whose stamps, asked last, answer as they did, runs no step, gives
-the warnings again and ends. A step's output is held as an output because
-the build itself writes it, within the second of its stat; and the check
-comes before the steps, so an up-to-date `rune.build` runs neither
-`scripts/gen-version.sh --config` nor more of git than its stamp. Not with
-`--explain-rebuild` or `--pass-stats`, which say what each unit did, nor with
-`-I`, whose plan lists directories, nor where an editor's buffer stands in for
-a file, nor where a step says nothing of what it reads and so runs on every
-build, nor where the warm path is off; with `-j` too, so that a no-op parses
-no input.
+its output, each held as an output is, and the warnings it gave, under a key
+of all its plan rests on: the command line, the directory, every `RUNE_`
+variable, the compiler's identity, the text of its build files, its inputs
+and its workspace (`UnitMemo.upToDate`, `memo/` of the cache). A compile
+with the same key, all of whose files have the stats they had and racily
+clean, whose questions have the same answers, and whose steps' outputs and
+own output are what were made, runs no step, gives the warnings again and
+ends. A step's output is held as an output because the build itself writes
+it, within the second of its stat; and the check comes before the steps, so
+an up-to-date build runs none. Not with `--explain-rebuild` or
+`--pass-stats`, which say what each unit did, nor with `-I`, whose plan
+lists directories, nor where an editor's buffer stands in for a file, nor
+where a step declares no inputs and so runs on every build, nor where the
+warm path is off; with `-j` too, so that a no-op parses no input.
 
 What a no-op costs (the build-system roadmap's M6): machine instructions
 (`perf stat -e instructions:u`, the compiler at tier 2) and the VM's
 (`runevm --count`), of a build made again with nothing changed, against the
 same build before M6; the first no-op after a build reads its output and the
 copy once more, since the output was written within the second of its stat.
-`rune.build` is a clean git checkout, its index written by git, and its
-no-op asks its config step's stamp, 0.046G of it; before M6 it ran the step,
-0.135G:
+`rune.build` is a git checkout in which make has written `build/config.sml`;
+its row is of the build without the config step it had for a while, whose
+stamp asked git on every no-op, 0.046G of the 0.274G a no-op was then:
 
 | Build | Before | No-op | First no-op | VM, before | VM, no-op |
 |---|---:|---:|---:|---:|---:|
-| `rune.build`, 257 units | 11.30G | 0.274G (2.4%) | 0.295G (2.6%) | 1.151G | 0.002G |
+| `rune.build`, 257 units | 11.30G | 0.229G (2.0%) | 0.252G (2.2%) | 1.151G | 0.002G |
 | HOL4's closure, 910 units | 25.78G | 0.261G (1.0%) | 0.314G (1.2%) | 2.872G | 0.006G |
 | MLton, 791 units | 87.27G | 0.284G (0.3%) | 0.335G (0.4%) | 9.011G | 0.007G |
 
@@ -871,7 +867,7 @@ A no-op's floor is the VM's start, 0.173G for `rune --version`. An edit of the
 last unit costs 9% fewer VM instructions than before on `rune.build` and HOL4
 (the units before it taken without their bases; its view loads most of them),
 and a build that links keeps a copy of its output in the cache. `-j 4` makes
-a no-op of `rune.build` 0.273G, against 13.30G before, since it parses no
+a no-op of `rune.build` 0.229G, against 13.30G before, since it parses no
 input; a build that is not up to date still parses every input with `-j`.
 
 `tests/runner/warmchecks.sml` (`make test-incremental`) holds the warm path to
