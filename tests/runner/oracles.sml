@@ -786,15 +786,13 @@ struct
       val out = run ^ "/cross"
       val () = mkdirs (OS.Path.dir(out ^ "/" ^ n ^ ".rbc"))
       fun f (c, ext) = out ^ "/" ^ n ^ "." ^ c ^ ext
-      (* a compile in units (a build file's) but by smlnj32, whose Word64 is
-         wrong and so its hash (Pickle.hash, D11 of
-         docs/plans/functors-units.md): a program that keeps its units'
-         identities carries them, which smlnj32 works out otherwise, as
-         rune-units below *)
-      val inUnits = List.exists (fn a => a = "--build" orelse a = "--units") args
+      (* every build, in units too: a program that keeps its units'
+         identities carries the hash's values (Pickle.hash), which every
+         host works out alike, smlnj32 too (the build-system roadmap's
+         D22) *)
       val results = List.map (fn c => (c, exec {cmd = ["bin/rune-" ^ c] @ target @ args @ ["-o", f (c, ".rbc")], dir = NONE,
                                                 stdin = "", stdout = "", stderr = f (c, ".err"), timeout = 0} = 0))
-                             (List.filter (fn c => not inUnits orelse c <> "smlnj32") (builds "rune"))
+                             (builds "rune")
       (* the reference: mlton's, or the first build's that compiled *)
       val reference = case List.find (fn (c, ok) => ok andalso c = "mlton") results of
                         SOME (c, _) => c
@@ -811,7 +809,8 @@ struct
      build or no check, or are of another category: what is wrong with the
      file, which fails `expectations/cross-deviations` *)
   fun crossCheckNames () =
-    ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all"]
+    ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all",
+     "virtual-table-list", "virtual-table-tree", "virtual-table-dynamic", "virtual-table-plugin"]
     @ List.map name (glob ("tests/lang", ".sml") @ ExampleProjects.programs ())
     @ List.map (fn t => "basis-" ^ t) (List.filter (fn t => t <> "harness" andalso t <> "finish") (List.map basename (glob ("tests/basis", ".sml"))))
   fun crossDeviationErrors (ls : Expectations.line list, hosts : string list, checks : string list) : string list =
@@ -834,6 +833,37 @@ struct
     | "runedoc-stack" => crossCheck ("runedoc-stack", ["--target=stack"], toolSrcs "runedoc", false)
     | "runeopt-stack" => crossCheck ("runeopt-stack", ["--target=stack"], toolSrcs "runeopt", false)
     | "basis-all" => crossCheck ("basis-all", [], ["--basis", "all", "examples/hello.sml"], false)
+    (* a virtual functor's program and a dynamic one's, built in units, and
+       the module the second loads: each keeps its units' identities and the
+       fingerprint of the functor's ABI, which every build works out alike
+       (the build-system roadmap's M21, D22) *)
+    | "virtual-table" =>
+        let
+          val dir = "examples/virtual/table"
+          val () = List.app (fn b => crossCheck ("virtual-table-" ^ b, [], ["--build", dir ^ "/" ^ b ^ ".build", "--no-cache"], false))
+                            ["list", "tree", "dynamic"]
+          val out = run ^ "/cross"
+          fun units c = out ^ "/virtual-table-plugin." ^ c
+          fun module c =
+            (rmTree (units c);
+             if exec {cmd = ["bin/rune-" ^ c, "--build", dir ^ "/plugin.build", "--no-cache", "--emit-units", units c,
+                             "-o", units c ^ ".rbc"], dir = NONE, stdin = "", stdout = "", stderr = units c ^ ".err", timeout = 0} <> 0
+             then NONE
+             else case List.rev (List.filter (String.isSuffix "-tree.rbu") (lines (read (units c ^ "/units")))) of
+                    f :: _ => SOME f      (* as the compile, from the root, was given it *)
+                  | [] => NONE)
+          val made = List.map (fn c => (c, module c)) (builds "rune")
+        in
+          case List.find (fn (c, _) => c = "mlton") made of
+            SOME (_, SOME reference) =>
+              List.app (fn (c, SOME f) => if same (reference, f) then ()
+                                          else say ("FAIL virtual-table-plugin: the module's unit differs between the mlton and "
+                                                    ^ c ^ " builds\n")
+                         | (c, NONE) => say ("FAIL virtual-table-plugin: rune-" ^ c ^ " did not emit the module: "
+                                             ^ firstLine (units c ^ ".err") ^ "\n"))
+                       made
+          | _ => say ("FAIL virtual-table-plugin: rune-mlton did not emit the module: " ^ firstLine (units "mlton" ^ ".err") ^ "\n")
+        end
     | "rune-units" =>
         let
           val out = run ^ "/cross"
@@ -843,16 +873,14 @@ struct
           fun f c = out ^ "/rune-units." ^ c ^ ".rbc"
           val ok = exec {cmd = ["bin/rune-mlton", "--units", "--no-cache"] @ srcs @ ["-o", f "nocache"], dir = NONE, stdin = "",
                          stdout = "", stderr = "", timeout = 0} = 0
-          (* one after another, through one cache; but smlnj32, whose Word64
-             is wrong, and so its hash (Pickle.hash, D11 of
-             docs/plans/functors-units.md): the compiler built in units keeps
-             its units' identities, which smlnj32 works out otherwise, with a
-             probe of its own that keeps its entries apart. Its whole
-             programs are compared above *)
+          (* one after another, through one cache, smlnj32 too: the
+             compiler built in units keeps its units' identities, which every
+             host works out alike (Pickle.hash; the build-system roadmap's
+             D22), so each takes the entries of the builds before it *)
           val bad = List.mapPartial (fn c => if exec {cmd = ["bin/rune-" ^ c, "--units", "--cache-dir", cache] @ srcs @ ["-o", f c],
                                                       dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 0} <> 0 then SOME c
                                              else if same (f "nocache", f c) then NONE else SOME (c ^ "(differs)"))
-                                    (List.filter (fn c => c <> "smlnj32") (builds "rune"))
+                                    (builds "rune")
         in
           if ok andalso null bad then ()
           else say ("FAIL rune-units: through one cache: " ^ String.concatWith " " ((if ok then [] else ["nocache"]) @ bad) ^ "\n")
@@ -1354,7 +1382,8 @@ struct
          (Test.describe "cross"
             (job ("@examples", ["example-project-inventory"], [], 1, 100, 60) ::
              List.map (fn x => job (x, ["cross-one", x], [], 1, 1500, 3600))
-                      ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all"]
+                      ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all",
+                       "virtual-table"]
              @ List.map (fn x => job (if String.isPrefix "basis:" x then "basis-" ^ String.extract (x, 6, NONE) else name x,
                                        ["cross-one", x], [], 1, 1000, 3600))
                         crossSrcs

@@ -1088,7 +1088,7 @@ struct
               in CompilerBuildContext.record (buildContext, p, deltaOf (b1, snap ()), ds); acc end
         | elabStep (SImplements (x, ds), acc) =
             if List.exists (fn y => y = x) (!implemented)
-            then raise Options.Usage ("the build gives the virtual module " ^ x ^ " two implementations")
+            then raise Options.Usage ("the build gives the virtual module or functor " ^ x ^ " two implementations")
             else
               (* what the implementation declares is the program's, and no
                  file after it names it: it is reached through the virtual

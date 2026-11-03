@@ -34,7 +34,7 @@ dec      ::= path                            a file, compiled in the basis befor
            | "use" path                      another build file, elaborated once
            | "implements" id "=" dec ... "end"
                                              the implementation of the virtual
-                                             module id (below)
+                                             module or functor id (below)
            | "annotate" string ... "in" dec ... "end"
                                              what the units inside may do (below)
            | "libraries" import ... "end"    libraries selected by this build,
@@ -543,7 +543,7 @@ last there.
 | `unit NAME PATH MODE ANNOTATION ...` | a file: its unit's name, as a compile names it (units.md, *Names*), its path, the mode it is read in and its annotations |
 | `use KEY` ... `end`, `replay KEY` | a build file's steps the first time it is used, and its second use, which adds what the first declared as `use` says above |
 | `boundary` ... `end` | a library's build file used by a build, with its exports, then its steps |
-| `implements NAME` ... `end` | a virtual module's implementation |
+| `implements NAME` ... `end` | a virtual module's or functor's implementation |
 | `provenance` ... `end` | how the plan was made, outside what two forms of one plan compare on: each build file read, `input PATH SHA256`, which `sha256sum` checks |
 
 A path is from the current directory, a library's too, wherever `--lib` is:
@@ -742,3 +742,33 @@ implementation of each virtual module: two are refused. One without any is
 compiled, and raises `Dynamic.Mismatch` when the declaration runs. Unlike a
 loaded module, a virtual module is part of the program, which can be
 compiled whole (`--whole`).
+
+A functor can be virtual too (the build-system roadmap's M21):
+
+```sml
+functor Table = _virtual (K : KEY) : TABLE where type key = K.t
+```
+
+is a functor of the parameter's signature `KEY` and the result's `TABLE`, in
+which `K` is the parameter, and nothing else; its implementation ends a file
+of an `implements Table = ... end` block with `_export functor Table (K : KEY)
+: TABLE where type key = K.t = ...`. An application is typed by the two
+signatures alone, its table and its exception new, its key the parameter's,
+and compiled as a call of the implementation's function, which the
+declaration takes (`RuneDynamic.take`, as for a structure) where the
+fingerprints of the two ABIs agree (docs/units.md, Dynamic modules): no unit
+after the block names the implementation, and none copies its body.
+`examples/virtual/table` has two, an association list (`list.build`) and a
+balanced tree (`tree.build`), each applied to two kinds of key; the second
+build through the first one's cache compiles `tree.sml` alone, each gives
+the same output, and `--whole` the bytes of the same files compiled whole
+(`virtual-table-*` of `tests/runner/scenarios.sml`). With no implementation
+the program compiles, and the declaration raises `Dynamic.Mismatch` when it
+runs; with two the build is refused; an implementation compiled against
+another `KEY`, which only the block sees, is refused when the declaration
+runs. `functor Table = _dynamic "table.rbu" (K : KEY) : TABLE where type key
+= K.t` (`dynamic.sml`, `dynamic.build`) takes it from a unit instead, a
+plugin compiled apart (`plugin.build`). `implements NAME` names a structure
+or a functor, and a build implements a name once. `where type` between two
+virtual modules is not built: a virtual functor's result names its own
+parameter's types alone.

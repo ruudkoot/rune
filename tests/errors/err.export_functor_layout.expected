@@ -1,0 +1,1 @@
+_export: the constructor D of d lies in 2 fields in the implementation, where a program compiled against the signature alone lays it boxed (its argument's type is abstract there)

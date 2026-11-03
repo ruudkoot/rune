@@ -452,17 +452,19 @@ struct
                                   driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check kernel"),
              Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-pipe", "exec bin/rune-protocol-check notebook")),
              Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check notebook"))]),
-       (* a compile's static layer is an analysis's (docs/units.md, Layers);
-          RUNE_LAYER_TREES adds builds that are not in the tree, MLton's and HOL4's *)
+       (* a compile's static layer is an analysis's (docs/units.md, Layers),
+          of the compiler and of a virtual functor's and a dynamic one's
+          programs (examples/virtual/table); RUNE_LAYER_TREES adds builds
+          that are not in the tree, MLton's and HOL4's *)
        tagged ["check", "test-layers", "covers:lib/compiler/driver/unitbasis.sml", "covers:tests/compiler/layers-analysis.sml"]
-         (Test.describe "layers" [driver ("static", "exec bin/rune-incremental layers rune.build $RUNE_LAYER_TREES")]),
+         (Test.describe "layers" [driver ("static", "exec bin/rune-incremental layers rune.build examples/virtual/table/list.build examples/virtual/table/dynamic.build $RUNE_LAYER_TREES")]),
        tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml", "covers:tests/runner/cache*.sml",
                "covers:src/driver/cachecheck.sml"]
          (Test.describe "incremental"
             (List.map (fn s => driver (s, "exec bin/rune-incremental one " ^ s ^ " bin/rune")) scenarios
-             @ [driver ("@mutate", "exec bin/rune-incremental mutate --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project"),
+             @ [driver ("@mutate", "exec bin/rune-incremental mutate --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project tests/incremental/virtual"),
                 (* and each warm build verified, entries across a change compared *)
-                driver ("@mutate-verify", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed 5 --steps 12 --out \"$RUNE_TEST_RUN/mutation-verify\" tests/incremental/functors tests/incremental/project"),
+                driver ("@mutate-verify", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed 5 --steps 12 --out \"$RUNE_TEST_RUN/mutation-verify\" tests/incremental/functors tests/incremental/project tests/incremental/virtual"),
                 driver ("@mutate-v1", "exec bin/rune-incremental mutate --replay-v1 --out \"$RUNE_TEST_RUN/mutation-replay\""),
                 driver ("@faults", "exec bin/rune-incremental faults"),
                 (* the soundness check of fingerprints (functors-units M4) holds a
@@ -473,6 +475,6 @@ struct
           change to a key (make test-cache-random; docs/testing.md) *)
        tagged ["test-cache-random", "nightly", "covers:tests/incremental/*"]
          (Test.describe "cache-random"
-            [driver ("projects", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed \"${RUNE_CACHE_SEED:-7}\" --steps 150 --out \"$RUNE_TEST_RUN/random-projects\" tests/incremental/functors tests/incremental/project"),
+            [driver ("projects", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed \"${RUNE_CACHE_SEED:-7}\" --steps 150 --out \"$RUNE_TEST_RUN/random-projects\" tests/incremental/functors tests/incremental/project tests/incremental/virtual"),
              driver ("compiler", "exec bin/rune-incremental mutate --rune bin/rune --seed \"${RUNE_CACHE_SEED:-7}\" --steps 12 --out \"$RUNE_TEST_RUN/random-compiler\" compiler")])]
 end
