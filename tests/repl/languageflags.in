@@ -1,0 +1,9 @@
+(* rune-repl takes the language's choices that rune takes (docs/repl.md):
+   under --flex-records=binding a flexible record is determined by the
+   binding that would generalise it, where the default, topdec, takes the
+   declaration after it before the `;` *)
+fun area {width, height, ...} = width * height : int
+val a = area {width = 2, height = 3, depth = 4};
+(* and --or-patterns, which Standard ML does not have *)
+fun small (1 | 2 | 3) = true | small _ = false;
+small 2;

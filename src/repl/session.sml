@@ -312,11 +312,13 @@ struct
       val k = !count
       val name = case cached of SOME (stem, n, _) => stem ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
       (* the mode its text was read in, which its key says where it is not
-         the default, as a compile in units says it (Main), and
-         --no-unicode-lints, whose warnings an entry would keep *)
+         the default, as a compile in units says it (Main), --or-patterns,
+         which a file of the session's input files may be compiled under,
+         and --no-unicode-lints, whose warnings an entry would keep *)
       val srcMode = modeOf file
       val settings = String.concatWith " " (List.filter (fn s => s <> "")
                                               [if srcMode = Source.Ascii then "" else Source.modeName srcMode,
+                                               if !Parser.orPatterns then "or-patterns" else "",
                                                if !Lexer.lints then "" else "no-unicode-lints"])
       val cache =
         case cached of

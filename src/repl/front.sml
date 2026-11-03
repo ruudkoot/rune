@@ -46,6 +46,9 @@ struct
     \  --overloading=M  what must determine an overloaded operator's or constant's type: binding, declaration\n\
     \  --free-tyvars=M  what becomes of a type variable a declaration leaves free: refuse (the default),\n\
     \                 monotype, dummy, later or later-monotype, which the end of the input decides (docs/language.md)\n\
+    \  --flex-records=M  what must determine a flexible record's labels: binding, declaration,\n\
+    \                 topdec-monomorphic, topdec (the default) or program, the end of the input (docs/language.md)\n\
+    \  --or-patterns  allow or-patterns (p1 | p2), which are not Standard ML\n\
     \  --engine       the engine, for a front: JSON-RPC on the descriptors 3 and 4 (docs/repl-protocol.md)\n\
     \  --engine-connect PORT  the same on a connection to 127.0.0.1:PORT, its token in RUNE_ENGINE_TOKEN\n\
     \  FILE           used before the first prompt\n"
@@ -93,6 +96,12 @@ struct
                      SOME m => (Elaborate.overloading := m; go rest)
                    | NONE => raise Usage ("--overloading takes binding, declaration, toplevel or topdec, not "
                                           ^ String.extract (a, 14, NONE)))
+                else if String.isPrefix "--flex-records=" a then
+                  (case Elaborate.flexModeOf (String.extract (a, 15, NONE)) of
+                     SOME m => (Elaborate.flexRecords := m; go rest)
+                   | NONE => raise Usage ("--flex-records takes binding, declaration, topdec-monomorphic, topdec or program, not "
+                                          ^ String.extract (a, 15, NONE)))
+                else if a = "--or-patterns" then (Parser.orPatterns := true; go rest)
                 else if String.isPrefix "--free-tyvars=" a then
                   (case Elaborate.freeModeOf (String.extract (a, 14, NONE)) of
                      SOME m => (Elaborate.freeTyvars := m; go rest)
