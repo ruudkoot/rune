@@ -179,6 +179,149 @@ struct
     let val ()=ignore (S.request (service,{id=R.Number 1,method="workspace/diagnostic",params=SOME (Json.Object [])}))
         val ()=S.reportStatus service
     in check ("a workspace poll is not busy before it plans a sweep",field (hd (statuses output),"busy")=Json.Bool false) end)
+  (* the outline as it was, a scan of everything for each symbol: what the
+     indexes must give *)
+  structure Reference=
+  struct
+    structure C=RuneCompiler
+    structure RuneLspStructure=RuneLspStructure
+    type entry=RuneLspOutline.entry
+    type symbol=RuneLspOutline.symbol
+    fun prepare {entries:entry list,events:C.Syntax.event list,pieces:C.Syntax.piece list,facts:C.Analysis.fact list} =
+      let fun same (a:entry,b:entry)= #identity a= #identity b andalso #name a= #name b andalso #category a= #category b
+          fun group (entry,kept)=case List.find(fn prior=>same(entry,prior))kept of NONE=>entry::kept
+            | SOME prior=>if #start prior<= #start entry then kept else entry::List.filter(fn prior=>not(same(entry,prior)))kept
+          val entries=RuneLspStructure.sort (fn (a:entry,b:entry)=> #start a< #start b)(List.foldl group [] entries)
+          fun contains (event:C.Syntax.event,start,stop)= #start event<=start andalso stop<= #stop event
+          fun smallest ([],best)=best
+            | smallest (event::rest,NONE)=smallest(rest,SOME event)
+            | smallest (event::rest,SOME prior)=smallest(rest,SOME(if #stop event- #start event< #stop prior- #start prior then event else prior))
+          fun firstName (event:C.Syntax.event,name)=Option.map #start(List.find(fn piece:C.Syntax.piece=>
+            #start event<= #start piece andalso #stop piece<= #stop event andalso #text piece=name andalso
+            List.exists(fn kind=>kind= #kind piece)["identifier","operator","typeVariable"])pieces)
+          fun named (entry:entry)=smallest(List.filter(fn event:C.Syntax.event=>
+            List.exists(fn kind=>kind= #kind event)["fundef","strbind","sigbind","funbind","typbind","datbind",
+              "typespec","valspec","strspec","exnspec","ExnDecl","ExnRepl","constructor"] andalso
+            (case #values event of name::_=>name= #name entry | _=>false) andalso
+            contains(event,#start entry,#stop entry) andalso firstName(event,#name entry)=SOME(#start entry))events,NONE)
+          fun valueDeclaration (entry:entry)=
+            case smallest(List.filter(fn event:C.Syntax.event=>contains(event,#start entry,#stop entry) andalso
+              List.exists(fn kind=>kind= #kind event)["DVal","DValRec"])events,NONE) of NONE=>NONE
+            | SOME event=>
+                (case List.find(fn expression:C.Syntax.event=>String.isPrefix "E" (#kind expression) andalso
+                  contains(event,#start expression,#stop expression))events of NONE=>NONE | SOME expression=>
+                  if #stop entry> #start expression orelse length(List.filter(fn other:entry=> #category other="value" andalso
+                    contains(event,#start other,#stop other) andalso #stop other<= #start expression)entries)<>1 then NONE
+                  else SOME(event,expression))
+          fun make (entry:entry):symbol =
+            let val declaration=named entry
+                val value=if #category entry="value" andalso not(isSome declaration) then valueDeclaration entry else NONE
+                val functionValue=case value of NONE=>false | SOME(_,expression)=> #kind expression="EFn" orelse
+                  List.exists(fn fact:C.Analysis.fact=> #start fact= #start expression andalso #stop fact= #stop expression
+                    andalso not(null(#arguments fact)))facts
+                val functionSpec=case declaration of SOME event=> #kind event="valspec" andalso
+                  (case List.find(fn item:C.Syntax.event=>String.isPrefix "Ty" (#kind item) andalso
+                    contains(event,#start item,#stop item))events of SOME ty=> #kind ty="TyArrow" | _=>false) | NONE=>false
+                val tag=case declaration of NONE=>"" | SOME event=> #kind event
+                val kind=case #category entry of "structure"=>2 | "signature"=>11 | "functor"=>12 | "type"=>23
+                  | _=>if tag="constructor" then 22 else if tag="ExnDecl" orelse tag="ExnRepl" orelse tag="exnspec" then 14
+                    else if tag="fundef" orelse functionValue orelse functionSpec then 12 else 13
+                val span=case declaration of SOME event=>
+                      (case smallest(List.filter(fn outer:C.Syntax.event=>contains(outer,#start event,#stop event) andalso
+                        (case #values outer of "1"::_=>true | _=>false) andalso
+                        List.exists(fn pair=>pair=(tag,#kind outer))[("fundef","DFun"),("strbind","DStructure"),
+                          ("sigbind","DSignature"),("funbind","DFunctor")])events,NONE) of SOME outer=>(#start outer,#stop outer)
+                       | NONE=>(#start event,#stop event))
+                  | NONE=>(case value of SOME(event,_)=>(#start event,#stop event) | NONE=>(#start entry,#stop entry))
+            in {name= #name entry,kind=kind,start= #1 span,stop= #2 span,selectionStart= #start entry,selectionStop= #stop entry} end
+      in List.map make entries end
+    fun flat (symbols:symbol list,uri,range)=List.map(fn item=>Json.Object
+      [("name",Json.String(#name item)),("kind",Json.int(#kind item)),("location",Json.Object
+        [("uri",Json.String uri),("range",range(#selectionStart item,#selectionStop item))])])symbols
+    fun nested (symbols:symbol list,range) =
+      let val table=Vector.fromList symbols
+          val count=Vector.length table
+          fun owner i=
+            let val child=Vector.sub(table,i)
+                fun pick(j,best)=if i=j then best else
+                  let val parent=Vector.sub(table,j)
+                      val encloses= #start parent<= #start child andalso #stop child<= #stop parent andalso
+                        (#start parent<> #start child orelse #stop parent<> #stop child)
+                  in if not encloses then best else case best of NONE=>SOME j | SOME old=>
+                    let val prior=Vector.sub(table,old)
+                    in if #stop parent- #start parent< #stop prior- #start prior then SOME j else best end end
+            in List.foldl pick NONE (List.tabulate(count,fn n=>n)) end
+          val parents=Vector.tabulate(count,owner)
+          fun children parent=List.filter(fn i=>Vector.sub(parents,i)=parent)(List.tabulate(count,fn n=>n))
+          fun emit i=
+            let val item=Vector.sub(table,i)
+            in Json.Object[("name",Json.String(#name item)),("kind",Json.int(#kind item)),
+              ("range",range(#start item,#stop item)),("selectionRange",range(#selectionStart item,#selectionStop item)),
+              ("children",Json.Array(List.map emit(children(SOME i))))] end
+      in List.map emit (children NONE) end
+  end
+  structure C=RuneCompiler
+  fun outlineOf (compiler,name,text)=
+    let val analysis=C.Analysis.create (compiler,{context=name})
+        val snapshot=C.Analysis.check (analysis,{project=NONE,cancelled=fn () => false,
+          inputs=[{file=name,text=text,revision="1",mode="ascii",annotations=[]}]})
+        val ()=check ("the outline's source checks: " ^ name ^ " " ^ String.concatWith "; " (List.map #message (C.Analysis.diagnostics snapshot)),
+          null (C.Analysis.diagnostics snapshot))
+        val unit=valOf (C.Analysis.unitAt (snapshot,{ordinal=0}))
+        val syntax=valOf (C.Analysis.syntaxAt (snapshot,{ordinal=0}))
+        val entries=List.mapPartial (fn occurrence:C.Analysis.occurrence =>
+          if #isDefinition occurrence andalso not (#derived occurrence) then
+            SOME {identity=getOpt (#binding occurrence,"span:" ^ Int.toString (#start occurrence)),name= #name occurrence,
+                  category= #kind occurrence,start= #start occurrence,stop= #stop occurrence}:RuneLspOutline.entry option
+          else NONE) (C.Analysis.occurrencesIn (snapshot,unit))
+    in C.Analysis.close analysis;
+       {entries=entries,events=C.Syntax.events syntax,pieces=C.Syntax.pieces syntax,facts=C.Analysis.factsIn (snapshot,unit)} end
+  fun outlineSame () =
+    let val compiler=C.session {lib=NONE,flags=[]}
+        fun lines items=String.concatWith "\n" items ^ "\n"
+        val sources=[("declarations",lines
+            ["signature S=sig type t val f:t->int val g:int exception E structure N:sig val h:int end end",
+             "structure A:S=struct type t=int fun f x=x val g=1 exception E structure N=struct val h=2 end end",
+             "functor F(X:S)=struct val y=X.g fun z x=x end",
+             "structure B=F(A) and D=F(A)",
+             "datatype d=C of int|K and e=M of d",
+             "exception X of int exception Y=X",
+             "type p=int and q=bool",
+             "val (a,b)=(1,2) and c=3",
+             "val h=fn x=>x val i=let val j=1 in j end val k=(fn y=>y) 1",
+             "fun m 0=1 | m n=n*m (n-1) and u x=m x",
+             "fun nest x=let fun inner y=let val deep=y in deep end val other=inner x in other end",
+             "local val hidden=1 in val shown=hidden end",
+             "val rec r=fn x=>r x"]),
+           ("same names",lines
+            ["val x=1 val x=2 val x=x+1",
+             "fun f x=x fun f y=y+1",
+             "structure A=struct val x=1 structure A=struct val x=2 fun x2 x=x end end",
+             "val y=let val y=1 val y=y in y end"])]
+        fun compare (name,text)=
+          let val input=outlineOf (compiler,name,text)
+              val fresh=RuneLspOutline.prepare input
+              val old=Reference.prepare input
+              fun range (start,stop)=Json.Array [Json.int start,Json.int stop]
+          in check ("the same symbols as the scan: " ^ name,fresh=old);
+             check ("the same tree as the scan: " ^ name,RuneLspOutline.nested (fresh,range)=Reference.nested (old,range)) end
+    in List.app compare sources;C.close compiler end
+  (* E20's reproducer: 1.4 s at 1,000 declarations, past the deadline at 6,000 *)
+  fun outlineLinear () =
+    let fun cost count =
+          let val entries=List.tabulate (count,fn i => {identity=Int.toString i,name="f" ^ Int.toString i,category="value",
+                start=10*i+4,stop=10*i+6}:RuneLspOutline.entry)
+              val events=List.concat (List.tabulate (count,fn i =>
+                [{kind="DFun",start=10*i,stop=10*i+9,values=["1"]},{kind="fundef",start=10*i,stop=10*i+9,values=["f" ^ Int.toString i]}]:C.Syntax.event list))
+              val pieces=List.tabulate (count,fn i => {kind="identifier",start=10*i+4,stop=10*i+6,text="f" ^ Int.toString i}:C.Syntax.piece)
+              val (symbols,{bytes,...})=Runtime.profile (fn () =>
+                let val symbols=RuneLspOutline.prepare {entries=entries,events=events,pieces=pieces,facts=[]}
+                in RuneLspOutline.nested (symbols,fn (start,stop) => Json.Array [Json.int start,Json.int stop]) end)
+          in check ("every declaration is a symbol",length symbols=count);bytes end
+        val small=cost 2000
+        val large=cost 8000
+    in check ("document symbols are linear in declarations: 4 times the declarations, " ^
+        Int.toString small ^ " to " ^ Int.toString large ^ " bytes",large<6*small) end
 end
 structure RuneLspServiceTestMain=Main (struct
   val name="lsp-service"
@@ -194,6 +337,8 @@ structure RuneLspServiceTestMain=Main (struct
     Test.it "status-query-failure" RuneLspServiceTests.queryFailure,
     Test.it "status-throttled" RuneLspServiceTests.throttledStatus,
     Test.it "status-unasked" RuneLspServiceTests.quietStatus,
-    Test.it "status-workspace-poll" RuneLspServiceTests.sweepStatus]
+    Test.it "status-workspace-poll" RuneLspServiceTests.sweepStatus,
+    Test.it "outline-same-as-the-scan" RuneLspServiceTests.outlineSame,
+    Test.it "outline-linear-in-declarations" RuneLspServiceTests.outlineLinear]
 end)
 val ()=RuneLspServiceTestMain.main ()
