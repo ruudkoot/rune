@@ -14,7 +14,8 @@
    * one of this unit's own, by a number of its own, given in the order the
      writing meets them, so that the same declarations always get the same
      numbers whatever came before (D3: Elsman's equality up to renaming);
-   * one of an earlier unit's, by that unit's identity and its number there.
+   * one of an earlier unit's, by its place in the unit's imports, a table of
+     each kind that says the earlier unit's identity and its number there.
    Loading a unit gives its numbers names of the session again, a range of
    each kind after everything before it, and registers the range, so that
    the units after it name what it declared by its identity.
@@ -27,8 +28,9 @@
    unit whose body changed and whose basis did not keeps its identity, and
    what was compiled against it stays valid (the cut-off), and so does a unit
    whose imports changed in nothing it names: what a compile may read of
-   an earlier unit through this one is what this one names of it. Every unit of a compile in units is loaded this way right
-   after it is compiled (Main, the REPL), and the units after it see only
+   an earlier unit through this one is what this one names of it. Every
+   unit of a compile in units is loaded this way right after it is compiled
+   (Main, the REPL), and the units after it see only
    what the bytes say: a unit compiled now and one taken from the cache are
    the same to them, byte for byte.
 
@@ -45,9 +47,9 @@
    unit's origins are written to a sidecar, apart from its basis and from
    every hash, and read beside it in the same order, so that a comment that
    moves a span moves no identity (docs/units.md). A batch compile records
-   none, and its sidecar is empty. The one position a
-   basis keeps is that of a body kept for a later unit to copy, whose line
-   table the copy's code holds (linePosition).
+   none, and its sidecar is empty. The one position a basis keeps is that of
+   a body kept for a later unit to copy, whose line table the copy's code
+   holds (linePosition).
 
    A functor is written as its signature and the global of its function,
    to which it is compiled: nothing of its body, which loading needs not;
