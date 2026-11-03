@@ -111,13 +111,21 @@ RUNEVM_REGISTER ?= bin/runevm
 RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
-SOURCES  := $(shell sh scripts/build-files.sh rune.build)
+# The files of the programs the other SML systems build, from the plans
+# committed beside their build files (docs/building.md, How a host gets its
+# list): rune.plan is what `rune --plan rune.build` prints, and `make plans`
+# prints them again after an edit of a build file, which scripts/gen-version.sh
+# refuses to build past. Each list is without build/config.sml, which each
+# program loads first, and the program's entry point, which is each system's own.
+PLANS    := rune.plan runedoc.plan runeopt.plan runeisa.plan runeffi.plan
+plan-sources = $(filter-out build/config.sml src/main/%,$(shell sh scripts/plan-files.sh $(1)))
+SOURCES  := $(call plan-sources,rune.plan)
 GEN_SML  := lib/compiler/backend/opcodes.sml lib/compiler/backend/prims.sml lib/compiler/backend/regcodes.sml
 GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/stack/interp_cases.h runtime/stack/interp_labels.h runtime/stack/ops.h runtime/register/regops.h runtime/register/reg_cases.h
-SOURCES_DOC := $(shell sh scripts/build-files.sh runedoc.build)
-SOURCES_OPT := $(shell sh scripts/build-files.sh runeopt.build)
-SOURCES_ISA := $(shell sh scripts/build-files.sh runeisa.build)
-SOURCES_FFI := $(shell sh scripts/build-files.sh runeffi.build)
+SOURCES_DOC := $(call plan-sources,runedoc.plan)
+SOURCES_OPT := $(call plan-sources,runeopt.plan)
+SOURCES_ISA := $(call plan-sources,runeisa.plan)
+SOURCES_FFI := $(call plan-sources,runeffi.plan)
 BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb
 VERSIONGEN := build/config.sml runtime/version.h lib/compiler/config.sml
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
@@ -294,11 +302,8 @@ REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyt
 DOC_LIBS := $(REPL_LIBS) compiler
 
 # Compiler ownership audit and interleaved-session acceptance.
-COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh tools/compiler/state-audit.build)
-COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh tests/compiler/state-tests.build)
-COMPILER_WITNESS_TEST_SRCS := $(shell sh scripts/build-files.sh tests/compiler/witness-tests.build)
 .PHONY: test-compiler-state
-bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) tools/compiler/state-audit.build manifests
+bin/rune-compiler-state-audit.rbc: $(RUNE) tools/compiler/state-audit.build manifests
 	$(RUNE) --build tools/compiler/state-audit.build -o $@
 bin/rune-compiler-state-audit: bin/rune-compiler-state-audit.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-compiler-state-audit.rbc" "$$@"\n' > $@
@@ -307,10 +312,10 @@ bin/rune-compiler-state-model.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/comp
 	$(RUNE) --library test/unit lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml -o $@
 bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml manifests
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
-bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) tests/compiler/state-tests.build manifests
+bin/rune-compiler-state-tests.rbc: $(RUNE) tests/compiler/state-tests.build manifests
 	$(RUNE) --build tests/compiler/state-tests.build -o $@
 # the syntax's node ids, the elaborator's witnesses and SourceTy (the linting roadmap's M11)
-bin/rune-compiler-witness-tests.rbc: $(RUNE) $(COMPILER_WITNESS_TEST_SRCS) tests/compiler/witness-tests.build manifests
+bin/rune-compiler-witness-tests.rbc: $(RUNE) tests/compiler/witness-tests.build manifests
 	$(RUNE) --build tests/compiler/witness-tests.build -o $@
 test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
                      bin/rune-compiler-witness-tests.rbc
@@ -324,10 +329,9 @@ test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model
 	bin/runevm bin/rune-compiler-witness-tests.rbc
 
 # Frontend baselines and edit traces for the language-server roadmap.
-LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh tools/lsp/bench.build)
 .PHONY: lsp-bench test-lsp-bench
 lsp-bench: bin/rune-lsp-bench
-bin/rune-lsp-bench.rbc: $(RUNE) $(LSP_BENCH_SRCS) tools/lsp/bench.build manifests
+bin/rune-lsp-bench.rbc: $(RUNE) tools/lsp/bench.build manifests
 	$(RUNE) --build tools/lsp/bench.build -o $@
 bin/rune-lsp-bench: bin/rune-lsp-bench.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-bench.rbc" "$$@"\n' > $@
@@ -349,10 +353,9 @@ lsp-protocol: bin/rune-lsp-protocol
 check-lsp-protocol: bin/rune-lsp-protocol
 	bin/rune-lsp-protocol --check
 
-LSP_SRCS := $(shell sh scripts/build-files.sh runelsp.build)
 .PHONY: lsp
 lsp: bin/runelsp
-bin/runelsp.rbc: $(RUNE) $(LSP_SRCS) runelsp.build manifests | check-lsp-protocol
+bin/runelsp.rbc: $(RUNE) runelsp.build manifests | check-lsp-protocol
 	$(RUNE) --build runelsp.build -o $@
 bin/runelsp: bin/runelsp.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/runelsp.rbc" --lib "$$d/../lib" "$$@"\n' > $@
@@ -363,7 +366,7 @@ bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
 	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
 .PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
 LSP_WORKER_TEST_SRCS := src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/worker-model.sml src/lsp/worker-process.sml
-bin/rune-lsp-analysis-worker.rbc: $(RUNE) tests/lsp/worker.build $(LSP_SRCS) tests/lsp/worker-main.sml manifests
+bin/rune-lsp-analysis-worker.rbc: $(RUNE) tests/lsp/worker.build manifests
 	$(RUNE) --build tests/lsp/worker.build -o $@
 bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml manifests
 	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml -o $@
@@ -416,8 +419,11 @@ test-lsp-workspace: bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tes
 	bin/runevm --jit=all bin/rune-lsp-workspace-tests.rbc
 	bin/runevm bin/rune-lsp-controller-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-controller-tests.rbc
-bin/rune-lsp-service-tests.rbc: $(RUNE) $(LSP_SRCS) tests/lsp/service-tests.sml manifests
-	$(RUNE) --library test/unit --library compiler --library lsp --library digest $(filter-out src/main/runelsp-main.sml,$(LSP_SRCS)) tests/lsp/service-tests.sml -o $@
+# runelsp's own files, less its entry point
+bin/rune-lsp-service-tests.rbc: $(RUNE) runelsp.build tests/lsp/service-tests.sml manifests
+	$(RUNE) --library test/unit --library compiler --library lsp --library digest \
+	  $$($(RUNE) --plan runelsp.build | awk '$$1 == "program" { p = 1 } p && $$1 == "unit" && $$3 !~ /^src\/main\// { print $$3 }') \
+	  tests/lsp/service-tests.sml -o $@
 .PHONY: test-lsp-service
 test-lsp-service: bin/rune-lsp-service-tests.rbc
 	bin/runevm bin/rune-lsp-service-tests.rbc
@@ -544,8 +550,15 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN)
 
-$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build runeffi.build lib/compiler/internal.build lib/compiler/frontend.build lib/compiler/util.build scripts/build-files.sh scripts/gen-build-files.sh
+$(BUILDFILES) &: $(PLANS) scripts/plan-files.sh scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
+
+# The plans the hosts read, printed again by the compiler there is, after an
+# edit of a build file they were made from (docs/building.md, How a host gets
+# its list). make check compares each with what the compiler prints.
+.PHONY: plans
+plans:
+	@for p in $(PLANS); do $(RUNE) --plan $${p%.plan}.build > $$p.$$$$ && mv -f $$p.$$$$ $$p || { rm -f $$p.$$$$; exit 1; }; done
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
 # written only when it changes, so that a new commit, a checkout or the first

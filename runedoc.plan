@@ -1,0 +1,92 @@
+rune-plan 1
+basis demand
+program
+  unit build/config.sml build/config.sml ascii
+  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii
+  unit unicode:utf8.sml lib/unicode/utf8.sml ascii
+  unit unicode:width_data.sml lib/unicode/width_data.sml ascii
+  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii
+  unit unicode:display_width.sml lib/unicode/display_width.sml ascii
+  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii
+  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii
+  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii
+  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii
+  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii
+  unit unicode:normalize.sml lib/unicode/normalize.sml ascii
+  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii
+  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii
+  unit unicode:identifier.sml lib/unicode/identifier.sml ascii
+  unit unicode:security_data.sml lib/unicode/security_data.sml ascii
+  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii
+  unit unicode:security.sml lib/unicode/security.sml ascii
+  unit json:json_sig.sml lib/json/json_sig.sml ascii
+  unit json:json.sml lib/json/json.sml ascii
+  use lib/compiler/frontend.build
+    use lib/compiler/util.build
+      unit compiler:util/scon.sml lib/compiler/util/scon.sml ascii
+      unit compiler:util/ordmap.sml lib/compiler/util/ordmap.sml ascii
+      unit compiler:util/inttable.sml lib/compiler/util/inttable.sml ascii
+      unit compiler:state_sig.sml lib/compiler/state_sig.sml ascii
+      unit compiler:state.sml lib/compiler/state.sml ascii
+    end
+    unit compiler:util/ident.sml lib/compiler/util/ident.sml ascii
+    unit compiler:util/source.sml lib/compiler/util/source.sml ascii
+    unit compiler:util/error.sml lib/compiler/util/error.sml ascii
+    unit compiler:util/color.sml lib/compiler/util/color.sml ascii
+    unit compiler:util/diagnostic.sml lib/compiler/util/diagnostic.sml ascii
+    unit compiler:util/pass.sml lib/compiler/util/pass.sml ascii
+    unit compiler:util/usage.sml lib/compiler/util/usage.sml ascii
+    unit compiler:util/pickle.sml lib/compiler/util/pickle.sml ascii
+    unit compiler:frontend/token.sml lib/compiler/frontend/token.sml ascii
+    unit compiler:frontend/lexer.sml lib/compiler/frontend/lexer.sml ascii
+    unit compiler:elab/elabstats.sml lib/compiler/elab/elabstats.sml ascii
+    unit compiler:elab/types.sml lib/compiler/elab/types.sml ascii
+    unit compiler:elab/sourcety.sml lib/compiler/elab/sourcety.sml ascii
+    unit compiler:elab/witness.sml lib/compiler/elab/witness.sml ascii
+    unit compiler:core/ty.sml lib/compiler/core/ty.sml ascii
+    unit compiler:elab/overload.sml lib/compiler/elab/overload.sml ascii
+    unit compiler:frontend/ast.sml lib/compiler/frontend/ast.sml ascii
+    unit compiler:frontend/fixity.sml lib/compiler/frontend/fixity.sml ascii
+    unit compiler:frontend/parser.sml lib/compiler/frontend/parser.sml ascii
+    unit compiler:elab/unify.sml lib/compiler/elab/unify.sml ascii
+    unit compiler:elab/env.sml lib/compiler/elab/env.sml ascii
+    unit compiler:elab/sigmatch.sml lib/compiler/elab/sigmatch.sml ascii
+    unit compiler:elab/exhaust.sml lib/compiler/elab/exhaust.sml ascii
+    unit compiler:backend/opcodes.sml lib/compiler/backend/opcodes.sml ascii
+    unit compiler:backend/prims.sml lib/compiler/backend/prims.sml ascii
+    unit compiler:elab/elaborate.sml lib/compiler/elab/elaborate.sml ascii
+    unit compiler:elab/astlint.sml lib/compiler/elab/astlint.sml ascii
+    unit compiler:driver/basismanifest.sml lib/compiler/driver/basismanifest.sml ascii
+    unit compiler:driver/libraryscope.sml lib/compiler/driver/libraryscope.sml ascii
+    unit compiler:driver/buildfile.sml lib/compiler/driver/buildfile.sml ascii
+    unit compiler:driver/deps.sml lib/compiler/driver/deps.sml ascii
+    unit compiler:driver/project.sml lib/compiler/driver/project.sml ascii
+    unit compiler:driver/libraryindex.sml lib/compiler/driver/libraryindex.sml ascii
+  end
+  unit src/doc/docsource.sml src/doc/docsource.sml ascii
+  unit src/doc/docdiag.sml src/doc/docdiag.sml ascii
+  unit src/doc/doccomments.sml src/doc/doccomments.sml ascii
+  unit src/doc/doctext.sml src/doc/doctext.sml ascii
+  unit src/doc/dochead.sml src/doc/dochead.sml ascii
+  unit src/doc/docir.sml src/doc/docir.sml ascii
+  unit src/doc/docextract.sml src/doc/docextract.sml ascii
+  unit src/doc/docanchor.sml src/doc/docanchor.sml ascii
+  unit src/doc/docmarkdown.sml src/doc/docmarkdown.sml ascii
+  unit src/doc/docclaims.sml src/doc/docclaims.sml ascii
+  unit src/doc/docelab.sml src/doc/docelab.sml ascii
+  unit src/doc/doctests.sml src/doc/doctests.sml ascii
+  unit src/doc/docnotes.sml src/doc/docnotes.sml ascii
+  unit src/doc/docannot.sml src/doc/docannot.sml ascii
+  unit src/doc/docresolve.sml src/doc/docresolve.sml ascii
+  unit src/doc/docpage.sml src/doc/docpage.sml ascii
+  unit src/doc/docexamples.sml src/doc/docexamples.sml ascii
+  unit src/doc/doclaws.sml src/doc/doclaws.sml ascii
+  unit src/doc/docsite.sml src/doc/docsite.sml ascii
+  unit src/doc/docmain.sml src/doc/docmain.sml ascii
+  unit src/main/runedoc-rune-main.sml src/main/runedoc-rune-main.sml ascii
+end
+provenance
+  input runedoc.build 57aa69a9a1c063e427dedda20af53024de004d143af4880dbb8f8e5e2dc09715
+  input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
+  input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
+end

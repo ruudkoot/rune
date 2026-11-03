@@ -264,10 +264,10 @@ struct
       val () = mkdirs (dirOf "good")
       val err = dirOf "bootsrcs.err"
       val code = Children.exec Subprocess.unlimited (fn e => e)
-                   {cmd = ["sh", "scripts/build-files.sh", "rune.build"], dir = SOME root, stdin = "", stdout = dirOf "files.txt",
+                   {cmd = ["sh", "scripts/plan-files.sh", "rune.plan"], dir = SOME root, stdin = "", stdout = dirOf "files.txt",
                     stderr = err, timeout = 60}
-      val () = need (code = 0, "scripts/build-files.sh failed: " ^ firstNonEmpty err)
-      val srcs = ["build/config.sml"] @ String.tokens Char.isSpace (read (dirOf "files.txt")) @ ["src/main/rune-main.sml"]
+      val () = need (code = 0, "scripts/plan-files.sh failed: " ^ firstNonEmpty err)
+      val srcs = String.tokens Char.isSpace (read (dirOf "files.txt"))
       val () = write (dirOf "bootsrcs.txt", String.concat (List.map (fn s => s ^ "\n") srcs))
       val () = need (exists good, "no bin/rune.rbc")
       (* each mutant applies to today's sources: its old text once *)

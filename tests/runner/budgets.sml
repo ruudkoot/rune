@@ -64,8 +64,8 @@ struct
       val doc = args name "runedoc"
       val compile = args name "compile"
       fun boot () =
-        let val () = execute name ["sh", "scripts/build-files.sh", "rune.build"] (prefix ^ ".sources") (prefix ^ ".sources.err")
-        in "build/config.sml" :: String.tokens Char.isSpace (read (fromRoot (prefix ^ ".sources"))) @ ["src/main/rune-main.sml"] end
+        let val () = execute name ["sh", "scripts/plan-files.sh", "rune.plan"] (prefix ^ ".sources") (prefix ^ ".sources.err")
+        in String.tokens Char.isSpace (read (fromRoot (prefix ^ ".sources"))) end
       fun file "@boot" = boot () | file "@gen" = [prefix ^ ".gen.sml"] | file path = [path]
       val () =
         if not (null doc) then

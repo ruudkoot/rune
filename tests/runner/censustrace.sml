@@ -22,9 +22,8 @@ struct
         if name = "compile-sigs" orelse name = "compile-hello" then
           (fromRoot "bin/rune.rbc", ["--lib", "lib", "-o", out] @ budget name "compile", out)
         else if name = "bootstrap" then
-          (fromRoot "bin/rune.rbc", ["--lib", "lib", "-o", out, "build/config.sml"]
-           @ String.tokens Char.isSpace (command dir "sources" ["sh", "scripts/build-files.sh", "rune.build"])
-           @ ["src/main/rune-main.sml"], out)
+          (fromRoot "bin/rune.rbc", ["--lib", "lib", "-o", out]
+           @ String.tokens Char.isSpace (command dir "sources" ["sh", "scripts/plan-files.sh", "rune.plan"]), out)
         else if name = "runedoc-ir" orelse name = "runedoc-page" then
           (fromRoot "bin/runedoc.rbc", ["--lib", "lib", if name = "runedoc-ir" then "--dump-ir" else "--page"]
            @ glob ("tests/basis/spec-sigs", ".sml"), "")

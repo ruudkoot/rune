@@ -13,7 +13,7 @@ struct
   fun budget name key=case List.find (String.isPrefix (key ^ " ")) (lines (read (fromRoot ("tests/perf/" ^ name ^ ".budget")))) of
         NONE => [] | SOME line => globWords (CommandWords.split (String.extract (line,size key+1,NONE)))
   fun boot directory =
-    "build/config.sml" :: String.tokens Char.isSpace (successful (execute root (directory ^ "/boot-sources") ["sh","scripts/build-files.sh","rune.build"])) @ ["src/main/rune-main.sml"]
+    String.tokens Char.isSpace (successful (execute root (directory ^ "/boot-sources") ["sh","scripts/plan-files.sh","rune.plan"]))
   fun main args =
     let val output=ref "tests/out/census" val every=ref "32768" val summary=ref false val graph=ref false val named=ref ""
         val heap=ref "1073741824" val timeout=ref 3600 val input=ref "/dev/null" val cwd=ref ""

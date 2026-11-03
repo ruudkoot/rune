@@ -56,7 +56,13 @@ struct
             val errors = dir ^ "/" ^ name ^ ".err"
             val status = exec {cmd = args, dir = SOME root, stdin = "", stdout = output, stderr = errors, timeout = 60}
         in (status, read output, read errors) end
-      val (status, listed, _) = invoke "bootstrap" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/root.build"]
+      (* what a host reads: the build's plan, by scripts/plan-files.sh *)
+      fun hostList (label, build, flags) =
+        let val (status, text, errors) = invoke (label ^ "-plan") ([fromRoot (env ("RUNE", "bin/rune"))] @ flags @ ["--plan", build])
+            val () = if status = 0 then () else raise Fail ("compiler layout: no plan of " ^ build ^ ": " ^ errors)
+            val () = write (dir ^ "/" ^ label ^ ".plan", text)
+        in invoke label ["sh", fromRoot "scripts/plan-files.sh", dir ^ "/" ^ label ^ ".plan"] end
+      val (status, listed, _) = hostList ("bootstrap", dir ^ "/root.build", [])
       val expected = [dir ^ "/nested/first.sml", dir ^ "/second.sml"]
       val () = if status = 0 andalso lines listed = expected then () else say "FAIL compiler layout: bootstrap use/order differs\n"
       val (status, compiled, _) = invoke "compiler" [fromRoot (env ("RUNE", "bin/rune")), "--build-list", dir ^ "/root.build"]
@@ -64,7 +70,7 @@ struct
       (* functors marked to be inlined across units (docs/build.md): no file
          to either list, and the manifest's # inline: line *)
       val () = write (dir ^ "/inline.build", "inline functor Make Other end\nuse nested/part.build\nfiles second.sml end\n")
-      val (status, listed, _) = invoke "inline-bootstrap" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/inline.build"]
+      val (status, listed, _) = hostList ("inline-bootstrap", dir ^ "/inline.build", [])
       val () = if status = 0 andalso lines listed = expected then () else say "FAIL compiler layout: bootstrap list with inline functor differs\n"
       val (status, compiled, _) = invoke "inline-compiler" [fromRoot (env ("RUNE", "bin/rune")), "--build-list", dir ^ "/inline.build"]
       val () = if status = 0 andalso lines compiled = expected then () else say "FAIL compiler layout: build-list with inline functor differs\n"
@@ -75,8 +81,31 @@ struct
       val () = if String.isSubstring "\n# inline: Make Other\n" (read (dir ^ "/MANIFEST")) then ()
                else say "FAIL compiler layout: library index did not carry the inline functors\n"
       val () = write (dir ^ "/cycle.build", "use cycle.build\n")
-      val (status, _, errors) = invoke "cycle" ["sh", fromRoot "scripts/build-files.sh", dir ^ "/cycle.build"]
-      val ()=if status <> 0 andalso String.isSubstring "cyclic" errors then () else say "FAIL compiler layout: cyclic use was accepted\n"
+      val (status, _, errors) = invoke "cycle" [fromRoot (env ("RUNE", "bin/rune")), "--plan", dir ^ "/cycle.build"]
+      val ()=if status <> 0 andalso String.isSubstring "uses itself" errors then () else say "FAIL compiler layout: cyclic use was accepted\n"
+      (* a library's final files come last in a host's list, as in --build-list *)
+      val fixtures = dir ^ "/lib"
+      val () = (rmTree fixtures; mkdirs (fixtures ^ "/fx"))
+      val () = Posix.FileSys.symlink {old = fromRoot "lib/basis", new = fixtures ^ "/basis"}
+      val () = write (fixtures ^ "/fx/library.build", "annotate \"final\" in last.sml end\nfirst.sml\n")
+      val () = write (fixtures ^ "/fx/last.sml", "val () = print \"last\\n\"\n")
+      val () = write (fixtures ^ "/fx/first.sml", "structure Fx = struct val x = 1 end\n")
+      val () = write (dir ^ "/finals.build", "libraries fx end\nfiles second.sml end\n")
+      val (status, listed, _) = hostList ("finals", dir ^ "/finals.build", ["--lib", fixtures])
+      val (_, compiled, _) = invoke "finals-compiler" [fromRoot (env ("RUNE", "bin/rune")), "--lib", fixtures, "--build-list", dir ^ "/finals.build"]
+      val () = if status = 0 andalso listed = compiled andalso
+                  List.map OS.Path.file (lines listed) = ["first.sml", "second.sml", "last.sml"] then ()
+               else say ("FAIL compiler layout: a host's list puts a library's final file elsewhere: " ^ listed ^ "\n")
+      (* and what a host cannot read it refuses: a build file, a word a plan of
+         version 1 does not have, a path that is escaped *)
+      fun refused (label, text, why) =
+        let val () = write (dir ^ "/" ^ label ^ ".plan", text)
+            val (status, listed, errors) = invoke label ["sh", fromRoot "scripts/plan-files.sh", dir ^ "/" ^ label ^ ".plan"]
+        in if status <> 0 andalso listed = "" andalso String.isSubstring why errors then ()
+           else say ("FAIL compiler layout: a host read " ^ label ^ ": " ^ listed ^ errors ^ "\n") end
+      val () = refused ("not-a-plan", read (dir ^ "/root.build"), "not a plan of version 1")
+      val () = refused ("unknown-word", "rune-plan 1\nbasis demand\nprogram\n  unit a.sml a.sml ascii\n  edge a.sml b.sml\nend\n", "has no edge")
+      val () = refused ("escaped", "rune-plan 1\nbasis demand\nprogram\n  unit a%20b.sml a%20b.sml ascii\nend\n", "a path a host cannot read")
       val ()=write (dir ^ "/annotated.build","annotate \"unicode\" \"allowPrim\" in use nested/annotated.build end\n")
       val ()=write (dir ^ "/nested/annotated.build","files ../unicode.sml end\n")
       val ()=write (dir ^ "/unicode.sml","val p=_prim \"print\" : string -> unit\nval \206\187=42\nval ()=p \"annotations inherited\\n\"\n")
@@ -340,7 +369,7 @@ struct
     {program="/bin/sh",args=["sh","-c","exec \"$RUNE_TEST_ROOT\"/bin/rune-windows vm --vm \"${RUNEVM:-bin/runevm-stack}\" --out \"$RUNE_TEST_RUN/low-level/vm\""],
      env=NONE,dir=SOME ".",stdin=NONE,timeout=Time.fromSeconds 900,cap=0,cpus=1,memory=500,pools=[],exclusive=false,after=[],judge=failLines} : Run.command Test.tree
   val tree=Test.describe "low-level"
-    [tagged ["check","test-build","covers:lib/compiler/*","covers:*.build","covers:scripts/build-files.sh","covers:scripts/mlkit-build-root.sh"]
+    [tagged ["check","test-build","covers:lib/compiler/*","covers:*.build","covers:scripts/plan-files.sh","covers:scripts/mlkit-build-root.sh"]
        (job "compiler-layout" ["build-compiler-layout"] []),
      tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:tests/lib/exports/*"]
        (job "library-exports" ["build-library-exports"] []),
