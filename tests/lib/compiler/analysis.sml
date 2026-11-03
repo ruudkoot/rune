@@ -356,6 +356,73 @@ struct
           null(A.diagnostics changed) andalso same(changed,oracle) andalso same(changed,repeated)
           andalso #checked(A.work repeated)=0)
     in A.close context;A.close fresh;C.close parent end
+  (* A library root of its own, made for work and taken away after: a Basis of
+     one file, and inner, a library with a header that exports Public and
+     not Hidden, unless exports says otherwise, and has the friends given.
+     settle () makes each file a minute old, a stamp an analysis trusts. *)
+  fun scopedRoot (exports,friends,work) =
+    let val dir=OS.FileSys.tmpName ()
+        val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir)
+        val dirs=ref [dir] val made=ref [] : string list ref
+        fun clean ()=(List.app (fn path => OS.FileSys.remove path handle _ => ()) (!made);
+          List.app (fn path => OS.FileSys.rmDir path handle _ => ()) (!dirs))
+        fun write (name,text)=
+          let val path=dir ^ "/" ^ name
+              val output=TextIO.openOut path
+          in TextIO.output (output,text);TextIO.closeOut output;
+             if List.exists (fn other => other=path) (!made) then () else made:=path:: !made end
+        fun exporting names=write ("inner/MANIFEST","# exports: " ^ names ^ "\n" ^
+          String.concat (List.map (fn friend => "# friends: " ^ friend ^ "\n") friends) ^
+          "inner.sml | always | yes | Hidden Public | \n")
+        fun settle ()=List.app (fn path => OS.FileSys.setTime (path,SOME (Time.- (Time.now (),Time.fromSeconds 60)))) (!made)
+        val ()=List.app (fn name => (OS.FileSys.mkDir (dir ^ "/" ^ name);dirs:=(dir ^ "/" ^ name):: !dirs)) ["basis","inner","proj"]
+        val ()=write ("basis/basis.sml","structure Base=struct val one=1 end\n")
+        val ()=write ("basis/MANIFEST","basis.sml | always | yes | Base | \n")
+        val ()=write ("inner/inner.sml","structure Hidden=struct val x=1 end\nstructure Public=struct val y=Hidden.x end\n")
+        val ()=exporting exports
+        val ()=write ("proj/client.sml","val seen=Hidden.x\n")
+        val ()=write ("proj/friend.build","files client.sml end\n")
+        val ()=settle ()
+    in (work {dir=dir,exporting=exporting,settle=settle} before clean ()) handle error => (clean ();raise error) end
+  (* A boundary narrowed under library files that stay as they were: what was
+     kept was reached through the old one, so the check walks from the start
+     (the engine's sameScopes) and sees what a fresh analysis sees. *)
+  fun changedScope () = scopedRoot ("structure:Public structure:Hidden",[],fn {dir,exporting,settle} =>
+    let val parent=C.session {lib=SOME dir,flags=["--library","inner"]}
+        val context=A.create (parent,{context="changed-scope"})
+        val sources=[input ("client.sml","val seen=Hidden.x\n","1")]
+        val wide=analyze (context,sources)
+        val ()=check ("a library's boundary lets out what it exports",null (A.diagnostics wide))
+        val again=analyze (context,sources)
+        val ()=check ("a check with nothing changed stays at its places",not (#walked (A.route again)) andalso #checked (A.work again)=0)
+        val ()=(exporting "structure:Public";settle ())
+        val narrow=analyze (context,sources)
+        val fresh=freshly (parent,sources)
+    in check ("a boundary narrowed under the same files walks from the start, and sees what a fresh analysis sees",
+         #walked (A.route narrow) andalso not (null (A.diagnostics fresh)) andalso A.diagnostics narrow=A.diagnostics fresh);
+       A.close context;C.close parent end)
+  (* A friend of a library sees past its boundary (docs/build.md, A library's
+     header). The plan a check keeps is the plan of the build it was for (the
+     engine's sameBuilding): the same steps checked for another build select
+     as a fresh check for that build would. *)
+  fun friendBuilding () = scopedRoot ("structure:Public",["../proj/friend.build"],fn {dir,...} =>
+    let val parent=C.session {lib=SOME dir,flags=["--library","inner"]}
+        val project=C.Project.read (parent,{file=dir ^ "/proj/friend.build",workspace=NONE,variables=[],overlays=[],windows=false})
+        val inputs=List.map (fn source:C.Project.source => {file= #file source,text="val seen=Hidden.x\n",mode= #mode source,
+          annotations= #annotations source,revision="1"}:A.input) (C.Project.sources project)
+        fun checkIn (context,project)=A.check (context,{project=project,inputs=inputs,cancelled=fn () => false})
+        fun fresh project=let val context=A.create (parent,{context="fresh"})
+          in checkIn (context,project) before A.close context end
+        val context=A.create (parent,{context="friend"})
+        val outside=checkIn (context,NONE)
+        val ()=check ("a client that is no friend does not see past the boundary",not (null (A.diagnostics outside)))
+        val friend=checkIn (context,SOME project)
+        val ()=check ("the friend's build, checked after, selects as a fresh check of it and sees past it",
+          null (A.diagnostics friend) andalso sameUnits (friend,fresh (SOME project)))
+        val back=checkIn (context,NONE)
+    in check ("and the same steps checked for no build again see only what is exported",
+         not (null (A.diagnostics back)) andalso A.diagnostics back=A.diagnostics (fresh NONE));
+       A.close context;C.close parent end)
   fun frozenLibrary () =
     let val dir=OS.FileSys.tmpName ()
         val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir;OS.FileSys.mkDir (dir ^ "/basis"))
@@ -613,6 +680,8 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "static-library-replay" CompilerAnalysisTests.libraries,
      Test.it "missing-library-diagnostic" CompilerAnalysisTests.missingLibrary,
      Test.it "changed-prelude-names" CompilerAnalysisTests.changedNames,
+     Test.it "changed-library-scope" CompilerAnalysisTests.changedScope,
+     Test.it "friend-building" CompilerAnalysisTests.friendBuilding,
      Test.it "frozen-library-query" CompilerAnalysisTests.frozenLibrary,
      Test.it "project-scopes" CompilerAnalysisTests.projects,
      Test.it "batch-compiler-oracle" CompilerAnalysisTests.batchOracle,
