@@ -246,7 +246,9 @@ assembles and links with `build/librune.a`: `runtime/runtime.c`, `heap.c`,
 * **`rune_resume`**: the places an image can stop at, by pc.
 * **`rune_options`**: what `runeopt --options` was given.
 * **Symbols**: each function has one, its name and its index
-  (`place#235`), since names repeat.
+  (`place#235`), since names repeat, with white space made `_`, which the
+  tools that print symbols (`nm`, `objdump`, perf, a backtrace) take for the
+  end of one: a functor's function, named `functor F`, is `functor_F#236`.
 
 ## Images
 
