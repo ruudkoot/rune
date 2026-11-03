@@ -868,6 +868,84 @@ went stale unseen when nothing did: `compiler-mutants/prepare` applies every
 mutant's edits, and `compiler-mutants/built-ID` builds each one, about 7
 minutes of CPU in all. It says nothing of what catches them.
 
+### The checks of the cache
+
+A hit claims that compiling the unit again would give the entry
+([units.md](units.md), *Checking it*, and `tests/incremental/model.sml`). That
+rests on a key covering what a compile reads, and the compiler's reads, spread
+through every pass and table, and the key, kept by hand, are two pieces of code
+that nothing ties together but tests. A scenario says what its author thought
+of; when anyone looked, real holes appeared (build-system roadmap, E18). So each
+premise has a check of its own, independent of the scenarios, in `make
+test-incremental` and so in `make check`, as a scenario of
+`bin/rune-incremental`:
+
+| Check | What fails it | Where |
+|---|---|---|
+| The flags oracle, `flag-*` | an option or a `RUNE_` variable of the compiler's sources with no row saying whether it reaches a key; a row's claim not holding, each way: through a cache filled without the setting, a build with it against the same build without a cache, and the other way about, in exit status, bytes and text | `tests/runner/cacheflags.sml` |
+| Fact edits, `fact-*` | an edit that flips one fact a fingerprint or the configuration holds, the value's name and type kept, compiling other units than the row says, or differing from a build without the cache | `tests/runner/cachefacts.sml` |
+| Root blanking, `blank-*` | a root of `CompilerState` that changes what a compile makes when it goes back to its baseline, and that `tests/incremental/roots.tsv` does not say what covers | `tests/runner/cachechecks.sml`, `src/driver/cachecheck.sml` |
+| Verification of all hits, `across-*`, S98 | `--verify-cache` finding that an entry taken across a unit that changed is not what compiling the unit gives | the same |
+| Random edits, `@mutate`, `@mutate-verify` | a warm build that disagrees with `--no-cache`, or that `--verify-cache` refuses | `tests/runner/mutationchecks.sml` |
+| The model, `model` | the model of a hit saying otherwise than `tests/incremental/model.expected` | `tests/incremental/model.sml` |
+
+The roots come from `CompilerState.names`, not a list: a new root needs no line
+until a compile reads it. Blanking cannot see a flag left at its default, which
+is what the oracle is for, and the oracle cannot see state no option sets, which
+is what blanking is for. `blank-*` takes three small groups, twelve units, each
+child a fork and a small compile. By hand, `RUNE_BLANK_ROOTS=FILE` makes any
+compile with `--no-cache` do it, of the input files or of the units
+`RUNE_BLANK_UNITS=A,B` names.
+
+`--verify-cache` compiles each unit it finds. An entry whose usages hold by
+binder must be the same bytes. One that holds by fingerprint names the old
+unit, so what is compared is the same thing made from each side: the entry
+loaded with its names remapped as a build would, and the unit compiled, each
+with its basis written again from what loading it left, without what only a
+hash reads, and its code read and written, a unit's identity left out. It
+compares an entry's basis and code, not its Mid, and an entry that does not load
+in a session that compiled the units before it is what a build would miss, and
+says so under `--explain-rebuild`. Build-cache issue 15 closes with M4's step 2
+of the build-system roadmap, when a basis written again is the same bytes.
+
+They are 96 tests of `make test-incremental`: 365 s of CPU, about 46 s of `make
+check` at eight jobs, of which the flags oracle is 212 s. `make test-cache-random`
+is the random edits at length, 150 steps of each small project with every warm
+build verified and 12 of the compiler's own sources, in the nightly tier; a
+change to a key runs it. `RUNE_CACHE_SEED=N` draws other edits.
+
+What these do not do. None of them sees a read of a table the usages do not
+name while every root is at its value: that is the mask, a unit recompiled with
+its basis cut down to its usages, which lands with lazy load (the build-system
+roadmap's M6). The fingerprint oracle waits for one writer of a fingerprint and
+a basis (M5). `rune-repl`'s own options are not in the oracle's rows, and a
+pass of these on small projects says that they ran there, nothing more.
+
+**The mutants of the cache** (`tests/runner/cachemutantlist.sml`, E18's and those
+added for each check) are built as the compiler's are, and run in
+`make test-compiler-mutants`, or alone by `make test-cache-mutants`. A compile
+of a corpus sees none of them, so each names the checks that must fail on it and
+what they must say, and the tier fails where one does not;
+`compiler-mutants/cache-control` runs those checks with no mutant, which must
+pass. `make check` holds them to the sources through `compiler-mutants/prepare`.
+The 13 that survived E18:
+
+| Mutant | What it drops | Issue | What became of it |
+|---|---|---:|---|
+| F1 | `fpVal`: `Translate.primAliases` | | Harmless: a value bound to a primitive is a function that applies it, so `Expand.primGlobals`, which `fpVal` also hashes, says the same. `F14` drops both, and `fact-primfunction` and `fact-primdirect` catch it |
+| F4 | `fpVal`: `Expand.primGlobals` | | `fact-primfunction`: the client reaches the function by a structure's other name, so that its usage is the structure, and no `inlv` says what the function is |
+| F5 | `fpVal`: which value, the anchor | 8 | `fact-anchor`: a structure's other name made to reach another value of the type, which a remap by the old path would find wrongly |
+| F6 | `fpVal`: a constructor's tag | | Harmless: a constructor's scheme names its type, and the definition holds the constructors in order, which is what a tag is |
+| F9 | a definition: a type name's equality | 16 | `fact-eqname`: an abstract type, whose definition is nothing else |
+| U4 | the usage `inl` | | `fact-inlfunctor`: E18's scenarios had no marked functor outside the Basis |
+| K1 | the key's `allow` | | `flag-allow-prim`: filled with the flag, built without it |
+| K5 | the configuration's `inline-val` | | `fact-markvalue`: the mark taken out of a build file |
+| C1 | a unit still in the session is a bar to a fingerprint | 21, 23 | S75 on the mutant's REPL, which the tier builds: in a batch build two units of one name do not arise |
+| C3 | `absent`, the units an entry's code names | 4 | S99: an entry planted in a program that takes nothing across a change, the one place nothing else refuses it |
+| C6 | a unit that keeps identities takes none across a change | 15 | S61, on the reason: with the guard gone `absent` refuses the entry, and the build is the same |
+| C9 | a signature's usage fingerprinted after the unit | 17 | S100: an unrelated edit compiles the unit that declares the name again |
+| M2 | `UnitMid`: the layouts a body fixed | | S101: only with the application left a call, where the layout decides the bytes |
+
 Benchmark correctness and deterministic-budget drivers use
 `bin/rune-bench-check` and `bin/rune-budget`. `suite NAME` selects the typed
 case contract, `catalogue` accepts the former profile/config/filter options,

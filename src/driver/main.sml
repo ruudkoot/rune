@@ -866,6 +866,7 @@ struct
       (* --verify-cache: the units whose entry is not what compiling them gives *)
       val unverified = ref 0
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
+      fun cachePaths (dir, config) = UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []), config)
       (* entries of this compile's configuration but for the hash, in the
          cache or the frozen Basis: a compiler's whose hash gives other values
          (UnitCache.settings), which none is taken from *)
@@ -960,7 +961,7 @@ struct
           val () = UnitBasis.position (!env, !fixity)
           (* from the cache: its basis loaded, its code read; or why not *)
           datatype looked = Hit of UnitBasis.result * Link.unitCode * string * UnitCache.entry | Miss of string
-          fun lookup quiet : looked * UnitCache.entry option =
+          fun lookup quiet : looked * (UnitCache.entry * CacheCheck.unitForm option) option =
             let
               val found =
                 case (cache, k) of
@@ -980,11 +981,18 @@ struct
                 case found of
                   UnitCache.Found (e as {usages, ...}) =>
                     if not (UnitCache.verifying ()) then (found, NONE)
-                    else if UnitBasis.exact usages then (UnitCache.Missed "to verify its entry", SOME e)
+                    else if UnitBasis.exact usages then (UnitCache.Missed "to verify its entry", SOME (e, NONE))
                     (* one taken across a unit that changed names the old
-                       unit, and is compiled again rather than compared
-                       (issue 15) *)
-                    else (UnitCache.Missed "to verify: its entry holds across a unit that changed, and is compiled again", NONE)
+                       unit: what it comes to loaded here is what is
+                       compared (issue 15, CacheCheck) *)
+                    else
+                      (case CacheCheck.ofEntry (e, {start = fn () => UnitBasis.begin (!env, !fixity), name = name, ident = ident,
+                                                    text = text (name, mode), mode = mode},
+                                                cachePaths (valOf cache)) of
+                         CacheCheck.Done form => (UnitCache.Missed "to verify, across a unit that changed", SOME (e, SOME form))
+                       | CacheCheck.Refused why =>
+                           (UnitCache.Missed ("to verify: its entry holds across a unit that changed and does not load here: " ^ why),
+                            NONE))
                 | _ => (found, NONE)
             in
               case found of
@@ -999,9 +1007,7 @@ struct
                           now, which its usages held of all the same, by the
                           paths to their names (M6's third part) *)
                        val remap = case cache of
-                                     SOME (dir, config) =>
-                                       UnitBasis.remapping (pickle, u, UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []),
-                                                                                       config))
+                                     SOME c => UnitBasis.remapping (pickle, u, cachePaths c)
                                    | NONE => []
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
@@ -1058,8 +1064,9 @@ struct
                  | Parallel.Run {quiet} => (case lookup quiet of (Hit h, _) => bindHit h | (Miss why, against) => here (why, against))
                  | Parallel.Compile => here (why, against))
         end
-      and compileUnit ((name, load, allow, ident, mode), k, against : UnitCache.entry option, acc) =
+      and compileUnit ((name, load, allow, ident, mode), k, against : (UnitCache.entry * CacheCheck.unitForm option) option, acc) =
         let
+          val () = CacheCheck.blankEach name
           val start = timed "unit-begin" (fn () => UnitBasis.begin (!env, !fixity))
           (* parsed and elaborated, the names it looks up recorded: its
              usages (UnitCache) *)
@@ -1084,7 +1091,7 @@ struct
           val warnings = List.rev (!Error.warnings)
           val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
         in
-          if failed then (failedBefore := true; acc)
+          if failed then (CacheCheck.blankResult (name, fn () => "error"); failedBefore := true; acc)
           else if !Options.typecheckOnly then
             (* no unit is made, whose basis would say what it declares: the
                signatures and functors of a boundary's exports, from its syntax *)
@@ -1110,12 +1117,24 @@ struct
               val midBytes = timed "unit-mid" (fn () => Pipeline.keeping name (fn () =>
                                                  case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => ""))
               val () = Pipeline.lastMid := NONE
+              val () = CacheCheck.blankResult (name, fn () => Pickle.hash (String.concat
+                         (UnitBasis.basisOf (#pickle exported) :: bytes :: midBytes :: List.map UnitCache.warningBytes warnings)))
               (* the entry verified: its basis the same bytes, and its code,
-                 named by the source where it is now *)
+                 named by the source where it is now; one taken across a
+                 unit that changed by what each comes to loaded *)
               val verified =
                 case against of
                   NONE => true
-                | SOME e => UnitCache.verifies (e, name, #pickle exported, bytes, midBytes)
+                | SOME (e, NONE) => UnitCache.verifies (e, name, #pickle exported, bytes, midBytes)
+                | SOME (_, SOME form) =>
+                    (case CacheCheck.ofCompile (Pipeline.fingerprint (), bytes, loaded,
+                                                {start = fn () => start, name = name, ident = ident, text = text (name, mode), mode = mode}) of
+                       CacheCheck.Done form' =>
+                         (case CacheCheck.difference (form, form') of
+                            NONE => (explain ("rune: " ^ name ^ ": its entry, loaded across a unit that changed, is what compiling it gives");
+                                     true)
+                          | SOME where' => (explain ("rune: " ^ name ^ ": across a unit that changed its entry differs in " ^ where'); false))
+                     | CacheCheck.Refused why => (explain ("rune: " ^ name ^ ": written again it raised " ^ why); false))
             in
               env := Env.plus (#env start, #delta loaded);
               fixity := Fixity.extend (#fixity start, #directives loaded);
@@ -1557,7 +1576,8 @@ struct
     in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
 
   and main' (_ : string, args : string list) : OS.Process.status =
-    (Options.parse args;
+    (CacheCheck.seal ();
+     Options.parse args;
      Options.settle ();
      Pass.startup ();
      Parser.orPatterns := !Options.orPatterns;
