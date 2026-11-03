@@ -15,9 +15,9 @@ struct
   (* a library's header, but for its exports: the Library after it. A name
      it requires is an import's word, with what is renamed (BasisManifest);
      shadows are the names of the Basis Library its exports take the place of
-     (docs/build.md, Clashes) *)
+     (docs/build.md, Clashes); strict holds its units to being well-formed *)
   type header = {requires : string list, friends : string list, views : (string * (kind * string) list) list,
-                 shadows : (kind * string) list}
+                 shadows : (kind * string) list, strict : bool}
   datatype dec =
       File of string                              (* a path, relative to the build file's directory *)
     | Files of string list
@@ -76,7 +76,7 @@ struct
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
-                  "libraries", "inline", "requires", "exports", "friends", "view", "shadows"]
+                  "libraries", "inline", "requires", "exports", "friends", "view", "shadows", "strict"]
 
   (* the words that were the language's and are not now, which no path may
      be: what to write instead (docs/build.md, What is gone; D6) *)
@@ -90,7 +90,7 @@ struct
   (* the words `annotate` takes (docs/build.md, Annotations, and A library's
      build file); view=NAME marks the seals of a view of the Basis Library *)
   fun knownAnnotation (a : string) : bool =
-    List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no"]
+    List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no", "host=only", "prelude"]
     orelse isSome (Source.modeNamed a)
     orelse (String.isPrefix "view=" a andalso BasisManifest.identifier (String.extract (a, 5, NONE)))
 
@@ -225,7 +225,7 @@ struct
         | word as S _ => File (reference ("source",word))
       (* A header's parts, in any order, each once but for its views: what
          comes before the first declaration of the file *)
-      fun header (requires, exports, friends, views, shadows) =
+      fun header (requires, exports, friends, views, shadows, strict) =
         let
           fun once (seen, what) = if isSome seen then error ("a header says " ^ what ^ " once") else ()
           (* a header's view has a list; view NAME alone is a program's *)
@@ -233,32 +233,35 @@ struct
         in
           case peek () of
             SOME (W "requires") =>
-              (ignore (next ()); once (requires, "requires"); header (SOME (libraryList ()), exports, friends, views, shadows))
+              (ignore (next ()); once (requires, "requires"); header (SOME (libraryList ()), exports, friends, views, shadows, strict))
           | SOME (W "exports") =>
-              (ignore (next ()); once (exports, "exports"); header (requires, SOME (exportList ()), friends, views, shadows))
+              (ignore (next ()); once (exports, "exports"); header (requires, SOME (exportList ()), friends, views, shadows, strict))
           | SOME (W "friends") =>
-              (ignore (next ()); once (friends, "friends"); header (requires, exports, SOME (paths "build"), views, shadows))
+              (ignore (next ()); once (friends, "friends"); header (requires, exports, SOME (paths "build"), views, shadows, strict))
           | SOME (W "shadows") =>
-              (ignore (next ()); once (shadows, "shadows"); header (requires, exports, friends, views, SOME (exportList ())))
+              (ignore (next ()); once (shadows, "shadows"); header (requires, exports, friends, views, SOME (exportList ()), strict))
           | SOME (W "view") =>
-              if not listed then (requires, exports, friends, List.rev views, shadows)
+              if not listed then (requires, exports, friends, List.rev views, shadows, strict)
               else
                 let
                   val () = ignore (next ())
                   val n = case next () of W n => n | S n => n
                   val () = if List.exists (fn (m, _) => m = n) views then error ("a header has two views " ^ n) else ()
-                in header (requires, exports, friends, (n, exportList ()) :: views, shadows) end
-          | _ => (requires, exports, friends, List.rev views, shadows)
+                in header (requires, exports, friends, (n, exportList ()) :: views, shadows, strict) end
+          | SOME (W "strict") =>
+              (ignore (next ()); if strict then error "a header says strict once" else ();
+               header (requires, exports, friends, views, shadows, true))
+          | _ => (requires, exports, friends, List.rev views, shadows, strict)
         end
       (* a header's exports are a boundary around all the file declares after
          it, in one word the Library that a build reads *)
       fun body () =
-        case header (NONE, NONE, NONE, [], NONE) of
-          (NONE, NONE, NONE, [], NONE) => decsUntil []
-        | (requires, SOME es, friends, views, shadows) =>
+        case header (NONE, NONE, NONE, [], NONE, false) of
+          (NONE, NONE, NONE, [], NONE, false) => decsUntil []
+        | (requires, SOME es, friends, views, shadows, strict) =>
             let val ds = decsUntil []
             in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views,
-                        shadows = getOpt (shadows, [])}, Library (es, ds)] end
+                        shadows = getOpt (shadows, []), strict = strict}, Library (es, ds)] end
         | _ => error "a library's header says what it exports"
     in
       let val ds = body ()

@@ -110,7 +110,10 @@ struct
     String.concatWith "/" (List.filter (fn arc => arc<>".")
       (String.fields (fn c => c = #"/") (normalize windows path)))
   fun fileName path=List.last (String.fields (fn c => c = #"/") path)
-  fun plan {file,windows,readBuild} : plan =
+  (* a build file's plan as Rune compiles it; with hosts, with the files the
+     other SML systems have alone too (host=only), which a library's index
+     lists for them *)
+  fun planWith {file,windows,readBuild,hosts:bool} : plan =
     let val file=normalize windows file
         val root=directory windows file
         val libraries=ref []
@@ -143,11 +146,15 @@ struct
               fun named name=
                 let val target=path name
                 in if String.isPrefix "$(" name then () else references:=(file,target) :: !references;target end
+              (* a file the other SML systems have alone is not Rune's *)
+              fun unit (annotations,file)=
+                if not hosts andalso List.exists (fn annotation => annotation="host=only") annotations then []
+                else [SUnit (file,annotations)]
               fun steps (annotations,declarations)=List.concat (List.map (fn declaration => step (annotations,declaration)) declarations)
               and step (annotations,declaration)=
                 case declaration of
-                  BuildFile.File name => [SUnit (named name,annotations)]
-                | BuildFile.Files names => List.map (fn name => SUnit (named name,annotations)) names
+                  BuildFile.File name => unit (annotations,named name)
+                | BuildFile.Files names => List.concat (List.map (fn name => unit (annotations,named name)) names)
                 | BuildFile.Library (exports,declarations) =>
                     (* a boundary is a library's: a directory with a library.build *)
                     if library then [SLibrary (exports,steps (annotations,declarations))]
@@ -178,6 +185,40 @@ struct
     in {steps=steps,libraries= !libraries,header= !header,inputs=List.rev (!inputs),inline= !inline,
         inlineValues= !inlineValues,references=List.rev (!references),basis="demand",view= !view} end
     handle BuildFile.Error message => raise Invalid message
+  fun plan {file,windows,readBuild} : plan = planWith {file=file,windows=windows,readBuild=readBuild,hosts=false}
+  (* A plan's units as the rules read them (Deps.illFormed), each file in the
+     fixity its place in the build gives it, as a compile reads it, from
+     fixity on: what a boundary keeps stays inside it, and a build file used
+     again adds what it left. library: the plan is a library's *)
+  fun layout {steps:step list,library:bool,defaultMode:Source.mode,fixity:Fixity.env,
+              syntax:Source.mode*string*Fixity.env -> Ast.program*Fixity.env} : Deps.layout list =
+    let
+      val used=ref StringMap.empty : (string*Fixity.fixity) list StringMap.map ref
+      fun added (after:Fixity.env,before':Fixity.env)=
+        List.take (#list after,length (#list after)-length (#list before'))
+      fun walk ([],fixity)=([],fixity)
+        | walk (step :: rest,fixity)=
+          let val (here,fixity)=one (step,fixity)
+              val (after,fixity)=walk (rest,fixity)
+          in (here @ after,fixity) end
+      and one (SUnit (file,annotations),fixity)=
+            let val (read,fixity)=
+                  let val (program,left)=syntax (modeOf (defaultMode,annotations),file,fixity)
+                  in (Deps.analyseUnit (file,program),left) end
+                  handle Error.CompileError (span,_) => (Deps.unread (file,span),fixity)
+            in ([Deps.unitOf (library,annotations,read)],fixity) end
+        | one (SLibrary (exports,inner),fixity)=
+            let val (within,after)=walk (inner,fixity)
+                fun out (n,_)=List.exists (fn export => export=(BuildFile.Fix,n)) exports
+            in ([Deps.Scope within],Fixity.extend (fixity,List.filter out (added (after,fixity)))) end
+        | one (SUse (key,inner),fixity)=
+            (case StringMap.find (!used,key) of
+               SOME directives => ([],Fixity.extend (fixity,directives))
+             | NONE =>
+                 let val (within,after)=walk (inner,fixity)
+                 in used:=StringMap.insert (!used,key,added (after,fixity));(within,after) end)
+        | one (SImplements (_,inner),fixity)=([Deps.Scope (#1 (walk (inner,fixity)))],fixity)
+    in #1 (walk (steps,fixity)) end
   (* whether all that steps declare stands behind a boundary of their own *)
   fun bounded steps=List.all (fn SUnit _ => false | SLibrary _ => true | SImplements _ => true
     | SUse (_,inner) => bounded inner) steps

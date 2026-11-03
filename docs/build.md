@@ -50,7 +50,8 @@ header   ::= ( "requires" import ... "end"    what a library's build file says
              | "exports" exports              first (A library's header, below)
              | "friends" path ... "end"
              | "view" id exports              a named subset of its exports
-             | "shadows" exports ) ...        Basis Library names its exports take
+             | "shadows" exports              Basis Library names its exports take
+             | "strict" ) ...                 its units held to be well-formed
 import   ::= path [ "(" rename "," ... ")" ]  a library, and what is renamed of it
 rename   ::= kind id "as" id                  kind not fixity (Clashes, below)
 older    ::= "library" exports "=" dec ... "end"
@@ -161,6 +162,7 @@ but through the names it gives.
 |---|---|
 | `allowPrim` | the units may use `_prim` and `_overload` (the Basis Library's) |
 | `noWarnings` | their warnings are not printed |
+| `prelude` | the units define the language for what follows: what they leave, a fixity among it, is everyone's after them, and they need not be well-formed ([units.md](units.md), *Well-formed units*) |
 | `ascii`, `unicode` (or `unicode=utf8`), `unicode=latin1` | the mode the units are read in, over the command line's `--unicode[=ENC]`; the last such annotation in force wins ([units.md](units.md), *Source modes*) |
 
 An annotation that is none of these, or of a library's below, is an error.
@@ -235,6 +237,7 @@ is to a program:
 | `final` | it is compiled after every program |
 | `host=swap`, `host=no` | how `bin/rune-generate host-basis` gives the file to the other SML systems |
 | `view=NAME` | with `seal`, in the Basis Library's build alone: the file is a seal of its view `NAME` (*Views of the Basis Library*, below) |
+| `host=only` | the file is the other SML systems' alone, in place of a `host=no` file of the same module after it, and Rune does not compile it: one module of a name in a scope ([units.md](units.md), *Well-formed units*) |
 
 `libraries random end` names the libraries it is written on, where it has
 no header. In an ordinary program build, the declaration selects those
@@ -264,6 +267,10 @@ end
 
 Its parts come in any order, each once but for `view`, and `exports` is the
 one a header must have. A `use`d build file and a program have no header.
+`strict` holds the library's units to the rules of a well-formed unit:
+`--basis-index` refuses one that breaks them, where another library is warned of
+it once ([units.md](units.md), *Well-formed units*). An `always` file is a
+prelude and a `final` file an entry unit, which they need not keep.
 `requires` is what a program's build calls `libraries`, renames included
 (*Clashes*, below); a library with a header does not write `libraries`.
 `shadows (structure RuneCompiler)` says which names of the Basis Library its

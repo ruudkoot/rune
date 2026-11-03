@@ -47,7 +47,7 @@ struct
       val libDir = root ^ "/basis"
       fun read path =
         {text = readText path handle IO.Io _ => raise P.Invalid ("cannot read the build file " ^ path), revision = ""}
-      val plan = P.plan {file = file, windows = windows, readBuild = read} handle P.Invalid m => raise Usage m
+      val plan = P.planWith {file = file, windows = windows, readBuild = read, hosts = true} handle P.Invalid m => raise Usage m
       val here = P.directory windows (P.normalize windows file)
       (* a path of the plan, from the library's directory *)
       fun relative p =
@@ -128,6 +128,25 @@ struct
                       in ((p, anns, Deps.analyse (p, prog)) :: acc, fx') end)
                    ([], Fixity.extend (Fixity.initial, imported)) listed
       val analysed = List.rev analysedRev
+      (* the rules (docs/units.md, Well-formed units), of the files Rune
+         compiles: a strict library is held to them, and another is told of
+         them once *)
+      val () =
+        case (Deps.illFormed (List.mapPartial (fn (_, anns, f) => if hostOf anns = "only" then NONE
+                                                                  else SOME (Deps.unitOf (true, anns, f))) analysed),
+              header) of
+          ([], _) => ()
+        | (findings, SOME {strict = true, ...}) =>
+            (List.app (fn (sp, what) => TextIO.output (TextIO.stdErr, Error.format (sp, Deps.notWellFormed what) ^ "\n")) findings;
+             raise Usage (file ^ ": a strict library's units are well-formed, and "
+                          ^ (case findings of [_] => "one is not" | _ => Int.toString (List.length findings) ^ " are not")))
+        | ((sp, what) :: rest, _) =>
+            if not warnings then ()
+            else (Error.warn ({file = file, start = 0, stop = 0},
+                              "this library" ^ (if List.null rest then " has a unit that is not well-formed, at "
+                                                else " has " ^ Int.toString (1 + List.length rest) ^ " units that are not well-formed, the first at ")
+                              ^ Source.describe sp ^ ", which is " ^ what ^ " (docs/units.md, Well-formed units)");
+                  Error.flushWarnings ())
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       val providers = List.foldl (fn ((_, _, f : Deps.file), m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
                                                                                (#declares f))

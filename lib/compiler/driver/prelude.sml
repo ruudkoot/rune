@@ -21,13 +21,21 @@ struct
 
   (* What a file of the program names of the libraries: the names it uses
      (Deps), and not every identifier, or alpha-renaming a bound variable
-     could change what links and what runs (D7). A file that does not parse
-     under the initial basis's fixity, which a file may not be read in, has
-     no syntax until the compile's own parse: its tokens. *)
+     could change what links and what runs (D7). A file is read in the
+     fixity the files before it leave, as the compile reads it, from what the
+     libraries export: a prelude's, and any other's, which the graph knows
+     (docs/units.md, Well-formed units). One that does not parse in it has no
+     syntax until the compile's own parse, which says why: a syntax error, or
+     a fixity of a library with no header, which no manifest holds. Its
+     tokens, then. *)
+  fun usedByIn (path : string, toks : Lexer.item vector, (names : names, fx : Fixity.env)) : names * Fixity.env =
+    let val (prog, fx') = Parser.parseTokensWith (toks, fx)
+        val f = Deps.analyse (path, prog)
+    in (BasisManifest.boundaryNames (toks, List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) names (#free f)), fx') end
+    handle Error.CompileError _ => (BasisManifest.namesOf (toks, names), fx)
+  (* the same of a file alone, which has no files before it *)
   fun usedBy (path : string, toks : Lexer.item vector, names : names) : names =
-    let val f = Deps.analyse (path, #1 (Parser.parseTokensWith (toks, Fixity.initial)))
-    in BasisManifest.boundaryNames (toks, List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) names (#free f)) end
-    handle Error.CompileError _ => BasisManifest.namesOf (toks, names)
+    #1 (usedByIn (path, toks, (names, Fixity.initial)))
 
   (* What the files of a program name of the libraries that provide names to
      mention (entries). A name a file uses is one of its tokens, so a file none
@@ -35,24 +43,30 @@ struct
      mention cannot change the selection, and is not parsed: in a large
      program most are not, which is most of what this costs a warm build. A
      small program is parsed: the table of the names costs more than that. *)
-  fun usedByAll (scopes : BasisManifest.scopes, entries : entry list, inputs : string list, toks : Lexer.item vector list) : names =
+  fun usedByAll (scopes : BasisManifest.scopes, entries : entry list, inputs : string list, toks : Lexer.item vector list,
+                 fixity : Fixity.env) : names =
     if List.foldl (fn (t, n) => n + Vector.length t) 0 toks < 4096
-    then ListPair.foldl usedBy StringMap.empty (inputs, toks)
+    then #1 (ListPair.foldl usedByIn (StringMap.empty, fixity) (inputs, toks))
     else
         let
           val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.forProgram (scopes, e)))
                                     StringMap.empty entries
           fun usable names n = StringMap.member (provided, n) andalso not (StringMap.member (names, n))
+          (* a file that may direct a fixity is read for it, whatever it names *)
           fun anything names =
             fn (Token.ID s, _) => usable names s
              | (Token.LONGID (s :: _, _), _) => usable names s
              | (Token.DYNAMIC, _) => usable names "RuneDynamic"
              | (Token.EXPORT, _) => usable names "RuneDynamic"
              | (Token.VIRTUAL, _) => usable names "RuneDynamic"
+             | (Token.INFIX, _) => true
+             | (Token.INFIXR, _) => true
+             | (Token.NONFIX, _) => true
              | _ => false
         in
-          ListPair.foldl (fn (path, tokens, names) => if Vector.exists (anything names) tokens then usedBy (path, tokens, names) else names)
-                         StringMap.empty (inputs, toks)
+          #1 (ListPair.foldl (fn (path, tokens, state as (names, _)) =>
+                                if Vector.exists (anything names) tokens then usedByIn (path, tokens, state) else state)
+                             (StringMap.empty, fixity) (inputs, toks))
         end
 
   (* What a compile chooses from: the Basis Library and the named libraries

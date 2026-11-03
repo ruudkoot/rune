@@ -128,7 +128,9 @@ struct
     \  --whole           with --units, make one program of the units' Mid, with\n\
     \                    the passes of a whole program, and not link their code\n\
     \  --deps            print the files in an order where each comes after the\n\
-    \                    files declaring the modules it uses (docs/units.md)\n\
+    \                    files declaring the modules it uses, and warn of each\n\
+    \                    unit that is not well-formed; with --build, the build's\n\
+    \                    (docs/units.md)\n\
     \  --deps-dot        the same, as a graph in DOT\n\
     \  --deps-uses       print the module names the inputs use, one per line\n\
     \  -I DIR            with one input, an entry point: compile before it the files\n\

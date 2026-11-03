@@ -410,14 +410,21 @@ struct
      match reports (which need the records' labels); with --units, at the
      end of each unit, which is then settled before the next is compiled
      (docs/units.md). *)
+  (* whether a flexible record noted is still open. Two that unify are bound
+     to a third that stands for both (Unify), which nobody noted: a noted
+     variable is as open as what it is bound to *)
+  fun flexOpen (r : tvar ref) : bool =
+    case prune (TVar r) of
+      TVar (ref (Unbound {kind = KFlex _, ...})) => true
+    | _ => false
+
   (* every flexible record so far determined, or an error at the first that
      is not: where the context --flex-records names ends *)
   fun settleFlex () =
     (List.app (fn (r, sp) =>
-                 case !r of
-                   Unbound {kind = KFlex _, ...} =>
-                     err (sp, "unresolved flexible record: cannot determine the full set of fields")
-                 | _ => ()) (List.rev (!pendingFlex));
+                 if flexOpen r
+                 then err (sp, "unresolved flexible record: cannot determine the full set of fields")
+                 else ()) (List.rev (!pendingFlex));
      pendingFlex := [])
 
   fun finish () =
@@ -2130,7 +2137,7 @@ struct
               fun refuse () =
                 let
                   val mine = List.take (!pendingFlex, Int.max (0, List.length (!pendingFlex) - flexBefore))
-                  val open' = List.find (fn (r, _) => case !r of Unbound {kind = KFlex _, ...} => true | _ => false) (List.rev mine)
+                  val open' = List.find (fn (r, _) => flexOpen r) (List.rev mine)
                 in
                   case open' of
                     SOME (_, sp) => err (sp, "unresolved flexible record: cannot determine the full set of fields")

@@ -702,29 +702,114 @@ signature's specification. The order keeps the order given wherever the
 uses allow it: the compiler's own sources in the order of `rune.build`
 come back as they are, and in any order as an order it builds in.
 
-The order is the files' only where each file keeps a discipline (CM's): its
-top-level declarations declare structures, signatures, functors, type
-abbreviations or (the Basis Library's) overloading, and none declares a
-value, a function, an exception, a datatype -- whose constructors are
-values -- or a fixity, or opens a structure, because a use of a value or of
-an operator names no module, and the analysis cannot see it. A file that
-breaks it is named, with the line; so are a name two files declare and a
-cycle. Inside a structure anything goes, but a name a structure `open`ed
-may bring in is counted as a use where a file of the group declares it,
-which the analysis cannot tell apart.
+Each file is read in the fixity the files before it leave, as a compile
+reads it. A cycle is refused. Inside a structure anything goes, but a name a
+structure `open`ed may bring in is counted as a use where another of the
+files declares it, which the analysis cannot tell apart.
+
+The names say the order only where a file is *well-formed* (below). One that
+is not stays where it is written: all before it stays before it and all
+after it after, so that what it binds is in scope as the text says, and a use
+that reaches past it means what the text means, the binder before it or none.
+`rune --deps` says which, with the line, and goes on.
+
+`rune --deps --build FILE` reads a build instead of a list. The order is the
+build's, a library's boundary and `use` hold as they do in a compile, a file is
+read in the fixity its place in the build gives it, and the classes and the
+scopes below are the build's.
 
 **An entry point.** With `-I DIR`, the one input is a program's entry
 point: the `.sml` files of its directory and of each `-I DIR` are analysed,
 and those its uses reach -- the files declaring what it names, and those
-they need -- are compiled before it, in the graph's order. A file that
-breaks the discipline is none of them; where it declares a module the
-program names, the compiler says so.
+they need -- are compiled before it, in the graph's order. They have no
+written order to fall back on, so a file that is not well-formed is none of
+them, and a name two of them declare is refused; where a file left out
+declares a module the program names, the compiler says so.
 
 **The Basis Library's MANIFEST** says what each of its files provides and
 requires (`lib/basis/MANIFEST`). It is made from the library's build file
 (`lib/basis/library.build`, docs/build.md) by `rune --basis-index DIR`:
 the provides column is what a file declares and the requires column what
 `Deps` derives, so neither is written by hand.
+
+## Well-formed units
+
+A unit is *well-formed* (CM's word) when its top level says what it binds in
+names a use can be found by. Four rules, the build-system roadmap's D17:
+
+1. No top-level `val`, `fun`, `exception`, `datatype`, `abstype` or
+   replication, because a use of what they bind names no module.
+2. No top-level `open`, which binds what the text does not show.
+3. No top-level fixity directive, because the parse of what follows depends
+   on it.
+4. No module name declared by two units of one scope. A scope is what a
+   library's boundary or an `implements` holds, or the rest of the build, so
+   two libraries may each have their own. Two that let
+   out one name into a scope are a clash of imports, a library's matter
+   ([build.md](build.md), *Clashes*), not two units'.
+
+A unit's top level may declare structures, signatures, functors and type
+abbreviations. The rest is free, since nothing needs it: an effect (`val _ =
+e`, `val () = e`, a bare expression) binds no name, what a top-level `local`'s
+head binds is private to it, a `use` does not exist in batch, a structure
+needs no signature, and inside a structure anything goes.
+
+**A correct program is never refused for these.** They are about finding an
+order and a closure from syntax, not about what a program means, and a unit
+that breaks one costs speed, never correctness: it keeps its place in the
+written order, as every unit has in a program. The 1990 Definition had such a
+subset and the 1997 revision took it out; Rune holds to the language it says
+it accepts ([language.md](language.md), row `mod.wellformed`).
+
+**The rules are for shared units.** A unit is of one of three classes:
+
+| Class | What it is | The rules |
+|---|---|---|
+| *shared* | others depend on it | hold |
+| *entry* | nothing depends on it: a program's main file, a script | all of Standard ML |
+| *prelude* | it defines the language for what follows: `annotate "prelude"` in a build ([build.md](build.md), *Annotations*), or an `always` file of a library | all of Standard ML; what it leaves is everyone's after it |
+
+Shared and entry come from the graph. A unit is shared if a unit after it
+names what it declares, by a module's name, or by an identifier that is one of
+its values: another unit's local variable of that name counts too, since the
+syntax cannot tell them apart. One whose `open` or replication binds what it
+does not show is shared if any unit comes after it. In a library the build
+says the class: a `final` file is an entry unit, and `demand` and `seal` files
+are their clients' to depend on, so shared.
+
+A prelude's fixity is known to the graph: `rune --deps` reads each file in the
+fixity the files before it leave, a prelude's among them, so a unit that needs
+it parses and shows its uses. So does choosing what of the libraries a program
+loads, by the names its files use (`--basis-deps` shows the choice), from what
+the libraries it sees export. A file that does not parse even so, because its
+fixity comes from a library with no header, which no manifest holds, is taken
+there by its tokens, and `rune --deps --build` keeps it where it is written;
+its compile has the last word. A prelude stays where it is written too.
+
+**Where it shows.** A warning, and `--no-warnings` silences it:
+
+* `rune --deps` lists every break, with its line. That is the question being
+  asked, and nothing is lost by the length of the answer.
+* `rune --basis-index` warns once a library, with how many units and the
+  first, as it does of a library with no header: the person indexing it is the
+  person changing it, and a client cannot act on it.
+
+A `rune --build`, and `rune FILE...`, do not warn: nothing there asks for the
+graph, since a build lists its files in the order they are compiled and the
+written order holds whatever the units are; and a warm build does not parse
+a unit it has no use for, which checking would cost it every time (parsing
+all of a build's files cost a no-op 9.2%: the build-system roadmap, M1). Ask
+with `rune --deps --build`.
+
+**`strict`.** A library says `strict` in its header ([build.md](build.md), *A
+library's header*) to make `--basis-index` refuse a unit that is not
+well-formed. It needs a header: a library without one keeps today's meaning,
+all of which is public and any of which may be named.
+
+So nothing of this reaches a program's meaning, and `--flex-records=program`,
+`--free-tyvars=later` and `later-monotype` are the only ways for anything to
+wait past a unit's end (*Compiling a unit*): they are refused in `--units` and
+stay outside builds.
 
 ## Dynamic modules
 
@@ -803,7 +888,7 @@ text is big enough to be worth a process (`RUNE_PARALLEL_MIN` bytes, 16384
 if not set). A unit the parent reaches and misses it compiles itself,
 unless a child has it, whose end it waits for. A unit needs the units
 before it that declare a name it uses (*The graph*; a Basis file by its
-MANIFEST); a unit that breaks the discipline, and an `always` file of the
+MANIFEST); a unit that is not well-formed, and an `always` file of the
 Basis, is needed by every unit after it. `RUNE_PARALLEL_DEBUG` set prints
 each child's start and end.
 

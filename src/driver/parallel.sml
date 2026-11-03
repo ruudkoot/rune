@@ -8,7 +8,7 @@
    done, and that is big enough to be worth a process, up to N at once. A
    unit the parent reaches and misses it compiles itself, unless a child has
    it, whose end it waits for. A unit needs the units before it that declare
-   a name it uses (Deps, by name; a unit that breaks the discipline, and an
+   a name it uses (Deps, by name; a unit that is not well-formed, and an
    `always` file of the Basis, is needed by every unit after it, and needs
    every one before it).
 

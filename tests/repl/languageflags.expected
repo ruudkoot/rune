@@ -1,0 +1,5 @@
+- = = = = = stdIn:5:1: error: unresolved flexible record: cannot determine the full set of fields
+stdIn:6:9: error: unbound variable or constructor: area
+- = val small = fn : int -> bool
+- val it = true : bool
+- 

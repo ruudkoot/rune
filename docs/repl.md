@@ -305,8 +305,10 @@ of the program: a type variable an input leaves free is refused, or made
 a new type, there, and not kept open for the inputs after it, as OCaml's
 weak type variables are, which would need its binding by an input that
 fails undone and a unit's basis that holds a variable. `rune-repl` takes
-`--overloading=MODE` and `--free-tyvars=MODE` as `rune` does. What follows
-says "a declaration" for it:
+`--overloading=MODE`, `--free-tyvars=MODE`, `--flex-records=MODE` and
+`--or-patterns` as `rune` does; under `--flex-records=program` the program is
+what the REPL compiles at once, a top-level declaration, as under `--units`
+it is the unit. It does not take `--default-type`. What follows says "a declaration" for it:
 
 * A declaration that does not elaborate is reported, with its file, line and
   column, and the session is as it was before it: nothing it declared is
@@ -323,6 +325,32 @@ says "a declaration" for it:
 Each declaration is compiled against what the ones before it declared, so a
 function keeps what it saw: `val x = 1; fun h () = x; val x = "two"; h ();`
 gives `1`.
+
+### Where a session and a program differ
+
+`tests/lang` through `use`, and a sample of the corpus, give what the same
+file compiled whole gives but for these (the build-system roadmap's E7):
+
+* An uncaught exception ends a program, and ends only the declaration in a
+  session, whose effects stay (Chapter 8, above). `use` stops at it, as a
+  program does. Its message has no trace, which `:bt` shows (and a terminal
+  says where it was raised); and a trace a program takes of its own frames
+  (`rt.trace_frames`, `rt.trace_inlined`, `mod.functor.functions_trace`) shows
+  the REPL's frames below the session's.
+* Under `--free-tyvars=later` and `later-monotype`, a variable an input leaves
+  free is settled at the end of that input (above), where a program can settle
+  it in a later declaration: `ty.infer.valuerestriction_later` is refused.
+* Text typed or given to `-e` is read as UTF-8, whatever `--unicode` says of
+  files ([units.md](units.md), *Source modes*), so a Latin-1 program pasted in
+  is refused where `use` reads it.
+* Text typed with a `;` after each declaration is a different program, one
+  top-level declaration each: the three programs of `tests/lang` that leave
+  something to the next declaration with no `;` between are refused so, as the
+  Definition says they are.
+* A file `use`d that ends in an unterminated comment is reported as ending in
+  the middle of a declaration, where a compile says the comment does not end.
+* `--default-type` is not taken, and the two programs of `tests/lang` that need
+  it run only compiled.
 
 ## `use`
 
