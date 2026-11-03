@@ -19,6 +19,9 @@ struct
   (* what each scope of this compile sees (BasisManifest), which choosing its
      files works out *)
   val librariesScoped = ref (BasisManifest.noScopes "")
+  (* the virtual modules of its libraries, KIND, NAME and library, which a
+     library implements and the program's build does not (D22) *)
+  val libraryVirtuals : (string * string * string) list ref = ref []
 
   (* The libraries of --library and those they are written on, in the order
      they are compiled, with the entries of each. *)
@@ -441,7 +444,9 @@ struct
                                         "" => "." | relative => relative) (!Options.libDir)
     in
       CompilerPlan.make {project = project, libraries = libraries, lib = lib, mode = !Options.sourceMode, scope = scopeWith lib,
-                         windows = windows, read = readBuild, hash = Hex.fromBytes o Sha256.digest}
+                         windows = windows, read = readBuild, hash = Hex.fromBytes o Sha256.digest,
+                         (* where a virtual library's tail begins: a file that says _virtual (D22) *)
+                         virtual = fn path => Vector.exists (fn (Token.VIRTUAL, _) => true | _ => false) (loadTokens (Source.Ascii, path))}
       handle CompilerProject.Invalid message => raise Options.Usage message
     end
 
@@ -573,6 +578,7 @@ struct
       val () = if taken = "none" andalso not (List.null (!Options.libraries))
                then raise Options.Usage "--library needs the basis library (not --no-prelude)" else ()
       val () = librariesScoped := BasisManifest.noScopes ""
+      val () = libraryVirtuals := []
       val basis =
         Pass.stage {name = "select", showIn = NONE, show = fn _ => "", check = fn _ => (), size = List.length}
                    (fn () =>
@@ -584,6 +590,8 @@ struct
                         handle BasisManifest.Usage why => raise Options.Usage why
             val {entries, scopes, ...} = found
             val () = librariesScoped := scopes
+            val () = libraryVirtuals := (BasisManifest.virtualModules (#libraries found)
+                                         handle BasisManifest.Usage why => raise Options.Usage why)
             (* two imports of one name in the program's scope, each an error
                that a rename at import answers (D9) *)
             val () =
@@ -1089,6 +1097,15 @@ struct
         | elabStep (SImplements (x, ds), acc) =
             if List.exists (fn y => y = x) (!implemented)
             then raise Options.Usage ("the build gives the virtual module or functor " ^ x ^ " two implementations")
+            else if List.exists (fn (_, n, _) => n = x) (!libraryVirtuals)
+            then
+              (* a library's files run before the program's: its virtual
+                 module is implemented by a library (D22) *)
+              let val (kind, _, dir) = valOf (List.find (fn (_, n, _) => n = x) (!libraryVirtuals))
+              in raise Options.Usage ("the build implements " ^ x ^ ", the virtual " ^ (if kind = "functor" then "functor" else "module")
+                                      ^ " of the library " ^ LibraryIndex.libraryShown (libRoot (), dir)
+                                      ^ ", which a library implements, with implements (" ^ kind ^ " " ^ x
+                                      ^ ") in its header (docs/build.md, Virtual libraries)") end
             else
               (* what the implementation declares is the program's, and no
                  file after it names it: it is reached through the virtual

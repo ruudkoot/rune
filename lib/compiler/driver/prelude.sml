@@ -71,13 +71,16 @@ struct
 
   (* What a compile chooses from: the Basis Library and the named libraries
      with those they are written on, in the order they are compiled, each
-     with its entries, and what each scope sees. *)
+     with its entries, and what each scope sees; a virtual library's files
+     from its first virtual module on after its implementation, and a
+     program with two of one refused (D22). *)
   type candidates = {libraries : (string * entry list) list, entries : entry list, scopes : BasisManifest.scopes}
   fun candidates {root : string, libraries : string list, building : string option, view : string option} : candidates =
     let
       val read = List.map (fn dir => (dir,BasisManifest.readManifest dir)) (BasisManifest.libraries (root,libraries))
+      val _ = BasisManifest.virtualModules read
     in
-      {libraries=read,entries=BasisManifest.readManifest (root ^ "/basis") @ List.concat (List.map #2 read),
+      {libraries=read,entries=BasisManifest.readManifest (root ^ "/basis") @ BasisManifest.arrange read,
        scopes=BasisManifest.scopes {root=root,building=building,names=libraries,headed=false,libraries=read,view=view}}
     end
 

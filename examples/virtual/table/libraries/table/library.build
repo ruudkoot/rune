@@ -1,0 +1,9 @@
+(* The virtual library: KEY, TABLE and the virtual functor Table, which a
+   program's units are compiled against. A library whose header says
+   implements (functor Table) is its implementation, and a program names
+   one of them beside it (docs/build.md, Virtual libraries). *)
+exports (signature KEY, signature TABLE, functor Table)
+virtual (functor Table)
+../../key_sig.sml
+../../table_sig.sml
+../../table.sml

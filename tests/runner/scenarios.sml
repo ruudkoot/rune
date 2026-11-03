@@ -336,7 +336,9 @@ struct
         (* the virtual functor's example (the build-system roadmap's M21) *)
         val table = fromRoot "examples/virtual/table"
         val () = mkdirs (dir ^ "/table")
-        val () = List.app (fn file => if isDir (table ^ "/" ^ file) then () else copy (table ^ "/" ^ file) (dir ^ "/table/" ^ file)) (entries table)
+        (* its build files, not the root of its libraries (VirtualLibraries) *)
+        val () = List.app (fn file => if isDir (table ^ "/" ^ file) orelse file = "rune.workspace" then ()
+                                      else copy (table ^ "/" ^ file) (dir ^ "/table/" ^ file)) (entries table)
         val () = put c "table/none.build" "key_sig.sml table_sig.sml table.sml main.sml"
         val () = put c "table/two.build" "key_sig.sml table_sig.sml implements Table = list.sml end implements Table = tree.sml end table.sml main.sml"
         (* an implementation compiled against another KEY, which only it sees *)

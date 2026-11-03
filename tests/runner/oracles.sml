@@ -810,7 +810,7 @@ struct
      file, which fails `expectations/cross-deviations` *)
   fun crossCheckNames () =
     ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all",
-     "virtual-table-list", "virtual-table-tree", "virtual-table-dynamic", "virtual-table-plugin"]
+     "virtual-table-list", "virtual-table-tree", "virtual-table-dynamic", "virtual-table-plugin", "virtual-libraries"]
     @ List.map name (glob ("tests/lang", ".sml") @ ExampleProjects.programs ())
     @ List.map (fn t => "basis-" ^ t) (List.filter (fn t => t <> "harness" andalso t <> "finish") (List.map basename (glob ("tests/basis", ".sml"))))
   fun crossDeviationErrors (ls : Expectations.line list, hosts : string list, checks : string list) : string list =
@@ -863,6 +863,51 @@ struct
                                              ^ firstLine (units c ^ ".err") ^ "\n"))
                        made
           | _ => say ("FAIL virtual-table-plugin: rune-mlton did not emit the module: " ^ firstLine (units "mlton" ^ ".err") ^ "\n")
+        end
+    (* the same program from its libraries, the virtual library and an
+       implementation (the build-system roadmap's M22): each build indexes
+       them, plans the program and compiles it, in one copy, one after
+       another, and every build gives the same manifests, plan and bytes *)
+    | "virtual-libraries" =>
+        let
+          val out = run ^ "/cross"
+          val copy = out ^ "/virtual-libraries"
+          fun copyFrom path =
+            let val from = fromRoot ("examples/virtual/table/" ^ path)
+            in if isDir from then (mkdirs (copy ^ "/" ^ path); List.app (fn e => copyFrom (path ^ "/" ^ e)) (entries from))
+               else if OS.Path.file path = "MANIFEST" orelse String.isPrefix "." (OS.Path.file path) then ()
+               else write (copy ^ "/" ^ path, read from)
+            end
+          val () = (rmTree copy; mkdirs copy; List.app copyFrom (entries (fromRoot "examples/virtual/table")))
+          val libraries = ["table", "table-list", "table-tree"]
+          fun one c =
+            let
+              val err = out ^ "/virtual-libraries." ^ c ^ ".err"
+              val rbc = out ^ "/virtual-libraries." ^ c ^ ".rbc"
+              val plan = out ^ "/virtual-libraries." ^ c ^ ".plan"
+              fun runs (cmd, stdout) = exec {cmd = cmd, dir = NONE, stdin = "", stdout = stdout, stderr = err, timeout = 0} = 0
+              val made =
+                List.all (fn l => runs (["bin/rune-" ^ c, "--basis-index", copy ^ "/libraries/" ^ l], "")) libraries
+                andalso runs (["bin/rune-" ^ c, "--no-warnings", "--plan", copy ^ "/list-libraries.build"], plan)
+                andalso runs (["bin/rune-" ^ c, "--build", copy ^ "/list-libraries.build", "--no-cache", "-o", rbc], "")
+            in
+              (c, if made then SOME (String.concat (List.map (fn l => read (copy ^ "/libraries/" ^ l ^ "/MANIFEST")) libraries),
+                                     read plan, read rbc)
+                  else NONE)
+            end
+          val made = List.map one (builds "rune")
+        in
+          case List.find (fn (c, _) => c = "mlton") made of
+            SOME (_, SOME (manifests, plan, bytes)) =>
+              List.app (fn (c, SOME (m, p, b)) =>
+                             if m <> manifests then say ("FAIL virtual-libraries: the manifests differ between the mlton and " ^ c ^ " builds\n")
+                             else if p <> plan then say ("FAIL virtual-libraries: the plan differs between the mlton and " ^ c ^ " builds\n")
+                             else if b <> bytes then say ("FAIL virtual-libraries: the program differs between the mlton and " ^ c ^ " builds\n")
+                             else ()
+                         | (c, NONE) => say ("FAIL virtual-libraries: rune-" ^ c ^ " did not build it: "
+                                             ^ firstLine (out ^ "/virtual-libraries." ^ c ^ ".err") ^ "\n"))
+                       made
+          | _ => say ("FAIL virtual-libraries: rune-mlton did not build it: " ^ firstLine (out ^ "/virtual-libraries.mlton.err") ^ "\n")
         end
     | "rune-units" =>
         let
@@ -1383,7 +1428,7 @@ struct
             (job ("@examples", ["example-project-inventory"], [], 1, 100, 60) ::
              List.map (fn x => job (x, ["cross-one", x], [], 1, 1500, 3600))
                       ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all",
-                       "virtual-table"]
+                       "virtual-table", "virtual-libraries"]
              @ List.map (fn x => job (if String.isPrefix "basis:" x then "basis-" ^ String.extract (x, 6, NONE) else name x,
                                        ["cross-one", x], [], 1, 1000, 3600))
                         crossSrcs

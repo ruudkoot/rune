@@ -1,0 +1,10 @@
+(* The program from libraries, with Table an association list: the virtual
+   library and the implementation the program chooses. Its units are
+   compiled against the virtual library alone (docs/build.md, Virtual
+   libraries); first index the libraries, from the top of the checkout:
+
+     for l in table table-list table-tree; do
+       rune --basis-index examples/virtual/table/libraries/$l
+     done *)
+libraries table table-list end
+main.sml

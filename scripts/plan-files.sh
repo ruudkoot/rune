@@ -10,14 +10,17 @@
 # of version 2 it lists the files as of version 1: a step's output is a file
 # like any other, which the host has from what it runs itself (build/config.sml
 # from scripts/gen-version.sh), and a file that a preprocessor of Rune's makes
-# what is compiled of it is refused, since a host has no preprocessor.
+# what is compiled of it is refused, since a host has no preprocessor. A virtual
+# library's continue is its files after its implementation, in the order the
+# plan gives.
 # Usage: scripts/plan-files.sh PLAN
 set -eu
 awk '
 function fail(message) { print "plan-files: " FILENAME ":" FNR ": " message > "/dev/stderr"; failed = 1; exit 2 }
 FNR == 1 { if ($1 != "rune-plan" || ($2 != "1" && $2 != "2") || NF != 2) fail("not a plan of version 1 or 2"); version = $2; next }
 NF == 0 { next }
-version == "2" && $1 ~ /^(preprocessor|generate|argument|reads|writes)$/ { next }
+version == "2" && $1 ~ /^(preprocessor|generate|argument|reads|writes|virtual)$/ { next }
+version == "2" && $1 == "continue" { inlibrary = 1; next }
 $1 !~ /^(basis|inline|library|form|requires|export|view|friend|end|program|unit|use|replay|boundary|implements|provenance|input)$/ {
   fail("a plan of version " version " has no " $1)
 }
