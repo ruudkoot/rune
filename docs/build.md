@@ -275,11 +275,13 @@ compiler's API and its analysis, and `runedoc`. `rune --basis-index DIR`
 makes the index of the library in `DIR` again and prints it, a line a file:
 
 ```
+$ rune --basis-index lib/digest
 # The index of a library, from its library.build (rune --basis-index)
-# library: json
-# exports: structure:Rpc signature:RPC
-rpc_sig.sml | demand | yes | RPC |
-rpc.sml | demand | yes | Rpc | Json RPC
+digest_sig.sml | demand | yes | DIGEST |
+sha256.sml | demand | yes | Sha256 | Array Char CharVector DIGEST IntInf String Vector Word Word32
+hex_sig.sml | demand | yes | HEX |
+hex.sml | demand | yes | Hex | Char HEX String
+...
 ```
 
 with what a client of the library cannot act on said, as a warning: a
@@ -302,8 +304,9 @@ wherever it is installed: there a first compile reads each file once, to
 see that it is what the record says, and keeps the record again in its
 own store. `--no-cache` turns units off, not the index: such a compile reads
 the store's records, and writes none. A compile with no store (`RUNE_CACHE`
-empty, the compiler's API, `runedoc`) makes what it does not find, and
-keeps it for the compile alone.
+empty, the compiler's API and an editor's analysis, `runedoc`) makes what it
+does not find, and holds it for its session, where a later compile holds it
+to what it was made of as it does a record of the store.
 
 ### A library's header
 

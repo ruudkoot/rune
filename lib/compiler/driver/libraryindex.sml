@@ -202,12 +202,13 @@ struct
     if hasBasis root then B.entriesOf (root ^ "/basis", index (root ^ "/basis")) else []
 
   (* The index of the library in dir, made from its build file and its
-     files; index, the index of another library, and known what a file was
-     to a making before, by its key. warnings says what it finds that a
+     files; index, the index of another library, known what a file was to a
+     making before, by its key, and hashed the hash of a file whose stat is
+     what it was then, racily clean. warnings says what it finds that a
      client cannot act on: a library with no header, units that are not
      well-formed *)
   fun make {dir : string, root : string, warnings : bool, windows : bool, index : string -> index,
-            known : string -> facts option} : made =
+            known : string -> facts option, hashed : string * S.stamp option -> string option} : made =
     let
       val file = OS.Path.joinDirFile {dir = dir, file = "library.build"}
       val libDir = root ^ "/basis"
@@ -305,8 +306,10 @@ struct
                       let
                         val path = OS.Path.concat (dir, p)
                         val stamp = S.statOf path
-                        val text = readText path handle IO.Io _ => raise Usage ("cannot read " ^ path)
-                        val h = hash text
+                        (* a file whose stat is what it was is not read for its hash *)
+                        val h = case hashed (p, stamp) of
+                                  SOME h => h
+                                | NONE => hash (readText path handle IO.Io _ => raise Usage ("cannot read " ^ path))
                         val () = reads := {path = p, stamp = stamp, hash = h} :: !reads
                         val key = hash (String.concatWith "\000" [h, path, fixityKey fx])
                         val f as {fixity = added, ...} =
@@ -605,6 +608,14 @@ struct
   val () = CompilerState.cellRoot ("LibraryIndex.making", making)
   val platform : bool option ref = ref NONE
   val () = CompilerState.cellRoot ("LibraryIndex.platform", platform)
+  (* And what the compiles of a session made or read, by each record's name,
+     which a compile that begins does not take on trust but holds to what
+     it was made of, as a record of the store: the first place a query
+     looks, so that a session with no store (the compiler's API, an
+     editor's analysis) makes no index twice *)
+  val held : (string * record) list ref = ref []
+  val () = CompilerState.cellRoot ("LibraryIndex.held", held)
+  fun hold (name : string, record : record) : unit = held := (name, record) :: List.filter (fn (n, _) => n <> name) (!held)
   fun forget () = (known := []; making := [])
   fun windows () = case !platform of SOME w => w | NONE => let val w = windowsHere () in platform := SOME w; w end
 
@@ -660,64 +671,81 @@ struct
           fun againstNow (idx : index) : (string * string) list =
             within (fn () => List.map (fn d => (placeOf (root, d), #2 (indexWithHash {root = root, dir = d, warnings = false, fresh = false})))
                                       (dirsOf (root, dir, idx)))
-          (* a record that holds, from the first store that has one *)
+          (* a record that holds, the session's or that of the first store
+             that has one; one in memory needs no hash of its bytes *)
+          fun holds (record as {read, against, indexHash, index, ...} : record, kept : bool) =
+            let val at = S.nowSeconds ()
+            in
+              case stillRead (dir, #at record, read) of
+                NONE => NONE
+              | SOME (readNow, moved) =>
+                  (case (SOME (readIndex (Pickle.reader index)) handle Pickle.Bad _ => NONE | Subscript => NONE
+                                                                      | Overflow => NONE | Size => NONE) of
+                     SOME idx =>
+                       if (kept orelse hash index = indexHash) andalso againstNow idx = against
+                       then SOME ({at = at, read = readNow, against = against, indexHash = indexHash, index = index,
+                                   factsHash = #factsHash record, facts = #facts record}, idx, moved)
+                       else NONE
+                   | NONE => NONE)
+            end
           fun holding [] = NONE
             | holding (store :: rest) =
                 case readRecord (recordFile (store, name), name) of
                   NONE => holding rest
-                | SOME (record as {read, against, indexHash, index, ...}) =>
-                    let val at = S.nowSeconds ()
-                    in
-                      case stillRead (dir, #at record, read) of
-                        NONE => holding rest
-                      | SOME (readNow, moved) =>
-                          (case (SOME (readIndex (Pickle.reader index)) handle Pickle.Bad _ => NONE | Subscript => NONE
-                                                                              | Overflow => NONE | Size => NONE) of
-                             SOME idx =>
-                               if hash index = indexHash andalso againstNow idx = against
-                               then SOME ({at = at, read = readNow, against = against, indexHash = indexHash, index = index,
-                                           factsHash = #factsHash record, facts = #facts record}, idx, moved)
-                               else holding rest
-                           | NONE => holding rest)
-                    end
+                | SOME record => case holds (record, false) of NONE => holding rest | found => found
+          fun found () =
+            case List.find (fn (n, _) => n = name) (!held) of
+              SOME (_, record) => (case holds (record, true) of NONE => holding (stores root) | some => some)
+            | NONE => holding (stores root)
         in
-          case (if fresh then NONE else holding (stores root)) of
+          case (if fresh then NONE else found ()) of
             SOME (record as {read, indexHash, ...}, idx, moved) =>
               ((* a record whose stats moved, written again with them *)
                if moved then Option.app (fn o' => writeRecord (o', name, record)) (overlay ()) else ();
+               hold (name, record);
                remember (dir, idx, indexHash, read))
           | NONE =>
               let
-                (* what each file was to the record before, by its key *)
+                (* what each file was to the record before, by its key, and
+                   the hash of each file it read, by its stat *)
                 fun factsOf (store, found) =
                   case found of
                     SOME _ => found
                   | NONE =>
                       (case readRecord (recordFile (store, name), name) of
-                         SOME {factsHash, facts, ...} =>
+                         SOME {factsHash, facts, read, at, ...} =>
                            if hash facts = factsHash
-                           then SOME (Pickle.rlist (fn r => let val k = Pickle.rstring r in (k, readFacts r) end) (Pickle.reader facts))
+                           then SOME (Pickle.rlist (fn r => let val k = Pickle.rstring r in (k, readFacts r) end) (Pickle.reader facts),
+                                      read, at)
                                 handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE | Size => NONE
                            else NONE
                        | NONE => NONE)
-                val table = List.foldl (fn ((k, f), m) => StringMap.insert (m, k, f)) StringMap.empty
-                                       (getOpt (List.foldl factsOf NONE (stores root), []))
+                val (previous, wasRead, wasAt) = getOpt (List.foldl factsOf NONE (stores root), ([], [], LargeInt.fromInt 0))
+                val table = List.foldl (fn ((k, f), m) => StringMap.insert (m, k, f)) StringMap.empty previous
+                val stamps = List.foldl (fn ({path, stamp = SOME {key, ...}, hash = h}, m) => StringMap.insert (m, path, (key, h))
+                                          | (_, m) => m) StringMap.empty wasRead
+                fun hashed (p, SOME (now as {key, ...} : S.stamp)) =
+                      (case StringMap.find (stamps, p) of
+                         SOME (k, h) => if k = key andalso S.clean (now, wasAt) then SOME h else NONE
+                       | NONE => NONE)
+                  | hashed (_, NONE) = NONE
                 val at = S.nowSeconds ()
                 val {index = idx, read, facts} =
                   within (fn () =>
                     make {dir = dir, root = root, warnings = warnings, windows = w,
                           index = fn d => #1 (indexWithHash {root = root, dir = d, warnings = false, fresh = false}),
-                          known = fn k => StringMap.find (table, k)})
+                          known = fn k => StringMap.find (table, k), hashed = hashed})
                 val bytes = let val wr = Pickle.writer () in writeIndex (wr, idx); Pickle.contents wr end
                 val indexHash = hash bytes
                 val factsBytes = let val wr = Pickle.writer ()
                                  in Pickle.list (fn (w, (k, f)) => (Pickle.string (w, k); writeFacts (w, f))) (wr, facts);
                                     Pickle.contents wr end
                 val against = againstNow idx
+                val record = {at = at, read = read, against = against, indexHash = indexHash,
+                              index = bytes, factsHash = hash factsBytes, facts = factsBytes}
               in
-                Option.app (fn o' => writeRecord (o', name, {at = at, read = read, against = against, indexHash = indexHash,
-                                                             index = bytes, factsHash = hash factsBytes, facts = factsBytes}))
-                           (overlay ());
+                Option.app (fn o' => writeRecord (o', name, record)) (overlay ());
+                hold (name, record);
                 remember (dir, idx, indexHash, read)
               end
         end
