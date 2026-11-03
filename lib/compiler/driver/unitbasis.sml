@@ -183,6 +183,23 @@ struct
      layer alone gets, which must be what elaboration needs (docs/units.md) *)
   val staticLoad = ref false
   val () = CompilerState.cellRoot ("UnitBasis.staticLoad", staticLoad)
+  (* An analysis's load (the compiler library's): the static layer alone is
+     read, and of the ABI layer only what the static layer names in it, a
+     value's name; nothing else of it is read or entered. So a unit loads the
+     same from a compile's basis and from an analysis's where their static
+     layers are the same, though their ABI layers are not (the build-system
+     roadmap's D27, the shared layer) *)
+  val staticOnly = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.staticOnly", staticOnly)
+  (* Other identities of the units loaded, each to the identity its unit is
+     loaded under: an analysis loads a unit under its static identity
+     (NAME@STATIC), and a compile's basis or usages name it by its whole
+     one, which is the same unit to an analysis (the editor's shared layer).
+     An alias outlives its unit's load, truncate's too: a unit loaded again
+     under the identity is that unit again *)
+  val aliases : string StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.aliases", aliases)
+  fun canonical (identity : string) : string = getOpt (StringMap.find (!aliases, identity), identity)
   (* RUNE_LAYER_DUMP=DIR: each export's hashes, by unit (dumpLayers) *)
   val layerDump : string option ref = ref NONE
   val () = CompilerState.cellRoot ("UnitBasis.layerDump", layerDump)
@@ -223,7 +240,7 @@ struct
      library alike, whose units' Mid the lint checks against the schemes of
      the globals of the units before them, which ToMid keeps *)
   fun startSession () =
-    (units := []; byIdentity := StringMap.empty; builtin := counters ();
+    (units := []; byIdentity := StringMap.empty; aliases := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
      fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty; schemeMemo := IntMap.empty;
      stampFps := IntTable.table 64; staticTycons := IntTable.table 64; layerDump := OS.Process.getEnv "RUNE_LAYER_DUMP";
@@ -233,6 +250,20 @@ struct
      MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
+
+  (* another identity of a unit loaded under identity *)
+  fun alias (other : string, identity : string) : unit =
+    if other = identity then () else aliases := StringMap.insert (!aliases, other, identity)
+  (* the unit an identity names in the session, by an alias too *)
+  fun loadedAs (identity : string) : loaded option = StringMap.find (!byIdentity, canonical identity)
+  (* a usage's key with the identity in it by the one its unit is loaded
+     under: an overloading's, "o IDENTITY#N" (stableName) *)
+  fun canonicalKey (key : string) : string =
+    if not (String.isPrefix "o " key) then key
+    else
+      case List.rev (String.fields (fn c => c = #"#") (String.extract (key, 2, NONE))) of
+        n :: (rest as _ :: _) => "o " ^ canonical (String.concatWith "#" (List.rev rest)) ^ "#" ^ n
+      | _ => key
 
   fun register (u : loaded) =
     (units := u :: !units;
@@ -1592,8 +1623,8 @@ struct
           (* "IDENTITY FINGERPRINT", an identity a name that may have spaces in it *)
           val fs = String.fields (fn c => c = #" ") v
           val fp = List.last fs
-          val i = String.concatWith " " (List.take (fs, List.length fs - 1))
-          val b = binderOfKey k
+          val i = canonical (String.concatWith " " (List.take (fs, List.length fs - 1)))
+          val b = binderOfKey (canonicalKey k)
         in
           b = i orelse (fp <> "-" andalso not (isSome (StringMap.find (!byIdentity, i))) andalso fingerprintAt (k, b) = SOME fp)
         end
@@ -1603,8 +1634,9 @@ struct
      unit of the session other than those it was compiled against *)
   fun exact (us : (string * string) list) : bool =
     List.all (fn (k, v) =>
-                let val fs = String.fields (fn c => c = #" ") v
-                in binderOfKey k = String.concatWith " " (List.take (fs, List.length fs - 1)) end) us
+                let (* "IDENTITY FINGERPRINT": the identity, before the last space *)
+                    fun last i = if i < 0 then 0 else if String.sub (v, i) = #" " then i else last (i - 1)
+                in binderOfKey (canonicalKey k) = canonical (String.substring (v, 0, last (String.size v - 1))) end) us
 
   (* The first unit that the code of an entry names and the session has
      not, if one: what its usages missed (docs/plans/build-cache-issues.md,
@@ -2105,8 +2137,19 @@ struct
     | Fixity.Infix p' => (P.byte (w, 1); P.nat (w, p'))
     | Fixity.Infixr p' => (P.byte (w, 2); P.nat (w, p'))
   (* ---- end of writers of origins ---- *)
+  (* A place in the unit's own source is written with no file, "\000", and
+     read as where its source is now (ownOrigin): most of a sidecar's bytes
+     were the one path again *)
+  fun ownFile (file : string) (origin : Env.origin) : Env.origin =
+    case origin of
+      Env.Named {unit, kind, name, span = {file = f, start, stop}} =>
+        if f = file andalso file <> "" then Env.Named {unit = unit, kind = kind, name = name, span = {file = "\000", start = start, stop = stop}}
+        else origin
+    | Env.Constrained (a, b) => Env.Constrained (ownFile file a, ownFile file b)
+    | Env.Held {unit, key, last} => ownFile file last
+    | Env.Unknown => origin
   fun writeOrigin (e : enc, origin) =
-    (case origin of Env.Unknown => () | _ => #spans e := true; writeOrigin' (#side e, origin))
+    (case origin of Env.Unknown => () | _ => #spans e := true; writeOrigin' (#side e, ownFile (#file e) origin))
 
   (* ---- environments by reference (functors-units M11, part 2) ----
 
@@ -2696,9 +2739,10 @@ struct
   (* ---- a unit's basis ---- *)
 
   (* What export gives: the bytes, the sidecar that goes with them (empty where
-     no origin was recorded), the unit's identity, and the number each of its
+     no origin was recorded), the unit's identity, the hash of its static
+     layer (an analysis's identity, NAME@STATIC), and the number each of its
      own names was given, for the code of the unit (relative) *)
-  type exported = {pickle : string, sidecar : string, identity : string, provenance : string,
+  type exported = {pickle : string, sidecar : string, identity : string, static : string, provenance : string,
                    own : int IntTable.table vector, counts : int vector}
 
   (* What a unit's imports are, for its identity to hold: of each type name its
@@ -2873,7 +2917,7 @@ struct
       val identity = uname ^ "@" ^ digest
     in
       {pickle = P.contents u ^ hashed, sidecar = if !(#spans e) then P.contents (#side e) else "", identity = identity,
-       provenance=Link.provenance (!CompilerSettings.target,mode,sourceHash),own = #own e, counts = counts}
+       static = staticDigest, provenance=Link.provenance (!CompilerSettings.target,mode,sourceHash),own = #own e, counts = counts}
     end)
 
   (* export {start, name, file, text, mode, delta, fixity}: the basis of the
@@ -3178,13 +3222,22 @@ struct
     | 2 => let val p' = P.rnat (r) in Fixity.Infixr p' end
     | _ => raise P.Bad "not a fixity"
   (* ---- end of readers of origins ---- *)
-  fun readOrigin (d : dec) = case #side d of SOME r => readOrigin' r | NONE => Env.Unknown
+  (* the source of the unit being read, as its spans name it now (load) *)
+  val readingFile = ref ""
+  val () = CompilerState.cellRoot ("UnitBasis.readingFile", readingFile)
+  fun ownOrigin (origin : Env.origin) : Env.origin =
+    case origin of
+      Env.Named {unit, kind, name, span = {file = "\000", start, stop}} =>
+        Env.Named {unit = unit, kind = kind, name = name, span = {file = !readingFile, start = start, stop = stop}}
+    | Env.Constrained (a, b) => Env.Constrained (ownOrigin a, ownOrigin b)
+    | _ => origin
+  fun readOrigin (d : dec) = case #side d of SOME r => ownOrigin (readOrigin' r) | NONE => Env.Unknown
 
   (* an environment read as a reference, with the origins the sidecar has of it *)
   fun withOrigins (side : P.reader, Env.Env {vals, tys, strs, ...}) : Env.env =
     let
       val origins = StringMap.fromList (P.rlist (fn r => let val key = P.rstring r
-                                                             val origin = readOrigin' r
+                                                             val origin = ownOrigin (readOrigin' r)
                                                          in (key, origin) end) side)
       val strs' = List.foldl (fn ((n, s), m) => StringMap.insert (m, n, withOrigins (side, s))) StringMap.empty
                              (StringMap.listItemsi strs)
@@ -3302,14 +3355,14 @@ struct
       val vals' = StringMap.fromList (P.rlist (fn _ => let val n_1 = P.rstring (#r d) in (n_1, rvalstatus d) end) (#r d))
       val tys' = StringMap.fromList (P.rlist (fn _ => let val n_2 = P.rstring (#r d) in (n_2, rtystatus d) end) (#r d))
       val strs' = StringMap.fromList (P.rlist (fn _ => let val n_3 = P.rstring (#r d) in (n_3, renv d) end) (#r d))
-      val origins' = (case #side d of SOME s_4 => StringMap.fromList (P.rlist (fn _ => let val n_5 = P.rstring s_4 in (n_5, readOrigin' s_4) end) s_4) | NONE => StringMap.empty)
+      val origins' = (case #side d of SOME s_4 => StringMap.fromList (P.rlist (fn _ => let val n_5 = P.rstring s_4 in (n_5, ownOrigin (readOrigin' s_4)) end) s_4) | NONE => StringMap.empty)
     in Env.Env {vals = vals', tys = tys', strs = strs', origins = origins'} end
 
   and rsigma (d : dec) : SigMatch.sigma =
     let
       val bound' = P.rlist (fn _ => rtycon d) (#r d)
       val env' = renv d
-      val origin' = (case #side d of SOME s_1 => readOrigin' s_1 | NONE => Env.Unknown)
+      val origin' = (case #side d of SOME s_1 => ownOrigin (readOrigin' s_1) | NONE => Env.Unknown)
     in {bound = bound', env = env', origin = origin'} end
   (* ---- end of readers of environments ---- *)
 
@@ -3324,7 +3377,7 @@ struct
       val param' = P.roption (fn _ => P.rstring (#r d)) (#r d)
       val paramSig' = rsigma d
       val summary' = rsummary d
-      val binding' = (case #side d of SOME s_1 => readOrigin' s_1 | NONE => Env.Unknown)
+      val binding' = (case #side d of SOME s_1 => ownOrigin (readOrigin' s_1) | NONE => Env.Unknown)
       val code' = rnameAt (#a d, d, kStamp)
     in Elaborate.FunInfo {param = param', paramSig = paramSig', summary = summary', binding = binding', code = code'} end
 
@@ -3682,7 +3735,7 @@ struct
      one its usages name and the units its basis names, by what they
      were, be others *)
   fun exactEntry (us : (string * string) list, pickle : string) : bool =
-    exact us andalso (List.all (fn i => isSome (StringMap.find (!byIdentity, i))) (namedBy pickle)
+    exact us andalso (List.all (fn i => isSome (loadedAs i)) (namedBy pickle)
                       (* what is wrong with its bytes, loading it says *)
                       handle P.Bad _ => true)
 
@@ -3708,7 +3761,7 @@ struct
     if not (!remapAllowed) then [] else
     List.mapPartial
       (fn i =>
-         if isSome (StringMap.find (!byIdentity, i)) then NONE
+         if isSome (loadedAs i) then NONE
          else
            let
              val name = nameOf i
@@ -3838,6 +3891,7 @@ struct
     let
       val r = P.reader pickle
       val side = if sidecar = "" then NONE else SOME (P.reader sidecar)
+      val () = readingFile := file
       val used = Vector.tabulate (3, fn _ => P.rnat r)
       val _ = P.rstring r   (* the hash of its source, for the compiler library *)
       val _ = P.rstring r   (* its mode *)
@@ -3853,7 +3907,7 @@ struct
                        SOME i => if String.isPrefix (uname ^ "@") i then i else raise P.Bad "another unit's identity"
                      | NONE => uname ^ "@" ^ digest
       val identities = P.rlist P.rstring r
-      val us = Vector.fromList (List.map (fn i => case StringMap.find (!byIdentity, i) of
+      val us = Vector.fromList (List.map (fn i => case loadedAs i of
                                                     SOME u => u
                                                   | NONE => (case List.find (fn (o', _, _) => o' = i) remap of
                                                                SOME (_, new, _) => new
@@ -3861,7 +3915,7 @@ struct
       (* of each unit named, where it is one the pickle was not written
          against, its names by the old numbers, by kind *)
       val remaps = Vector.fromList (List.map (fn i => case List.find (fn (o', _, _) => o' = i) remap of
-                                                        SOME (_, _, maps) => if isSome (StringMap.find (!byIdentity, i))
+                                                        SOME (_, _, maps) => if isSome (loadedAs i)
                                                                              then NONE else SOME maps
                                                       | NONE => NONE) identities)
       (* an import, as the session names it *)
@@ -3906,7 +3960,9 @@ struct
       val da = over a
       (* RUNE_STATIC_LOAD: nothing of the ABI layer is entered in the tables,
          where no code is to be made of them *)
-      val blank = !staticLoad andalso not (!Elaborate.makesCode)
+      val blank = (!staticLoad orelse !staticOnly) andalso not (!Elaborate.makesCode)
+      (* an analysis's: nothing read past the static layer and what it names *)
+      val only = !staticOnly andalso not (!Elaborate.makesCode)
       val directives = P.rlist (fn r => let val n = P.rstring r in (n, readFixity r) end) r
       val delta = renv d
       val sigs = P.rlist (fn r => let val n = P.rstring r val sg = rsigma d
@@ -3977,10 +4033,11 @@ struct
               IntTable.insert (!inlineHashes, code, h)
             end
         | _ => raise P.Bad "not an option"
-      val () = List.app rbody (List.rev (!written))
+      val () = if only then () else List.app rbody (List.rev (!written))
       (* its functions marked to be inlined: what a later unit that names
          one copies (Expand.withInlined) *)
       val values =
+        if only then [] else
         P.rlist (fn a =>
                    let
                      val s = rname (da, kStamp)
@@ -4011,6 +4068,7 @@ struct
                      s
                    end) a
       val schemes =
+        if only then [] else
         P.rlist (fn a =>
                    let
                      val ({name = g, tyvars, result, ...}, _) =
@@ -4071,10 +4129,10 @@ struct
         | 2 => (rabi (Vector.sub (base, kTycon) + P.rnat a); entries ())
         | 3 => let val c = Vector.sub (base, kTycon) + P.rnat a in rstatic (da, c); rabi c; entries () end
         | _ => raise P.Bad "not a table's entry"
-      val () = entries ()
-      val () = if P.atEnd a then () else raise P.Bad "bytes after the basis"
+      val () = if only then () else entries ()
+      val () = if only orelse P.atEnd a then () else raise P.Bad "bytes after the basis"
       val () = case side of
-                 SOME x => if P.atEnd x then () else raise P.Bad "bytes after the sidecar"
+                 SOME x => if only orelse P.atEnd x then () else raise P.Bad "bytes after the sidecar"
                | NONE => ()
       (* declared: signatures, functors, overloading *)
       val () = List.app (fn (n, s) => Elaborate.sigs := StringMap.insert (!Elaborate.sigs, n, s)) sigs
@@ -4125,7 +4183,7 @@ struct
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
       val () = if P.rstring r = P.probe () then () else raise P.Bad "a basis made by a compiler whose hash differs"
       val uname = P.rstring r
-      val _ = P.rstring r
+      val digest = P.rstring r
       val static = P.rstring r
       val identities = P.rlist P.rstring r
       val () = Vector.app (fn _ => ignore (P.rlist (fn r => (P.rnat r, P.rnat r)) r)) (Vector.tabulate (3, fn k => k))
@@ -4133,7 +4191,8 @@ struct
       val counts = Vector.tabulate (3, fn _ => P.rnat r)
       val _ = P.rnat r
       val directives = P.rlist (fn r => let val n = P.rstring r in (n, readFixity r) end) r
-    in {used = used, uname = uname, static = static, identities = identities, counts = counts, directives = directives} end
+    in {used = used, uname = uname, digest = digest, static = static, identities = identities, counts = counts,
+        directives = directives} end
     handle Overflow => raise P.Bad "a number out of range"
          | Subscript => raise P.Bad "out of range"
 
@@ -4143,7 +4202,7 @@ struct
      basis names a unit the session has not *)
   fun lightLoad ({pickle : string, file : string, at : int vector}, identity : string, keys : string list) : result =
     let
-      val {used, uname, static, identities, counts, directives} = header pickle
+      val {used, uname, static, identities, counts, directives, ...} = header pickle
       val () = if String.isPrefix (uname ^ "@") identity then () else raise P.Bad "another unit's identity"
       val () = List.app (fn i => if isSome (StringMap.find (!byIdentity, i)) then () else raise Missing i) identities
       val () = if isSome (StringMap.find (!byIdentity, identity)) then raise Missing (identity ^ " (loaded twice)") else ()
