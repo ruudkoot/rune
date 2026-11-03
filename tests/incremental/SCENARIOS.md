@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, S49 to S101, S121 to S124, and the checks
+a file system without case), S28 to S36, S40, S49 to S101, S121 to S130, and the checks
 of *Facts, flags and roots* below. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
@@ -190,6 +190,23 @@ exactly the units X and nothing else.
   by reference has the same bytes when that one gains a specification; its
   identity moves, and a client that matches it alone is refused as a compile
   without the cache refuses it.
+* **S125 to S127, a virtual functor (E10's probes; the build-system roadmap's
+  M21).** A build of a virtual functor's implementation (`_export functor`),
+  its declaration (`functor Table = _virtual (K : KEY) : TBL where type key =
+  K.t`) and a client: an edit of the implementation's body compiles it alone
+  (S125); one of the parameter's signature compiles every unit that names it,
+  the implementation, the declaration and the client (S126); one of the
+  result's, the same (S127).
+* **S128, a functor's ABI across compilers.** A dynamic functor's module
+  compiled by the compiler under test loads into a client that `bin/rune`
+  compiled: the same ABI. The mutants of the cache A1 to A4 make the ABI
+  another -- its version, its calling convention, the records' slots in
+  another order, the descriptors in another -- and the client refuses the
+  module.
+* **S129, S130, another signature with the same slots.** A dynamic functor's
+  module of another parameter's signature (S129) or result's (S130), whose
+  records have the same slots, is refused when the client loads it: the
+  signatures are in the fingerprint (the mutants A5 and A6 take them out).
 
 ## Failure and concurrency
 

@@ -201,27 +201,52 @@ struct
     in List.foldl (fn (file,result) => if List.exists (fn prior => prior=file) result then result else result @ [file]) [] files end
   (* The root file a build is under, which its units are named from. *)
   fun rootFile platform build=C.Workspace.find {file=build,windows=platform=U.Windows}
-  (* The targets a root file names, for a file of a folder of the client that
-     holds the root file; a folder inside a workspace takes its builds from
-     discovery alone. A root file that does not read shows at its builds. *)
-  fun namedTargets (Workspace {platform,roots,...},path,flags) =
-    (case rootFile platform path of NONE => [] | SOME found =>
+  (* and the text of one open in the editor where it is, saved or not *)
+  fun rootFileIn (platform,documents) build =
+    let val windows=platform=U.Windows
+        fun opened path=List.find (fn snapshot:D.snapshot => D.healthy (documents,#uri snapshot) andalso
+          ((case U.native (platform,U.parse (#uri snapshot)) of SOME {path=other,...} => sameFile platform (other,path)
+            | NONE => false) handle U.Invalid => false)) (D.all documents)
+        fun first []=NONE
+          | first (path::rest)=case opened path of
+              SOME snapshot => SOME (C.Workspace.read {file=path,text=LspPosition.text (#content snapshot),windows=windows})
+            | NONE => if (OS.FileSys.access (path,[]) handle OS.SysErr _ => false) then rootFile platform build else first rest
+    in first (C.Workspace.candidates {file=build,windows=windows}) end
+  (* The targets a root file names. A file's contexts take them wherever the
+     client's folder is, above the root or below it; a sweep of a folder
+     inside a workspace (within) takes its builds from discovery alone. A
+     root file that does not read shows at its builds. *)
+  fun namedTargets (Workspace {platform,roots,...},documents,path,flags,within) =
+    (case rootFileIn (platform,documents) path of NONE => [] | SOME found =>
       let val root=pathKey platform (C.Workspace.root found)
           fun holds folder=case nativeKey platform folder of SOME folder => below (folder,root) | NONE => false
-      in if not (List.exists holds (!roots)) then [] else
+      in if within andalso not (List.exists holds (!roots)) then [] else
          List.map (fn {name,build,options} => let val uri=U.original (U.fromPath (platform,build))
            in {name=name,build=uri,flags=flags @ options,variables=[],libraryRoot=NONE}:target end) (C.Workspace.targets found) end)
     handle C.Failed _ => [] | U.Invalid => []
   (* those, then the builds found that they do not name *)
-  fun withNamed (workspace,path,flags,found:target list) =
-    let val named=namedTargets (workspace,path,flags)
+  fun withNamed (workspace,documents,path,flags,found:target list,within) =
+    let val named=namedTargets (workspace,documents,path,flags,within)
     in named @ List.filter (fn target:target => not (List.exists (fn other:target => #build other= #build target) named)) found end
+  (* Whether a file of a library has that one context (D26): off only to
+     measure what was before (tools/lsp/contexts.sml --before) *)
+  val owners=ref true
+  (* The build of the library a file is of: the deepest directory above it
+     with a library.build, as its unit's name says (docs/units.md, Names) *)
+  fun ownerBuild platform path =
+    let fun up (directory,seen)=
+          let val build=join platform (directory,"library.build")
+          in if (OS.FileSys.access (build,[]) handle OS.SysErr _ => false) then SOME build
+             else case parent platform directory of NONE => NONE
+               | SOME above => if List.exists (fn other => other=above) seen orelse length seen>64 then NONE
+                   else up (above,directory::seen) end
+    in up (directory platform path,[]) end
   fun contexts (workspace as Workspace {platform,lib,settings=stored,...},documents,uri) =
     case U.native (platform,U.parse uri) of NONE => [] | SOME {path,key} =>
     let val config=configurationFor (workspace,uri)
-        val targets=if null (#targets config) then withNamed (workspace,path,#flags config,List.map (fn path =>
+        val targets=if null (#targets config) then withNamed (workspace,documents,path,#flags config,List.map (fn path =>
           let val uri=U.original (U.fromPath (platform,path))
-          in {name=uri,build=uri,flags= #flags config,variables=[],libraryRoot=NONE}:target end) (discover (workspace,path))) else #targets config
+          in {name=uri,build=uri,flags= #flags config,variables=[],libraryRoot=NONE}:target end) (discover (workspace,path)),false) else #targets config
         val overlays=List.mapPartial (fn snapshot:D.snapshot =>
           if not (D.healthy (documents,#uri snapshot)) then NONE else
           case U.native (platform,U.parse (#uri snapshot)) of NONE => NONE
@@ -229,7 +254,7 @@ struct
         fun target (target:target) =
           let val session=C.session {lib=SOME (getOpt (#libraryRoot target,getOpt (#libraryRoot config,lib))),flags= #flags target}
               val build=filePath platform (#build target)
-              val project=(C.Project.read (session,{file=build,workspace=rootFile platform build,
+              val project=(C.Project.read (session,{file=build,workspace=rootFileIn (platform,documents) build,
                 variables= #variables config @ #variables target,overlays=overlays,windows=platform=U.Windows})
                 before C.close session) handle e => (C.close session;raise e)
               val sources=List.filter (fn source:C.Project.source => sameFile platform (#file source,path)) (C.Project.sources project)
@@ -240,6 +265,16 @@ struct
              target= #name target,ordinal= #ordinal source,project=project,source=source}:context) sources end
         val found=List.concat (List.map (fn candidate =>
           if null (#targets config) then (target candidate handle C.Failed _ => []) else target candidate) targets)
+        (* One owner (D26): a file of a library is checked in the library,
+           whatever else holds it, a test's build among them, where the
+           library holds it; unless the settings name the context to take. *)
+        val found=if isSome (#activeContext config) orelse not (!owners) then found else
+          case ownerBuild platform path of NONE => found | SOME build =>
+            let val owned=List.filter (fn context:context => sameFile platform (filePath platform (#build context),build)) found
+                val owned=if not (null owned) then owned else
+                  let val uri=U.original (U.fromPath (platform,build))
+                  in target {name=uri,build=uri,flags= #flags config,variables=[],libraryRoot=NONE} handle C.Failed _ => [] end
+            in if null owned then found else owned end
         val basis=join platform (getOpt(#libraryRoot config,lib),"basis")
         val build=basisBuild platform (getOpt(#libraryRoot config,lib))
     in if not(null found) orelse not(below(pathKey platform basis,key)) then found
@@ -260,4 +295,25 @@ struct
        | NONE => case contexts of [] => Loose | [context] => Selected context | _ => Ambiguous contexts
     in (selection,contexts) end
   fun select arguments= #1 (resolve arguments)
+  (* The context of a file in no build: the implicit library a build at a
+     place no file has names (RuneLspImplicit), read through an overlay *)
+  fun implicitContext (workspace as Workspace {platform,lib,...},documents,uri,{build,text}) : context option =
+    case U.native (platform,U.parse uri) of NONE => NONE | SOME {path,...} =>
+    let val config=configurationFor (workspace,uri)
+        val overlays={file=build,text=text} :: List.mapPartial (fn snapshot:D.snapshot =>
+          if not (D.healthy (documents,#uri snapshot)) then NONE else
+          case U.native (platform,U.parse (#uri snapshot)) of NONE => NONE
+          | SOME {path,...} => SOME {file=path,text=LspPosition.text (#content snapshot)}) (D.all documents)
+        val session=C.session {lib=SOME (getOpt (#libraryRoot config,lib)),flags= #flags config}
+        val project=(C.Project.read (session,{file=build,workspace=rootFileIn (platform,documents) path,
+          variables= #variables config,overlays=overlays,windows=platform=U.Windows}) before C.close session)
+          handle e => (C.close session;raise e)
+        val buildUri=U.original (U.fromPath (platform,build))
+    in case List.find (fn source:C.Project.source => sameFile platform (#file source,path)) (C.Project.sources project) of
+         NONE => NONE
+       | SOME source => SOME {id=buildUri ^ "#implicit:" ^ Int.toString (#ordinal source),
+           label="its directory, and where the names it uses are declared (" ^
+             Int.toString (length (C.Project.sources project)) ^ " files)",
+           name="implicit",build=buildUri,target="implicit",ordinal= #ordinal source,project=project,source=source} end
+    handle C.Failed _ => NONE | U.Invalid => NONE
 end

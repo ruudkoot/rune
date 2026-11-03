@@ -137,9 +137,21 @@ logical paths; output contains no acquisition directory or timestamp.
 An altered immutable set is reported, including by `generate`; remove the
 damaged generated output directory and regenerate to recover it.
 
+`rehash --out DIR` gives the set that `DIR/current.build` names the name its
+files make now. The name is the hash of every file of the set, its build
+files (`library.build`, `native.build`) among them, so an edit of one of
+those, a migration of the build language, leaves a set whose name is not its
+hash. A rehash publishes it under its hash, as `generate` publishes, and
+points `current.build` at it: no headers, no target and no SDK are read, and
+what it writes is what `generate` would write of the same inputs. The old set
+stays, unless `--remove-old`. A set whose interface (`public_sig.sml`) is not
+the one its pointer names is refused: that is a `generate`'s. `check` stays
+the oracle of a set against its headers.
+
 Use `use build/ffi-generated/scalars/current.build` in a native application's
-`.build` file. Generation remains a separate prerequisite: `.build` never
-runs a command. The current file selects a normal virtual module
+`.build` file. Generation remains a separate prerequisite, an explicit
+command whose output is committed, not a step that a build runs
+(docs/build.md, Generated sources). The current file selects a normal virtual module
 implementation and exposes explicit raw/layout modules. An alternate
 implementation entrypoint reads the same stable public signature, supplies
 `implements GeneratedScalars = ... end`, then reads the stable virtual

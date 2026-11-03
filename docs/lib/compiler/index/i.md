@@ -1,6 +1,6 @@
 # Index: I
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) **i** [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) **i** [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
 - `Analysis.id` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.id)
 - `Analysis.implementationsOf` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.implementationsof)

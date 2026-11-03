@@ -1,5 +1,11 @@
-rune-plan 1
+rune-plan 2
 basis demand
+generate scripts/gen-version.sh .
+  argument --config
+  argument rune.plan
+  argument build/config.sml
+  writes build/config.sml
+end
 program
   unit build/config.sml build/config.sml ascii
   unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii
@@ -121,12 +127,13 @@ program
   unit src/driver/options.sml src/driver/options.sml ascii
   unit src/driver/parallel.sml src/driver/parallel.sml ascii
   unit src/driver/cachecheck.sml src/driver/cachecheck.sml ascii
+  unit src/driver/steps.sml src/driver/steps.sml ascii
   unit src/driver/main.sml src/driver/main.sml ascii
   unit src/driver/serve.sml src/driver/serve.sml ascii
   unit src/main/rune-main.sml src/main/rune-main.sml ascii
 end
 provenance
-  input rune.build 781360b4534b72a97a25e54a812f094beb8e4c1eb8a2ed52b6201e6600bf0c1e
+  input rune.build 4ea4fcc4854afe661a33d05908de7e36aeaf16e7ea8b071d104b16e944c68f4e
   input lib/compiler/internal.build 1075231ae8e51fd67ef36c46c59eedec3d93dc6c7f2aa1208ee286a4a4a57597
   input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c

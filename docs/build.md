@@ -34,7 +34,7 @@ dec      ::= path                            a file, compiled in the basis befor
            | "use" path                      another build file, elaborated once
            | "implements" id "=" dec ... "end"
                                              the implementation of the virtual
-                                             module id (below)
+                                             module or functor id (below)
            | "annotate" string ... "in" dec ... "end"
                                              what the units inside may do (below)
            | "libraries" import ... "end"    libraries selected by this build,
@@ -46,6 +46,15 @@ dec      ::= path                            a file, compiled in the basis befor
                                              applies them (below)
            | "inline" "val" name ... "end"   functions copied into every unit that
                                              names them (below)
+           | "generate" path [ arguments ] [ "inputs" path ... "end" ]
+               "outputs" path ... "end"      a step: a tool the build runs before
+                                             it reads a source (Generated sources)
+           | "preprocessor" id path [ arguments ] [ "inputs" path ... "end" ]
+                                             a class of files, each given to a
+                                             tool, whose output is compiled
+                                             (Generated sources)
+arguments ::= "(" arg "," ... ")"            arg ::= a word or a string, given
+                                             to the tool as written
 header   ::= ( "requires" import ... "end"    what a library's build file says
              | "exports" exports              first (A library's header, below)
              | "friends" path ... "end"
@@ -164,6 +173,7 @@ but through the names it gives.
 | `noWarnings` | their warnings are not printed |
 | `prelude` | the units define the language for what follows: what they leave, a fixity among it, is everyone's after them, and they need not be well-formed ([units.md](units.md), *Well-formed units*) |
 | `ascii`, `unicode` (or `unicode=utf8`), `unicode=latin1` | the mode the units are read in, over the command line's `--unicode[=ENC]`; the last such annotation in force wins ([units.md](units.md), *Source modes*) |
+| `preprocess=NAME` | the units are in the class of the preprocessor NAME: what they compile is what its tool makes of each (*Generated sources*, below); the last such annotation in force wins |
 
 An annotation that is none of these, or of a library's below, is an error.
 
@@ -519,10 +529,12 @@ last there.
 
 | Line | What it says |
 |---|---|
-| `rune-plan 1` | the version of the text |
+| `rune-plan 1`, `rune-plan 2` | the version of the text: 2 where the plan has a step or a preprocessor, which version 1 has not, and 1 where it has neither |
 | `basis B` | `demand`, `all` (`--basis all`) or `none` (`--no-prelude`); the Basis Library itself is implicit, as in a build file |
 | `view NAME` | the program's view of the Basis Library, where it has one (`view NAME`, `--basis-view`) |
 | `inline functor F`, `inline val f` | what the program's build files mark to be inlined, sorted |
+| `preprocessor NAME TOOL DIR` ... `end` | a preprocessor's class: its tool, the directory it runs in (its build file's), `argument A` for each argument and `reads PATH` for each input (*Generated sources*) |
+| `generate TOOL DIR` ... `end` | a step, in the order declared: as a preprocessor, and `writes PATH` for each output; printed, never run |
 | `library NAME DIR` ... `end` | each library the program names, with those they are written on, each before what is written on it: its name, as a unit's name begins, and its directory |
 | `form F` | `header`, `block` (the older form) or `open` (no boundary) |
 | `requires L` | the libraries it is written on, as written, in order: `requires` or `libraries`, a library with renames as one word, `same(structure:Same=One)` |
@@ -531,7 +543,7 @@ last there.
 | `unit NAME PATH MODE ANNOTATION ...` | a file: its unit's name, as a compile names it (units.md, *Names*), its path, the mode it is read in and its annotations |
 | `use KEY` ... `end`, `replay KEY` | a build file's steps the first time it is used, and its second use, which adds what the first declared as `use` says above |
 | `boundary` ... `end` | a library's build file used by a build, with its exports, then its steps |
-| `implements NAME` ... `end` | a virtual module's implementation |
+| `implements NAME` ... `end` | a virtual module's or functor's implementation |
 | `provenance` ... `end` | how the plan was made, outside what two forms of one plan compare on: each build file read, `input PATH SHA256`, which `sha256sum` checks |
 
 A path is from the current directory, a library's too, wherever `--lib` is:
@@ -542,7 +554,88 @@ host, a tool or another build system reads without the compiler. The words
 `edge` and `scc` are kept for what a plan discovered from the sources would
 add, an edge between units and a group of units that use each other; a plan
 of version 1 has neither, and a reader refuses them, as it refuses any word
-it does not know.
+it does not know. Version 2 is version 1 with steps and preprocessors, and a
+plan with neither is printed as version 1, so that every plan a reader of
+version 1 could read is one it can: of the five committed plans, `rune.plan`
+and `runedoc.plan` are of version 2, for their step (*Generated sources*),
+and the rest of version 1. `scripts/plan-files.sh` reads both; it lists a
+step's outputs as the files they are, since a host makes them itself, and
+refuses a file that a preprocessor makes what is compiled of.
+
+## Generated sources
+
+A build may say what makes its sources, as a *step* or a *preprocessor*,
+and runs them before it reads a source: the build-system roadmap's D16, in
+the manner of Bazel's declared outputs and holbuild's `[[generate]]`.
+Planning runs neither: `--plan`, `--build-list` and an editor read a build
+as it is written, and a step is in the plan's text (*The plan*, above) as
+what it is, not what it made. So the graph is static, and a step cannot
+add a unit or an edge. A step and a preprocessor belong to a program's
+build files, and a library's `library.build` declares neither.
+
+```
+(* a step: the tool, its arguments, what it reads, what it makes *)
+generate gen/tables.sh (tables.txt, tables.sml)
+  inputs gen/tables.sh tables.txt end
+  outputs tables.sml end
+tables.sml                          (* a unit, as any file is *)
+
+(* a preprocessor, and the files it is given *)
+preprocessor quote $(HOLDIR)/bin/unquote inputs $(HOLDIR)/tools-rune/bin/unquote.rbc end
+annotate "preprocess=quote" in
+  files src/boolScript.sml src/boolLib.sml end
+end
+```
+
+A tool is a path, as a source's is, and runs in the directory of the build
+file that declares it: a step as `TOOL ARG ...`, a preprocessor as
+`TOOL ARG ... INPUT OUTPUT` for each file of its class, where INPUT is the
+file and OUTPUT a file the tool writes. A tool that exits other than 0 stops
+the build.
+
+**A step** is run before the units are read, in the order the build file
+declares the steps, and each of its outputs must be there after it, or the
+build stops. Its key is its tool's bytes, its arguments, and its inputs'
+paths and bytes. The cache (`--cache-dir`) keeps, under `steps/`, the key
+a step last ran under and the hash of each output it made:
+
+* a step whose key and outputs are as kept is not run;
+* one whose key is not runs again: its outputs are stale, and a tool that
+  fails or leaves one unmade stops the build, so that what was there is not
+  compiled;
+* an output that is not what its step made under the key it still has is
+  refused, since it was changed after: by hand, or by another tool. Remove
+  it, and the build makes it again;
+* a step that declares no inputs runs on every build, since nothing says
+  when it is due. `rune.build`'s first step is one:
+  `scripts/gen-version.sh --config rune.plan build/config.sml` writes the
+  version, git's, and the compiler's identity, a hash of `rune.plan` and its
+  closure ([building.md](building.md), *The compiler's identity*), which is
+  what the hosts' build runs too;
+* with `--no-cache` nothing is kept, and every step runs.
+
+A step's outputs are files of the tree, which units name as they name any
+file: a unit is not told what made its file, and its key is the file's
+bytes. The other SML systems read a step's outputs from the plan as files
+they have, and make them by their own means (`build/config.sml`, by make).
+
+**A preprocessor's** output is what a unit of its class compiles, under the
+file's name, so that a diagnostic names the file, at the line of the output
+(a filter that keeps the lines, as HOL4's does, keeps them right). A unit's
+key is the output's bytes, so that a build after an edit of the file is the
+build of what the edit makes of it, warm as cold. Outputs are kept in the
+cache by the tool's bytes, its arguments, its inputs' bytes and the file's,
+and the tool is given a file only where none is kept. `rune --deps --build`
+preprocesses as a compile does; an editor reads the files as they are. A
+host has no preprocessor, and `scripts/plan-files.sh` refuses a plan with a
+file in the class of one.
+
+A set of generated sources that its generator writes once, and that is
+committed, is not a step: `runeffi` writes the sets under `lib/ffi/*/generated`
+by an explicit command, with the text of each set's build files in its hash
+(docs/plans/runeffi.md). `runeffi rehash --out DIR` gives a set its hash
+again after an edit of its build files, without the headers it was generated
+from.
 
 ## What is gone
 
@@ -649,3 +742,33 @@ implementation of each virtual module: two are refused. One without any is
 compiled, and raises `Dynamic.Mismatch` when the declaration runs. Unlike a
 loaded module, a virtual module is part of the program, which can be
 compiled whole (`--whole`).
+
+A functor can be virtual too (the build-system roadmap's M21):
+
+```sml
+functor Table = _virtual (K : KEY) : TABLE where type key = K.t
+```
+
+is a functor of the parameter's signature `KEY` and the result's `TABLE`, in
+which `K` is the parameter, and nothing else; its implementation ends a file
+of an `implements Table = ... end` block with `_export functor Table (K : KEY)
+: TABLE where type key = K.t = ...`. An application is typed by the two
+signatures alone, its table and its exception new, its key the parameter's,
+and compiled as a call of the implementation's function, which the
+declaration takes (`RuneDynamic.take`, as for a structure) where the
+fingerprints of the two ABIs agree (docs/units.md, Dynamic modules): no unit
+after the block names the implementation, and none copies its body.
+`examples/virtual/table` has two, an association list (`list.build`) and a
+balanced tree (`tree.build`), each applied to two kinds of key; the second
+build through the first one's cache compiles `tree.sml` alone, each gives
+the same output, and `--whole` the bytes of the same files compiled whole
+(`virtual-table-*` of `tests/runner/scenarios.sml`). With no implementation
+the program compiles, and the declaration raises `Dynamic.Mismatch` when it
+runs; with two the build is refused; an implementation compiled against
+another `KEY`, which only the block sees, is refused when the declaration
+runs. `functor Table = _dynamic "table.rbu" (K : KEY) : TABLE where type key
+= K.t` (`dynamic.sml`, `dynamic.build`) takes it from a unit instead, a
+plugin compiled apart (`plugin.build`). `implements NAME` names a structure
+or a functor, and a build implements a name once. `where type` between two
+virtual modules is not built: a virtual functor's result names its own
+parameter's types alone.

@@ -76,6 +76,7 @@ static void usage(void) {
 #ifdef RUNE_CENSUS
         "  --census-dir DIR     census VM: write the allocation traces of docs/census.md into DIR\n"
         "  --census-every N     census VM: a forced collection every N bytes allocated (default 32768; 0 = none)\n"
+        "  --census-at C,C,...  census VM: a forced collection also where the clock reaches each C (ascending)\n"
         "  --census-fields 0|1  census VM: write fields.bin (default 1)\n"
         "  --census-summary     census VM: no trace files (but pcs.bin) and no per-object arrays: census.txt alone\n"
         "  --census-ids N       census VM: the objects expected, so that the per-object arrays are allocated once\n"
@@ -185,6 +186,9 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--census-dir") == 0 && i + 1 < argc) census_dir = argv[++i];
         else if (strcmp(argv[i], "--census-every") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &census_every_arg)) { usage(); return 2; }
+        }
+        else if (strcmp(argv[i], "--census-at") == 0 && i + 1 < argc) {
+            if (!census_at_parse(argv[++i])) { usage(); return 2; }
         }
         else if (strcmp(argv[i], "--census-fields") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &census_fields) || census_fields > 1) { usage(); return 2; }

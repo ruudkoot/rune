@@ -7,18 +7,24 @@ struct
   type recipe = {rbc : string, args : string list, cwd : string, output : string}
   type collection = {clock : IntInf.int, copied : IntInf.int}
   type band = {clock : IntInf.int, lo : IntInf.int, hi : IntInf.int, exact : bool}
-  (* The copied bytes of each of the stock VM's collections against the band
-     at its own clock, which bin/heapsim --probe gives. The two band runs
-     cannot stand in for it: each collects where its own live data puts it
-     (the lower band, with less alive, later), and an object that lands
-     between two runs' triggers moves a collection past it. compile-sigs at
-     4 MiB after build-system M4: the stock's seventh collection came before
-     IntTable.grow's array of 4,104 bytes, the lower band's after it and
-     4,848 bytes later, copying 4,632 bytes more; the two runs' totals, 304
-     bytes apart, were 3,104 and 3,408 bytes above the stock's, while each of
-     its eight collections was in its band. Stale registers can still put a
-     collection outside (docs/census.md, Limits). NONE when every collection
-     is inside its band, else what is wrong with the first that is not. *)
+  (* The copied bytes of each of the stock VM's collections against what the
+     census found alive at the same clock (bin/heapsim --probe), where the
+     census collected too: a census of the setting's own, whose forced
+     collections are where the stock's were and nowhere else (--census-at).
+     A collection clears what it does not keep (a waiting frame's dead
+     registers, the stack above sp: runtime/gc/copy.c) and the running
+     frame's registers are all roots, so what is alive at a point depends on
+     where the VM collected before. A census that samples elsewhere keeps
+     more or less alive than the stock: compile-sigs at 4 MiB after
+     build-system M15, M19 and M21 copied 3,982,032 bytes at its eighth
+     collection, where the census of every 8 KiB had 4,184,696 to 4,719,288
+     (202,664 bytes of the IR, which a frame that waited during the stock's
+     collection held in a dead register and still held, running, at the
+     census's next sample), and string_ops at 1 MiB 287,952 bytes more than
+     that census's exact sample (docs/census.md, Limits). With the stock's
+     own collections the band is a point and the stock must be on it. NONE
+     when every collection is, else what is wrong with the first that is
+     not. *)
   fun outside (stock : collection list, bands : band list) =
     let
       fun text n = String.translate (fn #"~" => "-" | c => str c) (IntInf.toString n)
@@ -26,8 +32,8 @@ struct
             let val name = "collection " ^ Int.toString i ^ " at clock " ^ text clock
             in if at <> clock then SOME (name ^ ": the band is at clock " ^ text at)
                else if not exact then SOME (name ^ ": not where an object of the trace begins")
-               else if copied < lo orelse hi < copied then
-                 SOME (name ^ ": copied " ^ text copied ^ ", the band there " ^ text lo ^ " to " ^ text hi)
+               else if lo <> hi then SOME (name ^ ": the census did not collect there (the band " ^ text lo ^ " to " ^ text hi ^ ")")
+               else if copied <> lo then SOME (name ^ ": copied " ^ text copied ^ ", the census found " ^ text lo ^ " alive")
                else go (i + 1, cs, bs) end
         | go (_, [], []) = NONE
         | go _ = SOME (Int.toString (length stock) ^ " collections, " ^ Int.toString (length bands) ^ " bands")
@@ -55,7 +61,6 @@ struct
         "probe:" :: "at" :: clock :: "lo" :: lo :: "hi" :: hi :: rest =>
           SOME {clock = number clock, lo = number lo, hi = number hi, exact = null rest}
       | _ => NONE) (lines text)
-  fun liveWithin (lo, hi, actual) = IntInf.min (lo, hi) - 65536 <= actual andalso actual <= IntInf.max (lo, hi) + 65536
   fun budget name key =
     case List.find (String.isPrefix (key ^ " ")) (lines (read ("tests/perf/" ^ name ^ ".budget"))) of
       SOME line => String.tokens Char.isSpace (String.extract (line, size key + 1, NONE)) | NONE => []
@@ -116,13 +121,15 @@ struct
       val () = TraceCheck.silent trace
       val () = ignore (command dir "check" ["bin/heapsim", "--check", "--trace", trace])
       val stock = env ("RUNEVM_NEW", "bin/runevm")
+      val census = env ("RUNEVM_CENSUS", "bin/runevm-census")
+      val pretrace = metaValue trace "pretrace_bytes"
       fun one (heap, fill) =
         let
           val label = heap ^ "-" ^ fill
           val log = dir ^ "/stock-" ^ label ^ ".gclog"
           val () = reset recipe
           val () = ignore (commandIn (fn e => e) cwd dir ("stock-" ^ label)
-              ([stock, "--jit=off", "--nursery", "0", "--stats", "--gc-log", log, "--heap-size", heap, "--heap-fill", fill, rbc] @ args))
+              ([stock, "--jit=off", "--count", "--nursery", "0", "--stats", "--gc-log", log, "--heap-size", heap, "--heap-fill", fill, rbc] @ args))
           val stats = case List.rev (List.filter (fn line => String.isPrefix "runevm: " line andalso String.isSubstring " collections," line)
                          (lines (read (dir ^ "/stock-" ^ label ^ ".err")))) of
                         line :: _ => String.tokens (fn c => Char.isSpace c orelse c = #",") line
@@ -132,11 +139,28 @@ struct
           val ss = number (List.nth (stats, 7))
           val sl = number (List.nth (stats, 9))
           val sx = number (List.nth (stats, 12))
-          val made = collections (log, metaValue trace "pretrace_bytes")
+          val made = collections (log, pretrace)
           val () = need (IntInf.fromInt (length made) = sc andalso List.foldl (fn ({copied, ...}, n) => n + copied) 0 made = sx,
                          "stock-" ^ label ^ ": its --gc-log and its --stats disagree")
-          val probe = if null made then [] else ["--probe", String.concatWith "," (List.map (fn {clock, ...} => IntInf.toString clock) made)]
-          fun band band = command dir (band ^ "-" ^ label) (["bin/heapsim", "--trace", trace, "--workload", name,
+          (* this setting's census: forced collections where the stock's were
+             (a heap that grows is collected twice at one clock) and nowhere
+             else, so that it clears what the stock cleared (outside, above) *)
+          val clocks = List.map (fn {clock, ...} => IntInf.toString clock) made
+          val distinct = List.foldr (fn (c, cs) => case cs of d :: _ => if c = d then cs else c :: cs | [] => [c]) [] clocks
+          val at = dir ^ "/trace-" ^ label
+          val () = rmTree at
+          val () = reset recipe
+          val () = ignore (commandIn (fn e => e) cwd dir ("census-" ^ label)
+              ([census, "--jit=off", "--count", "--stats", "--heap-size", "1073741824", "--heap-fill", "50",
+                "--census-dir", at, "--census-every", "0"] @ (if null made then [] else ["--census-at", String.concatWith "," clocks]) @ [rbc] @ args))
+          val () = need (count (dir ^ "/census-" ^ label ^ ".err") = count (dir ^ "/stock-" ^ label ^ ".err"),
+                         "census-" ^ label ^ ": its count differs from the stock's")
+          val () = need (metaValue at "samples" = IntInf.fromInt (length distinct + 1),
+                         "census-" ^ label ^ ": " ^ IntInf.toString (metaValue at "samples") ^ " samples where the stock collected at "
+                         ^ Int.toString (length distinct) ^ " clocks, and the exit is one more: it did not collect where the stock did and only there")
+          val () = ignore (command dir ("check-" ^ label) ["bin/heapsim", "--check", "--trace", at])
+          val probe = if null made then [] else ["--probe", String.concatWith "," clocks]
+          fun band band = command dir (band ^ "-" ^ label) (["bin/heapsim", "--trace", at, "--workload", name,
                  "--layout", "W8", "--collector", "copier", "--heap-size", heap, "--heap-fill", fill, "--band", band]
                  @ (if band = "lo" then probe else []))
           val lo = band "lo"
@@ -150,23 +174,23 @@ struct
           val hx = numeric (hi, 20)
           val ll = numeric (lo, 31)
           val hl = numeric (hi, 31)
-          val verdict = if IntInf.min (lc, hc) <= sc andalso sc <= IntInf.max (lc, hc) then "ok" else "COLLECTIONS"
-          val verdict = verdict ^ (if numeric (lo, 30) = ss then "" else "/SEMISPACE")
+          (* with liveness exact where the stock collects, both bands' runs
+             make the stock's collections, from the first, which allocation
+             alone decides: every number is the stock's *)
+          val verdict = if lc = sc andalso hc = sc then "ok" else "COLLECTIONS"
+          val verdict = verdict ^ (if numeric (lo, 30) = ss andalso numeric (hi, 30) = ss then "" else "/SEMISPACE")
           val verdict = verdict ^ (if numeric (lo, 8) = sb then "" else "/BYTES")
-          val verdict = verdict ^ (if isSome miss then "/COPIED" else "")
-          val verdict = if verdict = "ok" andalso not (liveWithin (ll, hl, sl)) then "LIVE" else verdict
+          val verdict = verdict ^ (if isSome miss orelse lx <> sx orelse hx <> sx then "/COPIED" else "")
+          val verdict = verdict ^ (if ll = sl andalso hl = sl then "" else "/LIVE")
           fun text n = String.translate (fn #"~" => "-" | c => str c) (IntInf.toString n)
           fun group ns = String.concatWith " " (List.map text ns)
-          (* the band at the stock's own collections, summed, and its width *)
-          val width = if blo = 0 then "0" else String.translate (fn #"~" => "-" | c => str c)
-                (Real.fmt (StringCvt.FIX (SOME 3)) (100.0 * Real.fromLargeInt (IntInf.toLarge (bhi - blo)) / Real.fromLargeInt (IntInf.toLarge blo)))
           val row = String.concatWith "\t" [name, heap, fill,
                 "| " ^ group [sc, ss, sx, sl, number (List.nth (stats, 17))] ^ " us",
                 "| " ^ group [lc, numeric (lo, 30), lx, ll], "| " ^ group [hc, numeric (hi, 30), hx, hl],
-                "| " ^ group [blo, bhi] ^ " " ^ width ^ "%", verdict]
+                "| " ^ group [blo, bhi], verdict]
           val () = append (report, row ^ "\n")
           val () = say (row ^ "\n")
-        in if verdict = "ok" then ()
+        in if verdict = "ok" then rmTree at
            else failures := (label ^ ": " ^ verdict ^ (case miss of SOME why => " (" ^ why ^ ")" | NONE => "")) :: !failures end
       val () = List.app one [("4194304", "50"), ("67108864", "50"), ("268435456", "50"), ("67108864", "25"), ("67108864", "80")]
     in need (null (!failures), String.concatWith "; " (List.rev (!failures))) end

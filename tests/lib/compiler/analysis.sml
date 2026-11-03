@@ -686,6 +686,91 @@ struct
         val ()=check ("a client finds the moved definitions",not (null (targets first))
           andalso List.map (fn start => start+moved) (targets first)=targets second)
     in C.close parent end
+  (* Past the first error (docs/language-server.md, Contexts): a unit reports
+     each declaration that fails, as a compile does, and what it holds past
+     them answers a question; the units after it are not reached; and a kept
+     analysis says what a fresh one does. *)
+  fun pastFirstError () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="past-first-error"})
+        val text="val a:int=true\nval b=1\nval c:string=2\nval d=b+1\n"
+        val first=input ("one.sml",text,"1")
+        val second=input ("two.sml","val e=d\n","1")
+        val result=analyze (context,[first,second])
+        val errors=A.diagnostics result
+        val ()=check ("each independent error of a unit is reported",
+          List.map (fn diagnostic:C.diagnostic => (#file diagnostic,#line diagnostic)) errors=[("one.sml",1),("one.sml",3)])
+        val one=valOf (A.unitAt (result,{ordinal=0}))
+        val two=valOf (A.unitAt (result,{ordinal=1}))
+        fun at (snapshot,needle)=
+          let val (front,_)=Substring.position needle (Substring.full text) in Substring.size front end
+        val ()=check ("a declaration after an error is checked, and answers",
+          A.typeAtOccurrence (result,{ordinal=0,offset=at (result,"b+1")})=SOME "int"
+          andalso List.exists (fn occurrence:A.occurrence => #name occurrence="d" andalso #isDefinition occurrence)
+            (A.occurrencesIn (result,one)))
+        val ()=check ("the unit after the one that failed is not reached",null (A.occurrencesIn (result,two))
+          andalso null (A.factsIn (result,two)))
+        val ()=check ("a question past the error sees what is declared there",
+          List.exists (fn candidate:A.candidate => #name candidate="d")
+            (A.visibleAt (result,{ordinal=0,offset=size text,path=[]})))
+        val fixed=input ("one.sml","val a:int=1\nval b=1\nval c:string=2\nval d=b+1\n","2")
+        val edited=analyze (context,[fixed,second])
+        val oracle=freshly (parent,[fixed,second])
+        val ()=check ("a kept analysis past an error says what a fresh one does",same (edited,oracle)
+          andalso List.map #line (A.diagnostics edited)=[3])
+        val clean=analyze (context,[input ("one.sml","val d=1\n","3"),second])
+        val ()=check ("and once it checks, the units after it are reached",null (A.diagnostics clean)
+          andalso not (null (A.occurrencesIn (clean,two))) andalso same (clean,freshly (parent,A.inputs clean)))
+        val broken=analyze (context,[input ("one.sml","val = 1\nval x=2\nval = 3\n","4"),second])
+        val ()=check ("each syntax error of a unit is reported",length (A.diagnostics broken)>=2
+          andalso List.all (fn diagnostic:C.diagnostic => #file diagnostic="one.sml") (A.diagnostics broken))
+    in A.close context;C.close parent end
+  (* Two builds over one library (D26): a context that shares takes the
+     library's units from what another checked, and says what a fresh one
+     does; one that does not share elaborates them. *)
+  fun sharedLibrary () = scopedRoot ("structure:Public",[],fn {dir,...} =>
+    let val parent=C.session {lib=SOME dir,flags=["--library","inner"]}
+        val pool=A.pool ()
+        fun context (name,file,shares)=
+          let val made=A.create (parent,{context=name})
+          in A.share (made,if shares then SOME pool else NONE);A.focus (made,SOME [file]);made end
+        val first=context ("first","one.sml",true)
+        val second=context ("second","two.sml",true)
+        val alone=context ("alone","two.sml",false)
+        val one=analyze (first,[input ("one.sml","val one=Public.y\n","1")])
+        val sources=[input ("two.sml","val two=Public.y+1\n","1")]
+        val two=analyze (second,sources)
+        val fresh=analyze (alone,sources)
+        val ()=check ("the first build checks the library",null (A.diagnostics one) andalso #checked (A.work one)=3)
+        val ()=check ("a second build over it takes the library's units, and checks its own",
+          #checked (A.work two)=1 andalso #loaded (A.route two)=2 andalso #checked (A.work fresh)=3)
+        val ()=check ("and says what a fresh one does",same (two,fresh))
+        val edited=[input ("two.sml","val two=Public.y+2\n","2")]
+    in check ("and goes on as a kept one does",same (analyze (second,edited),analyze (alone,edited)));
+       A.close first;A.close second;A.close alone;C.close parent end)
+  (* A build's view of the Basis Library (D12), which an analysis selects as a
+     compile does: a Basis of one structure, whose view narrow hides a member. *)
+  fun basisView () = scopedRoot ("structure:Public",[],fn {dir,settle,...} =>
+    let fun write (name,text)=let val output=TextIO.openOut (dir ^ "/" ^ name) in TextIO.output (output,text);TextIO.closeOut output end
+        val ()=write ("basis/basis.sml","structure Base=struct val one=1 val two=2 end\n")
+        val ()=write ("basis/narrow.sml","structure Base:sig val one:int end=Base\n")
+        val ()=write ("basis/MANIFEST","basis.sml | always | yes | Base | \nnarrow.sml | seal@narrow | yes | Base | \n")
+        val ()=write ("proj/viewed.build","view narrow\nfiles client.sml end\n")
+        val ()=write ("proj/whole.build","files client.sml end\n")
+        val ()=settle ()
+        val parent=C.session {lib=SOME dir,flags=[]}
+        fun checked build=
+          let val project=C.Project.read (parent,{file=dir ^ "/proj/" ^ build,workspace=NONE,variables=[],overlays=[],windows=false})
+              val inputs=List.map (fn source:C.Project.source => {file= #file source,text="val seen=Base.two\n",mode= #mode source,
+                annotations= #annotations source,revision="1"}:A.input) (C.Project.sources project)
+              val context=A.create (parent,{context=build})
+          in A.check (context,{project=SOME project,inputs=inputs,cancelled=fn () => false}) before A.close context end
+        val whole=checked "whole.build"
+        val viewed=checked "viewed.build"
+        val ()=check ("without a view the whole Basis Library is seen",null (A.diagnostics whole))
+        val ()=check ("a build's view hides what it hides, as in a compile",
+          List.exists (fn diagnostic:C.diagnostic => String.isSubstring "two" (#message diagnostic)) (A.diagnostics viewed))
+    in C.close parent end)
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -713,6 +798,9 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "call-signatures" CompilerAnalysisTests.signatures,
      Test.it "node-types" CompilerAnalysisTests.nodeTypes,
      Test.it "spans-move-no-identity" CompilerAnalysisTests.spansMoveNoIdentity,
-     Test.it "generated-layouts" CompilerAnalysisTests.generatedLayouts]
+     Test.it "generated-layouts" CompilerAnalysisTests.generatedLayouts,
+     Test.it "past-the-first-error" CompilerAnalysisTests.pastFirstError,
+     Test.it "basis-view" CompilerAnalysisTests.basisView,
+     Test.it "two-builds-share-a-library" CompilerAnalysisTests.sharedLibrary]
 end)
 val ()=CompilerAnalysisTestMain.main ()

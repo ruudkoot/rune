@@ -549,7 +549,12 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   across it: in the directory of a key it looks in, and in `units/` when
   it writes there (S86). Temporary publication names
   come from an OS reservation held until the write finishes, as for
-  bytecode output; generating them does not format clocks or process ids.
+  bytecode output; generating them does not format clocks or process ids;
+* beside the configurations, `steps/` holds what a build's declared steps and
+  preprocessors made ([build.md](build.md), *Generated sources*): the key a
+  step last ran under, with the hash of each output, and a preprocessor's
+  output of each file, by the tool and the file's bytes. A unit of a
+  preprocessed file is keyed by that output, as any unit is by its text.
 
 **What a boundary does to a key.** A client's usages are by name, so what
 its entry holds of a library is what it could see and did name: a boundary
@@ -977,6 +982,61 @@ program. The scenarios `dynamic` of `tests/runner/scenarios.sml` (`make test-dyn
 virtual module (`structure X = _virtual : SIG`, [build.md](build.md),
 *Virtual modules*) is the same boundary inside one program, its
 implementation chosen by the build file.
+
+**A dynamic functor** (the build-system roadmap's M21 and D22) is the same
+for a functor, applied by its signature alone:
+
+```sml
+(* the program, compiled against KEY and TABLE alone *)
+functor Table = _dynamic "table.rbu" (K : KEY) : TABLE where type key = K.t
+structure Squares = Table (IntKey)
+
+(* the module, compiled to table.rbu *)
+_export functor Table (K : KEY) : TABLE where type key = K.t = struct ... end
+```
+
+`A` and `B` of `functor F = _dynamic "path" (X : A) : B` are its parameter's
+signature and its result's, in which `X` is the parameter. An application is
+typed by them alone, as rule 54 types any functor's (its types and
+exceptions new at each, `B`'s abstract types as an opaque ascription's), and
+compiled as a call of the functor's function over its argument's record and
+its result's, as an application of a functor of an earlier unit is ([ir.md](ir.md),
+*Functors compiled once*): there is no body to copy, so nothing of an
+implementation reaches the program, and the expansion leaves the call. The
+declaration sets the global of that function from what the module exports,
+the one slot of its record: `_export functor F (X : A) : B = strexp` is a
+functor of the module, its body ascribed to `B` opaquely, whose function its
+unit exports. `functor F = _virtual (X : A) : B` takes it from the program,
+as a virtual structure does ([build.md](build.md), *Virtual modules*).
+`Dynamic.reload` of the file gives the declaration the new module's
+function: an application after it is of the new code, and one before keeps
+its own slots and types, which no later application shares.
+
+The two sides agree on the functor's ABI where they agree on its
+fingerprint (`UnitBasis`, `Elaborate.functorFingerprint`), the hash of: the
+ABI's version and its calling convention; the parameter's record and the
+result's, each slot by name in order, the descriptors of the parameter's
+open constructors among them (`Elaborate.functorShape`); and `A` and `B`, their
+own type names by their places among both lists -- `B` names `A`'s where the
+result's types are the parameter's -- and every other type name by its
+unit's logical name and path, with what defines it, as the ABI layer's
+fingerprints are worked out (*Layers*, above). Nothing of where a signature
+was written is in it, so a client and a module whose files were spelt
+otherwise agree (E10's probe; `spelling` of the scenarios `dynamic`), and
+`Pickle.hash` gives every host the same value (`check-cross`'s `virtual-table`).
+Where they differ, the declaration raises `Dynamic.Mismatch`, which names
+both; each field has a mutant that is refused so (S128 to S130 of
+`tests/incremental/SCENARIOS.md`, the mutants of the cache A1 to A6). A
+datatype `B` specifies is read by the program as the specification lays it
+out, a constructor whose argument is an abstract type of `B` boxed, so an
+implementation that lays it out otherwise is refused where it is compiled,
+as an exported structure's is (`tests/errors/err.export_layout`); a
+datatype of `A` whose constructor takes `A`'s abstract type is laid out as
+the argument's datatype lays it, by the descriptor the caller gives, as for
+any functor. `examples/virtual/table` is both forms, and the scenarios
+`functor-*` of `dynamic` and `virtual-table-*` of `buildfile` are each of
+these. A dynamic or virtual functor is not `inline functor`: it has no body
+for its applications to copy.
 
 ## Parallel builds
 

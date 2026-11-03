@@ -187,6 +187,10 @@ struct
                    "library-strict-classes", "entry", "broken-required-file", "wellformed-rune", "wellformed-mlton",
                    "wellformed-hol4"]
   val factorial = "265252859812191058636308480000000\n~2\n16158687986375067893760000\nequal\n"
+  (* what examples/virtual/table prints, with either implementation *)
+  val tableOutput = "9 squares: 1 1, 2 4, 3 9, 4 16, 5 25, 6 36, 7 49, 8 64, 9 81\n"
+                    ^ "6 words: \"and\" 2, \"bird\" 1, \"cat\" 2, \"dog\" 1, \"saw\" 1, \"the\" 4\n"
+                    ^ "the square of 7 is 49\nno square of 10\nno word \"zebra\"\n"
   fun buildPrepare c () =
     let val () = reset c
         val () = List.app (fn (file, text) => put c file text)
@@ -329,6 +333,17 @@ struct
         val () = List.app (fn file => if isDir (original ^ "/" ^ file) then () else copy (original ^ "/" ^ file) (dir ^ "/bigint/" ^ file)) (entries original)
         val () = put c "bigint/none.build" "bigint_sig.sml bigint.sml main.sml"
         val () = put c "bigint/two.build" "bigint_sig.sml implements BigInt = intinf.sml end implements BigInt = digits.sml end bigint.sml main.sml"
+        (* the virtual functor's example (the build-system roadmap's M21) *)
+        val table = fromRoot "examples/virtual/table"
+        val () = mkdirs (dir ^ "/table")
+        val () = List.app (fn file => if isDir (table ^ "/" ^ file) then () else copy (table ^ "/" ^ file) (dir ^ "/table/" ^ file)) (entries table)
+        val () = put c "table/none.build" "key_sig.sml table_sig.sml table.sml main.sml"
+        val () = put c "table/two.build" "key_sig.sml table_sig.sml implements Table = list.sml end implements Table = tree.sml end table.sml main.sml"
+        (* an implementation compiled against another KEY, which only it sees *)
+        val () = put c "table/other_key.sml" "signature KEY = sig type t val compare : t * t -> order val toString : t -> string val hash : t -> int end"
+        val () = put c "table/other.build" "key_sig.sml table_sig.sml implements Table = other_key.sml list.sml end table.sml main.sml"
+        val () = put c "table/plugin-list.build" "key_sig.sml table_sig.sml list.sml"
+        val () = put c "table/inline.build" "inline functor Table end\nkey_sig.sml table_sig.sml implements Table = list.sml end table.sml main.sml"
         val () = Posix.FileSys.symlink {old = fromRoot "lib/basis", new = dir ^ "/select/lib/basis"}
         val () = success (compiler c "select-index" "select" ["--lib", "lib", "--basis-index", "lib/m"])
         val () = success (compiler c "select-index-ops" "select" ["--lib", "lib", "--no-warnings", "--basis-index", "lib/ops"])
@@ -343,6 +358,140 @@ struct
   fun buildRefused c source message =
     (rmTree (#directory c ^ "/" ^ source ^ ".rbc");
      refused (compiler c source "" ["--build", source ^ ".build", "--no-cache", "-o", source ^ ".rbc"]) message)
+  (* Generated sources (docs/build.md, Generated sources; the build-system
+     roadmap's D16), each scenario in a directory of its own: a step, whose
+     tool is /bin/sh given tool.sh, which writes made.sml from spec.txt; and
+     a preprocessor, which makes a line's @@ val. *)
+  val stepTool = "n=$(cat \"$1\")\ncase \"$n\" in fail) exit 1 ;; none) exit 0 ;; esac\n"
+                 ^ "printf 'structure Made = struct val n = %s end\\n' \"$n\" > \"$2\""
+  fun stepFixture c dir =
+    (rmTree (#directory c ^ "/" ^ dir);
+     List.app (fn (file, text) => put c (dir ^ "/" ^ file) text)
+       [("tool.sh", stepTool), ("spec.txt", "42"), ("main.sml", "val () = print (Int.toString Made.n ^ \"\\n\")"),
+        ("gen.build", "generate /bin/sh (tool.sh, spec.txt, made.sml)\n  inputs tool.sh spec.txt end\n  outputs made.sml end\n"
+                      ^ "made.sml main.sml")])
+  fun stepBuild c dir label flags =
+    compiler c label dir (["--build", "gen.build", "--cache-dir", "cache"] @ flags @ ["-o", "gen.rbc"])
+  fun stepBuilds c dir label expected =
+    (success (stepBuild c dir label []); output (program c (label ^ "-run") dir ["gen.rbc"]) expected)
+  fun ppFixture c dir =
+    (rmTree (#directory c ^ "/" ^ dir);
+     List.app (fn (file, text) => put c (dir ^ "/" ^ file) text)
+       [("filter.sh", "sed 's/^@@ /val /' \"$1\" > \"$2\""), ("pp.sml", "@@ n = 42"),
+        ("use.sml", "val () = print (Int.toString n ^ \"\\n\")"),
+        ("pp.build", "preprocessor at /bin/sh (filter.sh) inputs filter.sh end\nannotate \"preprocess=at\" in pp.sml end\nuse.sml")])
+  val stepCases = ["generate", "generate-hand-edited", "generate-fails", "generate-unmade", "generate-plan", "generate-in-library",
+                   "generate-plan-v1", "generate-no-outputs", "generate-twice", "generate-no-tool", "preprocess",
+                   "preprocess-undeclared", "preprocess-twice", "preprocess-unmade", "preprocess-host"]
+  fun generated c which =
+    case which of
+      "generate" =>
+        (* the step runs before a unit is read, and again when an input changes, and not when none does *)
+        (stepFixture c "gen";
+         stepBuilds c "gen" "generate-cold" "42\n";
+         let val r = stepBuild c "gen" "generate-warm" ["--explain-rebuild"]
+         in success r; need (String.isSubstring "is up to date" (#errors r), "a step whose inputs did not change ran again: " ^ #errors r) end;
+         put c "gen/spec.txt" "7";
+         stepBuilds c "gen" "generate-edited" "7\n")
+    | "generate-hand-edited" =>
+        (* an output that is not what the step made is refused; removed, it is made again *)
+        (stepFixture c "edited";
+         stepBuilds c "edited" "edited-cold" "42\n";
+         put c "edited/made.sml" "structure Made = struct val n = 0 end";
+         refused (stepBuild c "edited" "edited-refused" []) "made.sml is not what the step /bin/sh tool.sh spec.txt made.sml made";
+         OS.FileSys.remove (#directory c ^ "/edited/made.sml");
+         stepBuilds c "edited" "edited-again" "42\n")
+    | "generate-fails" =>
+        (* a step that fails stops the build, and the stale output it left is not compiled *)
+        (stepFixture c "fails";
+         stepBuilds c "fails" "fails-cold" "42\n";
+         put c "fails/spec.txt" "fail";
+         refused (stepBuild c "fails" "fails-refused" []) "failed, and what it makes is not compiled")
+    | "generate-unmade" =>
+        (stepFixture c "unmade";
+         put c "unmade/spec.txt" "none";
+         refused (stepBuild c "unmade" "unmade-refused" []) "did not make made.sml, which it says it makes")
+    | "generate-plan" =>
+        (* --plan prints a step and runs nothing, as a plan of version 2, which reads back *)
+        let
+          val () = stepFixture c "plan"
+          val r = compiler c "plan" "plan" ["--plan", "gen.build"]
+          val () = success r
+          val step = "\ngenerate /bin/sh .\n  argument tool.sh\n  argument spec.txt\n  argument made.sml\n  reads tool.sh\n"
+                     ^ "  reads spec.txt\n  writes made.sml\nend\n"
+          val () = need (String.isPrefix "rune-plan 2\n" (#output r) andalso String.isSubstring step (#output r),
+                         "the plan of a step: " ^ #output r)
+          val () = need (not (exists (#directory c ^ "/plan/made.sml")), "--plan ran a step")
+          val () = write (#directory c ^ "/plan/gen.plan", #output r)
+        in output (compiler c "plan-again" "plan" ["--plan", "gen.plan"]) (#output r) end
+    | "generate-in-library" =>
+        (put c "steplib/library.build" "exports (structure Made)\ngenerate /bin/sh (tool.sh) outputs made.sml end\nmade.sml";
+         refused (compiler c which "" ["--plan", "steplib/library.build"]) "a library's build file declares no step")
+    | "generate-plan-v1" =>
+        (put c "v1.plan" "rune-plan 1\nbasis demand\ngenerate /bin/sh .\n  writes a.sml\nend\nprogram\nend";
+         refused (compiler c which "" ["--plan", "v1.plan"]) "a plan of version 1 has no generate")
+    | "generate-no-outputs" =>
+        (put c "nooutputs.build" "generate /bin/sh (tool.sh) inputs tool.sh end\nmain.sml";
+         refused (compiler c which "" ["--plan", "nooutputs.build"]) "expected outputs, found main.sml")
+    | "generate-twice" =>
+        (* a file is made by one step at most *)
+        (put c "twice.build" "generate /bin/sh (a.sh) outputs made.sml end\ngenerate /bin/sh (b.sh) outputs made.sml end\nmain.sml";
+         refused (compiler c which "" ["--plan", "twice.build"]) "two steps make made.sml")
+    | "generate-no-tool" =>
+        (* a tool is a file, whose bytes are in the step's key *)
+        (put c "notool/gen.build" "generate no-such-tool (x) outputs made.sml end\nmain.sml";
+         put c "notool/main.sml" "val () = ()";
+         refused (compiler c which "notool" ["--build", "gen.build", "--no-cache", "-o", "gen.rbc"]) "no tool no-such-tool")
+    | "preprocess-twice" =>
+        (* a name is one preprocessor's *)
+        (put c "pptwice.build" "preprocessor p /bin/sh (a.sh)\npreprocessor p /bin/sh (b.sh)\nmain.sml";
+         refused (compiler c which "" ["--plan", "pptwice.build"]) "a second preprocessor p, not the first")
+    | "preprocess" =>
+        (* a file's preprocessor makes what its unit compiles; a build after an
+           edit of the file is the build of what the edit makes of it, warm as
+           cold (S41), and a file not edited is not given to the tool again *)
+        let
+          val () = ppFixture c "pp"
+          fun built (label, flags) = success (compiler c label "pp" (["--build", "pp.build"] @ flags @ ["-o", label ^ ".rbc"]))
+          val () = built ("warm1", ["--cache-dir", "cache"])
+          val () = output (program c "warm1-run" "pp" ["warm1.rbc"]) "42\n"
+          val again = compiler c "warm1-again" "pp" ["--build", "pp.build", "--cache-dir", "cache", "--explain-rebuild", "-o", "again.rbc"]
+          val () = success again
+          val () = need (not (String.isSubstring "preprocessed" (#errors again)), "a file not edited was preprocessed again: " ^ #errors again)
+          val () = put c "pp/pp.sml" "@@ n = 43"
+          val () = built ("warm2", ["--cache-dir", "cache"])
+          val () = built ("cold2", ["--no-cache"])
+          (* and -j changes no byte (S58): a child is forked with the outputs *)
+          val () = built ("parallel2", ["--cache-dir", "cache-j", "-j", "2"])
+          val dir = #directory c ^ "/pp/"
+        in
+          need (read (dir ^ "warm2.rbc") = read (dir ^ "cold2.rbc"), "a build after an edit of a preprocessed file is not the cold build");
+          need (read (dir ^ "parallel2.rbc") = read (dir ^ "cold2.rbc"), "a preprocessed build with -j is not the build without");
+          output (program c "warm2-run" "pp" ["warm2.rbc"]) "43\n"
+        end
+    | "preprocess-undeclared" =>
+        (put c "ppnone.build" "annotate \"preprocess=none\" in a.sml end";
+         refused (compiler c which "" ["--plan", "ppnone.build"]) "a.sml is put in the preprocessor none, which no build file of it declares")
+    | "preprocess-unmade" =>
+        (* a tool that writes nothing has made nothing, which is not compiled
+           as an empty file *)
+        (put c "ppunmade/pp.build" "preprocessor none /bin/sh (true.sh)\nannotate \"preprocess=none\" in a.sml end";
+         put c "ppunmade/true.sh" "exit 0";
+         put c "ppunmade/a.sml" "val () = ()";
+         refused (compiler c which "ppunmade" ["--build", "pp.build", "--no-cache", "-o", "pp.rbc"]) "made nothing of a.sml")
+    | "preprocess-host" =>
+        (* a host has no preprocessor: what it would read of the plan, it refuses *)
+        let
+          val () = ppFixture c "pphost"
+          val r = compiler c "pphost-plan" "pphost" ["--plan", "pp.build"]
+          val () = success r
+          val () = write (#directory c ^ "/pphost/pp.plan", #output r)
+          val h = execute c "pphost-host" "pphost" ["/bin/sh", fromRoot "scripts/plan-files.sh", "pp.plan"]
+        in
+          need (#status h <> 0 andalso #output h = "" andalso String.isSubstring "a file a host cannot compile" (#errors h),
+                "a host read a plan with a preprocessed file: " ^ #output h ^ #errors h)
+        end
+    | _ => raise Failed "unknown buildfile scenario"
   fun build c which () =
     case which of
       "list" => builds c which "list" [] "42\n"
@@ -499,9 +648,91 @@ struct
                  String.isSubstring "virtual module BigInt has no implementation" (#output result ^ #errors result),
                  "unimplemented virtual module was not rejected") end
     | "virtual-two" => buildRefused c "bigint/two" "two implementations"
+    (* a virtual functor (examples/virtual/table; the build-system roadmap's
+       M21): each implementation alike *)
+    | "virtual-table-list" => builds c which "table/list" [] tableOutput
+    | "virtual-table-tree" => builds c which "table/tree" [] tableOutput
+    (* the second implementation through the first one's cache compiles it
+       alone: nothing of the first reached a client *)
+    | "virtual-table-cache" =>
+        let val dir = #directory c
+            val () = rmTree (dir ^ "/tcache")
+            val first = compiler c "virtual-table-cache-first" "" ["--build", "table/list.build", "--cache-dir", "tcache", "-o", "tcache1.rbc"]
+            val () = success first
+            val second = compiler c "virtual-table-cache-second" "" ["--build", "table/tree.build", "--cache-dir", "tcache", "--explain-rebuild",
+                                                                       "-o", "tcache2.rbc"]
+            val () = success second
+            val compiled = List.filter (String.isPrefix "table/") (rebuilt (#errors second))
+            val () = need (compiled = ["table/tree.sml"], "another implementation of the virtual functor compiled more than itself: "
+                                                         ^ String.concatWith " " compiled)
+            val () = bytecode (dir ^ "/tcache2.rbc")
+        in output (program c "virtual-table-cache-run" "" ["tcache2.rbc"]) tableOutput end
+    (* each implementation through --units --whole: the bytes of a compile
+       of the same files whole (S42), and the same output *)
+    | "virtual-table-whole" =>
+        List.app (fn b =>
+                    let
+                      val dir = #directory c
+                      val files = List.map (fn f => "table/" ^ f)
+                                           (case b of "list" => ["key_sig.sml", "table_sig.sml", "list.sml", "table.sml", "main.sml"]
+                                                    | _ => ["key_sig.sml", "table_sig.sml", "tree.sml", "table.sml", "main.sml"])
+                      val () = List.app (fn f => rmTree (dir ^ "/" ^ f)) ["twhole.rbc", "tunits.rbc"]
+                      val () = success (compiler c (which ^ "-" ^ b) "" ["--build", "table/" ^ b ^ ".build", "--whole", "-o", "tunits.rbc"])
+                      val () = success (compiler c (which ^ "-" ^ b ^ "-files") "" (["--no-cache"] @ files @ ["-o", "twhole.rbc"]))
+                    in
+                      need (same (dir ^ "/tunits.rbc", dir ^ "/twhole.rbc"), "S42: --units --whole differs from whole, with " ^ b);
+                      output (program c (which ^ "-" ^ b ^ "-run") "" ["tunits.rbc"]) tableOutput
+                    end)
+                 ["list", "tree"]
+    (* compiled with no implementation, and refused when the declaration runs *)
+    | "virtual-table-none" =>
+        let val target = #directory c ^ "/tnone.rbc"
+            val () = rmTree target
+            val () = success (compiler c which "" ["--build", "table/none.build", "--no-cache", "-o", "tnone.rbc"])
+            val () = bytecode target
+            val result = program c (which ^ "-run") "" ["tnone.rbc"]
+        in need (#status result = 1 andalso #output result = ""
+                 andalso String.isSubstring "Mismatch \"the virtual functor Table has no implementation" (#errors result),
+                 "a virtual functor with no implementation was not refused: " ^ #errors result) end
+    | "virtual-table-two" => buildRefused c "table/two" "two implementations"
+    (* a virtual functor has no body for its applications to copy *)
+    | "virtual-table-inline" => buildRefused c "table/inline" "functor Table is virtual: it has no body for its applications to copy"
+    (* an implementation of another parameter's signature, refused at link *)
+    | "virtual-table-other" =>
+        let val target = #directory c ^ "/tother.rbc"
+            val () = rmTree target
+            val () = success (compiler c which "" ["--build", "table/other.build", "--no-cache", "-o", "tother.rbc"])
+            val result = program c (which ^ "-run") "" ["tother.rbc"]
+        in need (#status result = 1 andalso #output result = ""
+                 andalso String.isSubstring "the implementation of the virtual functor Table implements another signature" (#errors result),
+                 "an implementation of another signature was not refused: " ^ #errors result) end
+    (* the _dynamic variant: the client compiled with no implementation, each
+       implementation a plugin, its unit emitted on its own *)
+    | "virtual-table-plugin" =>
+        let
+          val dir = #directory c ^ "/table"
+          val () = rmTree (dir ^ "/dynamic.rbc")
+          val () = success (compiler c (which ^ "-client") "table" ["--build", "dynamic.build", "--no-cache", "-o", "dynamic.rbc"])
+          fun plugin (build, unit) =
+            let
+              val () = rmTree (dir ^ "/plugin")
+              val () = success (compiler c (which ^ "-" ^ unit) "table" ["--build", build, "--no-cache", "--emit-units", "plugin",
+                                                                          "-o", "plugin.rbc"])
+              (* the program's unit of that name, after the Basis's (list.sml) *)
+              val file = case List.rev (List.filter (String.isSuffix ("-" ^ unit ^ ".rbu")) (lines (read (dir ^ "/plugin/units")))) of
+                           f :: _ => if OS.Path.isAbsolute f then f else dir ^ "/" ^ f
+                         | [] => raise Failed ("the plugin's units list has no unit of " ^ unit)
+              val input = BinIO.openIn file
+              val bytes = BinIO.inputAll input before BinIO.closeIn input
+              val out = BinIO.openOut (dir ^ "/table.rbu")
+              val () = (BinIO.output (out, bytes); BinIO.closeOut out)
+            in output (program c (which ^ "-" ^ unit ^ "-run") "table" ["dynamic.rbc"]) tableOutput end
+        in plugin ("plugin.build", "tree"); plugin ("plugin-list.build", "list") end
+    | "virtual-table-whole-refused" =>
+        refused (compiler c which "table" ["--build", "dynamic.build", "--whole", "-o", "dwhole.rbc"]) "is built in units (rune --units)"
     | "bad" => buildRefused c "bad" "unexpected end of the file"
     | "self" => buildRefused c "self" "uses itself"
-    | _ => raise Failed "unknown buildfile scenario"
+    | _ => generated c which
   val buildCases = ["list", "boundary", "boundary-hidden", "no-group", "no-local", "no-cache", "no-program-boundary", "library-outside-boundary", "host-only",
                     "use-twice", "prim", "prim-allowed",
                     "path-variable", "missing-variable", "path-variable-nested", "build-list", "include-with-build", "plan-command-line",
@@ -510,7 +741,10 @@ struct
                     "use-sibling-boundary", "use-replayed-export", "use-after-implements", "export-nothing",
                     "export-no-signature", "export-from-outside", "export-rebound", "export-datatype", "export-abbreviation", "typecheck-exports", "reach-in", "reach-in-pointer",
                     "selection-by-uses", "install-no-basis", "clean-overlay",
-                    "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two", "bad", "self"]
+                    "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two",
+                    "virtual-table-list", "virtual-table-tree", "virtual-table-cache", "virtual-table-whole", "virtual-table-none",
+                    "virtual-table-two", "virtual-table-inline", "virtual-table-other", "virtual-table-plugin", "virtual-table-whole-refused", "bad", "self"]
+                   @ stepCases
   fun copy source destination =
     let val input = BinIO.openIn source
         val output = BinIO.openOut destination
@@ -548,6 +782,54 @@ struct
     in success result; bytecode target end
   fun shapeModule c =
     (put c "shape.sml" shape; put c "impl.sml" implementation; emit c "impl" ["shape.sml", "impl.sml"])
+  (* a dynamic functor (the build-system roadmap's M21): its parameter with
+     values, an exception, a substructure and an open constructor (Point,
+     whose argument the parameter's t is, laid flat by P), and its result
+     with a datatype a client takes apart and an exception of its own *)
+  val functorSigs =
+    "signature ARG =\nsig\n  type t\n  datatype shape = Point of t | Pair of t * t | Empty\n  val size : t -> int\n"
+    ^ "  exception Bad of t\n  structure Sub : sig val k : int end\nend\n"
+    ^ "signature RES =\nsig\n  type a\n  datatype view = One of a | Two of a * a | Nothing | Counted of int * int\n"
+    ^ "  val view : a -> view\n  val describe : view -> string\n  val total : a list -> int\n  exception Odd of a\n  val check : a -> a\nend\n"
+  val functorImpl =
+    "_export functor F (X : ARG) : RES where type a = X.shape =\nstruct\n  type a = X.shape\n"
+    ^ "  datatype view = One of a | Two of a * a | Nothing | Counted of int * int\n"
+    ^ "  fun view (s as X.Point p) = One s\n    | view (s as X.Pair (p, q)) = Two (s, s)\n    | view X.Empty = Nothing\n"
+    ^ "  fun sizeOf (X.Point p) = X.size p\n    | sizeOf (X.Pair (p, q)) = X.size p + X.size q\n    | sizeOf X.Empty = X.Sub.k\n"
+    ^ "  fun describe (One s) = \"one \" ^ Int.toString (sizeOf s)\n    | describe (Two (s, _)) = \"two \" ^ Int.toString (sizeOf s)\n"
+    ^ "    | describe Nothing = \"nothing\"\n    | describe (Counted (a, b)) = \"counted \" ^ Int.toString (a + b)\n"
+    ^ "  fun total l = List.foldl (fn (s, n) => n + sizeOf s) 0 l\n  exception Odd of a\n"
+    ^ "  fun check s = if sizeOf s mod 2 = 1 then raise Odd s else s\nend\n"
+  val functorClient =
+    "functor F = _dynamic \"impl.rbu\" (X : ARG) : RES where type a = X.shape\n"
+    ^ "structure P = struct type t = int * int  datatype shape = Point of t | Pair of t * t | Empty\n"
+    ^ "  fun size (a, b) = a + b  exception Bad of t  structure Sub = struct val k = 100 end end\n"
+    ^ "structure Q = struct type t = string  datatype shape = Point of t | Pair of t * t | Empty\n"
+    ^ "  val size = String.size  exception Bad of t  structure Sub = struct val k = 7 end end\n"
+    ^ "structure FP = F (P)\nstructure FQ = F (Q)\n"
+    ^ "val () = print (FP.describe (FP.view (P.Point (3, 4))) ^ \"\\n\")\n"
+    ^ "val () = print (FP.describe (FP.view (P.Pair ((1, 2), (3, 4)))) ^ \"\\n\")\n"
+    ^ "val () = print (FP.describe (FP.Counted (5, 6)) ^ \"\\n\")\n"
+    ^ "val () = print (case FP.view (P.Pair ((1, 1), (2, 2))) of FP.Two (P.Pair ((a, b), _), _) => \"pair \" ^ Int.toString (a + b) ^ \"\\n\" | _ => \"other\\n\")\n"
+    ^ "val () = print (Int.toString (FP.total [P.Point (1, 1), P.Empty, P.Pair ((2, 2), (3, 3))]) ^ \"\\n\")\n"
+    ^ "val () = print (FQ.describe (FQ.view (Q.Pair (\"ab\", \"cde\"))) ^ \" \" ^ Int.toString (FQ.total [Q.Point \"x\", Q.Empty]) ^ \"\\n\")\n"
+    ^ "val () = (ignore (FP.check (P.Point (1, 2))); print \"even\\n\") handle FP.Odd (P.Point (a, b)) => print (\"odd \" ^ Int.toString a ^ \"\\n\")\n"
+    ^ "val () = (ignore (FQ.check (Q.Point \"ab\")); print \"even\\n\") handle FQ.Odd _ => print \"odd\\n\"\n"
+  val functorOutput = "one 7\ntwo 10\ncounted 11\npair 2\n112\ntwo 5 8\nodd 1\neven\n"
+  fun functorModule c =
+    (put c "sigs.sml" functorSigs; put c "impl.sml" functorImpl; emit c "impl" ["sigs.sml", "impl.sml"])
+  (* the functor's client, run against an impl.rbu that is another module:
+     refused when the declaration runs *)
+  fun functorRefused c name =
+    (put c "client.sml" functorClient; linked c "client" ["sigs.sml", "client.sml"];
+     let val result = program c name "" ["client.rbc"]
+     in need (#status result = 1 andalso #output result = ""
+              andalso String.isSubstring "Mismatch \"impl.rbu implements another signature" (#errors result),
+              "a dynamic functor of another ABI was not refused: " ^ #errors result) end)
+  fun replaceIn text from into =
+    let val (left, right) = Substring.position from (Substring.full text)
+    in need (not (Substring.isEmpty right), "dynamic fixture replacement is missing: " ^ from);
+       Substring.string left ^ into ^ Substring.string (Substring.triml (size from) right) end
   fun dynamicReload c jit =
     let val dir = #directory c
         val () = List.app (fn (file, text) => put c file text)
@@ -631,10 +913,60 @@ struct
           ^ "         handle Dynamic.Mismatch m => print (if String.isSubstring \"abstract type\" m then \"refused\\n\" else m ^ \"\\n\")\n"
           ^ "val () = print (Int.toString (S.area kept) ^ \"\\n\")");
          linked c "noreload" ["shape.sml", "noreload.sml"]; run "noreload" [] "refused\n9\n")
+    (* a dynamic functor, applied twice, as a plugin *)
+    | "functor-link" => (functorModule c; put c "client.sml" functorClient; linked c "client" ["sigs.sml", "client.sml"];
+                         run "client" [] functorOutput)
+    | "functor-link-jit" => (functorModule c; put c "client.sml" functorClient; linked c "client" ["sigs.sml", "client.sml"];
+                             run "client" ["--jit=all"] functorOutput)
+    (* a module of another parameter's signature, or another result's, or a
+       structure where a functor is wanted: each another ABI *)
+    | "functor-param-mismatch" =>
+        (put c "sigs.sml" functorSigs;
+         put c "other.sml" (replaceIn functorSigs "  val size : t -> int\n" "  val size : t -> int\n  val weight : t -> int\n");
+         put c "impl.sml" functorImpl; emit c "impl" ["other.sml", "impl.sml"]; functorRefused c which)
+    | "functor-result-mismatch" =>
+        (put c "sigs.sml" functorSigs;
+         put c "other.sml" (replaceIn functorSigs "  val total : a list -> int\n" "  val total : a list -> IntInf.int\n");
+         put c "impl.sml" (replaceIn functorImpl "0 l\n" "0 l\n  val total = IntInf.fromInt o total\n");
+         emit c "impl" ["other.sml", "impl.sml"]; functorRefused c which)
+    | "functor-structure-mismatch" =>
+        (put c "sigs.sml" functorSigs;
+         put c "impl.sml" ("_export structure F : RES =\nstruct\n  type a = int\n"
+                           ^ "  datatype view = One of a | Two of a * a | Nothing | Counted of int * int\n"
+                           ^ "  fun view a = One a  fun describe _ = \"\"  fun total _ = 0  exception Odd of a  fun check a = a\nend\n");
+         emit c "impl" ["sigs.sml", "impl.sml"]; functorRefused c which)
+    | "functor-whole-refused" =>
+        (put c "sigs.sml" functorSigs; put c "client.sml" functorClient;
+         refused (compiler c which "" ["sigs.sml", "client.sml", "-o", "whole.rbc"]) "is built in units (rune --units)")
+    (* loaded again: an application after it is of the new module, one
+       before keeps the old *)
+    | "functor-reload" =>
+        (List.app (fn (file, text) => put c file text)
+           [("io.sml", "signature IN = sig val x : int end\nsignature OUT = sig type t val make : unit -> t val show : t -> string end"),
+            ("v1.sml", "_export functor G (A : IN) : OUT = struct type t = int fun make () = A.x + 1 fun show n = \"v1 \" ^ Int.toString n end"),
+            ("v2.sml", "_export functor G (A : IN) : OUT = struct type t = string fun make () = Int.toString (A.x * 2) fun show s = \"v2 \" ^ s end"),
+            ("g.sml", "functor G = _dynamic \"g.rbu\" (A : IN) : OUT\n"
+                      ^ "fun copy (a, b) = let val i = BinIO.openIn a val v = BinIO.inputAll i val () = BinIO.closeIn i\n"
+                      ^ "  val out = BinIO.openOut b in BinIO.output (out, v); BinIO.closeOut out end\n"
+                      ^ "structure One = G (struct val x = 10 end)\nval kept = One.make ()\nval () = print (One.show kept ^ \"\\n\")\n"
+                      ^ "val () = copy (\"v2.rbu\", \"g.rbu\")\nval () = Dynamic.reload \"g.rbu\"\n"
+                      ^ "structure Two = G (struct val x = 10 end)\n"
+                      ^ "val () = print (One.show kept ^ \" \" ^ Two.show (Two.make ()) ^ \"\\n\")")];
+         emit c "v1" ["io.sml", "v1.sml"]; emit c "v2" ["io.sml", "v2.sml"]; linked c "g" ["io.sml", "g.sml"];
+         copy (dir ^ "/v1.rbu") (dir ^ "/g.rbu"); run "g" [] "v1 11\nv1 11 v2 20\n")
+    (* a module compiled with its files spelt ./, its client without: one
+       unit's names and one ABI, whose fingerprints are of logical names
+       (E10, and M3 of the build-system roadmap) *)
+    | "spelling" =>
+        (put c "sigs.sml" functorSigs; put c "impl.sml" functorImpl; emit c "impl" ["./sigs.sml", "./impl.sml"];
+         put c "client.sml" functorClient; linked c "client" ["sigs.sml", "client.sml"]; run "client" [] functorOutput;
+         put c "shape.sml" shape; put c "shapeclient.sml" client; put c "impl.sml" implementation; emit c "impl" ["./shape.sml", "./impl.sml"];
+         linked c "shapeclient" ["shape.sml", "shapeclient.sml"]; run "shapeclient" [] "impl 9 square 3 round\npoly\nBad ~4\n")
     | _ => raise Failed "unknown dynamic module scenario"
     end
   val dynamicCases = ["link", "link-jit", "mismatch", "plugin", "shared-types", "whole-refused", "reload", "reload-jit", "abstract-reload",
-                      "nested"]
+                      "nested", "functor-link", "functor-link-jit", "functor-param-mismatch", "functor-result-mismatch",
+                      "functor-structure-mismatch", "functor-whole-refused", "functor-reload", "spelling"]
   val targets = ["registers", "stack"]
   fun targetVM "registers" = fromRoot "bin/runevm"
     | targetVM "stack" = fromRoot "bin/runevm-stack"

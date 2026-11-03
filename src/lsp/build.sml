@@ -102,7 +102,7 @@ struct
                 if List.exists (fn prior => W.sameFile platform (#file item,#file prior) andalso #text item<> #text prior) seen
                 then raise Fail "conflicting source overlays refer to one file" else item::seen) [] overlays
               val projectErrors=if not (null (#diagnostics syntax)) orelse not (isSome native) then [] else
-                ((ignore (C.Project.read (compiler (),{file=file,workspace=W.rootFile platform file,variables=variables,
+                ((ignore (C.Project.read (compiler (),{file=file,workspace=W.rootFileIn (platform,documents) file,variables=variables,
                    overlays=overlays,windows=platform=U.Windows}));[])
                  handle C.Failed errors => errors)
               fun diagnostic (diagnostic:C.diagnostic)=Json.Object

@@ -16,8 +16,15 @@ struct
      Library a compile takes, demand (the default), all (--basis all) or none
      (--no-prelude), and view its view of it, if any (D12), which the command
      line says and a program's build file may: a plan says what a compile sees *)
+  (* a declared step and a preprocessor's class (docs/build.md, Generated
+     sources; D16): its tool, its arguments, what it reads and, of a step,
+     what it writes, each path as a unit's is, from here; dir is the
+     directory of the build file that declares it, where its tool runs *)
+  type generate={tool:string,arguments:string list,inputs:string list,outputs:string list,dir:string}
+  type preprocessor={name:string,tool:string,arguments:string list,inputs:string list,dir:string}
   type plan={steps:step list,libraries:string list,header:BuildFile.header option,inputs:input list,inline:string list,
-             inlineValues:string list,references:(string*string) list,basis:string,view:string option}
+             inlineValues:string list,references:(string*string) list,basis:string,view:string option,
+             generates:generate list,preprocessors:preprocessor list}
   exception Invalid of string
   fun modeOf (default,annotations)=List.foldl (fn (annotation,mode) =>
     getOpt (Source.modeNamed annotation,mode)) default annotations
@@ -30,7 +37,7 @@ struct
      the libraries *)
   fun ofFiles {files:string list,libraries:string list} : plan=
     {steps=List.map (fn file => SUnit (file,[])) files,libraries=libraries,header=NONE,inputs=[],inline=[],
-     inlineValues=[],references=[],basis="demand",view=NONE}
+     inlineValues=[],references=[],basis="demand",view=NONE,generates=[],preprocessors=[]}
   (* a plan with the Basis Library the command line says of it, beside what a
      build file says: two views are refused *)
   fun withBasis (p : plan,{basis:string,view:string option}) : plan=
@@ -39,7 +46,8 @@ struct
           | (NONE,v) => v
           | (v,NONE) => v
     in {steps= #steps p,libraries= #libraries p,header= #header p,inputs= #inputs p,inline= #inline p,
-        inlineValues= #inlineValues p,references= #references p,basis=basis,view=view} end
+        inlineValues= #inlineValues p,references= #references p,basis=basis,view=view,generates= #generates p,
+        preprocessors= #preprocessors p} end
   fun alpha c=(c>= #"a" andalso c<= #"z") orelse (c>= #"A" andalso c<= #"Z")
   fun lower text=String.map (fn c => if c>= #"A" andalso c<= #"Z" then Char.chr (Char.ord c+32) else c) text
   fun normalize windows path =
@@ -110,6 +118,18 @@ struct
     String.concatWith "/" (List.filter (fn arc => arc<>".")
       (String.fields (fn c => c = #"/") (normalize windows path)))
   fun fileName path=List.last (String.fields (fn c => c = #"/") path)
+  (* the units of steps, in order, a build file used twice giving its own
+     once, each with its annotations *)
+  fun units steps =
+    let val used=ref [] : string list ref
+        fun all steps=List.concat (List.map one steps)
+        and one (SUnit unit)=[unit]
+          | one (SLibrary (_,steps))=all steps
+          | one (SImplements (_,steps))=all steps
+          | one (SUse (file,steps))=if List.exists (fn prior => prior=file) (!used) then []
+            else (used:=file :: !used;all steps)
+    in all steps end
+  fun files steps=List.map #1 (units steps)
   (* a build file's plan as Rune compiles it; with hosts, with the files the
      other SML systems have alone too (host=only), which a library's index
      lists for them *)
@@ -123,6 +143,8 @@ struct
         val view=ref NONE : string option ref
         val inputs=ref [] : input list ref
         val references=ref [] : (string*string) list ref
+        val generates=ref [] : generate list ref
+        val preprocessors=ref [] : preprocessor list ref
         val captured=ref StringMap.empty : input StringMap.map ref
         val completed=ref StringMap.empty : step list StringMap.map ref
         fun capture path =
@@ -139,6 +161,7 @@ struct
           let
               val declarations=BuildFile.parse (file,capture file)
               val here=directory windows file
+              val place=if here="" then "." else here
               val library=fileName file="library.build"
               fun path name=normalize windows (BuildFile.expandFrom {isAbsolute=absolute windows,concat=concat windows,root=root} (here,name))
                 handle BuildFile.Error message => raise Invalid (file ^ ": " ^ message)
@@ -171,6 +194,18 @@ struct
                     else raise Invalid (file ^ ": a header belongs to a library's library.build")
                 | BuildFile.Inline names => (inline:= !inline @ names;[])
                 | BuildFile.InlineVal names => (inlineValues:= !inlineValues @ names;[])
+                | BuildFile.Generate {tool,arguments,inputs,outputs} =>
+                    if library then raise Invalid (file ^ ": a library's build file declares no step; a program's build does")
+                    else (generates:= !generates @ [{tool=path tool,arguments=arguments,inputs=List.map path inputs,
+                                                    outputs=List.map path outputs,dir=place}];[])
+                | BuildFile.Preprocessor {name,tool,arguments,inputs} =>
+                    let val declared={name=name,tool=path tool,arguments=arguments,inputs=List.map path inputs,dir=place}
+                    in if library then raise Invalid (file ^ ": a library's build file declares no preprocessor; a program's build does")
+                       else case List.find (fn other => #name other=name) (!preprocessors) of
+                              SOME other => if other=declared then []
+                                            else raise Invalid (file ^ ": a second preprocessor " ^ name ^ ", not the first")
+                            | NONE => (preprocessors:= !preprocessors @ [declared];[])
+                    end
                 | BuildFile.View name =>
                     if library then raise Invalid (file ^ ": a view of the Basis Library is a program's; a library's own is a seal file inside its boundary")
                     else (case !view of
@@ -182,8 +217,21 @@ struct
               val ()=completed:=StringMap.insert (!completed,key,result)
           in result end end
         val steps=read (file,[],[])
+        (* a file is put in a preprocessor a build file declares; a file is
+           made by one step at most *)
+        val ()=List.app (fn (unit,annotations) =>
+                 case BuildFile.preprocessorOf annotations of
+                   NONE => ()
+                 | SOME name => if List.exists (fn p => #name p=name) (!preprocessors) then ()
+                                else raise Invalid (file ^ ": " ^ unit ^ " is put in the preprocessor " ^ name ^ ", which no build file of it declares"))
+               (units steps)
+        val ()=ignore (List.foldl (fn (output,made) =>
+                 let val key=pathKey windows output
+                 in if List.exists (fn k => k=key) made then raise Invalid (file ^ ": two steps make " ^ output) else key :: made end)
+               [] (List.concat (List.map #outputs (!generates))))
     in {steps=steps,libraries= !libraries,header= !header,inputs=List.rev (!inputs),inline= !inline,
-        inlineValues= !inlineValues,references=List.rev (!references),basis="demand",view= !view} end
+        inlineValues= !inlineValues,references=List.rev (!references),basis="demand",view= !view,
+        generates= !generates,preprocessors= !preprocessors} end
     handle BuildFile.Error message => raise Invalid message
   fun plan {file,windows,readBuild} : plan = planWith {file=file,windows=windows,readBuild=readBuild,hosts=false}
   (* A plan's units as the rules read them (Deps.illFormed), each file in the
@@ -256,14 +304,4 @@ struct
                     | add ((b,l,n) :: rest)=if b=build andalso l=library then (b,l,n+1) :: rest else (b,l,n) :: add rest
               in add found end
     in List.foldl note [] references end
-  fun units steps =
-    let val used=ref [] : string list ref
-        fun all steps=List.concat (List.map one steps)
-        and one (SUnit unit)=[unit]
-          | one (SLibrary (_,steps))=all steps
-          | one (SImplements (_,steps))=all steps
-          | one (SUse (file,steps))=if List.exists (fn prior => prior=file) (!used) then []
-            else (used:=file :: !used;all steps)
-    in all steps end
-  fun files steps=List.map #1 (units steps)
 end

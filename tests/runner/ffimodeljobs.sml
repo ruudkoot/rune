@@ -26,6 +26,7 @@ struct
     [tree,Test.describe "ffi/generator"
       [Test.requires["cc","ffi-runtime"](generatorJob "native" "native" (executionCheck @ ["test-ffi-generator"])),
        generatorJob "publication" "publication" ["check","test-ffi-generator"],
+       generatorJob "rehash" "rehash" ["check","test-ffi-generator"],
        Test.requires["windows"](Test.describe "windows" (List.map(fn bits=>generatorJob bits ("windows " ^ bits)
          ["test-ffi-generator-windows","windows","nightly"]) ["32","64"])),
        Test.requires["host:mlkit"](generatorJob "mlkit-no-ri" "host mlkit-no-ri" ["test-ffi-generator-hosts","library","nightly"]),

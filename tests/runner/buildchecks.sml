@@ -106,6 +106,15 @@ struct
       val () = refused ("not-a-plan", read (dir ^ "/root.build"), "not a plan of version 1")
       val () = refused ("unknown-word", "rune-plan 1\nbasis demand\nprogram\n  unit a.sml a.sml ascii\n  edge a.sml b.sml\nend\n", "has no edge")
       val () = refused ("escaped", "rune-plan 1\nbasis demand\nprogram\n  unit a%20b.sml a%20b.sml ascii\nend\n", "a path a host cannot read")
+      (* a step's output a host reads as a file; a file a preprocessor makes
+         what is compiled of, it cannot compile, and refuses *)
+      val () = write (dir ^ "/stepped.plan", "rune-plan 2\nbasis demand\ngenerate /bin/sh .\n  argument t.sh\n  reads t.sh\n"
+                                             ^ "  writes a.sml\nend\nprogram\n  unit a.sml a.sml ascii\nend\n")
+      val (status, listed, errors) = invoke "stepped" ["sh", fromRoot "scripts/plan-files.sh", dir ^ "/stepped.plan"]
+      val () = if status = 0 andalso listed = "a.sml\n" then ()
+               else say ("FAIL compiler layout: a host did not read a plan of version 2: " ^ listed ^ errors ^ "\n")
+      val () = refused ("preprocessed", "rune-plan 2\nbasis demand\npreprocessor p /bin/sh .\nend\nprogram\n"
+                                        ^ "  unit a.sml a.sml ascii preprocess=p\nend\n", "a file a host cannot compile")
       val ()=write (dir ^ "/annotated.build","annotate \"unicode\" \"allowPrim\" in use nested/annotated.build end\n")
       val ()=write (dir ^ "/nested/annotated.build","files ../unicode.sml end\n")
       val ()=write (dir ^ "/unicode.sml","val p=_prim \"print\" : string -> unit\nval \206\187=42\nval ()=p \"annotations inherited\\n\"\n")
@@ -368,8 +377,16 @@ struct
              List.filter (fn l => not (List.exists (fn p => String.isPrefix p l) ["  lib/unicode/", "  lib/json/", "  lib/digest/"])) written
       val () = write (tree ^ "/rune.build", String.concatWith "\n" through)
       val () = need (List.exists (fn l => l = "build/config.sml") through, "rune.build names build/config.sml on no line of its own")
-      val () = write (tree ^ "/toy.build", String.concatWith "\n"
-                        (List.concat (List.map (fn l => if l = "build/config.sml" then ["toy/config.sml", "toy/toy.sml"] else [l]) through)))
+      (* the toy loads a Config of its own first, which a step of its own
+         declares, as rune.build's first step declares build/config.sml
+         (docs/build.md, Generated sources) *)
+      fun toyLine l =
+        if l = "build/config.sml" then ["toy/config.sml", "toy/toy.sml"]
+        else if String.isPrefix "generate scripts/gen-version.sh " l
+        then ["generate scripts/gen-version.sh (--config, toy.plan, toy/config.sml)"]
+        else if String.isSubstring "outputs build/config.sml end" l then ["  outputs toy/config.sml end"]
+        else [l]
+      val () = write (tree ^ "/toy.build", String.concatWith "\n" (List.concat (List.map toyLine through)))
       val toy = "structure Toy = struct val name = \"toy\" end\n"
       val () = write (tree ^ "/toy/toy.sml", toy)
       fun invoke (label, cmd) =

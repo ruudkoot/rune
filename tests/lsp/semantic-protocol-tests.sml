@@ -388,6 +388,22 @@ struct
           val _=C.result(C.response(client,651))
       in check("a document context choice does not rescan unchanged workspace projects",plans()=planned) end)
     end)
+  (* D26: a sweep asks no one, and covers a file of several contexts, which it
+     checks in the first, where a document waits for a choice *)
+  fun sweepsCoverEveryFile ()=temporaryTree(fn {root,uri,write}=>
+    let val lib=minimalLibrary(root,write)
+        fun path name=OS.Path.concat(root,name)
+        val ()=List.app write[(path "one.build","files one.sml shared.sml end\n"),
+          (path "two.build","files two.sml shared.sml end\n"),(path "one.sml","val input=1\n"),
+          (path "two.sml","val input=true\n"),(path "shared.sml","val result:int=input\n")]
+    in fixtureInitialized(object[("capabilities",object[("textDocument",object[("diagnostic",object[])])]),
+        ("workspaceFolders",Json.Array[object[("uri",Json.String(uri root)),("name",Json.String "sweep")]]),
+        ("initializationOptions",object[("libraryRoot",Json.String(uri lib))])]) (fn client=>
+      let val ()=C.request(client,800,"workspace/diagnostic",object[("previousResultIds",Json.Array[])])
+          val reports=case C.field(C.result(C.response(client,800)),"items") of Json.Array reports=>reports | _=>[]
+          val shared=List.find(fn report=>C.field(report,"uri")=Json.String(uri(path "shared.sml")))reports
+      in check("a sweep covers a file of several contexts, checked in its first",case shared of
+           SOME report=>C.field(report,"items")=Json.Array[] | NONE=>false) end) end)
   fun idleWorkspacePolls ()=temporaryTree(fn {root,uri,write}=>
     let fun path name=OS.Path.concat(root,name)
         val lib=path "lib" val basis=OS.Path.concat(lib,"basis")
@@ -1447,6 +1463,7 @@ structure RuneLspSemanticProtocolTestMain=Main (struct
     Test.it "workspace-context-reporting" RuneLspSemanticProtocolTests.workspaceContexts,
     Test.it "live-analysis-progress" RuneLspSemanticProtocolTests.analysisProgress,
     Test.it "status-context" RuneLspSemanticProtocolTests.contextStatus,
+    Test.it "sweeps-cover-every-file" RuneLspSemanticProtocolTests.sweepsCoverEveryFile,
     Test.it "status-progress" RuneLspSemanticProtocolTests.progressStatus,
     Test.it "status-unasked" RuneLspSemanticProtocolTests.unasked,
     Test.it "idle-workspace-polls" RuneLspSemanticProtocolTests.idleWorkspacePolls,

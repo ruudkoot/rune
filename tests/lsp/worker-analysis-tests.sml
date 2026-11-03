@@ -294,6 +294,102 @@ struct
         val large=cost 160
     in check ("one unit's occurrences cost nothing of the others: " ^ Int.toString small ^ " to " ^ Int.toString large ^ " bytes",
         large<3*small) end
+  (* A tree of files on disk, a minute old, a worker, and a way to open one of
+     them, check it and discover its contexts; the client's folder is the
+     tree's root. *)
+  fun tree (files,action) =
+    let val root=OS.FileSys.tmpName ()
+        val ()=OS.FileSys.remove root handle OS.SysErr _ => ()
+        val ()=OS.FileSys.mkDir root
+        val root=OS.FileSys.fullPath root
+        fun path name=OS.Path.concat (root,name)
+        val made=ref [root]
+        fun mkdirs dir=if dir=root orelse List.exists (fn other => other=dir) (!made) then () else
+          (mkdirs (OS.Path.dir dir);OS.FileSys.mkDir dir;made:=dir:: !made)
+        val old=Time.- (Time.now (),Time.fromSeconds 100)
+        val ()=List.app (fn (name,text) => (mkdirs (OS.Path.dir (path name));writeFile (path name,text);
+          OS.FileSys.setTime (path name,SOME old))) files
+        val ()=List.app (fn dir => OS.FileSys.setTime (dir,SOME old)) (!made)
+        val platform=LspUri.Posix
+        fun uri name=LspUri.original (LspUri.fromPath (platform,path name))
+        val workspace=W.new {platform=platform,lib="lib"}
+        val ()=W.setRoots (workspace,[LspUri.original (LspUri.fromPath (platform,root))])
+        val documents=D.new (LspProtocol.Utf16,{maxDocuments=8,maxDocumentBytes=4*1024*1024,maxTotalBytes=8*1024*1024,
+          maxDocumentLines=200000,maxTotalLines=300000})
+        fun open' name=if isSome (D.snapshot (documents,uri name)) then () else ignore (D.openDocument (documents,{uri=uri name,languageId="sml",version=1,text=
+          List.foldl (fn ((other,text),found) => if other=name then text else found) "" files}))
+        val {call,phases,stop}=harness ()
+        fun state ()=M.capture (workspace,documents)
+        fun check name=(open' name;call [("op",V.Bytes "check"),("uri",V.Bytes (uri name)),("encoding",V.Bytes "utf-16"),("state",state ())])
+        fun discover name=(open' name;call [("op",V.Bytes "discover"),("uri",V.Bytes (uri name)),("state",state ())])
+        fun workspaceDiagnostics ()=V.unjson (call [("op",V.Bytes "workspace"),("method",V.Bytes "workspace/diagnostic"),
+          ("encoding",V.Bytes "utf-16"),("params",V.json (Json.Object [("previousResultIds",Json.Array [])])),
+          ("capabilities",V.json (Json.Object [])),("state",state ())])
+        fun errors reply=case V.array (V.field (reply,"reports")) of [] => [] | report::_ =>
+          (case Json.member ("items",V.unjson (V.field (report,"report"))) of SOME (Json.Array items) => items | _ => [])
+        fun messages reply=List.map (fn item => case Json.member ("message",item) of SOME (Json.String text) => text | _ => "") (errors reply)
+        fun clean dir=(List.app (fn entry => let val full=OS.Path.concat (dir,entry)
+            in if OS.FileSys.isDir full then clean full else OS.FileSys.remove full end)
+            (let val stream=OS.FileSys.openDir dir
+                 fun all found=case OS.FileSys.readDir stream of NONE => found | SOME entry => all (entry::found)
+             in all [] before OS.FileSys.closeDir stream end);OS.FileSys.rmDir dir) handle OS.SysErr _ => ()
+        val result=(action {uri=uri,path=path,check=check,discover=discover,errors=errors,messages=messages,phases=phases,
+          workspaceDiagnostics=workspaceDiagnostics} handle error => (stop ();clean root;raise error))
+    in stop ();clean root;result end
+  fun kind reply=V.bytes (V.field (reply,"kind"))
+  fun contextNames reply=List.map (fn context => V.bytes (V.field (context,"build"))) (V.array (V.field (reply,"contexts")))
+  fun shown reply=kind reply ^ " " ^ String.concatWith " " (List.map (fn name => OS.Path.file name) (contextNames reply))
+  (* D26: a file of a library is checked in the library, whatever else names it *)
+  fun owner ()=tree ([("lib1/library.build","files x.sml y.sml end\n"),("lib1/x.sml","structure X=struct val x=1 end\n"),
+      ("lib1/y.sml","structure Y=struct val y=X.x end\n"),
+      ("program.build","files lib1/x.sml lib1/y.sml main.sml end\n"),("main.sml","val main=Y.y\n"),
+      ("lib1/tests.build","files x.sml y.sml check.sml end\n"),("lib1/check.sml","val checked=Y.y\n")],
+    fn {uri,discover,check,errors,...} =>
+    let val found=discover "lib1/y.sml"
+        val ()=Expect.that ("a file of a library has one context, the library's, and no prompt: " ^ shown found,
+          kind found="selected" andalso contextNames found=[uri "lib1/library.build"])
+        val ()=Expect.that ("and checks in it",null (errors (check "lib1/y.sml")))
+        val outside=discover "main.sml"
+    in Expect.that ("a file of no library keeps its build",kind outside="selected" andalso contextNames outside=[uri "program.build"]) end)
+  (* D26: contexts compared by what the file's names resolve to, never by a
+     printed type; one that never reaches the file is no candidate *)
+  fun compared ()=tree ([("one.build","files base.sml shared.sml end\n"),("two.build","files base.sml other.sml shared.sml end\n"),
+      ("three.build","files broken.sml shared.sml end\n"),("four.build","files input.sml shared.sml end\n"),
+      ("base.sml","structure Base=struct val input=1 end\n"),("other.sml","structure Other=struct val unused=true end\n"),
+      ("broken.sml","val broken:int=true\n"),("input.sml","structure Base=struct val input=2 end\n"),
+      ("shared.sml","val result=Base.input+1\n"),
+      ("same.build","files base.sml twin.sml end\n"),("again.build","files base.sml other.sml twin.sml end\n"),
+      ("twin.sml","val twin=Base.input\n")],
+    fn {uri,discover,check,errors,phases,...} =>
+    let val twin=discover "twin.sml"
+        val ()=Expect.that ("contexts whose names resolve alike ask nothing: " ^ shown twin,kind twin="selected" andalso
+          contextNames twin=[uri "again.build",uri "same.build"])
+        val ()=Expect.that ("and the file checks in the first",null (errors (check "twin.sml")))
+        val shared=discover "shared.sml"
+        val ()=Expect.that ("where they resolve apart a choice is asked, of those that reach the file: " ^ shown shared,kind shared="ambiguous" andalso
+          contextNames shared=[uri "four.build",uri "one.build",uri "two.build"])
+    in Expect.that ("each comparison is reported",List.exists (fn phase => phase="contexts-compared") (!phases)) end)
+  (* D26: a file in no build, its names found in its directory, in a library
+     and anywhere in its workspace, the nearest first *)
+  fun implicit ()=tree ([("rune.workspace","roots lib end\n"),
+      ("tools/a/script.sml","val total=Helper.twice 2 + Far.value\nval document=Json.decode \"[]\"\n"),
+      ("tools/a/helper.sml","structure Helper=struct fun twice x=Inner.base*x end\n"),
+      ("tools/a/inner.sml","structure Inner=struct val base=2 end\n"),
+      ("tools/b/helper.sml","structure Helper=struct fun twice x=x end\n"),
+      ("deep/far/far.sml","structure Far=struct val value=3 end\n"),
+      ("tools/a/unbound.sml","val missing=Nowhere.value\n"),
+      ("tools/a/broken.sml","val sum=Helper.twice true\nval later:string=Far.value\n")],
+    fn {check,messages,discover,...} =>
+    let val found=discover "tools/a/script.sml"
+        val ()=Expect.that ("a file in no build has its implicit library, and no prompt",kind found="selected" andalso
+          V.bytes (V.field (V.field (found,"context"),"name"))="implicit")
+        val found=messages (check "tools/a/script.sml")
+        val ()=Expect.that ("its names are found beside it, in a library and anywhere in its workspace: " ^ String.concatWith "; " found,
+          null found)
+        val ()=Expect.that ("a name nowhere is unbound",List.exists (fn text => String.isSubstring "Nowhere" text)
+          (messages (check "tools/a/unbound.sml")))
+        val broken=messages (check "tools/a/broken.sml")
+    in Expect.that ("the nearest of two is taken, and analysis goes past an error",length broken=2) end)
 end
 structure RuneLspWorkerAnalysisTestMain=Main (struct
   val name="lsp-worker-analysis"
@@ -304,6 +400,9 @@ structure RuneLspWorkerAnalysisTestMain=Main (struct
     Test.it "plan-trusts-no-new-stamp" RuneLspWorkerAnalysisTests.planRacy,
     Test.it "query-stops-at-its-unit" RuneLspWorkerAnalysisTests.queryStops,
     Test.it "linear-in-units" RuneLspWorkerAnalysisTests.linearUnits,
-    Test.it "hover-reads-its-unit" RuneLspWorkerAnalysisTests.hoverPerUnit]
+    Test.it "hover-reads-its-unit" RuneLspWorkerAnalysisTests.hoverPerUnit,
+    Test.it "one-owning-library" RuneLspWorkerAnalysisTests.owner,
+    Test.it "contexts-compared-by-binder" RuneLspWorkerAnalysisTests.compared,
+    Test.it "implicit-library" RuneLspWorkerAnalysisTests.implicit]
 end)
 val ()=RuneLspWorkerAnalysisTestMain.main ()

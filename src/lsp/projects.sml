@@ -31,7 +31,7 @@ struct
               val ()=if seen then () else builds:=normalized :: !builds
               val parent=C.session {lib=SOME libraryRoot,flags= #flags target}
               val build=W.filePath platform (#build target)
-              val project=(if seen then NONE else SOME (C.Project.read (parent,{file=build,workspace=W.rootFile platform build,
+              val project=(if seen then NONE else SOME (C.Project.read (parent,{file=build,workspace=W.rootFileIn (platform,documents) build,
                 variables= #variables normalized,overlays=overlays,windows=platform=U.Windows})) before C.close parent)
                 handle error => (C.close parent;raise error)
               val ()=files:=C.Workspace.candidates {file=build,windows=platform=U.Windows} @ !files
@@ -51,9 +51,9 @@ struct
           let val config=W.configurationFor (workspace,uri)
               val targets=if not (null (#targets config)) then #targets config else
                 case U.native (platform,U.parse uri) of NONE => [] | SOME {path,...} =>
-                  W.withNamed (workspace,W.join platform (path,"file"),#flags config,
+                  W.withNamed (workspace,documents,W.join platform (path,"file"),#flags config,
                     List.map (fn file => {name=fileUri file,build=fileUri file,flags= #flags config,
-                      variables=[],libraryRoot=NONE}:W.target) (W.buildFiles platform path))
+                      variables=[],libraryRoot=NONE}:W.target) (W.buildFiles platform path),true)
               val ()=case U.native (platform,U.parse uri) of NONE => ()
                 | SOME {path,...} => directories:=path:: !directories
           in List.app (fn candidate => target (config,candidate)) targets end
@@ -67,7 +67,7 @@ struct
           [] (!memberships)
         fun apply uri =
           let val original=W.configurationFor (workspace,uri)
-              val config={targets= !(valOf (W.lookup (owners,uri))),flags= #flags original,variables=[],
+              val config={targets=List.rev (!(valOf (W.lookup (owners,uri)))),flags= #flags original,variables=[],
                 activeContext= #activeContext original,libraryRoot= #libraryRoot original}:W.settings
           in case W.scopedAt (workspace,uri) of SOME (settings:W.settings) =>
                if null (#targets settings) then SOME (uri,config) else NONE

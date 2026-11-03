@@ -49,7 +49,14 @@ where a usage says no. An open unit after it is elaborated again in any case:
 its facts print a type by a path that reaches it where the unit stands, which
 no usage covers. A plan or a selection of libraries that changed, or a scope a
 library is compiled in or its boundary (`LibraryScope`), walks the same way. A
-unit that fails leaves what is kept as it was, and its place stands. `route`
+unit that fails leaves what is kept as it was, and its place stands. It fails
+as a compile does (`docs/units.md`, *Errors*): each top-level declaration that
+does not elaborate is reported, undone and gone past, as is each syntax error,
+so that a unit reports every independent error and not only its first. What it
+declared past them is in the snapshot, and answers a question about the unit,
+but it is not kept, and nothing after it is reached: the walk stops after the
+unit, which is elaborated again wherever it is reached, since a name it found
+unbound is not among its usages. `route`
 reports how a check went; whichever way, the results are a fresh
 analysis's, and `tools/lsp/oracle.sml` holds them to one
 (`docs/language-server.md`, *Keeping what is computed*).
@@ -67,9 +74,22 @@ unit costs that unit. Type-name qualification is memoized only within one
 unit's fixed outgoing environment. Prelude name sets are kept by exact source
 text, mode and path, and an input lexed only where its text is new; a plan of
 libraries stands while the build checked is the same (a library's friend sees
-more), no input's set of names moved and no MANIFEST or library file changed. A
-file's stamp is its time and size, and is trusted only of a file older than the
-time's grain when it was stamped.
+more), its view of the Basis Library is the same (D12; a build's `view` is
+selected as a compile selects it), no input's set of names moved and no
+MANIFEST or library file changed. A file's stamp is its time and size, and is
+trusted only of a file older than the time's grain when it was stamped.
+
+`share (context, true)` lets contexts take a library's units from one another.
+A unit of a library is the same unit in every build over it (its name is
+`LIBRARY:PATH`, `docs/units.md`, *Names*), so a context reaching a library's
+unit it has never held takes the one another context that shares, under the
+same compiler configuration, checked last: by its usages, as a walk takes a
+unit, loaded from its pickle where they hold and elaborated where they do not.
+What is shared is a unit's entry without its place, which is a world's, so a
+closed context keeps nothing alive. A program's own units are never shared,
+and nor is a unit of an open file, which a walk elaborates in any case. The
+language server's contexts share; `tools/lsp/oracle.sml --share` holds a
+context that does to a fresh one that does not.
 
 `focus (context, SOME files)` closes every unit but those of files, for the
 checks after it: a closed unit keeps its pickle, sidecar, text and types, and of

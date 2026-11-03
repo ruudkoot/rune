@@ -65,6 +65,20 @@ struct
       val () = need (count (dir ^ "/summary.err") = counted andalso exists (summary ^ "/census.txt")
                       andalso OS.FileSys.fileSize (summary ^ "/census.txt") > 0 andalso not (exists (summary ^ "/alloc.bin")),
                      "summary count or file set differs")
+      (* --census-at: collections at the clocks given, a repeat once, and no
+         others (the replay's census of a stock VM's own collections) *)
+      val at = dir ^ "/at"
+      val () = rmTree at
+      val () = ignore (command dir "census-at" [census, "--jit=off", "--count", "--census-dir", at,
+                                                  "--census-every", "0", "--census-at", "65536,65536,131072", rbc])
+      val () = need (count (dir ^ "/census-at.err") = counted, "--census-at changed the program's count")
+      val () = TraceCheck.check at
+      val () = need (List.exists (fn line => line = "samples 3") (lines (read (at ^ "/meta.txt"))),
+                     "--census-at 65536,65536,131072 made other than two collections and the one at exit")
+      fun refused (label, list) = (ignore (command dir label [census, "--census-dir", dir ^ "/" ^ label, "--census-at", list, rbc]); false)
+                                  handle Failed _ => true
+      val () = need (refused ("census-at-down", "131072,65536") andalso refused ("census-at-text", "65536x"),
+                     "--census-at took clocks that fall or are not numbers")
       val static = command dir "static" [census, "--census-static", rbc]
       val rows = lines static
       val functions = length (List.filter (String.isPrefix "F\t") rows)

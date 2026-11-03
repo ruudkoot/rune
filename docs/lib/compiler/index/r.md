@@ -1,6 +1,6 @@
 # Index: R
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
 - `Analysis.restore` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.restore)
 - `Analysis.route` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.route)
@@ -8,6 +8,7 @@
 - `readMid` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-readmid)
 - `readUnit` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-readunit)
 - `run` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-run)
+- `Workspace.read` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.read)
 - `Workspace.root` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.root)
 
 ---
