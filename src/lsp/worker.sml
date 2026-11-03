@@ -39,6 +39,7 @@ struct
           let val opName=V.bytes (V.field (value,"op"))
               val id=V.integer (V.field (value,"id"))
               val ()=E.commandId (engine,id)
+              val ()=RuneLspProfile.sample ("command-" ^ opName) "" 0 0 0
               val ()=E.onProgress(engine,fn report=>send(V.Object
                 (("op",V.Bytes "progress")::("id",V.Integer id)::V.object report)))
               fun work () = case opName of
@@ -91,7 +92,8 @@ struct
                  | RuneLspWorkspace.Invalid message => failed (id,message)
                  | RuneLspSync.Invalid message => rejected (id,JsonRpc.invalidParams,message)
                  | LspUri.Invalid => failed (id,"invalid file URI during worker analysis")
-                 | error => failed (id,General.exnMessage error));RuneLspProfile.retained();ready ()) end
+                 | error => failed (id,General.exnMessage error));RuneLspProfile.sample ("replied-" ^ opName) "" 0 0 0;
+                RuneLspProfile.retained();ready ()) end
         fun loop ()=case !pending of value :: rest => (pending:=rest;command value;loop ())
           | [] => if !ended then () else (read ();loop ())
         val result=(ready ();loop ();if Framing.pending (!reader) then OS.Process.failure else OS.Process.success)

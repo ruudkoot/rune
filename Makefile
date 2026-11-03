@@ -426,6 +426,30 @@ test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rb
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
 	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc
+# A kept analysis against a fresh one, edit by edit (tools/lsp/oracle.sml): the
+# compiler's own build in make check, HOL4's closure and MLton in the nightly
+# tier, from the build files RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON name
+# (tests/lsp/README.md).
+LSP_ORACLE_SRCS := tools/lsp/oracle.sml src/main/lsp-oracle-main.sml
+bin/rune-lsp-oracle.rbc: $(RUNE) $(LSP_ORACLE_SRCS) tools/lsp/oracle.build manifests
+	$(RUNE) --build tools/lsp/oracle.build -o $@
+bin/rune-lsp-replay.rbc: $(RUNE) tests/lsp/client.sml tools/lsp/replay.sml tools/lsp/replay.build manifests
+	$(RUNE) --build tools/lsp/replay.build -o $@
+ORACLE = bin/runevm --jit=opt --equality-work 1000000000 --heap-limit
+ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
+.PHONY: test-lsp-oracle test-lsp-oracle-corpora
+test-lsp-oracle: bin/rune-lsp-oracle.rbc
+	@mkdir -p build/lsp
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
+	  --scenarios tests/lsp/oracle/rune.tsv --sample 12 --out build/lsp/oracle-rune.jsonl --require $(ORACLE_PATHS)
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
+	  --scenarios tests/lsp/oracle/rune.tsv --focus --sample 6 --out build/lsp/oracle-rune-focus.jsonl --require $(ORACLE_PATHS),opened
+test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
+	@mkdir -p build/lsp
+	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
+	  --scenarios tests/lsp/oracle/hol4.tsv --focus --sample 12 --out build/lsp/oracle-hol4.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
+	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
+	  --scenarios tests/lsp/oracle/mlton.tsv --focus --sample 8 --out build/lsp/oracle-mlton.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
 .PHONY: test-lsp-replay
 test-lsp-replay: bin/runelsp bin/rune-lsp-project-replay.rbc
 	@mkdir -p build/lsp
@@ -2115,7 +2139,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-documents-tests.rbc \
                bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
                bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc \
-               bin/rune-compiler-analysis-tests.rbc \
+               bin/rune-compiler-analysis-tests.rbc bin/rune-lsp-oracle.rbc \
                bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
                bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc bin/rune-lsp-semantic-tests.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \

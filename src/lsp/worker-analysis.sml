@@ -13,9 +13,12 @@ struct
   exception Stale of string
   exception ContextPending of string
   (* A file's text and identity, as long as its stamp stands. *)
-  type text={file:string,mode:string,stamp:string,id:OS.FileSys.file_id option,text:string}
+  type text={file:string,mode:string,stamp:string,key:string,id:OS.FileSys.file_id option,text:string}
+  (* latest: what a kept source's syntax is asked of. keys: a file's key by its
+     place among a view's sources. *)
   type context={key:string,compiler:C.session,analysis:A.t,bytes:int ref,
-    projects:(int*C.Project.t) list ref,texts:text option array ref}
+    projects:(int*C.Project.t) list ref,texts:text option array ref,latest:A.snapshot option ref,
+    keys:(string*string) option array ref}
   (* syntax: asks the snapshot, which opens a closed unit *)
   type source={file:string,uri:string,text:string,mode:string,ordinal:int option,syntax:unit->C.Syntax.t option,
     slot:int,version:IntInf.int option,revision:IntInf.int option,index:L.t option,
@@ -69,7 +72,7 @@ struct
     | NONE =>
       let val compiler=C.session {lib=lib,flags=flags}
           val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key}),bytes=ref 0,
-            projects=ref [],texts=ref (Array.fromList [])}:context
+            projects=ref [],texts=ref (Array.fromList []),latest=ref NONE,keys=ref (Array.fromList [])}:context
           val reportedChecked=ref ~1
           val ()=A.observe(#analysis context,SOME(fn event:A.observation=>
             let val report= #phase event<>"unit-frozen" orelse #checked event<> !reportedChecked
@@ -258,8 +261,11 @@ struct
        | W.Selected context => V.Object [("kind",V.Bytes "selected"),("context",descriptor context),all]
        | W.Ambiguous _ => V.Object [("kind",V.Bytes "ambiguous"),all] end
   fun check (worker as Worker {contexts,views,namespace,...},{state,uri,encoding,capabilities,cancelled}) =
-    let val (workspace as W.Workspace {platform,lib,...},documents)=M.restore state
+    let val ()=RuneLspProfile.sample "check-begin" uri 0 0 0
+        val (workspace as W.Workspace {platform,lib,...},documents)=M.restore state
+        val ()=RuneLspProfile.sample "check-restored" uri 0 0 0
         val planned as {configuration,selection,...}=plan (worker,state,workspace,documents,uri,cancelled)
+        val ()=RuneLspProfile.sample "check-planned" uri 0 0 0
         val selected=case selection of W.Ambiguous _ => raise ContextPending "select a build context before analysis"
           | W.Selected context => SOME context | W.Loose => NONE
         val ()=notify(worker,[("phase",V.Bytes "project-selected"),("file",V.Bytes(case selected of NONE=>uri | SOME context=> #build context)),
@@ -294,36 +300,40 @@ struct
           | SOME {path,...} => (snapshot,SOME (W.pathKey platform path),SOME (OS.FileSys.fileId path) handle OS.SysErr _ => NONE))
           (D.all documents)
         fun fileIdOf file=SOME (OS.FileSys.fileId file) handle OS.SysErr _ => NONE
+        fun fit (cell,at)=if at<Array.length (!cell) then () else
+          let val old= !cell
+          in cell:=Array.tabulate (Int.max (at+1,2*Array.length old),fn i => if i<Array.length old then Array.sub (old,i) else NONE) end
         (* a closed input's text, as long as its stamp stands *)
         fun remembered (file,mode,ordinal)=
           let val cell= #texts context
-              val ()=if ordinal<Array.length (!cell) then () else
-                let val old= !cell
-                in cell:=Array.tabulate (Int.max (ordinal+1,2*Array.length old),
-                     fn i => if i<Array.length old then Array.sub (old,i) else NONE) end
+              val ()=fit (cell,ordinal)
               val stamp=stampOf file
+              fun fresh ()=
+                let val memo={file=file,mode=mode,stamp=stamp,key=W.pathKey platform file,id=fileIdOf file,text=readFile (file,mode)}:text
+                in Array.update (!cell,ordinal,if settled file then SOME memo else NONE);memo end
           in case Array.sub (!cell,ordinal) of
-               SOME (memo:text) => if #file memo=file andalso #mode memo=mode andalso #stamp memo=stamp then memo else
-                 fresh (file,mode,stamp,ordinal)
-             | NONE => fresh (file,mode,stamp,ordinal) end
-        and fresh (file,mode,stamp,ordinal)=
-          let val memo={file=file,mode=mode,stamp=stamp,id=fileIdOf file,text=readFile (file,mode)}:text
-              val ()=Array.update (!(#texts context),ordinal,if settled file then SOME memo else NONE)
-          in memo end
-        val anyOpen=not (null opened)
-        fun matching (file,id)=if not anyOpen then [] else
-          let val key=W.pathKey platform file
-              fun same (snapshot:D.snapshot,documentKey,documentId)=case documentKey of NONE => file= #uri snapshot
+               SOME (memo:text) => if #file memo=file andalso #mode memo=mode andalso #stamp memo=stamp then memo else fresh ()
+             | NONE => fresh () end
+        fun matching (file,key,id)=
+          let fun same (snapshot:D.snapshot,documentKey,documentId)=case documentKey of NONE => file= #uri snapshot
                 | SOME other => other=key orelse (case (id,documentId) of
                     (SOME a,SOME b) => OS.FileSys.compare (a,b)=EQUAL | _ => false)
           in List.map #1 (List.filter same opened) end
-        fun overlayOf (file,id)=case matching (file,id) of [] => NONE
+        fun overlayOf (file,key,id)=case matching (file,key,id) of [] => NONE
           | first :: rest => if List.exists (fn snapshot => L.text (#content snapshot)<>L.text (#content first)) rest
               then raise Fail "conflicting source overlays refer to one file" else SOME first
-        fun overlay file=overlayOf (file,if anyOpen then fileIdOf file else NONE)
+        (* what a file is known by, kept with its place among the sources *)
+        fun identified (file,slot)=
+          let val cell= #keys context
+              val ()=fit (cell,slot)
+          in case Array.sub (!cell,slot) of
+               SOME (known,key) => if known=file then key else fresh (file,slot,cell)
+             | NONE => fresh (file,slot,cell) end
+        and fresh (file,slot,cell)=let val key=W.pathKey platform file in Array.update (!cell,slot,SOME (file,key));key end
         fun input (source:C.Project.source):A.input =
           let val disk=(SOME (remembered (#file source,#mode source,#ordinal source))) handle IO.Io _ => NONE | OS.SysErr _ => NONE
-              val opened=overlayOf (#file source,Option.mapPartial #id disk)
+              val opened=case disk of SOME memo => overlayOf (#file source,#key memo,#id memo)
+                | NONE => overlayOf (#file source,W.pathKey platform (#file source),fileIdOf (#file source))
           in {file= #file source,text=case (opened,disk) of (SOME snapshot,_) => L.text (#content snapshot)
                 | (NONE,SOME memo) => #text memo | (NONE,NONE) => readFile (#file source,#mode source),
               mode= #mode source,annotations= #annotations source,
@@ -346,10 +356,13 @@ struct
               if #key prior=key then n else !(#bytes prior)+n)0(!contexts)<=retainedSourceBudget then () else
           (List.app release (List.filter(fn prior:context=> #key prior<>key)(!contexts));
            contexts:=[context];views:=List.filter(fn view:view=>A.context(#snapshot view)=key)(!views))
+        val ()=RuneLspProfile.sample "check-inputs" uri 0 0 0
         (* what the editor has open keeps what a question needs; the rest closes *)
         val ()=A.focus (#analysis context,SOME (List.mapPartial (fn (snapshot:D.snapshot,_,_) =>
           Option.map #path (native (#uri snapshot))) opened @ (case native uri of NONE => [uri] | SOME {path,...} => [path])))
         val snapshot=A.check (#analysis context,{project=project,inputs=inputs,cancelled=cancelled})
+        val ()=RuneLspProfile.sample "check-analysed" uri 0 0 0
+        val ()= #latest context:=SOME snapshot
         val ()= #bytes context:=snapshotBytes snapshot
         val kept=retain (fn context:context=> !(#bytes context)) (!contexts)
         val ()=List.app release (List.filter(fn prior:context=>not(List.exists(fn context:context=> #key context= #key prior)kept))(!contexts))
@@ -361,31 +374,37 @@ struct
               val ()=List.app(fn source:source=>Array.update(slots,#slot source,SOME source))(#sources view)
           in Array.vector slots end
         fun captured (input:A.input,ordinal,slot):source list =
-          let val known=case Option.mapPartial (fn at => if at<Array.length (!(#texts context))
-                  then Array.sub (!(#texts context),at) else NONE) ordinal of
-                SOME memo => if #file memo= #file input then #id memo else fileIdOf (#file input)
-              | NONE => if anyOpen then fileIdOf (#file input) else NONE
-              val aliases=matching (#file input,known)
+          let val memo=Option.mapPartial (fn at => if at<Array.length (!(#texts context))
+                  then Array.sub (!(#texts context),at) else NONE) ordinal
+              val (key,id)=case memo of
+                  SOME memo => if #file memo= #file input then (#key memo,#id memo) else (identified (#file input,slot),NONE)
+                | NONE => (identified (#file input,slot),NONE)
+              val aliases=matching (#file input,key,id)
               val aliases=case List.find (fn snapshot:D.snapshot => #uri snapshot=uri) aliases of NONE => aliases
                 | SOME current => current :: List.filter (fn snapshot:D.snapshot => #uri snapshot<>uri) aliases
               val prior=if slot>=Vector.length previous then NONE else
                 case Vector.sub(previous,slot) of SOME source=>
                   if #file source= #file input andalso #text source= #text input andalso #mode source= #mode input
                   then SOME source else NONE | NONE=>NONE
-              val uris=if not (null aliases) then
-                  List.map (fn snapshot:D.snapshot => (#uri snapshot,SOME (#version snapshot),SOME (#revision snapshot))) aliases
-                else case prior of SOME source => [(#uri source,NONE,NONE)]
-                | NONE => [(U.original (U.fromPath (platform,OS.FileSys.fullPath (#file input))),NONE,NONE)]
               val index=case prior of SOME source=> #index source | NONE=>
                 (notify(worker,[("phase",V.Bytes "indexing-source"),("file",V.Bytes(#file input)),
                    ("checked",V.Integer(IntInf.fromInt(#checked(A.work snapshot)))),
                    ("reused",V.Integer(IntInf.fromInt(#reused(A.work snapshot))))]);
                  SOME(L.make(#text input)) handle L.Invalid=>NONE)
               val pieces=case prior of SOME source=> #tokens source | NONE=>ref NONE
-              fun syntax ()=Option.mapPartial (fn ordinal => A.syntaxAt (snapshot,{ordinal=ordinal})) ordinal
-          in List.map (fn (uri,version,revision) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,
-            syntax=syntax,slot=slot,version=version,revision=revision,
-            index=index,tokens=pieces}:source) uris end
+              val latest= #latest context
+              fun syntax ()=case (ordinal,!latest) of (SOME ordinal,SOME snapshot) => A.syntaxAt (snapshot,{ordinal=ordinal}) | _ => NONE
+          in case (prior,aliases) of
+               (SOME source,[]) => if isSome (#version source) orelse #ordinal source<>ordinal then
+                   [{file= #file input,uri= #uri source,text= #text input,mode= #mode input,ordinal=ordinal,syntax=syntax,slot=slot,
+                     version=NONE,revision=NONE,index=index,tokens=pieces}:source]
+                 else [source]
+             | _ =>
+               let val uris=if not (null aliases) then
+                     List.map (fn snapshot:D.snapshot => (#uri snapshot,SOME (#version snapshot),SOME (#revision snapshot))) aliases
+                   else [(U.original (U.fromPath (platform,OS.FileSys.fullPath (#file input))),NONE,NONE)]
+               in List.map (fn (uri,version,revision) => {file= #file input,uri=uri,text= #text input,mode= #mode input,ordinal=ordinal,
+                    syntax=syntax,slot=slot,version=version,revision=revision,index=index,tokens=pieces}:source) uris end end
         val primary=A.inputs snapshot
         val dependencies=A.dependencies snapshot
         val primaryCount=length primary
@@ -397,6 +416,7 @@ struct
           ordinal=Option.map #ordinal selected,capabilities=capabilities,generation=W.generation workspace}:view
         val all=view :: !views
         val ()=views:=retain (fn view:view=>snapshotBytes(#snapshot view)) all
+        val ()=RuneLspProfile.sample "check-viewed" uri 0 0 0
     in view end
   fun find (Worker {views,...},id)=List.find (fn view:view => #id view=id) (!views)
   fun documentDiagnostics (view:view,{uri,previous}) =

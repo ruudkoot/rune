@@ -5,7 +5,7 @@
    there; a difference is the failure that keeping can hide.
 
    Usage: rune-lsp-oracle --lib DIR --build FILE --scenarios FILE --out FILE
-            [--focus] [--sample N] [--no-fresh] [--require PATH,...]
+            [--focus] [--sample N] [--no-fresh] [--collect] [--require PATH,...]
 
    A scenario is a line of tab-separated fields:
      NAME  REPS  FILE-SUFFIX  KIND  [ARG1  [ARG2]]
@@ -26,6 +26,7 @@
    --focus keeps only the edited file open, as an editor does, and the sample
    of closed units compared opens them. --sample N compares N units besides the
    edited one, all of them without it. --no-fresh times the kept context alone.
+   --collect collects after each check, and reports what lives.
    --require fails a run that did not take each of the paths named:
    placed walked rebound loaded cutoff broken failed cancelled query opened. *)
 structure RuneLspOracle =
@@ -87,7 +88,7 @@ struct
   val paths=["placed","walked","rebound","loaded","cutoff","broken","failed","cancelled","query","opened"]
   fun main arguments =
     let val lib=ref "" val build=ref "" val scenariosFile=ref "" val out=ref ""
-        val focusing=ref false val fresh=ref true val sample=ref ~1 val required=ref []
+        val focusing=ref false val fresh=ref true val sample=ref ~1 val required=ref [] val collecting=ref false
         fun options [] = ()
           | options ("--lib"::value::rest)=(lib:=value;options rest)
           | options ("--build"::value::rest)=(build:=value;options rest)
@@ -95,6 +96,7 @@ struct
           | options ("--out"::value::rest)=(out:=value;options rest)
           | options ("--focus"::rest)=(focusing:=true;options rest)
           | options ("--no-fresh"::rest)=(fresh:=false;options rest)
+          | options ("--collect"::rest)=(collecting:=true;options rest)
           | options ("--sample"::value::rest)=(sample:=valOf (Int.fromString value);options rest)
           | options ("--require"::value::rest)=(required:=fields (#",",value);options rest)
           | options (other::_)=raise Fail ("unknown option: " ^ other)
@@ -142,6 +144,7 @@ struct
         fun next limit=(seed:=(!seed*1103515245+12345) mod 2147483648;if limit<=0 then 0 else !seed mod limit)
         fun compare (name,rep,kept:A.snapshot,edited:string list)=
           let val other=A.create (compiler,{context="fresh"})
+              val ()=if !focusing then A.focus (other,SOME edited) else ()
               val fresh=checkIn (other,never)
               val bad=ref []
               fun differ what=(bad:=what:: !bad;disagreements:= !disagreements+1)
@@ -192,14 +195,16 @@ struct
                       if null (A.diagnostics snapshot) then () else took "failed")
               val ()=checks:= !checks+1
               val agreed=if !fresh then SOME (compare (name,rep,snapshot,edited)) else NONE
+              val live=if !collecting then (Runtime.collect ();Runtime.collect ();#live (Runtime.stats ())) else #live after
           in emit ([("scenario",Json.String name),("rep",Json.int rep),("seconds",Json.Number (Real.toString seconds)),
                ("checked",Json.int checked),("reused",Json.int reused),("walked",Json.Bool walked),("rebound",Json.int rebound),
                ("loaded",Json.int loaded),("cutoff",Json.int cutoff),("broken",Json.int broken),
                ("diagnostics",Json.int (length (A.diagnostics snapshot))),("instructions",Json.int (#instructions after- #instructions before')),
-               ("allocated",Json.int (#bytes after- #bytes before')),("live",Json.int (#live after))] @
+               ("allocated",Json.int (#bytes after- #bytes before')),("live",Json.int live)] @
                (case agreed of NONE => [] | SOME same => [("same",Json.Bool same)]));
              say (name ^ " " ^ num rep ^ ": " ^ Real.fmt (StringCvt.FIX (SOME 3)) seconds ^ " s, checked " ^ num checked ^ ", reused " ^ num reused ^
                (if walked then ", walked" else ", placed") ^ ", rebound " ^ num rebound ^ ", loaded " ^ num loaded ^ ", cutoff " ^ num cutoff ^ ", broken " ^ num broken ^
+               (if !collecting then ", live " ^ Real.fmt (StringCvt.FIX (SOME 1)) (real live/1048576.0) ^ " MiB" else "") ^
                (case A.diagnostics snapshot of [] => "" | d::_ => ", diagnostic: " ^ #file d ^ ":" ^ num (#line d) ^ ": " ^ #message d) ^
                (case agreed of NONE => "" | SOME true => ", same as fresh" | SOME false => ", DIFFERS FROM FRESH") ^ "\n");
              snapshot end
