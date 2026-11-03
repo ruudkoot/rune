@@ -99,8 +99,10 @@ at `6c360f2a1`), compiling Rune's compiler itself, `cross/rune` and
 ending in `bd37` each time, and six runs of the same command outside it did
 not, with the runner's variables, descriptor 3 open, `stdin` from `/dev/null`
 and `@SMLalloc` at its default or `1M`. At `1480d911b`, the commit before,
-`make check-cross` passed. `tests/cross/deviations.txt` has a `HOST-FLAKY`
-line for each.
+`make check-cross` passed. They were marked `HOST-FLAKY` for a while, and the
+marks taken out again once the merge of M4 and M9 into M16 (`cfbea3039`), a
+heap laid out otherwise, passed `cross/rune` and `cross/rune-stack` three runs
+of three under `bin/rune-test`.
 
 ### Counts
 
