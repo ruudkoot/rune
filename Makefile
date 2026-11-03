@@ -449,7 +449,10 @@ test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
 	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
 	  --scenarios tests/lsp/oracle/hol4.tsv --focus --sample 12 --out build/lsp/oracle-hol4.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
-	  --scenarios tests/lsp/oracle/mlton.tsv --focus --sample 8 --out build/lsp/oracle-mlton.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
+	  --scenarios tests/lsp/oracle/mlton.tsv --focus --sample 8 --out build/lsp/oracle-mlton.jsonl \
+	  --record build/lsp/oracle-mlton.record --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
+	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
+	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton-against.jsonl --against build/lsp/oracle-mlton.record
 .PHONY: test-lsp-replay
 test-lsp-replay: bin/runelsp bin/rune-lsp-project-replay.rbc
 	@mkdir -p build/lsp
@@ -2139,7 +2142,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-documents-tests.rbc \
                bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
                bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc \
-               bin/rune-compiler-analysis-tests.rbc bin/rune-lsp-oracle.rbc \
+               bin/rune-compiler-analysis-tests.rbc bin/rune-lsp-oracle.rbc bin/rune-lsp-replay.rbc \
                bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
                bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc bin/rune-lsp-semantic-tests.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
