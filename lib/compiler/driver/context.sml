@@ -49,18 +49,32 @@ struct
          (#binders before') (#bound change)
     end
 
+  (* a name's key (UnitBasis.binders) by its kind, and back *)
+  fun kindKey k=case k of BuildFile.Str => "s" | BuildFile.Ty => "t" | BuildFile.Sig => "sig"
+                        | BuildFile.Fun => "fun" | BuildFile.Fix => "fix"
+  fun keyKind k=case k of "s" => SOME BuildFile.Str | "t" => SOME BuildFile.Ty | "sig" => SOME BuildFile.Sig
+                        | "fun" => SOME BuildFile.Fun | "fix" => SOME BuildFile.Fix | _ => NONE
+  (* What a change declares, by each name's key: the units' own say (bound),
+     from the cache too, and where no unit is made, --typecheck-only, what its
+     environment and its noted names do. A name's binding can be the one it
+     had, `structure List = List`, which only the first shows. *)
+  fun declaredBy (change:delta) : (string*string) list =
+    let val Env.Env {tys,strs,...}= #env change
+        val keys=List.mapPartial (fn key => case String.fields (fn c => c= #" ") key of
+            [kind,name] => if isSome (keyKind kind) then SOME (kind,name) else NONE
+          | _ => NONE) (#bound change)
+    in keys @ #declared change @ List.map (fn n => ("s",n)) (StringMap.listKeys strs)
+       @ List.map (fn n => ("t",n)) (StringMap.listKeys tys) @ List.map (fn (n,_) => ("fix",n)) (#directives change) end
+
   (* ---- boundaries, and what a second use sees through them (docs/build.md,
      D8) ---- *)
 
   fun enter ({boundaries,next,...}:t):int =
     let val id= !next in next:=id+1;boundaries:=id :: !boundaries;id end
-  (* out of the first part of a `local`: a use first seen in the second part
-     is not behind it, and one first seen in the first part is still seen *)
-  fun pause ({boundaries,...}:t,id:int)=boundaries:=List.filter (fn other => other<>id) (!boundaries)
   (* the boundary over: a build file first used inside it is seen outside it
      through its exports *)
-  fun leave (t as {used,...}:t,id:int,exports)=
-    (pause (t,id);
+  fun leave ({used,boundaries,...}:t,id:int,exports)=
+    (boundaries:=List.filter (fn other => other<>id) (!boundaries);
      used:=List.map (fn u as {file,change,within,through} =>
        if List.exists (fn other => other=id) within
        then {file=file,change=change,within=List.filter (fn other => other<>id) within,through=exports :: through}
@@ -74,7 +88,7 @@ struct
     used:={file=file,change=change,within=if CompilerProject.bounded steps then [] else !boundaries,through=[]} :: !used
   (* a build file used again: what its first use declared, through the
      boundaries that have closed around that use; false where it is the first *)
-  fun replay (t as {used,...}:t,file) : bool =
+  fun replay (t as {used,declared,...}:t,file) : bool =
     case List.find (fn u:used => #file u=file) (!used) of
       NONE => false
     | SOME {change,through,...} =>
@@ -82,27 +96,30 @@ struct
               [] => NONE
             | first :: rest => SOME (List.foldl (fn (more,kept) =>
                 List.filter (fn e => List.exists (fn x => x=e) more) kept) first rest)
-        in apply (t,snap t,change,exports);true end
+            fun shown (key,name)=case (exports,keyKind key) of
+                (NONE,_) => true
+              | (SOME es,SOME kind) => List.exists (fn e => e=(kind,name)) es
+              | _ => false
+        in apply (t,snap t,change,exports);
+           (* a boundary around this use has declared it, as around the first *)
+           declared:=List.filter shown (declaredBy change) @ !declared;true end
 
-  (* what is wrong with a boundary's exports, if anything, change being what
-     its inside declared. An export names what its inside sees: what it
-     declares, or what was in scope before it, which stays so. And `type` is a
-     type abbreviation's, as --basis-index asks: through a datatype's it would
-     lend its constructors to a replication, which the boundary hides *)
-  fun exportProblem ({env,...}:t,change:delta,exports:exports) : string option =
+  (* What is wrong with a boundary's exports, if anything, change being what
+     its inside declared. An export names what a file inside it declares, or
+     a build file used there (D6): a name that was only in scope is not the
+     library's, a client has it anyway, and a library that means to pass one
+     on declares it, `structure List = List`. And `type` is a type
+     abbreviation's, as the index asks: through a datatype's it would lend its
+     constructors to a replication, which the boundary hides. *)
+  fun exportProblem (change:delta,exports:exports) : string option =
     let
+      val found=List.foldl (fn ((kind,name),all) => StringMap.insert (all,kind ^ " " ^ name,())) StringMap.empty (declaredBy change)
       fun kindName k=case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
                              | BuildFile.Fun => "functor" | BuildFile.Ty => "type" | BuildFile.Fix => "fixity"
-      fun inScope (kind,name)=
-        case kind of
-          BuildFile.Str => StringMap.member (Env.strs (!env),name)
-        | BuildFile.Ty => StringMap.member (Env.tys (!env),name)
-        | BuildFile.Sig => StringMap.member (!Elaborate.sigs,name)
-        | BuildFile.Fun => StringMap.member (!Elaborate.funs,name)
-        | BuildFile.Fix => List.exists (fn (n,_) => n=name) (#directives change)
+      fun declared (kind,name)=StringMap.member (found,kindKey kind ^ " " ^ name)
       fun problem (kind,name)=
-        if not (inScope (kind,name))
-        then SOME ("a library exports " ^ kindName kind ^ " " ^ name ^ ", and nothing of that name is in scope")
+        if not (declared (kind,name))
+        then SOME ("a library exports " ^ kindName kind ^ " " ^ name ^ ", which no source declares")
         else
           case (kind,StringMap.find (Env.tys (#env change),name)) of
             (BuildFile.Ty,SOME (Env.TyStr {cons=_ :: _,...})) =>

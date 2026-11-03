@@ -25,6 +25,7 @@ _arguments -s \
   '--whole[with --units, one program of the units'"'"' Mid, as a whole-program compile]' \
   '--build[compile in units what a build file says]:build file:_files -g "*.build"' \
   '--build-list[print a build'"'"'s closure in order]:build file:_files -g "*.build"' \
+  '--plan[print the plan of a build file, or of what the command line says]' \
   '--path[a path variable of build files]:NAME=DIR:' \
   '--basis-index[write DIR/MANIFEST from DIR/library.build]:library:_files -/' \
   '--deps[print the files in the order the modules they declare and use give]' \

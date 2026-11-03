@@ -241,13 +241,13 @@ struct
   (* ---- the graph (Deps; the incremental roadmap's M8) ---- *)
 
   (* a file's syntax, for the names it declares and uses: the fixity of the
-     initial basis, as a file of a group's has no other (D15) *)
+     initial basis, as a file the graph orders has no other (D15) *)
   fun syntaxOf (mode : Source.mode, path : string) : Ast.program =
     #1 (Parser.parseTokensWith (loadTokens (mode, path), Fixity.initial))
 
   (* where a file breaks the discipline, as errors *)
   fun breaksOf (f : Deps.file) : string list =
-    List.map (fn (sp, what) => Error.format (sp, "a file of a group declares modules and type abbreviations only, and this is " ^ what))
+    List.map (fn (sp, what) => Error.format (sp, "a file the graph orders declares modules and type abbreviations only, and this is " ^ what))
              (#breaks f)
 
   (* --deps, --deps-dot: the inputs in an order the modules they declare and
@@ -311,20 +311,17 @@ struct
 
   (* ---- build files (docs/build.md; the incremental roadmap's M10) ---- *)
 
-  (* What a build file says, as the units driver follows it: a unit -- a
-     file, with the annotations in force -- or a scope of units whose basis
-     the build file says (compileUnits, elabSteps) *)
+  (* What a compile is: a unit -- a file, with the annotations in force -- or
+     a scope of units whose basis a build file says, which the units driver
+     follows (compileUnits, elabSteps). The command line says it too, for
+     files given by themselves, so that there is one plan (D6; commandPlan). *)
   datatype step = datatype CompilerProject.step
 
-  val buildPlan : step list option ref = ref NONE
+  val buildPlan : step list ref = ref []
 
   fun readText (f : string) : string =
     let val i = TextIO.openIn f in TextIO.inputAll i before TextIO.closeIn i end
 
-  (* A build file read: its paths made the files' (relative to its
-     directory, the variables given), each build file it uses read in its
-     place, each group put in the order its files' modules give (Deps), the
-     annotations given to each unit; and the cache directories it names *)
   val onWindows = Workspace.onWindows
   (* The workspace of this compile, from the build file or the first file
      given, and the file that was: the libraries it names are found by
@@ -337,292 +334,142 @@ struct
      BasisManifest.roots := (case !workspace of
                                SOME w => List.map (fn root => Workspace.fromHere (onWindows (), root)) (#libraryRoots w)
                              | NONE => []))
-  (* where this compile's units are named from (Workspace) *)
-  fun unitScope () : Workspace.scope =
+  (* where this compile's units are named from (Workspace), lib being where
+     its libraries are *)
+  fun scopeWith (lib : string option) : Workspace.scope =
     let val windows=onWindows ()
     in case (!Options.build,!entryFile) of
-         (SOME file,_) => Workspace.ofBuild {file=file,workspace= !workspace,lib= !Options.libDir,windows=windows}
-       | (NONE,file) => Workspace.ofFiles {file=getOpt (file,"."),workspace= !workspace,lib= !Options.libDir,windows=windows}
+         (SOME file,_) => Workspace.ofBuild {file=file,workspace= !workspace,lib=lib,windows=windows}
+       | (NONE,file) => Workspace.ofFiles {file=getOpt (file,"."),workspace= !workspace,lib=lib,windows=windows}
     end
+  fun unitScope () : Workspace.scope = scopeWith (!Options.libDir)
+  fun readBuild (path : string) =
+    let val text=readText path handle IO.Io _ => raise CompilerProject.Invalid ("cannot read the build file " ^ path)
+    in {text=text,revision=Pickle.hash text} end
   fun projectOf (file : string) : CompilerProject.plan =
+    CompilerProject.plan {file=file,windows=onWindows (),readBuild=readBuild}
+    handle CompilerProject.Invalid message => raise Options.Usage message
+
+  (* What the command line asks for, as a plan: the build file's, or the files
+     it gives, with -I those of an entry point (entryFiles). *)
+  fun commandPlan () : CompilerProject.plan =
+    case !Options.build of
+      SOME f =>
+        (if List.null (!Options.includeDirs) then () else raise Options.Usage "-I wants an entry point, and a build file says its own files";
+         findWorkspace f;
+         projectOf f)
+    | NONE =>
+        CompilerProject.ofFiles {libraries=[],files=
+          case (!Options.includeDirs, !Options.inputs) of
+            ([], files) => files
+          | (_, [main]) => entryFiles main
+          | (_, files) => if !knownToLoad then files else raise Options.Usage "-I wants one input, the entry point"}
+
+  (* a compile's libraries: those of --library, then what its plan names *)
+  fun librariesOf (project : CompilerProject.plan) : string list =
+    List.foldl (fn (library, all) => if List.exists (fn present => present = library) all then all else all @ [library])
+               (!Options.libraries) (#libraries project)
+
+  (* The plan of this compile, all of it, each library read from its build
+     file: what --plan prints and --build-list flattens. Its paths and names
+     hold no directory of the machine, so --lib is taken from here. *)
+  fun wholePlan () : CompilerPlan.t =
     let
-      val windows=onWindows ()
-      fun read path =
-        let val text=readText path handle IO.Io _ => raise CompilerProject.Invalid ("cannot read the build file " ^ path)
-        in {text=text,revision=Pickle.hash text} end
-      val plan=CompilerProject.plan {file=file,defaultMode= !Options.sourceMode,windows=windows,readBuild=read,syntax=syntaxOf}
-        handle CompilerProject.Invalid message => raise Options.Usage message
-    in plan end
-  fun planOf file = let val plan=projectOf file in (#steps plan,#caches plan) end
-
-  (* a library's directory as a message names it: by where it is in the
-     libraries, wherever those are *)
-  fun libraryShown (dir : string) : string =
-    let val root = libRoot () ^ "/"
-    in if String.isPrefix root dir then "lib/" ^ String.extract (dir, size root, NONE) else dir end
-
-  fun warnClash (file : string) (name : string, first : string, second : string) : unit =
-    Error.warn ({file = file, start = 0, stop = 0},
-                "this scope has " ^ name ^ " from both "
-                ^ (if first = "" then "the Basis Library" else "the library " ^ libraryShown first)
-                ^ " and the library " ^ libraryShown second ^ ", and the second shadows the first (docs/build.md, Clashes)")
-
-  (* --basis-index DIR: DIR/MANIFEST, what each file of the library provides
-     and requires (BasisManifest), from its build file DIR/library.build --
-     each file's class and host by its annotations ("always", "demand",
-     "seal", "final"; "host=swap", "host=no"), the libraries it is written
-     on by `libraries` -- and from the files: what each declares (Deps), and
-     what it uses that the files before it, the Basis Library or the
-     libraries it is written on provide. A file that uses a name only a file
-     after it provides is refused. *)
-  fun basisIndex (dir : string) : OS.Process.status =
-    let
-      val file = OS.Path.joinDirFile {dir = dir, file = "library.build"}
-      val () = findWorkspace file
-      val text = readText file handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ file)
-      val decs = BuildFile.parse (file, text) handle BuildFile.Error m => raise Options.Usage m
-      val libs : string list ref = ref []
-      val inl : string list ref = ref []
-      val inlVals : string list ref = ref []
-      val used = ref [] : string list ref
-      val boundary = ref NONE : (BuildFile.kind * string) list option ref
-      val header = ref NONE : BuildFile.header option ref
-      fun relative (base, p) = OS.Path.mkCanonical (OS.Path.concat (base, p))
-      fun entries (base, stack, anns, inside, ds) = List.concat (List.map (fn d => entry (base, stack, anns, inside, d)) ds)
-      and entry (base, stack, anns, inside, d) =
-        case d of
-          BuildFile.File p => [(relative (base, p), anns, inside)]
-        | BuildFile.Files ps => List.map (fn p => (relative (base, p), anns, inside)) ps
-        | BuildFile.Annotate (a, ds) => entries (base, stack, anns @ a, inside, ds)
-        | BuildFile.Use p =>
-            let val path = relative (base, p)
-                val () = if List.exists (fn q => q = path) stack then raise Options.Usage (file ^ ": cyclic use of " ^ path) else ()
-            in if List.exists (fn q => q = path) (!used) then []
-               else let val () = used := path :: !used
-                        val source = readText (OS.Path.concat (dir, path))
-                          handle IO.Io _ => raise Options.Usage (file ^ ": cannot read " ^ path)
-                        val included = BuildFile.parse (path, source) handle BuildFile.Error m => raise Options.Usage m
-                    in entries (OS.Path.dir path, path :: stack, anns, inside, included) end end
-        | BuildFile.Library (es, ds) =>
-            if inside orelse isSome (!boundary) then raise Options.Usage (file ^ ": a library has one outer export boundary")
-            else (boundary := SOME es; entries (base, stack, anns, true, ds))
-        | BuildFile.Libraries ns =>
-            if isSome (!header) then raise Options.Usage (file ^ ": a library with a header says what it is written on with requires")
-            else (libs := !libs @ ns; [])
-        | BuildFile.Header (h as {requires, friends, ...}) =>
-            if List.length stack > 1 then raise Options.Usage (file ^ ": " ^ hd stack ^ ": a header belongs to library.build")
-            else
-              (List.app (fn f => if OS.Path.isAbsolute f then raise Options.Usage (file ^ ": a friend is a path from the library: " ^ f) else ())
-                        friends;
-               header := SOME h; libs := requires; [])
-        | BuildFile.Inline ns => (inl := !inl @ ns; [])
-        | BuildFile.InlineVal ns => (inlVals := !inlVals @ ns; [])
-        | _ => raise Options.Usage (file ^ ": a library's build file lists its files, annotated; no more")
-      val raw = entries (".", ["library.build"], [], false, decs)
-      val () = if isSome (!boundary) andalso List.exists (fn (_,_,inside) => not inside) raw
-               then raise Options.Usage (file ^ ": all source files belong inside the library export boundary") else ()
-      val listed = List.map (fn (p,anns,_) => (p,anns)) raw
-      fun kindName k = case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
-                              | BuildFile.Fun => "functor" | BuildFile.Ty => "type" | BuildFile.Fix => "fixity"
-      val exports = Option.map (List.map (fn (k,n) => (kindName k,n))) (!boundary)
-      fun classOf anns =
-        case List.filter (fn a => List.exists (fn c => c = a) ["always", "demand", "seal", "final"]) anns of
-          [] => "demand" | cs => List.last cs
-      fun hostOf anns =
-        case List.filter (fn a => String.isPrefix "host=" a) anns of
-          [] => "yes" | hs => String.extract (List.last hs, 5, NONE)
-      (* what the Basis Library and the libraries this one is written on
-         provide, from their MANIFESTs, made before this one's *)
-      val isBasis = OS.Path.mkCanonical dir = OS.Path.mkCanonical (libRoot () ^ "/basis")
-      val written = if isBasis then []
-                    else List.map (fn d => (d, BasisManifest.readManifest d)) (BasisManifest.libraries (libRoot (), !libs))
-      val () = if isBasis orelse isSome (!header) orelse !Options.noWarnings then ()
-               else (Error.warn ({file = file, start = 0, stop = 0},
-                                 "this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)");
-                     Error.flushWarnings ())
-      val outside = if isBasis then [] else readManifest () @ List.concat (List.map #2 written)
-      (* with a header, it sees the Basis Library and what it requires alone,
-         through what a client of it would (BasisManifest) *)
-      val scopes = BasisManifest.scopes {root = libRoot (), building = SOME file, names = !libs, headed = isSome (!header),
-                                         libraries = written}
-                   handle BasisManifest.Usage why => raise Options.Usage why
-      fun usable (e : entry) =
-        if not (isSome (!header)) orelse #dir e = libDir () then BasisManifest.public e
-        else List.filter (fn n => BasisManifest.seen (#program scopes, e, n)) (#provides e)
-      val () = if isSome (!header) andalso not (!Options.noWarnings)
-               then (List.app (warnClash file) (BasisManifest.clashes (#program scopes, outside, libDir ()));
-                     Error.flushWarnings ())
-               else ()
-      val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (usable e))
-                                StringMap.empty outside
-      (* and what of those a boundary, or not being required, hides *)
-      val hidden = List.foldl (fn (e : entry, m) =>
-                                 let val public = BasisManifest.public e
-                                 in List.foldl (fn (n, m) =>
-                                      if StringMap.member (provided, n) then m
-                                      else StringMap.insert (m, n, (#dir e, List.exists (fn p => p = n) public))) m (#provides e) end)
-                              StringMap.empty outside
-      (* The fixity a file of the library is read in: the initial basis's, what
-         it requires exports, and what its files before say; a file may be in
-         a directory below the library's: sized/int32.sml *)
-      val imported = List.concat (List.map BasisManifest.fixities
-                                           (if isSome (!header) then List.map #dir (#program scopes) else List.map #1 written))
-      val (analysedRev, afterAll) =
-        List.foldl (fn ((p, anns), (acc, fx)) =>
-                      let val (prog, fx') = Parser.parseTokensWith (loadTokens (Source.Ascii, OS.Path.concat (dir, p)), fx)
-                      in ((p, anns, Deps.analyse (p, prog)) :: acc, fx') end)
-                   ([], Fixity.extend (Fixity.initial, imported)) listed
-      val analysed = List.rev analysedRev
-      fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
-      val providers = List.foldl (fn ((_, _, f : Deps.file), m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
-                                                                               (#declares f))
-                                 provided analysed
-      val declared = List.concat (List.map (fn (_,_,f : Deps.file) =>
-        List.map (fn (k,n) => (Deps.kindName k,n)) (#declares f))
-        (List.filter (fn (_,anns,_) => classOf anns <> "final") analysed))
-      val ownFixity = List.take (#list afterAll, List.length (#list afterAll)
-                                                 - List.length imported - List.length (#list Fixity.initial))
-      val () = Option.app (List.app (fn exported as (k,n) =>
-        if k = "fixity" then
-          (if List.exists (fn (m, _) => m = n) ownFixity then ()
-           else raise Options.Usage (file ^ ": exports fixity " ^ n ^ ", which no source declares"))
-        else if List.exists (fn declared => exported=declared) declared then ()
-        else raise Options.Usage (file ^ ": exports " ^ k ^ " " ^ n ^ ", which no source declares"))) exports
-      fun exportWords es = String.concatWith " " (List.map (fn (k,n) => k ^ ":" ^ n) es)
-      (* a header's views are of what it exports *)
-      val views = case !header of NONE => [] | SOME {views, ...} => List.map (fn (v, es) => (v, List.map (fn (k,n) => (kindName k,n)) es)) views
-      val () = List.app (fn (v, es) => List.app (fn e as (k, n) =>
-                 if List.exists (fn x => x = e) (getOpt (exports, [])) then ()
-                 else raise Options.Usage (file ^ ": the view " ^ v ^ " has " ^ k ^ " " ^ n ^ ", which the library does not export")) es) views
-      val scopeColumn = case (exports, !header) of (NONE, _) => "" | (_, SOME _) => "" | (SOME [], _) => " | -"
-        | (SOME es, _) => " | " ^ exportWords es
-      val (lines, _) =
-        List.foldl
-          (fn ((p, anns, f : Deps.file), (acc, earlier)) =>
-             let
-               val provides = List.map #2 (#declares f)
-               val requires = sorted (List.filter (fn n => StringMap.member (providers, n) andalso
-                                                           not (List.exists (fn m => m = n) provides))
-                                                  (List.map #2 (#uses f)))
-               val () = List.app (fn n => if StringMap.member (earlier, n) then ()
-                                          else raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^
-                                                                    ", which only a file after it provides"))
-                                 requires
-               (* a client would fail on it, and this library not (E28) *)
-               val () = List.app (fn (kind, n) =>
-                                    case StringMap.find (hidden, n) of
-                                      SOME (library, exported) =>
-                                        if kind = Deps.Tycon orelse StringMap.member (providers, n) then ()
-                                        else if exported then
-                                          raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^ ", of the library " ^ libraryShown library
-                                                               ^ ", which its header does not require")
-                                        else raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^ ", which the boundary of "
-                                                                  ^ library ^ " does not export")
-                                    | NONE => ())
-                                 (#uses f)
-               val line = p ^ " | " ^ classOf anns ^ " | " ^ hostOf anns ^ " | " ^ String.concatWith " " provides ^ " | "
-                          ^ String.concatWith " " requires ^ scopeColumn
-             in (line :: acc, List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier provides) end)
-          ([], provided) analysed
-      val out = OS.Path.joinDirFile {dir = dir, file = "MANIFEST"}
-      (* in bytes, so that every host writes the same file (Emit.writeFileAs) *)
-      val o' = BinIO.openOut out
-      fun put s = BinIO.output (o', Byte.stringToBytes s)
+      val windows = onWindows ()
+      val () = entryFile := (case !Options.inputs of first :: _ => SOME first | [] => NONE)
+      val project = commandPlan ()
+      val libraries = librariesOf project
+      val () = if List.null libraries then () else ignore (libRoot ())
+      val lib = Option.map (fn dir => case Workspace.fromHere (windows, Workspace.keyOf (windows, Workspace.here ()) dir) of
+                                        "" => "." | relative => relative) (!Options.libDir)
     in
-      put "# Generated from library.build by rune --basis-index -- do not edit.\n";
-      List.app (fn l => put ("# library: " ^ l ^ "\n")) (!libs);
-      (case (exports, !header) of
-         (SOME es, SOME {friends, ...}) =>
-           (put ("# exports: " ^ exportWords es ^ "\n");
-            if List.null friends then () else put ("# friends: " ^ String.concatWith " " friends ^ "\n");
-            List.app (fn (v, es) => put ("# view: " ^ v ^ " " ^ exportWords es ^ "\n")) views;
-            List.app (fn (n, f) => put ("# fixity: " ^ (case f of Fixity.Infix p => "infix " ^ Int.toString p
-                                                                | Fixity.Infixr p => "infixr " ^ Int.toString p
-                                                                | Fixity.Nonfix => "nonfix") ^ " " ^ n ^ "\n"))
-                     (List.filter (fn (n, _) => List.exists (fn e => e = ("fixity", n)) es) (List.rev ownFixity)))
-       | _ => ());
-      if List.null (!inl) then () else put ("# inline: " ^ String.concatWith " " (!inl) ^ "\n");
-      if List.null (!inlVals) then () else put ("# inline val: " ^ String.concatWith " " (!inlVals) ^ "\n");
-      List.app (fn l => put (l ^ "\n")) (List.rev lines);
-      BinIO.closeOut o';
+      CompilerPlan.make {project = project, libraries = libraries, lib = lib, mode = !Options.sourceMode, scope = scopeWith lib,
+                         basis = if !Options.noPrelude then "none" else if !Options.basisAll then "all" else "demand",
+                         windows = windows, read = readBuild, hash = Hex.fromBytes o Sha256.digest}
+      handle CompilerProject.Invalid message => raise Options.Usage message
+    end
+
+  (* --plan: the plan's text (docs/build.md, The plan), of the build file given
+     or of what the command line says; of a stored plan, that text again. The
+     text is read back as it is printed, so that what is printed can be. *)
+  fun planCommand () : OS.Process.status =
+    let
+      fun readBack text =
+        let val again = CompilerPlan.print (CompilerPlan.read text)
+        in if again = text then text else raise Error.Bug "--plan: a plan's text does not read back as it is" end
+        handle CompilerPlan.Bad why => raise Options.Usage ("not a plan: " ^ why)
+      fun stored file =
+        readBack (CompilerPlan.print (CompilerPlan.read (readText file)))
+        handle IO.Io _ => raise Options.Usage (Options.cannotRead file)
+             | CompilerPlan.Bad why => raise Options.Usage (file ^ ": not a plan: " ^ why)
+    in
+      case !Options.inputs of
+        [file] =>
+          if String.isSuffix ".plan" file then print (stored file)
+          else
+            (if String.isSuffix ".build" file then (Options.build := SOME file; Options.inputs := []) else ();
+             print (readBack (CompilerPlan.print (wholePlan ()))))
+      | _ => print (readBack (CompilerPlan.print (wholePlan ())));
       OS.Process.success
     end
+
+  (* --basis-index DIR: DIR/MANIFEST, from DIR/library.build (LibraryIndex) *)
+  fun indexCommand (dir : string) : OS.Process.status =
+    (findWorkspace (OS.Path.joinDirFile {dir = dir, file = "library.build"});
+     LibraryIndex.write {dir = dir, root = libRoot (), warnings = not (!Options.noWarnings), windows = onWindows ()};
+     OS.Process.success)
 
   (* the files of a plan, in the order they are compiled, with their
      annotations *)
   val unitsOf = CompilerProject.units
   val filesOf = CompilerProject.files
 
-  (* --build-list FILE: the closure of a build: the files of the libraries it
-     names and of those they are written on, each library before what is
-     written on it, then its own, then the libraries' final files. Whole
-     libraries, of what a program may name: which of their files one compile
-     takes is --basis-deps. The Basis Library is every program's, and not
-     in the list. *)
-  fun buildList (file : string) : OS.Process.status =
-    let
-      val () = findWorkspace file
-      val project = projectOf file
-      val names = List.foldl (fn (library, all) => if List.exists (fn present => present = library) all then all else all @ [library])
-                             (!Options.libraries) (#libraries project)
-      val entries =
-        if List.null names then []
-        else List.concat (List.map BasisManifest.readManifest (BasisManifest.libraries (libRoot (), names)))
-      val (final, library) = List.partition (fn e : entry => #when e = Final) entries
-      fun paths es = List.map (OS.Path.mkCanonical o BasisManifest.path) es
-    in
-      List.app println (paths library @ filesOf (#steps project) @ paths final);
-      OS.Process.success
-    end
+  (* --build-list FILE: the closure of a build: the plan flattened, the files
+     of the libraries it names and of those they are written on, each library
+     before what is written on it, then its own, then the libraries' final
+     files. Whole libraries, of what a program may name: which of their files
+     one compile takes is --basis-deps. The Basis Library is every program's,
+     and not in the list. *)
+  fun buildList () : OS.Process.status =
+    (List.app println (CompilerPlan.flatten (wholePlan ()));
+     OS.Process.success)
 
   fun compile () : OS.Process.status =
     let
       (* what a compile begins with that is not one of the compiler's roots,
          for one made again (diagnosed, compiledAgain) *)
       val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false; workspace := NONE; BasisManifest.roots := [])
-      (* --build: the inputs are the build file's files, its plan what the
-         units driver follows *)
-      val () =
-        case !Options.build of
-          NONE => ()
-        | SOME f =>
-            let val ()=findWorkspace f
-                val project=projectOf f
-                val plan= #steps project
-                val caches= #caches project
-                (* reaching into a library, which a later roadmap's milestone
-                   refuses (docs/build.md, Reaching in) *)
-                val ()=if !Options.noWarnings orelse !knownToLoad then () else
-                  (List.app (fn (build,library,paths) =>
-                     Error.warn ({file=build,start=0,stop=0},
-                       "this build reaches into the library " ^ library ^ " (" ^ Int.toString paths
-                       ^ (if paths=1 then " path" else " paths") ^ "), which is reached through its interface"))
-                     (CompilerProject.reaches {references= #references project,windows=onWindows (),
-                        isLibrary=fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir=dir,file="library.build"},[])
-                                            handle OS.SysErr _ => false});
-                   Error.flushWarnings ())
-                val ()=Options.libraries:=List.foldl (fn (library,all) =>
-                  if List.exists (fn present => present=library) all then all else all @ [library])
-                  (!Options.libraries) (#libraries project)
-                (* the functors its build files mark to be inlined (M6b) *)
-                val ()=Elaborate.inlineFunctors:=List.foldl (fn (n,m) => StringMap.insert (m,n,()))
-                  (!Elaborate.inlineFunctors) (#inline project)
-                (* and the functions (functors-units M10) *)
-                val ()=Elaborate.inlineValues:=List.foldl (fn (n,m) => StringMap.insert (m,n,()))
-                  (!Elaborate.inlineValues) (#inlineValues project)
-            in
-              buildPlan := SOME plan;
-              Options.inputs := filesOf plan;
-              buildModes := List.foldl (fn ((p, anns), m) => if StringMap.member (m, p) then m
-                                                             else StringMap.insert (m, p, modeOf anns))
-                                       StringMap.empty (unitsOf plan);
-              case (caches, !Options.cacheDir) of
-                (c :: _, NONE) => Options.cacheDir := SOME c
-              | _ => ()
-            end
       (* files given by themselves: the first names their units, and the
          workspace above it has only libraries to give them *)
       val () = if !knownToLoad then () else entryFile := (case !Options.inputs of first :: _ => SOME first | [] => NONE)
+      (* the plan: the inputs are its files, and it is what the units driver
+         follows *)
+      val project = commandPlan ()
+      (* reaching into a library, which a later roadmap's milestone refuses
+         (docs/build.md, Reaching in) *)
+      val () =
+        if !Options.noWarnings orelse !knownToLoad then ()
+        else
+          (List.app (fn (build,library,paths) =>
+             Error.warn ({file=build,start=0,stop=0},
+               "this build reaches into the library " ^ library ^ " (" ^ Int.toString paths
+               ^ (if paths=1 then " path" else " paths") ^ "), which is reached through its interface"))
+             (CompilerProject.reaches {references= #references project,windows=onWindows (),
+                isLibrary=fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir=dir,file="library.build"},[])
+                                    handle OS.SysErr _ => false});
+           Error.flushWarnings ())
+      val () = Options.libraries := librariesOf project
+      (* the functors its build files mark to be inlined (M6b) *)
+      val () = Elaborate.inlineFunctors := List.foldl (fn (n,m) => StringMap.insert (m,n,()))
+                                                      (!Elaborate.inlineFunctors) (#inline project)
+      (* and the functions (functors-units M10) *)
+      val () = Elaborate.inlineValues := List.foldl (fn (n,m) => StringMap.insert (m,n,()))
+                                                    (!Elaborate.inlineValues) (#inlineValues project)
+      val () = buildPlan := #steps project
+      val () = Options.inputs := filesOf (!buildPlan)
+      val () = buildModes := List.foldl (fn ((p, anns), m) => if StringMap.member (m, p) then m
+                                                              else StringMap.insert (m, p, modeOf anns))
+                                        StringMap.empty (unitsOf (!buildPlan))
       val () =
         case (!Options.build,!entryFile,!Options.libraries) of
           (NONE,SOME first,_ :: _) => findWorkspace first
@@ -643,12 +490,6 @@ struct
         else ()
       (* a whole program's dynamic modules: none (UnitBasis.wholeFingerprints) *)
       val () = UnitBasis.wholeFingerprints := (not (!Options.units) orelse !Options.wholeFromUnits)
-      (* -I: the entry point's files before it *)
-      val () =
-        case (!Options.includeDirs, !Options.inputs) of
-          ([], _) => ()
-        | (_, [main]) => Options.inputs := entryFiles main
-        | _ => if !knownToLoad then () else raise Options.Usage "-I wants one input, the entry point"
       val inputs = !Options.inputs
       val () = if List.null inputs then raise Options.Usage "no input files" else ()
     in
@@ -682,7 +523,7 @@ struct
             val () =
               if not (#scoped scopes) orelse !Options.noWarnings orelse !knownToLoad then ()
               else
-                (List.app (warnClash (getOpt (!Options.build, hd inputs))) (BasisManifest.clashes (#program scopes, entries, libDir ()));
+                (List.app (LibraryIndex.warnClash (libRoot ()) (getOpt (!Options.build, hd inputs))) (BasisManifest.clashes (#program scopes, entries, libDir ()));
                  Error.flushWarnings ())
             val mentioned = CompilerPrelude.usedByAll (scopes, entries, inputs, userToks)
             val () = namesLoading := List.exists BasisManifest.namesLoading userToks
@@ -1123,7 +964,7 @@ struct
       fun checkExports (change, exports) =
         if !failedBefore orelse isSome (!Parallel.child) then ()
         else Option.app (fn message => raise Options.Usage message)
-                        (CompilerBuildContext.exportProblem (buildContext, change, exports))
+                        (CompilerBuildContext.exportProblem (change, exports))
       val libraryWalk = LibraryScope.walk (env, fixity, UnitBasis.binders, !librariesScoped)
       fun libraries (es,acc) =
         LibraryScope.libraries (libraryWalk, entryGroups es,
@@ -1132,34 +973,26 @@ struct
         LibraryScope.finals (libraryWalk, entryGroups es,
                              fn (group,acc) => List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group, acc)
       val implemented : string list ref = ref []
-      (* the names of the plan's units, which its steps go through in order *)
-      val unnamed = ref userPart
-      fun nextName () =
-        case !unnamed of
-          (_, _, _, ident, _) :: rest => (unnamed := rest; ident)
+      (* the plan's units, which its steps go through in order *)
+      val remaining = ref userPart
+      fun nextUnit () =
+        case !remaining of
+          u :: rest => (remaining := rest; u)
         | [] => raise Fail "a unit that is not among the inputs"
       fun elabSteps (steps : step list, acc) = List.foldl elabStep acc steps
       and elabStep (SUnit (p, anns), acc) =
             let
-              val allow = !Options.allowPrim orelse List.exists (fn a => a = "allowPrim") anns
+              val (_, load, given, ident, read) = nextUnit ()
+              val allow = given orelse List.exists (fn a => a = "allowPrim") anns
               val quiet = !Options.noWarnings
               val () = if List.exists (fn a => a = "noWarnings") anns then Options.noWarnings := true else ()
               val mode = modeOf anns
-              val acc = unit ((p, fn () => loadTokens (mode, p), allow, nextName (), mode), acc)
+              (* its tokens as they were read, but for a file given twice in
+                 two modes *)
+              val load = if mode = read then load else fn () => loadTokens (mode, p)
+              val acc = unit ((p, load, allow, ident, mode), acc)
                         handle e => (Options.noWarnings := quiet; raise e)
             in Options.noWarnings := quiet; acc end
-        | elabStep (SLocal (a, b), acc) =
-            let
-              val b0 = snap ()
-              val boundary = CompilerBuildContext.enter buildContext
-              val acc = elabSteps (a, acc)
-              val () = CompilerBuildContext.pause (buildContext, boundary)
-              val b1 = snap ()
-              val acc = elabSteps (b, acc)
-            in
-              CompilerBuildContext.leave (buildContext, boundary, []);
-              apply (b0, deltaOf (b1, snap ()), NONE); acc
-            end
         | elabStep (SLibrary (exports, ds), acc) =
             let
               val b0 = snap ()
@@ -1236,10 +1069,7 @@ struct
         else ()
       fun programPart compileIt acc = (LibraryScope.program libraryWalk; compileIt acc)
       val compiled =
-        (case !buildPlan of
-           NONE => List.rev (finals (final,withDefaults (programPart (fn acc => List.foldl unit acc userPart)) (libraries (basis,[]))))
-         | SOME plan =>
-             List.rev (finals (final,withDefaults (programPart (fn acc => elabSteps (plan,acc))) (libraries (basis,[])))))
+        List.rev (finals (final,withDefaults (programPart (fn acc => elabSteps (!buildPlan,acc))) (libraries (basis,[]))))
         handle e => (Parallel.finish (); raise e)
       val () = Parallel.finish ()
       val units = List.map #1 compiled
@@ -1529,8 +1359,9 @@ struct
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
      else if !Options.deps orelse !Options.depsDot orelse !Options.depsUses then depsCommand ()
-     else if isSome (!Options.basisIndex) then basisIndex (valOf (!Options.basisIndex))
-     else if !Options.buildList then buildList (valOf (!Options.build))
+     else if isSome (!Options.indexLibrary) then indexCommand (valOf (!Options.indexLibrary))
+     else if !Options.plan then planCommand ()
+     else if !Options.buildList then buildList ()
      else if !Options.lexCount > 0 then lexCount ()
      else if !Options.dumpTokens then dumpTokens ()
      else if isSome (!Options.readMid) then diagnosed (fn () => readMid (valOf (!Options.readMid)))

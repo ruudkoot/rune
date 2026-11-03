@@ -39,9 +39,8 @@ files
   driver/pipeline.sml
   driver/unitmid.sml
   driver/unitcache.sml
-  driver/deps.sml
-  driver/project.sml
   driver/workspace.sml
+  driver/plan.sml
   driver/context.sml
   driver/prelude.sml
 end

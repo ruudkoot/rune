@@ -228,9 +228,11 @@ struct
           ("public.sml","structure Public=struct val x=Hidden.x+1 end\n"),
           ("final.sml","val result=Public.x\n")]
         val ()=List.app write files
-        val ()=write ("scope.build","local files hidden.sml end in files public.sml end end\nfiles final.sml end\n")
+        val ()=OS.FileSys.mkDir (dir ^ "/scoped")
+        val ()=write ("scoped/library.build","exports (structure Public)\nfiles ../hidden.sml ../public.sml end\n")
+        val ()=write ("scope.build","use scoped/library.build\nfiles final.sml end\n")
         fun clean ()=(List.app (fn file => OS.FileSys.remove (dir ^ "/" ^ file))
-          ("scope.build" :: List.map #1 files);OS.FileSys.rmDir dir)
+          ("scope.build" :: "scoped/library.build" :: List.map #1 files);OS.FileSys.rmDir (dir ^ "/scoped");OS.FileSys.rmDir dir)
         fun work () =
           let val parent=compiler ()
               val context=A.create (parent,{context="scoped"})

@@ -98,7 +98,6 @@ struct
         val planBytes=Pickle.writer ()
         fun encode (w,item)=case item of
           CompilerProject.SUnit (file,annotations) => (Pickle.byte (w,0);Pickle.string (w,file);Pickle.list Pickle.string (w,annotations))
-        | CompilerProject.SLocal (a,b) => (Pickle.byte (w,1);Pickle.list encode (w,a);Pickle.list encode (w,b))
         | CompilerProject.SLibrary (exports,children) => (Pickle.byte (w,2);
             Pickle.list (fn (w,(kind,name)) => (Pickle.byte (w,case kind of BuildFile.Str => 0 | BuildFile.Sig => 1 | BuildFile.Fun => 2 | BuildFile.Ty => 3 | BuildFile.Fix => 4);
               Pickle.string (w,name))) (w,exports);Pickle.list encode (w,children))
@@ -254,21 +253,12 @@ struct
               if #file source<>file then raise Fail "project input order differs" else
                 (remaining:=rest;
                  unit (source,name,allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true)))
-        | CompilerProject.SLocal (a,b) =>
-            let val before'=snap ()
-                val boundary=CompilerBuildContext.enter scopes
-                val ()=walk a
-                val ()=CompilerBuildContext.pause (scopes,boundary)
-                val hidden=snap ()
-                val ()=walk b
-                val ()=CompilerBuildContext.leave (scopes,boundary,[])
-            in apply (before',delta (hidden,snap ()),NONE) end
         | CompilerProject.SLibrary (exports,children) =>
             let val before'=snap ()
                 val boundary=CompilerBuildContext.enter scopes
                 val ()=walk children
                 val change=delta (before',snap ())
-                val ()=case CompilerBuildContext.exportProblem (scopes,change,exports) of
+                val ()=case CompilerBuildContext.exportProblem (change,exports) of
                     NONE => ()
                   | SOME message => raise Error.CompileError ({file=case sources of source :: _ => #file source | [] => "",
                                                                start=0,stop=0},message)
