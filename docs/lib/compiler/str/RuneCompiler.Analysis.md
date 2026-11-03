@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 49 |
+| Members | 50 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -53,9 +53,10 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`pool`](../sig/RUNE_COMPILER.md#val-analysis.pool) | `unit -> pool` |
 | val | [`project`](../sig/RUNE_COMPILER.md#val-analysis.project) | `snapshot -> string option` |
 | val | [`restore`](../sig/RUNE_COMPILER.md#val-analysis.restore) | `t * checkpoint -> unit` |
-| val | [`route`](../sig/RUNE_COMPILER.md#val-analysis.route) | `snapshot -> {broken : int, cutoff : int, loaded : int, rebound : int, walked : bool}` |
+| val | [`route`](../sig/RUNE_COMPILER.md#val-analysis.route) | `snapshot -> {broken : int, cutoff : int, loaded : int, rebound : int, stored : int, walked : bool}` |
 | val | [`share`](../sig/RUNE_COMPILER.md#val-analysis.share) | `t * pool option -> unit` |
 | val | [`signatureAt`](../sig/RUNE_COMPILER.md#val-analysis.signatureat) | `snapshot * {offset : int, ordinal : int} -> call option` |
+| val | [`store`](../sig/RUNE_COMPILER.md#val-analysis.store) | `t * string option -> unit` |
 | val | [`syntaxAt`](../sig/RUNE_COMPILER.md#val-analysis.syntaxat) | `snapshot * {ordinal : int} -> RuneCompiler.Syntax.t option` |
 | val | [`typeAt`](../sig/RUNE_COMPILER.md#val-analysis.typeat) | `snapshot * {file : string, offset : int} -> string option` |
 | val | [`typeAtOccurrence`](../sig/RUNE_COMPILER.md#val-analysis.typeatoccurrence) | `snapshot * {offset : int, ordinal : int} -> string option` |

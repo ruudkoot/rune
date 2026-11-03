@@ -5,12 +5,14 @@
 - `Analysis.share` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.share)
 - `Analysis.signatureAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.signatureat)
 - `Analysis.snapshot` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.snapshot)
+- `Analysis.store` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.store)
 - `Analysis.syntaxAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.syntaxat)
 - `Project.source` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-project.source)
 - `Project.sources` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.sources)
 - `session` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-session)
 - `session` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-session)
 - `Syntax` (str): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#str-syntax)
+- `Workspace.store` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.store)
 
 ---
 

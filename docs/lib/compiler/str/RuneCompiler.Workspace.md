@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 8 |
+| Members | 9 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -23,6 +23,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`libraryRoots`](../sig/RUNE_COMPILER.md#val-workspace.libraryroots) | `t -> string list` |
 | val | [`read`](../sig/RUNE_COMPILER.md#val-workspace.read) | `{file : string, text : string, windows : bool} -> t` |
 | val | [`root`](../sig/RUNE_COMPILER.md#val-workspace.root) | `t -> string` |
+| val | [`store`](../sig/RUNE_COMPILER.md#val-workspace.store) | `{file : string, windows : bool} -> string option` |
 | val | [`targets`](../sig/RUNE_COMPILER.md#val-workspace.targets) | `t -> target list` |
 
 ---

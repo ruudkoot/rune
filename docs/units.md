@@ -790,6 +790,8 @@ DIR/                 .rune, or lib/cache, or --cache-dir's
   memo/units/        the records of up-to-date builds, copies of outputs, and
                      trimmed, whose time is when the store was last trimmed
   steps/             what a build's steps and preprocessors made
+  editor/units/      the language server's sidecars, by the hash of a source
+                     (docs/language-server.md, The store)
 ```
 
 **Layers.** A compile writes one store, its *overlay*, and reads after it
@@ -860,8 +862,14 @@ the default options and a hash whose probe is the same.
 **What reads which.** The batch compiler and `--serve`: the overlay, then
 the layers. The REPL's `use`: the overlay of the file's workspace. The
 compiler library: the frozen libraries alone, and it writes `.rbi`, `.rbm`
-and `.rbs` beside its outputs. The language server keeps its analysis in
-memory and reads no store yet.
+and `.rbs` beside its outputs. The language server: the overlay of its
+build's workspace, where there is one, then the layers, for the static
+layers of a compile's entries, of any configuration whose static settings
+are its own (the compiler, the formats, the hash and `--flex-records`,
+`--overloading` and `--free-tyvars`; level, passes, fuel, target, the
+integers' width, the limits and what is inlined move no static layer); and
+it writes its sidecars there, never an entry
+([language-server.md](language-server.md), *The store*).
 
 ## A warm build
 

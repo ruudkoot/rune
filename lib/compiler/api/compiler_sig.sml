@@ -189,9 +189,10 @@ sig
     (* `targets workspace` lists its named targets in order. *)
     val targets : t -> target list
     (* `store {file, windows}` is the directory of the store a compile of
-       file keeps, where there is one: RUNE_CACHE's, else .rune beside the
-       nearest root file above file, else beside file (docs/units.md, The
-       store). *)
+       file keeps, where there is one.
+
+       That is RUNE_CACHE's, else .rune beside the nearest root file above
+       file, else beside file (docs/units.md, The store). *)
     val store : {file : string, windows : bool} -> string option
   end
 
