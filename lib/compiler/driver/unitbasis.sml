@@ -68,8 +68,9 @@ struct
      18: another unit's names by a table of the unit's imports, and the
      identity worked out with what they are, not with the units' identities;
      19: the static layer, written whole before the ABI layer; 20: an
-     environment with origins may be a reference, as one with none *)
-  val version = 20
+     environment with origins may be a reference, as one with none; 21: a
+     reference's stamps and flags as runs *)
+  val version = 21
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -146,9 +147,9 @@ struct
   (* the static layer's fingerprints of the type names, as tyconFps below *)
   val staticTycons : string IntTable.table ref = ref (IntTable.table 64)
   val () = CompilerState.refRoot ("UnitBasis.staticTycons", staticTycons, IntTable.copy)
-  (* RUNE_STATIC_LOAD: a load enters nothing of the ABI layer in the
-     compiler's tables: what a reader of the static layer alone gets, which
-     must be what elaboration needs (docs/testing.md) *)
+  (* RUNE_STATIC_LOAD: a load in a compile that makes no code enters nothing of
+     the ABI layer in the compiler's tables: what a reader of the static
+     layer alone gets, which must be what elaboration needs (docs/units.md) *)
   val staticLoad = ref false
   val () = CompilerState.cellRoot ("UnitBasis.staticLoad", staticLoad)
   (* RUNE_LAYER_DUMP=DIR: each export's hashes, by unit (dumpLayers) *)
@@ -2006,6 +2007,40 @@ struct
             in try (getOpt (StringMap.find (!paramTargets, namesKey en), [])) end
     end
 
+  (* A reference's names, as runs of numbers one after another: the values of a
+     structure met for the first time are numbered in the order they are
+     written, and a reference names thousands of them in MLton's functors,
+     which took more than half of its bases one at a time *)
+  fun nameRuns (a : P.writer, e : enc, k : int, names : int list) : unit =
+    let
+      fun place v =
+        if v < Vector.sub (!builtin, k) then (0, v)
+        else if v >= Vector.sub (#start e, k) then (1, ownNumber (e, k, v))
+        else (2, importOf (e, k, v))
+      fun runs ([], acc) = List.rev acc
+        | runs (v :: rest, acc) =
+            let
+              val (t, n) = place v
+              fun go (m, []) = (m, [])
+                | go (m, l as x :: xs) =
+                    let val (t', n') = place x
+                    in if t' = t andalso n' = n + m then go (m + 1, xs) else (m, l) end
+              val (m, left) = go (1, rest)
+            in runs (left, (t, n, m) :: acc) end
+    in P.list (fn (a, (t, n, m)) => (P.byte (a, t); P.int (a, n); P.nat (a, m))) (a, runs (names, [])) end
+
+  (* flags, the same way *)
+  fun flagRuns (a : P.writer, flags : bool list) : unit =
+    let
+      fun runs ([], acc) = List.rev acc
+        | runs (f :: rest, acc) =
+            let
+              fun go (m, []) = (m, [])
+                | go (m, l as x :: xs) = if x = f then go (m + 1, xs) else (m, l)
+              val (m, left) = go (1, rest)
+            in runs (left, (f, m) :: acc) end
+    in P.list (fn (a, (f, m)) => (P.bool (a, f); P.nat (a, m))) (a, runs (flags, [])) end
+
   (* an environment written as a reference has its origins in the sidecar
      all the same: its own, and each of its structures' in the order of their
      names *)
@@ -2026,9 +2061,8 @@ struct
             | Earlier u => (P.nat (w, 1 + unitRef (e, #identity u)); #targets e := (u, n) :: !(#targets e)));
            P.string (w, n); P.list P.string (w, path);
            P.list (fn (_, st) => tyfcn (e, valOf (IntMap.find (phi, st)))) (w, order);
-           if stamps = cStamps then P.byte (#a e, 0)
-           else (P.byte (#a e, 1); P.list (fn (a, st) => nameTo (a, e, kStamp, st)) (#a e, stamps));
-           if globals = cGlobals then P.byte (#a e, 0) else (P.byte (#a e, 1); P.list P.bool (#a e, globals));
+           if stamps = cStamps then P.byte (#a e, 0) else (P.byte (#a e, 1); nameRuns (#a e, e, kStamp, stamps));
+           if globals = cGlobals then P.byte (#a e, 0) else (P.byte (#a e, 1); flagRuns (#a e, globals));
            originTree (e, en))
       | NONE =>
           (P.byte (w, 0);
@@ -2862,13 +2896,38 @@ struct
       val () = if List.length images = List.length order then () else raise P.Bad "a reference's renaming of another length"
       val phi = ListPair.foldl (fn (st, f, m) => IntMap.insert (m, st, f)) IntMap.empty (order, images)
       val a = #a d
+      (* a run's names, last first, onto acc *)
+      fun nameRun (acc, a) =
+        let
+          val t = P.rbyte a
+          val n = P.rint a
+          val m = P.rnat a
+          fun at i = case t of
+                       0 => n + i
+                     | 1 => Vector.sub (#base d, kStamp) + n + i
+                     | 2 => (Vector.sub (Vector.sub (#imports d, kStamp), n + i)
+                             handle Subscript => raise P.Bad "an import out of range")
+                     | _ => raise P.Bad "not a name"
+          fun go (i, acc) = if i >= m then acc else go (i + 1, at i :: acc)
+        in go (0, acc) end
+      fun flagRun (acc, a) =
+        let
+          val f = P.rbool a
+          val m = P.rnat a
+          fun go (i, acc) = if i >= m then acc else go (i + 1, f :: acc)
+        in go (0, acc) end
+      fun runs (one : 'a list * P.reader -> 'a list) : 'a list =
+        let
+          fun go (0, acc) = List.rev acc
+            | go (k, acc) = go (k - 1, one (acc, a))
+        in go (P.rnat a, []) end
       val stamps = case P.rbyte a of
                      0 => NONE
-                   | 1 => SOME (ref (P.rlist (fn a => rnameAt (a, d, kStamp)) a))
+                   | 1 => SOME (ref (runs nameRun))
                    | _ => raise P.Bad "not a reference's stamps"
       val globals = case P.rbyte a of
                       0 => NONE
-                    | 1 => SOME (ref (P.rlist P.rbool a))
+                    | 1 => SOME (ref (runs flagRun))
                     | _ => raise P.Bad "not a reference's flags"
       val en = renamedEnv (tp, phi, stamps, globals) c
       fun empty (l : 'a list ref option) = case l of NONE => true | SOME x => List.null (!x)
@@ -3160,8 +3219,9 @@ struct
          hereTemplates = #hereTemplates shared}
       val d = over r
       val da = over a
-      (* RUNE_STATIC_LOAD: nothing of the ABI layer is entered in the tables *)
-      val blank = !staticLoad
+      (* RUNE_STATIC_LOAD: nothing of the ABI layer is entered in the tables,
+         where no code is to be made of them *)
+      val blank = !staticLoad andalso not (!Elaborate.makesCode)
       fun rfixity r =
         case P.rbyte r of
           0 => Fixity.Nonfix

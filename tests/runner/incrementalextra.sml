@@ -438,7 +438,7 @@ struct
              val output = session s false ["use \"./a.sml\";", "val n = !A.n;"]
          in check s ("a spelling compiled a used file again: " ^ output)
               (String.isSubstring "val n = 0 : int" output andalso cache s = entries) end)
-    | "S101" =>
+    | "S121" =>
         (* an identity holds no unit's identity: a unit whose import changed
            in nothing it names keeps its own, and what named it is exact *)
         let
@@ -460,7 +460,7 @@ struct
           val () = buildFile s "p.build" "a.sml"
           val () = across true
         in prints s "1" end
-    | "S102" =>
+    | "S122" =>
         (* a unit's bytes the same, and an import it names another: its
            identity moves, or what names it alone would hold by its binder *)
         let
@@ -476,7 +476,7 @@ struct
           val () = put s "a.sml" "structure A = struct datatype t = Y | X of int option end"
           val () = buildFile s "p.build" "a.sml b.sml c.sml"
         in prints s "true" end
-    | "S103" =>
+    | "S123" =>
         (* a name that is another unit's marked function: the unit's identity
            moves with the function's body, which its clients copy *)
         let
@@ -491,7 +491,7 @@ struct
           val () = declaring "2"
           val () = buildFile s "p.build" "a.sml b.sml c.sml"
         in prints s "3" end
-    | "S104" =>
+    | "S124" =>
         (* a signature written as a reference to an earlier unit's: what it
            is is that one, so the identity moves with it, though the bytes
            of the unit that refers to it stay the same *)
@@ -510,7 +510,7 @@ struct
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S101", "S102", "S103", "S104"]
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S121", "S122", "S123", "S124"]
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end

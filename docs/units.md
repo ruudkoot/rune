@@ -211,8 +211,8 @@ the static layer with its imports' static fingerprints, beside the identity's.
 
 `RUNE_LAYER_DUMP=DIR` writes each unit's exports and hashes to a file of `DIR`
 as a unit is bound, in a compile or an analysis, and `RUNE_STATIC_LOAD` makes a
-load enter nothing of the ABI layer in the compiler's tables, which is what an
-analysis must not need.
+load where no code is made enter nothing of the ABI layer in the compiler's
+tables, which is what an analysis must not need.
 
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
@@ -242,9 +242,9 @@ name is its fingerprint (below), a value or an exception its anchor, the
 facts a client reads of it, what a copy of it is and its type, a signature
 referred to its fingerprint. A unit whose body changed and whose basis did
 not keeps its identity, so that what was compiled against it stays valid, and
-so does a unit whose imports changed in nothing it names (S101), which is
+so does a unit whose imports changed in nothing it names (S121), which is
 what a fresh compile of it gives. A unit that names what changed moves, even
-where its own bytes do not (S102, S103): a client that names only it holds
+where its own bytes do not (S122, S123): a client that names only it holds
 by its binder, and what it may read through it must have moved it. Loading a
 basis gives the unit's numbers a range of each kind of name -- stamps, type
 names, type variables -- after the session's, and registers the range, which

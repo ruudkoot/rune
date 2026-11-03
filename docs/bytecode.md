@@ -269,7 +269,7 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    20 (UnitBasis.version)
+version     varint    21 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
@@ -299,6 +299,10 @@ size        varint    the bytes of the static layer
                 A name of a kind is written as built in, the unit's own (a
                 number), or another unit's (its place in imports) ...
 ```
+
+Version 21 (the build-system roadmap's M4) writes a reference's stamps and
+flags as runs: of stamps a byte for the name's form (built in, own, import),
+the first's number and how many follow it, and of flags the flag and how many.
 
 Version 20 (the build-system roadmap's M4) lets an environment with origins
 be a reference, as one with none: the sidecar holds its origins and each of
