@@ -888,6 +888,7 @@ test-incremental` and so in `make check`, as a scenario of
 | Verification of all hits, `across-*`, S98 | `--verify-cache` finding that an entry taken across a unit that changed is not what compiling the unit gives | the same |
 | Random edits, `@mutate`, `@mutate-verify` | a warm build that disagrees with `--no-cache`, or that `--verify-cache` refuses | `tests/runner/mutationchecks.sml` |
 | The model, `model` | the model of a hit saying otherwise than `tests/incremental/model.expected` | `tests/incremental/model.sml` |
+| The fingerprint oracle, `fp-oracle` | a field of a binding, or a fact of the tables a fingerprint reads by hand, changed alone, moving a fingerprint in other layers than the description of the codecs marks it in (`tools/codecs/compiler.sml`), or a sameness not saying what the description has it compare; or a kind of field or fact the program does not change | `tests/runner/cachechecks.sml`, `UnitBasis.fpOracle` ([units.md](units.md), *The fingerprint oracle*) |
 | Unit by unit, and the mask, `warm-unit-*` | a unit compiled alone, while every other is taken from the cache without its basis, that is not what its entry holds: under its view, what its text names loaded by need, or under the mask of its entry's usages, each structure cut to the paths they name and only the units their binders reach loaded | `tests/runner/warmchecks.sml` |
 | The racy cases, `warm-racy`; up to date, `warm-uptodate` | a warm build that differs from one without the cache after an edit the stat memo or a memo could miss: of the same size within the second of a build, the old text back with its old times, an edit with its time put back, the output overwritten or removed, a new name, a `library.build` above a unit | the same |
 | The config step, `warm-config` | in a git repository of its own, a step written as `rune.build`'s first, which writes a Config, run where nothing it reads changed, or not run where something did -- a file of its closure, an input, a commit, a tracked file outside the closure and the edit undone, a file git does not track, `git add`, a tag, a checkout, a branch, a hand edit of its output, the repository gone; its Config not what the tool run by hand makes, or the build not the build without the cache | the same |
@@ -911,7 +912,7 @@ in a session that compiled the units before it is what a build would miss, and
 says so under `--explain-rebuild`. Build-cache issue 15 closes with M4's step 2
 of the build-system roadmap, when a basis written again is the same bytes.
 
-They are 96 tests of `make test-incremental`: 365 s of CPU, about 46 s of `make
+They are 97 tests of `make test-incremental`: 365 s of CPU, about 46 s of `make
 check` at eight jobs, of which the flags oracle is 212 s. `make test-cache-random`
 is the random edits at length, 150 steps of each small project with every warm
 build verified and 12 of the compiler's own sources, in the nightly tier; a
@@ -927,8 +928,11 @@ on the warm path does; with `--explain-rebuild` either says how many units it
 loaded. What the mask leaves: the units a used unit's basis names, whose
 tables are all there, used or not.
 
-What these do not do. The fingerprint oracle waits for one writer of a
-fingerprint and a basis (M5). `rune-repl`'s own options are not in the oracle's rows, and a
+What these do not do. The fingerprint oracle changes what the description
+marks, and a fact of the tables it knows of: a fact a fingerprint should read
+and nobody wrote down is what the fact edits and the mask are for. A type is
+changed as a whole or in its first type variable's equality, not part by
+part. `rune-repl`'s own options are not in the flags oracle's rows, and a
 pass of these on small projects says that they ran there, nothing more.
 
 **The mutants of the cache** (`tests/runner/cachemutantlist.sml`, E18's and those
@@ -953,10 +957,10 @@ The 13 that survived E18:
 
 | Mutant | What it drops | Issue | What became of it |
 |---|---|---:|---|
-| F1 | `fpVal`: `Translate.primAliases` | | Harmless: a value bound to a primitive is a function that applies it, so `Expand.primGlobals`, which `fpVal` also hashes, says the same. `F14` drops both, and `fact-primfunction` and `fact-primdirect` catch it |
-| F4 | `fpVal`: `Expand.primGlobals` | | `fact-primfunction`: the client reaches the function by a structure's other name, so that its usage is the structure, and no `inlv` says what the function is |
-| F5 | `fpVal`: which value, the anchor | 8 | `fact-anchor`: a structure's other name made to reach another value of the type, which a remap by the old path would find wrongly |
-| F6 | `fpVal`: a constructor's tag | | Harmless: a constructor's scheme names its type, and the definition holds the constructors in order, which is what a tag is |
+| F1 | `valFacts`: `Translate.primAliases` | | Harmless to a compile: a value bound to a primitive is a function that applies it, so `Expand.primGlobals`, which the fingerprint also hashes, says the same. `F14` drops both, and `fact-primfunction` and `fact-primdirect` catch it; since M5, `fp-oracle`, which changes the fact alone |
+| F4 | `valFacts`: `Expand.primGlobals` | | `fact-primfunction`: the client reaches the function by a structure's other name, so that its usage is the structure, and no `inlv` says what the function is |
+| F5 | `fpAnchored`: which value, the anchor | 8 | `fact-anchor`: a structure's other name made to reach another value of the type, which a remap by the old path would find wrongly |
+| F6 | `fpConinfo`: a constructor's tag | | Harmless to a compile: a constructor's scheme names its type, and the definition holds the constructors in order, which is what a tag is; since M5, `fp-oracle`, which changes the tag alone |
 | F9 | a definition: a type name's equality | 16 | `fact-eqname`: an abstract type, whose definition is nothing else |
 | U3 | the usage `fun` | | Harmless since the build-system roadmap's M4: an application calls the functor's function, whose global no path reaches, so where the functor's unit changed an entry that calls it is not remapped and its unit is compiled (`its entry names ... a name no path of it reaches`), and where it did not nothing changed. `across-project` saw it only while an entry exact by its binders that named a changed unit failed to load; such an entry is taken across now |
 | U4 | the usage `inl` | | `fact-inlfunctor`: E18's scenarios had no marked functor outside the Basis |

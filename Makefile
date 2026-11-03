@@ -288,7 +288,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-cache-random manifests isa check-isa test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
+.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-cache-random manifests isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt runeffi manifests basis-cache
 
@@ -637,6 +637,44 @@ bin/runeisa-mlton: bin/runeisa-mlton.bin Makefile
 
 bin/runeisa.rbc: bin/rune bin/rune.rbc build/config.sml $(SOURCES_ISA) src/main/runeisa-rune-main.sml
 	$(RUNE_STACK) -o $@ build/config.sml $(SOURCES_ISA) src/main/runeisa-rune-main.sml
+
+# The codecs of a unit's basis and of Mid are described in
+# tools/codecs/compiler.sml (the build-system roadmap's D21; docs/units.md,
+# Codecs): bin/rune-codecs writes from it the parts of
+# lib/compiler/driver/unitbasis.sml, lib/compiler/core/midcodec.sml and
+# lib/compiler/driver/unitmid.sml marked as generated -- each type's writer,
+# reader, sameness and fingerprint -- which are committed, so that every host
+# builds the compiler with no generator. `make codecs` writes them again after
+# a change to the description, and `make check-codecs` (part of make check)
+# fails when one of them is not what it gives, when a field added to a
+# described type does not reach every traversal or a field left unmarked is
+# not refused (rune-codecs --test), or when a toy whose type has a field its
+# description has not compiles (rune-codecs --toy), as must the one whose
+# description has it, whose writer, reader, sameness and fingerprint read it.
+CODECS_SRCS := tools/codecs/codec.sml tools/codecs/emit.sml tools/codecs/compiler.sml tools/codecs/main.sml
+
+bin/rune-codecs.rbc: $(CODECS_SRCS) | $(RUNE)
+	$(RUNE) $(CODECS_SRCS) -o $@
+
+bin/rune-codecs: bin/rune-codecs.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-codecs.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+codecs: bin/rune-codecs
+	bin/rune-codecs --root .
+
+check-codecs: bin/rune-codecs $(RUNE) bin/runevm
+	bin/rune-codecs --root . --check
+	bin/rune-codecs --test
+	rm -rf build/codecs-toy
+	bin/rune-codecs --toy build/codecs-toy
+	$(RUNE) build/codecs-toy/toy.sml -o build/codecs-toy/toy.rbc
+	$(RUNEVM_REGISTER) build/codecs-toy/toy.rbc
+	@if $(RUNE) build/codecs-toy/stale.sml -o build/codecs-toy/stale.rbc 2> build/codecs-toy/stale.err; then \
+	  echo "FAIL codecs: a type with a field its description has not compiled"; exit 1; \
+	else grep -q 'records have different numbers of fields' build/codecs-toy/stale.err && echo "PASS toy: a field its description has not is a compile error"; fi
+
+check-tools: bin/rune-codecs
 
 # ---------------------------------------------------------------- compiler
 # The compiler has no built-in library path, so each bin/rune* is a wrapper
