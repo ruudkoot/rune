@@ -132,6 +132,12 @@ struct
   val () = CompilerState.cellRoot ("UnitBasis.privateNext", privateNext)
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.fpMemo", fpMemo)
+  (* the static layer's fingerprints of the type names, as tyconFps below *)
+  val staticTycons : string IntTable.table ref = ref (IntTable.table 64)
+  val () = CompilerState.refRoot ("UnitBasis.staticTycons", staticTycons, IntTable.copy)
+  (* RUNE_LAYER_DUMP=DIR: each export's hashes, by unit (dumpLayers) *)
+  val layerDump : string option ref = ref NONE
+  val () = CompilerState.cellRoot ("UnitBasis.layerDump", layerDump)
   (* what an import that is a value is, by stamp, once worked out (importStamp) *)
   val stampFps : string IntTable.table ref = ref (IntTable.table 64)
   val () = CompilerState.refRoot ("UnitBasis.stampFps", stampFps, IntTable.copy)
@@ -168,7 +174,7 @@ struct
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
      fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty; schemeMemo := IntMap.empty;
-     stampFps := IntTable.table 64;
+     stampFps := IntTable.table 64; staticTycons := IntTable.table 64; layerDump := OS.Process.getEnv "RUNE_LAYER_DUMP";
      sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
      MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
 
@@ -360,10 +366,24 @@ struct
   val members : unit IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.members", members)
 
+  (* A fingerprint of the static layer alone (docs/units.md, Layers): what
+     elaboration reads of a name, without what a client's code is built on:
+     no value's anchor or facts, no realisation of an opaque type. A compile's
+     key is the whole of it, a compile being a reader of both layers; a
+     compile that makes no code reads this one, and analysis and batch
+     give the same. *)
+  val staticLayer = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.staticLayer", staticLayer)
+
   fun knownTycon (s : int) : string option =
-    case IntTable.find (tyconFps, s) of
-      SOME f => SOME f
-    | NONE => IntTable.find (!scratch, s)
+    if !staticLayer then
+      (case IntTable.find (!staticTycons, s) of
+         SOME f => SOME f
+       | NONE => IntTable.find (!scratch, s))
+    else
+      case IntTable.find (tyconFps, s) of
+        SOME f => SOME f
+      | NONE => IntTable.find (!scratch, s)
 
   fun hashed (site : string) (f : P.writer -> unit) : string = let val w = P.writer () in f w; hashAt (site, P.contents w) end
 
@@ -393,11 +413,31 @@ struct
                        SOME cs => List.foldl (fn ((_, v), acc) => tyconsOf (local', schemeOf v, acc)) [] cs
                      | NONE => []
     in
+      if !staticLayer then fromCons else
       case IntTable.find (Ty.realizations, s) of
         SOME (T.TName c) => if IntMap.member (local', #stamp c) then fromCons else c :: fromCons
       | SOME (T.TAbbrev (_, body)) => tyconsOf (local', body, fromCons)
       | NONE => fromCons
     end
+
+  (* How the constructors of a datatype of these constructors lie, by tag: the
+     fields of one laid out flat (Ty.elabLayout, from the elaborator's own
+     types), which a parameter's open constructor must fit
+     (Elaborate.descriptors). The one fact of a layout elaboration reads, so
+     the static layer's, in the realised types' terms *)
+  fun layoutOf (s : int, cs : (string * Env.valstatus) list) : (int * int option) list =
+    case IntMap.find (!Ty.pinned, s) of
+      SOME l => l
+    | NONE =>
+        let
+          fun shape (tag, scheme) =
+            (tag, case T.prune scheme of T.TArrow (a, _) => Ty.shapeOf a | _ => NONE)
+          val all = List.mapPartial (fn (_, Env.Con {scheme, info}) => SOME (shape (#tag info, scheme))
+                                      | (_, Env.ConAsVal {scheme, info}) => SOME (shape (#tag info, scheme))
+                                      | _ => NONE) cs
+          fun insert (x as (t, _), []) = [x]
+            | insert (x as (t, _), (y as (u, _)) :: rest) = if t < u then x :: y :: rest else y :: insert (x, rest)
+        in List.foldl insert [] all end
 
   (* of a type: its generic variables numbered by first occurrence (tvs) *)
   fun fpTy (w : P.writer, tvs : int list ref, local' : int IntMap.map, t : T.ty) : unit =
@@ -487,20 +527,32 @@ struct
       val () = members := outer
       fun keep s = isSome (rangeOf (kTycon, s)) orelse s < Vector.sub (!builtin, kTycon)
     in
-      List.app (fn (a, c) => IntTable.insert (if keep (#stamp c) then tyconFps else !scratch, #stamp c, a ^ "#" ^ g)) named
+      List.app (fn (a, c) => IntTable.insert (if not (keep (#stamp c)) then !scratch
+                                              else if !staticLayer then !staticTycons else tyconFps,
+                                              #stamp c, a ^ "#" ^ g)) named
     end
 
   and definition (w : P.writer, local', c : T.tycon) : unit =
     let val s = #stamp c
     in
       P.nat (w, #arity c); P.bool (w, #eq c);
-      (case IntMap.find (!Elaborate.dataCons, s) of
-         SOME cs => (P.nat (w, List.length cs); List.app (fn (n, v) => (P.string (w, n); fpVal (w, local', v))) cs)
-       | NONE => P.nat (w, 0));
-      case IntTable.find (Ty.realizations, s) of
-        SOME f => (P.byte (w, 1); fpFcn (w, local', f))
-      | NONE => P.byte (w, 0)
+      definitionBody (w, local', s)
     end
+
+  (* the constructors, how they lie, and the realisation *)
+  and definitionBody (w : P.writer, local', s : int) : unit =
+    ((case IntMap.find (!Elaborate.dataCons, s) of
+        SOME cs => (P.nat (w, List.length cs); List.app (fn (n, v) => (P.string (w, n); fpVal (w, local', v))) cs;
+                    fpLayout (w, layoutOf (s, cs)))
+      | NONE => P.nat (w, 0));
+     if !staticLayer then P.byte (w, 0)
+     else
+       case IntTable.find (Ty.realizations, s) of
+         SOME f => (P.byte (w, 1); fpFcn (w, local', f))
+       | NONE => P.byte (w, 0))
+
+  and fpLayout (w : P.writer, l : (int * int option) list) : unit =
+    (P.nat (w, List.length l); List.app (fn (t, n) => (P.nat (w, t); P.option P.nat (w, n))) l)
 
   and fpFcn (w : P.writer, local' : int IntMap.map, f : T.tyfcn) : unit =
     case f of
@@ -513,10 +565,11 @@ struct
       (* which value: another with the same type is another value -- but
          for a signature's ABI and a functor's signature, whose values are
          specifications *)
-      fun anchored stamp = P.string (w, if !anchorValues then anchor (kStamp, stamp) else "")
+      fun anchored stamp = P.string (w, if !anchorValues andalso not (!staticLayer) then anchor (kStamp, stamp) else "")
     in
       case v of
         Env.Val {scheme, stamp, ...} =>
+          if !staticLayer then (P.byte (w, 20); ty scheme) else
           (P.byte (w, 20); anchored stamp; ty scheme;
            (case IntMap.find (!Translate.primAliases, stamp) of
               SOME p => (P.byte (w, 1); P.string (w, p))
@@ -545,13 +598,7 @@ struct
      defines it, with no arity or equality, which only its record has *)
   fun fpStampOnly (s : int) : string =
     hashed "tycon" (fn w =>
-      (P.string (w, anchor (kTycon, s));
-       (case IntMap.find (!Elaborate.dataCons, s) of
-          SOME cs => (P.nat (w, List.length cs); List.app (fn (n, v) => (P.string (w, n); fpVal (w, IntMap.empty, v))) cs)
-        | NONE => P.nat (w, 0));
-       case IntTable.find (Ty.realizations, s) of
-         SOME f => (P.byte (w, 1); fpFcn (w, IntMap.empty, f))
-       | NONE => P.byte (w, 0)))
+      (P.string (w, anchor (kTycon, s)); definitionBody (w, IntMap.empty, s)))
 
   fun fpTyStr (w : P.writer, local' : int IntMap.map, Env.TyStr {fcn, cons}) : unit =
     (fpFcn (w, local', fcn); P.nat (w, List.length cons); List.app (fn (n, v) => (P.string (w, n); fpVal (w, local', v))) cons)
@@ -559,7 +606,7 @@ struct
   (* a usage's fingerprint by its binder and key, from fpMemo, or worked out
      by f and kept *)
   fun memo (binder : string, key : string, f : unit -> string option) : string option =
-    let val m = binder ^ "\000" ^ key
+    let val m = (if !staticLayer then "S\000" else "") ^ binder ^ "\000" ^ key
     in
       case StringMap.find (!fpMemo, m) of
         SOME r => (countMemo true; r)
@@ -712,7 +759,7 @@ struct
       val fromTyStr : unit IntMap.map ref = ref IntMap.empty
       fun isLocal (k : T.tycon) = IntMap.member (cl, #stamp k)
       fun factless (s : int) = not (IntMap.member (!Translate.primAliases, s)) andalso not (IntMap.member (!Lower.knownBefore, s))
-      fun sameStamp (a : int, b : int) = a = b orelse (bare andalso factless a andalso factless b)
+      fun sameStamp (a : int, b : int) = a = b orelse !staticLayer orelse (bare andalso factless a andalso factless b)
       fun tvPair (tv : (int * int) list ref) (a : int, e1 : bool, b : int, e2 : bool) : unit =
         if e1 <> e2 then raise NoMatch
         else
@@ -1191,7 +1238,7 @@ struct
      numbered in the order of their first occurrence in it, worked out once
      a session, apart from any functor's stream *)
   and structureFp (key : string, cl : int IntMap.map, c : Env.env, order : int list) : string =
-    let val m = (if !anchorValues then "v\000" else "-\000") ^ key
+    let val m = (if !staticLayer then "S" else "") ^ (if !anchorValues then "v\000" else "-\000") ^ key
     in
       case StringMap.find (!refMemo, m) of
         SOME f => f
@@ -1558,6 +1605,7 @@ struct
       IntTable.removeRange (!ToMid.importedSchemes, s0, s1);
       IntTable.removeRange (!inlineHashes, s0, s1);
       IntTable.removeRange (Ty.realizations, t0, t1);
+      IntTable.removeRange (!staticTycons, t0, t1);
       Ty.pinned := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.pinned);
       Ty.openTypes := IntMap.filteri (fn (stamp, _) => stamp < t0 orelse stamp >= t1) (!Ty.openTypes);
       Env.typeOrigins:=IntMap.filteri (fn (stamp,_) => stamp<t0 orelse stamp>=t1) (!Env.typeOrigins)
@@ -1580,6 +1628,7 @@ struct
       IntTable.removeRange (!ToMid.importedSchemes, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (!inlineHashes, Vector.sub (at, kStamp), Vector.sub (now, kStamp));
       IntTable.removeRange (Ty.realizations, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
+      IntTable.removeRange (!staticTycons, Vector.sub (at, kTycon), Vector.sub (now, kTycon));
       Ty.datatypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.datatypes);
       Ty.pinned := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.pinned);
       Ty.openTypes := IntMap.filteri (fn (s, _) => outside kTycon s) (!Ty.openTypes);
@@ -2726,8 +2775,59 @@ struct
   val bindLog : string list ref = ref []
   val () = CompilerState.cellRoot ("UnitBasis.bindLog", bindLog)
 
-  fun bind ({unit, delta, directives, sigs, funs, overloads, ...} : result) : unit =
+  (* f under the static layer, or as it is *)
+  fun inStatic (f : unit -> 'a) : 'a =
     let
+      val () = (staticLayer := true; scratch := IntTable.table 16)
+      val x = f () handle e => (staticLayer := false; raise e)
+    in staticLayer := false; x end
+
+  (* A unit's exports, at every depth: each one's key, its static layer's
+     hash, and the hash of both layers, which is what a usage of it holds. In
+     the order of the names; a unit whose static hashes are the same in
+     analysis and in batch is one the editor and a compile can share *)
+  fun exportHashes ({unit, delta, directives, sigs, funs, ...} : result) : (string * string * string) list =
+    let
+      val id = #identity unit
+      val lines = ref []
+      fun line (k, f : unit -> string) =
+        let
+          val () = scratch := IntTable.table 16
+          val full = f ()
+        in lines := (k, inStatic f, full) :: !lines end
+      fun walk (prefix, Env.Env {vals, tys, strs, ...}) =
+        (StringMap.appi (fn (n, v) => line ("v " ^ prefix ^ n, fn () => hashed "v" (fn w => fpVal (w, IntMap.empty, v)))) vals;
+         StringMap.appi (fn (n, t) => line ("t " ^ prefix ^ n, fn () => hashed "t" (fn w => fpTyStr (w, IntMap.empty, t)))) tys;
+         StringMap.appi (fn (n, c) => (line ("s " ^ prefix ^ n, fn () => fpEnv ((id, prefix ^ n ^ "."), c));
+                                       walk (prefix ^ n ^ ".", c))) strs)
+      val () = walk ("", delta)
+      val () = List.app (fn (n, f) => line ("fix " ^ n, fn () => case f of
+                                                                   Fixity.Nonfix => "nonfix"
+                                                                 | Fixity.Infix p => "infix " ^ Int.toString p
+                                                                 | Fixity.Infixr p => "infixr " ^ Int.toString p)) directives
+      val () = List.app (fn n => case StringMap.find (!Elaborate.sigs, n) of
+                                   SOME sg => line ("sig " ^ n, fn () => byReference (fn () => fpSigma sg))
+                                 | NONE => ()) sigs
+      val () = List.app (fn n => case StringMap.find (!Elaborate.funs, n) of
+                                   SOME f => line ("fun " ^ n, fn () => getOpt (byReference (fn () => fpFunctor f), ""))
+                                 | NONE => ()) funs
+    in List.rev (!lines) end
+
+  fun dumpLayers (r as {unit, ...} : result) : unit =
+    case !layerDump of
+      NONE => ()
+    | SOME dir =>
+        let
+          val out = TextIO.openOut (OS.Path.joinDirFile {dir = dir, file = String.map (fn #"/" => #"%" | c => c) (#name unit)})
+        in
+          List.app (fn (k, s, f) => TextIO.output (out, k ^ "\t" ^ s ^ "\t" ^ f ^ "\n")) (exportHashes r);
+          TextIO.output (out, "UNIT\t" ^ #name unit ^ "\t" ^ #identity unit ^ "\n");
+          TextIO.closeOut out
+        end
+
+  fun bind (r as {unit, delta, directives, sigs, funs, overloads, ...} : result) : unit =
+    let
+      val () = dumpLayers r
       val id = #identity unit
       fun put (kind, names) = List.app (fn n => (binders := StringMap.insert (!binders, kind ^ " " ^ n, id);
                                                  bindLog := (kind ^ " " ^ n) :: !bindLog)) names
