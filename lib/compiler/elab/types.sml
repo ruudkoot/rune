@@ -373,22 +373,30 @@ struct
   (* --- pretty printing --- *)
   (* Printer state shared by the types of one message: type variable names,
      and the type names seen so far (distinct names that share a name are
-     told apart by their stamp). *)
+     told apart by the order they are shown in, which a stamp, a number of the
+     session, would not say alike from one session to the next). *)
   type printer = {names : (int * string) list ref, tycons : (string * int) list ref}
   fun newPrinter () : printer = {names = ref [], tycons = ref []}
+  (* a type name as a printer shows it, the second of its name name/2 *)
+  fun distinctName (shown : (string * int) list ref, name : string, stamp : int) : string =
+    let
+      val same = List.filter (fn (n, _) => n = name) (!shown)
+      fun place ([], _) = NONE
+        | place ((_, s) :: rest, k) = if s = stamp then SOME k else place (rest, k - 1)
+      val k = case place (same, List.length same) of
+                SOME k => k
+              | NONE => (shown := (name, stamp) :: !shown; List.length same + 1)
+    in if k = 1 then name else name ^ "/" ^ Int.toString k end
 
   (* nameOf: the name the caller has for a type, such as the path that reaches
-     it; where it has none, the name the type was declared under, and a stamp
+     it; where it has none, the name the type was declared under, and a number
      when another type of that name was shown already. *)
   fun toStringNamed (nameOf : tycon -> string option, {names, tycons} : printer) t =
     let
       fun tcName (c : tycon) =
         case nameOf c of
           SOME n => n
-        | NONE =>
-            (case List.find (fn (n, _) => n = #name c) (!tycons) of
-               SOME (_, s) => if s = #stamp c then #name c else #name c ^ "/" ^ Int.toString (#stamp c)
-             | NONE => (tycons := (#name c, #stamp c) :: !tycons; #name c))
+        | NONE => distinctName (tycons, #name c, #stamp c)
       fun tvName (id, eq) =
         case List.find (fn (i, _) => i = id) (!names) of
           SOME (_, s) => s

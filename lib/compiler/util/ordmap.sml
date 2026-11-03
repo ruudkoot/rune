@@ -32,6 +32,7 @@ sig
   val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
   val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+  (* foldli over the keys from lo up to but not including hi *)
   val foldRange : (key * 'a * 'b -> 'b) -> 'b -> key * key -> 'a map -> 'b
   val app : ('a -> unit) -> 'a map -> unit
   val appi : (key * 'a -> unit) -> 'a map -> unit

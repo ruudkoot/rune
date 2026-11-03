@@ -137,6 +137,15 @@ struct
         val ()=check ("the latest one answers at its unit's place",List.exists (fn candidate:A.candidate => #name candidate="make")
           (A.visibleAt (back,{ordinal=1,offset=0,path=["L"]})))
         val ()=check ("a query leaves the snapshot's check as it was",sameUnits (back,analyze (context,[library,client,other])))
+        (* a plan that changes: a unit gone, units in another order, a unit new *)
+        fun planned inputs=check ("a plan of " ^ Int.toString (length inputs) ^ " inputs equals fresh",
+          sameUnits (analyze (context,inputs),freshly (parent,inputs)))
+        val ()=planned [library,other]
+        val ()=planned [library,client,other]
+        val ()=planned [client,other]
+        val ()=planned [other,library,client]
+        val ()=planned [library,input ("new.sml","val added=area Round\n","1"),client,other]
+        val _=analyze (context,[library,client,other])
         val ()=A.compact context
         val compacted=analyze (context,[library,client,other])
         val ()=routed ("a compaction loads every unit again",compacted,true,0,3,0,0)
@@ -146,15 +155,23 @@ struct
      which no usage covers: an open unit past a moved identity is elaborated. *)
   fun printedPaths () =
     let val parent=compiler ()
-        val inputs=[library,client,other]
-        val aliased=[edited (library,#text library ^ "structure A=L\n"),client,other]
+        val first=input ("zed.sml","structure Zed=struct datatype t=T of int val make=T end\n","1")
+        val middle=input ("middle.sml","val nothing=()\n","1")
+        val second=input ("made.sml","val made=Zed.make 1\n","1")
+        val inputs=[first,middle,second]
+        val aliased=[first,edited (middle,#text middle ^ "structure Alpha=Zed\n"),second]
         val context=A.create (parent,{context="printed"})
-        val ()=A.focus (context,SOME ["client.sml"])
+        val ()=A.focus (context,SOME ["made.sml"])
         val _=analyze (context,inputs)
         val now=analyze (context,aliased)
-        val unit=valOf (A.unitAt (now,{ordinal=1}))
+        val unit=valOf (A.unitAt (now,{ordinal=2}))
         val oracle=freshly (parent,aliased)
-        val ()=check ("a type printed by a new path is printed so",A.factsIn (now,unit)=A.factsIn (oracle,unit))
+        val ()=check ("a type printed by a new path is printed so",A.factsIn (now,unit)=A.factsIn (oracle,unit)
+          andalso List.exists (fn fact:A.fact => #ty fact="Alpha.t") (A.factsIn (oracle,unit)))
+        val hidden=[input ("hidden.sml","local datatype t=A in val a=A end\nlocal datatype t=B in val b=B end\nval pair=(a,b)\n","1")]
+        val shown=List.map #ty (A.facts (freshly (parent,hidden)))
+        val ()=check ("two types of one name are told apart by their order, as no stamp would be",
+          List.exists (fn ty => ty="t * t/2") shown)
     in A.close context;C.close parent end
   (* a walk cancelled at every point it can be: the context goes on as if it
      had never run, loaded or not *)

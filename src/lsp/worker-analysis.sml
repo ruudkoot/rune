@@ -359,8 +359,8 @@ struct
            contexts:=[context];views:=List.filter(fn view:view=>A.context(#snapshot view)=key)(!views))
         val ()=RuneLspProfile.sample "check-inputs" uri 0 0 0
         (* what the editor has open keeps what a question needs; the rest closes *)
-        val ()=A.focus (#analysis context,SOME (List.mapPartial (fn (snapshot:D.snapshot,_,_) =>
-          Option.map #path (native (#uri snapshot))) opened @ (case native uri of NONE => [uri] | SOME {path,...} => [path])))
+        val ()=A.focus (#analysis context,SOME (List.mapPartial (fn input:A.input =>
+          if #revision input="disk" then NONE else SOME (#file input)) inputs))
         val snapshot=A.check (#analysis context,{project=project,inputs=inputs,cancelled=cancelled})
         val ()=RuneLspProfile.sample "check-analysed" uri 0 0 0
         val ()= #latest context:=SOME snapshot

@@ -69,7 +69,8 @@ struct
        alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
        alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*"]),
        alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*"]),
-       alone ("test-lsp-oracle", [], ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       step ("test-lsp-oracle", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
        Test.requires ["oracle-corpora"]
          (target ("test-lsp-oracle-corpora", 21600, {cpus = 1, memory = 16000, pools = [], after = [], tags = ["nightly"],
                                                      covers = ["lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]})),
