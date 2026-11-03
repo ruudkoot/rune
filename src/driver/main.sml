@@ -181,7 +181,7 @@ struct
       val scopes = BasisManifest.scopes {root = libRoot (), building = !Options.build, names = !Options.libraries, headed = false,
                                          libraries = libs}
                    handle BasisManifest.Usage why => raise Options.Usage why
-      val walk = LibraryScope.walk (LibraryScope.fixitySite fixity, scopes)
+      val walk = LibraryScope.walk (ref Env.initial, fixity, ref StringMap.empty, scopes)
       val checkBasis = fn () => List.foldl (check (providers basisEntries)) StringMap.empty basisEntries
       val earlier = if List.null basisEntries then checkBasis () else LibraryScope.group (walk, basisEntries, checkBasis)
       val all = basisEntries @ List.concat (List.map #2 libs)
@@ -1124,15 +1124,13 @@ struct
         if !failedBefore orelse isSome (!Parallel.child) then ()
         else Option.app (fn message => raise Options.Usage message)
                         (CompilerBuildContext.exportProblem (buildContext, change, exports))
-      val libraryWalk = LibraryScope.walk (CompilerBuildContext.site buildContext, !librariesScoped)
+      val libraryWalk = LibraryScope.walk (env, fixity, UnitBasis.binders, !librariesScoped)
       fun libraries (es,acc) =
-        List.foldl (fn (group,acc) =>
-          LibraryScope.group (libraryWalk, group, fn () =>
-            List.foldl (fn (e,acc) => unit (file (e,inBasis e),acc)) acc group)) acc (entryGroups es)
+        LibraryScope.libraries (libraryWalk, entryGroups es,
+                                fn (group,acc) => List.foldl (fn (e,acc) => unit (file (e,inBasis e),acc)) acc group, acc)
       fun finals (es,acc) =
-        List.foldl (fn (group,acc) =>
-          LibraryScope.final (libraryWalk, group, fn () =>
-            List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group)) acc (entryGroups es)
+        LibraryScope.finals (libraryWalk, entryGroups es,
+                             fn (group,acc) => List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group, acc)
       val implemented : string list ref = ref []
       (* the names of the plan's units, which its steps go through in order *)
       val unnamed = ref userPart
@@ -1356,9 +1354,10 @@ struct
       fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (Source.Ascii, BasisManifest.path e))) es)
       val syntaxGroups : (entry list * Ast.program) list ref = ref []
       val finalSyntax : (entry list * Ast.program) list ref = ref []
-      val parsing = LibraryScope.walk (LibraryScope.fixitySite fixity, !librariesScoped)
-      fun parseLibrary es = (es,LibraryScope.group (parsing,es,fn () => parseEntries es))
-      fun parseFinal es = (es,LibraryScope.final (parsing,es,fn () => parseEntries es))
+      (* the syntax of each library, in its scope's fixity; no environment
+         changes while they are read *)
+      val parsing = LibraryScope.walk (ref Env.initial, fixity, ref StringMap.empty, !librariesScoped)
+      fun parsed (es,acc) = (es,parseEntries es) :: acc
       (* The front end's two stages, for --pass-stats; their size is the
          number of top-level declarations. *)
       fun frontStage name f =
@@ -1369,14 +1368,14 @@ struct
       val (basisProg, libraryProg, userProg, finalProg) =
         frontStage "parse"
                    (fn () => let
-                               val groups = List.map parseLibrary (entryGroups basis)
+                               val groups = List.rev (LibraryScope.libraries (parsing,entryGroups basis,parsed,[]))
                                val () = syntaxGroups := groups
                                fun part keep = List.concat (List.map #2 (List.filter (fn (es,_) => keep (inBasis (hd es))) groups))
                                val b = part (fn inside => inside)
                                val l = part not
                                val () = LibraryScope.program parsing
                                val u = List.concat (List.map parseTokens userToks)
-                               val finals = List.map parseFinal (entryGroups final)
+                               val finals = List.rev (LibraryScope.finals (parsing,entryGroups final,parsed,[]))
                                val () = finalSyntax := finals
                              in (b,l,u,List.concat (List.map #2 finals)) end)
                    ()
@@ -1385,7 +1384,7 @@ struct
       val () = List.app Lexer.report (!Options.inputs)
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
       val env = ref (Env.initialNow ())
-      val elaborating = LibraryScope.walk (LibraryScope.basisSite env, !librariesScoped)
+      val elaborating = LibraryScope.walk (env, fixity, ref StringMap.empty, !librariesScoped)
       fun elabLibrary (es : entry list,ds) =
         (Elaborate.allowPrim := inBasis (hd es);
          LibraryScope.group (elaborating,es,fn () => Elaborate.elabTop (env,ds)))

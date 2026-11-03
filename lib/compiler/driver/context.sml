@@ -49,18 +49,6 @@ struct
          (#binders before') (#bound change)
     end
 
-  fun restore ({env,fixity,...}:t,b:snapshot)=
-    (env:= #env b;fixity:= #fixity b;Elaborate.sigs:= #sigs b;Elaborate.funs:= #funs b;UnitBasis.binders:= #binders b)
-
-  (* a library's boundary as what the libraries' walk reads it as *)
-  fun exportsOf (exports:LibraryScope.exports):exports=
-    List.map (fn (kind,name) => ((case kind of "structure" => BuildFile.Str | "signature" => BuildFile.Sig
-                                             | "functor" => BuildFile.Fun | "type" => BuildFile.Ty | _ => BuildFile.Fix),name)) exports
-  (* this context as LibraryScope's walk goes through it *)
-  fun site (t:t):(snapshot,delta) LibraryScope.site=
-    {get=fn () => snap t,set=fn b => restore (t,b),change=fn (b,a,_) => delta (t,b,a),
-     add=fn (onto,change,filter) => (apply (t,onto,change,Option.map exportsOf filter);snap t)}
-
   (* ---- boundaries, and what a second use sees through them (docs/build.md,
      D8) ---- *)
 

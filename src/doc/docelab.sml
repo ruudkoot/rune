@@ -35,13 +35,13 @@ struct
         case #root prelude of
           NONE => BasisManifest.noScopes ""
         | SOME root => BasisManifest.scopes {root = root, building = NONE, names = [], headed = false, libraries = written}
-      val walk = LibraryScope.walk (LibraryScope.bothSite (env, fixity), scopes)
+      val walk = LibraryScope.walk (env, fixity, ref StringMap.empty, scopes)
       fun elaborate d =
         case BasisManifest.readManifest d of
           [] => ()
         | entries =>
-            LibraryScope.group (walk, entries, fn () =>
-              Elaborate.elabTop (env, List.concat (List.map (parse d) entries)))
+            LibraryScope.libraries (walk, [entries],
+                                    fn (entries, ()) => Elaborate.elabTop (env, List.concat (List.map (parse d) entries)), ())
     in
       Elaborate.allowPrim := true;
       Option.app elaborate (#basis prelude);

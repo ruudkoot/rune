@@ -237,13 +237,11 @@ struct
         val inputNames=List.map (fn source:source => Workspace.fresh (ranks,Workspace.name (logical,#file source))) sources
         val ()=Source.overlays:=List.foldl (fn ((entry,text),overlays) => StringMap.insert
           (overlays,BasisManifest.path entry,text)) (!Source.overlays) librarySources
-        val libraryWalk=LibraryScope.walk (CompilerBuildContext.site scopes,#scopes plan)
-        fun library entries =
-          let fun one (entry:BasisManifest.entry)=
-                unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},
-                  valOf (StringMap.find (libraryNames,BasisManifest.path entry)),
-                  case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false)
-          in LibraryScope.group (libraryWalk,entries,fn () => List.app one entries) end
+        val libraryWalk=LibraryScope.walk (env,fixity,UnitBasis.binders,#scopes plan)
+        fun one (entry:BasisManifest.entry)=
+          unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},
+            valOf (StringMap.find (libraryNames,BasisManifest.path entry)),
+            case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false)
         val implemented=ref [] : string list ref
         val remaining=ref (ListPair.zip (sources,inputNames))
         fun snap ()=CompilerBuildContext.snap scopes
@@ -287,7 +285,8 @@ struct
                   val ()=implemented:=name :: !implemented val ()=walk children
                   val ()=CompilerBuildContext.leave (scopes,boundary,[])
               in apply (before',delta (before',snap ()),SOME []) end
-        val error=(List.app library (#groups plan);LibraryScope.program libraryWalk;walk steps;
+        val error=(LibraryScope.libraries (libraryWalk,#groups plan,fn (entries,()) => List.app one entries,());
+          LibraryScope.program libraryWalk;walk steps;
           if null (!remaining) then () else raise Fail "extra ordered project input";NONE) handle Error.CompileError (span,message) =>
           SOME (CompilerSession.sourceError ("error",span,message))
         val ()=poll ()
