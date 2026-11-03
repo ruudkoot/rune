@@ -92,6 +92,12 @@ struct
     val work=CompilerSyntax.work
     fun events snapshot=List.map (fn (kind,span:Source.span,values) =>
       {kind=kind,start= #start span,stop= #stop span,values=values}) (SyntaxAst.shape (CompilerSyntax.bridge snapshot))
+    (* the names of a unit, read from its syntax (Deps; docs/units.md,
+       Well-formed units) *)
+    fun names snapshot=C.owned (fn () =>
+      let val found=Deps.analyse ("",CompilerSyntax.bridge snapshot)
+          fun named (kind,name)={kind=Deps.kindName kind,name=name}
+      in {declares=List.map named (#declares found),uses=List.map named (#uses found)} end)
     fun diagnostics (snapshot as CompilerSyntax.Syntax {file,text,mode,...}) =
       let val source=Source.fromStringIn (mode,file,text)
       in List.map (fn (span:Source.span,message) =>
@@ -208,6 +214,7 @@ struct
     fun close (Analysis {analysis,...})=A.close analysis
     fun observe (Analysis {analysis,...},callback)=A.observe(analysis,callback)
     fun focus (Analysis {analysis,...},files)=A.focus(analysis,files)
+    fun share (Analysis {analysis,...},value)=A.share(analysis,value)
     fun compact (Analysis {analysis,...})=A.compact analysis
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))
@@ -218,17 +225,18 @@ struct
                | NONE => if #mode input="" then mode else invalid "unknown analysis source mode",#annotations input)),
              annotations= #annotations input,revision= #revision input}
           val inputs=List.map normalize inputs
-          val (steps,fingerprint,libraries,scope,building)=case project of NONE =>
+          val (steps,fingerprint,libraries,scope,building,view)=case project of NONE =>
               (List.map (fn input:input => CompilerProject.SUnit (#file input,#annotations input)) inputs,NONE,[],
-               W.ofFiles {file=case inputs of first :: _ => #file first | [] => ".",workspace=NONE,lib=lib,windows=W.onWindows ()},NONE)
+               W.ofFiles {file=case inputs of first :: _ => #file first | [] => ".",workspace=NONE,lib=lib,windows=W.onWindows ()},NONE,NONE)
             | SOME (Project.Project {owner=projectOwner,plan,sources,fingerprint,scope,...}) =>
                 let val ()=if owner=projectOwner then () else invalid "project belongs to another compiler context"
                     val ()=if length inputs=length sources then () else invalid "analysis input count differs from the project"
                     val ()=ListPair.app (fn (input:input,source:Project.source) =>
                       if #file input= #file source andalso #mode input= #mode source andalso #annotations input= #annotations source
                       then () else invalid "analysis inputs differ from the project's ordered source occurrences") (inputs,sources)
-                in (#steps plan,SOME fingerprint,#libraries plan,scope,Option.map #path (List.find (fn _ => true) (#inputs plan))) end
-      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,scope=scope,building=building,cancelled=cancelled}) end)
+                in (#steps plan,SOME fingerprint,#libraries plan,scope,Option.map #path (List.find (fn _ => true) (#inputs plan)),#view plan) end
+      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,scope=scope,building=building,view=view,
+           cancelled=cancelled}) end)
       handle Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]
     fun id (snapshot:snapshot)= #id snapshot
     fun context (snapshot:snapshot)= #context snapshot

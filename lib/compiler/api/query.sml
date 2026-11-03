@@ -84,7 +84,7 @@ struct
           in (source,CompilerPrelude.usedBy (#file source,Lexer.tokenize (Source.fromStringIn (#mode source,#file source,#text source)),mentioned)) end
         val inputs=List.map (fn input => #1 (source (input,StringMap.empty))) (!sources)
         val mentioned=List.foldl (fn (input,m) => #2 (source (input,m))) StringMap.empty (!sources)
-        val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,mentioned=mentioned,building=NONE}
+        val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,mentioned=mentioned,building=NONE,view=NONE}
         val libraries=LibraryScope.walk (env,fixity,ref StringMap.empty,#scopes plan)
         fun unit (e : BasisManifest.entry) =
           let val text= #text (Source.readFile (Source.Ascii,BasisManifest.path e))

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 14 |
+| Members | 15 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -26,6 +26,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`events`](../sig/RUNE_COMPILER.md#val-syntax.events) | `t -> event list` |
 | val | [`fixities`](../sig/RUNE_COMPILER.md#val-syntax.fixities) | `t -> fixities` |
 | val | [`initial`](../sig/RUNE_COMPILER.md#val-syntax.initial) | `fixities` |
+| val | [`names`](../sig/RUNE_COMPILER.md#val-syntax.names) | `t -> {declares : {kind : string, name : string} list, uses : {kind : string, name : string} list}` |
 | val | [`parse`](../sig/RUNE_COMPILER.md#val-syntax.parse) | `{file : string, fixity : fixities, mode : string, orPatterns : bool, text : string} -> t` |
 | val | [`pieces`](../sig/RUNE_COMPILER.md#val-syntax.pieces) | `t -> piece list` |
 | val | [`text`](../sig/RUNE_COMPILER.md#val-syntax.text) | `t -> string` |

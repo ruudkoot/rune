@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 102 of 102 entries documented |
+| Documentation | 104 of 104 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -62,6 +62,7 @@ sig
     val <a href="#val-syntax.pieces">pieces</a> : t -&gt; piece list
     val <a href="#val-syntax.events">events</a> : t -&gt; event list
     val <a href="#val-syntax.diagnostics">diagnostics</a> : t -&gt; diagnostic list
+    val <a href="#val-syntax.names">names</a> : t -&gt; {<a href="#fld-syntax.names.declares">declares</a> : {kind : string, name : string} list, <a href="#fld-syntax.names.uses">uses</a> : {kind : string, name : string} list}
     val <a href="#val-syntax.work">work</a> : t -&gt; work
   end
   structure <a href="#str-workspace">Workspace</a> :
@@ -114,6 +115,7 @@ sig
     val <a href="#val-analysis.close">close</a> : t -&gt; unit
     val <a href="#val-analysis.observe">observe</a> : t * (observation-&gt;unit) option -&gt; unit
     val <a href="#val-analysis.focus">focus</a> : t * string list option -&gt; unit
+    val <a href="#val-analysis.share">share</a> : t * bool -&gt; unit
     val <a href="#val-analysis.compact">compact</a> : t -&gt; unit
     val <a href="#val-analysis.check">check</a> : t * {<a href="#fld-analysis.check.project">project</a>:Project.t option,<a href="#fld-analysis.check.inputs">inputs</a>:input list,<a href="#fld-analysis.check.cancelled">cancelled</a>:unit-&gt;bool} -&gt; snapshot
     val <a href="#val-analysis.checkpoint">checkpoint</a> : t -&gt; checkpoint
@@ -536,6 +538,24 @@ val diagnostics : t -> diagnostic list
 ```
 
 `diagnostics snapshot` returns parse/lexical errors in its own source.
+
+#### <a name="val-syntax.names"></a>`names`
+
+```sml
+val names : t -> {declares : {kind : string, name : string} list, uses : {kind : string, name : string} list}
+```
+
+`names snapshot` returns the module-level names a unit declares at its
+top level, and those it uses but does not declare.
+
+They are read from its syntax as `rune --deps` reads them; kind is
+structure, signature, functor or type. A name a unit's code reaches
+after an `open` is not among them (docs/units.md, Well-formed units).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-syntax.names.declares"></a>`declares` | `{kind : string, name : string} list` |  |
+| <a name="fld-syntax.names.uses"></a>`uses` | `{kind : string, name : string} list` |  |
 
 #### <a name="val-syntax.work"></a>`work`
 
@@ -1106,6 +1126,21 @@ A check keeps the syntax, the facts and the occurrences of an open
 file's unit. Another's are dropped, and worked out again at its place
 when a query asks for them. NONE, the default, keeps every file open;
 while some are closed, occurrences and facts hold no closed unit's.
+
+#### <a name="val-analysis.share"></a>`share`
+
+```sml
+val share : t * bool -> unit
+```
+
+`share (context, true)` lets a context take a library's units from the
+other contexts that share.
+
+A library's unit is taken from what another such context checked under
+the same configuration, where the unit's usages hold where the context
+reaches it, as a compile takes a cache's entry; the context leaves its
+own for the others. Two builds over one library then elaborate its
+units once. Off by default.
 
 #### <a name="val-analysis.compact"></a>`compact`
 

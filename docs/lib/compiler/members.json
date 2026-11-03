@@ -223,6 +223,13 @@
     },
     {
      "kind": "val",
+     "name": "Syntax.names",
+     "spec": "val names : t -> {declares : {kind : string, name : string} list, uses : {kind : string, name : string} list}",
+     "doc": "`names snapshot` returns the module-level names a unit declares at its\ntop level, and those it uses but does not declare.\n\nThey are read from its syntax as `rune --deps` reads them; kind is\nstructure, signature, functor or type. A name a unit's code reaches\nafter an `open` is not among them (docs/units.md, Well-formed units).\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-syntax.names"
+    },
+    {
+     "kind": "val",
      "name": "Syntax.work",
      "spec": "val work : t -> work",
      "doc": "`work snapshot` reports lexical and declaration reuse for this operation.\n\n",
@@ -521,6 +528,13 @@
      "spec": "val focus : t * string list option -> unit",
      "doc": "`focus (context, files)` says which files to keep open for the checks\nafter it.\n\nA check keeps the syntax, the facts and the occurrences of an open\nfile's unit. Another's are dropped, and worked out again at its place\nwhen a query asks for them. NONE, the default, keeps every file open;\nwhile some are closed, occurrences and facts hold no closed unit's.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.focus"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.share",
+     "spec": "val share : t * bool -> unit",
+     "doc": "`share (context, true)` lets a context take a library's units from the\nother contexts that share.\n\nA library's unit is taken from what another such context checked under\nthe same configuration, where the unit's usages hold where the context\nreaches it, as a compile takes a cache's entry; the context leaves its\nown for the others. Two builds over one library then elaborate its\nunits once. Off by default.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.share"
     },
     {
      "kind": "val",

@@ -449,7 +449,7 @@ test-lsp-oracle: bin/rune-lsp-oracle.rbc
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --sample 12 --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
-	  --scenarios tests/lsp/oracle/rune.tsv --focus --sample 6 --out build/lsp/oracle-rune-focus.jsonl --require $(ORACLE_PATHS),opened
+	  --scenarios tests/lsp/oracle/rune.tsv --focus --sample 6 --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared
 test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
