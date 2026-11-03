@@ -6,10 +6,19 @@
    was made apart from what the plan is: `provenance` is outside the body two
    forms of one build compare on.
 
-     rune-plan 1
+     rune-plan 1 | 2                   2 where it has a step or a preprocessor
      basis demand | all | none
      view NAME                         the program's view of the Basis Library, if any
      inline functor|val NAME           the program's
+     preprocessor NAME TOOL DIR        each a program's build files declare
+       argument ARG                    as its tool is given them, in order
+       reads PATH                      what it reads beside the file it is given
+     end
+     generate TOOL DIR                 each step, in the order declared
+       argument ARG
+       reads PATH
+       writes PATH                     what it makes
+     end
      library NAME DIR                  each, what it is written on before it
        form open | block | header
        requires NAME                   as written, in order
@@ -38,7 +47,11 @@
    empty field is %-. The Basis Library is implicit, as it is in a build file.
    The words `edge` and `scc` are kept for what a graph discovered from
    sources would add, an edge between units and a group of units that use
-   each other; a plan of version 1 has neither, and refuses them. *)
+   each other; a plan of version 1 has neither, and refuses them. Version 2
+   is version 1 with what runs before a compile reads its sources, the steps
+   and the preprocessors (D16), and a plan with neither is of version 1, so
+   that a reader of version 1 reads every plan it can. A step is printed and
+   never run here: planning runs nothing. *)
 structure CompilerPlan =
 struct
   structure P = CompilerProject
@@ -57,8 +70,11 @@ struct
                   inlineValues : string list, views : (string * export list) list, friends : string list,
                   shadows : export list, steps : step list}
   type input = {path : string, hash : string}
+  type preprocessor = {name : string, tool : string, dir : string, arguments : string list, inputs : string list}
+  type generate = {tool : string, dir : string, arguments : string list, inputs : string list, outputs : string list}
   type t = {basis : string, view : string option, inline : string list, inlineValues : string list, libraries : library list,
-            requires : string list, program : step list, inputs : input list}
+            requires : string list, program : step list, inputs : input list, preprocessors : preprocessor list,
+            generates : generate list}
 
   exception Bad of string
 
@@ -136,10 +152,20 @@ struct
       String.concat (List.map (fn (k, n) => line (1, ["shadow", kindWord k, escape n])) shadows) ^
       stepsText (ref [], 1, steps) ^ line (0, ["end"])
     end
+  fun fieldsText (depth, word, values) = String.concat (List.map (fn v => line (depth, [word, escape v])) values)
+  fun preprocessorText ({name, tool, dir, arguments, inputs} : preprocessor) =
+    line (0, ["preprocessor", escape name, escape tool, escape dir]) ^ fieldsText (1, "argument", arguments) ^
+    fieldsText (1, "reads", inputs) ^ line (0, ["end"])
+  fun generateText ({tool, dir, arguments, inputs, outputs} : generate) =
+    line (0, ["generate", escape tool, escape dir]) ^ fieldsText (1, "argument", arguments) ^
+    fieldsText (1, "reads", inputs) ^ fieldsText (1, "writes", outputs) ^ line (0, ["end"])
+  fun version ({preprocessors, generates, ...} : t) =
+    if List.null preprocessors andalso List.null generates then "1" else "2"
   (* what two forms of one build must agree on; inputs say how it was made *)
-  fun body ({basis, view, inline, inlineValues, libraries, requires, program, ...} : t) : string =
-    line (0, ["rune-plan", "1"]) ^ line (0, ["basis", basis]) ^
+  fun body (p as {basis, view, inline, inlineValues, libraries, requires, program, preprocessors, generates, ...} : t) : string =
+    line (0, ["rune-plan", version p]) ^ line (0, ["basis", basis]) ^
     (case view of NONE => "" | SOME v => line (0, ["view", escape v])) ^ inlinesText (0, inline, inlineValues) ^
+    String.concat (List.map preprocessorText preprocessors) ^ String.concat (List.map generateText generates) ^
     String.concat (List.map libraryText libraries) ^
     line (0, ["program"]) ^ requiresText (1, requires) ^ stepsText (ref [], 1, program) ^ line (0, ["end"])
   fun print (p : t) : string =
@@ -217,11 +243,45 @@ struct
           {name = name, dir = dir, form = form, requires = rs, inline = inl, inlineValues = inlv,
            views = vs, friends = fs, shadows = shs, steps = ss}
         end
-      val () = case next () of ["rune-plan", "1"] => () | _ => raise Bad "not a plan of version 1"
+      val version = case next () of ["rune-plan", v] => if v = "1" orelse v = "2" then v else raise Bad ("no plan is of version " ^ v)
+                                  | _ => raise Bad "not a plan of version 1 or 2"
       val basis = case next () of ["basis", b] => b | _ => raise Bad "a plan says its basis"
       val view = case peek () of SOME ["view", v] => (ignore (next ()); SOME (field v)) | _ => NONE
       val inline = inlines "functor"
       val inlineValues = inlines "val"
+      fun fieldsOf word = collect (fn [w, x] => if w = word then SOME (field x) else NONE | _ => NONE, [])
+      fun preprocessors () =
+        case peek () of
+          SOME ["preprocessor", n, tool, dir] =>
+            let val () = ignore (next ())
+                val arguments = fieldsOf "argument"
+                val inputs = fieldsOf "reads"
+                val () = expect "end"
+            in {name = field n, tool = field tool, dir = field dir, arguments = arguments, inputs = inputs} :: preprocessors () end
+        | _ => []
+      fun generates () =
+        case peek () of
+          SOME ["generate", tool, dir] =>
+            let val () = ignore (next ())
+                val arguments = fieldsOf "argument"
+                val inputs = fieldsOf "reads"
+                val outputs = fieldsOf "writes"
+                val () = expect "end"
+            in {tool = field tool, dir = field dir, arguments = arguments, inputs = inputs, outputs = outputs} :: generates () end
+        | _ => []
+      val (ps, gs) =
+        if version = "2" then
+          let val ps = preprocessors ()
+              val gs = generates ()
+          in if List.null ps andalso List.null gs
+             then raise Bad "a plan of version 2 has a step or a preprocessor; one with neither is of version 1"
+             else (ps, gs)
+          end
+        else
+          case peek () of
+            SOME (w :: _) => if w = "generate" orelse w = "preprocessor" then raise Bad ("a plan of version 1 has no " ^ w)
+                             else ([], [])
+          | _ => ([], [])
       fun libraries acc =
         case peek () of
           SOME ["library", name, dir] => (ignore (next ()); libraries (readLibrary (field name, field dir) :: acc))
@@ -241,7 +301,7 @@ struct
       val () = case peek () of NONE => () | SOME _ => raise Bad "text after the plan"
     in
       {basis = basis, view = view, inline = inline, inlineValues = inlineValues, libraries = libs, requires = rs,
-       program = program, inputs = inputs}
+       program = program, inputs = inputs, preprocessors = ps, generates = gs}
     end
 
   (* ---- flattening ---- *)
@@ -355,6 +415,12 @@ struct
     in
       {basis = #basis project, view = #view project, inline = sortStrings (#inline project),
        inlineValues = sortStrings (#inlineValues project),
-       libraries = librariesPlanned, requires = libraries, program = program, inputs = inputs}
+       libraries = librariesPlanned, requires = libraries, program = program, inputs = inputs,
+       preprocessors = List.map (fn {name, tool, arguments, inputs, dir} =>
+                                   {name = name, tool = tool, dir = dir, arguments = arguments, inputs = inputs})
+                                (#preprocessors project),
+       generates = List.map (fn {tool, arguments, inputs, outputs, dir} =>
+                               {tool = tool, dir = dir, arguments = arguments, inputs = inputs, outputs = outputs})
+                            (#generates project)}
     end
 end

@@ -30,6 +30,11 @@ struct
     | Inline of string list                      (* functors to inline across units (M6b) *)
     | InlineVal of string list                   (* functions to inline across units (functors-units M10) *)
     | View of string                             (* the program's view of the Basis Library (D12) *)
+    (* a declared step, which a build runs before it reads a source, and
+       the class of a per-file preprocessor, which a file is put in by the
+       annotation preprocess=NAME (docs/build.md, Generated sources; D16) *)
+    | Generate of {tool : string, arguments : string list, inputs : string list, outputs : string list}
+    | Preprocessor of {name : string, tool : string, arguments : string list, inputs : string list}
 
   exception Error of string
   exception LocatedError of Source.span * string
@@ -76,7 +81,8 @@ struct
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
-                  "libraries", "inline", "requires", "exports", "friends", "view", "shadows", "strict"]
+                  "libraries", "inline", "requires", "exports", "friends", "view", "shadows", "strict",
+                  "generate", "preprocessor", "inputs", "outputs"]
 
   (* the words that were the language's and are not now, which no path may
      be: what to write instead (docs/build.md, What is gone; D6) *)
@@ -88,11 +94,17 @@ struct
     | _ => NONE
 
   (* the words `annotate` takes (docs/build.md, Annotations, and A library's
-     build file); view=NAME marks the seals of a view of the Basis Library *)
+     build file); view=NAME marks the seals of a view of the Basis Library,
+     and preprocess=NAME puts a file in the class of a preprocessor *)
   fun knownAnnotation (a : string) : bool =
     List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no", "host=only", "prelude"]
     orelse isSome (Source.modeNamed a)
     orelse (String.isPrefix "view=" a andalso BasisManifest.identifier (String.extract (a, 5, NONE)))
+    orelse (String.isPrefix "preprocess=" a andalso BasisManifest.identifier (String.extract (a, 11, NONE)))
+  (* the preprocessor a unit's annotations put it in: the last they name *)
+  fun preprocessorOf (annotations : string list) : string option =
+    List.foldl (fn (a, found) => if String.isPrefix "preprocess=" a then SOME (String.extract (a, 11, NONE)) else found)
+               NONE annotations
 
   fun parseUsing {path,text,recover,pathAt,wanted} : dec list =
     let
@@ -165,6 +177,28 @@ struct
               | _ => error "expected , or ) in the exports"
             end
         in expect "("; export () end
+      (* a step's arguments, as its tool is given them: ( ARG, ... ) *)
+      fun argumentList () =
+        case peek () of
+          SOME (W "(") =>
+            let
+              val () = ignore (next ())
+              fun argument () =
+                let
+                  val a = case next () of
+                            W "," => error "expected an argument, found ,"
+                          | W ")" => error "expected an argument, found )"
+                          | W a => a
+                          | S a => a
+                in
+                  case next () of
+                    W "," => a :: argument ()
+                  | W ")" => [a]
+                  | _ => error "expected , or ) in the arguments"
+                end
+            in case peek () of SOME (W ")") => (ignore (next ()); []) | _ => argument () end
+        | _ => []
+      fun inputList () = case peek () of SOME (W "inputs") => (ignore (next ()); paths "input") | _ => []
       fun decsUntil stops =
         case peek () of
           NONE => (want "source";[])
@@ -218,6 +252,25 @@ struct
                              | W n => n :: names ()
                              | S n => n :: names ()
             in kind (names ()) end
+        | W "generate" =>
+            let
+              val tool = pathWord "tool"
+              val arguments = argumentList ()
+              val inputs = inputList ()
+              val () = expect "outputs"
+              val outputs = paths "output"
+            in
+              if List.null outputs then error "a step says what it makes: outputs PATH ... end"
+              else Generate {tool = tool, arguments = arguments, inputs = inputs, outputs = outputs}
+            end
+        | W "preprocessor" =>
+            let
+              val name = case next () of
+                           W n => if BasisManifest.identifier n then n else error ("not the name of a preprocessor: " ^ n)
+                         | S n => error ("not the name of a preprocessor: \"" ^ n ^ "\"")
+              val tool = pathWord "tool"
+              val arguments = argumentList ()
+            in Preprocessor {name = name, tool = tool, arguments = arguments, inputs = inputList ()} end
         | word as W s =>
             (case dropped s of
                SOME instead => error ("the build language has no " ^ s ^ ": " ^ instead)

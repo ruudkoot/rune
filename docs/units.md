@@ -543,7 +543,12 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   across it: in the directory of a key it looks in, and in `units/` when
   it writes there (S86). Temporary publication names
   come from an OS reservation held until the write finishes, as for
-  bytecode output; generating them does not format clocks or process ids.
+  bytecode output; generating them does not format clocks or process ids;
+* beside the configurations, `steps/` holds what a build's declared steps and
+  preprocessors made ([build.md](build.md), *Generated sources*): the key a
+  step last ran under, with the hash of each output, and a preprocessor's
+  output of each file, by the tool and the file's bytes. A unit of a
+  preprocessed file is keyed by that output, as any unit is by its text.
 
 **What a boundary does to a key.** A client's usages are by name, so what
 its entry holds of a library is what it could see and did name: a boundary

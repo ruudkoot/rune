@@ -343,6 +343,130 @@ struct
   fun buildRefused c source message =
     (rmTree (#directory c ^ "/" ^ source ^ ".rbc");
      refused (compiler c source "" ["--build", source ^ ".build", "--no-cache", "-o", source ^ ".rbc"]) message)
+  (* Generated sources (docs/build.md, Generated sources; the build-system
+     roadmap's D16), each scenario in a directory of its own: a step, whose
+     tool is /bin/sh given tool.sh, which writes made.sml from spec.txt; and
+     a preprocessor, which makes a line's @@ val. *)
+  val stepTool = "n=$(cat \"$1\")\ncase \"$n\" in fail) exit 1 ;; none) exit 0 ;; esac\n"
+                 ^ "printf 'structure Made = struct val n = %s end\\n' \"$n\" > \"$2\""
+  fun stepFixture c dir =
+    (rmTree (#directory c ^ "/" ^ dir);
+     List.app (fn (file, text) => put c (dir ^ "/" ^ file) text)
+       [("tool.sh", stepTool), ("spec.txt", "42"), ("main.sml", "val () = print (Int.toString Made.n ^ \"\\n\")"),
+        ("gen.build", "generate /bin/sh (tool.sh, spec.txt, made.sml)\n  inputs tool.sh spec.txt end\n  outputs made.sml end\n"
+                      ^ "made.sml main.sml")])
+  fun stepBuild c dir label flags =
+    compiler c label dir (["--build", "gen.build", "--cache-dir", "cache"] @ flags @ ["-o", "gen.rbc"])
+  fun stepBuilds c dir label expected =
+    (success (stepBuild c dir label []); output (program c (label ^ "-run") dir ["gen.rbc"]) expected)
+  fun ppFixture c dir =
+    (rmTree (#directory c ^ "/" ^ dir);
+     List.app (fn (file, text) => put c (dir ^ "/" ^ file) text)
+       [("filter.sh", "sed 's/^@@ /val /' \"$1\" > \"$2\""), ("pp.sml", "@@ n = 42"),
+        ("use.sml", "val () = print (Int.toString n ^ \"\\n\")"),
+        ("pp.build", "preprocessor at /bin/sh (filter.sh) inputs filter.sh end\nannotate \"preprocess=at\" in pp.sml end\nuse.sml")])
+  val stepCases = ["generate", "generate-hand-edited", "generate-fails", "generate-unmade", "generate-plan", "generate-in-library",
+                   "generate-plan-v1", "generate-no-outputs", "generate-twice", "generate-no-tool", "preprocess",
+                   "preprocess-undeclared", "preprocess-twice", "preprocess-host"]
+  fun generated c which =
+    case which of
+      "generate" =>
+        (* the step runs before a unit is read, and again when an input changes, and not when none does *)
+        (stepFixture c "gen";
+         stepBuilds c "gen" "generate-cold" "42\n";
+         let val r = stepBuild c "gen" "generate-warm" ["--explain-rebuild"]
+         in success r; need (String.isSubstring "is up to date" (#errors r), "a step whose inputs did not change ran again: " ^ #errors r) end;
+         put c "gen/spec.txt" "7";
+         stepBuilds c "gen" "generate-edited" "7\n")
+    | "generate-hand-edited" =>
+        (* an output that is not what the step made is refused; removed, it is made again *)
+        (stepFixture c "edited";
+         stepBuilds c "edited" "edited-cold" "42\n";
+         put c "edited/made.sml" "structure Made = struct val n = 0 end";
+         refused (stepBuild c "edited" "edited-refused" []) "made.sml is not what the step /bin/sh tool.sh spec.txt made.sml made";
+         OS.FileSys.remove (#directory c ^ "/edited/made.sml");
+         stepBuilds c "edited" "edited-again" "42\n")
+    | "generate-fails" =>
+        (* a step that fails stops the build, and the stale output it left is not compiled *)
+        (stepFixture c "fails";
+         stepBuilds c "fails" "fails-cold" "42\n";
+         put c "fails/spec.txt" "fail";
+         refused (stepBuild c "fails" "fails-refused" []) "failed, and what it makes is not compiled")
+    | "generate-unmade" =>
+        (stepFixture c "unmade";
+         put c "unmade/spec.txt" "none";
+         refused (stepBuild c "unmade" "unmade-refused" []) "did not make made.sml, which it says it makes")
+    | "generate-plan" =>
+        (* --plan prints a step and runs nothing, as a plan of version 2, which reads back *)
+        let
+          val () = stepFixture c "plan"
+          val r = compiler c "plan" "plan" ["--plan", "gen.build"]
+          val () = success r
+          val step = "\ngenerate /bin/sh .\n  argument tool.sh\n  argument spec.txt\n  argument made.sml\n  reads tool.sh\n"
+                     ^ "  reads spec.txt\n  writes made.sml\nend\n"
+          val () = need (String.isPrefix "rune-plan 2\n" (#output r) andalso String.isSubstring step (#output r),
+                         "the plan of a step: " ^ #output r)
+          val () = need (not (exists (#directory c ^ "/plan/made.sml")), "--plan ran a step")
+          val () = write (#directory c ^ "/plan/gen.plan", #output r)
+        in output (compiler c "plan-again" "plan" ["--plan", "gen.plan"]) (#output r) end
+    | "generate-in-library" =>
+        (put c "steplib/library.build" "exports (structure Made)\ngenerate /bin/sh (tool.sh) outputs made.sml end\nmade.sml";
+         refused (compiler c which "" ["--plan", "steplib/library.build"]) "a library's build file declares no step")
+    | "generate-plan-v1" =>
+        (put c "v1.plan" "rune-plan 1\nbasis demand\ngenerate /bin/sh .\n  writes a.sml\nend\nprogram\nend";
+         refused (compiler c which "" ["--plan", "v1.plan"]) "a plan of version 1 has no generate")
+    | "generate-no-outputs" =>
+        (put c "nooutputs.build" "generate /bin/sh (tool.sh) inputs tool.sh end\nmain.sml";
+         refused (compiler c which "" ["--plan", "nooutputs.build"]) "expected outputs, found main.sml")
+    | "generate-twice" =>
+        (* a file is made by one step at most *)
+        (put c "twice.build" "generate /bin/sh (a.sh) outputs made.sml end\ngenerate /bin/sh (b.sh) outputs made.sml end\nmain.sml";
+         refused (compiler c which "" ["--plan", "twice.build"]) "two steps make made.sml")
+    | "generate-no-tool" =>
+        (* a tool is a file, whose bytes are in the step's key *)
+        (put c "notool/gen.build" "generate no-such-tool (x) outputs made.sml end\nmain.sml";
+         put c "notool/main.sml" "val () = ()";
+         refused (compiler c which "notool" ["--build", "gen.build", "--no-cache", "-o", "gen.rbc"]) "no tool no-such-tool")
+    | "preprocess-twice" =>
+        (* a name is one preprocessor's *)
+        (put c "pptwice.build" "preprocessor p /bin/sh (a.sh)\npreprocessor p /bin/sh (b.sh)\nmain.sml";
+         refused (compiler c which "" ["--plan", "pptwice.build"]) "a second preprocessor p, not the first")
+    | "preprocess" =>
+        (* a file's preprocessor makes what its unit compiles; a build after an
+           edit of the file is the build of what the edit makes of it, warm as
+           cold (S41), and a file not edited is not given to the tool again *)
+        let
+          val () = ppFixture c "pp"
+          fun built (label, flags) = success (compiler c label "pp" (["--build", "pp.build"] @ flags @ ["-o", label ^ ".rbc"]))
+          val () = built ("warm1", ["--cache-dir", "cache"])
+          val () = output (program c "warm1-run" "pp" ["warm1.rbc"]) "42\n"
+          val again = compiler c "warm1-again" "pp" ["--build", "pp.build", "--cache-dir", "cache", "--explain-rebuild", "-o", "again.rbc"]
+          val () = success again
+          val () = need (not (String.isSubstring "preprocessed" (#errors again)), "a file not edited was preprocessed again: " ^ #errors again)
+          val () = put c "pp/pp.sml" "@@ n = 43"
+          val () = built ("warm2", ["--cache-dir", "cache"])
+          val () = built ("cold2", ["--no-cache"])
+          val dir = #directory c ^ "/pp/"
+        in
+          need (read (dir ^ "warm2.rbc") = read (dir ^ "cold2.rbc"), "a build after an edit of a preprocessed file is not the cold build");
+          output (program c "warm2-run" "pp" ["warm2.rbc"]) "43\n"
+        end
+    | "preprocess-undeclared" =>
+        (put c "ppnone.build" "annotate \"preprocess=none\" in a.sml end";
+         refused (compiler c which "" ["--plan", "ppnone.build"]) "a.sml is put in the preprocessor none, which no build file of it declares")
+    | "preprocess-host" =>
+        (* a host has no preprocessor: what it would read of the plan, it refuses *)
+        let
+          val () = ppFixture c "pphost"
+          val r = compiler c "pphost-plan" "pphost" ["--plan", "pp.build"]
+          val () = success r
+          val () = write (#directory c ^ "/pphost/pp.plan", #output r)
+          val h = execute c "pphost-host" "pphost" ["/bin/sh", fromRoot "scripts/plan-files.sh", "pp.plan"]
+        in
+          need (#status h <> 0 andalso #output h = "" andalso String.isSubstring "a file a host cannot compile" (#errors h),
+                "a host read a plan with a preprocessed file: " ^ #output h ^ #errors h)
+        end
+    | _ => raise Failed "unknown buildfile scenario"
   fun build c which () =
     case which of
       "list" => builds c which "list" [] "42\n"
@@ -501,7 +625,7 @@ struct
     | "virtual-two" => buildRefused c "bigint/two" "two implementations"
     | "bad" => buildRefused c "bad" "unexpected end of the file"
     | "self" => buildRefused c "self" "uses itself"
-    | _ => raise Failed "unknown buildfile scenario"
+    | _ => generated c which
   val buildCases = ["list", "boundary", "boundary-hidden", "no-group", "no-local", "no-cache", "no-program-boundary", "library-outside-boundary", "host-only",
                     "use-twice", "prim", "prim-allowed",
                     "path-variable", "missing-variable", "path-variable-nested", "build-list", "include-with-build", "plan-command-line",
@@ -511,6 +635,7 @@ struct
                     "export-no-signature", "export-from-outside", "export-rebound", "export-datatype", "export-abbreviation", "typecheck-exports", "reach-in", "reach-in-pointer",
                     "selection-by-uses", "install-no-basis", "clean-overlay",
                     "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two", "bad", "self"]
+                   @ stepCases
   fun copy source destination =
     let val input = BinIO.openIn source
         val output = BinIO.openOut destination

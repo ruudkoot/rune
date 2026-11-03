@@ -1,4 +1,11 @@
 (* Compiler libraries followed by the command-line driver. *)
+(* build/config.sml says the version, git's, and the compiler's identity, a
+   hash of rune.plan and its closure (docs/building.md, The compiler's
+   identity): scripts/gen-version.sh writes it, here as on the hosts. It
+   reads git and every file of the closure, so it declares no inputs and
+   runs on every build (docs/build.md, Generated sources). *)
+generate scripts/gen-version.sh (--config, rune.plan, build/config.sml)
+  outputs build/config.sml end
 build/config.sml
 files
   lib/unicode/utf8_sig.sml
@@ -35,6 +42,7 @@ files
   src/driver/options.sml
   src/driver/parallel.sml
   src/driver/cachecheck.sml
+  src/driver/steps.sml
   src/driver/main.sml
   src/driver/serve.sml
 end
