@@ -43,6 +43,8 @@ struct
   (* which files keep what a question about them needs; NONE, every file *)
   fun focus (context as Analysis {engine,...},files)=(checked context;E.focus (engine,files))
   (* whether a library's units are taken from what other contexts checked *)
+  type pool=E.pool
+  val pool=E.pool
   fun share (context as Analysis {engine=E.Session {shares,...},...},value)=(checked context;shares:=value)
   fun compact (context as Analysis {engine,...})=(checked context;E.compact engine)
   fun checkpoint (context as Analysis {engine=E.Session {state,...},token,...}) =

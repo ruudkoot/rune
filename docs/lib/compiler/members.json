@@ -537,10 +537,24 @@
      "page": "sig/RUNE_COMPILER.md#val-analysis.focus"
     },
     {
+     "kind": "type",
+     "name": "Analysis.pool",
+     "spec": "type pool",
+     "doc": "What contexts that share leave of a library's units for each other.\n\nIts holder makes it and hands it to each: contexts of several compiler\nsessions may share one.\n\n",
+     "page": "sig/RUNE_COMPILER.md#type-analysis.pool"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.pool",
+     "spec": "val pool : unit -> pool",
+     "doc": "`pool ()` makes an empty pool, for the contexts that are to share it.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.pool"
+    },
+    {
      "kind": "val",
      "name": "Analysis.share",
-     "spec": "val share : t * bool -> unit",
-     "doc": "`share (context, true)` lets a context take a library's units from the\nother contexts that share.\n\nA library's unit is taken from what another such context checked under\nthe same configuration, where the unit's usages hold where the context\nreaches it, as a compile takes a cache's entry; the context leaves its\nown for the others. Two builds over one library then elaborate its\nunits once. Off by default.\n\n",
+     "spec": "val share : t * pool option -> unit",
+     "doc": "`share (context, SOME pool)` lets a context take a library's units\nfrom the other contexts that share the pool; `NONE` ends it.\n\nA library's unit is taken from what another such context checked under\nthe same configuration, where the unit's usages hold where the context\nreaches it, as a compile takes a cache's entry; the context leaves its\nown for the others. Two builds over one library then elaborate its\nunits once. Off by default.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.share"
     },
     {

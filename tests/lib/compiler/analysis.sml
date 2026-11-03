@@ -730,9 +730,10 @@ struct
      does; one that does not share elaborates them. *)
   fun sharedLibrary () = scopedRoot ("structure:Public",[],fn {dir,...} =>
     let val parent=C.session {lib=SOME dir,flags=["--library","inner"]}
+        val pool=A.pool ()
         fun context (name,file,shares)=
           let val made=A.create (parent,{context=name})
-          in A.share (made,shares);A.focus (made,SOME [file]);made end
+          in A.share (made,if shares then SOME pool else NONE);A.focus (made,SOME [file]);made end
         val first=context ("first","one.sml",true)
         val second=context ("second","two.sml",true)
         val alone=context ("alone","two.sml",false)

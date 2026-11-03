@@ -63,18 +63,19 @@ struct
   (* a compiler state whose units stay loaded; base: its tables as a walk begins *)
   datatype world=World of {owner:CompilerState.session,
     base:(SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map*Overload.entry IntMap.map) option ref}
-  (* doomed: an exception left the world's tables half written. shares:
-     whether a library's units are taken from what another session left
-     (shared) *)
-  datatype session=Session of {state:state ref,world:world option ref,config:CompilerSession.config,closed:bool ref,
-    observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref,walks:int ref,shares:bool ref}
   (* What the sessions that share have left of the libraries' units, by name,
      with the configuration they were elaborated in: a unit of a library is
      the same unit in two builds over it (D3), and is taken in a session that
      has not held it as a walk takes a unit, where its usages hold (D26, two
      builds over one library). Each is kept without its place, which is a
-     world's. *)
-  val shared=ref StringMap.empty : (CompilerSession.config*kept) StringMap.map ref
+     world's. A pool is its sharers' to hold, not this structure's: the
+     sessions that share may belong to several compilers *)
+  type pool=(CompilerSession.config*kept) StringMap.map ref
+  fun pool () : pool=ref StringMap.empty
+  (* doomed: an exception left the world's tables half written. shares:
+     the pool a library's units are taken from and left in, if any *)
+  datatype session=Session of {state:state ref,world:world option ref,config:CompilerSession.config,closed:bool ref,
+    observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref,walks:int ref,shares:pool option ref}
   exception Cancelled
   (* a query has what it asked for once its unit is elaborated *)
   exception Answered
@@ -89,7 +90,7 @@ struct
   fun keptErrors ()=List.mapPartial (fn (severity,span,message) =>
     if severity="error" then SOME (CompilerSession.sourceError ("error",span,message)) else NONE) (List.rev (!Error.kept))
   fun new config=Session {state=ref noState,world=ref NONE,config=config,closed=ref false,observer=ref NONE,focus=ref NONE,doomed=ref false,
-    walks=ref 0,shares=ref false}
+    walks=ref 0,shares=ref NONE}
   fun dropWorld (Session {world,...})=(Option.app (fn World {owner,...} => CompilerState.close owner) (!world);world:=NONE)
   fun close (session as Session {closed,state,...})=(closed:=true;state:=noState;dropWorld session)
   (* a state whose units must load again *)
@@ -100,7 +101,7 @@ struct
   (* a session of its own over a state: what a query of an old snapshot, or
      one whose context has closed, walks through; nothing in it is to be kept open *)
   fun over (state,config)=Session {state=ref (unplaced (state,#serial state)),world=ref NONE,config=config,closed=ref false,
-    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0,shares=ref false}
+    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0,shares=ref NONE}
   (* a state taken back: this session's earlier one *)
   fun restore (session as Session {state=current,...},saved:state)=
     (dropWorld session;current:=unplaced (saved,#serial (!current)+1))
@@ -432,8 +433,10 @@ struct
               val ()=(Env.currentUnit:=name;unitUses:=[])
               (* a library's unit this session has not held: what another left of it *)
               val prior=case priorOf name of SOME k => SOME k | NONE =>
-                if keepFacts orelse fast orelse not (!shares) then NONE else
-                  case StringMap.find (!shared,name) of SOME (other,k) => if other=config then SOME k else NONE | NONE => NONE
+                case (keepFacts orelse fast,!shares) of
+                  (false,SOME shared) =>
+                    (case StringMap.find (!shared,name) of SOME (other,k) => if other=config then SOME k else NONE | NONE => NONE)
+                | _ => NONE
               val index= !walked
               val ()=walked:=index+1
               val here=place ()
@@ -686,7 +689,7 @@ struct
         val errors=case fast of SOME (errors,_) => errors | NONE => walkErrors
         val ()=commit ()
         (* the libraries' units this check reached, for another session to take *)
-        val ()=if not (!shares) orelse isSome query then () else
+        val ()=case (!shares,query) of (NONE,_) => () | (_,SOME _) => () | (SOME shared,NONE) =>
           StringMap.app (fn name => case StringMap.find (!next,name) of NONE => () | SOME (k:kept) =>
             shared:=StringMap.insert (!shared,name,(config,{entry= #entry k,identity= #identity k,live=ref NONE,usages= #usages k,
               index= #index k,defined=ref NONE,keys=ref NONE}))) libraryNames

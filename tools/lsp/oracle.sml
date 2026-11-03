@@ -159,10 +159,11 @@ struct
         fun checkIn (analysis,cancelled)=A.check (analysis,{project=SOME (project ()),inputs=inputs (),cancelled=cancelled})
         val ()=if not (!shares) then () else
           let val seed=A.create (compiler,{context="seed"})
-          in A.share (seed,true);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
+              val pool=A.pool ()
+          in A.share (seed,SOME pool);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
              (* an open unit is elaborated where a walk reaches it, and never
                 taken from another context: none is open at first *)
-             A.share (context,true);A.focus (context,SOME []) end
+             A.share (context,SOME pool);A.focus (context,SOME []) end
         fun never ()=false
         (* a seeded choice of units, the same on every run *)
         val seed=ref 1

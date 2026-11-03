@@ -156,13 +156,14 @@ struct
         (* two builds over one library: what the second costs where it shares *)
         fun share (first,second) =
           let val compiler=C.session {lib=SOME (!lib),flags=[]}
+              val pool=A.pool ()
               fun inputsOf project=List.map (fn source:C.Project.source => {file= #file source,text=read (#file source),
                 mode= #mode source,annotations= #annotations source,revision=""}:A.input) (C.Project.sources project)
               fun checked (label,build,shares)=
                 let val path=full build
                     val project=C.Project.read (compiler,{file=path,workspace=W.rootFile platform path,variables=[],overlays=[],windows=false})
                     val context=A.create (compiler,{context=label})
-                    val ()=(A.share (context,shares);A.focus (context,SOME []))
+                    val ()=(A.share (context,if shares then SOME pool else NONE);A.focus (context,SOME []))
                     val ()=Runtime.collect ()
                     val start=Runtime.stats ()
                     val timer=Timer.startRealTimer ()

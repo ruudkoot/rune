@@ -69,6 +69,9 @@ struct
               else loop(rest,n+1,bytes+weight entry,entry::kept)
     in loop(entries,0,0,[]) end
   fun release (context:context)=(A.close(#analysis context);C.close(#compiler context))
+  (* the libraries' units this worker's contexts leave for each other: two
+     builds over one library check its units once (D26) *)
+  val libraryUnits=A.pool ()
   fun context (Worker {contexts,progress,...},{key,lib,flags}) =
     case List.find (fn context:context => #key context=key) (!contexts) of SOME context =>
       (contexts:=context :: List.filter (fn prior:context => #key prior<>key) (!contexts);context)
@@ -77,7 +80,7 @@ struct
           val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key}),bytes=ref 0,
             projects=ref [],texts=ref (Array.fromList []),latest=ref NONE,keys=ref (Array.fromList [])}:context
           (* two builds over one library check its units once (D26) *)
-          val ()=A.share (#analysis context,true)
+          val ()=A.share (#analysis context,SOME libraryUnits)
           val reportedChecked=ref ~1
           val ()=A.observe(#analysis context,SOME(fn event:A.observation=>
             let val report= #phase event<>"unit-frozen" orelse #checked event<> !reportedChecked

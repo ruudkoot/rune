@@ -215,6 +215,8 @@ struct
     fun close (Analysis {analysis,...})=A.close analysis
     fun observe (Analysis {analysis,...},callback)=A.observe(analysis,callback)
     fun focus (Analysis {analysis,...},files)=A.focus(analysis,files)
+    type pool=A.pool
+    val pool=A.pool
     fun share (Analysis {analysis,...},value)=A.share(analysis,value)
     fun compact (Analysis {analysis,...})=A.compact analysis
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis

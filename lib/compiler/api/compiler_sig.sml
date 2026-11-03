@@ -325,15 +325,22 @@ sig
        when a query asks for them. NONE, the default, keeps every file open;
        while some are closed, occurrences and facts hold no closed unit's. *)
     val focus : t * string list option -> unit
-    (* `share (context, true)` lets a context take a library's units from the
-       other contexts that share.
+    (* What contexts that share leave of a library's units for each other.
+
+       Its holder makes it and hands it to each: contexts of several compiler
+       sessions may share one. *)
+    type pool
+    (* `pool ()` makes an empty pool, for the contexts that are to share it. *)
+    val pool : unit -> pool
+    (* `share (context, SOME pool)` lets a context take a library's units
+       from the other contexts that share the pool; `NONE` ends it.
 
        A library's unit is taken from what another such context checked under
        the same configuration, where the unit's usages hold where the context
        reaches it, as a compile takes a cache's entry; the context leaves its
        own for the others. Two builds over one library then elaborate its
        units once. Off by default. *)
-    val share : t * bool -> unit
+    val share : t * pool option -> unit
     (* `compact context` gives up the compiler state a context's units stay
        loaded in, with what its tables hold of units long replaced.
 

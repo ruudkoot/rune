@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 105 of 105 entries documented |
+| Documentation | 107 of 107 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -116,7 +116,9 @@ sig
     val <a href="#val-analysis.close">close</a> : t -&gt; unit
     val <a href="#val-analysis.observe">observe</a> : t * (observation-&gt;unit) option -&gt; unit
     val <a href="#val-analysis.focus">focus</a> : t * string list option -&gt; unit
-    val <a href="#val-analysis.share">share</a> : t * bool -&gt; unit
+    type <a href="#type-analysis.pool">pool</a>
+    val <a href="#val-analysis.pool">pool</a> : unit -&gt; pool
+    val <a href="#val-analysis.share">share</a> : t * pool option -&gt; unit
     val <a href="#val-analysis.compact">compact</a> : t -&gt; unit
     val <a href="#val-analysis.check">check</a> : t * {<a href="#fld-analysis.check.project">project</a>:Project.t option,<a href="#fld-analysis.check.inputs">inputs</a>:input list,<a href="#fld-analysis.check.cancelled">cancelled</a>:unit-&gt;bool} -&gt; snapshot
     val <a href="#val-analysis.checkpoint">checkpoint</a> : t -&gt; checkpoint
@@ -1145,14 +1147,33 @@ file's unit. Another's are dropped, and worked out again at its place
 when a query asks for them. NONE, the default, keeps every file open;
 while some are closed, occurrences and facts hold no closed unit's.
 
+#### <a name="type-analysis.pool"></a>`pool`
+
+```sml
+type pool
+```
+
+What contexts that share leave of a library's units for each other.
+
+Its holder makes it and hands it to each: contexts of several compiler
+sessions may share one.
+
+#### <a name="val-analysis.pool"></a>`pool`
+
+```sml
+val pool : unit -> pool
+```
+
+`pool ()` makes an empty pool, for the contexts that are to share it.
+
 #### <a name="val-analysis.share"></a>`share`
 
 ```sml
-val share : t * bool -> unit
+val share : t * pool option -> unit
 ```
 
-`share (context, true)` lets a context take a library's units from the
-other contexts that share.
+`share (context, SOME pool)` lets a context take a library's units
+from the other contexts that share the pool; `NONE` ends it.
 
 A library's unit is taken from what another such context checked under
 the same configuration, where the unit's usages hold where the context
