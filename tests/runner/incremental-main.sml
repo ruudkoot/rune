@@ -112,9 +112,10 @@ struct
     | main ("mutate" :: args) = mutations args
     | main ("soundness" :: args) = soundness args
     | main ("layers" :: trees) = LayerChecks.main trees
+    | main ["layers-tree", build] = LayerChecks.one build
     | main ["one",name,compiler] = IncrementalExtra.runCase name compiler
     | main ("plant" :: args) = CachePlant.command args
-    | main _ = raise Usage "scenarios [--rune BIN] [FILTER] | one NAME COMPILER | mutate [OPTIONS] PROJECT... | soundness [OPTIONS] PROJECT... | layers BUILD... | plant [OPTIONS]"
+    | main _ = raise Usage "scenarios [--rune BIN] [FILTER] | one NAME COMPILER | mutate [OPTIONS] PROJECT... | soundness [OPTIONS] PROJECT... | layers BUILD... | layers-tree BUILD | plant [OPTIONS]"
 end
 val () =
   let fun message (IncrementalMain.Usage text)=text

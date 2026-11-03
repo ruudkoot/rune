@@ -652,6 +652,26 @@ struct
           handle C.Failed diagnostics => diagnostics
         val ()=check ("a compile refuses it",List.exists (fn diagnostic:C.diagnostic => says (#message diagnostic)) compiled)
     in A.close context;C.close parent end
+  (* The same refusal where the argument is the datatype of the parameter of
+     the body the application is in: its layout is in the code's tables only
+     where code is made, and the analysis reads it from its constructors
+     (Elaborate.layoutAt) *)
+  fun layoutsInABody () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="body-layouts"})
+        val text=String.concatWith "\n"
+          ["signature P = sig type e  datatype t = C of e | N end",
+           "functor F (X : P) = struct fun f (X.C v) = 1 | f _ = 0 end",
+           "signature Q = sig type e = int * int * int * int * int * int * int * int * int  datatype t = C of e | N end",
+           "functor G (Y : Q) = struct structure R = F (Y) end",""]
+        val says=String.isSubstring "lays out a constructor of t in 9 fields"
+        val result=analyze (context,[input ("body.sml",text,"1")])
+        val ()=check ("the analysis refuses it in a body as a compile does",
+          List.exists (fn diagnostic:C.diagnostic => says (#message diagnostic)) (A.diagnostics result))
+        val compiled=(ignore (C.compileText (parent,{file="body.sml",text=text}));[])
+          handle C.Failed diagnostics => diagnostics
+        val ()=check ("a compile refuses it in a body",List.exists (fn diagnostic:C.diagnostic => says (#message diagnostic)) compiled)
+    in A.close context;C.close parent end
   (* A comment that moves every span moves no identity: where a name was bound
      is in a sidecar, outside what an identity hashes (build-system M4, step
      1), and a unit read back still says where. *)
@@ -799,6 +819,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "node-types" CompilerAnalysisTests.nodeTypes,
      Test.it "spans-move-no-identity" CompilerAnalysisTests.spansMoveNoIdentity,
      Test.it "generated-layouts" CompilerAnalysisTests.generatedLayouts,
+     Test.it "layouts-in-a-body" CompilerAnalysisTests.layoutsInABody,
      Test.it "past-the-first-error" CompilerAnalysisTests.pastFirstError,
      Test.it "basis-view" CompilerAnalysisTests.basisView,
      Test.it "two-builds-share-a-library" CompilerAnalysisTests.sharedLibrary]
