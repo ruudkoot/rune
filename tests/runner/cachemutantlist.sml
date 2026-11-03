@@ -16,12 +16,16 @@ struct
 
   val ub = "lib/compiler/driver/unitbasis.sml"
   val uc = "lib/compiler/driver/unitcache.sml"
+  val us = "lib/compiler/driver/unitstore.sml"
   val el = "lib/compiler/elab/elaborate.sml"
   val en = "lib/compiler/elab/env.sml"
   val fx = "lib/compiler/frontend/fixity.sml"
   val um = "lib/compiler/driver/unitmid.sml"
   val cc = "src/driver/cachecheck.sml"
+  val mn = "src/driver/main.sml"
   val st = "lib/compiler/state.sml"
+  val mm = "lib/compiler/driver/unitmemo.sml"
+  val sp = "src/driver/steps.sml"
 
   fun m (id, class, issue, repl, note, catches, file, old, new) : mutant =
     {mutant = CompilerMutantList.m (id, class, "cache", file, note, issue, [(file, old, new)]),
@@ -123,13 +127,13 @@ struct
     m ("K1", "key: allow dropped", "", false, "",
        [("flag-allow-prim", "exit 0 through the cache, 1 without")],
        uc,
-       "UnitBasis.hashAt (\"source\", text), if allow then \"1\" else \"0\"]",
-       "UnitBasis.hashAt (\"source\", text), \"0\"]"),
+       "[name, source, if allow then \"1\" else \"0\"]",
+       "[name, source, \"0\"]"),
     m ("K2", "key: a unit's settings dropped", "", false, "",
        [("S62", "expected compilation failure"), ("flag-or-patterns", "exit 0 through the cache, 1 without")],
        uc,
-       "[name, UnitBasis.hashAt (\"source\", text), if allow then \"1\" else \"0\"]\n                                                           @ (if settings = \"\" then [] else [settings]))))",
-       "[name, UnitBasis.hashAt (\"source\", text), if allow then \"1\" else \"0\"]\n                                                           @ [])))"),
+       "[name, source, if allow then \"1\" else \"0\"]\n                               @ (if settings = \"\" then [] else [settings])))",
+       "[name, source, if allow then \"1\" else \"0\"]\n                               @ []))"),
     m ("K3", "configuration: intbits dropped", "", false, "",
        [("S26", "compiled [], wanted"), ("flag-int-bits-64", "compiled nothing")],
        uc,
@@ -180,26 +184,26 @@ struct
        ub,
        "    in Option.map #unit (List.find (not o here) (List.map #1 (#globals u) @ List.map #2 (#imports u))) end",
        "    in if false then Option.map #unit (List.find (not o here) (List.map #1 (#globals u) @ List.map #2 (#imports u))) else NONE end"),
-    m ("C4", "checkSchemes off", "", false, "",
-       [("S82", "compiled [], wanted [b.sml]")],
-       ub,
-       "    Pass.checkAt (\"schemes\", 0) (fn us => Option.app (fn k => raise SchemeChanged k) (schemesHold us)) us",
-       "    ()"),
+    m ("C4", "--verify-cache: an entry's schemes not compared", "", false, "",
+       [("S82", "expected compilation failure")],
+       mn,
+       "                    andalso (#schemes e = UnitBasis.importedSchemes code\n                             orelse",
+       "                    andalso (true\n                             orelse"),
     m ("C5", "an entry's hash not checked", "", false, "",
        [("S33", "corrupted entry was reused")],
-       uc,
-       "           if not (P.atEnd r) orelse UnitBasis.during \"cache\" (fn () => UnitBasis.hashAt (\"read\", String.extract (s, at, NONE))) <> h",
+       us,
+       "           if not (P.atEnd r) orelse hash (\"read\", String.extract (s, at, NONE)) <> h",
        "           if not (P.atEnd r)"),
     m ("C6", "a unit that keeps identities taken across a change", "15", false, "",
        [("S61", "refused for no reason it gives")],
        uc,
-       "               SOME e => if !UnitBasis.remapAllowed then (across := true; Found e)\n                         else Missed \"its entries hold across a unit that changed, which a program that keeps its units' identities takes none across\"",
-       "               SOME e => (across := true; Found e)"),
+       "        if !UnitBasis.remapAllowed then (across := true; lastSum := h; Found (whole e))\n        else Missed \"its entries hold across a unit that changed, which a program that keeps its units' identities takes none across\"",
+       "        (across := true; lastSum := h; Found (whole e))"),
     m ("C7", "an entry of a lower level of the lint taken", "", false, "",
        [("S81", "compiled [], wanted [a.sml b.sml]")],
        uc,
-       "                if l < level ()\n                then try",
-       "                if false\n                then try"),
+       "    if l < level () then SOME (S.Refused",
+       "    if false then SOME (S.Refused"),
     m ("C8", "code not relocated", "9", false, "",
        [("S1", "cached program differs from uncached compilation")],
        ub,
@@ -311,5 +315,30 @@ struct
        [("S130", "a module of another signature was not refused")],
        ub,
        "fpBound (w, #bound result); fpEnvInto (w, local', #env result))))",
-       "())))")]
+       "())))"),
+    (* the config step (the build-system roadmap's M6 and M15; docs/build.md,
+       Generated sources): what a step reads, each part of its key and of
+       an up-to-date build's record, dropped; each makes a build that runs
+       no step where git's state, a file of the step's closure or an input
+       changed, and so a stale Config *)
+    m ("W1", "up to date: a step's stamp not asked", "", false, "",
+       [("warm-config", "an edit of a tracked file the plan does not name: the step did not run")],
+       mm,
+       "          fun asks (id, answer) = (ask id = answer) handle _ => false",
+       "          fun asks (_ : string list * string) = true"),
+    m ("W2", "a step's key: its stamp's answer dropped", "", false, "",
+       [("warm-config", "a commit: the step did not run")],
+       sp,
+       "\"stamp\" :: toolHash :: stampArguments @ [\"answer\", ask windows (stampId (dir, s))]",
+       "\"stamp\" :: toolHash :: stampArguments @ [\"answer\", (ignore (ask windows (stampId (dir, s))); \"\")]"),
+    m ("W3", "a step's key: its closure's files dropped", "", false, "",
+       [("warm-config", "a second edit of a file the plan names, the tree dirty already: the step did not run")],
+       sp,
+       "List.concat (List.map (fn f => [f, closureHash (what, memo) f])",
+       "List.concat (List.map (fn f => [f, (ignore (closureHash (what, memo) f); \"\")])"),
+    m ("W4", "up to date: what a step reads not kept", "", false, "",
+       [("warm-config", "an edit of an input, the tree dirty already: the step did not run")],
+       sp,
+       "  fun readHash (path : string) : string option = (!Source.reading path; hashOf path)",
+       "  fun readHash (path : string) : string option = hashOf path")]
 end

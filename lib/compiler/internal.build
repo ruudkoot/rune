@@ -38,7 +38,9 @@ files
   driver/unitbasis.sml
   driver/pipeline.sml
   driver/unitmid.sml
+  driver/unitstore.sml
   driver/unitcache.sml
+  driver/unitmemo.sml
   driver/workspace.sml
   driver/plan.sml
   driver/context.sml

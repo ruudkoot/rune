@@ -4,8 +4,13 @@
 # sources, into build/config.sml.
 # Usage: scripts/gen-version.sh [ROOT_DIR]
 #        scripts/gen-version.sh --config PLAN FILE
+#        scripts/gen-version.sh --stamp
 # The second, run from the top of the checkout, writes FILE, the Config of
-# another compiler, whose identity is over its own plan (below).
+# another compiler, whose identity is over its own plan (below). The third
+# prints the version alone, as the others would write it, and writes
+# nothing: it is the stamp of rune.build's first step, what that step reads
+# that is in no file a build can name, git's state (docs/build.md, Generated
+# sources), so that a build asks it and not the whole of this.
 #
 # git decides the version. A tag that points at HEAD and starts with v is a
 # release: v1.2.3 is version 1.2.3, and any other tag is ignored. Otherwise
@@ -25,9 +30,13 @@
 set -eu
 
 config=
+stamp=
 if [ "${1:-}" = --config ]; then
   [ $# -eq 3 ] || { echo "usage: scripts/gen-version.sh --config PLAN FILE" >&2; exit 2; }
   config=$3
+elif [ "${1:-}" = --stamp ]; then
+  [ $# -eq 1 ] || { echo "usage: scripts/gen-version.sh --stamp" >&2; exit 2; }
+  stamp=1
 else
   root=${1:-$(pwd)}
   cd "$root"
@@ -50,6 +59,10 @@ elif [ -f build/config.sml ] && [ -f runtime/version.h ]; then
   version=$(sed -n 's/^  val version = "\(.*\)"$/\1/p' build/config.sml)
 else
   version=unknown
+fi
+if [ -n "$stamp" ]; then
+  printf '%s\n' "$version"
+  exit 0
 fi
 
 # The compiler's identity: a hash of what it is compiled from, the same for

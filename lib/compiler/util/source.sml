@@ -86,11 +86,25 @@ struct
 
   (* the text of a file read in a mode: a Latin-1 file is made UTF-8; an
      editor's buffer is its text already *)
+  (* What reading a file from disk does first: nothing, but where a compile
+     keeps what it read, to say later that none of it changed (UnitMemo) *)
+  val reading : (string -> unit) ref = ref (fn _ => ())
+  val () = CompilerState.cellRoot ("Source.reading", reading)
+
+  (* and what asking whether a file is there does after: what a name or a
+     place depends on, which a compile that keeps what it read keeps too *)
+  val probing : (string * bool -> unit) ref = ref (fn _ => ())
+  val () = CompilerState.cellRoot ("Source.probing", probing)
+  fun probe (path : string) : bool =
+    let val there = OS.FileSys.access (path, []) handle OS.SysErr _ => false
+    in !probing (path, there); there end
+
   fun readFile (mode : mode, name : string) : file =
     case StringMap.find (!overlays, name) of
       SOME text => fromStringIn (mode, name, text)
     | NONE =>
         let
+          val () = !reading name
           val ins = TextIO.openIn name
           val text = TextIO.inputAll ins
           val () = TextIO.closeIn ins
@@ -167,13 +181,24 @@ struct
   fun load (mode : mode, name : string) : file =
     let val f = readFile (mode, name) in register f; f end
 
+  (* What a lookup of a file that was not loaded does first: nothing, but
+     where a compile in units takes a unit from the cache without reading its
+     source (the build-system roadmap's M6), whose text a span of another
+     unit's code still names -- a function copied from it, a warning of it
+     given again -- and which this loads (Main) *)
+  val fault : (string -> unit) ref = ref (fn _ => ())
+  val () = CompilerState.cellRoot ("Source.fault", fault)
+
   fun findFile (name : string) : file option =
     case !lastFile of
       SOME (n, f) => if n = name then SOME f else findFile' name
     | NONE => findFile' name
   and findFile' name =
     case StringMap.find (!files, name) of
-      NONE => NONE
+      NONE => (!fault name;
+               case StringMap.find (!files, name) of
+                 NONE => NONE
+               | SOME f => (lastFile := SOME (name, f); SOME f))
     | SOME f => (lastFile := SOME (name, f); SOME f)
 
   (* The file, line and column a span starts at, for a source that was

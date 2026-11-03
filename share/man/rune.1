@@ -391,7 +391,8 @@ given. A prototype of the compiler as a service.
 With
 .BR \-\-units ,
 compile each unit the cache has too, and fail where the cache's is not
-the same bytes as what compiling it gives.
+the same bytes as what compiling it gives, or its schemes of what it names
+of other units are not.
 .B $RUNE_VERIFY_CACHE
 set and not empty does the same, and for the REPL's
 .B use
@@ -426,9 +427,10 @@ Compile in units what the build file
 .I FILE
 says: its files, each in the basis the declarations before it leave, with
 the export lists of the libraries it uses and its virtual modules'
-implementations (docs/build.md). The steps it declares run first, and its
-preprocessors make what their files compile (docs/build.md, Generated
-sources).
+implementations (docs/build.md). The steps it declares run first, each
+where something it reads has changed, and its preprocessors make what their
+files compile; a build that is up to date runs none (docs/build.md,
+Generated sources).
 .TP
 .BI \-\-build\-list " FILE"
 Print the files of the build file
@@ -611,6 +613,14 @@ Where the terminal sets it, its background chooses the theme
 .B dark
 or
 .BR light .
+.TP
+.B RUNE_WARM
+.B off
+turns off the warm path of
+.BR \-\-units :
+every unit taken from the cache has its basis loaded, every source of a
+unit is read for its key, and every build links and writes its output,
+though nothing it rests on changed (docs/units.md, A warm build).
 .SH EXIT STATUS
 .B rune
 exits 0 when it wrote the bytecode (or when

@@ -523,18 +523,24 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   the lint (N)"): the unit is compiled again, checked, and stored marked
   where the cache can be written (S81; the linting roadmap's M9);
 * an entry keeps the schemes of what its code names of other units, as
-  text (`UnitBasis.importedSchemes`), and where its usages hold by their
-  binders each is held to the scheme the unit there now has when the entry
-  is taken, a cheap check of what the binders say: one that differs is no
-  entry, and the unit is compiled ("its entry had another scheme of ...";
-  a check of level 0, `Pass.checkAt`, which `--pass-stats` counts as
-  `schemes`);
+  text (`UnitBasis.importedSchemes`). A build does not hold them to the
+  units there now when it takes the entry: where its usages hold by their
+  binders, the binders' identities are the bases that hold those schemes,
+  and a hit that loads no basis (*A warm build*, below) could not read them;
   where usages hold by fingerprint, the fingerprints are of the schemes
-  already;
+  already. `--verify-cache` compares them with what compiling the unit gives,
+  and fails where they differ ("its entry had another scheme of ...", S82;
+  the build-system roadmap's M6). The REPL's `use` and the compiler library
+  still hold them, a check of level 0;
 * an entry is one file, its usages, warnings, basis, the basis's identity
   (which loading takes from it rather than hashing the basis again) and
   code with the hash of them, written under a name of its own and renamed
-  into place, so that
+  into place (`UnitStore`, `lib/compiler/driver/unitstore.sml`, which keeps
+  entries and what is kept beside them by a name and knows nothing of what
+  a unit is: its head, the usages, and its sections are its client's to
+  write and read, and its client's `holds` says which entry stands;
+  `tests/lib/compiler/store.sml` holds it to that with a client of its own
+  and no compiler), so that
   two compiles at once never see half of one. One that cannot be read, or
   does not hold what its hash says, is no entry, and the unit is compiled
   and the entry written again. A cache that cannot be written is one that
@@ -547,8 +553,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * beside the configurations, `steps/` holds what a build's declared steps and
   preprocessors made ([build.md](build.md), *Generated sources*): the key a
   step last ran under, with the hash of each output, and a preprocessor's
-  output of each file, by the tool and the file's bytes. A unit of a
-  preprocessed file is keyed by that output, as any unit is by its text.
+  output of each file, by the tool and the file's bytes, and in
+  `steps/units/` the stat memo of the files the steps' closures name. A unit
+  of a preprocessed file is keyed by that output, as any unit is by its text.
 
 **What a boundary does to a key.** A client's usages are by name, so what
 its entry holds of a library is what it could see and did name: a boundary
@@ -692,6 +699,128 @@ through a cache all the programs share, and again from it, every unit
 taken from there, and wants the same bytes three times; `tests/units`
 does the same for its programs of several files; `make test-incremental`
 runs the scenarios of `tests/incremental/SCENARIOS.md` it can be held to.
+
+## A warm build
+
+A build whose units are all in the cache costs what reading them back costs
+(the build-system roadmap's D25 and M6). Four things keep that small, each
+with `--units` and a cache, and none in a key: a memo says that work need not
+be done again, and is believed only where every file it rests on has the stat
+it had or the bytes it had. `RUNE_WARM=off` turns all four off.
+
+**A unit taken without its basis.** An entry whose usages all hold by their
+binders, and whose basis names only units of the session, needs nothing of
+the session checked but the binders (`UnitCache.findExact`): its unit is
+registered -- its identity, the ranges of its names -- and the names it binds
+are bound to it by the keys the cache keeps of its identity
+(`UnitBasis.bindKeys`, a file beside the entries), and nothing of its basis
+is read (`UnitBasis.lightLoad`). Its code is read for the link, and its
+warnings are given again. A unit whose basis is wanted later -- by a compile,
+or by a hit that is not light -- is loaded then (`UnitBasis.materialise`), at
+the names it was registered at, with the units its basis names in turn and
+every unit that registered an overloading, which a compile reads by no name.
+
+**A compile that sees what it names.** A unit that is compiled sees a *view*
+(`UnitBasis.view`): the initial basis, and of each name its text has, the
+binding the binders say, which is what the environment of all the units
+before it would give for that name; its signatures and functors the same
+way. Only the units those bindings come from are loaded, and those their
+bases name. What the compile then looked up must have been in the view, and
+what its basis and code name must have been loaded (`UnitBasis.closed`); a
+compile that read outside its view is a missed lazy read, and the build is
+compiled again with every basis loaded (`UnitBasis.Unviewable`,
+`compiledAgain`), never taken. Not where every basis is wanted anyway --
+`--whole`, `--emit-units`, `--typecheck-only`, `--verify-cache`, `-j` -- nor
+for a program that loads units, nor where an import renames a name (a
+binder's names are its own unit's), nor where an editor's buffer stands in
+for a file's text (`--serve`), which no stat says anything of. A
+preprocessor's output stands in for its file too (*Generated sources* in
+[build.md](build.md)), but a compile sees a view all the same: its unit's key
+holds the output's hash, taken whole and not from the stat memo, since the
+file's stat says nothing of the tool.
+
+**The stat memo.** A unit's key holds the hash of its source, which a warm
+build need not read: the store keeps, by a file's path and mode, the hash its
+text had, its stat then -- device, inode, size, the times it was written and
+changed -- and when the stat was taken (`UnitStore.hashBy`, `units/` of the
+configuration). A hash is taken from the memo only where the stat is the same
+and the file was last written at least two seconds before the stat was taken,
+git's rule for an index that is racily clean, with a second more for a clock
+that is not the filesystem's; anything else reads the file. A span of another
+unit's code that names a source not read -- a function copied from it, a
+warning given again -- loads it (`Source.fault`). A stat is what Rune's own
+`rune` asks of `Posix.FileSys.stat` (`UnitStore.stat`, which
+`src/main/rune-main.sml` sets); a compiler built by another host has none,
+since MLKit's Basis Library has no `ctime`, and keeps and believes no memo:
+it reads every source and links every time.
+
+**An output.** What a build writes and reads again -- its program, and what
+a step made -- is held by its stat and by a copy of its bytes, which the
+cache keeps with the stat they were read back at (`UnitMemo.written`,
+`memo/units/copy-*`, one a path): where the stat is the same and racily
+clean, by the stat; where it is the same but was taken within the second of
+the write, by its bytes against the copy. A copy compared costs what reading
+it costs; a hash the VM works out of an output of megabytes costs more than a
+no-op (0.31G instructions of `rune.build`'s 6 MB program, against a no-op's
+0.27G). The price is the copy: a cache holds each output once more.
+
+**The link memo.** The program a link made is kept by the hash of what was
+linked, each unit's code by its entry's hash or its bytes' and where its
+files are now, with the output (`UnitMemo.linked`). The same units linked to
+an output that is what that link wrote are not linked again; an output that
+was changed, or written within the second of its stat and not the same
+bytes, is.
+
+**Up to date.** A compile in units keeps what it read once its plan was made
+-- every source, every MANIFEST, every file its declared steps and
+preprocessors read, with the stat each had when it was read, and whether
+each `library.build` it asked of was there -- with what its steps made and
+its output, each held as an output is, the answer of each step's stamp, and
+the warnings it gave, under a key of all its plan rests on:
+the command line, the directory, every `RUNE_` variable, the compiler's
+identity, the text of its build files, its inputs and its workspace
+(`UnitMemo.upToDate`, `memo/` of the cache). A compile with the same key, all
+of whose files have the stats they had and racily clean, whose questions
+have the same answers, whose steps' outputs and own output are what were
+made, and whose stamps, asked last, answer as they did, runs no step, gives
+the warnings again and ends. A step's output is held as an output because
+the build itself writes it, within the second of its stat; and the check
+comes before the steps, so an up-to-date `rune.build` runs neither
+`scripts/gen-version.sh --config` nor more of git than its stamp. Not with
+`--explain-rebuild` or `--pass-stats`, which say what each unit did, nor with
+`-I`, whose plan lists directories, nor where an editor's buffer stands in for
+a file, nor where a step says nothing of what it reads and so runs on every
+build, nor where the warm path is off; with `-j` too, so that a no-op parses
+no input.
+
+What a no-op costs (the build-system roadmap's M6): machine instructions
+(`perf stat -e instructions:u`, the compiler at tier 2) and the VM's
+(`runevm --count`), of a build made again with nothing changed, against the
+same build before M6; the first no-op after a build reads its output and the
+copy once more, since the output was written within the second of its stat.
+`rune.build` is a clean git checkout, its index written by git, and its
+no-op asks its config step's stamp, 0.046G of it; before M6 it ran the step,
+0.135G:
+
+| Build | Before | No-op | First no-op | VM, before | VM, no-op |
+|---|---:|---:|---:|---:|---:|
+| `rune.build`, 257 units | 11.30G | 0.274G (2.4%) | 0.295G (2.6%) | 1.151G | 0.002G |
+| HOL4's closure, 910 units | 25.78G | 0.261G (1.0%) | 0.314G (1.2%) | 2.872G | 0.006G |
+| MLton, 791 units | 87.27G | 0.284G (0.3%) | 0.335G (0.4%) | 9.011G | 0.007G |
+
+A no-op's floor is the VM's start, 0.173G for `rune --version`. An edit of the
+last unit costs 9% fewer VM instructions than before on `rune.build` and HOL4
+(the units before it taken without their bases; its view loads most of them),
+and a build that links keeps a copy of its output in the cache. `-j 4` makes
+a no-op of `rune.build` 0.273G, against 13.30G before, since it parses no
+input; a build that is not up to date still parses every input with `-j`.
+
+`tests/runner/warmchecks.sml` (`make test-incremental`) holds the warm path to
+what a build without it gives: each unit of two projects compiled alone under
+its view and under the mask of its usages while the others are taken without
+their bases ([testing.md](testing.md), *The checks of the cache*), E15's racy edits, and a compile that is up to
+date against a touch, an edit, the output removed and overwritten, and a
+`library.build` that makes a unit another library's.
 
 ## The graph
 

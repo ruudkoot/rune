@@ -17,6 +17,8 @@
      generate TOOL DIR                 each step, in the order declared
        argument ARG
        reads PATH
+       closure PLAN                    a plan whose files it reads, if any
+       stamp TOOL ARG ...              its stamp, if any: a command whose output is in its key
        writes PATH                     what it makes
      end
      library NAME DIR                  each, what it is written on before it
@@ -82,7 +84,8 @@ struct
                   tail : step list}
   type input = {path : string, hash : string}
   type preprocessor = {name : string, tool : string, dir : string, arguments : string list, inputs : string list}
-  type generate = {tool : string, dir : string, arguments : string list, inputs : string list, outputs : string list}
+  type generate = {tool : string, dir : string, arguments : string list, inputs : string list, closure : string option,
+                   stamp : {tool : string, arguments : string list} option, outputs : string list}
   type t = {basis : string, view : string option, inline : string list, inlineValues : string list, libraries : library list,
             requires : string list, program : step list, inputs : input list, preprocessors : preprocessor list,
             generates : generate list}
@@ -192,9 +195,12 @@ struct
   fun preprocessorText ({name, tool, dir, arguments, inputs} : preprocessor) =
     line (0, ["preprocessor", escape name, escape tool, escape dir]) ^ fieldsText (1, "argument", arguments) ^
     fieldsText (1, "reads", inputs) ^ line (0, ["end"])
-  fun generateText ({tool, dir, arguments, inputs, outputs} : generate) =
+  fun generateText ({tool, dir, arguments, inputs, closure, stamp, outputs} : generate) =
     line (0, ["generate", escape tool, escape dir]) ^ fieldsText (1, "argument", arguments) ^
-    fieldsText (1, "reads", inputs) ^ fieldsText (1, "writes", outputs) ^ line (0, ["end"])
+    fieldsText (1, "reads", inputs) ^
+    (case closure of SOME p => line (1, ["closure", escape p]) | NONE => "") ^
+    (case stamp of SOME {tool, arguments} => line (1, "stamp" :: List.map escape (tool :: arguments)) | NONE => "") ^
+    fieldsText (1, "writes", outputs) ^ line (0, ["end"])
   fun version ({preprocessors, generates, libraries, ...} : t) =
     if List.null preprocessors andalso List.null generates
        andalso List.all (fn {virtuals, implements, ...} : library => List.null virtuals andalso List.null implements) libraries
@@ -310,9 +316,14 @@ struct
             let val () = ignore (next ())
                 val arguments = fieldsOf "argument"
                 val inputs = fieldsOf "reads"
+                val closure = case peek () of SOME ["closure", p] => (ignore (next ()); SOME (field p)) | _ => NONE
+                val stamp = case peek () of
+                              SOME ("stamp" :: t :: args) => (ignore (next ()); SOME {tool = field t, arguments = fields args})
+                            | _ => NONE
                 val outputs = fieldsOf "writes"
                 val () = expect "end"
-            in {tool = field tool, dir = field dir, arguments = arguments, inputs = inputs, outputs = outputs} :: generates () end
+            in {tool = field tool, dir = field dir, arguments = arguments, inputs = inputs, closure = closure, stamp = stamp,
+                outputs = outputs} :: generates () end
         | _ => []
       val (ps, gs) =
         if version = "2" then
@@ -553,8 +564,9 @@ struct
        preprocessors = List.map (fn {name, tool, arguments, inputs, dir} =>
                                    {name = name, tool = tool, dir = dir, arguments = arguments, inputs = inputs})
                                 (#preprocessors project),
-       generates = List.map (fn {tool, arguments, inputs, outputs, dir} =>
-                               {tool = tool, dir = dir, arguments = arguments, inputs = inputs, outputs = outputs})
+       generates = List.map (fn {tool, arguments, inputs, closure, stamp, outputs, dir} =>
+                               {tool = tool, dir = dir, arguments = arguments, inputs = inputs, closure = closure, stamp = stamp,
+                                outputs = outputs})
                             (#generates project)}
     end
 end

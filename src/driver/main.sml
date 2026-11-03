@@ -249,6 +249,17 @@ struct
      compiled again, knowing (compiledAgain) *)
   exception LoadsUnits of string
   val knownToLoad = ref false
+  (* a compile under a view read outside it (UnitBasis.Unviewable): it is
+     compiled again with every basis loaded (compiledAgain) *)
+  val lazyRefused = ref false
+  (* RUNE_WARM=off: no unit is taken without its basis, nor a compile given
+     a view, nor a memo read (docs/units.md, A warm build) *)
+  fun warmOn () : bool = OS.Process.getEnv "RUNE_WARM" <> SOME "off"
+  (* the command line, which an up-to-date compile's key holds (UnitMemo) *)
+  val commandLine : string list ref = ref []
+  (* the key of this compile's record of what it read (UnitMemo), where it
+     keeps one *)
+  val upToDate : string option ref = ref NONE
 
   (* ---- the graph (Deps; the incremental roadmap's M8) ---- *)
 
@@ -495,8 +506,18 @@ struct
     (List.app println (CompilerPlan.flatten (wholePlan ()));
      OS.Process.success)
 
+  (* an editor's buffer in place of a file's text (--serve), whose stat says
+     nothing of it, where the compile began with one or has one now; a
+     preprocessor's output is not one (Steps.made) *)
+  val editorGave = ref false
+  fun editorOverlays () : bool =
+    !editorGave
+    orelse List.exists (fn (file, text) => StringMap.find (!Steps.made, file) <> SOME text) (StringMap.listItemsi (!Source.overlays))
+
   fun compile () : OS.Process.status =
     let
+      val () = editorGave := false
+      val () = editorGave := editorOverlays ()
       (* what a compile begins with that is not one of the compiler's roots,
          for one made again (diagnosed, compiledAgain) *)
       val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false; workspace := NONE; BasisManifest.roots := [])
@@ -532,15 +553,76 @@ struct
       val () = buildModes := List.foldl (fn ((p, anns), m) => if StringMap.member (m, p) then m
                                                               else StringMap.insert (m, p, modeOf anns))
                                         StringMap.empty (unitsOf (!buildPlan))
-      (* what the build runs before a unit is read: its steps, and its
-         preprocessors, whose output each unit of theirs compiles (Steps;
-         docs/build.md, Generated sources) *)
-      val () = Steps.prepare {project = project, cache = UnitCache.directory (), windows = onWindows (),
-                              explain = fn message => if !Options.explainRebuild then eprintln message else ()}
       val () =
         case (!Options.build,!entryFile,!Options.libraries) of
           (NONE,SOME first,_ :: _) => findWorkspace first
         | _ => ()
+      (* Nothing this compile rests on has changed since it last made its
+         output (UnitMemo, up to date; the build-system roadmap's D25 u):
+         its warnings again, and nothing else, not even a step: what its
+         steps read is in what it rests on, and their stamps are asked
+         (Steps.ask). Else what it reads from here on is kept, for the next
+         to ask *)
+      val upKey = upToDateKey project
+      val upHit = case (upKey, UnitCache.directory ()) of
+                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key, Steps.ask (onWindows ()))
+                  | _ => NONE
+      val () = upToDate := (if isSome upHit then NONE else upKey)
+      val () = case !upToDate of SOME _ => (Error.given := SOME []; UnitMemo.keepReads ()) | NONE => ()
+      (* what the build runs before a unit is read: its steps, and its
+         preprocessors, whose output each unit of theirs compiles (Steps;
+         docs/build.md, Generated sources); what they read is kept with the
+         rest, and what the steps made is held by its bytes *)
+      fun prepare () =
+        Steps.prepare {project = project, cache = UnitCache.directory (), windows = onWindows (),
+                       explain = fn message => if !Options.explainRebuild then eprintln message else (),
+                       noteOutput = fn path => case (!upToDate, UnitCache.directory ()) of
+                                                 (SOME _, SOME dir) => UnitMemo.noteMade (dir, path)
+                                               | _ => ()}
+    in
+      case upHit of
+        SOME warnings =>
+          (if !Options.noWarnings then ()
+           else
+             (* the files they are of, read as the compile read them, for
+                their lines and columns *)
+             (List.app (fn f => if isSome (Source.findFile f) then ()
+                                else ignore (Source.load (if List.exists (fn i => i = f) (!Options.inputs) then inputMode f
+                                                          else Source.Ascii, f))
+                                     handle IO.Io _ => ())
+                       (List.foldl (fn (({file, ...}, _), fs) => if List.exists (fn g => g = file) fs then fs else file :: fs)
+                                   [] warnings);
+              List.app Error.warn warnings; Error.flushWarnings ());
+           OS.Process.success)
+      | NONE => (prepare (); compilePlanned ())
+    end
+
+  (* The key of a compile's record of what it read (UnitMemo.upToDate): all
+     its plan rests on -- the command line, the directory, the RUNE_
+     variables, the compiler, the build files' text, the inputs and the
+     workspace -- where the compile keeps one: in units, not where it only
+     checks or explains, or asks what each unit does (--pass-stats), nor
+     with -I, whose plan lists directories, nor with an editor's buffers,
+     nor where a step does not say what it reads and so runs on every
+     build *)
+  and upToDateKey (project : CompilerProject.plan) : string option =
+    if not (!Options.units andalso warmOn () andalso not (!Options.explainRebuild) andalso not (!Pass.stats)
+            andalso not (UnitCache.verifying ()) andalso not (isSome (!Options.emitUnits)) andalso not (!Options.typecheckOnly)
+            andalso not (!Options.wholeFromUnits) andalso not (!Options.basisDeps) andalso List.null (!Options.includeDirs)
+            andalso not (!knownToLoad) andalso not (!lazyRefused) andalso not (editorOverlays ())
+            andalso List.all Steps.reads (#generates project))
+       orelse List.null (!Options.inputs) orelse List.all (fn f => String.isSuffix ".rbu" f) (!Options.inputs)
+    then NONE
+    else
+      SOME (UnitMemo.key {args = !commandLine, directory = Workspace.here (), lib = libRoot () handle _ => "-",
+                          inputs = !Options.inputs, builds = List.map (fn {path, revision, ...} => (path, revision)) (#inputs project),
+                          workspace = case !workspace of
+                                        SOME {root, file, libraryRoots, ...} => root :: file :: libraryRoots
+                                      | NONE => ["-"],
+                          roots = !BasisManifest.roots})
+
+  and compilePlanned () : OS.Process.status =
+    let
       (* the functors and the functions the Basis Library's and the chosen
          libraries' build files mark to be inlined (docs/build.md, Inline
          functors and functions) *)
@@ -711,10 +793,12 @@ struct
         else
           case acc of
             (u, _) :: _ =>
+              let val u = u () in
               if ident = runtimeFile then loadingKeys := Link.functionKeys (u, BasisManifest.loadingFunctions)
               else if not (Link.namesKey (u, !loadingKeys)) then ()
               else if !UnitCache.across andalso not (isSome (!Parallel.child)) then raise LoadsUnits name
               else (UnitBasis.remapAllowed := false; keepExports := true)
+              end
           | [] => ()
       (* the front end's stages, for --pass-stats; their size is the number of
          top-level declarations *)
@@ -734,6 +818,91 @@ struct
       val unverified = ref 0
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
       fun cachePaths (dir, config) = UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []), config)
+      (* The warm path (docs/units.md, A warm build; the build-system
+         roadmap's D25): a unit whose entry holds by its binders alone is
+         taken without its basis, and a compile, or a hit that is not, sees
+         what its text names, loaded by need (UnitBasis.lightLoad, view).
+         Not where every basis is wanted anyway -- --whole, --emit-units,
+         --typecheck-only, --verify-cache, -j -- nor for a program that loads
+         units, nor where an import renames, which a binder's names do not
+         say; nor once a compile under a view read outside it, which compiles
+         again with every basis loaded (compiledAgain), from the state sealed
+         here *)
+      val renames = List.exists (fn i : BasisManifest.import => not (List.null (#renames i)))
+                                (#program (!librariesScoped) @ List.concat (List.map #2 (#libraries (!librariesScoped))))
+      val lazyOn = isSome cache andalso !Options.jobs <= 1 andalso not (!Options.wholeFromUnits)
+                   andalso not (isSome (!Options.emitUnits)) andalso not (!Options.typecheckOnly)
+                   andalso not (UnitCache.verifying ()) andalso not known andalso not renames
+                   andalso not (!lazyRefused) andalso warmOn ()
+                   (* a buffer an editor gave in place of a file's text, whose stat says nothing of it (--serve);
+                      a preprocessor's output is not, its unit's source hashed whole (sourceOf) *)
+                   andalso not (editorOverlays ())
+      val () = UnitBasis.startLazy lazyOn
+      val () = if lazyOn then CompilerState.seal () else ()
+      val env0 = !env
+      val sigs0 = !Elaborate.sigs
+      val funs0 = !Elaborate.funs
+      val cacheDirs = case cache of SOME (dir, _) => dir :: (case frozen of SOME f => [f] | NONE => []) | NONE => []
+      fun lazily (f : unit -> 'a) : unit -> 'a =
+        let val r = ref NONE
+        in fn () => case !r of SOME x => x | NONE => let val x = f () in r := SOME x; x end end
+      (* a unit's view, before its compile or a hit that is not light; none
+         while no unit has been taken without its basis, the environment
+         being whole then (a cold build) *)
+      fun prepare (load : unit -> Lexer.item vector) : unit =
+        if lazyOn andalso !UnitBasis.deferredCount > 0
+        then env := UnitBasis.view (env0, sigs0, funs0, SOME (BasisManifest.namesOf (load (), StringMap.empty)))
+        else ()
+      (* The stat memo (UnitStore.hashBy): a unit's source hashed again only
+         where its stat says it may have changed since; where it is not read
+         for its key, a span of another unit's code that names it loads it
+         (Source.fault) *)
+      val memo = case (lazyOn, cache) of
+                   (true, SOME (dir, config)) => SOME (UnitStore.memoAt (dir, config))
+                 | _ => NONE
+      fun sourceOf (name, mode) =
+        case memo of
+          SOME m =>
+            if StringMap.member (!Source.overlays, name)
+            (* what a preprocessor made of the file, whose stat says nothing
+               of the tool: hashed whole, its file told by Steps *)
+            then UnitCache.sourceHash (text (name, mode) ())
+            else
+              ((* what a compile that keeps what it read keeps of it, though
+                  the memo may not read it (UnitMemo) *)
+               !Source.reading name;
+               UnitStore.hashBy m (name, Source.modeName mode, text (name, mode), UnitCache.sourceHash))
+        | NONE => UnitCache.sourceHash (text (name, mode) ())
+      val () =
+        if not (isSome memo) then ()
+        else
+          let val modes = List.foldl (fn ((n, _, _, _, m), t) => StringMap.insert (t, n, m)) StringMap.empty sources
+          in Source.fault := (fn f => ignore (Source.load (getOpt (StringMap.find (modes, f), Source.Ascii), f)) handle IO.Io _ => ()) end
+      (* RUNE_VERIFY_UNIT=NAME (docs/testing.md, The checks of the cache): on
+         the warm path, the unit of that file or logical name is compiled
+         under its view, or with RUNE_VERIFY_MASK set under the mask of its
+         entry's usages (UnitBasis.viewMask), its entry held by its binders,
+         and must be what that entry holds *)
+      val verifyUnit = if lazyOn then OS.Process.getEnv "RUNE_VERIFY_UNIT" else NONE
+      val masking = isSome (OS.Process.getEnv "RUNE_VERIFY_MASK")
+      fun findExact (dir, config, k) =
+        case UnitCache.findExact (dir, config, k) of
+          NONE => (case frozen of SOME f => UnitCache.findExact (f, config, k) | NONE => NONE)
+        | found => found
+      (* what the link is given, for the link memo (UnitMemo.linked): each
+         unit's code, by its entry's hash or its bytes', and where its files
+         are now; not where a unit was taken across a change, whose code is
+         remapped *)
+      val linkParts : string list ref = ref []
+      val linkable = ref true
+      fun linkPart (sum, was, name, others) =
+        linkParts := String.concatWith "\000" (sum :: name :: List.map (fn (f, _) => UnitBasis.movedTo (was, name, others) f) others)
+                     :: !linkParts
+      (* the keys a unit binds, kept by its identity for a light hit later *)
+      fun storeBinds (l : UnitBasis.result) : unit =
+        case (lazyOn, cache) of
+          (true, SOME (dir, config)) => UnitCache.storeBinds (dir, config, #identity (#unit l), UnitBasis.bindKeys l)
+        | _ => ()
       (* entries of this compile's configuration but for the hash, in the
          cache or the frozen Basis: a compiler's whose hash gives other values
          (UnitCache.settings), which none is taken from *)
@@ -821,13 +990,65 @@ struct
           val k = case cache of
                     SOME _ =>
                       if !failedBefore then NONE
-                      else SOME (timed "cache-key" (fn () => UnitCache.key {name = ident, text = text (name, mode) (), allow = allow,
-                                                                            settings = settingsOf (ident, mode)}))
+                      else SOME (timed "cache-key" (fn () => UnitCache.keyOf {name = ident, source = sourceOf (name, mode), allow = allow,
+                                                                              settings = settingsOf (ident, mode)}))
                   | NONE => NONE
+          (* a light hit (UnitBasis.lightLoad): an entry that holds by its
+             binders alone, of a unit whose bound keys the cache keeps; its
+             basis is not loaded and its code is decoded for the link *)
+          val bindsMissing = ref false
+          val evicted = case verifyUnit of SOME v => v = name orelse v = ident | NONE => false
+          fun lightHit (({pickle, code, file = was, others, warnings, identity, ...} : UnitCache.entry, sum), keys) =
+            (let
+               val (fp, self, named) = UnitFile.namedOf code
+               val () = if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ()
+               val () = List.app (fn i => if i = self orelse UnitBasis.isLoaded i then () else raise UnitBasis.Missing i) named
+               val l = timed "cache-basis" (fn () => UnitBasis.lightLoad ({pickle = pickle, file = name, at = UnitBasis.counters ()},
+                                                                         identity, keys))
+               val code = lazily (fn () => let val (_, u) = timed "cache-code" (fn () => UnitFile.read code)
+                                           in UnitBasis.relocate (u, was, name, others) end)
+             in
+               if quiet then () else explain ("rune: from the cache " ^ name);
+               if !Options.noWarnings then () else UnitCache.giveWarnings (warnings, was, name);
+               fixity := Fixity.extend (!fixity, #directives l);
+               logDeclared l;
+               linkPart (sum, was, name, others);
+               SOME ((code, keptPickle pickle) :: acc, false)
+             end)
+            handle UnitBasis.Missing _ => NONE | UnitFile.Bad _ => NONE | Pickle.Bad _ => NONE
+          val lighted =
+            case (lazyOn andalso not evicted, cache, k) of
+              (true, SOME (dir, config), SOME k) =>
+                (case timed "cache-find" (fn () => findExact (dir, config, k)) of
+                   NONE => NONE
+                 | SOME (e as ({identity, ...}, _)) =>
+                     (case UnitCache.bindsIn (cacheDirs, config) identity of
+                        NONE => (bindsMissing := true; NONE)
+                      | SOME keys => lightHit (e, keys)))
+            | _ => NONE
+        in
+          case lighted of
+            SOME done => done
+          | NONE => unitFull ((name, load, allow, ident, mode), acc, quiet, k, !bindsMissing, evicted)
+        end
+      and unitFull ((name, load, allow, ident, mode), acc, quiet, k, bindsMissing, evicted) =
+        let
+          (* what its text names, loaded, where the warm path is on; or the
+             mask of its entry's usages, for RUNE_VERIFY_MASK *)
+          val masked =
+            case (evicted andalso masking, cache, k) of
+              (true, SOME (dir, config), SOME k) => Option.map (fn (e : UnitCache.entry, _) => List.map #1 (#usages e))
+                                                               (findExact (dir, config, k))
+            | _ => NONE
+          val fixityBefore = !fixity
+          val () = case masked of
+                     NONE => prepare load
+                   | SOME keys => let val (e, f) = UnitBasis.viewMask (env0, sigs0, funs0, keys, !fixity)
+                                  in env := e; fixity := f end
           (* the unit's place, which its entries' usages are checked at *)
           val () = UnitBasis.position (!env, !fixity)
           (* from the cache: its basis loaded, its code read; or why not *)
-          datatype looked = Hit of UnitBasis.result * Link.unitCode * string * UnitCache.entry | Miss of string
+          datatype looked = Hit of UnitBasis.result * Link.unitCode * string * UnitCache.entry * (string * bool) | Miss of string
           fun lookup quiet : looked * (UnitCache.entry * CacheCheck.unitForm option) option =
             let
               val found =
@@ -847,7 +1068,7 @@ struct
               val (found, against) =
                 case found of
                   UnitCache.Found (e as {usages, pickle, ...}) =>
-                    if not (UnitCache.verifying ()) then (found, NONE)
+                    if not (UnitCache.verifying () orelse evicted) then (found, NONE)
                     else if UnitBasis.exactEntry (usages, pickle) then (UnitCache.Missed "to verify its entry", SOME (e, NONE))
                     (* one taken across a unit that changed names the old
                        unit: what it comes to loaded here is what is
@@ -866,10 +1087,14 @@ struct
                 UnitCache.Missed why => (Miss why, against)
               | UnitCache.Found (e as {pickle, identity, code, file, others, mid, ...}) =>
                   let val at = UnitBasis.counters ()
+                      val sum = !UnitCache.lastSum
                   in
                     (let
                        val (fp, u) = timed "cache-code" (fn () => UnitFile.read code)
                        val () = if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ()
+                       (* what its basis and code name, loaded where the
+                          warm path left them deferred *)
+                       val () = if lazyOn then UnitBasis.materialiseFor (pickle, u) else ()
                        (* the units it was compiled against that are others
                           now, which its usages held of all the same, by the
                           paths to their names (M6's third part) *)
@@ -879,10 +1104,14 @@ struct
                        val () = if List.null remap then () else UnitCache.across := true
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
-                       (* the schemes of what it names of other units, as its
-                          compile had them, against those units now, where it
-                          holds by their identities *)
-                       val () = if List.null remap then UnitBasis.checkSchemes (#schemes e) else ()
+                       (* The schemes of what it names of other units, as its
+                          compile had them, are not checked against those
+                          units now: where its usages hold by their binders,
+                          their identities are the bases that hold the
+                          schemes, and a light hit cannot read them
+                          (UnitBasis.lightLoad). --verify-cache compares them
+                          with what compiling it gives (the build-system
+                          roadmap's M6) *)
                        val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, sidecar = "", file = name, at = at},
                                                                                    SOME identity, remap))
                        (* its source, and those of the functors' bodies it
@@ -898,7 +1127,7 @@ struct
                          else explain ("rune: from the cache " ^ name
                                        ^ String.concat (List.map (fn (i, _, _) => ", across " ^ UnitBasis.nameOf i ^ " changed") remap))
                      in
-                       (Hit (l, u, pickle, e), NONE)
+                       (Hit (l, u, pickle, e, (sum, List.null remap)), NONE)
                      end)
                     handle UnitMid.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
                          | Pickle.Bad why => (UnitBasis.abandon at; (Miss ("a damaged entry: " ^ why), NONE))
@@ -908,19 +1137,29 @@ struct
                              (UnitBasis.abandon at; (Miss ("its entry had another scheme of " ^ k ^ " than its unit has"), NONE))
                   end
             end
-          fun bindHit (l, u, pickle, {warnings, file = was, ...} : UnitCache.entry) =
+          fun bindHit (l, u, pickle, {warnings, file = was, others, ...} : UnitCache.entry, (sum, plain)) =
             ((* the warnings its compile gave, again *)
              if !Options.noWarnings then () else UnitCache.giveWarnings (warnings, was, name);
              env := Env.plus (!env, #delta l);
              fixity := Fixity.extend (!fixity, #directives l);
              UnitBasis.bind l;
              logDeclared l;
-             ((u, keptPickle pickle) :: acc, false))
+             if bindsMissing then storeBinds l else ();
+             if not lazyOn then () else if plain then linkPart (sum, was, name, others) else linkable := false;
+             ((fn () => u, keptPickle pickle) :: acc, false))
           fun here (why, against) =
             (explain ("rune: compiled " ^ name ^ ": " ^ why
                       ^ (if why = "no entry" andalso isSome otherHash
                          then " (the cache's entries were made by a compiler whose hash differs)" else ""));
-             (compileUnit ((name, load, allow, ident, mode), k, against, acc), true))
+             let val acc = compileUnit ((name, load, allow, ident, mode), k, against, acc)
+             in
+               (* the fixity the mask cut, back, with what the unit added *)
+               if isSome masked
+               then fixity := Fixity.extend (fixityBefore, List.take (#list (!fixity),
+                                                                      List.length (#list (!fixity)) - List.length (#list fixityBefore)))
+               else ();
+               (acc, true)
+             end)
         in
           case lookup quiet of
             (Hit h, _) => bindHit h
@@ -972,6 +1211,12 @@ struct
               val {code, exported, loaded} =
                 Pipeline.unitThrough {start = start, name = ident, file = name, text = text (name, mode), mode = mode, decs = decs,
                                       delta = !Elaborate.lastDelta, fixity = !fixity, used = names, fresh = false}
+              (* under a view: what it looked up was in the view, and what it
+                 names was loaded, or it is compiled again with every basis *)
+              val outside = if not lazyOn then NONE else UnitBasis.closed (#pickle exported, code, names)
+              val () = case (outside, against) of
+                         (SOME what, NONE) => raise UnitBasis.Unviewable (name ^ ": " ^ what)
+                       | _ => ()
               val bytes = timed "unit-chunks" (fn () => String.concat (UnitFile.chunks (Pipeline.fingerprint (), code)))
               (* its code read back, at level 2 *)
               val () = Pass.checkAt ("code-rt", 2) (Pipeline.codeRoundTrip (Pipeline.fingerprint (), bytes)) code
@@ -991,10 +1236,26 @@ struct
                  named by the source where it is now; one taken across a
                  unit that changed by what each comes to loaded *)
               val verified =
-                case against of
-                  NONE => true
-                | SOME (e, NONE) => UnitCache.verifies (e, name, #pickle exported, bytes, midBytes)
-                | SOME (_, SOME form) =>
+                case (outside, against) of
+                  (SOME what, _) => (TextIO.output (TextIO.stdErr, "rune: " ^ name ^ ": compiled under its view, it read "
+                                                                   ^ what ^ ", which the view did not hold\n");
+                                     false)
+                | (NONE, NONE) => true
+                | (NONE, SOME (e, NONE)) =>
+                    UnitCache.verifies (e, name, #pickle exported, bytes, midBytes)
+                    (* and the schemes of the globals of other units its code
+                       names, which a hit does not read *)
+                    andalso (#schemes e = UnitBasis.importedSchemes code
+                             orelse (TextIO.output (TextIO.stdErr, "rune: " ^ name ^ ": its entry had another scheme of "
+                                                                   ^ getOpt (UnitBasis.schemesHold (#schemes e), "a global")
+                                                                   ^ " than its unit has\n");
+                                     false))
+                    before (if lazyOn then explain ("rune: " ^ name ^ ": compiled under its "
+                                                    ^ (if masking then "mask" else "view") ^ ", "
+                                                    ^ Int.toString (!UnitBasis.lateCount) ^ " units loaded late of "
+                                                    ^ Int.toString (!UnitBasis.deferredCount) ^ " deferred")
+                            else ())
+                | (NONE, SOME (_, SOME form)) =>
                     (case CacheCheck.ofCompile (Pipeline.fingerprint (), bytes, loaded,
                                                 {start = fn () => start, name = name, ident = ident, text = text (name, mode), mode = mode}) of
                        CacheCheck.Done form' =>
@@ -1008,6 +1269,7 @@ struct
               fixity := Fixity.extend (#fixity start, #directives loaded);
               UnitBasis.bind loaded;
               logDeclared loaded;
+              storeBinds loaded;
               (* for --whole, its Mid read back as the session names it, as a
                  unit from the cache is *)
               if !Options.wholeFromUnits then mids := UnitMid.read (midBytes, #unit loaded, [], fn f => f) :: !mids
@@ -1022,14 +1284,23 @@ struct
               (* an entry that did not verify is left as it was, to be looked at *)
               (case (cache, k, verified) of
                  (SOME (dir, config), SOME k, true) =>
-                   Pipeline.keeping name (fn () =>
-                     UnitCache.store (dir, config, k,
-                                      {usages = usages, warnings = warnings, file = name,
-                                       others = UnitBasis.sourcesOf (code, name), pickle = #pickle exported,
-                                       identity = #identity exported, code = bytes, mid = midBytes,
-                                       level = UnitCache.level (), schemes = UnitBasis.importedSchemes code}))
-               | _ => ());
-              (code, keptPickle (#pickle exported)) :: acc
+                   let
+                     val others = UnitBasis.sourcesOf (code, name)
+                     val sum = Pipeline.keeping name (fn () =>
+                                 UnitCache.storeSum (dir, config, k,
+                                                     {usages = usages, warnings = warnings, file = name,
+                                                      others = others, pickle = #pickle exported,
+                                                      identity = #identity exported, code = bytes, mid = midBytes,
+                                                      level = UnitCache.level (), schemes = UnitBasis.importedSchemes code}))
+                   in
+                     (* what the link is given of it, by its entry's hash, as a
+                        light hit of it gives it after *)
+                     case sum of
+                       SOME sum => if lazyOn then linkPart (sum, name, name, others) else ()
+                     | NONE => linkable := false
+                   end
+               | _ => linkable := false);
+              (fn () => code, keptPickle (#pickle exported)) :: acc
             end
         end
       (* --build: the user's units as the build file says (docs/build.md):
@@ -1044,10 +1315,25 @@ struct
       fun apply (before',change,exports)=CompilerBuildContext.apply (buildContext,before',change,exports)
       (* a boundary's exports held to what is inside it; not after an error,
          or in a child of -j, which skips units, where they may be missing *)
+      (* On the warm path the environment holds no unit taken without its
+         basis, and what was bound is what the binders say (bound): of the
+         types it exports, the environment is the binders' units' *)
+      fun bindersChange (change : delta, exports) : delta =
+        let
+          val bound = List.foldl (fn (k, m) => StringMap.insert (m, k, ())) StringMap.empty (#bound change)
+          val tys = List.foldl (fn ((BuildFile.Ty, n), m) =>
+                                   if not (StringMap.member (bound, "t " ^ n)) then m
+                                   else (case UnitBasis.boundType n of SOME t => StringMap.insert (m, n, t) | NONE => m)
+                                 | (_, m) => m) StringMap.empty exports
+        in
+          {env = Env.make {vals = StringMap.empty, tys = tys, strs = StringMap.empty, origins = StringMap.empty},
+           directives = #directives change, declared = #declared change, bound = #bound change, sigs = #sigs change,
+           funs = #funs change, binders = #binders change}
+        end
       fun checkExports (change, exports) =
         if !failedBefore orelse isSome (!Parallel.child) then ()
         else Option.app (fn message => raise Options.Usage message)
-                        (CompilerBuildContext.exportProblem (change, exports))
+                        (CompilerBuildContext.exportProblem (if lazyOn then bindersChange (change, exports) else change, exports))
       val libraryWalk = LibraryScope.walk (env, fixity, UnitBasis.binders, !librariesScoped)
       fun libraries (es,acc) =
         LibraryScope.libraries (libraryWalk, entryGroups es,
@@ -1164,14 +1450,19 @@ struct
         List.rev (finals (final,withDefaults (programPart (fn acc => elabSteps (!buildPlan,acc))) (libraries (basis,[]))))
         handle e => (Parallel.finish (); raise e)
       val () = Parallel.finish ()
-      val units = List.map #1 compiled
+      val () = Option.app UnitStore.memoWrite memo
+      val () = if !Pass.stats andalso lazyOn
+               then TextIO.output (TextIO.stdErr, "warm: " ^ Int.toString (!UnitBasis.deferredCount) ^ " units taken without their basis, "
+                                                  ^ Int.toString (!UnitBasis.lateCount) ^ " of them loaded later\n")
+               else ()
       val () = failIfReported ()
       val () = if !unverified > 0 then raise Reported else ()
       val fingerprint = Pipeline.fingerprint ()
       val () =
         case !Options.emitUnits of
           NONE => ()
-        | SOME dir => if !Options.typecheckOnly then () else emitUnitFiles (dir, fingerprint, List.map #1 sources, compiled)
+        | SOME dir => if !Options.typecheckOnly then () else emitUnitFiles (dir, fingerprint, List.map #1 sources,
+                                                                             List.map (fn (u, p) => (u (), p)) compiled)
     in
       if !Options.typecheckOnly then OS.Process.success
       else if !Options.wholeFromUnits then
@@ -1187,7 +1478,36 @@ struct
           if registers then emitProgramAs (RegCodes.fingerprint, inputs, Pipeline.targetStage low)
           else emitProgram (inputs, Pipeline.targetStage low)
         end
-      else timed "link" (fn () => linkUnits (fingerprint, inputs, units))
+      else
+        let
+          val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
+          val at = UnitStore.nowSeconds ()
+          (* the link memo: the same units, linked to an output that is what
+             that link wrote, are not linked again *)
+          val digest =
+            if not lazyOn orelse not (!linkable) then NONE
+            else SOME (UnitMemo.linkDigest {fingerprint = fingerprint, exports = !keepExports, config = #2 (valOf cache),
+                                             output = out, units = List.rev (!linkParts)})
+          fun link () = timed "link" (fn () => linkUnits (fingerprint, inputs, List.map (fn (u, _) => u ()) compiled))
+          val (status, output) =
+            case (digest, cache) of
+              (SOME d, SOME (dir, config)) =>
+                (case UnitMemo.linked (dir, config, out, d) of
+                   SOME kept => (OS.Process.success, SOME kept)
+                 | NONE => let val status = link () in (status, UnitMemo.noteLink (dir, config, out, d, at)) end)
+            | _ => (link (), NONE)
+          (* what it read, kept for the next compile of the same plan *)
+          val () =
+            case (!upToDate, UnitCache.directory ()) of
+              (SOME key, SOME dir) =>
+                (UnitMemo.stopReads ();
+                 if not (OS.Process.isSuccess status) then ()
+                 else
+                   case (case output of SOME kept => SOME kept | NONE => UnitMemo.written (dir, out, at)) of
+                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])), Steps.answered ())
+                   | NONE => ())
+            | _ => ()
+        in status end
     end
 
   (* The units linked into the program, by the target of the fingerprint *)
@@ -1421,27 +1741,41 @@ struct
      unit. A warning the first compile gave is given again: an alias of
      Runtime that loads is rare, and an entry taken across a change rarer. *)
   fun compiledAgain () : OS.Process.status =
-    compile ()
-    handle LoadsUnits name =>
-      let
-        val () = if !Options.explainRebuild
+    let
+      fun again () =
+        let
+          val session = CompilerState.session ()
+          val diagnostics = ref []
+          val status = CompilerState.withSession (session, fn () =>
+                         (compiledAgain () before diagnostics := !Diagnostic.collected)
+                         handle e => (diagnostics := !Diagnostic.collected; raise e))
+        in Diagnostic.collected := !diagnostics; status end
+    in
+      compile ()
+      handle LoadsUnits name =>
+               ((if !Options.explainRebuild
                  then eprintln ("rune: " ^ name ^ " loads units, which a unit taken from the cache across a unit that "
                                 ^ "changed does not allow: compiling again")
-                 else ()
-        val () = knownToLoad := true
-        val again = CompilerState.session ()
-        val diagnostics = ref []
-        val status = CompilerState.withSession (again, fn () =>
-                       (compile () before diagnostics := !Diagnostic.collected)
-                       handle e => (diagnostics := !Diagnostic.collected; raise e))
-      in Diagnostic.collected := !diagnostics; status end
+                 else ());
+                knownToLoad := true;
+                again ())
+           (* a compile under a view read outside it (the warm path,
+              UnitBasis.view): again, with every basis loaded *)
+           | UnitBasis.Unviewable what =>
+               ((if !Options.explainRebuild
+                 then eprintln ("rune: " ^ what ^ ", outside what was loaded for it: compiling again with every unit loaded")
+                 else ());
+                lazyRefused := true;
+                again ())
+    end
 
   fun main (name : string, args : string list) : OS.Process.status =
     let val status = main' (name, args)
     in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
 
   and main' (_ : string, args : string list) : OS.Process.status =
-    (CacheCheck.seal ();
+    (commandLine := args;
+     CacheCheck.seal ();
      Options.parse args;
      Options.settle ();
      Pass.startup ();

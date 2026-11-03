@@ -314,11 +314,16 @@ bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
 bin/rune-compiler-state-tests.rbc: $(RUNE) tests/compiler/state-tests.build manifests
 	$(RUNE) --build tests/compiler/state-tests.build -o $@
+# the store of units alone, with a client of its own and no compiler (the build-system roadmap's M6)
+STORE_TEST_SRCS := lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml \
+                   lib/compiler/util/pickle.sml lib/compiler/driver/unitstore.sml tests/lib/compiler/store.sml
+bin/rune-compiler-store-tests.rbc: $(RUNE) $(STORE_TEST_SRCS) manifests
+	$(RUNE) --library test/unit $(STORE_TEST_SRCS) -o $@
 # the syntax's node ids, the elaborator's witnesses and SourceTy (the linting roadmap's M11)
 bin/rune-compiler-witness-tests.rbc: $(RUNE) tests/compiler/witness-tests.build manifests
 	$(RUNE) --build tests/compiler/witness-tests.build -o $@
 test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
-                     bin/rune-compiler-witness-tests.rbc
+                     bin/rune-compiler-witness-tests.rbc bin/rune-compiler-store-tests.rbc
 	bin/rune-compiler-state-audit --self-test $(wildcard lib/compiler/*.sml lib/compiler/*/*.sml)
 	bin/runevm bin/rune-compiler-state-model.rbc
 	bin/runevm --jit=all bin/rune-compiler-state-model.rbc
@@ -327,6 +332,8 @@ test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model
 	bin/runevm bin/rune-compiler-state-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-state-tests.rbc
 	bin/runevm bin/rune-compiler-witness-tests.rbc
+	bin/runevm bin/rune-compiler-store-tests.rbc
+	bin/runevm --jit=all bin/rune-compiler-store-tests.rbc
 
 # Frontend baselines and edit traces for the language-server roadmap.
 .PHONY: lsp-bench test-lsp-bench
@@ -2097,7 +2104,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
-               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
+               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/main.sml
@@ -2177,7 +2184,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all rep
                bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
                bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc bin/rune-lsp-semantic-tests.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
-               bin/rune-compiler-witness-tests.rbc \
+               bin/rune-compiler-witness-tests.rbc bin/rune-compiler-store-tests.rbc \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \
@@ -2370,7 +2377,7 @@ bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/ru
 # Incremental edits, cache corruption and externally provisioned corpora.
 INCREMENTAL_BASE_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml \
                          tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml
-INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
+INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
                     tests/runner/mutationproject.sml tests/runner/mutationchecks.sml tests/runner/mutationhistory.sml \
                     tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/soundness.sml \
                     tests/runner/layerchecks.sml tests/runner/incremental-main.sml

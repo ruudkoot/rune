@@ -19,7 +19,7 @@ awk '
 function fail(message) { print "plan-files: " FILENAME ":" FNR ": " message > "/dev/stderr"; failed = 1; exit 2 }
 FNR == 1 { if ($1 != "rune-plan" || ($2 != "1" && $2 != "2") || NF != 2) fail("not a plan of version 1 or 2"); version = $2; next }
 NF == 0 { next }
-version == "2" && $1 ~ /^(preprocessor|generate|argument|reads|writes|virtual)$/ { next }
+version == "2" && $1 ~ /^(preprocessor|generate|argument|reads|closure|stamp|writes|virtual)$/ { next }
 version == "2" && $1 == "continue" { inlibrary = 1; next }
 $1 !~ /^(basis|inline|library|form|requires|export|view|friend|end|program|unit|use|replay|boundary|implements|provenance|input)$/ {
   fail("a plan of version " version " has no " $1)

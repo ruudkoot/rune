@@ -64,13 +64,17 @@ struct
       val j = right n
     in if i >= j then "" else String.substring (s, i, j - i) end
 
+  (* a MANIFEST opened, which a compile that keeps what it read is told of
+     (Source.reading) *)
+  fun openManifest (path : string) : TextIO.instream = (!Source.reading path; TextIO.openIn path)
+
   (* The MANIFEST is read for every program, so it is scanned in one pass
      over its text, a line at a time, with the bars and the words of a line
      found by index rather than by splitting it into strings first. *)
   fun readManifest (dir : string) : entry list =
     let
       val manifest = dir ^ "/MANIFEST"
-      val ins = TextIO.openIn manifest
+      val ins = openManifest manifest
                 handle IO.Io _ => raise Usage ("cannot read basis manifest " ^ manifest ^ " (use --lib or --no-prelude)")
       val text = TextIO.inputAll ins before TextIO.closeIn ins
       val n = String.size text
@@ -453,8 +457,7 @@ struct
       else
         let
           val first = libDir ^ "/" ^ name
-          fun holds dir = (OS.FileSys.access (dir ^ "/MANIFEST", []) orelse OS.FileSys.access (dir ^ "/library.build", []))
-                          handle OS.SysErr _ => false
+          fun holds dir = Source.probe (dir ^ "/MANIFEST") orelse Source.probe (dir ^ "/library.build")
         in
           if List.null (!roots) orelse holds first then first
           else getOpt (List.find holds (List.map (fn root => root ^ "/" ^ name) (!roots)), first)
@@ -485,7 +488,7 @@ struct
   fun libraryRequires (dir : string) : string list =
     let
       val manifest = dir ^ "/MANIFEST"
-      val ins = TextIO.openIn manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
+      val ins = openManifest manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
     in headerWords (ins, "# library:") end
 
   (* What orders a library among the others: what it is written on, on its
@@ -526,19 +529,19 @@ struct
         | directives ("infixr" :: p :: n :: rest) = (n, Fixity.Infixr (valOf (Int.fromString p))) :: directives rest
         | directives ("nonfix" :: n :: rest) = (n, Fixity.Nonfix) :: directives rest
         | directives _ = []
-    in directives (headerWords (TextIO.openIn (dir ^ "/MANIFEST"), "# fixity:")) end
+    in directives (headerWords (openManifest (dir ^ "/MANIFEST"), "# fixity:")) end
     handle IO.Io _ => []
 
   (* The functors a library's MANIFEST marks to be inlined across units, on
      its # inline: lines (its build file's `inline functor ... end`; M6b) *)
   fun inlineFunctors (dir : string) : string list =
-    headerWords (TextIO.openIn (dir ^ "/MANIFEST"), "# inline:")
+    headerWords (openManifest (dir ^ "/MANIFEST"), "# inline:")
     handle IO.Io _ => []
 
   (* The values it marks to be inlined across units, on its # inline val:
      lines (`inline val ... end`; functors-units M10) *)
   fun inlineValues (dir : string) : string list =
-    headerWords (TextIO.openIn (dir ^ "/MANIFEST"), "# inline val:")
+    headerWords (openManifest (dir ^ "/MANIFEST"), "# inline val:")
     handle IO.Io _ => []
 
   (* The directories of the named libraries and of those they are written on,

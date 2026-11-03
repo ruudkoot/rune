@@ -339,6 +339,21 @@ struct
   fun renameFile (u : Link.unitCode, old : string, new : string) : Link.unitCode =
     mapFiles (u, fn f => if f = old then new else f)
 
+  (* What a unit's file says before its code: the instruction set it is of,
+     its identity and the units it names, its source's provenance left out:
+     what a unit taken from the cache without its code decoded is checked by
+     (the build-system roadmap's M6) *)
+  fun namedOf (s : string) : int * string * string list =
+    let
+      val r = {s = s, pos = ref 0}
+      val () = if bytes (r, 4) = magic then () else raise Bad "not a unit of Rune bytecode"
+      val () = if i32 r = version then () else raise Bad "a unit of another version"
+      val fingerprint = i32 r
+      val () = if i32 r = bytecode then () else raise Bad "a unit of another kind of code"
+      val self = str r
+      val named = list (r, str)
+    in (fingerprint, self, List.filter (fn n => not (isSome (Link.sourceOf (self, n)))) named) end
+
   fun readFile (path : string) : int * Link.unitCode =
     let
       val inp = BinIO.openIn path

@@ -1469,6 +1469,38 @@ struct
       | _ => NONE
     end
 
+  (* the keys the view of the compile at hand holds, NONE for every one *)
+  val viewKeys : unit StringMap.map option ref = ref NONE
+  val () = CompilerState.cellRoot ("UnitBasis.viewKeys", viewKeys)
+
+  (* The key of the binder a usage's key is looked up by (binderOfKey):
+     of a long name, its first structure's *)
+  fun binderKey (key : string) : string =
+    if String.isPrefix "inl " key then "fun " ^ String.extract (key, 4, NONE)
+    else if String.isPrefix "inlv " key then binderKey ("v " ^ String.extract (key, 5, NONE))
+    else
+      case String.fields (fn c => c = #" ") key of
+        [kind, name] =>
+          if kind <> "v" andalso kind <> "t" then key
+          else (case String.fields (fn c => c = #".") name of
+                  first :: _ :: _ => "s " ^ first
+                | _ => key)
+      | _ => key
+
+  (* whether the view at hand holds what a usage's key names as the session
+     does: every key where the view is whole; else one bound by no unit, or
+     whose binder's key the view took *)
+  fun inView (key : string) : bool =
+    case !viewKeys of
+      NONE => true
+    | SOME m =>
+        (* a fixity, an overloading and a setting are the session's whole:
+           the fixity is kept for every unit, light or not, and every unit
+           that registered an overloading is loaded *)
+        List.exists (fn p => String.isPrefix p key) ["fix ", "o ", "p ", "echo ", "whole "]
+        orelse let val b = binderKey key
+               in StringMap.member (m, b) orelse not (StringMap.member (!binders, b)) end
+
   (* A usage holds as "IDENTITY FINGERPRINT": the binder's identity, which
      settles it where it is the same, and the fingerprint of what the name
      names, which settles the rest (a name no fingerprint covers -- a
@@ -1477,7 +1509,10 @@ struct
      name names is its binder's entry by that name, the same in every unit
      that names it there (fingerprints are a third of a compile in units
      where each unit works out its own) *)
-  fun fingerprintAt (key : string, binder : string) : string option = memo (binder, key, fn () => fingerprint key)
+  (* none for a key the view at hand does not hold: what the session names
+     by it is not what the view's environment says *)
+  fun fingerprintAt (key : string, binder : string) : string option =
+    if inView key then memo (binder, key, fn () => fingerprint key) else NONE
 
   fun usageValue (key : string) : string =
     let val b = binderOfKey key
@@ -3285,6 +3320,56 @@ struct
          imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
       end
 
+  (* ---- the warm path (the build-system roadmap's D25, a and d) ----
+
+     A session may take a unit from the cache without loading its basis
+     (lightLoad): where every usage of its entry holds by its binder, what
+     the entry's compile read is what a compile now would read, and the
+     unit is only registered -- its identity, the ranges of its names -- and
+     its names bound by the keys its basis binds (bindKeys, which the cache
+     keeps by its identity). Its basis is deferred, and loaded (materialise)
+     when a later unit's compile or a hit that is not light reads it: the
+     units of what that unit names, all the units their bases name in turn,
+     and every unit that registered an overloading, which a compile reads by
+     no name. Such a compile sees a view (view): the initial environment,
+     and of the names its text names, the binding each binder gave, which is
+     what the environment of every unit before it would give for those
+     names. What the compile then looked up and what it made are held to
+     what was loaded (closed): a name the view did not hold, or a unit its
+     basis or code names that is not loaded, and the driver compiles the
+     whole build again with every basis loaded (Unviewable). Off (lazy
+     false) in the REPL, the compiler library's sessions and wherever the
+     driver keeps every basis. *)
+  (* what a view could not give, or a compile under one read outside it:
+     the driver compiles again with every basis loaded *)
+  exception Unviewable of string
+  datatype lazyUnit =
+    Deferred of {pickle : string, file : string, at : int vector, names : string list}
+  | Materialised of {delta : Env.env, sigs : (string * SigMatch.sigma) list, funs : (string * Elaborate.funinfo) list}
+  val lazy = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.lazy", lazy)
+  val lazyUnits : lazyUnit StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.lazyUnits", lazyUnits)
+  (* the units deferred, newest first, which materialise loads in the
+     session's order *)
+  val lazyOrder : string list ref = ref []
+  val () = CompilerState.cellRoot ("UnitBasis.lazyOrder", lazyOrder)
+  (* the units that registered an overloading *)
+  val alwaysNeeded : string list ref = ref []
+  val () = CompilerState.cellRoot ("UnitBasis.alwaysNeeded", alwaysNeeded)
+  (* a load of a unit registered already, whose names stay where they were *)
+  val lateLoading = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.lateLoading", lateLoading)
+  (* how many were loaded late, and deferred, for --pass-stats *)
+  val lateCount = ref 0
+  val () = CompilerState.cellRoot ("UnitBasis.lateCount", lateCount)
+  val deferredCount = ref 0
+  val () = CompilerState.cellRoot ("UnitBasis.deferredCount", deferredCount)
+
+  fun startLazy (on : bool) : unit =
+    (lazy := on; lazyUnits := StringMap.empty; lazyOrder := []; alwaysNeeded := []; lateLoading := false;
+     lateCount := 0; deferredCount := 0; viewKeys := NONE)
+
   (* load {pickle, sidecar, file, at}: the unit whose basis pickle is, loaded
      after the units of the session: its numbers given the names of the
      session that follow at's counters and what its compile used, its tables
@@ -3576,8 +3661,10 @@ struct
       val u : loaded = {identity = identity, name = uname, file = file, base = base, count = counts}
     in
       lastBindings := {sigs = sigs, funs = funs, overloads = overloads};
-      register u;
+      if !lateLoading then () else register u;
       notePaths (u, delta, sigs);
+      if !lazy then lazyUnits := StringMap.insert (!lazyUnits, identity, Materialised {delta = delta, sigs = sigs, funs = funs})
+      else ();
       {unit = u, delta = delta, directives = directives, sigs = List.map #1 sigs, funs = List.map #1 funs,
        overloads = List.map #1 overloads, values = values, schemes = schemes, static = staticDigest,
        sizes = (staticSize, String.size pickle - staticEnd, String.size sidecar)}
@@ -3588,6 +3675,304 @@ struct
   fun loadKnown (args, known : string option, remap : remap) : result = during "load" (fn () => load' (args, known, remap))
   fun loadAgainst (args, remap : remap) : result = loadKnown (args, NONE, remap)
   fun load args : result = loadKnown (args, NONE, [])
+
+  (* ---- the warm path: a unit taken without its basis, and loaded when
+     it is read ---- *)
+
+  (* the keys bind enters for a unit, in its order: what the cache keeps of
+     an identity (UnitCache.storeBinds), so that a unit is bound without its
+     basis *)
+  fun bindKeys ({delta, directives, sigs, funs, overloads, ...} : result) : string list =
+    let fun put (kind, names) = List.map (fn n => kind ^ " " ^ n) names
+    in
+      put ("v", StringMap.listKeys (Env.vals delta)) @ put ("t", StringMap.listKeys (Env.tys delta))
+      @ put ("s", StringMap.listKeys (Env.strs delta)) @ put ("fix", List.map #1 directives)
+      @ put ("sig", sigs) @ put ("fun", funs)
+      @ put ("o", List.mapPartial (fn s => stableName (kTycon, s)) overloads)
+    end
+
+  (* what a basis says of its unit before its body: what its compile used
+     and declared of each kind, the units it names, and its fixity *)
+  fun header (pickle : string) =
+    let
+      val r = P.reader pickle
+      val used = Vector.tabulate (3, fn _ => P.rnat r)
+      val _ = P.rstring r
+      val _ = P.rstring r
+      val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
+      val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
+      val () = if P.rstring r = P.probe () then () else raise P.Bad "a basis made by a compiler whose hash differs"
+      val uname = P.rstring r
+      val _ = P.rstring r
+      val static = P.rstring r
+      val identities = P.rlist P.rstring r
+      val () = Vector.app (fn _ => ignore (P.rlist (fn r => (P.rnat r, P.rnat r)) r)) (Vector.tabulate (3, fn k => k))
+      val _ = P.rlist P.rnat r
+      val counts = Vector.tabulate (3, fn _ => P.rnat r)
+      val _ = P.rnat r
+      fun rfixity r =
+        case P.rbyte r of
+          0 => Fixity.Nonfix
+        | 1 => Fixity.Infix (P.rnat r)
+        | 2 => Fixity.Infixr (P.rnat r)
+        | _ => raise P.Bad "not a fixity"
+      val directives = P.rlist (fn r => let val n = P.rstring r in (n, rfixity r) end) r
+    in {used = used, uname = uname, static = static, identities = identities, counts = counts, directives = directives} end
+    handle Overflow => raise P.Bad "a number out of range"
+         | Subscript => raise P.Bad "out of range"
+
+  (* A unit taken without its basis: registered, its names given the ranges
+     load would give them, and bound by the keys its basis binds; nothing of
+     it in the tables by stamp until it is materialised. Missing where the
+     basis names a unit the session has not *)
+  fun lightLoad ({pickle : string, file : string, at : int vector}, identity : string, keys : string list) : result =
+    let
+      val {used, uname, static, identities, counts, directives} = header pickle
+      val () = if String.isPrefix (uname ^ "@") identity then () else raise P.Bad "another unit's identity"
+      val () = List.app (fn i => if isSome (StringMap.find (!byIdentity, i)) then () else raise Missing i) identities
+      val () = if isSome (StringMap.find (!byIdentity, identity)) then raise Missing (identity ^ " (loaded twice)") else ()
+      val base = Vector.tabulate (3, fn k => Vector.sub (at, k) + Vector.sub (used, k))
+      val () = List.app (fn k => counter k := Vector.sub (base, k) + Vector.sub (counts, k)) [kStamp, kTycon, kTvar]
+      val u : loaded = {identity = identity, name = uname, file = file, base = base, count = counts}
+      fun pref (p, k) = if String.isPrefix p k then SOME (String.extract (k, String.size p, NONE)) else NONE
+    in
+      register u;
+      lazyUnits := StringMap.insert (!lazyUnits, identity, Deferred {pickle = pickle, file = file, at = at, names = identities});
+      lazyOrder := identity :: !lazyOrder;
+      deferredCount := !deferredCount + 1;
+      List.app (fn k => (binders := StringMap.insert (!binders, k, identity); bindLog := k :: !bindLog)) keys;
+      if List.exists (fn k => String.isPrefix "o " k) keys then alwaysNeeded := identity :: !alwaysNeeded else ();
+      {unit = u, delta = Env.empty, directives = directives,
+       sigs = List.mapPartial (fn k => pref ("sig ", k)) keys, funs = List.mapPartial (fn k => pref ("fun ", k)) keys,
+       overloads = [], values = [], schemes = [], static = static, sizes = (0, 0, 0)}
+    end
+
+  fun isDeferred (identity : string) : bool =
+    case StringMap.find (!lazyUnits, identity) of SOME (Deferred _) => true | _ => false
+  fun isMaterialised (identity : string) : bool =
+    case StringMap.find (!lazyUnits, identity) of SOME (Materialised _) => true | _ => false
+
+  (* The units of seeds and those their bases name, all the way, loaded in
+     the order of the session, each at the names it was registered at. A
+     load late leaves the session's counters, signatures and functors as it
+     found them: those are the units' after it *)
+  fun materialise (seeds : string list) : unit =
+    let
+      val marked = ref StringMap.empty
+      fun visit i =
+        if StringMap.member (!marked, i) then ()
+        else
+          (marked := StringMap.insert (!marked, i, ());
+           case StringMap.find (!lazyUnits, i) of
+             SOME (Deferred {names, ...}) => List.app visit names
+           | _ => ())
+      val () = List.app visit seeds
+      fun late i =
+        case StringMap.find (!lazyUnits, i) of
+          SOME (Deferred {pickle, file, at, ...}) =>
+            if not (StringMap.member (!marked, i)) then ()
+            else
+              let
+                val saved = counters ()
+                val keptSigs = !Elaborate.sigs
+                val keptFuns = !Elaborate.funs
+                fun back () = (lateLoading := false; Elaborate.sigs := keptSigs; Elaborate.funs := keptFuns; setCounters saved)
+              in
+                lateLoading := true;
+                lateCount := !lateCount + 1;
+                ignore (loadKnown ({pickle = pickle, sidecar = "", file = file, at = at}, SOME i, [])) handle e => (back (); raise e);
+                back ()
+              end
+        | _ => ()
+    in
+      if StringMap.isEmpty (!marked) then ()
+      else
+        (List.app late (List.rev (!lazyOrder));
+         lazyOrder := List.filter isDeferred (!lazyOrder))
+    end
+
+  (* What a compile that names names sees (NONE: every name bound): the
+     initial environment env0, and of each of its names that a unit bound,
+     what that unit's basis bound it to; the signatures and functors on
+     the initial ones the same way. The binders are the truth, a scoped
+     build's visibility included; Elaborate.sigs and funs are set from
+     them *)
+  fun view (env0 : Env.env, sigs0 : SigMatch.sigma StringMap.map, funs0 : Elaborate.funinfo StringMap.map,
+            names : unit StringMap.map option) : Env.env =
+    let
+      val wanted =
+        case names of
+          SOME ns =>
+            StringMap.foldli (fn (n, (), acc) =>
+              List.foldl (fn (kind, acc) => let val k = kind ^ " " ^ n
+                                            in if StringMap.member (!binders, k) then k :: acc else acc end)
+                         acc ["v", "t", "s", "sig", "fun"]) [] ns
+        | NONE => List.filter (fn k => not (String.isPrefix "fix " k orelse String.isPrefix "o " k)) (StringMap.listKeys (!binders))
+      val () = viewKeys := (case names of
+                              NONE => NONE
+                            | SOME _ => SOME (List.foldl (fn (k, m) => StringMap.insert (m, k, ())) StringMap.empty wanted))
+      val () = materialise (List.map (fn k => StringMap.lookup (!binders, k)) wanted @ !alwaysNeeded)
+      fun unitOf k =
+        case StringMap.find (!lazyUnits, StringMap.lookup (!binders, k)) of
+          SOME (Materialised m) => m
+        | _ => raise Unviewable ("a binder not loaded: " ^ k)
+      fun missing k = raise Unviewable ("not in its binder: " ^ k)
+      val (vals, tys, strs, origins, sigs, funs) =
+        List.foldl (fn (k, (vals, tys, strs, origins, sigs, funs)) =>
+          let
+            val (kind, n) = case String.fields (fn c => c = #" ") k of
+                              kind :: rest => (kind, String.concatWith " " rest)
+                            | [] => bug "a key"
+            val m = unitOf k
+            val origins = case StringMap.find (Env.origins (#delta m), k) of
+                            SOME x => StringMap.insert (origins, k, x)
+                          | NONE => origins
+          in
+            case kind of
+              "v" => (StringMap.insert (vals, n, case StringMap.find (Env.vals (#delta m), n) of SOME x => x | NONE => missing k),
+                      tys, strs, origins, sigs, funs)
+            | "t" => (vals, StringMap.insert (tys, n, case StringMap.find (Env.tys (#delta m), n) of SOME x => x | NONE => missing k),
+                      strs, origins, sigs, funs)
+            | "s" => (vals, tys, StringMap.insert (strs, n, case StringMap.find (Env.strs (#delta m), n) of SOME x => x | NONE => missing k),
+                      origins, sigs, funs)
+            | "sig" => (vals, tys, strs, origins,
+                        StringMap.insert (sigs, n, case List.find (fn (x, _) => x = n) (#sigs m) of SOME (_, x) => x | NONE => missing k),
+                        funs)
+            | "fun" => (vals, tys, strs, origins, sigs,
+                        StringMap.insert (funs, n, case List.find (fn (x, _) => x = n) (#funs m) of SOME (_, x) => x | NONE => missing k))
+            | _ => (vals, tys, strs, origins, sigs, funs)
+          end)
+          (StringMap.empty, StringMap.empty, StringMap.empty, StringMap.empty, sigs0, funs0) wanted
+    in
+      Elaborate.sigs := sigs;
+      Elaborate.funs := funs;
+      Env.plus (env0, Env.make {vals = vals, tys = tys, strs = strs, origins = origins})
+    end
+
+  (* The mask (the build-system roadmap's D20): a compile given what its
+     entry's usages name and no more, each structure cut down to the paths
+     they name, the units loaded only those the binders of the usages reach,
+     so that the tables by stamp hold nothing of any other unit either; and
+     the fixity of a name a unit bound and no usage names put back as the
+     initial basis has it. A unit's compile under it must give its entry's
+     bytes (RUNE_VERIFY_UNIT, RUNE_VERIFY_MASK; docs/testing.md). What it
+     leaves: the units a used unit's basis names, whose tables are all
+     there, used or not. *)
+  fun viewMask (env0 : Env.env, sigs0 : SigMatch.sigma StringMap.map, funs0 : Elaborate.funinfo StringMap.map,
+                keys : string list, fixity : Fixity.env) : Env.env * Fixity.env =
+    let
+      fun parse k =
+        case String.fields (fn c => c = #" ") k of
+          [kind, name] => (kind, String.fields (fn c => c = #".") name)
+        | kind :: rest => (kind, [String.concatWith " " rest])
+        | [] => ("", [])
+      fun kindOf "inlv" = "v" | kindOf "inl" = "fun" | kindOf k = k
+      val parsed = List.map (fn k => let val (kind, path) = parse k in (kindOf kind, path) end) keys
+      val () = viewKeys := SOME (List.foldl (fn (k, m) => StringMap.insert (m, binderKey k, ())) StringMap.empty keys)
+      val seeds = List.mapPartial (fn k => case binderOfKey k of "" => NONE | "on" => NONE | b => SOME b) keys
+      val () = materialise (seeds @ !alwaysNeeded)
+      fun unitOf id =
+        case StringMap.find (!lazyUnits, id) of
+          SOME (Materialised m) => m
+        | _ => raise Unviewable ("a binder not loaded: " ^ id)
+      val wholes = List.foldl (fn ((k, [n]), m) => if k = "s" then StringMap.insert (m, n, ()) else m | (_, m) => m)
+                              StringMap.empty parsed
+      fun cut (Env.Env {vals, tys, strs, ...}, items : (string * string list) list) : Env.env =
+        let
+          fun names kind = List.foldl (fn ((k, [n]), m) => if k = kind then StringMap.insert (m, n, ()) else m | (_, m) => m)
+                                      StringMap.empty items
+          val vs = names "v"
+          val ts = names "t"
+          val ss = names "s"
+          val heads = List.foldl (fn ((_, h :: _ :: _), m) => StringMap.insert (m, h, ()) | (_, m) => m) StringMap.empty items
+          fun sub h = List.mapPartial (fn (k, h' :: (rest as _ :: _)) => if h' = h then SOME (k, rest) else NONE | _ => NONE) items
+        in
+          Env.make {vals = StringMap.filteri (fn (n, _) => StringMap.member (vs, n)) vals,
+                    tys = StringMap.filteri (fn (n, _) => StringMap.member (ts, n)) tys,
+                    strs = StringMap.foldli (fn (n, e, acc) =>
+                                               if StringMap.member (ss, n) then StringMap.insert (acc, n, e)
+                                               else if StringMap.member (heads, n) then StringMap.insert (acc, n, cut (e, sub n))
+                                               else acc) StringMap.empty strs,
+                    origins = StringMap.empty}
+        end
+      val (vals, tys, strs, sigs, funs) =
+        List.foldl (fn ((kind, path), acc as (vals, tys, strs, sigs, funs)) =>
+          let
+            val b = binderOfKey (kind ^ " " ^ String.concatWith "." path)
+            fun delta () = #delta (unitOf b)
+          in
+            if b = "" orelse b = "on" then acc
+            else
+              case (kind, path) of
+                ("v", [n]) => (case StringMap.find (Env.vals (delta ()), n) of
+                                 SOME x => (StringMap.insert (vals, n, x), tys, strs, sigs, funs) | NONE => acc)
+              | ("t", [n]) => (case StringMap.find (Env.tys (delta ()), n) of
+                                 SOME x => (vals, StringMap.insert (tys, n, x), strs, sigs, funs) | NONE => acc)
+              | ("s", [n]) => (case StringMap.find (Env.strs (delta ()), n) of
+                                 SOME x => (vals, tys, StringMap.insert (strs, n, x), sigs, funs) | NONE => acc)
+              | ("sig", [n]) => (case List.find (fn (x, _) => x = n) (#sigs (unitOf b)) of
+                                   SOME (_, x) => (vals, tys, strs, StringMap.insert (sigs, n, x), funs) | NONE => acc)
+              | ("fun", [n]) => (case List.find (fn (x, _) => x = n) (#funs (unitOf b)) of
+                                   SOME (_, x) => (vals, tys, strs, sigs, StringMap.insert (funs, n, x)) | NONE => acc)
+              | (_, h :: _ :: _) =>
+                  if not (kind = "v" orelse kind = "t") then acc
+                  else
+                    (case StringMap.find (Env.strs (delta ()), h) of
+                       NONE => acc
+                     | SOME x =>
+                         if StringMap.member (wholes, h) then (vals, tys, StringMap.insert (strs, h, x), sigs, funs)
+                         else
+                           let val items = List.mapPartial (fn (k, h' :: (rest as _ :: _)) => if h' = h then SOME (k, rest) else NONE
+                                                             | _ => NONE) parsed
+                           in (vals, tys, StringMap.insert (strs, h, cut (x, items)), sigs, funs) end)
+              | _ => acc
+          end)
+          (StringMap.empty, StringMap.empty, StringMap.empty, sigs0, funs0) parsed
+      val fixed = List.foldl (fn (k, m) => if String.isPrefix "fix " k then StringMap.insert (m, String.extract (k, 4, NONE), ()) else m)
+                             StringMap.empty keys
+      val table = StringMap.foldli (fn (n, f, t) =>
+                                      if StringMap.member (fixed, n) orelse not (StringMap.member (!binders, "fix " ^ n))
+                                      then StringMap.insert (t, n, f)
+                                      else case StringMap.find (#table Fixity.initial, n) of
+                                             SOME f0 => StringMap.insert (t, n, f0)
+                                           | NONE => t)
+                                   StringMap.empty (#table fixity)
+    in
+      Elaborate.sigs := sigs;
+      Elaborate.funs := funs;
+      (Env.plus (env0, Env.make {vals = vals, tys = tys, strs = strs, origins = StringMap.empty}),
+       {list = #list fixity, table = table})
+    end
+
+  (* the type a unit bound to a name, its basis loaded where it was not:
+     what a library's export of a type is checked against (Main) *)
+  fun boundType (n : string) : Env.tystatus option =
+    case StringMap.find (!binders, "t " ^ n) of
+      NONE => NONE
+    | SOME b =>
+        (materialise [b];
+         case StringMap.find (!lazyUnits, b) of
+           SOME (Materialised {delta, ...}) => StringMap.find (Env.tys delta, n)
+         | _ => NONE)
+
+  (* Whether a compile under the view read and made only what was loaded:
+     every name it looked up in the view (inView), and every unit its basis
+     and code name loaded. NONE where so, else what was not *)
+  fun closed (pickle : string, u : Link.unitCode, names : string list) : string option =
+    case List.find (not o inView) names of
+      SOME k => SOME ("its usage " ^ k)
+    | NONE =>
+        Option.map (fn i => "the unit " ^ i)
+                   (List.find (fn i => isDeferred i) (namedBy pickle @ namedByCode u))
+
+  (* the units an entry's basis and code name, or those of their names that
+     stand in for them, materialised: what its load and its remapping read *)
+  fun materialiseFor (pickle : string, u : Link.unitCode) : unit =
+    let
+      val named = namedBy pickle @ namedByCode u
+      fun now i = if isSome (StringMap.find (!byIdentity, i)) then SOME i
+                  else Option.map #identity (List.find (fn (l : loaded) => #name l = nameOf i) (!units))
+    in materialise (List.mapPartial now named @ !alwaysNeeded) end
 
   (* ---- a session whose units stay loaded between checks ---- *)
 
