@@ -30,7 +30,12 @@ struct
      the unit has been elaborated since it was loaded, or worked out from
      what was loaded when first asked. keys: each definition as a client found
      it, by where it was, worked out from what was loaded when first asked. *)
-  type kept={entry:entry,result:UnitBasis.result,bindings:UnitBasis.bindings,usages:(string*string) list,index:int,position:position,
+  (* What a unit loaded in a world has: what its load gave and the place it was
+     reached at. A walk that takes the unit out of the session takes this away,
+     in every state that shares it, so that a walk's new units do not stand
+     beside the old. *)
+  type live={result:UnitBasis.result,bindings:UnitBasis.bindings,position:position}
+  type kept={entry:entry,identity:string,live:live option ref,usages:(string*string) list,index:int,
     defined:Env.origin StringMap.map option ref,keys:string StringMap.map option ref}
   (* What a check leaves. complete: the last walk went through to the end, so
      that every place stands. stamps: of the files the libraries were read
@@ -123,8 +128,8 @@ struct
         SOME (kind ^ "\000" ^ name ^ "\000" ^ file ^ "\000" ^ Int.toString start ^ "\000" ^ Int.toString stop)
     | _ => NONE
   (* the definitions of a kept unit as they were loaded *)
-  fun loadedDefinitions (k:kept)=
-    definitions (#delta (#result k),#sigs (#bindings k),#funs (#bindings k))
+  fun loadedDefinitions (k:kept)=case !(#live k) of NONE => []
+    | SOME {result,bindings,...} => definitions (#delta result,#sigs bindings,#funs bindings)
   fun keysOf (k:kept)=case !(#keys k) of SOME keys => keys | NONE =>
     let fun leaves (key,origin,all)=case origin of
             Env.Constrained (a,b) => leaves (key,b,leaves (key,a,all))
@@ -154,7 +159,8 @@ struct
         (case find unit of NONE => last | SOME k =>
            case StringMap.find (definedBy (find,k),key) of SOME now => resolve find now | NONE => last)
     | _ => origin
-  fun identityOf (k:kept)= #identity (#unit (#result k))
+  fun identityOf (k:kept)= #identity k
+  fun liveOf (k:kept)=case !(#live k) of SOME live => live | NONE => raise Fail "a unit not loaded taken as loaded"
   (* the signatures or functors a unit declared, in the order it declared them,
      the last of each name, from its names newest first *)
   fun declared (names,table)=List.mapPartial (fn n => Option.map (fn value => (n,value)) (StringMap.find (table,n)))
@@ -283,8 +289,10 @@ struct
         (* in a load, where an exception leaves the tables half written *)
         val exposed=ref false
         fun cut index =
-          let val gone=StringMap.foldl (fn (k:kept,all) =>
-                if #index k>=index andalso UnitBasis.isLoaded (identityOf k) then identityOf k::all else all) [] (#kept old)
+          let val leaving=StringMap.foldl (fn (k:kept,all) =>
+                if #index k>=index andalso UnitBasis.isLoaded (identityOf k) then k::all else all) [] (#kept old)
+              val gone=List.map identityOf leaving
+              val ()=List.app (fn k:kept => #live k:=NONE) leaving
               val ()=exposed:=true
               val out=UnitBasis.truncate gone
           in exposed:=false;List.app (fn (identity,kept) => paths:=StringMap.insert (!paths,identity,kept)) out;dirty:=true end
@@ -416,13 +424,15 @@ struct
                     fun fresh ()=
                       let val ()=exposed:=true
                           val result=UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at= #counters start},SOME (#identity exported),[])
-                      in exposed:=false;(entry,result,!UnitBasis.lastBindings,usages,ref NONE,ref NONE) end
+                      in exposed:=false;(entry,#identity exported,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
+                           usages,ref NONE,ref NONE) end
                 in case prior of
                      SOME (k:kept) =>
-                       if asked then (entry,#result k,#bindings k,usages,#defined k,#keys k)
+                       if asked then (entry,identityOf k,#live k,usages,#defined k,#keys k)
                        else if #identity exported=identityOf k andalso not (!dirty) andalso known then
-                         (cutoff:= !cutoff+1;if fast then () else UnitBasis.rebind (#bindings k);
-                          (entry,#result k,#bindings k,usages,ref defined,#keys k))
+                         (cutoff:= !cutoff+1;if fast then () else UnitBasis.rebind (#bindings (liveOf k));
+                          (entry,identityOf k,if fast then #live k else ref (SOME {result= #result (liveOf k),bindings= #bindings (liveOf k),position=here}),
+                           usages,ref defined,#keys k))
                        else if fast then (stash:=SOME (name,entry,usages,exported,defined);raise NeedWalk)
                        else (if #identity exported=identityOf k then () else moved:=true;
                              if !dirty then () else cut index;fresh ())
@@ -430,8 +440,9 @@ struct
               fun taken (k:kept)=
                 let val entry= #entry k
                 in if not (!dirty) then
-                     (reused:= !reused+1;rebound:= !rebound+1;UnitBasis.rebind (#bindings k);
-                      SOME (entry,#result k,#bindings k,#usages k,#defined k,#keys k))
+                     (reused:= !reused+1;rebound:= !rebound+1;UnitBasis.rebind (#bindings (liveOf k));
+                      SOME (entry,identityOf k,ref (SOME {result= #result (liveOf k),bindings= #bindings (liveOf k),position=here}),
+                        #usages k,#defined k,#keys k))
                    else
                      let val at=UnitBasis.counters ()
                          val ()=exposed:=true
@@ -440,20 +451,21 @@ struct
                            handle UnitBasis.Missing _ => (UnitBasis.abandon at;NONE) | Pickle.Bad _ => (UnitBasis.abandon at;NONE)
                      in exposed:=false;case tried of
                           SOME result => (reused:= !reused+1;loaded:= !loaded+1;
-                            SOME (entry,result,!UnitBasis.lastBindings,#usages k,#defined k,ref NONE))
+                            SOME (entry,identityOf k,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
+                              #usages k,#defined k,ref NONE))
                         | NONE => NONE end end
-              val (entry,result,bindings,usages,defined,keys)=
+              val (entry,identity,live,usages,defined,keys)=
                 case (if holds then taken (valOf prior) else NONE) of SOME found => found | NONE => compile ()
               val ()=if asked then
                 (openedEntry:=SOME entry;raise Answered) else ()
               val ()=if fast then () else
-                (exposed:=true;
-                 env:=Env.plus (#env start,#delta result);
-                 fixity:=Fixity.extend (#fixity start,#directives result);
-                 UnitBasis.bind result;
-                 exposed:=false)
-              val k={entry=entry,result=result,bindings=bindings,usages=usages,index=index,
-                position=if fast then #position (valOf prior) else here,defined=defined,keys=keys}:kept
+                let val {result,...}=valOf (!live)
+                in exposed:=true;
+                   env:=Env.plus (#env start,#delta result);
+                   fixity:=Fixity.extend (#fixity start,#directives result);
+                   UnitBasis.bind result;
+                   exposed:=false end
+              val k={entry=entry,identity=identity,live=live,usages=usages,index=index,defined=defined,keys=keys}:kept
           in next:=StringMap.insert (!next,name,k);staged:=name:: !staged;
              observe "unit-frozen" file (length (#uses entry));poll ();k end
         (* each input's names, scanned where its text is new *)
@@ -508,7 +520,7 @@ struct
                 let val k=unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},
                       valOf (StringMap.find (libraryNames,BasisManifest.path entry)),
                       case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false,false)
-                in CompilerBuildContext.note (scopes,#result k) end
+                in CompilerBuildContext.note (scopes,#result (liveOf k)) end
               val ()=List.app one entries
           in case BasisManifest.scopeOf entries of NONE => () | SOME exports =>
             let val current:LibraryScope.basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
@@ -525,8 +537,8 @@ struct
             (case !remaining of [] => raise Fail "missing ordered project input" | (source,name) :: rest =>
               if #file source<>file then raise Fail "project input order differs" else
                 (remaining:=rest;
-                 CompilerBuildContext.note (scopes,#result (unit (source,name,
-                   allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true,false)))))
+                 CompilerBuildContext.note (scopes,#result (liveOf (unit (source,name,
+                   allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true,false))))))
         | CompilerProject.SLocal (a,b) =>
             let val before'=snap ()
                 val boundary=CompilerBuildContext.enter scopes
@@ -571,7 +583,7 @@ struct
           | SOME (k:kept) => #mode (#entry k)<> #mode source orelse #text (#entry k)<> #text source
               orelse (isFocused (#file source) andalso not (isOpen (#entry k)))
         fun atPlace (source,name,k:kept)=
-          (setPlace (#position k);walked:= #index k;Env.currentUnit:=name;
+          (setPlace (#position (liveOf k));walked:= #index k;Env.currentUnit:=name;
            ignore (unit (source,name,#allow (#entry k),true,true)))
         val fast : (CompilerSession.diagnostic option * string option) option =
           if not placed then NONE
@@ -601,8 +613,8 @@ struct
                   | SOME (k:kept) => if List.exists (fn other => other=name) all then (all,map)
                       else if not (isOpen (#entry k)) then (all,map)
                       else if isFocused (#file (#entry k)) then (name::all,map)
-                      else (all,StringMap.insert (map,name,{entry=closedEntry (#entry k),result= #result k,bindings= #bindings k,
-                             usages= #usages k,index= #index k,position= #position k,defined= #defined k,keys= #keys k}))) ([],merged) opens
+                      else (all,StringMap.insert (map,name,{entry=closedEntry (#entry k),identity= #identity k,live= #live k,
+                             usages= #usages k,index= #index k,defined= #defined k,keys= #keys k}))) ([],merged) opens
           in saved:=(case query of
               SOME _ => {serial= #serial old,kept=merged,order= #order old,opens=opens,complete= #complete old,planned= #planned old,
                 prelude= #prelude old,units= #units old,libraryNames= #libraryNames old,libraries= #libraries old,
