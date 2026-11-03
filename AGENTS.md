@@ -273,8 +273,11 @@ keep these invariants:
   end` block; docs/build.md), those of the documentation generator `runedoc`
   in `runedoc.build`, those of the native code generator `runeopt` in
   `runeopt.build` and those of `runeisa` in `runeisa.build`; the MLton,
-  SML/NJ and Poly/ML build files are generated from them — never edit
-  `build/`.
+  SML/NJ and Poly/ML build files are generated from the plans committed
+  beside them (`rune.plan`, ...) — never edit `build/`, nor a plan by hand. After an
+  edit of one of these build files, or of a build file they use, run `make
+  plans` and commit what it prints (docs/building.md, How a host gets its
+  list).
 * The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
   never from the machine's PATH.
 * In a cloud coding environment (e.g. `CLAUDE_CODE_REMOTE=true`), follow

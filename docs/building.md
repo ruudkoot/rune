@@ -217,6 +217,7 @@ name the tools to check.
 | `make vm` | `bin/runevm-stack`, and `bin/runevm`, `runtime/register`'s loop for the register bytecode |
 | `make vm-asan` | `bin/runevm-stack-asan` and `bin/runevm-asan` with AddressSanitizer/UBSan; `make test-register-asan` runs `tests/lang` on the latter |
 | `make test-register-jit` | `runtime/register` with every function compiled (`--jit=all`): `tests/lang` (at tier 2 too, and returning by `ret`, `--jit-returns=call`: [plans/native-frames.md](plans/native-frames.md), M7) and the Basis Library suite (`rune:jit`), every program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and the compiler compiling itself printing and counting the same interpreted, compiled, with every other function compiled (`--jit-only=odd`, so that calls, returns and raises cross between the tiers both ways) and under `--jit-stress` (tiered up at the lowest thresholds and invalidated every fifth call) and every instruction occurring in them (the oracle `jit` of `tests/runner/oracles.sml`), `runevm --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3-M5); part of `make check`. `make RUNE_JIT=0` builds `runtime/register` without the JIT. `RUNEVM_JIT=MODE` in the environment is the mode where no `--jit=` is given |
+| `make plans` | print the five committed plans again (`rune.plan`, `runedoc.plan`, `runeopt.plan`, `runeisa.plan`, `runeffi.plan`) with the compiler there is, after an edit of a build file they were made from (*How a host gets its list*, below) |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by the stage-0 image on `runevm`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
 | `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `bin/rune-windows vm` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
 | `make test-all` | run the suite with each of the six host builds |
@@ -229,7 +230,7 @@ name the tools to check.
 | `make test-dynamic` | dynamic modules: a module through `_dynamic`, with an abstract type, a datatype declared in another order, a polymorphic value and an exception across the boundary, under the interpreter and `--jit=all`; a module of another signature refused; a plugin through `Dynamic.load`; two modules sharing a library's types; a whole program refused (`bin/rune-scenarios dynamic`; [units.md](units.md), *Dynamic modules*) |
 | `make test-serve` | the compiler as a service, a prototype: `rune --serve` driven over its standard streams -- the diagnostics of a buffer with errors and without, the type of a function and of a variable at an offset, an unknown method, shutdown -- and what a request takes (`serve/*` of `tests/runner/protocols.sml`; the incremental roadmap's M12) |
 | `make check-reproducible` | the compiler built from `rune.build` the same bytes in units and whole, without the cache, through a cold cache and warm, by one process and with `-j`, and from a copy of its sources elsewhere; the whole builds `bin/rune.rbc` (the oracle `reproducible` of `tests/runner/oracles.sml`; [units.md](units.md), *Parallel builds*) |
-| `make test-build` | build files: a list, a library's exports, the words the language no longer has refused, a build file used twice and elaborated once, the plan of every build file read back as it is printed, an annotation, a path variable, a virtual module with either implementation and the other's units from the cache, and the errors (`bin/rune-scenarios buildfile`; [build.md](build.md)) |
+| `make test-build` | build files: a list, a library's exports, the words the language no longer has refused, a build file used twice and elaborated once, the plan of every build file read back as it is printed, the five committed plans as the compiler prints them and as a host reads them, the compiler's identity over its closure, an edit of `lib/unicode` through `libraries` giving another and compiler B taking none of A's entries, one per compiler (a second, on a toy, with its own), a stale plan refused, an annotation, a path variable, a virtual module with either implementation and the other's units from the cache, and the errors (`bin/rune-scenarios buildfile`; [build.md](build.md)) |
 | `make test-install` | `make install` staged with `DESTDIR` under another prefix, for the bytecode compiler and for the MLton and SML/NJ host builds: every file each library's `MANIFEST` names is installed, the man pages carry the version, the installed `rune`, `runevm`, `runevm-stack`, `runeopt`, `runedoc`, `rune-repl` (with `--dap`) and `rune-kernel --install` work from where they landed without naming the tree, and `make uninstall` with the same options leaves no file (`bin/rune-scenarios install`) |
 | `make test-incremental` | the cache's scenarios: a project edited, reverted, broken, built at two levels, its cache damaged or shared by two compiles, each build holding to what it must compile again (`tests/incremental/SCENARIOS.md`), and a project edited mechanically, each warm build the bytes of compiling everything (`bin/rune-incremental mutate`), and the independent checks of the cache ([testing.md](testing.md), *The checks of the cache*) |
 | `make test-cache-random` | the random edits at length, every warm build verified: what a change to a key runs |
@@ -395,7 +396,7 @@ reproducing itself by hand, as the oracle `bootstrap` of
 
 ```
 make bin/rune.rbc bin/rune.stack.rbc
-srcs="build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml"
+srcs=$(sh scripts/plan-files.sh rune.plan)
 bin/rune-boot -o build/rune.stage2.rbc $srcs && cmp bin/rune.rbc build/rune.stage2.rbc
 bin/rune-boot --target=stack -o build/rune.stage2.stack.rbc $srcs && cmp bin/rune.stack.rbc build/rune.stage2.stack.rbc
 ```
@@ -643,38 +644,37 @@ Remote WSL, checkout library configuration and publishing.
 
 ## How the build works
 
-* `rune.build` is the compiler's build file ([build.md](build.md)): its
-  `files ... end` block is the single ordered list of compiler source files,
-  between `build/config.sml` and the self-hosted entry point, and `rune --build
-  rune.build` compiles it. `scripts/gen-build-files.sh` generates
-  `build/rune.mlb` (MLton), `build/rune.cm` (SML/NJ), `build/polyml-build.sml`
-  (Poly/ML `use` script), `build/rune-mlkit.mlb` (MLKit: MLton's, without its
-  annotations and with its own entry point) from the block, which
-  `scripts/build-files.sh` reads, since the hosts build before there is a
-  `rune` to read a build file with. **Add new source files to `rune.build`
-  only.**
+* `rune.build` is the compiler's build file ([build.md](build.md)): the
+  ordered list of the compiler's source files, between `build/config.sml` and
+  the self-hosted entry point, and `rune --build rune.build` compiles it.
+  `rune.plan` beside it is its plan, which the other SML systems read their
+  list from (below). `scripts/gen-build-files.sh` generates `build/rune.mlb`
+  (MLton), `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use`
+  script), `build/rune-mlkit.mlb` (MLKit: MLton's, without its annotations
+  and with its own entry point) from the plan. **Add new source files to
+  `rune.build` only, then `make plans`.**
 * `runedoc.build` is the same for `runedoc`: the compiler's utilities,
   frontend and elaborator in the order of `rune.build`, then `src/doc`. The
   script makes `build/runedoc.mlb`, `build/runedoc.cm`,
   `build/runedoc-polyml-build.sml` and `build/runedoc-mlkit.mlb` from it;
   the entry points are
-  `src/main/runedoc-*-main.sml`. A file that both lists name is compiled into
+  `src/main/runedoc-*-main.sml`, and its plan `runedoc.plan`. A file that both lists name is compiled into
   both programs, so the rules below hold for `src/doc` as well. The SML/NJ
   builds run one after another, because CM keeps its results for all of them
   in the same `.cm` directories, and so do the MLKit builds, for their `MLB`
   directories.
 * `runeopt.build` is the same for `runeopt`, with `src/opt`; the entry
   points are `src/main/runeopt-*-main.sml`, and the rules below hold for
-  `src/opt` too.
+  `src/opt` too. `runeisa.build` and `runeffi.build` are the same for
+  `runeisa` and `runeffi`, and each of the five has its plan beside it.
 * The version is git's. A tag that points at the commit checked out and
   starts with `v` is a release, and the version is the rest of its name,
   so `v1.2.3` is `1.2.3`. Any other tag is ignored. With no such tag the
   version is the commit's abbreviated hash. `-dirty` follows either when
   a tracked file has changed. `scripts/gen-version.sh` writes it
   into `build/config.sml`, which every build of the four programs loads
-  first, with the compiler's identity, the hash of its sources that the
-  cache of compiled units keys its entries by ([units.md](units.md), *The
-  cache*), and into `runtime/version.h` for the VMs (`Runtime.version`). make
+  first, with the compiler's identity (below), and into `runtime/version.h`
+  for the VMs (`Runtime.version`). make
   asks git on every run but writes the files only when they change, so
   a new commit, a checkout or the first edit of a clean tree rebuilds the
   programs and the VMs once. Without git or a repository the files keep the
@@ -707,13 +707,74 @@ Remote WSL, checkout library configuration and publishing.
   `runevm`, `rune-mlton.bin`, `rune-polyml.bin`, `rune-mlkit.bin`, or the
   heap image with the `sml` of `make hosts`).
 
+### How a host gets its list
+
+MLton, Poly/ML, SML/NJ and MLKit build the compiler from a flat list of
+files, and they build it before there is a `rune` to read a build file with,
+so they do not read one. Each of the five programs they build, `rune`,
+`runedoc`, `runeopt`, `runeisa` and `runeffi`, has its plan committed beside
+its build file: `rune.plan` is what `rune --plan rune.build` prints
+([build.md](build.md), *The plan*). A plan is lines of words, and
+`scripts/plan-files.sh rune.plan`, a few lines of `awk`, prints its files in
+the order a compile takes them, which is what `rune --build-list rune.build`
+prints: each library's files, the program's, then the libraries' final
+files. It knows no build language, so a build file that reaches a library
+through `libraries` gives a host the library's files too, and it refuses a
+word a plan of its version does not have rather than guess.
+`scripts/gen-build-files.sh` makes the hosts' build files from these lists,
+and the `Makefile` its own (`SOURCES`, `BOOT_SRCS`), each without
+`build/config.sml`, which a host's build loads first, and the program's entry
+point, which is each system's own.
+
+A plan says how it was made: the SHA-256 of each build file it was read from
+(`input PATH SHA256`). After an edit of a build file, `make plans` prints the
+five again with the compiler there is, and a plan whose build files have
+changed since it was printed is refused: `scripts/gen-version.sh`, which every
+make runs, checks the hashes with `sha256sum` or `shasum` and stops the
+build, saying which plan to print again. A plan edited by hand keeps its
+hashes, so `make check` compares each committed plan with what `rune --plan`
+prints of its build, byte for byte (`low-level/plans`). With neither tool,
+the plans are trusted.
+
+### The compiler's identity
+
+`Config.identity` is a hash of what the compiler is made of, which the cache
+of compiled units keys its entries by ([units.md](units.md), *The cache*): a
+compiler built from other sources takes none of another's entries. The same
+sources give the same identity on every host. `scripts/gen-version.sh` works
+it out on every make, over `rune.plan`: the plan, less its `provenance`, and
+every file of its closure, the libraries' included, in order. It leaves out
+the two files that hold it, `build/config.sml` and
+`lib/compiler/config.sml`, so that two makes with no edit give one identity.
+So an edit of `lib/unicode` gives another identity whether `rune.build`
+lists its files or reaches it through `libraries`, which the list of `files`
+blocks the identity was once over did not see (the build-system roadmap's
+E12 and D14).
+
+What it still leaves out: the Basis Library, which no plan names, the VM and
+the compiler that built it. The compiler is held to make the same bytes
+whichever of these it runs on (`make check-cross`, S43), and a unit's entry
+names the Basis units it used by their own identities.
+
+`rune`, `runelsp`, `runedoc` and the REPL link `build/config.sml`, or
+`lib/compiler/config.sml`, the same, and have one identity: `runelsp` takes
+the batch compiler's entries. Another compiler built on the compiler's
+internals has its own, over its own plan: it loads a `Config` of its own
+first, as `rune.build` loads `build/config.sml`, and
+`scripts/gen-version.sh --config PLAN FILE`, run at the top of the checkout,
+writes `FILE` with the identity of `PLAN`'s closure, less `FILE` and the two
+above. An edit of its own sources then changes its identity and not `rune`'s.
+A program that reaches the compiler through `libraries compiler` has
+`lib/compiler/config.sml`'s, which is right for a client such as `runelsp`,
+whose own code does not change what a compile makes.
+
 ## Bootstrapping
 
 The compiler is written in the language it compiles, so it builds itself, and
 the result is the compiler you get:
 
-1. `make boot` compiles `build/config.sml`, the files of `rune.build` and
-   `src/main/rune-main.sml` into `build/bootstrap/rune.rbc` (stage 0). The
+1. `make boot` compiles the files of `rune.plan`, `build/config.sml` first
+   and `src/main/rune-main.sml` last, into `build/bootstrap/rune.rbc` (stage 0). The
    compiler is the first of the Rune release (`scripts/fetch-hosts.sh`
    installs v0.1), Poly/ML and MLton (`scripts/boot-host.sh`). `BOOTHOST`
    names one of those, or `smlnj-legacy`, `smlnj32`, `smlnj-dev` or
