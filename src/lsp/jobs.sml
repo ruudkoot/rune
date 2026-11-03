@@ -134,7 +134,8 @@ struct
         let val ()=(started:=SOME(Time.now());progress:=NONE;context:=NONE;
               phase:=Starting (Time.+ (Time.now (),Time.fromSeconds 30)))
             val process=P.start {command=command,args=args,
-              limits={addressSpace=SOME (1536*1024*1024),cpuTime=NONE,fileSize=NONE,core=SOME 0}}
+              limits={addressSpace=SOME (getOpt (Option.mapPartial Int.fromString (OS.Process.getEnv "RUNE_LSP_ADDRESS_SPACE_MB"),1536)*1024*1024),
+                cpuTime=NONE,fileSize=NONE,core=SOME 0}}
         in worker:=SOME process end
       | SOME process => case (!phase,!queue) of (Idle,job::rest) =>
           (queue:=rest;active:=SOME job;started:=SOME(Time.now());progress:=NONE;context:=NONE;

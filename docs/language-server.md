@@ -82,6 +82,8 @@ Unchanged per-file settings do not refresh every editor presentation.
 Each worker uses Rune's optimizing JIT, with a 512 MiB VM heap cap and a
 1.5 GiB process address-space cap
 (including both copying spaces and native code), and a 30-second job deadline.
+A measurement at a scale over them says otherwise with `RUNE_LSP_HEAP_LIMIT`
+(bytes), `RUNE_LSP_ADDRESS_SPACE_MB` and `RUNE_LSP_DEADLINE_SECONDS`.
 Workspace sweeps have 30 seconds per context and an overall allowance of
 30 seconds for planning plus 30 seconds for each planned context;
 unit progress does not extend a context's deadline. Each context's diagnostic

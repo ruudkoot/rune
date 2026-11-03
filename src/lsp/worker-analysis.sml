@@ -36,9 +36,10 @@ struct
   type planned={serial:int,key:string,stamps:(string*string) list,texts:(string*string) list,
     configuration:W.settings,selection:W.selection,contexts:W.context list}
   datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref,
-    progress:(V.value->unit) ref,diagnosticCache:diagnosticCache option ref,plans:planned list ref,planSerial:int ref}
+    progress:(V.value->unit) ref,diagnosticCache:diagnosticCache option ref,plans:planned list ref,planSerial:int ref,
+    symbolMemo:(string*Json.value list) W.table ref}
   fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local",
-    progress=ref(fn _=>()),diagnosticCache=ref NONE,plans=ref [],planSerial=ref 0}
+    progress=ref(fn _=>()),diagnosticCache=ref NONE,plans=ref [],planSerial=ref 0,symbolMemo=ref (W.table 0)}
   fun onProgress (Worker{progress,...},report)=progress:=report
   fun notify (Worker{progress,...},fields)=(!progress)(V.Object fields)
   (* Job IDs belong to the supervisor and do not reset with this process. *)
@@ -52,8 +53,8 @@ struct
   fun clearAnalysis (Worker {contexts,views,...}) =
     (List.app (fn context:context => (A.close (#analysis context);C.close (#compiler context))) (!contexts);
      contexts:=[];views:=[])
-  fun clear (worker as Worker {tokens,diagnosticCache,plans,...}) =
-    (clearAnalysis worker;diagnosticCache:=NONE;plans:=[];RuneLspTokens.clear tokens)
+  fun clear (worker as Worker {tokens,diagnosticCache,plans,symbolMemo,...}) =
+    (clearAnalysis worker;diagnosticCache:=NONE;plans:=[];symbolMemo:=W.table 0;RuneLspTokens.clear tokens)
   val retainedSourceBudget=2*1024*1024
   fun inputBytes inputs=List.foldl(fn (input:A.input,n)=>size(#text input)+n)0 inputs
   fun snapshotBytes snapshot=inputBytes(A.inputs snapshot)+inputBytes(A.dependencies snapshot)
@@ -570,8 +571,18 @@ struct
           | _=>report end
     in Json.Object [("items",Json.Array(List.map reuse reports))] end
   fun symbolToken symbol=Hex.fromBytes (Sha256.digest (Json.encode symbol))
-  fun workspaceSymbols (worker,{state,encoding,capabilities,cancelled,query}) =
+  fun workspaceSymbols (worker as Worker {symbolMemo,...},{state,encoding,capabilities,cancelled,query}) =
     let val generation=V.integer (V.field (state,"generation"))
+        (* A closed unit opens to say its symbols: once, while it stays as it is. *)
+        val remembered=ref []
+        fun symbolsOf (view:view,source:source)=
+          case Option.mapPartial (fn unit => A.versionOf (#snapshot view,unit)) (#activeUnit view) of
+            NONE => symbols (view,source)
+          | SOME version =>
+              let val found=case W.lookup (!symbolMemo,#uri source) of
+                      SOME (known,all) => if known=version then SOME all else NONE | NONE => NONE
+                  val all=case found of SOME all => all | NONE => symbols (view,source)
+              in remembered:=(#uri source,(version,all)):: !remembered;all end
         val needle=String.map Char.toLower query
         val resolve=case capability (capabilities,["workspace","symbol","resolveSupport","properties"]) of
           SOME (Json.Array properties) => List.exists (fn value => value=Json.String "location.range") properties | _ => false
@@ -586,11 +597,21 @@ struct
                     ("ordinal",case #ordinal view of NONE => Json.Null | SOME ordinal => Json.int ordinal)]
               in if not (String.isSubstring needle (String.map Char.toLower name)) then NONE else
                    SOME (Json.Object (("data",data)::("location",shown)::List.filter (fn (key,_) => key<>"location") fields)) end)
-              (symbols (view,source))
+              (symbolsOf (view,source))
         val {results,...}=workspaceResults (worker,
           {state=state,encoding=encoding,capabilities=capabilities,cancelled=cancelled},false,fn _=>(),viewSymbols)
-        val all=unique (List.concat results)
-    in Json.Array (List.take (all,Int.min (1000,length all))) end
+        val memo=W.table (length (!remembered))
+        val ()=List.app (fn (uri,item) => W.add (memo,uri,item)) (!remembered)
+        val ()=symbolMemo:=memo
+        (* the first thousand that differ, each looked at once *)
+        val seen=W.table 1000
+        fun first (0,_,kept)=List.rev kept
+          | first (_,[],kept)=List.rev kept
+          | first (left,symbol::rest,kept)=
+              let val key=Json.encode symbol
+              in if isSome (W.lookup (seen,key)) then first (left,rest,kept)
+                 else (W.add (seen,key,());first (left-1,rest,symbol::kept)) end
+    in Json.Array (first (1000,List.concat results,[])) end
   fun resolveSymbol (worker,params,state) =
     let val data=J.object (J.required (J.object params,"data"))
         val generation=case Json.toIntInf (J.required (data,"generation")) of SOME generation => generation

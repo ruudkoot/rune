@@ -374,6 +374,10 @@ sig
     (* `implementationsOf (snapshot, location)` returns the occurrences of every
        unit, open or closed, declared at location and defined elsewhere. *)
     val implementationsOf : snapshot * location -> occurrence list
+    (* `versionOf (snapshot, unit)` says what a unit's answers rest on: its text
+       and what it declares. Two snapshots that give a unit one version give
+       the same symbols for it; a unit not reached gives NONE. *)
+    val versionOf : snapshot * string -> string option
     (* `types snapshot` returns semantic constructor identities and sources. *)
     val types : snapshot -> typeDefinition list
     (* `facts snapshot` returns inferred types without mutable compiler refs. *)

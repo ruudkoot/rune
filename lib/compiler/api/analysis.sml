@@ -143,8 +143,12 @@ struct
   fun occurrencesIn (snapshot:snapshot,unit)=case StringMap.find (!(#projections snapshot),unit) of SOME uses => uses
     | NONE => case entryOf (snapshot,unit) of NONE => [] | SOME entry =>
         let val uses=projection (snapshot,entry)
-        in #projections snapshot:=StringMap.insert (!(#projections snapshot),unit,uses);uses end
+            val kept=case StringMap.find (#entries snapshot,unit) of SOME (k:E.kept) => E.isOpen (#entry k) | NONE => false
+        in if kept then #projections snapshot:=StringMap.insert (!(#projections snapshot),unit,uses) else ();uses end
   fun factsIn (snapshot:snapshot,unit)=case entryOf (snapshot,unit) of NONE => [] | SOME entry => #facts entry
+  (* what says that a unit gives the same answers: its text, and what it declares *)
+  fun versionOf (snapshot:snapshot,unit)=Option.map (fn k:E.kept => #key (#entry k) ^ ":" ^ E.identityOf k)
+    (StringMap.find (#entries snapshot,unit))
   fun entries (snapshot:snapshot)=List.map (fn name => #entry (valOf (StringMap.find (#entries snapshot,name)) : E.kept)) (#order snapshot)
   fun flat (snapshot:snapshot)=case !(#flat snapshot) of SOME all => all | NONE =>
     let val kept=entries snapshot
