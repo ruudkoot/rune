@@ -218,6 +218,56 @@ declaration at once (on the `incremental` branch: `docs/language.md`,
 *Flexible records*, and `docs/plans/incremental-compilation.md`, M2; on
 `master`, `docs/language.md` still describes the `program` behaviour).
 
+## Rune: virtual and dynamic modules and functors
+
+A program may be compiled against a module's signature alone, and the module
+chosen apart from it: by the build file, a *virtual* module, or when the
+program runs, a *dynamic* one, loaded from a unit file. For a structure:
+
+    structure BigInt = _virtual : BIGINT
+    structure S = _dynamic "impl.rbu" : SHAPE
+    _export structure BigInt : BIGINT = struct ... end
+
+and for a functor, which is applied by its signature alone (the build-system
+roadmap's M21 and D22):
+
+    functor Table = _virtual (K : KEY) : TABLE where type key = K.t
+    functor Table = _dynamic "table.rbu" (K : KEY) : TABLE where type key = K.t
+    _export functor Table (K : KEY) : TABLE where type key = K.t = struct ... end
+
+**What the Definition says.** Nothing of the forms: they are not in its
+grammar. Its typing makes the functor's half possible: rule 54 types an
+application by the functor's signature alone, `(T)(E, (T')E')`, never by its
+body, so a program can be typed against `A` and `B` of `(X : A) : B` with no
+body at all, an application's `B` names new at each, as an opaque ascription's
+are (rule 53). What a body would be is a matter of the code, not of the
+types.
+
+**What the others do.** SML/NJ 110.99.9 and 2026.2 (`syntax error: deleting
+IDA EQUALOP WILD`), Poly/ML 5.9.2 (`( expected but = was found`) and MLton
+20241230 (`Syntax error: deleting SHORTALPHANUMID EQUALOP WILD`) refuse
+`functor F = _virtual (X : S) : S` (tried 2026-11-03). OCaml's dune has
+virtual libraries, one implementation of each chosen per program, which is
+D22's model for a library (the roadmap's M22).
+
+**Where Rune meets it.** `examples/virtual/bigint` (a structure) and
+`examples/virtual/table` (a functor, on an association list and on a
+balanced tree, and as a plugin).
+
+**Rune.** Accepts the forms in every mode, as extensions (`docs/language.md`,
+`mod.dynamic` and `mod.dynamic.functor`): no new keyword, `_virtual`,
+`_dynamic` and `_export` being Rune's own. A virtual module's implementation
+is the one a unit before it exports, which the build file chooses
+(`implements NAME = ... end`); a dynamic one is loaded when the declaration
+runs, in a program built in units. An application of a virtual or dynamic
+functor is a call of the implementation's function over its argument's and
+its result's records, so nothing of a body reaches a client, and another
+implementation compiles no client again. The two sides agree where the
+fingerprints of their ABIs do -- the signatures, the records' slots, the
+descriptors of the parameter's open constructors, a version and the calling
+convention -- and `Dynamic.Mismatch` is raised where they do not. `where type`
+between two virtual modules is not built.
+
 ## Sources
 
 * *The Definition of Standard ML (Revised)*, Section 4.11, rules 54 and 86
