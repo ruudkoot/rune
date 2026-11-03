@@ -834,3 +834,322 @@ struct
   fun run' () =
     (tree (); kinds (); refusals (); cache (); plan (); history (); views ())
 end
+
+(* Virtual libraries (docs/build.md, Virtual libraries; the build-system
+   roadmap's M22 and D22): examples/virtual/table from its libraries, the
+   virtual library table and its two implementations, each built every way,
+   the program's units compiled once across both, S41, S42 and S58; what a
+   virtual or an implementing library may not be, and a program with two
+   implementations; a virtual structure with a library written on it and an
+   implementation written on another; the plan; random edits against
+   --no-cache. *)
+structure VirtualLibraries =
+struct
+  open Sh
+  val dir = run ^ "/virtual-libraries"
+  val table = dir ^ "/table"
+  fun need (ok, message) = if ok then () else raise Fail ("virtual libraries: " ^ message)
+  fun has text log = String.isSubstring text log
+  val count = ref 0
+  fun runeEnvIn (envf, at) args =
+    let
+      val () = count := !count + 1
+      val log = dir ^ "/log-" ^ Int.toString (!count)
+      val status = execEnv envf {cmd = fromRoot (env ("RUNE", "bin/rune")) :: "--lib" :: fromRoot "lib" :: args, dir = SOME at,
+                                 stdin = "", stdout = log, stderr = log, timeout = 300}
+    in (status, read log) end
+  fun rune args = runeEnvIn (fn e => e, table) args
+  fun runProgram rbc =
+    let
+      val log = rbc ^ ".out"
+      val status = exec {cmd = [fromRoot (env ("RUNEVM", "bin/runevm")), rbc], dir = SOME dir, stdin = "",
+                         stdout = log, stderr = log, timeout = 60}
+    in (status, read log) end
+  fun put (path, text) = (mkdirs (OS.Path.dir (table ^ "/" ^ path)); write (table ^ "/" ^ path, text))
+  fun ok label args = let val (status, log) = rune args in need (status = 0, label ^ ": " ^ log); log end
+  fun refused label args reason =
+    let val (status, log) = rune args
+    in need (status <> 0 andalso has reason log, label ^ " was not refused for " ^ reason ^ ": " ^ log) end
+  fun index name = ignore (ok ("index " ^ name) ["--basis-index", "libraries/" ^ name])
+  fun indexRefused name reason = refused ("index " ^ name) ["--basis-index", "libraries/" ^ name] reason
+  fun rebuilt log = List.mapPartial (fn line => if String.isPrefix "rune: compiled " line
+                                                then SOME (Substring.string (#1 (Substring.position ":" (Substring.full (String.extract (line, 15, NONE))))))
+                                                else NONE) (lines log)
+  val tableOutput = "9 squares: 1 1, 2 4, 3 9, 4 16, 5 25, 6 36, 7 49, 8 64, 9 81\n"
+                    ^ "6 words: \"and\" 2, \"bird\" 1, \"cat\" 2, \"dog\" 1, \"saw\" 1, \"the\" 4\n"
+                    ^ "the square of 7 is 49\nno square of 10\nno word \"zebra\"\n"
+  fun prints rbc expected =
+    let val (status, output) = runProgram rbc
+    in need (status = 0 andalso output = expected, rbc ^ " prints " ^ output) end
+
+  (* the example as it is in the tree, and its libraries indexed *)
+  fun tree () =
+    let
+      val original = fromRoot "examples/virtual/table"
+      fun copy path =
+        let val from = original ^ "/" ^ path
+        in if isDir from then List.app (fn e => copy (path ^ "/" ^ e)) (entries from)
+           else if OS.Path.file path = "MANIFEST" orelse String.isPrefix "." (OS.Path.file path) then ()
+           else put (path, read from)
+        end
+    in
+      rmTree dir; mkdirs table;
+      List.app copy (entries original);
+      List.app index ["table", "table-list", "table-tree"]
+    end
+
+  (* each implementation, every way: in units through a cache and with none,
+     and whole of the units; the whole program of the same libraries *)
+  fun builds () =
+    let
+      val cache = dir ^ "/builds-cache"
+      fun each (impl, build) =
+        let
+          fun out what = dir ^ "/" ^ impl ^ "-" ^ what ^ ".rbc"
+          val _ = ok (impl ^ " cold") ["--build", build, "--cache-dir", cache, "-o", out "cold"]
+          val _ = ok (impl ^ " warm") ["--build", build, "--cache-dir", cache, "-o", out "warm"]
+          val _ = ok (impl ^ " plain") ["--build", build, "--no-cache", "-o", out "plain"]
+          val _ = ok (impl ^ " units whole") ["--build", build, "--whole", "--no-cache", "-o", out "units-whole"]
+          val _ = ok (impl ^ " whole") ["--no-cache", "--library", "table", "--library", impl, "main.sml", "-o", out "whole"]
+          val parallel = ok (impl ^ " parallel") ["--build", build, "--cache-dir", dir ^ "/" ^ impl ^ "-parallel-cache", "-j", "4",
+                                                  "-o", out "parallel"]
+        in
+          ignore parallel;
+          List.app (fn what => prints (out what) tableOutput) ["cold", "whole"];
+          need (same (out "cold", out "warm"), "S41: " ^ impl ^ " warm differs from cold");
+          need (same (out "cold", out "plain"), impl ^ " through the cache differs from --no-cache");
+          need (same (out "units-whole", out "whole"), "S42: " ^ impl ^ " --units --whole differs from whole");
+          need (same (out "cold", out "parallel"), "S58: " ^ impl ^ " -j 4 differs")
+        end
+    in List.app each [("table-list", "list-libraries.build"), ("table-tree", "tree-libraries.build")] end
+
+  (* -j with every unit worth a child *)
+  fun parallel () =
+    let
+      fun build (label, jobs) =
+        let val (status, log) = runeEnvIn (setEnv ("RUNE_PARALLEL_MIN", "0"), table)
+                                          ["--build", "tree-libraries.build", "--cache-dir", dir ^ "/" ^ label ^ "-cache", "-j", jobs,
+                                           "-o", dir ^ "/" ^ label ^ ".rbc"]
+        in need (status = 0, label ^ ": " ^ log) end
+    in
+      build ("serial", "1"); build ("children", "4");
+      need (same (dir ^ "/serial.rbc", dir ^ "/children.rbc"), "S58: children compile another program")
+    end
+
+  (* the program's units, and the virtual library's, compiled once across
+     both implementations: the second compiles its implementation alone *)
+  fun once () =
+    let
+      val cache = dir ^ "/once-cache"
+      val first = ok "once list" ["--build", "list-libraries.build", "--cache-dir", cache, "--explain-rebuild", "-o", dir ^ "/once1.rbc"]
+      val second = ok "once tree" ["--build", "tree-libraries.build", "--cache-dir", cache, "--explain-rebuild", "-o", dir ^ "/once2.rbc"]
+      val third = ok "once list again" ["--build", "list-libraries.build", "--cache-dir", cache, "--explain-rebuild", "-o", dir ^ "/once3.rbc"]
+      fun mine log = List.filter (fn f => not (String.isSubstring "lib/basis" f) andalso not (String.isPrefix "basis:" f)) (rebuilt log)
+    in
+      need (List.length (mine first) = 5, "the first build compiled " ^ String.concatWith " " (mine first));
+      need (List.map OS.Path.file (mine second) = ["tree.sml"], "another implementation compiled more than itself: "
+                                                                  ^ String.concatWith " " (mine second));
+      need (List.null (mine third), "the first implementation again compiled " ^ String.concatWith " " (mine third));
+      prints (dir ^ "/once2.rbc") tableOutput;
+      need (same (dir ^ "/once1.rbc", dir ^ "/once3.rbc"), "the first implementation again is another program")
+    end
+
+  (* one implementation per program, and none of a library's virtual module in
+     a program's build; none is compiled, and refused when it runs *)
+  fun programs () =
+    let
+      val () = put ("two.build", "libraries table table-list table-tree end\nmain.sml\n")
+      val () = put ("program-implements.build", "libraries table end\nimplements Table = list.sml end\nmain.sml\n")
+      val () = put ("none.build", "libraries table end\nmain.sml\n")
+      val () = refused "two" ["--build", "two.build", "--no-cache", "-o", dir ^ "/two.rbc"]
+                       "the program has two implementations of the virtual functor Table"
+      val () = refused "two whole" ["--no-cache", "--library", "table", "--library", "table-list", "--library", "table-tree",
+                                    "main.sml", "-o", dir ^ "/two.rbc"]
+                       "the program has two implementations of the virtual functor Table"
+      val () = refused "program implements" ["--build", "program-implements.build", "--no-cache", "-o", dir ^ "/pi.rbc"]
+                       "the build implements Table, the virtual functor of the library"
+      val _ = ok "none" ["--build", "none.build", "--no-cache", "-o", dir ^ "/none.rbc"]
+      val (status, output) = runProgram (dir ^ "/none.rbc")
+    in
+      need (status <> 0 andalso has "the virtual functor Table has no implementation" output,
+            "a virtual library with no implementation ran: " ^ output)
+    end
+
+  (* the plan: the virtual library, its implementation, and its rest after
+     it, which --build-list and the hosts' reader list in that order *)
+  fun plan () =
+    let
+      val text = ok "plan" ["--no-warnings", "--plan", "list-libraries.build"]
+      val () = put ("list.plan", text)
+      val again = ok "plan again" ["--plan", "list.plan"]
+      val listed = ok "build-list" ["--no-warnings", "--build-list", "list-libraries.build"]
+      val log = dir ^ "/plan-files.log"
+      val status = exec {cmd = ["sh", fromRoot "scripts/plan-files.sh", table ^ "/list.plan"], dir = SOME table, stdin = "",
+                         stdout = log, stderr = log, timeout = 60}
+      val files = List.map OS.Path.file (lines listed)
+      fun has' l = List.exists (fn x => x = l) (List.map (String.tokens Char.isSpace) (lines text))
+    in
+      need (String.isPrefix "rune-plan 2\n" text andalso has' ["virtual", "functor", "Table"]
+            andalso has' ["implements", "functor", "Table"] andalso has' ["continue", "table"], "the plan: " ^ text);
+      need (again = text, "the plan does not read back as it is: " ^ again);
+      need (files = ["key_sig.sml", "table_sig.sml", "list.sml", "table.sml", "main.sml"], "--build-list: " ^ listed);
+      need (status = 0 andalso read log = listed, "the hosts' reader lists otherwise: " ^ read log);
+      put ("v1.plan", "rune-plan 1\n" ^ String.extract (text, 12, NONE));
+      refused "a plan of version 1" ["--plan", "v1.plan"] "a plan of version 1 has no virtual library"
+    end
+
+  (* what a virtual library and an implementing one may not be *)
+  fun malformed () =
+    let
+      fun bad (name, text, files, reason) =
+        (List.app put files;
+         put ("libraries/bad/library.build", text);
+         indexRefused "bad" reason;
+         ignore name)
+      val key = "signature K = sig val k : int end\n"
+      val virt = ("libraries/bad/v.sml", "structure V = _virtual : K\n")
+    in
+      put ("libraries/bad/k.sml", key);
+      List.app put [("libraries/other/library.build", "exports (signature K, structure O)\nvirtual (structure O)\nk.sml\no.sml\n"),
+                    ("libraries/other/k.sml", key), ("libraries/other/o.sml", "structure O = _virtual : K\n")];
+      index "other";
+      List.app bad
+        [("implements and exports", "requires table end\nexports (structure X)\nimplements (functor Table)\n../../list.sml\n", [],
+          "an implementing library exports nothing"),
+         ("kind", "exports (signature K)\nvirtual (signature K)\nk.sml\n", [], "a virtual module is a structure or a functor"),
+         ("not exported", "exports (signature K)\nvirtual (structure V)\nk.sml\nv.sml\n", [virt],
+          "says virtual structure V, which the library does not export"),
+         ("not virtual", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nw.sml\n",
+          [("libraries/bad/w.sml", "structure V : K = struct val k = 1 end\n")], "says virtual structure V, which no source declares _virtual"),
+         ("twice", "exports (signature K, structure V)\nvirtual (structure V)\nvirtual (structure V)\nk.sml\nv.sml\n", [virt],
+          "a header says virtual once"),
+         ("nested", "exports (signature K, structure Outer)\nk.sml\nn.sml\n",
+          [("libraries/bad/n.sml", "structure Outer = struct structure V = _virtual : K end\n")],
+          "says _virtual of a module not at its top level"),
+         ("not in the header", "exports (signature K, structure V)\nk.sml\nv.sml\n", [virt],
+          "v.sml declares the structure V _virtual, and the header does not say virtual (structure V)"),
+         ("used", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nuse inner.build\n",
+          [virt, ("libraries/bad/inner.build", "v.sml\n")], "is listed in the library's build, not in one it uses"),
+         ("named before", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nearly.sml\nv.sml\n",
+          [virt, ("libraries/bad/early.sml", "structure V = struct end\n")], "the name of a virtual module, before"),
+         ("not exported by a source", "requires table end\nimplements (functor Table)\nplain.sml\n",
+          [("libraries/bad/plain.sml", "structure Plain = struct end\n")], "implements the functor Table, which no source exports"),
+         ("not required", "implements (functor Table)\n../../list.sml\n", [],
+          "implements the functor Table, which no library it requires declares virtual"),
+         ("exports another", "requires table end\nimplements (functor Table)\n../../list.sml\nmore.sml\n",
+          [("libraries/bad/more.sml", "_export structure More : sig end = struct end\n")],
+          "more.sml exports the structure More, which the header does not say it implements"),
+         ("names the rest", "requires table end\nimplements (functor Table)\nuses.sml\n../../list.sml\n",
+          [("libraries/bad/uses.sml", "structure Uses = struct val t = 1 end\nfunctor F (K : KEY) = Table (K)\n")],
+          "uses Table, which "),
+         ("two virtual libraries", "requires table other end\nimplements (functor Table, structure O)\n../../list.sml\no.sml\n",
+          [("libraries/bad/o.sml", "_export structure O : K = struct val k = 2 end\n")],
+          "implements modules of two virtual libraries")]
+    end
+  fun twoVirtual () =
+    (put ("libraries/again/library.build", "exports (signature KEY2, functor Table)\nvirtual (functor Table)\nk.sml\nt.sml\n");
+     put ("libraries/again/k.sml", "signature KEY2 = sig type t end\nsignature TABLE2 = sig end\n");
+     put ("libraries/again/t.sml", "functor Table = _virtual (K : KEY2) : TABLE2\n");
+     index "again";
+     refused "two virtual" ["--no-cache", "--library", "table", "--library", "again", "main.sml", "-o", dir ^ "/again.rbc"]
+             "the program has two declarations of the virtual functor Table")
+
+  (* a virtual structure, a library written on it whose files come after
+     its implementation, and an implementation written on a library the
+     virtual one is not, which comes between them *)
+  fun structures () =
+    let
+      val () = List.app put
+        [("libraries/clock/library.build", "exports (signature CLOCK, structure Clock)\nvirtual (structure Clock)\nclock_sig.sml\nclock.sml\n"),
+         ("libraries/clock/clock_sig.sml", "signature CLOCK = sig val now : unit -> int val name : string end\n"),
+         ("libraries/clock/clock.sml", "structure Clock = _virtual : CLOCK\n"),
+         ("libraries/ticks/library.build", "exports (structure Ticks)\nticks.sml\n"),
+         ("libraries/ticks/ticks.sml", "structure Ticks = struct val start = 41 end\n"),
+         ("libraries/clock-fixed/library.build", "requires clock ticks end\nimplements (structure Clock)\nfixed.sml\n"),
+         ("libraries/clock-fixed/fixed.sml",
+          "structure Fixed = struct val n = Ticks.start + 1 end\n_export structure Clock : CLOCK = struct fun now () = Fixed.n val name = \"fixed\" end\n"),
+         ("libraries/clock-zero/library.build", "requires clock end\nimplements (structure Clock)\nzero.sml\n"),
+         ("libraries/clock-zero/zero.sml", "_export structure Clock : CLOCK = struct fun now () = 0 val name = \"zero\" end\n"),
+         ("libraries/stamp/library.build", "requires clock end\nexports (structure Stamp)\nstamp.sml\n"),
+         ("libraries/stamp/stamp.sml", "structure Stamp = struct fun show () = Clock.name ^ \" \" ^ Int.toString (Clock.now ()) end\n"),
+         ("stamp.sml", "val () = print (Stamp.show () ^ \"\\n\")\n"),
+         ("fixed.build", "libraries stamp clock-fixed end\nstamp.sml\n"),
+         ("zero.build", "libraries clock-zero stamp end\nstamp.sml\n")]
+      val () = List.app index ["clock", "ticks", "clock-fixed", "clock-zero", "stamp"]
+      val cache = dir ^ "/clock-cache"
+      val fixed = ok "fixed" ["--build", "fixed.build", "--cache-dir", cache, "-o", dir ^ "/fixed.rbc"]
+      val zero = ok "zero" ["--build", "zero.build", "--cache-dir", cache, "--explain-rebuild", "-o", dir ^ "/zero.rbc"]
+      val _ = ok "zero whole" ["--no-cache", "--library", "clock-zero", "--library", "stamp", "stamp.sml", "-o", dir ^ "/zero-whole.rbc"]
+      val _ = ok "zero units whole" ["--no-cache", "--build", "zero.build", "--whole", "-o", dir ^ "/zero-units-whole.rbc"]
+      fun mine log = List.filter (fn f => not (String.isPrefix "basis:" f) andalso not (String.isSubstring "lib/basis" f)) (rebuilt log)
+    in
+      ignore fixed;
+      prints (dir ^ "/fixed.rbc") "fixed 42\n";
+      prints (dir ^ "/zero.rbc") "zero 0\n";
+      need (List.map OS.Path.file (mine zero) = ["zero.sml"], "another clock compiled " ^ String.concatWith " " (mine zero));
+      need (same (dir ^ "/zero-whole.rbc", dir ^ "/zero-units-whole.rbc"), "S42 of a virtual structure differs")
+    end
+
+  (* random edits of the example's sources and libraries, each build through
+     the cache against one with none; the libraries indexed again after each,
+     as a change to one is *)
+  fun edits () =
+    let
+      val cache = dir ^ "/edits-cache"
+      fun text path = read (table ^ "/" ^ path)
+      val list = text "list.sml"
+      val tree = text "tree.sml"
+      val key = text "key_sig.sml"
+      val sig' = text "table_sig.sml"
+      val main = text "main.sml"
+      val build = text "list-libraries.build"
+      fun replace (whole, old, new) =
+        let val (a, b) = Substring.position old (Substring.full whole)
+        in if Substring.isEmpty b then whole else Substring.string a ^ new ^ String.extract (Substring.string b, size old, NONE) end
+      val choices =
+        Vector.fromList
+          [("list.sml", fn () => replace (list, "val size = List.length", "fun size t = List.length t")),
+           ("list.sml", fn () => replace (list, "fun toList t = t", "fun toList t = List.rev (List.rev t)")),
+           ("list.sml", fn () => replace (list, "val empty = []", "val empty = [] val extra = 1")),
+           ("list.sml", fn () => list),
+           ("tree.sml", fn () => replace (tree, "fun size Leaf = 0", "fun size Leaf = 0 + 0")),
+           ("tree.sml", fn () => replace (tree, "exception Missing of key", "exception Missing of key\n  exception Other")),
+           ("tree.sml", fn () => tree),
+           ("table_sig.sml", fn () => replace (sig', "val size : 'a table -> int", "val size : 'a table -> int\n  val extra : int")),
+           ("table_sig.sml", fn () => replace (sig', "(* the entries, by their keys in order *)", "(* in order *)")),
+           ("table_sig.sml", fn () => sig'),
+           ("key_sig.sml", fn () => replace (key, "val toString : t -> string", "val toString : t -> string\n  val hash : t -> int")),
+           ("key_sig.sml", fn () => key),
+           ("main.sml", fn () => replace (main, "the square of 7", "the square of seven")),
+           ("main.sml", fn () => replace (main, "Squares.get (squares, 7)", "Squares.get (squares, 8)")),
+           ("main.sml", fn () => main),
+           ("list-libraries.build", fn () => replace (build, "table-list", "table-tree")),
+           ("list-libraries.build", fn () => build),
+           ("list-libraries.build", fn () => replace (build, "table table-list", "table-list table"))]
+      val seed = ref (case Int.fromString (env ("RUNE_VIRTUAL_EDITS_SEED", "7")) of SOME n => n | NONE => 7)
+      val steps = case Int.fromString (env ("RUNE_VIRTUAL_EDITS", "40")) of SOME n => n | NONE => 40
+      fun next n = (seed := (!seed * 1103 + 12345) mod 65536; !seed mod n)
+      val agreed = ref 0
+      val built = ref 0
+      fun step 0 = ()
+        | step k =
+            let
+              val (file, make) = Vector.sub (choices, next (Vector.length choices))
+              val () = put (file, make ())
+              val _ = List.map (fn l => rune ["--basis-index", "libraries/" ^ l]) ["table", "table-list", "table-tree"]
+              val (s1, log) = rune ["--build", "list-libraries.build", "--cache-dir", cache, "-o", dir ^ "/edited.rbc"]
+              val (s2, _) = rune ["--build", "list-libraries.build", "--no-cache", "-o", dir ^ "/edited-plain.rbc"]
+              val agree = (s1 = 0) = (s2 = 0) andalso (s1 <> 0 orelse same (dir ^ "/edited.rbc", dir ^ "/edited-plain.rbc"))
+            in
+              need (agree, "the cache disagrees after an edit of " ^ file ^ " with " ^ Int.toString k ^ " to go: " ^ log);
+              agreed := !agreed + 1; if s2 = 0 then built := !built + 1 else (); step (k - 1)
+            end
+    in
+      step steps;
+      need (!built >= steps div 4 andalso !built < !agreed, "the edits do not exercise both outcomes");
+      say ("virtual libraries: " ^ Int.toString (!agreed) ^ " edits agree with no cache, " ^ Int.toString (!built) ^ " of them a program\n")
+    end
+
+  fun run' () =
+    (tree (); builds (); parallel (); once (); programs (); plan (); malformed (); twoVirtual (); structures (); tree (); edits ())
+end

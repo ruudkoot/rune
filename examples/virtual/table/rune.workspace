@@ -1,0 +1,4 @@
+(* The root of this example (docs/build.md, The workspace): the libraries of
+   its second form, the virtual library table and its two implementations,
+   are found under libraries. *)
+roots libraries end

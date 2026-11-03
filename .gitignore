@@ -13,4 +13,5 @@ __pycache__/
 /lib/cache/
 # made from each library's library.build (rune --basis-index; make manifests)
 /lib/**/MANIFEST
+/examples/**/MANIFEST
 /lib/compiler/config.sml

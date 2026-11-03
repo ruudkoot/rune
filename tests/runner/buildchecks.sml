@@ -560,6 +560,9 @@ struct
     | command ["build-library-exports"]=SOME libraryExports
     | command ["build-library-model"]=SOME LibraryModel.run'
     | command ["build-namespaces"]=SOME Namespaces.run'
+    | command ["build-virtual-libraries"]=SOME VirtualLibraries.run'
+    (* its random edits alone, RUNE_VIRTUAL_EDITS of them from RUNE_VIRTUAL_EDITS_SEED *)
+    | command ["build-virtual-edits"]=SOME (fn () => (VirtualLibraries.tree (); VirtualLibraries.edits ()))
     | command ["build-plan-round-trip"]=SOME planRoundTrip
     | command ["build-plans"]=SOME plans
     | command ["build-identity"]=SOME identity
@@ -578,6 +581,9 @@ struct
      tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:src/driver/*","covers:lib/basis/library.build",
              "covers:tests/runner/librarymodel.sml"]
        (job "namespaces" ["build-namespaces"] []),
+     tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:src/driver/*","covers:examples/virtual/*",
+             "covers:scripts/plan-files.sh","covers:tests/runner/librarymodel.sml"]
+       (job "virtual-libraries" ["build-virtual-libraries"] []),
      tagged ["check","test-build","covers:lib/compiler/*","covers:src/driver/*","covers:*.build"]
        (job "plan-round-trip" ["build-plan-round-trip"] []),
      tagged ["check","quick","test-build","covers:*.build","covers:*.plan","covers:scripts/plan-files.sh","covers:lib/compiler/*"]

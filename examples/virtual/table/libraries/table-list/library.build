@@ -1,0 +1,5 @@
+(* Table as an association list: an implementation of the virtual library
+   table, which adds no module of its own *)
+requires table end
+implements (functor Table)
+../../list.sml
