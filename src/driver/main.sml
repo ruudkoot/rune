@@ -527,7 +527,9 @@ struct
       (* the rules (docs/units.md, Well-formed units): a strict library is held
          to them, and another is told of them once *)
       val () =
-        case (Deps.illFormed (List.map (fn (_, anns, f) => Deps.unitOf (true, anns, f)) analysed), !header) of
+        case (Deps.illFormed (List.mapPartial (fn (_, anns, f) => if hostOf anns = "only" then NONE
+                                                                  else SOME (Deps.unitOf (true, anns, f))) analysed),
+              !header) of
           ([], _) => ()
         | (findings, SOME {strict = true, ...}) =>
             (List.app (fn (sp, what) => eprintln (Error.format (sp, Deps.notWellFormed what))) findings;

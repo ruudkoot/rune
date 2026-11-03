@@ -226,6 +226,7 @@ is to a program:
 | `seal` | as `demand`, but for no file of the library: it binds a structure again as its signature shows it |
 | `final` | it is compiled after every program |
 | `host=swap`, `host=no` | how `bin/rune-generate host-basis` gives the file to the other SML systems |
+| `host=only` | the file is the other SML systems' alone, in place of a `host=no` file of the same module after it, and Rune does not compile it: one module of a name in a scope ([units.md](units.md), *Well-formed units*) |
 
 `libraries random end` names the libraries it is written on, where it has
 no header. In an ordinary program build, the declaration selects those

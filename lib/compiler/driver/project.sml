@@ -142,7 +142,10 @@ struct
               fun named name=
                 let val target=path name
                 in if String.isPrefix "$(" name then () else references:=(file,target) :: !references;target end
-              fun unit (annotations,file)=(notePrelude (annotations,file);[SUnit (file,annotations)])
+              (* a file the other SML systems have alone is not Rune's *)
+              fun unit (annotations,file)=
+                if List.exists (fn annotation => annotation="host=only") annotations then []
+                else (notePrelude (annotations,file);[SUnit (file,annotations)])
               fun steps (annotations,declarations)=List.concat (List.map (fn declaration => step (annotations,declaration)) declarations)
               and step (annotations,declaration)=
                 case declaration of

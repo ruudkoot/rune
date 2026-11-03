@@ -37,7 +37,7 @@ struct
         if String.isPrefix "#" l orelse trim l = "" then NONE
         else case List.map trim (String.fields (fn c => c = #"|") l) of
           f :: _ :: h :: p :: r :: _ =>
-            SOME {path = dir ^ "/" ^ f, host = h = "yes", provides = String.tokens Char.isSpace p,
+            SOME {path = dir ^ "/" ^ f, host = h = "yes" orelse h = "only", provides = String.tokens Char.isSpace p,
                   requires = String.tokens Char.isSpace r}
         | _ => raise Fail (dir ^ "/MANIFEST: malformed line: " ^ l)
       val file = dir ^ "/MANIFEST"

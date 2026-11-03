@@ -80,7 +80,7 @@ struct
   (* the words `annotate` takes (docs/build.md, Annotations, and A library's
      build file) *)
   fun knownAnnotation (a : string) : bool =
-    List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no", "prelude"]
+    List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no", "host=only", "prelude"]
     orelse isSome (Source.modeNamed a)
 
   fun parseUsing {path,text,recover,pathAt,wanted} : dec list =

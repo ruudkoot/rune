@@ -160,6 +160,11 @@ struct
            ("gm.sml", "structure GM = struct end\nval top = 40"),
            ("gn.sml", "val () = print (Int.toString (top + 2) ^ \"\\n\")"),
            ("group-wf.build", "group gm.sml gn.sml end"),
+           (* a file the other SML systems have alone, which Rune does not compile *)
+           ("hostonly/hosts.sml", "structure P = struct val v = \"hosts\" end"),
+           ("hostonly/rune.sml", "structure P = struct val v = \"rune\" end"),
+           ("hostonly/main.sml", "val () = print (P.v ^ \"\\n\")"),
+           ("hostonly.build", "annotate \"host=only\" in hostonly/hosts.sml end\nannotate \"host=no\" in hostonly/rune.sml end\nhostonly/main.sml"),
            ("counted.sml", "structure C = struct val () = print \"once\\n\" val c = 1 end"),
            ("lib/counted.build", "counted.sml"),
            ("use-twice.build", "use lib/counted.build use lib/counted.build use-c.sml"),
@@ -282,6 +287,9 @@ struct
     | "library" => builds c which "library" [] "42\n"
     | "library-hidden" => buildRefused c which "unbound variable or constructor: A.x"
     | "group" => builds c which "group" [] "42\n"
+    | "host-only" =>
+        (builds c which "hostonly" [] "rune\n";
+         output (compiler c (which ^ "-deps") "" ["--deps", "--build", "hostonly.build"]) "hostonly/rune.sml\nhostonly/main.sml\n")
     | "group-not-well-formed" =>
         let val r = compiler c which "" ["--build", "group-wf.build", "--no-cache", "-o", "group-wf.rbc"]
         in success r;
@@ -415,7 +423,7 @@ struct
     | "bad" => buildRefused c "bad" "unexpected end of the file"
     | "self" => buildRefused c "self" "uses itself"
     | _ => raise Failed "unknown buildfile scenario"
-  val buildCases = ["list", "local", "local-hidden", "library", "library-hidden", "group", "group-not-well-formed", "use-twice", "prim", "prim-allowed",
+  val buildCases = ["list", "local", "local-hidden", "library", "library-hidden", "group", "group-not-well-formed", "host-only", "use-twice", "prim", "prim-allowed",
                     "path-variable", "missing-variable", "path-variable-nested", "build-list", "build-list-closure", "unknown-annotation",
                     "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-diamond", "use-diamond-hidden", "use-first-open", "use-inside-boundary",
                     "use-sibling-boundary", "use-after-local", "use-inside-local", "use-after-implements", "export-nothing",
