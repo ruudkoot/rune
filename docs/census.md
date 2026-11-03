@@ -229,7 +229,17 @@ the live data and the interval), and the final one at exit.
 - At a sample every register of the running frame is a root, its dead ones
   included, while the waiting frames' dead registers are cleared: a census
   keeps a little more alive than a stock VM that collects between its
-  samples (a few kilobytes on the bootstrap).
+  samples (a few kilobytes on the bootstrap). It can keep less, too: a
+  collection clears what it does not keep (the waiting frames' dead
+  registers and the stack above sp, `runtime/gc/copy.c` gc_stack_roots),
+  a census collects at every sample and a stock VM only when its heap is
+  full, and a register the stock VM never cleared may still hold what the
+  census found dead long before. Either way by as much as a stale
+  register holds: tests/perf/string_ops.sml at `--heap-size 1048576`
+  copies 888,488 bytes at its first collection, where its trace with
+  samples every 8 KiB has 600,536 bytes alive and a census whose first
+  sample falls there (every 1 MiB) 888,512, the 24 more being the object
+  the sample's allocation made.
 
 ### Checks
 - `bin/rune-heap-check heap-trace-check DIR`: the file sizes against `meta.txt`;
