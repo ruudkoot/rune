@@ -447,7 +447,8 @@ a count is a number that either matches or is a bug.
 **Byte-identical artefacts.** `make bootstrap` checks that the compiler
 compiled by itself reproduces `bin/rune.rbc` byte for byte, and
 `check-cross` that all host builds produce the same bytecode for every
-test program (`building.md`, *Bootstrapping*). This rests on the compiler
+test program, but for a compile in units by `smlnj32`, whose hash is its
+own (`building.md`, *Bootstrapping*). This rests on the compiler
 being deterministic: ordered maps, counter-generated stamps, reals passed
 through as text.
 
