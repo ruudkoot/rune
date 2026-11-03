@@ -74,6 +74,13 @@ struct
        ("entry/lib/z.sml", "structure Z = struct end\nval zero = 0"),
        ("entry/needs-z.sml", "structure Use = Z")];
      Posix.FileSys.symlink {old = fromRoot "lib/basis", new = #directory c ^ "/lib/basis"})
+  (* a run of rune --deps that succeeds and finds no unit that is not
+     well-formed, whatever else it says *)
+  fun wellFormed what (r : result) =
+    (success r;
+     case List.filter (String.isSubstring "is not well-formed") (lines (#errors r)) of
+       [] => ()
+     | broken => raise Failed (what ^ ": " ^ String.concatWith "\n" broken))
   (* a command that succeeds, with its output and the warnings that begin so *)
   fun warned (r : result) expected (warnings : string list) =
     (success r;
@@ -134,8 +141,10 @@ struct
           "lib/z.sml declares a module needs-z.sml names, and is not well-formed"
     (* E8's table (the build-system roadmap's M16): Rune's own libraries and
        builds, MLton and HOL4's closure are well-formed but for the preludes
-       they declare. MLton and HOL4 are trees of their own, given by
-       RUNE_WELLFORMED_MLTON and RUNE_WELLFORMED_HOL4 (docs/testing.md) *)
+       they declare: no unit breaks a rule. Another warning, a nested
+       library's use reaching in (D10) say, is not the row's. MLton and HOL4
+       are trees of their own, given by RUNE_WELLFORMED_MLTON and
+       RUNE_WELLFORMED_HOL4 (docs/testing.md) *)
     | "wellformed-rune" =>
         let
           fun libraries dir =
@@ -149,7 +158,7 @@ struct
           val units = List.foldl (fn (build, n) =>
                                     let val r = execute c ("wellformed-" ^ String.translate (fn #"/" => "-" | ch => String.str ch) build) root
                                                         [#compiler c, "--deps", "--build", build]
-                                    in success r; need (#errors r = "", build ^ ": " ^ #errors r); n + length (lines (#output r)) end)
+                                    in wellFormed build r; n + length (lines (#output r)) end)
                                  0 builds
         in say (Int.toString units ^ " units of " ^ Int.toString (length builds) ^ " builds, all well-formed but for their preludes\n") end
     | "wellformed-mlton" =>
@@ -157,16 +166,16 @@ struct
            "" => say "SKIP wellformed-mlton: RUNE_WELLFORMED_MLTON names no MLton tree with its build files\n"
          | dir =>
              let val r = execute c which (dir ^ "/mlton") [#compiler c, "--deps", "--build", "mlton.build"]
-             in success r; need (#errors r = "", "MLton: " ^ #errors r);
-                need (length (lines (#output r)) = 606, "MLton has 606 units, not " ^ Int.toString (length (lines (#output r))))
+             in wellFormed "MLton" r;
+                need (length (lines (#output r)) = 606, "MLton has 606 units, not " ^ Int.toString (length (lines (#output r))));
+                say ("606 units of MLton, all well-formed; " ^ Int.toString (length (lines (#errors r))) ^ " other lines on stderr\n")
              end)
     | "wellformed-hol4" =>
         (case env ("RUNE_WELLFORMED_HOL4", "") of
            "" => say "SKIP wellformed-hol4: RUNE_WELLFORMED_HOL4 names no directory of HOL4's closure and its boss.build\n"
          | dir =>
              let val r = execute c which dir [#compiler c, "--deps", "--build", "boss.build"]
-                 val () = success r
-                 val () = need (#errors r = "", "HOL4: " ^ #errors r)
+                 val () = wellFormed "HOL4" r
                  val files = lines (#output r)
                  val () = need (length files = 744, "HOL4's closure has 744 units, not " ^ Int.toString (length files))
                  (* and as a list: Conv.sml parses in the fixity Overlay.sml leaves *)

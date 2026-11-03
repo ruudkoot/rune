@@ -960,13 +960,18 @@ The three baseline failures (fluid float formatting, pidigits5 and zarith
 `bin/rune-scenarios SUITE [--rune BIN]` selects deps, buildfile, dynamic, units,
 install or dist. Three cases of deps are the build-system roadmap's E8 table
 ([units.md](units.md), *Well-formed units*): `wellformed-rune` holds every
-library and build of the tree to `rune --deps --build` warning of nothing,
-and `wellformed-mlton` and `wellformed-hol4` hold MLton's 606 units and HOL4's
-744 of the `src/boss` closure so, where `RUNE_WELLFORMED_MLTON` names a copy
-of MLton's sources with build files laid over it (`mlton/mlton.build`) and
-`RUNE_WELLFORMED_HOL4` a directory of the closure after HOL's filter with its
-`boss.build`, which declares its two preludes; `rune --deps` then finishes on
-the closure as a plain list. Without them those two say SKIP. Installation also accepts repeated `--host NAME`; Make's
+library and build of the tree to `rune --deps --build` finding no unit that
+is not well-formed, and `wellformed-mlton` and `wellformed-hol4` hold MLton's
+606 units and HOL4's 744 of the `src/boss` closure so; another warning, a
+nested library's `use` reaching in, is not theirs. `RUNE_WELLFORMED_MLTON`
+names a copy of MLton's sources (`mlton`, `lib/mlton`, `lib/mlyacc-lib`,
+`lib/stubs`, from `MLTON_SOURCES`) with the build files of the build-system
+roadmap's M9 laid over it, which its translator from MLton's `.mlb` files,
+`impl/bs-m9/e9/mlb2build2.py` of the roadmap's drafts, makes: 60 build files,
+30 of them libraries, `mlton/mlton.build` the program. `RUNE_WELLFORMED_HOL4`
+names a directory of the closure after HOL's filter with its `boss.build`,
+which declares its two preludes; `rune --deps` then finishes on the closure as
+a plain list. Without them those two say SKIP. Installation also accepts repeated `--host NAME`; Make's
 install tier retains bytecode, MLton and SML/NJ. All stage prefixes are private.
 Distribution assertions read archive metadata in SML and use independent
 ELF/PE fixture bytes. Compression decoding uses gzip/unzip, declared as
