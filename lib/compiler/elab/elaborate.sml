@@ -1264,12 +1264,23 @@ struct
       fun byTag l = List.foldl (fn (x as (t, _), acc) =>
                                   let fun ins [] = [x] | ins ((y as (u, _)) :: rest) = if t < u then x :: y :: rest else y :: ins rest
                                   in ins acc end) [] l
-      fun go (Env {tys, strs, ...}) =
-        List.concat (List.map (fn (_, TyStr {fcn = TName c, cons = cs as _ :: _}) =>
-                                    if isBound c then List.map #2 (byTag (opens (c, cs))) else []
-                                | _ => []) (StringMap.listItemsi tys))
-        @ List.concat (List.map (fn (_, e) => go e) (StringMap.listItemsi strs))
-    in go pe end
+      (* a datatype two specifications give (sharing a structure with a view
+         of it) is the first's, in the order of the names, as specDatatypes
+         enters it: the constructors the code's tables hold, one function
+         for each, of the type they give its argument. A constructor of each
+         made each its descriptor and its functions, which the body's code
+         took the last's of, of another type than its tables' *)
+      fun go (Env {tys, strs, ...}, (seen, acc)) =
+        let
+          val (seen, acc) =
+            List.foldl (fn ((_, TyStr {fcn = TName c, cons = cs as _ :: _}), (seen, acc)) =>
+                             if isBound c andalso not (IntMap.member (seen, #stamp c))
+                             then (IntMap.insert (seen, #stamp c, ()), List.revAppend (List.map #2 (byTag (opens (c, cs))), acc))
+                             else (seen, acc)
+                         | (_, x) => x)
+                       (seen, acc) (StringMap.listItemsi tys)
+        in List.foldl (fn ((_, e), x) => go (e, x)) (seen, acc) (StringMap.listItemsi strs) end
+    in List.rev (#2 (go (pe, (IntMap.empty, [])))) end
 
   (* What a virtual or dynamic functor's ABI is that its signatures do not
      say (D22), in its fingerprint with them: the ABI's version; the
