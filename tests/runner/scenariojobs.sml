@@ -25,6 +25,7 @@ struct
     | command ["scenario-dist-ffi"] = SOME (protect DistChecks.ffiArchives)
     | command ["scenario-dist-metadata"] = SOME (protect DistChecks.rejectedMetadata)
     | command ["scenario-dist-installer"] = SOME (protect DistChecks.installer)
+    | command ["scenario-dist-frozen"] = SOME (protect DistChecks.frozen)
     | command ["scenario-dist-binaries"] = SOME (protect DistChecks.binaryHeaders)
     | command ["scenario-dist-windows"] = SOME (protect DistChecks.windows)
     | command ["scenario-vscode-stage"] = SOME (protect VSCodeChecks.stage)
@@ -88,6 +89,7 @@ struct
            job "ffi" ["scenario-dist-ffi"] ["scenarios/dist/prepare"] [],
            job "metadata" ["scenario-dist-metadata"] ["scenarios/dist/prepare"] [],
            job "installer" ["scenario-dist-installer"] ["scenarios/dist/archives"] [],
+           job "frozen" ["scenario-dist-frozen"] ["scenarios/dist/prepare"] [],
            job "binaries" ["scenario-dist-binaries"] ["scenarios/dist/prepare"] [],
            job "faults" ["scenario-archive-faults"] [] []]),
            tagged ["test-windows", "nightly", "windows", "vm"]

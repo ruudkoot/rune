@@ -1580,8 +1580,9 @@ test-build: $(RUNE) vm bin/rune-test bin/rune-scenarios
 test-install: all repl dap kernel mlton smlnj-legacy bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy bin/rune-scenarios bin/rune-test
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) $(RUNE_TEST) --tier test-install
 
-# the distribution archives, with stand-in binaries (bin/rune-scenarios dist)
-test-dist: bin/rune-scenarios bin/rune-test
+# the distribution archives, with stand-in binaries (bin/rune-scenarios dist),
+# and one with the compiler and its frozen layer, installed and compiling
+test-dist: $(RUNE) vm basis-cache bin/rune-scenarios bin/rune-test
 	$(RUNE_TEST) --tier test-dist
 
 # the compiler as a service, a prototype (src/driver/serve.sml)
@@ -2245,14 +2246,14 @@ uninstall:
 # Distribution archives (docs/building.md, Distribution). The version is
 # git's, the one runtime/version.h already carries. Phony: the archives
 # land in the dist/ directory, whose stamp is not the archives'.
-dist: dist-vscode bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc \
+dist: dist-vscode bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc basis-cache \
       bin/dist/runevm bin/dist/runevm32 bin/dist/runevm-aarch64 bin/dist/runevm-ppc64 \
       bin/dist/runevm.exe bin/dist/runevm32.exe
 	@mkdir -p dist
 	bin/rune-build make-dist --out dist \
 	  --version "$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h)" \
 	  --lib lib --compiler bin/rune.rbc --repl bin/rune-repl.img \
-	  --ffi bin/runeffi.rbc --ffi-assets ffi \
+	  --ffi bin/runeffi.rbc --ffi-assets ffi --cache lib/cache \
 	  --linux x86_64=bin/dist/runevm --linux i686=bin/dist/runevm32 \
 	  --linux aarch64=bin/dist/runevm-aarch64 --linux ppc64=bin/dist/runevm-ppc64 \
 	  --windows x86_64=bin/dist/runevm.exe --windows i686=bin/dist/runevm32.exe
