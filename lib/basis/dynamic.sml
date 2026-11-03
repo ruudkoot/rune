@@ -32,7 +32,7 @@ struct
           else raise Mismatch ("the implementation of the virtual " ^ kind ^ " " ^ bare ^ " implements another signature ("
                                ^ f ^ ") than the program wants (" ^ fingerprint ^ ")")
       | NONE => raise Mismatch ("the virtual " ^ kind ^ " " ^ bare ^ " has no implementation (implements " ^ bare
-                                ^ " = ... end, before it in the build file)")
+                                ^ " = ... end, before it in the build file, or a library whose header says implements)")
     end
 
   (* the unit at path run, and what it exported, where the fingerprints

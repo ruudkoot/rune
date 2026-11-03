@@ -183,6 +183,23 @@ struct
         in view := SOME c; set (w, add (chain, c, NONE, [])); result end
       else if dir = #basis scopes then
         let val result = compile () in base := SOME (get w); result end
+      else if List.exists (fn {dir = d, ...} => d = dir) (!finished) then
+        (* The rest of a virtual library, after the library that implements
+           it (BasisManifest.arrange; D22): in the scope its first files
+           left, and then what it all declared, through its boundary *)
+        let
+          val chain = get w
+          val ({raw, change = (start, _, provided), ...} : finished) = valOf (List.find (fn {dir = d, ...} => d = dir) (!finished))
+          val () = set (w, raw)
+          val result = compile ()
+          val raw' = get w
+          val c = (start, raw', provided @ List.concat (List.map #provides entries))
+          val filter = BasisManifest.scopeOf entries
+        in
+          finished := List.map (fn f as {dir = d, ...} => if d = dir then {dir = dir, raw = raw', change = c} else f) (!finished);
+          set (w, case filter of SOME _ => add (chain, c, filter, []) | NONE => raw');
+          result
+        end
       else
         let
           val () = if isSome (!base) then () else base := SOME (get w)

@@ -26,8 +26,12 @@ struct
      what it requires, which are its # library: lines; a library with none
      has NONE, whose files see all before them and whose `libraries` are
      transitive (docs/build.md, A library's header; D7, D15). shadows are
-     the names of the Basis Library its exports take the place of (D9). *)
-  type header = {friends : string list, views : (string * (string * string) list) list, shadows : string list}
+     the names of the Basis Library its exports take the place of (D9).
+     virtuals are the virtual modules it declares and implements those of a
+     library it requires that it implements, KIND and NAME each (D22;
+     docs/build.md, Virtual libraries). *)
+  type header = {friends : string list, views : (string * (string * string) list) list, shadows : string list,
+                 virtuals : (string * string) list, implements : (string * string) list}
   (* requires is read from the text when it is asked for: most programs need
      it of few files. dir is the directory of the library the file is in.
      view is the view of the Basis Library a seal belongs to, a seal@VIEW
@@ -100,8 +104,10 @@ struct
       val friends = ref [] : string list ref
       val views = ref [] : (string * (string * string) list) list ref
       val shadows = ref [] : string list ref
+      val virtuals = ref [] : (string * string) list ref
+      val implements = ref [] : (string * string) list ref
       fun comment (i, f, e) =
-        if f + 2 >= e orelse not (Char.contains "efvs" (at (f + 2))) then ()
+        if f + 2 >= e orelse not (Char.contains "efvsi" (at (f + 2))) then ()
         else
           let
             val line = String.substring (text, f, e - f)
@@ -110,6 +116,8 @@ struct
             if String.isPrefix "# exports:" line then headed := SOME (exports (i, e, after "# exports:", e))
             else if String.isPrefix "# friends:" line then friends := !friends @ words (after "# friends:", e)
             else if String.isPrefix "# shadows:" line then shadows := !shadows @ List.map #2 (exports (i, e, after "# shadows:", e))
+            else if String.isPrefix "# virtual:" line then virtuals := !virtuals @ exports (i, e, after "# virtual:", e)
+            else if String.isPrefix "# implements:" line then implements := !implements @ exports (i, e, after "# implements:", e)
             else if String.isPrefix "# view:" line then
               (case words (after "# view:", e) of
                  n :: _ =>
@@ -147,7 +155,8 @@ struct
                    when=(case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final
                                     | _ => if isSome view then Seal else bad (i,e)),
                    provides=words (b3+1,b4),requires=fn () => words (b4+1,last),scope=scope,
-                   header=Option.map (fn _ => {friends= !friends,views=List.rev (!views),shadows= !shadows}) (!headed),
+                   header=Option.map (fn _ => {friends= !friends,views=List.rev (!views),shadows= !shadows,
+                                               virtuals= !virtuals,implements= !implements}) (!headed),
                    view=view}
                 end
             | _ => bad (i,e)
@@ -355,6 +364,11 @@ struct
           val mine = List.filter (fn e : entry => #view e = SOME v) viewed
         in if List.null mine then raise Usage ("the Basis Library has no view " ^ v) else plain @ mine end
 
+  (* The virtual modules a library's header declares, and those it
+     implements, as an entry of it says (D22) *)
+  fun virtualsOf (e : entry) = case #header e of SOME {virtuals, ...} => virtuals | NONE => []
+  fun implementsOf (e : entry) = case #header e of SOME {implements, ...} => implements | NONE => []
+
   (* The entries to load for a program that mentions the given names, in
      MANIFEST order, but for its view's seals, which come last. *)
   fun select (scopes : scopes, entries : entry list, mentioned : names) : entry list =
@@ -375,9 +389,21 @@ struct
       fun providersOf (from : entry, n) =
         List.filter (fn e : entry => #when e <> Seal andalso provider (from, e, n)) entries
       fun required (e : entry) = List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ())
+      (* A file that declares a virtual module brings the files that
+         implement it, in a library that says so (D22): they are what the
+         declaration takes, and are named by nothing else *)
+      val implementing = List.filter (fn e : entry => not (List.null (implementsOf e))) entries
+      fun implementationsOf (e : entry) : entry list =
+        case List.filter (fn (_, n) => List.exists (fn p => p = n) (#provides e)) (virtualsOf e) of
+          [] => []
+        | here => List.filter (fn i : entry => List.exists (fn m as (_, n) => List.exists (fn h => h = m) here
+                                                                              andalso List.exists (fn p => p = n) (#provides i))
+                                                           (implementsOf i))
+                              implementing
       fun add (e : entry, chosen : names) : names =
         if StringMap.member (chosen, path e) then chosen
-        else
+        else List.foldl add (required' (e, chosen)) (implementationsOf e)
+      and required' (e : entry, chosen : names) : names =
           List.foldl (fn (n, chosen) =>
                          case providersOf (e,n) of
                            [] => raise Usage ("basis manifest: " ^ #file e ^ " requires " ^ n ^
@@ -459,6 +485,36 @@ struct
       val ins = TextIO.openIn manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
     in headerWords (ins, "# library:") end
 
+  (* What orders a library among the others: what it is written on, on its
+     # library: lines, and the virtual modules it declares and implements, on
+     its # virtual: and # implements: lines, KIND:NAME each (D22). One
+     reading of its header. *)
+  type order = {requires : string list, virtuals : (string * string) list, implements : (string * string) list}
+  fun moduleOf (word : string) : string * string =
+    case String.fields (fn c => c = #":") word of
+      [kind, name] => (kind, name)
+    | _ => raise Usage ("not a module, KIND:NAME: " ^ word)
+  fun orderOf (dir : string) : order =
+    let
+      val manifest = dir ^ "/MANIFEST"
+      val ins = TextIO.openIn manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
+      fun lines (r, v, i) =
+        case TextIO.inputLine ins of
+          NONE => (r, v, i)
+        | SOME l =>
+            let
+              val l = trim l
+              fun after key = List.rev (String.tokens Char.isSpace (String.extract (l, size key, NONE)))
+            in
+              if String.isPrefix "# library:" l then lines (after "# library:" @ r, v, i)
+              else if String.isPrefix "# virtual:" l then lines (r, after "# virtual:" @ v, i)
+              else if String.isPrefix "# implements:" l then lines (r, v, after "# implements:" @ i)
+              else if String.isPrefix "#" l then lines (r, v, i)
+              else (r, v, i)
+            end
+      val (r, v, i) = lines ([], [], []) before TextIO.closeIn ins
+    in {requires = List.rev r, virtuals = List.map moduleOf (List.rev v), implements = List.map moduleOf (List.rev i)} end
+
   (* The fixity a library's MANIFEST says it exports, on its # fixity: lines,
      for reading the files of a library that requires it *)
   fun fixities (dir : string) : (string * Fixity.fixity) list =
@@ -484,21 +540,102 @@ struct
 
   (* The directories of the named libraries and of those they are written on,
      each once, every library after the ones it names; requires says what a
-     library in a directory names. *)
-  fun librariesBy (requires : string -> string list) (libDir : string, names : string list) : string list =
+     library in a directory names. A virtual library's implementations among
+     them come right after it, each after what it is written on that is not
+     before (D22): they run before the virtual library's files from the first
+     that declares a virtual module on (arrange). virtuals and implements say
+     what a library declares virtual and implements. *)
+  fun librariesWith {requires : string -> string list, virtuals : string -> (string * string) list,
+                     implements : string -> (string * string) list} (libDir : string, names : string list) : string list =
     let
-      fun visit (stack : string list) (name : string, done : string list) : string list =
-        let val dir = libraryDir (libDir, name)
-        in
-          if List.exists (fn d => d = dir) done then done
-          else if List.exists (fn d => d = dir) stack
-          then raise Usage ("library " ^ name ^ " is written on itself (" ^ String.concatWith " <- " (dir :: stack) ^ ")")
-          else
-            let val done = List.foldl (visit (dir :: stack)) done (requires dir)
-            in done @ [dir] end
-        end
-    in List.foldl (visit []) [] names end
-  val libraries = librariesBy libraryRequires
+      fun order (implementers : string -> string list) : string list =
+        let
+          fun visit stack (name : string, done : string list) : string list =
+            visitDir stack (name, libraryDir (libDir, name), done)
+          and visitDir (stack : string list) (name : string, dir : string, done : string list) : string list =
+            if List.exists (fn d => d = dir) done then done
+            else if List.exists (fn d => d = dir) stack
+            then raise Usage ("library " ^ name ^ " is written on itself (" ^ String.concatWith " <- " (dir :: stack) ^ ")")
+            else
+              let
+                val done = List.foldl (visit (dir :: stack)) done (requires dir) @ [dir]
+                (* one being visited comes when what it requires has: this
+                   library, and the rest of what it requires *)
+                val waiting = List.filter (fn i => not (List.exists (fn d => d = i) stack)) (implementers dir)
+              in List.foldl (fn (i, done) => visitDir (dir :: stack) (i, i, done)) done waiting end
+        in List.foldl (visit []) [] names end
+      val closure = order (fn _ => [])
+      fun implementersOf dir =
+        case virtuals dir of
+          [] => []
+        | vs => List.filter (fn d => d <> dir andalso List.exists (fn m => List.exists (fn v => v = m) vs) (implements d)) closure
+    in
+      if List.all (List.null o implements) closure then closure else order implementersOf
+    end
+  fun librariesBy (requires : string -> string list) =
+    librariesWith {requires = requires, virtuals = fn _ => [], implements = fn _ => []}
+  fun libraries (libDir : string, names : string list) : string list =
+    let
+      val known = ref [] : (string * order) list ref
+      fun header dir =
+        case List.find (fn (d, _) => d = dir) (!known) of
+          SOME (_, h) => h
+        | NONE => let val h = orderOf dir in known := (dir, h) :: !known; h end
+    in
+      librariesWith {requires = #requires o header, virtuals = #virtuals o header, implements = #implements o header}
+                    (libDir, names)
+    end
+
+  (* The entries of libraries, given in the order they are compiled, in the
+     order a compile takes them: a virtual library's files from the first that
+     declares a virtual module on come after the last library that implements
+     one of its modules, whose files run before them (D22; docs/build.md,
+     Virtual libraries) *)
+  fun virtualTail (virtuals : (string * string) list, es : entry list) : entry list * entry list =
+    let
+      fun here (e : entry) = #when e <> Final andalso List.exists (fn (_, n) => List.exists (fn p => p = n) (#provides e)) virtuals
+      fun go (head, []) = (List.rev head, [])
+        | go (head, e :: rest) = if here e then (List.rev head, e :: rest) else go (e :: head, rest)
+    in go ([], es) end
+  fun arrange (libraries : (string * entry list) list) : entry list =
+    let
+      fun headerOf es = case es of e :: _ => #header e | [] => NONE
+      fun virtualsIn es = case headerOf es of SOME {virtuals, ...} => virtuals | NONE => []
+      fun implementsIn es = case headerOf es of SOME {implements, ...} => implements | NONE => []
+      fun lastImplementer vs =
+        List.foldl (fn ((dir, es), found) => if List.exists (fn m => List.exists (fn v => v = m) vs) (implementsIn es)
+                                             then SOME dir else found) NONE libraries
+      val moved =
+        List.mapPartial (fn (dir, es) =>
+                           case virtualsIn es of
+                             [] => NONE
+                           | vs => Option.map (fn last => (dir, last, virtualTail (vs, es))) (lastImplementer vs))
+                        libraries
+      fun entriesOf (dir, es) =
+        (case List.find (fn (d, _, _) => d = dir) moved of SOME (_, _, (head, _)) => head | NONE => es)
+        @ List.concat (List.map (fn (_, _, (_, tail)) => tail) (List.filter (fn (_, last, _) => last = dir) moved))
+    in List.concat (List.map entriesOf libraries) end
+
+  (* The virtual modules of a compile's libraries, KIND, NAME and the
+     directory of the library that declares each; refused, two libraries that
+     declare one, and two that implement one: a program has one
+     implementation of each (D22) *)
+  fun virtualModules (libraries : (string * entry list) list) : (string * string * string) list =
+    let
+      fun headerOf es = case es of e :: _ => #header e | [] => NONE
+      fun described (kind, name) = "the virtual " ^ (if kind = "functor" then "functor " else "module ") ^ name
+      fun twice what (found : (string * string * string) list) =
+        List.foldl (fn (m as (kind, name, dir), seen) =>
+                      case List.find (fn (k, n, _) => k = kind andalso n = name) seen of
+                        SOME (_, _, other) => raise Usage ("the program has " ^ what ^ " of " ^ described (kind, name) ^ ": the libraries "
+                                                           ^ other ^ " and " ^ dir ^ " (docs/build.md, Virtual libraries)")
+                      | NONE => m :: seen) [] found
+      fun each select = List.concat (List.map (fn (dir, es) =>
+                          case headerOf es of SOME h => List.map (fn (k, n) => (k, n, dir)) (select h) | NONE => []) libraries)
+      val declared = each #virtuals
+      val _ = twice "two declarations" declared
+      val _ = twice "two implementations" (each #implements)
+    in declared end
 
   (* What each scope of a compile sees: its libraries, in the order they are
      compiled, with their entries, what the program names (names) and the

@@ -15,9 +15,13 @@ struct
   (* a library's header, but for its exports: the Library after it. A name
      it requires is an import's word, with what is renamed (BasisManifest);
      shadows are the names of the Basis Library its exports take the place of
-     (docs/build.md, Clashes); strict holds its units to being well-formed *)
+     (docs/build.md, Clashes); strict holds its units to being well-formed.
+     virtuals are the virtual modules it declares, and implements those of a
+     library it requires that it implements, each a structure or a functor
+     (docs/build.md, Virtual libraries; D22) *)
   type header = {requires : string list, friends : string list, views : (string * (kind * string) list) list,
-                 shadows : (kind * string) list, strict : bool}
+                 shadows : (kind * string) list, strict : bool, virtuals : (kind * string) list,
+                 implements : (kind * string) list}
   datatype dec =
       File of string                              (* a path, relative to the build file's directory *)
     | Files of string list
@@ -81,7 +85,7 @@ struct
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
-                  "libraries", "inline", "requires", "exports", "friends", "view", "shadows", "strict",
+                  "libraries", "inline", "requires", "exports", "friends", "view", "shadows", "strict", "virtual",
                   "generate", "preprocessor", "inputs", "outputs"]
 
   (* the words that were the language's and are not now, which no path may
@@ -276,46 +280,92 @@ struct
                SOME instead => error ("the build language has no " ^ s ^ ": " ^ instead)
              | NONE => if List.exists (fn k => k = s) keywords then error ("unexpected " ^ s) else File (reference ("source",word)))
         | word as S _ => File (reference ("source",word))
+      (* the modules a header says are virtual, or implemented: structures
+         and functors (docs/build.md, Virtual libraries) *)
+      fun moduleList what =
+        List.map (fn (k, n) => if k = Str orelse k = Fun then (k, n)
+                               else error ("a " ^ what ^ " module is a structure or a functor: " ^ what ^ " (KIND NAME, ...)"))
+                 (exportList ())
       (* A header's parts, in any order, each once but for its views: what
-         comes before the first declaration of the file *)
-      fun header (requires, exports, friends, views, shadows, strict) =
+         comes before the first declaration of the file. `implements (...)`
+         is a header's, and `implements NAME = ... end` a declaration *)
+      type parts = {requires : string list option, exports : (kind * string) list option, friends : string list option,
+                    views : (string * (kind * string) list) list, shadows : (kind * string) list option, strict : bool,
+                    virtuals : (kind * string) list option, implements : (kind * string) list option}
+      fun header (h : parts) : parts =
         let
           fun once (seen, what) = if isSome seen then error ("a header says " ^ what ^ " once") else ()
           (* a header's view has a list; view NAME alone is a program's *)
           val listed = case !ws of _ :: _ :: {word = W "(", ...} :: _ => true | _ => false
+          val implementsList = case !ws of _ :: {word = W "(", ...} :: _ => true | _ => false
+          val {requires, exports, friends, views, shadows, strict, virtuals, implements} = h
+          fun done () = {requires = requires, exports = exports, friends = friends, views = List.rev views, shadows = shadows,
+                         strict = strict, virtuals = virtuals, implements = implements}
         in
           case peek () of
             SOME (W "requires") =>
-              (ignore (next ()); once (requires, "requires"); header (SOME (libraryList ()), exports, friends, views, shadows, strict))
+              (ignore (next ()); once (requires, "requires");
+               header {requires = SOME (libraryList ()), exports = exports, friends = friends, views = views, shadows = shadows,
+                      strict = strict, virtuals = virtuals, implements = implements})
           | SOME (W "exports") =>
-              (ignore (next ()); once (exports, "exports"); header (requires, SOME (exportList ()), friends, views, shadows, strict))
+              (ignore (next ()); once (exports, "exports");
+               header {requires = requires, exports = SOME (exportList ()), friends = friends, views = views, shadows = shadows,
+                      strict = strict, virtuals = virtuals, implements = implements})
           | SOME (W "friends") =>
-              (ignore (next ()); once (friends, "friends"); header (requires, exports, SOME (paths "build"), views, shadows, strict))
+              (ignore (next ()); once (friends, "friends");
+               header {requires = requires, exports = exports, friends = SOME (paths "build"), views = views, shadows = shadows,
+                      strict = strict, virtuals = virtuals, implements = implements})
           | SOME (W "shadows") =>
-              (ignore (next ()); once (shadows, "shadows"); header (requires, exports, friends, views, SOME (exportList ()), strict))
+              (ignore (next ()); once (shadows, "shadows");
+               header {requires = requires, exports = exports, friends = friends, views = views, shadows = SOME (exportList ()),
+                      strict = strict, virtuals = virtuals, implements = implements})
+          | SOME (W "virtual") =>
+              (ignore (next ()); once (virtuals, "virtual");
+               header {requires = requires, exports = exports, friends = friends, views = views, shadows = shadows,
+                      strict = strict, virtuals = SOME (moduleList "virtual"), implements = implements})
+          | SOME (W "implements") =>
+              if not implementsList then done ()
+              else
+                (ignore (next ()); once (implements, "implements");
+                 header {requires = requires, exports = exports, friends = friends, views = views, shadows = shadows,
+                        strict = strict, virtuals = virtuals, implements = SOME (moduleList "implemented")})
           | SOME (W "view") =>
-              if not listed then (requires, exports, friends, List.rev views, shadows, strict)
+              if not listed then done ()
               else
                 let
                   val () = ignore (next ())
                   val n = case next () of W n => n | S n => n
                   val () = if List.exists (fn (m, _) => m = n) views then error ("a header has two views " ^ n) else ()
-                in header (requires, exports, friends, (n, exportList ()) :: views, shadows, strict) end
+                in
+                  header {requires = requires, exports = exports, friends = friends, views = (n, exportList ()) :: views,
+                         shadows = shadows, strict = strict, virtuals = virtuals, implements = implements}
+                end
           | SOME (W "strict") =>
               (ignore (next ()); if strict then error "a header says strict once" else ();
-               header (requires, exports, friends, views, shadows, true))
-          | _ => (requires, exports, friends, List.rev views, shadows, strict)
+               header {requires = requires, exports = exports, friends = friends, views = views, shadows = shadows,
+                      strict = true, virtuals = virtuals, implements = implements})
+          | _ => done ()
         end
       (* a header's exports are a boundary around all the file declares after
-         it, in one word the Library that a build reads *)
+         it, in one word the Library that a build reads. An implementing
+         library has none: what it implements is reached through the virtual
+         library, and it adds no public module (D22) *)
       fun body () =
-        case header (NONE, NONE, NONE, [], NONE, false) of
-          (NONE, NONE, NONE, [], NONE, false) => decsUntil []
-        | (requires, SOME es, friends, views, shadows, strict) =>
-            let val ds = decsUntil []
-            in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views,
-                        shadows = getOpt (shadows, []), strict = strict}, Library (es, ds)] end
-        | _ => error "a library's header says what it exports"
+        case header {requires = NONE, exports = NONE, friends = NONE, views = [], shadows = NONE, strict = false,
+                     virtuals = NONE, implements = NONE} of
+          {requires = NONE, exports = NONE, friends = NONE, views = [], shadows = NONE, strict = false,
+           virtuals = NONE, implements = NONE} => decsUntil []
+        | {exports = SOME _, implements = SOME _, ...} =>
+            error "an implementing library exports nothing: what it implements is reached through the virtual library (docs/build.md, Virtual libraries)"
+        | {requires, exports, friends, views, shadows, strict, virtuals, implements} =>
+            (case (exports, implements) of
+               (NONE, NONE) => error "a library's header says what it exports"
+             | _ =>
+                 let val ds = decsUntil []
+                 in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views,
+                             shadows = getOpt (shadows, []), strict = strict, virtuals = getOpt (virtuals, []),
+                             implements = getOpt (implements, [])},
+                     Library (getOpt (exports, []), ds)] end)
     in
       let val ds = body ()
       in case peek () of NONE => ds | SOME (W w) => error ("unexpected " ^ w) | SOME (S s) => error ("unexpected \"" ^ s ^ "\"") end

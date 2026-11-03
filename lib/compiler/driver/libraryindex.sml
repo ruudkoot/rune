@@ -41,6 +41,34 @@ struct
     Lexer.tokenize (Source.load (Source.Ascii, path))
     handle IO.Io _ => raise Usage ("cannot read " ^ path)
 
+  (* The virtual modules a file declares at its top level, and those it
+     exports (_export), KIND and NAME each (docs/build.md, Virtual
+     libraries; D22) *)
+  fun dynamicModules (prog : Ast.program) : {virtuals : (string * string) list, exports : (string * string) list} =
+    let
+      fun bare (Ast.StrAscribe (e, _, _, _, _)) = bare e
+        | bare e = e
+      fun top (d, acc as (vs, xs)) =
+        case d of
+          Ast.DStructure (bs, _, _) =>
+            List.foldl (fn ({name, strexp, ...} : Ast.strbind, (vs, xs)) =>
+                          case bare strexp of
+                            Ast.StrDynamic (Ast.DynamicVirtual _, _, _, _, _) => (vs @ [("structure", name)], xs)
+                          | Ast.StrExport _ => (vs, xs @ [("structure", name)])
+                          | _ => (vs, xs)) acc bs
+        | Ast.DFunctor (bs, _, _) =>
+            List.foldl (fn ({name, body, ...} : Ast.funbind, (vs, xs)) =>
+                          case body of
+                            Ast.StrDynamic (Ast.DynamicFunctor (Ast.DynamicVirtual _), _, _, _, _) => (vs @ [("functor", name)], xs)
+                          | Ast.StrExport _ => (vs, xs @ [("functor", name)])
+                          | _ => (vs, xs)) acc bs
+        | Ast.DLocal (_, b, _, _) => List.foldl top acc b
+        | _ => acc
+      val (vs, xs) = List.foldl top ([], []) prog
+    in {virtuals = vs, exports = xs} end
+  fun virtualTokens (toks : Lexer.item vector) : int =
+    Vector.foldl (fn ((Token.VIRTUAL, _), n) => n + 1 | (_, n) => n) 0 toks
+
   fun write {dir : string, root : string, warnings : bool, windows : bool} : unit =
     let
       val file = OS.Path.joinDirFile {dir = dir, file = "library.build"}
@@ -122,12 +150,18 @@ struct
          a directory below the library's: sized/int32.sml *)
       val imported = List.concat (List.map BasisManifest.fixities
                                            (if isSome header then List.map #dir (#program scopes) else List.map #1 written))
+      (* each file's virtual modules and _export declarations, and how many
+         times it says _virtual *)
+      val dynamics = ref [] : (string * string list * {virtuals : (string * string) list, exports : (string * string) list} * int) list ref
       val (analysedRev, afterAll) =
         List.foldl (fn ((p, anns), (acc, fx)) =>
-                      let val (prog, fx') = Parser.parseTokensWith (loadTokens (OS.Path.concat (dir, p)), fx)
-                      in ((p, anns, Deps.analyse (p, prog)) :: acc, fx') end)
+                      let val toks = loadTokens (OS.Path.concat (dir, p))
+                          val (prog, fx') = Parser.parseTokensWith (toks, fx)
+                      in dynamics := (p, anns, dynamicModules prog, virtualTokens toks) :: !dynamics;
+                         ((p, anns, Deps.analyse (p, prog)) :: acc, fx') end)
                    ([], Fixity.extend (Fixity.initial, imported)) listed
       val analysed = List.rev analysedRev
+      val dynamics = List.filter (fn (_, anns, _, _) => hostOf anns <> "only") (List.rev (!dynamics))
       (* the rules (docs/units.md, Well-formed units), of the files Rune
          compiles: a strict library is held to them, and another is told of
          them once *)
@@ -180,6 +214,79 @@ struct
                  else if not (List.exists (fn b => b = n) basisNames)
                  then raise Usage (file ^ ": shadows " ^ k ^ " " ^ n ^ ", which the Basis Library does not have")
                  else ()) shadows
+      (* Virtual libraries (docs/build.md, Virtual libraries; D22): a
+         virtual module is a header's, exported, declared _virtual at the top
+         level of a file the library's build lists itself, and nothing before
+         that file declares its name; an implementing library exports each
+         module it implements, nothing else, of one library it requires, and
+         names nothing that library declares from its first virtual module
+         on, which comes after the implementation *)
+      fun moduleText (k, n) = k ^ " " ^ n
+      val virtuals = case header of NONE => [] | SOME {virtuals, ...} => List.map (fn (k, n) => (kindName k, n)) virtuals
+      val implements = case header of NONE => [] | SOME {implements, ...} => List.map (fn (k, n) => (kindName k, n)) implements
+      fun refuse message = raise Usage (file ^ ": " ^ message ^ " (docs/build.md, Virtual libraries)")
+      val () = List.app (fn m =>
+                 if not (List.exists (fn x => x = m) (getOpt (exports, [])))
+                 then refuse ("says virtual " ^ moduleText m ^ ", which the library does not export")
+                 else if not (List.exists (fn (_, _, {virtuals = vs, ...}, _) => List.exists (fn v => v = m) vs) dynamics)
+                 then refuse ("says virtual " ^ moduleText m ^ ", which no source declares _virtual")
+                 else ()) virtuals
+      val () = List.app (fn (p, _, {virtuals = vs, ...}, count) =>
+                 (List.app (fn m => if List.exists (fn v => v = m) virtuals then ()
+                                    else refuse (p ^ " declares the " ^ moduleText m ^ " _virtual, and the header does not say virtual ("
+                                                 ^ moduleText m ^ ")")) vs;
+                  if count = List.length vs then ()
+                  else refuse (p ^ " says _virtual of a module not at its top level, where a library's virtual modules are declared"))) dynamics
+      val () =
+        case List.find (fn (_, _, {virtuals = vs, ...}, _) => not (List.null vs)) dynamics of
+          NONE => ()
+        | SOME (first, _, _, _) =>
+            let
+              val direct = List.exists (fn P.SUnit (q, _) => relative q = first | _ => false) inside
+              fun earlier ((p, _, f : Deps.file) :: rest) =
+                    if p = first then ()
+                    else (case List.find (fn (_, n) => List.exists (fn (_, m) => m = n) virtuals) (#declares f) of
+                            SOME (_, n) => refuse (p ^ " declares " ^ n ^ ", the name of a virtual module, before " ^ first
+                                                   ^ " declares it virtual")
+                          | NONE => earlier rest)
+                | earlier [] = ()
+            in
+              if direct then earlier analysed
+              else refuse (first ^ " declares a virtual module, and is listed in the library's build, not in one it uses")
+            end
+      val () = List.app (fn (p, _, {exports = xs, ...}, _) =>
+                 List.app (fn m => if List.exists (fn i => i = m) implements orelse List.null implements then ()
+                                   else refuse (p ^ " exports the " ^ moduleText m ^ ", which the header does not say it implements"))
+                          xs) dynamics
+      val () =
+        if List.null implements then ()
+        else
+          let
+            val direct = List.map (fn l => BasisManifest.libraryDir (root, l)) libs
+            fun virtualIn (d, es) = case es of (e : entry) :: _ => List.map (fn m => (m, d, es)) (BasisManifest.virtualsOf e) | [] => []
+            val declared = List.concat (List.map virtualIn (List.filter (fn (d, _) => List.exists (fn x => x = d) direct) written))
+            val owners =
+              List.map (fn m =>
+                          if not (List.exists (fn (_, _, {exports = xs, ...}, _) => List.exists (fn x => x = m) xs) dynamics)
+                          then refuse ("implements the " ^ moduleText m ^ ", which no source exports: _export " ^ moduleText m ^ " ...")
+                          else case List.find (fn (v, _, _) => v = m) declared of
+                                 SOME (_, d, es) => (d, es)
+                               | NONE => refuse ("implements the " ^ moduleText m ^ ", which no library it requires declares virtual"))
+                       implements
+            val (owner, entries) = hd owners
+            val () = case List.find (fn (d, _) => d <> owner) owners of
+                       SOME (other, _) => refuse ("implements modules of two virtual libraries, " ^ libraryShown (root, owner) ^ " and "
+                                                  ^ libraryShown (root, other) ^ ": a library implements one")
+                     | NONE => ()
+            val (_, tail) = BasisManifest.virtualTail (BasisManifest.virtualsOf (hd entries), entries)
+            val late = List.concat (List.map #provides tail)
+          in
+            List.app (fn (p, _, f : Deps.file) =>
+                        case List.find (fn (_, n) => List.exists (fn l => l = n) late) (#uses f) of
+                          SOME (_, n) => refuse (p ^ " uses " ^ n ^ ", which " ^ libraryShown (root, owner)
+                                                 ^ " declares from its first virtual module on, after its implementation")
+                        | NONE => ()) analysed
+          end
       val scopeColumn = case (exports, header) of (NONE, _) => "" | (_, SOME _) => "" | (SOME [], _) => " | -"
         | (SOME es, _) => " | " ^ exportWords es
       val (lines, _) =
@@ -219,7 +326,9 @@ struct
       List.app (fn l => put ("# library: " ^ l ^ "\n")) libs;
       (case (exports, header) of
          (SOME es, SOME {friends, ...}) =>
-           (put ("# exports: " ^ exportWords es ^ "\n");
+           (put ("# exports: " ^ (if List.null es then "-" else exportWords es) ^ "\n");
+            if List.null virtuals then () else put ("# virtual: " ^ exportWords virtuals ^ "\n");
+            if List.null implements then () else put ("# implements: " ^ exportWords implements ^ "\n");
             if List.null friends then () else put ("# friends: " ^ String.concatWith " " friends ^ "\n");
             if List.null shadows then () else put ("# shadows: " ^ exportWords shadows ^ "\n");
             List.app (fn (v, es) => put ("# view: " ^ v ^ " " ^ exportWords es ^ "\n")) views;
