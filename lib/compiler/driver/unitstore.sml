@@ -36,8 +36,10 @@ struct
 
   type ('h, 's) entry = {head : 'h, sections : 's}
 
-  (* an entry's file read: the entry, or why it is none *)
-  datatype ('h, 's) read = Read of ('h, 's) entry | Unread of string
+  (* an entry's file read: the entry and the hash of what it holds, which
+     names its bytes (a link of the units it holds is the same where these
+     are: UnitMemo), or why it is none *)
+  datatype ('h, 's) read = Read of ('h, 's) entry * string | Unread of string
 
   (* What a client's holds says of an entry that a compile might take: it
      stands; it stands, but behind any that simply stands; it does not, and
@@ -45,7 +47,7 @@ struct
   datatype verdict = Stands | StandsBehind | Refused of string
 
   (* the entry found, or why there is none *)
-  datatype ('h, 's) found = Found of ('h, 's) entry | FoundBehind of ('h, 's) entry | Missed of string
+  datatype ('h, 's) found = Found of ('h, 's) entry * string | FoundBehind of ('h, 's) entry * string | Missed of string
 
   (* ---- where things are ---- *)
 
@@ -126,7 +128,7 @@ struct
          in
            if not (P.atEnd r) orelse hash ("read", String.extract (s, at, NONE)) <> h
            then Unread "a damaged entry"
-           else Read {head = head, sections = sections}
+           else Read ({head = head, sections = sections}, h)
          end
          handle P.Bad why => Unread ("a damaged entry: " ^ why)
               | Overflow => Unread "a damaged entry"
@@ -163,10 +165,10 @@ struct
              | NONE => Missed why)
         | try (n :: rest, why, behind) =
             case read format (join (d, n)) of
-              Read e =>
+              Read (e, h) =>
                 (case holds e of
-                   Stands => Found e
-                 | StandsBehind => try (rest, why, case behind of NONE => SOME e | some => some)
+                   Stands => Found (e, h)
+                 | StandsBehind => try (rest, why, case behind of NONE => SOME (e, h) | some => some)
                  | Refused w => try (rest, first (why, w), behind))
             | Unread w => try (rest, first (why, w), behind)
     in
@@ -221,9 +223,10 @@ struct
 
   (* An entry of a key written, whole or not at all, by the hash of its
      head, beside the key's others, and the configuration's about with the
-     first; a store that cannot be written is a store that is not there *)
+     first; a store that cannot be written is a store that is not there. The
+     hash of what it holds, which a read of it gives (read) *)
   fun store ({magic, version, hash, writeHead, writeSections, ...} : ('h, 's) format, settings : (string * string) list)
-            (dir : string, config : string, k : string, {head, sections} : ('h, 's) entry) : unit =
+            (dir : string, config : string, k : string, {head, sections} : ('h, 's) entry) : string =
     let
       val d = keyDir (dir, config, k)
       val u = P.writer ()
@@ -231,7 +234,9 @@ struct
       val p = join (d, hash ("store", P.contents u))
       val body = P.writer ()
       val () = (writeHead (body, head); writeSections (body, sections))
-      val bytes = framed (magic, version, hash, "store", P.contents body)
+      val b = P.contents body
+      val sum = hash ("store", b)
+      val bytes = let val w = P.writer () in P.bytes (w, magic); P.nat (w, version); P.string (w, sum); P.bytes (w, b); P.contents w end
       val about = aboutFile (dir, config)
     in
       (mkdirs d;
@@ -246,7 +251,8 @@ struct
                  OS.FileSys.rename {old = t, new = about})))
              handle IO.Io _ => () | OS.SysErr _ => ());
        publish (p, bytes))
-      handle IO.Io _ => () | OS.SysErr _ => ()
+      handle IO.Io _ => () | OS.SysErr _ => ();
+      sum
     end
 
   (* ---- what is kept beside the entries, by a name ---- *)
@@ -303,4 +309,95 @@ struct
       (mkdirs (OS.Path.dir p); publish (p, framed (magic, version, hash, "side", P.contents body)))
       handle IO.Io _ => () | OS.SysErr _ => ()
     end
+
+  (* ---- the stat memo ---- *)
+
+  (* What a file's stat says of it: its device and inode, its size, and the
+     times it was last written and last changed, as text of whole numbers
+     however wide; and the later of those times in seconds. A file whose
+     stat is the same is the same file, written no more since -- but within
+     the second its times were taken, which `at` guards (clean) *)
+  type stamp = {key : string, latest : LargeInt.int}
+  fun statOf (p : string) : stamp option =
+    (let
+       val st = Posix.FileSys.stat p
+       val m = Posix.FileSys.ST.mtime st
+       val c = Posix.FileSys.ST.ctime st
+       fun word w = SysWord.fmt StringCvt.DEC w
+     in
+       SOME {key = String.concatWith ":" [word (Posix.FileSys.devToWord (Posix.FileSys.ST.dev st)),
+                                          word (Posix.FileSys.inoToWord (Posix.FileSys.ST.ino st)),
+                                          Position.toString (Posix.FileSys.ST.size st),
+                                          LargeInt.toString (Time.toMicroseconds m), LargeInt.toString (Time.toMicroseconds c)],
+             latest = LargeInt.max (Time.toSeconds m, Time.toSeconds c)}
+     end)
+    handle OS.SysErr _ => NONE | Overflow => NONE
+
+  fun nowSeconds () : LargeInt.int = Time.toSeconds (Time.now ())
+
+  (* A stat taken at `at` (seconds, taken before the stat) says what the
+     file held then if the file was last written at least two seconds
+     before: a write after the stat would then have given it later times.
+     One written in the second of the stat, or just before it, is racily
+     clean, and read again (git's rule, with whole seconds and a second
+     more for a clock that is not the filesystem's) *)
+  fun clean ({latest, ...} : stamp, at : LargeInt.int) : bool = latest + 2 <= at
+
+  (* The hash of what files held, by their stat: a file's path and the mode
+     its text was read in, to its stamp, when the stamp was taken, and the
+     hash. Read once, from units/stat-memo of a configuration's directory,
+     and written back where it changed; nothing in a key is read from it but
+     a hash whose stat holds, and a memo that cannot be read or written is a
+     memo that is empty *)
+  type memo = {dir : string, config : string, entries : (stamp * LargeInt.int * string) StringMap.map ref, read : bool ref,
+               dirty : bool ref}
+  val memoSide : (string * stamp * LargeInt.int * string) list side =
+    {magic = "RSM", version = 1, hash = fn (_, text) => P.hash text,
+     write = P.list (fn (w, (k, {key, latest}, at, h)) =>
+                       (P.string (w, k); P.string (w, key); P.string (w, LargeInt.toString latest);
+                        P.string (w, LargeInt.toString at); P.string (w, h))),
+     read = P.rlist (fn r =>
+                       let
+                         val k = P.rstring r
+                         val key = P.rstring r
+                         fun large r = case LargeInt.fromString (P.rstring r) of SOME n => n | NONE => raise P.Bad "not a number"
+                         val latest = large r
+                         val at = large r
+                       in (k, {key = key, latest = latest}, at, P.rstring r) end)}
+  fun memoAt (dir : string, config : string) : memo =
+    {dir = dir, config = config, entries = ref StringMap.empty, read = ref false, dirty = ref false}
+  fun memoRead ({dir, config, entries, read, ...} : memo) : unit =
+    if !read then ()
+    else
+      (read := true;
+       case readSide memoSide (dir, config, "stat-memo") of
+         SOME es => entries := List.foldl (fn ((k, st, at, h), m) => StringMap.insert (m, k, (st, at, h))) StringMap.empty es
+       | NONE => ())
+
+  (* the hash of a file's text, read in mode (a name for the memo), by the
+     memo where its stat holds, else of text (), which the memo then keeps *)
+  fun hashBy (m as {entries, dirty, ...} : memo) (path : string, mode : string, text : unit -> string,
+                                                   hash : string -> string) : string =
+    let
+      val () = memoRead m
+      val k = path ^ "\000" ^ mode
+      val at = nowSeconds ()
+    in
+      case statOf path of
+        NONE => hash (text ())
+      | SOME st =>
+          case StringMap.find (!entries, k) of
+            SOME (st', at', h) =>
+              if #key st = #key st' andalso clean (st', at') then h
+              else let val h = hash (text ()) in entries := StringMap.insert (!entries, k, (st, at, h)); dirty := true; h end
+          | NONE => let val h = hash (text ()) in entries := StringMap.insert (!entries, k, (st, at, h)); dirty := true; h end
+    end
+
+  (* the memo written back, where it changed *)
+  fun memoWrite ({dir, config, entries, dirty, ...} : memo) : unit =
+    if not (!dirty) then ()
+    else
+      (dirty := false;
+       storeSide memoSide (dir, config, "stat-memo", List.map (fn (k, (st, at, h)) => (k, st, at, h)) (StringMap.listItemsi (!entries))))
+
 end

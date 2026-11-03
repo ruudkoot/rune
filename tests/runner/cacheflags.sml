@@ -125,6 +125,8 @@ struct
      apart ("--units", cacheItself), apart ("--cache-dir", cacheItself), apart ("--no-cache", cacheItself),
      apart ("--verify-cache", cacheItself), apart ("RUNE_CACHE", cacheItself), apart ("RUNE_VERIFY_CACHE", cacheItself),
      apart ("RUNE_VERIFY_DUMP", cacheItself), apart ("RUNE_BLANK_ROOTS", cacheItself), apart ("RUNE_BLANK_UNITS", cacheItself),
+     apart ("RUNE_WARM", cacheItself),
+     apart ("RUNE_", "the prefix of every variable an up-to-date compile's record is kept under (UnitMemo)"), apart ("RUNE_VERIFY_UNIT", cacheItself), apart ("RUNE_VERIFY_MASK", cacheItself),
      apart ("RUNE_PARALLEL_DEBUG", "says what -j did"),
      apart ("RUNE_LAYER_DUMP", "says what each unit's exports hash to"),
      apart ("RUNE_STATIC_LOAD", "a load where no code is made; a compile makes code"),

@@ -888,6 +888,8 @@ test-incremental` and so in `make check`, as a scenario of
 | Verification of all hits, `across-*`, S98 | `--verify-cache` finding that an entry taken across a unit that changed is not what compiling the unit gives | the same |
 | Random edits, `@mutate`, `@mutate-verify` | a warm build that disagrees with `--no-cache`, or that `--verify-cache` refuses | `tests/runner/mutationchecks.sml` |
 | The model, `model` | the model of a hit saying otherwise than `tests/incremental/model.expected` | `tests/incremental/model.sml` |
+| Unit by unit, and the mask, `warm-unit-*` | a unit compiled alone, while every other is taken from the cache without its basis, that is not what its entry holds: under its view, what its text names loaded by need, or under the mask of its entry's usages, each structure cut to the paths they name and only the units their binders reach loaded | `tests/runner/warmchecks.sml` |
+| The racy cases, `warm-racy`; up to date, `warm-uptodate` | a warm build that differs from one without the cache after an edit the stat memo or a memo could miss: of the same size within the second of a build, the old text back with its old times, an edit with its time put back, the output overwritten or removed, a new name, a `library.build` above a unit | the same |
 
 The roots come from `CompilerState.names`, not a list: a new root needs no line
 until a compile reads it. Blanking cannot see a flag left at its default, which
@@ -914,11 +916,18 @@ is the random edits at length, 150 steps of each small project with every warm
 build verified and 12 of the compiler's own sources, in the nightly tier; a
 change to a key runs it. `RUNE_CACHE_SEED=N` draws other edits.
 
-What these do not do. None of them sees a read of a table the usages do not
-name while every root is at its value: that is the mask, a unit recompiled with
-its basis cut down to its usages, which lands with lazy load (the build-system
-roadmap's M6). The fingerprint oracle waits for one writer of a fingerprint and
-a basis (M5). `rune-repl`'s own options are not in the oracle's rows, and a
+A unit compiled under the mask, `RUNE_VERIFY_UNIT=NAME` with `RUNE_VERIFY_MASK`
+set (NAME its file or its logical name), sees only what its entry's usages
+name, and the tables by stamp only what the units their binders reach put
+there: it sees a read of a table the usages do not name, which no root
+blanking can, since every root is at its value. Without `RUNE_VERIFY_MASK` the
+unit sees its view, what its text names (units.md, *A warm build*), as a build
+on the warm path does; with `--explain-rebuild` either says how many units it
+loaded. What the mask leaves: the units a used unit's basis names, whose
+tables are all there, used or not.
+
+What these do not do. The fingerprint oracle waits for one writer of a
+fingerprint and a basis (M5). `rune-repl`'s own options are not in the oracle's rows, and a
 pass of these on small projects says that they ran there, nothing more.
 
 **The mutants of the cache** (`tests/runner/cachemutantlist.sml`, E18's and those

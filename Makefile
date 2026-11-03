@@ -2100,7 +2100,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
-               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
+               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/main.sml
@@ -2373,7 +2373,7 @@ bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/ru
 # Incremental edits, cache corruption and externally provisioned corpora.
 INCREMENTAL_BASE_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml \
                          tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml
-INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
+INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
                     tests/runner/mutationproject.sml tests/runner/mutationchecks.sml tests/runner/mutationhistory.sml \
                     tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/soundness.sml \
                     tests/runner/layerchecks.sml tests/runner/incremental-main.sml

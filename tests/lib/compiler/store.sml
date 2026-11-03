@@ -43,10 +43,11 @@ struct
     else case head of n :: _ => if n mod 2 = 1 then S.StandsBehind else S.Refused "no" | [] => S.Refused "empty"
 
   fun sectionOf (f : (int list, string) S.found) : string option =
-    case f of S.Found {sections, ...} => SOME sections | S.FoundBehind {sections, ...} => SOME ("behind " ^ sections) | S.Missed _ => NONE
+    case f of S.Found ({sections, ...}, _) => SOME sections | S.FoundBehind ({sections, ...}, _) => SOME ("behind " ^ sections)
+            | S.Missed _ => NONE
   fun whyOf (f : (int list, string) S.found) : string = case f of S.Missed why => why | _ => ""
 
-  fun put (dir, k, head, text) = S.store (format, settings) (dir, config, k, {head = head, sections = text})
+  fun put (dir, k, head, text) = ignore (S.store (format, settings) (dir, config, k, {head = head, sections = text}))
 
   fun found () =
     let

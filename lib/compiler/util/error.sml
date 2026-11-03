@@ -42,9 +42,16 @@ struct
 
   fun warn (sp, msg) = (warnings := (sp, msg) :: !warnings; note ("warning", sp, msg))
 
+  (* the warnings shown, newest first, where they are kept (SOME): what a
+     compile that is up to date gives again (UnitMemo; the driver keeps them
+     from where it starts to keep what it reads) *)
+  val given : (Source.span * string) list option ref = ref NONE
+  val () = CompilerState.cellRoot ("Error.given", given)
+
   fun flushWarnings () =
     (if !silent then ()
-     else List.app (fn w => TextIO.output (TextIO.stdErr, !show ("warning", #1 w, #2 w) ^ "\n")) (List.rev (!warnings));
+     else (List.app (fn w => TextIO.output (TextIO.stdErr, !show ("warning", #1 w, #2 w) ^ "\n")) (List.rev (!warnings));
+           case !given of SOME ws => given := SOME (!warnings @ ws) | NONE => ());
      warnings := [])
 
   (* Internal invariant violations: not user errors. *)

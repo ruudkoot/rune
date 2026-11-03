@@ -107,6 +107,7 @@ program
     unit compiler:driver/unitmid.sml lib/compiler/driver/unitmid.sml ascii
     unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
     unit compiler:driver/unitcache.sml lib/compiler/driver/unitcache.sml ascii
+    unit compiler:driver/unitmemo.sml lib/compiler/driver/unitmemo.sml ascii
     unit compiler:driver/workspace.sml lib/compiler/driver/workspace.sml ascii
     unit compiler:driver/plan.sml lib/compiler/driver/plan.sml ascii
     unit compiler:driver/context.sml lib/compiler/driver/context.sml ascii
@@ -126,7 +127,7 @@ program
 end
 provenance
   input rune.build 781360b4534b72a97a25e54a812f094beb8e4c1eb8a2ed52b6201e6600bf0c1e
-  input lib/compiler/internal.build 9029c5e20599959728fdecb3bf056d507066d7e054cf573eba79c80d36f0eb25
+  input lib/compiler/internal.build 1075231ae8e51fd67ef36c46c59eedec3d93dc6c7f2aa1208ee286a4a4a57597
   input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
 end

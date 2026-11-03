@@ -242,14 +242,17 @@ struct
                  #environment s := [("RUNE_LINT", "")]; b [] ""; #environment s := [])
     | "S82" => (c "a.sml b.sml"; b [] "a.sml b.sml";
                  (* b.sml's entry made to say what it names of other units
-                    had other schemes: it is no entry, and b.sml is compiled
-                    again *)
+                    had other schemes: its usages hold by their binders,
+                    whose identities are the bases that hold the schemes, so
+                    a hit reads none of them and takes it (the build-system
+                    roadmap's M6); --verify-cache compiles it, finds the
+                    schemes are not what compiling it gives, and fails *)
                  check s "b.sml's entry keeps no scheme"
                    (CachePlant.schemes (only (selectedEntry s "b.sml")) (fn (_, t) => t ^ "!") > 0);
-                 b [] "b.sml";
-                 check s ("the build did not say the schemes differ: " ^ #errors (!(#result s)))
-                   (String.isSubstring "b.sml: its entry had another scheme of " (#errors (!(#result s))));
-                 b [] "")
+                 b [] "";
+                 build s ["--verify-cache"]; fails s;
+                 check s ("--verify-cache did not say the schemes differ: " ^ #errors (!(#result s)))
+                   (String.isSubstring "b.sml: its entry had another scheme of " (#errors (!(#result s)))))
     | "S84" => (fresh s; b [] all; b ["--functor-budget=0"] all; b [] "";
                  build s ["--type-work=1"]; fails s; build s ["--match-work=1"]; fails s; b [] "")
     | "S85" =>

@@ -177,7 +177,7 @@ struct
               val up = P.directory windows d
               val found =
                 if above d then NONE
-                else if exists (P.concat windows (d,"library.build")) then SOME d
+                else if Source.probe (P.concat windows (d,"library.build")) then SOME d
                 else if d=root orelse up=d then NONE
                 else look up
             in known:=StringMap.insert (!known,d,found);found end

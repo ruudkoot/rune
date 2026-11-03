@@ -206,10 +206,15 @@ struct
      not say, because it holds for the input files and not the libraries
      (--default-type, --or-patterns); "" for none, which keeps the key it
      had before there were such settings *)
-  fun key {name : string, text : string, allow : bool, settings : string} : string =
+  (* source: the hash of its text (sourceHash), which the stat memo may
+     give (UnitStore.hashBy) *)
+  fun sourceHash (text : string) : string = UnitBasis.during "cache" (fn () => UnitBasis.hashAt ("source", text))
+  fun keyOf {name : string, source : string, allow : bool, settings : string} : string =
     UnitBasis.during "cache" (fn () =>
-      S.key (UnitBasis.hashAt, [name, UnitBasis.hashAt ("source", text), if allow then "1" else "0"]
+      S.key (UnitBasis.hashAt, [name, source, if allow then "1" else "0"]
                                @ (if settings = "" then [] else [settings])))
+  fun key {name : string, text : string, allow : bool, settings : string} : string =
+    keyOf {name = name, source = sourceHash text, allow = allow, settings = settings}
 
   fun readFile (p : string) : string = S.readFile p
 
@@ -256,12 +261,15 @@ struct
   (* an entry's file read: the entry, or why it is none *)
   fun read (p : string) : found =
     case S.read format p of
-      S.Read e => Found (whole e)
+      S.Read (e, _) => Found (whole e)
     | S.Unread why => Missed why
 
   (* whether find has given an entry that holds across a unit that changed *)
   val across = ref false
   val () = CompilerState.cellRoot ("UnitCache.across", across)
+  (* the hash of what the entry find gave last holds (UnitStore.read) *)
+  val lastSum = ref ""
+  val () = CompilerState.cellRoot ("UnitCache.lastSum", lastSum)
 
   (* Whether an entry stands for this compile: one checked at a lower level
      of the lint than the compile's does not (level); one whose usages hold
@@ -269,9 +277,11 @@ struct
      needs units remapped to load. This format keeps the level and the basis
      its exactness reads among the sections (D24: the build-system roadmap's
      M7 moves what a lookup judges into the head) *)
+  fun lowerLevel (l : int) : S.verdict option =
+    if l < level () then SOME (S.Refused ("its entry was checked at a lower level of the lint (" ^ Int.toString l ^ ")"))
+    else NONE
   fun holds ({head = usages, sections = {level = l, pickle, ...}} : ((string * string) list, sections) S.entry) : S.verdict =
-    if l < level () then S.Refused ("its entry was checked at a lower level of the lint (" ^ Int.toString l ^ ")")
-    else
+    case lowerLevel l of SOME refused => refused | NONE =>
       case UnitBasis.broken usages of
         NONE => if UnitBasis.exactEntry (usages, pickle) then S.Stands else S.StandsBehind
       | SOME u => S.Refused ("its entries used " ^ u ^ ", which is another now")
@@ -283,11 +293,24 @@ struct
      (docs/plans/build-cache-issues.md, issue 15) *)
   fun find (dir : string, config : string, k : string) : found =
     case S.find (format, holds) (dir, config, k) of
-      S.Found e => Found (whole e)
-    | S.FoundBehind e =>
-        if !UnitBasis.remapAllowed then (across := true; Found (whole e))
+      S.Found (e, h) => (lastSum := h; Found (whole e))
+    | S.FoundBehind (e, h) =>
+        if !UnitBasis.remapAllowed then (across := true; lastSum := h; Found (whole e))
         else Missed "its entries hold across a unit that changed, which a program that keeps its units' identities takes none across"
     | S.Missed why => Missed why
+
+  (* The first entry of a key that serves by its binders alone: its usages
+     hold by them and its basis names only units of the session, so that
+     taking it reads nothing of any unit (the warm path's light hit,
+     UnitBasis.lightLoad); none where every one would need a fingerprint *)
+  fun exactHolds ({head = usages, sections = {level = l, pickle, ...}} : ((string * string) list, sections) S.entry) : S.verdict =
+    case lowerLevel l of SOME refused => refused | NONE =>
+    if UnitBasis.exactEntry (usages, pickle) then S.Stands
+    else S.Refused "no entry that holds by its binders alone"
+  fun findExact (dir : string, config : string, k : string) : (entry * string) option =
+    case S.find (format, exactHolds) (dir, config, k) of
+      S.Found (e, h) => SOME (whole e, h)
+    | _ => NONE
 
   (* whether a key has an entry, whatever its usages: a unit likely found,
      which a parallel build leaves to the parent (Parallel) *)
@@ -312,16 +335,29 @@ struct
   fun storePaths (dir : string, config : string, identity : string, ps : (int * int * string) list) : unit =
     S.storeSide paths (dir, config, identity, ps)
 
+  (* The keys a unit binds (UnitBasis.bindKeys), kept by its identity: what
+     a light hit binds the unit's names by without its basis *)
+  val binds : string list S.side =
+    {magic = "RCB", version = version, hash = fn (_, text) => hash ("binds", text),
+     write = P.list P.string, read = P.rlist P.rstring}
+  fun bindsIn (dirs : string list, config : string) (identity : string) : string list option =
+    S.sideIn binds (dirs, config) ("binds " ^ identity)
+  fun storeBinds (dir : string, config : string, identity : string, keys : string list) : unit =
+    S.storeSide binds (dir, config, "binds " ^ identity, keys)
+
   (* store: the entry of a key written, whole or not at all, by the hash of
      its usages, beside the key's others; a cache that cannot be written is
      a cache that is not there *)
-  fun store (dir : string, config : string, k : string,
-             {usages = us, warnings, file, others, pickle, identity, code, mid, level = lvl, schemes} : entry) : unit =
+  (* the hash of what it holds, as a read of it gives it; NONE where it is
+     not kept *)
+  fun storeSum (dir : string, config : string, k : string,
+                {usages = us, warnings, file, others, pickle, identity, code, mid, level = lvl, schemes} : entry) : string option =
     (* code a test switch corrupted (RUNE_REGVERIFY_INJECT) is not kept *)
-    if RegVerify.injecting () then () else
+    if RegVerify.injecting () then NONE else
     UnitBasis.during "cache" (fn () =>
-      S.store (format, settings ())
-              (dir, config, k,
-               {head = us, sections = {warnings = warnings, file = file, others = others, pickle = pickle, identity = identity,
-                                       code = code, mid = mid, level = lvl, schemes = schemes}}))
+      SOME (S.store (format, settings ())
+                    (dir, config, k,
+                     {head = us, sections = {warnings = warnings, file = file, others = others, pickle = pickle, identity = identity,
+                                             code = code, mid = mid, level = lvl, schemes = schemes}})))
+  fun store (dir : string, config : string, k : string, e : entry) : unit = ignore (storeSum (dir, config, k, e))
 end
