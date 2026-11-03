@@ -1337,7 +1337,8 @@ struct
                                        in
                                          err (sp, "_export: the constructor " ^ con ^ " of " ^ path ^ n ^ " lies " ^ lies b
                                                   ^ " in the implementation, where a program compiled against the signature "
-                                                  ^ "alone lays it " ^ lies a ^ " (its argument's type is abstract there)")
+                                                  ^ "alone lays it " ^ lies a
+                                                  ^ (if isSome a then "" else " (its argument's type is abstract there)"))
                                        end
                                    | NONE => ()
                                  end
@@ -2214,8 +2215,6 @@ struct
               val saved = !inBody
               val flexBefore = List.length (!pendingFlex)
               val () = inBody := true
-              (* its overloading settled where it ends, in every mode: the
-                 function compiled once is typed there (--overloading) *)
               (* _export functor F (X : A) : B = strexp: the body ascribed
                  to B opaquely, as _export structure's is, and each datatype
                  B specifies lying as B says (checkExportedLayouts); B is
@@ -2235,6 +2234,8 @@ struct
                       noteModule (moduleResults, n, ascribed)
                     end
                 | body => elabStrexp (bodyEnv, level, top, outerScope, body)
+              (* its overloading settled where it ends, in every mode: the
+                 function compiled once is typed there (--overloading) *)
               val result =
                 overloadContext (fn () => ElabStats.within ElabStats.FunDecl body)
                 handle e => (inBody := saved; raise e)
