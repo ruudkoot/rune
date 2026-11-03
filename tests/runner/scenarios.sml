@@ -137,10 +137,51 @@ struct
         in output (program c "entry-run" "entry" ["p.rbc"]) "42\n" end
     | "broken-required-file" => refused (compiler c which "entry" ["-I", "lib", "needs-z.sml", "-o", "z.rbc"])
           "lib/z.sml declares a module needs-z.sml names, and is not well-formed"
+    (* E8's table (the build-system roadmap's M16): Rune's own libraries and
+       builds, MLton and HOL4's closure are well-formed but for the preludes
+       they declare. MLton and HOL4 are trees of their own, given by
+       RUNE_WELLFORMED_MLTON and RUNE_WELLFORMED_HOL4 (docs/testing.md) *)
+    | "wellformed-rune" =>
+        let
+          fun libraries dir =
+            List.concat (List.map (fn n => let val p = dir ^ "/" ^ n
+                                           in if n = "cache" andalso dir = "lib" then []
+                                              else if isDir (fromRoot p) then libraries p
+                                              else if n = "library.build" then [p] else [] end)
+                                  (entries (fromRoot dir)))
+          val builds = sort (libraries "lib")
+                       @ List.filter (fn n => String.isSuffix ".build" n) (sort (entries root))
+          val units = List.foldl (fn (build, n) =>
+                                    let val r = execute c ("wellformed-" ^ String.translate (fn #"/" => "-" | ch => String.str ch) build) root
+                                                        [#compiler c, "--deps", "--build", build]
+                                    in success r; need (#errors r = "", build ^ ": " ^ #errors r); n + length (lines (#output r)) end)
+                                 0 builds
+        in say (Int.toString units ^ " units of " ^ Int.toString (length builds) ^ " builds, all well-formed but for their preludes\n") end
+    | "wellformed-mlton" =>
+        (case env ("RUNE_WELLFORMED_MLTON", "") of
+           "" => say "SKIP wellformed-mlton: RUNE_WELLFORMED_MLTON names no MLton tree with its build files\n"
+         | dir =>
+             let val r = execute c which (dir ^ "/mlton") [#compiler c, "--deps", "--build", "mlton.build"]
+             in success r; need (#errors r = "", "MLton: " ^ #errors r);
+                need (length (lines (#output r)) = 606, "MLton has 606 units, not " ^ Int.toString (length (lines (#output r))))
+             end)
+    | "wellformed-hol4" =>
+        (case env ("RUNE_WELLFORMED_HOL4", "") of
+           "" => say "SKIP wellformed-hol4: RUNE_WELLFORMED_HOL4 names no directory of HOL4's closure and its boss.build\n"
+         | dir =>
+             let val r = execute c which dir [#compiler c, "--deps", "--build", "boss.build"]
+                 val () = success r
+                 val () = need (#errors r = "", "HOL4: " ^ #errors r)
+                 val files = lines (#output r)
+                 val () = need (length files = 744, "HOL4's closure has 744 units, not " ^ Int.toString (length files))
+                 (* and as a list: Conv.sml parses in the fixity Overlay.sml leaves *)
+                 val flat = execute c (which ^ "-list") dir ([#compiler c, "--deps"] @ files)
+             in success flat; need (length (lines (#output flat)) = 744, "HOL4's closure as a list") end)
     | _ => raise Failed "unknown dependency scenario"
   val depsCases = ["order", "dot", "cycle", "duplicate", "duplicate-unused", "discipline", "entry-unit", "quiet", "stays",
                    "relaxed", "fixity", "fixity-build", "prelude", "prelude-group", "library-warned", "library-strict",
-                   "library-strict-classes", "entry", "broken-required-file"]
+                   "library-strict-classes", "entry", "broken-required-file", "wellformed-rune", "wellformed-mlton",
+                   "wellformed-hol4"]
   val factorial = "265252859812191058636308480000000\n~2\n16158687986375067893760000\nequal\n"
   fun buildPrepare c () =
     let val () = reset c
