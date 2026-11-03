@@ -172,6 +172,11 @@ sig
        windows selects Windows drive/UNC syntax. A root file that is not
        well formed is reported through Failed. *)
     val find : {file : string, windows : bool} -> t option
+    (* `read {file, text, windows}` reads text as the root file at file, as
+       `find` reads one on disk: one an editor holds unsaved.
+
+       A root file that is not well formed is reported through Failed. *)
+    val read : {file : string, text : string, windows : bool} -> t
     (* `candidates {file, windows}` lists where a root file above file would
        be, the nearest first, each path whole. *)
     val candidates : {file : string, windows : bool} -> string list

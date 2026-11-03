@@ -265,6 +265,13 @@
     },
     {
      "kind": "val",
+     "name": "Workspace.read",
+     "spec": "val read : {file : string, text : string, windows : bool} -> t",
+     "doc": "`read {file, text, windows}` reads text as the root file at file, as\n`find` reads one on disk: one an editor holds unsaved.\n\nA root file that is not well formed is reported through Failed.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-workspace.read"
+    },
+    {
+     "kind": "val",
      "name": "Workspace.candidates",
      "spec": "val candidates : {file : string, windows : bool} -> string list",
      "doc": "`candidates {file, windows}` lists where a root file above file would\nbe, the nearest first, each path whole.\n\n",

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 104 of 104 entries documented |
+| Documentation | 105 of 105 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -70,6 +70,7 @@ sig
     type <a href="#type-workspace.t">t</a>
     type <a href="#type-workspace.target">target</a> = {<a href="#fld-workspace.target.name">name</a> : string, <a href="#fld-workspace.target.build">build</a> : string, <a href="#fld-workspace.target.options">options</a> : string list}
     val <a href="#val-workspace.find">find</a> : {<a href="#fld-workspace.find.file">file</a> : string, <a href="#fld-workspace.find.windows">windows</a> : bool} -&gt; t option
+    val <a href="#val-workspace.read">read</a> : {<a href="#fld-workspace.read.file">file</a> : string, <a href="#fld-workspace.read.text">text</a> : string, <a href="#fld-workspace.read.windows">windows</a> : bool} -&gt; t
     val <a href="#val-workspace.candidates">candidates</a> : {<a href="#fld-workspace.candidates.file">file</a> : string, <a href="#fld-workspace.candidates.windows">windows</a> : bool} -&gt; string list
     val <a href="#val-workspace.root">root</a> : t -&gt; string
     val <a href="#val-workspace.libraryroots">libraryRoots</a> : t -&gt; string list
@@ -609,6 +610,23 @@ well formed is reported through Failed.
 | --- | --- | --- |
 | <a name="fld-workspace.find.file"></a>`file` | `string` |  |
 | <a name="fld-workspace.find.windows"></a>`windows` | `bool` |  |
+
+#### <a name="val-workspace.read"></a>`read`
+
+```sml
+val read : {file : string, text : string, windows : bool} -> t
+```
+
+`read {file, text, windows}` reads text as the root file at file, as
+[`find`](#val-workspace.find) reads one on disk: one an editor holds unsaved.
+
+A root file that is not well formed is reported through Failed.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-workspace.read.file"></a>`file` | `string` |  |
+| <a name="fld-workspace.read.text"></a>`text` | `string` |  |
+| <a name="fld-workspace.read.windows"></a>`windows` | `bool` |  |
 
 #### <a name="val-workspace.candidates"></a>`candidates`
 

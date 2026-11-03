@@ -201,12 +201,23 @@ struct
     in List.foldl (fn (file,result) => if List.exists (fn prior => prior=file) result then result else result @ [file]) [] files end
   (* The root file a build is under, which its units are named from. *)
   fun rootFile platform build=C.Workspace.find {file=build,windows=platform=U.Windows}
+  (* and the text of one open in the editor where it is, saved or not *)
+  fun rootFileIn (platform,documents) build =
+    let val windows=platform=U.Windows
+        fun opened path=List.find (fn snapshot:D.snapshot => D.healthy (documents,#uri snapshot) andalso
+          ((case U.native (platform,U.parse (#uri snapshot)) of SOME {path=other,...} => sameFile platform (other,path)
+            | NONE => false) handle U.Invalid => false)) (D.all documents)
+        fun first []=NONE
+          | first (path::rest)=case opened path of
+              SOME snapshot => SOME (C.Workspace.read {file=path,text=LspPosition.text (#content snapshot),windows=windows})
+            | NONE => if (OS.FileSys.access (path,[]) handle OS.SysErr _ => false) then rootFile platform build else first rest
+    in first (C.Workspace.candidates {file=build,windows=windows}) end
   (* The targets a root file names. A file's contexts take them wherever the
      client's folder is, above the root or below it; a sweep of a folder
      inside a workspace (within) takes its builds from discovery alone. A
      root file that does not read shows at its builds. *)
-  fun namedTargets (Workspace {platform,roots,...},path,flags,within) =
-    (case rootFile platform path of NONE => [] | SOME found =>
+  fun namedTargets (Workspace {platform,roots,...},documents,path,flags,within) =
+    (case rootFileIn (platform,documents) path of NONE => [] | SOME found =>
       let val root=pathKey platform (C.Workspace.root found)
           fun holds folder=case nativeKey platform folder of SOME folder => below (folder,root) | NONE => false
       in if within andalso not (List.exists holds (!roots)) then [] else
@@ -214,8 +225,8 @@ struct
            in {name=name,build=uri,flags=flags @ options,variables=[],libraryRoot=NONE}:target end) (C.Workspace.targets found) end)
     handle C.Failed _ => [] | U.Invalid => []
   (* those, then the builds found that they do not name *)
-  fun withNamed (workspace,path,flags,found:target list,within) =
-    let val named=namedTargets (workspace,path,flags,within)
+  fun withNamed (workspace,documents,path,flags,found:target list,within) =
+    let val named=namedTargets (workspace,documents,path,flags,within)
     in named @ List.filter (fn target:target => not (List.exists (fn other:target => #build other= #build target) named)) found end
   (* Whether a file of a library has that one context (D26): off only to
      measure what was before (tools/lsp/contexts.sml --before) *)
@@ -233,7 +244,7 @@ struct
   fun contexts (workspace as Workspace {platform,lib,settings=stored,...},documents,uri) =
     case U.native (platform,U.parse uri) of NONE => [] | SOME {path,key} =>
     let val config=configurationFor (workspace,uri)
-        val targets=if null (#targets config) then withNamed (workspace,path,#flags config,List.map (fn path =>
+        val targets=if null (#targets config) then withNamed (workspace,documents,path,#flags config,List.map (fn path =>
           let val uri=U.original (U.fromPath (platform,path))
           in {name=uri,build=uri,flags= #flags config,variables=[],libraryRoot=NONE}:target end) (discover (workspace,path)),false) else #targets config
         val overlays=List.mapPartial (fn snapshot:D.snapshot =>
@@ -243,7 +254,7 @@ struct
         fun target (target:target) =
           let val session=C.session {lib=SOME (getOpt (#libraryRoot target,getOpt (#libraryRoot config,lib))),flags= #flags target}
               val build=filePath platform (#build target)
-              val project=(C.Project.read (session,{file=build,workspace=rootFile platform build,
+              val project=(C.Project.read (session,{file=build,workspace=rootFileIn (platform,documents) build,
                 variables= #variables config @ #variables target,overlays=overlays,windows=platform=U.Windows})
                 before C.close session) handle e => (C.close session;raise e)
               val sources=List.filter (fn source:C.Project.source => sameFile platform (#file source,path)) (C.Project.sources project)
@@ -294,7 +305,7 @@ struct
           case U.native (platform,U.parse (#uri snapshot)) of NONE => NONE
           | SOME {path,...} => SOME {file=path,text=LspPosition.text (#content snapshot)}) (D.all documents)
         val session=C.session {lib=SOME (getOpt (#libraryRoot config,lib)),flags= #flags config}
-        val project=(C.Project.read (session,{file=build,workspace=rootFile platform path,
+        val project=(C.Project.read (session,{file=build,workspace=rootFileIn (platform,documents) path,
           variables= #variables config,overlays=overlays,windows=platform=U.Windows}) before C.close session)
           handle e => (C.close session;raise e)
         val buildUri=U.original (U.fromPath (platform,build))

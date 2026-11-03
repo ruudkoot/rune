@@ -378,8 +378,9 @@ Without explicit targets, a root file (`rune.workspace`,
 [build.md](build.md), *The workspace*) gives a file its named targets, with
 their options after the settings' flags, whether the root file is inside the
 client's folder or above it; a workspace sweep of a folder inside a workspace
-reads the folder's own builds alone. The root file read is the one on disk: an
-unsaved edit of it counts once it is saved. Beside those, discovery examines
+reads the folder's own builds alone. A root file open in the editor is read as
+it stands, saved or not, and an edit of it plans a file's check again, as an
+edit of a build file does. Beside those, discovery examines
 the document directory and its ancestors up to an owning workspace root,
 following build `use` edges. It does not recursively scan descendants.
 Project source order, scopes and annotations come from `RuneCompiler.Project`,

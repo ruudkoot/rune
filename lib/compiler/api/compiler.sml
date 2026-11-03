@@ -111,6 +111,7 @@ struct
     type t=W.t
     type target=W.target
     fun find (request as {file,...})=guard file (fn () => W.find request)
+    fun read (request as {file,...})=guard file (fn () => W.parse request)
     val candidates=W.candidates
     fun root (workspace : t)= #root workspace
     fun libraryRoots (workspace : t)= #libraryRoots workspace

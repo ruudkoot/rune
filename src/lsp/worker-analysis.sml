@@ -227,14 +227,15 @@ struct
   fun planKey (state,uri,documents)=V.encode (V.Array [V.Bytes uri,
     V.Array (List.map (fn snapshot:D.snapshot => V.Bytes (#uri snapshot)) (D.all documents)),
     V.Object (List.filter (fn (name,_) => not (List.exists (fn other => other=name) ["documents","generation","inputGeneration"])) (V.object state))])
-  fun buildText (snapshot:D.snapshot)=OS.Path.file (#uri snapshot)="MANIFEST" orelse String.isSuffix ".build" (#uri snapshot)
+  fun buildText (snapshot:D.snapshot)=OS.Path.file (#uri snapshot)="MANIFEST" orelse OS.Path.file (#uri snapshot)="rune.workspace"
+    orelse String.isSuffix ".build" (#uri snapshot)
   (* The implicit library of a file in no build (D26), over its directory, with
      the names it uses looked up in its workspace: the workspace's root, or
      else the client's folder that holds it, or else its directory *)
   fun implicitFor (workspace as W.Workspace {platform,lib,roots,...},documents,uri) =
     case (U.native (platform,U.parse uri),D.snapshot (documents,uri)) of
       (SOME {path,key},SOME snapshot) =>
-        let val found=W.rootFile platform path handle C.Failed _ => NONE
+        let val found=W.rootFileIn (platform,documents) path handle C.Failed _ => NONE
             val folder=List.find (fn root => case W.nativeKey platform root of SOME root => W.below (root,key) | NONE => false) (!roots)
             val root=case (found,folder) of (SOME found,_) => C.Workspace.root found
               | (NONE,SOME folder) => W.filePath platform folder
@@ -362,7 +363,7 @@ struct
              SOME (_,project) => SOME project
            | NONE =>
                let val project=C.Project.read (#compiler context,
-                     {file=W.filePath platform (#build selected),workspace=W.rootFile platform (W.filePath platform (#build selected)),
+                     {file=W.filePath platform (#build selected),workspace=W.rootFileIn (platform,documents) (W.filePath platform (#build selected)),
                       variables=variables,overlays=overlays,windows=platform=U.Windows})
                    val all=(#serial planned,project):: !(#projects context)
                in #projects context:=List.take (all,Int.min (4,length all));SOME project end)

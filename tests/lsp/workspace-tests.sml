@@ -77,8 +77,12 @@ struct
           List.map #target (W.contexts (inner,documents,uri (root ^ "/src/inner/b.sml")))=[uri (root ^ "/src/inner/b.build")])
         val below=W.new {platform=U.Posix,lib="lib"}
         val ()=W.setRoots (below,[uri (root ^ "/src")])
-    in check ("a root file above the client's folder gives its targets",
-         List.map #target (W.contexts (below,documents,uri a))=["main",uri (root ^ "/src/other.build")]) end)
+        val ()=check ("a root file above the client's folder gives its targets",
+          List.map #target (W.contexts (below,documents,uri a))=["main",uri (root ^ "/src/other.build")])
+        val _=D.openDocument (documents,{uri=uri (root ^ "/rune.workspace"),languageId="rune-build",version=1,
+          text="roots lib end\ntarget alternative = src/other.build end\n"})
+    in check ("a root file open in the editor is read as it stands, unsaved",
+         List.map #target (W.contexts (workspace,documents,uri a))=["alternative",uri (root ^ "/src/main.build")]) end)
   fun shortNames ()=List.app (fn (name,short) => check (name ^ " shows as " ^ short,W.shortName (U.Posix,name)=short))
     [("file:///project/one.build","one.build"),("file:///a%20b/two%20words.build","two words.build"),
      ("rune","rune"),("loose source","loose source"),("untitled:note","untitled:note")]
