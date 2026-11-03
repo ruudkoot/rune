@@ -259,13 +259,59 @@ struct
                 val ()=ignore(command true[env("RUNEOPT","bin/runeopt"),stack,"-o",native])
             in say(command true[native,subject]) end
     end
+  (* rehash (src/ffi/main.sml; the build-system roadmap's D16, E28): a set's
+     name is the hash of its files, its build files among them. Every set
+     committed is given the name it has, in a copy, since none is changed;
+     an edit of a copy's library.build gives a set of another name, with the
+     same files but that one, which current.build names and a second rehash
+     leaves as it is; --remove-old takes the old set away; and a set whose
+     interface changed is refused. *)
+  fun rehash ()=
+    let val base=directory ^ "/rehash"
+        val ()=(rmTree base;mkdirs base)
+        fun copyTree(from,into)=
+          if isDir from then (mkdirs into;List.app(fn n=>copyTree(from ^ "/" ^ n,into ^ "/" ^ n))(entries from))
+          else write(into,read from)
+        fun current dir=read(dir ^ "/current.build")
+        fun revision dir=case String.fields(fn c=>c= #" ")(hd(lines(current dir))) of
+            words=>(case List.find(fn w=>size w=64)words of SOME r=>r | NONE=>raise Failed("no generation in " ^ dir))
+        fun rehashed(dir,flags)=command true([generator,"rehash","--out",dir] @ flags)
+        val families=["lib/ffi/sdl/generated/native","lib/ffi/sdl/generated/windows32","lib/ffi/sdl/generated/windows64",
+          "lib/ffi/win32/generated/32","lib/ffi/win32/generated/64"]
+        fun committed family=
+          let val copy=base ^ "/" ^ String.translate(fn #"/"=>"-" | c=>str c)family
+              val ()=copyTree(fromRoot family,copy)
+              val before'=current copy
+              val out=rehashed(copy,[])
+          in need(String.isSubstring "unchanged" out andalso current copy=before',
+               "the set of " ^ family ^ " has not the name its files make: " ^ out);copy end
+        val copies=List.map committed families
+        val copy=hd copies
+        val old=revision copy
+        val oldSet=copy ^ "/sets/" ^ old
+        val ()=append(oldSet ^ "/library.build","(* migrated *)\n")
+        val out=rehashed(copy,[])
+        val new=revision copy
+        val ()=need(new<>old andalso String.isSubstring new out,"an edit of a set's build file did not give it another name: " ^ out)
+        val ()=need(exists oldSet,"a rehash without --remove-old took the old set away")
+        val ()=List.app(fn f=>need(read(oldSet ^ "/" ^ f)=read(copy ^ "/sets/" ^ new ^ "/" ^ f),"the rehashed set's " ^ f ^ " differs"))
+          (List.filter(fn f=>f<>"MANIFEST")(entries oldSet))
+        val ()=need(String.isSubstring "unchanged" (rehashed(copy,[])),"a second rehash changed the set")
+        val ()=append(copy ^ "/sets/" ^ new ^ "/native.build","(* again *)\n")
+        val _=rehashed(copy,["--remove-old"])
+        val ()=need(not(exists(copy ^ "/sets/" ^ new)) andalso revision copy<>new,"--remove-old left the old set")
+        val ()=append(copy ^ "/sets/" ^ revision copy ^ "/public_sig.sml","(* changed *)\n")
+        val refused=command false[generator,"rehash","--out",copy]
+        val ()=need(String.isSubstring "interface" refused,"a set whose interface changed was rehashed: " ^ refused)
+    in say("PASS runeffi rehash: " ^ Int.toString(length copies) ^ " committed sets keep their names\n") end
   fun main["native"]=native()
+    | main["rehash"]=rehash()
     | main["publication"]=publication()
     | main["windows",bits]=windows bits
     | main["host",name]=host name
     | main["safe"]=safe "native"
     | main["safe-asan"]=safe "asan"
-    | main _=raise Failed "expected native, publication, windows BITS, safe, safe-asan or host HOST"
+    | main _=raise Failed "expected native, publication, rehash, windows BITS, safe, safe-asan or host HOST"
 end
 val ()=ForeignGeneratorChecks.main(CommandLine.arguments()) handle e=>
   (TextIO.output(TextIO.stdErr,"FAIL foreign generator: " ^ (case e of ForeignGeneratorChecks.Failed s=>s | _=>General.exnMessage e) ^ "\n");
