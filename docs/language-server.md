@@ -398,22 +398,26 @@ no usage, and a constructor added breaks those that used the datatype.
 
 Cold from a store, in process, no file open (`bin/rune-lsp-oracle --focus --store
 DIR --no-fresh --collect`, a seed context having written the sidecars; 2026-11-03,
-at a load of 9 to 18 on 16 processors: seconds are indications, VM instructions
-the claim; lines are the units', the Basis Library's included):
+at a load of 4 to 7 on 16 processors: seconds are indications, VM instructions
+the claim; lines are the program's, the Basis Library's added but on the
+generated build):
 
 | Build | Lines | Units taken from the store | Cold | VM instructions | Live after | A line |
 |---|---:|---:|---:|---:|---:|---:|
-| `rune.build`, a store at `-O0` | 67,338 | 260 of 260 | 0.28-0.33 s | | | |
-| `rune.build`, a store at the defaults | 67,338 | 259 of 260 | 0.80-0.91 s | | 40.6 MiB | 0.62 KB |
-| HOL4's `src/boss` closure | 231,714 | 907 of 910 | 1.8-2.9 s | 1.10G | 101 MiB | 0.45 KB |
+| `rune.build` | 67,338 | 259 of 260 | 0.41 s | 0.34G | 28.3 MiB | 0.43 KB |
+| HOL4's `src/boss` closure | 231,714 | 907 of 910 | 1.37 s | 1.09G | 100.5 MiB | 0.44 KB |
+| A generated build of 1.13M lines, 9,021 files (`gen-as-run.py`, `--domains 32`) | 1,133,346 | 9,015 of 9,016 | 13.8 s | 10.3G | 567 MiB | 0.51 KB |
+| MLton's 606 files | 217,107 | 756 of 764 | 32.8 s | 18.5G | 1,515 MiB | 7.0 KB |
 
 A unit is not taken where no entry of a compile holds by its binders, as on
 `rune.build` at the defaults the Basis's `seal_textio.sml`, whose compile took
 its entry from the frozen libraries across a change, by fingerprints a static
 layer does not say; or where its sidecar is another unit's, two files with one
-text, as HOL4's two `Systeml.sig`. MLton's kept world, with no store, is 3.5
-GiB live, 16.5 KB a line: its signatures are copied into each unit that loads
-them, which only a lazy load would leave unloaded.
+text, as HOL4's two `Systeml.sig`. MLton misses 2 KB a line: its signatures
+are copied into each unit that loads them, so that loaded eagerly its static
+layers hold 7 KB a line, and its kept world with no store, from its own
+elaboration, 3.5 GiB, 16.5 KB a line; only a load by need (M6's lazy view)
+would leave them unloaded, and the analysis does not load so yet.
 
 
 ## Workspaces and build contexts

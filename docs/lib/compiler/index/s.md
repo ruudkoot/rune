@@ -5,12 +5,14 @@
 - `Analysis.share` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.share)
 - `Analysis.signatureAt` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.signatureat)
 - `Analysis.snapshot` (type): [COMPILER_API](../sig/COMPILER_API.md#type-analysis.snapshot)
+- `Analysis.store` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.store)
 - `Analysis.syntaxAt` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.syntaxat)
 - `Project.source` (type): [COMPILER_API](../sig/COMPILER_API.md#type-project.source)
 - `Project.sources` (val): [COMPILER_API](../sig/COMPILER_API.md#val-project.sources)
 - `session` (type): [COMPILER_API](../sig/COMPILER_API.md#type-session)
 - `session` (val): [COMPILER_API](../sig/COMPILER_API.md#val-session)
 - `Syntax` (str): [COMPILER_API](../sig/COMPILER_API.md#str-syntax)
+- `Workspace.store` (val): [COMPILER_API](../sig/COMPILER_API.md#val-workspace.store)
 
 ---
 
