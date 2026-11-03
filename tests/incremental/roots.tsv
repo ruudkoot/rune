@@ -18,6 +18,7 @@ Ty.binders	basis	filled by each unit loaded from its basis, whose identity a usa
 Ty.exnArgs	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Ty.datatypes	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Ty.realizations	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Elaborate.dataCons	basis	filled by each unit loaded from its basis, whose identity a usage holds; what an identity hashes of an import that is a type name
 Translate.primAliases	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Lower.knownBefore	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.importedValues	basis	filled by each unit loaded from its basis, whose identity a usage holds

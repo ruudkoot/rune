@@ -127,7 +127,10 @@ named by placeholders, which are no names of the unit's. A functor marked
 to be inlined ([build.md](build.md), *Inline functors*) has its
 function's Mid written too, its positions in the unit's own source by
 nothing but that, and a unit that expands it depends on it (the usage
-`inl F`). A function marked to be inlined ([build.md](build.md), *Inline
+`inl F`), by the hash kept beside it: of the Mid, of what the copies take
+of the globals it names, and of its lines, of which the basis keeps only
+the hash, so that a basis written again from what it loads as is the same
+bytes. A function marked to be inlined ([build.md](build.md), *Inline
 functions*), and every function that only applies a primitive to its
 parameter, has its Mid written too, as the expansion leaves it, with the
 functions of the unit it calls while the group is under 400 Mid nodes,
@@ -163,15 +166,56 @@ again from the source on loading, and elaborated again by each unit that
 applied it, which then depended on the unit that declared it and on what
 the body's names were bound to.
 
-Static analysis can also record lexical origins in a version-7 basis:
-source ranges for bindings and the specification/implementation relation
-introduced by signature matching. These origins are separate from value,
-exception and generative type stamps. Exception replication shares a
-runtime exception identity while introducing a distinct lexical name.
-Analysis
-freezes query data before replacing a unit's mutable annotations; replay
-restores origins together with its checked basis. The batch driver and
-analysis share build-scope visibility through `CompilerBuildContext`.
+Static analysis can also record lexical origins: source ranges for
+bindings and the specification/implementation relation introduced by
+signature matching. These origins are separate from value, exception and
+generative type stamps. Exception replication shares a runtime exception
+identity while introducing a distinct lexical name. Origins are written
+to a sidecar, apart from the basis and from every hash: `UnitBasis.export`
+gives it beside the bytes, `UnitBasis.load` reads it beside them in the
+order the basis meets them, and a comment that moves a span moves no
+identity. A batch compile records none, so its sidecar is empty. The one
+position a basis keeps is that of a body kept for a later unit to copy,
+whose line table the copy's code holds: its hash is in the usages `inl` and
+`inlv` (*The cache*), so a comment above a marked function is a rebuild of
+what copied it. Analysis freezes query data before replacing a unit's
+mutable annotations; replay restores origins together with its checked
+basis. The batch driver and analysis share build-scope visibility through
+`CompilerBuildContext`.
+
+**Layers** (the build-system roadmap's D1). A basis is two layers, each its
+own bytes, read side by side:
+
+| Layer | Holds | Read by |
+|---|---|---|
+| static | fixity, names, schemes, type names, constructors and how they lie, a primitive's name, signatures, a functor's parameter and summary, an overloading's operators | a compile, an analysis |
+| ABI | a value's and an exception's stamp and flags, a reference's stamps and flags, a functor's global, bodies to copy and their hashes, an overloading's targets, and by name the type a value has in the IRs, primitives, globals that are others, functions known by name, a datatype's table, a realisation, a layout a body fixed | a compile |
+
+The static layer is written whole before the rest of the ABI layer, and
+nothing in it depends on the other: an own name is numbered as the static
+layer meets it, and an import by its place among the static layer's. So a
+compile and an analysis of a unit, which elaborate it alike, write the same
+bytes of the static layer, and only a compile has much to write in the other
+(`make test-layers`). A type name's realisation is the ABI layer's, whole: a
+client's code reads it (`Ty.convert`, `Ty.shapeOf`) and holds what it is made
+of, a word, an int, a pointer, so a key that held its layout alone took a
+client across `int` made `word` behind `:>`, and the link refused the two
+units. How a constructor lies is
+the one fact of a layout elaboration reads, for a parameter's open
+constructor (`Elaborate.descriptors`), so the static layer holds it.
+
+Each export, at every depth, has a hash of the static layer and a hash of both
+(`UnitBasis.exportHashes`): a fingerprint (*Fingerprints*, below) worked out
+without what a client's code is built on, or with it. A compile reads both
+layers, so a usage holds the second and a key of the static layer alone would
+take a client across a function made a closure, an opaque type's new
+realisation or another exception's name (E17). The header holds the hash of
+the static layer with its imports' static fingerprints, beside the identity's.
+
+`RUNE_LAYER_DUMP=DIR` writes each unit's exports and hashes to a file of `DIR`
+as a unit is bound, in a compile or an analysis, and `RUNE_STATIC_LOAD` makes a
+load where no code is made enter nothing of the ABI layer in the compiler's
+tables, which is what an analysis must not need.
 
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
@@ -191,15 +235,23 @@ way that does not depend on what was compiled before it (D3):
 * one of the unit's own is a number, given in the order the writing of its
   basis meets them, so that the same declarations always get the same
   numbers;
-* one of an earlier unit's is that unit's *identity* and its number there.
+* one of an earlier unit's is its place in the unit's *imports*, a table of
+  each kind that says its unit's identity and its number there.
 
 A unit's identity is its logical name (below) and the hash of its basis,
-without what its compile used of the session's counters. A unit whose body
-changed and whose basis did not keeps its identity, so that what was
-compiled against it stays valid. Loading a basis gives the unit's numbers a
-range of each kind of name -- stamps, type names, type variables -- after
-the session's, and registers the range, which is how a name of the session
-is written back as a unit's identity and number.
+without what its compile used of the session's counters and without the
+imports' table: an import is hashed as what it is, not as whose it is. A type
+name is its fingerprint (below), a value or an exception its anchor, the
+facts a client reads of it, what a copy of it is and its type, a signature
+referred to its fingerprint. A unit whose body changed and whose basis did
+not keeps its identity, so that what was compiled against it stays valid, and
+so does a unit whose imports changed in nothing it names (S121), which is
+what a fresh compile of it gives. A unit that names what changed moves, even
+where its own bytes do not (S122, S123): a client that names only it holds
+by its binder, and what it may read through it must have moved it. Loading a
+basis gives the unit's numbers a range of each kind of name -- stamps, type
+names, type variables -- after the session's, and registers the range, which
+is how a name of the session is written back as a unit's identity and number.
 
 **A unit's logical name** says where its file is, and nothing of how a path
 spelt it (`Workspace`, `lib/compiler/driver/workspace.sml`; the build-system
@@ -604,7 +656,8 @@ are marked 2 and a compile at any level takes them.
 An analysis names its units as a build does (*Names*, above), `file#rank`
 being gone: `RuneCompiler.Project.read` takes the workspace, and the same
 source in a build and in the editor has one name. So far only the name is the
-same: an analysis's basis holds origins, which a build's does not.
+same: an analysis's sidecar holds origins, which a build's does not, and an
+analysis knows no back-end fact, so the bases differ.
 
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source
@@ -650,8 +703,8 @@ come back as they are, and in any order as an order it builds in.
 
 Each file is read in the fixity the files before it leave, as a compile
 reads it. A cycle is refused. Inside a structure anything goes, but a name a
-structure `open`ed may bring in is counted as a use where a file of the
-group declares it, which the analysis cannot tell apart.
+structure `open`ed may bring in is counted as a use where another of the
+files declares it, which the analysis cannot tell apart.
 
 The names say the order only where a file is *well-formed* (below). One that
 is not stays where it is written: all before it stays before it and all
@@ -660,7 +713,7 @@ that reaches past it means what the text means, the binder before it or none.
 `rune --deps` says which, with the line, and goes on.
 
 `rune --deps --build FILE` reads a build instead of a list. The order is the
-build's, `local`, `library` and `use` hold as they do in a compile, a file is
+build's, a library's boundary and `use` hold as they do in a compile, a file is
 read in the fixity its place in the build gives it, and the classes and the
 scopes below are the build's.
 
@@ -689,8 +742,8 @@ names a use can be found by. Four rules, the build-system roadmap's D17:
 3. No top-level fixity directive, because the parse of what follows depends
    on it.
 4. No module name declared by two units of one scope. A scope is what a
-   `library`, an `implements` or the first part of a `local` holds, or the
-   rest of the build, so two libraries may each have their own. Two that let
+   library's boundary or an `implements` holds, or the rest of the build, so
+   two libraries may each have their own. Two that let
    out one name into a scope are a clash of imports, a library's matter
    ([build.md](build.md), *Clashes*), not two units'.
 
@@ -723,32 +776,29 @@ does not show is shared if any unit comes after it. In a library the build
 says the class: a `final` file is an entry unit, and `demand` and `seal` files
 are their clients' to depend on, so shared.
 
-A prelude's fixity is known to the graph: a `group` after one reads its files
-in that fixity, so a unit that needs it parses and shows its uses. Choosing
-what of the libraries a program loads, by the names its files use
-(`--basis-deps` shows the choice), reads each file in the fixity the files
-before it leave, a prelude's among them, and what the libraries it sees
-export. A file that does not parse even so, because its fixity comes from a
-library with no header, which no manifest holds, is taken there by its
-tokens, and in a `group` stays where it is written; its compile has the last
-word. A prelude stays where it is written too.
+A prelude's fixity is known to the graph: `rune --deps` reads each file in the
+fixity the files before it leave, a prelude's among them, so a unit that needs
+it parses and shows its uses. So does choosing what of the libraries a program
+loads, by the names its files use (`--basis-deps` shows the choice), from what
+the libraries it sees export. A file that does not parse even so, because its
+fixity comes from a library with no header, which no manifest holds, is taken
+there by its tokens, and `rune --deps --build` keeps it where it is written;
+its compile has the last word. A prelude stays where it is written too.
 
 **Where it shows.** A warning, and `--no-warnings` silences it:
 
 * `rune --deps` lists every break, with its line. That is the question being
   asked, and nothing is lost by the length of the answer.
-* A `group` in a build warns once a build file with how many units and the
-  first, because a group is the one place where a build asks for the order and
-  is given less.
 * `rune --basis-index` warns once a library, with how many units and the
   first, as it does of a library with no header: the person indexing it is the
   person changing it, and a client cannot act on it.
 
-A plain `rune --build` of `files`, and `rune FILE...`, do not warn: nothing
-there asks for the graph, the written order holds whatever the units are,
-and a warm build does not parse a unit it has no use for, which checking
-would cost it every time (parsing all of a build's files cost a no-op 9.2%:
-the build-system roadmap, M1). Ask with `rune --deps --build`.
+A `rune --build`, and `rune FILE...`, do not warn: nothing there asks for the
+graph, since a build lists its files in the order they are compiled and the
+written order holds whatever the units are; and a warm build does not parse
+a unit it has no use for, which checking would cost it every time (parsing
+all of a build's files cost a no-op 9.2%: the build-system roadmap, M1). Ask
+with `rune --deps --build`.
 
 **`strict`.** A library says `strict` in its header ([build.md](build.md), *A
 library's header*) to make `--basis-index` refuse a unit that is not

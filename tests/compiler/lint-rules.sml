@@ -517,6 +517,35 @@ struct
       back ("bytes that are no unit", "not a unit", "UnitFile.read")
     end
 
+  (* ---- a unit's basis written again (UnitBasis.sameAgain, basis-rt): what it
+     loads as is what it was, and a byte of it another is refused *)
+  fun bases () =
+    let
+      val text = "signature S = sig type t val x : t end\n"
+                 ^ "functor F (X : S) = struct datatype d = D of X.t val y = D X.x end\n"
+                 ^ "structure A = F (struct type t = int * int val x = (1, 2) end)\n"
+      val () = UnitBasis.startSession ()
+      val () = (Pass.whole := false; CompilerSettings.target := "registers")
+      val file = Source.fromString ("basis-rt.sml", text)
+      val () = Source.register file
+      val (ds, fx) = Parser.parseTokensWith (Lexer.tokenize file, Fixity.initial)
+      val env = ref Env.initial
+      val start = UnitBasis.begin (!env, Fixity.initial)
+      val () = Elaborate.elabTop (env, ds)
+      val () = Elaborate.finish ()
+      val {exported, loaded, ...} =
+        Pipeline.unitThrough {start = start, name = "basis-rt.sml", file = "basis-rt.sml", text = fn () => text,
+                              mode = Source.Ascii, decs = ds, delta = !Elaborate.lastDelta, fixity = fx, used = [], fresh = false}
+      val pickle = #pickle exported
+      val at = String.size pickle - 2
+      val changed = String.substring (pickle, 0, at) ^ str (chr ((ord (String.sub (pickle, at)) + 1) mod 256))
+                    ^ String.extract (pickle, at + 1, NONE)
+      val check = UnitBasis.sameAgain ({start = start, name = "basis-rt.sml", file = "basis-rt.sml", mode = Source.Ascii}, loaded)
+    in
+      checked ("basis-rt: a unit's own bytes", fn () => check pickle, "");
+      checked ("basis-rt: another byte", fn () => check changed, "written again from what it loads as differs")
+    end
+
   (* ---- LowLint's rules that no fault after lower reaches (M4;
      the jobs faults/lower:KIND): each refused on Low made by hand. funcR: a function
      with these parameters, variables, captured values, blocks and
@@ -576,6 +605,7 @@ struct
      midRules ();
      lowRules ();
      codes ();
+     bases ();
      levels ();
      lowWays ();
      directed ();

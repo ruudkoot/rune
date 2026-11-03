@@ -6,7 +6,6 @@ files
   syntax/ast.sml
   syntax/parser.sml
   syntax/incremental.sml
-  api/prelude.sml
   api/session.sml
   api/build-query.sml
   api/node-types.sml

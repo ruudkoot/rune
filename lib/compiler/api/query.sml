@@ -81,19 +81,17 @@ struct
           let val source=case input of CompilerSession.Text source => source
                 | CompilerSession.Loaded a => #source a
                 | CompilerSession.MidInput {source,...} => source
-          in (source,BasisManifest.namesOf (Lexer.tokenize (Source.fromStringIn (#mode source,#file source,#text source)),mentioned)) end
+          in (source,CompilerPrelude.usedBy (#file source,Lexer.tokenize (Source.fromStringIn (#mode source,#file source,#text source)),mentioned)) end
         val inputs=List.map (fn input => #1 (source (input,StringMap.empty))) (!sources)
         val mentioned=List.foldl (fn (input,m) => #2 (source (input,m))) StringMap.empty (!sources)
         val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,mentioned=mentioned,building=NONE}
-        val libraries=LibraryScope.walk (LibraryScope.bothSite (env,fixity),#scopes plan)
-        fun library entries =
-          let fun unit (e : BasisManifest.entry) =
-                let val text= #text (Source.readFile (Source.Ascii,BasisManifest.path e))
-                    val ds=parse {file=BasisManifest.path e,text=text,mode=Source.Ascii}
-                    val ()=Elaborate.allowPrim:=(case #lib config of SOME root => #dir e=root ^ "/basis" | NONE => false)
-                in Elaborate.elabTop (env,ds) end
-          in LibraryScope.group (libraries,entries,fn () => List.app unit entries) end
-        val ()=List.app library (#groups plan)
+        val libraries=LibraryScope.walk (env,fixity,ref StringMap.empty,#scopes plan)
+        fun unit (e : BasisManifest.entry) =
+          let val text= #text (Source.readFile (Source.Ascii,BasisManifest.path e))
+              val ds=parse {file=BasisManifest.path e,text=text,mode=Source.Ascii}
+              val ()=Elaborate.allowPrim:=(case #lib config of SOME root => #dir e=root ^ "/basis" | NONE => false)
+          in Elaborate.elabTop (env,ds) end
+        val ()=LibraryScope.libraries (libraries,#groups plan,fn (entries,()) => List.app unit entries,())
         val ()=LibraryScope.program libraries
         (* the user's declarations recorded for their node types (CompilerNodeTypes) *)
         val ()=(Elaborate.forgetLintRecords ();Elaborate.lintRecords:=true)

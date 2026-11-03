@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 95 of 95 entries documented |
+| Documentation | 94 of 94 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -90,7 +90,6 @@ sig
     val <a href="#val-project.sources">sources</a> : t -&gt; source list
     val <a href="#val-project.inputs">inputs</a> : t -&gt; input list
     val <a href="#val-project.libraries">libraries</a> : t -&gt; string list
-    val <a href="#val-project.cachedirectories">cacheDirectories</a> : t -&gt; string list
     val <a href="#val-project.fingerprint">fingerprint</a> : t -&gt; string
   end
   structure <a href="#str-analysis">Analysis</a> :
@@ -729,7 +728,7 @@ val buildLinks : session * {file:string,text:string,variables:(string*string) li
 
 `buildLinks (session, request)` expands complete build path tokens.
 
-Source/build/cache paths use the build directory and configured path
+Source and build paths use the build directory and configured path
 variables. Libraries use the same directory resolver as the compiler.
 Unfinished quotes and unresolved variables are omitted. This query
 performs no filesystem reads or execution; offsets include quotes.
@@ -803,8 +802,8 @@ val sources : t -> source list
 val inputs : t -> input list
 ```
 
-`inputs project` is the captured build and group-discovery text.
-Normal ordered sources need not be parsed to discover membership.
+`inputs project` is the captured text of the build files. Sources need
+not be read to discover membership.
 
 #### <a name="val-project.libraries"></a>`libraries`
 
@@ -814,15 +813,6 @@ val libraries : t -> string list
 
 `libraries project` lists library-header dependencies in source order.
 
-#### <a name="val-project.cachedirectories"></a>`cacheDirectories`
-
-```sml
-val cacheDirectories : t -> string list
-```
-
-`cacheDirectories project` lists declared cache paths. Reading a
-project does not create or write these directories.
-
 #### <a name="val-project.fingerprint"></a>`fingerprint`
 
 ```sml
@@ -830,7 +820,7 @@ val fingerprint : t -> string
 ```
 
 `fingerprint project` identifies the captured plan, configuration
-and discovery inputs. It is not a persisted analysis snapshot.
+and inputs. It is not a persisted analysis snapshot.
 
 ### <a name="str-analysis"></a>`Analysis`
 

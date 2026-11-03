@@ -1,23 +1,33 @@
-(* The compiler's scoped project model. Input callbacks let command-line
-   builds and editor overlays share source ordering and annotations. *)
+(* The compiler's scoped project model: what one build file says, with what
+   it uses, or what the command line says in its place. Input callbacks let
+   command-line builds and editor overlays share source ordering and
+   annotations. This is the reader of the build language: a library's index,
+   a compile, an editor and the plan's text all go through it (D6). *)
 structure CompilerProject =
 struct
   datatype step=SUnit of string * string list
-    | SLocal of step list * step list
     | SLibrary of (BuildFile.kind * string) list * step list
     | SUse of string * step list
     | SImplements of string * step list
   type input={path:string,text:string,revision:string}
   (* references: each path a build file names of a source or of a build file,
-     with the build file, as the build file spells them but for the directory;
-     illFormed: each build file with a group that is not all well-formed, and
-     what breaks a rule there (Deps.illFormed) *)
-  type plan={steps:step list,caches:string list,libraries:string list,inputs:input list,inline:string list,
-             inlineValues:string list,references:(string*string) list,
-             illFormed:(string*(Source.span*string) list) list}
+     with the build file, as the build file spells them but for the directory *)
+  (* header: the file's, where it is a library's *)
+  type plan={steps:step list,libraries:string list,header:BuildFile.header option,inputs:input list,inline:string list,
+             inlineValues:string list,references:(string*string) list}
   exception Invalid of string
   fun modeOf (default,annotations)=List.foldl (fn (annotation,mode) =>
     getOpt (Source.modeNamed annotation,mode)) default annotations
+  (* what a file is to a program, of a library (docs/build.md, A library's
+     build file): the last that its annotations name *)
+  fun classOf annotations=
+    case List.filter (fn annotation => List.exists (fn class => class=annotation) ["always","demand","seal","final"]) annotations of
+      [] => "demand" | classes => List.last classes
+  (* what a command line says, which is a plan too: the files, in order, and
+     the libraries *)
+  fun ofFiles {files:string list,libraries:string list} : plan=
+    {steps=List.map (fn file => SUnit (file,[])) files,libraries=libraries,header=NONE,inputs=[],inline=[],
+     inlineValues=[],references=[]}
   fun alpha c=(c>= #"a" andalso c<= #"z") orelse (c>= #"A" andalso c<= #"Z")
   fun lower text=String.map (fn c => if c>= #"A" andalso c<= #"Z" then Char.chr (Char.ord c+32) else c) text
   fun normalize windows path =
@@ -87,39 +97,19 @@ struct
   fun inputKey windows path =
     String.concatWith "/" (List.filter (fn arc => arc<>".")
       (String.fields (fn c => c = #"/") (normalize windows path)))
-  fun plan {file,defaultMode,windows,readBuild,
-            syntax:Source.mode*string*Fixity.env -> Ast.program*Fixity.env} : plan =
+  fun fileName path=List.last (String.fields (fn c => c = #"/") path)
+  (* a build file's plan as Rune compiles it; with hosts, with the files the
+     other SML systems have alone too (host=only), which a library's index
+     lists for them *)
+  fun planWith {file,windows,readBuild,hosts:bool} : plan =
     let val file=normalize windows file
         val root=directory windows file
-        val caches=ref []
         val libraries=ref []
+        val header=ref NONE : BuildFile.header option ref
         val inline=ref [] : string list ref
         val inlineValues=ref [] : string list ref
         val inputs=ref [] : input list ref
         val references=ref [] : (string*string) list ref
-        val illFormed=ref [] : (string*(Source.span*string) list) list ref
-        (* the fixity a prelude leaves, which is all that a group's files
-           may be read in before they are compiled (Deps): the preludes in
-           scope not yet read, the newest first, and what those read left *)
-        val preludes=ref [] : (Source.mode*string) list ref
-        fun added (after:Fixity.env,before':Fixity.env)=
-          List.take (#list after,length (#list after)-length (#list before'))
-        val known=ref Fixity.initial
-        fun isPrelude annotations=List.exists (fn annotation => annotation="prelude") annotations
-        fun notePrelude (annotations,file)=
-          if isPrelude annotations then preludes:=(modeOf (defaultMode,annotations),file) :: !preludes else ()
-        fun fixityHere ()=
-          (known:=List.foldr (fn ((mode,file),fixity) => #2 (syntax (mode,file,fixity)) handle Error.CompileError _ => fixity)
-                             (!known) (!preludes);
-           preludes:=[];
-           !known)
-        (* a boundary: what a prelude in it leaves stays in it, but for what
-           it lets out, as a compile has it (layout, below) *)
-        fun scoped (inner,out)=
-          let val before'=fixityHere ()
-              val result=inner ()
-              val after=fixityHere ()
-          in known:=Fixity.extend (before',List.filter out (added (after,before')));result end
         val captured=ref StringMap.empty : input StringMap.map ref
         val completed=ref StringMap.empty : step list StringMap.map ref
         fun capture path =
@@ -136,6 +126,7 @@ struct
           let
               val declarations=BuildFile.parse (file,capture file)
               val here=directory windows file
+              val library=fileName file="library.build"
               fun path name=normalize windows (BuildFile.expandFrom {isAbsolute=absolute windows,concat=concat windows,root=root} (here,name))
                 handle BuildFile.Error message => raise Invalid (file ^ ": " ^ message)
               (* a path the build file itself chooses, not a variable *)
@@ -144,54 +135,39 @@ struct
                 in if String.isPrefix "$(" name then () else references:=(file,target) :: !references;target end
               (* a file the other SML systems have alone is not Rune's *)
               fun unit (annotations,file)=
-                if List.exists (fn annotation => annotation="host=only") annotations then []
-                else (notePrelude (annotations,file);[SUnit (file,annotations)])
+                if not hosts andalso List.exists (fn annotation => annotation="host=only") annotations then []
+                else [SUnit (file,annotations)]
               fun steps (annotations,declarations)=List.concat (List.map (fn declaration => step (annotations,declaration)) declarations)
               and step (annotations,declaration)=
                 case declaration of
                   BuildFile.File name => unit (annotations,named name)
                 | BuildFile.Files names => List.concat (List.map (fn name => unit (annotations,named name)) names)
-                | BuildFile.Group names =>
-                    let val fixity=fixityHere ()
-                        val mode=modeOf (defaultMode,annotations)
-                        val analysed=List.map (fn name => let val file=named name
-                                val read=Deps.analyseUnit (file,#1 (syntax (mode,file,fixity)))
-                                  handle Error.CompileError (span,_) => Deps.unread (file,span)
-                            in if isPrelude annotations then Deps.declared read else read end) names
-                        val ()=case Deps.illFormed (List.map (fn f => Deps.Unit (f,NONE)) analysed) of
-                                 [] => ()
-                               | findings => illFormed:=(file,findings) :: !illFormed
-                        val (ordered,_)=Deps.order analysed handle Deps.Graph message => raise Invalid (file ^ ": " ^ message)
-                    in List.map (fn f:Deps.file => SUnit (#path f,annotations)) ordered end
-                | BuildFile.Local (a,b) =>
-                    let val before'=fixityHere ()
-                        val first=steps (annotations,a)
-                        val after1=fixityHere ()
-                        val second=steps (annotations,b)
-                    in known:=Fixity.afterLocal (before',after1,fixityHere ());[SLocal (first,second)] end
                 | BuildFile.Library (exports,declarations) =>
-                    scoped (fn () => [SLibrary (exports,steps (annotations,declarations))],
-                            fn (n,_) => List.exists (fn export => export=(BuildFile.Fix,n)) exports)
+                    (* a boundary is a library's: a directory with a library.build *)
+                    if library then [SLibrary (exports,steps (annotations,declarations))]
+                    else raise Invalid (file ^ ": a library's boundary belongs in its library.build")
                 | BuildFile.Use name => let val included=named name
                     in [SUse (pathKey windows included,read (included,key :: stack,annotations))] end
-                | BuildFile.Implements (name,declarations) =>
-                    scoped (fn () => [SImplements (name,steps (annotations,declarations))],fn _ => false)
+                | BuildFile.Implements (name,declarations) => [SImplements (name,steps (annotations,declarations))]
                 | BuildFile.Annotate (more,declarations) => steps (annotations @ more,declarations)
-                | BuildFile.Cache cache => (caches:=path cache :: !caches;[])
-                | BuildFile.Libraries names => (libraries:= !libraries @ names;[])
-                | BuildFile.Header {requires,...} =>
-                    if List.last (String.fields (fn c => c = #"/") file)="library.build"
-                    then (libraries:= !libraries @ requires;[])
+                | BuildFile.Libraries names =>
+                    if isSome (!header) then raise Invalid (file ^ ": a library with a header says what it is written on with requires")
+                    else (libraries:= !libraries @ names;[])
+                | BuildFile.Header (given as {requires,...}) =>
+                    if library then (if null stack then header:=SOME given else ();libraries:= !libraries @ requires;[])
                     else raise Invalid (file ^ ": a header belongs to a library's library.build")
                 | BuildFile.Inline names => (inline:= !inline @ names;[])
                 | BuildFile.InlineVal names => (inlineValues:= !inlineValues @ names;[])
               val result=steps (annotations,declarations)
+              val ()=if library andalso List.exists (fn SLibrary _ => true | _ => false) result andalso length result>1
+                     then raise Invalid (file ^ ": all source files belong inside the library export boundary") else ()
               val ()=completed:=StringMap.insert (!completed,key,result)
           in result end end
         val steps=read (file,[],[])
-    in {steps=steps,caches=List.rev (!caches),libraries= !libraries,inputs=List.rev (!inputs),inline= !inline,
-        inlineValues= !inlineValues,references=List.rev (!references),illFormed=List.rev (!illFormed)} end
-    handle BuildFile.Error message => raise Invalid message | Deps.Graph message => raise Invalid message
+    in {steps=steps,libraries= !libraries,header= !header,inputs=List.rev (!inputs),inline= !inline,
+        inlineValues= !inlineValues,references=List.rev (!references)} end
+    handle BuildFile.Error message => raise Invalid message
+  fun plan {file,windows,readBuild} : plan = planWith {file=file,windows=windows,readBuild=readBuild,hosts=false}
   (* A plan's units as the rules read them (Deps.illFormed), each file in the
      fixity its place in the build gives it, as a compile reads it, from
      fixity on: what a boundary keeps stays inside it, and a build file used
@@ -213,10 +189,6 @@ struct
                   in (Deps.analyseUnit (file,program),left) end
                   handle Error.CompileError (span,_) => (Deps.unread (file,span),fixity)
             in ([Deps.unitOf (library,annotations,read)],fixity) end
-        | one (SLocal (first,second),fixity)=
-            let val (private,fixity1)=walk (first,fixity)
-                val (public,fixity2)=walk (second,fixity1)
-            in (Deps.Scope private :: public,Fixity.afterLocal (fixity,fixity1,fixity2)) end
         | one (SLibrary (exports,inner),fixity)=
             let val (within,after)=walk (inner,fixity)
                 fun out (n,_)=List.exists (fn export => export=(BuildFile.Fix,n)) exports
@@ -229,10 +201,9 @@ struct
                  in used:=StringMap.insert (!used,key,added (after,fixity));(within,after) end)
         | one (SImplements (_,inner),fixity)=([Deps.Scope (#1 (walk (inner,fixity)))],fixity)
     in #1 (walk (steps,fixity)) end
-
   (* whether all that steps declare stands behind a boundary of their own *)
   fun bounded steps=List.all (fn SUnit _ => false | SLibrary _ => true | SImplements _ => true
-    | SLocal (_,second) => bounded second | SUse (_,inner) => bounded inner) steps
+    | SUse (_,inner) => bounded inner) steps
   (* Reaching in (docs/build.md, D10): a directory with a library.build is a
      library, the deepest over a path being its own, and a library is reached
      through its interface. What each build file names under a library not its
@@ -271,7 +242,6 @@ struct
     let val used=ref [] : string list ref
         fun all steps=List.concat (List.map one steps)
         and one (SUnit unit)=[unit]
-          | one (SLocal (a,b))=all a @ all b
           | one (SLibrary (_,steps))=all steps
           | one (SImplements (_,steps))=all steps
           | one (SUse (file,steps))=if List.exists (fn prior => prior=file) (!used) then []

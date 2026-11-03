@@ -100,7 +100,7 @@ struct
                         val library= #kind item="library"
                         val accepted=if library then directory andalso
                               (OS.FileSys.access (P.concat windows (path,"library.build"),[]) handle OS.SysErr _ => false)
-                            else #kind item<>"directory" orelse directory
+                            else true
                         val continuation=if directory andalso not library andalso tail="" then "/" else ""
                         val completed=if library then name else parent ^ name ^ continuation ^ tail
                         val found=if accepted then candidate (name ^ continuation,completed,

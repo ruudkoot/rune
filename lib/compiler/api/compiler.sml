@@ -121,7 +121,6 @@ struct
     fun sources (Project {sources,...})=sources
     fun inputs (Project {inputs,...})=inputs
     fun libraries (Project {plan,...})= #libraries plan
-    fun cacheDirectories (Project {plan,...})= #caches plan
     fun fingerprint (Project {fingerprint,...})=fingerprint
     fun buildSyntax (request as {file,...})=guard file (fn () => C.owned (fn () =>
       let val result=CompilerBuildQuery.inspect request
@@ -157,19 +156,12 @@ struct
                 if List.exists (fn (_,other,_) => other<>text) rest then invalid "multiple open overlays refer to the same project input"
                 else let val source=Source.fromStringIn (mode,path,text)
                      in Source.register source;source end end
-          val sourceInputs=ref [] : input list ref
           fun build path =
             let val source=load (Source.Ascii,path)
             in {text= #text source,revision=Pickle.hash ("ascii:" ^ #text source)} end
-          (* a source the plan reads, in the fixity its place gives it *)
-          fun syntax (mode,path,fixity) =
-            let val source=load (mode,path)
-                val revision=Pickle.hash (Source.modeName mode ^ ":" ^ #text source)
-                val ()=sourceInputs:={file=path,text= #text source,mode=Source.modeName mode,kind="source",revision=revision} :: !sourceInputs
-            in Parser.parseTokensWith (Lexer.tokenize source,fixity) end
-          val plan=P.plan {file=file,defaultMode=mode,windows=windows,readBuild=build,syntax=syntax}
+          val plan=P.plan {file=file,windows=windows,readBuild=build}
           val inputs=List.map (fn {path,text,revision} =>
-            {file=path,text=text,revision=revision,mode="ascii",kind="build"}) (#inputs plan) @ List.rev (!sourceInputs)
+            {file=path,text=text,revision=revision,mode="ascii",kind="build"}) (#inputs plan)
           val units=P.units (#steps plan)
           val sources=ListPair.map (fn ((path,annotations),ordinal) =>
             {file=path,annotations=annotations,mode=Source.modeName (P.modeOf (mode,annotations)),ordinal=ordinal})
@@ -184,7 +176,6 @@ struct
           val ()=List.app (fn ({file,text=body,mode,kind,...}:input) =>
             (text file;text mode;text kind;text body)) inputs
           val ()=Pickle.list Pickle.string (writer,#libraries plan)
-          val ()=Pickle.list Pickle.string (writer,#caches plan)
           val scope=W.ofBuild {file=file,workspace=workspace,lib= #lib config,windows=windows}
           val ()=text (#root scope)
           val ()=Pickle.list Pickle.string (writer,#libraries scope)
@@ -226,15 +217,12 @@ struct
           val (steps,fingerprint,libraries,scope,building)=case project of NONE =>
               (List.map (fn input:input => CompilerProject.SUnit (#file input,#annotations input)) inputs,NONE,[],
                W.ofFiles {file=case inputs of first :: _ => #file first | [] => ".",workspace=NONE,lib=lib,windows=W.onWindows ()},NONE)
-            | SOME (Project.Project {owner=projectOwner,plan,sources,inputs=captured,fingerprint,scope}) =>
+            | SOME (Project.Project {owner=projectOwner,plan,sources,fingerprint,scope,...}) =>
                 let val ()=if owner=projectOwner then () else invalid "project belongs to another compiler context"
                     val ()=if length inputs=length sources then () else invalid "analysis input count differs from the project"
                     val ()=ListPair.app (fn (input:input,source:Project.source) =>
                       if #file input= #file source andalso #mode input= #mode source andalso #annotations input= #annotations source
                       then () else invalid "analysis inputs differ from the project's ordered source occurrences") (inputs,sources)
-                    val ()=List.app (fn captured:Project.input => if #kind captured<>"source" then () else
-                      if List.exists (fn input:input => #file input= #file captured andalso #mode input= #mode captured
-                        andalso #text input= #text captured) inputs then () else invalid "group discovery input changed after project resolution") captured
                 in (#steps plan,SOME fingerprint,#libraries plan,scope,Option.map #path (List.find (fn _ => true) (#inputs plan))) end
       in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,scope=scope,building=building,cancelled=cancelled}) end)
       handle Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]

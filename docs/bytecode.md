@@ -269,31 +269,96 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    14 (UnitBasis.version)
+version     varint    23 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
                                 is not read
 name        varint len, bytes   the unit's name
+hash        varint len, bytes   the hash of its identity
+static      varint len, bytes   the hash of its static layer
 units       varint n, n × string   the identities of the units it names
+imports     3 × (varint n, n × (varint, varint))   of each kind of name, what
+                                it names of other units: the unit's place
+                                in units, and the name's number there
+referred    varint n, n × varint   the units whose signatures the static
+                                layer refers to, by their places in units
 counts      3 × varint   its own names of each kind
-            ... the fixity directives, the environment, the signatures,
-                functors (each its signature: its parameter's and its
-                body's summary; the global of its function; and the
-                function's Mid where it is marked to be inlined), its
-                functions copied into the units that name them (each its
-                global and its Mid), the schemes of the globals those name
-                that nothing else types, and the overloading it
-                declared, and the tables of its own names, each name of a
-                kind written as built in, the unit's own (a number), or
-                another unit's (its place, a number) ...
+size        varint    the bytes of the static layer
+            ... the static layer: the fixity directives, the environment,
+                the signatures, the functors (each its signature: its
+                parameter's and its body's summary) and the overloading it
+                declared, and of its own type names each's constructors
+                and how they lie ...
+            ... the ABI layer: as the static layer met them, each value's and
+                exception's stamp and flags, each reference's stamps and
+                flags, each functor's global and each overloading's
+                targets; then each functor's function's Mid and hash where
+                it is marked to be inlined, its functions copied into the
+                units that name them (each its global, its Mid and its
+                hash), the schemes of the globals those name that nothing
+                else types, and the tables of its own names and type names.
+                A name of a kind is written as built in, the unit's own (a
+                number), or another unit's (its place in imports) ...
 ```
+
+Version 23 (the build-system roadmap's M4) writes a reference's stamps that
+an earlier reference of the unit has as a byte 2 and that one's place among
+the references whose stamps were written, in the order written: MLton's
+functors refer to the same structures again and again.
+
+Version 22 (the build-system roadmap's M4) names the unit of a reference by
+its place in `referred`, in the order the static layer meets them: units
+holds them in the order both layers meet them, which is not a compile's and
+an analysis's alike. The sidecar has of a reference a byte, 0 where its
+origins are those of the structure it is, or 1 and its origins.
+
+Version 21 (the build-system roadmap's M4) writes a reference's stamps and
+flags as runs: of stamps a byte for the name's form (built in, own, import),
+the first's number and how many follow it, and of flags the flag and how many.
+
+Version 20 (the build-system roadmap's M4) lets an environment with origins
+be a reference, as one with none: the sidecar holds its origins and each of
+its structures' in the order of their names, so that an analysis writes the
+static layer a compile writes.
+
+Version 19 (the build-system roadmap's M4) writes the two layers of
+[units.md](units.md), *The export basis*, each its own bytes, the static layer
+whole before the rest of the ABI layer; the header gains the static layer's
+hash and its size. A reader goes through both at once, and an analysis reads
+what a compile wrote: the static layer's bytes are the same.
+
+Version 18 (the build-system roadmap's M4) names an earlier unit's names by
+a table, and takes the hash of the identity out of the reader's hands. The
+bytes hold no identity of another unit where a hash reads them: what the
+identity hashes is the magic, the version, the probe, the name and the counts,
+the bytes after the header, and what each import is ([units.md](units.md), *The
+export basis*). That last is worked out from the session as the basis is
+written, and no reader needs it, so the header holds the hash.
+
+Version 17 (the build-system roadmap's M4) keeps of a body a later unit
+copies its Mid, a marked functor's parameter's open datatypes and one hash,
+the one the usages `inl` and `inlv` compare: what the copies take of the
+globals the body names, and its lines, went only into that hash, and no
+reader kept them. So a basis written again from what loading it left is the
+same bytes (`UnitBasis.exportAgain`), which every unit compiled at lint level
+2 is held to (`basis-rt`).
+
+Version 16 (the build-system roadmap's M4) moves the origins version 7
+added out of the basis, into a sidecar that `UnitBasis.export` gives beside
+it and `UnitBasis.load` reads beside it, in the order the basis meets them:
+an environment's list of origins after its structures, a signature's and a
+functor's origin, and each type name's. No hash covers the sidecar, so a
+comment that moves a span moves no identity. A batch compile records no
+origin, its sidecar is empty, and `--emit-units` and a cache entry hold
+none. A body kept for a later unit to copy stays in the basis with its
+positions, since the copy's line table is in that unit's code.
 
 Version 14 (functors-units' M11) begins each environment with a byte: 0
 and the environment whole, as before, or 1 and a reference to a structure
 of a signature written before, renamed. That is the signature by its unit
 (a varint: 0 this unit, whose signatures come before its functors; n + 1
-the unit at place n of the header's) and its name, the path in it (a
+the unit at place n of the header's, since version 22 of `referred`) and its name, the path in it (a
 list of strings), the image of each of the structure's own type names in
 the order of their first occurrence in it (type functions), and its
 values' stamps and whether they are global: each a byte, 0 where they are
@@ -336,7 +401,8 @@ local names (docs/plans/build-cache-issues.md, issue 16), so an entry made
 before is not trusted, and its unit is compiled again.
 
 Version 7 added optional lexical binding origins to environments,
-signatures, functors and type-constructor tables. Static analysis records
+signatures, functors and type-constructor tables (since version 16 in a
+sidecar). Static analysis records
 source definitions, signature constraints and the lexical owner of copied
 functor bodies separately from runtime stamps. Ordinary batch compilation
 leaves tracking disabled. Earlier bases are rejected and caches rebuilt;
@@ -347,9 +413,8 @@ source's mode): a cache or a unit file of an earlier version is not read,
 and the unit is compiled again (S67 of `tests/incremental/SCENARIOS.md`).
 
 Numbers are varints (seven bits a byte, the high bit set where another
-follows; an integer zigzagged). The identity of the unit is its name and
-the hash of the bytes from `magic` on; what comes before them is not part
-of it.
+follows; an integer zigzagged). The identity of the unit is its name, an
+`@`, and `hash`.
 
 ## Values
 

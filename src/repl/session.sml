@@ -204,7 +204,7 @@ struct
                 val pickle = readBytes rbi handle IO.Io _ => raise Failed ("cannot read " ^ rbi)
                 val st = UnitBasis.begin (!env, !fixity)
                 val l =
-                  UnitBasis.load {pickle = pickle, file = name, at = #counters st}
+                  UnitBasis.load {pickle = pickle, sidecar = "", file = name, at = #counters st}
                   handle Pickle.Bad why => raise Failed (rbi ^ ": " ^ why)
                        | UnitBasis.Missing u => raise Failed (rbi ^ ": names " ^ u ^ ", which was not loaded")
                        | IO.Io _ => raise Failed ("cannot read " ^ path)
@@ -337,7 +337,8 @@ struct
       (* RUNE_VERIFY_CACHE: an entry found is compiled all the same, and what
          that gives is compared with it (UnitCache.verifying) *)
       val against = case found of
-                      SOME (e as {usages, ...}) => if UnitCache.verifying () andalso UnitBasis.exact usages then SOME e else NONE
+                      SOME (e as {usages, pickle, ...}) =>
+                        if UnitCache.verifying () andalso UnitBasis.exactEntry (usages, pickle) then SOME e else NONE
                     | NONE => NONE
       (* from the cache: its basis loaded, its code linked; when verifying,
          compiled all the same, and one taken across a unit that changed
@@ -364,7 +365,7 @@ struct
                   loaded and linked under an identity of its own, that what
                   named the first's globals still does (UnitBasis.unused) *)
                val as' = UnitBasis.unused identity
-               val l = UnitBasis.loadKnown ({pickle = pickle, file = file, at = at}, SOME as', remap)
+               val l = UnitBasis.loadKnown ({pickle = pickle, sidecar = "", file = file, at = at}, SOME as', remap)
                (* its source, and those of the functors' bodies it
                   applied, where they are now, in its code's files *)
                val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap) orelse as' <> identity

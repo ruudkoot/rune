@@ -332,7 +332,8 @@ struct
       else
         let
           val first = libDir ^ "/" ^ name
-          fun holds dir = OS.FileSys.access (dir ^ "/MANIFEST", []) handle OS.SysErr _ => false
+          fun holds dir = (OS.FileSys.access (dir ^ "/MANIFEST", []) orelse OS.FileSys.access (dir ^ "/library.build", []))
+                          handle OS.SysErr _ => false
         in
           if List.null (!roots) orelse holds first then first
           else getOpt (List.find holds (List.map (fn root => root ^ "/" ^ name) (!roots)), first)
@@ -390,8 +391,9 @@ struct
     handle IO.Io _ => []
 
   (* The directories of the named libraries and of those they are written on,
-     each once, every library after the ones it names. *)
-  fun libraries (libDir : string, names : string list) : string list =
+     each once, every library after the ones it names; requires says what a
+     library in a directory names. *)
+  fun librariesBy (requires : string -> string list) (libDir : string, names : string list) : string list =
     let
       fun visit (stack : string list) (name : string, done : string list) : string list =
         let val dir = libraryDir (libDir, name)
@@ -400,10 +402,11 @@ struct
           else if List.exists (fn d => d = dir) stack
           then raise Usage ("library " ^ name ^ " is written on itself (" ^ String.concatWith " <- " (dir :: stack) ^ ")")
           else
-            let val done = List.foldl (visit (dir :: stack)) done (libraryRequires dir)
+            let val done = List.foldl (visit (dir :: stack)) done (requires dir)
             in done @ [dir] end
         end
     in List.foldl (visit []) [] names end
+  val libraries = librariesBy libraryRequires
 
   (* What each scope of a compile sees: its libraries, in the order they are
      compiled, with their entries, what the program names (names) and the

@@ -53,14 +53,14 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
 | M1. The fixes found, and guards | F | M | | done |
-| M2. Independent checks of the cache | F | M | D20 | not started |
-| M3. Logical names and the workspace | U | L | D3, D4 | not started |
+| M2. Independent checks of the cache | F | M | D20 | done; issue 15 closes with M4 |
+| M3. Logical names and the workspace | U | L | D3, D4 | done |
 | M4. Layers | U | L | D1 | not started |
 | M5. Codecs | F | L | D21 | not started |
 | M6. The warm path | C | L | D2, D25 | not started |
 | M7. One store | C | M | D24 | not started |
-| M8. The library model | L | M | D7, D8, D11 | not started |
-| M9. One planner, and the plan | L | M | D5, D6 | not started |
+| M8. The library model | L | M | D7, D8, D11 | done |
+| M9. One planner, and the plan | L | M | D5, D6 | done; the hosts' reader goes with M11 |
 | M10. Namespaces and Basis views | L | M | D9, D12 | not started |
 | M11. Hosts' lists and the compiler's identity | L | S | D14 | not started |
 | M12. MANIFEST's end | L | L | D13 | not started |
@@ -96,6 +96,28 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
   - **Reach-in warnings:** the 12 hand-written builds. The 5 generated pointers are exempted: nobody wrote them, and their generator goes with the win32 work's migration.
   - **Departures:** D8's replay rule is narrower, and D8 says how and why. D6's export rule is D6's, "nothing of that name is in scope"; `--basis-index` keeps its stricter one, which M9 must settle.
   - **Left:** selection by uses is batch only, which M9 takes. A program calling `_prim "rt_link"` directly and linked from `.rbu` files gets no units section; `--units` handles it. `--type-work` drops the frozen Basis for that compile. A `rune.build` no-op measured 10.39G with a matching frozen layer against 9.75G without, on one compiler, cause unknown: M6 and M7 should look.
+- **M3** (`fbad51683`, `make check` 22,211 of 22,211).
+  - A unit is named `LIBRARY:PATH` under the deepest `library.build`, and a library by its place under `--lib` or a workspace's roots. `:` and `@` in a library's name become `_`, which leaves room for a version, `LIBRARY@1.2:PATH`. A second unit of one name is `NAME#2`, in build order, and the rank is in the key, the identity and the anchors. The root file is `rune.workspace`, found upward from a file (`lib/compiler/driver/workspace.sml`). `RuneCompiler.Workspace` is new, `Project.read` takes one, and analysis names units as batch does, so `file#rank` is gone. `Config.identity` does not depend on the root.
+  - E16's table: `worker.build` spelt `../../` compiles 1 unit, not 16; `rune.build` spelt `./` none, not 105; a moved library none, not 24. `same-file-twice` prints `0 10` whole, in units, cached and warm. Random edits: 430 builds, no disagreement. The stack bootstrap's budget re-based, +0.48%.
+  - **Choices the roadmap left open:** a loose file is named from the directory of the first file on the command line; a build's file outside any library from the root, with no prefix; a file reached by `../` past the root by that path, `../out/a.sml`; the REPL's `use` by the path from where the session began, and its place. So "a program's units are named from the root" holds for builds, not loose files: `rune --units src/a.sml` and a build naming `src/a.sml` miss each other, never mislead.
+  - **D4 refined:** the nearest root file, not dune's topmost, so that a worktree or a fixture under another root has its own.
+  - **Left:** no flag selects a named target, and only the editor reads targets. `Project.buildLinks`, path completion, runedoc and the API's text compile do not see a workspace's roots. An unsaved `rune.workspace` is not read. A library under `--lib` wins over one in a root.
+- **M8, with M2** (`3f0a7a84b`, M2, M3 and M8 together, `make check` 22,308 of 22,308).
+  - **M8:** a library's header, at the top of `library.build`: `requires ... end`, `exports (kind NAME, ...)`, `friends PATH ... end`, `view NAME (...)`. A header in a program's build, or in a `use`d build, is refused. A library with a header is elaborated in the Basis and what it requires; a library with none keeps today's meaning, and with none in a program's closure the code path is today's. All six sites and `--basis-check` take one walk (`LibraryScope`), which M9 finishes. Friends hold in batch, in the cache and in analysis. The 3 additions, 1 removal and 3 program edges are in, and `lib/compiler`'s boundary is in a header. E3's 159 programs give the same bytes, whole and in units. Random edits: 280, no disagreement. The bootstrap rose 1.28%, and both budgets re-based.
+  - **The no-header warning** is shown by `--basis-index`, once per library, and never in a client's compile: a client cannot act on it, and 31 libraries have none until the win32 work's migration.
+  - **Syntax the roadmap left open:** a view is `lib#view`, since `:` is M3's; `fixity NAME` is a fifth kind of export, so a private infix stays private, and its directive is in an `always` file.
+  - **No hash per filter was built,** and D8 says why.
+  - **Until M10,** the `RuneCompiler` clash warns on every compile that imports `compiler`.
+  - **M2:** `--verify-cache` compares an entry taken across a change: on MLton's S47 edit, 130 of 216 compared and all the same, 86 not loadable, as E18 found. A flags oracle, fact edits, root blanking from the `CompilerState` roots (31 of 339 roots matter), random edits as a tier (`make test-cache-random`) and E18's mutants (`make test-cache-mutants`): 47 mutants, 45 caught, 2 argued harmless (F1, F6), none a hole. Of the 13 survivors, 11 are killed by ordinary tests, so Appendix F's reading of U4, C3 and F5 was too pessimistic. `make check` grows by about 46 s at 8 jobs. Its scenarios are S98 to S101.
+  - **Found:** E3's `make052` dies in `--units` with an internal error, `record selector did not resolve to a record type`, on master too. Whole-program mode accepts a flexible record that a later file settles, though `docs/units.md` says a file's end settles it; three lines reproduce it. So D17's "in default modes nothing crosses a unit's end" is not so. M16 fixes it.
+- **M9** (`572e888be`, `make check` 22,314 of 22,314).
+  - **One reader:** `CompilerProject.plan` reads every build file, and the command line is a plan too (`ofFiles`); `-I` with `--build` is refused. **One site:** a library is loaded and its boundary applied in `LibraryScope.group` alone.
+  - **The plan's text,** `CompilerPlan` (`lib/compiler/driver/plan.sml`), and `rune --plan FILE.build|FILE.plan`: `requires` on the program and each library, `inline` and `inline val`, `replay`, and the inputs' provenance (`input PATH SHA256`) outside the body. `caches` is gone. `edge` and `scc` are reserved, and version 1 refuses them. `--build-list` is the plan flattened. Plans: `rune.build` 8,508 bytes and 115 units, MLton 122,691 and 606, HOL4 60,418 and 746. All 88 tracked builds round-trip, and MLton's and HOL4's reprint byte-equal.
+  - **What went:** `group`, `local` and `cache` are errors that say what to write instead; a `library` block stands only in a `library.build`, around all its files. `basisIndex` is gone: the index is `LibraryIndex`, beside `Deps` and `CompilerProject`, where runedoc reaches it. `tools/generate` takes the Basis's files from the plan.
+  - **Selection by uses everywhere:** a session, a query and an analysis select as batch does (`lib/compiler/driver/prelude.sml`).
+  - **D6's rule,** settled: an export names what a source of the library declares. A header may not re-export a Basis name, nor one from a library it requires; a source passes one on by declaring it, `structure List = List`. `--basis-index` and the compile apply the one rule in the same words.
+  - **MLton's translated build:** its 29 blocks and one `local` become 30 nested libraries with headers, and it still builds, on a private copy.
+  - **Left:** the hosts' awk (`scripts/build-files.sh`) still reads build text, and goes with M11. `--basis` and `--no-prelude` are printed in the plan but read from the options: M10. A plan made outside the top of a checkout spells its way there. `use DIR/library.build` warns that it reaches in. The bootstrap rose 2.05% on the register VM and 3.1% on the stack VM, and both budgets re-based.
 
 ## Found while writing this roadmap
 
@@ -4869,7 +4891,7 @@ Units compiled (E16).
 `libraries NAME` resolves under one `--lib` root or by path. A monorepo of 1000 builds needs something logical names can stand on, a place for the store and roots for the editor.
 
 - **A. Nearest build file** (holbuild). Each library is its own world; there is no shared store.
-- **B. One explicit root file.** **Recommended.** Found upward from a file. It names the library roots, which may be several, and the named targets `{name, build, options}`, much of the record `src/lsp/workspace.sml:9` has already. No ambient paths. Dune's topmost `dune-project` is the nearest model.
+- **B. One explicit root file.** **Recommended.** Found upward from a file. It names the library roots, which may be several, and the named targets `{name, build, options}`, much of the record `src/lsp/workspace.sml:9` has already. No ambient paths. Dune's topmost `dune-project` is the nearest model, but M3 takes the nearest root file, not the topmost, so that a worktree or a fixture inside another root has its own.
 - **C. Environment variables.** Machine state in what must be reproducible.
 
 ### D5. The form of the build language
@@ -4902,7 +4924,7 @@ Brief, line 6: "the build language should have one way of doing things".
   - **Move:** a library's boundary into a header of `library.build` (D8).
   - **Written order stays the semantics,** as in MLB and SMLSC, since effect order is not derivable (E6). Dependency order is derived for `-j`, never trusted for meaning.
   - **The command line** (`--library`, `--basis`, `-I`, file lists) is a second build language. It synthesises a plan, so there is one.
-  - **Unknown words are errors,** including annotations: `annotate "demnad"` means demand today. An export naming nothing is one too: a program-level `library` block's export must name something in scope, which lets E9's MLton build export the Basis's `CharArray`, and such an export changes nothing. `--basis-index` asks more, that a source declares it. M9 settles one rule when the block goes: whether a header may re-export a Basis name.
+  - **Unknown words are errors,** including annotations: `annotate "demnad"` means demand today. An export naming nothing is one too. M1 first held a program-level `library` block's export to naming something in scope, which let E9's MLton build export the Basis's `CharArray`, while `--basis-index` asked that a source declare it. M9 settled one rule, the index's: an export names what a source of the library declares, so a header may not re-export a Basis name, nor one from a library it requires. A source passes one on by declaring it, `structure List = List`.
 - **C. Dependency order everywhere.** The owner's "one way" read strongly. `group` has no users in the 88 tracked files, and a wrong parse of a file gives a wrong graph (`Deps` parses with `Fixity.initial`, E5). No.
 
 **Written order is per language.** Its reason above is SML's: effects whose order cannot be derived. A Haskell module's place comes from its imports, and the Report's own libraries hold an 11-module cycle, which `Deps` refuses (`lib/compiler/driver/deps.sml:270`). rhc scans imports and uses neither `Deps` nor `group`, so nothing here changes for it.
@@ -4932,7 +4954,7 @@ Brief, line 6: "the build language should have one way of doing things".
   - **Close the bypass.** A second `use` replays the raw delta (`src/driver/main.sml:939-946`), so a boundary is gone after it; `library (...) = use x.build end  use x.build` gives private names, also across build files (E3). A build with a boundary of its own replays as that boundary shows it, at every `use`; one with none replays through the boundaries closed around its first use. M1 found the first half: replaying everything through the first boundary, which this line first said, breaks a diamond. Two libraries sharing a bounded build then see its names or not by which comes first, and E9's MLton build fails with `unbound signature: WRAPPED`. An unbounded build shared by two libraries still depends on order, and is refused, not miscompiled, until it gains a boundary. A *first* `use` of a sub-build beneath another library is the same bypass, and it is how the compiler builds: that closes with friends (D11) and migration (D15), not sooner.
   - **Fixity crosses a boundary,** activated on import (SMLSC). Today it cannot, so a library cannot export an infix.
   - **Named subsets:** a library may declare a view, a named subset of its exports, whose files are the `requires` closure of those exports. No new loading primitive (E3). D10's three partial lists use these.
-  - **A hash per filter,** as SML/NJ's: what a client's key holds is what would have been pickled for the smaller environment. It was not prototyped, so it passes H3's check before it lands.
+  - **A hash per filter,** as SML/NJ's: what a client's key holds is what would have been pickled for the smaller environment. M8 found it already holds without one: a usage is per name, with the fingerprint of what the filter lets through, which is finer than SML/NJ's pid per filter. An edit behind the boundary compiles no client, even in the unit it names; an export it does not name compiles none; removing what it names refuses it; random edits found no disagreement. A separate hash would make a client depend on more. What remains is a program that keeps its units' identities, whose code names units: that is M4's hash per export.
 - **C. Signatures on every export,** the strict reading of "the abstraction and encapsulation that a structures/signature has". It adds nothing a structure's own ascription does not: 90 signatures had to be exported, and the claim rule gets that, without a second place to write them.
 
 The Basis is not a library in this sense: `library (...)` has no values, fixity or datatypes, and whole builds ignore a boundary on it (E3). It stays what it is, with a prelude's status (D17).
@@ -5556,12 +5578,13 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 - **The base:** master `b12141ecc`. Line numbers here are of that commit, and are checked again before each milestone.
 - **Flags and syntax this roadmap adds or changes:**
-  - a workspace root file, and logical names (M3);
+  - a workspace root file, `rune.workspace`, and logical names, `LIBRARY:PATH` and `NAME#2` (M3);
   - `view NAME` in a build, and `--basis-view` (M10);
-  - `friends`, `requires`, exports and views in a library's header (M8);
+  - `friends`, `requires`, exports and views in a library's header, `lib#view` for a view, and `fixity NAME` as an export (M8);
+  - `make test-cache-random` and `make test-cache-mutants` (M2);
   - `prelude` and `strict` in a build (M16);
   - declared steps and preprocessors (M15);
-  - a canonical plan: `rune --plan FILE` (M9);
+  - a canonical plan: `rune --plan FILE`, its text with `edge` and `scc` reserved (M9);
   - `--build-list` gives the closure (M1);
   - `rune/status`, `rune/context`, `rune/setContext`, `runelsp.chooseContext` and `runelsp.showOutput` (M19);
   - `functor F = _virtual (X : A) : B`, `functor F = _dynamic "path" (X : A) : B` and `_export functor` (M21);

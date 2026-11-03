@@ -148,8 +148,8 @@ struct
         val u = UnitBasis.remapKeys (u, remap)
         val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
         val s = start ()
-        val l = UnitBasis.loadKnown ({pickle = pickle, file = name, at = #counters s}, SOME identity, remap)
-        val x = UnitBasis.exportAgain ({start = s, name = ident, file = name, text = text, mode = mode}, l)
+        val l = UnitBasis.loadKnown ({pickle = pickle, sidecar = "", file = name, at = #counters s}, SOME identity, remap)
+        val x = UnitBasis.exportAgain ({start = s, name = ident, file = name, mode = mode}, l)
       in formBytes (written (fp, x, UnitBasis.relocate (u, file, name, others))) end))
 
   (* the unit just compiled, which code is and loaded its basis *)
@@ -158,7 +158,7 @@ struct
     forms (inChild (fn () =>
       let
         val (_, u) = UnitFile.read bytes
-        val x = UnitBasis.exportAgain ({start = start (), name = ident, file = name, text = text, mode = mode}, l)
+        val x = UnitBasis.exportAgain ({start = start (), name = ident, file = name, mode = mode}, l)
       in formBytes (written (fingerprint, x, u)) end))
 
   (* what differs, by the first byte; NONE: nothing *)

@@ -406,14 +406,24 @@ that declare the modules it uses, and those they need.
 Compile in units what the build file
 .I FILE
 says: its files, each in the basis the declarations before it leave, with
-its libraries' export lists, its
-.B local
-parts and its virtual modules' implementations (docs/build.md).
+the export lists of the libraries it uses and its virtual modules'
+implementations (docs/build.md).
 .TP
 .BI \-\-build\-list " FILE"
 Print the files of the build file
-.IR FILE ,
-in the order they are compiled.
+.I FILE
+and of the libraries it names, with those they are written on, in the order
+they are compiled.
+.TP
+.B \-\-plan
+Print the plan of what the rest of the command line says: of a build file
+.IR FILE .build
+given as the one input, or of the files and libraries given. The plan is
+line-oriented text that needs no Rune to read: the files in compile order, the
+libraries with their boundaries, and the build files it was made from, each
+with its SHA-256 (docs/build.md, The plan). Given a
+.IR FILE .plan,
+read it and print it again.
 .TP
 .BI \-\-path " NAME" = DIR
 The path variable

@@ -35,10 +35,11 @@ struct
   val depsUses = ref false                     (* --deps-uses: the module names each input uses *)
   val includeDirs : string list ref = ref []   (* -I DIR: where an entry point's files are looked for *)
   val build : string option ref = ref NONE     (* --build FILE: compile what a build file says (docs/build.md) *)
-  val buildList = ref false                    (* --build-list: print the build file's files in order *)
+  val buildList = ref false                    (* --build-list: print the build's closure in order *)
   (* --no-inline-functors: none inlined across units (M6b) *)
   val noInlineFunctors = ref false
-  val basisIndex : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
+  val plan = ref false                         (* --plan: print the plan's text *)
+  val indexLibrary : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
   val noWarnings = ref false
   val color = ref Color.WhenTerminal           (* --color=WHEN (docs/diagnostics.md) *)
   val diagnostics : bool option ref = ref NONE (* --diagnostics=full|short: SOME true, SOME false *)
@@ -129,6 +130,10 @@ struct
     \                    of its directory and of each -I DIR that it needs\n\
     \  --build FILE      compile in units what the build file FILE says\n\
     \                    (docs/build.md); --build-list prints its closure in order\n\
+    \  --plan            print the plan of what the rest of the command line says,\n\
+    \                    a build file's or the files and libraries given, as text\n\
+    \                    any program can read (docs/build.md, The plan); given a\n\
+    \                    FILE.plan, read it and print it again\n\
     \  --path NAME=DIR   the path variable $(NAME) of build files, a relative DIR\n\
     \                    from the directory of the build file given\n\
     \  --basis-index DIR write DIR/MANIFEST, what a library's files provide and\n\
@@ -268,7 +273,8 @@ struct
     | "--build" :: f :: rest => (build := SOME f; units := true; parse rest)
     | ["--build"] => raise Usage "--build requires a build file"
     | "--build-list" :: f :: rest => (build := SOME f; buildList := true; parse rest)
-    | "--basis-index" :: d :: rest => (basisIndex := SOME d; parse rest)
+    | "--plan" :: rest => (plan := true; parse rest)
+    | "--basis-index" :: d :: rest => (indexLibrary := SOME d; parse rest)
     | "--path" :: v :: rest =>
         (case String.fields (fn c => c = #"=") v of
            name :: (dir as _ :: _) => (BuildFile.variables := StringMap.insert (!BuildFile.variables, name, String.concatWith "=" dir);

@@ -114,7 +114,7 @@ struct
      apart ("--lib", naming), apart ("--library", naming), apart ("--no-prelude", naming), apart ("-I", naming),
      apart ("--build", naming), apart ("--path", naming),
      apart ("--basis-deps", stopping), apart ("--basis-check", stopping), apart ("--basis-index", stopping),
-     apart ("--build-list", stopping), apart ("--deps", stopping), apart ("--deps-dot", stopping), apart ("--deps-uses", stopping),
+     apart ("--build-list", stopping), apart ("--plan", stopping), apart ("--deps", stopping), apart ("--deps-dot", stopping), apart ("--deps-uses", stopping),
      apart ("--dump-tokens", stopping), apart ("--lex-count", stopping), apart ("--dump-ast", stopping),
      apart ("--read-mid", stopping), apart ("--version", stopping), apart ("--help", stopping), apart ("-h", stopping),
      apart ("--serve", "answers requests, each a build of its own with these rows' options"),
@@ -122,6 +122,8 @@ struct
      apart ("--verify-cache", cacheItself), apart ("RUNE_CACHE", cacheItself), apart ("RUNE_VERIFY_CACHE", cacheItself),
      apart ("RUNE_VERIFY_DUMP", cacheItself), apart ("RUNE_BLANK_ROOTS", cacheItself), apart ("RUNE_BLANK_UNITS", cacheItself),
      apart ("RUNE_PARALLEL_DEBUG", "says what -j did"),
+     apart ("RUNE_LAYER_DUMP", "says what each unit's exports hash to"),
+     apart ("RUNE_STATIC_LOAD", "a load where no code is made; a compile makes code"),
      apart ("RUNE_FAULT", testSwitch), apart ("RUNE_REGVERIFY_INJECT", testSwitch), apart ("RUNE_RBCCHECK_INJECT", testSwitch),
      apart ("RUNE_ASTLINT_FAULT", testSwitch)]
 

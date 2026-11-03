@@ -135,7 +135,7 @@ struct
                 val code = #code artifact
                 val () = if List.all (known o #1) (#globals code) andalso List.all (known o #2) (#imports code)
                          then () else raise Fail "unit dependency is not imported"
-                val loaded = UnitBasis.load {pickle= #pickle artifact,file=file,at=UnitBasis.counters ()}
+                val loaded = UnitBasis.load {pickle= #pickle artifact,sidecar="",file=file,at=UnitBasis.counters ()}
                 val () = if #identity (#unit loaded) = #identity artifact then () else raise Fail "unit and basis identities differ"
                 val () = (env:=Env.plus (!env,#delta loaded);
                           fixity:=Fixity.extend (!fixity,#directives loaded);UnitBasis.bind loaded)
@@ -144,7 +144,7 @@ struct
               let
                 val {file,text,mode}=source
                 val ()=Source.register (Source.fromStringIn (mode,file,text))
-                val loaded=UnitBasis.load {pickle=pickle,file=file,at=UnitBasis.counters ()}
+                val loaded=UnitBasis.load {pickle=pickle,sidecar="",file=file,at=UnitBasis.counters ()}
                 val unit= #unit loaded
                 val um=UnitMid.read (mid,unit,[],fn f => f)
                 val lo=Vector.sub (#base unit,UnitBasis.kStamp)
@@ -161,7 +161,7 @@ struct
                       val ()=List.app (fn i => IntTable.insert (table,Vector.sub (#base unit,k)+i,i))
                         (List.tabulate (Vector.sub (#count unit,k),fn i => i))
                   in table end)
-                val exported : UnitBasis.exported={pickle=pickle,identity= #identity unit,own=own,counts= #count unit,
+                val exported : UnitBasis.exported={pickle=pickle,sidecar="",identity= #identity unit,own=own,counts= #count unit,
                   provenance=Link.provenance (#target config,mode,Pickle.hash text)}
                 val code=UnitBasis.relative (exported,sc)
                 val fingerprint=Pipeline.fingerprint ()
@@ -173,21 +173,10 @@ struct
             let val {file,text,mode}=sourceOf input
                 val source=Source.fromStringIn (mode,file,text)
                 val ()=Source.register source
-            in BasisManifest.namesOf (Lexer.tokenize source,known) end
+            in CompilerPrelude.usedBy (file,Lexer.tokenize source,known) end
           val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,
             mentioned=List.foldl mentioned StringMap.empty sources,building=NONE}
-          type context={basis : LibraryScope.basis,fixity : Fixity.env,binders : string StringMap.map}
-          fun context () : context={basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs},fixity= !fixity,binders= !UnitBasis.binders}
-          fun restore (c : context) =
-            (env:= #env (#basis c);Elaborate.sigs:= #sigs (#basis c);Elaborate.funs:= #funs (#basis c);
-             fixity:= #fixity c;UnitBasis.binders:= #binders c)
-          val walk=LibraryScope.walk (
-            {get=context,set=restore,change=fn (before',raw,provides) => (before',raw,provides),
-             add=fn (onto : context,(before',raw,provides) : context * context * string list,filter) =>
-               {basis=LibraryScope.addBasis (#basis onto,(#basis before',#basis raw,provides),filter),
-                fixity=LibraryScope.addFixity (#fixity onto,(#fixity before',#fixity raw),filter),
-                binders=LibraryScope.addBinders (#binders onto,(#binders before',#binders raw),filter)}},
-            #scopes plan)
+          val walk=LibraryScope.walk (env,fixity,UnitBasis.binders,#scopes plan)
           fun libraryUnit (e : BasisManifest.entry,state) =
             let val file=BasisManifest.path e
                 val loaded=Source.readFile (Source.Ascii,file)
@@ -218,14 +207,11 @@ struct
                    handle UnitFile.Bad _ => raise CachedLoad | Pickle.Bad _ => raise CachedLoad | UnitBasis.Missing _ => raise CachedLoad
                         | UnitBasis.SchemeChanged _ => raise CachedLoad)
             end
-          fun group (entries,state) =
-            LibraryScope.group (walk,entries,fn () => List.foldl libraryUnit state entries)
-          val base=List.foldl group [] (#groups plan)
+          fun units (entries,state)=List.foldl libraryUnit state entries
+          val base=LibraryScope.libraries (walk,#groups plan,units,[])
           val ()=LibraryScope.program walk
           val result=List.foldl compile base sources
-          fun final (entries,state) =
-            LibraryScope.final (walk,entries,fn () => List.foldl libraryUnit state entries)
-          val finals=List.foldl final [] (CompilerPrelude.groups (#final plan))
+          val finals=LibraryScope.finals (walk,CompilerPrelude.groups (#final plan),units,[])
         in {units=List.rev result,finals=List.rev finals,cacheHits= !cacheHits,compiled= !compiled} end
       val result = CompilerState.withSession (owner,fn () => work ()
         handle Error.CompileError (span,message) => raise Failed [sourceError ("error",span,message)])
