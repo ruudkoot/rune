@@ -540,12 +540,13 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   bytes, then four sections, each with the hash of its own: its warnings,
   file, other files and identity, which loading takes rather than hashing
   the basis again; its basis; its code; its Mid (`UnitCache.version` 12;
-  the build-system roadmap's M7). A lookup reads the heads of a key's
-  entries and nothing more of one whose head does not stand, and hashes
-  nothing of it: a damage that makes a head refuse is a miss. A head that
-  stands is held to its hash, and each section to its own as it is read;
-  a build of the units' code reads no Mid, and holds none to its hash, and
-  `--whole`, `--verify-cache` and the compiler library read it
+  the build-system roadmap's M7). A lookup reads the head of each of a
+  key's entries -- its first four kilobytes, more where a head is longer --
+  and of one whose head does not stand reads no more and hashes nothing: a
+  damage that makes a head refuse is a miss. A head that stands is held to
+  its hash, and each section to its own as its client takes it; a build of
+  the units' code takes no Mid, and holds none to its hash, and `--whole`,
+  `--verify-cache` and the compiler library take it
   (`UnitStore`, `lib/compiler/driver/unitstore.sml`, which keeps entries
   and what is kept beside them by a name and knows nothing of what a unit
   is: the head and the sections are its client's to write and read, and
