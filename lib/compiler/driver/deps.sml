@@ -252,7 +252,7 @@ struct
       fun hiding (d, what) = (broken (d, what); hides := true)
       fun datatypeNames (dbs : datbind list) =
         List.concat (List.map (fn (b : datbind) => #name b :: List.map #1 (#cons b)) dbs)
-      fun patsOf bs = List.concat (List.map (patNames o #1) bs)
+      fun patsOf (bs : (pat * exp) list) = List.concat (List.map (patNames o #1) bs)
       fun top (sc, d, exported) =
         case d of
           DStructure (bs, _, _) => (if exported then List.app (fn (b : strbind) => declare (Str, #name b)) bs else (); dec (sc, d))
