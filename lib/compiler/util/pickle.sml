@@ -118,13 +118,9 @@ struct
      The steps follow the width of the host's Word: where it is 63 bits
      (Rune), as written; where it is wider, each sum masked to 63 bits
      before its rotation and each lane before a shift of its ending; where
-     it is narrower, the same in Word64, with no constant a compiler may
-     fold into a literal and no shift by 0, which SML/NJ 110.99.9 for 32
-     bits gets wrong; so every host gives the same values, which the probe
-     below holds to, and check-cross holds a program built in units to (the
-     build-system roadmap's D22). A host whose arithmetic still gives other
-     values gives another probe, which keeps its caches apart from
-     everyone else's (UnitCache, UnitBasis) ---- *)
+     it is narrower, the same in Word64. A host whose arithmetic still gives
+     other values (SML/NJ's 32-bit Word64) gives another probe, which keeps
+     its caches apart from everyone else's (UnitCache, UnitBasis) ---- *)
 
   (* What was hashed, for --pass-stats=hash: while counting, each hash
      adds its bytes to its label's, the place that hashed them (UnitBasis
@@ -151,32 +147,24 @@ struct
      (docs/bugreport/smlnj/MLRISC/movabsq-spilled) *)
   fun w63 (h : int, m : int, l : int) : word =
     Word.orb (Word.orb (Word.<< (Word.fromInt h, 0w42), Word.<< (Word.fromInt m, 0w21)), Word.fromInt l)
-  (* and in Word64 read from their digits, which no compiler folds into a
-     literal: SML/NJ 110.99.9 for 32 bits keeps of a 64-bit literal's low
-     half only its low 30 bits (docs/bugreport/smlnj/Word64-low-half) *)
-  fun l63 (digits : string) : Word64.word =
-    case StringCvt.scanString (Word64.scan StringCvt.HEX) digits of
-      SOME w => w
-    | NONE => raise Fail ("Pickle: not a hexadecimal constant " ^ digits)
+  fun l63 (h : int, m : int, l : int) : Word64.word =
+    Word64.orb (Word64.orb (Word64.<< (Word64.fromInt h, 0w42), Word64.<< (Word64.fromInt m, 0w21)), Word64.fromInt l)
   val p1 = w63 (0x78dde, 0xd8c2f, 0xbca87)        (* 0x1E3779B185EBCA87 *)
   val p2 = w63 (0x10acab, 0x11e93e, 0x14eb4f)     (* 0x42B2AE3D27D4EB4F *)
   val p3 = w63 (0x59599, 0x1d8cf1, 0x1779f9)      (* 0x165667B19E3779F9 *)
   val p4 = w63 (0x17af2, 0x13be15, 0x12ae63)      (* 0x05EBCA77C2B2AE63 *)
   val m63 = w63 (0x1fffff, 0x1fffff, 0x1fffff)
-  val l1 = l63 "1E3779B185EBCA87"
-  val l2 = l63 "42B2AE3D27D4EB4F"
-  val l3 = l63 "165667B19E3779F9"
-  val l4 = l63 "05EBCA77C2B2AE63"
-  val lm = l63 "7FFFFFFFFFFFFFFF"
+  val l1 = l63 (0x78dde, 0xd8c2f, 0xbca87)
+  val l2 = l63 (0x10acab, 0x11e93e, 0x14eb4f)
+  val l3 = l63 (0x59599, 0x1d8cf1, 0x1779f9)
+  val l4 = l63 (0x17af2, 0x13be15, 0x12ae63)
+  val lm = l63 (0x1fffff, 0x1fffff, 0x1fffff)
 
   (* the 16 hexadecimal digits of a lane, a nibble at a time *)
   fun hexOf (nibble : int -> int) : string =
     CharVector.tabulate (16, fn i => String.sub ("0123456789abcdef", nibble (60 - 4 * i)))
   fun hexWord (w : word) : string = hexOf (fn s => Word.toInt (Word.andb (Word.>> (w, Word.fromInt s), 0wxF)))
-  (* no shift by 0 in Word64: SML/NJ 110.99.9 for 32 bits ORs the two
-     halves for one (docs/bugreport/smlnj/Word64/shifts-and-negation) *)
-  fun hexLong (w : Word64.word) : string =
-    hexOf (fn s => Word64.toInt (Word64.andb (if s = 0 then w else Word64.>> (w, Word.fromInt s), 0wxF)))
+  fun hexLong (w : Word64.word) : string = hexOf (fn s => Word64.toInt (Word64.andb (Word64.>> (w, Word.fromInt s), 0wxF)))
 
   (* A text fed to the lanes a and b, with k bytes pending in p (fewer than
      seven, little-endian): the lanes, the bytes then pending and how many.
@@ -254,8 +242,7 @@ struct
       fun go (i, a, b, p, k) =
         if i = len then (a, b, p, k)
         else
-          let val x = Word64.fromInt (Char.ord (String.sub (s, i)))
-              val p = Word64.orb (p, if k = 0 then x else Word64.<< (x, Word.fromInt (8 * k)))
+          let val p = Word64.orb (p, Word64.<< (Word64.fromInt (Char.ord (String.sub (s, i))), Word.fromInt (8 * k)))
           in if k = 6 then let val (a, b) = stepLong (a, b, p) in go (i + 1, a, b, 0w0, 0) end
              else go (i + 1, a, b, p, k + 1)
           end

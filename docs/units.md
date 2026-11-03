@@ -1212,7 +1212,9 @@ unit's logical name and path, with what defines it, as the ABI layer's
 fingerprints are worked out (*Layers*, above). Nothing of where a signature
 was written is in it, so a client and a module whose files were spelt
 otherwise agree (E10's probe; `spelling` of the scenarios `dynamic`), and
-`Pickle.hash` gives every host the same value (`check-cross`'s `virtual-table`).
+`Pickle.hash` gives every host the same value but `smlnj32`, which has a
+hash of its own, and so a fingerprint and a configuration of its own
+(`check-cross`'s `virtual-table`).
 Where they differ, the declaration raises `Dynamic.Mismatch`, which names
 both; each field has a mutant that is refused so (S128 to S130 of
 `tests/incremental/SCENARIOS.md`, the mutants of the cache A1 to A6). A
