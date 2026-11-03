@@ -371,8 +371,9 @@ struct
                (!Options.libraries) (#libraries project)
 
   (* The plan of this compile, all of it, each library read from its build
-     file: what --plan prints and --build-list flattens. Its paths and names
-     hold no directory of the machine, so --lib is taken from here. *)
+     file: what --plan prints and --build-list flattens. Its paths are from
+     here, --lib's too, so that a plan made at the top of a checkout holds no
+     directory of the machine. *)
   fun wholePlan () : CompilerPlan.t =
     let
       val windows = onWindows ()
