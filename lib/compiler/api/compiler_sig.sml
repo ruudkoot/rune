@@ -150,6 +150,31 @@ sig
     val work : t -> work
   end
 
+  (* A workspace: the directory of a root file, rune.workspace, that names
+     where libraries are found, and the named targets (docs/build.md). *)
+  structure Workspace :
+  sig
+    (* A root file, read. *)
+    type t
+    (* A named target: a build file, its path whole, and the options of a
+       compiler session for it. *)
+    type target = {name : string, build : string, options : string list}
+    (* `find {file, windows}` reads the nearest root file above file, or
+       gives `NONE` where there is none.
+
+       windows selects Windows drive/UNC syntax. A root file that is not
+       well formed is reported through Failed. *)
+    val find : {file : string, windows : bool} -> t option
+    (* `root workspace` is the directory of its root file, which a build's
+       units are named from. *)
+    val root : t -> string
+    (* `libraryRoots workspace` lists the directories it finds libraries
+       under, in order, whole. *)
+    val libraryRoots : t -> string list
+    (* `targets workspace` lists its named targets in order. *)
+    val targets : t -> target list
+  end
+
   (* The compiler's immutable project model, shared with the CLI. *)
   structure Project :
   sig
@@ -195,11 +220,13 @@ sig
     (* `read (session, request)` resolves a build through compiler rules,
        preserving scopes, order, annotations, virtual implementations and use.
 
-       Variables are path-variable bindings. Overlays are already decoded
+       workspace is what its units are named from and its libraries found
+       under (`Workspace.find`); with none, the build's directory stands for
+       its root. Variables are path-variable bindings. Overlays are already decoded
        UTF-8, also for Latin-1 source files. windows selects Windows drive/UNC
        syntax independently of the host operating system. No user declarations execute and no cache
        files are written. Failure is reported through Failed. *)
-    val read : session * {file : string, variables : (string * string) list,
+    val read : session * {file : string, workspace : Workspace.t option, variables : (string * string) list,
                           overlays : {file : string, text : string} list, windows : bool} -> t
     (* `sources project` lists source occurrences in compiler order. *)
     val sources : t -> source list

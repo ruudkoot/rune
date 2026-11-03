@@ -234,7 +234,7 @@ struct
         fun work () =
           let val parent=compiler ()
               val context=A.create (parent,{context="scoped"})
-              val project=C.Project.read (parent,{file=dir ^ "/scope.build",variables=[],overlays=[],windows=false})
+              val project=C.Project.read (parent,{file=dir ^ "/scope.build",workspace=NONE,variables=[],overlays=[],windows=false})
               val inputs=List.map (fn source:C.Project.source =>
                 let val name=OS.Path.file (#file source)
                     val text= #2 (valOf (List.find (fn (file,_) => file=name) files))
@@ -245,6 +245,25 @@ struct
               val cached=run inputs
               val bad=List.take (inputs,2) @ [input (dir ^ "/final.sml","val wrong=Hidden.x\n","2")]
               val rejected=run bad
+              (* a unit's name is rune's: no rank of its place, no spelling *)
+              val ()=check ("a unit is named as rune names it",A.unitAt (valid,{ordinal=2})=SOME "final.sml")
+              val twice=A.create (parent,{context="twice"})
+              fun loose file=input (file,"val x=1\n","1")
+              val snapshot=A.check (twice,{project=NONE,inputs=[loose (dir ^ "/hidden.sml"),loose (dir ^ "/./hidden.sml")],
+                cancelled=fn () => false})
+              val ()=check ("a file given twice has a rank, however it is spelt",
+                A.unitAt (snapshot,{ordinal=0})=SOME "hidden.sml" andalso A.unitAt (snapshot,{ordinal=1})=SOME "hidden.sml#2")
+              val ()=A.close twice
+              (* Windows syntax, whatever the host: from the root, with ../
+                 beside it, and whole on another drive, which nothing reaches *)
+              val drives=C.Project.read (parent,{file="C:/project/root.build",workspace=NONE,variables=[("DEP","D:/dep")],
+                overlays=[{file="C:/project/root.build",text="files sub/b.sml $(DEP)/a.sml ../up.sml end\n"}],windows=true})
+              val windows=A.create (parent,{context="windows"})
+              val snapshot=A.check (windows,{project=SOME drives,cancelled=fn () => false,
+                inputs=List.map (fn source:C.Project.source => input (#file source,"val x=1\n","1")) (C.Project.sources drives)})
+              val ()=check ("a unit's name on Windows",List.map (fn ordinal => A.unitAt (snapshot,{ordinal=ordinal})) [0,1,2]=
+                [SOME "sub/b.sml",SOME "D:/dep/a.sml",SOME "../up.sml"])
+              val ()=A.close windows
               val ()=check ("project scopes are shared with the compiler",null (A.diagnostics valid)
                 andalso A.project valid=SOME (C.Project.fingerprint project) andalso same (valid,cached)
                 andalso #checked (A.work cached)=0 andalso not (null (A.diagnostics rejected)))

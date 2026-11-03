@@ -6,7 +6,6 @@ struct
   type candidate={name:string,kind:string,detail:string option,arguments:string list list,origin:Env.origin}
   type application={name:string,path:string list,argument:int,parameter:int}
   type scopeQuery={unit:string,file:string,offset:int,path:string list}
-  fun unitName (file,rank) = file ^ "#" ^ Int.toString rank
   type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
   type typeDefinition={id:string,origin:Env.origin}
   (* typing: what the editor's types are worked out from when first asked
@@ -16,18 +15,22 @@ struct
   type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,
     uses:(string*(string*(string list*string)*Source.span*Env.origin*bool)) list,
     candidates:candidate list,role:string,fields:(string*string) list,application:application option,
-    cache:entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,prelude:CompilerPrelude.plan}
+    cache:entry list,syntaxes:(string*CompilerSyntax.t) list,plan:string,prelude:CompilerPrelude.plan,units:string list}
   type observation={phase:string,file:string,checked:int,reused:int,items:int}
   datatype session=Session of {stored:entry list ref,plan:string ref,config:CompilerSession.config,closed:bool ref,
     observer:(observation->unit) option ref,names:(Source.mode*string*unit StringMap.map) StringMap.map ref}
   exception Cancelled
   fun new config=Session {stored=ref [],plan=ref "",config=config,closed=ref false,observer=ref NONE,names=ref StringMap.empty}
   fun close (Session {closed,stored,names,...})=(closed:=true;stored:=[];names:=StringMap.empty)
-  fun checkWith (Session {stored,plan=savedPlan,config,closed,observer,names=savedNames},sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
+  (* units: the logical name of each of sources, as rune gives them
+     (Workspace), its libraries' first, so that a unit is the same name in
+     analysis and in a build *)
+  fun checkWith (Session {stored,plan=savedPlan,config,closed,observer,names=savedNames},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
                  frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option) : snapshot = CompilerSession.owned (fn () =>
     let val {lib,libraries,target,allowPrim,...}=config
         val ()=CompilerSettings.target:=target
         val ()=CompilerSettings.libDir:=lib
+        val ()=BasisManifest.roots:= #libraries scope
         val ()=CompilerSession.language config
         val ()=UnitBasis.startSession ()
         val scopeEnv=ref NONE : (int*Env.env*SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map) option ref
@@ -226,27 +229,33 @@ struct
         val librarySources=List.map (fn entry:BasisManifest.entry =>
           (poll ();(entry,#text (Source.readFile (Source.Ascii,BasisManifest.path entry))))) (List.concat (#groups plan))
         val ()=observe "prelude-selected" "" (length librarySources)
+        val logical=Workspace.names scope
+        val ranks=Workspace.ranks ()
+        val libraryNames=List.foldl (fn (entry:BasisManifest.entry,all) =>
+          StringMap.insert (all,BasisManifest.path entry,
+            Workspace.fresh (ranks,Workspace.ofEntry (logical,{dir= #dir entry,file= #file entry})))) StringMap.empty (List.concat (#groups plan))
+        val inputNames=List.map (fn source:source => Workspace.fresh (ranks,Workspace.name (logical,#file source))) sources
         val ()=Source.overlays:=List.foldl (fn ((entry,text),overlays) => StringMap.insert
           (overlays,BasisManifest.path entry,text)) (!Source.overlays) librarySources
         val libraryWalk=LibraryScope.walk (CompilerBuildContext.site scopes,#scopes plan)
         fun library entries =
           let fun one (entry:BasisManifest.entry)=
-                unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},BasisManifest.path entry,
+                unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},
+                  valOf (StringMap.find (libraryNames,BasisManifest.path entry)),
                   case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false)
           in LibraryScope.group (libraryWalk,entries,fn () => List.app one entries) end
         val implemented=ref [] : string list ref
-        val remaining=ref sources
-        val ordinal=ref 0
+        val remaining=ref (ListPair.zip (sources,inputNames))
         fun snap ()=CompilerBuildContext.snap scopes
         fun delta (before',after)=CompilerBuildContext.delta (scopes,before',after)
         fun apply (before',change,exports)=CompilerBuildContext.apply (scopes,before',change,exports)
         fun walk steps=List.app step steps
         and step item = case item of
           CompilerProject.SUnit (file,annotations) =>
-            (case !remaining of [] => raise Fail "missing ordered project input" | source :: rest =>
+            (case !remaining of [] => raise Fail "missing ordered project input" | (source,name) :: rest =>
               if #file source<>file then raise Fail "project input order differs" else
-                (remaining:=rest;ordinal:= !ordinal+1;
-                 unit (source,unitName (file,!ordinal),allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true)))
+                (remaining:=rest;
+                 unit (source,name,allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true)))
         | CompilerProject.SLocal (a,b) =>
             let val before'=snap ()
                 val boundary=CompilerBuildContext.enter scopes
@@ -323,6 +332,6 @@ struct
       reused= !reused,checked= !checked,types=List.concat (List.rev (!types)),
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
       uses=List.concat (List.rev (!uses)),candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
-      cache= !stored,syntaxes=List.rev (!syntaxes),plan=planKey,prelude=plan} end)
-  fun checkSteps (session,sources,steps,libraries,cancelled,building)=checkWith (session,sources,steps,libraries,cancelled,NONE,[],NONE,building)
+      cache= !stored,syntaxes=List.rev (!syntaxes),plan=planKey,prelude=plan,units=inputNames} end)
+  fun checkSteps (session,scope,sources,steps,libraries,cancelled,building)=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,building)
 end

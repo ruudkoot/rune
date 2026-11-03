@@ -339,7 +339,7 @@ struct
         \fun diagnosed file =\n\
         \  let val parent = C.session {lib = SOME \"lib\", flags = []}\n\
         \      val context = A.create (parent, {context = \"scoped\"})\n\
-        \      val project = C.Project.read (parent, {file = file, variables = [], overlays = [], windows = false})\n\
+        \      val project = C.Project.read (parent, {file = file, workspace = NONE, variables = [], overlays = [], windows = false})\n\
         \      val inputs = List.map (fn source : C.Project.source =>\n\
         \        {file = #file source, text = read (#file source), mode = #mode source,\n\
         \         annotations = #annotations source, revision = \"1\"} : A.input) (C.Project.sources project)\n\

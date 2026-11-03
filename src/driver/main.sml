@@ -334,9 +334,25 @@ struct
      directory, the variables given), each build file it uses read in its
      place, each group put in the order its files' modules give (Deps), the
      annotations given to each unit; and the cache directories it names *)
-  fun onWindows () : bool =
-    List.exists (fn (key,value) => key="sysname" andalso value="Windows") (Posix.ProcEnv.uname ())
-    handle OS.SysErr _ => false
+  val onWindows = Workspace.onWindows
+  (* The workspace of this compile, from the build file or the first file
+     given, and the file that was: the libraries it names are found by
+     `libraries` and --library, and a build's units are named from it *)
+  val workspace : Workspace.t option ref = ref NONE
+  val entryFile : string option ref = ref NONE
+  fun findWorkspace (file : string) : unit =
+    (workspace := (Workspace.find {file=file,windows=onWindows ()}
+                   handle Workspace.Invalid message => raise Options.Usage message);
+     BasisManifest.roots := (case !workspace of
+                               SOME w => List.map (fn root => Workspace.fromHere (onWindows (), root)) (#libraryRoots w)
+                             | NONE => []))
+  (* where this compile's units are named from (Workspace) *)
+  fun unitScope () : Workspace.scope =
+    let val windows=onWindows ()
+    in case (!Options.build,!entryFile) of
+         (SOME file,_) => Workspace.ofBuild {file=file,workspace= !workspace,lib= !Options.libDir,windows=windows}
+       | (NONE,file) => Workspace.ofFiles {file=getOpt (file,"."),workspace= !workspace,lib= !Options.libDir,windows=windows}
+    end
   fun projectOf (file : string) : CompilerProject.plan =
     let
       val windows=onWindows ()
@@ -371,6 +387,7 @@ struct
   fun basisIndex (dir : string) : OS.Process.status =
     let
       val file = OS.Path.joinDirFile {dir = dir, file = "library.build"}
+      val () = findWorkspace file
       val text = readText file handle IO.Io _ => raise Options.Usage ("cannot read the build file " ^ file)
       val decs = BuildFile.parse (file, text) handle BuildFile.Error m => raise Options.Usage m
       val libs : string list ref = ref []
@@ -553,6 +570,7 @@ struct
      in the list. *)
   fun buildList (file : string) : OS.Process.status =
     let
+      val () = findWorkspace file
       val project = projectOf file
       val names = List.foldl (fn (library, all) => if List.exists (fn present => present = library) all then all else all @ [library])
                              (!Options.libraries) (#libraries project)
@@ -606,14 +624,15 @@ struct
     let
       (* what a compile begins with that is not one of the compiler's roots,
          for one made again (diagnosed, compiledAgain) *)
-      val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false)
+      val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false; workspace := NONE; BasisManifest.roots := [])
       (* --build: the inputs are the build file's files, its plan what the
          units driver follows *)
       val () =
         case !Options.build of
           NONE => ()
         | SOME f =>
-            let val project=projectOf f
+            let val ()=findWorkspace f
+                val project=projectOf f
                 val plan= #steps project
                 val caches= #caches project
                 (* reaching into a library, which a later roadmap's milestone
@@ -646,6 +665,13 @@ struct
                 (c :: _, NONE) => Options.cacheDir := SOME c
               | _ => ()
             end
+      (* files given by themselves: the first names their units, and the
+         workspace above it has only libraries to give them *)
+      val () = if !knownToLoad then () else entryFile := (case !Options.inputs of first :: _ => SOME first | [] => NONE)
+      val () =
+        case (!Options.build,!entryFile,!Options.libraries) of
+          (NONE,SOME first,_ :: _) => findWorkspace first
+        | _ => ()
       (* the functors and the functions the Basis Library's and the chosen
          libraries' build files mark to be inlined (docs/build.md, Inline
          functors and functions) *)
@@ -759,19 +785,25 @@ struct
       val () = UnitBasis.startSession ()
       (* each unit's source, its tokens when wanted, whether it may use
          _prim -- the basis library may, the libraries beside it may not --
-         and its name: a library's file by where it is in the library, so
-         that a cache follows the library where it is moved (UnitCache) *)
-      fun libName (e : entry) : string =
-        let val root = libRoot () ^ "/"
-        in
-          if String.isPrefix root (#dir e) then "lib/" ^ String.extract (#dir e, String.size root, NONE) ^ "/" ^ #file e
-          else BasisManifest.path e
-        end
+         and its logical name, with a rank where it is another's, in the
+         order of the units (Workspace): no spelling of a path reaches a
+         key, an identity or an anchor, and a cache follows a library where
+         it is moved (UnitCache) *)
+      val logical = Workspace.names (unitScope ())
+      val ranks = Workspace.ranks ()
+      val entryNames : string StringMap.map ref = ref StringMap.empty
+      fun nameEntry (e : entry) =
+        entryNames := StringMap.insert (!entryNames, BasisManifest.path e,
+                                        Workspace.fresh (ranks, Workspace.ofEntry (logical, {dir = #dir e, file = #file e})))
       fun file (e : entry, allow) =
-        (BasisManifest.path e, fn () => loadTokens (Source.Ascii, BasisManifest.path e), allow, libName e, Source.Ascii)
+        (BasisManifest.path e, fn () => loadTokens (Source.Ascii, BasisManifest.path e), allow,
+         valOf (StringMap.find (!entryNames, BasisManifest.path e)), Source.Ascii)
+      val () = List.app nameEntry basis
       val basisPart = List.map (fn e => file (e, inBasis e)) basis
-      val userPart = ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim, name, inputMode name))
+      val userPart = ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim,
+                                                       Workspace.fresh (ranks, Workspace.name (logical, name)), inputMode name))
                                   (userToks, inputs)
+      val () = List.app nameEntry final
       val finalPart = List.map (fn e => file (e, !Options.allowPrim)) final
       val sources = basisPart @ userPart @ finalPart
       val buildContext=CompilerBuildContext.new (env,fixity)
@@ -870,7 +902,7 @@ struct
                                   if !Options.defaultWord64 then "word64" else "",
                                   if !Options.orPatterns then "or-patterns" else "",
                                   if !Lexer.lints then "" else "no-unicode-lints"])
-      val userNames = List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty inputs
+      val userNames = List.foldl (fn ((_, _, _, ident, _), m) => StringMap.insert (m, ident, ())) StringMap.empty userPart
       (* and the unit's mode, where it is not the default: a unit read in
          one mode is not taken for one read in another (docs/plans/utf8.md,
          D1) *)
@@ -896,13 +928,13 @@ struct
       fun unit (src as (name, _, _, ident, _), acc) =
         let
           val acc =
-            case Parallel.at name of
+            case Parallel.at ident of
               Parallel.Skip => acc
             | Parallel.Run {quiet} => timedUnit (src, acc, quiet)
             | Parallel.Compile => timedUnit (src, acc, false)
         in judge (name, ident, acc); acc end
       (* --pass-stats: what each unit took, start to end *)
-      and timedUnit (src as (name, _, _, _, _), acc, quiet) =
+      and timedUnit (src as (name, _, _, ident, _), acc, quiet) =
         let
           val t0 = if !Pass.stats then Time.now () else Time.zeroTime
           val (acc, compiledIt) = unitHere (src, acc, quiet)
@@ -914,7 +946,7 @@ struct
                                                          then ", live " ^ Int.toString (!Pass.liveBytes ()) else "")
                                                       ^ "\n")
                    else ()
-        in Parallel.after (name, compiledIt); acc end
+        in Parallel.after (ident, compiledIt); acc end
       and unitHere ((name, load, allow, ident, mode), acc, quiet) =
         let
           val () = if !Pass.stats then TextIO.output (TextIO.stdErr, "unit " ^ name ^ "\n") else ()
@@ -1021,7 +1053,7 @@ struct
           | (Miss why, against) =>
               if isSome against then here (why, against)
               else
-                (case Parallel.missed name of
+                (case Parallel.missed ident of
                    Parallel.Skip => (acc, false)
                  | Parallel.Run {quiet} => (case lookup quiet of (Hit h, _) => bindHit h | (Miss why, against) => here (why, against))
                  | Parallel.Compile => here (why, against))
@@ -1139,6 +1171,12 @@ struct
           LibraryScope.final (libraryWalk, group, fn () =>
             List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group)) acc (entryGroups es)
       val implemented : string list ref = ref []
+      (* the names of the plan's units, which its steps go through in order *)
+      val unnamed = ref userPart
+      fun nextName () =
+        case !unnamed of
+          (_, _, _, ident, _) :: rest => (unnamed := rest; ident)
+        | [] => raise Fail "a unit that is not among the inputs"
       fun elabSteps (steps : step list, acc) = List.foldl elabStep acc steps
       and elabStep (SUnit (p, anns), acc) =
             let
@@ -1146,7 +1184,7 @@ struct
               val quiet = !Options.noWarnings
               val () = if List.exists (fn a => a = "noWarnings") anns then Options.noWarnings := true else ()
               val mode = modeOf anns
-              val acc = unit ((p, fn () => loadTokens (mode, p), allow, p, mode), acc)
+              val acc = unit ((p, fn () => loadTokens (mode, p), allow, nextName (), mode), acc)
                         handle e => (Options.noWarnings := quiet; raise e)
             in Options.noWarnings := quiet; acc end
         | elabStep (SLocal (a, b), acc) =
@@ -1204,14 +1242,14 @@ struct
         then
           let
             val basisUnits =
-              ListPair.map (fn (e : entry, (name, _, _, _, _)) =>
-                              (name, #provides e, List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ()),
+              ListPair.map (fn (e : entry, (_, _, _, ident, _)) =>
+                              (ident, #provides e, List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ()),
                                #when e = Always))
                            (basis, basisPart)
-            fun userUnit (name, _, _, _, mode) =
+            fun userUnit (name, _, _, ident, mode) =
               let val f = Deps.analyse (name, syntaxOf (mode, name))
-              in (name, List.map #2 (#declares f), List.map #2 (#uses f), not (List.null (#breaks f))) end
-              handle _ => (name, [], [], true)
+              in (ident, List.map #2 (#declares f), List.map #2 (#uses f), not (List.null (#breaks f))) end
+              handle _ => (ident, [], [], true)
             val described = Vector.fromList (basisPart @ userPart)
             fun hasEntry i =
               case cache of

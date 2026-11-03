@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 88 of 88 entries documented |
+| Documentation | 95 of 95 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -64,6 +64,15 @@ sig
     val <a href="#val-syntax.diagnostics">diagnostics</a> : t -&gt; diagnostic list
     val <a href="#val-syntax.work">work</a> : t -&gt; work
   end
+  structure <a href="#str-workspace">Workspace</a> :
+  sig
+    type <a href="#type-workspace.t">t</a>
+    type <a href="#type-workspace.target">target</a> = {<a href="#fld-workspace.target.name">name</a> : string, <a href="#fld-workspace.target.build">build</a> : string, <a href="#fld-workspace.target.options">options</a> : string list}
+    val <a href="#val-workspace.find">find</a> : {<a href="#fld-workspace.find.file">file</a> : string, <a href="#fld-workspace.find.windows">windows</a> : bool} -&gt; t option
+    val <a href="#val-workspace.root">root</a> : t -&gt; string
+    val <a href="#val-workspace.libraryroots">libraryRoots</a> : t -&gt; string list
+    val <a href="#val-workspace.targets">targets</a> : t -&gt; target list
+  end
   structure <a href="#str-project">Project</a> :
   sig
     type <a href="#type-project.t">t</a>
@@ -76,7 +85,7 @@ sig
     val <a href="#val-project.buildlinks">buildLinks</a> : session * {<a href="#fld-project.buildlinks.file">file</a>:string,<a href="#fld-project.buildlinks.text">text</a>:string,<a href="#fld-project.buildlinks.variables">variables</a>:(string*string) list,<a href="#fld-project.buildlinks.windows">windows</a>:bool} -&gt; buildLink list
     val <a href="#val-project.pathcompletions">pathCompletions</a> : session * {<a href="#fld-project.pathcompletions.file">file</a>:string,<a href="#fld-project.pathcompletions.text">text</a>:string,<a href="#fld-project.pathcompletions.offset">offset</a>:int,<a href="#fld-project.pathcompletions.variables">variables</a>:(string*string) list,<a href="#fld-project.pathcompletions.windows">windows</a>:bool} -&gt;
       {items:pathCompletion list,isIncomplete:bool}
-    val <a href="#val-project.read">read</a> : session * {<a href="#fld-project.read.file">file</a> : string, <a href="#fld-project.read.variables">variables</a> : (string * string) list,
+    val <a href="#val-project.read">read</a> : session * {<a href="#fld-project.read.file">file</a> : string, <a href="#fld-project.read.workspace">workspace</a> : Workspace.t option, <a href="#fld-project.read.variables">variables</a> : (string * string) list,
                           <a href="#fld-project.read.overlays">overlays</a> : {file : string, text : string} list, <a href="#fld-project.read.windows">windows</a> : bool} -&gt; t
     val <a href="#val-project.sources">sources</a> : t -&gt; source list
     val <a href="#val-project.inputs">inputs</a> : t -&gt; input list
@@ -529,6 +538,77 @@ val work : t -> work
 
 `work snapshot` reports lexical and declaration reuse for this operation.
 
+### <a name="str-workspace"></a>`Workspace`
+
+A workspace: the directory of a root file, rune.workspace, that names
+where libraries are found, and the named targets (docs/build.md).
+
+#### <a name="type-workspace.t"></a>`t`
+
+```sml
+type t
+```
+
+A root file, read.
+
+#### <a name="type-workspace.target"></a>`target`
+
+```sml
+type target = {name : string, build : string, options : string list}
+```
+
+A named target: a build file, its path whole, and the options of a
+compiler session for it.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-workspace.target.name"></a>`name` | `string` |  |
+| <a name="fld-workspace.target.build"></a>`build` | `string` |  |
+| <a name="fld-workspace.target.options"></a>`options` | `string list` |  |
+
+#### <a name="val-workspace.find"></a>`find`
+
+```sml
+val find : {file : string, windows : bool} -> t option
+```
+
+`find {file, windows}` reads the nearest root file above file, or
+gives `NONE` where there is none.
+
+windows selects Windows drive/UNC syntax. A root file that is not
+well formed is reported through Failed.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-workspace.find.file"></a>`file` | `string` |  |
+| <a name="fld-workspace.find.windows"></a>`windows` | `bool` |  |
+
+#### <a name="val-workspace.root"></a>`root`
+
+```sml
+val root : t -> string
+```
+
+`root workspace` is the directory of its root file, which a build's
+units are named from.
+
+#### <a name="val-workspace.libraryroots"></a>`libraryRoots`
+
+```sml
+val libraryRoots : t -> string list
+```
+
+`libraryRoots workspace` lists the directories it finds libraries
+under, in order, whole.
+
+#### <a name="val-workspace.targets"></a>`targets`
+
+```sml
+val targets : t -> target list
+```
+
+`targets workspace` lists its named targets in order.
+
 ### <a name="str-project"></a>`Project`
 
 The compiler's immutable project model, shared with the CLI.
@@ -687,14 +767,16 @@ truncation. Native filename bytes are preserved in returned strings.
 #### <a name="val-project.read"></a>`read`
 
 ```sml
-val read : session * {file : string, variables : (string * string) list,
+val read : session * {file : string, workspace : Workspace.t option, variables : (string * string) list,
                       overlays : {file : string, text : string} list, windows : bool} -> t
 ```
 
 `read (session, request)` resolves a build through compiler rules,
 preserving scopes, order, annotations, virtual implementations and use.
 
-Variables are path-variable bindings. Overlays are already decoded
+workspace is what its units are named from and its libraries found
+under ([`Workspace.find`](#val-workspace.find)); with none, the build's directory stands for
+its root. Variables are path-variable bindings. Overlays are already decoded
 UTF-8, also for Latin-1 source files. windows selects Windows drive/UNC
 syntax independently of the host operating system. No user declarations execute and no cache
 files are written. Failure is reported through Failed.
@@ -702,6 +784,7 @@ files are written. Failure is reported through Failed.
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-project.read.file"></a>`file` | `string` |  |
+| <a name="fld-project.read.workspace"></a>`workspace` | `Workspace.t option` |  |
 | <a name="fld-project.read.variables"></a>`variables` | `(string * string) list` |  |
 | <a name="fld-project.read.overlays"></a>`overlays` | `{file : string, text : string} list` |  |
 | <a name="fld-project.read.windows"></a>`windows` | `bool` |  |

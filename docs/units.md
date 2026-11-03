@@ -193,16 +193,57 @@ way that does not depend on what was compiled before it (D3):
   numbers;
 * one of an earlier unit's is that unit's *identity* and its number there.
 
-A unit's identity is its name and the hash of its basis, without what its
-compile used of the session's counters. A unit whose body changed and whose
-basis did not keeps its identity, so that what was compiled against it
-stays valid. Loading a basis gives the unit's numbers a range of each kind
-of name -- stamps, type names, type variables -- after the session's, and
-registers the range, which is how a name of the session is written back as
-a unit's identity and number.
+A unit's identity is its logical name (below) and the hash of its basis,
+without what its compile used of the session's counters. A unit whose body
+changed and whose basis did not keeps its identity, so that what was
+compiled against it stays valid. Loading a basis gives the unit's numbers a
+range of each kind of name -- stamps, type names, type variables -- after
+the session's, and registers the range, which is how a name of the session
+is written back as a unit's identity and number.
 
-A unit loaded where a unit of its identity is loaded already -- a file the
-REPL uses again, the same text against the same units -- is loaded and
+**A unit's logical name** says where its file is, and nothing of how a path
+spelt it (`Workspace`, `lib/compiler/driver/workspace.sml`; the build-system
+roadmap's D3). It is what a key, an identity and an anchor hold. The paths a
+program names its files by stay in its code's tables, for its traces and
+messages, and a unit from the cache has them made where the file is now.
+
+* A file of a library is `LIBRARY:PATH`, its path below the library: the
+  deepest directory above it with a `library.build`, so that `lib/basis/list.sml`
+  is `basis:list.sml` and `lib/compiler/driver/deps.sml`, reached by a path of
+  `rune.build` or through `--library compiler`, is `compiler:driver/deps.sml`.
+  A library is named by its place under a directory of libraries -- `--lib`,
+  then the workspace's roots ([build.md](build.md), *The workspace*) --
+  so `lib/ffi/runtime` is `ffi/runtime`, and else by its directory's name, so
+  that it keeps its name where it moves. A library's name holds no `:` and no
+  `@` (each is made `_`), which leaves room for a version, `LIBRARY@1.2:PATH`.
+* Any other file of a build is named from the workspace's root, or without a
+  root file from the build file's directory: `src/driver/main.sml`, spelt
+  `../../src/driver/main.sml` in `tests/lsp/worker.build` too.
+* Files given on the command line are named from the directory of the first
+  (with `-I`, of the entry point), whether or not a workspace is around them.
+  They have no build file to hold them together, and they move together: a
+  project moved to another directory keeps its cache (S29). They may be
+  given in any spelling, relative or absolute.
+* A file outside the root is named by the path to it from the root, with `..`
+  in it (`../out/a.sml`), which holds nothing of the machine, so that a tree
+  that moves keeps its cache (S96). Only a file on another drive than the
+  root, which no relative path reaches, has its whole path for a name. A
+  library above or beside the root is found as far up as the directory it
+  shares with the root; nothing above the root has a say.
+
+Links are not followed: a name is of the path after `.` and `..` are taken
+out, so a file reached through a link and through its real path are two
+names, and at worst two entries.
+
+**A rank.** Two units of one build never have one name. A file given twice is
+two units, as it is two declarations in a program compiled whole, and so are
+two files of one path in two libraries of one name: the second has `#2` after
+its name, in the order of the build, then `#3`, and so has its key and its
+identity. Each has its own globals, so `a.sml keep.sml a.sml main.sml` prints
+in units what it prints compiled whole (S91, S94).
+
+A unit the REPL loads where a unit of its identity is loaded already -- a
+file used again, the same text against the same units -- is loaded and
 linked under its identity with `~2` after it (`~3`, ... where that is
 taken too; `UnitBasis.unused`), so that its globals are its own and what
 named the first unit's still does; its name is the same, and its entry in
@@ -354,9 +395,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   that hold for the input files and not the libraries (`--default-type`,
   `--or-patterns`; S62; and `--no-unicode-lints`, since an entry keeps
   the warnings it leaves out; S64), and of any unit its mode where it is not the
-  default (*Source modes*; S63); a file of the library is named by its
-  place in the library (`lib/basis/list.sml`), so that a cache follows the
-  library where it is moved, and a unit taken from the cache names its
+  default (*Source modes*; S63); the name is the unit's logical name (*Names*,
+  above), so that no spelling of a path reaches the key, a cache follows a
+  library where it is moved (S93), and a unit taken from the cache names its
   source in its code's files where it is now -- its own, and those of the
   bodies of the functors marked to be inlined that it expanded, which an
   entry keeps with the unit each is the source of (S56);
@@ -463,10 +504,11 @@ part). A usage keeps, beside the unit that bound the name, the
 fingerprint of what the name named: the hash of an entry -- a value's
 scheme and where it is from, a type's definition with its constructors and
 realisation, a structure's entries, a signature, an identifier's fixity --
-with every name in it written by its unit's name and the path that reaches
-it there (`a.sml:A.shape`, `a.sml:sig:SHAPE.area`), so that a change under
-a name changes every fingerprint that mentions it, and a change beside it
-none. A usage holds where its binder is the same unit, or where what the
+with every name in it written by its unit's logical name and the path that
+reaches it there (`a.sml:A.shape`, `a.sml:sig:SHAPE.area`), so that a change
+under a name changes every fingerprint that mentions it, a change beside it
+none, and a change of spelling none: a `_dynamic` client of `./ty.sml` is the
+bytes of one of `ty.sml` (S92). A usage holds where its binder is the same unit, or where what the
 name names now has the same fingerprint and the unit that bound it then is
 not in the session: the entry's code names that unit's globals, which the
 unit of its name there now takes over (below), while a unit still there
@@ -552,6 +594,11 @@ their usages hold, which they do but for the seals of structures the
 program does not name. It is made with the lint at level 2, so its entries
 are marked 2 and a compile at any level takes them.
 
+An analysis names its units as a build does (*Names*, above), `file#rank`
+being gone: `RuneCompiler.Project.read` takes the workspace, and the same
+source in a build and in the editor has one name. So far only the name is the
+same: an analysis's basis holds origins, which a build's does not.
+
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source
 companion is a `Pickle` encoding: `RCS`, version 2, then strings containing
@@ -569,10 +616,10 @@ through `writeMid`. The [compiler-library roadmap](plans/compiler-library.md) re
 session and client-migration acceptance gates.
 
 **`use`** in the REPL ([repl.md](repl.md)) takes a file's declarations
-from the cache the same way, each a unit named by the file and its place
-in it, kept in `$RUNE_CACHE`, else `.rune` beside the file: a file used
-again links its units from there, its top level run again with globals of
-its own.
+from the cache the same way, each a unit named by the file's path from where
+the session began, however `use` spelt it (S97), and by its place in the
+file, kept in `$RUNE_CACHE`, else `.rune` beside the file: a file used again
+links its units from there, its top level run again with globals of its own.
 
 `make check-units` builds every program in units without the cache, then
 through a cache all the programs share, and again from it, every unit

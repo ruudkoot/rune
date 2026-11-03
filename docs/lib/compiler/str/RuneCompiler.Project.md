@@ -29,7 +29,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`inputs`](../sig/RUNE_COMPILER.md#val-project.inputs) | `t -> input list` |
 | val | [`libraries`](../sig/RUNE_COMPILER.md#val-project.libraries) | `t -> string list` |
 | val | [`pathCompletions`](../sig/RUNE_COMPILER.md#val-project.pathcompletions) | `RuneCompiler.session * {file : string, offset : int, text : string, variables : (string * string) list, windows : bool} -> {isIncomplete : bool, items : pathCompletion list}` |
-| val | [`read`](../sig/RUNE_COMPILER.md#val-project.read) | `RuneCompiler.session * {file : string, overlays : {file : string, text : string} list, variables : (string * string) list, windows : bool} -> t` |
+| val | [`read`](../sig/RUNE_COMPILER.md#val-project.read) | `RuneCompiler.session * {file : string, overlays : {file : string, text : string} list, variables : (string * string) list, windows : bool, workspace : RuneCompiler.Workspace.t option} -> t` |
 | val | [`sources`](../sig/RUNE_COMPILER.md#val-project.sources) | `t -> source list` |
 
 ---

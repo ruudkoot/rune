@@ -13,6 +13,9 @@
 - `Syntax.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.t)
 - `Syntax.text` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.text)
 - `typeAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-typeat)
+- `Workspace.t` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-workspace.t)
+- `Workspace.target` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-workspace.target)
+- `Workspace.targets` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.targets)
 
 ---
 

@@ -4,6 +4,7 @@
 structure RuneCompiler :> RUNE_COMPILER =
 struct
   structure C = CompilerSession
+  structure W = Workspace
   datatype session = Session of {compiler : C.session, mode : Source.mode}
   type compiled = C.compiled
   type diagnostic = C.diagnostic
@@ -21,6 +22,7 @@ struct
          | UnitMid.Bad message => invalid message
          | UnitBasis.Missing identity => invalid ("missing unit dependency: " ^ identity)
          | BasisManifest.Usage message => invalid message
+         | W.Invalid message => invalid message
          | Fail message => invalid message
   fun session {lib,flags} =
     let
@@ -97,6 +99,16 @@ struct
         (CompilerSyntax.problems snapshot) end
   end
 
+  structure Workspace =
+  struct
+    type t=W.t
+    type target=W.target
+    fun find (request as {file,...})=guard file (fn () => W.find request)
+    fun root (workspace : t)= #root workspace
+    fun libraryRoots (workspace : t)= #libraryRoots workspace
+    fun targets (workspace : t)= #targets workspace
+  end
+
   structure Project =
   struct
     structure P=CompilerProject
@@ -105,7 +117,7 @@ struct
     type buildReference=CompilerBuildQuery.reference
     type pathCompletion=CompilerBuildQuery.completion
     type buildLink=CompilerBuildQuery.link
-    datatype t=Project of {owner:unit ref,plan:P.plan,sources:source list,inputs:input list,fingerprint:string}
+    datatype t=Project of {owner:unit ref,plan:P.plan,sources:source list,inputs:input list,fingerprint:string,scope:W.scope}
     fun sources (Project {sources,...})=sources
     fun inputs (Project {inputs,...})=inputs
     fun libraries (Project {plan,...})= #libraries plan
@@ -125,7 +137,7 @@ struct
           val ()=BuildFile.variables:=bindings
       in CompilerBuildQuery.completions {file=file,text=text,offset=offset,variables=StringMap.listItemsi bindings,
            windows=windows,lib= #lib config} end))
-    fun read (Session {compiler=compiler as C.Session {config,token,...},mode},{file,variables,overlays,windows}) =
+    fun read (Session {compiler=compiler as C.Session {config,token,...},mode},{file,workspace,variables,overlays,windows}) =
       guard file (fn () => C.owned (fn () =>
         let
           val ()=C.checked compiler
@@ -172,7 +184,10 @@ struct
             (text file;text mode;text kind;text body)) inputs
           val ()=Pickle.list Pickle.string (writer,#libraries plan)
           val ()=Pickle.list Pickle.string (writer,#caches plan)
-        in Project {owner=token,plan=plan,sources=sources,inputs=inputs,fingerprint=Pickle.hash (Pickle.contents writer)} end
+          val scope=W.ofBuild {file=file,workspace=workspace,lib= #lib config,windows=windows}
+          val ()=text (#root scope)
+          val ()=Pickle.list Pickle.string (writer,#libraries scope)
+        in Project {owner=token,plan=plan,sources=sources,inputs=inputs,fingerprint=Pickle.hash (Pickle.contents writer),scope=scope} end
         handle CompilerProject.Invalid message => invalid message
              | Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]))
   end
@@ -180,7 +195,7 @@ struct
   structure Analysis =
   struct
     structure A=CompilerAnalysis
-    datatype t=Analysis of {analysis:A.t,mode:Source.mode,owner:unit ref}
+    datatype t=Analysis of {analysis:A.t,mode:Source.mode,owner:unit ref,lib:string option}
     type snapshot=A.snapshot
     type checkpoint=A.checkpoint
     type input=A.input
@@ -194,22 +209,23 @@ struct
     type observation=A.observation
     exception Cancelled=A.Cancelled
     exception Busy=A.Busy
-    fun create (Session {compiler=compiler as C.Session {token,...},mode},{context}) =
-      Analysis {analysis=A.new (compiler,context),mode=mode,owner=token}
+    fun create (Session {compiler=compiler as C.Session {token,config,...},mode},{context}) =
+      Analysis {analysis=A.new (compiler,context),mode=mode,owner=token,lib= #lib config}
     fun close (Analysis {analysis,...})=A.close analysis
     fun observe (Analysis {analysis,...},callback)=A.observe(analysis,callback)
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))
-    fun check (Analysis {analysis,mode,owner},{project,inputs,cancelled}) = guard "" (fn () =>
+    fun check (Analysis {analysis,mode,owner,lib},{project,inputs,cancelled}) = guard "" (fn () =>
       let fun normalize (input:input):input=
             {file= #file input,text= #text input,mode=Source.modeName (CompilerProject.modeOf
               (case Source.modeNamed (#mode input) of SOME mode => mode
                | NONE => if #mode input="" then mode else invalid "unknown analysis source mode",#annotations input)),
              annotations= #annotations input,revision= #revision input}
           val inputs=List.map normalize inputs
-          val (steps,fingerprint,libraries,building)=case project of NONE =>
-              (List.map (fn input:input => CompilerProject.SUnit (#file input,#annotations input)) inputs,NONE,[],NONE)
-            | SOME (Project.Project {owner=projectOwner,plan,sources,inputs=captured,fingerprint}) =>
+          val (steps,fingerprint,libraries,scope,building)=case project of NONE =>
+              (List.map (fn input:input => CompilerProject.SUnit (#file input,#annotations input)) inputs,NONE,[],
+               W.ofFiles {file=case inputs of first :: _ => #file first | [] => ".",workspace=NONE,lib=lib,windows=W.onWindows ()},NONE)
+            | SOME (Project.Project {owner=projectOwner,plan,sources,inputs=captured,fingerprint,scope}) =>
                 let val ()=if owner=projectOwner then () else invalid "project belongs to another compiler context"
                     val ()=if length inputs=length sources then () else invalid "analysis input count differs from the project"
                     val ()=ListPair.app (fn (input:input,source:Project.source) =>
@@ -218,8 +234,8 @@ struct
                     val ()=List.app (fn captured:Project.input => if #kind captured<>"source" then () else
                       if List.exists (fn input:input => #file input= #file captured andalso #mode input= #mode captured
                         andalso #text input= #text captured) inputs then () else invalid "group discovery input changed after project resolution") captured
-                in (#steps plan,SOME fingerprint,#libraries plan,Option.map #path (List.find (fn _ => true) (#inputs plan))) end
-      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,building=building,cancelled=cancelled}) end)
+                in (#steps plan,SOME fingerprint,#libraries plan,scope,Option.map #path (List.find (fn _ => true) (#inputs plan))) end
+      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,scope=scope,building=building,cancelled=cancelled}) end)
       handle Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]
     fun id (snapshot:snapshot)= #id snapshot
     fun context (snapshot:snapshot)= #context snapshot

@@ -5,6 +5,7 @@
 - `Analysis.work` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.work)
 - `Syntax.work` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.work)
 - `Syntax.work` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.work)
+- `Workspace` (str): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#str-workspace)
 - `writeMid` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-writemid)
 - `writeProgram` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-writeprogram)
 - `writeUnit` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-writeunit)

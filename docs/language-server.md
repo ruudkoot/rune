@@ -315,11 +315,16 @@ Initialization options use the same settings object as `runelsp`:
 file URI; path-variable values are directory file URIs. Targets may
 override compiler settings, libraries, path variables and the library root.
 
-Without explicit targets, discovery examines the document directory and
-its ancestors up to an owning workspace root, following build `use`
-edges. It does not recursively scan descendants. A loose file without a
-workspace checks its own directory. Project source order, scopes,
-annotations and group ordering come from `RuneCompiler.Project`.
+Without explicit targets, a root file (`rune.workspace`,
+[build.md](build.md), *The workspace*) inside one of the client's folders
+gives its named targets, with their options after the settings' flags. One
+above every folder gives none, and discovery alone serves such a folder.
+Beside those, discovery examines the document directory and its ancestors up
+to an owning workspace root, following build `use` edges. It does not
+recursively scan descendants. A loose file without a workspace checks its own
+directory. Project source order, scopes, annotations and group ordering come
+from `RuneCompiler.Project`, which is given the root file above each build, so
+that a unit has the name it has in a build ([units.md](units.md), *Names*).
 
 When several targets contain a file, the server requests a context choice;
 it does not select by enumeration order. A configured target name or the

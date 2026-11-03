@@ -84,7 +84,16 @@ struct
           val compiled=ref 0
           val env = ref Env.initial
           val fixity = ref Fixity.initial
-          fun textUnit (source : source,name,allow,library,(ordinal,artifacts)) =
+          (* a unit's name, as rune gives it (Workspace), from the directory
+             of the first source *)
+          fun sourceOf (Text source) = source
+            | sourceOf (Loaded artifact) = #source artifact
+            | sourceOf (MidInput {source,...}) = source
+          val logical=Workspace.names (Workspace.ofFiles
+            {file=case sources of first :: _ => #file (sourceOf first) | [] => ".",
+             workspace=NONE,lib= #lib config,windows=Workspace.onWindows ()})
+          val ranks=Workspace.ranks ()
+          fun textUnit (source : source,name,allow,library,artifacts) =
             let
               val ()=compiled:= !compiled+1
               val {file,text,mode} = source
@@ -113,10 +122,10 @@ struct
               val artifact = {identity= #identity code,fingerprint=fingerprint,code=code,
                 bytes=bytes,pickle= #pickle (#exported result),
                 mid=mid,source=source,library=library}
-            in (ordinal+1,artifact :: artifacts) end
-          fun compile (Text source,(ordinal,artifacts)) =
-                textUnit (source,#file source ^ "#" ^ Int.toString ordinal,#allowPrim config,false,(ordinal,artifacts))
-            | compile (Loaded (artifact : artifact),(ordinal,artifacts)) =
+            in artifact :: artifacts end
+          fun compile (Text source,artifacts) =
+                textUnit (source,Workspace.fresh (ranks,Workspace.name (logical,#file source)),#allowPrim config,false,artifacts)
+            | compile (Loaded (artifact : artifact),artifacts) =
               let
                 val {file,text,mode} = #source artifact
                 val () = Source.register (Source.fromStringIn (mode,file,text))
@@ -130,11 +139,8 @@ struct
                 val () = if #identity (#unit loaded) = #identity artifact then () else raise Fail "unit and basis identities differ"
                 val () = (env:=Env.plus (!env,#delta loaded);
                           fixity:=Fixity.extend (!fixity,#directives loaded);UnitBasis.bind loaded)
-              in (Int.max (ordinal+1,
-                    case List.rev (String.fields (fn c => c = #"#") (#name (#unit loaded))) of
-                      last :: _ => (case Int.fromString last of SOME n => n+1 | NONE => ordinal+1)
-                    | [] => ordinal+1),artifact :: artifacts) end
-            | compile (MidInput {source,pickle,mid},(ordinal,artifacts)) =
+              in Workspace.take (ranks,#name (#unit loaded));artifact :: artifacts end
+            | compile (MidInput {source,pickle,mid},artifacts) =
               let
                 val {file,text,mode}=source
                 val ()=Source.register (Source.fromStringIn (mode,file,text))
@@ -162,12 +168,9 @@ struct
                 val artifact={identity= #identity code,fingerprint=fingerprint,code=code,bytes=String.concat (UnitFile.chunks (fingerprint,code)),
                   pickle=pickle,mid=mid,source=source,library=false}
                 val ()=(env:=Env.plus (!env,#delta loaded);fixity:=Fixity.extend (!fixity,#directives loaded);UnitBasis.bind loaded)
-              in (ordinal+1,artifact :: artifacts) end
-          fun inputSource (Text source) = source
-            | inputSource (Loaded artifact) = #source artifact
-            | inputSource (MidInput {source,...}) = source
+              in Workspace.take (ranks,#name unit);artifact :: artifacts end
           fun mentioned (input,known) =
-            let val {file,text,mode}=inputSource input
+            let val {file,text,mode}=sourceOf input
                 val source=Source.fromStringIn (mode,file,text)
                 val ()=Source.register source
             in BasisManifest.namesOf (Lexer.tokenize source,known) end
@@ -188,9 +191,7 @@ struct
           fun libraryUnit (e : BasisManifest.entry,state) =
             let val file=BasisManifest.path e
                 val loaded=Source.readFile (Source.Ascii,file)
-                val name=case #lib config of
-                  SOME root => if String.isPrefix (root ^ "/") file then "lib/" ^ String.extract (file,size root+1,NONE) else file
-                | NONE => file
+                val name=Workspace.fresh (ranks,Workspace.ofEntry (logical,{dir= #dir e,file= #file e}))
                 val allow=case #lib config of SOME root => #dir e=root ^ "/basis" | NONE => false
                 val source={file=file,text= #text loaded,mode=Source.Ascii}
                 val ()=UnitBasis.position (!env,!fixity)
@@ -219,12 +220,12 @@ struct
             end
           fun group (entries,state) =
             LibraryScope.group (walk,entries,fn () => List.foldl libraryUnit state entries)
-          val base= #2 (List.foldl group (0,[]) (#groups plan))
+          val base=List.foldl group [] (#groups plan)
           val ()=LibraryScope.program walk
-          val (ordinal,result)=List.foldl compile (1,base) sources
+          val result=List.foldl compile base sources
           fun final (entries,state) =
             LibraryScope.final (walk,entries,fn () => List.foldl libraryUnit state entries)
-          val finals= #2 (List.foldl final (ordinal,[]) (CompilerPrelude.groups (#final plan)))
+          val finals=List.foldl final [] (CompilerPrelude.groups (#final plan))
         in {units=List.rev result,finals=List.rev finals,cacheHits= !cacheHits,compiled= !compiled} end
       val result = CompilerState.withSession (owner,fn () => work ()
         handle Error.CompileError (span,message) => raise Failed [sourceError ("error",span,message)])
@@ -297,14 +298,7 @@ struct
         val mode=case Source.modeNamed (Pickle.rstring r) of SOME mode => mode | NONE => raise Pickle.Bad "unit source mode"
         val ()=if Pickle.rbytes (r,3)=UnitBasis.magic andalso Pickle.rnat r=UnitBasis.version then () else raise Pickle.Bad "unit basis version"
         val ()=if Pickle.rstring r=Pickle.probe () then () else raise Pickle.Bad "unit basis made by a compiler whose hash differs"
-        val name=Pickle.rstring r
-        val parts=String.fields (fn c => c = #"#") name
-        val inferred=case List.rev parts of
-          ordinal :: rest => if not (null rest) andalso ordinal<>"" andalso CharVector.all Char.isDigit ordinal
-                            then String.concatWith "#" (List.rev rest) else name
-        | [] => name
-        val inferred=case #lib config of SOME lib => if String.isPrefix "lib/" inferred then lib ^ String.extract (inferred,3,NONE) else inferred
-                                             | NONE => inferred
+        val inferred=Workspace.sourceOf (#lib config,Pickle.rstring r)
         fun read [] = raise Fail "unit source is unavailable; provide its source companion"
           | read (file :: rest) =
               case (SOME (Source.readFile (mode,file)) handle IO.Io _ => NONE) of
