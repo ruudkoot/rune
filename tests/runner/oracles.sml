@@ -809,7 +809,8 @@ struct
      build or no check, or are of another category: what is wrong with the
      file, which fails `expectations/cross-deviations` *)
   fun crossCheckNames () =
-    ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all"]
+    ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all",
+     "virtual-table-list", "virtual-table-tree", "virtual-table-dynamic", "virtual-table-plugin"]
     @ List.map name (glob ("tests/lang", ".sml") @ ExampleProjects.programs ())
     @ List.map (fn t => "basis-" ^ t) (List.filter (fn t => t <> "harness" andalso t <> "finish") (List.map basename (glob ("tests/basis", ".sml"))))
   fun crossDeviationErrors (ls : Expectations.line list, hosts : string list, checks : string list) : string list =
@@ -832,6 +833,37 @@ struct
     | "runedoc-stack" => crossCheck ("runedoc-stack", ["--target=stack"], toolSrcs "runedoc", false)
     | "runeopt-stack" => crossCheck ("runeopt-stack", ["--target=stack"], toolSrcs "runeopt", false)
     | "basis-all" => crossCheck ("basis-all", [], ["--basis", "all", "examples/hello.sml"], false)
+    (* a virtual functor's program and a dynamic one's, built in units, and
+       the module the second loads: each keeps its units' identities and the
+       fingerprint of the functor's ABI, which every build works out alike
+       (the build-system roadmap's M21, D22) *)
+    | "virtual-table" =>
+        let
+          val dir = "examples/virtual/table"
+          val () = List.app (fn b => crossCheck ("virtual-table-" ^ b, [], ["--build", dir ^ "/" ^ b ^ ".build", "--no-cache"], false))
+                            ["list", "tree", "dynamic"]
+          val out = run ^ "/cross"
+          fun units c = out ^ "/virtual-table-plugin." ^ c
+          fun module c =
+            (rmTree (units c);
+             if exec {cmd = ["bin/rune-" ^ c, "--build", dir ^ "/plugin.build", "--no-cache", "--emit-units", units c,
+                             "-o", units c ^ ".rbc"], dir = NONE, stdin = "", stdout = "", stderr = units c ^ ".err", timeout = 0} <> 0
+             then NONE
+             else case List.rev (List.filter (String.isSuffix "-tree.rbu") (lines (read (units c ^ "/units")))) of
+                    f :: _ => SOME f      (* as the compile, from the root, was given it *)
+                  | [] => NONE)
+          val made = List.map (fn c => (c, module c)) (builds "rune")
+        in
+          case List.find (fn (c, _) => c = "mlton") made of
+            SOME (_, SOME reference) =>
+              List.app (fn (c, SOME f) => if same (reference, f) then ()
+                                          else say ("FAIL virtual-table-plugin: the module's unit differs between the mlton and "
+                                                    ^ c ^ " builds\n")
+                         | (c, NONE) => say ("FAIL virtual-table-plugin: rune-" ^ c ^ " did not emit the module: "
+                                             ^ firstLine (units c ^ ".err") ^ "\n"))
+                       made
+          | _ => say ("FAIL virtual-table-plugin: rune-mlton did not emit the module: " ^ firstLine (units "mlton" ^ ".err") ^ "\n")
+        end
     | "rune-units" =>
         let
           val out = run ^ "/cross"
@@ -1344,7 +1376,8 @@ struct
          (Test.describe "cross"
             (job ("@examples", ["example-project-inventory"], [], 1, 100, 60) ::
              List.map (fn x => job (x, ["cross-one", x], [], 1, 1500, 3600))
-                      ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all"]
+                      ["rune", "rune-stack", "rune-units", "runedoc", "runedoc-stack", "runeopt", "runeopt-stack", "basis-all",
+                       "virtual-table"]
              @ List.map (fn x => job (if String.isPrefix "basis:" x then "basis-" ^ String.extract (x, 6, NONE) else name x,
                                        ["cross-one", x], [], 1, 1000, 3600))
                         crossSrcs

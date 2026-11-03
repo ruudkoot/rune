@@ -287,11 +287,16 @@ struct
        el,
        "  val functorConvention = \"the function of the parameter's record to the result's, the one slot of the record exported\"",
        "  val functorConvention = \"the function of the parameter's record to the result's, curried\""),
-    m ("A3", "a functor's ABI: the records' slots in another order", "", false, "",
-       [("S128", "did not load into bin/rune's client")],
-       el,
-       "    List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals)",
-       "    List.rev (List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals))"),
+    (* the values' slots of every record in the other order, an argument's
+       too, so that the mutant is a compiler of its own ABI: reversing one
+       side alone, its own lint refuses what it makes *)
+    also (el, "      val vals = List.mapPartial slot (StringMap.listItemsi (Env.vals specE))",
+              "      val vals = List.rev (List.mapPartial slot (StringMap.listItemsi (Env.vals specE)))")
+      (m ("A3", "a functor's ABI: the records' slots in another order", "", false, "",
+          [("S128", "did not load into bin/rune's client")],
+          el,
+          "    List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals)",
+          "    List.rev (List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals))")),
     m ("A4", "a functor's ABI: the descriptors in another order", "", false, "",
        [("S128", "did not load into bin/rune's client")],
        el,
