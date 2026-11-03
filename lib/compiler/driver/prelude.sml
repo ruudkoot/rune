@@ -12,12 +12,11 @@ struct
      a view of the Basis Library are a group of their own, after the
      libraries (D12) *)
   fun groups (entries : entry list) =
-    let fun same (e : entry) (e' : entry) = #dir e = #dir e' andalso isSome (#view e) = isSome (#view e')
-        fun take (_,[],acc) = (List.rev acc,[])
-          | take (first,e :: rest,acc) = if same first e
-              then take (first,rest,e :: acc) else (List.rev acc,e :: rest)
+    let fun take (_,_,[],acc) = (List.rev acc,[])
+          | take (dir,viewed,e :: rest,acc) = if #dir (e : entry)=dir andalso isSome (#view e)=viewed
+              then take (dir,viewed,rest,e :: acc) else (List.rev acc,e :: rest)
         fun all [] = []
-          | all (e :: rest) = let val (group,rest)=take (e,rest,[e]) in group :: all rest end
+          | all (e :: rest) = let val (group,rest)=take (#dir e,isSome (#view e),rest,[e]) in group :: all rest end
     in all entries end
 
   (* What a file of the program names of the libraries: the names it uses

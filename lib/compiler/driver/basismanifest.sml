@@ -333,14 +333,14 @@ struct
      those of its view, which come after the libraries, the libraries having
      been compiled with the Basis Library whole (D12) *)
   fun inView (scopes : scopes, entries : entry list) : entry list =
-    let
-      val (viewed, plain) = List.partition (isSome o #view) entries
-      val mine = List.filter (fn e : entry => #view e = #view scopes) viewed
-    in
-      case #view scopes of
-        NONE => plain
-      | SOME v => if List.null mine then raise Usage ("the Basis Library has no view " ^ v) else plain @ mine
-    end
+    case (#view scopes, List.exists (isSome o #view) entries) of
+      (NONE, false) => entries   (* every compile, until the Basis Library has a view: nothing made *)
+    | (NONE, true) => List.filter (not o isSome o #view) entries
+    | (SOME v, _) =>
+        let
+          val (viewed, plain) = List.partition (isSome o #view) entries
+          val mine = List.filter (fn e : entry => #view e = SOME v) viewed
+        in if List.null mine then raise Usage ("the Basis Library has no view " ^ v) else plain @ mine end
 
   (* The entries to load for a program that mentions the given names, in
      MANIFEST order, but for its view's seals, which come last. *)
