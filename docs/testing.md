@@ -952,7 +952,10 @@ taken (S129, S130). W1 to W4 are the config step's (the build-system roadmap's
 M6): an up-to-date build that does not ask a step's stamp, a step's key
 without its stamp's answer, or without its closure's files, and an
 up-to-date build's record without what a step reads; each runs no step where
-something it reads changed, which `warm-config` sees.
+something it reads changed, which `warm-config` sees. C5 and C14 are the store's
+(the build-system roadmap's M7): an entry's sections, or its head, not held to
+their hashes, so that an entry damaged where it still reads is taken, which
+`store-damage` sees.
 The 13 that survived E18:
 
 | Mutant | What it drops | Issue | What became of it |

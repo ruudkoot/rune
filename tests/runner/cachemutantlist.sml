@@ -194,7 +194,7 @@ struct
        us,
        "          else if hash (\"read\", b) = Vector.sub (sums, i) then (Array.update (held, i, true); b)",
        "          else if true then (Array.update (held, i, true); b)"),
-    m ("C9", "an entry's head not held to its hash", "", false, "",
+    m ("C14", "an entry's head not held to its hash", "", false, "",
        [("store-damage", "a damaged head was taken")],
        us,
        "      val () = if hash (\"read\", head) = headSum then () else (BinIO.closeIn ins; raise Damaged)",

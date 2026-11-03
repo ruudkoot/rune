@@ -21,7 +21,7 @@
 
    store-damage: an entry damaged where it still reads, its hashes kept --
    in its head, so that it stands, or in its first section -- is compiled
-   again, not taken (the mutants C5 and C9).
+   again, not taken (the mutants C5 and C14).
 
    store-heads: a warm build's cost does not grow with stale entries (E13).
    A project's units are looked up through a store that holds their entries
