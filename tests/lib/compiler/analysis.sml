@@ -1,7 +1,7 @@
 (* libraries: test/unit random compiler *)
 structure CompilerAnalysisTests =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure A=C.Analysis
   val check=Expect.that
   fun input (file,text,revision):A.input={file=file,text=text,revision=revision,mode="ascii",annotations=[]}

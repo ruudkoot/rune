@@ -4,7 +4,7 @@
    usage: layers-analysis LIB BUILD *)
 structure LayersAnalysis =
 struct
-  structure C = RuneCompiler
+  structure C = CompilerApi
   structure A = C.Analysis
   fun main (lib, build) =
     let

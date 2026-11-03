@@ -27,7 +27,7 @@ allocation forms and explicit mutable root types, including nested modules,
 local declarations and eager collection callbacks. New allocation helpers
 must extend the audit and its fault cases.
 
-`RuneCompiler : RUNE_COMPILER` is the public API. Add `--library compiler`
+`CompilerApi : COMPILER_API` is the public API. Add `--library compiler`
 to a compile, or name `compiler` in a build's `libraries` declaration.
 Its export boundary hides the implementation modules, so clients can
 declare their own `Ast`, `Env` and `Types` structures. `api.build` adds the
@@ -74,7 +74,7 @@ identity, installed with the sources and never committed.
 
 | Signature |  |
 | --- | --- |
-| [`RUNE_COMPILER`](sig/RUNE_COMPILER.md) | The reusable Rune compiler. Compilation and queries are static; execution is an explicit operation on a compiled unit. |
+| [`COMPILER_API`](sig/COMPILER_API.md) | The reusable Rune compiler. Compilation and queries are static; execution is an explicit operation on a compiled unit. |
 
 ---
 

@@ -2,7 +2,7 @@
 
 [Overview](../README.md) &middot; **a** [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
-- `Analysis` (str): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#str-analysis)
+- `Analysis` (str): [COMPILER_API](../sig/COMPILER_API.md#str-analysis)
 
 ---
 

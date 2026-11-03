@@ -22,7 +22,7 @@ struct
       (case (LspPosition.offset (index,encoding,start),LspPosition.offset (index,encoding,stop)) of
          (SOME start,SOME stop) => SOME (start,stop)
        | _ => raise J.Invalid "inlay hint range splits an encoded character") end
-  fun render {uri,snapshot,revision,generation,capabilities,index,encoding,hint:RuneCompiler.Analysis.typeHint,resolved,clean} =
+  fun render {uri,snapshot,revision,generation,capabilities,index,encoding,hint:CompilerApi.Analysis.typeHint,resolved,clean} =
     let val position=case LspPosition.position (index,encoding,#position hint) of SOME position => position
           | NONE => raise Fail "inlay hint has an invalid source boundary"
         val lazy=resolving capabilities

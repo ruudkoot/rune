@@ -584,12 +584,11 @@ struct
       (* Nothing this compile rests on has changed since it last made its
          output (UnitMemo, up to date; the build-system roadmap's D25 u):
          its warnings again, and nothing else, not even a step: what its
-         steps read is in what it rests on, and their stamps are asked
-         (Steps.ask). Else what it reads from here on is kept, for the next
-         to ask *)
+         steps read is in what it rests on. Else what it reads from here on
+         is kept, for the next to ask *)
       val upKey = upToDateKey project
       val upHit = case (upKey, UnitCache.directory ()) of
-                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key, Steps.ask (onWindows ()))
+                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key)
                   | _ => NONE
       val () = upToDate := (if isSome upHit then NONE else upKey)
       val () = case !upToDate of SOME _ => (Error.given := SOME []; UnitMemo.keepReads ()) | NONE => ()
@@ -1539,7 +1538,7 @@ struct
                  if not (OS.Process.isSuccess status) then ()
                  else
                    case (case output of SOME kept => SOME kept | NONE => UnitMemo.written (dir, out, at)) of
-                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])), Steps.answered ())
+                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])))
                    | NONE => ())
             | _ => ()
         in status end

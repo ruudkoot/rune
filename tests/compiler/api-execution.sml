@@ -3,7 +3,7 @@
 structure Ast = struct val clientOwned=42 end
 structure CompilerApiExecutionTests =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   fun need (true,_) = () | need (false,message) = raise Fail message
   fun main (directory,foreignLibrary,hostUnit) =
     let
@@ -56,6 +56,6 @@ end
 val ()=(case CommandLine.arguments () of
   [directory,foreignLibrary,hostUnit] => CompilerApiExecutionTests.main (directory,foreignLibrary,hostUnit)
 | _ => raise Fail "compiler API execution requires an artifact directory")
-  handle RuneCompiler.Failed diagnostics =>
-    (List.app (fn d : RuneCompiler.diagnostic => TextIO.output (TextIO.stdErr,#file d ^ ": " ^ #message d ^ "\n")) diagnostics;
+  handle CompilerApi.Failed diagnostics =>
+    (List.app (fn d : CompilerApi.diagnostic => TextIO.output (TextIO.stdErr,#file d ^ ": " ^ #message d ^ "\n")) diagnostics;
      OS.Process.exit OS.Process.failure)

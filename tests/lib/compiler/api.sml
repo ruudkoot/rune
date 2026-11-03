@@ -3,7 +3,7 @@
    on native SML hosts, where execution is deliberately unavailable. *)
 structure CompilerApiTests =
 struct
-  structure C = RuneCompiler
+  structure C = CompilerApi
   val check = Expect.that
   fun session () = C.session {lib=NONE,flags=[]}
   fun text (context,file,source) = C.compileText (context,{file=file,text=source})

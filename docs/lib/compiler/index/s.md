@@ -2,17 +2,15 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) **s** [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
-- `Analysis.share` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.share)
-- `Analysis.signatureAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.signatureat)
-- `Analysis.snapshot` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.snapshot)
-- `Analysis.store` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.store)
-- `Analysis.syntaxAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.syntaxat)
-- `Project.source` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-project.source)
-- `Project.sources` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.sources)
-- `session` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-session)
-- `session` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-session)
-- `Syntax` (str): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#str-syntax)
-- `Workspace.store` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.store)
+- `Analysis.share` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.share)
+- `Analysis.signatureAt` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.signatureat)
+- `Analysis.snapshot` (type): [COMPILER_API](../sig/COMPILER_API.md#type-analysis.snapshot)
+- `Analysis.syntaxAt` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.syntaxat)
+- `Project.source` (type): [COMPILER_API](../sig/COMPILER_API.md#type-project.source)
+- `Project.sources` (val): [COMPILER_API](../sig/COMPILER_API.md#val-project.sources)
+- `session` (type): [COMPILER_API](../sig/COMPILER_API.md#type-session)
+- `session` (val): [COMPILER_API](../sig/COMPILER_API.md#val-session)
+- `Syntax` (str): [COMPILER_API](../sig/COMPILER_API.md#str-syntax)
 
 ---
 

@@ -24,8 +24,6 @@ struct
   val cc = "src/driver/cachecheck.sml"
   val mn = "src/driver/main.sml"
   val st = "lib/compiler/state.sml"
-  val mm = "lib/compiler/driver/unitmemo.sml"
-  val sp = "src/driver/steps.sml"
 
   fun m (id, class, issue, repl, note, catches, file, old, new) : mutant =
     {mutant = CompilerMutantList.m (id, class, "cache", file, note, issue, [(file, old, new)]),
@@ -321,30 +319,5 @@ struct
        [("S130", "a module of another signature was not refused")],
        ub,
        "fpBound (w, #bound result); fpEnvInto (w, local', #env result))))",
-       "())))"),
-    (* the config step (the build-system roadmap's M6 and M15; docs/build.md,
-       Generated sources): what a step reads, each part of its key and of
-       an up-to-date build's record, dropped; each makes a build that runs
-       no step where git's state, a file of the step's closure or an input
-       changed, and so a stale Config *)
-    m ("W1", "up to date: a step's stamp not asked", "", false, "",
-       [("warm-config", "an edit of a tracked file the plan does not name: the step did not run")],
-       mm,
-       "          fun asks (id, answer) = (ask id = answer) handle _ => false",
-       "          fun asks (_ : string list * string) = true"),
-    m ("W2", "a step's key: its stamp's answer dropped", "", false, "",
-       [("warm-config", "a commit: the step did not run")],
-       sp,
-       "\"stamp\" :: toolHash :: stampArguments @ [\"answer\", ask windows (stampId (dir, s))]",
-       "\"stamp\" :: toolHash :: stampArguments @ [\"answer\", (ignore (ask windows (stampId (dir, s))); \"\")]"),
-    m ("W3", "a step's key: its closure's files dropped", "", false, "",
-       [("warm-config", "a second edit of a file the plan names, the tree dirty already: the step did not run")],
-       sp,
-       "List.concat (List.map (fn f => [f, closureHash (what, memo) f])",
-       "List.concat (List.map (fn f => [f, (ignore (closureHash (what, memo) f); \"\")])"),
-    m ("W4", "up to date: what a step reads not kept", "", false, "",
-       [("warm-config", "an edit of an input, the tree dirty already: the step did not run")],
-       sp,
-       "  fun readHash (path : string) : string option = (!Source.reading path; hashOf path)",
-       "  fun readHash (path : string) : string option = hashOf path")]
+       "())))")]
 end

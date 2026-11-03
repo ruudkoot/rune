@@ -1,7 +1,7 @@
 (* Ordered static compilation with explicit execution and artifact I/O.
 
-   Implements: RUNE_COMPILER *)
-structure RuneCompiler :> RUNE_COMPILER =
+   Implements: COMPILER_API *)
+structure CompilerApi :> COMPILER_API =
 struct
   structure C = CompilerSession
   structure W = Workspace

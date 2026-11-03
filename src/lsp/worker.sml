@@ -81,9 +81,9 @@ struct
                        capabilities=V.unjson (V.field (value,"capabilities")),cancelled=fn () => cancelled id,previous=previous})) end
               | _ => raise V.Invalid "unknown worker operation"
           in if opName="cancel" then () else
-               ((reply (id,work ()) handle RuneCompiler.Analysis.Cancelled =>
+               ((reply (id,work ()) handle CompilerApi.Analysis.Cancelled =>
                    send (V.Object [("id",V.Integer id),("cancelled",V.Bool true)])
-                 | RuneCompiler.Failed diagnostics => failed (id,String.concatWith "\n" (List.map #message diagnostics))
+                 | CompilerApi.Failed diagnostics => failed (id,String.concatWith "\n" (List.map #message diagnostics))
                  | E.Stale message => rejected (id,LspProtocol.contentModified,message)
                  | E.ContextPending message => send(V.Object[("id",V.Integer id),("error",V.Object
                      [("code",V.Integer LspProtocol.serverCancelled),("message",V.Bytes(E.safe message)),

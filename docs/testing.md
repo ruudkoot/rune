@@ -896,7 +896,6 @@ test-incremental` and so in `make check`, as a scenario of
 | Trimming, `store-trim` | a build after the store was trimmed -- to sizes from the whole down to a byte, by age by hand and after a build, every other file and every third removed -- that differs from one without the store; a build after a build that trimmed compiling what that build took; a trim of the frozen layer, or a limit that is none, not refused | the same |
 | Damage, `store-damage` | an entry damaged where it still reads, its hashes kept -- in its head so that it stands, or in its first section -- taken rather than compiled; a damaged Mid read by a build of the units' code, or taken by `--whole` | the same |
 | Stale entries, `store-heads` | a lookup through a store with stale entries under a project's keys hashing more of the store than one through a store of its entries alone | the same |
-| The config step, `warm-config` | in a git repository of its own, a step written as `rune.build`'s first, which writes a Config, run where nothing it reads changed, or not run where something did -- a file of its closure, an input, a commit, a tracked file outside the closure and the edit undone, a file git does not track, `git add`, a tag, a checkout, a branch, a hand edit of its output, the repository gone; its Config not what the tool run by hand makes, or the build not the build without the cache | the same |
 
 The roots come from `CompilerState.names`, not a list: a new root needs no line
 until a compile reads it. Blanking cannot see a flag left at its default, which
@@ -917,8 +916,8 @@ in a session that compiled the units before it is what a build would miss, and
 says so under `--explain-rebuild`. Build-cache issue 15 closes with M4's step 2
 of the build-system roadmap, when a basis written again is the same bytes.
 
-They are 97 tests of `make test-incremental`: 365 s of CPU, about 46 s of `make
-check` at eight jobs, of which the flags oracle is 212 s. `make test-cache-random`
+They are 99 tests of `make test-incremental`: 500 s of CPU, of which the
+flags oracle's 66 are 167 s (2026-11-03). `make test-cache-random`
 is the random edits at length, 150 steps of each small project with every warm
 build verified and 12 of the compiler's own sources, in the nightly tier; a
 change to a key runs it. `RUNE_CACHE_SEED=N` draws other edits.
@@ -953,11 +952,7 @@ records' slots in another order, the descriptors in another -- and a module
 of the mutant is refused by a client of `bin/rune` when it loads it (S128 of
 `tests/incremental/SCENARIOS.md`); A5 and A6 take a signature out of the
 fingerprint, and a module of another signature with the same slots is then
-taken (S129, S130). W1 to W4 are the config step's (the build-system roadmap's
-M6): an up-to-date build that does not ask a step's stamp, a step's key
-without its stamp's answer, or without its closure's files, and an
-up-to-date build's record without what a step reads; each runs no step where
-something it reads changed, which `warm-config` sees. C5 and C14 are the store's
+taken (S129, S130). C5 and C14 are the store's
 (the build-system roadmap's M7): an entry's sections, or its head, not held to
 their hashes, so that an entry damaged where it still reads is taken, which
 `store-damage` sees.

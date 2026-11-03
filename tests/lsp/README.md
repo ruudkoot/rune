@@ -150,7 +150,7 @@ bin/runevm --jit=off --heap-limit 536870912 bin/rune-lsp-syntax-bench.rbc \
   --machine "record CPU, operating system and available processors"
 ```
 
-The public `RuneCompiler.Syntax` tests also run on native compiler hosts.
+The public `CompilerApi.Syntax` tests also run on native compiler hosts.
 The private differential suite compares full constructor/scalar/span
 structure with fresh batch parsing, using accepted and rejected language
 fixtures, frontend sources, deletions and randomized edit/undo sequences.

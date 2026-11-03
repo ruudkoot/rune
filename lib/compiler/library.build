@@ -1,10 +1,6 @@
-(* The reusable compiler's public boundary. Drivers use internal.build.
-   Its RuneCompiler takes the place of the Basis Library's, the REPL's
-   (lib/basis/compiler.sml), in a scope that imports it (docs/build.md,
-   Clashes): a client that wants both renames this one at import. *)
+(* The reusable compiler's public boundary. Drivers use internal.build. *)
 requires unicode json end
-exports (structure RuneCompiler, signature RUNE_COMPILER)
-shadows (structure RuneCompiler)
+exports (structure CompilerApi, signature COMPILER_API)
 annotate "demand" in
   config.sml
   use api.build

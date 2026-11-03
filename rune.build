@@ -1,16 +1,7 @@
 (* Compiler libraries followed by the command-line driver. *)
-(* build/config.sml says the version, git's, and the compiler's identity, a
-   hash of rune.plan and its closure (docs/building.md, The compiler's
-   identity): scripts/gen-version.sh writes it, here as on the hosts. It
-   reads scripts/plan-files.sh, rune.plan and every file the plan names, and
-   git, which its stamp asks: the version alone, from --stamp. So it runs
-   when one of those changed, and a build that is up to date runs it not at
-   all (docs/build.md, Generated sources). *)
-generate scripts/gen-version.sh (--config, rune.plan, build/config.sml)
-  inputs scripts/plan-files.sh end
-  closure rune.plan
-  stamp scripts/gen-version.sh (--stamp)
-  outputs build/config.sml end
+(* build/config.sml, the version and the compiler's identity, is what make
+   writes with scripts/gen-version.sh (docs/building.md, The compiler's
+   identity) *)
 build/config.sml
 files
   lib/unicode/utf8_sig.sml

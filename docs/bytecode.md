@@ -265,7 +265,7 @@ compiles after it need of it ([units.md](units.md), *The export basis*):
 used        3 × varint   what the unit's compile used of each kind of name
 source      varint len, bytes   the hash of its source, by which the
                                 compiler library checks a source it is
-                                given (RuneCompiler.readUnit, readMid)
+                                given (CompilerApi.readUnit, readMid)
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"

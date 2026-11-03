@@ -759,24 +759,11 @@ the compiler that built it. The compiler is held to make the same bytes
 whichever of these it runs on (`make check-cross`, S43), and a unit's entry
 names the Basis units it used by their own identities.
 
-`build/config.sml` is a declared output of the first step of `rune.build`
-and `runedoc.build` ([build.md](build.md), *Generated sources*):
-`generate scripts/gen-version.sh (--config, rune.plan, build/config.sml)`,
-which `rune --build` runs before it reads a source, and which writes what a
-make writes. The hosts read the plan as files (`scripts/plan-files.sh`), and
-make runs `scripts/gen-version.sh` for them. The step says what it reads:
-`scripts/plan-files.sh`, `closure rune.plan` (the plan and every file it
-names) and git, which its stamp, `scripts/gen-version.sh --stamp`, asks:
-the version alone, the cheap part. So `rune --build` runs it again only
-where one of those changed, and not at all where the build is up to date,
-which a no-op of `rune.build` is, the stamp asked: 0.046G instructions in a
-clean checkout of this repository, against 0.135G for the step, nearly all
-of it git's look at every tracked file for `-dirty`. A checkout whose index
-git has not written since its files were (a fresh clone) makes git read
-every file instead, about 1.25G, until a `git status` writes it, since
-`--no-optional-locks` leaves the index alone; the step itself costs that
-too. The step is in the plan's text, and so in what the identity hashes;
-its output is not.
+`rune.build` and `runedoc.build` list `build/config.sml` as a file, which
+make writes, and which `rune --build` reads as make left it: after an edit,
+run make, or `sh scripts/gen-version.sh`, before `rune --build rune.build`,
+or what it builds has the identity of the sources at the last make. A
+checkout make has not run in has none, and `rune --build` says to run it.
 
 `rune`, `runelsp`, `runedoc` and the REPL link `build/config.sml`, or
 `lib/compiler/config.sml`, the same, and have one identity: `runelsp` takes

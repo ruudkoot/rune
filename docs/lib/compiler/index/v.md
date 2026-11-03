@@ -2,9 +2,9 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) **v** [w](w.md)
 
-- `Analysis.versionOf` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.versionof)
-- `Analysis.visibleAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.visibleat)
-- `version` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-version)
+- `Analysis.versionOf` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.versionof)
+- `Analysis.visibleAt` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.visibleat)
+- `version` (val): [COMPILER_API](../sig/COMPILER_API.md#val-version)
 
 ---
 

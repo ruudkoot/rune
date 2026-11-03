@@ -2,7 +2,7 @@
    variables remain distinct even when their spellings are the same. *)
 structure RuneLspOutline =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure W=RuneLspWorkspace
   type entry={identity:string,name:string,category:string,start:int,stop:int}
   type symbol={name:string,kind:int,start:int,stop:int,selectionStart:int,selectionStop:int}

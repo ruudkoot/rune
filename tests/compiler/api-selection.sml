@@ -2,7 +2,7 @@
    The library m provides E, and its one file does not elaborate, so that a
    selection that takes it fails. Alpha-renaming a bound variable is nothing
    to a session, a query or an analysis; naming E is. *)
-structure C=RuneCompiler
+structure C=CompilerApi
 fun need (true,_) = () | need (false,message) = raise Fail message
 val root=case CommandLine.arguments () of [root] => root | _ => raise Fail "expected the fixture's library root"
 fun session () = C.session {lib=SOME root,flags=["--library","m"]}

@@ -3,3 +3,4 @@ Fail: Compiler.compile: this program has no compiler beside it (rune-repl has)
 Fail: Compiler.compile: this program has no compiler beside it (rune-repl has)
 20 [- ] [= ]
 3 [> ]
+7 10000 normal

@@ -1,7 +1,7 @@
 (* libraries: test/unit random compiler *)
 structure CompilerSyntaxTests =
 struct
-  structure S=RuneCompiler.Syntax
+  structure S=CompilerApi.Syntax
   val check=Expect.that
   fun parse text=S.parse {file="edit.sml",text=text,mode="unicode",orPatterns=true,fixity=S.initial}
   fun lossless snapshot=String.concat (List.map #text (S.pieces snapshot))=S.text snapshot

@@ -1,6 +1,6 @@
-# signature RUNE_COMPILER
+# signature COMPILER_API
 
-[Compiler](../README.md) &rsaquo; **RUNE_COMPILER**
+[Compiler](../README.md) &rsaquo; **COMPILER_API**
 
 |  |  |
 | --- | --- |
@@ -13,13 +13,13 @@
 ## Synopsis
 
 ```sml
-signature RUNE_COMPILER
-structure RuneCompiler :> RUNE_COMPILER
+signature COMPILER_API
+structure CompilerApi :> COMPILER_API
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`RuneCompiler`](../str/RuneCompiler.md) | Ordered static compilation with explicit execution and artifact I/O. | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
+| [`CompilerApi`](../str/CompilerApi.md) | Ordered static compilation with explicit execution and artifact I/O. | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
 The reusable Rune compiler. Compilation and queries are static;
 execution is an explicit operation on a compiled unit.
@@ -27,7 +27,7 @@ execution is an explicit operation on a compiled unit.
 ## Interface
 
 <pre>
-signature RUNE_COMPILER =
+signature COMPILER_API =
 sig
   type <a href="#type-session">session</a>
   type <a href="#type-compiled">compiled</a>

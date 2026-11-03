@@ -18,12 +18,9 @@ struct
      line says and a program's build file may: a plan says what a compile sees *)
   (* a declared step and a preprocessor's class (docs/build.md, Generated
      sources; D16): its tool, its arguments, what it reads and, of a step,
-     the plan whose files it reads too (closure), the command whose output
-     stands for what it reads that no file names (stamp) and what it
-     writes, each path as a unit's is, from here; dir is the directory of
-     the build file that declares it, where its tools run *)
-  type generate={tool:string,arguments:string list,inputs:string list,closure:string option,
-                 stamp:{tool:string,arguments:string list} option,outputs:string list,dir:string}
+     what it writes, each path as a unit's is, from here; dir is the
+     directory of the build file that declares it, where its tool runs *)
+  type generate={tool:string,arguments:string list,inputs:string list,outputs:string list,dir:string}
   type preprocessor={name:string,tool:string,arguments:string list,inputs:string list,dir:string}
   type plan={steps:step list,libraries:string list,header:BuildFile.header option,inputs:input list,inline:string list,
              inlineValues:string list,references:(string*string) list,basis:string,view:string option,
@@ -197,11 +194,9 @@ struct
                     else raise Invalid (file ^ ": a header belongs to a library's library.build")
                 | BuildFile.Inline names => (inline:= !inline @ names;[])
                 | BuildFile.InlineVal names => (inlineValues:= !inlineValues @ names;[])
-                | BuildFile.Generate {tool,arguments,inputs,closure,stamp,outputs} =>
+                | BuildFile.Generate {tool,arguments,inputs,outputs} =>
                     if library then raise Invalid (file ^ ": a library's build file declares no step; a program's build does")
                     else (generates:= !generates @ [{tool=path tool,arguments=arguments,inputs=List.map path inputs,
-                                                    closure=Option.map path closure,
-                                                    stamp=Option.map (fn {tool,arguments} => {tool=path tool,arguments=arguments}) stamp,
                                                     outputs=List.map path outputs,dir=place}];[])
                 | BuildFile.Preprocessor {name,tool,arguments,inputs} =>
                     let val declared={name=name,tool=path tool,arguments=arguments,inputs=List.map path inputs,dir=place}

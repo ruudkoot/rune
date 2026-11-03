@@ -109,7 +109,6 @@ struct
       (* a step's output a host reads as a file; a file a preprocessor makes
          what is compiled of, it cannot compile, and refuses *)
       val () = write (dir ^ "/stepped.plan", "rune-plan 2\nbasis demand\ngenerate /bin/sh .\n  argument t.sh\n  reads t.sh\n"
-                                             ^ "  closure p.plan\n  stamp /bin/sh s.sh --stamp\n"
                                              ^ "  writes a.sml\nend\nprogram\n  unit a.sml a.sml ascii\nend\n")
       val (status, listed, errors) = invoke "stepped" ["sh", fromRoot "scripts/plan-files.sh", dir ^ "/stepped.plan"]
       val () = if status = 0 andalso listed = "a.sml\n" then ()
@@ -378,17 +377,8 @@ struct
              List.filter (fn l => not (List.exists (fn p => String.isPrefix p l) ["  lib/unicode/", "  lib/json/", "  lib/digest/"])) written
       val () = write (tree ^ "/rune.build", String.concatWith "\n" through)
       val () = need (List.exists (fn l => l = "build/config.sml") through, "rune.build names build/config.sml on no line of its own")
-      (* the toy loads a Config of its own first, which a step of its own
-         declares, as rune.build's first step declares build/config.sml
-         (docs/build.md, Generated sources) *)
-      fun toyLine l =
-        if l = "build/config.sml" then ["toy/config.sml", "toy/toy.sml"]
-        else if String.isPrefix "generate scripts/gen-version.sh " l
-        then ["generate scripts/gen-version.sh (--config, toy.plan, toy/config.sml)"]
-        else if String.isSubstring "outputs build/config.sml end" l then ["  outputs toy/config.sml end"]
-        else if String.isSubstring "closure rune.plan" l then ["  closure toy.plan"]
-        else [l]
-      val () = write (tree ^ "/toy.build", String.concatWith "\n" (List.concat (List.map toyLine through)))
+      val () = write (tree ^ "/toy.build", String.concatWith "\n"
+                        (List.concat (List.map (fn l => if l = "build/config.sml" then ["toy/config.sml", "toy/toy.sml"] else [l]) through)))
       val toy = "structure Toy = struct val name = \"toy\" end\n"
       val () = write (tree ^ "/toy/toy.sml", toy)
       fun invoke (label, cmd) =
