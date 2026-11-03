@@ -841,7 +841,7 @@ so as well as by its build files above, from three libraries under
 ```
 (* libraries/table/library.build: the virtual library *)
 exports (signature KEY, signature TABLE, functor Table)
-virtual (functor Table)
+virtual (functor Table) in ../../table.sml
 ../../key_sig.sml
 ../../table_sig.sml
 ../../table.sml                     (* functor Table = _virtual (K : KEY) : TABLE where type key = K.t *)
@@ -867,10 +867,13 @@ virtual library's three files come from the cache (`virtual-libraries` of
 
 * **A virtual module is declared in its library,** with `_virtual` at the top
   level of a file that the library's build lists itself, as a structure or a
-  functor (*Virtual modules*, above), and it is exported. `--basis-index`,
-  and every compile through the library's index, refuses a `virtual` that no
-  file declares so, a `_virtual` the header does not name, and a file before
-  the declaration that declares its name.
+  functor (*Virtual modules*, above), and it is exported. The header's
+  `virtual (KIND NAME, ...) in FILE` names the file that declares the first of
+  them, as the build lists it, so that a plan splits the library there with
+  no source read. `--basis-index`, and every compile through the library's
+  index, refuses a `virtual` that no file declares so, a `_virtual` the
+  header does not name, a file before the declaration that declares its
+  name, and a `FILE` that is not the first to declare one.
 * **An implementing library adds no public module.** Its header says
   `implements (KIND NAME, ...)` in place of `exports`, and it exports nothing:
   what it implements is reached through the virtual library, and all else it

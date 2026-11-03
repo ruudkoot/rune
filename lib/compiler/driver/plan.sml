@@ -398,11 +398,9 @@ struct
      names them, whose order that is: the libraries, the program, the final
      files. A unit's name says where it is; a path that is not under a library
      keeps its spelling. *)
-  (* virtual says whether a file declares a virtual module, which only a
-     virtual library's files are asked (D22) *)
   fun make {project : P.plan, libraries : string list, lib : string option, mode : Source.mode,
             scope : W.scope, windows : bool, read : string -> {text : string, revision : string},
-            hash : string -> string, virtual : string -> bool} : t =
+            hash : string -> string} : t =
     let
       val names = W.names scope
       val ranks = W.ranks ()
@@ -422,21 +420,24 @@ struct
                                                              virtuals = headerPart #virtuals, implements = headerPart #implements}
                                                             (root, libraries)
       (* a virtual library's steps, and those from the first that declares a
-         virtual module on, where a library of the plan implements one: a
-         unit the build file lists itself (LibraryIndex) *)
+         virtual module on, where a library of the plan implements one: the
+         unit the header names (virtual (...) in FILE), which the build file
+         lists itself, and which the library's index holds to being the first
+         that declares one (LibraryIndex): no source is read *)
       fun implemented dir =
         let val vs = headerPart #virtuals dir
         in List.exists (fn d => List.exists (fn m => List.exists (fn v => v = m) vs) (headerPart #implements d)) dirs end
       fun split (dir, ss) =
-        if List.null (headerPart #virtuals dir) orelse not (implemented dir) then (ss, [])
-        else
-          let fun go (head, []) = (List.rev head, [])
-                | go (head, s :: rest) =
-                    case s of
-                      P.SUnit (path, annotations) =>
-                        if P.classOf annotations <> "final" andalso virtual path then (List.rev head, s :: rest) else go (s :: head, rest)
-                    | _ => go (s :: head, rest)
-          in go ([], ss) end
+        case (if implemented dir then Option.mapPartial #virtualIn (#header (planOf dir)) else NONE) of
+          NONE => (ss, [])
+        | SOME file =>
+            let val first = P.pathKey windows (P.concat windows (dir, file))
+                fun go (head, []) = (List.rev head, [])
+                  | go (head, s :: rest) =
+                      case s of
+                        P.SUnit (path, _) => if P.pathKey windows path = first then (List.rev head, s :: rest) else go (s :: head, rest)
+                      | _ => go (s :: head, rest)
+            in go ([], ss) end
       (* the names of a file's units, in the order a compile comes to them *)
       val named = ref StringMap.empty : string list StringMap.map ref
       fun give (path, name) =

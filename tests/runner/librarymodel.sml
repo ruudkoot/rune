@@ -1010,28 +1010,34 @@ struct
       val virt = ("libraries/bad/v.sml", "structure V = _virtual : K\n")
     in
       put ("libraries/bad/k.sml", key);
-      List.app put [("libraries/other/library.build", "exports (signature K, structure O)\nvirtual (structure O)\nk.sml\no.sml\n"),
+      List.app put [("libraries/other/library.build", "exports (signature K, structure O)\nvirtual (structure O) in o.sml\nk.sml\no.sml\n"),
                     ("libraries/other/k.sml", key), ("libraries/other/o.sml", "structure O = _virtual : K\n")];
       index "other";
       List.app bad
         [("implements and exports", "requires table end\nexports (structure X)\nimplements (functor Table)\n../../list.sml\n", [],
           "an implementing library exports nothing"),
          ("kind", "exports (signature K)\nvirtual (signature K)\nk.sml\n", [], "a virtual module is a structure or a functor"),
-         ("not exported", "exports (signature K)\nvirtual (structure V)\nk.sml\nv.sml\n", [virt],
+         ("not exported", "exports (signature K)\nvirtual (structure V) in v.sml\nk.sml\nv.sml\n", [virt],
           "says virtual structure V, which the library does not export"),
-         ("not virtual", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nw.sml\n",
+         ("not virtual", "exports (signature K, structure V)\nvirtual (structure V) in w.sml\nk.sml\nw.sml\n",
           [("libraries/bad/w.sml", "structure V : K = struct val k = 1 end\n")], "says virtual structure V, which no source declares _virtual"),
-         ("twice", "exports (signature K, structure V)\nvirtual (structure V)\nvirtual (structure V)\nk.sml\nv.sml\n", [virt],
+         ("twice", "exports (signature K, structure V)\nvirtual (structure V) in v.sml\nvirtual (structure V) in v.sml\nk.sml\nv.sml\n", [virt],
           "a header says virtual once"),
          ("nested", "exports (signature K, structure Outer)\nk.sml\nn.sml\n",
           [("libraries/bad/n.sml", "structure Outer = struct structure V = _virtual : K end\n")],
           "says _virtual of a module not at its top level"),
          ("not in the header", "exports (signature K, structure V)\nk.sml\nv.sml\n", [virt],
           "v.sml declares the structure V _virtual, and the header does not say virtual (structure V)"),
-         ("used", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nuse inner.build\n",
+         ("used", "exports (signature K, structure V)\nvirtual (structure V) in v.sml\nk.sml\nuse inner.build\n",
           [virt, ("libraries/bad/inner.build", "v.sml\n")], "is listed in the library's build, not in one it uses"),
-         ("named before", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nearly.sml\nv.sml\n",
+         ("named before", "exports (signature K, structure V)\nvirtual (structure V) in v.sml\nk.sml\nearly.sml\nv.sml\n",
           [virt, ("libraries/bad/early.sml", "structure V = struct end\n")], "the name of a virtual module, before"),
+         (* the header names the file that declares the first virtual module,
+            so that a plan reads no source; it says so, and of that file *)
+         ("no file named", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nv.sml\n", [virt],
+          "names the file that declares its first virtual module: virtual (KIND NAME, ...) in FILE"),
+         ("another file named", "exports (signature K, structure V)\nvirtual (structure V) in k.sml\nk.sml\nv.sml\n", [virt],
+          "says virtual (...) in k.sml, and the first file that declares a virtual module is v.sml"),
          ("not exported by a source", "requires table end\nimplements (functor Table)\nplain.sml\n",
           [("libraries/bad/plain.sml", "structure Plain = struct end\n")], "implements the functor Table, which no source exports"),
          ("not required", "implements (functor Table)\n../../list.sml\n", [],
@@ -1047,7 +1053,7 @@ struct
           "implements modules of two virtual libraries")]
     end
   fun twoVirtual () =
-    (put ("libraries/again/library.build", "exports (signature KEY2, functor Table)\nvirtual (functor Table)\nk.sml\nt.sml\n");
+    (put ("libraries/again/library.build", "exports (signature KEY2, functor Table)\nvirtual (functor Table) in t.sml\nk.sml\nt.sml\n");
      put ("libraries/again/k.sml", "signature KEY2 = sig type t end\nsignature TABLE2 = sig end\n");
      put ("libraries/again/t.sml", "functor Table = _virtual (K : KEY2) : TABLE2\n");
      index "again";
@@ -1060,7 +1066,7 @@ struct
   fun structures () =
     let
       val () = List.app put
-        [("libraries/clock/library.build", "exports (signature CLOCK, structure Clock)\nvirtual (structure Clock)\nclock_sig.sml\nclock.sml\n"),
+        [("libraries/clock/library.build", "exports (signature CLOCK, structure Clock)\nvirtual (structure Clock) in clock.sml\nclock_sig.sml\nclock.sml\n"),
          ("libraries/clock/clock_sig.sml", "signature CLOCK = sig val now : unit -> int val name : string end\n"),
          ("libraries/clock/clock.sml", "structure Clock = _virtual : CLOCK\n"),
          ("libraries/ticks/library.build", "exports (structure Ticks)\nticks.sml\n"),

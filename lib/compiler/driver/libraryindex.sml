@@ -394,11 +394,19 @@ struct
                                                  ^ moduleText m ^ ")")) vs;
                   if count = List.length vs then ()
                   else refuse (p ^ " says _virtual of a module not at its top level, where a library's virtual modules are declared"))) dynamics
+      (* the file the header names, from the library's directory as a unit's
+         path is, which the plan splits the library at (CompilerPlan) *)
+      val named = case header of SOME {virtualIn = SOME f, ...} => SOME (relative (P.concat windows (here, f))) | _ => NONE
       val () =
         case List.find (fn (_, _, {virtuals = vs, ...}, _) => not (List.null vs)) dynamics of
           NONE => ()
         | SOME (first, _, _, _) =>
             let
+              val () = case named of
+                         SOME f => if f = first then ()
+                                   else refuse ("says virtual (...) in " ^ f ^ ", and the first file that declares a virtual module is "
+                                                ^ first)
+                       | NONE => ()
               val direct = List.exists (fn P.SUnit (q, _) => relative q = first | _ => false) inside
               fun earlier ((p, _, f : Deps.file) :: rest) =
                     if p = first then ()

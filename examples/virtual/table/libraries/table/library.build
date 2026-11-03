@@ -3,7 +3,7 @@
    implements (functor Table) is its implementation, and a program names
    one of them beside it (docs/build.md, Virtual libraries). *)
 exports (signature KEY, signature TABLE, functor Table)
-virtual (functor Table)
+virtual (functor Table) in ../../table.sml
 ../../key_sig.sml
 ../../table_sig.sml
 ../../table.sml

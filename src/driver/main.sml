@@ -482,9 +482,7 @@ struct
                                         "" => "." | relative => relative) (!Options.libDir)
     in
       CompilerPlan.make {project = project, libraries = libraries, lib = lib, mode = !Options.sourceMode, scope = scopeWith lib,
-                         windows = windows, read = readBuild, hash = Hex.fromBytes o Sha256.digest,
-                         (* where a virtual library's tail begins: a file that says _virtual (D22) *)
-                         virtual = fn path => Vector.exists (fn (Token.VIRTUAL, _) => true | _ => false) (loadTokens (Source.Ascii, path))}
+                         windows = windows, read = readBuild, hash = Hex.fromBytes o Sha256.digest}
       handle CompilerProject.Invalid message => raise Options.Usage message
     end
 

@@ -15,11 +15,13 @@ struct
   (* a library's header, but for its exports: the Library after it. A name
      it requires is an import's word, with what is renamed (BasisManifest);
      strict holds its units to being well-formed. virtuals are the virtual
-     modules it declares, and implements those of a library it requires that
-     it implements, each a structure or a functor (docs/build.md, Virtual
-     libraries; D22) *)
+     modules it declares, virtualIn the file that declares the first of them,
+     as the build file spells it, and implements those of a library it
+     requires that it implements, each a structure or a functor
+     (docs/build.md, Virtual libraries; D22) *)
   type header = {requires : string list, friends : string list, views : (string * (kind * string) list) list,
-                 strict : bool, virtuals : (kind * string) list, implements : (kind * string) list}
+                 strict : bool, virtuals : (kind * string) list, virtualIn : string option,
+                 implements : (kind * string) list}
   datatype dec =
       File of string                              (* a path, relative to the build file's directory *)
     | Files of string list
@@ -292,7 +294,7 @@ struct
          is a header's, and `implements NAME = ... end` a declaration *)
       type parts = {requires : string list option, exports : (kind * string) list option, friends : string list option,
                     views : (string * (kind * string) list) list, strict : bool,
-                    virtuals : (kind * string) list option, implements : (kind * string) list option}
+                    virtuals : ((kind * string) list * string) option, implements : (kind * string) list option}
       fun header (h : parts) : parts =
         let
           fun once (seen, what) = if isSome seen then error ("a header says " ^ what ^ " once") else ()
@@ -317,9 +319,19 @@ struct
                header {requires = requires, exports = exports, friends = SOME (paths "build"), views = views,
                       strict = strict, virtuals = virtuals, implements = implements})
           | SOME (W "virtual") =>
-              (ignore (next ()); once (virtuals, "virtual");
-               header {requires = requires, exports = exports, friends = friends, views = views,
-                      strict = strict, virtuals = SOME (moduleList "virtual"), implements = implements})
+              let
+                val () = (ignore (next ()); once (virtuals, "virtual"))
+                val modules = moduleList "virtual"
+                (* the file that declares the first of them, which the
+                   plan splits the library at, reading no source (D22) *)
+                val () = case peek () of
+                           SOME (W "in") => ignore (next ())
+                         | _ => error "a virtual library's header names the file that declares its first virtual module: virtual (KIND NAME, ...) in FILE"
+                val file = pathWord "source"
+              in
+                header {requires = requires, exports = exports, friends = friends, views = views,
+                        strict = strict, virtuals = SOME (modules, file), implements = implements}
+              end
           | SOME (W "implements") =>
               if not implementsList then done ()
               else
@@ -360,7 +372,8 @@ struct
              | _ =>
                  let val ds = decsUntil []
                  in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views,
-                             strict = strict, virtuals = getOpt (virtuals, []), implements = getOpt (implements, [])},
+                             strict = strict, virtuals = case virtuals of SOME (ms, _) => ms | NONE => [],
+                             virtualIn = Option.map #2 virtuals, implements = getOpt (implements, [])},
                      Library (getOpt (exports, []), ds)] end)
     in
       let val ds = body ()
