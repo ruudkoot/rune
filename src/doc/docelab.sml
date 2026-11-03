@@ -34,10 +34,11 @@ struct
       val scopes =
         case #root prelude of
           NONE => BasisManifest.noScopes ""
-        | SOME root => BasisManifest.scopes {root = root, building = NONE, names = [], headed = false, libraries = written}
+        | SOME root => BasisManifest.scopes {root = root, building = NONE, names = [], headed = false, libraries = written, view = NONE}
       val walk = LibraryScope.walk (env, fixity, ref StringMap.empty, scopes)
+      (* the Basis Library as a program sees it in no view (D12) *)
       fun elaborate d =
-        case BasisManifest.readManifest d of
+        case List.filter (fn e : BasisManifest.entry => not (isSome (#view e))) (BasisManifest.readManifest d) of
           [] => ()
         | entries =>
             LibraryScope.libraries (walk, [entries],

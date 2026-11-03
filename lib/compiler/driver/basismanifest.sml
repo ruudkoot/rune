@@ -18,18 +18,23 @@ struct
      files, as IO and OS do (the structure and the signature of the
      specification); naming it loads them all. A seal file binds structures
      again as their signatures show them; it is loaded for a program that
-     mentions one, never because a file of the library requires the name. *)
+     mentions one, never because a file of the library requires the name.
+     A seal of a view of the library is seal@VIEW, loaded for a program in
+     that view, after the libraries (D12). *)
   datatype when = Always | Demand | Seal | Final
   (* What a library's header says beside its exports, which are scope, and
      what it requires, which are its # library: lines; a library with none
      has NONE, whose files see all before them and whose `libraries` are
-     transitive (docs/build.md, A library's header; D7, D15). *)
-  type header = {friends : string list, views : (string * (string * string) list) list}
+     transitive (docs/build.md, A library's header; D7, D15). shadows are
+     the names of the Basis Library its exports take the place of (D9). *)
+  type header = {friends : string list, views : (string * (string * string) list) list, shadows : string list}
   (* requires is read from the text when it is asked for: most programs need
-     it of few files. dir is the directory of the library the file is in. *)
+     it of few files. dir is the directory of the library the file is in.
+     view is the view of the Basis Library a seal belongs to, a seal@VIEW
+     line, which only a program in that view loads (D12). *)
   type entry = {dir : string, file : string, when : when, provides : string list,
                 requires : unit -> string list, scope : (string * string) list option,
-                header : header option}
+                header : header option, view : string option}
 
   (* A library's export boundary: its header's, on an # exports: line, or a
      library (...) block's, in a sixth MANIFEST field. Five-field manifests
@@ -94,8 +99,9 @@ struct
       val headed = ref NONE : (string * string) list option ref
       val friends = ref [] : string list ref
       val views = ref [] : (string * (string * string) list) list ref
+      val shadows = ref [] : string list ref
       fun comment (i, f, e) =
-        if f + 2 >= e orelse not (Char.contains "efv" (at (f + 2))) then ()
+        if f + 2 >= e orelse not (Char.contains "efvs" (at (f + 2))) then ()
         else
           let
             val line = String.substring (text, f, e - f)
@@ -103,6 +109,7 @@ struct
           in
             if String.isPrefix "# exports:" line then headed := SOME (exports (i, e, after "# exports:", e))
             else if String.isPrefix "# friends:" line then friends := !friends @ words (after "# friends:", e)
+            else if String.isPrefix "# shadows:" line then shadows := !shadows @ List.map #2 (exports (i, e, after "# shadows:", e))
             else if String.isPrefix "# view:" line then
               (case words (after "# view:", e) of
                  n :: _ =>
@@ -120,10 +127,16 @@ struct
           fun make (b1,b2,b3,b4,last,scope) =
             case (one (i,b1),one (b1+1,b2)) of
               (SOME file,SOME mode) =>
-                {dir=dir,file=file,
-                 when=(case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final | _ => bad (i,e)),
-                 provides=words (b3+1,b4),requires=fn () => words (b4+1,last),scope=scope,
-                 header=Option.map (fn _ => {friends= !friends,views=List.rev (!views)}) (!headed)}
+                let val view = if String.isPrefix "seal@" mode andalso size mode > 5
+                               then SOME (String.extract (mode,5,NONE)) else NONE
+                in
+                  {dir=dir,file=file,
+                   when=(case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final
+                                    | _ => if isSome view then Seal else bad (i,e)),
+                   provides=words (b3+1,b4),requires=fn () => words (b4+1,last),scope=scope,
+                   header=Option.map (fn _ => {friends= !friends,views=List.rev (!views),shadows= !shadows}) (!headed),
+                   view=view}
+                end
             | _ => bad (i,e)
         in
           case bars (i,[]) of
@@ -207,7 +220,7 @@ struct
                StringMap.empty entries
 
   (* ---- what each scope sees (docs/build.md, A library's header; D7, D8,
-     D11) ----
+     D9, D11) ----
 
      A scope is a program or a library with a header. It sees the Basis
      Library and its imports: what it names, and what those of them with no
@@ -215,46 +228,125 @@ struct
      library that has not said otherwise. A library with no header sees all
      that comes before it, as it always has, and has no line of libraries. *)
 
+  (* A name an import renames, of a kind, to another (D9): only a module or a
+     type is renamed, since a value would lose its status as a constructor *)
+  type rename = {kind : string, from : string, to : string}
+  val renameKinds = ["structure", "signature", "functor", "type"]
+
   (* a library as a scope sees it: through these exports, NONE being all it
-     declares, as a friend does or where it has no boundary *)
-  type import = {dir : string, names : (string * string) list option}
-  type scopes = {basis : string, scoped : bool, program : import list, libraries : (string * import list) list}
+     declares, as a friend does or where it has no boundary, and with what it
+     renames *)
+  type import = {dir : string, names : (string * string) list option, renames : rename list}
+  (* view is the program's view of the Basis Library, whose seals are loaded
+     after the libraries (D12) *)
+  type scopes = {basis : string, scoped : bool, program : import list, libraries : (string * import list) list,
+                 view : string option}
 
   fun noScopes (basis : string) : scopes =
-    {basis = basis, scoped = false, program = [], libraries = []}
+    {basis = basis, scoped = false, program = [], libraries = [], view = NONE}
 
   fun importsOf (scopes : scopes, dir : string) : import list option =
     Option.map #2 (List.find (fn (d, _) => d = dir) (#libraries scopes))
 
-  (* NAME or NAME#VIEW, which is how a library's name asks for one of its
-     views *)
-  fun splitView (name : string) : string * string option =
-    case String.fields (fn c => c = #"#") name of
-      [n] => (n, NONE)
-    | [n, v] => (n, SOME v)
-    | _ => raise Usage ("not the name of a library: " ^ name)
+  (* How a scope names a library (docs/build.md, Clashes): NAME, NAME#VIEW for
+     one of its views, and either with what it renames, which a build file
+     writes NAME (KIND FROM as TO, ...) and which is kept in one word, NAME(
+     KIND:FROM=TO,...) with no space: in a list of libraries, on a MANIFEST's
+     # library: lines and in a plan. *)
+  fun identifier (s : string) : bool =
+    size s > 0 andalso Char.isAlpha (String.sub (s, 0))
+    andalso CharVector.all (fn c => Char.isAlphaNum c orelse c = #"_" orelse c = #"'") s
+  fun importWord {name : string, view : string option, renames : rename list} : string =
+    name ^ (case view of NONE => "" | SOME v => "#" ^ v) ^
+    (case renames of
+       [] => ""
+     | rs => "(" ^ String.concatWith "," (List.map (fn {kind, from, to} => kind ^ ":" ^ from ^ "=" ^ to) rs) ^ ")")
+  fun importOf (word : string) : {name : string, view : string option, renames : rename list} =
+    let
+      fun bad () = raise Usage ("not the name of a library: " ^ word)
+      val n = size word
+      fun opening i = if i >= n then NONE else if String.sub (word, i) = #"(" then SOME i else opening (i + 1)
+      fun rename item =
+        case String.fields (fn c => c = #":" orelse c = #"=") item of
+          [kind, from, to] =>
+            if List.exists (fn k => k = kind) renameKinds andalso identifier from andalso identifier to
+            then {kind = kind, from = from, to = to} else bad ()
+        | _ => bad ()
+      val (head, renames) =
+        case opening 0 of
+          NONE => (word, [])
+        | SOME i =>
+            if n < i + 2 orelse String.sub (word, n - 1) <> #")" then bad ()
+            else (String.substring (word, 0, i),
+                  List.map rename (String.fields (fn c => c = #",") (String.substring (word, i + 1, n - i - 2))))
+    in
+      case String.fields (fn c => c = #"#") head of
+        [name] => {name = name, view = NONE, renames = renames}
+      | [name, v] => {name = name, view = SOME v, renames = renames}
+      | _ => bad ()
+    end
+  (* NAME, and the view NAME#VIEW asks for *)
+  fun splitView (word : string) : string * string option =
+    let val {name, view, ...} = importOf word in (name, view) end
+  (* a rename as a build file writes it *)
+  fun renameText ({kind, from, to} : rename) : string = kind ^ " " ^ from ^ " as " ^ to
 
   (* whether build, a path, is the friend that a library in dir names *)
   fun isFriend (dir : string, friend : string, build : string) : bool =
     OS.FileSys.fullPath (OS.Path.concat (dir, friend)) = OS.FileSys.fullPath build
     handle OS.SysErr _ => false | OS.Path.Path => false
 
-  (* whether a name of e is one that a scope importing as imports sees *)
+  (* a name of an import as the scope sees it *)
+  fun renamed (renames : rename list) (n : string) : string =
+    case List.find (fn {from, ...} => from = n) renames of SOME {to, ...} => to | NONE => n
+
+  (* whether a name of e is one that a scope importing as imports sees, n
+     being the scope's name for it. A name here has no kind and a rename has,
+     so a name renamed away counts as well as its new name: a selection may
+     load a file a scope does not need, and never misses one it does. *)
   fun seen (imports : import list, e : entry, n : string) : bool =
     case List.find (fn {dir, ...} => dir = #dir e) imports of
       NONE => false
-    | SOME {names = NONE, ...} => List.exists (fn p => p = n) (#provides e)
-    | SOME {names = SOME es, ...} => List.exists (fn (_, exported) => exported = n) es
+    | SOME {names, renames, ...} =>
+        List.exists (fn p => (p = n orelse renamed renames p = n)
+                             andalso (case names of NONE => true | SOME es => List.exists (fn (_, x) => x = p) es))
+                    (#provides e)
 
-  (* The names of e that a program may name, of a scopes *)
+  (* The names of e that a scope importing as imports may name, as it names
+     them, a name renamed away among them as seen counts it *)
+  fun seenNames (imports : import list, e : entry) : string list =
+    case List.find (fn {dir, ...} => dir = #dir e) imports of
+      NONE => []
+    | SOME {names, renames, ...} =>
+        List.concat (List.map (fn p =>
+                                 if (case names of NONE => true | SOME es => List.exists (fn (_, x) => x = p) es)
+                                 then (case renamed renames p of q => if q = p then [p] else [p, q])
+                                 else [])
+                              (#provides e))
+
+  (* The names of e that a program may name, of a scopes, as it names them *)
   fun forProgram (scopes : scopes, e : entry) : string list =
     if not (#scoped scopes) orelse #dir e = #basis scopes then public e
-    else List.filter (fn n => seen (#program scopes, e, n)) (#provides e)
+    else seenNames (#program scopes, e)
+
+  (* The entries a compile in scopes chooses among: those of no view and
+     those of its view, which come after the libraries, the libraries having
+     been compiled with the Basis Library whole (D12) *)
+  fun inView (scopes : scopes, entries : entry list) : entry list =
+    let
+      val (viewed, plain) = List.partition (isSome o #view) entries
+      val mine = List.filter (fn e : entry => #view e = #view scopes) viewed
+    in
+      case #view scopes of
+        NONE => plain
+      | SOME v => if List.null mine then raise Usage ("the Basis Library has no view " ^ v) else plain @ mine
+    end
 
   (* The entries to load for a program that mentions the given names, in
-     MANIFEST order. *)
+     MANIFEST order, but for its view's seals, which come last. *)
   fun select (scopes : scopes, entries : entry list, mentioned : names) : entry list =
     let
+      val entries = inView (scopes, entries)
       (* The files that provide a name: a scan of the entries, compared with
          the primitive =, for the few names the chosen files require (a map of
          every name would cost more to build than a program needs). *)
@@ -397,23 +489,25 @@ struct
 
   (* What each scope of a compile sees: its libraries, in the order they are
      compiled, with their entries, what the program names (names) and the
-     build it is, whose friends it may be. With no header among them nothing
-     is scoped, and a compile goes as it always has, unless what is being
+     build it is, whose friends it may be, and its view of the Basis Library.
+     With no header among them, no view of one and no rename, nothing is
+     scoped, and a compile goes as it always has, unless what is being
      compiled has one itself (headed: the "program" is that library). *)
   fun scopes {root : string, building : string option, names : string list, headed : bool,
-              libraries : (string * entry list) list} : scopes =
+              libraries : (string * entry list) list, view : string option} : scopes =
     let
       val basis = root ^ "/basis"
       fun entriesOf dir = case List.find (fn (d, _) => d = dir) libraries of SOME (_, es) => es | NONE => []
       fun headerOf dir = case entriesOf dir of e :: _ => #header e | [] => NONE
       val scoped = headed orelse List.exists (isSome o headerOf o #1) libraries
-                   orelse List.exists (isSome o #2 o splitView) names
+                   orelse List.exists (fn n => let val i = importOf n in isSome (#view i) orelse not (List.null (#renames i)) end)
+                                      names
       (* what a client sees of a library it names *)
       fun through (client : string option) (name : string, dir : string, view : string option) =
         case (headerOf dir, view) of
           (NONE, NONE) => scopeOf (entriesOf dir)
         | (NONE, SOME _) => raise Usage ("a view needs a header, and the library " ^ #1 (splitView name) ^ " has none")
-        | (SOME {friends, views}, _) =>
+        | (SOME {friends, views, ...}, _) =>
             let val friend = case client of
                   SOME build => List.exists (fn f => isFriend (dir, f, build)) friends
                 | NONE => false
@@ -427,24 +521,58 @@ struct
                       SOME (_, names) => SOME names
                     | NONE => raise Usage ("the library " ^ #1 (splitView name) ^ " has no view " ^ v)
             end
-      fun add (imports : import list, dir, names) =
-        case List.partition (fn {dir = d, ...} => d = dir) imports of
-          ([], _) => imports @ [{dir = dir, names = names}]
-        | ({names = old, ...} :: _, others) =>
-            others @ [{dir = dir, names = case (old, names) of
-                                            (SOME a, SOME b) => SOME (a @ b)
-                                          | _ => NONE}]
-      fun visit client (name : string, imports : import list) =
+      (* A rename is of a name the import offers, of that kind where the
+         library says (its exports), each name once, and to a name it does not
+         offer already *)
+      fun checkRenames (name : string, dir : string, names, renames : rename list) =
         let
+          val shown = #1 (splitView name)
+          val offered = case names of
+                          SOME es => es
+                        | NONE => List.concat (List.map (fn e : entry => List.map (fn n => ("", n)) (#provides e)) (entriesOf dir))
+          fun has ({kind, from, ...} : rename) = List.exists (fn (k, n) => n = from andalso (k = "" orelse k = kind)) offered
+          fun twice xs = case xs of [] => NONE | x :: rest => if List.exists (fn y => y = x) rest then SOME x else twice rest
+          fun refuse why = raise Usage ("the import of the library " ^ shown ^ " " ^ why ^ " (docs/build.md, Clashes)")
+        in
+          List.app (fn r => if has r then ()
+                            else refuse ("renames " ^ #kind r ^ " " ^ #from r ^ ", which it does not "
+                                         ^ (if isSome names then "export" else "declare"))) renames;
+          Option.app (fn n => refuse ("renames " ^ n ^ " twice")) (twice (List.map (fn {kind, from, ...} => kind ^ " " ^ from) renames));
+          Option.app (fn n => refuse ("renames two names to " ^ n)) (twice (List.map #to renames));
+          List.app (fn {from, to, ...} =>
+                      if List.exists (fn (_, n) => n = to andalso not (List.exists (fn r => #from r = n) renames)) offered
+                      then refuse ("renames " ^ from ^ " to " ^ to ^ ", which it has already") else ()) renames
+        end
+      fun add (imports : import list, name, dir, names, renames : rename list) =
+        case List.partition (fn {dir = d, ...} => d = dir) imports of
+          ([], _) => imports @ [{dir = dir, names = names, renames = renames}]
+        | ({names = old, renames = earlier, ...} :: _, others) =>
+            if earlier <> renames
+            then raise Usage ("the library " ^ #1 (splitView name) ^ " is imported twice in one scope, renamed otherwise"
+                              ^ " (docs/build.md, Clashes)")
+            else others @ [{dir = dir, names = case (old, names) of
+                                                 (SOME a, SOME b) => SOME (a @ b)
+                                               | _ => NONE,
+                            renames = renames}]
+      (* what a scope names itself, with what it renames, and then what
+         those with no header are written on, which it has as they are where
+         it does not name them itself *)
+      fun named client (name : string, imports : import list) =
+        let
+          val {view, renames, ...} = importOf name
           val dir = libraryDir (root, name)
-          val imports = add (imports, dir, through client (name, dir, #2 (splitView name)))
+          val names = through client (name, dir, view)
+          val () = if List.null renames then () else checkRenames (name, dir, names, renames)
+        in add (imports, name, dir, names, renames) end
+      fun transitive client (name : string, imports : import list) =
+        let val dir = libraryDir (root, name)
         in
           if isSome (headerOf dir) then imports
           else List.foldl (fn (n, acc) =>
                              if List.exists (fn {dir = d, ...} => d = libraryDir (root, n)) acc then acc
-                             else visit client (n, acc)) imports (libraryRequires dir)
+                             else transitive client (n, named client (n, acc))) imports (libraryRequires dir)
         end
-      fun imports client names = List.foldl (visit client) [] names
+      fun imports client names = List.foldl (transitive client) (List.foldl (named client) [] names) names
     in
       {basis = basis, scoped = scoped, program = if scoped then imports building names else [],
        libraries =
@@ -453,39 +581,50 @@ struct
            List.mapPartial
              (fn (dir, _) => Option.map (fn _ => (dir, imports (SOME (dir ^ "/library.build")) (libraryRequires dir)))
                                         (headerOf dir))
-             libraries}
+             libraries,
+       view = view}
     end
 
   (* What a scope imports twice: a name, the library it first has it from,
-     and the one that shadows that; "" for the Basis Library. Two libraries
-     with no header have always shadowed each other, and that stays so until
-     they have headers. A name is compared without its kind: no name of this
-     tree crosses kinds (D9), and a false warning is all that could come of
-     one that did. *)
+     and the one that shadows that; "" for the Basis Library. Each is an
+     error (D9), which a rename at import answers. Two libraries with no
+     header have always shadowed each other, and that stays so until they
+     have headers, unless a rename gives the name. A library shadows a name
+     of the Basis Library only where its header says so (shadows), and a
+     rename never does. A name is compared without its kind: no name of this
+     tree crosses kinds (D9), and a false error is all that could come of
+     one that did, which a rename answers too. *)
   fun clashes (imports : import list, entries : entry list, basis : string) : (string * string * string) list =
     let
       fun entriesOf dir = List.filter (fn e : entry => #dir e = dir) entries
-      fun headed dir = case entriesOf dir of e :: _ => isSome (#header e) | [] => false
+      fun headerOf dir = case entriesOf dir of e :: _ => #header e | [] => NONE
+      fun headed dir = isSome (headerOf dir)
+      fun shadowed (dir, n) = case headerOf dir of SOME {shadows, ...} => List.exists (fn s => s = n) shadows | NONE => false
       val basisNames =
-        List.foldl (fn (e : entry, m) => if #dir e = basis
+        List.foldl (fn (e : entry, m) => if #dir e = basis andalso not (isSome (#view e))
                                          then List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (public e) else m)
                    StringMap.empty entries
-      fun offered ({dir, names} : import) =
-        case names of
-          SOME es => List.mapPartial (fn (kind, n) => if kind = "fixity" then NONE else SOME n) es
-        | NONE => List.concat (List.map #provides (entriesOf dir))
+      (* each name as the scope sees it, and whether a rename gave it *)
+      fun offered ({dir, names, renames} : import) =
+        List.map (fn n => let val shown = renamed renames n in (shown, shown <> n) end)
+                 (case names of
+                    SOME es => List.mapPartial (fn (kind, n) => if kind = "fixity" then NONE else SOME n) es
+                  | NONE => List.concat (List.map #provides (entriesOf dir)))
       (* in the order they are compiled, which is the order they shadow in *)
       val dirs = List.foldl (fn (e : entry, ds) => if List.exists (fn d => d = #dir e) ds then ds else ds @ [#dir e]) [] entries
       val ordered = List.mapPartial (fn d => List.find (fn {dir, ...} => dir = d) imports) dirs
       fun visit (import as {dir, ...} : import, (seen, found)) =
-        List.foldl (fn (n, (seen, found)) =>
+        List.foldl (fn ((n, byRename), (seen, found)) =>
                        case StringMap.find (seen, n) of
-                         SOME other =>
-                           if other = dir orelse not (headed other orelse headed dir) then (seen, found)
-                           else (StringMap.insert (seen, n, dir), (n, other, dir) :: found)
+                         SOME (other, earlierByRename) =>
+                           if other = dir orelse not (headed other orelse headed dir orelse byRename orelse earlierByRename)
+                           then (seen, found)
+                           else (StringMap.insert (seen, n, (dir, byRename)), (n, other, dir) :: found)
                        | NONE =>
-                           (StringMap.insert (seen, n, dir),
-                            if headed dir andalso StringMap.member (basisNames, n) then (n, "", dir) :: found else found))
+                           (StringMap.insert (seen, n, (dir, byRename)),
+                            if (headed dir orelse byRename) andalso StringMap.member (basisNames, n)
+                               andalso (byRename orelse not (shadowed (dir, n)))
+                            then (n, "", dir) :: found else found))
                    (seen, found) (offered import)
     in List.rev (#2 (List.foldl visit (StringMap.empty, []) ordered)) end
 end

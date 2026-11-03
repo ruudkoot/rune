@@ -8,13 +8,16 @@ struct
   type names = BasisManifest.names
   type plan = {groups : entry list list, final : entry list, scopes : BasisManifest.scopes}
 
-  (* the entries of one library, which come together, in order *)
+  (* the entries of one library, which come together, in order; the seals of
+     a view of the Basis Library are a group of their own, after the
+     libraries (D12) *)
   fun groups (entries : entry list) =
-    let fun take (_,[],acc) = (List.rev acc,[])
-          | take (dir,e :: rest,acc) = if #dir (e : entry)=dir
-              then take (dir,rest,e :: acc) else (List.rev acc,e :: rest)
+    let fun same (e : entry) (e' : entry) = #dir e = #dir e' andalso isSome (#view e) = isSome (#view e')
+        fun take (_,[],acc) = (List.rev acc,[])
+          | take (first,e :: rest,acc) = if same first e
+              then take (first,rest,e :: acc) else (List.rev acc,e :: rest)
         fun all [] = []
-          | all (e :: rest) = let val (group,rest)=take (#dir e,rest,[e]) in group :: all rest end
+          | all (e :: rest) = let val (group,rest)=take (e,rest,[e]) in group :: all rest end
     in all entries end
 
   (* What a file of the program names of the libraries: the names it uses
@@ -57,12 +60,12 @@ struct
      with those they are written on, in the order they are compiled, each
      with its entries, and what each scope sees. *)
   type candidates = {libraries : (string * entry list) list, entries : entry list, scopes : BasisManifest.scopes}
-  fun candidates {root : string, libraries : string list, building : string option} : candidates =
+  fun candidates {root : string, libraries : string list, building : string option, view : string option} : candidates =
     let
       val read = List.map (fn dir => (dir,BasisManifest.readManifest dir)) (BasisManifest.libraries (root,libraries))
     in
       {libraries=read,entries=BasisManifest.readManifest (root ^ "/basis") @ List.concat (List.map #2 read),
-       scopes=BasisManifest.scopes {root=root,building=building,names=libraries,headed=false,libraries=read}}
+       scopes=BasisManifest.scopes {root=root,building=building,names=libraries,headed=false,libraries=read,view=view}}
     end
 
   (* What a program that mentions these names loads. A library beside the
@@ -85,7 +88,13 @@ struct
       NONE => if null libraries then {groups=[],final=[],scopes=BasisManifest.noScopes ""} else raise Fail "libraries require a library root"
     | SOME root =>
         let
-          val found = candidates {root=root,libraries=libraries,building=building}
+          val found = candidates {root=root,libraries=libraries,building=building,view=NONE}
+          val scopes = #scopes found
+          (* a clash is an error here as in a compile (D9) *)
+          val () = if not (#scoped scopes) then ()
+                   else case BasisManifest.clashes (#program scopes,#entries found,root ^ "/basis") of
+                          [] => ()
+                        | clash :: _ => raise BasisManifest.Usage (LibraryIndex.clashText root clash)
           fun tokens (e : entry) = Lexer.tokenize (Source.load (Source.Ascii,BasisManifest.path e))
-        in planOf (choose (found,mentioned,tokens),#scopes found) end
+        in planOf (choose (found,mentioned,tokens),scopes) end
 end

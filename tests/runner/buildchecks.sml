@@ -333,6 +333,7 @@ struct
     | command ["build-compiler-layout"]=SOME compilerLayout
     | command ["build-library-exports"]=SOME libraryExports
     | command ["build-library-model"]=SOME LibraryModel.run'
+    | command ["build-namespaces"]=SOME Namespaces.run'
     | command ["build-plan-round-trip"]=SOME planRoundTrip
     | command ["build-compiler-api"]=SOME compilerApi
     | command _=NONE
@@ -346,6 +347,9 @@ struct
        (job "library-exports" ["build-library-exports"] []),
      tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:src/driver/*","covers:tests/runner/librarymodel.sml"]
        (job "library-model" ["build-library-model"] []),
+     tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:src/driver/*","covers:lib/basis/library.build",
+             "covers:tests/runner/librarymodel.sml"]
+       (job "namespaces" ["build-namespaces"] []),
      tagged ["check","test-build","covers:lib/compiler/*","covers:src/driver/*","covers:*.build"]
        (job "plan-round-trip" ["build-plan-round-trip"] []),
      tagged ["check","test-compiler-api","test-lib","covers:lib/compiler/*","covers:tests/compiler/api*.sml"]

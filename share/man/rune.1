@@ -109,6 +109,13 @@ library's files are chosen as the basis library's are, and may not use
 .BR _prim .
 .IB NAME # VIEW
 sees that view of a library with a header (docs/build.md, A library's header).
+.I NAME
+.BI ( "structure A " as " B" , " ..." )
+renames what it imports, as a build file's
+.B libraries
+does: two imports of one name in one scope, two libraries' or a library's
+and the basis library's, are an error that a rename answers
+(docs/build.md, Clashes).
 Repeatable.
 .TP
 .B \-\-no\-prelude
@@ -127,6 +134,18 @@ With
 it compiles every file. The
 .B MANIFEST
 records what each file provides and requires.
+.TP
+.BI \-\-basis\-view " NAME"
+See the basis library through its view
+.IR NAME :
+its seal files marked
+.BI view= NAME\fR,\fP
+which bind structures again under narrower signatures, are loaded after the
+libraries, which see the basis library whole, so that only the program is
+held to the view. A build file's
+.B view
+.I NAME
+says the same (docs/build.md, Views of the Basis Library).
 .TP
 .B \-\-basis\-deps
 Print the library files that the inputs load, one per line, and exit: a

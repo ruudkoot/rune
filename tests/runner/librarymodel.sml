@@ -239,32 +239,64 @@ struct
       val (status, log) = build "sealed" "sees-through.sml"
     in need (status <> 0, "a friend saw through an ascription: " ^ log) end
 
-  (* D9: a warning now, once a scope; an error when a rename can answer it *)
+  (* D9: two imports of one name in one scope are an error, which a rename at
+     import answers; a library takes a name of the Basis Library only where
+     its header says it shadows it *)
   fun clashes () =
     let
       val source = "val () = print (Int.toString Same.v ^ \"\\n\")\n"
-      val () = prints "clash" ["same1", "same2"] source "2\n"
-      val (status, log) = rune (libraries ["same1", "same2"] @ ["--no-cache", "p/clash.sml", "-o", dir ^ "/clash.rbc"])
-      val () = need (status = 0 andalso has "warning: this scope has Same from both the library lib/same1 and the library lib/same2" log,
-                     "no warning of a clash: " ^ log)
+      val () = refused "clash" ["same1", "same2"] source "error: this scope has Same from both the library lib/same1 and the library lib/same2"
       val (status, log) = rune (libraries ["same1", "same2"] @ ["--no-warnings", "--no-cache", "p/clash.sml", "-o", dir ^ "/clash.rbc"])
-      val () = need (status = 0 andalso log = "", "--no-warnings: " ^ log)
+      val () = need (status <> 0 andalso has "this scope has Same" log, "--no-warnings silenced a clash: " ^ log)
+      (* a rename at import answers it, on the command line as in a build *)
+      val () = prints "renamed" ["same1", "same2 (structure Same as Two)"]
+                      "val () = print (Int.toString Same.v ^ Int.toString Two.v ^ \"\\n\")\n" "12\n"
+      val () = put ("p/renamed.build", "libraries same1 (structure Same as One) same2 (structure Same as Two) end\nrenamed-build.sml\n")
+      val () = put ("p/renamed-build.sml", "val () = print (Int.toString One.v ^ Int.toString Two.v ^ \"\\n\")\n")
+      val (status, log) = rune ["--no-cache", "--build", "p/renamed.build", "-o", dir ^ "/renamed-build.rbc"]
+      val () = need (status = 0, "renamed in a build: " ^ log)
+      val (status, output) = runProgram (dir ^ "/renamed-build.rbc")
+      val () = need (status = 0 andalso output = "12\n", "renamed in a build prints " ^ output)
+      (* a name renamed away is gone *)
+      val () = refused "renamed-away" ["same1 (structure Same as One)"] source "Same"
       (* with the Basis Library *)
-      val () = prints "basis-clash" ["mathy"] "val () = print (Int.toString Math.pi ^ \"\\n\")\n" "3\n"
-      val (status, log) = rune (libraries ["mathy"] @ ["--no-cache", "p/basis-clash.sml", "-o", dir ^ "/clash.rbc"])
-      val () = need (status = 0 andalso has "warning: this scope has Math from both the Basis Library and the library lib/mathy" log,
-                     "no warning of a clash with the Basis Library: " ^ log)
-      (* where the library requires both: at its index, and not at a client's compile *)
+      val () = refused "basis-clash" ["mathy"] "val () = print (Int.toString Math.pi ^ \"\\n\")\n"
+                       "this scope has Math from both the Basis Library and the library lib/mathy"
+      val () = prints "basis-renamed" ["mathy (structure Math as Mathy)"]
+                      "val () = print (Int.toString Mathy.pi ^ \" \" ^ Int.toString (Real.round (Math.sqrt 4.0)) ^ \"\\n\")\n" "3 2\n"
+      (* a rename onto a name of the Basis Library is a clash too *)
+      val () = refused "renamed-onto-basis" ["same1 (structure Same as List)"] source
+                       "this scope has List from both the Basis Library and the library lib/same1"
+      (* or where its header says it shadows the Basis Library's *)
+      val () = put ("lib/shadowing/library.build", "exports (structure Math)\nshadows (structure Math)\nannotate \"demand\" in math.sml end\n")
+      val () = put ("lib/shadowing/math.sml", "structure Math = struct val pi = 3 end\n")
+      val () = ignore (index "shadowing")
+      val () = need (has "# shadows: structure:Math\n" (read (lib ^ "/shadowing/MANIFEST")), "no shadows in the manifest")
+      val () = prints "shadowed" ["shadowing"] "val () = print (Int.toString Math.pi ^ \"\\n\")\n" "3\n"
+      val () = prints "shadowed-renamed" ["shadowing (structure Math as Mine)"]
+                      "val () = print (Int.toString Mine.pi ^ \" \" ^ Int.toString (Real.round (Math.sqrt 4.0)) ^ \"\\n\")\n" "3 2\n"
+      (* where the library requires both: at its index, and a rename there *)
       val () = put ("lib/both/library.build", "requires same1 same2 end\nexports (structure Uses)\nannotate \"demand\" in uses.sml end\n")
       val () = put ("lib/both/uses.sml", "structure Uses = struct val v = Same.v end\n")
-      val () = need (has "warning: this scope has Same from both" (index "both"), "no warning of a clash at the index")
-      val () = prints "scoped-clash" ["both"] "val () = print (Int.toString Uses.v ^ \"\\n\")\n" "2\n"
+      val () = indexRefused "both" "this scope has Same from both"
+      val () = put ("lib/both/library.build",
+                    "requires same1 (structure Same as One) same2 end\nexports (structure Uses)\nannotate \"demand\" in uses.sml end\n")
+      val () = put ("lib/both/uses.sml", "structure Uses = struct val v = One.v * 10 + Same.v end\n")
+      val () = ignore (index "both")
+      val () = need (has "# library: same1(structure:Same=One)\n# library: same2\n" (read (lib ^ "/both/MANIFEST")),
+                     "the renames are not in the manifest: " ^ read (lib ^ "/both/MANIFEST"))
+      val () = prints "scoped-clash" ["both"] "val () = print (Int.toString Uses.v ^ \"\\n\")\n" "12\n"
       val (status, log) = rune (libraries ["both"] @ ["--no-cache", "p/scoped-clash.sml", "-o", dir ^ "/clash.rbc"])
-      val () = need (status = 0 andalso log = "", "a client warned of its library's clash: " ^ log)
-      (* two with no header, as they always have *)
+      val () = need (status = 0 andalso log = "", "a client was told of its library's imports: " ^ log)
+      (* two with no header, as they always have, unless a rename says *)
       val () = prints "no-header-clash" ["both1", "both2"] "val () = print (Int.toString Both.v ^ \"\\n\")\n" "2\n"
       val (status, log) = rune (libraries ["both1", "both2"] @ ["--no-cache", "p/no-header-clash.sml", "-o", dir ^ "/clash.rbc"])
-    in need (status = 0 andalso log = "", "a warning of two libraries with no header: " ^ log) end
+      val () = need (status = 0 andalso log = "", "two libraries with no header: " ^ log)
+      val () = prints "no-header-renamed" ["both1", "both2 (structure Both as Second)"]
+                      "val () = print (Int.toString Both.v ^ Int.toString Second.v ^ \"\\n\")\n" "12\n"
+      val () = refused "no-header-onto" ["both1", "both2 (structure Both as Deep)", "deep"]
+                       "val () = print (Int.toString Deep.v ^ \"\\n\")\n" "this scope has Deep from both"
+    in () end
 
   (* what a header may not be *)
   fun malformed () =
@@ -502,4 +534,303 @@ struct
   fun run' () =
     (tree (); manifests (); requires (); noHeader (); boundary (); views (); friends (); clashes (); malformed (); holes ();
      library (); together (); keys (); tree (); edits ())
+end
+
+(* Namespaces and views of the Basis Library (docs/build.md, Clashes, and
+   Views of the Basis Library; the build-system roadmap's M10, D9 and D12):
+   renames at import of each kind, what they do to the cache, what a rename
+   may not be, a program with both of this tree's History structures, and a
+   view of a Basis Library that has one, which hides a member. *)
+structure Namespaces =
+struct
+  open Sh
+  val dir = run ^ "/namespaces"
+  val lib = dir ^ "/lib"
+  fun need (ok, message) = if ok then () else raise Fail ("namespaces: " ^ message)
+  fun has text log = String.isSubstring text log
+  val count = ref 0
+  fun runeEnv envf args =
+    let
+      val () = count := !count + 1
+      val log = dir ^ "/log-" ^ Int.toString (!count)
+      val status = execEnv envf {cmd = fromRoot (env ("RUNE", "bin/rune")) :: args, dir = SOME dir, stdin = "",
+                                 stdout = log, stderr = log, timeout = 600}
+    in (status, read log) end
+  val runeWith = runeEnv (fn e => e)
+  fun rune args = runeWith (["--lib", lib] @ args)
+  fun runProgram rbc =
+    let
+      val log = rbc ^ ".out"
+      val status = exec {cmd = [fromRoot (env ("RUNEVM", "bin/runevm")), rbc], dir = SOME dir, stdin = "",
+                         stdout = log, stderr = log, timeout = 60}
+    in (status, read log) end
+  fun put (path, text) =
+    (mkdirs (OS.Path.dir (dir ^ "/" ^ path)); write (dir ^ "/" ^ path, text))
+  fun index name =
+    let val (status, log) = rune ["--basis-index", "lib/" ^ name]
+    in need (status = 0, "cannot index " ^ name ^ ": " ^ log); log end
+  fun indexRefused name reason =
+    let val (status, log) = rune ["--basis-index", "lib/" ^ name]
+    in need (status <> 0 andalso has reason log, "the index of " ^ name ^ " did not say " ^ reason ^ ": " ^ log) end
+  val modes = [("whole", ["--no-cache"]), ("units", ["--units", "--no-cache"]), ("units-whole", ["--units", "--whole", "--no-cache"])]
+  val libraries = List.concat o List.map (fn l => ["--library", l])
+  (* a program prints expected, each way, with these arguments before it *)
+  fun printsWith (runner, label, args, source, expected) =
+    let
+      val () = put ("p/" ^ label ^ ".sml", source)
+      fun mode (name, flags) =
+        let
+          val rbc = dir ^ "/" ^ label ^ "-" ^ name ^ ".rbc"
+          val (status, log) = runner (flags @ args @ ["p/" ^ label ^ ".sml", "-o", rbc])
+          val () = need (status = 0, label ^ " does not compile " ^ name ^ ": " ^ log)
+          val (status, output) = runProgram rbc
+        in need (status = 0 andalso output = expected, label ^ " " ^ name ^ " prints " ^ output) end
+    in List.app mode modes end
+  fun prints label libs source expected = printsWith (rune, label, libraries libs, source, expected)
+  (* and this one is refused, saying reason *)
+  fun refusedWith (runner, label, args, source, reason) =
+    let
+      val () = put ("p/" ^ label ^ ".sml", source)
+      fun mode (name, flags) =
+        let val (status, log) = runner (flags @ args @ ["p/" ^ label ^ ".sml", "-o", dir ^ "/refused.rbc"])
+        in need (status <> 0 andalso has reason log, label ^ " " ^ name ^ " was not refused for " ^ reason ^ ": " ^ log) end
+    in List.app mode modes end
+  fun refused label libs source reason = refusedWith (rune, label, libraries libs, source, reason)
+
+  fun tree () =
+    (rmTree dir; mkdirs lib;
+     Posix.FileSys.symlink {old = fromRoot "lib/basis", new = lib ^ "/basis"};
+     put ("lib/one/library.build", "exports (structure Same, structure Left, structure Right)\nannotate \"demand\" in one.sml end\n");
+     put ("lib/one/one.sml", "structure Same = struct val v = 1 end\nstructure Left = struct val v = \"l\" end\nstructure Right = struct val v = \"r\" end\n");
+     put ("lib/two/library.build", "exports (structure Same)\nannotate \"demand\" in two.sml end\n");
+     put ("lib/two/two.sml", "structure Same = struct val v = 2 end\n");
+     (* a module and a type of each kind *)
+     put ("lib/kinds/library.build",
+          "exports (structure K, signature K_SIG, functor KFn, type kt)\nannotate \"demand\" in kinds.sml end\n");
+     put ("lib/kinds/kinds.sml",
+          "signature K_SIG = sig val v : int end\nstructure K : K_SIG = struct val v = 5 end\n\
+          \functor KFn (X : K_SIG) = struct val w = X.v + 1 end\ntype kt = int\n");
+     put ("lib/plainlib/library.build", "annotate \"demand\" in plain.sml end\n");
+     put ("lib/plainlib/plain.sml", "structure Plain = struct val v = 3 end\n");
+     put ("lib/loose/library.build", "libraries one (structure Same as One) end\nannotate \"demand\" in loose.sml end\n");
+     put ("lib/loose/loose.sml", "structure Loose = struct end\n");
+     List.app (fn n => ignore (index n)) ["one", "two", "kinds", "plainlib"])
+
+  (* renames of each kind, and two names changing places *)
+  fun kinds () =
+    (prints "kinds" ["kinds (structure K as Kay, signature K_SIG as KAY, functor KFn as KayFn, type kt as kay)"]
+            "structure L : KAY = Kay\nstructure M = KayFn (L)\nval x : kay = M.w\nval () = print (Int.toString x ^ \"\\n\")\n" "6\n";
+     refused "kinds-gone" ["kinds (structure K as Kay)"] "val () = print (Int.toString K.v ^ \"\\n\")\n" "K.v";
+     refused "kinds-type-gone" ["kinds (type kt as kay)"] "val x : kt = 1\n" "kt";
+     prints "swap" ["one (structure Left as Right, structure Right as Left)"]
+            "val () = print (Left.v ^ Right.v ^ \"\\n\")\n" "rl\n")
+
+  (* what a rename may not be *)
+  fun refusals () =
+    let
+      val source = "val () = ()\n"
+      fun no (label, libs, reason) = refused label libs source reason
+    in
+      no ("unknown", ["one (structure Nope as Yes)"], "renames structure Nope, which it does not export");
+      no ("kind", ["kinds (signature K as Kay)"], "renames signature K, which it does not export");
+      no ("twice", ["one (structure Same as A, structure Same as B)"], "renames structure Same twice");
+      no ("two-to-one", ["one (structure Left as A, structure Right as A)"], "renames two names to A");
+      no ("onto-own", ["one (structure Left as Right)"], "renames Left to Right, which it has already");
+      no ("value", ["one (val x as y)"], "a rename is of a structure, signature, functor or type");
+      no ("no-as", ["one (structure Same Two)"], "expected as");
+      no ("twice-imported", ["one (structure Same as A)", "one (structure Same as B)"], "imported twice in one scope, renamed otherwise");
+      (* a library with no header says its names and not their kinds: the
+         compile finds a kind it does not have *)
+      refused "no-header-kind" ["plainlib (signature Plain as P)"] "val () = print (Int.toString Plain.v)\n"
+              "renames signature Plain, which it does not declare as a signature";
+      prints "no-header-renamed" ["plainlib (structure Plain as P)"] "val () = print (Int.toString P.v ^ \"\\n\")\n" "3\n";
+      indexRefused "loose" "a library with no header renames nothing it is written on"
+    end
+
+  (* a rename in a cache: two that change places compile the client again,
+     and the cache agrees with none; S41, S42, S58 and --verify-cache *)
+  fun cache () =
+    let
+      val () = put ("p/client.sml", "val () = print (Int.toString One.v ^ Int.toString Two.v ^ \"\\n\")\n")
+      val cacheDir = ["--units", "--cache-dir", dir ^ "/cache"]
+      fun compile (label, flags, libs) =
+        let
+          val rbc = dir ^ "/" ^ label ^ ".rbc"
+          val (status, log) = runeEnv (setEnv ("RUNE_PARALLEL_MIN", "0"))
+                                      (["--lib", lib] @ flags @ libraries libs @ ["p/client.sml", "-o", rbc])
+        in need (status = 0, label ^ ": " ^ log); rbc end
+      fun output rbc = let val (status, out) = runProgram rbc in need (status = 0, rbc ^ " fails: " ^ out); out end
+      val ab = ["one (structure Same as One)", "two (structure Same as Two)"]
+      val ba = ["one (structure Same as Two)", "two (structure Same as One)"]
+      val cold = compile ("cold", cacheDir, ab)
+      val warm = compile ("warm", cacheDir, ab)
+      val verified = compile ("verified", "--verify-cache" :: cacheDir, ab)
+      val parallel = compile ("parallel", ["--units", "--cache-dir", dir ^ "/parallel-cache", "-j", "4"], ab)
+      val whole = compile ("whole", ["--no-cache"], ab)
+      val fromUnits = compile ("from-units", ["--units", "--whole", "--no-cache"], ab)
+      val () = need (output cold = "12\n", "the renamed client prints " ^ output cold)
+      val () = need (same (cold, warm), "S41: warm differs from cold")
+      val () = need (same (cold, verified), "--verify-cache differs")
+      val () = need (same (cold, parallel), "S58: -j changes the program")
+      val () = need (same (whole, fromUnits), "S42: --units --whole differs from whole")
+      val swapped = compile ("swapped", cacheDir, ba)
+      val plain = compile ("swapped-plain", ["--units", "--no-cache"], ba)
+    in
+      need (output swapped = "21\n", "the cache kept a rename's old binding: " ^ output swapped);
+      need (same (swapped, plain), "the cache disagrees with none after renames change places")
+    end
+
+  (* the plan says what is renamed, and reads back *)
+  fun plan () =
+    let
+      val () = put ("p/planned.build", "libraries one (structure Same as One) two end\nview planned\nplanned.sml\n")
+      val () = put ("p/planned.sml", "val () = ()\n")
+      val (status, log) = rune ["--plan", "p/planned.build"]
+      val () = need (status = 0 andalso has "\nview planned\n" log andalso has "  requires one(structure:Same=One)\n" log,
+                     "the plan of renames and a view: " ^ log)
+      val () = put ("p/planned.plan", log)
+      val (status, again) = rune ["--plan", "p/planned.plan"]
+    in need (status = 0 andalso again = log, "a plan with renames does not read back: " ^ again) end
+
+  (* D9's first rename: this tree's two History structures, terminal's and
+     test/runner's, in one program, which no order of the libraries gave *)
+  fun history () =
+    let
+      fun real args = runeWith (["--lib", fromRoot "lib"] @ args)
+      val source =
+        "val t = History.load {file = NONE, limit = 10}\n\
+        \val () = History.add (t, \"one\")\n\
+        \structure R : RUNNER_HISTORY = RunnerHistory\n\
+        \val r = R.record (R.empty, {path = \"p\", wall = 1.0, passed = true})\n\
+        \val () = print (Int.toString (Vector.length (History.entries t)) ^ \" \" ^ Int.toString (length (R.entries r)) ^ \"\\n\")\n"
+      val () = put ("p/histories.build",
+                    "libraries terminal test/runner (structure History as RunnerHistory, signature HISTORY as RUNNER_HISTORY) end\n\
+                    \histories.sml\n")
+      val () = put ("p/histories.sml", source)
+      fun build (label, flags) =
+        let
+          val rbc = dir ^ "/" ^ label ^ ".rbc"
+          val (status, log) = real (flags @ ["--build", "p/histories.build", "-o", rbc])
+          val () = need (status = 0, "both Historys, " ^ label ^ ": " ^ log)
+          val (status, output) = runProgram rbc
+        in need (status = 0 andalso output = "1 1\n", "both Historys, " ^ label ^ ", print " ^ output) end
+    in
+      build ("histories-whole", ["--no-cache", "--whole"]);
+      build ("histories-units", ["--cache-dir", dir ^ "/histories-cache"]);
+      (* without the rename, test/runner's shadows terminal's, as it did *)
+      refusedWith (real, "histories-shadowed", libraries ["terminal", "test/runner"],
+                   "val t = History.load {file = NONE, limit = 10}\n", "History.load")
+    end
+
+  (* D12: a Basis Library with a view, its seals after the libraries: the
+     whole Basis Library, each file linked, and a build file with the view *)
+  val vlib = dir ^ "/vlib"
+  fun viewTree () =
+    let
+      val basis = fromRoot "lib/basis"
+      val () = mkdirs (vlib ^ "/basis")
+      val () = List.app (fn f => if String.isSuffix ".sml" f then Posix.FileSys.symlink {old = basis ^ "/" ^ f, new = vlib ^ "/basis/" ^ f} else ())
+                        (entries basis)
+      val build = read (basis ^ "/library.build")
+      (* the view's seals go before the final file, after the seals *)
+      val final = "annotate \"final\""
+      fun before' (text, mark) =
+        let fun find i = if String.isPrefix mark (String.extract (text, i, NONE)) then i else find (i + 1)
+        in find 0 end
+      val i = before' (build, final)
+      val () = write (vlib ^ "/basis/library.build",
+                      String.substring (build, 0, i) ^
+                      "annotate \"seal\" \"view=narrow\" \"host=no\" in\n  view_narrow_list.sml\nend\n" ^
+                      String.extract (build, i, NONE))
+      val () = write (vlib ^ "/basis/view_narrow_list.sml",
+                      "(* a test's view of List: no getItem *)\n\
+                      \signature LIST_NARROW =\nsig\n  datatype list = datatype list\n  exception Empty\n\
+                      \  val null : 'a list -> bool\n  val length : 'a list -> int\n  val hd : 'a list -> 'a\n\
+                      \  val map : ('a -> 'b) -> 'a list -> 'b list\n  val foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b\nend\n\
+                      \signature LIST = LIST_NARROW\nstructure List : LIST = List\n")
+      (* a library that uses what the view hides, which it sees whole *)
+      val () = put ("vlib/getter/library.build", "exports (structure Getter)\nannotate \"demand\" in getter.sml end\n")
+      val () = put ("vlib/getter/getter.sml",
+                    "structure Getter = struct fun first l = case List.getItem l of SOME (x, _) => x | NONE => 0 end\n")
+      fun vindex name =
+        let val (status, log) = runeWith ["--lib", vlib, "--basis-index", vlib ^ "/" ^ name]
+        in need (status = 0, "cannot index " ^ name ^ ": " ^ log) end
+    in vindex "basis"; vindex "getter" end
+  fun inView args = runeWith (["--lib", vlib] @ args)
+
+  fun views () =
+    let
+      val () = viewTree ()
+      val () = need (has "| seal@narrow |" (read (vlib ^ "/basis/MANIFEST")), "no view in the manifest")
+      val getItem = "val () = print (case List.getItem [1, 2] of SOME (x, _) => Int.toString x ^ \"\\n\" | NONE => \"\\n\")\n"
+      val mapped = "val () = print (Int.toString (List.foldl op+ 0 (List.map (fn x => x * 2) [1, 2, 3])) ^ \"\\n\")\n"
+      (* the default sees all; the view hides a member *)
+      val () = printsWith (inView, "default", [], getItem, "1\n")
+      val () = refusedWith (inView, "hidden", ["--basis-view", "narrow"], getItem, "List.getItem")
+      val () = printsWith (inView, "narrow", ["--basis-view", "narrow"], mapped, "12\n")
+      val () = refusedWith (inView, "hidden-all", ["--basis", "all", "--basis-view", "narrow"], getItem, "List.getItem")
+      (* a library sees the Basis Library whole; the client in the view *)
+      val () = printsWith (inView, "library-whole", ["--basis-view", "narrow", "--library", "getter"],
+                           "val () = print (Int.toString (Getter.first [3, 4]) ^ \"\\n\")\n", "3\n")
+      (* a build file's view *)
+      val () = put ("p/viewed.build", "view narrow\nviewed.sml\n")
+      val () = put ("p/viewed.sml", getItem)
+      val (status, log) = inView ["--no-cache", "--build", "p/viewed.build", "-o", dir ^ "/viewed.rbc"]
+      val () = need (status <> 0 andalso has "List.getItem" log, "a build's view did not hide: " ^ log)
+      val (status, log) = inView ["--no-cache", "--basis-view", "other", "--build", "p/viewed.build", "-o", dir ^ "/viewed.rbc"]
+      val () = need (status <> 0 andalso has "the build's view of the Basis Library is narrow, and the command line's other" log,
+                     "two views: " ^ log)
+      (* what a view may not be *)
+      val () = refusedWith (inView, "unknown-view", ["--basis-view", "nope"], mapped, "the Basis Library has no view nope")
+      val (status, log) = inView ["--no-prelude", "--basis-view", "narrow", "p/narrow.sml", "-o", dir ^ "/x.rbc"]
+      val () = need (status <> 0 andalso has "needs the Basis Library" log, "a view with no Basis Library: " ^ log)
+      val () = put ("vlib/viewing/library.build", "exports (structure V)\nview narrow\nannotate \"demand\" in v.sml end\n")
+      val () = put ("vlib/viewing/v.sml", "structure V = struct end\n")
+      val (status, log) = runeWith ["--lib", vlib, "--basis-index", vlib ^ "/viewing"]
+      val () = need (status <> 0 andalso has "a view of the Basis Library is a program's" log, "a library's view: " ^ log)
+      val () = put ("vlib/viewing/library.build", "exports (structure V)\nannotate \"seal\" \"view=narrow\" in v.sml end\n")
+      val (status, log) = runeWith ["--lib", vlib, "--basis-index", vlib ^ "/viewing"]
+      val () = need (status <> 0 andalso has "a view is the Basis Library's" log, "a library's seal of a view: " ^ log)
+      (* S41, S42 and --verify-cache in the view, and one cache for both,
+         each order: the usage of List names its binder, which the view's
+         seal is *)
+      val () = put ("p/both.sml", mapped)
+      val cache = ["--units", "--cache-dir", dir ^ "/view-cache"]
+      fun compile (label, flags) =
+        let
+          val rbc = dir ^ "/" ^ label ^ ".rbc"
+          val (status, log) = inView (flags @ ["p/both.sml", "-o", rbc])
+        in (status, log, rbc) end
+      fun ok (label, flags) = let val (status, log, rbc) = compile (label, flags) in need (status = 0, label ^ ": " ^ log); rbc end
+      val narrow = ["--basis-view", "narrow"]
+      val cold = ok ("view-cold", cache @ narrow)
+      val warm = ok ("view-warm", cache @ narrow)
+      val verified = ok ("view-verified", "--verify-cache" :: cache @ narrow)
+      val whole = ok ("view-whole", "--no-cache" :: narrow)
+      val fromUnits = ok ("view-from-units", ["--units", "--whole", "--no-cache"] @ narrow)
+      val parallel =
+        let val rbc = dir ^ "/view-parallel.rbc"
+            val (status, log) = runeEnv (setEnv ("RUNE_PARALLEL_MIN", "0"))
+                                        (["--lib", vlib, "--units", "--cache-dir", dir ^ "/view-parallel-cache", "-j", "4"]
+                                         @ narrow @ ["p/both.sml", "-o", rbc])
+        in need (status = 0, "view-parallel: " ^ log); rbc end
+      val () = need (same (cold, parallel), "S58 in a view: -j changes the program")
+      val () = need (same (cold, warm), "S41 in a view: warm differs from cold")
+      val () = need (same (cold, verified), "--verify-cache in a view differs")
+      val () = need (same (whole, fromUnits), "S42 in a view: --units --whole differs from whole")
+      val plain = ok ("view-default", cache)
+      val plainNone = ok ("view-default-none", ["--units", "--no-cache"])
+      val () = need (same (plain, plainNone), "the default after the view, through one cache, differs")
+      val () = need (not (same (plain, cold)), "the view's program is the default's")
+      val () = put ("p/both.sml", getItem)
+      val (status, log, _) = compile ("view-hidden-cached", cache @ narrow)
+      val () = need (status <> 0 andalso has "List.getItem" log, "the cache let the view see a hidden member: " ^ log)
+      val again = ok ("view-default-again", cache)
+      val (status, output) = runProgram again
+      val () = need (status = 0 andalso output = "1\n", "the default after the view prints " ^ output)
+      val (status, log) = inView ["--plan", "--basis-view", "narrow", "p/both.sml"]
+    in need (status = 0 andalso has "\nview narrow\n" log, "--plan's view: " ^ log) end
+
+  fun run' () =
+    (tree (); kinds (); refusals (); cache (); plan (); history (); views ())
 end

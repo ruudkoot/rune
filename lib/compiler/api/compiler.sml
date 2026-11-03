@@ -48,7 +48,8 @@ struct
         | options ("--unicode" :: rest,target,allow,_,libraries) = options (rest,target,allow,Source.Unicode Source.Utf8,libraries)
         | options ("--unicode=utf8" :: rest,target,allow,_,libraries) = options (rest,target,allow,Source.Unicode Source.Utf8,libraries)
         | options ("--unicode=latin1" :: rest,target,allow,_,libraries) = options (rest,target,allow,Source.Unicode Source.Latin1,libraries)
-        | options ("--library" :: name :: rest,target,allow,mode,libraries) = options (rest,target,allow,mode,name :: libraries)
+        | options ("--library" :: name :: rest,target,allow,mode,libraries) =
+            options (rest,target,allow,mode,(BuildFile.importText name handle BuildFile.Error why => invalid why) :: libraries)
         | options (flag :: rest,target,allow,mode,libraries) =
             if prototype flag then options (rest,target,allow,mode,libraries)
             else invalid ("unsupported compiler-library flag: " ^ flag)

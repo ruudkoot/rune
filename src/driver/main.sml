@@ -27,7 +27,9 @@ struct
              (BasisManifest.libraries (libRoot (), !Options.libraries)
               handle BasisManifest.Usage why => raise Options.Usage why)
 
-  fun inBasis (e : entry) : bool = #dir e = libDir ()
+  (* a file of the Basis Library, which may use _prim, and is compiled before
+     the libraries: but for a seal of a view, which comes after them (D12) *)
+  fun inBasis (e : entry) : bool = #dir e = libDir () andalso not (isSome (#view e))
 
   (* Manifest entries are already ordered by library dependency. Contiguous
      library groups stay so, that their private bases can be hidden. *)
@@ -172,6 +174,13 @@ struct
                             (#requires e ())
           val () =
             if #when e <> Demand andalso #when e <> Seal then ()
+            else if isSome (#view e) then
+              (* a view seals structures again, and what is wired in stays
+                 outside it (D12) *)
+              List.app (fn Ast.DStructure _ => () | Ast.DSignature _ => ()
+                         | d => complain (e, "a view's seal may declare structures and signatures only, but has: " ^
+                                             String.substring (Ast.decToString d ^ "                    ", 0, 20)))
+                       prog
             else List.app (fn Ast.DStructure _ => () | Ast.DSignature _ => () | Ast.DFunctor _ => ()
                             | Ast.DType _ => () | Ast.DOverload _ => ()
                             | d => complain (e, "a demand file may declare modules and types only, but has: " ^
@@ -179,7 +188,7 @@ struct
                           prog
         in List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier (#provides e) end
       val scopes = BasisManifest.scopes {root = libRoot (), building = !Options.build, names = !Options.libraries, headed = false,
-                                         libraries = libs}
+                                         libraries = libs, view = NONE}
                    handle BasisManifest.Usage why => raise Options.Usage why
       val walk = LibraryScope.walk (ref Env.initial, fixity, ref StringMap.empty, scopes)
       val checkBasis = fn () => List.foldl (check (providers basisEntries)) StringMap.empty basisEntries
@@ -191,10 +200,10 @@ struct
           NONE => providers all
         | SOME imports =>
             let
-              fun visible (e as {dir = d, file, when, provides, requires, scope, header} : entry) =
+              fun visible (e as {dir = d, file, when, provides, requires, scope, header, view} : entry) =
                 if d = dir then e
-                else {dir = d, file = file, when = when, provides = List.filter (fn n => BasisManifest.seen (imports, e, n)) provides,
-                      requires = requires, scope = scope, header = header}
+                else {dir = d, file = file, when = when, provides = BasisManifest.seenNames (imports, e),
+                      requires = requires, scope = scope, header = header, view = view}
             in providers (basisEntries @ List.map visible (List.concat (List.map #2 libs))) end
       fun library ((dir,[]),earlier) = earlier
         | library ((dir,es),earlier) =
@@ -318,6 +327,9 @@ struct
   datatype step = datatype CompilerProject.step
 
   val buildPlan : step list ref = ref []
+  (* what of the Basis Library the plan takes, demand, all or none, and its
+     view of it (CompilerProject.plan) *)
+  val planBasis : {basis : string, view : string option} ref = ref {basis = "demand", view = NONE}
 
   fun readText (f : string) : string =
     let val i = TextIO.openIn f in TextIO.inputAll i before TextIO.closeIn i end
@@ -353,17 +365,29 @@ struct
   (* What the command line asks for, as a plan: the build file's, or the files
      it gives, with -I those of an entry point (entryFiles). *)
   fun commandPlan () : CompilerProject.plan =
-    case !Options.build of
-      SOME f =>
-        (if List.null (!Options.includeDirs) then () else raise Options.Usage "-I wants an entry point, and a build file says its own files";
-         findWorkspace f;
-         projectOf f)
-    | NONE =>
-        CompilerProject.ofFiles {libraries=[],files=
-          case (!Options.includeDirs, !Options.inputs) of
-            ([], files) => files
-          | (_, [main]) => entryFiles main
-          | (_, files) => if !knownToLoad then files else raise Options.Usage "-I wants one input, the entry point"}
+    let
+      val project =
+        case !Options.build of
+          SOME f =>
+            (if List.null (!Options.includeDirs) then () else raise Options.Usage "-I wants an entry point, and a build file says its own files";
+             findWorkspace f;
+             projectOf f)
+        | NONE =>
+            CompilerProject.ofFiles {libraries=[],files=
+              case (!Options.includeDirs, !Options.inputs) of
+                ([], files) => files
+              | (_, [main]) => entryFiles main
+              | (_, files) => if !knownToLoad then files else raise Options.Usage "-I wants one input, the entry point"}
+      (* what of the Basis Library a compile takes is the plan's too, the
+         command line's part of it *)
+      val project = CompilerProject.withBasis (project, {basis = if !Options.noPrelude then "none" else if !Options.basisAll then "all" else "demand",
+                                                         view = !Options.basisView})
+                    handle CompilerProject.Invalid message => raise Options.Usage message
+    in
+      if #basis project = "none" andalso isSome (#view project)
+      then raise Options.Usage "a view of the Basis Library needs the Basis Library (not --no-prelude)"
+      else project
+    end
 
   (* a compile's libraries: those of --library, then what its plan names *)
   fun librariesOf (project : CompilerProject.plan) : string list =
@@ -385,7 +409,6 @@ struct
                                         "" => "." | relative => relative) (!Options.libDir)
     in
       CompilerPlan.make {project = project, libraries = libraries, lib = lib, mode = !Options.sourceMode, scope = scopeWith lib,
-                         basis = if !Options.noPrelude then "none" else if !Options.basisAll then "all" else "demand",
                          windows = windows, read = readBuild, hash = Hex.fromBytes o Sha256.digest}
       handle CompilerProject.Invalid message => raise Options.Usage message
     end
@@ -467,6 +490,7 @@ struct
       val () = Elaborate.inlineValues := List.foldl (fn (n,m) => StringMap.insert (m,n,()))
                                                     (!Elaborate.inlineValues) (#inlineValues project)
       val () = buildPlan := #steps project
+      val () = planBasis := {basis = #basis project, view = #view project}
       val () = Options.inputs := filesOf (!buildPlan)
       val () = buildModes := List.foldl (fn ((p, anns), m) => if StringMap.member (m, p) then m
                                                               else StringMap.insert (m, p, modeOf anns))
@@ -479,7 +503,7 @@ struct
          libraries' build files mark to be inlined (docs/build.md, Inline
          functors and functions) *)
       val () =
-        if not (!Options.noPrelude) andalso not (!Options.noInlineFunctors) then
+        if #basis (!planBasis) <> "none" andalso not (!Options.noInlineFunctors) then
           let
             val dirs = libDir () :: (BasisManifest.libraries (libRoot (), !Options.libraries)
                                      handle BasisManifest.Usage _ => [])
@@ -507,25 +531,33 @@ struct
         Pass.stage {name = "lex", showIn = NONE, show = fn _ => "", check = fn _ => (),
                     size = List.foldl (fn (toks, n) => n + Vector.length toks) 0}
                    (List.map (fn p => loadTokens (inputMode p, p))) inputs
-      val () = if !Options.noPrelude andalso not (List.null (!Options.libraries))
+      (* what of the Basis Library the plan takes, and its view of it *)
+      val {basis = taken, view} = !planBasis
+      val () = if taken = "none" andalso not (List.null (!Options.libraries))
                then raise Options.Usage "--library needs the basis library (not --no-prelude)" else ()
       val () = librariesScoped := BasisManifest.noScopes ""
       val basis =
         Pass.stage {name = "select", showIn = NONE, show = fn _ => "", check = fn _ => (), size = List.length}
                    (fn () =>
-        if !Options.noPrelude then []
+        if taken = "none" then []
         else
           let
-            val found = CompilerPrelude.candidates {root = libRoot (), libraries = !Options.libraries, building = !Options.build}
+            val found = CompilerPrelude.candidates {root = libRoot (), libraries = !Options.libraries, building = !Options.build,
+                                                    view = view}
                         handle BasisManifest.Usage why => raise Options.Usage why
             val {entries, scopes, ...} = found
             val () = librariesScoped := scopes
-            (* two imports of one name: an error once a rename can answer it *)
+            (* two imports of one name in the program's scope, each an error
+               that a rename at import answers (D9) *)
             val () =
-              if not (#scoped scopes) orelse !Options.noWarnings orelse !knownToLoad then ()
+              if not (#scoped scopes) then ()
               else
-                (List.app (LibraryIndex.warnClash (libRoot ()) (getOpt (!Options.build, hd inputs))) (BasisManifest.clashes (#program scopes, entries, libDir ()));
-                 Error.flushWarnings ())
+                case BasisManifest.clashes (#program scopes, entries, libDir ()) of
+                  [] => ()
+                | found =>
+                    (List.app (fn clash => Error.report ({file = getOpt (!Options.build, hd inputs), start = 0, stop = 0},
+                                                         LibraryIndex.clashText (libRoot ()) clash)) found;
+                     raise Reported)
             val mentioned = CompilerPrelude.usedByAll (scopes, entries, inputs, userToks)
             val () = namesLoading := List.exists BasisManifest.namesLoading userToks
             fun tokens (e : entry) =
@@ -533,7 +565,8 @@ struct
               in if BasisManifest.namesLoading toks then namesLoading := true else (); toks end
             val selected = CompilerPrelude.choose (found, mentioned, tokens)
           in
-            if !Options.basisAll then entries else selected
+            if taken = "all" then BasisManifest.inView (scopes, entries) handle BasisManifest.Usage why => raise Options.Usage why
+            else selected
           end) ()
     in
       if !Options.basisDeps
