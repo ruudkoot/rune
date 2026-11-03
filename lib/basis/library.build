@@ -8,6 +8,11 @@
              provides, and for no file of the library: see the end of the list
    "final"   the file is compiled after every program: what is left to do
              when it ends
+   "view=NAME"
+             with "seal": a seal of the library's view NAME, which binds a
+             structure again under a narrower signature, loaded after the
+             libraries for a program in that view and for no other
+             (docs/build.md, Views of the Basis Library; it has none yet)
    "host=swap", "host=no"
              how tests/basis/host/gen-host-basis.sh gives the file to MLton,
              SML/NJ, Poly/ML and MLKit: as it is (the default), without the

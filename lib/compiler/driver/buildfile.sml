@@ -12,8 +12,12 @@ struct
   (* what a library may export; Fix is a name's fixity, which a boundary lets
      through only where it is named (docs/build.md, A library's header) *)
   datatype kind = Str | Sig | Fun | Ty | Fix
-  (* a library's header, but for its exports: the Library after it *)
-  type header = {requires : string list, friends : string list, views : (string * (kind * string) list) list}
+  (* a library's header, but for its exports: the Library after it. A name
+     it requires is an import's word, with what is renamed (BasisManifest);
+     shadows are the names of the Basis Library its exports take the place of
+     (docs/build.md, Clashes) *)
+  type header = {requires : string list, friends : string list, views : (string * (kind * string) list) list,
+                 shadows : (kind * string) list}
   datatype dec =
       File of string                              (* a path, relative to the build file's directory *)
     | Files of string list
@@ -21,10 +25,11 @@ struct
     | Use of string
     | Implements of string * dec list
     | Annotate of string list * dec list
-    | Libraries of string list                   (* the libraries a library is written on *)
+    | Libraries of string list                   (* the libraries a library is written on, each an import's word *)
     | Header of header                           (* what comes first in a library's build file *)
     | Inline of string list                      (* functors to inline across units (M6b) *)
     | InlineVal of string list                   (* functions to inline across units (functors-units M10) *)
+    | View of string                             (* the program's view of the Basis Library (D12) *)
 
   exception Error of string
   exception LocatedError of Source.span * string
@@ -71,7 +76,7 @@ struct
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
-                  "libraries", "inline", "requires", "exports", "friends", "view"]
+                  "libraries", "inline", "requires", "exports", "friends", "view", "shadows"]
 
   (* the words that were the language's and are not now, which no path may
      be: what to write instead (docs/build.md, What is gone; D6) *)
@@ -83,10 +88,11 @@ struct
     | _ => NONE
 
   (* the words `annotate` takes (docs/build.md, Annotations, and A library's
-     build file) *)
+     build file); view=NAME marks the seals of a view of the Basis Library *)
   fun knownAnnotation (a : string) : bool =
     List.exists (fn k => k = a) ["allowPrim", "noWarnings", "always", "demand", "seal", "final", "host=swap", "host=no"]
     orelse isSome (Source.modeNamed a)
+    orelse (String.isPrefix "view=" a andalso BasisManifest.identifier (String.extract (a, 5, NONE)))
 
   fun parseUsing {path,text,recover,pathAt,wanted} : dec list =
     let
@@ -111,6 +117,38 @@ struct
                      | SOME _ => let val p = pathWord role in p :: paths role end
                      | NONE => (want role;raise LocatedError
                          ({file=path,start=size text,stop=size text},"a list of files that does not end"))
+      (* A list of libraries, each with what its import renames: NAME (KIND
+         FROM as TO, ...), kept as one word (BasisManifest.importWord) *)
+      fun libraryList () =
+        case peek () of
+          SOME (W "end") => (ignore (next ()); [])
+        | SOME _ =>
+            let
+              val name = pathWord "library"
+              fun rename () =
+                let
+                  val kind = case next () of
+                               W k => if List.exists (fn x => x = k) BasisManifest.renameKinds then k
+                                      else error "a rename is of a structure, signature, functor or type: KIND NAME as NAME"
+                             | S _ => error "a rename is of a structure, signature, functor or type: KIND NAME as NAME"
+                  fun ident what = case next () of
+                                     W n => if BasisManifest.identifier n then n else error ("expected " ^ what ^ ", found " ^ n)
+                                   | S n => error ("expected " ^ what ^ ", found \"" ^ n ^ "\"")
+                  val from = ident "the name renamed"
+                  val () = expect "as"
+                  val to = ident "a name"
+                  val r = {kind = kind, from = from, to = to}
+                in
+                  case next () of
+                    W "," => r :: rename ()
+                  | W ")" => [r]
+                  | _ => error "expected , or ) in the renames"
+                end
+              val renames = case peek () of SOME (W "(") => (ignore (next ()); rename ()) | _ => []
+              val {name = library, view, ...} = BasisManifest.importOf name handle BasisManifest.Usage m => error m
+            in BasisManifest.importWord {name = library, view = view, renames = renames} :: libraryList () end
+        | NONE => (want "library";raise LocatedError
+            ({file=path,start=size text,stop=size text},"a list of libraries that does not end"))
       fun exportList () =
         let
           fun export () =
@@ -162,7 +200,13 @@ struct
               val ds = decsUntil ["end"]
               val () = expect "end"
             in Annotate (a, ds) end
-        | W "libraries" => Libraries (paths "library")
+        | W "libraries" => Libraries (libraryList ())
+        | W "view" =>
+            (* the program's view of the Basis Library: a header's view has a
+               list, and is a library's *)
+            (case next () of
+               W n => if BasisManifest.identifier n then View n else error ("not the name of a view: " ^ n)
+             | S n => error ("not the name of a view: \"" ^ n ^ "\""))
         | W "inline" =>
             let
               val kind = case next () of
@@ -181,33 +225,40 @@ struct
         | word as S _ => File (reference ("source",word))
       (* A header's parts, in any order, each once but for its views: what
          comes before the first declaration of the file *)
-      fun header (requires, exports, friends, views) =
+      fun header (requires, exports, friends, views, shadows) =
         let
           fun once (seen, what) = if isSome seen then error ("a header says " ^ what ^ " once") else ()
+          (* a header's view has a list; view NAME alone is a program's *)
+          val listed = case !ws of _ :: _ :: {word = W "(", ...} :: _ => true | _ => false
         in
           case peek () of
             SOME (W "requires") =>
-              (ignore (next ()); once (requires, "requires"); header (SOME (paths "library"), exports, friends, views))
+              (ignore (next ()); once (requires, "requires"); header (SOME (libraryList ()), exports, friends, views, shadows))
           | SOME (W "exports") =>
-              (ignore (next ()); once (exports, "exports"); header (requires, SOME (exportList ()), friends, views))
+              (ignore (next ()); once (exports, "exports"); header (requires, SOME (exportList ()), friends, views, shadows))
           | SOME (W "friends") =>
-              (ignore (next ()); once (friends, "friends"); header (requires, exports, SOME (paths "build"), views))
+              (ignore (next ()); once (friends, "friends"); header (requires, exports, SOME (paths "build"), views, shadows))
+          | SOME (W "shadows") =>
+              (ignore (next ()); once (shadows, "shadows"); header (requires, exports, friends, views, SOME (exportList ())))
           | SOME (W "view") =>
-              let
-                val () = ignore (next ())
-                val n = case next () of W n => n | S n => n
-                val () = if List.exists (fn (m, _) => m = n) views then error ("a header has two views " ^ n) else ()
-              in header (requires, exports, friends, (n, exportList ()) :: views) end
-          | _ => (requires, exports, friends, List.rev views)
+              if not listed then (requires, exports, friends, List.rev views, shadows)
+              else
+                let
+                  val () = ignore (next ())
+                  val n = case next () of W n => n | S n => n
+                  val () = if List.exists (fn (m, _) => m = n) views then error ("a header has two views " ^ n) else ()
+                in header (requires, exports, friends, (n, exportList ()) :: views, shadows) end
+          | _ => (requires, exports, friends, List.rev views, shadows)
         end
       (* a header's exports are a boundary around all the file declares after
          it, in one word the Library that a build reads *)
       fun body () =
-        case header (NONE, NONE, NONE, []) of
-          (NONE, NONE, NONE, []) => decsUntil []
-        | (requires, SOME es, friends, views) =>
+        case header (NONE, NONE, NONE, [], NONE) of
+          (NONE, NONE, NONE, [], NONE) => decsUntil []
+        | (requires, SOME es, friends, views, shadows) =>
             let val ds = decsUntil []
-            in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views}, Library (es, ds)] end
+            in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views,
+                        shadows = getOpt (shadows, [])}, Library (es, ds)] end
         | _ => error "a library's header says what it exports"
     in
       let val ds = body ()
@@ -215,6 +266,14 @@ struct
     end
   fun parse (path,text)=parseUsing {path=path,text=text,recover=false,pathAt=fn _ => (),wanted=fn _ => ()}
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
+
+  (* One import as a build file writes it in its list of libraries, NAME or
+     NAME (KIND FROM as TO, ...), as its word (BasisManifest.importWord): what
+     --library takes, so that the command line says it as a build file does *)
+  fun importText (text : string) : string =
+    case parse ("--library", "libraries " ^ text ^ " end") of
+      [Libraries [word]] => word
+    | _ => raise Error ("--library takes one library, with what it renames: " ^ text)
 
   (* ---- paths ---- *)
 

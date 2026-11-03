@@ -8,6 +8,7 @@
 
      rune-plan 1
      basis demand | all | none
+     view NAME                         the program's view of the Basis Library, if any
      inline functor|val NAME           the program's
      library NAME DIR                  each, what it is written on before it
        form open | block | header
@@ -16,6 +17,7 @@
        export KIND NAME                sorted; a view's are in view NAME ... end
        view NAME ... end
        friend PATH
+       shadow KIND NAME                  a name of the Basis Library an export takes the place of
        STEP ...
      end
      program
@@ -52,9 +54,10 @@ struct
      or a header (docs/build.md, A library's build file) *)
   datatype form = Open | Block of export list | Header of export list
   type library = {name : string, dir : string, form : form, requires : string list, inline : string list,
-                  inlineValues : string list, views : (string * export list) list, friends : string list, steps : step list}
+                  inlineValues : string list, views : (string * export list) list, friends : string list,
+                  shadows : export list, steps : step list}
   type input = {path : string, hash : string}
-  type t = {basis : string, inline : string list, inlineValues : string list, libraries : library list,
+  type t = {basis : string, view : string option, inline : string list, inlineValues : string list, libraries : library list,
             requires : string list, program : step list, inputs : input list}
 
   exception Bad of string
@@ -122,7 +125,7 @@ struct
   fun inlinesText (depth, functors, values) =
     String.concat (List.map (fn n => line (depth, ["inline", "functor", escape n])) functors) ^
     String.concat (List.map (fn n => line (depth, ["inline", "val", escape n])) values)
-  fun libraryText ({name, dir, form, requires, inline, inlineValues, views, friends, steps} : library) =
+  fun libraryText ({name, dir, form, requires, inline, inlineValues, views, friends, shadows, steps} : library) =
     let
       val (word, exports) = case form of Open => ("open", []) | Block es => ("block", es) | Header es => ("header", es)
     in
@@ -130,11 +133,13 @@ struct
       inlinesText (1, inline, inlineValues) ^ exportsText (1, exports) ^
       String.concat (List.map (fn (v, es) => line (1, ["view", escape v]) ^ exportsText (2, es) ^ line (1, ["end"])) views) ^
       String.concat (List.map (fn f => line (1, ["friend", escape f])) friends) ^
+      String.concat (List.map (fn (k, n) => line (1, ["shadow", kindWord k, escape n])) shadows) ^
       stepsText (ref [], 1, steps) ^ line (0, ["end"])
     end
   (* what two forms of one build must agree on; inputs say how it was made *)
-  fun body ({basis, inline, inlineValues, libraries, requires, program, ...} : t) : string =
-    line (0, ["rune-plan", "1"]) ^ line (0, ["basis", basis]) ^ inlinesText (0, inline, inlineValues) ^
+  fun body ({basis, view, inline, inlineValues, libraries, requires, program, ...} : t) : string =
+    line (0, ["rune-plan", "1"]) ^ line (0, ["basis", basis]) ^
+    (case view of NONE => "" | SOME v => line (0, ["view", escape v])) ^ inlinesText (0, inline, inlineValues) ^
     String.concat (List.map libraryText libraries) ^
     line (0, ["program"]) ^ requiresText (1, requires) ^ stepsText (ref [], 1, program) ^ line (0, ["end"])
   fun print (p : t) : string =
@@ -206,13 +211,15 @@ struct
                                 | _ => raise Bad ("no form of library is " ^ word)
           val vs = views ()
           val fs = collect (fn ["friend", f] => SOME (field f) | _ => NONE, [])
+          val shs = collect (fn ["shadow", k, n] => SOME (kindNamed k, field n) | _ => NONE, [])
           val ss = closed ()
         in
           {name = name, dir = dir, form = form, requires = rs, inline = inl, inlineValues = inlv,
-           views = vs, friends = fs, steps = ss}
+           views = vs, friends = fs, shadows = shs, steps = ss}
         end
       val () = case next () of ["rune-plan", "1"] => () | _ => raise Bad "not a plan of version 1"
       val basis = case next () of ["basis", b] => b | _ => raise Bad "a plan says its basis"
+      val view = case peek () of SOME ["view", v] => (ignore (next ()); SOME (field v)) | _ => NONE
       val inline = inlines "functor"
       val inlineValues = inlines "val"
       fun libraries acc =
@@ -233,7 +240,7 @@ struct
         | _ => []
       val () = case peek () of NONE => () | SOME _ => raise Bad "text after the plan"
     in
-      {basis = basis, inline = inline, inlineValues = inlineValues, libraries = libs, requires = rs,
+      {basis = basis, view = view, inline = inline, inlineValues = inlineValues, libraries = libs, requires = rs,
        program = program, inputs = inputs}
     end
 
@@ -270,7 +277,7 @@ struct
      names them, whose order that is: the libraries, the program, the final
      files. A unit's name says where it is; a path that is not under a library
      keeps its spelling. *)
-  fun make {project : P.plan, libraries : string list, basis : string, lib : string option, mode : Source.mode,
+  fun make {project : P.plan, libraries : string list, lib : string option, mode : Source.mode,
             scope : W.scope, windows : bool, read : string -> {text : string, revision : string},
             hash : string -> string} : t =
     let
@@ -327,14 +334,16 @@ struct
               (SOME _, [P.SLibrary (es, ss)]) => (Header (sortExports es), ss)
             | (NONE, [P.SLibrary (es, ss)]) => (Block (sortExports es), ss)
             | (_, ss) => (Open, ss)
-          val {friends, views} =
+          val {friends, views, shadows} =
             case #header p of
-              SOME {friends, views, ...} => {friends = sortStrings friends, views = List.map (fn (v, es) => (v, sortExports es)) views}
-            | NONE => {friends = [], views = []}
+              SOME {friends, views, shadows, ...} =>
+                {friends = sortStrings friends, views = List.map (fn (v, es) => (v, sortExports es)) views,
+                 shadows = sortExports shadows}
+            | NONE => {friends = [], views = [], shadows = []}
         in
           {name = W.libraryName names (W.keyOf (windows, #cwd scope) dir), dir = dir, form = form, requires = #libraries p,
            inline = sortStrings (#inline p), inlineValues = sortStrings (#inlineValues p), views = views, friends = friends,
-           steps = convert (normal, fn _ => Source.Ascii) steps}
+           shadows = shadows, steps = convert (normal, fn _ => Source.Ascii) steps}
         end
       val librariesPlanned = List.map libraryOf dirs
       val program = convert (fn path => path, fn annotations => P.modeOf (mode, annotations)) (#steps project)
@@ -344,7 +353,8 @@ struct
                       else all @ [{path = path, hash = hash text}])
                    [] (#inputs project @ List.concat (List.map (fn dir => #inputs (planOf dir)) dirs))
     in
-      {basis = basis, inline = sortStrings (#inline project), inlineValues = sortStrings (#inlineValues project),
+      {basis = #basis project, view = #view project, inline = sortStrings (#inline project),
+       inlineValues = sortStrings (#inlineValues project),
        libraries = librariesPlanned, requires = libraries, program = program, inputs = inputs}
     end
 end

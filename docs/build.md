@@ -13,8 +13,9 @@ value; a file is compiled in the basis before it and adds what it declares
 to it; a library's exports say what of a basis the files after it see;
 each build file is elaborated once. It differs from MLB in one thing: `use`
 elaborates a build file in the basis of its caller, where an `.mlb` starts
-from an empty one, so a file used sees what comes before the `use`. There
-is no renaming. Its syntax is Rune's own.
+from an empty one, so a file used sees what comes before the `use`. A module
+is renamed where a library is imported, and nowhere else (*Clashes*, below).
+Its syntax is Rune's own.
 
 There is one way to say each thing (the build-system roadmap's D6). Files are
 compiled in the order written, which is their meaning: the order of effects
@@ -36,17 +37,22 @@ dec      ::= path                            a file, compiled in the basis befor
                                              module id (below)
            | "annotate" string ... "in" dec ... "end"
                                              what the units inside may do (below)
-           | "libraries" name ... "end"      libraries selected by this build,
+           | "libraries" import ... "end"    libraries selected by this build,
                                              or what a library with no header is
                                              written on
+           | "view" id                       the program's view of the Basis
+                                             Library (below)
            | "inline" "functor" id ... "end" functors copied into every unit that
                                              applies them (below)
            | "inline" "val" name ... "end"   functions copied into every unit that
                                              names them (below)
-header   ::= ( "requires" name ... "end"      what a library's build file says
+header   ::= ( "requires" import ... "end"    what a library's build file says
              | "exports" exports              first (A library's header, below)
              | "friends" path ... "end"
-             | "view" id exports ) ...
+             | "view" id exports              a named subset of its exports
+             | "shadows" exports ) ...        Basis Library names its exports take
+import   ::= path [ "(" rename "," ... ")" ]  a library, and what is renamed of it
+rename   ::= kind id "as" id                  kind not fixity (Clashes, below)
 older    ::= "library" exports "=" dec ... "end"
                                              a library with no header: its boundary,
                                              around all its files (below)
@@ -228,6 +234,7 @@ is to a program:
 | `seal` | as `demand`, but for no file of the library: it binds a structure again as its signature shows it |
 | `final` | it is compiled after every program |
 | `host=swap`, `host=no` | how `bin/rune-generate host-basis` gives the file to the other SML systems |
+| `view=NAME` | with `seal`, in the Basis Library's build alone: the file is a seal of its view `NAME` (*Views of the Basis Library*, below) |
 
 `libraries random end` names the libraries it is written on, where it has
 no header. In an ordinary program build, the declaration selects those
@@ -257,8 +264,10 @@ end
 
 Its parts come in any order, each once but for `view`, and `exports` is the
 one a header must have. A `use`d build file and a program have no header.
-`requires` is what a program's build calls `libraries`; a library with a
-header does not write `libraries`.
+`requires` is what a program's build calls `libraries`, renames included
+(*Clashes*, below); a library with a header does not write `libraries`.
+`shadows (structure RuneCompiler)` says which names of the Basis Library its
+exports take the place of (*Clashes*), as `lib/compiler`'s does.
 
 * **`requires` says what may be named, and is not transitive.** The files of
   a library with a header are compiled in the Basis Library and what it
@@ -289,16 +298,20 @@ header does not write `libraries`.
   holds for it, and what the library requires is not its. A build that is not
   named is refused, even with a friend's entries in its cache, since a usage
   holds only of a name in scope.
-* **`view NAME` is a named subset of the exports.** `libraries lib#NAME end`,
+* **`view NAME (...)` is a named subset of the exports.** `libraries lib#NAME end`,
   `requires lib#NAME end` or `--library lib#NAME` see that subset, and the
   files that link are the closure of what they name of it, as for the whole
   library. A view has no files of its own, needs no loading primitive and costs
-  no second copy of anything (D8).
+  no second copy of anything (D8). It is a library's, and has a list; a
+  program's `view NAME`, with none, is a view of the Basis Library, another
+  thing (*Views of the Basis Library*, below).
 
 `--basis-index` writes a header to the manifest's comment lines, `# library:`
 for what is required, as the readers of a manifest have always read it, and
-`# exports:`, `# friends:`, `# view:` and `# fixity:` for the rest, with words
-such as `structure:Api signature:API`. `runedoc` uses the boundary when
+`# exports:`, `# friends:`, `# view:`, `# shadows:` and `# fixity:` for the
+rest, with words such as `structure:Api signature:API`. A library required
+with renames is one word on its `# library:` line, `same(structure:Same=One)`,
+which is how every reader of a list of libraries keeps it. `runedoc` uses the boundary when
 selecting public pages and elaborating dependencies.
 
 ### A library with no header
@@ -340,21 +353,102 @@ libraries that have not moved to a header, and goes when the last has
 
 ### Clashes
 
-Two imports of one name in one scope are a clash: two libraries that export
-it, or a library and the Basis Library. The later shadows the earlier, in the
-order the libraries are compiled, and the compiler warns once a scope:
+Two imports of one name in one scope are a clash, and an error (the
+build-system roadmap's D9): two libraries that export it, or a library and the
+Basis Library. A program's clashes show when it is compiled and a library's
+when it is indexed, not in its clients:
 
 ```
-tool.sml:1:1: warning: this scope has RuneCompiler from both the Basis Library and the library lib/compiler, and the second shadows the first (docs/build.md, Clashes)
+tool.sml:1:1: error: this scope has Same from both the library lib/one and the library lib/two: rename one where it is imported, as two (KIND Same as OTHER) does (docs/build.md, Clashes)
 ```
 
-A program's clashes show when it is compiled and a library's when it is
-indexed, not in its clients. At least one of the two must have a header: two
-libraries with none shadow each other as they always have. What a library
-declares itself wins over what it imports, and is no clash. Private names
-never clash, since a unit's identity holds them apart. `--no-warnings`
-silences this too. Renaming at import will answer a clash, which will then be
-an error (the build-system roadmap's M10).
+A rename at import answers it. After a library's name, wherever a list of
+libraries has one -- `libraries`, a header's `requires`, `--library` --
+parentheses give what the scope takes of it under another name:
+
+```
+libraries terminal test/runner (structure History as RunnerHistory, signature HISTORY as RUNNER_HISTORY) end
+```
+
+This is how a program has both of this tree's `History` structures, the line
+editor's (`lib/terminal`) and the test runner's (`lib/test/runner`), which
+before it no order of the two libraries reached. On the command line it is one
+argument, `--library 'test/runner (structure History as RunnerHistory)'`.
+
+* A structure, a signature, a functor and a type can be renamed, not a value or
+  a fixity: a value would lose its status as a constructor. What is renamed is
+  the binding, which keeps what it is: `Two.v` is the same value as the
+  library's `Same.v`, and a type is the same type.
+* The scope has the new name in place of the old; it may rename two names to
+  each other's. A rename names something the library exports (or, with no
+  header, declares), each name once, and gives a name the import does not have
+  already; two imports of one library in one scope rename alike.
+* A rename is the scope's: the library's own files, and its other clients, see
+  its names as they are. The cache holds a client to the binding it named,
+  whatever the name (*Units and bases*, above): renames that change places
+  compile the client again.
+* What a library declares itself wins over what it imports, and is no clash.
+  Private names never clash, since a unit's identity holds them apart.
+* A library with no header keeps its meaning (D15): two with none shadow each
+  other as they always have, the later in the order they are compiled, unless
+  a rename gives the name, which is held to the rule. A library with no header
+  renames nothing it is written on: its files see all that comes before them.
+
+The Basis Library cannot be renamed, since nothing imports it by name. A library
+takes a name of it only where its header says so, `shadows (structure
+RuneCompiler)`: then a scope that imports the library has the library's in
+place of the Basis Library's, and no clash. `lib/compiler` does this, so that
+`RuneCompiler` is the compiler's API in its clients and the REPL's controls
+(`lib/basis/compiler.sml`) everywhere else; a client that wants both renames
+the library's, `compiler (structure RuneCompiler as Api)`. `--basis-index`
+refuses a `shadows` that names no export, or no name of the Basis Library; a
+rename onto a name of the Basis Library is a clash.
+
+Clashes are compared by name, not by kind: no name of this tree is two kinds.
+`--no-warnings` does not silence a clash, which is an error.
+
+### Views of the Basis Library
+
+A view of the Basis Library is the same code under narrower signatures (D12),
+as SML/NJ's `basis-2004.cm` and MLton's `basis-2002.mlb` are: a set of seal
+files in the Basis Library's build, each annotated `view=NAME`, which bind
+structures again as the view shows them:
+
+```
+annotate "seal" "view=narrow" "host=no" in
+  view_narrow_list.sml
+end
+```
+
+```sml
+(* view_narrow_list.sml *)
+signature LIST_NARROW = sig ... end
+signature LIST = LIST_NARROW
+structure List : LIST = List
+```
+
+A program chooses one with `view NAME` in its build file, or `--basis-view
+NAME`; both must agree. The Basis Library this tree ships has no view yet; the
+mechanism is tested on a fixture's (`tests/runner/librarymodel.sml`,
+Namespaces).
+
+* **The seals load after the libraries,** in the program's scope alone, so a
+  library sees the Basis Library whole and its values and types cross to a
+  client in the view. Before them, the compiler's own library would fail:
+  it uses members a narrower view hides (E4).
+* **A view is a filter of names, not a capability.** A library that declares
+  `structure L = List` gives its clients the whole `List`. A functor of a
+  library that wants `LIST` is refused a client's narrower `List`: that is the
+  signature system working.
+* **What is wired in stays outside.** A view's file declares structures and
+  signatures, nothing else (`--basis-check`).
+* **No new cache configuration.** A view's seals are units; a program in the
+  view names their bindings, which the cache holds it to, so one cache serves
+  every view, in any order.
+* A library's own view of the Basis Library needs none of this: a seal file
+  inside its boundary, which its clients do not see. `view NAME` in a
+  library's build is refused, and so is `view=NAME` outside the Basis
+  Library's.
 
 ### What a library exports is ASCII
 
@@ -420,11 +514,12 @@ last there.
 |---|---|
 | `rune-plan 1` | the version of the text |
 | `basis B` | `demand`, `all` (`--basis all`) or `none` (`--no-prelude`); the Basis Library itself is implicit, as in a build file |
+| `view NAME` | the program's view of the Basis Library, where it has one (`view NAME`, `--basis-view`) |
 | `inline functor F`, `inline val f` | what the program's build files mark to be inlined, sorted |
 | `library NAME DIR` ... `end` | each library the program names, with those they are written on, each before what is written on it: its name, as a unit's name begins, and its directory |
 | `form F` | `header`, `block` (the older form) or `open` (no boundary) |
-| `requires L` | the libraries it is written on, as written, in order: `requires` or `libraries` |
-| `export KIND NAME`, `view V` ... `end`, `friend PATH` | its boundary, its views and its friends, sorted |
+| `requires L` | the libraries it is written on, as written, in order: `requires` or `libraries`, a library with renames as one word, `same(structure:Same=One)` |
+| `export KIND NAME`, `view V` ... `end`, `friend PATH`, `shadow KIND NAME` | its boundary, its views, its friends and what it shadows of the Basis Library, sorted |
 | `program` ... `end` | the program, with what it `requires` (`libraries` and `--library`) |
 | `unit NAME PATH MODE ANNOTATION ...` | a file: its unit's name, as a compile names it (units.md, *Names*), its path, the mode it is read in and its annotations |
 | `use KEY` ... `end`, `replay KEY` | a build file's steps the first time it is used, and its second use, which adds what the first declared as `use` says above |

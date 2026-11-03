@@ -113,6 +113,10 @@ struct
      apart ("-o", "says where the program goes"),
      apart ("--lib", naming), apart ("--library", naming), apart ("--no-prelude", naming), apart ("-I", naming),
      apart ("--build", naming), apart ("--path", naming),
+     (* a view's seals are units, whose binders a usage names: the Basis
+        Library has no view, so a fixture's holds it to this (D12) *)
+     apart ("--basis-view", "the Basis Library has no view yet; build-namespaces gives one to a fixture's and holds it, \
+                            \through one cache in both orders, to S41, S42 and --verify-cache"),
      apart ("--basis-deps", stopping), apart ("--basis-check", stopping), apart ("--basis-index", stopping),
      apart ("--build-list", stopping), apart ("--plan", stopping), apart ("--deps", stopping), apart ("--deps-dot", stopping), apart ("--deps-uses", stopping),
      apart ("--dump-tokens", stopping), apart ("--lex-count", stopping), apart ("--dump-ast", stopping),

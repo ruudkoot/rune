@@ -12,9 +12,12 @@ struct
   type input={path:string,text:string,revision:string}
   (* references: each path a build file names of a source or of a build file,
      with the build file, as the build file spells them but for the directory *)
-  (* header: the file's, where it is a library's *)
+  (* header: the file's, where it is a library's; basis: what of the Basis
+     Library a compile takes, demand (the default), all (--basis all) or none
+     (--no-prelude), and view its view of it, if any (D12), which the command
+     line says and a program's build file may: a plan says what a compile sees *)
   type plan={steps:step list,libraries:string list,header:BuildFile.header option,inputs:input list,inline:string list,
-             inlineValues:string list,references:(string*string) list}
+             inlineValues:string list,references:(string*string) list,basis:string,view:string option}
   exception Invalid of string
   fun modeOf (default,annotations)=List.foldl (fn (annotation,mode) =>
     getOpt (Source.modeNamed annotation,mode)) default annotations
@@ -27,7 +30,16 @@ struct
      the libraries *)
   fun ofFiles {files:string list,libraries:string list} : plan=
     {steps=List.map (fn file => SUnit (file,[])) files,libraries=libraries,header=NONE,inputs=[],inline=[],
-     inlineValues=[],references=[]}
+     inlineValues=[],references=[],basis="demand",view=NONE}
+  (* a plan with the Basis Library the command line says of it, beside what a
+     build file says: two views are refused *)
+  fun withBasis (p : plan,{basis:string,view:string option}) : plan=
+    let val view=case (#view p,view) of
+            (SOME a,SOME b) => if a=b then SOME a else raise Invalid ("the build's view of the Basis Library is " ^ a ^ ", and the command line's " ^ b)
+          | (NONE,v) => v
+          | (v,NONE) => v
+    in {steps= #steps p,libraries= #libraries p,header= #header p,inputs= #inputs p,inline= #inline p,
+        inlineValues= #inlineValues p,references= #references p,basis=basis,view=view} end
   fun alpha c=(c>= #"a" andalso c<= #"z") orelse (c>= #"A" andalso c<= #"Z")
   fun lower text=String.map (fn c => if c>= #"A" andalso c<= #"Z" then Char.chr (Char.ord c+32) else c) text
   fun normalize windows path =
@@ -105,6 +117,7 @@ struct
         val header=ref NONE : BuildFile.header option ref
         val inline=ref [] : string list ref
         val inlineValues=ref [] : string list ref
+        val view=ref NONE : string option ref
         val inputs=ref [] : input list ref
         val references=ref [] : (string*string) list ref
         val captured=ref StringMap.empty : input StringMap.map ref
@@ -151,6 +164,11 @@ struct
                     else raise Invalid (file ^ ": a header belongs to a library's library.build")
                 | BuildFile.Inline names => (inline:= !inline @ names;[])
                 | BuildFile.InlineVal names => (inlineValues:= !inlineValues @ names;[])
+                | BuildFile.View name =>
+                    if library then raise Invalid (file ^ ": a view of the Basis Library is a program's; a library's own is a seal file inside its boundary")
+                    else (case !view of
+                            SOME other => if other=name then [] else raise Invalid (file ^ ": a program has one view of the Basis Library, and this build says " ^ other ^ " and " ^ name)
+                          | NONE => (view:=SOME name;[]))
               val result=steps (annotations,declarations)
               val ()=if library andalso List.exists (fn SLibrary _ => true | _ => false) result andalso length result>1
                      then raise Invalid (file ^ ": all source files belong inside the library export boundary") else ()
@@ -158,7 +176,7 @@ struct
           in result end end
         val steps=read (file,[],[])
     in {steps=steps,libraries= !libraries,header= !header,inputs=List.rev (!inputs),inline= !inline,
-        inlineValues= !inlineValues,references=List.rev (!references)} end
+        inlineValues= !inlineValues,references=List.rev (!references),basis="demand",view= !view} end
     handle BuildFile.Error message => raise Invalid message
   (* whether all that steps declare stands behind a boundary of their own *)
   fun bounded steps=List.all (fn SUnit _ => false | SLibrary _ => true | SImplements _ => true

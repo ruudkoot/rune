@@ -5,6 +5,7 @@ struct
   val inputs = CompilerSettings.inputs
   val noPrelude = ref false
   val basisAll = ref false         (* --basis all: every file of the basis library *)
+  val basisView : string option ref = ref NONE  (* --basis-view NAME: the view of the basis library (D12) *)
   val basisDeps = ref false        (* --basis-deps: print the files that would be loaded *)
   val basisCheck = ref false       (* --basis-check: verify lib/basis/MANIFEST *)
   val allowPrim = ref false
@@ -61,10 +62,16 @@ struct
     \  --library NAME    compile the library LIBDIR/NAME (a MANIFEST like the basis\n\
     \                    library's) and those it names, after the basis library\n\
     \                    and before the inputs; NAME is a path if it begins with\n\
-    \                    / or .; NAME#VIEW sees that view of it; repeatable\n\
+    \                    / or .; NAME#VIEW sees that view of it; NAME (structure\n\
+    \                    A as B, ...) renames what it imports, as a build file's\n\
+    \                    libraries do (docs/build.md, Clashes); repeatable\n\
     \  --no-prelude      do not compile the basis library before the inputs\n\
     \  --basis MODE      demand (default): compile the files of the basis library\n\
     \                    that the inputs name, and what those need; all: every file\n\
+    \  --basis-view NAME see the basis library through its view NAME, seals loaded\n\
+    \                    after the libraries, which see it whole; a build file's\n\
+    \                    `view NAME` says the same (docs/build.md, Views of the\n\
+    \                    Basis Library)\n\
     \  --basis-deps      print the library files the inputs load, and exit\n\
     \  --basis-check     check the provides and requires columns of the basis\n\
     \                    library's MANIFEST, and of those of --library, against\n\
@@ -234,12 +241,16 @@ struct
     | ["-o"] => raise Usage "-o requires an argument"
     | "--lib" :: d :: rest => (libDir := SOME d; parse rest)
     | ["--lib"] => raise Usage "--lib requires an argument"
-    | "--library" :: n :: rest => (libraries := !libraries @ [n]; parse rest)
+    | "--library" :: n :: rest =>
+        (libraries := !libraries @ [BuildFile.importText n handle BuildFile.Error why => raise Usage why]; parse rest)
     | ["--library"] => raise Usage "--library requires a name"
     | "--no-prelude" :: rest => (noPrelude := true; parse rest)
     | "--basis" :: "all" :: rest => (basisAll := true; parse rest)
     | "--basis" :: "demand" :: rest => (basisAll := false; parse rest)
     | "--basis" :: _ => raise Usage "--basis requires all or demand"
+    | "--basis-view" :: v :: rest =>
+        if BasisManifest.identifier v then (basisView := SOME v; parse rest) else raise Usage ("not the name of a view: " ^ v)
+    | ["--basis-view"] => raise Usage "--basis-view requires the name of a view"
     | "--basis-deps" :: rest => (basisDeps := true; parse rest)
     | "--basis-check" :: rest => (basisCheck := true; parse rest)
     | "--allow-prim" :: rest => (allowPrim := true; parse rest)

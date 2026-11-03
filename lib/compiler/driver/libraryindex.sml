@@ -19,11 +19,20 @@ struct
     let val prefix = root ^ "/"
     in if String.isPrefix prefix dir then "lib/" ^ String.extract (dir, size prefix, NONE) else dir end
 
-  fun warnClash (root : string) (file : string) (name : string, first : string, second : string) : unit =
-    Error.warn ({file = file, start = 0, stop = 0},
-                "this scope has " ^ name ^ " from both "
-                ^ (if first = "" then "the Basis Library" else "the library " ^ libraryShown (root, first))
-                ^ " and the library " ^ libraryShown (root, second) ^ ", and the second shadows the first (docs/build.md, Clashes)")
+  (* a clash (BasisManifest.clashes), as an error says it (D9), with what
+     answers it: a rename where the second is imported, by the name an import
+     gives it *)
+  fun clashText (root : string) (name : string, first : string, second : string) : string =
+    let val prefix = root ^ "/"
+        val imported = if String.isPrefix prefix second then String.extract (second, size prefix, NONE) else second
+    in
+      "this scope has " ^ name ^ " from both "
+      ^ (if first = "" then "the Basis Library" else "the library " ^ libraryShown (root, first))
+      ^ " and the library " ^ libraryShown (root, second) ^ ": rename one where it is imported, as "
+      ^ imported ^ " (KIND " ^ name ^ " as OTHER) does"
+      ^ (if first = "" then ", or the library's header says shadows (KIND " ^ name ^ ")" else "")
+      ^ " (docs/build.md, Clashes)"
+    end
 
   fun readText (f : string) : string =
     let val i = TextIO.openIn f in TextIO.inputAll i before TextIO.closeIn i end
@@ -53,13 +62,27 @@ struct
       val () = List.app held inside
       val () = Option.app (fn {friends, ...} =>
         List.app (fn f => if OS.Path.isAbsolute f then raise Usage (file ^ ": a friend is a path from the library: " ^ f) else ()) friends) header
+      (* what a library with no header is written on, it sees whole: its
+         files see all before them, so a rename there means nothing (D15) *)
+      val () = if isSome header then ()
+               else List.app (fn l => if List.null (#renames (BasisManifest.importOf l)) then ()
+                                      else raise Usage (file ^ ": a library with no header renames nothing it is written on;"
+                                                        ^ " a header's requires does (docs/build.md, Clashes)")) libs
       val listed = List.map (fn (p, anns) => (relative p, anns)) (P.units inside)
       val inl = #inline plan
       val inlVals = #inlineValues plan
       fun kindName k = case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
                               | BuildFile.Fun => "functor" | BuildFile.Ty => "type" | BuildFile.Fix => "fixity"
       val exports = Option.map (List.map (fn (k,n) => (kindName k,n))) boundary
-      val classOf = P.classOf
+      val isBasisDir = OS.Path.mkCanonical dir = OS.Path.mkCanonical (root ^ "/basis")
+      (* a seal of a view of the Basis Library is seal@VIEW (D12) *)
+      fun classOf anns =
+        case List.filter (String.isPrefix "view=") anns of
+          [] => P.classOf anns
+        | views =>
+            if not isBasisDir then raise Usage (file ^ ": a view is the Basis Library's; a library's own view of it is a seal file inside its boundary")
+            else if P.classOf anns <> "seal" then raise Usage (file ^ ": the files of a view of the Basis Library are seal files")
+            else "seal@" ^ String.extract (List.last views, 5, NONE)
       fun hostOf anns =
         case List.filter (fn a => String.isPrefix "host=" a) anns of
           [] => "yes" | hs => String.extract (List.last hs, 5, NONE)
@@ -75,14 +98,16 @@ struct
       val outside = if isBasis then [] else BasisManifest.readManifest libDir @ List.concat (List.map #2 written)
       (* with a header, it sees the Basis Library and what it requires alone,
          through what a client of it would (BasisManifest) *)
-      val scopes = BasisManifest.scopes {root = root, building = SOME file, names = libs, headed = isSome header, libraries = written}
+      val scopes = BasisManifest.scopes {root = root, building = SOME file, names = libs, headed = isSome header, libraries = written,
+                                         view = NONE}
       fun usable (e : entry) =
         if not (isSome header) orelse #dir e = libDir then BasisManifest.public e
-        else List.filter (fn n => BasisManifest.seen (#program scopes, e, n)) (#provides e)
-      val () = if isSome header andalso warnings
-               then (List.app (warnClash root file) (BasisManifest.clashes (#program scopes, outside, libDir));
-                     Error.flushWarnings ())
-               else ()
+        else BasisManifest.seenNames (#program scopes, e)
+      (* two imports of one name in its scope (D9) *)
+      val () = if not (isSome header) then ()
+               else case BasisManifest.clashes (#program scopes, outside, libDir) of
+                      [] => ()
+                    | clash :: _ => raise Usage (file ^ ": " ^ clashText root clash)
       val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (usable e))
                                 StringMap.empty outside
       (* and what of those a boundary, or not being required, hides *)
@@ -124,6 +149,18 @@ struct
       val () = List.app (fn (v, es) => List.app (fn e as (k, n) =>
                  if List.exists (fn x => x = e) (getOpt (exports, [])) then ()
                  else raise Usage (file ^ ": the view " ^ v ^ " has " ^ k ^ " " ^ n ^ ", which the library does not export")) es) views
+      (* what it shadows of the Basis Library is an export of a name the
+         Basis Library has (D9) *)
+      val shadows = case header of NONE => [] | SOME {shadows, ...} => List.map (fn (k, n) => (kindName k, n)) shadows
+      val basisNames = if isBasis then []
+                       else List.concat (List.map BasisManifest.public
+                                                  (List.filter (fn e : entry => #dir e = libDir andalso not (isSome (#view e))) outside))
+      val () = List.app (fn e as (k, n) =>
+                 if not (List.exists (fn x => x = e) (getOpt (exports, [])))
+                 then raise Usage (file ^ ": shadows " ^ k ^ " " ^ n ^ ", which the library does not export")
+                 else if not (List.exists (fn b => b = n) basisNames)
+                 then raise Usage (file ^ ": shadows " ^ k ^ " " ^ n ^ ", which the Basis Library does not have")
+                 else ()) shadows
       val scopeColumn = case (exports, header) of (NONE, _) => "" | (_, SOME _) => "" | (SOME [], _) => " | -"
         | (SOME es, _) => " | " ^ exportWords es
       val (lines, _) =
@@ -165,6 +202,7 @@ struct
          (SOME es, SOME {friends, ...}) =>
            (put ("# exports: " ^ exportWords es ^ "\n");
             if List.null friends then () else put ("# friends: " ^ String.concatWith " " friends ^ "\n");
+            if List.null shadows then () else put ("# shadows: " ^ exportWords shadows ^ "\n");
             List.app (fn (v, es) => put ("# view: " ^ v ^ " " ^ exportWords es ^ "\n")) views;
             List.app (fn (n, f) => put ("# fixity: " ^ (case f of Fixity.Infix p => "infix " ^ Int.toString p
                                                                 | Fixity.Infixr p => "infixr " ^ Int.toString p

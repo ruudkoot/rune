@@ -83,10 +83,11 @@ struct
   fun isSeal (I.Struct {name, rhs = I.Alias other, ascription = SOME _, ...}) = name = other
     | isSeal _ = false
 
-  (* The modules of the files of the MANIFEST, in its order. *)
+  (* The modules of the files of the MANIFEST, in its order: but for the
+     seals of a view of the Basis Library, whose pages are the default's (D12) *)
   fun load (dir : string) : I.module list =
     let
-      val entries = BasisManifest.readManifest dir
+      val entries = List.filter (fn e : BasisManifest.entry => not (isSome (#view e))) (BasisManifest.readManifest dir)
       val scope = BasisManifest.scopeOf entries
       fun visible key = case scope of NONE => true | SOME exports => List.exists (fn exported => exported = key) exports
       fun exported m =
