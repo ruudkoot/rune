@@ -269,29 +269,47 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    18 (UnitBasis.version)
+version     varint    20 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
                                 is not read
 name        varint len, bytes   the unit's name
 hash        varint len, bytes   the hash of its identity
+static      varint len, bytes   the hash of its static layer
 units       varint n, n × string   the identities of the units it names
 imports     3 × (varint n, n × (varint, varint))   of each kind of name, what
                                 it names of other units: the unit's place
                                 in units, and the name's number there
 counts      3 × varint   its own names of each kind
-            ... the fixity directives, the environment, the signatures,
-                functors (each its signature: its parameter's and its
-                body's summary; the global of its function; and the
-                function's Mid and hash where it is marked to be inlined),
-                its functions copied into the units that name them (each
-                its global, its Mid and its hash), the schemes of the globals those name
-                that nothing else types, and the overloading it
-                declared, and the tables of its own names, each name of a
-                kind written as built in, the unit's own (a number), or
-                another unit's (its place in imports) ...
+size        varint    the bytes of the static layer
+            ... the static layer: the fixity directives, the environment,
+                the signatures, the functors (each its signature: its
+                parameter's and its body's summary) and the overloading it
+                declared, and of its own type names each's constructors
+                and how they lie ...
+            ... the ABI layer: as the static layer met them, each value's and
+                exception's stamp and flags, each reference's stamps and
+                flags, each functor's global and each overloading's
+                targets; then each functor's function's Mid and hash where
+                it is marked to be inlined, its functions copied into the
+                units that name them (each its global, its Mid and its
+                hash), the schemes of the globals those name that nothing
+                else types, and the tables of its own names and type names.
+                A name of a kind is written as built in, the unit's own (a
+                number), or another unit's (its place in imports) ...
 ```
+
+Version 20 (the build-system roadmap's M4) lets an environment with origins
+be a reference, as one with none: the sidecar holds its origins and each of
+its structures' in the order of their names, so that an analysis writes the
+static layer a compile writes.
+
+Version 19 (the build-system roadmap's M4) writes the two layers of
+[units.md](units.md), *The export basis*, each its own bytes, the static layer
+whole before the rest of the ABI layer; the header gains the static layer's
+hash and its size. A reader goes through both at once, and an analysis reads
+what a compile wrote: the static layer's bytes are the same.
 
 Version 18 (the build-system roadmap's M4) names an earlier unit's names by
 a table, and takes the hash of the identity out of the reader's hands. The
