@@ -27,6 +27,7 @@ struct
   val emitUnits : string option ref = ref NONE (* --emit-units DIR: each unit's file there too *)
   val cacheDir = CompilerSettings.cacheDir      (* --cache-dir DIR: the cache of units (UnitCache) *)
   val noCache = CompilerSettings.noCache        (* --no-cache: compile every unit *)
+  val cacheTrim = ref false                    (* --cache-trim: trim the store now (UnitStore.trim) *)
   val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
   val verifyCache = CompilerSettings.verifyCache (* --verify-cache: compile each unit found, and compare *)
   val jobs = ref 1                             (* -j N: units compiled by up to N child processes (Parallel) *)
@@ -112,9 +113,15 @@ struct
     \                    order; `rune -o P.rbc` given those files links them\n\
     \  --cache-dir DIR   with --units, keep each unit compiled in the cache in DIR\n\
     \                    and take it from there when nothing it was compiled from\n\
-    \                    changed (default: $RUNE_CACHE, else .rune beside the\n\
-    \                    first input; docs/units.md)\n\
+    \                    changed (default: $RUNE_CACHE, else .rune in the\n\
+    \                    workspace, by the rune.workspace above the build file or\n\
+    \                    the first input, else beside that file; docs/units.md)\n\
     \  --no-cache        with --units, compile every unit\n\
+    \  --cache-trim      remove from the store what no compile took for longer\n\
+    \                    than --cache-max-age DAYS (default 7), then the least\n\
+    \                    recently taken past --cache-max-size SIZE (bytes, or\n\
+    \                    with K, M, G or T; default 4G); a compile in units does\n\
+    \                    so after its work, at most once a day (none: no limit)\n\
     \  --explain-rebuild with --units, say of each unit whether it was taken from\n\
     \                    the cache, or why it was compiled\n\
     \  --verify-cache    with --units, compile each unit the cache has too, and\n\
@@ -273,6 +280,11 @@ struct
     | "--cache-dir" :: d :: rest => (cacheDir := SOME d; parse rest)
     | ["--cache-dir"] => raise Usage "--cache-dir requires a directory"
     | "--no-cache" :: rest => (noCache := true; parse rest)
+    | "--cache-trim" :: rest => (cacheTrim := true; parse rest)
+    | "--cache-max-age" :: d :: rest => (UnitCache.maxAge := maxAgeOf d; parse rest)
+    | ["--cache-max-age"] => raise Usage "--cache-max-age requires a number of days, or none"
+    | "--cache-max-size" :: n :: rest => (UnitCache.maxSize := maxSizeOf n; parse rest)
+    | ["--cache-max-size"] => raise Usage "--cache-max-size requires a size, or none"
     | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
     | "--verify-cache" :: rest => (verifyCache := true; parse rest)
     | "-j" :: n :: rest => (jobs := jobCount n; parse rest)
@@ -366,6 +378,39 @@ struct
     case Int.fromString text of
       SOME n => if n >= 1 then n else raise Usage "-j requires a number of jobs, at least 1"
     | NONE => raise Usage "-j requires a number of jobs, at least 1"
+  (* --cache-max-age DAYS: a whole number of days, at most 36500, or none *)
+  and maxAgeOf text =
+    if text = "none" then NONE
+    else
+      let fun bad () = raise Usage "--cache-max-age requires a whole number of days, at most 36500, or none"
+      in
+        if text = "" orelse not (CharVector.all Char.isDigit text) orelse size text > 5 then bad ()
+        else case Int.fromString text of
+               SOME n => if n <= 36500 then SOME (Time.fromSeconds (LargeInt.* (Int.toLarge n, Int.toLarge 86400))) else bad ()
+             | NONE => bad ()
+      end
+  (* --cache-max-size SIZE: bytes, or with K, M, G or T after the number,
+     of 1024 each to the one before, at most a petabyte; or none *)
+  and maxSizeOf text =
+    if text = "none" then NONE
+    else
+      let
+        fun bad () = raise Usage "--cache-max-size requires a whole number of bytes, with K, M, G or T after it or not, or none"
+        val (digits, scale) =
+          case List.rev (String.explode text) of
+            c :: rest => if Char.isDigit c then (text, 0)
+                         else (case Char.toUpper c of #"K" => (String.implode (List.rev rest), 1) | #"M" => (String.implode (List.rev rest), 2)
+                                                    | #"G" => (String.implode (List.rev rest), 3) | #"T" => (String.implode (List.rev rest), 4)
+                                                    | _ => bad ())
+          | [] => bad ()
+        val () = if digits = "" orelse not (CharVector.all Char.isDigit digits) orelse size digits > 16 then bad () else ()
+        val k = LargeInt.fromInt 1024
+        val n = List.foldl (fn (c, n) => LargeInt.+ (LargeInt.* (n, LargeInt.fromInt 10), LargeInt.fromInt (Char.ord c - Char.ord #"0")))
+                           (LargeInt.fromInt 0) (String.explode digits)
+        fun times (n, 0) = n
+          | times (n, j) = times (LargeInt.* (n, k), j - 1)
+        val n = times (n, scale)
+      in if LargeInt.> (n, times (LargeInt.fromInt 1, 5)) then bad () else SOME n end
   and workCount (option, text) =
     let
       fun bad () = raise Usage (option ^ " requires a positive integer at most 1000000000")

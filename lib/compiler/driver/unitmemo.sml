@@ -100,10 +100,14 @@ struct
 
   (* what a link of units was: the hash of what was linked, and the output *)
   val links : (string * output) S.side =
-    {magic = "RML", version = 2, hash = fn (_, text) => P.hash text,
+    {magic = "RML", version = 3, hash = fn (_, text) => P.hash text,
      write = fn (w, (digest, out)) => (P.string (w, digest); woutput (w, out)),
      read = fn r => let val d = P.rstring r in (d, routput r) end}
-  fun linkName (path : string) : string = "link " ^ path
+  (* by the output's path from the root of the filesystem, since compiles
+     in other directories share a store *)
+  fun linkName (path : string) : string =
+    "link " ^ ((if OS.Path.isAbsolute path then path else OS.Path.mkAbsolute {path = path, relativeTo = OS.FileSys.getDir ()})
+               handle OS.SysErr _ => path)
 
   (* the output at path, where it is what a link of digest made, which a
      link need not make again *)

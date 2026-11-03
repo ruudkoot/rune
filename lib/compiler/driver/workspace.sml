@@ -95,6 +95,11 @@ struct
           (let val parent = P.directory windows dir in if parent=dir then [] else up parent end)
     in up (P.directory windows (keyOf (windows,here ()) file)) end
 
+  (* the directory of the nearest root file above a file, not read: where
+     the workspace's store is (UnitCache.directory) *)
+  fun rootOf {file : string, windows : bool} : string option =
+    Option.map (P.directory windows) (List.find exists (candidates {file=file,windows=windows}))
+
   (* the nearest root file above a file, read *)
   fun find {file : string, windows : bool} : t option =
     let

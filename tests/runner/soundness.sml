@@ -12,8 +12,9 @@
    makes and the old did not.
 
    The entries are read here, apart from UnitCache: a usage list is the
-   first thing in an entry's body in every version of its format, so any
-   compiler can be either side. --weaken N cuts the new fingerprints to N
+   first thing in an entry's body up to version 11 of its format, and in
+   its head from version 12, its source's name after the warnings, in the
+   body or in the first section, so any compiler can be either side. --weaken N cuts the new fingerprints to N
    digits, a weak hash, which the check must catch. *)
 structure Soundness =
 struct
@@ -25,21 +26,31 @@ struct
     (let
        val text = CachePlant.binary file
        val () = CachePlant.need (String.isPrefix "RCE" text, "not a cache entry: " ^ file)
-       val (_, at) = CachePlant.natural text 3
-       val (_, at) = CachePlant.stringAt text at
-       val (count, at) = CachePlant.natural text at
-       fun pairs (0, at, acc) = (List.rev acc, at)
-         | pairs (n, at, acc) =
+       val (version, at) = CachePlant.natural text 3
+       fun pairs text (0, at, acc) = (List.rev acc, at)
+         | pairs text (n, at, acc) =
              let val (k, at) = CachePlant.stringAt text at
                  val (v, at) = CachePlant.stringAt text at
                  val fp = case List.rev (String.fields (fn c => c = #" ") v) of fp :: _ => fp | [] => v
-             in pairs (n - 1, at, (k, fp) :: acc) end
-       val (usages, at) = pairs (IntInf.toInt count, at, [])
-       val (warnings, at) = CachePlant.natural text at
-       fun skip (0, at) = at | skip (n, at) = skip (n - 1, #2 (CachePlant.stringAt text at))
-       val at = skip (IntInf.toInt warnings, at)
-       val (source, _) = CachePlant.stringAt text at
-     in SOME (source, usages) end)
+             in pairs text (n - 1, at, (k, fp) :: acc) end
+       fun usagesAt (text, at) = let val (count, at) = CachePlant.natural text at in pairs text (IntInf.toInt count, at, []) end
+       fun sourceAt (text, at) =
+         let
+           val (warnings, at) = CachePlant.natural text at
+           fun skip (0, at) = at | skip (n, at) = skip (n - 1, #2 (CachePlant.stringAt text at))
+         in #1 (CachePlant.stringAt text (skip (IntInf.toInt warnings, at))) end
+     in
+       if version < 12 then
+         let val (_, at) = CachePlant.stringAt text at
+             val (usages, at) = usagesAt (text, at)
+         in SOME (sourceAt (text, at), usages) end
+       else
+         let val {head, sections, ...} = CachePlant.parse file
+         in case sections of
+              meta :: _ => SOME (sourceAt (meta, 0), #1 (usagesAt (head, 0)))
+            | [] => NONE
+         end
+     end)
     handle CachePlant.Invalid _ => NONE
 
   fun units dir : (string * (string * string) list) list =

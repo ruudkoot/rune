@@ -52,41 +52,64 @@ struct
                     in Byte.bytesToString (BinIO.inputAll input) before BinIO.closeIn input end
   fun writeBinary file text = let val output = BinIO.openOut file
                              in BinIO.output (output, Byte.stringToBytes text); BinIO.closeOut output end
+  (* an entry (UnitCache.version 12, UnitStore): RCE, its version, the hash
+     of its head and its head, the number of its sections, the hash of each
+     and each -- its head its usages, its mark and the units its basis
+     names; its sections what else its compile gave, its basis, its code and
+     its Mid *)
   fun parse file =
     let val text = binary file
         val () = need (String.isPrefix "RCE" text, "not a cache entry: " ^ file)
         val (version, at) = natural text 3
         val (_, at) = stringAt text at
-        val body = String.extract (text, at, NONE)
-        val (count, at) = natural body 0
-        val () = need (count <= IntInf.fromInt (size body), "invalid cache usage count")
-        fun skip (0, at) = at | skip (n, at) = skip (n - 1, #2 (stringAt body at))
+        val (head, at) = stringAt text at
+        val (count, at) = natural text at
+        val () = need (count <= IntInf.fromInt (size text), "invalid cache section count")
+        fun strings (0, at, acc) = (List.rev acc, at)
+          | strings (k, at, acc) = let val (x, at) = stringAt text at in strings (k - 1, at, x :: acc) end
+        val (_, at) = strings (IntInf.toInt count, at, [])
+        val (sections, at) = strings (IntInf.toInt count, at, [])
+        val () = need (at = size text, "a cache entry with more after its sections")
+    in {version = version, head = head, sections = sections} end
+  fun str x = encoded (IntInf.fromInt (size x)) ^ x
+  fun publish file {version, head, sections} =
+    writeBinary file (String.concat (["RCE", encoded version, str (contentHash head), str head,
+                                      encoded (IntInf.fromInt (length sections))]
+                                     @ List.map (str o contentHash) sections @ List.map str sections))
+  (* a head's usages, and what follows them *)
+  fun usagesOf head =
+    let val (count, at) = natural head 0
+        val () = need (count <= IntInf.fromInt (size head), "invalid cache usage count")
+        fun skip (0, at) = at | skip (n, at) = skip (n - 1, #2 (stringAt head at))
         val finish = skip (IntInf.toInt count * 2, at)
-    in (version, String.substring (body, 0, finish), String.extract (body, finish, NONE)) end
-  fun publish file version body =
-    let val hash = contentHash body
-    in writeBinary file ("RCE" ^ encoded version ^ encoded (IntInf.fromInt (size hash)) ^ hash ^ body) end
+    in (String.substring (head, 0, finish), String.extract (head, finish, NONE)) end
+  (* new's usages over all else of old's *)
   fun stale old new =
-    let val (version, _, rest) = parse old
-        val (_, usages, _) = parse new
-    in publish new version (usages ^ rest) end
-  (* where the basis in an entry's rest is unit's: the offsets of its
-     version (after "RBI"), its probe (the hash's, Pickle.probe) and what
-     follows the probe; NONE where it is another unit's *)
-  fun basisHeader rest unit =
-    let val (prefix, found) = Substring.position "RBI" (Substring.full rest)
+    let val older = parse old
+        val newer = parse new
+    in publish new {version = #version older, head = #1 (usagesOf (#head newer)) ^ #2 (usagesOf (#head older)),
+                    sections = #sections older} end
+  (* where the basis, an entry's second section, is unit's: the offsets of
+     its version (after "RBI"), its probe (the hash's, Pickle.probe) and
+     what follows the probe; NONE where it is another unit's *)
+  fun basisHeader basis unit =
+    let val (prefix, found) = Substring.position "RBI" (Substring.full basis)
     in if Substring.isEmpty found then NONE else
        let val at = Substring.size prefix
-           val (_, afterVersion) = natural rest (at + 3)
-           val (_, afterProbe) = stringAt rest afterVersion
-           val (name, _) = stringAt rest afterProbe
+           val (_, afterVersion) = natural basis (at + 3)
+           val (_, afterProbe) = stringAt basis afterVersion
+           val (name, _) = stringAt basis afterProbe
        in if name <> unit then NONE else SOME (at + 3, afterVersion, afterProbe) end
     end
   fun rewrite file unit edit =
-    let val (outer, usages, rest) = parse file
-    in case basisHeader rest unit of
-         NONE => false
-       | SOME offsets => (publish file outer (usages ^ edit (rest, offsets)); true)
+    let val entry as {sections, ...} = parse file
+    in case sections of
+         meta :: basis :: more =>
+           (case basisHeader basis unit of
+              NONE => false
+            | SOME offsets => (publish file {version = #version entry, head = #head entry,
+                                             sections = meta :: edit (basis, offsets) :: more}; true))
+       | _ => false
     end
   fun basisVersion file unit version =
     rewrite file unit (fn (rest, (v, p, _)) => String.substring (rest, 0, v) ^ encoded version ^ String.extract (rest, p, NONE))
@@ -94,19 +117,18 @@ struct
     rewrite file unit (fn (rest, (_, p, n)) =>
                          String.substring (rest, 0, p) ^ encoded (IntInf.fromInt (size probe)) ^ probe ^ String.extract (rest, n, NONE))
   (* the schemes an entry keeps of what its code names of other units
-     (UnitCache.version 11), after its warnings, file, others, basis,
-     identity, code, Mid and mark -- by unit, the number and the text of
-     each -- each text edited: how many there are *)
+     (UnitCache.version 12), at the end of its first section, after its
+     warnings, file, others and identity -- by unit, the number and the
+     text of each -- each text edited: how many there are *)
   fun schemes file edit =
-    let val (outer, usages, rest) = parse file
+    let val entry as {sections, ...} = parse file
+        val (rest, more) = case sections of rest :: more => (rest, more) | [] => raise Invalid "a cache entry with no sections"
         fun strings (0, at) = at | strings (n, at) = strings (n - 1, #2 (stringAt rest at))
         val (warnings, at) = natural rest 0
         val at = strings (IntInf.toInt warnings + 1, at)
         val (others, at) = natural rest at
-        val at = strings (IntInf.toInt others * 2 + 4, at)
-        val (_, at) = natural rest at
+        val at = strings (IntInf.toInt others * 2 + 1, at)
         val (count, start) = natural rest at
-        fun str x = encoded (IntInf.fromInt (size x)) ^ x
         val found = ref 0
         fun texts (0, at) = ("", at)
           | texts (k, at) = let val (n, at) = natural rest at
@@ -121,7 +143,8 @@ struct
                             in (str u ^ encoded n ^ ts ^ more, at) end
         val (tail, finish) = units (IntInf.toInt count, start)
         val () = need (finish = size rest, "a cache entry with more after its schemes")
-    in publish file outer (usages ^ String.substring (rest, 0, at) ^ encoded count ^ tail); !found end
+    in publish file {version = #version entry, head = #head entry,
+                     sections = (String.substring (rest, 0, at) ^ encoded count ^ tail) :: more}; !found end
   fun command [old, new] = stale old new
     | command ("--basis-version" :: version :: unit :: files) =
         let val version = case IntInf.fromString version of SOME n => n | NONE => raise Invalid "invalid basis version"

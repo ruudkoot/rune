@@ -630,9 +630,10 @@ what it reads, in that order after its arguments:
   the build.
 
 Its key is its tool's bytes, its arguments, its inputs' paths and bytes,
-its closure's, and its stamp's tool's bytes, arguments and output. The cache
-(`--cache-dir`) keeps, under `steps/`, the key a step last ran under and the
-hash of each output it made:
+its closure's, and its stamp's tool's bytes, arguments and output. The
+store (the workspace's `.rune`, or `--cache-dir`; [units.md](units.md), *The
+store*) keeps, under `steps/`, the key a step last ran under and the hash of
+each output it made, which trimming may remove, and then the step runs:
 
 * a step whose key and outputs are as kept is not run;
 * one whose key is not runs again: its outputs are stale, and a tool that

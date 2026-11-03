@@ -18,10 +18,19 @@
    -- whose identity is its basis, so that the name means the same -- and
    so the unit's compile would be the same.
 
-   An entry is one file, written whole under another name and renamed, so
-   that a compile at the same time never sees half of one; it carries the
-   hash of what it holds, and one that does not hold what its hash says, or
-   that cannot be read, is not there. Nothing in a key is a time. *)
+   An entry is one file of the store (UnitStore), written whole under
+   another name and renamed, so that a compile at the same time never sees
+   half of one: its head, what a lookup judges it by, and its sections,
+   each with the hash of its bytes. One that does not hold what its hashes
+   say, or that cannot be read, is not there. Nothing in a key is a time.
+
+   The store is the workspace's (the build-system roadmap's D24): .rune in
+   the directory of its rune.workspace, which every build, the REPL and
+   the memos of a warm build of the workspace share, else beside the build
+   file or the first input; RUNE_CACHE names another, and --cache-dir
+   another still. It is written there, its overlay, and read after it are
+   its read-only layers: the frozen libraries (frozen), which a compile
+   never writes. *)
 structure UnitCache =
 struct
   structure P = Pickle
@@ -30,8 +39,10 @@ struct
   val magic = "RCE"
   (* 10: an entry's mark, the lint it was checked by, and the schemes of
      the globals of other units its code names (the linting roadmap's M9);
-     11: its warnings as spans and messages, not as lines *)
-  val version = 11
+     11: its warnings as spans and messages, not as lines; 12: a head of
+     its usages, its mark and the units its basis names, and four sections
+     hashed apart (the build-system roadmap's M7) *)
+  val version = 12
 
   (* what a unit's entry holds: its usages, the warnings its compile gave,
      which a compile that takes it from the cache gives again as its own
@@ -124,7 +135,8 @@ struct
       val same =
         pickle = pickle'
         andalso (mid = mid'
-                 orelse ((UnitMid.relocate (mid, UnitBasis.movedTo (file, name, others)) = mid') handle UnitMid.Bad _ => false))
+                 orelse ((UnitMid.relocate (mid, UnitBasis.movedTo (file, name, others)) = mid')
+                         handle UnitMid.Bad _ => false | P.Bad _ => false))
         andalso ((let
                     val (fp, u) = UnitFile.read code
                     fun again s = let val (fp, u) = UnitFile.read s in String.concat (UnitFile.chunks (fp, u)) end
@@ -169,8 +181,15 @@ struct
      whose hash differs (--explain-rebuild) *)
   fun otherHash (dir : string, config : string) : string option = S.otherBut "hash" (settings (), dir, config)
 
-  (* The directory of the cache: --cache-dir, else RUNE_CACHE, else .rune in
-     the directory of the first input; NONE with --no-cache *)
+  (* The store in a directory: its .rune *)
+  fun storeIn (home : string) : string = OS.Path.joinDirFile {dir = home, file = ".rune"}
+
+  (* The store's overlay, which a compile writes: --cache-dir, else
+     RUNE_CACHE, else .rune in the workspace's directory (storeHome, which
+     the driver sets: the directory of the nearest rune.workspace above the
+     build file or the first input, else of that file), so that every build
+     of a workspace, whatever file it begins with, has the one; NONE with
+     --no-cache *)
   fun directory () : string option =
     if !CompilerSettings.noCache then NONE
     else
@@ -180,15 +199,17 @@ struct
           case OS.Process.getEnv "RUNE_CACHE" of
             SOME d => if d = "" then NONE else SOME d
           | NONE =>
-              case !CompilerSettings.inputs of
-                first :: _ => SOME (OS.Path.joinDirFile {dir = OS.Path.dir first, file = ".rune"})
-              | [] => SOME ".rune"
+              case (!CompilerSettings.storeHome, !CompilerSettings.inputs) of
+                (SOME home, _) => SOME (storeIn home)
+              | (NONE, first :: _) => SOME (storeIn (OS.Path.dir first))
+              | (NONE, []) => SOME ".rune"
 
-  (* The frozen Basis Library (the incremental roadmap's D8): a cache that
-     every unit of the library was compiled into once, `cache` beside the
-     library's files (make basis-cache; installed with them), which a
-     compile reads after its own cache and never writes; NONE with
-     --no-cache or where there is none *)
+  (* The frozen libraries (the incremental roadmap's D8): a store that
+     every unit of the Basis Library and of the libraries the compiler needs
+     was compiled into once, `cache` beside the library's files (make
+     basis-cache; installed and shipped with them), which a compile reads
+     after its own store and never writes; NONE with --no-cache or where
+     there is none *)
   fun frozen () : string option =
     if !CompilerSettings.noCache then NONE
     else
@@ -197,6 +218,23 @@ struct
       | SOME lib =>
           let val d = OS.Path.joinDirFile {dir = lib, file = "cache"}
           in if (OS.FileSys.isDir d handle OS.SysErr _ => false) then SOME d else NONE end
+
+  (* The store's read-only layers, in the order they are read, after its
+     overlay: the frozen libraries *)
+  fun layers () : string list = case frozen () of SOME f => [f] | NONE => []
+
+  (* whether a directory is where a layer is, there yet or not, however a
+     path spells it: lib/cache, which make basis-cache writes as a store of
+     its own *)
+  fun isLayer (dir : string) : bool =
+    let
+      fun full d = OS.Path.mkCanonical (OS.Path.mkAbsolute {path = d, relativeTo = OS.FileSys.getDir ()})
+                   handle OS.SysErr _ => d | OS.Path.Path => d
+    in
+      case (!CompilerSettings.noCache, !CompilerSettings.libDir) of
+        (false, SOME lib) => full (OS.Path.joinDirFile {dir = lib, file = "cache"}) = full dir
+      | _ => false
+    end
 
   (* every hash of the cache's files, counted under "cache" *)
   fun hash (site : string, text : string) : string = UnitBasis.during "cache" (fn () => UnitBasis.hashAt (site, text))
@@ -218,44 +256,60 @@ struct
 
   fun readFile (p : string) : string = S.readFile p
 
-  (* ---- an entry in the store (UnitStore): its head, the usages, which
-     name it among its key's; its sections, the rest ---- *)
+  (* ---- an entry in the store (UnitStore) ---- *)
 
+  (* Its head: what a lookup judges it by, and all the store reads of an
+     entry it does not take -- its usages, which name it among its key's,
+     the level of the lint that checked it, and the units its basis names
+     (UnitBasis.namedBy), which say whether it needs anything remapped *)
+  type head = {usages : (string * string) list, level : int, named : string list}
+
+  (* Its sections, each hashed apart: what else its compile gave, its
+     basis, its code and its Mid. Its Mid is read only where a compile
+     asks for it (needMid): a build of the units' code takes none *)
   type sections = {warnings : (Source.span * string) list, file : string, others : (string * string) list, pickle : string,
-                   identity : string, code : string, mid : string, level : int, schemes : (string * (int * string) list) list}
+                   identity : string, code : string, mid : string, schemes : (string * (int * string) list) list}
 
-  fun whole ({head = usages, sections = {warnings, file, others, pickle, identity, code, mid, level, schemes}}
-             : ((string * string) list, sections) S.entry) : entry =
+  (* whether an entry's Mid is read, and held to its hash, where it is
+     taken: --whole, --verify-cache and the compiler library's units ask
+     for it; a build of the units' code does not (the driver says) *)
+  val needMid = ref true
+  val () = CompilerState.cellRoot ("UnitCache.needMid", needMid)
+
+  fun whole ({head = {usages, level = lvl, ...}, sections = {warnings, file, others, pickle, identity, code, mid, schemes}}
+             : (head, sections) S.entry) : entry =
     {usages = usages, warnings = warnings, file = file, others = others, pickle = pickle, identity = identity, code = code,
-     mid = mid, level = level, schemes = schemes}
+     mid = mid, level = lvl, schemes = schemes}
 
   fun usages (w : P.writer, us : (string * string) list) =
     P.list (fn (w, (k, i)) => (P.string (w, k); P.string (w, i))) (w, us)
+  fun rusages (r : P.reader) : (string * string) list = P.rlist (fn r => let val k = P.rstring r in (k, P.rstring r) end) r
 
-  val format : ((string * string) list, sections) S.format =
+  val format : (head, sections) S.format =
     {magic = magic, version = version, hash = hash,
-     writeHead = usages, readHead = P.rlist (fn r => let val k = P.rstring r in (k, P.rstring r) end),
-     writeSections = fn (body, {warnings, file, others, pickle, identity, code, mid, level = lvl, schemes}) =>
-       (P.list P.string (body, List.map warningBytes warnings); P.string (body, file);
-        usages (body, others); P.string (body, pickle); P.string (body, identity); P.string (body, code);
-        P.string (body, mid); P.int (body, lvl);
-        P.list (fn (w, (u, ns)) => (P.string (w, u); P.list (fn (w, (n, t)) => (P.nat (w, n); P.string (w, t))) (w, ns)))
-               (body, schemes)),
-     readSections = fn r =>
+     writeHead = fn (w, {usages = us, level = lvl, named}) => (usages (w, us); P.int (w, lvl); P.list P.string (w, named)),
+     readHead = fn r => let val us = rusages r val lvl = P.rint r in {usages = us, level = lvl, named = P.rlist P.rstring r} end,
+     sections = fn {warnings, file, others, pickle, identity, code, mid, schemes} =>
+       let val w = P.writer ()
+       in
+         P.list P.string (w, List.map warningBytes warnings); P.string (w, file); usages (w, others); P.string (w, identity);
+         P.list (fn (w, (u, ns)) => (P.string (w, u); P.list (fn (w, (n, t)) => (P.nat (w, n); P.string (w, t))) (w, ns)))
+                (w, schemes);
+         [P.contents w, pickle, code, mid]
+       end,
+     ofSections = fn section =>
        let
+         val r = P.reader (section 0)
          val warnings = List.map warningOf (P.rlist P.rstring r)
          val file = P.rstring r
-         val others = P.rlist (fn r => let val f = P.rstring r in (f, P.rstring r) end) r
-         val pickle = P.rstring r
+         val others = rusages r
          val identity = P.rstring r
-         val code = P.rstring r
-         val mid = P.rstring r
-         val lvl = P.rint r
          val schemes = P.rlist (fn r => let val u = P.rstring r
                                         in (u, P.rlist (fn r => let val n = P.rnat r in (n, P.rstring r) end) r) end) r
+         val () = if P.atEnd r then () else raise P.Bad "more than its section"
        in
-         {warnings = warnings, file = file, others = others, pickle = pickle, identity = identity, code = code, mid = mid,
-          level = lvl, schemes = schemes}
+         {warnings = warnings, file = file, others = others, pickle = section 1, identity = identity, code = section 2,
+          mid = if !needMid then section 3 else "", schemes = schemes}
        end}
 
   (* an entry's file read: the entry, or why it is none *)
@@ -271,46 +325,53 @@ struct
   val lastSum = ref ""
   val () = CompilerState.cellRoot ("UnitCache.lastSum", lastSum)
 
-  (* Whether an entry stands for this compile: one checked at a lower level
-     of the lint than the compile's does not (level); one whose usages hold
-     by their binders stands before one whose hold only by fingerprint, which
-     needs units remapped to load. This format keeps the level and the basis
-     its exactness reads among the sections (D24: the build-system roadmap's
-     M7 moves what a lookup judges into the head) *)
+  (* Whether an entry stands for this compile, by its head: one checked at
+     a lower level of the lint than the compile's does not (level); one
+     whose usages hold by their binders, and whose basis names only units
+     of the session, stands before one that holds only by fingerprint, or
+     names a unit the session has not, which needs units remapped to load *)
   fun lowerLevel (l : int) : S.verdict option =
     if l < level () then SOME (S.Refused ("its entry was checked at a lower level of the lint (" ^ Int.toString l ^ ")"))
     else NONE
-  fun holds ({head = usages, sections = {level = l, pickle, ...}} : ((string * string) list, sections) S.entry) : S.verdict =
+  fun exactHead (usages : (string * string) list, named : string list) : bool =
+    UnitBasis.exact usages andalso List.all UnitBasis.isLoaded named
+  fun holds ({usages, level = l, named} : head) : S.verdict =
     case lowerLevel l of SOME refused => refused | NONE =>
       case UnitBasis.broken usages of
-        NONE => if UnitBasis.exactEntry (usages, pickle) then S.Stands else S.StandsBehind
+        NONE => if exactHead (usages, named) then S.Stands else S.StandsBehind
       | SOME u => S.Refused ("its entries used " ^ u ^ ", which is another now")
 
   (* The entries of a key whose usages hold: the first found, or why there
      is none. One that holds by fingerprint alone, never for a program that
      keeps its units' identities (UnitBasis.remapAllowed): the entry names
      the units it was compiled against, which are others now
-     (docs/plans/build-cache-issues.md, issue 15) *)
-  fun find (dir : string, config : string, k : string) : found =
-    case S.find (format, holds) (dir, config, k) of
+     (docs/plans/build-cache-issues.md, issue 15). find, in a layer or a
+     store that is only read; take, in the store's overlay, whose entries'
+     times are kept (UnitStore.touch) *)
+  fun findAt (overlay : bool) (dir : string, config : string, k : string) : found =
+    case S.findAt (format, holds) {overlay = overlay} (dir, config, k) of
       S.Found (e, h) => (lastSum := h; Found (whole e))
     | S.FoundBehind (e, h) =>
         if !UnitBasis.remapAllowed then (across := true; lastSum := h; Found (whole e))
         else Missed "its entries hold across a unit that changed, which a program that keeps its units' identities takes none across"
     | S.Missed why => Missed why
+  val find = findAt false
+  val take = findAt true
 
   (* The first entry of a key that serves by its binders alone: its usages
      hold by them and its basis names only units of the session, so that
      taking it reads nothing of any unit (the warm path's light hit,
      UnitBasis.lightLoad); none where every one would need a fingerprint *)
-  fun exactHolds ({head = usages, sections = {level = l, pickle, ...}} : ((string * string) list, sections) S.entry) : S.verdict =
+  fun exactHolds ({usages, level = l, named} : head) : S.verdict =
     case lowerLevel l of SOME refused => refused | NONE =>
-    if UnitBasis.exactEntry (usages, pickle) then S.Stands
+    if exactHead (usages, named) then S.Stands
     else S.Refused "no entry that holds by its binders alone"
-  fun findExact (dir : string, config : string, k : string) : (entry * string) option =
-    case S.find (format, exactHolds) (dir, config, k) of
+  fun findExactAt (overlay : bool) (dir : string, config : string, k : string) : (entry * string) option =
+    case S.findAt (format, exactHolds) {overlay = overlay} (dir, config, k) of
       S.Found (e, h) => SOME (whole e, h)
     | _ => NONE
+  val findExact = findExactAt false
+  val takeExact = findExactAt true
 
   (* whether a key has an entry, whatever its usages: a unit likely found,
      which a parallel build leaves to the parent (Parallel) *)
@@ -327,7 +388,8 @@ struct
      write = P.list (fn (w, (k, n, path)) => (P.nat (w, k); P.nat (w, n); P.string (w, path))),
      read = P.rlist (fn r => let val k = P.rnat r val n = P.rnat r in (k, n, P.rstring r) end)}
 
-  (* in the cache, else in the frozen Basis, else none *)
+  (* in the first of dirs that has them -- the store's overlay, then its
+     layers -- else none *)
   fun pathsIn (dirs : string list, config : string) (identity : string) : (int * int * string) list option =
     S.sideIn paths (dirs, config) identity
 
@@ -357,7 +419,27 @@ struct
     UnitBasis.during "cache" (fn () =>
       SOME (S.store (format, settings ())
                     (dir, config, k,
-                     {head = us, sections = {warnings = warnings, file = file, others = others, pickle = pickle, identity = identity,
-                                             code = code, mid = mid, level = lvl, schemes = schemes}})))
+                     {head = {usages = us, level = lvl, named = UnitBasis.namedBy pickle handle P.Bad _ => []},
+                      sections = {warnings = warnings, file = file, others = others, pickle = pickle, identity = identity,
+                                  code = code, mid = mid, schemes = schemes}})))
   fun store (dir : string, config : string, k : string, e : entry) : unit = ignore (storeSum (dir, config, k, e))
+
+  (* ---- keeping the store small (UnitStore.trim) ---- *)
+
+  (* the limits of trim: --cache-max-age DAYS, a week unless given, and
+     --cache-max-size SIZE, 4 GiB unless given; NONE, none *)
+  val week = Time.fromSeconds 604800
+  val maxAge : Time.time option ref = ref (SOME week)
+  val () = CompilerState.cellRoot ("UnitCache.maxAge", maxAge)
+  val maxSize : LargeInt.int option ref = ref (SOME (LargeInt.* (LargeInt.fromInt 4096, LargeInt.fromInt 1048576)))
+  val () = CompilerState.cellRoot ("UnitCache.maxSize", maxSize)
+  fun limits () : S.limits = {age = !maxAge, size = !maxSize}
+
+  (* The overlay dir trimmed after a compile's work is done, where it was
+     last trimmed a day ago or more: one stat where it was not. A store
+     that is also a layer -- lib/cache, which make basis-cache writes -- is
+     never trimmed *)
+  fun trimAfter (dir : string) : unit =
+    if not (S.trimDue (Time.fromSeconds 86400) dir) orelse isLayer dir then ()
+    else (S.markTrimmed dir; ignore (S.trim (limits ()) dir))
 end
