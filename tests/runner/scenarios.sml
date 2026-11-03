@@ -367,7 +367,7 @@ struct
         ("pp.build", "preprocessor at /bin/sh (filter.sh) inputs filter.sh end\nannotate \"preprocess=at\" in pp.sml end\nuse.sml")])
   val stepCases = ["generate", "generate-hand-edited", "generate-fails", "generate-unmade", "generate-plan", "generate-in-library",
                    "generate-plan-v1", "generate-no-outputs", "generate-twice", "generate-no-tool", "preprocess",
-                   "preprocess-undeclared", "preprocess-twice", "preprocess-host"]
+                   "preprocess-undeclared", "preprocess-twice", "preprocess-unmade", "preprocess-host"]
   fun generated c which =
     case which of
       "generate" =>
@@ -446,14 +446,24 @@ struct
           val () = put c "pp/pp.sml" "@@ n = 43"
           val () = built ("warm2", ["--cache-dir", "cache"])
           val () = built ("cold2", ["--no-cache"])
+          (* and -j changes no byte (S58): a child is forked with the outputs *)
+          val () = built ("parallel2", ["--cache-dir", "cache-j", "-j", "2"])
           val dir = #directory c ^ "/pp/"
         in
           need (read (dir ^ "warm2.rbc") = read (dir ^ "cold2.rbc"), "a build after an edit of a preprocessed file is not the cold build");
+          need (read (dir ^ "parallel2.rbc") = read (dir ^ "cold2.rbc"), "a preprocessed build with -j is not the build without");
           output (program c "warm2-run" "pp" ["warm2.rbc"]) "43\n"
         end
     | "preprocess-undeclared" =>
         (put c "ppnone.build" "annotate \"preprocess=none\" in a.sml end";
          refused (compiler c which "" ["--plan", "ppnone.build"]) "a.sml is put in the preprocessor none, which no build file of it declares")
+    | "preprocess-unmade" =>
+        (* a tool that writes nothing has made nothing, which is not compiled
+           as an empty file *)
+        (put c "ppunmade/pp.build" "preprocessor none /bin/sh (true.sh)\nannotate \"preprocess=none\" in a.sml end";
+         put c "ppunmade/true.sh" "exit 0";
+         put c "ppunmade/a.sml" "val () = ()";
+         refused (compiler c which "ppunmade" ["--build", "pp.build", "--no-cache", "-o", "pp.rbc"]) "made nothing of a.sml")
     | "preprocess-host" =>
         (* a host has no preprocessor: what it would read of the plan, it refuses *)
         let

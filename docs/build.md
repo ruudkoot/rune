@@ -627,8 +627,8 @@ build of what the edit makes of it, warm as cold. Outputs are kept in the
 cache by the tool's bytes, its arguments, its inputs' bytes and the file's,
 and the tool is given a file only where none is kept. `rune --deps --build`
 preprocesses as a compile does; an editor reads the files as they are. A
-host has no preprocessor, and `scripts/plan-files.sh` refuses a plan with
-one.
+host has no preprocessor, and `scripts/plan-files.sh` refuses a plan with a
+file in the class of one.
 
 A set of generated sources that its generator writes once, and that is
 committed, is not a step: `runeffi` writes the sets under `lib/ffi/*/generated`

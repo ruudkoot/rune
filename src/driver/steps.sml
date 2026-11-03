@@ -188,16 +188,19 @@ struct
                       SOME out => out
                     | NONE =>
                         let
+                          fun remove p = OS.FileSys.remove p handle OS.SysErr _ => ()
+                          (* a name no other file has, and no file yet: a
+                             tool that writes nothing has made nothing *)
                           val target = OS.FileSys.tmpName ()
+                          val () = remove target
                           val source = case overlay of
                                          SOME text => let val t = OS.FileSys.tmpName () in write (t, text); SOME t end
                                        | NONE => NONE
-                          fun remove p = OS.FileSys.remove p handle OS.SysErr _ => ()
                           fun clean () = (remove target; Option.app remove source)
                           val () = runs := !runs + 1
                           val ok = run {windows = windows, dir = dir,
                                         words = full tool :: arguments @ [getOpt (source, full file), target]}
-                          val out = if ok then (bytes target handle IO.Io _ => (clean (); raise Refused (tool ^ " made nothing of " ^ file)))
+                          val out = if ok then (bytes target handle IO.Io _ => (clean (); raise Refused ("the preprocessor " ^ name ^ " made nothing of " ^ file)))
                                     else (clean (); raise Refused ("the preprocessor " ^ name ^ " failed on " ^ file))
                         in
                           clean ();
