@@ -14,14 +14,142 @@ struct
   type fact={unit:string,file:string,start:int,stop:int,ty:string,derived:bool,constructors:string list,arguments:string list list}
   type typeDefinition={id:string,origin:Env.origin}
   type use=string*(string list*string)*Source.span*Env.origin*bool
+  (* A type name a unit's facts print, and how they printed it: by the
+     identity of its unit and its number there, or built in (unit "") by its
+     stamp. A unit's own that no path reaches is none of these: it prints by
+     its name wherever the unit is. Facts print so again where each of these
+     does (printsSo): a path depends on the whole environment, which no
+     usage says (docs/language-server.md, The sidecar) *)
+  type printed={unit:string,number:int,name:string,arity:int,eq:bool,shown:string option}
   (* A unit's results. syntax and typing (what the editor's types are worked
      out from when first asked, CompilerNodeTypes, for a unit of the inputs),
-     facts and uses are a unit's that is open. A closed unit holds no syntax,
-     no typing and no facts, and of its uses those whose definition is not
-     their declaration, which an implementation is looked for among; it can
-     be opened at its place (open') *)
+     facts and uses are a unit's that is open, and printed what its facts
+     printed. A closed unit holds no syntax, no typing and no facts, and of
+     its uses those whose definition is not their declaration, which an
+     implementation is looked for among; its notes hold the rest as bytes,
+     which a question about it reads (opened), or it is opened at its place.
+     sidecar is the origins its pickle's names have, which a compile's
+     pickle lacks (UnitBasis.load) *)
   type entry={key:string,name:string,file:string,text:string,allow:bool,mode:Source.mode,pickle:string,sidecar:string,facts:fact list,
-    types:typeDefinition list,syntax:CompilerSyntax.t option,uses:use list,typing:CompilerNodeTypes.t option}
+    types:typeDefinition list,syntax:CompilerSyntax.t option,uses:use list,typing:CompilerNodeTypes.t option,
+    printed:printed list,notes:string}
+  (* ---- a closed unit's notes, and the store's sidecars (D27) ----
+
+     A unit's facts, uses and types, and the type names its facts printed,
+     as bytes, with each string once; and the units whose places their
+     origins hold that no reference follows (Env.Held), with the key of
+     each one's text then. *)
+  val notesFormat=1
+  type notes={facts:fact list,uses:use list,types:typeDefinition list,printed:printed list,spans:(string*string) list}
+  fun originsIn (uses:use list,types:typeDefinition list)=
+    let fun all (Env.Constrained (a,b),found)=all (b,all (a,found))
+          | all (origin,found)=origin::found
+    in List.foldl (fn ({origin,...}:typeDefinition,found) => all (origin,found))
+         (List.foldl (fn ((_,_,_,origin,_),found) => all (origin,found)) [] uses) types end
+  (* the units other than own whose places origins hold by span alone *)
+  fun spansOf (own,origins)=List.foldl (fn (Env.Named {unit,...},found) =>
+      if unit=own orelse unit="" orelse List.exists (fn other => other=unit) found then found else unit::found
+    | (_,found) => found) [] origins
+  fun encodeNotes ({facts,uses,types,printed,spans}:notes)=
+    let val table=ref StringMap.empty val strings=ref [] val count=ref 0
+        fun intern text=case StringMap.find (!table,text) of SOME i => i
+          | NONE => let val i= !count in table:=StringMap.insert (!table,text,i);strings:=text:: !strings;count:=i+1;i end
+        val w=Pickle.writer ()
+        fun str text=Pickle.nat (w,intern text)
+        fun strs texts=(Pickle.nat (w,length texts);List.app str texts)
+        fun span ({file,start,stop}:Source.span)=(str file;Pickle.nat (w,start);Pickle.nat (w,stop))
+        fun origin Env.Unknown=Pickle.byte (w,0)
+          | origin (Env.Named {unit,kind,name,span=s})=(Pickle.byte (w,1);str unit;str kind;str name;span s)
+          | origin (Env.Constrained (a,b))=(Pickle.byte (w,2);origin a;origin b)
+          | origin (Env.Held {unit,key,last})=(Pickle.byte (w,3);str unit;str key;origin last)
+        fun each f items=(Pickle.nat (w,length items);List.app f items)
+        val ()=each (fn {file,start,stop,ty,derived,constructors,arguments,...}:fact =>
+          (str file;Pickle.nat (w,start);Pickle.nat (w,stop);str ty;Pickle.bool (w,derived);strs constructors;
+           each strs arguments)) facts
+        val ()=each (fn (role,(path,name),s,o',derived) => (str role;strs path;str name;span s;origin o';Pickle.bool (w,derived))) uses
+        val ()=each (fn {id,origin=o'}:typeDefinition => (str id;origin o')) types
+        val ()=each (fn {unit,number,name,arity,eq,shown}:printed =>
+          (str unit;Pickle.nat (w,number);str name;Pickle.nat (w,arity);Pickle.bool (w,eq);
+           case shown of NONE => Pickle.byte (w,0) | SOME text => (Pickle.byte (w,1);str text))) printed
+        val ()=each (fn (unit,key) => (str unit;str key)) spans
+        val h=Pickle.writer ()
+    in Pickle.nat (h,notesFormat);Pickle.list Pickle.string (h,List.rev (!strings));Pickle.contents h ^ Pickle.contents w end
+  fun decodeNotes (unitName,bytes) : notes=
+    let val r=Pickle.reader bytes
+        val ()=if Pickle.rnat r=notesFormat then () else raise Pickle.Bad "notes of another format"
+        val strings=Vector.fromList (Pickle.rlist Pickle.rstring r)
+        fun str ()=Vector.sub (strings,Pickle.rnat r) handle Subscript => raise Pickle.Bad "no such string"
+        fun each f=List.tabulate (Pickle.rnat r,fn _ => f ())
+        fun strs ()=each str
+        fun span ()=let val file=str () val start=Pickle.rnat r in {file=file,start=start,stop=Pickle.rnat r}:Source.span end
+        fun origin ()=case Pickle.rbyte r of
+            0 => Env.Unknown
+          | 1 => let val unit=str () val kind=str () val name=str () in Env.Named {unit=unit,kind=kind,name=name,span=span ()} end
+          | 2 => let val a=origin () in Env.Constrained (a,origin ()) end
+          | 3 => let val unit=str () val key=str () in Env.Held {unit=unit,key=key,last=origin ()} end
+          | _ => raise Pickle.Bad "not an origin"
+        val facts=each (fn () =>
+          let val file=str () val start=Pickle.rnat r val stop=Pickle.rnat r val ty=str () val derived=Pickle.rbool r
+              val constructors=strs ()
+          in {unit=unitName,file=file,start=start,stop=stop,ty=ty,derived=derived,constructors=constructors,arguments=each strs}:fact end)
+        val uses=each (fn () =>
+          let val role=str () val path=strs () val name=str () val s=span () val o'=origin ()
+          in (role,(path,name),s,o',Pickle.rbool r):use end)
+        val types=each (fn () => let val id=str () in {id=id,origin=origin ()}:typeDefinition end)
+        val printed=each (fn () =>
+          let val unit=str () val number=Pickle.rnat r val name=str () val arity=Pickle.rnat r val eq=Pickle.rbool r
+          in {unit=unit,number=number,name=name,arity=arity,eq=eq,shown=case Pickle.rbyte r of 0 => NONE | _ => SOME (str ())}:printed end)
+        val spans=each (fn () => let val unit=str () in (unit,str ()) end)
+    in if Pickle.atEnd r then {facts=facts,uses=uses,types=types,printed=printed,spans=spans} else raise Pickle.Bad "more than notes" end
+  (* Whether facts print where a unit stands, its environment after it, as
+     they printed: each type name of theirs printed by the path it had *)
+  fun printsSo (after,printed:printed list)=List.all (fn {unit,number,name,arity,eq,shown} =>
+    let val stamp=if unit="" then SOME number else case UnitBasis.loadedAs unit of NONE => NONE
+          | SOME u => if number<Vector.sub (#count u,UnitBasis.kTycon) then SOME (Vector.sub (#base u,UnitBasis.kTycon)+number) else NONE
+    in case stamp of NONE => false | SOME stamp => Env.qualifiedName (after,{name=name,stamp=stamp,arity=arity,eq=eq})=shown end) printed
+  (* A sidecar in the store (UnitCache.readSidecar), by the hash of a unit's
+     source: the compiler that wrote it, the unit's identity, the names its
+     text mentions (CompilerPrelude.usedBy), where it was scanned, the binder of each name its
+     elaboration looked up, the origins of its pickle's names, and what a
+     closed unit holds (closed: its types, the uses an implementation is
+     looked for among, and the places that hold, as notes have them); its
+     notes are a part of their own, read where a question asks for them
+     (UnitCache.readSidecar). It is a hint: one of another compiler, or whose
+     unit is another, or whose usages another binder holds now, is not taken *)
+  type sidecar={compiler:string,identity:string,mode:string,allow:bool,mentions:string list option,binders:(string*string) list,
+    origins:string,closed:string}
+  fun encodeSidecar ({compiler,identity,mode,allow,mentions,binders,origins,closed}:sidecar)=
+    let val w=Pickle.writer ()
+    in Pickle.string (w,compiler);Pickle.string (w,identity);Pickle.string (w,mode);Pickle.bool (w,allow);
+       Pickle.option (Pickle.list Pickle.string) (w,mentions);
+       (* each binder once *)
+       let val table=ref StringMap.empty val order=ref [] val count=ref 0
+           fun index binder=case StringMap.find (!table,binder) of SOME i => i
+             | NONE => let val i= !count in table:=StringMap.insert (!table,binder,i);order:=binder:: !order;count:=i+1;i end
+           val indices=List.map (fn (key,binder) => (key,index binder)) binders
+       in Pickle.list Pickle.string (w,List.rev (!order));
+          Pickle.list (fn (w,(key,i)) => (Pickle.string (w,key);Pickle.nat (w,i))) (w,indices) end;
+       Pickle.string (w,origins);Pickle.string (w,closed);Pickle.contents w end
+  fun decodeSidecar bytes : sidecar=
+    let val r=Pickle.reader bytes
+        val compiler=Pickle.rstring r val identity=Pickle.rstring r val mode=Pickle.rstring r val allow=Pickle.rbool r
+        val mentions=Pickle.roption (Pickle.rlist Pickle.rstring) r
+        val table=Vector.fromList (Pickle.rlist Pickle.rstring r)
+        val binders=Pickle.rlist (fn r => let val key=Pickle.rstring r in (key,Vector.sub (table,Pickle.rnat r)) end) r
+        val origins=Pickle.rstring r
+        val closed=Pickle.rstring r
+    in if Pickle.atEnd r then {compiler=compiler,identity=identity,mode=mode,allow=allow,mentions=mentions,binders=binders,
+         origins=origins,closed=closed}
+       else raise Pickle.Bad "more than a sidecar" end
+  (* a usage's binder, from "IDENTITY FINGERPRINT", the identity a name that
+     may have spaces in it *)
+  fun binderOfValue value=
+    let val fields=String.fields (fn c => c= #" ") value
+    in String.concatWith " " (List.take (fields,length fields-1)) end
+  (* a usage with its binder by the identity its unit is loaded under *)
+  fun canonicalUsage (key,value)=
+    let val fields=String.fields (fn c => c= #" ") value
+    in (UnitBasis.canonicalKey key,UnitBasis.canonical (binderOfValue value) ^ " " ^ List.last fields) end
   (* the place a unit was reached at *)
   type position={env:Env.env,fixity:Fixity.env,sigs:SigMatch.sigma StringMap.map,funs:Elaborate.funinfo StringMap.map,
     binders:string StringMap.map,overloads:Overload.entry IntMap.map}
@@ -51,8 +179,9 @@ struct
   (* How a check went. walked: from the start, in place of a change at its
      place. rebound: units taken as they stood; loaded: taken again from their
      pickles; cutoff: elaborated to the identity they had; broken: a usage
-     said no. *)
-  type route={walked:bool,rebound:int,loaded:int,cutoff:int,broken:int}
+     said no; stored: taken from a compile's entries in the store, with
+     their sidecars. *)
+  type route={walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int}
   (* entries: what the check reached, by name, order its names; attempted: the
      syntax of the unit that failed; opened: a unit opened for a question *)
   type snapshot={diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,dependencies:source list,
@@ -74,8 +203,11 @@ struct
   fun pool () : pool=ref StringMap.empty
   (* doomed: an exception left the world's tables half written. shares:
      the pool a library's units are taken from and left in, if any *)
+  (* store: the directory of the store a check takes a compile's entries and
+     the sidecars from, and writes sidecars to; NONE, none *)
   datatype session=Session of {state:state ref,world:world option ref,config:CompilerSession.config,closed:bool ref,
-    observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref,walks:int ref,shares:pool option ref}
+    observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref,walks:int ref,shares:pool option ref,
+    store:string option ref}
   exception Cancelled
   (* a query has what it asked for once its unit is elaborated *)
   exception Answered
@@ -86,11 +218,15 @@ struct
      Errors), and what it holds where it was elaborated past them, which a
      question about the unit asks: the walk stops after it *)
   exception UnitFailed of entry option * CompilerSession.diagnostic list
+  (* What a question about a unit wants of it: Probe, what is visible at a
+     place in it, elaborated as far as that; Open, its facts, uses and types,
+     from its notes where they hold; Whole, its syntax and typing too *)
+  datatype opening=Probe | Open | Whole
   (* the errors the unit being elaborated has reported and gone on past *)
   fun keptErrors ()=List.mapPartial (fn (severity,span,message) =>
     if severity="error" then SOME (CompilerSession.sourceError ("error",span,message)) else NONE) (List.rev (!Error.kept))
   fun new config=Session {state=ref noState,world=ref NONE,config=config,closed=ref false,observer=ref NONE,focus=ref NONE,doomed=ref false,
-    walks=ref 0,shares=ref NONE}
+    walks=ref 0,shares=ref NONE,store=ref NONE}
   fun dropWorld (Session {world,...})=(Option.app (fn World {owner,...} => CompilerState.close owner) (!world);world:=NONE)
   fun close (session as Session {closed,state,...})=(closed:=true;state:=noState;dropWorld session)
   (* a state whose units must load again *)
@@ -101,7 +237,7 @@ struct
   (* a session of its own over a state: what a query of an old snapshot, or
      one whose context has closed, walks through; nothing in it is to be kept open *)
   fun over (state,config)=Session {state=ref (unplaced (state,#serial state)),world=ref NONE,config=config,closed=ref false,
-    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0,shares=ref NONE}
+    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0,shares=ref NONE,store=ref NONE}
   (* a state taken back: this session's earlier one *)
   fun restore (session as Session {state=current,...},saved:state)=
     (dropWorld session;current:=unplaced (saved,#serial (!current)+1))
@@ -125,10 +261,24 @@ struct
        (NONE,SOME _) => state:=unplaced (!state,#serial (!state)+1)  (* a library's closed units, which only a walk opens *)
      | _ => ();
      focus:=Option.map (List.foldl (fn (file,all) => StringMap.insert (all,file,())) StringMap.empty) files)
-  fun closedEntry (entry:entry):entry=
+  (* a unit closed: its notes made, where it has none, with the key of each
+     unit's text whose places its origins hold, keyOf (none, "", which no
+     text has, and a question then opens the unit at its place) *)
+  fun notesRecord keyOf (entry:entry) : notes={facts= #facts entry,uses= #uses entry,types= #types entry,printed= #printed entry,
+    spans=List.map (fn unit => (unit,getOpt (keyOf unit,""))) (spansOf (#name entry,originsIn (#uses entry,#types entry)))}
+  (* none of a unit with no syntax: one taken from the store, whose notes
+     are the store's (notesOf') *)
+  fun notesOf keyOf (entry:entry)=if #notes entry<>"" orelse not (isSome (#syntax entry)) then #notes entry
+    else encodeNotes (notesRecord keyOf entry)
+  (* what a closed unit holds decoded, as notes: no facts, of its uses
+     those an implementation is looked for among, its types *)
+  fun implementations (uses:use list)=List.filter (fn (_,_,_,origin,_) => Env.primary origin<>Env.declaration origin) uses
+  fun closedOf ({uses,types,spans,...}:notes)=
+    encodeNotes {facts=[],uses=implementations uses,types=types,printed=[],spans=spans}
+  fun closedEntry keyOf (entry:entry):entry=
     {key= #key entry,name= #name entry,file= #file entry,text= #text entry,allow= #allow entry,mode= #mode entry,pickle= #pickle entry,
      sidecar= #sidecar entry,facts=[],types= #types entry,syntax=NONE,typing=NONE,
-     uses=List.filter (fn (_,_,_,origin,_) => Env.primary origin<>Env.declaration origin) (#uses entry)}
+     uses=implementations (#uses entry),printed=[],notes=notesOf keyOf entry}
   fun isOpen (entry:entry)=isSome (#syntax entry)
   (* every origin of what a unit declares, by its key *)
   fun definitions (delta:Env.env,sigs:(string*SigMatch.sigma) list,funs:(string*Elaborate.funinfo) list) =
@@ -205,6 +355,9 @@ struct
         val World {owner,base}=current
         fun work ()=
           (Pass.lintDefault:=1;
+           (* what elaboration reads of a unit, and no more (D27): a compile's
+              basis and an analysis's load alike where their static layers do *)
+           UnitBasis.staticOnly:=true;UnitCache.needMid:=false;
            if isSome (!base) then () else
              (UnitBasis.startSession ();base:=SOME (!Elaborate.sigs,!Elaborate.funs,!Overload.table));
            action (valOf (!base)))
@@ -216,12 +369,27 @@ struct
      analysis and in a build. building: the build file checked, which a
      library's header may name a friend (CompilerPrelude.select). view: the
      build's view of the Basis Library, if it has one (D12), which the
-     selection takes as a compile does. opening: the unit query names is
-     wanted whole. *)
-  fun checkWith (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed,walks,shares},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
-                 frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option,view:string option,opening:bool) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads) =>
+     selection takes as a compile does. opening: what is wanted of the
+     unit query names. *)
+  fun checkWith (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed,walks,shares,store=storeSetting},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
+                 frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option,view:string option,opening:opening) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads) =>
     let val {lib,libraries,target,allowPrim,...}=config
         val old= !saved
+        (* each input's names, scanned where its text is new (scan) *)
+        val names=ref (#names old)
+        val mentions=ref false
+        val storeDir= !storeSetting
+        (* the configurations of its entries whose static layers this
+           analysis's are (UnitCache.configurationsFor), once asked for *)
+        val configs=ref StringMap.empty : string list StringMap.map ref
+        fun configsOf dir=case StringMap.find (!configs,dir) of SOME found => found | NONE =>
+          let val found=UnitCache.configurationsFor dir in configs:=StringMap.insert (!configs,dir,found);found end
+        (* a compile's entry of a key: in the store, then in its layers, the
+           frozen libraries (UnitCache.layers), which are only read *)
+        fun entryFor (dir,k)=case UnitCache.findStatic {overlay=true} (dir,configsOf dir,k) of
+            SOME found => SOME found
+          | NONE => List.foldl (fn (layer,found) => case found of SOME _ => found
+              | NONE => UnitCache.findStatic {overlay=false} (layer,configsOf layer,k)) NONE (UnitCache.layers ())
         val ()=CompilerSettings.target:=target
         val ()=CompilerSettings.libDir:=lib
         val ()=BasisManifest.roots:= #libraries scope
@@ -314,6 +482,7 @@ struct
         val loaded=ref 0
         val cutoff=ref 0
         val broken=ref 0
+        val stored=ref 0
         (* in a load, where an exception leaves the tables half written *)
         val exposed=ref false
         fun cut index =
@@ -329,13 +498,107 @@ struct
           (env:=e;fixity:=f;Elaborate.sigs:=sigs;Elaborate.funs:=funs;UnitBasis.binders:=binders;Overload.table:=overloads)
         fun isFocused file=case !focused of NONE => true | SOME files => StringMap.member (files,file)
         fun priorOf name=case StringMap.find (!next,name) of SOME k => SOME k | NONE => StringMap.find (#kept old,name)
+        (* the key of a unit's text, by its name *)
+        fun keyOf name=Option.map (fn k:kept => #key (#entry k)) (priorOf name)
+        fun spanHolds (unit,key)=keyOf unit=SOME key
+        val sourceHash=UnitCache.sourceHash
+        fun keyFor (name,allow,mode,source)=Pickle.hash (name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ source)
+        (* A unit's sidecar into the store, where its text is its file's: a
+           unit is written under its saved text alone, never under a buffer
+           an editor has not saved (D27) *)
+        fun onDisk (file,text)=(UnitCache.readFile file=text) handle IO.Io _ => false | OS.SysErr _ => false
+        (* the hash of an input's text, once a check *)
+        val hashes=ref StringMap.empty : (string*string) StringMap.map ref
+        fun hashOf (file,text)=case StringMap.find (!hashes,file) of
+            SOME (known,hash) => if known=text then hash else rehash (file,text)
+          | NONE => rehash (file,text)
+        and rehash (file,text)=let val hash=sourceHash text in hashes:=StringMap.insert (!hashes,file,(text,hash));hash end
+        (* the store's sidecar of a source, once a check: NONE, none, or one
+           that cannot be read or is another compiler's, a hint no answer is
+           taken from (D27) *)
+        val sides=ref StringMap.empty : sidecar option StringMap.map ref
+        fun sideOf (dir,source)=case StringMap.find (!sides,source) of SOME found => found | NONE =>
+          let val found=case UnitCache.readSidecar (dir,notesFormat,"head",source) of NONE => NONE
+                | SOME bytes => (SOME (decodeSidecar bytes) handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE)
+          in sides:=StringMap.insert (!sides,source,found);found end
+        fun keepSidecar (entry:entry,identity,usages,origins)=case storeDir of NONE => () | SOME dir =>
+            let val notes=notesRecord keyOf entry
+                val source=hashOf (#file entry,#text entry)
+                val w=Pickle.writer ()
+                val ()=(Pickle.string (w,identity);Pickle.string (w,if #notes entry<>"" then #notes entry else encodeNotes notes))
+            in UnitCache.storeSidecar (dir,notesFormat,"notes",source,Pickle.contents w);
+               UnitCache.storeSidecar (dir,notesFormat,"head",source,
+                 encodeSidecar {compiler=Config.identity,identity=identity,mode=Source.modeName (#mode entry),allow= #allow entry,
+                   mentions=case StringMap.find (!names,#file entry) of
+                       SOME (mode,text,found) => if mode= #mode entry andalso text= #text entry then SOME (StringMap.listKeys found) else NONE
+                     | NONE => NONE,
+                   binders=List.map (fn (key,value) => (key,binderOfValue value)) usages,origins=origins,
+                   closed=closedOf notes}) end
+        (* a unit's notes: what it holds, else the store's, of its identity *)
+        fun notesOf' (entry:entry,identity)=if #notes entry<>"" then SOME (#notes entry) else
+          case storeDir of NONE => NONE | SOME dir =>
+            case UnitCache.readSidecar (dir,notesFormat,"notes",hashOf (#file entry,#text entry)) of NONE => NONE
+            | SOME bytes => (let val r=Pickle.reader bytes
+                                 val written=Pickle.rstring r
+                                 val notes=Pickle.rstring r
+                             in if written=identity andalso Pickle.atEnd r then SOME notes else NONE end)
+                            handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE
+        (* A unit no session has held, from the store: a compile's entry whose
+           usages hold here, by their binders, loaded as an analysis loads
+           (UnitBasis.staticOnly) under its static identity, with its
+           sidecar's origins, uses and types, and its notes; NONE where either
+           is not there or does not hold. found: the entry's identity and its
+           static one, where there is an entry, which a unit elaborated here
+           to the same static identity is known by too (UnitBasis.alias) *)
+        (* Each compile's entry of a key whose static layer is the one a unit
+           elaborated here has: the same unit to an analysis, by which a
+           compile's entries after it name it (UnitBasis.alias) *)
+        (* a unit loaded from a pickle is known by the identity in its header too *)
+        fun aliasOwn (pickle,identity)=
+          (let val {uname,digest,...}=UnitBasis.header pickle in UnitBasis.alias (uname ^ "@" ^ digest,identity) end)
+          handle Pickle.Bad _ => ()
+        fun aliasAll (dir,k,identity)=
+          List.app (fn d => List.app (fn config => List.app (fn e:UnitCache.entry =>
+              let val {uname,digest,static,...}=UnitBasis.header (#pickle e)
+              in if uname ^ "@" ^ static=identity then UnitBasis.alias (uname ^ "@" ^ digest,identity) else () end
+              handle Pickle.Bad _ => ()) (UnitCache.entriesAt (d,config,k))) (configsOf d)) (dir::UnitCache.layers ())
+        fun storedUnit (dir,{file,text,mode}:source,name,allow,here,(k,source)) =
+          let (* why not, as an observation (store-missed): 1 no entry holds,
+                 2 no sidecar, 3 another compiler's, 4 another unit's, 5 a
+                 binder is another, 6 a place is another, 7 it did not load *)
+              fun missed why=(observe "store-missed" file why;NONE)
+          in case entryFor (dir,k) of NONE => missed 1 | SOME batch =>
+             let val {uname,digest,static,...}=UnitBasis.header (#pickle batch)
+                 val identity=name ^ "@" ^ static
+             in if uname<>name then missed 4 else
+                case sideOf (dir,source) of NONE => missed 2 | SOME side =>
+                let val notes=decodeNotes (name,#closed side)
+                in if #compiler side<>Config.identity then missed 3
+                   else if #identity side<>identity orelse #mode side<>Source.modeName mode orelse #allow side<>allow then missed 4
+                   else if not (List.all (fn (key,binder) => UnitBasis.binderOfKey (UnitBasis.canonicalKey key)=binder) (#binders side)) then missed 5
+                   else if not (List.all spanHolds (#spans notes)) then missed 6
+                   else
+                     let val at=UnitBasis.counters ()
+                         val ()=exposed:=true
+                         val result=SOME (UnitBasis.loadKnown ({pickle= #pickle batch,sidecar= #origins side,file=file,at=at},SOME identity,[]))
+                           handle UnitBasis.Missing _ => (UnitBasis.abandon at;NONE) | Pickle.Bad _ => (UnitBasis.abandon at;NONE)
+                     in exposed:=false;
+                        case result of NONE => missed 7 | SOME result =>
+                          (UnitBasis.alias (uname ^ "@" ^ digest,identity);
+                           SOME ({key=keyFor (name,allow,mode,source),name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle batch,
+                                  sidecar= #origins side,facts=[],types= #types notes,syntax=NONE,typing=NONE,
+                                  uses= #uses notes,printed=[],notes=""}:entry,
+                                 identity,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
+                                 List.map canonicalUsage (#usages batch),ref NONE,ref NONE)) end end
+                handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE end end
+          handle Pickle.Bad _ => NONE
         (* an elaboration of a unit that is waiting for a walk *)
         val stash=ref NONE : (string*entry*(string*string) list*UnitBasis.exported*Env.origin StringMap.map option) option ref
         (* the unit elaborated where the session is now: its entry, its usages and
            its export, with the tables as they were found *)
         fun elaborate (source:source,name,allow,keepFacts,start:UnitBasis.start,prior:kept option,key,asked) =
           let val {file,text,mode}=source
-              val keepOpen=isFocused file orelse (asked andalso opening)
+              val keepOpen=isFocused file orelse (asked andalso opening<>Probe)
               (* what a function's name is looked for in, and a position's line *)
               val ()=Source.register (Source.fromStringIn (mode,file,text))
               val ()=Elaborate.forgetLintRecords ()
@@ -369,14 +632,22 @@ struct
                     val ()=Elaborate.finish ()
                     val ()=observe "unit-elaborated" file (length(!unitUses))
                     val ()=Env.noteScope ({file=file,start=0,stop=size text+1},!env)
-                    val ()=if asked andalso not opening then raise Answered else ()
+                    val ()=if asked andalso opening=Probe then raise Answered else ()
                     val ()=poll ()
                 in (syntaxTree,syntax,outgoing) end)
               (* the declarations that failed, each undone and gone past *)
               val failures=keptErrors ()
               val held=UnitBasis.usagesOf usages
+              (* a unit that failed exports what its basis can say: one that an
+                 error left a flexible record open in (Elaborate.settleFlex)
+                 can say nothing, and is never loaded (tests/units/flex) *)
               val exported=UnitBasis.export {start=start,name=name,file=file,text=fn () => text,
                 mode=mode,delta= !Elaborate.lastDelta,fixity=outgoing}
+                handle Fail message => if null failures then raise Fail message else
+                  {pickle="",sidecar="",identity="",static="",provenance="",own=Vector.tabulate (3,fn _ => IntTable.table 1),
+                   counts=Vector.fromList [0,0,0]}
+              (* an analysis's identity: its static layer's (D27) *)
+              val identity=name ^ "@" ^ #static exported
               (* a type by its unit's name and its path there, which last while
                  the unit's identity moves *)
               val ownPaths=UnitBasis.typePaths (!Elaborate.lastDelta,declared (!Elaborate.insertedSigs,!Elaborate.sigs))
@@ -388,9 +659,10 @@ struct
                  Resolving a tycon's qualified path once per unit avoids
                  walking the entire environment for every occurrence. *)
               val qualified=IntTable.table 64
+              val shownTypes=ref [] : (Types.tycon*string option) list ref
               fun qualifiedName (c:Types.tycon)=case IntTable.find(qualified,#stamp c) of
                 SOME name=>name | NONE=>let val name=Env.qualifiedName(!env,c)
-                  in IntTable.insert(qualified,#stamp c,name);name end
+                  in IntTable.insert(qualified,#stamp c,name);shownTypes:=(c,name):: !shownTypes;name end
               fun frozenType (span:Source.span,ty,derived) =
                 let val printer=Types.newPrinter ()
                     fun show ty=Types.toStringNamed (qualifiedName,printer) ty
@@ -407,7 +679,18 @@ struct
                     val ()=visit ty
                 in {unit=name,file= #file span,start= #start span,stop= #stop span,ty=shown,derived=derived,
                   constructors=StringMap.listKeys (!constructors),arguments=arguments ty}:fact end
-              val frozenFacts=if keepOpen then List.map frozenType (CompilerFacts.collect syntax) else []
+              (* a closed unit's too, which its notes keep *)
+              val frozenFacts=List.map frozenType (CompilerFacts.collect syntax)
+              (* each type name they printed, by what names it beyond this
+                 elaboration (printsSo) *)
+              val printed=List.mapPartial (fn (c:Types.tycon,shown) =>
+                let val s= #stamp c
+                    fun mark (unit,number)=SOME {unit=unit,number=number,name= #name c,arity= #arity c,eq= #eq c,shown=shown}:printed option
+                in if s<Vector.sub (!UnitBasis.builtin,UnitBasis.kTycon) then mark ("",s)
+                   else case IntTable.find (Vector.sub (#own exported,UnitBasis.kTycon),s) of
+                     SOME n => mark (identity,n)
+                   | NONE => case UnitBasis.rangeOf (UnitBasis.kTycon,s) of
+                       SOME (b,u) => mark (#identity u,s-b) | NONE => NONE end) (!shownTypes)
               val typing=if not (keepFacts andalso keepOpen) then NONE else
                 SOME (CompilerNodeTypes.capture {tops=List.rev (!Elaborate.tops),ids=(firstId,!Ast.nextId),
                   stamps=(Vector.sub (#counters start,UnitBasis.kStamp),!Elaborate.stampCounter),env= !env})
@@ -422,8 +705,14 @@ struct
               val uses=List.foldl (fn ((role,id,span,origin,derived),all) => (role,id,span,holding origin,derived)::all) [] (!unitUses)
               val ()=UnitBasis.undo start
               val whole={key=key,name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle exported,sidecar= #sidecar exported,facts=frozenFacts,
-                types=typeDefinitions,syntax=SOME syntaxTree,uses=uses,typing=typing}:entry
-          in checked:= !checked+1;(if keepOpen then whole else closedEntry whole,held,exported,defined,failures) end
+                types=typeDefinitions,syntax=SOME syntaxTree,uses=uses,typing=typing,printed=printed,notes=""}:entry
+              (* its notes, where it closes or its sidecar is kept *)
+              val keeps=null failures andalso not asked andalso isSome storeDir andalso onDisk (file,text)
+              val whole=if keepOpen andalso not keeps then whole else
+                {key=key,name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle whole,sidecar= #sidecar whole,facts=frozenFacts,
+                 types=typeDefinitions,syntax=SOME syntaxTree,uses=uses,typing=typing,printed=printed,notes=notesOf keyOf whole}
+              val ()=if keeps then keepSidecar (whole,identity,held,#sidecar exported) else ()
+          in checked:= !checked+1;(if keepOpen then whole else closedEntry keyOf whole,held,exported,defined,failures) end
           handle Error.CompileError (span,message) =>
                    (UnitBasis.undo start;raise UnitFailed (NONE,keptErrors () @ [CompilerSession.sourceError ("error",span,message)]))
                | error => (UnitBasis.undo start;raise error)
@@ -449,8 +738,36 @@ struct
               val whole=case prior of NONE => false | SOME (k:kept) => not (isFocused file) orelse isOpen (#entry k)
               val ()=if isSome (Source.findFile file) then () else Source.register (Source.fromStringIn (mode,file,text))
               val key=case (prior,same) of (SOME (k:kept),true) => #key (#entry k)
-                | _ => Pickle.hash (name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ text)
+                | _ => keyFor (name,allow,mode,hashOf (file,text))
               val start=UnitBasis.begin (!env,!fixity)
+              (* where no session has held it, a compile's entry and its sidecar,
+                 for a unit not open: one open is elaborated, for its syntax *)
+              val storeKey=case (prior,storeDir,fast orelse asked) of
+                  (NONE,SOME _,false) =>
+                    let val source=hashOf (file,text)
+                    in SOME (UnitCache.keyOf {name=name,source=source,allow=allow,settings=if mode=Source.Ascii then "" else Source.modeName mode},
+                             source) end
+                | _ => NONE
+              val fromStore=case (storeDir,storeKey) of
+                  (SOME dir,SOME key) => if isFocused file then NONE else storedUnit (dir,source,name,allow,here,key)
+                | _ => NONE
+              (* a closed unit asked about, from its notes, where its facts print
+                 here as they did and the places its origins hold are as they were *)
+              val ()=case (asked andalso opening=Open,prior) of
+                  (true,SOME (k:kept)) =>
+                    if not known then () else
+                      (case (!(#live k),Option.map (fn bytes => decodeNotes (name,bytes)) (notesOf' (#entry k,identityOf k))
+                              handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE) of
+                         (SOME {result,...},SOME notes) =>
+                           if printsSo (Env.plus (!env,#delta result),#printed notes) andalso List.all spanHolds (#spans notes) then
+                             let val e= #entry k
+                             in openedEntry:=SOME {key= #key e,name= #name e,file= #file e,text= #text e,allow= #allow e,mode= #mode e,
+                                  pickle= #pickle e,sidecar= #sidecar e,facts= #facts notes,types= #types notes,syntax=NONE,
+                                  uses= #uses notes,typing=NONE,printed= #printed notes,notes= #notes e};
+                                raise Answered end
+                           else ()
+                       | _ => ())
+                | _ => ()
               (* A unit past a moved identity is taken by its usages. An open one's
                  facts print its types by the paths that reach them where it
                  stands, which no usage covers, so it is elaborated. *)
@@ -469,20 +786,26 @@ struct
                         let val (entry,usages,exported,defined,failures)=elaborate (source,name,allow,keepFacts,start,prior,key,asked)
                         in if null failures orelse asked then (entry,usages,exported,defined)
                            else raise UnitFailed (SOME entry,failures) end
+                    (* a question has what it asked for, and nothing is loaded *)
+                    val ()=if asked then (openedEntry:=SOME entry;raise Answered) else ()
+                    val identity=name ^ "@" ^ #static exported
                     fun fresh ()=
                       let val ()=exposed:=true
-                          val result=UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at= #counters start},SOME (#identity exported),[])
-                      in exposed:=false;(entry,#identity exported,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
+                          val result=UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at= #counters start},SOME identity,[])
+                          (* the same unit as a compile's of this text, where its
+                             static layer is: what that one's clients name *)
+                          val ()=case (storeDir,storeKey) of (SOME dir,SOME (k,_)) => aliasAll (dir,k,identity) | _ => ()
+                      in exposed:=false;(entry,identity,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
                            usages,ref NONE,ref NONE) end
                 in case prior of
                      SOME (k:kept) =>
                        if asked then (entry,identityOf k,#live k,usages,#defined k,#keys k)
-                       else if #identity exported=identityOf k andalso not (!dirty) andalso known then
+                       else if identity=identityOf k andalso not (!dirty) andalso known then
                          (cutoff:= !cutoff+1;if fast then () else UnitBasis.rebind (#bindings (liveOf k));
                           (entry,identityOf k,if fast then #live k else ref (SOME {result= #result (liveOf k),bindings= #bindings (liveOf k),position=here}),
                            usages,ref defined,#keys k))
                        else if fast then (stash:=SOME (name,entry,usages,exported,defined);raise NeedWalk)
-                       else (if #identity exported=identityOf k then () else moved:=true;
+                       else (if identity=identityOf k then () else moved:=true;
                              if !dirty then () else cut index;fresh ())
                    | NONE => (moved:=true;fresh ()) end
               fun taken (k:kept)=
@@ -498,11 +821,12 @@ struct
                              UnitBasis.remappingBasis (#pickle entry,fn identity => StringMap.find (!paths,identity)))))
                            handle UnitBasis.Missing _ => (UnitBasis.abandon at;NONE) | Pickle.Bad _ => (UnitBasis.abandon at;NONE)
                      in exposed:=false;case tried of
-                          SOME result => (reused:= !reused+1;loaded:= !loaded+1;
+                          SOME result => (reused:= !reused+1;loaded:= !loaded+1;aliasOwn (#pickle entry,identityOf k);
                             SOME (entry,identityOf k,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
                               #usages k,#defined k,ref NONE))
                         | NONE => NONE end end
               val (entry,identity,live,usages,defined,keys)=
+                case fromStore of SOME found => (stored:= !stored+1;reused:= !reused+1;found) | NONE =>
                 case (if holds then taken (valOf prior) else NONE) of SOME found => found | NONE => compile ()
               val ()=if asked then
                 (openedEntry:=SOME entry;raise Answered) else ()
@@ -517,15 +841,21 @@ struct
           in next:=StringMap.insert (!next,name,k);staged:=name:: !staged;
              observe "unit-frozen" file (length (#uses entry));poll ();k end
         (* each input's names, scanned where its text is new *)
-        val names=ref (#names old)
-        val mentions=ref false
         fun scan (source:source)=
           let val ()=poll ()
+              (* what its sidecar says it mentions, where the store has one of
+                 this compiler's (a sidecar is a function of the text) *)
+              fun stored ()=case storeDir of NONE => NONE | SOME dir =>
+                case sideOf (dir,hashOf (#file source,#text source)) of
+                  SOME side => if #compiler side=Config.identity andalso #mode side=Source.modeName (#mode source) then
+                      Option.map (List.foldl (fn (name,all) => StringMap.insert (all,name,())) StringMap.empty) (#mentions side) else NONE
+                | NONE => NONE
               fun fresh ()=
                 let val ()=observe "names-start" (#file source) (size (#text source))
-                    val (lexemes,_,_)=CompilerSyntax.lexical
-                      {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
-                    val found=CompilerPrelude.usedBy (#file source,CompilerSyntax.tokens lexemes (#file source),StringMap.empty)
+                    val found=case stored () of SOME found => found | NONE =>
+                      let val (lexemes,_,_)=CompilerSyntax.lexical
+                            {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
+                      in CompilerPrelude.usedBy (#file source,CompilerSyntax.tokens lexemes (#file source),StringMap.empty) end
                 in names:=StringMap.insert (!names,#file source,(#mode source,#text source,found));found end
           in case StringMap.find (!names,#file source) of
                SOME (mode,text,found) => if mode= #mode source andalso text= #text source then () else
@@ -658,7 +988,8 @@ struct
                   | SOME (k:kept) => if List.exists (fn other => other=name) all then (all,map)
                       else if not (isOpen (#entry k)) then (all,map)
                       else if isFocused (#file (#entry k)) then (name::all,map)
-                      else (all,StringMap.insert (map,name,{entry=closedEntry (#entry k),identity= #identity k,live= #live k,
+                      else (all,StringMap.insert (map,name,{entry=closedEntry (fn unit => Option.map (fn k:kept => #key (#entry k))
+                             (StringMap.find (merged,unit))) (#entry k),identity= #identity k,live= #live k,
                              usages= #usages k,index= #index k,defined= #defined k,keys= #keys k}))) ([],merged) opens
           in saved:=(case query of
               SOME _ => {serial= #serial old,kept=merged,order= #order old,opens=opens,complete= #complete old,planned= #planned old,
@@ -749,8 +1080,8 @@ struct
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
       candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
       state=current,entries=entries,order=order,attempted= !attempted,prelude=plan,units=inputNames,opened= !openedEntry,
-      route={walked=not (isSome fast),rebound= !rebound,loaded= !loaded,cutoff= !cutoff,broken= !broken}} end)
+      route={walked=not (isSome fast),rebound= !rebound,loaded= !loaded,cutoff= !cutoff,broken= !broken,stored= !stored}} end)
   fun checkSteps (session as Session {walks,...},scope,sources,steps,libraries,cancelled,building,view)=
-    let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,building,view,false)
+    let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,building,view,Probe)
     in if !walks>=walksToCompact then compact session else ();result end
 end

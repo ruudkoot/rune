@@ -439,10 +439,12 @@ test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rb
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
 	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc
-# A kept analysis against a fresh one, edit by edit (tools/lsp/oracle.sml): the
-# compiler's own build in make check, HOL4's closure and MLton in the nightly
-# tier, from the build files RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON name
-# (tests/lsp/README.md).
+# A kept analysis against a fresh one, edit by edit (tools/lsp/oracle.sml),
+# every unit compared: the compiler's own build in make check, the third run
+# cold from a store a compile of it made at -O0 (build/lsp/store,
+# C.Analysis.store), which an analysis reads by the static configuration;
+# HOL4's closure and MLton in the nightly tier, from the build files
+# RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON name (tests/lsp/README.md).
 LSP_ORACLE_SRCS := tools/lsp/oracle.sml src/main/lsp-oracle-main.sml
 bin/rune-lsp-oracle.rbc: $(RUNE) $(LSP_ORACLE_SRCS) tools/lsp/oracle.build manifests
 	$(RUNE) --build tools/lsp/oracle.build -o $@
@@ -458,9 +460,14 @@ ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
 test-lsp-oracle: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
-	  --scenarios tests/lsp/oracle/rune.tsv --sample 12 --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
+	  --scenarios tests/lsp/oracle/rune.tsv --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
-	  --scenarios tests/lsp/oracle/rune.tsv --focus --sample 6 --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared
+	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared
+	rm -rf build/lsp/store
+	$(RUNE) --units -O0 --build rune.build --cache-dir build/lsp/store -o build/lsp/store.rbc 2>/dev/null
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
+	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-store.jsonl --store build/lsp/store \
+	  --require $(ORACLE_PATHS),opened,stored
 test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \

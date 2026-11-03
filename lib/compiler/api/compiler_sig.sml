@@ -188,6 +188,11 @@ sig
     val libraryRoots : t -> string list
     (* `targets workspace` lists its named targets in order. *)
     val targets : t -> target list
+    (* `store {file, windows}` is the directory of the store a compile of
+       file keeps, where there is one: RUNE_CACHE's, else .rune beside the
+       nearest root file above file, else beside file (docs/units.md, The
+       store). *)
+    val store : {file : string, windows : bool} -> string option
   end
 
   (* The compiler's immutable project model, shared with the CLI. *)
@@ -341,6 +346,17 @@ sig
        own for the others. Two builds over one library then elaborate its
        units once. Off by default. *)
     val share : t * pool option -> unit
+    (* `store (context, SOME dir)` has a context read the store in dir, a
+       compile's (Workspace.store), and `store (context, NONE)`, the default,
+       none.
+
+       A unit not open whose compiled entry holds there, of any configuration
+       whose static settings are the context's, and whose sidecar the store
+       has from an earlier analysis of the same text, is loaded from them and
+       not elaborated: its static layer is the compile's. The sidecar of each
+       unit a check elaborates from the text its file has is written there.
+       The results are a fresh analysis's whichever way a unit came. *)
+    val store : t * string option -> unit
     (* `compact context` gives up the compiler state a context's units stay
        loaded in, with what its tables hold of units long replaced.
 
@@ -421,8 +437,9 @@ sig
        walked: from the start, rather than each change at its own place;
        rebound: units taken as they stood; loaded: taken again from their
        pickles; cutoff: elaborated to the identity they had; broken: a usage
-       refused a unit. The results are a fresh analysis's whichever the route. *)
-    val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int}
+       refused a unit; stored: taken from the store (store). The results are a
+       fresh analysis's whichever the route. *)
+    val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int}
     (* `typeAt (snapshot, position)` returns its innermost original-source type.
 
        Copied-body facts are used only where no original fact is available.

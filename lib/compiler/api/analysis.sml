@@ -46,6 +46,9 @@ struct
   type pool=E.pool
   val pool=E.pool
   fun share (context as Analysis {engine=E.Session {shares,...},...},value)=(checked context;shares:=value)
+  (* the store a context takes a compile's entries and the sidecars from,
+     and writes sidecars to; NONE, none *)
+  fun store (context as Analysis {engine=E.Session {store,...},...},value)=(checked context;store:=value)
   fun compact (context as Analysis {engine,...})=(checked context;E.compact engine)
   fun checkpoint (context as Analysis {engine=E.Session {state,...},token,...}) =
     (checked context;Checkpoint {token=token,state= !state})
@@ -129,20 +132,25 @@ struct
     let fun find i=if i=Vector.length (#units snapshot) then NONE
           else if Vector.sub (#units snapshot,i)=unit then SOME i else find (i+1)
     in find 0 end
-  (* A closed unit opened first, at its place: until a store can answer for it
-     (D27). The few asked for last are kept. *)
-  fun openUnit (snapshot:snapshot,unit) =
-    case List.find (fn entry:E.entry => #name entry=unit) (!(#opened snapshot)) of SOME entry => SOME entry | NONE =>
+  (* A closed unit opened: from its notes, where they hold (D27), else at its
+     place; whole, with its syntax and typing, at its place. The few asked for
+     last are kept. *)
+  fun openUnit (snapshot:snapshot,unit,whole) =
+    case List.find (fn entry:E.entry => #name entry=unit andalso (not whole orelse E.isOpen entry)) (!(#opened snapshot)) of
+      SOME entry => SOME entry | NONE =>
     case ordinalOf (snapshot,unit) of NONE => NONE | SOME ordinal =>
       let val input=Vector.sub (#ordered snapshot,ordinal)
           val result=answering (snapshot,fn engine => E.checkWith (engine,#scope snapshot,List.map source (#inputs snapshot),
             #steps snapshot,#libraries snapshot,fn () => false,SOME {unit=unit,file= #file input,offset= ~1,path=[]},
-            List.map source (#dependencies snapshot),SOME (#prelude snapshot),NONE,NONE,true))
+            List.map source (#dependencies snapshot),SOME (#prelude snapshot),NONE,NONE,if whole then E.Whole else E.Open))
       in case #opened result of NONE => NONE | SOME entry =>
           let val all=entry:: !(#opened snapshot)
           in #opened snapshot:=List.take (all,Int.min (16,length all));SOME entry end end
   fun entryOf (snapshot:snapshot,unit)=case StringMap.find (#entries snapshot,unit) of NONE => NONE
-    | SOME (k:E.kept) => if E.isOpen (#entry k) then SOME (#entry k) else openUnit (snapshot,unit)
+    | SOME (k:E.kept) => if E.isOpen (#entry k) then SOME (#entry k) else openUnit (snapshot,unit,false)
+  (* the same with its syntax and typing *)
+  fun wholeOf (snapshot:snapshot,unit)=case StringMap.find (#entries snapshot,unit) of NONE => NONE
+    | SOME (k:E.kept) => if E.isOpen (#entry k) then SOME (#entry k) else openUnit (snapshot,unit,true)
   (* what a unit holds, by its name, without a walk of the others *)
   fun occurrencesIn (snapshot:snapshot,unit)=case StringMap.find (!(#projections snapshot),unit) of SOME uses => uses
     | NONE => case entryOf (snapshot,unit) of NONE => [] | SOME entry =>
@@ -180,7 +188,7 @@ struct
      there *)
   fun typedAt (snapshot:snapshot,{file,unit,offset}) =
     let fun mine (entry:E.entry)=isSome (#typing entry) andalso #file entry=file
-        val found=case unit of SOME unit => entryOf (snapshot,unit) | NONE => List.find mine (entries snapshot)
+        val found=case unit of SOME unit => wholeOf (snapshot,unit) | NONE => List.find mine (entries snapshot)
     in case found of
          SOME entry => (case #typing entry of
                           SOME typing => C.owned (fn () => CompilerNodeTypes.typeAt (typing,file,offset))
@@ -206,8 +214,8 @@ struct
   fun syntaxAt (snapshot:snapshot,position) = Option.mapPartial (fn unit =>
     case #attempted snapshot of
       SOME (name,syntax) => if name=unit andalso not (StringMap.member (#entries snapshot,unit)) then SOME syntax
-        else Option.mapPartial #syntax (entryOf (snapshot,unit))
-    | NONE => Option.mapPartial #syntax (entryOf (snapshot,unit))) (unitAt (snapshot,position))
+        else Option.mapPartial #syntax (wholeOf (snapshot,unit))
+    | NONE => Option.mapPartial #syntax (wholeOf (snapshot,unit))) (unitAt (snapshot,position))
   fun typeAtOccurrence (snapshot:snapshot,{ordinal,offset}) =
     if ordinal<0 orelse ordinal>=Vector.length (#ordered snapshot) then NONE else
       let val input=Vector.sub (#ordered snapshot,ordinal)
@@ -274,7 +282,7 @@ struct
         fun query (sources,at)=answering (snapshot,fn engine => E.checkWith
           (engine,#scope snapshot,sources,#steps snapshot,#libraries snapshot,fn () => false,
            SOME {unit=Vector.sub (#units snapshot,ordinal),file= #file input,offset=at,path=path},
-           List.map source (#dependencies snapshot),SOME (#prelude snapshot),NONE,NONE,false))
+           List.map source (#dependencies snapshot),SOME (#prelude snapshot),NONE,NONE,E.Probe))
         val original=List.map source (#inputs snapshot)
         fun retry []=NONE
           | retry ((text,at)::rest)=
