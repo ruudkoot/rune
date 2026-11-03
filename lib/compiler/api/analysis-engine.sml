@@ -95,8 +95,11 @@ struct
          libraries= #libraries saved,stamps= #stamps saved,names= #names saved,
          paths=StringMap.filteri (fn (identity,_) => StringMap.member (named,identity)) (#paths saved)}) end
   (* which files stay open; NONE, all of them *)
-  fun focus (Session {focus,...},files)=
-    focus:=Option.map (List.foldl (fn (file,all) => StringMap.insert (all,file,())) StringMap.empty) files
+  fun focus (Session {focus,state,...},files)=
+    (case (files,!focus) of
+       (NONE,SOME _) => state:=unplaced (!state,#serial (!state)+1)  (* a library's closed units, which only a walk opens *)
+     | _ => ();
+     focus:=Option.map (List.foldl (fn (file,all) => StringMap.insert (all,file,())) StringMap.empty) files)
   fun closedEntry (entry:entry):entry=
     {key= #key entry,name= #name entry,file= #file entry,text= #text entry,allow= #allow entry,mode= #mode entry,pickle= #pickle entry,
      sidecar= #sidecar entry,facts=[],types= #types entry,syntax=NONE,typing=NONE,
@@ -152,6 +155,10 @@ struct
            case StringMap.find (definedBy (find,k),key) of SOME now => resolve find now | NONE => last)
     | _ => origin
   fun identityOf (k:kept)= #identity (#unit (#result k))
+  (* the signatures or functors a unit declared, in the order it declared them,
+     the last of each name, from its names newest first *)
+  fun declared (names,table)=List.mapPartial (fn n => Option.map (fn value => (n,value)) (StringMap.find (table,n)))
+    (List.foldl (fn (n,kept) => if List.exists (fn other => other=n) kept then kept else n::kept) [] names)
   fun sameSteps (a:CompilerProject.step list,b:CompilerProject.step list)=
     let fun same (CompilerProject.SUnit x,CompilerProject.SUnit y)=x=y
           | same (CompilerProject.SLocal (a,b),CompilerProject.SLocal (c,d))=sameSteps (a,c) andalso sameSteps (b,d)
@@ -330,8 +337,7 @@ struct
                 mode=mode,delta= !Elaborate.lastDelta,fixity=outgoing,used=usages}
               (* a type by its unit's name and its path there, which last while
                  the unit's identity moves *)
-              val ownPaths=UnitBasis.typePaths (!Elaborate.lastDelta,List.mapPartial (fn n =>
-                Option.map (fn sigma => (n,sigma)) (StringMap.find (!Elaborate.sigs,n))) (!Elaborate.insertedSigs))
+              val ownPaths=UnitBasis.typePaths (!Elaborate.lastDelta,declared (!Elaborate.insertedSigs,!Elaborate.sigs))
               fun typeId stamp=case IntTable.find (Vector.sub (#own exported,UnitBasis.kTycon),stamp) of
                 SOME index => name ^ ":" ^ (case IntTable.find (ownPaths,stamp) of SOME path => path | NONE => "#" ^ Int.toString index)
               | NONE => getOpt (UnitBasis.typeAnchor stamp,
@@ -368,10 +374,9 @@ struct
               val typeDefinitions=IntMap.foldRange (fn (stamp,origin,all) => {id=typeId stamp,origin=holding origin} :: all) []
                 (Vector.sub (#counters start,UnitBasis.kTycon),!Types.tyconCounter) (!Env.typeOrigins)
               (* what a client of this unit will find, where the unit is here again *)
-              val defined=case prior of NONE => NONE | SOME _ =>
-                let fun declared (names,table)=List.mapPartial (fn n => Option.map (fn value => (n,value)) (StringMap.find (table,n))) names
-                in SOME (List.foldl (fn ((key,origin),all) => StringMap.insert (all,key,holding origin)) StringMap.empty
-                     (definitions (!Elaborate.lastDelta,declared (!Elaborate.insertedSigs,!Elaborate.sigs),declared (!Elaborate.insertedFuns,!Elaborate.funs)))) end
+              val defined=Option.map (fn _ =>
+                List.foldl (fn ((key,origin),all) => StringMap.insert (all,key,holding origin)) StringMap.empty
+                  (definitions (!Elaborate.lastDelta,declared (!Elaborate.insertedSigs,!Elaborate.sigs),declared (!Elaborate.insertedFuns,!Elaborate.funs)))) prior
               val uses=List.foldl (fn ((role,id,span,origin,derived),all) => (role,id,span,holding origin,derived)::all) [] (!unitUses)
               val ()=UnitBasis.undo start
               val whole={key=key,name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle exported,sidecar= #sidecar exported,facts=frozenFacts,
@@ -453,7 +458,7 @@ struct
              observe "unit-frozen" file (length (#uses entry));poll ();k end
         (* each input's names, scanned where its text is new *)
         val names=ref (#names old)
-        val moved=ref false
+        val mentions=ref false
         fun scan (source:source)=
           let val ()=poll ()
               fun fresh ()=
@@ -464,8 +469,8 @@ struct
                 in names:=StringMap.insert (!names,#file source,(#mode source,#text source,found));found end
           in case StringMap.find (!names,#file source) of
                SOME (mode,text,found) => if mode= #mode source andalso text= #text source then () else
-                 let val keys=fresh () in if StringMap.listKeys keys=StringMap.listKeys found then () else moved:=true end
-             | NONE => (ignore (fresh ());moved:=true) end
+                 let val keys=fresh () in if StringMap.listKeys keys=StringMap.listKeys found then () else mentions:=true end
+             | NONE => (ignore (fresh ());mentions:=true) end
         val ()=if isSome frozenPlan then () else List.app scan sources
         val manifests=case lib of NONE => [] | SOME root =>
           (root ^ "/basis/MANIFEST")::List.map (fn dir => dir ^ "/MANIFEST")
@@ -476,7 +481,7 @@ struct
             | SOME (_,_,found) => StringMap.foldli (fn (name,(),all) => StringMap.insert (all,name,())) all found) StringMap.empty sources}
         val plan=case (frozenPlan,#prelude old) of
             (SOME plan,_) => plan
-          | (NONE,SOME plan) => if samePlan andalso stampsHold andalso not (!moved) then plan else selected ()
+          | (NONE,SOME plan) => if samePlan andalso stampsHold andalso not (!mentions) then plan else selected ()
           | (NONE,NONE) => selected ()
         val selection=List.map BasisManifest.path (List.concat (#groups plan))
         val priorSelection=List.map (BasisManifest.path o #1) (#libraries old)
