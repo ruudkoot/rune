@@ -104,8 +104,10 @@ exception's runtime identity. Signature constraints retain declaration
 and implementation locations. Copied functor bodies keep their lexical
 owner; `derived` identifies their copied occurrences and type facts.
 Generative and opaque type-constructor identities remain distinct through
-basis replay. This metadata is stored in the version-7 basis format;
-ordinary batch compilation leaves provenance tracking disabled.
+basis replay. This metadata is stored in a sidecar beside the basis,
+outside every hash, so that a comment that moves spans moves no unit's
+identity ([units.md](units.md), *The export basis*); ordinary batch
+compilation leaves provenance tracking disabled and its sidecar empty.
 
 `unitAt` supplies an opaque identity for each primary source occurrence;
 clients compare it with fact/occurrence unit fields instead of constructing

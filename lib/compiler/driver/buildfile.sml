@@ -1,10 +1,10 @@
 (* Build files (docs/build.md; the incremental roadmap's M10, D16): their
-   syntax, read into declarations, and their elaboration to what a build
-   compiles -- each unit with the basis it is compiled in, given as a plan
-   of steps that the units driver (Main) follows, a unit's basis being what
-   the steps before it leave. A basis is a value, as in MLB: a file adds what
-   it declares to the basis before it, `local` and export lists say what the
-   files after see. Unlike MLB, a `use` elaborates in its caller's basis. *)
+   syntax, read into declarations, which CompilerProject makes the plan of
+   what a build compiles -- each unit with the basis it is compiled in, a
+   unit's basis being what the steps before it leave. A basis is a value, as
+   in MLB: a file adds what it declares to the basis before it, and a
+   library's exports say what the files after it see. Unlike MLB, a `use`
+   elaborates in its caller's basis. *)
 structure BuildFile =
 struct
   (* ---- syntax ---- *)
@@ -17,13 +17,10 @@ struct
   datatype dec =
       File of string                              (* a path, relative to the build file's directory *)
     | Files of string list
-    | Group of string list
-    | Local of dec list * dec list
     | Library of (kind * string) list * dec list
     | Use of string
     | Implements of string * dec list
     | Annotate of string list * dec list
-    | Cache of string
     | Libraries of string list                   (* the libraries a library is written on *)
     | Header of header                           (* what comes first in a library's build file *)
     | Inline of string list                      (* functors to inline across units (M6b) *)
@@ -75,6 +72,15 @@ struct
 
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
                   "libraries", "inline", "requires", "exports", "friends", "view"]
+
+  (* the words that were the language's and are not now, which no path may
+     be: what to write instead (docs/build.md, What is gone; D6) *)
+  fun dropped (word : string) : string option =
+    case word of
+      "group" => SOME "a build lists its files in the order they are compiled"
+    | "local" => SOME "what a build hides stands behind a library's exports"
+    | "cache" => SOME "--cache-dir says where the cache is"
+    | _ => NONE
 
   (* the words `annotate` takes (docs/build.md, Annotations, and A library's
      build file) *)
@@ -129,10 +135,6 @@ struct
       and dec () =
         case next () of
           W "files" => Files (paths "source")
-        | W "group" => Group (paths "source")
-        | W "local" =>
-            let val a = decsUntil ["in"] val () = expect "in" val b = decsUntil ["end"] val () = expect "end"
-            in Local (a, b) end
         | W "library" =>
             let
               val es = exportList ()
@@ -160,7 +162,6 @@ struct
               val ds = decsUntil ["end"]
               val () = expect "end"
             in Annotate (a, ds) end
-        | W "cache" => Cache (pathWord "directory")
         | W "libraries" => Libraries (paths "library")
         | W "inline" =>
             let
@@ -173,7 +174,10 @@ struct
                              | W n => n :: names ()
                              | S n => n :: names ()
             in kind (names ()) end
-        | word as W s => if List.exists (fn k => k = s) keywords then error ("unexpected " ^ s) else File (reference ("source",word))
+        | word as W s =>
+            (case dropped s of
+               SOME instead => error ("the build language has no " ^ s ^ ": " ^ instead)
+             | NONE => if List.exists (fn k => k = s) keywords then error ("unexpected " ^ s) else File (reference ("source",word)))
         | word as S _ => File (reference ("source",word))
       (* A header's parts, in any order, each once but for its views: what
          comes before the first declaration of the file *)

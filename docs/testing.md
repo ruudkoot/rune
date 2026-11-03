@@ -937,6 +937,7 @@ The 13 that survived E18:
 | F5 | `fpVal`: which value, the anchor | 8 | `fact-anchor`: a structure's other name made to reach another value of the type, which a remap by the old path would find wrongly |
 | F6 | `fpVal`: a constructor's tag | | Harmless: a constructor's scheme names its type, and the definition holds the constructors in order, which is what a tag is |
 | F9 | a definition: a type name's equality | 16 | `fact-eqname`: an abstract type, whose definition is nothing else |
+| U3 | the usage `fun` | | Harmless since the build-system roadmap's M4: an application calls the functor's function, whose global no path reaches, so where the functor's unit changed an entry that calls it is not remapped and its unit is compiled (`its entry names ... a name no path of it reaches`), and where it did not nothing changed. `across-project` saw it only while an entry exact by its binders that named a changed unit failed to load; such an entry is taken across now |
 | U4 | the usage `inl` | | `fact-inlfunctor`: E18's scenarios had no marked functor outside the Basis |
 | K1 | the key's `allow` | | `flag-allow-prim`: filled with the flag, built without it |
 | K5 | the configuration's `inline-val` | | `fact-markvalue`: the mark taken out of a build file |

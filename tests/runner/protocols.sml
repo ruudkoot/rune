@@ -452,6 +452,10 @@ struct
                                   driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check kernel"),
              Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-pipe", "exec bin/rune-protocol-check notebook")),
              Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check notebook"))]),
+       (* a compile's static layer is an analysis's (docs/units.md, Layers);
+          RUNE_LAYER_TREES adds builds that are not in the tree, MLton's and HOL4's *)
+       tagged ["check", "test-layers", "covers:lib/compiler/driver/unitbasis.sml", "covers:tests/compiler/layers-analysis.sml"]
+         (Test.describe "layers" [driver ("static", "exec bin/rune-incremental layers rune.build $RUNE_LAYER_TREES")]),
        tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml", "covers:tests/runner/cache*.sml",
                "covers:src/driver/cachecheck.sml"]
          (Test.describe "incremental"

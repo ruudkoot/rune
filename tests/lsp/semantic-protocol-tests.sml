@@ -1326,12 +1326,12 @@ struct
     fixtureInitializedResult (object [("capabilities",linkCapabilities true)]) (fn (client,initialized) =>
       let val ()=check ("document link resolution is advertised only when supported",
             C.field (C.field (C.field (initialized,"capabilities"),"documentLinkProvider"),"resolveProvider")=Json.Bool true)
-          val text="files \"" ^ source ^ "\" $(MISSING)/x end\nuse child.build\nlibraries json end\ncache .\n"
+          val text="files \"" ^ source ^ "\" $(MISSING)/x end\nuse child.build\nlibraries json end\n"
           val ()=openDocument (client,uri,text)
           val items=linkItems (linkQuery (client,600,uri))
-          val ()=check ("compiler path roles produce deferred links and omit unresolved variables",length items=4 andalso
+          val ()=check ("compiler path roles produce deferred links and omit unresolved variables",length items=3 andalso
             List.all (fn item => Json.member ("target",item)=NONE andalso Json.member ("tooltip",item)=NONE) items)
-          val targets=[OS.Path.concat (dir,source),OS.Path.concat (dir,"child.build"),"lib/json/library.build",dir]
+          val targets=[OS.Path.concat (dir,source),OS.Path.concat (dir,"child.build"),"lib/json/library.build"]
           fun resolve (item,expected)=
             let val reordered=case item of Json.Object fields => object (List.map
                   (fn (name,Json.Object fields) => (name,object (List.rev fields)) | field => field) (List.rev fields))

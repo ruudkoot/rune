@@ -127,7 +127,10 @@ named by placeholders, which are no names of the unit's. A functor marked
 to be inlined ([build.md](build.md), *Inline functors*) has its
 function's Mid written too, its positions in the unit's own source by
 nothing but that, and a unit that expands it depends on it (the usage
-`inl F`). A function marked to be inlined ([build.md](build.md), *Inline
+`inl F`), by the hash kept beside it: of the Mid, of what the copies take
+of the globals it names, and of its lines, of which the basis keeps only
+the hash, so that a basis written again from what it loads as is the same
+bytes. A function marked to be inlined ([build.md](build.md), *Inline
 functions*), and every function that only applies a primitive to its
 parameter, has its Mid written too, as the expansion leaves it, with the
 functions of the unit it calls while the group is under 400 Mid nodes,
@@ -180,6 +183,40 @@ mutable annotations; replay restores origins together with its checked
 basis. The batch driver and analysis share build-scope visibility through
 `CompilerBuildContext`.
 
+**Layers** (the build-system roadmap's D1). A basis is two layers, each its
+own bytes, read side by side:
+
+| Layer | Holds | Read by |
+|---|---|---|
+| static | fixity, names, schemes, type names, constructors and how they lie, a primitive's name, signatures, a functor's parameter and summary, an overloading's operators | a compile, an analysis |
+| ABI | a value's and an exception's stamp and flags, a reference's stamps and flags, a functor's global, bodies to copy and their hashes, an overloading's targets, and by name the type a value has in the IRs, primitives, globals that are others, functions known by name, a datatype's table, a realisation, a layout a body fixed | a compile |
+
+The static layer is written whole before the rest of the ABI layer, and
+nothing in it depends on the other: an own name is numbered as the static
+layer meets it, and an import by its place among the static layer's. So a
+compile and an analysis of a unit, which elaborate it alike, write the same
+bytes of the static layer, and only a compile has much to write in the other
+(`make test-layers`). A type name's realisation is the ABI layer's, whole: a
+client's code reads it (`Ty.convert`, `Ty.shapeOf`) and holds what it is made
+of, a word, an int, a pointer, so a key that held its layout alone took a
+client across `int` made `word` behind `:>`, and the link refused the two
+units. How a constructor lies is
+the one fact of a layout elaboration reads, for a parameter's open
+constructor (`Elaborate.descriptors`), so the static layer holds it.
+
+Each export, at every depth, has a hash of the static layer and a hash of both
+(`UnitBasis.exportHashes`): a fingerprint (*Fingerprints*, below) worked out
+without what a client's code is built on, or with it. A compile reads both
+layers, so a usage holds the second and a key of the static layer alone would
+take a client across a function made a closure, an opaque type's new
+realisation or another exception's name (E17). The header holds the hash of
+the static layer with its imports' static fingerprints, beside the identity's.
+
+`RUNE_LAYER_DUMP=DIR` writes each unit's exports and hashes to a file of `DIR`
+as a unit is bound, in a compile or an analysis, and `RUNE_STATIC_LOAD` makes a
+load where no code is made enter nothing of the ABI layer in the compiler's
+tables, which is what an analysis must not need.
+
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
 to the unit's start, the bytes are read, their names given names of the
@@ -198,15 +235,23 @@ way that does not depend on what was compiled before it (D3):
 * one of the unit's own is a number, given in the order the writing of its
   basis meets them, so that the same declarations always get the same
   numbers;
-* one of an earlier unit's is that unit's *identity* and its number there.
+* one of an earlier unit's is its place in the unit's *imports*, a table of
+  each kind that says its unit's identity and its number there.
 
 A unit's identity is its logical name (below) and the hash of its basis,
-without what its compile used of the session's counters. A unit whose body
-changed and whose basis did not keeps its identity, so that what was
-compiled against it stays valid. Loading a basis gives the unit's numbers a
-range of each kind of name -- stamps, type names, type variables -- after
-the session's, and registers the range, which is how a name of the session
-is written back as a unit's identity and number.
+without what its compile used of the session's counters and without the
+imports' table: an import is hashed as what it is, not as whose it is. A type
+name is its fingerprint (below), a value or an exception its anchor, the
+facts a client reads of it, what a copy of it is and its type, a signature
+referred to its fingerprint. A unit whose body changed and whose basis did
+not keeps its identity, so that what was compiled against it stays valid, and
+so does a unit whose imports changed in nothing it names (S121), which is
+what a fresh compile of it gives. A unit that names what changed moves, even
+where its own bytes do not (S122, S123): a client that names only it holds
+by its binder, and what it may read through it must have moved it. Loading a
+basis gives the unit's numbers a range of each kind of name -- stamps, type
+names, type variables -- after the session's, and registers the range, which
+is how a name of the session is written back as a unit's identity and number.
 
 **A unit's logical name** says where its file is, and nothing of how a path
 spelt it (`Workspace`, `lib/compiler/driver/workspace.sml`; the build-system

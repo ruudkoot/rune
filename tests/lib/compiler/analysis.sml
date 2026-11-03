@@ -456,9 +456,11 @@ struct
           ("public.sml","structure Public=struct val x=Hidden.x+1 end\n"),
           ("final.sml","val result=Public.x\n")]
         val ()=List.app write files
-        val ()=write ("scope.build","local files hidden.sml end in files public.sml end end\nfiles final.sml end\n")
+        val ()=OS.FileSys.mkDir (dir ^ "/scoped")
+        val ()=write ("scoped/library.build","exports (structure Public)\nfiles ../hidden.sml ../public.sml end\n")
+        val ()=write ("scope.build","use scoped/library.build\nfiles final.sml end\n")
         fun clean ()=(List.app (fn file => OS.FileSys.remove (dir ^ "/" ^ file))
-          ("scope.build" :: List.map #1 files);OS.FileSys.rmDir dir)
+          ("scope.build" :: "scoped/library.build" :: List.map #1 files);OS.FileSys.rmDir (dir ^ "/scoped");OS.FileSys.rmDir dir)
         fun work () =
           let val parent=compiler ()
               val context=A.create (parent,{context="scoped"})
@@ -629,6 +631,27 @@ struct
           [("let",1),("C (a",1),(" + 2",1),("+ 2",1),("p=",1)]
           andalso C.typeAt (parent,{file="nodes.sml",offset=at ("(x,x)",1)})=SOME "'a * 'a")
     in A.close context;C.close parent end
+  (* A functor's result where no code is made: its fresh names are what a
+     compile makes them, with their constructors and layouts, so an analysis
+     refuses what a compile refuses of a datatype an application made, and
+     its static layer is a compile's (build-system M4, step 4) *)
+  fun generatedLayouts () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="generated"})
+        val text=String.concatWith "\n"
+          ["functor G () = struct type e = int * int * int * int * int * int * int * int * int  datatype t = C of e | N end",
+           "structure B = G ()",
+           "signature P = sig type e  datatype t = C of e | N end",
+           "functor F (X : P) = struct fun f (X.C v) = 1 | f _ = 0 end",
+           "structure R = F (B)",""]
+        val says=String.isSubstring "lays out a constructor of t in 9 fields"
+        val result=analyze (context,[input ("generated.sml",text,"1")])
+        val ()=check ("the analysis refuses it as a compile does",
+          List.exists (fn diagnostic:C.diagnostic => says (#message diagnostic)) (A.diagnostics result))
+        val compiled=(ignore (C.compileText (parent,{file="generated.sml",text=text}));[])
+          handle C.Failed diagnostics => diagnostics
+        val ()=check ("a compile refuses it",List.exists (fn diagnostic:C.diagnostic => says (#message diagnostic)) compiled)
+    in A.close context;C.close parent end
   (* A comment that moves every span moves no identity: where a name was bound
      is in a sidecar, outside what an identity hashes (build-system M4, step
      1), and a unit read back still says where. *)
@@ -689,6 +712,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "lexical-visibility" CompilerAnalysisTests.lexicalVisibility,
      Test.it "call-signatures" CompilerAnalysisTests.signatures,
      Test.it "node-types" CompilerAnalysisTests.nodeTypes,
-     Test.it "spans-move-no-identity" CompilerAnalysisTests.spansMoveNoIdentity]
+     Test.it "spans-move-no-identity" CompilerAnalysisTests.spansMoveNoIdentity,
+     Test.it "generated-layouts" CompilerAnalysisTests.generatedLayouts]
 end)
 val ()=CompilerAnalysisTestMain.main ()

@@ -1086,8 +1086,10 @@ struct
      have, under the names an instance of the signature gave them (rule
      65): their constructors from the specification's, with their schemes
      and tags -- what a functor's body is compiled against, and a dynamic
-     module's program (StrDynamic) *)
-  fun specDatatypes (isNew : tycon -> bool, e : env) : int list =
+     module's program (StrDynamic). Where no code is made only what elaboration
+     reads of them, the constructors, which a unit's static layer holds as
+     a compile's does *)
+  fun specDatatypes (code : bool, isNew : tycon -> bool, e : env) : int list =
     let
       val specified : int list ref = ref []
       fun datatypes (Env {tys, strs, ...}) =
@@ -1112,7 +1114,7 @@ struct
                                                                 | ins ((y as (u, _, _)) :: rest) = if t < u then x :: y :: rest else y :: ins rest
                                                           in ins acc end) [] cons
                              in
-                               Ty.bindDatatype (#stamp c, {params = params, cons = sorted});
+                               if code then Ty.bindDatatype (#stamp c, {params = params, cons = sorted}) else ();
                                dataCons := IntMap.insert (!dataCons, #stamp c, cs)
                              end
                            else ()
@@ -1197,7 +1199,9 @@ struct
                                                                (t, n, Option.map (fn Ty.FromElab x => Ty.FromElab (realize (phi, x))
                                                                                    | d => d) a)) cons});
            Ty.pinLayout (#stamp c', Ty.elabLayout (#stamp c)))
-      | NONE => ());
+      | NONE =>
+          (* all a static layer read alone says of how it lies *)
+          Option.app (fn l => Ty.pinLayout (#stamp c', l)) (IntMap.find (!Ty.pinned, #stamp c)));
      (case IntTable.find (Ty.realizations, #stamp c) of
         SOME f => Ty.bindRealization (#stamp c', realizeFcn (phi, f))
       | NONE => ());
@@ -2075,9 +2079,8 @@ struct
                  compile that makes no code (makesCode; D15) *)
               val code = !makesCode
               val boundSet = List.foldl (fn (c : tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty (#bound sigma)
-              val _ = if code then specDatatypes (fn c => IntMap.member (boundSet, #stamp c)
-                                                         andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
-                      else []
+              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c)
+                                                   andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
               val pEnv = if code then localParam (#env sigma) else #env sigma
               val _ = noteModule (functorParams, #id b, pEnv)
               val bodyEnv = case #param b of
@@ -2250,6 +2253,10 @@ struct
                    val _ = noteModule (freshFrom, n, !tyconCounter)
                    val fresh = noteModule (appliedNames, n, List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) generated)
                    val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) phi fresh
+                   (* the names made fresh as a compile makes them, with their
+                      constructors, layouts and realisations, which what
+                      names them reads *)
+                   val () = List.app (fn (c, c') => instance (phi, c, c')) fresh
                  in freshExceptions (realizeEnv (phi, result)) end
              in
                (* --pass-stats=elab: the match and the call are the application's *)
@@ -2280,7 +2287,7 @@ struct
           val fresh = List.map (fn c => (c, freshTycon (#name c, #arity c, #eq c))) (#bound sigma)
           val phi = List.foldl (fn ((c, c'), m) => IntMap.insert (m, #stamp c, TName c')) IntMap.empty fresh
           val inst = realizeEnv (phi, #env sigma)
-          val specified = specDatatypes (fn c => List.exists (fn (_, c') => #stamp c' = #stamp c) fresh, inst)
+          val specified = specDatatypes (true, fn c => List.exists (fn (_, c') => #stamp c' = #stamp c) fresh, inst)
           val via = dynamicVia (env, case from of DynamicFile _ => "load" | DynamicVirtual _ => "take", sp)
           (* each structure a record (DynRecord): its values and exceptions
              by name, then its substructures' records by name *)

@@ -335,7 +335,8 @@ struct
       (* RUNE_VERIFY_CACHE: an entry found is compiled all the same, and what
          that gives is compared with it (UnitCache.verifying) *)
       val against = case found of
-                      SOME (e as {usages, ...}) => if UnitCache.verifying () andalso UnitBasis.exact usages then SOME e else NONE
+                      SOME (e as {usages, pickle, ...}) =>
+                        if UnitCache.verifying () andalso UnitBasis.exactEntry (usages, pickle) then SOME e else NONE
                     | NONE => NONE
       (* from the cache: its basis loaded, its code linked; when verifying,
          compiled all the same, and one taken across a unit that changed

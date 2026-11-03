@@ -20,6 +20,10 @@ files
   lib/unicode/security.sml
   lib/json/json_sig.sml
   lib/json/json.sml
+  lib/digest/digest_sig.sml
+  lib/digest/sha256.sml
+  lib/digest/hex_sig.sml
+  lib/digest/hex.sml
 end
 use lib/compiler/internal.build
 files

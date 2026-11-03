@@ -167,7 +167,6 @@ struct
     (List.foldl (fn (n,kept) => if List.exists (fn other => other=n) kept then kept else n::kept) [] names)
   fun sameSteps (a:CompilerProject.step list,b:CompilerProject.step list)=
     let fun same (CompilerProject.SUnit x,CompilerProject.SUnit y)=x=y
-          | same (CompilerProject.SLocal (a,b),CompilerProject.SLocal (c,d))=sameSteps (a,c) andalso sameSteps (b,d)
           | same (CompilerProject.SLibrary (x,a),CompilerProject.SLibrary (y,b))=x=y andalso sameSteps (a,b)
           | same (CompilerProject.SUse (x,a),CompilerProject.SUse (y,b))=x=y andalso sameSteps (a,b)
           | same (CompilerProject.SImplements (x,a),CompilerProject.SImplements (y,b))=x=y andalso sameSteps (a,b)
@@ -346,7 +345,7 @@ struct
                 in (syntaxTree,syntax,outgoing) end)
               val held=UnitBasis.usagesOf usages
               val exported=UnitBasis.export {start=start,name=name,file=file,text=fn () => text,
-                mode=mode,delta= !Elaborate.lastDelta,fixity=outgoing,used=usages}
+                mode=mode,delta= !Elaborate.lastDelta,fixity=outgoing}
               (* a type by its unit's name and its path there, which last while
                  the unit's identity moves *)
               val ownPaths=UnitBasis.typePaths (!Elaborate.lastDelta,declared (!Elaborate.insertedSigs,!Elaborate.sigs))
@@ -481,7 +480,7 @@ struct
                 let val ()=observe "names-start" (#file source) (size (#text source))
                     val (lexemes,_,_)=CompilerSyntax.lexical
                       {file= #file source,text= #text source,mode= #mode source,previous=NONE,change=NONE}
-                    val found=BasisManifest.namesOf (CompilerSyntax.tokens lexemes (#file source),StringMap.empty)
+                    val found=CompilerPrelude.usedBy (#file source,CompilerSyntax.tokens lexemes (#file source),StringMap.empty)
                 in names:=StringMap.insert (!names,#file source,(#mode source,#text source,found));found end
           in case StringMap.find (!names,#file source) of
                SOME (mode,text,found) => if mode= #mode source andalso text= #text source then () else
@@ -523,14 +522,12 @@ struct
         val ()=Source.overlays:=List.foldl (fn ((entry,text),overlays) => StringMap.insert
           (overlays,BasisManifest.path entry,text)) (!Source.overlays) librarySources
         val scopes=CompilerBuildContext.new (env,fixity)
-        val libraryWalk=LibraryScope.walk (CompilerBuildContext.site scopes,#scopes plan)
-        fun library entries =
-          let fun one (entry:BasisManifest.entry)=
-                let val k=unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},
-                      valOf (StringMap.find (libraryNames,BasisManifest.path entry)),
-                      case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false,false)
-                in CompilerBuildContext.note (scopes,#result (liveOf k)) end
-          in LibraryScope.group (libraryWalk,entries,fn () => List.app one entries) end
+        val libraryWalk=LibraryScope.walk (env,fixity,UnitBasis.binders,#scopes plan)
+        fun one (entry:BasisManifest.entry)=
+          let val k=unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},
+                valOf (StringMap.find (libraryNames,BasisManifest.path entry)),
+                case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false,false)
+          in CompilerBuildContext.note (scopes,#result (liveOf k)) end
         val implemented=ref [] : string list ref
         val remaining=ref (ListPair.zip (sources,inputNames))
         fun snap ()=CompilerBuildContext.snap scopes
@@ -544,21 +541,12 @@ struct
                 (remaining:=rest;
                  CompilerBuildContext.note (scopes,#result (liveOf (unit (source,name,
                    allowPrim orelse List.exists (fn value => value="allowPrim") annotations,true,false))))))
-        | CompilerProject.SLocal (a,b) =>
-            let val before'=snap ()
-                val boundary=CompilerBuildContext.enter scopes
-                val ()=walk a
-                val ()=CompilerBuildContext.pause (scopes,boundary)
-                val hidden=snap ()
-                val ()=walk b
-                val ()=CompilerBuildContext.leave (scopes,boundary,[])
-            in apply (before',delta (hidden,snap ()),NONE) end
         | CompilerProject.SLibrary (exports,children) =>
             let val before'=snap ()
                 val boundary=CompilerBuildContext.enter scopes
                 val ()=walk children
                 val change=delta (before',snap ())
-                val ()=case CompilerBuildContext.exportProblem (scopes,change,exports) of
+                val ()=case CompilerBuildContext.exportProblem (change,exports) of
                     NONE => ()
                   | SOME message => raise Error.CompileError ({file=case sources of source :: _ => #file source | [] => "",
                                                                start=0,stop=0},message)
@@ -637,7 +625,8 @@ struct
                 Overload.table:=baseOverloads;UnitBasis.binders:=StringMap.empty;UnitBasis.bindLog:=[];walked:=0)
               val ()=staged:=[]
               val ()=if samePlan andalso sameSelection then () else (moved:=true;cut 0)
-          in (List.app library (#groups plan);LibraryScope.program libraryWalk;walk steps;
+          in (LibraryScope.libraries (libraryWalk,#groups plan,fn (entries,()) => List.app one entries,());
+              LibraryScope.program libraryWalk;walk steps;
               if null (!remaining) then () else raise Fail "extra ordered project input";finished:=true;NONE)
              handle Error.CompileError (span,message) => sourceError (span,message)
                   | Answered => NONE

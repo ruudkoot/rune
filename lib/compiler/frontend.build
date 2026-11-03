@@ -31,4 +31,7 @@ files
   driver/basismanifest.sml
   driver/libraryscope.sml
   driver/buildfile.sml
+  driver/deps.sml
+  driver/project.sml
+  driver/libraryindex.sml
 end

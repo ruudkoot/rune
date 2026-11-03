@@ -380,7 +380,7 @@ above every folder gives none, and discovery alone serves such a folder.
 Beside those, discovery examines the document directory and its ancestors up
 to an owning workspace root, following build `use` edges. It does not
 recursively scan descendants. A loose file without a workspace checks its own
-directory. Project source order, scopes, annotations and group ordering come
+directory. Project source order, scopes and annotations come
 from `RuneCompiler.Project`, which is given the root file above each build, so
 that a unit has the name it has in a build ([units.md](units.md), *Names*).
 

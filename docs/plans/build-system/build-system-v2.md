@@ -60,7 +60,7 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | M6. The warm path | C | L | D2, D25 | not started |
 | M7. One store | C | M | D24 | not started |
 | M8. The library model | L | M | D7, D8, D11 | done |
-| M9. One planner, and the plan | L | M | D5, D6 | not started |
+| M9. One planner, and the plan | L | M | D5, D6 | done; the hosts' reader goes with M11 |
 | M10. Namespaces and Basis views | L | M | D9, D12 | not started |
 | M11. Hosts' lists and the compiler's identity | L | S | D14 | not started |
 | M12. MANIFEST's end | L | L | D13 | not started |
@@ -110,6 +110,14 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
   - **Until M10,** the `RuneCompiler` clash warns on every compile that imports `compiler`.
   - **M2:** `--verify-cache` compares an entry taken across a change: on MLton's S47 edit, 130 of 216 compared and all the same, 86 not loadable, as E18 found. A flags oracle, fact edits, root blanking from the `CompilerState` roots (31 of 339 roots matter), random edits as a tier (`make test-cache-random`) and E18's mutants (`make test-cache-mutants`): 47 mutants, 45 caught, 2 argued harmless (F1, F6), none a hole. Of the 13 survivors, 11 are killed by ordinary tests, so Appendix F's reading of U4, C3 and F5 was too pessimistic. `make check` grows by about 46 s at 8 jobs. Its scenarios are S98 to S101.
   - **Found:** E3's `make052` dies in `--units` with an internal error, `record selector did not resolve to a record type`, on master too. Whole-program mode accepts a flexible record that a later file settles, though `docs/units.md` says a file's end settles it; three lines reproduce it. So D17's "in default modes nothing crosses a unit's end" is not so. M16 fixes it.
+- **M9** (`572e888be`, `make check` 22,314 of 22,314).
+  - **One reader:** `CompilerProject.plan` reads every build file, and the command line is a plan too (`ofFiles`); `-I` with `--build` is refused. **One site:** a library is loaded and its boundary applied in `LibraryScope.group` alone.
+  - **The plan's text,** `CompilerPlan` (`lib/compiler/driver/plan.sml`), and `rune --plan FILE.build|FILE.plan`: `requires` on the program and each library, `inline` and `inline val`, `replay`, and the inputs' provenance (`input PATH SHA256`) outside the body. `caches` is gone. `edge` and `scc` are reserved, and version 1 refuses them. `--build-list` is the plan flattened. Plans: `rune.build` 8,508 bytes and 115 units, MLton 122,691 and 606, HOL4 60,418 and 746. All 88 tracked builds round-trip, and MLton's and HOL4's reprint byte-equal.
+  - **What went:** `group`, `local` and `cache` are errors that say what to write instead; a `library` block stands only in a `library.build`, around all its files. `basisIndex` is gone: the index is `LibraryIndex`, beside `Deps` and `CompilerProject`, where runedoc reaches it. `tools/generate` takes the Basis's files from the plan.
+  - **Selection by uses everywhere:** a session, a query and an analysis select as batch does (`lib/compiler/driver/prelude.sml`).
+  - **D6's rule,** settled: an export names what a source of the library declares. A header may not re-export a Basis name, nor one from a library it requires; a source passes one on by declaring it, `structure List = List`. `--basis-index` and the compile apply the one rule in the same words.
+  - **MLton's translated build:** its 29 blocks and one `local` become 30 nested libraries with headers, and it still builds, on a private copy.
+  - **Left:** the hosts' awk (`scripts/build-files.sh`) still reads build text, and goes with M11. `--basis` and `--no-prelude` are printed in the plan but read from the options: M10. A plan made outside the top of a checkout spells its way there. `use DIR/library.build` warns that it reaches in. The bootstrap rose 2.05% on the register VM and 3.1% on the stack VM, and both budgets re-based.
 
 ## Found while writing this roadmap
 
@@ -4916,7 +4924,7 @@ Brief, line 6: "the build language should have one way of doing things".
   - **Move:** a library's boundary into a header of `library.build` (D8).
   - **Written order stays the semantics,** as in MLB and SMLSC, since effect order is not derivable (E6). Dependency order is derived for `-j`, never trusted for meaning.
   - **The command line** (`--library`, `--basis`, `-I`, file lists) is a second build language. It synthesises a plan, so there is one.
-  - **Unknown words are errors,** including annotations: `annotate "demnad"` means demand today. An export naming nothing is one too: a program-level `library` block's export must name something in scope, which lets E9's MLton build export the Basis's `CharArray`, and such an export changes nothing. `--basis-index` asks more, that a source declares it. M9 settles one rule when the block goes: whether a header may re-export a Basis name.
+  - **Unknown words are errors,** including annotations: `annotate "demnad"` means demand today. An export naming nothing is one too. M1 first held a program-level `library` block's export to naming something in scope, which let E9's MLton build export the Basis's `CharArray`, while `--basis-index` asked that a source declare it. M9 settled one rule, the index's: an export names what a source of the library declares, so a header may not re-export a Basis name, nor one from a library it requires. A source passes one on by declaring it, `structure List = List`.
 - **C. Dependency order everywhere.** The owner's "one way" read strongly. `group` has no users in the 88 tracked files, and a wrong parse of a file gives a wrong graph (`Deps` parses with `Fixity.initial`, E5). No.
 
 **Written order is per language.** Its reason above is SML's: effects whose order cannot be derived. A Haskell module's place comes from its imports, and the Report's own libraries hold an 11-module cycle, which `Deps` refuses (`lib/compiler/driver/deps.sml:270`). rhc scans imports and uses neither `Deps` nor `group`, so nothing here changes for it.
@@ -5576,7 +5584,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
   - `make test-cache-random` and `make test-cache-mutants` (M2);
   - `prelude` and `strict` in a build (M16);
   - declared steps and preprocessors (M15);
-  - a canonical plan: `rune --plan FILE` (M9);
+  - a canonical plan: `rune --plan FILE`, its text with `edge` and `scc` reserved (M9);
   - `--build-list` gives the closure (M1);
   - `rune/status`, `rune/context`, `rune/setContext`, `runelsp.chooseContext` and `runelsp.showOutput` (M19);
   - `functor F = _virtual (X : A) : B`, `functor F = _dynamic "path" (X : A) : B` and `_export functor` (M21);

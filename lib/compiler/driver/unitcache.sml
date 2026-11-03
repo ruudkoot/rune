@@ -325,7 +325,7 @@ struct
              | NONE => Missed why)
         | try (n :: rest, why, byFingerprint) =
             case read (OS.Path.joinDirFile {dir = d, file = n}) of
-              Found (e as {usages, level = l, ...}) =>
+              Found (e as {usages, pickle, level = l, ...}) =>
                 (* one checked at a lower level of the lint than the
                    compile's: none (level) *)
                 if l < level ()
@@ -333,7 +333,7 @@ struct
                                 else why, byFingerprint)
                 else
                   (case UnitBasis.broken usages of
-                     NONE => if UnitBasis.exact usages then Found e
+                     NONE => if UnitBasis.exactEntry (usages, pickle) then Found e
                              else try (rest, why, case byFingerprint of NONE => SOME e | some => some)
                    | SOME u => try (rest, if why = "no entry" then "its entries used " ^ u ^ ", which is another now" else why,
                                     byFingerprint))

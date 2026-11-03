@@ -206,7 +206,7 @@ sig
     val buildSyntax : {file:string,text:string} -> {references:buildReference list,diagnostics:diagnostic list}
     (* `buildLinks (session, request)` expands complete build path tokens.
 
-       Source/build/cache paths use the build directory and configured path
+       Source and build paths use the build directory and configured path
        variables. Libraries use the same directory resolver as the compiler.
        Unfinished quotes and unresolved variables are omitted. This query
        performs no filesystem reads or execution; offsets include quotes. *)
@@ -233,16 +233,13 @@ sig
                           overlays : {file : string, text : string} list, windows : bool} -> t
     (* `sources project` lists source occurrences in compiler order. *)
     val sources : t -> source list
-    (* `inputs project` is the captured build and group-discovery text.
-       Normal ordered sources need not be parsed to discover membership. *)
+    (* `inputs project` is the captured text of the build files. Sources need
+       not be read to discover membership. *)
     val inputs : t -> input list
     (* `libraries project` lists library-header dependencies in source order. *)
     val libraries : t -> string list
-    (* `cacheDirectories project` lists declared cache paths. Reading a
-       project does not create or write these directories. *)
-    val cacheDirectories : t -> string list
     (* `fingerprint project` identifies the captured plan, configuration
-       and discovery inputs. It is not a persisted analysis snapshot. *)
+       and inputs. It is not a persisted analysis snapshot. *)
     val fingerprint : t -> string
   end
 

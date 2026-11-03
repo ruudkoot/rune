@@ -169,20 +169,20 @@ struct
                      not (String.isSubstring "/public.sml" log) andalso not (String.isSubstring "/functor.sml" log),
                      "selection ignored public demand boundaries")
       fun scopeLine line =
-        if String.isPrefix "#" line orelse line="" then line
-        else String.concatWith "|" (List.take (String.fields (fn c => c = #"|") line,5) @ [" structure:Missing"])
+        if String.isPrefix "# exports:" line then "# exports: structure:Missing" else line
       val () = write (scoped ^ "/MANIFEST",String.concatWith "\n" (List.map scopeLine (String.fields (fn c => c = #"\n") manifest)))
       val (status,log) = invoke "missing-export" ["--library","scoped","--basis-check"]
       val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log,"undeclared manifest export accepted")
       val () = write (scoped ^ "/MANIFEST",manifest)
       val build = read (scoped ^ "/library.build")
-      val () = write (scoped ^ "/library.build","library (structure Missing) = use entries.build end\n")
+      val () = write (scoped ^ "/library.build","exports (structure Missing)\nuse entries.build\n")
       val (status,log) = invoke "bad-index" ["--basis-index",scoped]
       val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log andalso
                      read (scoped ^ "/MANIFEST")=manifest,"invalid index replaced a valid manifest")
       val () = write (scoped ^ "/library.build",build)
       val consumer = lib ^ "/consumer"
       val () = mkdirs consumer
+      (* a library with no header keeps a boundary in the older form, a block (D15) *)
       val () = write (consumer ^ "/library.build","libraries scoped end\nlibrary (structure Consumer) = consumer.sml end\n")
       val () = write (consumer ^ "/consumer.sml","structure Consumer = struct val value = Api.value end\n")
       val (status,log) = invoke "consumer-index" ["--basis-index",consumer]
@@ -204,6 +204,58 @@ struct
               (flags @ ["--library","consumer",dir ^ "/consumer-use.sml","-o",dir ^ "/rejected.rbc"])
         in need (status<>0 andalso String.isSubstring "Hidden.value" log,"private dependency leaked into another library") end
     in List.app privateConsumer modes end
+  (* The plan of every build file of the tree (D5): printed, read back and
+     printed again, the same bytes, and its unit lines the files --build-list
+     gives, which an awk reads with no Rune *)
+  fun planRoundTrip () =
+    let
+      val dir = run ^ "/plan-round-trip"
+      val () = (rmTree dir; mkdirs dir)
+      val skipped = ["out", ".rune", "cache", "node_modules", ".git"]
+      fun builds base =
+        List.concat (List.map (fn name =>
+          let val path = if base = "." then name else base ^ "/" ^ name
+          in if List.exists (fn s => s = name) skipped orelse OS.FileSys.isLink (fromRoot path) then []
+             else if isDir (fromRoot path) then builds path
+             else if String.isSuffix ".build" name then [path] else []
+          end) (entries (fromRoot base)))
+      val all = List.filter (fn f => String.isSuffix ".build" f) (entries root)
+                @ List.concat (List.map builds ["lib", "src", "tools", "tests", "examples", "ffi"])
+      fun invoke label args =
+        let val output = dir ^ "/" ^ label ^ ".out"
+            val errors = dir ^ "/" ^ label ^ ".err"
+            val status = exec {cmd = fromRoot (env ("RUNE", "bin/rune")) :: args, dir = SOME root, stdin = "",
+                               stdout = output, stderr = errors, timeout = 120}
+        in (status, read output, read errors) end
+      fun unitPaths text =
+        List.mapPartial (fn line => case String.tokens Char.isSpace line of "unit" :: _ :: path :: _ => SOME path | _ => NONE) (lines text)
+      val sorted = sort
+      val failed = ref 0
+      fun one (build, i) =
+        let
+          val label = Int.toString i
+          (* a variable at the start of a path is from the build given *)
+          val up = String.concatWith "/" (List.map (fn _ => "..") (List.tl (String.fields (fn c => c = #"/") build)))
+          val up = if up = "" then "." else up
+          val vars = ["--path", "SDL_GENERATED=" ^ up ^ "/lib/ffi/sdl/generated/native",
+                      "--path", "WIN32_GENERATED=" ^ up ^ "/lib/ffi/win32/generated/64"]
+          val (status, text, errors) = invoke label (["--no-warnings", "--plan"] @ vars @ [build])
+          val stored = dir ^ "/" ^ label ^ ".plan"
+          val () = write (stored, text)
+          val (again, reprinted, _) = invoke (label ^ "-again") ["--plan", stored]
+          val (listed, list, _) = invoke (label ^ "-list") (["--no-warnings"] @ vars @ ["--build-list", build])
+          fun fail why = (failed := !failed + 1; say ("FAIL plan " ^ build ^ ": " ^ why ^ "\n"))
+        in
+          if status <> 0 then fail ("not planned: " ^ errors)
+          else if again <> 0 orelse reprinted <> text then fail "its text does not read back as it is"
+          else if listed <> 0 orelse sorted (lines list) <> sorted (unitPaths text) then fail "its units are not the files --build-list gives"
+          else ()
+        end
+      val () = ListPair.app one (all, List.tabulate (length all, fn i => i))
+    in
+      if !failed = 0 then say ("plan-round-trip: OK (" ^ Int.toString (length all) ^ " build files)\n") else ()
+    end
+
   fun compilerApi () =
     let
       val dir=run ^ "/compiler-api"
@@ -256,6 +308,19 @@ struct
       val ()=need (status=0 andalso output="PASS CLI unit import\n" andalso errors="","CLI unit import failed: " ^ output ^ errors)
       val (status,output,errors)=invoke "imported" [fromRoot "bin/runevm",dir ^ "/imported.rbc"]
       val ()=need (status=0 andalso output="42 imported\n" andalso errors="","imported program differs: " ^ output ^ errors)
+      (* selection by uses, through the API: a library that fails where a
+         selection takes it (tests/compiler/api-selection.sml) *)
+      val selection=dir ^ "/selection"
+      val ()=mkdirs (selection ^ "/m")
+      val ()=write (selection ^ "/m/library.build","annotate \"demand\" in e.sml end\n")
+      val ()=write (selection ^ "/m/e.sml","structure E = struct val v = 1 + \"not an int\" end\n")
+      val ()=Posix.FileSys.symlink {old=fromRoot "lib/basis",new=selection ^ "/basis"}
+      val (status,_,errors)=invoke "selection-index"
+        [fromRoot (env ("RUNE","bin/rune")),"--lib",selection,"--no-warnings","--basis-index",selection ^ "/m"]
+      val ()=need (status=0,"selection fixture: " ^ errors)
+      val ()=compile ("selection",[],"tests/compiler/api-selection.sml")
+      val (status,output,errors)=invoke "selection" [fromRoot "bin/runevm",dir ^ "/selection.rbc",selection]
+      val ()=need (status=0 andalso output="PASS API selection\n" andalso errors="","API selection differs: " ^ output ^ errors)
       val private=dir ^ "/private.sml"
       val ()=write (private,"val private=Ast.decToString\n")
       val (status,_,errors)=invoke "private"
@@ -268,6 +333,7 @@ struct
     | command ["build-compiler-layout"]=SOME compilerLayout
     | command ["build-library-exports"]=SOME libraryExports
     | command ["build-library-model"]=SOME LibraryModel.run'
+    | command ["build-plan-round-trip"]=SOME planRoundTrip
     | command ["build-compiler-api"]=SOME compilerApi
     | command _=NONE
   val vm=Test.it "vm-refusals"
@@ -280,6 +346,8 @@ struct
        (job "library-exports" ["build-library-exports"] []),
      tagged ["check","test-build","test-lib","covers:lib/compiler/*","covers:src/driver/*","covers:tests/runner/librarymodel.sml"]
        (job "library-model" ["build-library-model"] []),
+     tagged ["check","test-build","covers:lib/compiler/*","covers:src/driver/*","covers:*.build"]
+       (job "plan-round-trip" ["build-plan-round-trip"] []),
      tagged ["check","test-compiler-api","test-lib","covers:lib/compiler/*","covers:tests/compiler/api*.sml"]
        (job "compiler-api" ["build-compiler-api"] []),
      tagged ["check","test","test-low-level","covers:tests/compiler/*","covers:tests/runtime/*"]

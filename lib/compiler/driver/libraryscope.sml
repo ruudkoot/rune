@@ -79,87 +79,84 @@ struct
 
   (* ---- the walk ---- *)
 
-  (* What a way through the libraries works on: its state, which is what a
-     file is compiled in; what a library changed of it; and the state with
-     what a change adds through a filter. *)
-  type ('s, 'c) site = {get : unit -> 's, set : 's -> unit, change : 's * 's * string list -> 'c,
-                        add : 's * 'c * exports option -> 's}
-  type ('s, 'c) done = {dir : string, raw : 's, change : 'c}
-  type ('s, 'c) walk = {site : ('s, 'c) site, scopes : BasisManifest.scopes, base : 's option ref,
-                        finished : ('s, 'c) done list ref}
+  (* What a file is compiled in, which a boundary changes: the environment and
+     the signatures and functors, the fixity, and what bound each name. What
+     keeps no units has binders that nobody reads, and what only parses has an
+     environment that does not change. *)
+  type state = {basis : basis, fixity : Fixity.env, binders : string StringMap.map}
+  type change = state * state * string list
+  type finished = {dir : string, raw : state, change : change}
+  type walk = {env : Env.env ref, fixity : Fixity.env ref, binders : string StringMap.map ref, scopes : BasisManifest.scopes,
+               base : state option ref, finished : finished list ref}
 
-  fun walk (site : ('s, 'c) site, scopes : BasisManifest.scopes) : ('s, 'c) walk =
-    {site = site, scopes = scopes, base = ref NONE, finished = ref []}
+  fun walk (env : Env.env ref, fixity : Fixity.env ref, binders : string StringMap.map ref, scopes : BasisManifest.scopes) : walk =
+    {env = env, fixity = fixity, binders = binders, scopes = scopes, base = ref NONE, finished = ref []}
 
-  (* the sites of the ways through that keep no binders *)
-  fun fixitySite (fixity : Fixity.env ref) : (Fixity.env, Fixity.env * Fixity.env) site =
-    {get = fn () => !fixity, set = fn f => fixity := f, change = fn (b, a, _) => (b, a), add = addFixity}
-  fun basisSite (env : Env.env ref) : (basis, basis * basis * string list) site =
-    {get = fn () => {env = !env, sigs = !Elaborate.sigs, funs = !Elaborate.funs},
-     set = fn (b : basis) => (env := #env b; Elaborate.sigs := #sigs b; Elaborate.funs := #funs b),
-     change = fn x => x, add = addBasis}
-  fun bothSite (env : Env.env ref, fixity : Fixity.env ref)
-      : (basis * Fixity.env, (basis * basis * string list) * (Fixity.env * Fixity.env)) site =
-    let
-      val {get = getB, set = setB, ...} = basisSite env
-      val {get = getF, set = setF, ...} = fixitySite fixity
-    in
-      {get = fn () => (getB (), getF ()), set = fn (b, f) => (setB b; setF f),
-       change = fn ((b, f), (b', f'), provides) => ((b, b', provides), (f, f')),
-       add = fn ((b, f), (cb, cf), filter) => (addBasis (b, cb, filter), addFixity (f, cf, filter))}
-    end
+  fun get ({env, fixity, binders, ...} : walk) : state =
+    {basis = {env = !env, sigs = !Elaborate.sigs, funs = !Elaborate.funs}, fixity = !fixity, binders = !binders}
+  fun set ({env, fixity, binders, ...} : walk, {basis, fixity = f, binders = b} : state) : unit =
+    (env := #env basis; Elaborate.sigs := #sigs basis; Elaborate.funs := #funs basis; fixity := f; binders := b)
+
+  (* onto, with what a library changed through a filter *)
+  fun add (onto : state, (before', raw, provides) : change, filter : exports option) : state =
+    {basis = addBasis (#basis onto, (#basis before', #basis raw, provides), filter),
+     fixity = addFixity (#fixity onto, (#fixity before', #fixity raw), filter),
+     binders = addBinders (#binders onto, (#binders before', #binders raw), filter)}
 
   (* the state to set for a scope: the Basis Library, and what it imports in
      the order they were compiled *)
-  fun assemble ({site = {add, set, get, ...}, base, finished, ...} : ('s, 'c) walk, imports : BasisManifest.import list) : unit =
+  fun assemble (w as {base, finished, ...} : walk, imports : BasisManifest.import list) : unit =
     let
-      fun step ({dir, change, ...} : ('s, 'c) done, state) =
+      fun step ({dir, change, ...} : finished, state) =
         case List.find (fn {dir = d, ...} => d = dir) imports of
           NONE => state
         | SOME {names, ...} => add (state, change, names)
-    in set (List.foldr step (case !base of SOME b => b | NONE => get ()) (!finished)) end
+    in set (w, List.foldr step (case !base of SOME b => b | NONE => get w) (!finished)) end
 
   (* One library: its files, compile (), in its scope, and what is left is
      what the libraries with no header after it see, which is what its
      boundary lets out. A library with no header and no boundary leaves all
-     it declared, and where nothing is scoped that is all there is to it. *)
-  fun group (w as {site = {get, set, change, add}, scopes, base, finished} : ('s, 'c) walk,
-             entries : BasisManifest.entry list, compile : unit -> 'a) : 'a =
+     it declared, and where nothing is scoped that is all there is to it.
+     This is the one place a library is loaded and its boundary applied. *)
+  fun group (w as {scopes, base, finished, ...} : walk, entries : BasisManifest.entry list, compile : unit -> 'a) : 'a =
     let
       val dir = #dir (hd entries)
     in
       if dir = #basis scopes then
-        let val result = compile () in base := SOME (get ()); result end
+        let val result = compile () in base := SOME (get w); result end
       else
         let
-          val () = if isSome (!base) then () else base := SOME (get ())
-          val chain = get ()
+          val () = if isSome (!base) then () else base := SOME (get w)
+          val chain = get w
           val filter = BasisManifest.scopeOf entries
           val () = Option.app (fn imports => assemble (w, imports)) (BasisManifest.importsOf (scopes, dir))
-          val start = get ()
+          val start = get w
           val result = compile ()
-          val raw = get ()
+          val raw = get w
         in
           if not (#scoped scopes orelse isSome filter) then ()
           else
-            let val c = change (start, raw, List.concat (List.map #provides entries))
+            let val c = (start, raw, List.concat (List.map #provides entries))
             in
               finished := {dir = dir, raw = raw, change = c} :: !finished;
-              if isSome filter then set (add (chain, c, filter)) else ()
+              if isSome filter then set (w, add (chain, c, filter)) else ()
             end;
           result
         end
     end
 
+  (* The libraries before a program, in order, each given to f in its scope *)
+  fun libraries (w : walk, groups : BasisManifest.entry list list, f : BasisManifest.entry list * 'a -> 'a, start : 'a) : 'a =
+    List.foldl (fn (entries, acc) => group (w, entries, fn () => f (entries, acc))) start groups
+
   (* The program's scope, before its first file. *)
-  fun program (w as {scopes, ...} : ('s, 'c) walk) : unit =
+  fun program (w as {scopes, ...} : walk) : unit =
     if #scoped scopes then assemble (w, #program scopes) else ()
 
   (* A library's final files, after the program: in its private context,
      where it has a boundary or the program does not see it, and else in what
      the program left, as it always has been. *)
-  fun final ({site = {get, set, ...}, scopes, finished, ...} : ('s, 'c) walk,
-             entries : BasisManifest.entry list, compile : unit -> 'a) : 'a =
+  fun final (w as {scopes, finished, ...} : walk, entries : BasisManifest.entry list, compile : unit -> 'a) : 'a =
     let
       val dir = #dir (hd entries)
       val apart = isSome (BasisManifest.scopeOf entries)
@@ -168,10 +165,12 @@ struct
       case (apart, List.find (fn {dir = d, ...} => d = dir) (!finished)) of
         (true, SOME {raw, ...}) =>
           let
-            val prior = get ()
-            val () = set raw
+            val prior = get w
+            val () = set (w, raw)
             val result = compile ()
-          in set prior; result end
+          in set (w, prior); result end
       | _ => compile ()
     end
+  fun finals (w : walk, groups : BasisManifest.entry list list, f : BasisManifest.entry list * 'a -> 'a, start : 'a) : 'a =
+    List.foldl (fn (entries, acc) => final (w, entries, fn () => f (entries, acc))) start groups
 end

@@ -10,11 +10,19 @@ cache. The file's extension is `.build`.
 Its model is that of MLB (MLton's ML Basis system): a *basis* -- the
 structures, signatures, functors, types, values and fixity in scope -- is a
 value; a file is compiled in the basis before it and adds what it declares
-to it; `local` and export lists say what of a basis the files after it see;
+to it; a library's exports say what of a basis the files after it see;
 each build file is elaborated once. It differs from MLB in one thing: `use`
 elaborates a build file in the basis of its caller, where an `.mlb` starts
 from an empty one, so a file used sees what comes before the `use`. There
 is no renaming. Its syntax is Rune's own.
+
+There is one way to say each thing (the build-system roadmap's D6). Files are
+compiled in the order written, which is their meaning: the order of effects
+cannot be worked out from the sources, and an order worked out from them is
+for `-j` alone. A boundary is a library's (*A library's build file*, below).
+What a build file says is read by one reader, `CompilerProject`, whatever
+reads it -- a compile, an editor, a library's index, `--plan` -- and what the
+command line says is a plan too (*The plan*, below).
 
 ## The language
 
@@ -22,20 +30,12 @@ is no renaming. Its syntax is Rune's own.
 build    ::= dec ...
 dec      ::= path                            a file, compiled in the basis before it
            | "files" path ... "end"          files, in the order given
-           | "group" path ... "end"          files, in the order the modules they
-                                             declare and use give (docs/units.md, The graph)
-           | "local" dec ... "in" dec ... "end"
-                                             the second part sees the first; what
-                                             follows sees the second part only
-           | "library" exports "=" dec ... "end"
-                                             what follows sees the exports only
            | "use" path                      another build file, elaborated once
            | "implements" id "=" dec ... "end"
                                              the implementation of the virtual
                                              module id (below)
            | "annotate" string ... "in" dec ... "end"
                                              what the units inside may do (below)
-           | "cache" path                    where the cache of the build is
            | "libraries" name ... "end"      libraries selected by this build,
                                              or what a library with no header is
                                              written on
@@ -47,6 +47,9 @@ header   ::= ( "requires" name ... "end"      what a library's build file says
              | "exports" exports              first (A library's header, below)
              | "friends" path ... "end"
              | "view" id exports ) ...
+older    ::= "library" exports "=" dec ... "end"
+                                             a library with no header: its boundary,
+                                             around all its files (below)
 exports  ::= "(" export "," ... ")"          export ::= kind id
 kind     ::= "structure" | "signature" | "functor" | "type" | "fixity"
 path     ::= a file's path, relative to the build file's directory, in which
@@ -58,7 +61,8 @@ string   ::= "..."
 
 Comments are SML's, `(* ... *)`. A path is a word of letters, digits and
 `/ . _ - + ~ #`, with `$(NAME)` anywhere in it, or a string, which holds any
-other character.
+other character. A word the language does not know is an error, an annotation
+included, and so are the words it no longer has (*What is gone*, below).
 
 A path that begins with a variable whose value is relative is relative to
 the directory of the build file given to `--build`, so that one value serves
@@ -75,33 +79,33 @@ compiles: the cache serves each unit whose usages hold, in that basis
 (docs/units.md, The cache), and `--whole` makes one program of them all
 (M7).
 
-`rune --build-list FILE` prints the build's closure in order: the files of
-the libraries it names and of those they are written on, each library's in
-its load order and each before what is written on it, then the build's own
-files, then the libraries' `final` files. A whole library is listed, all a
-program may name: `--basis-deps` says which of its files a compile takes.
-The Basis Library is every program's and is not listed. The other SML
-systems' build files do not come from here: `scripts/gen-build-files.sh`
-makes them from the `files ... end` blocks of the build files, through
-`scripts/build-files.sh`, which needs no compiler.
+`rune --build-list FILE` prints the build's closure in order, which is its
+plan flattened (*The plan*, below): the files of the libraries it names and
+of those they are written on, each library's in its load order and each
+before what is written on it, then the build's own files, then the
+libraries' `final` files. A whole library is listed, all a program may name:
+`--basis-deps` says which of its files a compile takes. The Basis Library is
+every program's and is not listed. The other SML systems' build files do not
+come from here: `scripts/gen-build-files.sh` makes them from the `files ...
+end` blocks of the build files, through `scripts/build-files.sh`, which needs
+no compiler (the build-system roadmap's M11 puts a committed plan in its
+place).
 
 * A sequence of declarations elaborates each in the basis the ones before
   it leave.
-* `local A in B end`: B is elaborated in the basis A leaves; the files
-  after it see what was before it and what B declared.
-* `library (structure X, signature S) = D end`: the files after it see X
-  and S of what D declared, and nothing else of D.
+* `use LIB/library.build`, a library's build file with a boundary: the files
+  after it see what the library exports, and nothing else of what it
+  declared.
 * `use FILE`: the declarations of another build file, in place, in the
   basis of the `use`; a build file used twice is elaborated once, the second
   use adding what the first declared, as far as the files after the second
   use may see it. A build file with a boundary of its own adds what that
   boundary exports at every use, so that libraries can share it whatever
   order they come in. Of one without, a boundary that has closed around the
-  first use -- a `library`, an `implements`, the first part of a `local` --
-  stands between the two: the second use adds what that boundary lets out,
-  and nothing more. Inside the same boundary, it adds all of it. (A first
-  `use` of a build file under another library's boundary is another matter:
-  that reaches in, below.)
+  first use -- a library's, an `implements` -- stands between the two: the
+  second use adds what that boundary lets out, and nothing more. Inside the
+  same boundary, it adds all of it. (A first `use` of a build file under
+  another library's boundary is another matter: that reaches in, below.)
 
 ## The workspace
 
@@ -163,12 +167,15 @@ the build once, in its first occurrence's context.
 
 ## Exports
 
-`library (...)` exports what the declarations inside it declare, from a file
-or from a build file used there. An export that names nothing in scope at
-the end of it is an error. One that names what was in scope before it, a
-structure of the Basis Library say, is allowed and changes nothing: that name
-stays in scope. A library's own build file is held to more: `--basis-index`
-wants each export declared by one of its files. `type t` exports
+A library exports what a source of it declares: a file inside its boundary,
+or a build file used there, again too. An export that names anything else is
+an error, by one rule wherever a boundary is read: the index
+(`--basis-index`) and a compile that uses the library's build file say so
+alike. A name that was only in scope is not the library's to export: a
+structure of the Basis Library is in every client's scope already, and so is
+one of a library a client requires. A library that means to pass such a name
+on declares it in a source, `structure List = List` or a structure that adds
+to it, which makes it its own. `type t` exports
 a type abbreviation. A datatype is not exported so: it would keep its
 constructors, which a replication (`datatype u = datatype t`) gets back
 past the boundary; export a structure that holds it, or the abbreviation of
@@ -199,10 +206,9 @@ is a generated pointer: a `current.build` naming what is under `sets/` beside
 it, which nobody wrote and whose generator cannot be told otherwise yet.
 
 The compiler library's `RuneCompiler.Project` API uses this same scoped
-planner. It can discover ordered files without parsing their programs;
-`group` uses the compiler's dependency discipline and records the source
-inputs needed to determine its order. Windows project resolution handles
-absolute drive and UNC paths explicitly, including expanded path variables.
+planner, which reads build files and never a source. Windows project
+resolution handles absolute drive and UNC paths explicitly, including
+expanded path variables.
 
 Levels per unit (`O0` ... `O2`) are not built: a build has the level of
 its command line.
@@ -229,7 +235,9 @@ libraries as `--library random` does; explicit command-line selections are
 retained. What each
 file provides and requires is not written down: `rune --basis-index DIR`
 works it out from the sources (`Deps`, docs/units.md, The graph) and writes
-`DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). `make
+`DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). It reads
+the build file as a compile does, through `CompilerProject`, and lives in
+`LibraryIndex`, which the compiler's driver and `runedoc` both reach. `make
 manifests` makes them all, and they are not committed.
 
 ### A library's header
@@ -315,7 +323,7 @@ index runs when the library changes, for the person changing it.
 `--no-warnings` silences it.
 
 Such a library may keep a boundary of its own in the older form, a `library`
-block around its files, which leaves the rest of its meaning as it is:
+block around all its files, which leaves the rest of its meaning as it is:
 
 ```sml
 libraries json end
@@ -325,7 +333,10 @@ end
 ```
 
 The manifest records that boundary in an optional sixth column, and every
-row of one library has the same one.
+row of one library has the same one. The block is a library's: it stands in a
+`library.build`, around every file of it, and nowhere else. It stays for the
+libraries that have not moved to a header, and goes when the last has
+(the build-system roadmap's D15).
 
 ### Clashes
 
@@ -356,6 +367,96 @@ read in the default mode, whatever its build file and the command line
 say ([units.md](units.md), *Source modes*), and the compiler refuses a
 name beyond ASCII in it; should a library's files ever be read in
 another mode, its exports stay ASCII all the same.
+
+## The plan
+
+`rune --plan FILE.build` prints the plan of a build: what it compiles, in
+the order it compiles it, as text that any program can read without Rune and
+without a parser (D5). Given files and `--library` instead, it prints the
+plan the command line makes, which is the plan a compile of them follows:
+`--library`, `--basis`, `--no-prelude`, `-I` and a list of files say what a
+build file says, and there is one plan either way. Given a `FILE.plan`, it
+reads that and prints it again, the same bytes.
+
+The plan of `app/app.build`, which says `libraries json end`, `use
+part.build`, `main.sml` and `use part.build` again, made at the top of the
+checkout (`unit unicode:` lines left out):
+
+```
+rune-plan 1
+basis demand
+library unicode lib/unicode
+  form open
+end
+library json lib/json
+  form open
+  requires unicode
+  unit json:json_sig.sml lib/json/json_sig.sml ascii demand
+  unit json:json.sml lib/json/json.sml ascii demand
+end
+program
+  requires json
+  use app/part.build
+    unit app/part.sml app/part.sml ascii
+  end
+  unit app/main.sml app/main.sml ascii
+  replay app/part.build
+end
+provenance
+  input app/app.build ca0d3cfe08b9b5d794694319ffc6a47fd7a1b0a1d616688b4a8b93c6d27dee2d
+  input app/part.build ec7f89648f9fc1c61929d8c1754c0c1dd4c0a8174b6fb5598c1460dc02e19e2c
+  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+  input lib/json/library.build 452367689d73def6ab952443ca574e1a8ff0d920167ddd35a54e3d2d59eac449
+end
+```
+
+A line is words: what it is, and its fields, indented by what holds it. A
+field holds no space: `%`, a space and what is not printable ASCII are
+`%xx`, and an empty field is `%-`. So `awk '$1=="unit"{print $3}'` lists the
+files, as `--build-list` does but for the libraries' final files, which come
+last there.
+
+| Line | What it says |
+|---|---|
+| `rune-plan 1` | the version of the text |
+| `basis B` | `demand`, `all` (`--basis all`) or `none` (`--no-prelude`); the Basis Library itself is implicit, as in a build file |
+| `inline functor F`, `inline val f` | what the program's build files mark to be inlined, sorted |
+| `library NAME DIR` ... `end` | each library the program names, with those they are written on, each before what is written on it: its name, as a unit's name begins, and its directory |
+| `form F` | `header`, `block` (the older form) or `open` (no boundary) |
+| `requires L` | the libraries it is written on, as written, in order: `requires` or `libraries` |
+| `export KIND NAME`, `view V` ... `end`, `friend PATH` | its boundary, its views and its friends, sorted |
+| `program` ... `end` | the program, with what it `requires` (`libraries` and `--library`) |
+| `unit NAME PATH MODE ANNOTATION ...` | a file: its unit's name, as a compile names it (units.md, *Names*), its path, the mode it is read in and its annotations |
+| `use KEY` ... `end`, `replay KEY` | a build file's steps the first time it is used, and its second use, which adds what the first declared as `use` says above |
+| `boundary` ... `end` | a library's build file used by a build, with its exports, then its steps |
+| `implements NAME` ... `end` | a virtual module's implementation |
+| `provenance` ... `end` | how the plan was made, outside what two forms of one plan compare on: each build file read, `input PATH SHA256`, which `sha256sum` checks |
+
+A path is from the current directory, a library's too, wherever `--lib` is:
+a plan made at the top of a checkout holds no directory of the machine, and
+one made elsewhere spells the way there. Nothing in a cache reads a plan, and
+the plan is Rune's: it says what the build language says, in a form that a
+host, a tool or another build system reads without the compiler. The words
+`edge` and `scc` are kept for what a plan discovered from the sources would
+add, an edge between units and a group of units that use each other; a plan
+of version 1 has neither, and a reader refuses them, as it refuses any word
+it does not know.
+
+## What is gone
+
+The language had more ways to say a thing, which it no longer has (D6).
+Each is an error now, which says what to write:
+
+| Was | Now |
+|---|---|
+| `group a.sml b.sml end`, files in the order their modules give | the files in the order they are compiled; `rune --deps` prints an order the modules give |
+| `local A in B end` | a library: A and B behind a boundary that exports what B declares, used where the `local` was |
+| `cache DIR` | `--cache-dir DIR` |
+| `library (...) = ... end` in a program's build | a library's own `library.build`, with a header, used where the block was: `use DIR/library.build` |
+
+A `library.build` with a `library` block keeps it (*A library with no
+header*, above). `RuneCompiler.Project` has no cache directories, and its
+inputs are the build files alone.
 
 ## Functors inlined across units
 

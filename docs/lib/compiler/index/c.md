@@ -18,7 +18,6 @@
 - `compiled` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-compiled)
 - `compileFile` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-compilefile)
 - `compileText` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-compiletext)
-- `Project.cacheDirectories` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.cachedirectories)
 - `Workspace.candidates` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.candidates)
 
 ---

@@ -344,7 +344,7 @@
      "kind": "val",
      "name": "Project.buildLinks",
      "spec": "val buildLinks : session * {file:string,text:string,variables:(string*string) list,windows:bool} -> buildLink list",
-     "doc": "`buildLinks (session, request)` expands complete build path tokens.\n\nSource/build/cache paths use the build directory and configured path\nvariables. Libraries use the same directory resolver as the compiler.\nUnfinished quotes and unresolved variables are omitted. This query\nperforms no filesystem reads or execution; offsets include quotes.\n\n",
+     "doc": "`buildLinks (session, request)` expands complete build path tokens.\n\nSource and build paths use the build directory and configured path\nvariables. Libraries use the same directory resolver as the compiler.\nUnfinished quotes and unresolved variables are omitted. This query\nperforms no filesystem reads or execution; offsets include quotes.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-project.buildlinks"
     },
     {
@@ -372,7 +372,7 @@
      "kind": "val",
      "name": "Project.inputs",
      "spec": "val inputs : t -> input list",
-     "doc": "`inputs project` is the captured build and group-discovery text.\nNormal ordered sources need not be parsed to discover membership.\n\n",
+     "doc": "`inputs project` is the captured text of the build files. Sources need\nnot be read to discover membership.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-project.inputs"
     },
     {
@@ -384,16 +384,9 @@
     },
     {
      "kind": "val",
-     "name": "Project.cacheDirectories",
-     "spec": "val cacheDirectories : t -> string list",
-     "doc": "`cacheDirectories project` lists declared cache paths. Reading a\nproject does not create or write these directories.\n\n",
-     "page": "sig/RUNE_COMPILER.md#val-project.cachedirectories"
-    },
-    {
-     "kind": "val",
      "name": "Project.fingerprint",
      "spec": "val fingerprint : t -> string",
-     "doc": "`fingerprint project` identifies the captured plan, configuration\nand discovery inputs. It is not a persisted analysis snapshot.\n\n",
+     "doc": "`fingerprint project` identifies the captured plan, configuration\nand inputs. It is not a persisted analysis snapshot.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-project.fingerprint"
     },
     {

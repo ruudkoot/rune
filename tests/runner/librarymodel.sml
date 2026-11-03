@@ -290,7 +290,7 @@ struct
          ("datatype", "exports (type t)\nannotate \"demand\" in t.sml end\n", "exports type t, which no source declares")]
       val () = put ("lib/bad/sub.build", "exports (structure A)\nannotate \"demand\" in a.sml end\n")
       val () = put ("lib/bad/library.build", "use sub.build\n")
-      val () = indexRefused "bad" "a header belongs to library.build"
+      val () = indexRefused "bad" "a header belongs to a library's library.build"
       val () = put ("p/header.build", "exports (structure A)\nheader.sml\n")
       val () = put ("p/header.sml", "structure A = struct end\n")
       val (status, log) = rune ["--no-cache", "--build", "p/header.build", "-o", dir ^ "/header.rbc"]
@@ -320,7 +320,8 @@ struct
      put ("p/first.sml", "val () = print (Int.toString Priv.v ^ \"\\n\")\n");
      let val (status, log) = rune ["--no-cache", "--build", "p/first.build", "-o", dir ^ "/first.rbc"]
      in need (status = 0 andalso has "this build reaches into the library" log, "a first use: " ^ log) end;
-     put ("p/second.build", "library (structure Pub) = use ../lib/subbed/x.build end\nuse ../lib/subbed/x.build\nfirst.sml\n");
+     put ("p/second/library.build", "exports (structure Pub)\nuse ../../lib/subbed/x.build\n");
+     put ("p/second.build", "use second/library.build\nuse ../lib/subbed/x.build\nfirst.sml\n");
      let val (status, log) = rune ["--no-cache", "--build", "p/second.build", "-o", dir ^ "/second.rbc"]
      in need (status <> 0 andalso has "Priv" log, "a second use: " ^ log) end)
 
