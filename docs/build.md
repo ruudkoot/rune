@@ -60,13 +60,17 @@ header   ::= ( "requires" import ... "end"    what a library's build file says
              | "friends" path ... "end"
              | "view" id exports              a named subset of its exports
              | "shadows" exports              Basis Library names its exports take
-             | "strict" ) ...                 its units held to be well-formed
+             | "strict"                       its units held to be well-formed
+             | "virtual" modules              the virtual modules it declares
+             | "implements" modules ) ...     those of a library it requires that
+                                             it implements (Virtual libraries)
 import   ::= path [ "(" rename "," ... ")" ]  a library, and what is renamed of it
 rename   ::= kind id "as" id                  kind not fixity (Clashes, below)
 older    ::= "library" exports "=" dec ... "end"
                                              a library with no header: its boundary,
                                              around all its files (below)
 exports  ::= "(" export "," ... ")"          export ::= kind id
+modules  ::= "(" module "," ... ")"          module ::= ("structure" | "functor") id
 kind     ::= "structure" | "signature" | "functor" | "type" | "fixity"
 path     ::= a file's path, relative to the build file's directory, in which
              $(NAME) is the path variable NAME (--path NAME=DIR, below)
@@ -276,7 +280,9 @@ end
 ```
 
 Its parts come in any order, each once but for `view`, and `exports` is the
-one a header must have. A `use`d build file and a program have no header.
+one a header must have, but for an implementing library's, which says
+`implements` in its place (*Virtual libraries*, below). A `use`d build file and
+a program have no header.
 `strict` holds the library's units to the rules of a well-formed unit:
 `--basis-index` refuses one that breaks them, where another library is warned of
 it once ([units.md](units.md), *Well-formed units*). An `always` file is a
@@ -325,8 +331,9 @@ exports take the place of (*Clashes*), as `lib/compiler`'s does.
 
 `--basis-index` writes a header to the manifest's comment lines, `# library:`
 for what is required, as the readers of a manifest have always read it, and
-`# exports:`, `# friends:`, `# view:`, `# shadows:` and `# fixity:` for the
-rest, with words such as `structure:Api signature:API`. A library required
+`# exports:`, `# friends:`, `# view:`, `# shadows:`, `# virtual:`,
+`# implements:` and `# fixity:` for the rest, with words such as
+`structure:Api signature:API`, and `-` for none. A library required
 with renames is one word on its `# library:` line, `same(structure:Same=One)`,
 which is how every reader of a list of libraries keeps it. `runedoc` uses the boundary when
 selecting public pages and elaborating dependencies.
@@ -529,7 +536,7 @@ last there.
 
 | Line | What it says |
 |---|---|
-| `rune-plan 1`, `rune-plan 2` | the version of the text: 2 where the plan has a step or a preprocessor, which version 1 has not, and 1 where it has neither |
+| `rune-plan 1`, `rune-plan 2` | the version of the text: 2 where the plan has a step, a preprocessor or a virtual library, which version 1 has not, and 1 where it has none |
 | `basis B` | `demand`, `all` (`--basis all`) or `none` (`--no-prelude`); the Basis Library itself is implicit, as in a build file |
 | `view NAME` | the program's view of the Basis Library, where it has one (`view NAME`, `--basis-view`) |
 | `inline functor F`, `inline val f` | what the program's build files mark to be inlined, sorted |
@@ -539,6 +546,8 @@ last there.
 | `form F` | `header`, `block` (the older form) or `open` (no boundary) |
 | `requires L` | the libraries it is written on, as written, in order: `requires` or `libraries`, a library with renames as one word, `same(structure:Same=One)` |
 | `export KIND NAME`, `view V` ... `end`, `friend PATH`, `shadow KIND NAME` | its boundary, its views, its friends and what it shadows of the Basis Library, sorted |
+| `virtual KIND NAME`, `implements KIND NAME` | the virtual modules a library declares, and those of another that it implements, sorted (*Virtual libraries*, below) |
+| `continue NAME` ... `end` | a virtual library's steps from the first file that declares a virtual module on, after the last library that implements one |
 | `program` ... `end` | the program, with what it `requires` (`libraries` and `--library`) |
 | `unit NAME PATH MODE ANNOTATION ...` | a file: its unit's name, as a compile names it (units.md, *Names*), its path, the mode it is read in and its annotations |
 | `use KEY` ... `end`, `replay KEY` | a build file's steps the first time it is used, and its second use, which adds what the first declared as `use` says above |
@@ -554,13 +563,15 @@ host, a tool or another build system reads without the compiler. The words
 `edge` and `scc` are kept for what a plan discovered from the sources would
 add, an edge between units and a group of units that use each other; a plan
 of version 1 has neither, and a reader refuses them, as it refuses any word
-it does not know. Version 2 is version 1 with steps and preprocessors, and a
-plan with neither is printed as version 1, so that every plan a reader of
-version 1 could read is one it can: of the five committed plans, `rune.plan`
-and `runedoc.plan` are of version 2, for their step (*Generated sources*),
-and the rest of version 1. `scripts/plan-files.sh` reads both; it lists a
-step's outputs as the files they are, since a host makes them itself, and
-refuses a file that a preprocessor makes what is compiled of.
+it does not know. Version 2 is version 1 with steps and preprocessors, and
+with virtual libraries, and a plan with none of them is printed as version 1,
+so that every plan a reader of version 1 could read is one it can: of the five
+committed plans, `rune.plan` and `runedoc.plan` are of version 2, for their
+step (*Generated sources*), and the rest of version 1. `scripts/plan-files.sh`
+reads both; it lists a step's outputs as the files they are, since a host
+makes them itself, refuses a file that a preprocessor makes what is compiled
+of, and lists a virtual library's files in the order the plan gives them,
+which is the order a compile takes them in.
 
 ## Generated sources
 
@@ -772,3 +783,78 @@ plugin compiled apart (`plugin.build`). `implements NAME` names a structure
 or a functor, and a build implements a name once. `where type` between two
 virtual modules is not built: a virtual functor's result names its own
 parameter's types alone.
+
+## Virtual libraries
+
+A library can be virtual too (the build-system roadmap's D22, M22): its
+header says which of the modules it exports are virtual, and another library,
+whose header says it implements them, is their implementation. A program names
+the virtual library and one implementation of it, and its units are compiled
+against the virtual library alone: another implementation compiles none of
+them again, as dune's virtual libraries do. `examples/virtual/table` builds
+so as well as by its build files above, from three libraries under
+`libraries`, which its root file names (*The workspace*):
+
+```
+(* libraries/table/library.build: the virtual library *)
+exports (signature KEY, signature TABLE, functor Table)
+virtual (functor Table)
+../../key_sig.sml
+../../table_sig.sml
+../../table.sml                     (* functor Table = _virtual (K : KEY) : TABLE where type key = K.t *)
+```
+
+```
+(* libraries/table-list/library.build: an implementation *)
+requires table end
+implements (functor Table)
+../../list.sml                      (* _export functor Table (K : KEY) : TABLE where type key = K.t = ... *)
+```
+
+```
+(* list-libraries.build: the program, with Table an association list *)
+libraries table table-list end
+main.sml
+```
+
+`tree-libraries.build` names `table-tree` instead, and through the cache
+`list-libraries.build` made it compiles `tree.sml` alone: `main.sml` and the
+virtual library's three files come from the cache (`virtual-libraries` of
+`tests/runner/librarymodel.sml`).
+
+* **A virtual module is declared in its library,** with `_virtual` at the top
+  level of a file that the library's build lists itself, as a structure or a
+  functor (*Virtual modules*, above), and it is exported. `--basis-index`
+  refuses a `virtual` that no file declares so, a `_virtual` the header does
+  not name, and a file before the declaration that declares its name.
+* **An implementing library adds no public module.** Its header says
+  `implements (KIND NAME, ...)` in place of `exports`, and it exports nothing:
+  what it implements is reached through the virtual library, and all else it
+  declares is its own. Each module it names is a virtual module of a library
+  it requires, of one library, and its files end with `_export KIND NAME ...`
+  of each and of nothing else. `--basis-index` refuses one that does not, and a
+  file of it that names what the virtual library declares from its first
+  virtual module on, which is compiled after it (below).
+* **One implementation per program.** Two libraries of a program that
+  implement one virtual module, or declare one, are refused, and so is an
+  `implements NAME = ... end` of a program's build that names a library's
+  virtual module: a program's files come after its libraries'. A program
+  with no implementation is compiled, and the declaration raises
+  `Dynamic.Mismatch` when it runs, as a virtual module's of a build does.
+* **The order.** The libraries are compiled each after what it requires; an
+  implementation comes right after its virtual library, after what else it
+  requires, and runs before the virtual library's files from the first that
+  declares a virtual module on, which take what it exported. Those files, and
+  a library written on the virtual library, come after it. So
+  `list-libraries.build` compiles `key_sig.sml`, `table_sig.sml`, `list.sml`,
+  `table.sml` and `main.sml`, in that order, which `--build-list` prints and
+  the plan says: the virtual library's rest is a `continue table` after
+  `table-list`. What is named is what loads: a program that names no virtual
+  module of the library takes nothing of its implementation.
+
+The kind is part of the name here: an implementing library names a structure
+or a functor, and a program can have a virtual structure and a virtual
+functor of one name from its libraries. A build file's `implements NAME =
+... end` names neither, and keeps to one of a name. The win32 work's three
+drivers, `native`, `sdl` and `mock` of `ffi/win32`, one virtual `Win32`, have
+this form; they move to it with that work (the roadmap's D15).
