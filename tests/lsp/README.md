@@ -51,6 +51,40 @@ then collects after each command returns and emits `job-retained`; this
 includes only retained worker state after temporary command data is dead.
 Forced-collection runs must not supply headline query latency measurements.
 
+## Keeping what is computed
+
+`bin/rune-lsp-oracle` is the oracle of what the server keeps (`tools/lsp/oracle.sml`
+says how to run it). One context lives through the edits of `oracle/*.tsv`, and
+after each a fresh context analyses the same inputs; a difference in a fact, an
+occurrence with its binding and locations, a type, a diagnostic or a query fails
+the run. `--require` names the paths a run must have taken, of `placed walked
+rebound loaded cutoff broken failed cancelled query opened`, so that a change that
+stops a path being taken fails too. `--focus` closes what is not edited, as an
+editor does, and the sample of units it compares opens them.
+
+```
+make test-lsp-oracle
+RUNE_ORACLE_HOL4=/path/boss.build RUNE_ORACLE_MLTON=/path/mlton.build make test-lsp-oracle-corpora
+```
+
+The second is the nightly tier's, and takes hours. `RUNE_ORACLE_HOL4` is HOL4's
+`src/boss` closure as one build file, after HOL's filter; `RUNE_ORACLE_MLTON` is
+MLton's 606 files, flat. Neither builds in `corpus/`: both go by absolute paths
+to a copy. The build roadmap's drafts hold the scripts that made them
+(`results/E9/hol-tree.py`, `results/E20/mlton/make-build.sh`). The edits' texts
+are in `oracle/hol4.tsv` and `oracle/mlton.tsv`, and a run stops on one that is
+no longer there.
+
+`bin/rune-lsp-replay` measures the same through the real server, from the
+client's side: the first check, then comments at the end of a file and body edits,
+each followed by a pull of diagnostics and a hover. `RUNE_LSP_DEADLINE_SECONDS`
+lifts the 30-second job deadline for a first check at a scale that is over it.
+
+```
+bin/runevm bin/rune-lsp-replay.rbc VM SERVER ROOT LIB BUILD SOURCE OUT.json LINE CHARACTER \
+  --comments 20 --body 5 OLD NEW
+```
+
 ## Document and workspace foundations (M3)
 
 `make test-lsp` checks document lifetimes, atomic sequential edits,

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 94 of 94 entries documented |
+| Documentation | 102 of 102 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -69,6 +69,7 @@ sig
     type <a href="#type-workspace.t">t</a>
     type <a href="#type-workspace.target">target</a> = {<a href="#fld-workspace.target.name">name</a> : string, <a href="#fld-workspace.target.build">build</a> : string, <a href="#fld-workspace.target.options">options</a> : string list}
     val <a href="#val-workspace.find">find</a> : {<a href="#fld-workspace.find.file">file</a> : string, <a href="#fld-workspace.find.windows">windows</a> : bool} -&gt; t option
+    val <a href="#val-workspace.candidates">candidates</a> : {<a href="#fld-workspace.candidates.file">file</a> : string, <a href="#fld-workspace.candidates.windows">windows</a> : bool} -&gt; string list
     val <a href="#val-workspace.root">root</a> : t -&gt; string
     val <a href="#val-workspace.libraryroots">libraryRoots</a> : t -&gt; string list
     val <a href="#val-workspace.targets">targets</a> : t -&gt; target list
@@ -112,6 +113,8 @@ sig
     val <a href="#val-analysis.create">create</a> : session * {<a href="#fld-analysis.create.context">context</a>:string} -&gt; t
     val <a href="#val-analysis.close">close</a> : t -&gt; unit
     val <a href="#val-analysis.observe">observe</a> : t * (observation-&gt;unit) option -&gt; unit
+    val <a href="#val-analysis.focus">focus</a> : t * string list option -&gt; unit
+    val <a href="#val-analysis.compact">compact</a> : t -&gt; unit
     val <a href="#val-analysis.check">check</a> : t * {<a href="#fld-analysis.check.project">project</a>:Project.t option,<a href="#fld-analysis.check.inputs">inputs</a>:input list,<a href="#fld-analysis.check.cancelled">cancelled</a>:unit-&gt;bool} -&gt; snapshot
     val <a href="#val-analysis.checkpoint">checkpoint</a> : t -&gt; checkpoint
     val <a href="#val-analysis.restore">restore</a> : t * checkpoint -&gt; unit
@@ -124,9 +127,14 @@ sig
     val <a href="#val-analysis.dependencies">dependencies</a> : snapshot -&gt; input list
     val <a href="#val-analysis.diagnostics">diagnostics</a> : snapshot -&gt; diagnostic list
     val <a href="#val-analysis.occurrences">occurrences</a> : snapshot -&gt; occurrence list
+    val <a href="#val-analysis.occurrencesin">occurrencesIn</a> : snapshot * string -&gt; occurrence list
+    val <a href="#val-analysis.implementationsof">implementationsOf</a> : snapshot * location -&gt; occurrence list
+    val <a href="#val-analysis.versionof">versionOf</a> : snapshot * string -&gt; string option
     val <a href="#val-analysis.types">types</a> : snapshot -&gt; typeDefinition list
     val <a href="#val-analysis.facts">facts</a> : snapshot -&gt; fact list
+    val <a href="#val-analysis.factsin">factsIn</a> : snapshot * string -&gt; fact list
     val <a href="#val-analysis.work">work</a> : snapshot -&gt; {<a href="#fld-analysis.work.checked">checked</a>:int,<a href="#fld-analysis.work.reused">reused</a>:int}
+    val <a href="#val-analysis.route">route</a> : snapshot -&gt; {<a href="#fld-analysis.route.walked">walked</a>:bool,<a href="#fld-analysis.route.rebound">rebound</a>:int,<a href="#fld-analysis.route.loaded">loaded</a>:int,<a href="#fld-analysis.route.cutoff">cutoff</a>:int,<a href="#fld-analysis.route.broken">broken</a>:int}
     val <a href="#val-analysis.typeat">typeAt</a> : snapshot * {<a href="#fld-analysis.typeat.file">file</a>:string,<a href="#fld-analysis.typeat.offset">offset</a>:int} -&gt; string option
     val <a href="#val-analysis.typeatoccurrence">typeAtOccurrence</a> : snapshot * {<a href="#fld-analysis.typeatoccurrence.ordinal">ordinal</a>:int,<a href="#fld-analysis.typeatoccurrence.offset">offset</a>:int} -&gt; string option
     val <a href="#val-analysis.typehints">typeHints</a> : snapshot * {<a href="#fld-analysis.typehints.ordinal">ordinal</a>:int,<a href="#fld-analysis.typehints.start">start</a>:int,<a href="#fld-analysis.typehints.stop">stop</a>:int} -&gt; typeHint list
@@ -581,6 +589,20 @@ well formed is reported through Failed.
 | --- | --- | --- |
 | <a name="fld-workspace.find.file"></a>`file` | `string` |  |
 | <a name="fld-workspace.find.windows"></a>`windows` | `bool` |  |
+
+#### <a name="val-workspace.candidates"></a>`candidates`
+
+```sml
+val candidates : {file : string, windows : bool} -> string list
+```
+
+`candidates {file, windows}` lists where a root file above file would
+be, the nearest first, each path whole.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-workspace.candidates.file"></a>`file` | `string` |  |
+| <a name="fld-workspace.candidates.windows"></a>`windows` | `bool` |  |
 
 #### <a name="val-workspace.root"></a>`root`
 
@@ -1071,6 +1093,32 @@ NONE disables it. Observer exceptions abort
 the current attempt; observation never executes the checked program.
 Timing and host-specific memory counters belong to the callback.
 
+#### <a name="val-analysis.focus"></a>`focus`
+
+```sml
+val focus : t * string list option -> unit
+```
+
+`focus (context, files)` says which files to keep open for the checks
+after it.
+
+A check keeps the syntax, the facts and the occurrences of an open
+file's unit. Another's are dropped, and worked out again at its place
+when a query asks for them. NONE, the default, keeps every file open;
+while some are closed, occurrences and facts hold no closed unit's.
+
+#### <a name="val-analysis.compact"></a>`compact`
+
+```sml
+val compact : t -> unit
+```
+
+`compact context` gives up the compiler state a context's units stay
+loaded in, with what its tables hold of units long replaced.
+
+The next check loads them into a new one, and gives what it would
+have. A check does this itself after enough walks.
+
 #### <a name="val-analysis.check"></a>`check`
 
 ```sml
@@ -1084,11 +1132,14 @@ its ordered occurrences, modes, annotations and group-discovery text.
 Without a project the inputs form an ordered loose-file context.
 No files or artifacts are written, and user initializers never run.
 
-Valid unchanged prefixes replay checked bases. Changed units receive
-fresh annotation slots in a fresh compiler owner. A failed unit returns
-diagnostics and query data for its validated prefix; later units remain
-unavailable. Cancellation is polled between analysis phases and units;
-a supervisor must bound phases that cannot yet be interrupted.
+A context keeps its units between checks: an input that changed is
+elaborated at the place it was reached, with fresh annotation slots, and
+a unit past a change is taken by its usages. Whichever way a check goes,
+its results are a fresh analysis's. A failed unit returns diagnostics
+and query data for its validated prefix; later units remain
+unavailable. Cancellation is polled between analysis phases and units,
+and leaves what is kept whole; a supervisor must bound phases that
+cannot yet be interrupted.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -1203,6 +1254,35 @@ val occurrences : snapshot -> occurrence list
 
 `occurrences snapshot` returns frozen lexical binding relationships.
 
+#### <a name="val-analysis.occurrencesin"></a>`occurrencesIn`
+
+```sml
+val occurrencesIn : snapshot * string -> occurrence list
+```
+
+`occurrencesIn (snapshot, unit)` returns those of the unit unitAt
+names, without a walk of the others.
+
+#### <a name="val-analysis.implementationsof"></a>`implementationsOf`
+
+```sml
+val implementationsOf : snapshot * location -> occurrence list
+```
+
+`implementationsOf (snapshot, location)` returns the occurrences of every
+unit, open or closed, declared at location and defined elsewhere.
+
+#### <a name="val-analysis.versionof"></a>`versionOf`
+
+```sml
+val versionOf : snapshot * string -> string option
+```
+
+`versionOf (snapshot, unit)` says what a unit's answers rest on.
+
+That is its text and what it declares: two snapshots that give a unit
+one version give the same symbols for it. A unit not reached gives NONE.
+
 #### <a name="val-analysis.types"></a>`types`
 
 ```sml
@@ -1219,6 +1299,15 @@ val facts : snapshot -> fact list
 
 `facts snapshot` returns inferred types without mutable compiler refs.
 
+#### <a name="val-analysis.factsin"></a>`factsIn`
+
+```sml
+val factsIn : snapshot * string -> fact list
+```
+
+`factsIn (snapshot, unit)` returns those of the unit unitAt names,
+without a walk of the others.
+
 #### <a name="val-analysis.work"></a>`work`
 
 ```sml
@@ -1231,6 +1320,27 @@ val work : snapshot -> {checked:int,reused:int}
 | --- | --- | --- |
 | <a name="fld-analysis.work.checked"></a>`checked` | `int` |  |
 | <a name="fld-analysis.work.reused"></a>`reused` | `int` |  |
+
+#### <a name="val-analysis.route"></a>`route`
+
+```sml
+val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int}
+```
+
+`route snapshot` reports how the check went, and nothing of its results.
+
+walked: from the start, rather than each change at its own place;
+rebound: units taken as they stood; loaded: taken again from their
+pickles; cutoff: elaborated to the identity they had; broken: a usage
+refused a unit. The results are a fresh analysis's whichever the route.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-analysis.route.walked"></a>`walked` | `bool` |  |
+| <a name="fld-analysis.route.rebound"></a>`rebound` | `int` |  |
+| <a name="fld-analysis.route.loaded"></a>`loaded` | `int` |  |
+| <a name="fld-analysis.route.cutoff"></a>`cutoff` | `int` |  |
+| <a name="fld-analysis.route.broken"></a>`broken` | `int` |  |
 
 #### <a name="val-analysis.typeat"></a>`typeAt`
 
@@ -1291,8 +1401,10 @@ val visibleAt : snapshot * {ordinal:int,offset:int,path:string list} -> candidat
 `visibleAt (snapshot, position)` returns actual lexical bindings at a
 source occurrence's byte offset, or members of path.
 
-It replays validated prefixes and rechecks the requested unit. Only
-frozen names/details escape; no mutable environment is published.
+It elaborates the requested unit at the place its check reached it, or,
+for a snapshot that is not its context's latest, loads the units before
+it again first. Only frozen names/details escape; no mutable environment
+is published.
 Incomplete expressions can use bounded private syntax probes whose
 facts and diagnostics are never published as original-source data.
 The snapshot remains queryable after its context closes.

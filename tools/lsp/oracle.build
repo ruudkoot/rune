@@ -1,0 +1,7 @@
+(* A kept analysis against a fresh one, edit by edit. *)
+libraries compiler json digest unicode end
+files
+  ../../build/config.sml
+  oracle.sml
+  ../../src/main/lsp-oracle-main.sml
+end

@@ -215,10 +215,7 @@ struct
       fun tcName (stamp, name) =
         case qualify (stamp, name) of
           SOME n => n
-        | NONE =>
-            (case List.find (fn (n, _) => n = name) (!shown) of
-               SOME (_, s) => if s = stamp then name else name ^ "/" ^ Int.toString stamp
-             | NONE => (shown := (name, stamp) :: !shown; name))
+        | NONE => Types.distinctName (shown, name, stamp)
       fun paren (b, s) = if b then "(" ^ s ^ ")" else s
       fun fields fs = String.concatWith ", " (List.map (fn (l, a) => l ^ " : " ^ go (0, a)) fs)
       and go (prec, t) =

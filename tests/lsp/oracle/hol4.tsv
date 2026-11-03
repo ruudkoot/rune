@@ -1,0 +1,9 @@
+# HOL4's closure (boss.build; see tests/lsp/README.md).
+leaf-comment	3	LAST	append
+leaf-body	2	src/pattern_matches/patternMatchesLib.sml	replace	handle HOL_ERR _ => "v"	handle HOL_ERR _ => "v$N"
+early-body	2	src/prekernel/Feedback.sml	replace	fun quote s = String.concat ["\"", s, "\""]	fun quote s = String.concat ["\"", s, "\"", "$N"]
+early-comment-start	2	src/prekernel/Feedback.sml	prepend
+early-add	2	src/prekernel/Feedback.sml	appendtext	val edit_$N = 1
+early-datatype	1	src/prekernel/Feedback.sig	replace	trace_level : int, default : int, max : int}\n	trace_level : int, default : int, max : int} | Edit$N\n
++	src/prekernel/Feedback.sml	replace	trace_level : int, default : int, max : int}\n	trace_level : int, default : int, max : int} | Edit$N\n
+early-type	1	src/prekernel/Feedback.sml	replace	fun quote s = String.concat ["\"", s, "\""]	fun quote s = 1 + String.concat ["\"", s, "\""]

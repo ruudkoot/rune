@@ -7,10 +7,16 @@ struct
   structure U=LspUri
   structure C=RuneCompiler
   type problem={uri:string,message:string}
+  (* the files a plan was read from, what of them are sources a build reads
+     (a group's), and the directories that say what builds there are *)
+  type read={files:string list,sources:string list,directories:string list}
   fun enrich (workspace as W.Workspace {platform,lib,roots,settings,...},documents,cancelled) =
     let val memberships=ref [] : (string*W.target) list ref
         val problems=ref [] : problem list ref
         val builds=ref [] : W.target list ref
+        val files=ref [] : string list ref
+        val sources=ref [] : string list ref
+        val directories=ref [] : string list ref
         fun poll ()=if cancelled () then raise C.Analysis.Cancelled else ()
         fun fileUri file=U.original (U.fromPath (platform,OS.FileSys.fullPath file handle OS.SysErr _ => file))
         val overlays=List.mapPartial (fn snapshot:D.snapshot =>
@@ -28,6 +34,10 @@ struct
               val project=(if seen then NONE else SOME (C.Project.read (parent,{file=build,workspace=W.rootFile platform build,
                 variables= #variables normalized,overlays=overlays,windows=platform=U.Windows})) before C.close parent)
                 handle error => (C.close parent;raise error)
+              val ()=files:=C.Workspace.candidates {file=build,windows=platform=U.Windows} @ !files
+              fun input (input:C.Project.input)=if #kind input="source"
+                then sources:= #file input:: !sources else files:= #file input:: !files
+              val ()=Option.app (fn project => List.app input (C.Project.inputs project)) project
               fun source (source:C.Project.source) =
                 let val uri=fileUri (#file source)
                     val aliases=List.map #uri (List.filter (fn snapshot:D.snapshot =>
@@ -44,6 +54,8 @@ struct
                   W.withNamed (workspace,W.join platform (path,"file"),#flags config,
                     List.map (fn file => {name=fileUri file,build=fileUri file,flags= #flags config,
                       variables=[],libraryRoot=NONE}:W.target) (W.buildFiles platform path))
+              val ()=case U.native (platform,U.parse uri) of NONE => ()
+                | SOME {path,...} => directories:=path:: !directories
           in List.app (fn candidate => target (config,candidate)) targets end
         val ()=List.app root (!roots)
         val global= !settings
@@ -61,5 +73,6 @@ struct
                if null (#targets settings) then SOME (uri,config) else NONE
              | NONE => SOME (uri,config) end
         val ()=W.assign (workspace,List.mapPartial apply uris)
-    in {uris=List.rev uris,problems=List.rev (!problems)} end
+    in {uris=List.rev uris,problems=List.rev (!problems),
+        read={files= !files,sources= !sources,directories= !directories}:read} end
 end

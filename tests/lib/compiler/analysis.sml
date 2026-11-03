@@ -20,6 +20,8 @@ struct
         val ()=check("observations preserve frozen semantic results",same(initial,measured))
         val ()=check("observations include publication and cache reuse",List.exists(fn event=>
           #phase event="snapshot-published" andalso #reused event>0)(!events))
+        val ()=check("a reused unit sends no message per input (E23)",not(List.exists(fn event=>
+          #phase event="names-start" orelse #phase event="unit-start")(!events)))
         val ()=A.observe(context,NONE)
         val count=length(!events) val _=analyze(context,[source])
         val ()=check("disabled observer receives no phases",length(!events)=count)
@@ -70,6 +72,165 @@ struct
         val ()=C.close parent
     in check ("frozen snapshot survives closing",A.inputs initial=[first,second] andalso not (null (A.facts initial))
       andalso A.unitAt (initial,{ordinal=0})=firstUnit) end
+  (* What is kept against a fresh analysis, with how each check went: units
+     held between checks, a change at its own place, usages past a change. *)
+  fun freshly (parent,inputs)=
+    let val context=A.create (parent,{context="fresh"})
+        val result=analyze (context,inputs)
+    in A.close context;result end
+  val library=input ("library.sml","signature S=sig type t val make:int->t val read:t->int end\n" ^
+    "structure L:S=struct type t=int fun make x=x fun read x=x end\ndatatype shape=Round|Square\nfun area Round=1 | area Square=2\n","1")
+  val client=input ("client.sml","val made=L.make 1\nval back=L.read made\nval here=area Round\n","1")
+  val other=input ("other.sml","fun twice x=x+x\nval four=twice 2\n","1")
+  fun edited (source:A.input,text)=input (#file source,text,"2")
+  fun around (old,new) (source:A.input)=
+    let val text= #text source
+        val (front,found)=Substring.position old (Substring.full text)
+        val ()=if Substring.isEmpty found then raise Fail ("no such text: " ^ old) else ()
+    in edited (source,Substring.string front ^ new ^ String.extract (text,Substring.size front+size old,NONE)) end
+  fun routed (name,snapshot,walked,rebound,loaded,cutoff,broken)=
+    let val found=A.route snapshot
+    in check (name ^ ": walked " ^ Bool.toString (#walked found) ^ ", rebound " ^ Int.toString (#rebound found) ^ ", loaded " ^
+        Int.toString (#loaded found) ^ ", cutoff " ^ Int.toString (#cutoff found) ^ ", broken " ^ Int.toString (#broken found),
+        found={walked=walked,rebound=rebound,loaded=loaded,cutoff=cutoff,broken=broken}) end
+  (* the same answers, unit by unit, closed units opened *)
+  fun sameUnits (left,right)=A.diagnostics left=A.diagnostics right andalso A.types left=A.types right andalso
+    List.all (fn ordinal => case (A.unitAt (left,{ordinal=ordinal}),A.unitAt (right,{ordinal=ordinal})) of
+        (SOME a,SOME b) => a=b andalso A.occurrencesIn (left,a)=A.occurrencesIn (right,b) andalso A.factsIn (left,a)=A.factsIn (right,b)
+      | _ => false) (List.tabulate (length (A.inputs left),fn i => i))
+  fun keptUnits () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="kept"})
+        val ()=A.focus (context,SOME ["library.sml"])
+        val cold=analyze (context,[library,client,other])
+        val ()=routed ("the first check walks",cold,true,0,0,0,0)
+        val again=analyze (context,[library,client,other])
+        val ()=check ("nothing changed, nothing checked",sameUnits (cold,again) andalso #checked (A.work again)=0 andalso #reused (A.work again)=3)
+        (* a body: the same length, so that no span moves *)
+        val changed=analyze (context,[around ("fun read x=x","fun read y=y") library,client,other])
+        val ()=routed ("a body of an early unit stays at its place",changed,false,0,0,1,0)
+        val ()=check ("and equals fresh",sameUnits (changed,freshly (parent,A.inputs changed)))
+        val ()=check ("and checks that unit alone",#checked (A.work changed)=1 andalso #reused (A.work changed)=2)
+        val comment=[edited (library,"(* moved *)\n" ^ #text library),client,other]
+        val moved=analyze (context,comment)
+        val ()=routed ("a comment that moves a definition moves no identity",moved,false,0,0,1,0)
+        val ()=check ("and equals fresh, bindings and all",sameUnits (moved,freshly (parent,comment)))
+        val added=[around ("fun area","val extra=1\nfun area") library,client,other]
+        val held=analyze (context,added)
+        val ()=routed ("a name added walks, and keeps every client by its usages",held,true,0,2,0,0)
+        val ()=check ("and equals fresh",sameUnits (held,freshly (parent,added)))
+        val shape=[around ("Round|Square","Round|Square|Oval") library,client,other]
+        val broken=analyze (context,shape)
+        val ()=routed ("a datatype changed elaborates its client again, and not the rest",broken,true,0,1,0,1)
+        val ()=check ("and equals fresh",sameUnits (broken,freshly (parent,shape)))
+        val ()=check ("a body that changes length equals fresh",
+          let val inputs=[library,around ("val made=L.make 1","val made=L.make (1+1)") client,other]
+          in sameUnits (analyze (context,inputs),freshly (parent,inputs)) end)
+        val failing=[around ("fun area","val wrong:int=true\nfun area") library,client,other]
+        val failed=analyze (context,failing)
+        val ()=check ("a unit that fails hides what follows it",not (null (A.diagnostics failed)) andalso
+          A.unitAt (failed,{ordinal=1})=A.unitAt (cold,{ordinal=1}) andalso null (A.factsIn (failed,valOf (A.unitAt (failed,{ordinal=1})))))
+        val back=analyze (context,[library,client,other])
+        val ()=check ("and is put right",sameUnits (back,freshly (parent,[library,client,other])))
+        val ()=check ("an old snapshot still answers",List.exists (fn candidate:A.candidate => #name candidate="make")
+          (A.visibleAt (cold,{ordinal=1,offset=0,path=["L"]})))
+        val ()=check ("the latest one answers at its unit's place",List.exists (fn candidate:A.candidate => #name candidate="make")
+          (A.visibleAt (back,{ordinal=1,offset=0,path=["L"]})))
+        val ()=check ("a query leaves the snapshot's check as it was",sameUnits (back,analyze (context,[library,client,other])))
+        (* a plan that changes: a unit gone, units in another order, a unit new *)
+        fun planned inputs=check ("a plan of " ^ Int.toString (length inputs) ^ " inputs equals fresh",
+          sameUnits (analyze (context,inputs),freshly (parent,inputs)))
+        val ()=planned [library,other]
+        val ()=planned [library,client,other]
+        val ()=planned [client,other]
+        val ()=planned [other,library,client]
+        val ()=planned [library,input ("new.sml","val added=area Round\n","1"),client,other]
+        val _=analyze (context,[library,client,other])
+        val ()=A.compact context
+        val compacted=analyze (context,[library,client,other])
+        val ()=routed ("a compaction loads every unit again",compacted,true,0,3,0,0)
+        val ()=check ("and changes no answer",sameUnits (compacted,back))
+    in A.close context;C.close parent end
+  (* The path a type is printed by depends on the environment a unit stands in,
+     which no usage covers: an open unit past a moved identity is elaborated. *)
+  fun printedPaths () =
+    let val parent=compiler ()
+        val first=input ("zed.sml","structure Zed=struct datatype t=T of int val make=T end\n","1")
+        val middle=input ("middle.sml","val nothing=()\n","1")
+        val second=input ("made.sml","val made=Zed.make 1\n","1")
+        val inputs=[first,middle,second]
+        val aliased=[first,edited (middle,#text middle ^ "structure Alpha=Zed\n"),second]
+        val context=A.create (parent,{context="printed"})
+        val ()=A.focus (context,SOME ["made.sml"])
+        val _=analyze (context,inputs)
+        val now=analyze (context,aliased)
+        val unit=valOf (A.unitAt (now,{ordinal=2}))
+        val oracle=freshly (parent,aliased)
+        val ()=check ("a type printed by a new path is printed so",A.factsIn (now,unit)=A.factsIn (oracle,unit)
+          andalso List.exists (fn fact:A.fact => #ty fact="Alpha.t") (A.factsIn (oracle,unit)))
+        val hidden=[input ("hidden.sml","local datatype t=A in val a=A end\nlocal datatype t=B in val b=B end\nval pair=(a,b)\n","1")]
+        val shown=List.map #ty (A.facts (freshly (parent,hidden)))
+        val ()=check ("two types of one name are told apart by their order, as no stamp would be",
+          List.exists (fn ty => ty="t * t/2") shown)
+    in A.close context;C.close parent end
+  (* a walk cancelled at every point it can be: the context goes on as if it
+     had never run, loaded or not *)
+  fun cancelledWalks () =
+    let val parent=compiler ()
+        val inputs=[library,client,other]
+        val interface=[around ("fun area","val extra=1\nfun area") library,client,other]
+        val shape=[around ("Round|Square","Round|Square|Oval") library,client,other]
+        val oracle=freshly (parent,shape)
+        fun attempt n=
+          let val context=A.create (parent,{context="cancelled"})
+              val ()=A.focus (context,SOME [])
+              val _=analyze (context,inputs)
+              val _=analyze (context,interface)
+              val polls=ref 0
+              val stopped=(ignore (A.check (context,{project=NONE,inputs=shape,cancelled=fn () => (polls:= !polls+1;!polls=n)}));false)
+                handle A.Cancelled => true
+              val after=analyze (context,shape)
+              val ()=check ("cancelled at poll " ^ Int.toString n ^ ", the next check equals fresh",sameUnits (after,oracle))
+              val ()=check ("and so does a check of what it left",sameUnits (analyze (context,inputs),freshly (parent,inputs)))
+          in A.close context;stopped end
+        fun every n=if attempt n then every (n+1) else n
+        val polls=every 1
+        val ()=check ("the walk had points to stop at: " ^ Int.toString polls,polls>4)
+        (* and a change at its place *)
+        val body=[around ("fun read x=x","fun read y=y") library,client,other]
+        val context=A.create (parent,{context="cancelled"})
+        val _=analyze (context,inputs)
+        val stopped=(ignore (A.check (context,{project=NONE,inputs=body,cancelled=fn () => true}));false) handle A.Cancelled => true
+        val ()=check ("a change at its place, cancelled, leaves the context as it was",stopped andalso
+          sameUnits (analyze (context,inputs),freshly (parent,inputs)))
+    in A.close context;C.close parent end
+  (* what a closed unit gives up, and gets back *)
+  fun closedUnits () =
+    let val parent=compiler ()
+        val inputs=[library,client,other]
+        val oracle=freshly (parent,inputs)
+        val context=A.create (parent,{context="closed"})
+        val ()=A.focus (context,SOME ["client.sml"])
+        val focused=analyze (context,inputs)
+        val unit=valOf (A.unitAt (focused,{ordinal=0}))
+        val open'=valOf (A.unitAt (focused,{ordinal=1}))
+        val ()=check ("an open unit holds its own",A.factsIn (focused,open')=A.factsIn (oracle,open'))
+        val ()=check ("the flat lists hold no closed unit's facts",
+          not (List.exists (fn fact:A.fact => #file fact="library.sml") (A.facts focused)))
+        val ()=check ("a closed unit keeps its types",A.types focused=A.types oracle)
+        val ()=check ("a closed unit opens at its place",A.occurrencesIn (focused,unit)=A.occurrencesIn (oracle,unit)
+          andalso A.factsIn (focused,unit)=A.factsIn (oracle,unit))
+        val ()=check ("and gives its syntax and its types",isSome (A.syntaxAt (focused,{ordinal=0})) andalso
+          A.typeAtOccurrence (focused,{ordinal=0,offset=0})=A.typeAtOccurrence (oracle,{ordinal=0,offset=0}))
+        val ()=A.focus (context,SOME ["library.sml"])
+        val moved=analyze (context,inputs)
+        val ()=check ("a unit that opens is elaborated alone",#checked (A.work moved)=1)
+        val ()=check ("and one that closes is dropped",not (List.exists (fn fact:A.fact => #file fact="client.sml") (A.facts moved)))
+        val ()=A.focus (context,NONE)
+        val whole=analyze (context,inputs)
+        val ()=check ("all open again equals fresh",same (whole,oracle))
+        val ()=A.close context
+    in check ("an opened unit outlives its context",A.occurrencesIn (focused,open')=A.occurrencesIn (oracle,open'));C.close parent end
   fun syntaxSnapshots () =
     let val parent=compiler ()
         val context=A.create (parent,{context="syntax-snapshots"})
@@ -195,6 +356,73 @@ struct
           null(A.diagnostics changed) andalso same(changed,oracle) andalso same(changed,repeated)
           andalso #checked(A.work repeated)=0)
     in A.close context;A.close fresh;C.close parent end
+  (* A library root of its own, made for work and taken away after: a Basis of
+     one file, and inner, a library with a header that exports Public and
+     not Hidden, unless exports says otherwise, and has the friends given.
+     settle () makes each file a minute old, a stamp an analysis trusts. *)
+  fun scopedRoot (exports,friends,work) =
+    let val dir=OS.FileSys.tmpName ()
+        val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir)
+        val dirs=ref [dir] val made=ref [] : string list ref
+        fun clean ()=(List.app (fn path => OS.FileSys.remove path handle _ => ()) (!made);
+          List.app (fn path => OS.FileSys.rmDir path handle _ => ()) (!dirs))
+        fun write (name,text)=
+          let val path=dir ^ "/" ^ name
+              val output=TextIO.openOut path
+          in TextIO.output (output,text);TextIO.closeOut output;
+             if List.exists (fn other => other=path) (!made) then () else made:=path:: !made end
+        fun exporting names=write ("inner/MANIFEST","# exports: " ^ names ^ "\n" ^
+          String.concat (List.map (fn friend => "# friends: " ^ friend ^ "\n") friends) ^
+          "inner.sml | always | yes | Hidden Public | \n")
+        fun settle ()=List.app (fn path => OS.FileSys.setTime (path,SOME (Time.- (Time.now (),Time.fromSeconds 60)))) (!made)
+        val ()=List.app (fn name => (OS.FileSys.mkDir (dir ^ "/" ^ name);dirs:=(dir ^ "/" ^ name):: !dirs)) ["basis","inner","proj"]
+        val ()=write ("basis/basis.sml","structure Base=struct val one=1 end\n")
+        val ()=write ("basis/MANIFEST","basis.sml | always | yes | Base | \n")
+        val ()=write ("inner/inner.sml","structure Hidden=struct val x=1 end\nstructure Public=struct val y=Hidden.x end\n")
+        val ()=exporting exports
+        val ()=write ("proj/client.sml","val seen=Hidden.x\n")
+        val ()=write ("proj/friend.build","files client.sml end\n")
+        val ()=settle ()
+    in (work {dir=dir,exporting=exporting,settle=settle} before clean ()) handle error => (clean ();raise error) end
+  (* A boundary narrowed under library files that stay as they were: what was
+     kept was reached through the old one, so the check walks from the start
+     (the engine's sameScopes) and sees what a fresh analysis sees. *)
+  fun changedScope () = scopedRoot ("structure:Public structure:Hidden",[],fn {dir,exporting,settle} =>
+    let val parent=C.session {lib=SOME dir,flags=["--library","inner"]}
+        val context=A.create (parent,{context="changed-scope"})
+        val sources=[input ("client.sml","val seen=Hidden.x\n","1")]
+        val wide=analyze (context,sources)
+        val ()=check ("a library's boundary lets out what it exports",null (A.diagnostics wide))
+        val again=analyze (context,sources)
+        val ()=check ("a check with nothing changed stays at its places",not (#walked (A.route again)) andalso #checked (A.work again)=0)
+        val ()=(exporting "structure:Public";settle ())
+        val narrow=analyze (context,sources)
+        val fresh=freshly (parent,sources)
+    in check ("a boundary narrowed under the same files walks from the start, and sees what a fresh analysis sees",
+         #walked (A.route narrow) andalso not (null (A.diagnostics fresh)) andalso A.diagnostics narrow=A.diagnostics fresh);
+       A.close context;C.close parent end)
+  (* A friend of a library sees past its boundary (docs/build.md, A library's
+     header). The plan a check keeps is the plan of the build it was for (the
+     engine's sameBuilding): the same steps checked for another build select
+     as a fresh check for that build would. *)
+  fun friendBuilding () = scopedRoot ("structure:Public",["../proj/friend.build"],fn {dir,...} =>
+    let val parent=C.session {lib=SOME dir,flags=["--library","inner"]}
+        val project=C.Project.read (parent,{file=dir ^ "/proj/friend.build",workspace=NONE,variables=[],overlays=[],windows=false})
+        val inputs=List.map (fn source:C.Project.source => {file= #file source,text="val seen=Hidden.x\n",mode= #mode source,
+          annotations= #annotations source,revision="1"}:A.input) (C.Project.sources project)
+        fun checkIn (context,project)=A.check (context,{project=project,inputs=inputs,cancelled=fn () => false})
+        fun fresh project=let val context=A.create (parent,{context="fresh"})
+          in checkIn (context,project) before A.close context end
+        val context=A.create (parent,{context="friend"})
+        val outside=checkIn (context,NONE)
+        val ()=check ("a client that is no friend does not see past the boundary",not (null (A.diagnostics outside)))
+        val friend=checkIn (context,SOME project)
+        val ()=check ("the friend's build, checked after, selects as a fresh check of it and sees past it",
+          null (A.diagnostics friend) andalso sameUnits (friend,fresh (SOME project)))
+        val back=checkIn (context,NONE)
+    in check ("and the same steps checked for no build again see only what is exported",
+         not (null (A.diagnostics back)) andalso A.diagnostics back=A.diagnostics (fresh NONE));
+       A.close context;C.close parent end)
   fun frozenLibrary () =
     let val dir=OS.FileSys.tmpName ()
         val ()=(OS.FileSys.remove dir handle _ => ();OS.FileSys.mkDir dir;OS.FileSys.mkDir (dir ^ "/basis"))
@@ -464,6 +692,10 @@ structure CompilerAnalysisTestMain=Main (struct
   val tests=Test.describe "compiler-analysis"
     [Test.it "observations" CompilerAnalysisTests.observations,
      Test.it "snapshots-checkpoints-cancellation" CompilerAnalysisTests.snapshots,
+     Test.it "kept-units" CompilerAnalysisTests.keptUnits,
+     Test.it "printed-paths" CompilerAnalysisTests.printedPaths,
+     Test.it "cancelled-walks" CompilerAnalysisTests.cancelledWalks,
+     Test.it "closed-units" CompilerAnalysisTests.closedUnits,
      Test.it "captured-syntax-snapshots" CompilerAnalysisTests.syntaxSnapshots,
      Test.it "inferred-pattern-type-hints" CompilerAnalysisTests.typeHints,
      Test.it "lexical-bindings" CompilerAnalysisTests.bindings,
@@ -471,6 +703,8 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "static-library-replay" CompilerAnalysisTests.libraries,
      Test.it "missing-library-diagnostic" CompilerAnalysisTests.missingLibrary,
      Test.it "changed-prelude-names" CompilerAnalysisTests.changedNames,
+     Test.it "changed-library-scope" CompilerAnalysisTests.changedScope,
+     Test.it "friend-building" CompilerAnalysisTests.friendBuilding,
      Test.it "frozen-library-query" CompilerAnalysisTests.frozenLibrary,
      Test.it "project-scopes" CompilerAnalysisTests.projects,
      Test.it "batch-compiler-oracle" CompilerAnalysisTests.batchOracle,

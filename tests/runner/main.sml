@@ -69,6 +69,11 @@ struct
        alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
        alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*"]),
        alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*"]),
+       step ("test-lsp-oracle", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       Test.requires ["oracle-corpora"]
+         (target ("test-lsp-oracle-corpora", 21600, {cpus = 1, memory = 16000, pools = [], after = [], tags = ["nightly"],
+                                                     covers = ["lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]})),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
        alone ("check-isa", [], [])]
 
@@ -96,6 +101,8 @@ struct
      {name = "windows", probe = "bin/rune-windows directory && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
+    @ [{name = "oracle-corpora", probe = "test -r \"$RUNE_ORACLE_HOL4\" && test -r \"$RUNE_ORACLE_MLTON\"",
+        hint = "set RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON to the build files of tests/lsp/README.md, Keeping what is computed"}]
     @ [{name="jupyter-client",probe="python3 -c 'import jupyter_client, zmq'",
         hint="install jupyter_client and pyzmq for python3 (Ubuntu: python3-jupyter-client python3-zmq)"}]
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities @ TerminalJobs.capabilities

@@ -6,6 +6,7 @@
 - `Analysis.observe` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.observe)
 - `Analysis.occurrence` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.occurrence)
 - `Analysis.occurrences` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.occurrences)
+- `Analysis.occurrencesIn` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.occurrencesin)
 
 ---
 

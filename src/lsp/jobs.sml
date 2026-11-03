@@ -80,7 +80,7 @@ struct
           val selected=case !context of NONE=>"" | SOME(label,_)=>preview label
           fun phaseName name=case name of "unit-start"=>"checking" | "unit-parsed"=>"elaborating"
             | "unit-elaborated"=>"recording analysis" | "unit-frozen"=>"checked"
-            | "names-start"=>"resolving libraries" | "occurrences-start"=>"preparing editor data"
+            | "names-start"=>"resolving libraries"
             | "indexing-source"=>"indexing" | "project-selected"=>"starting" | _=>preview name
           val detail=case !progress of NONE=>"" | SOME update=>
             "; " ^ phaseName(#phase update) ^ (if #file update="" then "" else " " ^ preview(#file update)) ^
@@ -134,7 +134,8 @@ struct
         let val ()=(started:=SOME(Time.now());progress:=NONE;context:=NONE;
               phase:=Starting (Time.+ (Time.now (),Time.fromSeconds 30)))
             val process=P.start {command=command,args=args,
-              limits={addressSpace=SOME (1536*1024*1024),cpuTime=NONE,fileSize=NONE,core=SOME 0}}
+              limits={addressSpace=SOME (getOpt (Option.mapPartial Int.fromString (OS.Process.getEnv "RUNE_LSP_ADDRESS_SPACE_MB"),1536)*1024*1024),
+                cpuTime=NONE,fileSize=NONE,core=SOME 0}}
         in worker:=SOME process end
       | SOME process => case (!phase,!queue) of (Idle,job::rest) =>
           (queue:=rest;active:=SOME job;started:=SOME(Time.now());progress:=NONE;context:=NONE;

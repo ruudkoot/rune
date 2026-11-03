@@ -258,6 +258,13 @@
     },
     {
      "kind": "val",
+     "name": "Workspace.candidates",
+     "spec": "val candidates : {file : string, windows : bool} -> string list",
+     "doc": "`candidates {file, windows}` lists where a root file above file would\nbe, the nearest first, each path whole.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-workspace.candidates"
+    },
+    {
+     "kind": "val",
      "name": "Workspace.root",
      "spec": "val root : t -> string",
      "doc": "`root workspace` is the directory of its root file, which a build's\nunits are named from.\n\n",
@@ -510,9 +517,23 @@
     },
     {
      "kind": "val",
+     "name": "Analysis.focus",
+     "spec": "val focus : t * string list option -> unit",
+     "doc": "`focus (context, files)` says which files to keep open for the checks\nafter it.\n\nA check keeps the syntax, the facts and the occurrences of an open\nfile's unit. Another's are dropped, and worked out again at its place\nwhen a query asks for them. NONE, the default, keeps every file open;\nwhile some are closed, occurrences and facts hold no closed unit's.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.focus"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.compact",
+     "spec": "val compact : t -> unit",
+     "doc": "`compact context` gives up the compiler state a context's units stay\nloaded in, with what its tables hold of units long replaced.\n\nThe next check loads them into a new one, and gives what it would\nhave. A check does this itself after enough walks.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.compact"
+    },
+    {
+     "kind": "val",
      "name": "Analysis.check",
      "spec": "val check : t * {project:Project.t option,inputs:input list,cancelled:unit->bool} -> snapshot",
-     "doc": "`check (context, request)` checks captured inputs in compiler order.\n\nA project must come from the same compiler session; inputs must match\nits ordered occurrences, modes, annotations and group-discovery text.\nWithout a project the inputs form an ordered loose-file context.\nNo files or artifacts are written, and user initializers never run.\n\nValid unchanged prefixes replay checked bases. Changed units receive\nfresh annotation slots in a fresh compiler owner. A failed unit returns\ndiagnostics and query data for its validated prefix; later units remain\nunavailable. Cancellation is polled between analysis phases and units;\na supervisor must bound phases that cannot yet be interrupted.\n\n",
+     "doc": "`check (context, request)` checks captured inputs in compiler order.\n\nA project must come from the same compiler session; inputs must match\nits ordered occurrences, modes, annotations and group-discovery text.\nWithout a project the inputs form an ordered loose-file context.\nNo files or artifacts are written, and user initializers never run.\n\nA context keeps its units between checks: an input that changed is\nelaborated at the place it was reached, with fresh annotation slots, and\na unit past a change is taken by its usages. Whichever way a check goes,\nits results are a fresh analysis's. A failed unit returns diagnostics\nand query data for its validated prefix; later units remain\nunavailable. Cancellation is polled between analysis phases and units,\nand leaves what is kept whole; a supervisor must bound phases that\ncannot yet be interrupted.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.check"
     },
     {
@@ -594,6 +615,27 @@
     },
     {
      "kind": "val",
+     "name": "Analysis.occurrencesIn",
+     "spec": "val occurrencesIn : snapshot * string -> occurrence list",
+     "doc": "`occurrencesIn (snapshot, unit)` returns those of the unit unitAt\nnames, without a walk of the others.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.occurrencesin"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.implementationsOf",
+     "spec": "val implementationsOf : snapshot * location -> occurrence list",
+     "doc": "`implementationsOf (snapshot, location)` returns the occurrences of every\nunit, open or closed, declared at location and defined elsewhere.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.implementationsof"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.versionOf",
+     "spec": "val versionOf : snapshot * string -> string option",
+     "doc": "`versionOf (snapshot, unit)` says what a unit's answers rest on.\n\nThat is its text and what it declares: two snapshots that give a unit\none version give the same symbols for it. A unit not reached gives NONE.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.versionof"
+    },
+    {
+     "kind": "val",
      "name": "Analysis.types",
      "spec": "val types : snapshot -> typeDefinition list",
      "doc": "`types snapshot` returns semantic constructor identities and sources.\n\n",
@@ -608,10 +650,24 @@
     },
     {
      "kind": "val",
+     "name": "Analysis.factsIn",
+     "spec": "val factsIn : snapshot * string -> fact list",
+     "doc": "`factsIn (snapshot, unit)` returns those of the unit unitAt names,\nwithout a walk of the others.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.factsin"
+    },
+    {
+     "kind": "val",
      "name": "Analysis.work",
      "spec": "val work : snapshot -> {checked:int,reused:int}",
      "doc": "`work snapshot` reports checked and replayed units, including libraries.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.work"
+    },
+    {
+     "kind": "val",
+     "name": "Analysis.route",
+     "spec": "val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int}",
+     "doc": "`route snapshot` reports how the check went, and nothing of its results.\n\nwalked: from the start, rather than each change at its own place;\nrebound: units taken as they stood; loaded: taken again from their\npickles; cutoff: elaborated to the identity they had; broken: a usage\nrefused a unit. The results are a fresh analysis's whichever the route.\n\n",
+     "page": "sig/RUNE_COMPILER.md#val-analysis.route"
     },
     {
      "kind": "val",
@@ -638,7 +694,7 @@
      "kind": "val",
      "name": "Analysis.visibleAt",
      "spec": "val visibleAt : snapshot * {ordinal:int,offset:int,path:string list} -> candidate list",
-     "doc": "`visibleAt (snapshot, position)` returns actual lexical bindings at a\nsource occurrence's byte offset, or members of path.\n\nIt replays validated prefixes and rechecks the requested unit. Only\nfrozen names/details escape; no mutable environment is published.\nIncomplete expressions can use bounded private syntax probes whose\nfacts and diagnostics are never published as original-source data.\nThe snapshot remains queryable after its context closes.\n\n",
+     "doc": "`visibleAt (snapshot, position)` returns actual lexical bindings at a\nsource occurrence's byte offset, or members of path.\n\nIt elaborates the requested unit at the place its check reached it, or,\nfor a snapshot that is not its context's latest, loads the units before\nit again first. Only frozen names/details escape; no mutable environment\nis published.\nIncomplete expressions can use bounded private syntax probes whose\nfacts and diagnostics are never published as original-source data.\nThe snapshot remains queryable after its context closes.\n\n",
      "page": "sig/RUNE_COMPILER.md#val-analysis.visibleat"
     },
     {

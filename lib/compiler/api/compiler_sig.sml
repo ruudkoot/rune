@@ -165,6 +165,9 @@ sig
        windows selects Windows drive/UNC syntax. A root file that is not
        well formed is reported through Failed. *)
     val find : {file : string, windows : bool} -> t option
+    (* `candidates {file, windows}` lists where a root file above file would
+       be, the nearest first, each path whole. *)
+    val candidates : {file : string, windows : bool} -> string list
     (* `root workspace` is the directory of its root file, which a build's
        units are named from. *)
     val root : t -> string
@@ -302,6 +305,20 @@ sig
        the current attempt; observation never executes the checked program.
        Timing and host-specific memory counters belong to the callback. *)
     val observe : t * (observation->unit) option -> unit
+    (* `focus (context, files)` says which files to keep open for the checks
+       after it.
+
+       A check keeps the syntax, the facts and the occurrences of an open
+       file's unit. Another's are dropped, and worked out again at its place
+       when a query asks for them. NONE, the default, keeps every file open;
+       while some are closed, occurrences and facts hold no closed unit's. *)
+    val focus : t * string list option -> unit
+    (* `compact context` gives up the compiler state a context's units stay
+       loaded in, with what its tables hold of units long replaced.
+
+       The next check loads them into a new one, and gives what it would
+       have. A check does this itself after enough walks. *)
+    val compact : t -> unit
     (* `check (context, request)` checks captured inputs in compiler order.
 
        A project must come from the same compiler session; inputs must match
@@ -309,11 +326,14 @@ sig
        Without a project the inputs form an ordered loose-file context.
        No files or artifacts are written, and user initializers never run.
 
-       Valid unchanged prefixes replay checked bases. Changed units receive
-       fresh annotation slots in a fresh compiler owner. A failed unit returns
-       diagnostics and query data for its validated prefix; later units remain
-       unavailable. Cancellation is polled between analysis phases and units;
-       a supervisor must bound phases that cannot yet be interrupted. *)
+       A context keeps its units between checks: an input that changed is
+       elaborated at the place it was reached, with fresh annotation slots, and
+       a unit past a change is taken by its usages. Whichever way a check goes,
+       its results are a fresh analysis's. A failed unit returns diagnostics
+       and query data for its validated prefix; later units remain
+       unavailable. Cancellation is polled between analysis phases and units,
+       and leaves what is kept whole; a supervisor must bound phases that
+       cannot yet be interrupted. *)
     val check : t * {project:Project.t option,inputs:input list,cancelled:unit->bool} -> snapshot
     (* `checkpoint context` captures only committed, validated unit entries. *)
     val checkpoint : t -> checkpoint
@@ -348,12 +368,33 @@ sig
     val diagnostics : snapshot -> diagnostic list
     (* `occurrences snapshot` returns frozen lexical binding relationships. *)
     val occurrences : snapshot -> occurrence list
+    (* `occurrencesIn (snapshot, unit)` returns those of the unit unitAt
+       names, without a walk of the others. *)
+    val occurrencesIn : snapshot * string -> occurrence list
+    (* `implementationsOf (snapshot, location)` returns the occurrences of every
+       unit, open or closed, declared at location and defined elsewhere. *)
+    val implementationsOf : snapshot * location -> occurrence list
+    (* `versionOf (snapshot, unit)` says what a unit's answers rest on.
+
+       That is its text and what it declares: two snapshots that give a unit
+       one version give the same symbols for it. A unit not reached gives NONE. *)
+    val versionOf : snapshot * string -> string option
     (* `types snapshot` returns semantic constructor identities and sources. *)
     val types : snapshot -> typeDefinition list
     (* `facts snapshot` returns inferred types without mutable compiler refs. *)
     val facts : snapshot -> fact list
+    (* `factsIn (snapshot, unit)` returns those of the unit unitAt names,
+       without a walk of the others. *)
+    val factsIn : snapshot * string -> fact list
     (* `work snapshot` reports checked and replayed units, including libraries. *)
     val work : snapshot -> {checked:int,reused:int}
+    (* `route snapshot` reports how the check went, and nothing of its results.
+
+       walked: from the start, rather than each change at its own place;
+       rebound: units taken as they stood; loaded: taken again from their
+       pickles; cutoff: elaborated to the identity they had; broken: a usage
+       refused a unit. The results are a fresh analysis's whichever the route. *)
+    val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int}
     (* `typeAt (snapshot, position)` returns its innermost original-source type.
 
        Copied-body facts are used only where no original fact is available.
@@ -373,8 +414,10 @@ sig
     (* `visibleAt (snapshot, position)` returns actual lexical bindings at a
        source occurrence's byte offset, or members of path.
 
-       It replays validated prefixes and rechecks the requested unit. Only
-       frozen names/details escape; no mutable environment is published.
+       It elaborates the requested unit at the place its check reached it, or,
+       for a snapshot that is not its context's latest, loads the units before
+       it again first. Only frozen names/details escape; no mutable environment
+       is published.
        Incomplete expressions can use bounded private syntax probes whose
        facts and diagnostics are never published as original-source data.
        The snapshot remains queryable after its context closes. *)

@@ -183,17 +183,21 @@ struct
           handle e => (OS.FileSys.closeDir stream handle _ => ();raise e)
         fun insert (x,[])= [x] | insert (x,y::rest)=if x<y then x::y::rest else y::insert (x,rest)
     in List.foldl insert [] files end handle OS.SysErr _ => []
-  fun discover (Workspace {platform,roots,...},path) =
+  (* the directories a file's builds are looked for in: its own and those above
+     it, up to the folder of the client that holds it *)
+  fun directories (Workspace {platform,roots,...},path) =
     let val key=pathKey platform path
         val applicable=List.filter (fn root => case nativeKey platform root of SOME root => below (root,key) | NONE => false) (!roots)
         fun ancestors (directory,boundary,seen) =
           if List.exists (fn previous => previous=directory) seen then [] else
-          buildFiles platform directory @ (if pathKey platform directory=boundary then [] else
+          directory :: (if pathKey platform directory=boundary then [] else
             case parent platform directory of NONE => [] | SOME next =>
               if below (boundary,pathKey platform next) then ancestors (next,boundary,directory::seen) else [])
-        val directories=case applicable of [] => [(directory platform path,pathKey platform (directory platform path))]
+        val starts=case applicable of [] => [(directory platform path,pathKey platform (directory platform path))]
           | roots => List.map (fn root => (directory platform path,valOf (nativeKey platform root))) roots
-        val files=List.concat (List.map (fn (directory,boundary) => ancestors (directory,boundary,[])) directories)
+    in List.concat (List.map (fn (directory,boundary) => ancestors (directory,boundary,[])) starts) end
+  fun discover (workspace as Workspace {platform,...},path) =
+    let val files=List.concat (List.map (buildFiles platform) (directories (workspace,path)))
     in List.foldl (fn (file,result) => if List.exists (fn prior => prior=file) result then result else result @ [file]) [] files end
   (* The root file a build is under, which its units are named from. *)
   fun rootFile platform build=C.Workspace.find {file=build,windows=platform=U.Windows}

@@ -36,12 +36,16 @@ struct
     refresh:unit Q.t,refreshPending:bool ref,refreshAgain:bool ref,published:publication list ref,send:R.message->unit,log:string->unit,
     discovered:string*V.value->unit,watchedRoots:unit->string list,
     wantsStatus:bool,statusSent:status option ref,statusAt:Time.time ref,failing:(int*string) list ref,lastUnits:string ref}
+  (* a job's deadline, 30 seconds unless a measurement of a first check at a
+     scale that is over it says otherwise *)
+  fun deadline ()=Time.fromSeconds (LargeInt.fromInt (getOpt (Option.mapPartial Int.fromString
+    (OS.Process.getEnv "RUNE_LSP_DEADLINE_SECONDS"),30)))
   fun new {workspace,documents,caps,command,args,send,log,discovered,watchedRoots} =
     Service {workspace=workspace,documents=documents,caps=caps,jobs=J.new {command=command,args=args,
-      timeout=Time.fromSeconds 30,cancelGrace=Time.fromMilliseconds 250,maxPending=128},results=ref [],requests=ref [],
-      workspaceJobs=J.new {command=command,args=args,timeout=Time.fromSeconds 30,
+      timeout=deadline (),cancelGrace=Time.fromMilliseconds 250,maxPending=128},results=ref [],requests=ref [],
+      workspaceJobs=J.new {command=command,args=args,timeout=deadline (),
         cancelGrace=Time.fromMilliseconds 250,maxPending=8},
-      basisJobs=J.new {command=command,args=args,timeout=Time.fromSeconds 30,
+      basisJobs=J.new {command=command,args=args,timeout=deadline (),
         cancelGrace=Time.fromMilliseconds 250,maxPending=128},
       flights=ref [],failures=ref [],refresh=Q.new {prefix="runelsp-diagnostics-",maxPending=1},refreshPending=ref false,
       refreshAgain=ref false,published=ref [],

@@ -105,6 +105,7 @@ struct
     type t=W.t
     type target=W.target
     fun find (request as {file,...})=guard file (fn () => W.find request)
+    val candidates=W.candidates
     fun root (workspace : t)= #root workspace
     fun libraryRoots (workspace : t)= #libraryRoots workspace
     fun targets (workspace : t)= #targets workspace
@@ -206,6 +207,8 @@ struct
       Analysis {analysis=A.new (compiler,context),mode=mode,owner=token,lib= #lib config}
     fun close (Analysis {analysis,...})=A.close analysis
     fun observe (Analysis {analysis,...},callback)=A.observe(analysis,callback)
+    fun focus (Analysis {analysis,...},files)=A.focus(analysis,files)
+    fun compact (Analysis {analysis,...})=A.compact analysis
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))
     fun check (Analysis {analysis,mode,owner,lib},{project,inputs,cancelled}) = guard "" (fn () =>
@@ -235,10 +238,15 @@ struct
     val syntaxAt=A.syntaxAt
     fun dependencies (snapshot:snapshot)= #dependencies snapshot
     fun diagnostics (snapshot:snapshot)= #diagnostics snapshot
-    fun occurrences (snapshot:snapshot)= #occurrences snapshot
-    fun types (snapshot:snapshot)= #types snapshot
-    fun facts (snapshot:snapshot)= #facts snapshot
+    val occurrences=A.occurrences
+    val occurrencesIn=A.occurrencesIn
+    val implementationsOf=A.implementationsOf
+    val versionOf=A.versionOf
+    val types=A.types
+    val facts=A.facts
+    val factsIn=A.factsIn
     fun work (snapshot:snapshot)={checked= #checked snapshot,reused= #reused snapshot}
+    fun route (snapshot:snapshot)= #route snapshot
     val typeAt=A.typeAt
     val typeAtOccurrence=A.typeAtOccurrence
     val typeHints=A.typeHints
