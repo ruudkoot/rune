@@ -79,6 +79,49 @@ struct
        both "a.sml" "val unused = 0" "val unused = 1  val more = 2"; compare "declaration edit";
        both "c.sml" "2 * S.area x" "2 * S.area"; compare "compile error";
        both "c.sml" "2 * S.area\n" "2 * S.area x\n"; compare "mended" end
+  (* a virtual functor, its implementation, its declaration and a client *)
+  fun implementation size =
+    "_export functor Table (K : KEY) : TBL where type key = K.t = struct\n  type key = K.t  type 'a t = (key * 'a) list\n"
+    ^ "  val empty = []  fun add (t, k, v) = (k, v) :: t  fun size t = " ^ size ^ "\n  fun count t = length t\n"
+    ^ "  fun first ((_, v) :: _) = SOME v | first [] = NONE end"
+  fun result more =
+    "signature TBL = sig\n  type key  type 'a t\n  val empty : 'a t  val add : 'a t * key * 'a -> 'a t\n  val size : 'a t -> int\n"
+    ^ "  val first : 'a t -> 'a option\n" ^ more ^ "end"
+  fun virtualFunctor (s : state) =
+    (own s "";
+     put s "k.sml" "signature KEY = sig type t  val compare : t * t -> order end";
+     put s "r.sml" (result "");
+     put s "impl.sml" (implementation "length t");
+     put s "decl.sml" "functor Table = _virtual (K : KEY) : TBL where type key = K.t";
+     put s "client.sml" ("structure T = Table (struct type t = int  val compare = Int.compare end)\n"
+                         ^ "val t = T.add (T.empty, 1, \"one\")\n"
+                         ^ "val () = print (Int.toString (T.size t) ^ \" \" ^ getOpt (T.first t, \"none\") ^ \"\\n\")");
+     put s "p.build" "k.sml r.sml implements Table = impl.sml end decl.sml client.sml")
+  (* a dynamic functor's module compiled against ARG and RES as given, and
+     its client against "val g : t -> int" and "val h : int -> int": the
+     same slots, other signatures *)
+  fun otherSignature (s : state) (g, h, body) =
+    let
+      fun sigs (g, h) = "signature ARG = sig type t  val f : t -> int  " ^ g ^ " end\nsignature RES = sig " ^ h ^ " end"
+      val () = own s ""
+      val () = put s "theirs.sml" (sigs (g, h))
+      val () = put s "ours.sml" (sigs ("val g : t -> int", "val h : int -> int"))
+      val () = put s "impl.sml" ("_export functor F (X : ARG) : RES = struct " ^ body ^ " end")
+      val () = put s "client.sml" ("functor F = _dynamic \"impl.rbu\" (X : ARG) : RES\n"
+                                   ^ "structure R = F (struct type t = int  fun f n = n  fun g n = n end)\n"
+                                   ^ "val () = print (Int.toString (R.h 41) ^ \"\\n\")")
+      val module = command s "" [#compiler s, "--units", "--no-cache", "--emit-units", "m", "theirs.sml", "impl.sml", "-o", "m.rbc"]
+      val () = check s ("the module did not compile: " ^ #errors module) (#status module = 0)
+      val unit = case List.filter (String.isSuffix "-impl.rbu") (lines (read (path s "m/units"))) of
+                   [f] => if OS.Path.isAbsolute f then f else path s f
+                 | _ => raise Fail "the module's units list has no one unit of impl.sml"
+      val () = copy unit (path s "impl.rbu")
+      val client = command s "" [#compiler s, "--units", "--no-cache", "ours.sml", "client.sml", "-o", "p.rbc"]
+      val () = check s ("the client did not compile: " ^ #errors client) (#status client = 0)
+      val run = command s "" [OS.Path.dir (#compiler s) ^ "/runevm", "p.rbc"]
+    in check s ("a module of another signature was not refused: " ^ #output run ^ #errors run)
+             (#status run = 1 andalso #output run = "" andalso String.isSubstring "Mismatch \"impl.rbu implements another signature" (#errors run))
+    end
   fun one (s : state) =
     let fun b flags expected = checkBuild s flags expected
         fun f file version = fixture s file version
@@ -505,6 +548,75 @@ struct
           val () = put s "a.sml" "signature S = sig type t  val x : t  val y : t end"
           val r = command s "" [#compiler s, "--build", "p.build", "--units", "--cache-dir", "cache", "-o", "p.rbc"]
         in check s "a client of a signature that changed was taken from the cache" (#status r <> 0) end
+    (* E10's probes on a virtual functor (the build-system roadmap's M21):
+       an edit of the implementation's body compiles it alone; an edit of
+       the parameter's signature or the result's compiles every unit that
+       names it, the declaration and its clients *)
+    | "S125" =>
+        let
+          val () = virtualFunctor s
+          val () = buildFile s "p.build" "k.sml r.sml impl.sml decl.sml client.sml"
+          val () = prints s "1 one"
+          val () = put s "impl.sml" (implementation "10 * length t")
+          val () = buildFile s "p.build" "impl.sml"
+        in prints s "10 one" end
+    | "S126" =>
+        let
+          val () = virtualFunctor s
+          val () = buildFile s "p.build" "k.sml r.sml impl.sml decl.sml client.sml"
+          val () = put s "k.sml" "signature KEY = sig eqtype t  val compare : t * t -> order end"
+          val () = buildFile s "p.build" "k.sml impl.sml decl.sml client.sml"
+        in prints s "1 one" end
+    | "S127" =>
+        let
+          val () = virtualFunctor s
+          val () = buildFile s "p.build" "k.sml r.sml impl.sml decl.sml client.sml"
+          val () = put s "r.sml" (result "  val count : 'a t -> int\n")
+          val () = buildFile s "p.build" "r.sml impl.sml decl.sml client.sml"
+        in prints s "1 one" end
+    (* A dynamic functor's module compiled by this compiler, and its client
+       by bin/rune: the same ABI, so the module loads. A compiler whose
+       functors' ABI is another -- the records' slots in another order, the
+       descriptors, the version, the calling convention -- makes a module
+       the client refuses when it loads it (the mutants of the cache
+       A1 to A8, tests/runner/cachemutantlist.sml) *)
+    | "S128" =>
+        let
+          val () = own s ""
+          val () = put s "sigs.sml" ("signature ARG = sig type t  datatype shape = Point of t | Box of t | Pair of t * t\n"
+                                     ^ "  val norm : t -> int  val zero : t  val scale : int -> t -> t  exception Bad of t\n"
+                                     ^ "  structure Sub : sig val k : int end end\n"
+                                     ^ "signature RES = sig type shape  val total : shape list -> int  val bigger : int -> int  val name : string end")
+          val () = put s "impl.sml" ("_export functor F (X : ARG) : RES where type shape = X.shape = struct\n"
+                                     ^ "  type shape = X.shape\n"
+                                     ^ "  fun size (X.Point p) = X.norm p | size (X.Box p) = 2 * X.norm (X.scale 3 p)\n"
+                                     ^ "    | size (X.Pair (p, q)) = X.norm p + X.norm q\n"
+                                     ^ "  fun total l = List.foldl (fn (s, n) => n + size s) (X.Sub.k + X.norm X.zero) l\n"
+                                     ^ "  fun bigger n = n + X.Sub.k  val name = \"f\" end")
+          val () = put s "client.sml" ("functor F = _dynamic \"impl.rbu\" (X : ARG) : RES where type shape = X.shape\n"
+                                       ^ "structure P = struct type t = int * int  datatype shape = Point of t | Box of t | Pair of t * t\n"
+                                       ^ "  fun norm (a, b) = a + b  val zero = (1, 0)  fun scale n (a, b) = (n * a, n * b)\n"
+                                       ^ "  exception Bad of t  structure Sub = struct val k = 100 end end\n"
+                                       ^ "structure FP = F (P)\n"
+                                       ^ "val () = print (FP.name ^ \" \" ^ Int.toString (FP.total [P.Point (1, 2), P.Box (1, 1), P.Pair ((1, 1), (2, 2))])\n"
+                                       ^ "                ^ \" \" ^ Int.toString (FP.bigger 1) ^ \"\\n\")")
+          val module = command s "" [#compiler s, "--units", "--no-cache", "--emit-units", "m", "sigs.sml", "impl.sml", "-o", "m.rbc"]
+          val () = check s ("the module did not compile: " ^ #errors module) (#status module = 0)
+          val unit = case List.filter (String.isSuffix "-impl.rbu") (lines (read (path s "m/units"))) of
+                       [f] => if OS.Path.isAbsolute f then f else path s f
+                     | _ => raise Fail "the module's units list has no one unit of impl.sml"
+          val () = copy unit (path s "impl.rbu")
+          val good = fromRoot "bin/rune"
+          val client = command s "" [good, "--units", "--no-cache", "sigs.sml", "client.sml", "-o", "p.rbc"]
+          val () = check s ("the client did not compile: " ^ #errors client) (#status client = 0)
+          val run = command s "" [OS.Path.dir good ^ "/runevm", "p.rbc"]
+        in check s ("the module of this compiler did not load into bin/rune's client: " ^ #output run ^ #errors run)
+                 (#status run = 0 andalso #output run = "f 122 101\n") end
+    (* a module of another parameter's signature, or another result's, with
+       the same slots: refused when the client loads it, by the signatures in
+       the fingerprint (the mutants of the cache A5 and A6) *)
+    | "S129" => otherSignature s ("val g : t -> string", "val h : int -> int", "fun h n = n + 1")
+    | "S130" => otherSignature s ("val g : t -> int", "val h : int -> string", "fun h n = Int.toString n")
     | "S58" => parallel s
     | n => if String.isPrefix CacheFacts.prefix n then CacheFacts.one s
            else if String.isPrefix CacheFlags.prefix n then CacheFlags.one s
@@ -513,7 +625,7 @@ struct
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S121", "S122", "S123", "S124"] @ CacheFacts.cases @ CacheFlags.cases @ CacheChecks.cases
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S121", "S122", "S123", "S124", "S125", "S126", "S127", "S128", "S129", "S130"] @ CacheFacts.cases @ CacheFlags.cases @ CacheChecks.cases
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end

@@ -269,5 +269,42 @@ struct
        [("S83", "compiled [a.sml], wanted [a.sml b.sml]")],
        ub,
        "      P.string (t, P.hash (P.contents lines));\n      P.hash (P.contents t)",
-       "      P.string (t, \"\");\n      P.hash (P.contents t)")]
+       "      P.string (t, \"\");\n      P.hash (P.contents t)"),
+    (* a virtual or dynamic functor's ABI (the build-system roadmap's M21,
+       D22): each field of its fingerprint, the ABI made another -- its
+       version, its calling convention, the records' slots in another order,
+       the descriptors in another -- by a compiler whose module bin/rune's
+       client refuses when it loads it (S128); and the two signatures,
+       which a module of another signature with the same slots tells apart
+       (S129, S130) *)
+    m ("A1", "a functor's ABI: another version", "", false, "",
+       [("S128", "did not load into bin/rune's client")],
+       el,
+       "  val functorAbiVersion = \"functor ABI 1\"",
+       "  val functorAbiVersion = \"functor ABI 2\""),
+    m ("A2", "a functor's ABI: another calling convention", "", false, "",
+       [("S128", "did not load into bin/rune's client")],
+       el,
+       "  val functorConvention = \"the function of the parameter's record to the result's, the one slot of the record exported\"",
+       "  val functorConvention = \"the function of the parameter's record to the result's, curried\""),
+    m ("A3", "a functor's ABI: the records' slots in another order", "", false, "",
+       [("S128", "did not load into bin/rune's client")],
+       el,
+       "    List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals)",
+       "    List.rev (List.filter (fn (_, Con _) => false | _ => true) (StringMap.listItemsi vals))"),
+    m ("A4", "a functor's ABI: the descriptors in another order", "", false, "",
+       [("S128", "did not load into bin/rune's client")],
+       el,
+       "ins ((y as (u, _)) :: rest) = if t < u then x :: y :: rest else y :: ins rest",
+       "ins ((y as (u, _)) :: rest) = if t > u then x :: y :: rest else y :: ins rest"),
+    m ("A5", "a functor's fingerprint: the parameter's signature not hashed", "", false, "",
+       [("S129", "a module of another signature was not refused")],
+       ub,
+       "fpBound (w, #bound param); fpEnvInto (w, local', #env param);",
+       ""),
+    m ("A6", "a functor's fingerprint: the result's signature not hashed", "", false, "",
+       [("S130", "a module of another signature was not refused")],
+       ub,
+       "fpBound (w, #bound result); fpEnvInto (w, local', #env result))))",
+       "())))")]
 end

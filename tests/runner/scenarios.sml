@@ -343,6 +343,7 @@ struct
         val () = put c "table/other_key.sml" "signature KEY = sig type t val compare : t * t -> order val toString : t -> string val hash : t -> int end"
         val () = put c "table/other.build" "key_sig.sml table_sig.sml implements Table = other_key.sml list.sml end table.sml main.sml"
         val () = put c "table/plugin-list.build" "key_sig.sml table_sig.sml list.sml"
+        val () = put c "table/inline.build" "inline functor Table end\nkey_sig.sml table_sig.sml implements Table = list.sml end table.sml main.sml"
         val () = Posix.FileSys.symlink {old = fromRoot "lib/basis", new = dir ^ "/select/lib/basis"}
         val () = success (compiler c "select-index" "select" ["--lib", "lib", "--basis-index", "lib/m"])
         val () = success (compiler c "select-index-ops" "select" ["--lib", "lib", "--no-warnings", "--basis-index", "lib/ops"])
@@ -560,6 +561,8 @@ struct
                  andalso String.isSubstring "Mismatch \"the virtual functor Table has no implementation" (#errors result),
                  "a virtual functor with no implementation was not refused: " ^ #errors result) end
     | "virtual-table-two" => buildRefused c "table/two" "two implementations"
+    (* a virtual functor has no body for its applications to copy *)
+    | "virtual-table-inline" => buildRefused c "table/inline" "functor Table is virtual: it has no body for its applications to copy"
     (* an implementation of another parameter's signature, refused at link *)
     | "virtual-table-other" =>
         let val target = #directory c ^ "/tother.rbc"
@@ -606,7 +609,7 @@ struct
                     "selection-by-uses", "install-no-basis", "clean-overlay",
                     "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two",
                     "virtual-table-list", "virtual-table-tree", "virtual-table-cache", "virtual-table-whole", "virtual-table-none",
-                    "virtual-table-two", "virtual-table-other", "virtual-table-plugin", "virtual-table-whole-refused", "bad", "self"]
+                    "virtual-table-two", "virtual-table-inline", "virtual-table-other", "virtual-table-plugin", "virtual-table-whole-refused", "bad", "self"]
   fun copy source destination =
     let val input = BinIO.openIn source
         val output = BinIO.openOut destination

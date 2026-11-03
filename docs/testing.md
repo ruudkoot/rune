@@ -928,6 +928,13 @@ of a corpus sees none of them, so each names the checks that must fail on it and
 what they must say, and the tier fails where one does not;
 `compiler-mutants/cache-control` runs those checks with no mutant, which must
 pass. `make check` holds them to the sources through `compiler-mutants/prepare`.
+A1 to A6 are a virtual or dynamic functor's ABI (the build-system roadmap's
+M21): A1 to A4 make it another -- its version, its calling convention, the
+records' slots in another order, the descriptors in another -- and a module
+of the mutant is refused by a client of `bin/rune` when it loads it (S128 of
+`tests/incremental/SCENARIOS.md`); A5 and A6 take a signature out of the
+fingerprint, and a module of another signature with the same slots is then
+taken (S129, S130).
 The 13 that survived E18:
 
 | Mutant | What it drops | Issue | What became of it |
