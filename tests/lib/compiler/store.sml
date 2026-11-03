@@ -221,6 +221,10 @@ struct
       val () = need (Time.> (age ps, S.hour), "a layer's side file keeps its time")
       val _ = S.sideIn side ([dir], config) "unit@1"
       val () = need (Time.< (age ps, Time.fromSeconds 60), "an overlay's is now")
+      val () = OS.FileSys.setTime (ps, SOME (dayAgo ()))
+      val () = S.touchSide side (dir, config, "unit@1")
+      val () = need (Time.< (age ps, Time.fromSeconds 60), "one a client will want, now")
+      val () = S.touchSide side (dir, config, "unit@2")
     in removeTree dir end
 
   (* trim: what no compile took for longer than the age, then the least

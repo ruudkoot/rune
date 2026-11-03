@@ -18,6 +18,10 @@
    frozen layer is never trimmed nor written, and a limit that is not one is
    refused.
 
+   store-damage: an entry damaged where it still reads, its hashes kept --
+   in its head, so that it stands, or in its first section -- is compiled
+   again, not taken (the mutants C5 and C9).
+
    store-heads: a warm build's cost does not grow with stale entries (E13).
    A project's units are looked up through a store that holds their entries
    alone, and through one where edits since undone left three more under
@@ -229,7 +233,61 @@ struct
                ^ Int.toString clean) (staled = clean)
     end
 
-  val cases = [prefix ^ "place", prefix ^ "trim", prefix ^ "heads"]
+  (* ---- damage ---- *)
+
+  (* Every entry of a project damaged where it still reads, its hashes kept:
+     in its head, so that it still stands, or in its first section; each
+     unit then compiled, not taken, and the build the build without the
+     store; and a damaged Mid, which a build of the units' code does not
+     read, taken by one and not by --whole *)
+  fun damage (s : state) =
+    let
+      fun damaged (what, says) =
+        let
+          val () = fresh s
+          val () = agrees s "first"
+          val hit = List.filter (fn f => CachePlant.damage f what) (cache s)
+          val () = check s ("no entry to damage in its " ^ what) (not (List.null hit))
+          val r = rune s [] (["--units", "--cache-dir", "cache", "--explain-rebuild"] @ words (path s "files") @ ["-o", "w.rbc"])
+          val taken = List.filter (String.isPrefix "rune: from the cache ") (lines (#errors r))
+        in
+          ok s ("a build over damaged entries (" ^ what ^ ")") r;
+          check s (says ^ ": " ^ String.concatWith "; " taken ^ " (" ^ Int.toString (List.length hit) ^ " damaged)")
+                (List.length (compiledBy r) >= List.length hit);
+          agrees s ("after damaged entries (" ^ what ^ ")")
+        end
+      fun whole label =
+        let
+          val w = rune s [] (["--units", "--cache-dir", "cache", "--whole", "--explain-rebuild"] @ words (path s "files") @ ["-o", "w.rbc"])
+          val n = rune s [] (["--units", "--no-cache", "--whole"] @ words (path s "files") @ ["-o", "n.rbc"])
+        in
+          ok s label w;
+          check s (label ^ ": the build differs from one without the store") (same (path s "w.rbc", path s "n.rbc"));
+          w
+        end
+    in
+      damaged ("head", "a damaged head was taken");
+      damaged ("file", "a damaged section was taken");
+      (* a damaged Mid: taken where the units' code is linked, which reads
+         none; compiled again for one program of the units' Mid *)
+      fresh s;
+      agrees s "first";
+      let
+        val hit = List.filter (fn f => CachePlant.damage f "mid") (cache s)
+        val r = rune s [] (["--units", "--cache-dir", "cache", "--explain-rebuild"] @ words (path s "files") @ ["-o", "w.rbc"])
+        val () = check s "no entry with a Mid to damage" (not (List.null hit))
+        val () = ok s "a build over damaged Mids" r
+        val () = check s ("a build of the units' code read a Mid: compiled " ^ String.concatWith " " (compiledBy r))
+                       (List.null (compiledBy r))
+        val () = agrees s "after damaged Mids"
+        val w = whole "--whole over damaged Mids"
+      in
+        check s ("--whole took a damaged Mid: compiled " ^ String.concatWith " " (compiledBy w))
+              (List.length (compiledBy w) >= List.length hit)
+      end
+    end
+
+  val cases = [prefix ^ "place", prefix ^ "trim", prefix ^ "heads", prefix ^ "damage"]
   fun handles name = String.isPrefix prefix name
   fun one (s : state) =
     let val n = #name s
@@ -237,6 +295,7 @@ struct
       if n = prefix ^ "place" then place s
       else if n = prefix ^ "trim" then trims s
       else if n = prefix ^ "heads" then heads s
+      else if n = prefix ^ "damage" then damage s
       else raise Failed ("no check " ^ n)
     end
 end

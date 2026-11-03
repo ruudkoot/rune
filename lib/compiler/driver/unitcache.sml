@@ -393,6 +393,12 @@ struct
   fun pathsIn (dirs : string list, config : string) (identity : string) : (int * int * string) list option =
     S.sideIn paths (dirs, config) identity
 
+  (* a unit's paths, kept in the overlay dir with its entry where the unit
+     is taken: a unit compiled against it reads them only once it changes,
+     which may be after a store trimmed by age has kept its entry and not
+     them (UnitStore.touch) *)
+  fun keepPaths (dir : string, config : string, identity : string) : unit = S.touchSide paths (dir, config, identity)
+
   (* storePaths: a unit's paths kept by its identity, whole or not at all *)
   fun storePaths (dir : string, config : string, identity : string, ps : (int * int * string) list) : unit =
     S.storeSide paths (dir, config, identity, ps)

@@ -769,7 +769,8 @@ stays until the store is trimmed.
 **What keeps it small.** What a compile takes from the overlay -- an entry,
 or a file kept beside the entries -- has its time set to now where it is an
 hour old or more (Go's rule), so that a file's time is when a compile last
-took it, within the hour. Trimming removes from the overlay what no compile
+took it, within the hour; a unit taken keeps the paths to its names so too,
+which a unit compiled against it reads only once it changes. Trimming removes from the overlay what no compile
 has taken for longer than `--cache-max-age DAYS` (7 unless given), then, the
 least recently taken first, what makes it larger than `--cache-max-size
 SIZE` (4G unless given), then the directories that leaves empty, and a
@@ -777,8 +778,10 @@ SIZE` (4G unless given), then the directories that leaves empty, and a
 trims its store after its work is done, where it was last trimmed a day ago
 or more (one stat where it was not), never during a build, and never in a
 child of `-j`, whose parent is still building; `rune --cache-trim` trims it
-now. Another compile may be reading the store as it is trimmed: any failure
-is a miss. An entry gone is compiled again, a key bound or a path gone loads
+now. Within the hour, then, the least recently taken is the first written:
+a size smaller than what builds take may remove what the next build takes,
+which it compiles again. Another compile may be reading the store as it is
+trimmed: any failure is a miss. An entry gone is compiled again, a key bound or a path gone loads
 the unit whole or compiles it, a memo gone does the work again, and a step's
 record gone runs the step; what a compile takes it reads whole first, so
 that nothing is read from the store after it is taken. `make clean` removes

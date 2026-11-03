@@ -88,14 +88,15 @@ struct
   (* in an order of their own, whatever the directory's *)
   fun sortBy (less : 'a * 'a -> bool) (xs : 'a list) : 'a list =
     let
-      fun merge ([], ys) = ys
-        | merge (xs, []) = xs
-        | merge (x :: xs, y :: ys) = if less (y, x) then y :: merge (x :: xs, ys) else x :: merge (xs, y :: ys)
-      fun pairs (a :: b :: rest) = merge (a, b) :: pairs rest
-        | pairs l = l
+      fun merge ([], ys, acc) = List.revAppend (acc, ys)
+        | merge (xs, [], acc) = List.revAppend (acc, xs)
+        | merge (x :: xs, y :: ys, acc) = if less (y, x) then merge (x :: xs, ys, y :: acc) else merge (xs, y :: ys, x :: acc)
+      fun pairs (a :: b :: rest, acc) = pairs (rest, merge (a, b, []) :: acc)
+        | pairs ([l], acc) = List.rev (l :: acc)
+        | pairs ([], acc) = List.rev acc
       fun all [] = []
         | all [l] = l
-        | all ls = all (pairs ls)
+        | all ls = all (pairs (ls, []))
     in all (List.map (fn x => [x]) xs) end
   fun sorted (names : string list) : string list = sortBy (fn (a, b) => a < b) names
 
@@ -436,6 +437,11 @@ struct
   fun readSide (side : 'a side) (dir : string, config : string, name : string) : 'a option =
     readSideAt side {overlay = true} (dir, config, name)
 
+  (* what is kept by name in an overlay, its time kept as if it were read:
+     what a client knows it will want, though it does not read it now *)
+  fun touchSide ({hash, ...} : 'a side) (dir : string, config : string, name : string) : unit =
+    touch (sideFile (hash, dir, config, name))
+
   (* in the first of dirs that has it: a store's overlay, then its layers,
      which are only read *)
   fun sideIn (side : 'a side) (dirs : string list, config : string) (name : string) : 'a option =
@@ -577,31 +583,56 @@ struct
   (* what it found there, and what it removed *)
   type trimmed = {files : int, bytes : LargeInt.int, removed : int, freed : LargeInt.int}
 
-  (* every file under d, with its size and time, no link followed; a file
-     being written left out, and swept where a compile that died left it *)
-  fun filesUnder (d : string) : (string * LargeInt.int * Time.time) list =
+  (* What trim asks of each file of a store: whether it is a directory or a
+     link, which is not followed, and its size and time. One lstat where
+     the program can ask (Rune's own main sets it, as it sets stat), else
+     the questions OS.FileSys answers one by one *)
+  datatype kind = File | Directory | Link
+  val lstat : (string -> kind * Position.int * Time.time) option ref = ref NONE
+  val () = CompilerState.cellRoot ("UnitStore.lstat", lstat)
+  fun kindOf (p : string) : kind * Position.int * Time.time =
+    case !lstat of
+      SOME f => f p
+    | NONE =>
+        if OS.FileSys.isLink p then (Link, Position.fromInt 0, Time.zeroTime)
+        else if OS.FileSys.isDir p then (Directory, Position.fromInt 0, Time.zeroTime)
+        else (File, OS.FileSys.fileSize p, OS.FileSys.modTime p)
+
+  (* every file under d, with its size and time, onto acc; a file being
+     written left out, and swept where a compile that died left it. Its
+     paths are d's with / and a name, as every system Rune runs on takes *)
+  fun filesUnder (d : string, acc : (string * LargeInt.int * Time.time) list) : (string * LargeInt.int * Time.time) list =
     List.foldl (fn (n, acc) =>
-                  let val p = join (d, n)
+                  let val p = d ^ "/" ^ n
                   in
-                    (if OS.FileSys.isLink p then acc
-                     else if OS.FileSys.isDir p then filesUnder p @ acc
-                     else if String.isSubstring ".tmp-" n then (sweep p; acc)
-                     else (p, Position.toLarge (OS.FileSys.fileSize p), OS.FileSys.modTime p) :: acc)
+                    (case kindOf p of
+                       (Directory, _, _) => filesUnder (p, acc)
+                     | (Link, _, _) => acc
+                     | (File, size, time) =>
+                         if String.isSubstring ".tmp-" n
+                         then ((if Time.< (Time.+ (time, hour), Time.now ()) then OS.FileSys.remove p else ()); acc)
+                         else (p, Position.toLarge size, time) :: acc)
                     handle OS.SysErr _ => acc
                   end)
-               [] (listDir d)
+               acc (listDir d)
 
-  (* the directories under d that are empty, removed, deepest first; d
-     stays. One a compile has just made is made again by it, or what it
-     would have written there is not kept *)
-  fun pruneUnder (d : string) : unit =
-    List.app (fn n => let val p = join (d, n)
-                      in
-                        if (OS.FileSys.isDir p andalso not (OS.FileSys.isLink p)) handle OS.SysErr _ => false
-                        then (pruneUnder p; OS.FileSys.rmDir p handle OS.SysErr _ => ())
-                        else ()
-                      end)
-             (listDir d)
+  (* the directories that held what was removed, removed where that left
+     them empty, and so on up, deepest first; never the store's own. One a
+     compile has just made is made again by it, or what it would have
+     written there is not kept *)
+  fun prune (dir : string, files : string list) : unit =
+    let
+      fun parents ps = List.foldl (fn (p, m) => let val d = OS.Path.dir p
+                                                in if d = dir orelse d = "" then m else StringMap.insert (m, d, ()) end)
+                                  StringMap.empty ps
+      fun up m =
+        if StringMap.isEmpty m then ()
+        else
+          let
+            val deepest = sortBy (fn (a, b) => size a > size b) (StringMap.listKeys m)
+            val gone = List.filter (fn d => (OS.FileSys.rmDir d; true) handle OS.SysErr _ => false) deepest
+          in up (parents gone) end
+    in up (parents files) end
 
   (* The file whose time says when the overlay dir was last trimmed: in
      memo/units, beside the memos of builds, as nothing that is not an
@@ -616,18 +647,20 @@ struct
   fun trim ({age, size} : limits) (dir : string) : trimmed =
     let
       val now = Time.now ()
-      val stamp = trimmedFile dir
-      val files = List.filter (fn (p, _, _) => p <> stamp) (filesUnder dir)
+      val stamp = dir ^ "/memo/units/trimmed"
+      val files = List.filter (fn (p, _, _) => p <> stamp) (filesUnder (dir, []))
       val zero = LargeInt.fromInt 0
       val total = List.foldl (fn ((_, n, _), t) => LargeInt.+ (t, n)) zero files
-      fun gone p = (OS.FileSys.remove p; true) handle OS.SysErr _ => false
+      val removedFiles = ref []
+      fun gone p = (OS.FileSys.remove p; removedFiles := p :: !removedFiles; true) handle OS.SysErr _ => false
       val old = case age of
                   NONE => (fn _ => false)
-                | SOME a => (fn (_, _, t) => Time.< (Time.+ (t, a), now))
+                | SOME a => let val cutoff = Time.- (now, a) handle _ => Time.zeroTime
+                            in fn (_, _, t) => Time.< (t, cutoff) end
       val (removed, freed) =
         List.foldl (fn (f as (p, n, _), (k, b)) => if old f andalso gone p then (k + 1, LargeInt.+ (b, n)) else (k, b))
                    (0, zero) files
-      val young = sortBy (fn ((_, _, a), (_, _, b)) => Time.< (a, b)) (List.filter (not o old) files)
+      val left = LargeInt.- (total, freed)
       fun shrink ([], k, b, _) = (k, b)
         | shrink ((p, n, _) :: rest, k, b, left) =
             case size of
@@ -635,9 +668,14 @@ struct
                             else if gone p then shrink (rest, k + 1, LargeInt.+ (b, n), LargeInt.- (left, n))
                             else shrink (rest, k, b, left)
             | NONE => (k, b)
-      val (removed, freed) = shrink (young, removed, freed, LargeInt.- (total, freed))
+      val (removed, freed) =
+        case size of
+          SOME limit => if LargeInt.<= (left, limit) then (removed, freed)
+                        else shrink (sortBy (fn ((_, _, a), (_, _, b)) => Time.< (a, b)) (List.filter (not o old) files),
+                                     removed, freed, left)
+        | NONE => (removed, freed)
     in
-      pruneUnder dir;
+      prune (dir, !removedFiles);
       {files = List.length files, bytes = total, removed = removed, freed = freed}
     end
 

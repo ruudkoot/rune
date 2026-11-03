@@ -927,6 +927,11 @@ struct
         linkParts := String.concatWith "\000" (sum :: name :: List.map (fn (f, _) => UnitBasis.movedTo (was, name, others) f) others)
                      :: !linkParts
       (* the keys a unit binds, kept by its identity for a light hit later *)
+      (* a unit taken: the paths to its names kept with its entry
+         (UnitCache.keepPaths), which a unit compiled against it needs once
+         it changes, and which a store trimmed by age would otherwise lose *)
+      fun keepPaths (identity : string) : unit =
+        case cache of SOME (dir, config) => UnitCache.keepPaths (dir, config, identity) | NONE => ()
       fun storeBinds (l : UnitBasis.result) : unit =
         case (lazyOn, cache) of
           (true, SOME (dir, config)) => UnitCache.storeBinds (dir, config, #identity (#unit l), UnitBasis.bindKeys l)
@@ -1040,6 +1045,7 @@ struct
                if !Options.noWarnings then () else UnitCache.giveWarnings (warnings, was, name);
                fixity := Fixity.extend (!fixity, #directives l);
                logDeclared l;
+               keepPaths identity;
                linkPart (sum, was, name, others);
                SOME ((code, keptPickle pickle) :: acc, false)
              end)
@@ -1172,6 +1178,7 @@ struct
              fixity := Fixity.extend (!fixity, #directives l);
              UnitBasis.bind l;
              logDeclared l;
+             keepPaths (#identity (#unit l));
              if bindsMissing then storeBinds l else ();
              if not lazyOn then () else if plain then linkPart (sum, was, name, others) else linkable := false;
              ((fn () => u, keptPickle pickle) :: acc, false))
