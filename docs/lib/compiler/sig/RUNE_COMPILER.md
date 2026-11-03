@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 102 of 102 entries documented |
+| Documentation | 105 of 105 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -62,6 +62,7 @@ sig
     val <a href="#val-syntax.pieces">pieces</a> : t -&gt; piece list
     val <a href="#val-syntax.events">events</a> : t -&gt; event list
     val <a href="#val-syntax.diagnostics">diagnostics</a> : t -&gt; diagnostic list
+    val <a href="#val-syntax.names">names</a> : t -&gt; {<a href="#fld-syntax.names.declares">declares</a> : {kind : string, name : string} list, <a href="#fld-syntax.names.uses">uses</a> : {kind : string, name : string} list}
     val <a href="#val-syntax.work">work</a> : t -&gt; work
   end
   structure <a href="#str-workspace">Workspace</a> :
@@ -69,6 +70,7 @@ sig
     type <a href="#type-workspace.t">t</a>
     type <a href="#type-workspace.target">target</a> = {<a href="#fld-workspace.target.name">name</a> : string, <a href="#fld-workspace.target.build">build</a> : string, <a href="#fld-workspace.target.options">options</a> : string list}
     val <a href="#val-workspace.find">find</a> : {<a href="#fld-workspace.find.file">file</a> : string, <a href="#fld-workspace.find.windows">windows</a> : bool} -&gt; t option
+    val <a href="#val-workspace.read">read</a> : {<a href="#fld-workspace.read.file">file</a> : string, <a href="#fld-workspace.read.text">text</a> : string, <a href="#fld-workspace.read.windows">windows</a> : bool} -&gt; t
     val <a href="#val-workspace.candidates">candidates</a> : {<a href="#fld-workspace.candidates.file">file</a> : string, <a href="#fld-workspace.candidates.windows">windows</a> : bool} -&gt; string list
     val <a href="#val-workspace.root">root</a> : t -&gt; string
     val <a href="#val-workspace.libraryroots">libraryRoots</a> : t -&gt; string list
@@ -114,6 +116,7 @@ sig
     val <a href="#val-analysis.close">close</a> : t -&gt; unit
     val <a href="#val-analysis.observe">observe</a> : t * (observation-&gt;unit) option -&gt; unit
     val <a href="#val-analysis.focus">focus</a> : t * string list option -&gt; unit
+    val <a href="#val-analysis.share">share</a> : t * bool -&gt; unit
     val <a href="#val-analysis.compact">compact</a> : t -&gt; unit
     val <a href="#val-analysis.check">check</a> : t * {<a href="#fld-analysis.check.project">project</a>:Project.t option,<a href="#fld-analysis.check.inputs">inputs</a>:input list,<a href="#fld-analysis.check.cancelled">cancelled</a>:unit-&gt;bool} -&gt; snapshot
     val <a href="#val-analysis.checkpoint">checkpoint</a> : t -&gt; checkpoint
@@ -537,6 +540,24 @@ val diagnostics : t -> diagnostic list
 
 `diagnostics snapshot` returns parse/lexical errors in its own source.
 
+#### <a name="val-syntax.names"></a>`names`
+
+```sml
+val names : t -> {declares : {kind : string, name : string} list, uses : {kind : string, name : string} list}
+```
+
+`names snapshot` returns the module-level names a unit declares at its
+top level, and those it uses but does not declare.
+
+They are read from its syntax as `rune --deps` reads them; kind is
+structure, signature, functor or type. A name a unit's code reaches
+after an `open` is not among them (docs/units.md, Well-formed units).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-syntax.names.declares"></a>`declares` | `{kind : string, name : string} list` |  |
+| <a name="fld-syntax.names.uses"></a>`uses` | `{kind : string, name : string} list` |  |
+
 #### <a name="val-syntax.work"></a>`work`
 
 ```sml
@@ -589,6 +610,23 @@ well formed is reported through Failed.
 | --- | --- | --- |
 | <a name="fld-workspace.find.file"></a>`file` | `string` |  |
 | <a name="fld-workspace.find.windows"></a>`windows` | `bool` |  |
+
+#### <a name="val-workspace.read"></a>`read`
+
+```sml
+val read : {file : string, text : string, windows : bool} -> t
+```
+
+`read {file, text, windows}` reads text as the root file at file, as
+[`find`](#val-workspace.find) reads one on disk: one an editor holds unsaved.
+
+A root file that is not well formed is reported through Failed.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-workspace.read.file"></a>`file` | `string` |  |
+| <a name="fld-workspace.read.text"></a>`text` | `string` |  |
+| <a name="fld-workspace.read.windows"></a>`windows` | `bool` |  |
 
 #### <a name="val-workspace.candidates"></a>`candidates`
 
@@ -1106,6 +1144,21 @@ A check keeps the syntax, the facts and the occurrences of an open
 file's unit. Another's are dropped, and worked out again at its place
 when a query asks for them. NONE, the default, keeps every file open;
 while some are closed, occurrences and facts hold no closed unit's.
+
+#### <a name="val-analysis.share"></a>`share`
+
+```sml
+val share : t * bool -> unit
+```
+
+`share (context, true)` lets a context take a library's units from the
+other contexts that share.
+
+A library's unit is taken from what another such context checked under
+the same configuration, where the unit's usages hold where the context
+reaches it, as a compile takes a cache's entry; the context leaves its
+own for the others. Two builds over one library then elaborate its
+units once. Off by default.
 
 #### <a name="val-analysis.compact"></a>`compact`
 

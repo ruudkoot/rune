@@ -1,0 +1,21 @@
+(* What the language server makes of a tree's files: contexts and prompts,
+   and the implicit library of a file in no build (D26). *)
+libraries compiler lsp digest json jsonrpc unicode end
+files
+  ../../src/lsp/profile.sml
+  ../../src/lsp/documents.sml
+  ../../src/lsp/sync.sml
+  ../../src/lsp/workspace.sml
+  ../../src/lsp/implicit.sml
+  ../../src/lsp/projects.sml
+  ../../src/lsp/worker-wire.sml
+  ../../src/lsp/worker-model.sml
+  ../../src/lsp/structure.sml
+  ../../src/lsp/outline.sml
+  ../../src/lsp/tokens.sml
+  ../../src/lsp/hints.sml
+  ../../src/lsp/completion.sml
+  ../../src/lsp/worker-analysis.sml
+  contexts.sml
+  ../../src/main/lsp-contexts-main.sml
+end

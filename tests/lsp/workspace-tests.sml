@@ -55,7 +55,8 @@ struct
         val rejected=((W.configure (workspace,Json.Object [("sourceMode",Json.String "invalid")]);false) handle W.Invalid _ => true)
     in check ("configuration is atomic",rejected andalso W.generation workspace=generation) end)
   (* A root file's targets come first, named, and what discovery finds beside
-     them stays; a folder inside a workspace goes by discovery alone. *)
+     them stays, whether the client's folder holds the root file or is
+     inside the workspace (M3's root above a folder). *)
   fun namedTargets () = fixture (fn root =>
     let val ()=List.app OS.FileSys.mkDir [root ^ "/src",root ^ "/src/inner"]
         val a=root ^ "/src/a.sml"
@@ -72,8 +73,16 @@ struct
         val ()=check ("a target's options",case found of first :: _ => #build first=uri (root ^ "/src/main.build") | [] => false)
         val inner=W.new {platform=U.Posix,lib="lib"}
         val ()=W.setRoots (inner,[uri (root ^ "/src/inner")])
-    in check ("a root file above a folder names no target of it",
-         List.map #target (W.contexts (inner,documents,uri (root ^ "/src/inner/b.sml")))=[uri (root ^ "/src/inner/b.build")]) end)
+        val ()=check ("a folder inside a workspace still has its own builds",
+          List.map #target (W.contexts (inner,documents,uri (root ^ "/src/inner/b.sml")))=[uri (root ^ "/src/inner/b.build")])
+        val below=W.new {platform=U.Posix,lib="lib"}
+        val ()=W.setRoots (below,[uri (root ^ "/src")])
+        val ()=check ("a root file above the client's folder gives its targets",
+          List.map #target (W.contexts (below,documents,uri a))=["main",uri (root ^ "/src/other.build")])
+        val _=D.openDocument (documents,{uri=uri (root ^ "/rune.workspace"),languageId="rune-build",version=1,
+          text="roots lib end\ntarget alternative = src/other.build end\n"})
+    in check ("a root file open in the editor is read as it stands, unsaved",
+         List.map #target (W.contexts (workspace,documents,uri a))=["alternative",uri (root ^ "/src/main.build")]) end)
   fun shortNames ()=List.app (fn (name,short) => check (name ^ " shows as " ^ short,W.shortName (U.Posix,name)=short))
     [("file:///project/one.build","one.build"),("file:///a%20b/two%20words.build","two words.build"),
      ("rune","rune"),("loose source","loose source"),("untitled:note","untitled:note")]

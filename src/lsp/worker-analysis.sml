@@ -32,9 +32,11 @@ struct
     trustedRoots:string list,validated:Time.time}
   (* What planning a file's check found, and what says that it holds: the state
      it was given, the stamps of what it read and the text of what of that is
-     open. *)
+     open. implicit: the build of a file in no build, which no file holds
+     (RuneLspImplicit). decided: whether several contexts have been compared. *)
   type planned={serial:int,key:string,stamps:(string*string) list,texts:(string*string) list,
-    configuration:W.settings,selection:W.selection,contexts:W.context list}
+    configuration:W.settings,selection:W.selection,contexts:W.context list,
+    implicit:{file:string,text:string} option,decided:bool}
   datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref,
     progress:(V.value->unit) ref,diagnosticCache:diagnosticCache option ref,plans:planned list ref,planSerial:int ref,
     symbolMemo:(string*Json.value list) W.table ref}
@@ -74,6 +76,8 @@ struct
       let val compiler=C.session {lib=lib,flags=flags}
           val context={key=key,compiler=compiler,analysis=A.create (compiler,{context=key}),bytes=ref 0,
             projects=ref [],texts=ref (Array.fromList []),latest=ref NONE,keys=ref (Array.fromList [])}:context
+          (* two builds over one library check its units once (D26) *)
+          val ()=A.share (#analysis context,true)
           val reportedChecked=ref ~1
           val ()=A.observe(#analysis context,SOME(fn event:A.observation=>
             let val report= #phase event<>"unit-frozen" orelse #checked event<> !reportedChecked
@@ -223,7 +227,26 @@ struct
   fun planKey (state,uri,documents)=V.encode (V.Array [V.Bytes uri,
     V.Array (List.map (fn snapshot:D.snapshot => V.Bytes (#uri snapshot)) (D.all documents)),
     V.Object (List.filter (fn (name,_) => not (List.exists (fn other => other=name) ["documents","generation","inputGeneration"])) (V.object state))])
-  fun buildText (snapshot:D.snapshot)=OS.Path.file (#uri snapshot)="MANIFEST" orelse String.isSuffix ".build" (#uri snapshot)
+  fun buildText (snapshot:D.snapshot)=OS.Path.file (#uri snapshot)="MANIFEST" orelse OS.Path.file (#uri snapshot)="rune.workspace"
+    orelse String.isSuffix ".build" (#uri snapshot)
+  (* The implicit library of a file in no build (D26), over its directory, with
+     the names it uses looked up in its workspace: the workspace's root, or
+     else the client's folder that holds it, or else its directory *)
+  fun implicitFor (workspace as W.Workspace {platform,lib,roots,...},documents,uri) =
+    case (U.native (platform,U.parse uri),D.snapshot (documents,uri)) of
+      (SOME {path,key},SOME snapshot) =>
+        let val found=W.rootFileIn (platform,documents) path handle C.Failed _ => NONE
+            val folder=List.find (fn root => case W.nativeKey platform root of SOME root => W.below (root,key) | NONE => false) (!roots)
+            val root=case (found,folder) of (SOME found,_) => C.Workspace.root found
+              | (NONE,SOME folder) => W.filePath platform folder
+              | (NONE,NONE) => W.directory platform path
+            val {build,text,read,...}=RuneLspImplicit.context {platform=platform,
+              lib=getOpt (#libraryRoot (W.configurationFor (workspace,uri)),lib),
+              libraryRoots=case found of SOME found => C.Workspace.libraryRoots found | NONE => [],
+              root=root,file=path,text=L.text (#content snapshot)}
+        in Option.map (fn context => (context,{file=build,text=text},read))
+             (W.implicitContext (workspace,documents,uri,{build=build,text=text})) end
+    | _ => NONE
   (* the plan of a file: what enrich and the choice of a context found, which
      hold while nothing they read has changed, whatever the file's text *)
   fun plan (worker as Worker {plans,planSerial,...},state,workspace as W.Workspace {platform,...},documents,uri,cancelled) =
@@ -240,10 +263,17 @@ struct
            val {read={files,sources,directories},...}=RuneLspProjects.enrich (workspace,documents,cancelled)
            val configuration=W.configurationFor (workspace,uri)
            val (selection,contexts)=W.resolve (workspace,documents,uri)
+           (* a file in no build has the implicit library of its directory *)
+           val (selection,contexts,implicit,implicitRead)=case selection of
+               W.Loose => (case implicitFor (workspace,documents,uri) of
+                   SOME (context,overlay,read) => (W.Selected context,[context],SOME overlay,read)
+                 | NONE => (W.Loose,[],NONE,[]))
+             | _ => (selection,contexts,NONE,[])
            fun unique items=List.foldl (fn (item,all) => if List.exists (fn other => other=item) all then all else item::all) [] items
            val own=case U.native (platform,U.parse uri) of NONE => [] | SOME {path,...} => W.directories (workspace,path)
-           val read=unique (files @ sources @ directories @ own @ List.concat (List.map (fn context:W.context =>
-             List.map #file (C.Project.inputs (#project context))) contexts))
+           val read=unique (files @ sources @ directories @ own @ implicitRead @ List.concat (List.map (fn context:W.context =>
+             List.filter (fn file => not (isSome implicit) orelse file<> #file (valOf implicit))
+               (List.map #file (C.Project.inputs (#project context)))) contexts))
            fun native (snapshot:D.snapshot)=Option.map #path (U.native (platform,U.parse (#uri snapshot)))
            val texts=List.mapPartial (fn snapshot:D.snapshot =>
              if buildText snapshot orelse (case native snapshot of NONE => false | SOME path =>
@@ -251,25 +281,13 @@ struct
              then SOME (#uri snapshot,textOf snapshot) else NONE) (D.all documents)
            val () =planSerial:= !planSerial+1
            val memo={serial= !planSerial,key=key,stamps=List.map (fn file => (file,stampOf file)) read,texts=texts,
-             configuration=configuration,selection=selection,contexts=contexts}:planned
+             configuration=configuration,selection=selection,contexts=contexts,implicit=implicit,decided=false}:planned
            val all=memo:: !plans
        in plans:=(if List.all settled read then List.take (all,Int.min (8,length all)) else !plans);memo end end
-  fun discover (worker,state,uri,cancelled)=
-    let val (workspace,documents)=M.restore state
-        val {selection,contexts,...}:planned=plan (worker,state,workspace,documents,uri,cancelled)
-        val all=("contexts",V.Array (List.map descriptor contexts))
-    in case selection of W.Loose => V.Object [("kind",V.Bytes "loose"),all]
-       | W.Selected context => V.Object [("kind",V.Bytes "selected"),("context",descriptor context),all]
-       | W.Ambiguous _ => V.Object [("kind",V.Bytes "ambiguous"),all] end
-  fun check (worker as Worker {contexts,views,namespace,...},{state,uri,encoding,capabilities,cancelled}) =
-    let val ()=RuneLspProfile.sample "check-begin" uri 0 0 0
-        val (workspace as W.Workspace {platform,lib,...},documents)=M.restore state
-        val ()=RuneLspProfile.sample "check-restored" uri 0 0 0
-        val planned as {configuration,selection,...}=plan (worker,state,workspace,documents,uri,cancelled)
-        val ()=RuneLspProfile.sample "check-planned" uri 0 0 0
-        val selected=case selection of W.Ambiguous _ => raise ContextPending "select a build context before analysis"
-          | W.Selected context => SOME context | W.Loose => NONE
-        val ()=notify(worker,[("phase",V.Bytes "project-selected"),("file",V.Bytes(case selected of NONE=>uri | SOME context=> #build context)),
+  (* a check of a file in the context selected, or on its own *)
+  fun checkIn (worker as Worker {contexts,views,namespace,...},{state,uri,encoding,capabilities,cancelled},
+               workspace as W.Workspace {platform,lib,...},documents,planned as {configuration,...}:planned,selected:W.context option) =
+    let val ()=notify(worker,[("phase",V.Bytes "project-selected"),("file",V.Bytes(case selected of NONE=>uri | SOME context=> #build context)),
           ("context",V.Bytes(case selected of NONE=>"loose source" | SOME context=> #target context))])
         val target=case selected of NONE => NONE | SOME selected => List.find (fn target:W.target =>
           #build target= #build selected andalso #name target= #target selected) (#targets configuration)
@@ -293,7 +311,8 @@ struct
         val context=context (worker,{key=key,lib=compilerLib,flags=compilerFlags})
         fun native uri=U.native (platform,U.parse uri)
         val overlays=List.mapPartial (fn snapshot:D.snapshot => case native (#uri snapshot) of NONE => NONE
-          | SOME {path,...} => SOME {file=path,text=L.text (#content snapshot)}) (D.all documents)
+          | SOME {path,...} => SOME {file=path,text=L.text (#content snapshot)}) (D.all documents) @
+          (case #implicit planned of SOME overlay => [overlay] | NONE => [])
         (* each open document once, so that an input costs a look at each and
            not a stat of it *)
         val opened=List.map (fn snapshot:D.snapshot => case native (#uri snapshot) of
@@ -344,7 +363,7 @@ struct
              SOME (_,project) => SOME project
            | NONE =>
                let val project=C.Project.read (#compiler context,
-                     {file=W.filePath platform (#build selected),workspace=W.rootFile platform (W.filePath platform (#build selected)),
+                     {file=W.filePath platform (#build selected),workspace=W.rootFileIn (platform,documents) (W.filePath platform (#build selected)),
                       variables=variables,overlays=overlays,windows=platform=U.Windows})
                    val all=(#serial planned,project):: !(#projects context)
                in #projects context:=List.take (all,Int.min (4,length all));SOME project end)
@@ -419,6 +438,66 @@ struct
         val ()=views:=retain (fn view:view=>snapshotBytes(#snapshot view)) all
         val ()=RuneLspProfile.sample "check-viewed" uri 0 0 0
     in view end
+  (* What a file's unit means where a view checked it: each occurrence, where
+     it is and what it resolves to, by paths whole and never by a printed
+     type, which depends on what was selected (E22); and its errors, if it
+     failed. NONE where the check stopped before the unit. *)
+  fun meaning (platform,view:view) =
+    case #activeUnit view of NONE => NONE | SOME unit =>
+      if not (isSome (A.versionOf (#snapshot view,unit))) then NONE else
+      let fun place NONE="-"
+            | place (SOME ({file,start,stop}:A.location))=W.pathKey platform file ^ ":" ^ Int.toString start ^ ":" ^ Int.toString stop
+          val file=case activeSource (view,#uri view) of SOME source => #file source | NONE => ""
+          val uses=List.map (fn occurrence:A.occurrence => String.concatWith "|" [#kind occurrence,
+            String.concatWith "." (#path occurrence @ [#name occurrence]),Int.toString (#start occurrence),Int.toString (#stop occurrence),
+            place (#definition occurrence),place (#declaration occurrence),Bool.toString (#isDefinition occurrence)])
+            (ownOccurrences view)
+          val errors=List.mapPartial (fn diagnostic:C.diagnostic => if #file diagnostic<>file then NONE else
+            SOME (String.concatWith "|" [Int.toString (#start diagnostic),Int.toString (#stop diagnostic),#message diagnostic]))
+            (A.diagnostics (#snapshot view))
+          fun insert (x,[])=[x] | insert (x,y::rest)=if x<=y then x::y::rest else y::insert (x,rest)
+      in SOME (List.foldl insert [] uses @ errors) end
+  (* Several contexts (D26): those that do not reach the file go, and a choice
+     is asked for only where those left differ in what the file's names
+     resolve to. Each is checked, the first last, so that it is the one kept;
+     the answer holds as long as the plan does. *)
+  fun decide (worker as Worker {plans,...},args as {cancelled,...},workspace as W.Workspace {platform,...},documents,planned:planned) =
+    case #selection planned of
+      W.Ambiguous contexts => if #decided planned then planned else
+        let fun meaningIn context=(meaning (platform,checkIn (worker,args,workspace,documents,planned,SOME context)))
+              handle C.Failed _ => NONE | Fail _ => NONE | IO.Io _ => NONE | OS.SysErr _ => NONE
+            val outcomes=List.rev (List.map (fn context => (context,meaningIn context)) (List.rev contexts))
+            val reaching=List.filter (isSome o #2) outcomes
+            val (selection,kept)=case reaching of
+                [] => (W.Selected (hd contexts),contexts)
+              | (first,found)::rest =>
+                  if List.all (fn (_,other) => other=found) rest then (W.Selected first,List.map #1 reaching)
+                  else (W.Ambiguous (List.map #1 reaching),List.map #1 reaching)
+            val memo={serial= #serial planned,key= #key planned,stamps= #stamps planned,texts= #texts planned,
+              configuration= #configuration planned,selection=selection,contexts=kept,implicit= #implicit planned,decided=true}:planned
+            val ()=notify (worker,[("phase",V.Bytes "contexts-compared"),("file",V.Bytes (#uri args)),
+              ("contexts",V.Integer (IntInf.fromInt (length contexts))),("reaching",V.Integer (IntInf.fromInt (length reaching)))])
+        in plans:=List.map (fn other:planned => if #serial other= #serial memo then memo else other) (!plans);memo end
+    | _ => planned
+  fun resolved (worker,args as {state,uri,cancelled,...},workspace,documents)=
+    decide (worker,args,workspace,documents,plan (worker,state,workspace,documents,uri,cancelled))
+  fun check (worker,args as {state,uri,...}) =
+    let val ()=RuneLspProfile.sample "check-begin" uri 0 0 0
+        val (workspace,documents)=M.restore state
+        val ()=RuneLspProfile.sample "check-restored" uri 0 0 0
+        val planned=resolved (worker,args,workspace,documents)
+        val ()=RuneLspProfile.sample "check-planned" uri 0 0 0
+        val selected=case #selection planned of W.Ambiguous _ => raise ContextPending "select a build context before analysis"
+          | W.Selected context => SOME context | W.Loose => NONE
+    in checkIn (worker,args,workspace,documents,planned,selected) end
+  fun discover (worker,state,uri,cancelled)=
+    let val (workspace,documents)=M.restore state
+        val {selection,contexts,...}:planned=resolved (worker,{state=state,uri=uri,encoding=LspProtocol.Utf16,
+          capabilities=Json.Object [],cancelled=cancelled},workspace,documents)
+        val all=("contexts",V.Array (List.map descriptor contexts))
+    in case selection of W.Loose => V.Object [("kind",V.Bytes "loose"),all]
+       | W.Selected context => V.Object [("kind",V.Bytes "selected"),("context",descriptor context),all]
+       | W.Ambiguous _ => V.Object [("kind",V.Bytes "ambiguous"),all] end
   fun find (Worker {views,...},id)=List.find (fn view:view => #id view=id) (!views)
   fun documentDiagnostics (view:view,{uri,previous}) =
     let val all=diagnostics view
@@ -459,29 +538,34 @@ struct
         val uris=unique ((if transient then [] else List.map #uri (D.all documents)) @ uris)
         val captured=M.capture (workspace,documents)
         fun contextKey (context:W.context)= #build context ^ "#" ^ #target context ^ ":" ^ C.Project.fingerprint (#project context)
+        (* a sweep covers every file, and asks no one to choose: a file with
+           several contexts is checked in the first (D26) *)
         fun group (uri,groups) =
           if cancelled () then raise A.Cancelled else
-          case W.select (workspace,documents,uri) of W.Ambiguous _ => groups
-          | selected =>
-            let val key=case selected of W.Loose => "loose:" ^ uri | W.Selected context => contextKey context | _ => ""
-                val ()=case selected of W.Selected context=>List.app(fn input:C.Project.input=>
-                  watch(#file input,#mode input,#text input))(C.Project.inputs(#project context)) | _=>()
-                val ordinal=case selected of W.Selected context => SOME (#ordinal context) | _ => NONE
-                fun insert []=[(key,[(uri,ordinal)])]
-                  | insert ((prior,items)::rest)=if prior=key then (prior,items @ [(uri,ordinal)])::rest
-                    else (prior,items)::insert rest
+            let val selected=case W.select (workspace,documents,uri) of W.Selected context => SOME context
+                  | W.Ambiguous (first::_) => SOME first | _ => NONE
+                val key=case selected of NONE => "loose:" ^ uri | SOME context => contextKey context
+                val ()=case selected of SOME context=>List.app(fn input:C.Project.input=>
+                  watch(#file input,#mode input,#text input))(C.Project.inputs(#project context)) | NONE=>()
+                val ordinal=Option.map #ordinal selected
+                fun insert []=[(key,(selected,[(uri,ordinal)]))]
+                  | insert ((prior,(context,items))::rest)=if prior=key then (prior,(context,items @ [(uri,ordinal)]))::rest
+                    else (prior,(context,items))::insert rest
             in insert groups end
         val groups=List.foldl group [] uris
         val ()=notify(worker,[("phase",V.Bytes "workspace-planned"),("file",V.Bytes ""),
           ("contexts",V.Integer(IntInf.fromInt(length groups)))])
         val contextIndex=ref 0
-        fun one (_,[]) = []
-          | one (_,(items as (uri,_)::_)) =
+        fun one (_,(_,[])) = []
+          | one (_,(selected,items as (uri,_)::_)) =
               let val ()=if transient then clearAnalysis worker else ()
                   val ()=contextIndex:= !contextIndex+1
                   val ()=notify(worker,[("phase",V.Bytes "workspace-context-start"),("file",V.Bytes uri),
                     ("contextIndex",V.Integer(IntInf.fromInt(!contextIndex)))])
-                  val view=check (worker,{state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled})
+                  val args={state=captured,uri=uri,encoding=encoding,capabilities=capabilities,cancelled=cancelled}
+                  val view=case selected of NONE => check (worker,args) | SOME context =>
+                    let val (workspace,documents)=M.restore captured
+                    in checkIn (worker,args,workspace,documents,plan (worker,captured,workspace,documents,uri,cancelled),SOME context) end
                   val ()=List.app(fn source:source=>watch(#file source,#mode source,#text source))(#sources view)
                   fun result (uri,ordinal)=
                     if cancelled () then raise A.Cancelled else

@@ -96,12 +96,13 @@ struct
     let val (final,before') = List.partition (fn e : entry => #when e = BasisManifest.Final) selected
     in {groups=groups before',final=final,scopes=scopes} end
 
-  fun select {lib,libraries,mentioned,building} : plan =
+  (* view: a build's view of the Basis Library, if it has one (D12) *)
+  fun select {lib,libraries,mentioned,building,view} : plan =
     case lib of
       NONE => if null libraries then {groups=[],final=[],scopes=BasisManifest.noScopes ""} else raise Fail "libraries require a library root"
     | SOME root =>
         let
-          val found = candidates {root=root,libraries=libraries,building=building,view=NONE}
+          val found = candidates {root=root,libraries=libraries,building=building,view=view}
           val scopes = #scopes found
           (* a clash is an error here as in a compile (D9) *)
           val () = if not (#scoped scopes) then ()

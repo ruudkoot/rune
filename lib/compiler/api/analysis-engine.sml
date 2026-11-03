@@ -41,7 +41,8 @@ struct
      that every place stands. stamps: of the files the libraries were read
      from. paths: of the units no longer in a session, which a pickle that
      holds by its usages still names *)
-  type state={serial:int,kept:kept StringMap.map,order:string list,opens:string list,complete:bool,planned:(CompilerProject.step list*string list*string option) option,
+  type state={serial:int,kept:kept StringMap.map,order:string list,opens:string list,complete:bool,
+    planned:(CompilerProject.step list*string list*string option*string option) option,
     prelude:CompilerPrelude.plan option,units:string list,libraryNames:string StringMap.map,
     libraries:(BasisManifest.entry*string) list,stamps:(string*string) list,
     names:(Source.mode*string*unit StringMap.map) StringMap.map,paths:(int*int*string) list StringMap.map}
@@ -62,15 +63,33 @@ struct
   (* a compiler state whose units stay loaded; base: its tables as a walk begins *)
   datatype world=World of {owner:CompilerState.session,
     base:(SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map*Overload.entry IntMap.map) option ref}
-  (* doomed: an exception left the world's tables half written *)
+  (* doomed: an exception left the world's tables half written. shares:
+     whether a library's units are taken from what another session left
+     (shared) *)
   datatype session=Session of {state:state ref,world:world option ref,config:CompilerSession.config,closed:bool ref,
-    observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref,walks:int ref}
+    observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref,walks:int ref,shares:bool ref}
+  (* What the sessions that share have left of the libraries' units, by name,
+     with the configuration they were elaborated in: a unit of a library is
+     the same unit in two builds over it (D3), and is taken in a session that
+     has not held it as a walk takes a unit, where its usages hold (D26, two
+     builds over one library). Each is kept without its place, which is a
+     world's. *)
+  val shared=ref StringMap.empty : (CompilerSession.config*kept) StringMap.map ref
   exception Cancelled
   (* a query has what it asked for once its unit is elaborated *)
   exception Answered
   (* an identity moved where nothing was to walk *)
   exception NeedWalk
-  fun new config=Session {state=ref noState,world=ref NONE,config=config,closed=ref false,observer=ref NONE,focus=ref NONE,doomed=ref false,walks=ref 0}
+  (* A unit that does not check, with every error of it that is independent of
+     the others, as a compile reports them (Elaborate.recover; docs/units.md,
+     Errors), and what it holds where it was elaborated past them, which a
+     question about the unit asks: the walk stops after it *)
+  exception UnitFailed of entry option * CompilerSession.diagnostic list
+  (* the errors the unit being elaborated has reported and gone on past *)
+  fun keptErrors ()=List.mapPartial (fn (severity,span,message) =>
+    if severity="error" then SOME (CompilerSession.sourceError ("error",span,message)) else NONE) (List.rev (!Error.kept))
+  fun new config=Session {state=ref noState,world=ref NONE,config=config,closed=ref false,observer=ref NONE,focus=ref NONE,doomed=ref false,
+    walks=ref 0,shares=ref false}
   fun dropWorld (Session {world,...})=(Option.app (fn World {owner,...} => CompilerState.close owner) (!world);world:=NONE)
   fun close (session as Session {closed,state,...})=(closed:=true;state:=noState;dropWorld session)
   (* a state whose units must load again *)
@@ -81,7 +100,7 @@ struct
   (* a session of its own over a state: what a query of an old snapshot, or
      one whose context has closed, walks through; nothing in it is to be kept open *)
   fun over (state,config)=Session {state=ref (unplaced (state,#serial state)),world=ref NONE,config=config,closed=ref false,
-    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0}
+    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0,shares=ref false}
   (* a state taken back: this session's earlier one *)
   fun restore (session as Session {state=current,...},saved:state)=
     (dropWorld session;current:=unplaced (saved,#serial (!current)+1))
@@ -194,10 +213,12 @@ struct
   (* units: the logical name of each of sources, as rune gives them
      (Workspace), its libraries' first, so that a unit is the same name in
      analysis and in a build. building: the build file checked, which a
-     library's header may name a friend (CompilerPrelude.select). opening:
-     the unit query names is wanted whole. *)
-  fun checkWith (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed,walks},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
-                 frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option,opening:bool) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads) =>
+     library's header may name a friend (CompilerPrelude.select). view: the
+     build's view of the Basis Library, if it has one (D12), which the
+     selection takes as a compile does. opening: the unit query names is
+     wanted whole. *)
+  fun checkWith (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed,walks,shares},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
+                 frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option,view:string option,opening:bool) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads) =>
     let val {lib,libraries,target,allowPrim,...}=config
         val old= !saved
         val ()=CompilerSettings.target:=target
@@ -247,8 +268,9 @@ struct
              | NONE => scopeEnv:=SOME (width,env,!Elaborate.sigs,!Elaborate.funs) end)
         fun poll ()=if !closed then raise CompilerSession.Closed else if cancelled () then raise Cancelled else ()
         val ()=poll ()
-        (* an analysis makes no code: no copy of a functor's body (D15) *)
-        val ()=(Error.keep:=true;Error.silent:=true;Error.kept:=[];Error.errors:=0;Elaborate.recover:=false;Elaborate.makesCode:=false)
+        (* an analysis makes no code: no copy of a functor's body (D15); and
+           it goes past a declaration that fails, as a compile does *)
+        val ()=(Error.keep:=true;Error.silent:=true;Error.kept:=[];Error.errors:=0;Elaborate.recover:=true;Elaborate.makesCode:=false)
         (* what the editor's types read of each unit, kept (CompilerNodeTypes) *)
         val ()=Elaborate.lintRecords:=true
         val env=ref Env.initial
@@ -264,9 +286,11 @@ struct
         fun observe phase file items=Option.app(fn f=>f {phase=phase,file=file,checked= !checked,reused= !reused,items=items})(!observer)
         val ()=observe "analysis-start" "" (length sources)
         val samePlan=case #planned old of NONE => false
-          | SOME (priorSteps,priorLibraries,_) => priorLibraries=extraLibraries andalso sameSteps (priorSteps,steps)
-        (* what the libraries are chosen by besides: the build checked, whose friends see more *)
-        val sameBuilding=case #planned old of NONE => false | SOME (_,_,priorBuilding) => priorBuilding=building
+          | SOME (priorSteps,priorLibraries,_,_) => priorLibraries=extraLibraries andalso sameSteps (priorSteps,steps)
+        (* what the libraries are chosen by besides: the build checked, whose
+           friends see more, and its view of the Basis Library *)
+        val sameBuilding=case #planned old of NONE => false
+          | SOME (_,_,priorBuilding,priorView) => priorBuilding=building andalso priorView=view
         val ()=Source.overlays:=StringMap.fromList (List.map (fn source => (#file source,#text source)) (frozen @ sources))
         fun replacement (beforeText,afterText) =
           let val beforeSize=size beforeText
@@ -314,6 +338,7 @@ struct
               (* what a function's name is looked for in, and a position's line *)
               val ()=Source.register (Source.fromStringIn (mode,file,text))
               val ()=Elaborate.forgetLintRecords ()
+              val ()=(Error.kept:=[];Error.errors:=0)
               val firstId= !Ast.nextId
               val ()=(observe "unit-start" file (size text);poll ())
               val ((syntaxTree,syntax,outgoing),usages)=Usage.record (fn () =>
@@ -326,7 +351,10 @@ struct
                       | NONE => CompilerSyntax.parse {file=file,text=text,mode=mode,orPatterns=false,fixity= !fixity}
                     val ()=observe "unit-parsed" file (size text)
                     val ()=if keepFacts then attempted:=SOME (name,syntaxTree) else ()
-                    val ()=case CompilerSyntax.problems syntaxTree of [] => () | problem :: _ => raise Error.CompileError problem
+                    (* every syntax error, which ends the unit before it is elaborated *)
+                    val ()=case CompilerSyntax.problems syntaxTree of [] => ()
+                      | problems => raise UnitFailed (NONE,List.map (fn (span,message) =>
+                          CompilerSession.sourceError ("error",span,message)) problems)
                     val syntax=CompilerSyntax.bridge syntaxTree
                     val ()=case query of SOME query => if #unit query=name then
                       (role:=classify (syntax,#offset query);queriedSyntax:=syntax) else () | NONE => ()
@@ -343,6 +371,8 @@ struct
                     val ()=if asked andalso not opening then raise Answered else ()
                     val ()=poll ()
                 in (syntaxTree,syntax,outgoing) end)
+              (* the declarations that failed, each undone and gone past *)
+              val failures=keptErrors ()
               val held=UnitBasis.usagesOf usages
               val exported=UnitBasis.export {start=start,name=name,file=file,text=fn () => text,
                 mode=mode,delta= !Elaborate.lastDelta,fixity=outgoing}
@@ -392,13 +422,18 @@ struct
               val ()=UnitBasis.undo start
               val whole={key=key,name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle exported,sidecar= #sidecar exported,facts=frozenFacts,
                 types=typeDefinitions,syntax=SOME syntaxTree,uses=uses,typing=typing}:entry
-          in checked:= !checked+1;(if keepOpen then whole else closedEntry whole,held,exported,defined) end
-          handle error => (UnitBasis.undo start;raise error)
+          in checked:= !checked+1;(if keepOpen then whole else closedEntry whole,held,exported,defined,failures) end
+          handle Error.CompileError (span,message) =>
+                   (UnitBasis.undo start;raise UnitFailed (NONE,keptErrors () @ [CompilerSession.sourceError ("error",span,message)]))
+               | error => (UnitBasis.undo start;raise error)
         fun unit (source:source,name,allow,keepFacts,fast) =
           let val {file,text,mode}=source
               val ()=poll ()
               val ()=(Env.currentUnit:=name;unitUses:=[])
-              val prior=priorOf name
+              (* a library's unit this session has not held: what another left of it *)
+              val prior=case priorOf name of SOME k => SOME k | NONE =>
+                if keepFacts orelse fast orelse not (!shares) then NONE else
+                  case StringMap.find (!shared,name) of SOME (other,k) => if other=config then SOME k else NONE | NONE => NONE
               val index= !walked
               val ()=walked:=index+1
               val here=place ()
@@ -423,7 +458,14 @@ struct
                 let val (entry,usages,exported,defined)=case !stash of
                       SOME (stashed,entry,usages,exported,defined) =>
                         if stashed<>name then raise Fail "an elaboration kept for another unit" else (stash:=NONE;(entry,usages,exported,defined))
-                    | NONE => elaborate (source,name,allow,keepFacts,start,prior,key,asked)
+                    | NONE =>
+                        (* a unit that failed is not kept, and is elaborated again
+                           wherever it is reached: what it read is not all in its
+                           usages, since a name it found unbound is not; a
+                           question about it has what it holds *)
+                        let val (entry,usages,exported,defined,failures)=elaborate (source,name,allow,keepFacts,start,prior,key,asked)
+                        in if null failures orelse asked then (entry,usages,exported,defined)
+                           else raise UnitFailed (SOME entry,failures) end
                     fun fresh ()=
                       let val ()=exposed:=true
                           val result=UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at= #counters start},SOME (#identity exported),[])
@@ -494,7 +536,7 @@ struct
         fun selected ()=CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=
           List.foldl (fn (source:source,all) => case StringMap.find (!names,#file source) of NONE => all
             | SOME (_,_,found) => StringMap.foldli (fn (name,(),all) => StringMap.insert (all,name,())) all found) StringMap.empty sources,
-          building=building}
+          building=building,view=view}
         val plan=case (frozenPlan,#prelude old) of
             (SOME plan,_) => plan
           | (NONE,SOME plan) => if samePlan andalso sameBuilding andalso stampsHold andalso not (!mentions) then plan else selected ()
@@ -526,7 +568,9 @@ struct
         fun one (entry:BasisManifest.entry)=
           let val k=unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},
                 valOf (StringMap.find (libraryNames,BasisManifest.path entry)),
-                case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false,false)
+                (* a seal of a view of the Basis Library is not the Basis's own,
+                   as in a compile (src/driver/main.sml, inBasis) *)
+                case lib of SOME lib => #dir entry=lib ^ "/basis" andalso not (isSome (#view entry)) | NONE => false,false,false)
           in CompilerBuildContext.note (scopes,#result (liveOf k)) end
         val implemented=ref [] : string list ref
         val remaining=ref (ListPair.zip (sources,inputNames))
@@ -563,7 +607,9 @@ struct
                   val ()=implemented:=name :: !implemented val ()=walk children
                   val ()=CompilerBuildContext.leave (scopes,boundary,[])
               in apply (before',delta (before',snap ()),SOME []) end
-        fun sourceError (span,message)=SOME (CompilerSession.sourceError ("error",span,message))
+        fun sourceError (span,message)=[CompilerSession.sourceError ("error",span,message)]
+        (* the unit that failed, as far as it was elaborated *)
+        val failedEntry=ref NONE : entry option ref
         (* Each changed input at its own place, while no identity moves: the
            plan and the libraries as they were, every place standing. A
            unit that fails leaves the units as they are: what follows it is
@@ -578,22 +624,25 @@ struct
         fun atPlace (source,name,k:kept)=
           (setPlace (#position (liveOf k));walked:= #index k;Env.currentUnit:=name;
            ignore (unit (source,name,#allow (#entry k),true,true)))
-        val fast : (CompilerSession.diagnostic option * string option) option =
+        val fast : (CompilerSession.diagnostic list * string option) option =
           if not placed then NONE
           else case query of
             SOME q =>
               (case List.find (fn (_,name) => name= #unit q) zipped of
                  SOME (source,name) => (case StringMap.find (#kept old,name) of
-                     SOME k => ((atPlace (source,name,k);SOME (NONE,NONE))
-                       handle Answered => SOME (NONE,NONE) | Error.CompileError (span,message) => SOME (sourceError (span,message),NONE))
+                     SOME k => ((atPlace (source,name,k);SOME ([],NONE))
+                       handle Answered => SOME ([],NONE)
+                            | UnitFailed (entry,diagnostics) => (failedEntry:=entry;SOME (diagnostics,NONE))
+                            | Error.CompileError (span,message) => SOME (sourceError (span,message),NONE))
                    | NONE => NONE)
                | NONE => NONE)
           | NONE =>
-            let fun go []=SOME (NONE,NONE)
+            let fun go []=SOME ([],NONE)
                   | go ((source,name)::rest)=if not (wanted (source,name)) then go rest else
                       (case StringMap.find (#kept old,name) of
                          SOME k => ((atPlace (source,name,k);go rest)
-                           handle Error.CompileError (span,message) => SOME (sourceError (span,message),SOME name))
+                           handle UnitFailed (entry,diagnostics) => (failedEntry:=entry;SOME (diagnostics,SOME name))
+                                | Error.CompileError (span,message) => SOME (sourceError (span,message),SOME name))
                        | NONE => NONE)
             in go zipped handle NeedWalk => NONE end
         val finished=ref false
@@ -614,38 +663,49 @@ struct
                 stamps= #stamps old,names= #names old,paths= !paths}
             | NONE => {serial= #serial old+1,kept=merged,order=if isSome fast then #order old else List.rev (!staged),opens=opens,
                 complete=isSome fast orelse !finished,
-                planned=SOME (steps,extraLibraries,building),prelude=SOME plan,units=inputNames,libraryNames=libraryNames,
+                planned=SOME (steps,extraLibraries,building,view),prelude=SOME plan,units=inputNames,libraryNames=libraryNames,
                 libraries=librarySources,
                 stamps=if sameSelection andalso stampsHold then #stamps old else
                   let val files=manifests @ selection
                   in (if List.all settled files then [] else [unsettled]) @ List.map (fn file => (file,stampOf file)) files end,
                 names= !names,paths= !paths}) end
-        val walkError=if isSome fast then NONE else
+        val walkErrors=if isSome fast then [] else
           let val ()=(Env.currentUnit:="";env:=Env.initial;fixity:=Fixity.initial;Elaborate.sigs:=baseSigs;Elaborate.funs:=baseFuns;
                 Overload.table:=baseOverloads;UnitBasis.binders:=StringMap.empty;UnitBasis.bindLog:=[];walked:=0)
               val ()=staged:=[]
               val ()=if samePlan andalso sameSelection then () else (moved:=true;cut 0)
           in (LibraryScope.libraries (libraryWalk,#groups plan,fn (entries,()) => List.app one entries,());
               LibraryScope.program libraryWalk;walk steps;
-              if null (!remaining) then () else raise Fail "extra ordered project input";finished:=true;NONE)
-             handle Error.CompileError (span,message) => sourceError (span,message)
-                  | Answered => NONE
+              if null (!remaining) then () else raise Fail "extra ordered project input";finished:=true;[])
+             handle UnitFailed (entry,diagnostics) => (failedEntry:=entry;diagnostics)
+                  | Error.CompileError (span,message) => sourceError (span,message)
+                  | Answered => []
                   | error => (if !exposed then doomed:=true else ();commit ();raise error) end
         val ()=if isSome fast orelse isSome query then () else walks:= !walks+1
         val failedAt=case fast of SOME (_,at) => at | NONE => NONE
-        val error=case fast of SOME (error,_) => error | NONE => walkError
+        val errors=case fast of SOME (errors,_) => errors | NONE => walkErrors
         val ()=commit ()
+        (* the libraries' units this check reached, for another session to take *)
+        val ()=if not (!shares) orelse isSome query then () else
+          StringMap.app (fn name => case StringMap.find (!next,name) of NONE => () | SOME (k:kept) =>
+            shared:=StringMap.insert (!shared,name,(config,{entry= #entry k,identity= #identity k,live=ref NONE,usages= #usages k,
+              index= #index k,defined=ref NONE,keys=ref NONE}))) libraryNames
         val current= !saved
         val ()=poll ()
         val ()=observe "analysis-frozen" "" (!checked)
-        val (order,entries)=case (fast,failedAt,error) of
+        val (order,entries)=case (fast,failedAt,errors) of
             (SOME _,NONE,_) => (#order current,#kept current)
           | (SOME _,SOME at,_) =>
               let val limit= #index (valOf (StringMap.find (#kept current,at)))
                   val order=List.filter (fn name => #index (valOf (StringMap.find (#kept current,name)))<limit) (#order current)
               in (order,List.foldl (fn (name,all) => StringMap.insert (all,name,valOf (StringMap.find (#kept current,name)))) StringMap.empty order) end
-          | (NONE,_,NONE) => (#order current,#kept current)
-          | (NONE,_,SOME _) => (#order current,List.foldl (fn (name,all) => StringMap.insert (all,name,valOf (StringMap.find (#kept current,name)))) StringMap.empty (#order current))
+          | (NONE,_,[]) => (#order current,#kept current)
+          | (NONE,_,_::_) => (#order current,List.foldl (fn (name,all) => StringMap.insert (all,name,valOf (StringMap.find (#kept current,name)))) StringMap.empty (#order current))
+        (* and the unit that failed, which a question about it is answered from,
+           though nothing after it sees it *)
+        val entries=case !failedEntry of NONE => entries | SOME (entry:entry) =>
+          StringMap.insert (entries,#name entry,{entry=entry,identity="failed",live=ref NONE,usages=[],index= ~1,
+            defined=ref NONE,keys=ref NONE})
         val ()=if isSome fast then reused:=length order- !checked else ()
         fun candidates ()=case (!scopeEnv,query) of (SOME (_,env,sigs,funs),SOME query) =>
           let val selected=case Env.findStr' (env,#path query) of SOME selected => SOME selected | NONE => NONE
@@ -682,12 +742,12 @@ struct
                   fun show ty=case !scopeEnv of NONE => Types.toStringNamed (fn _ => NONE,printer) ty
                     | SOME (_,env,_,_) => Types.toStringNamed (fn c => Env.qualifiedName (env,c),printer) ty
               in List.map (fn (name,ty) => (name,show ty)) fields end | _ => []
-    in {diagnostics=case error of NONE => [] | SOME error => [error],reused= !reused,checked= !checked,
+    in {diagnostics=errors,reused= !reused,checked= !checked,
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
       candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
       state=current,entries=entries,order=order,attempted= !attempted,prelude=plan,units=inputNames,opened= !openedEntry,
       route={walked=not (isSome fast),rebound= !rebound,loaded= !loaded,cutoff= !cutoff,broken= !broken}} end)
-  fun checkSteps (session as Session {walks,...},scope,sources,steps,libraries,cancelled,building)=
-    let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,building,false)
+  fun checkSteps (session as Session {walks,...},scope,sources,steps,libraries,cancelled,building,view)=
+    let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,building,view,false)
     in if !walks>=walksToCompact then compact session else ();result end
 end

@@ -175,7 +175,7 @@ struct
                 val ()=Source.register source
             in CompilerPrelude.usedBy (file,Lexer.tokenize source,known) end
           val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,
-            mentioned=List.foldl mentioned StringMap.empty sources,building=NONE}
+            mentioned=List.foldl mentioned StringMap.empty sources,building=NONE,view=NONE}
           val walk=LibraryScope.walk (env,fixity,UnitBasis.binders,#scopes plan)
           fun libraryUnit (e : BasisManifest.entry,state) =
             let val file=BasisManifest.path e

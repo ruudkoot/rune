@@ -6,7 +6,7 @@
 
    Usage: rune-lsp-oracle --lib DIR --build FILE --scenarios FILE --out FILE
             [--focus] [--sample N] [--no-fresh] [--collect] [--require PATH,...]
-            [--record FILE | --against FILE]
+            [--record FILE | --against FILE] [--share]
 
    A scenario is a line of tab-separated fields:
      NAME  REPS  FILE-SUFFIX  KIND  [ARG1  [ARG2]]
@@ -32,8 +32,13 @@
    runs: --record keeps the context and writes what each check gave, as digests;
    --against, with the same scenarios, analyses each check's inputs afresh, one
    at a time, and compares.
+   --share has the kept context share (C.Analysis.share): another context
+   over the same build checks first, and the kept one, with no file open at
+   first, takes the libraries' units from what that one left; the fresh ones
+   share nothing.
    --require fails a run that did not take each of the paths named:
-   placed walked rebound loaded cutoff broken failed cancelled query opened. *)
+   placed walked rebound loaded cutoff broken failed cancelled query opened
+   shared. *)
 structure RuneLspOracle =
 struct
   structure C=RuneCompiler
@@ -90,13 +95,14 @@ struct
   fun diagnosticText (d:C.diagnostic)=String.concatWith "|" [#severity d,#file d,num (#start d),num (#stop d),num (#line d),num (#column d),#message d]
   fun candidateText (c:A.candidate)=String.concatWith "|" [#name c,#kind c,getOpt (#detail c,"-"),location (#definition c),
     String.concatWith ";" (List.map (String.concatWith ",") (#arguments c))]
-  val paths=["placed","walked","rebound","loaded","cutoff","broken","failed","cancelled","query","opened"]
+  val paths=["placed","walked","rebound","loaded","cutoff","broken","failed","cancelled","query","opened","shared"]
   fun main arguments =
     let val lib=ref "" val build=ref "" val scenariosFile=ref "" val out=ref ""
         val focusing=ref false val fresh=ref true val sample=ref ~1 val required=ref [] val collecting=ref false
         val recording=ref NONE : TextIO.outstream option ref
         val expected=ref [] : string list ref
         val againstRecord=ref false
+        val shares=ref false
         fun options [] = ()
           | options ("--lib"::value::rest)=(lib:=value;options rest)
           | options ("--build"::value::rest)=(build:=value;options rest)
@@ -110,6 +116,7 @@ struct
               (expected:=List.filter (fn line => line<>"") (fields (#"\n",read file));againstRecord:=true;options rest)
           | options ("--sample"::value::rest)=(sample:=valOf (Int.fromString value);options rest)
           | options ("--require"::value::rest)=(required:=fields (#",",value);options rest)
+          | options ("--share"::rest)=(shares:=true;options rest)
           | options (other::_)=raise Fail ("unknown option: " ^ other)
         val ()=options arguments
         val compiler=C.session {lib=SOME (!lib),flags=[]}
@@ -150,6 +157,12 @@ struct
         val checks=ref 0
         val bindingsApart=ref 0
         fun checkIn (analysis,cancelled)=A.check (analysis,{project=SOME (project ()),inputs=inputs (),cancelled=cancelled})
+        val ()=if not (!shares) then () else
+          let val seed=A.create (compiler,{context="seed"})
+          in A.share (seed,true);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
+             (* an open unit is elaborated where a walk reaches it, and never
+                taken from another context: none is open at first *)
+             A.share (context,true);A.focus (context,SOME []) end
         fun never ()=false
         (* a seeded choice of units, the same on every run *)
         val seed=ref 1
@@ -246,6 +259,7 @@ struct
               val {checked,reused}=A.work snapshot
               val {walked,rebound,loaded,cutoff,broken}=A.route snapshot
               val ()=(if walked then took "walked" else took "placed";
+                      if !shares andalso name="cold" andalso loaded>0 then took "shared" else ();
                       if rebound>0 then took "rebound" else ();if loaded>0 then took "loaded" else ();
                       if cutoff>0 then took "cutoff" else ();if broken>0 then took "broken" else ();
                       if null (A.diagnostics snapshot) then () else took "failed")

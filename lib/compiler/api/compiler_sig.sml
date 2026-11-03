@@ -146,6 +146,13 @@ sig
     val events : t -> event list
     (* `diagnostics snapshot` returns parse/lexical errors in its own source. *)
     val diagnostics : t -> diagnostic list
+    (* `names snapshot` returns the module-level names a unit declares at its
+       top level, and those it uses but does not declare.
+
+       They are read from its syntax as `rune --deps` reads them; kind is
+       structure, signature, functor or type. A name a unit's code reaches
+       after an `open` is not among them (docs/units.md, Well-formed units). *)
+    val names : t -> {declares : {kind : string, name : string} list, uses : {kind : string, name : string} list}
     (* `work snapshot` reports lexical and declaration reuse for this operation. *)
     val work : t -> work
   end
@@ -165,6 +172,11 @@ sig
        windows selects Windows drive/UNC syntax. A root file that is not
        well formed is reported through Failed. *)
     val find : {file : string, windows : bool} -> t option
+    (* `read {file, text, windows}` reads text as the root file at file, as
+       `find` reads one on disk: one an editor holds unsaved.
+
+       A root file that is not well formed is reported through Failed. *)
+    val read : {file : string, text : string, windows : bool} -> t
     (* `candidates {file, windows}` lists where a root file above file would
        be, the nearest first, each path whole. *)
     val candidates : {file : string, windows : bool} -> string list
@@ -313,6 +325,15 @@ sig
        when a query asks for them. NONE, the default, keeps every file open;
        while some are closed, occurrences and facts hold no closed unit's. *)
     val focus : t * string list option -> unit
+    (* `share (context, true)` lets a context take a library's units from the
+       other contexts that share.
+
+       A library's unit is taken from what another such context checked under
+       the same configuration, where the unit's usages hold where the context
+       reaches it, as a compile takes a cache's entry; the context leaves its
+       own for the others. Two builds over one library then elaborate its
+       units once. Off by default. *)
+    val share : t * bool -> unit
     (* `compact context` gives up the compiler state a context's units stay
        loaded in, with what its tables hold of units long replaced.
 
