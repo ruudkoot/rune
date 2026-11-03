@@ -113,9 +113,21 @@ struct
                | [] => bad (i, e))
             else ()
           end
-      (* A line of five fields, optionally followed by the library's scope;
-         NONE for a file the other SML systems have alone (host=only) *)
-      fun entry (i, e) =
+      (* whether the host column between the bars b2 and b3 says only: a file
+         the other SML systems have alone (host=only), which Rune does not
+         compile. Read in place: every compile reads the Basis Library's
+         manifest *)
+      fun nonblank (k, e) = if k < e andalso blank (at k) then nonblank (k + 1, e) else k
+      fun allBlank (k, e) = k >= e orelse (blank (at k) andalso allBlank (k + 1, e))
+      fun hostOnly (b2, b3) =
+        let val a = nonblank (b2 + 1, b3)
+        in
+          a + 4 <= b3 andalso at a = #"o" andalso at (a + 1) = #"n" andalso at (a + 2) = #"l" andalso at (a + 3) = #"y"
+          andalso allBlank (a + 4, b3)
+        end
+      (* A line of five fields, optionally followed by the library's scope,
+         on acc, but for a file of host=only *)
+      fun entry (i, e, acc) =
         let
           fun bars (k, acc) = if k >= e then List.rev acc else bars (k + 1, if at k = #"|" then k :: acc else acc)
           fun make (b1,b2,b3,b4,last,scope) =
@@ -126,11 +138,10 @@ struct
                  provides=words (b3+1,b4),requires=fn () => words (b4+1,last),scope=scope,
                  header=Option.map (fn _ => {friends= !friends,views=List.rev (!views)}) (!headed)}
             | _ => bad (i,e)
-          fun runes (b2,b3) = one (b2+1,b3) <> SOME "only"
         in
           case bars (i,[]) of
-            [b1,b2,b3,b4] => if runes (b2,b3) then SOME (make (b1,b2,b3,b4,e,!headed)) else NONE
-          | [b1,b2,b3,b4,b5] => if runes (b2,b3) then SOME (make (b1,b2,b3,b4,b5,SOME (exports (i,e,b5+1,e)))) else NONE
+            [b1,b2,b3,b4] => if hostOnly (b2,b3) then acc else make (b1,b2,b3,b4,e,!headed) :: acc
+          | [b1,b2,b3,b4,b5] => if hostOnly (b2,b3) then acc else make (b1,b2,b3,b4,b5,SOME (exports (i,e,b5+1,e))) :: acc
           | _ => bad (i,e)
         end
       fun go (i, acc) =
@@ -144,7 +155,7 @@ struct
           in
             if f >= e then go (e + 1, acc)
             else if at f = #"#" then (comment (i, f, e); go (e + 1, acc))
-            else go (e + 1, case entry (i, e) of SOME x => x :: acc | NONE => acc)
+            else go (e + 1, entry (i, e, acc))
           end
     in let val entries = go (0, []) val _ = scopeOf entries in entries end end
 
