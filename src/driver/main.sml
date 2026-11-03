@@ -883,9 +883,9 @@ struct
                  what that gives is compared with it *)
               val (found, against) =
                 case found of
-                  UnitCache.Found (e as {usages, ...}) =>
+                  UnitCache.Found (e as {usages, pickle, ...}) =>
                     if not (UnitCache.verifying ()) then (found, NONE)
-                    else if UnitBasis.exact usages then (UnitCache.Missed "to verify its entry", SOME e)
+                    else if UnitBasis.exactEntry (usages, pickle) then (UnitCache.Missed "to verify its entry", SOME e)
                     (* one taken across a unit that changed names the old
                        unit, and is compiled again rather than compared
                        (issue 15) *)
@@ -908,6 +908,7 @@ struct
                                        UnitBasis.remapping (pickle, u, UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []),
                                                                                        config))
                                    | NONE => []
+                       val () = if List.null remap then () else UnitCache.across := true
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
                        (* the schemes of what it names of other units, as its

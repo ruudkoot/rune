@@ -201,15 +201,23 @@ way that does not depend on what was compiled before it (D3):
 * one of the unit's own is a number, given in the order the writing of its
   basis meets them, so that the same declarations always get the same
   numbers;
-* one of an earlier unit's is that unit's *identity* and its number there.
+* one of an earlier unit's is its place in the unit's *imports*, a table of
+  each kind that says its unit's identity and its number there.
 
 A unit's identity is its logical name (below) and the hash of its basis,
-without what its compile used of the session's counters. A unit whose body
-changed and whose basis did not keeps its identity, so that what was
-compiled against it stays valid. Loading a basis gives the unit's numbers a
-range of each kind of name -- stamps, type names, type variables -- after
-the session's, and registers the range, which is how a name of the session
-is written back as a unit's identity and number.
+without what its compile used of the session's counters and without the
+imports' table: an import is hashed as what it is, not as whose it is. A type
+name is its fingerprint (below), a value or an exception its anchor, the
+facts a client reads of it, what a copy of it is and its type, a signature
+referred to its fingerprint. A unit whose body changed and whose basis did
+not keeps its identity, so that what was compiled against it stays valid, and
+so does a unit whose imports changed in nothing it names (S101), which is
+what a fresh compile of it gives. A unit that names what changed moves, even
+where its own bytes do not (S102, S103): a client that names only it holds
+by its binder, and what it may read through it must have moved it. Loading a
+basis gives the unit's numbers a range of each kind of name -- stamps, type
+names, type variables -- after the session's, and registers the range, which
+is how a name of the session is written back as a unit's identity and number.
 
 **A unit's logical name** says where its file is, and nothing of how a path
 spelt it (`Workspace`, `lib/compiler/driver/workspace.sml`; the build-system

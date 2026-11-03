@@ -20,9 +20,14 @@
    the units after it name what it declared by its identity.
 
    A unit's identity is its name and the hash of its basis without the
-   counts of what its compile used: a unit whose body changed and whose
-   basis did not keeps it, and what was compiled against it stays valid
-   (the cut-off). Every unit of a compile in units is loaded this way right
+   counts of what its compile used and with no unit's identity in it: an
+   earlier unit's name is hashed as what it is, its anchor and fingerprint
+   (importsHash), and its unit and number, which may be others for the same
+   thing, are in a table of the unit's imports that no hash covers. So a
+   unit whose body changed and whose basis did not keeps its identity, and
+   what was compiled against it stays valid (the cut-off), and so does a unit
+   whose imports changed in nothing it names: what a compile may read of
+   an earlier unit through this one is what this one names of it. Every unit of a compile in units is loaded this way right
    after it is compiled (Main, the REPL), and the units after it see only
    what the bytes say: a unit compiled now and one taken from the cache are
    the same to them, byte for byte.
@@ -50,8 +55,10 @@ struct
   exception SchemeChanged of string
 
   (* 16: origins in a sidecar of their own, outside the bytes an identity
-     hashes; 17: of a copied body the hash alone of what only a hash reads *)
-  val version = 17
+     hashes; 17: of a copied body the hash alone of what only a hash reads;
+     18: another unit's names by a table of the unit's imports, and the
+     identity worked out with what they are, not with the units' identities *)
+  val version = 18
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -125,6 +132,9 @@ struct
   val () = CompilerState.cellRoot ("UnitBasis.privateNext", privateNext)
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.fpMemo", fpMemo)
+  (* what an import that is a value is, by stamp, once worked out (importStamp) *)
+  val stampFps : string IntTable.table ref = ref (IntTable.table 64)
+  val () = CompilerState.refRoot ("UnitBasis.stampFps", stampFps, IntTable.copy)
   (* the fingerprints of the signatures' structures that a usage's stream
      names by reference (fpChild), by mode, unit, signature and path, once
      worked out (functors-units M11) *)
@@ -158,6 +168,7 @@ struct
     (units := []; byIdentity := StringMap.empty; builtin := counters ();
      Array.modify (fn _ => Vector.fromList []) ranges; tvars := IntTable.table 1024; binders := StringMap.empty;
      fpMemo := StringMap.empty; refMemo := StringMap.empty; unitSigs := StringMap.empty; schemeMemo := IntMap.empty;
+     stampFps := IntTable.table 64;
      sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
      MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
 
@@ -529,6 +540,18 @@ struct
       | Env.ConAsVal {scheme, info} => (P.byte (w, 24); P.string (w, #name info); P.int (w, #tag info); ty scheme)
       | Env.ExnAsVal {ty = t, info} => (P.byte (w, 25); anchored (#stamp info); ty t)
     end
+
+  (* a type name known by its stamp alone, as a type of the IRs names one: what
+     defines it, with no arity or equality, which only its record has *)
+  fun fpStampOnly (s : int) : string =
+    hashed "tycon" (fn w =>
+      (P.string (w, anchor (kTycon, s));
+       (case IntMap.find (!Elaborate.dataCons, s) of
+          SOME cs => (P.nat (w, List.length cs); List.app (fn (n, v) => (P.string (w, n); fpVal (w, IntMap.empty, v))) cs)
+        | NONE => P.nat (w, 0));
+       case IntTable.find (Ty.realizations, s) of
+         SOME f => (P.byte (w, 1); fpFcn (w, IntMap.empty, f))
+       | NONE => P.byte (w, 0)))
 
   fun fpTyStr (w : P.writer, local' : int IntMap.map, Env.TyStr {fcn, cons}) : unit =
     (fpFcn (w, local', fcn); P.nat (w, List.length cons); List.app (fn (n, v) => (P.string (w, n); fpVal (w, local', v))) cons)
@@ -1335,6 +1358,12 @@ struct
   (* The usages of a compile: each name it looked up (Usage) *)
   fun usagesOf (names : string list) : (string * string) list = during "usages" (fn () => List.map (fn k => (k, usageValue k)) names)
 
+  (* a unit's name, from its identity, name@hash *)
+  fun nameOfIdentity (identity : string) : string =
+    case List.rev (String.fields (fn c => c = #"@") identity) of
+      _ :: (rest as _ :: _) => String.concatWith "@" (List.rev rest)
+    | _ => identity
+
   (* the first usage that does not hold in the session as it is, if one.
      By its fingerprint only where the unit that bound the name is not in
      the session: the entry's code names that unit's globals, which a unit
@@ -1375,7 +1404,7 @@ struct
   (* The schemes of the globals of other units a unit's code names -- the
      values it reads and the functions it calls -- as the session has them,
      by the unit and the number of each, in a text whose type names are
-     stable from session to session (stableName): what its compile
+     stable from session to session (anchor): what its compile
      had, which a cache entry keeps (UnitCache), and what a compile that
      takes the entry holds the units it names now to (schemesHold). A free
      type variable of the top level is written "_", its id being the
@@ -1390,11 +1419,12 @@ struct
        fun gen i =
          let fun go (_, []) = "?" | go (k, g :: rest) = if g = i then Int.toString k else go (k + 1, rest)
          in go (0, gens) end
-       (* stableName's, by the ranges *)
+       (* an anchor: not by its unit's identity, which may be another while
+          what the unit that holds the scheme names of it is the same *)
        fun tycon (c, n) =
          if c < Vector.sub (!builtin, kTycon) then "b" ^ Int.toString c
          else case rangeOf (kTycon, c) of
-                SOME (b, {identity, ...}) => identity ^ "#" ^ Int.toString (c - b)
+                SOME _ => anchor (kTycon, c)
               | NONE => "?" ^ n
        (* the text's pieces, last first *)
        fun ty (t, acc) =
@@ -1583,6 +1613,11 @@ struct
               nnames : int ref,                        (* how many *)
               refs : int IntTable.table,               (* the same, by the unit's range of a kind (3 * base + kind) *)
               nameList : string list ref,              (* the same, newest first *)
+              imports : int IntTable.table vector,     (* per kind: another unit's name -> its place in the imports *)
+              nimports : int ref vector,               (* how many *)
+              importList : (int * int * int) list ref vector, (* per kind, newest first: the name, its unit's place, its number *)
+              records : T.tycon IntTable.table,        (* type names of other units written, by stamp *)
+              targets : (loaded * string) list ref,    (* signatures of other units referred to, newest first *)
               tycons : int IntTable.table, ntycons : int ref,
               keys : (int list * string list * int) list IntTable.table,   (* each type's key, by what it is made of (intern) *)
               nkeys : int ref,
@@ -1609,21 +1644,31 @@ struct
         let val i = !(#nnames e)
         in #names e := StringMap.insert (!(#names e), identity, i); #nnames e := i + 1; #nameList e := identity :: !(#nameList e); i end
 
+  (* another unit's name: its place among the unit's imports, of its kind *)
+  fun importOf (e : enc, k : int, v : int) : int =
+    case IntTable.find (Vector.sub (#imports e, k), v) of
+      SOME i => i
+    | NONE =>
+        case rangeOf (k, v) of
+          SOME (b, u) =>
+            (* the unit's place by its range, not by its identity's text,
+               which a name of another unit would look up each time *)
+            let
+              val r = case IntTable.find (#refs e, 3 * b + k) of
+                        SOME r => r
+                      | NONE => let val r = unitRef (e, #identity u) in IntTable.insert (#refs e, 3 * b + k, r); r end
+              val n = Vector.sub (#nimports e, k)
+              val i = !n
+              val l = Vector.sub (#importList e, k)
+            in IntTable.insert (Vector.sub (#imports e, k), v, i); n := i + 1; l := (v, r, v - b) :: !l; i end
+        | NONE => bug ("a name of no unit: kind " ^ Int.toString k ^ ", " ^ Int.toString v)
+
   fun name (e : enc, k : int, v : int) : unit =
     let val w = #w e
     in
       if v < Vector.sub (!builtin, k) then (P.byte (w, 0); P.int (w, v))
       else if v >= Vector.sub (#start e, k) then (P.byte (w, 1); P.nat (w, ownNumber (e, k, v)))
-      else
-        case rangeOf (k, v) of
-          SOME (b, u) =>
-            (* the unit's place by its range, not by its identity's text,
-               which a name of another unit would look up each time *)
-            let val r = case IntTable.find (#refs e, 3 * b + k) of
-                          SOME r => r
-                        | NONE => let val r = unitRef (e, #identity u) in IntTable.insert (#refs e, 3 * b + k, r); r end
-            in P.byte (w, 2); P.nat (w, r); P.nat (w, v - b) end
-        | NONE => bug ("a name of no unit: kind " ^ Int.toString k ^ ", " ^ Int.toString v)
+      else (P.byte (w, 2); P.nat (w, importOf (e, k, v)))
     end
 
   fun tycon (e : enc, c : T.tycon) : unit =
@@ -1633,6 +1678,7 @@ struct
         SOME i => (P.byte (w, 1); P.nat (w, i))
       | NONE =>
           (IntTable.insert (#tycons e, #stamp c, !(#ntycons e)); #ntycons e := !(#ntycons e) + 1;
+           if #stamp c < Vector.sub (#start e, kTycon) then IntTable.insert (#records e, #stamp c, c) else ();
            P.byte (w, 0); name (e, kTycon, #stamp c); P.string (w, #name c); P.nat (w, #arity c); P.bool (w, #eq c))
     end
 
@@ -1893,7 +1939,9 @@ struct
       case (if !refsOK then basisReference (e, en) else NONE) of
         SOME (tg, n, path, order, {phi, stamps, globals, cStamps, cGlobals}) =>
           (P.byte (w, 1);
-           (case tg of Here => P.nat (w, 0) | Earlier u => P.nat (w, 1 + unitRef (e, #identity u)));
+           (case tg of
+              Here => P.nat (w, 0)
+            | Earlier u => (P.nat (w, 1 + unitRef (e, #identity u)); #targets e := (u, n) :: !(#targets e)));
            P.string (w, n); P.list P.string (w, path);
            P.list (fn (_, st) => tyfcn (e, valOf (IntMap.find (phi, st)))) (w, order);
            if stamps = cStamps then P.byte (w, 0) else (P.byte (w, 1); P.list (fn (_, st) => name (e, kStamp, st)) (w, stamps));
@@ -2183,6 +2231,58 @@ struct
   type exported = {pickle : string, sidecar : string, identity : string, provenance : string,
                    own : int IntTable.table vector, counts : int vector}
 
+  (* What a unit's imports are, for its identity to hold: of each type name its
+     fingerprint, of each value and exception what fingerprints say of one,
+     by the anchors of both, and of each signature it refers to that
+     signature's. Any of these that moves moves the identity, so a unit
+     that keeps its identity is the same to its clients, whatever they
+     read of an import through it; the identities of the units named have no
+     part in it. A type variable is its place alone. *)
+  fun importStamp (s : int) : string =
+    case IntTable.find (!stampFps, s) of
+      SOME f => f
+    | NONE =>
+        let
+          val f = hashed "import" (fn w =>
+            let
+              fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
+                            P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
+              fun ty t = fpTy (w, ref [], IntMap.empty, t)
+            in
+              P.string (w, anchor (kStamp, s)); prim s;
+              P.bool (w, IntMap.member (!Lower.knownBefore, s));
+              P.option (fn (_, h) => (P.string (w, anchor (kStamp, h)); prim h; P.bool (w, IntMap.member (!Lower.knownBefore, h))))
+                       (w, IntTable.find (!Expand.globalAliases, s));
+              (* what a copy of it is: itself a function kept to be copied, or
+                 one through the globals that are others *)
+              P.option P.string (w, inlineHash s);
+              P.option P.string (w, Option.mapPartial inlineHash (Expand.inlinedValue s));
+              P.option (fn (_, t) => ty t) (w, IntTable.find (Ty.binders, s));
+              P.option (P.option (fn (_, t) => ty t)) (w, IntTable.find (Ty.exnArgs, s))
+            end)
+        in IntTable.insert (!stampFps, s, f); f end
+
+  fun importsHash (e : enc) : string =
+    let
+      val w = P.writer ()
+      val () = scratch := IntTable.table 16
+      fun tyconFp (s, _, _) =
+        P.string (w, case IntTable.find (#records e, s) of
+                       SOME c => fpTycon (IntMap.empty, c)
+                     | NONE => fpStampOnly s)
+      fun sigFp ({identity, ...} : loaded, n) =
+        (P.string (w, nameOfIdentity identity); P.string (w, n);
+         P.string (w, case StringMap.find (!unitSigs, identity ^ "\000" ^ n) of
+                        SOME sg => getOpt (memo (identity, "sig " ^ n, fn () => SOME (byReference (fn () => fpSigma sg))), "")
+                      | NONE => bug ("a signature of no unit: " ^ n)))
+    in
+      List.app tyconFp (List.rev (!(Vector.sub (#importList e, kTycon))));
+      P.nat (w, !(Vector.sub (#nimports e, kTvar)));
+      List.app (fn (s, _, _) => P.string (w, importStamp s)) (List.rev (!(Vector.sub (#importList e, kStamp))));
+      List.app sigFp (List.rev (!(#targets e)));
+      hashAt ("imports", P.contents w)
+    end
+
   (* write (k, {start, name, file, text, mode, delta, fixity}): the basis of
      the unit compiled since start, which declared delta and left the fixity
      given; name is how it is known, file how its spans name its source,
@@ -2195,7 +2295,9 @@ struct
                      own = Vector.tabulate (3, fn _ => IntTable.table 256),
                      count = Vector.tabulate (3, fn _ => ref 0), queue = ref [], names = ref StringMap.empty,
                      nnames = ref 0, refs = IntTable.table 64,
-                     nameList = ref [], tycons = IntTable.table 256, ntycons = ref 0,
+                     nameList = ref [], imports = Vector.tabulate (3, fn _ => IntTable.table 256),
+                     nimports = Vector.tabulate (3, fn _ => ref 0), importList = Vector.tabulate (3, fn _ => ref []),
+                     records = IntTable.table 64, targets = ref [], tycons = IntTable.table 256, ntycons = ref 0,
                      keys = IntTable.table 1024, nkeys = ref 0,
                      types = ref IntMap.empty, ntypes = ref 0, cons = ref StringMap.empty, ncons = ref 0,
                      sibs = ref StringMap.empty, nsibs = ref 0, funsDone = IntTable.table 16,
@@ -2243,12 +2345,20 @@ struct
       val () = tables e
       val body = P.contents w
       val counts = Vector.map ! (#count e)
-      (* the header: the name, the identities it names, the counts of its own *)
+      (* what its identity hashes: the name, the counts of its own, the
+         body, and what its imports are *)
       val h = P.writer ()
       val () = (P.bytes (h, magic); P.nat (h, version); P.string (h, P.probe ()); P.string (h, uname);
-                P.list P.string (h, List.rev (!(#nameList e)));
                 Vector.app (fn c => P.nat (h, c)) counts)
-      val hashed = P.contents h ^ body
+      val digest = hashAt ("identity", P.contents h ^ body ^ importsHash e)
+      (* the header: as hashed, with the identity's hash and the units and
+         names of the imports *)
+      val r = P.writer ()
+      val () = (P.bytes (r, magic); P.nat (r, version); P.string (r, P.probe ()); P.string (r, uname); P.string (r, digest);
+                P.list P.string (r, List.rev (!(#nameList e)));
+                Vector.app (fn l => P.list (fn (w, (_, u, n)) => (P.nat (w, u); P.nat (w, n))) (r, List.rev (!l))) (#importList e);
+                Vector.app (fn c => P.nat (r, c)) counts)
+      val hashed = P.contents r ^ body
       (* what the compile used of each kind, which loading puts aside
          first, and the hash of the source and the mode it was read in, by
          which the compiler library checks a source it is given against
@@ -2260,7 +2370,7 @@ struct
       val () = Vector.app (fn c => P.nat (u, c)) used
       val () = P.string (u, sourceHash)
       val () = P.string (u, Source.modeName mode)
-      val identity = uname ^ "@" ^ hashAt ("identity", hashed)
+      val identity = uname ^ "@" ^ digest
     in
       {pickle = P.contents u ^ hashed, sidecar = if !(#spans e) then P.contents (#side e) else "", identity = identity,
        provenance=Link.provenance (!CompilerSettings.target,mode,sourceHash),own = #own e, counts = counts}
@@ -2348,9 +2458,7 @@ struct
               ntypes : int ref, types : T.ty array ref,    (* the types read, in the order written *)
               ncons : int ref, cons : Ast.coninfo array ref,
               nsibs : int ref, sibs : (string * bool) list array ref,
-              (* of each unit named, where it is one the pickle was not
-                 written against, its names by the old numbers, by kind *)
-              remaps : int IntMap.map vector option vector,
+              imports : int vector vector,            (* per kind, the session's names of its imports *)
               (* its signatures read so far, which a reference may name,
                  and the templates of their structures (renamedEnv) *)
               sigsRead : SigMatch.sigma StringMap.map ref, hereTemplates : template StringMap.map ref}
@@ -2362,19 +2470,9 @@ struct
         0 => P.rint r
       | 1 => Vector.sub (#base d, k) + P.rnat r
       | 2 =>
-          let
-            val u = P.rnat r
-            val i = P.rnat r
-            val () = if u >= Vector.length (#units d) then raise P.Bad "a unit out of range" else ()
-            val lu = Vector.sub (#units d, u)
-          in
-            case Vector.sub (#remaps d, u) of
-              SOME maps => (case IntMap.find (Vector.sub (maps, k), i) of
-                              SOME s => s
-                            | NONE => raise Missing (#identity lu ^ " (a name no path of it reaches)"))
-            | NONE =>
-                if i >= Vector.sub (#count lu, k) then raise P.Bad "a name out of its unit's range"
-                else Vector.sub (#base lu, k) + i
+          let val i = P.rnat r
+          in if i >= Vector.length (Vector.sub (#imports d, k)) then raise P.Bad "an import out of range"
+             else Vector.sub (Vector.sub (#imports d, k), i)
           end
       | _ => raise P.Bad "not a name"
     end
@@ -2671,13 +2769,20 @@ struct
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
       val () = if P.rstring r = P.probe () then () else raise P.Bad "a basis made by a compiler whose hash differs"
       val _ = P.rstring r   (* its name *)
+      val _ = P.rstring r   (* its identity's hash *)
     in P.rlist P.rstring r end
 
-  (* a unit's name, from its identity, name@hash *)
-  fun nameOf (identity : string) : string =
-    case List.rev (String.fields (fn c => c = #"@") identity) of
-      _ :: (rest as _ :: _) => String.concatWith "@" (List.rev rest)
-    | _ => identity
+  (* whether every usage holds by its binder and the entry's basis names
+     only units of the session: an entry that needs nothing remapped. An
+     identity moves with what it names, so a unit of the session may be the
+     one its usages name and the units its basis names, by what they
+     were, be others *)
+  fun exactEntry (us : (string * string) list, pickle : string) : bool =
+    exact us andalso (List.all (fn i => isSome (StringMap.find (!byIdentity, i))) (namedBy pickle)
+                      (* what is wrong with its bytes, loading it says *)
+                      handle P.Bad _ => true)
+
+  val nameOf = nameOfIdentity
 
   (* the units an entry's code names other than itself *)
   fun namedByCode (u : Link.unitCode) : string list =
@@ -2777,34 +2882,52 @@ struct
       val used = Vector.tabulate (3, fn _ => P.rnat r)
       val _ = P.rstring r   (* the hash of its source, for the compiler library *)
       val _ = P.rstring r   (* its mode *)
-      val hashed = String.extract (pickle, !(#pos r), NONE)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
       (* made by a compiler whose hash gives other values: its identities and
          fingerprints are not this one's (Pickle.probe) *)
       val () = if P.rstring r = P.probe () then () else raise P.Bad "a basis made by a compiler whose hash differs"
       val uname = P.rstring r
+      val digest = P.rstring r
       val identity = case known of
                        SOME i => if String.isPrefix (uname ^ "@") i then i else raise P.Bad "another unit's identity"
-                     | NONE => uname ^ "@" ^ hashAt ("identity", hashed)
+                     | NONE => uname ^ "@" ^ digest
       val identities = P.rlist P.rstring r
       val us = Vector.fromList (List.map (fn i => case StringMap.find (!byIdentity, i) of
                                                     SOME u => u
                                                   | NONE => (case List.find (fn (o', _, _) => o' = i) remap of
                                                                SOME (_, new, _) => new
                                                              | NONE => raise Missing i)) identities)
-      val identities' = Vector.fromList identities
+      (* of each unit named, where it is one the pickle was not written
+         against, its names by the old numbers, by kind *)
       val remaps = Vector.fromList (List.map (fn i => case List.find (fn (o', _, _) => o' = i) remap of
                                                         SOME (_, _, maps) => if isSome (StringMap.find (!byIdentity, i))
                                                                              then NONE else SOME maps
                                                       | NONE => NONE) identities)
+      (* an import, as the session names it *)
+      fun import k (r : P.reader) : int =
+        let
+          val u = P.rnat r
+          val i = P.rnat r
+          val () = if u >= Vector.length us then raise P.Bad "a unit out of range" else ()
+          val lu = Vector.sub (us, u)
+        in
+          case Vector.sub (remaps, u) of
+            SOME maps => (case IntMap.find (Vector.sub (maps, k), i) of
+                            SOME s => s
+                          | NONE => raise Missing (#identity lu ^ " (a name no path of it reaches)"))
+          | NONE =>
+              if i >= Vector.sub (#count lu, k) then raise P.Bad "a name out of its unit's range"
+              else Vector.sub (#base lu, k) + i
+        end
+      val imports = Vector.tabulate (3, fn k => Vector.fromList (P.rlist (import k) r))
       val counts = Vector.tabulate (3, fn _ => P.rnat r)
       val base = Vector.tabulate (3, fn k => Vector.sub (at, k) + Vector.sub (used, k))
       val () = List.app (fn k => counter k := Vector.sub (base, k) + Vector.sub (counts, k)) [kStamp, kTycon, kTvar]
       val d : dec = {r = r, side = side, base = base, units = us, ntycons = ref 0, tycons = ref (Array.fromList []),
                      ntypes = ref 0, types = ref (Array.fromList []), ncons = ref 0, cons = ref (Array.fromList []),
                      nsibs = ref 0, sibs = ref (Array.fromList []),
-                     remaps = remaps, sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
+                     imports = imports, sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
       fun rfixity r =
         case P.rbyte r of
           0 => Fixity.Nonfix

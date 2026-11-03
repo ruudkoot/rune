@@ -269,13 +269,17 @@ source      varint len, bytes   the hash of its source, by which the
 mode        varint len, bytes   how the source was read: ascii, unicode or
                                 unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    17 (UnitBasis.version)
+version     varint    18 (UnitBasis.version)
 probe       varint len, bytes   the probe of the compiler's hash
                                 (Pickle.probe): a basis made by a
                                 compiler whose hash gives other values
                                 is not read
 name        varint len, bytes   the unit's name
+hash        varint len, bytes   the hash of its identity
 units       varint n, n × string   the identities of the units it names
+imports     3 × (varint n, n × (varint, varint))   of each kind of name, what
+                                it names of other units: the unit's place
+                                in units, and the name's number there
 counts      3 × varint   its own names of each kind
             ... the fixity directives, the environment, the signatures,
                 functors (each its signature: its parameter's and its
@@ -286,8 +290,16 @@ counts      3 × varint   its own names of each kind
                 that nothing else types, and the overloading it
                 declared, and the tables of its own names, each name of a
                 kind written as built in, the unit's own (a number), or
-                another unit's (its place, a number) ...
+                another unit's (its place in imports) ...
 ```
+
+Version 18 (the build-system roadmap's M4) names an earlier unit's names by
+a table, and takes the hash of the identity out of the reader's hands. The
+bytes hold no identity of another unit where a hash reads them: what the
+identity hashes is the magic, the version, the probe, the name and the counts,
+the bytes after the header, and what each import is ([units.md](units.md), *The
+export basis*). That last is worked out from the session as the basis is
+written, and no reader needs it, so the header holds the hash.
 
 Version 17 (the build-system roadmap's M4) keeps of a body a later unit
 copies its Mid, a marked functor's parameter's open datatypes and one hash,
@@ -366,9 +378,8 @@ source's mode): a cache or a unit file of an earlier version is not read,
 and the unit is compiled again (S67 of `tests/incremental/SCENARIOS.md`).
 
 Numbers are varints (seven bits a byte, the high bit set where another
-follows; an integer zigzagged). The identity of the unit is its name and
-the hash of the bytes from `magic` on; what comes before them is not part
-of it.
+follows; an integer zigzagged). The identity of the unit is its name, an
+`@`, and `hash`.
 
 ## Values
 

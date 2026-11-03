@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S97. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, S49 to S97, and S101 to S104. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -176,6 +176,19 @@ exactly the units X and nothing else.
   from the root, so a tree that moves keeps its entries.
 * **S97, `use`.** `use "./a.sml"` after `use "a.sml"` in another session
   writes no entry.
+* **S101, an identity holds no unit's identity.** A unit whose import changed
+  in nothing it names, even with every number of the import moved, keeps its
+  identity, and a client that names only it is exact.
+* **S102, an import that is another.** The bytes of a unit that names a
+  datatype of an earlier unit are the same when the datatype changes; its
+  identity moves all the same, and a client that names only it compiles.
+* **S103, a name that is another unit's marked function.** An alias of it in
+  a unit between moves that unit's identity when the body changes, so a
+  client that copied it through the alias compiles.
+* **S104, a signature by reference.** A signature that holds an earlier unit's
+  by reference has the same bytes when that one gains a specification; its
+  identity moves, and a client that matches it alone is refused as a compile
+  without the cache refuses it.
 
 ## Failure and concurrency
 

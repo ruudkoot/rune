@@ -438,12 +438,79 @@ struct
              val output = session s false ["use \"./a.sml\";", "val n = !A.n;"]
          in check s ("a spelling compiled a used file again: " ^ output)
               (String.isSubstring "val n = 0 : int" output andalso cache s = entries) end)
+    | "S101" =>
+        (* an identity holds no unit's identity: a unit whose import changed
+           in nothing it names keeps its own, and what named it is exact *)
+        let
+          val () = own s ""
+          val () = put s "a.sml" "structure A = struct type t = int  val x : t = 1  val y = 2 end"
+          val () = put s "b.sml" "structure B = struct val v : A.t = A.x end"
+          val () = put s "c.sml" "val () = print (Int.toString B.v ^ \"\\n\")"
+          val () = put s "p.build" "a.sml b.sml c.sml"
+          fun across wanted =
+            check s ("what was taken across a change: " ^ #errors (!(#result s)))
+                    (String.isSubstring "rune: from the cache b.sml, across " (#errors (!(#result s)))
+                     andalso (String.isSubstring "rune: from the cache c.sml\n" (#errors (!(#result s)))) = wanted)
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = put s "a.sml" "structure A = struct type t = int  val x : t = 1  val y = \"two\" end"
+          val () = buildFile s "p.build" "a.sml"
+          val () = across true
+          (* the numbers of A's names all move, and what they are does not *)
+          val () = put s "a.sml" "structure A = struct type n = bool  val m = true  type t = int  val x : t = 1  val y = 2 end"
+          val () = buildFile s "p.build" "a.sml"
+          val () = across true
+        in prints s "1" end
+    | "S102" =>
+        (* a unit's bytes the same, and an import it names another: its
+           identity moves, or what names it alone would hold by its binder *)
+        let
+          val () = own s ""
+          val () = put s "a.sml" "structure A = struct datatype t = X | Y end"
+          val () = put s "b.sml" "structure B = struct val v = A.X  fun same (a, b) = a = b end"
+          val () = put s "c.sml" "val () = print (Bool.toString (B.same (B.v, B.v)) ^ \"\\n\")"
+          val () = put s "p.build" "a.sml b.sml c.sml"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = put s "a.sml" "structure A = struct datatype t = X of int option | Y end"
+          val () = put s "b.sml" "structure B = struct val v = A.Y  fun same (a, b) = a = b end"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = put s "a.sml" "structure A = struct datatype t = Y | X of int option end"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+        in prints s "true" end
+    | "S103" =>
+        (* a name that is another unit's marked function: the unit's identity
+           moves with the function's body, which its clients copy *)
+        let
+          val () = own s ""
+          fun declaring n = put s "a.sml" ("structure A = struct fun inc (x : int) = x + " ^ n ^ " end")
+          val () = declaring "1"
+          val () = put s "b.sml" "structure B = struct val f = A.inc end"
+          val () = put s "c.sml" "val () = print (Int.toString (B.f 1) ^ \"\\n\")"
+          val () = put s "p.build" "inline val A.inc end\nfiles a.sml b.sml c.sml end"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = prints s "2"
+          val () = declaring "2"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+        in prints s "3" end
+    | "S104" =>
+        (* a signature written as a reference to an earlier unit's: what it
+           is is that one, so the identity moves with it, though the bytes
+           of the unit that refers to it stay the same *)
+        let
+          val () = own s ""
+          val () = put s "a.sml" "signature S = sig type t  val x : t end"
+          val () = put s "b.sml" "signature T = sig structure I : S end"
+          val () = put s "c.sml" "structure M : T = struct structure I = struct type t = int  val x = 1 end end"
+          val () = put s "p.build" "a.sml b.sml c.sml"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = put s "a.sml" "signature S = sig type t  val x : t  val y : t end"
+          val r = command s "" [#compiler s, "--build", "p.build", "--units", "--cache-dir", "cache", "-o", "p.rbc"]
+        in check s "a client of a signature that changed was taken from the cache" (#status r <> 0) end
     | "S58" => parallel s
     | _ => simple s
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97"]
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S101", "S102", "S103", "S104"]
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end
