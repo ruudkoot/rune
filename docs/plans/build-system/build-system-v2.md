@@ -57,7 +57,7 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | M3. Logical names and the workspace | U | L | D3, D4 | done |
 | M4. Layers | U | L | D1 | done, but for two items: MLton's 4 units and the replay |
 | M5. Codecs | F | L | D21 | not started |
-| M6. The warm path | C | L | D2, D25 | not started |
+| M6. The warm path | C | L | D2, D25 | done; the plan memo not built |
 | M7. One store | C | M | D24 | not started |
 | M8. The library model | L | M | D7, D8, D11 | done |
 | M9. One planner, and the plan | L | M | D5, D6 | done |
@@ -73,7 +73,7 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | M19. Contexts, and the end of the prompt | A | L | D26 | done |
 | M20. The target, in CI | A | M | D28 | not started |
 | M21. Functor signatures | S | L | D22 | done |
-| M22. Virtual libraries | S | M | D22 | not started |
+| M22. Virtual libraries | S | M | D22 | done |
 | M23. Retire | | S | | not started |
 
 Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no milestone behind it: *Gates*.
@@ -139,6 +139,15 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
   - **M21, functor signatures:** `functor F = _virtual (X : A) : B`, `functor F = _dynamic "path" (X : A) : B` and `_export functor` in both parsers; an application is a call over nested records, typed by the signatures alone; `implements` takes a functor; the fingerprint holds version, calling convention, slots, descriptors and both signatures, and each field has a mutant refused at link or load. `examples/virtual/table` builds on an association list and on an AVL tree, with a `_dynamic` variant as a plugin; a body edit compiles only the implementation, a signature edit every unit that names it; the fingerprint is the same on every host, `7f5c2512d451806272a969fec81ef7a6`.
     - **`Pickle.hash` on `smlnj32`:** the difference was two SML/NJ 110.99.9 bugs, not word width. `lib/compiler/util/pickle.sml` now reads its Word64 constants from hex and never shifts by 0, beside its existing adaptation to MLRISC, so every host gives one hash and check-cross compares smlnj32 in units too. This is a host's bug answered in the compiler's sources, which `tests/cross/deviations.txt` says is not done; D22 asked for one fingerprint on the five hosts, and the owner may rule otherwise.
     - **Found:** an `_export structure` whose signature had `datatype d = D of u`, with `u` abstract and a tuple, compiled and then stopped the client's VM; such an export is now refused at compile time.
+- **M6 and M22** (`3de8dd41a`, together, `make check` 22,658, of which one failed, the stack VM's bootstrap budget, by 0.45%; both bootstrap budgets were re-based and `make perf-check` passed 48 of 48). Their merge found that a step's own words, `inputs`, `closure`, `stamp` and `outputs`, had been reserved everywhere, so that a library could not be called `stamp`; they are now words only inside a step.
+  - **M6, the warm path:** the store split out (`lib/compiler/driver/unitstore.sml`, the head the client's, `holds` passed in), with a test that links no compiler. A light hit takes an entry that holds by its binders and loads no basis; a compiled unit sees a view built from the names in its text, the bases it names loaded on demand, and if it reached outside its view the whole build is compiled again eagerly, never taken. A stat memo with ctime, inode and a racy guard; a link memo; a record of a build up to date, keyed by the command line, the `RUNE_` variables, the identity and every file read, which replays the warnings. M2's mask (D20) is `RUNE_VERIFY_UNIT`. `checkSchemes` moved to `--verify-cache`. A no-op, and the first after a build: `rune.build` 2.4% and 2.6% of before, HOL4's closure 1.0% and 1.2%, MLton 0.3% and 0.4%; `-j 4`'s no-op on `rune.build` from 13.30G to 0.27G. Each unit compiled alone under its view and under the mask gives its entry's bytes: 512 of `rune.build`, every tenth of HOL4's, every fifteenth of MLton's. Random edits, some with pauses inside the racy window: about 2,000 builds, no disagreement.
+    - **The config step is keyed:** a step may say `closure PLAN` and `stamp TOOL (ARGS)`; `rune.build`'s step that writes `build/config.sml` names its plan and asks `gen-version.sh --stamp` for git's state, and the up-to-date check comes before the steps, so a no-op runs none. A test changes each thing the step reads, one at a time, in a repository of its own. A fresh clone could not build `rune.build` before, since the step could not make `build/`.
+    - **Not built:** the plan memo (`c`): since M1, selection reads each file in the fixity the files before it leave, and E15's memo of names is unsound under that. So a leaf edit pays for lexing and selection, 8.6-9.4% less than before in VM instructions, not E15's 69-78% of. `-j` is eager when a build is not up to date. An outside write to the output between the rename and the read-back is not seen.
+    - **Found:** M1's "frozen layer makes a no-op dearer" was placement: `instructions:u` moves up to 7% with a path's length alone, so small differences here rest on VM counts.
+  - **M22, virtual libraries:** a header's `virtual (KIND NAME, ...)` and an implementing library's `implements (KIND NAME, ...)`, which exports nothing; `--basis-index` holds both to 14 rules, each with a negative test; the implementation is ordered after its virtual library and the virtual library's rest after the implementation; two implementations, or a build's `implements` of a library's virtual module, are refused. `examples/virtual/table` builds from three libraries, and the client's units compile once across both implementations. `ffi/win32`'s three fit the form on a private copy of master's, with nothing under `ffi/win32` changed.
+    - **Planning now lexes** the files of a virtual library that has an implementation in the plan, to find where its rest starts; before, it read build files alone. A host reads the committed plan and does not.
+    - **The compiler has grown:** compiling it, the bootstrap, costs 13.6% more on the register VM (2,181.6M to 2,479.5M instructions) and 14.5% more on the stack VM (3,595.8M to 4,115.4M) than when this roadmap began, re-based a little at a time by M3, M8, M9, M10, M15 and here. M23 measures where it went.
+    - **The win32 form needs more than three libraries:** an implementing library exports nothing, so the controls its entry points name sit in provider libraries beside it, and the implementations require the generated sets as libraries, not `use` of their `current.build`. *Later* says so.
 
 ## Found while writing this roadmap
 
@@ -4930,7 +4939,7 @@ The review of the ideation is *The ideation, reviewed*, and it decides this. In 
 
 The schema needs `requires` on the plan, `inline` and `inlineValues` on a library, `inputs` outside the compared body, and `replay` or its replacement; `caches` goes (E12).
 
-**The plan is Rune's.** Nothing in the store reads it, and rhc scans imports (rhc's D46). The schema leaves room for discovered edges and SCC groups and builds neither: Rune 2's plan, computed from a scan of headers, wants the same room.
+**The plan is Rune's.** A plan is made from build files, with one exception M22 brought: a virtual library's files are lexed to find where its rest begins. Nothing in the store reads it, and rhc scans imports (rhc's D46). The schema leaves room for discovered edges and SCC groups and builds neither: Rune 2's plan, computed from a scan of headers, wants the same room.
 
 ### D6. The one way
 
@@ -5087,7 +5096,7 @@ The brief does not mention these. What "as would be build via the build system" 
 
 - **A. Left outside,** as Holmake does today. `.build` compiles what exists.
 - **B. Declared steps, in a stage before planning.** **Recommended.** A step names its tool, inputs and outputs, all hashed; outputs are verified, and later units read them (holbuild's `[[generate]]`, Bazel's declared outputs).
-  - `build/config.sml` is the first honest case, and the proposed plan's `SGenerate` holds it. M15 found it cannot be keyed: `gen-version.sh` reads git and every file of the closure, so its step declares no inputs and runs on every build.
+  - `build/config.sml` is the first honest case, and the proposed plan's `SGenerate` holds it. M15 found it could not be keyed by its inputs alone: `gen-version.sh` reads git and every file of the closure. M6 keys it by the plan's closure and a stamp, `gen-version.sh --stamp`, which answers for git.
   - A **per-file preprocessor** is a declared class: HOL4's `QUse` filter changes 36 of 745 closure files (E20), and with it the closure compiles (E9).
   - Generated sets stay outside the plan, as explicit commands, with `.build` text inside their hash (E28). `runeffi` gains a rehash mode, and its driver accepts or removes an old set.
   - **A run step** (a theory script as an entry unit over its ancestors, its outputs read by later units) is what a true HOL4 build needs beyond this. It is a small addition to a declared step, and it can wait for someone who wants HOL4 built this way: Holmake works.
@@ -5246,7 +5255,7 @@ Up to date costs 20-53% of cold on real corpora and 39-40% at every size of the 
 
   Percent of an unset compiler; all output is the baseline's bytes (E15). A no-op falls to 0.22G, 67 ms and 19 MB on MLton.
   - **A leaf's floor is code decode plus link,** 70% of today on HOL4 and `rune.build`. A link from bytes, or a relocation table, is the item after, and it is unmeasured.
-  - **`checkSchemes` cannot run on a light hit:** it reads ToMid's tables, and S82 fails by design. A binder's identity covers what it checks, and a fingerprint hit is the one case it cannot check (`unitbasis.sml:1444-1446`), so it goes, or moves to `--verify-cache`, and S82 changes with it.
+  - **`checkSchemes` cannot run on a light hit:** it reads ToMid's tables, and S82 fails by design. A binder's identity covers what it checks, and a fingerprint hit is the one case it cannot check (`unitbasis.sml:1444-1446`), so it goes, or moves to `--verify-cache`, and S82 changes with it. M6 moved it to `--verify-cache`.
   - **A stat memo is not a key,** so "nothing in a key is a time" stands. It needs ctime, inode and the racy guard.
   - **A hit may read a head (D24).** "No basis" is a rule about SML's basis, not about what a client's check may read. For rhc a hit reads its imports' exports and the closure's instances through the head, inferred and not measured: its model counts 713 wrong answers in 15,750 edits with no instance read, and 298 with direct imports' alone (its E13).
   - **Memos go in `lib/compiler/driver`,** not `src/driver/main.sml`: 276 of the 321 `main.sml` additions in E15's patch name no compiler state, and a second driver then has them.
@@ -5568,7 +5577,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 
 - **A global index of analysis results,** which the brief defers. A name-to-file index is not this: it is M19's.
 - **A package manager,** on D3's version and D4's workspace.
-- **The win32 work's migration,** once that work has landed (D15), by D15's recipe. Its 8 boundaries, 4 additions and 4 program edges; the 5 generated sets rehashed; `runeffi`'s view of `lib/unicode`; the Win32 generate driver accepting or removing an old set (Appendix D); `ffi/win32`'s three as a virtual library (M22). Then the old form is refused, which closes the window.
+- **The win32 work's migration,** once that work has landed (D15), by D15's recipe. Its 8 boundaries, 4 additions and 4 program edges; the 5 generated sets rehashed; `runeffi`'s view of `lib/unicode`; the Win32 generate driver accepting or removing an old set (Appendix D); `ffi/win32`'s three as a virtual library (M22), with provider libraries beside the implementations for what their entry points name, and the generated sets required as libraries. Then the old form is refused, which closes the window.
 - **Imports in code by logical name, not number:** a step E16 did not run, out of M3 since 2026-11-02. It changes `Link.key`, `remapKeys` and `.rbu`, and rhc's link numbers, hashed by name with collisions unchecked, stand on today's form, so it is decided with rhc in view. No target here rests on it: remapping already takes a shifted number.
 - **Higher-order modules** (D23), and memoised functor applications.
 - **The term layer,** behind Gate G2.
