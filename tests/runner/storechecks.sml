@@ -7,7 +7,8 @@
    lines differ share their units, and nothing beside a build's first input
    or in its sources, nor where the REPL's use reads a file; RUNE_CACHE
    above that, --cache-dir above both; with no workspace, beside the build
-   file.
+   file. The workspace moved, its store with it, takes every unit and is the
+   build without the store, an edit there too.
 
    store-trim: what trimming removes is a miss, never a wrong hit. A project
    built, edited and built again, so that its store holds stale entries, is
@@ -108,7 +109,30 @@ struct
       val () = ok s "a build with no workspace" r
       val () = check s "a build with no workspace keeps no store beside its build file" there
       val ran = command s "" [OS.Path.dir (#compiler s) ^ "/runevm", "q.rbc"]
-    in check s ("the program of the shared store: " ^ #output ran) (#output ran = "2\n") end
+      val () = check s ("the program of the shared store: " ^ #output ran) (#output ran = "2\n")
+      (* the workspace moved, its store with it: every unit taken where it is
+         now, nothing stale, and an edit there seen *)
+      val moved = !(#directory s) ^ "-moved"
+      val () = rmTree moved
+      val () = ok s "the workspace moved" (command s "" ["cp", "-a", !(#directory s), moved])
+      fun there args =
+        command s "" (["sh", "-c", "cd \"$0\" && exec env -u RUNE_CACHE \"$@\"", moved, #compiler s] @ args)
+      fun agreesThere label =
+        let
+          val w = there ["--units", "--explain-rebuild", "--build", "p.build", "-o", "w.rbc"]
+          val n = there ["--units", "--no-cache", "--build", "p.build", "-o", "n.rbc"]
+        in
+          ok s label w; ok s (label ^ ", without the store") n;
+          check s (label ^ ": the build differs from one without the store") (same (moved ^ "/w.rbc", moved ^ "/n.rbc"));
+          compiledBy w
+        end
+      val first = agreesThere "a build of the workspace moved"
+      val () = check s ("a build of the workspace moved compiled " ^ String.concatWith " " first) (List.null first)
+      val () = write (moved ^ "/src/a.sml", "structure A = struct val x = Config.n + 2 end\n")
+      val edited = agreesThere "an edit in the workspace moved"
+      val () = check s ("an edit in the workspace moved compiled " ^ String.concatWith " " edited)
+                     (List.exists (fn u => u = "src/a.sml") edited)
+    in rmTree moved end
 
   (* ---- trimming ---- *)
 
