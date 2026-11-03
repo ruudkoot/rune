@@ -1390,6 +1390,20 @@ struct
      out once: its parameter's signature does not change *)
   val openMemo : (tycon * int * ty) list IntTable.table ref = ref (IntTable.table 64)
   val () = CompilerState.refRoot ("Elaborate.openMemo", openMemo, IntTable.copy)
+  (* how a datatype's constructors lie, as the code's tables say
+     (Ty.elabLayout); where no code is made a datatype a functor's parameter
+     specifies is not in them (specDatatypes), so from the constructors
+     elaboration entered of it, which say the same: an application in the
+     body to the parameter's datatype is checked as a compile checks it *)
+  fun layoutAt (stamp : int) : (int * int option) list =
+    case (Ty.elabLayout stamp, !makesCode) of
+      ([], false) =>
+        (case IntMap.find (!dataCons, stamp) of
+           SOME cs => List.mapPartial (fn (_, Con {scheme, info}) =>
+                                            SOME (#tag info, case prune scheme of TArrow (a, _) => Ty.shapeOf a | _ => NONE)
+                                        | _ => NONE) cs
+         | NONE => [])
+    | (l, _) => l
   fun descriptors (code : int, paramSig : SigMatch.sigma, phi : realisation, sp : Source.span) : desc list =
     List.map (fn (c, tag, _) =>
                 case Option.mapPartial fcnIsName (IntMap.find (phi, #stamp c)) of
@@ -1397,7 +1411,7 @@ struct
                     (case openAt (#stamp a, tag) of
                        SOME {desc, ...} => DescVar desc
                      | NONE =>
-                         (case List.find (fn (t, _) => t = tag) (Ty.elabLayout (#stamp a)) of
+                         (case List.find (fn (t, _) => t = tag) (layoutAt (#stamp a)) of
                             SOME (_, SOME n) =>
                               if n > Ty.maxFlat then
                                 err (sp, "the argument lays out a constructor of " ^ #name c ^ " in "
