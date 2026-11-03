@@ -5,16 +5,24 @@
    again, and is believed only where every file it rests on has the stat it
    had, racily clean (UnitStore.clean), or the bytes it had.
 
+   An output -- a program a link wrote, a file a step made -- is held by its
+   stat and by a copy of its bytes, which the cache keeps beside the memos
+   with the stat it had when it was read back: where the stat is racily
+   clean, by the stat; where it is the same but not clean, by its bytes
+   against the copy. A copy compared costs what reading it costs, where a
+   hash the VM works out of an output of megabytes costs more than a no-op
+   (0.31G instructions of rune.build's 6 MB, against a no-op's 0.27G).
+
    The link memo: the program a link made, by a hash of what was linked --
    each unit's code by the hash of its entry or of its bytes, and where its
-   files are now -- and the output's stat and the hash of its bytes. A link
-   of the same units to an output that is what it wrote is not made again.
+   files are now -- and the output. A link of the same units to an output
+   that is what it wrote is not made again.
 
    Up to date: of a compile in units, everything it read after its plan was
    made -- every source, every MANIFEST, what its declared steps and
    preprocessors read (Steps) -- with the stat each had when it was read;
-   what its steps made, and its output, each with its stat and its bytes'
-   hash; the answer of each step's stamp, a command whose output stands
+   what its steps made, and its output, each an output as above; the
+   answer of each step's stamp, a command whose output stands
    for what the step reads that no file names (git's state); and the
    warnings it gave; under a key of all the plan rests on: the command line,
    the directory, the RUNE_ variables, the compiler, the build files' text,
@@ -27,44 +35,58 @@ struct
   structure S = UnitStore
   structure P = Pickle
 
-  (* ---- an output, by its stat and the hash of its bytes ---- *)
+  (* ---- an output, by its stat and a copy of its bytes ---- *)
 
-  type output = {path : string, stamp : S.stamp, at : LargeInt.int, hash : string}
+  type output = {path : string, stamp : S.stamp, at : LargeInt.int}
+
+  (* kept beside the configurations, which a compile knows only once its
+     plan is made *)
+  val place = "memo"
 
   fun bytesOf (path : string) : string option = SOME (S.readFile path) handle IO.Io _ => NONE
 
-  (* an output just written: its stat, taken after at, and the hash of its
-     bytes, read back *)
-  fun written (path : string, at : LargeInt.int) : output option =
+  (* the copy of the output at path, one a path, in the cache dir; what it
+     holds is the stat the bytes were read back at, then the bytes *)
+  fun copyOf (dir : string, path : string) : string =
+    let val full = if OS.Path.isAbsolute path then path else OS.Path.mkAbsolute {path = path, relativeTo = OS.FileSys.getDir ()}
+    in OS.Path.joinDirFile {dir = S.unitsDir (dir, place), file = "copy-" ^ P.hash full} end
+  fun copied (stamp : S.stamp, bytes : string) : string = "rune-copy 1 " ^ #key stamp ^ "\n" ^ bytes
+
+  (* an output just written: its stat, taken after at, and a copy of its
+     bytes, read back, kept in the cache dir *)
+  fun written (dir : string, path : string, at : LargeInt.int) : output option =
     case (S.statOf path, bytesOf path) of
-      (SOME st, SOME b) => SOME {path = path, stamp = st, at = at, hash = P.hash b}
+      (SOME st, SOME b) =>
+        ((S.mkdirs (S.unitsDir (dir, place)); S.publish (copyOf (dir, path), copied (st, b));
+          SOME {path = path, stamp = st, at = at})
+         handle IO.Io _ => NONE | OS.SysErr _ => NONE)
     | _ => NONE
 
   (* Whether an output holds what o says: its stat the same, racily clean;
-     or else, the stat the same, its bytes, which then make the stat clean
-     from now (SOME of the output as it is now known); NONE where it does
-     not hold *)
-  fun holds ({path, stamp, at, hash} : output) : output option =
+     or else, the stat the same, its bytes those of its copy, which was
+     taken at that stat, and which then make the stat clean from now (SOME
+     of the output as it is now known); NONE where it does not hold *)
+  fun holds (dir : string) ({path, stamp, at} : output) : output option =
     let val now = S.nowSeconds ()
     in
       case S.statOf path of
         NONE => NONE
       | SOME st =>
           if #key st <> #key stamp then NONE
-          else if S.clean (stamp, at) then SOME {path = path, stamp = stamp, at = at, hash = hash}
-          else (case bytesOf path of
-                  SOME b => if P.hash b = hash then SOME {path = path, stamp = st, at = now, hash = hash} else NONE
-                | NONE => NONE)
+          else if S.clean (stamp, at) then SOME {path = path, stamp = stamp, at = at}
+          else (case (bytesOf path, bytesOf (copyOf (dir, path))) of
+                  (SOME b, SOME c) => if c = copied (stamp, b) then SOME {path = path, stamp = st, at = now} else NONE
+                | _ => NONE)
     end
 
   fun wstamp (w : P.writer, {key, latest} : S.stamp) = (P.string (w, key); P.string (w, LargeInt.toString latest))
   fun rlarge r = case LargeInt.fromString (P.rstring r) of SOME n => n | NONE => raise P.Bad "not a number"
   fun rstamp r : S.stamp = let val key = P.rstring r in {key = key, latest = rlarge r} end
-  fun woutput (w : P.writer, {path, stamp, at, hash} : output) =
-    (P.string (w, path); wstamp (w, stamp); P.string (w, LargeInt.toString at); P.string (w, hash))
+  fun woutput (w : P.writer, {path, stamp, at} : output) =
+    (P.string (w, path); wstamp (w, stamp); P.string (w, LargeInt.toString at))
   fun routput r : output =
-    let val path = P.rstring r val stamp = rstamp r val at = rlarge r
-    in {path = path, stamp = stamp, at = at, hash = P.rstring r} end
+    let val path = P.rstring r val stamp = rstamp r
+    in {path = path, stamp = stamp, at = rlarge r} end
 
   (* ---- the link memo ---- *)
 
@@ -78,7 +100,7 @@ struct
 
   (* what a link of units was: the hash of what was linked, and the output *)
   val links : (string * output) S.side =
-    {magic = "RML", version = 1, hash = fn (_, text) => P.hash text,
+    {magic = "RML", version = 2, hash = fn (_, text) => P.hash text,
      write = fn (w, (digest, out)) => (P.string (w, digest); woutput (w, out)),
      read = fn r => let val d = P.rstring r in (d, routput r) end}
   fun linkName (path : string) : string = "link " ^ path
@@ -90,7 +112,7 @@ struct
       SOME (d, out) =>
         if d <> digest then NONE
         else
-          (case holds out of
+          (case holds dir out of
              NONE => NONE
            | SOME out' => (if out' = out then () else S.storeSide links (dir, config, linkName path, (d, out')); SOME out'))
     | NONE => NONE
@@ -98,7 +120,7 @@ struct
   (* a link of digest has written path, the time at taken before: the
      output as it is now known *)
   fun noteLink (dir : string, config : string, path : string, digest : string, at : LargeInt.int) : output option =
-    case written (path, at) of
+    case written (dir, path, at) of
       SOME out => (S.storeSide links (dir, config, linkName path, (digest, out)); SOME out)
     | NONE => NONE
 
@@ -119,8 +141,8 @@ struct
      its stat is racily clean *)
   val made : output list ref = ref []
   val () = CompilerState.cellRoot ("UnitMemo.made", made)
-  fun noteMade (path : string) : unit =
-    case written (path, S.nowSeconds ()) of
+  fun noteMade (dir : string, path : string) : unit =
+    case written (dir, path, S.nowSeconds ()) of
       SOME out => made := out :: List.filter (fn o' => #path o' <> path) (!made)
     | NONE => ()
   fun keepReads () : unit =
@@ -134,7 +156,7 @@ struct
   type record = {files : (string * S.stamp) list, probes : (string * bool) list, at : LargeInt.int, output : output,
                  made : output list, stamps : (string list * string) list, warnings : (Source.span * string) list}
   val records : record S.side =
-    {magic = "RMU", version = 2, hash = fn (_, text) => P.hash text,
+    {magic = "RMU", version = 3, hash = fn (_, text) => P.hash text,
      write = fn (w, {files, probes, at, output, made, stamps, warnings}) =>
        (P.list (fn (w, (p, st)) => (P.string (w, p); wstamp (w, st))) (w, files);
         P.list (fn (w, (p, there)) => (P.string (w, p); P.bool (w, there))) (w, probes);
@@ -154,10 +176,6 @@ struct
          val warnings = P.rlist (fn r => let val file = P.rstring r val start = P.rint r val stop = P.rint r
                                          in ({file = file, start = start, stop = stop}, P.rstring r) end) r
        in {files = files, probes = probes, at = at, output = output, made = made, stamps = stamps, warnings = warnings} end}
-  (* kept beside the configurations, which a compile knows only once its
-     plan is made *)
-  val place = "memo"
-
   (* The key of a compile's record: all its plan rests on. Every RUNE_
      variable, whatever it is, and the build files by the hashes of their
      text *)
@@ -185,12 +203,12 @@ struct
           fun same (p, st) = case S.statOf p of SOME st' => #key st' = #key st andalso S.clean (st, at) | NONE => false
           fun answered (p, there) = (OS.FileSys.access (p, []) handle OS.SysErr _ => false) = there
           fun allHold ([], acc) = SOME (List.rev acc)
-            | allHold (o' :: rest, acc) = case holds o' of SOME o'' => allHold (rest, o'' :: acc) | NONE => NONE
+            | allHold (o' :: rest, acc) = case holds dir o' of SOME o'' => allHold (rest, o'' :: acc) | NONE => NONE
           fun asks (id, answer) = (ask id = answer) handle _ => false
         in
           if not (List.all same files andalso List.all answered probes) then NONE
           else
-            case (allHold (made, []), holds output) of
+            case (allHold (made, []), holds dir output) of
               (SOME made', SOME out) =>
                 if not (List.all asks stamps) then NONE
                 else

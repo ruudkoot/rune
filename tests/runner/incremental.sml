@@ -203,7 +203,9 @@ struct
                                  fun other line = if String.isPrefix "hash " line then "hash 0123456789abcdef0123456789abcdef" else line
                              in write (about, String.concatWith "\n" (List.map other lines));
                                 OS.FileSys.rename {old = dir, new = path s "cache/0123456789abcdef0123456789abcdef"} end)
-                          (List.filter (fn config => isDir (path s ("cache/" ^ config))) (entries (path s "cache")));
+                          (* each configuration, which says what it is in units/about;
+                             not memo/ or steps/, beside them *)
+                          (List.filter (fn config => exists (path s ("cache/" ^ config ^ "/units/about"))) (entries (path s "cache")));
                  b ["--explain-rebuild"] all;
                  check s "the build did not say the cache's hash differs"
                    (String.isSubstring "holds entries made by a compiler whose hash differs" (#errors (!(#result s)))))

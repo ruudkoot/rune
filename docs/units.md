@@ -754,26 +754,36 @@ warning given again -- loads it (`Source.fault`). A stat is what Rune's own
 since MLKit's Basis Library has no `ctime`, and keeps and believes no memo:
 it reads every source and links every time.
 
+**An output.** What a build writes and reads again -- its program, and what
+a step made -- is held by its stat and by a copy of its bytes, which the
+cache keeps with the stat they were read back at (`UnitMemo.written`,
+`memo/units/copy-*`, one a path): where the stat is the same and racily
+clean, by the stat; where it is the same but was taken within the second of
+the write, by its bytes against the copy. A copy compared costs what reading
+it costs; a hash the VM works out of an output of megabytes costs more than a
+no-op (0.31G instructions of `rune.build`'s 6 MB program, against a no-op's
+0.27G). The price is the copy: a cache holds each output once more.
+
 **The link memo.** The program a link made is kept by the hash of what was
 linked, each unit's code by its entry's hash or its bytes' and where its
-files are now, with the output's stat and the hash of its bytes
-(`UnitMemo.linked`). The same units linked to an output that is what that link
-wrote are not linked again; an output that was changed, or written within the
-second of its stat and not the same bytes, is.
+files are now, with the output (`UnitMemo.linked`). The same units linked to
+an output that is what that link wrote are not linked again; an output that
+was changed, or written within the second of its stat and not the same
+bytes, is.
 
 **Up to date.** A compile in units keeps what it read once its plan was made
 -- every source, every MANIFEST, every file its declared steps and
 preprocessors read, with the stat each had when it was read, and whether
 each `library.build` it asked of was there -- with what its steps made and
-its output, each by its stat and the hash of its bytes, the answer of each
-step's stamp, and the warnings it gave, under a key of all its plan rests on:
+its output, each held as an output is, the answer of each step's stamp, and
+the warnings it gave, under a key of all its plan rests on:
 the command line, the directory, every `RUNE_` variable, the compiler's
 identity, the text of its build files, its inputs and its workspace
 (`UnitMemo.upToDate`, `memo/` of the cache). A compile with the same key, all
 of whose files have the stats they had and racily clean, whose questions
 have the same answers, whose steps' outputs and own output are what were
 made, and whose stamps, asked last, answer as they did, runs no step, gives
-the warnings again and ends. A step's output is held by its bytes because
+the warnings again and ends. A step's output is held as an output because
 the build itself writes it, within the second of its stat; and the check
 comes before the steps, so an up-to-date `rune.build` runs neither
 `scripts/gen-version.sh --config` nor more of git than its stamp. Not with
@@ -786,22 +796,24 @@ no input.
 What a no-op costs (the build-system roadmap's M6): machine instructions
 (`perf stat -e instructions:u`, the compiler at tier 2) and the VM's
 (`runevm --count`), of a build made again with nothing changed, against the
-same build before M6; the first no-op after a build reads its output once
-more, since that was written within the second of its stat:
+same build before M6; the first no-op after a build reads its output and the
+copy once more, since the output was written within the second of its stat.
+`rune.build` is a clean git checkout, its index written by git, and its
+no-op asks its config step's stamp, 0.046G of it; before M6 it ran the step,
+0.135G:
 
 | Build | Before | No-op | First no-op | VM, before | VM, no-op |
 |---|---:|---:|---:|---:|---:|
-| `rune.build`, 256 units | 11.05G | 0.221G (2.0%) | 0.529G (4.8%) | 1.136G | 0.002G |
-| HOL4's closure, 910 units | 25.85G | 0.254G (1.0%) | 0.933G (3.6%) | 2.872G | 0.006G |
-| MLton, 791 units | 86.87G | 0.274G (0.3%) | 0.936G (1.1%) | 9.010G | 0.007G |
+| `rune.build`, 257 units | 11.30G | 0.274G (2.4%) | 0.295G (2.6%) | 1.151G | 0.002G |
+| HOL4's closure, 910 units | 25.78G | 0.261G (1.0%) | 0.314G (1.2%) | 2.872G | 0.006G |
+| MLton, 791 units | 87.27G | 0.284G (0.3%) | 0.335G (0.4%) | 9.011G | 0.007G |
 
 A no-op's floor is the VM's start, 0.173G for `rune --version`. An edit of the
 last unit costs 9% fewer VM instructions than before on `rune.build` and HOL4
 (the units before it taken without their bases; its view loads most of them),
-and a build that compiles makes one hash more, of its output (1.5% of a cold
-build of HOL4). `-j 4` makes a no-op of `rune.build` 0.221G, against 13.30G
-before, since it parses no input; a build that is not up to date still parses
-every input with `-j`.
+and a build that links keeps a copy of its output in the cache. `-j 4` makes
+a no-op of `rune.build` 0.273G, against 13.30G before, since it parses no
+input; a build that is not up to date still parses every input with `-j`.
 
 `tests/runner/warmchecks.sml` (`make test-incremental`) holds the warm path to
 what a build without it gives: each unit of two projects compiled alone under

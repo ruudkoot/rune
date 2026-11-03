@@ -571,7 +571,9 @@ struct
       fun prepare () =
         Steps.prepare {project = project, cache = UnitCache.directory (), windows = onWindows (),
                        explain = fn message => if !Options.explainRebuild then eprintln message else (),
-                       noteOutput = fn path => if isSome (!upToDate) then UnitMemo.noteMade path else ()}
+                       noteOutput = fn path => case (!upToDate, UnitCache.directory ()) of
+                                                 (SOME _, SOME dir) => UnitMemo.noteMade (dir, path)
+                                               | _ => ()}
     in
       case upHit of
         SOME warnings =>
@@ -1484,7 +1486,7 @@ struct
                 (UnitMemo.stopReads ();
                  if not (OS.Process.isSuccess status) then ()
                  else
-                   case (case output of SOME kept => SOME kept | NONE => UnitMemo.written (out, at)) of
+                   case (case output of SOME kept => SOME kept | NONE => UnitMemo.written (dir, out, at)) of
                      SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])), Steps.answered ())
                    | NONE => ())
             | _ => ()
