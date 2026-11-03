@@ -406,6 +406,14 @@ struct
       val () = need (status = 0 andalso not (clientCompiled log), "an edit behind the boundary compiled a client: " ^ log)
       val (status, output) = runProgram (dir ^ "/client.rbc")
       val () = need (status = 0 andalso output = "42\n", "client prints " ^ output)
+      (* and in the unit of what it names *)
+      val () = put ("p/twin-client.sml", "val () = print (Twin1.v ^ \"\\n\")\n")
+      fun twin () = rune (cache @ libraries ["twin1"] @ ["p/twin-client.sml", "-o", dir ^ "/twin-client.rbc"])
+      val (status, log) = twin ()
+      val () = need (status = 0, "client: " ^ log)
+      val () = put ("lib/twin1/twin.sml", "structure Shared = struct val v = \"one\" val more = 1 end\nstructure Twin1 = struct val v = Shared.v end\n")
+      val (status, log) = twin ()
+      val () = need (status = 0 andalso not (has "rune: compiled p/twin-client.sml" log), "an edit in the unit of what it names compiled a client: " ^ log)
       (* a new export it does not name *)
       val () = put ("lib/lower/library.build",
                     "exports (structure Lower, signature LOWER, structure Another, fixity +++)\n\
