@@ -1,6 +1,6 @@
 generate expo 20
 compile @gen
 nostack the front end's cost on the module language, the same on both VMs: measured on Rune as shipped alone
-instructions 2766294
-bytes 3358185
-objects 84694
+instructions 2875715
+bytes 3624684
+objects 93046
