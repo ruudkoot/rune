@@ -6,8 +6,8 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`COMPILER_API`](sig/COMPILER_API.md) | 107 | 107 | 100% | 68 | 68 |
-| **all** | 107 | 107 | 100% | 68 | 68 |
+| [`COMPILER_API`](sig/COMPILER_API.md) | 109 | 109 | 100% | 70 | 70 |
+| **all** | 109 | 109 | 100% | 70 | 70 |
 
 ## Members a signature describes
 
@@ -16,7 +16,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-5 structures have a page, with 107 members, of which 107 (100%) are described by a signature.
+5 structures have a page, with 109 members, of which 109 (100%) are described by a signature.
 
 ---
 

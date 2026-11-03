@@ -116,6 +116,14 @@ struct
     fun root (workspace : t)= #root workspace
     fun libraryRoots (workspace : t)= #libraryRoots workspace
     fun targets (workspace : t)= #targets workspace
+    (* where a compile of file keeps its store (UnitCache.directory), where
+       it is there: an analysis makes none *)
+    fun store {file,windows}=
+      let fun there dir=if (OS.FileSys.isDir dir handle OS.SysErr _ => false) then SOME dir else NONE
+      in case OS.Process.getEnv "RUNE_CACHE" of
+           SOME "" => NONE
+         | SOME dir => there dir
+         | NONE => there (UnitCache.storeIn (getOpt (W.rootOf {file=file,windows=windows},OS.Path.dir file))) end
   end
 
   structure Project =
@@ -218,6 +226,7 @@ struct
     type pool=A.pool
     val pool=A.pool
     fun share (Analysis {analysis,...},value)=A.share(analysis,value)
+    fun store (Analysis {analysis,...},value)=A.store(analysis,value)
     fun compact (Analysis {analysis,...})=A.compact analysis
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))

@@ -312,11 +312,16 @@ would otherwise repeat is memoised too.
 * **Closed inputs.** Their text is kept by the same stamps; a source is
   re-indexed only where its text changed.
 * **Closed units.** Only the units of the open documents keep syntax, typing,
-  facts and occurrences. A request into another opens it first, at its place, at
-  the price of its elaboration, until M18's sidecars answer it: that is
-  `workspace/symbol`, whose cost is every unit's on its first request and a
-  resident price of the last few. `textDocument/implementation` needs no unit
-  open: a closed unit keeps the occurrences it reads.
+  facts and occurrences. Another keeps its notes: its facts, occurrences and
+  types as bytes, with each type name its facts printed and the path they
+  printed it by. A request into it reads them where they hold: where each such
+  type name prints by that path still, from where the unit stands now (a path
+  depends on the whole environment, which no usage says), and the units whose
+  places its occurrences hold by span alone have the text they had. Otherwise,
+  and for its syntax or typing, it is opened at its place, at the price of its
+  elaboration. So `workspace/symbol` elaborates no unit to say its symbols.
+  `textDocument/implementation` needs no notes: a closed unit keeps the
+  occurrences it reads.
 * **Bindings.** A definition in another unit is held by reference, resolved when
   it is read, so go-to-definition and a binding's identity are right under a unit
   reused across a span that moved.
@@ -340,12 +345,81 @@ to its datatype about 1.2 seconds, elaborating the 13 whose usages it breaks.
 
 Nothing here is allowed to change an answer. `bin/rune-lsp-oracle` keeps a
 context through a list of edits, and after each compares every fact, occurrence,
-type, diagnostic and query with a fresh analysis of the same inputs, on the
-units named; it fails a run that did not take each path it is told to.
-`make test-lsp-oracle`, part of `make check`, runs it on the compiler's own build,
-with every file open, and with one and the Basis Library's units taken from
-another context (`--share`); `make test-lsp-oracle-corpora`, in the
-nightly tier, on HOL4's closure and MLton (`tests/lsp/README.md`).
+type, diagnostic and query with a fresh analysis of the same inputs, which keeps
+every file open, on every unit; it fails a run that did not take each path it is
+told to. `make test-lsp-oracle`, part of `make check`, runs it on the compiler's
+own build three times: with every file open; with one, and the Basis Library's
+units taken from another context (`--share`); and with one, cold from a store a
+compile at `-O0` made, whose units are taken from it (`--store`, *The store*,
+below). `make test-lsp-oracle-corpora`, in the nightly tier, on HOL4's closure
+and MLton (`tests/lsp/README.md`).
+
+### The store
+
+Where the build has a store (`docs/units.md`, *The store*: `.rune` beside the
+workspace's `rune.workspace`, or `RUNE_CACHE`), the server reads it: a compile's
+entries, and its own sidecars. It makes no store, and writes no entry.
+
+* **A compile's entries, as a static layer.** A unit no context holds, whose
+  file is not open, is taken from an entry of a compile whose usages hold where
+  the unit is reached, by their binders. Only its static layer is read, and of
+  the ABI layer only what the static layer names, so a compile's entry and an
+  analysis of the same text load the same; an analysis knows a unit by its
+  static layer's identity, so that a body edit moves none, and a compile's
+  entries name the units it loaded under their whole identities, which are the
+  same units to it. The configuration is split: an entry of any configuration
+  whose static settings are the server's (the compiler, the formats, the hash
+  and the language's settings) serves, whatever its level, passes, fuel,
+  target or integers' width, none of which moves a static layer.
+* **Sidecars.** A compile records no origins, so a unit is taken from its
+  entry only with its sidecar, which an analysis of the same text wrote: the
+  origins its basis's names have, its notes, its types, the names its text
+  mentions, the binder of each name it looked up, and the compiler that wrote
+  it. A sidecar is kept by the hash of the source and its format, not by the
+  compiler: after an upgrade it is still found, and taken for nothing (a hint,
+  never an answer); the unit is elaborated and its sidecar written again. One
+  whose unit is another, or whose names another unit binds now, or whose
+  places another text holds now, is not taken either. A sidecar is written for
+  each unit a check elaborates from the text its file has, never from a buffer
+  not saved, and goes when the store is trimmed.
+
+So a cold start costs what reading the store does, and an edit what a kept
+context's does. A body edit of a unit taken from a compile's entry keeps its
+static identity, and so every unit after it, which a compile's usages name under
+the compile's identities: E24 found 55 of the 79 units after
+`lib/compiler/util/source.sml` broken by such an edit, and now none is. An edit
+that moves an identity walks: a unit taken from a compile's entry holds its
+usages by the compile's fingerprints, which an analysis's never equal, so
+before the walk takes the changed unit out, what each unit after it used of it
+is worked out again in the analysis's terms, where the unit still stands, as an
+analysis that elaborated them would have recorded it. `make test-lsp-oracle`'s
+third run shows both: a name added to `source.sml`, cold from the store, breaks
+no usage, and a constructor added breaks those that used the datatype.
+
+Cold from a store, in process, no file open (`bin/rune-lsp-oracle --focus --store
+DIR --no-fresh --collect`, a seed context having written the sidecars; 2026-11-03,
+at a load of 4 to 7 on 16 processors: seconds are indications, VM instructions
+the claim; lines are the program's, the Basis Library's added but on the
+generated build):
+
+| Build | Lines | Units taken from the store | Cold | VM instructions | Live after | A line |
+|---|---:|---:|---:|---:|---:|---:|
+| `rune.build` | 67,338 | 259 of 260 | 0.41 s | 0.34G | 28.3 MiB | 0.43 KB |
+| HOL4's `src/boss` closure | 231,714 | 907 of 910 | 1.37 s | 1.09G | 100.5 MiB | 0.44 KB |
+| A generated build of 1.13M lines, 9,021 files (`gen-as-run.py`, `--domains 32`) | 1,133,346 | 9,015 of 9,016 | 13.8 s | 10.3G | 567 MiB | 0.51 KB |
+| MLton's 606 files | 217,107 | 756 of 764 | 32.8 s | 18.5G | 1,515 MiB | 7.0 KB |
+
+A unit is not taken where no entry of a compile holds by its binders, as on
+`rune.build` at the defaults the Basis's `seal_textio.sml`, whose compile took
+its entry from the frozen libraries across a change, by fingerprints a static
+layer does not say; or where its sidecar is another unit's, two files with one
+text, as HOL4's two `Systeml.sig`. MLton misses 2 KB a line: its signatures
+are copied into each unit that loads them, so that loaded eagerly its static
+layers hold 7 KB a line, from the store or from its own elaboration (1.58 GiB
+live with its units closed, of which the entries' texts, pickles, origins,
+notes and usages are 0.10 GiB); only a load by need (M6's lazy view) would
+leave them unloaded, and the analysis does not load so yet.
+
 
 ## Workspaces and build contexts
 

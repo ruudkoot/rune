@@ -383,6 +383,12 @@ struct
         (* what the editor has open keeps what a question needs; the rest closes *)
         val ()=A.focus (#analysis context,SOME (List.mapPartial (fn input:A.input =>
           if #revision input="disk" then NONE else SOME (#file input)) inputs))
+        (* the store a compile of the build keeps, where there is one: its
+           entries and the sidecars an earlier analysis left there (D27) *)
+        val ()=A.store (#analysis context,case (selected,inputs) of
+            (SOME selected,_) => C.Workspace.store {file=W.filePath platform (#build selected),windows=platform=U.Windows}
+          | (NONE,first::_) => C.Workspace.store {file= #file first,windows=platform=U.Windows}
+          | (NONE,[]) => NONE)
         val snapshot=A.check (#analysis context,{project=project,inputs=inputs,cancelled=cancelled})
         val ()=RuneLspProfile.sample "check-analysed" uri 0 0 0
         val ()= #latest context:=SOME snapshot

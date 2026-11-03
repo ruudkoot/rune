@@ -92,7 +92,7 @@ struct
     let val found=A.route snapshot
     in check (name ^ ": walked " ^ Bool.toString (#walked found) ^ ", rebound " ^ Int.toString (#rebound found) ^ ", loaded " ^
         Int.toString (#loaded found) ^ ", cutoff " ^ Int.toString (#cutoff found) ^ ", broken " ^ Int.toString (#broken found),
-        found={walked=walked,rebound=rebound,loaded=loaded,cutoff=cutoff,broken=broken}) end
+        found={walked=walked,rebound=rebound,loaded=loaded,cutoff=cutoff,broken=broken,stored=0}) end
   (* the same answers, unit by unit, closed units opened *)
   fun sameUnits (left,right)=A.diagnostics left=A.diagnostics right andalso A.types left=A.types right andalso
     List.all (fn ordinal => case (A.unitAt (left,{ordinal=ordinal}),A.unitAt (right,{ordinal=ordinal})) of
@@ -220,6 +220,17 @@ struct
         val ()=check ("a closed unit keeps its types",A.types focused=A.types oracle)
         val ()=check ("a closed unit opens at its place",A.occurrencesIn (focused,unit)=A.occurrencesIn (oracle,unit)
           andalso A.factsIn (focused,unit)=A.factsIn (oracle,unit))
+        (* go-to-definition and hover into a closed unit: the open unit's
+           occurrence of a name the closed one defines, and the closed
+           unit's own, from its notes *)
+        fun definitionOf (snapshot,unit,name)=Option.mapPartial #definition (List.find (fn occurrence:A.occurrence =>
+          #name occurrence=name andalso not (#isDefinition occurrence)) (A.occurrencesIn (snapshot,unit)))
+        val ()=check ("a definition in a closed unit is found from an open one",
+          isSome (definitionOf (focused,open',"make")) andalso definitionOf (focused,open',"make")=definitionOf (oracle,open',"make")
+          andalso Option.map #file (definitionOf (focused,open',"make"))=SOME "library.sml")
+        val ()=check ("and its type is the closed unit's own",
+          A.typeAtOccurrence (focused,{ordinal=1,offset=size "val made=L.ma"})=A.typeAtOccurrence (oracle,{ordinal=1,offset=size "val made=L.ma"})
+          andalso isSome (A.typeAtOccurrence (focused,{ordinal=1,offset=size "val made=L.ma"})))
         val ()=check ("and gives its syntax and its types",isSome (A.syntaxAt (focused,{ordinal=0})) andalso
           A.typeAtOccurrence (focused,{ordinal=0,offset=0})=A.typeAtOccurrence (oracle,{ordinal=0,offset=0}))
         val ()=A.focus (context,SOME ["library.sml"])
@@ -745,6 +756,25 @@ struct
         val ()=check ("each syntax error of a unit is reported",length (A.diagnostics broken)>=2
           andalso List.all (fn diagnostic:C.diagnostic => #file diagnostic="one.sml") (A.diagnostics broken))
     in A.close context;C.close parent end
+  (* A flexible record no later file of the unit settles (tests/units/flex):
+     the unit's error, as a compile reports it, and the check goes on; a
+     question about the unit is answered from what was elaborated *)
+  fun flexibleRecord () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="flexible-record"})
+        val first=input ("a.sml","fun getX r = #x r\n","1")
+        val second=input ("b.sml","val n = getX {x = 1, y = 2}\n","1")
+        val result=analyze (context,[first,second])
+        val ()=check ("an unresolved flexible record is the unit's error",
+          List.map (fn diagnostic:C.diagnostic => (#file diagnostic,#line diagnostic,#message diagnostic)) (A.diagnostics result)=
+            [("a.sml",1,"unresolved flexible record: cannot determine the full set of fields")])
+        val ()=check ("and says what a fresh analysis does",same (result,freshly (parent,[first,second])))
+        val ()=check ("the unit's own occurrences answer",List.exists (fn occurrence:A.occurrence =>
+          #name occurrence="getX" andalso #isDefinition occurrence) (A.occurrencesIn (result,valOf (A.unitAt (result,{ordinal=0})))))
+        val settled=analyze (context,[input ("a.sml","fun getX (r : {x : int, y : int}) = #x r\n","2"),second])
+        val ()=check ("once settled the units after it are reached",null (A.diagnostics settled)
+          andalso same (settled,freshly (parent,A.inputs settled)))
+    in A.close context;C.close parent end
   (* Two builds over one library (D26): a context that shares takes the
      library's units from what another checked, and says what a fresh one
      does; one that does not share elaborates them. *)
@@ -821,6 +851,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "generated-layouts" CompilerAnalysisTests.generatedLayouts,
      Test.it "layouts-in-a-body" CompilerAnalysisTests.layoutsInABody,
      Test.it "past-the-first-error" CompilerAnalysisTests.pastFirstError,
+     Test.it "flexible-record" CompilerAnalysisTests.flexibleRecord,
      Test.it "basis-view" CompilerAnalysisTests.basisView,
      Test.it "two-builds-share-a-library" CompilerAnalysisTests.sharedLibrary]
 end)

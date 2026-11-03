@@ -161,7 +161,7 @@ struct
                       val ()=List.app (fn i => IntTable.insert (table,Vector.sub (#base unit,k)+i,i))
                         (List.tabulate (Vector.sub (#count unit,k),fn i => i))
                   in table end)
-                val exported : UnitBasis.exported={pickle=pickle,sidecar="",identity= #identity unit,own=own,counts= #count unit,
+                val exported : UnitBasis.exported={pickle=pickle,sidecar="",identity= #identity unit,static= #static loaded,own=own,counts= #count unit,
                   provenance=Link.provenance (#target config,mode,Pickle.hash text)}
                 val code=UnitBasis.relative (exported,sc)
                 val fingerprint=Pipeline.fingerprint ()

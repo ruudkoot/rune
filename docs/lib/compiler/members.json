@@ -299,6 +299,13 @@
      "page": "sig/COMPILER_API.md#val-workspace.targets"
     },
     {
+     "kind": "val",
+     "name": "Workspace.store",
+     "spec": "val store : {file : string, windows : bool} -> string option",
+     "doc": "`store {file, windows}` is the directory of the store a compile of\nfile keeps, where there is one.\n\nThat is RUNE\\_CACHE's, else .rune beside the nearest root file above\nfile, else beside file (docs/units.md, The store).\n\n",
+     "page": "sig/COMPILER_API.md#val-workspace.store"
+    },
+    {
      "kind": "structure",
      "name": "Project",
      "spec": "structure Project : sig ... end",
@@ -559,6 +566,13 @@
     },
     {
      "kind": "val",
+     "name": "Analysis.store",
+     "spec": "val store : t * string option -> unit",
+     "doc": "`store (context, SOME dir)` has a context read the store in dir, a\ncompile's (Workspace.store), and `store (context, NONE)`, the default,\nnone.\n\nA unit not open whose compiled entry holds there, of any configuration\nwhose static settings are the context's, and whose sidecar the store\nhas from an earlier analysis of the same text, is loaded from them and\nnot elaborated: its static layer is the compile's. The sidecar of each\nunit a check elaborates from the text its file has is written there.\nThe results are a fresh analysis's whichever way a unit came.\n\n",
+     "page": "sig/COMPILER_API.md#val-analysis.store"
+    },
+    {
+     "kind": "val",
      "name": "Analysis.compact",
      "spec": "val compact : t -> unit",
      "doc": "`compact context` gives up the compiler state a context's units stay\nloaded in, with what its tables hold of units long replaced.\n\nThe next check loads them into a new one, and gives what it would\nhave. A check does this itself after enough walks.\n\n",
@@ -700,8 +714,8 @@
     {
      "kind": "val",
      "name": "Analysis.route",
-     "spec": "val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int}",
-     "doc": "`route snapshot` reports how the check went, and nothing of its results.\n\nwalked: from the start, rather than each change at its own place;\nrebound: units taken as they stood; loaded: taken again from their\npickles; cutoff: elaborated to the identity they had; broken: a usage\nrefused a unit. The results are a fresh analysis's whichever the route.\n\n",
+     "spec": "val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int}",
+     "doc": "`route snapshot` reports how the check went, and nothing of its results.\n\nwalked: from the start, rather than each change at its own place;\nrebound: units taken as they stood; loaded: taken again from their\npickles; cutoff: elaborated to the identity they had; broken: a usage\nrefused a unit; stored: taken from the store (store). The results are a\nfresh analysis's whichever the route.\n\n",
      "page": "sig/COMPILER_API.md#val-analysis.route"
     },
     {

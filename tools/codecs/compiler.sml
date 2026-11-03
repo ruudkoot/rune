@@ -312,7 +312,7 @@ struct
         ("tyname", leaf ("nameTo ({w}, {e}, kTycon, {x})", "rnameAt ({r}, {d}, kTycon)", "{x} = {y}", "", "", [Static, Abi])
                    |> others ("[{x} + 1]", true)),
         (* a binding's origin, in the sidecar (writeOrigin notes that one was) *)
-        ("origin", {write = "writeOrigin ({e}, {x})", read = "readOrigin' {r}", same = "{x} = {y}", fp = "", key = "",
+        ("origin", {write = "writeOrigin ({e}, {x})", read = "ownOrigin (readOrigin' {r})", same = "{x} = {y}", fp = "", key = "",
                     layers = [Side], default = "Env.Unknown", other = "[otherOrigin {x}]", static = true}),
         (* an environment: whole, or a reference to a signature's structure
            (env, renv); in a fingerprint a child (fpChild) *)
