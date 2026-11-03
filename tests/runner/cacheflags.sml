@@ -129,6 +129,7 @@ struct
      apart ("RUNE_", "the prefix of every variable an up-to-date compile's record is kept under (UnitMemo)"), apart ("RUNE_VERIFY_UNIT", cacheItself), apart ("RUNE_VERIFY_MASK", cacheItself),
      apart ("RUNE_PARALLEL_DEBUG", "says what -j did"),
      apart ("RUNE_LAYER_DUMP", "says what each unit's exports hash to"),
+     apart ("RUNE_FP_ORACLE", "checks each unit's fingerprints, and leaves the tables as they were"),
      apart ("RUNE_STATIC_LOAD", "a load where no code is made; a compile makes code"),
      apart ("RUNE_FAULT", testSwitch), apart ("RUNE_REGVERIFY_INJECT", testSwitch), apart ("RUNE_RBCCHECK_INJECT", testSwitch),
      apart ("RUNE_ASTLINT_FAULT", testSwitch)]

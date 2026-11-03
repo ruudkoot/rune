@@ -75,6 +75,19 @@ keep these invariants:
   `src/isa/stack.sml` if the file layout changes; a change to the
   instructions or the primitives changes the fingerprint of the instruction
   set by itself, which the `.rbc` and images carry.
+* **A unit's basis and its Mid** are written, read, compared and fingerprinted
+  by codecs generated from one description, `tools/codecs/compiler.sml`
+  (`docs/units.md`, *Codecs*): a field added to a type it describes -- a
+  value's status, a type's, an environment, a signature, a functor, a type of
+  Mid -- is added there too, with its layer and what the fingerprint and the
+  sameness make of it (or why they leave it out), then `make codecs`, which
+  writes the parts of `lib/compiler/driver/unitbasis.sml`,
+  `lib/compiler/core/midcodec.sml` and `lib/compiler/driver/unitmid.sml`
+  marked as generated; never edit those by hand, and `make check-codecs`
+  (part of `make check`) fails when they are stale. What a fingerprint reads
+  of the compiler's tables is written by hand (`valFacts`, `definition`): a
+  fact added there gets its change in `UnitBasis.fpOracle` too, which the
+  scenario `fp-oracle` holds to the fingerprint.
 * **Native code** (`runeopt`, `docs/native.md`): an instruction has,
   beside its description and body in `src/isa/stack.sml` (from which the
   interpreter's case and its stack effect are generated), a template in
@@ -303,7 +316,7 @@ keep these invariants:
   `test-install`, `check-reproducible`, `test-serve`, `test-repl`, `test-terminal`, `test-diagnostics`, `test-repl-protocol`, `test-kernel`, `test-dap`, `test-native`, `test-register`, `test-register-jit`,
   `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
   `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
-  `check-positions`, `check-cross`, `check-docs`, `check-isa`, each a test
+  `check-positions`, `check-cross`, `check-docs`, `check-isa`, `check-codecs`, each a test
   of the runner `bin/rune-test`, run at once where they share no files; a
   passing test prints nothing, a failure prints a block with its reason, the
   directory its output is kept in and the command that reruns it, and the

@@ -14,7 +14,11 @@
    --verify-cache compares what it can; S98 plants an entry that must fail.
 
    model: results/L1's model of the cache, the statement of what these are
-   for (docs/units.md, Checking it). *)
+   for (docs/units.md, Checking it).
+
+   fp-oracle: the fingerprint oracle, each field of a binding and each fact
+   of the tables changed alone, against what the description of the codecs
+   marks (tools/codecs/compiler.sml). *)
 structure CacheChecks =
 struct
   open Incremental
@@ -250,13 +254,61 @@ struct
       val expected = read (fromRoot "tests/incremental/model.expected")
     in check s ("the model says otherwise than tests/incremental/model.expected: " ^ #output r) (#output r = expected) end
 
-  val cases = "model" :: "S98" :: "S99" :: "S100" :: "S101"
+  (* ---- the fingerprint oracle (the build-system roadmap's D20 and M5) ----
+
+     A compile under RUNE_FP_ORACLE (UnitBasis.fpOracle): of each value, type
+     and structure a unit binds, each field changed alone moves the
+     fingerprint in the layers the description of the codecs marks it in
+     (tools/codecs/compiler.sml) and no other, and the sameness of two
+     bindings as it marks; and so does each fact a fingerprint reads of the
+     compiler's tables by hand. Every check holds, and the program has a
+     binding of each kind, so that each field and each fact is changed at
+     least once. *)
+  val oracleProgram =
+    [("a.sml", "structure A =\nstruct\n  datatype t = T of int | U\n  exception E of string\n  fun inc x = x + 1\n\
+               \  val aliased = inc\n  val len = String.size\n  fun same (x : ''a, y) = x = y\n  type 'a pair = 'a * 'a\n\
+               \  structure Inner = struct val n = 1 end\nend\n\
+               \signature S =\nsig\n  type t\n  datatype d = D | F of int\n  type e\n  val G : int -> e\n  val v : t\n\
+               \  exception X\n  val Y : exn\nend\n"),
+     ("b.sml", "structure B :> S =\nstruct\n  type t = string\n  datatype d = D | F of int\n  datatype e = G of int\n\
+               \  val v = \"b\"\n  exception X\n  exception Y\nend\n\
+               \val () = print (Int.toString (A.inc 1 + A.aliased 2 + A.len \"abc\") ^ \"\\n\")\n")]
+  val oracleLabels =
+    ["Env.Val.scheme", "Env.Val.stamp", "Env.Val.global", "Env.Con.scheme", "Env.Con.info.name", "Env.Con.info.tag",
+     "Env.Con.info.hasArg", "Env.Con.info.ncons", "Env.Con.info.isRef", "Env.Con.info.siblings", "Env.Exn.ty", "Env.Exn.info.name",
+     "Env.Exn.info.hasArg", "Env.Exn.info.stamp", "Env.Exn.info.isGlobal", "Env.ConAsVal.scheme", "Env.ConAsVal.info.tag",
+     "Env.ExnAsVal.ty", "Env.ExnAsVal.info.stamp", "Env.TyStr.fcn.T.TName.c", "Env.TyStr.fcn.T.TAbbrev.ids",
+     "Env.TyStr.fcn.T.TAbbrev.t", "Env.TyStr.cons", "Env.Env.vals", "Env.Env.tys", "Env.Env.strs",
+     "facts.primAliases", "facts.knownBefore", "facts.globalAliases", "facts.primGlobals",
+     "definition.eq", "definition.realisation", "definition.constructors"]
+
+  fun fpOracle (s : state) =
+    let
+      val () = own s "a.sml b.sml"
+      val () = List.app (fn (f, t) => put s f t) oracleProgram
+      val log = path s "oracle.log"
+      val () = #environment s := [("RUNE_FP_ORACLE", log)]
+      val r = command s "" [#compiler s, "--units", "--no-cache", "a.sml", "b.sml", "-o", "o.rbc"]
+      val () = #environment s := []
+      val () = check s ("the compile under the oracle failed: " ^ #errors r) (#status r = 0)
+      val rows = List.map (String.fields (fn c => c = #"\t")) (List.filter (fn l => l <> "") (lines (read log)))
+      val fails = List.filter (fn row => case row of v :: _ => v = "FAIL" | [] => false) rows
+      val () = check s ("the oracle found fingerprints or samenesses that are not what the description marks: "
+                        ^ String.concatWith "; " (List.map (String.concatWith " ") (List.take (fails, Int.min (8, length fails)))))
+                     (null fails)
+      val labels = List.mapPartial (fn row => case row of _ :: _ :: _ :: l :: _ => SOME l | _ => NONE) rows
+      val missing = List.filter (fn l => not (List.exists (fn x => x = l orelse String.isPrefix (l ^ "[") x) labels)) oracleLabels
+      val () = check s ("the oracle changed nothing of " ^ String.concatWith ", " missing) (null missing)
+    in say ("fp-oracle: " ^ Int.toString (length rows) ^ " checks, " ^ Int.toString (length oracleLabels) ^ " kinds of change\n") end
+
+  val cases = "model" :: "S98" :: "S99" :: "S100" :: "S101" :: "fp-oracle"
               :: List.map (fn (g : group) => blankPrefix ^ #label g) groups
               @ List.map (fn p => acrossPrefix ^ p) acrossProjects
 
-  fun handles name = List.exists (fn c => c = name) ["model", "S98", "S99", "S100", "S101"] orelse String.isPrefix blankPrefix name orelse String.isPrefix acrossPrefix name
+  fun handles name = List.exists (fn c => c = name) ["model", "S98", "S99", "S100", "S101", "fp-oracle"] orelse String.isPrefix blankPrefix name orelse String.isPrefix acrossPrefix name
   fun one (s : state) =
     if #name s = "model" then model s
+    else if #name s = "fp-oracle" then fpOracle s
     else if #name s = "S98" then planted s
     else if #name s = "S99" then absentUnit s
     else if #name s = "S100" then usedThenDeclared s

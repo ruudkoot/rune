@@ -217,6 +217,65 @@ as a unit is bound, in a compile or an analysis, and `RUNE_STATIC_LOAD` makes a
 load where no code is made enter nothing of the ABI layer in the compiler's
 tables, which is what an analysis must not need.
 
+**Codecs** (the build-system roadmap's D21 and M5). What a basis says of a
+binding is described once, in `tools/codecs/compiler.sml`: each type -- a
+value's status, a constructor's and an exception's information, a type's
+status and its type function, an environment written whole, a signature, a
+functor, an overloading, an origin, a fixity directive, the types of the IRs,
+and every type of Mid and of a unit's Mid -- is its constructors, each its
+fields, and each field has its marks: the layer it is written to (static, ABI
+or the sidecar: the marks are the layers), its codec, and, for a binding's
+types, which of its fields its fingerprint holds, by what canonical bytes and
+in which layers' (an anchor and a fact of the tables are the full
+fingerprint's), and which its sameness compares (`envDelta`). From it
+`bin/rune-codecs` writes each type's writer, reader, sameness and fingerprint,
+the key a value written once is kept by, and the names a function of Mid
+binds, into the parts of `lib/compiler/driver/unitbasis.sml`,
+`lib/compiler/core/midcodec.sml` and `lib/compiler/driver/unitmid.sml` marked
+as generated, which are committed (`make codecs`; `make check-codecs` fails
+where they are stale). So a fingerprint is no traversal of its own: it is the
+hash of the canonical bytes of the fields marked for a layer, as SML/NJ's
+`pickle2hash` and MLKit's `pu` combinators make theirs of the value they
+pickle. A field no traversal names is refused unless the description says,
+with a reason, that the traversal leaves it out; and every generated pattern
+names every field, so a field added to a type and not to its description is a
+compile error, and one added to both is written, read, compared and
+fingerprinted (`rune-codecs --test`, `--toy`). MidCodec and UnitMid write one
+encoding of Mid by one codec, each with its own hooks for names.
+
+What stays by hand, and why: a type of the elaborator (`ty`, `keyedTy`, `rty`,
+`fpTy`, `sameType`), whose parts are written once by a key of their structure
+and whose variables are cells a reader shares and a fingerprint numbers by
+first occurrence; a type name, written once by its stamp, and fingerprinted by
+the strongly connected group of its definition (`fpTycon`, `definition`); an
+environment written as a reference to a signature's structure (`env`'s other
+branch, `renamedEnv`, `fpChild`), which is a renaming, not a field list; the
+reads of the compiler's tables -- a fingerprint's facts of a value
+(`valFacts`), a type name's definition, an import's (`importStamp`), and a
+basis's tables of its own names (`staticTables`, `abiTables` and their
+readers in `load`), which a description of fields cannot say where to find;
+the header and the identities; a functor's fingerprint (`fpFunctor`,
+`Elaborate.functorFingerprint`), of its parameter's and its result's
+signatures over one numbering of both's type names; a structure's fingerprint
+as a usage names it, of its entries' hashes (`fpEnv`); and the walks that
+name a binding by its path (`walkPaths`, `bindKeys`). The generated writer,
+reader, sameness and fingerprint write the bytes, and the hashes, the hand
+ones did, on the Basis, `rune.build` and MLton.
+
+**The fingerprint oracle** (the build-system roadmap's D20). With
+`RUNE_FP_ORACLE=FILE`, of each value, type and structure a unit binds, as it
+is bound, each field is changed alone (`perturbVal`, `perturbTy`,
+`perturbEnv`, generated from the same description): the fingerprint must move
+in the layers the description marks the field in and no other, and the
+sameness say another where the description has it compare the field and the
+same where it leaves it out. Each fact a fingerprint reads of the tables by
+hand is changed alone too -- a value's primitive, its being known by name, the
+global it is, its primitive function -- which must move the full fingerprint
+and not the static one, and of a type name the unit declares its equality,
+its constructors and its realisation. `FILE` gets a line for each check, and
+the scenario `fp-oracle` of `make test-incremental` wants every check to hold
+and each kind of change made at least once.
+
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
 to the unit's start, the bytes are read, their names given names of the

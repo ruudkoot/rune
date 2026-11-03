@@ -75,7 +75,9 @@ struct
          (target ("test-lsp-oracle-corpora", 21600, {cpus = 1, memory = 16000, pools = [], after = [], tags = ["nightly"],
                                                      covers = ["lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]})),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
-       alone ("check-isa", [], [])]
+       alone ("check-isa", [], []),
+       alone ("check-codecs", [], ["tools/codecs/*", "lib/compiler/driver/unitbasis.sml", "lib/compiler/core/midcodec.sml",
+                                   "lib/compiler/driver/unitmid.sml"])]
 
   (* what tests require of the machine (D18; docs/testing.md, Requirements),
      with scripts/doctor.sh's hints *)
