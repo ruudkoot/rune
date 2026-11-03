@@ -37,13 +37,18 @@ dec      ::= path                            a file, compiled in the basis befor
                                              what the units inside may do (below)
            | "cache" path                    where the cache of the build is
            | "libraries" name ... "end"      libraries selected by this build,
-                                             or dependencies in library metadata
+                                             or what a library with no header is
+                                             written on
            | "inline" "functor" id ... "end" functors copied into every unit that
                                              applies them (below)
            | "inline" "val" name ... "end"   functions copied into every unit that
                                              names them (below)
+header   ::= ( "requires" name ... "end"      what a library's build file says
+             | "exports" exports              first (A library's header, below)
+             | "friends" path ... "end"
+             | "view" id exports ) ...
 exports  ::= "(" export "," ... ")"          export ::= kind id
-kind     ::= "structure" | "signature" | "functor" | "type"
+kind     ::= "structure" | "signature" | "functor" | "type" | "fixity"
 path     ::= a file's path, relative to the build file's directory, in which
              $(NAME) is the path variable NAME (--path NAME=DIR, below)
 name     ::= a long name of a value, as a word, or as a string where it holds
@@ -52,7 +57,7 @@ string   ::= "..."
 ```
 
 Comments are SML's, `(* ... *)`. A path is a word of letters, digits and
-`/ . _ - + ~`, with `$(NAME)` anywhere in it, or a string, which holds any
+`/ . _ - + ~ #`, with `$(NAME)` anywhere in it, or a string, which holds any
 other character.
 
 A path that begins with a variable whose value is relative is relative to
@@ -167,7 +172,13 @@ wants each export declared by one of its files. `type t` exports
 a type abbreviation. A datatype is not exported so: it would keep its
 constructors, which a replication (`datatype u = datatype t`) gets back
 past the boundary; export a structure that holds it, or the abbreviation of
-a type behind a signature.
+a type behind a signature. `fixity NAME` exports the fixity the name has
+at the end of the boundary. No other fixity crosses it.
+
+A boundary hides names, not representation. A private type that an exported
+signature mentions is usable by a client, equality and ascription included,
+but not nameable: that is what `:>` is for, in the structure's own source. A
+friend (below) sees private names and is held to `:>` like any client.
 
 ## Reaching in
 
@@ -212,16 +223,99 @@ is to a program:
 | `final` | it is compiled after every program |
 | `host=swap`, `host=no` | how `bin/rune-generate host-basis` gives the file to the other SML systems |
 
-`libraries random end` names the libraries it is written on. In an
-ordinary program build, the declaration selects those libraries as
-`--library random` does; explicit command-line selections are retained.
-What each
+`libraries random end` names the libraries it is written on, where it has
+no header. In an ordinary program build, the declaration selects those
+libraries as `--library random` does; explicit command-line selections are
+retained. What each
 file provides and requires is not written down: `rune --basis-index DIR`
 works it out from the sources (`Deps`, docs/units.md, The graph) and writes
 `DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). `make
 manifests` makes them all, and they are not committed.
 
-A library can put all its sources inside one explicit export boundary:
+### A library's header
+
+What a library is to the outside comes first in its `library.build`, before
+its first file:
+
+```
+requires json unicode end
+exports (structure Api, signature API, functor Make, type item, fixity "<+>")
+friends ../../tests/api/internals.build end
+view small (structure Api)
+annotate "demand" in
+  use implementation.build
+end
+```
+
+Its parts come in any order, each once but for `view`, and `exports` is the
+one a header must have. A `use`d build file and a program have no header.
+`requires` is what a program's build calls `libraries`; a library with a
+header does not write `libraries`.
+
+* **`requires` says what may be named, and is not transitive.** The files of
+  a library with a header are compiled in the Basis Library and what it
+  requires, whatever else a program has loaded. A name of another library
+  used undeclared is an error: `--basis-index` says so where a library it
+  requires is written on the name, and the compile says the name is unbound
+  in any case. A program is held to the same: it sees what its `libraries`
+  and `--library` name, and a library that one of those requires is not among
+  them. What is named is what loads, as ever: `requires` makes a library
+  available, and the closure of what is named of it links.
+* **`exports` is the boundary:** the files after it are inside it. Files inside
+  can use each other's private declarations, and a program or another library
+  sees the listed exports. This applies to whole-program compilation,
+  compilation in units and cache reuse. Private fixity declarations stay
+  inside the library, and its final files are elaborated in its private
+  context. An export must be declared before the program; `--basis-index` and
+  `--basis-check` reject a missing export or the wrong kind of declaration, and
+  `--basis-index` rejects a `fixity` export no file directs and a file that
+  uses a name a library it requires does not export, which would otherwise show
+  only when a client failed to compile. An invalid index leaves the existing
+  manifest intact. A fixity directive at the top level of a file belongs in an
+  `always` file, as a demand file declares modules and types only; that file
+  loads with the library, so an exported fixity is active wherever the library
+  is imported, and only there.
+* **`friends` names the build files that see all the library declares,** each
+  a path from the library's directory: the compiler's drivers, or a test of a
+  library's internals (D11). A friend sees private names and nothing more: `:>`
+  holds for it, and what the library requires is not its. A build that is not
+  named is refused, even with a friend's entries in its cache, since a usage
+  holds only of a name in scope.
+* **`view NAME` is a named subset of the exports.** `libraries lib#NAME end`,
+  `requires lib#NAME end` or `--library lib#NAME` see that subset, and the
+  files that link are the closure of what they name of it, as for the whole
+  library. A view has no files of its own, needs no loading primitive and costs
+  no second copy of anything (D8).
+
+`--basis-index` writes a header to the manifest's comment lines, `# library:`
+for what is required, as the readers of a manifest have always read it, and
+`# exports:`, `# friends:`, `# view:` and `# fixity:` for the rest, with words
+such as `structure:Api signature:API`. `runedoc` uses the boundary when
+selecting public pages and elaborating dependencies.
+
+### A library with no header
+
+A library with no header keeps the meaning it has always had, and a file shows
+by its own form whether it has moved: its files see all that is compiled before
+them, everything it declares is public, and `libraries` is transitive through
+it. A library with a header that requires one sees what that one is written
+on too. A build of libraries none of which has a header goes as it always has,
+byte for byte.
+
+`--basis-index` warns of each, once, when it writes the manifest:
+
+```
+lib/json/library.build: warning: this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)
+```
+
+That is the only place it shows. A client cannot act on it, and 31 of this
+tree's libraries have no header yet, 26 written by hand and the 5 generated
+sets, which would be a line in every compile of a program that uses one; the
+index runs when the library changes, for the person changing it.
+`--no-warnings` silences it.
+
+Such a library may keep a boundary of its own in the older form, a `library`
+block around its files, which leaves the rest of its meaning as it is:
 
 ```sml
 libraries json end
@@ -230,25 +324,30 @@ library (structure Api, signature API, functor Make, type item) =
 end
 ```
 
-Files inside that boundary can use each other's private declarations. A
-program or another library sees the listed exports. This applies to
-whole-program compilation, compilation in units and cache reuse. Private
-fixity declarations stay inside the library, and its final files are
-elaborated in its private context. An export must be declared before the
-program; `--basis-index` and `--basis-check` reject missing exports or the
-wrong kind of declaration. `--basis-index` also rejects a file that uses a
-name a library it is written on does not export, which would otherwise show
-only when a client failed to compile. An invalid index leaves the existing
-manifest intact.
+The manifest records that boundary in an optional sixth column, and every
+row of one library has the same one.
 
-The generated manifest records the complete boundary in an optional sixth
-column, using words such as `structure:Api signature:API`. Every row of
-one library has the same boundary. Existing five-column manifests keep
-their existing visibility. `runedoc` uses the boundary when selecting
-public pages and elaborating dependencies. A library without an explicit
-boundary retains its existing names.
+### Clashes
 
-**What a library exports is ASCII.** Standard ML has no escape for a
+Two imports of one name in one scope are a clash: two libraries that export
+it, or a library and the Basis Library. The later shadows the earlier, in the
+order the libraries are compiled, and the compiler warns once a scope:
+
+```
+tool.sml:1:1: warning: this scope has RuneCompiler from both the Basis Library and the library lib/compiler, and the second shadows the first (docs/build.md, Clashes)
+```
+
+A program's clashes show when it is compiled and a library's when it is
+indexed, not in its clients. At least one of the two must have a header: two
+libraries with none shadow each other as they always have. What a library
+declares itself wins over what it imports, and is no clash. Private names
+never clash, since a unit's identity holds them apart. `--no-warnings`
+silences this too. Renaming at import will answer a clash, which will then be
+an error (the build-system roadmap's M10).
+
+### What a library exports is ASCII
+
+Standard ML has no escape for a
 name, so a program read in the default mode could not name `Foo.λ`:
 the structures, signatures and functors of a library, and their
 members, constructors and fields, are spelt in ASCII, whatever mode its

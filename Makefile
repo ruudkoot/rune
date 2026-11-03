@@ -280,7 +280,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: check-docs-generated test-mutants test-compiler-mutants manifests isa check-isa test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
+.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-cache-random manifests isa check-isa test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt runeffi manifests basis-cache
 
@@ -1548,6 +1548,11 @@ test-incremental: $(RUNE) vm basis-cache bin/rune-repl bin/rune-test bin/rune-in
 test-layers: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental
 	$(RUNE_TEST) --tier test-layers
 
+# the random edits at length (docs/testing.md, The checks of the cache); a
+# milestone that changes a key runs it. RUNE_CACHE_SEED=N draws other edits
+test-cache-random: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental
+	$(RUNE_TEST) --tier test-cache-random
+
 check-positions: $(RUNE) $(RUNEVM) bin/rune-test
 	$(RUNE_TEST) --tier check-positions
 
@@ -2040,7 +2045,7 @@ check test test-all test-opt test-native test-register test-register-jit test-st
 RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
                tests/runner/hosts.sml tests/runner/libhosts.sml tests/runner/hostchecks.sml \
                tests/runner/migration.sml \
-               tests/runner/children.sml tests/runner/buildchecks.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
+               tests/runner/children.sml tests/runner/librarymodel.sml tests/runner/buildchecks.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
                tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml tests/runner/matrixfaults.sml \
                tests/runner/docchecks.sml tests/runner/mutants.sml tests/runner/docfaults.sml \
                tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml \
@@ -2048,9 +2053,9 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
-               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
+               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
-               tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/compilermutants.sml \
+               tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
@@ -2101,8 +2106,13 @@ test-mutants: $(RUNEDOC) vm manifests bin/rune-test bin/rune-doc-check
 # The mutants of the compiler (tests/runner/compilermutants.sml; docs/testing.md,
 # Mutants of the compiler): hours, never part of make check. COMPILER_MUTANTS=E01,M02
 # runs those alone; COMPILER_MUTANTS_QUICK=N keeps N items of each part of the corpus.
-test-compiler-mutants: $(RUNE) vm basis-cache bin/rune-test
+test-compiler-mutants: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental bin/rune-repl
 	$(RUNE_TEST) --tier test-compiler-mutants
+
+# Those of the cache alone (tests/runner/cachemutantlist.sml; docs/testing.md, The
+# checks of the cache), each against the checks that must see it: minutes
+test-cache-mutants: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental bin/rune-repl
+	$(RUNE_TEST) --tier test-cache-mutants
 
 MATRIX_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/matrixprepare.sml \
                tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml
@@ -2316,7 +2326,7 @@ bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/ru
 # Incremental edits, cache corruption and externally provisioned corpora.
 INCREMENTAL_BASE_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml \
                          tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml
-INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
+INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
                     tests/runner/mutationproject.sml tests/runner/mutationchecks.sml tests/runner/mutationhistory.sml \
                     tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/soundness.sml \
                     tests/runner/layerchecks.sml tests/runner/incremental-main.sml

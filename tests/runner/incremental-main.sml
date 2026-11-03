@@ -14,9 +14,11 @@ struct
         val repo = ref root
         val projects = ref []
         val replay = ref false
+        val verify = ref false
         fun parse [] = ()
           | parse ("--rune" :: value :: rest) = (compiler := value; parse rest)
           | parse ("--out" :: value :: rest) = (directory := fromRoot value; parse rest)
+          | parse ("--verify" :: rest) = (verify := true; parse rest)
           | parse ("--steps" :: value :: rest) = (steps := natural value; parse rest)
           | parse ("--seed" :: value :: rest) = (seed := (case IntInf.fromString value of SOME n => Word64.fromLargeInt n | NONE => raise Usage "invalid seed"); parse rest)
           | parse ("--flags" :: value :: rest) = (flags := String.tokens Char.isSpace value; parse rest)
@@ -33,7 +35,7 @@ struct
                  else raise Usage "mutation output must be a private test results directory"
         val () = (rmTree directory; mkdirs directory)
     in if !replay then MutationChecks.replay (!compiler) directory (fromRoot "tests/runner/incremental-edits-v1.json") else
-       let val checker = MutationChecks.create (!compiler) directory (!flags)
+       let val checker = MutationChecks.creating (!verify) (!compiler) directory (!flags)
            val generator = ref (Random.fromSeed (!seed))
            val () = if !history = 0 then () else MutationHistory.replay checker (!repo) (!history)
            fun project spec =
@@ -112,7 +114,7 @@ struct
     | main ("layers" :: trees) = LayerChecks.main trees
     | main ["one",name,compiler] = IncrementalExtra.runCase name compiler
     | main ("plant" :: args) = CachePlant.command args
-    | main _ = raise Usage "scenarios [--rune BIN] [FILTER] | mutate [OPTIONS] PROJECT... | soundness [OPTIONS] PROJECT... | layers BUILD... | plant [OPTIONS]"
+    | main _ = raise Usage "scenarios [--rune BIN] [FILTER] | one NAME COMPILER | mutate [OPTIONS] PROJECT... | soundness [OPTIONS] PROJECT... | layers BUILD... | plant [OPTIONS]"
 end
 val () =
   let fun message (IncrementalMain.Usage text)=text

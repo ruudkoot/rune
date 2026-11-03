@@ -1,5 +1,5 @@
 (* The worker entry point is also exercised independently of the LSP loop. *)
-libraries compiler lsp digest end
+libraries compiler lsp digest json jsonrpc unicode end
 files
   ../../src/lsp/profile.sml
   ../../src/lsp/documents.sml

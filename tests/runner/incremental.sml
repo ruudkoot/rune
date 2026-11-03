@@ -146,7 +146,10 @@ struct
                  let val files = List.filter (String.isSuffix "colors.rbi") (entriesBelow (path s "units"))
                      val bytes = OS.FileSys.fileSize (only files)
                  in check s "basis of 300 constructors exceeds its size bound" (#status (!(#result s)) = 0 andalso bytes > 0 andalso bytes < 100000) end; prints s "1")
-    | "S61" => (c "a.sml b.sml main.sml"; b [] "a.sml b.sml main.sml"; f "a.sml" 1; b [] "a.sml b.sml"; prints s "42 0")
+    | "S61" => (c "a.sml b.sml main.sml"; b [] "a.sml b.sml main.sml"; f "a.sml" 1; b [] "a.sml b.sml"; prints s "42 0";
+                 check s "a program that keeps its units' identities was refused for no reason it gives"
+                   (String.isSubstring "b.sml: its entries hold across a unit that changed, which a program that keeps its units' identities takes none across"
+                                       (#errors (!(#result s)))))
     | "S62" => (c "p.sml"; b ["--or-patterns"] "p.sml"; prints s "small"; build s []; fails s;
                  own s "d.sml"; f "d.sml" 0; b ["--default-type=int64"] "d.sml"; prints s "1"; build s []; fails s)
     | "S63" => (c "p.sml"; b ["--unicode"] "p.sml"; prints s "read"; b [] "p.sml"; b ["--unicode=latin1"] "p.sml";

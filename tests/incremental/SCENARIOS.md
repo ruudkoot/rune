@@ -12,7 +12,8 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, S49 to S97, and S121 to S124. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, S49 to S101, S121 to S124, and the checks
+of *Facts, flags and roots* below. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `bin/rune-incremental mutate` edits projects
@@ -503,6 +504,46 @@ when the scenarios above were all green
   which the fixity's edit compiles again (since functors-units M7; before,
   `main.sml`'s, whose copy of the body did).
 
+* **S98, an entry across a change that is wrong.** `c.sml`'s entry holds by
+  fingerprint across an edit of `a.sml`, its usages one compile's and its
+  contents another's (`bin/rune-incremental plant`). A build takes it;
+  `--verify-cache`, which compares such an entry as it comes to loaded
+  (build-cache issue 15), fails.
+* **S99, an entry that names a unit no longer there.** In S61's program,
+  which takes nothing across a change, `b.sml`'s entry has the usages of one
+  compile and the code of one before it, which names the old `a.sml`. Its
+  usages hold, and nothing remaps it: it is a miss, for the reason that it
+  names the unit (issue 4), not a link that finds no unit.
+* **S100, a signature used and then declared again.** `b.sml` matches a
+  structure against `a.sml`'s `S` and then declares its own `S`. An edit of
+  `a.sml` that keeps `S` compiles `a.sml` alone: the usage is the signature
+  as the unit began (issue 17, as S72 for a functor).
+* **S101, a layout a functor's body fixed.** An instance of a datatype of a
+  functor's result, whose argument is a tuple there and not in the body, and
+  the application left a call (`--functor-budget=0`): a program made of the
+  units' Mid (`--units --whole`) is the whole compile's bytes, cold and warm,
+  which needs the entry's Mid to keep the layout.
+
+## Facts, flags and roots
+
+Each is a scenario by name, so `bin/rune-incremental one NAME BIN` runs it, and
+`bin/rune-incremental scenarios --rune BIN FILTER` a family
+(`docs/testing.md`, *The checks of the cache*, says what each is for).
+
+* **`fact-*`** (`tests/runner/cachefacts.sml`) flip one fact a fingerprint or
+  the configuration holds, with the value's name and type kept: which global
+  a value is, a function known by name, a primitive under a name, a
+  constructor's tag, what an abstract type is, equality of a type variable and
+  of a type name, which value of two a path reaches, a marked body, a mark.
+  Each says which units compile, and wants the bytes of a build without the
+  cache, or both refusing.
+* **`flag-*`** (`tests/runner/cacheflags.sml`) hold every option and variable to
+  a row, and each row that compiles to what it says of the key.
+* **`blank-*`** and **`across-*`** (`tests/runner/cachechecks.sml`): root
+  blanking, and `--verify-cache` after each file of a project is edited.
+* **`model`** runs `tests/incremental/model.sml`, the model of a cache hit, and
+  wants `tests/incremental/model.expected`.
+
 ## Edits nobody wrote
 
 `bin/rune-incremental mutate` edits a project as a person might -- a
@@ -515,8 +556,12 @@ succeed and are the same bytes. Its projects are `tests/incremental/project`,
 `tests/incremental/functors` (functors over a datatype, fixity and a type,
 and a unit that declares their names again) and `compiler`, the compiler's
 own sources; `--history N` replays the compiler's last N commits through one
-cache. `make test-incremental` runs it briefly, with a seed of its own; a
-long run is by hand.
+cache; `--verify` adds a build with `--verify-cache` after each warm build,
+which must find nothing. `make test-incremental` runs it briefly, with and
+without `--verify`, and `make test-cache-random` at length (150 steps of each
+small project, verified, and 12 of the compiler's sources; in the nightly
+tier, and `RUNE_CACHE_SEED=N` draws other edits). A milestone that changes a
+key runs that.
 
 `bin/rune-incremental soundness --old BIN --new BIN` holds a new way of
 working out fingerprints to an old one (functors-units, M4): over the same

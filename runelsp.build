@@ -1,5 +1,5 @@
 (* Standalone server, isolated compiler analysis and portable worker supervision. *)
-libraries compiler lsp digest end
+libraries compiler lsp digest json jsonrpc unicode end
 files
   build/config.sml
   src/lsp/profile.sml

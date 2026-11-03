@@ -35,18 +35,31 @@ struct
         fun keyVisible key=case String.fields (fn c => c= #" ") key of
           ["s",name] => visible (BuildFile.Str,name) | ["t",name] => visible (BuildFile.Ty,name)
         | ["sig",name] => visible (BuildFile.Sig,name) | ["fun",name] => visible (BuildFile.Fun,name)
+        | ["fix",name] => visible (BuildFile.Fix,name)
         | _ => not (isSome exports)
         fun named (kind,map,base)=List.foldl (fn ((k,n),base) =>
           if k=kind andalso visible ((if kind="sig" then BuildFile.Sig else BuildFile.Fun),n) then
             (case StringMap.find (map,n) of SOME value => StringMap.insert (base,n,value) | NONE => base) else base) base (#declared change)
     in env:=Env.plus (#env before',exported);
-       fixity:=Fixity.extend (#fixity before',if isSome exports then [] else #directives change);
+       fixity:=Fixity.extend (#fixity before',List.filter (fn (n,_) => visible (BuildFile.Fix,n)) (#directives change));
        Elaborate.sigs:=named ("sig",#sigs change,#sigs before');
        Elaborate.funs:=named ("fun",#funs change,#funs before');
        UnitBasis.binders:=List.foldl (fn (key,base) => if keyVisible key then
          (case StringMap.find (#binders change,key) of SOME id => StringMap.insert (base,key,id) | NONE => base) else base)
          (#binders before') (#bound change)
     end
+
+  fun restore ({env,fixity,...}:t,b:snapshot)=
+    (env:= #env b;fixity:= #fixity b;Elaborate.sigs:= #sigs b;Elaborate.funs:= #funs b;UnitBasis.binders:= #binders b)
+
+  (* a library's boundary as what the libraries' walk reads it as *)
+  fun exportsOf (exports:LibraryScope.exports):exports=
+    List.map (fn (kind,name) => ((case kind of "structure" => BuildFile.Str | "signature" => BuildFile.Sig
+                                             | "functor" => BuildFile.Fun | "type" => BuildFile.Ty | _ => BuildFile.Fix),name)) exports
+  (* this context as LibraryScope's walk goes through it *)
+  fun site (t:t):(snapshot,delta) LibraryScope.site=
+    {get=fn () => snap t,set=fn b => restore (t,b),change=fn (b,a,_) => delta (t,b,a),
+     add=fn (onto,change,filter) => (apply (t,onto,change,Option.map exportsOf filter);snap t)}
 
   (* ---- boundaries, and what a second use sees through them (docs/build.md,
      D8) ---- *)
@@ -91,13 +104,14 @@ struct
   fun exportProblem ({env,...}:t,change:delta,exports:exports) : string option =
     let
       fun kindName k=case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
-                             | BuildFile.Fun => "functor" | BuildFile.Ty => "type"
+                             | BuildFile.Fun => "functor" | BuildFile.Ty => "type" | BuildFile.Fix => "fixity"
       fun inScope (kind,name)=
         case kind of
           BuildFile.Str => StringMap.member (Env.strs (!env),name)
         | BuildFile.Ty => StringMap.member (Env.tys (!env),name)
         | BuildFile.Sig => StringMap.member (!Elaborate.sigs,name)
         | BuildFile.Fun => StringMap.member (!Elaborate.funs,name)
+        | BuildFile.Fix => List.exists (fn (n,_) => n=name) (#directives change)
       fun problem (kind,name)=
         if not (inScope (kind,name))
         then SOME ("a library exports " ^ kindName kind ^ " " ^ name ^ ", and nothing of that name is in scope")

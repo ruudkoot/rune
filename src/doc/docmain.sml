@@ -220,7 +220,7 @@ struct
      lines, with those they name, in the order they are elaborated. *)
   fun preludeOf (dir : string) : DocElab.prelude =
     case !libDir of
-      NONE => {basis = NONE, libraries = []}
+      NONE => {root = NONE, basis = NONE, libraries = []}
     | SOME d =>
         let
           val basis = d ^ "/basis"
@@ -230,10 +230,10 @@ struct
                         (BasisManifest.libraries (d, BasisManifest.libraryRequires dir))
             handle BasisManifest.Usage why => raise Usage why
         in
-          if real basis = real dir then {basis = NONE, libraries = []}
+          if real basis = real dir then {root = NONE, basis = NONE, libraries = []}
           else if OS.FileSys.access (basis ^ "/MANIFEST", [OS.FileSys.A_READ])
-          then {basis = SOME basis, libraries = libraries}
-          else {basis = NONE, libraries = libraries}
+          then {root = SOME d, basis = SOME basis, libraries = libraries}
+          else {root = SOME d, basis = NONE, libraries = libraries}
         end
 
   fun generate (name : string) : OS.Process.status =
