@@ -14,7 +14,7 @@ struct
   (* What a library is written on: the Basis Library, for every library but
      itself, and the libraries its MANIFEST names (docs/plans/quickcheck.md,
      D1), in the order they are elaborated. *)
-  type prelude = {basis : string option, libraries : string list}
+  type prelude = {root : string option, basis : string option, libraries : string list}
 
   (* NONE when the library does not elaborate; the compiler's error is
      reported, and the documentation is still made. The prelude is elaborated
@@ -28,21 +28,20 @@ struct
         let val (prog, fx) = Parser.parseTokensWith (Lexer.tokenize (Source.load (!DocSource.mode, d ^ "/" ^ #file e)), !fixity)
         in fixity := fx; prog end
       val env = ref Env.initial
-      fun namespace () : LibraryScope.basis = {env = !env, sigs = !Elaborate.sigs, funs = !Elaborate.funs}
-      fun restore (basis : LibraryScope.basis) =
-        (env := #env basis; Elaborate.sigs := #sigs basis; Elaborate.funs := #funs basis)
+      (* the library's scope and those of what it is written on, as a compile
+         of a program of it has them *)
+      val written = List.map (fn d => (d, BasisManifest.readManifest d)) (#libraries prelude @ [dir])
+      val scopes =
+        case #root prelude of
+          NONE => BasisManifest.noScopes ""
+        | SOME root => BasisManifest.scopes {root = root, building = NONE, names = [], headed = false, libraries = written}
+      val walk = LibraryScope.walk (LibraryScope.bothSite (env, fixity), scopes)
       fun elaborate d =
-        let
-          val entries = BasisManifest.readManifest d
-          val incoming = !fixity
-          val prior = namespace ()
-          val prog = List.concat (List.map (parse d) entries)
-          val () = Elaborate.elabTop (env, prog)
-        in
-          case BasisManifest.scopeOf entries of
-            NONE => ()
-          | SOME exports => (restore (LibraryScope.restrict (prior, namespace (), exports)); fixity := incoming)
-        end
+        case BasisManifest.readManifest d of
+          [] => ()
+        | entries =>
+            LibraryScope.group (walk, entries, fn () =>
+              Elaborate.elabTop (env, List.concat (List.map (parse d) entries)))
     in
       Elaborate.allowPrim := true;
       Option.app elaborate (#basis prelude);

@@ -9,7 +9,11 @@ structure BuildFile =
 struct
   (* ---- syntax ---- *)
 
-  datatype kind = Str | Sig | Fun | Ty
+  (* what a library may export; Fix is a name's fixity, which a boundary lets
+     through only where it is named (docs/build.md, A library's header) *)
+  datatype kind = Str | Sig | Fun | Ty | Fix
+  (* a library's header, but for its exports: the Library after it *)
+  type header = {requires : string list, friends : string list, views : (string * (kind * string) list) list}
   datatype dec =
       File of string                              (* a path, relative to the build file's directory *)
     | Files of string list
@@ -21,6 +25,7 @@ struct
     | Annotate of string list * dec list
     | Cache of string
     | Libraries of string list                   (* the libraries a library is written on *)
+    | Header of header                           (* what comes first in a library's build file *)
     | Inline of string list                      (* functors to inline across units (M6b) *)
     | InlineVal of string list                   (* functions to inline across units (functors-units M10) *)
 
@@ -35,7 +40,7 @@ struct
       val n = String.size text
       fun at i = if i < n then String.sub (text, i) else #"\000"
       fun error (start,stop,message)=raise LocatedError ({file=path,start=start,stop=stop},message)
-      fun pathChar c = Char.isAlphaNum c orelse Char.contains "/._-+~" c
+      fun pathChar c = Char.isAlphaNum c orelse Char.contains "/._-+~#" c
       (* a path: its characters, and $(NAME) whole *)
       fun scan j =
         if j < n andalso (pathChar (at j) orelse recover andalso Char.ord (at j)>=128) then scan (j + 1)
@@ -69,7 +74,7 @@ struct
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
-                  "libraries", "inline"]
+                  "libraries", "inline", "requires", "exports", "friends", "view"]
 
   (* the words `annotate` takes (docs/build.md, Annotations, and A library's
      build file) *)
@@ -100,6 +105,22 @@ struct
                      | SOME _ => let val p = pathWord role in p :: paths role end
                      | NONE => (want role;raise LocatedError
                          ({file=path,start=size text,stop=size text},"a list of files that does not end"))
+      fun exportList () =
+        let
+          fun export () =
+            let
+              val k = case next () of
+                        W "structure" => Str | W "signature" => Sig | W "functor" => Fun | W "type" => Ty
+                      | W "fixity" => Fix
+                      | _ => error "an export is structure, signature, functor, type or fixity NAME"
+              val n = case next () of W n => n | S n => n
+            in
+              case next () of
+                W "," => (k, n) :: export ()
+              | W ")" => [(k, n)]
+              | _ => error "expected , or ) in the exports"
+            end
+        in expect "("; export () end
       fun decsUntil stops =
         case peek () of
           NONE => (want "source";[])
@@ -114,20 +135,7 @@ struct
             in Local (a, b) end
         | W "library" =>
             let
-              val () = expect "("
-              fun export () =
-                let
-                  val k = case next () of
-                            W "structure" => Str | W "signature" => Sig | W "functor" => Fun | W "type" => Ty
-                          | _ => error "an export is structure, signature, functor or type NAME"
-                  val n = case next () of W n => n | S n => n
-                in
-                  case next () of
-                    W "," => (k, n) :: export ()
-                  | W ")" => [(k, n)]
-                  | _ => error "expected , or ) in the exports"
-                end
-              val es = export ()
+              val es = exportList ()
               val () = expect "="
               val ds = decsUntil ["end"]
               val () = expect "end"
@@ -167,8 +175,38 @@ struct
             in kind (names ()) end
         | word as W s => if List.exists (fn k => k = s) keywords then error ("unexpected " ^ s) else File (reference ("source",word))
         | word as S _ => File (reference ("source",word))
+      (* A header's parts, in any order, each once but for its views: what
+         comes before the first declaration of the file *)
+      fun header (requires, exports, friends, views) =
+        let
+          fun once (seen, what) = if isSome seen then error ("a header says " ^ what ^ " once") else ()
+        in
+          case peek () of
+            SOME (W "requires") =>
+              (ignore (next ()); once (requires, "requires"); header (SOME (paths "library"), exports, friends, views))
+          | SOME (W "exports") =>
+              (ignore (next ()); once (exports, "exports"); header (requires, SOME (exportList ()), friends, views))
+          | SOME (W "friends") =>
+              (ignore (next ()); once (friends, "friends"); header (requires, exports, SOME (paths "build"), views))
+          | SOME (W "view") =>
+              let
+                val () = ignore (next ())
+                val n = case next () of W n => n | S n => n
+                val () = if List.exists (fn (m, _) => m = n) views then error ("a header has two views " ^ n) else ()
+              in header (requires, exports, friends, (n, exportList ()) :: views) end
+          | _ => (requires, exports, friends, List.rev views)
+        end
+      (* a header's exports are a boundary around all the file declares after
+         it, in one word the Library that a build reads *)
+      fun body () =
+        case header (NONE, NONE, NONE, []) of
+          (NONE, NONE, NONE, []) => decsUntil []
+        | (requires, SOME es, friends, views) =>
+            let val ds = decsUntil []
+            in [Header {requires = getOpt (requires, []), friends = getOpt (friends, []), views = views}, Library (es, ds)] end
+        | _ => error "a library's header says what it exports"
     in
-      let val ds = decsUntil []
+      let val ds = body ()
       in case peek () of NONE => ds | SOME (W w) => error ("unexpected " ^ w) | SOME (S s) => error ("unexpected \"" ^ s ^ "\"") end
     end
   fun parse (path,text)=parseUsing {path=path,text=text,recover=false,pathAt=fn _ => (),wanted=fn _ => ()}

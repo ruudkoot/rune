@@ -60,7 +60,7 @@ struct
     \  --library NAME    compile the library LIBDIR/NAME (a MANIFEST like the basis\n\
     \                    library's) and those it names, after the basis library\n\
     \                    and before the inputs; NAME is a path if it begins with\n\
-    \                    / or .; repeatable\n\
+    \                    / or .; NAME#VIEW sees that view of it; repeatable\n\
     \  --no-prelude      do not compile the basis library before the inputs\n\
     \  --basis MODE      demand (default): compile the files of the basis library\n\
     \                    that the inputs name, and what those need; all: every file\n\

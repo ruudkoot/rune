@@ -41,7 +41,7 @@ struct
      that every place stands. stamps: of the files the libraries were read
      from. paths: of the units no longer in a session, which a pickle that
      holds by its usages still names *)
-  type state={serial:int,kept:kept StringMap.map,order:string list,opens:string list,complete:bool,planned:(CompilerProject.step list*string list) option,
+  type state={serial:int,kept:kept StringMap.map,order:string list,opens:string list,complete:bool,planned:(CompilerProject.step list*string list*string option) option,
     prelude:CompilerPrelude.plan option,units:string list,libraryNames:string StringMap.map,
     libraries:(BasisManifest.entry*string) list,stamps:(string*string) list,
     names:(Source.mode*string*unit StringMap.map) StringMap.map,paths:(int*int*string) list StringMap.map}
@@ -194,9 +194,11 @@ struct
     in left ();result end
   (* units: the logical name of each of sources, as rune gives them
      (Workspace), its libraries' first, so that a unit is the same name in
-     analysis and in a build. opening: the unit query names is wanted whole. *)
+     analysis and in a build. building: the build file checked, which a
+     library's header may name a friend (CompilerPrelude.select). opening:
+     the unit query names is wanted whole. *)
   fun checkWith (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed,walks},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
-                 frozen:source list,frozenPlan:CompilerPrelude.plan option,opening:bool) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads) =>
+                 frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option,opening:bool) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads) =>
     let val {lib,libraries,target,allowPrim,...}=config
         val old= !saved
         val ()=CompilerSettings.target:=target
@@ -263,7 +265,9 @@ struct
         fun observe phase file items=Option.app(fn f=>f {phase=phase,file=file,checked= !checked,reused= !reused,items=items})(!observer)
         val ()=observe "analysis-start" "" (length sources)
         val samePlan=case #planned old of NONE => false
-          | SOME (priorSteps,priorLibraries) => priorLibraries=extraLibraries andalso sameSteps (priorSteps,steps)
+          | SOME (priorSteps,priorLibraries,_) => priorLibraries=extraLibraries andalso sameSteps (priorSteps,steps)
+        (* what the libraries are chosen by besides: the build checked, whose friends see more *)
+        val sameBuilding=case #planned old of NONE => false | SOME (_,_,priorBuilding) => priorBuilding=building
         val ()=Source.overlays:=StringMap.fromList (List.map (fn source => (#file source,#text source)) (frozen @ sources))
         fun replacement (beforeText,afterText) =
           let val beforeSize=size beforeText
@@ -490,14 +494,20 @@ struct
         val stampsHold=List.all (fn (file,stamp) => stampOf file=stamp) (#stamps old)
         fun selected ()=CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=
           List.foldl (fn (source:source,all) => case StringMap.find (!names,#file source) of NONE => all
-            | SOME (_,_,found) => StringMap.foldli (fn (name,(),all) => StringMap.insert (all,name,())) all found) StringMap.empty sources}
+            | SOME (_,_,found) => StringMap.foldli (fn (name,(),all) => StringMap.insert (all,name,())) all found) StringMap.empty sources,
+          building=building}
         val plan=case (frozenPlan,#prelude old) of
             (SOME plan,_) => plan
-          | (NONE,SOME plan) => if samePlan andalso stampsHold andalso not (!mentions) then plan else selected ()
+          | (NONE,SOME plan) => if samePlan andalso sameBuilding andalso stampsHold andalso not (!mentions) then plan else selected ()
           | (NONE,NONE) => selected ()
         val selection=List.map BasisManifest.path (List.concat (#groups plan))
         val priorSelection=List.map (BasisManifest.path o #1) (#libraries old)
-        val sameSelection=isSome (#prelude old) andalso selection=priorSelection
+        (* and each library in the scope it was in, behind the boundary it had
+           (LibraryScope): a place stands only where what it sees does *)
+        fun bounds (plan:CompilerPrelude.plan)=List.map (List.map (fn entry:BasisManifest.entry => #scope entry)) (#groups plan)
+        val sameScopes=case #prelude old of NONE => false
+          | SOME prior => #scopes prior= #scopes plan andalso bounds prior=bounds plan
+        val sameSelection=sameScopes andalso selection=priorSelection
         val librarySources=if sameSelection andalso stampsHold then #libraries old else
           List.map (fn entry:BasisManifest.entry =>
             (poll ();(entry,case StringMap.find (!Source.overlays,BasisManifest.path entry) of SOME text => text
@@ -513,19 +523,14 @@ struct
         val ()=Source.overlays:=List.foldl (fn ((entry,text),overlays) => StringMap.insert
           (overlays,BasisManifest.path entry,text)) (!Source.overlays) librarySources
         val scopes=CompilerBuildContext.new (env,fixity)
+        val libraryWalk=LibraryScope.walk (CompilerBuildContext.site scopes,#scopes plan)
         fun library entries =
-          let val prior:LibraryScope.basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
-              val incoming= !fixity
-              fun one (entry:BasisManifest.entry)=
+          let fun one (entry:BasisManifest.entry)=
                 let val k=unit ({file=BasisManifest.path entry,text=valOf (StringMap.find (!Source.overlays,BasisManifest.path entry)),mode=Source.Ascii},
                       valOf (StringMap.find (libraryNames,BasisManifest.path entry)),
                       case lib of SOME lib => #dir entry=lib ^ "/basis" | NONE => false,false,false)
                 in CompilerBuildContext.note (scopes,#result (liveOf k)) end
-              val ()=List.app one entries
-          in case BasisManifest.scopeOf entries of NONE => () | SOME exports =>
-            let val current:LibraryScope.basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
-                val visible=LibraryScope.restrict (prior,current,exports)
-            in env:= #env visible;fixity:=incoming;Elaborate.sigs:= #sigs visible;Elaborate.funs:= #funs visible end end
+          in LibraryScope.group (libraryWalk,entries,fn () => List.app one entries) end
         val implemented=ref [] : string list ref
         val remaining=ref (ListPair.zip (sources,inputNames))
         fun snap ()=CompilerBuildContext.snap scopes
@@ -621,7 +626,7 @@ struct
                 stamps= #stamps old,names= #names old,paths= !paths}
             | NONE => {serial= #serial old+1,kept=merged,order=if isSome fast then #order old else List.rev (!staged),opens=opens,
                 complete=isSome fast orelse !finished,
-                planned=SOME (steps,extraLibraries),prelude=SOME plan,units=inputNames,libraryNames=libraryNames,
+                planned=SOME (steps,extraLibraries,building),prelude=SOME plan,units=inputNames,libraryNames=libraryNames,
                 libraries=librarySources,
                 stamps=if sameSelection andalso stampsHold then #stamps old else
                   let val files=manifests @ selection
@@ -632,7 +637,7 @@ struct
                 Overload.table:=baseOverloads;UnitBasis.binders:=StringMap.empty;UnitBasis.bindLog:=[];walked:=0)
               val ()=staged:=[]
               val ()=if samePlan andalso sameSelection then () else (moved:=true;cut 0)
-          in (List.app library (#groups plan);walk steps;
+          in (List.app library (#groups plan);LibraryScope.program libraryWalk;walk steps;
               if null (!remaining) then () else raise Fail "extra ordered project input";finished:=true;NONE)
              handle Error.CompileError (span,message) => sourceError (span,message)
                   | Answered => NONE
@@ -693,7 +698,7 @@ struct
       candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
       state=current,entries=entries,order=order,attempted= !attempted,prelude=plan,units=inputNames,opened= !openedEntry,
       route={walked=not (isSome fast),rebound= !rebound,loaded= !loaded,cutoff= !cutoff,broken= !broken}} end)
-  fun checkSteps (session as Session {walks,...},scope,sources,steps,libraries,cancelled)=
-    let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,false)
+  fun checkSteps (session as Session {walks,...},scope,sources,steps,libraries,cancelled,building)=
+    let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,building,false)
     in if !walks>=walksToCompact then compact session else ();result end
 end

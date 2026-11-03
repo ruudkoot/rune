@@ -30,6 +30,7 @@ files
   src/driver/stackcheck.sml
   src/driver/options.sml
   src/driver/parallel.sml
+  src/driver/cachecheck.sml
   src/driver/main.sml
   src/driver/serve.sml
 end

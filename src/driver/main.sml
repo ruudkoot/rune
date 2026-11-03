@@ -16,8 +16,10 @@ struct
   type names = BasisManifest.names
   val namesOf = BasisManifest.namesOf
   val providers = BasisManifest.providers
-  val select = BasisManifest.select
   fun readManifest () = BasisManifest.readManifest (libDir ())
+  (* what each scope of this compile sees (BasisManifest), which choosing its
+     files works out *)
+  val librariesScoped = ref (BasisManifest.noScopes "")
 
   (* The libraries of --library and those they are written on, in the order
      they are compiled, with the entries of each. *)
@@ -39,13 +41,6 @@ struct
         | groups (e :: rest) =
             let val (group,rest) = take (#dir e,rest,[e]) in group :: groups rest end
     in groups entries end
-
-  fun exportsOf entries =
-    Option.map (List.map (fn (kind,n) =>
-      ((case kind of "structure" => BuildFile.Str | "signature" => BuildFile.Sig
-                   | "functor" => BuildFile.Fun | "type" => BuildFile.Ty
-                   | _ => raise Options.Usage ("unknown library export kind: " ^ kind)),n)))
-      (BasisManifest.scopeOf entries)
 
   fun defaultOutput (first : string) : string =
     let
@@ -149,7 +144,8 @@ struct
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       fun show l = String.concatWith " " l
       (* A file of the basis library is checked against the basis library;
-         one of another library against it and all that comes before it. *)
+         one of another library against it and all that comes before it, or
+         where the library has a header, against what it sees. *)
       fun check provider (e : entry, earlier : names) : names =
         let
           val toks = loadTokens (Source.Ascii, BasisManifest.path e)
@@ -191,19 +187,34 @@ struct
                                                 String.substring (Ast.decToString d ^ "                    ", 0, 20)))
                           prog
         in List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier (#provides e) end
-      val earlier = List.foldl (check (providers basisEntries)) StringMap.empty basisEntries
+      val scopes = BasisManifest.scopes {root = libRoot (), building = !Options.build, names = !Options.libraries, headed = false,
+                                         libraries = libs}
+                   handle BasisManifest.Usage why => raise Options.Usage why
+      val walk = LibraryScope.walk (LibraryScope.fixitySite fixity, scopes)
+      val checkBasis = fn () => List.foldl (check (providers basisEntries)) StringMap.empty basisEntries
+      val earlier = if List.null basisEntries then checkBasis () else LibraryScope.group (walk, basisEntries, checkBasis)
       val all = basisEntries @ List.concat (List.map #2 libs)
-      fun library ((dir,es),earlier) =
-        let val incoming = !fixity
-            val raw = List.foldl (check (providers all)) earlier es
+      (* what a file of a library may name of the others *)
+      fun providersOf dir =
+        case BasisManifest.importsOf (scopes, dir) of
+          NONE => providers all
+        | SOME imports =>
+            let
+              fun visible (e as {dir = d, file, when, provides, requires, scope, header} : entry) =
+                if d = dir then e
+                else {dir = d, file = file, when = when, provides = List.filter (fn n => BasisManifest.seen (imports, e, n)) provides,
+                      requires = requires, scope = scope, header = header}
+            in providers (basisEntries @ List.map visible (List.concat (List.map #2 libs))) end
+      fun library ((dir,[]),earlier) = earlier
+        | library ((dir,es),earlier) =
+        let val raw = LibraryScope.group (walk, es, fn () => List.foldl (check (providersOf dir)) earlier es)
         in case BasisManifest.scopeOf es of
              NONE => raw
            | SOME exports =>
                (List.app (fn (kind,name) =>
-                  if StringMap.member (!declaredKinds,declarationKey (dir,kind,name)) then ()
+                  if kind = "fixity" orelse StringMap.member (!declaredKinds,declarationKey (dir,kind,name)) then ()
                   else (eprintln ("rune: " ^ dir ^ "/MANIFEST: exports " ^ kind ^ " " ^ name ^
                                   ", which no source before the program declares");ok := false)) exports;
-                fixity := incoming;
                 List.foldl (fn ((_,name),m) => StringMap.insert (m,name,())) earlier exports)
         end
       val _ = List.foldl library earlier libs
@@ -353,6 +364,18 @@ struct
     in plan end
   fun planOf file = let val plan=projectOf file in (#steps plan,#caches plan) end
 
+  (* a library's directory as a message names it: by where it is in the
+     libraries, wherever those are *)
+  fun libraryShown (dir : string) : string =
+    let val root = libRoot () ^ "/"
+    in if String.isPrefix root dir then "lib/" ^ String.extract (dir, size root, NONE) else dir end
+
+  fun warnClash (file : string) (name : string, first : string, second : string) : unit =
+    Error.warn ({file = file, start = 0, stop = 0},
+                "this scope has " ^ name ^ " from both "
+                ^ (if first = "" then "the Basis Library" else "the library " ^ libraryShown first)
+                ^ " and the library " ^ libraryShown second ^ ", and the second shadows the first (docs/build.md, Clashes)")
+
   (* --basis-index DIR: DIR/MANIFEST, what each file of the library provides
      and requires (BasisManifest), from its build file DIR/library.build --
      each file's class and host by its annotations ("always", "demand",
@@ -372,6 +395,7 @@ struct
       val inlVals : string list ref = ref []
       val used = ref [] : string list ref
       val boundary = ref NONE : (BuildFile.kind * string) list option ref
+      val header = ref NONE : BuildFile.header option ref
       fun relative (base, p) = OS.Path.mkCanonical (OS.Path.concat (base, p))
       fun entries (base, stack, anns, inside, ds) = List.concat (List.map (fn d => entry (base, stack, anns, inside, d)) ds)
       and entry (base, stack, anns, inside, d) =
@@ -391,7 +415,15 @@ struct
         | BuildFile.Library (es, ds) =>
             if inside orelse isSome (!boundary) then raise Options.Usage (file ^ ": a library has one outer export boundary")
             else (boundary := SOME es; entries (base, stack, anns, true, ds))
-        | BuildFile.Libraries ns => (libs := !libs @ ns; [])
+        | BuildFile.Libraries ns =>
+            if isSome (!header) then raise Options.Usage (file ^ ": a library with a header says what it is written on with requires")
+            else (libs := !libs @ ns; [])
+        | BuildFile.Header (h as {requires, friends, ...}) =>
+            if List.length stack > 1 then raise Options.Usage (file ^ ": " ^ hd stack ^ ": a header belongs to library.build")
+            else
+              (List.app (fn f => if OS.Path.isAbsolute f then raise Options.Usage (file ^ ": a friend is a path from the library: " ^ f) else ())
+                        friends;
+               header := SOME h; libs := requires; [])
         | BuildFile.Inline ns => (inl := !inl @ ns; [])
         | BuildFile.InlineVal ns => (inlVals := !inlVals @ ns; [])
         | _ => raise Options.Usage (file ^ ": a library's build file lists its files, annotated; no more")
@@ -400,7 +432,7 @@ struct
                then raise Options.Usage (file ^ ": all source files belong inside the library export boundary") else ()
       val listed = List.map (fn (p,anns,_) => (p,anns)) raw
       fun kindName k = case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
-                              | BuildFile.Fun => "functor" | BuildFile.Ty => "type"
+                              | BuildFile.Fun => "functor" | BuildFile.Ty => "type" | BuildFile.Fix => "fixity"
       val exports = Option.map (List.map (fn (k,n) => (kindName k,n))) (!boundary)
       fun classOf anns =
         case List.filter (fn a => List.exists (fn c => c = a) ["always", "demand", "seal", "final"]) anns of
@@ -408,21 +440,48 @@ struct
       fun hostOf anns =
         case List.filter (fn a => String.isPrefix "host=" a) anns of
           [] => "yes" | hs => String.extract (List.last hs, 5, NONE)
-      (* a file may be in a directory below the library's: sized/int32.sml *)
-      val analysed = List.map (fn (p, anns) => (p, anns, Deps.analyse (p, syntaxOf (Source.Ascii, OS.Path.concat (dir, p)))))
-                              listed
       (* what the Basis Library and the libraries this one is written on
          provide, from their MANIFESTs, made before this one's *)
-      val outside =
-        if OS.Path.mkCanonical dir = OS.Path.mkCanonical (libRoot () ^ "/basis") then []
-        else readManifest () @ List.concat (List.map BasisManifest.readManifest
-                                                    (BasisManifest.libraries (libRoot (), !libs)))
-      val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.public e))
+      val isBasis = OS.Path.mkCanonical dir = OS.Path.mkCanonical (libRoot () ^ "/basis")
+      val written = if isBasis then []
+                    else List.map (fn d => (d, BasisManifest.readManifest d)) (BasisManifest.libraries (libRoot (), !libs))
+      val () = if isBasis orelse isSome (!header) orelse !Options.noWarnings then ()
+               else (Error.warn ({file = file, start = 0, stop = 0},
+                                 "this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)");
+                     Error.flushWarnings ())
+      val outside = if isBasis then [] else readManifest () @ List.concat (List.map #2 written)
+      (* with a header, it sees the Basis Library and what it requires alone,
+         through what a client of it would (BasisManifest) *)
+      val scopes = BasisManifest.scopes {root = libRoot (), building = SOME file, names = !libs, headed = isSome (!header),
+                                         libraries = written}
+                   handle BasisManifest.Usage why => raise Options.Usage why
+      fun usable (e : entry) =
+        if not (isSome (!header)) orelse #dir e = libDir () then BasisManifest.public e
+        else List.filter (fn n => BasisManifest.seen (#program scopes, e, n)) (#provides e)
+      val () = if isSome (!header) andalso not (!Options.noWarnings)
+               then (List.app (warnClash file) (BasisManifest.clashes (#program scopes, outside, libDir ()));
+                     Error.flushWarnings ())
+               else ()
+      val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (usable e))
                                 StringMap.empty outside
-      (* and what a boundary of one of those hides *)
-      val hidden = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => if StringMap.member (provided, n) then m
-                                                                             else StringMap.insert (m, n, #dir e)) m (#provides e))
+      (* and what of those a boundary, or not being required, hides *)
+      val hidden = List.foldl (fn (e : entry, m) =>
+                                 let val public = BasisManifest.public e
+                                 in List.foldl (fn (n, m) =>
+                                      if StringMap.member (provided, n) then m
+                                      else StringMap.insert (m, n, (#dir e, List.exists (fn p => p = n) public))) m (#provides e) end)
                               StringMap.empty outside
+      (* The fixity a file of the library is read in: the initial basis's, what
+         it requires exports, and what its files before say; a file may be in
+         a directory below the library's: sized/int32.sml *)
+      val imported = List.concat (List.map BasisManifest.fixities
+                                           (if isSome (!header) then List.map #dir (#program scopes) else List.map #1 written))
+      val (analysedRev, afterAll) =
+        List.foldl (fn ((p, anns), (acc, fx)) =>
+                      let val (prog, fx') = Parser.parseTokensWith (loadTokens (Source.Ascii, OS.Path.concat (dir, p)), fx)
+                      in ((p, anns, Deps.analyse (p, prog)) :: acc, fx') end)
+                   ([], Fixity.extend (Fixity.initial, imported)) listed
+      val analysed = List.rev analysedRev
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       val providers = List.foldl (fn ((_, _, f : Deps.file), m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m
                                                                                (#declares f))
@@ -430,11 +489,22 @@ struct
       val declared = List.concat (List.map (fn (_,_,f : Deps.file) =>
         List.map (fn (k,n) => (Deps.kindName k,n)) (#declares f))
         (List.filter (fn (_,anns,_) => classOf anns <> "final") analysed))
+      val ownFixity = List.take (#list afterAll, List.length (#list afterAll)
+                                                 - List.length imported - List.length (#list Fixity.initial))
       val () = Option.app (List.app (fn exported as (k,n) =>
-        if List.exists (fn declared => exported=declared) declared then ()
+        if k = "fixity" then
+          (if List.exists (fn (m, _) => m = n) ownFixity then ()
+           else raise Options.Usage (file ^ ": exports fixity " ^ n ^ ", which no source declares"))
+        else if List.exists (fn declared => exported=declared) declared then ()
         else raise Options.Usage (file ^ ": exports " ^ k ^ " " ^ n ^ ", which no source declares"))) exports
-      val scopeColumn = case exports of NONE => "" | SOME [] => " | -"
-        | SOME es => " | " ^ String.concatWith " " (List.map (fn (k,n) => k ^ ":" ^ n) es)
+      fun exportWords es = String.concatWith " " (List.map (fn (k,n) => k ^ ":" ^ n) es)
+      (* a header's views are of what it exports *)
+      val views = case !header of NONE => [] | SOME {views, ...} => List.map (fn (v, es) => (v, List.map (fn (k,n) => (kindName k,n)) es)) views
+      val () = List.app (fn (v, es) => List.app (fn e as (k, n) =>
+                 if List.exists (fn x => x = e) (getOpt (exports, [])) then ()
+                 else raise Options.Usage (file ^ ": the view " ^ v ^ " has " ^ k ^ " " ^ n ^ ", which the library does not export")) es) views
+      val scopeColumn = case (exports, !header) of (NONE, _) => "" | (_, SOME _) => "" | (SOME [], _) => " | -"
+        | (SOME es, _) => " | " ^ exportWords es
       val (lines, _) =
         List.foldl
           (fn ((p, anns, f : Deps.file), (acc, earlier)) =>
@@ -450,8 +520,11 @@ struct
                (* a client would fail on it, and this library not (E28) *)
                val () = List.app (fn (kind, n) =>
                                     case StringMap.find (hidden, n) of
-                                      SOME library =>
+                                      SOME (library, exported) =>
                                         if kind = Deps.Tycon orelse StringMap.member (providers, n) then ()
+                                        else if exported then
+                                          raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^ ", of the library " ^ libraryShown library
+                                                               ^ ", which its header does not require")
                                         else raise Options.Usage (file ^ ": " ^ p ^ " uses " ^ n ^ ", which the boundary of "
                                                                   ^ library ^ " does not export")
                                     | NONE => ())
@@ -467,6 +540,16 @@ struct
     in
       put "# Generated from library.build by rune --basis-index -- do not edit.\n";
       List.app (fn l => put ("# library: " ^ l ^ "\n")) (!libs);
+      (case (exports, !header) of
+         (SOME es, SOME {friends, ...}) =>
+           (put ("# exports: " ^ exportWords es ^ "\n");
+            if List.null friends then () else put ("# friends: " ^ String.concatWith " " friends ^ "\n");
+            List.app (fn (v, es) => put ("# view: " ^ v ^ " " ^ exportWords es ^ "\n")) views;
+            List.app (fn (n, f) => put ("# fixity: " ^ (case f of Fixity.Infix p => "infix " ^ Int.toString p
+                                                                | Fixity.Infixr p => "infixr " ^ Int.toString p
+                                                                | Fixity.Nonfix => "nonfix") ^ " " ^ n ^ "\n"))
+                     (List.filter (fn (n, _) => List.exists (fn e => e = ("fixity", n)) es) (List.rev ownFixity)))
+       | _ => ());
       if List.null (!inl) then () else put ("# inline: " ^ String.concatWith " " (!inl) ^ "\n");
       if List.null (!inlVals) then () else put ("# inline val: " ^ String.concatWith " " (!inlVals) ^ "\n");
       List.app (fn l => put (l ^ "\n")) (List.rev lines);
@@ -517,12 +600,12 @@ struct
      mention cannot change the selection, and is not parsed: in a large
      program most are not, which is most of what this costs a warm build. A
      small program is parsed: the table of the names costs more than that. *)
-  fun usedByAll (entries : entry list, inputs : string list, toks : Lexer.item vector list) : names =
+  fun usedByAll (scopes : BasisManifest.scopes, entries : entry list, inputs : string list, toks : Lexer.item vector list) : names =
     if List.foldl (fn (t, n) => n + Vector.length t) 0 toks < 4096
     then ListPair.foldl usedBy StringMap.empty (inputs, toks)
     else
         let
-          val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.public e))
+          val provided = List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, ())) m (BasisManifest.forProgram (scopes, e)))
                                     StringMap.empty entries
           fun usable names n = StringMap.member (provided, n) andalso not (StringMap.member (names, n))
           fun anything names =
@@ -629,20 +712,32 @@ struct
                    (List.map (fn p => loadTokens (inputMode p, p))) inputs
       val () = if !Options.noPrelude andalso not (List.null (!Options.libraries))
                then raise Options.Usage "--library needs the basis library (not --no-prelude)" else ()
+      val () = librariesScoped := BasisManifest.noScopes ""
       val basis =
         Pass.stage {name = "select", showIn = NONE, show = fn _ => "", check = fn _ => (), size = List.length}
                    (fn () =>
         if !Options.noPrelude then []
         else
           let
-            val entries = readManifest () @ List.concat (List.map #2 (libraryManifests ()))
-            val mentioned = usedByAll (entries, inputs, userToks)
+            val libraries = libraryManifests ()
+            val entries = readManifest () @ List.concat (List.map #2 libraries)
+            val scopes = BasisManifest.scopes {root = libRoot (), building = !Options.build, names = !Options.libraries,
+                                               headed = false, libraries = libraries}
+                         handle BasisManifest.Usage why => raise Options.Usage why
+            val () = librariesScoped := scopes
+            (* two imports of one name: an error once a rename can answer it *)
+            val () =
+              if not (#scoped scopes) orelse !Options.noWarnings orelse !knownToLoad then ()
+              else
+                (List.app (warnClash (getOpt (!Options.build, hd inputs))) (BasisManifest.clashes (#program scopes, entries, libDir ()));
+                 Error.flushWarnings ())
+            val mentioned = usedByAll (scopes, entries, inputs, userToks)
             val () = namesLoading := List.exists BasisManifest.namesLoading userToks
             (* A library beside the basis library sees the basis library as a
                program does, through its seals: what the chosen files of the
                libraries name counts as mentioned, and the choice is made
                again with it. *)
-            val chosenLibrary = List.filter (not o inBasis) (select (entries, mentioned))
+            val chosenLibrary = List.filter (not o inBasis) (BasisManifest.select (scopes, entries, mentioned))
             val mentioned =
               List.foldl (fn (e, m) =>
                             let val toks = loadTokens (Source.Ascii, BasisManifest.path e)
@@ -652,7 +747,7 @@ struct
                             end) mentioned chosenLibrary
           in
             if !Options.basisAll then entries
-            else select (entries, mentioned)
+            else BasisManifest.select (scopes, entries, mentioned)
           end) ()
     in
       if !Options.basisDeps
@@ -771,6 +866,7 @@ struct
       (* --verify-cache: the units whose entry is not what compiling them gives *)
       val unverified = ref 0
       fun explain msg = if !Options.explainRebuild then TextIO.output (TextIO.stdErr, msg ^ "\n") else ()
+      fun cachePaths (dir, config) = UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []), config)
       (* entries of this compile's configuration but for the hash, in the
          cache or the frozen Basis: a compiler's whose hash gives other values
          (UnitCache.settings), which none is taken from *)
@@ -865,7 +961,7 @@ struct
           val () = UnitBasis.position (!env, !fixity)
           (* from the cache: its basis loaded, its code read; or why not *)
           datatype looked = Hit of UnitBasis.result * Link.unitCode * string * UnitCache.entry | Miss of string
-          fun lookup quiet : looked * UnitCache.entry option =
+          fun lookup quiet : looked * (UnitCache.entry * CacheCheck.unitForm option) option =
             let
               val found =
                 case (cache, k) of
@@ -885,11 +981,18 @@ struct
                 case found of
                   UnitCache.Found (e as {usages, ...}) =>
                     if not (UnitCache.verifying ()) then (found, NONE)
-                    else if UnitBasis.exact usages then (UnitCache.Missed "to verify its entry", SOME e)
+                    else if UnitBasis.exact usages then (UnitCache.Missed "to verify its entry", SOME (e, NONE))
                     (* one taken across a unit that changed names the old
-                       unit, and is compiled again rather than compared
-                       (issue 15) *)
-                    else (UnitCache.Missed "to verify: its entry holds across a unit that changed, and is compiled again", NONE)
+                       unit: what it comes to loaded here is what is
+                       compared (issue 15, CacheCheck) *)
+                    else
+                      (case CacheCheck.ofEntry (e, {start = fn () => UnitBasis.begin (!env, !fixity), name = name, ident = ident,
+                                                    text = text (name, mode), mode = mode},
+                                                cachePaths (valOf cache)) of
+                         CacheCheck.Done form => (UnitCache.Missed "to verify, across a unit that changed", SOME (e, SOME form))
+                       | CacheCheck.Refused why =>
+                           (UnitCache.Missed ("to verify: its entry holds across a unit that changed and does not load here: " ^ why),
+                            NONE))
                 | _ => (found, NONE)
             in
               case found of
@@ -904,9 +1007,7 @@ struct
                           now, which its usages held of all the same, by the
                           paths to their names (M6's third part) *)
                        val remap = case cache of
-                                     SOME (dir, config) =>
-                                       UnitBasis.remapping (pickle, u, UnitCache.pathsIn (dir :: (case frozen of SOME f => [f] | NONE => []),
-                                                                                       config))
+                                     SOME c => UnitBasis.remapping (pickle, u, cachePaths c)
                                    | NONE => []
                        val u = UnitBasis.remapKeys (u, remap)
                        val () = Option.app (fn i => raise UnitBasis.Missing i) (UnitBasis.absent u)
@@ -963,8 +1064,9 @@ struct
                  | Parallel.Run {quiet} => (case lookup quiet of (Hit h, _) => bindHit h | (Miss why, against) => here (why, against))
                  | Parallel.Compile => here (why, against))
         end
-      and compileUnit ((name, load, allow, ident, mode), k, against : UnitCache.entry option, acc) =
+      and compileUnit ((name, load, allow, ident, mode), k, against : (UnitCache.entry * CacheCheck.unitForm option) option, acc) =
         let
+          val () = CacheCheck.blankEach name
           val start = timed "unit-begin" (fn () => UnitBasis.begin (!env, !fixity))
           (* parsed and elaborated, the names it looks up recorded: its
              usages (UnitCache) *)
@@ -989,7 +1091,7 @@ struct
           val warnings = List.rev (!Error.warnings)
           val () = if failed then () else if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
         in
-          if failed then (failedBefore := true; acc)
+          if failed then (CacheCheck.blankResult (name, fn () => "error"); failedBefore := true; acc)
           else if !Options.typecheckOnly then
             (* no unit is made, whose basis would say what it declares: the
                signatures and functors of a boundary's exports, from its syntax *)
@@ -1015,12 +1117,24 @@ struct
               val midBytes = timed "unit-mid" (fn () => Pipeline.keeping name (fn () =>
                                                  case !Pipeline.lastMid of SOME um => UnitMid.write (exported, um) | NONE => ""))
               val () = Pipeline.lastMid := NONE
+              val () = CacheCheck.blankResult (name, fn () => Pickle.hash (String.concat
+                         (UnitBasis.basisOf (#pickle exported) :: bytes :: midBytes :: List.map UnitCache.warningBytes warnings)))
               (* the entry verified: its basis the same bytes, and its code,
-                 named by the source where it is now *)
+                 named by the source where it is now; one taken across a
+                 unit that changed by what each comes to loaded *)
               val verified =
                 case against of
                   NONE => true
-                | SOME e => UnitCache.verifies (e, name, #pickle exported, bytes, midBytes)
+                | SOME (e, NONE) => UnitCache.verifies (e, name, #pickle exported, bytes, midBytes)
+                | SOME (_, SOME form) =>
+                    (case CacheCheck.ofCompile (Pipeline.fingerprint (), bytes, loaded,
+                                                {start = fn () => start, name = name, ident = ident, text = text (name, mode), mode = mode}) of
+                       CacheCheck.Done form' =>
+                         (case CacheCheck.difference (form, form') of
+                            NONE => (explain ("rune: " ^ name ^ ": its entry, loaded across a unit that changed, is what compiling it gives");
+                                     true)
+                          | SOME where' => (explain ("rune: " ^ name ^ ": across a unit that changed its entry differs in " ^ where'); false))
+                     | CacheCheck.Refused why => (explain ("rune: " ^ name ^ ": written again it raised " ^ why); false))
             in
               env := Env.plus (#env start, #delta loaded);
               fixity := Fixity.extend (#fixity start, #directives loaded);
@@ -1060,35 +1174,21 @@ struct
       fun snap ()=CompilerBuildContext.snap buildContext
       fun deltaOf (before',after)=CompilerBuildContext.delta (buildContext,before',after)
       fun apply (before',change,exports)=CompilerBuildContext.apply (buildContext,before',change,exports)
-      val libraryContexts : (string * snapshot) list ref = ref []
       (* a boundary's exports held to what is inside it; not after an error,
          or in a child of -j, which skips units, where they may be missing *)
       fun checkExports (change, exports) =
         if !failedBefore orelse isSome (!Parallel.child) then ()
         else Option.app (fn message => raise Options.Usage message)
                         (CompilerBuildContext.exportProblem (buildContext, change, exports))
-      fun restoreContext (b : snapshot) =
-        (env := #env b; fixity := #fixity b; Elaborate.sigs := #sigs b;
-         Elaborate.funs := #funs b; UnitBasis.binders := #binders b)
+      val libraryWalk = LibraryScope.walk (CompilerBuildContext.site buildContext, !librariesScoped)
       fun libraries (es,acc) =
         List.foldl (fn (group,acc) =>
-          let val prior = snap ()
-              val acc = List.foldl (fn (e,acc) => unit (file (e,inBasis e),acc)) acc group
-          in case exportsOf group of
-               NONE => acc
-             | SOME exports =>
-                 (libraryContexts := (#dir (hd group),snap ()) :: !libraryContexts;
-                  apply (prior,deltaOf (prior,snap ()),SOME exports); acc)
-          end) acc (entryGroups es)
+          LibraryScope.group (libraryWalk, group, fn () =>
+            List.foldl (fn (e,acc) => unit (file (e,inBasis e),acc)) acc group)) acc (entryGroups es)
       fun finals (es,acc) =
         List.foldl (fn (group,acc) =>
-          case List.find (fn (dir,_) => dir = #dir (hd group)) (!libraryContexts) of
-            NONE => List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group
-          | SOME (_,context) =>
-              let val prior = snap ()
-                  val () = restoreContext context
-                  val acc = List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group
-              in restoreContext prior; acc end) acc (entryGroups es)
+          LibraryScope.final (libraryWalk, group, fn () =>
+            List.foldl (fn (e,acc) => unit (file (e,!Options.allowPrim),acc)) acc group)) acc (entryGroups es)
       val implemented : string list ref = ref []
       (* the names of the plan's units, which its steps go through in order *)
       val unnamed = ref userPart
@@ -1192,11 +1292,12 @@ struct
                             worth = worth, explain = !Options.explainRebuild}
           end
         else ()
+      fun programPart compileIt acc = (LibraryScope.program libraryWalk; compileIt acc)
       val compiled =
         (case !buildPlan of
-           NONE => List.rev (finals (final,withDefaults (fn acc => List.foldl unit acc userPart) (libraries (basis,[]))))
+           NONE => List.rev (finals (final,withDefaults (programPart (fn acc => List.foldl unit acc userPart)) (libraries (basis,[]))))
          | SOME plan =>
-             List.rev (finals (final,withDefaults (fn acc => elabSteps (plan,acc)) (libraries (basis,[])))))
+             List.rev (finals (final,withDefaults (programPart (fn acc => elabSteps (plan,acc))) (libraries (basis,[])))))
         handle e => (Parallel.finish (); raise e)
       val () = Parallel.finish ()
       val units = List.map #1 compiled
@@ -1309,23 +1410,11 @@ struct
   and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =
     let
       fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (Source.Ascii, BasisManifest.path e))) es)
-      val syntaxGroups : (entry list * Ast.program * Fixity.env) list ref = ref []
+      val syntaxGroups : (entry list * Ast.program) list ref = ref []
       val finalSyntax : (entry list * Ast.program) list ref = ref []
-      fun parseLibrary es =
-        let val incoming = !fixity
-            val ds = parseEntries es
-            val outgoing = !fixity
-            val () = if isSome (exportsOf es) then fixity := incoming else ()
-        in (es,ds,outgoing) end
-      fun parseFinal es =
-        let val incoming = !fixity
-            val scoped = isSome (exportsOf es)
-            val () = if not scoped then () else
-              (case List.find (fn (group,_,_) => #dir (hd group) = #dir (hd es)) (!syntaxGroups) of
-                 SOME (_,_,fx) => fixity := fx | NONE => ())
-            val ds = parseEntries es
-            val () = if scoped then fixity := incoming else ()
-        in (es,ds) end
+      val parsing = LibraryScope.walk (LibraryScope.fixitySite fixity, !librariesScoped)
+      fun parseLibrary es = (es,LibraryScope.group (parsing,es,fn () => parseEntries es))
+      fun parseFinal es = (es,LibraryScope.final (parsing,es,fn () => parseEntries es))
       (* The front end's two stages, for --pass-stats; their size is the
          number of top-level declarations. *)
       fun frontStage name f =
@@ -1336,10 +1425,12 @@ struct
       val (basisProg, libraryProg, userProg, finalProg) =
         frontStage "parse"
                    (fn () => let
-                               val b = parseEntries (List.filter inBasis basis)
-                               val libraries = List.map parseLibrary (entryGroups (List.filter (not o inBasis) basis))
-                               val () = syntaxGroups := libraries
-                               val l = List.concat (List.map #2 libraries)
+                               val groups = List.map parseLibrary (entryGroups basis)
+                               val () = syntaxGroups := groups
+                               fun part keep = List.concat (List.map #2 (List.filter (fn (es,_) => keep (inBasis (hd es))) groups))
+                               val b = part (fn inside => inside)
+                               val l = part not
+                               val () = LibraryScope.program parsing
                                val u = List.concat (List.map parseTokens userToks)
                                val finals = List.map parseFinal (entryGroups final)
                                val () = finalSyntax := finals
@@ -1350,40 +1441,20 @@ struct
       val () = List.app Lexer.report (!Options.inputs)
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
       val env = ref (Env.initialNow ())
-      type libraryContext = LibraryScope.basis
-      val libraryContexts : (string * libraryContext) list ref = ref []
-      fun context () : libraryContext = {env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs}
-      fun restore (b : libraryContext) =
-        (env := #env b; Elaborate.sigs := #sigs b; Elaborate.funs := #funs b)
-      fun elabLibrary (es,ds,_) =
-        let val prior = context ()
-            val () = Elaborate.elabTop (env,ds)
-        in case exportsOf es of
-             NONE => ()
-           | SOME _ =>
-               let val raw = context ()
-                   val exports = valOf (BasisManifest.scopeOf es)
-               in libraryContexts := (#dir (hd es),raw) :: !libraryContexts;
-                  restore (LibraryScope.restrict (prior,raw,exports)) end
-        end
+      val elaborating = LibraryScope.walk (LibraryScope.basisSite env, !librariesScoped)
+      fun elabLibrary (es : entry list,ds) =
+        (Elaborate.allowPrim := inBasis (hd es);
+         LibraryScope.group (elaborating,es,fn () => Elaborate.elabTop (env,ds)))
       fun elabFinal (es : entry list,ds) =
-        case List.find (fn (dir,_) => dir = #dir (hd es)) (!libraryContexts) of
-          NONE => Elaborate.elabTop (env,ds)
-        | SOME (_,raw) =>
-            let val prior = context ()
-                val () = restore raw
-                val () = Elaborate.elabTop (env,ds)
-            in restore prior end
+        LibraryScope.final (elaborating,es,fn () => Elaborate.elabTop (env,ds))
       fun elaborate (progs as (b, l, u, fin)) =
         (lintWanted ();
-         Elaborate.allowPrim := true;
-         Elaborate.elabTop (env, b);
-         Elaborate.allowPrim := false;
          List.app elabLibrary (!syntaxGroups);
          Elaborate.allowPrim := !Options.allowPrim;
          (* --default-type holds for the input files, not for the libraries *)
          Elaborate.intDefault := (if !Options.defaultInt64 then Types.int64Ty else Types.intTy);
          Elaborate.wordDefault := (if !Options.defaultWord64 then Types.word64Ty else Types.wordTy);
+         LibraryScope.program elaborating;
          Elaborate.elabTop (env, u);
          Elaborate.intDefault := Types.intTy;
          Elaborate.wordDefault := Types.wordTy;
@@ -1505,7 +1576,8 @@ struct
     in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
 
   and main' (_ : string, args : string list) : OS.Process.status =
-    (Options.parse args;
+    (CacheCheck.seal ();
+     Options.parse args;
      Options.settle ();
      Pass.startup ();
      Parser.orPatterns := !Options.orPatterns;

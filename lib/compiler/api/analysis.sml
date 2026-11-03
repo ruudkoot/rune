@@ -69,7 +69,7 @@ struct
       binding=binding definition,definition=location definition,declaration=location declaration,
       isDefinition=isDefinition,derived=derived} end
   fun check (context as Analysis {parent,context=name,namespace,engine,serial,busy,dependencies=lastDependencies,...},
-             {inputs:input list,steps,project,libraries,scope,cancelled}) : snapshot =
+             {inputs:input list,steps,project,libraries,scope,building,cancelled}) : snapshot =
     let val ()=checked context
         val C.Session {config,...}=parent
         val ()=if length inputs>10000 then raise Fail "too many analysis inputs" else ()
@@ -83,7 +83,7 @@ struct
         fun poll ()=let val result=cancelled () in C.checked parent;result end
         val ()=busy:=true
         fun work () =
-          let val result=E.checkSteps (engine,scope,sources,steps,libraries,poll)
+          let val result=E.checkSteps (engine,scope,sources,steps,libraries,poll,building)
               val E.Session{observer,...}=engine
               fun phase name items=Option.app(fn f=>f {phase=name,file="",checked= #checked result,reused= #reused result,items=items})(!observer)
               fun dependency (source:E.source):input={file= #file source,text= #text source,
@@ -133,7 +133,7 @@ struct
       let val input=Vector.sub (#ordered snapshot,ordinal)
           val result=answering (snapshot,fn engine => E.checkWith (engine,#scope snapshot,List.map source (#inputs snapshot),
             #steps snapshot,#libraries snapshot,fn () => false,SOME {unit=unit,file= #file input,offset= ~1,path=[]},
-            List.map source (#dependencies snapshot),SOME (#prelude snapshot),true))
+            List.map source (#dependencies snapshot),SOME (#prelude snapshot),NONE,true))
       in case #opened result of NONE => NONE | SOME entry =>
           let val all=entry:: !(#opened snapshot)
           in #opened snapshot:=List.take (all,Int.min (16,length all));SOME entry end end
@@ -270,7 +270,7 @@ struct
         fun query (sources,at)=answering (snapshot,fn engine => E.checkWith
           (engine,#scope snapshot,sources,#steps snapshot,#libraries snapshot,fn () => false,
            SOME {unit=Vector.sub (#units snapshot,ordinal),file= #file input,offset=at,path=path},
-           List.map source (#dependencies snapshot),SOME (#prelude snapshot),false))
+           List.map source (#dependencies snapshot),SOME (#prelude snapshot),NONE,false))
         val original=List.map source (#inputs snapshot)
         fun retry []=NONE
           | retry ((text,at)::rest)=

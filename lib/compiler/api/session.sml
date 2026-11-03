@@ -175,13 +175,19 @@ struct
                 val ()=Source.register source
             in BasisManifest.namesOf (Lexer.tokenize source,known) end
           val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,
-            mentioned=List.foldl mentioned StringMap.empty sources}
+            mentioned=List.foldl mentioned StringMap.empty sources,building=NONE}
           type context={basis : LibraryScope.basis,fixity : Fixity.env,binders : string StringMap.map}
           fun context () : context={basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs},fixity= !fixity,binders= !UnitBasis.binders}
           fun restore (c : context) =
             (env:= #env (#basis c);Elaborate.sigs:= #sigs (#basis c);Elaborate.funs:= #funs (#basis c);
              fixity:= #fixity c;UnitBasis.binders:= #binders c)
-          val contexts=ref [] : (string * context) list ref
+          val walk=LibraryScope.walk (
+            {get=context,set=restore,change=fn (before',raw,provides) => (before',raw,provides),
+             add=fn (onto : context,(before',raw,provides) : context * context * string list,filter) =>
+               {basis=LibraryScope.addBasis (#basis onto,(#basis before',#basis raw,provides),filter),
+                fixity=LibraryScope.addFixity (#fixity onto,(#fixity before',#fixity raw),filter),
+                binders=LibraryScope.addBinders (#binders onto,(#binders before',#binders raw),filter)}},
+            #scopes plan)
           fun libraryUnit (e : BasisManifest.entry,state) =
             let val file=BasisManifest.path e
                 val loaded=Source.readFile (Source.Ascii,file)
@@ -213,28 +219,12 @@ struct
                         | UnitBasis.SchemeChanged _ => raise CachedLoad)
             end
           fun group (entries,state) =
-            let val prior=context ()
-                val state=List.foldl libraryUnit state entries
-            in case BasisManifest.scopeOf entries of
-                 NONE => state
-               | SOME exports =>
-                   let val raw=context ()
-                       val visible=LibraryScope.restrict (#basis prior,#basis raw,exports)
-                       fun public key = case String.fields (fn c => c = #" ") key of
-                         [kind,name] => List.exists (fn (k,n) => n=name andalso
-                           k=(case kind of "s" => "structure" | "t" => "type" | "sig" => "signature" | "fun" => "functor" | _ => "")) exports
-                       | _ => false
-                       val bound=StringMap.filteri (fn (key,_) => public key) (!UnitBasis.binders)
-                       val narrowed : context={basis=visible,fixity= #fixity prior,
-                         binders=StringMap.unionWith #2 (#binders prior,bound)}
-                   in contexts:=(#dir (hd entries),raw) :: !contexts;restore narrowed;state end
-            end
-          val result=List.foldl compile (List.foldl group [] (#groups plan)) sources
+            LibraryScope.group (walk,entries,fn () => List.foldl libraryUnit state entries)
+          val base=List.foldl group [] (#groups plan)
+          val ()=LibraryScope.program walk
+          val result=List.foldl compile base sources
           fun final (entries,state) =
-            let val prior=context ()
-                val ()=case List.find (fn (dir,_) => dir= #dir (hd entries)) (!contexts) of SOME (_,raw) => restore raw | NONE => ()
-                val state=List.foldl libraryUnit state entries
-            in restore prior;state end
+            LibraryScope.final (walk,entries,fn () => List.foldl libraryUnit state entries)
           val finals=List.foldl final [] (CompilerPrelude.groups (#final plan))
         in {units=List.rev result,finals=List.rev finals,cacheHits= !cacheHits,compiled= !compiled} end
       val result = CompilerState.withSession (owner,fn () => work ()

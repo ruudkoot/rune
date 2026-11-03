@@ -3,7 +3,7 @@
    language and the program of a suite; its files in load order, in the form
    of lib/basis/library.build. It is written on lib/test/property, for
    properties as tests: *)
-libraries random test/property end
+libraries test/property end
 (* Every compiler of tests/lib/run-hosts.sh builds every file. *)
 annotate "demand" in
   expect_sig.sml

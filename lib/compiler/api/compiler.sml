@@ -225,9 +225,9 @@ struct
                | NONE => if #mode input="" then mode else invalid "unknown analysis source mode",#annotations input)),
              annotations= #annotations input,revision= #revision input}
           val inputs=List.map normalize inputs
-          val (steps,fingerprint,libraries,scope)=case project of NONE =>
+          val (steps,fingerprint,libraries,scope,building)=case project of NONE =>
               (List.map (fn input:input => CompilerProject.SUnit (#file input,#annotations input)) inputs,NONE,[],
-               W.ofFiles {file=case inputs of first :: _ => #file first | [] => ".",workspace=NONE,lib=lib,windows=W.onWindows ()})
+               W.ofFiles {file=case inputs of first :: _ => #file first | [] => ".",workspace=NONE,lib=lib,windows=W.onWindows ()},NONE)
             | SOME (Project.Project {owner=projectOwner,plan,sources,inputs=captured,fingerprint,scope}) =>
                 let val ()=if owner=projectOwner then () else invalid "project belongs to another compiler context"
                     val ()=if length inputs=length sources then () else invalid "analysis input count differs from the project"
@@ -237,8 +237,8 @@ struct
                     val ()=List.app (fn captured:Project.input => if #kind captured<>"source" then () else
                       if List.exists (fn input:input => #file input= #file captured andalso #mode input= #mode captured
                         andalso #text input= #text captured) inputs then () else invalid "group discovery input changed after project resolution") captured
-                in (#steps plan,SOME fingerprint,#libraries plan,scope) end
-      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,scope=scope,cancelled=cancelled}) end)
+                in (#steps plan,SOME fingerprint,#libraries plan,scope,Option.map #path (List.find (fn _ => true) (#inputs plan))) end
+      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,scope=scope,building=building,cancelled=cancelled}) end)
       handle Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]
     fun id (snapshot:snapshot)= #id snapshot
     fun context (snapshot:snapshot)= #context snapshot

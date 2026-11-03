@@ -121,6 +121,14 @@ keep these invariants:
   binding (docs/units.md). `make check-units` holds every program of
   `tests/lang` and `tests/perf` compiled so to its output compiled whole,
   and the compiler compiled in units to compiling itself byte for byte.
+* **The cache** holds a unit's key to what its compile reads, and nothing but
+  tests ties the two together (`docs/testing.md`, *The checks of the cache*):
+  a new option of `rune`, or a `RUNE_` variable the compiler reads, has a row in
+  `tests/runner/cacheflags.sml` that says whether it reaches a key; a root a
+  compile reads has a line in `tests/incremental/roots.tsv`; a change to a key
+  runs `make test-cache-random`; and a change to the code of a mutant of
+  `tests/runner/cachemutantlist.sml` keeps that mutant applying and caught
+  (`make test-cache-mutants`).
 * **The folders of `runtime/`** say what depends on what. The runtime both
   VMs link is directly under it (`vm.h`, `value.h`, the heap, the loader,
   the primitives, images, `main.c`, and the generated `isa.h` with what the

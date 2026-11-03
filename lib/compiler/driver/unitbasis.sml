@@ -1596,6 +1596,14 @@ struct
 
   (* ---- writing ---- *)
 
+  (* What a marked body's writer adds for the hash and no reader keeps,
+     left out of both sides of a comparison (exportAgain): M4's step 2
+     takes them out of the pickle, and this with them *)
+  val hashFree = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.hashFree", hashFree)
+
+  fun kept x = if !hashFree then NONE else x
+
   type enc = {w : P.writer,
               side : P.writer,                         (* the sidecar: origins, in the order they are met *)
               spans : bool ref,                        (* whether an origin was written at all *)
@@ -2046,8 +2054,8 @@ struct
                     fun global s =
                       (if isSome (IntTable.find (seen, s)) then () else (IntTable.insert (seen, s, ()); named := s :: !named);
                        name (e, kStamp, s))
-                    fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
-                                  P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
+                    fun prim h = (P.option P.string (w, kept (IntMap.find (!Translate.primAliases, h)));
+                                  P.option P.string (w, kept (IntTable.find (!Expand.primGlobals, h))))
                     val lines = P.writer ()
                   in
                     (* a position in the unit's own source by nothing but
@@ -2068,9 +2076,9 @@ struct
                        marked functor's function's body it calls *)
                     P.list (fn (w, g) =>
                               (prim g;
-                               P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
-                               P.bool (w, IntMap.member (!Lower.knownBefore, g));
-                               P.option P.string (w, inlineHash g)))
+                               P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, kept (IntTable.find (!Expand.globalAliases, g)));
+                               P.bool (w, not (!hashFree) andalso IntMap.member (!Lower.knownBefore, g));
+                               P.option P.string (w, kept (inlineHash g))))
                            (w, List.rev (!named));
                     P.string (w, P.hash (P.contents lines));
                     IntTable.insert (!inlineHashes, code,
@@ -2093,8 +2101,8 @@ struct
       fun global g =
         (if isSome (IntTable.find (seen, g)) then () else (IntTable.insert (seen, g, ()); named := g :: !named);
          name (e, kStamp, g))
-      fun prim h = (P.option P.string (w, IntMap.find (!Translate.primAliases, h));
-                    P.option P.string (w, IntTable.find (!Expand.primGlobals, h)))
+      fun prim h = (P.option P.string (w, kept (IntMap.find (!Translate.primAliases, h)));
+                    P.option P.string (w, kept (IntTable.find (!Expand.primGlobals, h))))
       (* a position's file: the unit's own by nothing, another unit's source
          (a functor's whose copy the function is) by that unit's name, which
          the reader makes where its source is then, so that the bytes do not
@@ -2112,9 +2120,9 @@ struct
                           position = linePosition lines}) f;
       P.list (fn (w, g) =>
                 (prim g;
-                 P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, IntTable.find (!Expand.globalAliases, g));
-                 P.bool (w, IntMap.member (!Lower.knownBefore, g));
-                 P.option P.string (w, inlineHash g)))
+                 P.option (fn (_, h) => (name (e, kStamp, h); prim h)) (w, kept (IntTable.find (!Expand.globalAliases, g)));
+                 P.bool (w, not (!hashFree) andalso IntMap.member (!Lower.knownBefore, g));
+                 P.option P.string (w, kept (inlineHash g))))
              (w, List.rev (!named));
       P.string (w, P.hash (P.contents lines));
       IntTable.insert (!inlineHashes, s,
@@ -2778,8 +2786,13 @@ struct
      identity, which whoever has it need not work out again from the
      bytes: export, which just did, and an entry of the cache, which keeps
      it (functors-units, F2) *)
+  val lastValues : int list ref = ref []       (* what the last load read: the functions marked, *)
+  val () = CompilerState.cellRoot ("UnitBasis.lastValues", lastValues)
+  val lastSchemes : int list ref = ref []      (* and the schemes, newest first (exportAgain) *)
+  val () = CompilerState.cellRoot ("UnitBasis.lastSchemes", lastSchemes)
   fun load' ({pickle : string, sidecar : string, file : string, at : int vector}, known : string option, remap : remap) : result =
     let
+      val () = (lastValues := []; lastSchemes := [])
       val r = P.reader pickle
       val side = if sidecar = "" then NONE else SOME (P.reader sidecar)
       val used = Vector.tabulate (3, fn _ => P.rnat r)
@@ -2911,6 +2924,7 @@ struct
                    in
                      privateNext := base - !most - 1;
                      IntTable.insert (!Expand.importedValueNames, s, names);
+                     lastValues := s :: !lastValues;
                      IntTable.insert (!Expand.importedValues, s, body);
                      Expand.anyImported := true;
                      IntTable.insert (!inlineHashes, s, ref (Bytes (String.substring (#s r, p0, p1 - p0))))
@@ -2923,7 +2937,7 @@ struct
                                           tvar = fn () => rname (d, kTvar), file = fn () => (P.roption P.rstring r; file),
                                           local' = fn i => ~1 - i})
                        handle MidCodec.Bad m => raise P.Bad m
-                   in IntTable.insert (!ToMid.importedSchemes, g, (tyvars, result)) end) r
+                   in lastSchemes := g :: !lastSchemes; IntTable.insert (!ToMid.importedSchemes, g, (tyvars, result)) end) r
       val overloads =
         P.rlist (fn r =>
                    let
@@ -3050,4 +3064,45 @@ struct
       sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
       kept
     end
+
+  (* The basis of the unit just loaded (l), written again from what reading
+     it left in the session, without what only a hash reads (hashFree). Of
+     an entry loaded across a unit that changed it names the new unit, so
+     it can be compared with the same of the unit compiled (--verify-cache,
+     build-cache issue 15). What this leaves in the session's tables does
+     not matter: it runs in a child of the compile (CacheCheck), which then
+     ends *)
+  fun exportAgain ({start : start, name : string, file : string, text : unit -> string, mode : Source.mode}, l : result)
+      : exported =
+    let
+      fun named table key =
+        Option.app (List.app (fn (x, n) => Translate.funNames := IntMap.insert (!Translate.funNames, x, n)))
+                   (IntTable.find (table, key))
+      val values = List.rev (!lastValues)
+      val () = (hashFree := true; Elaborate.insertedSigs := List.rev (#sigs l); Elaborate.insertedFuns := List.rev (#funs l);
+                Expand.declaredOrder := values)
+      val () = List.app (fn s => (IntTable.insert (!Expand.declaredValues, s, valOf (IntTable.find (!Expand.importedValues, s)));
+                                  named (!Expand.importedValueNames) s)) values
+      val () = Expand.declaredSchemes := List.map (fn g => (g, valOf (IntTable.find (!ToMid.importedSchemes, g))))
+                                                  (List.rev (!lastSchemes))
+      val () = List.app (fn n =>
+                           case StringMap.find (!Elaborate.funs, n) of
+                             SOME (Elaborate.FunInfo {code, ...}) =>
+                               (Option.app (fn body => IntTable.insert (!Expand.declaredBodies, code, body))
+                                           (IntTable.find (!Expand.imported, code));
+                                named (!Expand.importedNames) code)
+                           | NONE => ()) (#funs l)
+    in
+      export {start = start, name = name, file = file, text = text, mode = mode, delta = #delta l,
+              fixity = Fixity.extend (#fixity start, #directives l), used = []}
+    end
+
+  (* a pickle's basis, past what its compile counted and its source's hash *)
+  fun basisOf (pickle : string) : string =
+    let
+      val r = P.reader pickle
+      val _ = Vector.tabulate (3, fn _ => P.rnat r)
+      val _ = P.rstring r
+      val _ = P.rstring r
+    in String.extract (pickle, !(#pos r), NONE) end
 end
