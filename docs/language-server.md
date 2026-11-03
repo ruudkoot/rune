@@ -321,6 +321,23 @@ would otherwise repeat is memoised too.
   it is read, so go-to-definition and a binding's identity are right under a unit
   reused across a span that moved.
 
+Through the real server at the 512 MiB heap, from the client's side, a pull
+of diagnostics after each edit (`bin/rune-lsp-replay`, 20 comments or 8 body edits,
+on 2026-11-03 at a load of 12 to 18 on 16 processors; seconds, p50 and p95):
+
+| Build | First check | Comment at the end of the last file | Body edit |
+|---|---:|---:|---:|
+| `rune.build`, 246 units with the Basis's | 5.7 | 0.024 / 0.045 | 0.246 / 0.330, `src/driver/main.sml`; 0.045 / 0.067, `lib/compiler/util/source.sml` |
+| HOL4's `src/boss` closure, 923 units | 17.5 | 0.132 / 0.152 | 0.357 / 0.369, `patternMatchesLib.sml` |
+| A generated build of 351k lines, 3,016 units | 49.1 | 0.188 / 0.223 | 0.129 / 0.139 |
+
+A body edit costs that unit's elaboration with its facts and pickle, which is
+most of each figure. A comment at the start of an early file costs the same as
+one at the end: it moves spans, and no identity. An edit that moves an identity
+walks: in process, on `rune.build`, a name added to `lib/compiler/util/source.sml`
+takes 0.15 to 0.3 seconds, reloading the 79 units after it, and a constructor added
+to its datatype about 1.2 seconds, elaborating the 13 whose usages it breaks.
+
 Nothing here is allowed to change an answer. `bin/rune-lsp-oracle` keeps a
 context through a list of edits, and after each compares every fact, occurrence,
 type, diagnostic and query with a fresh analysis of the same inputs, on the
