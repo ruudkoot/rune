@@ -93,6 +93,15 @@ at the fault. The other scripts of the counts below (the heaps built from
 campaign's notes, `~/.cache/claude-rune-drafts/linting/impl/li-a/m14/` on the
 machine that found it, and are not kept in the tree.
 
+Seen again on 2026-11-03 (the build-system roadmap's M16, branch `bs-m16`
+at `6c360f2a1`), compiling Rune's compiler itself, `cross/rune` and
+`cross/rune-stack`: four runs of four under `bin/rune-test` stopped, at a pc
+ending in `bd37` each time, and six runs of the same command outside it did
+not, with the runner's variables, descriptor 3 open, `stdin` from `/dev/null`
+and `@SMLalloc` at its default or `1M`. At `1480d911b`, the commit before,
+`make check-cross` passed. `tests/cross/deviations.txt` has a `HOST-FLAKY`
+line for each.
+
 ### Counts
 
 | What | failed |

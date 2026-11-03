@@ -16,3 +16,5 @@
 
 # ---- SML/NJ 110.99.9 built for 32 bits: its collector's stale pointer.
 smlnj32 | basis-word | HOST-FLAKY | SML/NJ 110.99.9 for 32 bits stops now and then with "bogus overflow fault" (signal 11): a stale pointer to a collected object, depending on when collections fall (the default 512k allocation area; none at 128k to 8M); still there with the fixes of GC/real-corrupted-on-64-bit and GC/spilled-word64-argument (docs/bugreport/smlnj/GC/bogus-overflow-fault)
+smlnj32 | rune | HOST-FLAKY | the same fault compiling Rune's compiler: at the build-system roadmap's M16 (6c360f2a1) it stopped all four runs of cross/rune under bin/rune-test, at a pc ending in bd37 each time, and none of six runs of the same command outside it, with the runner's variables, descriptor 3 and either allocation area; at 1480d911b, the commit before, it passed (docs/bugreport/smlnj/GC/bogus-overflow-fault)
+smlnj32 | rune-stack | HOST-FLAKY | as rune, the same compile with --target=stack, which stopped with it in each of the four runs (docs/bugreport/smlnj/GC/bogus-overflow-fault)
