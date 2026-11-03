@@ -66,13 +66,13 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | M12. MANIFEST's end | L | L | D13 | not started |
 | M13. Migration | L | M | D15 | not started |
 | M14. Reaching in, runedoc | L | M | D10 | not started |
-| M15. Generated sources and preprocessors | L | M | D16 | not started |
+| M15. Generated sources and preprocessors | L | M | D16 | done |
 | M16. The restriction | S | M | D17 | done |
 | M17. Keeping what is computed | A | L | D27 | done; MLton's oracle moved to M18 |
 | M18. Sidecars and the shared layer | A | L | D1, D27 | not started |
-| M19. Contexts, and the end of the prompt | A | L | D26 | the two status items landed; the rest not started |
+| M19. Contexts, and the end of the prompt | A | L | D26 | done |
 | M20. The target, in CI | A | M | D28 | not started |
-| M21. Functor signatures | S | L | D22 | not started |
+| M21. Functor signatures | S | L | D22 | done |
 | M22. Virtual libraries | S | M | D22 | not started |
 | M23. Retire | | S | | not started |
 
@@ -131,6 +131,14 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
   - **M17, keeping what is computed:** the free fixes, document symbols indexed, units kept between checks in a state of their own, a changed unit elaborated at its place, a walk by usages past a moved identity, closed units, origins by reference on M4's sidecar, a plan memo. A leaf comment's p95: `rune.build` 0.045 s, HOL4's closure 0.152 s, the 351k fixture 0.223 s, at 512 MiB, against 1.00 s and 9.3 s before. `make test-lsp-oracle` compares kept and fresh analysis after every edit: no disagreement on `rune.build`, a 117k fixture or HOL4. Cancellation mid-walk is tested.
     - **Moved to M18:** the oracle on MLton. Its checks agree, but the kept world is 12.75 GiB and a walk past a moved identity overruns the 15 GiB heap; M18's 2 KB a line is what makes it fit.
     - **Found:** usages alone cannot keep an open unit past a moved identity, since its facts print types by the paths that reach them there; such units are elaborated again. Types of one name are told apart by order, not a session's stamp.
+- **M15, M19 and M21** (`dda604310`, together, `make check` 22,644 of 22,644). Their first run together failed 8 tests, each fixed at its cause: M19's shared library units were a table outliving the compiler's sessions, which the state audit refuses, and are now a pool the sharing contexts are handed; M21's exported functor gave a native symbol a space, `functor F`, which `nm` split, and a symbol now has none; the heap replay failed again, and its census now collects where the stock VM did (`--census-at`), since what is alive depends on where collections fell, so every number of the replay must equal the stock's; a budget and the generated docs.
+  - **M15, generated sources and preprocessors:** `generate TOOL (ARGS) inputs ... end outputs ... end` and `preprocessor NAME TOOL (ARGS) inputs ... end`, with `annotate "preprocess=NAME"` for a file's class, run before a compile reads a source; a step is keyed by its tool's bytes, its arguments and its inputs, its outputs verified, and a hand-edited output refused while its key holds; a preprocessor's output is what a unit's key holds. A plan with either is `rune-plan 2`. `runeffi rehash` publishes a set under the hash its files make, on copies; no set under `ffi/` changed. HOL4's `src/boss` closure builds from its unfiltered sources with HOL's own `unquote` as a declared filter, the same 13,301,844 bytes as the filtered tree, and S41 holds across edits inside and outside quotations. `rune.build` and `runedoc.build` begin with the step that writes `build/config.sml`.
+    - **That step cannot be keyed:** `scripts/gen-version.sh` reads git and every file of the closure, so it declares no inputs and runs on every build, 0.11-0.13 s. M6 must key it or name it. The editor and the API do not preprocess yet.
+  - **M19, contexts:** a file in a library is checked in that library; candidate contexts are compared by binder, by each occurrence's definition and declaration, and a prompt appears only where they differ; a file in no build gets an implicit library beside it, its names looked up in its directory first and then the workspace; sweeps cover every file; a unit with errors reports each and answers past them; analysis contexts share a library's units; a Basis view reaches analysis; a root file above the editor's folder, or unsaved, is read. E22: prompts 124 to 1, the one a real difference of 32 against 64 bits; sweeps 153 to 220 of 220 files. E24's sample: clean files 251 to 517 of 726. A second build over `runelsp`'s library takes 254 of 257 units from the first, 2.2 s against 5.6 s. The editor suite on 1.106.0 passes A1's checks.
+    - **Narrowed:** past the first error means within a unit; the walk stops after it. Comparing a file's candidates costs a check each on first discovery, up to 18 s for 5, and the verdict lasts as long as the plan memo. Workspace symbols wait for M18's sidecars. **Found:** analysis of `tests/units/flex/a.sml` raises `Failed` where it should report a diagnostic.
+  - **M21, functor signatures:** `functor F = _virtual (X : A) : B`, `functor F = _dynamic "path" (X : A) : B` and `_export functor` in both parsers; an application is a call over nested records, typed by the signatures alone; `implements` takes a functor; the fingerprint holds version, calling convention, slots, descriptors and both signatures, and each field has a mutant refused at link or load. `examples/virtual/table` builds on an association list and on an AVL tree, with a `_dynamic` variant as a plugin; a body edit compiles only the implementation, a signature edit every unit that names it; the fingerprint is the same on every host, `7f5c2512d451806272a969fec81ef7a6`.
+    - **`Pickle.hash` on `smlnj32`:** the difference was two SML/NJ 110.99.9 bugs, not word width. `lib/compiler/util/pickle.sml` now reads its Word64 constants from hex and never shifts by 0, beside its existing adaptation to MLRISC, so every host gives one hash and check-cross compares smlnj32 in units too. This is a host's bug answered in the compiler's sources, which `tests/cross/deviations.txt` says is not done; D22 asked for one fingerprint on the five hosts, and the owner may rule otherwise.
+    - **Found:** an `_export structure` whose signature had `datatype d = D of u`, with `u` abstract and a tuple, compiled and then stopped the client's VM; such an export is now refused at compile time.
 
 ## Found while writing this roadmap
 
@@ -5079,7 +5087,7 @@ The brief does not mention these. What "as would be build via the build system" 
 
 - **A. Left outside,** as Holmake does today. `.build` compiles what exists.
 - **B. Declared steps, in a stage before planning.** **Recommended.** A step names its tool, inputs and outputs, all hashed; outputs are verified, and later units read them (holbuild's `[[generate]]`, Bazel's declared outputs).
-  - `build/config.sml` is the first honest case, and the proposed plan's `SGenerate` holds it.
+  - `build/config.sml` is the first honest case, and the proposed plan's `SGenerate` holds it. M15 found it cannot be keyed: `gen-version.sh` reads git and every file of the closure, so its step declares no inputs and runs on every build.
   - A **per-file preprocessor** is a declared class: HOL4's `QUse` filter changes 36 of 745 closure files (E20), and with it the closure compiles (E9).
   - Generated sets stay outside the plan, as explicit commands, with `.build` text inside their hash (E28). `runeffi` gains a rehash mode, and its driver accepts or removes an old set.
   - **A run step** (a theory script as an entry unit over its ancestors, its outputs read by later units) is what a true HOL4 build needs beyond this. It is a small addition to a declared step, and it can wait for someone who wants HOL4 built this way: Holmake works.
@@ -5193,7 +5201,7 @@ The cache needs no schema hash: `Config.identity` is in its config, so UnitCache
 **What A means.** Neither half was prototyped: E10 is on paper, with two probes, and the sizes come from the structure half.
 - **Functor signatures (M21).** `functor F = _virtual (X : A) : B` is bound at link: the build's `implements F = ... end` names files that end with `_export functor F (X : A) : B = ...`, as for a structure. `functor F = _dynamic "path" (X : A) : B` is bound at load, the plugin. A mismatch is an error at link or load. There is no new keyword, and the extension gets its `sml97-extensions.md` entry and `docs/language.md` rows.
 - **A client's code.** An application is a call over functors-units' nested records, with no expansion, so nothing of the body reaches a client. That is a firewall at a seam the program chose. D18's answer for libraries stands.
-- **The ABI fingerprint** lives in M4's ABI layer. It holds the parameter's and result's signatures, record shape and slot order, the descriptors a caller works out for its argument's datatypes, a version tag and the calling convention (E10). The brief wants it stable on the five hosts, and `Pickle.hash` differs on `smlnj32` today, so M21 must fix that or compute it another way.
+- **The ABI fingerprint** lives in M4's ABI layer. It holds the parameter's and result's signatures, record shape and slot order, the descriptors a caller works out for its argument's datatypes, a version tag and the calling convention (E10). The brief wants it stable on the five hosts, and `Pickle.hash` differs on `smlnj32` today, so M21 must fix that or compute it another way. M21 found two SML/NJ bugs behind it and made the five agree; the fingerprint is computed in the ABI layer's terms and carried in the units' code, not stored in a basis.
 - **The first client** is an example program, `examples/virtual/table`, beside `bigint`, the structures' example. A table functor, `functor Table = _virtual (K : KEY) : TABLE where type key = K.t`, on an association list and on a balanced tree, one build each, applied to two kinds of key. The client compiles against the signature alone, the second build through the first one's cache compiles the implementation alone, and a `_dynamic` variant takes an implementation as a plugin. It tests what `bigint` cannot: two applications give two generative types, and a result type is tied to the parameter.
 - **Virtual libraries (M22).** One library declares a virtual module and another implements it, in their headers, with one implementation per program and no new public modules, as dune's. `ffi/win32`'s `native`, `sdl` and `mock` are the real case: one virtual `Win32`, three implementations, `use`d as sub-builds today. They move with the win32 work's migration, in *Later*, not in M22.
 
@@ -5596,7 +5604,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
   - `friends`, `requires`, exports and views in a library's header, `lib#view` for a view, and `fixity NAME` as an export (M8);
   - `make test-cache-random` and `make test-cache-mutants` (M2);
   - `prelude` and `strict` in a build (M16);
-  - declared steps and preprocessors (M15);
+  - declared steps and preprocessors, `generate` and `preprocessor`, `annotate "preprocess=NAME"`, plan version 2 (M15); `runeffi rehash` (M15);
   - a canonical plan: `rune --plan FILE`, its text with `edge` and `scc` reserved (M9);
   - `--build-list` gives the closure (M1);
   - `rune/status`, `rune/context`, `rune/setContext`, `runelsp.chooseContext` and `runelsp.showOutput` (M19);
