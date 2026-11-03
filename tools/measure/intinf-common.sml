@@ -56,7 +56,7 @@ struct
               val ()=need (#status result=0,"IntInf child failed: " ^ #errors result)
           in result end
     in run end
-  fun usage result=obj [("wall",real (Time.toReal (#wall result))),("cpu",real (Time.toReal (Time.+ (#user result,#system result))))]
+  fun usage (result : {status : int,output : string,errors : string,wall : Time.time,user : Time.time,system : Time.time,residentKB : int})=obj [("wall",real (Time.toReal (#wall result))),("cpu",real (Time.toReal (Time.+ (#user result,#system result))))]
   fun pairs samples warmup sides action =List.app (fn i => List.app (fn side => action side (i>=warmup)) (if i mod 2=0 then List.rev sides else sides)) (List.tabulate (samples+warmup,fn i => i))
   fun samples opts default=let val n=integer (option opts "--samples" default) in need (n>=2 andalso n<=100000,"at least two measured pairs are required");n end
   fun add target key name value =
