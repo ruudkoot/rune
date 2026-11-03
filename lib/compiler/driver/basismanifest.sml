@@ -107,7 +107,7 @@ struct
       val virtuals = ref [] : (string * string) list ref
       val implements = ref [] : (string * string) list ref
       fun comment (i, f, e) =
-        if f + 2 >= e orelse not (Char.contains "efvsi" (at (f + 2))) then ()
+        if f + 3 >= e orelse not (Char.contains "efvs" (at (f + 2)) orelse at (f + 2) = #"i" andalso at (f + 3) = #"m") then ()
         else
           let
             val line = String.substring (text, f, e - f)
@@ -391,8 +391,9 @@ struct
       fun required (e : entry) = List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ())
       (* A file that declares a virtual module brings the files that
          implement it, in a library that says so (D22): they are what the
-         declaration takes, and are named by nothing else *)
-      val implementing = List.filter (fn e : entry => not (List.null (implementsOf e))) entries
+         declaration takes, and are named by nothing else. Both have headers,
+         so a compile with none scoped has none of either *)
+      val implementing = if #scoped scopes then List.filter (fn e : entry => not (List.null (implementsOf e))) entries else []
       fun implementationsOf (e : entry) : entry list =
         case List.filter (fn (_, n) => List.exists (fn p => p = n) (#provides e)) (virtualsOf e) of
           [] => []
@@ -402,7 +403,9 @@ struct
                               implementing
       fun add (e : entry, chosen : names) : names =
         if StringMap.member (chosen, path e) then chosen
-        else List.foldl add (required' (e, chosen)) (implementationsOf e)
+        else case implementing of
+               [] => required' (e, chosen)
+             | _ => List.foldl add (required' (e, chosen)) (implementationsOf e)
       and required' (e : entry, chosen : names) : names =
           List.foldl (fn (n, chosen) =>
                          case providersOf (e,n) of
@@ -574,7 +577,8 @@ struct
     end
   fun librariesBy (requires : string -> string list) =
     librariesWith {requires = requires, virtuals = fn _ => [], implements = fn _ => []}
-  fun libraries (libDir : string, names : string list) : string list =
+  fun libraries (_ : string, []) : string list = []
+    | libraries (libDir : string, names : string list) : string list =
     let
       val known = ref [] : (string * order) list ref
       fun header dir =
@@ -597,7 +601,8 @@ struct
       fun go (head, []) = (List.rev head, [])
         | go (head, e :: rest) = if here e then (List.rev head, e :: rest) else go (e :: head, rest)
     in go ([], es) end
-  fun arrange (libraries : (string * entry list) list) : entry list =
+  fun arrange ([] : (string * entry list) list) : entry list = []
+    | arrange libraries =
     let
       fun headerOf (es : entry list) = case es of e :: _ => #header e | [] => NONE
       fun virtualsIn es = case headerOf es of SOME {virtuals, ...} => virtuals | NONE => []
@@ -606,6 +611,8 @@ struct
         List.foldl (fn ((dir, es), found) => if List.exists (fn m => List.exists (fn v => v = m) vs) (implementsIn es)
                                              then SOME dir else found) NONE libraries
       val moved =
+        if List.all (List.null o virtualsIn o #2) libraries then []
+        else
         List.mapPartial (fn (dir, es) =>
                            case virtualsIn es of
                              [] => NONE
@@ -614,13 +621,18 @@ struct
       fun entriesOf (dir, es) =
         (case List.find (fn (d, _, _) => d = dir) moved of SOME (_, _, (head, _)) => head | NONE => es)
         @ List.concat (List.map (fn (_, _, (_, tail)) => tail) (List.filter (fn (_, last, _) => last = dir) moved))
-    in List.concat (List.map entriesOf libraries) end
+    in
+      case moved of
+        [] => List.concat (List.map #2 libraries)   (* no virtual library implemented: nothing made *)
+      | _ => List.concat (List.map entriesOf libraries)
+    end
 
   (* The virtual modules of a compile's libraries, KIND, NAME and the
      directory of the library that declares each; refused, two libraries that
      declare one, and two that implement one: a program has one
      implementation of each (D22) *)
-  fun virtualModules (libraries : (string * entry list) list) : (string * string * string) list =
+  fun virtualModules ([] : (string * entry list) list) : (string * string * string) list = []
+    | virtualModules libraries =
     let
       fun headerOf (es : entry list) = case es of e :: _ => #header e | [] => NONE
       fun described (kind, name) = "the virtual " ^ (if kind = "functor" then "functor " else "module ") ^ name
