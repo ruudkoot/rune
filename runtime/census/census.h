@@ -14,6 +14,10 @@ extern int census_on;
 extern uint64_t census_every;
 /* the allocation clock (L0 bytes) and the clock of the last sample */
 extern uint64_t census_clock, census_last_sample_clock;
+/* --census-at: the clocks, ascending, at which a collection is forced too
+   (where the stock VM collects: tests/runner/censustrace.sml), and the next */
+extern uint64_t *census_at;
+extern size_t census_at_n, census_at_i;
 /* the allocating instruction: its pc, its frame's function, the primitive
    under PRIM/PRIMPUSH (-1: none); UINT32_MAX before the loop runs */
 extern uint32_t census_site, census_func;
@@ -37,6 +41,8 @@ extern uint32_t census_sample_no;
 /* graph: also graph.bin, the pointee ids of every field at allocation
    (--census-graph; docs/census.md) */
 void census_init(VM *vm, const char *dir, uint64_t every, int fields, int summary, uint64_t ids_hint, int graph);
+/* --census-at C,C,...: 0 where a clock is not a number or less than the one before */
+int census_at_parse(const char *list);
 void census_alloc(VM *vm, Obj *o, size_t size);
 void census_flush(void);
 void census_gc_begin(VM *vm);
@@ -60,7 +66,7 @@ void census_static(const Program *p, const char *path, FILE *out);
 #define CENSUS_SITE(at, f) (census_site = (at), census_func = (f), census_prim = -1)
 #define CENSUS_PRIM(at, f, prim) (census_site = (at), census_func = (f), census_prim = (prim))
 #define CENSUS_ALLOC(vm, o, size) do { (o)->id = ++census_next_id | ((uint64_t)census_sample_no << CENSUS_ID_BITS); if (census_on) census_alloc((vm), (o), (size)); } while (0)
-#define CENSUS_FORCED() (census_every && census_clock - census_last_sample_clock >= census_every)
+#define CENSUS_FORCED() ((census_every && census_clock - census_last_sample_clock >= census_every) || (census_at_i < census_at_n && census_clock >= census_at[census_at_i]))
 #define CENSUS_GC_BEGIN(vm) do { CENSUS_FLUSH(); if (census_on) census_gc_begin(vm); } while (0)
 #define CENSUS_GC_END(vm) do { if (census_on) census_gc_end(vm); } while (0)
 #define CENSUS_SURVIVE(o, size) do { if (census_on) census_survive((o), (size)); } while (0)
