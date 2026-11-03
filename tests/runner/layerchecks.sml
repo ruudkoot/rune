@@ -59,19 +59,21 @@ struct
     let
       val dir = OS.Path.dir build
       val file = OS.Path.file build
-      val top = !(#directory s)
-      val out = top ^ "/" ^ Int.toString n
+      val out = !(#directory s) ^ "/" ^ Int.toString n
       val () = (mkdirs (out ^ "/batch"); mkdirs (out ^ "/analysis"); mkdirs (out ^ "/static"))
-      fun inTree f = (#directory s := dir; (f () before #directory s := top) handle e => (#directory s := top; raise e))
+      (* in the build's directory, its logs in the run's *)
       fun run (name, static, cmd) =
         let
-          val () = #environment s := ("RUNE_LAYER_DUMP", out ^ "/" ^ name)
-                                     :: (if static then [("RUNE_STATIC_LOAD", "1")] else [])
-          val r = inTree (fn () => command s "" cmd)
-          val () = #environment s := []
-          val () = need (#status r = 0, name ^ " of " ^ build ^ ": exit " ^ Int.toString (#status r) ^ ": "
-                                        ^ String.substring (#errors r, 0, Int.min (String.size (#errors r), 400)))
-        in #output r end
+          val log = out ^ "/" ^ name
+          val envf = List.foldl (fn ((n, v), f) => setEnv (n, v) o f) (unsetEnv ["FORCE_COLOR", "CLICOLOR_FORCE"])
+                                (("RUNE_LAYER_DUMP", out ^ "/" ^ name) :: (if static then [("RUNE_STATIC_LOAD", "1")] else []))
+          val status = Children.exec {addressSpace = NONE, cpuTime = SOME 3000, fileSize = SOME (1024 * 1024 * 1024), core = SOME 0}
+                                     envf {cmd = cmd, dir = SOME dir, stdin = "", stdout = log ^ ".out", stderr = log ^ ".err",
+                                           timeout = 3000}
+          val errors = read (log ^ ".err")
+          val () = need (status = 0, name ^ " of " ^ build ^ ": exit " ^ Int.toString status ^ ": "
+                                     ^ String.substring (errors, 0, Int.min (String.size errors, 400)))
+        in read (log ^ ".out") end
       val vm = fromRoot "bin/runevm"
       val heap = ["--heap-size", "67108864", "--heap-limit", "12000000000"]
       val () = ignore (run ("batch", false, [vm] @ heap @ [fromRoot "bin/rune.rbc", "--lib", fromRoot "lib", "--type-work=1000000000",
