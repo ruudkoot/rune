@@ -452,14 +452,23 @@ struct
                                   driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check kernel"),
              Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-pipe", "exec bin/rune-protocol-check notebook")),
              Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check notebook"))]),
-       tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml"]
+       tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml", "covers:tests/runner/cache*.sml",
+               "covers:src/driver/cachecheck.sml"]
          (Test.describe "incremental"
             (List.map (fn s => driver (s, "exec bin/rune-incremental one " ^ s ^ " bin/rune")) scenarios
              @ [driver ("@mutate", "exec bin/rune-incremental mutate --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project"),
+                (* and each warm build verified, entries across a change compared *)
+                driver ("@mutate-verify", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed 5 --steps 12 --out \"$RUNE_TEST_RUN/mutation-verify\" tests/incremental/functors tests/incremental/project"),
                 driver ("@mutate-v1", "exec bin/rune-incremental mutate --replay-v1 --out \"$RUNE_TEST_RUN/mutation-replay\""),
                 driver ("@faults", "exec bin/rune-incremental faults"),
                 (* the soundness check of fingerprints (functors-units M4) holds a
                    compiler to itself, and catches a weak hash *)
                 driver ("@soundness", "exec bin/rune-incremental soundness --old bin/rune --new bin/rune --probes --steps 10 --out \"$RUNE_TEST_RUN/soundness\" tests/incremental/project"),
-                driver ("@soundness-weak", "exec bin/rune-incremental soundness --old bin/rune --new bin/rune --weaken 0 --expect-violations --probes --out \"$RUNE_TEST_RUN/soundness-weak\"")]))]
+                driver ("@soundness-weak", "exec bin/rune-incremental soundness --old bin/rune --new bin/rune --weaken 0 --expect-violations --probes --out \"$RUNE_TEST_RUN/soundness-weak\"")])),
+       (* the random edits at length, with every warm build verified, for a
+          change to a key (make test-cache-random; docs/testing.md) *)
+       tagged ["test-cache-random", "nightly", "covers:tests/incremental/*"]
+         (Test.describe "cache-random"
+            [driver ("projects", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed \"${RUNE_CACHE_SEED:-7}\" --steps 150 --out \"$RUNE_TEST_RUN/random-projects\" tests/incremental/functors tests/incremental/project"),
+             driver ("compiler", "exec bin/rune-incremental mutate --rune bin/rune --seed \"${RUNE_CACHE_SEED:-7}\" --steps 12 --out \"$RUNE_TEST_RUN/random-compiler\" compiler")])]
 end

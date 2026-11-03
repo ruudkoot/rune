@@ -1,0 +1,7 @@
+policy                                        wrong (S41)        rebuilt   constants inlined
+binder identity, inlining                          0 of 2916     7104     7290
+static + ABI, inlining                             0 of 2916     7030     7290
+static only, inlining (the hole)                 336 of 2916     6670     7290
+ABI only, inlining (the hole)                    126 of 2916     6892     7290
+static + ABI, a usage dropped (x)                476 of 2916     6498     7290
+static only, compile reads static (firewall)       0 of 2916     6670     5832
