@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 15 |
+| Members | 14 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -24,7 +24,6 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | type | [`t`](../sig/RUNE_COMPILER.md#type-project.t) | *a type of its own* |
 | val | [`buildLinks`](../sig/RUNE_COMPILER.md#val-project.buildlinks) | `RuneCompiler.session * {file : string, text : string, variables : (string * string) list, windows : bool} -> buildLink list` |
 | val | [`buildSyntax`](../sig/RUNE_COMPILER.md#val-project.buildsyntax) | `{file : string, text : string} -> {diagnostics : {column : int, file : string, line : int, message : string, severity : string, start : int, stop : int} list, references : buildReference list}` |
-| val | [`cacheDirectories`](../sig/RUNE_COMPILER.md#val-project.cachedirectories) | `t -> string list` |
 | val | [`fingerprint`](../sig/RUNE_COMPILER.md#val-project.fingerprint) | `t -> string` |
 | val | [`inputs`](../sig/RUNE_COMPILER.md#val-project.inputs) | `t -> input list` |
 | val | [`libraries`](../sig/RUNE_COMPILER.md#val-project.libraries) | `t -> string list` |

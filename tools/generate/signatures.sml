@@ -32,7 +32,12 @@ struct
         val rune=tool "RUNE" (fromRoot "bin/rune") val counter=ref 0
         fun observe args=let val ()=counter:= !counter+1 in successful (execute root (tmp ^ "/compiler-" ^ Int.toString (!counter)) (rune @ args)) end
         val base=baseBuild (read build)
-        val files=List.filter (String.isSuffix ".sml") (GenerateMLB.tokenize (String.concatWith "\n" base))
+        (* the library's files but the block's, as its plan has them: the text
+           without the block, planned where it is *)
+        val ()=write (tmp ^ "/library.build",String.concat (List.map (fn line => line ^ "\n") (List.filter (fn row => row<>"@BLOCK@") base)))
+        val files=List.mapPartial (fn line => case String.tokens Char.isSpace line of
+            "unit"::_::path::_ => SOME (if String.isPrefix (tmp ^ "/") path then String.extract (path,size tmp+1,NONE) else path) | _ => NONE)
+          (lines (observe ["--plan",tmp ^ "/library.build"]))
         val provided=List.concat (List.mapPartial (fn line => case List.map trim (fields #"|" line) of file::_::_::names::_ => if List.exists (fn name => name=file) files then SOME (String.tokens Char.isSpace names) else NONE | _ => NONE) (T.dataLines manifest))
         val own=GenerateText.distinct (List.concat (List.map (fn file => declarations "" (read (basis ^ "/" ^ file))) files))
         val transcriptions=List.filter (not o String.isSuffix "_IMP.sml") (glob (fromRoot "tests/basis/spec-sigs",".sml"))
