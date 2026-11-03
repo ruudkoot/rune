@@ -1101,15 +1101,23 @@ struct
      and tags -- what a functor's body is compiled against, and a dynamic
      module's program (StrDynamic). Where no code is made only what elaboration
      reads of them, the constructors, which a unit's static layer holds as
-     a compile's does *)
+     a compile's does (UnitBasis.staticTycon).
+     A name two specifications give is entered once, from the first in the
+     order of the names, whether code is made or not: sharing joins two
+     structures that each specify the datatype, and their constructors'
+     types may name types the sharing leaves apart (MLton's
+     amd64-allocate-registers.sig shares a structure with a view of it
+     that has Operand but not Register). Taken from the last where no code
+     was made, the analysis wrote other bytes than the compile *)
   fun specDatatypes (code : bool, isNew : tycon -> bool, e : env) : int list =
     let
       val specified : int list ref = ref []
+      val seen : unit IntMap.map ref = ref IntMap.empty
       fun datatypes (Env {tys, strs, ...}) =
         (StringMap.app (fn TyStr {fcn = TName c, cons = cs as _ :: _} =>
-                           if isNew c then
+                           if isNew c andalso not (IntMap.member (!seen, #stamp c)) then
                              let
-                               val () = specified := #stamp c :: !specified
+                               val () = (specified := #stamp c :: !specified; seen := IntMap.insert (!seen, #stamp c, ()))
                                fun result t = case prune t of TArrow (_, r) => prune r | r => r
                                val params = case cs of
                                               (_, Con {scheme, ...}) :: _ =>
@@ -2178,8 +2186,7 @@ struct
                  compile that makes no code (makesCode; D15) *)
               val code = !makesCode
               val boundSet = List.foldl (fn (c : tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty (#bound sigma)
-              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c)
-                                                   andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
+              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c), #env sigma)
               val pEnv = if code then localParam (#env sigma) else #env sigma
               val _ = noteModule (functorParams, #id b, pEnv)
               val bodyEnv = case #param b of
@@ -2310,8 +2317,7 @@ struct
               (* the parameter's datatypes entered as a body's are, so that
                  both ABIs' fingerprints read the same tables *)
               val boundSet = List.foldl (fn (c : tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty (#bound sigma)
-              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c)
-                                                   andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
+              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c), #env sigma)
               val pEnv = #env sigma
               val _ = noteModule (functorParams, #id b, pEnv)
               val bodyEnv = case #param b of

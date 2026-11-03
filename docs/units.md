@@ -196,8 +196,13 @@ nothing in it depends on the other: an own name is numbered as the static
 layer meets it, and an import by its place among the static layer's. So a
 compile and an analysis of a unit, which elaborate it alike, write the same
 bytes of the static layer, and only a compile has much to write in the other
-(`make test-layers`). A type name's realisation is the ABI layer's, whole: a
-client's code reads it (`Ty.convert`, `Ty.shapeOf`) and holds what it is made
+(`make test-layers`). Alike includes the compiler's tables the static layer
+writes from: a datatype of a functor's parameter that two specifications give
+-- sharing a structure with a view of it, as MLton's codegen does, makes one
+name of two whose constructors take types the sharing leaves apart -- has the
+constructors of the first in the order of the names, whether code is made or
+not (`Elaborate.specDatatypes`). A type name's realisation is the ABI
+layer's, whole: a client's code reads it (`Ty.convert`, `Ty.shapeOf`) and holds what it is made
 of, a word, an int, a pointer, so a key that held its layout alone took a
 client across `int` made `word` behind `:>`, and the link refused the two
 units. How a constructor lies is

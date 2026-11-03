@@ -1,0 +1,4 @@
+(* the layers tier (tests/runner/layerchecks.sml): a compile and an
+   analysis of a functor whose parameter's datatype two specifications
+   give write the same static layer *)
+sigs.sml allocate.sml main.sml
