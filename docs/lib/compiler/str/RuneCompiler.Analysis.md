@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md) specifies it inside [`RuneCompiler`](../str/RuneCompiler.md) |
 | Status | required |
-| Members | 39 |
+| Members | 46 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -33,6 +33,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`check`](../sig/RUNE_COMPILER.md#val-analysis.check) | `t * {cancelled : unit -> bool, inputs : input list, project : RuneCompiler.Project.t option} -> snapshot` |
 | val | [`checkpoint`](../sig/RUNE_COMPILER.md#val-analysis.checkpoint) | `t -> checkpoint` |
 | val | [`close`](../sig/RUNE_COMPILER.md#val-analysis.close) | `t -> unit` |
+| val | [`compact`](../sig/RUNE_COMPILER.md#val-analysis.compact) | `t -> unit` |
 | val | [`completionAt`](../sig/RUNE_COMPILER.md#val-analysis.completionat) | `snapshot * {offset : int, ordinal : int, path : string list} -> {candidates : candidate list, fields : (string * string) list, role : string}` |
 | val | [`context`](../sig/RUNE_COMPILER.md#val-analysis.context) | `snapshot -> string` |
 | val | [`create`](../sig/RUNE_COMPILER.md#val-analysis.create) | `RuneCompiler.session * {context : string} -> t` |
@@ -40,12 +41,17 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`diagnostics`](../sig/RUNE_COMPILER.md#val-analysis.diagnostics) | `snapshot -> {column : int, file : string, line : int, message : string, severity : string, start : int, stop : int} list` |
 | val | [`documentationAt`](../sig/RUNE_COMPILER.md#val-analysis.documentationat) | `snapshot * location -> string option` |
 | val | [`facts`](../sig/RUNE_COMPILER.md#val-analysis.facts) | `snapshot -> fact list` |
+| val | [`factsIn`](../sig/RUNE_COMPILER.md#val-analysis.factsin) | `snapshot * string -> fact list` |
+| val | [`focus`](../sig/RUNE_COMPILER.md#val-analysis.focus) | `t * string list option -> unit` |
 | val | [`id`](../sig/RUNE_COMPILER.md#val-analysis.id) | `snapshot -> string` |
+| val | [`implementationsOf`](../sig/RUNE_COMPILER.md#val-analysis.implementationsof) | `snapshot * location -> occurrence list` |
 | val | [`inputs`](../sig/RUNE_COMPILER.md#val-analysis.inputs) | `snapshot -> input list` |
 | val | [`observe`](../sig/RUNE_COMPILER.md#val-analysis.observe) | `t * (observation -> unit) option -> unit` |
 | val | [`occurrences`](../sig/RUNE_COMPILER.md#val-analysis.occurrences) | `snapshot -> occurrence list` |
+| val | [`occurrencesIn`](../sig/RUNE_COMPILER.md#val-analysis.occurrencesin) | `snapshot * string -> occurrence list` |
 | val | [`project`](../sig/RUNE_COMPILER.md#val-analysis.project) | `snapshot -> string option` |
 | val | [`restore`](../sig/RUNE_COMPILER.md#val-analysis.restore) | `t * checkpoint -> unit` |
+| val | [`route`](../sig/RUNE_COMPILER.md#val-analysis.route) | `snapshot -> {broken : int, cutoff : int, loaded : int, rebound : int, walked : bool}` |
 | val | [`signatureAt`](../sig/RUNE_COMPILER.md#val-analysis.signatureat) | `snapshot * {offset : int, ordinal : int} -> call option` |
 | val | [`syntaxAt`](../sig/RUNE_COMPILER.md#val-analysis.syntaxat) | `snapshot * {ordinal : int} -> RuneCompiler.Syntax.t option` |
 | val | [`typeAt`](../sig/RUNE_COMPILER.md#val-analysis.typeat) | `snapshot * {file : string, offset : int} -> string option` |
@@ -53,6 +59,7 @@ What each means is on [`RUNE_COMPILER`](../sig/RUNE_COMPILER.md); the types are 
 | val | [`typeHints`](../sig/RUNE_COMPILER.md#val-analysis.typehints) | `snapshot * {ordinal : int, start : int, stop : int} -> typeHint list` |
 | val | [`types`](../sig/RUNE_COMPILER.md#val-analysis.types) | `snapshot -> typeDefinition list` |
 | val | [`unitAt`](../sig/RUNE_COMPILER.md#val-analysis.unitat) | `snapshot * {ordinal : int} -> string option` |
+| val | [`versionOf`](../sig/RUNE_COMPILER.md#val-analysis.versionof) | `snapshot * string -> string option` |
 | val | [`visibleAt`](../sig/RUNE_COMPILER.md#val-analysis.visibleat) | `snapshot * {offset : int, ordinal : int, path : string list} -> candidate list` |
 | val | [`work`](../sig/RUNE_COMPILER.md#val-analysis.work) | `snapshot -> {checked : int, reused : int}` |
 

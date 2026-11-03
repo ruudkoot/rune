@@ -4,6 +4,8 @@
 
 - `Analysis.fact` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.fact)
 - `Analysis.facts` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.facts)
+- `Analysis.factsIn` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.factsin)
+- `Analysis.focus` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.focus)
 - `Failed` (exn): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#exn-failed)
 - `Project.fingerprint` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.fingerprint)
 - `Syntax.fixities` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.fixities)

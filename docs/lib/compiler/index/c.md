@@ -9,6 +9,7 @@
 - `Analysis.checkpoint` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.checkpoint)
 - `Analysis.checkpoint` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.checkpoint)
 - `Analysis.close` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.close)
+- `Analysis.compact` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.compact)
 - `Analysis.completionAt` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.completionat)
 - `Analysis.context` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.context)
 - `Analysis.create` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.create)
@@ -18,6 +19,7 @@
 - `compileFile` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-compilefile)
 - `compileText` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-compiletext)
 - `Project.cacheDirectories` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.cachedirectories)
+- `Workspace.candidates` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-workspace.candidates)
 
 ---
 
