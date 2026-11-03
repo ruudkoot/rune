@@ -5,6 +5,7 @@
    sim --trace DIR [--layout W8|L0..L4] [--variant F,F,...] --collector copier|nursery|sticky|los|mutseg
        [--heap-size N] [--heap-fill P] [--nursery N] [--promote 1|2] [--los T]
        --band lo|hi [--real-level store|call|result] [--workload NAME] [--header] [--check]
+       [--probe C,C,...] [--gc-trace]
 
    The trace is of format 2 (the word layout's): the objects lie on the
    clock by their own sizes (layouts.h w8_obj_size), and the samples and
@@ -57,7 +58,7 @@ static const char *collector_name = "copier";
 static size_t heap_size0 = 4u << 20, nursery = 1u << 20, los_t = 0;
 static unsigned heap_fill = 50; static int promote = 1, band_hi = 0, real_level = 0, do_check = 0, gc_trace = 0, no_stores = 0;
 static uint64_t cur_clock0;
-static uint64_t probes[64]; static int nprobes, probe_i;
+static uint64_t *probes; static size_t nprobes, probes_cap, probe_i;   /* --probe: ascending L0 clocks, any number */
 
 /* ---- trace ---- */
 static AllocRec *alloc_rec; static uint32_t N;
@@ -630,7 +631,8 @@ static const char *cols =
 static void usage(void) {
     fprintf(stderr, "usage: sim --trace DIR [--layout W8|L0..L4] [--variant F,F] --collector copier|nursery|sticky|los|mutseg\n"
                     "           [--heap-size N] [--heap-fill P] [--nursery N] [--promote 1|2] [--los T] --band lo|hi\n"
-                    "           [--real-level store|call|result] [--workload NAME] [--header] [--check]\n");
+                    "           [--real-level store|call|result] [--workload NAME] [--header] [--check]\n"
+                    "           [--probe C,C,...: the band at these ascending clocks, to stderr] [--gc-trace]\n");
     exit(2);
 }
 static size_t size_arg(const char *s) {
@@ -651,6 +653,22 @@ static void parse_variant(const char *s) {
     snprintf(variant_str, sizeof variant_str, "%s", s);
 }
 
+/* --probe C,C,...: the clocks, ascending, at which the copier models print the
+   liveness band to stderr (bin/rune-heap-check heap-replay gives one per
+   collection of the stock VM, so there is no limit to how many) */
+static void parse_probes(char *s) {
+    for (char *t = strtok(s, ","); t; t = strtok(NULL, ",")) {
+        char *e; uint64_t c = strtoull(t, &e, 0);
+        if (*e || (nprobes && c < probes[nprobes - 1])) { fprintf(stderr, "sim: --probe: %s: not a number, or less than the clock before it\n", t); exit(2); }
+        if (nprobes == probes_cap) {
+            probes_cap = probes_cap ? 2 * probes_cap : 64;
+            probes = realloc(probes, probes_cap * sizeof *probes);
+            if (!probes) die("out of memory");
+        }
+        probes[nprobes++] = c;
+    }
+}
+
 int main(int argc, char **argv) {
     int header = 0;
     for (int i = 1; i < argc; i++) {
@@ -659,7 +677,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(a, "--check")) do_check = 1;
         else if (!strcmp(a, "--gc-trace")) gc_trace = 1;
         else if (!strcmp(a, "--no-stores")) no_stores = 1;
-        else if (!strcmp(a, "--probe") && i + 1 < argc) { char *t = strtok(argv[++i], ","); while (t && nprobes < 64) { probes[nprobes++] = strtoull(t, 0, 0); t = strtok(NULL, ","); } }
+        else if (!strcmp(a, "--probe") && i + 1 < argc) parse_probes(argv[++i]);
         else if (i + 1 >= argc) usage();
         else if (!strcmp(a, "--trace")) trace_dir = argv[++i];
         else if (!strcmp(a, "--workload")) workload = argv[++i];

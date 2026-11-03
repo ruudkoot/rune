@@ -53,13 +53,23 @@ the census's live bytes at every sample.
   --stats` at five heap
   settings, exactly as `bin/rune-measure census` ran it, and the stock's
   collections must lie between the two bands, the lower band's semispace
-  must equal the stock's, with the stock's bytes
-  copied (with half the band's width as slack) and live data inside the
-  band. The trace is made when it is missing or older than the bytecode or
+  must equal the stock's, and its live data inside the band. Its bytes
+  copied are held collection by collection (its `--gc-log`) to the band
+  at that collection's own clock (`bin/heapsim --probe`), which must be
+  where an object of the trace begins: each band's run collects where its
+  own live data puts it, and an object that lands between two runs'
+  triggers moves a collection past it, so the two runs' totals do not
+  bound the stock's (compile-sigs at 4 MiB after build-system M4: 304
+  bytes apart, and 3,104 and 3,408 bytes above the stock's, whose eight
+  collections each lay in their band). Stale registers can still put a
+  collection outside its band (`docs/census.md`, *Limits*). The trace is
+  made when it is missing or older than the bytecode or
   either VM; `CENSUS_TRACES` names the traces' directory and `CENSUS_EVERY`
   the interval of a census made here. `make check-heapsim` runs it on
   compile-sigs and intinf_fact; on the bootstrap at 32 KiB all five
-  settings agree, the copied bytes within 0.1%.
+  settings agreed, the copied bytes within 0.1%, under the rule before
+  build-system M4, which held the stock's total to the two runs' totals
+  with half their difference as slack.
 * `bin/rune-heap-check heap-trace-check DIR` checks trace consistency in
   Standard ML, without NumPy. `bin/rune-measure checkold DIR` checks stores' old
   values in Standard ML using bounded binary reads
