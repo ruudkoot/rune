@@ -107,13 +107,15 @@ struct
         in (OS.FileSys.remove tmp handle OS.SysErr _ => ()); text end
     in
       flush ();
-      case P.fork () of
-        NONE =>
+      (* no child on Windows: such an entry is compiled, and not compared *)
+      case (SOME (P.fork ()) handle OS.SysErr _ => NONE) of
+        NONE => ((OS.FileSys.remove tmp handle OS.SysErr _ => ()); Refused "this system makes no child to load it in")
+      | SOME NONE =>
           ((put ("=" ^ f ())
             handle UnitBasis.Missing i => put ("!it names " ^ i)
                  | e => put ("!" ^ General.exnMessage e));
            P.exit 0w0)
-      | SOME pid =>
+      | SOME (SOME pid) =>
           let
             val _ = P.waitpid (P.W_CHILD pid, [])
             val text = got () handle IO.Io _ => "!its child left nothing"
