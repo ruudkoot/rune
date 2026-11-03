@@ -441,7 +441,7 @@ ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
 test-lsp-oracle: bin/rune-lsp-oracle.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
-	  --scenarios tests/lsp/oracle/rune.tsv --sample 12 --out build/lsp/oracle-rune.jsonl --require $(ORACLE_PATHS)
+	  --scenarios tests/lsp/oracle/rune.tsv --sample 12 --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --focus --sample 6 --out build/lsp/oracle-rune-focus.jsonl --require $(ORACLE_PATHS),opened
 test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc

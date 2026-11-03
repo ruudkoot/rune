@@ -215,6 +215,7 @@ struct
     fun close (Analysis {analysis,...})=A.close analysis
     fun observe (Analysis {analysis,...},callback)=A.observe(analysis,callback)
     fun focus (Analysis {analysis,...},files)=A.focus(analysis,files)
+    fun compact (Analysis {analysis,...})=A.compact analysis
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))
     fun check (Analysis {analysis,mode,owner,lib},{project,inputs,cancelled}) = guard "" (fn () =>

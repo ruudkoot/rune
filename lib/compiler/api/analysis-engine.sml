@@ -59,13 +59,13 @@ struct
     base:(SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map*Overload.entry IntMap.map) option ref}
   (* doomed: an exception left the world's tables half written *)
   datatype session=Session of {state:state ref,world:world option ref,config:CompilerSession.config,closed:bool ref,
-    observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref}
+    observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref,walks:int ref}
   exception Cancelled
   (* a query has what it asked for once its unit is elaborated *)
   exception Answered
   (* an identity moved where nothing was to walk *)
   exception NeedWalk
-  fun new config=Session {state=ref noState,world=ref NONE,config=config,closed=ref false,observer=ref NONE,focus=ref NONE,doomed=ref false}
+  fun new config=Session {state=ref noState,world=ref NONE,config=config,closed=ref false,observer=ref NONE,focus=ref NONE,doomed=ref false,walks=ref 0}
   fun dropWorld (Session {world,...})=(Option.app (fn World {owner,...} => CompilerState.close owner) (!world);world:=NONE)
   fun close (session as Session {closed,state,...})=(closed:=true;state:=noState;dropWorld session)
   (* a state whose units must load again *)
@@ -76,10 +76,24 @@ struct
   (* a session of its own over a state: what a query of an old snapshot, or
      one whose context has closed, walks through; nothing in it is to be kept open *)
   fun over (state,config)=Session {state=ref (unplaced (state,#serial state)),world=ref NONE,config=config,closed=ref false,
-    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false}
+    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0}
   (* a state taken back: this session's earlier one *)
   fun restore (session as Session {state=current,...},saved:state)=
     (dropWorld session;current:=unplaced (saved,#serial (!current)+1))
+  (* A compaction: the world goes, with whatever its tables have kept of units
+     long replaced, and the next check loads the units into a new one. It also
+     forgets the paths of the identities no entry names. So it is done now and
+     then, by what has been walked: a walk costs a load of the units after a
+     change, and this a load of them all. *)
+  val walksToCompact=256
+  fun compact (session as Session {state,walks,...})=
+    let val saved= !state
+        val named=StringMap.foldl (fn (k:kept,all) => List.foldl (fn (identity,all) => StringMap.insert (all,identity,()))
+          all (UnitBasis.namedBy (#pickle (#entry k)))) StringMap.empty (#kept saved)
+    in walks:=0;restore (session,{serial= #serial saved,kept= #kept saved,order= #order saved,opens= #opens saved,complete=false,
+         planned= #planned saved,prelude= #prelude saved,units= #units saved,libraryNames= #libraryNames saved,
+         libraries= #libraries saved,stamps= #stamps saved,names= #names saved,
+         paths=StringMap.filteri (fn (identity,_) => StringMap.member (named,identity)) (#paths saved)}) end
   (* which files stay open; NONE, all of them *)
   fun focus (Session {focus,...},files)=
     focus:=Option.map (List.foldl (fn (file,all) => StringMap.insert (all,file,())) StringMap.empty) files
@@ -168,7 +182,7 @@ struct
   (* units: the logical name of each of sources, as rune gives them
      (Workspace), its libraries' first, so that a unit is the same name in
      analysis and in a build. opening: the unit query names is wanted whole. *)
-  fun checkWith (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
+  fun checkWith (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed,walks},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
                  frozen:source list,frozenPlan:CompilerPrelude.plan option,opening:bool) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads) =>
     let val {lib,libraries,target,allowPrim,...}=config
         val old= !saved
@@ -250,8 +264,10 @@ struct
         (* what this check has done to the state, each unit at most once *)
         val next=ref StringMap.empty : kept StringMap.map ref
         val paths=ref (#paths old)
-        (* an identity moved: the units from here on are out of the session *)
+        (* the units from here on are out of the session; moved: because an
+           identity moved, rather than for want of a session *)
         val dirty=ref false
+        val moved=ref false
         val walked=ref 0
         val rebound=ref 0
         val loaded=ref 0
@@ -381,7 +397,11 @@ struct
               val key=case (prior,same) of (SOME (k:kept),true) => #key (#entry k)
                 | _ => Pickle.hash (name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ text)
               val start=UnitBasis.begin (!env,!fixity)
+              (* A unit past a moved identity is taken by its usages. An open one's
+                 facts print its types by the paths that reach them where it
+                 stands, which no usage covers, so it is elaborated. *)
               val holds=same andalso whole andalso not asked andalso (not (!dirty) orelse
+                (not (!moved) orelse not (isFocused file)) andalso
                 (case UnitBasis.broken (#usages (valOf prior)) of NONE => true | SOME _ => (broken:= !broken+1;false)))
               fun compile ()=
                 let val (entry,usages,exported,defined)=case !stash of
@@ -399,8 +419,9 @@ struct
                          (cutoff:= !cutoff+1;if fast then () else UnitBasis.rebind (#bindings k);
                           (entry,#result k,#bindings k,usages,ref defined,#keys k))
                        else if fast then (stash:=SOME (name,entry,usages,exported,defined);raise NeedWalk)
-                       else (if !dirty then () else cut index;fresh ())
-                   | NONE => fresh () end
+                       else (if #identity exported=identityOf k then () else moved:=true;
+                             if !dirty then () else cut index;fresh ())
+                   | NONE => (moved:=true;fresh ()) end
               fun taken (k:kept)=
                 let val entry= #entry k
                 in if not (!dirty) then
@@ -593,12 +614,13 @@ struct
           let val ()=(Env.currentUnit:="";env:=Env.initial;fixity:=Fixity.initial;Elaborate.sigs:=baseSigs;Elaborate.funs:=baseFuns;
                 Overload.table:=baseOverloads;UnitBasis.binders:=StringMap.empty;UnitBasis.bindLog:=[];walked:=0)
               val ()=staged:=[]
-              val ()=if samePlan andalso sameSelection then () else cut 0
+              val ()=if samePlan andalso sameSelection then () else (moved:=true;cut 0)
           in (List.app library (#groups plan);walk steps;
               if null (!remaining) then () else raise Fail "extra ordered project input";finished:=true;NONE)
              handle Error.CompileError (span,message) => sourceError (span,message)
                   | Answered => NONE
                   | error => (if !exposed then doomed:=true else ();commit ();raise error) end
+        val ()=if isSome fast orelse isSome query then () else walks:= !walks+1
         val failedAt=case fast of SOME (_,at) => at | NONE => NONE
         val error=case fast of SOME (error,_) => error | NONE => walkError
         val ()=commit ()
@@ -654,5 +676,7 @@ struct
       candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
       state=current,entries=entries,order=order,attempted= !attempted,prelude=plan,units=inputNames,opened= !openedEntry,
       route={walked=not (isSome fast),rebound= !rebound,loaded= !loaded,cutoff= !cutoff,broken= !broken}} end)
-  fun checkSteps (session,scope,sources,steps,libraries,cancelled)=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,false)
+  fun checkSteps (session as Session {walks,...},scope,sources,steps,libraries,cancelled)=
+    let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,false)
+    in if !walks>=walksToCompact then compact session else ();result end
 end

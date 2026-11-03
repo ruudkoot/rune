@@ -288,6 +288,45 @@ configured path variable for a native name that cannot be written in the
 source encoding. Directory/result scans and completion response sizes are
 bounded, with incomplete results reported to the client.
 
+## Keeping what is computed
+
+A worker keeps each context's analysis between checks (`docs/compiler-analysis.md`).
+An edit that keeps a unit's identity, a comment, a body, costs that unit's
+elaboration at the place it was reached and nothing else: no later unit is
+walked, reloaded or looked at. An edit that moves an identity, a name added, a
+type changed, walks from the start: each later unit is taken by its usages,
+reloaded or elaborated again as they say, which is O(later units). What a check
+would otherwise repeat is memoised too.
+
+* **The plan.** Discovery and a check share a memo of a file's plan: the targets'
+  membership, the file's configuration and its contexts. It holds while the
+  workspace's settings, the set of open documents, the text of an open build
+  file or of a group's source, the stamps of the files the plan read and of the
+  directories a build is looked for in, and those of the places a root file would
+  be, all stand. A stamp is a file's time, in whole seconds, and its size, so
+  nothing is memoised of a file changed within three seconds of being read; it is
+  read again at the next check. A plan is read again on any other change, and an
+  edit of a source that is not a group's plans nothing.
+* **Closed inputs.** Their text is kept by the same stamps; a source is
+  re-indexed only where its text changed.
+* **Closed units.** Only the units of the open documents keep syntax, typing,
+  facts and occurrences. A request into another opens it first, at its place, at
+  the price of its elaboration, until M18's sidecars answer it: that is
+  `workspace/symbol`, whose cost is every unit's on its first request and a
+  resident price of the last few. `textDocument/implementation` needs no unit
+  open: a closed unit keeps the occurrences it reads.
+* **Bindings.** A definition in another unit is held by reference, resolved when
+  it is read, so go-to-definition and a binding's identity are right under a unit
+  reused across a span that moved.
+
+Nothing here is allowed to change an answer. `bin/rune-lsp-oracle` keeps a
+context through a list of edits, and after each compares every fact, occurrence,
+type, diagnostic and query with a fresh analysis of the same inputs, on the
+units named; it fails a run that did not take each path it is told to.
+`make test-lsp-oracle`, part of `make check`, runs it on the compiler's own build,
+with every file open and with one; `make test-lsp-oracle-corpora`, in the
+nightly tier, on HOL4's closure and MLton (`tests/lsp/README.md`).
+
 ## Workspaces and build contexts
 
 The server accepts initial workspace folders, legacy root settings and

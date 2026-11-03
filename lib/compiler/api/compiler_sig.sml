@@ -316,6 +316,12 @@ sig
        when a query asks for them. NONE, the default, keeps every file open;
        while some are closed, occurrences and facts hold no closed unit's. *)
     val focus : t * string list option -> unit
+    (* `compact context` gives up the compiler state a context's units stay
+       loaded in, with what its tables hold of units long replaced.
+
+       The next check loads them into a new one, and gives what it would
+       have. A check does this itself after enough walks. *)
+    val compact : t -> unit
     (* `check (context, request)` checks captured inputs in compiler order.
 
        A project must come from the same compiler session; inputs must match

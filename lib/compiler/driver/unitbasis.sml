@@ -3041,6 +3041,7 @@ struct
       List.app (fn u => byIdentity := StringMap.remove (!byIdentity, #identity u)) leaving;
       List.app (fn k => Array.update (ranges, k, stays (Array.sub (ranges, k)))) [kStamp, kTycon, kTvar];
       List.app (fn u => byPath := StringMap.remove (!byPath, #identity u)) leaving;
+      unitSigs := StringMap.filteri (fn (key, _) => not (StringMap.member (dead, hd (String.fields (fn c => c = #"\000") key)))) (!unitSigs);
       if List.null leaving then ()
       else (IntTable.removeRange (Vector.sub (paths, kStamp), Vector.sub (low, kStamp), Vector.sub (top, kStamp));
             IntTable.removeRange (Vector.sub (paths, kTycon), Vector.sub (low, kTycon), Vector.sub (top, kTycon));

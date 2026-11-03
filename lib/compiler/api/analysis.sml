@@ -42,6 +42,7 @@ struct
     (checked context;observer:=value)
   (* which files keep what a question about them needs; NONE, every file *)
   fun focus (context as Analysis {engine,...},files)=(checked context;E.focus (engine,files))
+  fun compact (context as Analysis {engine,...})=(checked context;E.compact engine)
   fun checkpoint (context as Analysis {engine=E.Session {state,...},token,...}) =
     (checked context;Checkpoint {token=token,state= !state})
   fun restore (context as Analysis {engine,token,...},Checkpoint saved) =
