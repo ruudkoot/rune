@@ -106,7 +106,8 @@ struct
           "val second=RuneffiMain.main(CommandLine.name()," ^ smlList safeArguments ^ ") val ()=print \"RUNEFFI-END\\n\" " ^
           "in OS.Process.exit(if OS.Process.isSuccess first andalso OS.Process.isSuccess second then OS.Process.success else OS.Process.failure) end\n")
 
-        val sources=List.filter(fn file=>String.isSuffix ".sml" file)(lines(command true["sh","scripts/build-files.sh","runeffi.build"]))
+        val sources=List.filter(fn file=>String.isSuffix ".sml" file andalso not(String.isPrefix "src/main/" file))
+          (lines(command true["sh","scripts/plan-files.sh","runeffi.plan"]))
         val result=Hosts.build{host=selectedHost,name="runeffi-generator",sources=sources @ [marker],
           dir=directory ^ "/host",runDir=root,timeout=600,memory=2500}
         val ()=need(#built result,"generator host did not build: " ^ name ^ ": " ^ #messages result)

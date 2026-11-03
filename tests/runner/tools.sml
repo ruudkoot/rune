@@ -1134,11 +1134,8 @@ struct
       val programs = [("rune", "polyml-build.sml"), ("runedoc", "runedoc-polyml-build.sml"),
                       ("runeopt", "runeopt-polyml-build.sml"), ("runeisa", "runeisa-polyml-build.sml"),
                       ("runeffi", "runeffi-polyml-build.sml")]
-      val () = List.app (fn n => (mkdirs (OS.Path.dir (dir ^ "/" ^ n));
-                                  write (dir ^ "/" ^ n, read (fromRoot n))))
-                         (List.map (fn (name, _) => name ^ ".build") programs @
-                          ["lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/util.build"])
-      val () = write (dir ^ "/scripts/build-files.sh", read (fromRoot "scripts/build-files.sh"))
+      val () = List.app (fn n => write (dir ^ "/" ^ n, read (fromRoot n))) (List.map (fn (name, _) => name ^ ".plan") programs)
+      val () = write (dir ^ "/scripts/plan-files.sh", read (fromRoot "scripts/plan-files.sh"))
       val script = fromRoot script
       val log = dir ^ "/reference.log"
       val reference = exec {cmd = ["/bin/sh", script, dir], dir = SOME dir, stdin = "", stdout = log, stderr = log, timeout = 60}

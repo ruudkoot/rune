@@ -5,7 +5,7 @@ scripts/benchmark-provenance.sh	shell	P2.14	retired	e53a16aca070fc7cfb65858cfbd2
 scripts/benchmark-result.sh	shell	P2.14	retired	ee2bc4a115ff1b3e74f9cc34ea968d730c8f6cbb	tools/measure/common.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure classify
 scripts/bisect-fuel.sh	shell	P2.14	retired	17ccadd553085766765df4c7a7d2c1000eba015b	tools/measure/basics.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure bisect-fuel
 scripts/boot-host.sh	shell	Retain: bootstrap/setup	retained	9ad404eec4771063a69398e12edb4e739c7846b0	-	bootstrap/setup
-scripts/build-files.sh	shell	Retain: bootstrap/setup	retained	c18b727ec7fab7fbe785a83d5d62fb291c91d343	-	bootstrap/setup
+scripts/build-files.sh	shell	Retain: bootstrap/setup	retired	c18b727ec7fab7fbe785a83d5d62fb291c91d343	lib/compiler/driver/plan.sml	build-system M11: rune --plan prints the plans committed for the hosts, which scripts/plan-files.sh reads (low-level/plans, low-level/identity)
 scripts/build-gmp-vm.py	python	P2.16	retired	3369d018cfd306205f06fa4a28b2bb1895beee26	tools/builder/cross-vm.sml	clean-bootstrap-configs-and-package-members
 scripts/build-gmp.py	python	P2.16	retired	131865ee41c4253f0370b843a34e8dbd9a3e62bc	tools/builder/gmp-build.sml	clean-bootstrap-configs-and-package-members
 scripts/census.sh	shell	P2.14	retired	753b9f243a4e091324c5355abb5942e92946945d	tools/measure/census.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure census
@@ -35,6 +35,7 @@ scripts/make-dist.py	python	P2.16	retired	f8606fa790caf68c02f0744d81ef4d0fd7e3e7
 scripts/measure-benchmarks.sh	shell	P2.14	retired	f79574567fa02872e8252b240663b736a208b194	tools/measure/benchmarks.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure benchmarks
 scripts/mlkit-build-root.sh	shell	Retain: bootstrap/setup	retained	36a900a30ed8e161a15edb6cf05d669e02b5348d	-	native MLKit bootstrap source-cache isolation; compiler-layout checks config invalidation and original-cache preservation
 scripts/ncpus.sh	shell	Retain: bootstrap/setup	retained	bf17a4157092e825df8513890d9af3852bf34517	-	bootstrap/setup
+scripts/plan-files.sh	shell	Retain: bootstrap/setup	retained	df49d314a17ab86b1e9a1390e28aed1b6d3b109f	-	bootstrap/setup
 scripts/opt.sh	shell	P2.14	retired	37fcb0eb343e8fd2c51d27193f5f23a5e00151da	tools/measure/basics.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure opt
 scripts/package-runtime.py	python	P2.16	retired	26df2e153d91f71c5a325e0d33ea3d178511d921	tools/builder/package-runtime.sml	clean-bootstrap-configs-and-package-members
 scripts/perf-cycles.sh	shell	P2.14	retired	b91b4649089159045c5e8729964a944b95335486	tools/measure/perf-cycles.sml	P2.14-shadow-live-faults-and-reports; CLI=bin/rune-measure perf-cycles

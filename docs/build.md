@@ -91,11 +91,11 @@ of those they are written on, each library's in its load order and each
 before what is written on it, then the build's own files, then the
 libraries' `final` files. A whole library is listed, all a program may name:
 `--basis-deps` says which of its files a compile takes. The Basis Library is
-every program's and is not listed. The other SML systems' build files do not
-come from here: `scripts/gen-build-files.sh` makes them from the `files ...
-end` blocks of the build files, through `scripts/build-files.sh`, which needs
-no compiler (the build-system roadmap's M11 puts a committed plan in its
-place).
+every program's and is not listed. The other SML systems, which build the
+compiler before there is one, read the same list from the plans committed
+beside the build files of the programs they build (`rune.plan`, ...) with
+`scripts/plan-files.sh`, which needs no compiler ([building.md](building.md),
+*How a host gets its list*).
 
 * A sequence of declarations elaborates each in the basis the ones before
   it leave.

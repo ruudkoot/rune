@@ -433,8 +433,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   with `RUNE_MEM` set says after each unit how many bytes its basis and
   its code took and how much the heap holds, collected;
 * in it, a directory per *configuration*: the hash of the compiler's
-  identity (`Config.identity`, a hash of the compiler's sources, which
-  `scripts/gen-version.sh` writes), the versions of the files, the
+  identity (`Config.identity`, a hash of the compiler's plan and of the
+  files of its closure, which `scripts/gen-version.sh` writes: [building.md](building.md),
+  *The compiler's identity*), the versions of the files, the
   instruction set, the options that change what the compiler makes, and
   the probe of its hash (`Pickle.probe`, the digest of a fixed text): the
   hash's values depend on the width of the `Word` of the host that built

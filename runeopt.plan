@@ -1,0 +1,26 @@
+rune-plan 1
+basis demand
+program
+  unit build/config.sml build/config.sml ascii
+  unit compiler:util/scon.sml lib/compiler/util/scon.sml ascii
+  unit compiler:util/ordmap.sml lib/compiler/util/ordmap.sml ascii
+  unit compiler:util/inttable.sml lib/compiler/util/inttable.sml ascii
+  unit compiler:state_sig.sml lib/compiler/state_sig.sml ascii
+  unit compiler:state.sml lib/compiler/state.sml ascii
+  unit src/isa/isa.sml src/isa/isa.sml ascii
+  unit src/isa/stack.sml src/isa/stack.sml ascii
+  unit src/isa/prims.sml src/isa/prims.sml ascii
+  unit compiler:backend/opcodes.sml lib/compiler/backend/opcodes.sml ascii
+  unit compiler:backend/prims.sml lib/compiler/backend/prims.sml ascii
+  unit src/opt/rbc.sml src/opt/rbc.sml ascii
+  unit src/opt/x64_layout.sml src/opt/x64_layout.sml ascii
+  unit src/opt/rbcimage.sml src/opt/rbcimage.sml ascii
+  unit src/opt/rbccheck.sml src/opt/rbccheck.sml ascii
+  unit src/opt/rbcdisasm.sml src/opt/rbcdisasm.sml ascii
+  unit src/opt/x64.sml src/opt/x64.sml ascii
+  unit src/opt/optmain.sml src/opt/optmain.sml ascii
+  unit src/main/runeopt-rune-main.sml src/main/runeopt-rune-main.sml ascii
+end
+provenance
+  input runeopt.build 1249e94d61d395932f0b322672021dfbe21d120ff8297712e65a960a42a5cb64
+end

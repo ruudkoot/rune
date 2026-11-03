@@ -1,10 +1,11 @@
 #!/bin/sh
-# Generate per-compiler build files from the programs' build files
-# (docs/build.md): the files of their `files ... end` blocks
-# (scripts/build-files.sh).
+# Generate per-compiler build files from the programs' committed plans
+# (docs/building.md, How a host gets its list): the files of each plan
+# (scripts/plan-files.sh), less build/config.sml, which each loads first,
+# and the program's own entry point, for which each has its own.
 # Usage: scripts/gen-build-files.sh [ROOT_DIR]
-# For every program (rune from rune.build, runedoc from runedoc.build,
-# runeopt from runeopt.build, runeisa from runeisa.build, runeffi from runeffi.build)
+# For every program (rune from rune.plan, runedoc from runedoc.plan,
+# runeopt from runeopt.plan, runeisa from runeisa.plan, runeffi from runeffi.plan)
 # produces build/PROG.mlb (MLton), build/PROG.cm (SML/NJ),
 # build/PROG-polyml-build.sml (Poly/ML, run from ROOT; polyml-build.sml for
 # rune) and build/PROG-mlkit.mlb (MLKit). Each loads build/config.sml first,
@@ -27,7 +28,8 @@ put() {
 # gen PROG LIST MAINPREFIX POLYSCRIPT
 gen() {
   prog=$1 list=$2 mainprefix=$3 polyscript=$4
-  srcs=$(sh scripts/build-files.sh "$list")
+  srcs=$(sh scripts/plan-files.sh "$list")
+  srcs=$(echo "$srcs" | grep -v -x -e build/config.sml -e "src/main/${mainprefix}rune-main.sml")
 
   # --- MLton ----------------------------------------------------------------
   {
@@ -76,10 +78,10 @@ gen() {
   } | put "build/$prog-mlkit.mlb"
 }
 
-gen rune rune.build "" polyml-build.sml
-gen runedoc runedoc.build runedoc- runedoc-polyml-build.sml
-gen runeopt runeopt.build runeopt- runeopt-polyml-build.sml
-gen runeisa runeisa.build runeisa- runeisa-polyml-build.sml
-gen runeffi runeffi.build runeffi- runeffi-polyml-build.sml
+gen rune rune.plan "" polyml-build.sml
+gen runedoc runedoc.plan runedoc- runedoc-polyml-build.sml
+gen runeopt runeopt.plan runeopt- runeopt-polyml-build.sml
+gen runeisa runeisa.plan runeisa- runeisa-polyml-build.sml
+gen runeffi runeffi.plan runeffi- runeffi-polyml-build.sml
 
 echo "generated build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb"

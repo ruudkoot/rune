@@ -1,0 +1,18 @@
+rune-plan 1
+basis demand
+program
+  unit build/config.sml build/config.sml ascii
+  unit compiler:util/ordmap.sml lib/compiler/util/ordmap.sml ascii
+  unit src/isa/isa.sml src/isa/isa.sml ascii
+  unit src/isa/stack.sml src/isa/stack.sml ascii
+  unit src/isa/prims.sml src/isa/prims.sml ascii
+  unit src/isa/regs.sml src/isa/regs.sml ascii
+  unit src/isa/isagen.sml src/isa/isagen.sml ascii
+  unit src/isa/reggen.sml src/isa/reggen.sml ascii
+  unit src/isa/isatest.sml src/isa/isatest.sml ascii
+  unit src/isa/isamain.sml src/isa/isamain.sml ascii
+  unit src/main/runeisa-rune-main.sml src/main/runeisa-rune-main.sml ascii
+end
+provenance
+  input runeisa.build 34bc5ae688c78821266b62264111a6ff43621481f1df495584a09dfd540be630
+end

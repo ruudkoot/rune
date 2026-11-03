@@ -64,17 +64,15 @@ struct
             List.concat(List.map(fn library=>["--library",library])
               (String.tokens Char.isSpace(String.substring(first,14,size first-17)))) else []
       in libraries @ sib(base source,".cargs") @ [source] end
-  (* the files of a tool's build, as scripts/build-files.sh lists them *)
-  fun buildFiles tool =
+  (* the files of a tool's build, as its committed plan lists them
+     (scripts/plan-files.sh): build/config.sml first and the entry point last *)
+  fun toolSrcs tool =
     let val f = OS.FileSys.tmpName ()
     in
-      ignore (exec {cmd = ["/bin/sh", "scripts/build-files.sh", tool ^ ".build"], dir = NONE, stdin = "", stdout = f, stderr = "",
+      ignore (exec {cmd = ["/bin/sh", "scripts/plan-files.sh", tool ^ ".plan"], dir = NONE, stdin = "", stdout = f, stderr = "",
                     timeout = 0});
       lines (read f) before OS.FileSys.remove f
     end
-  fun toolSrcs tool =
-    "build/config.sml" :: buildFiles tool
-    @ [case tool of "rune" => "src/main/rune-main.sml" | "runedoc" => "src/main/runedoc-rune-main.sml" | _ => "src/main/runeopt-rune-main.sml"]
   fun bootSrcs () = toolSrcs "rune"
   (* the VM of the JIT's checks: bin/runevm, or another (portability's) *)
   fun jitVm () = env ("JIT_VM", "bin/runevm")

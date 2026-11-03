@@ -3,21 +3,32 @@
 structure MutationHistory =
 struct
   open Incremental
+  (* the compiler's files in a tree, in order: its committed plan's
+     (scripts/plan-files.sh, the build-system roadmap's M11), or, in a tree
+     from before the plans, what its own scripts/build-files.sh read of
+     rune.build, between build/config.sml and the entry point, or its
+     sources.txt before that *)
   fun sources state tree =
-    if exists (tree ^ "/rune.build") then
-      let val result = command state "" ["sh", fromRoot "scripts/build-files.sh", tree ^ "/rune.build"]
+    if exists (tree ^ "/rune.plan") then
+      let val result = command state "" ["sh", fromRoot "scripts/plan-files.sh", tree ^ "/rune.plan"]
+      in need (#status result = 0, "cannot enumerate compiler sources");
+         String.tokens Char.isSpace (#output result) end
+    else if exists (tree ^ "/rune.build") then
+      let val result = command state "" ["sh", tree ^ "/scripts/build-files.sh", tree ^ "/rune.build"]
           (* build-files.sh names each file by the build file's directory:
              the files of the tree, by their places in it (the replay looked
              for TREE/TREE/...; functors-units M9) *)
           fun inTree path = if String.isPrefix (tree ^ "/") path then String.extract (path, size tree + 1, NONE) else path
       in need (#status result = 0, "cannot enumerate historical compiler sources");
-         List.map inTree (String.tokens Char.isSpace (#output result)) end
-    else List.map Hosts.trim (List.filter (fn line => Hosts.trim line <> "" andalso not (String.isPrefix "#" (Hosts.trim line)))
-                                        (lines (read (tree ^ "/sources.txt"))))
+         ["build/config.sml"] @ List.map inTree (String.tokens Char.isSpace (#output result)) @ ["src/main/rune-main.sml"] end
+    else ["build/config.sml"]
+         @ List.map Hosts.trim (List.filter (fn line => Hosts.trim line <> "" andalso not (String.isPrefix "#" (Hosts.trim line)))
+                                          (lines (read (tree ^ "/sources.txt"))))
+         @ ["src/main/rune-main.sml"]
   fun compilerSources compiler =
     let val state = create "mutation-sources" compiler
         val () = reset state
-        val files = ["build/config.sml"] @ sources state root @ ["src/main/rune-main.sml"]
+        val files = sources state root
         val () = need (List.all (fn file => exists (fromRoot file)) files, "compiler project needs its generated sources; run make gen")
     in List.map (fn file => (file, CachePlant.binary (fromRoot file))) files end
   fun replay (checker : MutationChecks.checker) repo count =
@@ -45,7 +56,7 @@ struct
               val () = #directory state := oldDirectory
           in if #status generated <> 0 orelse not (exists (tree ^ "/build/config.sml")) then
                say ("SKIP mutate history " ^ commit ^ ": its build files could not be made\n")
-             else let val files = ["build/config.sml"] @ sources state tree @ ["src/main/rune-main.sml"]
+             else let val files = sources state tree
                       val missing = List.filter (fn file => not (exists (tree ^ "/" ^ file))) files
                   in case missing of file :: _ => say ("SKIP mutate history " ^ commit ^ ": commit does not hold " ^ file ^ "\n")
                    | [] => let val p = MutationProject.create (#compiler checker) (#directory checker ^ "/work-history")

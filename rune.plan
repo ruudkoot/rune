@@ -1,0 +1,131 @@
+rune-plan 1
+basis demand
+program
+  unit build/config.sml build/config.sml ascii
+  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii
+  unit unicode:utf8.sml lib/unicode/utf8.sml ascii
+  unit unicode:width_data.sml lib/unicode/width_data.sml ascii
+  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii
+  unit unicode:display_width.sml lib/unicode/display_width.sml ascii
+  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii
+  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii
+  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii
+  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii
+  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii
+  unit unicode:normalize.sml lib/unicode/normalize.sml ascii
+  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii
+  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii
+  unit unicode:identifier.sml lib/unicode/identifier.sml ascii
+  unit unicode:security_data.sml lib/unicode/security_data.sml ascii
+  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii
+  unit unicode:security.sml lib/unicode/security.sml ascii
+  unit json:json_sig.sml lib/json/json_sig.sml ascii
+  unit json:json.sml lib/json/json.sml ascii
+  unit digest:digest_sig.sml lib/digest/digest_sig.sml ascii
+  unit digest:sha256.sml lib/digest/sha256.sml ascii
+  unit digest:hex_sig.sml lib/digest/hex_sig.sml ascii
+  unit digest:hex.sml lib/digest/hex.sml ascii
+  use lib/compiler/internal.build
+    use lib/compiler/frontend.build
+      use lib/compiler/util.build
+        unit compiler:util/scon.sml lib/compiler/util/scon.sml ascii
+        unit compiler:util/ordmap.sml lib/compiler/util/ordmap.sml ascii
+        unit compiler:util/inttable.sml lib/compiler/util/inttable.sml ascii
+        unit compiler:state_sig.sml lib/compiler/state_sig.sml ascii
+        unit compiler:state.sml lib/compiler/state.sml ascii
+      end
+      unit compiler:util/ident.sml lib/compiler/util/ident.sml ascii
+      unit compiler:util/source.sml lib/compiler/util/source.sml ascii
+      unit compiler:util/error.sml lib/compiler/util/error.sml ascii
+      unit compiler:util/color.sml lib/compiler/util/color.sml ascii
+      unit compiler:util/diagnostic.sml lib/compiler/util/diagnostic.sml ascii
+      unit compiler:util/pass.sml lib/compiler/util/pass.sml ascii
+      unit compiler:util/usage.sml lib/compiler/util/usage.sml ascii
+      unit compiler:util/pickle.sml lib/compiler/util/pickle.sml ascii
+      unit compiler:frontend/token.sml lib/compiler/frontend/token.sml ascii
+      unit compiler:frontend/lexer.sml lib/compiler/frontend/lexer.sml ascii
+      unit compiler:elab/elabstats.sml lib/compiler/elab/elabstats.sml ascii
+      unit compiler:elab/types.sml lib/compiler/elab/types.sml ascii
+      unit compiler:elab/sourcety.sml lib/compiler/elab/sourcety.sml ascii
+      unit compiler:elab/witness.sml lib/compiler/elab/witness.sml ascii
+      unit compiler:core/ty.sml lib/compiler/core/ty.sml ascii
+      unit compiler:elab/overload.sml lib/compiler/elab/overload.sml ascii
+      unit compiler:frontend/ast.sml lib/compiler/frontend/ast.sml ascii
+      unit compiler:frontend/fixity.sml lib/compiler/frontend/fixity.sml ascii
+      unit compiler:frontend/parser.sml lib/compiler/frontend/parser.sml ascii
+      unit compiler:elab/unify.sml lib/compiler/elab/unify.sml ascii
+      unit compiler:elab/env.sml lib/compiler/elab/env.sml ascii
+      unit compiler:elab/sigmatch.sml lib/compiler/elab/sigmatch.sml ascii
+      unit compiler:elab/exhaust.sml lib/compiler/elab/exhaust.sml ascii
+      unit compiler:backend/opcodes.sml lib/compiler/backend/opcodes.sml ascii
+      unit compiler:backend/prims.sml lib/compiler/backend/prims.sml ascii
+      unit compiler:elab/elaborate.sml lib/compiler/elab/elaborate.sml ascii
+      unit compiler:elab/astlint.sml lib/compiler/elab/astlint.sml ascii
+      unit compiler:driver/basismanifest.sml lib/compiler/driver/basismanifest.sml ascii
+      unit compiler:driver/libraryscope.sml lib/compiler/driver/libraryscope.sml ascii
+      unit compiler:driver/buildfile.sml lib/compiler/driver/buildfile.sml ascii
+      unit compiler:driver/deps.sml lib/compiler/driver/deps.sml ascii
+      unit compiler:driver/project.sml lib/compiler/driver/project.sml ascii
+      unit compiler:driver/libraryindex.sml lib/compiler/driver/libraryindex.sml ascii
+    end
+    unit compiler:settings.sml lib/compiler/settings.sml ascii
+    unit compiler:core/lambda.sml lib/compiler/core/lambda.sml ascii
+    unit compiler:core/irrules.sml lib/compiler/core/irrules.sml ascii
+    unit compiler:core/lambdalint.sml lib/compiler/core/lambdalint.sml ascii
+    unit compiler:core/matchcomp.sml lib/compiler/core/matchcomp.sml ascii
+    unit compiler:core/translate.sml lib/compiler/core/translate.sml ascii
+    unit compiler:core/mid.sml lib/compiler/core/mid.sml ascii
+    unit compiler:core/midlint.sml lib/compiler/core/midlint.sml ascii
+    unit compiler:core/midtext.sml lib/compiler/core/midtext.sml ascii
+    unit compiler:core/tomid.sml lib/compiler/core/tomid.sml ascii
+    unit compiler:core/midcodec.sml lib/compiler/core/midcodec.sml ascii
+    unit compiler:core/midcanon.sml lib/compiler/core/midcanon.sml ascii
+    unit compiler:core/expand.sml lib/compiler/core/expand.sml ascii
+    unit compiler:core/target.sml lib/compiler/core/target.sml ascii
+    unit compiler:core/shake.sml lib/compiler/core/shake.sml ascii
+    unit compiler:core/lift.sml lib/compiler/core/lift.sml ascii
+    unit compiler:core/simplify.sml lib/compiler/core/simplify.sml ascii
+    unit compiler:core/workers.sml lib/compiler/core/workers.sml ascii
+    unit compiler:core/refs.sml lib/compiler/core/refs.sml ascii
+    unit compiler:backend/code.sml lib/compiler/backend/code.sml ascii
+    unit compiler:backend/low.sml lib/compiler/backend/low.sml ascii
+    unit compiler:backend/target.sml lib/compiler/backend/target.sml ascii
+    unit compiler:backend/lowlint.sml lib/compiler/backend/lowlint.sml ascii
+    unit compiler:backend/rep.sml lib/compiler/backend/rep.sml ascii
+    unit compiler:backend/lower.sml lib/compiler/backend/lower.sml ascii
+    unit compiler:backend/lowshapes.sml lib/compiler/backend/lowshapes.sml ascii
+    unit compiler:backend/fault.sml lib/compiler/backend/fault.sml ascii
+    unit compiler:backend/stack.sml lib/compiler/backend/stack.sml ascii
+    unit compiler:backend/regcodes.sml lib/compiler/backend/regcodes.sml ascii
+    unit compiler:backend/regs.sml lib/compiler/backend/regs.sml ascii
+    unit compiler:backend/regverify.sml lib/compiler/backend/regverify.sml ascii
+    unit compiler:backend/emit.sml lib/compiler/backend/emit.sml ascii
+    unit compiler:backend/link.sml lib/compiler/backend/link.sml ascii
+    unit compiler:backend/unitfile.sml lib/compiler/backend/unitfile.sml ascii
+    unit compiler:driver/unitbasis.sml lib/compiler/driver/unitbasis.sml ascii
+    unit compiler:driver/pipeline.sml lib/compiler/driver/pipeline.sml ascii
+    unit compiler:driver/unitmid.sml lib/compiler/driver/unitmid.sml ascii
+    unit compiler:driver/unitcache.sml lib/compiler/driver/unitcache.sml ascii
+    unit compiler:driver/workspace.sml lib/compiler/driver/workspace.sml ascii
+    unit compiler:driver/plan.sml lib/compiler/driver/plan.sml ascii
+    unit compiler:driver/context.sml lib/compiler/driver/context.sml ascii
+    unit compiler:driver/prelude.sml lib/compiler/driver/prelude.sml ascii
+  end
+  unit src/isa/isa.sml src/isa/isa.sml ascii
+  unit src/isa/stack.sml src/isa/stack.sml ascii
+  unit src/opt/rbc.sml src/opt/rbc.sml ascii
+  unit src/opt/rbccheck.sml src/opt/rbccheck.sml ascii
+  unit src/driver/stackcheck.sml src/driver/stackcheck.sml ascii
+  unit src/driver/options.sml src/driver/options.sml ascii
+  unit src/driver/parallel.sml src/driver/parallel.sml ascii
+  unit src/driver/cachecheck.sml src/driver/cachecheck.sml ascii
+  unit src/driver/main.sml src/driver/main.sml ascii
+  unit src/driver/serve.sml src/driver/serve.sml ascii
+  unit src/main/rune-main.sml src/main/rune-main.sml ascii
+end
+provenance
+  input rune.build 781360b4534b72a97a25e54a812f094beb8e4c1eb8a2ed52b6201e6600bf0c1e
+  input lib/compiler/internal.build 3f3aa5bf03e0693c5d9e261c6d044c1102b588799c9b004a96d516138cf95f0e
+  input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
+  input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
+end

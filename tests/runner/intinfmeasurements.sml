@@ -116,7 +116,7 @@ struct
           in save ();say (name ^ " " ^ Real.fmt (StringCvt.GEN NONE) median ^ "\n") end
         val ()=List.app workload definitions
         val ()=if not compilerWorkloads then () else
-          let val listed=meta "compiler-sources" ["sh","scripts/build-files.sh","rune.build"]
+          let val listed=meta "compiler-sources" ["sh","scripts/plan-files.sh","rune.plan"]
               val inputs=String.tokens Char.isSpace listed
               fun one (name,inputs)=
                 let val target=path c (name ^ ".rbc")
@@ -128,6 +128,6 @@ struct
                          ("median_seconds",Measured.number (Measured.median (List.map (Time.toReal o #wall) runs))),("output_sha256",Json.String (hash target))]
                 in compilerEntries := (name,entry) :: !compilerEntries end
           in List.app one [("compile-hello",["examples/hello.sml"]),("compile-sigs",["tests/perf/compile-sigs.sml"]),
-               ("bootstrap",["build/config.sml"] @ inputs @ ["src/main/rune-main.sml"])] end
+               ("bootstrap",inputs)] end
     in save ();say "PASS IntInf measurement answers and separate samples\n" end
 end
