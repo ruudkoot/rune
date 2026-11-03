@@ -27,6 +27,14 @@
    what the bytes say: a unit compiled now and one taken from the cache are
    the same to them, byte for byte.
 
+   Where a name was bound, its origin, is the editor's and nobody else's: a
+   unit's origins are written to a sidecar, apart from its basis and from
+   every hash, and read beside it in the same order, so that a comment that
+   moves a span moves no identity (docs/units.md). A batch compile records
+   none, and its sidecar is empty. The one position a
+   basis keeps is that of a body kept for a later unit to copy, whose line
+   table the copy's code holds (linePosition).
+
    A functor is written as its signature and the global of its function,
    to which it is compiled: nothing of its body, which loading needs not;
    a functor marked to be inlined, its function's Mid as well (funcode). *)
@@ -41,7 +49,8 @@ struct
      its compile had (importedSchemes, schemesHold) *)
   exception SchemeChanged of string
 
-  val version = 15
+  (* 16: origins in a sidecar of their own, outside the bytes an identity hashes *)
+  val version = 16
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -1559,6 +1568,8 @@ struct
   (* ---- writing ---- *)
 
   type enc = {w : P.writer,
+              side : P.writer,                         (* the sidecar: origins, in the order they are met *)
+              spans : bool ref,                        (* whether an origin was written at all *)
               start : int vector,
               own : int IntTable.table vector,         (* per kind: a value -> its number *)
               count : int ref vector,
@@ -1748,10 +1759,13 @@ struct
   fun tystatus (e : enc, Env.TyStr {fcn, cons}) : unit =
     (tyfcn (e, fcn); P.list (fn (w, (n, v)) => (P.string (w, n); valstatus (e, v))) (#w e, cons))
 
-  fun writeOrigin (w,origin)=case origin of Env.Unknown => P.byte (w,0)
+  (* an origin, into the sidecar *)
+  fun writeOrigin' (w,origin)=case origin of Env.Unknown => P.byte (w,0)
     | Env.Named {unit,kind,name,span} => (P.byte (w,1);P.string (w,unit);P.string (w,kind);P.string (w,name);
         P.string (w,#file span);P.nat (w,#start span);P.nat (w,#stop span))
-    | Env.Constrained (actual,spec) => (P.byte (w,2);writeOrigin (w,actual);writeOrigin (w,spec))
+    | Env.Constrained (actual,spec) => (P.byte (w,2);writeOrigin' (w,actual);writeOrigin' (w,spec))
+  fun writeOrigin (e : enc, origin) =
+    (case origin of Env.Unknown => () | _ => #spans e := true; writeOrigin' (#side e, origin))
 
   (* ---- environments by reference (functors-units M11, part 2) ----
 
@@ -1884,11 +1898,11 @@ struct
            P.list (fn (w, (n, v)) => (P.string (w, n); valstatus (e, v))) (w, StringMap.listItemsi vals);
            P.list (fn (w, (n, t)) => (P.string (w, n); tystatus (e, t))) (w, StringMap.listItemsi tys);
            P.list (fn (w, (n, s)) => (P.string (w, n); env (e, s))) (w, StringMap.listItemsi strs);
-           P.list (fn (w,(key,origin)) => (P.string (w,key);writeOrigin (w,origin))) (w,StringMap.listItemsi origins))
+           P.list (fn (_,(key,origin)) => (P.string (#side e,key);writeOrigin (e,origin))) (#side e,StringMap.listItemsi origins))
     end
 
   fun sigma (e : enc, {bound, env = en,origin} : SigMatch.sigma) : unit =
-    (P.list (fn (_, c) => tycon (e, c)) (#w e, bound); env (e, en);writeOrigin (#w e,origin))
+    (P.list (fn (_, c) => tycon (e, c)) (#w e, bound); env (e, en);writeOrigin (e,origin))
 
   (* ---- what of an environment is not the unit's start ---- *)
 
@@ -1988,7 +2002,7 @@ struct
       inParamB := true; sigma (e, paramSig); inParamB := false;
       inResultB := true; sigma (e, {bound = generated, env = result, origin = Env.Unknown}); inResultB := false;
       paramTargets := StringMap.empty;
-      writeOrigin (w, binding);
+      writeOrigin (e, binding);
       name (e, kStamp, code);
       (* a functor marked to be inlined: its function's Mid, its
          globals and type names named as the basis names them, which makes
@@ -2127,7 +2141,7 @@ struct
                     (w, IntMap.find (!Ty.datatypes, v));
            P.option (fn (_, f) => tyfcn (e, f)) (w, IntTable.find (Ty.realizations, v));
            P.option (P.list (fn (w, (n, s)) => (P.string (w, n); valstatus (e, s)))) (w, IntMap.find (!Elaborate.dataCons, v));
-           writeOrigin (w,getOpt (IntMap.find (!Env.typeOrigins,v),Env.Unknown));
+           writeOrigin (e,getOpt (IntMap.find (!Env.typeOrigins,v),Env.Unknown));
            (* the layout a body gave an instance of its datatype (Ty.pinned) *)
            P.option (P.list (fn (w, (t, n)) => (P.nat (w, t); P.option P.nat (w, n)))) (w, IntMap.find (!Ty.pinned, v)))
         else ()
@@ -2135,9 +2149,10 @@ struct
 
   (* ---- a unit's basis ---- *)
 
-  (* What export gives: the bytes, the unit's identity, and the number each
-     of its own names was given, for the code of the unit (relative) *)
-  type exported = {pickle : string, identity : string, provenance : string,
+  (* What export gives: the bytes, the sidecar that goes with them (empty where
+     no origin was recorded), the unit's identity, and the number each of its
+     own names was given, for the code of the unit (relative) *)
+  type exported = {pickle : string, sidecar : string, identity : string, provenance : string,
                    own : int IntTable.table vector, counts : int vector}
 
   (* export {start, name, file, text, mode, delta, fixity, used}: the basis
@@ -2149,7 +2164,8 @@ struct
               delta : Env.env, fixity : Fixity.env, used : string list} : exported = during "export" (fn () =>
     let
       val w = P.writer ()
-      val e : enc = {w = w, start = #counters start, own = Vector.tabulate (3, fn _ => IntTable.table 256),
+      val e : enc = {w = w, side = P.writer (), spans = ref false, start = #counters start,
+                     own = Vector.tabulate (3, fn _ => IntTable.table 256),
                      count = Vector.tabulate (3, fn _ => ref 0), queue = ref [], names = ref StringMap.empty,
                      nnames = ref 0, refs = IntTable.table 64,
                      nameList = ref [], tycons = IntTable.table 256, ntycons = ref 0,
@@ -2228,7 +2244,7 @@ struct
       val () = P.string (u, Source.modeName mode)
       val identity = uname ^ "@" ^ hashAt ("identity", hashed)
     in
-      {pickle = P.contents u ^ hashed, identity = identity,
+      {pickle = P.contents u ^ hashed, sidecar = if !(#spans e) then P.contents (#side e) else "", identity = identity,
        provenance=Link.provenance (!CompilerSettings.target,mode,sourceHash),own = #own e, counts = counts}
     end)
 
@@ -2291,7 +2307,8 @@ struct
 
   (* ---- reading ---- *)
 
-  type dec = {r : P.reader, base : int vector, units : loaded vector, ntycons : int ref, tycons : T.tycon array ref,
+  type dec = {r : P.reader, side : P.reader option,    (* the sidecar, where it has anything *)
+              base : int vector, units : loaded vector, ntycons : int ref, tycons : T.tycon array ref,
               ntypes : int ref, types : T.ty array ref,    (* the types read, in the order written *)
               ncons : int ref, cons : Ast.coninfo array ref,
               nsibs : int ref, sibs : (string * bool) list array ref,
@@ -2475,12 +2492,13 @@ struct
     let val fcn = rtyfcn d
     in Env.TyStr {fcn = fcn, cons = P.rlist (fn r => let val n = P.rstring r in (n, rvalstatus d) end) (#r d)} end
 
-  fun readOrigin r = case P.rbyte r of 0 => Env.Unknown | 1 =>
+  fun readOrigin' r = case P.rbyte r of 0 => Env.Unknown | 1 =>
     let val unit=P.rstring r val kind=P.rstring r val name=P.rstring r
         val file=P.rstring r val start=P.rnat r val stop=P.rnat r
     in Env.Named {unit=unit,kind=kind,name=name,span={file=file,start=start,stop=stop}} end
-    | 2 => let val actual=readOrigin r val spec=readOrigin r in Env.Constrained (actual,spec) end
+    | 2 => let val actual=readOrigin' r val spec=readOrigin' r in Env.Constrained (actual,spec) end
     | _ => raise P.Bad "invalid binding origin"
+  fun readOrigin (d : dec) = case #side d of SOME r => readOrigin' r | NONE => Env.Unknown
 
   fun renv (d : dec) : Env.env =
     case P.rbyte (#r d) of
@@ -2489,10 +2507,11 @@ struct
           val vals = rmap d rvalstatus
           val tys = rmap d rtystatus
           val strs = rmap d renv
-          val origins=StringMap.fromList (P.rlist (fn r =>
-            let val key=P.rstring r
-                val origin=readOrigin r
-            in (key,origin) end) (#r d))
+          val origins=case #side d of NONE => StringMap.empty | SOME side =>
+            StringMap.fromList (P.rlist (fn r =>
+              let val key=P.rstring r
+                  val origin=readOrigin' r
+              in (key,origin) end) side)
         in Env.Env {vals = vals, tys = tys, strs = strs,origins=origins} end
     | 1 => rreference d
     | _ => raise P.Bad "not an environment"
@@ -2552,7 +2571,7 @@ struct
 
   fun rsigma (d : dec) : SigMatch.sigma =
     let val bound = P.rlist (fn _ => rtycon d) (#r d)
-        val env=renv d val origin=readOrigin (#r d)
+        val env=renv d val origin=readOrigin d
     in {bound=bound,env=env,origin=origin} end
 
   (* ---- loading ---- *)
@@ -2702,20 +2721,22 @@ struct
          imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
       end
 
-  (* load {pickle, file, at}: the unit whose basis pickle is, loaded after
-     the units of the session: its numbers given the names of the session
-     that follow at's counters and what its compile used, its tables
+  (* load {pickle, sidecar, file, at}: the unit whose basis pickle is, loaded
+     after the units of the session: its numbers given the names of the
+     session that follow at's counters and what its compile used, its tables
      entered, its signatures, functors and overloading declared, and the
-     unit registered; file is its source as spans name it now. Raises
+     unit registered; sidecar is what export gave beside the pickle, or ""
+     for no origins; file is its source as spans name it now. Raises
      Missing where it names a unit the session has not, and Pickle.Bad
      where the bytes are not a basis. *)
   (* loadKnown (args, known, remap): known, where it is SOME, the unit's
      identity, which whoever has it need not work out again from the
      bytes: export, which just did, and an entry of the cache, which keeps
      it (functors-units, F2) *)
-  fun load' ({pickle : string, file : string, at : int vector}, known : string option, remap : remap) : result =
+  fun load' ({pickle : string, sidecar : string, file : string, at : int vector}, known : string option, remap : remap) : result =
     let
       val r = P.reader pickle
+      val side = if sidecar = "" then NONE else SOME (P.reader sidecar)
       val used = Vector.tabulate (3, fn _ => P.rnat r)
       val _ = P.rstring r   (* the hash of its source, for the compiler library *)
       val _ = P.rstring r   (* its mode *)
@@ -2743,7 +2764,7 @@ struct
       val counts = Vector.tabulate (3, fn _ => P.rnat r)
       val base = Vector.tabulate (3, fn k => Vector.sub (at, k) + Vector.sub (used, k))
       val () = List.app (fn k => counter k := Vector.sub (base, k) + Vector.sub (counts, k)) [kStamp, kTycon, kTvar]
-      val d : dec = {r = r, base = base, units = us, ntycons = ref 0, tycons = ref (Array.fromList []),
+      val d : dec = {r = r, side = side, base = base, units = us, ntycons = ref 0, tycons = ref (Array.fromList []),
                      ntypes = ref 0, types = ref (Array.fromList []), ncons = ref 0, cons = ref (Array.fromList []),
                      nsibs = ref 0, sibs = ref (Array.fromList []),
                      remaps = remaps, sigsRead = ref StringMap.empty, hereTemplates = ref StringMap.empty}
@@ -2775,7 +2796,7 @@ struct
           val param = P.roption P.rstring r
           val paramSig = rsigma d
           val summary = let val {bound, env = result, ...} = rsigma d in {generated = bound, result = result} end
-          val binding = readOrigin r
+          val binding = readOrigin d
           val code = rname (d, kStamp)
           (* a marked functor's Mid: what an application of it in a later
              unit expands *)
@@ -2917,7 +2938,7 @@ struct
                                     in {params = params, cons = cons} : Ty.datatypeInfo end) r
               val real = P.roption (fn _ => rtyfcn d) r
               val dcons = P.roption (P.rlist (fn r => let val n = P.rstring r in (n, rvalstatus d) end)) r
-              val origin=readOrigin r
+              val origin=readOrigin d
               val pin = P.roption (P.rlist (fn r => let val t = P.rnat r in (t, P.roption P.rnat r) end)) r
               val () = Option.app (fn l => Ty.pinLayout (c, l)) pin
             in
@@ -2930,6 +2951,9 @@ struct
         | _ => raise P.Bad "not a table's entry"
       val () = entries ()
       val () = if P.atEnd r then () else raise P.Bad "bytes after the basis"
+      val () = case side of
+                 SOME x => if P.atEnd x then () else raise P.Bad "bytes after the sidecar"
+               | NONE => ()
       (* declared: signatures, functors, overloading *)
       val () = List.app (fn (n, s) => Elaborate.sigs := StringMap.insert (!Elaborate.sigs, n, s)) sigs
       val () = List.app (fn (n, f) => Elaborate.funs := StringMap.insert (!Elaborate.funs, n, f)) funs

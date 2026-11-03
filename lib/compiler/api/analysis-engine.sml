@@ -10,7 +10,7 @@ struct
   type typeDefinition={id:string,origin:Env.origin}
   (* typing: what the editor's types are worked out from when first asked
      (CompilerNodeTypes), for a unit of the inputs *)
-  type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list,
+  type entry={key:string,name:string,allow:bool,mode:Source.mode,pickle:string,sidecar:string,facts:fact list,types:typeDefinition list,syntax:CompilerSyntax.t,uses:(string*(string list*string)*Source.span*Env.origin*bool) list,
     typing:CompilerNodeTypes.t option}
   type snapshot={facts:fact list,diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,types:typeDefinition list,dependencies:source list,
     uses:(string*(string*(string list*string)*Source.span*Env.origin*bool)) list,
@@ -204,9 +204,9 @@ struct
                       if stamp<Vector.sub (#counters start,UnitBasis.kTycon) then all else
                         {id=typeId stamp,origin=origin} :: all) [] (!Env.typeOrigins)
                     val ()=UnitBasis.undo start
-                in checked:= !checked+1;{key=key,name=name,allow=allow,mode=mode,pickle= #pickle exported,facts=frozen,types=typeDefinitions,
+                in checked:= !checked+1;{key=key,name=name,allow=allow,mode=mode,pickle= #pickle exported,sidecar= #sidecar exported,facts=frozen,types=typeDefinitions,
                   syntax=syntaxTree,uses=List.rev (!unitUses),typing=typing}:entry end)
-              val loaded=UnitBasis.load {pickle= #pickle entry,file=file,at= #counters start}
+              val loaded=UnitBasis.load {pickle= #pickle entry,sidecar= #sidecar entry,file=file,at= #counters start}
               val ()=env:=Env.plus (#env start,#delta loaded)
               val ()=fixity:=Fixity.extend (#fixity start,#directives loaded)
               val ()=UnitBasis.bind loaded

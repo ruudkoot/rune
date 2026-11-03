@@ -163,15 +163,22 @@ again from the source on loading, and elaborated again by each unit that
 applied it, which then depended on the unit that declared it and on what
 the body's names were bound to.
 
-Static analysis can also record lexical origins in a version-7 basis:
-source ranges for bindings and the specification/implementation relation
-introduced by signature matching. These origins are separate from value,
-exception and generative type stamps. Exception replication shares a
-runtime exception identity while introducing a distinct lexical name.
-Analysis
-freezes query data before replacing a unit's mutable annotations; replay
-restores origins together with its checked basis. The batch driver and
-analysis share build-scope visibility through `CompilerBuildContext`.
+Static analysis can also record lexical origins: source ranges for
+bindings and the specification/implementation relation introduced by
+signature matching. These origins are separate from value, exception and
+generative type stamps. Exception replication shares a runtime exception
+identity while introducing a distinct lexical name. Origins are written
+to a sidecar, apart from the basis and from every hash: `UnitBasis.export`
+gives it beside the bytes, `UnitBasis.load` reads it beside them in the
+order the basis meets them, and a comment that moves a span moves no
+identity. A batch compile records none, so its sidecar is empty. The one
+position a basis keeps is that of a body kept for a later unit to copy,
+whose line table the copy's code holds: its hash is in the usages `inl` and
+`inlv` (*The cache*), so a comment above a marked function is a rebuild of
+what copied it. Analysis freezes query data before replacing a unit's
+mutable annotations; replay restores origins together with its checked
+basis. The batch driver and analysis share build-scope visibility through
+`CompilerBuildContext`.
 
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
@@ -583,7 +590,8 @@ are marked 2 and a compile at any level takes them.
 An analysis names its units as a build does (*Names*, above), `file#rank`
 being gone: `RuneCompiler.Project.read` takes the workspace, and the same
 source in a build and in the editor has one name. So far only the name is the
-same: an analysis's basis holds origins, which a build's does not.
+same: an analysis's sidecar holds origins, which a build's does not, and an
+analysis knows no back-end fact, so the bases differ.
 
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source

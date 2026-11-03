@@ -914,7 +914,7 @@ struct
                           compile had them, against those units now, where it
                           holds by their identities *)
                        val () = if List.null remap then UnitBasis.checkSchemes (#schemes e) else ()
-                       val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, file = name, at = at},
+                       val l = timed "cache-basis" (fn () => UnitBasis.loadKnown ({pickle = pickle, sidecar = "", file = name, at = at},
                                                                                    SOME identity, remap))
                        (* its source, and those of the functors' bodies it
                           applied, where they are now, in its code's files *)
