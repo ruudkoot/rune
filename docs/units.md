@@ -196,8 +196,11 @@ nothing in it depends on the other: an own name is numbered as the static
 layer meets it, and an import by its place among the static layer's. So a
 compile and an analysis of a unit, which elaborate it alike, write the same
 bytes of the static layer, and only a compile has much to write in the other
-(`make test-layers`). A type name's realisation is the ABI layer's, and a
-client's code reads it (`Ty.convert`, `Ty.shapeOf`). How a constructor lies is
+(`make test-layers`). A type name's realisation is the ABI layer's, whole: a
+client's code reads it (`Ty.convert`, `Ty.shapeOf`) and holds what it is made
+of, a word, an int, a pointer, so a key that held its layout alone took a
+client across `int` made `word` behind `:>`, and the link refused the two
+units. How a constructor lies is
 the one fact of a layout elaboration reads, for a parameter's open
 constructor (`Elaborate.descriptors`), so the static layer holds it.
 
