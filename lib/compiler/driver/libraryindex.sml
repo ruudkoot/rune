@@ -688,11 +688,16 @@ struct
                        else NONE
                    | NONE => NONE)
             end
+          (* a record taken from the overlay has its time kept, as an entry
+             has, so that trim keeps what compiles take (UnitStore.touch) *)
           fun holding [] = NONE
             | holding (store :: rest) =
                 case readRecord (recordFile (store, name), name) of
                   NONE => holding rest
-                | SOME record => case holds (record, false) of NONE => holding rest | found => found
+                | SOME record =>
+                    case holds (record, false) of
+                      NONE => holding rest
+                    | found => (if overlay () = SOME store then S.touch (recordFile (store, name)) else (); found)
           fun found () =
             case List.find (fn (n, _) => n = name) (!held) of
               SOME (_, record) => (case holds (record, true) of NONE => holding (stores root) | some => some)

@@ -789,6 +789,8 @@ DIR/                 .rune, or lib/cache, or --cache-dir's
   memo/units/        the records of up-to-date builds, copies of outputs, and
                      trimmed, whose time is when the store was last trimmed
   steps/             what a build's steps and preprocessors made
+  index/units/       each library's index, by its place, with what it was made
+                     of (docs/build.md, A library's index)
 ```
 
 **Layers.** A compile writes one store, its *overlay*, and reads after it

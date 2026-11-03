@@ -341,8 +341,8 @@ struct
         val diagnostics=(ignore(analyze(context,[input("missing.sml","val answer=42\n","1")]));[])
           handle C.Failed diagnostics=>diagnostics
         val ()=(A.close context;C.close parent)
-    in check("missing library manifests become public compiler diagnostics",
-      List.exists(fn diagnostic:C.diagnostic=>String.isSubstring "manifest" (#message diagnostic))diagnostics) end
+    in check("a missing library's build file becomes a public compiler diagnostic",
+      List.exists(fn diagnostic:C.diagnostic=>String.isSubstring "library.build" (#message diagnostic))diagnostics) end
   fun changedNames () =
     let val parent=C.session {lib=SOME "lib",flags=[]}
         val context=A.create(parent,{context="changed-names"})
