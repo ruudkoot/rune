@@ -202,10 +202,18 @@ struct
 
   (* The message for an input that cannot be read: `--unicode latin1`
      reads latin1 as an input, since --unicode takes its encoding only
-     after an = (docs/plans/utf8.md, D1). *)
+     after an = (docs/plans/utf8.md, D1); and the Config a checkout's
+     build files list, which make writes (docs/building.md, The compiler's
+     identity), and which a checkout that make has not run in lacks *)
   fun cannotRead (path : string) : string =
-    "cannot read " ^ path
-    ^ (if path = "utf8" orelse path = "latin1" then " (did you mean --unicode=" ^ path ^ "?)" else "")
+    let fun is p = path = p orelse String.isSuffix ("/" ^ p) path
+    in
+      "cannot read " ^ path
+      ^ (if path = "utf8" orelse path = "latin1" then " (did you mean --unicode=" ^ path ^ "?)"
+         else if is "build/config.sml" orelse is "lib/compiler/config.sml"
+         then " (run make, or sh scripts/gen-version.sh, which writes it)"
+         else "")
+    end
 
   (* An option of the form --name=value, as (--name, value). *)
   fun valued (a : string) : (string * string) option =

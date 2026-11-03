@@ -1173,14 +1173,8 @@ struct
       val list = out ^ "/build-list"
       val _ = exec {cmd = ["bin/rune", "--build-list", "rune.build"], dir = NONE, stdin = "", stdout = list, stderr = "", timeout = 0}
     in
-      (* and what its step runs, which writes build/config.sml (docs/build.md,
-         Generated sources): the script, executable, and the plan it reads *)
       List.app (fn p => (mkdirs (OS.Path.dir (copy ^ "/" ^ p)); write (copy ^ "/" ^ p, read p)))
-        (["rune.build", "rune.workspace", "lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/util.build",
-          "rune.plan", "scripts/gen-version.sh", "scripts/plan-files.sh"] @ lines (read list));
-      Posix.FileSys.chmod (copy ^ "/scripts/gen-version.sh",
-                           Posix.FileSys.S.flags [Posix.FileSys.S.irwxu, Posix.FileSys.S.irgrp, Posix.FileSys.S.ixgrp,
-                                                  Posix.FileSys.S.iroth, Posix.FileSys.S.ixoth])
+        (["rune.build", "rune.workspace", "lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/util.build"] @ lines (read list))
     end
 
   fun reproBuild nm =

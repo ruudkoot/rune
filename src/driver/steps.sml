@@ -6,28 +6,16 @@
    graph stays static.
 
    A step's key is its tool's bytes, its arguments, and its inputs' paths and
-   bytes; with a closure, a plan, the plan's bytes and those of each file it
-   names, as scripts/plan-files.sh names them to the tool (the build files it
-   was made from, then the files it lists), but the step's outputs, each by
-   the stat memo where there is a cache (UnitStore.hashBy); and with a stamp,
-   a command run where the tool runs, its tool's bytes, its arguments and
-   what it printed: what the step reads that no file names, as git's state
-   for scripts/gen-version.sh, whose --stamp prints the version alone. A
-   stamp is asked once a process: the up-to-date check asks it before the
-   steps (UnitMemo), and a step keyed by it is keyed by that answer. A stamp
-   that fails stops the build.
-
-   The cache keeps, under steps/, the key a step last ran under and the
+   bytes. The cache keeps, under steps/, the key a step last ran under and the
    hash of each output it made then. A step whose key and outputs are as kept
    is not run. One whose key is not runs, its outputs being stale, and each
    output must be there after: a tool that fails or leaves an output unmade
    stops the build, and what was there before is not compiled. An output that
    is not what its step made under the key it still has is refused: it was
    edited by hand, and a build would otherwise compile the edit or overwrite
-   it. A step that declares nothing it reads -- no inputs, closure or stamp
-   -- runs on every build, since nothing says when it is due, and a build
-   with one is never up to date. With --no-cache nothing is kept, and every
-   step runs.
+   it. A step that declares no inputs runs on every build, since nothing
+   says when it is due, and a build with one is never up to date. With
+   --no-cache nothing is kept, and every step runs.
 
    Every file a step or a preprocessor reads is told to a build that keeps
    what it reads (Source.reading; UnitMemo, up to date) before it is read,
@@ -77,11 +65,10 @@ struct
   fun quote (windows : bool) (word : string) : string =
     if windows then "\"" ^ String.translate (fn #"\"" => "\\\"" | c => String.str c) word ^ "\""
     else "'" ^ String.translate (fn #"'" => "'\\''" | c => String.str c) word ^ "'"
-  fun run {windows : bool, dir : string, words : string list, output : string option} : bool =
+  fun run {windows : bool, dir : string, words : string list} : bool =
     let
       val q = quote windows
       val command = (if windows then "cd /d " else "cd ") ^ q (full dir) ^ " && " ^ String.concatWith " " (List.map q words)
-                    ^ (case output of SOME file => " > " ^ q file | NONE => "")
     in OS.Process.isSuccess (OS.Process.system command) handle OS.SysErr _ => false end
 
   (* what a tool is, by what it is made of: its bytes, its arguments, and
@@ -125,88 +112,14 @@ struct
     "the step " ^ String.concatWith " " (tool :: arguments)
 
   (* whether a step says what it reads, and so when it is due *)
-  fun reads ({inputs, closure, stamp, ...} : generate) : bool =
-    not (List.null inputs) orelse isSome closure orelse isSome stamp
+  fun reads ({inputs, ...} : generate) : bool = not (List.null inputs)
 
-  (* ---- stamps ---- *)
-
-  (* A stamp by what runs it: the directory, the tool, the arguments *)
-  fun stampId (dir : string, {tool, arguments} : {tool : string, arguments : string list}) : string list =
-    absolute dir :: tool :: arguments
-  (* what each stamp asked in this process answered *)
-  val answers : (string list * string) list ref = ref []
-  fun answered () : (string list * string) list = List.rev (!answers)
-  (* what a stamp prints, run where its step's tool runs *)
-  fun ask (windows : bool) (id : string list) : string =
-    case (List.find (fn (i, _) => i = id) (!answers), id) of
-      (SOME (_, answer), _) => answer
-    | (NONE, dir :: tool :: arguments) =>
-        let
-          val out = OS.FileSys.tmpName ()
-          val ok = run {windows = windows, dir = dir, words = full tool :: arguments, output = SOME out}
-          val answer = bytes out handle IO.Io _ => ""
-          val () = OS.FileSys.remove out handle OS.SysErr _ => ()
-        in
-          if ok then (answers := (id, answer) :: !answers; answer)
-          else raise Refused ("the stamp " ^ String.concatWith " " (tool :: arguments) ^ " failed")
-        end
-    | (NONE, _) => raise Refused "a stamp with no tool"
-
-  (* ---- closures ---- *)
-
-  (* The files a plan names to its tool, as scripts/plan-files.sh does, from
-     the step's directory: the build files it was made from (its provenance,
-     whose being as they were the tool checks) and the files it lists; but
-     the step's own outputs *)
-  fun closureFiles (what : string, dir : string, plan : string, outputs : string list) : string list =
-    let
-      val () = !Source.reading plan
-      val p = CompilerPlan.read (bytes plan)
-              handle IO.Io _ => raise Refused (what ^ " reads " ^ plan ^ ", which cannot be read")
-                   | CompilerPlan.Bad why => raise Refused (what ^ " reads " ^ plan ^ ", which is not a plan: " ^ why)
-      fun from f = if OS.Path.isAbsolute f orelse dir = "." orelse dir = "" then f else OS.Path.concat (dir, f)
-      val mine = List.map absolute outputs
-    in
-      List.filter (fn f => not (List.exists (fn m => m = absolute f) mine))
-                  (List.map (fn {path, ...} => from path) (#inputs p) @ List.map from (CompilerPlan.flatten p))
-    end
-
-  (* a file of a closure by the hash of its bytes, by the stat memo where
-     there is one *)
-  fun closureHash (what : string, memo : UnitStore.memo option) (path : string) : string =
-    (!Source.reading path;
-     case memo of
-       SOME m => UnitStore.hashBy m (path, "bytes", fn () => bytes path, Pickle.hash)
-     | NONE => Pickle.hash (bytes path))
-    handle IO.Io _ => raise Refused (what ^ " reads " ^ path ^ ", which cannot be read")
-
-  fun generate {windows : bool, cache : string option, explain : string -> unit, memo : UnitStore.memo option}
-               (step as {tool, arguments, inputs, closure, stamp, outputs, dir} : generate) : unit =
+  fun generate {windows : bool, cache : string option, explain : string -> unit}
+               (step as {tool, arguments, inputs, outputs, dir} : generate) : unit =
     let
       val what = describe step
-      (* the tool's key, which refuses a tool that is not there, whether the
-         step is keyed or not *)
-      val base = toolKey ("generate", what, tool, arguments @ ["outputs"] @ outputs, inputs)
-      val key =
-        if not (reads step) then base
-        else
-          hash (String.concatWith "\000"
-                  (base
-                   :: (case closure of
-                         NONE => []
-                       | SOME plan =>
-                           let val planHash = closureHash (what, memo) plan
-                           in "closure" :: plan :: planHash
-                              :: List.concat (List.map (fn f => [f, closureHash (what, memo) f]) (closureFiles (what, dir, plan, outputs)))
-                           end)
-                   @ (case stamp of
-                        NONE => []
-                      | SOME (s as {tool = stampTool, arguments = stampArguments}) =>
-                          let
-                            val toolHash = case readHash stampTool of
-                                             SOME h => h
-                                           | NONE => raise Refused (what ^ " has no stamp " ^ stampTool)
-                          in "stamp" :: toolHash :: stampArguments @ ["answer", ask windows (stampId (dir, s))] end)))
+      (* the tool's key, which refuses a tool that is not there *)
+      val key = toolKey ("generate", what, tool, arguments @ ["outputs"] @ outputs, inputs)
       val record = Option.map (fn c => recordFile (c, step)) cache
       val kept = if not (reads step) then NONE else Option.mapPartial readRecord record
       val now = List.map (fn p => (p, hashOf p)) outputs
@@ -230,9 +143,9 @@ struct
       else
         let
           val () = explain ("rune: running " ^ what ^ (if reads step then "" else ", which runs on every build"))
-          (* where each output goes, as a fresh checkout has no build/ *)
+          (* where each output goes, which a fresh checkout may not have *)
           val () = List.app (fn p => UnitStore.mkdirs (OS.Path.dir p)) outputs
-          val ok = run {windows = windows, dir = dir, words = full tool :: arguments, output = NONE}
+          val ok = run {windows = windows, dir = dir, words = full tool :: arguments}
           val () = if ok then () else raise Refused (what ^ " failed, and what it makes is not compiled")
           val made = List.map (fn p => case hashOf p of
                                           SOME h => (p, h)
@@ -300,7 +213,7 @@ struct
                           fun clean () = (remove target; Option.app remove source)
                           val () = runs := !runs + 1
                           val ok = run {windows = windows, dir = dir,
-                                        words = full tool :: arguments @ [getOpt (source, full file), target], output = NONE}
+                                        words = full tool :: arguments @ [getOpt (source, full file), target]}
                           val out = if ok then (bytes target handle IO.Io _ => (clean (); raise Refused ("the preprocessor " ^ name ^ " made nothing of " ^ file)))
                                     else (clean (); raise Refused ("the preprocessor " ^ name ^ " failed on " ^ file))
                         in
@@ -325,12 +238,9 @@ struct
      preprocessors, on the files they make too *)
   fun prepare {project : CompilerProject.plan, cache : string option, windows : bool, explain : string -> unit,
                noteOutput : string -> unit} : unit =
-    let
-      val memo = Option.map (fn c => UnitStore.memoAt (c, "steps")) cache
-      val how = {windows = windows, cache = cache, explain = explain, memo = memo}
+    let val how = {windows = windows, cache = cache, explain = explain}
     in
       List.app (fn step => (generate how step; List.app noteOutput (#outputs step))) (#generates project);
-      Option.app UnitStore.memoWrite memo;
-      preprocess {windows = windows, cache = cache, explain = explain} (#preprocessors project) (CompilerProject.units (#steps project))
+      preprocess how (#preprocessors project) (CompilerProject.units (#steps project))
     end
 end

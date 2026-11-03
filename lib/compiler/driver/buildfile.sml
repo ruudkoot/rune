@@ -36,11 +36,8 @@ struct
     | View of string                             (* the program's view of the Basis Library (D12) *)
     (* a declared step, which a build runs before it reads a source, and
        the class of a per-file preprocessor, which a file is put in by the
-       annotation preprocess=NAME (docs/build.md, Generated sources; D16).
-       A step's closure is a plan whose files it reads, and its stamp a
-       command whose output stands for what it reads that no file names *)
-    | Generate of {tool : string, arguments : string list, inputs : string list, closure : string option,
-                   stamp : {tool : string, arguments : string list} option, outputs : string list}
+       annotation preprocess=NAME (docs/build.md, Generated sources; D16) *)
+    | Generate of {tool : string, arguments : string list, inputs : string list, outputs : string list}
     | Preprocessor of {name : string, tool : string, arguments : string list, inputs : string list}
 
   exception Error of string
@@ -88,8 +85,8 @@ struct
     handle LocatedError (_,message) => raise Error (path ^ ": " ^ message)
 
   (* The words that begin a construct, which no path may be. A step's own
-     words, inputs, closure, stamp and outputs, are known only where a step
-     reads them, so that a file or a library may still be called stamp *)
+     words, inputs and outputs, are known only where a step reads them, so
+     that a file or a library may still be called outputs *)
   val keywords = ["files", "group", "local", "in", "end", "library", "use", "implements", "annotate", "cache",
                   "libraries", "inline", "requires", "exports", "friends", "view", "shadows", "strict", "virtual",
                   "generate", "preprocessor"]
@@ -267,16 +264,11 @@ struct
               val tool = pathWord "tool"
               val arguments = argumentList ()
               val inputs = inputList ()
-              val closure = case peek () of SOME (W "closure") => (ignore (next ()); SOME (pathWord "plan")) | _ => NONE
-              val stamp =
-                case peek () of
-                  SOME (W "stamp") => (ignore (next ()); let val t = pathWord "stamp" in SOME {tool = t, arguments = argumentList ()} end)
-                | _ => NONE
               val () = expect "outputs"
               val outputs = paths "output"
             in
               if List.null outputs then error "a step says what it makes: outputs PATH ... end"
-              else Generate {tool = tool, arguments = arguments, inputs = inputs, closure = closure, stamp = stamp, outputs = outputs}
+              else Generate {tool = tool, arguments = arguments, inputs = inputs, outputs = outputs}
             end
         | W "preprocessor" =>
             let

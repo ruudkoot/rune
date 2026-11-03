@@ -83,9 +83,9 @@ Comments are SML's, `(* ... *)`. A path is a word of letters, digits and
 `/ . _ - + ~ #`, with `$(NAME)` anywhere in it, or a string, which holds any
 other character. A word the language does not know is an error, an annotation
 included, and so are the words it no longer has (*What is gone*, below). The
-words that begin a construct are no path's; a step's own, `inputs`, `closure`,
-`stamp` and `outputs`, are words only inside a step, so a file or a library may
-be called by one of them.
+words that begin a construct are no path's; a step's own, `inputs` and
+`outputs`, are words only inside a step, so a file or a library may be called
+by one of them.
 
 A path that begins with a variable whose value is relative is relative to
 the directory of the build file given to `--build`, so that one value serves
@@ -544,7 +544,7 @@ last there.
 | `view NAME` | the program's view of the Basis Library, where it has one (`view NAME`, `--basis-view`) |
 | `inline functor F`, `inline val f` | what the program's build files mark to be inlined, sorted |
 | `preprocessor NAME TOOL DIR` ... `end` | a preprocessor's class: its tool, the directory it runs in (its build file's), `argument A` for each argument and `reads PATH` for each input (*Generated sources*) |
-| `generate TOOL DIR` ... `end` | a step, in the order declared: as a preprocessor, then `closure PLAN` and `stamp TOOL ARG ...` where it has them, and `writes PATH` for each output; printed, never run |
+| `generate TOOL DIR` ... `end` | a step, in the order declared: as a preprocessor, and `writes PATH` for each output; printed, never run |
 | `library NAME DIR` ... `end` | each library the program names, with those they are written on, each before what is written on it: its name, as a unit's name begins, and its directory |
 | `form F` | `header`, `block` (the older form) or `open` (no boundary) |
 | `requires L` | the libraries it is written on, as written, in order: `requires` or `libraries`, a library with renames as one word, `same(structure:Same=One)` |
@@ -568,13 +568,12 @@ add, an edge between units and a group of units that use each other; a plan
 of version 1 has neither, and a reader refuses them, as it refuses any word
 it does not know. Version 2 is version 1 with steps and preprocessors, and
 with virtual libraries, and a plan with none of them is printed as version 1,
-so that every plan a reader of version 1 could read is one it can: of the five
-committed plans, `rune.plan` and `runedoc.plan` are of version 2, for their
-step (*Generated sources*), and the rest of version 1. `scripts/plan-files.sh`
-reads both; it lists a step's outputs as the files they are, since a host
-makes them itself, refuses a file that a preprocessor makes what is compiled
-of, and lists a virtual library's files in the order the plan gives them,
-which is the order a compile takes them in.
+so that every plan a reader of version 1 could read is one it can: the five
+committed plans are of version 1. `scripts/plan-files.sh` reads both; it
+lists a step's outputs as the files they are, since a host makes them
+itself, refuses a file that a preprocessor makes what is compiled of, and
+lists a virtual library's files in the order the plan gives them, which is
+the order a compile takes them in.
 
 ## Generated sources
 
@@ -594,13 +593,6 @@ generate gen/tables.sh (tables.txt, tables.sml)
   outputs tables.sml end
 tables.sml                          (* a unit, as any file is *)
 
-(* a step that reads a plan's files, and git, which its stamp asks *)
-generate scripts/gen-version.sh (--config, rune.plan, build/config.sml)
-  inputs scripts/plan-files.sh end
-  closure rune.plan
-  stamp scripts/gen-version.sh (--stamp)
-  outputs build/config.sml end
-
 (* a preprocessor, and the files it is given *)
 preprocessor quote $(HOLDIR)/bin/unquote inputs $(HOLDIR)/tools-rune/bin/unquote.rbc end
 annotate "preprocess=quote" in
@@ -617,21 +609,9 @@ the build.
 **A step** is run before the units are read, in the order the build file
 declares the steps, the directory of each of its outputs made first, and
 each of its outputs must be there after it, or the build stops. It says
-what it reads, in that order after its arguments:
-
-* `inputs PATH ... end`, files;
-* `closure PLAN`, a plan (*The plan*, above) and every file it names, as
-  `scripts/plan-files.sh` names them to a tool: the build files it was
-  made from, then the files it lists, less the step's own outputs;
-* `stamp TOOL (ARG, ...)`, a command, run where the tool runs, whose output
-  stands for what the step reads that no file names: git's state, for
-  `scripts/gen-version.sh --stamp`, which prints the version alone. A stamp
-  is asked on every build, an up-to-date one too, and one that fails stops
-  the build.
-
-Its key is its tool's bytes, its arguments, its inputs' paths and bytes,
-its closure's, and its stamp's tool's bytes, arguments and output. The
-store (the workspace's `.rune`, or `--cache-dir`; [units.md](units.md), *The
+what it reads as its inputs, `inputs PATH ... end`, after its arguments.
+Its key is its tool's bytes, its arguments, and its inputs' paths and
+bytes. The store (the workspace's `.rune`, or `--cache-dir`; [units.md](units.md), *The
 store*) keeps, under `steps/`, the key a step last ran under and the hash of
 each output it made, which trimming may remove, and then the step runs:
 
@@ -642,26 +622,18 @@ each output it made, which trimming may remove, and then the step runs:
 * an output that is not what its step made under the key it still has is
   refused, since it was changed after: by hand, or by another tool. Remove
   it, and the build makes it again;
-* a step that says nothing of what it reads runs on every build, since
-  nothing says when it is due, and its build is never up to date;
+* a step that declares no inputs runs on every build, since nothing says
+  when it is due, and its build is never up to date;
 * with `--no-cache` nothing is kept, and every step runs.
 
-`rune.build`'s first step, above, writes `build/config.sml`: the version,
-git's, and the compiler's identity, a hash of `rune.plan` and its closure
-([building.md](building.md), *The compiler's identity*), which is what the
-hosts' build runs too. Its stamp is the version as the step would write it,
-so a commit, a checkout, a tag, an edit of a tracked file or a `git add`
-that changes `-dirty` each run it again, as an edit of a file of
-`rune.plan`'s closure does.
-
 A build that is up to date ([units.md](units.md), *A warm build*) runs no
-step: what each step read and its stamp's answer are in what the build
-rests on, and what each step made is held by its bytes.
+step: what each step read is in what the build rests on, and what each step
+made is held by its bytes.
 
 A step's outputs are files of the tree, which units name as they name any
 file: a unit is not told what made its file, and its key is the file's
 bytes. The other SML systems read a step's outputs from the plan as files
-they have, and make them by their own means (`build/config.sml`, by make).
+they have, and make them by their own means.
 
 **A preprocessor's** output is what a unit of its class compiles, under the
 file's name, so that a diagnostic names the file, at the line of the output
@@ -679,7 +651,10 @@ committed, is not a step: `runeffi` writes the sets under `lib/ffi/*/generated`
 by an explicit command, with the text of each set's build files in its hash
 (docs/plans/runeffi.md). `runeffi rehash --out DIR` gives a set its hash
 again after an edit of its build files, without the headers it was generated
-from.
+from. Nor is `build/config.sml`, the version and the compiler's identity,
+which `rune.build` and the compiler's other build files list as a file:
+make writes it, with `scripts/gen-version.sh` ([building.md](building.md),
+*The compiler's identity*).
 
 ## What is gone
 
