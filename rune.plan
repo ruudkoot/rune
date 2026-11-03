@@ -4,6 +4,9 @@ generate scripts/gen-version.sh .
   argument --config
   argument rune.plan
   argument build/config.sml
+  reads scripts/plan-files.sh
+  closure rune.plan
+  stamp scripts/gen-version.sh --stamp
   writes build/config.sml
 end
 program
@@ -133,7 +136,7 @@ program
   unit src/main/rune-main.sml src/main/rune-main.sml ascii
 end
 provenance
-  input rune.build 4ea4fcc4854afe661a33d05908de7e36aeaf16e7ea8b071d104b16e944c68f4e
+  input rune.build d58daf717ccf20f5dd3dfc8a54ebc3e2cc5743b6897885679064ad803785b248
   input lib/compiler/internal.build 1075231ae8e51fd67ef36c46c59eedec3d93dc6c7f2aa1208ee286a4a4a57597
   input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c

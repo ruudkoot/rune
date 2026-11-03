@@ -382,10 +382,131 @@ struct
         ("pp.build", "preprocessor at /bin/sh (filter.sh) inputs filter.sh end\nannotate \"preprocess=at\" in pp.sml end\nuse.sml")])
   val stepCases = ["generate", "generate-hand-edited", "generate-fails", "generate-unmade", "generate-plan", "generate-in-library",
                    "generate-plan-v1", "generate-no-outputs", "generate-twice", "generate-no-tool", "preprocess",
-                   "preprocess-undeclared", "preprocess-twice", "preprocess-unmade", "preprocess-host"]
+                   "preprocess-undeclared", "preprocess-twice", "preprocess-unmade", "preprocess-host",
+                   "generate-closure", "generate-stamp", "generate-stamp-fails", "generate-stamp-plan", "generate-up-to-date",
+                   "preprocess-up-to-date", "generate-output-dir"]
+  (* A step that reads what it does not list as inputs, and says so: a plan
+     whose files it reads (closure), and a stamp, a command whose output
+     stands for what no file names; here state.txt, which the stamp prints
+     and the tool reads. The tool notes each run in runs.txt *)
+  fun readingFixture c dir build =
+    (rmTree (#directory c ^ "/" ^ dir);
+     List.app (fn (file, text) => put c (dir ^ "/" ^ file) text)
+       [("tool.sh", "echo run >> runs.txt\nn=$(sed -n 's/.*val n = \\([0-9]*\\).*/\\1/p' spec.sml)\ns=$(cat state.txt)\n"
+                    ^ "printf 'structure Made = struct val n = %s val s = \"%s\" end\\n' \"$n\" \"$s\" > \"$1\""),
+        ("stamp.sh", "cat state.txt"), ("state.txt", "a"), ("spec.sml", "structure Spec = struct val n = 42 end"),
+        ("spec.build", "spec.sml"),
+        ("main.sml", "val () = print (Int.toString Made.n ^ Made.s ^ \"\\n\")"), ("gen.build", build)])
+  fun readingBuild c dir label flags =
+    compiler c label dir (["--units", "--build", "gen.build", "--cache-dir", "cache"] @ flags @ ["-o", "gen.rbc"])
+  fun readingBuilds c dir label expected =
+    (success (readingBuild c dir label []); output (program c (label ^ "-run") dir ["gen.rbc"]) expected)
+  fun runsIn c dir = List.length (List.filter (fn l => l <> "") (lines (read (#directory c ^ "/" ^ dir ^ "/runs.txt"))))
+  fun planOf c dir name =
+    let val r = compiler c (dir ^ "-" ^ name ^ "-plan") dir ["--plan", name ^ ".build"]
+    in success r; put c (dir ^ "/" ^ name ^ ".plan") (#output r) end
+  fun pause () = OS.Process.sleep (Time.fromSeconds 3)
   fun generated c which =
     case which of
-      "generate" =>
+      "generate-output-dir" =>
+        (* an output's directory is made before its step runs, as in a fresh
+           checkout, which has no build/ for build/config.sml *)
+        (rmTree (#directory c ^ "/outdir");
+         List.app (fn (file, text) => put c ("outdir/" ^ file) text)
+           [("tool.sh", stepTool), ("spec.txt", "42"), ("main.sml", "val () = print (Int.toString Made.n ^ \"\\n\")"),
+            ("gen.build", "generate /bin/sh (tool.sh, spec.txt, out/made.sml)\n  inputs tool.sh spec.txt end\n"
+                          ^ "  outputs out/made.sml end\nout/made.sml main.sml")];
+         success (stepBuild c "outdir" "outdir" []);
+         output (program c "outdir-run" "outdir" ["gen.rbc"]) "42\n")
+    | "generate-closure" =>
+        (* a file the closure's plan names, not an input, makes the step due;
+           so does the plan; nothing else does *)
+        let
+          val build = "generate /bin/sh (tool.sh, made.sml) inputs tool.sh end closure spec.plan outputs made.sml end\nmade.sml main.sml"
+          val () = readingFixture c "closure" build
+          val () = planOf c "closure" "spec"
+          val () = readingBuilds c "closure" "closure-cold" "42a\n"
+          val again = readingBuild c "closure" "closure-again" ["--explain-rebuild"]
+          val () = success again
+          val () = need (String.isSubstring "is up to date" (#errors again), "a step whose closure did not change ran again: " ^ #errors again)
+          val () = put c "closure/spec.sml" "structure Spec = struct val n = 7 end"
+          val () = readingBuilds c "closure" "closure-edited" "7a\n"
+          val () = put c "closure/spec.plan" (read (#directory c ^ "/closure/spec.plan") ^ "\n")
+          val r = readingBuild c "closure" "closure-plan" ["--explain-rebuild"]
+        in
+          success r; need (String.isSubstring "running the step" (#errors r), "an edit of the closure's plan did not run the step: " ^ #errors r)
+        end
+    | "generate-stamp" =>
+        (* what the stamp prints is in the key: an edit of state.txt, which no
+           input names, makes the step due, an up-to-date build's included,
+           and a build without the cache agrees *)
+        let
+          val build = "generate /bin/sh (tool.sh, made.sml) inputs tool.sh spec.sml end stamp /bin/sh (stamp.sh) outputs made.sml end\nmade.sml main.sml"
+          val () = readingFixture c "stamp" build
+          val () = readingBuilds c "stamp" "stamp-cold" "42a\n"
+          val () = pause ()
+          val () = readingBuilds c "stamp" "stamp-noop" "42a\n"
+          val () = need (runsIn c "stamp" = 1, "an up-to-date build ran its step")
+          val () = put c "stamp/state.txt" "b"
+          val () = readingBuilds c "stamp" "stamp-edited" "42b\n"
+          val () = need (runsIn c "stamp" = 2, "a stamp that answers otherwise did not run its step")
+          val () = success (compiler c "stamp-cold2" "stamp" ["--units", "--build", "gen.build", "--no-cache", "-o", "cold.rbc"])
+          val dir = #directory c ^ "/stamp/"
+        in need (read (dir ^ "gen.rbc") = read (dir ^ "cold.rbc"), "a build after a stamp's answer changed is not the cold build") end
+    | "generate-stamp-fails" =>
+        (readingFixture c "stampfails" "generate /bin/sh (tool.sh, made.sml) stamp /bin/sh (stamp.sh) outputs made.sml end\nmade.sml main.sml";
+         put c "stampfails/stamp.sh" "exit 3";
+         refused (readingBuild c "stampfails" "stampfails" []) "the stamp /bin/sh stamp.sh failed")
+    | "generate-stamp-plan" =>
+        (* --plan prints a closure and a stamp, which read back *)
+        let
+          val () = readingFixture c "stampplan" ("generate /bin/sh (tool.sh, made.sml) inputs tool.sh end closure spec.plan "
+                                                 ^ "stamp /bin/sh (stamp.sh, \"two words\") outputs made.sml end\nmade.sml main.sml")
+          val r = compiler c "stampplan" "stampplan" ["--plan", "gen.build"]
+          val () = success r
+          val step = "\ngenerate /bin/sh .\n  argument tool.sh\n  argument made.sml\n  reads tool.sh\n  closure spec.plan\n"
+                     ^ "  stamp /bin/sh stamp.sh two%20words\n  writes made.sml\nend\n"
+          val () = need (String.isSubstring step (#output r), "the plan of a step with a closure and a stamp: " ^ #output r)
+          val () = write (#directory c ^ "/stampplan/gen.plan", #output r)
+          val () = output (compiler c "stampplan-again" "stampplan" ["--plan", "gen.plan"]) (#output r)
+          val h = execute c "stampplan-host" "stampplan" ["/bin/sh", fromRoot "scripts/plan-files.sh", "gen.plan"]
+        in output h "made.sml\nmain.sml\n" end
+    | "generate-up-to-date" =>
+        (* an up-to-date build runs no step; one with a step that says
+           nothing of what it reads is never up to date, and runs it *)
+        let
+          val () = readingFixture c "uptodate" "generate /bin/sh (tool.sh, made.sml) inputs tool.sh spec.sml state.txt end outputs made.sml end\nmade.sml main.sml"
+          val () = readingBuilds c "uptodate" "uptodate-cold" "42a\n"
+          val () = pause ()
+          val () = readingBuilds c "uptodate" "uptodate-noop" "42a\n"
+          val () = need (runsIn c "uptodate" = 1, "an up-to-date build ran its step")
+          val () = readingFixture c "always" "generate /bin/sh (tool.sh, made.sml) outputs made.sml end\nmade.sml main.sml"
+          val () = readingBuilds c "always" "always-cold" "42a\n"
+          val () = pause ()
+          val () = readingBuilds c "always" "always-again" "42a\n"
+        in need (runsIn c "always" = 2, "a step that says nothing of what it reads did not run on every build") end
+    | "preprocess-up-to-date" =>
+        (* a preprocessed build is up to date where nothing changed, and an
+           edit of the tool's input, of the file or of the tool is seen, warm
+           as cold *)
+        let
+          val () = ppFixture c "ppup"
+          val dir = #directory c ^ "/ppup/"
+          fun warm (label, expected) =
+            (success (compiler c label "ppup" ["--units", "--build", "pp.build", "--cache-dir", "cache", "-o", "w.rbc"]);
+             success (compiler c (label ^ "-cold") "ppup" ["--units", "--build", "pp.build", "--no-cache", "-o", "n.rbc"]);
+             need (read (dir ^ "w.rbc") = read (dir ^ "n.rbc"), label ^ ": the warm build is not the cold one");
+             output (program c (label ^ "-run") "ppup" ["w.rbc"]) expected)
+          val () = warm ("ppup-cold", "42\n")
+          val () = pause ()
+          val () = warm ("ppup-noop", "42\n")
+          val () = put c "ppup/pp.sml" "@@ n = 43"
+          val () = warm ("ppup-file", "43\n")
+          val () = put c "ppup/filter.sh" "sed 's/^@@ n = \\([0-9]*\\)/val n = 1\\1/' \"$1\" > \"$2\""
+          val () = warm ("ppup-tool", "143\n")
+          val () = pause ()
+        in warm ("ppup-settled", "143\n") end
+    | "generate" =>
         (* the step runs before a unit is read, and again when an input changes, and not when none does *)
         (stepFixture c "gen";
          stepBuilds c "gen" "generate-cold" "42\n";

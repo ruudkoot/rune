@@ -501,8 +501,18 @@ struct
     (List.app println (CompilerPlan.flatten (wholePlan ()));
      OS.Process.success)
 
+  (* an editor's buffer in place of a file's text (--serve), whose stat says
+     nothing of it, where the compile began with one or has one now; a
+     preprocessor's output is not one (Steps.made) *)
+  val editorGave = ref false
+  fun editorOverlays () : bool =
+    !editorGave
+    orelse List.exists (fn (file, text) => StringMap.find (!Steps.made, file) <> SOME text) (StringMap.listItemsi (!Source.overlays))
+
   fun compile () : OS.Process.status =
     let
+      val () = editorGave := false
+      val () = editorGave := editorOverlays ()
       (* what a compile begins with that is not one of the compiler's roots,
          for one made again (diagnosed, compiledAgain) *)
       val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false; workspace := NONE; BasisManifest.roots := [])
@@ -538,25 +548,30 @@ struct
       val () = buildModes := List.foldl (fn ((p, anns), m) => if StringMap.member (m, p) then m
                                                               else StringMap.insert (m, p, modeOf anns))
                                         StringMap.empty (unitsOf (!buildPlan))
-      (* what the build runs before a unit is read: its steps, and its
-         preprocessors, whose output each unit of theirs compiles (Steps;
-         docs/build.md, Generated sources) *)
-      val () = Steps.prepare {project = project, cache = UnitCache.directory (), windows = onWindows (),
-                              explain = fn message => if !Options.explainRebuild then eprintln message else ()}
       val () =
         case (!Options.build,!entryFile,!Options.libraries) of
           (NONE,SOME first,_ :: _) => findWorkspace first
         | _ => ()
       (* Nothing this compile rests on has changed since it last made its
          output (UnitMemo, up to date; the build-system roadmap's D25 u):
-         its warnings again, and nothing else. Else what it reads from here
-         on is kept, for the next to ask *)
+         its warnings again, and nothing else, not even a step: what its
+         steps read is in what it rests on, and their stamps are asked
+         (Steps.ask). Else what it reads from here on is kept, for the next
+         to ask *)
       val upKey = upToDateKey project
       val upHit = case (upKey, UnitCache.directory ()) of
-                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key)
+                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key, Steps.ask (onWindows ()))
                   | _ => NONE
       val () = upToDate := (if isSome upHit then NONE else upKey)
       val () = case !upToDate of SOME _ => (Error.given := SOME []; UnitMemo.keepReads ()) | NONE => ()
+      (* what the build runs before a unit is read: its steps, and its
+         preprocessors, whose output each unit of theirs compiles (Steps;
+         docs/build.md, Generated sources); what they read is kept with the
+         rest, and what the steps made is held by its bytes *)
+      fun prepare () =
+        Steps.prepare {project = project, cache = UnitCache.directory (), windows = onWindows (),
+                       explain = fn message => if !Options.explainRebuild then eprintln message else (),
+                       noteOutput = fn path => if isSome (!upToDate) then UnitMemo.noteMade path else ()}
     in
       case upHit of
         SOME warnings =>
@@ -572,7 +587,7 @@ struct
                                    [] warnings);
               List.app Error.warn warnings; Error.flushWarnings ());
            OS.Process.success)
-      | NONE => compilePlanned ()
+      | NONE => (prepare (); compilePlanned ())
     end
 
   (* The key of a compile's record of what it read (UnitMemo.upToDate): all
@@ -580,12 +595,15 @@ struct
      variables, the compiler, the build files' text, the inputs and the
      workspace -- where the compile keeps one: in units, not where it only
      checks or explains, or asks what each unit does (--pass-stats), nor
-     with -I, whose plan lists directories *)
+     with -I, whose plan lists directories, nor with an editor's buffers,
+     nor where a step does not say what it reads and so runs on every
+     build *)
   and upToDateKey (project : CompilerProject.plan) : string option =
     if not (!Options.units andalso warmOn () andalso not (!Options.explainRebuild) andalso not (!Pass.stats)
             andalso not (UnitCache.verifying ()) andalso not (isSome (!Options.emitUnits)) andalso not (!Options.typecheckOnly)
             andalso not (!Options.wholeFromUnits) andalso not (!Options.basisDeps) andalso List.null (!Options.includeDirs)
-            andalso not (!knownToLoad) andalso not (!lazyRefused) andalso StringMap.isEmpty (!Source.overlays))
+            andalso not (!knownToLoad) andalso not (!lazyRefused) andalso not (editorOverlays ())
+            andalso List.all Steps.reads (#generates project))
        orelse List.null (!Options.inputs) orelse List.all (fn f => String.isSuffix ".rbu" f) (!Options.inputs)
     then NONE
     else
@@ -806,8 +824,9 @@ struct
                    andalso not (isSome (!Options.emitUnits)) andalso not (!Options.typecheckOnly)
                    andalso not (UnitCache.verifying ()) andalso not known andalso not renames
                    andalso not (!lazyRefused) andalso warmOn ()
-                   (* a buffer an editor gave in place of a file's text, whose stat says nothing of it (--serve) *)
-                   andalso StringMap.isEmpty (!Source.overlays)
+                   (* a buffer an editor gave in place of a file's text, whose stat says nothing of it (--serve);
+                      a preprocessor's output is not, its unit's source hashed whole (sourceOf) *)
+                   andalso not (editorOverlays ())
       val () = UnitBasis.startLazy lazyOn
       val () = if lazyOn then CompilerState.seal () else ()
       val env0 = !env
@@ -833,10 +852,16 @@ struct
                  | _ => NONE
       fun sourceOf (name, mode) =
         case memo of
-          SOME m => ((* what a compile that keeps what it read keeps of it, though
-                        the memo may not read it (UnitMemo) *)
-                     !Source.reading name;
-                     UnitStore.hashBy m (name, Source.modeName mode, text (name, mode), UnitCache.sourceHash))
+          SOME m =>
+            if StringMap.member (!Source.overlays, name)
+            (* what a preprocessor made of the file, whose stat says nothing
+               of the tool: hashed whole, its file told by Steps *)
+            then UnitCache.sourceHash (text (name, mode) ())
+            else
+              ((* what a compile that keeps what it read keeps of it, though
+                  the memo may not read it (UnitMemo) *)
+               !Source.reading name;
+               UnitStore.hashBy m (name, Source.modeName mode, text (name, mode), UnitCache.sourceHash))
         | NONE => UnitCache.sourceHash (text (name, mode) ())
       val () =
         if not (isSome memo) then ()
@@ -1460,7 +1485,7 @@ struct
                  if not (OS.Process.isSuccess status) then ()
                  else
                    case (case output of SOME kept => SOME kept | NONE => UnitMemo.written (out, at)) of
-                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])))
+                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])), Steps.answered ())
                    | NONE => ())
             | _ => ()
         in status end

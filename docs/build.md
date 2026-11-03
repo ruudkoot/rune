@@ -534,7 +534,7 @@ last there.
 | `view NAME` | the program's view of the Basis Library, where it has one (`view NAME`, `--basis-view`) |
 | `inline functor F`, `inline val f` | what the program's build files mark to be inlined, sorted |
 | `preprocessor NAME TOOL DIR` ... `end` | a preprocessor's class: its tool, the directory it runs in (its build file's), `argument A` for each argument and `reads PATH` for each input (*Generated sources*) |
-| `generate TOOL DIR` ... `end` | a step, in the order declared: as a preprocessor, and `writes PATH` for each output; printed, never run |
+| `generate TOOL DIR` ... `end` | a step, in the order declared: as a preprocessor, then `closure PLAN` and `stamp TOOL ARG ...` where it has them, and `writes PATH` for each output; printed, never run |
 | `library NAME DIR` ... `end` | each library the program names, with those they are written on, each before what is written on it: its name, as a unit's name begins, and its directory |
 | `form F` | `header`, `block` (the older form) or `open` (no boundary) |
 | `requires L` | the libraries it is written on, as written, in order: `requires` or `libraries`, a library with renames as one word, `same(structure:Same=One)` |
@@ -580,6 +580,13 @@ generate gen/tables.sh (tables.txt, tables.sml)
   outputs tables.sml end
 tables.sml                          (* a unit, as any file is *)
 
+(* a step that reads a plan's files, and git, which its stamp asks *)
+generate scripts/gen-version.sh (--config, rune.plan, build/config.sml)
+  inputs scripts/plan-files.sh end
+  closure rune.plan
+  stamp scripts/gen-version.sh (--stamp)
+  outputs build/config.sml end
+
 (* a preprocessor, and the files it is given *)
 preprocessor quote $(HOLDIR)/bin/unquote inputs $(HOLDIR)/tools-rune/bin/unquote.rbc end
 annotate "preprocess=quote" in
@@ -594,10 +601,24 @@ file and OUTPUT a file the tool writes. A tool that exits other than 0 stops
 the build.
 
 **A step** is run before the units are read, in the order the build file
-declares the steps, and each of its outputs must be there after it, or the
-build stops. Its key is its tool's bytes, its arguments, and its inputs'
-paths and bytes. The cache (`--cache-dir`) keeps, under `steps/`, the key
-a step last ran under and the hash of each output it made:
+declares the steps, the directory of each of its outputs made first, and
+each of its outputs must be there after it, or the build stops. It says
+what it reads, in that order after its arguments:
+
+* `inputs PATH ... end`, files;
+* `closure PLAN`, a plan (*The plan*, above) and every file it names, as
+  `scripts/plan-files.sh` names them to a tool: the build files it was
+  made from, then the files it lists, less the step's own outputs;
+* `stamp TOOL (ARG, ...)`, a command, run where the tool runs, whose output
+  stands for what the step reads that no file names: git's state, for
+  `scripts/gen-version.sh --stamp`, which prints the version alone. A stamp
+  is asked on every build, an up-to-date one too, and one that fails stops
+  the build.
+
+Its key is its tool's bytes, its arguments, its inputs' paths and bytes,
+its closure's, and its stamp's tool's bytes, arguments and output. The cache
+(`--cache-dir`) keeps, under `steps/`, the key a step last ran under and the
+hash of each output it made:
 
 * a step whose key and outputs are as kept is not run;
 * one whose key is not runs again: its outputs are stale, and a tool that
@@ -606,13 +627,21 @@ a step last ran under and the hash of each output it made:
 * an output that is not what its step made under the key it still has is
   refused, since it was changed after: by hand, or by another tool. Remove
   it, and the build makes it again;
-* a step that declares no inputs runs on every build, since nothing says
-  when it is due. `rune.build`'s first step is one:
-  `scripts/gen-version.sh --config rune.plan build/config.sml` writes the
-  version, git's, and the compiler's identity, a hash of `rune.plan` and its
-  closure ([building.md](building.md), *The compiler's identity*), which is
-  what the hosts' build runs too;
+* a step that says nothing of what it reads runs on every build, since
+  nothing says when it is due, and its build is never up to date;
 * with `--no-cache` nothing is kept, and every step runs.
+
+`rune.build`'s first step, above, writes `build/config.sml`: the version,
+git's, and the compiler's identity, a hash of `rune.plan` and its closure
+([building.md](building.md), *The compiler's identity*), which is what the
+hosts' build runs too. Its stamp is the version as the step would write it,
+so a commit, a checkout, a tag, an edit of a tracked file or a `git add`
+that changes `-dirty` each run it again, as an edit of a file of
+`rune.plan`'s closure does.
+
+A build that is up to date ([units.md](units.md), *A warm build*) runs no
+step: what each step read and its stamp's answer are in what the build
+rests on, and what each step made is held by its bytes.
 
 A step's outputs are files of the tree, which units name as they name any
 file: a unit is not told what made its file, and its key is the file's

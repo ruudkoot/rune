@@ -890,6 +890,7 @@ test-incremental` and so in `make check`, as a scenario of
 | The model, `model` | the model of a hit saying otherwise than `tests/incremental/model.expected` | `tests/incremental/model.sml` |
 | Unit by unit, and the mask, `warm-unit-*` | a unit compiled alone, while every other is taken from the cache without its basis, that is not what its entry holds: under its view, what its text names loaded by need, or under the mask of its entry's usages, each structure cut to the paths they name and only the units their binders reach loaded | `tests/runner/warmchecks.sml` |
 | The racy cases, `warm-racy`; up to date, `warm-uptodate` | a warm build that differs from one without the cache after an edit the stat memo or a memo could miss: of the same size within the second of a build, the old text back with its old times, an edit with its time put back, the output overwritten or removed, a new name, a `library.build` above a unit | the same |
+| The config step, `warm-config` | in a git repository of its own, a step written as `rune.build`'s first, which writes a Config, run where nothing it reads changed, or not run where something did -- a file of its closure, an input, a commit, a tracked file outside the closure and the edit undone, a file git does not track, `git add`, a tag, a checkout, a branch, a hand edit of its output, the repository gone; its Config not what the tool run by hand makes, or the build not the build without the cache | the same |
 
 The roots come from `CompilerState.names`, not a list: a new root needs no line
 until a compile reads it. Blanking cannot see a flag left at its default, which
@@ -943,7 +944,11 @@ records' slots in another order, the descriptors in another -- and a module
 of the mutant is refused by a client of `bin/rune` when it loads it (S128 of
 `tests/incremental/SCENARIOS.md`); A5 and A6 take a signature out of the
 fingerprint, and a module of another signature with the same slots is then
-taken (S129, S130).
+taken (S129, S130). W1 to W4 are the config step's (the build-system roadmap's
+M6): an up-to-date build that does not ask a step's stamp, a step's key
+without its stamp's answer, or without its closure's files, and an
+up-to-date build's record without what a step reads; each runs no step where
+something it reads changed, which `warm-config` sees.
 The 13 that survived E18:
 
 | Mutant | What it drops | Issue | What became of it |

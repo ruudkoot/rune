@@ -427,9 +427,10 @@ Compile in units what the build file
 .I FILE
 says: its files, each in the basis the declarations before it leave, with
 the export lists of the libraries it uses and its virtual modules'
-implementations (docs/build.md). The steps it declares run first, and its
-preprocessors make what their files compile (docs/build.md, Generated
-sources).
+implementations (docs/build.md). The steps it declares run first, each
+where something it reads has changed, and its preprocessors make what their
+files compile; a build that is up to date runs none (docs/build.md,
+Generated sources).
 .TP
 .BI \-\-build\-list " FILE"
 Print the files of the build file

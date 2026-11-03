@@ -553,8 +553,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * beside the configurations, `steps/` holds what a build's declared steps and
   preprocessors made ([build.md](build.md), *Generated sources*): the key a
   step last ran under, with the hash of each output, and a preprocessor's
-  output of each file, by the tool and the file's bytes. A unit of a
-  preprocessed file is keyed by that output, as any unit is by its text.
+  output of each file, by the tool and the file's bytes, and in
+  `steps/units/` the stat memo of the files the steps' closures name. A unit
+  of a preprocessed file is keyed by that output, as any unit is by its text.
 
 **What a boundary does to a key.** A client's usages are by name, so what
 its entry holds of a library is what it could see and did name: a boundary
@@ -732,7 +733,11 @@ compiled again with every basis loaded (`UnitBasis.Unviewable`,
 `--whole`, `--emit-units`, `--typecheck-only`, `--verify-cache`, `-j` -- nor
 for a program that loads units, nor where an import renames a name (a
 binder's names are its own unit's), nor where an editor's buffer stands in
-for a file's text (`--serve`), which no stat says anything of.
+for a file's text (`--serve`), which no stat says anything of. A
+preprocessor's output stands in for its file too (*Generated sources* in
+[build.md](build.md)), but a compile sees a view all the same: its unit's key
+holds the output's hash, taken whole and not from the stat memo, since the
+file's stat says nothing of the tool.
 
 **The stat memo.** A unit's key holds the hash of its source, which a warm
 build need not read: the store keeps, by a file's path and mode, the hash its
@@ -757,17 +762,26 @@ wrote are not linked again; an output that was changed, or written within the
 second of its stat and not the same bytes, is.
 
 **Up to date.** A compile in units keeps what it read once its plan was made
--- every source, every MANIFEST, with the stat each had when it was read, and
-whether each `library.build` it asked of was there -- with its output and the
-warnings it gave, under a key of all its plan rests on: the command line, the
-directory, every `RUNE_` variable, the compiler's identity, the text of its
-build files, its inputs and its workspace (`UnitMemo.upToDate`, `memo/` of the
-cache). A compile with the same key, all of whose files have the stats they had
-and racily clean, whose questions have the same answers, and whose output is
-what it wrote, gives the warnings again and ends. Not with `--explain-rebuild`
-or `--pass-stats`, which say what each unit did, nor with `-I`, whose plan
-lists directories, nor where the warm path is off; with `-j` too, so that a
-no-op parses no input.
+-- every source, every MANIFEST, every file its declared steps and
+preprocessors read, with the stat each had when it was read, and whether
+each `library.build` it asked of was there -- with what its steps made and
+its output, each by its stat and the hash of its bytes, the answer of each
+step's stamp, and the warnings it gave, under a key of all its plan rests on:
+the command line, the directory, every `RUNE_` variable, the compiler's
+identity, the text of its build files, its inputs and its workspace
+(`UnitMemo.upToDate`, `memo/` of the cache). A compile with the same key, all
+of whose files have the stats they had and racily clean, whose questions
+have the same answers, whose steps' outputs and own output are what were
+made, and whose stamps, asked last, answer as they did, runs no step, gives
+the warnings again and ends. A step's output is held by its bytes because
+the build itself writes it, within the second of its stat; and the check
+comes before the steps, so an up-to-date `rune.build` runs neither
+`scripts/gen-version.sh --config` nor more of git than its stamp. Not with
+`--explain-rebuild` or `--pass-stats`, which say what each unit did, nor with
+`-I`, whose plan lists directories, nor where an editor's buffer stands in for
+a file, nor where a step says nothing of what it reads and so runs on every
+build, nor where the warm path is off; with `-j` too, so that a no-op parses
+no input.
 
 What a no-op costs (the build-system roadmap's M6): machine instructions
 (`perf stat -e instructions:u`, the compiler at tier 2) and the VM's
