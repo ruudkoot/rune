@@ -56,7 +56,7 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | M2. Independent checks of the cache | F | M | D20 | done; issue 15 closes with M4 |
 | M3. Logical names and the workspace | U | L | D3, D4 | done |
 | M4. Layers | U | L | D1 | done, but for two items: MLton's 4 units and the replay |
-| M5. Codecs | F | L | D21 | not started |
+| M5. Codecs | F | L | D21 | done |
 | M6. The warm path | C | L | D2, D25 | done; the plan memo not built |
 | M7. One store | C | M | D24 | not started |
 | M8. The library model | L | M | D7, D8, D11 | done |
@@ -154,6 +154,8 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
 Every bug has a reproducer: Appendix D lists them all. The ones marked *reproduced* were run again by hand on `b12141ecc`.
 
 **Wrong behaviour in the compiler**
+- **M5, codecs** (`bed38bd96`, `make check` 22,660 of 22,660). One description, `tools/codecs/compiler.sml`, marks each field of a unit's basis and Mid with its layer (static, ABI, sidecar) and how it is written, read, compared and fingerprinted, or why a traversal leaves it out; a generator writes 788 lines in 16 marked parts, committed, and `make check-codecs` refuses a stale part and a field left unmarked. Writers, readers, samenesses (`sameEnv` among them) and fingerprints are generated, and the Mid codec is one. The bytes are today's: every cache entry, export hash and program of the Basis, `rune.build` and MLton the same, so no key changed. A fingerprint oracle changes each field and each table fact alone and holds both fingerprints to the description's marks, 5,650 checks in `make test-incremental`; mutants F1 and F6, once argued harmless, are caught by it. MLton cold +0.3% in VM instructions, the rest within 0.05%.
+  - **Not as D21 put it:** the fingerprint is not the hash of the pickle's bytes, since the pickle names things relative to its unit; it is a separate canonical encoding, generated from the same description. Still by hand, and named in `docs/units.md`: the elaborator's types and type names, an environment by reference, table reads, the header and identities, functor fingerprints, path walks.
 - **Alpha-renaming changes a program's output,** because selection is by mention (E3, D7; *reproduced*).
 - **A warm build differs from a cold one.** A compile reads another unit's text for a copied function's line table, and no key holds it. A same-size edit keeps the stale line, and a trace names it (E18; *reproduced*).
 - **Three settings are in no key:** `--functor-budget`, `--type-work` and `--match-work`. A cache gives a hit where a miss is due; `--type-work=1` exits 0 warm and 1 cold (E18; the first *reproduced*).
