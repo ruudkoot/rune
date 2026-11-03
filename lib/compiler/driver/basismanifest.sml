@@ -599,7 +599,7 @@ struct
     in go ([], es) end
   fun arrange (libraries : (string * entry list) list) : entry list =
     let
-      fun headerOf es = case es of e :: _ => #header e | [] => NONE
+      fun headerOf (es : entry list) = case es of e :: _ => #header e | [] => NONE
       fun virtualsIn es = case headerOf es of SOME {virtuals, ...} => virtuals | NONE => []
       fun implementsIn es = case headerOf es of SOME {implements, ...} => implements | NONE => []
       fun lastImplementer vs =
@@ -622,7 +622,7 @@ struct
      implementation of each (D22) *)
   fun virtualModules (libraries : (string * entry list) list) : (string * string * string) list =
     let
-      fun headerOf es = case es of e :: _ => #header e | [] => NONE
+      fun headerOf (es : entry list) = case es of e :: _ => #header e | [] => NONE
       fun described (kind, name) = "the virtual " ^ (if kind = "functor" then "functor " else "module ") ^ name
       fun twice what (found : (string * string * string) list) =
         List.foldl (fn (m as (kind, name, dir), seen) =>
