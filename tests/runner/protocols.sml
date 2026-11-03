@@ -408,6 +408,16 @@ struct
        judge = Run.exitZero} : Run.command Test.tree
   fun driver x = driverIn [] x
 
+  (* a build outside the tree that the layers tier checks (RUNE_LAYER_TREES):
+     alone, since MLton's analysis takes some 6 GB, and with time for its
+     compile and two analyses, each held to 3000 s (LayerChecks.tree): MLton's
+     606 files take some 45 minutes, past a driver's 30 *)
+  fun layerTree build =
+    Test.it ("tree-" ^ OS.Path.base (OS.Path.file build))
+      {program = "/bin/sh", args = ["sh", "-c", "exec bin/rune-incremental layers-tree " ^ quote build], env = NONE,
+       dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 9600, cap = 0, cpus = 1, memory = 12000, pools = [],
+       exclusive = true, after = [], judge = Run.exitZero} : Run.command Test.tree
+
   fun command args =
     case args of
       ["repl", suffix] => SOME (fn () => repl (if suffix = "-" then "" else suffix))
@@ -457,10 +467,12 @@ struct
           programs (examples/virtual/table) and of a functor's parameter
           that shares a structure with a view of it (tests/layers/sharing,
           MLton's codegen in small); RUNE_LAYER_TREES adds builds that are
-          not in the tree, MLton's and HOL4's *)
+          not in the tree, MLton's and HOL4's, each a test of its own *)
        tagged ["check", "test-layers", "covers:lib/compiler/driver/unitbasis.sml", "covers:tests/compiler/layers-analysis.sml",
                "covers:tests/layers/*"]
-         (Test.describe "layers" [driver ("static", "exec bin/rune-incremental layers rune.build examples/virtual/table/list.build examples/virtual/table/dynamic.build tests/layers/sharing/sharing.build $RUNE_LAYER_TREES")]),
+         (Test.describe "layers"
+            (driver ("static", "exec bin/rune-incremental layers rune.build examples/virtual/table/list.build examples/virtual/table/dynamic.build tests/layers/sharing/sharing.build")
+             :: List.map layerTree (String.tokens Char.isSpace (getOpt (OS.Process.getEnv "RUNE_LAYER_TREES", ""))))),
        tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml", "covers:tests/runner/cache*.sml",
                "covers:src/driver/cachecheck.sml"]
          (Test.describe "incremental"

@@ -163,19 +163,36 @@ struct
                      name ^ ": the edit moved neither layer")
     in say ("PASS the edit " ^ name ^ " holds the static layer and rebuilds the client\n") end
 
+  (* the analysis, compiled, kept at keep, where a reset leaves it *)
+  fun analysisTool (s : state, keep : string) : unit =
+    let
+      val tool = path s "layers-analysis.rbc"
+      val r = command s "" [#compiler s, "--library", "compiler", "--no-warnings", fromRoot "tests/compiler/layers-analysis.sml", "-o", tool]
+      val () = need (#status r = 0, "layers-analysis does not compile: " ^ #errors r)
+    in copy tool keep end
+
   fun main (trees : string list) : unit =
     let
       val s = create "layers" "bin/rune"
       val () = reset s
-      val tool = path s "layers-analysis.rbc"
-      val r = command s "" [#compiler s, "--library", "compiler", "--no-warnings", fromRoot "tests/compiler/layers-analysis.sml", "-o", tool]
-      val () = need (#status r = 0, "layers-analysis does not compile: " ^ #errors r)
       val keep = run ^ "/layers-tool.rbc"
-      val () = copy tool keep
+      val () = analysisTool (s, keep)
       val () = flatSize s keep
       val () = List.app (directed s) probes
       val () = reset s
       val () = #directory s := run ^ "/incremental/layers"
       val () = ignore (List.foldl (fn (b, n) => (tree s keep n (fromRoot b); n + 1)) 0 trees)
     in () end
+
+  (* a build outside the tree alone (RUNE_LAYER_TREES, a test of its own):
+     a compile and two analyses of it, in a directory of its own *)
+  fun one (build : string) : unit =
+    let
+      val name = "layers-" ^ OS.Path.base (OS.Path.file build)
+      val s = create name "bin/rune"
+      val () = reset s
+      val keep = run ^ "/" ^ name ^ "-tool.rbc"
+      val () = analysisTool (s, keep)
+      val () = reset s
+    in tree s keep 0 (fromRoot build) end
 end
