@@ -318,20 +318,22 @@ struct
      stat is the same is the same file, written no more since -- but within
      the second its times were taken, which `at` guards (clean) *)
   type stamp = {key : string, latest : LargeInt.int}
-  fun statOf (p : string) : stamp option =
-    (let
-       val st = Posix.FileSys.stat p
-       val m = Posix.FileSys.ST.mtime st
-       val c = Posix.FileSys.ST.ctime st
-       fun word w = SysWord.fmt StringCvt.DEC w
-     in
-       SOME {key = String.concatWith ":" [word (Posix.FileSys.devToWord (Posix.FileSys.ST.dev st)),
-                                          word (Posix.FileSys.inoToWord (Posix.FileSys.ST.ino st)),
-                                          Position.toString (Posix.FileSys.ST.size st),
-                                          LargeInt.toString (Time.toMicroseconds m), LargeInt.toString (Time.toMicroseconds c)],
-             latest = LargeInt.max (Time.toSeconds m, Time.toSeconds c)}
-     end)
-    handle OS.SysErr _ => NONE | Overflow => NONE
+  fun stampOf {dev : SysWord.word, ino : SysWord.word, size : Position.int, mtime : Time.time, ctime : Time.time} : stamp =
+    let fun word w = SysWord.fmt StringCvt.DEC w
+    in
+      {key = String.concatWith ":" [word dev, word ino, Position.toString size,
+                                    LargeInt.toString (Time.toMicroseconds mtime), LargeInt.toString (Time.toMicroseconds ctime)],
+       latest = LargeInt.max (Time.toSeconds mtime, Time.toSeconds ctime)}
+    end
+
+  (* How a file is statted, where the program can ask: Rune's own main sets
+     it, from Posix.FileSys.ST, whose ctime not every host's Basis Library
+     has (MLKit's has none). Where it cannot, a file has no stamp, and no memo
+     is kept or believed: a compiler built by another host hashes every
+     source and links every time *)
+  val stat : (string -> stamp option) ref = ref (fn _ => NONE)
+  val () = CompilerState.cellRoot ("UnitStore.stat", stat)
+  fun statOf (p : string) : stamp option = !stat p
 
   fun nowSeconds () : LargeInt.int = Time.toSeconds (Time.now ())
 

@@ -738,7 +738,11 @@ and the file was last written at least two seconds before the stat was taken,
 git's rule for an index that is racily clean, with a second more for a clock
 that is not the filesystem's; anything else reads the file. A span of another
 unit's code that names a source not read -- a function copied from it, a
-warning given again -- loads it (`Source.fault`).
+warning given again -- loads it (`Source.fault`). A stat is what Rune's own
+`rune` asks of `Posix.FileSys.stat` (`UnitStore.stat`, which
+`src/main/rune-main.sml` sets); a compiler built by another host has none,
+since MLKit's Basis Library has no `ctime`, and keeps and believes no memo:
+it reads every source and links every time.
 
 **The link memo.** The program a link made is kept by the hash of what was
 linked, each unit's code by its entry's hash or its bytes' and where its
