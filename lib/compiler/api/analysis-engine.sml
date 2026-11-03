@@ -262,20 +262,6 @@ struct
   (* a state taken back: this session's earlier one *)
   fun restore (session as Session {state=current,...},saved:state)=
     (dropWorld session;current:=unplaced (saved,#serial (!current)+1))
-  (* A compaction: the world goes, with whatever its tables have kept of units
-     long replaced, and the next check loads the units into a new one. It also
-     forgets the paths of the identities no entry names. So it is done now and
-     then, by what has been walked: a walk costs a load of the units after a
-     change, and this a load of them all. *)
-  val walksToCompact=256
-  fun compact (session as Session {state,walks,...})=
-    let val saved= !state
-        val named=StringMap.foldl (fn (k:kept,all) => List.foldl (fn (identity,all) => StringMap.insert (all,identity,()))
-          all (UnitBasis.namedBy (#pickle (#entry k)))) StringMap.empty (#kept saved)
-    in walks:=0;restore (session,{serial= #serial saved,kept= #kept saved,order= #order saved,opens= #opens saved,complete=false,
-         planned= #planned saved,prelude= #prelude saved,units= #units saved,libraryNames= #libraryNames saved,
-         libraries= #libraries saved,stamps= #stamps saved,names= #names saved,
-         paths=StringMap.filteri (fn (identity,_) => StringMap.member (named,identity)) (#paths saved)}) end
   (* which files stay open; NONE, all of them *)
   fun focus (Session {focus,state,...},files)=
     (case (files,!focus) of
@@ -385,6 +371,23 @@ struct
         fun left ()=if !doomed then (doomed:=false;dropWorld session) else ()
         val result=CompilerState.withSession (owner,work) handle error => (left ();raise error)
     in left ();result end
+  (* A compaction: the world goes, with whatever its tables have kept of units
+     long replaced, and the next check loads the units into a new one. It also
+     forgets the paths of the identities no entry names. So it is done now and
+     then, by what has been walked: a walk costs a load of the units after a
+     change, and this a load of them all. *)
+  val walksToCompact=256
+  fun compact (session as Session {state,walks,world,...})=
+    let val saved= !state
+        (* by the identities the units are loaded under (UnitBasis.alias),
+           where the world knows them *)
+        fun gather canonical=StringMap.foldl (fn (k:kept,all) => List.foldl (fn (identity,all) => StringMap.insert (all,canonical identity,()))
+          all (UnitBasis.namedBy (#pickle (#entry k)) handle Pickle.Bad _ => [])) StringMap.empty (#kept saved)
+        val named=case !world of NONE => gather (fn identity => identity) | SOME _ => inWorld (session,fn _ => gather UnitBasis.canonical)
+    in walks:=0;restore (session,{serial= #serial saved,kept= #kept saved,order= #order saved,opens= #opens saved,complete=false,
+         planned= #planned saved,prelude= #prelude saved,units= #units saved,libraryNames= #libraryNames saved,
+         libraries= #libraries saved,stamps= #stamps saved,names= #names saved,
+         paths=StringMap.filteri (fn (identity,_) => StringMap.member (named,identity)) (#paths saved)}) end
   (* units: the logical name of each of sources, as rune gives them
      (Workspace), its libraries' first, so that a unit is the same name in
      analysis and in a build. building: the build file checked, which a
@@ -604,9 +607,41 @@ struct
                                   sidecar= #origins side,facts=[],types= #types notes,syntax=NONE,typing=NONE,
                                   uses= #uses notes,printed=[],notes=""}:entry,
                                  identity,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
-                                 List.map canonicalUsage (#usages batch),ref NONE,ref NONE)) end end
+                                 List.map canonicalUsage (List.filter (fn (key,_) => not (String.isPrefix "inl " key orelse
+                                   String.isPrefix "inlv " key)) (#usages batch)),ref NONE,ref NONE)) end end
                 handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE end end
           handle Pickle.Bad _ => NONE
+        (* What the units after a unit whose identity is about to move used of
+           it, in this analysis's terms. A unit taken from a compile's entry
+           holds its usages by the compile's fingerprints, which an analysis's
+           never equal, so each unit that used one whose identity moves would
+           be elaborated again, though what it used be the same. They are
+           worked out where the unit still stands, before the cut that takes
+           it out, as an analysis that elaborated them would have recorded
+           them (restated, usagesOf) *)
+        val restated=ref StringMap.empty : (string*string) list StringMap.map ref
+        fun usagesOf (k:kept)=getOpt (StringMap.find (!restated,#name (#entry k)),#usages k)
+        fun restate (k:kept)=case !(#live k) of NONE => () | SOME {result,bindings,position} =>
+          let val was=identityOf k
+              fun bound (_,value)=UnitBasis.canonical (binderOfValue value)=was
+              val later=StringMap.foldl (fn (c:kept,all) =>
+                if #index c> #index k andalso List.exists bound (usagesOf c) then c::all else all) [] (#kept old)
+          in if null later then () else
+            let val keys=List.foldl (fn (c,all) => List.foldl (fn (u as (key,_),all) =>
+                  if bound u then StringMap.insert (all,key,()) else all) all (usagesOf c)) StringMap.empty later
+                val saved=(!Env.session,!UnitBasis.sessionFixity,!UnitBasis.sessionSigs,!UnitBasis.sessionFuns,!UnitBasis.binders)
+                fun back ()=let val (e,f,g,u,b)=saved
+                  in Env.session:=e;UnitBasis.sessionFixity:=f;UnitBasis.sessionSigs:=g;UnitBasis.sessionFuns:=u;UnitBasis.binders:=b end
+                val ()=(Env.session:=SOME (Env.plus (#env position,#delta result));
+                        UnitBasis.sessionFixity:=Fixity.extend (#fixity position,#directives result);
+                        UnitBasis.sessionSigs:=List.foldl (fn ((n,g),m) => StringMap.insert (m,n,g)) (#sigs position) (#sigs bindings);
+                        UnitBasis.sessionFuns:=List.foldl (fn ((n,f),m) => StringMap.insert (m,n,f)) (#funs position) (#funs bindings);
+                        UnitBasis.binders:=List.foldl (fn (key,m) => StringMap.insert (m,key,was)) (#binders position) (UnitBasis.bindKeys result))
+                val fps=(StringMap.mapi (fn (key,()) => UnitBasis.fingerprintAt (key,was)) keys) handle e => (back ();raise e)
+                val ()=back ()
+            in List.app (fn c => restated:=StringMap.insert (!restated,#name (#entry c),List.map (fn u as (key,_) =>
+                 if bound u then (key,was ^ " " ^ (case StringMap.find (fps,key) of SOME (SOME fp) => fp | _ => "-")) else u)
+                 (usagesOf c))) later end end
         (* an elaboration of a unit that is waiting for a walk *)
         val stash=ref NONE : (string*entry*(string*string) list*UnitBasis.exported*Env.origin StringMap.map option) option ref
         (* the unit elaborated where the session is now: its entry, its usages and
@@ -783,7 +818,7 @@ struct
                  stands, which no usage covers, so it is elaborated. *)
               val holds=same andalso whole andalso not asked andalso (not (!dirty) orelse
                 (not (!moved) orelse not (isFocused file)) andalso
-                (case UnitBasis.broken (#usages (valOf prior)) of NONE => true | SOME _ => (broken:= !broken+1;false)))
+                (case UnitBasis.broken (usagesOf (valOf prior)) of NONE => true | SOME _ => (broken:= !broken+1;false)))
               fun compile ()=
                 let val (entry,usages,exported,defined)=case !stash of
                       SOME (stashed,entry,usages,exported,defined) =>
@@ -815,7 +850,7 @@ struct
                           (entry,identityOf k,if fast then #live k else ref (SOME {result= #result (liveOf k),bindings= #bindings (liveOf k),position=here}),
                            usages,ref defined,#keys k))
                        else if fast then (stash:=SOME (name,entry,usages,exported,defined);raise NeedWalk)
-                       else (if identity=identityOf k then () else moved:=true;
+                       else (if identity=identityOf k then () else (moved:=true;if !dirty orelse not known then () else restate k);
                              if !dirty then () else cut index;fresh ())
                    | NONE => (moved:=true;fresh ()) end
               fun taken (k:kept)=
@@ -823,17 +858,17 @@ struct
                 in if not (!dirty) then
                      (reused:= !reused+1;rebound:= !rebound+1;UnitBasis.rebind (#bindings (liveOf k));
                       SOME (entry,identityOf k,ref (SOME {result= #result (liveOf k),bindings= #bindings (liveOf k),position=here}),
-                        #usages k,#defined k,#keys k))
+                        usagesOf k,#defined k,#keys k))
                    else
                      let val at=UnitBasis.counters ()
                          val ()=exposed:=true
                          val tried=(SOME (UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at=at},SOME (identityOf k),
-                             UnitBasis.remappingBasis (#pickle entry,fn identity => StringMap.find (!paths,identity)))))
+                             UnitBasis.remappingBasis (#pickle entry,fn identity => StringMap.find (!paths,UnitBasis.canonical identity)))))
                            handle UnitBasis.Missing _ => (UnitBasis.abandon at;NONE) | Pickle.Bad _ => (UnitBasis.abandon at;NONE)
                      in exposed:=false;case tried of
                           SOME result => (reused:= !reused+1;loaded:= !loaded+1;aliasOwn (#pickle entry,identityOf k);
                             SOME (entry,identityOf k,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
-                              #usages k,#defined k,ref NONE))
+                              usagesOf k,#defined k,ref NONE))
                         | NONE => NONE end end
               val (entry,identity,live,usages,defined,keys)=
                 case fromStore of SOME found => (stored:= !stored+1;reused:= !reused+1;found) | NONE =>
