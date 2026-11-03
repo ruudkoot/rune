@@ -58,7 +58,7 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | M4. Layers | U | L | D1 | done, but for two items: MLton's 4 units and the replay |
 | M5. Codecs | F | L | D21 | done |
 | M6. The warm path | C | L | D2, D25 | done; the plan memo not built |
-| M7. One store | C | M | D24 | not started |
+| M7. One store | C | M | D24 | done |
 | M8. The library model | L | M | D7, D8, D11 | done |
 | M9. One planner, and the plan | L | M | D5, D6 | done |
 | M10. Namespaces and Basis views | L | M | D9, D12 | done |
@@ -156,6 +156,12 @@ Every bug has a reproducer: Appendix D lists them all. The ones marked *reproduc
 **Wrong behaviour in the compiler**
 - **M5, codecs** (`bed38bd96`, `make check` 22,660 of 22,660). One description, `tools/codecs/compiler.sml`, marks each field of a unit's basis and Mid with its layer (static, ABI, sidecar) and how it is written, read, compared and fingerprinted, or why a traversal leaves it out; a generator writes 788 lines in 16 marked parts, committed, and `make check-codecs` refuses a stale part and a field left unmarked. Writers, readers, samenesses (`sameEnv` among them) and fingerprints are generated, and the Mid codec is one. The bytes are today's: every cache entry, export hash and program of the Basis, `rune.build` and MLton the same, so no key changed. A fingerprint oracle changes each field and each table fact alone and holds both fingerprints to the description's marks, 5,650 checks in `make test-incremental`; mutants F1 and F6, once argued harmless, are caught by it. MLton cold +0.3% in VM instructions, the rest within 0.05%.
   - **Not as D21 put it:** the fingerprint is not the hash of the pickle's bytes, since the pickle names things relative to its unit; it is a separate canonical encoding, generated from the same description. Still by hand, and named in `docs/units.md`: the elaborator's types and type names, an environment by reference, table reads, the header and identities, functor fingerprints, path walks.
+- **M7, and the owner's rulings of 2026-11-03** (`5d592296b`, `make check` 22,665 of 22,665).
+  - **M7, one store:** an entry is a head, judged alone by the client's `holds` and read no further when it is refused, and four sections hashed apart (metadata, basis, code, Mid). The store is `<workspace>/.rune`, below `RUNE_CACHE` and `--cache-dir`, so `build/.rune` and `src/lsp/.rune` are gone; the frozen `lib/cache` is a read-only layer under the overlay, and a dist ships it, so a dist's first `--units` compile builds no Basis. Eviction by age, then by size, least recently taken first: `--cache-max-age` (7 days), `--cache-max-size` (4G), at most once a day after a compile, and `rune --cache-trim`. HOL4's store stays at its cap under eviction, and every build after a trim, to a quarter or to nothing, gives `--no-cache`'s bytes. Stale entries no longer make a warm build dearer: +0.2% on MLton over 14 seeded edits, where the base paid +17.1%; E13's +38% predates M6. A copy of the owner's 205,450-file HOL4 store trims in 2.8 s.
+    - **Narrowed:** sections are hashed apart, but the basis is not split into M4's static and ABI layers inside an entry. Within the hour a size cap evicts by write order, so a cap smaller than a build's take evicts what the next build needs, at a cost in time alone. No full `make dist` ran here: the cross VMs cannot be built on this machine.
+  - **smlnj32 keeps a hash of its own** (the owner: "we already decided smlnj32 gets fingerprint of its own as it is too buggy to workaround all its issues and this has performance impact on the working compilers. please revert"): M21's workaround in `pickle.sml` is reverted, and check-cross leaves smlnj32 out wherever a hash reaches bytes.
+  - **`shadows` goes** (the owner: "this adds a lot of complexity for something that is a code smell. i suggest we just rename one of the two instead and drop the shadows feature"): the Basis keeps `RuneCompiler` and its sealed `Compiler`, which HOL4's fork and users' scripts name, and `lib/compiler`'s API becomes `CompilerApi :> COMPILER_API`. Landing with the next batch.
+  - **A step's `closure` and `stamp` go, and the config step with them** (the owner: "yes drop closure and stamp"): `make` writes `build/config.sml` again, as before this roadmap, and `rune.build` lists it as a file. D16's "`build/config.sml` is in the plan" is dropped. Landing with the next batch.
 - **Alpha-renaming changes a program's output,** because selection is by mention (E3, D7; *reproduced*).
 - **A warm build differs from a cold one.** A compile reads another unit's text for a copied function's line table, and no key holds it. A same-size edit keeps the stale line, and a trace names it (E18; *reproduced*).
 - **Three settings are in no key:** `--functor-budget`, `--type-work` and `--match-work`. A cache gives a hit where a miss is due; `--type-work=1` exits 0 warm and 1 cold (E18; the first *reproduced*).
@@ -5507,7 +5513,7 @@ M1 comes first. M2 follows, less what needs M4's export of load and M6's lazy lo
 ### M15. Generated sources and preprocessors (L; M, about 400; after M9)
 
 * **What:** D16. Declared steps before planning, `build/config.sml` as the first, a per-file preprocessor class, and `runeffi`'s rehash mode.
-* **Done when:** HOL4's `src/boss` closure builds from its unfiltered sources with a declared filter; `build/config.sml` is in the plan.
+* **Done when:** HOL4's `src/boss` closure builds from its unfiltered sources with a declared filter; `build/config.sml` is in the plan (dropped by the owner on 2026-11-03, with the step that wrote it: `make` writes it, as before).
 * **Touches:** `lib/compiler/driver/{buildfile,project}.sml`, `src/driver/main.sml`, `src/ffi/`.
 
 ### M16. The restriction (S; M, about 500; after M8)
