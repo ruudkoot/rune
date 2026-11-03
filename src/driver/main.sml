@@ -255,6 +255,10 @@ struct
   (* RUNE_WARM=off: no unit is taken without its basis, nor a compile given
      a view, nor a memo read (docs/units.md, A warm build) *)
   fun warmOn () : bool = OS.Process.getEnv "RUNE_WARM" <> SOME "off"
+  (* whether this compile writes a layer of the store, lib/cache (make
+     basis-cache), which keeps entries and what they need, and no memo of a
+     build (UnitMemo) *)
+  fun writesLayer () : bool = case UnitCache.directory () of SOME d => UnitCache.isLayer d | NONE => false
   (* the command line, which an up-to-date compile's key holds (UnitMemo) *)
   val commandLine : string list ref = ref []
   (* the key of this compile's record of what it read (UnitMemo), where it
@@ -344,6 +348,24 @@ struct
      BasisManifest.roots := (case !workspace of
                                SOME w => List.map (fn root => Workspace.fromHere (onWindows (), root)) (#libraryRoots w)
                              | NONE => []))
+  (* Where this compile keeps its store where neither --cache-dir nor
+     RUNE_CACHE says (UnitCache.directory): .rune in its workspace's
+     directory, the nearest rune.workspace above its build file or first
+     input, else in that file's directory; from here, so that a store at the
+     top of a checkout is .rune (the build-system roadmap's D24) *)
+  fun storeHome () : unit =
+    let
+      val windows = onWindows ()
+      fun home file = case Workspace.rootOf {file = file, windows = windows} of
+                        SOME root => Workspace.fromHere (windows, root)
+                      | NONE => OS.Path.dir file
+    in
+      CompilerSettings.storeHome :=
+        (case (!Options.build, !Options.inputs) of
+           (SOME file, _) => SOME (home file)
+         | (NONE, first :: _) => SOME (home first)
+         | (NONE, []) => SOME (home (OS.Path.joinDirFile {dir = Workspace.here (), file = Workspace.rootFile})))
+    end
   (* where this compile's units are named from (Workspace), lib being where
      its libraries are *)
   fun scopeWith (lib : string option) : Workspace.scope =
@@ -365,6 +387,7 @@ struct
   fun depsOfBuild (file : string) : Deps.file list =
     let
       val () = findWorkspace file
+      val () = storeHome ()
       val project = projectOf file
       (* a file is read as a compile reads it, through its preprocessor; a
          step is not run (docs/build.md, Generated sources) *)
@@ -524,6 +547,7 @@ struct
       (* files given by themselves: the first names their units, and the
          workspace above it has only libraries to give them *)
       val () = if !knownToLoad then () else entryFile := (case !Options.inputs of first :: _ => SOME first | [] => NONE)
+      val () = storeHome ()
       (* the plan: the inputs are its files, and it is what the units driver
          follows *)
       val project = commandPlan ()
@@ -609,7 +633,7 @@ struct
     if not (!Options.units andalso warmOn () andalso not (!Options.explainRebuild) andalso not (!Pass.stats)
             andalso not (UnitCache.verifying ()) andalso not (isSome (!Options.emitUnits)) andalso not (!Options.typecheckOnly)
             andalso not (!Options.wholeFromUnits) andalso not (!Options.basisDeps) andalso List.null (!Options.includeDirs)
-            andalso not (!knownToLoad) andalso not (!lazyRefused) andalso not (editorOverlays ())
+            andalso not (!knownToLoad) andalso not (!lazyRefused) andalso not (editorOverlays ()) andalso not (writesLayer ())
             andalso List.all Steps.reads (#generates project))
        orelse List.null (!Options.inputs) orelse List.all (fn f => String.isSuffix ".rbu" f) (!Options.inputs)
     then NONE
@@ -813,6 +837,10 @@ struct
          and not looked for *)
       val cache = Option.map (fn d => (d, UnitCache.configuration ())) (UnitCache.directory ())
       val frozen = UnitCache.frozen ()
+      (* an entry's Mid, read where one program is made of the units' Mid,
+         or compared *)
+      val () = UnitCache.needMid := (!Options.wholeFromUnits orelse UnitCache.verifying ()
+                                     orelse isSome (OS.Process.getEnv "RUNE_VERIFY_UNIT"))
       val failedBefore = ref false
       (* --verify-cache: the units whose entry is not what compiling them gives *)
       val unverified = ref 0
@@ -886,7 +914,7 @@ struct
       val verifyUnit = if lazyOn then OS.Process.getEnv "RUNE_VERIFY_UNIT" else NONE
       val masking = isSome (OS.Process.getEnv "RUNE_VERIFY_MASK")
       fun findExact (dir, config, k) =
-        case UnitCache.findExact (dir, config, k) of
+        case UnitCache.takeExact (dir, config, k) of
           NONE => (case frozen of SOME f => UnitCache.findExact (f, config, k) | NONE => NONE)
         | found => found
       (* what the link is given, for the link memo (UnitMemo.linked): each
@@ -899,6 +927,11 @@ struct
         linkParts := String.concatWith "\000" (sum :: name :: List.map (fn (f, _) => UnitBasis.movedTo (was, name, others) f) others)
                      :: !linkParts
       (* the keys a unit binds, kept by its identity for a light hit later *)
+      (* a unit taken: the paths to its names kept with its entry
+         (UnitCache.keepPaths), which a unit compiled against it needs once
+         it changes, and which a store trimmed by age would otherwise lose *)
+      fun keepPaths (identity : string) : unit =
+        case cache of SOME (dir, config) => UnitCache.keepPaths (dir, config, identity) | NONE => ()
       fun storeBinds (l : UnitBasis.result) : unit =
         case (lazyOn, cache) of
           (true, SOME (dir, config)) => UnitCache.storeBinds (dir, config, #identity (#unit l), UnitBasis.bindKeys l)
@@ -1012,6 +1045,7 @@ struct
                if !Options.noWarnings then () else UnitCache.giveWarnings (warnings, was, name);
                fixity := Fixity.extend (!fixity, #directives l);
                logDeclared l;
+               keepPaths identity;
                linkPart (sum, was, name, others);
                SOME ((code, keptPickle pickle) :: acc, false)
              end)
@@ -1055,7 +1089,7 @@ struct
                 case (cache, k) of
                   (SOME (dir, config), SOME k) =>
                     timed "cache-find"
-                      (fn () => case (UnitCache.find (dir, config, k), frozen) of
+                      (fn () => case (UnitCache.take (dir, config, k), frozen) of
                                   (UnitCache.Missed why, SOME f) =>
                                     (case UnitCache.find (f, config, k) of
                                        UnitCache.Missed "no entry" => UnitCache.Missed why
@@ -1144,6 +1178,7 @@ struct
              fixity := Fixity.extend (!fixity, #directives l);
              UnitBasis.bind l;
              logDeclared l;
+             keepPaths (#identity (#unit l));
              if bindsMissing then storeBinds l else ();
              if not lazyOn then () else if plain then linkPart (sum, was, name, others) else linkable := false;
              ((fn () => u, keptPickle pickle) :: acc, false))
@@ -1485,7 +1520,7 @@ struct
           (* the link memo: the same units, linked to an output that is what
              that link wrote, are not linked again *)
           val digest =
-            if not lazyOn orelse not (!linkable) then NONE
+            if not lazyOn orelse not (!linkable) orelse writesLayer () then NONE
             else SOME (UnitMemo.linkDigest {fingerprint = fingerprint, exports = !keepExports, config = #2 (valOf cache),
                                              output = out, units = List.rev (!linkParts)})
           fun link () = timed "link" (fn () => linkUnits (fingerprint, inputs, List.map (fn (u, _) => u ()) compiled))
@@ -1769,6 +1804,36 @@ struct
                 again ())
     end
 
+  (* The store trimmed after a compile in units, its work done, where it
+     was last trimmed a day ago or more (UnitCache.trimAfter); never by a
+     child of -j, whose parent is still building *)
+  fun trimAfter () : unit =
+    if not (!Options.units) orelse isSome (!Parallel.child) then ()
+    else Option.app UnitCache.trimAfter (UnitCache.directory ())
+
+  (* --cache-trim: the store a compile here would write trimmed now,
+     whenever it was last (docs/units.md, The store) *)
+  fun trimCommand () : OS.Process.status =
+    let val () = storeHome ()
+    in
+      case UnitCache.directory () of
+        NONE => (eprintln "rune: --cache-trim: there is no store (--no-cache, or an empty RUNE_CACHE)"; OS.Process.failure)
+      | SOME dir =>
+          if UnitCache.isLayer dir
+          then (eprintln ("rune: --cache-trim: " ^ dir ^ " is a layer of the store, which is only read"); OS.Process.failure)
+          else if not (OS.FileSys.isDir dir handle OS.SysErr _ => false)
+          then (println ("rune: there is no store at " ^ dir); OS.Process.success)
+          else
+            let
+              val () = UnitStore.markTrimmed dir
+              val {files, bytes, removed, freed} = UnitStore.trim (UnitCache.limits ()) dir
+            in
+              println ("rune: trimmed the store " ^ dir ^ ": removed " ^ Int.toString removed ^ " of " ^ Int.toString files
+                       ^ " files, " ^ LargeInt.toString freed ^ " of " ^ LargeInt.toString bytes ^ " bytes");
+              OS.Process.success
+            end
+    end
+
   fun main (name : string, args : string list) : OS.Process.status =
     let val status = main' (name, args)
     in UnitBasis.hashStats (); Pass.finish (); Diagnostic.finish (OS.Process.isSuccess status); status end
@@ -1791,7 +1856,8 @@ struct
      else if !Options.lexCount > 0 then lexCount ()
      else if !Options.dumpTokens then dumpTokens ()
      else if isSome (!Options.readMid) then diagnosed (fn () => readMid (valOf (!Options.readMid)))
-     else diagnosed compiledAgain)
+     else if !Options.cacheTrim then trimCommand ()
+     else (diagnosed compiledAgain before trimAfter ()))
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          (* units whose interfaces do not fit at the link, which unit files

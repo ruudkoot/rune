@@ -891,6 +891,10 @@ test-incremental` and so in `make check`, as a scenario of
 | The fingerprint oracle, `fp-oracle` | a field of a binding, or a fact of the tables a fingerprint reads by hand, changed alone, moving a fingerprint in other layers than the description of the codecs marks it in (`tools/codecs/compiler.sml`), or a sameness not saying what the description has it compare; or a kind of field or fact the program does not change | `tests/runner/cachechecks.sml`, `UnitBasis.fpOracle` ([units.md](units.md), *The fingerprint oracle*) |
 | Unit by unit, and the mask, `warm-unit-*` | a unit compiled alone, while every other is taken from the cache without its basis, that is not what its entry holds: under its view, what its text names loaded by need, or under the mask of its entry's usages, each structure cut to the paths they name and only the units their binders reach loaded | `tests/runner/warmchecks.sml` |
 | The racy cases, `warm-racy`; up to date, `warm-uptodate` | a warm build that differs from one without the cache after an edit the stat memo or a memo could miss: of the same size within the second of a build, the old text back with its old times, an edit with its time put back, the output overwritten or removed, a new name, a `library.build` above a unit | the same |
+| Where the store is, `store-place` | a build, a build of another first line, a build run from below the root, a file given by itself or the REPL's `use` keeping a store anywhere but beside the workspace's `rune.workspace`, or two builds of one workspace not sharing it; `RUNE_CACHE` or `--cache-dir` not moving it; with no workspace, none beside the build file | `tests/runner/storechecks.sml` |
+| Trimming, `store-trim` | a build after the store was trimmed -- to sizes from the whole down to a byte, by age by hand and after a build, every other file and every third removed -- that differs from one without the store; a build after a build that trimmed compiling what that build took; a trim of the frozen layer, or a limit that is none, not refused | the same |
+| Damage, `store-damage` | an entry damaged where it still reads, its hashes kept -- in its head so that it stands, or in its first section -- taken rather than compiled; a damaged Mid read by a build of the units' code, or taken by `--whole` | the same |
+| Stale entries, `store-heads` | a lookup through a store with stale entries under a project's keys hashing more of the store than one through a store of its entries alone | the same |
 | The config step, `warm-config` | in a git repository of its own, a step written as `rune.build`'s first, which writes a Config, run where nothing it reads changed, or not run where something did -- a file of its closure, an input, a commit, a tracked file outside the closure and the edit undone, a file git does not track, `git add`, a tag, a checkout, a branch, a hand edit of its output, the repository gone; its Config not what the tool run by hand makes, or the build not the build without the cache | the same |
 
 The roots come from `CompilerState.names`, not a list: a new root needs no line
@@ -952,7 +956,10 @@ taken (S129, S130). W1 to W4 are the config step's (the build-system roadmap's
 M6): an up-to-date build that does not ask a step's stamp, a step's key
 without its stamp's answer, or without its closure's files, and an
 up-to-date build's record without what a step reads; each runs no step where
-something it reads changed, which `warm-config` sees.
+something it reads changed, which `warm-config` sees. C5 and C14 are the store's
+(the build-system roadmap's M7): an entry's sections, or its head, not held to
+their hashes, so that an entry damaged where it still reads is taken, which
+`store-damage` sees.
 The 13 that survived E18:
 
 | Mutant | What it drops | Issue | What became of it |

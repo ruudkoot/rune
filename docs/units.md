@@ -468,8 +468,9 @@ code -- in a cache, and a compile after it takes a unit from there rather
 than compiling it again where nothing it depends on changed (`UnitCache`,
 `lib/compiler/driver/unitcache.sml`; the incremental roadmap's D14):
 
-* the cache is a directory: `--cache-dir DIR`, else `$RUNE_CACHE` (empty:
-  none), else `.rune` beside the first input; `--no-cache` compiles every
+* the cache is a directory, the workspace's store (*The store*, below):
+  `--cache-dir DIR`, else `$RUNE_CACHE` (empty: none), else `.rune` in the
+  workspace, beside its `rune.workspace`; `--no-cache` compiles every
   unit; `--explain-rebuild` says of each unit whether it was taken from the
   cache or why it was compiled; `--verify-cache`, or `RUNE_VERIFY_CACHE`
   set and not empty (for the REPL's `use`, which takes no flags), compiles
@@ -591,18 +592,28 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   and fails where they differ ("its entry had another scheme of ...", S82;
   the build-system roadmap's M6). The REPL's `use` and the compiler library
   still hold them, a check of level 0;
-* an entry is one file, its usages, warnings, basis, the basis's identity
-  (which loading takes from it rather than hashing the basis again) and
-  code with the hash of them, written under a name of its own and renamed
-  into place (`UnitStore`, `lib/compiler/driver/unitstore.sml`, which keeps
-  entries and what is kept beside them by a name and knows nothing of what
-  a unit is: its head, the usages, and its sections are its client's to
-  write and read, and its client's `holds` says which entry stands;
+* an entry is one file, written under a name of its own and renamed into
+  place, so that two compiles at once never see half of one: first its
+  head -- its usages, the level of the lint that checked it and the units
+  its basis names, all a lookup judges it by -- with the hash of the head's
+  bytes, then four sections, each with the hash of its own: its warnings,
+  file, other files and identity, which loading takes rather than hashing
+  the basis again; its basis; its code; its Mid (`UnitCache.version` 12;
+  the build-system roadmap's M7). A lookup reads the head of each of a
+  key's entries -- its first four kilobytes, more where a head is longer --
+  and of one whose head does not stand reads no more and hashes nothing: a
+  damage that makes a head refuse is a miss. A head that stands is held to
+  its hash, and each section to its own as its client takes it; a build of
+  the units' code takes no Mid, and holds none to its hash, and `--whole`,
+  `--verify-cache` and the compiler library take it
+  (`UnitStore`, `lib/compiler/driver/unitstore.sml`, which keeps entries
+  and what is kept beside them by a name and knows nothing of what a unit
+  is: the head and the sections are its client's to write and read, and
+  its client's `holds` says of a head which entry stands;
   `tests/lib/compiler/store.sml` holds it to that with a client of its own
-  and no compiler), so that
-  two compiles at once never see half of one. One that cannot be read, or
-  does not hold what its hash says, is no entry, and the unit is compiled
-  and the entry written again. A cache that cannot be written is one that
+  and no compiler). One that cannot be read, or does not hold what its
+  hashes say, is no entry, and the unit is compiled and the entry written
+  again. A cache that cannot be written is one that
   is not there. Nothing in a key is a time. A `.tmp-` file an hour old is
   one a compile that died left, and a compile removes it where it comes
   across it: in the directory of a key it looks in, and in `units/` when
@@ -718,12 +729,13 @@ ways, through the cache and from it, `check-levels` at both levels, and
 **The frozen libraries** (D8): `make basis-cache`, part of `make all`,
 compiles every unit of `lib/basis` and `lib/compiler` once, with the
 compiler library's Unicode and JSON dependencies, for each bytecode, into
-`lib/cache`, which `make install` installs read-only beside the library. A
-compile reads it after its own cache and never writes it, so that a
-program's first compile takes the Basis Library's units from there where
-their usages hold, which they do but for the seals of structures the
-program does not name. It is made with the lint at level 2, so its entries
-are marked 2 and a compile at any level takes them.
+`lib/cache`, which `make install` installs read-only beside the library and
+`make dist` ships (*The store*, below). A compile reads it after its own
+store and never writes it, so that a program's first compile takes the
+Basis Library's units from there where their usages hold, which they do but
+for the seals of structures the program does not name. It is made with the
+lint at level 2, so its entries are marked 2 and a compile at any level
+takes them.
 
 An analysis names its units as a build does (*Names*, above), `file#rank`
 being gone: `RuneCompiler.Project.read` takes the workspace, and the same
@@ -750,14 +762,106 @@ session and client-migration acceptance gates.
 **`use`** in the REPL ([repl.md](repl.md)) takes a file's declarations
 from the cache the same way, each a unit named by the file's path from where
 the session began, however `use` spelt it (S97), and by its place in the
-file, kept in `$RUNE_CACHE`, else `.rune` beside the file: a file used again
-links its units from there, its top level run again with globals of its own.
+file, kept in `$RUNE_CACHE`, else the store of the file's workspace, else
+`.rune` beside the file: a file used again links its units from there, its
+top level run again with globals of its own.
 
 `make check-units` builds every program in units without the cache, then
 through a cache all the programs share, and again from it, every unit
 taken from there, and wants the same bytes three times; `tests/units`
 does the same for its programs of several files; `make test-incremental`
 runs the scenarios of `tests/incremental/SCENARIOS.md` it can be held to.
+
+## The store
+
+What a compile in units keeps is one store, used by every client the same
+way (the build-system roadmap's D24 and M7): the batch compiler, `--serve`,
+the REPL's `use`, `--verify-cache`, the memos of a warm build (*A warm
+build*, below) and the records of a build's steps. A store is a directory:
+
+```
+DIR/                 .rune, or lib/cache, or --cache-dir's
+  CONFIG/            one for each compiler and set of options
+    KEY/             one for each unit: its logical name, its text, its settings
+      HEAD           an entry, one for each set of usages
+    units/           what is kept by a unit's identity: the paths to its
+                     names, the keys it binds; about, what CONFIG is made of;
+                     the stat memo; the link memo
+  memo/units/        the records of up-to-date builds, copies of outputs, and
+                     trimmed, whose time is when the store was last trimmed
+  steps/             what a build's steps and preprocessors made
+```
+
+**Layers.** A compile writes one store, its *overlay*, and reads after it
+read-only stores, its *layers*, in order: the frozen libraries, `cache`
+beside the library (`lib/cache` in a checkout, `<prefix>/lib/rune/cache`
+installed). The two are one mechanism, the same code, layout, entries and
+rule for a hit; what differs is who writes them and for how long they are
+good. A layer is valid for exactly the compiler that made it, so it is made
+again whole when the compiler changes, needs no trimming, and sits beside
+that compiler in an install; the overlay outlives compilers and holds what
+they left. A hit in a layer is not copied into the overlay. The keys a
+unit's identity binds and the paths to its names are read from the first
+store that has them, the overlay first. A compile that writes a layer --
+`make basis-cache`, `--cache-dir lib/cache` -- keeps no memo of its build
+there and never trims it.
+
+**Where it is.** `--cache-dir DIR`, else `$RUNE_CACHE` (empty: none), which
+is how worktrees share one, else `.rune` in the workspace: the directory of
+the nearest `rune.workspace` above the build file, or above the first input
+for files given by themselves (*Names*; [build.md](build.md), *The
+workspace*), else beside that file. So every build of a workspace, whatever
+file its plan begins with, has one store, as do the REPL's `use` of a file in
+it and a build of a library in it; before M7 a store went beside the first
+input, which put `rune.build`'s in `build/.rune`, by its first line
+`build/config.sml`, and `tests/lsp/worker.build`'s in `src/lsp/.rune`. Its
+paths are from the root of the filesystem where a compile in another
+directory could mean another file by them (the stat memo, the link memo), so
+that compiles in several directories share it.
+
+**Keys and entries.** A unit's key is its logical name, the hash of its
+text and its settings (*The cache*, above); an entry's head is what the
+client judges it by, which the store holds and never reads, and its
+sections are hashed apart. Nothing in a key is a time, and nothing is ever
+invalidated: an edit gives a new key or breaks a usage, and the old entry
+stays until the store is trimmed.
+
+**What keeps it small.** What a compile takes from the overlay -- an entry,
+or a file kept beside the entries -- has its time set to now where it is an
+hour old or more (Go's rule), so that a file's time is when a compile last
+took it, within the hour; a unit taken keeps the paths to its names so too,
+which a unit compiled against it reads only once it changes. Trimming removes from the overlay what no compile
+has taken for longer than `--cache-max-age DAYS` (7 unless given), then, the
+least recently taken first, what makes it larger than `--cache-max-size
+SIZE` (4G unless given), then the directories that leaves empty, and a
+`.tmp-` file a compile that died left (`UnitStore.trim`). A compile in units
+trims its store after its work is done, where it was last trimmed a day ago
+or more (one stat where it was not), never during a build, and never in a
+child of `-j`, whose parent is still building; `rune --cache-trim` trims it
+now. Within the hour, then, the least recently taken is the first written:
+a size smaller than what builds take may remove what the next build takes,
+which it compiles again. Another compile may be reading the store as it is
+trimmed: any failure is a miss. An entry gone is compiled again, a key bound or a path gone loads
+the unit whole or compiles it, a memo gone does the work again, and a step's
+record gone runs the step; what a compile takes it reads whole first, so
+that nothing is read from the store after it is taken. `make clean` removes
+the overlays of the tree, and `lib/cache` stays until the next `make
+basis-cache`.
+
+**Install and dist.** `make install` copies `lib/cache` read-only to
+`<prefix>/lib/rune/cache`, and `make dist` ships it (`rune-build make-dist
+--cache lib/cache`), each configuration's entries and what is kept beside
+them, read-only in the tar, not the memos of the build that made it: a
+dist's first `--units` compile builds no unit of the Basis Library
+(`frozen` of `tests/runner/distchecks.sml`). Its entries serve the
+compiler with the configuration that made them: the same `Config.identity`,
+the default options and a hash whose probe is the same.
+
+**What reads which.** The batch compiler and `--serve`: the overlay, then
+the layers. The REPL's `use`: the overlay of the file's workspace. The
+compiler library: the frozen libraries alone, and it writes `.rbi`, `.rbm`
+and `.rbs` beside its outputs. The language server keeps its analysis in
+memory and reads no store yet.
 
 ## A warm build
 

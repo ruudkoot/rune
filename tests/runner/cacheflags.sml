@@ -48,6 +48,7 @@ struct
   val naming = "says which files are compiled, whose names and texts are in their keys"
   val cacheItself = "is the cache's own: what it decides is whether a key is asked"
   val testSwitch = "a test's switch, used without a cache: it corrupts or times what one compile makes"
+  val keeping = "says what trim removes from the store, after a build: what a compile then does not find, it compiles"
 
   val rows : row list =
     [(* in the configuration *)
@@ -123,6 +124,7 @@ struct
      apart ("--read-mid", stopping), apart ("--version", stopping), apart ("--help", stopping), apart ("-h", stopping),
      apart ("--serve", "answers requests, each a build of its own with these rows' options"),
      apart ("--units", cacheItself), apart ("--cache-dir", cacheItself), apart ("--no-cache", cacheItself),
+     apart ("--cache-trim", stopping), apart ("--cache-max-age", keeping), apart ("--cache-max-size", keeping),
      apart ("--verify-cache", cacheItself), apart ("RUNE_CACHE", cacheItself), apart ("RUNE_VERIFY_CACHE", cacheItself),
      apart ("RUNE_VERIFY_DUMP", cacheItself), apart ("RUNE_BLANK_ROOTS", cacheItself), apart ("RUNE_BLANK_UNITS", cacheItself),
      apart ("RUNE_WARM", cacheItself),

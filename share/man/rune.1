@@ -354,18 +354,50 @@ given those files links them.
 .BI \-\-cache\-dir " DIR"
 With
 .BR \-\-units ,
-keep the cache of units in
+keep the cache of units, the store, in
 .IR DIR .
 The default is
 .BR $RUNE_CACHE ,
 else
 .B .rune
-beside the first input.
+in the workspace, the directory of the nearest
+.I rune.workspace
+above the build file or the first input, else beside that file. A compile
+reads the frozen libraries,
+.IR <libdir>/cache ,
+after it, and never writes them.
 .TP
 .B \-\-no\-cache
 With
 .BR \-\-units ,
 compile every unit, and keep none.
+.TP
+.B \-\-cache\-trim
+Remove from the store what no compile took for longer than
+.B \-\-cache\-max\-age
+allows, then, the least recently taken first, what makes it larger than
+.B \-\-cache\-max\-size
+allows, and do nothing else. A compile in units does the same after its
+work, where the store was last trimmed a day ago or more. What a compile
+does not find in the store, it compiles.
+.TP
+.BI \-\-cache\-max\-age " DAYS"
+What
+.B \-\-cache\-trim
+keeps of what no compile took: a whole number of days, 7 unless given, or
+.BR none .
+.TP
+.BI \-\-cache\-max\-size " SIZE"
+How large
+.B \-\-cache\-trim
+leaves the store: bytes, or a number with
+.BR K ,
+.BR M ,
+.B G
+or
+.B T
+after it, 4G unless given, or
+.BR none .
 .TP
 .B \-\-explain\-rebuild
 With
@@ -654,6 +686,20 @@ The ordered list of basis library sources compiled before the inputs.
 The root of a workspace, the nearest above a build file: the directories its
 libraries are found under, and its named targets. A build's units are named
 from it.
+.TP
+.I .rune
+The workspace's store of compiled units, beside its
+.IR rune.workspace ,
+which every build of the workspace, the REPL's
+.B use
+and the memos of a warm build share
+.RB ( docs/units.md ,
+The store).
+.TP
+.I <libdir>/cache
+The frozen libraries: the Basis Library and the compiler's libraries,
+compiled once, which every compile in units reads after its store and never
+writes.
 .SH SEE ALSO
 .BR runevm (1),
 .BR runevm\-stack (1)

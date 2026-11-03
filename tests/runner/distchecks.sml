@@ -152,6 +152,85 @@ struct
              else if name = "share/rune.ico" then need (String.isPrefix "\000\000\001\000" data, "invalid Windows icon") else () end)
                        (ListPair.zip (List.tabulate (length entries, fn i => i), entries))
     in say "PASS distribution/archive-metadata\n" end
+  (* The frozen layer of the store, shipped (docs/units.md, The store; the
+     build-system roadmap's M7). With --cache, an archive holds each
+     configuration's files under lib/rune/cache, read-only in the tar, and
+     neither the store's memos nor make's mark; without it, none, whatever
+     --lib holds. Then a real one: the compiler and the store make
+     basis-cache made, packed and installed, compile a program in units for
+     the first time, through a store of its own that is empty, and build no
+     unit of the Basis Library, each taken from the layer the archive
+     brought, which the compile does not write *)
+  fun frozen () =
+    let val dir = directory () ^ "/frozen"
+        val () = InstallChecks.openTree dir
+        val () = rmTree dir
+        val () = mkdirs dir
+        val store = dir ^ "/store"
+        val () = List.app (fn (path, text) => put store path text)
+          [("c1/k1/e1", "entry\n"), ("c1/units/about", "identity x\n"), ("c2/k2/e2", "another\n"), ("made", ""),
+           ("memo/units/copy-1", "a copy\n"), ("steps/pre-1", "a step's\n"), ("c1/k1/e3.tmp-x", "half\n")]
+        val (linux, windows) = maps false
+        val result = InstallChecks.execute dir "pack" root ""
+          ([fromRoot "bin/rune-build", "make-dist", "--version", "frozen1", "--out", dir ^ "/archives", "--lib", directory () ^ "/lib",
+            "--license", fromRoot "LICENSE", "--compiler", directory () ^ "/rune.rbc", "--repl", directory () ^ "/rune-repl.img",
+            "--cache", store, "--fixture"]
+           @ List.concat (List.map (fn (arch, file) => ["--linux", arch ^ "=" ^ file]) linux)
+           @ List.concat (List.map (fn (arch, file) => ["--windows", arch ^ "=" ^ file]) windows))
+        val () = Scenarios.success result
+        val tar = ArchiveCheck.tar (ArchiveCheck.decode dir "frozen.tar" ["gzip", "-dc", dir ^ "/archives/rune-frozen1-linux.tar.gz"])
+        val top = "rune-frozen1-linux/lib/rune/cache/"
+        val cached = List.filter (fn m : ArchiveCheck.member => String.isPrefix top (#name m)) tar
+        val () = need (List.map (fn m : ArchiveCheck.member => String.extract (#name m, size top, NONE)) cached
+                       = ["c1/k1/e1", "c1/units/about", "c2/k2/e2"], "the archive's frozen layer is not the store's configurations")
+        val () = need (List.all (fn m : ArchiveCheck.member => #mode m = 292) cached, "the archive's frozen layer is not read-only")
+        val zipped = ArchiveCheck.zip (ArchiveCheck.binary (dir ^ "/archives/rune-frozen1-windows.zip"))
+        val () = need (List.length (List.filter (fn m : ArchiveCheck.zipped => String.isPrefix "rune-frozen1-windows/lib/rune/cache/" (#name m))
+                                                zipped) = 3, "the Windows archive's frozen layer")
+        (* a real one, of the Basis Library alone, which is what the program needs *)
+        val () = need (exists (fromRoot "lib/cache/made"), "no frozen layer to ship (make basis-cache)")
+        fun copyDir (from, to) =
+          if isDir from then (mkdirs to; List.app (fn n => copyDir (from ^ "/" ^ n, to ^ "/" ^ n)) (entries from))
+          else write (to, read from)
+        val () = copyDir (fromRoot "lib/basis", dir ^ "/real-lib/basis")
+        val result = InstallChecks.execute dir "pack-real" root ""
+          ([fromRoot "bin/rune-build", "make-dist", "--version", "frozen2", "--out", dir ^ "/real", "--lib", dir ^ "/real-lib",
+            "--license", fromRoot "LICENSE", "--compiler", fromRoot "bin/rune.rbc", "--repl", directory () ^ "/rune-repl.img",
+            "--cache", fromRoot "lib/cache", "--fixture"]
+           @ List.concat (List.map (fn (arch, file) => ["--linux", arch ^ "=" ^ (if arch = "x86_64" then fromRoot "bin/runevm" else file)])
+                                   linux)
+           @ List.concat (List.map (fn (arch, file) => ["--windows", arch ^ "=" ^ file]) windows))
+        val () = Scenarios.success result
+        val tree = dir ^ "/tree"
+        val () = mkdirs tree
+        val () = Scenarios.success (InstallChecks.execute dir "extract" root ""
+                                     ["tar", "-xzf", dir ^ "/real/rune-frozen2-linux.tar.gz", "-C", tree])
+        val prefix = dir ^ "/prefix"
+        val () = Scenarios.success (InstallChecks.execute dir "install" root ""
+                                     ["sh", tree ^ "/rune-frozen2-linux/install.sh", "--prefix", prefix, "--arch", "x86_64"])
+        val layer = prefix ^ "/lib/rune/cache"
+        fun files d = if isDir d then List.concat (List.map (fn n => files (d ^ "/" ^ n)) (entries d)) else [d]
+        val shipped = files layer
+        val () = need (not (List.null shipped) andalso List.all (fn f => not (OS.FileSys.access (f, [OS.FileSys.A_WRITE]))) shipped,
+                       "the installed frozen layer is missing or not read-only")
+        val work = dir ^ "/work"
+        val () = put work "hello.sml" "val () = print \"Hello from a first compile\\n\"\n"
+        val compiled = InstallChecks.execute dir "first-compile" work ""
+          [prefix ^ "/bin/rune", "--units", "--explain-rebuild", "--cache-dir", dir ^ "/own-store", "hello.sml", "-o", "hello.rbc"]
+        val () = Scenarios.success compiled
+        val said = String.tokens (fn c => c = #"\n") (#errors compiled)
+        val built = List.filter (String.isPrefix "rune: compiled ") said
+        val taken = List.filter (String.isPrefix "rune: from the cache ") said
+        val () = need (built = ["rune: compiled hello.sml: no entry"],
+                       "a dist's first compile in units built more than its program: " ^ String.concatWith "; " built)
+        val () = need (List.length taken >= 1, "a dist's first compile took nothing from the frozen layer")
+        val () = need (files layer = shipped, "a compile wrote into the frozen layer")
+        val ran = InstallChecks.execute dir "run" work "" [prefix ^ "/bin/runevm", "hello.rbc"]
+        val () = Scenarios.output ran "Hello from a first compile\n"
+        val () = Scenarios.success (InstallChecks.execute dir "uninstall" root ""
+                                     ["sh", tree ^ "/rune-frozen2-linux/install.sh", "--prefix", prefix, "--uninstall"])
+        val () = need (not (exists prefix), "the uninstall left the frozen layer")
+    in say "PASS distribution/frozen-layer\n" end
   fun rejectedMetadata () =
     let val dir = directory ()
         val (linux, windows) = maps false

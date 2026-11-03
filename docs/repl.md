@@ -377,8 +377,10 @@ as a build file's annotation does (`"ascii"`, `"unicode"`,
 declared.
 
 A file's declarations are units named by the file and their place in it,
-kept in the cache of units -- `$RUNE_CACHE`, else `.rune` beside the file
-([units.md](units.md), *The cache*) -- and a declaration whose usages hold,
+kept in the cache of units -- `$RUNE_CACHE`, else the store of the file's
+workspace, `.rune` beside the nearest `rune.workspace` above it, which its
+builds share, else `.rune` beside the file ([units.md](units.md), *The
+store*) -- and a declaration whose usages hold,
 the names it uses bound as they were, is linked from there rather than
 compiled: a file used again, unchanged, compiles nothing, and its top level
 runs again with globals of its own. With `RUNE_VERIFY_CACHE` set (not

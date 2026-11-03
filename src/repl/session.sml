@@ -270,13 +270,18 @@ struct
      is the session's already -- and what to echo of what is not a value.
      A declaration that does not elaborate leaves the session as it was and
      raises Error.CompileError, as the batch compiler does. *)
-  (* The cache of a file's units (UnitCache): RUNE_CACHE, else .rune beside
-     the file; NONE where RUNE_CACHE is empty *)
+  (* The store of a file's units (UnitCache): RUNE_CACHE, else the
+     workspace's, .rune by the nearest rune.workspace above the file, which
+     its builds share, else .rune beside the file; NONE where RUNE_CACHE is
+     empty *)
   fun cacheOf (file : string) : (string * string) option =
     let
+      val windows = Workspace.onWindows ()
       val dir = case OS.Process.getEnv "RUNE_CACHE" of
                   SOME d => if d = "" then NONE else SOME d
-                | NONE => SOME (OS.Path.joinDirFile {dir = OS.Path.dir file, file = ".rune"})
+                | NONE => SOME (UnitCache.storeIn (case Workspace.rootOf {file = file, windows = windows} of
+                                                     SOME root => Workspace.fromHere (windows, root)
+                                                   | NONE => OS.Path.dir file))
     in Option.map (fn d => (d, UnitCache.configuration ())) dir end
 
   (* compile (decs, file, text, cached): the declarations elaborated against
@@ -333,7 +338,7 @@ struct
           NONE => NONE
         | SOME (d, c, key) =>
             (UnitBasis.position (!env, #fixity start);
-             case UnitCache.find (d, c, key) of UnitCache.Found e => SOME e | UnitCache.Missed _ => NONE)
+             case UnitCache.take (d, c, key) of UnitCache.Found e => SOME e | UnitCache.Missed _ => NONE)
       (* RUNE_VERIFY_CACHE: an entry found is compiled all the same, and what
          that gives is compared with it (UnitCache.verifying) *)
       val against = case found of

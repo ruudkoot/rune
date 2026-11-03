@@ -622,12 +622,13 @@ struct
            else if String.isPrefix CacheFlags.prefix n then CacheFlags.one s
            else if CacheChecks.handles n then CacheChecks.one s
            else if WarmChecks.handles n then WarmChecks.one s
+           else if StoreChecks.handles n then StoreChecks.one s
            else simple s
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
                "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S121", "S122", "S123", "S124", "S125", "S126", "S127", "S128", "S129", "S130"] @ CacheFacts.cases @ CacheFlags.cases @ CacheChecks.cases
-              @ WarmChecks.cases
+              @ WarmChecks.cases @ StoreChecks.cases
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end

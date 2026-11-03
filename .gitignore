@@ -8,7 +8,7 @@ tests/out/
 runtime/version.h
 MLB/
 __pycache__/
-# the cache of compiled units, and the frozen Basis Library (docs/units.md, The cache)
+# the store of compiled units, and its frozen layer (docs/units.md, The store)
 .rune/
 /lib/cache/
 # made from each library's library.build (rune --basis-index; make manifests)
