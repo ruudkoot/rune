@@ -176,9 +176,12 @@ struct
       val () = need (String.isSubstring "structure:Api signature:API functor:Make type:exposed" log,"missing export metadata")
       val (status,log) = invoke "check" ["--library","scoped","--basis-check"]
       val () = need (status=0,"scoped manifest check: " ^ log)
-      (* --typecheck-only keeps what a library's boundary exports *)
+      (* --typecheck-only keeps what a library's boundary exports; the
+         program's file is its own, since a build that names a file of a
+         library with a header is refused (docs/build.md, Reaching in) *)
       val program = dir ^ "/program.build"
-      val () = write (program,"libraries scoped end\n\"" ^ fromRoot (fixture ^ "/use.sml") ^ "\"\n")
+      val () = write (dir ^ "/use.sml", read (fixture ^ "/use.sml"))
+      val () = write (program,"libraries scoped end\nuse.sml\n")
       val (status,log) = invoke "typecheck-library" ["--no-cache","--typecheck-only","--build",program]
       val () = need (status=0,"--typecheck-only lost a library's exports: " ^ log)
       val modes = [("whole",["--no-cache"]),("units",["--units","--no-cache"]),
@@ -365,13 +368,23 @@ struct
       fun check (true, _) = () | check (false, message) = (failed := !failed + 1; say ("FAIL identity: " ^ message ^ "\n"))
       fun link path = Posix.FileSys.symlink {old = fromRoot path, new = tree ^ "/" ^ path}
       (* the tree's own: its build files, lib/unicode/utf8.sml, which it
-         edits, and lib/compiler/config.sml, which gen-version.sh writes; the
-         rest is the checkout's, its scripts among them *)
+         edits, lib/compiler/config.sml, which gen-version.sh writes, and
+         lib/compiler/library.build, whose header names the toy a friend too,
+         since a second compiler's build reaches into the compiler's library
+         as rune.build does (docs/build.md, Reaching in); the rest is the
+         checkout's, its scripts among them *)
       val () = List.app link ["scripts", "src", "lib/basis", "lib/json", "lib/digest"]
-      val () = List.app (fn (d, own) => List.app (fn f => if f = own then () else link (d ^ "/" ^ f)) (entries (fromRoot d)))
-                 [("lib/unicode", "utf8.sml"), ("lib/compiler", "config.sml")]
+      val () = List.app (fn (d, own) => List.app (fn f => if List.exists (fn o' => o' = f) own then () else link (d ^ "/" ^ f))
+                                                 (entries (fromRoot d)))
+                 [("lib/unicode", ["utf8.sml"]), ("lib/compiler", ["config.sml", "library.build"])]
       val utf8 = read (fromRoot "lib/unicode/utf8.sml")
       val () = write (tree ^ "/lib/unicode/utf8.sml", utf8)
+      val compilerBuild = read (fromRoot "lib/compiler/library.build")
+      val () = need (String.isSubstring "\nfriends\n" compilerBuild, "lib/compiler/library.build names its friends on no line of their own")
+      val (before', after') = Substring.position "\nfriends\n" (Substring.full compilerBuild)
+      val () = write (tree ^ "/lib/compiler/library.build",
+                      Substring.string before' ^ "\nfriends\n  ../../toy.build\n"
+                      ^ Substring.string (Substring.triml (size "\nfriends\n") after'))
       val written = String.fields (fn c => c = #"\n") (read (fromRoot "rune.build"))
       val through =
         if List.exists (String.isPrefix "libraries ") written then written
