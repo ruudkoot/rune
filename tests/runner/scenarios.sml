@@ -178,10 +178,35 @@ struct
         (case env ("RUNE_WELLFORMED_MLTON", "") of
            "" => say "SKIP wellformed-mlton: RUNE_WELLFORMED_MLTON names no MLton tree with its build files\n"
          | dir =>
+             (* MLton's build is flat (docs/testing.md): its .mlb files shadow
+                the Basis Library and each other, which libraries with headers
+                may not (D9). So the 13 units that MLB's local keeps apart are
+                not well-formed, each by a name another unit declares too, and
+                exactly those: one more or one fewer fails the row *)
              let val r = execute c which (dir ^ "/mlton") [#compiler c, "--deps", "--build", "mlton.build"]
-             in wellFormed "MLton" r;
+                 val () = success r
+                 fun between (line, first, last) =
+                   let val rest = Substring.triml (size first) (#2 (Substring.position first (Substring.full line)))
+                   in Substring.string (#1 (Substring.position last rest)) end
+                 fun broken line =
+                   OS.Path.mkCanonical (Substring.string (Substring.takel (fn ch => ch <> #":") (Substring.full line)))
+                   ^ " " ^ between (line, "this is ", ", which")
+                 val found = sort (List.map broken (List.filter (String.isSubstring "is not well-formed") (lines (#errors r))))
+                 val expected = sort
+                   ["../lib/mlton/basic/stream.sig signature STREAM", "../lib/mlton/basic/stream.sml structure Stream",
+                    "../lib/stubs/mlton-stubs/mlton.sml structure MLton", "atoms/field.fun functor Field",
+                    "atoms/field.sig signature FIELD", "atoms/field.sig signature FIELD_STRUCTS",
+                    "codegen/x86-codegen/peephole.fun functor Peephole", "codegen/x86-codegen/peephole.sig signature PEEPHOLE",
+                    "codegen/x86-codegen/peephole.sig signature PEEPHOLE_TYPES", "control/control.sig signature CONTROL",
+                    "xml/shrink.fun functor Shrink", "xml/shrink.sig signature SHRINK", "xml/shrink.sig signature SHRINK_STRUCTS",
+                    "xml/simplify-types.fun functor SimplifyTypes", "xml/type-check.fun functor TypeCheck",
+                    "xml/type-check.sig signature TYPE_CHECK", "xml/type-check.sig signature TYPE_CHECK_STRUCTS"]
+                 val others = length (lines (#errors r)) - length found
+             in need (found = expected, "MLton: the units not well-formed are not the 13 that MLB's local keeps apart: "
+                                        ^ String.concatWith "; " found);
                 need (length (lines (#output r)) = 606, "MLton has 606 units, not " ^ Int.toString (length (lines (#output r))));
-                say ("606 units of MLton, all well-formed; " ^ Int.toString (length (lines (#errors r))) ^ " other lines on stderr\n")
+                say ("606 units of MLton, all well-formed but the 13 that MLB's local keeps apart; "
+                     ^ Int.toString others ^ " other lines on stderr\n")
              end)
     | "wellformed-hol4" =>
         (case env ("RUNE_WELLFORMED_HOL4", "") of

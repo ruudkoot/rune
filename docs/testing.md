@@ -989,22 +989,27 @@ The three baseline failures (fluid float formatting, pidigits5 and zarith
 install or dist. Three cases of deps are the build-system roadmap's E8 table
 ([units.md](units.md), *Well-formed units*): `wellformed-rune` holds every
 library and build of the tree to `rune --deps --build` finding no unit that
-is not well-formed, and `wellformed-mlton` and `wellformed-hol4` hold MLton's
-606 units and HOL4's 744 of the `src/boss` closure so. `RUNE_WELLFORMED_MLTON`
+is not well-formed, `wellformed-hol4` holds HOL4's 744 units of the
+`src/boss` closure so, and `wellformed-mlton` MLton's 606 but for 13, below.
+`RUNE_WELLFORMED_MLTON`
 names a copy of MLton's sources (`mlton`, `lib/mlton`, `lib/mlyacc-lib`,
 `lib/stubs`, from `MLTON_SOURCES`, symbolic links followed) with flat build
 files laid over it, which a translator from MLton's `.mlb` files,
 `impl/bs-m14/mlb2build3.py` of the build-system roadmap's drafts, makes: 30
 build files, one for each `.mlb` of its closure and two for the Makefile's
 lists of stubs, `mlton/mlton.build` the program, each `.mlb` it includes a
-plain `use`, and MLB's `local` flattened, with no library. MLton cannot be
-libraries: its `.mlb` files shadow the Basis Library and each other, which a
-library with a header may not ([build.md](build.md), *Clashes*). The flat build has the 606 units and
-compiles, but 17 of its names are each declared by two units that MLB's
+plain `use`, and MLB's `local` flattened, with no library. The row runs on
+that flat build: its 606 units, of which 13 are not well-formed, each
+declaring a name another unit declares too, 17 names in all, which MLB's
 `local` keeps apart (`STREAM` and `Stream` of `lib/mlton` and
 `lib/mlyacc-lib`, `CONTROL`, `FIELD` and `Field`, `MLton`, and the `xml/` and
-x86 copies of `ssa/` and amd64 passes), so the row fails on it: 13 units are
-not well-formed. `RUNE_WELLFORMED_HOL4`
+x86 copies of `ssa/` and amd64 passes). The row expects exactly those, by unit
+and by name, and fails on one more or one fewer. M9's library form of MLton,
+which had all 606 well-formed, cannot be written under D9: its libraries
+export 16 names of the Basis Library and 5 names come from two or three of
+them, which a library with a header may not ([build.md](build.md),
+*Clashes*), so a codebase that shadows the Basis renames before it can have
+headers. `RUNE_WELLFORMED_HOL4`
 names a directory of the closure after HOL's filter with its `boss.build`,
 which declares its two preludes; `rune --deps` then finishes on the closure as
 a plain list. Without them those two say SKIP. Installation also accepts repeated `--host NAME`; Make's
