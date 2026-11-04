@@ -438,7 +438,11 @@ struct
           (if List.exists (fn (m, _) => m = n) ownFixity then ()
            else raise Usage (file ^ ": exports fixity " ^ n ^ ", which no source declares"))
         else if List.exists (fn declared => exported=declared) declared then ()
-        else raise Usage (file ^ ": exports " ^ k ^ " " ^ n ^ ", which no source declares"))) exports
+        else raise Usage (file ^ ": exports " ^ k ^ " " ^ n ^ ", which no source declares"
+                          (* a datatype's is no type export: it would lend its
+                             constructors to a replication (CompilerBuildContext) *)
+                          ^ (if k = "type" then ": a `type` export is a type abbreviation's" else ""))))
+        exports
       (* The claim rule (D8): a public structure's signature is public. Where
          a header exports a structure or a functor, each signature of the
          library that a source ascribes it by name, or a structure inside it,

@@ -1,0 +1,5 @@
+name	kind	signature	realisations	status	origin	source
+AREA	signature			required	declared	tests/doc/noheader.lib/shapes.sml
+HIDDEN	signature			required	declared	tests/doc/noheader.lib/shapes.sml
+Helper	structure	HIDDEN		required	ascribed	tests/doc/noheader.lib/shapes.sml
+Shapes.Area	structure	AREA		required	ascribed	tests/doc/noheader.lib/shapes.sml

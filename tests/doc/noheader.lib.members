@@ -1,0 +1,34 @@
+{
+ "signatures": {
+  "AREA": {
+   "doc": "Areas of shapes.\n\n",
+   "page": "sig/AREA.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "square",
+     "spec": "val square : int -> int",
+     "doc": "`square s` is the area of a square whose side is `s`.\n\n**Example** `square 3 = 9`\n\n",
+     "page": "sig/AREA.md#val-square"
+    }
+   ]
+  },
+  "HIDDEN": {
+   "doc": "A helper that the header does not export.\n\n",
+   "page": "sig/HIDDEN.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "two",
+     "spec": "val two : int",
+     "doc": "Two.\n\n",
+     "page": "sig/HIDDEN.md#val-two"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Helper": "HIDDEN",
+  "Shapes.Area": "AREA"
+ }
+}

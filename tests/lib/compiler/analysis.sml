@@ -474,13 +474,16 @@ struct
         val ()=List.app write files
         val ()=OS.FileSys.mkDir (dir ^ "/scoped")
         val ()=write ("scoped/library.build","exports (structure Public)\nfiles ../hidden.sml ../public.sml end\n")
-        val ()=write ("scope.build","use scoped/library.build\nfiles final.sml end\n")
+        (* a library is imported by its name, here under the workspace's root *)
+        val ()=write ("rune.workspace","roots . end\n")
+        val ()=write ("scope.build","libraries scoped end\nfiles final.sml end\n")
         fun clean ()=(List.app (fn file => OS.FileSys.remove (dir ^ "/" ^ file))
-          ("scope.build" :: "scoped/library.build" :: List.map #1 files);OS.FileSys.rmDir (dir ^ "/scoped");OS.FileSys.rmDir dir)
+          ("scope.build" :: "rune.workspace" :: "scoped/library.build" :: List.map #1 files);OS.FileSys.rmDir (dir ^ "/scoped");OS.FileSys.rmDir dir)
         fun work () =
-          let val parent=compiler ()
+          let val parent=C.session {lib=SOME "lib",flags=[]}
               val context=A.create (parent,{context="scoped"})
-              val project=C.Project.read (parent,{file=dir ^ "/scope.build",workspace=NONE,variables=[],overlays=[],windows=false})
+              val workspace=C.Workspace.find {file=dir ^ "/scope.build",windows=false}
+              val project=C.Project.read (parent,{file=dir ^ "/scope.build",workspace=workspace,variables=[],overlays=[],windows=false})
               val inputs=List.map (fn source:C.Project.source =>
                 let val name=OS.Path.file (#file source)
                     val text= #2 (valOf (List.find (fn (file,_) => file=name) files))
@@ -489,10 +492,10 @@ struct
               fun run inputs=A.check (context,{project=SOME project,inputs=inputs,cancelled=fn () => false})
               val valid=run inputs
               val cached=run inputs
-              val bad=List.take (inputs,2) @ [input (dir ^ "/final.sml","val wrong=Hidden.x\n","2")]
+              val bad=[input (dir ^ "/final.sml","val wrong=Hidden.x\n","2")]
               val rejected=run bad
               (* a unit's name is rune's: no rank of its place, no spelling *)
-              val ()=check ("a unit is named as rune names it",A.unitAt (valid,{ordinal=2})=SOME "final.sml")
+              val ()=check ("a unit is named as rune names it",A.unitAt (valid,{ordinal=0})=SOME "final.sml")
               val twice=A.create (parent,{context="twice"})
               fun loose file=input (file,"val x=1\n","1")
               val snapshot=A.check (twice,{project=NONE,inputs=[loose (dir ^ "/hidden.sml"),loose (dir ^ "/./hidden.sml")],

@@ -155,10 +155,9 @@ struct
           "lib/z.sml declares a module needs-z.sml names, and is not well-formed"
     (* E8's table (the build-system roadmap's M16): Rune's own libraries and
        builds, MLton and HOL4's closure are well-formed but for the preludes
-       they declare: no unit breaks a rule. Another warning, a nested
-       library's use reaching in (D10) say, is not the row's. MLton and HOL4
-       are trees of their own, given by RUNE_WELLFORMED_MLTON and
-       RUNE_WELLFORMED_HOL4 (docs/testing.md) *)
+       they declare: no unit breaks a rule. MLton and HOL4 are trees of their
+       own, given by RUNE_WELLFORMED_MLTON and RUNE_WELLFORMED_HOL4
+       (docs/testing.md) *)
     | "wellformed-rune" =>
         let
           fun libraries dir =
@@ -179,10 +178,35 @@ struct
         (case env ("RUNE_WELLFORMED_MLTON", "") of
            "" => say "SKIP wellformed-mlton: RUNE_WELLFORMED_MLTON names no MLton tree with its build files\n"
          | dir =>
+             (* MLton's build is flat (docs/testing.md): its .mlb files shadow
+                the Basis Library and each other, which libraries with headers
+                may not (D9). So the 13 units that MLB's local keeps apart are
+                not well-formed, each by a name another unit declares too, and
+                exactly those: one more or one fewer fails the row *)
              let val r = execute c which (dir ^ "/mlton") [#compiler c, "--deps", "--build", "mlton.build"]
-             in wellFormed "MLton" r;
+                 val () = success r
+                 fun between (line, first, last) =
+                   let val rest = Substring.triml (size first) (#2 (Substring.position first (Substring.full line)))
+                   in Substring.string (#1 (Substring.position last rest)) end
+                 fun broken line =
+                   OS.Path.mkCanonical (Substring.string (Substring.takel (fn ch => ch <> #":") (Substring.full line)))
+                   ^ " " ^ between (line, "this is ", ", which")
+                 val found = sort (List.map broken (List.filter (String.isSubstring "is not well-formed") (lines (#errors r))))
+                 val expected = sort
+                   ["../lib/mlton/basic/stream.sig signature STREAM", "../lib/mlton/basic/stream.sml structure Stream",
+                    "../lib/stubs/mlton-stubs/mlton.sml structure MLton", "atoms/field.fun functor Field",
+                    "atoms/field.sig signature FIELD", "atoms/field.sig signature FIELD_STRUCTS",
+                    "codegen/x86-codegen/peephole.fun functor Peephole", "codegen/x86-codegen/peephole.sig signature PEEPHOLE",
+                    "codegen/x86-codegen/peephole.sig signature PEEPHOLE_TYPES", "control/control.sig signature CONTROL",
+                    "xml/shrink.fun functor Shrink", "xml/shrink.sig signature SHRINK", "xml/shrink.sig signature SHRINK_STRUCTS",
+                    "xml/simplify-types.fun functor SimplifyTypes", "xml/type-check.fun functor TypeCheck",
+                    "xml/type-check.sig signature TYPE_CHECK", "xml/type-check.sig signature TYPE_CHECK_STRUCTS"]
+                 val others = length (lines (#errors r)) - length found
+             in need (found = expected, "MLton: the units not well-formed are not the 13 that MLB's local keeps apart: "
+                                        ^ String.concatWith "; " found);
                 need (length (lines (#output r)) = 606, "MLton has 606 units, not " ^ Int.toString (length (lines (#output r))));
-                say ("606 units of MLton, all well-formed; " ^ Int.toString (length (lines (#errors r))) ^ " other lines on stderr\n")
+                say ("606 units of MLton, all well-formed but the 13 that MLB's local keeps apart; "
+                     ^ Int.toString others ^ " other lines on stderr\n")
              end)
     | "wellformed-hol4" =>
         (case env ("RUNE_WELLFORMED_HOL4", "") of
@@ -213,10 +237,6 @@ struct
            ("main.sml", "val () = print (Int.toString B.y ^ \"\\n\")"),
            ("uses-a.sml", "val () = print (Int.toString A.x ^ \"\\n\")"),
            ("list.build", "a.sml b.sml main.sml"),
-           (* a boundary is a library's *)
-           ("ab/library.build", "exports (structure B)\n../a.sml ../b.sml"),
-           ("boundary-used.build", "use ab/library.build main.sml"),
-           ("boundary-hidden.build", "use ab/library.build uses-a.sml"),
            (* what the language had, which a build no longer says *)
            ("no-group.build", "group a.sml b.sml end main.sml"),
            ("no-local.build", "local a.sml in b.sml end main.sml"),
@@ -244,63 +264,70 @@ struct
            ("vars-nested.build", "use nested/part.build $(VENDOR)/b.sml main.sml"),
            ("libs.build", "libraries json end a.sml b.sml main.sml"),
            ("demnad.build", "annotate \"demnad\" in a.sml end"),
-           (* what a boundary hides stays hidden, by any way back to it *)
+           (* a boundary is a library's, and a library is imported by its
+              name: boundary/ and exports/ are workspaces whose roots hold
+              theirs *)
+           ("boundary/rune.workspace", "roots . end"),
+           ("boundary/ab/library.build", "exports (structure B)\n../../a.sml ../../b.sml"),
+           ("boundary/used.build", "libraries ab end\n../main.sml"),
+           ("boundary/used-hidden.build", "libraries ab end\n../uses-a.sml"),
            ("boundary/x.sml", "structure Pub = struct val v = \"pub\" end\nstructure Priv = struct val v = \"private\" end"),
            ("boundary/x.build", "x.sml"),
-           ("boundary/pub/library.build", "exports (structure Pub)\nuse ../x.build"),
-           ("boundary/via.build", "use pub/library.build"),
            ("boundary/priv.sml", "val () = print (Priv.v ^ \"\\n\")"),
            ("boundary/pub.sml", "val () = print (Pub.v ^ \"\\n\")"),
-           ("boundary/second.build", "use pub/library.build\nuse x.build\npub.sml"),
-           ("boundary/second-hidden.build", "use pub/library.build\nuse x.build\npriv.sml"),
-           ("boundary/across.build", "use via.build\nuse x.build\npriv.sml"),
-           ("boundary/open.build", "use x.build\nuse pub/library.build\npriv.sml"),
-           ("boundary/in/library.build", "exports (structure Pub)\nuse ../x.build use ../x.build ../priv.sml"),
-           ("boundary/inside.build", "use in/library.build\npub.sml"),
-           ("boundary/priv/library.build", "exports (structure Priv)\nuse ../x.build"),
-           ("boundary/sibling.build", "use pub/library.build\nuse priv/library.build\npub.sml"),
-           (* an export a replay answers: what the first use declared, through what it showed *)
-           ("boundary/again/library.build", "exports (structure Pub)\nuse ../x.build"),
-           ("boundary/replayed.build", "use pub/library.build\nuse again/library.build\npub.sml"),
+           (* a build file used twice inside one boundary adds all it declared *)
+           ("boundary/seen.sml", "structure Seen = struct val v = Priv.v end"),
+           ("boundary/inner/library.build", "exports (structure Pub, structure Seen)\nuse ../x.build use ../x.build ../seen.sml"),
+           ("boundary/inside.sml", "val () = print (Seen.v ^ \"\\n\" ^ Pub.v ^ \"\\n\")"),
+           ("boundary/inside.build", "libraries inner end\ninside.sml"),
+           (* and outside an implements, which exports nothing, nothing *)
            ("boundary/implements.build", "implements Foo = use x.build end\nuse x.build\npriv.sml"),
            ("boundary/nope/library.build", "exports (structure Nope, structure Pub)\nuse ../x.build"),
-           ("boundary/nothing.build", "use nope/library.build\npub.sml"),
+           ("boundary/nothing.build", "libraries nope end\npub.sml"),
            ("boundary/nosig/library.build", "exports (signature NOPE, structure Pub)\nuse ../x.build"),
-           ("boundary/signature-nothing.build", "use nosig/library.build\npub.sml"),
-           (* a build file with a boundary of its own, which two libraries share *)
+           ("boundary/signature-nothing.build", "libraries nosig end\npub.sml"),
+           (* a library two others require *)
            ("boundary/shared.sml", "structure Shared = struct val s = \"shared\" end\nstructure Own = struct val v = \"own\" end"),
            ("boundary/shared/library.build", "exports (structure Shared)\n../shared.sml"),
            ("boundary/uses-shared.sml", "structure Other = struct val v = Shared.s end"),
            ("boundary/first.sml", "structure First = struct val v = Shared.s end"),
            ("boundary/shows.sml", "val () = print (First.v ^ \" \" ^ Other.v ^ \"\\n\")"),
            ("boundary/uses-own.sml", "val () = print Own.v"),
-           ("boundary/first/library.build", "exports (structure First)\nuse ../shared/library.build ../first.sml"),
-           ("boundary/other/library.build", "exports (structure Other)\nuse ../shared/library.build ../uses-shared.sml"),
-           ("boundary/diamond.build", "use first/library.build\nuse other/library.build\nshows.sml"),
-           ("boundary/diamond-hidden.build", "use first/library.build\nuse shared/library.build\nuses-own.sml"),
+           ("boundary/first/library.build", "requires shared end\nexports (structure First)\n../first.sml"),
+           ("boundary/other/library.build", "requires shared end\nexports (structure Other)\n../uses-shared.sml"),
+           ("boundary/diamond.build", "libraries first other end\nshows.sml"),
+           ("boundary/diamond-hidden.build", "libraries first shared end\nuses-own.sml"),
            (* a name of the Basis Library is no export, as MLton's build had CharArray, and a source that declares it makes it one *)
            ("boundary/lists.sml", "val () = print (Int.toString (List.length [Pub.v]) ^ \"\\n\")"),
            ("boundary/out/library.build", "exports (structure Pub, structure List)\nuse ../x.build ../lists.sml"),
-           ("boundary/outside.build", "use out/library.build"),
+           ("boundary/outside.build", "libraries out end\npub.sml"),
            ("boundary/rebind.sml", "structure List = struct open List val mine = 7 end\nstructure Option = Option"),
            ("boundary/bound/library.build", "exports (structure List, structure Option)\n../rebind.sml"),
-           ("boundary/rebound.sml", "val () = print (Int.toString List.mine ^ \" \" ^ Bool.toString (Option.isSome (SOME 1)) ^ \"\\n\")"),
-           ("boundary/rebound.build", "use bound/library.build\nrebound.sml"),
+           (* a client renames them, as a Basis name a library exports clashes with the Basis's (docs/build.md, Clashes) *)
+           ("boundary/rebound.sml", "val () = print (Int.toString BoundList.mine ^ \" \" ^ Bool.toString (BoundOption.isSome (SOME 1)) ^ \"\\n\")"),
+           ("boundary/rebound.build", "libraries bound (structure List as BoundList, structure Option as BoundOption) end\nrebound.sml"),
            ("boundary/datatype.sml", "datatype t = A | B of int\nstructure Show = struct fun show A = \"A\" | show (B n) = \"B\" end"),
            ("boundary/replicate.sml", "datatype u = datatype t\nval () = print (Show.show (B 3) ^ \"\\n\")"),
            ("boundary/dt/library.build", "exports (type t, structure Show)\n../datatype.sml"),
-           ("boundary/datatype.build", "use dt/library.build\nreplicate.sml"),
+           ("boundary/datatype.build", "libraries dt end\nreplicate.sml"),
            ("boundary/abbreviation.sml", "type t = int"),
            ("boundary/abbreviated.sml", "val () = print (Int.toString (3 : t) ^ \"\\n\")"),
            ("boundary/abbr/library.build", "exports (type t)\n../abbreviation.sml"),
-           ("boundary/abbreviation.build", "use abbr/library.build\nabbreviated.sml"),
+           ("boundary/abbreviation.build", "libraries abbr end\nabbreviated.sml"),
            (* --typecheck-only keeps what a boundary exports *)
+           ("exports/rune.workspace", "roots . end"),
            ("exports/a.sml", "signature S = sig val x : int end\nfunctor F (X : S) = struct val y = X.x + 1 end\nstructure Z = F (struct val x = 1 end)"),
            ("exports/b.sml", "structure Q : S = struct val x = 2 end\nstructure R = F (Q)\nval () = print (Int.toString (R.y + Z.y) ^ \"\\n\")"),
            ("exports/all/library.build", "exports (signature S, functor F, structure Z)\n../a.sml"),
-           ("exports/all.build", "use all/library.build\nb.sml"),
+           ("exports/all.build", "libraries all end\nb.sml"),
            ("exports/z/library.build", "exports (structure Z)\n../a.sml"),
-           ("exports/hidden.build", "use z/library.build\nb.sml"),
+           ("exports/hidden.build", "libraries z end\nb.sml"),
+           (* a workspace whose root is the directory a compile runs in *)
+           ("here/rune.workspace", "roots . end"),
+           ("here/thing/library.build", "exports (structure Thing)\nthing.sml"),
+           ("here/thing/thing.sml", "structure Thing = struct val n = 5 end"),
+           ("here/p.sml", "val () = print (Int.toString Thing.n ^ \"\\n\")"),
+           ("here/p.build", "libraries thing end\np.sml"),
            (* reaching into a library from outside it *)
            ("reach/lib/thing/library.build", "annotate \"demand\" in inner.sml end"),
            ("reach/lib/thing/inner.sml", "structure Inner = struct val x = 1 end"),
@@ -315,6 +342,22 @@ struct
            ("reach/lib/gen/sets/abc/set.build", "set.sml"),
            ("reach/lib/gen/sets/abc/set.sml", "structure Inner = struct val x = 2 end"),
            ("reach/pointer.build", "use lib/gen/current.build uses.sml"),
+           (* and into one with a header, which refuses all but its friends,
+              which may name its files or use a build file of it *)
+           ("reach/lib/sealed/library.build",
+            "exports (structure Inner)\nfriends ../../friend-in.build ../../friend-use.build ../../friend-whole.build end\n\
+            \annotate \"demand\" in inner.sml end"),
+           ("reach/lib/sealed/inner.sml", "structure Inner = struct val x = 3 end"),
+           ("reach/lib/sealed/own.build", "inner.sml"),
+           ("reach/sealed-in.build", "lib/sealed/inner.sml uses.sml"),
+           ("reach/sealed-use.build", "use lib/sealed/own.build uses.sml"),
+           ("reach/friend-in.build", "lib/sealed/inner.sml uses.sml"),
+           ("reach/friend-use.build", "use lib/sealed/own.build uses.sml"),
+           (* and a library is imported by its name, never by a use of its
+              library.build, from a friend or not, with a header or not *)
+           ("reach/sealed-whole.build", "use lib/sealed/library.build uses.sml"),
+           ("reach/friend-whole.build", "use lib/sealed/library.build uses.sml"),
+           ("reach/thing-whole.build", "use lib/thing/library.build uses.sml"),
            (* selection, by what a file uses *)
            ("select/lib/m/library.build", "annotate \"demand\" in e.sml end"),
            ("select/lib/m/e.sml", "structure E = struct val () = print \"(initialiser of E ran)\\n\" val v = 5 end"),
@@ -580,8 +623,8 @@ struct
   fun build c which () =
     case which of
       "list" => builds c which "list" [] "42\n"
-    | "boundary" => builds c which "boundary-used" [] "42\n"
-    | "boundary-hidden" => buildRefused c which "unbound variable or constructor: A.x"
+    | "boundary" => builds c which "boundary/used" [] "42\n"
+    | "boundary-hidden" => buildRefused c "boundary/used-hidden" "unbound variable or constructor: A.x"
     | "no-group" => buildRefused c which "the build language has no group"
     | "no-local" => buildRefused c which "the build language has no local"
     | "no-cache" => buildRefused c which "the build language has no cache"
@@ -635,15 +678,9 @@ struct
            | _ => raise Failed ("the closure of a build differs: " ^ #output r)
         end
     | "unknown-annotation" => buildRefused c "demnad" "unknown annotation \"demnad\""
-    | "use-through-boundary" => builds c which "boundary/second" [] "pub\n"
-    | "use-through-boundary-hidden" => buildRefused c "boundary/second-hidden" "unbound variable or constructor: Priv.v"
-    | "use-across-builds" => buildRefused c "boundary/across" "unbound variable or constructor: Priv.v"
-    | "use-diamond" => builds c which "boundary/diamond" [] "shared shared\n"
-    | "use-diamond-hidden" => buildRefused c "boundary/diamond-hidden" "unbound variable or constructor: Own.v"
-    | "use-first-open" => builds c which "boundary/open" [] "private\n"
+    | "requires-diamond" => builds c which "boundary/diamond" [] "shared shared\n"
+    | "requires-diamond-hidden" => buildRefused c "boundary/diamond-hidden" "unbound variable or constructor: Own.v"
     | "use-inside-boundary" => builds c which "boundary/inside" [] "private\npub\n"
-    | "use-sibling-boundary" => buildRefused c "boundary/sibling" "exports structure Priv, which no source declares"
-    | "use-replayed-export" => builds c which "boundary/replayed" [] "pub\n"
     | "use-after-implements" => buildRefused c "boundary/implements" "unbound variable or constructor: Priv.v"
     | "export-nothing" => buildRefused c "boundary/nothing" "exports structure Nope, which no source declares"
     | "export-no-signature" => buildRefused c "boundary/signature-nothing" "exports signature NOPE, which no source declares"
@@ -654,7 +691,7 @@ struct
               (success (compiler c (which ^ "-" ^ label) "boundary" ["--build", "rebound.build", "--cache-dir", "rebound-cache", "-o", "rebound.rbc"]);
                output (program c (which ^ "-run-" ^ label) "boundary" ["rebound.rbc"]) "7 true\n")
         in twice "cold"; twice "warm" end
-    | "export-datatype" => buildRefused c "boundary/datatype" "exports type t, which is a datatype"
+    | "export-datatype" => buildRefused c "boundary/datatype" "exports type t, which no source declares: a `type` export is a type abbreviation's"
     | "export-abbreviation" => builds c which "boundary/abbreviation" [] "3\n"
     | "typecheck-exports" =>
         (output (compiler c which "" ["--build", "exports/all.build", "--typecheck-only", "--no-cache", "--no-warnings"]) "";
@@ -674,8 +711,56 @@ struct
            output quiet "";
            output (compiler c (which ^ "-out") "reach" ["--build", "out.build", "--no-cache", "-o", "out.rbc"]) ""
         end
+    | "workspace-root-here" =>
+        (* its root is "" from there, which named no library (BasisManifest.libraryDir) *)
+        (success (compiler c which "here" ["--build", "p.build", "--no-cache", "-o", "p.rbc"]);
+         output (program c (which ^ "-run") "here" ["p.rbc"]) "5\n")
     | "reach-in-pointer" =>
         output (compiler c which "reach" ["--build", "pointer.build", "--no-cache", "-o", "pointer.rbc"]) ""
+    | "reach-in-header" =>
+        (* refused by a compile, --no-warnings or not, and by --plan, --build-list
+           and --deps, by a list of its files and by a use of a build file of it *)
+        let fun refusedBy build label flags =
+              refused (compiler c (which ^ "-" ^ build ^ "-" ^ label) "reach" (flags @ [build ^ ".build"]))
+                      (build ^ ".build: error: this build reaches into the library lib/sealed (1 path), which has a header")
+            fun everyWay build =
+              (refusedBy build "compile" ["--no-cache", "-o", build ^ ".rbc", "--build"];
+               refusedBy build "quiet" ["--no-cache", "--no-warnings", "-o", build ^ ".rbc", "--build"];
+               refusedBy build "plan" ["--plan"];
+               refusedBy build "list" ["--build-list"];
+               refusedBy build "deps" ["--deps", "--build"])
+        in everyWay "sealed-in"; everyWay "sealed-use" end
+    | "reach-in-gains-header" =>
+        (* a library that gains a header refuses a build that reached into
+           it, up to date as that build was *)
+        let val () = rmTree (#directory c ^ "/gains")
+            val () = put c "gains/lib/x/library.build" "annotate \"demand\" in inner.sml end"
+            val () = put c "gains/lib/x/inner.sml" "structure Inner = struct val x = 1 end"
+            val () = put c "gains/uses.sml" "val () = print (Int.toString Inner.x ^ \"\\n\")"
+            val () = put c "gains/p.build" "lib/x/inner.sml uses.sml"
+            fun compile label = compiler c (which ^ "-" ^ label) "gains" ["--build", "p.build", "--cache-dir", "cache", "-o", "p.rbc"]
+            val () = success (compile "before")
+            val () = success (compile "up-to-date")
+            val () = put c "gains/lib/x/library.build" "exports (structure Inner)\nannotate \"demand\" in inner.sml end"
+        in refused (compile "after") "p.build: error: this build reaches into the library lib/x (1 path), which has a header" end
+    | "reach-in-whole" =>
+        (* a library is imported by its name: a use of its library.build is
+           refused, a friend's too, with a header or not, by a compile and by
+           --plan *)
+        List.app (fn (build, library) =>
+                    let val message = build ^ ".build: use lib/" ^ library ^ "/library.build imports a library by its build file; "
+                                      ^ "import it with libraries NAME end"
+                    in refused (compiler c (which ^ "-" ^ build) "reach" ["--build", build ^ ".build", "--no-cache", "-o", build ^ ".rbc"])
+                               message;
+                       refused (compiler c (which ^ "-" ^ build ^ "-plan") "reach" ["--plan", build ^ ".build"]) message
+                    end)
+                 [("sealed-whole", "sealed"), ("friend-whole", "sealed"), ("thing-whole", "thing")]
+    | "reach-in-friend" =>
+        (* a friend reaches in either way, with no warning *)
+        List.app (fn build =>
+                    (output (compiler c (which ^ "-" ^ build) "reach" ["--build", build ^ ".build", "--no-cache", "-o", build ^ ".rbc"]) "";
+                     output (program c (which ^ "-" ^ build ^ "-run") "reach" [build ^ ".rbc"]) "3\n"))
+                 ["friend-in", "friend-use"]
     | "selection-by-uses" =>
         let fun selected name flags sources expected =
               let val () = success (compiler c ("select-" ^ name) "select" (["--lib", "lib", "--no-warnings"] @ flags @ ["-o", name ^ ".rbc"] @ sources))
@@ -918,9 +1003,9 @@ struct
                     "path-variable", "missing-variable", "config-missing", "path-variable-nested", "build-list", "include-with-build",
                     "plan-command-line",
                     "plan-refused", "build-list-closure", "unknown-annotation",
-                    "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-diamond", "use-diamond-hidden", "use-first-open", "use-inside-boundary",
-                    "use-sibling-boundary", "use-replayed-export", "use-after-implements", "export-nothing",
+                    "requires-diamond", "requires-diamond-hidden", "use-inside-boundary", "use-after-implements", "export-nothing",
                     "export-no-signature", "export-from-outside", "export-rebound", "export-datatype", "export-abbreviation", "typecheck-exports", "reach-in", "reach-in-pointer",
+                    "reach-in-header", "reach-in-gains-header", "reach-in-whole", "reach-in-friend", "workspace-root-here",
                     "selection-by-uses", "install-no-basis", "stale-index", "clean-overlay",
                     "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two",
                     "virtual-table-list", "virtual-table-tree", "virtual-table-cache", "virtual-table-whole", "virtual-table-none",
