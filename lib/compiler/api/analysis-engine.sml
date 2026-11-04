@@ -762,19 +762,23 @@ struct
            them (restated, usagesOf) *)
         val restated=ref StringMap.empty : (string*string) list StringMap.map ref
         fun usagesOf (k:kept)=getOpt (StringMap.find (!restated,#name (#entry k)),#usages k)
+        (* the identity in a pickle's header *)
+        fun ownOf pickle=(let val {uname,digest,...}=UnitBasis.header pickle in SOME (uname ^ "@" ^ digest) end) handle Pickle.Bad _ => NONE
         (* what taking a unit again asks of its usages and its pickle: again
-           where a binder of it changed, else as it was *)
+           where a binder of it changed, else as it was. It is worked out at
+           the unit's place before the unit is loaded: once loaded, the unit
+           binds its own names, and a usage of one of them is no longer of
+           the binder it had, so that every later walk would load it whole *)
         fun takingOf (k:kept)=case (!(#taking k),unchanged k) of
             (SOME taking,true) => taking
           | _ =>
             let val pickle= #pickle (#entry k)
                 val taking={exact=UnitBasis.exact (usagesOf k),named=(SOME (UnitBasis.namedBy pickle)) handle Pickle.Bad _ => NONE,
-                  own=(let val {uname,digest,...}=UnitBasis.header pickle in SOME (uname ^ "@" ^ digest) end) handle Pickle.Bad _ => NONE}
+                  own=ownOf pickle}
             in #taking k:=SOME taking;taking end
         (* UnitBasis.exactEntry, by what is kept of it *)
-        fun exactAgain (k:kept)=
-          let val {exact,named,...}=takingOf k
-          in exact andalso (case named of NONE => true | SOME named => List.all (fn i => isSome (UnitBasis.loadedAs i)) named) end
+        fun exactBy ({exact,named,...}:taking)=
+          exact andalso (case named of NONE => true | SOME named => List.all (fn i => isSome (UnitBasis.loadedAs i)) named)
         fun restate (k:kept)=case !(#live k) of NONE => () | SOME {result,bindings,position,light} =>
           let val was=identityOf k
               fun bound (_,value)=UnitBasis.canonical (binderOfValue value)=was
@@ -1061,8 +1065,9 @@ struct
                      let val at=UnitBasis.counters ()
                          (* by need, where it holds by its binders and its basis
                             names the units loaded *)
-                         val light=lazyWorld andalso not (null (#binds k)) andalso not (registers (#binds k))
-                           andalso exactAgain k
+                         val taking=if lazyWorld andalso not (null (#binds k)) andalso not (registers (#binds k))
+                           then SOME (takingOf k) else NONE
+                         val light=case taking of SOME taking => exactBy taking | NONE => false
                          val ()=exposed:=true
                          val tried=(SOME (if light then UnitBasis.lightLoad ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at=at},
                                             identityOf k,#binds k,#paths k)
@@ -1072,7 +1077,8 @@ struct
                            handle UnitBasis.Missing _ => (UnitBasis.abandon at;NONE) | Pickle.Bad _ => (UnitBasis.abandon at;NONE)
                      in exposed:=false;case tried of
                           SOME result => (reused:= !reused+1;loaded:= !loaded+1;
-                            Option.app (fn own => UnitBasis.alias (own,identityOf k)) (#own (takingOf k));
+                            Option.app (fn own => UnitBasis.alias (own,identityOf k))
+                              (case taking of SOME taking => #own taking | NONE => ownOf (#pickle entry));
                             if light then byNeed:= !byNeed+1 else ();
                             SOME (entry,identityOf k,ref (SOME {result=result,bindings=if light then noBindings else !UnitBasis.lastBindings,
                                                                 position=here,light=light}),
