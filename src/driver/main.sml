@@ -543,6 +543,16 @@ struct
     !editorGave
     orelse List.exists (fn (file, text) => StringMap.find (!Steps.made, file) <> SOME text) (StringMap.listItemsi (!Source.overlays))
 
+  (* whether the library in dir names build a friend in its header *)
+  fun isFriendOf (build : string, dir : string) : bool =
+    let val file = OS.Path.joinDirFile {dir = if dir = "" then "." else dir, file = "library.build"}
+    in
+      List.exists (fn BuildFile.Header {friends, ...} => List.exists (fn f => BasisManifest.isFriend (dir, f, build)) friends
+                    | _ => false)
+                  (BuildFile.parse (file, readText file))
+    end
+    handle _ => false
+
   fun compile () : OS.Process.status =
     let
       val () = editorGave := false
@@ -569,7 +579,8 @@ struct
                ^ (if paths=1 then " path" else " paths") ^ "), which is reached through its interface"))
              (CompilerProject.reaches {references= #references project,windows=onWindows (),
                 isLibrary=fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir=dir,file="library.build"},[])
-                                    handle OS.SysErr _ => false});
+                                    handle OS.SysErr _ => false,
+                isFriend=isFriendOf});
            Error.flushWarnings ())
       val () = Options.libraries := librariesOf project
       (* the functors its build files mark to be inlined (M6b) *)

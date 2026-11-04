@@ -399,9 +399,8 @@ reproducing itself by hand, as the oracle `bootstrap` of
 
 ```
 make bin/rune.rbc bin/rune.stack.rbc
-srcs=$(sh scripts/plan-files.sh rune.plan)
-bin/rune-boot -o build/rune.stage2.rbc $srcs && cmp bin/rune.rbc build/rune.stage2.rbc
-bin/rune-boot --target=stack -o build/rune.stage2.stack.rbc $srcs && cmp bin/rune.stack.rbc build/rune.stage2.stack.rbc
+bin/rune-boot --build rune.build --whole --no-cache -o build/rune.stage2.rbc && cmp bin/rune.rbc build/rune.stage2.rbc
+bin/rune-boot --target=stack --build rune.build --whole --no-cache -o build/rune.stage2.stack.rbc && cmp bin/rune.stack.rbc build/rune.stage2.stack.rbc
 ```
 
 What is different there:
@@ -651,8 +650,11 @@ Remote WSL, checkout library configuration and publishing.
 ## How the build works
 
 * `rune.build` is the compiler's build file ([build.md](build.md)): the
-  ordered list of the compiler's source files, between `build/config.sml` and
-  the self-hosted entry point, and `rune --build rune.build` compiles it.
+  libraries it is written on (`libraries unicode json digest`), then
+  `build/config.sml`, the compiler's library's sources through
+  `lib/compiler/internal.build`, which the library names it a friend to use,
+  the driver, and the self-hosted entry point; `rune --build rune.build`
+  compiles it.
   `rune.plan` beside it is its plan, which the other SML systems read their
   list from (below). `scripts/gen-build-files.sh` generates `build/rune.mlb`
   (MLton), `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use`
@@ -797,7 +799,12 @@ the result is the compiler you get:
    tree's Basis under `build/bootstrap/lib`, links to its files, and it
    emits this tree's bytecode.
 2. `bin/rune-bootstrap` runs stage 0 on `bin/runevm`. It compiles the same
-   sources into `bin/rune.rbc` (stage 1, register bytecode). `make boot`
+   sources into `bin/rune.rbc` (stage 1, register bytecode), through
+   `rune.build` (`--build rune.build --whole --no-cache`), as every other
+   way of building the compiler does (`make check-reproducible`): a library
+   that `rune.build` names is found under `--lib`, and its files are named so
+   in the bytes, where a host's list names them from the top of the
+   checkout. `make boot`
    then writes `bin/rune-boot`, a wrapper that runs
    `runevm --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
    it. `make` and `make dist` do this too: the compiler and the indexes in
@@ -807,9 +814,9 @@ the result is the compiler you get:
    the six host builds on every test program, the examples, and the
    compiler sources themselves. `check-cross` knows it as the build `boot`,
    hence the name `bin/rune-boot`.
-4. `make bootstrap` compiles the compiler with `bin/rune` into
-   `bin/rune.stage2.rbc` and checks with `cmp` that it is identical to
-   `bin/rune.rbc`: the compiler reproduces itself byte for byte. It does the
+4. `make bootstrap` compiles the compiler with `bin/rune`, through
+   `rune.build`, into `bin/rune.stage2.rbc` and checks with `cmp` that it is
+   identical to `bin/rune.rbc`: the compiler reproduces itself byte for byte. It does the
    same with `--target=stack` against `bin/rune.stack.rbc`.
 
 `RUNE_HEAP` (64 MiB) is only the semispace mapped up front; the heap grows on

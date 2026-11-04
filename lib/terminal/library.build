@@ -2,7 +2,11 @@
    styles, keys, the terminal device, and the line editor; its files in
    load order, in the form of lib/basis/library.build. It is written on
    lib/unicode, for UTF-8 and the widths of what it draws: *)
-libraries unicode end
+requires unicode end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Device, structure Emulator, structure History, structure Key, structure LineEdit,
+         structure PosixDevice, structure Style, signature DEVICE, signature EMULATOR, signature HISTORY,
+         signature KEY, signature LINE_EDIT, signature STYLE, functor LineEditFn)
 (* A file that every compiler of tests/lib/run-hosts.sh builds is
    "demand"; one that names Rune's own Terminal is "host=no" as well. *)
 annotate "demand" in

@@ -1,5 +1,9 @@
 (* LSP protocol values and the pinned method/property inventory. *)
-libraries jsonrpc json unicode end
+requires jsonrpc json unicode end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure LspMethods, structure LspPosition, structure LspProtocol, structure LspRequests,
+         structure LspUri, signature LSP_METHODS, signature LSP_POSITION, signature LSP_PROTOCOL,
+         signature LSP_REQUESTS, signature LSP_URI)
 annotate "demand" in
   methods_sig.sml
   methods.sml

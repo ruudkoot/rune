@@ -3,7 +3,11 @@
    language and the program of a suite; its files in load order, in the form
    of lib/basis/library.build. It is written on lib/test/property, for
    properties as tests: *)
-libraries test/property end
+requires test/property end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Expect, structure Golden, structure Suite, structure Test, structure TestFilter,
+         signature EXPECT, signature GOLDEN, signature SUITE, signature SUITE_MAIN, signature SUITE_RUN,
+         signature TEST, signature TEST_FILTER, functor Main)
 (* Every compiler of tests/lib/run-hosts.sh builds every file. *)
 annotate "demand" in
   expect_sig.sml

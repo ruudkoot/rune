@@ -5,7 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 2 |
+| Implementations | 1 |
 | Documentation | 4 of 4 entries documented |
 | Tests | not listed |
 | Source | [lib/digest/hmac\_sig.sml](../../../../lib/digest/hmac_sig.sml) |
@@ -14,13 +14,11 @@
 
 ```sml
 signature HMAC
-functor HmacFn (...) :> HMAC
 structure HmacSha256 : HMAC
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `HmacFn` | HmacFn: HMAC over a hash function; HmacSha256 is it over Sha256. | [lib/digest/hmac\_fn.sml](../../../../lib/digest/hmac_fn.sml) |
 | [`HmacSha256`](../str/HmacSha256.md) | HmacSha256: HMAC-SHA-256, the code RFC 4231's vectors check. | [lib/digest/hmac\_fn.sml](../../../../lib/digest/hmac_fn.sml) |
 
 HMAC (RFC 2104): a message authenticated by a key, over a hash

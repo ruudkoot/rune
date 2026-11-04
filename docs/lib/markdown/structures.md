@@ -15,7 +15,6 @@ the signature names and no others.
 | Structure |  | Signature | Realisations |  | Source |
 | --- | --- | --- | --- | --- | --- |
 | [`Markdown`](str/Markdown.md) | :> | [`MARKDOWN`](sig/MARKDOWN.md) |  |  | [lib/markdown/markdown.sml](../../../lib/markdown/markdown.sml) |
-| [`MarkdownEntities`](str/MarkdownEntities.md) |  | *none* |  |  | [lib/markdown/entities.sml](../../../lib/markdown/entities.sml) |
 
 ---
 

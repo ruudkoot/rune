@@ -76,7 +76,7 @@ struct
         val () = Scenarios.output (command "units" "" [bin ^ "/runevm", "units.rbc"]) "hello\n"
         val () = compile "compile-stack" ["--target=stack"] "hello.sml" "stack.rbc"
         val () = Scenarios.output (command "stack" "" [bin ^ "/runevm-stack", "stack.rbc"]) "hello\n"
-        val () = compile "compile-library" ["--library", "test/property/basis"] "property.sml" "property.rbc"
+        val () = compile "compile-library" ["--library", "test/property/basis", "--library", "test/property"] "property.sml" "property.rbc"
         val () = Scenarios.output (command "library" "" [bin ^ "/runevm", "property.rbc"]) "property\n"
         val () = Scenarios.success (command "translate-native" "" [bin ^ "/runeopt", "stack.rbc", "-o", "hello-native"])
         val () = Scenarios.bytecode (work ^ "/hello-native")

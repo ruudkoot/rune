@@ -1,4 +1,11 @@
 (* Reusable C declaration frontend; no FFI ownership or SML naming policy. *)
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure CAnalysis, structure CConst, structure CDeclarator, structure CEnumConst,
+         structure CExpression, structure CFiles, structure CInteger, structure CLayout, structure CLex,
+         structure CParse, structure CPreprocess, structure CType, signature C_ANALYSIS, signature C_CONST,
+         signature C_DECLARATOR, signature C_ENUM_CONST, signature C_EXPRESSION, signature C_FILES,
+         signature C_INTEGER, signature C_LAYOUT, signature C_LEX, signature C_PARSE, signature C_PREPROCESS,
+         signature C_TYPE)
 annotate "demand" in
   lex_sig.sml
   lex.sml

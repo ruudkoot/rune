@@ -1,4 +1,4 @@
-(* libraries: test/unit *)
+(* libraries: test/unit unicode *)
 (* Keys typed ahead (docs/repl.md, While a declaration runs): the line
    editor over a terminal of script -- a device whose reads are given and
    whose writes are kept -- given in one read the key that ends a line

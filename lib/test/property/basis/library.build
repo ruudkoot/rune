@@ -1,7 +1,22 @@
 (* The arbitraries of the Basis Library's types for the property-testing
    library (docs/plans/quickcheck.md, M6 and D10), its files in load order,
    in the form of lib/basis/library.build. It is written on test/property: *)
-libraries random test/property end
+requires random test/property end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure BasisDataArb, structure CharArb, structure CharArray2Arb, structure CharArrayArb,
+         structure CharArraySliceArb, structure CharVectorArb, structure CharVectorSliceArb,
+         structure DateArb, structure FixedIntArb, structure IEEERealArb, structure INet6SockArb,
+         structure Int16Arb, structure Int32Arb, structure Int64Arb, structure Int8Arb, structure IntArb,
+         structure IntArray2Arb, structure IntInfArb, structure LargeIntArb, structure LargeRealArb,
+         structure LargeWordArb, structure PositionArb, structure RandomArb, structure Real32Arb,
+         structure Real64Arb, structure RealArb, structure SML90Arb, structure StringArb,
+         structure SubstringArb, structure SysWordArb, structure SystemArb, structure TimeArb,
+         structure WideCharArb, structure WideStringArb, structure WideSubstringArb, structure Word16Arb,
+         structure Word32Arb, structure Word64Arb, structure Word8Arb, structure Word8Array2Arb,
+         structure Word8ArrayArb, structure Word8ArraySliceArb, structure Word8VectorArb,
+         structure Word8VectorSliceArb, structure WordArb, signature ARB_OF, signature BASIS_DATA_ARB,
+         signature DATE_ARB, signature IEEE_REAL_ARB, signature INET6_SOCK_ARB, signature SML90_ARB,
+         signature SYSTEM_ARB)
 (* A file that every compiler of tests/lib/run-hosts.sh builds is "demand";
    one that names a structure the Basis leaves optional (Int8, WideChar,
    SML90, IntArray2) or Rune's own (INet6Sock) is "host=no" as well. The

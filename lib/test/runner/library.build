@@ -4,7 +4,12 @@
    load order, in the form of lib/basis/library.build. It is written on
    lib/test/unit, for the tree of tests and the filters, and on
    lib/terminal, for the status line: *)
-libraries test/unit terminal end
+requires test/unit terminal end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Cli, structure Expectations, structure History, structure Report, structure Requirements,
+         structure Run, structure Scheduler, structure Supervisor, signature CLI, signature EXPECTATIONS,
+         signature HISTORY, signature REPORT, signature REQUIREMENTS, signature RUN, signature SCHEDULER,
+         signature SUPERVISOR)
 (* Rune's alone: it runs children through Subprocess and times them by
    Runtime.clock, which no other compiler has. *)
 annotate "demand" "host=no" in
