@@ -132,7 +132,6 @@
  },
  "structures": {
   "Hex": "HEX",
-  "HmacFn": "HMAC",
   "HmacSha256": "HMAC",
   "Murmur2": "MURMUR2",
   "Sha256": "DIGEST"

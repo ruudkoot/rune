@@ -36,7 +36,7 @@ flowchart TD
   n2(["HEX"])
   n3["Hex"]
   n4(["HMAC"])
-  n5["HmacFn<br>HmacSha256"]
+  n5["HmacSha256"]
   n1 --> n0
   n3 --> n2
   n5 --> n4

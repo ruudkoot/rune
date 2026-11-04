@@ -25,7 +25,7 @@ What each means is on [`BASIS_DATA_ARB`](../sig/BASIS_DATA_ARB.md); the types ar
 | val | [`bufferMode`](../sig/BASIS_DATA_ARB.md#val-buffermode) | `{co : IO.buffer_mode -> Word64.word, eq : (IO.buffer_mode * IO.buffer_mode -> bool) option, gen : IO.buffer_mode Gen.gen, show : IO.buffer_mode -> string}` |
 | val | [`canonicalAbsolutePath`](../sig/BASIS_DATA_ARB.md#val-canonicalabsolutepath) | `{co : string -> Word64.word, eq : (string * string -> bool) option, gen : string Gen.gen, show : string -> string}` |
 | val | [`path`](../sig/BASIS_DATA_ARB.md#val-path) | `{co : string -> Word64.word, eq : (string * string -> bool) option, gen : string Gen.gen, show : string -> string}` |
-| val | [`radix`](../sig/BASIS_DATA_ARB.md#val-radix) | `{co : StringCvt.radix -> Word64.word, eq : (StringCvt.radix * StringCvt.radix -> bool) option, gen : StringCvt.radix Gen.gen, show : StringCvt.radix -> string}` |
+| val | [`radix`](../sig/BASIS_DATA_ARB.md#val-radix) | `{co : RuneWideStringCvt.radix -> Word64.word, eq : (RuneWideStringCvt.radix * RuneWideStringCvt.radix -> bool) option, gen : RuneWideStringCvt.radix Gen.gen, show : RuneWideStringCvt.radix -> string}` |
 | val | [`reader`](../sig/BASIS_DATA_ARB.md#val-reader) | `{co : (int -> (char * int) option) -> Word64.word, eq : ((int -> (char * int) option) * (int -> (char * int) option) -> bool) option, gen : (int -> (char * int) option) Gen.gen, show : (int -> (char * int) option) -> string}` |
 | val | [`traversal`](../sig/BASIS_DATA_ARB.md#val-traversal) | `{co : Array2.traversal -> Word64.word, eq : (Array2.traversal * Array2.traversal -> bool) option, gen : Array2.traversal Gen.gen, show : Array2.traversal -> string}` |
 

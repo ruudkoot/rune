@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 2 requirements between the 3 files become 2 arrows.
+library and not a wall of lines: the 1 requirements between the 2 files become 1 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,28 +23,17 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Not in an area<br>(1)"]
-  a1["Text<br>(2)"]
-  a1 -- 1 --> a0
-```
-
-## Not in an area
-
-```mermaid
-flowchart TD
-  n0["MarkdownEntities"]
+  a0["Text<br>(2)"]
 ```
 
 ## Text
 
 ```mermaid
 flowchart TD
-  n1(["MARKDOWN"])
-  n2["Markdown"]
-  n2 --> n1
+  n0(["MARKDOWN"])
+  n1["Markdown"]
+  n1 --> n0
 ```
-
-It also needs Not in an area (1).
 
 ---
 
