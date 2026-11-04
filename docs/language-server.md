@@ -301,7 +301,8 @@ walked, reloaded or looked at. An edit that moves an identity, a name added, a
 type changed, walks from the start: each later unit is taken by its usages,
 reloaded or elaborated again as they say, which is O(later units); its usages
 are looked at only where a unit before it in the walk bound a key they name and
-changed identity (*The scale target*). What a check
+changed identity, after a walk that went through to the end (*The scale
+target*). What a check
 would otherwise repeat is memoised too.
 
 * **The plan.** Discovery and a check share a memo of a file's plan: the targets'
@@ -513,7 +514,12 @@ on 16 processors at a load of 12 to 14, the worker's heap at 512 MiB.
   at the usages of only those that name a key a unit before them in the walk
   bound, before or after, and was elaborated to another identity: a later unit
   taken again has its identity, so at its place no other binder can have
-  changed, and every unit the last check kept held there. What a later unit's
+  changed, and every unit the last walk kept held there. That holds where the
+  last walk went through to the end, from the start, over the same plan and
+  libraries, and the units come in its order; a walk stopped by a unit that
+  fails, or a question's, leaves later units as an earlier walk kept them, and
+  the next walk looks at every usage (`compiler-analysis/past-a-failure`, which
+  fails where it does not). What a later unit's
   usages and pickle ask of it is kept with it while its binders stand. So a
   later unit costs about 40k VM instructions, where it cost 340k: at 1,017
   units an added name 122.6M (0.15-0.17 s) where it cost 349.7M (0.30-0.48 s),

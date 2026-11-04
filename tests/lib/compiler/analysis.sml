@@ -154,6 +154,25 @@ struct
         val ()=routed ("a compaction loads every unit again",compacted,true,0,3,0,0)
         val ()=check ("and changes no answer",sameUnits (compacted,back))
     in A.close context;C.close parent end
+  (* A walk that stops at a unit that fails leaves the units after it as an
+     earlier walk kept them, against identities since moved: the next walk
+     looks at their usages, though no unit before them changes in it. *)
+  fun pastAFailure () =
+    let val parent=compiler ()
+        val context=A.create (parent,{context="past"})
+        val ()=A.focus (context,SOME ["library.sml"])
+        val user=input ("user.sml","val doubled=area Round+1\n","1")
+        val first=analyze (context,[library,client,user])
+        val ()=check ("the first check has no error",null (A.diagnostics first))
+        val boolean=around ("fun area Round=1 | area Square=2","fun area Round=true | area Square=false") library
+        val failed=analyze (context,[boolean,around ("val made","val wrong:int=true\nval made") client,user])
+        val ()=check ("a unit after a moved identity fails",not (null (A.diagnostics failed)))
+        val inputs=[boolean,client,user]
+        val after=analyze (context,inputs)
+        val fresh=freshly (parent,inputs)
+    in check ("the units past it, unchanged since, equal fresh: " ^ Int.toString (length (A.diagnostics after)) ^ " and " ^
+         Int.toString (length (A.diagnostics fresh)) ^ " diagnostics",sameUnits (after,fresh) andalso not (null (A.diagnostics fresh)));
+       A.close context;C.close parent end
   (* The path a type is printed by depends on the environment a unit stands in,
      which no usage covers: an open unit past a moved identity is elaborated. *)
   fun printedPaths () =
@@ -925,6 +944,7 @@ structure CompilerAnalysisTestMain=Main (struct
     [Test.it "observations" CompilerAnalysisTests.observations,
      Test.it "snapshots-checkpoints-cancellation" CompilerAnalysisTests.snapshots,
      Test.it "kept-units" CompilerAnalysisTests.keptUnits,
+     Test.it "past-a-failure" CompilerAnalysisTests.pastAFailure,
      Test.it "printed-paths" CompilerAnalysisTests.printedPaths,
      Test.it "cancelled-walks" CompilerAnalysisTests.cancelledWalks,
      Test.it "closed-units" CompilerAnalysisTests.closedUnits,
