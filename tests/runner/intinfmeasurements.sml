@@ -28,7 +28,7 @@ struct
         val manifest=Json.decode (read (fixtureRoot ^ "/manifest.json"))
         val definitions=array (field "workloads" manifest)
         val sourceFiles=["tests/runner/intinf-main.sml","tests/runner/intinfchecks.sml","tests/runner/intinfbackends.sml","tests/runner/intinfhardening.sml","tests/runner/intinfstorage.sml","tests/runner/commandwords.sml","tests/runner/sh.sml","tests/runner/children.sml","tests/runner/intinfmeasurements.sml","tests/runner/measured.sml","tests/intinf/checks.sml","tests/intinf/oracle.sml",
-             "tests/intinf/workloads.json","tests/intinf/fixtures/manifest.json","tests/intinf/fixtures/vectors.sml","lib/basis/intinf.sml","lib/basis/MANIFEST",
+             "tests/intinf/workloads.json","tests/intinf/fixtures/manifest.json","tests/intinf/fixtures/vectors.sml","lib/basis/intinf.sml",
              "Makefile","runtime/prims.c","runtime/value.h","runtime/vm.h","runtime/image.c","src/isa/prims.sml","tests/basis/host/rune-prim.sml",
              "lib/basis/library.build","rune.build","runtime/intinf.c"]
         val sourceFiles=List.filter (exists o fromRoot) sourceFiles

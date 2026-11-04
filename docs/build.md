@@ -259,12 +259,54 @@ is to a program:
 no header. In an ordinary program build, the declaration selects those
 libraries as `--library random` does; explicit command-line selections are
 retained. What each
-file provides and requires is not written down: `rune --basis-index DIR`
-works it out from the sources (`Deps`, docs/units.md, The graph) and writes
-`DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). It reads
-the build file as a compile does, through `CompilerProject`, and lives in
-`LibraryIndex`, which the compiler's driver and `runedoc` both reach. `make
-manifests` makes them all, and they are not committed.
+file provides and requires is not written down: it is the library's index,
+which the compiler works out from the build file and the sources (`Deps`,
+docs/units.md, The graph) where it is asked for, and which is never a file
+in the tree. *A library's index*, below, says how.
+
+### A library's index
+
+A library's index says, of each of its files, its class, its host, what it
+provides and what it requires, and of the library what its header says:
+what it is written on, what it exports, its friends and views, the fixity
+it exports and what it marks to inline. Every reader asks one query for it,
+`LibraryIndex.index`: a compile and its selection, a `-j` child, the
+compiler's API and its analysis, and `runedoc`. `rune --basis-index DIR`
+makes the index of the library in `DIR` again and prints it, a line a file:
+
+```
+$ rune --basis-index lib/digest
+# The index of a library, from its library.build (rune --basis-index)
+digest_sig.sml | demand | yes | DIGEST |
+sha256.sml | demand | yes | Sha256 | Array Char CharVector DIGEST IntInf String Vector Word Word32
+hex_sig.sml | demand | yes | HEX |
+hex.sml | demand | yes | Hex | Char HEX String
+...
+```
+
+with what a client of the library cannot act on said, as a warning: a
+library with no header, units that are not well-formed.
+
+**The store keeps it.** An index is made where a compile first asks for it,
+and kept in the compile's store ([units.md](units.md), *The store*) as a
+record of what it was made of: the bytes of the library's build files and of
+each of its sources, by their hashes, and the index of each library it was
+made against -- the Basis Library and the libraries it is written on -- by
+the hash of that index. A record is believed only where all of these are as
+they were, each file by its stat where that is racily clean and else by its
+bytes, so that an edit of a library's build file or of any file it names is
+a miss, and the index is made again: **a stale index cannot be read.** What
+each file was to the index is kept with it, by the file's hash and the
+fixity it was read in, so that the index made again parses the files
+edited and no other. The frozen layer, `lib/cache`, ships the records of
+the libraries it holds, by their place under `--lib`, and they hold
+wherever it is installed: there a first compile reads each file once, to
+see that it is what the record says, and keeps the record again in its
+own store. `--no-cache` turns units off, not the index: such a compile reads
+the store's records, and writes none. A compile with no store (`RUNE_CACHE`
+empty, the compiler's API and an editor's analysis, `runedoc`) makes what it
+does not find, and holds it for its session, where a later compile holds it
+to what it was made of as it does a record of the store.
 
 ### A library's header
 
@@ -310,8 +352,8 @@ prelude and a `final` file an entry unit, which they need not keep.
   `--basis-check` reject a missing export or the wrong kind of declaration, and
   `--basis-index` rejects a `fixity` export no file directs and a file that
   uses a name a library it requires does not export, which would otherwise show
-  only when a client failed to compile. An invalid index leaves the existing
-  manifest intact. A fixity directive at the top level of a file belongs in an
+  only when a client failed to compile. An invalid index is no index: every
+  compile that asks for it is refused, until it is valid. A fixity directive at the top level of a file belongs in an
   `always` file, as a demand file declares modules and types only; that file
   loads with the library, so an exported fixity is active wherever the library
   is imported, and only there.
@@ -329,9 +371,9 @@ prelude and a `final` file an entry unit, which they need not keep.
   program's `view NAME`, with none, is a view of the Basis Library, another
   thing (*Views of the Basis Library*, below).
 
-`--basis-index` writes a header to the manifest's comment lines, `# library:`
-for what is required, as the readers of a manifest have always read it, and
-`# exports:`, `# friends:`, `# view:`, `# virtual:`, `# implements:`
+A library's index holds its header (*A library's index*, above), which
+`--basis-index` prints as comment lines, `# library:` for what is required,
+and `# exports:`, `# friends:`, `# view:`, `# virtual:`, `# implements:`
 and `# fixity:` for the rest, with words such as
 `structure:Api signature:API`, and `-` for none. A library required
 with renames is one word on its `# library:` line, `same(structure:Same=One)`,
@@ -347,7 +389,7 @@ it. A library with a header that requires one sees what that one is written
 on too. A build of libraries none of which has a header goes as it always has,
 byte for byte.
 
-`--basis-index` warns of each, once, when it writes the manifest:
+`--basis-index` warns of each, once, when it makes the index:
 
 ```
 lib/json/library.build: warning: this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)
@@ -369,8 +411,8 @@ library (structure Api, signature API, functor Make, type item) =
 end
 ```
 
-The manifest records that boundary in an optional sixth column, and every
-row of one library has the same one. The block is a library's: it stands in a
+The index records that boundary, and `--basis-index` prints it in a sixth
+column, every row of one library the same. The block is a library's: it stands in a
 `library.build`, around every file of it, and nowhere else. It stays for the
 libraries that have not moved to a header, and goes when the last has
 (the build-system roadmap's D15).
@@ -686,7 +728,7 @@ ignore it, as they do `inline val` (below).
 The Basis Library marks its own functors in `lib/basis/library.build`.
 These are the functors that make its structures in units other than their
 own: the words, ints, vectors, arrays and slices, the packing, and the
-streams. `--basis-index` writes them to the manifest's header (`# inline:`), and
+streams. The index keeps them (`# inline:`, as `--basis-index` prints it), and
 every compile marks them unless `--no-inline-functors` is given.
 A program marks its own functors in its build file (`inline functor ...
 end`); there is no option for it (`--inline-functor` was retired by
@@ -717,8 +759,8 @@ The Basis Library marks the functions that a profile of MLton's
 benchmarks built in units found called across units on their hot paths:
 `not`, `o`, `valOf`, `app`, `foldl` and `foldr`; `Word32.+`, `Word32.>>`,
 `Word32.andb` and `Word32.fromLarge`; and `Word8Array.sub`,
-`PackWord32Little.subArr` and `PackWord32Big.subArr`. `--basis-index`
-writes them to the manifest's header (`# inline val:`), every compile
+`PackWord32Little.subArr` and `PackWord32Big.subArr`. The index keeps them
+(`# inline val:`), every compile
 marks them as it does the functors, and `--no-inline-functors` leaves them
 out too. A program marks its own in its build file.
 
@@ -802,7 +844,7 @@ so as well as by its build files above, from three libraries under
 ```
 (* libraries/table/library.build: the virtual library *)
 exports (signature KEY, signature TABLE, functor Table)
-virtual (functor Table)
+virtual (functor Table) in ../../table.sml
 ../../key_sig.sml
 ../../table_sig.sml
 ../../table.sml                     (* functor Table = _virtual (K : KEY) : TABLE where type key = K.t *)
@@ -828,9 +870,13 @@ virtual library's three files come from the cache (`virtual-libraries` of
 
 * **A virtual module is declared in its library,** with `_virtual` at the top
   level of a file that the library's build lists itself, as a structure or a
-  functor (*Virtual modules*, above), and it is exported. `--basis-index`
-  refuses a `virtual` that no file declares so, a `_virtual` the header does
-  not name, and a file before the declaration that declares its name.
+  functor (*Virtual modules*, above), and it is exported. The header's
+  `virtual (KIND NAME, ...) in FILE` names the file that declares the first of
+  them, as the build lists it, so that a plan splits the library there with
+  no source read. `--basis-index`, and every compile through the library's
+  index, refuses a `virtual` that no file declares so, a `_virtual` the
+  header does not name, a file before the declaration that declares its
+  name, and a `FILE` that is not the first to declare one.
 * **An implementing library adds no public module.** Its header says
   `implements (KIND NAME, ...)` in place of `exports`, and it exports nothing:
   what it implements is reached through the virtual library, and all else it

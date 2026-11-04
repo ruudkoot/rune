@@ -129,17 +129,17 @@ struct
               ["lower", "upper", "deep", "plain", "mixed", "loose", "isolated", "twin1", "twin2", "same1", "same2", "mathy",
                "both1", "both2", "h1", "h2"])
 
-  (* the header in the manifest: no sixth column *)
+  (* the header in the index, as --basis-index prints it: no sixth column *)
   fun manifests () =
     let
-      val text = read (lib ^ "/lower/MANIFEST")
+      val text = index "lower"
     in
       need (has "# exports: structure:Lower signature:LOWER fixity:+++\n" text, "no exports in the header: " ^ text);
       need (has "# friends: ../../p/friend.build ../../p/sealed.build\n" text, "no friends in the header");
       need (has "# view: small structure:Lower\n" text, "no view in the header");
       need (has "# fixity: infix 6 +++\n" text andalso not (has "***" text), "the exported fixity alone: " ^ text);
       need (not (has "| structure:Lower" text), "a sixth column beside a header");
-      need (has "# library: lower\n" (read (lib ^ "/upper/MANIFEST")), "requires is not what readers read");
+      need (has "# library: lower\n" (index "upper"), "requires is not what readers read");
       let val (status, log) = rune (libraries ["upper", "mixed"] @ ["--basis-check"])
       in need (status = 0, "--basis-check: " ^ log) end
     end
@@ -152,8 +152,7 @@ struct
      put ("lib/undeclared/library.build", "requires upper end\nexports (structure Undeclared)\nannotate \"demand\" in undeclared.sml end\n");
      put ("lib/undeclared/undeclared.sml", "structure Undeclared = struct val v = Lower.show (Lower.make 1) end\n");
      indexRefused "undeclared" "undeclared.sml uses Lower, of the library lib/lower, which its header does not require";
-     (* and by its compile, whatever the index said *)
-     put ("lib/undeclared/MANIFEST", "# library: upper\n# exports: structure:Undeclared\nundeclared.sml | demand | yes | Undeclared | \n");
+     (* and by its compile, whose index is made the same way *)
      refused "undeclared" ["undeclared"] "val () = print (Int.toString Undeclared.v ^ \"\\n\")\n" "Lower";
      (* a library's name that nothing it requires leads to, in a program that
         has that library: the header sees nothing of it *)
@@ -173,7 +172,7 @@ struct
      let
        val log = index "deep"
        val (status, quiet) = rune ["--no-warnings", "--basis-index", "lib/deep"]
-       val () = need (status = 0 andalso quiet = "", "--no-warnings: " ^ quiet)
+       val () = need (status = 0 andalso not (has "warning" quiet) andalso has "deep.sml | demand" quiet, "--no-warnings: " ^ quiet)
        val () = need (has "lib/deep/library.build: warning: this library has no header" log, "no warning of no header: " ^ log)
        val () = need (not (has "no header" (index "lower")), "a warning of no header on a header")
        val (status, log) = rune (libraries ["plain"] @ ["--no-cache", "p/transitive-plain.sml", "-o", dir ^ "/quiet.rbc"])
@@ -279,9 +278,9 @@ struct
       val () = put ("lib/both/library.build",
                     "requires same1 (structure Same as One) same2 end\nexports (structure Uses)\nannotate \"demand\" in uses.sml end\n")
       val () = put ("lib/both/uses.sml", "structure Uses = struct val v = One.v * 10 + Same.v end\n")
-      val () = ignore (index "both")
-      val () = need (has "# library: same1(structure:Same=One)\n# library: same2\n" (read (lib ^ "/both/MANIFEST")),
-                     "the renames are not in the manifest: " ^ read (lib ^ "/both/MANIFEST"))
+      val both = index "both"
+      val () = need (has "# library: same1(structure:Same=One)\n# library: same2\n" both,
+                     "the renames are not in the index: " ^ both)
       val () = prints "scoped-clash" ["both"] "val () = print (Int.toString Uses.v ^ \"\\n\")\n" "12\n"
       val (status, log) = rune (libraries ["both"] @ ["--no-cache", "p/scoped-clash.sml", "-o", dir ^ "/clash.rbc"])
       val () = need (status = 0 andalso log = "", "a client was told of its library's imports: " ^ log)
@@ -762,7 +761,7 @@ struct
   fun views () =
     let
       val () = viewTree ()
-      val () = need (has "| seal@narrow |" (read (vlib ^ "/basis/MANIFEST")), "no view in the manifest")
+      val () = need (has "| seal@narrow |" (#2 (runeWith ["--lib", vlib, "--basis-index", vlib ^ "/basis"])), "no view in the index")
       val getItem = "val () = print (case List.getItem [1, 2] of SOME (x, _) => Int.toString x ^ \"\\n\" | NONE => \"\\n\")\n"
       val mapped = "val () = print (Int.toString (List.foldl op+ 0 (List.map (fn x => x * 2) [1, 2, 3])) ^ \"\\n\")\n"
       (* the default sees all; the view hides a member *)
@@ -890,7 +889,7 @@ struct
       fun copy path =
         let val from = original ^ "/" ^ path
         in if isDir from then List.app (fn e => copy (path ^ "/" ^ e)) (entries from)
-           else if OS.Path.file path = "MANIFEST" orelse String.isPrefix "." (OS.Path.file path) then ()
+           else if String.isPrefix "." (OS.Path.file path) then ()
            else put (path, read from)
         end
     in
@@ -1011,28 +1010,34 @@ struct
       val virt = ("libraries/bad/v.sml", "structure V = _virtual : K\n")
     in
       put ("libraries/bad/k.sml", key);
-      List.app put [("libraries/other/library.build", "exports (signature K, structure O)\nvirtual (structure O)\nk.sml\no.sml\n"),
+      List.app put [("libraries/other/library.build", "exports (signature K, structure O)\nvirtual (structure O) in o.sml\nk.sml\no.sml\n"),
                     ("libraries/other/k.sml", key), ("libraries/other/o.sml", "structure O = _virtual : K\n")];
       index "other";
       List.app bad
         [("implements and exports", "requires table end\nexports (structure X)\nimplements (functor Table)\n../../list.sml\n", [],
           "an implementing library exports nothing"),
          ("kind", "exports (signature K)\nvirtual (signature K)\nk.sml\n", [], "a virtual module is a structure or a functor"),
-         ("not exported", "exports (signature K)\nvirtual (structure V)\nk.sml\nv.sml\n", [virt],
+         ("not exported", "exports (signature K)\nvirtual (structure V) in v.sml\nk.sml\nv.sml\n", [virt],
           "says virtual structure V, which the library does not export"),
-         ("not virtual", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nw.sml\n",
+         ("not virtual", "exports (signature K, structure V)\nvirtual (structure V) in w.sml\nk.sml\nw.sml\n",
           [("libraries/bad/w.sml", "structure V : K = struct val k = 1 end\n")], "says virtual structure V, which no source declares _virtual"),
-         ("twice", "exports (signature K, structure V)\nvirtual (structure V)\nvirtual (structure V)\nk.sml\nv.sml\n", [virt],
+         ("twice", "exports (signature K, structure V)\nvirtual (structure V) in v.sml\nvirtual (structure V) in v.sml\nk.sml\nv.sml\n", [virt],
           "a header says virtual once"),
          ("nested", "exports (signature K, structure Outer)\nk.sml\nn.sml\n",
           [("libraries/bad/n.sml", "structure Outer = struct structure V = _virtual : K end\n")],
           "says _virtual of a module not at its top level"),
          ("not in the header", "exports (signature K, structure V)\nk.sml\nv.sml\n", [virt],
           "v.sml declares the structure V _virtual, and the header does not say virtual (structure V)"),
-         ("used", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nuse inner.build\n",
+         ("used", "exports (signature K, structure V)\nvirtual (structure V) in v.sml\nk.sml\nuse inner.build\n",
           [virt, ("libraries/bad/inner.build", "v.sml\n")], "is listed in the library's build, not in one it uses"),
-         ("named before", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nearly.sml\nv.sml\n",
+         ("named before", "exports (signature K, structure V)\nvirtual (structure V) in v.sml\nk.sml\nearly.sml\nv.sml\n",
           [virt, ("libraries/bad/early.sml", "structure V = struct end\n")], "the name of a virtual module, before"),
+         (* the header names the file that declares the first virtual module,
+            so that a plan reads no source; it says so, and of that file *)
+         ("no file named", "exports (signature K, structure V)\nvirtual (structure V)\nk.sml\nv.sml\n", [virt],
+          "names the file that declares its first virtual module: virtual (KIND NAME, ...) in FILE"),
+         ("another file named", "exports (signature K, structure V)\nvirtual (structure V) in k.sml\nk.sml\nv.sml\n", [virt],
+          "says virtual (...) in k.sml, and the first file that declares a virtual module is v.sml"),
          ("not exported by a source", "requires table end\nimplements (functor Table)\nplain.sml\n",
           [("libraries/bad/plain.sml", "structure Plain = struct end\n")], "implements the functor Table, which no source exports"),
          ("not required", "implements (functor Table)\n../../list.sml\n", [],
@@ -1048,7 +1053,7 @@ struct
           "implements modules of two virtual libraries")]
     end
   fun twoVirtual () =
-    (put ("libraries/again/library.build", "exports (signature KEY2, functor Table)\nvirtual (functor Table)\nk.sml\nt.sml\n");
+    (put ("libraries/again/library.build", "exports (signature KEY2, functor Table)\nvirtual (functor Table) in t.sml\nk.sml\nt.sml\n");
      put ("libraries/again/k.sml", "signature KEY2 = sig type t end\nsignature TABLE2 = sig end\n");
      put ("libraries/again/t.sml", "functor Table = _virtual (K : KEY2) : TABLE2\n");
      index "again";
@@ -1061,7 +1066,7 @@ struct
   fun structures () =
     let
       val () = List.app put
-        [("libraries/clock/library.build", "exports (signature CLOCK, structure Clock)\nvirtual (structure Clock)\nclock_sig.sml\nclock.sml\n"),
+        [("libraries/clock/library.build", "exports (signature CLOCK, structure Clock)\nvirtual (structure Clock) in clock.sml\nclock_sig.sml\nclock.sml\n"),
          ("libraries/clock/clock_sig.sml", "signature CLOCK = sig val now : unit -> int val name : string end\n"),
          ("libraries/clock/clock.sml", "structure Clock = _virtual : CLOCK\n"),
          ("libraries/ticks/library.build", "exports (structure Ticks)\nticks.sml\n"),

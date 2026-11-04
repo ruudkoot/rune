@@ -65,7 +65,7 @@ The prepared inputs are:
 |---|---|
 | `code.tar` | An official portable Windows VS Code build, with `Code.exe` at the archive root. |
 | `extension.vsix` | The package under test. |
-| `fixture.tar` | Rune sources under `checkout/`, including generated library `MANIFEST`s, `build/config.sml` and `bin/rune.rbc`; compiled `project-replay.rbc`, `semantic-tests.rbc` and `distribution-tests.rbc` at the archive root. |
+| `fixture.tar` | Rune sources under `checkout/`, including `build/config.sml` and `bin/rune.rbc`; compiled `project-replay.rbc`, `semantic-tests.rbc` and `distribution-tests.rbc` at the archive root. |
 
 The launcher copies the guest script and editor suite from this directory
 into the input before starting. The guest checks the full Rune project,

@@ -256,6 +256,12 @@ sig
     val inputs : t -> input list
     (* `libraries project` lists library-header dependencies in source order. *)
     val libraries : t -> string list
+    (* `exports project` is what a library's build file lets a client name.
+
+       Each export has its kind: the header's exports, or its library
+       block's. NONE where it has neither, and a client sees all its files
+       declare (docs/build.md, A library's header). *)
+    val exports : t -> {kind : string, name : string} list option
     (* `fingerprint project` identifies the captured plan, configuration
        and inputs. It is not a persisted analysis snapshot. *)
     val fingerprint : t -> string

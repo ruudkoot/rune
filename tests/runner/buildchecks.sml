@@ -75,10 +75,10 @@ struct
       val (status, compiled, _) = invoke "inline-compiler" [fromRoot (env ("RUNE", "bin/rune")), "--build-list", dir ^ "/inline.build"]
       val () = if status = 0 andalso lines compiled = expected then () else say "FAIL compiler layout: build-list with inline functor differs\n"
       val () = write (dir ^ "/library.build", "inline functor Make Other end\nannotate \"demand\" in use nested/part.build end\n")
-      val (status, _, _) = invoke "library" [fromRoot (env ("RUNE", "bin/rune")), "--basis-index", dir]
-      val () = if status = 0 andalso String.isSubstring "nested/first.sml | demand" (read (dir ^ "/MANIFEST")) then ()
+      val (status, index, _) = invoke "library" [fromRoot (env ("RUNE", "bin/rune")), "--basis-index", dir]
+      val () = if status = 0 andalso String.isSubstring "nested/first.sml | demand" index then ()
                else say "FAIL compiler layout: library index did not follow annotated use\n"
-      val () = if String.isSubstring "\n# inline: Make Other\n" (read (dir ^ "/MANIFEST")) then ()
+      val () = if String.isSubstring "\n# inline: Make Other\n" index then ()
                else say "FAIL compiler layout: library index did not carry the inline functors\n"
       val () = write (dir ^ "/cycle.build", "use cycle.build\n")
       val (status, _, errors) = invoke "cycle" [fromRoot (env ("RUNE", "bin/rune")), "--plan", dir ^ "/cycle.build"]
@@ -173,8 +173,7 @@ struct
         in need (status=0 andalso read output="87\n",label ^ " has wrong output") end
       val (status,log) = invoke "index" ["--basis-index",scoped]
       val () = need (status=0,"cannot index scoped library: " ^ log)
-      val manifest = read (scoped ^ "/MANIFEST")
-      val () = need (String.isSubstring "structure:Api signature:API functor:Make type:exposed" manifest,"missing export metadata")
+      val () = need (String.isSubstring "structure:Api signature:API functor:Make type:exposed" log,"missing export metadata")
       val (status,log) = invoke "check" ["--library","scoped","--basis-check"]
       val () = need (status=0,"scoped manifest check: " ^ log)
       (* --typecheck-only keeps what a library's boundary exports *)
@@ -206,17 +205,14 @@ struct
       val () = need (status=0 andalso String.isSubstring "/type.sml" log andalso
                      not (String.isSubstring "/public.sml" log) andalso not (String.isSubstring "/functor.sml" log),
                      "selection ignored public demand boundaries")
-      fun scopeLine line =
-        if String.isPrefix "# exports:" line then "# exports: structure:Missing" else line
-      val () = write (scoped ^ "/MANIFEST",String.concatWith "\n" (List.map scopeLine (String.fields (fn c => c = #"\n") manifest)))
-      val (status,log) = invoke "missing-export" ["--library","scoped","--basis-check"]
-      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log,"undeclared manifest export accepted")
-      val () = write (scoped ^ "/MANIFEST",manifest)
+      (* an export no source declares: refused by the index, which every
+         reader asks, so by --basis-check as by --basis-index *)
       val build = read (scoped ^ "/library.build")
       val () = write (scoped ^ "/library.build","exports (structure Missing)\nuse entries.build\n")
+      val (status,log) = invoke "missing-export" ["--library","scoped","--basis-check"]
+      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log,"undeclared export accepted by --basis-check")
       val (status,log) = invoke "bad-index" ["--basis-index",scoped]
-      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log andalso
-                     read (scoped ^ "/MANIFEST")=manifest,"invalid index replaced a valid manifest")
+      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log,"undeclared export accepted by --basis-index")
       val () = write (scoped ^ "/library.build",build)
       val consumer = lib ^ "/consumer"
       val () = mkdirs consumer
@@ -232,15 +228,15 @@ struct
       val () = List.app consumerMode modes
       val () = write (consumer ^ "/consumer.sml","structure Consumer = struct val public = Api.value val private = Hidden.value end\n")
       (* a library that uses what a boundary it is written on hides fails at
-         its own index, and not only at its client's compile (E28); the
-         manifest stays as it was, and that compile fails as well *)
+         its own index, and not only at its client's compile (E28): every
+         compile asks for that index, and fails as it does *)
       val (status,log) = invoke "private-consumer-index" ["--basis-index",consumer]
       val () = need (status<>0 andalso String.isSubstring "uses Hidden, which the boundary of" log,
                      "the index did not notice a name a boundary hides: " ^ log)
       fun privateConsumer (label,flags) =
         let val (status,log) = invoke (label ^ "-private-consumer")
               (flags @ ["--library","consumer",dir ^ "/consumer-use.sml","-o",dir ^ "/rejected.rbc"])
-        in need (status<>0 andalso String.isSubstring "Hidden.value" log,"private dependency leaked into another library") end
+        in need (status<>0 andalso String.isSubstring "uses Hidden, which the boundary of" log,"private dependency leaked into another library") end
     in List.app privateConsumer modes end
   (* The plan of every build file of the tree (D5): printed, read back and
      printed again, the same bytes, and its unit lines the files --build-list
@@ -257,8 +253,11 @@ struct
              else if isDir (fromRoot path) then builds path
              else if String.isSuffix ".build" name then [path] else []
           end) (entries (fromRoot base)))
+      (* but two libraries written on each other, which no plan has: the
+         fixture of that refusal *)
       val all = List.filter (fn f => String.isSuffix ".build" f) (entries root)
-                @ List.concat (List.map builds ["lib", "src", "tools", "tests", "examples", "ffi"])
+                @ List.filter (fn f => not (List.exists (fn c => f = "tests/lib/" ^ c ^ "/library.build") ["cycle1", "cycle2"]))
+                              (List.concat (List.map builds ["lib", "src", "tools", "tests", "examples", "ffi"]))
       fun invoke label args =
         let val output = dir ^ "/" ^ label ^ ".out"
             val errors = dir ^ "/" ^ label ^ ".err"
@@ -277,6 +276,9 @@ struct
           val up = if up = "" then "." else up
           val vars = ["--path", "SDL_GENERATED=" ^ up ^ "/lib/ffi/sdl/generated/native",
                       "--path", "WIN32_GENERATED=" ^ up ^ "/lib/ffi/win32/generated/64"]
+                     (* the fixture libraries of rune --library, a library root
+                        of their own (tests/runner/tools.sml, lib.toy) *)
+                     @ (if String.isPrefix "tests/lib/" build then ["--lib", "tests/lib"] else [])
           val (status, text, errors) = invoke label (["--no-warnings", "--plan"] @ vars @ [build])
           val stored = dir ^ "/" ^ label ^ ".plan"
           val () = write (stored, text)
@@ -481,7 +483,7 @@ struct
       val foreign=dir ^ "/foreign"
       val ()=mkdirs (foreign ^ "/basis")
       val ()=List.app (fn name =>
-        if name="MANIFEST" orelse String.isSuffix ".sml" name then
+        if name="library.build" orelse String.isSuffix ".sml" name then
           write (foreign ^ "/basis/" ^ name,read ("lib/basis/" ^ name) ^
             (if name="runeexit.sml" then "\n(* different source, same exported interface *)\n" else "")) else ())
         (entries "lib/basis")

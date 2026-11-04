@@ -295,7 +295,7 @@ struct
         val ()=need(new<>old andalso String.isSubstring new out,"an edit of a set's build file did not give it another name: " ^ out)
         val ()=need(exists oldSet,"a rehash without --remove-old took the old set away")
         val ()=List.app(fn f=>need(read(oldSet ^ "/" ^ f)=read(copy ^ "/sets/" ^ new ^ "/" ^ f),"the rehashed set's " ^ f ^ " differs"))
-          (List.filter(fn f=>f<>"MANIFEST")(entries oldSet))
+          (entries oldSet)
         val ()=need(String.isSubstring "unchanged" (rehashed(copy,[])),"a second rehash changed the set")
         val ()=append(copy ^ "/sets/" ^ new ^ "/native.build","(* again *)\n")
         val _=rehashed(copy,["--remove-old"])

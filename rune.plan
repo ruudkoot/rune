@@ -66,9 +66,10 @@ program
       unit compiler:driver/buildfile.sml lib/compiler/driver/buildfile.sml ascii
       unit compiler:driver/deps.sml lib/compiler/driver/deps.sml ascii
       unit compiler:driver/project.sml lib/compiler/driver/project.sml ascii
+      unit compiler:settings.sml lib/compiler/settings.sml ascii
+      unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
       unit compiler:driver/libraryindex.sml lib/compiler/driver/libraryindex.sml ascii
     end
-    unit compiler:settings.sml lib/compiler/settings.sml ascii
     unit compiler:core/lambda.sml lib/compiler/core/lambda.sml ascii
     unit compiler:core/irrules.sml lib/compiler/core/irrules.sml ascii
     unit compiler:core/lambdalint.sml lib/compiler/core/lambdalint.sml ascii
@@ -105,7 +106,6 @@ program
     unit compiler:driver/unitbasis.sml lib/compiler/driver/unitbasis.sml ascii
     unit compiler:driver/pipeline.sml lib/compiler/driver/pipeline.sml ascii
     unit compiler:driver/unitmid.sml lib/compiler/driver/unitmid.sml ascii
-    unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
     unit compiler:driver/unitcache.sml lib/compiler/driver/unitcache.sml ascii
     unit compiler:driver/unitmemo.sml lib/compiler/driver/unitmemo.sml ascii
     unit compiler:driver/workspace.sml lib/compiler/driver/workspace.sml ascii
@@ -128,7 +128,7 @@ program
 end
 provenance
   input rune.build 34e0b0848535ea34d1d33e6b050b38d330bcbfa719f661b98261717eb66640aa
-  input lib/compiler/internal.build 1075231ae8e51fd67ef36c46c59eedec3d93dc6c7f2aa1208ee286a4a4a57597
-  input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
+  input lib/compiler/internal.build f9ba52d5b72372d7ee65fe8a4f0fe69a1d9ebaceb5385d7ae5837003f5f4157b
+  input lib/compiler/frontend.build 6d35ea98aba55a7b636242c2228a0eb606bd63e0f5b46ad5b66c94f1e9d6c4b4
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
 end

@@ -1,0 +1,3 @@
+(* A library written on another (tests/runner/tools.sml, lib.toy) *)
+libraries toy end
+toy2.sml

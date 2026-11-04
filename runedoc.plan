@@ -61,6 +61,8 @@ program
     unit compiler:driver/buildfile.sml lib/compiler/driver/buildfile.sml ascii
     unit compiler:driver/deps.sml lib/compiler/driver/deps.sml ascii
     unit compiler:driver/project.sml lib/compiler/driver/project.sml ascii
+    unit compiler:settings.sml lib/compiler/settings.sml ascii
+    unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
     unit compiler:driver/libraryindex.sml lib/compiler/driver/libraryindex.sml ascii
   end
   unit src/doc/docsource.sml src/doc/docsource.sml ascii
@@ -87,6 +89,6 @@ program
 end
 provenance
   input runedoc.build 156dc4f5116caae746de4da9744600b7b2d2a03ea09ea5ff0ef722b7b8d353a8
-  input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
+  input lib/compiler/frontend.build 6d35ea98aba55a7b636242c2228a0eb606bd63e0f5b46ad5b66c94f1e9d6c4b4
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
 end

@@ -41,10 +41,9 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'semantic suite failed' }
   if ((Get-Content C:\Results\semantic.log -Raw) -notmatch 'SUMMARY (\d+) tests, \1 passed, 0 failed, 0 skipped') { throw 'missing semantic acceptance marker' }
   $stage = 'packaged library workflow'
-  $env:RUNE_VSCODE_CHECKOUT = $project
   & $vm C:\Work\distribution-tests.rbc $extension *> C:\Results\packaged.log
   if ($LASTEXITCODE -ne 0) { throw 'packaged suite failed' }
-  if ((Get-Content C:\Results\packaged.log -Raw) -notmatch 'PASS vscode/packaged/regenerated-checkout-manifest') { throw 'missing manifest regeneration marker' }
+  if ((Get-Content C:\Results\packaged.log -Raw) -notmatch 'PASS vscode/packaged/changed-library-build') { throw 'missing library build marker' }
   $stage = 'editor integration'
   $env:RUNE_VSCODE_PROJECT_ROOT = $project
   Remove-Item Env:RUNE_LSP_PROFILE -ErrorAction SilentlyContinue

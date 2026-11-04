@@ -25,8 +25,8 @@ struct
     in String.concat (List.map (fn line => line ^ "\n") (rows @ (if !done then [] else [start] @ block @ [finish ^ " *)"]))) end
   fun main args =
     let val (check,library)=case args of [] => (false,"lib") | ["--check"] => (true,"lib") | [lib] => (false,lib) | ["--check",lib] => (true,lib) | _ => raise Usage "basis-signatures [--check] [LIBDIR]"
-        val library=fromRoot library val basis=library ^ "/basis" val manifest=basis ^ "/MANIFEST" val build=basis ^ "/library.build"
-        val ()=need (exists manifest,"no " ^ manifest ^ " (make manifests)")
+        val library=fromRoot library val basis=library ^ "/basis" val build=basis ^ "/library.build"
+        val ()=need (exists build,"no " ^ build)
         val tmp=T.privateDirectory (fromRoot "tests/out/generate") "signatures"
         val ()=mkdirs (tmp ^ "/out")
         val rune=tool "RUNE" (fromRoot "bin/rune") val counter=ref 0
@@ -38,7 +38,8 @@ struct
         val files=List.mapPartial (fn line => case String.tokens Char.isSpace line of
             "unit"::_::path::_ => SOME (if String.isPrefix (tmp ^ "/") path then String.extract (path,size tmp+1,NONE) else path) | _ => NONE)
           (lines (observe ["--plan",tmp ^ "/library.build"]))
-        val provided=List.concat (List.mapPartial (fn line => case List.map trim (fields #"|" line) of file::_::_::names::_ => if List.exists (fn name => name=file) files then SOME (String.tokens Char.isSpace names) else NONE | _ => NONE) (T.dataLines manifest))
+        val provided=List.concat (List.mapPartial (fn line => case List.map trim (fields #"|" line) of file::_::_::names::_ => if List.exists (fn name => name=file) files then SOME (String.tokens Char.isSpace names) else NONE | _ => NONE) (List.filter (fn line => let val line=trim line in line<>"" andalso not (String.isPrefix "#" line) end)
+                 (lines (observe ["--lib",library,"--no-warnings","--basis-index",basis]))))
         val own=GenerateText.distinct (List.concat (List.map (fn file => declarations "" (read (basis ^ "/" ^ file))) files))
         val transcriptions=List.filter (not o String.isSuffix "_IMP.sml") (glob (fromRoot "tests/basis/spec-sigs",".sml"))
         val sigs=List.concat (List.map (fn file => List.map (fn name => (name,file)) (List.filter (fn name => not (List.exists (fn old => old=name) own)) (declarations "SPEC_" (read file)))) transcriptions)
@@ -80,7 +81,8 @@ struct
              let val count=ref 0
                  val ()=List.app (fn (name,_) => let val dest=basis ^ "/" ^ generatedName name in if exists dest then () else
                        (copy (tmp ^ "/out/" ^ generatedName name) dest;count:= !count+1;say ("gen-basis-sigs: wrote " ^ dest ^ ", a copy of its transcription\n")) end) sigs
-                 val ()=T.atomic build desired val _=observe ["--basis-index",basis]
-             in say ("gen-basis-sigs: " ^ Int.toString (!count) ^ " new signature files in " ^ basis ^ "; the block of " ^ build ^ " is written, and " ^ manifest ^ "\n") end
+                 (* the index made again, which says that the Basis with them is one *)
+                 val ()=T.atomic build desired val _=observe ["--lib",library,"--no-warnings","--basis-index",basis]
+             in say ("gen-basis-sigs: " ^ Int.toString (!count) ^ " new signature files in " ^ basis ^ "; the block of " ^ build ^ " is written\n") end
     in rmTree tmp;if !bad then 1 else 0 end
 end

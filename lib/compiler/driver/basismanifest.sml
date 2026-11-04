@@ -1,13 +1,16 @@
-(* The MANIFEST of a library -- the basis library, or one of the libraries
+(* The index of a library -- the basis library, or one of the libraries
    beside it (docs/plans/quickcheck.md, D1) -- and the choice of the files a
-   program loads: shared by the compiler driver and runedoc. *)
+   program loads: shared by the compiler driver and runedoc. An index is
+   derived from the library's build file and its files, and kept in the
+   store, never in the tree (LibraryIndex; the build-system roadmap's D13).
+   This takes one as a value, and reads no file. *)
 structure BasisManifest =
 struct
   exception Usage of string
 
-  (* ---- the basis library: lib/basis/MANIFEST ----
-     One file per line, in load order:
-       file | always or demand | host | provides | requires
+  (* ---- a library's index ----
+     A line per file, in load order:
+       file, always or demand (or seal, final), host, provides, requires
      provides: the structures, signatures and functors the file declares;
      requires: those of other files that it names. (host is for the
      cross-check of tests/basis.) A program is compiled after the always
@@ -23,7 +26,7 @@ struct
      that view, after the libraries (D12). *)
   datatype when = Always | Demand | Seal | Final
   (* What a library's header says beside its exports, which are scope, and
-     what it requires, which are its # library: lines; a library with none
+     what it requires, which are its libraries; a library with none
      has NONE, whose files see all before them and whose `libraries` are
      transitive (docs/build.md, A library's header; D7, D15). virtuals are
      the virtual modules it declares and implements those of a library it
@@ -31,17 +34,26 @@ struct
      Virtual libraries). *)
   type header = {friends : string list, views : (string * (string * string) list) list,
                  virtuals : (string * string) list, implements : (string * string) list}
-  (* requires is read from the text when it is asked for: most programs need
-     it of few files. dir is the directory of the library the file is in.
+  (* requires is what the file needs of the others, as a function, which
+     most programs ask of few files. dir is the directory of the library the file is in.
      view is the view of the Basis Library a seal belongs to, a seal@VIEW
      line, which only a program in that view loads (D12). *)
   type entry = {dir : string, file : string, when : when, provides : string list,
                 requires : unit -> string list, scope : (string * string) list option,
                 header : header option, view : string option}
 
-  (* A library's export boundary: its header's, on an # exports: line, or a
-     library (...) block's, in a sixth MANIFEST field. Five-field manifests
-     retain their historical visibility. *)
+  (* An index: the libraries it is written on, each an import's word; its
+     export boundary, its header's or a library (...) block's, NONE where it
+     has neither and keeps the historical visibility; its header; the fixity
+     it exports; the functors and functions its build marks to inline; and
+     a line for each file, a file of host=only among them, which the other
+     SML systems have alone and Rune does not compile *)
+  type line = {file : string, class : string, host : string, provides : string list, requires : string list}
+  type index = {libraries : string list, scope : (string * string) list option, header : header option,
+                fixities : (string * Fixity.fixity) list, inline : string list, inlineValues : string list,
+                lines : line list}
+
+  (* A library's export boundary *)
   fun public (e : entry) =
     case #scope e of NONE => #provides e
     | SOME es => List.filter (fn n => List.exists (fn (_, exported) => exported = n) es) (#provides e)
@@ -49,7 +61,7 @@ struct
   fun scopeOf (es : entry list) =
     case es of [] => NONE | e :: rest =>
       if List.all (fn other : entry => #scope other = #scope e) rest then #scope e
-      else raise Usage ("inconsistent export boundary in " ^ #dir e ^ "/MANIFEST")
+      else raise Usage ("inconsistent export boundary in the index of " ^ #dir e)
 
   (* The file of an entry, as a path. *)
   fun path (e : entry) : string = #dir e ^ "/" ^ #file e
@@ -63,124 +75,22 @@ struct
       val j = right n
     in if i >= j then "" else String.substring (s, i, j - i) end
 
-  (* a MANIFEST opened, which a compile that keeps what it read is told of
-     (Source.reading) *)
-  fun openManifest (path : string) : TextIO.instream = (!Source.reading path; TextIO.openIn path)
-
-  (* The MANIFEST is read for every program, so it is scanned in one pass
-     over its text, a line at a time, with the bars and the words of a line
-     found by index rather than by splitting it into strings first. *)
-  fun readManifest (dir : string) : entry list =
-    let
-      val manifest = dir ^ "/MANIFEST"
-      val ins = openManifest manifest
-                handle IO.Io _ => raise Usage ("cannot read basis manifest " ^ manifest ^ " (use --lib or --no-prelude)")
-      val text = TextIO.inputAll ins before TextIO.closeIn ins
-      val n = String.size text
-      fun at k = String.sub (text, k)
-      fun blank c = c = #" " orelse c = #"\t" orelse c = #"\r"
-      (* the words of text[i, j) *)
-      fun words (i, j) =
-        let
-          fun skip k = if k < j andalso blank (at k) then skip (k + 1) else k
-          fun stop k = if k < j andalso not (blank (at k)) then stop (k + 1) else k
-          fun go (k, acc) =
-            let val a = skip k
-            in if a >= j then List.rev acc else let val e = stop a in go (e, String.substring (text, a, e - a) :: acc) end end
-        in go (i, []) end
-      fun bad (i, e) = raise Usage ("malformed line in " ^ manifest ^ ": " ^ String.substring (text, i, e - i))
-      (* the one word of text[i, j), or NONE *)
-      fun one (i, j) = case words (i, j) of [w] => SOME w | _ => NONE
-      (* a list of exports, KIND:NAME each; a name may hold a colon *)
-      fun exports (i, e, a, b) =
-        case words (a,b) of
-          ["-"] => []
-        | ws => List.map (fn word =>
-            case String.fields (fn c => c = #":") word of
-              kind :: (name as _ :: _) =>
-                let val n = String.concatWith ":" name
-                in if n <> "" andalso List.exists (fn x => kind=x) ["structure","signature","functor","type","fixity"]
-                   then (kind,n) else bad (i,e) end
-            | _ => bad (i,e)) ws
-      (* the header's lines, which come before the first file's *)
-      val headed = ref NONE : (string * string) list option ref
-      val friends = ref [] : string list ref
-      val views = ref [] : (string * (string * string) list) list ref
-      val virtuals = ref [] : (string * string) list ref
-      val implements = ref [] : (string * string) list ref
-      fun comment (i, f, e) =
-        if f + 3 >= e orelse not (Char.contains "efv" (at (f + 2)) orelse at (f + 2) = #"i" andalso at (f + 3) = #"m") then ()
-        else
-          let
-            val line = String.substring (text, f, e - f)
-            fun after key = f + size key
-          in
-            if String.isPrefix "# exports:" line then headed := SOME (exports (i, e, after "# exports:", e))
-            else if String.isPrefix "# friends:" line then friends := !friends @ words (after "# friends:", e)
-            else if String.isPrefix "# virtual:" line then virtuals := !virtuals @ exports (i, e, after "# virtual:", e)
-            else if String.isPrefix "# implements:" line then implements := !implements @ exports (i, e, after "# implements:", e)
-            else if String.isPrefix "# view:" line then
-              (case words (after "# view:", e) of
-                 n :: _ =>
-                   let
-                     fun skip k = if k < e andalso blank (at k) then skip (k + 1) else k
-                     val start = skip (after "# view:") + size n
-                   in views := (n, exports (i, e, start, e)) :: !views end
-               | [] => bad (i, e))
-            else ()
-          end
-      (* whether the host column between the bars b2 and b3 says only: a file
-         the other SML systems have alone (host=only), which Rune does not
-         compile. Read in place: every compile reads the Basis Library's
-         manifest *)
-      fun nonblank (k, e) = if k < e andalso blank (at k) then nonblank (k + 1, e) else k
-      fun allBlank (k, e) = k >= e orelse (blank (at k) andalso allBlank (k + 1, e))
-      fun hostOnly (b2, b3) =
-        let val a = nonblank (b2 + 1, b3)
-        in
-          a + 4 <= b3 andalso at a = #"o" andalso at (a + 1) = #"n" andalso at (a + 2) = #"l" andalso at (a + 3) = #"y"
-          andalso allBlank (a + 4, b3)
-        end
-      (* A line of five fields, optionally followed by the library's scope,
-         on acc, but for a file of host=only *)
-      fun entry (i, e, acc) =
-        let
-          fun bars (k, acc) = if k >= e then List.rev acc else bars (k + 1, if at k = #"|" then k :: acc else acc)
-          fun make (b1,b2,b3,b4,last,scope) =
-            case (one (i,b1),one (b1+1,b2)) of
-              (SOME file,SOME mode) =>
-                let val view = if String.isPrefix "seal@" mode andalso size mode > 5
-                               then SOME (String.extract (mode,5,NONE)) else NONE
-                in
-                  {dir=dir,file=file,
-                   when=(case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final
-                                    | _ => if isSome view then Seal else bad (i,e)),
-                   provides=words (b3+1,b4),requires=fn () => words (b4+1,last),scope=scope,
-                   header=Option.map (fn _ => {friends= !friends,views=List.rev (!views),
-                                               virtuals= !virtuals,implements= !implements}) (!headed),
-                   view=view}
-                end
-            | _ => bad (i,e)
-        in
-          case bars (i,[]) of
-            [b1,b2,b3,b4] => if hostOnly (b2,b3) then acc else make (b1,b2,b3,b4,e,!headed) :: acc
-          | [b1,b2,b3,b4,b5] => if hostOnly (b2,b3) then acc else make (b1,b2,b3,b4,b5,SOME (exports (i,e,b5+1,e))) :: acc
-          | _ => bad (i,e)
-        end
-      fun go (i, acc) =
-        if i >= n then List.rev acc
-        else
-          let
-            fun eol k = if k < n andalso at k <> #"\n" then eol (k + 1) else k
-            val e = eol i
-            fun first k = if k < e andalso blank (at k) then first (k + 1) else k
-            val f = first i
-          in
-            if f >= e then go (e + 1, acc)
-            else if at f = #"#" then (comment (i, f, e); go (e + 1, acc))
-            else go (e + 1, entry (i, e, acc))
-          end
-    in let val entries = go (0, []) val _ = scopeOf entries in entries end end
+  (* The entries of the index of the library in dir, but for its files of
+     host=only *)
+  fun entriesOf (dir : string, {scope, header, lines, ...} : index) : entry list =
+    List.mapPartial
+      (fn {file, class, host, provides, requires} =>
+         if host = "only" then NONE
+         else
+           let val view = if String.isPrefix "seal@" class andalso size class > 5 then SOME (String.extract (class, 5, NONE)) else NONE
+           in
+             SOME {dir = dir, file = file,
+                   when = (case class of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final
+                                       | _ => if isSome view then Seal else raise Usage ("a file of no class in the index of " ^ dir ^ ": " ^ file)),
+                   provides = provides, requires = fn () => requires, scope = scope,
+                   header = header, view = view}
+           end)
+      lines
 
   type names = unit StringMap.map
 
@@ -232,7 +142,7 @@ struct
       fun go i = i < n andalso (says i orelse go (i + 1))
     in go 0 end
 
-  (* name -> the files that provide it, as paths, in MANIFEST order *)
+  (* name -> the files that provide it, as paths, in the index's order *)
   fun providers (entries : entry list) : string list StringMap.map =
     List.foldl (fn (e : entry, m) =>
                    List.foldl (fn (n, m) =>
@@ -274,8 +184,8 @@ struct
   (* How a scope names a library (docs/build.md, Clashes): NAME, NAME#VIEW for
      one of its views, and either with what it renames, which a build file
      writes NAME (KIND FROM as TO, ...) and which is kept in one word, NAME(
-     KIND:FROM=TO,...) with no space: in a list of libraries, on a MANIFEST's
-     # library: lines and in a plan. *)
+     KIND:FROM=TO,...) with no space: in a list of libraries, in an index's
+     libraries and in a plan. *)
   fun identifier (s : string) : bool =
     size s > 0 andalso Char.isAlpha (String.sub (s, 0))
     andalso CharVector.all (fn c => Char.isAlphaNum c orelse c = #"_" orelse c = #"'") s
@@ -371,7 +281,7 @@ struct
   fun implementsOf (e : entry) = case #header e of SOME {implements, ...} => implements | NONE => []
 
   (* The entries to load for a program that mentions the given names, in
-     MANIFEST order, but for its view's seals, which come last. *)
+     the index's order, but for its view's seals, which come last. *)
   fun select (scopes : scopes, entries : entry list, mentioned : names) : entry list =
     let
       val entries = inView (scopes, entries)
@@ -431,15 +341,14 @@ struct
     in List.filter (fn e : entry => StringMap.member (chosen, path e)) entries end
 
   (* ---- the libraries beside the basis library ----
-     A library is a directory with a MANIFEST in the form above. The libraries
-     it is written on besides the basis library are named in its MANIFEST by
-     a line
-       # library: NAME ...
-     and are loaded before it. A NAME is a directory under the directory of
-     the libraries (--lib), test/property for LIBDIR/test/property, or where
-     that has none, under one of those a workspace names (roots), unless it
-     is an absolute host path or begins with ., when it is a path; after a
-     # it may say which of the library's views is meant. *)
+     A library is a directory with a library.build, whose index is in the
+     form above. The libraries it is written on besides the basis library are
+     what its build file requires, and are loaded before it. A NAME is a
+     directory under the directory of the libraries (--lib), test/property
+     for LIBDIR/test/property, or where that has none, under one of those a
+     workspace names (roots), unless it is an absolute host path or begins
+     with ., when it is a path; after a # it may say which of the library's
+     views is meant. *)
 
   fun isLibraryPath name = OS.Path.isAbsolute name orelse String.isPrefix "." name
 
@@ -454,92 +363,12 @@ struct
       else
         let
           val first = libDir ^ "/" ^ name
-          fun holds dir = Source.probe (dir ^ "/MANIFEST") orelse Source.probe (dir ^ "/library.build")
+          fun holds dir = Source.probe (dir ^ "/library.build")
         in
           if List.null (!roots) orelse holds first then first
           else getOpt (List.find holds (List.map (fn root => root ^ "/" ^ name) (!roots)), first)
         end
     end
-
-  (* The words of a MANIFEST's header lines that begin with key: the
-     comments --basis-index writes before the first file's line, which is
-     where the reading stops, so that a compile reads no more of the file
-     than its header for them (the Basis Library's is 25 KB, which read
-     again a line at a time cost every compile 0.3M instructions; M8). *)
-  fun headerWords (ins : TextIO.instream, key : string) : string list =
-    let
-      fun lines acc =
-        case TextIO.inputLine ins of
-          NONE => List.rev acc
-        | SOME l =>
-            let val l = trim l
-            in
-              if String.isPrefix key l
-              then lines (List.rev (String.tokens Char.isSpace (String.extract (l, size key, NONE))) @ acc)
-              else if String.isPrefix "#" l then lines acc
-              else List.rev acc
-            end
-    in lines [] before TextIO.closeIn ins end
-
-  (* The libraries a library's MANIFEST names on its # library: lines. *)
-  fun libraryRequires (dir : string) : string list =
-    let
-      val manifest = dir ^ "/MANIFEST"
-      val ins = openManifest manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
-    in headerWords (ins, "# library:") end
-
-  (* What orders a library among the others: what it is written on, on its
-     # library: lines, and the virtual modules it declares and implements, on
-     its # virtual: and # implements: lines, KIND:NAME each (D22). One
-     reading of its header. *)
-  type order = {requires : string list, virtuals : (string * string) list, implements : (string * string) list}
-  fun moduleOf (word : string) : string * string =
-    case String.fields (fn c => c = #":") word of
-      [kind, name] => (kind, name)
-    | _ => raise Usage ("not a module, KIND:NAME: " ^ word)
-  fun orderOf (dir : string) : order =
-    let
-      val manifest = dir ^ "/MANIFEST"
-      val ins = TextIO.openIn manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
-      fun lines (r, v, i) =
-        case TextIO.inputLine ins of
-          NONE => (r, v, i)
-        | SOME l =>
-            let
-              val l = trim l
-              fun after key = List.rev (String.tokens Char.isSpace (String.extract (l, size key, NONE)))
-            in
-              if String.isPrefix "# library:" l then lines (after "# library:" @ r, v, i)
-              else if String.isPrefix "# virtual:" l then lines (r, after "# virtual:" @ v, i)
-              else if String.isPrefix "# implements:" l then lines (r, v, after "# implements:" @ i)
-              else if String.isPrefix "#" l then lines (r, v, i)
-              else (r, v, i)
-            end
-      val (r, v, i) = lines ([], [], []) before TextIO.closeIn ins
-    in {requires = List.rev r, virtuals = List.map moduleOf (List.rev v), implements = List.map moduleOf (List.rev i)} end
-
-  (* The fixity a library's MANIFEST says it exports, on its # fixity: lines,
-     for reading the files of a library that requires it *)
-  fun fixities (dir : string) : (string * Fixity.fixity) list =
-    let
-      fun directives ("infix" :: p :: n :: rest) = (n, Fixity.Infix (valOf (Int.fromString p))) :: directives rest
-        | directives ("infixr" :: p :: n :: rest) = (n, Fixity.Infixr (valOf (Int.fromString p))) :: directives rest
-        | directives ("nonfix" :: n :: rest) = (n, Fixity.Nonfix) :: directives rest
-        | directives _ = []
-    in directives (headerWords (openManifest (dir ^ "/MANIFEST"), "# fixity:")) end
-    handle IO.Io _ => []
-
-  (* The functors a library's MANIFEST marks to be inlined across units, on
-     its # inline: lines (its build file's `inline functor ... end`; M6b) *)
-  fun inlineFunctors (dir : string) : string list =
-    headerWords (openManifest (dir ^ "/MANIFEST"), "# inline:")
-    handle IO.Io _ => []
-
-  (* The values it marks to be inlined across units, on its # inline val:
-     lines (`inline val ... end`; functors-units M10) *)
-  fun inlineValues (dir : string) : string list =
-    headerWords (openManifest (dir ^ "/MANIFEST"), "# inline val:")
-    handle IO.Io _ => []
 
   (* The directories of the named libraries and of those they are written on,
      each once, every library after the ones it names; requires says what a
@@ -577,19 +406,6 @@ struct
     end
   fun librariesBy (requires : string -> string list) =
     librariesWith {requires = requires, virtuals = fn _ => [], implements = fn _ => []}
-  fun libraries (_ : string, []) : string list = []
-    | libraries (libDir : string, names : string list) : string list =
-    let
-      val known = ref [] : (string * order) list ref
-      fun header dir =
-        case List.find (fn (d, _) => d = dir) (!known) of
-          SOME (_, h) => h
-        | NONE => let val h = orderOf dir in known := (dir, h) :: !known; h end
-    in
-      librariesWith {requires = #requires o header, virtuals = #virtuals o header, implements = #implements o header}
-                    (libDir, names)
-    end
-
   (* The entries of libraries, given in the order they are compiled, in the
      order a compile takes them: a virtual library's files from the first that
      declares a virtual module on come after the last library that implements
@@ -656,7 +472,7 @@ struct
      scoped, and a compile goes as it always has, unless what is being
      compiled has one itself (headed: the "program" is that library). *)
   fun scopes {root : string, building : string option, names : string list, headed : bool,
-              libraries : (string * entry list) list, view : string option} : scopes =
+              libraries : (string * entry list) list, view : string option, requires : string -> string list} : scopes =
     let
       val basis = root ^ "/basis"
       fun entriesOf dir = case List.find (fn (d, _) => d = dir) libraries of SOME (_, es) => es | NONE => []
@@ -732,7 +548,7 @@ struct
           if isSome (headerOf dir) then imports
           else List.foldl (fn (n, acc) =>
                              if List.exists (fn {dir = d, ...} => d = libraryDir (root, n)) acc then acc
-                             else transitive client (n, named client (n, acc))) imports (libraryRequires dir)
+                             else transitive client (n, named client (n, acc))) imports (requires dir)
         end
       fun imports client names = List.foldl (transitive client) (List.foldl (named client) [] names) names
     in
@@ -741,7 +557,7 @@ struct
          if not scoped then []
          else
            List.mapPartial
-             (fn (dir, _) => Option.map (fn _ => (dir, imports (SOME (dir ^ "/library.build")) (libraryRequires dir)))
+             (fn (dir, _) => Option.map (fn _ => (dir, imports (SOME (dir ^ "/library.build")) (requires dir)))
                                         (headerOf dir))
              libraries,
        view = view}

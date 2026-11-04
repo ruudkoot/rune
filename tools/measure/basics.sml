@@ -57,8 +57,8 @@ struct
         val payloads=["rune.rbc","rune.stack.rbc","rune.new.rbc","rune-mlton.bin","rune-polyml.bin","runevm","runevm-stack","runevm-new","runevm-native","runeopt-mlton","runeopt-mlton.bin"]
         val paths=if repository="" then [] else List.filter exists (List.map (fn name => repository ^ "/bin/" ^ name) payloads)
         val ()=write (bundle ^ "/" ^ role ^ "-payloads.sha256",String.concat (List.map sum paths))
-        val ()=if role<>"compiler" orelse repository="" orelse not (exists (repository ^ "/lib/basis/MANIFEST")) then () else
-             let val paths="lib/basis/MANIFEST" :: List.map (fn file => "lib/basis/" ^ file)
+        val ()=if role<>"compiler" orelse repository="" orelse not (exists (repository ^ "/lib/basis/library.build")) then () else
+             let val paths="lib/basis/library.build" :: List.map (fn file => "lib/basis/" ^ file)
                     (List.filter (String.isSuffix ".sml") (sort (entries (repository ^ "/lib/basis"))))
              in write (bundle ^ "/basis.sha256",String.concat (List.map (fn file => hash (repository ^ "/" ^ file) ^ "  " ^ file ^ "\n") paths)) end
     in 0 end

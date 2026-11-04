@@ -129,23 +129,21 @@ struct
     in case W.lookup (parses,file) of
          SOME (known:parsed) => if #stamp known=stamp then {declares= #declares known,uses= #uses known} else fresh ()
        | NONE => fresh () end
-  (* A MANIFEST's names: what a header exports, or else all its files provide *)
-  fun manifestNames text =
-    let val lines=String.fields (fn c => c= #"\n") text
-        fun words text=String.tokens Char.isSpace text
-        val exported=List.concat (List.map (fn line =>
-          if String.isPrefix "# exports:" line then
-            List.map (fn word => case String.fields (fn c => c= #":") word of [_,name] => name | _ => word)
-              (words (String.extract (line,size "# exports:",NONE)))
-          else []) lines)
-        val provided=List.concat (List.map (fn line =>
-          if String.isPrefix "#" line then [] else
-          case String.fields (fn c => c= #"|") line of _::_::_::provides::_ => words provides | _ => []) lines)
-    in if null exported then provided else exported end
+  (* What a library lets out, by its build file (CompilerApi.Project): what
+     its boundary exports, or else all its files declare; none where its
+     build cannot be read *)
+  fun libraryNames (platform,session,build)=
+    let val project=C.Project.read (session,{file=build,workspace=NONE,variables=[],overlays=[],windows=platform=LspUri.Windows})
+    in case C.Project.exports project of
+         SOME exports => List.mapPartial (fn {kind,name} => if kind="fixity" then NONE else SOME name) exports
+       | NONE => List.concat (List.map (fn source:C.Project.source => List.map #name (#declares (parsed (#file source))))
+                                       (C.Project.sources project))
+    end
+    handle C.Failed _ => [] | IO.Io _ => [] | OS.SysErr _ => []
   (* the libraries under a directory of libraries, each by its place there,
      its directory and the names it lets out; and the Basis Library's names *)
   type library={name:string,directory:string,names:string list}
-  fun libraries (platform,root) : library list =
+  fun libraries (platform,session,root) : library list =
     let fun walk (directory,place,depth,found)=
           if depth>8 then found else
           List.foldl (fn (entry,found) =>
@@ -153,24 +151,23 @@ struct
             let val path=W.join platform (directory,entry)
                 val named=if place="" then entry else place ^ "/" ^ entry
             in if not (isDir path) then found else
-               let val manifest=W.join platform (path,"MANIFEST")
-                   val found=if exists manifest andalso named<>"basis" then
-                       ({name=named,directory=W.pathKey platform path,names=manifestNames (read manifest)}::found)
-                       handle IO.Io _ => found
+               let val build=W.join platform (path,"library.build")
+                   val found=if exists build andalso named<>"basis" then
+                       {name=named,directory=W.pathKey platform path,names=libraryNames (platform,session,build)}::found
                      else found
                in walk (path,named,depth+1,found) end end) found (entries directory)
     in List.rev (walk (root,"",0,[])) end
-  fun basisNames (platform,root)=(manifestNames (read (W.join platform (W.join platform (root,"basis"),"MANIFEST"))))
-    handle IO.Io _ => [] | OS.SysErr _ => []
+  fun basisNames (platform,session,root)=libraryNames (platform,session,W.join platform (W.join platform (root,"basis"),"library.build"))
   (* the libraries and the Basis Library's names, walked again as the index is *)
   val known=ref [] : (string list*(library list*string list*Time.time)) list ref
   fun librariesOf (platform,lib,roots)=
     case List.find (fn (key,(_,_,walked)) => key=lib::roots andalso recent walked) (!known) of
       SOME (_,(available,basis,_)) => (available,basis)
     | NONE =>
-        let val available=List.concat (List.map (fn root => libraries (platform,root)) (lib::roots))
-            val basis=basisNames (platform,lib)
-        in known:=[(lib::roots,(available,basis,Time.now ()))];(available,basis) end
+        let val session=C.session {lib=SOME lib,flags=[]}
+            val available=List.concat (List.map (fn root => libraries (platform,session,root)) (lib::roots))
+            val basis=basisNames (platform,session,lib)
+        in C.close session;known:=[(lib::roots,(available,basis,Time.now ()))];(available,basis) end
   (* how near two files are: the directories they share *)
   fun nearness (platform,a,b) =
     let fun parts path=String.tokens (fn c => c= #"/" orelse c= #"\\") (W.directory platform path)

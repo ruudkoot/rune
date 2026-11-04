@@ -1510,7 +1510,7 @@ struct
 
   (* Runtime: the counters of Rune's VM. A host counts none of them -- it has
      neither Rune's instructions nor Rune's heap -- and lib/basis/runtime.sml
-     is `host = no` in the MANIFEST, so nothing here calls these. *)
+     is `host=no` in lib/basis/library.build, so nothing here calls these. *)
   fun rt_instructions () = unsupported ~1
   fun rt_bytes () = unsupported ~1
   fun rt_objects () = unsupported ~1

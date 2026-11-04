@@ -81,7 +81,7 @@ suffix replaced by
 Take the basis library from
 .IR DIR /basis ,
 which must contain a
-.B MANIFEST
+.B library.build
 listing the source files to compile before the inputs. Required unless
 .B \-\-no\-prelude
 is given.
@@ -100,11 +100,9 @@ or a path when it begins with
 or
 .BR . .
 Its
-.B MANIFEST
-has the basis library's form, and its lines
-.B # library:
-.I NAME ...
-name the libraries it is written on, which are compiled before it. A
+.B library.build
+has the basis library's form, and names the libraries it is written on,
+which are compiled before it. A
 library's files are chosen as the basis library's are, and may not use
 .BR _prim .
 .IB NAME # VIEW
@@ -131,9 +129,9 @@ the files of the basis library that provide a structure, signature or functor
 they mention, the files those require, and the few that every program gets.
 With
 .B all
-it compiles every file. The
-.B MANIFEST
-records what each file provides and requires.
+it compiles every file. The library's index, which the compiler derives
+from its build file and its sources and keeps in its store, records what
+each file provides and requires.
 .TP
 .BI \-\-basis\-view " NAME"
 See the basis library through its view
@@ -152,8 +150,7 @@ Print the library files that the inputs load, one per line, and exit: a
 file of the basis library by its name, one of another library by its path.
 .TP
 .B \-\-basis\-check
-Check the provides and requires columns of the
-.B MANIFEST
+Check what the basis library's index says each file provides and requires
 against the library sources, and exit; with
 .BR \-\-library ,
 those of the libraries too, whose requires column names what they use of the
@@ -488,12 +485,13 @@ of build files is
 .IR DIR .
 .TP
 .BI \-\-basis\-index " DIR"
-Write
-.IB DIR /MANIFEST\fR,\fP
-what each file of a library provides and requires, worked out from the
+Print the index of the library in
+.IR DIR ,
+what each of its files provides and requires, made again from the
 library's build file
 .IB DIR /library.build
-and its sources.
+and its sources, with what a client of the library cannot act on said as a
+warning. A compile derives the index itself, and keeps it in its store.
 .TP
 .B \-\-whole
 With
@@ -679,7 +677,7 @@ rune \-\-lib ~/rune/lib hello.sml
 .fi
 .SH FILES
 .TP
-.I <libdir>/basis/MANIFEST
+.I <libdir>/basis/library.build
 The ordered list of basis library sources compiled before the inputs.
 .TP
 .I rune.workspace

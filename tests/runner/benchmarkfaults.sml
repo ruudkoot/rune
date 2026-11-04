@@ -86,7 +86,7 @@ struct
         val () = List.app (fn (name, text) => write (foreign ^ "/bin/" ^ name, text))
            [("rune", "fixture compiler\n"), ("rune.rbc", "fixture payload\n"),
             ("rune.stack.rbc", "fixture stack payload\n"), ("rune.new.rbc", "fixture legacy register payload\n")]
-        val () = write (foreign ^ "/lib/basis/MANIFEST", "# fixture basis\n")
+        val () = write (foreign ^ "/lib/basis/library.build", "(* fixture basis *)\nfixture.sml\n")
         val () = write (foreign ^ "/lib/basis/fixture.sml", "val basisFixture = 1\n")
         fun git label args =
           let val (status, output, errors) = execute dir label foreign (fn e => e)
@@ -112,7 +112,7 @@ struct
         val () = List.app (fn name => need ("actual compiler payload " ^ name,
                        String.isSubstring (foreign ^ "/bin/" ^ name) payloads)) ["rune.rbc", "rune.stack.rbc", "rune.new.rbc"]
         val (status, hashes, _) = execute dir "basis" foreign (fn e => e)
-                    ["sha256sum", "lib/basis/MANIFEST", "lib/basis/fixture.sml"]
+                    ["sha256sum", "lib/basis/library.build", "lib/basis/fixture.sml"]
         val () = need ("actual compiler basis hashes", status = 0 andalso hashes = read (dir ^ "/record/basis.sha256"))
         (* A launcher outside every Git repository must remain unidentified. *)
         val stem = "/tmp/rune-benchmark-provenance-" ^ SysWord.toString (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))

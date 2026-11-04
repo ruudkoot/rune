@@ -1062,9 +1062,12 @@ struct
                  let val keys=fresh () in if StringMap.listKeys keys=StringMap.listKeys found then () else mentions:=true end
              | NONE => (ignore (fresh ());mentions:=true) end
         val ()=if isSome frozenPlan then () else List.app scan sources
-        val manifests=case lib of NONE => [] | SOME root =>
-          (root ^ "/basis/MANIFEST")::List.map (fn dir => dir ^ "/MANIFEST")
-            ((BasisManifest.libraries (root,libraries @ extraLibraries)) handle BasisManifest.Usage _ => [])
+        (* what the libraries' indexes rest on, their build files and
+           sources (LibraryIndex), once the selection has asked for them *)
+        fun manifests ()=case lib of NONE => [] | SOME root =>
+          List.concat (List.map (fn dir => LibraryIndex.inputs {root=root,dir=dir})
+            (root ^ "/basis"::((LibraryIndex.libraries (root,libraries @ extraLibraries)) handle BasisManifest.Usage _ => [])))
+          handle BasisManifest.Usage _ => []
         val stampsHold=List.all (fn (file,stamp) => stampOf file=stamp) (#stamps old)
         fun selected ()=CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=
           List.foldl (fn (source:source,all) => case StringMap.find (!names,#file source) of NONE => all
@@ -1201,7 +1204,7 @@ struct
                 planned=SOME (steps,extraLibraries,building,view),prelude=SOME plan,units=inputNames,libraryNames=libraryNames,
                 libraries=librarySources,
                 stamps=if sameSelection andalso stampsHold then #stamps old else
-                  let val files=manifests @ selection
+                  let val files=manifests () @ selection
                   in (if List.all settled files then [] else [unsettled]) @ List.map (fn file => (file,stampOf file)) files end,
                 names= !names,paths= !paths}) end
         val walkErrors=if isSome fast then [] else

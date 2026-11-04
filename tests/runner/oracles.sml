@@ -872,8 +872,8 @@ struct
     (* the same program from its libraries, the virtual library and an
        implementation (the build-system roadmap's M22): each build indexes
        them, plans the program and compiles it, in one copy, one after
-       another, and every build gives the same manifests, plan and bytes;
-       smlnj32 the same manifests and plan alone, since the program, built
+       another, and every build gives the same indexes, plan and bytes;
+       smlnj32 the same indexes and plan alone, since the program, built
        in units, carries its units' identities and the functor's
        fingerprint, which smlnj32's hash, its own, gives other values
        (Pickle.hash, D11 of docs/plans/functors-units.md; crossCheck) *)
@@ -884,7 +884,7 @@ struct
           fun copyFrom path =
             let val from = fromRoot ("examples/virtual/table/" ^ path)
             in if isDir from then (mkdirs (copy ^ "/" ^ path); List.app (fn e => copyFrom (path ^ "/" ^ e)) (entries from))
-               else if OS.Path.file path = "MANIFEST" orelse String.isPrefix "." (OS.Path.file path) then ()
+               else if String.isPrefix "." (OS.Path.file path) then ()
                else write (copy ^ "/" ^ path, read from)
             end
           val () = (rmTree copy; mkdirs copy; List.app copyFrom (entries (fromRoot "examples/virtual/table")))
@@ -895,12 +895,13 @@ struct
               val rbc = out ^ "/virtual-libraries." ^ c ^ ".rbc"
               val plan = out ^ "/virtual-libraries." ^ c ^ ".plan"
               fun runs (cmd, stdout) = exec {cmd = cmd, dir = NONE, stdin = "", stdout = stdout, stderr = err, timeout = 0} = 0
+              fun index l = out ^ "/virtual-libraries." ^ c ^ "." ^ l ^ ".index"
               val made =
-                List.all (fn l => runs (["bin/rune-" ^ c, "--basis-index", copy ^ "/libraries/" ^ l], "")) libraries
+                List.all (fn l => runs (["bin/rune-" ^ c, "--basis-index", copy ^ "/libraries/" ^ l], index l)) libraries
                 andalso runs (["bin/rune-" ^ c, "--no-warnings", "--plan", copy ^ "/list-libraries.build"], plan)
                 andalso runs (["bin/rune-" ^ c, "--build", copy ^ "/list-libraries.build", "--no-cache", "-o", rbc], "")
             in
-              (c, if made then SOME (String.concat (List.map (fn l => read (copy ^ "/libraries/" ^ l ^ "/MANIFEST")) libraries),
+              (c, if made then SOME (String.concat (List.map (read o index) libraries),
                                      read plan, read rbc)
                   else NONE)
             end
@@ -909,7 +910,7 @@ struct
           case List.find (fn (c, _) => c = "mlton") made of
             SOME (_, SOME (manifests, plan, bytes)) =>
               List.app (fn (c, SOME (m, p, b)) =>
-                             if m <> manifests then say ("FAIL virtual-libraries: the manifests differ between the mlton and " ^ c ^ " builds\n")
+                             if m <> manifests then say ("FAIL virtual-libraries: the indexes differ between the mlton and " ^ c ^ " builds\n")
                              else if p <> plan then say ("FAIL virtual-libraries: the plan differs between the mlton and " ^ c ^ " builds\n")
                              else if b <> bytes andalso c <> "smlnj32" then say ("FAIL virtual-libraries: the program differs between the mlton and " ^ c ^ " builds\n")
                              else ()

@@ -138,6 +138,12 @@ struct
     fun sources (Project {sources,...})=sources
     fun inputs (Project {inputs,...})=inputs
     fun libraries (Project {plan,...})= #libraries plan
+    fun exports (Project {plan,...})=
+      case #steps plan of
+        [P.SLibrary (es,_)] => SOME (List.map (fn (k,n) => {kind=case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
+                                                                    | BuildFile.Fun => "functor" | BuildFile.Ty => "type"
+                                                                    | BuildFile.Fix => "fixity",name=n}) es)
+      | _ => NONE
     fun fingerprint (Project {fingerprint,...})=fingerprint
     fun buildSyntax (request as {file,...})=guard file (fn () => C.owned (fn () =>
       let val result=CompilerBuildQuery.inspect request

@@ -7,7 +7,7 @@ struct
   val basisAll = ref false         (* --basis all: every file of the basis library *)
   val basisView : string option ref = ref NONE  (* --basis-view NAME: the view of the basis library (D12) *)
   val basisDeps = ref false        (* --basis-deps: print the files that would be loaded *)
-  val basisCheck = ref false       (* --basis-check: verify lib/basis/MANIFEST *)
+  val basisCheck = ref false       (* --basis-check: verify the Basis Library's index *)
   val allowPrim = ref false
   val orPatterns = ref false
   (* --unicode, --unicode=ENC: the mode of the input files; the libraries are
@@ -41,7 +41,7 @@ struct
   (* --no-inline-functors: none inlined across units (M6b) *)
   val noInlineFunctors = ref false
   val plan = ref false                         (* --plan: print the plan's text *)
-  val indexLibrary : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
+  val indexLibrary : string option ref = ref NONE (* --basis-index DIR: the index of DIR/library.build *)
   val noWarnings = ref false
   val color = ref Color.WhenTerminal           (* --color=WHEN (docs/diagnostics.md) *)
   val diagnostics : bool option ref = ref NONE (* --diagnostics=full|short: SOME true, SOME false *)
@@ -60,8 +60,8 @@ struct
     \  -o FILE           write bytecode to FILE (default: first input with .rbc)\n\
     \  --lib DIR         directory containing the basis library, in DIR/basis\n\
     \                    (required unless --no-prelude)\n\
-    \  --library NAME    compile the library LIBDIR/NAME (a MANIFEST like the basis\n\
-    \                    library's) and those it names, after the basis library\n\
+    \  --library NAME    compile the library LIBDIR/NAME (a directory with a\n\
+    \                    library.build) and those it names, after the basis library\n\
     \                    and before the inputs; NAME is a path if it begins with\n\
     \                    / or .; NAME#VIEW sees that view of it; NAME (structure\n\
     \                    A as B, ...) renames what it imports, as a build file's\n\
@@ -74,9 +74,9 @@ struct
     \                    `view NAME` says the same (docs/build.md, Views of the\n\
     \                    Basis Library)\n\
     \  --basis-deps      print the library files the inputs load, and exit\n\
-    \  --basis-check     check the provides and requires columns of the basis\n\
-    \                    library's MANIFEST, and of those of --library, against\n\
-    \                    their sources, and exit\n\
+    \  --basis-check     check what the basis library's index, and those of\n\
+    \                    --library, say each file provides and requires against\n\
+    \                    the sources, and exit\n\
     \  --allow-prim      allow the _prim extension in the inputs\n\
     \  --int-bits=N      the precision of int and word on the VM: 63 (default), or\n\
     \                    64 for a VM built with -DRUNE_INT64\n\
@@ -151,8 +151,8 @@ struct
     \                    FILE.plan, read it and print it again\n\
     \  --path NAME=DIR   the path variable $(NAME) of build files, a relative DIR\n\
     \                    from the directory of the build file given\n\
-    \  --basis-index DIR write DIR/MANIFEST, what a library's files provide and\n\
-    \                    require, from its build file DIR/library.build\n\
+    \  --basis-index DIR print the index of the library in DIR, what its files\n\
+    \                    provide and require, made again from DIR/library.build\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\

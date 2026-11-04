@@ -4,8 +4,6 @@ struct
   structure O=BuildOptions
   val linuxArchitectures=["x86_64","i686","aarch64","ppc64"]
   val windowsArchitectures=["x86_64","i686"]
-  fun manifestNames file=List.mapPartial (fn line => let val name=trim (hd (fields #"|" line))
-         in if name="" orelse String.isPrefix "#" name then NONE else SOME name end) (lines (read file))
   fun pathLess (a,b) =
     let fun loop ([],[])=false | loop ([],_)=true | loop (_,[])=false | loop (a::ar,b::br)=if a=b then loop (ar,br) else a<b
     in loop (fields #"/" a,fields #"/" b) end
@@ -13,14 +11,22 @@ struct
     let val builds=sort pathLess (List.filter (fn file => OS.Path.file file="library.build" andalso not (isDir file)) (tree library))
         val ()=need (not (null builds),"no library.build under " ^ library)
         fun relative file=String.extract (file,size library+1,NONE)
+        (* A library is its directory, but for the libraries nested in it:
+           its build files, its sources and its README. Its index is derived
+           from them where it is compiled (docs/build.md), so no list says
+           which (D13) *)
+        val dirs=List.map OS.Path.dir builds
         fun one build =
-          let val parent=OS.Path.dir build val manifest=parent ^ "/MANIFEST" val ()=need (exists manifest,"missing " ^ manifest ^ " (make manifests)")
-              val sources=List.map (fn name => let val source=parent ^ "/" ^ name
-                   in need (exists source andalso not (isDir source),manifest ^ " names " ^ name ^ ", which is not there");relative source end) (manifestNames manifest)
-          in relative manifest::sources @ (if exists (parent ^ "/README.md") then [relative (parent ^ "/README.md")] else []) end
+          let val parent=OS.Path.dir build
+              fun nested file=List.exists (fn dir => dir<>parent andalso String.isPrefix (parent ^ "/") dir
+                                                     andalso String.isPrefix (dir ^ "/") file) dirs
+              fun kept file=not (isDir file) andalso not (isLink file) andalso not (nested file) andalso
+                (OS.Path.file file="README.md" andalso OS.Path.dir file=parent orelse
+                 List.exists (fn suffix => String.isSuffix suffix file) [".sml",".build"])
+          in List.map relative (List.filter kept (tree parent)) end
         (* Complete immutable FFI sets include non-SML outputs and pointers
-           beside their derived MANIFESTs. Keep the same source tree as the
-           source installer, including future regenerated set identities. *)
+           beside their sources. Keep the same source tree as the source
+           installer, including future regenerated set identities. *)
         val assets=List.concat(List.map(fn name=>
           let val generated=library ^ "/" ^ name
           in if isDir generated then List.map relative

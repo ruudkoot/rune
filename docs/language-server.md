@@ -15,8 +15,9 @@ private Linux and Windows x86-64 runtimes and a fallback Basis. It supports
 Remote WSL and does not use Rune executables from PATH or the workspace's
 build outputs. See [the extension guide](../editors/vscode/README.md).
 For Rune development, set `runelsp.libraryRoot` to the checkout's `lib`
-directory as a file URI so analysis follows saved library edits. Run
-`make manifests` after adding files or changing their provided names.
+directory as a file URI so analysis follows saved library edits: a
+library's index follows its `library.build` and its files, with nothing to
+run after an edit ([build.md](build.md), *A library's index*).
 
 ```
 make lsp
@@ -105,7 +106,7 @@ build-file membership, settings and overlays guard reuse. Saved changes are
 detected even without a watched-file notification; previous result IDs still
 produce unchanged reports.
 Acknowledged file watches let cached workspace polls skip content hashing
-for covered SML/signature/build files and manifests. Watch notifications
+for covered SML, signature and build files. Watch notifications
 invalidate those reports through the input generation. Coverage is trusted
 only after registration succeeds and the cached content baseline is valid.
 Unwatched paths and refused registrations retain content validation; a full
@@ -543,7 +544,8 @@ file's directory, else the client's folder that holds the file, else its own
 directory), the nearest first by the directories they share. A file found in a
 library that lets the name out is not taken: the library is imported, as a
 build would import it. A name the Basis Library provides is its; a library none
-of whose files was read is imported by its `MANIFEST`. What is found is looked
+of whose files was read is imported by its `library.build`: what its header
+exports, or else all its files declare. What is found is looked
 through in turn, and the file is checked after it all, as a build no file holds,
 beside it, read through an overlay. It is analysis only: no batch build reads it.
 

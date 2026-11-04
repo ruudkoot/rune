@@ -21,7 +21,11 @@
    warm-uptodate: a compile that is up to date (UnitMemo): it compiles
    nothing, links nothing and gives its warnings again; a file touched, the
    output removed or overwritten, an edit, a build file's edit, a library.build
-   that makes a unit another library's -- each is seen. *)
+   that makes a unit another library's -- each is seen.
+
+   warm-uptodate-index: an edit of a Basis Library file under an index of the
+   frozen layer, and under one of the overlay, makes the next build not up to
+   date, the index being held by its record (the build-system roadmap's M12). *)
 structure WarmChecks =
 struct
   open Incremental
@@ -154,13 +158,96 @@ struct
       val () = warm "a library.build above a unit"
     in () end
 
-  val cases = List.map (fn p => prefix ^ "unit-" ^ p) projects @ [prefix ^ "racy", prefix ^ "uptodate"]
+  (* ---- up to date, through a library's index ---- *)
+
+  (* A compile that is up to date holds each library's index it took by the
+     index's record and the hash of what the index rests on, not by a copy
+     of its files (LibraryIndex.stillRests): an edit of a file of the Basis
+     Library, which leaves its index as it was, makes the next build not up
+     to date -- under an index the frozen layer holds, written by a compile
+     whose store that layer was, and under one the overlay holds, made by the
+     first build and taken by the next. First a file the program does not take, array2.sml, which
+     only the index rests on: a build that is not up to date writes its
+     record again, as one that is does not (the files of memo/, by their
+     inodes). Then one it takes, so that Bool.toString gives another text,
+     which a build that took itself to be up to date would not print. Each
+     Basis is a copy, written three seconds before its index is made, so
+     that the index's record holds its files by their stats *)
+  fun upToDateIndex (s : state) =
+    let
+      val () = own s "p.sml"
+      val () = put s "p.sml" "val () = print (Bool.toString true ^ \"\\n\")"
+      val () = List.app (fn root => copyTree (fromRoot "lib/basis") (path s (root ^ "/lib/basis"))) ["frozen", "overlay"]
+      val vm = OS.Path.dir (#compiler s) ^ "/runevm"
+      fun indexes store = entriesBelow (path s (store ^ "/index"))
+      fun modified out = OS.FileSys.modTime (path s out)
+      (* what a build writes again where it is not up to date: its record *)
+      fun memo store =
+        List.map (fn f => (f, Posix.FileSys.inoToWord (Posix.FileSys.ST.ino (Posix.FileSys.stat f))))
+                 (List.filter (String.isSubstring "/memo/") (entriesBelow (path s store)))
+      fun case' (root, store, (whose, taken)) =
+        let
+          val lib = path s (root ^ "/lib")
+          val out = root ^ ".rbc"
+          fun warm label printed =
+            let
+              val w = compile s ["--lib", lib, "--units", "--cache-dir", store] out
+              val n = compile s ["--lib", lib, "--units", "--no-cache"] (root ^ "-n.rbc")
+              val r = command s "" [vm, out]
+            in
+              check s (root ^ ", " ^ label ^ ": the build failed: " ^ #errors w) (#status w = 0);
+              check s (root ^ ", " ^ label ^ ": the build differs from one without the cache") (same (path s out, path s (root ^ "-n.rbc")));
+              check s (root ^ ", " ^ label ^ ": the program printed " ^ String.toString (#output r ^ #errors r))
+                    (#output r ^ #errors r = printed ^ "\n")
+            end
+          fun upToDate label =
+            let val t = modified out val m = memo store
+            in
+              warm label "true";
+              check s (root ^ ", " ^ label ^ ": an up-to-date build wrote its output") (Time.compare (t, modified out) = EQUAL);
+              check s (root ^ ", " ^ label ^ ": an up-to-date build wrote its record") (m = memo store)
+            end
+          val unused = root ^ "/lib/basis/array2.sml"
+        in
+          warm "first" "true";
+          check s (root ^ ": the index taken was not " ^ whose) (taken ());
+          (* a build that takes the index from the store, where the first
+             may have made it and so read its files *)
+          ignore (command s "" ["touch", path s "p.sml"]);
+          warm "the program touched" "true";
+          sleep 3; warm "nothing changed, which links nothing" "true";
+          upToDate "nothing changed again";
+          let val m = memo store
+          in
+            write (path s unused, read (path s unused) ^ "(* edited *)\n");
+            warm "a Basis file the program does not take edited" "true";
+            check s (root ^ ": the build after an edit of a file only the index rests on was up to date") (m <> memo store)
+          end;
+          sleep 3; warm "settled" "true";
+          upToDate "settled, nothing changed";
+          edit s (root ^ "/lib/basis/bool.sml") "fun toString true = \"true\"" "fun toString true = \"TRUE\"";
+          warm "a Basis file edited, its index the same" "TRUE";
+          sleep 3; warm "settled" "TRUE"
+        end
+      val () = sleep 3
+      (* the frozen layer's record, written by a compile whose store it is *)
+      val made = compile s ["--lib", path s "frozen/lib", "--cache-dir", path s "frozen/lib/cache"] "made.rbc"
+      val () = check s ("the frozen layer's index was not made: " ^ #errors made)
+                     (#status made = 0 andalso not (List.null (indexes "frozen/lib/cache")))
+      val () = sleep 3
+    in
+      case' ("frozen", "fcache", ("the frozen layer's", fn () => List.null (indexes "fcache")));
+      case' ("overlay", "ocache", ("the overlay's", fn () => not (List.null (indexes "ocache"))))
+    end
+
+  val cases = List.map (fn p => prefix ^ "unit-" ^ p) projects @ [prefix ^ "racy", prefix ^ "uptodate", prefix ^ "uptodate-index"]
   fun handles name = String.isPrefix prefix name
   fun one (s : state) =
     let val n = #name s
     in
       if n = prefix ^ "racy" then racy s
       else if n = prefix ^ "uptodate" then upToDate s
+      else if n = prefix ^ "uptodate-index" then upToDateIndex s
       else if String.isPrefix (prefix ^ "unit-") n then unitByUnit s (String.extract (n, size (prefix ^ "unit-"), NONE))
       else raise Failed ("no check " ^ n)
     end

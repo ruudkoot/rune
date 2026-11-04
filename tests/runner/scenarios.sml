@@ -680,6 +680,85 @@ struct
           (* and one that needs what a library with no header leaves, by its tokens *)
           selected "ops-label" ["--no-cache", "--build", "ops-label.build"] [] "(initialiser of E ran)\n3\n"
         end
+    | "stale-index" =>
+        (* E2's stale MANIFESTs that gave a wrong answer and no error, each
+           an edit of a library or its build with nothing made again by hand:
+           a library's index is derived, and kept in the store by what it was
+           made of, so that every compile after the edit, whole, in units and
+           with --no-cache, through the store that held the index before it,
+           gives what a fresh index gives (the build-system roadmap's D13,
+           M12). The files are written three seconds before the first compile,
+           so that the stat of a file not edited is believed (UnitStore.clean),
+           and an edited file is known by its stat, then its bytes *)
+        let
+          val dir = #directory c ^ "/stale"
+          val lib = dir ^ "/lib"
+          val () = (rmTree dir; mkdirs lib)
+          val () = Posix.FileSys.symlink {old = fromRoot "lib/basis", new = lib ^ "/basis"}
+          fun file (library, name, text) = (mkdirs (lib ^ "/" ^ library); write (lib ^ "/" ^ library ^ "/" ^ name, text))
+          val build = "annotate \"demand\" in\n  a.sml\n  b.sml\n  c.sml\n  effect.sml\n  d1.sml\n  d2.sml\nend\n"
+          fun library name =
+            List.app (fn (f, t) => file (name, f, t))
+              [("library.build", build), ("a.sml", "structure A = struct val v = \"A.v\" end\n"),
+               ("b.sml", "structure B = struct val v = \"B.v\" end\n"), ("c.sml", "structure C = struct val v = \"C.v on \" ^ B.v end\n"),
+               ("effect.sml", "structure E = struct val () = print \"(effect ran)\\n\" end\n"),
+               ("d1.sml", "structure D = struct val v = \"D from d1\" end\n"), ("d2.sml", "structure D = struct val v = \"D from d2\" end\n")]
+          fun append (library, name, text) = file (library, name, read (lib ^ "/" ^ library ^ "/" ^ name) ^ text)
+          (* each: its library, its program, what it prints before the edit,
+             the edit, and what it prints after: SOME output, or NONE and
+             what the refusal names *)
+          val cases =
+            [("shadowing", "val () = print (A.v ^ \"\\n\")\n", "A.v\n",
+              fn l => (file (l, "patch.sml", "structure A = struct val v = \"A.v PATCHED\" end\n");
+                       file (l, "library.build", "annotate \"demand\" in\n  a.sml\n  patch.sml\n  b.sml\n  c.sml\n  effect.sml\n  d1.sml\n  d2.sml\nend\n")),
+              SOME "A.v PATCHED\n"),
+             ("basis-name", "val () = print (Int.toString 1 ^ \"\\n\")\n", "1\n",
+              fn l => append (l, "a.sml", "structure Int = struct fun toString (_ : int) = \"library Int\" end\n"), SOME "library Int\n"),
+             ("always", "val () = print \"main\\n\"\n", "main\n",
+              fn l => file (l, "library.build", "annotate \"always\" in effect.sml end\n"
+                                                ^ "annotate \"demand\" in\n  a.sml\n  b.sml\n  c.sml\n  d1.sml\n  d2.sml\nend\n"),
+              SOME "(effect ran)\nmain\n"),
+             ("swapped", "val () = print (D.v ^ \"\\n\")\n", "D from d2\n",
+              fn l => file (l, "library.build", "annotate \"demand\" in\n  a.sml\n  b.sml\n  c.sml\n  effect.sml\n  d2.sml\n  d1.sml\nend\n"),
+              SOME "D from d1\n"),
+             ("boundary", "val () = print (B.v ^ \"\\n\")\n", "B.v\n",
+              fn l => file (l, "library.build", "library (structure A) =\n" ^ build ^ "end\n"), NONE),
+             ("basis-name-mentioned", "val () = print (Real.toString 1.0 ^ \"\\n\")\n", "1\n",
+              fn l => append (l, "a.sml", "structure Real = struct end\n"), NONE)]
+          val () = List.app (fn (l, program, _, _, _) => (library l; write (dir ^ "/" ^ l ^ ".sml", program))) cases
+          val () = OS.Process.sleep (Time.fromSeconds 3)
+          val modes = [("whole", ["--cache-dir", dir ^ "/store"]), ("units", ["--units", "--cache-dir", dir ^ "/store"]),
+                       ("no-cache", ["--no-cache"])]
+          fun compile (l, mode, flags, when) =
+            compiler c (l ^ "-" ^ mode ^ "-" ^ when) "stale"
+                     (["--lib", lib, "--no-warnings", "--library", l] @ flags @ [l ^ ".sml", "-o", l ^ "-" ^ mode ^ "-" ^ when ^ ".rbc"])
+          fun runs (l, mode, when) = program c (l ^ "-" ^ mode ^ "-" ^ when ^ "-run") "stale" [l ^ "-" ^ mode ^ "-" ^ when ^ ".rbc"]
+          fun first (l, _, printed, _, _) =
+            List.app (fn (mode, flags) => (success (compile (l, mode, flags, "before")); output (runs (l, mode, "before")) printed)) modes
+          fun again (l, _, _, edit, expected) =
+            (edit l;
+             List.app (fn (mode, flags) =>
+                         case expected of
+                           SOME printed => (success (compile (l, mode, flags, "after")); output (runs (l, mode, "after")) printed)
+                         | NONE => refused (compile (l, mode, flags, "after"))
+                                           (case l of "boundary" => "B.v" | _ => "Real.toString"))
+                      modes)
+          (* and a damaged record is a miss, never misread: a byte in the
+             middle of each record of the store changed, its length kept *)
+          val records = dir ^ "/store/index/units"
+          fun damaged () =
+            List.app (fn name =>
+                        let val path = records ^ "/" ^ name
+                            val bytes = read path
+                            val i = size bytes div 2
+                        in write (path, String.substring (bytes, 0, i) ^ str (Char.chr ((Char.ord (String.sub (bytes, i)) + 1) mod 256))
+                                        ^ String.extract (bytes, i + 1, NONE)) end)
+                     (entries records)
+          fun damage () =
+            (damaged ();
+             success (compile ("swapped", "whole", ["--cache-dir", dir ^ "/store"], "damaged"));
+             output (runs ("swapped", "whole", "damaged")) "D from d1\n")
+        in List.app first cases; List.app again cases; damage () end
     | "install-no-basis" =>
         let val dir = #directory c ^ "/installroot"
             val () = rmTree dir
@@ -687,8 +766,13 @@ struct
                               ["bin/runevm-stack", "bin/runevm", "bin/rune.rbc", "build/gmp/native-build.json"]
             val () = mkdirs (dir ^ "/scripts")
             val () = write (dir ^ "/scripts/install.sh", read (fromRoot "scripts/install.sh"))
-            val r = execute c which "" ["sh", dir ^ "/scripts/install.sh", "--prefix", dir ^ "/prefix"]
-        in refused r "lib/basis/MANIFEST"; need (not (exists (dir ^ "/prefix/bin/rune")), "installed with no Basis") end
+            fun install () = execute c which "" ["sh", dir ^ "/scripts/install.sh", "--prefix", dir ^ "/prefix"]
+            (* no Basis Library's build, and then a build with no source:
+               each refused before anything is installed (H2) *)
+            val () = refused (install ()) "lib/basis/library.build"
+            val () = need (not (exists (dir ^ "/prefix/bin/rune")), "installed with no Basis")
+            val () = (mkdirs (dir ^ "/lib/basis"); write (dir ^ "/lib/basis/library.build", "list.sml\n"))
+        in refused (install ()) "lib/basis/*.sml"; need (not (exists (dir ^ "/prefix/bin/rune")), "installed a Basis with no source") end
     | "clean-overlay" =>
         let val dir = #directory c ^ "/cleanroot"
             val () = rmTree dir
@@ -823,7 +907,7 @@ struct
                     "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-diamond", "use-diamond-hidden", "use-first-open", "use-inside-boundary",
                     "use-sibling-boundary", "use-replayed-export", "use-after-implements", "export-nothing",
                     "export-no-signature", "export-from-outside", "export-rebound", "export-datatype", "export-abbreviation", "typecheck-exports", "reach-in", "reach-in-pointer",
-                    "selection-by-uses", "install-no-basis", "clean-overlay",
+                    "selection-by-uses", "install-no-basis", "stale-index", "clean-overlay",
                     "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two",
                     "virtual-table-list", "virtual-table-tree", "virtual-table-cache", "virtual-table-whole", "virtual-table-none",
                     "virtual-table-two", "virtual-table-inline", "virtual-table-other", "virtual-table-plugin", "virtual-table-whole-refused", "bad", "self"]

@@ -38,8 +38,10 @@ struct
         val ()=X.listFile out "prefix" (prefix @ !files) val ()=X.writeFile out "flags" ""
         val ()=X.trim out (List.take (prefix,5)) val lib=out ^ "/lib/basis"
         val ()=List.app rmTree [lib ^ "/int64.sml",lib ^ "/seal_int64.sml"]
-        val manifest=String.concat (List.map (fn line => line ^ "\n") (List.filter (fn line => not (String.isPrefix "int64.sml " line orelse String.isPrefix "seal_int64.sml " line)) (lines (read (lib ^ "/MANIFEST")))))
-        val ()=T.atomic (lib ^ "/MANIFEST") (T.replace manifest " Real64 " " ")
+        (* the trimmed Basis's build without them; its index, derived, then
+           has no Real64 either, once real.sml and seal_real.sml do not *)
+        val build=String.concat (List.map (fn line => line ^ "\n") (List.filter (fn line => not (String.isSubstring " in int64.sml end" line orelse String.isSubstring " in seal_int64.sml end" line)) (lines (read (lib ^ "/library.build")))))
+        val ()=T.atomic (lib ^ "/library.build") build
         val ()=List.app (fn (file,remove) => T.atomic (lib ^ "/" ^ file) (T.filterLines (fn line => line<>remove) (read (lib ^ "/" ^ file)))) [("real.sml","structure Real64 = Real"),("seal_real.sml","structure Real64 : REAL = Real64")]
     in 0 end
 end
