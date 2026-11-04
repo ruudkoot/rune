@@ -16,6 +16,7 @@ files
   ../../src/lsp/hints.sml
   ../../src/lsp/completion.sml
   ../../src/lsp/worker-analysis.sml
+  seconds.sml
   contexts.sml
   ../../src/main/lsp-contexts-main.sml
 end

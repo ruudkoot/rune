@@ -54,7 +54,7 @@ struct
         fun response id=C.receiveWithin (client,fn value => Json.member ("id",value)=SOME (Json.int id),limit)
         fun note (name,kind,timer,status,detail)=
           let val seconds=Time.toReal (Timer.checkRealTimer timer)
-              val sample=object [("phase",Json.String name),("seconds",Json.Number (Real.toString seconds)),
+              val sample=object [("phase",Json.String name),("seconds",RuneLspSeconds.json seconds),
                 ("status",Json.String status),("detail",Json.String detail)]
               val ()=case List.find (fn (other,_) => other=kind) (!kinds) of SOME (_,all) => all:=seconds:: !all
                 | NONE => kinds:= !kinds @ [(kind,ref [seconds])]

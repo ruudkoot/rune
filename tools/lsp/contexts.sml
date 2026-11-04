@@ -146,7 +146,7 @@ struct
                 in emit [("file",Json.String path),("candidates",Json.int candidates),("owned",Json.Bool owned),
                      ("kind",Json.String kind),("contexts",Json.int (length contexts)),
                      ("builds",Json.Array (List.map (fn context:W.context => Json.String (#build context)) contexts)),
-                     ("seconds",Json.Number (Real.fmt (StringCvt.FIX (SOME 6)) (seconds timer)))];
+                     ("seconds",RuneLspSeconds.json (seconds timer))];
                    if kind="prompt" then say ("prompt: " ^ path ^ " (" ^ num (length contexts) ^ " contexts)\n") else () end
                 handle C.Failed diagnostics => (count "failed";emit [("file",Json.String path),("kind",Json.String "failed"),
                   ("message",Json.String (String.concatWith "\n" (List.map #message diagnostics)))])
@@ -182,7 +182,7 @@ struct
                      ("errors",Json.int (length diagnostics)),("own",Json.int (length own)),
                      ("message",Json.String (case diagnostics of first::_ => #message first | [] => "")),
                      ("unbound",Json.String (case unbound of first::_ => #message first | [] => "")),
-                     ("seconds",Json.Number (Real.fmt (StringCvt.FIX (SOME 6)) (seconds timer)))];class end
+                     ("seconds",RuneLspSeconds.json (seconds timer))];class end
                 handle error => (emit [("file",Json.String name),("class",Json.String "failed"),
                   ("message",Json.String (General.exnMessage error))];"failed")
               val classes=List.map one names
@@ -215,7 +215,7 @@ struct
                 in emit [("check",Json.String label),("build",Json.String build),("shares",Json.Bool shares),("units",Json.int units),
                      ("checked",Json.int checked),("reused",Json.int reused),("loaded",Json.int loaded),
                      ("diagnostics",Json.int (length (A.diagnostics snapshot))),
-                     ("seconds",Json.Number (Real.fmt (StringCvt.FIX (SOME 3)) spent)),
+                     ("seconds",RuneLspSeconds.json spent),
                      ("instructions",Json.int instructions),("live",Json.int live)];
                    say (label ^ ": " ^ build ^ ", " ^ num units ^ " units, checked " ^ num checked ^ ", loaded " ^ num loaded ^
                      ", " ^ Real.fmt (StringCvt.FIX (SOME 2)) spent ^ " s, " ^

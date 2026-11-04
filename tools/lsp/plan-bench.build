@@ -15,6 +15,7 @@ files
   ../../src/lsp/hints.sml
   ../../src/lsp/completion.sml
   ../../src/lsp/worker-analysis.sml
+  seconds.sml
   plan-bench.sml
   ../../src/main/lsp-plan-bench-main.sml
 end

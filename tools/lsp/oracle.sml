@@ -330,7 +330,7 @@ struct
                   if live>limit*Int.max (1,lines) then (overLine:= !overLine+1;
                     say ("  RESIDENT " ^ num (live div Int.max (1,lines)) ^ " bytes a line, over " ^ num limit ^ "\n")) else ()
                 | _ => ()
-          in emit ([("scenario",Json.String name),("rep",Json.int rep),("seconds",Json.Number (Real.toString seconds)),
+          in emit ([("scenario",Json.String name),("rep",Json.int rep),("seconds",RuneLspSeconds.json seconds),
                ("checked",Json.int checked),("reused",Json.int reused),("walked",Json.Bool walked),("rebound",Json.int rebound),
                ("loaded",Json.int loaded),("cutoff",Json.int cutoff),("broken",Json.int broken),("stored",Json.int stored),
                ("byNeed",Json.int byNeed),

@@ -117,7 +117,7 @@ struct
               val read= #builds after- #builds before'
               val kind=case #selection planned of W.Selected _ => "selected" | W.Ambiguous _ => "ambiguous" | W.Loose => "loose"
               val memo= #plans after= #plans before'
-              val ()=emit [("plan",Json.String name),("seconds",Json.Number (fixed (6,s))),("builds",Json.int read),
+              val ()=emit [("plan",Json.String name),("seconds",RuneLspSeconds.json s),("builds",Json.int read),
                 ("memo",Json.Bool memo),("selection",Json.String kind),("contexts",Json.int (length (#contexts planned)))]
               val ()=say (name ^ " " ^ fixed (3,s) ^ " s, " ^ num read ^ " builds read" ^ (if memo then ", memo" else "") ^ "\n")
               val ()=if name="cold" then () else
