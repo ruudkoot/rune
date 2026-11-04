@@ -1,6 +1,7 @@
 (* The reusable compiler's public boundary. Drivers use internal.build. *)
 requires unicode json end
 exports (structure CompilerApi, signature COMPILER_API)
+friends ../../tools/migrate/migrate.build end
 annotate "demand" in
   config.sml
   use api.build

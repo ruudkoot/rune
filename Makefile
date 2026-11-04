@@ -299,6 +299,14 @@ all: vm boot runedoc runeopt runeffi basis-cache
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter lsp
 DOC_LIBS := $(REPL_LIBS) compiler
 
+# The migrator of build files (docs/build.md, Migrating a tree): a friend of
+# the compiler's library, whose readers of build files and sources it uses.
+bin/rune-migrate.rbc: $(RUNE) tools/migrate/migrate.build FORCE
+	$(RUNE) --build tools/migrate/migrate.build -o $@
+bin/rune-migrate: bin/rune-migrate.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune-migrate.rbc" "$$@"\n' > $@
+	chmod +x $@
+
 # Compiler ownership audit and interleaved-session acceptance.
 .PHONY: test-compiler-state
 bin/rune-compiler-state-audit.rbc: $(RUNE) tools/compiler/state-audit.build FORCE
@@ -1545,7 +1553,7 @@ test-dynamic: $(RUNE) vm bin/rune-test bin/rune-scenarios
 	$(RUNE_TEST) --tier test-dynamic
 
 # build files (docs/build.md)
-test-build: $(RUNE) vm bin/rune-test bin/rune-scenarios
+test-build: $(RUNE) vm bin/rune-test bin/rune-scenarios bin/rune-migrate
 	$(RUNE_TEST) --tier test-build
 
 # make install staged and checked (bin/rune-scenarios install): the bytecode
@@ -2151,7 +2159,7 @@ CHECK_TOOLS := host-builds vm boot runedoc runeopt basis-cache all repl dap kern
                bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
                bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc bin/rune-lsp-semantic-tests.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
-               bin/rune-compiler-witness-tests.rbc bin/rune-compiler-store-tests.rbc \
+               bin/rune-compiler-witness-tests.rbc bin/rune-compiler-store-tests.rbc bin/rune-migrate \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \
