@@ -3964,7 +3964,8 @@ struct
      basis or code names that is not loaded, and the driver compiles the
      whole build again with every basis loaded (Unviewable). Off (lazy
      false) in the REPL, the compiler library's sessions and wherever the
-     driver keeps every basis. *)
+     driver keeps every basis; on in the library's analysis, whose views
+     are lazyView's, by default (the compiler library's Analysis.lazy). *)
   (* what a view could not give, or a compile under one read outside it:
      the driver compiles again with every basis loaded *)
   exception Unviewable of string
