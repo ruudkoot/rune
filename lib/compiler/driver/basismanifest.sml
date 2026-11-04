@@ -364,9 +364,11 @@ struct
         let
           val first = libDir ^ "/" ^ name
           fun holds dir = Source.probe (dir ^ "/library.build")
+          (* a root that is the directory a compile runs in is "" from here *)
+          fun under root = if root = "" then name else root ^ "/" ^ name
         in
           if List.null (!roots) orelse holds first then first
-          else getOpt (List.find holds (List.map (fn root => root ^ "/" ^ name) (!roots)), first)
+          else getOpt (List.find holds (List.map under (!roots)), first)
         end
     end
 

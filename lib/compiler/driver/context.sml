@@ -8,9 +8,11 @@ struct
   type delta={env:Env.env,directives:(string*Fixity.fixity) list,declared:(string*string) list,
     bound:string list,sigs:SigMatch.sigma StringMap.map,funs:Elaborate.funinfo StringMap.map,binders:string StringMap.map}
   (* A build file used: what it declared, the boundaries around its first use
-     that are open, and the exports of those that have closed, which is what
-     a later use outside them sees of it (replay) *)
-  type used={file:string,change:delta,within:int list,through:exports list}
+     that are open, and whether one of them has closed, which a later use
+     outside it then sees nothing of (replay). A boundary that closes before
+     the plan ends is an `implements`, which exports nothing: a library's is
+     around all of its plan, and a library is imported, never used *)
+  type used={file:string,change:delta,within:int list,hidden:bool}
   (* boundaries: the open ones, the innermost first *)
   type t={env:Env.env ref,fixity:Fixity.env ref,declared:(string*string) list ref,boundaries:int list ref,
     next:int ref,used:used list ref}
@@ -71,38 +73,26 @@ struct
 
   fun enter ({boundaries,next,...}:t):int =
     let val id= !next in next:=id+1;boundaries:=id :: !boundaries;id end
-  (* the boundary over: a build file first used inside it is seen outside it
-     through its exports *)
-  fun leave ({used,boundaries,...}:t,id:int,exports)=
+  (* the boundary over: a build file first used inside it is hidden outside
+     it *)
+  fun leave ({used,boundaries,...}:t,id:int)=
     (boundaries:=List.filter (fn other => other<>id) (!boundaries);
-     used:=List.map (fn u as {file,change,within,through} =>
+     used:=List.map (fn u as {file,change,within,...} =>
        if List.exists (fn other => other=id) within
-       then {file=file,change=change,within=List.filter (fn other => other<>id) within,through=exports :: through}
+       then {file=file,change=change,within=List.filter (fn other => other<>id) within,hidden=true}
        else u) (!used))
-  (* A build file with a boundary of its own is seen as that boundary shows
-     it, by every `use` of it: the boundaries around its first use are the
-     first user's business, and a library that shares it with another would
-     otherwise see what depends on which came first. Only one without leans on
-     the boundary around it to hide what it declares. *)
-  fun record ({used,boundaries,...}:t,file,change,steps)=
-    used:={file=file,change=change,within=if CompilerProject.bounded steps then [] else !boundaries,through=[]} :: !used
-  (* a build file used again: what its first use declared, through the
-     boundaries that have closed around that use; false where it is the first *)
+  fun record ({used,boundaries,...}:t,file,change)=
+    used:={file=file,change=change,within= !boundaries,hidden=false} :: !used
+  (* a build file used again: what its first use declared, or nothing where a
+     boundary has closed around that use; false where it is the first *)
   fun replay (t as {used,declared,...}:t,file) : bool =
     case List.find (fn u:used => #file u=file) (!used) of
       NONE => false
-    | SOME ({change,through,...}:used) =>
-        let val exports : exports option=case through of
-              [] => NONE
-            | first :: rest => SOME (List.foldl (fn (more,kept) =>
-                List.filter (fn e => List.exists (fn x => x=e) more) kept) first rest)
-            fun shown (key : string,name : string)=case (exports,keyKind key) of
-                (NONE,_) => true
-              | (SOME es,SOME kind) => List.exists (fn e => e=(kind,name)) es
-              | _ => false
-        in apply (t,snap t,change,exports);
-           (* a boundary around this use has declared it, as around the first *)
-           declared:=List.filter shown (declaredBy change) @ !declared;true end
+    | SOME ({hidden=true,...}:used) => true
+    | SOME ({change,...}:used) =>
+        (apply (t,snap t,change,NONE);
+         (* a boundary around this use has declared it, as around the first *)
+         declared:=declaredBy change @ !declared;true)
 
   (* Where units are loaded by need (a compile's warm path, an analysis that
      loads by need) the environment holds none of a unit taken without its
