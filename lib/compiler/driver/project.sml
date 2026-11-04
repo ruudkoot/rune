@@ -276,8 +276,12 @@ struct
      own, by the build file and the library, with how many paths; isLibrary
      says whether a directory has one. A generated pointer -- current.build,
      naming the set it stands for under sets/ -- is left out: nobody wrote it,
-     and what generates it goes with the FFI's migration (D15). *)
-  fun reaches {references:(string*string) list,windows:bool,isLibrary:string -> bool} : (string*string*int) list =
+     and what generates it goes with the FFI's migration (D15). So is a build
+     file that the library names a friend (D11), which isFriend says of the
+     build file and the library's directory: what may see all a library
+     declares may name its files. *)
+  fun reaches {references:(string*string) list,windows:bool,isLibrary:string -> bool,
+               isFriend:string * string -> bool} : (string*string*int) list =
     let
       val known=ref StringMap.empty : string option StringMap.map ref
       fun libraryOfDirectory dir =
@@ -298,7 +302,7 @@ struct
         case libraryOf target of
           NONE => found
         | SOME library =>
-            if libraryOf build=SOME library orelse pointer reference then found
+            if libraryOf build=SOME library orelse pointer reference orelse isFriend (build,library) then found
             else
               let fun add []=[(build,library,1)]
                     | add ((b,l,n) :: rest)=if b=build andalso l=library then (b,l,n+1) :: rest else (b,l,n) :: add rest
