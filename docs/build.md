@@ -211,6 +211,19 @@ signature mentions is usable by a client, equality and ascription included,
 but not nameable: that is what `:>` is for, in the structure's own source. A
 friend (below) sees private names and is held to `:>` like any client.
 
+**A public structure's signature is public** (the claim rule; the
+build-system roadmap's D8). Where a header exports a structure or a functor,
+each signature of the library that a source ascribes it by name is exported
+too: `structure Json :> JSON = ...` and `exports (structure Json)` without
+`signature JSON` is refused, and so is a structure declared inside an exported
+one's body, `structure Outer = struct structure Inner : INNER = ... end`, and
+a functor's result, `functor Make (X : ARG) : RESULT`. A client can then name
+what the structure implements, and `runedoc` can document it. A signature of
+the Basis Library or of another library is not the library's to export, a
+signature written out, `sig ... end`, names none, and a private structure's
+signature stays private. The rule is a header's, as every rule that enforces
+a boundary is: a library with no header is not held to it.
+
 ## Reaching in
 
 A directory with a `library.build` is a library, and the deepest over a

@@ -324,6 +324,38 @@ struct
       val (status, log) = rune ["--no-cache", "--build", "p/header.build", "-o", dir ^ "/header.rbc"]
     in need (status <> 0 andalso has "a header belongs to a library's library.build" log, "a header in a program: " ^ log) end
 
+  (* The claim rule (D8; docs/build.md, Exports): a public structure's
+     signature is public. A header that exports a structure or a functor, and
+     not a signature of the library that a source ascribes it or a structure
+     inside it, is refused; a signature of the Basis Library is not the
+     library's to export, and a private structure's signature stays private *)
+  fun claims () =
+    let
+      val files = "annotate \"demand\" in asig.sml a.sml b.sml f.sml l.sml p.sml end\n"
+      fun header exports = put ("lib/claim/library.build", "exports (" ^ exports ^ ")\n" ^ files)
+      val () = put ("lib/claim/asig.sml", "signature ASIG = sig type t val v : int end\n")
+      val () = put ("lib/claim/a.sml", "structure A :> ASIG = struct type t = int val v = 1 end\n")
+      val () = put ("lib/claim/b.sml",
+                    "structure B = struct structure Inner : ASIG where type t = int = struct type t = int val v = 2 end end\n")
+      val () = put ("lib/claim/f.sml", "functor F (X : ASIG) :> ASIG = X\n")
+      val () = put ("lib/claim/l.sml", "structure L : LIST = List\n")
+      val () = put ("lib/claim/p.sml", "structure P : ASIG = A\n")
+      val () = header "structure A"
+      val () = indexRefused "claim" "a.sml ascribes A the signature ASIG, which it does not export: a public structure's signature is public"
+      val () = header "structure B"
+      val () = indexRefused "claim" "b.sml ascribes B.Inner the signature ASIG"
+      val () = header "functor F"
+      val () = indexRefused "claim" "f.sml ascribes F the signature ASIG"
+      (* the Basis Library's LIST, and P, which is private *)
+      val () = header "structure L"
+      val () = ignore (index "claim")
+      val () = header "structure A, structure B, functor F, structure L, signature ASIG"
+      val () = ignore (index "claim")
+    in
+      prints "claim" ["claim"]
+             "structure G = F (B.Inner)\nval () = print (Int.toString (List.length (L.tabulate (A.v + G.v, fn i => i))) ^ \"\\n\")\n" "3\n"
+    end
+
   (* E3's holes, through a header *)
   fun holes () =
     (prints "h1-unnamed" ["h1"] "val x = Api.mk 1\nval () = print (Int.toString (Api.get x) ^ \"\\n\")\n" "1\n";
@@ -532,7 +564,8 @@ struct
     end
 
   fun run' () =
-    (tree (); manifests (); requires (); noHeader (); boundary (); views (); friends (); clashes (); malformed (); holes ();
+    (tree (); manifests (); requires (); noHeader (); boundary (); views (); friends (); clashes (); malformed (); claims ();
+     holes ();
      library (); together (); keys (); tree (); edits ())
 end
 

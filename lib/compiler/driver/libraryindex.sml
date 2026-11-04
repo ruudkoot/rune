@@ -80,14 +80,56 @@ struct
   fun virtualTokens (toks : Lexer.item vector) : int =
     Vector.foldl (fn ((Token.VIRTUAL, _), n) => n + 1 | (_, n) => n) 0 toks
 
+  (* What a file claims (the claim rule; docs/build.md, Exports; the
+     build-system roadmap's D8): each structure and functor it declares at
+     its top level that it ascribes a signature by name, and each structure
+     declared inside a structure's body, by its path, as runedoc claims them:
+     `structure Json :> JSON = ...` is ("structure", "Json", "JSON"),
+     `functor Make (X : ARG) : RESULT = ...` is ("functor", "Make",
+     "RESULT"), and `structure Outer = struct structure Inner : INNER = ...
+     end` is ("structure", "Outer.Inner", "INNER"). A signature written out,
+     `sig ... end`, names none. *)
+  fun claimsOf (prog : Ast.program) : (string * string * string) list =
+    let
+      fun named (Ast.SigId (n, _, _)) = SOME n
+        | named (Ast.SigWhere (g, _, _, _)) = named g
+        | named (Ast.SigSig _) = NONE
+      fun claim (kind, path, g) = case named g of SOME s => [(kind, path, s)] | NONE => []
+      fun str path e =
+        case e of
+          Ast.StrAscribe (e', g, _, _, _) => claim ("structure", path, g) @ str path e'
+        | Ast.StrStruct (ds, _, _) => List.concat (List.map (inner path) ds)
+        | Ast.StrDynamic (_, g, _, _, _) => claim ("structure", path, g)
+        | Ast.StrExport (_, g, _, _, _, _) => claim ("structure", path, g)
+        | _ => []
+      and inner path d =
+        case d of
+          Ast.DStructure (bs, _, _) => List.concat (List.map (fn {name, strexp, ...} : Ast.strbind => str (path ^ "." ^ name) strexp) bs)
+        | Ast.DLocal (_, b, _, _) => List.concat (List.map (inner path) b)
+        | _ => []
+      fun functorClaims ({name, body, ...} : Ast.funbind) =
+        case body of
+          Ast.StrAscribe (_, g, _, _, _) => claim ("functor", name, g)
+        | Ast.StrDynamic (_, g, _, _, _) => claim ("functor", name, g)
+        | Ast.StrExport (_, g, _, _, _, _) => claim ("functor", name, g)
+        | _ => []
+      fun top d =
+        case d of
+          Ast.DStructure (bs, _, _) => List.concat (List.map (fn {name, strexp, ...} : Ast.strbind => str name strexp) bs)
+        | Ast.DFunctor (bs, _, _) => List.concat (List.map functorClaims bs)
+        | Ast.DLocal (_, b, _, _) => List.concat (List.map top b)
+        | _ => []
+    in List.concat (List.map top prog) end
+
   fun hash (text : string) : string = Pickle.hash text
 
   (* ---- what a file is to its library's index, by its text ----
      what Deps finds of it, the virtual modules it declares and the modules it
-     exports (_export), how many times it says _virtual, and the fixity
-     directives it adds to what it is read in, newest first *)
+     exports (_export), how many times it says _virtual, the fixity
+     directives it adds to what it is read in, newest first, and what it
+     claims (claimsOf) *)
   type facts = {deps : Deps.file, virtuals : (string * string) list, exports : (string * string) list, said : int,
-                fixity : (string * Fixity.fixity) list}
+                fixity : (string * Fixity.fixity) list, claims : (string * string * string) list}
 
   local
     open Pickle
@@ -108,21 +150,23 @@ struct
       let val file = rstring r val start = rnat r val stop = rnat r
       in ({file = file, start = start, stop = stop}, rstring r) end
   in
+    fun triple (w, (a, b, c)) = (string (w, a); string (w, b); string (w, c))
+    fun rtriple r = let val a = rstring r val b = rstring r in (a, b, rstring r) end
     fun writeFacts (w, {deps = {path, declares, uses, free, breaks, values, hides, mentions, prelude}, virtuals, exports, said,
-                        fixity = fx} : facts) =
+                        fixity = fx, claims} : facts) =
       (string (w, path); list name (w, declares); list name (w, uses); list name (w, free); list break (w, breaks);
        list string (w, values); bool (w, hides); list string (w, mentions); bool (w, prelude);
-       list pair (w, virtuals); list pair (w, exports); nat (w, said); list fixity (w, fx))
+       list pair (w, virtuals); list pair (w, exports); nat (w, said); list fixity (w, fx); list triple (w, claims))
     fun readFacts r : facts =
       let
         val path = rstring r val declares = rlist rname r val uses = rlist rname r val free = rlist rname r
         val breaks = rlist rbreak r val values = rlist rstring r val hides = rbool r val mentions = rlist rstring r
         val prelude = rbool r val virtuals = rlist rpair r val exports = rlist rpair r val said = rnat r
-        val fx = rlist rfixity r
+        val fx = rlist rfixity r val claims = rlist rtriple r
       in
         {deps = {path = path, declares = declares, uses = uses, free = free, breaks = breaks, values = values, hides = hides,
                  mentions = mentions, prelude = prelude},
-         virtuals = virtuals, exports = exports, said = said, fixity = fx}
+         virtuals = virtuals, exports = exports, said = said, fixity = fx, claims = claims}
       end
 
     (* an index's bytes, and back *)
@@ -341,7 +385,8 @@ struct
                                 val {virtuals, exports} = dynamicModules prog
                               in
                                 {deps = Deps.analyse (p, prog), virtuals = virtuals, exports = exports, said = virtualTokens toks,
-                                 fixity = List.take (#list fx', List.length (#list fx') - List.length (#list fx))}
+                                 fixity = List.take (#list fx', List.length (#list fx') - List.length (#list fx)),
+                                 claims = claimsOf prog}
                               end
                       in factsRev := (key, f) :: !factsRev; ((p, anns, f) :: acc, Fixity.extend (fx, added)) end)
                    ([], Fixity.extend (Fixity.initial, imported)) listed
@@ -387,6 +432,30 @@ struct
            else raise Usage (file ^ ": exports fixity " ^ n ^ ", which no source declares"))
         else if List.exists (fn declared => exported=declared) declared then ()
         else raise Usage (file ^ ": exports " ^ k ^ " " ^ n ^ ", which no source declares"))) exports
+      (* The claim rule (D8): a public structure's signature is public. Where
+         a header exports a structure or a functor, each signature of the
+         library that a source ascribes it by name, or a structure inside it,
+         is exported too, so that a client can name what it implements and
+         runedoc can document it. Signatures of the Basis Library or of
+         another library are not this one's to export. *)
+      val () =
+        case (exports, header) of
+          (SOME es, SOME _) =>
+            List.app (fn (p, anns, {claims, ...} : facts) =>
+                        if classOf anns = "final" orelse hostOf anns = "only" then ()
+                        else List.app (fn (kind, path, signat) =>
+                               let val top = hd (String.fields (fn c => c = #".") path)
+                               in
+                                 if List.exists (fn e => e = (kind, top)) es
+                                    andalso List.exists (fn d => d = ("signature", signat)) declared
+                                    andalso not (List.exists (fn e => e = ("signature", signat)) es)
+                                 then raise Usage (file ^ ": exports " ^ kind ^ " " ^ top ^ ", and " ^ p ^ " ascribes "
+                                                   ^ path ^ " the signature " ^ signat ^ ", which it does not export:"
+                                                   ^ " a public structure's signature is public (docs/build.md, Exports)")
+                                 else ()
+                               end) claims)
+                     (List.rev analysedRev)
+        | _ => ()
       (* a header's views are of what it exports *)
       val views = case header of NONE => [] | SOME {views, ...} => List.map (fn (v, es) => (v, List.map (fn (k,n) => (kindName k,n)) es)) views
       val () = List.app (fn (v, es) => List.app (fn e as (k, n) =>
@@ -534,7 +603,8 @@ struct
      to date records of the index (UnitMemo): its damage too is a miss,
      and while the files' stats hold they are what it was made of. *)
   val magic = "RIX"
-  val version = 4
+  (* 5: a file's facts hold what it claims (claimsOf) *)
+  val version = 5
 
   (* what was read is held as its paths with their stats, and the hashes of
      their bytes in one string, which only a file whose stat moved reads *)
