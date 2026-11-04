@@ -298,11 +298,11 @@ bytes, so that an edit of a library's build file or of any file it names is
 a miss, and the index is made again: **a stale index cannot be read.** What
 each file was to the index is kept with it, by the file's hash and the
 fixity it was read in, so that the index made again parses the files
-edited and no other. The frozen layer, `lib/cache`, ships the records of
-the libraries it holds, by their place under `--lib`, and they hold
-wherever it is installed: there a first compile reads each file once, to
-see that it is what the record says, and keeps the record again in its
-own store. `--no-cache` turns units off, not the index: such a compile reads
+edited and no other. The frozen layer, `lib/cache`, ships the record of
+every library under `lib`, which `make basis-cache` writes there, by its
+place under `--lib`, and they hold wherever it is installed: there a first
+compile reads each file once, to see that it is what the record says, and
+keeps the record again in its own store. `--no-cache` turns units off, not the index: such a compile reads
 the store's records, and writes none. A compile with no store (`RUNE_CACHE`
 empty, the compiler's API and an editor's analysis, `runedoc`) makes what it
 does not find, and holds it for its session, where a later compile holds it

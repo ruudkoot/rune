@@ -491,12 +491,20 @@ test-lsp-replay: bin/runelsp bin/rune-lsp-project-replay.rbc
 # empty first, when the compiler or the library changes. Compiled with the
 # lint of every pass, which changes no byte of it, so that no unit a
 # compile takes from there went unchecked (docs/plans/correctness/linting.md, M1);
-# its entries are marked so, and a compile with the lint takes them (M9)
-basis-cache: lib/cache/made
+# its entries are marked so, and a compile with the lint takes them (M9).
+# And the index of every library (docs/build.md, A library's index), so that
+# a compile or runedoc with no record of its own reads it, as it read the
+# MANIFEST make wrote, rather than making it (the build-system roadmap's M12)
+basis-cache: lib/cache/made lib/cache/indexes
 lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml lib/basis/library.build lib/compiler/*.sml lib/compiler/*/*.sml lib/compiler/*.build)
 	rm -rf lib/cache
 	bin/rune --units --lint --basis all --library compiler --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
 	bin/rune --units --lint --basis all --library compiler --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
+	touch $@
+LIBRARY_SOURCES := $(shell find lib -path lib/cache -prune -o \( -name '*.sml' -o -name '*.build' \) -print)
+lib/cache/indexes: lib/cache/made $(LIBRARY_SOURCES)
+	for d in $(patsubst %/library.build,%,$(filter %/library.build,$(LIBRARY_SOURCES))); do \
+	  bin/rune --no-warnings --cache-dir lib/cache --basis-index $$d > /dev/null || exit 1; done
 	touch $@
 
 # ---------------------------------------------------------------- environment
