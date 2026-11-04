@@ -127,7 +127,21 @@ struct
     | "library-strict" =>
         refused (compiler c which "" ["--lib", "lib", "--basis-index", "lib/strict"])
           "lib/strict/library.build: a strict library's units are well-formed, and one is not"
-    | "library-strict-classes" => output (compiler c which "" ["--lib", "lib", "--basis-index", "lib/fine"]) ""
+    | "library-strict-classes" =>
+        (* a strict library whose files of class always and final are not
+           well-formed units, which the rules leave to them: its index is
+           made with no warning, each file of the class its build gives *)
+        let val r = compiler c which "" ["--lib", "lib", "--basis-index", "lib/fine"]
+            val () = success r
+            val classes = List.mapPartial (fn line =>
+                            case String.fields (fn ch => ch = #"|") line of
+                              file :: class :: _ => if String.isPrefix "#" line then NONE
+                                                     else SOME (String.concat (String.tokens Char.isSpace file),
+                                                                String.concat (String.tokens Char.isSpace class))
+                            | _ => NONE) (lines (#output r))
+        in need (#errors r = "" andalso classes = [("ops.sml", "always"), ("fine.sml", "demand"), ("last.sml", "final")],
+                 "the index of a strict library with always and final files: " ^ #output r ^ #errors r)
+        end
     | "entry" =>
         let val target = #directory c ^ "/entry/p.rbc"
             val () = rmTree target
