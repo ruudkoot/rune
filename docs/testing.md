@@ -992,14 +992,19 @@ library and build of the tree to `rune --deps --build` finding no unit that
 is not well-formed, and `wellformed-mlton` and `wellformed-hol4` hold MLton's
 606 units and HOL4's 744 of the `src/boss` closure so. `RUNE_WELLFORMED_MLTON`
 names a copy of MLton's sources (`mlton`, `lib/mlton`, `lib/mlyacc-lib`,
-`lib/stubs`, from `MLTON_SOURCES`) with the build files of the build-system
-roadmap's M9 laid over it, which its translator from MLton's `.mlb` files,
-`impl/bs-m9/e9/mlb2build2.py` of the roadmap's drafts, makes: 60 build files,
-30 of them libraries, `mlton/mlton.build` the program. Those build files use
-the libraries' `library.build`, which is refused now that a library is only
-imported ([build.md](build.md), *What is gone*), so the row fails on them
-until MLton's `.mlb` files have a translation to libraries, which the
-build-system roadmap's M14 report says is not yet found. `RUNE_WELLFORMED_HOL4`
+`lib/stubs`, from `MLTON_SOURCES`, symbolic links followed) with flat build
+files laid over it, which a translator from MLton's `.mlb` files,
+`impl/bs-m14/mlb2build3.py` of the build-system roadmap's drafts, makes: 30
+build files, one for each `.mlb` of its closure and two for the Makefile's
+lists of stubs, `mlton/mlton.build` the program, each `.mlb` it includes a
+plain `use`, and MLB's `local` flattened, with no library. MLton cannot be
+libraries: its `.mlb` files shadow the Basis Library and each other, which a
+library with a header may not ([build.md](build.md), *Clashes*). The flat build has the 606 units and
+compiles, but 17 of its names are each declared by two units that MLB's
+`local` keeps apart (`STREAM` and `Stream` of `lib/mlton` and
+`lib/mlyacc-lib`, `CONTROL`, `FIELD` and `Field`, `MLton`, and the `xml/` and
+x86 copies of `ssa/` and amd64 passes), so the row fails on it: 13 units are
+not well-formed. `RUNE_WELLFORMED_HOL4`
 names a directory of the closure after HOL's filter with its `boss.build`,
 which declares its two preludes; `rune --deps` then finishes on the closure as
 a plain list. Without them those two say SKIP. Installation also accepts repeated `--host NAME`; Make's
