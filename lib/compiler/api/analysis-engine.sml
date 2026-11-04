@@ -566,7 +566,11 @@ struct
               val ()=List.app (fn k:kept => #live k:=NONE) leaving
               val ()=exposed:=true
               val out=UnitBasis.truncate gone
-          in exposed:=false;List.app (fn (identity,kept) => paths:=StringMap.insert (!paths,identity,kept)) out;dirty:=true end
+              (* an identity's paths are its own: a unit loaded by need,
+                 whose names no table has, leaves those it had standing *)
+              fun keep (identity,kept)=if null kept andalso StringMap.member (!paths,identity) then ()
+                else paths:=StringMap.insert (!paths,identity,kept)
+          in exposed:=false;List.app keep out;dirty:=true end
         (* whether env is the whole environment: until a unit is loaded by
            need, from the start of a walk (as a compile's warm path gives no
            view until then) *)

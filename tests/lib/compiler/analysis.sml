@@ -889,6 +889,35 @@ struct
         val again=analyze (context,[input ("other.sml","val nothing=()\n","1"),input ("client.sml","val seen=Open.y\n","3")])
         val ()=check ("and stay so",null (A.diagnostics again) andalso length (!refused)=1)
     in A.close context;C.close parent end)
+  (* A unit taken by need and taken out again keeps the paths to its names
+     it had (the engine's paths), by which a unit after it that held by its
+     usages is loaded across its change: here middle, which a datatype's
+     change breaks, and user, which held by middle's O. Loading by need
+     elaborates no more units than loading every basis *)
+  fun pathsKept () =
+    let val parent=compiler ()
+        val first=input ("first.sml","val first=1\n","1")
+        val base=input ("base.sml","datatype shape=Round|Square\n","1")
+        val middle=input ("middle.sml","datatype other=O\nval s:shape=Round\n","1")
+        val user=input ("user.sml","val o'=O\n","1")
+        val moved=edited (first,"val first=1\nval second=2\n")
+        fun kept lazy=
+          let val context=A.create (parent,{context="paths"})
+              val ()=A.lazy (context,lazy)
+              val ()=A.focus (context,SOME ["base.sml"])
+              val _=analyze (context,[first,base,middle,user])
+              val taken=analyze (context,[moved,base,middle,user])
+              val inputs=[moved,around ("Round|Square","Round|Square|Oval") base,middle,user]
+              val last=analyze (context,inputs)
+          in A.close context;(taken,last,inputs) end
+        val (taken,byNeed,inputs)=kept true
+        val (_,whole,_)=kept false
+    in check ("a name added takes the units after it by need",#byNeed (A.route taken)>0);
+       check ("a datatype changed elaborates as many units by need as with every basis: " ^
+         Int.toString (#checked (A.work byNeed)) ^ " and " ^ Int.toString (#checked (A.work whole)),
+         #checked (A.work byNeed)= #checked (A.work whole));
+       check ("and equals fresh",sameUnits (byNeed,freshly (parent,inputs)));
+       C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -923,6 +952,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "basis-view" CompilerAnalysisTests.basisView,
      Test.it "two-builds-share-a-library" CompilerAnalysisTests.sharedLibrary,
      Test.it "overloadings-by-need" CompilerAnalysisTests.overloadings,
-     Test.it "refused-view" CompilerAnalysisTests.refusedView]
+     Test.it "refused-view" CompilerAnalysisTests.refusedView,
+     Test.it "paths-kept-by-need" CompilerAnalysisTests.pathsKept]
 end)
 val ()=CompilerAnalysisTestMain.main ()
