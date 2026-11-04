@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 108 of 108 entries documented |
+| Documentation | 111 of 111 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -75,6 +75,7 @@ sig
     val <a href="#val-workspace.root">root</a> : t -&gt; string
     val <a href="#val-workspace.libraryroots">libraryRoots</a> : t -&gt; string list
     val <a href="#val-workspace.targets">targets</a> : t -&gt; target list
+    val <a href="#val-workspace.store">store</a> : {<a href="#fld-workspace.store.file">file</a> : string, <a href="#fld-workspace.store.windows">windows</a> : bool} -&gt; string option
   end
   structure <a href="#str-project">Project</a> :
   sig
@@ -120,6 +121,8 @@ sig
     type <a href="#type-analysis.pool">pool</a>
     val <a href="#val-analysis.pool">pool</a> : unit -&gt; pool
     val <a href="#val-analysis.share">share</a> : t * pool option -&gt; unit
+    val <a href="#val-analysis.store">store</a> : t * string option -&gt; unit
+    val <a href="#val-analysis.lazy">lazy</a> : t * bool -&gt; unit
     val <a href="#val-analysis.compact">compact</a> : t -&gt; unit
     val <a href="#val-analysis.check">check</a> : t * {<a href="#fld-analysis.check.project">project</a>:Project.t option,<a href="#fld-analysis.check.inputs">inputs</a>:input list,<a href="#fld-analysis.check.cancelled">cancelled</a>:unit-&gt;bool} -&gt; snapshot
     val <a href="#val-analysis.checkpoint">checkpoint</a> : t -&gt; checkpoint
@@ -140,7 +143,7 @@ sig
     val <a href="#val-analysis.facts">facts</a> : snapshot -&gt; fact list
     val <a href="#val-analysis.factsin">factsIn</a> : snapshot * string -&gt; fact list
     val <a href="#val-analysis.work">work</a> : snapshot -&gt; {<a href="#fld-analysis.work.checked">checked</a>:int,<a href="#fld-analysis.work.reused">reused</a>:int}
-    val <a href="#val-analysis.route">route</a> : snapshot -&gt; {<a href="#fld-analysis.route.walked">walked</a>:bool,<a href="#fld-analysis.route.rebound">rebound</a>:int,<a href="#fld-analysis.route.loaded">loaded</a>:int,<a href="#fld-analysis.route.cutoff">cutoff</a>:int,<a href="#fld-analysis.route.broken">broken</a>:int}
+    val <a href="#val-analysis.route">route</a> : snapshot -&gt; {<a href="#fld-analysis.route.walked">walked</a>:bool,<a href="#fld-analysis.route.rebound">rebound</a>:int,<a href="#fld-analysis.route.loaded">loaded</a>:int,<a href="#fld-analysis.route.cutoff">cutoff</a>:int,<a href="#fld-analysis.route.broken">broken</a>:int,<a href="#fld-analysis.route.stored">stored</a>:int,<a href="#fld-analysis.route.byneed">byNeed</a>:int}
     val <a href="#val-analysis.typeat">typeAt</a> : snapshot * {<a href="#fld-analysis.typeat.file">file</a>:string,<a href="#fld-analysis.typeat.offset">offset</a>:int} -&gt; string option
     val <a href="#val-analysis.typeatoccurrence">typeAtOccurrence</a> : snapshot * {<a href="#fld-analysis.typeatoccurrence.ordinal">ordinal</a>:int,<a href="#fld-analysis.typeatoccurrence.offset">offset</a>:int} -&gt; string option
     val <a href="#val-analysis.typehints">typeHints</a> : snapshot * {<a href="#fld-analysis.typehints.ordinal">ordinal</a>:int,<a href="#fld-analysis.typehints.start">start</a>:int,<a href="#fld-analysis.typehints.stop">stop</a>:int} -&gt; typeHint list
@@ -671,6 +674,23 @@ val targets : t -> target list
 
 `targets workspace` lists its named targets in order.
 
+#### <a name="val-workspace.store"></a>`store`
+
+```sml
+val store : {file : string, windows : bool} -> string option
+```
+
+`store {file, windows}` is the directory of the store a compile of
+file keeps, where there is one.
+
+That is RUNE\_CACHE's, else .rune beside the nearest root file above
+file, else beside file (docs/units.md, The store).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-workspace.store.file"></a>`file` | `string` |  |
+| <a name="fld-workspace.store.windows"></a>`windows` | `bool` |  |
+
 ### <a name="str-project"></a>`Project`
 
 The compiler's immutable project model, shared with the CLI.
@@ -1199,6 +1219,41 @@ reaches it, as a compile takes a cache's entry; the context leaves its
 own for the others. Two builds over one library then elaborate its
 units once. Off by default.
 
+#### <a name="val-analysis.store"></a>`store`
+
+```sml
+val store : t * string option -> unit
+```
+
+`store (context, SOME dir)` has a context read the store in dir, a
+compile's (Workspace.store), and `store (context, NONE)`, the default,
+none.
+
+A unit not open whose compiled entry holds there, of any configuration
+whose static settings are the context's, and whose sidecar the store
+has from an earlier analysis of the same text, is loaded from them and
+not elaborated: its static layer is the compile's. The sidecar of each
+unit a check elaborates from the text its file has is written there.
+The results are a fresh analysis's whichever way a unit came.
+
+#### <a name="val-analysis.lazy"></a>`lazy`
+
+```sml
+val lazy : t * bool -> unit
+```
+
+`lazy (context, true)`, the default, loads a unit's basis only where
+a later unit names what it declared; `lazy (context, false)` loads
+every one.
+
+A unit taken from a store or from its own elaboration earlier, whose
+usages hold by the units that bound their names, is registered and its
+names bound, and its basis read when a later unit's text names one of
+them; a unit elaborated sees what its text names, and prints a type by
+the path the whole environment has. Where a unit looked up a name its
+text does not name, the context loads every basis from then on. The
+results are a fresh analysis's either way; a context's memory is not.
+
 #### <a name="val-analysis.compact"></a>`compact`
 
 ```sml
@@ -1416,7 +1471,7 @@ val work : snapshot -> {checked:int,reused:int}
 #### <a name="val-analysis.route"></a>`route`
 
 ```sml
-val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int}
+val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int,byNeed:int}
 ```
 
 `route snapshot` reports how the check went, and nothing of its results.
@@ -1424,7 +1479,9 @@ val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:in
 walked: from the start, rather than each change at its own place;
 rebound: units taken as they stood; loaded: taken again from their
 pickles; cutoff: elaborated to the identity they had; broken: a usage
-refused a unit. The results are a fresh analysis's whichever the route.
+refused a unit; stored: taken from the store (store); byNeed: of those
+stored or loaded, those whose basis was not read (lazy). The results
+are a fresh analysis's whichever the route.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -1433,6 +1490,8 @@ refused a unit. The results are a fresh analysis's whichever the route.
 | <a name="fld-analysis.route.loaded"></a>`loaded` | `int` |  |
 | <a name="fld-analysis.route.cutoff"></a>`cutoff` | `int` |  |
 | <a name="fld-analysis.route.broken"></a>`broken` | `int` |  |
+| <a name="fld-analysis.route.stored"></a>`stored` | `int` |  |
+| <a name="fld-analysis.route.byneed"></a>`byNeed` | `int` |  |
 
 #### <a name="val-analysis.typeat"></a>`typeAt`
 
