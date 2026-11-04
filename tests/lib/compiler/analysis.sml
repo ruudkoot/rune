@@ -864,6 +864,31 @@ struct
         val ()=check ("and at its place again",sameUnits (analyze (context,again),freshly (parent,again)))
         val _=early
     in A.close context;C.close parent end
+  (* A view a unit's names cannot give: an import renames (docs/build.md,
+     Clashes), and the binder of the new name declared the old. The context
+     loads every basis from then on, and checks again so (lazy-refused):
+     the answers are a fresh analysis's *)
+  fun refusedView () = scopedRoot ("structure:Public",[],fn {dir,settle,...} =>
+    let val parent=C.session {lib=SOME dir,flags=["--library","inner (structure Public as Open)"]}
+        val context=A.create (parent,{context="refused"})
+        val refused=ref []
+        val ()=A.observe (context,SOME (fn {phase,file,...} => if phase="lazy-refused" then refused:=file:: !refused else ()))
+        val ()=A.focus (context,SOME ["client.sml"])
+        val sources=[input ("other.sml","val nothing=()\n","1"),input ("client.sml","val seen=Open.y\n","1")]
+        val cold=analyze (context,sources)
+        val ()=check ("a renamed structure is seen by its new name",null (A.diagnostics cold) andalso null (!refused))
+        (* the Basis's unit moves its identity: the library's unit after it is
+           taken by need, and the client elaborated in a view *)
+        val output=TextIO.openOut (dir ^ "/basis/basis.sml")
+        val ()=(TextIO.output (output,"structure Base=struct val one=1 val two=2 end\n");TextIO.closeOut output;settle ())
+        val edited=[input ("other.sml","val nothing=()\n","1"),input ("client.sml","val seen=Open.y\n(* edited *)\n","2")]
+        val after=analyze (context,edited)
+        val ()=check ("the view of the new name is refused, and every basis loaded: " ^ String.concatWith "; " (!refused),
+          not (null (!refused)))
+        val ()=check ("and the answers are a fresh analysis's",null (A.diagnostics after) andalso sameUnits (after,freshly (parent,edited)))
+        val again=analyze (context,[input ("other.sml","val nothing=()\n","1"),input ("client.sml","val seen=Open.y\n","3")])
+        val ()=check ("and stay so",null (A.diagnostics again) andalso length (!refused)=1)
+    in A.close context;C.close parent end)
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -897,6 +922,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "flexible-record" CompilerAnalysisTests.flexibleRecord,
      Test.it "basis-view" CompilerAnalysisTests.basisView,
      Test.it "two-builds-share-a-library" CompilerAnalysisTests.sharedLibrary,
-     Test.it "overloadings-by-need" CompilerAnalysisTests.overloadings]
+     Test.it "overloadings-by-need" CompilerAnalysisTests.overloadings,
+     Test.it "refused-view" CompilerAnalysisTests.refusedView]
 end)
 val ()=CompilerAnalysisTestMain.main ()

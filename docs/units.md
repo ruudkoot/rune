@@ -914,6 +914,13 @@ preprocessor's output stands in for its file too (*Generated sources* in
 holds the output's hash, taken whole and not from the stat memo, since the
 file's stat says nothing of the tool.
 
+The editor's analysis loads its units by need the same way
+([compiler-analysis.md](compiler-analysis.md), *Loading by need*), but that a
+unit that registers an overloading is loaded whole at its place, and that a
+view prints a type by the path the whole environment has, from an index of
+what each unit's top-level names reach. A compile's view names a type in a
+message by the path the view has.
+
 **The stat memo.** A unit's key holds the hash of its source, which a warm
 build need not read: the store keeps, by a file's path and mode, the hash its
 text had, its stat then -- device, inode, size, the times it was written and
