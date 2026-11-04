@@ -466,18 +466,18 @@ measures at the sizes the tiers below run, on generated trees
 (`bin/rune-lsp-fixture`, `tools/lsp/fixture.sml`): a tree of 100k files and 1000
 builds, the build files alone, which is the 10M-line tree's (lines change the
 sources alone), and a build of 130,793 lines in 1,017 units with its 10 builds
-(`--lines 100000 --files 1000 --builds 10`). Times are 2026-11-04's on 16
-processors at a load of 12 to 14, the worker's heap at 512 MiB.
+(`--lines 100000 --files 1000 --builds 10`). Times are 2026-11-04's, two runs,
+on 16 processors at a load of 12 to 14, the worker's heap at 512 MiB.
 
 | Scope | Target | Measured |
 |---|---|---|
-| A workspace: 10M lines, 100k files, 1000 builds, each a target | Planning a check at most 200 ms, reading no build outside the changed set | A file of a library: after a change, 0.03-0.13 s, reading the changed build alone; with none to what it read, its memo, 8-34 ms. The first plan, 0.11-0.55 s. A file of no library: see below |
+| A workspace: 10M lines, 100k files, 1000 builds, each a target | Planning a check at most 200 ms, reading no build outside the changed set | A file of a library: after a change, 0.03-0.14 s, reading the changed build alone; with none to what it read, its memo, 5-34 ms. The first plan, 0.11-0.55 s. A file of no library: see below |
 | A context: one closure of 1M lines, 10k units | At most 2 KB a line resident | 0.33-0.39 KB a line, from a store, after every edit; 0.32 KB at 1.13M lines (*Loading by need*) |
-| Cold from a store | Seconds at 1M lines | 1.38 s in process, every unit from the store, 3.7 s through the server; 7.6 s at 1.13M lines |
-| A leaf comment | p95 at most 250 ms | 0.052 / 0.065 s, p50 / p95 through the server |
-| A body edit | That unit's own elaboration, on top | One unit elaborated, at its place; 0.040 / 0.059 s through the server |
+| Cold from a store | Seconds at 1M lines | 0.97-1.39 s in process, every unit from the store, 2.5-3.7 s through the server; 7.6 s at 1.13M lines |
+| A leaf comment | p95 at most 250 ms | 0.052-0.055 / 0.065-0.075 s, p50 / p95 through the server |
+| A body edit | That unit's own elaboration, on top | One unit elaborated, at its place; 0.040-0.050 / 0.059-0.063 s through the server |
 | An interface edit | O(clients) | The edited unit and its clients elaborated (2 units for a name added to the first module, 32 for a constructor added to its datatype, which 30 files use), but every later unit taken again: see below |
-| Hover | At most 50 ms | 7-11 ms through the server |
+| Hover | At most 50 ms | 7-18 ms through the server |
 
 * **Planning** reads only what changed. A file of a library is checked in its
   library (*A file's context*), so its plan is made from the targets over its
