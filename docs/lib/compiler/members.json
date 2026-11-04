@@ -573,6 +573,13 @@
     },
     {
      "kind": "val",
+     "name": "Analysis.lazy",
+     "spec": "val lazy : t * bool -> unit",
+     "doc": "`lazy (context, true)`, the default, loads a unit's basis only where\na later unit names what it declared; `lazy (context, false)` loads\nevery one.\n\nA unit taken from a store or from its own elaboration earlier, whose\nusages hold by the units that bound their names, is registered and its\nnames bound, and its basis read when a later unit's text names one of\nthem; a unit elaborated sees what its text names, and prints a type by\nthe path the whole environment has. Where a unit looked up a name its\ntext does not name, the context loads every basis from then on. The\nresults are a fresh analysis's either way; a context's memory is not.\n\n",
+     "page": "sig/COMPILER_API.md#val-analysis.lazy"
+    },
+    {
+     "kind": "val",
      "name": "Analysis.compact",
      "spec": "val compact : t -> unit",
      "doc": "`compact context` gives up the compiler state a context's units stay\nloaded in, with what its tables hold of units long replaced.\n\nThe next check loads them into a new one, and gives what it would\nhave. A check does this itself after enough walks.\n\n",
@@ -714,8 +721,8 @@
     {
      "kind": "val",
      "name": "Analysis.route",
-     "spec": "val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int}",
-     "doc": "`route snapshot` reports how the check went, and nothing of its results.\n\nwalked: from the start, rather than each change at its own place;\nrebound: units taken as they stood; loaded: taken again from their\npickles; cutoff: elaborated to the identity they had; broken: a usage\nrefused a unit; stored: taken from the store (store). The results are a\nfresh analysis's whichever the route.\n\n",
+     "spec": "val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int,byNeed:int}",
+     "doc": "`route snapshot` reports how the check went, and nothing of its results.\n\nwalked: from the start, rather than each change at its own place;\nrebound: units taken as they stood; loaded: taken again from their\npickles; cutoff: elaborated to the identity they had; broken: a usage\nrefused a unit; stored: taken from the store (store); byNeed: of those\nstored or loaded, those whose basis was not read (lazy). The results\nare a fresh analysis's whichever the route.\n\n",
      "page": "sig/COMPILER_API.md#val-analysis.route"
     },
     {

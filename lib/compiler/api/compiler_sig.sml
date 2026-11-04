@@ -358,10 +358,9 @@ sig
        unit a check elaborates from the text its file has is written there.
        The results are a fresh analysis's whichever way a unit came. *)
     val store : t * string option -> unit
-    (* `lazy (context, false)` has a context load the basis of every unit it
-       takes, as it did before loading by need; `lazy (context, true)`, the
-       default, loads a unit's basis only where a unit elaborated after it
-       names what it declared.
+    (* `lazy (context, true)`, the default, loads a unit's basis only where
+       a later unit names what it declared; `lazy (context, false)` loads
+       every one.
 
        A unit taken from a store or from its own elaboration earlier, whose
        usages hold by the units that bound their names, is registered and its
