@@ -13,9 +13,14 @@ struct
   (* A table of chains, in which a name's first entry is the one a search of the
      list it was made from finds. *)
   type 'a table=(string*'a) list array
+  (* changes: the files a client's watcher said changed, newest first, each by
+     the input generation its event made, its key, and whether it came or
+     went, which changes its directory too; changeFloor: the generation from
+     which that list is whole (changed, below) *)
   datatype t=Workspace of {platform:U.platform,lib:string,roots:string list ref,settings:settings ref,scoped:(string*settings) list ref,
     index:{uris:settings table,keys:settings table} option ref,
-    generation:IntInf.int ref,inputGeneration:IntInf.int ref,choices:(string*string) list ref}
+    generation:IntInf.int ref,inputGeneration:IntInf.int ref,choices:(string*string) list ref,
+    changes:(IntInf.int*string*bool) list ref,changeFloor:IntInf.int ref}
   exception Invalid of string
   val defaults:settings={targets=[],flags=[],variables=[],activeContext=NONE,libraryRoot=NONE}
   fun invalid message=raise Invalid message
@@ -67,7 +72,7 @@ struct
     in {targets=targets,flags=common,variables=vars,activeContext=active,libraryRoot=libraryRoot} end
     handle J.Invalid message => raise Invalid message | U.Invalid => raise Invalid "invalid file URI"
   fun new {platform,lib} = Workspace {platform=platform,lib=lib,roots=ref [],settings=ref defaults,scoped=ref [],index=ref NONE,
-    generation=ref 0,inputGeneration=ref 0,choices=ref []}
+    generation=ref 0,inputGeneration=ref 0,choices=ref [],changes=ref [],changeFloor=ref 0}
   fun generation (Workspace {generation,...})= !generation
   fun inputGeneration (Workspace {inputGeneration,...})= !inputGeneration
   fun dirty (Workspace {generation,inputGeneration,...}) =
@@ -86,6 +91,24 @@ struct
   fun slot (chains:'a table,name)=CharVector.foldl (fn (c,hash) => (hash*31+Char.ord c) mod 1048573) 0 name mod Array.length chains
   fun lookup (chains,name)=Option.map #2 (List.find (fn (other,_) => other=name) (Array.sub (chains,slot (chains,name))))
   fun add (chains,name,value)=let val at=slot (chains,name) in Array.update (chains,at,(name,value) :: Array.sub (chains,at)) end
+  (* a table that grows, in which a name has one entry *)
+  type 'a store={chains:'a table ref,count:int ref}
+  fun store () : 'a store={chains=ref (table 32),count=ref 0}
+  fun fetch ({chains,...}:'a store,name)=lookup (!chains,name)
+  fun remove ({chains,count}:'a store,name)=
+    let val at=slot (!chains,name)
+        val (gone,kept)=List.partition (fn (other,_) => other=name) (Array.sub (!chains,at))
+    in Array.update (!chains,at,kept);count:= !count-length gone end
+  fun keep (s as {chains,count}:'a store,name,value)=
+    (remove (s,name);
+     if 2*(!count+1)<=Array.length (!chains) then () else
+       let val old= !chains
+           val grown=table (2*Array.length old)
+       in Array.app (List.app (fn (other,item) => add (grown,other,item))) old;chains:=grown end;
+     add (!chains,name,value);count:= !count+1)
+  fun entries ({chains,...}:'a store)=Array.foldl (op @) [] (!chains)
+  fun empty ({chains,count}:'a store)=(chains:=table 32;count:=0)
+  fun stored ({count,...}:'a store)= !count
   (* Scoped settings by URI and by native key, made after a change to them, so
      that a file's configuration costs its depth and not the number of scopes. *)
   fun indexed (Workspace {platform,scoped,index,...}) =
@@ -156,13 +179,93 @@ struct
         val kept=List.filter (fn root => not (List.exists (fn uri => root=uri) removed)) (!stored)
     in setRoots (workspace,kept @ List.filter (fn uri => not (List.exists (fn root => root=uri) kept)) added) end
   fun below (root,path)=root=path orelse String.isPrefix (if String.isSuffix "/" root then root else root ^ "/") path
+  (* What a path is known by: remembered, for a path's key does not change
+     where the path alone gives it (at most a million) *)
+  val known=store () : string store
   fun pathKey platform path =
-    let val uri=U.fromPath (platform,path) handle U.Invalid => U.fromPath (platform,OS.FileSys.fullPath path)
-    in case U.native (platform,uri) of SOME {key,...} => key | NONE => path end
+    let val name=(if platform=U.Windows then "w:" else "p:") ^ path
+    in case fetch (known,name) of SOME key => key | NONE =>
+       let val (uri,pure)=(U.fromPath (platform,path),true) handle U.Invalid => (U.fromPath (platform,OS.FileSys.fullPath path),false)
+           val key=case U.native (platform,uri) of SOME {key,...} => key | NONE => path
+       in if pure andalso stored known<1000000 then keep (known,name,key) else ();key end end
     handle OS.SysErr _ => path
-  fun sameFile platform (left,right) =
-    pathKey platform left=pathKey platform right orelse
-      ((OS.FileSys.compare (OS.FileSys.fileId left,OS.FileSys.fileId right)=EQUAL) handle OS.SysErr _ => false)
+  (* The file a key names, remembered where the client's events would say
+     that it changed (vouch, which the worker sets, and unknow, which it
+     calls as it brings those up to date, D28); elsewhere looked at again *)
+  (* A key with its ".." arcs taken out, as a client's events name a file:
+     NONE where one would climb above its root *)
+  fun lexical key=
+    let val (head,body)=
+          if String.isPrefix "//" key then
+            let fun slash (at,n)=if at>=size key then size key else if String.sub (key,at)= #"/" then (if n=1 then at else slash (at+1,n-1)) else slash (at+1,n)
+                val stop=slash (2,2)
+            in (String.substring (key,0,Int.min (size key,stop+1)),String.extract (key,Int.min (size key,stop+1),NONE)) end
+          else if size key>=3 andalso String.sub (key,1)= #":" andalso String.sub (key,2)= #"/" then (String.substring (key,0,3),String.extract (key,3,NONE))
+          else if String.isPrefix "/" key then ("/",String.extract (key,1,NONE)) else ("",key)
+        fun clean ([],kept)=SOME (List.rev kept)
+          | clean (".."::rest,_::kept)=clean (rest,kept)
+          | clean (".."::_,[])=NONE
+          | clean (arc::rest,kept)=if arc="" orelse arc="." then clean (rest,kept) else clean (rest,arc::kept)
+    in Option.map (fn arcs => head ^ String.concatWith "/" arcs) (clean (String.fields (fn c => c= #"/") body,[])) end
+  (* The key by which a client's file events name what a path names: its key,
+     or with its ".." arcs taken out where that is the same file (it is not
+     through a symbolic link to a directory), remembered; NONE where not. *)
+  val eventKeys=store () : string option store
+  fun eventKey platform path=
+    let val key=pathKey platform path
+    in if not (List.exists (fn arc => arc="..") (String.fields (fn c => c= #"/") key)) then SOME key else
+       case fetch (eventKeys,key) of SOME known => known | NONE =>
+       let val clean=case lexical key of NONE => NONE | SOME clean =>
+             ((if OS.FileSys.compare (OS.FileSys.fileId path,OS.FileSys.fileId clean)=EQUAL then SOME clean else NONE)
+              handle OS.SysErr _ => NONE)
+       in if stored eventKeys<1000000 then keep (eventKeys,key,clean) else ();clean end end
+  val identities=store () : OS.FileSys.file_id option store
+  (* the key by which events vouch for a file, where they do; the worker says *)
+  val vouch=ref (fn _ : string => NONE : string option)
+  fun unknow NONE=empty identities
+    | unknow (SOME keys)=List.app (fn key => remove (identities,key)) keys
+  fun identityOf (path,_)=
+    let fun look ()=SOME (OS.FileSys.fileId path) handle OS.SysErr _ => NONE
+    in case !vouch path of NONE => look () | SOME key =>
+       case fetch (identities,key) of SOME id => id | NONE => let val id=look () in keep (identities,key,id);id end end
+  (* whether a path names a file, its key and its file found once *)
+  fun sameAs platform path=
+    let val key=pathKey platform path
+        val id=ref NONE : OS.FileSys.file_id option option ref
+        fun mine ()=case !id of SOME known => known | NONE => let val known=identityOf (path,key) in id:=SOME known;known end
+    in fn other => let val otherKey=pathKey platform other
+       in otherKey=key orelse (case mine () of NONE => false
+            | SOME a => case identityOf (other,otherKey) of SOME b => OS.FileSys.compare (a,b)=EQUAL | NONE => false) end end
+  (* the path of a file URI, remembered, for it does not change *)
+  val uriPaths=store () : string store
+  fun uriPath platform uri=
+    let val name=(if platform=U.Windows then "w:" else "p:") ^ uri
+    in case fetch (uriPaths,name) of SOME path => path | NONE =>
+       let val path=filePath platform uri in if stored uriPaths<1000000 then keep (uriPaths,name,path) else ();path end end
+  (* Files the client's watcher says changed (workspace/didChangeWatchedFiles):
+     a plan made at an input generation sees what changed since without a
+     look at the disk, where the client watches (D28). The last 4096 are
+     kept; a plan older than the newest dropped looks at the disk. *)
+  val changeLimit=4096
+  fun changed (workspace as Workspace {platform,inputGeneration,changes,changeFloor,...},files : (string*bool) list) =
+    let val ()=dirty workspace
+        val generation= !inputGeneration
+        val keys=List.map (fn (uri,moved) => (nativeKey platform uri,moved)) files
+        val all=List.map (fn (key,moved) => (generation,getOpt (key,""),moved)) keys @ !changes
+    in if List.exists (not o isSome o #1) keys then (changes:=[];changeFloor:=generation)
+       else if length all<=changeLimit then changes:=all
+       else (changes:=List.take (all,changeLimit);changeFloor:= #1 (List.nth (all,changeLimit))) end
+  (* the keys of the files that changed since generation, each with whether
+     it came or went, where the list says *)
+  fun changedSince (Workspace {changes,changeFloor,...},generation)=
+    if IntInf.< (generation,!changeFloor) then NONE
+    else SOME (List.map (fn (_,key,moved) => (key,moved)) (List.filter (fn (g,_,_) => IntInf.> (g,generation)) (!changes)))
+  (* What a client's watcher reports (RuneLspController.watch): a file of these
+     names, and a directory, by what is created in it and removed from it *)
+  fun watchable path=
+    List.exists (fn suffix => String.isSuffix suffix path) [".sml",".sig",".fun",".build","/MANIFEST","/rune.workspace","\\MANIFEST","\\rune.workspace"]
+    orelse path="MANIFEST" orelse path="rune.workspace"
+  fun sameFile platform (left,right)=sameAs platform right left
   fun directory platform path = if platform<>U.Windows then OS.Path.dir path else
     let val path=String.map (fn #"\\" => #"/" | c => c) path
         fun last i=if i<0 then NONE else if String.sub (path,i)= #"/" then SOME i else last (i-1)
@@ -201,6 +304,15 @@ struct
     in List.foldl (fn (file,result) => if List.exists (fn prior => prior=file) result then result else result @ [file]) [] files end
   (* The root file a build is under, which its units are named from. *)
   fun rootFile platform build=C.Workspace.find {file=build,windows=platform=U.Windows}
+  (* What a plan may take of a build file without reading it, and what it is
+     told of each it reads (RuneLspWorkerAnalysis keeps those texts, while
+     the client's events or their stamps say that they stand, D28); and how
+     many builds have been read, for a bench. *)
+  val holding=ref {held=fn _ : string => NONE : string option,read=fn _ : string*string => ()}
+  val buildsRead=ref 0
+  fun readProject (session,request)=
+    let val {held,read}= !holding
+    in C.Project.readHolding (session,request,{held=held,read=fn file => (buildsRead:= !buildsRead+1;read file)}) end
   (* and the text of one open in the editor where it is, saved or not *)
   fun rootFileIn (platform,documents) build =
     let val windows=platform=U.Windows
@@ -241,6 +353,15 @@ struct
                | SOME above => if List.exists (fn other => other=above) seen orelse length seen>64 then NONE
                    else up (above,directory::seen) end
     in up (directory platform path,[]) end
+  (* the contexts a target's project gives a file, one an occurrence of it *)
+  fun contextsIn (platform,target:target,project,path)=
+    let val same=sameAs platform path in
+    List.map (fn source:C.Project.source =>
+      {id= #build target ^ "#" ^ #name target ^ ":" ^ Int.toString (#ordinal source),
+       label= #name target ^ " (unit " ^ Int.toString (#ordinal source+1) ^ ")",
+       name=shortName (platform,#name target),build= #build target,
+       target= #name target,ordinal= #ordinal source,project=project,source=source}:context)
+      (List.filter (fn source:C.Project.source => same (#file source)) (C.Project.sources project)) end
   fun contexts (workspace as Workspace {platform,lib,settings=stored,...},documents,uri) =
     case U.native (platform,U.parse uri) of NONE => [] | SOME {path,key} =>
     let val config=configurationFor (workspace,uri)
@@ -254,15 +375,10 @@ struct
         fun target (target:target) =
           let val session=C.session {lib=SOME (getOpt (#libraryRoot target,getOpt (#libraryRoot config,lib))),flags= #flags target}
               val build=filePath platform (#build target)
-              val project=(C.Project.read (session,{file=build,workspace=rootFileIn (platform,documents) build,
+              val project=(readProject (session,{file=build,workspace=rootFileIn (platform,documents) build,
                 variables= #variables config @ #variables target,overlays=overlays,windows=platform=U.Windows})
                 before C.close session) handle e => (C.close session;raise e)
-              val sources=List.filter (fn source:C.Project.source => sameFile platform (#file source,path)) (C.Project.sources project)
-          in List.map (fn source:C.Project.source =>
-            {id= #build target ^ "#" ^ #name target ^ ":" ^ Int.toString (#ordinal source),
-             label= #name target ^ " (unit " ^ Int.toString (#ordinal source+1) ^ ")",
-             name=shortName (platform,#name target),build= #build target,
-             target= #name target,ordinal= #ordinal source,project=project,source=source}:context) sources end
+          in contextsIn (platform,target,project,path) end
         val found=List.concat (List.map (fn candidate =>
           if null (#targets config) then (target candidate handle C.Failed _ => []) else target candidate) targets)
         (* One owner (D26): a file of a library is checked in the library,
@@ -281,9 +397,10 @@ struct
        else let val location=U.fromPath(platform,build) handle U.Invalid=>U.fromPath(platform,OS.FileSys.fullPath build)
             in target {name="basis",build=U.original location,flags= #flags config,
               variables=[],libraryRoot= #libraryRoot config} end handle C.Failed _=>found end
-  fun resolve (workspace as Workspace {platform,lib,settings=stored,choices,...},documents,uri) =
-    let val contexts=contexts (workspace,documents,uri)
-        val active=case List.find (fn (document,_) => document=uri) (!choices) of SOME (_,id) => SOME id
+  (* which of a file's contexts it is checked in: the one chosen, or the
+     only one, or the client is asked *)
+  fun selectAmong (workspace as Workspace {platform,lib,choices,...},uri,contexts) =
+    let val active=case List.find (fn (document,_) => document=uri) (!choices) of SOME (_,id) => SOME id
           | NONE => #activeContext (configurationFor (workspace,uri))
         val selection=case active of SOME id =>
          (case List.filter (fn context:context => #id context=id orelse #target context=id) contexts of
@@ -293,7 +410,10 @@ struct
               then Selected context else Ambiguous contexts
             | _=>Ambiguous contexts)
        | NONE => case contexts of [] => Loose | [context] => Selected context | _ => Ambiguous contexts
-    in (selection,contexts) end
+    in selection end
+  fun resolve (workspace,documents,uri) =
+    let val contexts=contexts (workspace,documents,uri)
+    in (selectAmong (workspace,uri,contexts),contexts) end
   fun select arguments= #1 (resolve arguments)
   (* The context of a file in no build: the implicit library a build at a
      place no file has names (RuneLspImplicit), read through an overlay *)
@@ -305,7 +425,7 @@ struct
           case U.native (platform,U.parse (#uri snapshot)) of NONE => NONE
           | SOME {path,...} => SOME {file=path,text=LspPosition.text (#content snapshot)}) (D.all documents)
         val session=C.session {lib=SOME (getOpt (#libraryRoot config,lib)),flags= #flags config}
-        val project=(C.Project.read (session,{file=build,workspace=rootFileIn (platform,documents) path,
+        val project=(readProject (session,{file=build,workspace=rootFileIn (platform,documents) path,
           variables= #variables config,overlays=overlays,windows=platform=U.Windows}) before C.close session)
           handle e => (C.close session;raise e)
         val buildUri=U.original (U.fromPath (platform,build))

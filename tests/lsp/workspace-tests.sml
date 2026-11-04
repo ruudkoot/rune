@@ -54,6 +54,36 @@ struct
         val generation=W.generation workspace
         val rejected=((W.configure (workspace,Json.Object [("sourceMode",Json.String "invalid")]);false) handle W.Invalid _ => true)
     in check ("configuration is atomic",rejected andalso W.generation workspace=generation) end)
+  (* D28: the files a client's watcher names, by the generation each event
+     made; a plan older than the last kept looks at the disk instead *)
+  fun changes () =
+    let val workspace=W.new {platform=U.Posix,lib="lib"}
+        val start=W.inputGeneration workspace
+        val ()=W.changed (workspace,[(uri "/w/a.sml",false),(uri "/w/b.build",true)])
+        val middle=W.inputGeneration workspace
+        val ()=W.changed (workspace,[(uri "/w/c.sml",false)])
+        val ()=check ("each event moves the input generation",IntInf.> (middle,start))
+        val ()=check ("a plan sees what changed since it, and what came or went",
+          W.changedSince (workspace,start)=SOME [("/w/c.sml",false),("/w/a.sml",false),("/w/b.build",true)]
+          andalso W.changedSince (workspace,middle)=SOME [("/w/c.sml",false)])
+        val ()=W.changed (workspace,List.tabulate (W.changeLimit,fn i => (uri ("/w/many" ^ Int.toString i ^ ".sml"),false)))
+        val ()=check ("past the last kept, a plan is told nothing, and looks",W.changedSince (workspace,start)=NONE)
+        val ()=check ("one made since the last is told",isSome (W.changedSince (workspace,W.inputGeneration workspace)))
+        val ()=W.changed (workspace,[("untitled:scratch",false)])
+        val ()=check ("an event of no file tells every plan to look",W.changedSince (workspace,W.inputGeneration workspace-1)=NONE)
+    in check ("a key without ..",W.lexical "/w/x/../y/./z.sml"=SOME "/w/y/z.sml" andalso W.lexical "/../z"=NONE) end
+  (* An event names a file by its path; a key with .. names it so only where
+     no symbolic link to a directory comes before the .. *)
+  fun eventKeys () = fixture (fn root =>
+    let val ()=List.app OS.FileSys.mkDir [root ^ "/real",root ^ "/real/deep",root ^ "/sub"]
+        val ()=List.app write [(root ^ "/x.build","files end\n"),(root ^ "/real/x.build","files end\n")]
+        val ()=Posix.FileSys.symlink {old=root ^ "/real/deep",new=root ^ "/link"}
+        val direct=W.eventKey U.Posix (root ^ "/sub/../x.build")
+        val linked=W.eventKey U.Posix (root ^ "/link/../x.build")
+        val ()=OS.FileSys.remove (root ^ "/link")
+    in check ("a path through a directory and back names its file",direct=SOME (W.pathKey U.Posix (root ^ "/x.build")));
+       check ("one back out of a symbolic link names none",linked=NONE);
+       check ("a path without .. is its key",W.eventKey U.Posix (root ^ "/x.build")=SOME (W.pathKey U.Posix (root ^ "/x.build"))) end)
   (* A root file's targets come first, named, and what discovery finds beside
      them stays, whether the client's folder holds the root file or is
      inside the workspace (M3's root above a folder). *)
@@ -128,6 +158,7 @@ structure RuneLspWorkspaceTestMain = Main (struct
   val tests=Test.describe "lsp-workspace" [Test.it "contexts" RuneLspWorkspaceTests.contexts,
     Test.it "scopes" RuneLspWorkspaceTests.scopes,Test.it "scope-cost" RuneLspWorkspaceTests.scopeCost,
     Test.it "named-targets" RuneLspWorkspaceTests.namedTargets,
-    Test.it "short-names" RuneLspWorkspaceTests.shortNames]
+    Test.it "short-names" RuneLspWorkspaceTests.shortNames,
+    Test.it "file-events" RuneLspWorkspaceTests.changes,Test.it "event-keys" RuneLspWorkspaceTests.eventKeys]
 end)
 val ()=RuneLspWorkspaceTestMain.main ()

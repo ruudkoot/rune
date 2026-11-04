@@ -95,7 +95,7 @@ struct
           val roots=W.roots workspace
           fun patterns root=List.map (fn pattern => Json.Object [("globPattern",
             if relative then Json.Object [("baseUri",Json.String root),("pattern",Json.String pattern)] else Json.String pattern),
-            ("kind",Json.int 7)]) ["**/*.{sml,sig,build}","**/MANIFEST"]
+            ("kind",Json.int 7)]) ["**/*.{sml,sig,fun,build}","**/MANIFEST","**/rune.workspace"]
           val watchers=if relative then List.concat (List.map patterns roots) else patterns ""
           val id="runelsp-watch-" ^ IntInf.toString (!serial)
           val ()=serial:=IntInf.+ (!serial,1)
@@ -141,15 +141,15 @@ struct
     | "workspace/didChangeWorkspaceFolders" => (W.foldersChanged (workspace,value ());renew ();allContexts controller;true)
     | "workspace/didChangeWatchedFiles" =>
         (case J.required (value (),"changes") of Json.Array changes =>
-           List.app (fn change =>
+           W.changed (workspace,List.map (fn change =>
              let val change=J.object change
                  val uri=J.string (J.required (change,"uri"))
                  val _=LspUri.parse uri
                  val kind=J.required (change,"type")
-             in if List.exists (fn expected => kind=Json.int expected) [1,2,3] then ()
-                else raise W.Invalid "invalid watched-file change type" end) changes
+             in if List.exists (fn expected => kind=Json.int expected) [1,2,3] then (uri,kind<>Json.int 2)
+                else raise W.Invalid "invalid watched-file change type" end) changes)
          | _ => raise W.Invalid "watched-file changes must be an array";
-         W.dirty workspace;allContexts controller;true)
+         allContexts controller;true)
     | _ => false
     end handle W.Invalid message => (error message;true) | J.Invalid message => (error message;true)
       | LspUri.Invalid => (error "invalid watched-file URI";true)

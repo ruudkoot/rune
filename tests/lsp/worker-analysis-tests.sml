@@ -319,7 +319,13 @@ struct
         fun open' name=if isSome (D.snapshot (documents,uri name)) then () else ignore (D.openDocument (documents,{uri=uri name,languageId="sml",version=1,text=
           List.foldl (fn ((other,text),found) => if other=name then text else found) "" files}))
         val {call,phases,stop}=harness ()
-        fun state ()=M.capture (workspace,documents)
+        (* as the service captures it, with the folder the client watches once
+           watch () says so; changed names files an event says changed *)
+        val watching=ref false
+        fun state ()=V.Object (("watchedRoots",M.strings (if !watching then [LspUri.original (LspUri.fromPath (platform,root))] else []))::
+          V.object (M.capture (workspace,documents)))
+        fun watch ()=watching:=true
+        fun changed names=W.changed (workspace,List.map (fn name => (uri name,false)) names)
         fun check name=(open' name;call [("op",V.Bytes "check"),("uri",V.Bytes (uri name)),("encoding",V.Bytes "utf-16"),("state",state ())])
         fun discover name=(open' name;call [("op",V.Bytes "discover"),("uri",V.Bytes (uri name)),("state",state ())])
         fun workspaceDiagnostics ()=V.unjson (call [("op",V.Bytes "workspace"),("method",V.Bytes "workspace/diagnostic"),
@@ -334,7 +340,7 @@ struct
                  fun all found=case OS.FileSys.readDir stream of NONE => found | SOME entry => all (entry::found)
              in all [] before OS.FileSys.closeDir stream end);OS.FileSys.rmDir dir) handle OS.SysErr _ => ()
         val result=(action {uri=uri,path=path,check=check,discover=discover,errors=errors,messages=messages,phases=phases,
-          workspaceDiagnostics=workspaceDiagnostics} handle error => (stop ();clean root;raise error))
+          workspaceDiagnostics=workspaceDiagnostics,watch=watch,changed=changed,old=old} handle error => (stop ();clean root;raise error))
     in stop ();clean root;result end
   fun kind reply=V.bytes (V.field (reply,"kind"))
   fun contextNames reply=List.map (fn context => V.bytes (V.field (context,"build"))) (V.array (V.field (reply,"contexts")))
@@ -369,6 +375,28 @@ struct
         val ()=Expect.that ("where they resolve apart a choice is asked, of those that reach the file: " ^ shown shared,kind shared="ambiguous" andalso
           contextNames shared=[uri "four.build",uri "one.build",uri "two.build"])
     in Expect.that ("each comparison is reported",List.exists (fn phase => phase="contexts-compared") (!phases)) end)
+  (* D28: where the client watches, its file events say what changed, and a
+     plan takes them over the stamps: a build rewritten at its size and time,
+     which no stamp can tell, is read again when an event names it, and an
+     event that names another file plans nothing. *)
+  fun planByEvents ()=tree ([("lib1/library.build","files x.sml y.sml end\n"),("lib1/x.sml","structure X=struct val x=1 end\n"),
+      ("lib1/y.sml","structure Y=struct val y=X.x end\n"),("main.sml","val main=Y.y\n"),
+      ("program.build","use lib1/library.build\nfiles main.sml end\n")],
+    fn {path,check,errors,phases,watch,changed,old,...} =>
+    let fun planned ()=length (List.filter (fn phase => phase="planning") (!phases))
+        val ()=watch ()
+        val ()=Expect.that ("a file of a library checks in it",null (errors (check "lib1/y.sml")))
+        val first=planned ()
+        val ()=changed ["main.sml"]
+        val ()=Expect.that ("an event of a file the plan did not read plans nothing",
+          null (errors (check "lib1/y.sml")) andalso planned ()=first)
+        val ()=writeFile (path "lib1/library.build","files y.sml x.sml end\n")
+        val ()=OS.FileSys.setTime (path "lib1/library.build",SOME old)
+        val ()=Expect.that ("with no event, a build rewritten at its size and time is not seen",
+          null (errors (check "lib1/y.sml")) andalso planned ()=first)
+        val ()=changed ["lib1/library.build"]
+        val reply=check "lib1/y.sml"
+    in Expect.that ("its event has it read again, and its new order holds",planned ()=first+1 andalso not (null (errors reply))) end)
   (* D26: a file in no build, its names found in its directory, in a library
      and anywhere in its workspace, the nearest first *)
   fun implicit ()=tree ([("rune.workspace","roots lib end\n"),
@@ -403,6 +431,7 @@ structure RuneLspWorkerAnalysisTestMain=Main (struct
     Test.it "hover-reads-its-unit" RuneLspWorkerAnalysisTests.hoverPerUnit,
     Test.it "one-owning-library" RuneLspWorkerAnalysisTests.owner,
     Test.it "contexts-compared-by-binder" RuneLspWorkerAnalysisTests.compared,
-    Test.it "implicit-library" RuneLspWorkerAnalysisTests.implicit]
+    Test.it "implicit-library" RuneLspWorkerAnalysisTests.implicit,
+    Test.it "plan-by-file-events" RuneLspWorkerAnalysisTests.planByEvents]
 end)
 val ()=RuneLspWorkerAnalysisTestMain.main ()

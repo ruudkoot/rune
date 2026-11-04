@@ -153,7 +153,8 @@ struct
           val ()=BuildFile.variables:=bindings
       in CompilerBuildQuery.completions {file=file,text=text,offset=offset,variables=StringMap.listItemsi bindings,
            windows=windows,lib= #lib config} end))
-    fun read (Session {compiler=compiler as C.Session {config,token,...},mode},{file,workspace,variables,overlays,windows}) =
+    fun readHolding (Session {compiler=compiler as C.Session {config,token,...},mode},{file,workspace,variables,overlays,windows},
+                     {held,read}) =
       guard file (fn () => C.owned (fn () =>
         let
           val ()=C.checked compiler
@@ -168,7 +169,10 @@ struct
                 fun matches (file,_,other) = file=key orelse
                   (case (id,other) of (SOME a,SOME b) => OS.FileSys.compare (a,b)=EQUAL | _ => false)
                 val found=List.filter matches overlayIds
-            in case found of [] => Source.load (mode,path)
+            in case found of
+               [] => (case held path of
+                 SOME text => let val source=Source.fromStringIn (mode,path,text) in Source.register source;source end
+               | NONE => let val source=Source.load (mode,path) in read (path,#text source);source end)
              | (_,text,_) :: rest =>
                 if List.exists (fn (_,other,_) => other<>text) rest then invalid "multiple open overlays refer to the same project input"
                 else let val source=Source.fromStringIn (mode,path,text)
@@ -199,6 +203,7 @@ struct
         in Project {owner=token,plan=plan,sources=sources,inputs=inputs,fingerprint=Pickle.hash (Pickle.contents writer),scope=scope} end
         handle CompilerProject.Invalid message => invalid message
              | Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]))
+    fun read (session,request)=readHolding (session,request,{held=fn _ => NONE,read=fn _ => ()})
   end
 
   structure Analysis =
