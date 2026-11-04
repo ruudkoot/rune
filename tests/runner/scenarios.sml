@@ -700,6 +700,19 @@ struct
                refusedBy build "list" ["--build-list"];
                refusedBy build "deps" ["--deps", "--build"])
         in everyWay "sealed-in"; everyWay "sealed-use" end
+    | "reach-in-gains-header" =>
+        (* a library that gains a header refuses a build that reached into
+           it, up to date as that build was *)
+        let val () = rmTree (#directory c ^ "/gains")
+            val () = put c "gains/lib/x/library.build" "annotate \"demand\" in inner.sml end"
+            val () = put c "gains/lib/x/inner.sml" "structure Inner = struct val x = 1 end"
+            val () = put c "gains/uses.sml" "val () = print (Int.toString Inner.x ^ \"\\n\")"
+            val () = put c "gains/p.build" "lib/x/inner.sml uses.sml"
+            fun compile label = compiler c (which ^ "-" ^ label) "gains" ["--build", "p.build", "--cache-dir", "cache", "-o", "p.rbc"]
+            val () = success (compile "before")
+            val () = success (compile "up-to-date")
+            val () = put c "gains/lib/x/library.build" "exports (structure Inner)\nannotate \"demand\" in inner.sml end"
+        in refused (compile "after") "p.build: error: this build reaches into the library lib/x (1 path), which has a header" end
     | "reach-in-whole" =>
         (* a use of its library.build goes through its boundary: a warning *)
         let val r = compiler c which "reach" ["--build", "sealed-whole.build", "--no-cache", "-o", "sealed-whole.rbc"]
@@ -960,7 +973,7 @@ struct
                     "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-diamond", "use-diamond-hidden", "use-first-open", "use-inside-boundary",
                     "use-sibling-boundary", "use-replayed-export", "use-after-implements", "export-nothing",
                     "export-no-signature", "export-from-outside", "export-rebound", "export-datatype", "export-abbreviation", "typecheck-exports", "reach-in", "reach-in-pointer",
-                    "reach-in-header", "reach-in-whole", "reach-in-friend",
+                    "reach-in-header", "reach-in-gains-header", "reach-in-whole", "reach-in-friend",
                     "selection-by-uses", "install-no-basis", "stale-index", "clean-overlay",
                     "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two",
                     "virtual-table-list", "virtual-table-tree", "virtual-table-cache", "virtual-table-whole", "virtual-table-none",
