@@ -34,8 +34,8 @@ struct
      Virtual libraries). *)
   type header = {friends : string list, views : (string * (string * string) list) list,
                  virtuals : (string * string) list, implements : (string * string) list}
-  (* requires is split from its line when it is asked for: most programs need
-     it of few files. dir is the directory of the library the file is in.
+  (* requires is what the file needs of the others, as a function, which
+     most programs ask of few files. dir is the directory of the library the file is in.
      view is the view of the Basis Library a seal belongs to, a seal@VIEW
      line, which only a program in that view loads (D12). *)
   type entry = {dir : string, file : string, when : when, provides : string list,
@@ -48,7 +48,7 @@ struct
      it exports; the functors and functions its build marks to inline; and
      a line for each file, a file of host=only among them, which the other
      SML systems have alone and Rune does not compile *)
-  type line = {file : string, class : string, host : string, provides : string list, requires : string}
+  type line = {file : string, class : string, host : string, provides : string list, requires : string list}
   type index = {libraries : string list, scope : (string * string) list option, header : header option,
                 fixities : (string * Fixity.fixity) list, inline : string list, inlineValues : string list,
                 lines : line list}
@@ -87,7 +87,7 @@ struct
              SOME {dir = dir, file = file,
                    when = (case class of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final
                                        | _ => if isSome view then Seal else raise Usage ("a file of no class in the index of " ^ dir ^ ": " ^ file)),
-                   provides = provides, requires = fn () => String.tokens (fn c => c = #" ") requires, scope = scope,
+                   provides = provides, requires = fn () => requires, scope = scope,
                    header = header, view = view}
            end)
       lines

@@ -286,6 +286,31 @@ struct
       val () = writeBytes (p, String.substring (s, 0, String.size s - 1) ^ "q")
       val () = need (S.readSide side (a, config, "unit@1") = NONE, "a byte changed")
     in removeTree a; removeTree b end
+  (* A stat stamp, kept as numbers and compared as numbers (the build-system
+     roadmap's M12): what is written reads back the same, a stamp a field
+     of which differs is another, a number no stat has is written as one no
+     stat matches, and the racy guard holds as before *)
+  fun stamps () =
+    let
+      val a = {dev = 2080, ino = 123456789, size = 4096, mtime = 1762214400000000, ctime = 1762214401000000}
+      fun roundTrip st = let val w = P.writer () val () = S.wstamp (w, st) val r = P.reader (P.contents w)
+                         in (S.rstamp r, P.atEnd r, String.size (P.contents w)) end
+      val (a', atEnd, width) = roundTrip a
+      val () = need (S.sameStamp (a, a') andalso atEnd andalso width = 40, "a stamp reads back as it was written")
+      (* an inode with the word's top bits, as a filesystem's file id has *)
+      val top = S.wordOf (SysWord.notb (SysWord.fromInt 0))
+      val (b', _, _) = roundTrip {dev = 1, ino = top, size = 1, mtime = 1, ctime = 1}
+      val () = need (top > 0 andalso #ino b' = top, "an inode of the word's top bits is kept")
+      val () = need (not (S.sameStamp (a, {dev = 2080, ino = 123456789, size = 4097, mtime = 1762214400000000, ctime = 1762214401000000})),
+                     "another size, another stamp")
+      val () = need (not (S.sameStamp (a, {dev = 2080, ino = 123456789, size = 4096, mtime = 1762214400000000, ctime = 1762214402000000})),
+                     "another time it was changed, another stamp")
+      val (neg, _, _) = roundTrip {dev = ~5, ino = 1, size = 1, mtime = 1, ctime = 1}
+      val () = need (#dev neg = ~1, "a number below zero is written as one no stat has")
+      (* clean: last changed two seconds or more before the stat was taken *)
+      val () = need (S.clean (a, LargeInt.fromInt 1762214403) andalso not (S.clean (a, LargeInt.fromInt 1762214402)),
+                     "racily clean at two seconds and no less")
+    in () end
 end
 
 structure UnitStoreTestMain = Main (struct
@@ -294,6 +319,6 @@ structure UnitStoreTestMain = Main (struct
                 [Test.it "found" UnitStoreTests.found, Test.it "bytes" UnitStoreTests.bytes,
                  Test.it "heads" UnitStoreTests.heads, Test.it "damaged" UnitStoreTests.damaged,
                  Test.it "sides" UnitStoreTests.sides, Test.it "times" UnitStoreTests.times,
-                 Test.it "trimmed" UnitStoreTests.trimmed]
+                 Test.it "trimmed" UnitStoreTests.trimmed, Test.it "stamps" UnitStoreTests.stamps]
 end)
 val () = UnitStoreTestMain.main ()

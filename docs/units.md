@@ -906,15 +906,16 @@ file's stat says nothing of the tool.
 **The stat memo.** A unit's key holds the hash of its source, which a warm
 build need not read: the store keeps, by a file's path and mode, the hash its
 text had, its stat then -- device, inode, size, the times it was written and
-changed -- and when the stat was taken (`UnitStore.hashBy`, `units/` of the
-configuration). A hash is taken from the memo only where the stat is the same
+changed, kept and compared as whole numbers, never made text -- and when the
+stat was taken (`UnitStore.hashBy`, `units/` of the configuration). A hash is taken from the memo only where the stat is the same
 and the file was last written at least two seconds before the stat was taken,
 git's rule for an index that is racily clean, with a second more for a clock
 that is not the filesystem's; anything else reads the file. A span of another
 unit's code that names a source not read -- a function copied from it, a
 warning given again -- loads it (`Source.fault`). A stat is what Rune's own
 `rune` asks of `Posix.FileSys.stat` (`UnitStore.stat`, which
-`src/main/rune-main.sml` sets); a compiler built by another host has none,
+`src/main/rune-main.sml` sets, and `runedoc` and the compiler's API on Rune
+too); a compiler built by another host has none,
 since MLKit's Basis Library has no `ctime`, and keeps and believes no memo:
 it reads every source and links every time.
 

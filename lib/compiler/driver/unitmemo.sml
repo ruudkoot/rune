@@ -48,7 +48,7 @@ struct
   fun copyOf (dir : string, path : string) : string =
     let val full = if OS.Path.isAbsolute path then path else OS.Path.mkAbsolute {path = path, relativeTo = OS.FileSys.getDir ()}
     in OS.Path.joinDirFile {dir = S.unitsDir (dir, place), file = "copy-" ^ P.hash full} end
-  fun copied (stamp : S.stamp, bytes : string) : string = "rune-copy 1 " ^ #key stamp ^ "\n" ^ bytes
+  fun copied (stamp : S.stamp, bytes : string) : string = "rune-copy 2 " ^ S.stampText stamp ^ "\n" ^ bytes
 
   (* an output just written: its stat, taken after at, and a copy of its
      bytes, read back, kept in the cache dir *)
@@ -70,18 +70,18 @@ struct
       case S.statOf path of
         NONE => NONE
       | SOME st =>
-          if #key st <> #key stamp then NONE
+          if not (S.sameStamp (st, stamp)) then NONE
           else if S.clean (stamp, at) then SOME {path = path, stamp = stamp, at = at}
           else (case (bytesOf path, bytesOf (copyOf (dir, path))) of
                   (SOME b, SOME c) => if c = copied (stamp, b) then SOME {path = path, stamp = st, at = now} else NONE
                 | _ => NONE)
     end
 
-  fun wstamp (w : P.writer, {key, latest} : S.stamp) = (P.string (w, key); P.string (w, LargeInt.toString latest))
-  fun rlarge r = case LargeInt.fromString (P.rstring r) of SOME n => n | NONE => raise P.Bad "not a number"
-  fun rstamp r : S.stamp = let val key = P.rstring r in {key = key, latest = rlarge r} end
+  val wstamp = S.wstamp
+  val rstamp = S.rstamp
+  val rlarge = S.rlarge
   fun woutput (w : P.writer, {path, stamp, at} : output) =
-    (P.string (w, path); wstamp (w, stamp); P.string (w, LargeInt.toString at))
+    (P.string (w, path); wstamp (w, stamp); S.wlarge (w, at))
   fun routput r : output =
     let val path = P.rstring r val stamp = rstamp r
     in {path = path, stamp = stamp, at = rlarge r} end
@@ -98,7 +98,7 @@ struct
 
   (* what a link of units was: the hash of what was linked, and the output *)
   val links : (string * output) S.side =
-    {magic = "RML", version = 3, hash = fn (_, text) => P.hash text,
+    {magic = "RML", version = 4, hash = fn (_, text) => P.hash text,
      write = fn (w, (digest, out)) => (P.string (w, digest); woutput (w, out)),
      read = fn r => let val d = P.rstring r in (d, routput r) end}
   (* by the output's path from the root of the filesystem, since compiles
@@ -156,11 +156,11 @@ struct
   type record = {files : (string * S.stamp) list, probes : (string * bool) list, at : LargeInt.int, output : output,
                  made : output list, warnings : (Source.span * string) list}
   val records : record S.side =
-    {magic = "RMU", version = 4, hash = fn (_, text) => P.hash text,
+    {magic = "RMU", version = 5, hash = fn (_, text) => P.hash text,
      write = fn (w, {files, probes, at, output, made, warnings}) =>
        (P.list (fn (w, (p, st)) => (P.string (w, p); wstamp (w, st))) (w, files);
         P.list (fn (w, (p, there)) => (P.string (w, p); P.bool (w, there))) (w, probes);
-        P.string (w, LargeInt.toString at); woutput (w, output);
+        S.wlarge (w, at); woutput (w, output);
         P.list woutput (w, made);
         P.list (fn (w, ({file, start, stop}, msg)) => (P.string (w, file); P.int (w, start); P.int (w, stop); P.string (w, msg)))
                (w, warnings)),
@@ -197,7 +197,7 @@ struct
       NONE => NONE
     | SOME {files, probes, at, output, made, warnings} =>
         let
-          fun same (p, st) = case S.statOf p of SOME st' => #key st' = #key st andalso S.clean (st, at) | NONE => false
+          fun same (p, st) = case S.statOf p of SOME st' => S.sameStamp (st', st) andalso S.clean (st, at) | NONE => false
           fun answered (p, there) = (OS.FileSys.access (p, []) handle OS.SysErr _ => false) = there
           fun allHold ([], acc) = SOME (List.rev acc)
             | allHold (o' :: rest, acc) = case holds dir o' of SOME o'' => allHold (rest, o'' :: acc) | NONE => NONE

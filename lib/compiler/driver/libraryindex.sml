@@ -132,8 +132,23 @@ struct
                   (list string (w, friends); list (fn (w, (v, es)) => (string (w, v); list pair (w, es))) (w, views);
                    list pair (w, virtuals); list pair (w, implements))) (w, header);
        list fixity (w, fixities); list string (w, inline); list string (w, inlineValues);
-       list (fn (w, {file, class, host, provides, requires} : B.line) =>
-               (string (w, file); string (w, class); string (w, host); list string (w, provides); string (w, requires))) (w, lines))
+       (* every name of the lines once, in a table, and each line's by its
+          place there: a line's names and its class and host are most of
+          the bytes, which every compile reads and holds to their hash *)
+       let
+         val table = ref StringMap.empty : int StringMap.map ref
+         val order = ref [] : string list ref
+         fun place n = case StringMap.find (!table, n) of
+                         SOME i => i
+                       | NONE => let val i = StringMap.numItems (!table)
+                                 in table := StringMap.insert (!table, n, i); order := n :: !order; i end
+         val coded = List.map (fn {file, class, host, provides, requires} : B.line =>
+                                 (file, place class, place host, List.map place provides, List.map place requires)) lines
+       in
+         list string (w, List.rev (!order));
+         list (fn (w, (file, class, host, provides, requires)) =>
+                 (string (w, file); nat (w, class); nat (w, host); list nat (w, provides); list nat (w, requires))) (w, coded)
+       end)
     fun readIndex r : index =
       let
         val libraries = rlist rstring r
@@ -145,9 +160,11 @@ struct
         val fixities = rlist rfixity r
         val inline = rlist rstring r
         val inlineValues = rlist rstring r
-        val lines = rlist (fn r => let val file = rstring r val class = rstring r val host = rstring r
-                                       val provides = rlist rstring r
-                                   in {file = file, class = class, host = host, provides = provides, requires = rstring r} end) r
+        val names = Vector.fromList (rlist rstring r)
+        fun name r = Vector.sub (names, rnat r) handle Subscript => raise Bad "a name of no line"
+        val lines = rlist (fn r => let val file = rstring r val class = name r val host = name r
+                                       val provides = rlist name r
+                                   in {file = file, class = class, host = host, provides = provides, requires = rlist name r} end) r
       in {libraries = libraries, scope = scope, header = header, fixities = fixities, inline = inline,
           inlineValues = inlineValues, lines = lines} end
   end
@@ -176,7 +193,8 @@ struct
         @ (if List.null inline then [] else ["# inline: " ^ String.concatWith " " inline ^ "\n"])
         @ (if List.null inlineValues then [] else ["# inline val: " ^ String.concatWith " " inlineValues ^ "\n"])
         @ List.map (fn {file, class, host, provides, requires} =>
-                      file ^ " | " ^ class ^ " | " ^ host ^ " | " ^ String.concatWith " " provides ^ " | " ^ requires ^ scopeColumn ^ "\n")
+                      file ^ " | " ^ class ^ " | " ^ host ^ " | " ^ String.concatWith " " provides ^ " | " ^ String.concatWith " " requires
+                      ^ scopeColumn ^ "\n")
                    lines)
     end
 
@@ -480,7 +498,7 @@ struct
                                     | NONE => ())
                                  (#uses f)
                val line = {file = p, class = classOf anns, host = hostOf anns, provides = provides,
-                           requires = String.concatWith " " requires}
+                           requires = requires}
              in (line :: acc, List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier provides) end)
           ([], provided) analysed
       val index =
@@ -501,21 +519,29 @@ struct
      filesystem, so that the record a frozen layer ships holds wherever it is
      installed. It holds
 
-       magic version string(name) string(at)
-       list(path stamp hash)              what was read, and its stat
+       magic version string(name) at
+       list(path option(stamp)) string(hashes)  what was read, its stat, and its bytes' hashes
        list(place hash)                   the libraries it was made against
        string(hash) string(index)         the index, held to its hash
-       string(hash) string(facts)         what each file was to it, read only to make it again
 
-     What was read and what it was made against need no hash of their own: a
-     damage to them can only make the record a miss, since a file's stat
-     names the file, and a hash is of what it holds. The index is held to
-     its hash, which is what a library made against it records. *)
+     and beside it, in a file of its own that only a making again reads,
+     what each file was to it, held to its hash too. What was read and what it
+     was made against need no hash of their own: a damage to them can only
+     make the record a miss, since a file's stat names the file, and a hash is
+     of what it holds. The index is held to its hash, which is what a library
+     made against it records. *)
   val magic = "RIX"
-  val version = 1
+  val version = 3
 
-  type record = {at : LargeInt.int, read : read list, against : (string * string) list, indexHash : string, index : string,
-                 factsHash : string, facts : string}
+  (* what was read is held as its paths with their stats, and the hashes of
+     their bytes in one string, which only a file whose stat moved reads *)
+  type record = {at : LargeInt.int, files : (string * S.stamp option) list, hashes : string,
+                 against : (string * string) list, indexHash : string, index : string}
+  val hashWidth = 32
+  fun hashAt (hashes : string, i : int) : string = String.substring (hashes, hashWidth * i, hashWidth)
+  fun recordOf (at : LargeInt.int, read : read list, against, indexHash : string, index : string) : record =
+    {at = at, files = List.map (fn {path, stamp, ...} => (path, stamp)) read, hashes = String.concat (List.map #hash read),
+     against = against, indexHash = indexHash, index = index}
 
   fun windowsHere () : bool =
     List.exists (fn (key, value) => key = "sysname" andalso value = "Windows") (Posix.ProcEnv.uname ())
@@ -525,55 +551,85 @@ struct
     OS.Path.mkCanonical (OS.Path.mkAbsolute {path = p, relativeTo = OS.FileSys.getDir ()})
     handle OS.SysErr _ => p | OS.Path.Path => p
 
-  (* a library's place: its path under the libraries, or else its own *)
+  (* a library's place: its path under the libraries, or else its own; a
+     directory named from the libraries' as ROOT/NAME, as a library is found,
+     is NAME with no question of the filesystem *)
   fun placeOf (root : string, dir : string) : string =
-    let val r = absolute root val d = absolute dir
-    in if String.isPrefix (r ^ "/") d then "lib:" ^ String.extract (d, size r + 1, NONE) else "dir:" ^ d end
+    let
+      val named = if String.isPrefix (root ^ "/") dir then String.extract (dir, size root + 1, NONE) else ""
+      fun plain n = n <> "" andalso List.all (fn a => a <> "" andalso a <> "." andalso a <> "..")
+                                             (String.fields (fn c => c = #"/") n)
+    in
+      if plain named then "lib:" ^ named
+      else
+        let val r = absolute root val d = absolute dir
+        in if String.isPrefix (r ^ "/") d then "lib:" ^ String.extract (d, size r + 1, NONE) else "dir:" ^ d end
+    end
 
   fun nameOf (place : string, windows : bool) : string =
     String.concatWith "\000" ["library-index", Int.toString version, Config.identity, Pickle.probe (),
                               if windows then "windows" else "posix", place]
 
   fun recordFile (store : string, name : string) : string = S.sideFile (fn (_, t) => hash t, store, "index", name)
-
-  fun large (r : Pickle.reader) : LargeInt.int =
-    case LargeInt.fromString (Pickle.rstring r) of SOME n => n | NONE => raise Pickle.Bad "not a number"
+  fun factsFile (store : string, name : string) : string = S.sideFile (fn (_, t) => hash t, store, "index", name ^ "\000facts")
 
   fun readRecord (p : string, name : string) : record option =
     (let
        val r = Pickle.reader (S.readFile p)
        val () = if Pickle.rbytes (r, 3) = magic andalso Pickle.rnat r = version andalso Pickle.rstring r = name then ()
                 else raise Pickle.Bad "another record"
-       val at = large r
-       (* a stamp's latest time is of no use here: the stat it is held to
-          has the same, where it holds (stillRead) *)
-       val read = Pickle.rlist (fn r => let val path = Pickle.rstring r val key = Pickle.rstring r
-                                        in {path = path, stamp = if key = "" then NONE else SOME {key = key, latest = 0},
-                                            hash = Pickle.rstring r} end) r
+       val at = S.rlarge r
+       val files = Pickle.rlist (fn r => let val path = Pickle.rstring r in (path, Pickle.roption S.rstamp r) end) r
+       val hashes = Pickle.rstring r
+       val () = if size hashes = hashWidth * List.length files then () else raise Pickle.Bad "not the hashes of the files"
        val against = Pickle.rlist (fn r => let val place = Pickle.rstring r in (place, Pickle.rstring r) end) r
        val indexHash = Pickle.rstring r
        val index = Pickle.rstring r
-       val factsHash = Pickle.rstring r
-       val facts = Pickle.rstring r
      in
        if Pickle.atEnd r
-       then SOME {at = at, read = read, against = against, indexHash = indexHash, index = index, factsHash = factsHash, facts = facts}
+       then SOME {at = at, files = files, hashes = hashes, against = against, indexHash = indexHash, index = index}
        else NONE
      end)
     handle IO.Io _ => NONE | Pickle.Bad _ => NONE | Overflow => NONE | Subscript => NONE | Size => NONE
 
-  fun writeRecord (store : string, name : string, {at, read, against, indexHash, index, factsHash, facts} : record) : unit =
+  fun writeRecord (store : string, name : string, {at, files, hashes, against, indexHash, index} : record) : unit =
     let
       val p = recordFile (store, name)
       val w = Pickle.writer ()
       open Pickle
     in
-      bytes (w, magic); nat (w, version); string (w, name); string (w, LargeInt.toString at);
-      list (fn (w, {path, stamp, hash}) =>
-              (string (w, path); string (w, case stamp of SOME {key, ...} => key | NONE => ""); string (w, hash))) (w, read);
+      bytes (w, magic); nat (w, version); string (w, name); S.wlarge (w, at);
+      list (fn (w, (path, stamp)) => (string (w, path); option S.wstamp (w, stamp))) (w, files);
+      string (w, hashes);
       list (fn (w, (place, h)) => (string (w, place); string (w, h))) (w, against);
-      string (w, indexHash); string (w, index); string (w, factsHash); string (w, facts);
+      string (w, indexHash); string (w, index);
       (S.mkdirs (OS.Path.dir p); S.publish (p, contents w))
+      handle IO.Io _ => () | OS.SysErr _ => ()
+    end
+
+  (* what each file was to a making, by its key, held to its hash *)
+  fun readFactsFile (p : string, name : string) : (string * facts) list option =
+    (let
+       val r = Pickle.reader (S.readFile p)
+       val () = if Pickle.rbytes (r, 3) = "RIF" andalso Pickle.rnat r = version andalso Pickle.rstring r = name then ()
+                else raise Pickle.Bad "another record"
+       val h = Pickle.rstring r
+       val bytes = Pickle.rstring r
+     in
+       if Pickle.atEnd r andalso hash bytes = h
+       then SOME (Pickle.rlist (fn r => let val k = Pickle.rstring r in (k, readFacts r) end) (Pickle.reader bytes))
+       else NONE
+     end)
+    handle IO.Io _ => NONE | Pickle.Bad _ => NONE | Overflow => NONE | Subscript => NONE | Size => NONE
+  fun writeFactsFile (store : string, name : string, facts : (string * facts) list) : unit =
+    let
+      val p = factsFile (store, name)
+      val b = let val w = Pickle.writer () in Pickle.list (fn (w, (k, f)) => (Pickle.string (w, k); writeFacts (w, f))) (w, facts);
+                                                Pickle.contents w end
+      val w = Pickle.writer ()
+    in
+      Pickle.bytes (w, "RIF"); Pickle.nat (w, version); Pickle.string (w, name); Pickle.string (w, hash b); Pickle.string (w, b);
+      (S.mkdirs (OS.Path.dir p); S.publish (p, Pickle.contents w))
       handle IO.Io _ => () | OS.SysErr _ => ()
     end
 
@@ -615,15 +671,16 @@ struct
      editor's analysis) makes no index twice *)
   val held : (string * record) list ref = ref []
   val () = CompilerState.cellRoot ("LibraryIndex.held", held)
+  val heldFacts : (string * (string * facts) list) list ref = ref []
+  val () = CompilerState.cellRoot ("LibraryIndex.heldFacts", heldFacts)
   fun hold (name : string, record : record) : unit = held := (name, record) :: List.filter (fn (n, _) => n <> name) (!held)
   fun forget () = (known := []; making := [])
   fun windows () = case !platform of SOME w => w | NONE => let val w = windowsHere () in platform := SOME w; w end
 
   (* an index this compile knows, and the files it rests on, which a
      compile that keeps what it read keeps (Source.reading) *)
-  fun remember (dir : string, idx : index, h : string, read : read list) : index * string =
-    let val paths = List.map (fn {path, ...} => dir ^ "/" ^ path) read
-    in
+  fun remember (dir : string, idx : index, h : string, paths : string list) : index * string =
+    let in
       List.app (fn p => !Source.reading p) paths;
       known := (dir, (idx, h, paths)) :: List.filter (fn (d, _) => d <> dir) (!known);
       (idx, h)
@@ -633,23 +690,27 @@ struct
      stat, racily clean as of at, else by the hash of its bytes, read after
      its stat is taken again; SOME of what it read with the stats it has now,
      and whether one of them moved, which a record written again keeps *)
-  fun stillRead (dir : string, at : LargeInt.int, read : read list) : (read list * bool) option =
+  fun stillRead (dir : string, at : LargeInt.int, files : (string * S.stamp option) list, hashes : string)
+      : ((string * S.stamp option) list * bool * string list) option =
     let
-      fun one (r as {path, stamp, hash = h} : read, SOME (acc, moved)) =
+      (* clean as of at: the later of a stamp's times two seconds before *)
+      val limit = LargeInt.toInt at - 2 handle Overflow => ~1
+      fun clean ({mtime, ctime, ...} : S.stamp) = Int.max (mtime, ctime) div 1000000 <= limit
+      fun sameBytes (p, i) = (hash (readText p) = hashAt (hashes, i) handle IO.Io _ => false)
+      (* the files with their stats now, whether one moved, and their paths *)
+      fun go ([], _, acc, moved, paths) = SOME (List.rev acc, moved, List.rev paths)
+        | go ((f as (path, stamp)) :: rest, i, acc, moved, paths) =
             let val p = dir ^ "/" ^ path
                 val now = S.statOf p
             in
               case (now, stamp) of
                 (SOME s, SOME was) =>
-                  if #key s = #key was andalso S.clean (s, at) then SOME ({path = path, stamp = now, hash = h} :: acc, moved)
-                  else if (hash (readText p) = h handle IO.Io _ => false) then SOME ({path = path, stamp = now, hash = h} :: acc, true)
+                  if S.sameStamp (s, was) andalso clean s then go (rest, i + 1, f :: acc, moved, p :: paths)
+                  else if sameBytes (p, i) then go (rest, i + 1, (path, now) :: acc, true, p :: paths)
                   else NONE
-              | _ => if (hash (readText p) = h handle IO.Io _ => false)
-                     then SOME ({path = path, stamp = now, hash = h} :: acc, moved orelse isSome now)
-                     else NONE
+              | _ => if sameBytes (p, i) then go (rest, i + 1, (path, now) :: acc, moved orelse isSome now, p :: paths) else NONE
             end
-        | one (_, NONE) = NONE
-    in Option.map (fn (acc, moved) => (List.rev acc, moved)) (List.foldl one (SOME ([], false)) read) end
+    in go (files, 0, [], false, []) end
 
   (* The index of the library in dir, with the hash of its bytes: what this
      compile knows, else a record that still holds, else made and kept;
@@ -673,18 +734,18 @@ struct
                                       (dirsOf (root, dir, idx)))
           (* a record that holds, the session's or that of the first store
              that has one; one in memory needs no hash of its bytes *)
-          fun holds (record as {read, against, indexHash, index, ...} : record, kept : bool) =
+          fun holds (record as {files, hashes, against, indexHash, index, ...} : record, kept : bool) =
             let val at = S.nowSeconds ()
             in
-              case stillRead (dir, #at record, read) of
+              case stillRead (dir, #at record, files, hashes) of
                 NONE => NONE
-              | SOME (readNow, moved) =>
+              | SOME (filesNow, moved, paths) =>
                   (case (SOME (readIndex (Pickle.reader index)) handle Pickle.Bad _ => NONE | Subscript => NONE
                                                                       | Overflow => NONE | Size => NONE) of
                      SOME idx =>
                        if (kept orelse hash index = indexHash) andalso againstNow idx = against
-                       then SOME ({at = at, read = readNow, against = against, indexHash = indexHash, index = index,
-                                   factsHash = #factsHash record, facts = #facts record}, idx, moved)
+                       then SOME ({at = at, files = filesNow, hashes = hashes, against = against, indexHash = indexHash,
+                                   index = index}, idx, moved, paths)
                        else NONE
                    | NONE => NONE)
             end
@@ -704,34 +765,40 @@ struct
             | NONE => holding (stores root)
         in
           case (if fresh then NONE else found ()) of
-            SOME (record as {read, indexHash, ...}, idx, moved) =>
+            SOME (record as {indexHash, ...}, idx, moved, paths) =>
               ((* a record whose stats moved, written again with them *)
                if moved then Option.app (fn o' => writeRecord (o', name, record)) (overlay ()) else ();
                hold (name, record);
-               remember (dir, idx, indexHash, read))
+               remember (dir, idx, indexHash, paths))
           | NONE =>
               let
-                (* what each file was to the record before, by its key, and
-                   the hash of each file it read, by its stat *)
-                fun factsOf (store, found) =
-                  case found of
-                    SOME _ => found
-                  | NONE =>
-                      (case readRecord (recordFile (store, name), name) of
-                         SOME {factsHash, facts, read, at, ...} =>
-                           if hash facts = factsHash
-                           then SOME (Pickle.rlist (fn r => let val k = Pickle.rstring r in (k, readFacts r) end) (Pickle.reader facts),
-                                      read, at)
-                                handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE | Size => NONE
-                           else NONE
-                       | NONE => NONE)
-                val (previous, wasRead, wasAt) = getOpt (List.foldl factsOf NONE (stores root), ([], [], LargeInt.fromInt 0))
+                (* what each file was to a making before, by its key, the
+                   session's or a store's; and the hash of each file the
+                   record before read, by its stat *)
+                val previous =
+                  case List.find (fn (n, _) => n = name) (!heldFacts) of
+                    SOME (_, fs) => fs
+                  | NONE => getOpt (List.foldl (fn (store, found) => case found of
+                                                                     SOME _ => found
+                                                                   | NONE => readFactsFile (factsFile (store, name), name))
+                                               NONE (stores root), [])
+                val was =
+                  case List.find (fn (n, _) => n = name) (!held) of
+                    SOME (_, record) => SOME record
+                  | NONE => List.foldl (fn (store, found) => case found of
+                                                              SOME _ => found
+                                                            | NONE => readRecord (recordFile (store, name), name))
+                                       NONE (stores root)
+                val wasAt = case was of SOME {at, ...} => at | NONE => LargeInt.fromInt 0
                 val table = List.foldl (fn ((k, f), m) => StringMap.insert (m, k, f)) StringMap.empty previous
-                val stamps = List.foldl (fn ({path, stamp = SOME {key, ...}, hash = h}, m) => StringMap.insert (m, path, (key, h))
-                                          | (_, m) => m) StringMap.empty wasRead
-                fun hashed (p, SOME (now as {key, ...} : S.stamp)) =
+                val stamps = case was of
+                               NONE => StringMap.empty
+                             | SOME {files, hashes, ...} =>
+                                 #1 (List.foldl (fn ((path, SOME st), (m, i)) => (StringMap.insert (m, path, (st, hashAt (hashes, i))), i + 1)
+                                                  | (_, (m, i)) => (m, i + 1)) (StringMap.empty, 0) files)
+                fun hashed (p, SOME now) =
                       (case StringMap.find (stamps, p) of
-                         SOME (k, h) => if k = key andalso S.clean (now, wasAt) then SOME h else NONE
+                         SOME (was, h) => if S.sameStamp (was, now) andalso S.clean (now, wasAt) then SOME h else NONE
                        | NONE => NONE)
                   | hashed (_, NONE) = NONE
                 val at = S.nowSeconds ()
@@ -742,16 +809,13 @@ struct
                           known = fn k => StringMap.find (table, k), hashed = hashed})
                 val bytes = let val wr = Pickle.writer () in writeIndex (wr, idx); Pickle.contents wr end
                 val indexHash = hash bytes
-                val factsBytes = let val wr = Pickle.writer ()
-                                 in Pickle.list (fn (w, (k, f)) => (Pickle.string (w, k); writeFacts (w, f))) (wr, facts);
-                                    Pickle.contents wr end
                 val against = againstNow idx
-                val record = {at = at, read = read, against = against, indexHash = indexHash,
-                              index = bytes, factsHash = hash factsBytes, facts = factsBytes}
+                val record = recordOf (at, read, against, indexHash, bytes)
               in
-                Option.app (fn o' => writeRecord (o', name, record)) (overlay ());
+                Option.app (fn o' => (writeRecord (o', name, record); writeFactsFile (o', name, facts))) (overlay ());
                 hold (name, record);
-                remember (dir, idx, indexHash, read)
+                heldFacts := (name, facts) :: List.filter (fn (n, _) => n <> name) (!heldFacts);
+                remember (dir, idx, indexHash, List.map (fn (path, _) => dir ^ "/" ^ path) (#files record))
               end
         end
   (* the libraries an index is made against: the Basis Library, but for
