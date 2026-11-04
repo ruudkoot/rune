@@ -178,7 +178,7 @@ struct
 
   fun compile name =
     Test.it name
-      (shell ("mkdir -p \"$RUNE_TEST_RUN\"/laws && exec bin/rune --library test/property/basis build/laws/"
+      (shell ("mkdir -p \"$RUNE_TEST_RUN\"/laws && exec bin/rune --library test/property/basis --library test/property build/laws/"
               ^ name ^ ".sml -o \"$RUNE_TEST_RUN\"/laws/" ^ name ^ ".rbc",
               SOME ".", 600, 500, [], Run.exitZero))
 

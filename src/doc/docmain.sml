@@ -58,7 +58,7 @@ struct
     \  --laws DIR      write the laws of the comments as a program for each\n\
     \                  signature, holding each at every structure that\n\
     \                  implements it, and stop; compile one with\n\
-    \                  rune --library test/property/basis\n\
+    \                  rune --library test/property/basis --library test/property\n\
     \  --labels        print the checks of the suite of --tests and stop\n\
     \  --check-coverage  with --library and --tests: every value and exception\n\
     \                  that a signature specifies has a check for every\n\

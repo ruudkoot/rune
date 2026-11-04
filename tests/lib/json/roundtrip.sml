@@ -1,4 +1,4 @@
-(* libraries: test/unit random *)
+(* libraries: test/unit random unicode *)
 (* Json: random values written and read back, compactly and indented; the
    escapes the writer makes; what decode reports where a text breaks off;
    and the integers of toInt and int at the edges of int. *)

@@ -1,4 +1,4 @@
-(* libraries: test/unit random *)
+(* libraries: test/unit random unicode *)
 (* The line editor's core: what keys do to the text and the cursor, the
    history, search, completion and the kill ring; and the property of
    docs/plans/repl.md's D23 -- for random edits at random widths, what

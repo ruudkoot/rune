@@ -1,4 +1,4 @@
-(* libraries: test/unit *)
+(* libraries: test/unit test/property *)
 (* Normalize, its laws as properties (lib/test/property): each form
    idempotent; NFC of NFD is NFC and NFD of NFC is NFD; NFC is in NFC;
    isNFC exactly when nfc changes nothing, and the quick check never

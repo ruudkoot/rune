@@ -236,11 +236,16 @@ per build file and library, unless `--no-warnings` is given:
 rune.build: warning: this build reaches into the library lib/compiler (1 path), which is reached through its interface
 ```
 
-The compiler's own programs and the tests of its internals do this today
-(the build-system roadmap's D10), so it is a warning and changes nothing
-that is compiled. A path that a variable gives is not counted, and neither
-is a generated pointer: a `current.build` naming what is under `sets/` beside
-it, which nobody wrote and whose generator cannot be told otherwise yet.
+It is a warning and changes nothing that is compiled (the build-system
+roadmap's D10). A build file that the library names a friend may reach in
+(*A library's header*, below): the programs the other SML systems build,
+`rune.build`, `runedoc.build`, `runeisa.build` and `runeopt.build`, list
+files of the compiler's library or use its `internal.build` and
+`frontend.build`, which the other systems' lists keep to what each needs,
+and the library names them. A path that a variable gives is not counted, and
+neither is a generated pointer: a `current.build` naming what is under
+`sets/` beside it, which nobody wrote and whose generator cannot be told
+otherwise yet.
 
 The compiler library's `CompilerApi.Project` API uses this same scoped
 planner, which reads build files and never a source. Windows project
@@ -375,7 +380,9 @@ prelude and a `final` file an entry unit, which they need not keep.
   library's internals (D11). A friend sees private names and nothing more: `:>`
   holds for it, and what the library requires is not its. A build that is not
   named is refused, even with a friend's entries in its cache, since a usage
-  holds only of a name in scope.
+  holds only of a name in scope. A friend may also name the library's files
+  and the build files it uses, which another build is warned of (*Reaching
+  in*, above).
 * **`view NAME (...)` is a named subset of the exports.** `libraries lib#NAME end`,
   `requires lib#NAME end` or `--library lib#NAME` see that subset, and the
   files that link are the closure of what they name of it, as for the whole
@@ -405,14 +412,15 @@ byte for byte.
 `--basis-index` warns of each, once, when it makes the index:
 
 ```
-lib/json/library.build: warning: this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)
+lib/unicode/library.build: warning: this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)
 ```
 
-That is the only place it shows. A client cannot act on it, and 31 of this
-tree's libraries have no header yet, 26 written by hand and the 5 generated
-sets, which would be a line in every compile of a program that uses one; the
-index runs when the library changes, for the person changing it.
-`--no-warnings` silences it.
+That is the only place it shows. A client cannot act on it, and 14 of this
+tree's libraries have no header yet -- the 8 of the win32 work and
+`lib/ffi/runtime`, which its migration left alone (*Migrating a tree*,
+below), and the 5 generated sets -- which would be a line in every
+compile of a program that uses one; the index runs when the library changes,
+for the person changing it. `--no-warnings` silences it.
 
 Such a library may keep a boundary of its own in the older form, a `library`
 block around all its files, which leaves the rest of its meaning as it is:
@@ -561,8 +569,10 @@ library unicode lib/unicode
   form open
 end
 library json lib/json
-  form open
+  form header
   requires unicode
+  export signature JSON
+  export structure Json
   unit json:json_sig.sml lib/json/json_sig.sml ascii demand
   unit json:json.sml lib/json/json.sml ascii demand
 end
@@ -578,7 +588,7 @@ provenance
   input app/app.build ca0d3cfe08b9b5d794694319ffc6a47fd7a1b0a1d616688b4a8b93c6d27dee2d
   input app/part.build ec7f89648f9fc1c61929d8c1754c0c1dd4c0a8174b6fb5598c1460dc02e19e2c
   input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
-  input lib/json/library.build 452367689d73def6ab952443ca574e1a8ff0d920167ddd35a54e3d2d59eac449
+  input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end
 ```
 
@@ -722,6 +732,81 @@ Each is an error now, which says what to write:
 A `library.build` with a `library` block keeps it (*A library with no
 header*, above). `CompilerApi.Project` has no cache directories, and its
 inputs are the build files alone.
+
+## Migrating a tree
+
+`bin/rune-migrate` (`tools/migrate`; the build-system roadmap's D15) carries
+a tree's build files to the library model. It reads them with the compiler's
+own readers -- the planner for build files, the parser and the dependency
+analysis for sources, a library's index for the Basis Library and for what a
+file claims -- and lists nothing by hand. It is given the tree's files, one
+a line from the tree's top, which is where it runs:
+
+```
+git ls-files | bin/rune-migrate --report migrate.txt -
+git ls-files | bin/rune-migrate --write -
+```
+
+* **A library with no header gains one.** Its `exports` are the names of the
+  library that a client uses -- a source outside it, or in a library nested
+  in it -- with each signature of the library that those ascribe (the claim
+  rule, *Exports* above), a functor's parameter's, and what `runedoc`'s
+  comments claim, `Implements: SIG`. Its `requires` is what its `libraries`
+  said, with each library it uses a name of that it reached only through
+  another, since `requires` is not transitive. The header stands where its
+  `libraries` stood, or before its first file.
+* **A header it wrote, it writes again**, from the sources as they are. It
+  marks one so, with the comment `(* exports: what the library's clients use
+  (tools/migrate; ...) *)` before its `exports`. A header a person wrote has
+  no such line, and is left as it is; a person who takes a boundary over
+  deletes the line.
+* **A program's build** names, in its `libraries`, each library whose every
+  file it lists, and those files go; and each library whose names its own
+  units use, and that its scope would not show now that a library it reaches
+  through has a header.
+* **It reports what it cannot settle, and leaves it:** a part of a library
+  listed or a build file of a library used from outside it, unless the library
+  names the build a friend, which may; a library whose sources it cannot read
+  alone, or that declares a value or a fixity at its top level, which a header
+  cannot export; a kept build that would need a library named; a library it
+  requires and uses nothing of.
+
+`--keep FILE` names build files it leaves as they are, a line each, and
+reports a kept build that a header would break. `--clients DIR` reads the
+sources under `DIR` as clients too: a branch's, made with `git archive` or
+`git show`, so that no header hides a name the branch uses. `--ignore PREFIX`
+leaves the sources under it out, `--path NAME=DIR` gives a path variable an
+absolute value, `--lib DIR` says where the libraries are, `--report FILE`
+writes the report, and without `--write` it changes nothing. A second run
+changes nothing.
+
+**This tree's migration** (the build-system roadmap's M13) gave 17 libraries
+a header, ran with the win32 work's files kept (`win32-desktop` and the
+branches made from it, which another work goes on in) and with the sources
+each of those branches adds or changes as clients, and named in programs'
+builds the libraries they listed whole. It left `lib/ffi/runtime` without a
+header: one would hide `lib/ffi/marshal` from the win32 work's builds that
+use a generated set's files, which name it. Of the builds that reached in,
+the tests of the compiler's internals and the tools on them became its
+friends, through `libraries compiler`, and the programs the other SML systems
+build stay as they were, friends that list its files.
+
+### A branch's recipe
+
+A branch made before its base was migrated:
+
+1. Rebase it on the base, or merge the base in. Where a `.build` file
+   conflicts, take the branch's text.
+2. `git ls-files | bin/rune-migrate --write -`. A library the branch added
+   gains a header, and a header the migrator wrote is written again from the
+   branch's sources, so that a boundary that the merge brought in hides
+   nothing the branch's clients use, which no conflict shows (D15's trap).
+3. The migrator leaves a generated set as it is. Where its build files
+   change all the same -- a header its generator comes to write, or a hand
+   edit -- `runeffi rehash --out DIR` gives the set the name its files make
+   now, without its headers or an SDK (docs/ffi/generation.md); `runeffi
+   check` stays the oracle.
+4. `make plans`, if a root's build changed, then build and test.
 
 ## Functors inlined across units
 

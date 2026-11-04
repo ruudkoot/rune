@@ -750,9 +750,11 @@ struct
     in
       build ("histories-whole", ["--no-cache", "--whole"]);
       build ("histories-units", ["--cache-dir", dir ^ "/histories-cache"]);
-      (* without the rename, test/runner's shadows terminal's, as it did *)
-      refusedWith (real, "histories-shadowed", libraries ["terminal", "test/runner"],
-                   "val t = History.load {file = NONE, limit = 10}\n", "History.load")
+      (* without the rename, the two clash: both libraries have a header
+         (D9), where with none test/runner's shadowed terminal's *)
+      refusedWith (real, "histories-clash", libraries ["terminal", "test/runner"],
+                   "val t = History.load {file = NONE, limit = 10}\n",
+                   "this scope has History from both the library lib/terminal and the library lib/test/runner")
     end
 
   (* D12: a Basis Library with a view, its seals after the libraries: the
@@ -1086,7 +1088,7 @@ struct
           "implements modules of two virtual libraries")]
     end
   fun twoVirtual () =
-    (put ("libraries/again/library.build", "exports (signature KEY2, functor Table)\nvirtual (functor Table) in t.sml\nk.sml\nt.sml\n");
+    (put ("libraries/again/library.build", "exports (signature KEY2, signature TABLE2, functor Table)\nvirtual (functor Table) in t.sml\nk.sml\nt.sml\n");
      put ("libraries/again/k.sml", "signature KEY2 = sig type t end\nsignature TABLE2 = sig end\n");
      put ("libraries/again/t.sml", "functor Table = _virtual (K : KEY2) : TABLE2\n");
      index "again";

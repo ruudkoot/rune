@@ -1,4 +1,4 @@
-(* libraries: test/unit *)
+(* libraries: test/unit unicode *)
 (* What the terminal is when the line editor announces its prompt
    (LineEdit.beforePrompt, where the REPL sends OSC 133's A) and after it
    has read: the editor over a terminal of script -- a device whose reads

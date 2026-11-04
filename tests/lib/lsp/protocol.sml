@@ -1,4 +1,4 @@
-(* libraries: test/unit random *)
+(* libraries: test/unit random jsonrpc json *)
 (* Common wire values against the LSP 3.18 contract, including widths
    that do not fit the default integer of a 31-bit SML host. *)
 structure LspProtocolTest =
