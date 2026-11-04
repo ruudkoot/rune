@@ -444,7 +444,8 @@ test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rb
 # cold from a store a compile of it made at -O0 (build/lsp/store,
 # C.Analysis.store), which an analysis reads by the static configuration;
 # HOL4's closure and MLton in the nightly tier, from the build files
-# RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON name (tests/lsp/README.md).
+# RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON name (tests/lsp/README.md); MLton's
+# recording run collects after each check, which keeps it within 15 GiB.
 LSP_ORACLE_SRCS := tools/lsp/oracle.sml src/main/lsp-oracle-main.sml
 bin/rune-lsp-oracle.rbc: $(RUNE) $(LSP_ORACLE_SRCS) tools/lsp/oracle.build manifests
 	$(RUNE) --build tools/lsp/oracle.build -o $@
@@ -478,7 +479,7 @@ test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
 	  --scenarios tests/lsp/oracle/hol4.tsv --focus --store build/lsp/store-hol4 --out build/lsp/oracle-hol4-store.jsonl \
 	  --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,stored,byneed
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
-	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton.jsonl \
+	  --scenarios tests/lsp/oracle/mlton.tsv --focus --collect --out build/lsp/oracle-mlton.jsonl \
 	  --record build/lsp/oracle-mlton.record --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,byneed
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
 	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton-against.jsonl --against build/lsp/oracle-mlton.record
