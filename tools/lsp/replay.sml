@@ -5,14 +5,17 @@
    is a sample rather than the end of the run.
 
    Usage: rune-lsp-replay VM SERVER ROOT LIB BUILD SOURCE OUT.json LINE CHARACTER
-            [--comments N] [--body N OLD NEW]
+            [--comments N] [--body N OLD NEW] [--limit KIND SECONDS]...
 
    BUILD is the target, or - for a file's discovery. LINE and CHARACTER are a
    position in SOURCE to hover and complete. --comments N appends a comment at
    the end of SOURCE, N times, a different one each time. --body N OLD NEW
    replaces the first OLD by NEW with $N made the repetition: a body edit. The
    summary on standard output gives each kind's nearest-rank p50 and p95, which
-   is the 19th of 20. RUNE_LSP_REPLAY_TIMEOUT: seconds for a response. *)
+   is the 19th of 20. --limit fails the run where a kind's p95 is over
+   SECONDS, or a request of it failed: D28's targets (comment 0.25, hover
+   0.05, edit-hover 0.05; docs/language-server.md, The scale target).
+   RUNE_LSP_REPLAY_TIMEOUT: seconds for a response. *)
 structure RuneLspReplay =
 struct
   structure C=RuneLspTestClient
@@ -39,7 +42,7 @@ struct
     let fun insert (x,[])=[x] | insert (x,y::rest)=if Real.<= (x,y) then x::y::rest else y::insert (x,rest)
     in List.foldl insert [] xs end
   fun percentile (values,p)=List.nth (values,Int.max (0,Int.min (length values-1,(length values*p) div 100-1)))
-  fun run (vm,server,root,lib,build,source,out,line,character,comments,body) =
+  fun run (vm,server,root,lib,build,source,out,line,character,comments,body,limits) =
     let val root=OS.FileSys.fullPath root
         fun uri path=LspUri.original (LspUri.fromPath (LspUri.Posix,path))
         val document=object [("uri",Json.String (uri source))]
@@ -47,6 +50,7 @@ struct
         val limit=Time.fromSeconds (LargeInt.fromInt (envInt ("RUNE_LSP_REPLAY_TIMEOUT",900)))
         val samples=ref []
         val kinds=ref [] : (string*real list ref) list ref
+        val failedKinds=ref [] : string list ref
         fun response id=C.receiveWithin (client,fn value => Json.member ("id",value)=SOME (Json.int id),limit)
         fun note (name,kind,timer,status,detail)=
           let val seconds=Time.toReal (Timer.checkRealTimer timer)
@@ -60,9 +64,9 @@ struct
         fun answer (name,kind,timer,id)=
           let val value=response id
           in case Json.member ("error",value) of
-               SOME failure => (note (name,kind,timer,"error",abbreviate failure);NONE)
+               SOME failure => (failedKinds:=kind:: !failedKinds;note (name,kind,timer,"error",abbreviate failure);NONE)
              | NONE => (note (name,kind,timer,"ok",abbreviate (getOpt (Json.member ("result",value),Json.Null)));Json.member ("result",value)) end
-          handle Fail message => (note (name,kind,timer,"failed",message);NONE)
+          handle Fail message => (failedKinds:=kind:: !failedKinds;note (name,kind,timer,"failed",message);NONE)
         fun timed (name,kind,id,method,params)=
           let val timer=Timer.startRealTimer ()
           in C.request (client,id,method,params);answer (name,kind,timer,id) end
@@ -104,20 +108,30 @@ struct
               val ()=(C.request (client,9000,"shutdown",Json.Null);ignore (response 9000);C.notify (client,"exit",Json.Null))
               val timer=Timer.startRealTimer ()
               val ()=(C.awaitExit (client,Time.fromSeconds 10);note ("shutdown-exit","shutdown",timer,"ok",""))
-          in List.app (fn (kind,all) =>
+              val ()=List.app (fn (kind,all) =>
                let val ordered=sort (!all)
                in print ("SUMMARY " ^ kind ^ " n=" ^ Int.toString (length ordered) ^ " p50 " ^
                     Real.fmt (StringCvt.FIX (SOME 3)) (percentile (ordered,50)) ^ " p95 " ^ Real.fmt (StringCvt.FIX (SOME 3)) (percentile (ordered,95)) ^
-                    " max " ^ Real.fmt (StringCvt.FIX (SOME 3)) (List.last ordered) ^ "\n") end) (!kinds) end
+                    " max " ^ Real.fmt (StringCvt.FIX (SOME 3)) (List.last ordered) ^ "\n") end) (!kinds)
+              fun over (kind,limit)=case List.find (fn (other,_) => other=kind) (!kinds) of
+                  NONE => SOME (kind ^ " was not measured")
+                | SOME (_,all) => let val p95=percentile (sort (!all),95)
+                    in if List.exists (fn other => other=kind) (!failedKinds) then SOME (kind ^ ": a request failed")
+                       else if p95>limit then SOME (kind ^ " p95 " ^ Real.fmt (StringCvt.FIX (SOME 3)) p95 ^ " s, over " ^
+                         Real.fmt (StringCvt.FIX (SOME 3)) limit ^ " s") else NONE end
+              val failures=List.mapPartial over limits
+          in List.app (fn failure => print ("FAIL " ^ failure ^ "\n")) failures;null failures end
     in (work () before C.close client) handle error => (C.close client;raise error) end
   fun main (vm::server::root::lib::build::source::out::line::character::rest) =
-        let fun options ([],comments,body)=(comments,body)
-              | options ("--comments"::n::rest,_,body)=options (rest,valOf (Int.fromString n),body)
-              | options ("--body"::n::old::new::rest,comments,_)=options (rest,comments,SOME (valOf (Int.fromString n),old,new))
-              | options (other::_,_,_)=raise Fail ("unknown option: " ^ other)
-            val (comments,body)=options (rest,20,NONE)
-        in run (vm,server,root,lib,build,source,out,valOf (Int.fromString line),valOf (Int.fromString character),comments,body) end
-    | main _=raise Fail "usage: rune-lsp-replay VM SERVER ROOT LIB BUILD SOURCE OUT.json LINE CHARACTER [--comments N] [--body N OLD NEW]"
+        let fun options ([],comments,body,limits)=(comments,body,List.rev limits)
+              | options ("--comments"::n::rest,_,body,limits)=options (rest,valOf (Int.fromString n),body,limits)
+              | options ("--body"::n::old::new::rest,comments,_,limits)=options (rest,comments,SOME (valOf (Int.fromString n),old,new),limits)
+              | options ("--limit"::kind::seconds::rest,comments,body,limits)=
+                  options (rest,comments,body,(kind,valOf (Real.fromString seconds))::limits)
+              | options (other::_,_,_,_)=raise Fail ("unknown option: " ^ other)
+            val (comments,body,limits)=options (rest,20,NONE,[])
+        in run (vm,server,root,lib,build,source,out,valOf (Int.fromString line),valOf (Int.fromString character),comments,body,limits) end
+    | main _=raise Fail "usage: rune-lsp-replay VM SERVER ROOT LIB BUILD SOURCE OUT.json LINE CHARACTER [--comments N] [--body N OLD NEW] [--limit KIND SECONDS]..."
 end
-val ()=RuneLspReplay.main (CommandLine.arguments ())
+val ()=if RuneLspReplay.main (CommandLine.arguments ()) then () else OS.Process.exit OS.Process.failure
   handle error => (TextIO.output (TextIO.stdErr,"rune-lsp-replay: " ^ General.exnMessage error ^ "\n");OS.Process.exit OS.Process.failure)

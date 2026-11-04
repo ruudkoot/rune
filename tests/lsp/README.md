@@ -77,6 +77,9 @@ makes of a tree's files: `--builds` the contexts and prompts of every source of 
 builds listed, `--zero` the implicit library of each file listed, in no build, and
 `--share` the second of two builds over one library, sharing and alone. Each takes
 `--before` to do as the server did before the build-system roadmap's M19.
+`--owned`, with `--builds`, holds the plan of a file of a library made from its
+owner's targets alone to what enrich and the choice of a context make of it, and
+fails a run where they differ; `--targets` makes every build listed a target.
 
 ```
 bin/runevm --heap-limit 4294967296 bin/rune-lsp-contexts.rbc --lib "$PWD/lib" --root "$PWD" \
@@ -98,13 +101,42 @@ no longer there.
 
 `bin/rune-lsp-replay` measures the same through the real server, from the
 client's side: the first check, then comments at the end of a file and body edits,
-each followed by a pull of diagnostics and a hover. `RUNE_LSP_DEADLINE_SECONDS`
-lifts the 30-second job deadline for a first check at a scale that is over it.
+each followed by a pull of diagnostics and a hover. `--limit KIND SECONDS` fails a
+run whose p95 of a kind is over it. `RUNE_LSP_DEADLINE_SECONDS` sets how long a
+worker may report no progress, 30 seconds.
 
 ```
 bin/runevm bin/rune-lsp-replay.rbc VM SERVER ROOT LIB BUILD SOURCE OUT.json LINE CHARACTER \
   --comments 20 --body 5 OLD NEW
 ```
+
+## The scale target
+
+`docs/language-server.md`, *The scale target*, states it; three tiers hold it on
+generated trees. `bin/rune-lsp-fixture` (`tools/lsp/fixture.sml`) makes a tree of
+libraries and programs shaped by what was measured on Rune, MLton and HOL4, the
+same for a seed on every host; `--no-text` writes the build files alone.
+`bin/rune-lsp-plan-bench` (`tools/lsp/plan-bench.sml`) plans a file's check
+through the worker's own plan, every build a target, cold and then after each
+kind of change; `--events` tells the worker of each change by a file event, as a
+client that watches does, `--reads` fails a plan that reads a build outside the
+changed set or misses its memo where nothing it read changed, `--limit MS` one
+whose median is over it. `bin/rune-lsp-oracle --per-line BYTES --clients
+--cold-limit SECONDS` fails a run in which more than BYTES a line lives after a
+check, a check after an edit elaborates a unit but the edited one and those whose
+usages broke, or the first check is slower.
+
+```
+make test-lsp-scale          # make check: reads, memo, clients, bytes a line
+make test-lsp-scale-times    # nightly, alone: 200 ms, 250 ms, 50 ms, a cold start
+make test-lsp-scale-oracle   # nightly: kept against fresh on every unit, 100k lines
+```
+
+The trees are `build/lsp/scale/plan` (`--lines 10000000 --files 100000 --builds
+1000 --domains 32 --no-text`) and `build/lsp/scale/f100k` (`--lines 100000
+--files 1000 --builds 10`), its store made at each run by a compile at `-O0`. The
+edits are `oracle/scale.tsv`'s, on `f100k`'s seed; another seed or a change to
+the generator needs their texts checked.
 
 ## Document and workspace foundations (M3)
 
