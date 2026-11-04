@@ -30,6 +30,7 @@ library json lib/json
 end
 library digest lib/digest
   form header
+  export functor HmacFn
   export signature DIGEST
   export signature HEX
   export signature HMAC
@@ -138,7 +139,7 @@ provenance
   input runeffi.build 96ca850997a2c4f004592045a9869124d99f1158a0a71e61b271728a946f1329
   input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
-  input lib/digest/library.build 0f8f7e1db43b9b676546f3ab92a5f6780fdf58c80ab4a4e30c6bbd72841c0562
+  input lib/digest/library.build b9c71d923fa95bdce9a1edc822bc08f4e754c5357d82db81832be08c99a80e80
   input lib/language/c/library.build 6b927a80ff4aada901205fdfc956451c94a808e602ef286566038b7ea09040d8
   input lib/ffi/model/library.build a8b7797de6ff649c2bc8fa60249db1bf89733d2c3a07fa95ec9dc69f7ee0b0a1
 end

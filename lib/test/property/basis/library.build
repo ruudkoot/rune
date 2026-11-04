@@ -2,21 +2,56 @@
    library (docs/plans/quickcheck.md, M6 and D10), its files in load order,
    in the form of lib/basis/library.build. It is written on test/property: *)
 requires random test/property end
-(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
-exports (structure BasisDataArb, structure CharArb, structure CharArray2Arb, structure CharArrayArb,
-         structure CharArraySliceArb, structure CharVectorArb, structure CharVectorSliceArb,
-         structure DateArb, structure FixedIntArb, structure IEEERealArb, structure INet6SockArb,
-         structure Int16Arb, structure Int32Arb, structure Int64Arb, structure Int8Arb, structure IntArb,
-         structure IntArray2Arb, structure IntInfArb, structure LargeIntArb, structure LargeRealArb,
-         structure LargeWordArb, structure PositionArb, structure RandomArb, structure Real32Arb,
-         structure Real64Arb, structure RealArb, structure SML90Arb, structure StringArb,
-         structure SubstringArb, structure SysWordArb, structure SystemArb, structure TimeArb,
-         structure WideCharArb, structure WideStringArb, structure WideSubstringArb, structure Word16Arb,
-         structure Word32Arb, structure Word64Arb, structure Word8Arb, structure Word8Array2Arb,
-         structure Word8ArrayArb, structure Word8ArraySliceArb, structure Word8VectorArb,
-         structure Word8VectorSliceArb, structure WordArb, signature ARB_OF, signature BASIS_DATA_ARB,
-         signature DATE_ARB, signature IEEE_REAL_ARB, signature INET6_SOCK_ARB, signature SML90_ARB,
-         signature SYSTEM_ARB)
+(* exports: by hand, not tools/migrate's: the library gives an arbitrary
+   for each type of the Basis Library, the signatures they ascribe and the
+   functors that make one for a type of a client's, whether or not a source
+   of this tree names it -- the programs of the laws (runedoc --laws, which
+   tests/runner/laws.sml compiles) are made at test time and name any of
+   them. Its helpers, PropertyAround, PropertyDimensions and PropertyScratch,
+   are its own. *)
+exports (structure BasisDataArb, structure BoolArray2Arb, structure BoolArrayArb, structure BoolArraySliceArb,
+         structure BoolVectorArb, structure BoolVectorSliceArb, structure CharArb, structure CharArray2Arb,
+         structure CharArrayArb, structure CharArraySliceArb, structure CharVectorArb,
+         structure CharVectorSliceArb, structure DateArb, structure FixedIntArb, structure IEEERealArb,
+         structure INet6SockArb, structure Int16Arb, structure Int16Array2Arb, structure Int16ArrayArb,
+         structure Int16ArraySliceArb, structure Int16VectorArb, structure Int16VectorSliceArb,
+         structure Int32Arb, structure Int32Array2Arb, structure Int32ArrayArb, structure Int32ArraySliceArb,
+         structure Int32VectorArb, structure Int32VectorSliceArb, structure Int64Arb,
+         structure Int64Array2Arb, structure Int64ArrayArb, structure Int64ArraySliceArb,
+         structure Int64VectorArb, structure Int64VectorSliceArb, structure Int8Arb, structure Int8Array2Arb,
+         structure Int8ArrayArb, structure Int8ArraySliceArb, structure Int8VectorArb,
+         structure Int8VectorSliceArb, structure IntArb, structure IntArray2Arb, structure IntArrayArb,
+         structure IntArraySliceArb, structure IntInfArb, structure IntVectorArb, structure IntVectorSliceArb,
+         structure LargeIntArb, structure LargeIntArray2Arb, structure LargeIntArrayArb,
+         structure LargeIntArraySliceArb, structure LargeIntVectorArb, structure LargeIntVectorSliceArb,
+         structure LargeRealArb, structure LargeRealArray2Arb, structure LargeRealArrayArb,
+         structure LargeRealArraySliceArb, structure LargeRealVectorArb, structure LargeRealVectorSliceArb,
+         structure LargeWordArb, structure LargeWordArray2Arb, structure LargeWordArrayArb,
+         structure LargeWordArraySliceArb, structure LargeWordVectorArb, structure LargeWordVectorSliceArb,
+         structure PositionArb, structure RandomArb, structure Real32Arb, structure Real32Array2Arb,
+         structure Real32ArrayArb, structure Real32ArraySliceArb, structure Real32VectorArb,
+         structure Real32VectorSliceArb, structure Real64Arb, structure Real64Array2Arb,
+         structure Real64ArrayArb, structure Real64ArraySliceArb, structure Real64VectorArb,
+         structure Real64VectorSliceArb, structure RealArb, structure RealArray2Arb, structure RealArrayArb,
+         structure RealArraySliceArb, structure RealVectorArb, structure RealVectorSliceArb,
+         structure SML90Arb, structure StringArb, structure SubstringArb, structure SysWordArb,
+         structure SystemArb, structure TimeArb, structure WideCharArb, structure WideCharArray2Arb,
+         structure WideCharArrayArb, structure WideCharArraySliceArb, structure WideCharVectorArb,
+         structure WideCharVectorSliceArb, structure WideStringArb, structure WideSubstringArb,
+         structure WideTextArb, structure Word16Arb, structure Word16Array2Arb, structure Word16ArrayArb,
+         structure Word16ArraySliceArb, structure Word16VectorArb, structure Word16VectorSliceArb,
+         structure Word32Arb, structure Word32Array2Arb, structure Word32ArrayArb,
+         structure Word32ArraySliceArb, structure Word32VectorArb, structure Word32VectorSliceArb,
+         structure Word64Arb, structure Word64Array2Arb, structure Word64ArrayArb,
+         structure Word64ArraySliceArb, structure Word64VectorArb, structure Word64VectorSliceArb,
+         structure Word8Arb, structure Word8Array2Arb, structure Word8ArrayArb, structure Word8ArraySliceArb,
+         structure Word8VectorArb, structure Word8VectorSliceArb, structure WordArb, structure WordArray2Arb,
+         structure WordArrayArb, structure WordArraySliceArb, structure WordVectorArb,
+         structure WordVectorSliceArb, signature ARB_OF, signature BASIS_DATA_ARB, signature DATE_ARB,
+         signature IEEE_REAL_ARB, signature INET6_SOCK_ARB, signature SML90_ARB, signature SYSTEM_ARB,
+         functor CharArbFn, functor IntegerArbFn, functor MonoArray2ArbFn, functor MonoArrayArbFn,
+         functor MonoArraySliceArbFn, functor MonoVectorArbFn, functor MonoVectorSliceArbFn,
+         functor RealArbFn, functor StringArbFn, functor SubstringArbFn, functor WordArbFn)
 (* A file that every compiler of tests/lib/run-hosts.sh builds is "demand";
    one that names a structure the Basis leaves optional (Int8, WideChar,
    SML90, IntArray2) or Rune's own (INet6Sock) is "host=no" as well. The

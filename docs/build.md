@@ -771,6 +771,15 @@ git ls-files | bin/rune-migrate --write -
   cannot export; a kept build that would need a library named; a library it
   requires and uses nothing of.
 
+**A client it cannot see is a person's to name.** The migrator reads the
+sources of the tree, and of the trees `--clients` names; a program made at
+test time (`runedoc --laws`'s, a runner's own), a client outside the tree,
+or what a library's documentation offers that nothing here uses yet, it does
+not see. Where a library's interface is wider than what its clients here
+name, a person writes its exports and deletes the mark: `lib/test/property/basis`
+exports an arbitrary for every type of the Basis Library, its signatures and
+its functors, and `lib/digest` its `HmacFn`.
+
 `--keep FILE` names build files it leaves as they are, a line each, and
 reports a kept build that a header would break. `--clients DIR` reads the
 sources under `DIR` as clients too: a branch's, made with `git archive` or
@@ -781,7 +790,7 @@ writes the report, and without `--write` it changes nothing. A second run
 changes nothing.
 
 **This tree's migration** (the build-system roadmap's M13) gave 17 libraries
-a header, ran with the win32 work's files kept (`win32-desktop` and the
+a header, two of which a person then took over (above), ran with the win32 work's files kept (`win32-desktop` and the
 branches made from it, which another work goes on in) and with the sources
 each of those branches adds or changes as clients, and named in programs'
 builds the libraries they listed whole. It left `lib/ffi/runtime` without a

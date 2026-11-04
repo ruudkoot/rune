@@ -30,6 +30,7 @@ library json lib/json
 end
 library digest lib/digest
   form header
+  export functor HmacFn
   export signature DIGEST
   export signature HEX
   export signature HMAC
@@ -160,5 +161,5 @@ provenance
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
   input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
-  input lib/digest/library.build 0f8f7e1db43b9b676546f3ab92a5f6780fdf58c80ab4a4e30c6bbd72841c0562
+  input lib/digest/library.build b9c71d923fa95bdce9a1edc822bc08f4e754c5357d82db81832be08c99a80e80
 end
