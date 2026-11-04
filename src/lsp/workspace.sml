@@ -213,7 +213,8 @@ struct
   val eventKeys=store () : string option store
   fun eventKey platform path=
     let val key=pathKey platform path
-    in if not (List.exists (fn arc => arc="..") (String.fields (fn c => c= #"/") key)) then SOME key else
+    in if not (String.isSubstring ".." key) orelse not (List.exists (fn arc => arc="..") (String.fields (fn c => c= #"/") key))
+       then SOME key else
        case fetch (eventKeys,key) of SOME known => known | NONE =>
        let val clean=case lexical key of NONE => NONE | SOME clean =>
              ((if OS.FileSys.compare (OS.FileSys.fileId path,OS.FileSys.fileId clean)=EQUAL then SOME clean else NONE)
