@@ -249,11 +249,13 @@ sig
        files are written. Failure is reported through Failed. *)
     val read : session * {file : string, workspace : Workspace.t option, variables : (string * string) list,
                           overlays : {file : string, text : string} list, windows : bool} -> t
-    (* `readHolding (session, request, {held, read})` is `read`, where the
-       caller holds the text of build files it read before: `held path` is
-       that text, or NONE, and the build is read from the disk and `read` is
-       told its path and text. An overlay comes first, and is neither. So an
-       editor that knows which builds changed reads those alone (D28). *)
+    (* `readHolding (session, request, {held, read})` is `read`, taking the
+       text of the build files the caller holds.
+
+       `held path` is that text, or NONE, and then the build is read from the
+       disk and `read` is told its path and text. An overlay comes first, and
+       is neither. So an editor that knows which builds changed reads those
+       alone (the build-system roadmap's D28). *)
     val readHolding : session * {file : string, workspace : Workspace.t option, variables : (string * string) list,
                                  overlays : {file : string, text : string} list, windows : bool} *
                       {held : string -> string option, read : string * string -> unit} -> t

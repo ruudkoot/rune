@@ -5,6 +5,7 @@
 - `Analysis.restore` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.restore)
 - `Analysis.route` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.route)
 - `Project.read` (val): [COMPILER_API](../sig/COMPILER_API.md#val-project.read)
+- `Project.readHolding` (val): [COMPILER_API](../sig/COMPILER_API.md#val-project.readholding)
 - `readMid` (val): [COMPILER_API](../sig/COMPILER_API.md#val-readmid)
 - `readUnit` (val): [COMPILER_API](../sig/COMPILER_API.md#val-readunit)
 - `run` (val): [COMPILER_API](../sig/COMPILER_API.md#val-run)
