@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`COMPILER_API`](../sig/COMPILER_API.md) specifies it inside [`CompilerApi`](../str/CompilerApi.md) |
 | Status | required |
-| Members | 49 |
+| Members | 50 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -53,9 +53,10 @@ What each means is on [`COMPILER_API`](../sig/COMPILER_API.md); the types are th
 | val | [`pool`](../sig/COMPILER_API.md#val-analysis.pool) | `unit -> pool` |
 | val | [`project`](../sig/COMPILER_API.md#val-analysis.project) | `snapshot -> string option` |
 | val | [`restore`](../sig/COMPILER_API.md#val-analysis.restore) | `t * checkpoint -> unit` |
-| val | [`route`](../sig/COMPILER_API.md#val-analysis.route) | `snapshot -> {broken : int, cutoff : int, loaded : int, rebound : int, walked : bool}` |
+| val | [`route`](../sig/COMPILER_API.md#val-analysis.route) | `snapshot -> {broken : int, cutoff : int, loaded : int, rebound : int, stored : int, walked : bool}` |
 | val | [`share`](../sig/COMPILER_API.md#val-analysis.share) | `t * pool option -> unit` |
 | val | [`signatureAt`](../sig/COMPILER_API.md#val-analysis.signatureat) | `snapshot * {offset : int, ordinal : int} -> call option` |
+| val | [`store`](../sig/COMPILER_API.md#val-analysis.store) | `t * string option -> unit` |
 | val | [`syntaxAt`](../sig/COMPILER_API.md#val-analysis.syntaxat) | `snapshot * {ordinal : int} -> CompilerApi.Syntax.t option` |
 | val | [`typeAt`](../sig/COMPILER_API.md#val-analysis.typeat) | `snapshot * {file : string, offset : int} -> string option` |
 | val | [`typeAtOccurrence`](../sig/COMPILER_API.md#val-analysis.typeatoccurrence) | `snapshot * {offset : int, ordinal : int} -> string option` |

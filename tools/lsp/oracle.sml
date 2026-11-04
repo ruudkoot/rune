@@ -6,7 +6,7 @@
 
    Usage: rune-lsp-oracle --lib DIR --build FILE --scenarios FILE --out FILE
             [--focus] [--sample N] [--no-fresh] [--collect] [--require PATH,...]
-            [--record FILE | --against FILE] [--share]
+            [--record FILE | --against FILE] [--share] [--store DIR]
 
    A scenario is a line of tab-separated fields:
      NAME  REPS  FILE-SUFFIX  KIND  [ARG1  [ARG2]]
@@ -24,9 +24,12 @@
    In ARG1 and ARG2, \n is a newline. After its repetitions a scenario's files
    go back and one more check settles them.
 
-   --focus keeps only the edited file open, as an editor does, and the sample
-   of closed units compared opens them. --sample N compares N units besides the
-   edited one, all of them without it. --no-fresh times the kept context alone.
+   --focus keeps only the edited file open, as an editor does, and the units
+   compared that are closed are opened, from their notes where those hold.
+   A fresh context keeps every file open, so that what it says of a unit is
+   its elaboration's (but against a record, below, where it keeps the edited
+   files alone). --sample N compares N units besides the edited one, every
+   one without it. --no-fresh times the kept context alone.
    --collect collects after each check, and reports what lives.
    A corpus too large for two contexts at once is held to its oracle in two
    runs: --record keeps the context and writes what each check gave, as digests;
@@ -36,9 +39,15 @@
    over the same build checks first, and the kept one, with no file open at
    first, takes the libraries' units from what that one left; the fresh ones
    share nothing.
+   --store DIR has the kept context read the store in DIR (C.Analysis.store),
+   a compile's of the build: another context over it checks first, with no
+   file open, and writes the sidecars of the units it elaborates there; the
+   kept one, with no file open at first, takes the units whose entries and
+   sidecars hold from it. Without it the kept context reads no store, and
+   the fresh ones never do.
    --require fails a run that did not take each of the paths named:
    placed walked rebound loaded cutoff broken failed cancelled query opened
-   shared. *)
+   shared stored. *)
 structure RuneLspOracle =
 struct
   structure C=CompilerApi
@@ -95,7 +104,7 @@ struct
   fun diagnosticText (d:C.diagnostic)=String.concatWith "|" [#severity d,#file d,num (#start d),num (#stop d),num (#line d),num (#column d),#message d]
   fun candidateText (c:A.candidate)=String.concatWith "|" [#name c,#kind c,getOpt (#detail c,"-"),location (#definition c),
     String.concatWith ";" (List.map (String.concatWith ",") (#arguments c))]
-  val paths=["placed","walked","rebound","loaded","cutoff","broken","failed","cancelled","query","opened","shared"]
+  val paths=["placed","walked","rebound","loaded","cutoff","broken","failed","cancelled","query","opened","shared","stored"]
   fun main arguments =
     let val lib=ref "" val build=ref "" val scenariosFile=ref "" val out=ref ""
         val focusing=ref false val fresh=ref true val sample=ref ~1 val required=ref [] val collecting=ref false
@@ -103,6 +112,7 @@ struct
         val expected=ref [] : string list ref
         val againstRecord=ref false
         val shares=ref false
+        val storeDir=ref NONE : string option ref
         fun options [] = ()
           | options ("--lib"::value::rest)=(lib:=value;options rest)
           | options ("--build"::value::rest)=(build:=value;options rest)
@@ -117,6 +127,7 @@ struct
           | options ("--sample"::value::rest)=(sample:=valOf (Int.fromString value);options rest)
           | options ("--require"::value::rest)=(required:=fields (#",",value);options rest)
           | options ("--share"::rest)=(shares:=true;options rest)
+          | options ("--store"::dir::rest)=(storeDir:=SOME dir;options rest)
           | options (other::_)=raise Fail ("unknown option: " ^ other)
         val ()=options arguments
         val compiler=C.session {lib=SOME (!lib),flags=[]}
@@ -150,6 +161,7 @@ struct
            text=case overlay (#file source) of SOME text => text | NONE => disk (#file source,#mode source)}:A.input)
           (C.Project.sources (project ()))
         val context=A.create (compiler,{context="kept"})
+        val ()=A.store (context,!storeDir)
         val placeholder=ref NONE : A.snapshot option ref
         val taken=ref [] : string list ref
         fun took path=if List.exists (fn other => other=path) (!taken) then () else taken:=path:: !taken
@@ -160,10 +172,15 @@ struct
         val ()=if not (!shares) then () else
           let val seed=A.create (compiler,{context="seed"})
               val pool=A.pool ()
-          in A.share (seed,SOME pool);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
+          in A.store (seed,NONE);A.share (seed,SOME pool);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
              (* an open unit is elaborated where a walk reaches it, and never
                 taken from another context: none is open at first *)
              A.share (context,SOME pool);A.focus (context,SOME []) end
+        (* the store's sidecars, from an analysis of the files as they are *)
+        val ()=case !storeDir of NONE => () | SOME dir =>
+          let val seed=A.create (compiler,{context="seed"})
+          in A.store (seed,SOME dir);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
+             A.focus (context,SOME []) end
         fun never ()=false
         (* a seeded choice of units, the same on every run *)
         val seed=ref 1
@@ -194,7 +211,8 @@ struct
                ["occurrences " ^ num ordinal,"loose " ^ num ordinal,"facts " ^ num ordinal]) chosen) end
         fun freshOf edited=
           let val other=A.create (compiler,{context="fresh"})
-              val ()=if !focusing then A.focus (other,SOME edited) else ()
+              val ()=A.store (other,NONE)
+              val ()=if !focusing andalso !againstRecord then A.focus (other,SOME edited) else ()
           in (other,checkIn (other,never)) end
         fun firstDifference (left,right)=
           let fun first ([],[])=() | first (x::_,[])=say ("  kept only: " ^ x ^ "\n") | first ([],y::_)=say ("  fresh only: " ^ y ^ "\n")
@@ -258,10 +276,11 @@ struct
               val seconds=Time.toReal (Timer.checkRealTimer timer)
               val after=Runtime.stats ()
               val {checked,reused}=A.work snapshot
-              val {walked,rebound,loaded,cutoff,broken}=A.route snapshot
+              val {walked,rebound,loaded,cutoff,broken,stored}=A.route snapshot
               val ()=(if walked then took "walked" else took "placed";
                       if !shares andalso name="cold" andalso loaded>0 then took "shared" else ();
                       if rebound>0 then took "rebound" else ();if loaded>0 then took "loaded" else ();
+                      if stored>0 then took "stored" else ();
                       if cutoff>0 then took "cutoff" else ();if broken>0 then took "broken" else ();
                       if null (A.diagnostics snapshot) then () else took "failed")
               val ()=checks:= !checks+1
@@ -270,12 +289,13 @@ struct
               val live=if !collecting then (Runtime.collect ();Runtime.collect ();#live (Runtime.stats ())) else #live after
           in emit ([("scenario",Json.String name),("rep",Json.int rep),("seconds",Json.Number (Real.toString seconds)),
                ("checked",Json.int checked),("reused",Json.int reused),("walked",Json.Bool walked),("rebound",Json.int rebound),
-               ("loaded",Json.int loaded),("cutoff",Json.int cutoff),("broken",Json.int broken),
+               ("loaded",Json.int loaded),("cutoff",Json.int cutoff),("broken",Json.int broken),("stored",Json.int stored),
                ("diagnostics",Json.int (length (A.diagnostics snapshot))),("instructions",Json.int (#instructions after- #instructions before')),
                ("allocated",Json.int (#bytes after- #bytes before')),("live",Json.int live)] @
                (case agreed of NONE => [] | SOME same => [("same",Json.Bool same)]));
              say (name ^ " " ^ num rep ^ ": " ^ Real.fmt (StringCvt.FIX (SOME 3)) seconds ^ " s, checked " ^ num checked ^ ", reused " ^ num reused ^
                (if walked then ", walked" else ", placed") ^ ", rebound " ^ num rebound ^ ", loaded " ^ num loaded ^ ", cutoff " ^ num cutoff ^ ", broken " ^ num broken ^
+               (if stored>0 then ", stored " ^ num stored else "") ^
                (if !collecting then ", live " ^ Real.fmt (StringCvt.FIX (SOME 1)) (real live/1048576.0) ^ " MiB" else "") ^
                (case A.diagnostics snapshot of [] => "" | d::_ => ", diagnostic: " ^ #file d ^ ":" ^ num (#line d) ^ ": " ^ #message d) ^
                (case agreed of NONE => "" | SOME true => ", same as fresh" | SOME false => ", DIFFERS FROM FRESH") ^ "\n");

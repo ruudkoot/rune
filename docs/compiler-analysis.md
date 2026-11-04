@@ -38,7 +38,12 @@ Library source is captured separately in `dependencies`.
 
 A context keeps what it has worked out between checks, in a compiler state of
 its own, a world: each unit stays loaded, with the place it was reached at
-(its environment, fixity, signatures, functors and binders). A later check
+(its environment, fixity, signatures, functors and binders). It loads a unit
+as elaboration reads one: the static layer of its basis, and of the ABI layer
+the names of the values the static layer holds, nothing else
+(`UnitBasis.staticOnly`); and a unit's identity is its static layer's,
+`NAME@HASH` of that layer, so that an edit of a body moves none, and a
+compile's basis and an analysis's of the same text load the same. A later check
 compares each input with what is kept, by its unit's name, and elaborates what
 changed at its own place, touching nothing else while the unit's identity
 stands: the rest of the build does not know it changed. Where an identity
@@ -56,7 +61,9 @@ so that a unit reports every independent error and not only its first. What it
 declared past them is in the snapshot, and answers a question about the unit,
 but it is not kept, and nothing after it is reached: the walk stops after the
 unit, which is elaborated again wherever it is reached, since a name it found
-unbound is not among its usages. `route`
+unbound is not among its usages. A unit whose error left a flexible record
+open (`tests/units/flex`) has no basis to write, and reports the error as a
+compile does. `route`
 reports how a check went; whichever way, the results are a fresh
 analysis's, and `tools/lsp/oracle.sml` holds them to one
 (`docs/language-server.md`, *Keeping what is computed*).
@@ -94,9 +101,15 @@ context that does to a fresh one that does not.
 `focus (context, SOME files)` closes every unit but those of files, for the
 checks after it: a closed unit keeps its pickle, sidecar, text and types, and of
 its uses those whose definition is not their declaration, which is what
-`implementationsOf` reads. A query that needs more opens the unit at its place,
-which costs that unit's elaboration, and keeps the last few. The flat lists hold
-no closed unit's facts or occurrences. The default is every file open, so that
+`implementationsOf` reads, and its notes: its facts, occurrences and types as
+bytes, with each type name its facts printed and the path that printed it. A
+query of its facts or occurrences reads the notes where they hold: each such
+type name prints by the same path from where the unit stands now, which no
+usage says, since a path depends on the whole environment; and each unit whose
+places its occurrences hold by span alone, not by reference, has the text it
+had. A query of its syntax or typing, or one whose notes do not hold, opens the
+unit at its place, which costs that unit's elaboration; the last few opened are
+kept. The flat lists hold no closed unit's facts or occurrences. The default is every file open, so that
 an analysis left alone never takes a unit by its usages. `compact` gives up the
 compiler state and loads the units into a new one, which a check does itself
 after 256 walks: what the tables hold of units long replaced goes with it.
@@ -110,6 +123,31 @@ A query of the latest snapshot goes to its unit's place, and ends when that unit
 is elaborated: nothing after it is touched. A query of an older snapshot, or one
 whose context has closed, walks the snapshot's own entries in a compiler state
 of its own.
+
+`store (context, SOME dir)` has a context read a compile's store
+(`Workspace.store` says where a compile of a file keeps it; `docs/units.md`,
+*The store*). A unit that no context holds and whose file is not open is
+taken from it where two things are there: a compile's entry of the unit whose
+usages hold where the unit is reached, by their binders, of any configuration
+whose static settings are the context's (the compiler, the formats, the hash
+and the language's settings: `UnitCache.staticSettings`), in the store and
+then its layers; and the unit's sidecar, by the hash of its text, which an
+analysis of the same text wrote, of the same compiler, the same static
+identity, its usages' binders the same here, and the places it holds by span
+in texts that are the same. The entry gives its static layer, under its static
+identity, and the compile's identity of it names it too (`UnitBasis.alias`);
+the sidecar gives the origins of its names, which a compile does not record,
+its notes, its types, and the names its text mentions, which the selection of
+the libraries reads in place of a parse. A unit elaborated from the text its
+file has gets its sidecar written. A unit taken so holds its usages by the
+compile's fingerprints, which an analysis's never equal: where the identity
+of a unit it used is about to move, a walk first works out again, where that
+unit still stands, what each unit after it used of it, in the analysis's
+terms, so that a unit whose names are the same is taken and not elaborated.
+`store (context, NONE)` is the default.
+`route` counts the units taken so as `stored`; an observation `store-missed`
+says why one was not (1, no entry held; 2, no sidecar; 3, another compiler's;
+4, another unit's; 5, a binder another; 6, a place another; 7, it did not load).
 
 `observe (context, SOME callback)` enables synchronous phase observations
 between checks. Events identify phases, source units and work counts; callers

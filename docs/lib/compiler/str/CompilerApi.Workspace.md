@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`COMPILER_API`](../sig/COMPILER_API.md) specifies it inside [`CompilerApi`](../str/CompilerApi.md) |
 | Status | required |
-| Members | 8 |
+| Members | 9 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -23,6 +23,7 @@ What each means is on [`COMPILER_API`](../sig/COMPILER_API.md); the types are th
 | val | [`libraryRoots`](../sig/COMPILER_API.md#val-workspace.libraryroots) | `t -> string list` |
 | val | [`read`](../sig/COMPILER_API.md#val-workspace.read) | `{file : string, text : string, windows : bool} -> t` |
 | val | [`root`](../sig/COMPILER_API.md#val-workspace.root) | `t -> string` |
+| val | [`store`](../sig/COMPILER_API.md#val-workspace.store) | `{file : string, windows : bool} -> string option` |
 | val | [`targets`](../sig/COMPILER_API.md#val-workspace.targets) | `t -> target list` |
 
 ---

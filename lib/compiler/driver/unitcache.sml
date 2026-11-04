@@ -176,6 +176,41 @@ struct
   (* The hash of the configuration of this compile *)
   fun configuration () : string = S.configuration (UnitBasis.hashAt, settings ())
 
+  (* The configuration split in two (the build-system roadmap's D27): what
+     moves a unit's static layer, which elaboration reads -- the compiler,
+     which is its front end's version, the formats, the hash, and the
+     language's settings -- and the rest, which says what the back end makes:
+     the instruction set, the level, the passes, the fuel, the integers'
+     width, the limits and what is inlined, none of which moves a static hash
+     (E24). An analysis reads a static layer, so it takes an entry of any
+     configuration whose static settings are its own *)
+  val staticNames = ["identity", "cache", "basis", "hash", "flex", "overloading", "freetyvars"]
+  fun staticSettings () : (string * string) list =
+    List.filter (fn (n, _) => List.exists (fn m => m = n) staticNames) (settings ())
+
+  (* The configurations in dir whose static settings are these, by what
+     each says it is made of (UnitStore's about), the one written to last
+     first: a store a compile keeps under one configuration and an analysis
+     reads under any of them *)
+  fun configurationsFor (dir : string) : string list =
+    let
+      val mine = staticSettings ()
+      fun lines t = List.mapPartial (fn l => case String.fields (fn c => c = #" ") l of
+                                               n :: rest => SOME (n, String.concatWith " " rest)
+                                             | [] => NONE)
+                                    (String.tokens (fn c => c = #"\n") t)
+      fun theirs c =
+        let
+          val about = S.aboutFile (dir, c)
+          val ls = lines (S.readFile about)
+        in
+          if List.filter (fn (n, _) => List.exists (fn m => m = n) staticNames) ls = mine
+          then SOME (c, OS.FileSys.modTime (S.join (dir, c))) else NONE
+        end
+        handle IO.Io _ => NONE | OS.SysErr _ => NONE
+      val found = List.mapPartial theirs (S.listDir dir)
+    in List.map #1 (S.sortBy (fn ((_, a), (_, b)) => Time.> (a, b)) found) end
+
   (* The probe of another configuration of dir that is this one but for the
      hash, where dir has none of this one's: entries made by a compiler
      whose hash differs (--explain-rebuild) *)
@@ -312,6 +347,18 @@ struct
           mid = if !needMid then section 3 else "", schemes = schemes}
        end}
 
+  (* the same, of an entry whose static layer is all that is read (an
+     analysis's): its code and its Mid are neither read nor held to their
+     hashes *)
+  val staticFormat : (head, sections) S.format =
+    {magic = #magic format, version = #version format, hash = #hash format, writeHead = #writeHead format,
+     readHead = #readHead format, sections = #sections format,
+     ofSections = fn section =>
+       let val {warnings, file, others, pickle, identity, schemes, ...} =
+             #ofSections format (fn i => if i >= 2 then "" else section i) handle P.Bad _ => raise P.Bad "not a section"
+       in {warnings = warnings, file = file, others = others, pickle = pickle, identity = identity, code = "", mid = "",
+           schemes = schemes} end}
+
   (* an entry's file read: the entry, or why it is none *)
   fun read (p : string) : found =
     case S.read format p of
@@ -334,7 +381,7 @@ struct
     if l < level () then SOME (S.Refused ("its entry was checked at a lower level of the lint (" ^ Int.toString l ^ ")"))
     else NONE
   fun exactHead (usages : (string * string) list, named : string list) : bool =
-    UnitBasis.exact usages andalso List.all UnitBasis.isLoaded named
+    UnitBasis.exact usages andalso List.all (isSome o UnitBasis.loadedAs) named
   fun holds ({usages, level = l, named} : head) : S.verdict =
     case lowerLevel l of SOME refused => refused | NONE =>
       case UnitBasis.broken usages of
@@ -372,6 +419,70 @@ struct
     | _ => NONE
   val findExact = findExactAt false
   val takeExact = findExactAt true
+
+  (* An entry for an analysis, which reads its static layer alone: one whose
+     usages hold by their binders and whose basis names only units of the
+     session, of whatever lint level, in the first of configs that has one;
+     its time kept, as a compile's take keeps it (the editor's shared layer,
+     docs/language-server.md) *)
+  fun forAnalysis ({usages, named, ...} : head) : S.verdict =
+    if exactHead (usages, named) then S.Stands else S.Refused "not by its binders"
+  (* an entry's file read as far as its basis, its head and those two
+     sections held to their hashes: an analysis reads neither its code nor
+     its Mid, most of its bytes *)
+  fun readFirst (p : string, stands : head -> bool) : entry option =
+    (let
+       val opened as {ins, head = bytes, headSum, rest} = S.openEntry staticFormat p
+       val h = S.headOf staticFormat bytes handle e => (BinIO.closeIn ins; raise e)
+     in
+       if not (stands h) orelse hash ("read", bytes) <> headSum then (BinIO.closeIn ins; NONE)
+       else
+         let
+           val buffer = ref rest
+           fun parse () =
+             let val r = P.reader (!buffer)
+                 val n = P.rnat r
+                 val sums = List.tabulate (n, fn _ => P.rstring r)
+             in if n < 2 then raise S.Damaged else SOME (sums, List.tabulate (2, fn _ => P.rstring r)) end
+             handle P.Bad "cut short" => NONE
+           fun more () =
+             let val got = Byte.bytesToString (BinIO.inputN (ins, Int.max (65536, String.size (!buffer))))
+             in if got = "" then raise P.Bad "cut short" else buffer := !buffer ^ got end
+           fun loop () = case parse () of SOME found => found | NONE => (more (); loop ())
+           val (sums, parts) = (loop () before BinIO.closeIn ins) handle e => (BinIO.closeIn ins; raise e)
+           fun section i =
+             if i >= 2 then ""
+             else let val b = List.nth (parts, i)
+                  in if hash ("read", b) = List.nth (sums, i) then b else raise S.Damaged end
+         in SOME (whole {head = h, sections = #ofSections staticFormat section}) end
+     end)
+    handle IO.Io _ => NONE | S.Damaged => NONE | P.Bad _ => NONE | Overflow => NONE | Subscript => NONE | Size => NONE
+         | OS.SysErr _ => NONE
+  (* the first entry of a key that stands for an analysis, in the order of
+     the names, its time kept where dir is an overlay (UnitStore.touch) *)
+  fun findStatic {overlay : bool} (dir : string, configs : string list, k : string) : entry option =
+    case configs of
+      [] => NONE
+    | config :: rest =>
+        let
+          val d = S.keyDir (dir, config, k)
+          fun first [] = findStatic {overlay = overlay} (dir, rest, k)
+            | first (n :: names) =
+                if String.isSubstring ".tmp-" n then first names
+                else case readFirst (S.join (d, n), fn h => forAnalysis h = S.Stands) of
+                       SOME e => ((if overlay then S.touch (S.join (d, n)) else ()); SOME e)
+                     | NONE => first names
+        in first (S.sorted (S.listDir d)) end
+
+  (* Every entry of a key, whatever its usages, in a store or a layer, which
+     is only read: what an analysis knows a unit it elaborated by too, where
+     an entry's static layer is the same (UnitBasis.alias) *)
+  fun entriesAt (dir : string, config : string, k : string) : entry list =
+    let val d = S.keyDir (dir, config, k)
+    in
+      List.mapPartial (fn n => if String.isSubstring ".tmp-" n then NONE else readFirst (S.join (d, n), fn _ => true))
+                      (S.sorted (S.listDir d))
+    end
 
   (* whether a key has an entry, whatever its usages: a unit likely found,
      which a parallel build leaves to the parent (Parallel) *)
@@ -412,6 +523,24 @@ struct
     S.sideIn binds (dirs, config) ("binds " ^ identity)
   fun storeBinds (dir : string, config : string, identity : string, keys : string list) : unit =
     S.storeSide binds (dir, config, "binds " ^ identity, keys)
+
+  (* The editor's sidecars (docs/language-server.md, The store): what an
+     analysis keeps of a unit's source beside a compile's entries -- the
+     names it mentions, its facts, uses and types, and the origins a
+     compile's basis has none of -- by their format, their part and the hash
+     of the source, in editor/ of the store and under no configuration, so
+     that a compiler upgrade leaves them, as hints that the analysis that
+     reads one checks (CompilerAnalysisEngine). Two parts: what a unit is
+     loaded with ("head"), and its notes, read only where a question asks
+     for them ("notes"). Trimmed with the rest (trim) *)
+  val sidecars : string S.side =
+    {magic = "RES", version = 1, hash = fn (_, text) => hash ("sidecar", text), write = P.string, read = P.rstring}
+  fun sidecarName (format : int, part : string, source : string) : string =
+    String.concatWith "\000" [Int.toString format, part, source]
+  fun readSidecar (dir : string, format : int, part : string, source : string) : string option =
+    S.readSide sidecars (dir, "editor", sidecarName (format, part, source))
+  fun storeSidecar (dir : string, format : int, part : string, source : string, bytes : string) : unit =
+    S.storeSide sidecars (dir, "editor", sidecarName (format, part, source), bytes)
 
   (* store: the entry of a key written, whole or not at all, by the hash of
      its usages, beside the key's others; a cache that cannot be written is
