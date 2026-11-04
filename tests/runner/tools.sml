@@ -133,6 +133,7 @@ struct
       val () = optional (".md", fn () => String.concat (List.map read (glob (site ^ "/sig", ".md"))))
       val () = optional (".types", fn () => read (site ^ "/types.md"))
       val () = optional (".structures", fn () => read (site ^ "/structures.md"))
+      val () = optional (".claims", fn () => read (site ^ "/claims.tsv"))
       fun programs (ext, flag) =
         if exists (t ext) then
           let val d = out ^ "/" ^ n ^ ext

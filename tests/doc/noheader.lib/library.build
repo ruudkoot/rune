@@ -1,0 +1,5 @@
+(* Hand-written fixture: a library with no header documents what does not
+   begin with Rune or RUNE_: the sources of header.lib, without its header. *)
+annotate "demand" in
+  shapes.sml
+end
