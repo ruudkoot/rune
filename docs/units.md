@@ -937,17 +937,22 @@ was changed, or written within the second of its stat and not the same
 bytes, is.
 
 **Up to date.** A compile in units keeps what it read once its plan was made
--- every source, every build file and source each library's index rests on,
-every file its declared steps and preprocessors read, with the stat each had when it was read, and whether
-each `library.build` it asked of was there -- with what its steps made and
-its output, each held as an output is, and the warnings it gave, under a key
-of all its plan rests on: the command line, the directory, every `RUNE_`
-variable, the compiler's identity, the text of its build files, its inputs
-and its workspace (`UnitMemo.upToDate`, `memo/` of the cache). A compile
-with the same key, all of whose files have the stats they had and racily
-clean, whose questions have the same answers, and whose steps' outputs and
-own output are what were made, runs no step, gives the warnings again and
-ends. A step's output is held as an output because the build itself writes
+-- every source, every file its declared steps and preprocessors read, with
+the stat each had when it was read, and whether each `library.build` it
+asked of was there -- and each library's index it took, by the name of the
+index's record in the store and the hash of the paths and bytes the index
+rests on (`LibraryIndex.stillRests`), not by a copy of those files; with
+what its steps made and its output, each held as an output is, and the
+warnings it gave, under a key of all its plan rests on: the command line,
+the directory, every `RUNE_` variable, the compiler's identity, the text of
+its build files, its inputs and its workspace (`UnitMemo.upToDate`, `memo/`
+of the cache). A compile with the same key, all of whose files have the
+stats they had and racily clean, each of whose indexes has a record of the
+same hash whose files are what it was made of (by their stats where racily
+clean, else by their bytes, as a query holds a record), whose questions have
+the same answers, and whose steps' outputs and own output are what were
+made, runs no step, gives the warnings again and ends: an edit of any file
+an index rests on makes the next build not up to date. A step's output is held as an output because the build itself writes
 it, within the second of its stat; and the check comes before the steps, so
 an up-to-date build runs none. Not with `--explain-rebuild` or
 `--pass-stats`, which say what each unit did, nor with `-I`, whose plan

@@ -521,6 +521,7 @@ struct
 
        magic version string(name) at
        list(path option(stamp)) string(hashes)  what was read, its stat, and its bytes' hashes
+       string(inputs)                     the hash of those paths and hashes
        list(place hash)                   the libraries it was made against
        string(hash) string(index)         the index, held to its hash
 
@@ -529,19 +530,26 @@ struct
      was made against need no hash of their own: a damage to them can only
      make the record a miss, since a file's stat names the file, and a hash is
      of what it holds. The index is held to its hash, which is what a library
-     made against it records. *)
+     made against it records. The inputs' hash is what a compile that is up
+     to date records of the index (UnitMemo): its damage too is a miss,
+     and while the files' stats hold they are what it was made of. *)
   val magic = "RIX"
-  val version = 3
+  val version = 4
 
   (* what was read is held as its paths with their stats, and the hashes of
      their bytes in one string, which only a file whose stat moved reads *)
-  type record = {at : LargeInt.int, files : (string * S.stamp option) list, hashes : string,
+  type record = {at : LargeInt.int, files : (string * S.stamp option) list, hashes : string, inputs : string,
                  against : (string * string) list, indexHash : string, index : string}
   val hashWidth = 32
   fun hashAt (hashes : string, i : int) : string = String.substring (hashes, hashWidth * i, hashWidth)
   fun recordOf (at : LargeInt.int, read : read list, against, indexHash : string, index : string) : record =
-    {at = at, files = List.map (fn {path, stamp, ...} => (path, stamp)) read, hashes = String.concat (List.map #hash read),
-     against = against, indexHash = indexHash, index = index}
+    let
+      val files = List.map (fn {path, stamp, ...} => (path, stamp)) read
+      val hashes = String.concat (List.map #hash read)
+    in
+      {at = at, files = files, hashes = hashes, inputs = hash (String.concat (List.map (fn (p, _) => p ^ "\000") files) ^ hashes),
+       against = against, indexHash = indexHash, index = index}
+    end
 
   fun windowsHere () : bool =
     List.exists (fn (key, value) => key = "sysname" andalso value = "Windows") (Posix.ProcEnv.uname ())
@@ -582,17 +590,19 @@ struct
        val files = Pickle.rlist (fn r => let val path = Pickle.rstring r in (path, Pickle.roption S.rstamp r) end) r
        val hashes = Pickle.rstring r
        val () = if size hashes = hashWidth * List.length files then () else raise Pickle.Bad "not the hashes of the files"
+       val inputs = Pickle.rstring r
        val against = Pickle.rlist (fn r => let val place = Pickle.rstring r in (place, Pickle.rstring r) end) r
        val indexHash = Pickle.rstring r
        val index = Pickle.rstring r
      in
        if Pickle.atEnd r
-       then SOME {at = at, files = files, hashes = hashes, against = against, indexHash = indexHash, index = index}
+       then SOME {at = at, files = files, hashes = hashes, inputs = inputs, against = against, indexHash = indexHash,
+                  index = index}
        else NONE
      end)
     handle IO.Io _ => NONE | Pickle.Bad _ => NONE | Overflow => NONE | Subscript => NONE | Size => NONE
 
-  fun writeRecord (store : string, name : string, {at, files, hashes, against, indexHash, index} : record) : unit =
+  fun writeRecord (store : string, name : string, {at, files, hashes, inputs, against, indexHash, index} : record) : unit =
     let
       val p = recordFile (store, name)
       val w = Pickle.writer ()
@@ -600,7 +610,7 @@ struct
     in
       bytes (w, magic); nat (w, version); string (w, name); S.wlarge (w, at);
       list (fn (w, (path, stamp)) => (string (w, path); option S.wstamp (w, stamp))) (w, files);
-      string (w, hashes);
+      string (w, hashes); string (w, inputs);
       list (fn (w, (place, h)) => (string (w, place); string (w, h))) (w, against);
       string (w, indexHash); string (w, index);
       (S.mkdirs (OS.Path.dir p); S.publish (p, contents w))
@@ -654,11 +664,17 @@ struct
 
   (* ---- the query ---- *)
 
+  (* What a compile that keeps what it read keeps of an index it took
+     (UnitMemo, up to date): the library's directory, that of the libraries,
+     the name of the index's record and the hash of what the index rests on,
+     its record's inputs -- the record, and not a copy of its files, which a
+     compile asking whether it is up to date holds again (stillRests) *)
+  type rests = {dir : string, root : string, name : string, inputs : string}
   (* What this compile knows: each library's index by its directory, with
-     the hash of its bytes and the files it rests on, and those being made,
-     to refuse a library written on itself. A compile begins with none
-     (forget) *)
-  val known : (string * (index * string * string list)) list ref = ref []
+     the hash of its bytes, the files it rests on and what it rests on, and
+     those being made, to refuse a library written on itself. A compile
+     begins with none (forget) *)
+  val known : (string * (index * string * string list * rests)) list ref = ref []
   val () = CompilerState.cellRoot ("LibraryIndex.known", known)
   val making : string list ref = ref []
   val () = CompilerState.cellRoot ("LibraryIndex.making", making)
@@ -676,15 +692,19 @@ struct
   fun hold (name : string, record : record) : unit = held := (name, record) :: List.filter (fn (n, _) => n <> name) (!held)
   fun forget () = (known := []; making := [])
   fun windows () = case !platform of SOME w => w | NONE => let val w = windowsHere () in platform := SOME w; w end
+  (* And what each index taken since restFrom rests on, as it was first
+     taken, as a compile keeps the stat a file had when it was first read *)
+  val rested : rests list ref = ref []
+  val () = CompilerState.cellRoot ("LibraryIndex.rested", rested)
+  (* the indexes a compile that begins to keep what it reads knows already,
+     which its plan took *)
+  fun restFrom () : unit = rested := List.map (fn (_, (_, _, _, r)) => r) (!known)
 
-  (* an index this compile knows, and the files it rests on, which a
-     compile that keeps what it read keeps (Source.reading) *)
-  fun remember (dir : string, idx : index, h : string, paths : string list) : index * string =
-    let in
-      List.app (fn p => !Source.reading p) paths;
-      known := (dir, (idx, h, paths)) :: List.filter (fn (d, _) => d <> dir) (!known);
-      (idx, h)
-    end
+  (* an index this compile knows, the files it rests on, and what it rests on *)
+  fun remember (idx : index, h : string, paths : string list, r as {dir, name, ...} : rests) : index * string =
+    (known := (dir, (idx, h, paths, r)) :: List.filter (fn (d, _) => d <> dir) (!known);
+     if List.exists (fn r' => #dir r' = dir andalso #name r' = name) (!rested) then () else rested := r :: !rested;
+     (idx, h))
 
   (* Whether what a record was made of is what it was: each file by its
      stat, racily clean as of at, else by the hash of its bytes, read after
@@ -712,12 +732,45 @@ struct
             end
     in go (files, 0, [], false, []) end
 
+  (* Whether an index a compile took rests on what it rested on then: a
+     record of its name, the session's or a store's, of the same inputs,
+     whose files are still what it was made of (stillRead). That is every
+     file the index rests on, by its stat where that is racily clean and else
+     by its bytes, as a query holds a record, though the index is not read.
+     A record whose stats moved is written again with them, and one of the
+     overlay has its time kept, as a query does *)
+  fun stillRests ({dir, root, name, inputs} : rests) : bool =
+    let
+      fun holdsNow (record : record, store : string option) : bool =
+        #inputs record = inputs
+        andalso
+        (let val at = S.nowSeconds ()
+         in
+           case stillRead (dir, #at record, #files record, #hashes record) of
+             NONE => false
+           | SOME (filesNow, moved, _) =>
+               (if moved
+                then let val record' = {at = at, files = filesNow, hashes = #hashes record, inputs = inputs,
+                                        against = #against record, indexHash = #indexHash record, index = #index record}
+                     in Option.app (fn o' => writeRecord (o', name, record')) (overlay ()); hold (name, record') end
+                else if isSome store andalso store = overlay () then S.touch (recordFile (valOf store, name))
+                else ();
+                true)
+         end)
+    in
+      (case List.find (fn (n, _) => n = name) (!held) of SOME (_, record) => holdsNow (record, NONE) | NONE => false)
+      orelse List.exists (fn store => case readRecord (recordFile (store, name), name) of
+                                        SOME record => holdsNow (record, SOME store)
+                                      | NONE => false)
+                         (stores root)
+    end
+
   (* The index of the library in dir, with the hash of its bytes: what this
      compile knows, else a record that still holds, else made and kept;
      fresh, made again whatever is known *)
   fun indexWithHash {root : string, dir : string, warnings : bool, fresh : bool} : index * string =
     case (if fresh then NONE else List.find (fn (d, _) => d = dir) (!known)) of
-      SOME (_, (idx, h, _)) => (idx, h)
+      SOME (_, (idx, h, _, _)) => (idx, h)
     | NONE =>
         let
           val () = if List.exists (fn d => d = dir) (!making)
@@ -734,7 +787,7 @@ struct
                                       (dirsOf (root, dir, idx)))
           (* a record that holds, the session's or that of the first store
              that has one; one in memory needs no hash of its bytes *)
-          fun holds (record as {files, hashes, against, indexHash, index, ...} : record, kept : bool) =
+          fun holds (record as {files, hashes, inputs, against, indexHash, index, ...} : record, kept : bool) =
             let val at = S.nowSeconds ()
             in
               case stillRead (dir, #at record, files, hashes) of
@@ -744,8 +797,8 @@ struct
                                                                       | Overflow => NONE | Size => NONE) of
                      SOME idx =>
                        if (kept orelse hash index = indexHash) andalso againstNow idx = against
-                       then SOME ({at = at, files = filesNow, hashes = hashes, against = against, indexHash = indexHash,
-                                   index = index}, idx, moved, paths)
+                       then SOME ({at = at, files = filesNow, hashes = hashes, inputs = inputs, against = against,
+                                   indexHash = indexHash, index = index}, idx, moved, paths)
                        else NONE
                    | NONE => NONE)
             end
@@ -765,11 +818,11 @@ struct
             | NONE => holding (stores root)
         in
           case (if fresh then NONE else found ()) of
-            SOME (record as {indexHash, ...}, idx, moved, paths) =>
+            SOME (record as {indexHash, inputs, ...}, idx, moved, paths) =>
               ((* a record whose stats moved, written again with them *)
                if moved then Option.app (fn o' => writeRecord (o', name, record)) (overlay ()) else ();
                hold (name, record);
-               remember (dir, idx, indexHash, paths))
+               remember (idx, indexHash, paths, {dir = dir, root = root, name = name, inputs = inputs}))
           | NONE =>
               let
                 (* what each file was to a making before, by its key, the
@@ -815,7 +868,8 @@ struct
                 Option.app (fn o' => (writeRecord (o', name, record); writeFactsFile (o', name, facts))) (overlay ());
                 hold (name, record);
                 heldFacts := (name, facts) :: List.filter (fn (n, _) => n <> name) (!heldFacts);
-                remember (dir, idx, indexHash, List.map (fn (path, _) => dir ^ "/" ^ path) (#files record))
+                remember (idx, indexHash, List.map (fn (path, _) => dir ^ "/" ^ path) (#files record),
+                          {dir = dir, root = root, name = name, inputs = #inputs record})
               end
         end
   (* the libraries an index is made against: the Basis Library, but for
@@ -859,7 +913,7 @@ struct
      build files and its sources (what an editor watches) *)
   fun inputs {root : string, dir : string} : string list =
     (ignore (indexOf root dir);
-     case List.find (fn (d, _) => d = dir) (!known) of SOME (_, (_, _, paths)) => paths | NONE => [])
+     case List.find (fn (d, _) => d = dir) (!known) of SOME (_, (_, _, paths, _)) => paths | NONE => [])
 
   (* --basis-index DIR: the index made again, with what a client cannot act
      on said, and its text *)

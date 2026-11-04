@@ -595,10 +595,10 @@ struct
          is kept, for the next to ask *)
       val upKey = upToDateKey project
       val upHit = case (upKey, UnitCache.directory ()) of
-                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key)
+                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key, LibraryIndex.stillRests)
                   | _ => NONE
       val () = upToDate := (if isSome upHit then NONE else upKey)
-      val () = case !upToDate of SOME _ => (Error.given := SOME []; UnitMemo.keepReads ()) | NONE => ()
+      val () = case !upToDate of SOME _ => (Error.given := SOME []; UnitMemo.keepReads (); LibraryIndex.restFrom ()) | NONE => ()
       (* what the build runs before a unit is read: its steps, and its
          preprocessors, whose output each unit of theirs compiles (Steps;
          docs/build.md, Generated sources); what they read is kept with the
@@ -1546,7 +1546,8 @@ struct
                  if not (OS.Process.isSuccess status) then ()
                  else
                    case (case output of SOME kept => SOME kept | NONE => UnitMemo.written (dir, out, at)) of
-                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])))
+                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])),
+                                                         List.rev (!LibraryIndex.rested))
                    | NONE => ())
             | _ => ()
         in status end

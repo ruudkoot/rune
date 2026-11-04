@@ -19,15 +19,17 @@
    that is what it wrote is not made again.
 
    Up to date: of a compile in units, everything it read after its plan was
-   made -- every source, every file a library's index rests on (LibraryIndex),
-   what its declared steps and preprocessors read (Steps) -- with the stat each had when it was read;
-   what its steps made, and its output, each an output as above; and the
-   warnings it gave; under a key of all the plan rests on: the command line,
-   the directory, the RUNE_ variables, the compiler, the build files' text,
-   the inputs, the libraries and the workspace. A compile with the same key
-   whose files all have the stats they had, and whose steps' outputs and own
-   output are what were made, runs no step, gives the warnings again and
-   does nothing else. *)
+   made -- every source, what its declared steps and preprocessors read
+   (Steps) -- with the stat each had when it was read; each library's index
+   it took, by its record in the store and the hash of what the index rests
+   on (LibraryIndex.stillRests), not by a copy of those files; what its steps
+   made, and its output, each an output as above; and the warnings it gave;
+   under a key of all the plan rests on: the command line, the directory,
+   the RUNE_ variables, the compiler, the build files' text, the inputs, the
+   libraries and the workspace. A compile with the same key whose files all
+   have the stats they had, each of whose indexes rests on what it rested on,
+   and whose steps' outputs and own output are what were made, runs no step,
+   gives the warnings again and does nothing else. *)
 structure UnitMemo =
 struct
   structure S = UnitStore
@@ -153,12 +155,18 @@ struct
      Source.probing := (fn (p, there) => probes := StringMap.insert (!probes, p, there)))
   fun stopReads () : unit = (Source.reading := (fn _ => ()); Source.probing := (fn _ => ()))
 
-  type record = {files : (string * S.stamp) list, probes : (string * bool) list, at : LargeInt.int, output : output,
-                 made : output list, warnings : (Source.span * string) list}
+  (* an index a compile took, as LibraryIndex keeps it (LibraryIndex.rests):
+     its library's directory, that of the libraries, its record's name and
+     the hash of what it rests on, which the caller holds again *)
+  type rests = {dir : string, root : string, name : string, inputs : string}
+  type record = {files : (string * S.stamp) list, indexes : rests list, probes : (string * bool) list,
+                 at : LargeInt.int, output : output, made : output list, warnings : (Source.span * string) list}
   val records : record S.side =
-    {magic = "RMU", version = 5, hash = fn (_, text) => P.hash text,
-     write = fn (w, {files, probes, at, output, made, warnings}) =>
+    {magic = "RMU", version = 6, hash = fn (_, text) => P.hash text,
+     write = fn (w, {files, indexes, probes, at, output, made, warnings}) =>
        (P.list (fn (w, (p, st)) => (P.string (w, p); wstamp (w, st))) (w, files);
+        P.list (fn (w, {dir, root, name, inputs}) => (P.string (w, dir); P.string (w, root); P.string (w, name); P.string (w, inputs)))
+               (w, indexes);
         P.list (fn (w, (p, there)) => (P.string (w, p); P.bool (w, there))) (w, probes);
         S.wlarge (w, at); woutput (w, output);
         P.list woutput (w, made);
@@ -167,13 +175,15 @@ struct
      read = fn r =>
        let
          val files = P.rlist (fn r => let val p = P.rstring r in (p, rstamp r) end) r
+         val indexes = P.rlist (fn r => let val dir = P.rstring r val root = P.rstring r val name = P.rstring r
+                                        in {dir = dir, root = root, name = name, inputs = P.rstring r} end) r
          val probes = P.rlist (fn r => let val p = P.rstring r in (p, P.rbool r) end) r
          val at = rlarge r
          val output = routput r
          val made = P.rlist routput r
          val warnings = P.rlist (fn r => let val file = P.rstring r val start = P.rint r val stop = P.rint r
                                          in ({file = file, start = start, stop = stop}, P.rstring r) end) r
-       in {files = files, probes = probes, at = at, output = output, made = made, warnings = warnings} end}
+       in {files = files, indexes = indexes, probes = probes, at = at, output = output, made = made, warnings = warnings} end}
   (* The key of a compile's record: all its plan rests on. Every RUNE_
      variable, whatever it is, and the build files by the hashes of their
      text *)
@@ -190,40 +200,43 @@ struct
     end
 
   (* the warnings to give again where nothing a compile of key rests on has
-     changed since it was made, and what its steps made and its output are
-     what they were; NONE where something has *)
-  fun upToDate (dir : string, key : string) : (Source.span * string) list option =
+     changed since it was made -- each index it took holding by stillRests --
+     and what its steps made and its output are what they were; NONE where
+     something has *)
+  fun upToDate (dir : string, key : string, stillRests : rests -> bool) : (Source.span * string) list option =
     case S.readSide records (dir, place, key) of
       NONE => NONE
-    | SOME {files, probes, at, output, made, warnings} =>
+    | SOME {files, indexes, probes, at, output, made, warnings} =>
         let
           fun same (p, st) = case S.statOf p of SOME st' => S.sameStamp (st', st) andalso S.clean (st, at) | NONE => false
           fun answered (p, there) = (OS.FileSys.access (p, []) handle OS.SysErr _ => false) = there
           fun allHold ([], acc) = SOME (List.rev acc)
             | allHold (o' :: rest, acc) = case holds dir o' of SOME o'' => allHold (rest, o'' :: acc) | NONE => NONE
         in
-          if not (List.all same files andalso List.all answered probes) then NONE
+          if not (List.all same files andalso List.all answered probes andalso List.all stillRests indexes) then NONE
           else
             case (allHold (made, []), holds dir output) of
               (SOME made', SOME out) =>
                 ((if out = output andalso made' = made then ()
-                  else S.storeSide records (dir, place, key, {files = files, probes = probes, at = at, output = out,
-                                                              made = made', warnings = warnings}));
+                  else S.storeSide records (dir, place, key, {files = files, indexes = indexes, probes = probes, at = at,
+                                                              output = out, made = made', warnings = warnings}));
                  SOME warnings)
             | _ => NONE
         end
 
   (* a compile of key made the output out, with these warnings, from what
-     it read since keepReads, its steps having made what noteMade was told;
-     every file read could be statted. A file a step made is held by its
-     bytes, not by the stat it had when it was read *)
-  fun noteUpToDate (dir : string, key : string, out : output, warnings : (Source.span * string) list) : unit =
+     it read since keepReads and the indexes it took, its steps having made
+     what noteMade was told; every file read could be statted. A file a step
+     made is held by its bytes, not by the stat it had when it was read *)
+  fun noteUpToDate (dir : string, key : string, out : output, warnings : (Source.span * string) list, indexes : rests list)
+      : unit =
     let
       val files = List.filter (fn (p, _) => not (List.exists (fn o' => #path o' = p) (!made))) (StringMap.listItemsi (!reads))
     in
       if List.exists (fn (_, st) => not (isSome st)) files then ()
       else
         S.storeSide records (dir, place, key, {files = List.map (fn (p, st) => (p, valOf st)) files,
+                                               indexes = indexes,
                                                probes = StringMap.listItemsi (!probes), at = !readsFrom,
                                                output = out, made = !made, warnings = warnings})
     end
