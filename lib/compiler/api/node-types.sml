@@ -40,12 +40,15 @@ struct
          binder = fn s => IntTable.find (binders, s), moduleResult = fn n => IntTable.find (results, n),
          functorParam = fn n => IntTable.find (params, n)}
       val tops = Vector.fromList tops
-      (* a type name's path from the unit's top level, once per name *)
+      (* a type name's path from the unit's top level, once per name; and
+         what lies beyond a view, as it was where the unit was elaborated
+         (Env.beyond) *)
+      val outside = !Env.beyond
       val qualified : string option IntTable.table = IntTable.table 64
       fun qualify (stamp, name) =
         case IntTable.find (qualified, stamp) of
           SOME q => q
-        | NONE => let val q = Env.qualifiedName (env, {name = name, stamp = stamp, arity = 0, eq = false})
+        | NONE => let val q = Env.qualifiedNameWith outside (env, {name = name, stamp = stamp, arity = 0, eq = false})
                   in IntTable.insert (qualified, stamp, q); q end
     in
       Unit {tops = tops, reader = reader, qualify = qualify, typed = Array.array (Vector.length tops, NONE),

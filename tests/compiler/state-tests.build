@@ -22,4 +22,4 @@ files
   ../../lib/json/json.sml
 end
 use ../../lib/compiler/internal.build
-files ../../tests/compiler/state-analysis.sml end
+files ../../tests/compiler/state-analysis.sml ../../tests/compiler/lazy-units.sml end

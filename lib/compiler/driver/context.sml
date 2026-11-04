@@ -104,6 +104,23 @@ struct
            (* a boundary around this use has declared it, as around the first *)
            declared:=List.filter shown (declaredBy change) @ !declared;true end
 
+  (* Where units are loaded by need (a compile's warm path, an analysis that
+     loads by need) the environment holds none of a unit taken without its
+     basis, and what was bound is what the binders say (bound): of the types
+     a boundary exports, the environment is the binders' units' *)
+  fun bindersChange (change : delta, exports : exports) : delta =
+    let
+      val bound = List.foldl (fn (k, m) => StringMap.insert (m, k, ())) StringMap.empty (#bound change)
+      val tys = List.foldl (fn ((BuildFile.Ty, n), m) =>
+                               if not (StringMap.member (bound, "t " ^ n)) then m
+                               else (case UnitBasis.boundType n of SOME t => StringMap.insert (m, n, t) | NONE => m)
+                             | (_, m) => m) StringMap.empty exports
+    in
+      {env = Env.make {vals = StringMap.empty, tys = tys, strs = StringMap.empty, origins = StringMap.empty},
+       directives = #directives change, declared = #declared change, bound = #bound change, sigs = #sigs change,
+       funs = #funs change, binders = #binders change}
+    end
+
   (* What is wrong with a boundary's exports, if anything, change being what
      its inside declared. An export names what a file inside it declares, or
      a build file used there (D6): a name that was only in scope is not the
