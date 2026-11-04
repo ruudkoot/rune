@@ -9,7 +9,10 @@ struct
   fun main (lib, build) =
     let
       val parent = C.session {lib = SOME lib, flags = []}
-      val project = C.Project.read (parent, {file = build, workspace = NONE, variables = [], overlays = [], windows = false})
+      (* the workspace above the build, which names its units as a compile's
+         (Workspace.find, as the worker's rootFile finds it) *)
+      val workspace = C.Workspace.find {file = OS.Path.mkAbsolute {path = build, relativeTo = OS.FileSys.getDir ()}, windows = false}
+      val project = C.Project.read (parent, {file = build, workspace = workspace, variables = [], overlays = [], windows = false})
       val texts = List.filter (fn i : C.Project.input => #kind i = "source") (C.Project.inputs project)
       fun textOf file =
         case List.find (fn i : C.Project.input => #file i = file) texts of

@@ -1095,21 +1095,90 @@ struct
   fun bodyAt (sp : Source.span) : functorCode option = StringMap.find (!bodies, spanKey sp)
   fun callAt (sp : Source.span) : callCode option = StringMap.find (!calls, spanKey sp)
 
+  (* A datatype two specifications of a signature give, whose first one the
+     tables hold (specDatatypes): what is built or taken apart through a
+     later one is typed as the tables are, by the first's constructors. Their
+     arguments are each specification's types, and where the first names one
+     of the signature's own names and a later one another -- MLton's
+     amd64.Register.t and mlton.live.amd64.Register.t, which no equation
+     shares -- every argument that matches makes them one type, its
+     datatype's constructor taking one argument: the later's name is the
+     first's in the code's types (Ty.realizations, which Ty.convert and
+     Ty.shapeOf read), the two datatypes so made one by their constructors in
+     turn. Elaboration keeps them apart, as the Definition does. Names of
+     one arity alone; where one is not the signature's own the other is made
+     it; nothing else is made one. In either mode, so that a layout read
+     through them is the same *)
+  fun identify (own : tycon -> bool, firsts : (string * valstatus) list IntMap.map,
+                pairs : ((string * valstatus) list * (string * valstatus) list) list) : unit =
+    let
+      val named : tycon IntMap.map ref = ref IntMap.empty
+      fun resolve (c : tycon) = case IntMap.find (!named, #stamp c) of SOME c' => resolve c' | NONE => c
+      fun free (c : tycon) = own c andalso not (isSome (IntTable.find (Ty.realizations, #stamp c)))
+      val work = ref pairs
+      fun name (y : tycon, x : tycon) =
+        (named := IntMap.insert (!named, #stamp y, x);
+         case (IntMap.find (firsts, #stamp x), IntMap.find (firsts, #stamp y)) of
+           (SOME cx, SOME cy) => work := (cx, cy) :: !work
+         | _ => ())
+      fun same (a : ty, b : ty) : unit =
+        case (prune a, prune b) of
+          (TCon (x, xs), TCon (y, ys)) =>
+            let val (x, y) = (resolve x, resolve y)
+            in
+              if #stamp x = #stamp y orelse #arity x <> #arity y then ()
+              else if free y then name (y, x)
+              else if free x then name (x, y)
+              else ();
+              if List.length xs = List.length ys then ListPair.app same (xs, ys) else ()
+            end
+        | (TRecord fs, TRecord gs) =>
+            if List.map #1 fs = List.map #1 gs then ListPair.app (fn ((_, a), (_, b)) => same (a, b)) (fs, gs) else ()
+        | (TArrow (a1, b1), TArrow (a2, b2)) => (same (a1, a2); same (b1, b2))
+        | _ => ()
+      fun argOf (Con {scheme, ...}) = (case prune scheme of TArrow (a, _) => SOME a | _ => NONE)
+        | argOf _ = NONE
+      fun pair (first, later) =
+        List.app (fn (n, v) =>
+                     case (List.find (fn (m, _) => m = n) first, argOf v) of
+                       (SOME (_, f), SOME b) => (case argOf f of SOME a => same (a, b) | NONE => ())
+                     | _ => ()) later
+      fun loop () = case !work of [] => () | p :: rest => (work := rest; pair p; loop ())
+    in
+      loop ();
+      IntMap.appi (fn (s, c) => Ty.bindRealization (s, TName (resolve c))) (!named)
+    end
+
   (* The datatypes a signature specifies that the compiler's tables do not
      have, under the names an instance of the signature gave them (rule
      65): their constructors from the specification's, with their schemes
      and tags -- what a functor's body is compiled against, and a dynamic
      module's program (StrDynamic). Where no code is made only what elaboration
      reads of them, the constructors, which a unit's static layer holds as
-     a compile's does *)
+     a compile's does (UnitBasis.staticTycon).
+     A name two specifications give is entered once, from the first in the
+     order of the names, whether code is made or not: sharing joins two
+     structures that each specify the datatype, and their constructors'
+     types may name types the sharing leaves apart (MLton's
+     amd64-allocate-registers.sig shares a structure with a view of it
+     that has Operand but not Register). Taken from the last where no code
+     was made, the analysis wrote other bytes than the compile. The names a
+     later one's constructors take are the first's in the code's types
+     (identify) *)
   fun specDatatypes (code : bool, isNew : tycon -> bool, e : env) : int list =
     let
       val specified : int list ref = ref []
+      (* each name's first specification's constructors, and each later one
+         with the first's *)
+      val seen : (string * valstatus) list IntMap.map ref = ref IntMap.empty
+      val later : ((string * valstatus) list * (string * valstatus) list) list ref = ref []
       fun datatypes (Env {tys, strs, ...}) =
         (StringMap.app (fn TyStr {fcn = TName c, cons = cs as _ :: _} =>
-                           if isNew c then
+                           if not (isNew c) then ()
+                           else if IntMap.member (!seen, #stamp c) then later := (valOf (IntMap.find (!seen, #stamp c)), cs) :: !later
+                           else
                              let
-                               val () = specified := #stamp c :: !specified
+                               val () = (specified := #stamp c :: !specified; seen := IntMap.insert (!seen, #stamp c, cs))
                                fun result t = case prune t of TArrow (_, r) => prune r | r => r
                                val params = case cs of
                                               (_, Con {scheme, ...}) :: _ =>
@@ -1130,10 +1199,9 @@ struct
                                if code then Ty.bindDatatype (#stamp c, {params = params, cons = sorted}) else ();
                                dataCons := IntMap.insert (!dataCons, #stamp c, cs)
                              end
-                           else ()
                          | _ => ()) tys;
          StringMap.app datatypes strs)
-    in datatypes e; !specified end
+    in datatypes e; identify (isNew, !seen, List.rev (!later)); !specified end
 
   (* The parameter's values and exceptions as local variables of the
      function the body is compiled to, fresh ones *)
@@ -1256,12 +1324,23 @@ struct
       fun byTag l = List.foldl (fn (x as (t, _), acc) =>
                                   let fun ins [] = [x] | ins ((y as (u, _)) :: rest) = if t < u then x :: y :: rest else y :: ins rest
                                   in ins acc end) [] l
-      fun go (Env {tys, strs, ...}) =
-        List.concat (List.map (fn (_, TyStr {fcn = TName c, cons = cs as _ :: _}) =>
-                                    if isBound c then List.map #2 (byTag (opens (c, cs))) else []
-                                | _ => []) (StringMap.listItemsi tys))
-        @ List.concat (List.map (fn (_, e) => go e) (StringMap.listItemsi strs))
-    in go pe end
+      (* a datatype two specifications give (sharing a structure with a view
+         of it) is the first's, in the order of the names, as specDatatypes
+         enters it: the constructors the code's tables hold, one function
+         for each, of the type they give its argument. A constructor of each
+         made each its descriptor and its functions, which the body's code
+         took the last's of, of another type than its tables' *)
+      fun go (Env {tys, strs, ...}, (seen, acc)) =
+        let
+          val (seen, acc) =
+            List.foldl (fn ((_, TyStr {fcn = TName c, cons = cs as _ :: _}), (seen, acc)) =>
+                             if isBound c andalso not (IntMap.member (seen, #stamp c))
+                             then (IntMap.insert (seen, #stamp c, ()), List.revAppend (List.map #2 (byTag (opens (c, cs))), acc))
+                             else (seen, acc)
+                         | (_, x) => x)
+                       (seen, acc) (StringMap.listItemsi tys)
+        in List.foldl (fn ((_, e), x) => go (e, x)) (seen, acc) (StringMap.listItemsi strs) end
+    in List.rev (#2 (go (pe, (IntMap.empty, [])))) end
 
   (* What a virtual or dynamic functor's ABI is that its signatures do not
      say (D22), in its fingerprint with them: the ABI's version; the
@@ -1382,6 +1461,20 @@ struct
      out once: its parameter's signature does not change *)
   val openMemo : (tycon * int * ty) list IntTable.table ref = ref (IntTable.table 64)
   val () = CompilerState.refRoot ("Elaborate.openMemo", openMemo, IntTable.copy)
+  (* how a datatype's constructors lie, as the code's tables say
+     (Ty.elabLayout); where no code is made a datatype a functor's parameter
+     specifies is not in them (specDatatypes), so from the constructors
+     elaboration entered of it, which say the same: an application in the
+     body to the parameter's datatype is checked as a compile checks it *)
+  fun layoutAt (stamp : int) : (int * int option) list =
+    case (Ty.elabLayout stamp, !makesCode) of
+      ([], false) =>
+        (case IntMap.find (!dataCons, stamp) of
+           SOME cs => List.mapPartial (fn (_, Con {scheme, info}) =>
+                                            SOME (#tag info, case prune scheme of TArrow (a, _) => Ty.shapeOf a | _ => NONE)
+                                        | _ => NONE) cs
+         | NONE => [])
+    | (l, _) => l
   fun descriptors (code : int, paramSig : SigMatch.sigma, phi : realisation, sp : Source.span) : desc list =
     List.map (fn (c, tag, _) =>
                 case Option.mapPartial fcnIsName (IntMap.find (phi, #stamp c)) of
@@ -1389,7 +1482,7 @@ struct
                     (case openAt (#stamp a, tag) of
                        SOME {desc, ...} => DescVar desc
                      | NONE =>
-                         (case List.find (fn (t, _) => t = tag) (Ty.elabLayout (#stamp a)) of
+                         (case List.find (fn (t, _) => t = tag) (layoutAt (#stamp a)) of
                             SOME (_, SOME n) =>
                               if n > Ty.maxFlat then
                                 err (sp, "the argument lays out a constructor of " ^ #name c ^ " in "
@@ -2178,8 +2271,7 @@ struct
                  compile that makes no code (makesCode; D15) *)
               val code = !makesCode
               val boundSet = List.foldl (fn (c : tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty (#bound sigma)
-              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c)
-                                                   andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
+              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c), #env sigma)
               val pEnv = if code then localParam (#env sigma) else #env sigma
               val _ = noteModule (functorParams, #id b, pEnv)
               val bodyEnv = case #param b of
@@ -2310,8 +2402,7 @@ struct
               (* the parameter's datatypes entered as a body's are, so that
                  both ABIs' fingerprints read the same tables *)
               val boundSet = List.foldl (fn (c : tycon, m) => IntMap.insert (m, #stamp c, ())) IntMap.empty (#bound sigma)
-              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c)
-                                                   andalso not (IntMap.member (!Ty.datatypes, #stamp c)), #env sigma)
+              val _ = specDatatypes (code, fn c => IntMap.member (boundSet, #stamp c), #env sigma)
               val pEnv = #env sigma
               val _ = noteModule (functorParams, #id b, pEnv)
               val bodyEnv = case #param b of
