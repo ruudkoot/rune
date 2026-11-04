@@ -171,6 +171,7 @@ struct
           in reap () end
     in {call=call,phases=phases,stop=stop} end
   fun writeFile (file,text)=let val output=TextIO.openOut file in TextIO.output (output,text);TextIO.closeOut output end
+  fun readFile file=let val input=TextIO.openIn file in TextIO.inputAll input before TextIO.closeIn input end
   (* A project on disk, every file older than a stamp's doubt, and a file of it open. *)
   fun project action =
     let val root=OS.FileSys.tmpName ()
@@ -408,6 +409,72 @@ struct
         val ()=changed (List.tabulate (W.changeLimit+1,fn i => "lib1/elsewhere" ^ Int.toString i ^ ".sml"))
     in Expect.that ("a closed input changed with no event is read again when the events are not whole",
         not (null (errors (check "lib1/y.sml")))) end)
+  (* D28: the plan a file of no library has from the index of what each build
+     names (RuneLspProjects.indexed) is the one enrich and W.resolve come to,
+     where a file is named by two programs, through a symbolic link to its
+     directory, by a hard link under another name, by a path with .., by a
+     path with a variable, by a build that does not parse; with every build a
+     target and with none, the file open as an editor has it. *)
+  fun indexExact () =
+    let val root=OS.FileSys.fullPath (let val dir=OS.FileSys.tmpName () in (OS.FileSys.remove dir handle OS.SysErr _ => ());
+          OS.FileSys.mkDir dir;dir end)
+        fun path name=OS.Path.concat (root,name)
+        val ()=List.app (fn dir => OS.FileSys.mkDir (path dir)) ["lib","lib/a","apps","shared","deep","deep/er"]
+        val ()=List.app (fn (name,text) => writeFile (path name,text))
+          [("lib/a/library.build","files x.sml end\n"),("lib/a/x.sml","structure X=struct val x=1 end\n"),
+           ("apps/p.build","use ../lib/a/library.build\nfiles p.sml end\n"),("apps/p.sml","val p=X.x\n"),
+           ("apps/q.build","use ../lib/a/library.build\nfiles ../shared/s.sml end\n"),
+           ("apps/r.build","files ../shared/s.sml end\n"),("shared/s.sml","val s=1\n"),
+           ("apps/t.build","files ../link/s.sml end\n"),("apps/h.build","files ../shared/h.sml end\n"),
+           ("apps/u.build","files ../deep/er/../../shared/s.sml end\n"),
+           ("apps/v.build","files $(NOWHERE)/s.sml end\n"),("apps/bad.build","files ../shared/s.sml\n"),
+           ("apps/w.build","use r.build\n")]
+        val ()=Posix.FileSys.symlink {old=path "shared",new=path "link"}
+        val ()=Posix.FileSys.link {old=path "shared/s.sml",new=path "shared/h.sml"}
+        val platform=LspUri.Posix
+        fun uri name=LspUri.original (LspUri.fromPath (platform,path name))
+        val builds=["lib/a/library.build","apps/p.build","apps/q.build","apps/r.build","apps/t.build","apps/h.build",
+          "apps/u.build","apps/v.build","apps/bad.build","apps/w.build"]
+        fun workspaceOf targets=
+          let val workspace=W.new {platform=platform,lib="lib"}
+              val ()=W.setRoots (workspace,[uri ""])
+              val ()=if targets then W.configure (workspace,Json.Object [("targets",Json.Array (List.map (fn name =>
+                Json.Object [("name",Json.String name),("build",Json.String (uri name))]) builds))]) else ()
+          in workspace end
+        fun kindOf selection=case selection of W.Selected c => "selected " ^ #id c | W.Ambiguous cs => "prompt " ^ Int.toString (length cs) | W.Loose => "none"
+        fun compare targets name=
+          let val documents=D.new (LspProtocol.Utf16,{maxDocuments=8,maxDocumentBytes=4*1024*1024,maxTotalBytes=8*1024*1024,
+                maxDocumentLines=200000,maxTotalLines=300000})
+              val _=D.openDocument (documents,{uri=uri name,languageId="sml",version=1,text=readFile (path name)})
+              val old=workspaceOf targets
+              val _=RuneLspProjects.enrich (old,documents,fn () => false)
+              val (selection,contexts)=W.resolve (old,documents,uri name)
+              val fresh=workspaceOf targets
+              val index=RuneLspProjects.index ()
+              val planned=case RuneLspProjects.owned (fresh,documents,uri name,fn () => false) of SOME planned => SOME planned
+                | NONE => RuneLspProjects.indexed (index,fresh,documents,uri name,fn () => false)
+          in case planned of NONE => (name,"not settled")
+             | SOME {contexts=found,...} =>
+                 (name,if List.map #id found=List.map #id contexts andalso kindOf (W.selectAmong (fresh,uri name,found))=kindOf selection
+                       then "the same" else "DIFFERENT: " ^ String.concatWith "," (List.map #id found) ^ " against " ^
+                         String.concatWith "," (List.map #id contexts)) end
+        val files=["shared/s.sml","shared/h.sml","apps/p.sml","lib/a/x.sml"]
+        val configured=List.map (compare true) files
+        (* with no targets, no root build holds them: discovery decides *)
+        val discovered=List.map (compare false) files
+        val outcomes=configured @ discovered
+        fun clean dir=(List.app (fn entry => let val full=OS.Path.concat (dir,entry)
+            in if (Posix.FileSys.ST.isLink (Posix.FileSys.lstat full)) then OS.FileSys.remove full
+               else if OS.FileSys.isDir full then clean full else OS.FileSys.remove full end)
+            (let val stream=OS.FileSys.openDir dir
+                 fun all found=case OS.FileSys.readDir stream of NONE => found | SOME entry => all (entry::found)
+             in all [] before OS.FileSys.closeDir stream end);OS.FileSys.rmDir dir) handle OS.SysErr _ => ()
+        val ()=clean root
+    in List.app (fn (name,outcome) => Expect.that ("the index plans " ^ name ^ " as enrich does: " ^ outcome,
+         outcome="the same" orelse outcome="not settled")) outcomes;
+       Expect.that ("with every build a target, the index or the owner settles every file: " ^
+         String.concatWith "; " (List.map (fn (n,result) => n ^ " " ^ result) configured),
+         List.all (fn (_,outcome) => outcome="the same") configured) end
   (* D26: a file in no build, its names found in its directory, in a library
      and anywhere in its workspace, the nearest first *)
   fun implicit ()=tree ([("rune.workspace","roots lib end\n"),
@@ -444,6 +511,7 @@ structure RuneLspWorkerAnalysisTestMain=Main (struct
     Test.it "contexts-compared-by-binder" RuneLspWorkerAnalysisTests.compared,
     Test.it "implicit-library" RuneLspWorkerAnalysisTests.implicit,
     Test.it "plan-by-file-events" RuneLspWorkerAnalysisTests.planByEvents,
-    Test.it "texts-past-file-events" RuneLspWorkerAnalysisTests.textsPastEvents]
+    Test.it "texts-past-file-events" RuneLspWorkerAnalysisTests.textsPastEvents,
+    Test.it "index-plans-as-enrich" RuneLspWorkerAnalysisTests.indexExact]
 end)
 val ()=RuneLspWorkerAnalysisTestMain.main ()

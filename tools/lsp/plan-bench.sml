@@ -5,9 +5,9 @@
    Usage: rune-lsp-plan-bench --lib DIR --root DIR --open FILE --out FILE
             [--events] [--reads] [--limit MS] [--repeat N]
 
-   FILE is a source of a build under the root; it need not exist, since the
-   editor holds its text. The bench plans its check cold, then after each of
-   these, each REPEAT times:
+   FILE is a source of a build under the root; where the tree has no text,
+   it is written for the run, as a file an editor opens is on the disk. The
+   bench plans its check cold, then after each of these, each REPEAT times:
      same      nothing changed
      edit      the open file's text changed
      touch     a build that holds the file rewritten on disk, as it was
@@ -19,8 +19,9 @@
    a file event, as an editor that watches does; without it, the worker
    looks at the stamps of what it read. --reads fails the run if a plan after
    the first reads a build outside the changed set, or one after no change
-   to what it read (same, edit, other) does not take the memo: what make
-   check holds. --limit fails it if a plan after the first takes longer, at
+   to a build (same, edit) does not take the memo: what make check holds.
+   (A library's file takes it after other too: no program's build is read
+   to plan it.) --limit fails it if a plan after the first takes longer, at
    the median of its repetitions: what the nightly tier holds, a measure of
    time asking for the machine to itself (docs/testing.md). *)
 structure RuneLspPlanBench =
@@ -86,7 +87,11 @@ struct
           ("targets",Json.Array (List.map (fn build => Json.Object [("name",Json.String build),("build",Json.String (uriOf build))]) targets))])
         val documents=D.new (LspProtocol.Utf16,{maxDocuments=8,maxDocumentBytes=16*1024*1024,maxTotalBytes=64*1024*1024,
           maxDocumentLines=500000,maxTotalLines=1000000})
-        val text=(read openPath) handle IO.Io _ => "structure Opened = struct val x = 1 end\n"
+        (* a file an editor opens is on the disk: where the tree has no text
+           (--no-text), the open file is written, and taken away at the end *)
+        val written=not (OS.FileSys.access (openPath,[]) handle OS.SysErr _ => false)
+        val ()=if written then write (openPath,"structure Opened = struct val x = 1 end\n") else ()
+        val text=read openPath
         val _=D.openDocument (documents,{uri=uri,languageId="sml",version=1,text=text})
         val version=ref 1
         val worker=E.new ()
@@ -119,7 +124,7 @@ struct
                 (case List.find (fn (n,_) => n=name) (!times) of SOME (_,all) => all:=s:: !all
                    | NONE => times:= !times @ [(name,ref [s])];
                  if !reads andalso read>length (List.filter (not o #2) changed) then failures:=(name ^ " read " ^ num read ^ " builds, of a changed set of " ^ num (length changed)):: !failures else ();
-                 if !reads andalso not memo andalso List.exists (fn other => other=name) ["same","edit","other","other-back"]
+                 if !reads andalso not memo andalso List.exists (fn other => other=name) ["same","edit"]
                  then failures:=(name ^ " planned again, though nothing it read changed"):: !failures else ())
           in () end
         val ()=say (num (length targets) ^ " targets under " ^ rootPath ^ "\n")
@@ -144,6 +149,7 @@ struct
         val ()=again (!repeat,fn () => (write (other,otherText ^ "(* changed *)\n");plan ("other",[(other,false)]);
           write (other,otherText);plan ("other-back",[(other,false)])))
         val ()=TextIO.closeOut output
+        val ()=if written then OS.FileSys.remove openPath else ()
         val ()=List.app (fn (name,all) =>
           let val m=median (!all)
           in say ("SUMMARY " ^ name ^ " n=" ^ num (length (!all)) ^ " median " ^ fixed (3,m) ^ " s max " ^ fixed (3,List.last (sort (!all))) ^ " s\n");

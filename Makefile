@@ -375,8 +375,8 @@ bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
 LSP_WORKER_TEST_SRCS := src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/worker-model.sml src/lsp/worker-process.sml
 bin/rune-lsp-analysis-worker.rbc: $(RUNE) tests/lsp/worker.build manifests
 	$(RUNE) --build tests/lsp/worker.build -o $@
-bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml manifests
-	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml -o $@
+bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/projects.sml tests/lsp/worker-analysis-tests.sml manifests
+	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) src/lsp/projects.sml tests/lsp/worker-analysis-tests.sml -o $@
 bin/rune-lsp-jobs-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml manifests
 	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml -o $@
 bin/rune-lsp-semantic-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml manifests
@@ -486,8 +486,9 @@ test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
 # generator of a tree of libraries and programs (tools/lsp/fixture.sml), the
 # planning bench (tools/lsp/plan-bench.sml), and two tiers on them.
 # test-lsp-scale, in make check, holds what the machine's load cannot move: at
-# 100k files and 1000 builds, a plan reads no build outside the changed set,
-# and takes its memo where nothing it read changed; on a generated build of
+# 100k files and 1000 builds, a plan of a library's file and of a program's
+# reads no build outside the changed set, takes its memo where no build
+# changed, and fits the worker's heap; on a generated build of
 # 100k lines, cold from a store, a body edit elaborates its unit alone, an
 # interface edit only the units whose usages it breaks, and at most 2 KB a
 # line lives. test-lsp-scale-times, nightly and on a machine of its own, as
@@ -502,7 +503,11 @@ bin/rune-lsp-fixture.rbc: $(RUNE) tools/lsp/fixture.sml src/main/lsp-fixture-mai
 bin/rune-lsp-plan-bench.rbc: $(RUNE) tools/lsp/plan-bench.sml src/main/lsp-plan-bench-main.sml tools/lsp/plan-bench.build $(wildcard src/lsp/*.sml) manifests
 	$(RUNE) --build tools/lsp/plan-bench.build -o $@
 SCALE = build/lsp/scale
-SCALE_OPEN = libs/g026/l00799/m799_1.sml
+# a library's file deep in its graph, and a program's own file, which the
+# index of what each build names plans; both at the worker's 512 MiB heap
+SCALE_PLAN = bin/runevm --jit=opt --heap-limit 536870912 bin/rune-lsp-plan-bench.rbc --lib "$(abspath lib)" --root $(SCALE)/plan --events --reads
+SCALE_LIBRARY_FILE = libs/g026/l00799/m799_1.sml
+SCALE_PROGRAM_FILE = apps/p00000.sml
 $(SCALE)/plan/fixture.json: bin/rune-lsp-fixture.rbc
 	rm -rf $(SCALE)/plan
 	bin/runevm --jit=opt bin/rune-lsp-fixture.rbc --out $(SCALE)/plan --lines 10000000 --files 100000 --builds 1000 --domains 32 --no-text
@@ -512,8 +517,8 @@ $(SCALE)/f100k/fixture.json: bin/rune-lsp-fixture.rbc
 SCALE_STORE = rm -rf $(SCALE)/store && $(RUNE) --units -O0 --build $(SCALE)/f100k/apps/all.build --cache-dir $(SCALE)/store -o $(SCALE)/store.rbc 2>/dev/null
 .PHONY: test-lsp-scale test-lsp-scale-times test-lsp-scale-oracle
 test-lsp-scale: bin/rune-lsp-plan-bench.rbc bin/rune-lsp-oracle.rbc $(SCALE)/plan/fixture.json $(SCALE)/f100k/fixture.json
-	bin/runevm --jit=opt --heap-limit 2147483648 bin/rune-lsp-plan-bench.rbc --lib "$(abspath lib)" --root $(SCALE)/plan \
-	  --open $(SCALE_OPEN) --out $(SCALE)/plan.jsonl --events --reads
+	$(SCALE_PLAN) --open $(SCALE_LIBRARY_FILE) --out $(SCALE)/plan.jsonl
+	$(SCALE_PLAN) --open $(SCALE_PROGRAM_FILE) --out $(SCALE)/plan-program.jsonl
 	$(SCALE_STORE)
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath $(SCALE)/f100k/apps/all.build)" \
 	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --no-fresh --collect --per-line 2048 --clients \
@@ -524,8 +529,8 @@ test-lsp-scale-oracle: bin/rune-lsp-oracle.rbc $(SCALE)/f100k/fixture.json
 	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --clients \
 	  --out $(SCALE)/oracle-fresh.jsonl --require placed,walked,broken,stored,byneed
 test-lsp-scale-times: bin/runelsp bin/rune-lsp-replay.rbc bin/rune-lsp-plan-bench.rbc bin/rune-lsp-oracle.rbc $(SCALE)/plan/fixture.json $(SCALE)/f100k/fixture.json
-	bin/runevm --jit=opt --heap-limit 2147483648 bin/rune-lsp-plan-bench.rbc --lib "$(abspath lib)" --root $(SCALE)/plan \
-	  --open $(SCALE_OPEN) --out $(SCALE)/plan-times.jsonl --events --reads --repeat 5 --limit 200
+	$(SCALE_PLAN) --open $(SCALE_LIBRARY_FILE) --out $(SCALE)/plan-times.jsonl --repeat 5 --limit 200
+	$(SCALE_PLAN) --open $(SCALE_PROGRAM_FILE) --out $(SCALE)/plan-program-times.jsonl --repeat 5 --limit 200
 	$(SCALE_STORE)
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath $(SCALE)/f100k/apps/all.build)" \
 	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --collect --no-fresh --cold-limit 2 \

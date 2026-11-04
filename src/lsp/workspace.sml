@@ -88,7 +88,12 @@ struct
     let val parsed=settings platform value
     in if parsed= !stored then () else (stored:=parsed;invalidate workspace) end
   fun table count : 'a table=Array.array (2*count+1,[])
-  fun slot (chains:'a table,name)=CharVector.foldl (fn (c,hash) => (hash*31+Char.ord c) mod 1048573) 0 name mod Array.length chains
+  (* by a name's last 32 characters and its size: paths share long prefixes,
+     and a chain compares whole names *)
+  fun slot (chains:'a table,name)=
+    let val n=size name
+        fun go (i,hash)=if i>=n then hash else go (i+1,(hash*31+Char.ord (String.sub (name,i))) mod 1048573)
+    in go (Int.max (0,n-32),n mod 1048573) mod Array.length chains end
   fun lookup (chains,name)=Option.map #2 (List.find (fn (other,_) => other=name) (Array.sub (chains,slot (chains,name))))
   fun add (chains,name,value)=let val at=slot (chains,name) in Array.update (chains,at,(name,value) :: Array.sub (chains,at)) end
   (* a table that grows, in which a name has one entry *)
@@ -213,9 +218,9 @@ struct
   val eventKeys=store () : string option store
   fun eventKey platform path=
     let val key=pathKey platform path
-    in if not (String.isSubstring ".." key) orelse not (List.exists (fn arc => arc="..") (String.fields (fn c => c= #"/") key))
-       then SOME key else
+    in if not (String.isSubstring ".." key) then SOME key else
        case fetch (eventKeys,key) of SOME known => known | NONE =>
+       if not (List.exists (fn arc => arc="..") (String.fields (fn c => c= #"/") key)) then SOME key else
        let val clean=case lexical key of NONE => NONE | SOME clean =>
              ((if OS.FileSys.compare (OS.FileSys.fileId path,OS.FileSys.fileId clean)=EQUAL then SOME clean else NONE)
               handle OS.SysErr _ => NONE)
@@ -355,8 +360,15 @@ struct
                    else up (above,directory::seen) end
     in up (directory platform path,[]) end
   (* the contexts a target's project gives a file, one an occurrence of it *)
-  fun contextsIn (platform,target:target,project,path)=
-    let val same=sameAs platform path in
+  (* where a file's name is one of names *)
+  fun named names path=List.exists (fn name => path=name orelse String.isSuffix ("/" ^ name) path orelse
+    String.isSuffix ("\\" ^ name) path) names
+  fun contextsIn (platform,target:target,project,path)=contextsNamed (platform,target,project,path,NONE)
+  (* those whose name is one of names, where it is known that only a file of
+     such a name can be the file (RuneLspProjects.indexed) *)
+  and contextsNamed (platform,target:target,project,path,names)=
+    let val same=sameAs platform path
+        val same=case names of NONE => same | SOME names => (fn other => named names other andalso same other) in
     List.map (fn source:C.Project.source =>
       {id= #build target ^ "#" ^ #name target ^ ":" ^ Int.toString (#ordinal source),
        label= #name target ^ " (unit " ^ Int.toString (#ordinal source+1) ^ ")",

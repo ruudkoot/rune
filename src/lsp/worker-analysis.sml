@@ -45,16 +45,17 @@ struct
   (* A build file's text as it was read, which plans take without reading it
      while the client's events or its stamp say that it stands (D28) *)
   type kept={path:string,text:string,stamp:string}
-  (* builds: those texts; seen: the input generation they are as of;
+  (* builds: those texts, and unvouched, those no event vouches for; seen: the input generation they are as of;
      looked: when the disk was last looked at for all a plan read, which a
      plan does a minute after, as the bound of a missed file event *)
   datatype t=Worker of {contexts:context list ref,views:view list ref,tokens:RuneLspTokens.t,namespace:string ref,
     progress:(V.value->unit) ref,diagnosticCache:diagnosticCache option ref,plans:planned list ref,planSerial:int ref,
-    symbolMemo:(string*Json.value list) W.table ref,builds:kept W.store,seen:IntInf.int ref,looked:Time.time ref,
-    recent:bool ref}
+    symbolMemo:(string*Json.value list) W.table ref,builds:kept W.store,unvouched:unit W.store,watching:string list ref,
+    seen:IntInf.int ref,looked:Time.time ref,
+    recent:bool ref,index:RuneLspProjects.index}
   fun new ()=Worker {contexts=ref [],views=ref [],tokens=RuneLspTokens.new (),namespace=ref "local",
     progress=ref(fn _=>()),diagnosticCache=ref NONE,plans=ref [],planSerial=ref 0,symbolMemo=ref (W.table 0),
-    builds=W.store (),seen=ref 0,looked=ref Time.zeroTime,recent=ref false}
+    builds=W.store (),unvouched=W.store (),watching=ref [],seen=ref 0,looked=ref Time.zeroTime,recent=ref false,index=RuneLspProjects.index ()}
   fun onProgress (Worker{progress,...},report)=progress:=report
   (* how many plans this worker has made, and the builds read since it began *)
   fun planStats (Worker {planSerial,...})={plans= !planSerial,builds= !W.buildsRead}
@@ -70,9 +71,9 @@ struct
   fun clearAnalysis (Worker {contexts,views,...}) =
     (List.app (fn context:context => (A.close (#analysis context);C.close (#compiler context))) (!contexts);
      contexts:=[];views:=[])
-  fun clear (worker as Worker {tokens,diagnosticCache,plans,symbolMemo,builds,...}) =
+  fun clear (worker as Worker {tokens,diagnosticCache,plans,symbolMemo,builds,unvouched,index,...}) =
     (clearAnalysis worker;diagnosticCache:=NONE;plans:=[];symbolMemo:=W.table 0;RuneLspTokens.clear tokens;
-     List.app (fn (key,_) => W.remove (builds,key)) (W.entries builds))
+     W.empty builds;W.empty unvouched;RuneLspProjects.forgetIndex index)
   val retainedSourceBudget=2*1024*1024
   fun inputBytes inputs=List.foldl(fn (input:A.input,n)=>size(#text input)+n)0 inputs
   fun snapshotBytes snapshot=inputBytes(A.inputs snapshot)+inputBytes(A.dependencies snapshot)
@@ -160,11 +161,18 @@ struct
      they were last brought up go, and where no event can say, those whose
      stamp moved; then plans read through them (W.holding), and keep what
      they read where an event would say if it changed or it is settled. *)
-  fun holdBuilds (Worker {builds,seen,...},workspace as W.Workspace {platform,...},state,recent) =
+  fun holdBuilds (Worker {builds,unvouched,watching,seen,...},workspace as W.Workspace {platform,...},state,recent) =
     let val look=looking (workspace,state,!seen,recent)
-        val ()=List.app (fn (key,{path,stamp,...}:kept) =>
-          case vouched look path of SOME key => if named look key then W.remove (builds,key) else ()
-          | NONE => if stampOf path=stamp then () else W.remove (builds,key)) (W.entries builds)
+        fun byStamp key=case W.fetch (builds,key) of NONE => W.remove (unvouched,key)
+          | SOME {path,stamp,...} => if stampOf path=stamp then () else (W.remove (builds,key);W.remove (unvouched,key))
+        (* those the events since name go, and those no event vouches for are
+           looked at; where the events are not whole, or the folders watched
+           are others, every one *)
+        val ()=case (#changed look,W.changedSince (workspace,!seen)) of
+            (SOME _,SOME changed) => if #roots look<> !watching then List.app (fn (key,_) => byStamp key) (W.entries builds) else
+              (List.app (fn (key,_) => W.remove (builds,key)) changed;List.app (fn (key,_) => byStamp key) (W.entries unvouched))
+          | _ => List.app (fn (key,_) => byStamp key) (W.entries builds)
+        val ()=watching:= #roots look
         val ()=W.unknow (case #changed look of NONE => NONE
           | SOME _ => Option.map (List.map #1) (W.changedSince (workspace,!seen)))
         val ()=seen:=stateGeneration state
@@ -174,8 +182,20 @@ struct
         fun keyOf path=getOpt (W.eventKey platform path,W.pathKey platform path)
         fun held path=Option.map #text (W.fetch (builds,keyOf path))
         fun read (path,text)=
-          if isSome (vouched now path) orelse settled path then W.keep (builds,keyOf path,{path=path,text=text,stamp=stampOf path}) else ()
+          let val vouch=isSome (vouched now path)
+              val key=keyOf path
+          in if vouch orelse settled path then
+               (W.keep (builds,key,{path=path,text=text,stamp=stampOf path});
+                if vouch then W.remove (unvouched,key) else W.keep (unvouched,key,())) else () end
     in W.holding:={held=held,read=read} end
+  (* The index of what each build names, brought up to a state, as the kept
+     texts are just before: where the events since are not whole, every
+     source's file is looked at again *)
+  fun holdIndex (Worker {index,...},workspace as W.Workspace {platform,...},state,documents,recent) =
+    let val look=looking (workspace,state,!(#seen index),recent)
+        val changed=case #changed look of NONE => NONE
+          | SOME _ => Option.map (List.map #1) (W.changedSince (workspace,!(#seen index)))
+    in RuneLspProjects.refresh (index,platform,documents,changed);#seen index:=stateGeneration state end
   (* what the identities events vouch for are kept for: the work just after
      holdBuilds brought them up to a state, and no other job *)
   fun vouching work=(work () before W.vouch:=(fn _ => NONE)) handle error => (W.vouch:=(fn _ => NONE);raise error)
@@ -328,7 +348,7 @@ struct
      file of a library takes its owner's plan where that settles it
      (RuneLspProjects.owned), which reads none of the other targets; a build
      is read from the disk only where it changed (holdBuilds, D28). *)
-  fun plan (worker as Worker {plans,planSerial,looked,recent=recentJob,...},state,workspace as W.Workspace {platform,...},documents,uri,cancelled) =
+  fun plan (worker as Worker {plans,planSerial,looked,recent=recentJob,index,...},state,workspace as W.Workspace {platform,...},documents,uri,cancelled) =
     let val key=planKey (state,uri,documents)
         val generation=stateGeneration state
         val recent=Time.< (Time.now (),Time.+ (!looked,Time.fromSeconds 60))
@@ -360,7 +380,10 @@ struct
               cancelled ())
            val ()=holdBuilds (worker,workspace,state,recent)
            val (configuration,selection,contexts,implicit,{files,sources,directories},own,implicitRead)=
-             case RuneLspProjects.owned (workspace,documents,uri,cancelled) of
+             case (case RuneLspProjects.owned (workspace,documents,uri,cancelled) of
+                     SOME planned => SOME planned
+                   | NONE => (holdIndex (worker,workspace,state,documents,recent);
+                       RuneLspProjects.indexed (index,workspace,documents,uri,cancelled))) of
                SOME {contexts,configuration,read} =>
                  (configuration,W.selectAmong (workspace,uri,contexts),contexts,NONE,read,[],[])
              | NONE =>
@@ -391,14 +414,17 @@ struct
                   List.exists (fn file => W.sameFile platform (file,path)) sources)
              then SOME (#uri snapshot,textOf snapshot) else NONE) (D.all documents)
            val () =planSerial:= !planSerial+1
-           val memo={serial= !planSerial,key=key,stamps=List.map (fn file => (file,stampOf file)) read,
-             places=List.map (fn place => (place,stampOf place)) places,generation=generation,texts=texts,
+           (* what events vouch for has no stamp: where they cannot say, it is
+              taken as changed, and planned again *)
+           val look=looking (workspace,state,generation,true)
+           val read=List.map (fn file => (file,isSome (vouched look file))) read
+           val places=List.map (fn place => (place,isSome (eventKey look place))) places
+           val memo={serial= !planSerial,key=key,stamps=List.map (fn (file,vouch) => (file,if vouch then "" else stampOf file)) read,
+             places=List.map (fn (place,vouch) => (place,if vouch then "" else stampOf place)) places,generation=generation,texts=texts,
              configuration=configuration,selection=selection,contexts=contexts,implicit=implicit,decided=false}:planned
            val all=memo:: !plans
-           val look=looking (workspace,state,generation,true)
-           fun stands file=isSome (vouched look file) orelse settled file
-           fun placed place=isSome (eventKey look place) orelse settled place
-       in plans:=(if List.all stands read andalso List.all placed places then List.take (all,Int.min (8,length all)) else !plans);memo end) end
+           fun stands (file,vouch)=vouch orelse settled file
+       in plans:=(if List.all stands read andalso List.all stands places then List.take (all,Int.min (8,length all)) else !plans);memo end) end
   (* a check of a file in the context selected, or on its own *)
   fun checkIn (worker as Worker {contexts,views,namespace,recent,...},{state,uri,encoding,capabilities,cancelled},
                workspace as W.Workspace {platform,lib,...},documents,planned as {configuration,...}:planned,selected:W.context option) =

@@ -14,7 +14,9 @@
    number alone (no owner, no comparison), and a file in no build alone with
    the Basis Library. --owned holds the plan of a file of a library made from
    its owner's targets alone (RuneLspProjects.owned, D28) to what enrich and
-   W.resolve make of it, file by file, and fails a run where they differ.
+   W.resolve make of it, file by file, and fails a run where they differ;
+   where the owner does not settle a file, the plan the index of what each
+   build names makes of it (RuneLspProjects.indexed) is held so too.
    --targets makes every build listed a target of the settings. --share checks the first build, then the second over
    the same libraries, in contexts that share (C.Analysis.share), and the
    second again in one that does not: what each elaborated, loaded, took
@@ -107,16 +109,23 @@ struct
               val ()=W.setRoots (bare,[uriOf rootPath])
               val ()=if !everyTarget then W.configure (bare,targetSettings) else ()
               fun kindOf selection=case selection of W.Selected c => "selected " ^ #id c | W.Ambiguous _ => "prompt" | W.Loose => "none"
+              val index=RuneLspProjects.index ()
+              fun compared (how,uri,selection,contexts:W.context list,found:W.context list)=
+                let val same=List.map #id found=List.map #id contexts andalso
+                      kindOf (W.selectAmong (bare,uri,found))=kindOf selection
+                in if same then count (how ^ ": the same") else
+                     (count (how ^ ": DIFFERENT");differences:= !differences+1;
+                      say (how ^ " differs: " ^ uri ^ ": " ^ String.concatWith "," (List.map #id found) ^ " against " ^
+                        String.concatWith "," (List.map #id contexts) ^ "\n")) end
+              (* the owner's plan, and else the index's (RuneLspProjects.indexed) *)
               fun owned (uri,selection,contexts:W.context list)=
                 case RuneLspProjects.owned (bare,documents,uri,fn () => false) of
-                  NONE => count "owned: not settled by the owner"
-                | SOME {contexts=found,...} =>
-                    let val same=List.map #id found=List.map #id contexts andalso
-                          kindOf (W.selectAmong (bare,uri,found))=kindOf selection
-                    in if same then count "owned: the same" else
-                         (count "owned: DIFFERENT";differences:= !differences+1;
-                          say ("owned differs: " ^ uri ^ ": " ^ String.concatWith "," (List.map #id found) ^ " against " ^
-                            String.concatWith "," (List.map #id contexts) ^ "\n")) end
+                  SOME {contexts=found,...} => compared ("owned",uri,selection,contexts,found)
+                | NONE =>
+                  (RuneLspProjects.refresh (index,platform,documents,NONE);
+                   case RuneLspProjects.indexed (index,bare,documents,uri,fn () => false) of
+                     NONE => count "indexed: not settled by the index"
+                   | SOME {contexts=found,...} => compared ("indexed",uri,selection,contexts,found))
               fun one path=
                 let val uri=uriOf path
                     val timer=Timer.startRealTimer ()
