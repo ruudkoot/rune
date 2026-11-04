@@ -50,7 +50,7 @@ struct
   fun copyOf (dir : string, path : string) : string =
     let val full = if OS.Path.isAbsolute path then path else OS.Path.mkAbsolute {path = path, relativeTo = OS.FileSys.getDir ()}
     in OS.Path.joinDirFile {dir = S.unitsDir (dir, place), file = "copy-" ^ P.hash full} end
-  fun copied (stamp : S.stamp, bytes : string) : string = "rune-copy 2 " ^ S.stampText stamp ^ "\n" ^ bytes
+  fun copied (stamp : S.stamp, bytes : string) : string = "rune-copy 3 " ^ S.stampBytes stamp ^ "\n" ^ bytes
 
   (* an output just written: its stat, taken after at, and a copy of its
      bytes, read back, kept in the cache dir *)
@@ -100,7 +100,7 @@ struct
 
   (* what a link of units was: the hash of what was linked, and the output *)
   val links : (string * output) S.side =
-    {magic = "RML", version = 4, hash = fn (_, text) => P.hash text,
+    {magic = "RML", version = 5, hash = fn (_, text) => P.hash text,
      write = fn (w, (digest, out)) => (P.string (w, digest); woutput (w, out)),
      read = fn r => let val d = P.rstring r in (d, routput r) end}
   (* by the output's path from the root of the filesystem, since compiles
@@ -162,7 +162,7 @@ struct
   type record = {files : (string * S.stamp) list, indexes : rests list, probes : (string * bool) list,
                  at : LargeInt.int, output : output, made : output list, warnings : (Source.span * string) list}
   val records : record S.side =
-    {magic = "RMU", version = 6, hash = fn (_, text) => P.hash text,
+    {magic = "RMU", version = 7, hash = fn (_, text) => P.hash text,
      write = fn (w, {files, indexes, probes, at, output, made, warnings}) =>
        (P.list (fn (w, (p, st)) => (P.string (w, p); wstamp (w, st))) (w, files);
         P.list (fn (w, {dir, root, name, inputs}) => (P.string (w, dir); P.string (w, root); P.string (w, name); P.string (w, inputs)))

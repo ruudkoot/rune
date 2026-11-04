@@ -541,7 +541,7 @@ struct
      to date records of the index (UnitMemo): its damage too is a miss,
      and while the files' stats hold they are what it was made of. *)
   val magic = "RIX"
-  val version = 4
+  val version = 5
 
   (* what was read is held as its paths with their stats, and the hashes of
      their bytes in one string, which only a file whose stat moved reads *)
@@ -759,6 +759,7 @@ struct
      A record whose stats moved is written again with them, and one of the
      overlay has its time kept, as a query does *)
   fun stillRests ({dir, root, name, inputs} : rests) : bool =
+    Pass.timed "index" (fn () =>
     let
       fun holdsNow (record : record, store : string option) : bool =
         #inputs record = inputs
@@ -782,7 +783,7 @@ struct
                                         SOME record => holdsNow (record, SOME store)
                                       | NONE => false)
                          (stores root)
-    end
+    end)
 
   (* The index of the library in dir, with the hash of its bytes: what this
      compile knows, else a record that still holds, else made and kept;
@@ -791,6 +792,9 @@ struct
     case (if fresh then NONE else List.find (fn (d, _) => d = dir) (!known)) of
       SOME (_, (idx, h, _, _)) => (idx, h)
     | NONE =>
+        (* a stage of --pass-stats of its own, wherever a compile asks
+           (Pass.timed): one inside another stage is counted there *)
+        Pass.timed "index" (fn () =>
         let
           val () = if List.exists (fn d => d = dir) (!making)
                    then raise Usage ("library " ^ dir ^ " is written on itself (" ^ String.concatWith " <- " (dir :: !making) ^ ")")
@@ -890,7 +894,7 @@ struct
                 remember (idx, indexHash, #files record,
                           {dir = dir, root = root, name = name, inputs = #inputs record})
               end
-        end
+        end)
   (* the libraries an index is made against: the Basis Library, but for
      itself, and the libraries it is written on, with theirs, in order *)
   and dirsOf (root : string, dir : string, idx : index) : string list =

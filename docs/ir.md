@@ -102,6 +102,10 @@ stages of the pipeline above, the compile's stages are:
   declarations;
 * `lex`, the input files read and lexed (their tokens), and `select`, the
   files of the libraries they need chosen (those files);
+* `index`, a library's index taken ([build.md](build.md), *A library's
+  index*): its record read and held to its files, or the index made, and an
+  index held again where a compile asks whether it is up to date; one taken
+  inside another stage, as `select` takes them, is counted there;
 * `parse` and `elaborate`, whose size is the top-level declarations;
 * with `--units`, the work of the cache and of each unit (`cache-key`,
   `cache-find`, `unit-begin`, `unit-passes`, `unit-export`, ..., and `link`);

@@ -497,49 +497,53 @@ struct
   fun stampOf {dev : SysWord.word, ino : SysWord.word, size : Position.int, mtime : Time.time, ctime : Time.time} : stamp =
     {dev = wordOf dev, ino = wordOf ino, size = Position.toInt size,
      mtime = LargeInt.toInt (Time.toMicroseconds mtime), ctime = LargeInt.toInt (Time.toMicroseconds ctime)}
-  fun sameStamp (a : stamp, b : stamp) : bool =
-    #mtime a = #mtime b andalso #ctime a = #ctime b andalso #size a = #size b andalso #ino a = #ino b andalso #dev a = #dev b
+  (* the same stamp: compared whole, in one step whatever field differs,
+     so that what a compile counts does not turn on which one does, nor on
+     the second a file was written in (tests/runner/oracles.sml, the
+     reproducible counts) *)
+  fun sameStamp (a : stamp, b : stamp) : bool = a = b
   (* the later of its times, in seconds *)
   fun latestOf ({mtime, ctime, ...} : stamp) : LargeInt.int = LargeInt.fromInt (Int.max (mtime, ctime) div 1000000)
-  (* as text, for what a person reads *)
-  fun stampText ({dev, ino, size, mtime, ctime} : stamp) : string =
-    String.concatWith ":" (List.map Int.toString [dev, ino, size, mtime, ctime])
 
-  (* A whole number of a stat, or a time, kept as two below 2^28, so that
-     every host reads it as Pickle has it; one a host's int cannot hold reads
-     as ~1, which no stat and no time has *)
-  val half = 268435456
-  fun wwhole (w : P.writer, n : int) = (P.int (w, n div half); P.nat (w, n mod half))
-  fun rwhole (r : P.reader) : int = let val hi = P.rint r val lo = P.rnat r in (hi * half + lo) handle Overflow => ~1 end
-  (* A stamp, as its five numbers in eight bytes each, the most significant
-     first: read where a compile stats a file it rests on, so read with no
-     call a byte. A number below zero is written as ~1's bytes, which no
-     stat matches, and a host whose int cannot hold one reads ~1 *)
+  (* A whole number of a stat, or a time, in eight bytes, the most
+     significant first, onto acc: the same bytes and the same work for every
+     value, so that no stat and no clock reading changes what a compile
+     counts (UnitStore.withTemporary). One below zero is ~1's bytes, which
+     no stat matches; a host whose int cannot hold one reads ~1 *)
+  fun eight (n : int, acc : char list) : char list =
+    if n < 0 then List.tabulate (8, fn _ => #"\255") @ acc
+    else
+      let val x = Word.fromInt n
+          fun b s = Char.chr (Word.toInt (Word.andb (Word.>> (x, s), 0wxFF)))
+      in b 0w56 :: b 0w48 :: b 0w40 :: b 0w32 :: b 0w24 :: b 0w16 :: b 0w8 :: b 0w0 :: acc end
+  fun eightAt (s : string, k : int) : int =
+    let fun b k = Char.ord (String.sub (s, k))
+    in
+      if b k > 127 then ~1
+      else (((((((b k * 256 + b (k + 1)) * 256 + b (k + 2)) * 256 + b (k + 3)) * 256 + b (k + 4)) * 256 + b (k + 5)) * 256
+             + b (k + 6)) * 256 + b (k + 7)) handle Overflow => ~1
+    end
+  (* A stamp, as its five numbers' bytes: read where a compile stats a file
+     it rests on, so read with no call a byte *)
   val stampWidth = 40
-  fun wstamp (w : P.writer, {dev, ino, size, mtime, ctime} : stamp) =
-    let
-      (* n's eight bytes before acc, by the word's shifts: no division, and
-         one string of the five *)
-      fun put (n, acc) =
-        if n < 0 then List.tabulate (8, fn _ => #"\255") @ acc
-        else
-          let val x = Word.fromInt n
-              fun b s = Char.chr (Word.toInt (Word.andb (Word.>> (x, s), 0wxFF)))
-          in b 0w56 :: b 0w48 :: b 0w40 :: b 0w32 :: b 0w24 :: b 0w16 :: b 0w8 :: b 0w0 :: acc end
-    in P.bytes (w, String.implode (put (dev, put (ino, put (size, put (mtime, put (ctime, []))))))) end
+  fun stampBytes ({dev, ino, size, mtime, ctime} : stamp) : string =
+    String.implode (eight (dev, eight (ino, eight (size, eight (mtime, eight (ctime, []))))))
+  fun wstamp (w : P.writer, st : stamp) = P.bytes (w, stampBytes st)
   fun rstamp ({s, pos} : P.reader) : stamp =
     let
       val p = !pos
       val () = if p + stampWidth > String.size s then raise P.Bad "cut short" else ()
-      fun b k = Char.ord (String.sub (s, k))
-      fun field k =
-        if b k > 127 then ~1
-        else (((((((b k * 256 + b (k + 1)) * 256 + b (k + 2)) * 256 + b (k + 3)) * 256 + b (k + 4)) * 256 + b (k + 5)) * 256
-               + b (k + 6)) * 256 + b (k + 7)) handle Overflow => ~1
-      val st = {dev = field p, ino = field (p + 8), size = field (p + 16), mtime = field (p + 24), ctime = field (p + 32)}
+      val st = {dev = eightAt (s, p), ino = eightAt (s, p + 8), size = eightAt (s, p + 16), mtime = eightAt (s, p + 24),
+                ctime = eightAt (s, p + 32)}
     in pos := p + stampWidth; st end
-  fun wlarge (w : P.writer, n : LargeInt.int) = wwhole (w, LargeInt.toInt n handle Overflow => ~1)
-  fun rlarge (r : P.reader) : LargeInt.int = LargeInt.fromInt (rwhole r)
+  (* a time in seconds, as a stamp's number is *)
+  fun wlarge (w : P.writer, n : LargeInt.int) = P.bytes (w, String.implode (eight (LargeInt.toInt n handle Overflow => ~1, [])))
+  fun rlarge ({s, pos} : P.reader) : LargeInt.int =
+    let val p = !pos
+    in
+      if p + 8 > String.size s then raise P.Bad "cut short"
+      else (pos := p + 8; LargeInt.fromInt (eightAt (s, p)))
+    end
 
   (* How a file is statted, where the program can ask: Rune's own main sets
      it, from Posix.FileSys.ST, whose ctime not every host's Basis Library
@@ -570,7 +574,7 @@ struct
   type memo = {dir : string, config : string, cwd : string, entries : (stamp * LargeInt.int * string) StringMap.map ref,
                read : bool ref, dirty : bool ref}
   val memoSide : (string * stamp * LargeInt.int * string) list side =
-    {magic = "RSM", version = 3, hash = fn (_, text) => P.hash text,
+    {magic = "RSM", version = 4, hash = fn (_, text) => P.hash text,
      write = P.list (fn (w, (k, st, at, h)) => (P.string (w, k); wstamp (w, st); wlarge (w, at); P.string (w, h))),
      read = P.rlist (fn r =>
                        let
