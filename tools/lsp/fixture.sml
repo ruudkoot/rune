@@ -31,8 +31,9 @@
    MLton's do. --no-text writes the build files alone, for planning.
 
    The text is templates whose per-line costs were calibrated against real
-   code (E20). The numbers are SplitMix64's (lib/random), so a seed gives the
-   same tree on every host; they are not gen.py's, whose trees differ. *)
+   code (E20). A seed gives one tree: the numbers are SplitMix64's
+   (lib/random), not gen.py's, whose trees differ in the draws, not the
+   shape. *)
 structure RuneLspFixture =
 struct
   structure R=Random
