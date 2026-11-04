@@ -78,8 +78,10 @@ builds listed, `--zero` the implicit library of each file listed, in no build, a
 `--share` the second of two builds over one library, sharing and alone. Each takes
 `--before` to do as the server did before the build-system roadmap's M19.
 `--owned`, with `--builds`, holds the plan of a file of a library made from its
-owner's targets alone to what enrich and the choice of a context make of it, and
-fails a run where they differ; `--targets` makes every build listed a target.
+owner's targets alone, and of any other file the index of what each build names
+makes (`RuneLspProjects.indexed`), to what enrich and the choice of a context
+make of it, and fails a run where they differ; `--targets` makes every build
+listed a target.
 
 ```
 bin/runevm --heap-limit 4294967296 bin/rune-lsp-contexts.rbc --lib "$PWD/lib" --root "$PWD" \
@@ -127,7 +129,7 @@ check, a check after an edit elaborates a unit but the edited one and those whos
 usages broke, or the first check is slower.
 
 ```
-make test-lsp-scale          # make check: reads, memo, clients, bytes a line
+make test-lsp-scale          # make check: reads, memo, heap, clients, bytes a line
 make test-lsp-scale-times    # nightly, alone: 200 ms, 250 ms, 50 ms, a cold start
 make test-lsp-scale-oracle   # nightly: kept against fresh on every unit, 100k lines
 ```
