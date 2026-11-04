@@ -22,7 +22,11 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-45 structures have a page, with 129 members, of which 129 (100%) are described by a signature.
+130 structures have a page, with 302 members, of which 297 (98%) are described by a signature.
+
+| Structure | Members | Described |  |
+| --- | --- | --- | --- |
+| [`WideTextArb`](str/WideTextArb.md) | 5 | 0 | 0% |
 
 ---
 
