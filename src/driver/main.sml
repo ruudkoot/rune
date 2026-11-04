@@ -1035,8 +1035,8 @@ struct
                val (fp, self, named) = UnitFile.namedOf code
                val () = if fp <> Pipeline.fingerprint () then raise UnitFile.Bad "another instruction set" else ()
                val () = List.app (fn i => if i = self orelse UnitBasis.isLoaded i then () else raise UnitBasis.Missing i) named
-               val l = timed "cache-basis" (fn () => UnitBasis.lightLoad ({pickle = pickle, file = name, at = UnitBasis.counters ()},
-                                                                         identity, keys))
+               val l = timed "cache-basis" (fn () => UnitBasis.lightLoad ({pickle = pickle, sidecar = "", file = name,
+                                                                          at = UnitBasis.counters ()}, identity, keys, []))
                val code = lazily (fn () => let val (_, u) = timed "cache-code" (fn () => UnitFile.read code)
                                            in UnitBasis.relocate (u, was, name, others) end)
              in
@@ -1349,25 +1349,13 @@ struct
       fun apply (before',change,exports)=CompilerBuildContext.apply (buildContext,before',change,exports)
       (* a boundary's exports held to what is inside it; not after an error,
          or in a child of -j, which skips units, where they may be missing *)
-      (* On the warm path the environment holds no unit taken without its
-         basis, and what was bound is what the binders say (bound): of the
-         types it exports, the environment is the binders' units' *)
-      fun bindersChange (change : delta, exports) : delta =
-        let
-          val bound = List.foldl (fn (k, m) => StringMap.insert (m, k, ())) StringMap.empty (#bound change)
-          val tys = List.foldl (fn ((BuildFile.Ty, n), m) =>
-                                   if not (StringMap.member (bound, "t " ^ n)) then m
-                                   else (case UnitBasis.boundType n of SOME t => StringMap.insert (m, n, t) | NONE => m)
-                                 | (_, m) => m) StringMap.empty exports
-        in
-          {env = Env.make {vals = StringMap.empty, tys = tys, strs = StringMap.empty, origins = StringMap.empty},
-           directives = #directives change, declared = #declared change, bound = #bound change, sigs = #sigs change,
-           funs = #funs change, binders = #binders change}
-        end
+      (* on the warm path, of the types it exports, the environment is the
+         binders' units' (CompilerBuildContext.bindersChange) *)
       fun checkExports (change, exports) =
         if !failedBefore orelse isSome (!Parallel.child) then ()
         else Option.app (fn message => raise Options.Usage message)
-                        (CompilerBuildContext.exportProblem (if lazyOn then bindersChange (change, exports) else change, exports))
+                        (CompilerBuildContext.exportProblem
+                           (if lazyOn then CompilerBuildContext.bindersChange (change, exports) else change, exports))
       val libraryWalk = LibraryScope.walk (env, fixity, UnitBasis.binders, !librariesScoped)
       fun libraries (es,acc) =
         LibraryScope.libraries (libraryWalk, entryGroups es,

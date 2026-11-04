@@ -456,66 +456,103 @@ struct
      parameters in order *)
   fun tyconOf (TyStr {fcn, ...}) = Option.map #stamp (fcnIsName fcn)
 
-  (* the shortest path that names the type constructor in env: its own name
-     at the top where that is it, else the structures breadth first, a path
-     that ends in its own name before one that does not, then the first in
-     order; only names satisfying accepts are considered, and never a name of
-     the initial basis that no program can write (`_int64`, which the
-     library names Int64.int by) *)
-  fun pathOfWhen (env : env, c : tycon, accepts : string -> bool) : string option =
-    let
-      val stamp = #stamp c
-      fun named e n = case StringMap.find (tys e, n) of SOME ts => tyconOf ts = SOME stamp | NONE => false
-      fun search ([], _) = NONE
-        | search (_, 0) = NONE
-        | search (level : (string * env) list, depth : int) =
-            let
-              fun own (p, e) = if named e (#name c) andalso accepts (p ^ #name c) then SOME (p ^ #name c) else NONE
-              fun other (p, e) =
-                StringMap.foldli (fn (n, ts, found) => case found of
-                                                         SOME _ => found
-                                                       | NONE => if tyconOf ts = SOME stamp andalso not (String.isPrefix "_" n)
-                                                                    andalso accepts (p ^ n)
-                                                                 then SOME (p ^ n) else NONE)
-                                 NONE (tys e)
-              (* the library's own structures (Rune...) after the others,
-                 and the type's own long name (Int64.int, which FixedInt.int
-                 is too) and then a structure named for the type (WideString
-                 for its string, which WideChar's string is too) before the
-                 rest *)
-              fun private p = String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p
-              fun lower s = String.map Char.toLower s
-              fun namedFor p =
-                let val parts = String.tokens (fn ch => ch = #".") p
-                in List.length parts >= 2
-                   andalso String.isSubstring (lower (#name c)) (lower (List.nth (parts, List.length parts - 2)))
-                end
-              fun firstOf f =
-                case List.mapPartial f level of
-                  [] => NONE
-                | found =>
-                    let val public = List.filter (not o private) found
-                        val pick = case (List.filter (fn p => p = #name c) public, List.filter namedFor public) of
-                                     (p :: _, _) => [p]
-                                   | ([], p :: _) => [p]
-                                   | ([], []) => public
-                    in SOME (case pick of p :: _ => p | [] => hd found) end
-            in
-              case firstOf own of
-                SOME p => SOME p
-              | NONE =>
-                  case firstOf other of
-                    SOME p => SOME p
-                  | NONE =>
-                      search (List.concat (List.map (fn (p, e) => StringMap.foldri (fn (n, s, acc) => (p ^ n ^ ".", s) :: acc)
-                                                                                    [] (strs e)) level),
-                              depth - 1)
-            end
-    in
-      if named env (#name c) andalso accepts (#name c) then SOME (#name c) else search ([("", env)], 5)
-    end
+  (* ---- the path a type is named by (pathOf), and its key ----
 
-  fun pathOf (env : env, c : tycon) = pathOfWhen (env, c, fn _ => true)
+     The path that names a type constructor in an environment is the least,
+     by a key, of the paths that reach it there through at most four
+     structures: the fewest names; then the type's own name before another
+     (not one starting with _, as `_int64`, which no program can write); then,
+     below the top level, a path through a library structure (Rune...) last,
+     and of the others first one that is the type's name (a built-in's may be
+     a path, Word64.word), then one whose structure is named for the type,
+     then the rest; then the names in order, structure by structure. At the
+     top level the first other name in order is taken, whatever it is. So the
+     least path under each top-level name is its own business, and the least
+     of those is the environment's: a part of the environment not loaded
+     contributes the least keys its units' names reach (beyond, below; the
+     index, UnitBasis.unitPaths). *)
+  type pathKey = {own : bool, class : int, path : string list}
+  fun comparePaths ([], []) = EQUAL
+    | comparePaths ([], _) = LESS
+    | comparePaths (_, []) = GREATER
+    | comparePaths (a :: x, b :: y) = (case String.compare (a, b) of EQUAL => comparePaths (x, y) | other => other)
+  fun compareKeys (a : pathKey, b : pathKey) : order =
+    case Int.compare (List.length (#path a), List.length (#path b)) of
+      EQUAL =>
+        (case (#own a, #own b) of
+           (true, false) => LESS
+         | (false, true) => GREATER
+         | _ => (case Int.compare (#class a, #class b) of EQUAL => comparePaths (#path a, #path b) | other => other))
+    | other => other
+  fun leastKey (NONE, b) = b
+    | leastKey (a, NONE) = a
+    | leastKey (SOME a, SOME b) = if compareKeys (b, a) = LESS then SOME b else SOME a
+  (* the key of a path to c: its structures, and the type's name there *)
+  fun pathKey (name : string, structures : string list, n : string) : pathKey =
+    let
+      fun lower s = String.map Char.toLower s
+      (* a built-in type's name may be a path (Word64.word) *)
+      val class =
+        case structures of
+          [] => 0
+        | first :: _ =>
+            if String.isPrefix "Rune" first orelse String.isPrefix "RUNE" first then 3
+            else if String.concatWith "." (structures @ [n]) = name then 0
+            else if String.isSubstring (lower name) (lower (List.last structures)) then 1
+            else 2
+    in {own = n = name, class = class, path = structures @ [n]} end
+  (* the least key of a path below the structures given, with at most depth
+     names, to a type of that name and stamp, among the paths accepts takes;
+     each level of structures in order, and at the top level the first
+     other name only (pathOfWhen) *)
+  fun leastBelow (level : (string list * env) list, depth : int, name : string, stamp : int,
+                  accepts : string list -> bool) : pathKey option =
+    if depth = 0 orelse List.null level then NONE
+    else
+      let
+        fun own (p, e) =
+          case StringMap.find (tys e, name) of
+            SOME ts => if tyconOf ts = SOME stamp andalso accepts (p @ [name]) then SOME (pathKey (name, p, name)) else NONE
+          | NONE => NONE
+        fun other (p, e) =
+          StringMap.foldli (fn (n, ts, found) => case found of
+                                                   SOME _ => found
+                                                 | NONE => if tyconOf ts = SOME stamp andalso not (String.isPrefix "_" n)
+                                                              andalso accepts (p @ [n])
+                                                           then SOME (pathKey (name, p, n)) else NONE)
+                           NONE (tys e)
+        fun least f = List.foldl (fn (x, found) => leastKey (found, f x)) NONE level
+      in
+        case least own of
+          SOME k => SOME k
+        | NONE =>
+            case least other of
+              SOME k => SOME k
+            | NONE => leastBelow (List.concat (List.map (fn (p, e) => StringMap.foldri (fn (n, s, acc) => (p @ [n], s) :: acc)
+                                                                                      [] (strs e)) level),
+                                  depth - 1, name, stamp, accepts)
+      end
+  fun leastIn (env : env, c : tycon, accepts : string list -> bool) : pathKey option =
+    leastBelow ([([], env)], 5, #name c, #stamp c, accepts)
+
+  (* What the environment given does not hold of the one a unit stands in:
+     where analysis gives a unit a view (UnitBasis.lazyView) and not the
+     whole environment, the least key of a path to a type through a
+     top-level name the env has not, which the binders say what is (NONE,
+     none: the env is the whole) *)
+  fun nowhere (_ : env * tycon) : pathKey option = NONE
+  val beyond : (env * tycon -> pathKey option) ref = ref nowhere
+  val () = CompilerState.cellRoot ("Env.beyond", beyond)
+
+  (* the path that names c in env among those accepts takes (the REPL's) *)
+  fun pathOfWhen (env : env, c : tycon, accepts : string -> bool) : string option =
+    Option.map (String.concatWith "." o #path) (leastIn (env, c, fn p => accepts (String.concatWith "." p)))
+
+  (* the path, with what lies beyond env as outside says *)
+  fun pathOfWith (outside : env * tycon -> pathKey option) (env : env, c : tycon) : string option =
+    Option.map (String.concatWith "." o #path) (leastKey (leastIn (env, c, fn _ => true), outside (env, c)))
+
+  fun pathOf (env : env, c : tycon) = pathOfWith (!beyond) (env, c)
 
   (* The name a message gives a type constructor, where the name it was
      declared under would not do: the path that reaches it from env, the top
@@ -523,8 +560,9 @@ struct
      where `string` is `String.string`). NONE where the top level names it so,
      and where no path reaches it (a type of a structure being elaborated):
      the declared name is printed then (Types.qualifier). *)
-  fun qualifiedName (env : env, c : tycon) : string option =
-    case pathOf (env, c) of
+  fun qualifiedNameWith (outside : env * tycon -> pathKey option) (env : env, c : tycon) : string option =
+    case pathOfWith outside (env, c) of
       SOME p => if p = #name c then NONE else SOME p
     | NONE => NONE
+  fun qualifiedName (env : env, c : tycon) : string option = qualifiedNameWith (!beyond) (env, c)
 end

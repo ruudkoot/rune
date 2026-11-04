@@ -6,7 +6,7 @@
 
    Usage: rune-lsp-oracle --lib DIR --build FILE --scenarios FILE --out FILE
             [--focus] [--sample N] [--no-fresh] [--collect] [--require PATH,...]
-            [--record FILE | --against FILE] [--share] [--store DIR]
+            [--record FILE | --against FILE] [--share] [--store DIR] [--eager]
 
    A scenario is a line of tab-separated fields:
      NAME  REPS  FILE-SUFFIX  KIND  [ARG1  [ARG2]]
@@ -45,9 +45,14 @@
    kept one, with no file open at first, takes the units whose entries and
    sidecars hold from it. Without it the kept context reads no store, and
    the fresh ones never do.
+   --eager has the kept context load every unit's basis (C.Analysis.lazy):
+   without it, it loads them by need, and a fresh context, which is the
+   truth, loads every one. A kept context that goes back to loading every
+   basis (a unit read outside its view) says so (lazy refused).
    --require fails a run that did not take each of the paths named:
    placed walked rebound loaded cutoff broken failed cancelled query opened
-   shared stored. *)
+   shared stored byneed (a unit taken without its basis, and loading by need
+   never refused). *)
 structure RuneLspOracle =
 struct
   structure C=CompilerApi
@@ -104,7 +109,7 @@ struct
   fun diagnosticText (d:C.diagnostic)=String.concatWith "|" [#severity d,#file d,num (#start d),num (#stop d),num (#line d),num (#column d),#message d]
   fun candidateText (c:A.candidate)=String.concatWith "|" [#name c,#kind c,getOpt (#detail c,"-"),location (#definition c),
     String.concatWith ";" (List.map (String.concatWith ",") (#arguments c))]
-  val paths=["placed","walked","rebound","loaded","cutoff","broken","failed","cancelled","query","opened","shared","stored"]
+  val paths=["placed","walked","rebound","loaded","cutoff","broken","failed","cancelled","query","opened","shared","stored","byneed"]
   fun main arguments =
     let val lib=ref "" val build=ref "" val scenariosFile=ref "" val out=ref ""
         val focusing=ref false val fresh=ref true val sample=ref ~1 val required=ref [] val collecting=ref false
@@ -113,6 +118,7 @@ struct
         val againstRecord=ref false
         val shares=ref false
         val storeDir=ref NONE : string option ref
+        val eager=ref false
         fun options [] = ()
           | options ("--lib"::value::rest)=(lib:=value;options rest)
           | options ("--build"::value::rest)=(build:=value;options rest)
@@ -128,6 +134,7 @@ struct
           | options ("--require"::value::rest)=(required:=fields (#",",value);options rest)
           | options ("--share"::rest)=(shares:=true;options rest)
           | options ("--store"::dir::rest)=(storeDir:=SOME dir;options rest)
+          | options ("--eager"::rest)=(eager:=true;options rest)
           | options (other::_)=raise Fail ("unknown option: " ^ other)
         val ()=options arguments
         val compiler=C.session {lib=SOME (!lib),flags=[]}
@@ -162,6 +169,11 @@ struct
           (C.Project.sources (project ()))
         val context=A.create (compiler,{context="kept"})
         val ()=A.store (context,!storeDir)
+        val ()=A.lazy (context,not (!eager))
+        (* a kept context that goes back to loading every basis *)
+        val refused=ref 0
+        val ()=A.observe (context,SOME (fn {phase,file,...} => if phase<>"lazy-refused" then () else
+          (refused:= !refused+1;say ("  lazy refused: " ^ file ^ "\n"))))
         val placeholder=ref NONE : A.snapshot option ref
         val taken=ref [] : string list ref
         fun took path=if List.exists (fn other => other=path) (!taken) then () else taken:=path:: !taken
@@ -172,14 +184,14 @@ struct
         val ()=if not (!shares) then () else
           let val seed=A.create (compiler,{context="seed"})
               val pool=A.pool ()
-          in A.store (seed,NONE);A.share (seed,SOME pool);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
+          in A.store (seed,NONE);A.lazy (seed,not (!eager));A.share (seed,SOME pool);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
              (* an open unit is elaborated where a walk reaches it, and never
                 taken from another context: none is open at first *)
              A.share (context,SOME pool);A.focus (context,SOME []) end
         (* the store's sidecars, from an analysis of the files as they are *)
         val ()=case !storeDir of NONE => () | SOME dir =>
           let val seed=A.create (compiler,{context="seed"})
-          in A.store (seed,SOME dir);A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
+          in A.store (seed,SOME dir);A.lazy (seed,not (!eager));A.focus (seed,SOME []);ignore (checkIn (seed,fn () => false));A.close seed;
              A.focus (context,SOME []) end
         fun never ()=false
         (* a seeded choice of units, the same on every run *)
@@ -212,6 +224,7 @@ struct
         fun freshOf edited=
           let val other=A.create (compiler,{context="fresh"})
               val ()=A.store (other,NONE)
+              val ()=A.lazy (other,false)
               val ()=if !focusing andalso !againstRecord then A.focus (other,SOME edited) else ()
           in (other,checkIn (other,never)) end
         fun firstDifference (left,right)=
@@ -276,11 +289,11 @@ struct
               val seconds=Time.toReal (Timer.checkRealTimer timer)
               val after=Runtime.stats ()
               val {checked,reused}=A.work snapshot
-              val {walked,rebound,loaded,cutoff,broken,stored}=A.route snapshot
+              val {walked,rebound,loaded,cutoff,broken,stored,byNeed}=A.route snapshot
               val ()=(if walked then took "walked" else took "placed";
                       if !shares andalso name="cold" andalso loaded>0 then took "shared" else ();
                       if rebound>0 then took "rebound" else ();if loaded>0 then took "loaded" else ();
-                      if stored>0 then took "stored" else ();
+                      if stored>0 then took "stored" else ();if byNeed>0 then took "byneed" else ();
                       if cutoff>0 then took "cutoff" else ();if broken>0 then took "broken" else ();
                       if null (A.diagnostics snapshot) then () else took "failed")
               val ()=checks:= !checks+1
@@ -290,12 +303,13 @@ struct
           in emit ([("scenario",Json.String name),("rep",Json.int rep),("seconds",Json.Number (Real.toString seconds)),
                ("checked",Json.int checked),("reused",Json.int reused),("walked",Json.Bool walked),("rebound",Json.int rebound),
                ("loaded",Json.int loaded),("cutoff",Json.int cutoff),("broken",Json.int broken),("stored",Json.int stored),
+               ("byNeed",Json.int byNeed),
                ("diagnostics",Json.int (length (A.diagnostics snapshot))),("instructions",Json.int (#instructions after- #instructions before')),
                ("allocated",Json.int (#bytes after- #bytes before')),("live",Json.int live)] @
                (case agreed of NONE => [] | SOME same => [("same",Json.Bool same)]));
              say (name ^ " " ^ num rep ^ ": " ^ Real.fmt (StringCvt.FIX (SOME 3)) seconds ^ " s, checked " ^ num checked ^ ", reused " ^ num reused ^
                (if walked then ", walked" else ", placed") ^ ", rebound " ^ num rebound ^ ", loaded " ^ num loaded ^ ", cutoff " ^ num cutoff ^ ", broken " ^ num broken ^
-               (if stored>0 then ", stored " ^ num stored else "") ^
+               (if stored>0 then ", stored " ^ num stored else "") ^ (if byNeed>0 then ", by need " ^ num byNeed else "") ^
                (if !collecting then ", live " ^ Real.fmt (StringCvt.FIX (SOME 1)) (real live/1048576.0) ^ " MiB" else "") ^
                (case A.diagnostics snapshot of [] => "" | d::_ => ", diagnostic: " ^ #file d ^ ":" ^ num (#line d) ^ ": " ^ #message d) ^
                (case agreed of NONE => "" | SOME true => ", same as fresh" | SOME false => ", DIFFERS FROM FRESH") ^ "\n");
@@ -377,11 +391,13 @@ struct
               val ordinal=length (A.inputs closed) div 2
               val unit=valOf (A.unitAt (closed,{ordinal=ordinal}))
           in if null (A.occurrencesIn (closed,unit)) then () else took "opened" end
-        val missing=List.filter (fn path => not (List.exists (fn other => other=path) (!taken))) (!required)
+        val missing=List.filter (fn path => not (List.exists (fn other => other=path) (!taken)) orelse
+          (path="byneed" andalso !refused>0)) (!required)
         val unknown=List.filter (fn path => not (List.exists (fn other => other=path) paths)) (!required)
         val ()=A.close context
         val ()=TextIO.closeOut output
         val ()=Option.app TextIO.closeOut (!recording)
+        val ()=if !refused=0 then () else say ("lazy refused " ^ num (!refused) ^ " times\n")
         val ()=say ("checks " ^ num (!checks) ^ ", disagreements " ^ num (!disagreements) ^ " (only a definition's place in " ^ num (!bindingsApart) ^
           "), paths taken: " ^ String.concatWith " " (List.rev (!taken)) ^ "\n")
         val ()=if null missing andalso null unknown then () else

@@ -76,6 +76,8 @@ struct
      held between checks, a change at its own place, usages past a change. *)
   fun freshly (parent,inputs)=
     let val context=A.create (parent,{context="fresh"})
+        (* the truth: every unit's basis loaded *)
+        val ()=A.lazy (context,false)
         val result=analyze (context,inputs)
     in A.close context;result end
   val library=input ("library.sml","signature S=sig type t val make:int->t val read:t->int end\n" ^
@@ -92,7 +94,8 @@ struct
     let val found=A.route snapshot
     in check (name ^ ": walked " ^ Bool.toString (#walked found) ^ ", rebound " ^ Int.toString (#rebound found) ^ ", loaded " ^
         Int.toString (#loaded found) ^ ", cutoff " ^ Int.toString (#cutoff found) ^ ", broken " ^ Int.toString (#broken found),
-        found={walked=walked,rebound=rebound,loaded=loaded,cutoff=cutoff,broken=broken,stored=0}) end
+        {walked= #walked found,rebound= #rebound found,loaded= #loaded found,cutoff= #cutoff found,broken= #broken found,stored= #stored found}=
+          {walked=walked,rebound=rebound,loaded=loaded,cutoff=cutoff,broken=broken,stored=0}) end
   (* the same answers, unit by unit, closed units opened *)
   fun sameUnits (left,right)=A.diagnostics left=A.diagnostics right andalso A.types left=A.types right andalso
     List.all (fn ordinal => case (A.unitAt (left,{ordinal=ordinal}),A.unitAt (right,{ordinal=ordinal})) of
@@ -821,6 +824,100 @@ struct
         val ()=check ("a build's view hides what it hides, as in a compile",
           List.exists (fn diagnostic:C.diagnostic => String.isSubstring "two" (#message diagnostic)) (A.diagnostics viewed))
     in C.close parent end)
+  (* An overloading registered by a unit a walk takes again (E24's `type
+     mismatch between int and int` on HOL4): each walk enters again the
+     registrations of the units before a place, and only those, as where
+     every basis is loaded *)
+  fun overloadings () =
+    let val parent=compiler ()
+        val base=input ("base.sml","val zero=0\n","1")
+        val letters={file="letters.sml",revision="1",mode="ascii",annotations=["allowPrim"],
+          text="structure Letter=struct datatype char=L of int\n" ^
+            "  val op < = fn (L a,L b) => a<b val op <= = fn (L a,L b) => a<=b\n" ^
+            "  val op > = fn (L a,L b) => a>b val op >= = fn (L a,L b) => a>=b end\n_overload char Letter 8\n"}:A.input
+        val middle=input ("middle.sml","val nothing=()\n","1")
+        val client=input ("client.sml","val c:Letter.char= #\"a\"\nval less=Letter.< (c,c)\n","1")
+        val context=A.create (parent,{context="overloadings"})
+        val ()=A.focus (context,SOME ["client.sml"])
+        fun step (label,inputs)=
+          let val kept=analyze (context,inputs)
+          in check (label ^ " equals fresh" ^ (case A.diagnostics kept of d::_ => " (" ^ #message d ^ ")" | [] => ""),
+               sameUnits (kept,freshly (parent,inputs)) andalso null (A.diagnostics kept)) end
+        val ()=step ("cold",[base,letters,middle,client])
+        val moved=edited (base,#text base ^ "val one=1\n")
+        val ()=step ("a name added before the registration",[moved,letters,middle,client])
+        val ()=step ("and another after it",[moved,letters,edited (middle,#text middle ^ "val more=()\n"),client])
+        (* a registration after a unit is not that unit's *)
+        val early=input ("early.sml","val d:Letter.char= #\"b\"\n","1")
+        val late={file="late.sml",revision="1",mode="ascii",annotations=["allowPrim"],
+          text="structure Late=struct datatype char=M of int\n" ^
+            "  val op < = fn (M a,M b) => a<b val op <= = fn (M a,M b) => a<=b\n" ^
+            "  val op > = fn (M a,M b) => a>b val op >= = fn (M a,M b) => a>=b end\n"}:A.input
+        val use=input ("use.sml","val e:Late.char= #\"c\"\n","1")
+        val register={file="register.sml",revision="1",mode="ascii",annotations=["allowPrim"],text="_overload char Late 8\n"}:A.input
+        val inputs=[base,letters,late,use,register]
+        val ()=A.focus (context,SOME ["use.sml"])
+        val first=analyze (context,inputs)
+        val ()=check ("a literal before its type's registration is refused, as fresh",
+          not (null (A.diagnostics first)) andalso sameUnits (first,freshly (parent,inputs)))
+        val again=[base,letters,late,edited (use,#text use ^ "\n"),register]
+        val ()=check ("and at its place again",sameUnits (analyze (context,again),freshly (parent,again)))
+        val _=early
+    in A.close context;C.close parent end
+  (* A view a unit's names cannot give: an import renames (docs/build.md,
+     Clashes), and the binder of the new name declared the old. The context
+     loads every basis from then on, and checks again so (lazy-refused):
+     the answers are a fresh analysis's *)
+  fun refusedView () = scopedRoot ("structure:Public",[],fn {dir,settle,...} =>
+    let val parent=C.session {lib=SOME dir,flags=["--library","inner (structure Public as Open)"]}
+        val context=A.create (parent,{context="refused"})
+        val refused=ref []
+        val ()=A.observe (context,SOME (fn {phase,file,...} => if phase="lazy-refused" then refused:=file:: !refused else ()))
+        val ()=A.focus (context,SOME ["client.sml"])
+        val sources=[input ("other.sml","val nothing=()\n","1"),input ("client.sml","val seen=Open.y\n","1")]
+        val cold=analyze (context,sources)
+        val ()=check ("a renamed structure is seen by its new name",null (A.diagnostics cold) andalso null (!refused))
+        (* the Basis's unit moves its identity: the library's unit after it is
+           taken by need, and the client elaborated in a view *)
+        val output=TextIO.openOut (dir ^ "/basis/basis.sml")
+        val ()=(TextIO.output (output,"structure Base=struct val one=1 val two=2 end\n");TextIO.closeOut output;settle ())
+        val edited=[input ("other.sml","val nothing=()\n","1"),input ("client.sml","val seen=Open.y\n(* edited *)\n","2")]
+        val after=analyze (context,edited)
+        val ()=check ("the view of the new name is refused, and every basis loaded: " ^ String.concatWith "; " (!refused),
+          not (null (!refused)))
+        val ()=check ("and the answers are a fresh analysis's",null (A.diagnostics after) andalso sameUnits (after,freshly (parent,edited)))
+        val again=analyze (context,[input ("other.sml","val nothing=()\n","1"),input ("client.sml","val seen=Open.y\n","3")])
+        val ()=check ("and stay so",null (A.diagnostics again) andalso length (!refused)=1)
+    in A.close context;C.close parent end)
+  (* A unit taken by need and taken out again keeps the paths to its names
+     it had (the engine's paths), by which a unit after it that held by its
+     usages is loaded across its change: here middle, which a datatype's
+     change breaks, and user, which held by middle's O. Loading by need
+     elaborates no more units than loading every basis *)
+  fun pathsKept () =
+    let val parent=compiler ()
+        val first=input ("first.sml","val first=1\n","1")
+        val base=input ("base.sml","datatype shape=Round|Square\n","1")
+        val middle=input ("middle.sml","datatype other=O\nval s:shape=Round\n","1")
+        val user=input ("user.sml","val o'=O\n","1")
+        val moved=edited (first,"val first=1\nval second=2\n")
+        fun kept lazy=
+          let val context=A.create (parent,{context="paths"})
+              val ()=A.lazy (context,lazy)
+              val ()=A.focus (context,SOME ["base.sml"])
+              val _=analyze (context,[first,base,middle,user])
+              val taken=analyze (context,[moved,base,middle,user])
+              val inputs=[moved,around ("Round|Square","Round|Square|Oval") base,middle,user]
+              val last=analyze (context,inputs)
+          in A.close context;(taken,last,inputs) end
+        val (taken,byNeed,inputs)=kept true
+        val (_,whole,_)=kept false
+    in check ("a name added takes the units after it by need",#byNeed (A.route taken)>0);
+       check ("a datatype changed elaborates as many units by need as with every basis: " ^
+         Int.toString (#checked (A.work byNeed)) ^ " and " ^ Int.toString (#checked (A.work whole)),
+         #checked (A.work byNeed)= #checked (A.work whole));
+       check ("and equals fresh",sameUnits (byNeed,freshly (parent,inputs)));
+       C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -853,6 +950,9 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "past-the-first-error" CompilerAnalysisTests.pastFirstError,
      Test.it "flexible-record" CompilerAnalysisTests.flexibleRecord,
      Test.it "basis-view" CompilerAnalysisTests.basisView,
-     Test.it "two-builds-share-a-library" CompilerAnalysisTests.sharedLibrary]
+     Test.it "two-builds-share-a-library" CompilerAnalysisTests.sharedLibrary,
+     Test.it "overloadings-by-need" CompilerAnalysisTests.overloadings,
+     Test.it "refused-view" CompilerAnalysisTests.refusedView,
+     Test.it "paths-kept-by-need" CompilerAnalysisTests.pathsKept]
 end)
 val ()=CompilerAnalysisTestMain.main ()

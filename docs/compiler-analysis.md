@@ -149,6 +149,43 @@ terms, so that a unit whose names are the same is taken and not elaborated.
 says why one was not (1, no entry held; 2, no sidecar; 3, another compiler's;
 4, another unit's; 5, a binder another; 6, a place another; 7, it did not load).
 
+### Loading by need
+
+`lazy (context, true)`, the default, has a context load its units by need, as
+a compile's warm path does (`docs/units.md`, *A warm build*). A unit taken
+without being elaborated, from a store or from its own pickle again after a
+walk, whose usages hold by the units that bound their names, is registered and
+its names bound by the keys its basis binds, and its basis is not read: it is
+read when a later unit names what it declared. The keys, and the paths its
+top-level names reach (below), are kept with the unit and in its sidecar.
+Until a walk takes a unit so the environment is whole, and nothing differs.
+After, a unit elaborated sees a view: the initial environment, less what a
+unit has bound since, and of each name its text has the binding its binder
+gave (`UnitBasis.lazyView`). What it looked up must be in the view and what its
+basis names loaded; else the context loads every basis from then on and checks
+again so, which an observation `lazy-refused` reports with the reason. A
+question of what is visible at a place sees every name. Three things keep the
+answers a whole environment's:
+
+* A unit that registers an overloading, which the units after it use by no
+  name, is loaded whole at its place, and a walk enters its registrations
+  again as it goes, so that those of the units before a place, and only those,
+  stand there. E24's `type mismatch between int and int` on HOL4 was such a
+  registration lost.
+* A type is printed by the path the whole environment has (`Env.pathOf`): the
+  least, by a key, of the paths that reach it through at most four
+  structures, which is the least of the paths through each top-level name. A
+  view's own paths are compared with those of the top-level names it does not
+  hold, which an index of what each unit's top-level names reach gives by the
+  type's stamp (`UnitBasis.unitPaths`, `Env.beyond`). So a view prints
+  `RuneStatus.status`, as the whole does, and not `OS.Process.status`.
+* A walk that takes units out of the compiler state takes them out of the
+  tables of loading by need too.
+
+`route` counts the units taken without their basis as `byNeed`.
+`lazy (context, false)` loads every unit's basis; `tools/lsp/oracle.sml`'s
+fresh contexts, which are the truth, do.
+
 `observe (context, SOME callback)` enables synchronous phase observations
 between checks. Events identify phases, source units and work counts; callers
 supply clocks and host allocation measurements. `NONE` disables observation.

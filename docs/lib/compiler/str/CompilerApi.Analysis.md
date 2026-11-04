@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`COMPILER_API`](../sig/COMPILER_API.md) specifies it inside [`CompilerApi`](../str/CompilerApi.md) |
 | Status | required |
-| Members | 50 |
+| Members | 51 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -47,13 +47,14 @@ What each means is on [`COMPILER_API`](../sig/COMPILER_API.md); the types are th
 | val | [`id`](../sig/COMPILER_API.md#val-analysis.id) | `snapshot -> string` |
 | val | [`implementationsOf`](../sig/COMPILER_API.md#val-analysis.implementationsof) | `snapshot * location -> occurrence list` |
 | val | [`inputs`](../sig/COMPILER_API.md#val-analysis.inputs) | `snapshot -> input list` |
+| val | [`lazy`](../sig/COMPILER_API.md#val-analysis.lazy) | `t * bool -> unit` |
 | val | [`observe`](../sig/COMPILER_API.md#val-analysis.observe) | `t * (observation -> unit) option -> unit` |
 | val | [`occurrences`](../sig/COMPILER_API.md#val-analysis.occurrences) | `snapshot -> occurrence list` |
 | val | [`occurrencesIn`](../sig/COMPILER_API.md#val-analysis.occurrencesin) | `snapshot * string -> occurrence list` |
 | val | [`pool`](../sig/COMPILER_API.md#val-analysis.pool) | `unit -> pool` |
 | val | [`project`](../sig/COMPILER_API.md#val-analysis.project) | `snapshot -> string option` |
 | val | [`restore`](../sig/COMPILER_API.md#val-analysis.restore) | `t * checkpoint -> unit` |
-| val | [`route`](../sig/COMPILER_API.md#val-analysis.route) | `snapshot -> {broken : int, cutoff : int, loaded : int, rebound : int, stored : int, walked : bool}` |
+| val | [`route`](../sig/COMPILER_API.md#val-analysis.route) | `snapshot -> {broken : int, byNeed : int, cutoff : int, loaded : int, rebound : int, stored : int, walked : bool}` |
 | val | [`share`](../sig/COMPILER_API.md#val-analysis.share) | `t * pool option -> unit` |
 | val | [`signatureAt`](../sig/COMPILER_API.md#val-analysis.signatureat) | `snapshot * {offset : int, ordinal : int} -> call option` |
 | val | [`store`](../sig/COMPILER_API.md#val-analysis.store) | `t * string option -> unit` |

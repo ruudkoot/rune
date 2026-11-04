@@ -374,8 +374,9 @@ entries, and its own sidecars. It makes no store, and writes no entry.
 * **Sidecars.** A compile records no origins, so a unit is taken from its
   entry only with its sidecar, which an analysis of the same text wrote: the
   origins its basis's names have, its notes, its types, the names its text
-  mentions, the binder of each name it looked up, and the compiler that wrote
-  it. A sidecar is kept by the hash of the source and its format, not by the
+  mentions, the binder of each name it looked up, the keys its names are bound
+  by and the paths its top-level names reach (with which it is taken by need,
+  below), and the compiler that wrote it. A sidecar is kept by the hash of the source and its format, not by the
   compiler: after an upgrade it is still found, and taken for nothing (a hint,
   never an answer); the unit is elaborated and its sidecar written again. One
   whose unit is another, or whose names another unit binds now, or whose
@@ -397,29 +398,59 @@ third run shows both: a name added to `source.sml`, cold from the store, breaks
 no usage, and a constructor added breaks those that used the datatype.
 
 Cold from a store, in process, no file open (`bin/rune-lsp-oracle --focus --store
-DIR --no-fresh --collect`, a seed context having written the sidecars; 2026-11-03,
-at a load of 4 to 7 on 16 processors: seconds are indications, VM instructions
-the claim; lines are the program's, the Basis Library's added but on the
-generated build):
+DIR --no-fresh --collect`, a seed context having written the sidecars; 2026-11-04,
+one store each, by need, the default, and with every basis loaded, `--eager`;
+VM instructions the claim, and seconds the best of three runs each on a
+processor of its own, but the generated build's, the better of two at a load
+of 2, its runs on a processor of their own having met a load of 13 to 17;
+lines are the program's, the Basis Library's added but on the generated
+build):
 
-| Build | Lines | Units taken from the store | Cold | VM instructions | Live after | A line |
+| Build | Lines | Units from the store, by need | Cold, every basis / by need | VM instructions | Live after | A line |
 |---|---:|---:|---:|---:|---:|---:|
-| `rune.build` | 67,338 | 259 of 260 | 0.41 s | 0.34G | 28.3 MiB | 0.43 KB |
-| HOL4's `src/boss` closure | 231,714 | 907 of 910 | 1.37 s | 1.09G | 100.5 MiB | 0.44 KB |
-| A generated build of 1.13M lines, 9,021 files (`gen-as-run.py`, `--domains 32`) | 1,133,346 | 9,015 of 9,016 | 13.8 s | 10.3G | 567 MiB | 0.51 KB |
-| MLton's 606 files | 217,107 | 756 of 764 | 32.8 s | 18.5G | 1,515 MiB | 7.0 KB |
+| `rune.build` | 67,338 | 259 of 260, 253 | 0.42 / 0.35 s | 0.346G / 0.314G | 28.4 / 19.6 MiB | 0.43 / 0.30 KB |
+| HOL4's `src/boss` closure | 231,714 | 907 of 910, 902 | 1.18 / 1.05 s | 1.099G / 1.005G | 100.6 / 69.3 MiB | 0.44 / 0.31 KB |
+| A generated build of 1.13M lines, 9,021 files (`gen-as-run.py`, `--domains 32`) | 1,133,346 | 9,015 of 9,016, 9,014 | 14.8 / 7.6 s | 10.33G / 6.34G | 567.8 / 350.0 MiB | 0.51 / 0.32 KB |
+| MLton's 606 files | 217,107 | 762 of 764, 755 | 25.1 / 1.13 s | 7.37G / 1.53G | 1,487.7 / 118.7 MiB | 7.0 / 0.56 KB |
 
 A unit is not taken where no entry of a compile holds by its binders, as on
 `rune.build` at the defaults the Basis's `seal_textio.sml`, whose compile took
 its entry from the frozen libraries across a change, by fingerprints a static
 layer does not say; or where its sidecar is another unit's, two files with one
-text, as HOL4's two `Systeml.sig`. MLton misses 2 KB a line: its signatures
-are copied into each unit that loads them, so that loaded eagerly its static
-layers hold 7 KB a line, from the store or from its own elaboration (1.58 GiB
-live with its units closed, of which the entries' texts, pickles, origins,
-notes and usages are 0.10 GiB); only a load by need (M6's lazy view) would
-leave them unloaded, and the analysis does not load so yet.
+text, as HOL4's two `Systeml.sig`. Of those taken, a unit that registers an
+overloading is loaded whole (below); the rest only where a unit elaborated
+after them names what they declared. MLton's signatures are copied into each
+unit that loads them, so that its static layers hold 7 KB a line when every
+basis is loaded; by need it holds 0.56 KB a line, within 2 KB.
 
+### Loading by need
+
+A context loads its units by need (`docs/compiler-analysis.md`, *Loading by
+need*), as a compile's warm path does: a unit taken from the store, or from
+its pickle again after a walk, whose usages hold by the units that bound their
+names, is registered and its names bound, and its basis is not read until a
+unit elaborated after it names what it declared; that unit sees what its text
+names. The answers are a whole environment's. `make test-lsp-oracle`'s second
+and third runs and the corpora's take units so, hold the context to a fresh
+one that loads every basis, and fail where none was taken so, or where a unit
+read outside its view, which has the context load every basis from then on.
+HOL4's datatype edit of `Feedback.sig` and MLton's of `control-flags.sig`,
+which gave E24's false type errors under its lazy world, agree with a fresh
+analysis on every unit: those were an overloading's registration a walk lost,
+which a unit that registers one, loaded whole at its place, no longer loses,
+and the tables of units a walk took out, which it now clears.
+
+An edit costs a little more: a unit taken by need costs a registration where
+it cost a load, but each unit elaborated after an interface edit sees a view
+and loads the bases its text names, and a unit taken by need has the paths its
+names reach entered. HOL4's closure, no file open, kept context alone
+(`--no-fresh`), in VM instructions: a comment or a body edit the same; a name
+added to `Feedback.sml` 0.37G by need against 0.29G with every basis; a
+constructor added to its datatype 5.94G against 5.56G, elaborating 204 units
+either way. From no store,
+a cold check elaborates every unit and so loads every basis: MLton holds
+1.58 GiB after it, no file open, as before, and 184 MiB once a name added to
+`layout.sml` and taken out again has had the 561 units after it taken by need.
 
 ## Workspaces and build contexts
 

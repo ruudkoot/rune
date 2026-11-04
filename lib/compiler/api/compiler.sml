@@ -227,6 +227,7 @@ struct
     val pool=A.pool
     fun share (Analysis {analysis,...},value)=A.share(analysis,value)
     fun store (Analysis {analysis,...},value)=A.store(analysis,value)
+    fun lazy (Analysis {analysis,...},value)=A.lazy(analysis,value)
     fun compact (Analysis {analysis,...})=A.compact analysis
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))

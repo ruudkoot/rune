@@ -3825,6 +3825,126 @@ struct
          imports = List.map (fn (ix, k) => (ix, key k)) (#imports u), exports = #exports u}
       end
 
+  (* ---- the path index (the build-system roadmap's M20; Env.beyond) ----
+
+     The path a type is printed by is the least, by Env.compareKeys, of the
+     paths the whole environment has to it (Env.pathOf), and each top-level
+     name's paths are its binder's alone. So a unit's paths, worked out once
+     from what it declared, say what each of its top-level type and
+     structure names reaches, and a view (lazyView) that holds a few units'
+     names prints a type as the whole environment would: by the least of
+     its own paths and those of the names it does not hold that their
+     binders' paths have (beyondWith). *)
+  (* a top-level name's key ("t n", "s S"), a type name it reaches by its
+     stable name (stableName), and the least key of a path there to it *)
+  type unitPath = string * string * Env.pathKey
+  (* whether the units loaded have their paths worked out: an analysis whose
+     units are loaded by need *)
+  val indexPaths = ref false
+  val () = CompilerState.cellRoot ("UnitBasis.indexPaths", indexPaths)
+  (* each loaded unit's paths, by its identity *)
+  val unitPathsOf : unitPath list StringMap.map ref = ref StringMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.unitPathsOf", unitPathsOf)
+  (* the paths of the units loaded, by the stamp of the type they reach:
+     its top-level name's key, the unit's identity, the key *)
+  val pathIndex : (string * string * Env.pathKey) list IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("UnitBasis.pathIndex", pathIndex)
+
+  (* a unit's paths, from what it declared, its names in the session's
+     ranges (a unit loaded) *)
+  fun unitPaths (delta : Env.env) : unitPath list =
+    let
+      val found = ref []
+      fun note (key, stamp, k) = case stableName (kTycon, stamp) of SOME s => found := (key, s, k) :: !found | NONE => ()
+      (* each type name at most once under a name: its least key *)
+      fun tycon (Env.TyStr {fcn, ...}) = T.fcnIsName fcn
+      fun top (n, ts) =
+        case tycon ts of
+          SOME c => if n = #name c orelse not (String.isPrefix "_" n) then note ("t " ^ n, #stamp c, Env.pathKey (#name c, [], n)) else ()
+        | NONE => ()
+      fun under (s, e) =
+        let
+          val least : Env.pathKey IntMap.map ref = ref IntMap.empty
+          fun offer (stamp, k) =
+            case IntMap.find (!least, stamp) of
+              SOME old => if Env.compareKeys (k, old) = LESS then least := IntMap.insert (!least, stamp, k) else ()
+            | NONE => least := IntMap.insert (!least, stamp, k)
+          fun level ([], _) = ()
+            | level (_, 0) = ()
+            | level (envs : (string list * Env.env) list, depth : int) =
+                (List.app (fn (p, e) =>
+                             (* in an environment, a type's own name, and the
+                                first other in order (Env.leastBelow) *)
+                             let val others = ref IntMap.empty
+                             in StringMap.appi (fn (n, ts) =>
+                                                  case tycon ts of
+                                                    SOME c =>
+                                                      if n = #name c then offer (#stamp c, Env.pathKey (#name c, p, n))
+                                                      else if String.isPrefix "_" n orelse IntMap.member (!others, #stamp c) then ()
+                                                      else (others := IntMap.insert (!others, #stamp c, ());
+                                                            offer (#stamp c, Env.pathKey (#name c, p, n)))
+                                                  | NONE => ()) (Env.tys e)
+                             end) envs;
+                 level (List.concat (List.map (fn (p, e) => StringMap.foldri (fn (n, x, acc) => (p @ [n], x) :: acc) [] (Env.strs e))
+                                              envs),
+                        depth - 1))
+        in level ([([s], e)], 4); IntMap.appi (fn (stamp, k) => note ("s " ^ s, stamp, k)) (!least) end
+    in
+      StringMap.appi top (Env.tys delta);
+      StringMap.appi under (Env.strs delta);
+      List.rev (!found)
+    end
+
+  (* a type name's stamp in the session, by its stable name *)
+  fun stampOfStable (s : string) : int option =
+    if String.isPrefix "b" s andalso not (String.isSubstring "#" s) then Int.fromString (String.extract (s, 1, NONE))
+    else
+      case List.rev (String.fields (fn c => c = #"#") s) of
+        n :: (rest as _ :: _) =>
+          (case (Int.fromString n, loadedAs (String.concatWith "#" (List.rev rest))) of
+             (SOME i, SOME u) => if i < Vector.sub (#count u, kTycon) then SOME (Vector.sub (#base u, kTycon) + i) else NONE
+           | _ => NONE)
+      | _ => NONE
+
+  (* a unit's paths entered: by its identity, and by the stamps they reach *)
+  fun enterPaths (identity : string, paths : unitPath list) : unit =
+    (unitPathsOf := StringMap.insert (!unitPathsOf, identity, paths);
+     List.app (fn (key, s, k) =>
+                 case stampOfStable s of
+                   SOME stamp => pathIndex := IntMap.insert (!pathIndex, stamp, (key, identity, k)
+                                                                              :: getOpt (IntMap.find (!pathIndex, stamp), []))
+                 | NONE => ()) paths)
+  fun pathsOfUnit (identity : string) : unitPath list option = StringMap.find (!unitPathsOf, identity)
+  (* the gone units' paths out *)
+  fun forgetPaths (dead : unit StringMap.map) : unit =
+    (unitPathsOf := StringMap.filteri (fn (i, _) => not (StringMap.member (dead, i))) (!unitPathsOf);
+     pathIndex := IntMap.foldli (fn (stamp, l, m) =>
+                                   case List.filter (fn (_, i, _) => not (StringMap.member (dead, i))) l of
+                                     [] => m
+                                   | kept => IntMap.insert (m, stamp, kept)) IntMap.empty (!pathIndex))
+
+  (* What lies beyond env (Env.beyond) where binders say what the whole
+     environment's top-level names are: of those env has not, the least key
+     of the paths their binders' units have to the type *)
+  fun beyondWith (b : string StringMap.map, index : (string * string * Env.pathKey) list IntMap.map)
+                 (env : Env.env, c : T.tycon) : Env.pathKey option =
+    case IntMap.find (index, #stamp c) of
+      NONE => NONE
+    | SOME entries =>
+        let
+          fun held key =
+            case String.fields (fn ch => ch = #" ") key of
+              ["t", n] => StringMap.member (Env.tys env, n)
+            | ["s", n] => StringMap.member (Env.strs env, n)
+            | _ => true
+        in
+          List.foldl (fn ((key, identity, k), best) =>
+                        if StringMap.find (b, key) = SOME identity andalso not (held key) then Env.leastKey (best, SOME k) else best)
+                     NONE entries
+        end
+  (* as the binders and the units loaded are now *)
+  fun beyondNow () : Env.env * T.tycon -> Env.pathKey option = beyondWith (!binders, !pathIndex)
+
   (* ---- the warm path (the build-system roadmap's D25, a and d) ----
 
      A session may take a unit from the cache without loading its basis
@@ -3844,12 +3964,14 @@ struct
      basis or code names that is not loaded, and the driver compiles the
      whole build again with every basis loaded (Unviewable). Off (lazy
      false) in the REPL, the compiler library's sessions and wherever the
-     driver keeps every basis. *)
+     driver keeps every basis; on in the library's analysis, whose views
+     are lazyView's, by default (the compiler library's Analysis.lazy). *)
   (* what a view could not give, or a compile under one read outside it:
      the driver compiles again with every basis loaded *)
   exception Unviewable of string
+  (* sidecar: the origins of its names, as load reads them (an analysis's) *)
   datatype lazyUnit =
-    Deferred of {pickle : string, file : string, at : int vector, names : string list}
+    Deferred of {pickle : string, sidecar : string, file : string, at : int vector, names : string list}
   | Materialised of {delta : Env.env, sigs : (string * SigMatch.sigma) list, funs : (string * Elaborate.funinfo) list}
   val lazy = ref false
   val () = CompilerState.cellRoot ("UnitBasis.lazy", lazy)
@@ -3873,7 +3995,7 @@ struct
 
   fun startLazy (on : bool) : unit =
     (lazy := on; lazyUnits := StringMap.empty; lazyOrder := []; alwaysNeeded := []; lateLoading := false;
-     lateCount := 0; deferredCount := 0; viewKeys := NONE)
+     lateCount := 0; deferredCount := 0; viewKeys := NONE; unitPathsOf := StringMap.empty; pathIndex := IntMap.empty)
 
   (* load {pickle, sidecar, file, at}: the unit whose basis pickle is, loaded
      after the units of the session: its numbers given the names of the
@@ -4143,6 +4265,8 @@ struct
       lastBindings := {sigs = sigs, funs = funs, overloads = overloads};
       if !lateLoading then () else register u;
       notePaths (u, delta, sigs);
+      (* a unit loaded late has its paths from its light load *)
+      if !indexPaths andalso not (!lateLoading) then enterPaths (identity, unitPaths delta) else ();
       if !lazy then lazyUnits := StringMap.insert (!lazyUnits, identity, Materialised {delta = delta, sigs = sigs, funs = funs})
       else ();
       {unit = u, delta = delta, directives = directives, sigs = List.map #1 sigs, funs = List.map #1 funs,
@@ -4196,15 +4320,23 @@ struct
     handle Overflow => raise P.Bad "a number out of range"
          | Subscript => raise P.Bad "out of range"
 
+  (* a unit's names bound by the keys its basis binds (bindKeys), as bind
+     binds them *)
+  fun bindByKeys (identity : string, keys : string list) : unit =
+    List.app (fn k => (binders := StringMap.insert (!binders, k, identity); bindLog := k :: !bindLog)) keys
+
   (* A unit taken without its basis: registered, its names given the ranges
      load would give them, and bound by the keys its basis binds; nothing of
      it in the tables by stamp until it is materialised. Missing where the
      basis names a unit the session has not *)
-  fun lightLoad ({pickle : string, file : string, at : int vector}, identity : string, keys : string list) : result =
+  (* sidecar, paths: an analysis's (load, unitPaths); a compile's "" and none *)
+  fun lightLoad ({pickle : string, sidecar : string, file : string, at : int vector}, identity : string, keys : string list,
+                 paths : unitPath list) : result =
     let
       val {used, uname, static, identities, counts, directives, ...} = header pickle
       val () = if String.isPrefix (uname ^ "@") identity then () else raise P.Bad "another unit's identity"
-      val () = List.app (fn i => if isSome (StringMap.find (!byIdentity, i)) then () else raise Missing i) identities
+      (* by the identity each is loaded under (alias) *)
+      val () = List.app (fn i => if isSome (loadedAs i) then () else raise Missing i) identities
       val () = if isSome (StringMap.find (!byIdentity, identity)) then raise Missing (identity ^ " (loaded twice)") else ()
       val base = Vector.tabulate (3, fn k => Vector.sub (at, k) + Vector.sub (used, k))
       val () = List.app (fn k => counter k := Vector.sub (base, k) + Vector.sub (counts, k)) [kStamp, kTycon, kTvar]
@@ -4212,10 +4344,12 @@ struct
       fun pref (p, k) = if String.isPrefix p k then SOME (String.extract (k, String.size p, NONE)) else NONE
     in
       register u;
-      lazyUnits := StringMap.insert (!lazyUnits, identity, Deferred {pickle = pickle, file = file, at = at, names = identities});
+      lazyUnits := StringMap.insert (!lazyUnits, identity, Deferred {pickle = pickle, sidecar = sidecar, file = file, at = at,
+                                                                     names = identities});
+      if !indexPaths then enterPaths (identity, paths) else ();
       lazyOrder := identity :: !lazyOrder;
       deferredCount := !deferredCount + 1;
-      List.app (fn k => (binders := StringMap.insert (!binders, k, identity); bindLog := k :: !bindLog)) keys;
+      bindByKeys (identity, keys);
       if List.exists (fn k => String.isPrefix "o " k) keys then alwaysNeeded := identity :: !alwaysNeeded else ();
       {unit = u, delta = Env.empty, directives = directives,
        sigs = List.mapPartial (fn k => pref ("sig ", k)) keys, funs = List.mapPartial (fn k => pref ("fun ", k)) keys,
@@ -4234,17 +4368,21 @@ struct
   fun materialise (seeds : string list) : unit =
     let
       val marked = ref StringMap.empty
-      fun visit i =
-        if StringMap.member (!marked, i) then ()
-        else
-          (marked := StringMap.insert (!marked, i, ());
-           case StringMap.find (!lazyUnits, i) of
-             SOME (Deferred {names, ...}) => List.app visit names
-           | _ => ())
+      (* by the identity each is loaded under (alias) *)
+      fun visit i' =
+        let val i = canonical i'
+        in
+          if StringMap.member (!marked, i) then ()
+          else
+            (marked := StringMap.insert (!marked, i, ());
+             case StringMap.find (!lazyUnits, i) of
+               SOME (Deferred {names, ...}) => List.app visit names
+             | _ => ())
+        end
       val () = List.app visit seeds
       fun late i =
         case StringMap.find (!lazyUnits, i) of
-          SOME (Deferred {pickle, file, at, ...}) =>
+          SOME (Deferred {pickle, sidecar, file, at, ...}) =>
             if not (StringMap.member (!marked, i)) then ()
             else
               let
@@ -4255,7 +4393,7 @@ struct
               in
                 lateLoading := true;
                 lateCount := !lateCount + 1;
-                ignore (loadKnown ({pickle = pickle, sidecar = "", file = file, at = at}, SOME i, [])) handle e => (back (); raise e);
+                ignore (loadKnown ({pickle = pickle, sidecar = sidecar, file = file, at = at}, SOME i, [])) handle e => (back (); raise e);
                 back ()
               end
         | _ => ()
@@ -4323,6 +4461,39 @@ struct
       Elaborate.funs := funs;
       Env.plus (env0, Env.make {vals = vals, tys = tys, strs = strs, origins = origins})
     end
+
+  (* An analysis's view (the compiler library's, where its units are loaded
+     by need): the initial environment, less the names a unit has bound
+     since, which the view takes from their binders where names has them; and
+     what lies beyond it as the binders say (Env.beyond), so that a type is
+     printed by the path the whole environment has. names NONE: every name,
+     which a question of what is visible wants *)
+  (* the initial environment less what binders b say a unit has bound *)
+  fun initialLess (b : string StringMap.map) : Env.env =
+    let val Env.Env {vals, tys, ...} = Env.initial
+    in Env.make {vals = StringMap.filteri (fn (n, _) => not (StringMap.member (b, "v " ^ n))) vals,
+                 tys = StringMap.filteri (fn (n, _) => not (StringMap.member (b, "t " ^ n))) tys,
+                 strs = StringMap.empty, origins = StringMap.empty} end
+  fun lazyView (sigs0 : SigMatch.sigma StringMap.map, funs0 : Elaborate.funinfo StringMap.map,
+                names : unit StringMap.map option) : Env.env =
+    let val env = view (initialLess (!binders), sigs0, funs0, names)
+    in Env.beyond := beyondNow (); env end
+  (* the names a list of usages' keys looks up first, which a view of them
+     takes *)
+  fun namesOfKeys (keys : string list) : unit StringMap.map =
+    List.foldl (fn (k, m) =>
+                  case String.fields (fn c => c = #" ") k of
+                    [kind, name] =>
+                      if List.exists (fn x => x = kind) ["v", "t", "s", "sig", "fun", "inl", "inlv"]
+                      then StringMap.insert (m, hd (String.fields (fn c => c = #".") name), ()) else m
+                  | _ => m) StringMap.empty keys
+  (* what a unit loaded by need declared, loaded where it was not *)
+  fun materialisedOf (identity : string) : {delta : Env.env, sigs : (string * SigMatch.sigma) list,
+                                            funs : (string * Elaborate.funinfo) list} option =
+    (materialise [identity];
+     case StringMap.find (!lazyUnits, canonical identity) of
+       SOME (Materialised m) => SOME m
+     | _ => NONE)
 
   (* The mask (the build-system roadmap's D20): a compile given what its
      entry's usages name and no more, each structure cut down to the paths
@@ -4433,21 +4604,24 @@ struct
   (* Whether a compile under the view read and made only what was loaded:
      every name it looked up in the view (inView), and every unit its basis
      and code name loaded. NONE where so, else what was not *)
-  fun closed (pickle : string, u : Link.unitCode, names : string list) : string option =
+  fun closedWith (pickle : string, named : string list, names : string list) : string option =
     case List.find (not o inView) names of
       SOME k => SOME ("its usage " ^ k)
     | NONE =>
         Option.map (fn i => "the unit " ^ i)
-                   (List.find (fn i => isDeferred i) (namedBy pickle @ namedByCode u))
+                   (List.find (fn i => isDeferred (canonical i)) (namedBy pickle @ named))
+  fun closed (pickle : string, u : Link.unitCode, names : string list) : string option =
+    closedWith (pickle, namedByCode u, names)
 
   (* the units an entry's basis and code name, or those of their names that
      stand in for them, materialised: what its load and its remapping read *)
-  fun materialiseFor (pickle : string, u : Link.unitCode) : unit =
+  fun materialiseNamed (named : string list) : unit =
     let
-      val named = namedBy pickle @ namedByCode u
-      fun now i = if isSome (StringMap.find (!byIdentity, i)) then SOME i
-                  else Option.map #identity (List.find (fn (l : loaded) => #name l = nameOf i) (!units))
+      fun now i = case loadedAs i of
+                    SOME l => SOME (#identity l)
+                  | NONE => Option.map #identity (List.find (fn (l : loaded) => #name l = nameOf i) (!units))
     in materialise (List.mapPartial now named @ !alwaysNeeded) end
+  fun materialiseFor (pickle : string, u : Link.unitCode) : unit = materialiseNamed (namedBy pickle @ namedByCode u)
 
   (* ---- a session whose units stay loaded between checks ---- *)
 
@@ -4483,6 +4657,14 @@ struct
             abandon low; setCounters top);
       fpMemo := StringMap.empty; refMemo := StringMap.empty; schemeMemo := IntMap.empty; stampFps := IntTable.table 64;
       sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
+      (* and what a load by need kept of them (M6's tables): a view after
+         this would take a gone load's environment, whose names are of no
+         unit, and a materialise load one late at its old place *)
+      lazyUnits := StringMap.filteri (fn (i, _) => not (StringMap.member (dead, i))) (!lazyUnits);
+      lazyOrder := List.filter (fn i => not (StringMap.member (dead, i))) (!lazyOrder);
+      alwaysNeeded := List.filter (fn i => not (StringMap.member (dead, i))) (!alwaysNeeded);
+      deferredCount := StringMap.foldl (fn (Deferred _, n) => n + 1 | (_, n) => n) 0 (!lazyUnits);
+      forgetPaths dead;
       kept
     end
 
