@@ -15,7 +15,10 @@ struct
   type entry = BasisManifest.entry
   type names = BasisManifest.names
   val providers = BasisManifest.providers
-  fun readManifest () = BasisManifest.readManifest (libDir ())
+  (* a library's index (LibraryIndex: derived from its build file, kept in
+     the store), and the Basis Library's *)
+  fun indexEntries (dir : string) : entry list = LibraryIndex.entries {root = libRoot (), dir = dir}
+  fun readManifest () = indexEntries (libDir ())
   (* what each scope of this compile sees (BasisManifest), which choosing its
      files works out *)
   val librariesScoped = ref (BasisManifest.noScopes "")
@@ -26,8 +29,8 @@ struct
   (* The libraries of --library and those they are written on, in the order
      they are compiled, with the entries of each. *)
   fun libraryManifests () : (string * entry list) list =
-    List.map (fn d => (d, BasisManifest.readManifest d))
-             (BasisManifest.libraries (libRoot (), !Options.libraries)
+    List.map (fn d => (d, indexEntries d))
+             (LibraryIndex.libraries (libRoot (), !Options.libraries)
               handle BasisManifest.Usage why => raise Options.Usage why)
 
   (* a file of the Basis Library, which may use _prim, and is compiled before
@@ -136,7 +139,7 @@ struct
       val ok = ref true
       val declaredKinds = ref StringMap.empty : unit StringMap.map ref
       fun declarationKey (dir,kind,name) = dir ^ "\000" ^ kind ^ " " ^ name
-      fun complain (e : entry, msg) = (eprintln ("rune: " ^ #dir e ^ "/MANIFEST: " ^ #file e ^ ": " ^ msg); ok := false)
+      fun complain (e : entry, msg) = (eprintln ("rune: the index of " ^ #dir e ^ ": " ^ #file e ^ ": " ^ msg); ok := false)
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       fun show l = String.concatWith " " l
       (* A file of the basis library is checked against the basis library;
@@ -190,7 +193,7 @@ struct
                                                 String.substring (Ast.decToString d ^ "                    ", 0, 20)))
                           prog
         in List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier (#provides e) end
-      val scopes = BasisManifest.scopes {root = libRoot (), building = !Options.build, names = !Options.libraries, headed = false,
+      val scopes = LibraryIndex.scopes {root = libRoot (), building = !Options.build, names = !Options.libraries, headed = false,
                                          libraries = libs, view = NONE}
                    handle BasisManifest.Usage why => raise Options.Usage why
       val walk = LibraryScope.walk (ref Env.initial, fixity, ref StringMap.empty, scopes)
@@ -216,7 +219,7 @@ struct
            | SOME exports =>
                (List.app (fn (kind,name) =>
                   if kind = "fixity" orelse StringMap.member (!declaredKinds,declarationKey (dir,kind,name)) then ()
-                  else (eprintln ("rune: " ^ dir ^ "/MANIFEST: exports " ^ kind ^ " " ^ name ^
+                  else (eprintln ("rune: the index of " ^ dir ^ ": exports " ^ kind ^ " " ^ name ^
                                   ", which no source before the program declares");ok := false)) exports;
                 List.foldl (fn ((_,name),m) => StringMap.insert (m,name,())) earlier exports)
         end
@@ -382,6 +385,65 @@ struct
     CompilerProject.plan {file=file,windows=onWindows (),readBuild=readBuild}
     handle CompilerProject.Invalid message => raise Options.Usage message
 
+  (* Reaching in (docs/build.md, Reaching in; the build-system roadmap's D10):
+     what a build file of the plan names under a library not its own, a file
+     or a build file of it (a library's library.build is refused as it is
+     read: a library is imported). Into a library with a header it is an
+     error, unless the header names the build file a friend (D11), which may
+     reach in by naming files or by using a sub-build; into a library with
+     none it is a warning, until those libraries have their headers (D15's
+     window). A library's header is read from its library.build, which a
+     compile does not otherwise read where the library is reached into, so
+     that one gaining a header refuses the builds that reach in, up to date or
+     not. *)
+  fun headerAt (dir : string) : BuildFile.header option =
+    let val file = OS.Path.joinDirFile {dir = if dir = "" then "." else dir, file = "library.build"}
+        val text = SOME (readText file) handle IO.Io _ => NONE
+    in
+      case text of
+        NONE => NONE
+      | SOME text =>
+          List.foldl (fn (BuildFile.Header h, NONE) => SOME h | (_, found) => found) NONE (BuildFile.parse (file, text))
+          handle BuildFile.Error message => raise Options.Usage message
+    end
+  fun reachingIn {warn : bool} (project : CompilerProject.plan) : unit =
+    let
+      val headers = ref StringMap.empty : BuildFile.header option StringMap.map ref
+      fun header dir =
+        case StringMap.find (!headers, dir) of
+          SOME h => h
+        | NONE => let val h = headerAt dir in headers := StringMap.insert (!headers, dir, h); h end
+      val reached =
+        CompilerProject.reaches
+          {references = #references project, windows = onWindows (),
+           isLibrary = fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir = dir, file = "library.build"}, [])
+                                 handle OS.SysErr _ => false,
+           isFriend = fn (build, dir) =>
+             case header dir of
+               SOME {friends, ...} => List.exists (fn f => BasisManifest.isFriend (dir, f, build)) friends
+             | NONE => false}
+      fun counted paths = Int.toString paths ^ (if paths = 1 then " path" else " paths")
+      val (refused, warned) = List.partition (fn (_, library, _) => isSome (header library)) reached
+    in
+      if !Options.noWarnings orelse not warn then ()
+      else
+        (List.app (fn (build, library, paths) =>
+                     Error.warn ({file = build, start = 0, stop = 0},
+                                 "this build reaches into the library " ^ library ^ " (" ^ counted paths
+                                 ^ "), which is reached through its interface"))
+                  warned;
+         Error.flushWarnings ());
+      if List.null refused then ()
+      else
+        (List.app (fn (build, library, paths) =>
+                     Error.report ({file = build, start = 0, stop = 0},
+                                   "this build reaches into the library " ^ library ^ " (" ^ counted paths
+                                   ^ "), which has a header: name the library with libraries, "
+                                   ^ "or have its header name this build a friend"))
+                  refused;
+         raise Reported)
+    end
+
   (* --deps --build: what the build compiles, in its order, and where it
      breaks the rules *)
   fun depsOfBuild (file : string) : Deps.file list =
@@ -389,11 +451,13 @@ struct
       val () = findWorkspace file
       val () = storeHome ()
       val project = projectOf file
+      val () = reachingIn {warn = false} project
       (* a file is read as a compile reads it, through its preprocessor; a
          step is not run (docs/build.md, Generated sources) *)
       val () = Steps.preprocess {windows = onWindows (), cache = UnitCache.directory (), explain = fn _ => ()}
                                 (#preprocessors project) (CompilerProject.units (#steps project))
-      val imported = List.concat (List.map BasisManifest.fixities (BasisManifest.libraries (libRoot (), #libraries project)))
+      val imported = List.concat (List.map (fn dir => LibraryIndex.fixities {root = libRoot (), dir = dir})
+                                           (LibraryIndex.libraries (libRoot (), #libraries project)))
                      handle BasisManifest.Usage why => raise Options.Usage why
       val layout = CompilerProject.layout {steps = #steps project, defaultMode = !Options.sourceMode,
                                            library = OS.Path.file file = "library.build", syntax = syntaxIn,
@@ -408,7 +472,7 @@ struct
      build file writes *)
   fun depsCommand () : OS.Process.status =
     if !Options.depsUses then
-      (* the names, whatever they are of: what a MANIFEST's requires
+      (* the names, whatever they are of: what an index's requires
          column is made of (scripts/gen-basis-sigs.sh) *)
       let
         val names = List.foldl (fn (f : Deps.file, m) => List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) m (#uses f))
@@ -472,15 +536,16 @@ struct
       val windows = onWindows ()
       val () = entryFile := (case !Options.inputs of first :: _ => SOME first | [] => NONE)
       val project = commandPlan ()
+      (* a plan that a compile would refuse is not printed; what a compile
+         only warns of is the compile's to say *)
+      val () = reachingIn {warn = false} project
       val libraries = librariesOf project
       val () = if List.null libraries then () else ignore (libRoot ())
       val lib = Option.map (fn dir => case Workspace.fromHere (windows, Workspace.keyOf (windows, Workspace.here ()) dir) of
                                         "" => "." | relative => relative) (!Options.libDir)
     in
       CompilerPlan.make {project = project, libraries = libraries, lib = lib, mode = !Options.sourceMode, scope = scopeWith lib,
-                         windows = windows, read = readBuild, hash = Hex.fromBytes o Sha256.digest,
-                         (* where a virtual library's tail begins: a file that says _virtual (D22) *)
-                         virtual = fn path => Vector.exists (fn (Token.VIRTUAL, _) => true | _ => false) (loadTokens (Source.Ascii, path))}
+                         windows = windows, read = readBuild, hash = Hex.fromBytes o Sha256.digest}
       handle CompilerProject.Invalid message => raise Options.Usage message
     end
 
@@ -508,10 +573,14 @@ struct
       OS.Process.success
     end
 
-  (* --basis-index DIR: DIR/MANIFEST, from DIR/library.build (LibraryIndex) *)
+  (* --basis-index DIR: the index of the library in DIR, made again from
+     DIR/library.build and its files and printed, with what a client of it
+     cannot act on said (LibraryIndex) *)
   fun indexCommand (dir : string) : OS.Process.status =
     (findWorkspace (OS.Path.joinDirFile {dir = dir, file = "library.build"});
-     LibraryIndex.write {dir = dir, root = libRoot (), warnings = not (!Options.noWarnings), windows = onWindows ()};
+     storeHome ();
+     LibraryIndex.forget ();
+     print (LibraryIndex.check {root = libRoot (), dir = dir, warnings = not (!Options.noWarnings)});
      OS.Process.success)
 
   (* the files of a plan, in the order they are compiled, with their
@@ -543,7 +612,8 @@ struct
       val () = editorGave := editorOverlays ()
       (* what a compile begins with that is not one of the compiler's roots,
          for one made again (diagnosed, compiledAgain) *)
-      val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false; workspace := NONE; BasisManifest.roots := [])
+      val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false; workspace := NONE; BasisManifest.roots := [];
+                LibraryIndex.forget ())
       (* files given by themselves: the first names their units, and the
          workspace above it has only libraries to give them *)
       val () = if !knownToLoad then () else entryFile := (case !Options.inputs of first :: _ => SOME first | [] => NONE)
@@ -551,19 +621,7 @@ struct
       (* the plan: the inputs are its files, and it is what the units driver
          follows *)
       val project = commandPlan ()
-      (* reaching into a library, which a later roadmap's milestone refuses
-         (docs/build.md, Reaching in) *)
-      val () =
-        if !Options.noWarnings orelse !knownToLoad then ()
-        else
-          (List.app (fn (build,library,paths) =>
-             Error.warn ({file=build,start=0,stop=0},
-               "this build reaches into the library " ^ library ^ " (" ^ Int.toString paths
-               ^ (if paths=1 then " path" else " paths") ^ "), which is reached through its interface"))
-             (CompilerProject.reaches {references= #references project,windows=onWindows (),
-                isLibrary=fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir=dir,file="library.build"},[])
-                                    handle OS.SysErr _ => false});
-           Error.flushWarnings ())
+      val () = if !knownToLoad then () else reachingIn {warn = true} project
       val () = Options.libraries := librariesOf project
       (* the functors its build files mark to be inlined (M6b) *)
       val () = Elaborate.inlineFunctors := List.foldl (fn (n,m) => StringMap.insert (m,n,()))
@@ -588,10 +646,10 @@ struct
          is kept, for the next to ask *)
       val upKey = upToDateKey project
       val upHit = case (upKey, UnitCache.directory ()) of
-                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key)
+                    (SOME key, SOME dir) => UnitMemo.upToDate (dir, key, LibraryIndex.stillRests)
                   | _ => NONE
       val () = upToDate := (if isSome upHit then NONE else upKey)
-      val () = case !upToDate of SOME _ => (Error.given := SOME []; UnitMemo.keepReads ()) | NONE => ()
+      val () = case !upToDate of SOME _ => (Error.given := SOME []; UnitMemo.keepReads (); LibraryIndex.restFrom ()) | NONE => ()
       (* what the build runs before a unit is read: its steps, and its
          preprocessors, whose output each unit of theirs compiles (Steps;
          docs/build.md, Generated sources); what they read is kept with the
@@ -652,12 +710,13 @@ struct
       val () =
         if #basis (!planBasis) <> "none" andalso not (!Options.noInlineFunctors) then
           let
-            val dirs = libDir () :: (BasisManifest.libraries (libRoot (), !Options.libraries)
+            val dirs = libDir () :: (LibraryIndex.libraries (libRoot (), !Options.libraries)
                                      handle BasisManifest.Usage _ => [])
             fun add (table, names) = table := List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!table) names
+            fun each f = List.concat (List.map (fn dir => f {root = libRoot (), dir = dir}) dirs)
           in
-            add (Elaborate.inlineFunctors, List.concat (List.map BasisManifest.inlineFunctors dirs));
-            add (Elaborate.inlineValues, List.concat (List.map BasisManifest.inlineValues dirs))
+            add (Elaborate.inlineFunctors, each LibraryIndex.inlineFunctors);
+            add (Elaborate.inlineValues, each LibraryIndex.inlineValues)
           end
         else ()
       (* a whole program's dynamic modules: none (UnitBasis.wholeFingerprints) *)
@@ -710,7 +769,7 @@ struct
                      raise Reported)
             (* the fixity a program's files are read in: the initial basis's,
                and what the libraries it sees export (docs/build.md) *)
-            val imported = List.concat (List.map (fn (dir, _) => BasisManifest.fixities dir) (#libraries found))
+            val imported = List.concat (List.map (fn (dir, _) => LibraryIndex.fixities {root = libRoot (), dir = dir}) (#libraries found))
             val mentioned = CompilerPrelude.usedByAll (scopes, entries, inputs, userToks, Fixity.extend (Fixity.initial, imported))
             val () = namesLoading := List.exists BasisManifest.namesLoading userToks
             fun tokens (e : entry) =
@@ -1392,7 +1451,7 @@ struct
               val change = deltaOf (b0, snap ())
             in
               checkExports (change, exports);
-              CompilerBuildContext.leave (buildContext, boundary, exports);
+              CompilerBuildContext.leave (buildContext, boundary);
               apply (b0, change, SOME exports); acc
             end
         | elabStep (SUse (p, ds), acc) =
@@ -1401,7 +1460,7 @@ struct
               let
                 val b1 = snap ()
                 val acc = elabSteps (ds, acc)
-              in CompilerBuildContext.record (buildContext, p, deltaOf (b1, snap ()), ds); acc end
+              in CompilerBuildContext.record (buildContext, p, deltaOf (b1, snap ())); acc end
         | elabStep (SImplements (x, ds), acc) =
             if List.exists (fn y => y = x) (!implemented)
             then raise Options.Usage ("the build gives the virtual module or functor " ^ x ^ " two implementations")
@@ -1424,11 +1483,11 @@ struct
                 val boundary = CompilerBuildContext.enter buildContext
                 val acc = elabSteps (ds, acc)
               in
-                CompilerBuildContext.leave (buildContext, boundary, []);
+                CompilerBuildContext.leave (buildContext, boundary);
                 apply (b0, deltaOf (b0, snap ()), SOME []); acc
               end
       (* -j N: the units before the final ones, each with what it declares
-         and uses -- a Basis file's by its MANIFEST, a program's by Deps --
+         and uses -- a Basis file's by its index, a program's by Deps --
          for Parallel to start children in an order that works *)
       val () =
         if !Options.jobs > 1 andalso isSome cache andalso not (UnitCache.verifying ())
@@ -1526,7 +1585,8 @@ struct
                  if not (OS.Process.isSuccess status) then ()
                  else
                    case (case output of SOME kept => SOME kept | NONE => UnitMemo.written (dir, out, at)) of
-                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])))
+                     SOME kept => UnitMemo.noteUpToDate (dir, key, kept, List.rev (getOpt (!Error.given, [])),
+                                                         List.rev (!LibraryIndex.rested))
                    | NONE => ())
             | _ => ()
         in status end
@@ -1835,7 +1895,7 @@ struct
      Diagnostic.install {color = !Options.color, full = !Options.diagnostics, json = !Options.diagnosticsJson};
      if !Options.showHelp then (print Options.usage; OS.Process.success)
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
-     else if !Options.basisCheck then checkManifest ()
+     else if !Options.basisCheck then (storeHome (); checkManifest ())
      else if !Options.deps orelse !Options.depsDot orelse !Options.depsUses then depsCommand ()
      else if isSome (!Options.indexLibrary) then indexCommand (valOf (!Options.indexLibrary))
      else if !Options.plan then planCommand ()

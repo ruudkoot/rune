@@ -323,7 +323,7 @@ struct
     V.Array (List.map (fn snapshot:D.snapshot => V.Bytes (#uri snapshot)) (D.all documents)),
     V.Object (List.filter (fn (name,_) => not (List.exists (fn other => other=name)
       ["documents","generation","inputGeneration","changes","changeFloor"])) (V.object state))])
-  fun buildText (snapshot:D.snapshot)=OS.Path.file (#uri snapshot)="MANIFEST" orelse OS.Path.file (#uri snapshot)="rune.workspace"
+  fun buildText (snapshot:D.snapshot)=OS.Path.file (#uri snapshot)="rune.workspace"
     orelse String.isSuffix ".build" (#uri snapshot)
   (* The implicit library of a file in no build (D26), over its directory, with
      the names it uses looked up in its workspace: the workspace's root, or
@@ -765,7 +765,7 @@ struct
         fun valid (cached:diagnosticCache)=
           let val periodic=Time.>=(Time.-(Time.now(),#validated cached),Time.fromSeconds 60)
               fun covered file=not periodic andalso
-                (OS.Path.file file="MANIFEST" orelse List.exists(fn suffix=>String.isSuffix suffix file)[".sml",".sig",".build"]) andalso
+                List.exists(fn suffix=>String.isSuffix suffix file)[".sml",".sig",".build"] andalso
                 List.exists(fn root=>List.exists(fn old=>old=root)(#trustedRoots cached) andalso
                   (case W.nativeKey platform root of NONE=>false | SOME key=>W.below(key,W.pathKey platform file)))watchedRoots
               val ok= #key cached=key andalso #builds cached=builds() andalso
@@ -780,13 +780,15 @@ struct
         fun remember (file,mode,digest)=case List.find(fn prior:watched=> #file prior=file andalso #mode prior=mode)(!files) of
           SOME prior=>if #digest prior=digest then () else consistent:=false
         | NONE=>files:={file=file,mode=mode,digest=digest}:: !files
-        fun manifests file=
+        (* the library build of each directory above a file, there or
+           not, whose index says what the file is to the libraries *)
+        fun librariesAbove file=
           let val dir=OS.Path.dir file
-              val manifest=OS.Path.concat(dir,"MANIFEST")
-              val ()=if List.exists(fn prior:watched=> #file prior=manifest)(!files) then ()
-                else remember(manifest,"",disk(manifest,""))
-          in if dir=file orelse dir="" then () else manifests dir end
-        fun watch(file,mode,text)=(remember(file,mode,SOME(hash text));manifests file)
+              val build=OS.Path.concat(dir,"library.build")
+              val ()=if List.exists(fn prior:watched=> #file prior=build)(!files) then ()
+                else remember(build,"",disk(build,""))
+          in if dir=file orelse dir="" then () else librariesAbove dir end
+        fun watch(file,mode,text)=(remember(file,mode,SOME(hash text));librariesAbove file)
         fun report (view:view)=
           let val json=documentDiagnostics (view,{uri= #uri view,previous=NONE})
               val fields=case json of Json.Object fields => fields | _ => []

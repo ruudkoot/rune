@@ -2,7 +2,9 @@
    read strictly and written back; its files in load order, in the form of
    lib/basis/library.build. It is written on lib/unicode, for the UTF-8 of
    strings: *)
-libraries unicode end
+requires unicode end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Json, signature JSON)
 annotate "demand" in
   json_sig.sml
   json.sml

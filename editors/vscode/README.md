@@ -70,9 +70,7 @@ test host; it needs a display (or Xvfb). `VSCODE_TEST_VERSION` selects the
 test host version, defaulting to the minimum supported version, 1.106.0.
 The portable `bin/rune-lsp-distribution-tests.rbc` can also run on the
 packaged Windows VM with the native extracted-extension path as its argument.
-Set `RUNE_VSCODE_CHECKOUT` to a native checkout path for an additional check
-that regenerates the temporary library's manifest with that checkout's
-compiler. All edits remain in the test's private library copy.
+All its edits remain in the test's private library copy.
 
 Editor tests use dedicated profiles. For operating-system isolation, run
 Windows tests in Windows Sandbox or a disposable VM, and Linux tests in

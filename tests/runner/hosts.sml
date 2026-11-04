@@ -30,6 +30,10 @@ struct
 
   fun trim s = Substring.string (Substring.dropl Char.isSpace (Substring.dropr Char.isSpace (Substring.full s)))
   type source = {path : string, host : bool, provides : string list, requires : string list}
+  (* A library's index, as the compiler derives it from the library's build
+     file and prints it (rune --basis-index; LibraryIndex), a line a file:
+     its path, whether the other SML systems have it, what it provides and
+     what it requires *)
   fun manifest library =
     let
       val dir = "lib/" ^ library
@@ -39,10 +43,14 @@ struct
           f :: _ :: h :: p :: r :: _ =>
             SOME {path = dir ^ "/" ^ f, host = h = "yes" orelse h = "only", provides = String.tokens Char.isSpace p,
                   requires = String.tokens Char.isSpace r}
-        | _ => raise Fail (dir ^ "/MANIFEST: malformed line: " ^ l)
-      val file = dir ^ "/MANIFEST"
-      val () = if exists file then () else raise Fail (file ^ ": missing; run make manifests")
-    in List.mapPartial one (lines (read file)) end
+        | _ => raise Fail ("the index of " ^ dir ^ ": malformed line: " ^ l)
+      val out = run ^ "/index/" ^ String.translate (fn #"/" => "-" | c => String.str c) library ^ "."
+                ^ SysWord.toString (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
+      val () = mkdirs (OS.Path.dir out)
+      val status = exec {cmd = [fromRoot "bin/rune", "--no-warnings", "--basis-index", fromRoot dir], dir = NONE, stdin = "",
+                         stdout = out, stderr = out ^ ".err", timeout = 0}
+      val () = if status = 0 then () else raise Fail ("the index of " ^ dir ^ ": " ^ read (out ^ ".err"))
+    in List.mapPartial one (lines (read out)) end
   fun portable library = List.map #path (List.filter #host (manifest library))
 
   fun cleanEnv changes e =

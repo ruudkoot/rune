@@ -1,4 +1,4 @@
-(* libraries: test/unit *)
+(* libraries: test/unit unicode *)
 (* Emulator: what a terminal shows after text, wrapping, wide clusters,
    moves and erasing, as xterm does. *)
 structure EmulatorTest =

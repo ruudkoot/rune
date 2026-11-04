@@ -60,7 +60,9 @@ struct
         val source=fromRoot ("tests/lib/" ^ library ^ "/interop/" ^ (if library="zmtp" then "server.sml" else "kernel.sml"))
         val payload=directory ^ "/" ^ library ^ ".rbc"
         val status=Children.exec Subprocess.unlimited (fn e => e)
-             {cmd=[compiler,"--library",library,source,"-o",payload],dir=SOME root,stdin="",stdout=directory ^ "/compile.out",stderr=directory ^ "/compile.err",timeout=120}
+             (* the kernel's messages are lib/json's, which lib/jupyter requires
+                and, having a header, does not show it *)
+             {cmd=[compiler,"--library",library] @ (if library="jupyter" then ["--library","json"] else []) @ [source,"-o",payload],dir=SOME root,stdin="",stdout=directory ^ "/compile.out",stderr=directory ^ "/compile.err",timeout=120}
         val ()=need (status=0,"interop peer compilation failed: " ^ read (directory ^ "/compile.err"))
         val endpoint=if library="zmtp" then directory ^ "/ports" else #1 (KernelChecks.connection directory "a-secret-key")
         val ()=if library="zmtp" then rmTree endpoint else ()

@@ -481,17 +481,68 @@ struct
   (* ---- the stat memo ---- *)
 
   (* What a file's stat says of it: its device and inode, its size, and the
-     times it was last written and last changed, as text of whole numbers
-     however wide; and the later of those times in seconds. A file whose
-     stat is the same is the same file, written no more since -- but within
-     the second its times were taken, which `at` guards (clean) *)
-  type stamp = {key : string, latest : LargeInt.int}
+     times it was last written and last changed, in microseconds, each a
+     whole number: compared as numbers and kept as numbers, never as text,
+     whose making cost a compile more than the stat (the build-system
+     roadmap's M12). A file whose stat is the same is the same file, written
+     no more since -- but within the second its times were taken, which `at`
+     guards (clean) *)
+  type stamp = {dev : int, ino : int, size : int, mtime : int, ctime : int}
+  (* a device or an inode, which may use the word's top bits (a filesystem's
+     file id), less those two above an int's 62: a file whose inode differs
+     from another's in them alone, and in nothing else of its stat, is the
+     same to it *)
+  fun wordOf (w : SysWord.word) : int =
+    SysWord.toInt w handle Overflow => SysWord.toInt (SysWord.>> (SysWord.<< (w, 0w2), 0w2))
   fun stampOf {dev : SysWord.word, ino : SysWord.word, size : Position.int, mtime : Time.time, ctime : Time.time} : stamp =
-    let fun word w = SysWord.fmt StringCvt.DEC w
+    {dev = wordOf dev, ino = wordOf ino, size = Position.toInt size,
+     mtime = LargeInt.toInt (Time.toMicroseconds mtime), ctime = LargeInt.toInt (Time.toMicroseconds ctime)}
+  (* the same stamp: compared whole, in one step whatever field differs,
+     so that what a compile counts does not turn on which one does, nor on
+     the second a file was written in (tests/runner/oracles.sml, the
+     reproducible counts) *)
+  fun sameStamp (a : stamp, b : stamp) : bool = a = b
+  (* the later of its times, in seconds *)
+  fun latestOf ({mtime, ctime, ...} : stamp) : LargeInt.int = LargeInt.fromInt (Int.max (mtime, ctime) div 1000000)
+
+  (* A whole number of a stat, or a time, in eight bytes, the most
+     significant first, onto acc: the same bytes and the same work for every
+     value, so that no stat and no clock reading changes what a compile
+     counts (UnitStore.withTemporary). One below zero is ~1's bytes, which
+     no stat matches; a host whose int cannot hold one reads ~1 *)
+  fun eight (n : int, acc : char list) : char list =
+    if n < 0 then List.tabulate (8, fn _ => #"\255") @ acc
+    else
+      let val x = Word.fromInt n
+          fun b s = Char.chr (Word.toInt (Word.andb (Word.>> (x, s), 0wxFF)))
+      in b 0w56 :: b 0w48 :: b 0w40 :: b 0w32 :: b 0w24 :: b 0w16 :: b 0w8 :: b 0w0 :: acc end
+  fun eightAt (s : string, k : int) : int =
+    let fun b k = Char.ord (String.sub (s, k))
     in
-      {key = String.concatWith ":" [word dev, word ino, Position.toString size,
-                                    LargeInt.toString (Time.toMicroseconds mtime), LargeInt.toString (Time.toMicroseconds ctime)],
-       latest = LargeInt.max (Time.toSeconds mtime, Time.toSeconds ctime)}
+      if b k > 127 then ~1
+      else (((((((b k * 256 + b (k + 1)) * 256 + b (k + 2)) * 256 + b (k + 3)) * 256 + b (k + 4)) * 256 + b (k + 5)) * 256
+             + b (k + 6)) * 256 + b (k + 7)) handle Overflow => ~1
+    end
+  (* A stamp, as its five numbers' bytes: read where a compile stats a file
+     it rests on, so read with no call a byte *)
+  val stampWidth = 40
+  fun stampBytes ({dev, ino, size, mtime, ctime} : stamp) : string =
+    String.implode (eight (dev, eight (ino, eight (size, eight (mtime, eight (ctime, []))))))
+  fun wstamp (w : P.writer, st : stamp) = P.bytes (w, stampBytes st)
+  fun rstamp ({s, pos} : P.reader) : stamp =
+    let
+      val p = !pos
+      val () = if p + stampWidth > String.size s then raise P.Bad "cut short" else ()
+      val st = {dev = eightAt (s, p), ino = eightAt (s, p + 8), size = eightAt (s, p + 16), mtime = eightAt (s, p + 24),
+                ctime = eightAt (s, p + 32)}
+    in pos := p + stampWidth; st end
+  (* a time in seconds, as a stamp's number is *)
+  fun wlarge (w : P.writer, n : LargeInt.int) = P.bytes (w, String.implode (eight (LargeInt.toInt n handle Overflow => ~1, [])))
+  fun rlarge ({s, pos} : P.reader) : LargeInt.int =
+    let val p = !pos
+    in
+      if p + 8 > String.size s then raise P.Bad "cut short"
+      else (pos := p + 8; LargeInt.fromInt (eightAt (s, p)))
     end
 
   (* How a file is statted, where the program can ask: Rune's own main sets
@@ -511,7 +562,7 @@ struct
      One written in the second of the stat, or just before it, is racily
      clean, and read again (git's rule, with whole seconds and a second
      more for a clock that is not the filesystem's) *)
-  fun clean ({latest, ...} : stamp, at : LargeInt.int) : bool = latest + 2 <= at
+  fun clean (st : stamp, at : LargeInt.int) : bool = latestOf st + 2 <= at
 
   (* The hash of what files held, by their stat: a file's path from the
      root of the machine's filesystem, since compiles in other directories
@@ -523,18 +574,14 @@ struct
   type memo = {dir : string, config : string, cwd : string, entries : (stamp * LargeInt.int * string) StringMap.map ref,
                read : bool ref, dirty : bool ref}
   val memoSide : (string * stamp * LargeInt.int * string) list side =
-    {magic = "RSM", version = 2, hash = fn (_, text) => P.hash text,
-     write = P.list (fn (w, (k, {key, latest}, at, h)) =>
-                       (P.string (w, k); P.string (w, key); P.string (w, LargeInt.toString latest);
-                        P.string (w, LargeInt.toString at); P.string (w, h))),
+    {magic = "RSM", version = 4, hash = fn (_, text) => P.hash text,
+     write = P.list (fn (w, (k, st, at, h)) => (P.string (w, k); wstamp (w, st); wlarge (w, at); P.string (w, h))),
      read = P.rlist (fn r =>
                        let
                          val k = P.rstring r
-                         val key = P.rstring r
-                         fun large r = case LargeInt.fromString (P.rstring r) of SOME n => n | NONE => raise P.Bad "not a number"
-                         val latest = large r
-                         val at = large r
-                       in (k, {key = key, latest = latest}, at, P.rstring r) end)}
+                         val st = rstamp r
+                         val at = rlarge r
+                       in (k, st, at, P.rstring r) end)}
   fun memoAt (dir : string, config : string) : memo =
     {dir = dir, config = config, cwd = OS.FileSys.getDir () handle OS.SysErr _ => "", entries = ref StringMap.empty,
      read = ref false, dirty = ref false}
@@ -561,7 +608,7 @@ struct
       | SOME st =>
           case StringMap.find (!entries, k) of
             SOME (st', at', h) =>
-              if #key st = #key st' andalso clean (st', at') then h
+              if sameStamp (st, st') andalso clean (st', at') then h
               else let val h = hash (text ()) in entries := StringMap.insert (!entries, k, (st, at, h)); dirty := true; h end
           | NONE => let val h = hash (text ()) in entries := StringMap.insert (!entries, k, (st, at, h)); dirty := true; h end
     end

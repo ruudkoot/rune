@@ -14,10 +14,10 @@ struct
     \       runedoc --library NAME --examples DIR\n\
     \       runedoc --library NAME --laws DIR\n\
     \       runedoc (--page | --dump-ir | --lint) FILE...\n\
-    \  --library NAME  document the library LIBDIR/NAME, which has a MANIFEST;\n\
+    \  --library NAME  document the library LIBDIR/NAME, which has a library.build;\n\
     \                  a NAME that begins with / or . is the directory itself.\n\
     \                  A library other than LIBDIR/basis is read on top of it,\n\
-    \                  after the libraries its # library: lines name\n\
+    \                  after the libraries its build file requires\n\
     \  --basis-docs DIR  for a library on top of LIBDIR/basis: where its pages\n\
     \                  are, from DIR of --out, for the links to what it names\n\
     \                  of the basis library (without it, those are plain code)\n\
@@ -58,7 +58,7 @@ struct
     \  --laws DIR      write the laws of the comments as a program for each\n\
     \                  signature, holding each at every structure that\n\
     \                  implements it, and stop; compile one with\n\
-    \                  rune --library test/property/basis\n\
+    \                  rune --library test/property/basis --library test/property\n\
     \  --labels        print the checks of the suite of --tests and stop\n\
     \  --check-coverage  with --library and --tests: every value and exception\n\
     \                  that a signature specifies has a check for every\n\
@@ -115,7 +115,7 @@ struct
   fun parse (args : string list) : unit =
     case args of
       [] => ()
-    | "--lib" :: dir :: rest => (libDir := SOME dir; parse rest)
+    | "--lib" :: dir :: rest => (libDir := SOME dir; DocElab.libRoot := SOME dir; parse rest)
     | "--lib" :: [] => raise Usage "--lib needs a directory"
     | "--dump-ir" :: rest => (dumpIR := true; parse rest)
     | "--page" :: rest => (page := true; parse rest)
@@ -216,8 +216,8 @@ struct
     else case !libDir of SOME d => BasisManifest.libraryDir (d, name) | NONE => raise Usage "no library directory (use --lib DIR)"
 
   (* What a library other than the Basis Library is written on: LIBDIR/basis,
-     if it is there, and the libraries its MANIFEST names on # library:
-     lines, with those they name, in the order they are elaborated. *)
+     if it is there, and the libraries its build file requires, with those
+     they require, in the order they are elaborated. *)
   fun preludeOf (dir : string) : DocElab.prelude =
     case !libDir of
       NONE => {root = NONE, basis = NONE, libraries = []}
@@ -227,11 +227,11 @@ struct
           fun real p = OS.FileSys.fullPath p handle OS.SysErr _ => p
           val libraries =
             List.filter (fn l => real l <> real dir)
-                        (BasisManifest.libraries (d, BasisManifest.libraryRequires dir))
+                        (LibraryIndex.libraries (d, DocElab.requiresOf dir))
             handle BasisManifest.Usage why => raise Usage why
         in
           if real basis = real dir then {root = NONE, basis = NONE, libraries = []}
-          else if OS.FileSys.access (basis ^ "/MANIFEST", [OS.FileSys.A_READ])
+          else if OS.FileSys.access (basis ^ "/library.build", [OS.FileSys.A_READ])
           then {root = SOME d, basis = SOME basis, libraries = libraries}
           else {root = SOME d, basis = NONE, libraries = libraries}
         end
@@ -269,8 +269,8 @@ struct
     | SOME d =>
         (DocElab.instanceStructures :=
            SOME (List.filter (fn n => String.isSuffix "Arb" n)
-                             (List.concat (List.map #provides (BasisManifest.readManifest (d ^ "/test/property")
-                                                                @ BasisManifest.readManifest (d ^ "/test/property/basis"))))))
+                             (List.concat (List.map #provides (DocElab.entriesOf (d ^ "/test/property")
+                                                                @ DocElab.entriesOf (d ^ "/test/property/basis"))))))
         handle _ => ()
 
   (* --palette: the roles' styles for HTML and for an editor *)

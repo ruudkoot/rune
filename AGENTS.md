@@ -38,10 +38,10 @@ keep these invariants:
 * When adding a basis structure, add a `basis.<name>` row listing its members
   and add the file to `lib/basis/library.build` in a block of its class
   (`docs/build.md`). What it provides and requires is worked out from the
-  source: `make manifests` writes `lib/basis/MANIFEST`, which is generated
-  and never committed or edited (`rune --basis-check`, part of `make
-  check-docs`, verifies that a file loaded on demand declares modules and
-  types only). A signature of the
+  source: the library's index, which every compile derives and keeps in its
+  store, and which is never a file in the tree (`rune --basis-index
+  lib/basis` prints it; `rune --basis-check`, part of `make check-docs`,
+  verifies that a file loaded on demand declares modules and types only). A signature of the
   specification is transcribed in `tests/basis/spec-sigs` first;
   `bin/rune-generate basis-signatures` then makes `lib/basis/sig_<sig>.sml` and its
   line in the build file, and from there on the library's file is edited by hand
@@ -282,8 +282,10 @@ keep these invariants:
 
 ## Build and verification
 
-* Compiler sources are listed in `rune.build` (ordered, in its `files ...
-  end` block; docs/build.md), those of the documentation generator `runedoc`
+* Compiler sources are listed in `rune.build` (ordered, after the libraries
+  it names, through `lib/compiler/internal.build`, which the compiler's
+  library names it a friend to use, and in its `files ... end` block;
+  docs/build.md), those of the documentation generator `runedoc`
   in `runedoc.build`, those of the native code generator `runeopt` in
   `runeopt.build` and those of `runeisa` in `runeisa.build`; the MLton,
   SML/NJ and Poly/ML build files are generated from the plans committed
@@ -414,10 +416,13 @@ keep these invariants:
   compiled by `make docs` and run by `make test-basis`; give a description an example where it shows
   what prose cannot, and find its value by running it.
 * A library beside the basis library (`lib/NAME`, compiled with `rune --library
-  NAME`) has a `library.build` in the basis library's form, whose
-  `libraries` declaration names the libraries it is written on; its
-  generated `MANIFEST` records what each file uses of the basis library as
-  well (`rune --basis-check --library NAME` checks it). It may not use `_prim`,
+  NAME`) has a `library.build` in the basis library's form, whose header
+  says what it `requires` and what it `exports` (docs/build.md, *A library's
+  header*): a client names each library it uses a name of, since `requires`
+  is not transitive, and a header `bin/rune-migrate` wrote it writes again
+  (docs/build.md, *Migrating a tree*); its index records what each file uses
+  of the basis library as well (`rune --basis-check --library NAME` checks
+  it). It may not use `_prim`,
   and what it exports is ASCII, so that a program in every mode can name it
   (docs/build.md, *A library's build file*). The mechanism's tests are in
   `tests/lib` (`make test-lib`), and a library's own tests, `tests/lib/NAME`, are suites on

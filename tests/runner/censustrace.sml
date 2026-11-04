@@ -85,6 +85,10 @@ struct
           in (rbc, budget name "args", "") end
     in {rbc = rbc, args = args, cwd = root, output = output} end
   fun reset ({output, ...} : recipe) = if output = "" then () else rmTree output
+  (* each run of a recipe from the same store: the frozen layer's alone,
+     RUNE_CACHE empty, so that no run reads what a run before it wrote there
+     (a library's index, docs/build.md) and every run does the same work *)
+  val frozenOnly = setEnv ("RUNE_CACHE", "")
   fun writeRecipe file ({rbc, args, cwd, output} : recipe) =
     let fun row (key, value) = key ^ "\t" ^ String.toString value ^ "\n"
     in write (file, "version\t1\n" ^ String.concat (List.map row
@@ -105,9 +109,9 @@ struct
       val stock = env ("RUNEVM_NEW", "bin/runevm")
       val census = env ("RUNEVM_CENSUS", "bin/runevm-census")
       val () = reset recipe
-      val stdout = commandIn (fn e => e) cwd dir "stock" ([stock, "--jit=off", "--count", "--heap-size", "67108864", rbc] @ args)
+      val stdout = commandIn frozenOnly cwd dir "stock" ([stock, "--jit=off", "--count", "--heap-size", "67108864", rbc] @ args)
       val () = reset recipe
-      val actual = commandIn (fn e => e) cwd dir "census" ([census, "--jit=off", "--count", "--stats", "--heap-size", "1073741824",
+      val actual = commandIn frozenOnly cwd dir "census" ([census, "--jit=off", "--count", "--stats", "--heap-size", "1073741824",
            "--heap-fill", "50", "--census-dir", trace, "--census-every", every, rbc] @ args)
       val () = need (stdout = actual andalso count (dir ^ "/stock.err") = count (dir ^ "/census.err"),
                      "census producer differs from stock")
@@ -128,7 +132,7 @@ struct
           val label = heap ^ "-" ^ fill
           val log = dir ^ "/stock-" ^ label ^ ".gclog"
           val () = reset recipe
-          val () = ignore (commandIn (fn e => e) cwd dir ("stock-" ^ label)
+          val () = ignore (commandIn frozenOnly cwd dir ("stock-" ^ label)
               ([stock, "--jit=off", "--count", "--nursery", "0", "--stats", "--gc-log", log, "--heap-size", heap, "--heap-fill", fill, rbc] @ args))
           val stats = case List.rev (List.filter (fn line => String.isPrefix "runevm: " line andalso String.isSubstring " collections," line)
                          (lines (read (dir ^ "/stock-" ^ label ^ ".err")))) of
@@ -150,7 +154,7 @@ struct
           val at = dir ^ "/trace-" ^ label
           val () = rmTree at
           val () = reset recipe
-          val () = ignore (commandIn (fn e => e) cwd dir ("census-" ^ label)
+          val () = ignore (commandIn frozenOnly cwd dir ("census-" ^ label)
               ([census, "--jit=off", "--count", "--stats", "--heap-size", "1073741824", "--heap-fill", "50",
                 "--census-dir", at, "--census-every", "0"] @ (if null made then [] else ["--census-at", String.concatWith "," clocks]) @ [rbc] @ args))
           val () = need (count (dir ^ "/census-" ^ label ^ ".err") = count (dir ^ "/stock-" ^ label ^ ".err"),

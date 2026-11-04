@@ -1,6 +1,8 @@
 (* The ZMTP library (docs/plans/repl.md, The libraries; M11): ZeroMQ's
    sockets over ZMTP 3.1 with the NULL mechanism; its files in load order,
    in the form of lib/basis/library.build. *)
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Zmtp, structure ZmtpWire, signature ZMTP, signature ZMTP_WIRE)
 annotate "demand" in
   wire_sig.sml
   wire.sml

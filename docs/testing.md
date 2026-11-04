@@ -891,7 +891,7 @@ test-incremental` and so in `make check`, as a scenario of
 | The model, `model` | the model of a hit saying otherwise than `tests/incremental/model.expected` | `tests/incremental/model.sml` |
 | The fingerprint oracle, `fp-oracle` | a field of a binding, or a fact of the tables a fingerprint reads by hand, changed alone, moving a fingerprint in other layers than the description of the codecs marks it in (`tools/codecs/compiler.sml`), or a sameness not saying what the description has it compare; or a kind of field or fact the program does not change | `tests/runner/cachechecks.sml`, `UnitBasis.fpOracle` ([units.md](units.md), *The fingerprint oracle*) |
 | Unit by unit, and the mask, `warm-unit-*` | a unit compiled alone, while every other is taken from the cache without its basis, that is not what its entry holds: under its view, what its text names loaded by need, or under the mask of its entry's usages, each structure cut to the paths they name and only the units their binders reach loaded | `tests/runner/warmchecks.sml` |
-| The racy cases, `warm-racy`; up to date, `warm-uptodate` | a warm build that differs from one without the cache after an edit the stat memo or a memo could miss: of the same size within the second of a build, the old text back with its old times, an edit with its time put back, the output overwritten or removed, a new name, a `library.build` above a unit | the same |
+| The racy cases, `warm-racy`; up to date, `warm-uptodate`, `warm-uptodate-index` | a warm build that differs from one without the cache after an edit the stat memo or a memo could miss: of the same size within the second of a build, the old text back with its old times, an edit with its time put back, the output overwritten or removed, a new name, a `library.build` above a unit, a Basis Library file edited under an index of the frozen layer or of the overlay | the same |
 | Where the store is, `store-place` | a build, a build of another first line, a build run from below the root, a file given by itself or the REPL's `use` keeping a store anywhere but beside the workspace's `rune.workspace`, or two builds of one workspace not sharing it; `RUNE_CACHE` or `--cache-dir` not moving it; with no workspace, none beside the build file | `tests/runner/storechecks.sml` |
 | Trimming, `store-trim` | a build after the store was trimmed -- to sizes from the whole down to a byte, by age by hand and after a build, every other file and every third removed -- that differs from one without the store; a build after a build that trimmed compiling what that build took; a trim of the frozen layer, or a limit that is none, not refused | the same |
 | Damage, `store-damage` | an entry damaged where it still reads, its hashes kept -- in its head so that it stands, or in its first section -- taken rather than compiled; a damaged Mid read by a build of the units' code, or taken by `--whole` | the same |
@@ -989,14 +989,27 @@ The three baseline failures (fluid float formatting, pidigits5 and zarith
 install or dist. Three cases of deps are the build-system roadmap's E8 table
 ([units.md](units.md), *Well-formed units*): `wellformed-rune` holds every
 library and build of the tree to `rune --deps --build` finding no unit that
-is not well-formed, and `wellformed-mlton` and `wellformed-hol4` hold MLton's
-606 units and HOL4's 744 of the `src/boss` closure so; another warning, a
-nested library's `use` reaching in, is not theirs. `RUNE_WELLFORMED_MLTON`
+is not well-formed, `wellformed-hol4` holds HOL4's 744 units of the
+`src/boss` closure so, and `wellformed-mlton` MLton's 606 but for 13, below.
+`RUNE_WELLFORMED_MLTON`
 names a copy of MLton's sources (`mlton`, `lib/mlton`, `lib/mlyacc-lib`,
-`lib/stubs`, from `MLTON_SOURCES`) with the build files of the build-system
-roadmap's M9 laid over it, which its translator from MLton's `.mlb` files,
-`impl/bs-m9/e9/mlb2build2.py` of the roadmap's drafts, makes: 60 build files,
-30 of them libraries, `mlton/mlton.build` the program. `RUNE_WELLFORMED_HOL4`
+`lib/stubs`, from `MLTON_SOURCES`, symbolic links followed) with flat build
+files laid over it, which a translator from MLton's `.mlb` files,
+`impl/bs-m14/mlb2build3.py` of the build-system roadmap's drafts, makes: 30
+build files, one for each `.mlb` of its closure and two for the Makefile's
+lists of stubs, `mlton/mlton.build` the program, each `.mlb` it includes a
+plain `use`, and MLB's `local` flattened, with no library. The row runs on
+that flat build: its 606 units, of which 13 are not well-formed, each
+declaring a name another unit declares too, 17 names in all, which MLB's
+`local` keeps apart (`STREAM` and `Stream` of `lib/mlton` and
+`lib/mlyacc-lib`, `CONTROL`, `FIELD` and `Field`, `MLton`, and the `xml/` and
+x86 copies of `ssa/` and amd64 passes). The row expects exactly those, by unit
+and by name, and fails on one more or one fewer. M9's library form of MLton,
+which had all 606 well-formed, cannot be written under D9: its libraries
+export 16 names of the Basis Library and 5 names come from two or three of
+them, which a library with a header may not ([build.md](build.md),
+*Clashes*), so a codebase that shadows the Basis renames before it can have
+headers. `RUNE_WELLFORMED_HOL4`
 names a directory of the closure after HOL's filter with its `boss.build`,
 which declares its two preludes; `rune --deps` then finishes on the closure as
 a plain list. Without them those two say SKIP. Installation also accepts repeated `--host NAME`; Make's

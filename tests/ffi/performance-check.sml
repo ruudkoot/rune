@@ -54,7 +54,7 @@ struct
   fun sourcesUnder directory=List.concat(List.map(fn name=>
     let val path=OS.Path.concat(directory,name)
     in if isDir path then sourcesUnder path else
-      if String.isSuffix ".sml" name orelse name="library.build" orelse name="MANIFEST" then [path] else [] end)(entries directory))
+      if String.isSuffix ".sml" name orelse name="library.build" then [path] else [] end)(entries directory))
   val benchmarkSources=List.map fromRoot["tests/ffi/performance.c","tests/ffi/performance-direct.c","tests/ffi/performance.sml","tests/ffi/performance-model.sml",
     "tests/ffi/performance-generation.sml","tests/ffi/performance-check.sml"]
   val productionSources=sourceMain::cliMain::List.map(fn path=>sourceRoot ^ "/" ^ path)

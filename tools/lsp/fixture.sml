@@ -9,13 +9,22 @@
             [--no-text]
 
    Layout:
-     libs/gNNN/lMMMMM/library.build  a library: a use of each library it is
-                                     written on, then its files, in order
+     rune.workspace                  roots libs end: a library is named by its
+                                     directory under libs, gNNN/lMMMMM
+     libs/gNNN/lMMMMM/library.build  a library, with no header: the libraries
+                                     it is written on, then its files, in order
      libs/gNNN/lMMMMM/mM_I.sml       a module: a structure, or a functor and
                                      its application; mM_I.sig its signature
-     apps/pKKKKK.build, .sml         a program: a use of some libraries, one file
-     apps/all.build, all.sml         a use of every library: the whole tree
+     apps/pKKKKK.build, .sml         a program: some libraries, one file
+     apps/all.build, all.sml         the whole tree as one context: every
+                                     library's files as its own, in load
+                                     order, which a build may name where the
+                                     library has no header
      fixture.json                    the parameters, and what came out
+
+   A library with no header has its libraries transitive (docs/build.md, A
+   library with no header), so that a module may name one that a library it
+   is written on is written on, as with the use of each that it replaces.
 
    The shape (log-normal fits of E20's shape.py): a file's lines, sigma 1.46,
    the mean from --lines over --files; a structure's fan-out, log mean
@@ -28,7 +37,8 @@
    the first alone, so that a program's closure is about 1/K of the tree:
    with 32 at 10M lines, about 1M lines, D28's context. --nested-sigs P has
    that share of signatures specify their dependencies as structures, as
-   MLton's do. --no-text writes the build files alone, for planning.
+   MLton's do. --no-text writes the build files and the root file alone,
+   for planning.
 
    The text is templates whose per-line costs were calibrated against real
    code (E20). A seed gives one tree: the numbers are SplitMix64's
@@ -192,7 +202,11 @@ struct
         val drawn=List.tabulate (L,fn _ => Real.max (2.0,lognorm (real (!files)/real L,1.35)))
         val scale=real (!files)/List.foldl op+ 0.0 drawn
         val sizes=Vector.fromList (List.map (fn s => Int.max (2,round (s*scale))) drawn)
-        fun libdir i="libs/g" ^ pad (3,i div 30) ^ "/l" ^ pad (5,i)
+        fun libname i="g" ^ pad (3,i div 30) ^ "/l" ^ pad (5,i)
+        fun libdir i="libs/" ^ libname i
+        (* the libraries a build names, by name (libraries NAME, the one way) *)
+        fun libraries' []=""
+          | libraries' names="libraries " ^ String.concatWith " " (List.map libname names) ^ " end\n"
         fun domain i=if !domains>0 then i* !domains div L else 0
         (* what each library is written on: a DAG in index order, preferential on
            fan-in, near neighbours favoured so that depth grows *)
@@ -279,12 +293,13 @@ struct
         fun write (path,text)=
           let val n=CharVector.foldl (fn (c,k) => if c= #"\n" then k+1 else k) 0 text
           in count:= !count+1;total:= !total+n;bytes:= !bytes+String.size text;
-             if !noText andalso not (String.isSuffix ".build" path) then () else
+             if !noText andalso not (String.isSuffix ".build" path) andalso path<>"rune.workspace" then () else
              let val full=OS.Path.concat (!out,path)
                  val ()=mkdirs (OS.Path.dir full)
                  val output=TextIO.openOut full
              in TextIO.output (output,text);TextIO.closeOut output end end
         val ()=mkdirs (!out)
+        val ()=write ("rune.workspace","(* generated: the fixture's root *)\nroots libs end\n")
         fun library li=
           let val d=libdir li
               fun module (m:module)=
@@ -317,22 +332,27 @@ struct
                       else write (d ^ "/" ^ stem ^ ".sml",header (#name m,li) ^ "\nstructure " ^ #name m ^ ascription ^ " =\nstruct\n" ^ text ^ "\nend\n")
                 in entries @ [stem ^ ".sml"] end
               val entries=List.concat (List.map module (Array.sub (perlib,li)))
-              fun relative j="../../g" ^ pad (3,j div 30) ^ "/l" ^ pad (5,j) ^ "/library.build"
-          in write (d ^ "/library.build","(* generated: library " ^ num li ^ " *)\n" ^
-               String.concat (List.map (fn j => "use " ^ relative j ^ "\n") (Array.sub (libdeps,li))) ^
-               "files\n" ^ String.concat (List.map (fn e => "  " ^ e ^ "\n") entries) ^ "end\n") end
-        val ()=List.app library (List.tabulate (L,fn i => i))
-        fun program (name,chosen)=
+          in write (d ^ "/library.build","(* generated: library " ^ num li ^ " *)\n" ^ libraries' (Array.sub (libdeps,li)) ^
+               "files\n" ^ String.concat (List.map (fn e => "  " ^ e ^ "\n") entries) ^ "end\n");
+             entries end
+        val entriesOf=Vector.fromList (List.map library (List.tabulate (L,fn i => i)))
+        (* a program names its libraries; the whole tree has their files as
+           its own, each library's in order and after those it is written on
+           (a DAG in index order) *)
+        fun program (name,chosen,whole)=
           let val picked=List.map (fn j => choice (Array.sub (perlib,j))) chosen
               val picked=List.take (picked,Int.min (64,length picked))
+              val own=if not whole then "" else
+                String.concat (List.map (fn li => String.concat (List.map (fn e => "  ../" ^ libdir li ^ "/" ^ e ^ "\n")
+                  (Vector.sub (entriesOf,li)))) chosen)
           in write ("apps/" ^ name ^ ".build","(* generated: program " ^ name ^ " *)\n" ^
-               String.concat (List.map (fn j => "use ../libs/g" ^ pad (3,j div 30) ^ "/l" ^ pad (5,j) ^ "/library.build\n") chosen) ^
-               "files\n  " ^ name ^ ".sml\nend\n");
+               (if whole then "" else libraries' chosen) ^
+               "files\n" ^ own ^ "  " ^ name ^ ".sml\nend\n");
              write ("apps/" ^ name ^ ".sml",String.concatWith "\n" (["val total = ref 0"] @
                ListPair.map (fn (m:module,i) => "val () = total := !total + " ^ #name m ^ ".size (" ^ #name m ^ ".make " ^ num (i+2) ^ ")")
                  (picked,List.tabulate (length picked,fn i => i)) @ ["val () = print (Int.toString (!total) ^ \"\\n\")"]) ^ "\n") end
-        val ()=ListPair.app (fn (chosen,p) => program ("p" ^ pad (5,p),chosen)) (progs,List.tabulate (P,fn p => p))
-        val ()=program ("all",List.tabulate (L,fn i => i))
+        val ()=ListPair.app (fn (chosen,p) => program ("p" ^ pad (5,p),chosen,false)) (progs,List.tabulate (P,fn p => p))
+        val ()=program ("all",List.tabulate (L,fn i => i),true)
         (* what came out *)
         fun files' li=Vector.sub (sizes,li)
         val closure=List.tabulate (L,fn i => files' i+List.foldl (fn (j,n) => n+files' j) 0 (Array.sub (visible,i)))

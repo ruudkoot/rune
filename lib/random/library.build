@@ -1,7 +1,9 @@
 (* The random-number library (docs/plans/quickcheck.md, D2 and M3), its
-   files in load order, in the form of lib/basis/library.build. Its MANIFEST
-   (make manifests) records what a file uses of the basis library too, so
-   that a program that names only Random loads it. *)
+   files in load order, in the form of lib/basis/library.build. Its index
+   records what a file uses of the basis library too, so that a program that
+   names only Random loads it. *)
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Random, signature RANDOM)
 annotate "demand" in
   random_sig.sml
   random.sml

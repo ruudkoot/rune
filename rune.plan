@@ -1,30 +1,58 @@
 rune-plan 1
 basis demand
+library unicode lib/unicode
+  form open
+  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii demand
+  unit unicode:utf8.sml lib/unicode/utf8.sml ascii demand
+  unit unicode:width_data.sml lib/unicode/width_data.sml ascii demand
+  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii demand
+  unit unicode:display_width.sml lib/unicode/display_width.sml ascii demand
+  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii demand
+  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii demand
+  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii demand
+  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii demand
+  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii demand
+  unit unicode:normalize.sml lib/unicode/normalize.sml ascii demand
+  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii demand
+  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii demand
+  unit unicode:identifier.sml lib/unicode/identifier.sml ascii demand
+  unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
+  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
+  unit unicode:security.sml lib/unicode/security.sml ascii demand
+end
+library json lib/json
+  form header
+  requires unicode
+  export signature JSON
+  export structure Json
+  unit json:json_sig.sml lib/json/json_sig.sml ascii demand
+  unit json:json.sml lib/json/json.sml ascii demand
+end
+library digest lib/digest
+  form header
+  export functor HmacFn
+  export signature DIGEST
+  export signature HEX
+  export signature HMAC
+  export signature MURMUR2
+  export structure Hex
+  export structure HmacSha256
+  export structure Murmur2
+  export structure Sha256
+  unit digest:digest_sig.sml lib/digest/digest_sig.sml ascii demand
+  unit digest:sha256.sml lib/digest/sha256.sml ascii demand
+  unit digest:hex_sig.sml lib/digest/hex_sig.sml ascii demand
+  unit digest:hex.sml lib/digest/hex.sml ascii demand
+  unit digest:hmac_sig.sml lib/digest/hmac_sig.sml ascii demand
+  unit digest:hmac_fn.sml lib/digest/hmac_fn.sml ascii demand
+  unit digest:murmur2_sig.sml lib/digest/murmur2_sig.sml ascii demand
+  unit digest:murmur2.sml lib/digest/murmur2.sml ascii demand
+end
 program
+  requires unicode
+  requires json
+  requires digest
   unit build/config.sml build/config.sml ascii
-  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii
-  unit unicode:utf8.sml lib/unicode/utf8.sml ascii
-  unit unicode:width_data.sml lib/unicode/width_data.sml ascii
-  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii
-  unit unicode:display_width.sml lib/unicode/display_width.sml ascii
-  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii
-  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii
-  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii
-  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii
-  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii
-  unit unicode:normalize.sml lib/unicode/normalize.sml ascii
-  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii
-  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii
-  unit unicode:identifier.sml lib/unicode/identifier.sml ascii
-  unit unicode:security_data.sml lib/unicode/security_data.sml ascii
-  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii
-  unit unicode:security.sml lib/unicode/security.sml ascii
-  unit json:json_sig.sml lib/json/json_sig.sml ascii
-  unit json:json.sml lib/json/json.sml ascii
-  unit digest:digest_sig.sml lib/digest/digest_sig.sml ascii
-  unit digest:sha256.sml lib/digest/sha256.sml ascii
-  unit digest:hex_sig.sml lib/digest/hex_sig.sml ascii
-  unit digest:hex.sml lib/digest/hex.sml ascii
   use lib/compiler/internal.build
     use lib/compiler/frontend.build
       use lib/compiler/util.build
@@ -66,9 +94,10 @@ program
       unit compiler:driver/buildfile.sml lib/compiler/driver/buildfile.sml ascii
       unit compiler:driver/deps.sml lib/compiler/driver/deps.sml ascii
       unit compiler:driver/project.sml lib/compiler/driver/project.sml ascii
+      unit compiler:settings.sml lib/compiler/settings.sml ascii
+      unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
       unit compiler:driver/libraryindex.sml lib/compiler/driver/libraryindex.sml ascii
     end
-    unit compiler:settings.sml lib/compiler/settings.sml ascii
     unit compiler:core/lambda.sml lib/compiler/core/lambda.sml ascii
     unit compiler:core/irrules.sml lib/compiler/core/irrules.sml ascii
     unit compiler:core/lambdalint.sml lib/compiler/core/lambdalint.sml ascii
@@ -105,7 +134,6 @@ program
     unit compiler:driver/unitbasis.sml lib/compiler/driver/unitbasis.sml ascii
     unit compiler:driver/pipeline.sml lib/compiler/driver/pipeline.sml ascii
     unit compiler:driver/unitmid.sml lib/compiler/driver/unitmid.sml ascii
-    unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
     unit compiler:driver/unitcache.sml lib/compiler/driver/unitcache.sml ascii
     unit compiler:driver/unitmemo.sml lib/compiler/driver/unitmemo.sml ascii
     unit compiler:driver/workspace.sml lib/compiler/driver/workspace.sml ascii
@@ -127,8 +155,11 @@ program
   unit src/main/rune-main.sml src/main/rune-main.sml ascii
 end
 provenance
-  input rune.build 34e0b0848535ea34d1d33e6b050b38d330bcbfa719f661b98261717eb66640aa
-  input lib/compiler/internal.build 1075231ae8e51fd67ef36c46c59eedec3d93dc6c7f2aa1208ee286a4a4a57597
-  input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
+  input rune.build 8b2a966627c41d946fa7ba976861f5201a983e25fb12b7c2959ddd0815155075
+  input lib/compiler/internal.build f9ba52d5b72372d7ee65fe8a4f0fe69a1d9ebaceb5385d7ae5837003f5f4157b
+  input lib/compiler/frontend.build 6d35ea98aba55a7b636242c2228a0eb606bd63e0f5b46ad5b66c94f1e9d6c4b4
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
+  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+  input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
+  input lib/digest/library.build b9c71d923fa95bdce9a1edc822bc08f4e754c5357d82db81832be08c99a80e80
 end

@@ -1133,9 +1133,12 @@ struct
                  let val keys=fresh () in if StringMap.listKeys keys=StringMap.listKeys found then () else mentions:=true end
              | NONE => (ignore (fresh ());mentions:=true) end
         val ()=if isSome frozenPlan then () else List.app scan sources
-        val manifests=case lib of NONE => [] | SOME root =>
-          (root ^ "/basis/MANIFEST")::List.map (fn dir => dir ^ "/MANIFEST")
-            ((BasisManifest.libraries (root,libraries @ extraLibraries)) handle BasisManifest.Usage _ => [])
+        (* what the libraries' indexes rest on, their build files and
+           sources (LibraryIndex), once the selection has asked for them *)
+        fun manifests ()=case lib of NONE => [] | SOME root =>
+          List.concat (List.map (fn dir => LibraryIndex.inputs {root=root,dir=dir})
+            (root ^ "/basis"::((LibraryIndex.libraries (root,libraries @ extraLibraries)) handle BasisManifest.Usage _ => [])))
+          handle BasisManifest.Usage _ => []
         val stampsHold=List.all (fn (file,stamp) => stampOf file=stamp) (#stamps old)
         fun selected ()=CompilerPrelude.select {lib=lib,libraries=libraries @ extraLibraries,mentioned=
           List.foldl (fn (source:source,all) => case StringMap.find (!names,#file source) of NONE => all
@@ -1199,18 +1202,18 @@ struct
                     NONE => ()
                   | SOME message => raise Error.CompileError ({file=case sources of source :: _ => #file source | [] => "",
                                                                start=0,stop=0},message)
-                val ()=CompilerBuildContext.leave (scopes,boundary,exports)
+                val ()=CompilerBuildContext.leave (scopes,boundary)
             in apply (before',change,SOME exports) end
         | CompilerProject.SUse (file,children) =>
             if CompilerBuildContext.replay (scopes,file) then () else
               let val before'=snap () val ()=walk children
-              in CompilerBuildContext.record (scopes,file,delta (before',snap ()),children) end
+              in CompilerBuildContext.record (scopes,file,delta (before',snap ())) end
         | CompilerProject.SImplements (name,children) =>
             if List.exists (fn prior => prior=name) (!implemented) then raise Fail "duplicate virtual implementation" else
               let val before'=snap ()
                   val boundary=CompilerBuildContext.enter scopes
                   val ()=implemented:=name :: !implemented val ()=walk children
-                  val ()=CompilerBuildContext.leave (scopes,boundary,[])
+                  val ()=CompilerBuildContext.leave (scopes,boundary)
               in apply (before',delta (before',snap ()),SOME []) end
         fun sourceError (span,message)=[CompilerSession.sourceError ("error",span,message)]
         (* the unit that failed, as far as it was elaborated *)
@@ -1275,7 +1278,7 @@ struct
                 planned=SOME (steps,extraLibraries,building,view),prelude=SOME plan,units=inputNames,libraryNames=libraryNames,
                 libraries=librarySources,
                 stamps=if sameSelection andalso stampsHold then #stamps old else
-                  let val files=manifests @ selection
+                  let val files=manifests () @ selection
                   in (if List.all settled files then [] else [unsettled]) @ List.map (fn file => (file,stampOf file)) files end,
                 names= !names,paths= !paths}) end
         val walkErrors=if isSome fast then [] else

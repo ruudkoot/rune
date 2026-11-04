@@ -1,0 +1,2 @@
+(* Two libraries written on each other (tests/runner/tools.sml, lib.toy). *)
+libraries cycle1 end

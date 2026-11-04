@@ -1,6 +1,10 @@
 (* The digest library (docs/plans/repl.md, The libraries; M11): SHA-256
    of FIPS 180-4, HMAC of RFC 2104, hexadecimal, and MurmurHash2 (M12);
    its files in load order, in the form of lib/basis/library.build. *)
+(* exports: by hand, not tools/migrate's: HmacFn, HMAC over a client's own
+   DIGEST, is the library's whether or not a source of this tree applies it *)
+exports (structure Hex, structure HmacSha256, structure Murmur2, structure Sha256, signature DIGEST,
+         signature HEX, signature HMAC, signature MURMUR2, functor HmacFn)
 annotate "demand" in
   digest_sig.sml
   sha256.sml

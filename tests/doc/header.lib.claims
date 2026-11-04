@@ -1,0 +1,4 @@
+name	kind	signature	realisations	status	origin	source
+AREA	signature			required	declared	tests/doc/header.lib/shapes.sml
+RuneShapes.Area	structure	AREA		required	ascribed	tests/doc/header.lib/shapes.sml
+Shapes.Area	structure	AREA		required	inherited	tests/doc/header.lib/shapes.sml

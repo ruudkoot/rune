@@ -1,7 +1,7 @@
 (* requires: Runtime Array Byte Char IO List OS String TextIO Time Vector *)
 (* Runtime (signature RUNTIME, Rune's own): the counters the VM keeps for the
    program it is running. No other SML system counts any of this, and
-   lib/basis/runtime.sml is `host = no` in the MANIFEST, so this file runs on
+   lib/basis/runtime.sml is `host=no` in lib/basis/library.build, so this file runs on
    Rune alone.
 
    The numbers themselves are not checked. They depend on everything the

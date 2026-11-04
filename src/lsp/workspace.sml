@@ -269,8 +269,8 @@ struct
   (* What a client's watcher reports (RuneLspController.watch): a file of these
      names, and a directory, by what is created in it and removed from it *)
   fun watchable path=
-    List.exists (fn suffix => String.isSuffix suffix path) [".sml",".sig",".fun",".build","/MANIFEST","/rune.workspace","\\MANIFEST","\\rune.workspace"]
-    orelse path="MANIFEST" orelse path="rune.workspace"
+    List.exists (fn suffix => String.isSuffix suffix path) [".sml",".sig",".fun",".build","/rune.workspace","\\rune.workspace"]
+    orelse path="rune.workspace"
   fun sameFile platform (left,right)=sameAs platform right left
   fun directory platform path = if platform<>U.Windows then OS.Path.dir path else
     let val path=String.map (fn #"\\" => #"/" | c => c) path

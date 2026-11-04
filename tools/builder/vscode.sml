@@ -71,10 +71,15 @@ struct
                    ("dist/extension.js",client ^ "/extension.js",420),
                    ("ThirdPartyNotices.txt",client ^ "/ThirdPartyNotices.txt",420),
                    ("server/bin/runevm",linux,493),("server/bin/runevm.exe",windows,493),
-                   ("server/bin/runelsp.rbc",server,420),("server/lib/basis/MANIFEST",library ^ "/MANIFEST",420)]
-                val names=unique(BuildDist.manifestNames(library ^ "/MANIFEST"))
+                   ("server/bin/runelsp.rbc",server,420)]
+                (* the Basis Library: its build files and its sources, from
+                   which the server derives its index (docs/build.md) *)
+                val ()=need(exists(library ^ "/library.build"),"no Basis Library build: " ^ library ^ "/library.build")
+                val names=List.map(fn file=>String.extract(file,size library+1,NONE))
+                  (List.filter(fn file=>not(isDir file) andalso List.exists(fn suffix=>String.isSuffix suffix file)[".sml",".build"])
+                    (tree library))
                 val ()=List.app(fn name=>
-                  (need(safe name andalso not(isLink(library ^ "/" ^ name)),"unsafe Basis source in manifest: " ^ name);
+                  (need(safe name andalso not(isLink(library ^ "/" ^ name)),"unsafe Basis source: " ^ name);
                    copyFile("server/lib/basis/" ^ name,library ^ "/" ^ name,420)))names
                 val supplied=O.get options "--gmp-notices" ""
                 val gmp=fromRoot(if supplied="" then "build/deps/gmp/native-dist/share/licenses/gmp" else supplied)

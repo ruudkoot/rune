@@ -2,7 +2,9 @@
    kernel's side of Jupyter's messaging protocol; its files in load order,
    in the form of lib/basis/library.build. It is written on lib/zmtp,
    lib/json and lib/digest: *)
-libraries zmtp json digest end
+requires zmtp json digest end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Jupyter, signature JUPYTER)
 annotate "demand" in
   jupyter_sig.sml
   jupyter.sml

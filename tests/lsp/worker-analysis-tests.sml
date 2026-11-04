@@ -382,7 +382,7 @@ struct
      event that names another file plans nothing. *)
   fun planByEvents ()=tree ([("lib1/library.build","files x.sml y.sml end\n"),("lib1/x.sml","structure X=struct val x=1 end\n"),
       ("lib1/y.sml","structure Y=struct val y=X.x end\n"),("main.sml","val main=Y.y\n"),
-      ("program.build","use lib1/library.build\nfiles main.sml end\n")],
+      ("rune.workspace","roots . end\n"),("program.build","libraries lib1 end\nfiles main.sml end\n")],
     fn {path,check,errors,phases,watch,changed,old,...} =>
     let fun planned ()=length (List.filter (fn phase => phase="planning") (!phases))
         val ()=watch ()
@@ -411,7 +411,8 @@ struct
         not (null (errors (check "lib1/y.sml")))) end)
   (* D28: the plan a file of no library has from the index of what each build
      names (RuneLspProjects.indexed) is the one enrich and W.resolve come to,
-     where a file is named by two programs, through a symbolic link to its
+     where a file is named by two programs that import a library of the
+     workspace (libraries NAME, the one way), through a symbolic link to its
      directory, by a hard link under another name, by a path with .., by a
      path with a variable, by a build that does not parse; with every build a
      target and with none, the file open as an editor has it. *)
@@ -421,9 +422,10 @@ struct
         fun path name=OS.Path.concat (root,name)
         val ()=List.app (fn dir => OS.FileSys.mkDir (path dir)) ["lib","lib/a","apps","shared","deep","deep/er"]
         val ()=List.app (fn (name,text) => writeFile (path name,text))
-          [("lib/a/library.build","files x.sml end\n"),("lib/a/x.sml","structure X=struct val x=1 end\n"),
-           ("apps/p.build","use ../lib/a/library.build\nfiles p.sml end\n"),("apps/p.sml","val p=X.x\n"),
-           ("apps/q.build","use ../lib/a/library.build\nfiles ../shared/s.sml end\n"),
+          [("rune.workspace","roots lib end\n"),
+           ("lib/a/library.build","files x.sml end\n"),("lib/a/x.sml","structure X=struct val x=1 end\n"),
+           ("apps/p.build","libraries a end\nfiles p.sml end\n"),("apps/p.sml","val p=X.x\n"),
+           ("apps/q.build","libraries a end\nfiles ../shared/s.sml end\n"),
            ("apps/r.build","files ../shared/s.sml end\n"),("shared/s.sml","val s=1\n"),
            ("apps/t.build","files ../link/s.sml end\n"),("apps/h.build","files ../shared/h.sml end\n"),
            ("apps/u.build","files ../deep/er/../../shared/s.sml end\n"),

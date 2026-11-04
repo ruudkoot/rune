@@ -75,8 +75,10 @@ struct
   (* The claims of a module and of the structures inside it, under their
      public path. A structure that is bound to another one by name
      (`structure FileSys = RunePosixFileSys` inside Posix) has the
-     substructures of that one: Posix.FileSys.S is RunePosixFileSys.S. *)
-  fun ofModule (tops : I.module list) (prefix : string) (m : I.module) : claim list =
+     substructures of that one: Posix.FileSys.S is RunePosixFileSys.S.
+     isPublic says what the library documents (DocSite.publicOf): what its
+     header exports, or with none what does not begin with Rune. *)
+  fun ofModule (isPublic : string -> bool) (tops : I.module list) (prefix : string) (m : I.module) : claim list =
     case m of
       I.Struct {name, doc, ascription, subs, rhs, file, span, ...} =>
         let
@@ -86,7 +88,7 @@ struct
             case rhs of
               I.Alias target =>
                 (case List.find (fn I.Struct {name = n, ...} => n = target | _ => false) tops of
-                   SOME (I.Struct {subs = subs', ...}) => (subs', not (String.isPrefix "Rune" target))
+                   SOME (I.Struct {subs = subs', ...}) => (subs', isPublic target)
                  | _ => (subs, false))
             | _ => (subs, false)
           fun mark (c : claim) : claim =
@@ -96,17 +98,17 @@ struct
                   file = #file c, span = #span c}
         in
           claimsOf (prefix ^ name, false, doc, ascription, file, span)
-          @ List.map mark (List.concat (List.map (ofModule tops (prefix ^ name ^ ".")) inner))
+          @ List.map mark (List.concat (List.map (ofModule isPublic tops (prefix ^ name ^ ".")) inner))
         end
     | I.Functor {name, doc, result, file, span, ...} => claimsOf (name, true, doc, result, file, span)
     | I.Signature _ => []
     | I.Decl _ => []
 
   (* The claims of the public modules: those whose name, and the names of the
-     structures they are inside, do not begin with Rune. *)
+     structures they are inside, are public. *)
   fun ofModules (isPublic : string -> bool) (modules : I.module list) : claim list =
     List.filter (fn c : claim => List.all isPublic (String.fields (fn ch => ch = #".") (#name c)))
-                (List.concat (List.map (ofModule modules "") modules))
+                (List.concat (List.map (ofModule isPublic modules "") modules))
 
   (* A claim names a signature that is documented. *)
   fun checkNames (signatures : I.module StringMap.map) (claims : claim list) : unit =

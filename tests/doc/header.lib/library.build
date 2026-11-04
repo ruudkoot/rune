@@ -1,0 +1,7 @@
+(* Hand-written fixture: a library's header says what its documentation is.
+   What it exports is documented, a name that begins with Rune among it, and
+   nothing it does not export, whatever its name. *)
+exports (signature AREA, structure RuneShapes, structure Shapes)
+annotate "demand" in
+  shapes.sml
+end

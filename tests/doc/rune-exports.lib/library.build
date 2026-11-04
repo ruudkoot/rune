@@ -1,0 +1,4 @@
+(* Hand-written fixture: explicit exports override the Rune-prefix convention. *)
+library (signature RUNE_API, structure RuneApi) =
+  api.sml
+end

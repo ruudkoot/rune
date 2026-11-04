@@ -117,7 +117,10 @@ bin/runevm bin/rune-lsp-replay.rbc VM SERVER ROOT LIB BUILD SOURCE OUT.json LINE
 `docs/language-server.md`, *The scale target*, states it; three tiers hold it on
 generated trees. `bin/rune-lsp-fixture` (`tools/lsp/fixture.sml`) makes a tree of
 libraries and programs shaped by what was measured on Rune, MLton and HOL4, one
-tree for a seed; `--no-text` writes the build files alone.
+tree for a seed; `--no-text` writes the build files alone. A program names its
+libraries under the tree's `rune.workspace` (`libraries NAME`; they have no
+header, so they are transitive), and `apps/all.build` has every library's files
+as its own, the whole tree in one context.
 `bin/rune-lsp-plan-bench` (`tools/lsp/plan-bench.sml`) plans a file's check
 through the worker's own plan, every build a target, cold and then after each
 kind of change; `--events` tells the worker of each change by a file event, as a

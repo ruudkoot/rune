@@ -796,6 +796,8 @@ DIR/                 .rune, or lib/cache, or --cache-dir's
   steps/             what a build's steps and preprocessors made
   editor/units/      the language server's sidecars, by the hash of a source
                      (docs/language-server.md, The store)
+  index/units/       each library's index, by its place, with what it was made
+                     of (docs/build.md, A library's index)
 ```
 
 **Layers.** A compile writes one store, its *overlay*, and reads after it
@@ -924,15 +926,16 @@ message by the path the view has.
 **The stat memo.** A unit's key holds the hash of its source, which a warm
 build need not read: the store keeps, by a file's path and mode, the hash its
 text had, its stat then -- device, inode, size, the times it was written and
-changed -- and when the stat was taken (`UnitStore.hashBy`, `units/` of the
-configuration). A hash is taken from the memo only where the stat is the same
+changed, kept and compared as whole numbers, never made text -- and when the
+stat was taken (`UnitStore.hashBy`, `units/` of the configuration). A hash is taken from the memo only where the stat is the same
 and the file was last written at least two seconds before the stat was taken,
 git's rule for an index that is racily clean, with a second more for a clock
 that is not the filesystem's; anything else reads the file. A span of another
 unit's code that names a source not read -- a function copied from it, a
 warning given again -- loads it (`Source.fault`). A stat is what Rune's own
 `rune` asks of `Posix.FileSys.stat` (`UnitStore.stat`, which
-`src/main/rune-main.sml` sets); a compiler built by another host has none,
+`src/main/rune-main.sml` sets, and `runedoc` and the compiler's API on Rune
+too); a compiler built by another host has none,
 since MLKit's Basis Library has no `ctime`, and keeps and believes no memo:
 it reads every source and links every time.
 
@@ -954,17 +957,22 @@ was changed, or written within the second of its stat and not the same
 bytes, is.
 
 **Up to date.** A compile in units keeps what it read once its plan was made
--- every source, every MANIFEST, every file its declared steps and
-preprocessors read, with the stat each had when it was read, and whether
-each `library.build` it asked of was there -- with what its steps made and
-its output, each held as an output is, and the warnings it gave, under a key
-of all its plan rests on: the command line, the directory, every `RUNE_`
-variable, the compiler's identity, the text of its build files, its inputs
-and its workspace (`UnitMemo.upToDate`, `memo/` of the cache). A compile
-with the same key, all of whose files have the stats they had and racily
-clean, whose questions have the same answers, and whose steps' outputs and
-own output are what were made, runs no step, gives the warnings again and
-ends. A step's output is held as an output because the build itself writes
+-- every source, every file its declared steps and preprocessors read, with
+the stat each had when it was read, and whether each `library.build` it
+asked of was there -- and each library's index it took, by the name of the
+index's record in the store and the hash of the paths and bytes the index
+rests on (`LibraryIndex.stillRests`), not by a copy of those files; with
+what its steps made and its output, each held as an output is, and the
+warnings it gave, under a key of all its plan rests on: the command line,
+the directory, every `RUNE_` variable, the compiler's identity, the text of
+its build files, its inputs and its workspace (`UnitMemo.upToDate`, `memo/`
+of the cache). A compile with the same key, all of whose files have the
+stats they had and racily clean, each of whose indexes has a record of the
+same hash whose files are what it was made of (by their stats where racily
+clean, else by their bytes, as a query holds a record), whose questions have
+the same answers, and whose steps' outputs and own output are what were
+made, runs no step, gives the warnings again and ends: an edit of any file
+an index rests on makes the next build not up to date. A step's output is held as an output because the build itself writes
 it, within the second of its stat; and the check comes before the steps, so
 an up-to-date build runs none. Not with `--explain-rebuild` or
 `--pass-stats`, which say what each unit did, nor with `-I`, whose plan
@@ -1039,11 +1047,12 @@ written order to fall back on, so a file that is not well-formed is none of
 them, and a name two of them declare is refused; where a file left out
 declares a module the program names, the compiler says so.
 
-**The Basis Library's MANIFEST** says what each of its files provides and
-requires (`lib/basis/MANIFEST`). It is made from the library's build file
-(`lib/basis/library.build`, docs/build.md) by `rune --basis-index DIR`:
-the provides column is what a file declares and the requires column what
-`Deps` derives, so neither is written by hand.
+**The Basis Library's index** says what each of its files provides and
+requires. It is derived from the library's build file
+(`lib/basis/library.build`, docs/build.md) and its sources, and kept in the
+store, never in the tree (docs/build.md, *A library's index*): what a file
+provides is what it declares and what it requires what `Deps` derives, so
+neither is written by hand, and `rune --basis-index DIR` prints it.
 
 ## Well-formed units
 
@@ -1095,7 +1104,7 @@ fixity the files before it leave, a prelude's among them, so a unit that needs
 it parses and shows its uses. So does choosing what of the libraries a program
 loads, by the names its files use (`--basis-deps` shows the choice), from what
 the libraries it sees export. A file that does not parse even so, because its
-fixity comes from a library with no header, which no manifest holds, is taken
+fixity comes from a library with no header, which no index holds, is taken
 there by its tokens, and `rune --deps --build` keeps it where it is written;
 its compile has the last word. A prelude stays where it is written too.
 
@@ -1258,7 +1267,7 @@ text is big enough to be worth a process (`RUNE_PARALLEL_MIN` bytes, 16384
 if not set). A unit the parent reaches and misses it compiles itself,
 unless a child has it, whose end it waits for. A unit needs the units
 before it that declare a name it uses (*The graph*; a Basis file by its
-MANIFEST); a unit that is not well-formed, and an `always` file of the
+index); a unit that is not well-formed, and an `always` file of the
 Basis, is needed by every unit after it. `RUNE_PARALLEL_DEBUG` set prints
 each child's start and end.
 

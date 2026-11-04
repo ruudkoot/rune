@@ -1,26 +1,37 @@
 rune-plan 1
 basis demand
+library unicode lib/unicode
+  form open
+  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii demand
+  unit unicode:utf8.sml lib/unicode/utf8.sml ascii demand
+  unit unicode:width_data.sml lib/unicode/width_data.sml ascii demand
+  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii demand
+  unit unicode:display_width.sml lib/unicode/display_width.sml ascii demand
+  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii demand
+  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii demand
+  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii demand
+  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii demand
+  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii demand
+  unit unicode:normalize.sml lib/unicode/normalize.sml ascii demand
+  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii demand
+  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii demand
+  unit unicode:identifier.sml lib/unicode/identifier.sml ascii demand
+  unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
+  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
+  unit unicode:security.sml lib/unicode/security.sml ascii demand
+end
+library json lib/json
+  form header
+  requires unicode
+  export signature JSON
+  export structure Json
+  unit json:json_sig.sml lib/json/json_sig.sml ascii demand
+  unit json:json.sml lib/json/json.sml ascii demand
+end
 program
+  requires unicode
+  requires json
   unit build/config.sml build/config.sml ascii
-  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii
-  unit unicode:utf8.sml lib/unicode/utf8.sml ascii
-  unit unicode:width_data.sml lib/unicode/width_data.sml ascii
-  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii
-  unit unicode:display_width.sml lib/unicode/display_width.sml ascii
-  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii
-  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii
-  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii
-  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii
-  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii
-  unit unicode:normalize.sml lib/unicode/normalize.sml ascii
-  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii
-  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii
-  unit unicode:identifier.sml lib/unicode/identifier.sml ascii
-  unit unicode:security_data.sml lib/unicode/security_data.sml ascii
-  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii
-  unit unicode:security.sml lib/unicode/security.sml ascii
-  unit json:json_sig.sml lib/json/json_sig.sml ascii
-  unit json:json.sml lib/json/json.sml ascii
   use lib/compiler/frontend.build
     use lib/compiler/util.build
       unit compiler:util/scon.sml lib/compiler/util/scon.sml ascii
@@ -61,6 +72,8 @@ program
     unit compiler:driver/buildfile.sml lib/compiler/driver/buildfile.sml ascii
     unit compiler:driver/deps.sml lib/compiler/driver/deps.sml ascii
     unit compiler:driver/project.sml lib/compiler/driver/project.sml ascii
+    unit compiler:settings.sml lib/compiler/settings.sml ascii
+    unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
     unit compiler:driver/libraryindex.sml lib/compiler/driver/libraryindex.sml ascii
   end
   unit src/doc/docsource.sml src/doc/docsource.sml ascii
@@ -86,7 +99,9 @@ program
   unit src/main/runedoc-rune-main.sml src/main/runedoc-rune-main.sml ascii
 end
 provenance
-  input runedoc.build 156dc4f5116caae746de4da9744600b7b2d2a03ea09ea5ff0ef722b7b8d353a8
-  input lib/compiler/frontend.build 85f31791ad8fa2003fd92b36d4db263b5f406b547d23523d5d6266504041bd74
+  input runedoc.build e9eae6d804b7f52078eb7dbb0e46aee385bf60e28104c66fe3e8710d8a6a5c46
+  input lib/compiler/frontend.build 6d35ea98aba55a7b636242c2228a0eb606bd63e0f5b46ad5b66c94f1e9d6c4b4
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
+  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+  input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

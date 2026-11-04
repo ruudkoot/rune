@@ -412,6 +412,13 @@
     },
     {
      "kind": "val",
+     "name": "Project.exports",
+     "spec": "val exports : t -> {kind : string, name : string} list option",
+     "doc": "`exports project` is what a library's build file lets a client name.\n\nEach export has its kind: the header's exports, or its library\nblock's. NONE where it has neither, and a client sees all its files\ndeclare (docs/build.md, A library's header).\n\n",
+     "page": "sig/COMPILER_API.md#val-project.exports"
+    },
+    {
+     "kind": "val",
      "name": "Project.fingerprint",
      "spec": "val fingerprint : t -> string",
      "doc": "`fingerprint project` identifies the captured plan, configuration\nand inputs. It is not a persisted analysis snapshot.\n\n",

@@ -75,10 +75,10 @@ struct
       val (status, compiled, _) = invoke "inline-compiler" [fromRoot (env ("RUNE", "bin/rune")), "--build-list", dir ^ "/inline.build"]
       val () = if status = 0 andalso lines compiled = expected then () else say "FAIL compiler layout: build-list with inline functor differs\n"
       val () = write (dir ^ "/library.build", "inline functor Make Other end\nannotate \"demand\" in use nested/part.build end\n")
-      val (status, _, _) = invoke "library" [fromRoot (env ("RUNE", "bin/rune")), "--basis-index", dir]
-      val () = if status = 0 andalso String.isSubstring "nested/first.sml | demand" (read (dir ^ "/MANIFEST")) then ()
+      val (status, index, _) = invoke "library" [fromRoot (env ("RUNE", "bin/rune")), "--basis-index", dir]
+      val () = if status = 0 andalso String.isSubstring "nested/first.sml | demand" index then ()
                else say "FAIL compiler layout: library index did not follow annotated use\n"
-      val () = if String.isSubstring "\n# inline: Make Other\n" (read (dir ^ "/MANIFEST")) then ()
+      val () = if String.isSubstring "\n# inline: Make Other\n" index then ()
                else say "FAIL compiler layout: library index did not carry the inline functors\n"
       val () = write (dir ^ "/cycle.build", "use cycle.build\n")
       val (status, _, errors) = invoke "cycle" [fromRoot (env ("RUNE", "bin/rune")), "--plan", dir ^ "/cycle.build"]
@@ -173,13 +173,15 @@ struct
         in need (status=0 andalso read output="87\n",label ^ " has wrong output") end
       val (status,log) = invoke "index" ["--basis-index",scoped]
       val () = need (status=0,"cannot index scoped library: " ^ log)
-      val manifest = read (scoped ^ "/MANIFEST")
-      val () = need (String.isSubstring "structure:Api signature:API functor:Make type:exposed" manifest,"missing export metadata")
+      val () = need (String.isSubstring "structure:Api signature:API functor:Make type:exposed" log,"missing export metadata")
       val (status,log) = invoke "check" ["--library","scoped","--basis-check"]
       val () = need (status=0,"scoped manifest check: " ^ log)
-      (* --typecheck-only keeps what a library's boundary exports *)
+      (* --typecheck-only keeps what a library's boundary exports; the
+         program's file is its own, since a build that names a file of a
+         library with a header is refused (docs/build.md, Reaching in) *)
       val program = dir ^ "/program.build"
-      val () = write (program,"libraries scoped end\n\"" ^ fromRoot (fixture ^ "/use.sml") ^ "\"\n")
+      val () = write (dir ^ "/use.sml", read (fixture ^ "/use.sml"))
+      val () = write (program,"libraries scoped end\nuse.sml\n")
       val (status,log) = invoke "typecheck-library" ["--no-cache","--typecheck-only","--build",program]
       val () = need (status=0,"--typecheck-only lost a library's exports: " ^ log)
       val modes = [("whole",["--no-cache"]),("units",["--units","--no-cache"]),
@@ -206,17 +208,14 @@ struct
       val () = need (status=0 andalso String.isSubstring "/type.sml" log andalso
                      not (String.isSubstring "/public.sml" log) andalso not (String.isSubstring "/functor.sml" log),
                      "selection ignored public demand boundaries")
-      fun scopeLine line =
-        if String.isPrefix "# exports:" line then "# exports: structure:Missing" else line
-      val () = write (scoped ^ "/MANIFEST",String.concatWith "\n" (List.map scopeLine (String.fields (fn c => c = #"\n") manifest)))
-      val (status,log) = invoke "missing-export" ["--library","scoped","--basis-check"]
-      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log,"undeclared manifest export accepted")
-      val () = write (scoped ^ "/MANIFEST",manifest)
+      (* an export no source declares: refused by the index, which every
+         reader asks, so by --basis-check as by --basis-index *)
       val build = read (scoped ^ "/library.build")
       val () = write (scoped ^ "/library.build","exports (structure Missing)\nuse entries.build\n")
+      val (status,log) = invoke "missing-export" ["--library","scoped","--basis-check"]
+      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log,"undeclared export accepted by --basis-check")
       val (status,log) = invoke "bad-index" ["--basis-index",scoped]
-      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log andalso
-                     read (scoped ^ "/MANIFEST")=manifest,"invalid index replaced a valid manifest")
+      val () = need (status<>0 andalso String.isSubstring "exports structure Missing" log,"undeclared export accepted by --basis-index")
       val () = write (scoped ^ "/library.build",build)
       val consumer = lib ^ "/consumer"
       val () = mkdirs consumer
@@ -232,15 +231,15 @@ struct
       val () = List.app consumerMode modes
       val () = write (consumer ^ "/consumer.sml","structure Consumer = struct val public = Api.value val private = Hidden.value end\n")
       (* a library that uses what a boundary it is written on hides fails at
-         its own index, and not only at its client's compile (E28); the
-         manifest stays as it was, and that compile fails as well *)
+         its own index, and not only at its client's compile (E28): every
+         compile asks for that index, and fails as it does *)
       val (status,log) = invoke "private-consumer-index" ["--basis-index",consumer]
       val () = need (status<>0 andalso String.isSubstring "uses Hidden, which the boundary of" log,
                      "the index did not notice a name a boundary hides: " ^ log)
       fun privateConsumer (label,flags) =
         let val (status,log) = invoke (label ^ "-private-consumer")
               (flags @ ["--library","consumer",dir ^ "/consumer-use.sml","-o",dir ^ "/rejected.rbc"])
-        in need (status<>0 andalso String.isSubstring "Hidden.value" log,"private dependency leaked into another library") end
+        in need (status<>0 andalso String.isSubstring "uses Hidden, which the boundary of" log,"private dependency leaked into another library") end
     in List.app privateConsumer modes end
   (* The plan of every build file of the tree (D5): printed, read back and
      printed again, the same bytes, and its unit lines the files --build-list
@@ -257,8 +256,11 @@ struct
              else if isDir (fromRoot path) then builds path
              else if String.isSuffix ".build" name then [path] else []
           end) (entries (fromRoot base)))
+      (* but two libraries written on each other, which no plan has: the
+         fixture of that refusal *)
       val all = List.filter (fn f => String.isSuffix ".build" f) (entries root)
-                @ List.concat (List.map builds ["lib", "src", "tools", "tests", "examples", "ffi"])
+                @ List.filter (fn f => not (List.exists (fn c => f = "tests/lib/" ^ c ^ "/library.build") ["cycle1", "cycle2"]))
+                              (List.concat (List.map builds ["lib", "src", "tools", "tests", "examples", "ffi"]))
       fun invoke label args =
         let val output = dir ^ "/" ^ label ^ ".out"
             val errors = dir ^ "/" ^ label ^ ".err"
@@ -277,6 +279,9 @@ struct
           val up = if up = "" then "." else up
           val vars = ["--path", "SDL_GENERATED=" ^ up ^ "/lib/ffi/sdl/generated/native",
                       "--path", "WIN32_GENERATED=" ^ up ^ "/lib/ffi/win32/generated/64"]
+                     (* the fixture libraries of rune --library, a library root
+                        of their own (tests/runner/tools.sml, lib.toy) *)
+                     @ (if String.isPrefix "tests/lib/" build then ["--lib", "tests/lib"] else [])
           val (status, text, errors) = invoke label (["--no-warnings", "--plan"] @ vars @ [build])
           val stored = dir ^ "/" ^ label ^ ".plan"
           val () = write (stored, text)
@@ -363,13 +368,23 @@ struct
       fun check (true, _) = () | check (false, message) = (failed := !failed + 1; say ("FAIL identity: " ^ message ^ "\n"))
       fun link path = Posix.FileSys.symlink {old = fromRoot path, new = tree ^ "/" ^ path}
       (* the tree's own: its build files, lib/unicode/utf8.sml, which it
-         edits, and lib/compiler/config.sml, which gen-version.sh writes; the
-         rest is the checkout's, its scripts among them *)
+         edits, lib/compiler/config.sml, which gen-version.sh writes, and
+         lib/compiler/library.build, whose header names the toy a friend too,
+         since a second compiler's build reaches into the compiler's library
+         as rune.build does (docs/build.md, Reaching in); the rest is the
+         checkout's, its scripts among them *)
       val () = List.app link ["scripts", "src", "lib/basis", "lib/json", "lib/digest"]
-      val () = List.app (fn (d, own) => List.app (fn f => if f = own then () else link (d ^ "/" ^ f)) (entries (fromRoot d)))
-                 [("lib/unicode", "utf8.sml"), ("lib/compiler", "config.sml")]
+      val () = List.app (fn (d, own) => List.app (fn f => if List.exists (fn o' => o' = f) own then () else link (d ^ "/" ^ f))
+                                                 (entries (fromRoot d)))
+                 [("lib/unicode", ["utf8.sml"]), ("lib/compiler", ["config.sml", "library.build"])]
       val utf8 = read (fromRoot "lib/unicode/utf8.sml")
       val () = write (tree ^ "/lib/unicode/utf8.sml", utf8)
+      val compilerBuild = read (fromRoot "lib/compiler/library.build")
+      val () = need (String.isSubstring "\nfriends\n" compilerBuild, "lib/compiler/library.build names its friends on no line of their own")
+      val (before', after') = Substring.position "\nfriends\n" (Substring.full compilerBuild)
+      val () = write (tree ^ "/lib/compiler/library.build",
+                      Substring.string before' ^ "\nfriends\n  ../../toy.build\n"
+                      ^ Substring.string (Substring.triml (size "\nfriends\n") after'))
       val written = String.fields (fn c => c = #"\n") (read (fromRoot "rune.build"))
       val through =
         if List.exists (String.isPrefix "libraries ") written then written
@@ -481,7 +496,7 @@ struct
       val foreign=dir ^ "/foreign"
       val ()=mkdirs (foreign ^ "/basis")
       val ()=List.app (fn name =>
-        if name="MANIFEST" orelse String.isSuffix ".sml" name then
+        if name="library.build" orelse String.isSuffix ".sml" name then
           write (foreign ^ "/basis/" ^ name,read ("lib/basis/" ^ name) ^
             (if name="runeexit.sml" then "\n(* different source, same exported interface *)\n" else "")) else ())
         (entries "lib/basis")
@@ -544,6 +559,115 @@ struct
       val (status,_,errors)=invoke "private"
         [fromRoot (env ("RUNE","bin/rune")),"--library","compiler",private,"-o",dir ^ "/private.rbc"]
     in need (status<>0 andalso String.isSubstring "Ast.decToString" errors,"private compiler namespace leaked") end
+  (* The migrator (tools/migrate; docs/build.md, Migrating a tree; the
+     build-system roadmap's D15): on a tree of its own, a dry run writes
+     nothing; a run writes each library with no header a header -- what its
+     clients use, the signature that ascribes (D8), and what it reached
+     through another library -- names a library a program listed whole, and
+     names what a program reached through a library that now has a header;
+     what it writes compiles and prints what it printed; a second run
+     changes nothing; a client that comes to use a hidden name is given it,
+     where the migrator wrote the header, as a branch's merge needs (D15's
+     trap), and not where a person did; and a kept build that would need a
+     library named, a part of a library listed and a header a person wrote
+     are reported and left. *)
+  fun migrate ()=
+    let
+      val dir=run ^ "/migrate"
+      val ()=(rmTree dir;mkdirs (dir ^ "/lib");mkdirs (dir ^ "/p"))
+      val ()=Posix.FileSys.symlink {old=fromRoot "lib/basis",new=dir ^ "/lib/basis"}
+      fun need (ok,message)=if ok then () else raise Fail ("migrate: " ^ message)
+      fun put (path,text)=(mkdirs (OS.Path.dir (dir ^ "/" ^ path));write (dir ^ "/" ^ path,text))
+      fun get path=read (dir ^ "/" ^ path)
+      val count=ref 0
+      fun invoke args=
+        let val () = count := !count+1
+            val log=dir ^ "/log-" ^ Int.toString (!count)
+            val status=execEnv (fn e => "RUNE_CACHE=" :: List.filter (fn s => not (String.isPrefix "RUNE_CACHE=" s)) e)
+                         {cmd=args,dir=SOME dir,stdin="",stdout=log,stderr=log,timeout=600}
+        in (status,read log) end
+      val files=["lib/low/library.build","lib/low/low_sig.sml","lib/low/low.sml","lib/low/private.sml",
+                 "lib/mid/library.build","lib/mid/mid.sml","lib/top/library.build","lib/top/top.sml",
+                 "lib/hand/library.build","lib/hand/hand.sml","lib/kept/library.build","lib/kept/kept.sml",
+                 "p/program.build","p/main.sml","p/whole.build","p/whole.sml","p/part.build","p/kept.build","p/kept.sml"]
+      val ()=put ("files",String.concatWith "\n" files ^ "\n")
+      val ()=put ("keep","lib/kept/library.build\np/kept.build\n")
+      val ()=put ("lib/low/library.build","(* the lowest *)\nannotate \"demand\" in low_sig.sml low.sml private.sml end\n")
+      val ()=put ("lib/low/low_sig.sml","signature LOW = sig val v : int end\n")
+      val ()=put ("lib/low/low.sml","structure Low :> LOW = struct val v = 1 end\n")
+      val ()=put ("lib/low/private.sml","structure LowPrivate = struct val w = 40 end\n")
+      val ()=put ("lib/mid/library.build","libraries low end\nannotate \"demand\" in mid.sml end\n")
+      val ()=put ("lib/mid/mid.sml","structure Mid = struct val v = Low.v + 1 end\n")
+      val ()=put ("lib/top/library.build","libraries mid end\nannotate \"demand\" in top.sml end\n")
+      val ()=put ("lib/top/top.sml","structure Top = struct val v = Mid.v + Low.v end\n")
+      val hand="exports (structure Hand)\nannotate \"demand\" in hand.sml end\n"
+      val ()=put ("lib/hand/library.build",hand)
+      val ()=put ("lib/hand/hand.sml","structure HandPrivate = struct val v = 3 end\nstructure Hand = struct val v = HandPrivate.v end\n")
+      val ()=put ("lib/kept/library.build","libraries top end\nannotate \"demand\" in kept.sml end\n")
+      val ()=put ("lib/kept/kept.sml","structure Kept = struct val v = Top.v end\n")
+      val ()=put ("p/program.build","libraries top hand end\nmain.sml\n")
+      val ()=put ("p/main.sml","val () = print (Int.toString (Top.v + Mid.v + Hand.v) ^ \"\\n\")\n")
+      val ()=put ("p/whole.build","files\n  ../lib/low/low_sig.sml\n  ../lib/low/low.sml\n  ../lib/low/private.sml\nend\nwhole.sml\n")
+      val ()=put ("p/whole.sml","val () = print (Int.toString (Low.v + LowPrivate.w) ^ \"\\n\")\n")
+      val ()=put ("p/part.build","../lib/low/low_sig.sml\nwhole.sml\n")
+      val ()=put ("p/kept.build","libraries kept end\nkept.sml\n")
+      val ()=put ("p/kept.sml","val () = print (Int.toString (Kept.v + Mid.v) ^ \"\\n\")\n")
+      val migrator=[fromRoot "bin/rune-migrate","--lib","lib","--keep","keep"]
+      fun prints (label,build,expected)=
+        let val (status,log)=invoke [fromRoot (env ("RUNE","bin/rune")),"--lib","lib","--no-cache","--build",build,"-o",label ^ ".rbc"]
+            val () = need (status=0,build ^ " does not compile: " ^ log)
+            val (status,output)=invoke [fromRoot "bin/runevm",label ^ ".rbc"]
+        in need (status=0 andalso output=expected,build ^ " prints " ^ output) end
+      val () = prints ("before","p/program.build","8\n")
+      val () = prints ("whole-before","p/whole.build","41\n")
+      val texts=List.map get files
+      (* a dry run reports and writes nothing *)
+      val (status,log)=invoke (migrator @ ["files"])
+      val ()=need (status=0 andalso List.map get files=texts,"a dry run wrote: " ^ log)
+      val ()=need (String.isSubstring "changed: 5 (not written)" log,"a dry run's count: " ^ log)
+      (* a run *)
+      val (status,log)=invoke (migrator @ ["--write","--report","report","files"])
+      val ()=need (status=0,"the run failed: " ^ log)
+      fun has (path,text)=need (String.isSubstring text (get path),path ^ " lacks " ^ text ^ ": " ^ get path)
+      fun hasNot (path,text)=need (not (String.isSubstring text (get path)),path ^ " has " ^ text ^ ": " ^ get path)
+      val ()=has ("lib/low/library.build","(* the lowest *)\n(* exports: what the library's clients use")
+      val ()=has ("lib/low/library.build","exports (structure Low, structure LowPrivate, signature LOW)\nannotate")
+      val ()=has ("lib/mid/library.build","requires low end\n")
+      val ()=has ("lib/mid/library.build","exports (structure Mid)\n")
+      val ()=hasNot ("lib/mid/library.build","libraries")
+      val ()=has ("lib/top/library.build","requires mid low end\n")
+      val ()=need (get "lib/hand/library.build"=hand,"a header a person wrote changed")
+      val ()=need (get "lib/kept/library.build"=List.nth (texts,10),"a kept library changed")
+      val ()=has ("p/program.build","libraries top hand mid end\n")
+      val ()=has ("p/whole.build","libraries low end\nwhole.sml\n")
+      val ()=hasNot ("p/whole.build","files")
+      val ()=need (get "p/part.build"=List.nth (texts,16),"a part of a library listed changed")
+      val ()=need (get "p/kept.build"=List.nth (texts,17),"a kept build changed")
+      val report=get "report"
+      val ()=List.app (fn text => need (String.isSubstring text report,"the report lacks " ^ text ^ ": " ^ report))
+        ["judgement: part of a library listed: 1\n  p/part.build: lib/low (1 of 3 files)",
+         "blocked: a kept build would need a library named: 1\n  p/kept.build: mid",
+         "left: a header a person wrote: 1\n  hand","left: kept: 1\n  kept"]
+      (* what it wrote compiles, and prints what it printed *)
+      val () = prints ("after","p/program.build","8\n")
+      val () = prints ("whole-after","p/whole.build","41\n")
+      val (status,log)=invoke [fromRoot (env ("RUNE","bin/rune")),"--lib","lib","--basis-index","lib/low"]
+      val () = need (status=0,"the index refuses what it wrote: " ^ log)
+      (* a second run changes nothing *)
+      val texts=List.map get files
+      val (status,log)=invoke (migrator @ ["--write","files"])
+      val ()=need (status=0 andalso List.map get files=texts andalso String.isSubstring "changed: 0" log,"a second run changed: " ^ log)
+      (* a client that comes to use a hidden name: the header the migrator
+         wrote shows it, and the one a person wrote does not; a client in
+         another tree (--clients) counts as one of this tree *)
+      val ()=put ("lib/low/low.sml","structure Low :> LOW = struct val v = 1 end\nstructure LowNew = struct val u = 2 end\n")
+      val ()=put ("other/p/uses.sml","val x = LowNew.u + HandPrivate.v\n")
+      val (status,log)=invoke (migrator @ ["--write","--clients","other","files"])
+      val ()=need (status=0,"the run with a client tree failed: " ^ log)
+      val ()=has ("lib/low/library.build","exports (structure Low, structure LowNew, structure LowPrivate, signature LOW)\n")
+      val ()=need (get "lib/hand/library.build"=hand,"a header a person wrote grew")
+      val (status,log)=invoke (migrator @ ["--write","--clients","other","files"])
+    in need (status=0 andalso String.isSubstring "changed: 0" log,"a run after the client changed: " ^ log) end
   fun command ["build-asm-check"]=SOME asmCheck
     | command ["build-asm-faults"]=SOME asmFaults
     | command ["build-jit-compile"]=SOME compile
@@ -559,6 +683,7 @@ struct
     | command ["build-plans"]=SOME plans
     | command ["build-identity"]=SOME identity
     | command ["build-compiler-api"]=SOME compilerApi
+    | command ["build-migrate"]=SOME migrate
     | command _=NONE
   val vm=Test.it "vm-refusals"
     {program="/bin/sh",args=["sh","-c","exec \"$RUNE_TEST_ROOT\"/bin/rune-windows vm --vm \"${RUNEVM:-bin/runevm-stack}\" --out \"$RUNE_TEST_RUN/low-level/vm\""],
@@ -583,6 +708,8 @@ struct
      tagged ["check","test-build","test-incremental","covers:*.build","covers:*.plan","covers:scripts/gen-version.sh",
              "covers:scripts/plan-files.sh","covers:lib/compiler/*","covers:src/driver/*"]
        (job "identity" ["build-identity"] []),
+     tagged ["check","test-build","covers:tools/migrate/*","covers:lib/compiler/driver/*"]
+       (job "migrate" ["build-migrate"] []),
      tagged ["check","test-compiler-api","test-lib","covers:lib/compiler/*","covers:tests/compiler/api*.sml"]
        (job "compiler-api" ["build-compiler-api"] []),
      tagged ["check","test","test-low-level","covers:tests/compiler/*","covers:tests/runtime/*"]

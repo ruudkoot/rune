@@ -65,7 +65,8 @@ struct
               (String.tokens Char.isSpace(String.substring(first,14,size first-17)))) else []
       in libraries @ sib(base source,".cargs") @ [source] end
   (* the files of a tool's build, as its committed plan lists them
-     (scripts/plan-files.sh): build/config.sml first and the entry point last *)
+     (scripts/plan-files.sh): the libraries' it names, then its own, the
+     entry point last *)
   fun toolSrcs tool =
     let val f = OS.FileSys.tmpName ()
     in
@@ -872,8 +873,8 @@ struct
     (* the same program from its libraries, the virtual library and an
        implementation (the build-system roadmap's M22): each build indexes
        them, plans the program and compiles it, in one copy, one after
-       another, and every build gives the same manifests, plan and bytes;
-       smlnj32 the same manifests and plan alone, since the program, built
+       another, and every build gives the same indexes, plan and bytes;
+       smlnj32 the same indexes and plan alone, since the program, built
        in units, carries its units' identities and the functor's
        fingerprint, which smlnj32's hash, its own, gives other values
        (Pickle.hash, D11 of docs/plans/functors-units.md; crossCheck) *)
@@ -884,7 +885,7 @@ struct
           fun copyFrom path =
             let val from = fromRoot ("examples/virtual/table/" ^ path)
             in if isDir from then (mkdirs (copy ^ "/" ^ path); List.app (fn e => copyFrom (path ^ "/" ^ e)) (entries from))
-               else if OS.Path.file path = "MANIFEST" orelse String.isPrefix "." (OS.Path.file path) then ()
+               else if String.isPrefix "." (OS.Path.file path) then ()
                else write (copy ^ "/" ^ path, read from)
             end
           val () = (rmTree copy; mkdirs copy; List.app copyFrom (entries (fromRoot "examples/virtual/table")))
@@ -895,12 +896,13 @@ struct
               val rbc = out ^ "/virtual-libraries." ^ c ^ ".rbc"
               val plan = out ^ "/virtual-libraries." ^ c ^ ".plan"
               fun runs (cmd, stdout) = exec {cmd = cmd, dir = NONE, stdin = "", stdout = stdout, stderr = err, timeout = 0} = 0
+              fun index l = out ^ "/virtual-libraries." ^ c ^ "." ^ l ^ ".index"
               val made =
-                List.all (fn l => runs (["bin/rune-" ^ c, "--basis-index", copy ^ "/libraries/" ^ l], "")) libraries
+                List.all (fn l => runs (["bin/rune-" ^ c, "--basis-index", copy ^ "/libraries/" ^ l], index l)) libraries
                 andalso runs (["bin/rune-" ^ c, "--no-warnings", "--plan", copy ^ "/list-libraries.build"], plan)
                 andalso runs (["bin/rune-" ^ c, "--build", copy ^ "/list-libraries.build", "--no-cache", "-o", rbc], "")
             in
-              (c, if made then SOME (String.concat (List.map (fn l => read (copy ^ "/libraries/" ^ l ^ "/MANIFEST")) libraries),
+              (c, if made then SOME (String.concat (List.map (read o index) libraries),
                                      read plan, read rbc)
                   else NONE)
             end
@@ -909,7 +911,7 @@ struct
           case List.find (fn (c, _) => c = "mlton") made of
             SOME (_, SOME (manifests, plan, bytes)) =>
               List.app (fn (c, SOME (m, p, b)) =>
-                             if m <> manifests then say ("FAIL virtual-libraries: the manifests differ between the mlton and " ^ c ^ " builds\n")
+                             if m <> manifests then say ("FAIL virtual-libraries: the indexes differ between the mlton and " ^ c ^ " builds\n")
                              else if p <> plan then say ("FAIL virtual-libraries: the plan differs between the mlton and " ^ c ^ " builds\n")
                              else if b <> bytes andalso c <> "smlnj32" then say ("FAIL virtual-libraries: the program differs between the mlton and " ^ c ^ " builds\n")
                              else ()
@@ -1222,7 +1224,8 @@ struct
         if target = "stack" then (["--target=stack"], out ^ "/rune.stage2.stack.rbc", "bin/rune.stack.rbc")
         else ([], out ^ "/rune.stage2.rbc", "bin/rune.rbc")
     in
-      if exec {cmd = ["bin/rune-boot"] @ flags @ ["-o", made] @ bootSrcs (), dir = NONE, stdin = "", stdout = out ^ "/" ^ target ^ ".err",
+      if exec {cmd = ["bin/rune-boot"] @ flags @ ["--build", "rune.build", "--whole", "--no-cache", "-o", made],
+               dir = NONE, stdin = "", stdout = out ^ "/" ^ target ^ ".err",
                stderr = out ^ "/" ^ target ^ ".err", timeout = 0} <> 0
       then say ("FAIL bootstrap: the compiler did not compile itself: " ^ firstLine (out ^ "/" ^ target ^ ".err") ^ "\n")
       else if same (reference, made) then ()
@@ -1238,10 +1241,10 @@ struct
         val stage2=out ^ "/rune.stage2.units.rbc"
         fun command label args=exec {cmd=args,dir=NONE,stdin="",stdout=out ^ "/" ^ label ^ ".out",
                                     stderr=out ^ "/" ^ label ^ ".err",timeout=1800}
-    in if command "stage1" (["bin/rune-boot","--units","-o",stage1] @ bootSrcs ())<>0
+    in if command "stage1" ["bin/rune-boot","--units","--build","rune.build","-o",stage1]<>0
        then say "FAIL units bootstrap: stage 1 failed\n"
-       else if command "stage2" (["bin/runevm","--heap-size",env ("RUNE_HEAP","67108864"),stage1,
-                                 "--lib","bin/../lib","-o",stage2] @ bootSrcs ())<>0
+       else if command "stage2" ["bin/runevm","--heap-size",env ("RUNE_HEAP","67108864"),stage1,
+                                 "--lib","bin/../lib","--build","rune.build","--whole","--no-cache","-o",stage2]<>0
        then say "FAIL units bootstrap: stage 2 failed\n"
        else if same ("bin/rune.rbc",stage2) then ()
        else say "FAIL units bootstrap: compiler bytecode differs\n" end

@@ -15,15 +15,13 @@ struct
         val () = rmTree dir
         val () = mkdirs dir
         val () = List.app (fn (path, text) => put dir path text)
-          [("lib/basis/MANIFEST", "# a comment\nlist.sml | demand | yes | List | \n"),
-           ("lib/basis/list.sml", "structure List = struct end\n"), ("lib/basis/README.md", "# Basis\n"),
+          [("lib/basis/list.sml", "structure List = struct end\n"), ("lib/basis/README.md", "# Basis\n"),
            ("lib/basis/library.build", "files list.sml end\n"),
-           ("lib/json/MANIFEST", "json.sml | demand | yes | Json | \npkg/extra.sml | demand | yes | | \n"),
            ("lib/json/json.sml", "structure Json = struct end\n"), ("lib/json/pkg/extra.sml", "structure Extra = struct end\n"),
            ("lib/json/README.md", "# Json\n"), ("lib/json/library.build", "files json.sml end\n"),
            ("lib/stray.sml", "not a library\n"), ("lib/cache/made", "cached\n"),
            ("rune.rbc", "compiler\n"), ("rune-repl.img", "repl\n"),
-           ("nomanifest/lib/gone/library.build", "files end\n"), ("script-vm", "#!/bin/sh\necho no\n")]
+           ("nolibrary/lib/gone/gone.sml", "structure Gone = struct end\n"), ("script-vm", "#!/bin/sh\necho no\n")]
         val () = List.app (fn arch => put dir ("vm-" ^ arch) ("vm-" ^ arch ^ "\n")) linuxArchitectures
         val () = List.app (fn arch => put dir ("exe-" ^ arch) ("exe-" ^ arch ^ "\n")) windowsArchitectures
         fun interpreter "x86_64" = "/lib64/ld-linux-x86-64.so.2"
@@ -55,8 +53,8 @@ struct
     let val dir = directory ()
     in (List.map (fn arch => (arch, dir ^ (if good then "/good-" else "/vm-") ^ arch)) linuxArchitectures,
         List.map (fn arch => (arch, dir ^ (if good then if arch = "x86_64" then "/good-win64" else "/good-win32" else "/exe-" ^ arch))) windowsArchitectures) end
-  val libraryMembers = ["LICENSE", "VERSION", "lib/rune/basis/MANIFEST", "lib/rune/basis/README.md", "lib/rune/basis/list.sml",
-       "lib/rune/json/MANIFEST", "lib/rune/json/README.md", "lib/rune/json/json.sml", "lib/rune/json/pkg/extra.sml",
+  val libraryMembers = ["LICENSE", "VERSION", "lib/rune/basis/library.build", "lib/rune/basis/README.md", "lib/rune/basis/list.sml",
+       "lib/rune/json/library.build", "lib/rune/json/README.md", "lib/rune/json/json.sml", "lib/rune/json/pkg/extra.sml",
        "lib/rune/rune-repl.img", "lib/rune/rune.rbc"]
   fun ffiArchives ()=
     let val dir=directory() val assets=dir ^ "/ffi-assets"
@@ -64,13 +62,12 @@ struct
         val ()=put dir "ffi-assets/sdl/upstream/original.h" "original header\n"
         val library=dir ^ "/ffi-library"
         val ()=List.app(fn(path,text)=>put library path text)
-          [("basis/library.build","files list.sml end\n"),("basis/MANIFEST","list.sml | demand | yes | List | \n"),
-           ("basis/list.sml","structure List = struct end\n")]
+          [("basis/library.build","files list.sml end\n"),("basis/list.sml","structure List = struct end\n")]
         val generated=List.concat(List.map(fn(family,target)=>
           let val prefix="ffi/" ^ family ^ "/generated/" ^ target ^ "/"
           in List.map(fn(name,text)=>(prefix ^ name,text))
             [("current.build","use sets/identity/native.build\n"),("api/api/public_sig.sml","signature GENERATED = sig end\n"),
-             ("sets/identity/library.build","files raw.sml end\n"),("sets/identity/MANIFEST","raw.sml | demand | yes | Generated | \n"),
+             ("sets/identity/library.build","files raw.sml end\n"),
              ("sets/identity/raw.sml","structure Generated = struct end\n"),("sets/identity/native.build","raw.sml\n"),
              ("sets/identity/shims.c","/* generated typed C shim */\n"),("sets/identity/ffi-manifest.json","{\"declarations\":[]}\n"),
              ("sets/identity/dependencies.json","{\"headers\":[]}\n")]
@@ -234,8 +231,8 @@ struct
   fun rejectedMetadata () =
     let val dir = directory ()
         val (linux, windows) = maps false
-        val missing = pack "missing-manifest" true "test1" (dir ^ "/nomanifest/lib") linux windows
-        val () = need (#status missing <> 0 andalso String.isSubstring "MANIFEST" (#errors missing), "packaged a library without a manifest")
+        val missing = pack "no-library" true "test1" (dir ^ "/nolibrary/lib") linux windows
+        val () = need (#status missing <> 0 andalso String.isSubstring "no library.build" (#errors missing), "packaged libraries with no build")
         val version = pack "bad-version" true "../x" (dir ^ "/lib") linux windows
     in need (#status version <> 0, "packaged an unsafe version") end
   fun binaryHeaders () =
@@ -295,8 +292,10 @@ struct
         val () = need (same (stage ^ "/runtime/aarch64/runevm", prefix ^ "/bin/runevm"), "installed the wrong architecture")
         val () = List.app (fn path => need (same (dir ^ "/lib/" ^ path, prefix ^ "/lib/rune/" ^ path), "installed library differs: " ^ path))
                        ["basis/list.sml", "json/pkg/extra.sml"]
-        val () = need (not (exists (prefix ^ "/lib/rune/basis/library.build")) andalso not (exists (prefix ^ "/lib/rune/cache")),
-                       "installed build metadata or unrelated cache")
+        (* a library's build file is what its index is derived from where it
+           is compiled; a store not asked for is not shipped *)
+        val () = need (exists (prefix ^ "/lib/rune/basis/library.build") andalso not (exists (prefix ^ "/lib/rune/cache")),
+                       "installed no build file of a library, or an unrelated cache")
         val wrapper = read (prefix ^ "/bin/rune")
         val () = need (not (String.isSubstring root wrapper) andalso not (String.isSubstring dir wrapper), "installed wrapper depends on archive/source tree")
         val () = need (String.isSubstring ("note: " ^ prefix ^ "/bin is not on your PATH") (#output installed), "installer omitted the PATH note")

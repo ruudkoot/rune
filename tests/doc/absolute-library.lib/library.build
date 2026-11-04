@@ -1,0 +1,4 @@
+(* Reuse the reviewed exports.sml input and its IR, Markdown and diagnostics. *)
+library (signature API, structure Api) =
+  ../exports.sml
+end

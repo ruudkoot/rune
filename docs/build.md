@@ -115,19 +115,16 @@ beside the build files of the programs they build (`rune.plan`, ...) with
 
 * A sequence of declarations elaborates each in the basis the ones before
   it leave.
-* `use LIB/library.build`, a library's build file with a boundary: the files
-  after it see what the library exports, and nothing else of what it
-  declared.
 * `use FILE`: the declarations of another build file, in place, in the
   basis of the `use`; a build file used twice is elaborated once, the second
   use adding what the first declared, as far as the files after the second
-  use may see it. A build file with a boundary of its own adds what that
-  boundary exports at every use, so that libraries can share it whatever
-  order they come in. Of one without, a boundary that has closed around the
-  first use -- a library's, an `implements` -- stands between the two: the
-  second use adds what that boundary lets out, and nothing more. Inside the
-  same boundary, it adds all of it. (A first `use` of a build file under
-  another library's boundary is another matter: that reaches in, below.)
+  use may see it. An `implements` that has closed around the first use
+  stands between the two, and the second use adds nothing, as the
+  `implements` lets nothing out; inside the same boundary, it adds all of
+  it. A library is never used: it is imported, with `libraries NAME end`,
+  and a `use` of a `library.build` is refused (*What is gone*, below). (A
+  `use` of another build file under a library is another matter: that
+  reaches in, below, and is refused where the library has a header.)
 
 ## The workspace
 
@@ -211,23 +208,61 @@ signature mentions is usable by a client, equality and ascription included,
 but not nameable: that is what `:>` is for, in the structure's own source. A
 friend (below) sees private names and is held to `:>` like any client.
 
+**A public structure's signature is public** (the claim rule; the
+build-system roadmap's D8). Where a header exports a structure or a functor,
+each signature of the library that a source ascribes it by name is exported
+too: `structure Json :> JSON = ...` and `exports (structure Json)` without
+`signature JSON` is refused, and so is a structure declared inside an exported
+one's body, `structure Outer = struct structure Inner : INNER = ... end`, and
+a functor's result, `functor Make (X : ARG) : RESULT`. A client can then name
+what the structure implements, and `runedoc` can document it. A signature of
+the Basis Library or of another library is not the library's to export, a
+signature written out, `sig ... end`, names none, and a private structure's
+signature stays private. The rule is a header's, as every rule that enforces
+a boundary is: a library with no header is not held to it.
+
 ## Reaching in
 
 A directory with a `library.build` is a library, and the deepest over a
 path is the one it is in. A library is reached through its interface,
 `libraries NAME end` and what it exports. A build file that names a path
-under a library it is not in reaches in, and the compiler warns of it once
-per build file and library, unless `--no-warnings` is given:
+under a library it is not in reaches in: a file of the library, or a build
+file of it (a sub-build). Its `library.build` is never named so: a library is
+imported with `libraries NAME end`, and a `use` of it is refused as the build
+file is read, from any build, a friend's too (*What is gone*, below).
+
+Into a library with a header, naming a file or a sub-build is an error,
+since it takes what the library hides past its boundary, and a compile, `rune
+--plan`, `--build-list` and `--deps --build` refuse it, `--no-warnings` or
+not (the build-system roadmap's D10):
 
 ```
-rune.build: warning: this build reaches into the library lib/compiler (1 path), which is reached through its interface
+p.build: error: this build reaches into the library lib/thing (1 path), which has a header: name the library with libraries, or have its header name this build a friend
 ```
 
-The compiler's own programs and the tests of its internals do this today
-(the build-system roadmap's D10), so it is a warning and changes nothing
-that is compiled. A path that a variable gives is not counted, and neither
-is a generated pointer: a `current.build` naming what is under `sets/` beside
-it, which nobody wrote and whose generator cannot be told otherwise yet.
+A build file that the library names a friend may reach in either way, by
+naming files or by using a sub-build (*A library's header*, below): the
+programs the other SML systems build, `rune.build`, `runedoc.build`,
+`runeisa.build` and `runeopt.build`, list files of the compiler's library or
+use its `internal.build` and `frontend.build`, which the other systems'
+lists keep to what each needs, and the library names them.
+
+Reaching into a library with no header, which keeps the meaning it had (*A
+library with no header*, below), is a warning until the win32 work's
+libraries have headers (D15's window), and then an error too. A compile gives
+it once per build file and library, unless `--no-warnings` is given, and it
+changes nothing that is compiled:
+
+```
+p.build: warning: this build reaches into the library lib/ffi/runtime (1 path), which is reached through its interface
+```
+
+No build file of this tree reaches in but those friends. A path that a
+variable gives is not counted, and neither is a generated pointer: a
+`current.build` naming what is under `sets/` beside it, which nobody wrote
+and whose generator cannot be told otherwise yet. A library's header is read
+for this from its `library.build` at every compile, so a library that gains
+one refuses at once a build that reached into it, up to date or not.
 
 The compiler library's `CompilerApi.Project` API uses this same scoped
 planner, which reads build files and never a source. Windows project
@@ -259,12 +294,54 @@ is to a program:
 no header. In an ordinary program build, the declaration selects those
 libraries as `--library random` does; explicit command-line selections are
 retained. What each
-file provides and requires is not written down: `rune --basis-index DIR`
-works it out from the sources (`Deps`, docs/units.md, The graph) and writes
-`DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). It reads
-the build file as a compile does, through `CompilerProject`, and lives in
-`LibraryIndex`, which the compiler's driver and `runedoc` both reach. `make
-manifests` makes them all, and they are not committed.
+file provides and requires is not written down: it is the library's index,
+which the compiler works out from the build file and the sources (`Deps`,
+docs/units.md, The graph) where it is asked for, and which is never a file
+in the tree. *A library's index*, below, says how.
+
+### A library's index
+
+A library's index says, of each of its files, its class, its host, what it
+provides and what it requires, and of the library what its header says:
+what it is written on, what it exports, its friends and views, the fixity
+it exports and what it marks to inline. Every reader asks one query for it,
+`LibraryIndex.index`: a compile and its selection, a `-j` child, the
+compiler's API and its analysis, and `runedoc`. `rune --basis-index DIR`
+makes the index of the library in `DIR` again and prints it, a line a file:
+
+```
+$ rune --basis-index lib/digest
+# The index of a library, from its library.build (rune --basis-index)
+digest_sig.sml | demand | yes | DIGEST |
+sha256.sml | demand | yes | Sha256 | Array Char CharVector DIGEST IntInf String Vector Word Word32
+hex_sig.sml | demand | yes | HEX |
+hex.sml | demand | yes | Hex | Char HEX String
+...
+```
+
+with what a client of the library cannot act on said, as a warning: a
+library with no header, units that are not well-formed.
+
+**The store keeps it.** An index is made where a compile first asks for it,
+and kept in the compile's store ([units.md](units.md), *The store*) as a
+record of what it was made of: the bytes of the library's build files and of
+each of its sources, by their hashes, and the index of each library it was
+made against -- the Basis Library and the libraries it is written on -- by
+the hash of that index. A record is believed only where all of these are as
+they were, each file by its stat where that is racily clean and else by its
+bytes, so that an edit of a library's build file or of any file it names is
+a miss, and the index is made again: **a stale index cannot be read.** What
+each file was to the index is kept with it, by the file's hash and the
+fixity it was read in, so that the index made again parses the files
+edited and no other. The frozen layer, `lib/cache`, ships the record of
+every library under `lib`, which `make basis-cache` writes there, by its
+place under `--lib`, and they hold wherever it is installed: there a first
+compile reads each file once, to see that it is what the record says, and
+keeps the record again in its own store. `--no-cache` turns units off, not the index: such a compile reads
+the store's records, and writes none. A compile with no store (`RUNE_CACHE`
+empty, the compiler's API and an editor's analysis, `runedoc`) makes what it
+does not find, and holds it for its session, where a later compile holds it
+to what it was made of as it does a record of the store.
 
 ### A library's header
 
@@ -310,8 +387,8 @@ prelude and a `final` file an entry unit, which they need not keep.
   `--basis-check` reject a missing export or the wrong kind of declaration, and
   `--basis-index` rejects a `fixity` export no file directs and a file that
   uses a name a library it requires does not export, which would otherwise show
-  only when a client failed to compile. An invalid index leaves the existing
-  manifest intact. A fixity directive at the top level of a file belongs in an
+  only when a client failed to compile. An invalid index is no index: every
+  compile that asks for it is refused, until it is valid. A fixity directive at the top level of a file belongs in an
   `always` file, as a demand file declares modules and types only; that file
   loads with the library, so an exported fixity is active wherever the library
   is imported, and only there.
@@ -320,7 +397,9 @@ prelude and a `final` file an entry unit, which they need not keep.
   library's internals (D11). A friend sees private names and nothing more: `:>`
   holds for it, and what the library requires is not its. A build that is not
   named is refused, even with a friend's entries in its cache, since a usage
-  holds only of a name in scope.
+  holds only of a name in scope. A friend may also name the library's files
+  and the build files it uses, which a build it does not name may not
+  (*Reaching in*, above).
 * **`view NAME (...)` is a named subset of the exports.** `libraries lib#NAME end`,
   `requires lib#NAME end` or `--library lib#NAME` see that subset, and the
   files that link are the closure of what they name of it, as for the whole
@@ -329,9 +408,9 @@ prelude and a `final` file an entry unit, which they need not keep.
   program's `view NAME`, with none, is a view of the Basis Library, another
   thing (*Views of the Basis Library*, below).
 
-`--basis-index` writes a header to the manifest's comment lines, `# library:`
-for what is required, as the readers of a manifest have always read it, and
-`# exports:`, `# friends:`, `# view:`, `# virtual:`, `# implements:`
+A library's index holds its header (*A library's index*, above), which
+`--basis-index` prints as comment lines, `# library:` for what is required,
+and `# exports:`, `# friends:`, `# view:`, `# virtual:`, `# implements:`
 and `# fixity:` for the rest, with words such as
 `structure:Api signature:API`, and `-` for none. A library required
 with renames is one word on its `# library:` line, `same(structure:Same=One)`,
@@ -347,17 +426,18 @@ it. A library with a header that requires one sees what that one is written
 on too. A build of libraries none of which has a header goes as it always has,
 byte for byte.
 
-`--basis-index` warns of each, once, when it writes the manifest:
+`--basis-index` warns of each, once, when it makes the index:
 
 ```
-lib/json/library.build: warning: this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)
+lib/unicode/library.build: warning: this library has no header: all it declares is public, and its libraries are transitive (docs/build.md, A library's header)
 ```
 
-That is the only place it shows. A client cannot act on it, and 31 of this
-tree's libraries have no header yet, 26 written by hand and the 5 generated
-sets, which would be a line in every compile of a program that uses one; the
-index runs when the library changes, for the person changing it.
-`--no-warnings` silences it.
+That is the only place it shows. A client cannot act on it, and 14 of this
+tree's libraries have no header yet -- the 8 of the win32 work and
+`lib/ffi/runtime`, which its migration left alone (*Migrating a tree*,
+below), and the 5 generated sets -- which would be a line in every
+compile of a program that uses one; the index runs when the library changes,
+for the person changing it. `--no-warnings` silences it.
 
 Such a library may keep a boundary of its own in the older form, a `library`
 block around all its files, which leaves the rest of its meaning as it is:
@@ -369,8 +449,8 @@ library (structure Api, signature API, functor Make, type item) =
 end
 ```
 
-The manifest records that boundary in an optional sixth column, and every
-row of one library has the same one. The block is a library's: it stands in a
+The index records that boundary, and `--basis-index` prints it in a sixth
+column, every row of one library the same. The block is a library's: it stands in a
 `library.build`, around every file of it, and nowhere else. It stays for the
 libraries that have not moved to a header, and goes when the last has
 (the build-system roadmap's D15).
@@ -506,8 +586,10 @@ library unicode lib/unicode
   form open
 end
 library json lib/json
-  form open
+  form header
   requires unicode
+  export signature JSON
+  export structure Json
   unit json:json_sig.sml lib/json/json_sig.sml ascii demand
   unit json:json.sml lib/json/json.sml ascii demand
 end
@@ -523,7 +605,7 @@ provenance
   input app/app.build ca0d3cfe08b9b5d794694319ffc6a47fd7a1b0a1d616688b4a8b93c6d27dee2d
   input app/part.build ec7f89648f9fc1c61929d8c1754c0c1dd4c0a8174b6fb5598c1460dc02e19e2c
   input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
-  input lib/json/library.build 452367689d73def6ab952443ca574e1a8ff0d920167ddd35a54e3d2d59eac449
+  input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end
 ```
 
@@ -660,13 +742,103 @@ Each is an error now, which says what to write:
 | Was | Now |
 |---|---|
 | `group a.sml b.sml end`, files in the order their modules give | the files in the order they are compiled; `rune --deps` prints an order the modules give |
-| `local A in B end` | a library: A and B behind a boundary that exports what B declares, used where the `local` was |
+| `local A in B end` | a library: A and B behind a boundary that exports what B declares, imported with `libraries NAME end` |
 | `cache DIR` | `--cache-dir DIR` |
-| `library (...) = ... end` in a program's build | a library's own `library.build`, with a header, used where the block was: `use DIR/library.build` |
+| `library (...) = ... end` in a program's build | a library's own `library.build`, with a header, imported with `libraries NAME end` |
+| `use DIR/library.build` | `libraries NAME end`, NAME the library's directory under `--lib` or under a root of `rune.workspace` (*The workspace*) |
+
+A library is imported, never used: what it declares is elaborated in the
+Basis Library and what it requires, before the program's files, and not in
+the basis of a place among them, so that each library is compiled once, as
+itself, whoever imports it (the build-system roadmap's D6 and D10).
 
 A `library.build` with a `library` block keeps it (*A library with no
 header*, above). `CompilerApi.Project` has no cache directories, and its
 inputs are the build files alone.
+
+## Migrating a tree
+
+`bin/rune-migrate` (`tools/migrate`; the build-system roadmap's D15) carries
+a tree's build files to the library model. It reads them with the compiler's
+own readers -- the planner for build files, the parser and the dependency
+analysis for sources, a library's index for the Basis Library and for what a
+file claims -- and lists nothing by hand. It is given the tree's files, one
+a line from the tree's top, which is where it runs:
+
+```
+git ls-files | bin/rune-migrate --report migrate.txt -
+git ls-files | bin/rune-migrate --write -
+```
+
+* **A library with no header gains one.** Its `exports` are the names of the
+  library that a client uses -- a source outside it, or in a library nested
+  in it -- with each signature of the library that those ascribe (the claim
+  rule, *Exports* above), a functor's parameter's, and what `runedoc`'s
+  comments claim, `Implements: SIG`. Its `requires` is what its `libraries`
+  said, with each library it uses a name of that it reached only through
+  another, since `requires` is not transitive. The header stands where its
+  `libraries` stood, or before its first file.
+* **A header it wrote, it writes again**, from the sources as they are. It
+  marks one so, with the comment `(* exports: what the library's clients use
+  (tools/migrate; ...) *)` before its `exports`. A header a person wrote has
+  no such line, and is left as it is; a person who takes a boundary over
+  deletes the line.
+* **A program's build** names, in its `libraries`, each library whose every
+  file it lists, and those files go; and each library whose names its own
+  units use, and that its scope would not show now that a library it reaches
+  through has a header.
+* **It reports what it cannot settle, and leaves it:** a part of a library
+  listed or a build file of a library used from outside it, unless the library
+  names the build a friend, which may; a library whose sources it cannot read
+  alone, or that declares a value or a fixity at its top level, which a header
+  cannot export; a kept build that would need a library named; a library it
+  requires and uses nothing of.
+
+**A client it cannot see is a person's to name.** The migrator reads the
+sources of the tree, and of the trees `--clients` names; a program made at
+test time (`runedoc --laws`'s, a runner's own), a client outside the tree,
+or what a library's documentation offers that nothing here uses yet, it does
+not see. Where a library's interface is wider than what its clients here
+name, a person writes its exports and deletes the mark: `lib/test/property/basis`
+exports an arbitrary for every type of the Basis Library, its signatures and
+its functors, and `lib/digest` its `HmacFn`.
+
+`--keep FILE` names build files it leaves as they are, a line each, and
+reports a kept build that a header would break. `--clients DIR` reads the
+sources under `DIR` as clients too: a branch's, made with `git archive` or
+`git show`, so that no header hides a name the branch uses. `--ignore PREFIX`
+leaves the sources under it out, `--path NAME=DIR` gives a path variable an
+absolute value, `--lib DIR` says where the libraries are, `--report FILE`
+writes the report, and without `--write` it changes nothing. A second run
+changes nothing.
+
+**This tree's migration** (the build-system roadmap's M13) gave 17 libraries
+a header, two of which a person then took over (above), ran with the win32 work's files kept (`win32-desktop` and the
+branches made from it, which another work goes on in) and with the sources
+each of those branches adds or changes as clients, and named in programs'
+builds the libraries they listed whole. It left `lib/ffi/runtime` without a
+header: one would hide `lib/ffi/marshal` from the win32 work's builds that
+use a generated set's files, which name it. Of the builds that reached in,
+the tests of the compiler's internals and the tools on them became its
+friends, through `libraries compiler`, and the programs the other SML systems
+build stay as they were, friends that list its files.
+
+### A branch's recipe
+
+A branch made before its base was migrated:
+
+1. Rebase it on the base, or merge the base in. Where a `.build` file
+   conflicts, take the branch's text.
+2. `git ls-files | bin/rune-migrate --write -`. A library the branch added
+   gains a header, and a header the migrator wrote is written again from the
+   branch's sources, so that a boundary that the merge brought in hides
+   nothing the branch's clients use, which no conflict shows (D15's trap).
+3. The migrator leaves a generated set as it is. Where its build files
+   change all the same -- a header its generator comes to write, or a hand
+   edit -- `runeffi rehash --out DIR` gives the set the name its files make
+   now, without its headers or an SDK (docs/ffi/generation.md); `runeffi
+   check` stays the oracle.
+4. `make plans`, if a root's build changed, then build and test.
 
 ## Functors inlined across units
 
@@ -686,7 +858,7 @@ ignore it, as they do `inline val` (below).
 The Basis Library marks its own functors in `lib/basis/library.build`.
 These are the functors that make its structures in units other than their
 own: the words, ints, vectors, arrays and slices, the packing, and the
-streams. `--basis-index` writes them to the manifest's header (`# inline:`), and
+streams. The index keeps them (`# inline:`, as `--basis-index` prints it), and
 every compile marks them unless `--no-inline-functors` is given.
 A program marks its own functors in its build file (`inline functor ...
 end`); there is no option for it (`--inline-functor` was retired by
@@ -717,8 +889,8 @@ The Basis Library marks the functions that a profile of MLton's
 benchmarks built in units found called across units on their hot paths:
 `not`, `o`, `valOf`, `app`, `foldl` and `foldr`; `Word32.+`, `Word32.>>`,
 `Word32.andb` and `Word32.fromLarge`; and `Word8Array.sub`,
-`PackWord32Little.subArr` and `PackWord32Big.subArr`. `--basis-index`
-writes them to the manifest's header (`# inline val:`), every compile
+`PackWord32Little.subArr` and `PackWord32Big.subArr`. The index keeps them
+(`# inline val:`), every compile
 marks them as it does the functors, and `--no-inline-functors` leaves them
 out too. A program marks its own in its build file.
 
@@ -802,7 +974,7 @@ so as well as by its build files above, from three libraries under
 ```
 (* libraries/table/library.build: the virtual library *)
 exports (signature KEY, signature TABLE, functor Table)
-virtual (functor Table)
+virtual (functor Table) in ../../table.sml
 ../../key_sig.sml
 ../../table_sig.sml
 ../../table.sml                     (* functor Table = _virtual (K : KEY) : TABLE where type key = K.t *)
@@ -828,9 +1000,13 @@ virtual library's three files come from the cache (`virtual-libraries` of
 
 * **A virtual module is declared in its library,** with `_virtual` at the top
   level of a file that the library's build lists itself, as a structure or a
-  functor (*Virtual modules*, above), and it is exported. `--basis-index`
-  refuses a `virtual` that no file declares so, a `_virtual` the header does
-  not name, and a file before the declaration that declares its name.
+  functor (*Virtual modules*, above), and it is exported. The header's
+  `virtual (KIND NAME, ...) in FILE` names the file that declares the first of
+  them, as the build lists it, so that a plan splits the library there with
+  no source read. `--basis-index`, and every compile through the library's
+  index, refuses a `virtual` that no file declares so, a `_virtual` the
+  header does not name, a file before the declaration that declares its
+  name, and a `FILE` that is not the first to declare one.
 * **An implementing library adds no public module.** Its header says
   `implements (KIND NAME, ...)` in place of `exports`, and it exports nothing:
   what it implements is reached through the virtual library, and all else it

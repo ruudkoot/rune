@@ -59,10 +59,22 @@ struct
     let val ()=rmTree (out ^ "/lib") val ()=mkdirs (out ^ "/lib/basis")
         val result=execute root (out ^ "/basis-deps") (tool "RUNE" (fromRoot "bin/rune") @ ["--lib","lib","--allow-prim","--basis-deps"] @ files)
         val listing=successful result val keep=lines listing val ()=GenerateText.atomic (out ^ "/lib.files") listing
-        fun retained line=String.isPrefix "#" line orelse trim line="" orelse List.exists (fn name => name=trim (hd (fields #"|" line))) keep
-        val manifest=String.fields (fn c => c = #"\n") (read (fromRoot "lib/basis/MANIFEST"))
-        val manifest=if List.last manifest="" then List.take (manifest,length manifest-1) else manifest
-        val ()=GenerateText.atomic (out ^ "/lib/basis/MANIFEST") (String.concat (List.map (fn line => line ^ "\n") (List.filter retained manifest)))
+        (* the Basis Library's index (rune --basis-index), its files kept
+           written back as a build file, a file a line in its class and host,
+           with what the index marks to inline *)
+        val index=lines (successful (execute root (out ^ "/basis-index") (tool "RUNE" (fromRoot "bin/rune") @ ["--lib","lib","--no-warnings","--basis-index","lib/basis"])))
+        fun marked key=List.concat (List.map (fn line => if String.isPrefix key line then String.tokens Char.isSpace (String.extract (line,size key,NONE)) else []) index)
+        fun inline (word,key)=case marked key of [] => "" | names => "inline " ^ word ^ " " ^ String.concatWith " " names ^ " end\n"
+        fun row line=if String.isPrefix "#" line orelse trim line="" then NONE else
+          case List.map trim (fields #"|" line) of
+            file::class::host::_ =>
+              if not (List.exists (fn name => name=file) keep) then NONE else
+                let val classes=if String.isPrefix "seal@" class then ["seal","view=" ^ String.extract (class,5,NONE)] else [class]
+                    val words=classes @ (if host="yes" then [] else ["host=" ^ host])
+                in SOME ("annotate " ^ String.concatWith " " (List.map (fn w => "\"" ^ w ^ "\"") words) ^ " in " ^ file ^ " end\n") end
+          | _ => raise Failed ("not a line of an index: " ^ line)
+        val ()=GenerateText.atomic (out ^ "/lib/basis/library.build")
+          (inline ("functor","# inline:") ^ inline ("val","# inline val:") ^ String.concat (List.mapPartial row index))
     in List.app (fn file => copy (fromRoot ("lib/basis/" ^ file)) (out ^ "/lib/basis/" ^ file)) keep;0 end
     | trimLib _=raise Usage "trim-lib OUTDIR FILE..."
 end

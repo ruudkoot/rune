@@ -74,7 +74,7 @@ struct
                 stdout=prepared ^ "/" ^ name ^ ".out",stderr=prepared ^ "/" ^ name ^ ".err",timeout=120}
           in need (status=0,"terminal probe compile failed: " ^ name ^ ": " ^ read (prepared ^ "/" ^ name ^ ".err")) end
     in compile "keys" [] "tests/terminal/keys.sml";compile "readline" ["--library","terminal"] "examples/readline.sml";
-       compile "display" ["--library","test/runner"] "tests/runner/displayfixture.sml" end
+       compile "display" ["--library","test/runner","--library","test/unit"] "tests/runner/displayfixture.sml" end
   fun substitutions windows =
     let val vm=fromRoot (if windows then "bin/runevm.exe" else "bin/runevm")
     in [("REPL",quote vm ^ " --heap-size 67108864 --restore " ^ quote (fromRoot "bin/rune-repl.img") ^ " --"),

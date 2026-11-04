@@ -1,6 +1,7 @@
-libraries unicode json digest end
-files ../../build/config.sml end
-use ../../lib/compiler/api.build
+(* The measurement of the editor's syntax, on the compiler's API graph: a friend
+   of the compiler's library, which sees all it declares (docs/build.md, A
+   library's header). *)
+libraries unicode json digest compiler end
 files
   ../../tools/lsp/syntax-bench.sml
   ../../src/main/lsp-syntax-bench-main.sml

@@ -95,7 +95,7 @@ struct
           val roots=W.roots workspace
           fun patterns root=List.map (fn pattern => Json.Object [("globPattern",
             if relative then Json.Object [("baseUri",Json.String root),("pattern",Json.String pattern)] else Json.String pattern),
-            ("kind",Json.int 7)]) ["**/*.{sml,sig,fun,build}","**/MANIFEST","**/rune.workspace"]
+            ("kind",Json.int 7)]) ["**/*.{sml,sig,fun,build}","**/rune.workspace"]
           val watchers=if relative then List.concat (List.map patterns roots) else patterns ""
           val id="runelsp-watch-" ^ IntInf.toString (!serial)
           val ()=serial:=IntInf.+ (!serial,1)

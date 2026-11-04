@@ -1,0 +1,21 @@
+{
+ "signatures": {
+  "AREA": {
+   "doc": "Areas of shapes.\n\n",
+   "page": "sig/AREA.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "square",
+     "spec": "val square : int -> int",
+     "doc": "`square s` is the area of a square whose side is `s`.\n\n**Example** `square 3 = 9`\n\n",
+     "page": "sig/AREA.md#val-square"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "RuneShapes.Area": "AREA",
+  "Shapes.Area": "AREA"
+ }
+}

@@ -1,3 +1,0 @@
-# Annotations that are wrong: a line that is none, and labels that no check
-# of a documented member has.
-unit.sml | demand | yes | UNIT Unit |

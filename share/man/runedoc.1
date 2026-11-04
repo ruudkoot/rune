@@ -39,7 +39,7 @@ for the whole tree. It uses the lexer, the parser and the elaborator of
 .BR rune (1).
 .PP
 A library is a directory with a
-.B MANIFEST
+.B library.build
 that lists its files in the order they are compiled in; the names that begin
 with
 .B Rune
@@ -123,9 +123,7 @@ As
 .BR \-\-basis\-docs ,
 for a library
 .I NAME
-that this one is written on (its MANIFEST's
-.B # library:
-lines): where
+that this one is written on (what its build file requires): where
 .IR NAME 's
 pages are, from the
 .B \-\-out
@@ -259,7 +257,7 @@ implements it, each labelled
 with its variables drawn from the arbitraries of the library
 .BR test/property ,
 and is compiled with
-.BR "rune \-\-library test/property/basis" .
+.BR "rune \-\-library test/property/basis \-\-library test/property" .
 It prints a line
 .B LAW
 before each law and

@@ -5,7 +5,9 @@
    `runedoc --laws` writes a program for each signature with a law into
    build/laws (make check-tools), holding every law at every structure that
    implements the signature. Each is compiled with `--library
-   test/property/basis` (`laws-compile/NAME`), and its laws run a structure
+   test/property/basis --library test/property` (`laws-compile/NAME`): the
+   arbitraries, and Check, Gen and Prop, which the first requires and, with a
+   header, does not show its clients. Its laws run a structure
    at a time (`laws/NAME@STRUCTURE`, or `laws/NAME@-` for all of them) by
    `bin/rune-test laws-one`: the program runs with at most LAWS_MEMORY
    megabytes (4096), printing a line before each law and each case, and a
@@ -178,7 +180,7 @@ struct
 
   fun compile name =
     Test.it name
-      (shell ("mkdir -p \"$RUNE_TEST_RUN\"/laws && exec bin/rune --library test/property/basis build/laws/"
+      (shell ("mkdir -p \"$RUNE_TEST_RUN\"/laws && exec bin/rune --library test/property/basis --library test/property build/laws/"
               ^ name ^ ".sml -o \"$RUNE_TEST_RUN\"/laws/" ^ name ^ ".rbc",
               SOME ".", 600, 500, [], Run.exitZero))
 

@@ -1,7 +1,7 @@
 (* The documentation of a library as a tree of files (docs/plans/docgen.md,
    D8): a page per signature, the overview, the index of identifiers, how to
    read a page, and what is documented so far. A library is a directory with
-   a MANIFEST; explicit exports define its public names. Legacy libraries
+   a library.build; explicit exports define its public names. Legacy libraries
    hide names beginning with Rune. Everything is made in memory first: `write` puts it on disk and
    removes what it no longer makes, `check` only compares. `librariesPage`
    is the overview of every library, grouped by area, one page above those
@@ -28,7 +28,7 @@ struct
   (* Explicit export lists supersede the legacy Rune-prefix convention.
      load has already removed the private top-level modules in this case. *)
   fun publicOf dir =
-    case BasisManifest.scopeOf (BasisManifest.readManifest dir) of
+    case BasisManifest.scopeOf (DocElab.entriesOf dir) of
       NONE => isPublic
     | SOME _ => (fn (_ : string) => true)
 
@@ -77,17 +77,17 @@ struct
 
   (* ---- the library ---- *)
   (* A structure bound to itself under a signature, `structure List : LIST =
-     List`: a seal file of the MANIFEST shows a program the structure as its
+     List`: a seal file of the library shows a program the structure as its
      signature has it. It declares nothing to document; what it hides is known
      from elaboration, which has the structure as the program sees it. *)
   fun isSeal (I.Struct {name, rhs = I.Alias other, ascription = SOME _, ...}) = name = other
     | isSeal _ = false
 
-  (* The modules of the files of the MANIFEST, in its order: but for the
+  (* The modules of the files of the library's index, in its order: but for the
      seals of a view of the Basis Library, whose pages are the default's (D12) *)
   fun load (dir : string) : I.module list =
     let
-      val entries = List.filter (fn e : BasisManifest.entry => not (isSome (#view e))) (BasisManifest.readManifest dir)
+      val entries = List.filter (fn e : BasisManifest.entry => not (isSome (#view e))) (DocElab.entriesOf dir)
       val scope = BasisManifest.scopeOf entries
       fun visible key = case scope of NONE => true | SOME exports => List.exists (fn exported => exported = key) exports
       fun exported m =
@@ -318,7 +318,7 @@ struct
   fun capitalised (s : string) : string =
     if s = "" then s else String.str (Char.toUpper (String.sub (s, 0))) ^ String.extract (s, 1, NONE)
 
-  (* The areas in the order in which the MANIFEST first has them; the
+  (* The areas in the order in which the library's index first has them; the
      signatures that name none come last. *)
   fun byArea (sigs : I.signatureRecord list) =
     let
@@ -540,7 +540,7 @@ struct
      was elaborated. basisLibrary: only the Basis mixes required, optional and
      extension, so only its table names a status. *)
   (* A structure that shows a program more than its signatures name is an
-     error: it needs a seal file in the MANIFEST. *)
+     error: it needs a seal file in the library. *)
   (* rows: every structure that has a page, with the claims it makes and the
      status of its page, so that the index reaches all of them. *)
   fun structuresPage (env : P.env, title : string, modules : I.module list, sigStatus : string -> string,
@@ -626,7 +626,7 @@ struct
                       [] => ()
                     | ms => DocDiag.error (#span c, #name c ^ " shows a program " ^ String.concatWith ", " ms
                                                     ^ ", which " ^ #signat c ^ " does not name: bind it to its signature"
-                                                    ^ " in a seal file of the MANIFEST"))
+                                                    ^ " in a seal file of the library"))
                  firstClaims
     in
       "# Structures and what they implement\n\n"
@@ -1026,7 +1026,7 @@ struct
     in
       "# Libraries\n\n"
       ^ "The libraries that come with Rune, grouped by what they are for. Each is a\n"
-      ^ "directory of `lib/` with a MANIFEST, documented from the signatures it is\n"
+      ^ "directory of `lib/` with a library.build, documented from the signatures it is\n"
       ^ "built from. A program asks for one by name, `rune --library NAME`; the Basis\n"
       ^ "Library is what every program starts with.\n\n"
       ^ String.concat (List.map section groups)
@@ -1379,7 +1379,7 @@ struct
     DocExamples.structureOf (claims, fn c : DocClaims.claim => case #status c of SOME st => st | NONE => sigStatus (#signat c))
 
   (* ---- what depends on what ---- *)
-  (* The graph the MANIFEST records: a node is one source file, named by the
+  (* The graph the library's index records: a node is one source file, named by the
      public modules it declares, and an edge is a `requires`. A file that
      declares nothing public is left out, and what it needs is added to what
      needs it, so that the graph is of the library a program sees and not of
@@ -1537,12 +1537,12 @@ struct
       ^ "[" ^ M.escape title ^ "](README.md)\n\n"
       ^ "A node is one file of the library, named by the modules it declares; a family of structures that\n"
       ^ "one file declares, such as the five of `Int8`, is one node. An arrow from one node to another\n"
-      ^ "means that the first needs the second to compile, as the library's MANIFEST records it. An arrow\n"
+      ^ "means that the first needs the second to compile, as the library's index records it. An arrow\n"
       ^ "that a path of other arrows already implies is left out, so that what is left is the shape of the\n"
       ^ "library and not a wall of lines: the "
       ^ Int.toString (List.foldl (fn (f, n) => n + List.length (succOf f)) 0 files) ^ " requirements between the "
       ^ Int.toString (List.length files) ^ " files become " ^ Int.toString (List.length edges) ^ " arrows.\n"
-      ^ "The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a\n"
+      ^ "The order in which the library loads its files makes the graph acyclic: every arrow points at a\n"
       ^ "file that is compiled earlier.\n\n"
       ^ "A rounded node declares signatures, a square one structures. The library writes its structures\n"
       ^ "first and the signatures of the specification after them, so an arrow from a signature to a\n"
@@ -1554,7 +1554,7 @@ struct
       ^ "one need a file of the other.\n\n"
       ^ areaGraph ()
       ^ String.concat (List.map areaSection areas)
-      ^ "---\n\n<sub>Generated by runedoc from the MANIFEST; do not edit.</sub>\n"
+      ^ "---\n\n<sub>Generated by runedoc from the library's index; do not edit.</sub>\n"
     end
 
   (* ---- the index of members (members.json) ----
@@ -2076,7 +2076,7 @@ struct
         :: ("structures.md",
             structuresPage (env "", title, modules, sigStatus, indexRows,
                             Option.map DocElab.namesOf elaborated, basisLibrary))
-        :: ("depends.md", dependsPage isPublic (env "", title, BasisManifest.readManifest dir, areaOfModule))
+        :: ("depends.md", dependsPage isPublic (env "", title, DocElab.entriesOf dir, areaOfModule))
         :: ("exceptions.md", exceptionsPage (env "", title, sigs))
         :: ("notes.tsv", DocNotes.tsv labels notes)
         :: ("members.json", membersIndex isPublic (sigs, sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
