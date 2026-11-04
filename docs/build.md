@@ -127,7 +127,8 @@ beside the build files of the programs they build (`rune.plan`, ...) with
   first use -- a library's, an `implements` -- stands between the two: the
   second use adds what that boundary lets out, and nothing more. Inside the
   same boundary, it adds all of it. (A first `use` of a build file under
-  another library's boundary is another matter: that reaches in, below.)
+  another library is another matter: that reaches in, below, and is refused
+  where the library has a header.)
 
 ## The workspace
 
@@ -229,23 +230,49 @@ a boundary is: a library with no header is not held to it.
 A directory with a `library.build` is a library, and the deepest over a
 path is the one it is in. A library is reached through its interface,
 `libraries NAME end` and what it exports. A build file that names a path
-under a library it is not in reaches in, and the compiler warns of it once
-per build file and library, unless `--no-warnings` is given:
+under a library it is not in reaches in: a file of the library, a build file
+of it (a sub-build), or its `library.build`.
+
+Into a library with a header, naming a file or a sub-build is an error,
+since it takes what the library hides past its boundary, and a compile, `rune
+--plan`, `--build-list` and `--deps --build` refuse it, `--no-warnings` or
+not (the build-system roadmap's D10):
 
 ```
-rune.build: warning: this build reaches into the library lib/compiler (1 path), which is reached through its interface
+p.build: error: this build reaches into the library lib/thing (1 path), which has a header: name the library with libraries, or have its header name this build a friend
 ```
 
-It is a warning and changes nothing that is compiled (the build-system
-roadmap's D10). A build file that the library names a friend may reach in
-(*A library's header*, below): the programs the other SML systems build,
-`rune.build`, `runedoc.build`, `runeisa.build` and `runeopt.build`, list
-files of the compiler's library or use its `internal.build` and
-`frontend.build`, which the other systems' lists keep to what each needs,
-and the library names them. A path that a variable gives is not counted, and
-neither is a generated pointer: a `current.build` naming what is under
-`sets/` beside it, which nobody wrote and whose generator cannot be told
-otherwise yet.
+A build file that the library names a friend may reach in either way, by
+naming files or by using a sub-build (*A library's header*, below): the
+programs the other SML systems build, `rune.build`, `runedoc.build`,
+`runeisa.build` and `runeopt.build`, list files of the compiler's library or
+use its `internal.build` and `frontend.build`, which the other systems'
+lists keep to what each needs, and the library names them.
+
+The rest is a warning, which a compile gives once per build file and
+library, unless `--no-warnings` is given, and which changes nothing that is
+compiled:
+
+```
+p.build: warning: this build reaches into the library lib/ffi/runtime (1 path), which is reached through its interface
+```
+
+* Reaching into a library with no header, which keeps the meaning it had
+  (*A library with no header*, below): until the win32 work's libraries have
+  headers (D15's window), its files may be named. When that work is
+  migrated, this becomes an error too.
+* A `use` of a library's own `library.build` (`use LIB/library.build`,
+  above): the files after it see what the library exports and nothing else,
+  so nothing is taken past its boundary, but the library is elaborated in
+  the basis of the `use`, not in the Basis Library and what it requires
+  alone, as `libraries` has it.
+
+No build file of this tree reaches in but those friends. A path that a
+variable gives is not counted, and neither is a generated pointer: a
+`current.build` naming what is under `sets/` beside it, which nobody wrote
+and whose generator cannot be told otherwise yet. A library's header is read
+for this from its `library.build` at every compile, so a library that gains
+one refuses at once a build that reached into it, up to date or not.
 
 The compiler library's `CompilerApi.Project` API uses this same scoped
 planner, which reads build files and never a source. Windows project
@@ -381,8 +408,8 @@ prelude and a `final` file an entry unit, which they need not keep.
   holds for it, and what the library requires is not its. A build that is not
   named is refused, even with a friend's entries in its cache, since a usage
   holds only of a name in scope. A friend may also name the library's files
-  and the build files it uses, which another build is warned of (*Reaching
-  in*, above).
+  and the build files it uses, which a build it does not name may not
+  (*Reaching in*, above).
 * **`view NAME (...)` is a named subset of the exports.** `libraries lib#NAME end`,
   `requires lib#NAME end` or `--library lib#NAME` see that subset, and the
   files that link are the closure of what they name of it, as for the whole

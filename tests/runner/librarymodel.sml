@@ -369,21 +369,24 @@ struct
      refused "h2-abbreviation" ["h2"] "datatype u = datatype t\nval x = A\n" "A";
      refused "h2-alias" ["h2"] "datatype u = datatype Alias.t\nval x = B 7\n" "B";
      prints "h2-no-constructor" ["h2"] "datatype u = datatype Api.t\nval () = print (Api.show Api.a ^ \"\\n\")\n" "A\n";
-     (* a first `use` of a library's sub-build is a reach into it, which warns;
-        M1's second use stays through its boundary (reach-in, boundary/ of
-        tests/runner/scenarios.sml) *)
-     put ("lib/subbed/library.build", "exports (structure Pub)\nannotate \"demand\" in use x.build end\n");
+     (* a first `use` of a library's sub-build is a reach into it, which a
+        header refuses but from a friend; M1's second use, a friend's, stays
+        through its boundary (reach-in, boundary/ of tests/runner/scenarios.sml) *)
+     put ("lib/subbed/library.build",
+          "exports (structure Pub)\nfriends ../../p/second/library.build ../../p/second.build end\n\
+          \annotate \"demand\" in use x.build end\n");
      put ("lib/subbed/x.build", "x.sml\n");
      put ("lib/subbed/x.sml", "structure Pub = struct val v = 1 end\nstructure Priv = struct val v = 2 end\n");
      ignore (index "subbed");
      put ("p/first.build", "use ../lib/subbed/x.build\nfirst.sml\n");
      put ("p/first.sml", "val () = print (Int.toString Priv.v ^ \"\\n\")\n");
      let val (status, log) = rune ["--no-cache", "--build", "p/first.build", "-o", dir ^ "/first.rbc"]
-     in need (status = 0 andalso has "this build reaches into the library" log, "a first use: " ^ log) end;
+     in need (status <> 0 andalso has "this build reaches into the library" log andalso has "which has a header" log,
+              "a first use: " ^ log) end;
      put ("p/second/library.build", "exports (structure Pub)\nuse ../../lib/subbed/x.build\n");
      put ("p/second.build", "use second/library.build\nuse ../lib/subbed/x.build\nfirst.sml\n");
      let val (status, log) = rune ["--no-cache", "--build", "p/second.build", "-o", dir ^ "/second.rbc"]
-     in need (status <> 0 andalso has "Priv" log, "a second use: " ^ log) end)
+     in need (status <> 0 andalso has "Priv" log andalso not (has "which has a header" log), "a second use: " ^ log) end)
 
   (* the compiler library's ways through a library: a session's compile, and
      an analysis of a project, whose friends it knows from its build file;

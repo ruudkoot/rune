@@ -273,15 +273,18 @@ struct
   (* Reaching in (docs/build.md, D10): a directory with a library.build is a
      library, the deepest over a path being its own, and a library is reached
      through its interface. What each build file names under a library not its
-     own, by the build file and the library, with how many paths; isLibrary
-     says whether a directory has one. A generated pointer -- current.build,
+     own, by the build file and the library: inside, how many of its files
+     and build files other than its library.build, and whole, how many uses
+     of its library.build, which go through its boundary; isLibrary says
+     whether a directory has one. A generated pointer -- current.build,
      naming the set it stands for under sets/ -- is left out: nobody wrote it,
      and what generates it goes with the FFI's migration (D15). So is a build
      file that the library names a friend (D11), which isFriend says of the
      build file and the library's directory: what may see all a library
      declares may name its files. *)
+  type reach={build:string,library:string,inside:int,whole:int}
   fun reaches {references:(string*string) list,windows:bool,isLibrary:string -> bool,
-               isFriend:string * string -> bool} : (string*string*int) list =
+               isFriend:string * string -> bool} : reach list =
     let
       val known=ref StringMap.empty : string option StringMap.map ref
       fun libraryOfDirectory dir =
@@ -304,8 +307,12 @@ struct
         | SOME library =>
             if libraryOf build=SOME library orelse pointer reference orelse isFriend (build,library) then found
             else
-              let fun add []=[(build,library,1)]
-                    | add ((b,l,n) :: rest)=if b=build andalso l=library then (b,l,n+1) :: rest else (b,l,n) :: add rest
+              let val whole=if fileName target="library.build" then 1 else 0
+                  fun add []=[{build=build,library=library,inside=1-whole,whole=whole}]
+                    | add ((r:reach) :: rest)=
+                        if #build r=build andalso #library r=library
+                        then {build=build,library=library,inside= #inside r+1-whole,whole= #whole r+whole} :: rest
+                        else r :: add rest
               in add found end
     in List.foldl note [] references end
 end

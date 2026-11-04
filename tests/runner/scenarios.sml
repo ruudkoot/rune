@@ -315,6 +315,17 @@ struct
            ("reach/lib/gen/sets/abc/set.build", "set.sml"),
            ("reach/lib/gen/sets/abc/set.sml", "structure Inner = struct val x = 2 end"),
            ("reach/pointer.build", "use lib/gen/current.build uses.sml"),
+           (* and into one with a header, which refuses all but its friends,
+              which may name its files or use a build file of it *)
+           ("reach/lib/sealed/library.build",
+            "exports (structure Inner)\nfriends ../../friend-in.build ../../friend-use.build end\nannotate \"demand\" in inner.sml end"),
+           ("reach/lib/sealed/inner.sml", "structure Inner = struct val x = 3 end"),
+           ("reach/lib/sealed/own.build", "inner.sml"),
+           ("reach/sealed-in.build", "lib/sealed/inner.sml uses.sml"),
+           ("reach/sealed-use.build", "use lib/sealed/own.build uses.sml"),
+           ("reach/friend-in.build", "lib/sealed/inner.sml uses.sml"),
+           ("reach/friend-use.build", "use lib/sealed/own.build uses.sml"),
+           ("reach/sealed-whole.build", "use lib/sealed/library.build uses.sml"),
            (* selection, by what a file uses *)
            ("select/lib/m/library.build", "annotate \"demand\" in e.sml end"),
            ("select/lib/m/e.sml", "structure E = struct val () = print \"(initialiser of E ran)\\n\" val v = 5 end"),
@@ -676,6 +687,34 @@ struct
         end
     | "reach-in-pointer" =>
         output (compiler c which "reach" ["--build", "pointer.build", "--no-cache", "-o", "pointer.rbc"]) ""
+    | "reach-in-header" =>
+        (* refused by a compile, --no-warnings or not, and by --plan, --build-list
+           and --deps, by a list of its files and by a use of a build file of it *)
+        let fun refusedBy build label flags =
+              refused (compiler c (which ^ "-" ^ build ^ "-" ^ label) "reach" (flags @ [build ^ ".build"]))
+                      (build ^ ".build: error: this build reaches into the library lib/sealed (1 path), which has a header")
+            fun everyWay build =
+              (refusedBy build "compile" ["--no-cache", "-o", build ^ ".rbc", "--build"];
+               refusedBy build "quiet" ["--no-cache", "--no-warnings", "-o", build ^ ".rbc", "--build"];
+               refusedBy build "plan" ["--plan"];
+               refusedBy build "list" ["--build-list"];
+               refusedBy build "deps" ["--deps", "--build"])
+        in everyWay "sealed-in"; everyWay "sealed-use" end
+    | "reach-in-whole" =>
+        (* a use of its library.build goes through its boundary: a warning *)
+        let val r = compiler c which "reach" ["--build", "sealed-whole.build", "--no-cache", "-o", "sealed-whole.rbc"]
+        in success r;
+           need (String.isSubstring ("sealed-whole.build: warning: this build reaches into the library lib/sealed (1 path), "
+                                     ^ "which is reached through its interface") (#errors r),
+                 "no warning of a use of a library's build file: " ^ #errors r);
+           output (program c (which ^ "-run") "reach" ["sealed-whole.rbc"]) "3\n"
+        end
+    | "reach-in-friend" =>
+        (* a friend reaches in either way, with no warning *)
+        List.app (fn build =>
+                    (output (compiler c (which ^ "-" ^ build) "reach" ["--build", build ^ ".build", "--no-cache", "-o", build ^ ".rbc"]) "";
+                     output (program c (which ^ "-" ^ build ^ "-run") "reach" [build ^ ".rbc"]) "3\n"))
+                 ["friend-in", "friend-use"]
     | "selection-by-uses" =>
         let fun selected name flags sources expected =
               let val () = success (compiler c ("select-" ^ name) "select" (["--lib", "lib", "--no-warnings"] @ flags @ ["-o", name ^ ".rbc"] @ sources))
@@ -921,6 +960,7 @@ struct
                     "use-through-boundary", "use-through-boundary-hidden", "use-across-builds", "use-diamond", "use-diamond-hidden", "use-first-open", "use-inside-boundary",
                     "use-sibling-boundary", "use-replayed-export", "use-after-implements", "export-nothing",
                     "export-no-signature", "export-from-outside", "export-rebound", "export-datatype", "export-abbreviation", "typecheck-exports", "reach-in", "reach-in-pointer",
+                    "reach-in-header", "reach-in-whole", "reach-in-friend",
                     "selection-by-uses", "install-no-basis", "stale-index", "clean-overlay",
                     "virtual-intinf", "virtual-digits", "virtual-cache", "virtual-whole", "virtual-none", "virtual-two",
                     "virtual-table-list", "virtual-table-tree", "virtual-table-cache", "virtual-table-whole", "virtual-table-none",

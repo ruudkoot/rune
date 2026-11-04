@@ -385,6 +385,66 @@ struct
     CompilerProject.plan {file=file,windows=onWindows (),readBuild=readBuild}
     handle CompilerProject.Invalid message => raise Options.Usage message
 
+  (* Reaching in (docs/build.md, Reaching in; the build-system roadmap's D10):
+     what a build file of the plan names under a library not its own. A file
+     of a library with a header, or a build file of it other than its
+     library.build, is an error, unless the header names the build file a
+     friend (D11), which may reach in by naming files or by using a
+     sub-build. The rest is a warning: a library with no header, until those
+     libraries have their headers (D15's window), and a use of a library's
+     own library.build, which goes through its boundary. A library's header
+     is read from its library.build, which a compile does not otherwise read
+     where the library is reached into, so that one gaining a header refuses
+     the builds that reach in, up to date or not. *)
+  fun headerAt (dir : string) : BuildFile.header option =
+    let val file = OS.Path.joinDirFile {dir = if dir = "" then "." else dir, file = "library.build"}
+        val text = SOME (readText file) handle IO.Io _ => NONE
+    in
+      case text of
+        NONE => NONE
+      | SOME text =>
+          List.foldl (fn (BuildFile.Header h, NONE) => SOME h | (_, found) => found) NONE (BuildFile.parse (file, text))
+          handle BuildFile.Error message => raise Options.Usage message
+    end
+  fun reachingIn {warn : bool} (project : CompilerProject.plan) : unit =
+    let
+      val headers = ref StringMap.empty : BuildFile.header option StringMap.map ref
+      fun header dir =
+        case StringMap.find (!headers, dir) of
+          SOME h => h
+        | NONE => let val h = headerAt dir in headers := StringMap.insert (!headers, dir, h); h end
+      val reached =
+        CompilerProject.reaches
+          {references = #references project, windows = onWindows (),
+           isLibrary = fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir = dir, file = "library.build"}, [])
+                                 handle OS.SysErr _ => false,
+           isFriend = fn (build, dir) =>
+             case header dir of
+               SOME {friends, ...} => List.exists (fn f => BasisManifest.isFriend (dir, f, build)) friends
+             | NONE => false}
+      fun counted paths = Int.toString paths ^ (if paths = 1 then " path" else " paths")
+      val (refused, warned) =
+        List.partition (fn r : CompilerProject.reach => #inside r > 0 andalso isSome (header (#library r))) reached
+    in
+      if !Options.noWarnings orelse not warn then ()
+      else
+        (List.app (fn {build, library, inside, whole} =>
+                     Error.warn ({file = build, start = 0, stop = 0},
+                                 "this build reaches into the library " ^ library ^ " (" ^ counted (inside + whole)
+                                 ^ "), which is reached through its interface"))
+                  warned;
+         Error.flushWarnings ());
+      if List.null refused then ()
+      else
+        (List.app (fn {build, library, inside, ...} =>
+                     Error.report ({file = build, start = 0, stop = 0},
+                                   "this build reaches into the library " ^ library ^ " (" ^ counted inside
+                                   ^ "), which has a header: name the library with libraries, "
+                                   ^ "or have its header name this build a friend"))
+                  refused;
+         raise Reported)
+    end
+
   (* --deps --build: what the build compiles, in its order, and where it
      breaks the rules *)
   fun depsOfBuild (file : string) : Deps.file list =
@@ -392,6 +452,7 @@ struct
       val () = findWorkspace file
       val () = storeHome ()
       val project = projectOf file
+      val () = reachingIn {warn = false} project
       (* a file is read as a compile reads it, through its preprocessor; a
          step is not run (docs/build.md, Generated sources) *)
       val () = Steps.preprocess {windows = onWindows (), cache = UnitCache.directory (), explain = fn _ => ()}
@@ -476,6 +537,9 @@ struct
       val windows = onWindows ()
       val () = entryFile := (case !Options.inputs of first :: _ => SOME first | [] => NONE)
       val project = commandPlan ()
+      (* a plan that a compile would refuse is not printed; what a compile
+         only warns of is the compile's to say *)
+      val () = reachingIn {warn = false} project
       val libraries = librariesOf project
       val () = if List.null libraries then () else ignore (libRoot ())
       val lib = Option.map (fn dir => case Workspace.fromHere (windows, Workspace.keyOf (windows, Workspace.here ()) dir) of
@@ -543,16 +607,6 @@ struct
     !editorGave
     orelse List.exists (fn (file, text) => StringMap.find (!Steps.made, file) <> SOME text) (StringMap.listItemsi (!Source.overlays))
 
-  (* whether the library in dir names build a friend in its header *)
-  fun isFriendOf (build : string, dir : string) : bool =
-    let val file = OS.Path.joinDirFile {dir = if dir = "" then "." else dir, file = "library.build"}
-    in
-      List.exists (fn BuildFile.Header {friends, ...} => List.exists (fn f => BasisManifest.isFriend (dir, f, build)) friends
-                    | _ => false)
-                  (BuildFile.parse (file, readText file))
-    end
-    handle _ => false
-
   fun compile () : OS.Process.status =
     let
       val () = editorGave := false
@@ -568,20 +622,7 @@ struct
       (* the plan: the inputs are its files, and it is what the units driver
          follows *)
       val project = commandPlan ()
-      (* reaching into a library, which a later roadmap's milestone refuses
-         (docs/build.md, Reaching in) *)
-      val () =
-        if !Options.noWarnings orelse !knownToLoad then ()
-        else
-          (List.app (fn (build,library,paths) =>
-             Error.warn ({file=build,start=0,stop=0},
-               "this build reaches into the library " ^ library ^ " (" ^ Int.toString paths
-               ^ (if paths=1 then " path" else " paths") ^ "), which is reached through its interface"))
-             (CompilerProject.reaches {references= #references project,windows=onWindows (),
-                isLibrary=fn dir => OS.FileSys.access (OS.Path.joinDirFile {dir=dir,file="library.build"},[])
-                                    handle OS.SysErr _ => false,
-                isFriend=isFriendOf});
-           Error.flushWarnings ())
+      val () = if !knownToLoad then () else reachingIn {warn = true} project
       val () = Options.libraries := librariesOf project
       (* the functors its build files mark to be inlined (M6b) *)
       val () = Elaborate.inlineFunctors := List.foldl (fn (n,m) => StringMap.insert (m,n,()))
