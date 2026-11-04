@@ -386,16 +386,16 @@ struct
     handle CompilerProject.Invalid message => raise Options.Usage message
 
   (* Reaching in (docs/build.md, Reaching in; the build-system roadmap's D10):
-     what a build file of the plan names under a library not its own. A file
-     of a library with a header, or a build file of it other than its
-     library.build, is an error, unless the header names the build file a
-     friend (D11), which may reach in by naming files or by using a
-     sub-build. The rest is a warning: a library with no header, until those
-     libraries have their headers (D15's window), and a use of a library's
-     own library.build, which goes through its boundary. A library's header
-     is read from its library.build, which a compile does not otherwise read
-     where the library is reached into, so that one gaining a header refuses
-     the builds that reach in, up to date or not. *)
+     what a build file of the plan names under a library not its own, a file
+     or a build file of it (a library's library.build is refused as it is
+     read: a library is imported). Into a library with a header it is an
+     error, unless the header names the build file a friend (D11), which may
+     reach in by naming files or by using a sub-build; into a library with
+     none it is a warning, until those libraries have their headers (D15's
+     window). A library's header is read from its library.build, which a
+     compile does not otherwise read where the library is reached into, so
+     that one gaining a header refuses the builds that reach in, up to date or
+     not. *)
   fun headerAt (dir : string) : BuildFile.header option =
     let val file = OS.Path.joinDirFile {dir = if dir = "" then "." else dir, file = "library.build"}
         val text = SOME (readText file) handle IO.Io _ => NONE
@@ -423,22 +423,21 @@ struct
                SOME {friends, ...} => List.exists (fn f => BasisManifest.isFriend (dir, f, build)) friends
              | NONE => false}
       fun counted paths = Int.toString paths ^ (if paths = 1 then " path" else " paths")
-      val (refused, warned) =
-        List.partition (fn r : CompilerProject.reach => #inside r > 0 andalso isSome (header (#library r))) reached
+      val (refused, warned) = List.partition (fn (_, library, _) => isSome (header library)) reached
     in
       if !Options.noWarnings orelse not warn then ()
       else
-        (List.app (fn {build, library, inside, whole} =>
+        (List.app (fn (build, library, paths) =>
                      Error.warn ({file = build, start = 0, stop = 0},
-                                 "this build reaches into the library " ^ library ^ " (" ^ counted (inside + whole)
+                                 "this build reaches into the library " ^ library ^ " (" ^ counted paths
                                  ^ "), which is reached through its interface"))
                   warned;
          Error.flushWarnings ());
       if List.null refused then ()
       else
-        (List.app (fn {build, library, inside, ...} =>
+        (List.app (fn (build, library, paths) =>
                      Error.report ({file = build, start = 0, stop = 0},
-                                   "this build reaches into the library " ^ library ^ " (" ^ counted inside
+                                   "this build reaches into the library " ^ library ^ " (" ^ counted paths
                                    ^ "), which has a header: name the library with libraries, "
                                    ^ "or have its header name this build a friend"))
                   refused;
@@ -1452,7 +1451,7 @@ struct
               val change = deltaOf (b0, snap ())
             in
               checkExports (change, exports);
-              CompilerBuildContext.leave (buildContext, boundary, exports);
+              CompilerBuildContext.leave (buildContext, boundary);
               apply (b0, change, SOME exports); acc
             end
         | elabStep (SUse (p, ds), acc) =
@@ -1461,7 +1460,7 @@ struct
               let
                 val b1 = snap ()
                 val acc = elabSteps (ds, acc)
-              in CompilerBuildContext.record (buildContext, p, deltaOf (b1, snap ()), ds); acc end
+              in CompilerBuildContext.record (buildContext, p, deltaOf (b1, snap ())); acc end
         | elabStep (SImplements (x, ds), acc) =
             if List.exists (fn y => y = x) (!implemented)
             then raise Options.Usage ("the build gives the virtual module or functor " ^ x ^ " two implementations")
@@ -1484,7 +1483,7 @@ struct
                 val boundary = CompilerBuildContext.enter buildContext
                 val acc = elabSteps (ds, acc)
               in
-                CompilerBuildContext.leave (buildContext, boundary, []);
+                CompilerBuildContext.leave (buildContext, boundary);
                 apply (b0, deltaOf (b0, snap ()), SOME []); acc
               end
       (* -j N: the units before the final ones, each with what it declares

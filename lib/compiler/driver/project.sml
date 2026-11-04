@@ -183,14 +183,19 @@ struct
                     if library then [SLibrary (exports,steps (annotations,declarations))]
                     else raise Invalid (file ^ ": a library's boundary belongs in its library.build")
                 | BuildFile.Use name => let val included=named name
-                    in [SUse (pathKey windows included,read (included,key :: stack,annotations))] end
+                    in (* a library is imported, by its name, and never used:
+                          one way to import it (docs/build.md, What is gone) *)
+                       if fileName included="library.build"
+                       then raise Invalid (file ^ ": use " ^ name ^ " imports a library by its build file; import it with libraries NAME end, "
+                                           ^ "NAME being its directory under --lib or under a root of rune.workspace (docs/build.md, What is gone)")
+                       else [SUse (pathKey windows included,read (included,key :: stack,annotations))] end
                 | BuildFile.Implements (name,declarations) => [SImplements (name,steps (annotations,declarations))]
                 | BuildFile.Annotate (more,declarations) => steps (annotations @ more,declarations)
                 | BuildFile.Libraries names =>
                     if isSome (!header) then raise Invalid (file ^ ": a library with a header says what it is written on with requires")
                     else (libraries:= !libraries @ names;[])
                 | BuildFile.Header (given as {requires,...}) =>
-                    if library then (if null stack then header:=SOME given else ();libraries:= !libraries @ requires;[])
+                    if library then (header:=SOME given;libraries:= !libraries @ requires;[])
                     else raise Invalid (file ^ ": a header belongs to a library's library.build")
                 | BuildFile.Inline names => (inline:= !inline @ names;[])
                 | BuildFile.InlineVal names => (inlineValues:= !inlineValues @ names;[])
@@ -267,24 +272,19 @@ struct
                  in used:=StringMap.insert (!used,key,added (after,fixity));(within,after) end)
         | one (SImplements (_,inner),fixity)=([Deps.Scope (#1 (walk (inner,fixity)))],fixity)
     in #1 (walk (steps,fixity)) end
-  (* whether all that steps declare stands behind a boundary of their own *)
-  fun bounded steps=List.all (fn SUnit _ => false | SLibrary _ => true | SImplements _ => true
-    | SUse (_,inner) => bounded inner) steps
   (* Reaching in (docs/build.md, D10): a directory with a library.build is a
      library, the deepest over a path being its own, and a library is reached
      through its interface. What each build file names under a library not its
-     own, by the build file and the library: inside, how many of its files
-     and build files other than its library.build, and whole, how many uses
-     of its library.build, which go through its boundary; isLibrary says
-     whether a directory has one. A generated pointer -- current.build,
+     own, by the build file and the library, with how many paths; isLibrary
+     says whether a directory has one. A generated pointer -- current.build,
      naming the set it stands for under sets/ -- is left out: nobody wrote it,
      and what generates it goes with the FFI's migration (D15). So is a build
      file that the library names a friend (D11), which isFriend says of the
      build file and the library's directory: what may see all a library
-     declares may name its files. *)
-  type reach={build:string,library:string,inside:int,whole:int}
+     declares may name its files. A library's library.build is never among
+     them: a use of it is refused as it is read (plan). *)
   fun reaches {references:(string*string) list,windows:bool,isLibrary:string -> bool,
-               isFriend:string * string -> bool} : reach list =
+               isFriend:string * string -> bool} : (string*string*int) list =
     let
       val known=ref StringMap.empty : string option StringMap.map ref
       fun libraryOfDirectory dir =
@@ -307,12 +307,8 @@ struct
         | SOME library =>
             if libraryOf build=SOME library orelse pointer reference orelse isFriend (build,library) then found
             else
-              let val whole=if fileName target="library.build" then 1 else 0
-                  fun add []=[{build=build,library=library,inside=1-whole,whole=whole}]
-                    | add ((r:reach) :: rest)=
-                        if #build r=build andalso #library r=library
-                        then {build=build,library=library,inside= #inside r+1-whole,whole= #whole r+whole} :: rest
-                        else r :: add rest
+              let fun add []=[(build,library,1)]
+                    | add ((b,l,n) :: rest)=if b=build andalso l=library then (b,l,n+1) :: rest else (b,l,n) :: add rest
               in add found end
     in List.foldl note [] references end
 end

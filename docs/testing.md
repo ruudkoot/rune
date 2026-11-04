@@ -990,13 +990,16 @@ install or dist. Three cases of deps are the build-system roadmap's E8 table
 ([units.md](units.md), *Well-formed units*): `wellformed-rune` holds every
 library and build of the tree to `rune --deps --build` finding no unit that
 is not well-formed, and `wellformed-mlton` and `wellformed-hol4` hold MLton's
-606 units and HOL4's 744 of the `src/boss` closure so; another warning, a
-nested library's `use` reaching in, is not theirs. `RUNE_WELLFORMED_MLTON`
+606 units and HOL4's 744 of the `src/boss` closure so. `RUNE_WELLFORMED_MLTON`
 names a copy of MLton's sources (`mlton`, `lib/mlton`, `lib/mlyacc-lib`,
 `lib/stubs`, from `MLTON_SOURCES`) with the build files of the build-system
 roadmap's M9 laid over it, which its translator from MLton's `.mlb` files,
 `impl/bs-m9/e9/mlb2build2.py` of the roadmap's drafts, makes: 60 build files,
-30 of them libraries, `mlton/mlton.build` the program. `RUNE_WELLFORMED_HOL4`
+30 of them libraries, `mlton/mlton.build` the program. Those build files use
+the libraries' `library.build`, which is refused now that a library is only
+imported ([build.md](build.md), *What is gone*), so the row fails on them
+until MLton's `.mlb` files have a translation to libraries, which the
+build-system roadmap's M14 report says is not yet found. `RUNE_WELLFORMED_HOL4`
 names a directory of the closure after HOL's filter with its `boss.build`,
 which declares its two preludes; `rune --deps` then finishes on the closure as
 a plain list. Without them those two say SKIP. Installation also accepts repeated `--host NAME`; Make's

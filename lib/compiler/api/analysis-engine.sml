@@ -1131,18 +1131,18 @@ struct
                     NONE => ()
                   | SOME message => raise Error.CompileError ({file=case sources of source :: _ => #file source | [] => "",
                                                                start=0,stop=0},message)
-                val ()=CompilerBuildContext.leave (scopes,boundary,exports)
+                val ()=CompilerBuildContext.leave (scopes,boundary)
             in apply (before',change,SOME exports) end
         | CompilerProject.SUse (file,children) =>
             if CompilerBuildContext.replay (scopes,file) then () else
               let val before'=snap () val ()=walk children
-              in CompilerBuildContext.record (scopes,file,delta (before',snap ()),children) end
+              in CompilerBuildContext.record (scopes,file,delta (before',snap ())) end
         | CompilerProject.SImplements (name,children) =>
             if List.exists (fn prior => prior=name) (!implemented) then raise Fail "duplicate virtual implementation" else
               let val before'=snap ()
                   val boundary=CompilerBuildContext.enter scopes
                   val ()=implemented:=name :: !implemented val ()=walk children
-                  val ()=CompilerBuildContext.leave (scopes,boundary,[])
+                  val ()=CompilerBuildContext.leave (scopes,boundary)
               in apply (before',delta (before',snap ()),SOME []) end
         fun sourceError (span,message)=[CompilerSession.sourceError ("error",span,message)]
         (* the unit that failed, as far as it was elaborated *)
