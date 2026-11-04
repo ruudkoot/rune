@@ -462,24 +462,24 @@ test-lsp-oracle: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
-	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared
+	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared,byneed
 	rm -rf build/lsp/store
 	$(RUNE) --units -O0 --build rune.build --cache-dir build/lsp/store -o build/lsp/store.rbc 2>/dev/null
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-store.jsonl --store build/lsp/store \
-	  --require $(ORACLE_PATHS),opened,stored
+	  --require $(ORACLE_PATHS),opened,stored,byneed
 test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
-	  --scenarios tests/lsp/oracle/hol4.tsv --focus --out build/lsp/oracle-hol4.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
+	  --scenarios tests/lsp/oracle/hol4.tsv --focus --out build/lsp/oracle-hol4.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,byneed
 	rm -rf build/lsp/store-hol4
 	$(RUNE) --units --build "$(RUNE_ORACLE_HOL4)" --cache-dir build/lsp/store-hol4 -o build/lsp/store-hol4.rbc 2>/dev/null
 	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
 	  --scenarios tests/lsp/oracle/hol4.tsv --focus --store build/lsp/store-hol4 --out build/lsp/oracle-hol4-store.jsonl \
-	  --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,stored
+	  --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,stored,byneed
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
 	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton.jsonl \
-	  --record build/lsp/oracle-mlton.record --require placed,walked,rebound,loaded,cutoff,broken,failed,opened
+	  --record build/lsp/oracle-mlton.record --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,byneed
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
 	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton-against.jsonl --against build/lsp/oracle-mlton.record
 .PHONY: test-lsp-replay

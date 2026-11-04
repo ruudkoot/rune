@@ -49,6 +49,8 @@ struct
   (* the store a context takes a compile's entries and the sidecars from,
      and writes sidecars to; NONE, none *)
   fun store (context as Analysis {engine=E.Session {store,...},...},value)=(checked context;store:=value)
+  (* whether units are loaded by need (docs/compiler-analysis.md); on at first *)
+  fun lazy (context as Analysis {engine,...},on)=(checked context;E.setLazy (engine,on))
   fun compact (context as Analysis {engine,...})=(checked context;E.compact engine)
   fun checkpoint (context as Analysis {engine=E.Session {state,...},token,...}) =
     (checked context;Checkpoint {token=token,state= !state})

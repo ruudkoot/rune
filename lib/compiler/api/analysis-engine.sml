@@ -39,7 +39,7 @@ struct
      as bytes, with each string once; and the units whose places their
      origins hold that no reference follows (Env.Held), with the key of
      each one's text then. *)
-  val notesFormat=1
+  val notesFormat=2
   type notes={facts:fact list,uses:use list,types:typeDefinition list,printed:printed list,spans:(string*string) list}
   fun originsIn (uses:use list,types:typeDefinition list)=
     let fun all (Env.Constrained (a,b),found)=all (b,all (a,found))
@@ -101,12 +101,13 @@ struct
           in {unit=unit,number=number,name=name,arity=arity,eq=eq,shown=case Pickle.rbyte r of 0 => NONE | _ => SOME (str ())}:printed end)
         val spans=each (fn () => let val unit=str () in (unit,str ()) end)
     in if Pickle.atEnd r then {facts=facts,uses=uses,types=types,printed=printed,spans=spans} else raise Pickle.Bad "more than notes" end
-  (* Whether facts print where a unit stands, its environment after it, as
-     they printed: each type name of theirs printed by the path it had *)
-  fun printsSo (after,printed:printed list)=List.all (fn {unit,number,name,arity,eq,shown} =>
+  (* Whether facts print where a unit stands, its environment after it (and
+     what lies beyond that, where it is a view: Env.beyond), as they printed:
+     each type name of theirs printed by the path it had *)
+  fun printsSo ((after,outside),printed:printed list)=List.all (fn {unit,number,name,arity,eq,shown} =>
     let val stamp=if unit="" then SOME number else case UnitBasis.loadedAs unit of NONE => NONE
           | SOME u => if number<Vector.sub (#count u,UnitBasis.kTycon) then SOME (Vector.sub (#base u,UnitBasis.kTycon)+number) else NONE
-    in case stamp of NONE => false | SOME stamp => Env.qualifiedName (after,{name=name,stamp=stamp,arity=arity,eq=eq})=shown end) printed
+    in case stamp of NONE => false | SOME stamp => Env.qualifiedNameWith outside (after,{name=name,stamp=stamp,arity=arity,eq=eq})=shown end) printed
   (* A sidecar in the store (UnitCache.readSidecar), by the hash of a unit's
      source: the compiler that wrote it, the unit's identity, the names its
      text mentions (CompilerPrelude.usedBy), where it was scanned, the binder of each name its
@@ -116,9 +117,12 @@ struct
      notes are a part of their own, read where a question asks for them
      (UnitCache.readSidecar). It is a hint: one of another compiler, or whose
      unit is another, or whose usages another binder holds now, is not taken *)
+  (* binds and paths: the keys its names are bound by, and what its top-level
+     names reach, which a world that loads by need takes it with, its basis
+     unread (UnitBasis.lightLoad) *)
   type sidecar={compiler:string,identity:string,mode:string,allow:bool,mentions:string list option,binders:(string*string) list,
-    origins:string,closed:string}
-  fun encodeSidecar ({compiler,identity,mode,allow,mentions,binders,origins,closed}:sidecar)=
+    origins:string,closed:string,binds:string list,paths:UnitBasis.unitPath list}
+  fun encodeSidecar ({compiler,identity,mode,allow,mentions,binders,origins,closed,binds,paths}:sidecar)=
     let val w=Pickle.writer ()
     in Pickle.string (w,compiler);Pickle.string (w,identity);Pickle.string (w,mode);Pickle.bool (w,allow);
        Pickle.option (Pickle.list Pickle.string) (w,mentions);
@@ -129,7 +133,11 @@ struct
            val indices=List.map (fn (key,binder) => (key,index binder)) binders
        in Pickle.list Pickle.string (w,List.rev (!order));
           Pickle.list (fn (w,(key,i)) => (Pickle.string (w,key);Pickle.nat (w,i))) (w,indices) end;
-       Pickle.string (w,origins);Pickle.string (w,closed);Pickle.contents w end
+       Pickle.string (w,origins);Pickle.string (w,closed);
+       Pickle.list Pickle.string (w,binds);
+       Pickle.list (fn (w,(key,name,{own,class,path}:Env.pathKey)) =>
+         (Pickle.string (w,key);Pickle.string (w,name);Pickle.bool (w,own);Pickle.nat (w,class);Pickle.list Pickle.string (w,path))) (w,paths);
+       Pickle.contents w end
   fun decodeSidecar bytes : sidecar=
     let val r=Pickle.reader bytes
         val compiler=Pickle.rstring r val identity=Pickle.rstring r val mode=Pickle.rstring r val allow=Pickle.rbool r
@@ -138,8 +146,11 @@ struct
         val binders=Pickle.rlist (fn r => let val key=Pickle.rstring r in (key,Vector.sub (table,Pickle.rnat r)) end) r
         val origins=Pickle.rstring r
         val closed=Pickle.rstring r
+        val binds=Pickle.rlist Pickle.rstring r
+        val paths=Pickle.rlist (fn r => let val key=Pickle.rstring r val name=Pickle.rstring r val own=Pickle.rbool r
+            val class=Pickle.rnat r in (key,name,{own=own,class=class,path=Pickle.rlist Pickle.rstring r}:Env.pathKey) end) r
     in if Pickle.atEnd r then {compiler=compiler,identity=identity,mode=mode,allow=allow,mentions=mentions,binders=binders,
-         origins=origins,closed=closed}
+         origins=origins,closed=closed,binds=binds,paths=paths}
        else raise Pickle.Bad "more than a sidecar" end
   (* a unit's notes in the store, by the hash of its source, of its identity *)
   fun storedNotes (dir,source,identity)=
@@ -150,18 +161,26 @@ struct
                      in if written=identity andalso Pickle.atEnd r then SOME notes else NONE end)
                     handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE
   (* A closed unit opened from its notes (bytes), where they hold where it
-     stands: its environment before it (place), which with what it declared
-     its facts print in as they did, and the units whose places its
-     occurrences hold by span, whose texts' keys keyOf says, as they were *)
-  fun fromNotes (entry:entry,bytes,place,result:UnitBasis.result,keyOf)=
+     stands: its environment after it (after, printing), in which its facts
+     print as they did, and the units whose places its occurrences hold by
+     span, whose texts' keys keyOf says, as they were *)
+  fun fromNotes (entry:entry,bytes,after,keyOf)=
     case (SOME (decodeNotes (#name entry,bytes)) handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE) of
       NONE => NONE
     | SOME notes =>
-        if printsSo (Env.plus (place,#delta result),#printed notes) andalso List.all (fn (unit,key) => keyOf unit=SOME key) (#spans notes)
+        if printsSo (after,#printed notes) andalso List.all (fn (unit,key) => keyOf unit=SOME key) (#spans notes)
         then SOME ({key= #key entry,name= #name entry,file= #file entry,text= #text entry,allow= #allow entry,mode= #mode entry,
                pickle= #pickle entry,sidecar= #sidecar entry,facts= #facts notes,types= #types notes,syntax=NONE,
                uses= #uses notes,typing=NONE,printed= #printed notes,notes=bytes}:entry)
         else NONE
+  (* Where a unit's facts print after it (fromNotes): its place's environment
+     and what it declared; where its world loads by need, the initial
+     environment less what the binders, with the unit's own keys, say, and
+     what lies beyond that (Env.beyond) *)
+  fun printing (lazy,placeEnv,placeBinders,result:UnitBasis.result,binds)=
+    if not lazy then (Env.plus (placeEnv,#delta result),Env.nowhere) else
+      let val b=List.foldl (fn (key,m) => StringMap.insert (m,key,#identity (#unit result))) placeBinders binds
+      in (UnitBasis.initialLess b,UnitBasis.beyondWith (b,!UnitBasis.pathIndex)) end
   (* a usage's binder, from "IDENTITY FINGERPRINT", the identity a name that
      may have spaces in it *)
   fun binderOfValue value=
@@ -171,9 +190,10 @@ struct
   fun canonicalUsage (key,value)=
     let val fields=String.fields (fn c => c= #" ") value
     in (UnitBasis.canonicalKey key,UnitBasis.canonical (binderOfValue value) ^ " " ^ List.last fields) end
-  (* the place a unit was reached at *)
+  (* the place a unit was reached at; whole: env is the whole environment
+     there, where no unit before it was loaded by need *)
   type position={env:Env.env,fixity:Fixity.env,sigs:SigMatch.sigma StringMap.map,funs:Elaborate.funinfo StringMap.map,
-    binders:string StringMap.map,overloads:Overload.entry IntMap.map}
+    binders:string StringMap.map,overloads:Overload.entry IntMap.map,whole:bool}
   (* What a unit declares, by a key of each definition that outlasts its span:
      its kind and the path to it. defined: each definition now, by key, where
      the unit has been elaborated since it was loaded, or worked out from
@@ -183,9 +203,15 @@ struct
      reached at. A walk that takes the unit out of the session takes this away,
      in every state that shares it, so that a walk's new units do not stand
      beside the old. *)
-  type live={result:UnitBasis.result,bindings:UnitBasis.bindings,position:position}
+  (* light: loaded by need, its basis not read until a view wants it
+     (UnitBasis.lightLoad), whose result holds no environment *)
+  type live={result:UnitBasis.result,bindings:UnitBasis.bindings,position:position,light:bool}
+  (* binds: the keys its names are bound by, and paths: what its top-level
+     names reach (UnitBasis.unitPaths), which a load by need takes again
+     without its basis; none where the world loads every basis *)
   type kept={entry:entry,identity:string,live:live option ref,usages:(string*string) list,index:int,
-    defined:Env.origin StringMap.map option ref,keys:string StringMap.map option ref}
+    defined:Env.origin StringMap.map option ref,keys:string StringMap.map option ref,
+    binds:string list,paths:UnitBasis.unitPath list}
   (* What a check leaves. complete: the last walk went through to the end, so
      that every place stands. stamps: of the files the libraries were read
      from. paths: of the units no longer in a session, which a pickle that
@@ -201,8 +227,9 @@ struct
      place. rebound: units taken as they stood; loaded: taken again from their
      pickles; cutoff: elaborated to the identity they had; broken: a usage
      said no; stored: taken from a compile's entries in the store, with
-     their sidecars. *)
-  type route={walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int}
+     their sidecars; byNeed: of those stored or loaded, those taken without
+     their basis (UnitBasis.lightLoad) *)
+  type route={walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int,byNeed:int}
   (* entries: what the check reached, by name, order its names; attempted: the
      syntax of the unit that failed; opened: a unit opened for a question *)
   type snapshot={diagnostics:CompilerSession.diagnostic list,reused:int,checked:int,dependencies:source list,
@@ -210,9 +237,11 @@ struct
     state:state,entries:kept StringMap.map,order:string list,attempted:(string*CompilerSyntax.t) option,
     prelude:CompilerPrelude.plan,units:string list,opened:entry option,route:route}
   type observation={phase:string,file:string,checked:int,reused:int,items:int}
-  (* a compiler state whose units stay loaded; base: its tables as a walk begins *)
+  (* a compiler state whose units stay loaded; base: its tables as a walk
+     begins; lazy: whether its units are loaded by need (docs/compiler-analysis.md,
+     Loading by need) *)
   datatype world=World of {owner:CompilerState.session,
-    base:(SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map*Overload.entry IntMap.map) option ref}
+    base:(SigMatch.sigma StringMap.map*Elaborate.funinfo StringMap.map*Overload.entry IntMap.map) option ref,lazy:bool}
   (* What the sessions that share have left of the libraries' units, by name,
      with the configuration they were elaborated in: a unit of a library is
      the same unit in two builds over it (D3), and is taken in a session that
@@ -226,9 +255,11 @@ struct
      the pool a library's units are taken from and left in, if any *)
   (* store: the directory of the store a check takes a compile's entries and
      the sidecars from, and writes sidecars to; NONE, none *)
+  (* lazy: whether a world loads its units by need, which goes off for good
+     where a unit read outside its view (UnitBasis.Unviewable) *)
   datatype session=Session of {state:state ref,world:world option ref,config:CompilerSession.config,closed:bool ref,
     observer:(observation->unit) option ref,focus:unit StringMap.map option ref,doomed:bool ref,walks:int ref,shares:pool option ref,
-    store:string option ref}
+    store:string option ref,lazy:bool ref}
   exception Cancelled
   (* a query has what it asked for once its unit is elaborated *)
   exception Answered
@@ -247,7 +278,7 @@ struct
   fun keptErrors ()=List.mapPartial (fn (severity,span,message) =>
     if severity="error" then SOME (CompilerSession.sourceError ("error",span,message)) else NONE) (List.rev (!Error.kept))
   fun new config=Session {state=ref noState,world=ref NONE,config=config,closed=ref false,observer=ref NONE,focus=ref NONE,doomed=ref false,
-    walks=ref 0,shares=ref NONE,store=ref NONE}
+    walks=ref 0,shares=ref NONE,store=ref NONE,lazy=ref true}
   fun dropWorld (Session {world,...})=(Option.app (fn World {owner,...} => CompilerState.close owner) (!world);world:=NONE)
   fun close (session as Session {closed,state,...})=(closed:=true;state:=noState;dropWorld session)
   (* a state whose units must load again *)
@@ -258,7 +289,7 @@ struct
   (* a session of its own over a state: what a query of an old snapshot, or
      one whose context has closed, walks through; nothing in it is to be kept open *)
   fun over (state,config)=Session {state=ref (unplaced (state,#serial state)),world=ref NONE,config=config,closed=ref false,
-    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0,shares=ref NONE,store=ref NONE}
+    observer=ref NONE,focus=ref (SOME StringMap.empty),doomed=ref false,walks=ref 0,shares=ref NONE,store=ref NONE,lazy=ref true}
   (* a state taken back: this session's earlier one *)
   fun restore (session as Session {state=current,...},saved:state)=
     (dropWorld session;current:=unplaced (saved,#serial (!current)+1))
@@ -304,15 +335,26 @@ struct
       Env.Named {kind,name,span={file,start,stop},...} =>
         SOME (kind ^ "\000" ^ name ^ "\000" ^ file ^ "\000" ^ Int.toString start ^ "\000" ^ Int.toString stop)
     | _ => NONE
-  (* the definitions of a kept unit as they were loaded *)
-  fun loadedDefinitions (k:kept)=case !(#live k) of NONE => []
-    | SOME {result,bindings,...} => definitions (#delta result,#sigs bindings,#funs bindings)
+  (* the definitions of a kept unit as they were loaded; of one loaded by
+     need none, but where its world is entered (inside), which loads it *)
+  fun loadedDefinitions' (k:kept,inside)=case !(#live k) of NONE => []
+    | SOME {result,bindings,light,...} =>
+        if not light then definitions (#delta result,#sigs bindings,#funs bindings)
+        else if not inside then []
+        else case UnitBasis.materialisedOf (#identity k)
+                    handle UnitBasis.Missing why => raise UnitBasis.Unviewable ("a basis loaded by need names " ^ why)
+                         | Pickle.Bad why => raise UnitBasis.Unviewable ("a basis loaded by need: " ^ why) of
+          SOME {delta,sigs,funs} => definitions (delta,sigs,funs)
+        | NONE => []
+  fun loadedDefinitions k=loadedDefinitions' (k,false)
+  fun isLight (k:kept)=case !(#live k) of SOME {light,...} => light | NONE => false
+  (* in its world: what a client elaborated there holds (hold) *)
   fun keysOf (k:kept)=case !(#keys k) of SOME keys => keys | NONE =>
     let fun leaves (key,origin,all)=case origin of
             Env.Constrained (a,b) => leaves (key,b,leaves (key,a,all))
           | _ => case leafKey origin of NONE => all | SOME leaf =>
               if StringMap.member (all,leaf) then all else StringMap.insert (all,leaf,key)
-        val keys=List.foldr (fn ((key,origin),all) => leaves (key,origin,all)) StringMap.empty (loadedDefinitions k)
+        val keys=List.foldr (fn ((key,origin),all) => leaves (key,origin,all)) StringMap.empty (loadedDefinitions' (k,true))
     in #keys k:=SOME keys;keys end
   (* An origin that names another unit, made a reference to that definition.
      find: a unit by its name. *)
@@ -323,11 +365,14 @@ struct
            case Option.mapPartial (fn leaf => StringMap.find (keysOf k,leaf)) (leafKey origin) of
              SOME key => Env.Held {unit=unit,key=key,last=origin} | NONE => origin)
     | _ => origin
+  (* what a unit loaded by need defines is known where a client elaborated
+     in its world asked (keysOf), or where it was elaborated; else a
+     reference to it is taken as it was (resolve, last), and none is kept *)
   fun definedBy (find,k:kept)=case !(#defined k) of SOME all => all | NONE =>
     let val own= #name (#entry k)
         val all=List.foldl (fn ((key,origin),all) => StringMap.insert (all,key,hold (find,own) origin)) StringMap.empty
           (loadedDefinitions k)
-    in #defined k:=SOME all;all end
+    in if isLight k then () else #defined k:=SOME all;all end
   (* An origin as it stands in a state, a reference followed to where its
      definition is now: what a fresh analysis would say *)
   fun resolve (find:string->kept option) origin=case origin of
@@ -357,17 +402,21 @@ struct
   (* the world of a session, entered *)
   fun inWorld (session as Session {world,doomed,...},action) =
     let val current=case !world of SOME current => current | NONE =>
-          let val made=World {owner=CompilerState.session (),base=ref NONE}
+          let val Session {lazy=lazySetting,...}=session
+            val made=World {owner=CompilerState.session (),base=ref NONE,lazy= !lazySetting}
           in world:=SOME made;made end
-        val World {owner,base}=current
+        val World {owner,base,lazy}=current
         fun work ()=
           (Pass.lintDefault:=1;
            (* what elaboration reads of a unit, and no more (D27): a compile's
               basis and an analysis's load alike where their static layers do *)
            UnitBasis.staticOnly:=true;UnitCache.needMid:=false;
+           (* a type's path where the env given is the whole: none beyond *)
+           Env.beyond:=Env.nowhere;
            if isSome (!base) then () else
-             (UnitBasis.startSession ();base:=SOME (!Elaborate.sigs,!Elaborate.funs,!Overload.table));
-           action (valOf (!base)))
+             (UnitBasis.startSession ();UnitBasis.startLazy lazy;UnitBasis.indexPaths:=lazy;
+              base:=SOME (!Elaborate.sigs,!Elaborate.funs,!Overload.table));
+           let val (sigs,funs,overloads)=valOf (!base) in action (sigs,funs,overloads,lazy) end)
         fun left ()=if !doomed then (doomed:=false;dropWorld session) else ()
         val result=CompilerState.withSession (owner,work) handle error => (left ();raise error)
     in left ();result end
@@ -395,8 +444,8 @@ struct
      build's view of the Basis Library, if it has one (D12), which the
      selection takes as a compile does. opening: what is wanted of the
      unit query names. *)
-  fun checkWith (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed,walks,shares,store=storeSetting},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
-                 frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option,view:string option,opening:opening) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads) =>
+  fun checkWorld (session as Session {state=saved,world,config,closed,observer,focus=focused,doomed,walks,shares,store=storeSetting,...},scope:Workspace.scope,sources:source list,steps,extraLibraries,cancelled,query:scopeQuery option,
+                 frozen:source list,frozenPlan:CompilerPrelude.plan option,building:string option,view:string option,opening:opening) : snapshot = inWorld (session,fn (baseSigs,baseFuns,baseOverloads,lazyWorld) =>
     let val {lib,libraries,target,allowPrim,...}=config
         val old= !saved
         (* each input's names, scanned where its text is new (scan) *)
@@ -507,6 +556,7 @@ struct
         val cutoff=ref 0
         val broken=ref 0
         val stored=ref 0
+        val byNeed=ref 0
         (* in a load, where an exception leaves the tables half written *)
         val exposed=ref false
         fun cut index =
@@ -517,9 +567,15 @@ struct
               val ()=exposed:=true
               val out=UnitBasis.truncate gone
           in exposed:=false;List.app (fn (identity,kept) => paths:=StringMap.insert (!paths,identity,kept)) out;dirty:=true end
-        fun place ():position={env= !env,fixity= !fixity,sigs= !Elaborate.sigs,funs= !Elaborate.funs,binders= !UnitBasis.binders,overloads= !Overload.table}
-        fun setPlace ({env=e,fixity=f,sigs,funs,binders,overloads}:position)=
-          (env:=e;fixity:=f;Elaborate.sigs:=sigs;Elaborate.funs:=funs;UnitBasis.binders:=binders;Overload.table:=overloads)
+        (* whether env is the whole environment: until a unit is loaded by
+           need, from the start of a walk (as a compile's warm path gives no
+           view until then) *)
+        val envWhole=ref true
+        fun place ():position={env= !env,fixity= !fixity,sigs= !Elaborate.sigs,funs= !Elaborate.funs,binders= !UnitBasis.binders,
+          overloads= !Overload.table,whole= !envWhole}
+        fun setPlace ({env=e,fixity=f,sigs,funs,binders,overloads,whole}:position)=
+          (env:=e;fixity:=f;Elaborate.sigs:=sigs;Elaborate.funs:=funs;UnitBasis.binders:=binders;Overload.table:=overloads;
+           envWhole:=whole)
         fun isFocused file=case !focused of NONE => true | SOME files => StringMap.member (files,file)
         fun priorOf name=case StringMap.find (!next,name) of SOME k => SOME k | NONE => StringMap.find (#kept old,name)
         (* the key of a unit's text, by its name *)
@@ -545,7 +601,7 @@ struct
           let val found=case UnitCache.readSidecar (dir,notesFormat,"head",source) of NONE => NONE
                 | SOME bytes => (SOME (decodeSidecar bytes) handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE)
           in sides:=StringMap.insert (!sides,source,found);found end
-        fun keepSidecar (entry:entry,identity,usages,origins)=case storeDir of NONE => () | SOME dir =>
+        fun keepSidecar (entry:entry,identity,usages,origins,binds,paths)=case storeDir of NONE => () | SOME dir =>
             let val notes=notesRecord keyOf entry
                 val source=hashOf (#file entry,#text entry)
                 val w=Pickle.writer ()
@@ -557,7 +613,44 @@ struct
                        SOME (mode,text,found) => if mode= #mode entry andalso text= #text entry then SOME (StringMap.listKeys found) else NONE
                      | NONE => NONE,
                    binders=List.map (fn (key,value) => (key,binderOfValue value)) usages,origins=origins,
-                   closed=closedOf notes}) end
+                   closed=closedOf notes,binds=binds,paths=paths}) end
+        (* In a world that loads by need (lazyWorld): the environment between
+           units is the initial one, the binders saying the rest; a unit is
+           elaborated in a view of what its text names (UnitBasis.lazyView),
+           and one taken whole or from its pickle is loaded by need where it
+           holds by its binders (UnitBasis.lightLoad) *)
+        val lazyBase=Env.initial
+        val noBindings={sigs=[],funs=[],overloads=[]}:UnitBasis.bindings
+        (* A unit that registers an overloading, which every unit after it
+           reads by no name, is loaded whole at its place, as where every
+           basis is loaded, so that a walk enters its registrations again
+           (rebind), and only those of the units before a place stand there *)
+        fun registers binds=List.exists (fn key => String.isPrefix "o " key) binds
+        (* a basis loaded by need that does not load is the end of loading
+           by need, as a view's name not there is (UnitBasis.Unviewable) *)
+        fun needing f=f () handle UnitBasis.Missing why => raise UnitBasis.Unviewable ("a basis loaded by need names " ^ why)
+                                | Pickle.Bad why => raise UnitBasis.Unviewable ("a basis loaded by need: " ^ why)
+        (* what a basis names, loaded, before it is loaded whole *)
+        fun materialiseNamed pickle=
+          if lazyWorld then needing (fn () => UnitBasis.materialiseNamed (UnitBasis.namedBy pickle handle Pickle.Bad _ => [])) else ()
+        (* the names a unit's text has, which its view takes *)
+        val viewed=ref StringMap.empty : (string*unit StringMap.map) StringMap.map ref
+        fun viewNames ({file,text,mode}:source)=case StringMap.find (!viewed,file) of
+            SOME (known,found) => if known=text then found else viewNamesOf (file,text,mode)
+          | NONE => viewNamesOf (file,text,mode)
+        and viewNamesOf (file,text,mode)=
+          let val (lexemes,_,_)=CompilerSyntax.lexical {file=file,text=text,mode=mode,previous=NONE,change=NONE}
+              val found=BasisManifest.namesOf (CompilerSyntax.tokens lexemes file,StringMap.empty)
+          in viewed:=StringMap.insert (!viewed,file,(text,found));found end
+        (* the first usage that does not hold here: by a view of the names of
+           those that do not hold by their binder alone, where the world loads
+           by need *)
+        fun brokenHere usages=
+          if not lazyWorld orelse !envWhole orelse UnitBasis.exact usages then UnitBasis.broken usages else
+            let val loose=List.filter (fn u => not (UnitBasis.exact [u])) usages
+            in UnitBasis.position (needing (fn () => UnitBasis.lazyView (baseSigs,baseFuns,SOME (UnitBasis.namesOfKeys (List.map #1 loose)))),
+                 !fixity);
+               UnitBasis.broken usages end
         (* a unit's notes: what it holds, else the store's, of its identity *)
         fun notesOf' (entry:entry,identity)=if #notes entry<>"" then SOME (#notes entry) else
           case storeDir of NONE => NONE | SOME dir => storedNotes (dir,hashOf (#file entry,#text entry),identity)
@@ -597,18 +690,25 @@ struct
                    else if not (List.all spanHolds (#spans notes)) then missed 6
                    else
                      let val at=UnitBasis.counters ()
+                         val light=lazyWorld andalso not (null (#binds side)) andalso not (registers (#binds side))
                          val ()=exposed:=true
-                         val result=SOME (UnitBasis.loadKnown ({pickle= #pickle batch,sidecar= #origins side,file=file,at=at},SOME identity,[]))
+                         val result=SOME (if light then UnitBasis.lightLoad ({pickle= #pickle batch,sidecar= #origins side,file=file,at=at},
+                                            identity,#binds side,#paths side)
+                                          else (materialiseNamed (#pickle batch);
+                                                UnitBasis.loadKnown ({pickle= #pickle batch,sidecar= #origins side,file=file,at=at},SOME identity,[])))
                            handle UnitBasis.Missing _ => (UnitBasis.abandon at;NONE) | Pickle.Bad _ => (UnitBasis.abandon at;NONE)
                      in exposed:=false;
                         case result of NONE => missed 7 | SOME result =>
-                          (UnitBasis.alias (uname ^ "@" ^ digest,identity);
+                          (UnitBasis.alias (uname ^ "@" ^ digest,identity);if light then byNeed:= !byNeed+1 else ();
                            SOME ({key=keyFor (name,allow,mode,source),name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle batch,
                                   sidecar= #origins side,facts=[],types= #types notes,syntax=NONE,typing=NONE,
                                   uses= #uses notes,printed=[],notes=""}:entry,
-                                 identity,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
+                                 identity,ref (SOME {result=result,bindings=if light then noBindings else !UnitBasis.lastBindings,position=here,light=light}),
                                  List.map canonicalUsage (List.filter (fn (key,_) => not (String.isPrefix "inl " key orelse
-                                   String.isPrefix "inlv " key)) (#usages batch)),ref NONE,ref NONE)) end end
+                                   String.isPrefix "inlv " key)) (#usages batch)),ref NONE,ref NONE,
+                                 if not lazyWorld then [] else if light then #binds side else UnitBasis.bindKeys result,
+                                 if not lazyWorld then [] else if light then #paths side else getOpt (UnitBasis.pathsOfUnit identity,[]),
+                                 light)) end end
                 handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE end end
           handle Pickle.Bad _ => NONE
         (* What the units after a unit whose identity is about to move used of
@@ -621,7 +721,7 @@ struct
            them (restated, usagesOf) *)
         val restated=ref StringMap.empty : (string*string) list StringMap.map ref
         fun usagesOf (k:kept)=getOpt (StringMap.find (!restated,#name (#entry k)),#usages k)
-        fun restate (k:kept)=case !(#live k) of NONE => () | SOME {result,bindings,position} =>
+        fun restate (k:kept)=case !(#live k) of NONE => () | SOME {result,bindings,position,light} =>
           let val was=identityOf k
               fun bound (_,value)=UnitBasis.canonical (binderOfValue value)=was
               val later=StringMap.foldl (fn (c:kept,all) =>
@@ -629,24 +729,34 @@ struct
           in if null later then () else
             let val keys=List.foldl (fn (c,all) => List.foldl (fn (u as (key,_),all) =>
                   if bound u then StringMap.insert (all,key,()) else all) all (usagesOf c)) StringMap.empty later
-                val saved=(!Env.session,!UnitBasis.sessionFixity,!UnitBasis.sessionSigs,!UnitBasis.sessionFuns,!UnitBasis.binders)
-                fun back ()=let val (e,f,g,u,b)=saved
-                  in Env.session:=e;UnitBasis.sessionFixity:=f;UnitBasis.sessionSigs:=g;UnitBasis.sessionFuns:=u;UnitBasis.binders:=b end
-                val ()=(Env.session:=SOME (Env.plus (#env position,#delta result));
+                (* what it declared, loaded where it was loaded by need *)
+                val (delta,sigs,funs)=if not light then (#delta result,#sigs bindings,#funs bindings) else
+                  case needing (fn () => UnitBasis.materialisedOf was) of SOME {delta,sigs,funs} => (delta,sigs,funs)
+                  | NONE => (#delta result,#sigs bindings,#funs bindings)
+                val saved=(!Env.session,!UnitBasis.sessionFixity,!UnitBasis.sessionSigs,!UnitBasis.sessionFuns,!UnitBasis.binders,
+                  !UnitBasis.viewKeys)
+                fun back ()=let val (e,f,g,u,b,v)=saved
+                  in Env.session:=e;UnitBasis.sessionFixity:=f;UnitBasis.sessionSigs:=g;UnitBasis.sessionFuns:=u;UnitBasis.binders:=b;
+                     UnitBasis.viewKeys:=v end
+                val ()=(Env.session:=SOME (Env.plus (#env position,delta));
+                        (* every key it binds is in what it declared *)
+                        UnitBasis.viewKeys:=NONE;
                         UnitBasis.sessionFixity:=Fixity.extend (#fixity position,#directives result);
-                        UnitBasis.sessionSigs:=List.foldl (fn ((n,g),m) => StringMap.insert (m,n,g)) (#sigs position) (#sigs bindings);
-                        UnitBasis.sessionFuns:=List.foldl (fn ((n,f),m) => StringMap.insert (m,n,f)) (#funs position) (#funs bindings);
-                        UnitBasis.binders:=List.foldl (fn (key,m) => StringMap.insert (m,key,was)) (#binders position) (UnitBasis.bindKeys result))
+                        UnitBasis.sessionSigs:=List.foldl (fn ((n,g),m) => StringMap.insert (m,n,g)) (#sigs position) sigs;
+                        UnitBasis.sessionFuns:=List.foldl (fn ((n,f),m) => StringMap.insert (m,n,f)) (#funs position) funs;
+                        UnitBasis.binders:=List.foldl (fn (key,m) => StringMap.insert (m,key,was)) (#binders position)
+                          (if light then #binds k else UnitBasis.bindKeys result))
                 val fps=(StringMap.mapi (fn (key,()) => UnitBasis.fingerprintAt (key,was)) keys) handle e => (back ();raise e)
                 val ()=back ()
             in List.app (fn c => restated:=StringMap.insert (!restated,#name (#entry c),List.map (fn u as (key,_) =>
                  if bound u then (key,was ^ " " ^ (case StringMap.find (fps,key) of SOME (SOME fp) => fp | _ => "-")) else u)
                  (usagesOf c))) later end end
         (* an elaboration of a unit that is waiting for a walk *)
-        val stash=ref NONE : (string*entry*(string*string) list*UnitBasis.exported*Env.origin StringMap.map option) option ref
+        val stash=ref NONE : (string*entry*(string*string) list*UnitBasis.exported*Env.origin StringMap.map option*
+          ((unit->string list*UnitBasis.unitPath list)->unit)) option ref
         (* the unit elaborated where the session is now: its entry, its usages and
            its export, with the tables as they were found *)
-        fun elaborate (source:source,name,allow,keepFacts,start:UnitBasis.start,prior:kept option,key,asked) =
+        fun elaborate (source:source,name,allow,keepFacts,start:UnitBasis.start,prior:kept option,key,asked,viewing) =
           let val {file,text,mode}=source
               val keepOpen=isFocused file orelse (asked andalso opening<>Probe)
               (* what a function's name is looked for in, and a position's line *)
@@ -698,6 +808,15 @@ struct
                    counts=Vector.fromList [0,0,0]}
               (* an analysis's identity: its static layer's (D27) *)
               val identity=name ^ "@" ^ #static exported
+              (* In a view, what it looked up was in the view, and what its
+                 basis names is loaded: else the world loads every basis
+                 (UnitBasis.Unviewable), as a compile's warm path compiles
+                 again *)
+              val ()=if not viewing then () else
+                case (case List.find (not o UnitBasis.inView) usages of SOME k => SOME ("its usage " ^ k)
+                      | NONE => if #pickle exported="" then NONE else UnitBasis.closedWith (#pickle exported,[],[])) of
+                  NONE => ()
+                | SOME what => raise UnitBasis.Unviewable (name ^ ": " ^ what)
               (* a type by its unit's name and its path there, which last while
                  the unit's identity moves *)
               val ownPaths=UnitBasis.typePaths (!Elaborate.lastDelta,declared (!Elaborate.insertedSigs,!Elaborate.sigs))
@@ -761,8 +880,11 @@ struct
               val whole=if keepOpen andalso not keeps then whole else
                 {key=key,name=name,file=file,text=text,allow=allow,mode=mode,pickle= #pickle whole,sidecar= #sidecar whole,facts=frozenFacts,
                  types=typeDefinitions,syntax=SOME syntaxTree,uses=uses,typing=typing,printed=printed,notes=notesOf keyOf whole}
-              val ()=if keeps then keepSidecar (whole,identity,held,#sidecar exported) else ()
-          in checked:= !checked+1;(if keepOpen then whole else closedEntry keyOf whole,held,exported,defined,failures) end
+              (* its sidecar, once what binds its names and what they reach
+                 are known, where it is loaded *)
+              fun keep found=if keeps then let val (binds,paths)=found () in keepSidecar (whole,identity,held,#sidecar exported,binds,paths) end
+                else ()
+          in checked:= !checked+1;(if keepOpen then whole else closedEntry keyOf whole,held,exported,defined,failures,keep) end
           handle Error.CompileError (span,message) =>
                    (UnitBasis.undo start;raise UnitFailed (NONE,keptErrors () @ [CompilerSession.sourceError ("error",span,message)]))
                | error => (UnitBasis.undo start;raise error)
@@ -808,7 +930,7 @@ struct
                     if not known then () else
                       (case (!(#live k),notesOf' (#entry k,identityOf k)) of
                          (SOME {result,...},SOME bytes) =>
-                           (case fromNotes (#entry k,bytes,!env,result,keyOf) of
+                           (case fromNotes (#entry k,bytes,printing (lazyWorld,!env,!UnitBasis.binders,result,#binds k),keyOf) of
                               SOME opened => (openedEntry:=SOME opened;raise Answered)
                             | NONE => ())
                        | _ => ())
@@ -818,38 +940,53 @@ struct
                  stands, which no usage covers, so it is elaborated. *)
               val holds=same andalso whole andalso not asked andalso (not (!dirty) orelse
                 (not (!moved) orelse not (isFocused file)) andalso
-                (case UnitBasis.broken (usagesOf (valOf prior)) of NONE => true | SOME _ => (broken:= !broken+1;false)))
+                (case brokenHere (usagesOf (valOf prior)) of NONE => true | SOME _ => (broken:= !broken+1;false)))
               fun compile ()=
-                let val (entry,usages,exported,defined)=case !stash of
-                      SOME (stashed,entry,usages,exported,defined) =>
-                        if stashed<>name then raise Fail "an elaboration kept for another unit" else (stash:=NONE;(entry,usages,exported,defined))
+                let val (entry,usages,exported,defined,keep)=case !stash of
+                      SOME (stashed,entry,usages,exported,defined,keep) =>
+                        if stashed<>name then raise Fail "an elaboration kept for another unit" else (stash:=NONE;(entry,usages,exported,defined,keep))
                     | NONE =>
                         (* a unit that failed is not kept, and is elaborated again
                            wherever it is reached: what it read is not all in its
                            usages, since a name it found unbound is not; a
-                           question about it has what it holds *)
-                        let val (entry,usages,exported,defined,failures)=elaborate (source,name,allow,keepFacts,start,prior,key,asked)
-                        in if null failures orelse asked then (entry,usages,exported,defined)
+                           question about it has what it holds. Where the world
+                           loads by need, in a view of what its text names, or
+                           every name for a question of what is visible there *)
+                        let val viewing=lazyWorld andalso not (!envWhole)
+                            val start=if not viewing then (Env.beyond:=Env.nowhere;UnitBasis.viewKeys:=NONE;start) else
+                              (env:=needing (fn () => UnitBasis.lazyView (baseSigs,baseFuns,
+                                      if asked andalso opening=Probe then NONE else SOME (viewNames source)));
+                               UnitBasis.begin (!env,!fixity))
+                            val (entry,usages,exported,defined,failures,keep)=elaborate (source,name,allow,keepFacts,start,prior,key,asked,viewing)
+                        in if null failures orelse asked then (entry,usages,exported,defined,keep)
                            else raise UnitFailed (SOME entry,failures) end
                     (* a question has what it asked for, and nothing is loaded *)
                     val ()=if asked then (openedEntry:=SOME entry;raise Answered) else ()
                     val identity=name ^ "@" ^ #static exported
                     fun fresh ()=
                       let val ()=exposed:=true
+                          val ()=materialiseNamed (#pickle entry)
                           val result=UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at= #counters start},SOME identity,[])
                           (* the same unit as a compile's of this text, where its
                              static layer is: what that one's clients name *)
                           val ()=case (storeDir,storeKey) of (SOME dir,SOME (k,_)) => aliasAll (dir,k,identity) | _ => ()
-                      in exposed:=false;(entry,identity,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
-                           usages,ref NONE,ref NONE) end
+                          val binds=if lazyWorld then UnitBasis.bindKeys result else []
+                          val paths=if lazyWorld then getOpt (UnitBasis.pathsOfUnit identity,[]) else []
+                      in exposed:=false;
+                         keep (fn () => if lazyWorld then (binds,paths) else (UnitBasis.bindKeys result,UnitBasis.unitPaths (#delta result)));
+                         (entry,identity,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here,light=false}),
+                          usages,ref NONE,ref NONE,binds,paths,false) end
                 in case prior of
                      SOME (k:kept) =>
-                       if asked then (entry,identityOf k,#live k,usages,#defined k,#keys k)
+                       if asked then (entry,identityOf k,#live k,usages,#defined k,#keys k,#binds k,#paths k,false)
                        else if identity=identityOf k andalso not (!dirty) andalso known then
-                         (cutoff:= !cutoff+1;if fast then () else UnitBasis.rebind (#bindings (liveOf k));
-                          (entry,identityOf k,if fast then #live k else ref (SOME {result= #result (liveOf k),bindings= #bindings (liveOf k),position=here}),
-                           usages,ref defined,#keys k))
-                       else if fast then (stash:=SOME (name,entry,usages,exported,defined);raise NeedWalk)
+                         let val live=liveOf k
+                         in cutoff:= !cutoff+1;if fast then () else UnitBasis.rebind (#bindings live);
+                            keep (fn () => if lazyWorld then (#binds k,#paths k)
+                                           else (UnitBasis.bindKeys (#result live),UnitBasis.unitPaths (#delta (#result live))));
+                            (entry,identityOf k,if fast then #live k else ref (SOME {result= #result live,bindings= #bindings live,position=here,light= #light live}),
+                             usages,ref defined,#keys k,#binds k,#paths k,false) end
+                       else if fast then (stash:=SOME (name,entry,usages,exported,defined,keep);raise NeedWalk)
                        else (if identity=identityOf k then () else (moved:=true;if !dirty orelse not known then () else restate k);
                              if !dirty then () else cut index;fresh ())
                    | NONE => (moved:=true;fresh ()) end
@@ -857,32 +994,46 @@ struct
                 let val entry= #entry k
                 in if not (!dirty) then
                      (reused:= !reused+1;rebound:= !rebound+1;UnitBasis.rebind (#bindings (liveOf k));
-                      SOME (entry,identityOf k,ref (SOME {result= #result (liveOf k),bindings= #bindings (liveOf k),position=here}),
-                        usagesOf k,#defined k,#keys k))
+                      SOME (entry,identityOf k,ref (SOME {result= #result (liveOf k),bindings= #bindings (liveOf k),position=here,light= #light (liveOf k)}),
+                        usagesOf k,#defined k,#keys k,#binds k,#paths k,false))
                    else
                      let val at=UnitBasis.counters ()
+                         (* by need, where it holds by its binders and its basis
+                            names the units loaded *)
+                         val light=lazyWorld andalso not (null (#binds k)) andalso not (registers (#binds k))
+                           andalso UnitBasis.exactEntry (usagesOf k,#pickle entry)
                          val ()=exposed:=true
-                         val tried=(SOME (UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at=at},SOME (identityOf k),
-                             UnitBasis.remappingBasis (#pickle entry,fn identity => StringMap.find (!paths,UnitBasis.canonical identity)))))
+                         val tried=(SOME (if light then UnitBasis.lightLoad ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at=at},
+                                            identityOf k,#binds k,#paths k)
+                             else (materialiseNamed (#pickle entry);
+                                   UnitBasis.loadKnown ({pickle= #pickle entry,sidecar= #sidecar entry,file=file,at=at},SOME (identityOf k),
+                                     UnitBasis.remappingBasis (#pickle entry,fn identity => StringMap.find (!paths,UnitBasis.canonical identity))))))
                            handle UnitBasis.Missing _ => (UnitBasis.abandon at;NONE) | Pickle.Bad _ => (UnitBasis.abandon at;NONE)
                      in exposed:=false;case tried of
                           SOME result => (reused:= !reused+1;loaded:= !loaded+1;aliasOwn (#pickle entry,identityOf k);
-                            SOME (entry,identityOf k,ref (SOME {result=result,bindings= !UnitBasis.lastBindings,position=here}),
-                              usagesOf k,#defined k,ref NONE))
+                            if light then byNeed:= !byNeed+1 else ();
+                            SOME (entry,identityOf k,ref (SOME {result=result,bindings=if light then noBindings else !UnitBasis.lastBindings,
+                                                                position=here,light=light}),
+                              usagesOf k,#defined k,ref NONE,
+                              if not lazyWorld orelse light then #binds k else UnitBasis.bindKeys result,
+                              if not lazyWorld orelse light then #paths k else getOpt (UnitBasis.pathsOfUnit (identityOf k),[]),light))
                         | NONE => NONE end end
-              val (entry,identity,live,usages,defined,keys)=
+              val (entry,identity,live,usages,defined,keys,binds,paths,bound)=
                 case fromStore of SOME found => (stored:= !stored+1;reused:= !reused+1;found) | NONE =>
                 case (if holds then taken (valOf prior) else NONE) of SOME found => found | NONE => compile ()
               val ()=if asked then
                 (openedEntry:=SOME entry;raise Answered) else ()
+              (* its names bound: by the keys its basis binds where it was
+                 loaded by need (which bound them, bound) *)
               val ()=if fast then () else
-                let val {result,...}=valOf (!live)
+                let val {result,light,...}=valOf (!live)
                 in exposed:=true;
-                   env:=Env.plus (#env start,#delta result);
+                   if light then envWhole:=false else ();
+                   env:=(if lazyWorld andalso not (!envWhole) then lazyBase else Env.plus (#env start,#delta result));
                    fixity:=Fixity.extend (#fixity start,#directives result);
-                   UnitBasis.bind result;
+                   if bound then () else if light then UnitBasis.bindByKeys (identity,binds) else UnitBasis.bind result;
                    exposed:=false end
-              val k={entry=entry,identity=identity,live=live,usages=usages,index=index,defined=defined,keys=keys}:kept
+              val k={entry=entry,identity=identity,live=live,usages=usages,index=index,defined=defined,keys=keys,binds=binds,paths=paths}:kept
           in next:=StringMap.insert (!next,name,k);staged:=name:: !staged;
              observe "unit-frozen" file (length (#uses entry));poll ();k end
         (* each input's names, scanned where its text is new *)
@@ -968,7 +1119,8 @@ struct
                 val boundary=CompilerBuildContext.enter scopes
                 val ()=walk children
                 val change=delta (before',snap ())
-                val ()=case CompilerBuildContext.exportProblem (change,exports) of
+                val ()=case CompilerBuildContext.exportProblem
+                    (if lazyWorld then CompilerBuildContext.bindersChange (change,exports) else change,exports) of
                     NONE => ()
                   | SOME message => raise Error.CompileError ({file=case sources of source :: _ => #file source | [] => "",
                                                                start=0,stop=0},message)
@@ -1035,7 +1187,7 @@ struct
                       else if isFocused (#file (#entry k)) then (name::all,map)
                       else (all,StringMap.insert (map,name,{entry=closedEntry (fn unit => Option.map (fn k:kept => #key (#entry k))
                              (StringMap.find (merged,unit))) (#entry k),identity= #identity k,live= #live k,
-                             usages= #usages k,index= #index k,defined= #defined k,keys= #keys k}))) ([],merged) opens
+                             usages= #usages k,index= #index k,defined= #defined k,keys= #keys k,binds= #binds k,paths= #paths k}))) ([],merged) opens
           in saved:=(case query of
               SOME _ => {serial= #serial old,kept=merged,order= #order old,opens=opens,complete= #complete old,planned= #planned old,
                 prelude= #prelude old,units= #units old,libraryNames= #libraryNames old,libraries= #libraries old,
@@ -1050,7 +1202,7 @@ struct
                 names= !names,paths= !paths}) end
         val walkErrors=if isSome fast then [] else
           let val ()=(Env.currentUnit:="";env:=Env.initial;fixity:=Fixity.initial;Elaborate.sigs:=baseSigs;Elaborate.funs:=baseFuns;
-                Overload.table:=baseOverloads;UnitBasis.binders:=StringMap.empty;UnitBasis.bindLog:=[];walked:=0)
+                Overload.table:=baseOverloads;UnitBasis.binders:=StringMap.empty;UnitBasis.bindLog:=[];walked:=0;envWhole:=true)
               val ()=staged:=[]
               val ()=if samePlan andalso sameSelection then () else (moved:=true;cut 0)
           in (LibraryScope.libraries (libraryWalk,#groups plan,fn (entries,()) => List.app one entries,());
@@ -1068,7 +1220,7 @@ struct
         val ()=case (!shares,query) of (NONE,_) => () | (_,SOME _) => () | (SOME shared,NONE) =>
           StringMap.app (fn name => case StringMap.find (!next,name) of NONE => () | SOME (k:kept) =>
             shared:=StringMap.insert (!shared,name,(config,{entry= #entry k,identity= #identity k,live=ref NONE,usages= #usages k,
-              index= #index k,defined=ref NONE,keys=ref NONE}))) libraryNames
+              index= #index k,defined=ref NONE,keys=ref NONE,binds= #binds k,paths= #paths k}))) libraryNames
         val current= !saved
         val ()=poll ()
         val ()=observe "analysis-frozen" "" (!checked)
@@ -1084,7 +1236,7 @@ struct
            though nothing after it sees it *)
         val entries=case !failedEntry of NONE => entries | SOME (entry:entry) =>
           StringMap.insert (entries,#name entry,{entry=entry,identity="failed",live=ref NONE,usages=[],index= ~1,
-            defined=ref NONE,keys=ref NONE})
+            defined=ref NONE,keys=ref NONE,binds=[],paths=[]})
         val ()=if isSome fast then reused:=length order- !checked else ()
         fun candidates ()=case (!scopeEnv,query) of (SOME (_,env,sigs,funs),SOME query) =>
           let val selected=case Env.findStr' (env,#path query) of SOME selected => SOME selected | NONE => NONE
@@ -1125,13 +1277,28 @@ struct
       dependencies=List.map (fn (entry,text) => {file=BasisManifest.path entry,text=text,mode=Source.Ascii}:source) librarySources,
       candidates=candidates (),role= !role,fields=fields (),application=Option.map #2 (!application),
       state=current,entries=entries,order=order,attempted= !attempted,prelude=plan,units=inputNames,opened= !openedEntry,
-      route={walked=not (isSome fast),rebound= !rebound,loaded= !loaded,cutoff= !cutoff,broken= !broken,stored= !stored}} end)
+      route={walked=not (isSome fast),rebound= !rebound,loaded= !loaded,cutoff= !cutoff,broken= !broken,stored= !stored,
+        byNeed= !byNeed}} end)
+  (* A check. Where a unit elaborated in a view looked up a name outside it,
+     or its basis names a unit not loaded, or a view could not be given
+     (UnitBasis.Unviewable), the session loads every basis from then on and
+     the check is done again so, as a compile's warm path compiles again
+     with every basis loaded; an observer is told (lazy-refused) *)
+  fun checkWith (args as (session as Session {lazy,state,observer,...},_,_,_,_,_,_,_,_,_,_,_))=
+    checkWorld args handle UnitBasis.Unviewable why =>
+      (lazy:=false;dropWorld session;state:=unplaced (!state,#serial (!state));
+       Option.app (fn f => f {phase="lazy-refused",file=why,checked=0,reused=0,items=0}) (!observer);
+       checkWorld args)
+  (* whether a session's worlds load their units by need (on at first): a
+     change loads every unit again *)
+  fun setLazy (session as Session {lazy,state,...},on)=
+    if !lazy=on then () else (lazy:=on;dropWorld session;state:=unplaced (!state,#serial (!state)+1))
   (* A closed unit of the session's latest state opened from its notes, where
      it stays loaded and they hold: what a question of its facts or
      occurrences reads, with no check (opened). NONE where they do not, which
      a check at its place answers *)
   fun opened (session as Session {state,world,store,...},name)=
-    case !world of NONE => NONE | SOME _ => inWorld (session,fn _ =>
+    case !world of NONE => NONE | SOME _ => inWorld (session,fn (_,_,_,lazy) =>
       case StringMap.find (#kept (!state),name) of NONE => NONE | SOME (k:kept) =>
         case !(#live k) of NONE => NONE | SOME {result,position,...} =>
           if not (UnitBasis.isLoaded (identityOf k)) orelse isOpen (#entry k) then NONE else
@@ -1139,7 +1306,7 @@ struct
               fun keyOf unit=Option.map (fn k:kept => #key (#entry k)) (StringMap.find (#kept (!state),unit))
               val bytes=if #notes e<>"" then SOME (#notes e) else
                 case !store of NONE => NONE | SOME dir => storedNotes (dir,UnitCache.sourceHash (#text e),identityOf k)
-          in Option.mapPartial (fn bytes => fromNotes (e,bytes,#env position,result,keyOf)) bytes end)
+          in Option.mapPartial (fn bytes => fromNotes (e,bytes,printing (lazy,#env position,#binders position,result,#binds k),keyOf)) bytes end)
   fun checkSteps (session as Session {walks,...},scope,sources,steps,libraries,cancelled,building,view)=
     let val result=checkWith (session,scope,sources,steps,libraries,cancelled,NONE,[],NONE,building,view,Probe)
     in if !walks>=walksToCompact then compact session else ();result end

@@ -358,6 +358,19 @@ sig
        unit a check elaborates from the text its file has is written there.
        The results are a fresh analysis's whichever way a unit came. *)
     val store : t * string option -> unit
+    (* `lazy (context, false)` has a context load the basis of every unit it
+       takes, as it did before loading by need; `lazy (context, true)`, the
+       default, loads a unit's basis only where a unit elaborated after it
+       names what it declared.
+
+       A unit taken from a store or from its own elaboration earlier, whose
+       usages hold by the units that bound their names, is registered and its
+       names bound, and its basis read when a later unit's text names one of
+       them; a unit elaborated sees what its text names, and prints a type by
+       the path the whole environment has. Where a unit looked up a name its
+       text does not name, the context loads every basis from then on. The
+       results are a fresh analysis's either way; a context's memory is not. *)
+    val lazy : t * bool -> unit
     (* `compact context` gives up the compiler state a context's units stay
        loaded in, with what its tables hold of units long replaced.
 
@@ -438,9 +451,10 @@ sig
        walked: from the start, rather than each change at its own place;
        rebound: units taken as they stood; loaded: taken again from their
        pickles; cutoff: elaborated to the identity they had; broken: a usage
-       refused a unit; stored: taken from the store (store). The results are a
-       fresh analysis's whichever the route. *)
-    val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int}
+       refused a unit; stored: taken from the store (store); byNeed: of those
+       stored or loaded, those whose basis was not read (lazy). The results
+       are a fresh analysis's whichever the route. *)
+    val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int,byNeed:int}
     (* `typeAt (snapshot, position)` returns its innermost original-source type.
 
        Copied-body facts are used only where no original fact is available.
