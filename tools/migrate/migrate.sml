@@ -402,19 +402,38 @@ struct
               val new =
                 case header of
                   NONE =>
-                    let
-                      val t = case partExtent (ls, "libraries", "end") of SOME (a, b) => cut (text, a, b) | NONE => text
-                      val first = case lexemes (#build l, t) of x :: _ => #start x | [] => size t
-                    in splice (t, first, headerText (List.map importText requires, exports)) end
+                    let val h = headerText (List.map importText requires, exports)
+                    in
+                      (* in the place of its libraries, or before its first word *)
+                      case partExtent (ls, "libraries", "end") of
+                        SOME (a, b) => String.substring (text, 0, a) ^ String.substring (h, 0, size h - 1) ^ String.extract (text, b, NONE)
+                      | NONE => splice (text, case ls of x :: _ => #start x | [] => size text, h)
+                    end
                 | SOME _ =>
                     let
-                      val t = text
-                      val t = case partExtent (lexemes (#build l, t), "exports", ")") of SOME (a, b) => cut (t, a, b) | NONE => t
-                      val t = case partExtent (lexemes (#build l, t), "requires", "end") of SOME (a, b) => cut (t, a, b) | NONE => t
-                      val at = case findSub (mark, t) of SOME i => i | NONE => 0
-                      val t = cut (t, at, at + size mark)
-                      val first = case lexemes (#build l, t) of x :: _ => #start x | [] => size t
-                    in splice (t, first, headerText (List.map importText requires, exports)) end
+                      val h = headerText (List.map importText requires, exports)
+                      (* where it wrote its requires, mark and exports: in
+                         their place, where nothing else stands between them *)
+                      val spans = List.mapPartial (fn x => x)
+                                    [partExtent (ls, "requires", "end"), partExtent (ls, "exports", ")"),
+                                     Option.map (fn i => (i, i + size mark)) (findSub (mark, text))]
+                      val a = List.foldl Int.min (size text) (List.map #1 spans)
+                      val b = List.foldl Int.max 0 (List.map #2 spans)
+                      val between = List.foldl (fn ((x, y), s) => String.substring (s, 0, x - a) ^ String.implode (List.tabulate (y - x, fn _ => #" "))
+                                                                  ^ String.extract (s, y - a, NONE))
+                                               (String.substring (text, a, b - a)) spans
+                    in
+                      if CharVector.all Char.isSpace between
+                      then String.substring (text, 0, a) ^ String.substring (h, 0, size h - 1) ^ String.extract (text, b, NONE)
+                      else
+                        let
+                          val t = text
+                          val t = case partExtent (lexemes (#build l, t), "exports", ")") of SOME (a, b) => cut (t, a, b) | NONE => t
+                          val t = case partExtent (lexemes (#build l, t), "requires", "end") of SOME (a, b) => cut (t, a, b) | NONE => t
+                          val t = case findSub (mark, t) of SOME i => cut (t, i, i + size mark) | NONE => t
+                          val first = case lexemes (#build l, t) of x :: _ => #start x | [] => size t
+                        in splice (t, first, h) end
+                    end
               val hiddenNames = List.filter (fn d => not (member d exports)) (sortNames declared)
               val hidden = List.length hiddenNames
               val () = if List.null hiddenNames then ()
