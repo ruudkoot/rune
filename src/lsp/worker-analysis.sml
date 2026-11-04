@@ -98,9 +98,14 @@ struct
           (* two builds over one library check its units once (D26) *)
           val ()=A.share (#analysis context,SOME libraryUnits)
           val reportedChecked=ref ~1
+          val reportedAt=ref (Time.now ())
+          (* units taken as they were are reported once a second, so that a
+             check that takes thousands says that it goes on (D28) *)
           val ()=A.observe(#analysis context,SOME(fn event:A.observation=>
             let val report= #phase event<>"unit-frozen" orelse #checked event<> !reportedChecked
+                  orelse Time.> (Time.now (),Time.+ (!reportedAt,Time.fromSeconds 1))
                 val ()=reportedChecked:= #checked event
+                val ()=if report then reportedAt:=Time.now () else ()
             in RuneLspProfile.observe event;if report then
               (!progress)(V.Object[("phase",V.Bytes(#phase event)),("file",V.Bytes(#file event)),
                 ("checked",V.Integer(IntInf.fromInt(#checked event))),("reused",V.Integer(IntInf.fromInt(#reused event)))]) else () end))
@@ -441,10 +446,12 @@ struct
         val () =
           let val look=looking (workspace,state,!(#seen context),!recent)
               val cell= !(#texts context)
-          in Array.appi (fn (at,SOME (memo:text)) => (case vouched look (#file memo) of
-                 SOME key => if named look key then Array.update (cell,at,NONE) else ()
-               | NONE => ())
-             | _ => ()) cell;
+              (* where the events since are not whole, or a minute has passed,
+                 each text's stamp says, which each keeps *)
+              fun stale (memo:text)=case #changed look of
+                  NONE => stampOf (#file memo)<> #stamp memo
+                | SOME _ => (case vouched look (#file memo) of SOME key => named look key | NONE => false)
+          in Array.appi (fn (at,SOME memo) => if stale memo then Array.update (cell,at,NONE) else () | _ => ()) cell;
              #seen context:=generation end
         val now=looking (workspace,state,generation,!recent)
         fun remembered (file,mode,ordinal)=

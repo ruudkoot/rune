@@ -397,6 +397,17 @@ struct
         val ()=changed ["lib1/library.build"]
         val reply=check "lib1/y.sml"
     in Expect.that ("its event has it read again, and its new order holds",planned ()=first+1 andalso not (null (errors reply))) end)
+  (* D28: where the events since a closed input was read are not whole, its
+     stamp says, not the events: a change no event named is seen *)
+  fun textsPastEvents ()=tree ([("lib1/library.build","files x.sml y.sml end\n"),("lib1/x.sml","structure X=struct val x=1 end\n"),
+      ("lib1/y.sml","structure Y=struct val y=X.x+1 end\n")],
+    fn {path,check,errors,watch,changed,...} =>
+    let val ()=watch ()
+        val ()=Expect.that ("the library checks",null (errors (check "lib1/y.sml")))
+        val ()=writeFile (path "lib1/x.sml","structure X=struct val x=true end\n")
+        val ()=changed (List.tabulate (W.changeLimit+1,fn i => "lib1/elsewhere" ^ Int.toString i ^ ".sml"))
+    in Expect.that ("a closed input changed with no event is read again when the events are not whole",
+        not (null (errors (check "lib1/y.sml")))) end)
   (* D26: a file in no build, its names found in its directory, in a library
      and anywhere in its workspace, the nearest first *)
   fun implicit ()=tree ([("rune.workspace","roots lib end\n"),
@@ -432,6 +443,7 @@ structure RuneLspWorkerAnalysisTestMain=Main (struct
     Test.it "one-owning-library" RuneLspWorkerAnalysisTests.owner,
     Test.it "contexts-compared-by-binder" RuneLspWorkerAnalysisTests.compared,
     Test.it "implicit-library" RuneLspWorkerAnalysisTests.implicit,
-    Test.it "plan-by-file-events" RuneLspWorkerAnalysisTests.planByEvents]
+    Test.it "plan-by-file-events" RuneLspWorkerAnalysisTests.planByEvents,
+    Test.it "texts-past-file-events" RuneLspWorkerAnalysisTests.textsPastEvents]
 end)
 val ()=RuneLspWorkerAnalysisTestMain.main ()
