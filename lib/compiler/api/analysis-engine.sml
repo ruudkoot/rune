@@ -594,6 +594,26 @@ struct
         fun unchanged (k:kept)=lazyWorld andalso !aligned andalso
           (case !changedKeys of [] => true | changed => let val keys=used k
              in not (List.exists (fn key => StringMap.member (keys,key)) changed) end)
+        (* What a unit elaborated in this check defines through another
+           definition than it did -- an alias retargeted, structure A=B made
+           structure A=C, of one interface, so that its identity may stand --
+           by the binder keys of those names (rerouted). A unit after it that
+           uses one held its occurrences through the old definition, though
+           its usages hold, and is elaborated again (forced), its own such
+           names rerouted in turn *)
+        val rerouted=ref StringMap.empty : unit StringMap.map ref
+        val forced=ref false
+        fun reroutedUse (k:kept)=not (StringMap.isEmpty (!rerouted)) andalso
+          let val keys=used k in StringMap.foldli (fn (key,(),found) => found orelse StringMap.member (keys,key)) false (!rerouted) end
+        (* the binder key of a definition's key: A.v x is A's, v x its own *)
+        fun binderOfDefinition key=
+          let val (head,rest)=Substring.splitl (fn c => c<> #"." andalso c<> #" ") (Substring.full key)
+          in if Substring.isPrefix "." rest then "s " ^ Substring.string head
+             else case String.fields (fn c => c= #" ") key of
+                    ["g",name] => "sig " ^ name | ["f",name] => "fun " ^ name | _ => key end
+        fun reroute keys=List.app (fn key => let val binder=binderOfDefinition key
+          in if StringMap.member (!rerouted,binder) then () else
+               (rerouted:=StringMap.insert (!rerouted,binder,());changedKeys:=binder:: !changedKeys) end) keys
         (* in a load, where an exception leaves the tables half written *)
         val exposed=ref false
         fun cut index =
@@ -622,6 +642,49 @@ struct
         (* the key of a unit's text, by its name *)
         fun keyOf name=Option.map (fn k:kept => #key (#entry k)) (priorOf name)
         fun spanHolds (unit,key)=keyOf unit=SOME key
+        (* What a unit's definitions name in other units, by key: where an
+           alias takes each, a definition of another unit by its key there.
+           A unit's own definitions are its own wherever they move, which a
+           reference by key follows, so they are left out *)
+        fun foreignTargets own fold=
+          let fun foreign origin=case origin of Env.Named {unit,...} => unit<>own | Env.Held {unit,...} => unit<>own
+                | Env.Constrained (a,b) => foreign a orelse foreign b | Env.Unknown => false
+              fun target origin=case origin of
+                  Env.Named {unit,kind,name,span} => unit ^ "\000" ^ kind ^ "\000" ^ name ^
+                    (if unit=own then "" else "\000" ^ #file span ^ "\000" ^ Int.toString (#start span))
+                | Env.Held {unit,key,...} => unit ^ "\000" ^ key
+                | Env.Constrained (a,b) => "(" ^ target a ^ "," ^ target b ^ ")"
+                | Env.Unknown => ""
+          in fold (fn (key,origin,all) => if foreign origin then StringMap.insert (all,key,target origin) else all) StringMap.empty end
+        (* a unit's as it was before this check elaborated it: where it was
+           elaborated (defined), or from what was loaded while it is (live);
+           NONE once a walk has taken it out *)
+        val priorMemo=ref StringMap.empty : string StringMap.map option StringMap.map ref
+        fun priorTargets (name,k:kept)=case StringMap.find (!priorMemo,name) of SOME found => found | NONE =>
+          let val found=case !(#defined k) of
+                  SOME all => SOME (foreignTargets name (fn f => fn init => StringMap.foldli f init all))
+                | NONE => if not (isSome (!(#live k))) then NONE else
+                    let val holding=hold (priorOf,name)
+                        val pairs=loadedDefinitions' (k,true)
+                    in SOME (foreignTargets name (fn f => fn init => List.foldl (fn ((key,origin),all) => f (key,holding origin,all)) init pairs)) end
+          in priorMemo:=StringMap.insert (!priorMemo,name,found);found end
+        (* the keys a unit elaborated again defines through another
+           definition than before; where what it was is not known, each it
+           defines as an alias does, by a definition of another unit, if it
+           was elaborated for a use of a name rerouted (forced): an alias of
+           that name is rerouted with it. A name declared by another unit's
+           signature, and defined here, is not an alias *)
+        fun reroutes (name,k:kept,defined:Env.origin StringMap.map option)=case defined of NONE => [] | SOME now =>
+          case priorTargets (name,k) of
+            SOME before' =>
+              let val after=foreignTargets name (fn f => fn init => StringMap.foldli f init now)
+              in StringMap.foldli (fn (key,target,all) => if StringMap.find (before',key)=SOME target then all else key::all)
+                   (StringMap.foldli (fn (key,_,all) => if StringMap.member (after,key) then all else key::all) [] before') after end
+          | NONE => if not (!forced) then [] else
+              StringMap.foldli (fn (key,origin,all) => case Env.primary origin of
+                  Env.Named {unit,...} => if unit<>name then key::all else all
+                | Env.Held {unit,...} => if unit<>name then key::all else all
+                | _ => all) [] now
         val sourceHash=UnitCache.sourceHash
         fun keyFor (name,allow,mode,source)=Pickle.hash (name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ source)
         (* A unit's sidecar into the store, where its text is its file's: a
@@ -1020,10 +1083,12 @@ struct
               (* A unit past a moved identity is taken by its usages. An open one's
                  facts print its types by the paths that reach them where it
                  stands, which no usage covers, so it is elaborated. *)
+              val ()=forced:=false
               val holds=same andalso whole andalso not asked andalso (not (!dirty) orelse
                 (not (!moved) orelse not (isFocused file)) andalso
                 (case (if unchanged (valOf prior) then NONE else brokenHere (usagesOf (valOf prior))) of
-                   NONE => true | SOME _ => (broken:= !broken+1;false)))
+                   NONE => if reroutedUse (valOf prior) then (forced:=true;broken:= !broken+1;false) else true
+                 | SOME _ => (broken:= !broken+1;false)))
               fun compile ()=
                 let val (entry,usages,exported,defined,keep)=case !stash of
                       SOME (stashed,entry,usages,exported,defined,keep) =>
@@ -1063,14 +1128,25 @@ struct
                      SOME (k:kept) =>
                        if asked then (entry,identityOf k,#live k,usages,#defined k,#keys k,#binds k,#paths k,false)
                        else if identity=identityOf k andalso not (!dirty) andalso known then
+                         (* its identity stands, and what it defines through
+                            others' may not: then it is loaded as it is now,
+                            its origins with it, and a walk takes the units
+                            after it by their usages, those that use such a
+                            name elaborated again *)
+                         let val moves=reroutes (name,k,defined)
+                         in if not (null moves) then
+                              if fast then (stash:=SOME (name,entry,usages,exported,defined,keep);raise NeedWalk)
+                              else (reroute moves;cut index;fresh ())
+                            else
                          let val live=liveOf k
                          in cutoff:= !cutoff+1;if fast then () else UnitBasis.rebind (#bindings live);
                             keep (fn () => if lazyWorld then (#binds k,#paths k)
                                            else (UnitBasis.bindKeys (#result live),UnitBasis.unitPaths (#delta (#result live))));
                             (entry,identityOf k,if fast then #live k else ref (SOME {result= #result live,bindings= #bindings live,position=here,light= #light live}),
-                             usages,ref defined,#keys k,#binds k,#paths k,false) end
+                             usages,ref defined,#keys k,#binds k,#paths k,false) end end
                        else if fast then (stash:=SOME (name,entry,usages,exported,defined,keep);raise NeedWalk)
-                       else (if identity=identityOf k then () else (moved:=true;if !dirty orelse not known then () else restate k);
+                       else (reroute (reroutes (name,k,defined));
+                             if identity=identityOf k then () else (moved:=true;if !dirty orelse not known then () else restate k);
                              if !dirty then () else cut index;fresh ())
                    | NONE => (moved:=true;fresh ()) end
               fun taken (k:kept)=
@@ -1245,6 +1321,10 @@ struct
             BasisManifest.path entry=BasisManifest.path priorEntry andalso text=priorText) (librarySources,#libraries old)
         val placed=placedBy (#complete old)
         val zipped=ListPair.zip (sources,inputNames)
+        (* what each edited unit defined through others', while it is loaded *)
+        val ()=List.app (fn (source:source,name) => case StringMap.find (#kept old,name) of
+            SOME (k:kept) => if #text (#entry k)<> #text source orelse #mode (#entry k)<> #mode source then ignore (priorTargets (name,k)) else ()
+          | NONE => ()) zipped
         fun wanted (source:source,name)=case StringMap.find (#kept old,name) of NONE => true
           | SOME (k:kept) => #mode (#entry k)<> #mode source orelse #text (#entry k)<> #text source
               orelse (isFocused (#file source) andalso not (isOpen (#entry k)))
@@ -1305,7 +1385,7 @@ struct
               val ()=staged:=[]
               (* each unit as it was kept holds against those before it: the
                  last walk's, with the plan and libraries it had *)
-              val ()=(aligned:=placedBy (#aligned old);ahead:= #order old;changedKeys:=[])
+              val ()=(aligned:=placedBy (#aligned old);ahead:= #order old;changedKeys:=[];rerouted:=StringMap.empty)
               val ()=if samePlan andalso sameSelection then () else (moved:=true;cut 0)
           in (LibraryScope.libraries (libraryWalk,#groups plan,fn (entries,()) => List.app one entries,());
               LibraryScope.program libraryWalk;walk steps;

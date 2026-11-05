@@ -4,7 +4,10 @@
 # and library 1's last module binding M0_5 to a structure of nothing, which breaks the files
 # after it that use M0_5, though no text of theirs changed; and binding it again to itself,
 # structure M0_5 = M0_5, whose removal leaves the files after it that use M0_5 holding by
-# their usages, but resolved through a binding that is gone (M20's rebind.tsv).
+# their usages, but resolved through a binding that is gone (M20's rebind.tsv); and binding
+# it to one of two structures of one interface, the first of M0_5's members, the second
+# with a size of its own, so that its unit's identity stands when it is made the second,
+# and the files after it that use M0_5.size must resolve it to the new size.
 leaf-comment	3	LAST	append
 leaf-body	2	LAST	replace	val total = ref 0	val total = ref $N
 early-comment	2	l00000/m0_0.sml	prepend
@@ -13,3 +16,4 @@ early-add	2	l00000/m0_0.sml	replace	  fun make (n : int)	  val edit_$N = 1\n  fu
 early-datatype	2	l00000/m0_0.sml	replace	    | F of string list	    | F of string list\n    | G$N
 mid-shadow	1	l00001/m1_2.sml	appendtext	structure M0_5 = struct end
 mid-rebind	1	l00001/m1_2.sml	appendtext	structure M0_5 = M0_5
+mid-realias	2	l00001/m1_2.sml	appendtext	structure Pick1 = M0_5\nstructure Pick2 = struct open M0_5 fun size (_ : t) : int = 1 end\nstructure M0_5 = Pick$N

@@ -1018,6 +1018,38 @@ struct
                   not (null found) andalso List.all (fn file => file="first.sml") found) end;
              A.close context end
     in run (NONE,false);run (NONE,true);run (SOME ["second.sml"],false);run (SOME ["second.sml"],true);C.close parent end
+  (* An alias retargeted at one identity: structure A=B made structure A=C,
+     B and C of one static interface in other units. The unit's identity
+     stands, but a client's A.x is C's x now, and so is the x of D=A in
+     that client and of D.x in a unit after it, as a fresh analysis says,
+     open or closed, by need or not *)
+  fun realiased () =
+    let val parent=compiler ()
+        val first=input ("first.sml","structure B=struct val x=1 end\n","1")
+        val other=input ("other.sml","structure C=struct val x=2 end\n","1")
+        val second=input ("second.sml","structure A=B\n","1")
+        val user=input ("user.sml","val y=A.x\nstructure D=A\nval z=D.x\n","1")
+        val later=input ("later.sml","val w=y+z+A.x+D.x\n","1")
+        val retargeted=edited (second,"structure A=C\n")
+        fun run (focus,lazy)=
+          let val context=A.create (parent,{context="realiased"})
+              val ()=A.focus (context,focus)
+              val ()=A.lazy (context,lazy)
+              val how=(case focus of NONE => "open" | SOME _ => "closed") ^ (if lazy then ", by need" else "")
+              fun step (label,inputs)=
+                let val kept=analyze (context,inputs)
+                in check (label ^ " (" ^ how ^ ") equals fresh",null (A.diagnostics kept) andalso sameUnits (kept,freshly (parent,inputs)));
+                   kept end
+              fun xs (snapshot,unit)=List.mapPartial (fn occurrence:A.occurrence =>
+                if #kind occurrence="value" andalso #name occurrence="x" then Option.map #file (#definition occurrence) else NONE)
+                (A.occurrencesIn (snapshot,unit))
+              val _=step ("cold",[first,other,second,user,later])
+              val moved=step ("A made C",[first,other,retargeted,user,later])
+              val found=xs (moved,"user.sml") @ xs (moved,"later.sml")
+          in check ("A.x and D.x are C's x (" ^ how ^ "): " ^ String.concatWith " " found,
+               length found=4 andalso List.all (fn file => file="other.sml") found);
+             A.close context end
+    in run (NONE,false);run (NONE,true);run (SOME ["second.sml"],false);run (SOME ["second.sml"],true);C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -1056,6 +1088,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "refused-view" CompilerAnalysisTests.refusedView,
      Test.it "paths-kept-by-need" CompilerAnalysisTests.pathsKept,
      Test.it "virtual-library" CompilerAnalysisTests.virtualLibrary,
-     Test.it "rebinding-removed" CompilerAnalysisTests.rebindingRemoved]
+     Test.it "rebinding-removed" CompilerAnalysisTests.rebindingRemoved,
+     Test.it "alias-retargeted" CompilerAnalysisTests.realiased]
 end)
 val ()=CompilerAnalysisTestMain.main ()

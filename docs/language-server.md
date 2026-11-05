@@ -340,7 +340,11 @@ would otherwise repeat is memoised too.
   than before, at the same fingerprint, is elaborated again, not reused: its
   references went through the old binding, which may be gone, as where
   `structure M = M` is added and removed (`tests/lsp/oracle/scale.tsv`,
-  `mid-rebind`).
+  `mid-rebind`). Nor is a unit that uses a name another unit now defines
+  through another definition, its identity standing: `structure A = B` made
+  `structure A = C`, of one interface (`mid-realias`). That unit is loaded as
+  it is now and a walk follows it, and the units that use such a name are
+  elaborated again, an alias of it among theirs in turn.
 
 Through the real server at the 512 MiB heap, from the client's side, a pull
 of diagnostics after each edit (`bin/rune-lsp-replay`, 20 comments or 8 body edits,
