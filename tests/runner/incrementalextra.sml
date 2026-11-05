@@ -617,6 +617,31 @@ struct
        the fingerprint (the mutants of the cache A5 and A6) *)
     | "S129" => otherSignature s ("val g : t -> string", "val h : int -> int", "fun h n = n + 1")
     | "S130" => otherSignature s ("val g : t -> int", "val h : int -> string", "fun h n = Int.toString n")
+    (* What a file is to the plan (LibraryIndex.programFacts) follows the
+       fixity before it. While a.sml makes <+> infix, b.sml does not parse,
+       and so names all its tokens, Vector among them, which takes the Basis
+       Library's vector.sml; once <+> is nonfix again b.sml parses, names
+       nothing of the Basis, and the program takes no vector.sml. A plan kept
+       by a file's text alone would take it still: another program than
+       without the cache (the mutant of the cache P1) *)
+    | "S131" =>
+        let
+          val () = own s "a.sml b.sml main.sml"
+          fun infixed yes = put s "a.sml" ("fun <+> (a, b) = a + b" ^ (if yes then "\ninfix 5 <+>" else ""))
+          val () = infixed true
+          val () = put s "b.sml" "datatype mark = Vector | Plain\nval g = <+>"
+          val () = put s "main.sml" "val () = print (Int.toString (g (1, 2)) ^ \"\\n\")"
+          val () = build s []
+          val () = fails s
+          val () = infixed false
+          val () = checkBuild s [] "a.sml b.sml main.sml"
+          val () = prints s "3"
+          val () = infixed true
+          val () = build s []
+          val () = fails s
+          val () = infixed false
+          val () = checkBuild s [] ""
+        in prints s "3" end
     | "S58" => parallel s
     | n => if String.isPrefix CacheFacts.prefix n then CacheFacts.one s
            else if String.isPrefix CacheFlags.prefix n then CacheFlags.one s
@@ -627,7 +652,7 @@ struct
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S121", "S122", "S123", "S124", "S125", "S126", "S127", "S128", "S129", "S130"] @ CacheFacts.cases @ CacheFlags.cases @ CacheChecks.cases
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S121", "S122", "S123", "S124", "S125", "S126", "S127", "S128", "S129", "S130", "S131"] @ CacheFacts.cases @ CacheFlags.cases @ CacheChecks.cases
               @ WarmChecks.cases @ StoreChecks.cases
   fun runCase name compiler =
     let val s = create name compiler

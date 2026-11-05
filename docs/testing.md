@@ -887,11 +887,12 @@ test-incremental` and so in `make check`, as a scenario of
 | Fact edits, `fact-*` | an edit that flips one fact a fingerprint or the configuration holds, the value's name and type kept, compiling other units than the row says, or differing from a build without the cache | `tests/runner/cachefacts.sml` |
 | Root blanking, `blank-*` | a root of `CompilerState` that changes what a compile makes when it goes back to its baseline, and that `tests/incremental/roots.tsv` does not say what covers | `tests/runner/cachechecks.sml`, `src/driver/cachecheck.sml` |
 | Verification of all hits, `across-*`, S98 | `--verify-cache` finding that an entry taken across a unit that changed is not what compiling the unit gives | the same |
-| Random edits, `@mutate`, `@mutate-verify` | a warm build that disagrees with `--no-cache`, or that `--verify-cache` refuses | `tests/runner/mutationchecks.sml` |
+| Random edits, `@mutate`, `@mutate-verify` | a warm build that disagrees with `--no-cache`, or that `--verify-cache` refuses; among the edits, a fixity directive changed, added, removed, made `nonfix` or put in a `local` that keeps it or drops it, so that the files after it parse another way | `tests/runner/mutationchecks.sml`, `tests/runner/mutationproject.sml` |
 | The model, `model` | the model of a hit saying otherwise than `tests/incremental/model.expected` | `tests/incremental/model.sml` |
 | The fingerprint oracle, `fp-oracle` | a field of a binding, or a fact of the tables a fingerprint reads by hand, changed alone, moving a fingerprint in other layers than the description of the codecs marks it in (`tools/codecs/compiler.sml`), or a sameness not saying what the description has it compare; or a kind of field or fact the program does not change | `tests/runner/cachechecks.sml`, `UnitBasis.fpOracle` ([units.md](units.md), *The fingerprint oracle*) |
 | Unit by unit, and the mask, `warm-unit-*` | a unit compiled alone, while every other is taken from the cache without its basis, that is not what its entry holds: under its view, what its text names loaded by need, or under the mask of its entry's usages, each structure cut to the paths they name and only the units their binders reach loaded | `tests/runner/warmchecks.sml` |
 | The racy cases, `warm-racy`; up to date, `warm-uptodate`, `warm-uptodate-index` | a warm build that differs from one without the cache after an edit the stat memo or a memo could miss: of the same size within the second of a build, the old text back with its old times, an edit with its time put back, the output overwritten or removed, a new name, a `library.build` above a unit, a Basis Library file edited under an index of the frozen layer or of the overlay | the same |
+| The plan, `warm-plan`, S131 | a build that reads, lexes and parses other files for its plan than the edit and the fixity it moved say ([units.md](units.md), *A warm build*): the file edited; after a fixity directive changed, added, removed, made `nonfix` or put in a `local` that drops it, the files after it; after one put in a `local` that keeps it, that file alone. A warm build that differs from one without the cache, where a file's text is the same and the fixity before it is not; `--verify-cache` finding what the store keeps of a file is not what reading it gives | `tests/runner/warmchecks.sml`, `tests/runner/incrementalextra.sml` |
 | Where the store is, `store-place` | a build, a build of another first line, a build run from below the root, a file given by itself or the REPL's `use` keeping a store anywhere but beside the workspace's `rune.workspace`, or two builds of one workspace not sharing it; `RUNE_CACHE` or `--cache-dir` not moving it; with no workspace, none beside the build file | `tests/runner/storechecks.sml` |
 | Trimming, `store-trim` | a build after the store was trimmed -- to sizes from the whole down to a byte, by age by hand and after a build, every other file and every third removed -- that differs from one without the store; a build after a build that trimmed compiling what that build took; a trim of the frozen layer, or a limit that is none, not refused | the same |
 | Damage, `store-damage` | an entry damaged where it still reads, its hashes kept -- in its head so that it stands, or in its first section -- taken rather than compiled; a damaged Mid read by a build of the units' code, or taken by `--whole` | the same |
@@ -955,7 +956,10 @@ fingerprint, and a module of another signature with the same slots is then
 taken (S129, S130). C5 and C14 are the store's
 (the build-system roadmap's M7): an entry's sections, or its head, not held to
 their hashes, so that an entry damaged where it still reads is taken, which
-`store-damage` sees.
+`store-damage` sees. P1 keeps what a file is to the plan by its text alone, as
+E15's plan memo did, not by the fixity before it: S131 sees the program take
+the Basis Library's file a parse that failed before named, and `warm-plan` a
+fixity edit read one file where it should read those after it.
 The 13 that survived E18:
 
 | Mutant | What it drops | Issue | What became of it |

@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `bin/rune-incremental scenarios` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, S49 to S101, S121 to S130, and the checks
+a file system without case), S28 to S36, S40, S49 to S101, S121 to S131, and the checks
 of *Facts, flags and roots* below. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
@@ -207,6 +207,16 @@ exactly the units X and nothing else.
   module of another parameter's signature (S129) or result's (S130), whose
   records have the same slots, is refused when the client loads it: the
   signatures are in the fingerprint (the mutants A5 and A6 take them out).
+* **S131, the plan follows the fixity before a file.** `a.sml` makes `<+>`
+  infix, and `b.sml`, `val g = <+>`, does not parse in it: it names all its
+  tokens, `Vector` among them (a constructor), which takes the Basis
+  Library's `vector.sml`, and the build fails. `a.sml` makes `<+>` nonfix
+  again: `b.sml`, whose text is the same, parses, names nothing of the
+  Basis, and the program takes no `vector.sml`. And back, and again. What a
+  file is to the plan is kept by its text and the fixity before it
+  (`docs/units.md`, *A warm build*); kept by its text alone, as E15's plan
+  memo was, the second build takes `vector.sml` still (the mutant of the
+  cache P1). `warm-plan` holds what each build reads for its plan.
 
 ## Failure and concurrency
 

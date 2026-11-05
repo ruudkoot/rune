@@ -25,7 +25,15 @@
 
    warm-uptodate-index: an edit of a Basis Library file under an index of the
    frozen layer, and under one of the overlay, makes the next build not up to
-   date, the index being held by its record (the build-system roadmap's M12). *)
+   date, the index being held by its record (the build-system roadmap's M12).
+
+   warm-plan: what each file is to the plan (LibraryIndex.programFacts), kept
+   by its text and the fixity before it: an edit reads the file edited, and
+   an edit of a fixity directive -- changed, put in a local that keeps it or
+   drops it, nonfix, added, removed -- the files after it whose fixity before
+   them it changed, by the tokens the build lexed (--pass-stats); each build
+   held to one without the cache, and to --verify-cache, which reads every
+   file and holds what the store kept to it. *)
 structure WarmChecks =
 struct
   open Incremental
@@ -240,7 +248,56 @@ struct
       case' ("overlay", "ocache", ("the overlay's", fn () => not (List.null (indexes "ocache"))))
     end
 
-  val cases = List.map (fn p => prefix ^ "unit-" ^ p) projects @ [prefix ^ "racy", prefix ^ "uptodate", prefix ^ "uptodate-index"]
+  (* ---- what each file is to the plan ---- *)
+
+  fun plan (s : state) =
+    let
+      val files = ["ops.sml", "use.sml", "mid.sml", "last.sml"]
+      val () = own s (String.concatWith " " files)
+      val () = put s "ops.sml" "fun ++ (a, b) = a * 10 + b\ninfix 6 ++"
+      val () = put s "use.sml" "structure U = struct val v = 1 ++ 2 ++ 3 end"
+      val () = put s "mid.sml" "structure M = struct val w = U.v + 1 end"
+      val () = put s "last.sml" "val () = print (Int.toString (U.v ++ M.w) ^ \"\\n\")"
+      fun tokens file = List.length (lines (#output (command s "" [#compiler s, "--dump-tokens", file])))
+      (* the tokens a build in units lexed for its plan *)
+      fun lexed errors =
+        case List.mapPartial (fn l => if String.isPrefix "pass lex: " l
+                                      then Int.fromString (String.extract (l, size "pass lex: ", NONE)) else NONE)
+                             (lines errors) of
+          [n] => n
+        | _ => ~1
+      fun warm label (read, ok) =
+        let
+          val wanted = List.foldl (fn (f, n) => n + tokens f) 0 read
+          val w = compile s ["--units", "--cache-dir", "cache", "--pass-stats"] "w.rbc"
+          val n = compile s ["--units", "--no-cache"] "n.rbc"
+          val v = compile s ["--units", "--cache-dir", "cache", "--verify-cache"] "v.rbc"
+        in
+          check s (label ^ ": the build " ^ (if ok then "failed: " else "did not fail: ") ^ #errors w)
+                ((#status w = 0) = ok andalso (#status n = 0) = ok);
+          check s (label ^ ": the build differs from one without the cache") (not ok orelse same (path s "w.rbc", path s "n.rbc"));
+          check s (label ^ ": the plan read " ^ Int.toString (lexed (#errors w)) ^ " tokens, wanted " ^ Int.toString wanted
+                   ^ ", those of " ^ String.concatWith " " read)
+                (lexed (#errors w) = wanted);
+          check s (label ^ ": --verify-cache found what the store keeps is not what reading gives: " ^ #errors v)
+                (not ok orelse #status v = 0)
+        end
+      fun set file (old, new) = edit s file old new
+    in
+      warm "first" (files, true);
+      set "mid.sml" ("+ 1 end", "+ 1 end (* edited *)"); warm "a comment in mid.sml" (["mid.sml"], true);
+      set "ops.sml" ("infix 6", "infixr 6"); warm "infix made infixr in the first file" (files, true);
+      set "ops.sml" ("infixr 6 ++", "local in infixr 6 ++ end"); warm "the directive in a local that keeps it" (["ops.sml"], true);
+      set "ops.sml" ("local in infixr 6 ++ end", "local infixr 6 ++ in end");
+      warm "the directive in a local that drops it" (files, false);
+      set "ops.sml" ("local infixr 6 ++ in end", "infix 6 ++"); warm "the directive back" (files, true);
+      set "last.sml" ("^ \"\\n\")", "^ \"\\n\")\nnonfix ++"); warm "nonfix in the last file" (["last.sml"], true);
+      set "mid.sml" ("(* edited *)", "infix 3 ++"); warm "a directive added in mid.sml" (["mid.sml", "last.sml"], true);
+      set "ops.sml" ("\ninfix 6 ++", ""); warm "the first file's directive removed" (files, false)
+    end
+
+  val cases = List.map (fn p => prefix ^ "unit-" ^ p) projects @ [prefix ^ "racy", prefix ^ "uptodate", prefix ^ "uptodate-index",
+                                                                    prefix ^ "plan"]
   fun handles name = String.isPrefix prefix name
   fun one (s : state) =
     let val n = #name s
@@ -248,6 +305,7 @@ struct
       if n = prefix ^ "racy" then racy s
       else if n = prefix ^ "uptodate" then upToDate s
       else if n = prefix ^ "uptodate-index" then upToDateIndex s
+      else if n = prefix ^ "plan" then plan s
       else if String.isPrefix (prefix ^ "unit-") n then unitByUnit s (String.extract (n, size (prefix ^ "unit-"), NONE))
       else raise Failed ("no check " ^ n)
     end

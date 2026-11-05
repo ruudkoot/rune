@@ -24,6 +24,7 @@ struct
   val cc = "src/driver/cachecheck.sml"
   val mn = "src/driver/main.sml"
   val st = "lib/compiler/state.sml"
+  val li = "lib/compiler/driver/libraryindex.sml"
 
   fun m (id, class, issue, repl, note, catches, file, old, new) : mutant =
     {mutant = CompilerMutantList.m (id, class, "cache", file, note, issue, [(file, old, new)]),
@@ -319,5 +320,13 @@ struct
        [("S130", "a module of another signature was not refused")],
        ub,
        "fpBound (w, #bound result); fpEnvInto (w, local', #env result))))",
-       "())))")]
+       "())))"),
+    (* what a file is to the plan (LibraryIndex.factsKey; the build-system
+       work F2): kept by its text alone, as E15's plan memo was, a file read
+       in another fixity than before is taken as it was *)
+    m ("P1", "a file's facts kept by its text alone, not the fixity before it", "", false, "",
+       [("S131", "cached program differs from uncached compilation"), ("warm-plan", "the plan read")],
+       li,
+       "[text, path, Source.modeName mode, fixity, if !Parser.orPatterns",
+       "[text, path, Source.modeName mode, if !Parser.orPatterns")]
 end
