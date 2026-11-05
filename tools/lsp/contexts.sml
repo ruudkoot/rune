@@ -12,7 +12,12 @@
    checks it, and its errors and the first unbound name are written.
    --before does as the server did before M19: a file's contexts by their
    number alone (no owner, no comparison), and a file in no build alone with
-   the Basis Library. --share checks the first build, then the second over
+   the Basis Library. --owned holds the plan of a file of a library made from
+   its owner's targets alone (RuneLspProjects.owned, D28) to what enrich and
+   W.resolve make of it, file by file, and fails a run where they differ;
+   where the owner does not settle a file, the plan the index of what each
+   build names makes of it (RuneLspProjects.indexed) is held so too.
+   --targets makes every build listed a target of the settings. --share checks the first build, then the second over
    the same libraries, in contexts that share (C.Analysis.share), and the
    second again in one that does not: what each elaborated, loaded, took
    and kept. One JSON line a file or a check, and a summary on stdout. *)
@@ -32,7 +37,8 @@ struct
   fun say text=(print text;TextIO.flushOut TextIO.stdOut)
   fun seconds timer=Time.toReal (Timer.checkRealTimer timer)
   fun main arguments =
-    let val lib=ref "" val root=ref "" val out=ref "" val before'=ref false
+    let val lib=ref "" val root=ref "" val out=ref "" val before'=ref false val compareOwned=ref false val everyTarget=ref false
+        val differences=ref 0
         val builds=ref NONE : string option ref val zero=ref NONE : string option ref
         val pair=ref NONE : (string*string) option ref
         fun options []=()
@@ -42,6 +48,8 @@ struct
           | options ("--builds"::value::rest)=(builds:=SOME value;options rest)
           | options ("--zero"::value::rest)=(zero:=SOME value;options rest)
           | options ("--before"::rest)=(before':=true;options rest)
+          | options ("--owned"::rest)=(compareOwned:=true;options rest)
+          | options ("--targets"::rest)=(everyTarget:=true;options rest)
           | options ("--share"::first::second::rest)=(pair:=SOME (first,second);options rest)
           | options (other::_)=raise Fail ("unknown option: " ^ other)
         val ()=options arguments
@@ -61,12 +69,17 @@ struct
         (* a plan of the worker's, made here: what a check in a context reads of it *)
         fun planned (documents,uri,selection,contexts,implicit)=
           (serial:= !serial+1;
-           {serial= !serial,key=uri,stamps=[],texts=[],configuration=W.configurationFor (workspace,uri),
+           {serial= !serial,key=uri,stamps=[],places=[],generation=0,texts=[],configuration=W.configurationFor (workspace,uri),
             selection=selection,contexts=contexts,implicit=implicit,decided=false}:E.planned)
         fun args (documents,uri)={state=M.capture (workspace,documents),uri=uri,encoding=LspProtocol.Utf16,
           capabilities=Json.Object [],cancelled=fn () => false}
+        (* every build listed a target of the settings, as E20's planning curve has it *)
+        val targetSettings=Json.Object [("targets",Json.Array (List.map (fn name =>
+          Json.Object [("name",Json.String name),("build",Json.String (uriOf (full name)))])
+          (case !builds of SOME file => lines file | NONE => [])))]
         fun prompts file =
           let val names=lines file
+              val ()=if !everyTarget then W.configure (workspace,targetSettings) else ()
               (* every source of every build, once *)
               val session=C.session {lib=SOME (!lib),flags=[]}
               val seen=W.table 4096
@@ -91,10 +104,33 @@ struct
               val counts=ref [] : (string*int) list ref
               fun count key=counts:=(case List.find (fn (k,_) => k=key) (!counts) of
                   SOME (_,n) => (key,n+1)::List.filter (fn (k,_) => k<>key) (!counts) | NONE => (key,1):: !counts)
+              (* the owner's plan, in a workspace enrich has not settled *)
+              val bare=W.new {platform=platform,lib= !lib}
+              val ()=W.setRoots (bare,[uriOf rootPath])
+              val ()=if !everyTarget then W.configure (bare,targetSettings) else ()
+              fun kindOf selection=case selection of W.Selected c => "selected " ^ #id c | W.Ambiguous _ => "prompt" | W.Loose => "none"
+              val index=RuneLspProjects.index ()
+              fun compared (how,uri,selection,contexts:W.context list,found:W.context list)=
+                let val same=List.map #id found=List.map #id contexts andalso
+                      kindOf (W.selectAmong (bare,uri,found))=kindOf selection
+                in if same then count (how ^ ": the same") else
+                     (count (how ^ ": DIFFERENT");differences:= !differences+1;
+                      say (how ^ " differs: " ^ uri ^ ": " ^ String.concatWith "," (List.map #id found) ^ " against " ^
+                        String.concatWith "," (List.map #id contexts) ^ "\n")) end
+              (* the owner's plan, and else the index's (RuneLspProjects.indexed) *)
+              fun owned (uri,selection,contexts:W.context list)=
+                case RuneLspProjects.owned (bare,documents,uri,fn () => false) of
+                  SOME {contexts=found,...} => compared ("owned",uri,selection,contexts,found)
+                | NONE =>
+                  (RuneLspProjects.refresh (index,platform,documents,NONE);
+                   case RuneLspProjects.indexed (index,bare,documents,uri,fn () => false) of
+                     NONE => count "indexed: not settled by the index"
+                   | SOME {contexts=found,...} => compared ("indexed",uri,selection,contexts,found))
               fun one path=
                 let val uri=uriOf path
                     val timer=Timer.startRealTimer ()
                     val (selection,contexts)=W.resolve (workspace,documents,uri)
+                    val ()=if !compareOwned then owned (uri,selection,contexts) else ()
                     val candidates=length contexts
                     val owned= !W.owners andalso isSome (W.ownerBuild platform path)
                     val (selection,contexts)=case selection of
@@ -110,7 +146,7 @@ struct
                 in emit [("file",Json.String path),("candidates",Json.int candidates),("owned",Json.Bool owned),
                      ("kind",Json.String kind),("contexts",Json.int (length contexts)),
                      ("builds",Json.Array (List.map (fn context:W.context => Json.String (#build context)) contexts)),
-                     ("seconds",Json.Number (Real.fmt (StringCvt.FIX (SOME 6)) (seconds timer)))];
+                     ("seconds",RuneLspSeconds.json (seconds timer))];
                    if kind="prompt" then say ("prompt: " ^ path ^ " (" ^ num (length contexts) ^ " contexts)\n") else () end
                 handle C.Failed diagnostics => (count "failed";emit [("file",Json.String path),("kind",Json.String "failed"),
                   ("message",Json.String (String.concatWith "\n" (List.map #message diagnostics)))])
@@ -146,7 +182,7 @@ struct
                      ("errors",Json.int (length diagnostics)),("own",Json.int (length own)),
                      ("message",Json.String (case diagnostics of first::_ => #message first | [] => "")),
                      ("unbound",Json.String (case unbound of first::_ => #message first | [] => "")),
-                     ("seconds",Json.Number (Real.fmt (StringCvt.FIX (SOME 6)) (seconds timer)))];class end
+                     ("seconds",RuneLspSeconds.json (seconds timer))];class end
                 handle error => (emit [("file",Json.String name),("class",Json.String "failed"),
                   ("message",Json.String (General.exnMessage error))];"failed")
               val classes=List.map one names
@@ -179,7 +215,7 @@ struct
                 in emit [("check",Json.String label),("build",Json.String build),("shares",Json.Bool shares),("units",Json.int units),
                      ("checked",Json.int checked),("reused",Json.int reused),("loaded",Json.int loaded),
                      ("diagnostics",Json.int (length (A.diagnostics snapshot))),
-                     ("seconds",Json.Number (Real.fmt (StringCvt.FIX (SOME 3)) spent)),
+                     ("seconds",RuneLspSeconds.json spent),
                      ("instructions",Json.int instructions),("live",Json.int live)];
                    say (label ^ ": " ^ build ^ ", " ^ num units ^ " units, checked " ^ num checked ^ ", loaded " ^ num loaded ^
                      ", " ^ Real.fmt (StringCvt.FIX (SOME 2)) spent ^ " s, " ^
@@ -195,6 +231,6 @@ struct
         val ()=case (!builds,!zero,!pair) of (SOME file,_,_) => prompts file | (NONE,SOME file,_) => zeros file
           | (NONE,NONE,SOME pair) => share pair
           | _ => raise Fail "one of --builds, --zero and --share"
-    in TextIO.closeOut output;OS.Process.success end
+    in TextIO.closeOut output;if !differences=0 then OS.Process.success else OS.Process.failure end
     handle Fail message => (print ("rune-lsp-contexts: " ^ message ^ "\n");OS.Process.failure)
 end

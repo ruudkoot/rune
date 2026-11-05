@@ -381,8 +381,8 @@ bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml FORCE
 LSP_WORKER_TEST_SRCS := src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/worker-model.sml src/lsp/worker-process.sml
 bin/rune-lsp-analysis-worker.rbc: $(RUNE) tests/lsp/worker.build FORCE
 	$(RUNE) --build tests/lsp/worker.build -o $@
-bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml FORCE
-	$(RUNE) --library test/unit --library compiler --library lsp --library json --library unicode --library jsonrpc $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml -o $@
+bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/projects.sml tests/lsp/worker-analysis-tests.sml FORCE
+	$(RUNE) --library test/unit --library compiler --library lsp --library json --library unicode --library jsonrpc $(LSP_WORKER_TEST_SRCS) src/lsp/projects.sml tests/lsp/worker-analysis-tests.sml -o $@
 bin/rune-lsp-jobs-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml FORCE
 	$(RUNE) --library test/unit --library compiler --library lsp --library json --library unicode --library jsonrpc $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml -o $@
 bin/rune-lsp-semantic-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml FORCE
@@ -427,6 +427,12 @@ bin/rune-lsp-workspace-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml
 	$(RUNE) --library test/unit --library lsp --library compiler --library unicode --library json src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml -o $@
 bin/rune-lsp-controller-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml FORCE
 	$(RUNE) --library test/unit --library lsp --library compiler --library json --library jsonrpc --library unicode src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml -o $@
+# the measuring tools' times as JSON (tools/lsp/seconds.sml)
+bin/rune-lsp-seconds-tests.rbc: $(RUNE) tools/lsp/seconds.sml tests/lsp/seconds-tests.sml FORCE
+	$(RUNE) --library test/unit --library json tools/lsp/seconds.sml tests/lsp/seconds-tests.sml -o $@
+.PHONY: test-lsp-seconds
+test-lsp-seconds: bin/rune-lsp-seconds-tests.rbc
+	bin/runevm bin/rune-lsp-seconds-tests.rbc
 test-lsp-workspace: bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc
 	bin/runevm bin/rune-lsp-workspace-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-workspace-tests.rbc
@@ -441,7 +447,7 @@ bin/rune-lsp-service-tests.rbc: $(RUNE) runelsp.build tests/lsp/service-tests.sm
 test-lsp-service: bin/rune-lsp-service-tests.rbc
 	bin/runevm bin/rune-lsp-service-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-service-tests.rbc
-test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker test-lsp-service test-lsp-replay
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker test-lsp-service test-lsp-replay test-lsp-seconds
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
 	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc
@@ -450,15 +456,16 @@ test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rb
 # cold from a store a compile of it made at -O0 (build/lsp/store,
 # C.Analysis.store), which an analysis reads by the static configuration;
 # HOL4's closure and MLton in the nightly tier, from the build files
-# RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON name (tests/lsp/README.md).
-LSP_ORACLE_SRCS := tools/lsp/oracle.sml src/main/lsp-oracle-main.sml
+# RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON name (tests/lsp/README.md); MLton's
+# recording run collects after each check, which keeps it within 15 GiB.
+LSP_ORACLE_SRCS := tools/lsp/seconds.sml tools/lsp/oracle.sml src/main/lsp-oracle-main.sml
 bin/rune-lsp-oracle.rbc: $(RUNE) $(LSP_ORACLE_SRCS) tools/lsp/oracle.build FORCE
 	$(RUNE) --build tools/lsp/oracle.build -o $@
 # What the server makes of a tree's files: contexts, prompts, implicit libraries
 # and two builds over one library (tools/lsp/contexts.sml, tests/lsp/README.md)
-bin/rune-lsp-contexts.rbc: $(RUNE) tools/lsp/contexts.sml src/main/lsp-contexts-main.sml tools/lsp/contexts.build $(wildcard src/lsp/*.sml) FORCE
+bin/rune-lsp-contexts.rbc: $(RUNE) tools/lsp/seconds.sml tools/lsp/contexts.sml src/main/lsp-contexts-main.sml tools/lsp/contexts.build $(wildcard src/lsp/*.sml) FORCE
 	$(RUNE) --build tools/lsp/contexts.build -o $@
-bin/rune-lsp-replay.rbc: $(RUNE) tests/lsp/client.sml tools/lsp/replay.sml tools/lsp/replay.build FORCE
+bin/rune-lsp-replay.rbc: $(RUNE) tests/lsp/client.sml tools/lsp/seconds.sml tools/lsp/replay.sml tools/lsp/replay.build FORCE
 	$(RUNE) --build tools/lsp/replay.build -o $@
 ORACLE = bin/runevm --jit=opt --equality-work 1000000000 --heap-limit
 ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
@@ -484,10 +491,66 @@ test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
 	  --scenarios tests/lsp/oracle/hol4.tsv --focus --store build/lsp/store-hol4 --out build/lsp/oracle-hol4-store.jsonl \
 	  --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,stored,byneed
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
-	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton.jsonl \
+	  --scenarios tests/lsp/oracle/mlton.tsv --focus --collect --out build/lsp/oracle-mlton.jsonl \
 	  --record build/lsp/oracle-mlton.record --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,byneed
 	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
 	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton-against.jsonl --against build/lsp/oracle-mlton.record
+# The scale target (D28; docs/language-server.md, The scale target): the
+# generator of a tree of libraries and programs (tools/lsp/fixture.sml), the
+# planning bench (tools/lsp/plan-bench.sml), and two tiers on them.
+# test-lsp-scale, in make check, holds what the machine's load cannot move: at
+# 100k files and 1000 builds, a plan of a library's file and of a program's
+# reads no build outside the changed set, takes its memo where no build
+# changed, and fits the worker's heap; on a generated build of
+# 100k lines, cold from a store, a body edit elaborates its unit alone, an
+# interface edit only the units whose usages it breaks, and at most 2 KB a
+# line lives. test-lsp-scale-times, nightly and on a machine of its own, as
+# every timing is (docs/testing.md), holds the times: a plan at most 200 ms,
+# a leaf comment's p95 at most 250 ms and hover's 50 ms through the server,
+# and cold from a store within 2 s. test-lsp-scale-oracle, nightly, holds the
+# kept analysis to a fresh one on every unit of the generated build after
+# every edit: some 20 fresh analyses of 100k lines, half an hour, which
+# make check's test-lsp-oracle does on the compiler's own build.
+bin/rune-lsp-fixture.rbc: $(RUNE) tools/lsp/fixture.sml src/main/lsp-fixture-main.sml tools/lsp/fixture.build FORCE
+	$(RUNE) --build tools/lsp/fixture.build -o $@
+bin/rune-lsp-plan-bench.rbc: $(RUNE) tools/lsp/seconds.sml tools/lsp/plan-bench.sml src/main/lsp-plan-bench-main.sml tools/lsp/plan-bench.build $(wildcard src/lsp/*.sml) FORCE
+	$(RUNE) --build tools/lsp/plan-bench.build -o $@
+SCALE = build/lsp/scale
+# a library's file deep in its graph, and a program's own file, which the
+# index of what each build names plans; both at the worker's 512 MiB heap
+SCALE_PLAN = bin/runevm --jit=opt --heap-limit 536870912 bin/rune-lsp-plan-bench.rbc --lib "$(abspath lib)" --root $(SCALE)/plan --events --reads
+SCALE_LIBRARY_FILE = libs/g026/l00799/m799_1.sml
+SCALE_PROGRAM_FILE = apps/p00000.sml
+$(SCALE)/plan/fixture.json: bin/rune-lsp-fixture.rbc
+	rm -rf $(SCALE)/plan
+	bin/runevm --jit=opt bin/rune-lsp-fixture.rbc --out $(SCALE)/plan --lines 10000000 --files 100000 --builds 1000 --domains 32 --no-text
+$(SCALE)/f100k/fixture.json: bin/rune-lsp-fixture.rbc
+	rm -rf $(SCALE)/f100k
+	bin/runevm --jit=opt bin/rune-lsp-fixture.rbc --out $(SCALE)/f100k --lines 100000 --files 1000 --builds 10
+SCALE_STORE = rm -rf $(SCALE)/store && $(RUNE) --units -O0 --build $(SCALE)/f100k/apps/all.build --cache-dir $(SCALE)/store -o $(SCALE)/store.rbc 2>/dev/null
+.PHONY: test-lsp-scale test-lsp-scale-times test-lsp-scale-oracle
+test-lsp-scale: bin/rune-lsp-plan-bench.rbc bin/rune-lsp-oracle.rbc $(SCALE)/plan/fixture.json $(SCALE)/f100k/fixture.json
+	$(SCALE_PLAN) --open $(SCALE_LIBRARY_FILE) --out $(SCALE)/plan.jsonl
+	$(SCALE_PLAN) --open $(SCALE_PROGRAM_FILE) --out $(SCALE)/plan-program.jsonl
+	$(SCALE_STORE)
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath $(SCALE)/f100k/apps/all.build)" \
+	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --no-fresh --collect --per-line 2048 --clients \
+	  --out $(SCALE)/oracle.jsonl --require placed,walked,broken,stored,byneed
+test-lsp-scale-oracle: bin/rune-lsp-oracle.rbc $(SCALE)/f100k/fixture.json
+	$(SCALE_STORE)
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath $(SCALE)/f100k/apps/all.build)" \
+	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --clients \
+	  --out $(SCALE)/oracle-fresh.jsonl --require placed,walked,broken,stored,byneed
+test-lsp-scale-times: bin/runelsp bin/rune-lsp-replay.rbc bin/rune-lsp-plan-bench.rbc bin/rune-lsp-oracle.rbc $(SCALE)/plan/fixture.json $(SCALE)/f100k/fixture.json
+	$(SCALE_PLAN) --open $(SCALE_LIBRARY_FILE) --out $(SCALE)/plan-times.jsonl --repeat 5 --limit 200
+	$(SCALE_PLAN) --open $(SCALE_PROGRAM_FILE) --out $(SCALE)/plan-program-times.jsonl --repeat 5 --limit 200
+	$(SCALE_STORE)
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath $(SCALE)/f100k/apps/all.build)" \
+	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --collect --no-fresh --cold-limit 2 \
+	  --out $(SCALE)/oracle-times.jsonl
+	RUNE_CACHE="$(abspath $(SCALE)/store)" bin/runevm bin/rune-lsp-replay.rbc "$(abspath bin/runevm)" "$(abspath bin/runelsp.rbc)" "$(abspath $(SCALE)/f100k)" "$(abspath lib)" \
+	  "$(abspath $(SCALE)/f100k/apps/all.build)" "$(abspath $(SCALE)/f100k/apps/all.sml)" $(SCALE)/replay.json 1 34 \
+	  --comments 20 --body 8 'val total = ref 0' 'val total = ref $$N' --limit comment 0.25 --limit hover 0.05 --limit edit-hover 0.05
 .PHONY: test-lsp-replay
 test-lsp-replay: bin/runelsp bin/rune-lsp-project-replay.rbc
 	@mkdir -p build/lsp

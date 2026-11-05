@@ -36,8 +36,8 @@ struct
     refresh:unit Q.t,refreshPending:bool ref,refreshAgain:bool ref,published:publication list ref,send:R.message->unit,log:string->unit,
     discovered:string*V.value->unit,watchedRoots:unit->string list,
     wantsStatus:bool,statusSent:status option ref,statusAt:Time.time ref,failing:(int*string) list ref,lastUnits:string ref}
-  (* a job's deadline, 30 seconds unless a measurement of a first check at a
-     scale that is over it says otherwise *)
+  (* a job's deadline: how long its worker may report no progress, 30
+     seconds unless a measurement says otherwise (D28) *)
   fun deadline ()=Time.fromSeconds (LargeInt.fromInt (getOpt (Option.mapPartial Int.fromString
     (OS.Process.getEnv "RUNE_LSP_DEADLINE_SECONDS"),30)))
   fun new {workspace,documents,caps,command,args,send,log,discovered,watchedRoots} =

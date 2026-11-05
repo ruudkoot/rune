@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`COMPILER_API`](../sig/COMPILER_API.md) specifies it inside [`CompilerApi`](../str/CompilerApi.md) |
 | Status | required |
-| Members | 15 |
+| Members | 16 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -30,6 +30,7 @@ What each means is on [`COMPILER_API`](../sig/COMPILER_API.md); the types are th
 | val | [`libraries`](../sig/COMPILER_API.md#val-project.libraries) | `t -> string list` |
 | val | [`pathCompletions`](../sig/COMPILER_API.md#val-project.pathcompletions) | `CompilerApi.session * {file : string, offset : int, text : string, variables : (string * string) list, windows : bool} -> {isIncomplete : bool, items : pathCompletion list}` |
 | val | [`read`](../sig/COMPILER_API.md#val-project.read) | `CompilerApi.session * {file : string, overlays : {file : string, text : string} list, variables : (string * string) list, windows : bool, workspace : CompilerApi.Workspace.t option} -> t` |
+| val | [`readHolding`](../sig/COMPILER_API.md#val-project.readholding) | `CompilerApi.session * {file : string, overlays : {file : string, text : string} list, variables : (string * string) list, windows : bool, workspace : CompilerApi.Workspace.t option} * {held : string -> string option, read : string * string -> unit} -> t` |
 | val | [`sources`](../sig/COMPILER_API.md#val-project.sources) | `t -> source list` |
 
 ---

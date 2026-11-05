@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 111 of 111 entries documented |
+| Documentation | 112 of 112 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -91,6 +91,9 @@ sig
       {items:pathCompletion list,isIncomplete:bool}
     val <a href="#val-project.read">read</a> : session * {<a href="#fld-project.read.file">file</a> : string, <a href="#fld-project.read.workspace">workspace</a> : Workspace.t option, <a href="#fld-project.read.variables">variables</a> : (string * string) list,
                           <a href="#fld-project.read.overlays">overlays</a> : {file : string, text : string} list, <a href="#fld-project.read.windows">windows</a> : bool} -&gt; t
+    val <a href="#val-project.readholding">readHolding</a> : session * {<a href="#fld-project.readholding.file">file</a> : string, <a href="#fld-project.readholding.workspace">workspace</a> : Workspace.t option, <a href="#fld-project.readholding.variables">variables</a> : (string * string) list,
+                                 <a href="#fld-project.readholding.overlays">overlays</a> : {file : string, text : string} list, <a href="#fld-project.readholding.windows">windows</a> : bool} *
+                      {held : string -&gt; string option, read : string * string -&gt; unit} -&gt; t
     val <a href="#val-project.sources">sources</a> : t -&gt; source list
     val <a href="#val-project.inputs">inputs</a> : t -&gt; input list
     val <a href="#val-project.libraries">libraries</a> : t -&gt; string list
@@ -870,6 +873,30 @@ files are written. Failure is reported through Failed.
 | <a name="fld-project.read.variables"></a>`variables` | `(string * string) list` |  |
 | <a name="fld-project.read.overlays"></a>`overlays` | `{file : string, text : string} list` |  |
 | <a name="fld-project.read.windows"></a>`windows` | `bool` |  |
+
+#### <a name="val-project.readholding"></a>`readHolding`
+
+```sml
+val readHolding : session * {file : string, workspace : Workspace.t option, variables : (string * string) list,
+                             overlays : {file : string, text : string} list, windows : bool} *
+                  {held : string -> string option, read : string * string -> unit} -> t
+```
+
+`readHolding (session, request, {held, read})` is `read`, taking the
+text of the build files the caller holds.
+
+`held path` is that text, or NONE, and then the build is read from the
+disk and `read` is told its path and text. An overlay comes first, and
+is neither. So an editor that knows which builds changed reads those
+alone (the build-system roadmap's D28).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-project.readholding.file"></a>`file` | `string` |  |
+| <a name="fld-project.readholding.workspace"></a>`workspace` | `Workspace.t option` |  |
+| <a name="fld-project.readholding.variables"></a>`variables` | `(string * string) list` |  |
+| <a name="fld-project.readholding.overlays"></a>`overlays` | `{file : string, text : string} list` |  |
+| <a name="fld-project.readholding.windows"></a>`windows` | `bool` |  |
 
 #### <a name="val-project.sources"></a>`sources`
 

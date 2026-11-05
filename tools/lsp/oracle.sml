@@ -7,6 +7,7 @@
    Usage: rune-lsp-oracle --lib DIR --build FILE --scenarios FILE --out FILE
             [--focus] [--sample N] [--no-fresh] [--collect] [--require PATH,...]
             [--record FILE | --against FILE] [--share] [--store DIR] [--eager]
+            [--per-line BYTES] [--clients] [--cold-limit SECONDS]
 
    A scenario is a line of tab-separated fields:
      NAME  REPS  FILE-SUFFIX  KIND  [ARG1  [ARG2]]
@@ -31,6 +32,12 @@
    files alone). --sample N compares N units besides the edited one, every
    one without it. --no-fresh times the kept context alone.
    --collect collects after each check, and reports what lives.
+   --per-line fails a run in which what lives after a check, so collected,
+   is more than BYTES a line of the build's sources (D28: 2048). --clients
+   fails one in which a check after an edit elaborates a unit but the edited
+   one and those whose usages it broke: an edit's elaboration is that unit's
+   and its clients' (D28). A walk still takes each later unit again, by need.
+   --cold-limit fails one whose first check takes longer than SECONDS.
    A corpus too large for two contexts at once is held to its oracle in two
    runs: --record keeps the context and writes what each check gave, as digests;
    --against, with the same scenarios, analyses each check's inputs afresh, one
@@ -119,6 +126,11 @@ struct
         val shares=ref false
         val storeDir=ref NONE : string option ref
         val eager=ref false
+        val perLine=ref NONE : int option ref
+        val overLine=ref 0
+        val clients=ref false val beyond=ref 0
+        val coldLimit=ref NONE : real option ref
+        val sourceLines=ref NONE : int option ref
         fun options [] = ()
           | options ("--lib"::value::rest)=(lib:=value;options rest)
           | options ("--build"::value::rest)=(build:=value;options rest)
@@ -135,6 +147,9 @@ struct
           | options ("--share"::rest)=(shares:=true;options rest)
           | options ("--store"::dir::rest)=(storeDir:=SOME dir;options rest)
           | options ("--eager"::rest)=(eager:=true;options rest)
+          | options ("--per-line"::value::rest)=(perLine:=SOME (valOf (Int.fromString value));options rest)
+          | options ("--clients"::rest)=(clients:=true;options rest)
+          | options ("--cold-limit"::value::rest)=(coldLimit:=SOME (valOf (Real.fromString value));options rest)
           | options (other::_)=raise Fail ("unknown option: " ^ other)
         val ()=options arguments
         val compiler=C.session {lib=SOME (!lib),flags=[]}
@@ -300,12 +315,28 @@ struct
               val agreed=if !fresh then SOME (compare (name,rep,snapshot,edited)) else NONE
               val ()=placeholder:=SOME snapshot
               val live=if !collecting then (Runtime.collect ();Runtime.collect ();#live (Runtime.stats ())) else #live after
-          in emit ([("scenario",Json.String name),("rep",Json.int rep),("seconds",Json.Number (Real.toString seconds)),
+              (* the sources' lines, counted at the first check that asks *)
+              val lines=case (!perLine,!sourceLines) of (NONE,_) => 0 | (_,SOME n) => n | (SOME _,NONE) =>
+                let val n=List.foldl (fn (input:A.input,n) => n+CharVector.foldl (fn (c,k) => if c= #"\n" then k+1 else k) 0 (#text input)) 0 (inputs ())
+                in sourceLines:=SOME n;n end
+              val ()=if !clients andalso name<>"cold" andalso checked>1+broken then
+                (beyond:= !beyond+1;say ("  BEYOND ITS CLIENTS: elaborated " ^ num checked ^ " where " ^ num broken ^
+                   " units' usages broke\n")) else ()
+              val ()=case !coldLimit of SOME limit => if name="cold" andalso seconds>limit then
+                  (beyond:= !beyond+1;say ("  COLD " ^ Real.fmt (StringCvt.FIX (SOME 3)) seconds ^ " s, over " ^
+                     Real.fmt (StringCvt.FIX (SOME 3)) limit ^ " s\n")) else ()
+                | NONE => ()
+              val ()=case (!perLine,!collecting) of (SOME limit,true) =>
+                  if live>limit*Int.max (1,lines) then (overLine:= !overLine+1;
+                    say ("  RESIDENT " ^ num (live div Int.max (1,lines)) ^ " bytes a line, over " ^ num limit ^ "\n")) else ()
+                | _ => ()
+          in emit ([("scenario",Json.String name),("rep",Json.int rep),("seconds",RuneLspSeconds.json seconds),
                ("checked",Json.int checked),("reused",Json.int reused),("walked",Json.Bool walked),("rebound",Json.int rebound),
                ("loaded",Json.int loaded),("cutoff",Json.int cutoff),("broken",Json.int broken),("stored",Json.int stored),
                ("byNeed",Json.int byNeed),
                ("diagnostics",Json.int (length (A.diagnostics snapshot))),("instructions",Json.int (#instructions after- #instructions before')),
                ("allocated",Json.int (#bytes after- #bytes before')),("live",Json.int live)] @
+               (if lines>0 then [("lines",Json.int lines)] else []) @
                (case agreed of NONE => [] | SOME same => [("same",Json.Bool same)]));
              say (name ^ " " ^ num rep ^ ": " ^ Real.fmt (StringCvt.FIX (SOME 3)) seconds ^ " s, checked " ^ num checked ^ ", reused " ^ num reused ^
                (if walked then ", walked" else ", placed") ^ ", rebound " ^ num rebound ^ ", loaded " ^ num loaded ^ ", cutoff " ^ num cutoff ^ ", broken " ^ num broken ^
@@ -402,7 +433,8 @@ struct
           "), paths taken: " ^ String.concatWith " " (List.rev (!taken)) ^ "\n")
         val ()=if null missing andalso null unknown then () else
           say ("ORACLE a path not taken: " ^ String.concatWith " " (missing @ unknown) ^ "\n")
-    in if !disagreements=0 andalso null missing andalso null unknown then OS.Process.success else OS.Process.failure end
+    in if !disagreements=0 andalso null missing andalso null unknown andalso !overLine=0 andalso !beyond=0
+       then OS.Process.success else OS.Process.failure end
     handle Fail message => (print ("rune-lsp-oracle: " ^ message ^ "\n");OS.Process.failure)
          | C.Failed diagnostics => (print ("rune-lsp-oracle: " ^ String.concatWith "\n" (List.map #message diagnostics) ^ "\n");OS.Process.failure)
 end

@@ -81,10 +81,6 @@ struct
              {inputs:input list,steps,project,libraries,scope,building,view,cancelled}) : snapshot =
     let val ()=checked context
         val C.Session {config,...}=parent
-        val ()=if length inputs>10000 then raise Fail "too many analysis inputs" else ()
-        val _=List.foldl (fn (input:input,total) =>
-          if size (#text input)>128*1024*1024-total then raise Fail "analysis input budget exceeded"
-          else total+size (#text input)) 0 inputs
         fun source (input:input):E.source =
           {file= #file input,text= #text input,mode=case Source.modeNamed (#mode input) of
             SOME mode => mode | NONE => raise Fail "unknown analysis source mode"}

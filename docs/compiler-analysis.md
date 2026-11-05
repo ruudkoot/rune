@@ -264,9 +264,11 @@ unavailable. Recovery within a rejected unit remains a later extension.
 
 Cancellation is polled between capture, parsing, elaboration, export and
 unit boundaries. A language server supervises the worker process to bound
-uninterruptible phases. The API currently bounds user inputs to 10,000
-occurrences and 128 MiB of decoded text; worker and document limits are
-separate. `Busy` rejects re-entry of an active analysis context.
+uninterruptible phases. The API sets no bound of its own on a check's
+inputs, their number or their text: what an analysis holds is the scale
+target's (`docs/language-server.md`, *The scale target*), and the worker's
+heap and the documents' limits are a server's. `Busy` rejects re-entry of
+an active analysis context.
 
 Occurrence ranges describe compiler syntax constructs and can include
 more than an identifier. Editing consumers derive exact token selections

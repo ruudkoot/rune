@@ -62,16 +62,18 @@ struct
           ("uri",V.Bytes uri),("snapshot",V.Bytes "snapshot-55"),("method",V.Bytes "textDocument/completion"),
           ("state",V.Bytes "captured-source-sentinel")]})
         val ()=(worker:=SOME process;active:=SOME(hd(!queue));queue:=[];
-          started:=SOME(Time.-(Time.now(),Time.fromSeconds 11));phase:=J.Working(Time.-(Time.now(),Time.fromSeconds 1)))
+          started:=SOME(Time.-(Time.now(),Time.fromSeconds 11));phase:=J.Working(Time.+(Time.now(),Time.fromSeconds 10)))
         val ()=J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
           ("phase",V.Bytes "project-selected"),("file",V.Bytes "file:///project/rune.build"),("context",V.Bytes "rune")])
         val ()=J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
           ("phase",V.Bytes "unit-elaborated"),("file",V.Bytes "/project with spaces \206\187/elaborate.sml"),
           ("checked",V.Integer 187),("reused",V.Integer 2)])
         val ()=check("progress is metadata, not a completed job",List.all(fn J.Progress _=>true | _=>false)(!events))
+        (* then the worker says nothing for longer than the limit *)
+        val ()=phase:=J.Working(Time.-(Time.now(),Time.fromSeconds 1))
         val ()=J.tick jobs
         val message=case List.find(fn J.Failed("deadline",_)=>true | _=>false)(!events) of
-          SOME(J.Failed(_,message))=>message | _=>raise Fail "deadline did not fail despite progress"
+          SOME(J.Failed(_,message))=>message | _=>raise Fail "deadline did not fail a silent worker"
         val ()=check("a lost worker says why, once",isSome(J.takeLoss jobs) andalso not(isSome(J.takeLoss jobs)))
     in check("deadline identifies worker, job, request, source, project and last phase",
       List.all(fn text=>String.isSubstring text message)["analysis worker exceeded its deadline",
@@ -84,8 +86,11 @@ struct
         val shown=J.preview path
     in check("metadata stays bounded and escapes controls and invalid native bytes",size shown<1100 andalso
       String.isSubstring "tail\\x0A\\xFF" shown andalso not(String.isSubstring "\n" shown)) end
+  (* A deadline is a limit on silence (D28): progress of any kind extends a
+     job's, so that a check at scale goes on as long as it reports; a worker
+     that reports nothing is lost; cancellation's grace is not extended. *)
   fun workspaceDeadlines () =
-    let fun scenario (opName,age,cancelling,unitProgress) =
+    let fun scenario (opName,age,cancelling,progress) =
           let val jobs=J.new {command="unused",args=[],timeout=Time.fromSeconds 1,
                 cancelGrace=Time.fromMilliseconds 50,maxPending=1}:string J.t
               val J.Jobs {active,queue,phase,started,events,planned,...}=jobs
@@ -95,19 +100,22 @@ struct
               val ()=(active:=SOME(hd(!queue));queue:=[];
                 started:=SOME(Time.-(Time.now(),Time.fromSeconds age));planned:=SOME 13;
                 phase:=(if cancelling then J.Cancelling expired else J.Working expired))
-              val ()=J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
-                ("phase",V.Bytes(if unitProgress then "unit-start" else "project-selected")),
-                ("file",V.Bytes "file:///project/main.sml"),("context",V.Bytes "project")])
+              val ()=case progress of NONE => () | SOME name =>
+                J.message(jobs,V.Object[("op",V.Bytes "progress"),("id",V.Integer id),
+                  ("phase",V.Bytes name),("file",V.Bytes "file:///project/main.sml"),("context",V.Bytes "project")])
               val ()=J.tick jobs
               val failed=List.exists(fn J.Failed _=>true | _=>false)(!events)
               val ended=case !phase of J.Idle=>true | _=>false
           in J.close jobs;(failed,ended) end
-    in check("a new workspace context gets its own deadline",scenario("workspace",0,false,false)=(false,false));
-      check("13 contexts can exceed the old four-context overall cap",scenario("workspace",5,false,false)=(false,false));
-      check("unit progress cannot extend the context deadline",scenario("workspace",0,false,true)=(true,true));
-      check("context progress cannot extend the plan-derived overall deadline",scenario("workspace",15,false,false)=(true,true));
-      check("document deadlines remain absolute",scenario("check",0,false,false)=(true,true));
-      check("context progress cannot extend cancellation grace",#2(scenario("workspace",0,true,false))) end
+    in check("a new workspace context gets its own deadline",scenario("workspace",0,false,SOME "project-selected")=(false,false));
+      check("13 contexts can exceed the old four-context overall cap",scenario("workspace",5,false,SOME "project-selected")=(false,false));
+      check("unit progress extends a context's deadline",scenario("workspace",0,false,SOME "unit-start")=(false,false));
+      check("a sweep has no overall cap, only a limit on silence",scenario("workspace",900,false,SOME "unit-start")=(false,false));
+      check("a document check's progress extends its deadline",scenario("check",600,false,SOME "unit-elaborated")=(false,false));
+      check("planning's progress extends its deadline",scenario("check",0,false,SOME "planning")=(false,false));
+      check("a silent document check is lost at its deadline",scenario("check",0,false,NONE)=(true,true));
+      check("a silent sweep is lost at its deadline",scenario("workspace",0,false,NONE)=(true,true));
+      check("progress cannot extend cancellation grace",#2(scenario("workspace",0,true,SOME "unit-start"))) end
   fun liveProgress () =
     let val jobs=J.new {command="unused",args=[],timeout=Time.fromSeconds 30,
           cancelGrace=Time.fromMilliseconds 50,maxPending=1}:string J.t
@@ -122,8 +130,7 @@ struct
         val ()=update("workspace-context-start","",[("contextIndex",V.Integer 1)])
         val ()=update("project-selected","file:///project/rune.build",[("context",V.Bytes "rune")])
         fun messages()=List.mapPartial(fn J.Progress(_,text)=>SOME text | _=>NONE)(List.rev(!events))
-        val ()=check("workspace plan controls the bounded overall budget",!planned=SOME 13 andalso
-          J.workspaceLimit(Time.fromSeconds 30,!planned)=Time.fromSeconds 420)
+        val ()=check("the workspace plan's context count is kept",!planned=SOME 13)
         val ()=check("context changes are visible immediately",length(messages())=2 andalso
           List.exists(fn text=>String.isSubstring "context 1/13: rune" text)(messages()))
         val ()=started:=SOME(Time.-(Time.now(),Time.fromSeconds 130))

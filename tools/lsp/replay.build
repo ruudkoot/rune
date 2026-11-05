@@ -2,5 +2,6 @@
 libraries json lsp end
 files
   ../../tests/lsp/client.sml
+  seconds.sml
   replay.sml
 end

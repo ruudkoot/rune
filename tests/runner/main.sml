@@ -52,6 +52,17 @@ struct
           judge = judge} : Run.command Test.tree)
       (tags @ List.map (fn g => "covers:" ^ g) covers)
 
+  (* a make of a target that measures time: in the nightly tier, and alone
+     on the machine, as every timing is (docs/testing.md) *)
+  fun timing (name, seconds, memory, covers) =
+    List.foldl (fn (t, tree) => Test.tag t tree)
+      (Test.it name
+         {program = "/bin/sh",
+          args = ["sh", "-c", "exec \"${MAKE:-make}\" --no-print-directory " ^ name ^ " JOBS=\"$RUNE_TEST_CPUS\""],
+          env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds seconds, cap = 0, cpus = 1,
+          memory = memory, pools = [], exclusive = true, after = [], judge = judge} : Run.command Test.tree)
+      ("nightly" :: List.map (fn g => "covers:" ^ g) covers)
+
   fun step (name, {cpus, memory, pools, after}, tags, covers) =
     target (name, 3600, {cpus = cpus, memory = memory, pools = pools, after = after, tags = "check" :: tags, covers = covers})
   fun lang (name, more, after, covers) =
@@ -71,6 +82,13 @@ struct
        alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*"]),
        step ("test-lsp-oracle", {cpus = 1, memory = 2000, pools = [], after = []}, [],
              ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       (* the scale target (D28): what the load cannot move in make check,
+          its times nightly *)
+       step ("test-lsp-scale", {cpus = 1, memory = 4000, pools = [], after = []}, [],
+             ["src/lsp/*", "lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       timing ("test-lsp-scale-times", 3600, 4000, ["src/lsp/*", "lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       target ("test-lsp-scale-oracle", 7200, {cpus = 1, memory = 6000, pools = [], after = [], tags = ["nightly"],
+                                               covers = ["src/lsp/*", "lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]}),
        Test.requires ["oracle-corpora"]
          (target ("test-lsp-oracle-corpora", 21600, {cpus = 1, memory = 16000, pools = [], after = [], tags = ["nightly"],
                                                      covers = ["lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]})),

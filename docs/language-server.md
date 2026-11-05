@@ -82,12 +82,15 @@ Unchanged per-file settings do not refresh every editor presentation.
 
 Each worker uses Rune's optimizing JIT, with a 512 MiB VM heap cap and a
 1.5 GiB process address-space cap
-(including both copying spaces and native code), and a 30-second job deadline.
+(including both copying spaces and native code). A job's deadline is a limit
+on silence, not on work: a worker that reports no progress for 30 seconds is
+lost, and one that goes on reporting is not cut short, however long a first
+check at scale takes (*The scale target*, below). Planning reports that it goes
+on every second or so, a check each unit it reaches.
 A measurement at a scale over them says otherwise with `RUNE_LSP_HEAP_LIMIT`
 (bytes), `RUNE_LSP_ADDRESS_SPACE_MB` and `RUNE_LSP_DEADLINE_SECONDS`.
-Workspace sweeps have 30 seconds per context and an overall allowance of
-30 seconds for planning plus 30 seconds for each planned context;
-unit progress does not extend a context's deadline. Each context's diagnostic
+A workspace sweep's contexts have the same limit, with none on the sweep as a
+whole. Each context's diagnostic
 or symbol results are collected before the next context is checked, so the
 response does not keep evicted analysis snapshots alive.
 The Rune Language Server Output channel shows the workspace context count,
@@ -95,7 +98,7 @@ each context as it starts, and progress about every five seconds: the current
 file and phase, checked/reused unit counts, and elapsed time. Document checks
 start reporting after two seconds. Completion is logged for reported work.
 Clients supplying a work-done token receive these intermediate reports through
-`$/progress` as well. Progress updates do not extend deadlines or cancellation.
+`$/progress` as well. Progress extends a job's deadline, and never cancellation's grace.
 A client that asks for it hears what the server is doing as well, whether or
 not a request brought a token: *Status for a client that asks*, below.
 The background worker retains at most one diagnostic report cache, bounded
@@ -157,15 +160,14 @@ time. For example:
 
 ```text
 runelsp: analysis worker exceeded its deadline
-  worker PID 12345, elapsed 30.003 s, limit 30.000 s, job 7 (check)
+  worker PID 12345, elapsed 95.003 s, limit 30.000 s with no progress, job 7 (check)
   document: file:///home/me/rune/src/main/rune-main.sml
   executable: /private-extension/server/bin/runevm
   context: rune (file:///home/me/rune/rune.build)
-  last reported phase: unit-elaborated at /home/me/rune/lib/compiler/elab/elaborate.sml (checked 187, reused 0; 1.200 s before failure)
+  last reported phase: unit-elaborated at /home/me/rune/lib/compiler/elab/elaborate.sml (checked 187, reused 0; 30.002 s before failure)
 ```
 
-Progress travels over the private worker pipe and does not extend the
-deadline. Error metadata is bounded; control characters and invalid native
+Progress travels over the private worker pipe. Error metadata is bounded; control characters and invalid native
 filename bytes are escaped. Captured source contents are excluded.
 
 The server supports push diagnostics and document/workspace pull reports,
@@ -298,20 +300,27 @@ An edit that keeps a unit's identity, a comment, a body, costs that unit's
 elaboration at the place it was reached and nothing else: no later unit is
 walked, reloaded or looked at. An edit that moves an identity, a name added, a
 type changed, walks from the start: each later unit is taken by its usages,
-reloaded or elaborated again as they say, which is O(later units). What a check
+reloaded or elaborated again as they say, which is O(later units); its usages
+are looked at only where a unit before it in the walk bound a key they name and
+changed identity, after a walk that went through to the end (*The scale
+target*). What a check
 would otherwise repeat is memoised too.
 
 * **The plan.** Discovery and a check share a memo of a file's plan: the targets'
   membership, the file's configuration and its contexts. It holds while the
   workspace's settings, the set of open documents, the text of an open build
-  file or of a group's source, the stamps of the files the plan read and of the
-  directories a build is looked for in, and those of the places a root file would
-  be, all stand. A stamp is a file's time, in whole seconds, and its size, so
-  nothing is memoised of a file changed within three seconds of being read; it is
-  read again at the next check. A plan is read again on any other change, and an
-  edit of a source that is not a group's plans nothing.
-* **Closed inputs.** Their text is kept by the same stamps; a source is
-  re-indexed only where its text changed.
+  file or of a group's source, the files the plan read, the directories a build
+  is looked for in and the places a root file would be, all stand. What says
+  that a file stands is the client's file events where it watches the file
+  (*File events*, below), and elsewhere its stamp: its time, in whole seconds,
+  and its size, so that nothing is memoised by its stamp of a file changed
+  within three seconds of being read; it is read again at the next check. A
+  plan is made again on any other change, and an edit of a source that is not
+  a group's plans nothing. A plan reads from the disk only the builds that
+  changed: the text of each build read is kept while it stands, and taken
+  from there (*The scale target*, below).
+* **Closed inputs.** Their text is kept while it stands, by the same rule; a
+  source is re-indexed only where its text changed.
 * **Closed units.** Only the units of the open documents keep syntax, typing,
   facts and occurrences. Another keeps its notes: its facts, occurrences and
   types as bytes, with each type name its facts printed and the path they
@@ -453,6 +462,128 @@ a cold check elaborates every unit and so loads every basis: MLton holds
 1.58 GiB after it, no file open, as before, and 184 MiB once a name added to
 `layout.sml` and taken out again has had the 561 units after it taken by need.
 
+## The scale target
+
+The editor's scale target is the build-system roadmap's D28: cost functions,
+not a size at which the server stops. The table gives each row and what it
+measures at the sizes the tiers below run, on generated trees
+(`bin/rune-lsp-fixture`, `tools/lsp/fixture.sml`): a tree of 100k files and 1000
+builds, the build files alone, which is the 10M-line tree's (lines change the
+sources alone), and a build of 130,793 lines in 1,017 units with its 10 builds
+(`--lines 100000 --files 1000 --builds 10`). A program names its libraries
+(`libraries NAME`, under the tree's `rune.workspace`), and the whole tree's
+build has every library's files as its own, in load order, so that its context
+is all 1,017 units. Times are 2026-11-04's, two runs,
+on 16 processors at a load of 12 to 14, the worker's heap at 512 MiB.
+
+| Scope | Target | Measured |
+|---|---|---|
+| A workspace: 10M lines, 100k files, 1000 builds, each a target | Planning a check at most 200 ms, reading no build outside the changed set | After a change, reading the changed build alone: a file of a library 0.02-0.14 s, a program's own file 0.06-0.17 s (medians). With no build changed, its memo, 5-34 ms. The first plan, 0.1-0.6 s, a program's 6.5 s. 161 MB live at most, in the worker's 512 MiB |
+| A context: one closure of 1M lines, 10k units | At most 2 KB a line resident | 0.33-0.39 KB a line, from a store, after every edit; 0.32 KB at 1.13M lines (*Loading by need*) |
+| Cold from a store | Seconds at 1M lines | 0.97-1.39 s in process, every unit from the store, 2.5-3.7 s through the server; 7.6 s at 1.13M lines |
+| A leaf comment | p95 at most 250 ms | 0.052-0.055 / 0.065-0.075 s, p50 / p95 through the server |
+| A body edit | That unit's own elaboration, on top | One unit elaborated, at its place; 0.040-0.050 / 0.059-0.063 s through the server |
+| An interface edit | O(clients) | The edited unit and its clients elaborated (2 units for a name added to the first module, 32 for a constructor added to its datatype, which 30 files use), and only their usages looked at; every later unit is still taken again by need: see below |
+| Hover | At most 50 ms | 7-18 ms through the server |
+
+* **Planning** reads only what changed. A file of a library is checked in its
+  library (*A file's context*), so its plan is made from the targets over its
+  owning library alone where those hold it, and the rest are not read: the
+  answer is the one enrich and the choice of a context come to, which
+  `bin/rune-lsp-contexts --owned` holds them to over every file of this
+  repository's builds, with every build a target and with none (712 of 850
+  files planned so, none different; the other 138 below). A build's
+  text is kept while it stands and taken from there, so that a plan reads from
+  the disk only the builds that changed; a path's key and a file's identity
+  are kept too, the second while events vouch for it.
+* **A file of no library**, a program's own file, is planned from an index of
+  what each build names (`RuneLspProjects.indexed`): each build, under the real
+  directory of the spelling a plan reaches it by, with the files it names, by
+  key and by identity, and the builds it uses. A target holds the file only if
+  its build reaches a build naming a file that is the file: a superset, of
+  which each target is read as enrich reads it, and only it, which makes the
+  answer exact. A build that does not parse, names a path with a variable, or is
+  not there, may name anything. The index is kept between plans, a build taken
+  again where its text changed and a file looked at again where an event names
+  it, or at every plan where no event can; a target's project is kept while
+  every build it read has its text. A file not on the disk (one not saved yet)
+  has no identity, and takes the whole way. `bin/rune-lsp-contexts --owned`
+  holds the index to enrich too: with every build a target, the 138 files the
+  owner does not settle are all planned by it, none differently; with none, 72,
+  and the other 66, which no root's build holds, go by discovery. Before it, such
+  a file's plan at 100k files and 1000 builds took 558 s cold and 343-413 s
+  after a change, in 2.8 GB; at 10k files and 100 builds, 5.7-8.2 s.
+* **An interface edit** elaborates the units whose usages it breaks and no
+  other. A walk takes each unit after the edited one again, by need, but looks
+  at the usages of only those that name a key a unit before them in the walk
+  bound, before or after, and was elaborated to another identity: a later unit
+  taken again has its identity, so at its place no other binder can have
+  changed, and every unit the last walk kept held there. That holds where the
+  last walk went through to the end, from the start, over the same plan and
+  libraries, and the units come in its order; a walk stopped by a unit that
+  fails, or a question's, leaves later units as an earlier walk kept them, and
+  the next walk looks at every usage (`compiler-analysis/past-a-failure`, which
+  fails where it does not). What a later unit's
+  usages and pickle ask of it is kept with it while its binders stand. So a
+  later unit costs about 40k VM instructions, where it cost 340k: at 1,017
+  units an added name 122.6M (0.15-0.17 s) where it cost 349.7M (0.30-0.48 s),
+  and the datatype edit 454.4M (0.89-0.95 s) where it cost 685.5M (1.25-1.42 s),
+  in process. That is still O(later units), with a seventh of the constant, not
+  O(clients): every later unit is taken again and its keys registered. Keeping
+  a later unit without taking it again needs the walk not to cut it, and so the
+  binders of each place after the edited unit, the tables of units loaded by
+  need, their order and the paths a type is printed by, to change in the
+  middle, which none of them does.
+* **The caps.** An analysis has no cap of its own on its inputs, their number
+  or their text: the 10,000 inputs and 128 MiB are gone. A job's deadline is a
+  limit on silence (*Static analysis and queries*). The worker's 512 MiB heap
+  stays: it holds the 130k-line build with room, and a context of 1.13M lines
+  holds 350 MiB loaded by need.
+
+`make test-lsp-scale`, in `make check`, holds what the machine's load cannot
+move: on the 100k-file tree, with file events and at the worker's heap, that a
+plan of a library's file and of a program's own after a change reads no build
+outside the changed set, and one after none takes its memo;
+cold from a store a compile of the 130k-line build made, that a body edit
+elaborates its unit alone, an interface edit no unit but the edited one and
+those whose usages broke, and that at most 2 KB a line lives after each
+check (`bin/rune-lsp-plan-bench --reads`, `bin/rune-lsp-oracle --clients
+--per-line 2048`, scenarios `tests/lsp/oracle/scale.tsv`). `make
+test-lsp-scale-times`, in the nightly tier and on a machine of its own, as
+every timing is (`docs/testing.md`), holds the times: a plan of either file at
+most 200 ms at the median of five, a leaf comment's p95 at most 250 ms and hover's 50 ms
+through the server (`bin/rune-lsp-replay --limit`), and cold from the store
+within 2 s. `make test-lsp-scale-oracle`, nightly, holds the kept analysis to
+a fresh one on every unit of the 130k-line build after each edit: 20 checks,
+no disagreement, about twelve minutes, which `make test-lsp-oracle` does on
+the compiler's own build in `make check`.
+
+### File events
+
+Where the client watches files (`workspace/didChangeWatchedFiles`, registered
+for `*.sml`, `*.sig`, `*.fun`, `*.build` and `rune.workspace`), the
+server keeps the last 4096 files its events named, with the generation each
+made, and each job carries them. What a plan or a check read at a generation
+stands while no event since names it, or, of a directory, no file that came
+into it or went, with no look at the disk: a file of those names under a folder the client
+watches, by the key an event would name it by (a path with `..` where that is
+the same file). Elsewhere, where the events since are not whole, and a minute
+after the disk was last looked at, the stamp decides, as the bound of an event
+the client dropped. So an edit of the open file plans nothing and looks at no
+file, and a changed build is read again alone.
+
+**Entries on save** (D27 D) were measured and not built. A compile in units of
+`rune.build` after a body edit of `src/driver/main.sml` costs 1,163.7M VM
+instructions (3.6-4.2 s), against a no-op's 3.3M (0.14 s); after a build run
+on the save, the user's build costs 878.3M (1.9-4.4 s): the build on save ran
+within three seconds of the save, so the up-to-date record was not written and
+the next build takes every unit by the warm path. A build on save delayed past
+that window would leave a no-op, at the price of a whole build after every
+save, which an editor that saves as one types makes continuous, and only where
+the user's build is the one the editor ran, with its flags. That is work moved,
+not removed, by a mechanism with one user, the editor's save, which this
+project does not add for one case.
+
 ## Workspaces and build contexts
 
 The server accepts initial workspace folders, legacy root settings and
@@ -555,7 +686,7 @@ file's text for the names after `structure`, `signature` and `functor`, which a
 parse of the file confirms where one is looked up; both are kept while the
 file's stamp stands. A type or a value at the top level is not looked up, and
 nor is a name a file reaches only through an `open`. The tree is walked again
-at most every 30 seconds, since the worker has no file events; a file a name
+at most every 30 seconds, which file events do not shorten; a file a name
 is found in is read by its stamp in any case. The first walk and scan of this
 repository's 3,983 files take about 2 s.
 

@@ -1,0 +1,12 @@
+# D28's rows on the scale fixture (tools/lsp/fixture.sml, seed 1: --lines 100000 --files 1000
+# --builds 10, its apps/all.build): a comment and a body edit at the end, a comment, a body edit,
+# an added name and a datatype's added constructor in its first module, M0_0, which 30 files use;
+# and library 1's last module binding M0_5 to a structure of nothing, which breaks the files
+# after it that use M0_5, though no text of theirs changed.
+leaf-comment	3	LAST	append
+leaf-body	2	LAST	replace	val total = ref 0	val total = ref $N
+early-comment	2	l00000/m0_0.sml	prepend
+early-body	2	l00000/m0_0.sml	replace	fun make (n : int) : t = if n <= 0 then D	fun make (n : int) : t = if n <= $N then D
+early-add	2	l00000/m0_0.sml	replace	  fun make (n : int)	  val edit_$N = 1\n  fun make (n : int)
+early-datatype	2	l00000/m0_0.sml	replace	    | F of string list	    | F of string list\n    | G$N
+mid-shadow	1	l00001/m1_2.sml	appendtext	structure M0_5 = struct end
