@@ -1820,16 +1820,22 @@ struct
      that changed (LoadsUnits): that unit's identity in the program would not
      be a build from source's, which a unit loaded into it names. It is
      compiled again, as what it is, from the state sealed before the first
-     unit. A warning the first compile gave is given again: an alias of
-     Runtime that loads is rare, and an entry taken across a change rarer. *)
+     unit. What the compile that stands gives is printed once: a diagnostic
+     an attempt before it printed is not printed again (Error.output), and
+     the warnings an up-to-date record keeps are its own (Error.given). *)
   fun compiledAgain () : OS.Process.status =
+    (Error.printed := SOME []; Error.owed := []; attempt ())
+
+  and attempt () : OS.Process.status =
     let
       fun again () =
         let
+          val shown = getOpt (!Error.printed, [])
           val session = CompilerState.session ()
           val diagnostics = ref []
           val status = CompilerState.withSession (session, fn () =>
-                         (compiledAgain () before diagnostics := !Diagnostic.collected)
+                         ((Error.printed := SOME shown; Error.owed := shown; attempt ())
+                          before diagnostics := !Diagnostic.collected)
                          handle e => (diagnostics := !Diagnostic.collected; raise e))
         in Diagnostic.collected := !diagnostics; status end
     in

@@ -316,20 +316,38 @@ struct
         end
     | "S89" =>
         let val () = own s "a.sml b.sml other.sml"
-            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 fun g (SOME z) = z end"
             val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
             val () = put s "other.sml" ("structure R = Runtime\nval () = print (if List.null (R.linkedUnits ()) "
                                         ^ "then \"no units\\n\" else \"units\\n\")")
             val () = b [] "a.sml b.sml other.sml"
             val () = prints s "3\nunits"
+            (* a.sml's warning, given once by a build however many times it
+               compiles *)
+            fun once label errors =
+              let val n = List.length (List.filter (String.isSubstring "warning: match is not exhaustive") (lines errors))
+              in check s (label ^ ": a.sml's warning was given " ^ Int.toString n ^ " times: " ^ errors) (n = 1) end
+            fun plain () = compile s ["--units", "--cache-dir", "cache"] "p.rbc"
         in
           edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
           b [] "a.sml b.sml"; prints s "3\nunits";
           check s "the build did not say why it compiled again"
             (String.isSubstring "other.sml loads units" (#errors (!(#result s))));
+          once "the build that compiled again" (#errors (!(#result s)));
           (* and with children, which the first compile leaves running *)
           edit s "a.sml" "val added = 2" "val added = 2 val third = 3";
-          b ["-j", "2"] "a.sml b.sml"; prints s "3\nunits"
+          b ["-j", "2"] "a.sml b.sml"; prints s "3\nunits";
+          once "the build with children" (#errors (!(#result s)));
+          (* a build that keeps its record, and one up to date by it, which
+             gives the warnings it kept *)
+          once "the build after" (#errors (plain ()));
+          OS.Process.sleep (Time.fromSeconds 3);
+          let val t = OS.FileSys.modTime (path s "p.rbc")
+              val r = plain ()
+          in
+            check s "the build after it was not up to date" (Time.compare (t, OS.FileSys.modTime (path s "p.rbc")) = EQUAL);
+            once "the build up to date" (#errors r)
+          end
         end
     | "S90" =>
         let val () = own s "a.sml b.sml other.sml"
