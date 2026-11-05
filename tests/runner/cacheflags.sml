@@ -15,12 +15,22 @@
    Free   no unit compiles, and the builds agree.
    Input  it changes which units there are: the builds agree.
    Apart  not run, and says why: it stops before a unit is compiled, or it is
-          what names the inputs or the cache. *)
+          what names the inputs or the cache.
+   And a setting of the language -- how a file is lexed, parsed or
+   elaborated, or how far a compile may go -- once more on a library's file,
+   lib-*: the program names a library, ./lib/flaglib, whose one file holds
+   what the setting is about, and the builds agree both ways, as Key's do.
+   Library true: the setting reaches the library's unit, which a build
+   compiles again through a cache filled the other way, or refuses both ways;
+   Library false: the library is compiled without it (the input files'
+   --default-type, --unicode, --allow-prim), so its unit is taken both ways
+   (the owner's ruling of 2026-11-05: a library parses under the program's
+   flags, and they are in its unit's key). *)
 structure CacheFlags =
 struct
   open Incremental
 
-  datatype class = Key | Level | Free | Input | Apart of string
+  datatype class = Key | Level | Free | Input | Apart of string | Library of bool
   type row = {label : string, name : string, args : string list, env : (string * string) list,
               base : string list, fixture : string, printing : bool, class : class}
 
@@ -41,6 +51,10 @@ struct
   fun chatty (r : row) : row =
     {label = #label r, name = #name r, args = #args r, env = #env r, base = #base r, fixture = #fixture r,
      printing = false, class = #class r}
+  (* the same, on a library's file *)
+  fun library reaches (r : row) : row =
+    {label = "lib-" ^ #label r, name = #name r, args = #args r, env = #env r, base = #base r, fixture = "lib-" ^ #fixture r,
+     printing = #printing r, class = Library reaches}
   fun variable (label, name, value, class) : row =
     {label = label, name = name, args = [], env = [(name, value)], base = [], fixture = "plain", printing = true, class = class}
 
@@ -70,7 +84,8 @@ struct
      free ("match-work-default", "--match-work", ["--match-work=1000000"]),
      key ("no-inline-functors", "--no-inline-functors", ["--no-inline-functors"]),
      key ("target-stack", "--target", ["--target=stack"]), free ("target-registers", "--target", ["--target=registers"]),
-     (* in the key of the input files' units *)
+     (* in the key of the input files' units; --or-patterns and
+        --no-unicode-lints in every unit's (lib-* below) *)
      on "prim" (key ("allow-prim", "--allow-prim", ["--allow-prim"])),
      on "orpat" (key ("or-patterns", "--or-patterns", ["--or-patterns"])),
      on "unicode" (key ("unicode", "--unicode", ["--unicode"])),
@@ -79,6 +94,22 @@ struct
      on "int64" (key ("default-int64", "--default-type", ["--default-type=int64"])),
      on "word64" (key ("default-word64", "--default-type", ["--default-type=word64"])),
      free ("default-int", "--default-type", ["--default-type=int"]), free ("default-word", "--default-type", ["--default-type=word"]),
+     (* the same of a library's file: the settings of the language that a
+        library is lexed, parsed and elaborated under, and those of the input
+        files alone, which it is not *)
+     library true (on "orpat" (key ("or-patterns", "--or-patterns", ["--or-patterns"]))),
+     library true (on "comment" (key ("no-unicode-lints", "--no-unicode-lints", ["--no-unicode-lints"]))),
+     library true (on "flex" (key ("flex-records", "--flex-records", ["--flex-records=program"]))),
+     library true (on "plain" (key ("overloading", "--overloading", ["--overloading=topdec"]))),
+     library true (on "plain" (key ("free-tyvars", "--free-tyvars", ["--free-tyvars=monotype"]))),
+     library true (on "plain" (key ("int-bits-64", "--int-bits", ["--int-bits=64"]))),
+     library true (on "plain" (key ("type-work-1", "--type-work", ["--type-work=1"]))),
+     library true (on "plain" (key ("match-work-1", "--match-work", ["--match-work=1"]))),
+     library true (on "plain" (key ("functor-budget-0", "--functor-budget", ["--functor-budget=0"]))),
+     library false (on "int64" (key ("default-int64", "--default-type", ["--default-type=int64"]))),
+     library false (on "word64" (key ("default-word64", "--default-type", ["--default-type=word64"]))),
+     library false (on "unicode" (key ("unicode", "--unicode", ["--unicode"]))),
+     library false (on "prim" (key ("allow-prim", "--allow-prim", ["--allow-prim"]))),
      (* the mark on an entry *)
      over ["--lint=0"] (row ("lint", "--lint", ["--lint"], Level)), over ["--lint=0"] (row ("lint-1", "--lint", ["--lint=1"], Level)),
      free ("lint-0", "--lint", ["--lint=0"]),
@@ -225,6 +256,18 @@ struct
     | fixture "lookalike" = ("val v\208\176l = 1", "val () = print (Int.toString v\208\176l ^ \"\\n\")")
     | fixture "int64" = ("val big = 4611686018427387904", "val () = print (Int64.toString big ^ \"\\n\")")
     | fixture "word64" = ("val big = 0wxF000000000000000", "val () = print (Word64.toString big ^ \"\\n\")")
+    (* a library's file, structure L, and the program's, which names it *)
+    | fixture "lib-orpat" = ("structure L = struct fun f (1 | 2) = \"a\\n\" | f _ = \"b\\n\" end", "val () = print (L.f 1)")
+    | fixture "lib-comment" = ("structure L = struct (* a lookalike: \226\136\151) *) val s = \"c\\n\" end", "val () = print L.s")
+    | fixture "lib-flex" = ("structure L = struct fun get r = #a r  val n = get {a = 1, b = 2} end",
+                            "val () = print (Int.toString L.n ^ \"\\n\")")
+    | fixture "lib-plain" = ("structure L = struct fun f y = y + 1  fun g (x : int) = case x of 0 => \"z\" | _ => \"m\" end",
+                             "val () = print (L.g (L.f 0) ^ \"\\n\")")
+    | fixture "lib-int64" = ("structure L = struct val n = 1 end", "val () = print (Int.toString L.n ^ \"\\n\")")
+    | fixture "lib-word64" = ("structure L = struct val w = 0w1 end", "val () = print (Word.toString L.w ^ \"\\n\")")
+    | fixture "lib-unicode" = ("structure L = struct val s = \"caf\195\169\\n\" end", "val () = print L.s")
+    | fixture "lib-prim" = ("structure L = struct val g = _prim \"int_abs\" : int -> int end",
+                            "val () = print (Int.toString (L.g ~1) ^ \"\\n\")")
     | fixture name = raise Failed ("no fixture " ^ name)
 
   fun text (errors : string) = String.concatWith "\n" (List.filter (fn l => not (String.isPrefix "rune: " l)) (lines errors))
@@ -256,7 +299,11 @@ struct
   fun runRow (s : state) (r : row) =
     let
       val (first, second) = fixture (#fixture r)
-      val () = (own s "a.sml b.sml"; put s "a.sml" first; put s "b.sml" second)
+      val () =
+        case #class r of
+          Library _ => (own s "--build p.build"; put s "lib/flaglib/library.build" "files l.sml end"; put s "lib/flaglib/l.sml" first;
+                        put s "p.build" "libraries ./lib/flaglib end\nmain.sml"; put s "main.sml" second)
+        | _ => (own s "a.sml b.sml"; put s "a.sml" first; put s "b.sml" second)
       (* the runner's RUNE_LINT is not what a row of the lint starts from *)
       val without = (#base r, if #name r = "RUNE_LINT" then [("RUNE_LINT", "0")] else [])
       val given = (#args r, #env r)
@@ -274,6 +321,22 @@ struct
            check s "an entry checked at a higher level was not taken" (null (#1 (back ()))))
       | Free =>
           check s ("an option said to reach no key compiled " ^ String.concatWith " " (#1 forth)) (null (#1 forth))
+      | Library reaches =>
+          let
+            (* whether the library's unit was compiled, or the build refused *)
+            fun library (compiled, refused) = refused orelse List.exists (String.isSubstring "flaglib/l.sml") compiled
+            fun taken (compiled, refused) = not refused andalso not (List.exists (String.isSubstring "flaglib/l.sml") compiled)
+          in
+            if reaches
+            then (check s "a setting the library is compiled under did not compile its unit through a cache filled without it"
+                        (library forth);
+                  check s "filled with a setting the library is compiled under, a build without it did not compile its unit"
+                        (library (back ())))
+            else (check s "a setting of the input files alone compiled the library's unit, or refused, through a cache filled without it"
+                        (taken forth orelse #2 forth);
+                  check s "filled with a setting of the input files alone, a build without it compiled the library's unit"
+                        (let val b = back () in taken b orelse #2 b end))
+          end
       | Input => ()
       | Apart _ => ()
     end

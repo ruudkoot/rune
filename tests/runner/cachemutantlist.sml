@@ -321,6 +321,15 @@ struct
        ub,
        "fpBound (w, #bound result); fpEnvInto (w, local', #env result))))",
        "())))"),
+    (* the settings every file is lexed and parsed under, in the key of the
+       input files' units alone, as before the owner's ruling of 2026-11-05:
+       a library's unit made under --or-patterns is taken without it *)
+    m ("K10", "unit settings: --or-patterns and --no-unicode-lints of the input files alone", "", false, "",
+       [("flag-lib-or-patterns", "exit 0 through the cache, 1 without"),
+        ("flag-lib-no-unicode-lints", "it prints other text through the cache")],
+       mn,
+       "((if isSome (StringMap.find (userNames, ident)) then inputSettings else [])\n                                  @ fileSettings @",
+       "((if isSome (StringMap.find (userNames, ident)) then inputSettings @ fileSettings else [])\n                                  @"),
     (* what a file is to the plan (LibraryIndex.factsKey; the build-system
        work F2): kept by its text alone, as E15's plan memo was, a file read
        in another fixity than before is taken as it was *)

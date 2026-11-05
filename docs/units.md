@@ -518,11 +518,17 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   sources, or another level, finds none of another's entries, and two
   configurations live side by side;
 * in that, a directory per *key*, the hash of the unit's name, its source
-  and whether it may use `_prim`, and of an input file's unit the settings
-  that hold for the input files and not the libraries (`--default-type`,
-  `--or-patterns`; S62; and `--no-unicode-lints`, since an entry keeps
-  the warnings it leaves out; S64), and of any unit its mode where it is not the
-  default (*Source modes*; S63); the name is the unit's logical name (*Names*,
+  and whether it may use `_prim`; of an input file's unit the setting that
+  holds for the input files and not the libraries (`--default-type`; S62);
+  of every unit, a library's and the Basis Library's too, the settings
+  every file is lexed and parsed under (`--or-patterns`, S62; and
+  `--no-unicode-lints`, since an entry keeps the warnings it leaves out,
+  S64), so that a library's unit made under one is not taken by a build
+  without it, nor the other way about (the owner's ruling of 2026-11-05;
+  the flags oracle's `lib-*` rows); and of any unit its mode where it is
+  not the default (*Source modes*; S63). A build with `--or-patterns` or
+  `--no-unicode-lints` so takes no unit of the frozen layer, and compiles
+  the Basis Library's it takes once into its store; the name is the unit's logical name (*Names*,
   above), so that no spelling of a path reaches the key, a cache follows a
   library where it is moved (S93), and a unit taken from the cache names its
   source in its code's files where it is now -- its own, and those of the

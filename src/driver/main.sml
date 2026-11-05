@@ -1090,25 +1090,27 @@ struct
         | _ => ()
       (* the cache's work, for --pass-stats *)
       val timed = Pass.timed
-      (* the input files' settings, which the libraries are compiled
-         without: in their units' keys, so that a unit compiled under them is
-         not taken for one compiled without (--default-type, --or-patterns,
-         and --no-unicode-lints, since an entry keeps the warnings it
-         leaves out) *)
-      val userSettings =
-        String.concatWith " " (List.filter (fn s => s <> "")
-                                 [if !Options.defaultInt64 then "int64" else "",
-                                  if !Options.defaultWord64 then "word64" else "",
-                                  if !Options.orPatterns then "or-patterns" else "",
-                                  if !Lexer.lints then "" else "no-unicode-lints"])
+      (* What a unit is compiled under that the configuration does not say,
+         in its key, so that a unit compiled under a setting is not taken for
+         one compiled without, nor the other way about. The input files
+         alone are elaborated under --default-type (withDefaults), which the
+         libraries are not; every file, a library's and the Basis Library's
+         as well as an input's, is parsed under --or-patterns and lexed under
+         --no-unicode-lints, whose warnings an entry keeps or leaves out (the
+         owner's ruling of 2026-11-05: a library parses under the program's
+         flags, and they are in its unit's key; the lib- rows of
+         tests/runner/cacheflags.sml). Where none is given a key is what it
+         was *)
+      val inputSettings = [if !Options.defaultInt64 then "int64" else "", if !Options.defaultWord64 then "word64" else ""]
+      val fileSettings = [if !Options.orPatterns then "or-patterns" else "", if !Lexer.lints then "" else "no-unicode-lints"]
       val userNames = List.foldl (fn ((_, _, _, ident, _), m) => StringMap.insert (m, ident, ())) StringMap.empty userPart
       (* and the unit's mode, where it is not the default: a unit read in
          one mode is not taken for one read in another (docs/plans/utf8.md,
          D1) *)
       fun settingsOf (ident, mode) =
         String.concatWith " " (List.filter (fn s => s <> "")
-                                 [if isSome (StringMap.find (userNames, ident)) then userSettings else "",
-                                  if mode = Source.Ascii then "" else Source.modeName mode])
+                                 ((if isSome (StringMap.find (userNames, ident)) then inputSettings else [])
+                                  @ fileSettings @ [if mode = Source.Ascii then "" else Source.modeName mode]))
       (* --default-type holds for the input files, not for the libraries *)
       fun withDefaults f x =
         let
