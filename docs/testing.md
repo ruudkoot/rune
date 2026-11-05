@@ -913,8 +913,8 @@ with its basis written again from what loading it left, without what only a
 hash reads, and its code read and written, a unit's identity left out. It
 compares an entry's basis and code, not its Mid, and an entry that does not load
 in a session that compiled the units before it is what a build would miss, and
-says so under `--explain-rebuild`. Build-cache issue 15 closes with M4's step 2
-of the build-system roadmap, when a basis written again is the same bytes.
+says so under `--explain-rebuild`. Build-cache issue 15 closed with M4's step 2
+of the build-system roadmap, since a basis written again is the same bytes.
 
 They are 99 tests of `make test-incremental`: 500 s of CPU, of which the
 flags oracle's 66 are 167 s (2026-11-03). `make test-cache-random`

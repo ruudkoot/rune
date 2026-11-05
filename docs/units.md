@@ -486,8 +486,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   compiled against, so it is loaded with its names remapped, as a build
   would load it, and its basis written again and its code read and written
   are compared with the same made of the unit compiled, a unit's identity
-  left out and what only a hash reads (build-cache issue 15, which closes
-  when a basis written again is the same bytes). Its Mid is not compared.
+  left out and what only a hash reads (build-cache issue 15, closed by the
+  build-system roadmap's M4, since a basis written again is the same
+  bytes). Its Mid is not compared.
   One that does not load there is what a build would miss, and is compiled
   and says so (`src/driver/cachecheck.sml`; the REPL's `use` compiles such an
   entry again without comparing it); `RUNE_VERIFY_DUMP=DIR` writes the
