@@ -475,7 +475,8 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 
 * the cache is a directory, the workspace's store (*The store*, below):
   `--cache-dir DIR`, else `$RUNE_CACHE` (empty: none), else `.rune` in the
-  workspace, beside its `rune.workspace`; `--no-cache` compiles every
+  workspace, beside its `rune.workspace`, or with no workspace beside the
+  build file or the first input; `--no-cache` compiles every
   unit; `--explain-rebuild` says of each unit whether it was taken from the
   cache or why it was compiled; `--verify-cache`, or `RUNE_VERIFY_CACHE`
   set and not empty (for the REPL's `use`, which takes no flags), compiles
@@ -741,11 +742,14 @@ for the seals of structures the program does not name. It is made with the
 lint at level 2, so its entries are marked 2 and a compile at any level
 takes them.
 
-An analysis names its units as a build does (*Names*, above), `file#rank`
-being gone: `CompilerApi.Project.read` takes the workspace, and the same
-source in a build and in the editor has one name. So far only the name is the
-same: an analysis's sidecar holds origins, which a build's does not, and an
-analysis knows no back-end fact, so the bases differ.
+An analysis names its units as a build does (*Names*, above):
+`CompilerApi.Project.read` takes the workspace, and the same source in a
+build and in the editor has one name, and a second unit of that name is
+`NAME#2` in both. The static layer of a unit's basis is the same bytes too
+(*Layers*, above), which is how the editor takes a compile's entries
+([language-server.md](language-server.md), *The store*); the rest differs:
+an analysis's sidecar holds origins, which a build's does not, and an
+analysis knows no back-end fact, so it has little to write in the ABI layer.
 
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source
@@ -1338,8 +1342,8 @@ units for both bytecodes and held to what it expects: functions, workers,
 datatypes, exceptions, a functor and fixity used across files, a
 structure shadowed by a later file, the trace of an exception raised in
 the last file, the errors of two files, a flexible record left to a
-later file, which only the whole build accepts, and functors applied to a
-structure of an earlier file (a fixture's
+later file, which the whole build refuses as the units do, and functors
+applied to a structure of an earlier file (a fixture's
 `flags`, the compiler's flags in each of its builds). Last, the compiler is
 compiled in units and made to compile its own sources whole, which must
 give `bin/rune.rbc` byte for byte.
