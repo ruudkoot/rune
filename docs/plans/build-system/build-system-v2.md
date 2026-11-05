@@ -48,7 +48,7 @@ What it rests on:
 
 ## Status
 
-Decided, and being implemented on this branch. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). The win32 work is out of this roadmap, and is migrated later (D15). *The implementation so far* says what has landed.
+Decided, and implemented on this branch: M1 to M23 are done (2026-11-05), and *At the close* says what came and what is left. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). The win32 work is out of this roadmap, and is migrated later (D15). *The implementation so far* says what has landed.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
@@ -74,7 +74,7 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | M20. The target, in CI | A | M | D28 | done; an interface edit O(later units) |
 | M21. Functor signatures | S | L | D22 | done |
 | M22. Virtual libraries | S | M | D22 | done |
-| M23. Retire | | S | | not started |
+| M23. Retire | | S | | done |
 
 Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no milestone behind it: *Gates*.
 
@@ -183,6 +183,89 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
   - **Found and fixed:** M20's first skip of later usages was unsound after a plan change or a walk stopped by a failing unit; a test fails without the guard. The oracle wrote a check's time with `Real.toString`, which gives `3E~3` for 3 ms, and `Json.write` refuses that with `Domain`: about one run in 37 died. Times are now written in fixed notation (`tools/lsp/seconds.sml`), with a test. `tests/ffi/generator/repl-check.sml` and `tests/ffi/sdl/repl-check.sml`, older than this roadmap, write times the same way.
   - **Found, not fixed, older than M20:** where a library's last module binds `M0_5` again (`structure M0_5 = M0_5`), after an edit and its restore 12 units keep a definition's place in the rebinding file where a fresh analysis has the original: 15 disagreements, each only a definition's place (`impl/bs-m20/scale/rebind.tsv`).
   - **With M12 to M14:** the editor watches no MANIFEST. The scale fixture is a workspace whose programs name their libraries, and its `all.build` lists every library's files, so the tree stays one context of 1,017 units.
+
+## At the close
+
+M1 to M23 are done (2026-11-05). This section gathers what a later review needs. The campaign's log, briefs, reports and raw data are in `~/.cache/claude-rune-drafts/build-system/impl/`: `README.md` logs every merge and `make check`, and M23's reports `M23-measuring.md` and `M23-close.md` give each number below with its script and raw file.
+
+**The last check:** `make check` on `af98cf6d2`, M23's documents on M1 to M22, 22,758 of 22,758. `build-system-v2` is 274 commits ahead of master (`7b910ccb3`) and is not pushed: the owner merges it by pull request.
+
+### The owner's rulings while it was built
+
+- **2026-11-03:** smlnj32 keeps a hash, fingerprint and caches of its own, and M21's workaround is reverted.
+- **2026-11-03:** `shadows` is dropped. `lib/compiler`'s API is `CompilerApi :> COMPILER_API`, and the Basis keeps `RuneCompiler`.
+- **2026-11-03:** a step's `closure` and `stamp` are dropped, and the config step with them; `make` writes `build/config.sml`.
+- **2026-11-03:** lazy load in analysis is a goal of M18, met in M18b.
+- **2026-11-04:** `libraries NAME` is the one way to import a library (D6, M14).
+- **2026-11-04:** on MLton's 13 units: "our build language should have been mlbasis (.mlb) instead (maybe with some small extensions). this is too big of a change to do now - it needs a full roadmap". `docs/plans/build-system/mlbasis.md` holds the question for that roadmap. D5 never offered MLB, though this roadmap found several of MLB's rules again.
+
+### What *Measuring* promised, and what came
+
+| What | Today | Target | At the close | Met |
+|---|---|---|---|---|
+| E13's replay, units rebuilt | 4,048 | 1,874; lower after M4 | 1,970: MLton 683, HOL4 845, lint31 241, fu31 201 | on MLton and HOL4; lint31's and fu31's 1,874 had a frozen layer that `--type-work` in the key excludes (M1) |
+| No-op, MLton | 88.89G | under 5% | 0.276G, 0.31% | yes |
+| No-op, HOL4's closure | 26.06G | under 5% | 0.277G, 1.06% | yes |
+| No-op, `rune.build` | 9.72G | under 5% | 0.241G, 2.48% | yes |
+| Leaf, MLton | 89.6-93.4G | about 25% | 31.59G, 34-35% | no: the plan memo was not built (M6) |
+| A no-op against cold, at 1M lines | 39-40% | under 5% | 0.12%; 9.8% with `--explain-rebuild`, which keeps no up-to-date record | yes |
+| A cold build at 10M lines | about 50 minutes, 48 GB | not answered | not measured | *Later* |
+| Stale files that generate work | 33 MANIFESTs | 0 | 0; two archived copies, read by nothing | yes |
+| Reach-in builds | 12 | 0 | 0 of 127 | yes |
+| Libraries with a boundary | 1 | all but the Basis and the win32 work's 8 | 18 of 33 | but `ffi/runtime`, which waits for the win32 work |
+| A dist's first `--units` compile | builds the Basis | builds nothing | builds nothing (`scenarios/dist/frozen`); no full `make dist` ran, since the cross VMs do not build here | as far as run |
+| Hello's compile | 296M | no more | 334.75M, +13.2% with the JIT; +9.9% without; VM instructions -14.4% | no |
+| Prompts in this repo | 210 | 4 or fewer | 2 | yes |
+| Leaf comment, p95, editor | 1-78 s | at most 250 ms | `rune.build` 0.049 s, HOL4 0.155 s, CI's fixture 0.072 s | yes |
+| Body edit, editor | 0.35-103 s | that unit's elaboration | one unit; p95 0.06-0.45 s | yes |
+| Cold, editor | 4.9-231 s | about 1 s from a store | `rune.build` 0.35-0.40 s, HOL4 1.22 s, MLton 1.33-1.47 s | about |
+| Resident, editor | 8.8 KB a line | at most 2 KB a line | 0.34-0.61 KB | yes |
+
+- **Hello:** of its 39.1M more instructions, 27.4M are start-up: `rune.rbc` is 17.4% larger, and that costs before any compile begins. Hello at `6fce5270d` equals `b12141ecc` to the instruction, so all of the growth is this roadmap's.
+- **The compiler's growth:** compiling the compiler costs 17.2% more VM instructions than at `6fce5270d`, and 17.9% more on the stack VM. M22's line gives +13.6%, but it counted from after M1. All of the growth is the compiler being bigger. On the same sources, today's compiler runs 0.4% fewer instructions than the old one, and the sources have 18.9% more lines, most of them in `lib/compiler/driver`. The largest steps were M6 with M22, +99.9M, and M4 with M10, M11, M16 and M17, +78.5M.
+
+### Bugs found, and where they went
+
+- **Appendix D's 42 rows:**
+  - 33 are fixed, each shown by its reproducer at the close where one runs.
+  - 2 are open: D18, the win32 generate driver, which goes with the win32 migration; and D40, a datatype behind `:>` moving a functor's static hash, which costs a compile.
+  - 2 are open in part: D19, `lib/basis` outside the compiler's identity, by design; and D24, `-j` on small units, which costs 17% more instructions for 19% less wall time.
+  - Issue 11's text is still stale.
+  - No fixed row came back.
+- **Found while implementing and fixed:** each is in *The implementation so far*.
+- **Found while implementing and open at the close:**
+  - runedoc loses the comment and claims of an exported `structure S = T` whose `T` is private (M14). No library has the pattern.
+  - Two `--lib` roots sharing a store displace each other's index record, which costs time, not answers (M12). Likewise, an installed Basis's first compile in a new store reads every Basis file once.
+  - A compile found to load units compiles again, and prints the first compile's warnings twice (M1).
+  - After an edit and its restore, a rebinding `structure M = M` leaves a definition's place in the rebinding file: 18 disagreements on the fixture, places alone. The code is older than M20, which found it.
+  - `tests/ffi/generator/repl-check.sml` and `tests/ffi/sdl/repl-check.sml` write a time with `Real.toString`, which `Json.write` refuses with `Domain`; M20's oracle had the same bug.
+  - `bin/rune-measure validate2` keeps the summed-copy rule that the heap replay replaced.
+  - `vscode-languageclient` 10.1.2's cancellation is still worked around in the extension (A1).
+
+### Done-when items not met
+
+Each is in its milestone's line above, with its reason:
+- M1 and M4: the replay.
+- M6: the plan memo, and so the leaf.
+- M7: no full `make dist`.
+- M12: hello.
+- M13: 17 headers, and 14 programs other in units.
+- M16: MLton's 13 units, by D9.
+- M18: MLton's eager 2 KB a line; it is 0.61 KB by need.
+- M20: an interface edit is O(later units); entries on save were not built.
+
+### Left open, for *Later*
+
+- An interface edit in O(clients) (M20).
+- The plan memo, under M1's rule that a file is read in the fixity before it (M6).
+- The win32 work's migration, which closes D15's window, gives `ffi/runtime` a header and settles D18. It should wait for the MLB roadmap's decision, or it migrates twice.
+- The MLB question (`mlbasis.md`), which reopens D5, D6, D8, D9 and D12.
+- `-j` on small units, a cold build at 10M lines, and entries on save.
+- Hello's growth and the compiler's.
+
+### Worktrees, branches and drafts
+
+Every `bs-*` branch has all its commits in `build-system-v2`. The worktrees are `bs-int`, `bs-m12`, `bs-m13`, `bs-m14`, `bs-m20` and `bs-m23`, and the snapshots `bs-base`, `bs-cache`, `bs-lib`, `bs-lsp` and `bs-sep`; removing them and the branches waits for the owner's word. The drafts take 12 GB. Their stores and corpus copies can be made again, and `M23-close.md` says what is worth keeping: MLton's flat tree and M9's library translation among it.
 
 ## Found while writing this roadmap
 
