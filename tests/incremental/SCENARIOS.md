@@ -574,17 +574,22 @@ Each is a scenario by name, so `bin/rune-incremental one NAME BIN` runs it, and
 ## Edits nobody wrote
 
 `bin/rune-incremental mutate` edits a project as a person might -- a
-fixity directive's precedence or side, two constructors of a datatype
+fixity directive's precedence or side, one added, removed, made `nonfix` or
+put in a `local` that keeps it or drops it, two constructors of a datatype
 swapped, a numeral changed, a value added at top level or inside a
 structure, an earlier file declared again later in the order, two files
 swapped, a comment added, a file put back -- and builds it through one cache
 and without one after each edit. The two must agree: both fail, or both
 succeed and are the same bytes. Its projects are `tests/incremental/project`,
 `tests/incremental/functors` (functors over a datatype, fixity and a type,
-and a unit that declares their names again) and `compiler`, the compiler's
-own sources; `--history N` replays the compiler's last N commits through one
-cache; `--verify` adds a build with `--verify-cache` after each warm build,
-which must find nothing. `make test-incremental` runs it briefly, with and
+and a unit that declares their names again), `tests/incremental/virtual`,
+`tests/incremental/fixity` (a file that parses only in the fixity the file
+before it leaves, and whose failed parse would name `Vector`) and
+`compiler`, the compiler's own sources; `--history N` replays the compiler's
+last N commits through one cache; `--verify` adds a build with
+`--verify-cache` after each warm build, which must find nothing, and after
+each that fails, which must find nothing wrong with what the store keeps of
+each file for the plan. `make test-incremental` runs it briefly, with and
 without `--verify`, and `make test-cache-random` at length (150 steps of each
 small project, verified, and 12 of the compiler's sources; in the nightly
 tier, and `RUNE_CACHE_SEED=N` draws other edits). A milestone that changes a

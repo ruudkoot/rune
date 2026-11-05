@@ -26,8 +26,13 @@ struct
         val compiled = length (List.filter (fn line => String.isPrefix "rune: compiled " line andalso not (String.isSubstring "lib/basis" line)) (lines (#errors cached)))
         val across = length (List.filter (fn line => String.isPrefix "rune: from the cache " line andalso String.isSubstring ", across " line) (lines (#errors cached)))
         val built = #status plain = 0
+        (* and where the build fails, what the store keeps of each file for
+           the plan, which --verify-cache holds to its text before a unit is
+           compiled: a fixity edit that breaks a later file's parse is where
+           a plan kept by text alone is wrong first (docs/units.md, A warm
+           build) *)
         val verified =
-          if not (#verify checker andalso built) then true
+          if not (#verify checker) then true
           else
             let val r = compile s (cacheFlags @ ["--verify-cache"]) "verified.rbc"
             in
@@ -35,7 +40,8 @@ struct
                 + length (List.filter (String.isSubstring "its entry, loaded across a unit that changed, is what compiling it gives")
                                       (lines (#errors r)));
               write (path s "verify.err", #errors r);
-              #status r = 0
+              (not built orelse #status r = 0)
+              andalso not (String.isSubstring "for the plan is not what reading it gives" (#errors r))
             end
         val agreement = verified andalso (#status cached = 0) = built andalso (not built orelse same (path s "p.rbc", path s "nocache.rbc"))
         val () = #compiled checker := !(#compiled checker) + compiled

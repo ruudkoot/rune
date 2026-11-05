@@ -477,9 +477,9 @@ struct
                "covers:src/driver/cachecheck.sml"]
          (Test.describe "incremental"
             (List.map (fn s => driver (s, "exec bin/rune-incremental one " ^ s ^ " bin/rune")) scenarios
-             @ [driver ("@mutate", "exec bin/rune-incremental mutate --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project tests/incremental/virtual"),
+             @ [driver ("@mutate", "exec bin/rune-incremental mutate --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project tests/incremental/virtual tests/incremental/fixity"),
                 (* and each warm build verified, entries across a change compared *)
-                driver ("@mutate-verify", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed 5 --steps 12 --out \"$RUNE_TEST_RUN/mutation-verify\" tests/incremental/functors tests/incremental/project tests/incremental/virtual"),
+                driver ("@mutate-verify", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed 5 --steps 12 --out \"$RUNE_TEST_RUN/mutation-verify\" tests/incremental/functors tests/incremental/project tests/incremental/virtual tests/incremental/fixity"),
                 driver ("@mutate-v1", "exec bin/rune-incremental mutate --replay-v1 --out \"$RUNE_TEST_RUN/mutation-replay\""),
                 driver ("@faults", "exec bin/rune-incremental faults"),
                 (* the soundness check of fingerprints (functors-units M4) holds a
@@ -490,6 +490,6 @@ struct
           change to a key (make test-cache-random; docs/testing.md) *)
        tagged ["test-cache-random", "nightly", "covers:tests/incremental/*"]
          (Test.describe "cache-random"
-            [driver ("projects", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed \"${RUNE_CACHE_SEED:-7}\" --steps 150 --out \"$RUNE_TEST_RUN/random-projects\" tests/incremental/functors tests/incremental/project tests/incremental/virtual"),
+            [driver ("projects", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed \"${RUNE_CACHE_SEED:-7}\" --steps 150 --out \"$RUNE_TEST_RUN/random-projects\" tests/incremental/functors tests/incremental/project tests/incremental/virtual tests/incremental/fixity"),
              driver ("compiler", "exec bin/rune-incremental mutate --rune bin/rune --seed \"${RUNE_CACHE_SEED:-7}\" --steps 12 --out \"$RUNE_TEST_RUN/random-compiler\" compiler")])]
 end

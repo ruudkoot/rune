@@ -887,7 +887,7 @@ test-incremental` and so in `make check`, as a scenario of
 | Fact edits, `fact-*` | an edit that flips one fact a fingerprint or the configuration holds, the value's name and type kept, compiling other units than the row says, or differing from a build without the cache | `tests/runner/cachefacts.sml` |
 | Root blanking, `blank-*` | a root of `CompilerState` that changes what a compile makes when it goes back to its baseline, and that `tests/incremental/roots.tsv` does not say what covers | `tests/runner/cachechecks.sml`, `src/driver/cachecheck.sml` |
 | Verification of all hits, `across-*`, S98 | `--verify-cache` finding that an entry taken across a unit that changed is not what compiling the unit gives | the same |
-| Random edits, `@mutate`, `@mutate-verify` | a warm build that disagrees with `--no-cache`, or that `--verify-cache` refuses; among the edits, a fixity directive changed, added, removed, made `nonfix` or put in a `local` that keeps it or drops it, so that the files after it parse another way | `tests/runner/mutationchecks.sml`, `tests/runner/mutationproject.sml` |
+| Random edits, `@mutate`, `@mutate-verify` | a warm build that disagrees with `--no-cache`, or that `--verify-cache` refuses; a build that fails whose plan `--verify-cache` refuses. Among the edits, a fixity directive changed, added, removed, made `nonfix` or put in a `local` that keeps it or drops it, so that the files after it parse another way, or not at all (`tests/incremental/fixity`) | `tests/runner/mutationchecks.sml`, `tests/runner/mutationproject.sml` |
 | The model, `model` | the model of a hit saying otherwise than `tests/incremental/model.expected` | `tests/incremental/model.sml` |
 | The fingerprint oracle, `fp-oracle` | a field of a binding, or a fact of the tables a fingerprint reads by hand, changed alone, moving a fingerprint in other layers than the description of the codecs marks it in (`tools/codecs/compiler.sml`), or a sameness not saying what the description has it compare; or a kind of field or fact the program does not change | `tests/runner/cachechecks.sml`, `UnitBasis.fpOracle` ([units.md](units.md), *The fingerprint oracle*) |
 | Unit by unit, and the mask, `warm-unit-*` | a unit compiled alone, while every other is taken from the cache without its basis, that is not what its entry holds: under its view, what its text names loaded by need, or under the mask of its entry's usages, each structure cut to the paths they name and only the units their binders reach loaded | `tests/runner/warmchecks.sml` |
@@ -959,7 +959,8 @@ their hashes, so that an entry damaged where it still reads is taken, which
 `store-damage` sees. P1 keeps what a file is to the plan by its text alone, as
 E15's plan memo did, not by the fixity before it: S131 sees the program take
 the Basis Library's file a parse that failed before named, and `warm-plan` a
-fixity edit read one file where it should read those after it.
+fixity edit read one file where it should read those after it; random edits
+of `tests/incremental/fixity` with `--verify` see it too, 9 builds of 50.
 The 13 that survived E18:
 
 | Mutant | What it drops | Issue | What became of it |
