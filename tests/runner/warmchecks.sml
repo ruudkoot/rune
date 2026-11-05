@@ -33,7 +33,12 @@
    drops it, nonfix, added, removed -- the files after it whose fixity before
    them it changed, by the tokens the build lexed (--pass-stats); each build
    held to one without the cache, and to --verify-cache, which reads every
-   file and holds what the store kept to it. *)
+   file and holds what the store kept to it.
+
+   warm-index-roots: two copies of the Basis Library under two roots, built
+   through one store, each keep their index's record there, which a build
+   from the other root does not displace; and in units, what each file is
+   to the plan, which each root keeps apart too (warm-plan-roots). *)
 structure WarmChecks =
 struct
   open Incremental
@@ -296,8 +301,70 @@ struct
       set "ops.sml" ("\ninfix 6 ++", ""); warm "the first file's directive removed" (files, false)
     end
 
-  val cases = List.map (fn p => prefix ^ "unit-" ^ p) projects @ [prefix ^ "racy", prefix ^ "uptodate", prefix ^ "uptodate-index",
-                                                                    prefix ^ "plan"]
+  (* ---- two roots, one store ---- *)
+
+  (* Two copies of the Basis Library, under the roots a/lib and b/lib, built
+     in turn through one store: the index of each has a record of its own
+     there (LibraryIndex.namesOf), where one record of the library's place
+     would hold the stats of the last copy built, and a build from the other
+     root read every file of its copy again to hold it, and write the record
+     again. Each copy is three seconds older than its index's record, so
+     that the record holds its files by their stats; a record that holds is
+     not written again (the files of index/, by their inodes). *)
+  fun indexRoots (s : state) =
+    let
+      val () = own s "p.sml"
+      val () = put s "p.sml" "val () = print (Bool.toString true ^ \"\\n\")"
+      val () = List.app (fn root => copyTree (fromRoot "lib/basis") (path s (root ^ "/lib/basis"))) ["a", "b"]
+      fun records () =
+        List.map (fn f => (f, Posix.FileSys.inoToWord (Posix.FileSys.ST.ino (Posix.FileSys.stat f))))
+                 (entriesBelow (path s "cache/index"))
+      fun build root =
+        let val r = compile s ["--lib", path s (root ^ "/lib"), "--cache-dir", "cache"] (root ^ ".rbc")
+        in check s (root ^ ": the build failed: " ^ #errors r) (#status r = 0) end
+      val () = sleep 3
+      val () = (build "a"; build "b")
+      val made = records ()
+      val () = check s ("the store holds " ^ Int.toString (List.length made) ^ " files of index records, not a record and"
+                        ^ " its facts for each root") (List.length made = 4)
+      val () = sleep 3
+      val () = (build "a"; build "b"; build "a")
+    in
+      check s "a build from one root wrote again the record of its index, which the other's had displaced"
+            (records () = made)
+    end
+
+  (* ---- two roots, one store, in units: the plan ---- *)
+
+  (* The same, built in units: what each file is to the plan is kept by the
+     program's place and its root of libraries (LibraryIndex.programFacts),
+     so that each root's plan has a file of its own in plan/, which a build
+     from the other root does not write again *)
+  fun planRoots (s : state) =
+    let
+      val () = own s "p.sml"
+      val () = put s "p.sml" "val () = print (Bool.toString true ^ \"\\n\")"
+      val () = List.app (fn root => copyTree (fromRoot "lib/basis") (path s (root ^ "/lib/basis"))) ["a", "b"]
+      fun plans () =
+        List.map (fn f => (f, Posix.FileSys.inoToWord (Posix.FileSys.ST.ino (Posix.FileSys.stat f))))
+                 (entriesBelow (path s "cache/plan"))
+      fun build root =
+        let val r = compile s ["--lib", path s (root ^ "/lib"), "--units", "--cache-dir", "cache"] (root ^ ".rbc")
+        in check s (root ^ ": the build failed: " ^ #errors r) (#status r = 0) end
+      val () = sleep 3
+      val () = (build "a"; build "b")
+      val made = plans ()
+      val () = check s ("the store holds " ^ Int.toString (List.length made) ^ " plans, not one for each root")
+                     (List.length made = 2)
+      val () = sleep 3
+      val () = (build "a"; build "b"; build "a")
+    in
+      check s "a build from one root wrote its plan again, which the other's had displaced" (plans () = made)
+    end
+
+  val cases = List.map (fn p => prefix ^ "unit-" ^ p) projects
+              @ [prefix ^ "racy", prefix ^ "uptodate", prefix ^ "uptodate-index", prefix ^ "plan", prefix ^ "index-roots",
+                 prefix ^ "plan-roots"]
   fun handles name = String.isPrefix prefix name
   fun one (s : state) =
     let val n = #name s
@@ -306,6 +373,8 @@ struct
       else if n = prefix ^ "uptodate" then upToDate s
       else if n = prefix ^ "uptodate-index" then upToDateIndex s
       else if n = prefix ^ "plan" then plan s
+      else if n = prefix ^ "index-roots" then indexRoots s
+      else if n = prefix ^ "plan-roots" then planRoots s
       else if String.isPrefix (prefix ^ "unit-") n then unitByUnit s (String.extract (n, size (prefix ^ "unit-"), NONE))
       else raise Failed ("no check " ^ n)
     end

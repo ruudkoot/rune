@@ -625,7 +625,8 @@ struct
      identity, its hash's, the platform and the library's place, its path
      under the libraries (--lib) or else from the root of the machine's
      filesystem, so that the record a frozen layer ships holds wherever it is
-     installed. It holds
+     installed; in any other store, the library's directory as well
+     (namesOf). It holds
 
        magic version string(name) at
        list(path option(stamp)) string(hashes)  what was read, its stat, and its bytes' hashes
@@ -642,9 +643,11 @@ struct
      to date records of the index (UnitMemo): its damage too is a miss,
      and while the files' stats hold they are what it was made of. *)
   val magic = "RIX"
-  (* 5: stamps and times are 8 fixed bytes; 6: a file's facts hold what it
-     claims (claimsOf) *)
-  val version = 6
+  (* 5: stamps and times are 8 fixed bytes; 6: a file's facts held what it
+     claims (claimsOf); 7: outside the frozen layer, a record's name holds
+     its library's directory (namesOf). The facts beside a record, and a
+     program's (programFacts), have a version of their own (factsVersion) *)
+  val version = 7
 
   (* what was read is held as its paths with their stats, and the hashes of
      their bytes in one string, which only a file whose stat moved reads *)
@@ -687,6 +690,34 @@ struct
   fun nameOf (place : string, windows : bool) : string =
     String.concatWith "\000" ["library-index", Int.toString version, Config.identity, Pickle.probe (),
                               if windows then "windows" else "posix", place]
+
+  (* the frozen layer of the libraries in root *)
+  fun frozenOf (root : string) : string = OS.Path.joinDirFile {dir = root, file = "cache"}
+
+  (* The names of a library's record. In the frozen layer of its libraries,
+     which moves with them, the name is its place alone (nameOf), so that the
+     record holds wherever they are installed. Any other store, and a
+     session, may hold libraries of one place under several roots, two
+     copies of lib/basis, whose files have stats of their own: there the
+     name holds the library's directory too, so that their records coexist,
+     where one would displace the other and each compile read every file of
+     its library again to hold it. The directory is as the compile spells
+     it, from where it runs: two spellings of one make two records, each of
+     which holds, but no two directories one. *)
+  type names = {kept : string, frozen : string}
+  (* a directory as the compile spells it, from where it runs *)
+  fun spelt (dir : string) : string =
+    if OS.Path.isAbsolute dir then dir else (OS.FileSys.getDir () handle OS.SysErr _ => ".") ^ "/" ^ dir
+  fun namesOf (root : string, dir : string, windows : bool) : names =
+    let val frozen = nameOf (placeOf (root, dir), windows)
+    in {kept = frozen ^ "\000" ^ spelt dir, frozen = frozen} end
+  (* the name of the record in a store: the store is the frozen layer where
+     it is that directory, which only a store named "cache" can be *)
+  fun nameIn (root : string, {kept, frozen} : names) (store : string) : string =
+    if store = frozenOf root
+       orelse (case OS.Path.file store of "cache" => true | "" => true | _ => false)
+              andalso absolute store = absolute (frozenOf root)
+    then frozen else kept
 
   fun recordFile (store : string, name : string) : string = S.sideFile (fn (_, t) => hash t, store, "index", name)
   fun factsFile (store : string, name : string) : string = S.sideFile (fn (_, t) => hash t, store, "index", name ^ "\000facts")
@@ -769,7 +800,7 @@ struct
         | NONE => Option.map (fn home => OS.Path.joinDirFile {dir = home, file = ".rune"}) (!CompilerSettings.storeHome)
   fun overlay () : string option = if !CompilerSettings.noCache then NONE else storeDir ()
   fun stores (root : string) : string list =
-    let val frozen = OS.Path.joinDirFile {dir = root, file = "cache"}
+    let val frozen = frozenOf root
     in
       (case storeDir () of SOME d => [d] | NONE => [])
       @ (if (OS.FileSys.isDir frozen handle OS.SysErr _ => false) then [frozen] else [])
@@ -779,8 +810,8 @@ struct
 
   (* What a compile that keeps what it read keeps of an index it took
      (UnitMemo, up to date): the library's directory, that of the libraries,
-     the name of the index's record and the hash of what the index rests on,
-     its record's inputs -- the record, and not a copy of its files, which a
+     the name of the index's record in a session (namesOf) and the hash of
+     what the index rests on, its record's inputs -- the record, and not a copy of its files, which a
      compile asking whether it is up to date holds again (stillRests) *)
   type rests = {dir : string, root : string, name : string, inputs : string}
   (* What this compile knows: each library's index by its directory, with
@@ -867,7 +898,9 @@ struct
   fun stillRests ({dir, root, name, inputs} : rests) : bool =
     Pass.timed "index" (fn () =>
     let
-      fun holdsNow (record : record, store : string option) : bool =
+      val nameIn = nameIn (root, namesOf (root, dir, windows ()))
+      (* store: the store the record is of, and its file *)
+      fun holdsNow (record : record, store : (string * string) option) : bool =
         #inputs record = inputs
         andalso
         (let val at = S.nowSeconds ()
@@ -878,16 +911,20 @@ struct
                (if moved
                 then let val record' = {at = at, files = filesNow, hashes = #hashes record, inputs = inputs,
                                         against = #against record, indexHash = #indexHash record, index = #index record}
-                     in Option.app (fn o' => writeRecord (o', name, record')) (overlay ()); hold (name, record') end
-                else if isSome store andalso store = overlay () then S.touch (recordFile (valOf store, name))
-                else ();
+                     in Option.app (fn o' => writeRecord (o', nameIn o', record')) (overlay ()); hold (name, record') end
+                else (case store of
+                        SOME (s, file) => if SOME s = overlay () then S.touch file else ()
+                      | NONE => ());
                 true)
          end)
     in
       (case List.find (fn (n, _) => n = name) (!held) of SOME (_, record) => holdsNow (record, NONE) | NONE => false)
-      orelse List.exists (fn store => case readRecord (recordFile (store, name), name) of
-                                        SOME record => holdsNow (record, SOME store)
-                                      | NONE => false)
+      orelse List.exists (fn store => let val n = nameIn store val file = recordFile (store, n)
+                                      in
+                                        case readRecord (file, n) of
+                                          SOME record => holdsNow (record, SOME (store, file))
+                                        | NONE => false
+                                      end)
                          (stores root)
     end)
 
@@ -906,7 +943,10 @@ struct
                    then raise Usage ("library " ^ dir ^ " is written on itself (" ^ String.concatWith " <- " (dir :: !making) ^ ")")
                    else ()
           val w = windows ()
-          val name = nameOf (placeOf (root, dir), w)
+          val names = namesOf (root, dir, w)
+          (* its name in this session, and in a store *)
+          val name = #kept names
+          val nameIn = nameIn (root, names)
           fun within f = (making := dir :: !making; f () before making := tl (!making))
                          handle e => (making := tl (!making); raise e)
           (* what an index is made against now: each library by its place
@@ -935,12 +975,15 @@ struct
              has, so that trim keeps what compiles take (UnitStore.touch) *)
           fun holding [] = NONE
             | holding (store :: rest) =
-                case readRecord (recordFile (store, name), name) of
-                  NONE => holding rest
-                | SOME record =>
-                    case holds (record, false) of
-                      NONE => holding rest
-                    | found => (if overlay () = SOME store then S.touch (recordFile (store, name)) else (); found)
+                let val n = nameIn store val file = recordFile (store, n)
+                in
+                  case readRecord (file, n) of
+                    NONE => holding rest
+                  | SOME record =>
+                      case holds (record, false) of
+                        NONE => holding rest
+                      | found => (if overlay () = SOME store then S.touch file else (); found)
+                end
           fun found () =
             case List.find (fn (n, _) => n = name) (!held) of
               SOME (_, record) => (case holds (record, true) of NONE => holding (stores root) | some => some)
@@ -949,7 +992,7 @@ struct
           case (if fresh then NONE else found ()) of
             SOME (record as {indexHash, inputs, files, ...}, idx, moved) =>
               ((* a record whose stats moved, written again with them *)
-               if moved then Option.app (fn o' => writeRecord (o', name, record)) (overlay ()) else ();
+               if moved then Option.app (fn o' => writeRecord (o', nameIn o', record)) (overlay ()) else ();
                hold (name, record);
                remember (idx, indexHash, files, {dir = dir, root = root, name = name, inputs = inputs}))
           | NONE =>
@@ -962,14 +1005,14 @@ struct
                     SOME (_, fs) => fs
                   | NONE => getOpt (List.foldl (fn (store, found) => case found of
                                                                      SOME _ => found
-                                                                   | NONE => readFactsFile (factsFile (store, name), name))
+                                                                   | NONE => readFactsFile (factsFile (store, nameIn store), nameIn store))
                                                NONE (stores root), [])
                 val was =
                   case List.find (fn (n, _) => n = name) (!held) of
                     SOME (_, record) => SOME record
                   | NONE => List.foldl (fn (store, found) => case found of
                                                               SOME _ => found
-                                                            | NONE => readRecord (recordFile (store, name), name))
+                                                            | NONE => readRecord (recordFile (store, nameIn store), nameIn store))
                                        NONE (stores root)
                 val wasAt = case was of SOME {at, ...} => at | NONE => LargeInt.fromInt 0
                 val table = List.foldl (fn ((k, f), m) => StringMap.insert (m, k, f)) StringMap.empty previous
@@ -994,7 +1037,7 @@ struct
                 val against = againstNow idx
                 val record = recordOf (at, read, against, indexHash, bytes)
               in
-                Option.app (fn o' => (writeRecord (o', name, record); writeFactsFile (o', name, facts))) (overlay ());
+                Option.app (fn o' => (writeRecord (o', nameIn o', record); writeFactsFile (o', nameIn o', facts))) (overlay ());
                 hold (name, record);
                 heldFacts := (name, facts) :: List.filter (fn (n, _) => n <> name) (!heldFacts);
                 remember (idx, indexHash, #files record,
@@ -1063,12 +1106,16 @@ struct
      where it may); tokens: its tokens. With no store every file is read;
      with verify (--verify-cache) too, and the files whose kept facts are not
      what reading them gives are named. They are in the store's plan/, beside
-     its index/, which is the libraries' *)
-  fun programFacts {place : string, files : (string * Source.mode) list, fixity : Fixity.env, store : string option,
+     its index/, which is the libraries', by the program's place and the
+     directory of its libraries as the compile spells it (root), so that two
+     roots' plans of one program coexist in a store as their indexes do
+     (namesOf) *)
+  fun programFacts {place : string, root : string, files : (string * Source.mode) list, fixity : Fixity.env,
+                    store : string option,
                     textHash : string * Source.mode -> string, tokens : string * Source.mode -> Lexer.item vector,
                     verify : bool} : facts list * string list =
     let
-      val name = nameOf ("program:" ^ place, windows ())
+      val name = nameOf ("program:" ^ place, windows ()) ^ "\000" ^ spelt root
       fun file store = S.sideFile (fn (_, t) => hash t, store, "plan", name)
       val previous = case store of SOME s => getOpt (readFactsFile (file s, name), []) | NONE => []
       val table = List.foldl (fn ((k, f), m) => StringMap.insert (m, k, f)) StringMap.empty previous

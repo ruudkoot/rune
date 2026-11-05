@@ -802,10 +802,12 @@ DIR/                 .rune, or lib/cache, or --cache-dir's
   steps/             what a build's steps and preprocessors made
   editor/units/      the language server's sidecars, by the hash of a source
                      (docs/language-server.md, The store)
-  index/units/       each library's index, by its place, with what it was made
-                     of (docs/build.md, A library's index)
+  index/units/       each library's index, by its place and, but in the frozen
+                     layer, its directory, with what it was made of
+                     (docs/build.md, A library's index)
   plan/units/        what each file of a program is to its compile, by the
-                     program's place (A warm build, The plan)
+                     program's place and its root of libraries (A warm build,
+                     The plan)
 ```
 
 **Layers.** A compile writes one store, its *overlay*, and reads after it
@@ -958,7 +960,8 @@ the program loads units -- is kept in the store as a library's index keeps
 its files' ([build.md](build.md), *A library's index*), by the hash of its
 text (by the stat memo), its path, its mode, the fixity it is read in and
 `--or-patterns` (`LibraryIndex.programFacts`, `plan/` of the store, by the
-program's build file or first file). A file whose key is there is not read
+program's build file or first file and its root of libraries, so that two
+roots' plans coexist in a store as their indexes do). A file whose key is there is not read
 until its unit is compiled. So a build after an edit reads the file edited;
 after an edit of a fixity directive -- changed, added, removed, made
 `nonfix`, put in a `local` that drops it -- the files after it, whose fixity
@@ -1249,7 +1252,8 @@ program that loads units takes no such entry, since a unit loaded into it
 names the identities of a build from source. Where that shows only once
 such an entry has been taken -- the first unit to name a member does so by
 an alias, after the edit -- the program is compiled again as what it is, and
-`--explain-rebuild` says so. `--emit-units`, which gives the units'
+`--explain-rebuild` says so; a warning or an error that both compiles give
+is printed once. `--emit-units`, which gives the units'
 identities to whoever reads the files, takes no such entry either for a
 program that has `Runtime`.
  Two modules compiled against one library share its types

@@ -29,12 +29,32 @@ struct
   val silent = ref false
   val () = CompilerState.cellRoot ("Error.silent", silent)
 
+  (* What a compile made again does not print twice (the driver's
+     compiledAgain): the text of the diagnostics printed so far, newest
+     first, where the compile keeps it (SOME); and of that, the text an
+     attempt made again has not yet given, which it gives without printing.
+     A diagnostic is printed once, however many attempts give it *)
+  val printed : string list option ref = ref NONE
+  val () = CompilerState.cellRoot ("Error.printed", printed)
+  val owed : string list ref = ref []
+  val () = CompilerState.cellRoot ("Error.owed", owed)
+  fun output (text : string) : unit =
+    let
+      fun take (_, []) = NONE
+        | take (seen, t :: rest) = if t = text then SOME (List.revAppend (seen, rest)) else take (t :: seen, rest)
+    in
+      case take ([], !owed) of
+        SOME rest => owed := rest
+      | NONE => (TextIO.output (TextIO.stdErr, text);
+                 case !printed of SOME ts => printed := SOME (text :: ts) | NONE => ())
+    end
+
   (* The errors a compile that goes on after an error has reported so far
      (Elaborate.recover): each is printed when it is found. *)
   val errors = ref 0
   val () = CompilerState.cellRoot ("Error.errors", errors)
   fun report (sp, msg) =
-    ((if !silent then () else TextIO.output (TextIO.stdErr, !show ("error", sp, msg) ^ "\n"));
+    ((if !silent then () else output (!show ("error", sp, msg) ^ "\n"));
      errors := !errors + 1; note ("error", sp, msg))
 
   val warnings : (Source.span * string) list ref = ref []
@@ -50,7 +70,7 @@ struct
 
   fun flushWarnings () =
     (if !silent then ()
-     else (List.app (fn w => TextIO.output (TextIO.stdErr, !show ("warning", #1 w, #2 w) ^ "\n")) (List.rev (!warnings));
+     else (List.app (fn w => output (!show ("warning", #1 w, #2 w) ^ "\n")) (List.rev (!warnings));
            case !given of SOME ws => given := SOME (!warnings @ ws) | NONE => ());
      warnings := [])
 
