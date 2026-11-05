@@ -966,10 +966,12 @@ before them changed, and after one put in a `local` that keeps it the file
 alone, since what it leaves is what it left. A file whose text is the same
 but that is read in another fixity is read again: E15's plan memo kept a file
 by its text alone, and took a parse that had failed for one that now holds,
-or the other way about. Not with `--no-cache`, under `RUNE_WARM=off` or where
-an editor's buffer stands in for a file, nor in a layer of the store; with
-`--verify-cache` every file is read all the same, and one whose kept facts
-are not what reading it gives is an error.
+or the other way about. None is kept with `--no-cache`, under `RUNE_WARM=off`
+or where an editor's buffer stands in for a file, nor in a layer of the
+store: such a build reads and lexes every file, and parses those that may
+name what the choice takes, as a build in whole does (but with `-j`, which
+reads what each is). With `--verify-cache` every file is read all the same,
+and one whose kept facts are not what reading it gives is an error.
 
 **An output.** What a build writes and reads again -- its program, and what
 a step made -- is held by its stat and by a copy of its bytes, which the

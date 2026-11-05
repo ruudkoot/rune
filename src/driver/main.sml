@@ -757,21 +757,24 @@ struct
          what the libraries it sees export (docs/build.md) *)
       fun fixityOf (libraries : string list) =
         Fixity.extend (Fixity.initial, List.concat (List.map (fn dir => LibraryIndex.fixities {root = libRoot (), dir = dir}) libraries))
-      (* The input files: in whole, each read and lexed. In units, what each
+      (* The input files: in a compile in units that keeps a plan, what each
          is to the compile (LibraryIndex.programFacts), from the store where
          its text and the fixity before it are what they were, and else read,
          lexed and parsed, its tokens kept for its unit: a file the store
          answers for is read only where its unit is compiled, or where a span
-         of another unit's names it (Source.fault). Not kept with --no-cache
-         or RUNE_WARM=off, nor where an editor's buffer stands for a file, nor
-         in a layer of the store; with --verify-cache each file is read, and
-         a kept one must be what reading it gives (docs/units.md, A warm
-         build) *)
+         of another unit's names it (Source.fault). None is kept in whole,
+         with --no-cache or RUNE_WARM=off, where an editor's buffer stands for
+         a file, nor in a layer of the store: each file is read and lexed then,
+         and parsed where it may name what the plan chooses (usedByAll), but
+         for -j, which orders the units by what each is. With --verify-cache
+         each file is read, and a kept one must be what reading it gives
+         (docs/units.md, A warm build) *)
       val units = !Options.units
       val keep = if not units then NONE
                  else case UnitCache.directory () of
                         SOME dir => if warmOn () andalso not (editorOverlays ()) andalso not (writesLayer ()) then SOME dir else NONE
                       | NONE => NONE
+      val planned = units andalso (isSome keep orelse !Options.jobs > 1)
       val () = statMemo := Option.map (fn dir => UnitStore.memoAt (dir, UnitCache.configuration ())) keep
       fun textHash (path, mode) =
         let fun text () = #text (fileOf (path, mode))
@@ -786,11 +789,11 @@ struct
         else
           let val given = List.foldl (fn (p, m) => StringMap.insert (m, p, ())) StringMap.empty inputs
           in Source.fault := (fn f => if StringMap.member (given, f) then ignore (Source.load (inputMode f, f)) handle IO.Io _ => () else ()) end
-      val whole = if units then []
+      val whole = if planned then []
                   else lexStage (List.foldl (fn (toks, n) => n + Vector.length toks) 0)
                                 (fn () => List.map (fn p => tokens (p, inputMode p)) inputs)
       val () =
-        if not units then ()
+        if not planned then ()
         else
           let
             val (facts, wrong) =
@@ -835,9 +838,9 @@ struct
                                                          LibraryIndex.clashText (libRoot ()) clash)) found;
                      raise Reported)
             val mentioned =
-              if units then CompilerPrelude.namedBy (!inputFacts)
+              if planned then CompilerPrelude.namedBy (!inputFacts)
               else CompilerPrelude.usedByAll (scopes, entries, inputs, whole, fixityOf (List.map #1 (#libraries found)))
-            val () = namesLoading := (if units then List.exists #loads (!inputFacts) else List.exists BasisManifest.namesLoading whole)
+            val () = namesLoading := (if planned then List.exists #loads (!inputFacts) else List.exists BasisManifest.namesLoading whole)
             fun tokens (e : entry) =
               let val toks = loadTokens (Source.Ascii, BasisManifest.path e)
               in if BasisManifest.namesLoading toks then namesLoading := true else (); toks end
