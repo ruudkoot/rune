@@ -123,13 +123,18 @@ struct
 
   fun hash (text : string) : string = Pickle.hash text
 
-  (* ---- what a file is to its library's index, by its text ----
+  (* ---- what a file is to its library's index and to a compile ----
      what Deps finds of it, the virtual modules it declares and the modules it
      exports (_export), how many times it says _virtual, the fixity
      directives it adds to what it is read in, newest first, and what it
-     claims (claimsOf) *)
+     claims (claimsOf); and what a program's compile takes of it to choose
+     the files of its libraries (CompilerPrelude): the names it uses and a
+     dynamic module's boundary's, and whether it says the program loads
+     units (BasisManifest.namesLoading). A function of its text, its mode,
+     its path and the fixity it is read in, and kept by them (factsKey) *)
   type facts = {deps : Deps.file, virtuals : (string * string) list, exports : (string * string) list, said : int,
-                fixity : (string * Fixity.fixity) list, claims : (string * string * string) list}
+                fixity : (string * Fixity.fixity) list, claims : (string * string * string) list,
+                names : string list, loads : bool}
 
   local
     open Pickle
@@ -153,20 +158,21 @@ struct
     fun triple (w, (a, b, c)) = (string (w, a); string (w, b); string (w, c))
     fun rtriple r = let val a = rstring r val b = rstring r in (a, b, rstring r) end
     fun writeFacts (w, {deps = {path, declares, uses, free, breaks, values, hides, mentions, prelude}, virtuals, exports, said,
-                        fixity = fx, claims} : facts) =
+                        fixity = fx, claims, names, loads} : facts) =
       (string (w, path); list name (w, declares); list name (w, uses); list name (w, free); list break (w, breaks);
        list string (w, values); bool (w, hides); list string (w, mentions); bool (w, prelude);
-       list pair (w, virtuals); list pair (w, exports); nat (w, said); list fixity (w, fx); list triple (w, claims))
+       list pair (w, virtuals); list pair (w, exports); nat (w, said); list fixity (w, fx); list triple (w, claims);
+       list string (w, names); bool (w, loads))
     fun readFacts r : facts =
       let
         val path = rstring r val declares = rlist rname r val uses = rlist rname r val free = rlist rname r
         val breaks = rlist rbreak r val values = rlist rstring r val hides = rbool r val mentions = rlist rstring r
         val prelude = rbool r val virtuals = rlist rpair r val exports = rlist rpair r val said = rnat r
-        val fx = rlist rfixity r val claims = rlist rtriple r
+        val fx = rlist rfixity r val claims = rlist rtriple r val names = rlist rstring r val loads = rbool r
       in
         {deps = {path = path, declares = declares, uses = uses, free = free, breaks = breaks, values = values, hides = hides,
                  mentions = mentions, prelude = prelude},
-         virtuals = virtuals, exports = exports, said = said, fixity = fx, claims = claims}
+         virtuals = virtuals, exports = exports, said = said, fixity = fx, claims = claims, names = names, loads = loads}
       end
 
     (* an index's bytes, and back *)
@@ -262,6 +268,35 @@ struct
   fun fixityKey (fx : Fixity.env) : string =
     String.concatWith " " (List.map (fn (n, f) => n ^ (case f of Fixity.Nonfix => "~" | Fixity.Infix p => "<" ^ Int.toString p
                                                               | Fixity.Infixr p => ">" ^ Int.toString p)) (#list fx))
+
+  (* The key of what a file is (facts): the hash of its text as it is read,
+     its path, its mode, the fixity it is read in (fixityKey) and what the
+     parser is told (--or-patterns) -- all that the facts are a function of,
+     so that a file whose text is the same but whose fixity before it is not
+     is read again *)
+  fun factsKey {text : string, path : string, mode : Source.mode, fixity : string} : string =
+    hash (String.concatWith "\000" [text, path, Source.modeName mode, fixity, if !Parser.orPatterns then "or-patterns" else ""])
+
+  (* What a file is, from its tokens read in fx (facts). One that does not
+     parse in fx raises the parser's error, as a library's file does; for a
+     program's file (tolerant) it is what its tokens name until its compile's
+     own parse says why -- a syntax error, or a fixity of a library with no
+     header, which no index holds -- and adds no fixity *)
+  fun factsOf {path : string, toks : Lexer.item vector, fixity = fx : Fixity.env, tolerant : bool} : facts =
+    let
+      val (prog, fx') = Parser.parseTokensWith (toks, fx)
+      val deps = Deps.analyse (path, prog)
+      val {virtuals, exports} = dynamicModules prog
+      val used = List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) StringMap.empty (#free deps)
+    in
+      {deps = deps, virtuals = virtuals, exports = exports, said = virtualTokens toks,
+       fixity = List.take (#list fx', List.length (#list fx') - List.length (#list fx)), claims = claimsOf prog,
+       names = StringMap.listKeys (B.boundaryNames (toks, used)), loads = B.namesLoading toks}
+    end
+    handle e as Error.CompileError (sp, _) =>
+      if not tolerant then raise e
+      else {deps = Deps.unread (path, sp), virtuals = [], exports = [], said = virtualTokens toks, fixity = [], claims = [],
+            names = StringMap.listKeys (B.namesOf (toks, StringMap.empty)), loads = B.namesLoading toks}
 
   (* Whether the libraries in root have a Basis Library: a directory of them
      may have none, which runedoc documents a library of as written on
@@ -380,21 +415,14 @@ struct
                                   SOME h => h
                                 | NONE => hash (readText path handle IO.Io _ => raise Usage ("cannot read " ^ path))
                         val () = reads := {path = p, stamp = stamp, hash = h} :: !reads
-                        val key = hash (String.concatWith "\000" [h, path, fixityKey fx])
+                        val key = factsKey {text = h, path = path, mode = Source.Ascii, fixity = fixityKey fx}
                         val f as {fixity = added, ...} =
                           case known key of
                             SOME f => f
                           | NONE =>
-                              let
-                                val toks = Lexer.tokenize (Source.load (Source.Ascii, path))
-                                           handle IO.Io _ => raise Usage ("cannot read " ^ path)
-                                val (prog, fx') = Parser.parseTokensWith (toks, fx)
-                                val {virtuals, exports} = dynamicModules prog
-                              in
-                                {deps = Deps.analyse (p, prog), virtuals = virtuals, exports = exports, said = virtualTokens toks,
-                                 fixity = List.take (#list fx', List.length (#list fx') - List.length (#list fx)),
-                                 claims = claimsOf prog}
-                              end
+                              factsOf {path = p, toks = Lexer.tokenize (Source.load (Source.Ascii, path))
+                                                        handle IO.Io _ => raise Usage ("cannot read " ^ path),
+                                       fixity = fx, tolerant = false}
                       in factsRev := (key, f) :: !factsRev; ((p, anns, f) :: acc, Fixity.extend (fx, added)) end)
                    ([], Fixity.extend (Fixity.initial, imported)) listed
       val analysed = List.map (fn (p, anns, f : facts) => (p, anns, #deps f)) (List.rev analysedRev)
@@ -699,11 +727,13 @@ struct
       handle IO.Io _ => () | OS.SysErr _ => ()
     end
 
-  (* what each file was to a making, by its key, held to its hash *)
+  (* what each file was to a making, by its key, held to its hash, in a
+     format of its own (7: what a program's compile takes of a file) *)
+  val factsVersion = 7
   fun readFactsFile (p : string, name : string) : (string * facts) list option =
     (let
        val r = Pickle.reader (S.readFile p)
-       val () = if Pickle.rbytes (r, 3) = "RIF" andalso Pickle.rnat r = version andalso Pickle.rstring r = name then ()
+       val () = if Pickle.rbytes (r, 3) = "RIF" andalso Pickle.rnat r = factsVersion andalso Pickle.rstring r = name then ()
                 else raise Pickle.Bad "another record"
        val h = Pickle.rstring r
        val bytes = Pickle.rstring r
@@ -713,17 +743,18 @@ struct
        else NONE
      end)
     handle IO.Io _ => NONE | Pickle.Bad _ => NONE | Overflow => NONE | Subscript => NONE | Size => NONE
-  fun writeFactsFile (store : string, name : string, facts : (string * facts) list) : unit =
+  fun writeFactsAt (p : string, name : string, facts : (string * facts) list) : unit =
     let
-      val p = factsFile (store, name)
       val b = let val w = Pickle.writer () in Pickle.list (fn (w, (k, f)) => (Pickle.string (w, k); writeFacts (w, f))) (w, facts);
                                                 Pickle.contents w end
       val w = Pickle.writer ()
     in
-      Pickle.bytes (w, "RIF"); Pickle.nat (w, version); Pickle.string (w, name); Pickle.string (w, hash b); Pickle.string (w, b);
+      Pickle.bytes (w, "RIF"); Pickle.nat (w, factsVersion); Pickle.string (w, name); Pickle.string (w, hash b); Pickle.string (w, b);
       (S.mkdirs (OS.Path.dir p); S.publish (p, Pickle.contents w))
       handle IO.Io _ => () | OS.SysErr _ => ()
     end
+  fun writeFactsFile (store : string, name : string, facts : (string * facts) list) : unit =
+    writeFactsAt (factsFile (store, name), name, facts)
 
   (* Where a compile keeps the records: the overlay of its store, which
      --cache-dir, RUNE_CACHE or its home names (UnitCache.directory), where
@@ -1017,4 +1048,53 @@ struct
      on said, and its text *)
   fun check {root : string, dir : string, warnings : bool} : string =
     text (#1 (indexWithHash {root = root, dir = dir, warnings = warnings, fresh = true}))
+
+  (* ---- a program's files ----
+     What each file of a program is to its compile in units (facts), in its
+     order, each read in the fixity the files before it leave from fixity,
+     the libraries' (docs/units.md, A warm build): what the compile chooses
+     its libraries' files by, and -j orders its units by, without reading a
+     file. Kept in the store as a library's are, by the program's place --
+     its build file, or its first file -- and each file's key (factsKey), so
+     that a file is read, lexed and parsed again only where its text or the
+     fixity before it is not what it was: an edit reads the file edited, and
+     an edit of a fixity directive the files after it whose fixity before
+     them it changed. textHash: the hash of a file's text (by the stat memo
+     where it may); tokens: its tokens. With no store every file is read;
+     with verify (--verify-cache) too, and the files whose kept facts are not
+     what reading them gives are named. They are in the store's plan/, beside
+     its index/, which is the libraries' *)
+  fun programFacts {place : string, files : (string * Source.mode) list, fixity : Fixity.env, store : string option,
+                    textHash : string * Source.mode -> string, tokens : string * Source.mode -> Lexer.item vector,
+                    verify : bool} : facts list * string list =
+    let
+      val name = nameOf ("program:" ^ place, windows ())
+      fun file store = S.sideFile (fn (_, t) => hash t, store, "plan", name)
+      val previous = case store of SOME s => getOpt (readFactsFile (file s, name), []) | NONE => []
+      val table = List.foldl (fn ((k, f), m) => StringMap.insert (m, k, f)) StringMap.empty previous
+      fun read (path, mode, fx) = factsOf {path = path, toks = tokens (path, mode), fixity = fx, tolerant = true}
+      fun keyOf fx = if isSome store then fixityKey fx else ""
+      val (kept, _, _, readAny, wrong) =
+        List.foldl
+          (fn ((path, mode), (acc, fx, fxKey, readAny, wrong)) =>
+             let
+               val key = if isSome store then factsKey {text = textHash (path, mode), path = path, mode = mode, fixity = fxKey} else ""
+               val (f, wasRead, wrong) =
+                 case StringMap.find (table, key) of
+                   SOME f => if not verify then (f, false, wrong)
+                             else let val f' = read (path, mode, fx) in (f', true, if f' = f then wrong else path :: wrong) end
+                 | NONE => (read (path, mode, fx), true, wrong)
+               val (fx, fxKey) = case #fixity f of
+                                   [] => (fx, fxKey)
+                                 | added => let val fx = Fixity.extend (fx, added) in (fx, keyOf fx) end
+             in ((key, f) :: acc, fx, fxKey, readAny orelse wasRead, wrong) end)
+          ([], fixity, keyOf fixity, false, []) files
+      val kept = List.rev kept
+      (* written where a file was read, and kept as an entry taken is where
+         none was (UnitStore.touch) *)
+      val () = case store of
+                 SOME s => if readAny orelse List.length kept <> List.length previous then writeFactsAt (file s, name, kept)
+                           else S.touch (file s)
+               | NONE => ()
+    in (List.map #2 kept, List.rev wrong) end
 end

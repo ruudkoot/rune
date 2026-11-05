@@ -333,7 +333,8 @@ bytes, so that an edit of a library's build file or of any file it names is
 a miss, and the index is made again: **a stale index cannot be read.** What
 each file was to the index is kept with it, by the file's hash and the
 fixity it was read in, so that the index made again parses the files
-edited and no other. The frozen layer, `lib/cache`, ships the record of
+edited and no other; a program's own files are kept the same way, in the
+store's `plan/` ([units.md](units.md), *A warm build*). The frozen layer, `lib/cache`, ships the record of
 every library under `lib`, which `make basis-cache` writes there, by its
 place under `--lib`, and they hold wherever it is installed: there a first
 compile reads each file once, to see that it is what the record says, and

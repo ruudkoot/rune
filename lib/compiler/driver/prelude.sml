@@ -27,12 +27,16 @@ struct
      (docs/units.md, Well-formed units). One that does not parse in it has no
      syntax until the compile's own parse, which says why: a syntax error, or
      a fixity of a library with no header, which no manifest holds. Its
-     tokens, then. *)
+     tokens, then. What a file is to this (LibraryIndex.facts) is what a
+     compile in units keeps of it, and chooses by without reading it
+     (namedBy). *)
+  fun namesOf (facts : LibraryIndex.facts, names : names) : names =
+    List.foldl (fn (n, m) => StringMap.insert (m, n, ())) names (#names facts)
   fun usedByIn (path : string, toks : Lexer.item vector, (names : names, fx : Fixity.env)) : names * Fixity.env =
-    let val (prog, fx') = Parser.parseTokensWith (toks, fx)
-        val f = Deps.analyse (path, prog)
-    in (BasisManifest.boundaryNames (toks, List.foldl (fn ((_, n), m) => StringMap.insert (m, n, ())) names (#free f)), fx') end
-    handle Error.CompileError _ => (BasisManifest.namesOf (toks, names), fx)
+    let val f = LibraryIndex.factsOf {path = path, toks = toks, fixity = fx, tolerant = true}
+    in (namesOf (f, names), Fixity.extend (fx, #fixity f)) end
+  (* what the files of a program name, by what each is *)
+  fun namedBy (facts : LibraryIndex.facts list) : names = List.foldl namesOf StringMap.empty facts
   (* the same of a file alone, which has no files before it *)
   fun usedBy (path : string, toks : Lexer.item vector, names : names) : names =
     #1 (usedByIn (path, toks, (names, Fixity.initial)))

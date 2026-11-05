@@ -78,10 +78,13 @@ struct
 
   (* an entry's warnings, its compile having named its source was, given
      again as a compile of its source, now named name, gives them, in every
-     form it may be asked for (Error.show) *)
+     form it may be asked for (Error.show): each file a warning names read,
+     for its line and column, where the build did not read it (Source.fault;
+     docs/units.md, A warm build) *)
   fun giveWarnings (warnings : (Source.span * string) list, was : string, name : string) : unit =
     (List.app (fn ({file, start, stop}, message) =>
-                 Error.warn ({file = if file = was then name else file, start = start, stop = stop}, message)) warnings;
+                 let val file = if file = was then name else file
+                 in ignore (Source.findFile file); Error.warn ({file = file, start = start, stop = stop}, message) end) warnings;
      Error.flushWarnings ())
 
   fun warningBytes (({file, start, stop}, message) : Source.span * string) : string =

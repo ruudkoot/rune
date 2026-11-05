@@ -267,6 +267,11 @@ struct
   (* the key of this compile's record of what it read (UnitMemo), where it
      keeps one *)
   val upToDate : string option ref = ref NONE
+  (* in units, what each input is (LibraryIndex.programFacts), in order,
+     which -j orders the units by; and the stat memo its texts were hashed
+     by, which the units' keys are taken by too (UnitStore.hashBy) *)
+  val inputFacts : LibraryIndex.facts list ref = ref []
+  val statMemo : UnitStore.memo option ref = ref NONE
 
   (* ---- the graph (Deps; the incremental roadmap's M8) ---- *)
 
@@ -613,7 +618,7 @@ struct
       (* what a compile begins with that is not one of the compiler's roots,
          for one made again (diagnosed, compiledAgain) *)
       val () = (fixity := Fixity.initial; keptSyntax := []; namesLoading := false; workspace := NONE; BasisManifest.roots := [];
-                LibraryIndex.forget ())
+                LibraryIndex.forget (); inputFacts := []; statMemo := NONE)
       (* files given by themselves: the first names their units, and the
          workspace above it has only libraries to give them *)
       val () = if !knownToLoad then () else entryFile := (case !Options.inputs of first :: _ => SOME first | [] => NONE)
@@ -730,17 +735,79 @@ struct
 
   and compileSources (inputs : string list) : OS.Process.status =
     let
-      (* the input files read and lexed, and the files of the libraries
-         they need chosen: stages of --pass-stats, whose sizes are the
-         tokens and the files chosen *)
-      val userToks =
-        Pass.stage {name = "lex", showIn = NONE, show = fn _ => "", check = fn _ => (),
-                    size = List.foldl (fn (toks, n) => n + Vector.length toks) 0}
-                   (List.map (fn p => loadTokens (inputMode p, p))) inputs
       (* what of the Basis Library the plan takes, and its view of it *)
       val {basis = taken, view} = !planBasis
       val () = if taken = "none" andalso not (List.null (!Options.libraries))
                then raise Options.Usage "--library needs the basis library (not --no-prelude)" else ()
+      (* each input's text and tokens, read once, as its unit asks for them *)
+      val lexed = ref StringMap.empty : Lexer.item vector StringMap.map ref
+      val count = ref 0
+      fun fileOf (path, mode) =
+        case Source.findFile path of
+          SOME f => f
+        | NONE => Source.load (mode, path) handle IO.Io _ => raise Options.Usage (Options.cannotRead path)
+      fun tokens (path, mode) =
+        case StringMap.find (!lexed, path) of
+          SOME toks => toks
+        | NONE => let val toks = Lexer.tokenize (fileOf (path, mode))
+                  in lexed := StringMap.insert (!lexed, path, toks); count := !count + Vector.length toks; toks end
+      (* a stage of --pass-stats, whose size is the tokens lexed *)
+      fun lexStage size f = Pass.stage {name = "lex", showIn = NONE, show = fn _ => "", check = fn _ => (), size = size} f ()
+      (* the fixity a program's files are read in: the initial basis's, and
+         what the libraries it sees export (docs/build.md) *)
+      fun fixityOf (libraries : string list) =
+        Fixity.extend (Fixity.initial, List.concat (List.map (fn dir => LibraryIndex.fixities {root = libRoot (), dir = dir}) libraries))
+      (* The input files: in whole, each read and lexed. In units, what each
+         is to the compile (LibraryIndex.programFacts), from the store where
+         its text and the fixity before it are what they were, and else read,
+         lexed and parsed, its tokens kept for its unit: a file the store
+         answers for is read only where its unit is compiled, or where a span
+         of another unit's names it (Source.fault). Not kept with --no-cache
+         or RUNE_WARM=off, nor where an editor's buffer stands for a file, nor
+         in a layer of the store; with --verify-cache each file is read, and
+         a kept one must be what reading it gives (docs/units.md, A warm
+         build) *)
+      val units = !Options.units
+      val keep = if not units then NONE
+                 else case UnitCache.directory () of
+                        SOME dir => if warmOn () andalso not (editorOverlays ()) andalso not (writesLayer ()) then SOME dir else NONE
+                      | NONE => NONE
+      val () = statMemo := Option.map (fn dir => UnitStore.memoAt (dir, UnitCache.configuration ())) keep
+      fun textHash (path, mode) =
+        let fun text () = #text (fileOf (path, mode))
+        in
+          case !statMemo of
+            SOME m => if StringMap.member (!Source.overlays, path) then UnitCache.sourceHash (text ())
+                      else (!Source.reading path; UnitStore.hashBy m (path, Source.modeName mode, text, UnitCache.sourceHash))
+          | NONE => UnitCache.sourceHash (text ())
+        end
+      val () =
+        if not (isSome keep) then ()
+        else
+          let val given = List.foldl (fn (p, m) => StringMap.insert (m, p, ())) StringMap.empty inputs
+          in Source.fault := (fn f => if StringMap.member (given, f) then ignore (Source.load (inputMode f, f)) handle IO.Io _ => () else ()) end
+      val whole = if units then []
+                  else lexStage (List.foldl (fn (toks, n) => n + Vector.length toks) 0)
+                                (fn () => List.map (fn p => tokens (p, inputMode p)) inputs)
+      val () =
+        if not units then ()
+        else
+          let
+            val (facts, wrong) =
+              lexStage (fn _ => !count) (fn () =>
+                LibraryIndex.programFacts
+                  {place = LibraryIndex.absolute (case !Options.build of SOME b => b | NONE => hd inputs),
+                   files = List.map (fn p => (p, inputMode p)) inputs,
+                   fixity = if taken = "none" then Fixity.initial
+                            else fixityOf (LibraryIndex.libraries (libRoot (), !Options.libraries))
+                                 handle BasisManifest.Usage why => raise Options.Usage why,
+                   store = keep, textHash = textHash, tokens = tokens, verify = UnitCache.verifying ()})
+          in
+            inputFacts := facts;
+            List.app (fn p => eprintln ("rune: " ^ p ^ ": what the store keeps of it for the plan is not what reading it gives"))
+                     wrong;
+            if List.null wrong then () else raise Reported
+          end
       val () = librariesScoped := BasisManifest.noScopes ""
       val () = libraryVirtuals := []
       val basis =
@@ -767,11 +834,10 @@ struct
                     (List.app (fn clash => Error.report ({file = getOpt (!Options.build, hd inputs), start = 0, stop = 0},
                                                          LibraryIndex.clashText (libRoot ()) clash)) found;
                      raise Reported)
-            (* the fixity a program's files are read in: the initial basis's,
-               and what the libraries it sees export (docs/build.md) *)
-            val imported = List.concat (List.map (fn (dir, _) => LibraryIndex.fixities {root = libRoot (), dir = dir}) (#libraries found))
-            val mentioned = CompilerPrelude.usedByAll (scopes, entries, inputs, userToks, Fixity.extend (Fixity.initial, imported))
-            val () = namesLoading := List.exists BasisManifest.namesLoading userToks
+            val mentioned =
+              if units then CompilerPrelude.namedBy (!inputFacts)
+              else CompilerPrelude.usedByAll (scopes, entries, inputs, whole, fixityOf (List.map #1 (#libraries found)))
+            val () = namesLoading := (if units then List.exists #loads (!inputFacts) else List.exists BasisManifest.namesLoading whole)
             fun tokens (e : entry) =
               let val toks = loadTokens (Source.Ascii, BasisManifest.path e)
               in if BasisManifest.namesLoading toks then namesLoading := true else (); toks end
@@ -785,14 +851,15 @@ struct
       then (List.app (fn e : entry => println (if inBasis e then #file e else BasisManifest.path e)) basis;
             OS.Process.success)
       else compileWith (List.filter (fn e : entry => #when e <> Final) basis,
-                        List.filter (fn e : entry => #when e = Final) basis, userToks, inputs)
+                        List.filter (fn e : entry => #when e = Final) basis,
+                        List.map (fn p => fn () => tokens (p, inputMode p)) inputs, inputs)
     end
 
   (* The front end and the back end are two functions, so that nothing of
      the first -- tokens, syntax, environment -- is still reachable, and
      copied by every collection, while the second runs: compileWith
      calls frontEnd and then hands its result on in a tail call. *)
-  and compileWith (args : entry list * entry list * Lexer.item vector list * string list) : OS.Process.status =
+  and compileWith (args : entry list * entry list * (unit -> Lexer.item vector) list * string list) : OS.Process.status =
     if !Options.units then compileUnits args
     else backEnd (#4 args, frontEnd args)
 
@@ -831,7 +898,7 @@ struct
          valOf (StringMap.find (!entryNames, BasisManifest.path e)), Source.Ascii)
       val () = List.app nameEntry basis
       val basisPart = List.map (fn e => file (e, inBasis e)) basis
-      val userPart = ListPair.map (fn (toks, name) => (name, fn () => toks, !Options.allowPrim,
+      val userPart = ListPair.map (fn (toks, name) => (name, toks, !Options.allowPrim,
                                                        Workspace.fresh (ranks, Workspace.name (logical, name)), inputMode name))
                                   (userToks, inputs)
       val () = List.app nameEntry final
@@ -944,7 +1011,7 @@ struct
          for its key, a span of another unit's code that names it loads it
          (Source.fault) *)
       val memo = case (lazyOn, cache) of
-                   (true, SOME (dir, config)) => SOME (UnitStore.memoAt (dir, config))
+                   (true, SOME (dir, config)) => SOME (case !statMemo of SOME m => m | NONE => UnitStore.memoAt (dir, config))
                  | _ => NONE
       fun sourceOf (name, mode) =
         case memo of
@@ -1487,8 +1554,9 @@ struct
                 apply (b0, deltaOf (b0, snap ()), SOME []); acc
               end
       (* -j N: the units before the final ones, each with what it declares
-         and uses -- a Basis file's by its index, a program's by Deps --
-         for Parallel to start children in an order that works *)
+         and uses -- a Basis file's by its index, a program's by what it is
+         (LibraryIndex.programFacts), read in the fixity before it -- for
+         Parallel to start children in an order that works *)
       val () =
         if !Options.jobs > 1 andalso isSome cache andalso not (UnitCache.verifying ())
            andalso not (!Options.typecheckOnly)
@@ -1499,10 +1567,8 @@ struct
                               (ident, #provides e, List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ()),
                                #when e = Always))
                            (basis, basisPart)
-            fun userUnit (name, _, _, ident, mode) =
-              let val f = Deps.analyse (name, syntaxOf (mode, name))
-              in (ident, List.map #2 (#declares f), List.map #2 (#uses f), not (List.null (#breaks f))) end
-              handle _ => (ident, [], [], true)
+            fun userUnit ((_, _, _, ident, _), {deps = f, ...} : LibraryIndex.facts) =
+              (ident, List.map #2 (#declares f), List.map #2 (#uses f), not (List.null (#breaks f)))
             val described = Vector.fromList (basisPart @ userPart)
             fun hasEntry i =
               case cache of
@@ -1522,7 +1588,7 @@ struct
                           SOME n => n | NONE => 16384
             fun worth i = let val (name, _, _, _, mode) = Vector.sub (described, i) in String.size (text (name, mode) ()) >= least end
           in
-            Parallel.start {units = basisUnits @ List.map userUnit userPart, jobs = !Options.jobs, hasEntry = hasEntry,
+            Parallel.start {units = basisUnits @ ListPair.map userUnit (userPart, !inputFacts), jobs = !Options.jobs, hasEntry = hasEntry,
                             worth = worth, explain = !Options.explainRebuild}
           end
         else ()
@@ -1531,7 +1597,7 @@ struct
         List.rev (finals (final,withDefaults (programPart (fn acc => elabSteps (!buildPlan,acc))) (libraries (basis,[]))))
         handle e => (Parallel.finish (); raise e)
       val () = Parallel.finish ()
-      val () = Option.app UnitStore.memoWrite memo
+      val () = Option.app UnitStore.memoWrite (case memo of SOME m => SOME m | NONE => !statMemo)
       val () = if !Pass.stats andalso lazyOn
                then TextIO.output (TextIO.stdErr, "warm: " ^ Int.toString (!UnitBasis.deferredCount) ^ " units taken without their basis, "
                                                   ^ Int.toString (!UnitBasis.lateCount) ^ " of them loaded later\n")
@@ -1698,7 +1764,7 @@ struct
                                val b = part (fn inside => inside)
                                val l = part not
                                val () = LibraryScope.program parsing
-                               val u = List.concat (List.map parseTokens userToks)
+                               val u = List.concat (List.map (fn toks => parseTokens (toks ())) userToks)
                                val finals = List.rev (LibraryScope.finals (parsing,entryGroups final,parsed,[]))
                                val () = finalSyntax := finals
                              in (b,l,u,List.concat (List.map #2 finals)) end)

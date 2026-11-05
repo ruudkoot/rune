@@ -101,7 +101,10 @@ stages of the pipeline above, the compile's stages are:
   loading it, and on `runevm` the bytecode and the compiler's top-level
   declarations;
 * `lex`, the input files read and lexed (their tokens), and `select`, the
-  files of the libraries they need chosen (those files);
+  files of the libraries they need chosen (those files); with `--units`,
+  `lex` is what each input is to the plan, taken from the store where its
+  text and the fixity before it are what they were and else read, lexed and
+  parsed (the tokens it lexed; [units.md](units.md), *A warm build*);
 * `index`, a library's index taken ([build.md](build.md), *A library's
   index*): its record read and held to its files, or the index made, and an
   index held again where a compile asks whether it is up to date; one taken

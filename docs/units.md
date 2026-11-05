@@ -804,6 +804,8 @@ DIR/                 .rune, or lib/cache, or --cache-dir's
                      (docs/language-server.md, The store)
   index/units/       each library's index, by its place, with what it was made
                      of (docs/build.md, A library's index)
+  plan/units/        what each file of a program is to its compile, by the
+                     program's place (A warm build, The plan)
 ```
 
 **Layers.** A compile writes one store, its *overlay*, and reads after it
@@ -886,10 +888,10 @@ it writes its sidecars there, never an entry
 ## A warm build
 
 A build whose units are all in the cache costs what reading them back costs
-(the build-system roadmap's D25 and M6). Four things keep that small, each
+(the build-system roadmap's D25 and M6). Five things keep that small, each
 with `--units` and a cache, and none in a key: a memo says that work need not
 be done again, and is believed only where every file it rests on has the stat
-it had or the bytes it had. `RUNE_WARM=off` turns all four off.
+it had or the bytes it had. `RUNE_WARM=off` turns all five off.
 
 **A unit taken without its basis.** An entry whose usages all hold by their
 binders, and whose basis names only units of the session, needs nothing of
@@ -944,6 +946,30 @@ warning given again -- loads it (`Source.fault`). A stat is what Rune's own
 too); a compiler built by another host has none,
 since MLKit's Basis Library has no `ctime`, and keeps and believes no memo:
 it reads every source and links every time.
+
+**The plan.** Before a unit is compiled, a build chooses the files of the
+Basis Library and of its libraries that its files name ([build.md](build.md),
+*A library's build file*), and `-j` orders its units by what each declares
+and uses (*Parallel builds*). Both ask what each file is, read in the fixity the files
+before it leave (*Well-formed units*), so a build read, lexed and parsed every
+file before it compiled one. What a file is -- what it declares and uses, the
+names the choice takes of it, the fixity directives it adds, whether it says
+the program loads units -- is kept in the store as a library's index keeps
+its files' ([build.md](build.md), *A library's index*), by the hash of its
+text (by the stat memo), its path, its mode, the fixity it is read in and
+`--or-patterns` (`LibraryIndex.programFacts`, `plan/` of the store, by the
+program's build file or first file). A file whose key is there is not read
+until its unit is compiled. So a build after an edit reads the file edited;
+after an edit of a fixity directive -- changed, added, removed, made
+`nonfix`, put in a `local` that drops it -- the files after it, whose fixity
+before them changed, and after one put in a `local` that keeps it the file
+alone, since what it leaves is what it left. A file whose text is the same
+but that is read in another fixity is read again: E15's plan memo kept a file
+by its text alone, and took a parse that had failed for one that now holds,
+or the other way about. Not with `--no-cache`, under `RUNE_WARM=off` or where
+an editor's buffer stands in for a file, nor in a layer of the store; with
+`--verify-cache` every file is read all the same, and one whose kept facts
+are not what reading it gives is an error.
 
 **An output.** What a build writes and reads again -- its program, and what
 a step made -- is held by its stat and by a copy of its bytes, which the
@@ -1006,7 +1032,8 @@ last unit costs 9% fewer VM instructions than before on `rune.build` and HOL4
 (the units before it taken without their bases; its view loads most of them),
 and a build that links keeps a copy of its output in the cache. `-j 4` makes
 a no-op of `rune.build` 0.229G, against 13.30G before, since it parses no
-input; a build that is not up to date still parses every input with `-j`.
+input; a build that is not up to date reads its inputs with `-j` for their
+keys, and parses those the plan does not know.
 
 `tests/runner/warmchecks.sml` (`make test-incremental`) holds the warm path to
 what a build without it gives: each unit of two projects compiled alone under
@@ -1273,7 +1300,8 @@ text is big enough to be worth a process (`RUNE_PARALLEL_MIN` bytes, 16384
 if not set). A unit the parent reaches and misses it compiles itself,
 unless a child has it, whose end it waits for. A unit needs the units
 before it that declare a name it uses (*The graph*; a Basis file by its
-index); a unit that is not well-formed, and an `always` file of the
+index, a program's by what it is to the plan, read in the fixity before it,
+*A warm build*); a unit that is not well-formed, and an `always` file of the
 Basis, is needed by every unit after it. `RUNE_PARALLEL_DEBUG` set prints
 each child's start and end.
 
