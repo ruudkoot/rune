@@ -31,7 +31,7 @@ modes still control literal semantics and representability.
 For a project, call `CompilerApi.Project.read` with the same compiler
 session, and the workspace `CompilerApi.Workspace.find` gives above its
 build, and supply its source occurrences in order, with matching modes
-and annotations. Group-discovery text must still match the captured plan.
+and annotations. The build files' text must still match the captured plan.
 The library validates these conditions instead of silently analyzing a
 different build. Project library headers supplement configured libraries.
 Library source is captured separately in `dependencies`.
@@ -225,8 +225,9 @@ state, and it remains usable after its owner closes.
 prefix and asks the compiler for the lexical environment at a byte cursor,
 or for members of a qualified structure path. Its frozen names, kinds,
 types and definition locations remain queryable after the context closes.
-The selected library plan is captured too: later manifest changes or
-deletion of the original library cannot change an old snapshot's query.
+The selected library plan is captured too: later changes to a library's
+build file or index, or deletion of the original library, cannot change an
+old snapshot's query.
 Whitespace between declarations sees only preceding bindings. An unfinished
 expression can use a bounded private syntax probe; probe facts and errors
 are never published as analysis of the original text. No mutable environment
@@ -247,7 +248,8 @@ diagnostics; recovery retains unfinished paths and variables. Completion queries
 read directory metadata using the session's library root and supplied path
 variables, preserve native filename bytes, and never execute a project.
 
-`buildLinks` expands complete source, included-build and cache paths through
+`buildLinks` expands complete source, included-build, friend, tool, input
+and output paths through
 the compiler's directory/variable expansion, and library targets use its actual
 library resolver. Unfinished quotes and unresolved variables are omitted.
 Returned targets retain read-path arcs and are not inspected on disk. The

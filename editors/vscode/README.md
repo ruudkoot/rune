@@ -39,9 +39,11 @@ directory as a file URI in workspace settings:
 
 On Windows use a URI such as `file:///C:/src/rune/lib`. In Remote WSL use
 the Linux path. Each workspace folder can select its own library root.
-Saved source changes are rechecked; after adding library files or changing
-the names they provide, run `make manifests` in the checkout. Compiler
-language and primitive changes may require an updated extension as well.
+Saved source changes are rechecked, and so is a library's index: it follows
+the library's `library.build` and files, so nothing needs running in the
+checkout after adding library files or changing the names they provide.
+Compiler language and primitive changes may require an updated extension as
+well.
 The Basis's own sources are checked through `basis/library.build` in their
 bootstrap environment, including their permitted primitive declarations.
 The extension's executable files remain separate from that checkout's

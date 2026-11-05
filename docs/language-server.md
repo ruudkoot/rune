@@ -104,10 +104,11 @@ not a request brought a token: *Status for a client that asks*, below.
 The background worker retains at most one diagnostic report cache, bounded
 to 4 MiB of encoded reports. Unchanged workspace polls reuse those JSON
 reports without retaining analysis snapshots or logging another sweep.
-Captured source/build content, relevant manifest content/existence, root
-build-file membership, settings and overlays guard reuse. Saved changes are
-detected even without a watched-file notification; previous result IDs still
-produce unchanged reports.
+Captured source/build content, the content or absence of each
+`library.build` above a source (whose index says what the source is to the
+libraries), root build-file membership, settings and overlays guard reuse.
+Saved changes are detected even without a watched-file notification;
+previous result IDs still produce unchanged reports.
 Acknowledged file watches let cached workspace polls skip content hashing
 for covered SML, signature and build files. Watch notifications
 invalidate those reports through the input generation. Coverage is trusted
@@ -279,7 +280,8 @@ are rejected. Build requests do not execute the project or fabricate SML
 semantic snapshots. Other semantic providers currently apply to SML sources.
 
 Clients supporting document links receive links for complete build references:
-sources, included build files, cache directories and installed libraries. Path
+sources, included build files, a header's friends, installed libraries, and a
+step's or a preprocessor's tool, inputs and outputs. Path
 variables and library directories follow the compiler's rules. Targets resolve
 on demand to native file URIs; a missing target fails explicitly. Resolution
 checks the original document revision, workspace generation and range. Tooltips
@@ -309,16 +311,16 @@ would otherwise repeat is memoised too.
 * **The plan.** Discovery and a check share a memo of a file's plan: the targets'
   membership, the file's configuration and its contexts. It holds while the
   workspace's settings, the set of open documents, the text of an open build
-  file or of a group's source, the files the plan read, the directories a build
+  file, the files the plan read, the directories a build
   is looked for in and the places a root file would be, all stand. What says
   that a file stands is the client's file events where it watches the file
   (*File events*, below), and elsewhere its stamp: its time, in whole seconds,
   and its size, so that nothing is memoised by its stamp of a file changed
   within three seconds of being read; it is read again at the next check. A
-  plan is made again on any other change, and an edit of a source that is not
-  a group's plans nothing. A plan reads from the disk only the builds that
-  changed: the text of each build read is kept while it stands, and taken
-  from there (*The scale target*, below).
+  plan is made again on any other change, and an edit of a source plans
+  nothing: a plan reads build files alone. A plan reads from the disk only
+  the builds that changed: the text of each build read is kept while it
+  stands, and taken from there (*The scale target*, below).
 * **Closed inputs.** Their text is kept while it stands, by the same rule; a
   source is re-indexed only where its text changed.
 * **Closed units.** Only the units of the open documents keep syntax, typing,
@@ -491,8 +493,9 @@ on 16 processors at a load of 12 to 14, the worker's heap at 512 MiB.
   owning library alone where those hold it, and the rest are not read: the
   answer is the one enrich and the choice of a context come to, which
   `bin/rune-lsp-contexts --owned` holds them to over every file of this
-  repository's builds, with every build a target and with none (712 of 850
-  files planned so, none different; the other 138 below). A build's
+  repository's builds, with every build a target and with none (734 of the
+  879 files of its 127 builds planned so, none different; the other 145
+  below). A build's
   text is kept while it stands and taken from there, so that a plan reads from
   the disk only the builds that changed; a path's key and a file's identity
   are kept too, the second while events vouch for it.
@@ -508,9 +511,9 @@ on 16 processors at a load of 12 to 14, the worker's heap at 512 MiB.
   it, or at every plan where no event can; a target's project is kept while
   every build it read has its text. A file not on the disk (one not saved yet)
   has no identity, and takes the whole way. `bin/rune-lsp-contexts --owned`
-  holds the index to enrich too: with every build a target, the 138 files the
+  holds the index to enrich too: with every build a target, the 145 files the
   owner does not settle are all planned by it, none differently; with none, 72,
-  and the other 66, which no root's build holds, go by discovery. Before it, such
+  and the other 73, which no root's build holds, go by discovery. Before it, such
   a file's plan at 100k files and 1000 builds took 558 s cold and 343-413 s
   after a change, in 2.8 GB; at 10k files and 100 builds, 5.7-8.2 s.
 * **An interface edit** elaborates the units whose usages it breaks and no
