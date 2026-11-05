@@ -335,13 +335,17 @@ struct
         fun errors reply=case V.array (V.field (reply,"reports")) of [] => [] | report::_ =>
           (case Json.member ("items",V.unjson (V.field (report,"report"))) of SOME (Json.Array items) => items | _ => [])
         fun messages reply=List.map (fn item => case Json.member ("message",item) of SOME (Json.String text) => text | _ => "") (errors reply)
+        (* a question of a check's snapshot, at a line and a character of a file *)
+        fun query (reply,method,name,line,character)=V.unjson (call [("op",V.Bytes "query"),("snapshot",V.field (reply,"snapshot")),
+          ("method",V.Bytes method),("params",V.json (Json.Object [("textDocument",Json.Object [("uri",Json.String (uri name))]),
+            ("position",Json.Object [("line",Json.int line),("character",Json.int character)])]))])
         fun clean dir=(List.app (fn entry => let val full=OS.Path.concat (dir,entry)
             in if OS.FileSys.isDir full then clean full else OS.FileSys.remove full end)
             (let val stream=OS.FileSys.openDir dir
                  fun all found=case OS.FileSys.readDir stream of NONE => found | SOME entry => all (entry::found)
              in all [] before OS.FileSys.closeDir stream end);OS.FileSys.rmDir dir) handle OS.SysErr _ => ()
         val result=(action {uri=uri,path=path,check=check,discover=discover,errors=errors,messages=messages,phases=phases,
-          workspaceDiagnostics=workspaceDiagnostics,watch=watch,changed=changed,old=old} handle error => (stop ();clean root;raise error))
+          workspaceDiagnostics=workspaceDiagnostics,watch=watch,changed=changed,old=old,query=query} handle error => (stop ();clean root;raise error))
     in stop ();clean root;result end
   fun kind reply=V.bytes (V.field (reply,"kind"))
   fun contextNames reply=List.map (fn context => V.bytes (V.field (context,"build"))) (V.array (V.field (reply,"contexts")))
@@ -498,6 +502,62 @@ struct
           (messages (check "tools/a/unbound.sml")))
         val broken=messages (check "tools/a/broken.sml")
     in Expect.that ("the nearest of two is taken, and analysis goes past an error",length broken=2) end)
+  (* A virtual library's client in five builds (D22; examples/virtual/table):
+     an implementation named in the build, two through libraries, whose
+     sources a library's build names ../../table.sml, and a plugin, which
+     declares the functor `_dynamic` in a file of its own. The client is
+     compiled against the signature alone in each, so nothing is asked, and
+     go-to-definition goes to the declaration of the context it is checked
+     in, never to an implementation. A virtual functor of another signature
+     is a real difference, and is asked about. *)
+  val keySig="signature KEY=sig type t val compare:t*t->order end\n"
+  val tableSig="signature TABLE=sig type key type 'a table val empty:'a table\n" ^
+    "  val insert:'a table*key*'a->'a table val size:'a table->int end\n"
+  val virtualTable="functor Table=_virtual (K:KEY):TABLE where type key=K.t\n"
+  fun implementation representation="_export functor Table (K:KEY):TABLE where type key=K.t=\nstruct\n" ^
+    "  type key=K.t\n  type 'a table=" ^ representation ^ "\n  val empty=[]\n  fun insert (t,k,v)=(k,v)::t\n  val size=List.length\nend\n"
+  val client="structure IntKey=struct type t=int val compare=Int.compare end\n" ^
+    "structure Squares=Table (IntKey)\nval squares=Squares.insert (Squares.empty,3,9)\nval count=Squares.size squares\n"
+  fun virtualLibrary ()=tree ([("rune.workspace","roots libraries end\n"),
+      ("key_sig.sml",keySig),("table_sig.sml",tableSig),("table.sml",virtualTable),
+      ("list.sml",implementation "(key*'a) list"),("tree.sml",implementation "(key*'a) list (* a tree, some day *)"),
+      ("dynamic.sml","functor Table=_dynamic \"table.rbu\" (K:KEY):TABLE where type key=K.t\n"),("main.sml",client),
+      ("list.build","key_sig.sml\ntable_sig.sml\nimplements Table = list.sml end\ntable.sml\nmain.sml\n"),
+      ("tree.build","key_sig.sml\ntable_sig.sml\nimplements Table = tree.sml end\ntable.sml\nmain.sml\n"),
+      ("dynamic.build","key_sig.sml\ntable_sig.sml\ndynamic.sml\nmain.sml\n"),
+      ("libraries/table/library.build","exports (signature KEY, signature TABLE, functor Table)\n" ^
+         "virtual (functor Table) in ../../table.sml\n../../key_sig.sml\n../../table_sig.sml\n../../table.sml\n"),
+      ("libraries/table-list/library.build","requires table end\nimplements (functor Table)\n../../list.sml\n"),
+      ("libraries/table-tree/library.build","requires table end\nimplements (functor Table)\n../../tree.sml\n"),
+      ("list-libraries.build","libraries table table-list end\nmain.sml\n"),
+      ("tree-libraries.build","libraries table table-tree end\nmain.sml\n"),
+      (* the same client of a virtual functor of two signatures *)
+      ("narrow.sml","functor Table=_virtual (K:KEY):TABLE\n"),
+      ("other.sml","structure Keys=struct type t=string val compare=String.compare end\nstructure Named=Table (Keys)\n"),
+      ("wide.build","key_sig.sml\ntable_sig.sml\ntable.sml\nother.sml\n"),
+      ("narrow.build","key_sig.sml\ntable_sig.sml\nnarrow.sml\nother.sml\n")],
+    fn {uri,discover,check,errors,messages,query,...} =>
+    let val found=discover "main.sml"
+        val ()=Expect.that ("a virtual library's client in five builds asks nothing: " ^ shown found,kind found="selected" andalso
+          contextNames found=List.map uri ["dynamic.build","list-libraries.build","list.build","tree-libraries.build","tree.build"])
+        val checked=check "main.sml"
+        val ()=Expect.that ("it checks: " ^ String.concatWith "; " (messages checked),null (errors checked))
+        (* Table (IntKey), on line 1, in the first context, the plugin's *)
+        fun definition (line,character)=case query (checked,"textDocument/definition","main.sml",line,character) of
+            Json.Array [target] => (case Json.member ("uri",target) of SOME (Json.String place) => place | _ => "")
+          | _ => ""
+        val ()=Expect.that ("go-to-definition on Table goes to the declaration the context has: " ^ definition (1,18),
+          definition (1,18)=uri "dynamic.sml")
+        val ()=Expect.that ("and go-to-implementation finds none",
+          query (checked,"textDocument/implementation","main.sml",1,18)=Json.Array [])
+        val hover=query (checked,"textDocument/hover","main.sml",2,5)
+        val ()=Expect.that ("hover gives the interface's type: " ^ Json.encode hover,
+          Json.member ("contents",hover)=SOME (Json.Object [("kind",Json.String "plaintext"),("value",Json.String "int Squares.table")])
+          orelse (case Json.member ("contents",hover) of SOME contents => Json.member ("value",contents)=SOME (Json.String "int Squares.table")
+                  | NONE => false))
+        val other=discover "other.sml"
+    in Expect.that ("a virtual functor of another signature is asked about: " ^ shown other,kind other="ambiguous" andalso
+         contextNames other=List.map uri ["narrow.build","wide.build"]) end)
 end
 structure RuneLspWorkerAnalysisTestMain=Main (struct
   val name="lsp-worker-analysis"
@@ -514,6 +574,7 @@ structure RuneLspWorkerAnalysisTestMain=Main (struct
     Test.it "implicit-library" RuneLspWorkerAnalysisTests.implicit,
     Test.it "plan-by-file-events" RuneLspWorkerAnalysisTests.planByEvents,
     Test.it "texts-past-file-events" RuneLspWorkerAnalysisTests.textsPastEvents,
-    Test.it "index-plans-as-enrich" RuneLspWorkerAnalysisTests.indexExact]
+    Test.it "index-plans-as-enrich" RuneLspWorkerAnalysisTests.indexExact,
+    Test.it "virtual-library-contexts" RuneLspWorkerAnalysisTests.virtualLibrary]
 end)
 val ()=RuneLspWorkerAnalysisTestMain.main ()
