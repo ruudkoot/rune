@@ -71,7 +71,7 @@ Decided, and being implemented on this branch. The owner took every recommendati
 | M17. Keeping what is computed | A | L | D27 | done; MLton's oracle moved to M18 |
 | M18. Sidecars and the shared layer | A | L | D1, D27 | done, lazy load included (M18b) |
 | M19. Contexts, and the end of the prompt | A | L | D26 | done |
-| M20. The target, in CI | A | M | D28 | not started |
+| M20. The target, in CI | A | M | D28 | done; an interface edit O(later units) |
 | M21. Functor signatures | S | L | D22 | done |
 | M22. Virtual libraries | S | M | D22 | done |
 | M23. Retire | | S | | not started |
@@ -174,6 +174,15 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
   - **Found and fixed:** a workspace whose root is the directory a compile runs in found no library; a `type` export of a datatype was refused as naming nothing, and the message now says a `type` export is an abbreviation's.
   - **Found, not fixed:** runedoc loses the comments and substructure claims of an exported `structure S = T` when `T` is private, since private modules are dropped before aliases are followed. No library of the tree has the pattern.
   - **Left:** rhc's named view `lib/compiler/mid.build` has not landed anywhere, so there is nothing to name.
+- **M20** (`845eebb9d`, `make check` 22,758 of 22,758). Its first run with M12 to M14 failed one test, below.
+  - **Planning reads only what changed.** A library's file is planned over its own library alone, from kept build texts and the client's file events, with stamps where events do not vouch. A file of no library is planned from an index of what each build names, by key and by file identity, held to the old way on every tracked build: of 879 files in 127 builds, 734 by their library and 145 by the index, the same, none different. At 100k files and 1000 builds (`--no-text`, 512 MiB): a library's file 15-92 ms after a change, a program's file 39-193 ms at the median by load, a memo hit 19-21 ms, cold 6.5-6.9 s, at most 161 MB live; before, 343-413 s a change in 2.8 GB. A program file's add and remove come near the 200 ms target on a busy machine, 227 ms once at load 12.6; the timing tier is nightly, and `make check` holds counts alone.
+  - **The caps are gone,** 10,000 inputs and 128 MiB; a job's deadline is a limit on silence, which progress extends. The 512 MiB worker heap stays.
+  - **D28's table at CI's sizes** (130,793 lines, 1,017 units, load 12-14): 0.33-0.39 KB a line resident; cold from a store 0.97-1.39 s in process, 2.5-3.7 s through the server; a leaf comment's p95 0.065-0.075 s, a body edit's 0.059-0.063 s; hover 7-18 ms. The fixture's generator is `tools/lsp/fixture.sml`, with a planning bench; `docs/language-server.md` states the target in place of the LSP plan's budgets.
+  - **Not met: an interface edit is O(later units), not O(clients).** A walk looks at a later unit's usages only where a unit before it bound a name they use and changed identity: a name added costs 120M VM instructions where it cost 350M, a constructor added 454M where 686M, HOL4's added name 190M where 359M. But every later unit is still taken again, at about 40k instructions each where it was 340k. O(clients) needs a walk that does not cut a later unit, so binders, the tables loaded by need, their order and a type's printing paths would change in the middle of it: *Later*.
+  - **Not built: entries on save** (D27 D). A build on save falls in the store's racy window, and a no-op holds only with a delayed whole build after every save, for one user.
+  - **Found and fixed:** M20's first skip of later usages was unsound after a plan change or a walk stopped by a failing unit; a test fails without the guard. The oracle wrote a check's time with `Real.toString`, which gives `3E~3` for 3 ms, and `Json.write` refuses that with `Domain`: about one run in 37 died. Times are now written in fixed notation (`tools/lsp/seconds.sml`), with a test. `tests/ffi/generator/repl-check.sml` and `tests/ffi/sdl/repl-check.sml`, older than this roadmap, write times the same way.
+  - **Found, not fixed, older than M20:** where a library's last module binds `M0_5` again (`structure M0_5 = M0_5`), after an edit and its restore 12 units keep a definition's place in the rebinding file where a fresh analysis has the original: 15 disagreements, each only a definition's place (`impl/bs-m20/scale/rebind.tsv`).
+  - **With M12 to M14:** the editor watches no MANIFEST. The scale fixture is a workspace whose programs name their libraries, and its `all.build` lists every library's files, so the tree stays one context of 1,017 units.
 
 ## Found while writing this roadmap
 
