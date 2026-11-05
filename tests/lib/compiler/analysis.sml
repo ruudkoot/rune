@@ -1050,6 +1050,24 @@ struct
                length found=4 andalso List.all (fn file => file="other.sml") found);
              A.close context end
     in run (NONE,false);run (NONE,true);run (SOME ["second.sml"],false);run (SOME ["second.sml"],true);C.close parent end
+  (* A constructor added to a datatype a signature in another unit
+     specifies is no alias moved: a client of the structure that names no
+     part of the datatype holds, and is not elaborated again (the corpora
+     tier found HOL4's Feedback edit elaborating 312 units where 204 broke) *)
+  fun addedConstructor () =
+    let val parent=compiler ()
+        val sigs=input ("sigs.sml","signature S=sig datatype t=A|B val f:int->int end\n","1")
+        val impl=input ("impl.sml","structure M:>S=struct datatype t=A|B fun f x=x+1 end\n","1")
+        val user=input ("user.sml","val y=M.f 1\n","1")
+        val context=A.create (parent,{context="added-constructor"})
+        val ()=A.focus (context,SOME ["impl.sml"])
+        val _=analyze (context,[sigs,impl,user])
+        val inputs=[around ("A|B","A|B|C") sigs,around ("A|B","A|B|C") impl,user]
+        val kept=analyze (context,inputs)
+    in check ("the two edited units are elaborated, and the client is not: " ^ Int.toString (#checked (A.work kept)),
+         #checked (A.work kept)=2 andalso #broken (A.route kept)=0);
+       check ("and it equals fresh",null (A.diagnostics kept) andalso sameUnits (kept,freshly (parent,inputs)));
+       A.close context;C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -1089,6 +1107,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "paths-kept-by-need" CompilerAnalysisTests.pathsKept,
      Test.it "virtual-library" CompilerAnalysisTests.virtualLibrary,
      Test.it "rebinding-removed" CompilerAnalysisTests.rebindingRemoved,
-     Test.it "alias-retargeted" CompilerAnalysisTests.realiased]
+     Test.it "alias-retargeted" CompilerAnalysisTests.realiased,
+     Test.it "constructor-added-moves-no-alias" CompilerAnalysisTests.addedConstructor]
 end)
 val ()=CompilerAnalysisTestMain.main ()
