@@ -118,7 +118,13 @@ after 256 walks: what the tables hold of units long replaced goes with it.
 Another unit's origin is held by reference: its kind and path in what that
 unit declares, resolved when it is read. So a span that moves under a unit
 reused as it stands does not leave the unit's bindings stale. The binding a
-client shows is the definition's now, as a fresh analysis would say.
+client shows is the definition's now, as a fresh analysis would say. A
+reference names the unit that bound the name, so a unit is taken by its usages
+only where each name is bound by the same unit as before, if at another
+identity: a usage that holds by its fingerprint where another unit binds the
+name now holds for a compile's code, but the unit's references go through a
+binding that may be gone (a rebinding, `structure M = M`, removed), and it is
+elaborated again.
 
 A query of the latest snapshot goes to its unit's place, and ends when that unit
 is elaborated: nothing after it is touched. A query of an older snapshot, or one

@@ -683,15 +683,33 @@ struct
           let val (lexemes,_,_)=CompilerSyntax.lexical {file=file,text=text,mode=mode,previous=NONE,change=NONE}
               val found=BasisManifest.namesOf (CompilerSyntax.tokens lexemes file,StringMap.empty)
           in viewed:=StringMap.insert (!viewed,file,(text,found));found end
-        (* the first usage that does not hold here: by a view of the names of
-           those that do not hold by their binder alone, where the world loads
-           by need *)
-        fun brokenHere usages=
-          if not lazyWorld orelse !envWhole orelse UnitBasis.exact usages then UnitBasis.broken usages else
+        (* A usage that holds by its fingerprint where the unit that bound its
+           name is gone and another unit binds it now holds for a compile's
+           code, not for an analysis's occurrences: they were resolved
+           through the binder the unit had (hold), whose binding may be gone
+           with it -- a rebinding, structure M = M, removed -- where a fresh
+           analysis resolves them through the binder there is. Such a unit is
+           elaborated again. One whose binder is the same unit at another
+           identity holds, its occurrences followed to that unit's
+           definitions as they are now (resolve) *)
+        fun movedBinder usages=Option.map #1 (List.find (fn (key,value) =>
+          let (* "IDENTITY FINGERPRINT": the identity, before the last space *)
+              fun last i=if i<0 then 0 else if String.sub (value,i)= #" " then i else last (i-1)
+              val was=UnitBasis.canonical (String.substring (value,0,last (size value-1)))
+              val now=UnitBasis.binderOfKey (UnitBasis.canonicalKey key)
+          in was<>now andalso UnitBasis.nameOfIdentity was<>UnitBasis.nameOfIdentity now end) usages)
+        (* the first usage that does not hold here, or whose binder another
+           unit is (movedBinder): none where each holds by its binder; by a
+           view of the names of those that do not, where the world loads by
+           need *)
+        fun brokenHere usages=if UnitBasis.exact usages then NONE else
+          case (if not lazyWorld orelse !envWhole then UnitBasis.broken usages else
             let val loose=List.filter (fn u => not (UnitBasis.exact [u])) usages
             in UnitBasis.position (needing (fn () => UnitBasis.lazyView (baseSigs,baseFuns,SOME (UnitBasis.namesOfKeys (List.map #1 loose)))),
                  !fixity);
-               UnitBasis.broken usages end
+               UnitBasis.broken usages end) of
+            NONE => movedBinder usages
+          | found => found
         (* a unit's notes: what it holds, else the store's, of its identity *)
         fun notesOf' (entry:entry,identity)=if #notes entry<>"" then SOME (#notes entry) else
           case storeDir of NONE => NONE | SOME dir => storedNotes (dir,hashOf (#file entry,#text entry),identity)

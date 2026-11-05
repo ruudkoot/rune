@@ -336,7 +336,11 @@ would otherwise repeat is memoised too.
   occurrences it reads.
 * **Bindings.** A definition in another unit is held by reference, resolved when
   it is read, so go-to-definition and a binding's identity are right under a unit
-  reused across a span that moved.
+  reused across a span that moved. A unit whose name is bound by another unit
+  than before, at the same fingerprint, is elaborated again, not reused: its
+  references went through the old binding, which may be gone, as where
+  `structure M = M` is added and removed (`tests/lsp/oracle/scale.tsv`,
+  `mid-rebind`).
 
 Through the real server at the 512 MiB heap, from the client's side, a pull
 of diagnostics after each edit (`bin/rune-lsp-replay`, 20 comments or 8 body edits,

@@ -985,6 +985,39 @@ struct
     in check ("a client's error is the same in each build: " ^ String.concatWith "; " (List.concat wrong),
          not (null (hd wrong)) andalso List.all (fn errors => errors=hd wrong) wrong);
        C.close parent end
+  (* A rebinding removed (the build-system roadmap's M20, rebind.tsv): a unit
+     binds M again, structure M=M, and the edit is undone. The units after it
+     that name M hold by their usages, an alias being its original to a
+     fingerprint, but their occurrences were resolved through the rebinding,
+     whose binding is gone: they say what a fresh analysis says, the
+     original's place, open or closed, by need or not *)
+  fun rebindingRemoved () =
+    let val parent=compiler ()
+        val first=input ("first.sml","structure M=struct val x=1 end\n","1")
+        val second=input ("second.sml","val other=2\n","1")
+        val user=input ("user.sml","val y=M.x\nstructure N=M\n","1")
+        val later=input ("later.sml","val z=N.x+y\n","1")
+        val rebound=edited (second,"val other=2\nstructure M=M\n")
+        fun run (focus,lazy)=
+          let val context=A.create (parent,{context="rebind"})
+              val ()=A.focus (context,focus)
+              val ()=A.lazy (context,lazy)
+              val how=(case focus of NONE => "open" | SOME _ => "closed") ^ (if lazy then ", by need" else "")
+              fun step (label,inputs)=
+                let val kept=analyze (context,inputs)
+                in check (label ^ " (" ^ how ^ ") equals fresh",null (A.diagnostics kept) andalso sameUnits (kept,freshly (parent,inputs)))
+                end
+              fun placeOfM snapshot=List.mapPartial (fn occurrence:A.occurrence =>
+                if #kind occurrence="structure" andalso #name occurrence="M" andalso #path occurrence=[] andalso not (#isDefinition occurrence)
+                then Option.map #file (#definition occurrence) else NONE) (A.occurrencesIn (snapshot,"user.sml"))
+          in step ("cold",[first,second,user,later]);
+             step ("M bound again",[first,rebound,user,later]);
+             step ("and the rebinding removed",[first,second,user,later]);
+             let val found=placeOfM (analyze (context,[first,second,user,later]))
+             in check ("user's M is first's again (" ^ how ^ "): " ^ String.concatWith " " found,
+                  not (null found) andalso List.all (fn file => file="first.sml") found) end;
+             A.close context end
+    in run (NONE,false);run (NONE,true);run (SOME ["second.sml"],false);run (SOME ["second.sml"],true);C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -1022,6 +1055,7 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "overloadings-by-need" CompilerAnalysisTests.overloadings,
      Test.it "refused-view" CompilerAnalysisTests.refusedView,
      Test.it "paths-kept-by-need" CompilerAnalysisTests.pathsKept,
-     Test.it "virtual-library" CompilerAnalysisTests.virtualLibrary]
+     Test.it "virtual-library" CompilerAnalysisTests.virtualLibrary,
+     Test.it "rebinding-removed" CompilerAnalysisTests.rebindingRemoved]
 end)
 val ()=CompilerAnalysisTestMain.main ()
