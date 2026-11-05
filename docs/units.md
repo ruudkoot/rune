@@ -1037,12 +1037,40 @@ a no-op of `rune.build` 0.229G, against 13.30G before, since it parses no
 input; a build that is not up to date reads its inputs with `-j` for their
 keys, and parses those the plan does not know.
 
+What a leaf pays (the build-system work F2, against the compiler before it
+kept a plan, `a8d450357`; machine instructions and the VM's as above): an edit
+of a function's body in one of a program's last units, built warm, one unit
+compiled, the bytes of `--no-cache`:
+
+| Build | Before | Leaf | VM, before | VM, leaf |
+|---|---:|---:|---:|---:|
+| `rune.build`, `src/driver/main.sml` | 12.83G | 11.08G (-13.6%) | 1,175.5M | 989.9M (-15.8%) |
+| HOL4's closure, `patternMatchesLib.sml` | 27.06G | 20.61G (-23.8%) | 2,629.7M | 2,049.8M (-22.1%) |
+| MLton, `elaborate-core.fun` | 31.53G | 28.18G (-10.6%) | 3,495.0M | 2,949.8M (-15.6%) |
+
+The plan reads the file edited and no other: on MLton 18,967 tokens where it
+lexed 908,931, about 1% of the leaf's processor time where lexing and choosing
+were 13% (`--pass-stats`, the JIT off). What is left is the link and the unit:
+each unit's code decoded and the program linked again (`cache-code` and
+`link`, 41% on MLton), each unit's entry found (`cache-find`, 15%), the unit
+compiled, and the work outside the stages (planning, the up-to-date check and
+its record, 16%). So MLton's leaf is 30-31% of what it was before the build-system
+roadmap, not the 25% E15's prototypes gave a compiler of then; a link that
+decodes and links only what changed is the next floor (D25). A build that
+keeps a plan parses each file once more to make it: a cold build costs 1.6%
+more VM instructions on `rune.build` and 1.2% on HOL4's closure. A no-op, and
+a build with `--no-cache`, run the VM instructions they did, within 0.1%; a
+compiler 0.35% larger to start costs each 0.2-0.3% more machine instructions.
+
 `tests/runner/warmchecks.sml` (`make test-incremental`) holds the warm path to
 what a build without it gives: each unit of two projects compiled alone under
 its view and under the mask of its usages while the others are taken without
 their bases ([testing.md](testing.md), *The checks of the cache*), E15's racy edits, and a compile that is up to
 date against a touch, an edit, the output removed and overwritten, and a
-`library.build` that makes a unit another library's.
+`library.build` that makes a unit another library's; and the plan
+(`warm-plan`), which a build after each edit -- of a comment, of a fixity
+directive changed, added, removed, made `nonfix` or put in a `local` -- reads
+as the edit says, and `--verify-cache` holds to the files' texts.
 
 ## The graph
 
