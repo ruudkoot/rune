@@ -567,8 +567,8 @@ every timing is (`docs/testing.md`), holds the times: a plan of either file at
 most 200 ms at the median of five, a leaf comment's p95 at most 250 ms and hover's 50 ms
 through the server (`bin/rune-lsp-replay --limit`), and cold from the store
 within 2 s. `make test-lsp-scale-oracle`, nightly, holds the kept analysis to
-a fresh one on every unit of the 130k-line build after each edit: 24 checks,
-no disagreement, about nine minutes, which `make test-lsp-oracle` does on
+a fresh one on every unit of the 130k-line build after each edit: 27 checks,
+no disagreement, nine to twelve minutes, which `make test-lsp-oracle` does on
 the compiler's own build in `make check`.
 
 ### File events
