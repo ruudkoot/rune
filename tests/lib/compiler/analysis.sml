@@ -942,6 +942,132 @@ struct
          #checked (A.work byNeed)= #checked (A.work whole));
        check ("and equals fresh",sameUnits (byNeed,freshly (parent,inputs)));
        C.close parent end
+  (* A virtual library's client (the build-system roadmap's D22,
+     examples/virtual/table): in each of its five builds the client's Table
+     is the virtual functor's declaration the build has, table.sml's
+     `_virtual`, through a library or not, or a plugin's `_dynamic`, and never
+     an implementation, which the client is not compiled against; and it
+     types and fails alike in each *)
+  fun virtualLibrary () =
+    let val parent=C.session {lib=SOME "lib",flags=[]}
+        val dir="examples/virtual/table"
+        fun read file=let val stream=TextIO.openIn file in TextIO.inputAll stream before TextIO.closeIn stream end
+        val main=dir ^ "/main.sml"
+        val text=read main
+        fun offset (pattern,shift)=Substring.size (#1 (Substring.position pattern (Substring.full text)))+shift
+        fun checked (build,client)=
+          let val path=dir ^ "/" ^ build
+              val project=C.Project.read (parent,{file=path,workspace=C.Workspace.find {file=path,windows=false},
+                variables=[],overlays=[],windows=false})
+              val inputs=List.map (fn source:C.Project.source => {file= #file source,mode= #mode source,annotations= #annotations source,
+                revision="1",text=if OS.FileSys.fullPath (#file source)=OS.FileSys.fullPath main then client else read (#file source)}:A.input)
+                (C.Project.sources project)
+              val context=A.create (parent,{context=build})
+              val snapshot=A.check (context,{project=SOME project,inputs=inputs,cancelled=fn () => false})
+              val ordinal=length inputs-1
+              val unit=valOf (A.unitAt (snapshot,{ordinal=ordinal}))
+              val tables=List.filter (fn occurrence:A.occurrence => #kind occurrence="functor" andalso #name occurrence="Table")
+                (A.occurrencesIn (snapshot,unit))
+              val places=List.map (fn occurrence:A.occurrence => case #definition occurrence of
+                  SOME {file,...} => OS.Path.file (OS.FileSys.fullPath file) | NONE => "-") tables
+              val typed=A.typeAtOccurrence (snapshot,{ordinal=ordinal,offset=offset ("val squares",5)})
+              val errors=List.map #message (A.diagnostics snapshot)
+          in A.close context;{places=places,typed=typed,errors=errors} end
+        val builds=["list.build","tree.build","list-libraries.build","tree-libraries.build","dynamic.build"]
+        val clean=List.map (fn build => (build,checked (build,text))) builds
+        val ()=List.app (fn (build,{places,typed,errors}) =>
+          let val declared=if build="dynamic.build" then "dynamic.sml" else "table.sml"
+          in check (build ^ ": the client checks",null errors);
+             check (build ^ ": Table is the declaration of " ^ declared ^ ": " ^ String.concatWith " " places,
+               length places=2 andalso List.all (fn place => place=declared) places);
+             check (build ^ ": a hover's type is the interface's: " ^ getOpt (typed,"none"),typed=SOME "int Squares.table") end) clean
+        val wrong=List.map (fn build => #errors (checked (build,text ^ "val wrong : string = Squares.size squares\n"))) builds
+    in check ("a client's error is the same in each build: " ^ String.concatWith "; " (List.concat wrong),
+         not (null (hd wrong)) andalso List.all (fn errors => errors=hd wrong) wrong);
+       C.close parent end
+  (* A rebinding removed (the build-system roadmap's M20, rebind.tsv): a unit
+     binds M again, structure M=M, and the edit is undone. The units after it
+     that name M hold by their usages, an alias being its original to a
+     fingerprint, but their occurrences were resolved through the rebinding,
+     whose binding is gone: they say what a fresh analysis says, the
+     original's place, open or closed, by need or not *)
+  fun rebindingRemoved () =
+    let val parent=compiler ()
+        val first=input ("first.sml","structure M=struct val x=1 end\n","1")
+        val second=input ("second.sml","val other=2\n","1")
+        val user=input ("user.sml","val y=M.x\nstructure N=M\n","1")
+        val later=input ("later.sml","val z=N.x+y\n","1")
+        val rebound=edited (second,"val other=2\nstructure M=M\n")
+        fun run (focus,lazy)=
+          let val context=A.create (parent,{context="rebind"})
+              val ()=A.focus (context,focus)
+              val ()=A.lazy (context,lazy)
+              val how=(case focus of NONE => "open" | SOME _ => "closed") ^ (if lazy then ", by need" else "")
+              fun step (label,inputs)=
+                let val kept=analyze (context,inputs)
+                in check (label ^ " (" ^ how ^ ") equals fresh",null (A.diagnostics kept) andalso sameUnits (kept,freshly (parent,inputs)))
+                end
+              fun placeOfM snapshot=List.mapPartial (fn occurrence:A.occurrence =>
+                if #kind occurrence="structure" andalso #name occurrence="M" andalso #path occurrence=[] andalso not (#isDefinition occurrence)
+                then Option.map #file (#definition occurrence) else NONE) (A.occurrencesIn (snapshot,"user.sml"))
+          in step ("cold",[first,second,user,later]);
+             step ("M bound again",[first,rebound,user,later]);
+             step ("and the rebinding removed",[first,second,user,later]);
+             let val found=placeOfM (analyze (context,[first,second,user,later]))
+             in check ("user's M is first's again (" ^ how ^ "): " ^ String.concatWith " " found,
+                  not (null found) andalso List.all (fn file => file="first.sml") found) end;
+             A.close context end
+    in run (NONE,false);run (NONE,true);run (SOME ["second.sml"],false);run (SOME ["second.sml"],true);C.close parent end
+  (* An alias retargeted at one identity: structure A=B made structure A=C,
+     B and C of one static interface in other units. The unit's identity
+     stands, but a client's A.x is C's x now, and so is the x of D=A in
+     that client and of D.x in a unit after it, as a fresh analysis says,
+     open or closed, by need or not *)
+  fun realiased () =
+    let val parent=compiler ()
+        val first=input ("first.sml","structure B=struct val x=1 end\n","1")
+        val other=input ("other.sml","structure C=struct val x=2 end\n","1")
+        val second=input ("second.sml","structure A=B\n","1")
+        val user=input ("user.sml","val y=A.x\nstructure D=A\nval z=D.x\n","1")
+        val later=input ("later.sml","val w=y+z+A.x+D.x\n","1")
+        val retargeted=edited (second,"structure A=C\n")
+        fun run (focus,lazy)=
+          let val context=A.create (parent,{context="realiased"})
+              val ()=A.focus (context,focus)
+              val ()=A.lazy (context,lazy)
+              val how=(case focus of NONE => "open" | SOME _ => "closed") ^ (if lazy then ", by need" else "")
+              fun step (label,inputs)=
+                let val kept=analyze (context,inputs)
+                in check (label ^ " (" ^ how ^ ") equals fresh",null (A.diagnostics kept) andalso sameUnits (kept,freshly (parent,inputs)));
+                   kept end
+              fun xs (snapshot,unit)=List.mapPartial (fn occurrence:A.occurrence =>
+                if #kind occurrence="value" andalso #name occurrence="x" then Option.map #file (#definition occurrence) else NONE)
+                (A.occurrencesIn (snapshot,unit))
+              val _=step ("cold",[first,other,second,user,later])
+              val moved=step ("A made C",[first,other,retargeted,user,later])
+              val found=xs (moved,"user.sml") @ xs (moved,"later.sml")
+          in check ("A.x and D.x are C's x (" ^ how ^ "): " ^ String.concatWith " " found,
+               length found=4 andalso List.all (fn file => file="other.sml") found);
+             A.close context end
+    in run (NONE,false);run (NONE,true);run (SOME ["second.sml"],false);run (SOME ["second.sml"],true);C.close parent end
+  (* A constructor added to a datatype a signature in another unit
+     specifies is no alias moved: a client of the structure that names no
+     part of the datatype holds, and is not elaborated again (the corpora
+     tier found HOL4's Feedback edit elaborating 312 units where 204 broke) *)
+  fun addedConstructor () =
+    let val parent=compiler ()
+        val sigs=input ("sigs.sml","signature S=sig datatype t=A|B val f:int->int end\n","1")
+        val impl=input ("impl.sml","structure M:>S=struct datatype t=A|B fun f x=x+1 end\n","1")
+        val user=input ("user.sml","val y=M.f 1\n","1")
+        val context=A.create (parent,{context="added-constructor"})
+        val ()=A.focus (context,SOME ["impl.sml"])
+        val _=analyze (context,[sigs,impl,user])
+        val inputs=[around ("A|B","A|B|C") sigs,around ("A|B","A|B|C") impl,user]
+        val kept=analyze (context,inputs)
+    in check ("the two edited units are elaborated, and the client is not: " ^ Int.toString (#checked (A.work kept)),
+         #checked (A.work kept)=2 andalso #broken (A.route kept)=0);
+       check ("and it equals fresh",null (A.diagnostics kept) andalso sameUnits (kept,freshly (parent,inputs)));
+       A.close context;C.close parent end
 end
 structure CompilerAnalysisTestMain=Main (struct
   val name="compiler-analysis"
@@ -978,6 +1104,10 @@ structure CompilerAnalysisTestMain=Main (struct
      Test.it "two-builds-share-a-library" CompilerAnalysisTests.sharedLibrary,
      Test.it "overloadings-by-need" CompilerAnalysisTests.overloadings,
      Test.it "refused-view" CompilerAnalysisTests.refusedView,
-     Test.it "paths-kept-by-need" CompilerAnalysisTests.pathsKept]
+     Test.it "paths-kept-by-need" CompilerAnalysisTests.pathsKept,
+     Test.it "virtual-library" CompilerAnalysisTests.virtualLibrary,
+     Test.it "rebinding-removed" CompilerAnalysisTests.rebindingRemoved,
+     Test.it "alias-retargeted" CompilerAnalysisTests.realiased,
+     Test.it "constructor-added-moves-no-alias" CompilerAnalysisTests.addedConstructor]
 end)
 val ()=CompilerAnalysisTestMain.main ()

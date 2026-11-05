@@ -222,16 +222,22 @@ struct
         val tokens=(pieces,Vector.fromList pieces)
     in #tokens source:=SOME tokens;tokens end
   fun tokens source = #1 (tokenData source)
-  fun piecesWithin (source,start,stop) =
+  (* the pieces from start to stop, those wanted, at most limit of them *)
+  fun piecesWhere (source,start,stop,wanted,limit) =
     let val pieces= #2 (tokenData source)
         val count=Vector.length pieces
         fun lower (lo,hi)=if lo>=hi then lo else
           let val mid=lo+(hi-lo) div 2
           in if #start (Vector.sub (pieces,mid))<start then lower (mid+1,hi) else lower (lo,mid) end
-        fun collect (at,kept)=if at=count then List.rev kept else
+        fun collect (at,n,kept)=if at=count orelse n=limit then List.rev kept else
           let val piece=Vector.sub (pieces,at)
-          in if #start piece>=stop then List.rev kept else collect (at+1,piece::kept) end
-    in collect (lower (0,count),[]) end
+          in if #start piece>=stop then List.rev kept
+             else if wanted piece then collect (at+1,n+1,piece::kept) else collect (at+1,n,kept) end
+    in collect (lower (0,count),0,[]) end
+  fun piecesWithin (source,start,stop)=piecesWhere (source,start,stop,fn _ => true,~1)
+  (* the words from start to stop: no white space, no comment *)
+  fun wordsWithin (source,start,stop,limit)=piecesWhere (source,start,stop,
+    fn piece:C.Syntax.piece => #kind piece<>"whitespace" andalso #kind piece<>"comment",limit)
   fun identifier (piece:C.Syntax.piece)=List.exists (fn kind => kind= #kind piece) ["identifier","operator","typeVariable"]
   fun selectionCandidates (source:source,occurrence:A.occurrence) =
     let val wanted= #path occurrence @ [#name occurrence]
@@ -609,12 +615,39 @@ struct
   fun meaning (platform,view:view) =
     case #activeUnit view of NONE => NONE | SOME unit =>
       if not (isSome (A.versionOf (#snapshot view,unit))) then NONE else
-      let fun place NONE="-"
-            | place (SOME ({file,start,stop}:A.location))=W.pathKey platform file ^ ":" ^ Int.toString start ^ ":" ^ Int.toString stop
+      let (* a place by the file go-to-definition opens (location), so that
+             one file spelt two ways is one place: a library's sources are
+             named from its build, libraries/table/../../table.sml *)
+          val opened=W.table 64
+          fun fileOf file=case W.lookup (opened,file) of SOME found => found | NONE =>
+            let val found=case sourceFor (view,file) of SOME source => #uri source | NONE => W.pathKey platform file
+            in W.add (opened,file,found);found end
+          fun at ({file,start,stop}:A.location)=fileOf file ^ ":" ^ Int.toString start ^ ":" ^ Int.toString stop
+          fun place NONE="-" | place (SOME location)=at location
+          (* A module a virtual module's declaration binds, `F = _virtual
+             (X : A) : B` or `F = _dynamic "path" (X : A) : B`, and the
+             same of a structure (D22): its clients are compiled against
+             its signature alone, whichever file a build declares it in, and
+             one build may declare it as a plugin where another names an
+             implementation. So it is that signature, resolved, that is
+             compared, as the file's unit was typed against it
+             (A.interfaceOf), and not the declaration's place; where the
+             unit's usages hold none, the place is compared after all *)
+          fun virtualAt ({file,start,stop}:A.location)=case sourceFor (view,file) of NONE => false | SOME source =>
+            case wordsWithin (source,start,stop,3) of
+              [_,{text="=",...},{text="_virtual",...}] => true
+            | [_,{text="=",...},{text="_dynamic",...}] => true
+            | _ => false
+          fun module (occurrence:A.occurrence,location)=
+            if #kind occurrence<>"functor" andalso #kind occurrence<>"structure" then place location else
+            case location of NONE => "-" | SOME location =>
+              if not (virtualAt location) then at location else
+                case A.interfaceOf (#snapshot view,occurrence) of SOME interface => "virtual " ^ interface | NONE => at location
           val file=case activeSource (view,#uri view) of SOME source => #file source | NONE => ""
           val uses=List.map (fn occurrence:A.occurrence => String.concatWith "|" [#kind occurrence,
             String.concatWith "." (#path occurrence @ [#name occurrence]),Int.toString (#start occurrence),Int.toString (#stop occurrence),
-            place (#definition occurrence),place (#declaration occurrence),Bool.toString (#isDefinition occurrence)])
+            module (occurrence,#definition occurrence),module (occurrence,#declaration occurrence),
+            Bool.toString (#isDefinition occurrence)])
             (ownOccurrences view)
           val errors=List.mapPartial (fn diagnostic:C.diagnostic => if #file diagnostic<>file then NONE else
             SOME (String.concatWith "|" [Int.toString (#start diagnostic),Int.toString (#stop diagnostic),#message diagnostic]))

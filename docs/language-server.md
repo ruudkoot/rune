@@ -336,7 +336,15 @@ would otherwise repeat is memoised too.
   occurrences it reads.
 * **Bindings.** A definition in another unit is held by reference, resolved when
   it is read, so go-to-definition and a binding's identity are right under a unit
-  reused across a span that moved.
+  reused across a span that moved. A unit whose name is bound by another unit
+  than before, at the same fingerprint, is elaborated again, not reused: its
+  references went through the old binding, which may be gone, as where
+  `structure M = M` is added and removed (`tests/lsp/oracle/scale.tsv`,
+  `mid-rebind`). Nor is a unit that uses a name another unit now defines
+  through another definition, its identity standing: `structure A = B` made
+  `structure A = C`, of one interface (`mid-realias`). That unit is loaded as
+  it is now and a walk follows it, and the units that use such a name are
+  elaborated again, an alias of it among theirs in turn.
 
 Through the real server at the 512 MiB heap, from the client's side, a pull
 of diagnostics after each edit (`bin/rune-lsp-replay`, 20 comments or 8 body edits,
@@ -559,8 +567,8 @@ every timing is (`docs/testing.md`), holds the times: a plan of either file at
 most 200 ms at the median of five, a leaf comment's p95 at most 250 ms and hover's 50 ms
 through the server (`bin/rune-lsp-replay --limit`), and cold from the store
 within 2 s. `make test-lsp-scale-oracle`, nightly, holds the kept analysis to
-a fresh one on every unit of the 130k-line build after each edit: 20 checks,
-no disagreement, about twelve minutes, which `make test-lsp-oracle` does on
+a fresh one on every unit of the 130k-line build after each edit: 27 checks,
+no disagreement, nine to twelve minutes, which `make test-lsp-oracle` does on
 the compiler's own build in `make check`.
 
 ### File events
@@ -645,13 +653,35 @@ choice is asked for only where its contexts really differ.
   is dropped. The rest are compared by what each occurrence of the file's names
   resolves to, the place of its definition and its declaration, by paths whole,
   and by the file's own errors, never by a printed type, which depends on what
-  was selected (`SML90.instream` or `TextIO.instream`). Where they agree the file
-  is checked in the first, and nothing is asked; the file still has them all, and
-  a client that asks can choose another (*Status for a client that asks*). The
-  comparison is made once while the file's plan holds, and its first discovery
-  pays a check of each context: in this repository, 9.9 s for
-  `build/config.sml`, in five builds, and 7.3 s for `src/isa/isa.sml`, in three
-  (2026-11-05, at a load of 3).
+  was selected (`SML90.instream` or `TextIO.instream`). A place is the file
+  go-to-definition opens, so that one file named two ways is one place: a
+  library's build names its sources from its own directory,
+  `libraries/table/../../table.sml`, where a program's build names `table.sml`.
+  A virtual module's name, one a `_virtual` or a `_dynamic` declaration binds
+  (*A virtual module*, below), is compared by the signature it resolves to, as
+  the file's unit was typed against it (the fingerprint its usage of the name
+  holds, `CompilerApi.Analysis.interfaceOf`), and not by the declaration's
+  place or how it is spelt; this reads what each check kept, and costs no
+  check more. Where they agree the
+  file is checked in the first, and nothing is asked; the file still has them
+  all, and a client that asks can choose another (*Status for a client that
+  asks*). The comparison is made once while the file's plan holds, and its first
+  discovery pays a check of each context: in this repository, 10 to 12 s for
+  `build/config.sml`, in five builds, and 5 to 6 s for `src/isa/isa.sml`, in
+  three (2026-11-05, at a load of 1 to 3).
+* **A virtual module.** A client of a virtual module ([build.md](build.md),
+  *Virtual libraries*) is compiled against its signature alone, whichever
+  implementation a build names or a plugin gives, and a build that names
+  another implementation compiles none of the client's units again: so its
+  builds are compared as above, and agree.
+  Go-to-definition on the module's name in the client goes to the declaration
+  the client is compiled against, in the context the file is checked in: the
+  `_virtual` declaration, a program's own or a virtual library's, or a plugin
+  build's `_dynamic` one. It never goes to an implementation, which no client's
+  code reaches, and go-to-implementation finds none. Two builds that declare it
+  with one signature agree however they spell it, another parameter's name or
+  another name of the signature; where the signature is another, even with one
+  text whose names name other signatures, the choice is asked for.
 * **A real choice.** Where they differ, the server requests a context choice,
   of those that reach the file; it does not select by enumeration order. A
   configured target name or the returned context identifier can also select one.
@@ -666,9 +696,10 @@ choice is asked for only where its contexts really differ.
 In this repository (`tools/lsp/contexts.sml --builds`, the 880 sources of the
 113 of its 127 builds that the server can read as they stand, as a client
 whose folder is its root sees them), 739 files are a library's, 24 have several
-contexts, and 2 ask for a choice: `tests/ffi/win32/native/config.sml`, whose
-builds are for 32 and 64 bits, and `examples/virtual/table/main.sml`, whose five
-builds give the virtual functor `Table` different implementations. A sweep
+contexts, and 1 asks for a choice: `tests/ffi/win32/native/config.sml`, whose
+builds are for 32 and 64 bits. `examples/virtual/table/main.sml`, the client of
+the virtual functor `Table` in five builds, asked too, until places were
+compared by the file they open and a virtual module by its signature. A sweep
 covers all 154 files the root's targets hold. When these rules came, on the 834
 sources of 76 readable builds, the prompts fell from 124 to 1, and a sweep from
 153 of 220 files to 220.

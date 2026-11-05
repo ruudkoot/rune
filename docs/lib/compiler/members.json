@@ -706,6 +706,13 @@
     },
     {
      "kind": "val",
+     "name": "Analysis.interfaceOf",
+     "spec": "val interfaceOf : snapshot * occurrence -> string option",
+     "doc": "`interfaceOf (snapshot, occurrence)` says what the occurrence's unit was\ntyped against by its name.\n\nIt is the fingerprint the unit's usage of the name holds, which a\ncompile's cache holds the unit to (docs/units.md, The cache): two\nsnapshots give one where the name means the same to the unit, whichever\nunit declares it, as a virtual module's `_virtual` or `_dynamic`\ndeclaration in any file. NONE where the unit did not use the name as\nits session's, or no fingerprint covers it.\n\n",
+     "page": "sig/COMPILER_API.md#val-analysis.interfaceof"
+    },
+    {
+     "kind": "val",
      "name": "Analysis.types",
      "spec": "val types : snapshot -> typeDefinition list",
      "doc": "`types snapshot` returns semantic constructor identities and sources.\n\n",
