@@ -476,11 +476,13 @@ sources alone), and a build of 130,793 lines in 1,017 units with its 10 builds
 (`libraries NAME`, under the tree's `rune.workspace`), and the whole tree's
 build has every library's files as its own, in load order, so that its context
 is all 1,017 units. Times are 2026-11-04's, two runs,
-on 16 processors at a load of 12 to 14, the worker's heap at 512 MiB.
+on 16 processors at a load of 12 to 14, the worker's heap at 512 MiB; the
+planning row's are 2026-11-05's, on the build-system roadmap's last commit,
+two runs at a load of 1.5 to 3.3.
 
 | Scope | Target | Measured |
 |---|---|---|
-| A workspace: 10M lines, 100k files, 1000 builds, each a target | Planning a check at most 200 ms, reading no build outside the changed set | After a change, reading the changed build alone: a file of a library 0.02-0.14 s, a program's own file 0.06-0.17 s (medians). With no build changed, its memo, 5-34 ms. The first plan, 0.1-0.6 s, a program's 6.5 s. 161 MB live at most, in the worker's 512 MiB |
+| A workspace: 10M lines, 100k files, 1000 builds, each a target | Planning a check at most 200 ms, reading no build outside the changed set | After a change, reading the changed build alone: a file of a library 18-32 ms, a program's own file 33-65 ms (medians, a touch to an added or removed file). With no build changed, its memo, 6-16 ms. The first plan 0.08-0.1 s, a program's 7.6-9.3 s. 134 MB live at most, 186 MB resident, in the worker's 512 MiB |
 | A context: one closure of 1M lines, 10k units | At most 2 KB a line resident | 0.33-0.39 KB a line, from a store, after every edit; 0.32 KB at 1.13M lines (*Loading by need*) |
 | Cold from a store | Seconds at 1M lines | 0.97-1.39 s in process, every unit from the store, 2.5-3.7 s through the server; 7.6 s at 1.13M lines |
 | A leaf comment | p95 at most 250 ms | 0.052-0.055 / 0.065-0.075 s, p50 / p95 through the server |
@@ -647,8 +649,9 @@ choice is asked for only where its contexts really differ.
   is checked in the first, and nothing is asked; the file still has them all, and
   a client that asks can choose another (*Status for a client that asks*). The
   comparison is made once while the file's plan holds, and its first discovery
-  pays a check of each context: in this repository, 18 s for
-  `build/config.sml`, in five builds, and about 7 s for a file in three.
+  pays a check of each context: in this repository, 9.9 s for
+  `build/config.sml`, in five builds, and 7.3 s for `src/isa/isa.sml`, in three
+  (2026-11-05, at a load of 3).
 * **A real choice.** Where they differ, the server requests a context choice,
   of those that reach the file; it does not select by enumeration order. A
   configured target name or the returned context identifier can also select one.
@@ -660,12 +663,15 @@ choice is asked for only where its contexts really differ.
 * **Sweeps.** A workspace sweep asks no one: a file with several contexts is
   checked in its first, so that a sweep covers every file of the builds it reads.
 
-In this repository (`tools/lsp/contexts.sml --builds`, the 834 sources of its 76
-readable builds, as a client whose folder is its root sees them), 715 files are
-a library's, 18 have several contexts, and 1 asks for a choice:
-`tests/ffi/win32/native/config.sml`, whose builds are for 32 and 64 bits. Before
-these rules the same files asked 124 times, and a sweep covered 153 of the 220
-files its builds hold, against 220 now.
+In this repository (`tools/lsp/contexts.sml --builds`, the 880 sources of the
+113 of its 127 builds that the server can read as they stand, as a client
+whose folder is its root sees them), 739 files are a library's, 24 have several
+contexts, and 2 ask for a choice: `tests/ffi/win32/native/config.sml`, whose
+builds are for 32 and 64 bits, and `examples/virtual/table/main.sml`, whose five
+builds give the virtual functor `Table` different implementations. A sweep
+covers all 154 files the root's targets hold. When these rules came, on the 834
+sources of 76 readable builds, the prompts fell from 124 to 1, and a sweep from
+153 of 220 files to 220.
 
 ### A file in no build
 
