@@ -502,7 +502,7 @@ The Basis Library cannot be renamed, since nothing imports it by name. A
 library with a header that exports one of its names clashes with it in every
 scope that imports the library, as a rename onto one of its names does, and a
 client renames the library's at import: `geometry (structure Math as
-Geometry)`. So the compiler library's API is `CompilerApi : COMPILER_API`,
+Geometry)`. So the compiler library's API is `CompilerApi :> COMPILER_API`,
 which the Basis Library does not have: a client of the compiler library has it
 and the Basis Library's `RuneCompiler`, the REPL's controls
 (`lib/basis/compiler.sml`, `Compiler` to a program), with no rename.
@@ -632,7 +632,7 @@ last there.
 | `program` ... `end` | the program, with what it `requires` (`libraries` and `--library`) |
 | `unit NAME PATH MODE ANNOTATION ...` | a file: its unit's name, as a compile names it (units.md, *Names*), its path, the mode it is read in and its annotations |
 | `use KEY` ... `end`, `replay KEY` | a build file's steps the first time it is used, and its second use, which adds what the first declared as `use` says above |
-| `boundary` ... `end` | a library's build file used by a build, with its exports, then its steps |
+| `boundary` ... `end` | a library's boundary where the build planned is its own `library.build` (`rune --plan DIR/library.build`): its exports, then its steps. No build uses a `library.build` (*What is gone*), so a program's plan has none |
 | `implements NAME` ... `end` | a virtual module's or functor's implementation |
 | `provenance` ... `end` | how the plan was made, outside what two forms of one plan compare on: each build file read, `input PATH SHA256`, which `sha256sum` checks |
 
@@ -1036,5 +1036,9 @@ The kind is part of the name here: an implementing library names a structure
 or a functor, and a program can have a virtual structure and a virtual
 functor of one name from its libraries. A build file's `implements NAME =
 ... end` names neither, and keeps to one of a name. The win32 work's three
-drivers, `native`, `sdl` and `mock` of `ffi/win32`, one virtual `Win32`, have
-this form; they move to it with that work (the roadmap's D15).
+drivers, `native`, `sdl` and `mock` of `ffi/win32`, one virtual `Win32`, fit
+this form, though not as three libraries alone: an implementing library
+exports nothing, so what their entry points name stands in libraries beside
+the implementations, and they require the generated sets as libraries, not
+by a `use` of a set's `current.build`. They move to it with that work (the
+roadmap's D15 and M22).
