@@ -40,8 +40,9 @@ for the whole tree. It uses the lexer, the parser and the elaborator of
 .PP
 A library is a directory with a
 .B library.build
-that lists its files in the order they are compiled in; the names that begin
-with
+that lists its files in the order they are compiled in. What its header
+.B exports
+is documented; in a library with no header the names that begin with
 .B Rune
 are internal and the rest is documented. Its
 .I README.md
@@ -107,9 +108,11 @@ is the directory of the library itself. A library other
 than
 .IR LIBDIR /basis
 is elaborated on top of the Basis Library, so that it may use it, after the
-libraries its
-.B # library:
-lines name. What its comments name of the Basis Library is looked up there.
+libraries its build file is written on
+.RB ( requires ,
+or
+.B libraries
+with no header). What its comments name of the Basis Library is looked up there.
 .TP
 .BI \-\-basis\-docs " DIR"
 For a library on top of the Basis Library: where the Basis Library's pages

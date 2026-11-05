@@ -95,6 +95,9 @@ is a directory under the
 .B \-\-lib
 directory, such as
 .BR test/property ,
+else under a root that the workspace's
+.I rune.workspace
+names (docs/build.md, The workspace),
 or a path when it begins with
 .B /
 or
@@ -124,9 +127,10 @@ top-level environment at all, so it is only useful together with
 .BI \-\-basis " MODE"
 With
 .B demand
-(the default) the compiler looks at the identifiers of the inputs and compiles
-the files of the basis library that provide a structure, signature or functor
-they mention, the files those require, and the few that every program gets.
+(the default) the compiler reads from the syntax of the inputs the names they
+use, not every identifier, and compiles the files of the basis library that
+provide a structure, signature or functor among them, the files those
+require, and the few that every program gets.
 With
 .B all
 it compiles every file. The library's index, which the compiler derives
@@ -696,8 +700,9 @@ The store).
 .TP
 .I <libdir>/cache
 The frozen libraries: the Basis Library and the compiler's libraries,
-compiled once, which every compile in units reads after its store and never
-writes.
+compiled once, which every compile in units reads after its store, and the
+index of every library beside them, which every compile reads so. No
+compile writes them.
 .SH SEE ALSO
 .BR runevm (1),
 .BR runevm\-stack (1)
