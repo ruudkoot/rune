@@ -188,7 +188,11 @@ the header exports, and nothing the library does not export, whatever its
 name ([build.md](build.md), *A library's header*). An exported signature
 has a page, and so does an exported structure, with each structure inside it
 under its path; an exported structure bound by name to another exported
-one, `structure Shapes = RuneShapes`, shares that one's page. A library
+one, `structure Shapes = RuneShapes`, shares that one's page. One bound to
+a structure the header does not export, `structure Shapes = ShapesImpl`, is
+documented as that structure under the exported name: its comment, else the
+other's, and the other's members, substructures and their claims
+(`tests/doc/alias-private.lib`). A library
 whose boundary is a `library (...)` block in its `library.build` documents
 what the block exports. The compiler holds a header to the claim rule, so a
 public structure's signature is exported and has its page.

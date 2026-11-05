@@ -90,25 +90,60 @@ struct
       val entries = List.filter (fn e : BasisManifest.entry => not (isSome (#view e))) (DocElab.entriesOf dir)
       val scope = BasisManifest.scopeOf entries
       fun visible key = case scope of NONE => true | SOME exports => List.exists (fn exported => exported = key) exports
+      val files = List.map (fn e : BasisManifest.entry => (e, List.filter (not o isSeal) (DocExtract.file (dir ^ "/" ^ #file e))))
+                           entries
+      val tops = List.concat (List.map #2 files)
+      (* A structure bound by name to one the header does not export,
+         `structure Shapes = ShapesImpl`, or to a structure inside one, is
+         what a program sees of that one under a name it can use: it is
+         documented as that one under its own name -- its comment, else the
+         other's; its ascription, else the other's; and the other's
+         substructures, members and notes -- since the other has no page
+         of its own to link to. So is a substructure bound so, but where a
+         structure before it, in its body or one around it, has the name it
+         is bound to. *)
+      fun followed (depth : int, siblings : string list, r : I.structRecord) : I.structRecord =
+        let
+          val r =
+            case #rhs r of
+              I.Alias target =>
+                let val head = List.hd (dotted target)
+                in
+                  if depth > 16 orelse visible ("structure", head) orelse List.exists (fn n => n = head) siblings then r
+                  else
+                    case structAt (tops, dotted target) of
+                      NONE => r
+                    | SOME t =>
+                        followed (depth + 1, [],
+                                  {name = #name r, file = #file r, span = #span r,
+                                   doc = if List.null (#doc r) then #doc t else #doc r,
+                                   ascription = case #ascription r of SOME a => SOME a | NONE => #ascription t,
+                                   rhs = #rhs t, subs = #subs t, members = #members t, notes = #notes t, twins = #twins t})
+                end
+            | _ => r
+          fun inner (I.Struct sub, (seen, acc)) = (#name sub :: seen, I.Struct (followed (depth, seen, sub)) :: acc)
+            | inner (m, (seen, acc)) = (seen, m :: acc)
+        in
+          {name = #name r, file = #file r, span = #span r, doc = #doc r, ascription = #ascription r, rhs = #rhs r,
+           subs = List.rev (#2 (List.foldl inner (siblings, []) (#subs r))),
+           members = #members r, notes = #notes r, twins = #twins r}
+        end
       fun exported m =
         case m of
           I.Signature r => if visible ("signature", #name r) then SOME m else NONE
-        | I.Struct r => if visible ("structure", #name r) then SOME m else NONE
+        | I.Struct r => if visible ("structure", #name r) then SOME (I.Struct (followed (0, [], r))) else NONE
         | I.Functor r => if visible ("functor", #name r) then SOME m else NONE
         | I.Decl {kind, names, file, span, doc} =>
             let val names = if kind = "type" then List.filter (fn n => visible ("type", n)) names else []
             in if null names then NONE else SOME (I.Decl {kind = kind, names = names, file = file, span = span, doc = doc}) end
-      fun file (e : BasisManifest.entry) =
-        let val ms = List.filter (not o isSeal) (DocExtract.file (dir ^ "/" ^ #file e))
-        in
-          case scope of
-            SOME _ => List.mapPartial exported ms
-          | NONE =>
-              (* only a file that every program loads declares the top-level environment *)
-              if #when e = BasisManifest.Always then ms
-              else List.filter (fn I.Decl _ => false | _ => true) ms
-        end
-    in List.concat (List.map file entries) end
+      fun file (e : BasisManifest.entry, ms) =
+        case scope of
+          SOME _ => List.mapPartial exported ms
+        | NONE =>
+            (* only a file that every program loads declares the top-level environment *)
+            if #when e = BasisManifest.Always then ms
+            else List.filter (fn I.Decl _ => false | _ => true) ms
+    in List.concat (List.map file files) end
 
   fun signaturesOf isPublic (modules : I.module list) : I.signatureRecord list =
     List.mapPartial (fn I.Signature s => if isPublic (#name s) then SOME s else NONE | _ => NONE) modules

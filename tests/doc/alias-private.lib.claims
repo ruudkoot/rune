@@ -1,0 +1,4 @@
+name	kind	signature	realisations	status	origin	source
+AREA	signature			required	declared	tests/doc/alias-private.lib/shapes.sml
+Figures.Area	structure	AREA		required	ascribed	tests/doc/alias-private.lib/shapes.sml
+Shapes.Area	structure	AREA		required	ascribed	tests/doc/alias-private.lib/shapes.sml

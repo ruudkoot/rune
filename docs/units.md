@@ -802,8 +802,9 @@ DIR/                 .rune, or lib/cache, or --cache-dir's
   steps/             what a build's steps and preprocessors made
   editor/units/      the language server's sidecars, by the hash of a source
                      (docs/language-server.md, The store)
-  index/units/       each library's index, by its place, with what it was made
-                     of (docs/build.md, A library's index)
+  index/units/       each library's index, by its place and, but in the frozen
+                     layer, its directory, with what it was made of
+                     (docs/build.md, A library's index)
 ```
 
 **Layers.** A compile writes one store, its *overlay*, and reads after it
@@ -1192,7 +1193,8 @@ program that loads units takes no such entry, since a unit loaded into it
 names the identities of a build from source. Where that shows only once
 such an entry has been taken -- the first unit to name a member does so by
 an alias, after the edit -- the program is compiled again as what it is, and
-`--explain-rebuild` says so. `--emit-units`, which gives the units'
+`--explain-rebuild` says so; a warning or an error that both compiles give
+is printed once. `--emit-units`, which gives the units'
 identities to whoever reads the files, takes no such entry either for a
 program that has `Runtime`.
  Two modules compiled against one library share its types

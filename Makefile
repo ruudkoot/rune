@@ -2741,11 +2741,11 @@ bin/rune-win32-mutants.rbc: $(RUNE) $(WIN32_MUTANT_SRCS) tests/ffi/win32/contrac
 test-win32-contract-mutants: $(RUNE) vm bin/rune-win32-mutants.rbc
 	bin/runevm bin/rune-win32-mutants.rbc
 
-SDL_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/repl-check.sml
+SDL_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tools/lsp/seconds.sml tests/ffi/sdl/repl-check.sml
 bin/rune-sdl-repl-check.rbc: $(RUNE) $(SDL_REPL_CHECK_SRCS) tests/ffi/sdl/repl-session.sml FORCE
 	$(RUNE) --library test/runner --library json --library digest $(SDL_REPL_CHECK_SRCS) -o $@
 
-FFI_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/generator/repl-check.sml
+FFI_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tools/lsp/seconds.sml tests/ffi/generator/repl-check.sml
 .PHONY: test-ffi-repl
 bin/rune-ffi-repl-check.rbc: $(RUNE) $(FFI_REPL_CHECK_SRCS) tests/ffi/generator/repl-session.sml FORCE
 	$(RUNE) --library test/runner --library json --library digest $(FFI_REPL_CHECK_SRCS) -o $@
