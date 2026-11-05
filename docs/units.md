@@ -741,7 +741,8 @@ store and never writes it, so that a program's first compile takes the
 Basis Library's units from there where their usages hold, which they do but
 for the seals of structures the program does not name. It is made with the
 lint at level 2, so its entries are marked 2 and a compile at any level
-takes them.
+takes them. It also keeps the index of every library under `lib`, which a
+compile reads there too ([build.md](build.md), *A library's index*).
 
 An analysis names its units as a build does (*Names*, above):
 `CompilerApi.Project.read` takes the workspace, and the same source in a
