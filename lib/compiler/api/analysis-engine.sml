@@ -600,8 +600,10 @@ struct
            by the binder keys of those names (rerouted). A unit after it that
            uses one held its occurrences through the old definition, though
            its usages hold, and is elaborated again (forced), its own such
-           names rerouted in turn *)
+           names rerouted in turn. involved: the units such a name was
+           defined in, before and after, and the unit that defines it so *)
         val rerouted=ref StringMap.empty : unit StringMap.map ref
+        val involved=ref StringMap.empty : unit StringMap.map ref
         val forced=ref false
         fun reroutedUse (k:kept)=not (StringMap.isEmpty (!rerouted)) andalso
           let val keys=used k in StringMap.foldli (fn (key,(),found) => found orelse StringMap.member (keys,key)) false (!rerouted) end
@@ -646,45 +648,57 @@ struct
            alias takes each, a definition of another unit by its key there.
            A unit's own definitions are its own wherever they move, which a
            reference by key follows, so they are left out *)
+        fun foreign own origin=case origin of Env.Named {unit,...} => unit<>own | Env.Held {unit,...} => unit<>own
+          | Env.Constrained (a,b) => foreign own a orelse foreign own b | Env.Unknown => false
         fun foreignTargets own fold=
-          let fun foreign origin=case origin of Env.Named {unit,...} => unit<>own | Env.Held {unit,...} => unit<>own
-                | Env.Constrained (a,b) => foreign a orelse foreign b | Env.Unknown => false
-              fun target origin=case origin of
+          let fun target origin=case origin of
                   Env.Named {unit,kind,name,span} => unit ^ "\000" ^ kind ^ "\000" ^ name ^
                     (if unit=own then "" else "\000" ^ #file span ^ "\000" ^ Int.toString (#start span))
                 | Env.Held {unit,key,...} => unit ^ "\000" ^ key
                 | Env.Constrained (a,b) => "(" ^ target a ^ "," ^ target b ^ ")"
                 | Env.Unknown => ""
-          in fold (fn (key,origin,all) => if foreign origin then StringMap.insert (all,key,target origin) else all) StringMap.empty end
+          in fold (fn (key,origin,all) => if foreign own origin then StringMap.insert (all,key,target origin) else all) StringMap.empty end
+        fun primaryUnit origin=case Env.primary origin of Env.Named {unit,...} => SOME unit | Env.Held {unit,...} => SOME unit | _ => NONE
         (* a unit's as it was before this check elaborated it: where it was
-           elaborated (defined), or from what was loaded while it is (live);
-           NONE once a walk has taken it out *)
-        val priorMemo=ref StringMap.empty : string StringMap.map option StringMap.map ref
+           elaborated (defined), or from what was loaded while it is (live),
+           with each definition's origin by its key, asked for rarely; NONE
+           once a walk has taken it out *)
+        type prior={targets:string StringMap.map,origin:string -> Env.origin option}
+        val priorMemo=ref StringMap.empty : prior option StringMap.map ref
         fun priorTargets (name,k:kept)=case StringMap.find (!priorMemo,name) of SOME found => found | NONE =>
           let val found=case !(#defined k) of
-                  SOME all => SOME (foreignTargets name (fn f => fn init => StringMap.foldli f init all))
+                  SOME all => SOME {targets=foreignTargets name (fn f => fn init => StringMap.foldli f init all),
+                    origin=fn key => StringMap.find (all,key)}
                 | NONE => if not (isSome (!(#live k))) then NONE else
                     let val holding=hold (priorOf,name)
                         val pairs=loadedDefinitions' (k,true)
-                    in SOME (foreignTargets name (fn f => fn init => List.foldl (fn ((key,origin),all) => f (key,holding origin,all)) init pairs)) end
+                    in SOME {targets=foreignTargets name (fn f => fn init => List.foldl (fn ((key,origin),all) => f (key,holding origin,all)) init pairs),
+                        origin=fn key => Option.map (holding o #2) (List.find (fn (other,_) => other=key) pairs)} end
           in priorMemo:=StringMap.insert (!priorMemo,name,found);found end
-        (* the keys a unit elaborated again defines through another
-           definition than before; where what it was is not known, each it
-           defines as an alias does, by a definition of another unit, if it
-           was elaborated for a use of a name rerouted (forced): an alias of
-           that name is rerouted with it. A name declared by another unit's
-           signature, and defined here, is not an alias *)
+        (* The keys a unit elaborated again defines through another
+           definition than before: one it defined before and defines now,
+           through others' either time (a name added or gone is no client's
+           to have held). Where what it was is not known, each it defines by
+           a definition of a unit involved, if it was elaborated for a use
+           of a name rerouted (forced): an alias of that name. The units
+           involved are noted *)
+        fun note unit=involved:=StringMap.insert (!involved,unit,())
         fun reroutes (name,k:kept,defined:Env.origin StringMap.map option)=case defined of NONE => [] | SOME now =>
           case priorTargets (name,k) of
-            SOME before' =>
+            SOME {targets=before',origin} =>
               let val after=foreignTargets name (fn f => fn init => StringMap.foldli f init now)
-              in StringMap.foldli (fn (key,target,all) => if StringMap.find (before',key)=SOME target then all else key::all)
-                   (StringMap.foldli (fn (key,_,all) => if StringMap.member (after,key) then all else key::all) [] before') after end
+                  fun moved (key,all)=
+                    (note name;Option.app note (Option.mapPartial primaryUnit (origin key));
+                     Option.app note (Option.mapPartial primaryUnit (StringMap.find (now,key)));key::all)
+              in StringMap.foldli (fn (key,target,all) => case StringMap.find (before',key) of
+                     SOME was => if was=target then all else moved (key,all)
+                   | NONE => if isSome (origin key) then moved (key,all) else all)
+                   (StringMap.foldli (fn (key,_,all) => if StringMap.member (after,key) orelse not (StringMap.member (now,key)) then all
+                      else moved (key,all)) [] before') after end
           | NONE => if not (!forced) then [] else
-              StringMap.foldli (fn (key,origin,all) => case Env.primary origin of
-                  Env.Named {unit,...} => if unit<>name then key::all else all
-                | Env.Held {unit,...} => if unit<>name then key::all else all
-                | _ => all) [] now
+              StringMap.foldli (fn (key,origin,all) => case primaryUnit origin of
+                  SOME unit => if unit<>name andalso StringMap.member (!involved,unit) then (note name;key::all) else all
+                | NONE => all) [] now
         val sourceHash=UnitCache.sourceHash
         fun keyFor (name,allow,mode,source)=Pickle.hash (name ^ ":" ^ Bool.toString allow ^ ":" ^ Source.modeName mode ^ ":" ^ source)
         (* A unit's sidecar into the store, where its text is its file's: a
@@ -1385,7 +1399,8 @@ struct
               val ()=staged:=[]
               (* each unit as it was kept holds against those before it: the
                  last walk's, with the plan and libraries it had *)
-              val ()=(aligned:=placedBy (#aligned old);ahead:= #order old;changedKeys:=[];rerouted:=StringMap.empty)
+              val ()=(aligned:=placedBy (#aligned old);ahead:= #order old;changedKeys:=[];rerouted:=StringMap.empty;
+                      involved:=StringMap.empty)
               val ()=if samePlan andalso sameSelection then () else (moved:=true;cut 0)
           in (LibraryScope.libraries (libraryWalk,#groups plan,fn (entries,()) => List.app one entries,());
               LibraryScope.program libraryWalk;walk steps;

@@ -127,10 +127,12 @@ binding that may be gone (a rebinding, `structure M = M`, removed), and it is
 elaborated again. An identity says what a unit declares, not which definitions
 its aliases take: `structure A = B` made `structure A = C`, B and C of one
 interface in other units, keeps it. So a unit elaborated again compares what it
-defines through other units' definitions with what it did, by key; where one
-moved, it is loaded as it is now, the units after it are taken by their usages,
-and those that use such a name (its binder key, `s A`) are elaborated again,
-an alias of it among their own definitions moving with it. That costs a
+defines through other units' definitions with what it did, by key, of the names
+it defined both times (a name added or gone is no client's to have held);
+where one moved, it is loaded as it is now, the units after it are taken by
+their usages, and those that use such a name (its binder key, `s A`) are
+elaborated again, an alias of it among their own definitions moving with it:
+one that is defined in a unit the move involved. That costs a
 unit's definitions read twice at each edit that keeps its identity (about 1%
 of a comment's check on the scale target), and a walk only where one moved.
 
