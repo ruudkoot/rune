@@ -91,7 +91,7 @@ SML rejects, or reject some that SML accepts.
 | exp.literal | Integer, word, real, character and string constants | Supported | |
 | exp.tuple | Tuples `(a, b)`, unit `()` | Supported | |
 | exp.record | Records `{a = 1, b = "x"}`, structural equality, label order irrelevant | Supported | Fields are evaluated in source order. |
-| exp.record.select | Selectors `#lab` (including numeric labels `#2`) | Supported | The record type must be determined by the end of the program. |
+| exp.record.select | Selectors `#lab` (including numeric labels `#2`) | Supported | The record type must be determined by the end of the top-level declaration, or of the context `--flex-records` names (*Flexible records* above). |
 | exp.list | List syntax `[a, b, c]` | Supported | |
 | exp.seq | Sequencing `(e1; e2; e3)` | Supported | |
 | exp.let | `let dec in exp; exp end` | Supported | A datatype introduced inside a `let` may not escape in its result or through types shared with the surrounding environment. Closures may capture its values when their exposed type does not mention it. |
