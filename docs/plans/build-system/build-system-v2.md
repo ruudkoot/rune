@@ -48,7 +48,7 @@ What it rests on:
 
 ## Status
 
-Decided, and implemented on this branch: M1 to M23 are done (2026-11-05), and *At the close* says what came and what is left. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). The win32 work is out of this roadmap, and is migrated later (D15). *The implementation so far* says what has landed.
+Decided, and implemented on this branch: M1 to M23 are done (2026-11-05), and *At the close* says what came and what is left. *After the close* says what the owner asked for next, and what it changed. The owner took every recommendation, D1 to D29, on 2026-11-02, with two changes: D22 is done now, with an example program under `examples/virtual` as its first client, and D26 adds two language status items to the VS Code extension (*Decisions*). The win32 work is out of this roadmap, and is migrated later (D15). *The implementation so far* says what has landed.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
@@ -97,6 +97,7 @@ Gate G1 (aggregates) closed with D19. Gate G2 (the term layer) stays, with no mi
       - So the compiler throws the first attempt away and compiles again with taking across turned off.
       - **It is rare:** it needs a program that loads units, an edit that moved an identity, and a load reached only through an alias, `open` or a functor.
       - **The alternative not taken:** read every entry's recorded keys before taking anything across. No compile would run twice, but every warm build of every program would pay for that read.
+      - Since F3, after the close, a warning the first attempt printed is not printed again.
   - **S41 on program bytes** holds on HOL4's closure (293 units taken across a change, 13.3 MB) and MLton (195, 13.0 MB). Random edits: 477 builds, no disagreement.
   - **E13's replay** gives 1,978 rebuilds, not 1,874: MLton 678 against 684, HOL4 852 against 852, `lint31` 243 against 187 and `fu31` 205 against 151, none refused. E13's 187 and 151 had a frozen layer, whose first step compiled 69 and 58 of 235 units; with `--type-work` in the key, as M1 requires, that layer no longer applies to the replay. The base under the same conditions gives 609 and 427. Instructions on those two chains fall 22.2% and 17.4%. The 3,270G total is not comparable with 4,373G and 3,506G.
   - **Selection's parse:** hello +0.88%, warm hello in units +1.01%, a `rune.build` no-op unmeasurable, since a file whose tokens cannot add a name is not parsed; parsing all of them cost +9.2%. `compile-share` and `compile-sharenest` re-based for bytes, +4.5% and +5.9%.
@@ -273,6 +274,22 @@ Each is in its milestone's line above, with its reason:
 ### Worktrees, branches and drafts
 
 Every `bs-*` branch has all its commits in `build-system-v2`. The worktrees are `bs-int`, `bs-m12`, `bs-m13`, `bs-m14`, `bs-m20` and `bs-m23`, and the snapshots `bs-base`, `bs-cache`, `bs-lib`, `bs-lsp` and `bs-sep`; removing them and the branches waits for the owner's word. The drafts take 12 GB. Their stores and corpus copies can be made again, and `M23-close.md` says what is worth keeping: MLton's flat tree and M9's library translation among it.
+
+## After the close
+
+On 2026-11-05 the owner asked: "Fix virtual in the editor, the 5 bugs, the planning cache", and to keep the worktrees and drafts for now. Three agents worked from `a8d450357`: F1 (the editor), F2 (the planning cache) and F3 (four bugs). Their reports are `impl/reports/F1.md` to `F3.md`.
+
+- **F2 and F3** (`15d9c7331`, `make check` 22,776 of 22,776).
+  - **The planning cache (F2).** A file's facts for its plan, what selection takes of it and whether it loads units, are kept by its text and the fixity coming into it, and its effect on fixity with them, so every file's key is known without reading it. It reuses M12's per-file facts, and selection, `-j` and the library index read them; `-j` now reads each file in the fixity it really has. They live in the store, never in the frozen layer; `--no-cache` neither reads nor writes them, and `--verify-cache` compares them all.
+    - **Sound:** a file whose parse flips with a fixity edit (S131), nine kinds of fixity edit checked against `--no-cache` and `--verify-cache`, and 2,145 random builds with 402 fixity edits, no disagreement. A mutant keyed by text alone fails them, and a new random-edit project of fixity edits catches it in 9 of 50 builds.
+    - **A leaf:** `rune.build` 12.83G to 11.08G `instructions:u` (-13.6%), HOL4's closure 27.06G to 20.61G (-23.8%), MLton 31.53G to 28.18G (-10.6%), now 30-31% of E15's, not 25%. Lexing and selection fell from 13% of MLton's leaf to 1%; what remains is decoding every unit's code and the link (41%), finding the entries (15%) and the one compile, E15's floor.
+    - **Costs:** hello and the three no-ops +0.2-0.3% `instructions:u`, from a `rune.rbc` 0.35% larger, their VM counts unchanged; a cold build +1.6% VM instructions on `rune.build`, +1.2% on HOL4. Accepted.
+    - **Found and fixed, with the owner's choice:** `--or-patterns` and `--no-unicode-lints` were in the keys of a program's own units alone, though they change how every file is read, libraries and the Basis too: a library compiled with `--or-patterns` was taken by a build without it, which a cold build refuses. The owner chose that libraries keep the program's flags, in the key; both flags are now in every unit's key, and each language setting has a library row in the flags oracle (13 rows), the two broken before the fix. A build with either flag takes no unit from the frozen layer. Per-library settings are a question for `mlbasis.md`.
+  - **Four bugs (F3).**
+    - runedoc documents an exported `structure S = T` whose `T` is private under `S`, with `T`'s comment, members and the claims of its substructures; no page of `docs/lib` changed.
+    - A library index record outside the frozen layer is named by the library's place and its directory as spelt, so two `--lib` roots sharing a store keep theirs apart: a switch costs hello 1.85M VM instructions where it cost 15.25M. F2's program facts are named the same way. An installed or copied Basis still pays its first compile in a new store once, 15.2M: avoiding it needs a mechanism, and none was built.
+    - A compile that runs again (M1, above) prints each warning once.
+    - The two FFI REPL checks write their times as JSON numbers; they could not fail, since the runner polls every 10 ms.
 
 ## Found while writing this roadmap
 
