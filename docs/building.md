@@ -426,7 +426,7 @@ What is different there:
   `build/heap_test`), passes.
 * MLton's basis under MinGW opens a `TextIO` stream in text mode and gives
   every file of a drive the same `OS.FileSys.fileId`, so the compiler writes
-  its bytecode, its manifests and its lists of units with `BinIO`, and trusts
+  its bytecode and its lists of units with `BinIO`, and trusts
   a file's id only where it tells the output from its directory.
 * The MSYS2 runtime rewrites what a native program is given:
   `tests/run-tests.sh` passes 350 of the 352 programs of `tests/lang`, and
@@ -661,8 +661,10 @@ Remote WSL, checkout library configuration and publishing.
   script), `build/rune-mlkit.mlb` (MLKit: MLton's, without its annotations
   and with its own entry point) from the plan. **Add new source files to
   `rune.build` only, then `make plans`.**
-* `runedoc.build` is the same for `runedoc`: the compiler's utilities,
-  frontend and elaborator in the order of `rune.build`, then `src/doc`. The
+* `runedoc.build` is the same for `runedoc`: the libraries it is written on
+  (`libraries unicode json`), `build/config.sml`, the compiler's utilities,
+  frontend and elaborator through `lib/compiler/frontend.build`, which the
+  library names it a friend to use, then `src/doc`. The
   script makes `build/runedoc.mlb`, `build/runedoc.cm`,
   `build/runedoc-polyml-build.sml` and `build/runedoc-mlkit.mlb` from it;
   the entry points are
