@@ -363,7 +363,7 @@ the original signature/implementation with only their names changed, the
 observer bytecode and VM, and all raw samples. To rerun from that archive:
 
 ```
-bin/rune --library jsonrpc PATH/old-framing.sml tests/lsp/framing-performance.sml -o tests/out/framing-performance.rbc
+bin/rune --library jsonrpc --library json PATH/old-framing.sml tests/lsp/framing-performance.sml -o tests/out/framing-performance.rbc
 bin/runevm tests/out/framing-performance.rbc
 ```
 
