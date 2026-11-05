@@ -6,6 +6,7 @@
 - `Analysis.implementationsOf` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.implementationsof)
 - `Analysis.input` (type): [COMPILER_API](../sig/COMPILER_API.md#type-analysis.input)
 - `Analysis.inputs` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.inputs)
+- `Analysis.interfaceOf` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.interfaceof)
 - `Project.input` (type): [COMPILER_API](../sig/COMPILER_API.md#type-project.input)
 - `Project.inputs` (val): [COMPILER_API](../sig/COMPILER_API.md#val-project.inputs)
 - `Syntax.initial` (val): [COMPILER_API](../sig/COMPILER_API.md#val-syntax.initial)

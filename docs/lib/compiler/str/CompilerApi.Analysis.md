@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: [`COMPILER_API`](../sig/COMPILER_API.md) specifies it inside [`CompilerApi`](../str/CompilerApi.md) |
 | Status | required |
-| Members | 51 |
+| Members | 52 |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler.sml](../../../../lib/compiler/api/compiler.sml) |
 
@@ -47,6 +47,7 @@ What each means is on [`COMPILER_API`](../sig/COMPILER_API.md); the types are th
 | val | [`id`](../sig/COMPILER_API.md#val-analysis.id) | `snapshot -> string` |
 | val | [`implementationsOf`](../sig/COMPILER_API.md#val-analysis.implementationsof) | `snapshot * location -> occurrence list` |
 | val | [`inputs`](../sig/COMPILER_API.md#val-analysis.inputs) | `snapshot -> input list` |
+| val | [`interfaceOf`](../sig/COMPILER_API.md#val-analysis.interfaceof) | `snapshot * occurrence -> string option` |
 | val | [`lazy`](../sig/COMPILER_API.md#val-analysis.lazy) | `t * bool -> unit` |
 | val | [`observe`](../sig/COMPILER_API.md#val-analysis.observe) | `t * (observation -> unit) option -> unit` |
 | val | [`occurrences`](../sig/COMPILER_API.md#val-analysis.occurrences) | `snapshot -> occurrence list` |

@@ -164,6 +164,18 @@ struct
   (* what says that a unit gives the same answers: its text, and what it declares *)
   fun versionOf (snapshot:snapshot,unit)=Option.map (fn k:E.kept => #key (#entry k) ^ ":" ^ E.identityOf k)
     (StringMap.find (#entries snapshot,unit))
+  (* what an occurrence's unit was typed against by its name: the
+     fingerprint its usage of the name holds ("IDENTITY FINGERPRINT", the
+     part after the binder's identity), none where it has no such usage or
+     no fingerprint covers the name *)
+  fun interfaceOf (snapshot:snapshot,occurrence:occurrence)=
+    case StringMap.find (#entries snapshot,#unit occurrence) of NONE => NONE | SOME (k:E.kept) =>
+      let val long=String.concatWith "." (#path occurrence @ [#name occurrence])
+          val key=case #kind occurrence of "functor" => "fun " ^ long | "signature" => "sig " ^ long
+            | "structure" => "s " ^ long | "value" => "v " ^ long | "type" => "t " ^ long | kind => kind ^ " " ^ long
+      in case List.find (fn (name,_) => name=key) (#usages k) of NONE => NONE
+         | SOME (_,value) => (case List.rev (String.fields (fn c => c= #" ") value) of
+             fingerprint::_::_ => if fingerprint="-" then NONE else SOME fingerprint | _ => NONE) end
   fun entries (snapshot:snapshot)=List.map (fn name => #entry (valOf (StringMap.find (#entries snapshot,name)) : E.kept)) (#order snapshot)
   fun flat (snapshot:snapshot)=case !(#flat snapshot) of SOME all => all | NONE =>
     let val kept=entries snapshot

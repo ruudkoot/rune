@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 112 of 112 entries documented |
+| Documentation | 113 of 113 entries documented |
 | Tests | not listed |
 | Source | [lib/compiler/api/compiler\_sig.sml](../../../../lib/compiler/api/compiler_sig.sml) |
 
@@ -142,6 +142,7 @@ sig
     val <a href="#val-analysis.occurrencesin">occurrencesIn</a> : snapshot * string -&gt; occurrence list
     val <a href="#val-analysis.implementationsof">implementationsOf</a> : snapshot * location -&gt; occurrence list
     val <a href="#val-analysis.versionof">versionOf</a> : snapshot * string -&gt; string option
+    val <a href="#val-analysis.interfaceof">interfaceOf</a> : snapshot * occurrence -&gt; string option
     val <a href="#val-analysis.types">types</a> : snapshot -&gt; typeDefinition list
     val <a href="#val-analysis.facts">facts</a> : snapshot -&gt; fact list
     val <a href="#val-analysis.factsin">factsIn</a> : snapshot * string -&gt; fact list
@@ -1456,6 +1457,22 @@ val versionOf : snapshot * string -> string option
 
 That is its text and what it declares: two snapshots that give a unit
 one version give the same symbols for it. A unit not reached gives NONE.
+
+#### <a name="val-analysis.interfaceof"></a>`interfaceOf`
+
+```sml
+val interfaceOf : snapshot * occurrence -> string option
+```
+
+`interfaceOf (snapshot, occurrence)` says what the occurrence's unit was
+typed against by its name.
+
+It is the fingerprint the unit's usage of the name holds, which a
+compile's cache holds the unit to (docs/units.md, The cache): two
+snapshots give one where the name means the same to the unit, whichever
+unit declares it, as a virtual module's `_virtual` or `_dynamic`
+declaration in any file. NONE where the unit did not use the name as
+its session's, or no fingerprint covers it.
 
 #### <a name="val-analysis.types"></a>`types`
 

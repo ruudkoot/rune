@@ -274,6 +274,7 @@ struct
     val occurrencesIn=A.occurrencesIn
     val implementationsOf=A.implementationsOf
     val versionOf=A.versionOf
+    val interfaceOf=A.interfaceOf
     val types=A.types
     val facts=A.facts
     val factsIn=A.factsIn

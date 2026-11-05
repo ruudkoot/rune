@@ -452,6 +452,16 @@ sig
        That is its text and what it declares: two snapshots that give a unit
        one version give the same symbols for it. A unit not reached gives NONE. *)
     val versionOf : snapshot * string -> string option
+    (* `interfaceOf (snapshot, occurrence)` says what the occurrence's unit was
+       typed against by its name.
+
+       It is the fingerprint the unit's usage of the name holds, which a
+       compile's cache holds the unit to (docs/units.md, The cache): two
+       snapshots give one where the name means the same to the unit, whichever
+       unit declares it, as a virtual module's `_virtual` or `_dynamic`
+       declaration in any file. NONE where the unit did not use the name as
+       its session's, or no fingerprint covers it. *)
+    val interfaceOf : snapshot * occurrence -> string option
     (* `types snapshot` returns semantic constructor identities and sources. *)
     val types : snapshot -> typeDefinition list
     (* `facts snapshot` returns inferred types without mutable compiler refs. *)

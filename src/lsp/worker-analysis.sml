@@ -627,24 +627,26 @@ struct
           (* A module a virtual module's declaration binds, `F = _virtual
              (X : A) : B` or `F = _dynamic "path" (X : A) : B`, and the
              same of a structure (D22): its clients are compiled against
-             the signature alone, whichever file a build declares it in, and
+             its signature alone, whichever file a build declares it in, and
              one build may declare it as a plugin where another names an
-             implementation. So it is that signature, as written, which is
-             compared, and not the declaration's place. *)
-          fun virtualAt ({file,start,stop}:A.location)=case sourceFor (view,file) of NONE => NONE | SOME source =>
-            let fun spelt skip=SOME ("virtual " ^ String.concatWith " "
-                  (List.map (fn piece:C.Syntax.piece => #text piece) (List.drop (wordsWithin (source,start,stop,~1),skip))))
-            (* its first words first: a structure's declaration may be long *)
-            in case wordsWithin (source,start,stop,4) of
-                 [_,{text="=",...},{text="_dynamic",...},{kind="string",...}] => spelt 4
-               | _::{text="=",...}::{text="_virtual",...}::_ => spelt 3
-               | _ => NONE end
-          fun module (kind,location)=if kind<>"functor" andalso kind<>"structure" then place location else
-            case location of NONE => "-" | SOME location => case virtualAt location of SOME interface => interface | NONE => at location
+             implementation. So it is that signature, resolved, that is
+             compared, as the file's unit was typed against it
+             (A.interfaceOf), and not the declaration's place; where the
+             unit's usages hold none, the place is compared after all *)
+          fun virtualAt ({file,start,stop}:A.location)=case sourceFor (view,file) of NONE => false | SOME source =>
+            case wordsWithin (source,start,stop,3) of
+              [_,{text="=",...},{text="_virtual",...}] => true
+            | [_,{text="=",...},{text="_dynamic",...}] => true
+            | _ => false
+          fun module (occurrence:A.occurrence,location)=
+            if #kind occurrence<>"functor" andalso #kind occurrence<>"structure" then place location else
+            case location of NONE => "-" | SOME location =>
+              if not (virtualAt location) then at location else
+                case A.interfaceOf (#snapshot view,occurrence) of SOME interface => "virtual " ^ interface | NONE => at location
           val file=case activeSource (view,#uri view) of SOME source => #file source | NONE => ""
           val uses=List.map (fn occurrence:A.occurrence => String.concatWith "|" [#kind occurrence,
             String.concatWith "." (#path occurrence @ [#name occurrence]),Int.toString (#start occurrence),Int.toString (#stop occurrence),
-            module (#kind occurrence,#definition occurrence),module (#kind occurrence,#declaration occurrence),
+            module (occurrence,#definition occurrence),module (occurrence,#declaration occurrence),
             Bool.toString (#isDefinition occurrence)])
             (ownOccurrences view)
           val errors=List.mapPartial (fn diagnostic:C.diagnostic => if #file diagnostic<>file then NONE else

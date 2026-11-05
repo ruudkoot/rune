@@ -508,8 +508,12 @@ struct
      declares the functor `_dynamic` in a file of its own. The client is
      compiled against the signature alone in each, so nothing is asked, and
      go-to-definition goes to the declaration of the context it is checked
-     in, never to an implementation. A virtual functor of another signature
-     is a real difference, and is asked about. *)
+     in, never to an implementation. The signature is compared as resolved,
+     not as written: a sixth build that spells it otherwise, another
+     parameter's name and another name of TABLE, asks nothing either; and
+     a virtual functor of another signature is a real difference, and is
+     asked about, even where its declaration is one file whose TABLE names
+     another signature. *)
   val keySig="signature KEY=sig type t val compare:t*t->order end\n"
   val tableSig="signature TABLE=sig type key type 'a table val empty:'a table\n" ^
     "  val insert:'a table*key*'a->'a table val size:'a table->int end\n"
@@ -525,6 +529,8 @@ struct
       ("list.build","key_sig.sml\ntable_sig.sml\nimplements Table = list.sml end\ntable.sml\nmain.sml\n"),
       ("tree.build","key_sig.sml\ntable_sig.sml\nimplements Table = tree.sml end\ntable.sml\nmain.sml\n"),
       ("dynamic.build","key_sig.sml\ntable_sig.sml\ndynamic.sml\nmain.sml\n"),
+      ("respelled.sml","signature TABLE_OF_KEYS = TABLE\nfunctor Table = _virtual (Key : KEY) : TABLE_OF_KEYS where type key = Key.t\n"),
+      ("respelled.build","key_sig.sml\ntable_sig.sml\nrespelled.sml\nmain.sml\n"),
       ("libraries/table/library.build","exports (signature KEY, signature TABLE, functor Table)\n" ^
          "virtual (functor Table) in ../../table.sml\n../../key_sig.sml\n../../table_sig.sml\n../../table.sml\n"),
       ("libraries/table-list/library.build","requires table end\nimplements (functor Table)\n../../list.sml\n"),
@@ -535,11 +541,23 @@ struct
       ("narrow.sml","functor Table=_virtual (K:KEY):TABLE\n"),
       ("other.sml","structure Keys=struct type t=string val compare=String.compare end\nstructure Named=Table (Keys)\n"),
       ("wide.build","key_sig.sml\ntable_sig.sml\ntable.sml\nother.sml\n"),
-      ("narrow.build","key_sig.sml\ntable_sig.sml\nnarrow.sml\nother.sml\n")],
+      ("narrow.build","key_sig.sml\ntable_sig.sml\nnarrow.sml\nother.sml\n"),
+      (* table.sml's text in two builds, its TABLE two signatures *)
+      ("alt_sig.sml","signature TABLE=sig type key type 'a table val empty:'a table end\n"),
+      ("same.sml","structure Keys=struct type t=string val compare=String.compare end\nstructure Named=Table (Keys)\n"),
+      ("same.build","key_sig.sml\ntable_sig.sml\ntable.sml\nsame.sml\n"),
+      ("alt.build","key_sig.sml\nalt_sig.sml\ntable.sml\nsame.sml\n")],
     fn {uri,discover,check,errors,messages,query,...} =>
     let val found=discover "main.sml"
-        val ()=Expect.that ("a virtual library's client in five builds asks nothing: " ^ shown found,kind found="selected" andalso
-          contextNames found=List.map uri ["dynamic.build","list-libraries.build","list.build","tree-libraries.build","tree.build"])
+        val ()=Expect.that ("a virtual library's client in six builds asks nothing: " ^ shown found,kind found="selected" andalso
+          contextNames found=List.map uri ["dynamic.build","list-libraries.build","list.build","respelled.build",
+            "tree-libraries.build","tree.build"])
+        val other=discover "other.sml"
+        val ()=Expect.that ("a virtual functor of another signature is asked about: " ^ shown other,kind other="ambiguous" andalso
+          contextNames other=List.map uri ["narrow.build","wide.build"])
+        val same=discover "same.sml"
+        val ()=Expect.that ("and so is one declared in one file whose TABLE is another signature: " ^ shown same,kind same="ambiguous" andalso
+          contextNames same=List.map uri ["alt.build","same.build"])
         val checked=check "main.sml"
         val ()=Expect.that ("it checks: " ^ String.concatWith "; " (messages checked),null (errors checked))
         (* Table (IntKey), on line 1, in the first context, the plugin's *)
@@ -555,9 +573,7 @@ struct
           Json.member ("contents",hover)=SOME (Json.Object [("kind",Json.String "plaintext"),("value",Json.String "int Squares.table")])
           orelse (case Json.member ("contents",hover) of SOME contents => Json.member ("value",contents)=SOME (Json.String "int Squares.table")
                   | NONE => false))
-        val other=discover "other.sml"
-    in Expect.that ("a virtual functor of another signature is asked about: " ^ shown other,kind other="ambiguous" andalso
-         contextNames other=List.map uri ["narrow.build","wide.build"]) end)
+    in () end)
 end
 structure RuneLspWorkerAnalysisTestMain=Main (struct
   val name="lsp-worker-analysis"

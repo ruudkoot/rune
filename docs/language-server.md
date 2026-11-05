@@ -654,14 +654,17 @@ choice is asked for only where its contexts really differ.
   library's build names its sources from its own directory,
   `libraries/table/../../table.sml`, where a program's build names `table.sml`.
   A virtual module's name, one a `_virtual` or a `_dynamic` declaration binds
-  (*A virtual module*, below), is compared by the signature its declaration
-  gives, as written, and not by the declaration's place. Where they agree the
+  (*A virtual module*, below), is compared by the signature it resolves to, as
+  the file's unit was typed against it (the fingerprint its usage of the name
+  holds, `CompilerApi.Analysis.interfaceOf`), and not by the declaration's
+  place or how it is spelt; this reads what each check kept, and costs no
+  check more. Where they agree the
   file is checked in the first, and nothing is asked; the file still has them
   all, and a client that asks can choose another (*Status for a client that
   asks*). The comparison is made once while the file's plan holds, and its first
-  discovery pays a check of each context: in this repository, 8.5 s for
-  `build/config.sml`, in five builds, and 5.4 s for `src/isa/isa.sml`, in three
-  (2026-11-05, at a load of 3).
+  discovery pays a check of each context: in this repository, 10 to 12 s for
+  `build/config.sml`, in five builds, and 5 to 6 s for `src/isa/isa.sml`, in
+  three (2026-11-05, at a load of 1 to 3).
 * **A virtual module.** A client of a virtual module ([build.md](build.md),
   *Virtual libraries*) is compiled against its signature alone, whichever
   implementation a build names or a plugin gives, and a build that names
@@ -671,8 +674,10 @@ choice is asked for only where its contexts really differ.
   the client is compiled against, in the context the file is checked in: the
   `_virtual` declaration, a program's own or a virtual library's, or a plugin
   build's `_dynamic` one. It never goes to an implementation, which no client's
-  code reaches, and go-to-implementation finds none. Where two builds declare
-  the module with signatures written differently, the choice is asked for.
+  code reaches, and go-to-implementation finds none. Two builds that declare it
+  with one signature agree however they spell it, another parameter's name or
+  another name of the signature; where the signature is another, even with one
+  text whose names name other signatures, the choice is asked for.
 * **A real choice.** Where they differ, the server requests a context choice,
   of those that reach the file; it does not select by enumeration order. A
   configured target name or the returned context identifier can also select one.
