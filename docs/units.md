@@ -802,8 +802,9 @@ DIR/                 .rune, or lib/cache, or --cache-dir's
   steps/             what a build's steps and preprocessors made
   editor/units/      the language server's sidecars, by the hash of a source
                      (docs/language-server.md, The store)
-  index/units/       each library's index, by its place, with what it was made
-                     of (docs/build.md, A library's index)
+  index/units/       each library's index, by its place and, but in the frozen
+                     layer, its directory, with what it was made of
+                     (docs/build.md, A library's index)
 ```
 
 **Layers.** A compile writes one store, its *overlay*, and reads after it
