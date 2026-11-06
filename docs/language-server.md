@@ -650,30 +650,37 @@ choice is asked for only where its contexts really differ.
   says.
 * **Several contexts.** Where a file still has several, the server checks it in
   each. A context whose check stops before the file, at an earlier unit's error,
-  is dropped. The rest are compared by what each occurrence of the file's names
-  resolves to, the place of its definition and its declaration, by paths whole,
-  and by the file's own errors, never by a printed type, which depends on what
-  was selected (`SML90.instream` or `TextIO.instream`). A place is the file
-  go-to-definition opens, so that one file named two ways is one place: a
-  library's build names its sources from its own directory,
+  is dropped. The rest are compared by each occurrence of the file's names:
+  the place of its definition and its declaration, which decide navigation, by
+  paths whole; and what the file's unit was typed against by that name, the
+  static fingerprint its usage of the name holds
+  (`CompilerApi.Analysis.interfaceOf`, what a compile's cache holds the unit
+  to), so that `type key = Config.word` in one file of two builds, where
+  `Config.word` is `Word32.word` in one and `Word64.word` in the other, is a
+  real difference to a file that names `key` alone, though every place agrees.
+  A name of the file's own unit has no usage, and is compared by its places.
+  The file's own errors are compared too; a printed type is not, since it
+  depends on what was selected (`SML90.instream` or `TextIO.instream`). A place
+  is the file go-to-definition opens, so that one file named two ways is one
+  place: a library's build names its sources from its own directory,
   `libraries/table/../../table.sml`, where a program's build names `table.sml`.
   A virtual module's name, one a `_virtual` or a `_dynamic` declaration binds
-  (*A virtual module*, below), is compared by the signature it resolves to, as
-  the file's unit was typed against it (the fingerprint its usage of the name
-  holds, `CompilerApi.Analysis.interfaceOf`), and not by the declaration's
-  place or how it is spelt; this reads what each check kept, and costs no
-  check more. Where they agree the
+  (*A virtual module*, below), is compared by its fingerprint alone, and not by
+  the declaration's place or how it is spelt. The fingerprints are read from
+  what each check kept, and cost no check more. Where they agree the
   file is checked in the first, and nothing is asked; the file still has them
   all, and a client that asks can choose another (*Status for a client that
   asks*). The comparison is made once while the file's plan holds, and its first
-  discovery pays a check of each context: in this repository, 10 to 12 s for
+  discovery pays a check of each context: in this repository, 14 to 15 s for
   `build/config.sml`, in five builds, and 5 to 6 s for `src/isa/isa.sml`, in
-  three (2026-11-05, at a load of 1 to 3).
+  three, where the store holds nothing yet, and 5 to 6 s for `build/config.sml`
+  once it holds the libraries' indexes (2026-11-06, at a load of 2 to 7).
 * **A virtual module.** A client of a virtual module ([build.md](build.md),
   *Virtual libraries*) is compiled against its signature alone, whichever
   implementation a build names or a plugin gives, and a build that names
   another implementation compiles none of the client's units again: so its
-  builds are compared as above, and agree.
+  builds are compared as above, by the fingerprint of the signature the module's
+  name resolves to, and agree.
   Go-to-definition on the module's name in the client goes to the declaration
   the client is compiled against, in the context the file is checked in: the
   `_virtual` declaration, a program's own or a virtual library's, or a plugin
@@ -693,13 +700,14 @@ choice is asked for only where its contexts really differ.
 * **Sweeps.** A workspace sweep asks no one: a file with several contexts is
   checked in its first, so that a sweep covers every file of the builds it reads.
 
-In this repository (`tools/lsp/contexts.sml --builds`, the 880 sources of the
-113 of its 127 builds that the server can read as they stand, as a client
-whose folder is its root sees them), 739 files are a library's, 24 have several
+In this repository (`tools/lsp/contexts.sml --builds`, the 881 sources of the
+114 of its 128 builds that the server can read as they stand, as a client
+whose folder is its root sees them), 740 files are a library's, 24 have several
 contexts, and 1 asks for a choice: `tests/ffi/win32/native/config.sml`, whose
 builds are for 32 and 64 bits. `examples/virtual/table/main.sml`, the client of
 the virtual functor `Table` in five builds, asked too, until places were
-compared by the file they open and a virtual module by its signature. A sweep
+compared by the file they open and a virtual module by its signature. Comparing
+fingerprints beside places changed none of the other 23. A sweep
 covers all 154 files the root's targets hold. When these rules came, on the 834
 sources of 76 readable builds, the prompts fell from 124 to 1, and a sweep from
 153 of 220 files to 220.
