@@ -25,3 +25,4 @@
 - we need several github CI actions to very the bootstrap process works. e.g. bootstrapping with system C compiler compiled runevm and the bytecode image under bootstrap for a variety of platforms and system C compilers.
   - we also should have actions to check rune can be bootstrapped by other sml compilers (rune 0.1 release, polyml, mlton, ...) w/o makeing use of the bytecode image under bootstrap. i.e. from sml source only.
 - clean up all the complexity that has been build up so far. e.g. the Makefile and tools/builder and the scripts directory.
+- also need to deal with build/config.sml
