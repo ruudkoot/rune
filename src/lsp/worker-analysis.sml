@@ -624,30 +624,35 @@ struct
             in W.add (opened,file,found);found end
           fun at ({file,start,stop}:A.location)=fileOf file ^ ":" ^ Int.toString start ^ ":" ^ Int.toString stop
           fun place NONE="-" | place (SOME location)=at location
-          (* A module a virtual module's declaration binds, `F = _virtual
-             (X : A) : B` or `F = _dynamic "path" (X : A) : B`, and the
-             same of a structure (D22): its clients are compiled against
-             its signature alone, whichever file a build declares it in, and
-             one build may declare it as a plugin where another names an
-             implementation. So it is that signature, resolved, that is
-             compared, as the file's unit was typed against it
-             (A.interfaceOf), and not the declaration's place; where the
-             unit's usages hold none, the place is compared after all *)
+          (* What a name means where the file uses it: its places, which
+             decide navigation, and its static fingerprint, what the file's
+             unit was typed against by it (A.interfaceOf, the fingerprint
+             its usage holds), which a place alone does not say: one
+             `type key = Config.word` in two builds whose Config.word is
+             Word32.word in one and Word64.word in the other. A name of its
+             own unit has no usage and is its place alone. A virtual
+             module's name, one `F = _virtual (X : A) : B` or `F = _dynamic
+             "path" (X : A) : B` binds, and the same of a structure (D22), is
+             its fingerprint alone: its clients are compiled against its
+             signature, whichever file a build declares it in, and one build
+             may declare it as a plugin where another names an
+             implementation; where the unit's usages hold none, its place
+             is compared after all *)
           fun virtualAt ({file,start,stop}:A.location)=case sourceFor (view,file) of NONE => false | SOME source =>
             case wordsWithin (source,start,stop,3) of
               [_,{text="=",...},{text="_virtual",...}] => true
             | [_,{text="=",...},{text="_dynamic",...}] => true
             | _ => false
-          fun module (occurrence:A.occurrence,location)=
-            if #kind occurrence<>"functor" andalso #kind occurrence<>"structure" then place location else
-            case location of NONE => "-" | SOME location =>
-              if not (virtualAt location) then at location else
-                case A.interfaceOf (#snapshot view,occurrence) of SOME interface => "virtual " ^ interface | NONE => at location
+          fun meant (occurrence:A.occurrence)=
+            let val fingerprint=A.interfaceOf (#snapshot view,occurrence)
+                val virtual=(#kind occurrence="functor" orelse #kind occurrence="structure") andalso isSome fingerprint andalso
+                  (case #definition occurrence of SOME location => virtualAt location | NONE => false)
+                fun placed location=if virtual then "virtual" else place location
+            in [placed (#definition occurrence),placed (#declaration occurrence),getOpt (fingerprint,"-")] end
           val file=case activeSource (view,#uri view) of SOME source => #file source | NONE => ""
-          val uses=List.map (fn occurrence:A.occurrence => String.concatWith "|" [#kind occurrence,
+          val uses=List.map (fn occurrence:A.occurrence => String.concatWith "|" ([#kind occurrence,
             String.concatWith "." (#path occurrence @ [#name occurrence]),Int.toString (#start occurrence),Int.toString (#stop occurrence),
-            module (occurrence,#definition occurrence),module (occurrence,#declaration occurrence),
-            Bool.toString (#isDefinition occurrence)])
+            Bool.toString (#isDefinition occurrence)] @ meant occurrence))
             (ownOccurrences view)
           val errors=List.mapPartial (fn diagnostic:C.diagnostic => if #file diagnostic<>file then NONE else
             SOME (String.concatWith "|" [Int.toString (#start diagnostic),Int.toString (#stop diagnostic),#message diagnostic]))

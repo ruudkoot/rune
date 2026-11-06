@@ -380,6 +380,26 @@ struct
         val ()=Expect.that ("where they resolve apart a choice is asked, of those that reach the file: " ^ shown shared,kind shared="ambiguous" andalso
           contextNames shared=[uri "four.build",uri "one.build",uri "two.build"])
     in Expect.that ("each comparison is reported",List.exists (fn phase => phase="contexts-compared") (!phases)) end)
+  (* D26: contexts compared by what each name the file uses was typed as
+     too, its fingerprint, which no place says: common.sml in two builds
+     says type key=Config.word, Word32.word in one and Word64.word in the
+     other, and client.sml, which names key alone, is asked about; where
+     Config.word is Word32.word in both, from two files, nothing is asked *)
+  fun typed ()=tree ([("config32.sml","structure Config=struct type word=Word32.word end\n"),
+      ("config64.sml","structure Config=struct type word=Word64.word end\n"),
+      ("config32copy.sml","structure Config=struct type word=Word32.word end\n"),
+      ("common.sml","type key=Config.word\n"),("client.sml","fun keep (k:key)=k\nval kept=keep\n"),
+      ("b32.build","files config32.sml common.sml client.sml end\n"),("b64.build","files config64.sml common.sml client.sml end\n"),
+      ("twin-common.sml","type key=Config.word\n"),("twin-client.sml","fun keep (k:key)=k\nval kept=keep\n"),
+      ("twin-a.build","files config32.sml twin-common.sml twin-client.sml end\n"),
+      ("twin-b.build","files config32copy.sml twin-common.sml twin-client.sml end\n")],
+    fn {uri,discover,...} =>
+    let val apart=discover "client.sml"
+        val ()=Expect.that ("a file whose names are typed apart is asked about, though its places agree: " ^ shown apart,
+          kind apart="ambiguous" andalso contextNames apart=[uri "b32.build",uri "b64.build"])
+        val alike=discover "twin-client.sml"
+    in Expect.that ("and one whose names are typed alike is not: " ^ shown alike,kind alike="selected" andalso
+         contextNames alike=[uri "twin-a.build",uri "twin-b.build"]) end)
   (* D28: where the client watches, its file events say what changed, and a
      plan takes them over the stamps: a build rewritten at its size and time,
      which no stamp can tell, is read again when an event names it, and an
@@ -587,6 +607,7 @@ structure RuneLspWorkerAnalysisTestMain=Main (struct
     Test.it "hover-reads-its-unit" RuneLspWorkerAnalysisTests.hoverPerUnit,
     Test.it "one-owning-library" RuneLspWorkerAnalysisTests.owner,
     Test.it "contexts-compared-by-binder" RuneLspWorkerAnalysisTests.compared,
+    Test.it "contexts-compared-by-type" RuneLspWorkerAnalysisTests.typed,
     Test.it "implicit-library" RuneLspWorkerAnalysisTests.implicit,
     Test.it "plan-by-file-events" RuneLspWorkerAnalysisTests.planByEvents,
     Test.it "texts-past-file-events" RuneLspWorkerAnalysisTests.textsPastEvents,

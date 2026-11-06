@@ -24,7 +24,7 @@ struct
     steps:CompilerProject.step list,libraries:string list,prelude:CompilerPrelude.plan,
     scope:Workspace.scope,units:string vector,opened:E.entry list ref,projections:occurrence list StringMap.map ref,
     flat:{occurrences:occurrence list,facts:fact list,types:typeDefinition list} option ref,
-    files:E.entry StringMap.map option ref}
+    files:E.entry StringMap.map option ref,interfaces:string StringMap.map StringMap.map ref}
   datatype t=Analysis of {parent:C.session,context:string,namespace:string,engine:E.session,
     token:unit ref,serial:IntInf.int ref,busy:bool ref,closed:bool ref,dependencies:input list ref}
   datatype checkpoint=Checkpoint of {token:unit ref,state:E.state}
@@ -102,7 +102,7 @@ struct
                 diagnostics= #diagnostics result,reused= #reused result,checked= #checked result,route= #route result,config=config,
                 engine=engine,state= #state result,entries= #entries result,order= #order result,attempted= #attempted result,
                 steps=steps,libraries=libraries,prelude= #prelude result,scope=scope,units=Vector.fromList (#units result),
-                opened=ref [],projections=ref StringMap.empty,flat=ref NONE,files=ref NONE}:snapshot
+                opened=ref [],projections=ref StringMap.empty,flat=ref NONE,files=ref NONE,interfaces=ref StringMap.empty}:snapshot
               val ()=phase "snapshot-published" (length (#order result))
           in serial:=IntInf.+ (!serial,1);snapshot end
         val result=work () handle error => (busy:=false;raise error)
@@ -167,15 +167,20 @@ struct
   (* what an occurrence's unit was typed against by its name: the
      fingerprint its usage of the name holds ("IDENTITY FINGERPRINT", the
      part after the binder's identity), none where it has no such usage or
-     no fingerprint covers the name *)
+     no fingerprint covers the name; a unit's, by key, worked out once *)
   fun interfaceOf (snapshot:snapshot,occurrence:occurrence)=
     case StringMap.find (#entries snapshot,#unit occurrence) of NONE => NONE | SOME (k:E.kept) =>
-      let val long=String.concatWith "." (#path occurrence @ [#name occurrence])
+      let val table=case StringMap.find (!(#interfaces snapshot),#unit occurrence) of SOME table => table | NONE =>
+            let fun fingerprint value=case List.rev (String.fields (fn c => c= #" ") value) of
+                    found::_::_ => if found="-" then NONE else SOME found | _ => NONE
+                val table=List.foldl (fn ((key,value),all) => case fingerprint value of
+                    SOME found => if StringMap.member (all,key) then all else StringMap.insert (all,key,found) | NONE => all)
+                  StringMap.empty (#usages k)
+            in #interfaces snapshot:=StringMap.insert (!(#interfaces snapshot),#unit occurrence,table);table end
+          val long=String.concatWith "." (#path occurrence @ [#name occurrence])
           val key=case #kind occurrence of "functor" => "fun " ^ long | "signature" => "sig " ^ long
             | "structure" => "s " ^ long | "value" => "v " ^ long | "type" => "t " ^ long | kind => kind ^ " " ^ long
-      in case List.find (fn (name,_) => name=key) (#usages k) of NONE => NONE
-         | SOME (_,value) => (case List.rev (String.fields (fn c => c= #" ") value) of
-             fingerprint::_::_ => if fingerprint="-" then NONE else SOME fingerprint | _ => NONE) end
+      in StringMap.find (table,key) end
   fun entries (snapshot:snapshot)=List.map (fn name => #entry (valOf (StringMap.find (#entries snapshot,name)) : E.kept)) (#order snapshot)
   fun flat (snapshot:snapshot)=case !(#flat snapshot) of SOME all => all | NONE =>
     let val kept=entries snapshot
