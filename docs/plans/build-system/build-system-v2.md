@@ -295,7 +295,7 @@ On 2026-11-05 the owner asked: "Fix virtual in the editor, the 5 bugs, the plann
   - **Go-to-definition no longer lands on a removed rebinding:** a unit whose name another unit now binds is elaborated again. The rebind scenario's 18 disagreements are 0, and it is in the scale oracle's tier.
   - **Re-aliasing**, found by F1: `structure A = B` made `structure A = C`, with one interface in another unit, kept the unit's identity, so a client's `A.x` stayed at B's. The users of a name an alias now takes from another definition are elaborated again. A first version over-elaborated a datatype edit on HOL4 (204 units to 430) and was narrowed back to 204.
   - **Costs** on the scale fixture: +0.02-0.43% VM instructions on the other edits, about 1% on a comment or body check; restoring a rebinding and re-aliasing pay the walk a right answer needs.
-  - **Found, not fixed:** M19's comparison still compares no types.
+- **F1b, types in the comparison** (`496756683`, `make check` 22,776 of 22,776). The owner, on M19's comparison of a file's contexts, which compared places and never types: "do it". Each name a file uses is now compared by the static fingerprint its unit's usage of it holds, beside its places, so a file that names only `common.sml`'s `type key = Config.word`, with `Config.word` `Word32.word` in one build and `Word64.word` in the other, is asked about; a test fails without it. A virtual module's name is the special case, compared by its fingerprint alone, and F1's separate rule is folded in. It reads what each check kept, so it costs no check more. In this repo, 1 prompt stays, and none of the 23 files whose builds agreed now disagrees.
 
 ## Found while writing this roadmap
 
