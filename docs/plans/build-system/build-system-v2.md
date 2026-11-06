@@ -290,6 +290,12 @@ On 2026-11-05 the owner asked: "Fix virtual in the editor, the 5 bugs, the plann
     - A library index record outside the frozen layer is named by the library's place and its directory as spelt, so two `--lib` roots sharing a store keep theirs apart: a switch costs hello 1.85M VM instructions where it cost 15.25M. F2's program facts are named the same way. An installed or copied Basis still pays its first compile in a new store once, 15.2M: avoiding it needs a mechanism, and none was built.
     - A compile that runs again (M1, above) prints each warning once.
     - The two FFI REPL checks write their times as JSON numbers; they could not fail, since the runner polls every 10 ms.
+- **F1, the editor** (`fe93d8918`, `make check` 22,776 of 22,776). F1 stopped on the account's weekly limit after its last commit, before it reported; the lead wrote its report from its commits and raw files.
+  - **A client of a virtual library no longer prompts.** Two causes, not the one the lead guessed: places were compared by their spelling, so `libraries/table/../../table.sml` and `table.sml` differed; and the plugin build declares `Table` itself with `_dynamic`. Places are now compared by the file go-to-definition opens, and a virtual or dynamic module by the signature it resolves to. That rule is general: such a module's client is typed by its signature alone (M21). Prompts in this repo: 1, the Win32 configuration's 32 against 64 bits. Editor and analysis tests with a virtual library now exist, which M22 left open.
+  - **Go-to-definition no longer lands on a removed rebinding:** a unit whose name another unit now binds is elaborated again. The rebind scenario's 18 disagreements are 0, and it is in the scale oracle's tier.
+  - **Re-aliasing**, found by F1: `structure A = B` made `structure A = C`, with one interface in another unit, kept the unit's identity, so a client's `A.x` stayed at B's. The users of a name an alias now takes from another definition are elaborated again. A first version over-elaborated a datatype edit on HOL4 (204 units to 430) and was narrowed back to 204.
+  - **Costs** on the scale fixture: +0.02-0.43% VM instructions on the other edits, about 1% on a comment or body check; restoring a rebinding and re-aliasing pay the walk a right answer needs.
+  - **Found, not fixed:** M19's comparison still compares no types.
 
 ## Found while writing this roadmap
 
