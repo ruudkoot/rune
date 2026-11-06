@@ -12,7 +12,7 @@ is a separate defect.
 
 ## Reproduction
 
-From a Rune checkout with the pinned hosts and manifests prepared:
+From a Rune checkout with the pinned hosts prepared:
 
 ```
 NATIVE_HOST=yes bin/rune-test run 'lib-hosts/smlnj*/ffi.model.generate' --keep

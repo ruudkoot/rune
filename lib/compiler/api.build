@@ -1,11 +1,11 @@
-(* Shared API graph. Bootstrap hosts use the portable platform module;
-   Rune builds include the annotated runtime adapter before the facade. *)
+(* Shared API graph. The other SML systems have the portable platform
+   module alone (host=only), and Rune its runtime adapter (host=no), each
+   before the facade: one module of the name in either. *)
 use internal.build
 files
   syntax/ast.sml
   syntax/parser.sml
   syntax/incremental.sml
-  api/prelude.sml
   api/session.sml
   api/build-query.sml
   api/node-types.sml
@@ -15,6 +15,8 @@ files
   api/scope-probe.sml
   api/analysis.sml
   api/compiler_sig.sml
+end
+annotate "host=only" in
   api/platform.sml
 end
 annotate "host=no" in

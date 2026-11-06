@@ -37,7 +37,14 @@
    make check holds the mutants to the sources, as nothing else does between
    full runs: prepare, and a job for each mutant that builds it (built-ID).
    A mutant that no longer applies or compiles seeds nothing, and that is a
-   FAIL in both tiers. *)
+   FAIL in both tiers.
+
+   The mutants of the cache (tests/runner/cachemutantlist.sml, E18) are another
+   kind: what sees one is no compile of a corpus but a check of the cache, so
+   each names the checks that must fail on it (cache-ID), each of which must
+   pass with no mutant (cache-control). Tier test-cache-mutants runs those
+   alone, within test-compiler-mutants; make check holds them to the sources
+   by prepare. *)
 structure CompilerMutants =
 struct
   open Sh
@@ -257,10 +264,10 @@ struct
       val () = mkdirs (dirOf "good")
       val err = dirOf "bootsrcs.err"
       val code = Children.exec Subprocess.unlimited (fn e => e)
-                   {cmd = ["sh", "scripts/build-files.sh", "rune.build"], dir = SOME root, stdin = "", stdout = dirOf "files.txt",
+                   {cmd = ["sh", "scripts/plan-files.sh", "rune.plan"], dir = SOME root, stdin = "", stdout = dirOf "files.txt",
                     stderr = err, timeout = 60}
-      val () = need (code = 0, "scripts/build-files.sh failed: " ^ firstNonEmpty err)
-      val srcs = ["build/config.sml"] @ String.tokens Char.isSpace (read (dirOf "files.txt")) @ ["src/main/rune-main.sml"]
+      val () = need (code = 0, "scripts/plan-files.sh failed: " ^ firstNonEmpty err)
+      val srcs = String.tokens Char.isSpace (read (dirOf "files.txt"))
       val () = write (dirOf "bootsrcs.txt", String.concat (List.map (fn s => s ^ "\n") srcs))
       val () = need (exists good, "no bin/rune.rbc")
       (* each mutant applies to today's sources: its old text once *)
@@ -269,7 +276,7 @@ struct
                             need (length (places (read (fromRoot file), old)) = 1,
                                   #id m ^ ": its old text is not in " ^ file ^ " once"))
                           (#edits m))
-               CompilerMutantList.mutants
+               (CompilerMutantList.mutants @ List.map #mutant CacheMutantList.mutants)
     in say "PASS compiler-mutants: prepared\n" end
 
   fun goodPart part () =
@@ -505,6 +512,128 @@ struct
           end
     end
 
+  (* ---- the mutants of the cache (tests/runner/cachemutantlist.sml) *)
+
+  (* a directory as bin is to the checks, of the compiler rbc: bin/rune-incremental
+     takes the VM, and the REPL unless it is the mutant's, from beside it *)
+  fun stage (id, rbc) =
+    let
+      val bin = dirOf (id ^ "/bin")
+      val () = mkdirs bin
+      val rune = bin ^ "/rune"
+      val () = write (rune, "#!/bin/sh\nexec " ^ String.concatWith " " (List.map quote (compiler rbc)) ^ " \"$@\"\n")
+      val () = Posix.FileSys.chmod (rune, Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.ixusr])
+      fun beside n = if exists (fromRoot ("bin/" ^ n)) andalso not (exists (bin ^ "/" ^ n))
+                     then Posix.FileSys.symlink {old = fromRoot ("bin/" ^ n), new = bin ^ "/" ^ n} else ()
+    in List.app beside ["runevm", "runevm-stack", "rune-repl", "rune-repl.img", "rune-repl.load.rbc"]; rune end
+
+  (* the REPL of the mutant, made as the Makefile makes bin/rune-repl from the
+     sources bin/rune-repl.units lists, for a check that drives it *)
+  fun stageRepl (m : mutant) rune =
+    let
+      val d = dirOf (#id m)
+      val bin = d ^ "/bin"
+      val units = bin ^ "/rune-repl.units"
+      val err = d ^ "/repl.err"
+      val edited = List.map #file (#edits m)
+      fun source f = if List.exists (fn e => e = f) edited then d ^ "/src/" ^ f else fromRoot f
+      val srcs = List.map source (List.filter (not o String.isSubstring "lib/basis/") (lines (read (fromRoot "bin/rune-repl.units/sources"))))
+      fun remove n = rmTree (bin ^ "/" ^ n)
+      val () = List.app remove ["rune-repl", "rune-repl.img"]
+      val code = execute (900, compiler good @ ["--units", "--basis", "all", "--cache-dir", d ^ "/cache", "--emit-units", units,
+                                                "-o", bin ^ "/rune-repl.rbc"] @ srcs,
+                          root, "", err, err)
+      val () = need (code = 0, "the mutant's REPL does not build: " ^ errLine (read err))
+      val code = execute (300, [vm, "--heap-size", "67108864", fromRoot "bin/rune-repl.load.rbc", units ^ "/units", "--make-image",
+                                bin ^ "/rune-repl.img"], root, "", err, err)
+      val () = need (code = 0, "the mutant's REPL does not make its image: " ^ errLine (read err))
+      val script = bin ^ "/rune-repl"
+    in
+      write (script, "#!/bin/sh\nd=$(dirname \"$0\")\nexec \"$d/runevm\" --heap-size 67108864 --restore \"$d/rune-repl.img\" -- \"$@\"\n");
+      Posix.FileSys.chmod (script, Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.ixusr])
+    end
+
+  (* a check run on the compiler rune: whether it passed, and what it said *)
+  fun runCheck (id, rune, check) =
+    let
+      val log = dirOf (id ^ "/" ^ check ^ ".log")
+      val projects = ["tests/incremental/project", "tests/incremental/functors"]
+      val args = case check of
+                   "mutate" => ["mutate", "--rune", rune, "--steps", "40"] @ projects
+                 | "soundness" => ["soundness", "--old", "bin/rune", "--new", rune, "--steps", "15", "--probes"] @ projects
+                 | _ => ["one", check, rune]
+      (* a directory of its own: the scenario of another mutant may be running *)
+      val code = Children.exec (limits 900) (setEnv ("RUNE_TEST_RUN", dirOf (id ^ "/run")) o setEnv ("RUNE_LINT", "2") o environment)
+                   {cmd = [fromRoot "bin/rune-incremental"] @ args, dir = SOME root, stdin = "", stdout = log, stderr = log, timeout = 2700}
+    in (code = 0, read log) end
+  (* the line of what a check said that says why it failed *)
+  fun whyFailed said =
+    case List.filter (String.isPrefix "FAIL") (lines said) of
+      l :: _ => clean (if size l > 200 then String.substring (l, 0, 200) else l)
+    | [] => errLine said
+
+  fun namedCache id =
+    case List.find (fn c => #id (#mutant c : CompilerMutantList.mutant) = id) CacheMutantList.mutants of
+      SOME c => c
+    | NONE => raise Failed ("no mutant of the cache " ^ id)
+  fun cacheVerdict (id, text) = (mkdirs (dirOf "verdicts"); write (dirOf "verdicts/cache-" ^ id, text ^ "\n"); say (text ^ "\n"))
+
+  (* a mutant of the cache: each check that must see it fails on it, saying
+     what it must say. One argued harmless (docs/testing.md) only applies *)
+  fun cacheJob id () =
+    let
+      val c = namedCache id
+      val m = #mutant c
+    in
+      case #catches c of
+        [] => cacheVerdict (id, "ARGUED " ^ id ^ " (" ^ #class m ^ "): " ^ #note m)
+      | catches =>
+          case build m of
+            (NONE, status) => (cacheVerdict (id, "STILLBORN " ^ id ^ ": " ^ status); raise Failed (id ^ " no longer compiles: " ^ status))
+          | (SOME rbc, _) =>
+              let
+                val rune = stage (id, rbc)
+                val () = if #repl c then stageRepl m rune else ()
+                val runs = List.map (fn {check, says} => (check, says, runCheck (id, rune, check))) catches
+                fun seen (_, says, (passed, said)) = not passed andalso String.isSubstring says said
+                val missed = List.filter (not o seen) runs
+                fun show (check, _, (passed, said)) = check ^ ": " ^ (if passed then "passed" else whyFailed said)
+                val word = if null missed then "CAUGHT " else "MISSED "
+              in
+                cacheVerdict (id, word ^ id ^ " (" ^ #class m ^ "): " ^ String.concatWith "; " (List.map show runs));
+                rmTree (dirOf id);
+                need (null missed, id ^ ": " ^ String.concatWith "; " (List.map show missed))
+              end
+    end
+
+  (* the same checks on the compiler itself: a check that fails here says
+     nothing of a mutant *)
+  fun cacheControl () =
+    let
+      val checks = List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) []
+                     (List.concat (List.map (fn c => List.map #check (#catches c)) CacheMutantList.mutants))
+      val rune = stage ("cache-control", good)
+      val failed = List.filter (fn check => not (#1 (runCheck ("cache-control", rune, check)))) checks
+    in
+      need (null failed, "the checks fail with no mutant: " ^ String.concatWith " " failed);
+      say ("PASS compiler-mutants: the control: " ^ Int.toString (length checks) ^ " checks of the cache pass\n")
+    end
+
+  fun cacheFinal () =
+    let
+      val vs = List.map (fn c => read (dirOf "verdicts/cache-" ^ #id (#mutant c : CompilerMutantList.mutant))) CacheMutantList.mutants
+      fun count w = length (List.filter (String.isPrefix (w ^ " ")) vs)
+      val public = fromRoot "tests/out/compiler-mutants"
+      val summary = Int.toString (length vs) ^ " mutants of the cache: " ^ Int.toString (count "CAUGHT") ^ " caught by the checks that must, "
+                    ^ Int.toString (count "ARGUED") ^ " argued harmless, " ^ Int.toString (count "MISSED") ^ " missed, "
+                    ^ Int.toString (count "STILLBORN") ^ " stillborn\n"
+    in
+      mkdirs public;
+      write (public ^ "/cache-results.txt", String.concat vs);
+      say summary;
+      need (count "MISSED" = 0 andalso count "STILLBORN" = 0 andalso List.all (fn v => v <> "") vs, "the mutants of the cache: " ^ summary)
+    end
+
   fun final () =
     let
       val vs = List.map (fn (m : mutant) => read (dirOf "verdicts/" ^ #id m)) (selected ())
@@ -545,6 +674,9 @@ struct
     | ["compiler-mutant", id] => SOME (protect (mutantJob id))
     | ["compiler-mutant-built", id] => SOME (protect (builtJob id))
     | ["compiler-mutants-final"] => SOME (protect final)
+    | ["cache-mutant", id] => SOME (protect (cacheJob id))
+    | ["cache-mutants-control"] => SOME (protect cacheControl)
+    | ["cache-mutants-final"] => SOME (protect cacheFinal)
     | _ => NONE
 
   fun job (name, args, after, memory) =
@@ -557,14 +689,21 @@ struct
     let
       val goods = List.map (fn p => "compiler-mutants/good-" ^ p) parts
       val ms = List.map #id (selected ())
+      val cms = List.map (fn c => #id (#mutant c : CompilerMutantList.mutant)) CacheMutantList.mutants
+      val cacheTier = Test.tag "test-cache-mutants" o Test.tag "test-compiler-mutants"
     in
       Test.tag "covers:tests/runner/compilermutant*"
+        (Test.tag "covers:tests/runner/cachemutantlist.sml"
         (Test.describe "compiler-mutants"
-           (Test.tag "check" (Test.tag "test-compiler-mutants" (job ("prepare", ["compiler-mutants-prepare"], [], 300)))
+           (Test.tag "check" (cacheTier (job ("prepare", ["compiler-mutants-prepare"], [], 300)))
             :: List.map (fn i => Test.tag "check" (job ("built-" ^ i, ["compiler-mutant-built", i], ["compiler-mutants/prepare"], 1500))) ms
             @ List.map (Test.tag "test-compiler-mutants")
                 (List.map (fn p => job ("good-" ^ p, ["compiler-mutants-good", p], ["compiler-mutants/prepare"], 2000)) parts
                  @ List.map (fn i => job (i, ["compiler-mutant", i], goods, 2500)) ms
-                 @ [job ("final", ["compiler-mutants-final"], List.map (fn i => "compiler-mutants/" ^ i) ms, 300)])))
+                 @ [job ("final", ["compiler-mutants-final"], List.map (fn i => "compiler-mutants/" ^ i) ms, 300)])
+            @ List.map cacheTier
+                (job ("cache-control", ["cache-mutants-control"], ["compiler-mutants/prepare"], 2000)
+                 :: List.map (fn i => job ("cache-" ^ i, ["cache-mutant", i], ["compiler-mutants/cache-control"], 2500)) cms
+                 @ [job ("cache-final", ["cache-mutants-final"], List.map (fn i => "compiler-mutants/cache-" ^ i) cms, 300)]))))
     end
 end

@@ -137,25 +137,6 @@ struct
     (case !jsonFile of SOME _ => collected := (level, sp, msg) :: !collected | NONE => ();
      render (level, sp, msg))
 
-  (* a warning replayed from the cache, which keeps its first line only *)
-  fun showCached line =
-    case !theme of
-      NONE => line
-    | SOME _ =>
-        let
-          val marker = ": warning: "
-          fun find i =
-            if i + size marker > size line then NONE
-            else if String.substring (line, i, size marker) = marker then SOME i
-            else find (i + 1)
-        in
-          case find 0 of
-            NONE => line
-          | SOME i =>
-              paint "diag.location" (String.substring (line, 0, i + 1)) ^ " " ^ paint "warning" "warning:" ^ " " ^
-              paint "diag.message" (String.extract (line, i + size marker, NONE))
-        end
-
   (* --color, --diagnostics and --diagnostics-json, for standard error *)
   fun install {color, full, json} =
     let

@@ -1330,7 +1330,18 @@ the elaborator, queue or serialization dominates.
 
 M1 establishes proposed absolute per-fixture budgets with the actual
 hardware named; M4/M5 replace proposals with accepted measurements before
-preview, and M14 enforces them. A budget change records the evidence and
+preview, and M14 enforces them. Analysis's budgets are now the build-system
+roadmap's D28, a table of cost functions stated in
+[the server's documentation](../language-server.md#the-scale-target) and held
+by `make test-lsp-scale` and, for its times, the nightly
+`make test-lsp-scale-times`: planning a check at most 200 ms at 100k files
+and 1000 builds, reading no build outside the changed set; at most 2 KB a line
+resident; cold from a store in seconds at 1M lines; a leaf comment's p95 at
+most 250 ms; a body edit that unit's elaboration on top; an interface edit
+O(clients); hover at most 50 ms. They replace the proposals of M1's ledger for
+diagnostics after a local edit (250 ms) and a cached query (50 ms); its
+edit-application, local-syntax, cancellation and retention proposals are not
+analysis's and stand. A budget change records the evidence and
 reason instead of silently weakening a failed check. The parser-sharing
 threshold is fixed by the owner's requirement and cannot be relaxed by
 this budgeting process. Memory is also bounded by explicit cache/input

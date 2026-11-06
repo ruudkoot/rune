@@ -447,7 +447,8 @@ a count is a number that either matches or is a bug.
 **Byte-identical artefacts.** `make bootstrap` checks that the compiler
 compiled by itself reproduces `bin/rune.rbc` byte for byte, and
 `check-cross` that all host builds produce the same bytecode for every
-test program (`building.md`, *Bootstrapping*). This rests on the compiler
+test program, but for a compile in units by `smlnj32`, whose hash is its
+own (`building.md`, *Bootstrapping*). This rests on the compiler
 being deterministic: ordered maps, counter-generated stamps, reals passed
 through as text.
 
@@ -868,6 +869,118 @@ went stale unseen when nothing did: `compiler-mutants/prepare` applies every
 mutant's edits, and `compiler-mutants/built-ID` builds each one, about 7
 minutes of CPU in all. It says nothing of what catches them.
 
+### The checks of the cache
+
+A hit claims that compiling the unit again would give the entry
+([units.md](units.md), *Checking it*, and `tests/incremental/model.sml`). That
+rests on a key covering what a compile reads, and the compiler's reads, spread
+through every pass and table, and the key, kept by hand, are two pieces of code
+that nothing ties together but tests. A scenario says what its author thought
+of; when anyone looked, real holes appeared (build-system roadmap, E18). So each
+premise has a check of its own, independent of the scenarios, in `make
+test-incremental` and so in `make check`, as a scenario of
+`bin/rune-incremental`:
+
+| Check | What fails it | Where |
+|---|---|---|
+| The flags oracle, `flag-*` | an option or a `RUNE_` variable of the compiler's sources with no row saying whether it reaches a key; a row's claim not holding, each way: through a cache filled without the setting, a build with it against the same build without a cache, and the other way about, in exit status, bytes and text; and each setting of the language once more on a library's file (`flag-lib-*`): the library's unit compiled again where the setting reaches it (`--or-patterns`, `--no-unicode-lints` and the configuration's), and taken where it does not (`--default-type`, `--unicode`, `--allow-prim`, the input files') | `tests/runner/cacheflags.sml` |
+| Fact edits, `fact-*` | an edit that flips one fact a fingerprint or the configuration holds, the value's name and type kept, compiling other units than the row says, or differing from a build without the cache | `tests/runner/cachefacts.sml` |
+| Root blanking, `blank-*` | a root of `CompilerState` that changes what a compile makes when it goes back to its baseline, and that `tests/incremental/roots.tsv` does not say what covers | `tests/runner/cachechecks.sml`, `src/driver/cachecheck.sml` |
+| Verification of all hits, `across-*`, S98 | `--verify-cache` finding that an entry taken across a unit that changed is not what compiling the unit gives | the same |
+| Random edits, `@mutate`, `@mutate-verify` | a warm build that disagrees with `--no-cache`, or that `--verify-cache` refuses; a build that fails whose plan `--verify-cache` refuses. Among the edits, a fixity directive changed, added, removed, made `nonfix` or put in a `local` that keeps it or drops it, so that the files after it parse another way, or not at all (`tests/incremental/fixity`) | `tests/runner/mutationchecks.sml`, `tests/runner/mutationproject.sml` |
+| The model, `model` | the model of a hit saying otherwise than `tests/incremental/model.expected` | `tests/incremental/model.sml` |
+| The fingerprint oracle, `fp-oracle` | a field of a binding, or a fact of the tables a fingerprint reads by hand, changed alone, moving a fingerprint in other layers than the description of the codecs marks it in (`tools/codecs/compiler.sml`), or a sameness not saying what the description has it compare; or a kind of field or fact the program does not change | `tests/runner/cachechecks.sml`, `UnitBasis.fpOracle` ([units.md](units.md), *The fingerprint oracle*) |
+| Unit by unit, and the mask, `warm-unit-*` | a unit compiled alone, while every other is taken from the cache without its basis, that is not what its entry holds: under its view, what its text names loaded by need, or under the mask of its entry's usages, each structure cut to the paths they name and only the units their binders reach loaded | `tests/runner/warmchecks.sml` |
+| The racy cases, `warm-racy`; up to date, `warm-uptodate`, `warm-uptodate-index` | a warm build that differs from one without the cache after an edit the stat memo or a memo could miss: of the same size within the second of a build, the old text back with its old times, an edit with its time put back, the output overwritten or removed, a new name, a `library.build` above a unit, a Basis Library file edited under an index of the frozen layer or of the overlay | the same |
+| The plan, `warm-plan`, S131 | a build that reads, lexes and parses other files for its plan than the edit and the fixity it moved say ([units.md](units.md), *A warm build*): the file edited; after a fixity directive changed, added, removed, made `nonfix` or put in a `local` that drops it, the files after it; after one put in a `local` that keeps it, that file alone. A warm build that differs from one without the cache, where a file's text is the same and the fixity before it is not; `--verify-cache` finding what the store keeps of a file is not what reading it gives | `tests/runner/warmchecks.sml`, `tests/runner/incrementalextra.sml` |
+| Two roots, one store, `warm-index-roots`, `warm-plan-roots` | two copies of the Basis Library under two `--lib` roots, built in turn through one store, not keeping a record of each one's index there, or a build from one writing again the record of the other's; in units, the same of each root's plan | the same |
+| Where the store is, `store-place` | a build, a build of another first line, a build run from below the root, a file given by itself or the REPL's `use` keeping a store anywhere but beside the workspace's `rune.workspace`, or two builds of one workspace not sharing it; `RUNE_CACHE` or `--cache-dir` not moving it; with no workspace, none beside the build file | `tests/runner/storechecks.sml` |
+| Trimming, `store-trim` | a build after the store was trimmed -- to sizes from the whole down to a byte, by age by hand and after a build, every other file and every third removed -- that differs from one without the store; a build after a build that trimmed compiling what that build took; a trim of the frozen layer, or a limit that is none, not refused | the same |
+| Damage, `store-damage` | an entry damaged where it still reads, its hashes kept -- in its head so that it stands, or in its first section -- taken rather than compiled; a damaged Mid read by a build of the units' code, or taken by `--whole` | the same |
+| Stale entries, `store-heads` | a lookup through a store with stale entries under a project's keys hashing more of the store than one through a store of its entries alone | the same |
+
+The roots come from `CompilerState.names`, not a list: a new root needs no line
+until a compile reads it. Blanking cannot see a flag left at its default, which
+is what the oracle is for, and the oracle cannot see state no option sets, which
+is what blanking is for. `blank-*` takes three small groups, twelve units, each
+child a fork and a small compile. By hand, `RUNE_BLANK_ROOTS=FILE` makes any
+compile with `--no-cache` do it, of the input files or of the units
+`RUNE_BLANK_UNITS=A,B` names.
+
+`--verify-cache` compiles each unit it finds. An entry whose usages hold by
+binder must be the same bytes. One that holds by fingerprint names the old
+unit, so what is compared is the same thing made from each side: the entry
+loaded with its names remapped as a build would, and the unit compiled, each
+with its basis written again from what loading it left, without what only a
+hash reads, and its code read and written, a unit's identity left out. It
+compares an entry's basis and code, not its Mid, and an entry that does not load
+in a session that compiled the units before it is what a build would miss, and
+says so under `--explain-rebuild`. Build-cache issue 15 closed with M4's step 2
+of the build-system roadmap, since a basis written again is the same bytes.
+
+They are 99 tests of `make test-incremental`: 500 s of CPU, of which the
+flags oracle's 66 are 167 s (2026-11-03). `make test-cache-random`
+is the random edits at length, 150 steps of each small project with every warm
+build verified and 12 of the compiler's own sources, in the nightly tier; a
+change to a key runs it. `RUNE_CACHE_SEED=N` draws other edits.
+
+A unit compiled under the mask, `RUNE_VERIFY_UNIT=NAME` with `RUNE_VERIFY_MASK`
+set (NAME its file or its logical name), sees only what its entry's usages
+name, and the tables by stamp only what the units their binders reach put
+there: it sees a read of a table the usages do not name, which no root
+blanking can, since every root is at its value. Without `RUNE_VERIFY_MASK` the
+unit sees its view, what its text names (units.md, *A warm build*), as a build
+on the warm path does; with `--explain-rebuild` either says how many units it
+loaded. What the mask leaves: the units a used unit's basis names, whose
+tables are all there, used or not.
+
+What these do not do. The fingerprint oracle changes what the description
+marks, and a fact of the tables it knows of: a fact a fingerprint should read
+and nobody wrote down is what the fact edits and the mask are for. A type is
+changed as a whole or in its first type variable's equality, not part by
+part. `rune-repl`'s own options are not in the flags oracle's rows, and a
+pass of these on small projects says that they ran there, nothing more.
+
+**The mutants of the cache** (`tests/runner/cachemutantlist.sml`, E18's and those
+added for each check) are built as the compiler's are, and run in
+`make test-compiler-mutants`, or alone by `make test-cache-mutants`. A compile
+of a corpus sees none of them, so each names the checks that must fail on it and
+what they must say, and the tier fails where one does not;
+`compiler-mutants/cache-control` runs those checks with no mutant, which must
+pass. `make check` holds them to the sources through `compiler-mutants/prepare`.
+A1 to A6 are a virtual or dynamic functor's ABI (the build-system roadmap's
+M21): A1 to A4 make it another -- its version, its calling convention, the
+records' slots in another order, the descriptors in another -- and a module
+of the mutant is refused by a client of `bin/rune` when it loads it (S128 of
+`tests/incremental/SCENARIOS.md`); A5 and A6 take a signature out of the
+fingerprint, and a module of another signature with the same slots is then
+taken (S129, S130). C5 and C14 are the store's
+(the build-system roadmap's M7): an entry's sections, or its head, not held to
+their hashes, so that an entry damaged where it still reads is taken, which
+`store-damage` sees. P1 keeps what a file is to the plan by its text alone, as
+E15's plan memo did, not by the fixity before it: S131 sees the program take
+the Basis Library's file a parse that failed before named, and `warm-plan` a
+fixity edit read one file where it should read those after it; random edits
+of `tests/incremental/fixity` with `--verify` see it too, 9 builds of 50.
+The 13 that survived E18:
+
+| Mutant | What it drops | Issue | What became of it |
+|---|---|---:|---|
+| F1 | `valFacts`: `Translate.primAliases` | | Harmless to a compile: a value bound to a primitive is a function that applies it, so `Expand.primGlobals`, which the fingerprint also hashes, says the same. `F14` drops both, and `fact-primfunction` and `fact-primdirect` catch it; since M5, `fp-oracle`, which changes the fact alone |
+| F4 | `valFacts`: `Expand.primGlobals` | | `fact-primfunction`: the client reaches the function by a structure's other name, so that its usage is the structure, and no `inlv` says what the function is |
+| F5 | `fpAnchored`: which value, the anchor | 8 | `fact-anchor`: a structure's other name made to reach another value of the type, which a remap by the old path would find wrongly |
+| F6 | `fpConinfo`: a constructor's tag | | Harmless to a compile: a constructor's scheme names its type, and the definition holds the constructors in order, which is what a tag is; since M5, `fp-oracle`, which changes the tag alone |
+| F9 | a definition: a type name's equality | 16 | `fact-eqname`: an abstract type, whose definition is nothing else |
+| U3 | the usage `fun` | | Harmless since the build-system roadmap's M4: an application calls the functor's function, whose global no path reaches, so where the functor's unit changed an entry that calls it is not remapped and its unit is compiled (`its entry names ... a name no path of it reaches`), and where it did not nothing changed. `across-project` saw it only while an entry exact by its binders that named a changed unit failed to load; such an entry is taken across now |
+| U4 | the usage `inl` | | `fact-inlfunctor`: E18's scenarios had no marked functor outside the Basis |
+| K1 | the key's `allow` | | `flag-allow-prim`: filled with the flag, built without it |
+| K5 | the configuration's `inline-val` | | `fact-markvalue`: the mark taken out of a build file |
+| C1 | a unit still in the session is a bar to a fingerprint | 21, 23 | S75 on the mutant's REPL, which the tier builds: in a batch build two units of one name do not arise |
+| C3 | `absent`, the units an entry's code names | 4 | S99: an entry planted in a program that takes nothing across a change, the one place nothing else refuses it |
+| C6 | a unit that keeps identities takes none across a change | 15 | S61, on the reason: with the guard gone `absent` refuses the entry, and the build is the same |
+| C9 | a signature's usage fingerprinted after the unit | 17 | S100: an unrelated edit compiles the unit that declares the name again |
+| M2 | `UnitMid`: the layouts a body fixed | | S101: only with the application left a call, where the layout decides the bytes |
+
 Benchmark correctness and deterministic-budget drivers use
 `bin/rune-bench-check` and `bin/rune-budget`. `suite NAME` selects the typed
 case contract, `catalogue` accepts the former profile/config/filter options,
@@ -879,7 +992,33 @@ The three baseline failures (fluid float formatting, pidigits5 and zarith
 27-digit layout) remain failures; all 267 old/new output streams match.
 
 `bin/rune-scenarios SUITE [--rune BIN]` selects deps, buildfile, dynamic, units,
-install or dist. Installation also accepts repeated `--host NAME`; Make's
+install or dist. Three cases of deps are the build-system roadmap's E8 table
+([units.md](units.md), *Well-formed units*): `wellformed-rune` holds every
+library and build of the tree to `rune --deps --build` finding no unit that
+is not well-formed, `wellformed-hol4` holds HOL4's 744 units of the
+`src/boss` closure so, and `wellformed-mlton` MLton's 606 but for 13, below.
+`RUNE_WELLFORMED_MLTON`
+names a copy of MLton's sources (`mlton`, `lib/mlton`, `lib/mlyacc-lib`,
+`lib/stubs`, from `MLTON_SOURCES`, symbolic links followed) with flat build
+files laid over it, which a translator from MLton's `.mlb` files,
+`impl/bs-m14/mlb2build3.py` of the build-system roadmap's drafts, makes: 30
+build files, one for each `.mlb` of its closure and two for the Makefile's
+lists of stubs, `mlton/mlton.build` the program, each `.mlb` it includes a
+plain `use`, and MLB's `local` flattened, with no library. The row runs on
+that flat build: its 606 units, of which 13 are not well-formed, each
+declaring a name another unit declares too, 17 names in all, which MLB's
+`local` keeps apart (`STREAM` and `Stream` of `lib/mlton` and
+`lib/mlyacc-lib`, `CONTROL`, `FIELD` and `Field`, `MLton`, and the `xml/` and
+x86 copies of `ssa/` and amd64 passes). The row expects exactly those, by unit
+and by name, and fails on one more or one fewer. M9's library form of MLton,
+which had all 606 well-formed, cannot be written under D9: its libraries
+export 16 names of the Basis Library and 5 names come from two or three of
+them, which a library with a header may not ([build.md](build.md),
+*Clashes*), so a codebase that shadows the Basis renames before it can have
+headers. `RUNE_WELLFORMED_HOL4`
+names a directory of the closure after HOL's filter with its `boss.build`,
+which declares its two preludes; `rune --deps` then finishes on the closure as
+a plain list. Without them those two say SKIP. Installation also accepts repeated `--host NAME`; Make's
 install tier retains bytecode, MLton and SML/NJ. All stage prefixes are private.
 Distribution assertions read archive metadata in SML and use independent
 ELF/PE fixture bytes. Compression decoding uses gzip/unzip, declared as

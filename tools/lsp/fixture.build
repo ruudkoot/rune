@@ -1,0 +1,6 @@
+(* The scale fixture: a synthetic tree of libraries and programs (D28). *)
+libraries json random end
+files
+  fixture.sml
+  ../../src/main/lsp-fixture-main.sml
+end

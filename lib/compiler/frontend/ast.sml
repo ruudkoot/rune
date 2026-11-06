@@ -59,8 +59,10 @@ struct
 
   (* where a dynamic structure comes from: the unit in a file, loaded when
      the declaration runs, or the module of the program that exports the
-     name, a virtual module's implementation (docs/build.md) *)
-  datatype dynamicFrom = DynamicFile of string | DynamicVirtual of string
+     name, a virtual module's implementation (docs/build.md); and a dynamic
+     or virtual functor's function, from either, the body of its funbind
+     (functor F = _virtual (X : A) : B) and of no other *)
+  datatype dynamicFrom = DynamicFile of string | DynamicVirtual of string | DynamicFunctor of dynamicFrom
   (* a dynamic module's record (D3): its values and exceptions, a slot each
      by name -- each a global, its type, and whether it is an exception's --
      then a record of its own for each substructure, by name, as a functor's
@@ -445,6 +447,8 @@ struct
     | StrLet (ds, e, _, _) => "let " ^ String.concatWith " " (List.map decToString ds) ^ " in " ^ strexpToString e ^ " end"
     | StrDynamic (DynamicFile path, s, _, _, _) => "_dynamic \"" ^ String.toString path ^ "\" : " ^ sigexpToString s
     | StrDynamic (DynamicVirtual _, s, _, _, _) => "_virtual : " ^ sigexpToString s
+    | StrDynamic (DynamicFunctor (DynamicFile path), s, _, _, _) => "_dynamic \"" ^ String.toString path ^ "\" (...) : " ^ sigexpToString s
+    | StrDynamic (DynamicFunctor _, s, _, _, _) => "_virtual (...) : " ^ sigexpToString s
     | StrExport (_, s, e, _, _, _) => "_export " ^ sigexpToString s ^ " (" ^ strexpToString e ^ ")"
 
   and sigexpToString s =

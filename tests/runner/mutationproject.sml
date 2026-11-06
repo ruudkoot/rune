@@ -50,6 +50,14 @@ struct
          (#files p := List.map #1 (List.filter (fn (file, _) => not (List.exists (fn b => b = file) (#basis p))) (#original p));
           List.app (fn (file, value) => write p file value) (#original p); SOME "the whole project put back")
        else case choose generator changed of NONE => NONE | SOME (file, value) => (write p file value; SOME (file ^ " put back")) end
+  (* an operator the files name, whose fixity an edit may set: a symbolic
+     identifier, not one of the language's reserved symbols *)
+  fun operator (t : SmlScan.token) =
+    #kind t = SmlScan.Symbol andalso CharVector.all (fn c => Char.contains "!%&$#+-/:<=>?@\\~`^|*" c) (#text t)
+    andalso not (List.exists (fn r => r = #text t) ["=", "=>", "->", "|", ":", ":>", "#"])
+  fun fixityWord (t : SmlScan.token) = List.exists (fn w => w = #text t) ["infix", "infixr", "nonfix"]
+  (* where a fixity directive at t ends: its line's end *)
+  fun lineEnd (text, i) = if i >= size text orelse String.sub (text, i) = #"\n" then i else lineEnd (text, i + 1)
   fun edit generator (p : project) kind =
     let fun any select action = case choose generator (candidates p select) of NONE => NONE | SOME (file, value) =>
                       (action file value; SOME (kind ^ " in " ^ file))
@@ -67,6 +75,27 @@ struct
                      let val n = List.nth (ts, i+1) in case Int.fromString (#text n) of SOME k => SOME (t, n, k) | NONE => NONE end else NONE) (indexed ts))
                   (fn file => fn (t, n, k) => if coin generator then splice p file (#start t) (#finish n) (#text t ^ " " ^ Int.toString ((k + 1 + number generator 9) mod 10))
                        else splice p file (#start t) (#finish t) (if #text t = "infix" then "infixr" else "infix"))
+    (* the fixity of the files after an edit (the build-system work F2): a
+       directive added at the end of a file, removed, nonfix, or put in a
+       local that drops it or keeps it; a file read in it parses another way,
+       or not at all *)
+    | "fixity_add" => (case (choose generator (candidates p (List.filter operator)), choose generator (editable p)) of
+                         (SOME (_, t), SOME file) =>
+                           (write p file (text p file ^ "\n" ^ (if coin generator then "infix " else "infixr ")
+                                          ^ Int.toString (number generator 10) ^ " " ^ #text t ^ "\n");
+                            SOME ("fixity of " ^ #text t ^ " added in " ^ file))
+                       | _ => NONE)
+    | "nonfix" => (case (choose generator (candidates p (List.filter operator)), choose generator (editable p)) of
+                     (SOME (_, t), SOME file) => (write p file (text p file ^ "\nnonfix " ^ #text t ^ "\n");
+                                                  SOME ("nonfix " ^ #text t ^ " in " ^ file))
+                   | _ => NONE)
+    | "fixity_remove" => any (List.filter fixityWord)
+                  (fn file => fn t => splice p file (#start t) (lineEnd (text p file, #start t)) "")
+    | "fixity_local" => any (List.filter fixityWord)
+                  (fn file => fn t => let val stop = lineEnd (text p file, #start t)
+                                          val directive = String.substring (text p file, #start t, stop - #start t)
+                                      in splice p file (#start t) stop
+                                           (if coin generator then "local " ^ directive ^ " in end" else "local in " ^ directive ^ " end") end)
     | "numeral" => any (List.filter (fn t : SmlScan.token => #kind t = SmlScan.Identifier andalso CharVector.all Char.isDigit (#text t)))
                   (fn file => fn t => let val old = valOf (IntInf.fromString (#text t))
                                      in splice p file (#start t) (#finish t) (IntInf.toString (old + IntInf.fromInt (List.nth ([1,2,7], number generator 3)))) end)
@@ -123,7 +152,7 @@ struct
     | _ => raise Failed ("unknown edit kind " ^ kind)
     end
   val weighted = List.concat (List.map (fn (name,n) => List.tabulate (n, fn _ => name))
-      [("fixity",3),("constructors",4),("numeral",5),("top_value",2),("struct_value",3),("comment",1),("shadow",2),("swap",1),("revert",4),("type",3),("exception",2),("remove",1),("rename",1)])
+      [("fixity",3),("fixity_add",2),("fixity_remove",2),("nonfix",1),("fixity_local",2),("constructors",4),("numeral",5),("top_value",2),("struct_value",3),("comment",1),("shadow",2),("swap",1),("revert",4),("type",3),("exception",2),("remove",1),("rename",1)])
   fun next generator p =
     let fun attempt 0 = raise Failed "no applicable edit after 1000 attempts"
           | attempt n = let val kind = List.nth (weighted, number generator (length weighted))

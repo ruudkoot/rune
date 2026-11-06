@@ -16,7 +16,7 @@ experiments*) rest on. `tools/heapsim` replays the traces under models of
 collectors (`tools/heapsim/README.md`).
 
     bin/runevm-census --jit=off --count --stats --heap-size 268435456 --heap-fill 50 \
-        --census-dir DIR [--census-every BYTES] [--census-summary] [--census-graph] FILE.rbc ARGS...
+        --census-dir DIR [--census-every BYTES] [--census-at C,C,...] [--census-summary] [--census-graph] FILE.rbc ARGS...
     bin/runevm-census --census-static FILE.rbc
 
 `--census-dir DIR` turns tracing on and names the directory (made if
@@ -25,7 +25,12 @@ every BYTES bytes allocated (default 32768; 0 for none), which is how the
 census samples liveness: with a semispace whose half holds the live data and
 the interval, and `--heap-fill 50`, no other collection happens, so an
 object's death is bracketed by two samples; a nursery can be modelled from
-four intervals up (128 KiB at the default). `--census-summary` writes
+four intervals up (128 KiB at the default). `--census-at C,C,...` forces
+a collection also at the first allocation where the clock reaches each C
+(ascending, repeats allowed): with `--census-every 0` and the clocks where
+a stock VM collected, the census collects where it did and nowhere else,
+and finds alive at each what it copied (*Limits*;
+`tests/runner/censustrace.sml` replays so). `--census-summary` writes
 `census.txt`, `meta.txt` and `pcs.bin` alone, with no per-object memory, for
 a program that allocates tens of gigabytes; its survival table comes from
 the birth sample kept in each object's header. `--census-graph` adds
@@ -170,7 +175,7 @@ the live data and the interval), and the final one at exit.
                       collection skip)
     u32 sp_ptrs       the slots of [0, sp) that held a pointer when the collection began
     u32 flags         bit 0 forced by --census-every; 1 the final collection at exit (the last
-                      sample alone); 2 the heap grew at it
+                      sample alone); 2 the heap grew at it; 3 forced by --census-at
 
 ### pcs.bin -- u64 per byte of code: the executions of the instruction that starts there.
 
@@ -229,7 +234,25 @@ the live data and the interval), and the final one at exit.
 - At a sample every register of the running frame is a root, its dead ones
   included, while the waiting frames' dead registers are cleared: a census
   keeps a little more alive than a stock VM that collects between its
-  samples (a few kilobytes on the bootstrap).
+  samples (a few kilobytes on the bootstrap). It can keep less, too: a
+  collection clears what it does not keep (the waiting frames' dead
+  registers and the stack above sp, `runtime/gc/copy.c` gc_stack_roots),
+  a census collects at every sample and a stock VM only when its heap is
+  full, and a register the stock VM never cleared may still hold what the
+  census found dead long before. Either way by as much as a stale
+  register holds: tests/perf/string_ops.sml at `--heap-size 1048576`
+  copies 888,488 bytes at its first collection, where its trace with
+  samples every 8 KiB has 600,536 bytes alive and a census whose first
+  sample falls there (every 1 MiB) 888,512, the 24 more being the object
+  the sample's allocation made; tests/perf/compile-sigs.sml compiled at
+  4 MiB (build-system M15, M19 and M21) copies 3,982,032 at its eighth
+  collection, where the trace of every 8 KiB has 4,184,696 alive at the
+  next sample, 202,664 bytes of the compiler's IR that a frame waiting
+  during the stock's collection held in a dead register and still held,
+  running, at that sample. A census with `--census-every 0 --census-at`
+  the stock VM's own clocks collects where it did, clears what it
+  cleared, and finds alive at each of its collections exactly what it
+  copied.
 
 ### Checks
 - `bin/rune-heap-check heap-trace-check DIR`: the file sizes against `meta.txt`;

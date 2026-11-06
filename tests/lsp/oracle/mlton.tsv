@@ -1,0 +1,9 @@
+# MLton's 606 files (see tests/lsp/README.md).
+leaf-comment	1	LAST	append
+leaf-body	1	elaborate/elaborate-core.fun	replace	error ("char constant", ty)	error ("char constant$N", ty)
+early-body	1	lib/mlton/basic/layout.sml	replace	String.make (n, #" ")	String.make (n + $N - $N, #" ")
+early-comment-start	1	lib/mlton/basic/layout.sml	prepend
+early-add	1	lib/mlton/basic/layout.sml	appendtext	val edit_$N = 1
+early-datatype	1	control/control-flags.sig	replace	datatype align = Align4 | Align8	datatype align = Align4 | Align8 | Align$N
++	control/control-flags.sml	replace	datatype t = Align4 | Align8	datatype t = Align4 | Align8 | Align$N
+early-type	1	lib/mlton/basic/layout.sml	replace	String.make (n, #" ")	String.make (n + "x", #" ")

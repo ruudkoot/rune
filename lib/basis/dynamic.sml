@@ -12,21 +12,28 @@ struct
   val cast = _prim "unsafe_cast" : 'a -> 'b
   val exported : (string * unit) option ref = ref NONE
   (* what the program's modules exported, by name, the last first: a virtual
-     module's implementation is the one of its name (docs/build.md) *)
+     module's implementation is the one of its name (docs/build.md), and a
+     virtual functor's, "functor NAME", the record of its function *)
   val named : (string * (string * unit)) list ref = ref []
+  (* what a name is, in a message *)
+  fun described (name : string) : string * string =
+    if String.isPrefix "functor " name then ("functor", String.extract (name, 8, NONE)) else ("module", name)
 
   fun export (name : string, fingerprint : string, slots : 'a) : unit =
     (exported := SOME (fingerprint, cast slots);
      named := (name, (fingerprint, cast slots)) :: !named)
 
   fun take (name : string, fingerprint : string) : 'a =
-    case List.find (fn (n, _) => n = name) (!named) of
-      SOME (_, (f, slots)) =>
-        if f = fingerprint then cast slots
-        else raise Mismatch ("the implementation of the virtual module " ^ name ^ " implements another signature ("
-                             ^ f ^ ") than the program wants (" ^ fingerprint ^ ")")
-    | NONE => raise Mismatch ("the virtual module " ^ name ^ " has no implementation (implements " ^ name
-                              ^ " = ... end, before it in the build file)")
+    let val (kind, bare) = described name
+    in
+      case List.find (fn (n, _) => n = name) (!named) of
+        SOME (_, (f, slots)) =>
+          if f = fingerprint then cast slots
+          else raise Mismatch ("the implementation of the virtual " ^ kind ^ " " ^ bare ^ " implements another signature ("
+                               ^ f ^ ") than the program wants (" ^ fingerprint ^ ")")
+      | NONE => raise Mismatch ("the virtual " ^ kind ^ " " ^ bare ^ " has no implementation (implements " ^ bare
+                                ^ " = ... end, before it in the build file, or a library whose header says implements)")
+    end
 
   (* the unit at path run, and what it exported, where the fingerprints
      agree, given to set, which sets the slots of the declaration *)

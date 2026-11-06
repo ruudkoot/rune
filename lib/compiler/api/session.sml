@@ -66,8 +66,8 @@ struct
               List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
                 (case (noInline,#lib config) of
                    (false,SOME root) =>
-                     List.concat (List.map BasisManifest.inlineFunctors
-                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                     List.concat (List.map (fn dir => LibraryIndex.inlineFunctors {root=root,dir=dir})
+                       (root ^ "/basis" :: (LibraryIndex.libraries (root,#libraries config)
                                             handle BasisManifest.Usage _ => [])))
                  | _ => [])
           (* and the functions (functors-units M10) *)
@@ -76,15 +76,24 @@ struct
               List.foldl (fn (n,m) => StringMap.insert (m,n,())) StringMap.empty
                 (case (noInline,#lib config) of
                    (false,SOME root) =>
-                     List.concat (List.map BasisManifest.inlineValues
-                       (root ^ "/basis" :: (BasisManifest.libraries (root,#libraries config)
+                     List.concat (List.map (fn dir => LibraryIndex.inlineValues {root=root,dir=dir})
+                       (root ^ "/basis" :: (LibraryIndex.libraries (root,#libraries config)
                                             handle BasisManifest.Usage _ => [])))
                  | _ => [])
           val cacheHits=ref 0
           val compiled=ref 0
           val env = ref Env.initial
           val fixity = ref Fixity.initial
-          fun textUnit (source : source,name,allow,library,(ordinal,artifacts)) =
+          (* a unit's name, as rune gives it (Workspace), from the directory
+             of the first source *)
+          fun sourceOf (Text source) = source
+            | sourceOf (Loaded artifact) = #source artifact
+            | sourceOf (MidInput {source,...}) = source
+          val logical=Workspace.names (Workspace.ofFiles
+            {file=case sources of first :: _ => #file (sourceOf first) | [] => ".",
+             workspace=NONE,lib= #lib config,windows=Workspace.onWindows ()})
+          val ranks=Workspace.ranks ()
+          fun textUnit (source : source,name,allow,library,artifacts) =
             let
               val ()=compiled:= !compiled+1
               val {file,text,mode} = source
@@ -113,10 +122,10 @@ struct
               val artifact = {identity= #identity code,fingerprint=fingerprint,code=code,
                 bytes=bytes,pickle= #pickle (#exported result),
                 mid=mid,source=source,library=library}
-            in (ordinal+1,artifact :: artifacts) end
-          fun compile (Text source,(ordinal,artifacts)) =
-                textUnit (source,#file source ^ "#" ^ Int.toString ordinal,#allowPrim config,false,(ordinal,artifacts))
-            | compile (Loaded (artifact : artifact),(ordinal,artifacts)) =
+            in artifact :: artifacts end
+          fun compile (Text source,artifacts) =
+                textUnit (source,Workspace.fresh (ranks,Workspace.name (logical,#file source)),#allowPrim config,false,artifacts)
+            | compile (Loaded (artifact : artifact),artifacts) =
               let
                 val {file,text,mode} = #source artifact
                 val () = Source.register (Source.fromStringIn (mode,file,text))
@@ -126,19 +135,16 @@ struct
                 val code = #code artifact
                 val () = if List.all (known o #1) (#globals code) andalso List.all (known o #2) (#imports code)
                          then () else raise Fail "unit dependency is not imported"
-                val loaded = UnitBasis.load {pickle= #pickle artifact,file=file,at=UnitBasis.counters ()}
+                val loaded = UnitBasis.load {pickle= #pickle artifact,sidecar="",file=file,at=UnitBasis.counters ()}
                 val () = if #identity (#unit loaded) = #identity artifact then () else raise Fail "unit and basis identities differ"
                 val () = (env:=Env.plus (!env,#delta loaded);
                           fixity:=Fixity.extend (!fixity,#directives loaded);UnitBasis.bind loaded)
-              in (Int.max (ordinal+1,
-                    case List.rev (String.fields (fn c => c = #"#") (#name (#unit loaded))) of
-                      last :: _ => (case Int.fromString last of SOME n => n+1 | NONE => ordinal+1)
-                    | [] => ordinal+1),artifact :: artifacts) end
-            | compile (MidInput {source,pickle,mid},(ordinal,artifacts)) =
+              in Workspace.take (ranks,#name (#unit loaded));artifact :: artifacts end
+            | compile (MidInput {source,pickle,mid},artifacts) =
               let
                 val {file,text,mode}=source
                 val ()=Source.register (Source.fromStringIn (mode,file,text))
-                val loaded=UnitBasis.load {pickle=pickle,file=file,at=UnitBasis.counters ()}
+                val loaded=UnitBasis.load {pickle=pickle,sidecar="",file=file,at=UnitBasis.counters ()}
                 val unit= #unit loaded
                 val um=UnitMid.read (mid,unit,[],fn f => f)
                 val lo=Vector.sub (#base unit,UnitBasis.kStamp)
@@ -155,36 +161,26 @@ struct
                       val ()=List.app (fn i => IntTable.insert (table,Vector.sub (#base unit,k)+i,i))
                         (List.tabulate (Vector.sub (#count unit,k),fn i => i))
                   in table end)
-                val exported : UnitBasis.exported={pickle=pickle,identity= #identity unit,own=own,counts= #count unit,
+                val exported : UnitBasis.exported={pickle=pickle,sidecar="",identity= #identity unit,static= #static loaded,own=own,counts= #count unit,
                   provenance=Link.provenance (#target config,mode,Pickle.hash text)}
                 val code=UnitBasis.relative (exported,sc)
                 val fingerprint=Pipeline.fingerprint ()
                 val artifact={identity= #identity code,fingerprint=fingerprint,code=code,bytes=String.concat (UnitFile.chunks (fingerprint,code)),
                   pickle=pickle,mid=mid,source=source,library=false}
                 val ()=(env:=Env.plus (!env,#delta loaded);fixity:=Fixity.extend (!fixity,#directives loaded);UnitBasis.bind loaded)
-              in (ordinal+1,artifact :: artifacts) end
-          fun inputSource (Text source) = source
-            | inputSource (Loaded artifact) = #source artifact
-            | inputSource (MidInput {source,...}) = source
+              in Workspace.take (ranks,#name unit);artifact :: artifacts end
           fun mentioned (input,known) =
-            let val {file,text,mode}=inputSource input
+            let val {file,text,mode}=sourceOf input
                 val source=Source.fromStringIn (mode,file,text)
                 val ()=Source.register source
-            in BasisManifest.namesOf (Lexer.tokenize source,known) end
+            in CompilerPrelude.usedBy (file,Lexer.tokenize source,known) end
           val plan=CompilerPrelude.select {lib= #lib config,libraries= #libraries config,
-            mentioned=List.foldl mentioned StringMap.empty sources}
-          type context={basis : LibraryScope.basis,fixity : Fixity.env,binders : string StringMap.map}
-          fun context () : context={basis={env= !env,sigs= !Elaborate.sigs,funs= !Elaborate.funs},fixity= !fixity,binders= !UnitBasis.binders}
-          fun restore (c : context) =
-            (env:= #env (#basis c);Elaborate.sigs:= #sigs (#basis c);Elaborate.funs:= #funs (#basis c);
-             fixity:= #fixity c;UnitBasis.binders:= #binders c)
-          val contexts=ref [] : (string * context) list ref
+            mentioned=List.foldl mentioned StringMap.empty sources,building=NONE,view=NONE}
+          val walk=LibraryScope.walk (env,fixity,UnitBasis.binders,#scopes plan)
           fun libraryUnit (e : BasisManifest.entry,state) =
             let val file=BasisManifest.path e
                 val loaded=Source.readFile (Source.Ascii,file)
-                val name=case #lib config of
-                  SOME root => if String.isPrefix (root ^ "/") file then "lib/" ^ String.extract (file,size root+1,NONE) else file
-                | NONE => file
+                val name=Workspace.fresh (ranks,Workspace.ofEntry (logical,{dir= #dir e,file= #file e}))
                 val allow=case #lib config of SOME root => #dir e=root ^ "/basis" | NONE => false
                 val source={file=file,text= #text loaded,mode=Source.Ascii}
                 val ()=UnitBasis.position (!env,!fixity)
@@ -211,31 +207,11 @@ struct
                    handle UnitFile.Bad _ => raise CachedLoad | Pickle.Bad _ => raise CachedLoad | UnitBasis.Missing _ => raise CachedLoad
                         | UnitBasis.SchemeChanged _ => raise CachedLoad)
             end
-          fun group (entries,state) =
-            let val prior=context ()
-                val state=List.foldl libraryUnit state entries
-            in case BasisManifest.scopeOf entries of
-                 NONE => state
-               | SOME exports =>
-                   let val raw=context ()
-                       val visible=LibraryScope.restrict (#basis prior,#basis raw,exports)
-                       fun public key = case String.fields (fn c => c = #" ") key of
-                         [kind,name] => List.exists (fn (k,n) => n=name andalso
-                           k=(case kind of "s" => "structure" | "t" => "type" | "sig" => "signature" | "fun" => "functor" | _ => "")) exports
-                       | _ => false
-                       val bound=StringMap.filteri (fn (key,_) => public key) (!UnitBasis.binders)
-                       val narrowed : context={basis=visible,fixity= #fixity prior,
-                         binders=StringMap.unionWith #2 (#binders prior,bound)}
-                   in contexts:=(#dir (hd entries),raw) :: !contexts;restore narrowed;state end
-            end
-          val base= #2 (List.foldl group (0,[]) (#groups plan))
-          val (ordinal,result)=List.foldl compile (1,base) sources
-          fun final (entries,state) =
-            let val prior=context ()
-                val ()=case List.find (fn (dir,_) => dir= #dir (hd entries)) (!contexts) of SOME (_,raw) => restore raw | NONE => ()
-                val state=List.foldl libraryUnit state entries
-            in restore prior;state end
-          val finals= #2 (List.foldl final (ordinal,[]) (CompilerPrelude.groups (#final plan)))
+          fun units (entries,state)=List.foldl libraryUnit state entries
+          val base=LibraryScope.libraries (walk,#groups plan,units,[])
+          val ()=LibraryScope.program walk
+          val result=List.foldl compile base sources
+          val finals=LibraryScope.finals (walk,CompilerPrelude.groups (#final plan),units,[])
         in {units=List.rev result,finals=List.rev finals,cacheHits= !cacheHits,compiled= !compiled} end
       val result = CompilerState.withSession (owner,fn () => work ()
         handle Error.CompileError (span,message) => raise Failed [sourceError ("error",span,message)])
@@ -308,14 +284,7 @@ struct
         val mode=case Source.modeNamed (Pickle.rstring r) of SOME mode => mode | NONE => raise Pickle.Bad "unit source mode"
         val ()=if Pickle.rbytes (r,3)=UnitBasis.magic andalso Pickle.rnat r=UnitBasis.version then () else raise Pickle.Bad "unit basis version"
         val ()=if Pickle.rstring r=Pickle.probe () then () else raise Pickle.Bad "unit basis made by a compiler whose hash differs"
-        val name=Pickle.rstring r
-        val parts=String.fields (fn c => c = #"#") name
-        val inferred=case List.rev parts of
-          ordinal :: rest => if not (null rest) andalso ordinal<>"" andalso CharVector.all Char.isDigit ordinal
-                            then String.concatWith "#" (List.rev rest) else name
-        | [] => name
-        val inferred=case #lib config of SOME lib => if String.isPrefix "lib/" inferred then lib ^ String.extract (inferred,3,NONE) else inferred
-                                             | NONE => inferred
+        val inferred=Workspace.sourceOf (#lib config,Pickle.rstring r)
         fun read [] = raise Fail "unit source is unavailable; provide its source companion"
           | read (file :: rest) =
               case (SOME (Source.readFile (mode,file)) handle IO.Io _ => NONE) of

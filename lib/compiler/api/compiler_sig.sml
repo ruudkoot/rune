@@ -1,6 +1,6 @@
 (* The reusable Rune compiler. Compilation and queries are static;
    execution is an explicit operation on a compiled unit. *)
-signature RUNE_COMPILER =
+signature COMPILER_API =
 sig
   (* An independent ordered compilation context. *)
   type session
@@ -146,8 +146,54 @@ sig
     val events : t -> event list
     (* `diagnostics snapshot` returns parse/lexical errors in its own source. *)
     val diagnostics : t -> diagnostic list
+    (* `names snapshot` returns the module-level names a unit declares at its
+       top level, and those it uses but does not declare.
+
+       They are read from its syntax as `rune --deps` reads them; kind is
+       structure, signature, functor or type. A name a unit's code reaches
+       after an `open` is not among them (docs/units.md, Well-formed units). *)
+    val names : t -> {declares : {kind : string, name : string} list, uses : {kind : string, name : string} list}
     (* `work snapshot` reports lexical and declaration reuse for this operation. *)
     val work : t -> work
+  end
+
+  (* A workspace: the directory of a root file, rune.workspace, that names
+     where libraries are found, and the named targets (docs/build.md). *)
+  structure Workspace :
+  sig
+    (* A root file, read. *)
+    type t
+    (* A named target: a build file, its path whole, and the options of a
+       compiler session for it. *)
+    type target = {name : string, build : string, options : string list}
+    (* `find {file, windows}` reads the nearest root file above file, or
+       gives `NONE` where there is none.
+
+       windows selects Windows drive/UNC syntax. A root file that is not
+       well formed is reported through Failed. *)
+    val find : {file : string, windows : bool} -> t option
+    (* `read {file, text, windows}` reads text as the root file at file, as
+       `find` reads one on disk: one an editor holds unsaved.
+
+       A root file that is not well formed is reported through Failed. *)
+    val read : {file : string, text : string, windows : bool} -> t
+    (* `candidates {file, windows}` lists where a root file above file would
+       be, the nearest first, each path whole. *)
+    val candidates : {file : string, windows : bool} -> string list
+    (* `root workspace` is the directory of its root file, which a build's
+       units are named from. *)
+    val root : t -> string
+    (* `libraryRoots workspace` lists the directories it finds libraries
+       under, in order, whole. *)
+    val libraryRoots : t -> string list
+    (* `targets workspace` lists its named targets in order. *)
+    val targets : t -> target list
+    (* `store {file, windows}` is the directory of the store a compile of
+       file keeps, where there is one.
+
+       That is RUNE_CACHE's, else .rune beside the nearest root file above
+       file, else beside file (docs/units.md, The store). *)
+    val store : {file : string, windows : bool} -> string option
   end
 
   (* The compiler's immutable project model, shared with the CLI. *)
@@ -178,7 +224,7 @@ sig
     val buildSyntax : {file:string,text:string} -> {references:buildReference list,diagnostics:diagnostic list}
     (* `buildLinks (session, request)` expands complete build path tokens.
 
-       Source/build/cache paths use the build directory and configured path
+       Source and build paths use the build directory and configured path
        variables. Libraries use the same directory resolver as the compiler.
        Unfinished quotes and unresolved variables are omitted. This query
        performs no filesystem reads or execution; offsets include quotes. *)
@@ -195,24 +241,39 @@ sig
     (* `read (session, request)` resolves a build through compiler rules,
        preserving scopes, order, annotations, virtual implementations and use.
 
-       Variables are path-variable bindings. Overlays are already decoded
+       workspace is what its units are named from and its libraries found
+       under (`Workspace.find`); with none, the build's directory stands for
+       its root. Variables are path-variable bindings. Overlays are already decoded
        UTF-8, also for Latin-1 source files. windows selects Windows drive/UNC
        syntax independently of the host operating system. No user declarations execute and no cache
        files are written. Failure is reported through Failed. *)
-    val read : session * {file : string, variables : (string * string) list,
+    val read : session * {file : string, workspace : Workspace.t option, variables : (string * string) list,
                           overlays : {file : string, text : string} list, windows : bool} -> t
+    (* `readHolding (session, request, {held, read})` is `read`, taking the
+       text of the build files the caller holds.
+
+       `held path` is that text, or NONE, and then the build is read from the
+       disk and `read` is told its path and text. An overlay comes first, and
+       is neither. So an editor that knows which builds changed reads those
+       alone (the build-system roadmap's D28). *)
+    val readHolding : session * {file : string, workspace : Workspace.t option, variables : (string * string) list,
+                                 overlays : {file : string, text : string} list, windows : bool} *
+                      {held : string -> string option, read : string * string -> unit} -> t
     (* `sources project` lists source occurrences in compiler order. *)
     val sources : t -> source list
-    (* `inputs project` is the captured build and group-discovery text.
-       Normal ordered sources need not be parsed to discover membership. *)
+    (* `inputs project` is the captured text of the build files. Sources need
+       not be read to discover membership. *)
     val inputs : t -> input list
     (* `libraries project` lists library-header dependencies in source order. *)
     val libraries : t -> string list
-    (* `cacheDirectories project` lists declared cache paths. Reading a
-       project does not create or write these directories. *)
-    val cacheDirectories : t -> string list
+    (* `exports project` is what a library's build file lets a client name.
+
+       Each export has its kind: the header's exports, or its library
+       block's. NONE where it has neither, and a client sees all its files
+       declare (docs/build.md, A library's header). *)
+    val exports : t -> {kind : string, name : string} list option
     (* `fingerprint project` identifies the captured plan, configuration
-       and discovery inputs. It is not a persisted analysis snapshot. *)
+       and inputs. It is not a persisted analysis snapshot. *)
     val fingerprint : t -> string
   end
 
@@ -278,6 +339,59 @@ sig
        the current attempt; observation never executes the checked program.
        Timing and host-specific memory counters belong to the callback. *)
     val observe : t * (observation->unit) option -> unit
+    (* `focus (context, files)` says which files to keep open for the checks
+       after it.
+
+       A check keeps the syntax, the facts and the occurrences of an open
+       file's unit. Another's are dropped, and worked out again at its place
+       when a query asks for them. NONE, the default, keeps every file open;
+       while some are closed, occurrences and facts hold no closed unit's. *)
+    val focus : t * string list option -> unit
+    (* What contexts that share leave of a library's units for each other.
+
+       Its holder makes it and hands it to each: contexts of several compiler
+       sessions may share one. *)
+    type pool
+    (* `pool ()` makes an empty pool, for the contexts that are to share it. *)
+    val pool : unit -> pool
+    (* `share (context, SOME pool)` lets a context take a library's units
+       from the other contexts that share the pool; `NONE` ends it.
+
+       A library's unit is taken from what another such context checked under
+       the same configuration, where the unit's usages hold where the context
+       reaches it, as a compile takes a cache's entry; the context leaves its
+       own for the others. Two builds over one library then elaborate its
+       units once. Off by default. *)
+    val share : t * pool option -> unit
+    (* `store (context, SOME dir)` has a context read the store in dir, a
+       compile's (Workspace.store), and `store (context, NONE)`, the default,
+       none.
+
+       A unit not open whose compiled entry holds there, of any configuration
+       whose static settings are the context's, and whose sidecar the store
+       has from an earlier analysis of the same text, is loaded from them and
+       not elaborated: its static layer is the compile's. The sidecar of each
+       unit a check elaborates from the text its file has is written there.
+       The results are a fresh analysis's whichever way a unit came. *)
+    val store : t * string option -> unit
+    (* `lazy (context, true)`, the default, loads a unit's basis only where
+       a later unit names what it declared; `lazy (context, false)` loads
+       every one.
+
+       A unit taken from a store or from its own elaboration earlier, whose
+       usages hold by the units that bound their names, is registered and its
+       names bound, and its basis read when a later unit's text names one of
+       them; a unit elaborated sees what its text names, and prints a type by
+       the path the whole environment has. Where a unit looked up a name its
+       text does not name, the context loads every basis from then on. The
+       results are a fresh analysis's either way; a context's memory is not. *)
+    val lazy : t * bool -> unit
+    (* `compact context` gives up the compiler state a context's units stay
+       loaded in, with what its tables hold of units long replaced.
+
+       The next check loads them into a new one, and gives what it would
+       have. A check does this itself after enough walks. *)
+    val compact : t -> unit
     (* `check (context, request)` checks captured inputs in compiler order.
 
        A project must come from the same compiler session; inputs must match
@@ -285,11 +399,14 @@ sig
        Without a project the inputs form an ordered loose-file context.
        No files or artifacts are written, and user initializers never run.
 
-       Valid unchanged prefixes replay checked bases. Changed units receive
-       fresh annotation slots in a fresh compiler owner. A failed unit returns
-       diagnostics and query data for its validated prefix; later units remain
-       unavailable. Cancellation is polled between analysis phases and units;
-       a supervisor must bound phases that cannot yet be interrupted. *)
+       A context keeps its units between checks: an input that changed is
+       elaborated at the place it was reached, with fresh annotation slots, and
+       a unit past a change is taken by its usages. Whichever way a check goes,
+       its results are a fresh analysis's. A failed unit returns diagnostics
+       and query data for its validated prefix; later units remain
+       unavailable. Cancellation is polled between analysis phases and units,
+       and leaves what is kept whole; a supervisor must bound phases that
+       cannot yet be interrupted. *)
     val check : t * {project:Project.t option,inputs:input list,cancelled:unit->bool} -> snapshot
     (* `checkpoint context` captures only committed, validated unit entries. *)
     val checkpoint : t -> checkpoint
@@ -324,12 +441,45 @@ sig
     val diagnostics : snapshot -> diagnostic list
     (* `occurrences snapshot` returns frozen lexical binding relationships. *)
     val occurrences : snapshot -> occurrence list
+    (* `occurrencesIn (snapshot, unit)` returns those of the unit unitAt
+       names, without a walk of the others. *)
+    val occurrencesIn : snapshot * string -> occurrence list
+    (* `implementationsOf (snapshot, location)` returns the occurrences of every
+       unit, open or closed, declared at location and defined elsewhere. *)
+    val implementationsOf : snapshot * location -> occurrence list
+    (* `versionOf (snapshot, unit)` says what a unit's answers rest on.
+
+       That is its text and what it declares: two snapshots that give a unit
+       one version give the same symbols for it. A unit not reached gives NONE. *)
+    val versionOf : snapshot * string -> string option
+    (* `interfaceOf (snapshot, occurrence)` says what the occurrence's unit was
+       typed against by its name.
+
+       It is the fingerprint the unit's usage of the name holds, which a
+       compile's cache holds the unit to (docs/units.md, The cache): two
+       snapshots give one where the name means the same to the unit, whichever
+       unit declares it, as a virtual module's `_virtual` or `_dynamic`
+       declaration in any file. NONE where the unit did not use the name as
+       its session's, or no fingerprint covers it. *)
+    val interfaceOf : snapshot * occurrence -> string option
     (* `types snapshot` returns semantic constructor identities and sources. *)
     val types : snapshot -> typeDefinition list
     (* `facts snapshot` returns inferred types without mutable compiler refs. *)
     val facts : snapshot -> fact list
+    (* `factsIn (snapshot, unit)` returns those of the unit unitAt names,
+       without a walk of the others. *)
+    val factsIn : snapshot * string -> fact list
     (* `work snapshot` reports checked and replayed units, including libraries. *)
     val work : snapshot -> {checked:int,reused:int}
+    (* `route snapshot` reports how the check went, and nothing of its results.
+
+       walked: from the start, rather than each change at its own place;
+       rebound: units taken as they stood; loaded: taken again from their
+       pickles; cutoff: elaborated to the identity they had; broken: a usage
+       refused a unit; stored: taken from the store (store); byNeed: of those
+       stored or loaded, those whose basis was not read (lazy). The results
+       are a fresh analysis's whichever the route. *)
+    val route : snapshot -> {walked:bool,rebound:int,loaded:int,cutoff:int,broken:int,stored:int,byNeed:int}
     (* `typeAt (snapshot, position)` returns its innermost original-source type.
 
        Copied-body facts are used only where no original fact is available.
@@ -349,8 +499,10 @@ sig
     (* `visibleAt (snapshot, position)` returns actual lexical bindings at a
        source occurrence's byte offset, or members of path.
 
-       It replays validated prefixes and rechecks the requested unit. Only
-       frozen names/details escape; no mutable environment is published.
+       It elaborates the requested unit at the place its check reached it, or,
+       for a snapshot that is not its context's latest, loads the units before
+       it again first. Only frozen names/details escape; no mutable environment
+       is published.
        Incomplete expressions can use bounded private syntax probes whose
        facts and diagnostics are never published as original-source data.
        The snapshot remains queryable after its context closes. *)

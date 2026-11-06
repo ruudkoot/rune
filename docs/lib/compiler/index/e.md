@@ -1,10 +1,11 @@
 # Index: E
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [i](i.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
-- `Syntax.edit` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.edit)
-- `Syntax.event` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.event)
-- `Syntax.events` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.events)
+- `Project.exports` (val): [COMPILER_API](../sig/COMPILER_API.md#val-project.exports)
+- `Syntax.edit` (val): [COMPILER_API](../sig/COMPILER_API.md#val-syntax.edit)
+- `Syntax.event` (type): [COMPILER_API](../sig/COMPILER_API.md#type-syntax.event)
+- `Syntax.events` (val): [COMPILER_API](../sig/COMPILER_API.md#val-syntax.events)
 
 ---
 

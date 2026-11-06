@@ -3,11 +3,14 @@
 structure MutationChecks =
 struct
   open Incremental
-  type checker = {compiler : string, directory : string, flags : string list,
-                  builds : int ref, failures : int ref, compiled : int ref, across : int ref}
-  fun create compiler directory flags : checker =
-    (mkdirs directory; {compiler = fromRoot compiler, directory = directory, flags = flags,
-                       builds = ref 0, failures = ref 0, compiled = ref 0, across = ref 0})
+  (* verify: each build through the cache followed by one with --verify-cache,
+     which must find nothing (docs/testing.md, The checks of the cache) *)
+  type checker = {compiler : string, directory : string, flags : string list, verify : bool,
+                  builds : int ref, failures : int ref, compiled : int ref, across : int ref, compared : int ref}
+  fun creating verify compiler directory flags : checker =
+    (mkdirs directory; {compiler = fromRoot compiler, directory = directory, flags = flags, verify = verify,
+                       builds = ref 0, failures = ref 0, compiled = ref 0, across = ref 0, compared = ref 0})
+  fun create compiler directory flags : checker = creating false compiler directory flags
   fun check (checker : checker) (project : MutationProject.project) history =
     let val s = #state project
         val () = put s "files" (String.concatWith "\n" (!(#files project)))
@@ -23,7 +26,24 @@ struct
         val compiled = length (List.filter (fn line => String.isPrefix "rune: compiled " line andalso not (String.isSubstring "lib/basis" line)) (lines (#errors cached)))
         val across = length (List.filter (fn line => String.isPrefix "rune: from the cache " line andalso String.isSubstring ", across " line) (lines (#errors cached)))
         val built = #status plain = 0
-        val agreement = (#status cached = 0) = built andalso (not built orelse same (path s "p.rbc", path s "nocache.rbc"))
+        (* and where the build fails, what the store keeps of each file for
+           the plan, which --verify-cache holds to its text before a unit is
+           compiled: a fixity edit that breaks a later file's parse is where
+           a plan kept by text alone is wrong first (docs/units.md, A warm
+           build) *)
+        val verified =
+          if not (#verify checker) then true
+          else
+            let val r = compile s (cacheFlags @ ["--verify-cache"]) "verified.rbc"
+            in
+              #compared checker := !(#compared checker)
+                + length (List.filter (String.isSubstring "its entry, loaded across a unit that changed, is what compiling it gives")
+                                      (lines (#errors r)));
+              write (path s "verify.err", #errors r);
+              (not built orelse #status r = 0)
+              andalso not (String.isSubstring "for the plan is not what reading it gives" (#errors r))
+            end
+        val agreement = verified andalso (#status cached = 0) = built andalso (not built orelse same (path s "p.rbc", path s "nocache.rbc"))
         val () = #compiled checker := !(#compiled checker) + compiled
         val () = #across checker := !(#across checker) + across
         val () = if agreement then () else
@@ -69,7 +89,8 @@ struct
        say ("PASS mutation replay v1: " ^ Int.toString (!(#builds checker)) ^ " identical legacy receipts\n") end
   fun summary (checker : checker) =
     (say ("mutate: " ^ Int.toString (!(#builds checker)) ^ " builds, " ^ Int.toString (!(#failures checker))
-          ^ " disagreements; " ^ Int.toString (!(#across checker)) ^ " units taken from the cache across a unit that changed\n");
+          ^ " disagreements; " ^ Int.toString (!(#across checker)) ^ " units taken from the cache across a unit that changed"
+          ^ (if #verify checker then ", " ^ Int.toString (!(#compared checker)) ^ " such entries compared" else "") ^ "\n");
      need (!(#failures checker) = 0, "cache differential disagreements"))
   fun generate (checker : checker) generator steps spec sources basis =
     let val name = if spec = "compiler" then "compiler" else OS.Path.file spec

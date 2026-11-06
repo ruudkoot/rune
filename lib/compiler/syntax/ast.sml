@@ -117,7 +117,9 @@ struct
       | StrAscribe (e,g,opaque,s, _) => let val s=note ("StrAscribe",s,[Bool.toString opaque]) in StrAscribe (str e,sg g,opaque,s, freshId ()) end
       | StrApp (n,e,s, _) => let val s=note ("StrApp",s,[n]) in StrApp (n,str e,s, freshId ()) end
       | StrLet (ds,e,s, _) => let val s=note ("StrLet",s,[count ds]) in StrLet (List.map dec ds,str e,s, freshId ()) end
-      | StrDynamic (from,g,_,s, _) => let val s=note ("StrDynamic",s,case from of DynamicFile p => ["file",p] | DynamicVirtual n => ["virtual",n])
+      | StrDynamic (from,g,_,s, _) => let fun fromOf (DynamicFile p) = ["file",p] | fromOf (DynamicVirtual n) = ["virtual",n]
+                                           | fromOf (DynamicFunctor f) = "functor" :: fromOf f
+                                         val s=note ("StrDynamic",s,fromOf from)
           in StrDynamic (from,sg g,ref NONE,s, freshId ()) end
       | StrExport (n,g,e,_,s, _) => let val s=note ("StrExport",s,[n]) in StrExport (n,sg g,str e,ref NONE,s, freshId ()) end
       and sg g = case g of

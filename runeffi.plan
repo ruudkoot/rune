@@ -1,0 +1,145 @@
+rune-plan 1
+basis demand
+library unicode lib/unicode
+  form open
+  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii demand
+  unit unicode:utf8.sml lib/unicode/utf8.sml ascii demand
+  unit unicode:width_data.sml lib/unicode/width_data.sml ascii demand
+  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii demand
+  unit unicode:display_width.sml lib/unicode/display_width.sml ascii demand
+  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii demand
+  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii demand
+  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii demand
+  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii demand
+  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii demand
+  unit unicode:normalize.sml lib/unicode/normalize.sml ascii demand
+  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii demand
+  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii demand
+  unit unicode:identifier.sml lib/unicode/identifier.sml ascii demand
+  unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
+  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
+  unit unicode:security.sml lib/unicode/security.sml ascii demand
+end
+library json lib/json
+  form header
+  requires unicode
+  export signature JSON
+  export structure Json
+  unit json:json_sig.sml lib/json/json_sig.sml ascii demand
+  unit json:json.sml lib/json/json.sml ascii demand
+end
+library digest lib/digest
+  form header
+  export functor HmacFn
+  export signature DIGEST
+  export signature HEX
+  export signature HMAC
+  export signature MURMUR2
+  export structure Hex
+  export structure HmacSha256
+  export structure Murmur2
+  export structure Sha256
+  unit digest:digest_sig.sml lib/digest/digest_sig.sml ascii demand
+  unit digest:sha256.sml lib/digest/sha256.sml ascii demand
+  unit digest:hex_sig.sml lib/digest/hex_sig.sml ascii demand
+  unit digest:hex.sml lib/digest/hex.sml ascii demand
+  unit digest:hmac_sig.sml lib/digest/hmac_sig.sml ascii demand
+  unit digest:hmac_fn.sml lib/digest/hmac_fn.sml ascii demand
+  unit digest:murmur2_sig.sml lib/digest/murmur2_sig.sml ascii demand
+  unit digest:murmur2.sml lib/digest/murmur2.sml ascii demand
+end
+library language/c lib/language/c
+  form header
+  export signature C_ANALYSIS
+  export signature C_CONST
+  export signature C_DECLARATOR
+  export signature C_ENUM_CONST
+  export signature C_EXPRESSION
+  export signature C_FILES
+  export signature C_INTEGER
+  export signature C_LAYOUT
+  export signature C_LEX
+  export signature C_PARSE
+  export signature C_PREPROCESS
+  export signature C_TYPE
+  export structure CAnalysis
+  export structure CConst
+  export structure CDeclarator
+  export structure CEnumConst
+  export structure CExpression
+  export structure CFiles
+  export structure CInteger
+  export structure CLayout
+  export structure CLex
+  export structure CParse
+  export structure CPreprocess
+  export structure CType
+  unit language/c:lex_sig.sml lib/language/c/lex_sig.sml ascii demand
+  unit language/c:lex.sml lib/language/c/lex.sml ascii demand
+  unit language/c:const_sig.sml lib/language/c/const_sig.sml ascii demand
+  unit language/c:const.sml lib/language/c/const.sml ascii demand
+  unit language/c:integer_sig.sml lib/language/c/integer_sig.sml ascii demand
+  unit language/c:integer.sml lib/language/c/integer.sml ascii demand
+  unit language/c:preprocess_sig.sml lib/language/c/preprocess_sig.sml ascii demand
+  unit language/c:preprocess.sml lib/language/c/preprocess.sml ascii demand
+  unit language/c:parse_sig.sml lib/language/c/parse_sig.sml ascii demand
+  unit language/c:parse.sml lib/language/c/parse.sml ascii demand
+  unit language/c:type_sig.sml lib/language/c/type_sig.sml ascii demand
+  unit language/c:type.sml lib/language/c/type.sml ascii demand
+  unit language/c:declarator_sig.sml lib/language/c/declarator_sig.sml ascii demand
+  unit language/c:declarator.sml lib/language/c/declarator.sml ascii demand
+  unit language/c:expression_sig.sml lib/language/c/expression_sig.sml ascii demand
+  unit language/c:expression.sml lib/language/c/expression.sml ascii demand
+  unit language/c:enum_const_sig.sml lib/language/c/enum_const_sig.sml ascii demand
+  unit language/c:enum_const.sml lib/language/c/enum_const.sml ascii demand
+  unit language/c:layout_sig.sml lib/language/c/layout_sig.sml ascii demand
+  unit language/c:layout.sml lib/language/c/layout.sml ascii demand
+  unit language/c:analysis_sig.sml lib/language/c/analysis_sig.sml ascii demand
+  unit language/c:analysis.sml lib/language/c/analysis.sml ascii demand
+  unit language/c:files_sig.sml lib/language/c/files_sig.sml ascii demand
+  unit language/c:files.sml lib/language/c/files.sml ascii demand
+end
+library ffi/model lib/ffi/model
+  form open
+  requires json
+  requires language/c
+  unit ffi/model:model_sig.sml lib/ffi/model/model_sig.sml ascii demand
+  unit ffi/model:model.sml lib/ffi/model/model.sml ascii demand
+  unit ffi/model:located_json_sig.sml lib/ffi/model/located_json_sig.sml ascii demand
+  unit ffi/model:located_json.sml lib/ffi/model/located_json.sml ascii demand
+  unit ffi/model:target_sig.sml lib/ffi/model/target_sig.sml ascii demand
+  unit ffi/model:target.sml lib/ffi/model/target.sml ascii demand
+  unit ffi/model:policy_sig.sml lib/ffi/model/policy_sig.sml ascii demand
+  unit ffi/model:policy.sml lib/ffi/model/policy.sml ascii demand
+  unit ffi/model:projection_sig.sml lib/ffi/model/projection_sig.sml ascii demand
+  unit ffi/model:projection.sml lib/ffi/model/projection.sml ascii demand
+  unit ffi/model:validate_sig.sml lib/ffi/model/validate_sig.sml ascii demand
+  unit ffi/model:validate.sml lib/ffi/model/validate.sml ascii demand
+  unit ffi/model:shim_sig.sml lib/ffi/model/shim_sig.sml ascii demand
+  unit ffi/model:shim.sml lib/ffi/model/shim.sml ascii demand
+  unit ffi/model:coverage_sig.sml lib/ffi/model/coverage_sig.sml ascii demand
+  unit ffi/model:coverage.sml lib/ffi/model/coverage.sml ascii demand
+  unit ffi/model:public_sig.sml lib/ffi/model/public_sig.sml ascii demand
+  unit ffi/model:public.sml lib/ffi/model/public.sml ascii demand
+  unit ffi/model:adapter_sig.sml lib/ffi/model/adapter_sig.sml ascii demand
+  unit ffi/model:adapter.sml lib/ffi/model/adapter.sml ascii demand
+  unit ffi/model:generate_sig.sml lib/ffi/model/generate_sig.sml ascii demand
+  unit ffi/model:generate.sml lib/ffi/model/generate.sml ascii demand
+end
+program
+  requires unicode
+  requires json
+  requires digest
+  requires language/c
+  requires ffi/model
+  unit src/ffi/main.sml src/ffi/main.sml ascii
+  unit src/main/runeffi-rune-main.sml src/main/runeffi-rune-main.sml ascii
+end
+provenance
+  input runeffi.build 96ca850997a2c4f004592045a9869124d99f1158a0a71e61b271728a946f1329
+  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+  input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
+  input lib/digest/library.build b9c71d923fa95bdce9a1edc822bc08f4e754c5357d82db81832be08c99a80e80
+  input lib/language/c/library.build 6b927a80ff4aada901205fdfc956451c94a808e602ef286566038b7ea09040d8
+  input lib/ffi/model/library.build a8b7797de6ff649c2bc8fa60249db1bf89733d2c3a07fa95ec9dc69f7ee0b0a1
+end

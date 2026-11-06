@@ -1,7 +1,7 @@
 (* libraries: test/unit random compiler *)
 structure CompilerSyntaxTests =
 struct
-  structure S=RuneCompiler.Syntax
+  structure S=CompilerApi.Syntax
   val check=Expect.that
   fun parse text=S.parse {file="edit.sml",text=text,mode="unicode",orPatterns=true,fixity=S.initial}
   fun lossless snapshot=String.concat (List.map #text (S.pieces snapshot))=S.text snapshot
@@ -67,6 +67,25 @@ struct
                 val ()=check ("random incremental/fresh syntax",same (next,parse expected))
             in loop (n-1,next) end
     in loop (400,parse "val x=1\nval y=2\n") end
+  (* E20's reproducer: a key this long is more than the VM's budget for one `=`,
+     which aborts the process, so nothing past the abort reports a failure. *)
+  fun largeDeclaration () =
+    let fun function i="  fun f" ^ Int.toString i ^ " (x : int) : int =\n    let\n      val a = x * 3 + " ^ Int.toString i ^
+          "\n      val b = List.foldl (fn (y, acc) => y + acc) a [a, x, " ^ Int.toString (i mod 100) ^
+          "]\n    in\n      if b > 100 then b mod 7 else b + " ^ (if i=0 then "1" else "f" ^ Int.toString (i-1) ^ " a") ^ "\n    end\n"
+        val count=4000
+        val text="structure Big =\nstruct\n" ^ String.concat (List.tabulate (count,function)) ^ "end\n"
+        val original=parse text
+        val ()=check ("a large declaration parses",null (S.diagnostics original) andalso lossless original)
+        val needle="val a = x * 3 + 2000\n"
+        val (prefix,_)=Substring.position needle (Substring.full text)
+        val start=Substring.size prefix+size needle-2
+        val updated=S.edit (original,{start=start,stop=start+1,text="7",fixity=S.initial})
+        val ()=check ("an edit inside it parses",null (S.diagnostics updated))
+        val ()=check ("an edit inside it keeps the functions around it",#reusedDeclarations (S.work updated)>=count-1)
+        val ()=check ("its text is the edited text",String.isSubstring "val a = x * 3 + 2007\n" (S.text updated))
+        val shifted=S.edit (updated,{start=0,stop=0,text="(* above *)\n",fixity=S.initial})
+    in check ("an edit above it moves it, whole",null (S.diagnostics shifted) andalso lossless shifted) end
 end
 structure CompilerSyntaxTestMain=Main (struct
   val name="compiler-syntax"
@@ -74,6 +93,7 @@ structure CompilerSyntaxTestMain=Main (struct
     [Test.it "lossless-and-recovery" CompilerSyntaxTests.examples,
      Test.it "reuse-and-boundaries" CompilerSyntaxTests.reuse,
      Test.it "fixities" CompilerSyntaxTests.fixities,
-     Test.it "random-edits" CompilerSyntaxTests.edits]
+     Test.it "random-edits" CompilerSyntaxTests.edits,
+     Test.it "large-declaration" CompilerSyntaxTests.largeDeclaration]
 end)
 val ()=CompilerSyntaxTestMain.main ()

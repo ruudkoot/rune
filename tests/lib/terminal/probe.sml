@@ -1,4 +1,4 @@
-(* libraries: test/unit *)
+(* libraries: test/unit unicode *)
 (* What the line editor asks of the terminal at its first read
    (docs/plans/repl.md, D9 and M13): the editor over a terminal of script --
    a device whose reads are given and whose writes are kept -- answered as

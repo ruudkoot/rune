@@ -1,0 +1,35 @@
+# What covers each root a compile reads (docs/testing.md, The checks of the cache): root, class, why.
+# bin/rune-incremental blank-*: a root that changes what a compile makes and is not here fails.
+Pass.whole	settings	--units sets it, and every entry is made under it
+Elaborate.inlineFunctors	settings	the configuration's inline and inline-val
+Elaborate.inlineValues	settings	the configuration's inline and inline-val
+Elaborate.stampCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
+Types.tyconCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
+Types.tvarCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
+Ty.Node.next	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
+Ty.Node.buckets	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
+UnitBasis.builtin	session	which units the session has: the usages hold of them by identity or path
+UnitBasis.ranges	session	which units the session has: the usages hold of them by identity or path
+UnitBasis.byIdentity	session	which units the session has: the usages hold of them by identity or path
+UnitBasis.units	session	which units the session has: the usages hold of them by identity or path
+UnitBasis.paths	session	which units the session has: the usages hold of them by identity or path
+UnitBasis.unitSigs	session	which units the session has: the usages hold of them by identity or path
+Ty.binders	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Ty.exnArgs	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Ty.datatypes	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Ty.realizations	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Elaborate.dataCons	basis	filled by each unit loaded from its basis, whose identity a usage holds; what an identity hashes of an import that is a type name
+Translate.primAliases	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Lower.knownBefore	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Expand.importedValues	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Expand.importedValueNames	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Expand.anyImported	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Expand.imported	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Expand.importedNames	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Expand.globalAliases	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Expand.primGlobals	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Overload.table	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Elaborate.funs	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Elaborate.sigs	basis	filled by each unit loaded from its basis, whose identity a usage holds
+Source.files	text	a unit's own text is in its key; another's lines reach a unit that copied its function, and the usage inlv holds their hash
+MidLint.importedScheme	basis	the lint of a level above 0 reads what loading a basis filled, and refuses what it cannot find

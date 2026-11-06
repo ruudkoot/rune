@@ -52,6 +52,17 @@ struct
           judge = judge} : Run.command Test.tree)
       (tags @ List.map (fn g => "covers:" ^ g) covers)
 
+  (* a make of a target that measures time: in the nightly tier, and alone
+     on the machine, as every timing is (docs/testing.md) *)
+  fun timing (name, seconds, memory, covers) =
+    List.foldl (fn (t, tree) => Test.tag t tree)
+      (Test.it name
+         {program = "/bin/sh",
+          args = ["sh", "-c", "exec \"${MAKE:-make}\" --no-print-directory " ^ name ^ " JOBS=\"$RUNE_TEST_CPUS\""],
+          env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds seconds, cap = 0, cpus = 1,
+          memory = memory, pools = [], exclusive = true, after = [], judge = judge} : Run.command Test.tree)
+      ("nightly" :: List.map (fn g => "covers:" ^ g) covers)
+
   fun step (name, {cpus, memory, pools, after}, tags, covers) =
     target (name, 3600, {cpus = cpus, memory = memory, pools = pools, after = after, tags = "check" :: tags, covers = covers})
   fun lang (name, more, after, covers) =
@@ -69,8 +80,22 @@ struct
        alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
        alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*"]),
        alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*"]),
+       step ("test-lsp-oracle", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       (* the scale target (D28): what the load cannot move in make check,
+          its times nightly *)
+       step ("test-lsp-scale", {cpus = 1, memory = 4000, pools = [], after = []}, [],
+             ["src/lsp/*", "lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       timing ("test-lsp-scale-times", 3600, 4000, ["src/lsp/*", "lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       target ("test-lsp-scale-oracle", 7200, {cpus = 1, memory = 6000, pools = [], after = [], tags = ["nightly"],
+                                               covers = ["src/lsp/*", "lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]}),
+       Test.requires ["oracle-corpora"]
+         (target ("test-lsp-oracle-corpora", 21600, {cpus = 1, memory = 16000, pools = [], after = [], tags = ["nightly"],
+                                                     covers = ["lib/compiler/api/*", "tools/lsp/*", "tests/lsp/oracle/*"]})),
        alone ("bench-coverage", [], ["examples/benchmarks/*", "tests/benchmarks/*"]),
-       alone ("check-isa", [], [])]
+       alone ("check-isa", [], []),
+       alone ("check-codecs", [], ["tools/codecs/*", "lib/compiler/driver/unitbasis.sml", "lib/compiler/core/midcodec.sml",
+                                   "lib/compiler/driver/unitmid.sml"])]
 
   (* what tests require of the machine (D18; docs/testing.md, Requirements),
      with scripts/doctor.sh's hints *)
@@ -96,6 +121,8 @@ struct
      {name = "windows", probe = "bin/rune-windows directory && command -v x86_64-w64-mingw32-gcc",
       hint = "Windows under WSL with interop (RUNE_WINDOWS_DIR names a directory there) and mingw-w64 (apt: gcc-mingw-w64-x86-64 gcc-mingw-w64-i686)"}]
     @ List.map (fn h => {name = h, probe = "test -x bin/rune-" ^ h, hint = "run: make hosts, then make " ^ h}) Lang.hosts
+    @ [{name = "oracle-corpora", probe = "test -r \"$RUNE_ORACLE_HOL4\" && test -r \"$RUNE_ORACLE_MLTON\"",
+        hint = "set RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON to the build files of tests/lsp/README.md, Keeping what is computed"}]
     @ [{name="jupyter-client",probe="python3 -c 'import jupyter_client, zmq'",
         hint="install jupyter_client and pyzmq for python3 (Ubuntu: python3-jupyter-client python3-zmq)"}]
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities @ TerminalJobs.capabilities

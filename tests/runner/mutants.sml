@@ -23,7 +23,7 @@ struct
   fun compile lib source output =
     let val () = rmTree output
         val log = output ^ ".cerr"
-        val status = execute log ([compiler ()] @ (if lib = "" then [] else ["--lib", lib, "--library", "test/property/basis"])
+        val status = execute log ([compiler ()] @ (if lib = "" then [] else ["--lib", lib, "--library", "test/property/basis", "--library", "test/property"])
                                          @ [source, "-o", output])
     in if status = 0 then (need (exists output andalso OS.FileSys.fileSize output > 0,
                                       "compiler exited zero without bytecode"); true)

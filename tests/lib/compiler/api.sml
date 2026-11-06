@@ -3,7 +3,7 @@
    on native SML hosts, where execution is deliberately unavailable. *)
 structure CompilerApiTests =
 struct
-  structure C = RuneCompiler
+  structure C = CompilerApi
   val check = Expect.that
   fun session () = C.session {lib=NONE,flags=[]}
   fun text (context,file,source) = C.compileText (context,{file=file,text=source})
@@ -134,9 +134,9 @@ struct
         val dir=if hostWindows then String.map (fn #"\\" => #"/" | c => c) dir else dir
         val root=dir ^ "/root.build"
         val child=dir ^ "/child.build"
-        val rootText="libraries json end\nannotate \"unicode\" \"allowPrim\" in use child.build end\nuse child.build\ncache $(ROOT)/cache\n"
+        val rootText="libraries json end\nannotate \"unicode\" \"allowPrim\" in use child.build end\nuse $(ROOT)/child.build\n"
         val overlays=[{file=root,text=rootText},{file=child,text="files first.sml second.sml end\n"}]
-        fun plan overlays=C.Project.read (context,{file=root,variables=[("ROOT",dir)],overlays=overlays,windows=hostWindows})
+        fun plan overlays=C.Project.read (context,{file=root,workspace=NONE,variables=[("ROOT",dir)],overlays=overlays,windows=hostWindows})
         val first=plan overlays
         val second=plan overlays
         val sources=C.Project.sources first
@@ -144,39 +144,56 @@ struct
         val ()=check ("project annotations through use",List.all (fn s:C.Project.source =>
           #mode s="unicode" andalso #annotations s=["unicode","allowPrim"]) sources)
         val ()=check ("project inputs captured once",length (C.Project.inputs first)=2)
-        val ()=check ("project library/cache metadata",C.Project.libraries first=["json"] andalso
-          C.Project.cacheDirectories first=[dir ^ "/cache"])
+        val ()=check ("project library metadata",C.Project.libraries first=["json"])
         val ()=check ("project fingerprint deterministic",C.Project.fingerprint first=C.Project.fingerprint second)
         val changed=plan [{file=root,text="files another.sml end\n"}]
         val ()=check ("project changes invalidate fingerprint",C.Project.fingerprint first<>C.Project.fingerprint changed)
         val ()=check ("project path variables do not leak",fails (fn () => ignore (C.Project.read (context,
-          {file=root,variables=[],overlays=overlays,windows=hostWindows}))))
-        val grouped=C.Project.read (context,{file=root,variables=[],windows=hostWindows,overlays=
-          [{file=root,text="group second.sml first.sml end\n"},
-           {file=dir ^ "/second.sml",text="structure B=struct val x=A.x end\n"},
-           {file=dir ^ "/first.sml",text="structure A=struct val x=1 end\n"}]})
-        val ()=check ("group order uses compiler dependency rules",List.map #file (C.Project.sources grouped)=
-          [dir ^ "/first.sml",dir ^ "/second.sml"])
-        val ()=check ("group discovery inputs recorded",length (C.Project.inputs grouped)=3)
-        val posix=C.Project.read (context,{file="/Virtual/root.build",variables=[],windows=false,
+          {file=root,workspace=NONE,variables=[],overlays=overlays,windows=hostWindows}))))
+        val ()=check ("a project refuses what the language no longer has",List.all (fn text => fails (fn () =>
+          ignore (C.Project.read (context,{file=root,workspace=NONE,variables=[],windows=hostWindows,overlays=[{file=root,text=text}]}))))
+          ["group first.sml end\n","local first.sml in second.sml end\n","cache here\n"])
+        val posix=C.Project.read (context,{file="/Virtual/root.build",workspace=NONE,variables=[],windows=false,
           overlays=[{file="/Virtual/root.build",text="use sub/part.build\n"},
                     {file="/Virtual/sub/part.build",text="files ../Capital.sml end\n"}]})
         val ()=check ("POSIX project syntax is independent of the host",List.map #file (C.Project.sources posix)=
           ["/Virtual/sub/../Capital.sml"])
-        val windows=C.Project.read (context,{file="C:\\project\\root.build",variables=[("DEP","D:\\dependency")],
+        val windows=C.Project.read (context,{file="C:\\project\\root.build",workspace=NONE,variables=[("DEP","D:\\dependency")],
           windows=true,overlays=[{file="C:/project/root.build",text="files $(DEP)/a.sml end\n"}]})
         val ()=check ("Windows absolute path variables",List.map #file (C.Project.sources windows)=["D:/dependency/a.sml"])
-        val unc=C.Project.read (context,{file="//SERVER/share/root.build",variables=[],windows=true,
+        val unc=C.Project.read (context,{file="//SERVER/share/root.build",workspace=NONE,variables=[],windows=true,
           overlays=[{file="//server/share/root.build",text="use sub/part.build\nfiles tail.sml end\n"},
                     {file="//server/share/sub/part.build",text="files head.sml end\n"}]})
         val ()=check ("UNC roots survive nested build resolution",List.map #file (C.Project.sources unc)=
           ["//server/share/sub/head.sml","//server/share/tail.sml"])
-        val drive=C.Project.read (context,{file="C:/root.build",variables=[],windows=true,
+        val drive=C.Project.read (context,{file="C:/root.build",workspace=NONE,variables=[],windows=true,
           overlays=[{file="C:/root.build",text="use sub/part.build\n"},{file="C:/sub/part.build",text="files head.sml end\n"}]})
         val ()=check ("drive root survives nested build resolution",List.map #file (C.Project.sources drive)=["C:/sub/head.sml"])
-        val rootCache=C.Project.read (context,{file="C:/root.build",variables=[],windows=true,
-          overlays=[{file="C:/root.build",text="cache \"\"\n"}]})
-        val ()=check ("empty root-relative cache keeps its drive root",C.Project.cacheDirectories rootCache=["C:/"])
+        (* the root file: found upward, what a project's units are named from *)
+        fun put (name,text)=let val output=TextIO.openOut (dir ^ "/" ^ name)
+          in TextIO.output (output,text);TextIO.closeOut output end
+        val ()=OS.FileSys.mkDir (dir ^ "/sub")
+        val ()=check ("no root file above a directory that has none",
+          case C.Workspace.find {file=dir ^ "/sub/a.build",windows=hostWindows} of
+            NONE => true
+          | SOME found => not (String.isPrefix dir (C.Workspace.root found)))
+        val ()=put ("rune.workspace","(* root *)\nroots vendor ../other end\ntarget one = sub/a.build \"--target=stack\" end\n")
+        val found=valOf (C.Workspace.find {file=dir ^ "/sub/a.build",windows=hostWindows})
+        val ()=check ("a root file is found upward",C.Workspace.root found=dir)
+        val ()=check ("a root file's directories, whole",C.Workspace.libraryRoots found=
+          [dir ^ "/vendor",OS.Path.dir dir ^ "/other"])
+        val ()=check ("a root file's targets",C.Workspace.targets found=
+          [{name="one",build=dir ^ "/sub/a.build",options=["--target=stack"]}])
+        val inRoot=C.Project.read (context,{file=dir ^ "/sub/a.build",workspace=SOME found,variables=[],
+          windows=hostWindows,overlays=[{file=dir ^ "/sub/a.build",text="files a.sml end\n"}]})
+        val alone=C.Project.read (context,{file=dir ^ "/sub/a.build",workspace=NONE,variables=[],
+          windows=hostWindows,overlays=[{file=dir ^ "/sub/a.build",text="files a.sml end\n"}]})
+        val ()=check ("a project holds its workspace",C.Project.fingerprint inRoot<>C.Project.fingerprint alone)
+        val ()=put ("rune.workspace","frob\n")
+        val ()=check ("a root file that is not well formed",fails (fn () =>
+          ignore (C.Workspace.find {file=dir ^ "/sub/a.build",windows=hostWindows})))
+        val ()=OS.FileSys.remove (dir ^ "/rune.workspace")
+        val ()=OS.FileSys.rmDir (dir ^ "/sub")
         val ()=C.close context
     in check ("project value survives session close",length (C.Project.sources first)=2) end)
   fun absoluteLibrary () = temporary (fn root =>
@@ -185,10 +202,10 @@ struct
         val ()=(OS.FileSys.mkDir basis;OS.FileSys.mkDir library)
         fun write (file,text)=let val output=TextIO.openOut file
           in TextIO.output (output,text);TextIO.closeOut output end
-        val basisManifest=OS.Path.concat (basis,"MANIFEST")
-        val libraryManifest=OS.Path.concat (library,"MANIFEST")
+        val basisManifest=OS.Path.concat (basis,"library.build")
+        val libraryManifest=OS.Path.concat (library,"library.build")
         val source=OS.Path.concat (library,"native.sml")
-        val ()=(write (basisManifest,"");write (libraryManifest,"native.sml | demand | rune | NativeLibrary | -\n");
+        val ()=(write (basisManifest,"");write (libraryManifest,"native.sml\n");
           write (source,"structure NativeLibrary=struct val value=42 end\n"))
         fun clean ()=(List.app remove [basisManifest,libraryManifest,source];OS.FileSys.rmDir basis;OS.FileSys.rmDir library)
         fun work () =
@@ -226,22 +243,22 @@ struct
               val expanded=complete "files $(ROOT)/al"
               val ()=check ("path completion expands variables while preserving their spelling",List.exists
                 (fn item:C.Project.pathCompletion => #text item="$(ROOT)/alpha.sml") (#items expanded))
-              val directory=complete "cache su"
-              val ()=check ("cache path completion offers directories",case #items directory of [item] =>
+              val directory=complete "use su"
+              val ()=check ("path completion offers directories",case #items directory of [item] =>
                 #kind item="directory" andalso #text item="sub/" | _ => false)
               val keyword=complete "files en"
               val ()=check ("keyword filenames are quoted",case #items keyword of [item] => #text item="\"end\"" | _ => false)
-              val syntax=C.Project.buildSyntax {file="example.build",text="local files a.sml end in use \"child.build\" end\ncache $(ROOT)/x\n"}
+              val syntax=C.Project.buildSyntax {file="example.build",text="files a.sml end\nuse \"child.build\"\n"}
               val ()=check ("build syntax keeps compiler path roles and source spans",null (#diagnostics syntax) andalso
                 List.map (fn item:C.Project.buildReference => (#kind item,#value item)) (#references syntax)=
-                  [("source","a.sml"),("build","child.build"),("directory","$(ROOT)/x")])
-              val linkText="files \"alpha space.sml\" $(ROOT)/alpha.sml $(MISSING)/x end\nuse child.build\ncache sub\n"
+                  [("source","a.sml"),("build","child.build")])
+              val linkText="files \"alpha space.sml\" $(ROOT)/alpha.sml $(MISSING)/x end\nuse child.build\n"
               val links=C.Project.buildLinks (context,{file=dir ^ "/main.build",text=linkText,variables=[("ROOT",dir)],windows=windows})
               fun native path=if windows then String.map (fn #"\\" => #"/" | c => c) path else path
               val ()=check ("build links expand actual roles and variables without reading target files",
                 List.map (fn item:C.Project.buildLink => (#kind item,#target item)) links=
                   [("source",native (dir ^ "/alpha space.sml")),("source",native (dir ^ "/alpha.sml")),
-                   ("build",native (dir ^ "/child.build")),("directory",native (dir ^ "/sub"))])
+                   ("build",native (dir ^ "/child.build"))])
               val ()=check ("build link spans retain quotes",case links of first::_ =>
                 String.substring (linkText,#start first,#stop first- #start first)="\"alpha space.sml\"" | _ => false)
               val ()=check ("unfinished path quotes have no links",null (C.Project.buildLinks (context,

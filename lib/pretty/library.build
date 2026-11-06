@@ -2,7 +2,9 @@
    documents laid out at a width, within budgets; its files in load order,
    in the form of lib/basis/library.build. It is written on lib/unicode,
    for the display width of text: *)
-libraries unicode end
+requires unicode end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Pretty, signature PRETTY)
 annotate "demand" in
   pretty_sig.sml
   pretty.sml

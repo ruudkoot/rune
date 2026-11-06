@@ -58,15 +58,31 @@ struct
       val () = HeapChecks.need (TraceCheck.uint (bytes [255, 255, 255, 255], 0, 4) = 4294967295
                   andalso TraceCheck.uint (bytes [255, 255, 255, 255, 255, 255, 255, 255], 0, 8) = 18446744073709551615,
                   "unsigned binary fields lost their high bit")
-      val () = HeapChecks.need (List.all (fn x => CensusTrace.copiedWithin (100, 120, x)) [90, 130]
-                  andalso List.all (fn x => not (CensusTrace.copiedWithin (120, 100, x))) [89, 131]
-                  andalso CensusTrace.copiedWithin (100, 101, 100) andalso not (CensusTrace.copiedWithin (100, 101, 99)),
-                  "copied-byte tolerance changed at its inclusive or rounded boundary")
-      val () = HeapChecks.need (CensusTrace.liveWithin (100000, 120000, 34464)
-                  andalso CensusTrace.liveWithin (120000, 100000, 185536)
-                  andalso not (CensusTrace.liveWithin (100000, 120000, 34463))
-                  andalso not (CensusTrace.liveWithin (100000, 120000, 185537)),
-                  "live-byte tolerance changed at its inclusive boundary")
+      (* compile-sigs at 4 MiB after build-system M15, M19 and M21: the
+         stock's eight collections (clock, copied), each what the census of
+         the stock's own clocks found alive there *)
+      val stockClocks : (IntInf.int * IntInf.int) list =
+        [(4194288, 1714992), (6673592, 2147048), (12915144, 3653536), (17650192, 4635528),
+         (29791848, 5237736), (41331328, 4212576), (53895968, 5576608), (65096560, 3982032)]
+      val made = List.map (fn (clock, copied) => {clock = clock, copied = copied}) stockClocks
+      val probed = List.map (fn (clock, copied) => {clock = clock, lo = copied, hi = copied, exact = true}) stockClocks
+      fun copying d = List.map (fn {clock, copied} => {clock = clock, copied = if clock = 65096560 then copied + d else copied}) made
+      fun probing f = List.map (fn b as {clock, ...} => if clock = 65096560 then f b else b) probed
+      val () = HeapChecks.need (CensusTrace.outside (made, probed) = NONE andalso CensusTrace.outside ([], []) = NONE
+                  andalso isSome (CensusTrace.outside (copying ~1, probed))
+                  andalso isSome (CensusTrace.outside (copying 1, probed))
+                  (* the eighth collection against the census of every 8 KiB, the
+                     failure this rule is for: a band, not a point, 202,664 bytes
+                     above the stock at its low edge; and one that holds it *)
+                  andalso isSome (CensusTrace.outside (made, probing (fn {clock, exact, ...} => {clock = clock, lo = 4184696, hi = 4719288, exact = exact})))
+                  andalso isSome (CensusTrace.outside (made, probing (fn {clock, exact, ...} => {clock = clock, lo = 3900000, hi = 4100000, exact = exact})))
+                  andalso isSome (CensusTrace.outside (made, probing (fn {clock, lo, hi, ...} => {clock = clock, lo = lo, hi = hi, exact = false})))
+                  andalso isSome (CensusTrace.outside (made, probing (fn {clock, lo, hi, exact} => {clock = clock + 8, lo = lo, hi = hi, exact = exact})))
+                  andalso isSome (CensusTrace.outside (tl made, probed)) andalso isSome (CensusTrace.outside (made, tl probed)),
+                  "a collection's copied bytes against what the census found alive at its clock: a byte off, a band that is no point, or one missing, misplaced or inside an object accepted")
+      val () = HeapChecks.need (CensusTrace.bands "probe: at 16 lo 8 hi 24 \nprobe: at 40 lo 8 hi 32 (next object)\nsim: other\n"
+                    = [{clock = 16, lo = 8, hi = 24, exact = true}, {clock = 40, lo = 8, hi = 32, exact = false}],
+                  "bin/heapsim --probe's lines read wrongly")
     in () end
   fun boundaries () =
     let

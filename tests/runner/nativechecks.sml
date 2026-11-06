@@ -144,9 +144,8 @@ struct
         val exe = dir ^ "/rune"
         val () = require (call dir "translate" [nativeOpt (), "bin/rune.stack.rbc", "-o", exe, "--options",
                             "--heap-size " ^ env ("RUNE_HEAP", "67108864")] = 0, "native compiler translation failed")
-        val () = require (call dir "sources" ["sh", "scripts/build-files.sh", "rune.build"] = 0, "cannot read compiler sources")
-        val args = [exe, "--target=stack", "--lib", "bin/../lib", "-o", dir ^ "/stage2.rbc", "build/config.sml"]
-                   @ words (dir ^ "/sources.out") @ ["src/main/rune-main.sml"]
+        val args = [exe, "--target=stack", "--lib", "bin/../lib", "--build", "rune.build", "--whole", "--no-cache",
+                    "-o", dir ^ "/stage2.rbc"]
         val () = require (call dir "stage2" args = 0, "compiler as native code failed")
     in sameFiles ("native compiler bootstrap", "bin/rune.stack.rbc", dir ^ "/stage2.rbc") end
   fun images () =

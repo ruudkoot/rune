@@ -2,7 +2,7 @@
    Standard ML semantic snapshots. All operations are static and read-only. *)
 structure RuneLspBuild =
 struct
-  structure C=RuneCompiler
+  structure C=CompilerApi
   structure D=RuneLspDocuments
   structure W=RuneLspWorkspace
   structure M=RuneLspWorkerModel
@@ -25,7 +25,7 @@ struct
         val native=Option.map #path (U.native (platform,U.parse uri))
         val file=getOpt (native,uri)
         val text=L.text (#content snapshot)
-        val source={file=file,uri=uri,text=text,mode="ascii",ordinal=NONE,syntax=NONE,slot=0,version=SOME (#version snapshot),
+        val source={file=file,uri=uri,text=text,mode="ascii",ordinal=NONE,syntax=fn () => NONE,slot=0,version=SOME (#version snapshot),
           revision=SOME (#revision snapshot),index=SOME (#content snapshot),tokens=ref NONE}:E.source
         val configuration=W.configurationFor (workspace,uri)
         fun matches (target:W.target)=case native of NONE => false | SOME path =>
@@ -102,7 +102,7 @@ struct
                 if List.exists (fn prior => W.sameFile platform (#file item,#file prior) andalso #text item<> #text prior) seen
                 then raise Fail "conflicting source overlays refer to one file" else item::seen) [] overlays
               val projectErrors=if not (null (#diagnostics syntax)) orelse not (isSome native) then [] else
-                ((ignore (C.Project.read (compiler (),{file=file,variables=variables,
+                ((ignore (C.Project.read (compiler (),{file=file,workspace=W.rootFileIn (platform,documents) file,variables=variables,
                    overlays=overlays,windows=platform=U.Windows}));[])
                  handle C.Failed errors => errors)
               fun diagnostic (diagnostic:C.diagnostic)=Json.Object

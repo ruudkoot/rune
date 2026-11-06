@@ -44,7 +44,7 @@ struct
   val output=read(directory ^ "/stdout")
   val errors=read(directory ^ "/stderr")
   val ()=write(directory ^ "/result.json",Json.encodeIndented 2(Json.Object[
-    ("schema",Json.int 1),("status",Json.int status),("wallSeconds",Json.Number(Real.toString elapsed)),
+    ("schema",Json.int 1),("status",Json.int status),("wallSeconds",RuneLspSeconds.json elapsed),
     ("videoDriverOverride",Json.Null),("generatedSet",Json.String selected),
     ("sourceAndBinaryHashes",Json.Array(List.map(fn(path,digest)=>Json.Object[
       ("path",Json.String path),("sha256",Json.String digest)])hashes))]) ^ "\n")

@@ -1,4 +1,4 @@
-(* libraries: test/unit *)
+(* libraries: test/unit json jsonrpc *)
 (* Dap: the messages of the protocol's overview, as VS Code's adapters
    exchange them, read and written back; a session of messages framed
    and read back in pieces; replies and the events. *)

@@ -1,4 +1,7 @@
-libraries unicode end
+requires unicode end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure ForeignBytes, structure ForeignScope, structure ForeignText, signature FOREIGN_BYTES,
+         signature FOREIGN_SCOPE, signature FOREIGN_TEXT)
 annotate "demand" in
   scope_sig.sml
   scope.sml

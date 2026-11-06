@@ -8,6 +8,11 @@
              provides, and for no file of the library: see the end of the list
    "final"   the file is compiled after every program: what is left to do
              when it ends
+   "view=NAME"
+             with "seal": a seal of the library's view NAME, which binds a
+             structure again under a narrower signature, loaded after the
+             libraries for a program in that view and for no other
+             (docs/build.md, Views of the Basis Library; it has none yet)
    "host=swap", "host=no"
              how tests/basis/host/gen-host-basis.sh gives the file to MLton,
              SML/NJ, Poly/ML and MLKit: as it is (the default), without the
@@ -16,8 +21,9 @@
    What a file provides -- the structures, signatures, functors and
    top-level types it declares -- and what it requires -- those of other
    files that it names (Deps, lib/compiler/driver/deps.sml; docs/units.md, The graph)
-   -- are worked out from the files: `make manifests` writes them to
-   lib/basis/MANIFEST (rune --basis-index), which the compiler reads. A name
+   -- are worked out from the files: the library's index, which the compiler
+   derives and keeps in its store (docs/build.md; rune --basis-index prints
+   it). A name
    the library needs for itself and offers to nobody is written `RuneFoo` or
    `RUNE_FOO`: the documentation leaves those out. A program can still name
    one -- every declaration of a file that loads is in scope -- so the prefix

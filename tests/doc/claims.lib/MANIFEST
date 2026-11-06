@@ -1,3 +1,0 @@
-# A small library whose structures claim to implement a signature: two
-# claims are true, and the compiler has something to say against the others.
-counter.sml | demand | yes | COUNTER Good Wrong Narrow Missing |

@@ -172,7 +172,9 @@ outside the cache that the last section lists.
   identity with `~2` after it (`~3`, ...), its code's own keys renamed for
   linking only; its entry keeps its basis's identity (`docs/units.md`).
   Scenarios S38 (through the cache) and S74 (compiled again, the cache
-  verified).
+  verified). A file given twice in a batch build was the same bug, printing
+  `10 10` where a whole compile prints `0 10` (build-system E16). Fixed by a
+  rank in the unit's logical name, `a.sml#2` (build-system M3, S91).
 
 * **23. The REPL linked a unit from the cache to the first of two loads.**
   Found fixing 22 (2026-10-25). `use "counter.sml"; use "user.sml"`, where
@@ -187,8 +189,10 @@ outside the cache that the last section lists.
   22's fix alone would have made it wrong. Status: fixed. A usage holds by
   its fingerprint only where the unit that bound the name then is not in
   the session (`docs/units.md`, *Fingerprints*); where it is, the entry is
-  a miss and the unit is compiled. A batch build never has two units of
-  one name, so this changes nothing there; it fixes 21 too. Scenario S75.
+  a miss and the unit is compiled. A batch build has no two units of one
+  name, since a rank tells them apart (build-system M3; before it, a file
+  given twice was two), so this changes nothing there; it fixes 21 too.
+  Scenario S75.
 
 * **24. The REPL named a declaration's printer by the session's count.**
   Found by the functors-units roadmap (M7, 2026-10-25), building HOL4
@@ -385,7 +389,20 @@ outside the cache that the last section lists.
   function, which names the units it uses as any code does. The rest is
   as above: MLton's S48, which compiled six units because four held only
   across `profile.fun` changed, compiles `profile.fun` alone, since an edit
-  of a body no longer changes its unit's identity.
+  of a body no longer changes its unit's identity. Since the build-system
+  roadmap's M2 `--verify-cache` compares such an entry: loaded with its names
+  remapped, its basis written again and its code read and written, against
+  the same made of the unit compiled, identities and what only a hash reads
+  left out (`src/driver/cachecheck.sml`, S98). Status: fixed (the
+  build-system roadmap's M4). A basis keeps nothing that only a hash reads,
+  so one written again from what loading it left is the same bytes, which
+  every unit compiled at lint level 2 is held to (`basis-rt`); and an
+  identity holds no unit's identity, an import being hashed as what it is
+  (docs/units.md, *The export basis*), so an entry taken across a unit that
+  changed in nothing it names has the identity a fresh compile gives, and
+  its basis written again is a fresh compile's bytes, which `--verify-cache`
+  compares. A unit that names nothing that changed is now exact by its
+  binders (S121), where it held by fingerprint before.
 
 * **17. A functor's or a signature's usage was fingerprinted after the
   unit's own declarations.** Found by the functors-units roadmap (E5 and

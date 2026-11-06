@@ -39,13 +39,11 @@ struct
           let val opName=V.bytes (V.field (value,"op"))
               val id=V.integer (V.field (value,"id"))
               val ()=E.commandId (engine,id)
+              val ()=RuneLspProfile.sample ("command-" ^ opName) "" 0 0 0
               val ()=E.onProgress(engine,fn report=>send(V.Object
                 (("op",V.Bytes "progress")::("id",V.Integer id)::V.object report)))
               fun work () = case opName of
-                "discover" =>
-                  let val (workspace,documents)=RuneLspWorkerModel.restore (V.field (value,"state"))
-                      val _=RuneLspProjects.enrich (workspace,documents,fn () => cancelled id)
-                  in E.discovery (workspace,documents,V.bytes (V.field (value,"uri"))) end
+                "discover" => E.discover (engine,V.field (value,"state"),V.bytes (V.field (value,"uri")),fn () => cancelled id)
               | "check" =>
                   let val encoding=case V.bytes (V.field (value,"encoding")) of "utf-8" => LspProtocol.Utf8
                         | "utf-16" => LspProtocol.Utf16 | "utf-32" => LspProtocol.Utf32
@@ -83,9 +81,9 @@ struct
                        capabilities=V.unjson (V.field (value,"capabilities")),cancelled=fn () => cancelled id,previous=previous})) end
               | _ => raise V.Invalid "unknown worker operation"
           in if opName="cancel" then () else
-               ((reply (id,work ()) handle RuneCompiler.Analysis.Cancelled =>
+               ((reply (id,work ()) handle CompilerApi.Analysis.Cancelled =>
                    send (V.Object [("id",V.Integer id),("cancelled",V.Bool true)])
-                 | RuneCompiler.Failed diagnostics => failed (id,String.concatWith "\n" (List.map #message diagnostics))
+                 | CompilerApi.Failed diagnostics => failed (id,String.concatWith "\n" (List.map #message diagnostics))
                  | E.Stale message => rejected (id,LspProtocol.contentModified,message)
                  | E.ContextPending message => send(V.Object[("id",V.Integer id),("error",V.Object
                      [("code",V.Integer LspProtocol.serverCancelled),("message",V.Bytes(E.safe message)),
@@ -94,7 +92,8 @@ struct
                  | RuneLspWorkspace.Invalid message => failed (id,message)
                  | RuneLspSync.Invalid message => rejected (id,JsonRpc.invalidParams,message)
                  | LspUri.Invalid => failed (id,"invalid file URI during worker analysis")
-                 | error => failed (id,General.exnMessage error));RuneLspProfile.retained();ready ()) end
+                 | error => failed (id,General.exnMessage error));RuneLspProfile.sample ("replied-" ^ opName) "" 0 0 0;
+                RuneLspProfile.retained();ready ()) end
         fun loop ()=case !pending of value :: rest => (pending:=rest;command value;loop ())
           | [] => if !ended then () else (read ();loop ())
         val result=(ready ();loop ();if Framing.pending (!reader) then OS.Process.failure else OS.Process.success)

@@ -32,6 +32,16 @@ struct
      the files' encoding (docs/plans/utf8.md, D1) *)
   val mode : Source.mode ref = ref Source.Ascii
   fun typedMode () : Source.mode = case !mode of Source.Ascii => Source.Ascii | Source.Unicode _ => Source.Unicode Source.Utf8
+  (* What a file a session uses is named by, its unit's stem (docs/units.md,
+     Names): its path from where the session began, however it was spelt, so
+     that two files never have one name in a session. *)
+  val began : string option ref = ref NONE
+  fun stem (file : string) : string =
+    let
+      val windows = Workspace.onWindows ()
+      val here = Workspace.here ()
+      val root = case !began of SOME root => root | NONE => (began := SOME here; here)
+    in Workspace.relative windows (Workspace.keyOf (windows, root) root, Workspace.keyOf (windows, here) file) end
   (* the mode the source named file was read in, where it was registered
      (the REPL's parse); else the files' *)
   fun modeOf (file : string) : Source.mode =
@@ -194,7 +204,7 @@ struct
                 val pickle = readBytes rbi handle IO.Io _ => raise Failed ("cannot read " ^ rbi)
                 val st = UnitBasis.begin (!env, !fixity)
                 val l =
-                  UnitBasis.load {pickle = pickle, file = name, at = #counters st}
+                  UnitBasis.load {pickle = pickle, sidecar = "", file = name, at = #counters st}
                   handle Pickle.Bad why => raise Failed (rbi ^ ": " ^ why)
                        | UnitBasis.Missing u => raise Failed (rbi ^ ": names " ^ u ^ ", which was not loaded")
                        | IO.Io _ => raise Failed ("cannot read " ^ path)
@@ -260,13 +270,18 @@ struct
      is the session's already -- and what to echo of what is not a value.
      A declaration that does not elaborate leaves the session as it was and
      raises Error.CompileError, as the batch compiler does. *)
-  (* The cache of a file's units (UnitCache): RUNE_CACHE, else .rune beside
-     the file; NONE where RUNE_CACHE is empty *)
+  (* The store of a file's units (UnitCache): RUNE_CACHE, else the
+     workspace's, .rune by the nearest rune.workspace above the file, which
+     its builds share, else .rune beside the file; NONE where RUNE_CACHE is
+     empty *)
   fun cacheOf (file : string) : (string * string) option =
     let
+      val windows = Workspace.onWindows ()
       val dir = case OS.Process.getEnv "RUNE_CACHE" of
                   SOME d => if d = "" then NONE else SOME d
-                | NONE => SOME (OS.Path.joinDirFile {dir = OS.Path.dir file, file = ".rune"})
+                | NONE => SOME (UnitCache.storeIn (case Workspace.rootOf {file = file, windows = windows} of
+                                                     SOME root => Workspace.fromHere (windows, root)
+                                                   | NONE => OS.Path.dir file))
     in Option.map (fn d => (d, UnitCache.configuration ())) dir end
 
   (* compile (decs, file, text, cached): the declarations elaborated against
@@ -302,11 +317,13 @@ struct
       val k = !count
       val name = case cached of SOME (stem, n, _) => stem ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
       (* the mode its text was read in, which its key says where it is not
-         the default, as a compile in units says it (Main), and
-         --no-unicode-lints, whose warnings an entry would keep *)
+         the default, as a compile in units says it (Main), --or-patterns,
+         which a file of the session's input files may be compiled under,
+         and --no-unicode-lints, whose warnings an entry would keep *)
       val srcMode = modeOf file
       val settings = String.concatWith " " (List.filter (fn s => s <> "")
                                               [if srcMode = Source.Ascii then "" else Source.modeName srcMode,
+                                               if !Parser.orPatterns then "or-patterns" else "",
                                                if !Lexer.lints then "" else "no-unicode-lints"])
       val cache =
         case cached of
@@ -321,11 +338,12 @@ struct
           NONE => NONE
         | SOME (d, c, key) =>
             (UnitBasis.position (!env, #fixity start);
-             case UnitCache.find (d, c, key) of UnitCache.Found e => SOME e | UnitCache.Missed _ => NONE)
+             case UnitCache.take (d, c, key) of UnitCache.Found e => SOME e | UnitCache.Missed _ => NONE)
       (* RUNE_VERIFY_CACHE: an entry found is compiled all the same, and what
          that gives is compared with it (UnitCache.verifying) *)
       val against = case found of
-                      SOME (e as {usages, ...}) => if UnitCache.verifying () andalso UnitBasis.exact usages then SOME e else NONE
+                      SOME (e as {usages, pickle, ...}) =>
+                        if UnitCache.verifying () andalso UnitBasis.exactEntry (usages, pickle) then SOME e else NONE
                     | NONE => NONE
       (* from the cache: its basis loaded, its code linked; when verifying,
          compiled all the same, and one taken across a unit that changed
@@ -352,7 +370,7 @@ struct
                   loaded and linked under an identity of its own, that what
                   named the first's globals still does (UnitBasis.unused) *)
                val as' = UnitBasis.unused identity
-               val l = UnitBasis.loadKnown ({pickle = pickle, file = file, at = at}, SOME as', remap)
+               val l = UnitBasis.loadKnown ({pickle = pickle, sidecar = "", file = file, at = at}, SOME as', remap)
                (* its source, and those of the functors' bodies it
                   applied, where they are now, in its code's files *)
                val code = if UnitBasis.moves (u, was, file, others) orelse not (List.null remap) orelse as' <> identity
@@ -361,7 +379,7 @@ struct
                val run = linkFor (code, IntMap.empty)
              in
                (* the warnings its compile gave, again *)
-               List.app (fn w => TextIO.output (TextIO.stdErr, Diagnostic.showCached w ^ "\n")) warnings;
+               UnitCache.giveWarnings (warnings, was, file);
                SOME (result (l, run))
              end)
             handle Pickle.Bad _ => (UnitBasis.abandon at; NONE)
@@ -370,7 +388,7 @@ struct
                  | UnitFile.Bad _ => (UnitBasis.abandon at; NONE)
                  | Fail _ => (UnitBasis.abandon at; NONE)
           end
-      val warnings : string list ref = ref []
+      val warnings : (Source.span * string) list ref = ref []
       (* the source of the printer, which nothing names once it is compiled:
          one name for every declaration's, which are compiled one at a time,
          so that a declaration's code does not depend on how many the session
@@ -404,7 +422,7 @@ struct
                   val () = Pass.checkAt ("astlint", 2) AstLint.check () handle e => (Elaborate.lintRecords := false; raise e)
                   val () = Elaborate.lintRecords := false
                   val delta = !Elaborate.lastDelta
-                  val () = warnings := map Error.formatWarning (List.rev (!Error.warnings))
+                  val () = warnings := List.rev (!Error.warnings)
                   val () = Error.flushWarnings ()
                   val pdecs =
                     case ReplShow.echoes (!here, bound delta, delta, (Usage.use ("echo", "on"); echoing ())) of

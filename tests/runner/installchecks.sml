@@ -42,18 +42,21 @@ struct
         fun install uninstall = execute dir (if uninstall then "uninstall" else "install") root ""
              (["sh", "scripts/install.sh", "--destdir", stage, "--prefix", "/opt/rune"] @ host @ (if uninstall then ["--uninstall"] else []))
         val () = Scenarios.success (install false)
-        val manifests = List.filter (fn path => OS.Path.file path = "MANIFEST") (files (fromRoot "lib"))
-        fun manifest path =
+        (* each library of the tree, by its library.build: every build file
+           and source under it, and its README, installed as they are; and
+           the Basis Library among them, which install.sh never does without *)
+        val builds = List.filter (fn path => OS.Path.file path = "library.build") (files (fromRoot "lib"))
+        val () = need (List.exists (fn path => path = fromRoot "lib/basis/library.build") builds, "the tree has no Basis Library build")
+        fun library path =
           let val library = String.extract (OS.Path.dir path, size (fromRoot "lib") + 1, NONE)
               val source = fromRoot ("lib/" ^ library)
-              val names = List.mapPartial (fn line =>
-                let val line = Hosts.trim line
-                in if line = "" orelse String.isPrefix "#" line then NONE
-                   else SOME (Hosts.trim (hd (String.fields (fn c => c = #"|") line))) end) (lines (read path))
-              val names = "MANIFEST" :: names @ (if exists (source ^ "/README.md") then ["README.md"] else [])
+              val names = List.mapPartial (fn file => if String.isSuffix ".sml" file orelse String.isSuffix ".build" file
+                                                      then SOME (String.extract (file, size source + 1, NONE)) else NONE)
+                                          (files source)
+              val names = names @ (if exists (source ^ "/README.md") then ["README.md"] else [])
           in List.app (fn name => need (same (source ^ "/" ^ name, lib ^ "/" ^ library ^ "/" ^ name),
                                     "installed library differs: " ^ library ^ "/" ^ name)) names end
-        val () = List.app manifest manifests
+        val () = List.app library builds
         val versionLine = valOf (List.find (String.isPrefix "#define RUNE_VERSION ") (lines (read (fromRoot "runtime/version.h"))))
         val version = List.nth (String.fields (fn c => c = #"\"") versionLine, 1)
         val () = List.app (fn name => need (String.isSubstring ("\"" ^ name ^ " " ^ version ^ "\"")
@@ -73,7 +76,7 @@ struct
         val () = Scenarios.output (command "units" "" [bin ^ "/runevm", "units.rbc"]) "hello\n"
         val () = compile "compile-stack" ["--target=stack"] "hello.sml" "stack.rbc"
         val () = Scenarios.output (command "stack" "" [bin ^ "/runevm-stack", "stack.rbc"]) "hello\n"
-        val () = compile "compile-library" ["--library", "test/property/basis"] "property.sml" "property.rbc"
+        val () = compile "compile-library" ["--library", "test/property/basis", "--library", "test/property"] "property.sml" "property.rbc"
         val () = Scenarios.output (command "library" "" [bin ^ "/runevm", "property.rbc"]) "property\n"
         val () = Scenarios.success (command "translate-native" "" [bin ^ "/runeopt", "stack.rbc", "-o", "hello-native"])
         val () = Scenarios.bytecode (work ^ "/hello-native")

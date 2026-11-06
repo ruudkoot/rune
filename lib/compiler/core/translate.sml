@@ -581,7 +581,15 @@ struct
     (* a dynamic module (D17, D18): what RuneDynamic.load gives -- or
        RuneDynamic.take, for a virtual module -- a tuple of the slots as
        units, and each slot's global set from it *)
-    | StrDynamic (from, _, slot, sp, _) =>
+    | StrDynamic (DynamicVirtual name, _, slot, sp, _) => dynamicCode (name, DynamicVirtual name, slot, sp, k)
+    | StrDynamic (from, _, slot, sp, _) => dynamicCode ("", from, slot, sp, k)
+    | StrExport (name, _, body, slot, sp, _) => transStrexp (body, fn () => exportCode (name, slot, sp, k))
+
+  (* the code of a dynamic or virtual module's declaration (StrDynamic), and
+     of a dynamic or virtual functor's, whose one slot is its function (D22):
+     the slots taken, by name, from what the program exported, or loaded
+     from the unit at the path *)
+  and dynamicCode (name : string, from : dynamicFrom, slot, sp, k : unit -> lexp) : lexp =
         (case !slot of
            NONE => bug (sp, "a dynamic structure not elaborated")
          | SOME {fingerprint, slots, via, temp, reloadable} =>
@@ -607,7 +615,7 @@ struct
                  in vs (vals, 0) end
              in
                case from of
-                 DynamicVirtual name =>
+                 DynamicVirtual _ =>
                    let
                      val takeTy = Types.TArrow (Types.tupleTy [Types.stringTy, Types.stringTy], tupleTy)
                      val call = App (useOf (Global via, via, takeTy),
@@ -629,12 +637,14 @@ struct
                                             if reloadable then trueExp else falseExp,
                                             setter])
                    in Mark (sp, Seq (call, k ())) end
+               | DynamicFunctor _ => bug (sp, "a dynamic functor's from as a structure's")
              end)
-    (* its implementation: the body, then its slots, each cast to unit -- a
-       polymorphic one at unit, which changes nothing of its value -- given
-       to RuneDynamic.export with the fingerprint *)
-    | StrExport (name, _, body, slot, sp, _) =>
-        transStrexp (body, fn () =>
+
+  (* an implementation's (StrExport), after its body, or an exported
+     functor's, after its function: its slots, each cast to unit -- a
+     polymorphic one at unit, which changes nothing of its value -- given to
+     RuneDynamic.export with the fingerprint, under the name *)
+  and exportCode (name : string, slot, sp, k : unit -> lexp) : lexp =
           case !slot of
             NONE => bug (sp, "an exported structure not elaborated")
           | SOME {fingerprint, slots, via, ...} =>
@@ -661,7 +671,7 @@ struct
                           Tuple [Const (CString name, Ty.fromTypes Types.stringTy),
                                  Const (CString fingerprint, Ty.fromTypes Types.stringTy), Tuple elems]),
                      k ())
-              end)
+              end
 
   (* ---- functors compiled once (docs/ir.md, Functors compiled once) ---- *)
 
@@ -794,6 +804,12 @@ struct
   (* a functor's declaration: its function, of its argument's record to its
      result's *)
   and functorFun (b : funbind, rest : lexp) : lexp =
+    case #body b of
+      (* a virtual or dynamic functor (D22): its function's global set from
+         the function the program exported under its name, or the unit at
+         the path, which every application calls *)
+      StrDynamic (DynamicFunctor from, _, slot, sp, _) => dynamicCode ("functor " ^ #name b, from, slot, sp, fn () => rest)
+    | _ =>
     case Elaborate.bodyAt (#span b) of
       NONE => bug (#span b, "a functor without its code")
     | SOME {func, param, paramRecord, result, opens} =>
@@ -801,11 +817,19 @@ struct
           val saved = (!structPath, !inBody)
           val () = (structPath := [#name b]; inBody := true)
           val () = read := IntTable.table 1024
-          val body = bindUsed (paramRecord, Var param, openFuns (opens, fn () => transStrexp (#body b, fn () => recordExp result)))
+          (* an exported functor's body is its implementation's: what it
+             exports is the function, after it *)
+          val (bodyExp, export) = case #body b of
+                                    StrExport (_, _, inner, slot, sp, _) => (inner, SOME (slot, sp))
+                                  | e => (e, NONE)
+          val body = bindUsed (paramRecord, Var param, openFuns (opens, fn () => transStrexp (bodyExp, fn () => recordExp result)))
                      handle x => (structPath := #1 saved; inBody := #2 saved; raise x)
           val () = (structPath := #1 saved; inBody := #2 saved)
           val fty = Ty.arrow (recordTyN (Elaborate.slotsOf paramRecord), recordTyN (Elaborate.slotsOf result))
           val f = Mark (#span b, Fn (param, fty, body))
+          val rest = case export of
+                       SOME (slot, sp) => exportCode ("functor " ^ #name b, slot, sp, fn () => rest)
+                     | NONE => rest
         in nameFun ("functor " ^ #name b, f); Seq (SetGlobal (func, f), rest) end
 
   (* The functions that make and take apart each constructor whose layout

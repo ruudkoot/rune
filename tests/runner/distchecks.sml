@@ -15,15 +15,13 @@ struct
         val () = rmTree dir
         val () = mkdirs dir
         val () = List.app (fn (path, text) => put dir path text)
-          [("lib/basis/MANIFEST", "# a comment\nlist.sml | demand | yes | List | \n"),
-           ("lib/basis/list.sml", "structure List = struct end\n"), ("lib/basis/README.md", "# Basis\n"),
+          [("lib/basis/list.sml", "structure List = struct end\n"), ("lib/basis/README.md", "# Basis\n"),
            ("lib/basis/library.build", "files list.sml end\n"),
-           ("lib/json/MANIFEST", "json.sml | demand | yes | Json | \npkg/extra.sml | demand | yes | | \n"),
            ("lib/json/json.sml", "structure Json = struct end\n"), ("lib/json/pkg/extra.sml", "structure Extra = struct end\n"),
            ("lib/json/README.md", "# Json\n"), ("lib/json/library.build", "files json.sml end\n"),
            ("lib/stray.sml", "not a library\n"), ("lib/cache/made", "cached\n"),
            ("rune.rbc", "compiler\n"), ("rune-repl.img", "repl\n"),
-           ("nomanifest/lib/gone/library.build", "files end\n"), ("script-vm", "#!/bin/sh\necho no\n")]
+           ("nolibrary/lib/gone/gone.sml", "structure Gone = struct end\n"), ("script-vm", "#!/bin/sh\necho no\n")]
         val () = List.app (fn arch => put dir ("vm-" ^ arch) ("vm-" ^ arch ^ "\n")) linuxArchitectures
         val () = List.app (fn arch => put dir ("exe-" ^ arch) ("exe-" ^ arch ^ "\n")) windowsArchitectures
         fun interpreter "x86_64" = "/lib64/ld-linux-x86-64.so.2"
@@ -55,8 +53,8 @@ struct
     let val dir = directory ()
     in (List.map (fn arch => (arch, dir ^ (if good then "/good-" else "/vm-") ^ arch)) linuxArchitectures,
         List.map (fn arch => (arch, dir ^ (if good then if arch = "x86_64" then "/good-win64" else "/good-win32" else "/exe-" ^ arch))) windowsArchitectures) end
-  val libraryMembers = ["LICENSE", "VERSION", "lib/rune/basis/MANIFEST", "lib/rune/basis/README.md", "lib/rune/basis/list.sml",
-       "lib/rune/json/MANIFEST", "lib/rune/json/README.md", "lib/rune/json/json.sml", "lib/rune/json/pkg/extra.sml",
+  val libraryMembers = ["LICENSE", "VERSION", "lib/rune/basis/library.build", "lib/rune/basis/README.md", "lib/rune/basis/list.sml",
+       "lib/rune/json/library.build", "lib/rune/json/README.md", "lib/rune/json/json.sml", "lib/rune/json/pkg/extra.sml",
        "lib/rune/rune-repl.img", "lib/rune/rune.rbc"]
   fun ffiArchives ()=
     let val dir=directory() val assets=dir ^ "/ffi-assets"
@@ -64,13 +62,12 @@ struct
         val ()=put dir "ffi-assets/sdl/upstream/original.h" "original header\n"
         val library=dir ^ "/ffi-library"
         val ()=List.app(fn(path,text)=>put library path text)
-          [("basis/library.build","files list.sml end\n"),("basis/MANIFEST","list.sml | demand | yes | List | \n"),
-           ("basis/list.sml","structure List = struct end\n")]
+          [("basis/library.build","files list.sml end\n"),("basis/list.sml","structure List = struct end\n")]
         val generated=List.concat(List.map(fn(family,target)=>
           let val prefix="ffi/" ^ family ^ "/generated/" ^ target ^ "/"
           in List.map(fn(name,text)=>(prefix ^ name,text))
             [("current.build","use sets/identity/native.build\n"),("api/api/public_sig.sml","signature GENERATED = sig end\n"),
-             ("sets/identity/library.build","files raw.sml end\n"),("sets/identity/MANIFEST","raw.sml | demand | yes | Generated | \n"),
+             ("sets/identity/library.build","files raw.sml end\n"),
              ("sets/identity/raw.sml","structure Generated = struct end\n"),("sets/identity/native.build","raw.sml\n"),
              ("sets/identity/shims.c","/* generated typed C shim */\n"),("sets/identity/ffi-manifest.json","{\"declarations\":[]}\n"),
              ("sets/identity/dependencies.json","{\"headers\":[]}\n")]
@@ -152,11 +149,90 @@ struct
              else if name = "share/rune.ico" then need (String.isPrefix "\000\000\001\000" data, "invalid Windows icon") else () end)
                        (ListPair.zip (List.tabulate (length entries, fn i => i), entries))
     in say "PASS distribution/archive-metadata\n" end
+  (* The frozen layer of the store, shipped (docs/units.md, The store; the
+     build-system roadmap's M7). With --cache, an archive holds each
+     configuration's files under lib/rune/cache, read-only in the tar, and
+     neither the store's memos nor make's mark; without it, none, whatever
+     --lib holds. Then a real one: the compiler and the store make
+     basis-cache made, packed and installed, compile a program in units for
+     the first time, through a store of its own that is empty, and build no
+     unit of the Basis Library, each taken from the layer the archive
+     brought, which the compile does not write *)
+  fun frozen () =
+    let val dir = directory () ^ "/frozen"
+        val () = InstallChecks.openTree dir
+        val () = rmTree dir
+        val () = mkdirs dir
+        val store = dir ^ "/store"
+        val () = List.app (fn (path, text) => put store path text)
+          [("c1/k1/e1", "entry\n"), ("c1/units/about", "identity x\n"), ("c2/k2/e2", "another\n"), ("made", ""),
+           ("memo/units/copy-1", "a copy\n"), ("steps/pre-1", "a step's\n"), ("c1/k1/e3.tmp-x", "half\n")]
+        val (linux, windows) = maps false
+        val result = InstallChecks.execute dir "pack" root ""
+          ([fromRoot "bin/rune-build", "make-dist", "--version", "frozen1", "--out", dir ^ "/archives", "--lib", directory () ^ "/lib",
+            "--license", fromRoot "LICENSE", "--compiler", directory () ^ "/rune.rbc", "--repl", directory () ^ "/rune-repl.img",
+            "--cache", store, "--fixture"]
+           @ List.concat (List.map (fn (arch, file) => ["--linux", arch ^ "=" ^ file]) linux)
+           @ List.concat (List.map (fn (arch, file) => ["--windows", arch ^ "=" ^ file]) windows))
+        val () = Scenarios.success result
+        val tar = ArchiveCheck.tar (ArchiveCheck.decode dir "frozen.tar" ["gzip", "-dc", dir ^ "/archives/rune-frozen1-linux.tar.gz"])
+        val top = "rune-frozen1-linux/lib/rune/cache/"
+        val cached = List.filter (fn m : ArchiveCheck.member => String.isPrefix top (#name m)) tar
+        val () = need (List.map (fn m : ArchiveCheck.member => String.extract (#name m, size top, NONE)) cached
+                       = ["c1/k1/e1", "c1/units/about", "c2/k2/e2"], "the archive's frozen layer is not the store's configurations")
+        val () = need (List.all (fn m : ArchiveCheck.member => #mode m = 292) cached, "the archive's frozen layer is not read-only")
+        val zipped = ArchiveCheck.zip (ArchiveCheck.binary (dir ^ "/archives/rune-frozen1-windows.zip"))
+        val () = need (List.length (List.filter (fn m : ArchiveCheck.zipped => String.isPrefix "rune-frozen1-windows/lib/rune/cache/" (#name m))
+                                                zipped) = 3, "the Windows archive's frozen layer")
+        (* a real one, of the Basis Library alone, which is what the program needs *)
+        val () = need (exists (fromRoot "lib/cache/made"), "no frozen layer to ship (make basis-cache)")
+        fun copyDir (from, to) =
+          if isDir from then (mkdirs to; List.app (fn n => copyDir (from ^ "/" ^ n, to ^ "/" ^ n)) (entries from))
+          else write (to, read from)
+        val () = copyDir (fromRoot "lib/basis", dir ^ "/real-lib/basis")
+        val result = InstallChecks.execute dir "pack-real" root ""
+          ([fromRoot "bin/rune-build", "make-dist", "--version", "frozen2", "--out", dir ^ "/real", "--lib", dir ^ "/real-lib",
+            "--license", fromRoot "LICENSE", "--compiler", fromRoot "bin/rune.rbc", "--repl", directory () ^ "/rune-repl.img",
+            "--cache", fromRoot "lib/cache", "--fixture"]
+           @ List.concat (List.map (fn (arch, file) => ["--linux", arch ^ "=" ^ (if arch = "x86_64" then fromRoot "bin/runevm" else file)])
+                                   linux)
+           @ List.concat (List.map (fn (arch, file) => ["--windows", arch ^ "=" ^ file]) windows))
+        val () = Scenarios.success result
+        val tree = dir ^ "/tree"
+        val () = mkdirs tree
+        val () = Scenarios.success (InstallChecks.execute dir "extract" root ""
+                                     ["tar", "-xzf", dir ^ "/real/rune-frozen2-linux.tar.gz", "-C", tree])
+        val prefix = dir ^ "/prefix"
+        val () = Scenarios.success (InstallChecks.execute dir "install" root ""
+                                     ["sh", tree ^ "/rune-frozen2-linux/install.sh", "--prefix", prefix, "--arch", "x86_64"])
+        val layer = prefix ^ "/lib/rune/cache"
+        fun files d = if isDir d then List.concat (List.map (fn n => files (d ^ "/" ^ n)) (entries d)) else [d]
+        val shipped = files layer
+        val () = need (not (List.null shipped) andalso List.all (fn f => not (OS.FileSys.access (f, [OS.FileSys.A_WRITE]))) shipped,
+                       "the installed frozen layer is missing or not read-only")
+        val work = dir ^ "/work"
+        val () = put work "hello.sml" "val () = print \"Hello from a first compile\\n\"\n"
+        val compiled = InstallChecks.execute dir "first-compile" work ""
+          [prefix ^ "/bin/rune", "--units", "--explain-rebuild", "--cache-dir", dir ^ "/own-store", "hello.sml", "-o", "hello.rbc"]
+        val () = Scenarios.success compiled
+        val said = String.tokens (fn c => c = #"\n") (#errors compiled)
+        val built = List.filter (String.isPrefix "rune: compiled ") said
+        val taken = List.filter (String.isPrefix "rune: from the cache ") said
+        val () = need (built = ["rune: compiled hello.sml: no entry"],
+                       "a dist's first compile in units built more than its program: " ^ String.concatWith "; " built)
+        val () = need (List.length taken >= 1, "a dist's first compile took nothing from the frozen layer")
+        val () = need (files layer = shipped, "a compile wrote into the frozen layer")
+        val ran = InstallChecks.execute dir "run" work "" [prefix ^ "/bin/runevm", "hello.rbc"]
+        val () = Scenarios.output ran "Hello from a first compile\n"
+        val () = Scenarios.success (InstallChecks.execute dir "uninstall" root ""
+                                     ["sh", tree ^ "/rune-frozen2-linux/install.sh", "--prefix", prefix, "--uninstall"])
+        val () = need (not (exists prefix), "the uninstall left the frozen layer")
+    in say "PASS distribution/frozen-layer\n" end
   fun rejectedMetadata () =
     let val dir = directory ()
         val (linux, windows) = maps false
-        val missing = pack "missing-manifest" true "test1" (dir ^ "/nomanifest/lib") linux windows
-        val () = need (#status missing <> 0 andalso String.isSubstring "MANIFEST" (#errors missing), "packaged a library without a manifest")
+        val missing = pack "no-library" true "test1" (dir ^ "/nolibrary/lib") linux windows
+        val () = need (#status missing <> 0 andalso String.isSubstring "no library.build" (#errors missing), "packaged libraries with no build")
         val version = pack "bad-version" true "../x" (dir ^ "/lib") linux windows
     in need (#status version <> 0, "packaged an unsafe version") end
   fun binaryHeaders () =
@@ -216,8 +292,10 @@ struct
         val () = need (same (stage ^ "/runtime/aarch64/runevm", prefix ^ "/bin/runevm"), "installed the wrong architecture")
         val () = List.app (fn path => need (same (dir ^ "/lib/" ^ path, prefix ^ "/lib/rune/" ^ path), "installed library differs: " ^ path))
                        ["basis/list.sml", "json/pkg/extra.sml"]
-        val () = need (not (exists (prefix ^ "/lib/rune/basis/library.build")) andalso not (exists (prefix ^ "/lib/rune/cache")),
-                       "installed build metadata or unrelated cache")
+        (* a library's build file is what its index is derived from where it
+           is compiled; a store not asked for is not shipped *)
+        val () = need (exists (prefix ^ "/lib/rune/basis/library.build") andalso not (exists (prefix ^ "/lib/rune/cache")),
+                       "installed no build file of a library, or an unrelated cache")
         val wrapper = read (prefix ^ "/bin/rune")
         val () = need (not (String.isSubstring root wrapper) andalso not (String.isSubstring dir wrapper), "installed wrapper depends on archive/source tree")
         val () = need (String.isSubstring ("note: " ^ prefix ^ "/bin is not on your PATH") (#output installed), "installer omitted the PATH note")

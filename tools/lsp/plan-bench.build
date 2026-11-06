@@ -1,0 +1,21 @@
+(* Planning a check at scale, through the worker's own plan (D28). *)
+libraries compiler lsp digest json jsonrpc unicode end
+files
+  ../../src/lsp/profile.sml
+  ../../src/lsp/documents.sml
+  ../../src/lsp/sync.sml
+  ../../src/lsp/workspace.sml
+  ../../src/lsp/implicit.sml
+  ../../src/lsp/projects.sml
+  ../../src/lsp/worker-wire.sml
+  ../../src/lsp/worker-model.sml
+  ../../src/lsp/structure.sml
+  ../../src/lsp/outline.sml
+  ../../src/lsp/tokens.sml
+  ../../src/lsp/hints.sml
+  ../../src/lsp/completion.sml
+  ../../src/lsp/worker-analysis.sml
+  seconds.sml
+  plan-bench.sml
+  ../../src/main/lsp-plan-bench-main.sml
+end

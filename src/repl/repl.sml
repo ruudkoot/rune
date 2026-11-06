@@ -271,7 +271,7 @@ struct
       (case Usage.record (fn () => parseAt (!ReplSession.mode, file, text ^ "\n;", 1)) of
          (Decs (decs, fx), names) =>
            (ReplSession.fixity := fx;
-            if run (decs, file, text ^ "\n;", SOME (file, 0, names), true) then ()
+            if run (decs, file, text ^ "\n;", SOME (ReplSession.stem file, 0, names), true) then ()
             else raise Fail ("use: " ^ file ^ " has errors"))
        | (More, _) => raise Fail ("use: " ^ file ^ " ends in the middle of a declaration")
        | (Wrong e, _) => (report e; raise Fail ("use: " ^ file ^ " has errors")))
@@ -305,7 +305,7 @@ struct
         (ReplSession.fixity := fx;
          fn () =>
            let
-             val cached = if isFile then SOME (file ^ ":" ^ Int.toString line, 0, names) else NONE
+             val cached = if isFile then SOME (ReplSession.stem file ^ ":" ^ Int.toString line, 0, names) else NONE
              val ok = run (decs, file, text, cached, true) handle e => (Source.keepLines file; raise e)
            in
              Source.keepLines file;
@@ -676,10 +676,10 @@ struct
       if not (!noInline) then
         (Elaborate.inlineFunctors :=
            List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineFunctors)
-                      (BasisManifest.inlineFunctors (OS.Path.concat (lib, "basis")));
+                      (LibraryIndex.inlineFunctors {root = lib, dir = OS.Path.concat (lib, "basis")});
          Elaborate.inlineValues :=
            List.foldl (fn (n, m) => StringMap.insert (m, n, ())) (!Elaborate.inlineValues)
-                      (BasisManifest.inlineValues (OS.Path.concat (lib, "basis"))))
+                      (LibraryIndex.inlineValues {root = lib, dir = OS.Path.concat (lib, "basis")}))
       else ();
       rest
     end

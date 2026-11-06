@@ -217,21 +217,27 @@ name the tools to check.
 | `make vm` | `bin/runevm-stack`, and `bin/runevm`, `runtime/register`'s loop for the register bytecode |
 | `make vm-asan` | `bin/runevm-stack-asan` and `bin/runevm-asan` with AddressSanitizer/UBSan; `make test-register-asan` runs `tests/lang` on the latter |
 | `make test-register-jit` | `runtime/register` with every function compiled (`--jit=all`): `tests/lang` (at tier 2 too, and returning by `ret`, `--jit-returns=call`: [plans/native-frames.md](plans/native-frames.md), M7) and the Basis Library suite (`rune:jit`), every program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and the compiler compiling itself printing and counting the same interpreted, compiled, with every other function compiled (`--jit-only=odd`, so that calls, returns and raises cross between the tiers both ways) and under `--jit-stress` (tiered up at the lowest thresholds and invalidated every fifth call) and every instruction occurring in them (the oracle `jit` of `tests/runner/oracles.sml`), `runevm --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3-M5); part of `make check`. `make RUNE_JIT=0` builds `runtime/register` without the JIT. `RUNEVM_JIT=MODE` in the environment is the mode where no `--jit=` is given |
+| `make plans` | print the five committed plans again (`rune.plan`, `runedoc.plan`, `runeopt.plan`, `runeisa.plan`, `runeffi.plan`) with the compiler there is, after an edit of a build file they were made from (*How a host gets its list*, below) |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by the stage-0 image on `runevm`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot`; `bin/rune.stack.rbc` is the same compiler in the stack bytecode |
 | `make test` | the programs of `tests/lang` and `tests/errors` compiled by `bin/rune-stack` (`bin/rune --target=stack`, written by every `make`, for `RUNE=` if you give one) and run on `bin/runevm-stack`, on the runner (`bin/rune-test run --tier test`; `tests/runner/lang.sml`), and `make test-steps`: the compiler's own tests, the runtime's limits and collector log, `bin/rune-windows vm` (bytecode files and options the VM must refuse with a message) and the C test of the heap. `make test-heap`, `test-gc`, `test-all`, `test-native`, `test-register` and `test-register-jit` run `tests/lang` in their ways the same way, each by its tag, and the rest of what they run as `make TARGET-steps` |
 | `make test-all` | run the suite with each of the six host builds |
 | `make isa` | write the tables of the instruction sets and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `runtime/stack/opcodes.def`, `runtime/prims.def`, `runtime/isa.h`, `runtime/stack/opcodes.h`, `runtime/prims_table.h`, `lib/compiler/backend/opcodes.sml`, `lib/compiler/backend/prims.sml`, and the register bytecode's `runtime/register/regs.def`, `regops.h`, `reg_cases.h`, `reg_labels.h`, `jit_emit.h`, `jit_cases.h` and `lib/compiler/backend/regcodes.sml`; they are committed |
 | `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler, or when a check of the descriptions does not refuse a description made wrong (`runeisa --test`, `src/isa/isatest.sml`); part of `make check` |
+| `make codecs` | write again the parts of `lib/compiler/driver/unitbasis.sml`, `lib/compiler/core/midcodec.sml` and `lib/compiler/driver/unitmid.sml` marked as generated, each type's writer, reader, sameness and fingerprint, from the description of the codecs in `tools/codecs/compiler.sml`, with `bin/rune-codecs` ([units.md](units.md), *Codecs*); they are committed |
+| `make check-codecs` | fail when one of those parts is not what the description gives, when a field added to a described type does not reach every traversal or one left unmarked is not refused (`rune-codecs --test`), or when a type with a field its description has not compiles and one whose description has it does not write, read, compare and fingerprint it (`rune-codecs --toy`); part of `make check` |
 | `make test-ir` | the tests of the intermediate representations (`tests/ir`, [ir.md](ir.md)): the dumps of small programs compiled with the lint of every pass on |
 | `make check-levels` | every program of `tests/lang` and `tests/perf` compiled to both bytecodes at `-O0` and `-O2`, whole and in units, with the lint at level 2, the register bytecode's at `-O2` and in units the same bytes as at level 0; every build must print and exit as the stack bytecode's at `-O0`, the register bytecode's at tier 2 of the JIT too |
 | `make check-units` | every program of `tests/lang` and `tests/perf` compiled whole and a unit per file, at `-O0`, `-O1` and `-O2`, without the cache of units, through it and from it; all must print and exit the same, the builds through and from the cache be the bytes of the one without it, and the unit files linked or loaded do the same; and the compiler compiled in units compiling itself ([units.md](units.md)) |
-| `make test-deps` | the dependency graph: files ordered by the modules they declare and use, a cycle, a name declared twice and a file that breaks the discipline refused, the graph as DOT, and an entry point with `-I` compiling the files it needs and only those (`bin/rune-scenarios deps`; [units.md](units.md), *The graph*) |
+| `make test-deps` | the dependency graph: files ordered by the modules they declare and use, each read in the fixity the files before it leave, a cycle refused, a unit that is not well-formed kept where it is written and warned of where others depend on it, a prelude, `strict` and a library warned of once, the graph as DOT, and an entry point with `-I` compiling the files it needs and only those (`bin/rune-scenarios deps`; [units.md](units.md), *The graph*, *Well-formed units*) |
 | `make test-dynamic` | dynamic modules: a module through `_dynamic`, with an abstract type, a datatype declared in another order, a polymorphic value and an exception across the boundary, under the interpreter and `--jit=all`; a module of another signature refused; a plugin through `Dynamic.load`; two modules sharing a library's types; a whole program refused (`bin/rune-scenarios dynamic`; [units.md](units.md), *Dynamic modules*) |
 | `make test-serve` | the compiler as a service, a prototype: `rune --serve` driven over its standard streams -- the diagnostics of a buffer with errors and without, the type of a function and of a variable at an offset, an unknown method, shutdown -- and what a request takes (`serve/*` of `tests/runner/protocols.sml`; the incremental roadmap's M12) |
 | `make check-reproducible` | the compiler built from `rune.build` the same bytes in units and whole, without the cache, through a cold cache and warm, by one process and with `-j`, and from a copy of its sources elsewhere; the whole builds `bin/rune.rbc` (the oracle `reproducible` of `tests/runner/oracles.sml`; [units.md](units.md), *Parallel builds*) |
-| `make test-build` | build files: a list, `local`, a library's exports, a group put in order, a build file used twice and elaborated once, an annotation, a path variable, a virtual module with either implementation and the other's units from the cache, and the errors (`bin/rune-scenarios buildfile`; [build.md](build.md)) |
-| `make test-install` | `make install` staged with `DESTDIR` under another prefix, for the bytecode compiler and for the MLton and SML/NJ host builds: every file each library's `MANIFEST` names is installed, the man pages carry the version, the installed `rune`, `runevm`, `runevm-stack`, `runeopt`, `runedoc`, `rune-repl` (with `--dap`) and `rune-kernel --install` work from where they landed without naming the tree, and `make uninstall` with the same options leaves no file (`bin/rune-scenarios install`) |
-| `make test-incremental` | the cache's scenarios: a project edited, reverted, broken, built at two levels, its cache damaged or shared by two compiles, each build holding to what it must compile again (`tests/incremental/SCENARIOS.md`), and a project edited mechanically, each warm build the bytes of compiling everything (`bin/rune-incremental mutate`) |
+| `make test-build` | build files: a list, a library's exports, the words the language no longer has refused, a build file used twice and elaborated once, the plan of every build file read back as it is printed, the five committed plans as the compiler prints them and as a host reads them, the compiler's identity over its closure, an edit of `lib/unicode` through `libraries` giving another and compiler B taking none of A's entries, one per compiler (a second, on a toy, with its own), a stale plan refused, an annotation, a path variable, a virtual module with either implementation and the other's units from the cache, a library's index after six edits that a stale `MANIFEST` once hid, whole, in units and with `--no-cache` through the store that held it, and a damaged record of it, and the errors (`bin/rune-scenarios buildfile`; [build.md](build.md), *A library's index*) |
+| `make test-install` | `make install` staged with `DESTDIR` under another prefix, for the bytecode compiler and for the MLton and SML/NJ host builds: every build file and source of each library is installed, and a Basis Library is or the install refuses, the man pages carry the version, the installed `rune`, `runevm`, `runevm-stack`, `runeopt`, `runedoc`, `rune-repl` (with `--dap`) and `rune-kernel --install` work from where they landed without naming the tree, and `make uninstall` with the same options leaves no file (`bin/rune-scenarios install`) |
+| `make test-layers` | a compile and an analysis of `rune.build`, of `examples/virtual/table`'s programs and of `tests/layers/sharing` (a functor's parameter whose datatype two specifications give, MLton's codegen in small) the same static layer, by its hash and each export's, with and without the ABI layer loaded, and five edits that keep the static layer and move the ABI layer each rebuilding the client (`bin/rune-incremental layers`; [units.md](units.md), *The export basis*). `RUNE_LAYER_TREES` adds builds that are not in the tree, MLton's and HOL4's, each a test of its own, run alone (`bin/rune-incremental layers-tree BUILD`) |
+| `make test-incremental` | the cache's scenarios: a project edited, reverted, broken, built at two levels, its cache damaged or shared by two compiles, each build holding to what it must compile again (`tests/incremental/SCENARIOS.md`), and a project edited mechanically, each warm build the bytes of compiling everything (`bin/rune-incremental mutate`), and the independent checks of the cache ([testing.md](testing.md), *The checks of the cache*) |
+| `make test-cache-random` | the random edits at length, every warm build verified: what a change to a key runs |
+| `make test-cache-mutants` | the mutants of the cache alone, each against the checks that must see it; `make test-compiler-mutants` includes them |
 | `make test-repl` | the REPL's transcripts on every mode of the JIT ([repl.md](repl.md)) |
 | `make test-terminal` | programs on a terminal: the scripts of `tests/terminal` on the runtime pseudo-terminal and SML screen emulator; native ConPTY on Windows ([testing.md](testing.md), *Programs on a terminal*) |
 | `make test-diagnostics` | diagnostics rendered with colour and excerpts (`tests/diagnostics`), and the contrast of the palette (`tests/color`) ([diagnostics.md](diagnostics.md)) |
@@ -247,7 +253,7 @@ name the tools to check.
 | `make check-cross` | compile every test, example and Basis Library suite program, the compiler, `runedoc` and `runeopt` with all six builds and compare the bytecode (but `smlnj32`'s where the compile is in units: its broken `Word64` gives its hash, `Pickle.hash`, other values, which a program that keeps its units' identities carries; [plans/functors-units.md](plans/functors-units.md), D11), where a build of a host whose compiler fails a check now and then may fail it as `tests/cross/deviations.txt` says (a `HOST-FLAKY` line, told and not a failure; its bytes compared where it compiles: [testing.md](testing.md), *Expectations*); run the six builds of `runedoc` on the same input and compare what they write (the oracle `cross` of `tests/runner/oracles.sml`), and the same for `runeopt` (the oracle `cross` of `tests/runner/oracles.sml`) |
 | `make check-docs` | verify docs, tests and `.def` files are in sync, that the library's signatures have the tokens of their transcriptions, that the comments of `lib/basis` and `src` are in the language of doc comments (`runedoc --lint`, [doc-comments.md](doc-comments.md)), that `docs/lib` is up to date (which includes `docs/lib/README.md`, and that the Basis Library suite has a check for every specified member of every structure: `runedoc` reads the suite's labels), and that the structures the library says implement a signature are the ones the suite matches against it (`bin/rune-doc-check docs-claims`), and that the notes of the documentation and `tests/basis/deviations.txt` agree (`bin/rune-doc-check docs-notes`) |
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
-| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`, Rune as shipped) by benchmark programs, by the compiler compiling `examples/hello.sml`, the bootstrap and programs that scale the module language, and by `runedoc`, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n (`scale N EXPONENT`; for a compile of a generated program, `scale KIND ARGS... EXPONENT` names a bigger one, and the growth is by the applications of functors static interpretation would elaborate in each, which the generator writes on the program's first line: the expansion's copies held to linear, `compile-funnest*` and `compile-funapp*`); then the same on `runevm-stack` against `tests/perf/stack`. The numbers are the same on every machine. `sh bin/rune-budget --update` (and `--stack --update`) records new values after a deliberate change |
+| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`, Rune as shipped) by benchmark programs, by the compiler compiling `examples/hello.sml`, the bootstrap and programs that scale the module language, and by `runedoc`, each with `RUNE_CACHE` empty so that a library's index is read from the frozen layer alone, as a first compile reads it, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n (`scale N EXPONENT`; for a compile of a generated program, `scale KIND ARGS... EXPONENT` names a bigger one, and the growth is by the applications of functors static interpretation would elaborate in each, which the generator writes on the program's first line: the expansion's copies held to linear, `compile-funnest*` and `compile-funapp*`); then the same on `runevm-stack` against `tests/perf/stack`. The numbers are the same on every machine. `sh bin/rune-budget --update` (and `--stack --update`) records new values after a deliberate change |
 | `make bootstrap` | compile the compiler with `bin/rune` and check the result equals `bin/rune.rbc`, and again with `--target=stack` against `bin/rune.stack.rbc` |
 | `make check` | all of the above: `make check-tools` builds what they need, and `bin/rune-test run --tier check` runs each of them as a test of the runner, at once where they share no files ([testing.md](testing.md), *Running the tests*) |
 | `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |
@@ -393,9 +399,8 @@ reproducing itself by hand, as the oracle `bootstrap` of
 
 ```
 make bin/rune.rbc bin/rune.stack.rbc
-srcs="build/config.sml $(sh scripts/build-files.sh rune.build) src/main/rune-main.sml"
-bin/rune-boot -o build/rune.stage2.rbc $srcs && cmp bin/rune.rbc build/rune.stage2.rbc
-bin/rune-boot --target=stack -o build/rune.stage2.stack.rbc $srcs && cmp bin/rune.stack.rbc build/rune.stage2.stack.rbc
+bin/rune-boot --build rune.build --whole --no-cache -o build/rune.stage2.rbc && cmp bin/rune.rbc build/rune.stage2.rbc
+bin/rune-boot --target=stack --build rune.build --whole --no-cache -o build/rune.stage2.stack.rbc && cmp bin/rune.stack.rbc build/rune.stage2.stack.rbc
 ```
 
 What is different there:
@@ -421,7 +426,7 @@ What is different there:
   `build/heap_test`), passes.
 * MLton's basis under MinGW opens a `TextIO` stream in text mode and gives
   every file of a drive the same `OS.FileSys.fileId`, so the compiler writes
-  its bytecode, its manifests and its lists of units with `BinIO`, and trusts
+  its bytecode and its lists of units with `BinIO`, and trusts
   a file's id only where it tells the output from its directory.
 * The MSYS2 runtime rewrites what a native program is given:
   `tests/run-tests.sh` passes 350 of the 352 programs of `tests/lang`, and
@@ -525,7 +530,7 @@ $PREFIX/lib/rune/runeopt.rbc         the native code generator
 $PREFIX/lib/rune/rune-repl.img        the REPL, saved once started (docs/repl.md)
 $PREFIX/lib/rune/runtime/            librune.a and rune-offsets.s, what
                                      runeopt links a program with
-$PREFIX/lib/rune/basis/              MANIFEST and the basis library sources,
+$PREFIX/lib/rune/basis/              library.build and the basis library sources,
                                      README.md, the overview runedoc reads
 $PREFIX/share/man/man1/              rune.1, runevm.1, runevm-stack.1, runedoc.1, runeopt.1
 $PREFIX/share/bash-completion/completions/rune, runedoc, runeopt
@@ -590,8 +595,11 @@ pinned release.
 `dist/rune-language-server-<version>.vsix` for VS Code. `<version>` is the version in
 `runtime/version.h`. Each archive holds the register VM for every machine
 of that system, under `runtime/<arch>/`, the compiler `lib/rune/rune.rbc`,
-the REPL image, and every library under `lib`: its `MANIFEST`, the files
-that names, and `README.md` where the library has one. The Linux machines
+the REPL image, and every library under `lib`: its build files, its
+sources, and `README.md` where the library has one, from which a compile
+derives its index ([build.md](build.md), *A library's index*), and the
+frozen layer, `lib/rune/cache`, which holds the indexes of the libraries
+it holds. The Linux machines
 are `x86_64`, `i686`, `aarch64` and big-endian `ppc64`. The Windows
 machines are `x86_64` and `i686`.
 
@@ -641,38 +649,42 @@ Remote WSL, checkout library configuration and publishing.
 
 ## How the build works
 
-* `rune.build` is the compiler's build file ([build.md](build.md)): its
-  `files ... end` block is the single ordered list of compiler source files,
-  between `build/config.sml` and the self-hosted entry point, and `rune --build
-  rune.build` compiles it. `scripts/gen-build-files.sh` generates
-  `build/rune.mlb` (MLton), `build/rune.cm` (SML/NJ), `build/polyml-build.sml`
-  (Poly/ML `use` script), `build/rune-mlkit.mlb` (MLKit: MLton's, without its
-  annotations and with its own entry point) from the block, which
-  `scripts/build-files.sh` reads, since the hosts build before there is a
-  `rune` to read a build file with. **Add new source files to `rune.build`
-  only.**
-* `runedoc.build` is the same for `runedoc`: the compiler's utilities,
-  frontend and elaborator in the order of `rune.build`, then `src/doc`. The
+* `rune.build` is the compiler's build file ([build.md](build.md)): the
+  libraries it is written on (`libraries unicode json digest`), then
+  `build/config.sml`, the compiler's library's sources through
+  `lib/compiler/internal.build`, which the library names it a friend to use,
+  the driver, and the self-hosted entry point; `rune --build rune.build`
+  compiles it.
+  `rune.plan` beside it is its plan, which the other SML systems read their
+  list from (below). `scripts/gen-build-files.sh` generates `build/rune.mlb`
+  (MLton), `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use`
+  script), `build/rune-mlkit.mlb` (MLKit: MLton's, without its annotations
+  and with its own entry point) from the plan. **Add new source files to
+  `rune.build` only, then `make plans`.**
+* `runedoc.build` is the same for `runedoc`: the libraries it is written on
+  (`libraries unicode json`), `build/config.sml`, the compiler's utilities,
+  frontend and elaborator through `lib/compiler/frontend.build`, which the
+  library names it a friend to use, then `src/doc`. The
   script makes `build/runedoc.mlb`, `build/runedoc.cm`,
   `build/runedoc-polyml-build.sml` and `build/runedoc-mlkit.mlb` from it;
   the entry points are
-  `src/main/runedoc-*-main.sml`. A file that both lists name is compiled into
+  `src/main/runedoc-*-main.sml`, and its plan `runedoc.plan`. A file that both lists name is compiled into
   both programs, so the rules below hold for `src/doc` as well. The SML/NJ
   builds run one after another, because CM keeps its results for all of them
   in the same `.cm` directories, and so do the MLKit builds, for their `MLB`
   directories.
 * `runeopt.build` is the same for `runeopt`, with `src/opt`; the entry
   points are `src/main/runeopt-*-main.sml`, and the rules below hold for
-  `src/opt` too.
+  `src/opt` too. `runeisa.build` and `runeffi.build` are the same for
+  `runeisa` and `runeffi`, and each of the five has its plan beside it.
 * The version is git's. A tag that points at the commit checked out and
   starts with `v` is a release, and the version is the rest of its name,
   so `v1.2.3` is `1.2.3`. Any other tag is ignored. With no such tag the
   version is the commit's abbreviated hash. `-dirty` follows either when
   a tracked file has changed. `scripts/gen-version.sh` writes it
   into `build/config.sml`, which every build of the four programs loads
-  first, with the compiler's identity, the hash of its sources that the
-  cache of compiled units keys its entries by ([units.md](units.md), *The
-  cache*), and into `runtime/version.h` for the VMs (`Runtime.version`). make
+  first, with the compiler's identity (below), and into `runtime/version.h`
+  for the VMs (`Runtime.version`). make
   asks git on every run but writes the files only when they change, so
   a new commit, a checkout or the first edit of a clean tree rebuilds the
   programs and the VMs once. Without git or a repository the files keep the
@@ -705,13 +717,80 @@ Remote WSL, checkout library configuration and publishing.
   `runevm`, `rune-mlton.bin`, `rune-polyml.bin`, `rune-mlkit.bin`, or the
   heap image with the `sml` of `make hosts`).
 
+### How a host gets its list
+
+MLton, Poly/ML, SML/NJ and MLKit build the compiler from a flat list of
+files, and they build it before there is a `rune` to read a build file with,
+so they do not read one. Each of the five programs they build, `rune`,
+`runedoc`, `runeopt`, `runeisa` and `runeffi`, has its plan committed beside
+its build file: `rune.plan` is what `rune --plan rune.build` prints
+([build.md](build.md), *The plan*). A plan is lines of words, and
+`scripts/plan-files.sh rune.plan`, a few lines of `awk`, prints its files in
+the order a compile takes them, which is what `rune --build-list rune.build`
+prints: each library's files, the program's, then the libraries' final
+files. It knows no build language, so a build file that reaches a library
+through `libraries` gives a host the library's files too, and it refuses a
+word a plan of its version does not have rather than guess.
+`scripts/gen-build-files.sh` makes the hosts' build files from these lists,
+and the `Makefile` its own (`SOURCES`, `BOOT_SRCS`), each without
+`build/config.sml`, which a host's build loads first, and the program's entry
+point, which is each system's own.
+
+A plan says how it was made: the SHA-256 of each build file it was read from
+(`input PATH SHA256`). After an edit of a build file, `make plans` prints the
+five again with the compiler there is, and a plan whose build files have
+changed since it was printed is refused: `scripts/gen-version.sh`, which every
+make runs, checks the hashes with `sha256sum` or `shasum` and stops the
+build, saying which plan to print again. A plan edited by hand keeps its
+hashes, so `make check` compares each committed plan with what `rune --plan`
+prints of its build, byte for byte (`low-level/plans`). With neither tool,
+the plans are trusted.
+
+### The compiler's identity
+
+`Config.identity` is a hash of what the compiler is made of, which the cache
+of compiled units keys its entries by ([units.md](units.md), *The cache*): a
+compiler built from other sources takes none of another's entries. The same
+sources give the same identity on every host. `scripts/gen-version.sh` works
+it out on every make, over `rune.plan`: the plan, less its `provenance`, and
+every file of its closure, the libraries' included, in order. It leaves out
+the two files that hold it, `build/config.sml` and
+`lib/compiler/config.sml`, so that two makes with no edit give one identity.
+So an edit of `lib/unicode` gives another identity whether `rune.build`
+lists its files or reaches it through `libraries`, which the list of `files`
+blocks the identity was once over did not see (the build-system roadmap's
+E12 and D14).
+
+What it still leaves out: the Basis Library, which no plan names, the VM and
+the compiler that built it. The compiler is held to make the same bytes
+whichever of these it runs on (`make check-cross`, S43), and a unit's entry
+names the Basis units it used by their own identities.
+
+`rune.build` and `runedoc.build` list `build/config.sml` as a file, which
+make writes, and which `rune --build` reads as make left it: after an edit,
+run make, or `sh scripts/gen-version.sh`, before `rune --build rune.build`,
+or what it builds has the identity of the sources at the last make. A
+checkout make has not run in has none, and `rune --build` says to run it.
+
+`rune`, `runelsp`, `runedoc` and the REPL link `build/config.sml`, or
+`lib/compiler/config.sml`, the same, and have one identity: `runelsp` takes
+the batch compiler's entries. Another compiler built on the compiler's
+internals has its own, over its own plan: it loads a `Config` of its own
+first, as `rune.build` loads `build/config.sml`, and
+`scripts/gen-version.sh --config PLAN FILE`, run at the top of the checkout,
+writes `FILE` with the identity of `PLAN`'s closure, less `FILE` and the two
+above. An edit of its own sources then changes its identity and not `rune`'s.
+A program that reaches the compiler through `libraries compiler` has
+`lib/compiler/config.sml`'s, which is right for a client such as `runelsp`,
+whose own code does not change what a compile makes.
+
 ## Bootstrapping
 
 The compiler is written in the language it compiles, so it builds itself, and
 the result is the compiler you get:
 
-1. `make boot` compiles `build/config.sml`, the files of `rune.build` and
-   `src/main/rune-main.sml` into `build/bootstrap/rune.rbc` (stage 0). The
+1. `make boot` compiles the files of `rune.plan`, `build/config.sml` first
+   and `src/main/rune-main.sml` last, into `build/bootstrap/rune.rbc` (stage 0). The
    compiler is the first of the Rune release (`scripts/fetch-hosts.sh`
    installs v0.1), Poly/ML and MLton (`scripts/boot-host.sh`). `BOOTHOST`
    names one of those, or `smlnj-legacy`, `smlnj32`, `smlnj-dev` or
@@ -719,11 +798,15 @@ the result is the compiler you get:
    shipped in the release, and that image (`build/bootstrap/rune-host.rbc`)
    runs on the release's `runevm`. Poly/ML and MLton compile them against
    their own Basis. The resulting compiler reads a private copy of this
-   tree's Basis under `build/bootstrap/lib`, so it does not write the
-   `MANIFEST` files that ship, and it emits this tree's bytecode.
-2. `bin/rune-bootstrap` runs stage 0 on `bin/runevm`. It writes
-   every library `MANIFEST` (`rune --basis-index`) and compiles the same
-   sources into `bin/rune.rbc` (stage 1, register bytecode). `make boot`
+   tree's Basis under `build/bootstrap/lib`, links to its files, and it
+   emits this tree's bytecode.
+2. `bin/rune-bootstrap` runs stage 0 on `bin/runevm`. It compiles the same
+   sources into `bin/rune.rbc` (stage 1, register bytecode), through
+   `rune.build` (`--build rune.build --whole --no-cache`), as every other
+   way of building the compiler does (`make check-reproducible`): a library
+   that `rune.build` names is found under `--lib`, and its files are named so
+   in the bytes, where a host's list names them from the top of the
+   checkout. `make boot`
    then writes `bin/rune-boot`, a wrapper that runs
    `runevm --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
    it. `make` and `make dist` do this too: the compiler and the indexes in
@@ -733,9 +816,9 @@ the result is the compiler you get:
    the six host builds on every test program, the examples, and the
    compiler sources themselves. `check-cross` knows it as the build `boot`,
    hence the name `bin/rune-boot`.
-4. `make bootstrap` compiles the compiler with `bin/rune` into
-   `bin/rune.stage2.rbc` and checks with `cmp` that it is identical to
-   `bin/rune.rbc`: the compiler reproduces itself byte for byte. It does the
+4. `make bootstrap` compiles the compiler with `bin/rune`, through
+   `rune.build`, into `bin/rune.stage2.rbc` and checks with `cmp` that it is
+   identical to `bin/rune.rbc`: the compiler reproduces itself byte for byte. It does the
    same with `--target=stack` against `bin/rune.stack.rbc`.
 
 `RUNE_HEAP` (64 MiB) is only the semispace mapped up front; the heap grows on
@@ -802,8 +885,9 @@ Absolute Windows drive and UNC paths are accepted directly, including paths
 returned by `OS.FileSys.fullPath`. `runedoc --library` uses the same rule.
 It has a `library.build` in
 the basis library's form, whose `libraries NAME ... end` names the
-libraries it is written on, and the `MANIFEST` that `make manifests` makes
-of it (`rune --basis-index DIR`); those are compiled first, and the files of all of them are
+libraries it is written on, from which a compile derives its index
+([build.md](build.md), *A library's index*; `rune --basis-index DIR`
+prints it); those are compiled first, and the files of all of them are
 chosen as the basis library's are, by what the program names
 (`lib/*` of `tests/runner/tools.sml`, `make test-lib`). A library other than the
 basis library may not use `_prim`.

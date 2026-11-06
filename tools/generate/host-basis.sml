@@ -32,8 +32,10 @@ struct
                         let val rest=String.extract (line,10,NONE) val name=Substring.string (Substring.takel (fn c => Char.isAlphaNum c orelse c = #"_") (Substring.full rest))
                         in SOME name end else NONE) (lines source)
             in SOME (target ^ "\t" ^ String.concatWith " " structures ^ "\n") end
-          | _ => raise Failed "invalid Basis manifest row"
-        val listing=List.mapPartial one (T.dataLines (fromRoot "lib/basis/MANIFEST"))
+          | _ => raise Failed "invalid Basis index row"
+        (* the Basis Library's index, as the compiler derives it (rune --basis-index) *)
+        val index=successful (execute root (out ^ "/basis-index") (tool "RUNE" (fromRoot "bin/rune") @ ["--lib","lib","--no-warnings","--basis-index","lib/basis"]))
+        val listing=List.mapPartial one (List.filter (fn line => let val line=trim line in line<>"" andalso not (String.isPrefix "#" line) end) (lines index))
     in T.atomic (out ^ "/files") (String.concat listing);0 end
     | main _=raise Usage "host-basis OUTDIR"
 end

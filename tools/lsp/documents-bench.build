@@ -1,4 +1,4 @@
-libraries lsp digest end
+libraries lsp digest json end
 files
   ../../build/config.sml
   ../../tools/lsp/documents-bench.sml

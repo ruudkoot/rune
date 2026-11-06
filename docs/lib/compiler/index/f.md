@@ -1,13 +1,16 @@
 # Index: F
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [i](i.md) [l](l.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [i](i.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
-- `Analysis.fact` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-analysis.fact)
-- `Analysis.facts` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-analysis.facts)
-- `Failed` (exn): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#exn-failed)
-- `Project.fingerprint` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-project.fingerprint)
-- `Syntax.fixities` (type): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#type-syntax.fixities)
-- `Syntax.fixities` (val): [RUNE_COMPILER](../sig/RUNE_COMPILER.md#val-syntax.fixities)
+- `Analysis.fact` (type): [COMPILER_API](../sig/COMPILER_API.md#type-analysis.fact)
+- `Analysis.facts` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.facts)
+- `Analysis.factsIn` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.factsin)
+- `Analysis.focus` (val): [COMPILER_API](../sig/COMPILER_API.md#val-analysis.focus)
+- `Failed` (exn): [COMPILER_API](../sig/COMPILER_API.md#exn-failed)
+- `Project.fingerprint` (val): [COMPILER_API](../sig/COMPILER_API.md#val-project.fingerprint)
+- `Syntax.fixities` (type): [COMPILER_API](../sig/COMPILER_API.md#type-syntax.fixities)
+- `Syntax.fixities` (val): [COMPILER_API](../sig/COMPILER_API.md#val-syntax.fixities)
+- `Workspace.find` (val): [COMPILER_API](../sig/COMPILER_API.md#val-workspace.find)
 
 ---
 

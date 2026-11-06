@@ -33,6 +33,10 @@ sig
      compiler modules have loaded. Further calls preserve that baseline.
      Duplicate names and later registration raise Fail. *)
   val seal : unit -> unit
+  (* `blank i` puts the i-th root of `names ()` back at the sealed baseline,
+     for a check of what a compile reads: a compile must not depend on a
+     root that no key covers (docs/testing.md, The checks of the cache). *)
+  val blank : int -> unit
   (* `freshIdentity ()` allocates a process-local identity outside owned
      compiler roots, also suitable for an execution namespace. *)
   val freshIdentity : unit -> int

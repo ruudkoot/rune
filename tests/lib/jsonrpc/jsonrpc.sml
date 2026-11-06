@@ -1,4 +1,4 @@
-(* libraries: test/unit random *)
+(* libraries: test/unit random json *)
 (* JsonRpc against the examples of the JSON-RPC 2.0 specification (its
    section 7), messages written and read back, a server's answers; and
    Framing on every split of a stream, in both framings. *)

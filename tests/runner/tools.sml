@@ -133,6 +133,7 @@ struct
       val () = optional (".md", fn () => String.concat (List.map read (glob (site ^ "/sig", ".md"))))
       val () = optional (".types", fn () => read (site ^ "/types.md"))
       val () = optional (".structures", fn () => read (site ^ "/structures.md"))
+      val () = optional (".claims", fn () => read (site ^ "/claims.tsv"))
       fun programs (ext, flag) =
         if exists (t ext) then
           let val d = out ^ "/" ^ n ^ ext
@@ -289,7 +290,7 @@ struct
 
   (* the examples of a library's documentation: each signature's program
      must print PASS and no FAIL; with GUARDED, a library may have none *)
-  fun libExamples (lib, guarded) =
+  fun libExamples (lib, guarded, others) =
     let
       val tag = String.translate (fn #"/" => "-" | c => str c) lib
       val ex = libOut ^ "/" ^ tag ^ "-examples"
@@ -305,7 +306,8 @@ struct
             List.app (fn src =>
                         let val p = String.substring (src, 0, size src - 4)
                         in
-                          if exec {cmd = ["bin/rune", "--library", lib, src, "-o", p ^ ".rbc"], dir = NONE, stdin = "", stdout = p ^ ".cerr",
+                          if exec {cmd = ["bin/rune", "--library", lib] @ List.concat (List.map (fn l => ["--library", l]) others)
+                                         @ [src, "-o", p ^ ".rbc"], dir = NONE, stdin = "", stdout = p ^ ".cerr",
                                    stderr = p ^ ".cerr", timeout = 0} = 0
                              andalso (ignore (exec {cmd = ["bin/runevm", p ^ ".rbc"], dir = NONE, stdin = "", stdout = p ^ ".out",
                                                     stderr = p ^ ".out", timeout = 0}); passes (p ^ ".out"))
@@ -317,7 +319,7 @@ struct
 
   (* Check.laws, and RUNE_PROPERTY_ONLY *)
   fun libLaws () =
-    case libProgram ("property-laws", ["--library", "test/property/basis"], "tests/lib/property/laws.sml") of
+    case libProgram ("property-laws", ["--library", "test/property/basis", "--library", "test/property"], "tests/lib/property/laws.sml") of
       NONE => ()
     | SOME out =>
         let
@@ -1134,11 +1136,8 @@ struct
       val programs = [("rune", "polyml-build.sml"), ("runedoc", "runedoc-polyml-build.sml"),
                       ("runeopt", "runeopt-polyml-build.sml"), ("runeisa", "runeisa-polyml-build.sml"),
                       ("runeffi", "runeffi-polyml-build.sml")]
-      val () = List.app (fn n => (mkdirs (OS.Path.dir (dir ^ "/" ^ n));
-                                  write (dir ^ "/" ^ n, read (fromRoot n))))
-                         (List.map (fn (name, _) => name ^ ".build") programs @
-                          ["lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/util.build"])
-      val () = write (dir ^ "/scripts/build-files.sh", read (fromRoot "scripts/build-files.sh"))
+      val () = List.app (fn n => write (dir ^ "/" ^ n, read (fromRoot n))) (List.map (fn (name, _) => name ^ ".plan") programs)
+      val () = write (dir ^ "/scripts/plan-files.sh", read (fromRoot "scripts/plan-files.sh"))
       val script = fromRoot script
       val log = dir ^ "/reference.log"
       val reference = exec {cmd = ["/bin/sh", script, dir], dir = SOME dir, stdin = "", stdout = log, stderr = log, timeout = 60}
@@ -1194,7 +1193,11 @@ struct
     | ["doc-overview"] => SOME docOverview
     | ["lib-toy"] => SOME libToy
     | ["lib-random-kat"] => SOME libRandomKat
-    | ["lib-check", kind, n, lib, src] => SOME (fn () => libCheck (kind, n, ["--library", lib], src))
+    (* its libraries, one argument: a library and those whose names it uses
+       that the first requires, which a header does not show (docs/build.md,
+       A library's header) *)
+    | ["lib-check", kind, n, libs, src] =>
+        SOME (fn () => libCheck (kind, n, List.concat (List.map (fn l => ["--library", l]) (String.tokens Char.isSpace libs)), src))
     (* the Win32 contract against the mock, which needs no SDL: the only
        compile of Win32ContractFn that make check has *)
     | ["lib-win32-contract"] =>
@@ -1202,7 +1205,7 @@ struct
                                  ["--library", "ffi/win32/mock", "--library", "test/unit", "tests/ffi/win32/contract.sml"],
                                  "tests/ffi/win32/mock-contract-main.sml"))
     | ["lib-basis-check", lib] => SOME (fn () => libBasisCheck lib)
-    | ["lib-examples", lib, guarded] => SOME (fn () => libExamples (lib, guarded = "guarded"))
+    | "lib-examples" :: lib :: guarded :: others => SOME (fn () => libExamples (lib, guarded = "guarded", others))
     | ["lib-laws"] => SOME libLaws
     | ["lib-suite", lib, src] => SOME (fn () => libSuite (lib, src))
     | ["lib-interop", lib] => SOME (fn () => libInterop lib)
@@ -1225,6 +1228,11 @@ struct
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
+  (* what of the libraries it requires a library's examples use, which a
+     header does not show a client: the client names them (docs/build.md, A
+     library's header) *)
+  fun exampleLibraries lib =
+    case lib of "terminal" => ["unicode"] | "jsonrpc" => ["json"] | "dap" => ["json"] | "lsp" => ["json"] | _ => []
   val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter", "lsp", "language/c", "ffi/model", "ffi/marshal", "ffi/runtime", "ffi/win32/common"]
   val native = case OS.Process.getEnv "NATIVE_HOST" of SOME v => v = "yes" | NONE => exists "bin/runevm-native"
 
@@ -1249,16 +1257,16 @@ struct
          (Test.describe "lib"
             ([job ("toy", ["lib-toy"], [], 300, 600),
               Test.requires ["cc"] (job ("random-kat", ["lib-random-kat"], [], 300, 600)),
-              job ("random-props", ["lib-check", "nofail", "random-props", "test/unit", "tests/lib/random/props.sml"], [], 300, 600),
+              job ("random-props", ["lib-check", "nofail", "random-props", "test/unit random", "tests/lib/random/props.sml"], [], 300, 600),
               job ("random-check", ["lib-basis-check", "random"], [], 300, 600),
               job ("random-examples", ["lib-examples", "random", "unguarded"], [], 300, 600),
-              job ("property-core", ["lib-check", "fingerprint", "property-core", "test/property/basis", "tests/lib/property/core.sml"], [], 300, 600),
-              job ("property-shrink", ["lib-check", "passes", "property-shrink", "test/property/basis", "tests/lib/property/shrink.sml"], [], 300, 600),
-              job ("property-instances", ["lib-check", "frozen", "property-instances", "test/property/basis", "tests/lib/property/instances.sml"], [], 300, 600),
-              job ("property-mutants", ["lib-check", "mutants", "property-mutants", "test/property/basis", "tests/lib/property/mutants.sml"], [], 300, 600),
+              job ("property-core", ["lib-check", "fingerprint", "property-core", "test/property/basis test/property random", "tests/lib/property/core.sml"], [], 300, 600),
+              job ("property-shrink", ["lib-check", "passes", "property-shrink", "test/property/basis test/property", "tests/lib/property/shrink.sml"], [], 300, 600),
+              job ("property-instances", ["lib-check", "frozen", "property-instances", "test/property/basis test/property random", "tests/lib/property/instances.sml"], [], 300, 600),
+              job ("property-mutants", ["lib-check", "mutants", "property-mutants", "test/property/basis test/property", "tests/lib/property/mutants.sml"], [], 300, 600),
               job ("property-laws", ["lib-laws"], [], 300, 600),
-              job ("unit-core", ["lib-check", "passes", "unit-core", "test/unit", "tests/lib/unit/core.sml"], [], 300, 600),
-              job ("runner-props", ["lib-check", "passes", "runner-props", "test/runner", "tests/lib/runner/props.sml"], [], 300, 600)]
+              job ("unit-core", ["lib-check", "passes", "unit-core", "test/unit test/property", "tests/lib/unit/core.sml"], [], 300, 600),
+              job ("runner-props", ["lib-check", "passes", "runner-props", "test/runner test/property test/unit", "tests/lib/runner/props.sml"], [], 300, 600)]
              @ [job ("compiler/api", ["lib-suite", "compiler", "tests/lib/compiler/api.sml"], [], 500, 600),
                 job ("compiler/@check", ["lib-basis-check", "compiler"], [], 500, 600),
                 job ("ffi/win32/mock/contract", ["lib-win32-contract"], [], 500, 600),
@@ -1274,7 +1282,7 @@ struct
                                            then [Test.requires ["python3"] (job (lib ^ "/@interop", ["lib-interop", lib], [], 500, 600))]
                                            else [])
                                         @ [job (lib ^ "/@check", ["lib-basis-check", lib], [], 300, 600),
-                                           job (lib ^ "/@examples", ["lib-examples", lib, "guarded"], [], 300, 600)])
+                                           job (lib ^ "/@examples", ["lib-examples", lib, "guarded"] @ exampleLibraries lib, [], 300, 600)])
                                      replLibs))),
        tagged ["check", "test-incremental", "covers:tests/flexrec/*"]
          (Test.describe "flexrec"

@@ -1,0 +1,5 @@
+(* Table as a balanced tree: the other implementation of the virtual
+   library table *)
+requires table end
+implements (functor Table)
+../../tree.sml

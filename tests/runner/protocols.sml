@@ -408,6 +408,16 @@ struct
        judge = Run.exitZero} : Run.command Test.tree
   fun driver x = driverIn [] x
 
+  (* a build outside the tree that the layers tier checks (RUNE_LAYER_TREES):
+     alone, since MLton's analysis takes some 6 GB, and with time for its
+     compile and two analyses, each held to 3000 s (LayerChecks.tree): MLton's
+     606 files take some 45 minutes, past a driver's 30 *)
+  fun layerTree build =
+    Test.it ("tree-" ^ OS.Path.base (OS.Path.file build))
+      {program = "/bin/sh", args = ["sh", "-c", "exec bin/rune-incremental layers-tree " ^ quote build], env = NONE,
+       dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 9600, cap = 0, cpus = 1, memory = 12000, pools = [],
+       exclusive = true, after = [], judge = Run.exitZero} : Run.command Test.tree
+
   fun command args =
     case args of
       ["repl", suffix] => SOME (fn () => repl (if suffix = "-" then "" else suffix))
@@ -452,14 +462,34 @@ struct
                                   driverIn ["kernel"] ("connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check kernel"),
              Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-pipe", "exec bin/rune-protocol-check notebook")),
              Test.requires ["jupyter-client"] (driverIn ["kernel"] ("notebook-connection", "RUNE_ENGINE_CONNECT=1 exec bin/rune-protocol-check notebook"))]),
-       tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml"]
+       (* a compile's static layer is an analysis's (docs/units.md, Layers),
+          of the compiler, of a virtual functor's and a dynamic one's
+          programs (examples/virtual/table) and of a functor's parameter
+          that shares a structure with a view of it (tests/layers/sharing,
+          MLton's codegen in small); RUNE_LAYER_TREES adds builds that are
+          not in the tree, MLton's and HOL4's, each a test of its own *)
+       tagged ["check", "test-layers", "covers:lib/compiler/driver/unitbasis.sml", "covers:tests/compiler/layers-analysis.sml",
+               "covers:tests/layers/*"]
+         (Test.describe "layers"
+            (driver ("static", "exec bin/rune-incremental layers rune.build examples/virtual/table/list.build examples/virtual/table/dynamic.build tests/layers/sharing/sharing.build")
+             :: List.map layerTree (String.tokens Char.isSpace (getOpt (OS.Process.getEnv "RUNE_LAYER_TREES", ""))))),
+       tagged ["check", "test-incremental", "covers:tests/incremental/*", "covers:examples/hello.sml", "covers:tests/runner/cache*.sml",
+               "covers:src/driver/cachecheck.sml"]
          (Test.describe "incremental"
             (List.map (fn s => driver (s, "exec bin/rune-incremental one " ^ s ^ " bin/rune")) scenarios
-             @ [driver ("@mutate", "exec bin/rune-incremental mutate --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project"),
+             @ [driver ("@mutate", "exec bin/rune-incremental mutate --rune bin/rune --steps 30 tests/incremental/functors tests/incremental/project tests/incremental/virtual tests/incremental/fixity"),
+                (* and each warm build verified, entries across a change compared *)
+                driver ("@mutate-verify", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed 5 --steps 12 --out \"$RUNE_TEST_RUN/mutation-verify\" tests/incremental/functors tests/incremental/project tests/incremental/virtual tests/incremental/fixity"),
                 driver ("@mutate-v1", "exec bin/rune-incremental mutate --replay-v1 --out \"$RUNE_TEST_RUN/mutation-replay\""),
                 driver ("@faults", "exec bin/rune-incremental faults"),
                 (* the soundness check of fingerprints (functors-units M4) holds a
                    compiler to itself, and catches a weak hash *)
                 driver ("@soundness", "exec bin/rune-incremental soundness --old bin/rune --new bin/rune --probes --steps 10 --out \"$RUNE_TEST_RUN/soundness\" tests/incremental/project"),
-                driver ("@soundness-weak", "exec bin/rune-incremental soundness --old bin/rune --new bin/rune --weaken 0 --expect-violations --probes --out \"$RUNE_TEST_RUN/soundness-weak\"")]))]
+                driver ("@soundness-weak", "exec bin/rune-incremental soundness --old bin/rune --new bin/rune --weaken 0 --expect-violations --probes --out \"$RUNE_TEST_RUN/soundness-weak\"")])),
+       (* the random edits at length, with every warm build verified, for a
+          change to a key (make test-cache-random; docs/testing.md) *)
+       tagged ["test-cache-random", "nightly", "covers:tests/incremental/*"]
+         (Test.describe "cache-random"
+            [driver ("projects", "exec bin/rune-incremental mutate --rune bin/rune --verify --seed \"${RUNE_CACHE_SEED:-7}\" --steps 150 --out \"$RUNE_TEST_RUN/random-projects\" tests/incremental/functors tests/incremental/project tests/incremental/virtual tests/incremental/fixity"),
+             driver ("compiler", "exec bin/rune-incremental mutate --rune bin/rune --seed \"${RUNE_CACHE_SEED:-7}\" --steps 12 --out \"$RUNE_TEST_RUN/random-compiler\" compiler")])]
 end

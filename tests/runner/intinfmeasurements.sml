@@ -28,7 +28,7 @@ struct
         val manifest=Json.decode (read (fixtureRoot ^ "/manifest.json"))
         val definitions=array (field "workloads" manifest)
         val sourceFiles=["tests/runner/intinf-main.sml","tests/runner/intinfchecks.sml","tests/runner/intinfbackends.sml","tests/runner/intinfhardening.sml","tests/runner/intinfstorage.sml","tests/runner/commandwords.sml","tests/runner/sh.sml","tests/runner/children.sml","tests/runner/intinfmeasurements.sml","tests/runner/measured.sml","tests/intinf/checks.sml","tests/intinf/oracle.sml",
-             "tests/intinf/workloads.json","tests/intinf/fixtures/manifest.json","tests/intinf/fixtures/vectors.sml","lib/basis/intinf.sml","lib/basis/MANIFEST",
+             "tests/intinf/workloads.json","tests/intinf/fixtures/manifest.json","tests/intinf/fixtures/vectors.sml","lib/basis/intinf.sml",
              "Makefile","runtime/prims.c","runtime/value.h","runtime/vm.h","runtime/image.c","src/isa/prims.sml","tests/basis/host/rune-prim.sml",
              "lib/basis/library.build","rune.build","runtime/intinf.c"]
         val sourceFiles=List.filter (exists o fromRoot) sourceFiles
@@ -116,7 +116,7 @@ struct
           in save ();say (name ^ " " ^ Real.fmt (StringCvt.GEN NONE) median ^ "\n") end
         val ()=List.app workload definitions
         val ()=if not compilerWorkloads then () else
-          let val listed=meta "compiler-sources" ["sh","scripts/build-files.sh","rune.build"]
+          let val listed=meta "compiler-sources" ["sh","scripts/plan-files.sh","rune.plan"]
               val inputs=String.tokens Char.isSpace listed
               fun one (name,inputs)=
                 let val target=path c (name ^ ".rbc")
@@ -128,6 +128,6 @@ struct
                          ("median_seconds",Measured.number (Measured.median (List.map (Time.toReal o #wall) runs))),("output_sha256",Json.String (hash target))]
                 in compilerEntries := (name,entry) :: !compilerEntries end
           in List.app one [("compile-hello",["examples/hello.sml"]),("compile-sigs",["tests/perf/compile-sigs.sml"]),
-               ("bootstrap",["build/config.sml"] @ inputs @ ["src/main/rune-main.sml"])] end
+               ("bootstrap",inputs)] end
     in save ();say "PASS IntInf measurement answers and separate samples\n" end
 end

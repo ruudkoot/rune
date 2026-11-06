@@ -295,10 +295,12 @@ struct
       val () = (Expand.declaredOrder := []; Expand.declaredSchemes := [])
       val sc = timed "unit-passes" (fn () => unitOf decs)
       val x = timed "unit-export" (fn () => UnitBasis.export {start = start, name = name, file = file, text = text, mode = mode,
-                                                             delta = delta, fixity = fixity, used = used})
+                                                             delta = delta, fixity = fixity})
       val () = timed "unit-undo" (fn () => UnitBasis.undo start)
-      val l = timed "unit-load" (fn () => UnitBasis.loadKnown ({pickle = #pickle x, file = file, at = #counters start},
+      val l = timed "unit-load" (fn () => UnitBasis.loadKnown ({pickle = #pickle x, sidecar = #sidecar x, file = file, at = #counters start},
                                                               SOME (if fresh then UnitBasis.unused (#identity x)
                                                                     else #identity x), []))
+      (* what it loads as written again is the same bytes *)
+      val () = Pass.checkAt ("basis-rt", 2) (UnitBasis.sameAgain ({start = start, name = name, file = file, mode = mode}, l)) (#pickle x)
     in {code = timed "unit-relative" (fn () => UnitBasis.relative (x, sc)), exported = x, loaded = l} end)
 end

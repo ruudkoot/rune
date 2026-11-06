@@ -10,17 +10,26 @@ struct
   type 'a job={id:IntInf.int,key:string option,priority:int,data:'a,payload:V.value}
   datatype phase=Starting of Time.time | Idle | Working of Time.time | Cancelling of Time.time | AwaitReady
   type progress={phase:string,file:string,checked:IntInf.int,reused:IntInf.int,at:Time.time}
+  type finished={context:string option,checked:IntInf.int,reused:IntInf.int}
   datatype 'a t=Jobs of {command:string,args:string list,timeout:Time.time,cancelGrace:Time.time,maxPending:int,
     worker:P.t option ref,retired:P.t list ref,phase:phase ref,queue:'a job list ref,active:'a job option ref,
     serial:IntInf.int ref,events:'a event list ref,closed:bool ref,started:Time.time option ref,
     progress:progress option ref,context:(string*string) option ref,planned:IntInf.int option ref,
-    contextNumber:IntInf.int ref,reported:Time.time option ref}
+    contextNumber:IntInf.int ref,reported:Time.time option ref,finished:finished option ref,loss:string option ref}
   exception Full
   fun new {command,args,timeout,cancelGrace,maxPending} =
     if maxPending<1 then raise Domain else Jobs {command=command,args=args,timeout=timeout,cancelGrace=cancelGrace,
       maxPending=maxPending,worker=ref NONE,retired=ref [],phase=ref Idle,queue=ref [],active=ref NONE,
       serial=ref 0,events=ref [],closed=ref false,started=ref NONE,progress=ref NONE,context=ref NONE,
-      planned=ref NONE,contextNumber=ref 0,reported=ref NONE}
+      planned=ref NONE,contextNumber=ref 0,reported=ref NONE,finished=ref NONE,loss=ref NONE}
+  (* What a status shows: the work, the running job's progress, and the units of
+     the last job that reported any. *)
+  fun activity (Jobs {active,queue,progress,context,...})={active=Option.map #data (!active),
+    queued=List.map #data (!queue),context=Option.map #1 (!context),progress= !progress}
+  fun finished (Jobs {finished,...})= !finished
+  (* Why the worker was lost since this was last asked, unless a cancellation
+     ended it. A job that fails in a worker that goes on is a Failed event alone. *)
+  fun takeLoss (Jobs {loss,...})= !loss before loss:=NONE
   (* Only bounded metadata reaches logs: never the captured source/state. *)
   fun preview text =
     let val text=if size text<=256 then text else String.substring(text,0,96) ^ "..." ^ String.extract(text,size text-160,NONE)
@@ -33,9 +42,6 @@ struct
     in if CharVector.all(fn c=>Char.ord c>=32 andalso Char.ord c<127)text then text else loop(0,[]) end
   fun textField (value,name)=SOME(V.bytes(V.field(value,name))) handle V.Invalid _=>NONE
   fun workspaceJob (job:'a job)=textField(#payload job,"op")=SOME "workspace"
-  (* One allowance for planning, then one for each planned context. *)
-  fun workspaceLimit (timeout,planned)=Time.fromMicroseconds
-    (IntInf.*(IntInf.+(1,getOpt(planned,0)),Time.toMicroseconds timeout))
   fun elapsed since=Time.toString(if Time.<(Time.now(),since) then Time.zeroTime else Time.-(Time.now(),since)) ^ " s"
   fun details (Jobs{worker,command,active,queue,phase,timeout,cancelGrace,started,progress,context,...}) =
     let val job=case !active of SOME job=>SOME job | NONE=>(case !phase of Starting _=>List.find(fn _=>true)(!queue) | _=>NONE)
@@ -43,8 +49,7 @@ struct
           | SOME(P.Process{pid,...})=>"worker PID " ^ Int.toString pid
         val limit=case !phase of Starting _=>Time.fromSeconds 30 | Cancelling _=>cancelGrace | _=>timeout
         val timing=(case !started of NONE=>"" | SOME since=>", elapsed " ^ elapsed since) ^
-          (case job of SOME job=>if workspaceJob job then ", context limit " else ", limit " | NONE=>", limit ") ^
-          Time.toString limit ^ " s"
+          ", limit " ^ Time.toString limit ^ " s" ^ (case !phase of Working _ => " with no progress" | _ => "")
         fun field(payload,name,label)=case textField(payload,name) of NONE=>"" | SOME ""=>""
           | SOME value=>"\n  " ^ label ^ ": " ^ preview value
         val work=case job of NONE=>"" | SOME job=>", job " ^ IntInf.toString(#id job) ^
@@ -71,7 +76,7 @@ struct
           val selected=case !context of NONE=>"" | SOME(label,_)=>preview label
           fun phaseName name=case name of "unit-start"=>"checking" | "unit-parsed"=>"elaborating"
             | "unit-elaborated"=>"recording analysis" | "unit-frozen"=>"checked"
-            | "names-start"=>"resolving libraries" | "occurrences-start"=>"preparing editor data"
+            | "names-start"=>"resolving libraries"
             | "indexing-source"=>"indexing" | "project-selected"=>"starting" | _=>preview name
           val detail=case !progress of NONE=>"" | SOME update=>
             "; " ^ phaseName(#phase update) ^ (if #file update="" then "" else " " ^ preview(#file update)) ^
@@ -111,8 +116,9 @@ struct
     in queue:=insert (!queue);id end
   fun retire (Jobs {worker,retired,...}) = case !worker of NONE => () | SOME process =>
     (P.terminate process;retired:=process :: !retired;worker:=NONE)
-  fun lost (jobs as Jobs {active,phase,queue,...},message) =
+  fun lost (jobs as Jobs {active,phase,queue,loss,...},message) =
     let val message=explain(jobs,message)
+        val ()=case !phase of Cancelling _ => () | _ => loss:=SOME message
     in (case !active of NONE => (case (!phase,!queue) of (Starting _,job::rest) =>
          (queue:=rest;emit (jobs,Failed (#data job,message))) | _ => ()) | SOME job =>
        (case !phase of Cancelling _ => () | _ => emit (jobs,Failed (#data job,message)));
@@ -124,14 +130,15 @@ struct
         let val ()=(started:=SOME(Time.now());progress:=NONE;context:=NONE;
               phase:=Starting (Time.+ (Time.now (),Time.fromSeconds 30)))
             val process=P.start {command=command,args=args,
-              limits={addressSpace=SOME (1536*1024*1024),cpuTime=NONE,fileSize=NONE,core=SOME 0}}
+              limits={addressSpace=SOME (getOpt (Option.mapPartial Int.fromString (OS.Process.getEnv "RUNE_LSP_ADDRESS_SPACE_MB"),1536)*1024*1024),
+                cpuTime=NONE,fileSize=NONE,core=SOME 0}}
         in worker:=SOME process end
       | SOME process => case (!phase,!queue) of (Idle,job::rest) =>
           (queue:=rest;active:=SOME job;started:=SOME(Time.now());progress:=NONE;context:=NONE;
            planned:=NONE;contextNumber:=0;reported:=NONE;
            phase:=Working (Time.+ (Time.now (),timeout));P.enqueue (process,#payload job))
         | _ => ()
-  fun message (jobs as Jobs {active,phase,progress,context,started,timeout,planned,contextNumber,reported,...},value) =
+  fun message (jobs as Jobs {active,phase,progress,context,started,timeout,planned,contextNumber,reported,finished,...},value) =
     let val opName=textField(value,"op")
         val ready=opName=SOME "ready"
     in if ready then
@@ -152,11 +159,11 @@ struct
                   in if n<>IntInf.+(!contextNumber,1) orelse n>getOpt(!planned,0)
                     then raise V.Invalid "invalid workspace context index" else contextNumber:=n;context:=NONE end else ()
                 val ()=case textField(value,"context") of NONE=>() | SOME label=>context:=SOME(preview label,file)
-                (* A workspace sweep checks several independent projects.
-                   Unit progress cannot extend a stalled project's deadline. *)
-                val ()=case !phase of Working _=>
-                  if workspaceJob job andalso name="project-selected" then
-                    phase:=Working(Time.+(Time.now(),timeout)) else () | _=>()
+                (* A deadline is a limit on silence, not on work (D28): a
+                   worker that reports progress goes on, however long a check
+                   at scale takes; one that reports nothing for the limit is
+                   lost. Cancellation's grace is not extended. *)
+                val ()=case !phase of Working _=>phase:=Working(Time.+(Time.now(),timeout)) | _=>()
                 val ()=progress:=SOME{phase=name,file=file,checked=count "checked",reused=count "reused",at=Time.now()}
             in if name="workspace-context-start" then () else
               reportProgress(jobs,name="workspace-planned" orelse name="project-selected",false) end
@@ -165,7 +172,10 @@ struct
               val fields=V.object value
               fun optional name=case List.find (fn (key,_) => key=name) fields of NONE => NONE | SOME (_,value) => SOME value
               val ()=if cancelling then () else case optional "result" of SOME result =>
-                  (if isSome(!reported) then reportProgress(jobs,true,true) else ();emit (jobs,Done (#data job,result)))
+                  (if isSome(!reported) then reportProgress(jobs,true,true) else ();
+                   Option.app(fn update=>finished:=SOME{context=Option.map #1 (!context),checked= #checked update,
+                     reused= #reused update})(!progress);
+                   emit (jobs,Done (#data job,result)))
                 | NONE => (case optional "cancelled" of SOME (V.Bool true) => emit (jobs,Cancelled (#data job))
                   | _ => (case optional "error" of SOME (error as V.Object _) =>
                       emit (jobs,Rejected (#data job,{code=V.integer (V.field (error,"code")),
@@ -176,15 +186,11 @@ struct
           in active:=NONE;phase:=AwaitReady end
        end end
     handle V.Invalid message => lost (jobs,message)
-  fun tick (jobs as Jobs {retired,phase,active,started,timeout,planned,...}) =
+  fun tick (jobs as Jobs {retired,phase,...}) =
     let val ()=retired:=List.filter (fn process => (not (isSome (P.reap process))) handle OS.SysErr _ => false) (!retired)
         val expired=case !phase of Starting deadline => Time.> (Time.now (),deadline)
           | Working deadline => Time.> (Time.now (),deadline) | Cancelling deadline => Time.> (Time.now (),deadline) | _ => false
-        val workspaceExpired=case (!phase,!active,!started) of (Working _,SOME job,SOME since)=>
-          workspaceJob job andalso Time.>(Time.now(),Time.+(since,workspaceLimit(timeout,!planned))) | _=>false
-        val ()=if workspaceExpired then lost(jobs,"analysis worker exceeded its overall workspace deadline (" ^
-            Time.toString(workspaceLimit(timeout,!planned)) ^ " s)")
-          else if expired then lost (jobs,"analysis worker exceeded its deadline") else ()
+        val ()=if expired then lost (jobs,"analysis worker exceeded its deadline") else ()
     in startNext jobs;reportProgress(jobs,false,false) end
     handle error => lost (jobs,case error of OS.SysErr(message,code)=>message ^
       (case code of NONE=>"" | SOME code=>": " ^ OS.errorMsg code) | Fail message=>message | _=>General.exnMessage error)

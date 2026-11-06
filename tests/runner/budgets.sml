@@ -26,9 +26,12 @@ struct
   fun runedocRbc Registers = "bin/runedoc.rbc" | runedocRbc Stack = "bin/runedoc.stack.rbc"
   val limits = {addressSpace = NONE, cpuTime = SOME 900, fileSize = SOME (64 * 1024 * 1024), core = SOME 0}
   (* without RUNE_LINT, which bin/rune-test sets: a budget counts the
-     compiler as it is shipped, which lints nothing *)
+     compiler as it is shipped, which lints nothing; and with RUNE_CACHE
+     empty, so that a compile reads the libraries' indexes from the frozen
+     layer alone, as a first compile does, and not records another test
+     wrote to the store they would share (docs/build.md, A library's index) *)
   fun execute name command stdout stderr =
-    let val status = Children.exec limits (List.filter (fn kv => not (String.isPrefix "RUNE_LINT=" kv)))
+    let val status = Children.exec limits (setEnv ("RUNE_CACHE", "") o List.filter (fn kv => not (String.isPrefix "RUNE_LINT=" kv)))
           {cmd = command, dir = SOME root, stdin = "-", stdout = fromRoot stdout,
            stderr = fromRoot stderr, timeout = 900}
     in need (status = 0, name ^ ": exit " ^ Int.toString status ^ ": " ^ firstLine (fromRoot stderr)) end
@@ -64,8 +67,8 @@ struct
       val doc = args name "runedoc"
       val compile = args name "compile"
       fun boot () =
-        let val () = execute name ["sh", "scripts/build-files.sh", "rune.build"] (prefix ^ ".sources") (prefix ^ ".sources.err")
-        in "build/config.sml" :: String.tokens Char.isSpace (read (fromRoot (prefix ^ ".sources"))) @ ["src/main/rune-main.sml"] end
+        let val () = execute name ["sh", "scripts/plan-files.sh", "rune.plan"] (prefix ^ ".sources") (prefix ^ ".sources.err")
+        in String.tokens Char.isSpace (read (fromRoot (prefix ^ ".sources"))) end
       fun file "@boot" = boot () | file "@gen" = [prefix ^ ".gen.sml"] | file path = [path]
       val () =
         if not (null doc) then

@@ -1,0 +1,18 @@
+# Every path of a kept analysis on the compiler's own build (tools/lsp/oracle.sml).
+# Each edit's anchor is a line that has stood for years; a change to one is a change here.
+leaf-comment	3	LAST	append
+leaf-add	2	LAST	appendtext	val edit_$N = 1
+leaf-body	2	src/driver/main.sml	replace	rune: the compile at --lint=2 found no breach	rune: the compile at --lint=2 found no breach $N
+mid-body	2	lib/compiler/util/source.sml	replace	val noSpan : span = {file = "", start = 0, stop = 0}	val noSpan : span = {file = "", start = 0, stop = $N}
+mid-comment-end	2	lib/compiler/util/source.sml	append
+mid-comment-start	2	lib/compiler/util/source.sml	prepend
+mid-add	2	lib/compiler/util/source.sml	replace	  val noSpan : span	  val edit_$N = 1\n  val noSpan : span
+mid-datatype	2	lib/compiler/util/source.sml	replace	datatype mode = Ascii | Unicode of encoding	datatype mode = Ascii | Unicode of encoding | Edit$N
+first-comment	2	FIRST	prepend
+mid-syntax	2	lib/compiler/util/source.sml	replace	val noSpan : span = {file	val noSpan : : span = {file
+mid-type	2	lib/compiler/util/source.sml	replace	val noSpan : span = {file = "", start = 0, stop = 0}	val noSpan : span = {file = "", start = 0, stop = "x"}
+leaf-type	2	src/driver/main.sml	replace	"rune: the compile at --lint=2 found no breach"	1 + "rune: the compile at --lint=2 found no breach"
+cancelled-datatype	2	lib/compiler/util/source.sml	replace	datatype mode = Ascii | Unicode of encoding	datatype mode = Ascii | Unicode of encoding | Edit$N
++	lib/compiler/util/source.sml	cancel	40
+complete-early	1	lib/compiler/util/source.sml	complete	fun lineCol (
+complete-leaf	1	src/driver/main.sml	complete	eprintln "try

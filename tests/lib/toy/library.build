@@ -1,0 +1,5 @@
+(* A library for the tests of rune --library (tests/runner/tools.sml, lib.toy):
+   its files, in load order. A program that names only the library loads
+   them, and what they use of the Basis Library. *)
+toy.sml
+extra.sml

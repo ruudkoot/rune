@@ -1,11 +1,12 @@
 (* Standalone server, isolated compiler analysis and portable worker supervision. *)
-libraries compiler lsp digest end
+libraries compiler lsp digest json jsonrpc unicode end
 files
   build/config.sml
   src/lsp/profile.sml
   src/lsp/documents.sml
   src/lsp/sync.sml
   src/lsp/workspace.sml
+  src/lsp/implicit.sml
   src/lsp/projects.sml
   src/lsp/worker-wire.sml
   src/lsp/worker-model.sml

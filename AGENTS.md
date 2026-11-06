@@ -38,10 +38,10 @@ keep these invariants:
 * When adding a basis structure, add a `basis.<name>` row listing its members
   and add the file to `lib/basis/library.build` in a block of its class
   (`docs/build.md`). What it provides and requires is worked out from the
-  source: `make manifests` writes `lib/basis/MANIFEST`, which is generated
-  and never committed or edited (`rune --basis-check`, part of `make
-  check-docs`, verifies that a file loaded on demand declares modules and
-  types only). A signature of the
+  source: the library's index, which every compile derives and keeps in its
+  store, and which is never a file in the tree (`rune --basis-index
+  lib/basis` prints it; `rune --basis-check`, part of `make check-docs`,
+  verifies that a file loaded on demand declares modules and types only). A signature of the
   specification is transcribed in `tests/basis/spec-sigs` first;
   `bin/rune-generate basis-signatures` then makes `lib/basis/sig_<sig>.sml` and its
   line in the build file, and from there on the library's file is edited by hand
@@ -75,6 +75,19 @@ keep these invariants:
   `src/isa/stack.sml` if the file layout changes; a change to the
   instructions or the primitives changes the fingerprint of the instruction
   set by itself, which the `.rbc` and images carry.
+* **A unit's basis and its Mid** are written, read, compared and fingerprinted
+  by codecs generated from one description, `tools/codecs/compiler.sml`
+  (`docs/units.md`, *Codecs*): a field added to a type it describes -- a
+  value's status, a type's, an environment, a signature, a functor, a type of
+  Mid -- is added there too, with its layer and what the fingerprint and the
+  sameness make of it (or why they leave it out), then `make codecs`, which
+  writes the parts of `lib/compiler/driver/unitbasis.sml`,
+  `lib/compiler/core/midcodec.sml` and `lib/compiler/driver/unitmid.sml`
+  marked as generated; never edit those by hand, and `make check-codecs`
+  (part of `make check`) fails when they are stale. What a fingerprint reads
+  of the compiler's tables is written by hand (`valFacts`, `definition`): a
+  fact added there gets its change in `UnitBasis.fpOracle` too, which the
+  scenario `fp-oracle` holds to the fingerprint.
 * **Native code** (`runeopt`, `docs/native.md`): an instruction has,
   beside its description and body in `src/isa/stack.sml` (from which the
   interpreter's case and its stack effect are generated), a template in
@@ -121,6 +134,14 @@ keep these invariants:
   binding (docs/units.md). `make check-units` holds every program of
   `tests/lang` and `tests/perf` compiled so to its output compiled whole,
   and the compiler compiled in units to compiling itself byte for byte.
+* **The cache** holds a unit's key to what its compile reads, and nothing but
+  tests ties the two together (`docs/testing.md`, *The checks of the cache*):
+  a new option of `rune`, or a `RUNE_` variable the compiler reads, has a row in
+  `tests/runner/cacheflags.sml` that says whether it reaches a key; a root a
+  compile reads has a line in `tests/incremental/roots.tsv`; a change to a key
+  runs `make test-cache-random`; and a change to the code of a mutant of
+  `tests/runner/cachemutantlist.sml` keeps that mutant applying and caught
+  (`make test-cache-mutants`).
 * **The folders of `runtime/`** say what depends on what. The runtime both
   VMs link is directly under it (`vm.h`, `value.h`, the heap, the loader,
   the primitives, images, `main.c`, and the generated `isa.h` with what the
@@ -261,12 +282,17 @@ keep these invariants:
 
 ## Build and verification
 
-* Compiler sources are listed in `rune.build` (ordered, in its `files ...
-  end` block; docs/build.md), those of the documentation generator `runedoc`
+* Compiler sources are listed in `rune.build` (ordered, after the libraries
+  it names, through `lib/compiler/internal.build`, which the compiler's
+  library names it a friend to use, and in its `files ... end` block;
+  docs/build.md), those of the documentation generator `runedoc`
   in `runedoc.build`, those of the native code generator `runeopt` in
   `runeopt.build` and those of `runeisa` in `runeisa.build`; the MLton,
-  SML/NJ and Poly/ML build files are generated from them — never edit
-  `build/`.
+  SML/NJ and Poly/ML build files are generated from the plans committed
+  beside them (`rune.plan`, ...) — never edit `build/`, nor a plan by hand. After an
+  edit of one of these build files, or of a build file they use, run `make
+  plans` and commit what it prints (docs/building.md, How a host gets its
+  list).
 * The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
   never from the machine's PATH.
 * In a cloud coding environment (e.g. `CLAUDE_CODE_REMOTE=true`), follow
@@ -292,7 +318,7 @@ keep these invariants:
   `test-install`, `check-reproducible`, `test-serve`, `test-repl`, `test-terminal`, `test-diagnostics`, `test-repl-protocol`, `test-kernel`, `test-dap`, `test-native`, `test-register`, `test-register-jit`,
   `test-heap`, `test-gc`, `test-census`, `check-heapsim`, `check-gcsim`,
   `check-layouts`, `check-gcbench`, `perf-check`, `bench-smoke`,
-  `check-positions`, `check-cross`, `check-docs`, `check-isa`, each a test
+  `check-positions`, `check-cross`, `check-docs`, `check-isa`, `check-codecs`, each a test
   of the runner `bin/rune-test`, run at once where they share no files; a
   passing test prints nothing, a failure prints a block with its reason, the
   directory its output is kept in and the command that reruns it, and the
@@ -390,10 +416,13 @@ keep these invariants:
   compiled by `make docs` and run by `make test-basis`; give a description an example where it shows
   what prose cannot, and find its value by running it.
 * A library beside the basis library (`lib/NAME`, compiled with `rune --library
-  NAME`) has a `library.build` in the basis library's form, whose
-  `libraries` declaration names the libraries it is written on; its
-  generated `MANIFEST` records what each file uses of the basis library as
-  well (`rune --basis-check --library NAME` checks it). It may not use `_prim`,
+  NAME`) has a `library.build` in the basis library's form, whose header
+  says what it `requires` and what it `exports` (docs/build.md, *A library's
+  header*): a client names each library it uses a name of, since `requires`
+  is not transitive, and a header `bin/rune-migrate` wrote it writes again
+  (docs/build.md, *Migrating a tree*); its index records what each file uses
+  of the basis library as well (`rune --basis-check --library NAME` checks
+  it). It may not use `_prim`,
   and what it exports is ASCII, so that a program in every mode can name it
   (docs/build.md, *A library's build file*). The mechanism's tests are in
   `tests/lib` (`make test-lib`), and a library's own tests, `tests/lib/NAME`, are suites on

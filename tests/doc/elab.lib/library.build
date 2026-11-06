@@ -1,0 +1,7 @@
+(* What only elaboration knows: the names of a structure that has no body in
+   the source, and the types that are one type. *)
+box.sml
+(* a seal file: what a program sees of Box, Crate and Chest is what BOX names,
+   so that `full` and `spare` are no names beyond the signature, and the
+   bindings are no second claims *)
+annotate "seal" in seal_box.sml end

@@ -32,8 +32,12 @@ struct
   fun quote (s : string) : string =
     "\"" ^ String.translate (fn #"\"" => "\\\"" | #"\\" => "\\\\" | #"\n" => "\\n" | c => String.str c) s ^ "\""
 
-  (* The symbol of function f: its name and its index, since names repeat. *)
-  fun symbol (name : string, f : int) : string = quote (name ^ "#" ^ Int.toString f)
+  (* The symbol of function f: its name and its index, since names repeat,
+     with no white space, which the tools that print symbols (nm, objdump,
+     perf, a debugger's backtrace) end a symbol at: a functor's function
+     is named "functor F" (Translate), its symbol functor_F#N. *)
+  fun symbol (name : string, f : int) : string =
+    quote (String.translate (fn c => if Char.isSpace c then "_" else String.str c) name ^ "#" ^ Int.toString f)
 
   (* The instructions after which a straight run of code ends, and with it
      what the counter adds at once (docs/native.md, Counting). *)

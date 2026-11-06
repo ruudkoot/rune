@@ -4,8 +4,6 @@ struct
   structure O=BuildOptions
   val linuxArchitectures=["x86_64","i686","aarch64","ppc64"]
   val windowsArchitectures=["x86_64","i686"]
-  fun manifestNames file=List.mapPartial (fn line => let val name=trim (hd (fields #"|" line))
-         in if name="" orelse String.isPrefix "#" name then NONE else SOME name end) (lines (read file))
   fun pathLess (a,b) =
     let fun loop ([],[])=false | loop ([],_)=true | loop (_,[])=false | loop (a::ar,b::br)=if a=b then loop (ar,br) else a<b
     in loop (fields #"/" a,fields #"/" b) end
@@ -13,20 +11,40 @@ struct
     let val builds=sort pathLess (List.filter (fn file => OS.Path.file file="library.build" andalso not (isDir file)) (tree library))
         val ()=need (not (null builds),"no library.build under " ^ library)
         fun relative file=String.extract (file,size library+1,NONE)
+        (* A library is its directory, but for the libraries nested in it:
+           its build files, its sources and its README. Its index is derived
+           from them where it is compiled (docs/build.md), so no list says
+           which (D13) *)
+        val dirs=List.map OS.Path.dir builds
         fun one build =
-          let val parent=OS.Path.dir build val manifest=parent ^ "/MANIFEST" val ()=need (exists manifest,"missing " ^ manifest ^ " (make manifests)")
-              val sources=List.map (fn name => let val source=parent ^ "/" ^ name
-                   in need (exists source andalso not (isDir source),manifest ^ " names " ^ name ^ ", which is not there");relative source end) (manifestNames manifest)
-          in relative manifest::sources @ (if exists (parent ^ "/README.md") then [relative (parent ^ "/README.md")] else []) end
+          let val parent=OS.Path.dir build
+              fun nested file=List.exists (fn dir => dir<>parent andalso String.isPrefix (parent ^ "/") dir
+                                                     andalso String.isPrefix (dir ^ "/") file) dirs
+              fun kept file=not (isDir file) andalso not (isLink file) andalso not (nested file) andalso
+                (OS.Path.file file="README.md" andalso OS.Path.dir file=parent orelse
+                 List.exists (fn suffix => String.isSuffix suffix file) [".sml",".build"])
+          in List.map relative (List.filter kept (tree parent)) end
         (* Complete immutable FFI sets include non-SML outputs and pointers
-           beside their derived MANIFESTs. Keep the same source tree as the
-           source installer, including future regenerated set identities. *)
+           beside their sources. Keep the same source tree as the source
+           installer, including future regenerated set identities. *)
         val assets=List.concat(List.map(fn name=>
           let val generated=library ^ "/" ^ name
           in if isDir generated then List.map relative
             (List.filter(fn file=>not(isDir file) andalso not(isLink file))(tree generated)) else [] end)
           ["ffi/sdl","ffi/win32/generated"])
     in sort pathLess(unique(List.concat(List.map one builds) @ assets)) end
+  (* The frozen layer of the store (docs/units.md, The store): each
+     configuration's entries and what is kept beside them, under lib/rune/cache,
+     which every compile in units reads after its own store and never writes,
+     so that a first compile builds no Basis Library. Not the memos of the
+     build that made it, nor a mark of make's *)
+  fun cacheFiles cache =
+    let val configs=List.filter (fn name => isDir (cache ^ "/" ^ name) andalso name<>"memo" andalso name<>"steps") (sorted (entries cache))
+        val ()=need (not (null configs),"no configuration in the store " ^ cache ^ " (make basis-cache)")
+    in sort pathLess (List.concat (List.map (fn config =>
+         List.map (fn path => String.extract (path,size cache+1,NONE))
+                  (List.filter (fn path => not (isDir path) andalso not (isLink path) andalso not (String.isSubstring ".tmp-" path))
+                               (tree (cache ^ "/" ^ config)))) configs)) end
   fun crlf data =
     let val n=size data
         fun loop i acc=if i=n then String.concat (List.rev acc) else
@@ -56,7 +74,7 @@ struct
                | (true,SOME why) => raise Failed ("format self-test rejected valid " ^ arch ^ ": " ^ why) | _ => raise Failed ("format self-test accepted invalid " ^ arch) end
     in List.app one (array (field "cases" fixtures)) end
   fun main args =
-    let val specifications=[("--self-test",O.Flag),("--write-ico",O.Value),("--version",O.Value),("--out",O.Value),("--lib",O.Value),("--license",O.Value),("--compiler",O.Value),("--repl",O.Value),("--ffi",O.Value),("--ffi-assets",O.Value),("--fixture",O.Flag)]
+    let val specifications=[("--self-test",O.Flag),("--write-ico",O.Value),("--version",O.Value),("--out",O.Value),("--lib",O.Value),("--license",O.Value),("--compiler",O.Value),("--repl",O.Value),("--ffi",O.Value),("--ffi-assets",O.Value),("--cache",O.Value),("--fixture",O.Flag)]
         (* Repeated runtime maps have append semantics. *)
         fun separate [] regular linux windows=(List.rev regular,List.rev linux,List.rev windows)
           | separate ("--linux"::value::rest) regular linux windows=separate rest regular (value::linux) windows
@@ -80,13 +98,17 @@ struct
             val ffiFiles=ffiFiles @ (if assets="" then [] else
               List.map(fn file=>entry("lib/rune/ffi-assets/" ^ String.extract(file,size assets+1,NONE))(read file)420)
                 (List.filter(fn file=>not(isDir file) andalso not(isLink file))(tree assets)))
+            (* read-only where the archive says modes (the tar), as an install makes it *)
+            val cache=O.get options "--cache" ""
+            val frozen=if cache="" then [] else List.map (fn name => (name,read (cache ^ "/" ^ name))) (cacheFiles cache)
+            fun frozenAs mode=List.map (fn (name,data) => entry ("lib/rune/cache/" ^ name) data mode) frozen
             val common=List.map (fn name => entry ("lib/rune/" ^ name) (read (library ^ "/" ^ name)) 420) libs @
                  [entry "lib/rune/rune.rbc" (read compiler) 420,entry "lib/rune/rune-repl.img" (read repl) 420,entry "LICENSE" (read license) 420,entry "VERSION" (version ^ "\n") 420] @ ffiFiles
             fun runtimes system vms =List.map (fn (arch,path) =>
               let val data=read path val ()=if O.flag options "--fixture" then () else if system="linux" then BuildFormats.linux data arch else BuildFormats.windows data arch
               in entry ("runtime/" ^ arch ^ "/" ^ (if system="windows" then "runevm.exe" else "runevm")) data 493 end) (sort (fn ((a,_),(b,_)) => a<b) vms)
-            val linuxFiles=common @ runtimes "linux" linux @ [entry "install.sh" (read (fromRoot "scripts/dist-install.sh")) 493]
-            val windowsFiles=common @ runtimes "windows" windows @
+            val linuxFiles=common @ frozenAs 292 @ runtimes "linux" linux @ [entry "install.sh" (read (fromRoot "scripts/dist-install.sh")) 493]
+            val windowsFiles=common @ frozenAs 420 @ runtimes "windows" windows @
                   List.map (fn name => entry name (crlf (read (fromRoot ("scripts/dist-" ^ name)))) 420) ["install.bat","uninstall.bat"] @
                   [entry "register.ps1" (read (fromRoot "scripts/dist-register.ps1")) 420,entry "share/rune.ico" (icon ()) 420] @
                   List.map (fn name => entry ("wrappers/" ^ name) (crlf (read (fromRoot ("scripts/dist-" ^ name)))) 420) (["rune.cmd","rune-repl.cmd"] @ (if ffi="" then [] else ["runeffi.cmd"]))

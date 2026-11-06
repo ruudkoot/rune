@@ -1,0 +1,7 @@
+(* Hand-written fixture: a structure the header exports that is bound by
+   name to one it does not export is documented as that one, under its own
+   name: its comment, its substructures and their claims. *)
+exports (signature AREA, structure Shapes, structure Figures)
+annotate "demand" in
+  shapes.sml
+end

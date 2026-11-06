@@ -69,7 +69,7 @@ linting roadmap, D12 and D13), each from its level up:
 | `off` | none of level 0's; the passes' own assertions, the decoders and the loader, as always | -- |
 | 0 | always on, where nothing says otherwise in `rune`: the invariant of results in globals after every `lower` (`results`), the functor bodies a unit's basis decoded, linted at the next unit's passes (`functor-body`), the units' interfaces at a link (`link`), and the imported schemes of an entry the cache gives (`schemes`) | 0.15%; 0.51% |
 | 1 | the boundaries between representations: `LambdaLint` after `translate`, `MidLint` after `mid` (and of the units' Mid `--units --whole` concatenates, `midconcat`) and of what `lower` is given (`prelower`), `midcanon`'s renaming, `LowLint` and `LowShapes` after `lower`, `RegVerify` after `registers` (*The register target*); what the REPL and the compiler library run where nothing says otherwise | 20.2%; 37.1% |
-| 2 | every pass: `AstLint` after elaboration (`astlint`, *AstLint* below), `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again), and the whole program a link makes (`regverify-link`, *The register target*); what `--lint` runs, and every test | 57.3%; 97.2%, of which `AstLint` 15.2%; 18.2% (*AstLint*), and in units 11% more of a compile for `code-rt` and 2-10% for `regverify-link` |
+| 2 | every pass: `AstLint` after elaboration (`astlint`, *AstLint* below), `MidLint` after each optional pass on Mid, and inside `simplify` of each definition as it is made, with the copies its calls made, in the program around it (`simplify-def`), a unit's code read back as its file says it (`code-rt`: `UnitFile.read` of the bytes written, the same code but for the reader's normal form, and the same bytes written again), a unit's basis written again from what it loads as, the same bytes (`basis-rt`), and the whole program a link makes (`regverify-link`, *The register target*); what `--lint` runs, and every test | 57.3%; 97.2%, of which `AstLint` 15.2%; 18.2% (*AstLint*), and in units 11% more of a compile for `code-rt` and 2-10% for `regverify-link` |
 | 3 | and Mid's text read back after every stage of Mid (`KEY-roundtrip`), as `--mid-roundtrip` does after `mid` alone from level 1; one tier of `make check` (`make test-ir`) | about 10 times the compile |
 
 `--lint=LEVEL` gives the level; else `RUNE_LINT` (a level, `off`, or
@@ -101,7 +101,14 @@ stages of the pipeline above, the compile's stages are:
   loading it, and on `runevm` the bytecode and the compiler's top-level
   declarations;
 * `lex`, the input files read and lexed (their tokens), and `select`, the
-  files of the libraries they need chosen (those files);
+  files of the libraries they need chosen (those files); with `--units`,
+  `lex` is what each input is to the plan, taken from the store where its
+  text and the fixity before it are what they were and else read, lexed and
+  parsed (the tokens it lexed; [units.md](units.md), *A warm build*);
+* `index`, a library's index taken ([build.md](build.md), *A library's
+  index*): its record read and held to its files, or the index made, and an
+  index held again where a compile asks whether it is up to date; one taken
+  inside another stage, as `select` takes them, is counted there;
 * `parse` and `elaborate`, whose size is the top-level declarations;
 * with `--units`, the work of the cache and of each unit (`cache-key`,
   `cache-find`, `unit-begin`, `unit-passes`, `unit-export`, ..., and `link`);
@@ -115,7 +122,7 @@ by its key (`Pass.checkAt`; *Levels* above): the stage it follows
 (`translate`, `mid`, `midcanon`, ..., `lower`), `midconcat`, `prelower`,
 `mid-roundtrip` and the other round trips, `results`, which runs inside
 `lower`, `simplify-def`, inside `simplify`, `functor-body`, `code-rt`,
-`shapes` (level 1), `rbccheck`, the check of the stack code (level 2), and in units `link`, the
+`basis-rt`, `shapes` (level 1), `rbccheck`, the check of the stack code (level 2), and in units `link`, the
 check of the units' interfaces at the link, and `schemes`, of a cache
 entry's imported schemes where it is taken, both at level 0
 ([units.md](units.md)). They are counted in the stages' times already, `checks`

@@ -36,7 +36,7 @@ one intermediate representation to the next, `--dump-before=PASS` and
 | Stack target | `lib/compiler/backend/target.sml`, `code.sml`, `stack.sml` | Low → per-function instruction lists (`Code`) | A value used once stays on the stack; the others get locals shared by linear scan; jumps fall through or become returns where they can. `Code` holds the instruction lists and the tables of the program (constants, globals, files, inlined frames) that both targets fill and Emit writes. |
 | Register target | `lib/compiler/backend/regs.sml`, `regcodes.sml` (generated) | Low → register bytecode | Every variable a register, shared by linear scan; `CALL` then `RESULT`; with `--target=registers`, for `runtime/register` ([bytecode.md](bytecode.md), The register bytecode). |
 | Emission | `lib/compiler/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `TextIO`. |
-| Driver | `lib/compiler/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
+| Driver | `lib/compiler/driver/project.sml`, `plan.sml`, `workspace.sml`, `basismanifest.sml`, `libraryindex.sml`, `libraryscope.sml`, `prelude.sml`; `src/driver/options.sml`, `main.sml` | CLI | `CompilerProject` is the one reader of build files, and a compile follows its plan (`CompilerPlan`, what `--plan` prints; the command line is a plan too); `Workspace` finds the `rune.workspace` above a build and names its units from there ([build.md](build.md), [units.md](units.md), *Names*). `LibraryIndex` derives a library's index from its `library.build` and its sources and keeps it in the store; `BasisManifest` takes it and chooses the files a program loads, and `LibraryScope` puts each in the scope its library's header gives (the documentation generator uses them too). The driver picks the files of the basis library and the other libraries the program needs by their indexes (the always-loaded files, the files that provide a name the program's files use, which `Deps` reads from their syntax, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program, or in units through the store with `--units` and `--build` ([units.md](units.md)). `--basis-deps` prints the choice; `--basis-check` verifies the index against the sources; `--basis-index` prints it. |
 
 Shared utilities: `lib/compiler/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
 applied as `StringMap`/`IntMap`), `inttable.sml` (mutable hash tables of
@@ -63,11 +63,15 @@ the Basis and checking declarations.
 ## The documentation generator
 
 `runedoc` ([docs/plans/docgen.md](plans/docgen.md)) is a second program built
-from the same sources: `runedoc.build` lists the utilities, the frontend and
-the elaborator of the compiler, `BasisManifest`, and `src/doc`. It reads a
-library the way the compiler does (the same lexer, parser and, later,
-elaborator), so what it documents is what the compiler compiles. Nothing of
-`src/doc` is part of the compiler, so it costs the bootstrap nothing.
+from the same sources: `runedoc.build` names the libraries `unicode` and
+`json`, uses the compiler library's `frontend.build` -- its utilities, its
+frontend and elaborator, `BasisManifest` and `LibraryIndex` -- as a friend of
+that library ([build.md](build.md), *Reaching in*), and lists `src/doc`. It
+reads a library the way the compiler does (the same lexer, parser,
+elaborator and library index), so what it documents is what the compiler
+compiles, and a library with a header has pages for what it exports.
+Nothing of `src/doc` is part of the compiler, so it costs the bootstrap
+nothing.
 
 ## The native code generator
 
@@ -167,7 +171,7 @@ release compiles the current sources against the Basis it ships, and that
 image runs on the release's `runevm`; Poly/ML and MLton compile them against
 their own Basis. Each of those compilers emits this tree's bytecode.
 `bin/rune-bootstrap` runs that image on `bin/runevm` and compiles the same
-sources into `bin/rune.rbc`; it also writes every library `MANIFEST`.
+sources into `bin/rune.rbc`.
 `runevm` executes `bin/rune.rbc` as
 `bin/rune-boot`, and `bin/rune` names that. The host builds
 `bin/rune-mlton`, `bin/rune-smlnj-legacy`,
@@ -243,8 +247,9 @@ run reproducible, and where the platform shows through.
 
 `lib/basis/*.sml` is ordinary SML compiled before a program that needs it; the
 order is in `lib/basis/library.build` (docs/build.md), and what each file
-provides and requires is worked out from the sources into
-`lib/basis/MANIFEST` (`make manifests`, `rune --basis-index`). A
+provides and requires is worked out from the sources, the library's index,
+which a compile derives and keeps in its store (`LibraryIndex`;
+`rune --basis-index` prints it). A
 file that is loaded on demand declares modules and types only, all listed in
 its provides column, so that the top-level
 environment of a program does not depend on which files it happens to load. Two
@@ -268,17 +273,22 @@ the files it requires are loaded already. Primitives are bound with
 primitives that construct options.
 
 Other libraries sit beside the basis library under the `--lib` directory
-(`lib/test/property`), each with a `library.build` and a generated `MANIFEST` of the same form
-(`BasisManifest`, `lib/compiler/driver/basismanifest.sml`). `rune --library NAME` adds
+(`lib/test/property`), or under a root that a workspace's `rune.workspace`
+names ([build.md](build.md), *The workspace*), each with a `library.build`
+and an index of the same form (`LibraryIndex`, `BasisManifest`). `rune
+--library NAME` adds
 a library's entries after the basis library's, with those of the libraries
-its `# library:` lines name before it (those and its `# inline:` lines are
-its header, before the first file's line, where reading them stops), and
+its build file requires before it, and
 the files are chosen from all of
 them together, by path. A library's requires column names what it uses of
 the basis library, so that a program that names only the library loads what
 the library needs. The driver elaborates the basis library with `_prim`
 allowed, then the other libraries without, then the program; runedoc
-elaborates a library on the same terms (`DocElab.library`).
+elaborates a library on the same terms (`DocElab.library`). A library with
+a header (docs/build.md) is compiled in the basis library and what it
+requires alone, and a program sees what it names: `BasisManifest.scopes` says
+what each scope sees, `select` chooses by it, and `LibraryScope`'s walk puts
+each file in its scope, for each of the compiler's ways through the libraries.
 
 ## Adding a language feature (checklist)
 

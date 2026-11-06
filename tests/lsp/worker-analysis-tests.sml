@@ -5,6 +5,8 @@ struct
   structure W=RuneLspWorkspace
   structure D=RuneLspDocuments
   structure M=RuneLspWorkerModel
+  structure C=CompilerApi
+  structure A=C.Analysis
   val check=Expect.that
   fun run () =
     let val (vm,worker)=case CommandLine.arguments () of [vm,worker] => (vm,worker) | _ => raise Fail "worker paths required"
@@ -114,9 +116,502 @@ struct
               handle V.Invalid _ => false) end
         val result=(work () handle error => (stop (!process);raise error))
     in stop (!process);result end
+  (* E20: Env.plus filtered every origin on every declaration, so that twice the
+     declarations in a unit allocated and took four times as much. *)
+  fun linear () =
+    let fun cost count =
+          let val text="structure Big=struct\n" ^ String.concat (List.tabulate (count,fn i =>
+                "  fun f" ^ Int.toString i ^ " (x:int):int=x+" ^ Int.toString i ^ "\n")) ^ "end\n"
+              val compiler=C.session {lib=NONE,flags=[]}
+              val analysis=A.create (compiler,{context="linear"})
+              val input={file="big.sml",text=text,revision="1",mode="ascii",annotations=[]}:A.input
+              val (snapshot,{bytes,...})=Runtime.profile (fn () =>
+                A.check (analysis,{project=NONE,inputs=[input],cancelled=fn () => false}))
+              val ()=check ("the unit checks",null (A.diagnostics snapshot))
+          in A.close analysis;C.close compiler;bytes end
+        val small=cost 2000
+        val large=cost 8000
+    in check ("analysis is linear in a unit's declarations: 4 times the declarations, " ^
+        Int.toString small ^ " to " ^ Int.toString large ^ " bytes",large<6*small) end
+  (* a worker of its own, and the phases it reports *)
+  fun harness () =
+    let val (vm,worker)=case CommandLine.arguments () of [vm,worker] => (vm,worker) | _ => raise Fail "worker paths required"
+        val process=P.start {command=vm,args=[worker],limits=Subprocess.unlimited}
+        val inbox=ref [] : V.value list ref
+        val phases=ref [] : string list ref
+        fun progress value=(V.bytes(V.field(value,"op"))="progress") handle V.Invalid _=>false
+        fun receive predicate =
+          let val until=Time.+ (Time.now (),Time.fromSeconds 30)
+              fun find ()=case List.find predicate (!inbox) of SOME value =>
+                    (inbox:=List.filter (fn other => other<>value) (!inbox);value)
+                | NONE => if Time.> (Time.now (),until) then raise Fail "analysis worker timeout" else
+                    let val events=P.pump (process,OS.IO.poll (P.descriptors process,SOME (Time.fromMilliseconds 20)))
+                        val ()=List.app (fn P.Message value =>
+                            if progress value then phases:=V.bytes (V.field (value,"phase")):: !phases else inbox:= !inbox @ [value]
+                          | P.Ended => raise Fail "analysis worker exited" | P.Failed message => raise Fail message) events
+                    in find () end
+          in find () end
+        val serial=ref (0:IntInf.int)
+        fun ready ()=ignore (receive (fn value => (V.bytes (V.field (value,"op"))="ready") handle V.Invalid _ => false))
+        fun call fields=
+          let val ()=serial:=IntInf.+ (!serial,1)
+              val id= !serial
+              val ()=ready ()
+              val ()=P.enqueue (process,V.Object (("id",V.Integer id)::fields))
+              val answer=receive (fn value => (V.integer (V.field (value,"id"))=id) handle V.Invalid _ => false)
+          in V.field (answer,"result") handle V.Invalid _ =>
+               let val error=V.field (answer,"error")
+               in raise Fail (case error of V.Bytes message => message | _ => V.bytes (V.field (error,"message"))) end end
+        fun stop ()=
+          let val ()=P.terminate process
+              val until=Time.+ (Time.now (),Time.fromSeconds 3)
+              fun reap ()=case P.reap process of SOME _ => () | NONE =>
+                if Time.> (Time.now (),until) then raise Fail "worker not reaped"
+                else (ignore (OS.IO.poll ([],SOME (Time.fromMilliseconds 10)));reap ())
+          in reap () end
+    in {call=call,phases=phases,stop=stop} end
+  fun writeFile (file,text)=let val output=TextIO.openOut file in TextIO.output (output,text);TextIO.closeOut output end
+  fun readFile file=let val input=TextIO.openIn file in TextIO.inputAll input before TextIO.closeIn input end
+  (* A project on disk, every file older than a stamp's doubt, and a file of it open. *)
+  fun project action =
+    let val root=OS.FileSys.tmpName ()
+        val ()=OS.FileSys.remove root handle OS.SysErr _ => ()
+        val ()=OS.FileSys.mkDir root
+        val root=OS.FileSys.fullPath root
+        fun path name=OS.Path.concat (root,name)
+        val old=Time.- (Time.now (),Time.fromSeconds 100)
+        fun age name=OS.FileSys.setTime (path name,SOME old)
+        val ()=writeFile (path "a.sml","val a=1\n")
+        val ()=writeFile (path "b.sml","val b=a+1\n")
+        val ()=writeFile (path "p.build","files a.sml b.sml end\n")
+        val ()=List.app age ["a.sml","b.sml","p.build"]
+        val ()=OS.FileSys.setTime (root,SOME old)
+        val platform=LspUri.Posix
+        fun uri name=LspUri.original (LspUri.fromPath (platform,path name))
+        val workspace=W.new {platform=platform,lib="lib"}
+        val ()=W.setRoots (workspace,[LspUri.original (LspUri.fromPath (platform,root))])
+        val documents=D.new (LspProtocol.Utf16,{maxDocuments=3,maxDocumentBytes=4*1024*1024,maxTotalBytes=8*1024*1024,
+          maxDocumentLines=200000,maxTotalLines=300000})
+        val _=D.openDocument (documents,{uri=uri "b.sml",languageId="sml",version=1,text="val b=a+1\n"})
+        val {call,phases,stop}=harness ()
+        fun state ()=M.capture (workspace,documents)
+        fun check ()=call [("op",V.Bytes "check"),("uri",V.Bytes (uri "b.sml")),("encoding",V.Bytes "utf-16"),("state",state ())]
+        fun discover ()=call [("op",V.Bytes "discover"),("uri",V.Bytes (uri "b.sml")),("state",state ())]
+        fun planned ()=length (List.filter (fn phase => phase="planning") (!phases))
+        fun edit (version,text)=ignore (D.changeDocument (documents,{uri=uri "b.sml",version=version,changes=[D.Replace text]}))
+        fun errors reply=case V.array (V.field (reply,"reports")) of [] => [] | report::_ =>
+          (case Json.member ("items",V.unjson (V.field (report,"report"))) of SOME (Json.Array items) => items | _ => [])
+        fun cleanup ()=(List.app (fn name => OS.FileSys.remove (path name) handle OS.SysErr _ => ()) ["a.sml","b.sml","p.build","q.build"];
+          OS.FileSys.rmDir root handle OS.SysErr _ => ())
+        val result=(action {path=path,age=age,root=root,old=old,check=check,discover=discover,planned=planned,edit=edit,errors=errors,workspace=workspace}
+          handle error => (stop ();cleanup ();raise error))
+    in stop ();cleanup ();result end
+  (* E23: a discover job read every target before every check: 19.1 s against 0.6 s *)
+  fun planHolds ()=project (fn {discover,check,planned,edit,errors,...} =>
+    let val _=discover ()
+        val first=planned ()
+        val ()=Expect.that ("the first discovery plans",first=1)
+        val reply=check ()
+        val ()=Expect.that ("the check takes the discovery's plan",planned ()=first andalso null (errors reply))
+        val ()=edit (2,"val b=a+2\n")
+        val _=discover ()
+        val _=check ()
+    in Expect.that ("an edit of a source plans nothing",planned ()=first) end)
+  fun planMoves ()=project (fn {path,age,root,old,discover,check,planned,edit,errors,...} =>
+    let val _=check ()
+        val first=planned ()
+        (* the same size, and older than the file's doubt: a time that moved *)
+        val ()=writeFile (path "p.build","files b.sml a.sml end\n")
+        val ()=OS.FileSys.setTime (path "p.build",SOME (Time.+ (old,Time.fromSeconds 10)))
+        val reply=check ()
+        val ()=Expect.that ("a build file that changed plans again",planned ()=first+1)
+        val ()=Expect.that ("and its order holds",not (null (errors reply)))
+        val ()=writeFile (path "p.build","files a.sml b.sml end\n")
+        val ()=age "p.build"
+        val reply=check ()
+        val ()=Expect.that ("back again",null (errors reply))
+        val count=planned ()
+        val _=discover ()
+        val ()=Expect.that ("that plan holds",planned ()=count)
+        val ()=writeFile (path "q.build","files b.sml end\n")
+        val ()=OS.FileSys.setTime (path "q.build",SOME old)
+        val _=discover ()
+    in Expect.that ("a new build beside it plans again",planned ()=count+1) end)
+  (* a file written this second, of the same size: a stamp cannot tell *)
+  fun planRacy ()=project (fn {path,check,planned,errors,...} =>
+    let val ()=writeFile (path "p.build","files b.sml a.sml end\n")
+        val first=check ()
+        val ()=Expect.that ("a build written now is read",not (null (errors first)))
+        val ()=writeFile (path "p.build","files a.sml b.sml end\n")
+        val second=check ()
+        val ()=Expect.that ("and so is one rewritten in the same second at the same size",null (errors second))
+        val ()=writeFile (path "a.sml","val c=1\n")
+        val third=check ()
+    in Expect.that ("as is a closed source",not (null (errors third))) end)
+  fun unitsOf count=List.tabulate (count,fn i => {file="unit" ^ Int.toString i ^ ".sml",text="val v" ^ Int.toString i ^ "=" ^
+    (if i=0 then "1" else "v" ^ Int.toString (i-1)) ^ "\nstructure S" ^ Int.toString i ^ "=struct datatype t=C end\n",
+    revision="1",mode="ascii",annotations=[]}:A.input)
+  fun checkOf (context,inputs)=A.check (context,{project=NONE,inputs=inputs,cancelled=fn () => false})
+  (* E23: a query of an early file elaborated every unit after it, 2.35 s against 0.012 s *)
+  fun queryStops () =
+    let fun cost count =
+          let val compiler=C.session {lib=NONE,flags=[]}
+              val analysis=A.create (compiler,{context="query"})
+              val snapshot=checkOf (analysis,unitsOf count)
+              val (candidates,{bytes,...})=Runtime.profile (fn () => A.visibleAt (snapshot,{ordinal=1,offset=0,path=[]}))
+              val ()=check ("the query sees the unit before it",List.exists (fn candidate:A.candidate => #name candidate="v0") candidates)
+          in A.close analysis;C.close compiler;bytes end
+        val small=cost 10
+        val large=cost 160
+    in check ("a query costs nothing of the units after it: " ^ Int.toString small ^ " to " ^ Int.toString large ^ " bytes",
+        large<3*small) end
+  (* E23: register and stableName, and syntaxAt per input, were quadratic in units *)
+  fun linearUnits () =
+    let fun cost count =
+          let val compiler=C.session {lib=NONE,flags=[]}
+              val analysis=A.create (compiler,{context="units"})
+              val (_,{bytes,...})=Runtime.profile (fn () =>
+                let val snapshot=checkOf (analysis,unitsOf count)
+                    val ()=check ("the units check",null (A.diagnostics snapshot))
+                in List.app (fn ordinal => ignore (A.syntaxAt (snapshot,{ordinal=ordinal}))) (List.tabulate (count,fn i => i)) end)
+          in A.close analysis;C.close compiler;bytes end
+        val small=cost 300
+        val large=cost 1200
+    in check ("analysis is linear in units: 4 times the units, " ^ Int.toString small ^ " to " ^ Int.toString large ^ " bytes",
+        large<6*small) end
+  (* E23: every hover filtered the occurrences of every unit *)
+  fun hoverPerUnit () =
+    let fun cost count =
+          let val compiler=C.session {lib=NONE,flags=[]}
+              val analysis=A.create (compiler,{context="hover"})
+              val snapshot=checkOf (analysis,unitsOf count)
+              val unit=valOf (A.unitAt (snapshot,{ordinal=0}))
+              val (found,{bytes,...})=Runtime.profile (fn () => A.occurrencesIn (snapshot,unit))
+              val ()=check ("a unit's occurrences are its own",not (null found) andalso
+                List.all (fn occurrence:A.occurrence => #unit occurrence=unit) found andalso
+                found=List.filter (fn occurrence:A.occurrence => #unit occurrence=unit) (A.occurrences snapshot))
+          in A.close analysis;C.close compiler;bytes end
+        val small=cost 10
+        val large=cost 160
+    in check ("one unit's occurrences cost nothing of the others: " ^ Int.toString small ^ " to " ^ Int.toString large ^ " bytes",
+        large<3*small) end
+  (* A tree of files on disk, a minute old, a worker, and a way to open one of
+     them, check it and discover its contexts; the client's folder is the
+     tree's root. *)
+  fun tree (files,action) =
+    let val root=OS.FileSys.tmpName ()
+        val ()=OS.FileSys.remove root handle OS.SysErr _ => ()
+        val ()=OS.FileSys.mkDir root
+        val root=OS.FileSys.fullPath root
+        fun path name=OS.Path.concat (root,name)
+        val made=ref [root]
+        fun mkdirs dir=if dir=root orelse List.exists (fn other => other=dir) (!made) then () else
+          (mkdirs (OS.Path.dir dir);OS.FileSys.mkDir dir;made:=dir:: !made)
+        val old=Time.- (Time.now (),Time.fromSeconds 100)
+        val ()=List.app (fn (name,text) => (mkdirs (OS.Path.dir (path name));writeFile (path name,text);
+          OS.FileSys.setTime (path name,SOME old))) files
+        val ()=List.app (fn dir => OS.FileSys.setTime (dir,SOME old)) (!made)
+        val platform=LspUri.Posix
+        fun uri name=LspUri.original (LspUri.fromPath (platform,path name))
+        val workspace=W.new {platform=platform,lib="lib"}
+        val ()=W.setRoots (workspace,[LspUri.original (LspUri.fromPath (platform,root))])
+        val documents=D.new (LspProtocol.Utf16,{maxDocuments=8,maxDocumentBytes=4*1024*1024,maxTotalBytes=8*1024*1024,
+          maxDocumentLines=200000,maxTotalLines=300000})
+        fun open' name=if isSome (D.snapshot (documents,uri name)) then () else ignore (D.openDocument (documents,{uri=uri name,languageId="sml",version=1,text=
+          List.foldl (fn ((other,text),found) => if other=name then text else found) "" files}))
+        val {call,phases,stop}=harness ()
+        (* as the service captures it, with the folder the client watches once
+           watch () says so; changed names files an event says changed *)
+        val watching=ref false
+        fun state ()=V.Object (("watchedRoots",M.strings (if !watching then [LspUri.original (LspUri.fromPath (platform,root))] else []))::
+          V.object (M.capture (workspace,documents)))
+        fun watch ()=watching:=true
+        fun changed names=W.changed (workspace,List.map (fn name => (uri name,false)) names)
+        fun check name=(open' name;call [("op",V.Bytes "check"),("uri",V.Bytes (uri name)),("encoding",V.Bytes "utf-16"),("state",state ())])
+        fun discover name=(open' name;call [("op",V.Bytes "discover"),("uri",V.Bytes (uri name)),("state",state ())])
+        fun workspaceDiagnostics ()=V.unjson (call [("op",V.Bytes "workspace"),("method",V.Bytes "workspace/diagnostic"),
+          ("encoding",V.Bytes "utf-16"),("params",V.json (Json.Object [("previousResultIds",Json.Array [])])),
+          ("capabilities",V.json (Json.Object [])),("state",state ())])
+        fun errors reply=case V.array (V.field (reply,"reports")) of [] => [] | report::_ =>
+          (case Json.member ("items",V.unjson (V.field (report,"report"))) of SOME (Json.Array items) => items | _ => [])
+        fun messages reply=List.map (fn item => case Json.member ("message",item) of SOME (Json.String text) => text | _ => "") (errors reply)
+        (* a question of a check's snapshot, at a line and a character of a file *)
+        fun query (reply,method,name,line,character)=V.unjson (call [("op",V.Bytes "query"),("snapshot",V.field (reply,"snapshot")),
+          ("method",V.Bytes method),("params",V.json (Json.Object [("textDocument",Json.Object [("uri",Json.String (uri name))]),
+            ("position",Json.Object [("line",Json.int line),("character",Json.int character)])]))])
+        fun clean dir=(List.app (fn entry => let val full=OS.Path.concat (dir,entry)
+            in if OS.FileSys.isDir full then clean full else OS.FileSys.remove full end)
+            (let val stream=OS.FileSys.openDir dir
+                 fun all found=case OS.FileSys.readDir stream of NONE => found | SOME entry => all (entry::found)
+             in all [] before OS.FileSys.closeDir stream end);OS.FileSys.rmDir dir) handle OS.SysErr _ => ()
+        val result=(action {uri=uri,path=path,check=check,discover=discover,errors=errors,messages=messages,phases=phases,
+          workspaceDiagnostics=workspaceDiagnostics,watch=watch,changed=changed,old=old,query=query} handle error => (stop ();clean root;raise error))
+    in stop ();clean root;result end
+  fun kind reply=V.bytes (V.field (reply,"kind"))
+  fun contextNames reply=List.map (fn context => V.bytes (V.field (context,"build"))) (V.array (V.field (reply,"contexts")))
+  fun shown reply=kind reply ^ " " ^ String.concatWith " " (List.map (fn name => OS.Path.file name) (contextNames reply))
+  (* D26: a file of a library is checked in the library, whatever else names it *)
+  fun owner ()=tree ([("lib1/library.build","files x.sml y.sml end\n"),("lib1/x.sml","structure X=struct val x=1 end\n"),
+      ("lib1/y.sml","structure Y=struct val y=X.x end\n"),
+      ("program.build","files lib1/x.sml lib1/y.sml main.sml end\n"),("main.sml","val main=Y.y\n"),
+      ("lib1/tests.build","files x.sml y.sml check.sml end\n"),("lib1/check.sml","val checked=Y.y\n")],
+    fn {uri,discover,check,errors,...} =>
+    let val found=discover "lib1/y.sml"
+        val ()=Expect.that ("a file of a library has one context, the library's, and no prompt: " ^ shown found,
+          kind found="selected" andalso contextNames found=[uri "lib1/library.build"])
+        val ()=Expect.that ("and checks in it",null (errors (check "lib1/y.sml")))
+        val outside=discover "main.sml"
+    in Expect.that ("a file of no library keeps its build",kind outside="selected" andalso contextNames outside=[uri "program.build"]) end)
+  (* D26: contexts compared by what the file's names resolve to, never by a
+     printed type; one that never reaches the file is no candidate *)
+  fun compared ()=tree ([("one.build","files base.sml shared.sml end\n"),("two.build","files base.sml other.sml shared.sml end\n"),
+      ("three.build","files broken.sml shared.sml end\n"),("four.build","files input.sml shared.sml end\n"),
+      ("base.sml","structure Base=struct val input=1 end\n"),("other.sml","structure Other=struct val unused=true end\n"),
+      ("broken.sml","val broken:int=true\n"),("input.sml","structure Base=struct val input=2 end\n"),
+      ("shared.sml","val result=Base.input+1\n"),
+      ("same.build","files base.sml twin.sml end\n"),("again.build","files base.sml other.sml twin.sml end\n"),
+      ("twin.sml","val twin=Base.input\n")],
+    fn {uri,discover,check,errors,phases,...} =>
+    let val twin=discover "twin.sml"
+        val ()=Expect.that ("contexts whose names resolve alike ask nothing: " ^ shown twin,kind twin="selected" andalso
+          contextNames twin=[uri "again.build",uri "same.build"])
+        val ()=Expect.that ("and the file checks in the first",null (errors (check "twin.sml")))
+        val shared=discover "shared.sml"
+        val ()=Expect.that ("where they resolve apart a choice is asked, of those that reach the file: " ^ shown shared,kind shared="ambiguous" andalso
+          contextNames shared=[uri "four.build",uri "one.build",uri "two.build"])
+    in Expect.that ("each comparison is reported",List.exists (fn phase => phase="contexts-compared") (!phases)) end)
+  (* D26: contexts compared by what each name the file uses was typed as
+     too, its fingerprint, which no place says: common.sml in two builds
+     says type key=Config.word, Word32.word in one and Word64.word in the
+     other, and client.sml, which names key alone, is asked about; where
+     Config.word is Word32.word in both, from two files, nothing is asked *)
+  fun typed ()=tree ([("config32.sml","structure Config=struct type word=Word32.word end\n"),
+      ("config64.sml","structure Config=struct type word=Word64.word end\n"),
+      ("config32copy.sml","structure Config=struct type word=Word32.word end\n"),
+      ("common.sml","type key=Config.word\n"),("client.sml","fun keep (k:key)=k\nval kept=keep\n"),
+      ("b32.build","files config32.sml common.sml client.sml end\n"),("b64.build","files config64.sml common.sml client.sml end\n"),
+      ("twin-common.sml","type key=Config.word\n"),("twin-client.sml","fun keep (k:key)=k\nval kept=keep\n"),
+      ("twin-a.build","files config32.sml twin-common.sml twin-client.sml end\n"),
+      ("twin-b.build","files config32copy.sml twin-common.sml twin-client.sml end\n")],
+    fn {uri,discover,...} =>
+    let val apart=discover "client.sml"
+        val ()=Expect.that ("a file whose names are typed apart is asked about, though its places agree: " ^ shown apart,
+          kind apart="ambiguous" andalso contextNames apart=[uri "b32.build",uri "b64.build"])
+        val alike=discover "twin-client.sml"
+    in Expect.that ("and one whose names are typed alike is not: " ^ shown alike,kind alike="selected" andalso
+         contextNames alike=[uri "twin-a.build",uri "twin-b.build"]) end)
+  (* D28: where the client watches, its file events say what changed, and a
+     plan takes them over the stamps: a build rewritten at its size and time,
+     which no stamp can tell, is read again when an event names it, and an
+     event that names another file plans nothing. *)
+  fun planByEvents ()=tree ([("lib1/library.build","files x.sml y.sml end\n"),("lib1/x.sml","structure X=struct val x=1 end\n"),
+      ("lib1/y.sml","structure Y=struct val y=X.x end\n"),("main.sml","val main=Y.y\n"),
+      ("rune.workspace","roots . end\n"),("program.build","libraries lib1 end\nfiles main.sml end\n")],
+    fn {path,check,errors,phases,watch,changed,old,...} =>
+    let fun planned ()=length (List.filter (fn phase => phase="planning") (!phases))
+        val ()=watch ()
+        val ()=Expect.that ("a file of a library checks in it",null (errors (check "lib1/y.sml")))
+        val first=planned ()
+        val ()=changed ["main.sml"]
+        val ()=Expect.that ("an event of a file the plan did not read plans nothing",
+          null (errors (check "lib1/y.sml")) andalso planned ()=first)
+        val ()=writeFile (path "lib1/library.build","files y.sml x.sml end\n")
+        val ()=OS.FileSys.setTime (path "lib1/library.build",SOME old)
+        val ()=Expect.that ("with no event, a build rewritten at its size and time is not seen",
+          null (errors (check "lib1/y.sml")) andalso planned ()=first)
+        val ()=changed ["lib1/library.build"]
+        val reply=check "lib1/y.sml"
+    in Expect.that ("its event has it read again, and its new order holds",planned ()=first+1 andalso not (null (errors reply))) end)
+  (* D28: where the events since a closed input was read are not whole, its
+     stamp says, not the events: a change no event named is seen *)
+  fun textsPastEvents ()=tree ([("lib1/library.build","files x.sml y.sml end\n"),("lib1/x.sml","structure X=struct val x=1 end\n"),
+      ("lib1/y.sml","structure Y=struct val y=X.x+1 end\n")],
+    fn {path,check,errors,watch,changed,...} =>
+    let val ()=watch ()
+        val ()=Expect.that ("the library checks",null (errors (check "lib1/y.sml")))
+        val ()=writeFile (path "lib1/x.sml","structure X=struct val x=true end\n")
+        val ()=changed (List.tabulate (W.changeLimit+1,fn i => "lib1/elsewhere" ^ Int.toString i ^ ".sml"))
+    in Expect.that ("a closed input changed with no event is read again when the events are not whole",
+        not (null (errors (check "lib1/y.sml")))) end)
+  (* D28: the plan a file of no library has from the index of what each build
+     names (RuneLspProjects.indexed) is the one enrich and W.resolve come to,
+     where a file is named by two programs that import a library of the
+     workspace (libraries NAME, the one way), through a symbolic link to its
+     directory, by a hard link under another name, by a path with .., by a
+     path with a variable, by a build that does not parse; with every build a
+     target and with none, the file open as an editor has it. *)
+  fun indexExact () =
+    let val root=OS.FileSys.fullPath (let val dir=OS.FileSys.tmpName () in (OS.FileSys.remove dir handle OS.SysErr _ => ());
+          OS.FileSys.mkDir dir;dir end)
+        fun path name=OS.Path.concat (root,name)
+        val ()=List.app (fn dir => OS.FileSys.mkDir (path dir)) ["lib","lib/a","apps","shared","deep","deep/er"]
+        val ()=List.app (fn (name,text) => writeFile (path name,text))
+          [("rune.workspace","roots lib end\n"),
+           ("lib/a/library.build","files x.sml end\n"),("lib/a/x.sml","structure X=struct val x=1 end\n"),
+           ("apps/p.build","libraries a end\nfiles p.sml end\n"),("apps/p.sml","val p=X.x\n"),
+           ("apps/q.build","libraries a end\nfiles ../shared/s.sml end\n"),
+           ("apps/r.build","files ../shared/s.sml end\n"),("shared/s.sml","val s=1\n"),
+           ("apps/t.build","files ../link/s.sml end\n"),("apps/h.build","files ../shared/h.sml end\n"),
+           ("apps/u.build","files ../deep/er/../../shared/s.sml end\n"),
+           ("apps/v.build","files $(NOWHERE)/s.sml end\n"),("apps/bad.build","files ../shared/s.sml\n"),
+           ("apps/w.build","use r.build\n")]
+        val ()=Posix.FileSys.symlink {old=path "shared",new=path "link"}
+        val ()=Posix.FileSys.link {old=path "shared/s.sml",new=path "shared/h.sml"}
+        val platform=LspUri.Posix
+        fun uri name=LspUri.original (LspUri.fromPath (platform,path name))
+        val builds=["lib/a/library.build","apps/p.build","apps/q.build","apps/r.build","apps/t.build","apps/h.build",
+          "apps/u.build","apps/v.build","apps/bad.build","apps/w.build"]
+        fun workspaceOf targets=
+          let val workspace=W.new {platform=platform,lib="lib"}
+              val ()=W.setRoots (workspace,[uri ""])
+              val ()=if targets then W.configure (workspace,Json.Object [("targets",Json.Array (List.map (fn name =>
+                Json.Object [("name",Json.String name),("build",Json.String (uri name))]) builds))]) else ()
+          in workspace end
+        fun kindOf selection=case selection of W.Selected c => "selected " ^ #id c | W.Ambiguous cs => "prompt " ^ Int.toString (length cs) | W.Loose => "none"
+        fun compare targets name=
+          let val documents=D.new (LspProtocol.Utf16,{maxDocuments=8,maxDocumentBytes=4*1024*1024,maxTotalBytes=8*1024*1024,
+                maxDocumentLines=200000,maxTotalLines=300000})
+              val _=D.openDocument (documents,{uri=uri name,languageId="sml",version=1,text=readFile (path name)})
+              val old=workspaceOf targets
+              val _=RuneLspProjects.enrich (old,documents,fn () => false)
+              val (selection,contexts)=W.resolve (old,documents,uri name)
+              val fresh=workspaceOf targets
+              val index=RuneLspProjects.index ()
+              val planned=case RuneLspProjects.owned (fresh,documents,uri name,fn () => false) of SOME planned => SOME planned
+                | NONE => RuneLspProjects.indexed (index,fresh,documents,uri name,fn () => false)
+          in case planned of NONE => (name,"not settled")
+             | SOME {contexts=found,...} =>
+                 (name,if List.map #id found=List.map #id contexts andalso kindOf (W.selectAmong (fresh,uri name,found))=kindOf selection
+                       then "the same" else "DIFFERENT: " ^ String.concatWith "," (List.map #id found) ^ " against " ^
+                         String.concatWith "," (List.map #id contexts)) end
+        val files=["shared/s.sml","shared/h.sml","apps/p.sml","lib/a/x.sml"]
+        val configured=List.map (compare true) files
+        (* with no targets, no root build holds them: discovery decides *)
+        val discovered=List.map (compare false) files
+        val outcomes=configured @ discovered
+        fun clean dir=(List.app (fn entry => let val full=OS.Path.concat (dir,entry)
+            in if (Posix.FileSys.ST.isLink (Posix.FileSys.lstat full)) then OS.FileSys.remove full
+               else if OS.FileSys.isDir full then clean full else OS.FileSys.remove full end)
+            (let val stream=OS.FileSys.openDir dir
+                 fun all found=case OS.FileSys.readDir stream of NONE => found | SOME entry => all (entry::found)
+             in all [] before OS.FileSys.closeDir stream end);OS.FileSys.rmDir dir) handle OS.SysErr _ => ()
+        val ()=clean root
+    in List.app (fn (name,outcome) => Expect.that ("the index plans " ^ name ^ " as enrich does: " ^ outcome,
+         outcome="the same" orelse outcome="not settled")) outcomes;
+       Expect.that ("with every build a target, the index or the owner settles every file: " ^
+         String.concatWith "; " (List.map (fn (n,result) => n ^ " " ^ result) configured),
+         List.all (fn (_,outcome) => outcome="the same") configured) end
+  (* D26: a file in no build, its names found in its directory, in a library
+     and anywhere in its workspace, the nearest first *)
+  fun implicit ()=tree ([("rune.workspace","roots lib end\n"),
+      ("tools/a/script.sml","val total=Helper.twice 2 + Far.value\nval document=Json.decode \"[]\"\n"),
+      ("tools/a/helper.sml","structure Helper=struct fun twice x=Inner.base*x end\n"),
+      ("tools/a/inner.sml","structure Inner=struct val base=2 end\n"),
+      ("tools/b/helper.sml","structure Helper=struct fun twice x=x end\n"),
+      ("deep/far/far.sml","structure Far=struct val value=3 end\n"),
+      ("tools/a/unbound.sml","val missing=Nowhere.value\n"),
+      ("tools/a/broken.sml","val sum=Helper.twice true\nval later:string=Far.value\n")],
+    fn {check,messages,discover,...} =>
+    let val found=discover "tools/a/script.sml"
+        val ()=Expect.that ("a file in no build has its implicit library, and no prompt",kind found="selected" andalso
+          V.bytes (V.field (V.field (found,"context"),"name"))="implicit")
+        val found=messages (check "tools/a/script.sml")
+        val ()=Expect.that ("its names are found beside it, in a library and anywhere in its workspace: " ^ String.concatWith "; " found,
+          null found)
+        val ()=Expect.that ("a name nowhere is unbound",List.exists (fn text => String.isSubstring "Nowhere" text)
+          (messages (check "tools/a/unbound.sml")))
+        val broken=messages (check "tools/a/broken.sml")
+    in Expect.that ("the nearest of two is taken, and analysis goes past an error",length broken=2) end)
+  (* A virtual library's client in five builds (D22; examples/virtual/table):
+     an implementation named in the build, two through libraries, whose
+     sources a library's build names ../../table.sml, and a plugin, which
+     declares the functor `_dynamic` in a file of its own. The client is
+     compiled against the signature alone in each, so nothing is asked, and
+     go-to-definition goes to the declaration of the context it is checked
+     in, never to an implementation. The signature is compared as resolved,
+     not as written: a sixth build that spells it otherwise, another
+     parameter's name and another name of TABLE, asks nothing either; and
+     a virtual functor of another signature is a real difference, and is
+     asked about, even where its declaration is one file whose TABLE names
+     another signature. *)
+  val keySig="signature KEY=sig type t val compare:t*t->order end\n"
+  val tableSig="signature TABLE=sig type key type 'a table val empty:'a table\n" ^
+    "  val insert:'a table*key*'a->'a table val size:'a table->int end\n"
+  val virtualTable="functor Table=_virtual (K:KEY):TABLE where type key=K.t\n"
+  fun implementation representation="_export functor Table (K:KEY):TABLE where type key=K.t=\nstruct\n" ^
+    "  type key=K.t\n  type 'a table=" ^ representation ^ "\n  val empty=[]\n  fun insert (t,k,v)=(k,v)::t\n  val size=List.length\nend\n"
+  val client="structure IntKey=struct type t=int val compare=Int.compare end\n" ^
+    "structure Squares=Table (IntKey)\nval squares=Squares.insert (Squares.empty,3,9)\nval count=Squares.size squares\n"
+  fun virtualLibrary ()=tree ([("rune.workspace","roots libraries end\n"),
+      ("key_sig.sml",keySig),("table_sig.sml",tableSig),("table.sml",virtualTable),
+      ("list.sml",implementation "(key*'a) list"),("tree.sml",implementation "(key*'a) list (* a tree, some day *)"),
+      ("dynamic.sml","functor Table=_dynamic \"table.rbu\" (K:KEY):TABLE where type key=K.t\n"),("main.sml",client),
+      ("list.build","key_sig.sml\ntable_sig.sml\nimplements Table = list.sml end\ntable.sml\nmain.sml\n"),
+      ("tree.build","key_sig.sml\ntable_sig.sml\nimplements Table = tree.sml end\ntable.sml\nmain.sml\n"),
+      ("dynamic.build","key_sig.sml\ntable_sig.sml\ndynamic.sml\nmain.sml\n"),
+      ("respelled.sml","signature TABLE_OF_KEYS = TABLE\nfunctor Table = _virtual (Key : KEY) : TABLE_OF_KEYS where type key = Key.t\n"),
+      ("respelled.build","key_sig.sml\ntable_sig.sml\nrespelled.sml\nmain.sml\n"),
+      ("libraries/table/library.build","exports (signature KEY, signature TABLE, functor Table)\n" ^
+         "virtual (functor Table) in ../../table.sml\n../../key_sig.sml\n../../table_sig.sml\n../../table.sml\n"),
+      ("libraries/table-list/library.build","requires table end\nimplements (functor Table)\n../../list.sml\n"),
+      ("libraries/table-tree/library.build","requires table end\nimplements (functor Table)\n../../tree.sml\n"),
+      ("list-libraries.build","libraries table table-list end\nmain.sml\n"),
+      ("tree-libraries.build","libraries table table-tree end\nmain.sml\n"),
+      (* the same client of a virtual functor of two signatures *)
+      ("narrow.sml","functor Table=_virtual (K:KEY):TABLE\n"),
+      ("other.sml","structure Keys=struct type t=string val compare=String.compare end\nstructure Named=Table (Keys)\n"),
+      ("wide.build","key_sig.sml\ntable_sig.sml\ntable.sml\nother.sml\n"),
+      ("narrow.build","key_sig.sml\ntable_sig.sml\nnarrow.sml\nother.sml\n"),
+      (* table.sml's text in two builds, its TABLE two signatures *)
+      ("alt_sig.sml","signature TABLE=sig type key type 'a table val empty:'a table end\n"),
+      ("same.sml","structure Keys=struct type t=string val compare=String.compare end\nstructure Named=Table (Keys)\n"),
+      ("same.build","key_sig.sml\ntable_sig.sml\ntable.sml\nsame.sml\n"),
+      ("alt.build","key_sig.sml\nalt_sig.sml\ntable.sml\nsame.sml\n")],
+    fn {uri,discover,check,errors,messages,query,...} =>
+    let val found=discover "main.sml"
+        val ()=Expect.that ("a virtual library's client in six builds asks nothing: " ^ shown found,kind found="selected" andalso
+          contextNames found=List.map uri ["dynamic.build","list-libraries.build","list.build","respelled.build",
+            "tree-libraries.build","tree.build"])
+        val other=discover "other.sml"
+        val ()=Expect.that ("a virtual functor of another signature is asked about: " ^ shown other,kind other="ambiguous" andalso
+          contextNames other=List.map uri ["narrow.build","wide.build"])
+        val same=discover "same.sml"
+        val ()=Expect.that ("and so is one declared in one file whose TABLE is another signature: " ^ shown same,kind same="ambiguous" andalso
+          contextNames same=List.map uri ["alt.build","same.build"])
+        val checked=check "main.sml"
+        val ()=Expect.that ("it checks: " ^ String.concatWith "; " (messages checked),null (errors checked))
+        (* Table (IntKey), on line 1, in the first context, the plugin's *)
+        fun definition (line,character)=case query (checked,"textDocument/definition","main.sml",line,character) of
+            Json.Array [target] => (case Json.member ("uri",target) of SOME (Json.String place) => place | _ => "")
+          | _ => ""
+        val ()=Expect.that ("go-to-definition on Table goes to the declaration the context has: " ^ definition (1,18),
+          definition (1,18)=uri "dynamic.sml")
+        val ()=Expect.that ("and go-to-implementation finds none",
+          query (checked,"textDocument/implementation","main.sml",1,18)=Json.Array [])
+        val hover=query (checked,"textDocument/hover","main.sml",2,5)
+        val ()=Expect.that ("hover gives the interface's type: " ^ Json.encode hover,
+          Json.member ("contents",hover)=SOME (Json.Object [("kind",Json.String "plaintext"),("value",Json.String "int Squares.table")])
+          orelse (case Json.member ("contents",hover) of SOME contents => Json.member ("value",contents)=SOME (Json.String "int Squares.table")
+                  | NONE => false))
+    in () end)
 end
 structure RuneLspWorkerAnalysisTestMain=Main (struct
   val name="lsp-worker-analysis"
-  val tests=Test.describe "lsp-worker-analysis" [Test.it "snapshots-diagnostics-cancellation" RuneLspWorkerAnalysisTests.run]
+  val tests=Test.describe "lsp-worker-analysis" [Test.it "snapshots-diagnostics-cancellation" RuneLspWorkerAnalysisTests.run,
+    Test.it "linear-in-declarations" RuneLspWorkerAnalysisTests.linear,
+    Test.it "plan-holds-through-edits" RuneLspWorkerAnalysisTests.planHolds,
+    Test.it "plan-moves-with-its-files" RuneLspWorkerAnalysisTests.planMoves,
+    Test.it "plan-trusts-no-new-stamp" RuneLspWorkerAnalysisTests.planRacy,
+    Test.it "query-stops-at-its-unit" RuneLspWorkerAnalysisTests.queryStops,
+    Test.it "linear-in-units" RuneLspWorkerAnalysisTests.linearUnits,
+    Test.it "hover-reads-its-unit" RuneLspWorkerAnalysisTests.hoverPerUnit,
+    Test.it "one-owning-library" RuneLspWorkerAnalysisTests.owner,
+    Test.it "contexts-compared-by-binder" RuneLspWorkerAnalysisTests.compared,
+    Test.it "contexts-compared-by-type" RuneLspWorkerAnalysisTests.typed,
+    Test.it "implicit-library" RuneLspWorkerAnalysisTests.implicit,
+    Test.it "plan-by-file-events" RuneLspWorkerAnalysisTests.planByEvents,
+    Test.it "texts-past-file-events" RuneLspWorkerAnalysisTests.textsPastEvents,
+    Test.it "index-plans-as-enrich" RuneLspWorkerAnalysisTests.indexExact,
+    Test.it "virtual-library-contexts" RuneLspWorkerAnalysisTests.virtualLibrary]
 end)
 val ()=RuneLspWorkerAnalysisTestMain.main ()

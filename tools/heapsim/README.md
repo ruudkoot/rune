@@ -50,16 +50,27 @@ the census's live bytes at every sample.
   (7 seconds).
 * `bin/rune-heap-check heap-validate [--out DIR] WORKLOAD...` holds the copier model to the stock
   VM with no nursery: the workload runs on `bin/runevm --jit=off --nursery 0
-  --stats` at five heap
-  settings, exactly as `bin/rune-measure census` ran it, and the stock's
-  collections must lie between the two bands, the lower band's semispace
-  must equal the stock's, with the stock's bytes
-  copied (with half the band's width as slack) and live data inside the
-  band. The trace is made when it is missing or older than the bytecode or
-  either VM; `CENSUS_TRACES` names the traces' directory and `CENSUS_EVERY`
-  the interval of a census made here. `make check-heapsim` runs it on
-  compile-sigs and intinf_fact; on the bootstrap at 32 KiB all five
-  settings agree, the copied bytes within 0.1%.
+  --stats --gc-log` at five heap settings, exactly as `bin/rune-measure
+  census` ran it, and at each the census VM runs it again with its forced
+  collections where the stock's were and nowhere else (`--census-every 0
+  --census-at`, its clocks from the `--gc-log`). What is alive at a point
+  depends on where the VM collected before (a collection clears the dead
+  registers of the frames that wait and the stack above sp, and the
+  running frame's registers are all roots: `docs/census.md`, *Limits*), so
+  a census of other samples, every 8 KiB, keeps more or less alive than
+  the stock where it collects: 202,664 bytes more at compile-sigs' eighth
+  collection at 4 MiB after build-system M15, M19 and M21, 287,952 less at
+  string_ops' first at 1 MiB. With the stock's own the liveness at every
+  collection is exact, and both bands' runs must make the stock's
+  collections from the first, which allocation alone decides: the same
+  number, semispace, bytes, final live data and copied bytes, each
+  collection's equal to what the census found alive at its clock
+  (`bin/heapsim --probe`), which must be where an object of the trace
+  begins. The trace of every 8 KiB is checked for its own consistency
+  (`--check`, and in Standard ML). It is made when it is missing or older
+  than the bytecode or either VM; `CENSUS_TRACES` names the traces'
+  directory and `CENSUS_EVERY` the interval of a census made here. `make
+  check-heapsim` runs it on compile-sigs and intinf_fact.
 * `bin/rune-heap-check heap-trace-check DIR` checks trace consistency in
   Standard ML, without NumPy. `bin/rune-measure checkold DIR` checks stores' old
   values in Standard ML using bounded binary reads

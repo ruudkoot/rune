@@ -15,3 +15,6 @@ use "@REPL@/twice.sml";
 use "@REPL@/apply.sml";
 structure C = Twice (struct fun step n = n - 1 end);
 C.go 10;
+signature S = sig type t end;
+functor F (X : S) = X and G (Y : S) = Y;
+structure D = G (struct type t = int end);

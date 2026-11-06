@@ -1,0 +1,6 @@
+(* The migrator of build files (docs/build.md, Migrating a tree): a friend
+   of the compiler's library, whose readers of build files and sources it
+   uses. *)
+libraries compiler end
+migrate.sml
+main.sml

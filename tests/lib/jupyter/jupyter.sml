@@ -1,4 +1,4 @@
-(* libraries: test/unit *)
+(* libraries: test/unit json *)
 (* Jupyter: the connection file, the signature of a message (against
    Python's hmac), messages written and read back, and what is refused.
    bin/rune-protocol-check interop jupyter drives a kernel with a client written from

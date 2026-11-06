@@ -81,7 +81,7 @@ suffix replaced by
 Take the basis library from
 .IR DIR /basis ,
 which must contain a
-.B MANIFEST
+.B library.build
 listing the source files to compile before the inputs. Required unless
 .B \-\-no\-prelude
 is given.
@@ -95,18 +95,28 @@ is a directory under the
 .B \-\-lib
 directory, such as
 .BR test/property ,
+else under a root that the workspace's
+.I rune.workspace
+names (docs/build.md, The workspace),
 or a path when it begins with
 .B /
 or
 .BR . .
 Its
-.B MANIFEST
-has the basis library's form, and its lines
-.B # library:
-.I NAME ...
-name the libraries it is written on, which are compiled before it. A
+.B library.build
+has the basis library's form, and names the libraries it is written on,
+which are compiled before it. A
 library's files are chosen as the basis library's are, and may not use
 .BR _prim .
+.IB NAME # VIEW
+sees that view of a library with a header (docs/build.md, A library's header).
+.I NAME
+.BI ( "structure A " as " B" , " ..." )
+renames what it imports, as a build file's
+.B libraries
+does: two imports of one name in one scope, two libraries' or a library's
+and the basis library's, are an error that a rename answers
+(docs/build.md, Clashes).
 Repeatable.
 .TP
 .B \-\-no\-prelude
@@ -117,22 +127,34 @@ top-level environment at all, so it is only useful together with
 .BI \-\-basis " MODE"
 With
 .B demand
-(the default) the compiler looks at the identifiers of the inputs and compiles
-the files of the basis library that provide a structure, signature or functor
-they mention, the files those require, and the few that every program gets.
+(the default) the compiler reads from the syntax of the inputs the names they
+use, not every identifier, and compiles the files of the basis library that
+provide a structure, signature or functor among them, the files those
+require, and the few that every program gets.
 With
 .B all
-it compiles every file. The
-.B MANIFEST
-records what each file provides and requires.
+it compiles every file. The library's index, which the compiler derives
+from its build file and its sources and keeps in its store, records what
+each file provides and requires.
+.TP
+.BI \-\-basis\-view " NAME"
+See the basis library through its view
+.IR NAME :
+its seal files marked
+.BI view= NAME\fR,\fP
+which bind structures again under narrower signatures, are loaded after the
+libraries, which see the basis library whole, so that only the program is
+held to the view. A build file's
+.B view
+.I NAME
+says the same (docs/build.md, Views of the Basis Library).
 .TP
 .B \-\-basis\-deps
 Print the library files that the inputs load, one per line, and exit: a
 file of the basis library by its name, one of another library by its path.
 .TP
 .B \-\-basis\-check
-Check the provides and requires columns of the
-.B MANIFEST
+Check what the basis library's index says each file provides and requires
 against the library sources, and exit; with
 .BR \-\-library ,
 those of the libraries too, whose requires column names what they use of the
@@ -333,18 +355,50 @@ given those files links them.
 .BI \-\-cache\-dir " DIR"
 With
 .BR \-\-units ,
-keep the cache of units in
+keep the cache of units, the store, in
 .IR DIR .
 The default is
 .BR $RUNE_CACHE ,
 else
 .B .rune
-beside the first input.
+in the workspace, the directory of the nearest
+.I rune.workspace
+above the build file or the first input, else beside that file. A compile
+reads the frozen libraries,
+.IR <libdir>/cache ,
+after it, and never writes them.
 .TP
 .B \-\-no\-cache
 With
 .BR \-\-units ,
 compile every unit, and keep none.
+.TP
+.B \-\-cache\-trim
+Remove from the store what no compile took for longer than
+.B \-\-cache\-max\-age
+allows, then, the least recently taken first, what makes it larger than
+.B \-\-cache\-max\-size
+allows, and do nothing else. A compile in units does the same after its
+work, where the store was last trimmed a day ago or more. What a compile
+does not find in the store, it compiles.
+.TP
+.BI \-\-cache\-max\-age " DAYS"
+What
+.B \-\-cache\-trim
+keeps of what no compile took: a whole number of days, 7 unless given, or
+.BR none .
+.TP
+.BI \-\-cache\-max\-size " SIZE"
+How large
+.B \-\-cache\-trim
+leaves the store: bytes, or a number with
+.BR K ,
+.BR M ,
+.B G
+or
+.B T
+after it, 4G unless given, or
+.BR none .
 .TP
 .B \-\-explain\-rebuild
 With
@@ -370,7 +424,8 @@ given. A prototype of the compiler as a service.
 With
 .BR \-\-units ,
 compile each unit the cache has too, and fail where the cache's is not
-the same bytes as what compiling it gives.
+the same bytes as what compiling it gives, or its schemes of what it names
+of other units are not.
 .B $RUNE_VERIFY_CACHE
 set and not empty does the same, and for the REPL's
 .B use
@@ -381,8 +436,15 @@ writes each entry that does not verify, and what compiling it gave, to
 .TP
 .B \-\-deps
 Print the inputs in an order where each comes after the files that declare
-the modules it uses, or name a cycle, a module declared twice or a file
-that declares something other than modules and type abbreviations.
+the modules it uses, each read in the fixity the files before it leave, or
+name a cycle. A file that is not a well-formed unit, one others depend on
+that binds a value, an exception, a datatype or a fixity at its top level,
+opens a structure there, or declares a module another of its scope declares,
+stays where it is written, with a warning for each break (docs/units.md,
+Well-formed units). With
+.BR \-\-build ,
+the build's files in its order, read as the build reads them, its preludes
+and its scopes the build's.
 .TP
 .B \-\-deps\-dot
 The same, as a graph in DOT.
@@ -397,14 +459,28 @@ that declare the modules it uses, and those they need.
 Compile in units what the build file
 .I FILE
 says: its files, each in the basis the declarations before it leave, with
-its libraries' export lists, its
-.B local
-parts and its virtual modules' implementations (docs/build.md).
+the export lists of the libraries it uses and its virtual modules'
+implementations (docs/build.md). The steps it declares run first, each
+where something it reads has changed, and its preprocessors make what their
+files compile; a build that is up to date runs none (docs/build.md,
+Generated sources).
 .TP
 .BI \-\-build\-list " FILE"
 Print the files of the build file
-.IR FILE ,
-in the order they are compiled.
+.I FILE
+and of the libraries it names, with those they are written on, in the order
+they are compiled.
+.TP
+.B \-\-plan
+Print the plan of what the rest of the command line says: of a build file
+.IR FILE .build
+given as the one input, or of the files and libraries given. The plan is
+line-oriented text that needs no Rune to read: the files in compile order, the
+libraries with their boundaries, and the build files it was made from, each
+with its SHA-256 (docs/build.md, The plan). A step is printed and not run.
+Given a
+.IR FILE .plan,
+read it and print it again.
 .TP
 .BI \-\-path " NAME" = DIR
 The path variable
@@ -413,12 +489,13 @@ of build files is
 .IR DIR .
 .TP
 .BI \-\-basis\-index " DIR"
-Write
-.IB DIR /MANIFEST\fR,\fP
-what each file of a library provides and requires, worked out from the
+Print the index of the library in
+.IR DIR ,
+what each of its files provides and requires, made again from the
 library's build file
 .IB DIR /library.build
-and its sources.
+and its sources, with what a client of the library cannot act on said as a
+warning. A compile derives the index itself, and keeps it in its store.
 .TP
 .B \-\-whole
 With
@@ -570,6 +647,14 @@ Where the terminal sets it, its background chooses the theme
 .B dark
 or
 .BR light .
+.TP
+.B RUNE_WARM
+.B off
+turns off the warm path of
+.BR \-\-units :
+every unit taken from the cache has its basis loaded, every source of a
+unit is read for its key, and every build links and writes its output,
+though nothing it rests on changed (docs/units.md, A warm build).
 .SH EXIT STATUS
 .B rune
 exits 0 when it wrote the bytecode (or when
@@ -596,8 +681,28 @@ rune \-\-lib ~/rune/lib hello.sml
 .fi
 .SH FILES
 .TP
-.I <libdir>/basis/MANIFEST
+.I <libdir>/basis/library.build
 The ordered list of basis library sources compiled before the inputs.
+.TP
+.I rune.workspace
+The root of a workspace, the nearest above a build file: the directories its
+libraries are found under, and its named targets. A build's units are named
+from it.
+.TP
+.I .rune
+The workspace's store of compiled units, beside its
+.IR rune.workspace ,
+which every build of the workspace, the REPL's
+.B use
+and the memos of a warm build share
+.RB ( docs/units.md ,
+The store).
+.TP
+.I <libdir>/cache
+The frozen libraries: the Basis Library and the compiler's libraries,
+compiled once, which every compile in units reads after its store, and the
+index of every library beside them, which every compile reads so. No
+compile writes them.
 .SH SEE ALSO
 .BR runevm (1),
 .BR runevm\-stack (1)

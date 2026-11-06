@@ -19,7 +19,11 @@
       { "id": "sml", "aliases": ["Standard ML", "SML"], "extensions": [".sml", ".sig"], "configuration": "./sml-language.json" },
       { "id": "rune-build", "aliases": ["Rune build"], "extensions": [".build"] }
     ],
-    "commands": [{ "command": "runelsp.restart", "title": "Rune: Restart Language Server" }],
+    "commands": [
+      { "command": "runelsp.restart", "title": "Rune: Restart Language Server" },
+      { "command": "runelsp.chooseContext", "title": "Rune: Choose Build Context" },
+      { "command": "runelsp.showOutput", "title": "Rune: Show Language Server Output" }
+    ],
     "configuration": {
       "title": "Rune",
       "id": "runelsp",

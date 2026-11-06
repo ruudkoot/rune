@@ -1,5 +1,5 @@
-(* Private compiler names are used only by this independent differential suite. *)
-libraries unicode json test/unit end
-files ../../build/config.sml end
-use ../../lib/compiler/api.build
+(* Private compiler names are used only by this independent differential suite,
+   a friend of the compiler's library, which sees all it declares (docs/build.md,
+   A library's header). *)
+libraries unicode json test/unit compiler end
 ../../tests/lsp/syntax-tests.sml

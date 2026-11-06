@@ -12,6 +12,8 @@ for opening `src/main/rune-main.sml` in the complete `rune.build` project.
 It explicitly supplies the source/library root and target, then sends the
 diagnostic/hover/symbol/link burst before waiting for any response. Latencies
 start at dispatch and include queue time. Any failed response fails the run.
+`make test-lsp-replay`, part of `make test-lsp`, runs it on this tree. It finds
+its positions by name in the source, which grows.
 
 ```
 bin/runevm bin/rune-lsp-project-replay.rbc /absolute/VM /absolute/runelsp.rbc \
@@ -48,6 +50,98 @@ For a separate retention pass, also set `RUNE_LSP_PROFILE_GC=1`. The worker
 then collects after each command returns and emits `job-retained`; this
 includes only retained worker state after temporary command data is dead.
 Forced-collection runs must not supply headline query latency measurements.
+
+## Keeping what is computed
+
+`bin/rune-lsp-oracle` is the oracle of what the server keeps (`tools/lsp/oracle.sml`
+says how to run it). One context lives through the edits of `oracle/*.tsv`, and
+after each a fresh context analyses the same inputs; a difference in a fact, an
+occurrence with its binding and locations, a type, a diagnostic or a query fails
+the run. `--require` names the paths a run must have taken, of `placed walked
+rebound loaded cutoff broken failed cancelled query opened shared stored`, so that a
+change that stops a path being taken fails too. Every unit is compared, but with
+`--sample N`. `--focus` closes what is not edited, as an editor does, and the units
+it compares are opened, from their notes where those hold; a fresh context keeps
+every file open, but against a record. `--share` has the kept context take the
+libraries' units from another context first, as the server's contexts do
+(`docs/language-server.md`, *Two builds over one library*); the fresh ones never
+share. `--store DIR` has the kept context read the store in DIR, which a compile
+made: another context checks first and writes the sidecars, and the kept one,
+cold, takes the units whose entries and sidecars hold from the store
+(`docs/language-server.md`, *The store*); the fresh ones read none. `make
+test-lsp-oracle` makes its store with a compile of `rune.build` at `-O0`, so that
+the run takes entries of another configuration than its own.
+
+`bin/rune-lsp-contexts` (`tools/lsp/contexts.sml`) asks the server's own code what it
+makes of a tree's files: `--builds` the contexts and prompts of every source of the
+builds listed, `--zero` the implicit library of each file listed, in no build, and
+`--share` the second of two builds over one library, sharing and alone. Each takes
+`--before` to do as the server did before the build-system roadmap's M19.
+`--owned`, with `--builds`, holds the plan of a file of a library made from its
+owner's targets alone, and of any other file the index of what each build names
+makes (`RuneLspProjects.indexed`), to what enrich and the choice of a context
+make of it, and fails a run where they differ; `--targets` makes every build
+listed a target.
+
+```
+bin/runevm --heap-limit 4294967296 bin/rune-lsp-contexts.rbc --lib "$PWD/lib" --root "$PWD" \
+  --builds builds.txt --out prompts.jsonl
+```
+
+```
+make test-lsp-oracle
+RUNE_ORACLE_HOL4=/path/boss.build RUNE_ORACLE_MLTON=/path/mlton.build make test-lsp-oracle-corpora
+```
+
+The second is the nightly tier's, and takes hours. `RUNE_ORACLE_HOL4` is HOL4's
+`src/boss` closure as one build file, after HOL's filter; `RUNE_ORACLE_MLTON` is
+MLton's 606 files, flat. Neither builds in `corpus/`: both go by absolute paths
+to a copy. The build roadmap's drafts hold the scripts that made them
+(`results/E9/hol-tree.py`, `results/E20/mlton/make-build.sh`). The edits' texts
+are in `oracle/hol4.tsv` and `oracle/mlton.tsv`, and a run stops on one that is
+no longer there.
+
+`bin/rune-lsp-replay` measures the same through the real server, from the
+client's side: the first check, then comments at the end of a file and body edits,
+each followed by a pull of diagnostics and a hover. `--limit KIND SECONDS` fails a
+run whose p95 of a kind is over it. `RUNE_LSP_DEADLINE_SECONDS` sets how long a
+worker may report no progress, 30 seconds.
+
+```
+bin/runevm bin/rune-lsp-replay.rbc VM SERVER ROOT LIB BUILD SOURCE OUT.json LINE CHARACTER \
+  --comments 20 --body 5 OLD NEW
+```
+
+## The scale target
+
+`docs/language-server.md`, *The scale target*, states it; three tiers hold it on
+generated trees. `bin/rune-lsp-fixture` (`tools/lsp/fixture.sml`) makes a tree of
+libraries and programs shaped by what was measured on Rune, MLton and HOL4, one
+tree for a seed; `--no-text` writes the build files alone. A program names its
+libraries under the tree's `rune.workspace` (`libraries NAME`; they have no
+header, so they are transitive), and `apps/all.build` has every library's files
+as its own, the whole tree in one context.
+`bin/rune-lsp-plan-bench` (`tools/lsp/plan-bench.sml`) plans a file's check
+through the worker's own plan, every build a target, cold and then after each
+kind of change; `--events` tells the worker of each change by a file event, as a
+client that watches does, `--reads` fails a plan that reads a build outside the
+changed set or misses its memo where nothing it read changed, `--limit MS` one
+whose median is over it. `bin/rune-lsp-oracle --per-line BYTES --clients
+--cold-limit SECONDS` fails a run in which more than BYTES a line lives after a
+check, a check after an edit elaborates a unit but the edited one and those whose
+usages broke, or the first check is slower.
+
+```
+make test-lsp-scale          # make check: reads, memo, heap, clients, bytes a line
+make test-lsp-scale-times    # nightly, alone: 200 ms, 250 ms, 50 ms, a cold start
+make test-lsp-scale-oracle   # nightly: kept against fresh on every unit, 100k lines
+```
+
+The trees are `build/lsp/scale/plan` (`--lines 10000000 --files 100000 --builds
+1000 --domains 32 --no-text`) and `build/lsp/scale/f100k` (`--lines 100000
+--files 1000 --builds 10`), its store made at each run by a compile at `-O0`. The
+edits are `oracle/scale.tsv`'s, on `f100k`'s seed; another seed or a change to
+the generator needs their texts checked.
 
 ## Document and workspace foundations (M3)
 
@@ -93,7 +187,7 @@ bin/runevm --jit=off --heap-limit 536870912 bin/rune-lsp-syntax-bench.rbc \
   --machine "record CPU, operating system and available processors"
 ```
 
-The public `RuneCompiler.Syntax` tests also run on native compiler hosts.
+The public `CompilerApi.Syntax` tests also run on native compiler hosts.
 The private differential suite compares full constructor/scalar/span
 structure with fresh batch parsing, using accepted and rejected language
 fixtures, frontend sources, deletions and randomized edit/undo sequences.
@@ -269,7 +363,7 @@ the original signature/implementation with only their names changed, the
 observer bytecode and VM, and all raw samples. To rerun from that archive:
 
 ```
-bin/rune --library jsonrpc PATH/old-framing.sml tests/lsp/framing-performance.sml -o tests/out/framing-performance.rbc
+bin/rune --library jsonrpc --library json PATH/old-framing.sml tests/lsp/framing-performance.sml -o tests/out/framing-performance.rbc
 bin/runevm tests/out/framing-performance.rbc
 ```
 

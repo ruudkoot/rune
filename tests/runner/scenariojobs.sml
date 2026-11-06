@@ -25,6 +25,7 @@ struct
     | command ["scenario-dist-ffi"] = SOME (protect DistChecks.ffiArchives)
     | command ["scenario-dist-metadata"] = SOME (protect DistChecks.rejectedMetadata)
     | command ["scenario-dist-installer"] = SOME (protect DistChecks.installer)
+    | command ["scenario-dist-frozen"] = SOME (protect DistChecks.frozen)
     | command ["scenario-dist-binaries"] = SOME (protect DistChecks.binaryHeaders)
     | command ["scenario-dist-windows"] = SOME (protect DistChecks.windows)
     | command ["scenario-vscode-stage"] = SOME (protect VSCodeChecks.stage)
@@ -32,10 +33,15 @@ struct
     | command ["scenario-archive-faults"] = SOME (protect ArchiveCheck.faults)
     | command _ = NONE
   fun tagged tags tree = List.foldl (fn (tag, tree) => Test.tag tag tree) tree tags
+  (* a scenario that cannot run here says SKIP, with why *)
+  fun skipping (result, files) =
+    case failLines (result, files) of
+      SOME failure => SOME failure
+    | NONE => if String.isPrefix "SKIP " (read (#stdout files)) then SOME ("SKIP", firstNonEmpty (#stdout files)) else NONE
   fun job name args after pools = Test.it name {program = "/bin/sh",
     args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-scenarios " ^ String.concatWith " " (List.map quote args)],
     env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 3600, cap = 0, cpus = 1,
-    memory = 1000, pools = pools, exclusive = false, after = after, judge = failLines} : Run.command Test.tree
+    memory = 1000, pools = pools, exclusive = false, after = after, judge = skipping} : Run.command Test.tree
   fun group name tag covers nodes = tagged ["check", tag, "scenarios-" ^ name, "covers:" ^ covers]
                                            (Test.describe name nodes)
   fun tree () =
@@ -83,6 +89,7 @@ struct
            job "ffi" ["scenario-dist-ffi"] ["scenarios/dist/prepare"] [],
            job "metadata" ["scenario-dist-metadata"] ["scenarios/dist/prepare"] [],
            job "installer" ["scenario-dist-installer"] ["scenarios/dist/archives"] [],
+           job "frozen" ["scenario-dist-frozen"] ["scenarios/dist/prepare"] [],
            job "binaries" ["scenario-dist-binaries"] ["scenarios/dist/prepare"] [],
            job "faults" ["scenario-archive-faults"] [] []]),
            tagged ["test-windows", "nightly", "windows", "vm"]

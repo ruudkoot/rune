@@ -64,7 +64,7 @@ struct
     (("S60", "main.sml", 0), "val () = print (Int.toString (Colors.index Colors.C1) ^ \"\\n\")"),
     (("S61", "a.sml", 0), "structure A = struct val x = 40 end"),
     (("S61", "b.sml", 0), "functor F () = struct val y = A.x + 2 end"),
-    (("S61", "main.sml", 0), "structure B = F ()\nval () = print (Int.toString B.y ^ \" \" ^ Int.toString (#instructions (Runtime.stats ()) div 1000000000) ^ \"\\n\")"),
+    (("S61", "main.sml", 0), "structure B = F ()\nval () = print (Int.toString B.y ^ \" \" ^ Int.toString (length (Runtime.linkedUnits ()) div 1000000) ^ \"\\n\")"),
     (("S61", "a.sml", 1), "structure A = struct val x = 40 val z = 3 end"),
     (("S62", "p.sml", 0), "fun f (1 | 2) = \"small\" | f _ = \"big\"\nval () = print (f 2 ^ \"\\n\")"),
     (("S62", "d.sml", 0), "val x = 1\nval () = print (Int64.toString x ^ \"\\n\")"),

@@ -27,7 +27,7 @@ allocation forms and explicit mutable root types, including nested modules,
 local declarations and eager collection callbacks. New allocation helpers
 must extend the audit and its fault cases.
 
-`RuneCompiler : RUNE_COMPILER` is the public API. Add `--library compiler`
+`CompilerApi :> COMPILER_API` is the public API. Add `--library compiler`
 to a compile, or name `compiler` in a build's `libraries` declaration.
 Its export boundary hides the implementation modules, so clients can
 declare their own `Ast`, `Env` and `Types` structures. `api.build` adds the
@@ -68,13 +68,13 @@ for evidence and outstanding gates. Internal modules are implementation
 interfaces. `config.sml` is a generated copy of the build's version and
 identity, installed with the sources and never committed.
 
-[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
+[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [l](index/l.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md)
 
 ## Not yet assigned to an area
 
 | Signature |  |
 | --- | --- |
-| [`RUNE_COMPILER`](sig/RUNE_COMPILER.md) | The reusable Rune compiler. Compilation and queries are static; execution is an explicit operation on a compiled unit. |
+| [`COMPILER_API`](sig/COMPILER_API.md) | The reusable Rune compiler. Compilation and queries are static; execution is an explicit operation on a compiled unit. |
 
 ---
 

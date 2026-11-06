@@ -778,20 +778,47 @@ struct
           (* _export structure Name : SIG = strexp: a dynamic module's
              implementation (docs/units.md, Dynamic modules) *)
           | EXPORT =>
-              if ctx <> Top then err "_export declares a structure at the top level only"
+              if ctx <> Top then err "_export declares a structure or a functor at the top level only"
               else
                 let
                   val () = advance ()
-                  val () = expect STRUCTURE
-                  val name = case next () of ID s => s | _ => err "expected structure name"
-                  val () = expect COLON
-                  val sg = parseSigexp ()
-                  val () = expect EQUALS
-                  val body = parseStrexp ()
                 in
-                  DStructure ([{name = name, strexp = StrExport (name, sg, body, ref NONE, spanFrom start, freshId ()), span = spanFrom start,
-                                id = freshId ()}],
-                              spanFrom start, freshId ())
+                  case peek () of
+                    STRUCTURE =>
+                      let
+                        val () = advance ()
+                        val name = case next () of ID s => s | _ => err "expected structure name"
+                        val () = expect COLON
+                        val sg = parseSigexp ()
+                        val () = expect EQUALS
+                        val body = parseStrexp ()
+                      in
+                        DStructure ([{name = name, strexp = StrExport (name, sg, body, ref NONE, spanFrom start, freshId ()),
+                                      span = spanFrom start, id = freshId ()}],
+                                    spanFrom start, freshId ())
+                      end
+                  (* _export functor F (X : A) : B = strexp: a virtual or
+                     dynamic functor's implementation, a functor whose body
+                     is ascribed to B opaquely, and whose function the unit
+                     exports (docs/units.md, Dynamic modules): its body is
+                     the StrExport, which no other functor's is *)
+                  | FUNCTOR =>
+                      let
+                        val () = advance ()
+                        val bstart = peekSpan ()
+                        val name = case next () of ID s => s | _ => err "expected functor name"
+                        val (param, paramSig) = parseFunctorParam ()
+                        val () = expect COLON
+                        val sg = parseSigexp ()
+                        val () = expect EQUALS
+                        val body = parseStrexp ()
+                      in
+                        DFunctor ([{name = name, param = param, paramSig = paramSig,
+                                    body = StrExport (name, sg, body, ref NONE, spanFrom start, freshId ()),
+                                    span = spanFrom bstart, id = freshId ()}],
+                                  spanFrom start, freshId ())
+                      end
+                  | t => err ("expected structure or functor after _export but found '" ^ toString t ^ "'")
                 end
           | STRUCTURE =>
               if ctx = Let then err "structure declarations are not allowed inside expressions"
@@ -856,17 +883,39 @@ struct
                     let
                       val bstart = peekSpan ()
                       val name = case next () of ID s => s | _ => err "expected functor name"
-                      val () = expect LPAREN
-                      val (param, paramSig) =
-                        case (peek (), peekAt 1) of
-                          (ID s, COLON) => (advance (); advance (); (SOME s, parseSigexp ()))
-                        | _ =>
-                          (* derived form: functor F (spec) = e  ==>  functor F (X : sig spec end) = let open X in e end *)
-                          let
-                            val sstart = peekSpan ()
-                            val specs = parseSpecs ()
-                          in (NONE, SigSig (specs, spanFrom sstart, freshId ())) end
-                      val () = expect RPAREN
+                    in
+                      if peek () = EQUALS then
+                        (* functor F = _virtual (X : A) : B, a virtual functor,
+                           and functor F = _dynamic "path" (X : A) : B, one
+                           loaded when the program reaches it: applied by
+                           its signature alone, its function the one the
+                           program's _export functor F gives, or the unit at
+                           path's (docs/units.md, Dynamic modules). Its body
+                           is a StrDynamic of DynamicFunctor, which no other
+                           functor's is *)
+                        let
+                          val () = advance ()
+                          val fstart = peekSpan ()
+                          val from =
+                            case peek () of
+                              VIRTUAL => (advance (); DynamicVirtual name)
+                            | DYNAMIC =>
+                                (advance ();
+                                 case peek () of
+                                   STRING s => (advance (); DynamicFile s)
+                                 | t => err ("expected the path of a dynamic functor but found '" ^ toString t ^ "'"))
+                            | t => err ("expected _virtual or _dynamic after functor " ^ name ^ " = but found '" ^ toString t ^ "'")
+                          val (param, paramSig) = parseFunctorParam ()
+                          val () = expect COLON
+                          val result = parseSigexp ()
+                        in
+                          {name = name, param = param, paramSig = paramSig,
+                           body = StrDynamic (DynamicFunctor from, result, ref NONE, spanFrom fstart, freshId ()),
+                           span = spanFrom bstart, id = freshId ()}
+                        end
+                      else
+                    let
+                      val (param, paramSig) = parseFunctorParam ()
                       val result =
                         case peek () of
                           COLON => (advance (); SOME (parseSigexp (), false))
@@ -879,6 +928,7 @@ struct
                                    NONE => body
                                  | SOME (sg, opaque) => StrAscribe (body, sg, opaque, spanFrom bstart, freshId ())
                     in {name = name, param = param, paramSig = paramSig, body = body, span = spanFrom bstart, id = freshId ()} end
+                    end
                   fun loop acc = if peek () = AND then (advance (); loop (bind () :: acc)) else List.rev acc
                   val binds = loop [bind ()]
                 in
@@ -957,6 +1007,23 @@ struct
             | COLONGT => (advance (); ascribe (StrAscribe (e, parseSigexp (), true, spanFrom start, freshId ())))
             | _ => e
         in ascribe e end
+
+      (* A functor's parameter, in its parentheses: X : A, or the derived
+         form spec, which the body opens -- functor F (spec) = e  ==>
+         functor F (X : sig spec end) = let open X in e end *)
+      and parseFunctorParam () : string option * sigexp =
+        let
+          val () = expect LPAREN
+          val p =
+            case (peek (), peekAt 1) of
+              (ID s, COLON) => (advance (); advance (); (SOME s, parseSigexp ()))
+            | _ =>
+              let
+                val sstart = peekSpan ()
+                val specs = parseSpecs ()
+              in (NONE, SigSig (specs, spanFrom sstart, freshId ())) end
+          val () = expect RPAREN
+        in p end
 
       (* The argument of a functor application: a structure expression, or
          the derived form  funid ( strdec )  ==>  funid ( struct strdec end ). *)

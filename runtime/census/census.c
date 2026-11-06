@@ -21,6 +21,8 @@
 int census_on;
 uint64_t census_every;
 uint64_t census_clock, census_last_sample_clock;
+uint64_t *census_at;
+size_t census_at_n, census_at_i;
 uint32_t census_site = UINT32_MAX, census_func = UINT32_MAX;
 int census_prim = -1;
 int census_runtime;
@@ -313,6 +315,21 @@ static const char *const site_names[3] = { "SETENV", "ref_set", "array_update" }
 
 /* ---------------------------------------------------------------- init */
 
+int census_at_parse(const char *list) {
+    for (const char *s = list; *s; ) {
+        char *e;
+        errno = 0;
+        unsigned long long c = strtoull(s, &e, 10);
+        if (e == s || errno || (*e && *e != ',') || (census_at_n && c < census_at[census_at_n - 1])) return 0;
+        uint64_t *grown = realloc(census_at, (census_at_n + 1) * sizeof *census_at);
+        if (!grown) die("out of memory (--census-at)");
+        census_at = grown;
+        census_at[census_at_n++] = c;
+        s = *e ? e + 1 : e;
+    }
+    return 1;
+}
+
 void census_init(VM *vm, const char *d, uint64_t every, int fields, int summ, uint64_t hint, int graph) {
     the_vm = vm;
     snprintf(dir, sizeof dir, "%s", d);
@@ -595,6 +612,8 @@ void census_gc_begin(VM *vm) {
     size_t fp = nframes ? nframes - 1 : 0;
     for (size_t i = 0; i < sp; i++) if (val_is_ptr(vm->stack[i])) ptrs++;
     uint32_t flags = (census_every && census_clock - census_last_sample_clock >= census_every ? 1u : 0u) | (final_collection ? 2u : 0u);
+    if (census_at_i < census_at_n && census_clock >= census_at[census_at_i]) flags |= 8u;   /* at a clock of --census-at */
+    while (census_at_i < census_at_n && census_at[census_at_i] <= census_clock) census_at_i++;
     put_u32(sample_rec + 40, (uint32_t)sp);
     put_u32(sample_rec + 44, (uint32_t)fp);
     put_u32(sample_rec + 48, (uint32_t)low_index);
@@ -743,6 +762,7 @@ void census_fork_child(void) {
        the buffers are dropped without a flush */
     census_on = 0;
     census_every = 0;
+    census_at_n = 0;
     census_pending = NULL;
     census_pcs = NULL;
     out_alloc.n = out_fields.n = out_stores.n = out_samples.n = out_graph.n = 0;

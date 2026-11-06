@@ -8,6 +8,28 @@ struct
         val new = old ^ suffix
     in rmTree new; OS.FileSys.rename {old = old, new = new}; #directory s := new end
   fun environment (s : state) key value = #environment s := (key, value) :: !(#environment s)
+  (* what a build compiled of its own, by the paths it gave them: not the
+     libraries' files, which a project's first build through its own cache
+     may compile *)
+  fun ownCompiled (s : state) =
+    List.filter (not o String.isSubstring "/../lib/") (Scenarios.rebuilt (#errors (!(#result s))))
+  fun wantOwn (s : state) expected =
+    check s ("compiled [" ^ String.concatWith " " (ownCompiled s) ^ "], wanted [" ^ expected ^ "]")
+            (#status (!(#result s)) = 0 andalso ownCompiled s = String.tokens Char.isSpace expected)
+  (* a build file through the cache, and without it: S41 *)
+  fun buildFile (s : state) file expected =
+    let val () = #result s := command s "" [#compiler s, "--build", file, "--units", "--cache-dir", "cache", "--explain-rebuild",
+                                            "-o", "p.rbc"]
+        val () = wantOwn s expected
+        val plain = command s "" [#compiler s, "--build", file, "--units", "--no-cache", "-o", "nocache.rbc"]
+    in check s "cached program differs from uncached compilation"
+             (#status plain = 0 andalso same (path s "p.rbc", path s "nocache.rbc")) end
+  (* a root file that is refused, and how *)
+  fun refused (s : state) (text, says) =
+    let val () = put s "rune.workspace" text
+        val r = command s "" [#compiler s, "--build", "p.build", "--units", "--no-cache", "-o", "p.rbc"]
+    in check s ("a workspace was not refused: " ^ text)
+             (#status r <> 0 andalso String.isSubstring "rune.workspace" (#errors r) andalso String.isSubstring says (#errors r)) end
   fun permissions path writable =
     let val mode = Posix.FileSys.ST.mode (Posix.FileSys.stat path)
         val writeBits = Posix.FileSys.S.flags [Posix.FileSys.S.iwusr, Posix.FileSys.S.iwgrp, Posix.FileSys.S.iwoth]
@@ -57,6 +79,49 @@ struct
        both "a.sml" "val unused = 0" "val unused = 1  val more = 2"; compare "declaration edit";
        both "c.sml" "2 * S.area x" "2 * S.area"; compare "compile error";
        both "c.sml" "2 * S.area\n" "2 * S.area x\n"; compare "mended" end
+  (* a virtual functor, its implementation, its declaration and a client *)
+  fun implementation size =
+    "_export functor Table (K : KEY) : TBL where type key = K.t = struct\n  type key = K.t  type 'a t = (key * 'a) list\n"
+    ^ "  val empty = []  fun add (t, k, v) = (k, v) :: t  fun size t = " ^ size ^ "\n  fun count t = length t\n"
+    ^ "  fun first ((_, v) :: _) = SOME v | first [] = NONE end"
+  fun result more =
+    "signature TBL = sig\n  type key  type 'a t\n  val empty : 'a t  val add : 'a t * key * 'a -> 'a t\n  val size : 'a t -> int\n"
+    ^ "  val first : 'a t -> 'a option\n" ^ more ^ "end"
+  fun virtualFunctor (s : state) =
+    (own s "";
+     put s "k.sml" "signature KEY = sig type t  val compare : t * t -> order end";
+     put s "r.sml" (result "");
+     put s "impl.sml" (implementation "length t");
+     put s "decl.sml" "functor Table = _virtual (K : KEY) : TBL where type key = K.t";
+     put s "client.sml" ("structure T = Table (struct type t = int  val compare = Int.compare end)\n"
+                         ^ "val t = T.add (T.empty, 1, \"one\")\n"
+                         ^ "val () = print (Int.toString (T.size t) ^ \" \" ^ getOpt (T.first t, \"none\") ^ \"\\n\")");
+     put s "p.build" "k.sml r.sml implements Table = impl.sml end decl.sml client.sml")
+  (* a dynamic functor's module compiled against ARG and RES as given, and
+     its client against "val g : t -> int" and "val h : int -> int": the
+     same slots, other signatures *)
+  fun otherSignature (s : state) (g, h, body) =
+    let
+      fun sigs (g, h) = "signature ARG = sig type t  val f : t -> int  " ^ g ^ " end\nsignature RES = sig " ^ h ^ " end"
+      val () = own s ""
+      val () = put s "theirs.sml" (sigs (g, h))
+      val () = put s "ours.sml" (sigs ("val g : t -> int", "val h : int -> int"))
+      val () = put s "impl.sml" ("_export functor F (X : ARG) : RES = struct " ^ body ^ " end")
+      val () = put s "client.sml" ("functor F = _dynamic \"impl.rbu\" (X : ARG) : RES\n"
+                                   ^ "structure R = F (struct type t = int  fun f n = n  fun g n = n end)\n"
+                                   ^ "val () = print (Int.toString (R.h 41) ^ \"\\n\")")
+      val module = command s "" [#compiler s, "--units", "--no-cache", "--emit-units", "m", "theirs.sml", "impl.sml", "-o", "m.rbc"]
+      val () = check s ("the module did not compile: " ^ #errors module) (#status module = 0)
+      val unit = case List.filter (String.isSuffix "-impl.rbu") (lines (read (path s "m/units"))) of
+                   [f] => if OS.Path.isAbsolute f then f else path s f
+                 | _ => raise Fail "the module's units list has no one unit of impl.sml"
+      val () = copy unit (path s "impl.rbu")
+      val client = command s "" [#compiler s, "--units", "--no-cache", "ours.sml", "client.sml", "-o", "p.rbc"]
+      val () = check s ("the client did not compile: " ^ #errors client) (#status client = 0)
+      val run = command s "" [OS.Path.dir (#compiler s) ^ "/runevm", "p.rbc"]
+    in check s ("a module of another signature was not refused: " ^ #output run ^ #errors run)
+             (#status run = 1 andalso #output run = "" andalso String.isSubstring "Mismatch \"impl.rbu implements another signature" (#errors run))
+    end
   fun one (s : state) =
     let fun b flags expected = checkBuild s flags expected
         fun f file version = fixture s file version
@@ -215,12 +280,380 @@ struct
           edit s "a.sml" "fun other x = x * 2" "fun other x = x * 2 + 0";
           bld "a.sml" "43 6"
         end
+    | "S83" =>
+        (* an edit that keeps every offset and moves a line (a space made a
+           newline): a unit that copied the marked function has its line in
+           its line table, from the source of the unit that declares it *)
+        let
+          val () = own s ""
+          fun declaring gap = put s "a.sml" ("structure A = struct val pad = 0" ^ gap
+                                             ^ "fun inc (x : int) = if x > 2 then raise Fail \"boom\" else x + 1 end")
+          val () = declaring " "
+          val () = put s "b.sml" "val () = print (Int.toString (A.inc 5) ^ \"\\n\")"
+          val () = put s "p.build" "inline val A.inc end\nfiles a.sml b.sml end"
+          fun bld expected =
+            let
+              val r = command s "" [#compiler s, "--build", "p.build", "--units", "--cache-dir", "cache", "--explain-rebuild",
+                                    "-o", "p.rbc"]
+              val () = #result s := r
+              val got = compiled s
+              val () = check s ("compiled [" ^ String.concatWith " " got ^ "], wanted [" ^ expected ^ "]")
+                             (#status r = 0 andalso got = String.tokens Char.isSpace expected)
+              val plain = command s "" [#compiler s, "--build", "p.build", "--units", "--no-cache", "-o", "nocache.rbc"]
+            in check s "cached program differs from uncached compilation"
+                     (#status plain = 0 andalso same (path s "p.rbc", path s "nocache.rbc")) end
+        in
+          bld "a.sml b.sml";
+          declaring "\n";
+          bld "a.sml b.sml"
+        end
+    | "S91" =>
+        (* a file given twice is two units, as compiled whole: each has its
+           own globals (build-cache issue 22, in batch; E16) *)
+        let
+          val () = own s "a.sml keep.sml a.sml main.sml"
+          val () = put s "a.sml" "structure A = struct val n = ref 0 end"
+          val () = put s "keep.sml" "structure Old = A"
+          val () = put s "main.sml" "val () = Old.n := 10\nval () = print (Int.toString (!A.n) ^ \" \" ^ Int.toString (!Old.n) ^ \"\\n\")"
+          val () = b [] "a.sml keep.sml a.sml main.sml"
+          val () = prints s "0 10"
+          val () = b [] ""
+          val () = prints s "0 10"
+          val whole = compile s [] "whole.rbc"
+          val () = check s "the whole program does not compile" (#status whole = 0)
+          val direct = command s "" [OS.Path.dir (#compiler s) ^ "/runevm", "whole.rbc"]
+          val () = check s "the whole program prints otherwise" (#output direct = "0 10\n")
+          val units = compile s ["--units", "--whole", "--cache-dir", "cache"] "units.rbc"
+          val () = check s "--units --whole is not the whole program" (#status units = 0 andalso same (path s "units.rbc", path s "whole.rbc"))
+          val () = environment s "RUNE_PARALLEL_MIN" "1"
+          val parallel = compile s ["--units", "-j", "3", "--cache-dir", "parallel"] "parallel.rbc"
+          val () = check s "-j changes a file given twice" (#status parallel = 0 andalso same (path s "parallel.rbc", path s "p.rbc"))
+          val () = #environment s := []
+          (* a build's are named from its root, and these from the first
+             file: the same here, where the two are one directory *)
+          val () = put s "rune.workspace" ""
+          val () = put s "p.build" "a.sml keep.sml a.sml main.sml"
+        in buildFile s "p.build" ""; prints s "0 10" end
+    | "S92" =>
+        (* however a path spells a file, it is one unit: nothing is compiled
+           again, and a dynamic module's client is the same bytes (E10) *)
+        let
+          val () = fresh s
+          val () = b [] all
+          val () = mkdirs (path s "sub")
+          val () = put s "files" "./a.sml b.sml sub/../c.sml .//d.sml main.sml"
+          val () = build s []
+          val () = wantOwn s ""
+          val () = check s "a spelling names the file in the program" (String.isSubstring "./a.sml" (CachePlant.binary (path s "p.rbc")))
+          val plain = compile s ["--units", "--no-cache"] "nocache.rbc"
+          val () = check s "cached program differs from uncached compilation" (#status plain = 0 andalso same (path s "p.rbc", path s "nocache.rbc"))
+          val () = put s "files" (String.concatWith " " (List.map (path s) (String.tokens Char.isSpace all)))
+          val () = build s []
+          val () = wantOwn s ""
+          val () = put s "sg.sml" "signature SHAPE = sig val v : Ty.t val area : int -> int end"
+          val () = put s "ty.sml" "structure Ty = struct datatype t = A | B end"
+          val () = put s "client.sml" "structure S = _dynamic \"impl.rbu\" : SHAPE\nval () = print (Int.toString (S.area 3) ^ \"\\n\")"
+          fun emitted (dir, ty) =
+            let val r = command s "" [#compiler s, "--units", "--no-cache", "--emit-units", dir, ty, "sg.sml", "client.sml", "-o", dir ^ ".rbc"]
+                val () = check s ("a dynamic client does not compile: " ^ #errors r) (#status r = 0)
+            in valOf (List.find (String.isSubstring "client") (entriesBelow (path s dir))) end
+          val plainClient = emitted ("plain", "ty.sml")
+          val spelt = emitted ("spelt", "./ty.sml")
+        in check s "a spelling reaches a dynamic client" (same (plainClient, spelt)) end
+    | "S93" =>
+        (* a library keeps its name where it moves: nothing is compiled, and
+           what the program and the warnings name is where it is now *)
+        let
+          val () = own s ""
+          val () = put s "rune.workspace" ""
+          val () = put s "old/foo/library.build" "files a.sml end"
+          val () = put s "old/foo/a.sml" "fun f 0 = 1"
+          val () = put s "main.sml" "val () = print (Int.toString (f 0) ^ \"\\n\")"
+          val () = put s "p.build" "old/foo/a.sml main.sml"
+          val () = buildFile s "p.build" "old/foo/a.sml main.sml"
+          val () = mkdirs (path s "new")
+          val () = OS.FileSys.rename {old = path s "old/foo", new = path s "new/foo"}
+          val () = put s "p.build" "new/foo/a.sml main.sml"
+          val () = buildFile s "p.build" ""
+          val warned = #errors (!(#result s))
+          val () = check s ("a warning does not name where the file is now: " ^ warned)
+                         (String.isSubstring "new/foo/a.sml:1:5: warning" warned andalso not (String.isSubstring "old/foo" warned))
+          val () = check s "the program names the old path" (not (String.isSubstring "old/foo" (CachePlant.binary (path s "p.rbc"))))
+          val () = OS.FileSys.rename {old = path s "new/foo", new = path s "new/bar"}
+          val () = put s "p.build" "new/bar/a.sml main.sml"
+        in buildFile s "p.build" "new/bar/a.sml main.sml" end
+    | "S94" =>
+        (* two libraries of one name: their files of one path are two units
+           by a rank, and a client is taken to the one it named (E16) *)
+        let
+          val () = own s ""
+          val () = put s "rune.workspace" ""
+          val () = List.app (fn dir => put s (dir ^ "/library.build") "files a.sml end") ["x/util", "y/util"]
+          val () = put s "x/util/a.sml" "structure A = struct val n = ref 0 end"
+          val () = put s "y/util/a.sml" "structure A = struct val n = ref 0 end"
+          val () = put s "keep.sml" "structure Old = A"
+          val () = put s "main.sml" "val () = Old.n := 10\nval () = print (Int.toString (!A.n) ^ \" \" ^ Int.toString (!Old.n) ^ \"\\n\")"
+          val () = put s "p.build" "x/util/a.sml keep.sml y/util/a.sml main.sml"
+          val () = buildFile s "p.build" "x/util/a.sml keep.sml y/util/a.sml main.sml"
+          val () = prints s "0 10"
+          val () = buildFile s "p.build" ""
+          val () = prints s "0 10"
+          val () = put s "x/util/u.sml" "structure A = struct val x = 1 end\nstructure Keep = A"
+          val () = put s "y/util/u.sml" "structure A = struct val x = 2 end"
+          val () = put s "u2.sml" "val () = print (Int.toString (Keep.x + 0) ^ \"\\n\")"
+          val () = put s "q.build" "x/util/u.sml y/util/u.sml u2.sml"
+          val () = buildFile s "q.build" "x/util/u.sml y/util/u.sml u2.sml"
+          val () = prints s "1"
+          val () = put s "x/util/u.sml" "structure A = struct val x = 1 val y = 2 end\nstructure Keep = A"
+          val () = buildFile s "q.build" "x/util/u.sml"
+          val () = check s "the client was not taken across the edit"
+                         (String.isSubstring "from the cache u2.sml, across util:u.sml changed" (#errors (!(#result s))))
+          val () = prints s "1"
+          (* a library's name leaves room for a version: no @, no : *)
+          val () = put s "v@1/library.build" "files u.sml end"
+          val () = put s "v@1/u.sml" "structure Keep = struct val x = 1 end"
+          val () = put s "u3.sml" "val () = print (Int.toString Keep.x ^ \"\\n\")"
+          val () = put s "r.build" "\"v@1/u.sml\" u3.sml"
+          val () = buildFile s "r.build" "v@1/u.sml u3.sml"
+          val () = put s "v@1/u.sml" "structure Keep = struct val x = 1 val y = 2 end"
+          val () = buildFile s "r.build" "v@1/u.sml"
+        in
+          check s "a library's name holds an @" (String.isSubstring "across v_1:u.sml changed" (#errors (!(#result s))))
+        end
+    | "S95" =>
+        (* the root file: what a build's units are named from, the nearest
+           above the build, and where it finds its libraries *)
+        let
+          val () = own s ""
+          val () = put s "rune.workspace" "(* the root *)\nroots vendor end\ntarget top = top.build \"--target=stack\" end"
+          val () = put s "src/a.sml" "structure A = struct val x = 1 end"
+          val () = put s "src/b.sml" "structure B = struct val y = A.x + 1 end"
+          val () = put s "tests/t.sml" "val () = print (Int.toString B.y ^ \"\\n\")"
+          val () = put s "top.build" "src/a.sml src/b.sml"
+          val () = put s "tests/t.build" "../src/a.sml ../src/b.sml t.sml"
+          val () = buildFile s "top.build" "src/a.sml src/b.sml"
+          val () = buildFile s "tests/t.build" "tests/t.sml"
+          val () = prints s "2"
+          val () = put s "tests/rune.workspace" ""
+          val () = buildFile s "tests/t.build" "tests/../src/a.sml tests/../src/b.sml tests/t.sml"
+          val () = OS.FileSys.remove (path s "tests/rune.workspace")
+          val () = put s "vendor/foo/library.build" "files foo.sml end"
+          val () = put s "vendor/foo/foo.sml" "structure Foo = struct val z = 5 end"
+          val r = command s "" [#compiler s, "--basis-index", "vendor/foo"]
+          val () = check s ("a library of a root does not index: " ^ #errors r) (#status r = 0)
+          val () = put s "main.sml" "val () = print (Int.toString Foo.z ^ \"\\n\")"
+          val () = put s "m.build" "libraries foo end\nmain.sml"
+          val () = buildFile s "m.build" "vendor/foo/foo.sml main.sml"
+          val () = prints s "5"
+          val () = put s "rune.workspace" ""
+          val r = command s "" [#compiler s, "--build", "m.build", "--units", "--no-cache", "-o", "p.rbc"]
+          val () = check s "a library was found under no root" (#status r <> 0)
+          val () = put s "p.build" "src/a.sml"
+        in
+          List.app (refused s)
+            [("frob", "unexpected frob"), ("roots /usr/lib end", "relative"), ("roots $(HOME)/lib end", "relative"),
+             ("roots lib", "does not end"), ("target a = end", "names no build file"), ("target a b.build end", "target NAME"),
+             ("target a = a.build --allow-prim end", "is a string"), ("target a = a.build --target=stack end", "unexpected ="),
+             ("roots a = b end", "unexpected ="),
+             ("target a = a.build end target a = b.build end", "two targets"), ("(* no end", "comment")]
+        end
+    | "S96" =>
+        (* a file outside the root, reached by ../, is named by the same
+           path from the root: nothing of the machine, so a tree that moves
+           keeps its entries *)
+        let
+          val () = own s ""
+          val () = put s "tree/w/rune.workspace" ""
+          val () = put s "tree/out/a.sml" "structure A = struct val x = 1 end"
+          val () = put s "tree/w/main.sml" "val () = print (Int.toString A.x ^ \"\\n\")"
+          val () = put s "tree/w/p.build" "../out/a.sml main.sml"
+          val () = buildFile s "tree/w/p.build" "tree/w/../out/a.sml tree/w/main.sml"
+          val () = prints s "1"
+          val () = buildFile s "tree/w/p.build" ""
+          val () = OS.FileSys.rename {old = path s "tree", new = path s "moved"}
+          val () = buildFile s "moved/w/p.build" ""
+        in prints s "1" end
+    | "S97" =>
+        (* the REPL's use: however a path spells a file, one unit *)
+        (own s ""; put s "a.sml" "structure A = struct val n = ref 0 end";
+         let val _ = session s false ["use \"a.sml\";"]
+             val entries = cache s
+             val output = session s false ["use \"./a.sml\";", "val n = !A.n;"]
+         in check s ("a spelling compiled a used file again: " ^ output)
+              (String.isSubstring "val n = 0 : int" output andalso cache s = entries) end)
+    | "S121" =>
+        (* an identity holds no unit's identity: a unit whose import changed
+           in nothing it names keeps its own, and what named it is exact *)
+        let
+          val () = own s ""
+          val () = put s "a.sml" "structure A = struct type t = int  val x : t = 1  val y = 2 end"
+          val () = put s "b.sml" "structure B = struct val v : A.t = A.x end"
+          val () = put s "c.sml" "val () = print (Int.toString B.v ^ \"\\n\")"
+          val () = put s "p.build" "a.sml b.sml c.sml"
+          fun across wanted =
+            check s ("what was taken across a change: " ^ #errors (!(#result s)))
+                    (String.isSubstring "rune: from the cache b.sml, across " (#errors (!(#result s)))
+                     andalso (String.isSubstring "rune: from the cache c.sml\n" (#errors (!(#result s)))) = wanted)
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = put s "a.sml" "structure A = struct type t = int  val x : t = 1  val y = \"two\" end"
+          val () = buildFile s "p.build" "a.sml"
+          val () = across true
+          (* the numbers of A's names all move, and what they are does not *)
+          val () = put s "a.sml" "structure A = struct type n = bool  val m = true  type t = int  val x : t = 1  val y = 2 end"
+          val () = buildFile s "p.build" "a.sml"
+          val () = across true
+        in prints s "1" end
+    | "S122" =>
+        (* a unit's bytes the same, and an import it names another: its
+           identity moves, or what names it alone would hold by its binder *)
+        let
+          val () = own s ""
+          val () = put s "a.sml" "structure A = struct datatype t = X | Y end"
+          val () = put s "b.sml" "structure B = struct val v = A.X  fun same (a, b) = a = b end"
+          val () = put s "c.sml" "val () = print (Bool.toString (B.same (B.v, B.v)) ^ \"\\n\")"
+          val () = put s "p.build" "a.sml b.sml c.sml"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = put s "a.sml" "structure A = struct datatype t = X of int option | Y end"
+          val () = put s "b.sml" "structure B = struct val v = A.Y  fun same (a, b) = a = b end"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = put s "a.sml" "structure A = struct datatype t = Y | X of int option end"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+        in prints s "true" end
+    | "S123" =>
+        (* a name that is another unit's marked function: the unit's identity
+           moves with the function's body, which its clients copy *)
+        let
+          val () = own s ""
+          fun declaring n = put s "a.sml" ("structure A = struct fun inc (x : int) = x + " ^ n ^ " end")
+          val () = declaring "1"
+          val () = put s "b.sml" "structure B = struct val f = A.inc end"
+          val () = put s "c.sml" "val () = print (Int.toString (B.f 1) ^ \"\\n\")"
+          val () = put s "p.build" "inline val A.inc end\nfiles a.sml b.sml c.sml end"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = prints s "2"
+          val () = declaring "2"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+        in prints s "3" end
+    | "S124" =>
+        (* a signature written as a reference to an earlier unit's: what it
+           is is that one, so the identity moves with it, though the bytes
+           of the unit that refers to it stay the same *)
+        let
+          val () = own s ""
+          val () = put s "a.sml" "signature S = sig type t  val x : t end"
+          val () = put s "b.sml" "signature T = sig structure I : S end"
+          val () = put s "c.sml" "structure M : T = struct structure I = struct type t = int  val x = 1 end end"
+          val () = put s "p.build" "a.sml b.sml c.sml"
+          val () = buildFile s "p.build" "a.sml b.sml c.sml"
+          val () = put s "a.sml" "signature S = sig type t  val x : t  val y : t end"
+          val r = command s "" [#compiler s, "--build", "p.build", "--units", "--cache-dir", "cache", "-o", "p.rbc"]
+        in check s "a client of a signature that changed was taken from the cache" (#status r <> 0) end
+    (* E10's probes on a virtual functor (the build-system roadmap's M21):
+       an edit of the implementation's body compiles it alone; an edit of
+       the parameter's signature or the result's compiles every unit that
+       names it, the declaration and its clients *)
+    | "S125" =>
+        let
+          val () = virtualFunctor s
+          val () = buildFile s "p.build" "k.sml r.sml impl.sml decl.sml client.sml"
+          val () = prints s "1 one"
+          val () = put s "impl.sml" (implementation "10 * length t")
+          val () = buildFile s "p.build" "impl.sml"
+        in prints s "10 one" end
+    | "S126" =>
+        let
+          val () = virtualFunctor s
+          val () = buildFile s "p.build" "k.sml r.sml impl.sml decl.sml client.sml"
+          val () = put s "k.sml" "signature KEY = sig eqtype t  val compare : t * t -> order end"
+          val () = buildFile s "p.build" "k.sml impl.sml decl.sml client.sml"
+        in prints s "1 one" end
+    | "S127" =>
+        let
+          val () = virtualFunctor s
+          val () = buildFile s "p.build" "k.sml r.sml impl.sml decl.sml client.sml"
+          val () = put s "r.sml" (result "  val count : 'a t -> int\n")
+          val () = buildFile s "p.build" "r.sml impl.sml decl.sml client.sml"
+        in prints s "1 one" end
+    (* A dynamic functor's module compiled by this compiler, and its client
+       by bin/rune: the same ABI, so the module loads. A compiler whose
+       functors' ABI is another -- the records' slots in another order, the
+       descriptors, the version, the calling convention -- makes a module
+       the client refuses when it loads it (the mutants of the cache
+       A1 to A8, tests/runner/cachemutantlist.sml) *)
+    | "S128" =>
+        let
+          val () = own s ""
+          val () = put s "sigs.sml" ("signature ARG = sig type t  datatype shape = Point of t | Box of t | Pair of t * t\n"
+                                     ^ "  val norm : t -> int  val zero : t  val scale : int -> t -> t  exception Bad of t\n"
+                                     ^ "  structure Sub : sig val k : int end end\n"
+                                     ^ "signature RES = sig type shape  val total : shape list -> int  val bigger : int -> int  val name : string end")
+          val () = put s "impl.sml" ("_export functor F (X : ARG) : RES where type shape = X.shape = struct\n"
+                                     ^ "  type shape = X.shape\n"
+                                     ^ "  fun size (X.Point p) = X.norm p | size (X.Box p) = 2 * X.norm (X.scale 3 p)\n"
+                                     ^ "    | size (X.Pair (p, q)) = X.norm p + X.norm q\n"
+                                     ^ "  fun total l = List.foldl (fn (s, n) => n + size s) (X.Sub.k + X.norm X.zero) l\n"
+                                     ^ "  fun bigger n = n + X.Sub.k  val name = \"f\" end")
+          val () = put s "client.sml" ("functor F = _dynamic \"impl.rbu\" (X : ARG) : RES where type shape = X.shape\n"
+                                       ^ "structure P = struct type t = int * int  datatype shape = Point of t | Box of t | Pair of t * t\n"
+                                       ^ "  fun norm (a, b) = a + b  val zero = (1, 0)  fun scale n (a, b) = (n * a, n * b)\n"
+                                       ^ "  exception Bad of t  structure Sub = struct val k = 100 end end\n"
+                                       ^ "structure FP = F (P)\n"
+                                       ^ "val () = print (FP.name ^ \" \" ^ Int.toString (FP.total [P.Point (1, 2), P.Box (1, 1), P.Pair ((1, 1), (2, 2))])\n"
+                                       ^ "                ^ \" \" ^ Int.toString (FP.bigger 1) ^ \"\\n\")")
+          val module = command s "" [#compiler s, "--units", "--no-cache", "--emit-units", "m", "sigs.sml", "impl.sml", "-o", "m.rbc"]
+          val () = check s ("the module did not compile: " ^ #errors module) (#status module = 0)
+          val unit = case List.filter (String.isSuffix "-impl.rbu") (lines (read (path s "m/units"))) of
+                       [f] => if OS.Path.isAbsolute f then f else path s f
+                     | _ => raise Fail "the module's units list has no one unit of impl.sml"
+          val () = copy unit (path s "impl.rbu")
+          val good = fromRoot "bin/rune"
+          val client = command s "" [good, "--units", "--no-cache", "sigs.sml", "client.sml", "-o", "p.rbc"]
+          val () = check s ("the client did not compile: " ^ #errors client) (#status client = 0)
+          val run = command s "" [OS.Path.dir good ^ "/runevm", "p.rbc"]
+        in check s ("the module of this compiler did not load into bin/rune's client: " ^ #output run ^ #errors run)
+                 (#status run = 0 andalso #output run = "f 122 101\n") end
+    (* a module of another parameter's signature, or another result's, with
+       the same slots: refused when the client loads it, by the signatures in
+       the fingerprint (the mutants of the cache A5 and A6) *)
+    | "S129" => otherSignature s ("val g : t -> string", "val h : int -> int", "fun h n = n + 1")
+    | "S130" => otherSignature s ("val g : t -> int", "val h : int -> string", "fun h n = Int.toString n")
+    (* What a file is to the plan (LibraryIndex.programFacts) follows the
+       fixity before it. While a.sml makes <+> infix, b.sml does not parse,
+       and so names all its tokens, Vector among them, which takes the Basis
+       Library's vector.sml; once <+> is nonfix again b.sml parses, names
+       nothing of the Basis, and the program takes no vector.sml. A plan kept
+       by a file's text alone would take it still: another program than
+       without the cache (the mutant of the cache P1) *)
+    | "S131" =>
+        let
+          val () = own s "a.sml b.sml main.sml"
+          fun infixed yes = put s "a.sml" ("fun <+> (a, b) = a + b" ^ (if yes then "\ninfix 5 <+>" else ""))
+          val () = infixed true
+          val () = put s "b.sml" "datatype mark = Vector | Plain\nval g = <+>"
+          val () = put s "main.sml" "val () = print (Int.toString (g (1, 2)) ^ \"\\n\")"
+          val () = build s []
+          val () = fails s
+          val () = infixed false
+          val () = checkBuild s [] "a.sml b.sml main.sml"
+          val () = prints s "3"
+          val () = infixed true
+          val () = build s []
+          val () = fails s
+          val () = infixed false
+          val () = checkBuild s [] ""
+        in prints s "3" end
     | "S58" => parallel s
-    | _ => simple s
+    | n => if String.isPrefix CacheFacts.prefix n then CacheFacts.one s
+           else if String.isPrefix CacheFlags.prefix n then CacheFlags.one s
+           else if CacheChecks.handles n then CacheChecks.one s
+           else if WarmChecks.handles n then WarmChecks.one s
+           else if StoreChecks.handles n then StoreChecks.one s
+           else simple s
     end
   val cases = ["S1", "S2", "S3", "S5", "S6", "S8", "S17", "S18", "S19", "S29", "S13", "S24", "S31", "S33", "S34", "S36", "S28", "S40",
                "S4", "S7", "S9", "S10", "S11", "S12", "S14", "S15", "S16", "S20", "S21", "S22", "S23", "S25", "S26", "S30", "S32", "S35",
-               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82"]
+               "S57", "S56", "S49", "S50", "S51", "S52", "S53", "S54", "S55", "S58", "S59", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S67", "S68", "S69", "S70", "S71", "S72", "S73", "S74", "S75", "S76", "S77", "S78", "S79", "S80", "S81", "S82", "S83", "S84", "S85", "S86", "S87", "S88", "S89", "S90", "S91", "S92", "S93", "S94", "S95", "S96", "S97", "S121", "S122", "S123", "S124", "S125", "S126", "S127", "S128", "S129", "S130", "S131"] @ CacheFacts.cases @ CacheFlags.cases @ CacheChecks.cases
+              @ WarmChecks.cases @ StoreChecks.cases
   fun runCase name compiler =
     let val s = create name compiler
     in one s; say ("PASS incremental." ^ name ^ ": " ^ Int.toString (!(#assertions s)) ^ " assertions\n") end

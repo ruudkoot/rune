@@ -127,7 +127,10 @@ named by placeholders, which are no names of the unit's. A functor marked
 to be inlined ([build.md](build.md), *Inline functors*) has its
 function's Mid written too, its positions in the unit's own source by
 nothing but that, and a unit that expands it depends on it (the usage
-`inl F`). A function marked to be inlined ([build.md](build.md), *Inline
+`inl F`), by the hash kept beside it: of the Mid, of what the copies take
+of the globals it names, and of its lines, of which the basis keeps only
+the hash, so that a basis written again from what it loads as is the same
+bytes. A function marked to be inlined ([build.md](build.md), *Inline
 functions*), and every function that only applies a primitive to its
 parameter, has its Mid written too, as the expansion leaves it, with the
 functions of the unit it calls while the group is under 400 Mid nodes,
@@ -163,15 +166,120 @@ again from the source on loading, and elaborated again by each unit that
 applied it, which then depended on the unit that declared it and on what
 the body's names were bound to.
 
-Static analysis can also record lexical origins in a version-7 basis:
-source ranges for bindings and the specification/implementation relation
-introduced by signature matching. These origins are separate from value,
-exception and generative type stamps. Exception replication shares a
-runtime exception identity while introducing a distinct lexical name.
-Analysis
-freezes query data before replacing a unit's mutable annotations; replay
-restores origins together with its checked basis. The batch driver and
-analysis share build-scope visibility through `CompilerBuildContext`.
+Static analysis can also record lexical origins: source ranges for
+bindings and the specification/implementation relation introduced by
+signature matching. These origins are separate from value, exception and
+generative type stamps. Exception replication shares a runtime exception
+identity while introducing a distinct lexical name. Origins are written
+to a sidecar, apart from the basis and from every hash: `UnitBasis.export`
+gives it beside the bytes, `UnitBasis.load` reads it beside them in the
+order the basis meets them, and a comment that moves a span moves no
+identity. A batch compile records none, so its sidecar is empty. The one
+position a basis keeps is that of a body kept for a later unit to copy,
+whose line table the copy's code holds: its hash is in the usages `inl` and
+`inlv` (*The cache*), so a comment above a marked function is a rebuild of
+what copied it. Analysis freezes query data before replacing a unit's
+mutable annotations; replay restores origins together with its checked
+basis. The batch driver and analysis share build-scope visibility through
+`CompilerBuildContext`.
+
+**Layers** (the build-system roadmap's D1). A basis is two layers, each its
+own bytes, read side by side:
+
+| Layer | Holds | Read by |
+|---|---|---|
+| static | fixity, names, schemes, type names, constructors and how they lie, a primitive's name, signatures, a functor's parameter and summary, an overloading's operators | a compile, an analysis |
+| ABI | a value's and an exception's stamp and flags, a reference's stamps and flags, a functor's global, bodies to copy and their hashes, an overloading's targets, and by name the type a value has in the IRs, primitives, globals that are others, functions known by name, a datatype's table, a realisation, a layout a body fixed | a compile |
+
+The static layer is written whole before the rest of the ABI layer, and
+nothing in it depends on the other: an own name is numbered as the static
+layer meets it, and an import by its place among the static layer's. So a
+compile and an analysis of a unit, which elaborate it alike, write the same
+bytes of the static layer, and only a compile has much to write in the other
+(`make test-layers`). Alike includes the compiler's tables the static layer
+writes from: a datatype of a functor's parameter that two specifications give
+-- sharing a structure with a view of it, as MLton's codegen does, makes one
+name of two whose constructors take types the sharing leaves apart -- has the
+constructors of the first in the order of the names, whether code is made or
+not (`Elaborate.specDatatypes`). A type name's realisation is the ABI
+layer's, whole: a client's code reads it (`Ty.convert`, `Ty.shapeOf`) and holds what it is made
+of, a word, an int, a pointer, so a key that held its layout alone took a
+client across `int` made `word` behind `:>`, and the link refused the two
+units. How a constructor lies is
+the one fact of a layout elaboration reads, for a parameter's open
+constructor (`Elaborate.descriptors`), so the static layer holds it.
+
+Each export, at every depth, has a hash of the static layer and a hash of both
+(`UnitBasis.exportHashes`): a fingerprint (*Fingerprints*, below) worked out
+without what a client's code is built on, or with it. A compile reads both
+layers, so a usage holds the second and a key of the static layer alone would
+take a client across a function made a closure, an opaque type's new
+realisation or another exception's name (E17). The header holds the hash of
+the static layer with its imports' static fingerprints, beside the identity's.
+
+`RUNE_LAYER_DUMP=DIR` writes each unit's exports and hashes to a file of `DIR`
+as a unit is bound, in a compile or an analysis, and `RUNE_STATIC_LOAD` makes a
+load where no code is made enter nothing of the ABI layer in the compiler's
+tables, which is what an analysis must not need.
+
+**Codecs** (the build-system roadmap's D21 and M5). What a basis says of a
+binding is described once, in `tools/codecs/compiler.sml`: each type -- a
+value's status, a constructor's and an exception's information, a type's
+status and its type function, an environment written whole, a signature, a
+functor, an overloading, an origin, a fixity directive, the types of the IRs,
+and every type of Mid and of a unit's Mid -- is its constructors, each its
+fields, and each field has its marks: the layer it is written to (static, ABI
+or the sidecar: the marks are the layers), its codec, and, for a binding's
+types, which of its fields its fingerprint holds, by what canonical bytes and
+in which layers' (an anchor and a fact of the tables are the full
+fingerprint's), and which its sameness compares (`envDelta`). From it
+`bin/rune-codecs` writes each type's writer, reader, sameness and fingerprint,
+the key a value written once is kept by, and the names a function of Mid
+binds, into the parts of `lib/compiler/driver/unitbasis.sml`,
+`lib/compiler/core/midcodec.sml` and `lib/compiler/driver/unitmid.sml` marked
+as generated, which are committed (`make codecs`; `make check-codecs` fails
+where they are stale). So a fingerprint is no traversal of its own: it is the
+hash of the canonical bytes of the fields marked for a layer, as SML/NJ's
+`pickle2hash` and MLKit's `pu` combinators make theirs of the value they
+pickle. A field no traversal names is refused unless the description says,
+with a reason, that the traversal leaves it out; and every generated pattern
+names every field, so a field added to a type and not to its description is a
+compile error, and one added to both is written, read, compared and
+fingerprinted (`rune-codecs --test`, `--toy`). MidCodec and UnitMid write one
+encoding of Mid by one codec, each with its own hooks for names.
+
+What stays by hand, and why: a type of the elaborator (`ty`, `keyedTy`, `rty`,
+`fpTy`, `sameType`), whose parts are written once by a key of their structure
+and whose variables are cells a reader shares and a fingerprint numbers by
+first occurrence; a type name, written once by its stamp, and fingerprinted by
+the strongly connected group of its definition (`fpTycon`, `definition`); an
+environment written as a reference to a signature's structure (`env`'s other
+branch, `renamedEnv`, `fpChild`), which is a renaming, not a field list; the
+reads of the compiler's tables -- a fingerprint's facts of a value
+(`valFacts`), a type name's definition, an import's (`importStamp`), and a
+basis's tables of its own names (`staticTables`, `abiTables` and their
+readers in `load`), which a description of fields cannot say where to find;
+the header and the identities; a functor's fingerprint (`fpFunctor`,
+`Elaborate.functorFingerprint`), of its parameter's and its result's
+signatures over one numbering of both's type names; a structure's fingerprint
+as a usage names it, of its entries' hashes (`fpEnv`); and the walks that
+name a binding by its path (`walkPaths`, `bindKeys`). The generated writer,
+reader, sameness and fingerprint write the bytes, and the hashes, the hand
+ones did, on the Basis, `rune.build` and MLton.
+
+**The fingerprint oracle** (the build-system roadmap's D20). With
+`RUNE_FP_ORACLE=FILE`, of each value, type and structure a unit binds, as it
+is bound, each field is changed alone (`perturbVal`, `perturbTy`,
+`perturbEnv`, generated from the same description): the fingerprint must move
+in the layers the description marks the field in and no other, and the
+sameness say another where the description has it compare the field and the
+same where it leaves it out. Each fact a fingerprint reads of the tables by
+hand is changed alone too -- a value's primitive, its being known by name, the
+global it is, its primitive function -- which must move the full fingerprint
+and not the static one, and of a type name the unit declares its equality,
+its constructors and its realisation. `FILE` gets a line for each check, and
+the scenario `fp-oracle` of `make test-incremental` wants every check to hold
+and each kind of change made at least once.
 
 Then the unit's basis is *loaded* again in place of what its compile left
 (`UnitBasis.load`; `Pipeline.unitThrough`): the compiler's tables go back
@@ -191,18 +299,67 @@ way that does not depend on what was compiled before it (D3):
 * one of the unit's own is a number, given in the order the writing of its
   basis meets them, so that the same declarations always get the same
   numbers;
-* one of an earlier unit's is that unit's *identity* and its number there.
+* one of an earlier unit's is its place in the unit's *imports*, a table of
+  each kind that says its unit's identity and its number there.
 
-A unit's identity is its name and the hash of its basis, without what its
-compile used of the session's counters. A unit whose body changed and whose
-basis did not keeps its identity, so that what was compiled against it
-stays valid. Loading a basis gives the unit's numbers a range of each kind
-of name -- stamps, type names, type variables -- after the session's, and
-registers the range, which is how a name of the session is written back as
-a unit's identity and number.
+A unit's identity is its logical name (below) and the hash of its basis,
+without what its compile used of the session's counters and without the
+imports' table: an import is hashed as what it is, not as whose it is. A type
+name is its fingerprint (below), a value or an exception its anchor, the
+facts a client reads of it, what a copy of it is and its type, a signature
+referred to its fingerprint. A unit whose body changed and whose basis did
+not keeps its identity, so that what was compiled against it stays valid, and
+so does a unit whose imports changed in nothing it names (S121), which is
+what a fresh compile of it gives. A unit that names what changed moves, even
+where its own bytes do not (S122, S123): a client that names only it holds
+by its binder, and what it may read through it must have moved it. Loading a
+basis gives the unit's numbers a range of each kind of name -- stamps, type
+names, type variables -- after the session's, and registers the range, which
+is how a name of the session is written back as a unit's identity and number.
 
-A unit loaded where a unit of its identity is loaded already -- a file the
-REPL uses again, the same text against the same units -- is loaded and
+**A unit's logical name** says where its file is, and nothing of how a path
+spelt it (`Workspace`, `lib/compiler/driver/workspace.sml`; the build-system
+roadmap's D3). It is what a key, an identity and an anchor hold. The paths a
+program names its files by stay in its code's tables, for its traces and
+messages, and a unit from the cache has them made where the file is now.
+
+* A file of a library is `LIBRARY:PATH`, its path below the library: the
+  deepest directory above it with a `library.build`, so that `lib/basis/list.sml`
+  is `basis:list.sml` and `lib/compiler/driver/deps.sml`, reached by a path of
+  `rune.build` or through `--library compiler`, is `compiler:driver/deps.sml`.
+  A library is named by its place under a directory of libraries -- `--lib`,
+  then the workspace's roots ([build.md](build.md), *The workspace*) --
+  so `lib/ffi/runtime` is `ffi/runtime`, and else by its directory's name, so
+  that it keeps its name where it moves. A library's name holds no `:` and no
+  `@` (each is made `_`), which leaves room for a version, `LIBRARY@1.2:PATH`.
+* Any other file of a build is named from the workspace's root, or without a
+  root file from the build file's directory: `src/driver/main.sml`, spelt
+  `../../src/driver/main.sml` in `tests/lsp/worker.build` too.
+* Files given on the command line are named from the directory of the first
+  (with `-I`, of the entry point), whether or not a workspace is around them.
+  They have no build file to hold them together, and they move together: a
+  project moved to another directory keeps its cache (S29). They may be
+  given in any spelling, relative or absolute.
+* A file outside the root is named by the path to it from the root, with `..`
+  in it (`../out/a.sml`), which holds nothing of the machine, so that a tree
+  that moves keeps its cache (S96). Only a file on another drive than the
+  root, which no relative path reaches, has its whole path for a name. A
+  library above or beside the root is found as far up as the directory it
+  shares with the root; nothing above the root has a say.
+
+Links are not followed: a name is of the path after `.` and `..` are taken
+out, so a file reached through a link and through its real path are two
+names, and at worst two entries.
+
+**A rank.** Two units of one build never have one name. A file given twice is
+two units, as it is two declarations in a program compiled whole, and so are
+two files of one path in two libraries of one name: the second has `#2` after
+its name, in the order of the build, then `#3`, and so has its key and its
+identity. Each has its own globals, so `a.sml keep.sml a.sml main.sml` prints
+in units what it prints compiled whole (S91, S94).
+
+A unit the REPL loads where a unit of its identity is loaded already -- a
+file used again, the same text against the same units -- is loaded and
 linked under its identity with `~2` after it (`~3`, ... where that is
 taken too; `UnitBasis.unused`), so that its globals are its own and what
 named the first unit's still does; its name is the same, and its entry in
@@ -316,15 +473,25 @@ code -- in a cache, and a compile after it takes a unit from there rather
 than compiling it again where nothing it depends on changed (`UnitCache`,
 `lib/compiler/driver/unitcache.sml`; the incremental roadmap's D14):
 
-* the cache is a directory: `--cache-dir DIR`, else `$RUNE_CACHE` (empty:
-  none), else `.rune` beside the first input; `--no-cache` compiles every
+* the cache is a directory, the workspace's store (*The store*, below):
+  `--cache-dir DIR`, else `$RUNE_CACHE` (empty: none), else `.rune` in the
+  workspace, beside its `rune.workspace`, or with no workspace beside the
+  build file or the first input; `--no-cache` compiles every
   unit; `--explain-rebuild` says of each unit whether it was taken from the
   cache or why it was compiled; `--verify-cache`, or `RUNE_VERIFY_CACHE`
   set and not empty (for the REPL's `use`, which takes no flags), compiles
-  each unit the cache has too, and fails where the cache's is not the same
-  bytes as what compiling it gives -- an entry whose usages hold by binder;
-  one that holds by fingerprint alone names the old unit it was compiled
-  against, and is compiled again rather than compared (issue 15); `RUNE_VERIFY_DUMP=DIR` writes the
+  each unit the cache has too, and fails where the cache's is not what
+  compiling it gives: the same bytes, for an entry whose usages hold by
+  binder. One that holds by fingerprint alone names the old unit it was
+  compiled against, so it is loaded with its names remapped, as a build
+  would load it, and its basis written again and its code read and written
+  are compared with the same made of the unit compiled, a unit's identity
+  left out and what only a hash reads (build-cache issue 15, closed by the
+  build-system roadmap's M4, since a basis written again is the same
+  bytes). Its Mid is not compared.
+  One that does not load there is what a build would miss, and is compiled
+  and says so (`src/driver/cachecheck.sml`; the REPL's `use` compiles such an
+  entry again without comparing it); `RUNE_VERIFY_DUMP=DIR` writes the
   entry of each unit that does not verify, and what compiling it gave, to
   DIR (`NAME.cached.pickle`, `NAME.fresh.code`, ...) to compare. A unit's
   code lists the names it uses of other units in the order of their places
@@ -333,8 +500,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   with `RUNE_MEM` set says after each unit how many bytes its basis and
   its code took and how much the heap holds, collected;
 * in it, a directory per *configuration*: the hash of the compiler's
-  identity (`Config.identity`, a hash of the compiler's sources, which
-  `scripts/gen-version.sh` writes), the versions of the files, the
+  identity (`Config.identity`, a hash of the compiler's plan and of the
+  files of its closure, which `scripts/gen-version.sh` writes: [building.md](building.md),
+  *The compiler's identity*), the versions of the files, the
   instruction set, the options that change what the compiler makes, and
   the probe of its hash (`Pickle.probe`, the digest of a fixed text): the
   hash's values depend on the width of the `Word` of the host that built
@@ -344,17 +512,25 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   is not read (S70). The configuration's `units/about` lists what it is
   made of
   (`-O`, `--passes`, `--int-bits`, `--fuel`, `--flex-records`,
-  `--overloading`, `--free-tyvars`). A compiler built from other
+  `--overloading`, `--free-tyvars`, and the limits `--functor-budget`,
+  `--type-work` and `--match-work`, which change what a compile gives;
+  S84). A compiler built from other
   sources, or another level, finds none of another's entries, and two
   configurations live side by side;
 * in that, a directory per *key*, the hash of the unit's name, its source
-  and whether it may use `_prim`, and of an input file's unit the settings
-  that hold for the input files and not the libraries (`--default-type`,
-  `--or-patterns`; S62; and `--no-unicode-lints`, since an entry keeps
-  the warnings it leaves out; S64), and of any unit its mode where it is not the
-  default (*Source modes*; S63); a file of the library is named by its
-  place in the library (`lib/basis/list.sml`), so that a cache follows the
-  library where it is moved, and a unit taken from the cache names its
+  and whether it may use `_prim`; of an input file's unit the setting that
+  holds for the input files and not the libraries (`--default-type`; S62);
+  of every unit, a library's and the Basis Library's too, the settings
+  every file is lexed and parsed under (`--or-patterns`, S62; and
+  `--no-unicode-lints`, since an entry keeps the warnings it leaves out,
+  S64), so that a library's unit made under one is not taken by a build
+  without it, nor the other way about (the owner's ruling of 2026-11-05;
+  the flags oracle's `lib-*` rows); and of any unit its mode where it is
+  not the default (*Source modes*; S63). A build with `--or-patterns` or
+  `--no-unicode-lints` so takes no unit of the frozen layer, and compiles
+  the Basis Library's it takes once into its store; the name is the unit's logical name (*Names*,
+  above), so that no spelling of a path reaches the key, a cache follows a
+  library where it is moved (S93), and a unit taken from the cache names its
   source in its code's files where it is now -- its own, and those of the
   bodies of the functors marked to be inlined that it expanded, which an
   entry keeps with the unit each is the source of (S56);
@@ -392,9 +568,11 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   (the usage `funat IDENTITY`);
 * a function marked to be inlined, or that only applies a primitive, is
   copied into a unit that names it, which uses its Mid too (`inlv NAME`,
-  by the name the unit used, held by the hash of the Mid): an edit of its
-  body compiles the units that copied it again, and an edit beside it
-  does not (S78); which functions the libraries mark is in the cache's
+  by the name the unit used, held by the hash of the Mid and of the lines
+  and columns of its positions, which a copy's line table takes from the
+  source of the unit that declares it): an edit of its body compiles the
+  units that copied it again, and so does one that moves it a line, and an
+  edit beside it does not (S78, S83); which functions the libraries mark is in the cache's
   configuration, as which functors they do;
 * in the REPL, what a declaration of a file used echoes is compiled with
   it: two usages more say what that was compiled by, `echo on` whether it
@@ -404,8 +582,9 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * an entry whose code names a unit the session has not -- one its usages
   should have found changed -- is no entry, and the unit is compiled
   rather than the link finding nothing to take the name from;
-* an entry keeps the warnings its compile gave, which a compile that takes
-  it from the cache gives again;
+* an entry keeps the warnings its compile gave, as spans and messages,
+  which a compile that takes it from the cache gives again as its own, in
+  whatever form it was asked for (S85);
 * an entry is marked with the level of the lint its compile ran
   (`UnitCache.level`: `--lint=N` or `RUNE_LINT`, else the program's own,
   0 for `rune`; at most 2, level 3's round trips not being asked of an
@@ -417,34 +596,73 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
   the lint (N)"): the unit is compiled again, checked, and stored marked
   where the cache can be written (S81; the linting roadmap's M9);
 * an entry keeps the schemes of what its code names of other units, as
-  text (`UnitBasis.importedSchemes`), and where its usages hold by their
-  binders each is held to the scheme the unit there now has when the entry
-  is taken, a cheap check of what the binders say: one that differs is no
-  entry, and the unit is compiled ("its entry had another scheme of ...";
-  a check of level 0, `Pass.checkAt`, which `--pass-stats` counts as
-  `schemes`);
+  text (`UnitBasis.importedSchemes`). A build does not hold them to the
+  units there now when it takes the entry: where its usages hold by their
+  binders, the binders' identities are the bases that hold those schemes,
+  and a hit that loads no basis (*A warm build*, below) could not read them;
   where usages hold by fingerprint, the fingerprints are of the schemes
-  already;
-* an entry is one file, its usages, warnings, basis, the basis's identity
-  (which loading takes from it rather than hashing the basis again) and
-  code with the hash of them, written under a name of its own and renamed
-  into place, so that
-  two compiles at once never see half of one. One that cannot be read, or
-  does not hold what its hash says, is no entry, and the unit is compiled
-  and the entry written again. A cache that cannot be written is one that
-  is not there. Nothing in a key is a time. Temporary publication names
+  already. `--verify-cache` compares them with what compiling the unit gives,
+  and fails where they differ ("its entry had another scheme of ...", S82;
+  the build-system roadmap's M6). The REPL's `use` and the compiler library
+  still hold them, a check of level 0;
+* an entry is one file, written under a name of its own and renamed into
+  place, so that two compiles at once never see half of one: first its
+  head -- its usages, the level of the lint that checked it and the units
+  its basis names, all a lookup judges it by -- with the hash of the head's
+  bytes, then four sections, each with the hash of its own: its warnings,
+  file, other files and identity, which loading takes rather than hashing
+  the basis again; its basis; its code; its Mid (`UnitCache.version` 12;
+  the build-system roadmap's M7). A lookup reads the head of each of a
+  key's entries -- its first four kilobytes, more where a head is longer --
+  and of one whose head does not stand reads no more and hashes nothing: a
+  damage that makes a head refuse is a miss. A head that stands is held to
+  its hash, and each section to its own as its client takes it; a build of
+  the units' code takes no Mid, and holds none to its hash, and `--whole`,
+  `--verify-cache` and the compiler library take it
+  (`UnitStore`, `lib/compiler/driver/unitstore.sml`, which keeps entries
+  and what is kept beside them by a name and knows nothing of what a unit
+  is: the head and the sections are its client's to write and read, and
+  its client's `holds` says of a head which entry stands;
+  `tests/lib/compiler/store.sml` holds it to that with a client of its own
+  and no compiler). One that cannot be read, or does not hold what its
+  hashes say, is no entry, and the unit is compiled and the entry written
+  again. A cache that cannot be written is one that
+  is not there. Nothing in a key is a time. A `.tmp-` file an hour old is
+  one a compile that died left, and a compile removes it where it comes
+  across it: in the directory of a key it looks in, and in `units/` when
+  it writes there (S86). Temporary publication names
   come from an OS reservation held until the write finishes, as for
-  bytecode output; generating them does not format clocks or process ids.
+  bytecode output; generating them does not format clocks or process ids;
+* beside the configurations, `steps/` holds what a build's declared steps and
+  preprocessors made ([build.md](build.md), *Generated sources*): the key a
+  step last ran under, with the hash of each output, and a preprocessor's
+  output of each file, by the tool and the file's bytes. A unit of a
+  preprocessed file is keyed by that output, as any unit is by its text.
+
+**What a boundary does to a key.** A client's usages are by name, so what
+its entry holds of a library is what it could see and did name: a boundary
+needs no hash of its own, as SML/NJ's filter does, whose clients depend on a
+unit's one hash (D8 asks for "what would have been pickled for the smaller
+environment"; a usage is finer than that). A name a boundary hides is bound
+in no client's scope: `UnitBasis.binders` follows the filter, so a usage of it
+does not hold there, and a build that is no friend compiles the unit again and
+is refused rather than served. An edit behind a boundary compiles no client,
+whichever unit it is in, unless the client is a program that keeps its units'
+identities: the usage holds by its fingerprint, across the unit that changed
+(`keys` of `tests/runner/librarymodel.sml`). What it did not name it does not
+depend on. A library's own files are keyed the same way, in the scope its
+header gives them, so a unit is one entry whatever else a program loads.
 
 **Fingerprints** (GHC's rule; the incremental roadmap's M6, the third
 part). A usage keeps, beside the unit that bound the name, the
 fingerprint of what the name named: the hash of an entry -- a value's
 scheme and where it is from, a type's definition with its constructors and
 realisation, a structure's entries, a signature, an identifier's fixity --
-with every name in it written by its unit's name and the path that reaches
-it there (`a.sml:A.shape`, `a.sml:sig:SHAPE.area`), so that a change under
-a name changes every fingerprint that mentions it, and a change beside it
-none. A usage holds where its binder is the same unit, or where what the
+with every name in it written by its unit's logical name and the path that
+reaches it there (`a.sml:A.shape`, `a.sml:sig:SHAPE.area`), so that a change
+under a name changes every fingerprint that mentions it, a change beside it
+none, and a change of spelling none: a `_dynamic` client of `./ty.sml` is the
+bytes of one of `ty.sml` (S92). A usage holds where its binder is the same unit, or where what the
 name names now has the same fingerprint and the unit that bound it then is
 not in the session: the entry's code names that unit's globals, which the
 unit of its name there now takes over (below), while a unit still there
@@ -523,12 +741,23 @@ ways, through the cache and from it, `check-levels` at both levels, and
 **The frozen libraries** (D8): `make basis-cache`, part of `make all`,
 compiles every unit of `lib/basis` and `lib/compiler` once, with the
 compiler library's Unicode and JSON dependencies, for each bytecode, into
-`lib/cache`, which `make install` installs read-only beside the library. A
-compile reads it after its own cache and never writes it, so that a
-program's first compile takes the Basis Library's units from there where
-their usages hold, which they do but for the seals of structures the
-program does not name. It is made with the lint at level 2, so its entries
-are marked 2 and a compile at any level takes them.
+`lib/cache`, which `make install` installs read-only beside the library and
+`make dist` ships (*The store*, below). A compile reads it after its own
+store and never writes it, so that a program's first compile takes the
+Basis Library's units from there where their usages hold, which they do but
+for the seals of structures the program does not name. It is made with the
+lint at level 2, so its entries are marked 2 and a compile at any level
+takes them. It also keeps the index of every library under `lib`, which a
+compile reads there too ([build.md](build.md), *A library's index*).
+
+An analysis names its units as a build does (*Names*, above):
+`CompilerApi.Project.read` takes the workspace, and the same source in a
+build and in the editor has one name, and a second unit of that name is
+`NAME#2` in both. The static layer of a unit's basis is the same bytes too
+(*Layers*, above), which is how the editor takes a compile's entries
+([language-server.md](language-server.md), *The store*); the rest differs:
+an analysis's sidecar holds origins, which a build's does not, and an
+analysis knows no back-end fact, so it has little to write in the ABI layer.
 
 The public [compiler library](lib/compiler/README.md) writes units with
 `.rbi` checked-basis, `.rbm` Mid and `.rbs` source companions. The source
@@ -547,16 +776,310 @@ through `writeMid`. The [compiler-library roadmap](plans/compiler-library.md) re
 session and client-migration acceptance gates.
 
 **`use`** in the REPL ([repl.md](repl.md)) takes a file's declarations
-from the cache the same way, each a unit named by the file and its place
-in it, kept in `$RUNE_CACHE`, else `.rune` beside the file: a file used
-again links its units from there, its top level run again with globals of
-its own.
+from the cache the same way, each a unit named by the file's path from where
+the session began, however `use` spelt it (S97), and by its place in the
+file, kept in `$RUNE_CACHE`, else the store of the file's workspace, else
+`.rune` beside the file: a file used again links its units from there, its
+top level run again with globals of its own.
 
 `make check-units` builds every program in units without the cache, then
 through a cache all the programs share, and again from it, every unit
 taken from there, and wants the same bytes three times; `tests/units`
 does the same for its programs of several files; `make test-incremental`
 runs the scenarios of `tests/incremental/SCENARIOS.md` it can be held to.
+
+## The store
+
+What a compile in units keeps is one store, used by every client the same
+way (the build-system roadmap's D24 and M7): the batch compiler, `--serve`,
+the REPL's `use`, `--verify-cache`, the memos of a warm build (*A warm
+build*, below) and the records of a build's steps. A store is a directory:
+
+```
+DIR/                 .rune, or lib/cache, or --cache-dir's
+  CONFIG/            one for each compiler and set of options
+    KEY/             one for each unit: its logical name, its text, its settings
+      HEAD           an entry, one for each set of usages
+    units/           what is kept by a unit's identity: the paths to its
+                     names, the keys it binds; about, what CONFIG is made of;
+                     the stat memo; the link memo
+  memo/units/        the records of up-to-date builds, copies of outputs, and
+                     trimmed, whose time is when the store was last trimmed
+  steps/             what a build's steps and preprocessors made
+  editor/units/      the language server's sidecars, by the hash of a source
+                     (docs/language-server.md, The store)
+  index/units/       each library's index, by its place and, but in the frozen
+                     layer, its directory, with what it was made of
+                     (docs/build.md, A library's index)
+  plan/units/        what each file of a program is to its compile, by the
+                     program's place and its root of libraries (A warm build,
+                     The plan)
+```
+
+**Layers.** A compile writes one store, its *overlay*, and reads after it
+read-only stores, its *layers*, in order: the frozen libraries, `cache`
+beside the library (`lib/cache` in a checkout, `<prefix>/lib/rune/cache`
+installed). The two are one mechanism, the same code, layout, entries and
+rule for a hit; what differs is who writes them and for how long they are
+good. A layer is valid for exactly the compiler that made it, so it is made
+again whole when the compiler changes, needs no trimming, and sits beside
+that compiler in an install; the overlay outlives compilers and holds what
+they left. A hit in a layer is not copied into the overlay. The keys a
+unit's identity binds and the paths to its names are read from the first
+store that has them, the overlay first. A compile that writes a layer --
+`make basis-cache`, `--cache-dir lib/cache` -- keeps no memo of its build
+there and never trims it.
+
+**Where it is.** `--cache-dir DIR`, else `$RUNE_CACHE` (empty: none), which
+is how worktrees share one, else `.rune` in the workspace: the directory of
+the nearest `rune.workspace` above the build file, or above the first input
+for files given by themselves (*Names*; [build.md](build.md), *The
+workspace*), else beside that file. So every build of a workspace, whatever
+file its plan begins with, has one store, as do the REPL's `use` of a file in
+it and a build of a library in it; before M7 a store went beside the first
+input, which put `rune.build`'s in `build/.rune`, by its first line
+`build/config.sml`, and `tests/lsp/worker.build`'s in `src/lsp/.rune`. Its
+paths are from the root of the filesystem where a compile in another
+directory could mean another file by them (the stat memo, the link memo), so
+that compiles in several directories share it.
+
+**Keys and entries.** A unit's key is its logical name, the hash of its
+text and its settings (*The cache*, above); an entry's head is what the
+client judges it by, which the store holds and never reads, and its
+sections are hashed apart. Nothing in a key is a time, and nothing is ever
+invalidated: an edit gives a new key or breaks a usage, and the old entry
+stays until the store is trimmed.
+
+**What keeps it small.** What a compile takes from the overlay -- an entry,
+or a file kept beside the entries -- has its time set to now where it is an
+hour old or more (Go's rule), so that a file's time is when a compile last
+took it, within the hour; a unit taken keeps the paths to its names so too,
+which a unit compiled against it reads only once it changes. Trimming removes from the overlay what no compile
+has taken for longer than `--cache-max-age DAYS` (7 unless given), then, the
+least recently taken first, what makes it larger than `--cache-max-size
+SIZE` (4G unless given), then the directories that leaves empty, and a
+`.tmp-` file a compile that died left (`UnitStore.trim`). A compile in units
+trims its store after its work is done, where it was last trimmed a day ago
+or more (one stat where it was not), never during a build, and never in a
+child of `-j`, whose parent is still building; `rune --cache-trim` trims it
+now. Within the hour, then, the least recently taken is the first written:
+a size smaller than what builds take may remove what the next build takes,
+which it compiles again. Another compile may be reading the store as it is
+trimmed: any failure is a miss. An entry gone is compiled again, a key bound or a path gone loads
+the unit whole or compiles it, a memo gone does the work again, and a step's
+record gone runs the step; what a compile takes it reads whole first, so
+that nothing is read from the store after it is taken. `make clean` removes
+the overlays of the tree, and `lib/cache` stays until the next `make
+basis-cache`.
+
+**Install and dist.** `make install` copies `lib/cache` read-only to
+`<prefix>/lib/rune/cache`, and `make dist` ships it (`rune-build make-dist
+--cache lib/cache`), each configuration's entries and what is kept beside
+them, read-only in the tar, not the memos of the build that made it: a
+dist's first `--units` compile builds no unit of the Basis Library
+(`frozen` of `tests/runner/distchecks.sml`). Its entries serve the
+compiler with the configuration that made them: the same `Config.identity`,
+the default options and a hash whose probe is the same.
+
+**What reads which.** The batch compiler and `--serve`: the overlay, then
+the layers. The REPL's `use`: the overlay of the file's workspace. The
+compiler library: the frozen libraries alone, and it writes `.rbi`, `.rbm`
+and `.rbs` beside its outputs. The language server: the overlay of its
+build's workspace, where there is one, then the layers, for the static
+layers of a compile's entries, of any configuration whose static settings
+are its own (the compiler, the formats, the hash and `--flex-records`,
+`--overloading` and `--free-tyvars`; level, passes, fuel, target, the
+integers' width, the limits and what is inlined move no static layer); and
+it writes its sidecars there, never an entry
+([language-server.md](language-server.md), *The store*).
+
+## A warm build
+
+A build whose units are all in the cache costs what reading them back costs
+(the build-system roadmap's D25 and M6). Five things keep that small, each
+with `--units` and a cache, and none in a key: a memo says that work need not
+be done again, and is believed only where every file it rests on has the stat
+it had or the bytes it had. `RUNE_WARM=off` turns all five off.
+
+**A unit taken without its basis.** An entry whose usages all hold by their
+binders, and whose basis names only units of the session, needs nothing of
+the session checked but the binders (`UnitCache.findExact`): its unit is
+registered -- its identity, the ranges of its names -- and the names it binds
+are bound to it by the keys the cache keeps of its identity
+(`UnitBasis.bindKeys`, a file beside the entries), and nothing of its basis
+is read (`UnitBasis.lightLoad`). Its code is read for the link, and its
+warnings are given again. A unit whose basis is wanted later -- by a compile,
+or by a hit that is not light -- is loaded then (`UnitBasis.materialise`), at
+the names it was registered at, with the units its basis names in turn and
+every unit that registered an overloading, which a compile reads by no name.
+
+**A compile that sees what it names.** A unit that is compiled sees a *view*
+(`UnitBasis.view`): the initial basis, and of each name its text has, the
+binding the binders say, which is what the environment of all the units
+before it would give for that name; its signatures and functors the same
+way. Only the units those bindings come from are loaded, and those their
+bases name. What the compile then looked up must have been in the view, and
+what its basis and code name must have been loaded (`UnitBasis.closed`); a
+compile that read outside its view is a missed lazy read, and the build is
+compiled again with every basis loaded (`UnitBasis.Unviewable`,
+`compiledAgain`), never taken. Not where every basis is wanted anyway --
+`--whole`, `--emit-units`, `--typecheck-only`, `--verify-cache`, `-j` -- nor
+for a program that loads units, nor where an import renames a name (a
+binder's names are its own unit's), nor where an editor's buffer stands in
+for a file's text (`--serve`), which no stat says anything of. A
+preprocessor's output stands in for its file too (*Generated sources* in
+[build.md](build.md)), but a compile sees a view all the same: its unit's key
+holds the output's hash, taken whole and not from the stat memo, since the
+file's stat says nothing of the tool.
+
+The editor's analysis loads its units by need the same way
+([compiler-analysis.md](compiler-analysis.md), *Loading by need*), but that a
+unit that registers an overloading is loaded whole at its place, and that a
+view prints a type by the path the whole environment has, from an index of
+what each unit's top-level names reach. A compile's view names a type in a
+message by the path the view has.
+
+**The stat memo.** A unit's key holds the hash of its source, which a warm
+build need not read: the store keeps, by a file's path and mode, the hash its
+text had, its stat then -- device, inode, size, the times it was written and
+changed, kept and compared as whole numbers, never made text -- and when the
+stat was taken (`UnitStore.hashBy`, `units/` of the configuration). A hash is taken from the memo only where the stat is the same
+and the file was last written at least two seconds before the stat was taken,
+git's rule for an index that is racily clean, with a second more for a clock
+that is not the filesystem's; anything else reads the file. A span of another
+unit's code that names a source not read -- a function copied from it, a
+warning given again -- loads it (`Source.fault`). A stat is what Rune's own
+`rune` asks of `Posix.FileSys.stat` (`UnitStore.stat`, which
+`src/main/rune-main.sml` sets, and `runedoc` and the compiler's API on Rune
+too); a compiler built by another host has none,
+since MLKit's Basis Library has no `ctime`, and keeps and believes no memo:
+it reads every source and links every time.
+
+**The plan.** Before a unit is compiled, a build chooses the files of the
+Basis Library and of its libraries that its files name ([build.md](build.md),
+*A library's build file*), and `-j` orders its units by what each declares
+and uses (*Parallel builds*). Both ask what each file is, read in the fixity the files
+before it leave (*Well-formed units*), so a build read, lexed and parsed every
+file before it compiled one. What a file is -- what it declares and uses, the
+names the choice takes of it, the fixity directives it adds, whether it says
+the program loads units -- is kept in the store as a library's index keeps
+its files' ([build.md](build.md), *A library's index*), by the hash of its
+text (by the stat memo), its path, its mode, the fixity it is read in and
+`--or-patterns` (`LibraryIndex.programFacts`, `plan/` of the store, by the
+program's build file or first file and its root of libraries, so that two
+roots' plans coexist in a store as their indexes do). A file whose key is there is not read
+until its unit is compiled. So a build after an edit reads the file edited;
+after an edit of a fixity directive -- changed, added, removed, made
+`nonfix`, put in a `local` that drops it -- the files after it, whose fixity
+before them changed, and after one put in a `local` that keeps it the file
+alone, since what it leaves is what it left. A file whose text is the same
+but that is read in another fixity is read again: E15's plan memo kept a file
+by its text alone, and took a parse that had failed for one that now holds,
+or the other way about. None is kept with `--no-cache`, under `RUNE_WARM=off`
+or where an editor's buffer stands in for a file, nor in a layer of the
+store: such a build reads and lexes every file, and parses those that may
+name what the choice takes, as a build in whole does (but with `-j`, which
+reads what each is). With `--verify-cache` every file is read all the same,
+and one whose kept facts are not what reading it gives is an error.
+
+**An output.** What a build writes and reads again -- its program, and what
+a step made -- is held by its stat and by a copy of its bytes, which the
+cache keeps with the stat they were read back at (`UnitMemo.written`,
+`memo/units/copy-*`, one a path): where the stat is the same and racily
+clean, by the stat; where it is the same but was taken within the second of
+the write, by its bytes against the copy. A copy compared costs what reading
+it costs; a hash the VM works out of an output of megabytes costs more than a
+no-op (0.31G instructions of `rune.build`'s 6 MB program, against a no-op's
+0.27G). The price is the copy: a cache holds each output once more.
+
+**The link memo.** The program a link made is kept by the hash of what was
+linked, each unit's code by its entry's hash or its bytes' and where its
+files are now, with the output (`UnitMemo.linked`). The same units linked to
+an output that is what that link wrote are not linked again; an output that
+was changed, or written within the second of its stat and not the same
+bytes, is.
+
+**Up to date.** A compile in units keeps what it read once its plan was made
+-- every source, every file its declared steps and preprocessors read, with
+the stat each had when it was read, and whether each `library.build` it
+asked of was there -- and each library's index it took, by the name of the
+index's record in the store and the hash of the paths and bytes the index
+rests on (`LibraryIndex.stillRests`), not by a copy of those files; with
+what its steps made and its output, each held as an output is, and the
+warnings it gave, under a key of all its plan rests on: the command line,
+the directory, every `RUNE_` variable, the compiler's identity, the text of
+its build files, its inputs and its workspace (`UnitMemo.upToDate`, `memo/`
+of the cache). A compile with the same key, all of whose files have the
+stats they had and racily clean, each of whose indexes has a record of the
+same hash whose files are what it was made of (by their stats where racily
+clean, else by their bytes, as a query holds a record), whose questions have
+the same answers, and whose steps' outputs and own output are what were
+made, runs no step, gives the warnings again and ends: an edit of any file
+an index rests on makes the next build not up to date. A step's output is held as an output because the build itself writes
+it, within the second of its stat; and the check comes before the steps, so
+an up-to-date build runs none. Not with `--explain-rebuild` or
+`--pass-stats`, which say what each unit did, nor with `-I`, whose plan
+lists directories, nor where an editor's buffer stands in for a file, nor
+where a step declares no inputs and so runs on every build, nor where the
+warm path is off; with `-j` too, so that a no-op parses no input.
+
+What a no-op costs (the build-system roadmap's M6): machine instructions
+(`perf stat -e instructions:u`, the compiler at tier 2) and the VM's
+(`runevm --count`), of a build made again with nothing changed, against the
+same build before M6; the first no-op after a build reads its output and the
+copy once more, since the output was written within the second of its stat.
+`rune.build` is a git checkout in which make has written `build/config.sml`;
+its row is of the build without the config step it had for a while, whose
+stamp asked git on every no-op, 0.046G of the 0.274G a no-op was then:
+
+| Build | Before | No-op | First no-op | VM, before | VM, no-op |
+|---|---:|---:|---:|---:|---:|
+| `rune.build`, 257 units | 11.30G | 0.229G (2.0%) | 0.252G (2.2%) | 1.151G | 0.002G |
+| HOL4's closure, 910 units | 25.78G | 0.261G (1.0%) | 0.314G (1.2%) | 2.872G | 0.006G |
+| MLton, 791 units | 87.27G | 0.284G (0.3%) | 0.335G (0.4%) | 9.011G | 0.007G |
+
+A no-op's floor is the VM's start, 0.173G for `rune --version`. An edit of the
+last unit costs 9% fewer VM instructions than before on `rune.build` and HOL4
+(the units before it taken without their bases; its view loads most of them),
+and a build that links keeps a copy of its output in the cache. `-j 4` makes
+a no-op of `rune.build` 0.229G, against 13.30G before, since it parses no
+input; a build that is not up to date reads its inputs with `-j` for their
+keys, and parses those the plan does not know.
+
+What a leaf pays (the build-system work F2, against the compiler before it
+kept a plan, `a8d450357`; machine instructions and the VM's as above): an edit
+of a function's body in one of a program's last units, built warm, one unit
+compiled, the bytes of `--no-cache`:
+
+| Build | Before | Leaf | VM, before | VM, leaf |
+|---|---:|---:|---:|---:|
+| `rune.build`, `src/driver/main.sml` | 12.83G | 11.08G (-13.6%) | 1,175.5M | 989.9M (-15.8%) |
+| HOL4's closure, `patternMatchesLib.sml` | 27.06G | 20.61G (-23.8%) | 2,629.7M | 2,049.8M (-22.1%) |
+| MLton, `elaborate-core.fun` | 31.53G | 28.18G (-10.6%) | 3,495.0M | 2,949.8M (-15.6%) |
+
+The plan reads the file edited and no other: on MLton 18,967 tokens where it
+lexed 908,931, about 1% of the leaf's processor time where lexing and choosing
+were 13% (`--pass-stats`, the JIT off). What is left is the link and the unit:
+each unit's code decoded and the program linked again (`cache-code` and
+`link`, 41% on MLton), each unit's entry found (`cache-find`, 15%), the unit
+compiled, and the work outside the stages (planning, the up-to-date check and
+its record, 16%). So MLton's leaf is 30-31% of what it was before the build-system
+roadmap, not the 25% E15's prototypes gave a compiler of then; a link that
+decodes and links only what changed is the next floor (D25). A build that
+keeps a plan parses each file once more to make it: a cold build costs 1.6%
+more VM instructions on `rune.build` and 1.2% on HOL4's closure. A no-op, and
+a build with `--no-cache`, run the VM instructions they did, within 0.1%; a
+compiler 0.35% larger to start costs each 0.2-0.3% more machine instructions.
+
+`tests/runner/warmchecks.sml` (`make test-incremental`) holds the warm path to
+what a build without it gives: each unit of two projects compiled alone under
+its view and under the mask of its usages while the others are taken without
+their bases ([testing.md](testing.md), *The checks of the cache*), E15's racy edits, and a compile that is up to
+date against a touch, an edit, the output removed and overwritten, and a
+`library.build` that makes a unit another library's; and the plan
+(`warm-plan`), which a build after each edit -- of a comment, of a fixity
+directive changed, added, removed, made `nonfix` or put in a `local` -- reads
+as the edit says, and `--verify-cache` holds to the files' texts.
 
 ## The graph
 
@@ -572,29 +1095,115 @@ signature's specification. The order keeps the order given wherever the
 uses allow it: the compiler's own sources in the order of `rune.build`
 come back as they are, and in any order as an order it builds in.
 
-The order is the files' only where each file keeps a discipline (CM's): its
-top-level declarations declare structures, signatures, functors, type
-abbreviations or (the Basis Library's) overloading, and none declares a
-value, a function, an exception, a datatype -- whose constructors are
-values -- or a fixity, or opens a structure, because a use of a value or of
-an operator names no module, and the analysis cannot see it. A file that
-breaks it is named, with the line; so are a name two files declare and a
-cycle. Inside a structure anything goes, but a name a structure `open`ed
-may bring in is counted as a use where a file of the group declares it,
-which the analysis cannot tell apart.
+Each file is read in the fixity the files before it leave, as a compile
+reads it. A cycle is refused. Inside a structure anything goes, but a name a
+structure `open`ed may bring in is counted as a use where another of the
+files declares it, which the analysis cannot tell apart.
+
+The names say the order only where a file is *well-formed* (below). One that
+is not stays where it is written: all before it stays before it and all
+after it after, so that what it binds is in scope as the text says, and a use
+that reaches past it means what the text means, the binder before it or none.
+`rune --deps` says which, with the line, and goes on.
+
+`rune --deps --build FILE` reads a build instead of a list. The order is the
+build's, a library's boundary and `use` hold as they do in a compile, a file is
+read in the fixity its place in the build gives it, and the classes and the
+scopes below are the build's.
 
 **An entry point.** With `-I DIR`, the one input is a program's entry
 point: the `.sml` files of its directory and of each `-I DIR` are analysed,
 and those its uses reach -- the files declaring what it names, and those
-they need -- are compiled before it, in the graph's order. A file that
-breaks the discipline is none of them; where it declares a module the
-program names, the compiler says so.
+they need -- are compiled before it, in the graph's order. They have no
+written order to fall back on, so a file that is not well-formed is none of
+them, and a name two of them declare is refused; where a file left out
+declares a module the program names, the compiler says so.
 
-**The Basis Library's MANIFEST** says what each of its files provides and
-requires (`lib/basis/MANIFEST`). It is made from the library's build file
-(`lib/basis/library.build`, docs/build.md) by `rune --basis-index DIR`:
-the provides column is what a file declares and the requires column what
-`Deps` derives, so neither is written by hand.
+**The Basis Library's index** says what each of its files provides and
+requires. It is derived from the library's build file
+(`lib/basis/library.build`, docs/build.md) and its sources, and kept in the
+store, never in the tree (docs/build.md, *A library's index*): what a file
+provides is what it declares and what it requires what `Deps` derives, so
+neither is written by hand, and `rune --basis-index DIR` prints it.
+
+## Well-formed units
+
+A unit is *well-formed* (CM's word) when its top level says what it binds in
+names a use can be found by. Four rules, the build-system roadmap's D17:
+
+1. No top-level `val`, `fun`, `exception`, `datatype`, `abstype` or
+   replication, because a use of what they bind names no module.
+2. No top-level `open`, which binds what the text does not show.
+3. No top-level fixity directive, because the parse of what follows depends
+   on it.
+4. No module name declared by two units of one scope. A scope is what a
+   library's boundary or an `implements` holds, or the rest of the build, so
+   two libraries may each have their own. Two that let
+   out one name into a scope are a clash of imports, a library's matter
+   ([build.md](build.md), *Clashes*), not two units'.
+
+A unit's top level may declare structures, signatures, functors and type
+abbreviations. The rest is free, since nothing needs it: an effect (`val _ =
+e`, `val () = e`, a bare expression) binds no name, what a top-level `local`'s
+head binds is private to it, a `use` does not exist in batch, a structure
+needs no signature, and inside a structure anything goes.
+
+**A correct program is never refused for these.** They are about finding an
+order and a closure from syntax, not about what a program means, and a unit
+that breaks one costs speed, never correctness: it keeps its place in the
+written order, as every unit has in a program. The 1990 Definition had such a
+subset and the 1997 revision took it out; Rune holds to the language it says
+it accepts ([language.md](language.md), row `mod.wellformed`).
+
+**The rules are for shared units.** A unit is of one of three classes:
+
+| Class | What it is | The rules |
+|---|---|---|
+| *shared* | others depend on it | hold |
+| *entry* | nothing depends on it: a program's main file, a script | all of Standard ML |
+| *prelude* | it defines the language for what follows: `annotate "prelude"` in a build ([build.md](build.md), *Annotations*), or an `always` file of a library | all of Standard ML; what it leaves is everyone's after it |
+
+Shared and entry come from the graph. A unit is shared if a unit after it
+names what it declares, by a module's name, or by an identifier that is one of
+its values: another unit's local variable of that name counts too, since the
+syntax cannot tell them apart. One whose `open` or replication binds what it
+does not show is shared if any unit comes after it. In a library the build
+says the class: a `final` file is an entry unit, and `demand` and `seal` files
+are their clients' to depend on, so shared.
+
+A prelude's fixity is known to the graph: `rune --deps` reads each file in the
+fixity the files before it leave, a prelude's among them, so a unit that needs
+it parses and shows its uses. So does choosing what of the libraries a program
+loads, by the names its files use (`--basis-deps` shows the choice), from what
+the libraries it sees export. A file that does not parse even so, because its
+fixity comes from a library with no header, which no index holds, is taken
+there by its tokens, and `rune --deps --build` keeps it where it is written;
+its compile has the last word. A prelude stays where it is written too.
+
+**Where it shows.** A warning, and `--no-warnings` silences it:
+
+* `rune --deps` lists every break, with its line. That is the question being
+  asked, and nothing is lost by the length of the answer.
+* `rune --basis-index` warns once a library, with how many units and the
+  first, as it does of a library with no header: the person indexing it is the
+  person changing it, and a client cannot act on it.
+
+A `rune --build`, and `rune FILE...`, do not warn: nothing there asks for the
+graph, since a build lists its files in the order they are compiled and the
+written order holds whatever the units are; and a warm build does not parse
+a unit it has no use for, which checking would cost it every time (parsing
+all of a build's files cost a no-op 9.2%: the build-system roadmap, M1). Ask
+with `rune --deps --build`.
+
+**`strict`.** A library says `strict` in its header ([build.md](build.md), *A
+library's header*) to make `--basis-index` refuse a unit that is not
+well-formed. It needs a header: a library without one keeps today's meaning,
+all of which is public and any of which may be named.
+
+So nothing of this reaches a program's meaning, and `--flex-records=program`,
+`--free-tyvars=later` and `later-monotype` are the only ways for anything to
+wait past a unit's end (*Compiling a unit*): they are refused in `--units` and
+stay outside builds.
 
 ## Dynamic modules
 
@@ -631,13 +1240,92 @@ naming both. The module's code names what it uses of the program's units by
 their identities, which a program linked from units keeps (*The units
 section of a program*, [bytecode.md](bytecode.md)): so a program compiled
 whole, whose units are one, cannot load a module, and is refused one at
-compile time. Two modules compiled against one library share its types
+compile time.
+
+A program compiled in units keeps that section where it *loads units*: it has
+a dynamic module (`lib/basis/dynamic.sml` is among its units), or a unit of
+it names one of `Runtime.load`, `link`, `linkedUnits` and
+`linkedUnitSources`. So does every client of `CompilerApi`, through the
+library's own file that links compiled code. The members are told apart by
+the keys a unit's code names, of the functions those members are in
+`lib/basis/runtime.sml`'s code, so an alias, an `open` or a functor's argument
+counts where a member is used and not where it is not, and a program that
+names `Runtime` for its counters, or has a structure `Runtime` of its own,
+does not load units. Such a program keeps no section, so nothing in its file
+depends on a unit's identity, and an entry taken from the cache across a unit
+that changed gives it the bytes a build from source gives (*The cache*). A
+program that loads units takes no such entry, since a unit loaded into it
+names the identities of a build from source. Where that shows only once
+such an entry has been taken -- the first unit to name a member does so by
+an alias, after the edit -- the program is compiled again as what it is, and
+`--explain-rebuild` says so; a warning or an error that both compiles give
+is printed once. `--emit-units`, which gives the units'
+identities to whoever reads the files, takes no such entry either for a
+program that has `Runtime`.
+ Two modules compiled against one library share its types
 with each other and with the program. `Dynamic.load file` is the untyped
 form, for a unit that registers what it offers through a structure of the
-program. `tests/dynamic/run.sh` (`make test-dynamic`) is each of these. A
+program. The scenarios `dynamic` of `tests/runner/scenarios.sml` (`make test-dynamic`) are each of these. A
 virtual module (`structure X = _virtual : SIG`, [build.md](build.md),
 *Virtual modules*) is the same boundary inside one program, its
 implementation chosen by the build file.
+
+**A dynamic functor** (the build-system roadmap's M21 and D22) is the same
+for a functor, applied by its signature alone:
+
+```sml
+(* the program, compiled against KEY and TABLE alone *)
+functor Table = _dynamic "table.rbu" (K : KEY) : TABLE where type key = K.t
+structure Squares = Table (IntKey)
+
+(* the module, compiled to table.rbu *)
+_export functor Table (K : KEY) : TABLE where type key = K.t = struct ... end
+```
+
+`A` and `B` of `functor F = _dynamic "path" (X : A) : B` are its parameter's
+signature and its result's, in which `X` is the parameter. An application is
+typed by them alone, as rule 54 types any functor's (its types and
+exceptions new at each, `B`'s abstract types as an opaque ascription's), and
+compiled as a call of the functor's function over its argument's record and
+its result's, as an application of a functor of an earlier unit is ([ir.md](ir.md),
+*Functors compiled once*): there is no body to copy, so nothing of an
+implementation reaches the program, and the expansion leaves the call. The
+declaration sets the global of that function from what the module exports,
+the one slot of its record: `_export functor F (X : A) : B = strexp` is a
+functor of the module, its body ascribed to `B` opaquely, whose function its
+unit exports. `functor F = _virtual (X : A) : B` takes it from the program,
+as a virtual structure does ([build.md](build.md), *Virtual modules*).
+`Dynamic.reload` of the file gives the declaration the new module's
+function: an application after it is of the new code, and one before keeps
+its own slots and types, which no later application shares.
+
+The two sides agree on the functor's ABI where they agree on its
+fingerprint (`UnitBasis`, `Elaborate.functorFingerprint`), the hash of: the
+ABI's version and its calling convention; the parameter's record and the
+result's, each slot by name in order, the descriptors of the parameter's
+open constructors among them (`Elaborate.functorShape`); and `A` and `B`, their
+own type names by their places among both lists -- `B` names `A`'s where the
+result's types are the parameter's -- and every other type name by its
+unit's logical name and path, with what defines it, as the ABI layer's
+fingerprints are worked out (*Layers*, above). Nothing of where a signature
+was written is in it, so a client and a module whose files were spelt
+otherwise agree (E10's probe; `spelling` of the scenarios `dynamic`), and
+`Pickle.hash` gives every host the same value but `smlnj32`, which has a
+hash of its own, and so a fingerprint and a configuration of its own
+(`check-cross`'s `virtual-table`).
+Where they differ, the declaration raises `Dynamic.Mismatch`, which names
+both; each field has a mutant that is refused so (S128 to S130 of
+`tests/incremental/SCENARIOS.md`, the mutants of the cache A1 to A6). A
+datatype `B` specifies is read by the program as the specification lays it
+out, a constructor whose argument is an abstract type of `B` boxed, so an
+implementation that lays it out otherwise is refused where it is compiled,
+as an exported structure's is (`tests/errors/err.export_layout`); a
+datatype of `A` whose constructor takes `A`'s abstract type is laid out as
+the argument's datatype lays it, by the descriptor the caller gives, as for
+any functor. `examples/virtual/table` is both forms, and the scenarios
+`functor-*` of `dynamic` and `virtual-table-*` of `buildfile` are each of
+these. A dynamic or virtual functor is not `inline functor`: it has no body
+for its applications to copy.
 
 ## Parallel builds
 
@@ -652,7 +1340,8 @@ text is big enough to be worth a process (`RUNE_PARALLEL_MIN` bytes, 16384
 if not set). A unit the parent reaches and misses it compiles itself,
 unless a child has it, whose end it waits for. A unit needs the units
 before it that declare a name it uses (*The graph*; a Basis file by its
-MANIFEST); a unit that breaks the discipline, and an `always` file of the
+index, a program's by what it is to the plan, read in the fixity before it,
+*A warm build*); a unit that is not well-formed, and an `always` file of the
 Basis, is needed by every unit after it. `RUNE_PARALLEL_DEBUG` set prints
 each child's start and end.
 
@@ -695,19 +1384,36 @@ needs, a declaration at a time (Chapter 8 of the Definition).
 
 ## Checking it
 
+**What a hit claims.** A compile takes a configuration, a unit's text and the
+environment before it to code and exports; an entry is kept under a key of the
+first two, with usages that say what the compile read of the third. If every
+usage holds in another environment, compiling the unit there gives the entry's
+code and exports, up to a renaming of imports. The argument is one line, a
+compile that reads only that much cannot tell the two apart, and everything
+hard is in its premises: that the compile is a function of those inputs, and
+that the usages and fingerprints cover what it reads, which are two pieces of
+code with nothing but tests between them. `tests/incremental/model.sml` is a
+model of this, and not Rune's code: three units, six policies, every edit
+between 54 projects. Each policy that reads more than its key holds breaks
+S41 silently and looks like an improvement from the rebuilds alone; one that
+reads no more is sound whatever its key holds. `make test-incremental` holds
+its output to `tests/incremental/model.expected`, and
+[testing.md](testing.md), *The checks of the cache*, says how each premise
+is checked.
+
 `make check-units` (the oracle `units` of `tests/runner/oracles.sml`) compiles every program of
 `tests/lang` and `tests/perf` whole and with `--units` at `-O0`, `-O1` and
 `-O2`, the lint of every pass on, runs them as `bin/rune-suite` does,
 and wants the same output on both streams, traces included, and the same
 exit status. It is to separate compilation what `make check-levels` is to
 the optimisations. Those programs are of one file; `tests/units`
-(`tests/units/run.sh`) has programs of several, each built whole and in
+(the scenarios `units` of `tests/runner/scenarios.sml`) has programs of several, each built whole and in
 units for both bytecodes and held to what it expects: functions, workers,
 datatypes, exceptions, a functor and fixity used across files, a
 structure shadowed by a later file, the trace of an exception raised in
 the last file, the errors of two files, a flexible record left to a
-later file, which only the whole build accepts, and functors applied to a
-structure of an earlier file (a fixture's
+later file, which the whole build refuses as the units do, and functors
+applied to a structure of an earlier file (a fixture's
 `flags`, the compiler's flags in each of its builds). Last, the compiler is
 compiled in units and made to compile its own sources whole, which must
 give `bin/rune.rbc` byte for byte.

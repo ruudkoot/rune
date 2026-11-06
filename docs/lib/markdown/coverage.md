@@ -16,11 +16,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-2 structures have a page, with 9 members, of which 8 (88%) are described by a signature.
-
-| Structure | Members | Described |  |
-| --- | --- | --- | --- |
-| [`MarkdownEntities`](str/MarkdownEntities.md) | 1 | 0 | 0% |
+1 structures have a page, with 8 members, of which 8 (100%) are described by a signature.
 
 ## Examples that are run
 

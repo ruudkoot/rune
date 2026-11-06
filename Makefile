@@ -58,7 +58,7 @@
 # sources against the Basis it ships; that image runs on the release's runevm
 # and emits this tree's bytecode. Poly/ML and MLton compile the same sources
 # against their own Basis. bin/rune-bootstrap runs stage 0 on bin/runevm and
-# is what compiles bin/rune.rbc and the library MANIFESTs. The host builds
+# is what compiles bin/rune.rbc. The host builds
 # bin/rune-mlton, bin/rune-smlnj-legacy, bin/rune-smlnj32, bin/rune-smlnj-dev,
 # bin/rune-polyml and bin/rune-mlkit exist for stage 0, when that host is
 # the one selected, and to check that all seven agree (check-cross). Every
@@ -111,13 +111,21 @@ RUNEVM_REGISTER ?= bin/runevm
 RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
-SOURCES  := $(shell sh scripts/build-files.sh rune.build)
+# The files of the programs the other SML systems build, from the plans
+# committed beside their build files (docs/building.md, How a host gets its
+# list): rune.plan is what `rune --plan rune.build` prints, and `make plans`
+# prints them again after an edit of a build file, which scripts/gen-version.sh
+# refuses to build past. Each list is without build/config.sml, which each
+# program loads first, and the program's entry point, which is each system's own.
+PLANS    := rune.plan runedoc.plan runeopt.plan runeisa.plan runeffi.plan
+plan-sources = $(filter-out build/config.sml src/main/%,$(shell sh scripts/plan-files.sh $(1)))
+SOURCES  := $(call plan-sources,rune.plan)
 GEN_SML  := lib/compiler/backend/opcodes.sml lib/compiler/backend/prims.sml lib/compiler/backend/regcodes.sml
 GEN_C    := runtime/isa.h runtime/stack/opcodes.h runtime/prims_table.h runtime/stack/interp_cases.h runtime/stack/interp_labels.h runtime/stack/ops.h runtime/register/regops.h runtime/register/reg_cases.h
-SOURCES_DOC := $(shell sh scripts/build-files.sh runedoc.build)
-SOURCES_OPT := $(shell sh scripts/build-files.sh runeopt.build)
-SOURCES_ISA := $(shell sh scripts/build-files.sh runeisa.build)
-SOURCES_FFI := $(shell sh scripts/build-files.sh runeffi.build)
+SOURCES_DOC := $(call plan-sources,runedoc.plan)
+SOURCES_OPT := $(call plan-sources,runeopt.plan)
+SOURCES_ISA := $(call plan-sources,runeisa.plan)
+SOURCES_FFI := $(call plan-sources,runeffi.plan)
 BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb
 VERSIONGEN := build/config.sml runtime/version.h lib/compiler/config.sml
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
@@ -270,7 +278,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 # Empty unless the user names one. scripts/boot-host.sh then picks the
 # first of the Rune release, Poly/ML and MLton.
 BOOTHOST ?=
-# What compiles the compiler that ships, and the MANIFEST of every library:
+# What compiles the compiler that ships:
 # the stage-0 image, on bin/runevm. The release, Poly/ML and MLton each
 # compile these sources against their own Basis, and the result emits this
 # tree's bytecode.
@@ -280,40 +288,48 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: check-docs-generated test-mutants test-compiler-mutants manifests isa check-isa test-ir check-levels check-units test-incremental test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
+.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
-all: vm boot runedoc runeopt runeffi manifests basis-cache
+all: vm boot runedoc runeopt runeffi basis-cache
 
-# The MANIFEST of each library (BasisManifest; docs/build.md), what each of
-# its files provides and requires, made from the library's build file and
-# its sources by the stage-0 compiler running on runevm
-# ($(BOOTSTRAP_RUNE) --basis-index). The host compiler is not used here:
-# it only builds that stage-0 image, against a private copy of the Basis.
+# A library's index, what each of its files provides and requires, is no
+# file: every compile derives it from the library's build file and its
+# sources, and keeps it in its store (LibraryIndex; docs/build.md).
 # the libraries of docs/plans/repl.md (The libraries)
 REPL_LIBS := unicode json terminal digest jsonrpc dap pretty markdown zmtp jupyter lsp
 DOC_LIBS := $(REPL_LIBS) compiler
 
+# The migrator of build files (docs/build.md, Migrating a tree): a friend of
+# the compiler's library, whose readers of build files and sources it uses.
+bin/rune-migrate.rbc: $(RUNE) tools/migrate/migrate.build FORCE
+	$(RUNE) --build tools/migrate/migrate.build -o $@
+bin/rune-migrate: bin/rune-migrate.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune-migrate.rbc" "$$@"\n' > $@
+	chmod +x $@
+
 # Compiler ownership audit and interleaved-session acceptance.
-COMPILER_STATE_AUDIT_SRCS := $(shell sh scripts/build-files.sh tools/compiler/state-audit.build)
-COMPILER_STATE_TEST_SRCS := $(shell sh scripts/build-files.sh tests/compiler/state-tests.build)
-COMPILER_WITNESS_TEST_SRCS := $(shell sh scripts/build-files.sh tests/compiler/witness-tests.build)
 .PHONY: test-compiler-state
-bin/rune-compiler-state-audit.rbc: $(RUNE) $(COMPILER_STATE_AUDIT_SRCS) tools/compiler/state-audit.build manifests
+bin/rune-compiler-state-audit.rbc: $(RUNE) tools/compiler/state-audit.build FORCE
 	$(RUNE) --build tools/compiler/state-audit.build -o $@
 bin/rune-compiler-state-audit: bin/rune-compiler-state-audit.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-compiler-state-audit.rbc" "$$@"\n' > $@
 	chmod +x $@
-bin/rune-compiler-state-model.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml manifests
+bin/rune-compiler-state-model.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml FORCE
 	$(RUNE) --library test/unit lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/lib/compiler/state.sml -o $@
-bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml manifests
+bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml FORCE
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
-bin/rune-compiler-state-tests.rbc: $(RUNE) $(COMPILER_STATE_TEST_SRCS) tests/compiler/state-tests.build manifests
+bin/rune-compiler-state-tests.rbc: $(RUNE) tests/compiler/state-tests.build FORCE
 	$(RUNE) --build tests/compiler/state-tests.build -o $@
+# the store of units alone, with a client of its own and no compiler (the build-system roadmap's M6)
+STORE_TEST_SRCS := lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml \
+                   lib/compiler/util/pickle.sml lib/compiler/driver/unitstore.sml tests/lib/compiler/store.sml
+bin/rune-compiler-store-tests.rbc: $(RUNE) $(STORE_TEST_SRCS) FORCE
+	$(RUNE) --library test/unit $(STORE_TEST_SRCS) -o $@
 # the syntax's node ids, the elaborator's witnesses and SourceTy (the linting roadmap's M11)
-bin/rune-compiler-witness-tests.rbc: $(RUNE) $(COMPILER_WITNESS_TEST_SRCS) tests/compiler/witness-tests.build manifests
+bin/rune-compiler-witness-tests.rbc: $(RUNE) tests/compiler/witness-tests.build FORCE
 	$(RUNE) --build tests/compiler/witness-tests.build -o $@
 test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
-                     bin/rune-compiler-witness-tests.rbc
+                     bin/rune-compiler-witness-tests.rbc bin/rune-compiler-store-tests.rbc
 	bin/rune-compiler-state-audit --self-test $(wildcard lib/compiler/*.sml lib/compiler/*/*.sml)
 	bin/runevm bin/rune-compiler-state-model.rbc
 	bin/runevm --jit=all bin/rune-compiler-state-model.rbc
@@ -322,23 +338,24 @@ test-compiler-state: bin/rune-compiler-state-audit bin/rune-compiler-state-model
 	bin/runevm bin/rune-compiler-state-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-state-tests.rbc
 	bin/runevm bin/rune-compiler-witness-tests.rbc
+	bin/runevm bin/rune-compiler-store-tests.rbc
+	bin/runevm --jit=all bin/rune-compiler-store-tests.rbc
 
 # Frontend baselines and edit traces for the language-server roadmap.
-LSP_BENCH_SRCS := $(shell sh scripts/build-files.sh tools/lsp/bench.build)
 .PHONY: lsp-bench test-lsp-bench
 lsp-bench: bin/rune-lsp-bench
-bin/rune-lsp-bench.rbc: $(RUNE) $(LSP_BENCH_SRCS) tools/lsp/bench.build manifests
+bin/rune-lsp-bench.rbc: $(RUNE) tools/lsp/bench.build FORCE
 	$(RUNE) --build tools/lsp/bench.build -o $@
 bin/rune-lsp-bench: bin/rune-lsp-bench.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-bench.rbc" "$$@"\n' > $@
 	chmod +x $@
-bin/rune-lsp-bench-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/bench-tests.sml manifests
+bin/rune-lsp-bench-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/bench-tests.sml FORCE
 	$(RUNE) --library test/runner --library json tests/runner/sh.sml tests/lsp/bench-tests.sml -o $@
 test-lsp-bench: bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc bin/rune
 	bin/rune-lsp-bench --self-test
 	bin/runevm bin/rune-lsp-bench-tests.rbc
 
-bin/rune-lsp-protocol.rbc: $(RUNE) tools/lsp/protocol-gen.sml manifests
+bin/rune-lsp-protocol.rbc: $(RUNE) tools/lsp/protocol-gen.sml FORCE
 	$(RUNE) --library json --library digest tools/lsp/protocol-gen.sml -o $@
 bin/rune-lsp-protocol: bin/rune-lsp-protocol.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-lsp-protocol.rbc" "$$@"\n' > $@
@@ -349,158 +366,195 @@ lsp-protocol: bin/rune-lsp-protocol
 check-lsp-protocol: bin/rune-lsp-protocol
 	bin/rune-lsp-protocol --check
 
-LSP_SRCS := $(shell sh scripts/build-files.sh runelsp.build)
 .PHONY: lsp
 lsp: bin/runelsp
-bin/runelsp.rbc: $(RUNE) $(LSP_SRCS) runelsp.build manifests | check-lsp-protocol
+bin/runelsp.rbc: $(RUNE) runelsp.build FORCE | check-lsp-protocol
 	$(RUNE) --build runelsp.build -o $@
 bin/runelsp: bin/runelsp.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/runelsp.rbc" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
-bin/rune-lsp-wire-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/protocol-tests.sml manifests
+bin/rune-lsp-wire-tests.rbc: $(RUNE) tests/runner/sh.sml tests/lsp/protocol-tests.sml FORCE
 	$(RUNE) --library test/runner --library json tests/runner/sh.sml tests/lsp/protocol-tests.sml -o $@
-bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml manifests
-	$(RUNE) --library test/unit --library random --library lsp tests/lib/lsp/protocol.sml -o $@
+bin/rune-lsp-tests.rbc: $(RUNE) tests/lib/lsp/protocol.sml FORCE
+	$(RUNE) --library test/unit --library random --library lsp --library jsonrpc --library json tests/lib/lsp/protocol.sml -o $@
 .PHONY: test-lsp test-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker
 LSP_WORKER_TEST_SRCS := src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/worker-model.sml src/lsp/worker-process.sml
-bin/rune-lsp-analysis-worker.rbc: $(RUNE) tests/lsp/worker.build $(LSP_SRCS) tests/lsp/worker-main.sml manifests
+bin/rune-lsp-analysis-worker.rbc: $(RUNE) tests/lsp/worker.build FORCE
 	$(RUNE) --build tests/lsp/worker.build -o $@
-bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml manifests
-	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) tests/lsp/worker-analysis-tests.sml -o $@
-bin/rune-lsp-jobs-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml manifests
-	$(RUNE) --library test/unit --library compiler --library lsp $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml -o $@
-bin/rune-lsp-semantic-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml manifests
+bin/rune-lsp-worker-analysis-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/projects.sml tests/lsp/worker-analysis-tests.sml FORCE
+	$(RUNE) --library test/unit --library compiler --library lsp --library json --library unicode --library jsonrpc $(LSP_WORKER_TEST_SRCS) src/lsp/projects.sml tests/lsp/worker-analysis-tests.sml -o $@
+bin/rune-lsp-jobs-tests.rbc: $(RUNE) $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml FORCE
+	$(RUNE) --library test/unit --library compiler --library lsp --library json --library unicode --library jsonrpc $(LSP_WORKER_TEST_SRCS) src/lsp/jobs.sml tests/lsp/jobs-tests.sml -o $@
+bin/rune-lsp-semantic-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml FORCE
 	$(RUNE) --library test/unit --library json --library lsp tests/lsp/client.sml tests/lsp/semantic-protocol-tests.sml -o $@
-bin/rune-lsp-worker-wire-tests.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml manifests
-	$(RUNE) --library test/unit --library lsp src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml -o $@
-bin/rune-lsp-worker-echo.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-echo.sml manifests
-	$(RUNE) --library lsp src/lsp/worker-wire.sml tests/lsp/worker-echo.sml -o $@
-bin/rune-lsp-worker-process-tests.rbc: $(RUNE) src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml manifests
-	$(RUNE) --library test/unit --library lsp src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml -o $@
+bin/rune-lsp-worker-wire-tests.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml FORCE
+	$(RUNE) --library test/unit --library lsp --library json --library jsonrpc src/lsp/worker-wire.sml tests/lsp/worker-wire-tests.sml -o $@
+bin/rune-lsp-worker-echo.rbc: $(RUNE) src/lsp/worker-wire.sml tests/lsp/worker-echo.sml FORCE
+	$(RUNE) --library lsp --library json --library jsonrpc src/lsp/worker-wire.sml tests/lsp/worker-echo.sml -o $@
+bin/rune-lsp-worker-process-tests.rbc: $(RUNE) src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml FORCE
+	$(RUNE) --library test/unit --library lsp --library json --library jsonrpc src/lsp/worker-wire.sml src/lsp/worker-process.sml tests/lsp/worker-process-tests.sml -o $@
 test-lsp-worker: bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc
 	bin/runevm bin/rune-lsp-worker-wire-tests.rbc
 	bin/runevm bin/rune-lsp-worker-process-tests.rbc bin/runevm bin/rune-lsp-worker-echo.rbc
 	bin/runevm --jit=all bin/rune-lsp-worker-process-tests.rbc bin/runevm bin/rune-lsp-worker-echo.rbc
 	bin/runevm bin/rune-lsp-worker-analysis-tests.rbc bin/runevm bin/rune-lsp-analysis-worker.rbc
 	bin/runevm bin/rune-lsp-jobs-tests.rbc bin/runevm bin/rune-lsp-analysis-worker.rbc
-bin/rune-compiler-analysis-tests.rbc: $(RUNE) tests/lib/compiler/analysis.sml manifests
+bin/rune-compiler-analysis-tests.rbc: $(RUNE) tests/lib/compiler/analysis.sml FORCE
 	$(RUNE) --library test/unit --library compiler tests/lib/compiler/analysis.sml -o $@
 test-lsp-analysis: bin/rune-compiler-analysis-tests.rbc
 	bin/runevm bin/rune-compiler-analysis-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-analysis-tests.rbc
-bin/rune-lsp-syntax-bench.rbc: $(RUNE) tools/lsp/syntax-bench.build tools/lsp/syntax-bench.sml src/main/lsp-syntax-bench-main.sml $(wildcard lib/compiler/syntax/*.sml) manifests
+bin/rune-lsp-syntax-bench.rbc: $(RUNE) tools/lsp/syntax-bench.build tools/lsp/syntax-bench.sml src/main/lsp-syntax-bench-main.sml $(wildcard lib/compiler/syntax/*.sml) FORCE
 	$(RUNE) --build tools/lsp/syntax-bench.build -o $@
-bin/rune-compiler-syntax-tests.rbc: $(RUNE) tests/lib/compiler/syntax.sml manifests
+bin/rune-compiler-syntax-tests.rbc: $(RUNE) tests/lib/compiler/syntax.sml FORCE
 	$(RUNE) --library test/unit --library compiler tests/lib/compiler/syntax.sml -o $@
-bin/rune-lsp-syntax-tests.rbc: $(RUNE) tests/lsp/syntax-tests.build tests/lsp/syntax-tests.sml $(wildcard lib/compiler/syntax/*.sml) manifests
+bin/rune-lsp-syntax-tests.rbc: $(RUNE) tests/lsp/syntax-tests.build tests/lsp/syntax-tests.sml $(wildcard lib/compiler/syntax/*.sml) FORCE
 	$(RUNE) --build tests/lsp/syntax-tests.build -o $@
 test-lsp-syntax: bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc
 	bin/runevm bin/rune-compiler-syntax-tests.rbc
 	bin/runevm --jit=all bin/rune-compiler-syntax-tests.rbc
 	bin/runevm bin/rune-lsp-syntax-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-syntax-tests.rbc
-bin/rune-lsp-documents-bench.rbc: $(RUNE) tools/lsp/documents-bench.sml src/main/lsp-documents-bench-main.sml tools/lsp/documents-bench.build manifests
+bin/rune-lsp-documents-bench.rbc: $(RUNE) tools/lsp/documents-bench.sml src/main/lsp-documents-bench-main.sml tools/lsp/documents-bench.build FORCE
 	$(RUNE) --build tools/lsp/documents-bench.build -o $@
 test-lsp: test-lsp-protocol
-bin/rune-lsp-documents-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml manifests
-	$(RUNE) --library test/unit --library lsp src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml -o $@
+bin/rune-lsp-documents-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml FORCE
+	$(RUNE) --library test/unit --library lsp --library unicode --library json src/lsp/documents.sml src/lsp/sync.sml tests/lsp/edit-traces.sml tests/lsp/documents-tests.sml -o $@
 test-lsp-documents: bin/rune-lsp-documents-tests.rbc
 	bin/runevm bin/rune-lsp-documents-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-documents-tests.rbc
-bin/rune-lsp-workspace-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml manifests
-	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml -o $@
-bin/rune-lsp-controller-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml manifests
-	$(RUNE) --library test/unit --library lsp --library compiler src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml -o $@
+bin/rune-lsp-workspace-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml FORCE
+	$(RUNE) --library test/unit --library lsp --library compiler --library unicode --library json src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml tests/lsp/workspace-tests.sml -o $@
+bin/rune-lsp-controller-tests.rbc: $(RUNE) src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml FORCE
+	$(RUNE) --library test/unit --library lsp --library compiler --library json --library jsonrpc --library unicode src/lsp/documents.sml src/lsp/sync.sml src/lsp/workspace.sml src/lsp/worker-wire.sml src/lsp/controller.sml tests/lsp/controller-tests.sml -o $@
+# the measuring tools' times as JSON (tools/lsp/seconds.sml)
+bin/rune-lsp-seconds-tests.rbc: $(RUNE) tools/lsp/seconds.sml tests/lsp/seconds-tests.sml FORCE
+	$(RUNE) --library test/unit --library json tools/lsp/seconds.sml tests/lsp/seconds-tests.sml -o $@
+.PHONY: test-lsp-seconds
+test-lsp-seconds: bin/rune-lsp-seconds-tests.rbc
+	bin/runevm bin/rune-lsp-seconds-tests.rbc
 test-lsp-workspace: bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc
 	bin/runevm bin/rune-lsp-workspace-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-workspace-tests.rbc
 	bin/runevm bin/rune-lsp-controller-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-controller-tests.rbc
-bin/rune-lsp-service-tests.rbc: $(RUNE) $(LSP_SRCS) tests/lsp/service-tests.sml manifests
-	$(RUNE) --library test/unit --library compiler --library lsp --library digest $(filter-out src/main/runelsp-main.sml,$(LSP_SRCS)) tests/lsp/service-tests.sml -o $@
+# runelsp's own files, less its entry point
+bin/rune-lsp-service-tests.rbc: $(RUNE) runelsp.build tests/lsp/service-tests.sml FORCE
+	$(RUNE) --library test/unit --library compiler --library lsp --library digest --library json --library jsonrpc --library unicode \
+	  $$($(RUNE) --plan runelsp.build | awk '$$1 == "program" { p = 1 } p && $$1 == "unit" && $$3 !~ /^src\/main\// { print $$3 }') \
+	  tests/lsp/service-tests.sml -o $@
 .PHONY: test-lsp-service
 test-lsp-service: bin/rune-lsp-service-tests.rbc
 	bin/runevm bin/rune-lsp-service-tests.rbc
 	bin/runevm --jit=all bin/rune-lsp-service-tests.rbc
-test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker test-lsp-service
+test-lsp-protocol: bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-semantic-tests.rbc check-lsp-protocol test-lsp-documents test-lsp-workspace test-lsp-syntax test-lsp-analysis test-lsp-worker test-lsp-service test-lsp-replay test-lsp-seconds
 	bin/runevm bin/rune-lsp-tests.rbc
 	bin/runevm bin/rune-lsp-wire-tests.rbc
 	bin/runevm bin/rune-lsp-semantic-tests.rbc bin/runevm bin/runelsp.rbc
-
-manifests: lib/basis/MANIFEST lib/random/MANIFEST lib/test/property/MANIFEST lib/test/property/basis/MANIFEST lib/test/unit/MANIFEST lib/test/runner/MANIFEST lib/compiler/MANIFEST lib/language/c/MANIFEST lib/ffi/model/MANIFEST lib/ffi/marshal/MANIFEST lib/ffi/runtime/MANIFEST lib/ffi/win32/common/MANIFEST lib/ffi/win32/model/MANIFEST lib/ffi/win32/mock/MANIFEST $(foreach l,$(REPL_LIBS),lib/$(l)/MANIFEST) lib/sdl/MANIFEST lib/ffi/win32/sdldriver/MANIFEST
-lib/compiler/MANIFEST: lib/compiler/library.build $(wildcard lib/compiler/*.build lib/compiler/*.sml lib/compiler/*/*.sml) lib/json/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/compiler
-lib/basis/MANIFEST: lib/basis/library.build $(wildcard lib/basis/*.sml) $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/basis
-lib/random/MANIFEST: lib/random/library.build $(wildcard lib/random/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/random
-lib/test/property/MANIFEST: lib/test/property/library.build $(wildcard lib/test/property/*.sml) lib/random/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/test/property
-lib/test/property/basis/MANIFEST: lib/test/property/basis/library.build $(wildcard lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml) lib/test/property/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/test/property/basis
-# the unit-testing library (docs/plans/unit-testing.md, M1), written on test/property
-lib/test/unit/MANIFEST: lib/test/unit/library.build $(wildcard lib/test/unit/*.sml) lib/test/property/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/test/unit
-# the runner (docs/plans/unit-testing.md, M3), written on test/unit and terminal
-lib/test/runner/MANIFEST: lib/test/runner/library.build $(wildcard lib/test/runner/*.sml) lib/test/unit/MANIFEST lib/terminal/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/test/runner
-# the libraries of docs/plans/repl.md (The libraries), each after those it
-# is written on
-lib/unicode/MANIFEST: lib/unicode/library.build $(wildcard lib/unicode/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/unicode
-lib/json/MANIFEST: lib/json/library.build $(wildcard lib/json/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/json
-lib/language/c/MANIFEST: lib/language/c/library.build $(wildcard lib/language/c/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/language/c
-lib/terminal/MANIFEST: lib/terminal/library.build $(wildcard lib/terminal/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/terminal
-lib/pretty/MANIFEST: lib/pretty/library.build $(wildcard lib/pretty/*.sml) lib/basis/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/pretty
-lib/markdown/MANIFEST: lib/markdown/library.build $(wildcard lib/markdown/*.sml) lib/basis/MANIFEST lib/pretty/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/markdown
-lib/digest/MANIFEST: lib/digest/library.build $(wildcard lib/digest/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/digest
-lib/jsonrpc/MANIFEST: lib/jsonrpc/library.build $(wildcard lib/jsonrpc/*.sml) lib/basis/MANIFEST lib/json/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/jsonrpc
-lib/lsp/MANIFEST: lib/lsp/library.build $(wildcard lib/lsp/*.sml) lib/jsonrpc/MANIFEST lib/unicode/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/lsp
-lib/dap/MANIFEST: lib/dap/library.build $(wildcard lib/dap/*.sml) lib/basis/MANIFEST lib/jsonrpc/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/dap
-lib/zmtp/MANIFEST: lib/zmtp/library.build $(wildcard lib/zmtp/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/zmtp
-lib/jupyter/MANIFEST: lib/jupyter/library.build $(wildcard lib/jupyter/*.sml) lib/basis/MANIFEST lib/zmtp/MANIFEST lib/json/MANIFEST lib/digest/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/jupyter
-
-lib/ffi/model/MANIFEST: lib/ffi/model/library.build $(wildcard lib/ffi/model/*.sml) lib/json/MANIFEST lib/language/c/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/model
-lib/ffi/marshal/MANIFEST: lib/ffi/marshal/library.build $(wildcard lib/ffi/marshal/*.sml) lib/unicode/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/marshal
-lib/ffi/runtime/MANIFEST: lib/ffi/runtime/library.build $(wildcard lib/ffi/runtime/*.sml) lib/ffi/marshal/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/runtime
-lib/ffi/win32/common/MANIFEST: lib/ffi/win32/common/library.build $(wildcard lib/ffi/win32/common/*.sml) lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/common
-lib/ffi/win32/model/MANIFEST: lib/ffi/win32/model/library.build $(wildcard lib/ffi/win32/model/*.sml) lib/ffi/win32/common/MANIFEST lib/unicode/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/model
-lib/ffi/win32/mock/MANIFEST: lib/ffi/win32/mock/library.build $(wildcard lib/ffi/win32/mock/*.sml) lib/ffi/win32/model/MANIFEST lib/basis/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/mock
-lib/sdl/MANIFEST: lib/sdl/library.build $(wildcard lib/sdl/*.sml) lib/ffi/runtime/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/sdl
-lib/ffi/win32/sdldriver/MANIFEST: lib/ffi/win32/sdldriver/library.build $(wildcard lib/ffi/win32/sdldriver/*.sml) lib/sdl/MANIFEST lib/ffi/win32/common/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/sdldriver
-lib/ffi/win32/native/MANIFEST: lib/ffi/win32/native/library.build $(wildcard lib/ffi/win32/native/*.sml) lib/ffi/win32/common/MANIFEST lib/ffi/runtime/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index lib/ffi/win32/native
-manifests: lib/ffi/win32/native/MANIFEST
-
-# Immutable generated FFI sets are real source libraries. Their MANIFESTs
-# are derived locally; current.build/API pointers, C shims and provenance are
-# additional installed/distribution source assets, outside the SML index.
-FFI_GENERATED_LIBRARIES := $(patsubst %/library.build,%,$(foreach family,sdl win32,$(wildcard lib/ffi/$(family)/generated/*/sets/*/library.build)))
-FFI_GENERATED_MANIFESTS := $(addsuffix /MANIFEST,$(FFI_GENERATED_LIBRARIES))
-manifests: $(FFI_GENERATED_MANIFESTS)
-ifneq ($(strip $(FFI_GENERATED_MANIFESTS)),)
-$(FFI_GENERATED_MANIFESTS): %/MANIFEST: %/library.build $(foreach family,sdl win32,$(wildcard lib/ffi/$(family)/generated/*/sets/*/*.sml)) lib/ffi/runtime/MANIFEST $(BOOTSTRAP_RUNE)
-	$(BOOTSTRAP_RUNE) --basis-index $(@D)
-endif
+# A kept analysis against a fresh one, edit by edit (tools/lsp/oracle.sml),
+# every unit compared: the compiler's own build in make check, the third run
+# cold from a store a compile of it made at -O0 (build/lsp/store,
+# C.Analysis.store), which an analysis reads by the static configuration;
+# HOL4's closure and MLton in the nightly tier, from the build files
+# RUNE_ORACLE_HOL4 and RUNE_ORACLE_MLTON name (tests/lsp/README.md); MLton's
+# recording run collects after each check, which keeps it within 15 GiB.
+LSP_ORACLE_SRCS := tools/lsp/seconds.sml tools/lsp/oracle.sml src/main/lsp-oracle-main.sml
+bin/rune-lsp-oracle.rbc: $(RUNE) $(LSP_ORACLE_SRCS) tools/lsp/oracle.build FORCE
+	$(RUNE) --build tools/lsp/oracle.build -o $@
+# What the server makes of a tree's files: contexts, prompts, implicit libraries
+# and two builds over one library (tools/lsp/contexts.sml, tests/lsp/README.md)
+bin/rune-lsp-contexts.rbc: $(RUNE) tools/lsp/seconds.sml tools/lsp/contexts.sml src/main/lsp-contexts-main.sml tools/lsp/contexts.build $(wildcard src/lsp/*.sml) FORCE
+	$(RUNE) --build tools/lsp/contexts.build -o $@
+bin/rune-lsp-replay.rbc: $(RUNE) tests/lsp/client.sml tools/lsp/seconds.sml tools/lsp/replay.sml tools/lsp/replay.build FORCE
+	$(RUNE) --build tools/lsp/replay.build -o $@
+ORACLE = bin/runevm --jit=opt --equality-work 1000000000 --heap-limit
+ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
+.PHONY: test-lsp-oracle test-lsp-oracle-corpora
+test-lsp-oracle: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+	@mkdir -p build/lsp
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
+	  --scenarios tests/lsp/oracle/rune.tsv --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
+	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared,byneed
+	rm -rf build/lsp/store
+	$(RUNE) --units -O0 --build rune.build --cache-dir build/lsp/store -o build/lsp/store.rbc 2>/dev/null
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
+	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-store.jsonl --store build/lsp/store \
+	  --require $(ORACLE_PATHS),opened,stored,byneed
+test-lsp-oracle-corpora: bin/rune-lsp-oracle.rbc
+	@mkdir -p build/lsp
+	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
+	  --scenarios tests/lsp/oracle/hol4.tsv --focus --out build/lsp/oracle-hol4.jsonl --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,byneed
+	rm -rf build/lsp/store-hol4
+	$(RUNE) --units --build "$(RUNE_ORACLE_HOL4)" --cache-dir build/lsp/store-hol4 -o build/lsp/store-hol4.rbc 2>/dev/null
+	$(ORACLE) 8589934592 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_HOL4)" \
+	  --scenarios tests/lsp/oracle/hol4.tsv --focus --store build/lsp/store-hol4 --out build/lsp/oracle-hol4-store.jsonl \
+	  --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,stored,byneed
+	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
+	  --scenarios tests/lsp/oracle/mlton.tsv --focus --collect --out build/lsp/oracle-mlton.jsonl \
+	  --record build/lsp/oracle-mlton.record --require placed,walked,rebound,loaded,cutoff,broken,failed,opened,byneed
+	$(ORACLE) 16106127360 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(RUNE_ORACLE_MLTON)" \
+	  --scenarios tests/lsp/oracle/mlton.tsv --focus --out build/lsp/oracle-mlton-against.jsonl --against build/lsp/oracle-mlton.record
+# The scale target (D28; docs/language-server.md, The scale target): the
+# generator of a tree of libraries and programs (tools/lsp/fixture.sml), the
+# planning bench (tools/lsp/plan-bench.sml), and two tiers on them.
+# test-lsp-scale, in make check, holds what the machine's load cannot move: at
+# 100k files and 1000 builds, a plan of a library's file and of a program's
+# reads no build outside the changed set, takes its memo where no build
+# changed, and fits the worker's heap; on a generated build of
+# 100k lines, cold from a store, a body edit elaborates its unit alone, an
+# interface edit only the units whose usages it breaks, and at most 2 KB a
+# line lives. test-lsp-scale-times, nightly and on a machine of its own, as
+# every timing is (docs/testing.md), holds the times: a plan at most 200 ms,
+# a leaf comment's p95 at most 250 ms and hover's 50 ms through the server,
+# and cold from a store within 2 s. test-lsp-scale-oracle, nightly, holds the
+# kept analysis to a fresh one on every unit of the generated build after
+# every edit: some 20 fresh analyses of 100k lines, half an hour, which
+# make check's test-lsp-oracle does on the compiler's own build.
+bin/rune-lsp-fixture.rbc: $(RUNE) tools/lsp/fixture.sml src/main/lsp-fixture-main.sml tools/lsp/fixture.build FORCE
+	$(RUNE) --build tools/lsp/fixture.build -o $@
+bin/rune-lsp-plan-bench.rbc: $(RUNE) tools/lsp/seconds.sml tools/lsp/plan-bench.sml src/main/lsp-plan-bench-main.sml tools/lsp/plan-bench.build $(wildcard src/lsp/*.sml) FORCE
+	$(RUNE) --build tools/lsp/plan-bench.build -o $@
+SCALE = build/lsp/scale
+# a library's file deep in its graph, and a program's own file, which the
+# index of what each build names plans; both at the worker's 512 MiB heap
+SCALE_PLAN = bin/runevm --jit=opt --heap-limit 536870912 bin/rune-lsp-plan-bench.rbc --lib "$(abspath lib)" --root $(SCALE)/plan --events --reads
+SCALE_LIBRARY_FILE = libs/g026/l00799/m799_1.sml
+SCALE_PROGRAM_FILE = apps/p00000.sml
+$(SCALE)/plan/fixture.json: bin/rune-lsp-fixture.rbc
+	rm -rf $(SCALE)/plan
+	bin/runevm --jit=opt bin/rune-lsp-fixture.rbc --out $(SCALE)/plan --lines 10000000 --files 100000 --builds 1000 --domains 32 --no-text
+$(SCALE)/f100k/fixture.json: bin/rune-lsp-fixture.rbc
+	rm -rf $(SCALE)/f100k
+	bin/runevm --jit=opt bin/rune-lsp-fixture.rbc --out $(SCALE)/f100k --lines 100000 --files 1000 --builds 10
+SCALE_STORE = rm -rf $(SCALE)/store && $(RUNE) --units -O0 --build $(SCALE)/f100k/apps/all.build --cache-dir $(SCALE)/store -o $(SCALE)/store.rbc 2>/dev/null
+.PHONY: test-lsp-scale test-lsp-scale-times test-lsp-scale-oracle
+test-lsp-scale: bin/rune-lsp-plan-bench.rbc bin/rune-lsp-oracle.rbc $(SCALE)/plan/fixture.json $(SCALE)/f100k/fixture.json
+	$(SCALE_PLAN) --open $(SCALE_LIBRARY_FILE) --out $(SCALE)/plan.jsonl
+	$(SCALE_PLAN) --open $(SCALE_PROGRAM_FILE) --out $(SCALE)/plan-program.jsonl
+	$(SCALE_STORE)
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath $(SCALE)/f100k/apps/all.build)" \
+	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --no-fresh --collect --per-line 2048 --clients \
+	  --out $(SCALE)/oracle.jsonl --require placed,walked,broken,stored,byneed
+test-lsp-scale-oracle: bin/rune-lsp-oracle.rbc $(SCALE)/f100k/fixture.json
+	$(SCALE_STORE)
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath $(SCALE)/f100k/apps/all.build)" \
+	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --clients \
+	  --out $(SCALE)/oracle-fresh.jsonl --require placed,walked,broken,stored,byneed
+test-lsp-scale-times: bin/runelsp bin/rune-lsp-replay.rbc bin/rune-lsp-plan-bench.rbc bin/rune-lsp-oracle.rbc $(SCALE)/plan/fixture.json $(SCALE)/f100k/fixture.json
+	$(SCALE_PLAN) --open $(SCALE_LIBRARY_FILE) --out $(SCALE)/plan-times.jsonl --repeat 5 --limit 200
+	$(SCALE_PLAN) --open $(SCALE_PROGRAM_FILE) --out $(SCALE)/plan-program-times.jsonl --repeat 5 --limit 200
+	$(SCALE_STORE)
+	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath $(SCALE)/f100k/apps/all.build)" \
+	  --scenarios tests/lsp/oracle/scale.tsv --focus --store $(SCALE)/store --collect --no-fresh --cold-limit 2 \
+	  --out $(SCALE)/oracle-times.jsonl
+	RUNE_CACHE="$(abspath $(SCALE)/store)" bin/runevm bin/rune-lsp-replay.rbc "$(abspath bin/runevm)" "$(abspath bin/runelsp.rbc)" "$(abspath $(SCALE)/f100k)" "$(abspath lib)" \
+	  "$(abspath $(SCALE)/f100k/apps/all.build)" "$(abspath $(SCALE)/f100k/apps/all.sml)" $(SCALE)/replay.json 1 34 \
+	  --comments 20 --body 8 'val total = ref 0' 'val total = ref $$N' --limit comment 0.25 --limit hover 0.05 --limit edit-hover 0.05
+.PHONY: test-lsp-replay
+test-lsp-replay: bin/runelsp bin/rune-lsp-project-replay.rbc
+	@mkdir -p build/lsp
+	bin/runevm bin/rune-lsp-project-replay.rbc "$(abspath bin/runevm)" "$(abspath bin/runelsp.rbc)" "$(CURDIR)" "$(abspath build/lsp/project-replay.json)"
 
 # The frozen Basis and compiler libraries (docs/units.md, The cache): every unit of
 # lib/basis compiled once, for each bytecode, into lib/cache, which every
@@ -508,12 +562,20 @@ endif
 # empty first, when the compiler or the library changes. Compiled with the
 # lint of every pass, which changes no byte of it, so that no unit a
 # compile takes from there went unchecked (docs/plans/correctness/linting.md, M1);
-# its entries are marked so, and a compile with the lint takes them (M9)
-basis-cache: lib/cache/made
-lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml lib/compiler/*.sml lib/compiler/*/*.sml lib/compiler/*.build) lib/basis/MANIFEST lib/compiler/MANIFEST
+# its entries are marked so, and a compile with the lint takes them (M9).
+# And the index of every library (docs/build.md, A library's index), so that
+# a compile or runedoc with no record of its own reads it, as it read the
+# MANIFEST make wrote, rather than making it (the build-system roadmap's M12)
+basis-cache: lib/cache/made lib/cache/indexes
+lib/cache/made: bin/rune bin/rune.rbc bin/runevm $(wildcard lib/basis/*.sml lib/basis/library.build lib/compiler/*.sml lib/compiler/*/*.sml lib/compiler/*.build)
 	rm -rf lib/cache
 	bin/rune --units --lint --basis all --library compiler --cache-dir lib/cache examples/hello.sml -o build/basis-cache.rbc
 	bin/rune --units --lint --basis all --library compiler --target=stack --cache-dir lib/cache examples/hello.sml -o build/basis-cache.stack.rbc
+	touch $@
+LIBRARY_SOURCES := $(shell find lib -path lib/cache -prune -o \( -name '*.sml' -o -name '*.build' \) -print)
+lib/cache/indexes: lib/cache/made $(LIBRARY_SOURCES)
+	for d in $(patsubst %/library.build,%,$(filter %/library.build,$(LIBRARY_SOURCES))); do \
+	  bin/rune --no-warnings --cache-dir lib/cache --basis-index $$d > /dev/null || exit 1; done
 	touch $@
 
 # ---------------------------------------------------------------- environment
@@ -540,8 +602,15 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN)
 
-$(BUILDFILES) &: rune.build runedoc.build runeopt.build runeisa.build runeffi.build lib/compiler/internal.build lib/compiler/frontend.build lib/compiler/util.build scripts/build-files.sh scripts/gen-build-files.sh
+$(BUILDFILES) &: $(PLANS) scripts/plan-files.sh scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
+
+# The plans the hosts read, printed again by the compiler there is, after an
+# edit of a build file they were made from (docs/building.md, How a host gets
+# its list). make check compares each with what the compiler prints.
+.PHONY: plans
+plans:
+	@for p in $(PLANS); do $(RUNE) --plan $${p%.plan}.build > $$p.$$$$ && mv -f $$p.$$$$ $$p || { rm -f $$p.$$$$; exit 1; }; done
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
 # written only when it changes, so that a new commit, a checkout or the first
@@ -582,6 +651,44 @@ bin/runeisa-mlton: bin/runeisa-mlton.bin Makefile
 
 bin/runeisa.rbc: bin/rune bin/rune.rbc build/config.sml $(SOURCES_ISA) src/main/runeisa-rune-main.sml
 	$(RUNE_STACK) -o $@ build/config.sml $(SOURCES_ISA) src/main/runeisa-rune-main.sml
+
+# The codecs of a unit's basis and of Mid are described in
+# tools/codecs/compiler.sml (the build-system roadmap's D21; docs/units.md,
+# Codecs): bin/rune-codecs writes from it the parts of
+# lib/compiler/driver/unitbasis.sml, lib/compiler/core/midcodec.sml and
+# lib/compiler/driver/unitmid.sml marked as generated -- each type's writer,
+# reader, sameness and fingerprint -- which are committed, so that every host
+# builds the compiler with no generator. `make codecs` writes them again after
+# a change to the description, and `make check-codecs` (part of make check)
+# fails when one of them is not what it gives, when a field added to a
+# described type does not reach every traversal or a field left unmarked is
+# not refused (rune-codecs --test), or when a toy whose type has a field its
+# description has not compiles (rune-codecs --toy), as must the one whose
+# description has it, whose writer, reader, sameness and fingerprint read it.
+CODECS_SRCS := tools/codecs/codec.sml tools/codecs/emit.sml tools/codecs/compiler.sml tools/codecs/main.sml
+
+bin/rune-codecs.rbc: $(CODECS_SRCS) | $(RUNE)
+	$(RUNE) $(CODECS_SRCS) -o $@
+
+bin/rune-codecs: bin/rune-codecs.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-codecs.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+codecs: bin/rune-codecs
+	bin/rune-codecs --root .
+
+check-codecs: bin/rune-codecs $(RUNE) bin/runevm
+	bin/rune-codecs --root . --check
+	bin/rune-codecs --test
+	rm -rf build/codecs-toy
+	bin/rune-codecs --toy build/codecs-toy
+	$(RUNE) build/codecs-toy/toy.sml -o build/codecs-toy/toy.rbc
+	$(RUNEVM_REGISTER) build/codecs-toy/toy.rbc
+	@if $(RUNE) build/codecs-toy/stale.sml -o build/codecs-toy/stale.rbc 2> build/codecs-toy/stale.err; then \
+	  echo "FAIL codecs: a type with a field its description has not compiled"; exit 1; \
+	else grep -q 'records have different numbers of fields' build/codecs-toy/stale.err && echo "PASS toy: a field its description has not is a compile error"; fi
+
+check-tools: bin/rune-codecs
 
 # ---------------------------------------------------------------- compiler
 # The compiler has no built-in library path, so each bin/rune* is a wrapper
@@ -698,7 +805,7 @@ check-ffi-generated: bin/runeffi
 	bin/runeffi check --config $(FFI_CONFIG) --target $(FFI_TARGET) --out $(FFI_OUT) $(FFI_OPTIONS)
 FFI_GENERATOR_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/windowsdir.sml tests/ffi/generator-check.sml
 check-tools: bin/runeffi bin/rune-ffi-generator-check
-bin/rune-ffi-generator-check.rbc: $(RUNE) $(FFI_GENERATOR_CHECK_SRCS) manifests
+bin/rune-ffi-generator-check.rbc: $(RUNE) $(FFI_GENERATOR_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner --library json $(FFI_GENERATOR_CHECK_SRCS) -o $@
 bin/rune-ffi-generator-check: bin/rune-ffi-generator-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-generator-check.rbc" "$$@"\n' > $@
@@ -717,17 +824,17 @@ FFI_PERF_ITERATIONS ?= 10000
 FFI_PERF_SAMPLES ?= 5
 FFI_PERF_MODE ?= off
 FFI_PERF_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/performance-model.sml tests/ffi/performance-check.sml
-bin/rune-ffi-performance.rbc: $(RUNE) $(FFI_PERF_SRCS) manifests
+bin/rune-ffi-performance.rbc: $(RUNE) $(FFI_PERF_SRCS) FORCE
 	$(RUNE) --library test/runner --library json --library digest $(FFI_PERF_SRCS) -o $@
 bin/rune-ffi-performance: bin/rune-ffi-performance.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-ffi-performance.rbc" "$$@"\n' > $@
 	chmod +x $@
 .PHONY: ffi-performance
-ffi-performance: $(RUNE) vm bin/rune-ffi-performance manifests
+ffi-performance: $(RUNE) vm bin/rune-ffi-performance FORCE
 	FFI_PERF_MODE='$(FFI_PERF_MODE)' bin/rune-ffi-performance '$(FFI_PERF_OUT)' '$(FFI_PERF_ITERATIONS)' '$(FFI_PERF_SAMPLES)'
 
 .PHONY: test-ffi-performance-model
-test-ffi-performance-model: $(RUNE) vm manifests
+test-ffi-performance-model: $(RUNE) vm FORCE
 	$(RUNE) --library json --library test/unit tests/ffi/performance-model.sml tests/ffi/performance-model-tests.sml -o build/ffi-performance-model.rbc
 	$(RUNEVM_REGISTER) build/ffi-performance-model.rbc
 
@@ -1445,10 +1552,10 @@ REPL_SRCS := build/config.sml $(SOURCES) $(REPL_TERMINAL) lib/pretty/pretty_sig.
              src/repl/show.sml src/repl/session.sml src/repl/scan.sml src/repl/highlight.sml src/repl/complete.sml \
              src/repl/front.sml src/repl/doc.sml src/repl/search.sml src/repl/repl.sml src/repl/debug.sml src/repl/commands.sml \
              src/repl/engine.sml src/repl/protocol.sml src/main/repl-main.sml
-bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
+bin/rune-repl.units/units: bin/rune-boot $(REPL_SRCS) $(wildcard lib/basis/*.sml lib/basis/library.build)
 	rm -rf bin/rune-repl.units
 	bin/rune-boot --units --basis all --emit-units bin/rune-repl.units -o bin/rune-repl.rbc $(REPL_SRCS)
-bin/rune-repl.load.rbc: bin/rune-boot src/repl/load.sml lib/basis/MANIFEST
+bin/rune-repl.load.rbc: bin/rune-boot src/repl/load.sml lib/basis/library.build
 	bin/rune-boot -o $@ src/repl/load.sml
 # the REPL started once and saved once it has compiled its library again
 # (docs/repl.md): what bin/rune-repl restores, its arguments the files to
@@ -1469,9 +1576,9 @@ test-repl: bin/rune-repl bin/runevm bin/rune-test
 
 # rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
 # in SML over lib/jupyter that drives the REPL's engine as its child
-bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml lib/compiler/util/ident.sml src/kernel/kernel.sml manifests \
+bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml lib/compiler/util/ident.sml src/kernel/kernel.sml FORCE \
                      $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml lib/unicode/*.sml)
-	$(RUNE) --library jupyter --library jsonrpc --library digest --library unicode src/front/engine.sml src/dap/translate.sml \
+	$(RUNE) --library jupyter --library jsonrpc --library digest --library unicode --library json src/front/engine.sml src/dap/translate.sml \
 	  lib/compiler/util/ident.sml src/kernel/kernel.sml -o $@
 bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
@@ -1485,8 +1592,8 @@ test-kernel: bin/rune-kernel bin/rune-test bin/rune-protocol-check
 # rune-dap, the Debug Adapter Protocol for Standard ML (docs/dap.md): an
 # adapter in SML over lib/dap that drives the REPL's engine as its child;
 # `rune-repl --dap` is it
-bin/rune-dap.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml manifests $(wildcard lib/dap/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
-	$(RUNE) --library dap --library jsonrpc src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml -o $@
+bin/rune-dap.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml FORCE $(wildcard lib/dap/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
+	$(RUNE) --library dap --library jsonrpc --library json src/front/engine.sml src/dap/translate.sml src/dap/adapter.sml -o $@
 bin/rune-dap: bin/rune-dap.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-dap.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" "$$@"\n' > $@
 	chmod +x $@
@@ -1517,7 +1624,7 @@ test-dynamic: $(RUNE) vm bin/rune-test bin/rune-scenarios
 	$(RUNE_TEST) --tier test-dynamic
 
 # build files (docs/build.md)
-test-build: $(RUNE) vm bin/rune-test bin/rune-scenarios
+test-build: $(RUNE) vm bin/rune-test bin/rune-scenarios bin/rune-migrate
 	$(RUNE_TEST) --tier test-build
 
 # make install staged and checked (bin/rune-scenarios install): the bytecode
@@ -1525,8 +1632,9 @@ test-build: $(RUNE) vm bin/rune-test bin/rune-scenarios
 test-install: all repl dap kernel mlton smlnj-legacy bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy bin/rune-scenarios bin/rune-test
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) $(RUNE_TEST) --tier test-install
 
-# the distribution archives, with stand-in binaries (bin/rune-scenarios dist)
-test-dist: bin/rune-scenarios bin/rune-test
+# the distribution archives, with stand-in binaries (bin/rune-scenarios dist),
+# and one with the compiler and its frozen layer, installed and compiling
+test-dist: $(RUNE) vm basis-cache bin/rune-scenarios bin/rune-test
 	$(RUNE_TEST) --tier test-dist
 
 # the compiler as a service, a prototype (src/driver/serve.sml)
@@ -1540,13 +1648,22 @@ check-reproducible: $(RUNE) vm basis-cache bin/rune.rbc bin/rune-test
 test-incremental: $(RUNE) vm basis-cache bin/rune-repl bin/rune-test bin/rune-incremental bin/rune-external
 	$(RUNE_TEST) --tier test-incremental
 
+# a compile's static layer is an analysis's (docs/units.md, Layers); RUNE_LAYER_TREES names builds outside the tree
+test-layers: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental
+	$(RUNE_TEST) --tier test-layers
+
+# the random edits at length (docs/testing.md, The checks of the cache); a
+# milestone that changes a key runs it. RUNE_CACHE_SEED=N draws other edits
+test-cache-random: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental
+	$(RUNE_TEST) --tier test-cache-random
+
 check-positions: $(RUNE) $(RUNEVM) bin/rune-test
 	$(RUNE_TEST) --tier check-positions
 
 check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 	$(RUNE_TEST) --tier docs-consistency
 
-check-docs-generated: $(RUNE) $(RUNEDOC) manifests
+check-docs-generated: $(RUNE) $(RUNEDOC) FORCE
 	$(RUNE_STACK) --basis-check
 	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) lib/compiler/*.sml lib/compiler/*/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
@@ -1620,7 +1737,7 @@ DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis
 DOCS_C := --lib lib --library language/c --out docs/lib/language/c --basis-docs ../../basis \
           --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
-# docs/lib/NAME (DOC_LIBS, with the manifests). The heading of the library's
+# docs/lib/NAME (DOC_LIBS). The heading of the library's
 # README.md is its name, on its pages and in the overview below.
 docs_lib = --lib lib --library $(1) --out docs/lib/$(1) --basis-docs ../basis \
            --conventions ../conventions.md
@@ -1659,7 +1776,7 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page ffi/win32/sdldriver \
 	--library-page ffi/win32/native
 
-docs: $(RUNEDOC) manifests
+docs: $(RUNEDOC) FORCE
 	$(RUNEDOC) $(DOCS_BASIS)
 	$(RUNEDOC) $(DOCS_RANDOM)
 	$(RUNEDOC) $(DOCS_PROPERTY)
@@ -1700,23 +1817,23 @@ build/basis-examples/.done: $(RUNEDOC) $(wildcard lib/basis/*.sml)
 
 # The tests of the documentation generator (tests/doc), with bin/runedoc;
 # `make test-doc RUNEDOC=bin/runedoc-mlton` is the faster loop.
-test-doc: $(RUNEDOC) vm manifests bin/rune-test
+test-doc: $(RUNEDOC) vm FORCE bin/rune-test
 	$(RUNE_TEST) --tier test-doc
 
 # The libraries beside the basis library and rune --library (tests/lib;
 # docs/plans/quickcheck.md, D1).
-test-lib: $(RUNE) $(RUNEDOC) vm manifests bin/rune-test
+test-lib: $(RUNE) $(RUNEDOC) vm FORCE bin/rune-test
 	$(RUNE_TEST) --tier test-lib
 
 .PHONY: test-compiler-api
-test-compiler-api: $(RUNE) vm manifests bin/rune-test
+test-compiler-api: $(RUNE) vm FORCE bin/rune-test
 	$(RUNE_TEST) --tier test-compiler-api
 
 # The laws of the Basis Library's documentation, each at every structure that
 # implements its signature (docs/plans/quickcheck.md, M8): every law holds,
 # or tests/basis/law-skips.txt lists it (D12). In `make check` since the end
 # of the hunt (M9); RUNE_PROPERTY_DEEP=1 runs the deep mode.
-test-laws: $(RUNE) $(RUNEDOC) vm manifests build/laws/.done bin/rune-test
+test-laws: $(RUNE) $(RUNEDOC) vm FORCE build/laws/.done bin/rune-test
 	$(RUNE_TEST) --tier test-laws
 
 # The programs of the laws, one for each signature with a law (runedoc
@@ -1728,14 +1845,14 @@ build/laws/.done: $(RUNEDOC) $(wildcard lib/basis/*.sml)
 
 # The same libraries on the hosts, against their own Basis Library (after a
 # change to a library, as matrix-quick is after one to lib/basis).
-test-lib-hosts: manifests bin/rune-test
+test-lib-hosts: FORCE bin/rune-test
 	$(RUNE_TEST) --tier test-lib-hosts
 
 # The laws of the Basis Library's documentation on the other compilers
 # (docs/plans/quickcheck.md, D10): the differences from Rune's last run of
 # test-laws that tests/basis/law-deviations.txt does not explain. Not part of
 # `make check`.
-test-laws-hosts: $(RUNEDOC) manifests bin/rune-test bin/rune-laws-hosts
+test-laws-hosts: $(RUNEDOC) FORCE bin/rune-test bin/rune-laws-hosts
 	RUNEDOC=$(RUNEDOC) bin/rune-laws-hosts
 
 # The native code generator's own tests (tests/opt): after the suites, whose
@@ -1777,7 +1894,7 @@ test-stress: $(RUNE) vm bin/rune-test | build/.doctor-check
 NATIVE_HOST := $(shell [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ] && echo yes)
 
 NATIVE_VM_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/nativevm.sml tests/runner/nativevm-main.sml
-bin/runevm-native.rbc: $(RUNE) $(NATIVE_VM_SRCS) manifests
+bin/runevm-native.rbc: $(RUNE) $(NATIVE_VM_SRCS) FORCE
 	$(RUNE) --library test/runner --library digest $(NATIVE_VM_SRCS) -o $@
 bin/runevm-native: bin/runevm-native.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/runevm-native.rbc" "$$d/.." "$$@"\n' > $@
@@ -1841,8 +1958,7 @@ perf: $(RUNE) vm bin/rune-matrix bin/rune-test | $(MATRIX_DOCTOR)
 
 # ---------------------------------------------------------------- bootstrap
 # Stage 0 exists only to compile the compiler that ships. It reads a private
-# copy of the Basis, so the MANIFEST files under lib/ can be written later
-# by that compiler. The compiler that builds it is the first of these
+# copy of the Basis, links to its files. The compiler that builds it is the first of these
 # (scripts/boot-host.sh), unless BOOTHOST names one:
 #   rune    the release (RUNE_BOOT_VERSION, v0.1) compiles these sources
 #           against the Basis in the release. build/bootstrap/rune-host.rbc
@@ -1852,8 +1968,8 @@ perf: $(RUNE) vm bin/rune-matrix bin/rune-test | $(MATRIX_DOCTOR)
 #   mlton   bin/rune-mlton, then bin/runevm
 # The other host builds (smlnj-legacy, smlnj32, smlnj-dev, mlkit) also emit
 # this tree's bytecode, when BOOTHOST names them.
-# Stage 1 is that image ($(BOOTSTRAP_RUNE)). It writes every library
-# MANIFEST and bin/rune.rbc, the register bytecode dist ships.
+# Stage 1 is that image ($(BOOTSTRAP_RUNE)). It writes bin/rune.rbc, the
+# register bytecode dist ships.
 # bin/rune-boot runs stage 1 on bin/runevm and is what bin/rune names;
 # `bootstrap` checks that stage 1 reproduces itself byte for byte.
 # check-cross knows that build as `boot`.
@@ -1886,19 +2002,13 @@ bin/rune-stage0: build/bootstrap/boot.host Makefile
 	  printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/rune-%s" "$$@"\n' "$$host" > $@; \
 	fi
 	chmod +x $@
-$(BOOT_BASIS)/.linked: lib/basis/library.build $(filter-out lib/basis/MANIFEST,$(wildcard lib/basis/*))
+$(BOOT_BASIS)/.linked: $(wildcard lib/basis/*)
 	set -e; rm -rf $(BOOT_BASIS); mkdir -p $(BOOT_BASIS); \
 	for f in lib/basis/*; do \
-	  b=$$(basename "$$f"); \
-	  [ "$$b" = MANIFEST ] && continue; \
-	  ln -s "$(CURDIR)/$$f" "$(BOOT_BASIS)/$$b"; \
+	  ln -s "$(CURDIR)/$$f" "$(BOOT_BASIS)/$$(basename "$$f")"; \
 	done; \
 	touch $@
-$(BOOT_BASIS)/MANIFEST: $(BOOT_BASIS)/.linked bin/rune-stage0 build/bootstrap/boot.host
-	@host=$$(cat build/bootstrap/boot.host); \
-	if [ "$$host" = rune ]; then $(MAKE) build/bootstrap/rune-host.rbc; fi
-	bin/rune-stage0 --lib $(BOOT_LIB) --basis-index $(BOOT_BASIS)
-build/bootstrap/rune.rbc: bin/rune-stage0 $(BOOT_BASIS)/MANIFEST $(BOOT_SRCS) build/bootstrap/boot.host
+build/bootstrap/rune.rbc: bin/rune-stage0 $(BOOT_BASIS)/.linked $(BOOT_SRCS) build/bootstrap/boot.host
 	@mkdir -p build/bootstrap
 	@host=$$(cat build/bootstrap/boot.host); \
 	if [ "$$host" = rune ]; then $(MAKE) build/bootstrap/rune-host.rbc; fi
@@ -1909,14 +2019,18 @@ bin/rune-bootstrap: build/bootstrap/rune.rbc bin/runevm Makefile
 	chmod +x $@
 
 # The compiler that ships: stage 0, running on runevm, compiling the same
-# sources to register bytecode. dist packs this file.
-bin/rune.rbc: $(BOOTSTRAP_RUNE) $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
-	$(BOOTSTRAP_RUNE) --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
+# sources to register bytecode, through rune.build, as every way of building
+# it does (check-reproducible): a library rune.build names (libraries
+# unicode json digest) is found under --lib, and its files are named so in
+# the bytes, where the other systems' list names them from here. dist packs
+# this file.
+bin/rune.rbc: $(BOOTSTRAP_RUNE) $(BOOT_SRCS) rune.plan $(wildcard lib/basis/*.sml lib/basis/library.build)
+	$(BOOTSTRAP_RUNE) --lint --mid-roundtrip --build rune.build --whole --no-cache -o $@
 
 # The same compiler in the stack bytecode, which runevm-stack runs: what the
 # suites of the stack VM, runeopt's translations and its budgets are made of.
-bin/rune.stack.rbc: $(BOOTSTRAP_RUNE) $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
-	$(BOOTSTRAP_RUNE) --target=stack --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
+bin/rune.stack.rbc: $(BOOTSTRAP_RUNE) $(BOOT_SRCS) rune.plan $(wildcard lib/basis/*.sml lib/basis/library.build)
+	$(BOOTSTRAP_RUNE) --target=stack --lint --mid-roundtrip --build rune.build --whole --no-cache -o $@
 
 # bin/rune making the register bytecode of runtime/register
 # The suites through runtime/register's first loop (docs/plans/middle-end.md, M5): the
@@ -2032,7 +2146,7 @@ check test test-all test-opt test-native test-register test-register-jit test-st
 RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/lang.sml tests/runner/basis.sml tests/runner/laws.sml tests/runner/sh.sml \
                tests/runner/hosts.sml tests/runner/libhosts.sml tests/runner/hostchecks.sml \
                tests/runner/migration.sml \
-               tests/runner/children.sml tests/runner/buildchecks.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
+               tests/runner/children.sml tests/runner/librarymodel.sml tests/runner/buildchecks.sml tests/runner/bytecode.sml tests/runner/windowsdir.sml tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativefaults.sml tests/runner/native.sml \
                tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml tests/runner/matrixfaults.sml \
                tests/runner/docchecks.sml tests/runner/mutants.sml tests/runner/docfaults.sml \
                tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml \
@@ -2040,13 +2154,13 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
-               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
+               tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/storechecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
-               tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/compilermutants.sml \
+               tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/main.sml
-bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) manifests \
+bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
-	$(RUNE) --library test/runner --library json --library digest $(RUNNER_SRCS) -o $@
+	$(RUNE) --library test/runner --library json --library digest --library test/unit $(RUNNER_SRCS) -o $@
 bin/rune-test: bin/rune-test.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n: "$${RUNE_LINT=2}"\nexport RUNE_LINT\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -2055,7 +2169,7 @@ bin/rune-test: bin/rune-test.rbc bin/runevm Makefile bin/rune-generate bin/rune-
 # in every worker process. Scheduling and requirements remain in rune-test.
 NATIVE_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/bytecode.sml \
                      tests/runner/nativevm.sml tests/runner/nativechecks.sml tests/runner/nativechecks-main.sml
-bin/rune-native-check.rbc: $(RUNE) $(NATIVE_CHECK_SRCS) manifests
+bin/rune-native-check.rbc: $(RUNE) $(NATIVE_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner --library digest $(NATIVE_CHECK_SRCS) -o $@
 bin/rune-native-check: bin/rune-native-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-native-check.rbc" "$$@"\n' > $@
@@ -2065,8 +2179,8 @@ bin/rune-native-check: bin/rune-native-check.rbc bin/runevm Makefile
 HEAP_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/bytecode.sml \
                    tests/runner/tracecheck.sml tests/runner/heapchecks.sml tests/runner/censustrace.sml \
                    tests/runner/heapfaults.sml tests/runner/jitdumpcheck.sml tests/runner/heap.sml tests/runner/heapchecks-main.sml
-bin/rune-heap-check.rbc: $(RUNE) $(HEAP_CHECK_SRCS) manifests
-	$(RUNE) --library test/runner $(HEAP_CHECK_SRCS) -o $@
+bin/rune-heap-check.rbc: $(RUNE) $(HEAP_CHECK_SRCS) FORCE
+	$(RUNE) --library test/runner --library test/unit $(HEAP_CHECK_SRCS) -o $@
 bin/rune-heap-check: bin/rune-heap-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-heap-check.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -2074,32 +2188,37 @@ bin/rune-heap-check: bin/rune-heap-check.rbc bin/runevm Makefile
 HOST_LAWS_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/windowsdir.sml \
                   tests/runner/matrixmodel.sml tests/runner/matrixprobe.sml tests/runner/matrixhost.sml \
                   tests/runner/smlscan.sml tests/runner/programselect.sml tests/runner/hostlaws.sml
-bin/rune-laws-hosts.rbc: $(RUNE) $(HOST_LAWS_SRCS) tests/runner/hostlaws-main.sml manifests
-	$(RUNE) --library test/runner $(HOST_LAWS_SRCS) tests/runner/hostlaws-main.sml -o $@
+bin/rune-laws-hosts.rbc: $(RUNE) $(HOST_LAWS_SRCS) tests/runner/hostlaws-main.sml FORCE
+	$(RUNE) --library test/runner --library test/unit $(HOST_LAWS_SRCS) tests/runner/hostlaws-main.sml -o $@
 bin/rune-laws-hosts: bin/rune-laws-hosts.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-laws-hosts.rbc" "$$@"\n' > $@
 	chmod +x $@
 
 DOC_CHECK_SRCS := $(HOST_LAWS_SRCS) tests/runner/bytecode.sml tests/runner/docchecks.sml \
                   tests/runner/mutants.sml tests/runner/docfaults.sml tests/runner/docchecks-main.sml
-bin/rune-doc-check.rbc: $(RUNE) $(DOC_CHECK_SRCS) manifests
-	$(RUNE) --library test/runner $(DOC_CHECK_SRCS) -o $@
+bin/rune-doc-check.rbc: $(RUNE) $(DOC_CHECK_SRCS) FORCE
+	$(RUNE) --library test/runner --library test/unit $(DOC_CHECK_SRCS) -o $@
 bin/rune-doc-check: bin/rune-doc-check.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-doc-check.rbc" "$$@"\n' > $@
 	chmod +x $@
-test-mutants: $(RUNEDOC) vm manifests bin/rune-test bin/rune-doc-check
+test-mutants: $(RUNEDOC) vm FORCE bin/rune-test bin/rune-doc-check
 	bin/rune-doc-check mutants $(if $(filter command line environment,$(origin JOBS)),-j $(JOBS))
 
 # The mutants of the compiler (tests/runner/compilermutants.sml; docs/testing.md,
 # Mutants of the compiler): hours, never part of make check. COMPILER_MUTANTS=E01,M02
 # runs those alone; COMPILER_MUTANTS_QUICK=N keeps N items of each part of the corpus.
-test-compiler-mutants: $(RUNE) vm basis-cache bin/rune-test
+test-compiler-mutants: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental bin/rune-repl
 	$(RUNE_TEST) --tier test-compiler-mutants
+
+# Those of the cache alone (tests/runner/cachemutantlist.sml; docs/testing.md, The
+# checks of the cache), each against the checks that must see it: minutes
+test-cache-mutants: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental bin/rune-repl
+	$(RUNE_TEST) --tier test-cache-mutants
 
 MATRIX_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/matrixprepare.sml \
                tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml tests/runner/matrixperf.sml tests/runner/matrixexecutionfaults.sml tests/runner/matrixcachefaults.sml tests/runner/matrix.sml
-bin/rune-matrix.rbc: $(RUNE) $(MATRIX_SRCS) tests/runner/matrix-main.sml manifests
-	$(RUNE) --library test/runner --library digest $(MATRIX_SRCS) tests/runner/matrix-main.sml -o $@
+bin/rune-matrix.rbc: $(RUNE) $(MATRIX_SRCS) tests/runner/matrix-main.sml FORCE
+	$(RUNE) --library test/runner --library digest --library test/unit $(MATRIX_SRCS) tests/runner/matrix-main.sml -o $@
 bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-matrix.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -2107,15 +2226,15 @@ bin/rune-matrix: bin/rune-matrix.rbc bin/runevm Makefile bin/rune-generate bin/r
 # Everything a step of make check needs, built before the runner starts, so
 # that two steps that run at once never build one file (each step is a make
 # of its own).
-CHECK_TOOLS := host-builds vm boot runedoc runeopt manifests basis-cache all repl dap kernel mlton smlnj-legacy \
+CHECK_TOOLS := host-builds vm boot runedoc runeopt basis-cache all repl dap kernel mlton smlnj-legacy \
                bin/runelsp bin/rune-lsp-tests.rbc bin/rune-lsp-wire-tests.rbc bin/rune-lsp-documents-tests.rbc \
                bin/rune-lsp-workspace-tests.rbc bin/rune-lsp-controller-tests.rbc bin/rune-lsp-bench bin/rune-lsp-bench-tests.rbc \
                bin/rune-compiler-syntax-tests.rbc bin/rune-lsp-syntax-tests.rbc \
-               bin/rune-compiler-analysis-tests.rbc \
+               bin/rune-compiler-analysis-tests.rbc bin/rune-lsp-oracle.rbc bin/rune-lsp-replay.rbc \
                bin/rune-lsp-worker-wire-tests.rbc bin/rune-lsp-worker-process-tests.rbc bin/rune-lsp-worker-echo.rbc \
                bin/rune-lsp-worker-analysis-tests.rbc bin/rune-lsp-analysis-worker.rbc bin/rune-lsp-jobs-tests.rbc bin/rune-lsp-semantic-tests.rbc \
                bin/rune-compiler-state-audit bin/rune-compiler-state-model.rbc bin/rune-compiler-state-duplicate.rbc bin/rune-compiler-state-tests.rbc \
-               bin/rune-compiler-witness-tests.rbc \
+               bin/rune-compiler-witness-tests.rbc bin/rune-compiler-store-tests.rbc bin/rune-migrate \
                bin/rune-boot bin/rune.rbc bin/rune.stack.rbc bin/runedoc.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc \
                bin/runedoc-mlton bin/runeopt-mlton bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy \
                build/librune.a bin/runevm-gcbits bin/runevm-cards \
@@ -2127,7 +2246,7 @@ check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
 # changed).
-quick: $(RUNE) vm runedoc manifests bin/rune-test | build/.doctor-check
+quick: $(RUNE) vm runedoc bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier quick
 
 # The tests of the tier check, each step of the old recipe a test of the
@@ -2139,9 +2258,13 @@ CHECK_MAKE := $(MAKE)
 check: check-tools
 	$(RUNE_TEST) --tier check
 
+# The caches compiles write (.rune; the frozen lib/cache stays until the next
+# make basis-cache, docs/units.md), not those of the corpus trees or of other
+# worktrees, which nothing here builds.
 clean:
 	rm -rf bin build tests/out dist
-	find . -type d \( -name .cm -o -name MLB \) -prune -exec rm -rf {} +
+	find . \( -path ./corpus -o -path ./.worktrees \) -prune -o \
+	  -type d \( -name .cm -o -name MLB -o -name .rune \) -prune -exec rm -rf {} +
 
 .PHONY: test-intinf
 test-intinf: $(RUNE) bin/runevm bin/runevm-stack bin/rune-intinf bin/rune-test
@@ -2172,14 +2295,14 @@ uninstall:
 # Distribution archives (docs/building.md, Distribution). The version is
 # git's, the one runtime/version.h already carries. Phony: the archives
 # land in the dist/ directory, whose stamp is not the archives'.
-dist: dist-vscode bin/rune-build runtime/version.h manifests bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc \
+dist: dist-vscode bin/rune-build runtime/version.h bin/rune.rbc bin/rune-repl.img bin/runeffi.rbc basis-cache \
       bin/dist/runevm bin/dist/runevm32 bin/dist/runevm-aarch64 bin/dist/runevm-ppc64 \
       bin/dist/runevm.exe bin/dist/runevm32.exe
 	@mkdir -p dist
 	bin/rune-build make-dist --out dist \
 	  --version "$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h)" \
 	  --lib lib --compiler bin/rune.rbc --repl bin/rune-repl.img \
-	  --ffi bin/runeffi.rbc --ffi-assets ffi \
+	  --ffi bin/runeffi.rbc --ffi-assets ffi --cache lib/cache \
 	  --linux x86_64=bin/dist/runevm --linux i686=bin/dist/runevm32 \
 	  --linux aarch64=bin/dist/runevm-aarch64 --linux ppc64=bin/dist/runevm-ppc64 \
 	  --windows x86_64=bin/dist/runevm.exe --windows i686=bin/dist/runevm32.exe
@@ -2190,9 +2313,9 @@ NPM ?= npm
 VSIX_PUBLISHER ?= ruudkoot
 VSCODE_CLIENT_SRCS := $(wildcard editors/vscode/src/*.js) editors/vscode/bundle.cjs
 .PHONY: vscode dist-vscode test-vscode test-vscode-packaged test-vscode-editor
-bin/rune-lsp-distribution-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/distribution-tests.sml manifests
+bin/rune-lsp-distribution-tests.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/distribution-tests.sml FORCE
 	$(RUNE) --library json --library lsp tests/lsp/client.sml tests/lsp/distribution-tests.sml -o $@
-bin/rune-lsp-project-replay.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/project-replay.sml manifests
+bin/rune-lsp-project-replay.rbc: $(RUNE) tests/lsp/client.sml tests/lsp/project-replay.sml FORCE
 	$(RUNE) --library json --library lsp tests/lsp/client.sml tests/lsp/project-replay.sml -o $@
 editors/vscode/node_modules/.package-lock.json: editors/vscode/package.json editors/vscode/package-lock.json
 	$(NODE) -e 'if (+process.versions.node.split(".")[0] < 22) throw Error("VSIX tooling requires Node.js 22 or later")'
@@ -2200,7 +2323,7 @@ editors/vscode/node_modules/.package-lock.json: editors/vscode/package.json edit
 build/vscode/client/.built: $(VSCODE_CLIENT_SRCS) editors/vscode/node_modules/.package-lock.json
 	$(NODE) editors/vscode/bundle.cjs $(abspath build/vscode/client)
 	touch $@
-vscode dist-vscode: bin/rune-build bin/runelsp.rbc bin/dist/runevm bin/dist/runevm.exe build/vscode/client/.built manifests
+vscode dist-vscode: bin/rune-build bin/runelsp.rbc bin/dist/runevm bin/dist/runevm.exe build/vscode/client/.built
 	bin/rune-build package-lsp --version "$$(sed -n 's/^#define RUNE_VERSION "\(.*\)"$$/\1/p' runtime/version.h)" \
 	  --out build/vscode/extension --server bin/runelsp.rbc --lib lib \
 	  --linux bin/dist/runevm --windows bin/dist/runevm.exe --publisher '$(VSIX_PUBLISHER)' \
@@ -2285,18 +2408,18 @@ test-intinf-dependency: bin/rune-intinf bin/rune-test
 
 # SML benchmark/scenario workers. Entry scripts only locate their payloads.
 BUDGET_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/budgets.sml tests/runner/budgets-main.sml
-bin/rune-budget.rbc: $(RUNE) $(BUDGET_SRCS) manifests
-	$(RUNE) --library test/runner $(BUDGET_SRCS) -o $@
+bin/rune-budget.rbc: $(RUNE) $(BUDGET_SRCS) FORCE
+	$(RUNE) --library test/runner --library test/unit $(BUDGET_SRCS) -o $@
 BENCH_CHECK_SRCS := $(HOST_LAWS_SRCS) tests/runner/matrixload.sml tests/runner/matrixprepare.sml tests/runner/matrixsuite.sml tests/runner/matrixprogram.sml \
                     examples/benchmarks/shared/catalog.sml tests/runner/budgets.sml tests/runner/budgetfaults.sml tests/runner/benchcases.sml tests/runner/benchchecks.sml \
                     tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml \
                     tests/runner/inventorytests.sml tests/runner/benchmarks.sml tests/runner/benchmarks-main.sml
-bin/rune-bench-check.rbc: $(RUNE) $(BENCH_CHECK_SRCS) tests/runner/benchmark-cases.json tests/runner/inventory-cases.json manifests
-	$(RUNE) --library test/runner --library json --library digest $(BENCH_CHECK_SRCS) -o $@
+bin/rune-bench-check.rbc: $(RUNE) $(BENCH_CHECK_SRCS) tests/runner/benchmark-cases.json tests/runner/inventory-cases.json FORCE
+	$(RUNE) --library test/runner --library json --library digest --library test/unit $(BENCH_CHECK_SRCS) -o $@
 SCENARIO_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml tests/runner/windowsdir.sml tests/runner/installchecks.sml \
                  tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml tests/runner/scenarios-main.sml
-bin/rune-scenarios.rbc: $(RUNE) $(SCENARIO_SRCS) manifests
-	$(RUNE) --library test/runner --library json $(SCENARIO_SRCS) -o $@
+bin/rune-scenarios.rbc: $(RUNE) $(SCENARIO_SRCS) FORCE
+	$(RUNE) --library test/runner --library json --library test/unit $(SCENARIO_SRCS) -o $@
 bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/$(notdir $@).rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -2304,18 +2427,18 @@ bin/rune-budget bin/rune-bench-check bin/rune-scenarios: bin/%: bin/%.rbc bin/ru
 # Incremental edits, cache corruption and externally provisioned corpora.
 INCREMENTAL_BASE_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/scenarios.sml \
                          tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml
-INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
+INCREMENTAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/storechecks.sml tests/runner/incrementalextra.sml tests/runner/smlscan.sml \
                     tests/runner/mutationproject.sml tests/runner/mutationchecks.sml tests/runner/mutationhistory.sml \
                     tests/runner/mltonincremental.sml tests/runner/incrementalfaults.sml tests/runner/soundness.sml \
-                    tests/runner/incremental-main.sml
-bin/rune-incremental.rbc: $(RUNE) $(INCREMENTAL_SRCS) tests/runner/incremental-edits-v1.json manifests
-	$(RUNE) --library test/runner --library json $(INCREMENTAL_SRCS) -o $@
+                    tests/runner/layerchecks.sml tests/runner/incremental-main.sml
+bin/rune-incremental.rbc: $(RUNE) $(INCREMENTAL_SRCS) tests/runner/incremental-edits-v1.json FORCE
+	$(RUNE) --library test/runner --library json --library random $(INCREMENTAL_SRCS) -o $@
 bin/rune-incremental: bin/rune-incremental.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-incremental.rbc" "$$@"\n' > $@
 	chmod +x $@
 EXTERNAL_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/externalchecks.sml tests/runner/external-main.sml
-bin/rune-external.rbc: $(RUNE) $(EXTERNAL_SRCS) manifests
-	$(RUNE) --library test/runner --library json $(EXTERNAL_SRCS) -o $@
+bin/rune-external.rbc: $(RUNE) $(EXTERNAL_SRCS) FORCE
+	$(RUNE) --library test/runner --library json --library test/unit $(EXTERNAL_SRCS) -o $@
 bin/rune-external: bin/rune-external.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-external.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -2324,7 +2447,7 @@ bin/rune-external: bin/rune-external.rbc bin/runevm Makefile bin/rune-generate b
 # and as copies, whole and in units (docs/testing.md, Generated functor
 # programs).
 FUNCTOR_GEN_SRCS := tests/runner/sh.sml tests/runner/functorgen.sml tests/runner/functorgen-main.sml
-bin/rune-functor-gen.rbc: $(RUNE) $(FUNCTOR_GEN_SRCS) manifests
+bin/rune-functor-gen.rbc: $(RUNE) $(FUNCTOR_GEN_SRCS) FORCE
 	$(RUNE) --library test/runner --library test/property $(FUNCTOR_GEN_SRCS) -o $@
 bin/rune-functor-gen: bin/rune-functor-gen.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-functor-gen.rbc" "$$@"\n' > $@
@@ -2334,24 +2457,24 @@ INTINF_SRCS := $(INCREMENTAL_BASE_SRCS) tests/runner/bytecode.sml tests/runner/c
                tests/runner/intinfchecks.sml tests/runner/measured.sml tests/runner/intinfmeasurements.sml \
                tests/runner/intinfbackends.sml tests/runner/intinfhardening.sml tests/runner/intinfstorage.sml \
                tests/runner/windowsdir.sml tests/runner/gmpchecks.sml tests/runner/gmpdownloadchecks.sml tests/runner/gmpinstallchecks.sml tests/runner/gmpplatformchecks.sml tests/runner/intinffaults.sml tests/runner/intinffixtures.sml tests/runner/intinf-main.sml
-bin/rune-intinf.rbc: $(RUNE) $(INTINF_SRCS) $(wildcard tests/intinf/fixtures/*) manifests
+bin/rune-intinf.rbc: $(RUNE) $(INTINF_SRCS) $(wildcard tests/intinf/fixtures/*) FORCE
 	$(RUNE) --library test/runner --library json --library digest $(INTINF_SRCS) -o $@
 bin/rune-intinf: bin/rune-intinf.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-intinf.rbc" "$$@"\n' > $@
 	chmod +x $@
 
 FFI_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/check.sml
-bin/rune-ffi-check.rbc: $(RUNE) $(FFI_CHECK_SRCS) manifests
+bin/rune-ffi-check.rbc: $(RUNE) $(FFI_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner --library json --library digest $(FFI_CHECK_SRCS) -o $@
 bin/rune-ffi-check: bin/rune-ffi-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-check.rbc" "$$@"\n' > $@
 	chmod +x $@
-bin/rune-cfrontend.rbc: $(RUNE) tools/cfrontend/main.sml $(wildcard lib/language/c/*.sml) manifests
+bin/rune-cfrontend.rbc: $(RUNE) tools/cfrontend/main.sml $(wildcard lib/language/c/*.sml) FORCE
 	$(RUNE) --library json --library language/c tools/cfrontend/main.sml -o $@
 bin/rune-cfrontend: bin/rune-cfrontend.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-cfrontend.rbc" "$$@"\n' > $@
 	chmod +x $@
-bin/rune-ffi-model.rbc: $(RUNE) tools/ffimodel/main.sml $(wildcard lib/ffi/model/*.sml) manifests
+bin/rune-ffi-model.rbc: $(RUNE) tools/ffimodel/main.sml $(wildcard lib/ffi/model/*.sml) FORCE
 	$(RUNE) --library ffi/model tools/ffimodel/main.sml -o $@
 bin/rune-ffi-model: bin/rune-ffi-model.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-ffi-model.rbc" "$$@"\n' > $@
@@ -2359,7 +2482,7 @@ bin/rune-ffi-model: bin/rune-ffi-model.rbc bin/runevm Makefile
 
 FFI_MODEL_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/model-check.sml
 check-tools: bin/rune-ffi-model bin/rune-ffi-model-check
-bin/rune-ffi-model-check.rbc: $(RUNE) $(FFI_MODEL_CHECK_SRCS) manifests
+bin/rune-ffi-model-check.rbc: $(RUNE) $(FFI_MODEL_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner --library json $(FFI_MODEL_CHECK_SRCS) -o $@
 bin/rune-ffi-model-check: bin/rune-ffi-model-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-model-check.rbc" "$$@"\n' > $@
@@ -2374,7 +2497,7 @@ test-ffi-model-hosts: $(RUNE) vm bin/rune-ffi-model-check bin/rune-test bin/rune
 
 FFI_SHIM_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/shim-check.sml
 check-tools: bin/rune-ffi-shim-check
-bin/rune-ffi-shim-check.rbc: $(RUNE) $(FFI_SHIM_CHECK_SRCS) manifests
+bin/rune-ffi-shim-check.rbc: $(RUNE) $(FFI_SHIM_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner $(FFI_SHIM_CHECK_SRCS) -o $@
 bin/rune-ffi-shim-check: bin/rune-ffi-shim-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-shim-check.rbc" "$$@"\n' > $@
@@ -2387,7 +2510,7 @@ test-ffi-shims-hosts: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test
 
 C_LAYOUT_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/layout-check.sml
 check-tools: bin/rune-c-layout-check
-bin/rune-c-layout-check.rbc: $(RUNE) $(C_LAYOUT_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests
+bin/rune-c-layout-check.rbc: $(RUNE) $(C_LAYOUT_CHECK_SRCS) $(wildcard lib/language/c/*.sml) FORCE
 	$(RUNE) --library test/runner --library language/c $(C_LAYOUT_CHECK_SRCS) -o $@
 bin/rune-c-layout-check: bin/rune-c-layout-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-c-layout-check.rbc" "$$@"\n' > $@
@@ -2398,11 +2521,11 @@ test-c-layout: $(RUNE) vm bin/rune-c-layout-check bin/rune-test
 
 HEADER_LAYOUT_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/header-layout-check.sml
 check-tools: bin/rune-header-layout-check
-bin/rune-header-layout-probe.rbc: $(RUNE) tests/ffi/header-layout.sml $(wildcard lib/ffi/model/*.sml) $(wildcard lib/language/c/*.sml) manifests
+bin/rune-header-layout-probe.rbc: $(RUNE) tests/ffi/header-layout.sml $(wildcard lib/ffi/model/*.sml) $(wildcard lib/language/c/*.sml) FORCE
 	$(RUNE) --library ffi/model tests/ffi/header-layout.sml -o $@
-bin/rune-real32-probe.rbc: $(RUNE) tests/ffi/real32.sml $(wildcard lib/ffi/marshal/*.sml) manifests
+bin/rune-real32-probe.rbc: $(RUNE) tests/ffi/real32.sml $(wildcard lib/ffi/marshal/*.sml) FORCE
 	$(RUNE) --library ffi/marshal tests/ffi/real32.sml -o $@
-bin/rune-header-layout-check.rbc: $(RUNE) $(HEADER_LAYOUT_CHECK_SRCS) manifests
+bin/rune-header-layout-check.rbc: $(RUNE) $(HEADER_LAYOUT_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner --library ffi/model $(HEADER_LAYOUT_CHECK_SRCS) -o $@
 bin/rune-header-layout-check: bin/rune-header-layout-check.rbc bin/rune-header-layout-probe.rbc bin/rune-real32-probe.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-header-layout-check.rbc" "$$@"\n' > $@
@@ -2415,7 +2538,7 @@ test-ffi-real32: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
 
 C_FRONTEND_CHECK_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/ffi/frontend-check.sml
 check-tools: bin/rune-c-check
-bin/rune-c-check.rbc: $(RUNE) $(C_FRONTEND_CHECK_SRCS) $(wildcard lib/language/c/*.sml) manifests
+bin/rune-c-check.rbc: $(RUNE) $(C_FRONTEND_CHECK_SRCS) $(wildcard lib/language/c/*.sml) FORCE
 	$(RUNE) --library test/runner --library json --library language/c $(C_FRONTEND_CHECK_SRCS) -o $@
 bin/rune-c-check: bin/rune-c-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-c-check.rbc" "$$@"\n' > $@
@@ -2444,9 +2567,9 @@ test-ffi-runtime-windows: $(RUNE) vm windows bin/rune-ffi-check bin/rune-test bi
 WINDOWS_SRCS := tests/runner/langchecks.sml $(HOST_LAWS_SRCS) tests/runner/bytecode.sml \
                 tests/runner/matrixload.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml \
                 tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/windows-main.sml
-bin/rune-windows.rbc: $(RUNE) $(WINDOWS_SRCS) manifests
-	$(RUNE) --library test/runner --library digest $(WINDOWS_SRCS) -o $@
-bin/rune-suite.rbc: $(RUNE) tests/runner/sh.sml tests/runner/suite-main.sml manifests
+bin/rune-windows.rbc: $(RUNE) $(WINDOWS_SRCS) FORCE
+	$(RUNE) --library test/runner --library digest --library test/unit $(WINDOWS_SRCS) -o $@
+bin/rune-suite.rbc: $(RUNE) tests/runner/sh.sml tests/runner/suite-main.sml FORCE
 	$(RUNE) --library test/runner tests/runner/sh.sml tests/runner/suite-main.sml -o $@
 bin/rune-windows: bin/rune-windows.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-windows.rbc" "$$@"\n' > $@
@@ -2458,8 +2581,8 @@ bin/rune-suite: bin/rune-suite.rbc bin/runevm Makefile
 PROTOCOL_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/windowsdir.sml \
                  tests/runner/protocolio.sml tests/runner/protocoljson.sml tests/runner/replprotocolchecks.sml \
                  tests/runner/dapchecks.sml tests/runner/kernelchecks.sml tests/runner/protocolchecks.sml tests/runner/protocolfaults.sml tests/runner/protocol-main.sml
-bin/rune-protocol-check.rbc: $(RUNE) $(PROTOCOL_SRCS) manifests
-	$(RUNE) --library test/runner --library jupyter --library dap --library unicode $(PROTOCOL_SRCS) -o $@
+bin/rune-protocol-check.rbc: $(RUNE) $(PROTOCOL_SRCS) FORCE
+	$(RUNE) --library test/runner --library jupyter --library dap --library unicode --library jsonrpc --library json --library zmtp $(PROTOCOL_SRCS) -o $@
 bin/rune-protocol-check: bin/rune-protocol-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-protocol-check.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -2467,8 +2590,11 @@ bin/rune-protocol-check: bin/rune-protocol-check.rbc bin/runevm Makefile
 TERMINAL_SRCS := tests/runner/sh.sml tests/runner/hosts.sml tests/runner/children.sml tests/runner/commandwords.sml tests/runner/windowsdir.sml \
                  tests/runner/terminalpattern.sml tests/runner/terminalio.sml tests/runner/terminalchecks.sml tests/runner/terminalraw.sml \
                  tests/runner/terminaldisplay.sml tests/runner/terminalplatform.sml tests/runner/terminalfaults.sml tests/runner/terminalraces.sml tests/runner/terminal-main.sml
-bin/rune-terminal.rbc: $(RUNE) $(TERMINAL_SRCS) manifests
-	$(RUNE) --library test/runner $(TERMINAL_SRCS) -o $@
+# the terminal's emulator beside the runner, each with a History: the
+# runner's renamed where it is imported (docs/build.md, Clashes)
+bin/rune-terminal.rbc: $(RUNE) $(TERMINAL_SRCS) FORCE
+	$(RUNE) --library terminal --library unicode --library 'test/runner (structure History as RunnerHistory, signature HISTORY as RUNNER_HISTORY)' \
+	  $(TERMINAL_SRCS) -o $@
 bin/rune-terminal: bin/rune-terminal.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-terminal.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -2491,7 +2617,7 @@ MEASURE_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/comma
                 tools/measure/perf-units.sml tools/measure/perf-cycles.sml tools/measure/intinf-common.sml \
                 tools/measure/intinf-compare.sml tools/measure/intinf-dispatch.sml tools/measure/intinf-conversion.sml \
                 tools/measure/intinf-design.sml tools/measure/main.sml
-bin/rune-measure.rbc: $(RUNE) $(MEASURE_SRCS) $(wildcard tools/measure/fixtures/*) manifests
+bin/rune-measure.rbc: $(RUNE) $(MEASURE_SRCS) $(wildcard tools/measure/fixtures/*) FORCE
 	$(RUNE) --library test/runner --library json --library digest $(MEASURE_SRCS) -o $@
 bin/rune-measure: bin/rune-measure.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory bin/rune-matrix build/bench-report.rbc build/bench-counts.rbc
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-measure.rbc" "$$@"\n' > $@
@@ -2511,16 +2637,16 @@ GENERATE_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/comm
                  tools/generate/inventory-discover.sml tools/generate/inventory-classify.sml \
                  tools/generate/inventory-credits.sml tools/generate/inventory-build.sml tools/generate/inventory.sml \
                  tools/generate/main.sml
-bin/rune-generate.rbc: $(RUNE) $(GENERATE_SRCS) $(wildcard tools/generate/data/*) manifests
-	$(RUNE) --library test/runner --library json --library digest $(GENERATE_SRCS) -o $@
+bin/rune-generate.rbc: $(RUNE) $(GENERATE_SRCS) $(wildcard tools/generate/data/*) FORCE
+	$(RUNE) --library test/runner --library json --library digest --library unicode $(GENERATE_SRCS) -o $@
 bin/rune-generate bin/rune-inventory: bin/rune-generate.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-generate.rbc" $(if $(filter bin/rune-inventory,$@),inventory )"$$@"\n' > $@
 	chmod +x $@
 
 # Portable relinking controller: post-bootstrap only, never a GMP/VM prerequisite.
 BUILDER_RUNE_SRCS := tools/builder/io.sig tools/builder/rune-io.sml $(BUILDER_MODEL_SRCS) tools/builder/main.sml tools/builder/run.sml
-bin/rune-build.rbc: $(RUNE) $(BUILDER_RUNE_SRCS) manifests
-	$(RUNE) --library json --library digest $(BUILDER_RUNE_SRCS) -o $@
+bin/rune-build.rbc: $(RUNE) $(BUILDER_RUNE_SRCS) FORCE
+	$(RUNE) --library json --library digest --library unicode $(BUILDER_RUNE_SRCS) -o $@
 bin/rune-build-rune: bin/rune-build.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_BUILD_ROOT:-}" ]; then RUNE_BUILD_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_BUILD_ROOT; fi\nexec "$$d/runevm" "$$d/rune-build.rbc" "$$@"\n' > $@
 	chmod +x $@
@@ -2528,7 +2654,7 @@ bin/rune-build-rune: bin/rune-build.rbc bin/runevm Makefile
 
 SDL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/exampleprojects.sml tests/ffi/sdl/check.sml
 check-tools: bin/rune-sdl-check
-bin/rune-sdl-check.rbc: $(RUNE) $(SDL_CHECK_SRCS) manifests
+bin/rune-sdl-check.rbc: $(RUNE) $(SDL_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner --library json $(SDL_CHECK_SRCS) -o $@
 bin/rune-sdl-check: bin/rune-sdl-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-sdl-check.rbc" "$$@"\n' > $@
@@ -2579,7 +2705,7 @@ ffi-sdl-windows64: bin/rune-build
 FFI_DEPS_MODEL_SRCS := tools/builder/io.sig tools/builder/rune-io.sml tools/builder/common.sml tools/builder/options.sml \
                        tools/builder/archive.sml tools/builder/ffi-deps.sml tests/ffi/provision/model.sml
 check-tools: bin/rune-ffi-deps-check
-bin/rune-ffi-deps-check.rbc: $(RUNE) $(FFI_DEPS_MODEL_SRCS) manifests
+bin/rune-ffi-deps-check.rbc: $(RUNE) $(FFI_DEPS_MODEL_SRCS) FORCE
 	$(RUNE) --library json --library digest $(FFI_DEPS_MODEL_SRCS) -o $@
 bin/rune-ffi-deps-check: bin/rune-ffi-deps-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_BUILD_ROOT:-}" ]; then RUNE_BUILD_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_BUILD_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-deps-check.rbc" "$$@"\n' > $@
@@ -2590,7 +2716,7 @@ test-ffi-deps: $(RUNE) vm bin/rune-ffi-deps-check bin/rune-test
 # Original SDK generation and native Windows GUI acceptance; .build files
 # contain source/virtual-module declarations only.
 WIN32_NATIVE_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/exampleprojects.sml tests/ffi/win32/native/check.sml
-bin/rune-win32-check.rbc: $(RUNE) $(WIN32_NATIVE_CHECK_SRCS) manifests
+bin/rune-win32-check.rbc: $(RUNE) $(WIN32_NATIVE_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner --library json $(WIN32_NATIVE_CHECK_SRCS) -o $@
 bin/rune-win32-check: bin/rune-win32-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-win32-check.rbc" "$$@"\n' > $@
@@ -2610,18 +2736,18 @@ test-win32-app-native: $(RUNE) vm windows bin/runeffi bin/rune-win32-check bin/r
 # Each planted defect must compile, then fail its intended shared WIN32 check.
 WIN32_MUTANT_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/win32/mutants.sml
 .PHONY: test-win32-contract-mutants
-bin/rune-win32-mutants.rbc: $(RUNE) $(WIN32_MUTANT_SRCS) tests/ffi/win32/contract.sml manifests
+bin/rune-win32-mutants.rbc: $(RUNE) $(WIN32_MUTANT_SRCS) tests/ffi/win32/contract.sml FORCE
 	$(RUNE) --library test/runner --library json --library digest $(WIN32_MUTANT_SRCS) -o $@
 test-win32-contract-mutants: $(RUNE) vm bin/rune-win32-mutants.rbc
 	bin/runevm bin/rune-win32-mutants.rbc
 
-SDL_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/repl-check.sml
-bin/rune-sdl-repl-check.rbc: $(RUNE) $(SDL_REPL_CHECK_SRCS) tests/ffi/sdl/repl-session.sml manifests
+SDL_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tools/lsp/seconds.sml tests/ffi/sdl/repl-check.sml
+bin/rune-sdl-repl-check.rbc: $(RUNE) $(SDL_REPL_CHECK_SRCS) tests/ffi/sdl/repl-session.sml FORCE
 	$(RUNE) --library test/runner --library json --library digest $(SDL_REPL_CHECK_SRCS) -o $@
 
-FFI_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/generator/repl-check.sml
+FFI_REPL_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tools/lsp/seconds.sml tests/ffi/generator/repl-check.sml
 .PHONY: test-ffi-repl
-bin/rune-ffi-repl-check.rbc: $(RUNE) $(FFI_REPL_CHECK_SRCS) tests/ffi/generator/repl-session.sml manifests
+bin/rune-ffi-repl-check.rbc: $(RUNE) $(FFI_REPL_CHECK_SRCS) tests/ffi/generator/repl-session.sml FORCE
 	$(RUNE) --library test/runner --library json --library digest $(FFI_REPL_CHECK_SRCS) -o $@
 test-ffi-repl: $(RUNE) vm bin/runeffi.rbc bin/rune-repl.img bin/rune-ffi-repl-check.rbc
 	bin/runevm bin/rune-ffi-repl-check.rbc
@@ -2636,7 +2762,7 @@ ffi-libffi-ppc64: bin/rune-build
 
 FFI_CROSS_CHECK_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/cross-check.sml
 check-tools: bin/rune-ffi-cross-check
-bin/rune-ffi-cross-check.rbc: $(RUNE) $(FFI_CROSS_CHECK_SRCS) manifests
+bin/rune-ffi-cross-check.rbc: $(RUNE) $(FFI_CROSS_CHECK_SRCS) FORCE
 	$(RUNE) --library test/runner --library json --library digest $(FFI_CROSS_CHECK_SRCS) -o $@
 bin/rune-ffi-cross-check: bin/rune-ffi-cross-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-cross-check.rbc" "$$@"\n' > $@
@@ -2652,7 +2778,7 @@ test-win32-hosts: host-builds bin/rune-boot bin/runeffi bin/rune-win32-check bin
 
 SDL_GENERATED_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/ffi/sdl/generated.sml
 .PHONY: sdl-generated check-sdl-generated
-bin/rune-sdl-generated.rbc: $(RUNE) $(SDL_GENERATED_SRCS) manifests
+bin/rune-sdl-generated.rbc: $(RUNE) $(SDL_GENERATED_SRCS) FORCE
 	$(RUNE) --library test/runner --library json --library digest $(SDL_GENERATED_SRCS) -o $@
 sdl-generated: $(RUNE) vm bin/runeffi bin/rune-sdl-generated.rbc
 	bin/runevm bin/rune-sdl-generated.rbc generate

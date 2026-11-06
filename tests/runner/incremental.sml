@@ -146,7 +146,10 @@ struct
                  let val files = List.filter (String.isSuffix "colors.rbi") (entriesBelow (path s "units"))
                      val bytes = OS.FileSys.fileSize (only files)
                  in check s "basis of 300 constructors exceeds its size bound" (#status (!(#result s)) = 0 andalso bytes > 0 andalso bytes < 100000) end; prints s "1")
-    | "S61" => (c "a.sml b.sml main.sml"; b [] "a.sml b.sml main.sml"; f "a.sml" 1; b [] "a.sml b.sml"; prints s "42 0")
+    | "S61" => (c "a.sml b.sml main.sml"; b [] "a.sml b.sml main.sml"; f "a.sml" 1; b [] "a.sml b.sml"; prints s "42 0";
+                 check s "a program that keeps its units' identities was refused for no reason it gives"
+                   (String.isSubstring "b.sml: its entries hold across a unit that changed, which a program that keeps its units' identities takes none across"
+                                       (#errors (!(#result s)))))
     | "S62" => (c "p.sml"; b ["--or-patterns"] "p.sml"; prints s "small"; build s []; fails s;
                  own s "d.sml"; f "d.sml" 0; b ["--default-type=int64"] "d.sml"; prints s "1"; build s []; fails s)
     | "S63" => (c "p.sml"; b ["--unicode"] "p.sml"; prints s "read"; b [] "p.sml"; b ["--unicode=latin1"] "p.sml";
@@ -200,7 +203,9 @@ struct
                                  fun other line = if String.isPrefix "hash " line then "hash 0123456789abcdef0123456789abcdef" else line
                              in write (about, String.concatWith "\n" (List.map other lines));
                                 OS.FileSys.rename {old = dir, new = path s "cache/0123456789abcdef0123456789abcdef"} end)
-                          (List.filter (fn config => isDir (path s ("cache/" ^ config))) (entries (path s "cache")));
+                          (* each configuration, which says what it is in units/about;
+                             not memo/ or steps/, beside them *)
+                          (List.filter (fn config => exists (path s ("cache/" ^ config ^ "/units/about"))) (entries (path s "cache")));
                  b ["--explain-rebuild"] all;
                  check s "the build did not say the cache's hash differs"
                    (String.isSubstring "holds entries made by a compiler whose hash differs" (#errors (!(#result s)))))
@@ -239,14 +244,123 @@ struct
                  #environment s := [("RUNE_LINT", "")]; b [] ""; #environment s := [])
     | "S82" => (c "a.sml b.sml"; b [] "a.sml b.sml";
                  (* b.sml's entry made to say what it names of other units
-                    had other schemes: it is no entry, and b.sml is compiled
-                    again *)
+                    had other schemes: its usages hold by their binders,
+                    whose identities are the bases that hold the schemes, so
+                    a hit reads none of them and takes it (the build-system
+                    roadmap's M6); --verify-cache compiles it, finds the
+                    schemes are not what compiling it gives, and fails *)
                  check s "b.sml's entry keeps no scheme"
                    (CachePlant.schemes (only (selectedEntry s "b.sml")) (fn (_, t) => t ^ "!") > 0);
-                 b [] "b.sml";
-                 check s ("the build did not say the schemes differ: " ^ #errors (!(#result s)))
-                   (String.isSubstring "b.sml: its entry had another scheme of " (#errors (!(#result s))));
-                 b [] "")
+                 b [] "";
+                 build s ["--verify-cache"]; fails s;
+                 check s ("--verify-cache did not say the schemes differ: " ^ #errors (!(#result s)))
+                   (String.isSubstring "b.sml: its entry had another scheme of " (#errors (!(#result s)))))
+    | "S84" => (fresh s; b [] all; b ["--functor-budget=0"] all; b [] "";
+                 build s ["--type-work=1"]; fails s; build s ["--match-work=1"]; fails s; b [] "")
+    | "S85" =>
+        let val () = own s "w.sml"
+            val () = put s "w.sml" "fun f 0 = 1  val () = print (Int.toString (f 0) ^ \"\\n\")"
+            fun shown () = List.filter (not o String.isPrefix "rune: ") (lines (#errors (!(#result s))))
+            val () = b ["--diagnostics=full"] "w.sml"
+            val cold = shown ()
+            val () = check s "--diagnostics=full shows the source" (List.exists (String.isSubstring "^") cold)
+            val () = b ["--diagnostics=full"] ""
+            val () = check s ("warm warnings differ from cold's: " ^ String.concatWith "\n" (shown ()))
+                           (shown () = cold)
+            val () = b ["--diagnostics-json", "d.json"] ""
+        in check s "a warning from the cache is not in the JSON" (String.isSubstring "match is not exhaustive" (read (path s "d.json"))) end
+    | "S86" =>
+        let val () = own s "a.sml b.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString A.x ^ \"\\n\")"
+            val () = b [] "a.sml b.sml"
+            val entry = only (selectedEntry s "b.sml")
+            val units = OS.Path.dir (OS.Path.dir entry) ^ "/units"
+            fun plant p = write (p, "")
+            fun old p = (plant p; OS.FileSys.setTime (p, SOME (Time.fromSeconds 1000)))
+            val left = [OS.Path.dir entry ^ "/x.tmp-old", units ^ "/x.tmp-old"]
+            val fresh' = [OS.Path.dir entry ^ "/x.tmp-new", units ^ "/x.tmp-new"]
+            val () = (List.app old left; List.app plant fresh')
+        in
+          (* an entry looked for sweeps its key, a unit compiled the units *)
+          edit s "a.sml" "val x = 1" "val x = 2";
+          b [] "a.sml";
+          check s "a file an old compile left stays" (not (List.exists exists left));
+          check s "a file a compile may be writing is gone" (List.all exists fresh')
+        end
+    | "S87" =>
+        let val () = own s "a.sml b.sml other.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
+            val () = put s "other.sml" "structure Runtime = struct val mine = 3 end"
+            val () = b [] "a.sml b.sml other.sml"
+        in
+          edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
+          b [] "a.sml"; prints s "3";
+          check s "the client was not taken across the edit"
+            (String.isSubstring "from the cache b.sml, across a.sml changed" (#errors (!(#result s))))
+        end
+    | "S88" =>
+        let val () = own s "a.sml b.sml other.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
+            (* a string that spells a primitive is a string *)
+            val () = put s "other.sml" ("structure R = Runtime\nval () = R.collect ()\nval table = [\"rt_link\"]\n"
+                                        ^ "val () = if #instructions (Runtime.stats ()) > 0 then print \"counted\\n\" else ()")
+            val () = b [] "a.sml b.sml other.sml"
+        in
+          edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
+          b [] "a.sml"; prints s "3\ncounted";
+          check s "the client was not taken across the edit"
+            (String.isSubstring "from the cache b.sml, across a.sml changed" (#errors (!(#result s))))
+        end
+    | "S89" =>
+        let val () = own s "a.sml b.sml other.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 fun g (SOME z) = z end"
+            val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
+            val () = put s "other.sml" ("structure R = Runtime\nval () = print (if List.null (R.linkedUnits ()) "
+                                        ^ "then \"no units\\n\" else \"units\\n\")")
+            val () = b [] "a.sml b.sml other.sml"
+            val () = prints s "3\nunits"
+            (* a.sml's warning, given once by a build however many times it
+               compiles *)
+            fun once label errors =
+              let val n = List.length (List.filter (String.isSubstring "warning: match is not exhaustive") (lines errors))
+              in check s (label ^ ": a.sml's warning was given " ^ Int.toString n ^ " times: " ^ errors) (n = 1) end
+            fun plain () = compile s ["--units", "--cache-dir", "cache"] "p.rbc"
+        in
+          edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
+          b [] "a.sml b.sml"; prints s "3\nunits";
+          check s "the build did not say why it compiled again"
+            (String.isSubstring "other.sml loads units" (#errors (!(#result s))));
+          once "the build that compiled again" (#errors (!(#result s)));
+          (* and with children, which the first compile leaves running *)
+          edit s "a.sml" "val added = 2" "val added = 2 val third = 3";
+          b ["-j", "2"] "a.sml b.sml"; prints s "3\nunits";
+          once "the build with children" (#errors (!(#result s)));
+          (* a build that keeps its record, and one up to date by it, which
+             gives the warnings it kept *)
+          once "the build after" (#errors (plain ()));
+          OS.Process.sleep (Time.fromSeconds 3);
+          let val t = OS.FileSys.modTime (path s "p.rbc")
+              val r = plain ()
+          in
+            check s "the build after it was not up to date" (Time.compare (t, OS.FileSys.modTime (path s "p.rbc")) = EQUAL);
+            once "the build up to date" (#errors r)
+          end
+        end
+    | "S90" =>
+        let val () = own s "a.sml b.sml other.sml"
+            val () = put s "a.sml" "structure A = struct val x = 1 val f = fn y => y + 1 end"
+            val () = put s "b.sml" "val () = print (Int.toString (A.f 2) ^ \"\\n\")"
+            val () = put s "other.sml" "val load = Runtime.load"
+            val () = b [] "a.sml b.sml other.sml"
+        in
+          edit s "a.sml" "val x = 1" "val x = 1 val added = 2";
+          b [] "a.sml b.sml"; prints s "3";
+          check s "a program that loads units took a client across an edit"
+            (String.isSubstring "b.sml: its entries hold across a unit that changed" (#errors (!(#result s))))
+        end
     | _ => raise Failed ("not a simple scenario: " ^ #name s)
     end
 end

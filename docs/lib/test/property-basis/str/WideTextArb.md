@@ -20,11 +20,11 @@ The types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | `contents` | `(int -> (WideChar.char * int) option) -> WideString.string` |
-| val | `pos` | `{co : WideTextPrimIO.pos -> Word64.word, eq : (WideTextPrimIO.pos * WideTextPrimIO.pos -> bool) option, gen : WideTextPrimIO.pos Gen.gen, show : WideTextPrimIO.pos -> string}` |
-| val | `positionIn` | `WideString.string * int -> WideTextPrimIO.pos` |
-| val | `reader` | `{co : (int -> (WideChar.char * int) option) -> Word64.word, eq : ((int -> (WideChar.char * int) option) * (int -> (WideChar.char * int) option) -> bool) option, gen : (int -> (WideChar.char * int) option) Gen.gen, show : (int -> (WideChar.char * int) option) -> string}` |
-| val | `readerOf` | `WideString.string -> int -> (WideChar.char * int) option` |
+| val | `contents` | `(int -> (RuneWideChar.char * int) option) -> WideString.string` |
+| val | `pos` | `{co : RuneWideTextPos.pos -> Word64.word, eq : (RuneWideTextPos.pos * RuneWideTextPos.pos -> bool) option, gen : RuneWideTextPos.pos Gen.gen, show : RuneWideTextPos.pos -> string}` |
+| val | `positionIn` | `WideString.string * int -> RuneWideTextPos.pos` |
+| val | `reader` | `{co : (int -> (RuneWideChar.char * int) option) -> Word64.word, eq : ((int -> (RuneWideChar.char * int) option) * (int -> (RuneWideChar.char * int) option) -> bool) option, gen : (int -> (RuneWideChar.char * int) option) Gen.gen, show : (int -> (RuneWideChar.char * int) option) -> string}` |
+| val | `readerOf` | `WideString.string -> int -> (RuneWideChar.char * int) option` |
 
 ---
 

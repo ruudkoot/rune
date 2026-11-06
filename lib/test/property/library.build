@@ -2,7 +2,11 @@
    engine, its files in load order, in the form of lib/basis/library.build.
    The arbitraries of the Basis Library's types are the library
    test/property/basis, in basis/. It is written on lib/random: *)
-libraries random end
+requires random end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Arb, structure Check, structure Co, structure Gen, structure Prop,
+         structure PropertySource, structure Show, signature ARB, signature CHECK, signature CO,
+         signature GEN, signature PROP, signature SHOW)
 (* Every compiler of tests/lib/run-hosts.sh builds every file. *)
 annotate "demand" in
   source.sml

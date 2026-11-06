@@ -1,9 +1,10 @@
 (* Ordered static compilation with explicit execution and artifact I/O.
 
-   Implements: RUNE_COMPILER *)
-structure RuneCompiler :> RUNE_COMPILER =
+   Implements: COMPILER_API *)
+structure CompilerApi :> COMPILER_API =
 struct
   structure C = CompilerSession
+  structure W = Workspace
   datatype session = Session of {compiler : C.session, mode : Source.mode}
   type compiled = C.compiled
   type diagnostic = C.diagnostic
@@ -21,6 +22,7 @@ struct
          | UnitMid.Bad message => invalid message
          | UnitBasis.Missing identity => invalid ("missing unit dependency: " ^ identity)
          | BasisManifest.Usage message => invalid message
+         | W.Invalid message => invalid message
          | Fail message => invalid message
   fun session {lib,flags} =
     let
@@ -46,7 +48,8 @@ struct
         | options ("--unicode" :: rest,target,allow,_,libraries) = options (rest,target,allow,Source.Unicode Source.Utf8,libraries)
         | options ("--unicode=utf8" :: rest,target,allow,_,libraries) = options (rest,target,allow,Source.Unicode Source.Utf8,libraries)
         | options ("--unicode=latin1" :: rest,target,allow,_,libraries) = options (rest,target,allow,Source.Unicode Source.Latin1,libraries)
-        | options ("--library" :: name :: rest,target,allow,mode,libraries) = options (rest,target,allow,mode,name :: libraries)
+        | options ("--library" :: name :: rest,target,allow,mode,libraries) =
+            options (rest,target,allow,mode,(BuildFile.importText name handle BuildFile.Error why => invalid why) :: libraries)
         | options (flag :: rest,target,allow,mode,libraries) =
             if prototype flag then options (rest,target,allow,mode,libraries)
             else invalid ("unsupported compiler-library flag: " ^ flag)
@@ -89,12 +92,38 @@ struct
     val work=CompilerSyntax.work
     fun events snapshot=List.map (fn (kind,span:Source.span,values) =>
       {kind=kind,start= #start span,stop= #stop span,values=values}) (SyntaxAst.shape (CompilerSyntax.bridge snapshot))
+    (* the names of a unit, read from its syntax (Deps; docs/units.md,
+       Well-formed units) *)
+    fun names snapshot=C.owned (fn () =>
+      let val found=Deps.analyse ("",CompilerSyntax.bridge snapshot)
+          fun named (kind,name)={kind=Deps.kindName kind,name=name}
+      in {declares=List.map named (#declares found),uses=List.map named (#uses found)} end)
     fun diagnostics (snapshot as CompilerSyntax.Syntax {file,text,mode,...}) =
       let val source=Source.fromStringIn (mode,file,text)
       in List.map (fn (span:Source.span,message) =>
         let val (line,column)=Source.lineCol (source,#start span)
         in {severity="error",file=file,start= #start span,stop= #stop span,line=line,column=column,message=message} end)
         (CompilerSyntax.problems snapshot) end
+  end
+
+  structure Workspace =
+  struct
+    type t=W.t
+    type target=W.target
+    fun find (request as {file,...})=guard file (fn () => W.find request)
+    fun read (request as {file,...})=guard file (fn () => W.parse request)
+    val candidates=W.candidates
+    fun root (workspace : t)= #root workspace
+    fun libraryRoots (workspace : t)= #libraryRoots workspace
+    fun targets (workspace : t)= #targets workspace
+    (* where a compile of file keeps its store (UnitCache.directory), where
+       it is there: an analysis makes none *)
+    fun store {file,windows}=
+      let fun there dir=if (OS.FileSys.isDir dir handle OS.SysErr _ => false) then SOME dir else NONE
+      in case OS.Process.getEnv "RUNE_CACHE" of
+           SOME "" => NONE
+         | SOME dir => there dir
+         | NONE => there (UnitCache.storeIn (getOpt (W.rootOf {file=file,windows=windows},OS.Path.dir file))) end
   end
 
   structure Project =
@@ -105,11 +134,16 @@ struct
     type buildReference=CompilerBuildQuery.reference
     type pathCompletion=CompilerBuildQuery.completion
     type buildLink=CompilerBuildQuery.link
-    datatype t=Project of {owner:unit ref,plan:P.plan,sources:source list,inputs:input list,fingerprint:string}
+    datatype t=Project of {owner:unit ref,plan:P.plan,sources:source list,inputs:input list,fingerprint:string,scope:W.scope}
     fun sources (Project {sources,...})=sources
     fun inputs (Project {inputs,...})=inputs
     fun libraries (Project {plan,...})= #libraries plan
-    fun cacheDirectories (Project {plan,...})= #caches plan
+    fun exports (Project {plan,...})=
+      case #steps plan of
+        [P.SLibrary (es,_)] => SOME (List.map (fn (k,n) => {kind=case k of BuildFile.Str => "structure" | BuildFile.Sig => "signature"
+                                                                    | BuildFile.Fun => "functor" | BuildFile.Ty => "type"
+                                                                    | BuildFile.Fix => "fixity",name=n}) es)
+      | _ => NONE
     fun fingerprint (Project {fingerprint,...})=fingerprint
     fun buildSyntax (request as {file,...})=guard file (fn () => C.owned (fn () =>
       let val result=CompilerBuildQuery.inspect request
@@ -125,7 +159,8 @@ struct
           val ()=BuildFile.variables:=bindings
       in CompilerBuildQuery.completions {file=file,text=text,offset=offset,variables=StringMap.listItemsi bindings,
            windows=windows,lib= #lib config} end))
-    fun read (Session {compiler=compiler as C.Session {config,token,...},mode},{file,variables,overlays,windows}) =
+    fun readHolding (Session {compiler=compiler as C.Session {config,token,...},mode},{file,workspace,variables,overlays,windows},
+                     {held,read}) =
       guard file (fn () => C.owned (fn () =>
         let
           val ()=C.checked compiler
@@ -140,23 +175,20 @@ struct
                 fun matches (file,_,other) = file=key orelse
                   (case (id,other) of (SOME a,SOME b) => OS.FileSys.compare (a,b)=EQUAL | _ => false)
                 val found=List.filter matches overlayIds
-            in case found of [] => Source.load (mode,path)
+            in case found of
+               [] => (case held path of
+                 SOME text => let val source=Source.fromStringIn (mode,path,text) in Source.register source;source end
+               | NONE => let val source=Source.load (mode,path) in read (path,#text source);source end)
              | (_,text,_) :: rest =>
                 if List.exists (fn (_,other,_) => other<>text) rest then invalid "multiple open overlays refer to the same project input"
                 else let val source=Source.fromStringIn (mode,path,text)
                      in Source.register source;source end end
-          val sourceInputs=ref [] : input list ref
           fun build path =
             let val source=load (Source.Ascii,path)
             in {text= #text source,revision=Pickle.hash ("ascii:" ^ #text source)} end
-          fun syntax (mode,path) =
-            let val source=load (mode,path)
-                val revision=Pickle.hash (Source.modeName mode ^ ":" ^ #text source)
-                val ()=sourceInputs:={file=path,text= #text source,mode=Source.modeName mode,kind="source",revision=revision} :: !sourceInputs
-            in #1 (Parser.parseTokensWith (Lexer.tokenize source,Fixity.initial)) end
-          val plan=P.plan {file=file,defaultMode=mode,windows=windows,readBuild=build,syntax=syntax}
+          val plan=P.plan {file=file,windows=windows,readBuild=build}
           val inputs=List.map (fn {path,text,revision} =>
-            {file=path,text=text,revision=revision,mode="ascii",kind="build"}) (#inputs plan) @ List.rev (!sourceInputs)
+            {file=path,text=text,revision=revision,mode="ascii",kind="build"}) (#inputs plan)
           val units=P.units (#steps plan)
           val sources=ListPair.map (fn ((path,annotations),ordinal) =>
             {file=path,annotations=annotations,mode=Source.modeName (P.modeOf (mode,annotations)),ordinal=ordinal})
@@ -171,16 +203,19 @@ struct
           val ()=List.app (fn ({file,text=body,mode,kind,...}:input) =>
             (text file;text mode;text kind;text body)) inputs
           val ()=Pickle.list Pickle.string (writer,#libraries plan)
-          val ()=Pickle.list Pickle.string (writer,#caches plan)
-        in Project {owner=token,plan=plan,sources=sources,inputs=inputs,fingerprint=Pickle.hash (Pickle.contents writer)} end
+          val scope=W.ofBuild {file=file,workspace=workspace,lib= #lib config,windows=windows}
+          val ()=text (#root scope)
+          val ()=Pickle.list Pickle.string (writer,#libraries scope)
+        in Project {owner=token,plan=plan,sources=sources,inputs=inputs,fingerprint=Pickle.hash (Pickle.contents writer),scope=scope} end
         handle CompilerProject.Invalid message => invalid message
              | Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]))
+    fun read (session,request)=readHolding (session,request,{held=fn _ => NONE,read=fn _ => ()})
   end
 
   structure Analysis =
   struct
     structure A=CompilerAnalysis
-    datatype t=Analysis of {analysis:A.t,mode:Source.mode,owner:unit ref}
+    datatype t=Analysis of {analysis:A.t,mode:Source.mode,owner:unit ref,lib:string option}
     type snapshot=A.snapshot
     type checkpoint=A.checkpoint
     type input=A.input
@@ -194,32 +229,38 @@ struct
     type observation=A.observation
     exception Cancelled=A.Cancelled
     exception Busy=A.Busy
-    fun create (Session {compiler=compiler as C.Session {token,...},mode},{context}) =
-      Analysis {analysis=A.new (compiler,context),mode=mode,owner=token}
+    fun create (Session {compiler=compiler as C.Session {token,config,...},mode},{context}) =
+      Analysis {analysis=A.new (compiler,context),mode=mode,owner=token,lib= #lib config}
     fun close (Analysis {analysis,...})=A.close analysis
     fun observe (Analysis {analysis,...},callback)=A.observe(analysis,callback)
+    fun focus (Analysis {analysis,...},files)=A.focus(analysis,files)
+    type pool=A.pool
+    val pool=A.pool
+    fun share (Analysis {analysis,...},value)=A.share(analysis,value)
+    fun store (Analysis {analysis,...},value)=A.store(analysis,value)
+    fun lazy (Analysis {analysis,...},value)=A.lazy(analysis,value)
+    fun compact (Analysis {analysis,...})=A.compact analysis
     fun checkpoint (Analysis {analysis,...})=A.checkpoint analysis
     fun restore (Analysis {analysis,...},checkpoint)=guard "" (fn () => A.restore (analysis,checkpoint))
-    fun check (Analysis {analysis,mode,owner},{project,inputs,cancelled}) = guard "" (fn () =>
+    fun check (Analysis {analysis,mode,owner,lib},{project,inputs,cancelled}) = guard "" (fn () =>
       let fun normalize (input:input):input=
             {file= #file input,text= #text input,mode=Source.modeName (CompilerProject.modeOf
               (case Source.modeNamed (#mode input) of SOME mode => mode
                | NONE => if #mode input="" then mode else invalid "unknown analysis source mode",#annotations input)),
              annotations= #annotations input,revision= #revision input}
           val inputs=List.map normalize inputs
-          val (steps,fingerprint,libraries)=case project of NONE =>
-              (List.map (fn input:input => CompilerProject.SUnit (#file input,#annotations input)) inputs,NONE,[])
-            | SOME (Project.Project {owner=projectOwner,plan,sources,inputs=captured,fingerprint}) =>
+          val (steps,fingerprint,libraries,scope,building,view)=case project of NONE =>
+              (List.map (fn input:input => CompilerProject.SUnit (#file input,#annotations input)) inputs,NONE,[],
+               W.ofFiles {file=case inputs of first :: _ => #file first | [] => ".",workspace=NONE,lib=lib,windows=W.onWindows ()},NONE,NONE)
+            | SOME (Project.Project {owner=projectOwner,plan,sources,fingerprint,scope,...}) =>
                 let val ()=if owner=projectOwner then () else invalid "project belongs to another compiler context"
                     val ()=if length inputs=length sources then () else invalid "analysis input count differs from the project"
                     val ()=ListPair.app (fn (input:input,source:Project.source) =>
                       if #file input= #file source andalso #mode input= #mode source andalso #annotations input= #annotations source
                       then () else invalid "analysis inputs differ from the project's ordered source occurrences") (inputs,sources)
-                    val ()=List.app (fn captured:Project.input => if #kind captured<>"source" then () else
-                      if List.exists (fn input:input => #file input= #file captured andalso #mode input= #mode captured
-                        andalso #text input= #text captured) inputs then () else invalid "group discovery input changed after project resolution") captured
-                in (#steps plan,SOME fingerprint,#libraries plan) end
-      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,cancelled=cancelled}) end)
+                in (#steps plan,SOME fingerprint,#libraries plan,scope,Option.map #path (List.find (fn _ => true) (#inputs plan)),#view plan) end
+      in A.check (analysis,{inputs=inputs,steps=steps,project=fingerprint,libraries=libraries,scope=scope,building=building,view=view,
+           cancelled=cancelled}) end)
       handle Error.CompileError (span,message) => raise Failed [C.sourceError ("error",span,message)]
     fun id (snapshot:snapshot)= #id snapshot
     fun context (snapshot:snapshot)= #context snapshot
@@ -229,10 +270,16 @@ struct
     val syntaxAt=A.syntaxAt
     fun dependencies (snapshot:snapshot)= #dependencies snapshot
     fun diagnostics (snapshot:snapshot)= #diagnostics snapshot
-    fun occurrences (snapshot:snapshot)= #occurrences snapshot
-    fun types (snapshot:snapshot)= #types snapshot
-    fun facts (snapshot:snapshot)= #facts snapshot
+    val occurrences=A.occurrences
+    val occurrencesIn=A.occurrencesIn
+    val implementationsOf=A.implementationsOf
+    val versionOf=A.versionOf
+    val interfaceOf=A.interfaceOf
+    val types=A.types
+    val facts=A.facts
+    val factsIn=A.factsIn
     fun work (snapshot:snapshot)={checked= #checked snapshot,reused= #reused snapshot}
+    fun route (snapshot:snapshot)= #route snapshot
     val typeAt=A.typeAt
     val typeAtOccurrence=A.typeAtOccurrence
     val typeHints=A.typeHints

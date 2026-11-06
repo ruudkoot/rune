@@ -22,7 +22,7 @@ struct
           stdout=prefix ^ ".out",stderr=prefix ^ ".err",timeout=600}
         val elapsed=Time.toReal(Time.-(Runtime.clock(),started))
         val row=Json.Object[("name",Json.String name),("argv",Json.Array(List.map Json.String arguments)),
-          ("status",Json.int status),("wallSeconds",Json.Number(Real.toString elapsed))]
+          ("status",Json.int status),("wallSeconds",RuneLspSeconds.json elapsed)]
         val ()=commands:= !commands @ [row]
         val ()=write(prefix ^ ".json",Json.encodeIndented 2 row ^ "\n")
         val output=read(prefix ^ ".out") val errors=read(prefix ^ ".err")

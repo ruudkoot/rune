@@ -5,8 +5,9 @@ struct
   val inputs = CompilerSettings.inputs
   val noPrelude = ref false
   val basisAll = ref false         (* --basis all: every file of the basis library *)
+  val basisView : string option ref = ref NONE  (* --basis-view NAME: the view of the basis library (D12) *)
   val basisDeps = ref false        (* --basis-deps: print the files that would be loaded *)
-  val basisCheck = ref false       (* --basis-check: verify lib/basis/MANIFEST *)
+  val basisCheck = ref false       (* --basis-check: verify the Basis Library's index *)
   val allowPrim = ref false
   val orPatterns = ref false
   (* --unicode, --unicode=ENC: the mode of the input files; the libraries are
@@ -26,6 +27,7 @@ struct
   val emitUnits : string option ref = ref NONE (* --emit-units DIR: each unit's file there too *)
   val cacheDir = CompilerSettings.cacheDir      (* --cache-dir DIR: the cache of units (UnitCache) *)
   val noCache = CompilerSettings.noCache        (* --no-cache: compile every unit *)
+  val cacheTrim = ref false                    (* --cache-trim: trim the store now (UnitStore.trim) *)
   val explainRebuild = ref false               (* --explain-rebuild: say why each unit was compiled *)
   val verifyCache = CompilerSettings.verifyCache (* --verify-cache: compile each unit found, and compare *)
   val jobs = ref 1                             (* -j N: units compiled by up to N child processes (Parallel) *)
@@ -35,10 +37,11 @@ struct
   val depsUses = ref false                     (* --deps-uses: the module names each input uses *)
   val includeDirs : string list ref = ref []   (* -I DIR: where an entry point's files are looked for *)
   val build : string option ref = ref NONE     (* --build FILE: compile what a build file says (docs/build.md) *)
-  val buildList = ref false                    (* --build-list: print the build file's files in order *)
+  val buildList = ref false                    (* --build-list: print the build's closure in order *)
   (* --no-inline-functors: none inlined across units (M6b) *)
   val noInlineFunctors = ref false
-  val basisIndex : string option ref = ref NONE (* --basis-index DIR: DIR/MANIFEST from DIR/library.build *)
+  val plan = ref false                         (* --plan: print the plan's text *)
+  val indexLibrary : string option ref = ref NONE (* --basis-index DIR: the index of DIR/library.build *)
   val noWarnings = ref false
   val color = ref Color.WhenTerminal           (* --color=WHEN (docs/diagnostics.md) *)
   val diagnostics : bool option ref = ref NONE (* --diagnostics=full|short: SOME true, SOME false *)
@@ -57,17 +60,23 @@ struct
     \  -o FILE           write bytecode to FILE (default: first input with .rbc)\n\
     \  --lib DIR         directory containing the basis library, in DIR/basis\n\
     \                    (required unless --no-prelude)\n\
-    \  --library NAME    compile the library LIBDIR/NAME (a MANIFEST like the basis\n\
-    \                    library's) and those it names, after the basis library\n\
+    \  --library NAME    compile the library LIBDIR/NAME (a directory with a\n\
+    \                    library.build) and those it names, after the basis library\n\
     \                    and before the inputs; NAME is a path if it begins with\n\
-    \                    / or .; repeatable\n\
+    \                    / or .; NAME#VIEW sees that view of it; NAME (structure\n\
+    \                    A as B, ...) renames what it imports, as a build file's\n\
+    \                    libraries do (docs/build.md, Clashes); repeatable\n\
     \  --no-prelude      do not compile the basis library before the inputs\n\
     \  --basis MODE      demand (default): compile the files of the basis library\n\
     \                    that the inputs name, and what those need; all: every file\n\
+    \  --basis-view NAME see the basis library through its view NAME, seals loaded\n\
+    \                    after the libraries, which see it whole; a build file's\n\
+    \                    `view NAME` says the same (docs/build.md, Views of the\n\
+    \                    Basis Library)\n\
     \  --basis-deps      print the library files the inputs load, and exit\n\
-    \  --basis-check     check the provides and requires columns of the basis\n\
-    \                    library's MANIFEST, and of those of --library, against\n\
-    \                    their sources, and exit\n\
+    \  --basis-check     check what the basis library's index, and those of\n\
+    \                    --library, say each file provides and requires against\n\
+    \                    the sources, and exit\n\
     \  --allow-prim      allow the _prim extension in the inputs\n\
     \  --int-bits=N      the precision of int and word on the VM: 63 (default), or\n\
     \                    64 for a VM built with -DRUNE_INT64\n\
@@ -104,9 +113,15 @@ struct
     \                    order; `rune -o P.rbc` given those files links them\n\
     \  --cache-dir DIR   with --units, keep each unit compiled in the cache in DIR\n\
     \                    and take it from there when nothing it was compiled from\n\
-    \                    changed (default: $RUNE_CACHE, else .rune beside the\n\
-    \                    first input; docs/units.md)\n\
+    \                    changed (default: $RUNE_CACHE, else .rune in the\n\
+    \                    workspace, by the rune.workspace above the build file or\n\
+    \                    the first input, else beside that file; docs/units.md)\n\
     \  --no-cache        with --units, compile every unit\n\
+    \  --cache-trim      remove from the store what no compile took for longer\n\
+    \                    than --cache-max-age DAYS (default 7), then the least\n\
+    \                    recently taken past --cache-max-size SIZE (bytes, or\n\
+    \                    with K, M, G or T; default 4G); a compile in units does\n\
+    \                    so after its work, at most once a day (none: no limit)\n\
     \  --explain-rebuild with --units, say of each unit whether it was taken from\n\
     \                    the cache, or why it was compiled\n\
     \  --verify-cache    with --units, compile each unit the cache has too, and\n\
@@ -120,16 +135,24 @@ struct
     \  --whole           with --units, make one program of the units' Mid, with\n\
     \                    the passes of a whole program, and not link their code\n\
     \  --deps            print the files in an order where each comes after the\n\
-    \                    files declaring the modules it uses (docs/units.md)\n\
+    \                    files declaring the modules it uses, and warn of each\n\
+    \                    unit that is not well-formed; with --build, the build's\n\
+    \                    (docs/units.md)\n\
     \  --deps-dot        the same, as a graph in DOT\n\
     \  --deps-uses       print the module names the inputs use, one per line\n\
     \  -I DIR            with one input, an entry point: compile before it the files\n\
     \                    of its directory and of each -I DIR that it needs\n\
-    \  --build FILE      compile in units what the build file FILE says\n\
-    \                    (docs/build.md); --build-list prints its files in order\n\
-    \  --path NAME=DIR   the path variable $(NAME) of build files\n\
-    \  --basis-index DIR write DIR/MANIFEST, what a library's files provide and\n\
-    \                    require, from its build file DIR/library.build\n\
+    \  --build FILE      compile in units what the build file FILE says, after the\n\
+    \                    steps it declares (docs/build.md); --build-list prints its\n\
+    \                    closure in order\n\
+    \  --plan            print the plan of what the rest of the command line says,\n\
+    \                    a build file's or the files and libraries given, as text\n\
+    \                    any program can read (docs/build.md, The plan); given a\n\
+    \                    FILE.plan, read it and print it again\n\
+    \  --path NAME=DIR   the path variable $(NAME) of build files, a relative DIR\n\
+    \                    from the directory of the build file given\n\
+    \  --basis-index DIR print the index of the library in DIR, what its files\n\
+    \                    provide and require, made again from DIR/library.build\n\
     \  --typecheck-only  stop after type checking\n\
     \  --type-work=N     type traversal budget per top-level declaration (50000000)\n\
     \  --match-work=N    pattern-analysis budget per match (1000000)\n\
@@ -179,10 +202,18 @@ struct
 
   (* The message for an input that cannot be read: `--unicode latin1`
      reads latin1 as an input, since --unicode takes its encoding only
-     after an = (docs/plans/utf8.md, D1). *)
+     after an = (docs/plans/utf8.md, D1); and the Config a checkout's
+     build files list, which make writes (docs/building.md, The compiler's
+     identity), and which a checkout that make has not run in lacks *)
   fun cannotRead (path : string) : string =
-    "cannot read " ^ path
-    ^ (if path = "utf8" orelse path = "latin1" then " (did you mean --unicode=" ^ path ^ "?)" else "")
+    let fun is p = path = p orelse String.isSuffix ("/" ^ p) path
+    in
+      "cannot read " ^ path
+      ^ (if path = "utf8" orelse path = "latin1" then " (did you mean --unicode=" ^ path ^ "?)"
+         else if is "build/config.sml" orelse is "lib/compiler/config.sml"
+         then " (run make, or sh scripts/gen-version.sh, which writes it)"
+         else "")
+    end
 
   (* An option of the form --name=value, as (--name, value). *)
   fun valued (a : string) : (string * string) option =
@@ -228,12 +259,16 @@ struct
     | ["-o"] => raise Usage "-o requires an argument"
     | "--lib" :: d :: rest => (libDir := SOME d; parse rest)
     | ["--lib"] => raise Usage "--lib requires an argument"
-    | "--library" :: n :: rest => (libraries := !libraries @ [n]; parse rest)
+    | "--library" :: n :: rest =>
+        (libraries := !libraries @ [BuildFile.importText n handle BuildFile.Error why => raise Usage why]; parse rest)
     | ["--library"] => raise Usage "--library requires a name"
     | "--no-prelude" :: rest => (noPrelude := true; parse rest)
     | "--basis" :: "all" :: rest => (basisAll := true; parse rest)
     | "--basis" :: "demand" :: rest => (basisAll := false; parse rest)
     | "--basis" :: _ => raise Usage "--basis requires all or demand"
+    | "--basis-view" :: v :: rest =>
+        if BasisManifest.identifier v then (basisView := SOME v; parse rest) else raise Usage ("not the name of a view: " ^ v)
+    | ["--basis-view"] => raise Usage "--basis-view requires the name of a view"
     | "--basis-deps" :: rest => (basisDeps := true; parse rest)
     | "--basis-check" :: rest => (basisCheck := true; parse rest)
     | "--allow-prim" :: rest => (allowPrim := true; parse rest)
@@ -253,6 +288,11 @@ struct
     | "--cache-dir" :: d :: rest => (cacheDir := SOME d; parse rest)
     | ["--cache-dir"] => raise Usage "--cache-dir requires a directory"
     | "--no-cache" :: rest => (noCache := true; parse rest)
+    | "--cache-trim" :: rest => (cacheTrim := true; parse rest)
+    | "--cache-max-age" :: d :: rest => (UnitCache.maxAge := maxAgeOf d; parse rest)
+    | ["--cache-max-age"] => raise Usage "--cache-max-age requires a number of days, or none"
+    | "--cache-max-size" :: n :: rest => (UnitCache.maxSize := maxSizeOf n; parse rest)
+    | ["--cache-max-size"] => raise Usage "--cache-max-size requires a size, or none"
     | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
     | "--verify-cache" :: rest => (verifyCache := true; parse rest)
     | "-j" :: n :: rest => (jobs := jobCount n; parse rest)
@@ -265,7 +305,8 @@ struct
     | "--build" :: f :: rest => (build := SOME f; units := true; parse rest)
     | ["--build"] => raise Usage "--build requires a build file"
     | "--build-list" :: f :: rest => (build := SOME f; buildList := true; parse rest)
-    | "--basis-index" :: d :: rest => (basisIndex := SOME d; parse rest)
+    | "--plan" :: rest => (plan := true; parse rest)
+    | "--basis-index" :: d :: rest => (indexLibrary := SOME d; parse rest)
     | "--path" :: v :: rest =>
         (case String.fields (fn c => c = #"=") v of
            name :: (dir as _ :: _) => (BuildFile.variables := StringMap.insert (!BuildFile.variables, name, String.concatWith "=" dir);
@@ -345,6 +386,39 @@ struct
     case Int.fromString text of
       SOME n => if n >= 1 then n else raise Usage "-j requires a number of jobs, at least 1"
     | NONE => raise Usage "-j requires a number of jobs, at least 1"
+  (* --cache-max-age DAYS: a whole number of days, at most 36500, or none *)
+  and maxAgeOf text =
+    if text = "none" then NONE
+    else
+      let fun bad () = raise Usage "--cache-max-age requires a whole number of days, at most 36500, or none"
+      in
+        if text = "" orelse not (CharVector.all Char.isDigit text) orelse size text > 5 then bad ()
+        else case Int.fromString text of
+               SOME n => if n <= 36500 then SOME (Time.fromSeconds (LargeInt.* (Int.toLarge n, Int.toLarge 86400))) else bad ()
+             | NONE => bad ()
+      end
+  (* --cache-max-size SIZE: bytes, or with K, M, G or T after the number,
+     of 1024 each to the one before, at most a petabyte; or none *)
+  and maxSizeOf text =
+    if text = "none" then NONE
+    else
+      let
+        fun bad () = raise Usage "--cache-max-size requires a whole number of bytes, with K, M, G or T after it or not, or none"
+        val (digits, scale) =
+          case List.rev (String.explode text) of
+            c :: rest => if Char.isDigit c then (text, 0)
+                         else (case Char.toUpper c of #"K" => (String.implode (List.rev rest), 1) | #"M" => (String.implode (List.rev rest), 2)
+                                                    | #"G" => (String.implode (List.rev rest), 3) | #"T" => (String.implode (List.rev rest), 4)
+                                                    | _ => bad ())
+          | [] => bad ()
+        val () = if digits = "" orelse not (CharVector.all Char.isDigit digits) orelse size digits > 16 then bad () else ()
+        val k = LargeInt.fromInt 1024
+        val n = List.foldl (fn (c, n) => LargeInt.+ (LargeInt.* (n, LargeInt.fromInt 10), LargeInt.fromInt (Char.ord c - Char.ord #"0")))
+                           (LargeInt.fromInt 0) (String.explode digits)
+        fun times (n, 0) = n
+          | times (n, j) = times (LargeInt.* (n, k), j - 1)
+        val n = times (n, scale)
+      in if LargeInt.> (n, times (LargeInt.fromInt 1, 5)) then bad () else SOME n end
   and workCount (option, text) =
     let
       fun bad () = raise Usage (option ^ " requires a positive integer at most 1000000000")

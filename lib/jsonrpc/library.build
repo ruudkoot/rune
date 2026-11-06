@@ -2,7 +2,9 @@
    JSON-RPC 2.0's messages, and messages framed by lines or
    Content-Length; its files in load order, in the form of
    lib/basis/library.build. It is written on lib/json: *)
-libraries json end
+requires json end
+(* exports: what the library's clients use (tools/migrate; docs/build.md, Migrating a tree) *)
+exports (structure Framing, structure JsonRpc, signature FRAMING, signature JSON_RPC)
 annotate "demand" in
   framing_sig.sml
   framing.sml
