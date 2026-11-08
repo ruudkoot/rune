@@ -136,6 +136,13 @@ struct
       else say ("FAIL MLKit generator -no_ri control: " ^ #messages result ^ #output result ^ "\n")
     end
 
+  (* The memory a test's build and run may take, in MB (its address space,
+     Hosts.build). compiler.syntax's large declaration (E20's reproducer)
+     takes SML/NJ 2026.2 to 2.07 GB at its peak, which 2 GiB stopped
+     ("unable to allocate minimum size", the nightly of 2026-11-07), and
+     MLton's build of it to 2.07 GB too *)
+  fun memoryOf label = if label = "compiler.syntax" then 3072 else 2048
+
   fun one (host, label) =
     let
       val t = case List.find (fn t : test => #label t = label) tests of
@@ -143,7 +150,7 @@ struct
       val dir = location (host, label)
       val result = Hosts.build {host = Hosts.get host, name = label, sources = files (#libraries t) @ [#source t], dir = dir,
                                runDir = root,
-                               timeout = getOpt (Int.fromString (env ("LIB_HOST_TIMEOUT", "600")), 600), memory = 2048}
+                               timeout = getOpt (Int.fromString (env ("LIB_HOST_TIMEOUT", "600")), 600), memory = memoryOf label}
       val output = Hosts.libraryOutput host (#output result)
       val () = write (dir ^ "/output", output)
       (* Shell command substitution strips trailing newlines, not spaces. *)
@@ -198,7 +205,7 @@ struct
          List.map (fn host => Test.requires ["host:" ^ host]
            (Test.describe host
              (List.map (fn t : test => jobIn (if host = "mlkit" then ["matrix"] else [])
-                (#label t, ["lib-host-one", host, #label t], ["lib-hosts/@reference"], 2048)) tests
+                (#label t, ["lib-host-one", host, #label t], ["lib-hosts/@reference"], memoryOf (#label t))) tests
               @ (if host = "mlkit" then [jobIn ["matrix"] ("ffi.model.generate-no-ri", ["lib-host-generate-no-ri"], ["lib-hosts/@reference"], 2048)] else [])
               @ [job ("@stale", ["lib-host-stale", host], List.map (fn t : test => "lib-hosts/" ^ host ^ "/" ^ #label t) tests, 10)])))
            Hosts.names)))))))
