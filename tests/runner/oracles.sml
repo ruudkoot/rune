@@ -566,7 +566,11 @@ struct
 
   (* the compiler as register bytecode compiling itself in a mode: each in a
      directory of a name of one length, with the same arguments, since
-     they reach its counts *)
+     they reach its counts, and with no store (RUNE_CACHE empty): the
+     checkout's .rune holds the records of the libraries' indexes, which one
+     mode writes and another, running beside it, reads, so that a mode's
+     count turned on when it ran (the nightly of 2026-11-07, the slow
+     interpreter under qemu 10 instructions off) *)
   val bootModes =
     [("1", "off", ["--jit=off"]), ("2", "all", ["--jit=all"]), ("3", "odd", ["--jit=all", "--jit-only=odd"]),
      ("4", "baseline", ["--jit=baseline"]), ("5", "opt", ["--jit=all", "--jit-tier=2"]),
@@ -588,9 +592,10 @@ struct
         let
           val dir = jitDir () ^ "-boot/" ^ d
           val () = mkdirs dir
-          val code = exec {cmd = [jitVm (), "--count"] @ jit @ ["--heap-size", "67108864", jitDir () ^ "-boot/rune.rbc", "--lib",
-                                                                  root ^ "/lib", "-o", "compiled.rbc"] @ List.map fromRoot (bootSrcs ()),
-                           dir = SOME dir, stdin = "", stdout = "", stderr = dir ^ "/stderr", timeout = 0}
+          val code = execEnv (setEnv ("RUNE_CACHE", "") o setEnv ("RUNEVM_INTINF", "sml"))
+                       {cmd = [jitVm (), "--count"] @ jit @ ["--heap-size", "67108864", jitDir () ^ "-boot/rune.rbc", "--lib",
+                                                             root ^ "/lib", "-o", "compiled.rbc"] @ List.map fromRoot (bootSrcs ()),
+                        dir = SOME dir, stdin = "", stdout = "", stderr = dir ^ "/stderr", timeout = 0}
         in append (dir ^ "/stderr", "exit " ^ Int.toString code ^ "\n") end
 
   fun jitBootCompare () =
