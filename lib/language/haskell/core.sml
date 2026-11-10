@@ -47,6 +47,7 @@ struct
       Data of string * (string * kind) list * (string * ty list) list
     | Newtype of string * (string * kind) list * string * ty
     | Val of string * ty * exp
+    | Import of string * ty
 
   type program = decl list
 

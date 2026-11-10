@@ -23,6 +23,7 @@ the signature names and no others.
 | [`CoreRuntime`](str/CoreRuntime.md) | :> | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) |  |  | [lib/language/haskell/coreruntime.sml](../../../../lib/language/haskell/coreruntime.sml) |
 | [`CoreText`](str/CoreText.md) | : | [`CORE_TEXT`](sig/CORE_TEXT.md) |  |  | [lib/language/haskell/coretext.sml](../../../../lib/language/haskell/coretext.sml) |
 | [`CoreToMid`](str/CoreToMid.md) | : | [`CORE_TO_MID`](sig/CORE_TO_MID.md) |  |  | [lib/language/haskell/coretomid.sml](../../../../lib/language/haskell/coretomid.sml) |
+| [`CoreUnits`](str/CoreUnits.md) | :> | [`CORE_UNITS`](sig/CORE_UNITS.md) |  |  | [lib/language/haskell/coreunits.sml](../../../../lib/language/haskell/coreunits.sml) |
 | [`HsAst`](str/HsAst.md) | :> | [`HS_AST`](sig/HS_AST.md) |  |  | [lib/language/haskell/ast.sml](../../../../lib/language/haskell/ast.sml) |
 | [`HsChar`](str/HsChar.md) | :> | [`HS_CHAR`](sig/HS_CHAR.md) |  |  | [lib/language/haskell/char.sml](../../../../lib/language/haskell/char.sml) |
 | [`HsClasses`](str/HsClasses.md) | :> | [`HS_CLASSES`](sig/HS_CLASSES.md) |  |  | [lib/language/haskell/classes.sml](../../../../lib/language/haskell/classes.sml) |

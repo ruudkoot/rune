@@ -229,6 +229,11 @@ struct
 
   fun program ({fault : fault option}, prog : program) : string =
     let
+      (* a whole program: an import of another unit waits for M21's units *)
+      val () =
+        case List.find (fn Import _ => true | _ => false) prog of
+          SOME (Import (x, _)) => raise Unsupported ("an import of another unit, " ^ x ^ ", in a program compiled whole")
+        | _ => ()
       (* ---- The declarations ---- *)
       val decls = builtinData @ prog
       val tycons : tycon CoreMap.map ref = ref CoreMap.empty
@@ -297,7 +302,8 @@ struct
         in
           List.foldl (fn (Data (_, _, cs), acc) => List.foldl (fn ((_, fs), acc) => List.foldl ty acc fs) acc cs
                        | (Newtype (_, _, _, f), acc) => ty (f, acc)
-                       | (Val (_, t, e), acc) => ty (t, exp (e, acc)))
+                       | (Val (_, t, e), acc) => ty (t, exp (e, acc))
+                       | (Import (_, t), acc) => ty (t, acc))
                      [] decls
         end
       fun boxedNewtype t = recursiveNewtype t orelse member (t, partialNewtypes)
@@ -315,7 +321,8 @@ struct
                    | Newtype (t, ps, c, field) =>
                        tycons := CoreMap.insert (!tycons, t, {name = if boxedNewtype t then midName t else t, params = ps,
                                                               shape = if boxedNewtype t then BoxT (c, field) else NewT field})
-                   | Val _ => ())
+                   | Val _ => ()
+                   | Import _ => ())
                  decls
       (* each constructor: its type, its tag, the types of its fields *)
       val cons : {tycon : string, tag : int, params : (string * kind) list, fields : ty list, count : int} CoreMap.map =

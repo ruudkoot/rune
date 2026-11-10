@@ -34,7 +34,7 @@
 - `ERecCon` (con): [HS_AST](../sig/HS_AST.md#con-ereccon)
 - `ERecUpd` (con): [HS_AST](../sig/HS_AST.md#con-erecupd)
 - `ERightSec` (con): [HS_AST](../sig/HS_AST.md#con-erightsec)
-- `Error` (exn): [CORE_LINT](../sig/CORE_LINT.md#exn-error), [CORE_TEXT](../sig/CORE_TEXT.md#exn-error), [HS_SOURCE](../sig/HS_SOURCE.md#exn-error)
+- `Error` (exn): [CORE_LINT](../sig/CORE_LINT.md#exn-error), [CORE_TEXT](../sig/CORE_TEXT.md#exn-error), [CORE_UNITS](../sig/CORE_UNITS.md#exn-error), [HS_SOURCE](../sig/HS_SOURCE.md#exn-error)
 - `ESeq` (con): [HS_AST](../sig/HS_AST.md#con-eseq)
 - `ESig` (con): [HS_AST](../sig/HS_AST.md#con-esig)
 - `ETuple` (con): [HS_AST](../sig/HS_AST.md#con-etuple)

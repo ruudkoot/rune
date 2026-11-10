@@ -15,7 +15,10 @@ parser. [`CoreLint`](str/CoreLint.md) checks a program, [`CoreInterp`](str/CoreI
 what it can do that is not Core, and [`CoreGen`](str/CoreGen.md) makes programs to test them
 with. [`CoreToMid`](str/CoreToMid.md) lowers a program to Mid's text, a lazy position a
 suspension and an evaluated one its value, which rhc gives to the passes of
-`lib/compiler` from Mid on.
+`lib/compiler` from Mid on. A program may be in units (M21): a unit takes a
+value of another by an import, `(import x TYPE)`, and a type by a copy of
+its declaration, and [`CoreUnits`](str/CoreUnits.md) joins units into one program, which the
+interpreter runs.
 
 [`CoreRuntime`](str/CoreRuntime.md) is rhc's runtime, written in Core over [`CorePrim`](str/CorePrim.md) (M17, D26's
 A: no SML below Haskell), so that the interpreter and the VM run one text:
@@ -83,6 +86,12 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | Maps keyed by strings, as the front end's scopes, exports and tables need them: persistent, ordered by the keys, and balanced (red-black trees, inserting only), so that a fold visits the keys in order and a result does not depend on the order things were added. |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | The lexemes of Haskell 98 (the Report's chapter 2 and section 9.2), with what lies between them. |
 | [`HS_TYPES`](sig/HS_TYPES.md) | The types of Haskell 98's checker (the haskell98 roadmap's M13, D31): kinds, types with unification variables, predicates and schemes, and first-order unification with levels. |
+
+## Not yet assigned to an area
+
+| Signature |  |
+| --- | --- |
+| [`CORE_UNITS`](sig/CORE_UNITS.md) | Core in units (the haskell98 roadmap's M21): a program of several units, each a Core program that names what it takes of the others, a value by an import (`(import x TYPE)`) and a type by a copy of its declaration, joined into one program, which Core's interpreter runs and a compile whole takes. |
 
 ---
 

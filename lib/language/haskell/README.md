@@ -17,7 +17,10 @@ parser. `CoreLint` checks a program, `CoreInterp` runs it, `CorePrim` is
 what it can do that is not Core, and `CoreGen` makes programs to test them
 with. `CoreToMid` lowers a program to Mid's text, a lazy position a
 suspension and an evaluated one its value, which rhc gives to the passes of
-`lib/compiler` from Mid on.
+`lib/compiler` from Mid on. A program may be in units (M21): a unit takes a
+value of another by an import, `(import x TYPE)`, and a type by a copy of
+its declaration, and `CoreUnits` joins units into one program, which the
+interpreter runs.
 
 `CoreRuntime` is rhc's runtime, written in Core over `CorePrim` (M17, D26's
 A: no SML below Haskell), so that the interpreter and the VM run one text:

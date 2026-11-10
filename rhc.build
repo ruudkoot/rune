@@ -17,6 +17,8 @@ files
   src/rhc/names.sml
   src/rhc/lint.sml
   src/rhc/syntax.sml
+  src/rhc/store.sml
+  src/rhc/storeconfig.sml
   src/rhc/main.sml
 end
 src/main/rhc-main.sml

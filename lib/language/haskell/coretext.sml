@@ -139,7 +139,7 @@ struct
   (* ---- Words ---- *)
 
   val keywords = ["\\", "let", "letrec", "case", "con", "prim", "utuple", "cast", "forall", "->", "data", "newtype",
-                  "val", "_", "*", "#"]
+                  "val", "import", "_", "*", "#"]
   fun member (x, xs) = List.exists (fn y => y = x) xs
   fun isKeyword w = member (w, keywords)
 
@@ -361,7 +361,9 @@ struct
     | FList (FWord ("newtype", l) :: _, _) => fail (l, "a newtype is (newtype T (TYPARAM ...) C TYPE)")
     | FList ([FWord ("val", _), x, t, e], _) => Val (nameOf x, tyOf [] t, expOf [] e)
     | FList (FWord ("val", l) :: _, _) => fail (l, "a value is (val x TYPE EXP)")
-    | _ => fail (lineOf f, "a declaration is (data ...), (newtype ...) or (val ...)")
+    | FList ([FWord ("import", _), x, t], _) => Import (nameOf x, tyOf [] t)
+    | FList (FWord ("import", l) :: _, _) => fail (l, "an import is (import x TYPE)")
+    | _ => fail (lineOf f, "a declaration is (data ...), (newtype ...), (val ...) or (import ...)")
 
   fun parse text = List.map declOf (forms text)
 
@@ -444,6 +446,7 @@ struct
               :: List.map (fn (c, fields) => list (name c :: List.map tyForm fields)) cons)
     | Newtype (t, ps, c, field) => list [w "newtype", name t, list (List.map typaramForm ps), name c, tyForm field]
     | Val (x, t, e) => list [w "val", name x, tyForm t, expForm e]
+    | Import (x, t) => list [w "import", name x, tyForm t]
 
   (* ---- Forms as text ---- *)
 
@@ -465,7 +468,7 @@ struct
   (* how many items of a list headed by a word stay on its first line *)
   fun inline head =
     case head of
-      "\\" => 2 | "case" => 3 | "val" => 3 | "data" => 3 | "newtype" => 3 | "con" => 2 | "prim" => 2
+      "\\" => 2 | "case" => 3 | "val" => 3 | "import" => 3 | "data" => 3 | "newtype" => 3 | "con" => 2 | "prim" => 2
     | "cast" => 2 | _ => 1
 
   (* f at column col, broken over lines where it does not fit *)

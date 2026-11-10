@@ -754,12 +754,16 @@ struct
       Data (_, _, cons) => List.foldl (fn ((_, fs), acc) => List.foldl tyNames acc fs) [] cons
     | Newtype (_, _, _, f) => tyNames (f, [])
     | Val (_, t, e) => tyNames (t, expNames (e, []))
-  (* the names a declaration makes *)
+    | Import (_, t) => tyNames (t, [])
+  (* the names a declaration makes: an import none, so that a whole
+     program whose unit imports a name of the runtime gets its definition,
+     which joining the units then gives the import (CoreUnits.join) *)
   fun makes d =
     case d of
       Data (t, _, cons) => t :: List.map #1 cons
     | Newtype (t, _, c, _) => [t, c]
     | Val (x, _, _) => [x]
+    | Import _ => []
 
   fun link strings (p : program) : program =
     let

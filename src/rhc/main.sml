@@ -37,9 +37,12 @@ struct
       else ()
     end
 
-  (* the program of the files, read in order, after what it reaches of rhc's
-     runtime (CoreRuntime) *)
-  fun readCore (strings, files : string list) : Core.program =
+  (* the program of the files, read in order, each a unit, after what it
+     reaches of rhc's runtime (CoreRuntime): the units joined, an import
+     given its definition and a type declared once (CoreUnits), and every
+     import defined where the program is run or compiled (whole); a unit
+     checked alone (--typecheck-only) may import what it does not define *)
+  fun readCore (strings, files : string list, whole : bool) : Core.program =
     let
       fun one file =
         CoreText.parse (readFile file)
@@ -47,7 +50,14 @@ struct
       fun runtime p =
         CoreRuntime.link strings p
         handle CoreText.Error (line, msg) => raise Error.Bug ("rhc's runtime does not read, at line " ^ Int.toString line ^ ": " ^ msg)
-      val read = fn () => runtime (List.concat (List.map one files))
+      fun failed msg = (eprint (String.concatWith ", " files ^ ": error: " ^ msg ^ "\n"); raise Failed)
+      fun defined p =
+        case (whole, CoreUnits.unresolved p) of
+          (false, _) => p
+        | (true, []) => p
+        | (true, xs) => failed ("imported and defined by no unit: " ^ String.concatWith ", " xs)
+      val read = fn () => defined (CoreUnits.join [runtime (List.concat (List.map one files))])
+                          handle CoreUnits.Error msg => failed msg
     in
       Pass.stage {name = "read", showIn = NONE, show = CoreText.show,
                   check = Pass.checkAt ("read", 3) roundTrip, size = List.length} read ()
@@ -132,7 +142,7 @@ struct
             else
               let
                 val () = Pass.startup ()
-                val p = readCore (#strings opts, #readCore opts)
+                val p = readCore (#strings opts, #readCore opts, not (#typecheckOnly opts))
                 val () = lint (#readCore opts, p)
                 val () =
                   if #typecheckOnly opts orelse isSome (#output opts)

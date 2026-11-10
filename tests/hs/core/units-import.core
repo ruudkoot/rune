@@ -1,0 +1,20 @@
+; run: --read-core tests/hs/core/lib/base.core
+; Core in units (the haskell98 roadmap's M21): this file a unit that takes
+; what it uses of the other, lib/base.core, and of rhc's runtime, a value by
+; an import at its type and a type by a copy of its declaration, as an
+; interface gives them; the units joined, each import is given its
+; definition and each type is declared once (CoreUnits.join).
+(data List (a) (Nil) (Cons a (List a)))
+(data Unit () (Unit))
+(import printIntList (-> (List Int) World (utuple World Unit)))
+(import map (forall (a b) (-> (-> a b) (List a) (List b))))
+(import primReturnIO (forall (a) (-> a World (utuple World a))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (inc (-> Int Int) (\ ((n Int)) (case n k (_ (prim int_add k 1)))))
+    (let (l0 (List Int) (con Nil @Int))
+    (let (l1 (List Int) (con Cons @Int 2 l0))
+    (let (l2 (List Int) (map @Int @Int inc l1))
+    (case (printIntList l2 w) r
+      ((utuple w1 _) (let (u Unit (con Unit)) (primReturnIO @Unit u w1))))))))))
