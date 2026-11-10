@@ -1,0 +1,10 @@
+(* The Haskell 98 front end and Core of rhc, the haskell98 roadmap's
+   compiler (docs/plans/language/haskell98.md): Core, its text, CoreLint
+   and its interpreter in core.build. Rune alone builds it (D42). Its
+   friends see what it does not export: rhc's build, which is a friend of
+   lib/compiler too. *)
+exports (structure Core, signature CORE)
+friends ../../../rhc.build end
+annotate "demand" in
+  use core.build
+end

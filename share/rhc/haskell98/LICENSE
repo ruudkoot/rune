@@ -1,0 +1,36 @@
+The files of this directory are a modified version of the Haskell 98 Report,
+"Haskell 98 Language and Libraries: The Revised Report", edited by Simon
+Peyton Jones, in its online form of December 2002:
+https://www.haskell.org/onlinereport/
+
+They are not a definition of the language Haskell 98, and do not claim to be
+one: they are part of an implementation of it, rhc.
+
+What was changed:
+
+  * Only the Haskell code of the Report's Prelude and libraries (chapters 8
+    and 12 to 27) is here, not the Report in its entirety.
+  * pristine/ holds that code as printed, taken mechanically from the HTML of
+    the online Report (pristine/MANIFEST.tsv). It is kept unchanged, as the
+    text the modules here are compared with.
+  * The 20 modules here are that code with the published errata of the
+    Revised Report applied, and a comment at the head of each saying so.
+    errata.tsv lists every erratum and what was done with it; the errata are
+    https://www.haskell.org/definition/haskell98-revised-bugs.html
+  * overlay.tsv lists every change made to the Report's code, or to be made
+    to it, each with its reason.
+
+The Report's notice, as the online Report gives it:
+
+  Copyright (c) Simon Peyton Jones.
+
+  The authors intend this Report to belong to the entire Haskell
+  community, and so we grant permission to copy and distribute it for
+  any purpose, provided that it is reproduced in its entirety,
+  including this Notice. Modified versions of this Report may also be
+  copied and distributed for any purpose, provided that the modified
+  version is clearly presented as such, and that it does not claim to be
+  a definition of the language Haskell 98.
+
+These files are distributed under that notice. The CC0 dedication of the rest
+of the Rune repository, in the LICENSE at its top, does not apply to them.

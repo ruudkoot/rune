@@ -1,0 +1,40 @@
+# The pristine transcription: the Haskell code of the Haskell 98 Report's Prelude and libraries, as printed in the
+# online Revised Report of December 2002 (https://www.haskell.org/onlinereport/, fetched on 2026-11-01; each page
+# byte-identical to the official tarball haskell98-report-html.tar.gz). Each file is the text of the page's code
+# blocks for one module, taken mechanically from the HTML: <br> ends a line, entities are decoded, a non-breaking
+# space is a space, the page's own tabs are kept, nothing else is changed. synopsis/ holds the interface a chapter
+# prints before its code, where it prints one. Never edit these files: they are what overlay.tsv is held to.
+# Columns: file, module, section, page, page_sha256 (the HTML page), lines, sha256 (the file).
+file	module	section	page	page_sha256	lines	sha256
+Prelude.hs	Prelude	8	https://www.haskell.org/onlinereport/standard-prelude.html	242ddd10ff88f65fef0db44f912098fa76f0f465cd348e095932b723e354ba8b	697	7e973a7c905aaf1400556b4214f2f72fb9843c8e955bf8cb295993787058876e
+PreludeList.hs	PreludeList	8.1	https://www.haskell.org/onlinereport/standard-prelude.html	242ddd10ff88f65fef0db44f912098fa76f0f465cd348e095932b723e354ba8b	353	a6c8ed7df6865dda0772c2104e9e326ab4b40758f2673fa5387a2779ed8a9d87
+PreludeText.hs	PreludeText	8.2	https://www.haskell.org/onlinereport/standard-prelude.html	242ddd10ff88f65fef0db44f912098fa76f0f465cd348e095932b723e354ba8b	238	aab417f9c3e81b23e87f0ecfcf96b95d60c4dbfd451c99f69f9ce064dd4a817c
+PreludeIO.hs	PreludeIO	8.3	https://www.haskell.org/onlinereport/standard-prelude.html	242ddd10ff88f65fef0db44f912098fa76f0f465cd348e095932b723e354ba8b	99	8bce32cd77c38d137d79d95a1af9ff25b702a0fe3eccbe5468fba4110e609391
+Ratio.hs	Ratio	12.1	https://www.haskell.org/onlinereport/ratio.html	3880866c5f898d7becc6a4ebeb051d6a0959ee6da1ed20d7778b3d55d280ee42	100	9b0a124dba875cd9ac0091891bda58b166525869c03491fccba47e7cdae225f7
+synopsis/Ratio.hs	Ratio	12	https://www.haskell.org/onlinereport/ratio.html	3880866c5f898d7becc6a4ebeb051d6a0959ee6da1ed20d7778b3d55d280ee42	20	edf79228bba0e8f622af24006ce607d7947a2ef02ae7f3f0b0892b5bf4190c89
+Complex.hs	Complex	13.1	https://www.haskell.org/onlinereport/complex.html	d83af902cdca62ac6d7a6b358d9172cece2a78e8e5c059629c65303e434af481	95	ce413ea669a0af697625c708e1dd724eb15da1d8f9fe6ebcd0cc21fdc632129d
+synopsis/Complex.hs	Complex	13	https://www.haskell.org/onlinereport/complex.html	d83af902cdca62ac6d7a6b358d9172cece2a78e8e5c059629c65303e434af481	22	f96eed87cf963227aa23b1787006fb705191f8fc47f4bfacb5aa7bffd56e0c75
+Numeric.hs	Numeric	14.4	https://www.haskell.org/onlinereport/numeric.html	d5470075d761278fb92f10863eb96ae266882b46011ee5746ec5876b25070a8f	342	bad317d6017de0663427937d94a1cda5651d671d5e5806e3a63f7409464f4449
+synopsis/Numeric.hs	Numeric	14	https://www.haskell.org/onlinereport/numeric.html	d5470075d761278fb92f10863eb96ae266882b46011ee5746ec5876b25070a8f	34	01e7eeb075fe36aa17b0164c59ab9b46f81df887f9d954aab829890fa0824397
+Ix.hs	Ix	15.2	https://www.haskell.org/onlinereport/ix.html	7ffec9b44bc6ff9b9c63bd24b600189a03ed01689320e976bfcb5e49d583748b	42	81f178d60663d13ce63e65f781fff4d0be19b272fb306827f138cca801a9a6af
+synopsis/Ix.hs	Ix	15	https://www.haskell.org/onlinereport/ix.html	7ffec9b44bc6ff9b9c63bd24b600189a03ed01689320e976bfcb5e49d583748b	16	5cf57a8890c8bf201c21396f2f095ef79c249a13360673e91aface5eeb59cd86
+Array.hs	Array	16.4	https://www.haskell.org/onlinereport/array.html	e98b366e46a1fec2fbff05eafa6a5a716716c312a3e71cdb77dedbe21a31fc99	86	4338bcff83d3f7304365fde2e6e4474241fae625222cdc4671863e202499edf0
+synopsis/Array.hs	Array	16	https://www.haskell.org/onlinereport/array.html	e98b366e46a1fec2fbff05eafa6a5a716716c312a3e71cdb77dedbe21a31fc99	33	8d06dc78c8c18030752c1a94d723efad06b4d192f5df789349c7c43d970cfec9
+List.hs	List	17.9	https://www.haskell.org/onlinereport/list.html	58dcb9c1a3e334295b2635e84a8c8046b07a1692b7d98d4830ae89def6e67da8	271	448fa77cc4caf9f13df39d60785225bd98c17496cad44c452443806596cf30dd
+synopsis/List.hs	List	17	https://www.haskell.org/onlinereport/list.html	58dcb9c1a3e334295b2635e84a8c8046b07a1692b7d98d4830ae89def6e67da8	91	39580b25ac9409b821c4bdb1bd5373e93099c6b1937da25dc1ff77e5ba4b0369
+Maybe.hs	Maybe	18.1	https://www.haskell.org/onlinereport/maybe.html	320c627588d43e82ce57e9483bad3a9889dbc203a5a22ed101907d802f44af43	39	35cc047b4b1981bdd5e6c46c582715131f45455dd5c20664e516cec414a33c16
+synopsis/Maybe.hs	Maybe	18	https://www.haskell.org/onlinereport/maybe.html	320c627588d43e82ce57e9483bad3a9889dbc203a5a22ed101907d802f44af43	18	b1b731d5f01dc12d00eb3f1d2dc821f4db079ce4d97f6b5b976c4c04ebcb9e28
+Char.hs	Char	19.1	https://www.haskell.org/onlinereport/char.html	ea0120f3e44463609e25b21d0db6c2cf834fb3302d9181f072b56e516d95716c	158	60f3279db3289d737febf9ed8e24579922b8c5612146acd2e1a0888bb0b45a04
+synopsis/Char.hs	Char	19	https://www.haskell.org/onlinereport/char.html	ea0120f3e44463609e25b21d0db6c2cf834fb3302d9181f072b56e516d95716c	27	7e3dac5a831e1cdee6c4c6a781bbdee7fcf7bc6a98c0cbb38db4a98cf8f70e50
+Monad.hs	Monad	20.4	https://www.haskell.org/onlinereport/monad.html	7f2a3c5bbf7f9015cbd8657559558cb0e61a9822aff2cbf2ba2d15ffdd5f0c41	98	a2989ee2505d761389f5207362c90d7411f2422b9abf5dbd247f9f77c3b10579
+synopsis/Monad.hs	Monad	20	https://www.haskell.org/onlinereport/monad.html	7f2a3c5bbf7f9015cbd8657559558cb0e61a9822aff2cbf2ba2d15ffdd5f0c41	41	a4f2e297b903ee243362a6b33ff8181b90f469b9bc984f640a45b215c1c27d2a
+IO.hs	IO	21.11	https://www.haskell.org/onlinereport/io.html	c7d7087579374422fc4addca54282253e550cebc1e24af13483bb1dc72ad20af	28	6e248cfac303656f2f435181e84271ce4ba762140764be516eb88b859b5a07dd
+synopsis/IO.hs	IO	21	https://www.haskell.org/onlinereport/io.html	c7d7087579374422fc4addca54282253e550cebc1e24af13483bb1dc72ad20af	95	5351ed6e36de36da4e6b07231334e95109b300bfe47d8bff4c392508093b0e08
+Directory.hs	Directory	22	https://www.haskell.org/onlinereport/directory.html	cceced0877c3235a35dcd2235e3f3257cea4487f3ab4978c4f5cef5938b84086	42	e211e718ff66cabc242f42ed9cffa442dd2d3bd81e36176b364ffb7122703019
+System.hs	System	23	https://www.haskell.org/onlinereport/system.html	6f4f79176472c0e7cdc8e56379c8d2d9bcf9e4dd8c29c5ba8e7f2e320f640f74	15	8cbf79f61c41d870e128b231263119ffed983470e7b5815fbc9f91bc222a2e0f
+Time.hs	Time	24.1	https://www.haskell.org/onlinereport/time.html	1ebbdf7fdec7c1dff14836174a8712fad054c6246e1eb949312cb16c80b9de36	137	524bd5b1eee0f395e772c16292884edaafdaa4ea0271d814b1d30ffd97ad58b1
+synopsis/Time.hs	Time	24	https://www.haskell.org/onlinereport/time.html	1ebbdf7fdec7c1dff14836174a8712fad054c6246e1eb949312cb16c80b9de36	58	0c936b91ff72701ebde991b9a83b11847ad64b7a9c33634a02f1a67aa54c1934
+Locale.hs	Locale	25.1	https://www.haskell.org/onlinereport/locale.html	e8b4dc061c96312a696a94f89afa23a91a7fd29f76e2d663853ba0077a0582ef	31	f21f84410246081518c3d90e9573dd9424e5e365f75b0a9850d42e9af5d5deaa
+synopsis/Locale.hs	Locale	25	https://www.haskell.org/onlinereport/locale.html	e8b4dc061c96312a696a94f89afa23a91a7fd29f76e2d663853ba0077a0582ef	12	380578696ceb3e6d0a17245e1b5de730279b71aadbd42170fccbfc80065931ec
+CPUTime.hs	CPUTime	26	https://www.haskell.org/onlinereport/cputime.html	b8a0dfd6f824a734bdcb46345172fa6dba2bd0d404cdf327e63c74402d943a36	5	25d4cdaccbaa0e03ae9d23a55c566b5519ae3a63a673c2c8d50301d696c771af
+Random.hs	Random	27	https://www.haskell.org/onlinereport/random.html	808ffe1eead18b7de5c4d8783d3bfc4d51696bd146e8357183c245be44bf8fc4	51	f881feed1f6f0068938e194bd538ee937cbe1fc9592015d5d4778b0dee3a0483
