@@ -424,27 +424,19 @@ struct
   type context = {schemes : scheme IntTable.table, nary : Ty.ty list IntTable.table, setters : unit IntTable.table}
   fun extend ({schemes, nary, setters} : context) (p : program) : unit =
     let
-      (* the globals a function sets, for a Do's rule *)
-      fun exp (inFun, e) =
-        case e of
-          Let (_, _, r, b) => (rhs (inFun, r); exp (inFun, b))
-        | Fun (fs, b) => (List.app (fn f => exp (true, #body f)) fs; exp (inFun, b))
-        | Join (_, _, b, sc) => (exp (inFun, b); exp (inFun, sc))
-        | If (_, t, f) => (exp (inFun, t); exp (inFun, f))
-        | Handle (a, _, h) => (exp (inFun, a); exp (inFun, h))
-        | Return r => rhs (inFun, r)
-        | Mark (_, a) => exp (inFun, a)
-        | _ => ()
-      and rhs (true, SetGlobal (g, _)) = IntTable.insert (setters, g, ())
-        | rhs _ = ()
+      (* the globals a function sets, for a Do's rule: every SetGlobal in a
+         function's body, and outside one in the functions made there *)
+      fun rhs r = case r of SetGlobal (g, _) => IntTable.insert (setters, g, ()) | _ => ()
+      fun inFun (f : fundef) = appRhs rhs (#body f)
+      fun outside e = fold {rhs = fn _ => (), atom = fn _ => (), jump = fn _ => (), fundef = fn (f, ()) => inFun f} () e
       fun fundef (f : fundef) =
         (IntTable.insert (schemes, #name f, (#tyvars f, funTy f));
          case #params f of [_] => () | ps => IntTable.insert (nary, #name f, List.map #2 ps);
-         exp (true, #body f))
+         inFun f)
     in
-      List.app (fn Val (g, s, e) => (IntTable.insert (schemes, g, s); exp (false, e))
+      List.app (fn Val (g, s, e) => (IntTable.insert (schemes, g, s); outside e)
                  | Funs fs => List.app fundef fs
-                 | Do (gs, e) => (List.app (fn (g, s) => IntTable.insert (schemes, g, s)) gs; exp (false, e))) p
+                 | Do (gs, e) => (List.app (fn (g, s) => IntTable.insert (schemes, g, s)) gs; outside e)) p
     end
   fun context (p : program) : context =
     let val c = {schemes = IntTable.table 1024, nary = IntTable.table 64, setters = IntTable.table 16}

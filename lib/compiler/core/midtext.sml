@@ -136,21 +136,8 @@ struct
         | Const (_, t) => collect t
         | Con0 (_, t) => collect t
         | Unit => ()
-      fun collectRhs r =
-        case r of
-          Atom a => collectAtom a
-        | App (f, xs) => List.app collectAtom (f :: xs)
-        | Prim (_, t, xs) => (collect t; List.app collectAtom xs)
-        | Tuple xs => List.app collectAtom xs
-        | Select (_, a) => collectAtom a
-        | Con (_, t, a) => (collect t; collectAtom a)
-        | Decon (_, t, a) => (collect t; collectAtom a)
-        | ConTag a => collectAtom a
-        | MkExn (c, a) => (collectAtom c; collectAtom a)
-        | ExnCon a => collectAtom a
-        | ExnArg (t, a) => (collect t; collectAtom a)
-        | SetGlobal (_, a) => collectAtom a
-        | _ => ()
+      (* a step's own type is before its atoms *)
+      fun collectRhs r = (List.app collect (typesOfRhs r); List.app collectAtom (atomsOfRhs r))
       fun collectExp e =
         case e of
           Let (_, (_, t), r, b) => (collect t; collectRhs r; collectExp b)

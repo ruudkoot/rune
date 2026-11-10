@@ -704,6 +704,40 @@ openness the old one's; so it keeps what `MidLint` checked after `mid`. The
 units' `Mid` that `--units --whole` concatenates is linted by `MidLint`
 (`midconcat`), since a unit taken from the cache was not.
 
+### Walking Mid
+
+A few functions of `Mid` name every form of a step and of an expression,
+with no catch-all (decision D10 of
+[plans/language/haskell98.md](plans/language/haskell98.md)), and a walker
+whose arms would only do what one of them does asks it instead:
+
+* `Mid.atomsOfRhs` gives the atoms a step names, in the order it names
+  them, and `Mid.typesOfRhs` the type it says beside them, which comes
+  before its atoms;
+* `Mid.mapRhs` gives the step with each atom mapped, and `Mid.mapRhsWith`
+  with its types, its atoms and the global a `SetGlobal` sets mapped too,
+  each in the order the step names them, so that a walker that numbers
+  what it meets as it goes (`MidCanon.rename`) meets them in that order;
+* `Mid.fold` walks an expression, giving what it is given each step, each
+  atom outside a step (an `If`'s test, a `Jump`'s arguments, a `Raise`'s
+  exception), each jump and each function made in the expression, whose
+  body is the caller's to walk or not; `Mid.appRhs` and `Mid.existsRhs`
+  give, or ask of, every step, those of the functions made there among
+  them.
+
+A walker that does more than these at some form names each form it does
+not end at, rather than ending in `| _ =>`. So a form added to `rhs` or
+`exp` is a match that is not exhaustive (a warning of the compile,
+`elab/exhaust.sml`) in these functions and in each walker that says more of
+it, and is walked as its parts say everywhere else: never taken in silence
+for a step with no atoms or no effect, or for an expression with nothing
+under it. What still ends in a catch-all is a peephole, which knows the
+shapes it rewrites and leaves the rest as they are (`Simplify.known`,
+`Lower.tagTest`); a judgement that holds of any form (`Expand.small`, for
+which what is not a line of steps and `If`s is big); or a comparison of
+two (`MidCanon.checkRenaming`), whose catch-all is the bug of two forms
+that differ.
+
 ### Mid as text
 
 `MidText.show` prints a program (`--dump-after=mid`), and `MidText.parse`
