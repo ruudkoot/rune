@@ -2857,7 +2857,7 @@ lib.r.complex.signum.zero	13	signum 0 = 0	library	run	exact	hand	Planned
 lib.r.complex.signum	13	signum z = x/r :+ y/r with r the magnitude: unit magnitude, z's phase	library	run	within a tolerance	hand	Planned		
 lib.r.complex.context	13.1	Complex needs a RealFloat component	library	reject	`(1 :+ 2) :: Complex Int` is refused	hand	Planned		
 lib.r.complex.noord	13.1	Complex has no Ord instance (nor Real)	library	reject	`(1:+0) < (2:+0)` is refused	hand	Planned		
-lib.r.complex.show	13.1	Complex derives Show at infix 6	library	run	`show (1.5 :+ 2)`, with the float reading of readings.md on negatives	hand	Planned	R49	
+lib.r.complex.show	13.1	Complex derives Show at infix 6	library	run	`show (1.5 :+ 2)`, with the float reading of readings.md on negatives	hand	Planned	R42 R49	
 lib.complex.fixity.6colonplus	13.1	fixity declaration `6 :+` holds for the operators it names	library	run	parse of an unparenthesised mix of the operators, shown by evaluation	generated	Planned		
 lib.complex.data.realfloata	13.1	type (RealFloat a) is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Planned		
 lib.complex.realpart	13.1	realPart has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		

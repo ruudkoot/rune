@@ -322,3 +322,4 @@ mhs | hs/lang/lib.list.unzip5_probe1::run | HOST-BUG | exit: MicroHs's unzip5 is
 mhs | hs/lang/lib.list.unzip6_probe1::run | HOST-BUG | exit: MicroHs's unzip6 is strict in the spine, where the code's foldr with a lazy pattern is not
 mhs | hs/lang/lib.list.zip4_literal::run | HOST-BUG | exit: MicroHs's unzip4 and unzip7 are strict in the spine: of an infinite list they overflow the stack, where the code's foldr with a lazy pattern is not
 nhc98 | hs/errors/lib.r.list.noelemby::judge | HOST-BUG | accept: nhc98's List exports elemBy, which 17.6 says the library does not provide
+nhc98 | hs/lang/lib.r.complex.show_negative::run | HOST-BUG | exit: nhc98 derives Show of the infix :+ without its spaces or its parentheses at precedence 7 (-1.5:+-2.0), and Read cannot read it back (10.4)
