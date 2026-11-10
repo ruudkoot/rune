@@ -221,14 +221,15 @@ struct
         "vm->global_set[a] = 1;"],
      implicitly [ReadsClosure]
        (rinst ("ENV", [("d", Writes (EnvOf "e")), ("e", K EnvSlot)], Next, "Register d := slot e of the current closure's environment.")
-          ["/* the header's closure: a closure, or unit where the frame has none */",
+          ["/* the header's closure: a closure, a suspension whose code has not",
+           "   yet said BLACKHOLE, or unit where the frame has none */",
            "Value cv = CLOSURE();",
-           "if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE || (uint32_t)b + 1 >= obj_len(val_ptr(cv))) FATAL(\"environment slot %d out of range\", b);",
+           "if (!val_is_ptr(cv) || !obj_has_env(val_ptr(cv)) || (uint32_t)b + 1 >= obj_len(val_ptr(cv))) FATAL(\"environment slot %d out of range\", b);",
            "R(a) = obj_field(val_ptr(cv), b + 1);"]),
      implicitly [ReadsClosure]
        (rinst ("SELF", [("d", Writes (Is RPtr))], Next, "Register d := the closure running.")
           ["Value cv = CLOSURE();",
-           "if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE) FATAL(\"SELF outside a closure\");",
+           "if (!val_is_ptr(cv) || (obj_kind(val_ptr(cv)) != K_CLOSURE && obj_kind(val_ptr(cv)) != K_THUNK)) FATAL(\"SELF outside a closure\");",
            "R(a) = cv;"]),
      (ordered [Then "RESULT"] o implicitly [CallsClosure, Leaves any])
        (rinst ("CALL", [("f", Reads (Is RPtr)), ("x", Reads any)], Call,
@@ -496,7 +497,49 @@ struct
        ["Obj *o = EXPECT(R(b), K_CON, \"constructor with fields\");",
         "if (vm->checked && obj_contag(o) != c) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)obj_contag(o), (int)c);",
         "if ((uint32_t)d >= obj_len(o)) FATAL(\"constructor field %d out of range\", d);",
-        "R(a) = obj_field(o, d);"]]
+        "R(a) = obj_field(o, d);"],
+     (* Suspensions (docs/ir.md, Suspensions; docs/plans/language/haskell98.md,
+        D11, D13): thunk_force is FORCE, then on its slow path ENTER and
+        RESULT; a suspension's code says BLACKHOLE once it has read what it
+        captured, and UPDATE with its value before it returns it. *)
+     rinst ("FORCE", [("d", Writes any), ("s", Reads any), ("o", K Label)], Branch,
+            "Where register s holds no unevaluated suspension, register d := its value -- what an indirection holds, else what s holds -- and jump to o; else on to the ENTER after it.")
+       ["Value v = R(b);",
+        "if (val_is_ptr(v)) {",
+        "  int k = obj_kind(val_ptr(v));",
+        "  if (k == K_THUNK) NEXT;",
+        "  if (k == K_IND) v = obj_field(val_ptr(v), 0);",
+        "}",
+        "R(a) = v;",
+        "pc = (uint32_t)c;"],
+     (ordered [Then "RESULT"] o implicitly [CallsClosure, Leaves any])
+       (rinst ("ENTER", [("f", Reads (Is RPtr)), ("x", Reads any)], Call,
+               "Enter the suspension in register f, as CALL enters a closure, with register x; RESULT takes its value. One under evaluation is a loop, a fatal error.")
+          (["POLL(9);",
+            "Value arg = R(b);",
+            "Obj *c = EXPECT(R(a), K_THUNK, \"suspension\");",
+            "if (obj_contag(c) == THUNK_BLACKHOLE) FATAL(\"<<loop>>: a suspension forced while it is evaluated\");",
+            "int64_t fidx = val_imm(obj_field(c, 0));",
+            "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+            "Function *fn = &p->funcs[fidx];",
+            "size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;",
+            "ROOM(top, fn);",
+            "HEADER(top, pc, mk_ptr(c));",
+            "vm->fp = top;",
+            "vm->func = (uint32_t)fidx;"]
+           @ enter
+           @ ["HANDOVER((uint32_t)fidx);"])),
+     implicitly [ReadsClosure]
+       (rinst ("BLACKHOLE", [], Next,
+               "The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows.")
+          ["Value cv = CLOSURE();",
+           "if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL(\"BLACKHOLE outside a suspension\");",
+           "vm_blackhole(vm, val_ptr(cv));"]),
+     implicitly [ReadsClosure]
+       (rinst ("UPDATE", [("s", Reads any)], Next, "The suspension running becomes an indirection to register s.")
+          ["Value cv = CLOSURE();",
+           "if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL(\"UPDATE outside a suspension\");",
+           "obj_become_ind(vm, val_ptr(cv), R(a));"])]
 
   (* ---- questions about the description ---- *)
 

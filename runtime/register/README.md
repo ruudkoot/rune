@@ -77,6 +77,26 @@ state are structs of the VM (`GcState`, `AllocState`, `runtime/vm.h`): the
 fast path bumps `alloc.used` against `alloc.size` -- in compiled code a
 pointer in a register of its own against `VM.alloc_limit`, below.
 
+**Suspensions** (docs/ir.md, *Suspensions*; docs/plans/language/haskell98.md,
+D11): a lazy front end's suspension is a `K_THUNK`, a flat closure that
+`thunk_make` makes of a fresh one in place (`fastprim.h`, and `emit.c` in
+line), its state in the header's tag: unevaluated, or under evaluation
+once its code has said `BLACKHOLE`, when `obj_scanned_fields` gives the
+collector none of its fields -- the code read what it captured at its entry
+(`Low.hoistEnv`), so that a suspension running lets go of them. `UPDATE`
+makes it a `K_IND` of its value in place (`obj_become_ind`), whose first
+field alone the collector follows and which it shortcuts. `FORCE` takes a
+value that is no unevaluated suspension, an indirection's through it, and
+jumps on; else `ENTER` enters the suspension as `CALL` enters a closure,
+`RESULT` after it, and a suspension under evaluation is a loop, a fatal
+error. A frame that runs a suspension's code reads its closure
+(`Function.reads_closure`: `BLACKHOLE` and `UPDATE` as `ENV` and `SELF`),
+which it updates; `CALL` stops a `K_THUNK`, where the interpreter and tier
+1 test the kind, and tier 2 does not where the section says the register
+holds a pointer. While the low-pause collector's cycle marks, `BLACKHOLE`
+shades the fields it lets go (`vm_blackhole`) and `UPDATE` stores through
+the barrier, in C (`SLOW_THUNK`).
+
 ## Frames, registers and the stack
 
 A frame lives in the value stack (docs/plans/native-frames.md, M4): its
@@ -1055,7 +1075,12 @@ runs interpreted until it returns or is unwound, and what it calls runs
 at its own tier; entering a resumed frame's code at its resume point is
 the table of pc to address, M6. Under `--jit=all` `make test-register-jit`
 holds `--restore`, `Runtime.restore` and the emulated fork to the
-interpreter's output and counts.
+interpreter's output and counts. A frame's closure may be a suspension,
+evaluated or not, and an image writes unit for the fields of an object the
+collector does not follow (an indirection's but its first, a suspension's
+under evaluation), which may point to what is gone (`put_object`); the
+kernel `tests/thunks/image.sml` saves from inside a suspension's code and
+goes on there when restored (`tests/runner/thunks.sml`).
 
 ## What is measured, and how
 

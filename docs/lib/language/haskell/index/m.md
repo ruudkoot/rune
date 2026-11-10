@@ -12,6 +12,7 @@
 - `metaLevel` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metalevel)
 - `metas` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metas)
 - `Method` (con): [HS_MODULES](../sig/HS_MODULES.md#con-method)
+- `methods` (val): [HS_DERIVE](../sig/HS_DERIVE.md#val-methods)
 - `Mismatch` (exn): [HS_TYPES](../sig/HS_TYPES.md#exn-mismatch)
 - `MODULE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-module)
 - `Module` (con): [HS_AST](../sig/HS_AST.md#con-module)

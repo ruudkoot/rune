@@ -25,7 +25,7 @@ struct
     \            | --dump-ast [--no-spans]] FILE.hs\n\
     \       rhc [--typecheck-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
-    \       rhc --dump-types | --dump-evidence [NAME OPTION...] FILE.hs\n\
+    \       rhc --dump-types | --dump-evidence | --dump-derived [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
     \Core, its typed lazy intermediate language, checks it and runs it on\n\
@@ -44,6 +44,7 @@ struct
     \                        and the library's errors (M13)\n\
     \  --dump-evidence       print the checker's evidence records of the program's modules:\n\
     \                        each overloaded use's dictionaries, each binder's type (D31)\n\
+    \  --dump-derived        print the methods of the program's derived instances (D33)\n\
     \  --dump-hslint         print the type HsLint's second inference gives each binding of\n\
     \                        the top level of FILE.hs's program, and the defaults it chose\n\
     \  --hslint-claims=FILE  at level 2, hold HsLint's inference to a record's claims, lines\n\

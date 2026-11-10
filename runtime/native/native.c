@@ -86,6 +86,19 @@ const void *native_tailcall(VM *vm) {
     return enter(vm, f, arg);
 }
 
+/* ENTER (docs/ir.md, Suspensions): CALL of a suspension, which is a loop
+   where its code has said BLACKHOLE, as runtime/stack/interp_cases.h has it */
+const void *native_enter(VM *vm, void *back) {
+    Value arg = vm_pop(vm);
+    Value tv = vm_pop(vm);
+    Obj *c = vm_expect_obj(vm, tv, K_THUNK, "suspension");
+    if (obj_contag(c) == THUNK_BLACKHOLE) vm_fatal(vm, "<<loop>>: a suspension forced while it is evaluated");
+    uint32_t f = callee(vm, c);
+    vm_push_frame(vm, f, c, vm->pc, vm->sp);
+    vm->frames[vm->fp].native_ret = back;
+    return enter(vm, f, arg);
+}
+
 /* CALLK (middle-end M8) when the array of frames is full: a frame of
    function f at the n arguments on top of the stack, which are its first
    locals, with no closure, the rest of its locals unit. */
@@ -239,6 +252,8 @@ void native_closure(VM *vm, int32_t a, int32_t b) { op_CLOSURE(vm, a, b); }
 void native_setenv(VM *vm, int32_t a) { op_SETENV(vm, a, 0); }
 void native_newexn(VM *vm, int32_t a) { op_NEWEXN(vm, a, 0); }
 void native_mkexn(VM *vm) { op_MKEXN(vm, 0, 0); }
+void native_blackhole(VM *vm) { op_BLACKHOLE(vm, 0, 0); }
+void native_update(VM *vm) { op_UPDATE(vm, 0, 0); }
 
 /* The checks the code makes itself end here, with vm->pc already the
    instruction after the one that failed, as the interpreter has it; `what`

@@ -2364,6 +2364,32 @@ static int p_repl_printer_add(VM *vm) { return ret(vm, 1, mk_unit()); }
 /* the library's own cast: the value, whatever its type (RuneShow) */
 static int p_unsafe_cast(VM *vm) { return ret(vm, 1, ARG(0)); }
 
+/* ---- suspensions (docs/ir.md, Suspensions; docs/plans/language/haskell98.md, D11) ----
+   thunk_make: the fresh closure made a suspension in place; one that
+   captures nothing may be a constant the program shares, so a suspension of
+   its function is made instead. runtime/register/fastprim.h and the JIT
+   (emit.c) do the first in line. */
+static int p_thunk_make(VM *vm) {
+    Obj *c = check_obj(vm, ARG(0), K_CLOSURE, "thunk_make");
+    if (obj_len(c) >= 2) { obj_become_thunk(c); return ret(vm, 1, ARG(0)); }
+    Obj *t = vm_alloc_fields(vm, K_THUNK, THUNK_UNEVALUATED, 1);
+    obj_fill_field(t, 0, obj_field(val_ptr(ARG(0)), 0));   /* the closure read again: the allocation may have moved it */
+    return ret(vm, 1, mk_ptr(t));
+}
+/* what each target makes instructions of (FORCE, BLACKHOLE, UPDATE): a
+   program that calls one has code no compiler made */
+static int p_thunk_force(VM *vm) { vm_fatal(vm, "primitive thunk_force: the compiler makes it FORCE"); return 0; }
+static int p_thunk_blackhole(VM *vm) { vm_fatal(vm, "primitive thunk_blackhole: the compiler makes it BLACKHOLE"); return 0; }
+static int p_thunk_self_update(VM *vm) { vm_fatal(vm, "primitive thunk_self_update: the compiler makes it UPDATE"); return 0; }
+/* any_check (rune --check-casts): a value a cast says is evaluated, which
+   a suspension or an indirection is not */
+static int p_any_check(VM *vm) {
+    Value v = ARG(0);
+    if (val_is_ptr(v) && (obj_kind(val_ptr(v)) == K_THUNK || obj_kind(val_ptr(v)) == K_IND))
+        vm_fatal(vm, "a suspension where a cast says the value is evaluated (any_check)");
+    return ret(vm, 1, v);
+}
+
 /* One frame as (name, file, line, column), built on the VM stack: every
    allocation here can collect, and the strings must survive the next one. */
 static void push_frame(VM *vm, const char *name, const char *file, int64_t line, int64_t col) {

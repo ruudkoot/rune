@@ -451,3 +451,57 @@ CASE(FIELD) {
     PUSH(obj_field(c, b));
     NEXT;
 }
+CASE(FORCE) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_FORCE, a, 0);
+    pc += 5;
+    count++;
+    Value v = TOP(0);
+    if (val_is_ptr(v)) {
+      int k = obj_kind(val_ptr(v));
+      if (k == K_THUNK) NEXT;
+      if (k == K_IND) TOP(0) = obj_field(val_ptr(v), 0);
+    }
+    JUMP_TO(a);
+    NEXT;
+}
+CASE(ENTER) {
+    TRACE(OP_ENTER, 0, 0);
+    pc += 1;
+    count++;
+    POLL();
+    Value arg = POP();
+    Value tv = POP();
+    Obj *c = EXPECT(tv, K_THUNK, "suspension");
+    if (obj_contag(c) == THUNK_BLACKHOLE) FATAL("<<loop>>: a suspension forced while it is evaluated");
+    int64_t fidx = val_imm(obj_field(c, 0));
+    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t at = (size_t)(sp - vm->stack);
+    vm_push_frame(vm, (uint32_t)fidx, c, PC, at);
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = vm->stack + at;
+    slot[0] = arg;
+    for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
+    NEXT;
+}
+CASE(BLACKHOLE) {
+    TRACE(OP_BLACKHOLE, 0, 0);
+    pc += 1;
+    count++;
+    SYNC();
+    op_BLACKHOLE(vm, 0, 0);
+    RELOAD();
+    NEXT;
+}
+CASE(UPDATE) {
+    TRACE(OP_UPDATE, 0, 0);
+    pc += 1;
+    count++;
+    SYNC();
+    op_UPDATE(vm, 0, 0);
+    RELOAD();
+    NEXT;
+}

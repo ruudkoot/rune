@@ -259,3 +259,25 @@ case ROP_FIELD: {
     emit_FIELD(j, pc, a, b, c, d);
     break;
 }
+case ROP_FORCE: {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    int32_t c = read_i32(code + pc + 9);
+    emit_FORCE(j, pc, a, b, c);
+    break;
+}
+case ROP_ENTER: {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    emit_ENTER(j, pc, a, b);
+    break;
+}
+case ROP_BLACKHOLE: {
+    emit_BLACKHOLE(j, pc);
+    break;
+}
+case ROP_UPDATE: {
+    int32_t a = read_i32(code + pc + 1);
+    emit_UPDATE(j, pc, a);
+    break;
+}

@@ -14,6 +14,8 @@ files
   evidence.sml
   kinds_sig.sml
   kinds.sml
+  derive_sig.sml
+  derive.sml
   infer_sig.sml
   infer.sml
 end

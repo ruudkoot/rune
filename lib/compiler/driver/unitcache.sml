@@ -169,6 +169,8 @@ struct
         changes the code, --type-work and --match-work whether there is any *)
      ("functor-budget", Int.toString (!Expand.budget)), ("type-work", Int.toString (!Types.workLimit)),
      ("match-work", Int.toString (!Exhaust.workLimit))]
+    (* the checks of casts, which change the code where a program casts *)
+    @ (if !Lower.checkCasts then [("check-casts", "1")] else [])
     (* the functors inlined across units: what a unit's basis keeps *)
     @ (if not (StringMap.isEmpty (!Elaborate.inlineFunctors))
        then [("inline", String.concatWith "," (StringMap.listKeys (!Elaborate.inlineFunctors)))] else [])

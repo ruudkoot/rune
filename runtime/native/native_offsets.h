@@ -65,6 +65,8 @@
     X("K_REAL", K_REAL) \
     X("K_BOX", K_BOX) \
     X("K_BYTES", K_BYTES) \
-    X("K_REALS", K_REALS)
+    X("K_REALS", K_REALS) \
+    X("K_THUNK", K_THUNK) \
+    X("K_IND", K_IND)
 
 #endif
