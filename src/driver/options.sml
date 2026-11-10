@@ -298,9 +298,9 @@ struct
     | ["--cache-dir"] => raise Usage "--cache-dir requires a directory"
     | "--no-cache" :: rest => (noCache := true; parse rest)
     | "--cache-trim" :: rest => (cacheTrim := true; parse rest)
-    | "--cache-max-age" :: d :: rest => (UnitCache.maxAge := maxAgeOf d; parse rest)
+    | "--cache-max-age" :: d :: rest => (StorePolicy.maxAge := maxAgeOf d; parse rest)
     | ["--cache-max-age"] => raise Usage "--cache-max-age requires a number of days, or none"
-    | "--cache-max-size" :: n :: rest => (UnitCache.maxSize := maxSizeOf n; parse rest)
+    | "--cache-max-size" :: n :: rest => (StorePolicy.maxSize := maxSizeOf n; parse rest)
     | ["--cache-max-size"] => raise Usage "--cache-max-size requires a size, or none"
     | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
     | "--verify-cache" :: rest => (verifyCache := true; parse rest)

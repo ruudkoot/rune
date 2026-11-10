@@ -324,9 +324,11 @@ bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
 bin/rune-compiler-state-tests.rbc: $(RUNE) tests/compiler/state-tests.build FORCE
 	$(RUNE) --build tests/compiler/state-tests.build -o $@
-# the store of units alone, with a client of its own and no compiler (the build-system roadmap's M6)
+# the store of units alone, with a client of its own and no compiler (the build-system roadmap's M6), and its
+# policy, with the settings it reads and no UnitCache (the haskell98 roadmap's M20)
 STORE_TEST_SRCS := lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml \
-                   lib/compiler/util/pickle.sml lib/compiler/driver/unitstore.sml tests/lib/compiler/store.sml
+                   lib/compiler/util/pickle.sml lib/compiler/driver/unitstore.sml lib/compiler/settings.sml \
+                   lib/compiler/driver/storepolicy.sml tests/lib/compiler/store.sml
 bin/rune-compiler-store-tests.rbc: $(RUNE) $(STORE_TEST_SRCS) FORCE
 	$(RUNE) --library test/unit $(STORE_TEST_SRCS) -o $@
 # the syntax's node ids, the elaborator's witnesses and SourceTy (the linting roadmap's M11)
