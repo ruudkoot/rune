@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 10 of 10 entries documented |
-| Tests | 104 checks of 10 entries |
+| Tests | 164 checks of 10 entries |
 | Source | [lib/basis/sig\_int\_inf.sml](../../../../lib/basis/sig_int_inf.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure IntInf : INT_INF  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`IntInf`](../str/IntInf.md) | IntInf: canonical small integers or signed immutable packed magnitudes. The bytes are little endian, independent of the arithmetic workspace's limb width. Arrays below are private scratch and never escape in a value. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`IntInf`](../str/IntInf.md) | IntInf: an immediate where the number fits the word, else a sign and an immutable packed magnitude (haskell98 M31, D20 D). The VM's primitives add, subtract, multiply, divide and compare, two immediates in line and the rest in the runtime (runtime/intinf.c); this structure does the rest over the parts of a number, its sign and its magnitude, whose bytes are little endian, independent of the workspace's limb width. Arrays below are private scratch and never escape in a value. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
 Integers of arbitrary precision: everything [`INTEGER`](../sig/INTEGER.md) has, and the
 operations that make sense only, or mostly, without a bound.
@@ -30,21 +30,26 @@ conversions to a bounded type. The bit operations treat an integer as an
 infinite string of bits in two's complement, so that a negative number has
 infinitely many leading ones and `notb i` is `~(i + 1)`.
 
-> **Implementation** `IntInf.int/limbs`. A small machine integer or a sign
-> and immutable little-endian magnitude bytes. The register VM optionally
-> uses GMP through temporary native objects; the independent SML backend
-> uses indexed 30-bit scratch digits (15-bit on narrow hosts). Storage
-> primitives pack and unpack the bytes. Normalization gives equal numbers
-> equal values, so `=` compares them. [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md). Both backends
-> enforce a finite operational magnitude budget (134217728 bits by default),
-> with a runtime-limit failure rather than [`Overflow`](../sig/GENERAL.md#exn-overflow) when it is exceeded.
-> The budget is configurable and does not change `precision = NONE`.
-> Unit divisors and clearly smaller dividends use direct SML results;
-> small/large addition updates a private byte copy, and machine multiply
-> overflow converts directly to arithmetic digits. Normalization checks
-> the machine boundary without raising an exception. The fallback reuses
-> private scratch digits for addition, subtraction, single-digit scaling,
-> bit operations and right shifts, returning small results without packing
+> **Implementation** `IntInf.int/limbs`. A type of the VM's: a number that
+> fits 63 bits is an immediate, the same word as an [`int`](../sig/INTEGER.md#type-int) of it, and a
+> larger one a sign and immutable little-endian magnitude bytes.
+> Normalization gives equal numbers equal values, so `=` compares them.
+> [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md). Addition, subtraction, multiplication, the four
+> divisions, negation, the comparisons and the conversions from and to
+> [`int`](../sig/INTEGER.md#type-int) are primitives of the VM, which do two immediates in line, as an
+> [`int`](../sig/INTEGER.md#type-int)'s are done, and the rest in the runtime: with GMP's multiplication
+> and division where the register VM selects GMP and an operand is large,
+> and otherwise with its own 32-bit digits, in memory of its own freed
+> before the primitive returns. The bit operations, the shifts, [`pow`](#val-pow) and
+> the conversions to text and from it are SML over a number's sign and
+> magnitude, with indexed 30-bit scratch digits (15-bit on narrow hosts)
+> that storage primitives pack and unpack, or GMP's where it is selected.
+> Every path enforces a finite operational magnitude budget (134217728 bits
+> by default), with a runtime-limit failure rather than [`Overflow`](../sig/GENERAL.md#exn-overflow) when it
+> is exceeded. The budget is configurable and does not change
+> `precision = NONE`. Normalization checks the machine boundary without
+> raising an exception. The SML paths reuse private scratch digits for bit
+> operations and right shifts, returning small results without packing
 > them first. Positive OR/XOR with a small operand visits only low bytes.
 > Public values remain immutable.
 
@@ -239,9 +244,9 @@ val orb : int * int -> int
 
 **Example** `orb (12, 3) = 15`
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (17)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200-or-2^100` &middot; `~2^200-or-2^100` &middot; `~2^200-or-2^200-1` &middot; `model*` &middot; `de-morgan*` &middot; `andb-plus-orb*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200-or-2^100` &middot; `~2^200-or-2^100` &middot; `~2^200-or-2^200-1` &middot; `edge-2^62-1-with-2^62-1` &middot; `edge-2^62-with-2^62-1` &middot; `edge-~2^62-with-2^62-1` &middot; `edge-~2^62-1-with-2^62-1` &middot; `edge-2^63-1-with-2^62-1` &middot; `edge-~2^63-with-2^62-1` &middot; `edge-~2^63-1-with-2^62-1` &middot; `edge-2^31-1-with-2^62-1` &middot; `edge-~2^31-with-2^62-1` &middot; `edge-2^64-1-with-2^62-1` &middot; `model*` &middot; `de-morgan*` &middot; `andb-plus-orb*`
 
 </details>
 
@@ -257,9 +262,9 @@ val xorb : int * int -> int
 
 **Example** `xorb (12, 10) = 6`
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (17)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200+2^100-xor-2^100` &middot; `~2^200-xor-2^200-1` &middot; `minus-one-xor-2^200` &middot; `model*` &middot; `orb-minus-andb*` &middot; `self*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200+2^100-xor-2^100` &middot; `~2^200-xor-2^200-1` &middot; `minus-one-xor-2^200` &middot; `edge-2^62-1-with-~1` &middot; `edge-2^62-with-~1` &middot; `edge-~2^62-with-~1` &middot; `edge-~2^62-1-with-~1` &middot; `edge-2^63-1-with-~1` &middot; `edge-~2^63-with-~1` &middot; `edge-~2^63-1-with-~1` &middot; `edge-2^31-1-with-~1` &middot; `edge-~2^31-with-~1` &middot; `edge-2^64-1-with-~1` &middot; `model*` &middot; `orb-minus-andb*` &middot; `self*`
 
 </details>
 
@@ -275,9 +280,9 @@ A negative number has ones without end to the left:
 
 **Example** `andb (~1, 255) = 255`
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (17)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200-with-*` &middot; `2^200-1-and-2^100` &middot; `~2^100-and-2^200-1` &middot; `model*` &middot; `de-morgan*` &middot; `commutative*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200-with-*` &middot; `2^200-1-and-2^100` &middot; `~2^100-and-2^200-1` &middot; `edge-2^62-1-with-~2^62` &middot; `edge-2^62-with-~2^62` &middot; `edge-~2^62-with-~2^62` &middot; `edge-~2^62-1-with-~2^62` &middot; `edge-2^63-1-with-~2^62` &middot; `edge-~2^63-with-~2^62` &middot; `edge-~2^63-1-with-~2^62` &middot; `edge-2^31-1-with-~2^62` &middot; `edge-~2^31-with-~2^62` &middot; `edge-2^64-1-with-~2^62` &middot; `model*` &middot; `de-morgan*` &middot; `commutative*`
 
 </details>
 
@@ -293,9 +298,9 @@ val notb : int -> int
 
 **Example** `notb 0 = ~1`
 
-<details><summary>Tests (6)</summary>
+<details><summary>Tests (16)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200` &middot; `~2^200` &middot; `model*` &middot; `negation-minus-one*` &middot; `involution*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200` &middot; `~2^200` &middot; `edge-2^62-1-notb` &middot; `edge-2^62-notb` &middot; `edge-~2^62-notb` &middot; `edge-~2^62-1-notb` &middot; `edge-2^63-1-notb` &middot; `edge-~2^63-notb` &middot; `edge-~2^63-1-notb` &middot; `edge-2^31-1-notb` &middot; `edge-~2^31-notb` &middot; `edge-2^64-1-notb` &middot; `model*` &middot; `negation-minus-one*` &middot; `involution*`
 
 </details>
 
@@ -312,9 +317,9 @@ val << : int * Word.word -> int
 
 **Example** `<< (1, 0w100) = pow (2, 100)`
 
-<details><summary>Tests (8)</summary>
+<details><summary>Tests (18)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `one-by-100` &middot; `minus-one-by-100` &middot; `one-by-200` &middot; `2^36-by-64` &middot; `three-by-1000` &middot; `model*` &middot; `times-power*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `one-by-100` &middot; `minus-one-by-100` &middot; `one-by-200` &middot; `2^36-by-64` &middot; `three-by-1000` &middot; `edge-2^62-1-by-1` &middot; `edge-2^62-by-1` &middot; `edge-~2^62-by-1` &middot; `edge-~2^62-1-by-1` &middot; `edge-2^63-1-by-1` &middot; `edge-~2^63-by-1` &middot; `edge-~2^63-1-by-1` &middot; `edge-2^31-1-by-1` &middot; `edge-~2^31-by-1` &middot; `edge-2^64-1-by-1` &middot; `model*` &middot; `times-power*`
 
 </details>
 
@@ -338,9 +343,9 @@ shift (for every `i : IntInf.int`, `n : word`)
 
 </details>
 
-<details><summary>Tests (12)</summary>
+<details><summary>Tests (22)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^100-by-100` &middot; `2^100-by-101` &middot; `~2^100-by-100` &middot; `~2^100-by-101` &middot; `~2^100-by-99` &middot; `~2^100-1-by-100` &middot; `2^200-by-100` &middot; `2^164-by-64` &middot; `model*` &middot; `floor-by-power*` &middot; `after-shift-left*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^100-by-100` &middot; `2^100-by-101` &middot; `~2^100-by-100` &middot; `~2^100-by-101` &middot; `~2^100-by-99` &middot; `~2^100-1-by-100` &middot; `2^200-by-100` &middot; `2^164-by-64` &middot; `edge-2^62-1-by-1` &middot; `edge-2^62-by-1` &middot; `edge-~2^62-by-1` &middot; `edge-~2^62-1-by-1` &middot; `edge-2^63-1-by-1` &middot; `edge-~2^63-by-1` &middot; `edge-~2^63-1-by-1` &middot; `edge-2^31-1-by-1` &middot; `edge-~2^31-by-1` &middot; `edge-2^64-1-by-1` &middot; `model*` &middot; `floor-by-power*` &middot; `after-shift-left*`
 
 </details>
 

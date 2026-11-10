@@ -16,10 +16,22 @@ instruction set, the primitives and the command line;
 
 `--intinf=auto|gmp|sml` selects arithmetic in the current VM. The default
 `auto` uses a supported GMP build when present, otherwise the independent
-SML implementation. An explicit unavailable `gmp` request fails at startup.
+implementation. An explicit unavailable `gmp` request fails at startup.
 `RUNEVM_INTINF` supplies a default for wrappers; the command-line option wins.
-The stack VM and native output use SML. The same register bytecode works in
-both builds; images contain canonical Rune values, never GMP pointers.
+The stack VM and native output use the independent implementation. The same
+register bytecode works in both builds; images contain canonical Rune values,
+never GMP pointers.
+
+An `IntInf.int` is an immediate where its number fits 63 bits, and otherwise
+a pair of its sign and its canonical magnitude (haskell98 M31). Its
+arithmetic and comparisons are primitives, `intinf_add` and the rest
+([bytecode.md](bytecode.md), *Primitives*): two immediates are worked on in
+line, and anything else by `runtime/intinf.c`, whose independent
+implementation is its own arithmetic in 32-bit digits, and which multiplies
+and divides a large operand with GMP where it is selected. The other
+operations of `IntInf` -- the bit operations, shifts, powers, text -- are
+SML over a number's sign and magnitude, with GMP's primitives below where it
+is selected.
 
 `--intinf-max-bits N` sets the finite magnitude budget (default 134217728;
 range 64 through 1073741822). This is an operational limit, not a mathematical
@@ -33,10 +45,12 @@ total-process memory guarantee: Rune's managed heap, GMP's stack temporaries,
 allocator metadata, and system overhead are separate. Both limits remain
 finite, and restoration preserves the stricter saved/invocation value.
 
-SML handles parsing, normalization, small values, exception rules and dispatch.
-The C bindings use documented `mpz` import/export with one-byte words in
-little-endian order, floor division for `div`/`mod`, and truncation for
-`quot`/`rem`. Zero divisors are rejected before entering GMP. Each returning
+SML handles parsing, exception rules and dispatch for the operations that
+are SML; the primitives of `IntInf.int` normalize, raise `Div` and dispatch
+in C. The C bindings use documented `mpz` import/export with one-byte words in
+little-endian order (32-bit native words, least significant first, for the
+digits of `IntInf.int`'s primitives), floor division for `div`/`mod`, and
+truncation for `quot`/`rem`. Zero divisors are rejected before entering GMP. Each returning
 primitive clears all its GMP objects; allocation hooks enforce the budget
 and terminate through the runtime-limit path on exhaustion or allocation
 failure. They never return NULL or unwind through `longjmp`. Hooks are

@@ -472,3 +472,23 @@ foreign_callback 3  string * string * (string -> string) -> bool * Word64.word *
 
 # --- linked unit inventory (compiler library sessions) ---
 rt_linked_units  1  unit -> string list      Identities of successfully linked units in first-link order, each once; the reserved top-level export is the marker. Does not imply execution of initializers.
+
+# --- IntInf.int (an immediate where the number fits 63 bits, else a sign and a canonical magnitude; haskell98 M31) ---
+intinf_add       2  IntInf.int * IntInf.int -> IntInf.int   Addition. Two immediates whose sum fits are added in line; the rest is the primitive's, which makes a large result as large as the magnitude budget allows.
+intinf_sub       2  IntInf.int * IntInf.int -> IntInf.int   Subtraction, as intinf_add.
+intinf_mul       2  IntInf.int * IntInf.int -> IntInf.int   Multiplication, as intinf_add; GMP's when this VM selects it and an operand is large.
+intinf_div       2  IntInf.int * IntInf.int -> IntInf.int   Floor division; raises Div on zero.
+intinf_mod       2  IntInf.int * IntInf.int -> IntInf.int   Floor modulus, of the divisor's sign; raises Div on zero.
+intinf_quot      2  IntInf.int * IntInf.int -> IntInf.int   Truncating division; raises Div on zero.
+intinf_rem       2  IntInf.int * IntInf.int -> IntInf.int   Truncating remainder, of the dividend's sign; raises Div on zero.
+intinf_neg       1  IntInf.int -> IntInf.int   Negation.
+intinf_lt        2  IntInf.int * IntInf.int -> bool   Less than.
+intinf_le        2  IntInf.int * IntInf.int -> bool   Less or equal.
+intinf_gt        2  IntInf.int * IntInf.int -> bool   Greater than.
+intinf_ge        2  IntInf.int * IntInf.int -> bool   Greater or equal.
+intinf_order     2  IntInf.int * IntInf.int -> order   LESS, EQUAL or GREATER.
+intinf_from_int  1  int -> IntInf.int        An int as an IntInf.int: the immediate itself, or a large value for an int past 63 bits under RUNE_INT64.
+intinf_to_int    1  IntInf.int -> int        An IntInf.int as an int; raises Overflow for one an int does not hold.
+intinf_is_small  1  IntInf.int -> bool       Whether the number is an immediate, which intinf_to_int gives without Overflow.
+intinf_parts     1  IntInf.int -> bool * string   Whether the number is negative, and its canonical little-endian magnitude: a large value's own pair, a new one for an immediate. The magnitude budget applies.
+intinf_make      2  bool * string -> IntInf.int   The number of a sign and a canonical magnitude, an immediate where it fits; the empty magnitude is 0. The magnitude budget applies; a magnitude with a high zero byte is a bytecode error.

@@ -90,10 +90,18 @@ struct
      equality is its identity. *)
   val bytearrayTycon = mk ("bytearray", 14, 0, true)
   val realarrayTycon = mk ("realarray", 15, 0, true)
+  (* IntInf.int (haskell98 M31, D20 D): an immediate where the number fits
+     the VM's 63 bits, and otherwise a sign and a magnitude in the heap,
+     which the primitives intinf_add and the others take apart. The Basis
+     Library names it with `_prim "intinf"`; the compiler knows nothing of
+     it but its name, so a value of it is of no representation it trusts
+     (Lower.repOfTy) and `=` of two is poly_eq. *)
+  val intinfTycon = mk ("IntInf.int", 16, 0, true)
 
   val builtinTycons =
     [intTycon, wordTycon, realTycon, charTycon, stringTycon, boolTycon, listTycon, refTycon,
-     exnTycon, arrayTycon, vectorTycon, int64Tycon, word64Tycon, bytearrayTycon, realarrayTycon]
+     exnTycon, arrayTycon, vectorTycon, int64Tycon, word64Tycon, bytearrayTycon, realarrayTycon,
+     intinfTycon]
 
   val intTy = TCon (intTycon, [])
   val wordTy = TCon (wordTycon, [])
