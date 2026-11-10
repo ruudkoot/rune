@@ -11,8 +11,9 @@ module PreludeIO (
     readFile, writeFile, appendFile, readIO, readLn
   ) where
 
-import PreludeBuiltin
-import PreludeRuntime (IOErrorKind(..), ioErrorKind, ioErrorText, ioErrorFile, ioErrorHandle)  -- (rhc's)
+import PreludeBuiltin hiding (primReadFile, primWriteFile, primAppendFile)
+import PreludeRuntime (IOErrorKind(..), ioErrorKind, ioErrorText, ioErrorFile, ioErrorHandle,
+                       primReadFile, primWriteFile, primAppendFile)  -- (rhc's: IO's handles and locks)
 import IO (hSetBuffering, stdin, stdout, BufferMode(..), hGetLine)  -- interact's, getLine's (rhc's)
 
 

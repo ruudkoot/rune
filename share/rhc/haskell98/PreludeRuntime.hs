@@ -60,7 +60,7 @@ module PreludeRuntime (
     primHGetPosn, primHSeek, primHWaitForInput, primHGetChar, primHGetLine,
     primHLookAhead, primHGetContents, primHPutChar, primHPutStr,
     primHIsOpen, primHIsClosed, primHIsReadable, primHIsWritable,
-    primHIsSeekable, primExit,
+    primHIsSeekable, primExit, primReadFile, primWriteFile, primAppendFile,
 
     -- the system (22 to 27)
     ClockTime(..), primSystemCall,
@@ -70,6 +70,9 @@ module PreludeRuntime (
     command_arg_count, command_arg, command_name, time_now, time_cpu,
     date_offset, date_zone_name, date_is_dst, random_seed
   ) where
+
+import PreludeBuiltin (primElided)    -- the reader's binding of a primitive (src/rhc/library.sml, I5 to I7)
+import qualified PreludeBuiltin (primReadFile, primWriteFile, primAppendFile)
 
 -- ---- Core's types that are not the Prelude's ----
 
@@ -596,11 +599,9 @@ primHFileSize h   = do
 -- often as is wanted (21.2.3).
 primOpenFile      :: FilePath -> Int -> IO Handle
 primOpenFile f mode = do
+    locked f mode
     hs <- ref_get handles
-    open <- mapM isOpen hs
-    if or (zipWith (&&) open (map locks hs))
-      then ioError (primMakeIOError AlreadyInUse ("openFile: " ++ f ++ ": file is locked") Nothing (Just f))
-      else if mode == 3
+    if mode == 3
       then ioError (primMakeIOError IllegalOperation ("openFile: " ++ f ++ ": ReadWriteMode is not supported")
                                     Nothing (Just f))
       else do
@@ -609,12 +610,57 @@ primOpenFile f mode = do
           else do
             n <- ref_get handleCount
             ref_set handleCount (n + 1)
-            h <- newHandle n fd f (mode == 0) (mode /= 0) (mode == 0) 2
+            h <- newHandle n fd f (mode == 0) (mode /= 0) (mode /= 2) 2   -- AppendMode's writes go to the end
             ref_set handles (h : hs)
             return h
-  where
-    isOpen h = ref_get (handleState h) >>= \st -> return (st /= 2)
-    locks h = handleId h > 2 && handleName h == f && (handleWrites h || mode /= 0)
+
+-- readFile, writeFile and appendFile (7.1): the runtime's, which read and
+-- write a chunk at a time, under the locks of 21.2.3. readFile's file is
+-- held for reading until its contents are read; writeFile and appendFile
+-- are refused a file held elsewhere, and hold it while they write. A hold
+-- is a handle of no file in the list of those opened.
+primReadFile      :: FilePath -> IO String
+primReadFile f    = do
+    locked f 0
+    s <- PreludeBuiltin.primReadFile f
+    h <- hold f 0
+    return (releasing h s)
+
+primWriteFile, primAppendFile :: FilePath -> String -> IO ()
+primWriteFile f s  = locked f 1 >> hold f 1 >>= \h -> ensure (PreludeBuiltin.primWriteFile f s) (release h)
+primAppendFile f s = locked f 2 >> hold f 2 >>= \h -> ensure (PreludeBuiltin.primAppendFile f s) (release h)
+
+-- an IOError where the file is held so that a handle of the mode may not
+-- have it: open for writing anywhere, or for anything where the mode writes
+locked            :: FilePath -> Int -> IO ()
+locked f mode     = do
+    hs <- ref_get handles
+    open <- mapM (\h -> ref_get (handleState h) >>= \st -> return (st /= 2)) hs
+    if or (zipWith (&&) open (map locks hs))
+      then ioError (primMakeIOError AlreadyInUse (f ++ ": file is locked") Nothing (Just f))
+      else return ()
+  where locks h = handleId h > 2 && handleName h == f && (handleWrites h || mode /= 0)
+
+hold              :: FilePath -> Int -> IO Handle
+hold f mode       = do
+    n <- ref_get handleCount
+    ref_set handleCount (n + 1)
+    h <- newHandle n (-1) f (mode == 0) (mode /= 0) False 2
+    hs <- ref_get handles
+    ref_set handles (h : hs)
+    return h
+
+release           :: Handle -> IO ()
+release h         =  ref_set (handleState h) 2
+
+-- the list, its hold released when its end is reached
+releasing         :: Handle -> [a] -> [a]
+releasing h []    =  unsafe_perform_io (release h) `seq` []
+releasing h (x:xs) = x : releasing h xs
+
+-- the action, then the last one, whether the first raised an IOError or not
+ensure            :: IO a -> IO () -> IO a
+ensure act final  =  catch (act >>= \r -> final >> return r) (\e -> final >> ioError e)
 
 -- ---- the end of a program ----
 
@@ -623,7 +669,7 @@ primOpenFile f mode = do
 primExit          :: Int -> IO a
 primExit n        = do
     hs <- ref_get handles
-    mapM_ (\h -> if handleWrites h then catch (h_flush (handleFd h)) (\_ -> return ()) else return ()) hs
+    mapM_ (\h -> if handleWrites h && handleFd h >= 0 then catch (h_flush (handleFd h)) (\_ -> return ()) else return ()) hs
     exit n
 
 -- ---- the system (22 to 27) ----
