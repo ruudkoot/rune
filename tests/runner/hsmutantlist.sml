@@ -69,5 +69,12 @@ struct
           ["hs/types/derive/module"]),
      one ("HD02", "deriving", "a derived instance's context too wide: each parameter's, not the fields' types' (10.1)",
           "infer.sml", "reduce {cls = cls, ty = f}) fields)", "reduce {cls = cls, ty = f}) (fields @ List.tabulate (vars, T.TGen)))",
+          ["hs/types/derive/module"]),
+     one ("HD03", "deriving", "a derived Ord's and Ix's constructor positions are bare literals, which the module's default types",
+          "derive.sml",
+          "fun tag x =\n        e (A.ESig (e (A.EParen (ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i))\n" ^
+          "                                             (constrs, List.tabulate (length constrs, fn i => i))))),\n" ^
+          "                   NONE, intType ()))",
+          "fun tag x = ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i)) (constrs, List.tabulate (length constrs, fn i => i)))",
           ["hs/types/derive/module"])]
 end

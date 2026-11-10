@@ -17,7 +17,7 @@ derives with its context, and `written` or `derived`; and `LIBRARY-ERROR`, an er
 | `tiebreak` | D30's tie-break case: a type variable whose predicates arose in two modules whose `default`s differ, refused under either setting |
 | `rule2` | Rule 2 in a cycle: a restricted variable of one module fixed by another's use, refused under `module`, an `Int` under `scc` |
 | `defaults` | A module's own `default` in a cycle: an `Int` under `module`; refused under `scc`, where the cycle's modules' `default`s differ |
-| `derive` | Deriving (chapter 10, D33's C): each class that can be derived, with the contexts 10.1's fixpoint infers (a parameter only one field uses, one under a type constructor, a recursive type, a data type's own context by 4.3.3), a record, an infix constructor and a newtype; each instance's methods made and checked as a user's (`bin/rhc --dump-derived` prints them) |
+| `derive` | Deriving (chapter 10, D33's C): each class that can be derived, with the contexts 10.1's fixpoint infers (a parameter only one field uses, one under a type constructor, a recursive type, a data type's own context by 4.3.3), a record, an infix constructor and a newtype; each instance's methods made and checked as a user's (`bin/rhc --dump-derived` prints them); and in `NoDefault`, under `default ()`, an enumeration's derived `Ord` and `Ix`, whose constructors' positions are `Int`s whatever the module's default |
 
 `RUNE_TEST_ACCEPT=1 bin/rune-test run 'hs/types/*'` writes the expected files again from what rhc prints, keeping their
 comments.
