@@ -1,0 +1,157 @@
+; run: --read-core tests/hs/core/lib/base.core
+; files: own
+; The primitives of the file system (CorePrimSys, M18), each a result the
+; Report's Directory reads: 0 or -1 where a call is made or fails, and
+; then the name of the system's error that sys_errno gives (CorePrimIo's); a path's
+; kind, whether it can be read, written or run, its mode as set, when it
+; was changed; a directory's names, then "" at its end; the working
+; directory, one arc deeper after a chdir. It writes a directory sysdir
+; where it runs, a directory of its own, and removes it again.
+
+(val sayInt (-> !Str !Int World (utuple World Unit))
+  (\ ((l !Str) (n !Int) (w World))
+    (case (showInt n) s (_ (case (prim str_concat l s) t (_ (putStrLn t w)))))))
+
+; a Str between brackets, so that "" shows
+(val sayStr (-> !Str !Str World (utuple World Unit))
+  (\ ((l !Str) (v !Str) (w World))
+    (case (prim str_concat l "[") a (_ (case (prim str_concat a v) b (_ (case (prim str_concat b "]") t (_ (putStrLn t w)))))))))
+
+(val sayBool (-> !Str !Bool World (utuple World Unit))
+  (\ ((l !Str) (b !Bool) (w World))
+    (case b v ((True) (case (prim str_concat l "True") t (_ (putStrLn t w)))) ((False) (case (prim str_concat l "False") t (_ (putStrLn t w)))))))
+
+; an Int, and where it is below 0 the name of the system's error, sys_errno's
+(val sayResult (-> !Str !Int World (utuple World Unit))
+  (\ ((l !Str) (n !Int) (w World))
+    (case (prim int_lt n 0) neg
+      ((True)
+        (case (prim sys_errno w) o ((utuple w1 e)
+        (case (prim sys_error_name e) m (_
+        (case (showInt n) s (_
+        (case (prim str_concat l s) t (_
+        (case (prim str_concat t " ") t2 (_
+        (case (prim str_concat t2 m) t3 (_ (putStrLn t3 w1))))))))))))))
+      ((False) (sayInt l n w)))))
+
+(val done (-> World (utuple World Unit)) (\ ((w World)) (let (u Unit (con Unit)) (utuple w u))))
+
+; what an earlier run may have left
+(val cleanup (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim os_remove "sysdir/a" w) o1 ((utuple w1 _)
+    (case (prim os_remove "sysdir/b" w1) o2 ((utuple w2 _)
+    (case (prim os_rmdir "sysdir" w2) o3 ((utuple w3 _)
+    (done w3)))))))))
+
+(val dirs (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim os_mkdir "sysdir" w) o1 ((utuple w1 r1)
+    (case (sayResult "mkdir: " r1 w1) p1 ((utuple w2 _)
+    (case (prim os_mkdir "sysdir" w2) o2 ((utuple w3 r2)
+    (case (sayResult "mkdir again: " r2 w3) p2 ((utuple w4 _)
+    (case (prim os_file_kind "sysdir" w4) o3 ((utuple w5 r3)
+    (case (sayResult "kind of a directory: " r3 w5) p3 ((utuple w6 _)
+    (case (prim os_file_kind "nothing-here" w6) o4 ((utuple w7 r4)
+    (sayResult "kind of nothing: " r4 w7)))))))))))))))))
+
+(val file (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim h_open "sysdir/a" 1 w) o1 ((utuple w1 h)
+    (case (prim h_close h w1) w2 (_
+    (case (prim os_file_kind "sysdir/a" w2) o2 ((utuple w3 r1)
+    (case (sayResult "kind of a file: " r1 w3) p1 ((utuple w4 _)
+    (case (prim os_access "sysdir/a" 0 w4) o3 ((utuple w5 r2)
+    (case (sayResult "a file is there: " r2 w5) p2 ((utuple w6 _)
+    (case (prim os_access "nothing-here" 0 w6) o4 ((utuple w7 r3)
+    (case (sayResult "nothing is there: " r3 w7) p3 ((utuple w8 _)
+    (case (prim os_access "sysdir" 1 w8) o5 ((utuple w9 r4)
+    (sayResult "a directory can be read: " r4 w9)))))))))))))))))))))
+
+(val modes (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim os_set_mode "sysdir/a" 384 w) o1 ((utuple w1 r1)
+    (case (sayResult "set mode 0600: " r1 w1) p1 ((utuple w2 _)
+    (case (prim os_file_mode "sysdir/a" w2) o2 ((utuple w3 r2)
+    (case (sayResult "mode: " r2 w3) p2 ((utuple w4 _)
+    (case (prim os_access "sysdir/a" 4 w4) o3 ((utuple w5 r3)
+    (case (sayResult "can be run: " r3 w5) p3 ((utuple w6 _)
+    (case (prim os_set_mode "sysdir/a" 448 w6) o4 ((utuple w7 r4)
+    (case (sayResult "set mode 0700: " r4 w7) p4 ((utuple w8 _)
+    (case (prim os_file_mode "sysdir/a" w8) o5 ((utuple w9 r5)
+    (case (sayResult "mode: " r5 w9) p5 ((utuple w10 _)
+    (case (prim os_access "sysdir/a" 4 w10) o6 ((utuple w11 r6)
+    (case (sayResult "can be run: " r6 w11) p6 ((utuple w12 _)
+    (case (prim os_file_mode "nothing-here" w12) o7 ((utuple w13 r7)
+    (case (sayResult "mode of nothing: " r7 w13) p7 ((utuple w14 _)
+    (case (prim os_set_mode "nothing-here" 448 w14) o8 ((utuple w15 r8)
+    (sayResult "set the mode of nothing: " r8 w15)))))))))))))))))))))))))))))))))
+
+(val listing (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim os_mod_time "sysdir/a" w) o1 ((utuple w1 t)
+    (case (prim int_gt t 1000000000) b1 (_
+    (case (sayBool "changed after 2001: " b1 w1) p1 ((utuple w2 _)
+    (case (prim os_mod_time "nothing-here" w2) o2 ((utuple w3 r2)
+    (case (sayResult "time of nothing: " r2 w3) p2 ((utuple w4 _)
+    (case (prim os_open_dir "sysdir" w4) o3 ((utuple w5 h)
+    (case (prim int_ge h 0) b2 (_
+    (case (sayBool "opened: " b2 w5) p3 ((utuple w6 _)
+    (case (prim os_read_dir h w6) o4 ((utuple w7 n1)
+    (case (sayStr "first name: " n1 w7) p4 ((utuple w8 _)
+    (case (prim os_read_dir h w8) o5 ((utuple w9 n2)
+    (case (sayStr "then: " n2 w9) p5 ((utuple w10 _)
+    (case (prim os_close_dir h w10) o6 ((utuple w11 r3)
+    (case (sayResult "closed: " r3 w11) p6 ((utuple w12 _)
+    (case (prim os_open_dir "nothing-here" w12) o7 ((utuple w13 r4)
+    (sayResult "open nothing: " r4 w13)))))))))))))))))))))))))))))))))
+
+(val renames (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim os_rename "sysdir/a" "sysdir/b" w) o1 ((utuple w1 r1)
+    (case (sayResult "rename: " r1 w1) p1 ((utuple w2 _)
+    (case (prim os_rename "nothing-here" "sysdir/c" w2) o2 ((utuple w3 r2)
+    (case (sayResult "rename nothing: " r2 w3) p2 ((utuple w4 _)
+    (case (prim os_file_kind "sysdir/b" w4) o3 ((utuple w5 r3)
+    (case (sayResult "kind of the new name: " r3 w5) p3 ((utuple w6 _)
+    (case (prim os_file_kind "sysdir/a" w6) o4 ((utuple w7 r4)
+    (case (sayResult "kind of the old: " r4 w7) p4 ((utuple w8 _)
+    (case (prim os_rmdir "sysdir" w8) o5 ((utuple w9 r5)
+    (case (sayResult "rmdir of a full directory: " r5 w9) p5 ((utuple w10 _)
+    (case (prim os_remove "sysdir/b" w10) o6 ((utuple w11 r6)
+    (case (sayResult "remove: " r6 w11) p6 ((utuple w12 _)
+    (case (prim os_remove "sysdir/b" w12) o7 ((utuple w13 r7)
+    (sayResult "remove again: " r7 w13)))))))))))))))))))))))))))))
+
+(val cwd (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim os_getcwd w) o1 ((utuple w1 c1)
+    (case (prim os_chdir "sysdir" w1) o2 ((utuple w2 r1)
+    (case (sayResult "chdir: " r1 w2) p1 ((utuple w3 _)
+    (case (prim os_getcwd w3) o3 ((utuple w4 c2)
+    (case (prim str_size c1) n1 (_
+    (case (prim str_size c2) n2 (_
+    (case (prim int_sub n2 n1) d1 (_
+    (case (sayResult "deeper by: " d1 w4) p2 ((utuple w5 _)
+    (case (prim os_chdir ".." w5) o4 ((utuple w6 r2)
+    (case (sayResult "chdir ..: " r2 w6) p3 ((utuple w7 _)
+    (case (prim os_getcwd w7) o5 ((utuple w8 c3)
+    (case (prim str_size c3) n3 (_
+    (case (prim int_sub n3 n1) d2 (_
+    (case (sayResult "back by: " d2 w8) p4 ((utuple w9 _)
+    (case (prim os_chdir "nothing-here" w9) o6 ((utuple w10 r3)
+    (case (sayResult "chdir to nothing: " r3 w10) p5 ((utuple w11 _)
+    (case (prim os_rmdir "sysdir" w11) o7 ((utuple w12 r4)
+    (case (sayResult "rmdir: " r4 w12) p6 ((utuple w13 _)
+    (case (prim os_rmdir "sysdir" w13) o8 ((utuple w14 r5)
+    (sayResult "rmdir again: " r5 w14)))))))))))))))))))))))))))))))))))))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (cleanup w) a ((utuple w1 _)
+    (case (dirs w1) b ((utuple w2 _)
+    (case (file w2) c ((utuple w3 _)
+    (case (modes w3) d ((utuple w4 _)
+    (case (listing w4) e ((utuple w5 _)
+    (case (renames w5) f ((utuple w6 _)
+    (cwd w6)))))))))))))))

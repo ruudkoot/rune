@@ -1,0 +1,168 @@
+; run: --read-core tests/hs/core/lib/base.core
+; The primitives of the process and of time (CorePrimSys, M18), each a
+; result the Report's System, Time, CPUTime and Random read: a command's
+; exit, by its status or the signal that ended it; the environment; no
+; arguments; the program's name without its extension, whose last arc
+; starts with the test's (the VMs run prims-sys.O0.registers.rbc and the
+; like, so the name's arc is the same as far as the test's goes); the
+; clock, the processor's time, the local zone's offset and its summer time
+; agreeing; a seed of 56 bits; and Domain where the system cannot say what
+; the offset is, 2^61 seconds on.
+
+(val sayInt (-> !Str !Int World (utuple World Unit))
+  (\ ((l !Str) (n !Int) (w World))
+    (case (showInt n) s (_ (case (prim str_concat l s) t (_ (putStrLn t w)))))))
+
+; a Str between brackets, so that "" shows
+(val sayStr (-> !Str !Str World (utuple World Unit))
+  (\ ((l !Str) (v !Str) (w World))
+    (case (prim str_concat l "[") a (_ (case (prim str_concat a v) b (_ (case (prim str_concat b "]") t (_ (putStrLn t w)))))))))
+
+(val sayBool (-> !Str !Bool World (utuple World Unit))
+  (\ ((l !Str) (b !Bool) (w World))
+    (case b v ((True) (case (prim str_concat l "True") t (_ (putStrLn t w)))) ((False) (case (prim str_concat l "False") t (_ (putStrLn t w)))))))
+
+; ---- Str by its bytes
+
+(val strEqFrom (-> !Str !Str !Int Bool)
+  (\ ((a !Str) (b !Str) (i !Int))
+    (case (prim str_size a) n (_
+    (case (prim int_ge i n) e
+      ((True) (con True))
+      ((False)
+        (case (prim str_byte a i) x (_
+        (case (prim str_byte b i) y (_
+        (case (prim int_eq x y) q
+          ((True) (case (prim int_add i 1) j (_ (strEqFrom a b j))))
+          ((False) (con False)))))))))))))
+
+(val strEq (-> !Str !Str Bool)
+  (\ ((a !Str) (b !Str))
+    (case (prim str_size a) n (_
+    (case (prim str_size b) m (_
+    (case (prim int_eq n m) e ((True) (strEqFrom a b 0)) ((False) (con False)))))))))
+
+(val endsWith (-> !Str !Str Bool)
+  (\ ((s !Str) (t !Str))
+    (case (prim str_size s) n (_
+    (case (prim str_size t) m (_
+    (case (prim int_lt n m) short
+      ((True) (con False))
+      ((False) (case (prim int_sub n m) k (_ (case (prim str_extract s k m) e (_ (strEq e t)))))))))))))
+
+; the part of s after its last / at i or before
+(val afterSlash (-> !Str !Int Str)
+  (\ ((s !Str) (i !Int))
+    (case (prim int_lt i 0) e
+      ((True) s)
+      ((False)
+        (case (prim str_byte s i) c (_
+        (case (prim int_eq c 47) sl
+          ((True) (case (prim int_add i 1) j (_ (case (prim str_size s) n (_ (case (prim int_sub n j) k (_ (prim str_extract s j k))))))))
+          ((False) (case (prim int_sub i 1) h (_ (afterSlash s h)))))))))))
+
+(val boolEq (-> !Bool !Bool Bool)
+  (\ ((a !Bool) (b !Bool))
+    (case a x
+      ((True) b)
+      ((False) (case b y ((True) (con False)) ((False) (con True)))))))
+
+(val both (-> !Bool !Bool Bool)
+  (\ ((a !Bool) (b !Bool)) (case a x ((True) b) ((False) (con False)))))
+
+; ---- the process
+
+(val process (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim os_system "exit 3" w) o1 ((utuple w1 r1)
+    (case (sayInt "exit 3: " r1 w1) p1 ((utuple w2 _)
+    (case (prim os_system "true" w2) o2 ((utuple w3 r2)
+    (case (sayInt "true: " r2 w3) p2 ((utuple w4 _)
+    (case (prim os_system "kill -9 $$" w4) o3 ((utuple w5 r3)
+    (case (sayInt "killed: " r3 w5) p3 ((utuple w6 _)
+    (case (prim os_has_env "PATH" w6) o4 ((utuple w7 b1)
+    (case (sayBool "PATH is set: " b1 w7) p4 ((utuple w8 _)
+    (case (prim os_getenv "PATH" w8) o5 ((utuple w9 s1)
+    (case (prim str_size s1) n1 (_
+    (case (prim int_gt n1 0) b2 (_
+    (case (sayBool "PATH has a value: " b2 w9) p5 ((utuple w10 _)
+    (case (prim os_has_env "RHC_TEST_SURELY_UNSET" w10) o6 ((utuple w11 b3)
+    (case (sayBool "an unset variable is set: " b3 w11) p6 ((utuple w12 _)
+    (case (prim os_getenv "RHC_TEST_SURELY_UNSET" w12) o7 ((utuple w13 s2)
+    (sayStr "its value: " s2 w13)))))))))))))))))))))))))))))))))
+
+(val arguments (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim command_arg_count w) o1 ((utuple w1 r1)
+    (case (sayInt "arguments: " r1 w1) p1 ((utuple w2 _)
+    (case (prim command_arg 0 w2) o2 ((utuple w3 s1)
+    (case (sayStr "the first: " s1 w3) p2 ((utuple w4 _)
+    (case (prim command_arg -1 w4) o3 ((utuple w5 s2)
+    (case (sayStr "the one before it: " s2 w5) p3 ((utuple w6 _)
+    (case (prim command_name w6) o4 ((utuple w7 name)
+    (case (prim str_size name) n (_
+    (case (prim int_sub n 1) last (_
+    (case (afterSlash name last) arc (_
+    (case (prim str_extract arc 0 9) start (_
+    (case (sayStr "the name's last arc starts: " start w7) p4 ((utuple w8 _)
+    (case (endsWith name ".rbc") b1 (_
+    (case (sayBool "it ends .rbc: " b1 w8) p5 ((utuple w9 _)
+    (case (endsWith name ".core") b2 (_
+    (sayBool "it ends .core: " b2 w9)))))))))))))))))))))))))))))))))
+
+(val clock (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim time_now w) o1 ((utuple w1 t1)
+    (case (prim int_gt t1 1600000000000000) b1 (_
+    (case (sayBool "now is after 2020: " b1 w1) p1 ((utuple w2 _)
+    (case (prim time_cpu w2) o2 ((utuple w3 c)
+    (case (prim int_ge c 0) b2 (_
+    (case (sayBool "processor time: " b2 w3) p2 ((utuple w4 _)
+    (case (prim time_now w4) o3 ((utuple w5 t2)
+    (case (prim int_ge t2 t1) b3 (_
+    (sayBool "the clock goes on: " b3 w5)))))))))))))))))))
+
+(val zone (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim date_offset 1700000000 w) o1 ((utuple w1 off1)
+    (case (prim date_offset 1690000000 w1) o2 ((utuple w2 off2)
+    (case (prim int_mod off1 900) q (_
+    (case (prim int_eq q 0) b1 (_
+    (case (sayBool "the offset is of quarter hours: " b1 w2) p1 ((utuple w3 _)
+    (case (prim int_le off1 50400) b2 (_
+    (case (prim int_ge off1 -50400) b3 (_
+    (case (both b2 b3) b4 (_
+    (case (sayBool "and within 14 hours: " b4 w3) p2 ((utuple w4 _)
+    (case (prim date_is_dst 1700000000 w4) o3 ((utuple w5 d1)
+    (case (prim date_is_dst 1690000000 w5) o4 ((utuple w6 d2)
+    (case (boolEq d1 d2) sameDst (_
+    (case (prim int_eq off1 off2) sameOff (_
+    (case (boolEq sameDst sameOff) b5 (_
+    (case (sayBool "the offset moves with summer time: " b5 w6) p3 ((utuple w7 _)
+    (case (prim date_zone_name 1700000000 w7) o5 ((utuple w8 z)
+    (case (prim str_size z) n (_
+    (case (prim int_gt n 0) b6 (_
+    (sayBool "the zone has a name: " b6 w8)))))))))))))))))))))))))))))))))))))))
+
+(val seed (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim random_seed w) o1 ((utuple w1 s)
+    (case (prim int_ge s 0) b1 (_
+    (case (prim int_lt s 72057594037927936) b2 (_
+    (case (both b1 b2) b3 (_
+    (sayBool "a seed of 56 bits: " b3 w1)))))))))))
+
+(val far (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (act (-> World (utuple World Unit))
+           (\ ((v World)) (case (prim date_offset 2305843009213693952 v) o ((utuple v1 off) (sayInt "far: " off v1)))))
+      (try act w))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (process w) a ((utuple w1 _)
+    (case (arguments w1) b ((utuple w2 _)
+    (case (clock w2) c ((utuple w3 _)
+    (case (zone w3) d ((utuple w4 _)
+    (case (seed w4) e ((utuple w5 _)
+    (far w5)))))))))))))

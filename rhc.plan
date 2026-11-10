@@ -163,6 +163,8 @@ library language/haskell lib/language/haskell
     unit language/haskell:coreprimfamily_sig.sml lib/language/haskell/coreprimfamily_sig.sml ascii demand
     unit language/haskell:coreprimfamily.sml lib/language/haskell/coreprimfamily.sml ascii demand
     unit language/haskell:coreprimio.sml lib/language/haskell/coreprimio.sml ascii demand
+    unit language/haskell:coreprimsys_sig.sml lib/language/haskell/coreprimsys_sig.sml ascii demand
+    unit language/haskell:coreprimsys.sml lib/language/haskell/coreprimsys.sml ascii demand
     unit language/haskell:coreprim_sig.sml lib/language/haskell/coreprim_sig.sml ascii demand
     unit language/haskell:coreprim.sml lib/language/haskell/coreprim.sml ascii demand
     unit language/haskell:coreruntime_sig.sml lib/language/haskell/coreruntime_sig.sml ascii demand
@@ -267,6 +269,6 @@ provenance
   input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
   input lib/language/haskell/types.build 070f2c855a3a6ca976bd77085d92acb876f16d060e28bc1805aecee9ef19a736
   input lib/language/haskell/hslint.build 69a5ac241d7d13b48b05de9f9d8c330ba9f2f9945cadd93c70d658bb442ce4a4
-  input lib/language/haskell/core.build 4d3724224c4b375286e96edaaff03054f4072e9025606fa82ed3fd1abd6b5f48
+  input lib/language/haskell/core.build af9419b8663fcd975e48babc55f1620ab8ba15d2766b50c395429795d7d03eaf
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

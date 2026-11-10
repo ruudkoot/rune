@@ -35,7 +35,10 @@ rounded to binary32 after each operation (D23). rhc links into a program
 what it reaches of the runtime. A family of primitives (`CorePrimFamily`) is
 a file of its own, each primitive with what the interpreter does and the Mid
 function it is lowered to: `CorePrimIo` gives the IO library's positions of
-files and errors of the system's, over `CoreFiles`, the interpreter's files.
+files and errors of the system's, over `CoreFiles`, the interpreter's files;
+`CorePrimSys` the operating system's file system, process, environment,
+clock, time zone and randomness, which Directory, System, Time, CPUTime and
+Random read (the roadmap's M18), each over a primitive of Mid's.
 
 The syntax (`syntax.build`, the roadmap's M11) reads a file of Haskell 98 to
 a tree that keeps all of it. `HsLiterate` gives a literate file's program

@@ -15,6 +15,8 @@ files
   coreprimfamily_sig.sml
   coreprimfamily.sml
   coreprimio.sml
+  coreprimsys_sig.sml
+  coreprimsys.sml
   coreprim_sig.sml
   coreprim.sml
   coreruntime_sig.sml
