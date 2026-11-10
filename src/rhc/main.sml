@@ -113,6 +113,63 @@ struct
     handle CoreToMid.Unsupported msg =>
       (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
 
+  (* Each file a unit, after rhc's runtime's, each checked and compiled
+     apart against the units before it, which it imports from, and the
+     units linked (the haskell98 roadmap's M21c): a unit takes what it
+     reaches of the runtime from the runtime's unit (CoreRuntime.linkUnit) *)
+  fun compileUnits (opts : RhcOptions.options, out : string) : int =
+    let
+      val strings = #strings opts
+      fun one file =
+        CoreText.parse (readFile file)
+        handle CoreText.Error (line, msg) => (eprint (file ^ ":" ^ Int.toString line ^ ": error: " ^ msg ^ "\n"); raise Failed)
+      (* what a unit names and does not declare, of the units before it:
+         each value an import and each type a copy, as their interface gives
+         them (CoreUnits.interface), a constructor by its type *)
+      fun declared d =
+        case d of
+          Core.Data (t, _, cons) => t :: List.map #1 cons
+        | Core.Newtype (t, _, c, _) => [t, c]
+        | Core.Val (x, _, _) => [x]
+        | Core.Import (x, _) => [x]
+      fun taken (earlier : Core.program, p : Core.program) : Core.program =
+        let
+          val own = List.concat (List.map declared p)
+          fun member (x, xs) = List.exists (fn y => y = x) xs
+          val needed = List.filter (fn n => not (member (n, own))) (List.concat (List.map CoreRuntime.mentions p))
+          fun typeOf n =
+            case List.find (fn Core.Data (_, _, cons) => List.exists (fn (c, _) => c = n) cons
+                             | Core.Newtype (_, _, c, _) => c = n | _ => false) earlier of
+              SOME (Core.Data (t, _, _)) => t
+            | SOME (Core.Newtype (t, _, _, _)) => t
+            | _ => n
+          (* the units' own: no import, each type its first declaration *)
+          fun firsts ([], _, acc) = List.rev acc
+            | firsts (Core.Import _ :: ds, seen, acc) = firsts (ds, seen, acc)
+            | firsts (d :: ds, seen, acc) =
+                (case d of
+                   Core.Val _ => firsts (ds, seen, d :: acc)
+                 | _ => let val t = hd (declared d)
+                        in if member (t, seen) then firsts (ds, seen, acc) else firsts (ds, t :: seen, d :: acc) end)
+        in CoreUnits.interface (firsts (earlier, [], []), List.map typeOf needed) end
+      fun units (earlier, [], acc) = List.rev acc
+        | units (earlier, f :: fs, acc) =
+            let
+              val p = one f
+              val p = taken (earlier, p) @ p
+            in units (earlier @ p, fs, (OS.Path.base (OS.Path.file f), CoreRuntime.linkUnit strings p) :: acc) end
+      val units = ("rhc-runtime", CoreRuntime.program strings) :: units ([], #readCore opts, [])
+      fun check (name, p) =
+        if not (Pass.linting' 0) then ()
+        else CoreLint.check p handle CoreLint.Error msg => (eprint (name ^ ": error: " ^ msg ^ "\n"); raise Failed)
+      fun build ((name, p), done) =
+        (check (name, p);
+         done @ [RhcUnits.compile {name = name, earlier = done, fault = #fault opts} p])
+    in RhcUnits.link (List.foldl build [] units, out); 0 end
+    handle RhcUnits.Error msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
+         | CoreToMid.Unsupported msg =>
+             (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
+
   (* a program of Haskell, checked (RhcSyntax), desugared to Core (M15)
      with what it reaches of rhc's runtime, checked by CoreLint, and run on
      the Core interpreter or, with -o, compiled; `args` are the options of
@@ -217,6 +274,11 @@ struct
         | NONE =>
             if null (#readCore opts) then raise RhcOptions.Usage "nothing to do: give --read-core FILE"
             else
+              if #units opts then
+                case #output opts of
+                  SOME out => (Pass.startup (); compileUnits (opts, out) before Pass.finish ())
+                | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
+              else
               let
                 val () = Pass.startup ()
                 val p = readCore (#strings opts, #readCore opts, not (#typecheckOnly opts))

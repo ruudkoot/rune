@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`CORE_RUNTIME`](../sig/CORE_RUNTIME.md) |
 | Status | required |
-| Members | 4 |
+| Members | 6 |
 | Tests | not listed |
 | Source | [lib/language/haskell/coreruntime.sml](../../../../../lib/language/haskell/coreruntime.sml) |
 
@@ -27,6 +27,8 @@ What each means is on [`CORE_RUNTIME`](../sig/CORE_RUNTIME.md); the types are th
 | --- | --- | --- |
 | datatype | [`strings`](../sig/CORE_RUNTIME.md#type-strings) | `Lazy` &#124; `Whole` |
 | val | [`link`](../sig/CORE_RUNTIME.md#val-link) | `strings -> Core.decl list -> Core.decl list` |
+| val | [`linkUnit`](../sig/CORE_RUNTIME.md#val-linkunit) | `strings -> Core.decl list -> Core.decl list` |
+| val | [`mentions`](../sig/CORE_RUNTIME.md#val-mentions) | `Core.decl -> string list` |
 | val | [`program`](../sig/CORE_RUNTIME.md#val-program) | `strings -> Core.decl list` |
 | val | [`reportNames`](../sig/CORE_RUNTIME.md#val-reportnames) | `string list` |
 

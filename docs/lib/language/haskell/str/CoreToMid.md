@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`CORE_TO_MID`](../sig/CORE_TO_MID.md) |
 | Status | required |
-| Members | 3 |
+| Members | 6 |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid.sml](../../../../../lib/language/haskell/coretomid.sml) |
 
@@ -30,9 +30,12 @@ What each means is on [`CORE_TO_MID`](../sig/CORE_TO_MID.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
+| datatype | [`abi`](../sig/CORE_TO_MID.md#type-abi) | `Function` &#124; `Suspension` &#124; `Literal` |
 | datatype | [`fault`](../sig/CORE_TO_MID.md#type-fault) | `ThunkInSlot` &#124; `ForceBehindCast` |
 | exception | [`Unsupported`](../sig/CORE_TO_MID.md#exn-unsupported) | `of string` |
 | val | [`program`](../sig/CORE_TO_MID.md#val-program) | `{fault : fault option} * Core.decl list -> string` |
+| val | [`shared`](../sig/CORE_TO_MID.md#val-shared) | `string list` |
+| val | [`unit`](../sig/CORE_TO_MID.md#val-unit) | `{fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.decl list -> {abi : (string * abi) list, names : (string * string) list, text : string}` |
 
 ---
 

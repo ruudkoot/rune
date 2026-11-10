@@ -333,6 +333,20 @@
      "spec": "val link : strings -> Core.program -> Core.program",
      "doc": "`link strings p` is `p` after the declarations of the runtime that `p`\nreaches, through the names it mentions and through theirs.\n\nA declaration `p` makes of a name of the runtime is `p`'s own, and the\nruntime's is left out.\n\n",
      "page": "sig/CORE_RUNTIME.md#val-link"
+    },
+    {
+     "kind": "val",
+     "name": "linkUnit",
+     "spec": "val linkUnit : strings -> Core.program -> Core.program",
+     "doc": "`linkUnit strings p` is the unit `p` after what it reaches of the\nruntime, each value imported (the haskell98 roadmap's M21).\n\nWhat `link` would add is there, but each value an import of the\nruntime's unit, whose program is `program`'s, and each type a copy of\nthe runtime's declaration; an import of the unit's own is kept.\n\n",
+     "page": "sig/CORE_RUNTIME.md#val-linkunit"
+    },
+    {
+     "kind": "val",
+     "name": "mentions",
+     "spec": "val mentions : Core.decl -> string list",
+     "doc": "`mentions d` is the names the declaration `d` mentions: types,\nconstructors and values, each as often as it does.\n\n",
+     "page": "sig/CORE_RUNTIME.md#val-mentions"
     }
    ]
   },
@@ -429,6 +443,27 @@
      "spec": "val program : {fault : fault option} * Core.program -> string",
      "doc": "`program ({fault}, p)` is the text of Mid of the Core program `p`,\nwhich CoreLint passed, with the fault made where it is `SOME`.\n\nA suspension is form C's (the roadmap's M9): made by `thunk_make`,\nforced by one `thunk_force` node, its code saying `thunk_blackhole`\nfirst and `thunk_self_update` last.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, an IOError's text as the\nlibrary's Show IOError gives it, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
      "page": "sig/CORE_TO_MID.md#val-program"
+    },
+    {
+     "kind": "datatype",
+     "name": "abi",
+     "spec": "datatype abi = Function | Suspension | Literal",
+     "doc": "How a value of the top level is in Mid, an ABI fact of its interface.\n\nA unit that imports it binds it so (H9): a function global, a\nsuspension in a global (a CAF), or a literal in a global.\n\n",
+     "page": "sig/CORE_TO_MID.md#type-abi"
+    },
+    {
+     "kind": "val",
+     "name": "unit",
+     "spec": "val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.program\n           -> {text : string, names : (string * string) list, abi : (string * abi) list}",
+     "doc": "`unit ({fault, imports, makesShared}, p)` is the text of Mid of the\nunit `p` (the haskell98 roadmap's M21).\n\nEach import of another unit is bound as `imports` says that unit's\nCore to Mid made it. Its `names` is the name in the text of each value of the top level,\nthe unit's own and its imports, by its Core name; its `abi` how each\nof its own is made. An import is declared in the text as a global of\nits scheme whose expression is a placeholder, which the client drops\nafter reading the text, its scheme MidLint's for the import\n(MidLint.importedScheme). The text calls `main` where the unit\ndefines it, as `program`'s does.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got, or an\nimport `imports` does not give.\n\n",
+     "page": "sig/CORE_TO_MID.md#val-unit"
+    },
+    {
+     "kind": "val",
+     "name": "shared",
+     "spec": "val shared : string list",
+     "doc": "`shared` is the globals of every text's prelude that have an\nidentity, Core's exceptions, which one unit of a program makes.\n\nEach is in `unit`'s `names` by itself, and\nin its `abi` where the unit makes them (makesShared), which one unit\nof a program does; in the others' texts they are imports, which their\nclient reads as it reads an import's placeholder.\n\n",
+     "page": "sig/CORE_TO_MID.md#val-shared"
     }
    ]
   },

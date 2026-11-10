@@ -13,6 +13,7 @@ struct
      lintRules : bool,                (* --lint-rules: print CoreLint's rules *)
      generate : int option,           (* --generate-core=SEED: print a generated program *)
      output : string option,          (* -o FILE: compile to bytecode, through Mid, in place of running *)
+     units : bool,                    (* --units: with -o, each --read-core file a unit, compiled apart and linked *)
      fault : CoreToMid.fault option,  (* --fault=NAME: a fault of Core to Mid made on purpose, for its tests *)
      strings : CoreRuntime.strings,   (* --strings=lazy|whole: how a string literal becomes its list (D24) *)
      help : bool,
@@ -76,6 +77,8 @@ struct
     \  --depth=N             the deepest the interpreter's stack may go, a bottom past it\n\
     \                        (default: 10000000)\n\
     \  -o FILE               compile to bytecode, through Mid, in place of running\n\
+    \  --units               with -o, each --read-core file a unit, after rhc's runtime's,\n\
+    \                        compiled apart and linked\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1)\n\
     \  --target=T            the bytecode: registers (default) or stack\n\
     \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
@@ -111,6 +114,7 @@ struct
       val lintRules = ref false
       val generate = ref NONE
       val output = ref NONE
+      val units = ref false
       val fault = ref NONE
       val strings = ref CoreRuntime.Lazy
       val help = ref false
@@ -126,6 +130,7 @@ struct
         | go ("--help" :: rest) = (help := true; go rest)
         | go ("--version" :: rest) = (version := true; go rest)
         | go ("-o" :: file :: rest) = (output := SOME file; go rest)
+        | go ("--units" :: rest) = (units := true; go rest)
         | go ["-o"] = raise Usage "-o takes a file"
         | go ("-O0" :: rest) = (Pass.level := 0; go rest)
         | go ("-O1" :: rest) = (Pass.level := 1; go rest)
@@ -155,7 +160,7 @@ struct
     in
       go args;
       {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
-       lintRules = !lintRules, generate = !generate, output = !output, fault = !fault,
+       lintRules = !lintRules, generate = !generate, output = !output, units = !units, fault = !fault,
        strings = !strings, help = !help, version = !version}
     end
 end

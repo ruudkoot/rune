@@ -277,11 +277,12 @@ program
   unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
   unit src/rhc/store.sml src/rhc/store.sml ascii
   unit src/rhc/storeconfig.sml src/rhc/storeconfig.sml ascii
+  unit src/rhc/units.sml src/rhc/units.sml ascii
   unit src/rhc/main.sml src/rhc/main.sml ascii
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build 5aaf67ce9f69c57bb885a92f07ee325c4216fba4441fcc26dc0f551d935d6a10
+  input rhc.build 6dac19fcb75e3994d2fca946f617a5e66f861693bf394105af4c9f29dea10543
   input lib/compiler/mid.build 3457b8d2776d3c493c09d63ea2ee5df01b4dfe1a92dc0195f2922a10ea3587cf
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
