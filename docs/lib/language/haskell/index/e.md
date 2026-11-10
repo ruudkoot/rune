@@ -20,6 +20,7 @@
 - `empty` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-empty), [HS_DS_ENV](../sig/HS_DS_ENV.md#val-empty), [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-empty), [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-empty)
 - `ENeg` (con): [HS_AST](../sig/HS_AST.md#con-eneg)
 - `Ent` (con): [HS_AST](../sig/HS_AST.md#con-ent)
+- `Entity` (con): [HS_USAGE](../sig/HS_USAGE.md#con-entity)
 - `entity` (type): [HS_AST](../sig/HS_AST.md#type-entity), [HS_MODULES](../sig/HS_MODULES.md#type-entity)
 - `entity_` (type): [HS_AST](../sig/HS_AST.md#type-entity_)
 - `EntModule` (con): [HS_AST](../sig/HS_AST.md#con-entmodule)
@@ -47,6 +48,8 @@
 - `exp_` (type): [HS_AST](../sig/HS_AST.md#type-exp_)
 - `expitem` (type): [HS_AST](../sig/HS_AST.md#type-expitem)
 - `explicit` (val): [HS_PRINT](../sig/HS_PRINT.md#val-explicit)
+- `Exports` (con): [HS_USAGE](../sig/HS_USAGE.md#con-exports)
+- `extend` (val): [HS_INFER](../sig/HS_INFER.md#val-extend)
 
 ---
 

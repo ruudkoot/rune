@@ -2,7 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) **k** [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
-- `key` (val): [HS_MODULES](../sig/HS_MODULES.md#val-key)
+- `key` (val): [HS_MODULES](../sig/HS_MODULES.md#val-key), [HS_USAGE](../sig/HS_USAGE.md#val-key)
 - `keyOf` (val): [HS_KINDS](../sig/HS_KINDS.md#val-keyof)
 - `KFree` (con): [HS_TYPES](../sig/HS_TYPES.md#con-kfree)
 - `KFun` (con): [HS_TYPES](../sig/HS_TYPES.md#con-kfun)

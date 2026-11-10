@@ -20,6 +20,9 @@
      rhc --dump-hslint FILE.hs         the types HsLint's second inference gives
                                        the program's bindings (RhcLint); with
                                        =library, the library's unsigned ones too
+     rhc --dump-iface FILE.hs          the interfaces of the program's modules,
+                                       their items and fingerprints (RhcIface)
+     rhc --dump-usages FILE.hs         what each unit reads of its imports
 
    `rhc --typecheck-only FILE.hs` checks the program as far as rhc goes,
    its names, fixity, kinds, types and classes (M13); `rhc FILE.hs` checks
@@ -39,7 +42,7 @@ struct
 
   datatype mode =
       ParseOnly | Print | PrintLayout | PrintExact | DumpTokens | DumpAst | DumpNames | DumpTypes | DumpEvidence
-    | DumpDerived | DumpBinders | DumpHsLint of bool | Check | Compile
+    | DumpDerived | DumpBinders | DumpHsLint of bool | DumpIface | DumpUsages | Check | Compile
 
   fun isSource a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
 
@@ -56,6 +59,8 @@ struct
     | "--dump-evidence" => SOME DumpEvidence
     | "--dump-derived" => SOME DumpDerived
     | "--dump-binders" => SOME DumpBinders
+    | "--dump-iface" => SOME DumpIface
+    | "--dump-usages" => SOME DumpUsages
     | "--dump-hslint" => SOME (DumpHsLint false)
     | "--dump-hslint=library" => SOME (DumpHsLint true)
     | _ => NONE
@@ -99,9 +104,13 @@ struct
         | DumpHsLint _ => NONE
         | _ => SOME (case !cycleDefault of PerModule => HsInfer.PerModule | PerGroup => HsInfer.PerGroup)
       (* a check or a compile from the saved world where it can (RhcWorld,
-         D45's B); the views, whole *)
+         D45's B), or with --by-interface each group from the interfaces
+         before it (RhcIface, M21); the views, whole *)
       val (g, r) =
-        if mode = Check orelse mode = Compile then
+        if mode = Check andalso !RhcIface.byInterface then
+          let val g = RhcGraph.load {roots = files, dotted = !dotted}
+          in (g, RhcIface.program (g, !fixpoint, check)) end
+        else if mode = Check orelse mode = Compile then
           RhcWorld.program {roots = files, dotted = !dotted, fixpoint = !fixpoint, check = check}
         else
           let val g = RhcGraph.load {roots = files, dotted = !dotted}
@@ -139,6 +148,8 @@ struct
       | DumpEvidence => (report (); RhcNames.dumpEvidence (g, r); OS.Process.success)
       | DumpDerived => (report (); RhcNames.dumpDerived (g, r); OS.Process.success)
       | DumpBinders => (RhcNames.dumpBinders (g, r); OS.Process.success)
+      | DumpIface => (report (); RhcIface.dumpIface (g, !fixpoint, check); OS.Process.success)
+      | DumpUsages => (report (); RhcIface.dumpUsages (g, !fixpoint, check); OS.Process.success)
       | _ =>
           if not (null diags) then (report (); OS.Process.failure)
           else if (case mode of DumpHsLint _ => true | _ => false) then
@@ -205,6 +216,7 @@ struct
               | "--cycle-default=module" => (cycleDefault := PerModule; true)
               | "--cycle-default=scc" => (cycleDefault := PerGroup; true)
               | "--dotted-names" => (dotted := true; true)
+              | "--by-interface" => (RhcIface.byInterface := true; true)
               | "--lint" => (Pass.lintGiven := SOME 2; true)
               | _ =>
                   if String.isPrefix "--hslint-claims=" a then
@@ -237,7 +249,8 @@ struct
             (* what is the compile's: the options not of the syntax and names *)
             fun own a =
               isSource a orelse isSome (modeOf a) orelse a = "--no-spans" orelse a = "--typecheck-only"
-              orelse a = "--dotted-names" orelse String.isPrefix "--names=" a orelse String.isPrefix "--cycle-default=" a
+              orelse a = "--dotted-names" orelse a = "--by-interface" orelse String.isPrefix "--names=" a
+              orelse String.isPrefix "--cycle-default=" a
               orelse String.isPrefix "--hslint-claims=" a
             val rest = List.filter (not o own) args
             val mode =
@@ -246,7 +259,8 @@ struct
               | [m] => m
               | _ => raise RhcOptions.Usage
                        ("one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens, --dump-ast, " ^
-                        "--dump-names, --dump-types, --dump-evidence, --dump-derived, --dump-binders and --dump-hslint")
+                        "--dump-names, --dump-types, --dump-evidence, --dump-derived, --dump-binders, --dump-hslint, " ^
+                        "--dump-iface and --dump-usages")
           in
             case (mode, files) of
               (_, []) => raise RhcOptions.Usage "no file of Haskell to read: give FILE.hs"
@@ -255,6 +269,8 @@ struct
             | (DumpEvidence, _) => program (DumpEvidence, files, rest)
             | (DumpDerived, _) => program (DumpDerived, files, rest)
             | (DumpBinders, [file]) => program (DumpBinders, [file], rest)
+            | (DumpIface, _) => program (DumpIface, files, rest)
+            | (DumpUsages, _) => program (DumpUsages, files, rest)
             | (_, [file]) => go (mode, spans, file, rest)
             | _ => raise RhcOptions.Usage "one file of Haskell at a time, the program's Main, but for --dump-names"
           end)

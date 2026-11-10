@@ -54,6 +54,7 @@ library language/haskell lib/language/haskell
   export signature HS_LITERATE
   export signature HS_MATCH
   export signature HS_MODULES
+  export signature HS_MOD_IFACE
   export signature HS_PARSER
   export signature HS_PRINT
   export signature HS_RENAME
@@ -62,6 +63,7 @@ library language/haskell lib/language/haskell
   export signature HS_STRING_MAP
   export signature HS_TOKEN
   export signature HS_TYPES
+  export signature HS_USAGE
   export structure Core
   export structure CoreGen
   export structure CoreInterp
@@ -89,6 +91,7 @@ library language/haskell lib/language/haskell
   export structure HsLint
   export structure HsLiterate
   export structure HsMatch
+  export structure HsModIface
   export structure HsModules
   export structure HsParser
   export structure HsPrint
@@ -98,6 +101,7 @@ library language/haskell lib/language/haskell
   export structure HsStringMap
   export structure HsToken
   export structure HsTypes
+  export structure HsUsage
   friend ../../../rhc.build
   use lib/language/haskell/syntax.build
     unit language/haskell:source_sig.sml lib/language/haskell/source_sig.sml ascii demand
@@ -122,6 +126,8 @@ library language/haskell lib/language/haskell
     unit language/haskell:dump.sml lib/language/haskell/dump.sml ascii demand
   end
   use lib/language/haskell/names.build
+    unit language/haskell:usage_sig.sml lib/language/haskell/usage_sig.sml ascii demand
+    unit language/haskell:usage.sml lib/language/haskell/usage.sml ascii demand
     unit language/haskell:strmap_sig.sml lib/language/haskell/strmap_sig.sml ascii demand
     unit language/haskell:strmap.sml lib/language/haskell/strmap.sml ascii demand
     unit language/haskell:modules_sig.sml lib/language/haskell/modules_sig.sml ascii demand
@@ -146,6 +152,8 @@ library language/haskell lib/language/haskell
     unit language/haskell:derive.sml lib/language/haskell/derive.sml ascii demand
     unit language/haskell:infer_sig.sml lib/language/haskell/infer_sig.sml ascii demand
     unit language/haskell:infer.sml lib/language/haskell/infer.sml ascii demand
+    unit language/haskell:modiface_sig.sml lib/language/haskell/modiface_sig.sml ascii demand
+    unit language/haskell:modiface.sml lib/language/haskell/modiface.sml ascii demand
   end
   use lib/language/haskell/core.build
     unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
@@ -272,6 +280,7 @@ program
   unit src/rhc/graph.sml src/rhc/graph.sml ascii
   unit src/rhc/names.sml src/rhc/names.sml ascii
   unit src/rhc/world.sml src/rhc/world.sml ascii
+  unit src/rhc/iface.sml src/rhc/iface.sml ascii
   unit src/rhc/lint.sml src/rhc/lint.sml ascii
   unit src/rhc/desugar.sml src/rhc/desugar.sml ascii
   unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
@@ -282,14 +291,14 @@ program
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build 6dac19fcb75e3994d2fca946f617a5e66f861693bf394105af4c9f29dea10543
+  input rhc.build 144e1a55ce9a958c59ed0d6f2bf525a3ceb92ad6adfffc7fd4a4279d92d4018d
   input lib/compiler/mid.build 3457b8d2776d3c493c09d63ea2ee5df01b4dfe1a92dc0195f2922a10ea3587cf
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
-  input lib/language/haskell/library.build 30cba585a4d95430e2d17cc9da1ba70a094f919686ba24569caeb4da886fe630
+  input lib/language/haskell/library.build 49ab305d9b9ba6438fd71ce3c09abad47c6ba3db561d3b275f34922a4b3a3e68
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
-  input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
-  input lib/language/haskell/types.build 070f2c855a3a6ca976bd77085d92acb876f16d060e28bc1805aecee9ef19a736
+  input lib/language/haskell/names.build 865f359abc0c0d488bf56afea3d97d8ed86edc3c53b7c39997433996a9119960
+  input lib/language/haskell/types.build 415989611838f3d9649cb05be340ce588c8026fc3ff775e870a1cab0fc36701c
   input lib/language/haskell/core.build af9419b8663fcd975e48babc55f1620ab8ba15d2766b50c395429795d7d03eaf
   input lib/language/haskell/hslint.build 111f509ac8f0072d070441ed422f8dd0b55dfb6dc0f2fbb926c909cf24e8c5a5
   input lib/language/haskell/desugar.build 2f2d4325b72d7b38c53d61974f92d02243122fcd36b98f4a6923b2353266481a

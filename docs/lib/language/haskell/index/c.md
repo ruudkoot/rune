@@ -3,7 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `C` (con): [HS_AST](../sig/HS_AST.md#con-c)
-- `canonical` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonical)
+- `canonical` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonical), [HS_MOD_IFACE](../sig/HS_MOD_IFACE.md#val-canonical)
 - `CASE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-case)
 - `Case` (con): [CORE](../sig/CORE.md#con-case)
 - `caseCon` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-casecon)
@@ -23,6 +23,7 @@
 - `class_` (type): [HS_LINT](../sig/HS_LINT.md#type-class_)
 - `classes` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-classes), [HS_INFER](../sig/HS_INFER.md#val-classes)
 - `classify` (val): [HS_CHAR](../sig/HS_CHAR.md#val-classify)
+- `classList` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-classlist)
 - `clause` (type): [HS_MATCH](../sig/HS_MATCH.md#type-clause)
 - `clauses` (val): [HS_MATCH](../sig/HS_MATCH.md#val-clauses)
 - `closeImplicit` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-closeimplicit)

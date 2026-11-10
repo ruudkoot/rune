@@ -20,7 +20,7 @@
 - `initial` (val): [HS_INFER](../sig/HS_INFER.md#val-initial)
 - `insert` (val): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-insert)
 - `INSTANCE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-instance)
-- `Instance` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-instance)
+- `Instance` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-instance), [HS_USAGE](../sig/HS_USAGE.md#con-instance)
 - `instance` (type): [HS_CLASSES](../sig/HS_CLASSES.md#type-instance)
 - `instanceId` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-instanceid)
 - `instances` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-instances)
@@ -39,6 +39,7 @@
 - `isSpecial` (val): [HS_AST](../sig/HS_AST.md#val-isspecial)
 - `isSymbol` (val): [HS_CHAR](../sig/HS_CHAR.md#val-issymbol)
 - `isSymbolic` (val): [HS_AST](../sig/HS_AST.md#val-issymbolic)
+- `Item` (con): [HS_USAGE](../sig/HS_USAGE.md#con-item)
 - `item` (type): [HS_TOKEN](../sig/HS_TOKEN.md#type-item)
 
 ---
