@@ -1,0 +1,291 @@
+# rhc's oracles' differences (D52; tests/hs/oracles/README.md), in the format of
+# docs/testing.md, Expectations: ORACLE | PROGRAM::LABEL | CATEGORY | OUTCOME: why.
+# A label is what was asked: conformance (E7's tests, built and run, against what
+# the suite expects), judge (accepted in some variant), open, ext or run (against
+# what E8 recorded, tests/hs/corpus). A program hs/... is one of rhc's own
+# (tests/hs), whose runner judges it on the oracles. The reason begins with the
+# outcome the line explains, and an R number is a reading of the Report
+# (tests/hs/readings.md from R55; E9's readings.md in the drafts before it).
+
+# The hard cases of E7: each yields a reading of the Report, or is nhc98 refusing legal code (roadmap, D52)
+ghc | conformance98/Array/timeLargeArray::conformance | HOST-BUG | reject: GHC 9.4 reads (!1) as a bang pattern in every language mode (E7, E10)
+hugs | conformance98/Array/timeLargeArray::conformance | SPEC-AMBIGUOUS | reject: R20: Hugs resolves the restricted top-level binding size = 60 at Integer before it sees its use at Int
+hugs | conformance98/Enum/succ::conformance | HOST-BUG | diff: R55: Hugs shows 1.0e20 as 1.0e+20, not in the form of the Report's showFloat
+hugs | yhc-conformance/Enum/succ::conformance | HOST-BUG | diff: R55: Hugs shows 1.0e20 as 1.0e+20, not in the form of the Report's showFloat
+hugs | conformance98/numbers/floatdouble::conformance | HOST-BUG | diff: R55: Hugs shows a Float to 7 digits and a Double to 15, not the shortest that read back
+mhs | conformance98/numbers/floatdouble::conformance | HOST-BUG | diff: R55: MicroHs shows a Double to 16 digits, not the shortest that read back
+hugs | conformance98/numbers/integerdouble::conformance | HOST-BUG | diff: R55: Hugs shows 1.23456789e8 as 123456789.0, where showFloat takes the exponent form above 10^7
+hugs | conformance98/numbers/subtract::conformance | HOST-BUG | diff: R55: Hugs shows the Float 0.70470005 as 0.7047001, not the shortest digits that read back
+hugs | yhc-conformance/parsing/rational_lits::conformance | HOST-BUG | diff: R55: Hugs shows 1.0e12 as 1000000000000.0, where showFloat takes the exponent form above 10^7
+nhc98 | conformance98/ctxsimpl::conformance | HOST-BUG | reject: nhc98 does not parse the context Eq (m a), which the suite marks SHOULDCOMPILE: nhc98 refusing legal code needs no reading (E7)
+ghc | conformance98/fields/operator::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of a record with an operator field; the suite expects nhc98's text with no spaces, these print GHC's spaced one
+hugs | conformance98/fields/operator::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of a record with an operator field; the suite expects nhc98's text with no spaces, these print GHC's spaced one
+mhs | conformance98/fields/operator::conformance | SPEC-AMBIGUOUS | rtfail: R41: derived Show of a record, and MicroHs cannot read back an operator field
+ghc | conformance98/fields/showread::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of records; the suite expects nhc98's spacing
+hugs | conformance98/fields/showread::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of records; the suite expects nhc98's spacing
+mhs | conformance98/fields/showread::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of records; the suite expects nhc98's spacing
+ghc | conformance98/fields/type::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of records; the suite expects nhc98's spacing
+hugs | conformance98/fields/type::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of records; the suite expects nhc98's spacing
+mhs | conformance98/fields/type::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of records; the suite expects nhc98's spacing
+ghc | conformance98/identifiers/twiddle::conformance | FAILS | accept: foo@(~(x,y)) = (1,2) is legal; the suite's hmakerr records nhc98's refusal, which needs no reading (E7)
+hugs | conformance98/identifiers/twiddle::conformance | FAILS | accept: foo@(~(x,y)) = (1,2) is legal; the suite's hmakerr records nhc98's refusal, which needs no reading (E7)
+mhs | conformance98/identifiers/twiddle::conformance | FAILS | accept: foo@(~(x,y)) = (1,2) is legal; the suite's hmakerr records nhc98's refusal, which needs no reading (E7)
+hugs | conformance98/import/emptyprelude::conformance | SPEC-AMBIGUOUS | reject: R32: after import Prelude (), Hugs takes (:) and nhc98 takes () out of scope; GHC and MicroHs keep built-in syntax
+nhc98 | conformance98/import/emptyprelude::conformance | SPEC-AMBIGUOUS | reject: R32: after import Prelude (), Hugs takes (:) and nhc98 takes () out of scope; GHC and MicroHs keep built-in syntax
+ghc | conformance98/import/specialchar::conformance | SPEC-AMBIGUOUS | reject: R34: import Prelude([](..)), which no oracle takes; the suite carries no expectation, so accept is the harness's default
+hugs | conformance98/import/specialchar::conformance | SPEC-AMBIGUOUS | reject: R34: import Prelude([](..)), which no oracle takes; the suite carries no expectation, so accept is the harness's default
+nhc98 | conformance98/import/specialchar::conformance | SPEC-AMBIGUOUS | reject: R34: import Prelude([](..)), which no oracle takes; the suite carries no expectation, so accept is the harness's default
+mhs | conformance98/import/specialchar::conformance | SPEC-AMBIGUOUS | reject: R34: import Prelude([](..)), which no oracle takes; the suite carries no expectation, so accept is the harness's default
+ghc | conformance98/infix/minus::conformance | SPEC-AMBIGUOUS | reject: R10: 3 * -4, prefix minus at precedence 6 under *; Hugs and nhc98 take it
+mhs | conformance98/infix/minus::conformance | SPEC-AMBIGUOUS | reject: R10: 3 * -4, prefix minus at precedence 6 under *; Hugs and nhc98 take it
+hugs | conformance98/layout/do::conformance | HOST-BUG | reject: R56: f a b = do a == b; do {e} is e (3.14), and Hugs wants a monadic type of the last statement
+ghc | conformance98/listindex::conformance | SPEC-AMBIGUOUS | reject: R10: xs !! -1, as infix/minus
+mhs | conformance98/listindex::conformance | SPEC-AMBIGUOUS | reject: R10: xs !! -1, as infix/minus
+hugs | conformance98/listindex::conformance | SPEC-AMBIGUOUS | rtfail: R10: xs !! -1 taken, as infix/minus, and failing at run time on the empty list
+nhc98 | conformance98/listindex::conformance | SPEC-AMBIGUOUS | rtfail: R10: xs !! -1 taken, as infix/minus, and failing at run time on the empty list
+hugs | conformance98/numbers/negliteral::conformance | SPEC-AMBIGUOUS | diff: R10: -2::N on a user Num folds to FromInteger (-2), where GHC and nhc98 give Negate (FromInteger 2)
+mhs | conformance98/numbers/negliteral::conformance | SPEC-AMBIGUOUS | diff: R10: -2::N on a user Num folds to FromInteger (-2), where GHC and nhc98 give Negate (FromInteger 2)
+ghc | conformance98/read/1x23::conformance | SPEC-AMBIGUOUS | reject: R22: print (reads "1x23") is ambiguous at (Show a, Read a); the suite records nhc98, which defaults it
+hugs | conformance98/read/1x23::conformance | SPEC-AMBIGUOUS | reject: R22: print (reads "1x23") is ambiguous at (Show a, Read a); the suite records nhc98, which defaults it
+mhs | conformance98/read/1x23::conformance | SPEC-AMBIGUOUS | reject: R22: print (reads "1x23") is ambiguous at (Show a, Read a); the suite records nhc98, which defaults it
+nhc98 | yhc-conformance/infix/derived::conformance | HOST-BUG | timeout: R43: derived Read with an infix constructor and no fixity; nhc98 exhausts its heap or its time
+
+# Tests that are not Haskell 98, which the suite expects to compile
+ghc | conformance98/FFI/evalorder::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+hugs | conformance98/FFI/evalorder::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+mhs | conformance98/FFI/evalorder::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+ghc | conformance98/FFI/foreignobj::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+hugs | conformance98/FFI/foreignobj::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+mhs | conformance98/FFI/foreignobj::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+ghc | conformance98/FFI/foreignptr::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+hugs | conformance98/FFI/foreignptr::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+mhs | conformance98/FFI/foreignptr::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+ghc | conformance98/FFI/newtype::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+hugs | conformance98/FFI/newtype::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+mhs | conformance98/FFI/newtype::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+ghc | conformance98/FFI/sizedtypes/Int::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+hugs | conformance98/FFI/sizedtypes/Int::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+mhs | conformance98/FFI/sizedtypes/Int::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+ghc | conformance98/FFI/sizedtypes/Word::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+hugs | conformance98/FFI/sizedtypes/Word::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+mhs | conformance98/FFI/sizedtypes/Word::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+ghc | conformance98/IOExtras/IOArray::conformance | FAILS | reject: not Haskell 98: NHC.IOExtras
+hugs | conformance98/IOExtras/IOArray::conformance | FAILS | reject: not Haskell 98: NHC.IOExtras
+mhs | conformance98/IOExtras/IOArray::conformance | FAILS | reject: not Haskell 98: NHC.IOExtras
+ghc | conformance98/IOExtras/IORef::conformance | FAILS | reject: not Haskell 98: NHC.IOExtras
+hugs | conformance98/IOExtras/IORef::conformance | FAILS | reject: not Haskell 98: NHC.IOExtras
+mhs | conformance98/IOExtras/IORef::conformance | FAILS | reject: not Haskell 98: NHC.IOExtras
+ghc | conformance98/foreign/exportio::conformance | FAILS | reject: not Haskell 98: foreign export and NHC.IOExtras
+hugs | conformance98/foreign/exportio::conformance | FAILS | reject: not Haskell 98: foreign export and NHC.IOExtras
+mhs | conformance98/foreign/exportio::conformance | FAILS | reject: not Haskell 98: foreign export and NHC.IOExtras
+ghc | conformance98/foreign/testunsafe::conformance | FAILS | reject: not Haskell 98: NHC.Internal
+hugs | conformance98/foreign/testunsafe::conformance | FAILS | reject: not Haskell 98: NHC.Internal
+mhs | conformance98/foreign/testunsafe::conformance | FAILS | reject: not Haskell 98: NHC.Internal
+ghc | conformance98/hmake::conformance | FAILS | reject: not Haskell 98: the preprocessor
+hugs | conformance98/hmake::conformance | FAILS | reject: not Haskell 98: the preprocessor
+nhc98 | conformance98/hmake::conformance | FAILS | rtfail: not Haskell 98: the preprocessor; nhc98 takes it and fails at run time
+mhs | conformance98/hmake::conformance | FAILS | reject: not Haskell 98: the preprocessor
+ghc | yhc-conformance/BinArray/test1::conformance | FAILS | reject: not Haskell 98: NHC.Binary
+hugs | yhc-conformance/BinArray/test1::conformance | FAILS | reject: not Haskell 98: NHC.Binary
+nhc98 | yhc-conformance/BinArray/test1::conformance | FAILS | reject: not Haskell 98: NHC.Binary; nhc98 fails at link: its basic build has no NHC.Binary
+mhs | yhc-conformance/BinArray/test1::conformance | FAILS | reject: not Haskell 98: NHC.Binary
+ghc | yhc-conformance/BinArray/test2::conformance | FAILS | reject: not Haskell 98: NHC.Binary
+hugs | yhc-conformance/BinArray/test2::conformance | FAILS | reject: not Haskell 98: NHC.Binary
+nhc98 | yhc-conformance/BinArray/test2::conformance | FAILS | reject: not Haskell 98: NHC.Binary; nhc98 fails at link: its basic build has no NHC.Binary
+mhs | yhc-conformance/BinArray/test2::conformance | FAILS | reject: not Haskell 98: NHC.Binary
+ghc | yhc-conformance/FFI/sizedtypes/Int::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+hugs | yhc-conformance/FFI/sizedtypes/Int::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+nhc98 | yhc-conformance/FFI/sizedtypes/Int::conformance | FAILS | diff: not Haskell 98: NHC.FFI; yhc's copy expects other output than nhc98 gives on this build
+mhs | yhc-conformance/FFI/sizedtypes/Int::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+ghc | yhc-conformance/getargs::conformance | FAILS | reject: not Haskell 98: System.Environment, which the strict GHC refuses by design
+ghc | yhc-conformance/packedstring::conformance | FAILS | reject: not Haskell 98: Data.PackedString
+hugs | yhc-conformance/packedstring::conformance | FAILS | reject: not Haskell 98: Data.PackedString
+nhc98 | yhc-conformance/packedstring::conformance | FAILS | reject: not Haskell 98: Data.PackedString
+mhs | yhc-conformance/packedstring::conformance | FAILS | reject: not Haskell 98: Data.PackedString
+
+# What an oracle lacks
+mhs | conformance98/IO/overwrite::conformance | HOST-BUG | reject: MicroHs has no hSeek
+mhs | conformance98/N+K::conformance | HOST-BUG | reject: MicroHs has no n+k patterns
+mhs | conformance98/fields/puns::conformance | HOST-BUG | diff: MicroHs takes record puns without asking
+mhs | conformance98/infix/constructor::conformance | HOST-BUG | reject: MicroHs cannot parse an operator left-hand side with an infix pattern on its right
+mhs | conformance98/qualifiers::conformance | HOST-BUG | ok?: MicroHs takes a trailing comma in a list comprehension
+mhs | conformance98/strings/newline::conformance | HOST-BUG | ok: MicroHs takes a newline in a string
+mhs | yhc-conformance/IO/overwrite::conformance | HOST-BUG | reject: MicroHs has no hSeek
+
+# The environment
+ghc | conformance98/Directory/getDirContents::conformance | FAILS | diff: lists the working directory, which each oracle leaves with other files
+hugs | conformance98/Directory/getDirContents::conformance | FAILS | diff: lists the working directory, which each oracle leaves with other files
+nhc98 | conformance98/Directory/getDirContents::conformance | FAILS | diff: lists the working directory, which each oracle leaves with other files
+mhs | conformance98/Directory/getDirContents::conformance | FAILS | diff: lists the working directory, which each oracle leaves with other files
+ghc | conformance98/float/show::conformance | FAILS | rtfail: the test has no stdin, and its stderr expects the read to fail: every oracle fails alike
+hugs | conformance98/float/show::conformance | FAILS | rtfail: the test has no stdin, and its stderr expects the read to fail: every oracle fails alike
+nhc98 | conformance98/float/show::conformance | FAILS | rtfail: the test has no stdin, and its stderr expects the read to fail: every oracle fails alike
+mhs | conformance98/float/show::conformance | FAILS | rtfail: the test has no stdin, and its stderr expects the read to fail: every oracle fails alike
+ghc | conformance98/layout/tullsen3::conformance | FAILS | diff: the result of system: this copy expects the raw wait status (256), where GHC and Hugs give the exit code
+hugs | conformance98/layout/tullsen3::conformance | FAILS | diff: the result of system: this copy expects the raw wait status (256), where GHC and Hugs give the exit code
+ghc | yhc-conformance/float/show::conformance | FAILS | reject: yhc's copy has trailing text that every oracle refuses
+hugs | yhc-conformance/float/show::conformance | FAILS | reject: yhc's copy has trailing text that every oracle refuses
+nhc98 | yhc-conformance/float/show::conformance | FAILS | reject: yhc's copy has trailing text that every oracle refuses
+mhs | yhc-conformance/float/show::conformance | FAILS | reject: yhc's copy has trailing text that every oracle refuses
+* | conformance98/random::conformance | HOST-FLAKY | diff: seeded from the clock, so its output changes from run to run, on every oracle
+
+# What has moved since E8's record: the compat layer's hash over Integer (D22), which Hugs and nhc98 now print
+# right, and runs near the oracles' time limits (E8: Hugs 120 s, nhc98 300 s), which E8 ran at load 30 to 40
+hugs | nofib/imaginary/bernouilli::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/imaginary/digits-of-e1::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/imaginary/digits-of-e2::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/real/anna::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/real/hpg::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/real/infer::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/real/lift::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/real/parser::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/real/prolog::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/real/rsa::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/real/symalg::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | nofib/spectral/sphere::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/imaginary/bernouilli::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/imaginary/digits-of-e1::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/imaginary/digits-of-e2::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/imaginary/gen_regexps::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/anna::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/bspt::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/compress::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/hpg::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/infer::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/linear::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/parser::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/prolog::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/reptile::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/real/rsa::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+nhc98 | nofib/spectral/sphere::run | WIDTH | ok/0/same: nofib's hash wraps at 64 bits; E8's compat folded it in a 32-bit Int, D22's over Integer prints the 64-bit value
+hugs | jhc/6_fixed_bugs/Rand.hs::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nhcnofib/real/hidden::run | HOST-FLAKY | ok/0/close: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nhcnofib/real/maillist::run | HOST-FLAKY | ok/0/same: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nhcnofib/spectral/constraints::run | HOST-FLAKY | ok/0/same: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nhcnofib/spectral/cryptarithm1::run | HOST-FLAKY | ok/0/same: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+nhc98 | nofib/gc/fulsom::run | HOST-FLAKY | ok/0/diff: near nhc98's 300 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/imaginary/queens::run | HOST-FLAKY | ok/0/same: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/imaginary/rfib::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/imaginary/x2n1::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+nhc98 | nofib/imaginary/x2n1::run | HOST-FLAKY | ok/0/same: near nhc98's 300 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/real/bspt::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+nhc98 | nofib/real/fulsom::run | HOST-FLAKY | ok/timeout/diff: near nhc98's 300 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/real/maillist::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/spectral/cryptarithm1::run | HOST-FLAKY | ok/0/same: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/spectral/hartel/fft::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+nhc98 | nofib/spectral/hartel/fft::run | HOST-FLAKY | ok/timeout/diff: near nhc98's 300 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/spectral/hartel/solid::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/spectral/secretary::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/spectral/sorting::run | HOST-FLAKY | ok/0/diff: near Hugs's 120 s, so whether it ends in time is the load's; E8 timed out
+hugs | nofib/imaginary/gen_regexps::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; it timed out here, and E8 ran it in time
+hugs | nofib/real/reptile::run | HOST-FLAKY | ok/timeout/diff: near Hugs's 120 s, so whether it ends in time is the load's; it timed out here, and E8 ran it in time
+
+# rhc's own run programs (tests/hs/lang, M19), which T's runner judges on the oracles: their lines are T's,
+# the last two by the lead's ruling of 2026-11-10
+hugs | hs/lang/exp.field.upd.strictfield_undef::run | HOST-BUG | diff: an update of a strict field to bottom is not bottom in Hugs (3.15.3, 4.2.1)
+nhc98 | hs/lang/exp.field.upd.strictfield_undef::run | HOST-BUG | diff: an update of a strict field to bottom is not bottom in nhc98 (3.15.3, 4.2.1)
+hugs | hs/lang/std.float.isnan::run | HOST-BUG | diff: Hugs's isNaN, isInfinite, isNegativeZero and isIEEE answer False at IEEE Double and Float (6.4.6)
+nhc98 | hs/lang/std.float.isnan::run | HOST-BUG | diff: nhc98's isNaN, isInfinite, isNegativeZero and isIEEE answer False at IEEE Double and Float (6.4.6)
+hugs | hs/lang/tr.lit.float.exact::run | HOST-BUG | diff: Hugs reads a floating literal at Rational through Double, so its digits past a Double's are lost (3.2)
+hugs | hs/lang/tr.op.neg::run | HOST-BUG | diff: R10: Hugs takes -5 as fromInteger (-5), not negate (fromInteger 5)
+mhs | hs/lang/tr.op.neg::run | HOST-BUG | diff: R10: MicroHs takes -5 as fromInteger (-5), not negate (fromInteger 5)
+hugs | hs/lang/pat.neg.meaning::run | HOST-BUG | diff: R10: Hugs matches the pattern -1 by fromInteger (-1)
+mhs | hs/lang/pat.neg.meaning::run | HOST-BUG | diff: R10: MicroHs matches the pattern -1 by fromInteger (-1)
+hugs | hs/lang/exp.lit.char::run | HOST-BUG | reject: runhugs cannot run a Main with no unqualified >> in scope (the Prelude imported qualified)
+hugs | hs/lang/exp.free.bind::run | HOST-BUG | reject: runhugs cannot run a Main with no unqualified >> in scope (>> hidden)
+hugs | hs/lang/exp.free.list::run | HOST-BUG | reject: runhugs cannot run a Main with no unqualified >> in scope (an import list without it)
+nhc98 | hs/lang/exp.free.list::run | HOST-BUG | reject: nhc98's translation of list syntax names the Prelude's entities by the names in scope (3)
+nhc98 | hs/lang/exp.free.true::run | HOST-BUG | reject: nhc98's translations name True and False by the names in scope, not the Prelude's (3)
+nhc98 | hs/lang/exp.free.error::run | HOST-BUG | reject: nhc98's translations name error by the name in scope, not the Prelude's (3)
+nhc98 | hs/lang/exp.free.undefined::run | HOST-BUG | reject: nhc98's translations name undefined by the name in scope, not the Prelude's (3)
+nhc98 | hs/lang/exp.minus.rebind::run | HOST-BUG | reject: nhc98 takes unary minus from the - in scope, not the Prelude's negate (3.4)
+nhc98 | hs/lang/exp.neg.prec.fixed::run | HOST-BUG | reject: R10: nhc98 gives prefix negation the fixity of the - in scope (3.4)
+nhc98 | hs/lang/exp.case.shorthand::run | HOST-BUG | reject: nhc98 refuses a where binding that shadows a pattern variable of its alternative (3.13)
+nhc98 | hs/lang/exp.do.emptystmt.elim::run | HOST-BUG | reject: nhc98 refuses the empty statements of a do (3.14)
+nhc98 | hs/lang/pat.m.label.order::run | HOST-BUG | diff: nhc98 matches labelled fields in the declaration's order, not the pattern's (3.17.2, erratum of July 2004)
+mhs | hs/lang/pat.m.label.order::run | HOST-BUG | diff: MicroHs matches labelled fields in the declaration's order, not the pattern's (3.17.2, erratum of July 2004)
+nhc98 | hs/lang/pat.m.lit.overload::run | HOST-BUG | crash: nhc98 dies of SIGSEGV on a floating literal pattern at a user Fractional type
+hugs | hs/lang/std.tuple.bounded::run | HOST-BUG | reject: Hugs has no Bounded instances for tuples (6.1.4)
+hugs | hs/lang/std.tuple.size15.value::run | HOST-BUG | reject: Hugs has Show instances for tuples up to 5 components, not 15 (6.1.4)
+nhc98 | hs/lang/std.ord.default.compare::run | HOST-BUG | diff: nhc98's default max x y is x where x <= y and they are equal; the Report's is y (6.3.2, 8)
+nhc98 | hs/lang/std.enum.int.from::run | HOST-BUG | diff: nhc98's [1,1..1] is [1], not an infinite list of 1s (6.3.4)
+nhc98 | hs/lang/std.enum.float.rules::run | HOST-BUG | diff: R39: nhc98 ends a Float sequence before the limit plus half the step
+mhs | hs/lang/std.enum.float.rules::run | HOST-BUG | diff: R39: MicroHs ends a Float sequence before the limit plus half the step
+nhc98 | hs/lang/std.exp.def::run | HOST-BUG | diff: nhc98's atan2 in the third quadrant (6.4.5)
+nhc98 | hs/lang/std.float.radix::run | HOST-BUG | diff: nhc98's floatRange counts denormals: (-148,128) and (-1073,1024) (6.4.6)
+hugs | hs/lang/std.float.decode::run | HOST-BUG | diff: Hugs's decodeFloat 0 is (0,-53), where m and n are both zero (6.4.6)
+nhc98 | hs/lang/std.num.table.complex::run | HOST-BUG | diff: nhc98's derived Show of an infix constructor has no spaces around it (10.4's showsPrec)
+nhc98 | hs/lang/io.getline.partial::run | HOST-BUG | diff: R46: nhc98 raises end of file on a last line with no newline, where 21.9.2 returns it
+mhs | hs/lang/io.getline.partial::run | HOST-BUG | diff: R46: MicroHs raises end of file on a last line with no newline
+hugs | hs/lang/pre.text.reads::run | HOST-BUG | diff: Hugs's showsPrec 6 (-5 :: Int) has parentheses, which showSigned puts only above 6 (8.2)
+ghc | hs/lang/tr.do.seq::run | HOST-BUG | reject: GHC's base wants an Applicative instance for a Monad, which Haskell 98 has not
+ghc | hs/lang/std.monad.default.then::run | HOST-BUG | reject: GHC's base has no fail in Monad (MonadFail)
+ghc | hs/lang/std.monad.default.fail::run | HOST-BUG | reject: GHC's base wants an Applicative instance for a Monad, which Haskell 98 has not
+hugs | hs/lang/*::run | HOST-BUG | stdout: Hugs writes a program error on standard output, where 7.3 and R37 have standard error (set aside in judging)
+nhc98 | hs/lang/*::run | HOST-BUG | exit: nhc98 ends an error with status 255; R37's seed is exitFailure's 1 (judged as non-zero)
+
+# rhc's own programs of M19f (T's lines)
+ghc | hs/accept/pre.export.boolfalsectrue_imported::judge | HOST-BUG | reject: GHC's base Prelude has no fail in Monad, so Monad((>>=), (>>), return, fail) cannot be imported
+nhc98 | hs/accept/pre.export.boolfalsectrue_imported::judge | HOST-BUG | reject: nhc98's translations need () and the list's names in scope under an explicit import list
+nhc98 | hs/accept/pre.list.export.map_imported::judge | HOST-BUG | reject: nhc98's translations need () and the list's names in scope under an explicit import list
+nhc98 | hs/accept/pre.io.export.filepath_imported::judge | HOST-BUG | reject: nhc98's translations need () and the list's names in scope under an explicit import list
+nhc98 | hs/accept/pre.text.export.reads_imported::judge | HOST-BUG | reject: nhc98's translations need () and the list's names in scope under an explicit import list
+nhc98 | hs/lang/pre.class.num_defaults::run | HOST-BUG | diff: nhc98 gives negate (C 0) as C 0 where the instance defines negate _ = C 4
+ghc | hs/lang/pre.class.monad_defaults::run | HOST-BUG | reject: GHC's base has no fail in Monad (MonadFail)
+nhc98 | hs/lang/pre.numericenumfrom_literal::run | HOST-BUG | diff: R39: nhc98's Float sequences end before the limit plus half the step
+nhc98 | hs/errors/pre.r.builtin.colon::judge | HOST-BUG | accept: nhc98 takes a fixity declaration for the built-in (:)
+mhs | hs/errors/pre.r.builtin.colon::judge | HOST-BUG | accept: MicroHs takes a fixity declaration for the built-in (:)
+nhc98 | hs/errors/pre.r.significant::judge | HOST-BUG | accept: nhc98's Prelude exports numericEnumFrom, which the Report's does not
+nhc98 | hs/errors/pre.r.prim.hidden::judge | HOST-BUG | accept: nhc98 has a module PreludeBuiltin to import
+nhc98 | hs/errors/pre.r.builtin.export::judge | HOST-BUG | accept: nhc98 lets [] stand in an export list
+mhs | hs/errors/pre.r.builtin.export::judge | HOST-BUG | accept: MicroHs lets [] stand in an export list
+hugs | hs/accept/tr.do.last.nomonad::judge | SPEC-AMBIGUOUS | reject: R56: Hugs refuses do {e} at a type that is no monad's
+hugs | hs/errors/exp.cons.reserved::judge | HOST-BUG | accept: Hugs lets a data declaration declare the constructor (:)
+nhc98 | hs/errors/exp.cons.reserved::judge | HOST-BUG | accept: nhc98 lets a data declaration declare the constructor (:)
+nhc98 | hs/errors/exp.nil.reserved::judge | HOST-BUG | accept: nhc98 lets a data declaration declare the constructor []
+nhc98 | hs/errors/exp.field.once::judge | HOST-BUG | accept: nhc98 takes a constructor that names a field twice
+nhc98 | hs/errors/exp.field.con.twice::judge | HOST-BUG | accept: nhc98 takes a construction that names a field twice
+nhc98 | hs/errors/exp.field.con.strict::judge | HOST-BUG | accept: nhc98 takes a construction that leaves out a strict field
+mhs | hs/errors/exp.field.con.strict::judge | HOST-BUG | accept: MicroHs takes a construction that leaves out a strict field
+nhc98 | hs/errors/exp.field.con.empty.strict::judge | HOST-BUG | accept: nhc98 takes F {} where F has a strict field
+hugs | hs/errors/exp.field.con.empty.strict::judge | HOST-BUG | reject: Hugs refuses with an internal error (depConFlds), not a diagnostic
+nhc98 | hs/errors/exp.field.upd.twice::judge | HOST-BUG | accept: nhc98 takes an update that names a field twice
+mhs | hs/errors/exp.field.upd.twice::judge | HOST-BUG | accept: MicroHs takes an update that names a field twice
+nhc98 | hs/errors/exp.sig.general::judge | HOST-BUG | accept: nhc98 takes 'a' :: a, a signature more general than the type
+nhc98 | hs/errors/exp.sig.scope::judge | HOST-BUG | accept: nhc98 scopes a signature's type variable beyond its signature
+nhc98 | hs/errors/pat.m.label.twice::judge | HOST-BUG | accept: nhc98 takes a field pattern that names a field twice
+nhc98 | hs/errors/pat.class.npk::judge | HOST-BUG | accept: nhc98 takes an n+k pattern at Double, which is no Integral
+nhc98 | hs/errors/io.print.type::judge | HOST-BUG | accept: nhc98 takes print id, with no Show for functions
+ghc | hs/lang/std.enum.float.accum_literal::run | HOST-BUG | diff: R39: GHC computes n + k * step, not the code's iterated sum (Note [Numeric Stability])
+nhc98 | hs/lang/std.enum.strict.float_seq::run | HOST-BUG | diff: R39: nhc98's enumFrom at Double is not strict, as the erratum of May 2003 makes it
+ghc | hs/lang/std.gcd.zero_error::run | SPEC-AMBIGUOUS | diff: R45: GHC gives gcd 0 0 as 0 (Haskell 2010), where Haskell 98's is an error
+mhs | hs/lang/std.gcd.zero_error::run | SPEC-AMBIGUOUS | diff: R45: MicroHs gives gcd 0 0 as 0 (Haskell 2010)
+hugs | hs/lang/std.trig.atan2.origin_default::run | HOST-BUG | diff: Hugs's atan2 of signed zeros is not the default's (no negative zero)
+nhc98 | hs/lang/std.trig.atan2.origin_default::run | HOST-BUG | diff: nhc98's atan2 of the origin is an error
+hugs | hs/lang/std.float.isdenorm_smallest::run | HOST-BUG | diff: Hugs's isDenormalized answers False on the smallest denormal
+nhc98 | hs/lang/std.float.isdenorm_smallest::run | HOST-BUG | diff: nhc98's isDenormalized answers False on the smallest denormal
+ghc | hs/lang/std.eq.neither_loops::run | HOST-BUG | timeout: GHC loops without detecting it; bottom either way
+nhc98 | hs/lang/std.eq.neither_loops::run | HOST-BUG | timeout: nhc98 loops without detecting it; bottom either way
+
+# the libraries' programs of M19 (O: chapters 12 to 27); a program of tests/hs/accept or tests/hs/errors is judged (::judge)
+mhs | hs/lang/lib.r.ratio.percent.zero_error::run | HOST-BUG | exit: MicroHs's x % 0 is no error (12.1)
+mhs | hs/lang/lib.ratio.inst.eqratioa_methods::run | HOST-BUG | diff: MicroHs's [1 % 2 .. 2] at Rational ends at the limit, not the limit plus a half (12.1, numericEnumFromTo)
+nhc98 | hs/lang/lib.complex.fixity.6colonplus_parse::run | HOST-BUG | diff: nhc98's derived Show of an infix constructor has no spaces around it (10.4's showsPrec)
+hugs | hs/lang/lib.complex.inst.numcomplexa_methods::run | HOST-BUG | diff: R55: Hugs shows pi to 15 digits
+nhc98 | hs/lang/lib.complex.inst.numcomplexa_methods::run | HOST-BUG | exit: nhc98's derived Read of an infix constructor does not read 1.5 :+ 2.0, and its derived Show has no spaces (10.4)
+nhc98 | hs/lang/lib.complex.realpart_literal::run | HOST-BUG | diff: nhc98's atan2 0 (-1) is not pi, so its phase leaves (-pi, pi] (6.4.5)
+mhs | hs/lang/lib.complex.realpart_literal::run | HOST-BUG | diff: MicroHs's magnitude (0 :+ 0) is NaN
+ghc | hs/errors/lib.r.complex.context::judge | HOST-BUG | accept: GHC's Complex has no datatype context (RealFloat a), which the shim cannot restore
+mhs | hs/errors/lib.r.complex.context::judge | HOST-BUG | accept: MicroHs's Complex has no datatype context (RealFloat a)
+mhs | hs/lang/lib.numeric.showsigned_literal::run | HOST-BUG | diff: MicroHs's readSigned does not read " - 5" as -5, where the code lexes the - apart (14.2)
+nhc98 | hs/lang/lib.numeric.showsigned_literal::run | HOST-BUG | reject: nhc98 refuses the Report's own Numeric code: a pattern binding (minExp0, _) = floatRange r whose type needs RealFloat (legal, 4.4.3.2)
+ghc | hs/lang/lib.r.numeric.digs.just_ties::run | HOST-BUG | diff: GHC's roundTo takes a half to even, where the code's takes it up, and GHC's showEFloat (Just 0) shows no digit after the point, where the code's max dec 1 shows one (14.4)
+mhs | hs/lang/lib.r.numeric.digs.just_ties::run | HOST-BUG | diff: MicroHs's roundTo takes a half to even, and its showEFloat (Just 0) shows no digit after the point (14.4)
+ghc | hs/lang/lib.r.numeric.floattodigits.zero_exact::run | HOST-BUG | diff: GHC's floatToDigits _ 0 is ([0], 0), where the code's first equation gives ([], 0) (14.4)
+hugs | hs/lang/lib.r.numeric.floattodigits.zero_exact::run | HOST-BUG | diff: Hugs's floatToDigits _ 0 is ([0], 0), where the code's first equation gives ([], 0) (14.4)
+mhs | hs/lang/lib.r.numeric.floattodigits.zero_exact::run | HOST-BUG | diff: MicroHs's floatToDigits _ 0 is ([0], 0), where the code's first equation gives ([], 0) (14.4)
+ghc | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | diff: GHC's readFloat reads neither NaN nor Infinity, which the code's last two generators read (14.4)
+mhs | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | diff: MicroHs's readFloat reads neither NaN nor Infinity (14.4)
+hugs | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | exit: Hugs's isNaN, isInfinite and isNegativeZero answer False at IEEE Double, so formatRealFloat fails on NaN and drops -0's sign (6.4.6, 14.4)
+nhc98 | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | exit: nhc98's isNaN, isInfinite and isNegativeZero answer False at IEEE Double, so formatRealFloat fails on NaN and drops -0's sign (6.4.6, 14.4)
+hugs | hs/lang/lib.r.numeric.showsigned_text::run | HOST-BUG | diff: R55: Hugs shows 1.0e-2 as 0.01

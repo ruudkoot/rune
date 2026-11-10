@@ -59,7 +59,7 @@ struct
         | _ => acc
       fun go (e, acc) =
         case e of
-          Let (x, _, r, b) => let val acc = List.foldl atom acc (atomsOfRhs r) in bind x; go (b, acc) end
+          Let (x, _, r, b) => let val acc = foldAtomsOfRhs atom acc r in bind x; go (b, acc) end
         | Fun (fs, b) =>
             let
               val inGroup = groupFreeOf fs
@@ -71,7 +71,7 @@ struct
         | If (c, t, f) => go (f, go (t, atom (c, acc)))
         | Handle (a, x, h) => let val acc = go (a, acc) in bind x; go (h, acc) end
         | Raise a => atom (a, acc)
-        | Return r => List.foldl atom acc (atomsOfRhs r)
+        | Return r => foldAtomsOfRhs atom acc r
         | Mark (_, a) => go (a, acc)
     in
       go (e, acc)
@@ -101,7 +101,7 @@ struct
         | Const (_, t) => gensOfTy (t, acc)
         | Con0 (_, t) => gensOfTy (t, acc)
         | Unit => acc
-      fun rhs (r, acc) = List.foldl gensOfTy (List.foldl atom acc (atomsOfRhs r)) (typesOfRhs r)
+      fun rhs (r, acc) = List.foldl gensOfTy (foldAtomsOfRhs atom acc r) (typesOfRhs r)
       fun without (tvs, m) = List.foldl (fn (a, m) => IntMap.remove (m, a)) m tvs
     in
       case e of
@@ -166,7 +166,7 @@ struct
         case e of
           Let (x, s, r, b) =>
             (IntTable.insert (schemes, x, s);
-             List.app useAtom (atomsOfRhs r);
+             appAtomsOfRhs useAtom r;
              case r of App (Var (f, _), _) => bump (calls, f) | _ => ();
              scan b)
         | Fun (fs, b) => (List.app (fn f => IntTable.insert (funs, #name f, ())) fs; List.app scanFun fs; scan b)
@@ -176,7 +176,7 @@ struct
         | Handle (a, x, h) => (IntTable.insert (schemes, x, ([], Ty.exn)); scan a; scan h)
         | Raise a => useAtom a
         | Return r =>
-            (List.app useAtom (atomsOfRhs r);
+            (appAtomsOfRhs useAtom r;
              case r of App (Var (f, _), _) => bump (calls, f) | _ => ())
         | Mark (_, a) => scan a
       and scanFun (f : fundef) =

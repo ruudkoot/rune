@@ -13,7 +13,21 @@ documented when a comment describes it, alone or together with the entry before 
 | [`CORE_PRIM`](sig/CORE_PRIM.md) | 4 | 4 | 100% | 1 | 1 |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | 9 | 9 | 100% | 8 | 8 |
 | [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 4 | 4 | 100% | 1 | 1 |
-| **all** | 45 | 45 | 100% | 22 | 22 |
+| [`HS_AST`](sig/HS_AST.md) | 44 | 44 | 100% | 8 | 8 |
+| [`HS_CHAR`](sig/HS_CHAR.md) | 4 | 4 | 100% | 3 | 3 |
+| [`HS_DUMP`](sig/HS_DUMP.md) | 2 | 2 | 100% | 2 | 2 |
+| [`HS_FIXITY`](sig/HS_FIXITY.md) | 4 | 4 | 100% | 2 | 2 |
+| [`HS_LAYOUT`](sig/HS_LAYOUT.md) | 13 | 13 | 100% | 11 | 11 |
+| [`HS_LEXER`](sig/HS_LEXER.md) | 3 | 3 | 100% | 1 | 1 |
+| [`HS_LITERATE`](sig/HS_LITERATE.md) | 2 | 2 | 100% | 2 | 2 |
+| [`HS_MODULES`](sig/HS_MODULES.md) | 14 | 14 | 100% | 6 | 6 |
+| [`HS_PARSER`](sig/HS_PARSER.md) | 6 | 6 | 100% | 3 | 3 |
+| [`HS_PRINT`](sig/HS_PRINT.md) | 7 | 7 | 100% | 7 | 7 |
+| [`HS_RENAME`](sig/HS_RENAME.md) | 4 | 4 | 100% | 2 | 2 |
+| [`HS_SOURCE`](sig/HS_SOURCE.md) | 10 | 10 | 100% | 6 | 6 |
+| [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 8 | 8 | 100% | 6 | 6 |
+| [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
+| **all** | 175 | 175 | 100% | 86 | 86 |
 
 ## Members a signature describes
 
@@ -22,7 +36,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-7 structures have a page, with 45 members, of which 45 (100%) are described by a signature.
+21 structures have a page, with 175 members, of which 175 (100%) are described by a signature.
 
 ---
 

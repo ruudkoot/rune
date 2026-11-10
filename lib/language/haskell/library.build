@@ -6,7 +6,7 @@
    builds it (D42). Its friends see what it does not export: rhc's build,
    which is a friend of lib/compiler too. *)
 requires unicode end
-exports (structure Core, signature CORE, structure CoreText, signature CORE_TEXT, structure CorePrim,
+exports (structure Core, signature CORE, structure CoreText, signature CORE_TEXT, structure CorePrim, structure CoreRuntime, signature CORE_RUNTIME,
          signature CORE_PRIM, structure CoreLint, signature CORE_LINT, structure CoreInterp, signature CORE_INTERP,
          structure CoreGen, signature CORE_GEN, structure CoreToMid, signature CORE_TO_MID,
          structure HsAst, structure HsChar, structure HsDump, structure HsFixity, structure HsLayout,

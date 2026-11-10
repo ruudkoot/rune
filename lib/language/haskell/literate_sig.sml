@@ -16,10 +16,11 @@ sig
   val isLiterate : string -> bool
 
   (* `unlit (file, bytes)` is the program text of the literate file
-     `file`, whose bytes are `bytes`. A line that begins with `>` is a
-     program line, and so is every line between a line that begins with
-     `\begin{code}` and one that begins with `\end{code}`; every other
-     line is commentary.
+     `file`, whose bytes are `bytes`.
+
+     A line that begins with `>` is a program line, and so is every line
+     between a line that begins with `\begin{code}` and one that begins
+     with `\end{code}`; every other line is commentary.
 
      Raises: `HsSource.Error` for a program line next to a line of
      commentary that is not blank, for a `\begin{code}` that no

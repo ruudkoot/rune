@@ -197,3 +197,30 @@ none. At `F` the longest lexeme is therefore `F.-`, then `-`: `F.--1` is `F.- - 
 refuses. The row's first reading, `F` then the varsym `.--`, overlooks the shorter qualified operator. **GHC**, **Hugs**
 and **nhc98** all read one qualified symbol `F.--` and refuse it as out of scope. **rhc** follows 2.4; the row needs a
 refused program, and stays without one until its test is read again. Rows: `lex.qual.dashes`.
+
+## The readings of the libraries' clause programs (M19, chapters 12 to 27)
+
+These come from the clause programs of the Report's libraries, `tests/hs/lang` and `tests/hs/accept` from `lib.`, put to
+GHC 9.4.7 with the strict shim, Hugs `+98`, nhc98 `-98` and MicroHs before they landed. Where the library's prose and its
+code part, the code is the text (D38, as the lead's ruling on R39 takes chapter 8's code), and rhc follows it.
+
+### R150. `showFFloat Nothing 245000` is `245000.0`
+> showFFloat uses standard decimal notation (e.g. 245000, 0.0015). (14.1)
+> Nothing -- Always prints a decimal point (14.4, Numeric, formatRealFloat)
+
+**What the text says.** The prose's example drops the point that the code always prints: by the code,
+`showFFloat Nothing 245000 ""` is `245000.0`, and `0.0015` stays `0.0015`. The code defines the function; the example
+illustrates "standard decimal notation", which both forms are. E9's R49 lists this among the library's prose against its
+code. **GHC**, **Hugs**, **nhc98** and **MicroHs** all print `245000.0`. **rhc** follows the code.
+Rows: `lib.r.numeric.showffloat`.
+
+### R151. `floatToDigits`: `r = 0.d1...dn * b^e` exactly only where `b` is a power of the radix
+> if floatToDigits b r = ([d_1, d_2, ... d_n], e) then the following properties hold: r = 0.d1 d2 ..., dn * be (14.1)
+> Based on "Printing Floating-Point Numbers Quickly and Accurately" by R.G. Burger and R. K. Dybvig (14.4, Numeric)
+
+**What the text says.** The code generates the shortest digits that identify `r` among the numbers of its type, its
+citation's algorithm, so `floatToDigits 10 0.1` is `([1], 0)`, while `0.1 :: Double` is not one tenth. The first
+property holds exactly in bases 2 and 16, where the digits are `r`'s own, and in base 10 only as the digits read back to
+`r`: `fromRational` of `0.d1...dn * 10^e` is `r`. The other properties hold as written. **GHC**, **Hugs**, **nhc98** and
+**MicroHs** agree with the code. **rhc** follows the code; the program checks the property exactly in bases 2 and 16
+and to the nearest float in base 10. Rows: `lib.r.numeric.floattodigits.value`.
