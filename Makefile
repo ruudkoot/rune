@@ -292,7 +292,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
+.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-rhc-mutants test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt runeffi basis-cache
 
@@ -2180,7 +2180,8 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
-               tests/runner/hssyntax.sml \
+               tests/runner/hssyntax.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
+               tests/runner/hsmeta.sml tests/runner/hsgen.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
@@ -2248,6 +2249,12 @@ test-mutants: $(RUNEDOC) vm FORCE bin/rune-test bin/rune-doc-check
 # runs those alone; COMPILER_MUTANTS_QUICK=N keeps N items of each part of the corpus.
 test-compiler-mutants: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental bin/rune-repl
 	$(RUNE_TEST) --tier test-compiler-mutants
+
+# rhc's mutants (tests/runner/hsmutants.sml; docs/testing.md, rhc's mutants), each
+# built into an rhc of its own and held to the jobs it names: minutes. HS_MUTANTS=HL01
+# runs those alone; make check only builds them.
+test-rhc-mutants: $(RUNE) vm bin/rune-test bin/rhc
+	$(RUNE_TEST) --tier test-rhc-mutants
 
 # Those of the cache alone (tests/runner/cachemutantlist.sml; docs/testing.md, The
 # checks of the cache), each against the checks that must see it: minutes
