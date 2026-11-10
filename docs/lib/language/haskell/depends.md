@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 156 requirements between the 64 files become 84 arrows.
+library and not a wall of lines: the 212 requirements between the 72 files become 98 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(62)"]
+  a0["Languages<br>(70)"]
   a1["Not in an area<br>(2)"]
   a1 -- 2 --> a0
 ```
@@ -94,6 +94,14 @@ flowchart TD
   n61["CoreGen"]
   n62(["CORE_TO_MID"])
   n63["CoreToMid"]
+  n64(["HS_DS_CORE"])
+  n65["HsDsCore"]
+  n66(["HS_DS_ENV"])
+  n67["HsDsEnv"]
+  n68(["HS_MATCH"])
+  n69["HsMatch"]
+  n70(["HS_DESUGAR"])
+  n71["HsDesugar"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -175,6 +183,20 @@ flowchart TD
   n62 --> n45
   n63 --> n62
   n63 --> n53
+  n64 --> n45
+  n65 --> n47
+  n65 --> n64
+  n65 --> n21
+  n66 --> n65
+  n66 --> n41
+  n67 --> n66
+  n68 --> n67
+  n69 --> n68
+  n70 --> n45
+  n70 --> n41
+  n71 --> n53
+  n71 --> n70
+  n71 --> n69
 ```
 
 ## Not in an area

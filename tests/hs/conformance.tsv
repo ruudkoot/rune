@@ -358,9 +358,9 @@ exp.op.default.fixity	3.2	An operator with no fixity declaration has the highest
 exp.op.paren	3.2	Parentheses convert an operator symbol to an ordinary identifier: (+) x y is x + y	dynamic	run	value	hand	Planned		
 exp.op.paren.foldr	3.2	foldr (*) 1 xs is equivalent to foldr (\x y -> x*y) 1 xs	dynamic	run	value	hand	Planned		
 exp.op.nofixity.paren	3.2	An operator in parentheses is an ordinary identifier, so its fixity has no effect	syntax	run	f (+) (*) parses as an application of three	hand	Planned		
-tr.lit.int	3.2	The integer literal i is equivalent to fromInteger i	dynamic	run	user Num instance sees the call; see readings.md: read literally the identity does not terminate, as i on the right is an Integer constant the kernel must hold	hand	Planned	R14	
-tr.lit.float	3.2	The floating literal f is equivalent to fromRational (n Ratio.% d)	dynamic	run	user Fractional instance sees the call; see readings.md: Ratio.% is not in the Prelude though 3 says free names are	hand	Planned	R14	
-tr.lit.float.exact	3.2	n and d are chosen so that n/d = f, exactly	dynamic	run	(0.1 :: Rational) == 1 % 10; a literal of many digits keeps them all at Rational	hand	Planned		
+tr.lit.int	3.2	The integer literal i is equivalent to fromInteger i	dynamic	run	user Num instance sees the call; see readings.md: read literally the identity does not terminate, as i on the right is an Integer constant the kernel must hold	hand	Supported	R14	
+tr.lit.float	3.2	The floating literal f is equivalent to fromRational (n Ratio.% d)	dynamic	run	user Fractional instance sees the call; see readings.md: Ratio.% is not in the Prelude though 3 says free names are	hand	Supported	R14	
+tr.lit.float.exact	3.2	n and d are chosen so that n/d = f, exactly	dynamic	run	(0.1 :: Rational) == 1 % 10; a literal of many digits keeps them all at Rational	hand	Supported		
 exp.lit.int.value	3.2	An integer literal denotes an Integer value before conversion, of any size	dynamic	run	a literal past 2^64 at Integer, its exact digits	hand	Planned		
 exp.lit.int.anybase	3.2	Octal and hexadecimal literals are integer literals and convert the same way	dynamic	run	0o17 and 0xF at a user Num instance	hand	Planned		
 exp.lit.float.notint	3.2	A floating literal has no integer reading: it needs Fractional	static	reject	1.5 :: Int	hand	Supported		
@@ -375,14 +375,14 @@ exp.lambda.infixpat	3.3	\x:xs->x is syntactically incorrect	syntax	reject	the Re
 exp.lambda.infixpat.paren	3.3	\(x:xs)->x is legal	syntax	accept	the Report's example	hand	Supported		
 exp.lambda.conapp	3.3	An unparenthesised constructor application is not an apat	syntax	reject	\Just x -> x	hand	Supported		
 exp.lambda.linear	3.3	The set of patterns of a lambda must be linear: no variable twice in the set	static	reject	\x x -> x and \(x,y) x -> x	hand	Supported		
-tr.lambda	3.3	\ p1 ... pn -> e = \ x1 ... xn -> case (x1, ..., xn) of (p1, ..., pn) -> e, the xi new	dynamic	run	literal translation at -O0 differenced against compiled code, including the strictness order	hand	Planned		
-tr.lambda.fresh	3.3	The xi are new identifiers: they capture nothing in e	dynamic	run	source naming x1 in e and in the patterns	hand	Planned		
-tr.lambda.fail	3.3	If a pattern of a lambda fails to match, the result is ⊥	dynamic	run	(\(Just x) -> x) Nothing terminates as error does	hand	Planned		
-tr.lambda.partial	3.3	Matching happens only when all n arguments are supplied	dynamic	run	(\(x,y) z -> 1) undefined is a function; seq of it succeeds; applied to one more it is ⊥	hand	Planned		
+tr.lambda	3.3	\ p1 ... pn -> e = \ x1 ... xn -> case (x1, ..., xn) of (p1, ..., pn) -> e, the xi new	dynamic	run	literal translation at -O0 differenced against compiled code, including the strictness order	hand	Supported		
+tr.lambda.fresh	3.3	The xi are new identifiers: they capture nothing in e	dynamic	run	source naming x1 in e and in the patterns	hand	Supported		
+tr.lambda.fail	3.3	If a pattern of a lambda fails to match, the result is ⊥	dynamic	run	(\(Just x) -> x) Nothing terminates as error does	hand	Supported		
+tr.lambda.partial	3.3	Matching happens only when all n arguments are supplied	dynamic	run	(\(x,y) z -> 1) undefined is a function; seq of it succeeds; applied to one more it is ⊥	hand	Supported		
 exp.infix.form	3.4	e1 qop e2 is the infix application of a binary operator	syntax	accept	any qop	hand	Supported		
 exp.neg.form	3.4	-e is prefix negation	syntax	accept	in the positions lexp6 allows	hand	Supported		
-tr.op.infix	3.4	e1 op e2 = (op) e1 e2	dynamic	run	value and strictness equal the prefix form	hand	Planned		
-tr.op.neg	3.4	-e = negate (e)	dynamic	run	user Num instance sees negate, not (-) and not fromInteger of a negative	hand	Planned		
+tr.op.infix	3.4	e1 op e2 = (op) e1 e2	dynamic	run	value and strictness equal the prefix form	hand	Supported		
+tr.op.neg	3.4	-e = negate (e)	dynamic	run	user Num instance sees negate, not (-) and not fromInteger of a negative	hand	Supported		
 exp.neg.literal	3.4	-1 in an expression is negate (fromInteger 1), not a negative literal	dynamic	run	user Num instance logs the calls; see readings.md	hand	Planned	R10	
 exp.minus.rebind	3.4	The binary - need not be the Prelude's: it may be rebound by the module system	static	run	import Prelude hiding ((-)) with own -, used infix	hand	Planned		
 exp.neg.prelude	3.4	Unary - always refers to the negate of the Prelude	static	run	same module: -x still the Prelude's	hand	Planned		
@@ -417,17 +417,17 @@ exp.sec.neg.tighter	3.5	A left section of a tighter operator may not begin with 
 exp.sec.subtract	3.5	(subtract exp) is equivalent to the disallowed section	dynamic	run	subtract 1 3 is 2	hand	Planned		
 exp.sec.plusneg	3.5	(+ (- exp)) can serve the same purpose	dynamic	run	value	hand	Planned		
 exp.sec.partial	3.5	A section partially applies a binary operator	dynamic	run	map (2^) and map (^2) give different lists	hand	Planned		
-tr.sec.right	3.5	(op e) = \ x -> x op e, x not free in e	dynamic	run	literal translation differenced; see readings.md: read literally e is re-evaluated at each call	hand	Planned	R11	
-tr.sec.left	3.5	(e op) = \ x -> e op x, x not free in e	dynamic	run	literal translation differenced; see readings.md: read literally e is unshared and the section is a value, so seq (undefined +) () is ()	hand	Planned	R11	
-tr.sec.fresh	3.5	x does not occur free in e	dynamic	run	source with a variable x in e	hand	Planned		
-tr.sec.whnf	3.5	A section is a lambda, so it is a value whatever op and e are	dynamic	run	seq (+ undefined) () and seq (undefined +) () are (); see readings.md	hand	Planned	R11	
+tr.sec.right	3.5	(op e) = \ x -> x op e, x not free in e	dynamic	run	literal translation differenced; see readings.md: read literally e is re-evaluated at each call	hand	Supported	R11	
+tr.sec.left	3.5	(e op) = \ x -> e op x, x not free in e	dynamic	run	literal translation differenced; see readings.md: read literally e is unshared and the section is a value, so seq (undefined +) () is ()	hand	Supported	R11	
+tr.sec.fresh	3.5	x does not occur free in e	dynamic	run	source with a variable x in e	hand	Supported		
+tr.sec.whnf	3.5	A section is a lambda, so it is a value whatever op and e are	dynamic	run	seq (+ undefined) () and seq (undefined +) () are (); see readings.md	hand	Supported	R11	
 tr.sec.sharing	3.5	The identities say nothing of sharing; an implementation may share e	dynamic	run	--count budget on map (expensive +) xs; a sharing test is a choice of rhc, not the Report's: see readings.md	hand	Planned	R11	
 exp.if.form	3.6	if e1 then e2 else e3	syntax	accept	all three present	hand	Supported		
 exp.if.noelse	3.6	else is not optional	syntax	reject	if a then b	hand	Supported		
 exp.if.true	3.6	The value is e2 if e1 is True	dynamic	run	value; e3 not evaluated	hand	Planned		
 exp.if.false	3.6	The value is e3 if e1 is False	dynamic	run	value; e2 not evaluated	hand	Planned		
 exp.if.bottom	3.6	The value is ⊥ otherwise	dynamic	run	if undefined then 1 else 2 terminates as error does	hand	Planned		
-tr.if	3.6	if e1 then e2 else e3 = case e1 of { True -> e2 ; False -> e3 }	dynamic	run	literal translation differenced	hand	Planned		
+tr.if	3.6	if e1 then e2 else e3 = case e1 of { True -> e2 ; False -> e3 }	dynamic	run	literal translation differenced	hand	Supported		
 exp.if.type.cond	3.6	The type of e1 must be Bool	static	reject	if 1 then 2 else 3 with no Num Bool	hand	Supported		
 exp.if.type.branches	3.6	e2 and e3 must have the same type	static	reject	if c then 'a' else True	hand	Supported		
 exp.if.type.result	3.6	That type is the type of the conditional	static	accept	annotated result	hand	Supported		
@@ -435,7 +435,7 @@ exp.if.do.semi	3.6	No optional semicolons around then and else: Haskell 98's pro
 exp.list.form	3.7	[e1, ..., ek] with k >= 1	syntax	accept	one and several elements	hand	Supported		
 exp.list.trailing	3.7	No trailing comma in a list	syntax	reject	[1,]	hand	Supported		
 exp.list.cons.nil	3.7	The constructor is : and the empty list is []	dynamic	run	pattern match on both	hand	Planned		
-tr.list	3.7	[e1, ..., ek] = e1 : (e2 : ( ... (ek : [])))	dynamic	run	literal translation differenced; laziness of elements	hand	Planned		
+tr.list	3.7	[e1, ..., ek] = e1 : (e2 : ( ... (ek : [])))	dynamic	run	literal translation differenced; laziness of elements	hand	Supported		
 exp.list.lazy	3.7	List elements are not evaluated by forming the list	dynamic	run	length [undefined, undefined] is 2	hand	Planned		
 exp.list.type.same	3.7	e1 through ek must all have the same type	static	reject	[1, 'a'] with no Num Char	hand	Supported		
 exp.list.type.result	3.7	The type of the expression is [t]	static	accept	annotated	hand	Supported		
@@ -451,17 +451,17 @@ exp.tuple.lazy	3.8	Tuple components are not evaluated by forming the tuple	dynam
 tr.tuple	3.8	(e1, ..., ek) is an instance of a k-tuple as defined in the Prelude and requires no translation	dynamic	accept	primitive in the kernel; see translations.md	hand	Planned		
 exp.tuple.type	3.8	If t1 through tk are the types of the ei, the tuple has type (t1, ..., tk)	static	accept	annotated	hand	Supported		
 exp.paren	3.9	(e) is equivalent to e	dynamic	run	value and printer round trip	hand	Planned		
-tr.paren	3.9	(e) is equivalent to e, in fixity resolution too	syntax	run	(a + b) * c, and an operator chain is cut by parentheses	hand	Planned		
+tr.paren	3.9	(e) is equivalent to e, in fixity resolution too	syntax	run	(a + b) * c, and an operator chain is cut by parentheses	hand	Supported		
 exp.unit.type	3.9	The unit expression () has type ()	static	accept	annotated	hand	Supported		
 exp.unit.member	3.9	() is the only member of its type apart from ⊥	dynamic	run	case undefined of () -> 1 is ⊥, by match, as () is a constructor	hand	Planned		
 exp.seq.forms	3.10	[ e1 [, e2] .. [e3] ] in four forms	syntax	accept	[1..], [1,2..], [1..3], [1,2..3]	hand	Supported		
 exp.seq.type	3.10	Each ei has the same type t	static	reject	[1,'a'..]	hand	Supported		
 exp.seq.enum	3.10	t must be an instance of Enum	static	reject	[id ..]	hand	Supported		
 exp.seq.denotes	3.10	The sequence denotes a list of values of type t	static	accept	annotated [t]	hand	Supported		
-tr.seq.from	3.10	[ e1.. ] = enumFrom e1	dynamic	run	user Enum instance logs which method was called	hand	Planned		
-tr.seq.fromthen	3.10	[ e1,e2.. ] = enumFromThen e1 e2	dynamic	run	as tr.seq.from	hand	Planned		
-tr.seq.fromto	3.10	[ e1..e3 ] = enumFromTo e1 e3	dynamic	run	as tr.seq.from	hand	Planned		
-tr.seq.fromthento	3.10	[ e1,e2..e3 ] = enumFromThenTo e1 e2 e3	dynamic	run	as tr.seq.from	hand	Planned		
+tr.seq.from	3.10	[ e1.. ] = enumFrom e1	dynamic	run	user Enum instance logs which method was called	hand	Supported		
+tr.seq.fromthen	3.10	[ e1,e2.. ] = enumFromThen e1 e2	dynamic	run	as tr.seq.from	hand	Supported		
+tr.seq.fromto	3.10	[ e1..e3 ] = enumFromTo e1 e3	dynamic	run	as tr.seq.from	hand	Supported		
+tr.seq.fromthento	3.10	[ e1,e2..e3 ] = enumFromThenTo e1 e2 e3	dynamic	run	as tr.seq.from	hand	Supported		
 exp.seq.instance	3.10	The semantics of a sequence depends entirely on the instance for t	dynamic	run	a user instance with strange methods is obeyed, no compile-time folding	hand	Planned		
 exp.seq.lexing	3.10	By 2.4 F.. lexes as a qualified dot, so [False..] is not the sequence	lex	reject	[False..] refused; [False ..] accepted	hand	Supported		
 exp.comp.form	3.11	[ e | q1, ..., qn ] with n >= 1	syntax	accept	each qualifier form	hand	Supported		
@@ -477,12 +477,12 @@ exp.comp.ex.nested	3.11	[ x | xs <- [ [(1,2),(3,4)], [(5,4),(3,2)] ], (3,x) <- x
 exp.comp.guard	3.11	A guard must evaluate to True for the previous match to succeed	dynamic	run	[x | x <- [1,2,3], odd x]	hand	Planned		
 exp.comp.shadow	3.11	Bindings in a comprehension can shadow those in outer scopes	static	run	[ x | x <- x, x <- x ] = [ z | y <- x, z <- y]	hand	Planned		
 exp.comp.scope	3.11	A generator's variables scope over later qualifiers and e, not earlier ones	static	reject	[x | y > 0, y <- xs]	hand	Supported		
-tr.comp.true	3.11	[ e | True ] = [e]	dynamic	run	literal translation differenced	hand	Planned		
-tr.comp.single	3.11	[ e | q ] = [ e | q, True ]	dynamic	run	literal translation differenced; see readings.md: must not fire on q = True, or it never ends	hand	Planned	R17	
-tr.comp.guard	3.11	[ e | b, Q ] = if b then [ e | Q ] else []	dynamic	run	literal translation differenced	hand	Planned		
-tr.comp.gen	3.11	[ e | p <- l, Q ] = let ok p = [ e | Q ]; ok _ = [] in concatMap ok l	dynamic	run	literal translation differenced	hand	Planned		
-tr.comp.let	3.11	[ e | let decls, Q ] = let decls in [ e | Q ]	dynamic	run	literal translation differenced	hand	Planned		
-tr.comp.ok.fresh	3.11	ok is a fresh variable	static	run	source that binds and uses ok in e and in p	hand	Planned		
+tr.comp.true	3.11	[ e | True ] = [e]	dynamic	run	literal translation differenced	hand	Supported		
+tr.comp.single	3.11	[ e | q ] = [ e | q, True ]	dynamic	run	literal translation differenced; see readings.md: must not fire on q = True, or it never ends	hand	Supported	R17	
+tr.comp.guard	3.11	[ e | b, Q ] = if b then [ e | Q ] else []	dynamic	run	literal translation differenced	hand	Supported		
+tr.comp.gen	3.11	[ e | p <- l, Q ] = let ok p = [ e | Q ]; ok _ = [] in concatMap ok l	dynamic	run	literal translation differenced	hand	Supported		
+tr.comp.let	3.11	[ e | let decls, Q ] = let decls in [ e | Q ]	dynamic	run	literal translation differenced	hand	Supported		
+tr.comp.ok.fresh	3.11	ok is a fresh variable	static	run	source that binds and uses ok in e and in p	hand	Supported		
 exp.comp.poly.let	3.11	Variables bound by let have fully polymorphic types	static	accept	[(f 1, f 'a') | let f x = x]	hand	Supported		
 exp.comp.mono.gen	3.11	Variables defined by <- are lambda bound and monomorphic	static	reject	[(f 1, f 'a') | f <- [id]]	hand	Supported		
 exp.let.form	3.12	let { d1 ; ... ; dn } in e	syntax	accept	explicit and layout forms, n = 0 too	hand	Supported		
@@ -495,10 +495,10 @@ exp.let.lazy	3.12	Pattern bindings are matched lazily: an implicit ~ makes the p
 exp.let.lazy.demand	3.12	let (x,y) = undefined in e causes no error until x or y is evaluated	dynamic	run	the Report's example, then demanding x	hand	Planned		
 exp.let.refutable.demand	3.12	A refutable let pattern that fails, fails when a variable of it is demanded, and not before	dynamic	run	let Just x = Nothing in 1 prints 1; demanding x terminates	hand	Planned		
 exp.let.pat.novar	3.12	A pattern binding with no variables is never matched	dynamic	run	let True = False in 1 prints 1, by tr.let.case with tr.case.d at n = 0; see readings.md	hand	Planned	R17	
-tr.let.pre	3.12	After removing all type signatures, each declaration di is translated to an equation pi = ei by 4.4.3	dynamic	run	literal translation of function and guarded bindings differenced	hand	Planned		
-tr.let.tuple	3.12	let {p1=e1; ... ; pn=en} in e0 = let (~p1, ... ,~pn) = (e1, ... ,en) in e0	dynamic	run	literal translation differenced; see readings.md: n = 0 and n = 1 are not tuples	hand	Planned	R17	
-tr.let.case	3.12	let p = e1 in e0 = case e1 of ~p -> e0, where no variable in p appears free in e1	dynamic	run	literal translation differenced	hand	Planned		
-tr.let.fix	3.12	let p = e1 in e0 = let p = fix ( \ ~p -> e1) in e0	dynamic	run	literal translation differenced; see translations.md: fix is not an entity of the Prelude; the right side reaches tr.let.case	hand	Planned		
+tr.let.pre	3.12	After removing all type signatures, each declaration di is translated to an equation pi = ei by 4.4.3	dynamic	run	literal translation of function and guarded bindings differenced	hand	Supported		
+tr.let.tuple	3.12	let {p1=e1; ... ; pn=en} in e0 = let (~p1, ... ,~pn) = (e1, ... ,en) in e0	dynamic	run	literal translation differenced; see readings.md: n = 0 and n = 1 are not tuples	hand	Supported	R17	
+tr.let.case	3.12	let p = e1 in e0 = case e1 of ~p -> e0, where no variable in p appears free in e1	dynamic	run	literal translation differenced	hand	Supported		
+tr.let.fix	3.12	let p = e1 in e0 = let p = fix ( \ ~p -> e1) in e0	dynamic	run	literal translation differenced; see translations.md: fix is not an entity of the Prelude; the right side reaches tr.let.case	hand	Supported		
 tr.let.notstatic	3.12	The let translation does not preserve the static semantics: case precludes fully polymorphic typing of the bound variables	static	accept	let f x = x in (f 1, f 'a') accepted though its translation would be refused	hand	Supported		
 tr.let.static	3.12	The static semantics of let bindings are in 4.4.3 and 4.5	static	none	a pointer: the rows of chapter 4	hand	Planned		
 exp.case.form	3.13	case e of { p1 match1 ; ... ; pn matchn }	syntax	accept	explicit and layout forms	hand	Supported		
@@ -530,12 +530,12 @@ exp.do.last.let	3.14	The last statement must be an expression, not a let	syntax	
 exp.do.emptystmt	3.14	Empty statements are allowed, and a trailing semicolon	syntax	accept	do { ; a ; ; b ; }	hand	Supported		
 exp.do.emptystmt.elim	3.14	Empty statements are eliminated before translating	dynamic	run	value equals the form without them	hand	Planned		
 exp.do.example	3.14	The do form of the example means putStr "x: " >> getLine >>= \l -> return (words l)	dynamic	run	both forms given one stdin, same output	hand	Planned		
-tr.do.last	3.14	do {e} = e	dynamic	run	literal translation differenced	hand	Planned		
+tr.do.last	3.14	do {e} = e	dynamic	run	literal translation differenced	hand	Supported		
 tr.do.last.nomonad	3.14	do {e} needs no Monad: its type is e's	static	accept	do {3} :: Int compiles, by the identity	hand	Supported		
-tr.do.seq	3.14	do {e;stmts} = e >> do {stmts}	dynamic	run	literal translation differenced; user Monad logs >>, not >>=	hand	Planned		
-tr.do.bind	3.14	do {p <- e; stmts} = let ok p = do {stmts}; ok _ = fail "..." in e >>= ok	dynamic	run	literal translation differenced	hand	Planned		
-tr.do.let	3.14	do {let decls; stmts} = let decls in do {stmts}	dynamic	run	literal translation differenced	hand	Planned		
-tr.do.ok.fresh	3.14	ok is a fresh identifier	static	run	source that binds and uses ok	hand	Planned		
+tr.do.seq	3.14	do {e;stmts} = e >> do {stmts}	dynamic	run	literal translation differenced; user Monad logs >>, not >>=	hand	Supported		
+tr.do.bind	3.14	do {p <- e; stmts} = let ok p = do {stmts}; ok _ = fail "..." in e >>= ok	dynamic	run	literal translation differenced	hand	Supported		
+tr.do.let	3.14	do {let decls; stmts} = let decls in do {stmts}	dynamic	run	literal translation differenced	hand	Supported		
+tr.do.ok.fresh	3.14	ok is a fresh identifier	static	run	source that binds and uses ok	hand	Supported		
 exp.do.fail	3.14	A failed pattern in a do calls fail	dynamic	run	Nothing at Maybe, [] at lists, an IOError at IO	hand	Planned		
 exp.do.fail.msg	3.14	The string is compiler-generated, preferably indicating the location of the failure	dynamic	run	non-empty at IO shown by a handler; its text is not required	hand	Planned		
 exp.do.fail.lazy	3.14	A failable pattern that diverges diverges: fail is for failure only	dynamic	run	do { True <- return undefined; return 1 } at Maybe is ⊥	hand	Planned		
@@ -553,8 +553,8 @@ exp.field.sel	3.15.1	A field label used as a variable is a function extracting t
 exp.field.sel.toplevel	3.15.1	Selectors are top-level bindings and cannot conflict with other top-level bindings of the name	static	reject	data T = T {f :: Int}; f = 1	hand	Supported		
 exp.field.sel.shadow	3.15.1	Selectors may be shadowed by local variables	static	run	let f = 1 in f	hand	Planned		
 exp.field.sel.shadowonly	3.15.1	Shadowing affects only the selector: in construction and update a field label is not an ordinary variable	static	run	let f = 1 in C {f = f}, and r {f = f}	hand	Planned		
-tr.field.sel	3.15.1	f x = case x of { C1 p11 ...p1k -> e1 ; ... ; Cn pn1 ...pnk -> en }, Ci all constructors containing f, pij y where f labels component j, else _, ei y	dynamic	run	literal translation differenced; see readings.md: `undefined otherwise` is dead and the arities are written as one k	hand	Planned	R16	
-tr.field.sel.missing	3.15.1	A selector applied to a constructor without the field is ⊥, by the case falling through	dynamic	run	f2 (C2 ...) terminates as error does	hand	Planned		
+tr.field.sel	3.15.1	f x = case x of { C1 p11 ...p1k -> e1 ; ... ; Cn pn1 ...pnk -> en }, Ci all constructors containing f, pij y where f labels component j, else _, ei y	dynamic	run	literal translation differenced; see readings.md: `undefined otherwise` is dead and the arities are written as one k	hand	Supported	R16	
+tr.field.sel.missing	3.15.1	A selector applied to a constructor without the field is ⊥, by the case falling through	dynamic	run	f2 (C2 ...) terminates as error does	hand	Supported		
 exp.field.con.form	3.15.2	qcon { fbind1 , ... , fbindn } with n >= 0, fbind being qvar = exp	syntax	accept	qualified constructor and qualified label	hand	Supported		
 exp.field.con.nolayout	3.15.2	These braces are not subject to layout: they must be explicit	layout	reject	a label list with the braces left out; also in update and pattern	hand	Supported		
 exp.field.con.pos	3.15.2	Components are specified by name, not position	dynamic	run	bindings in any order	hand	Planned		
@@ -565,8 +565,8 @@ exp.field.con.strict	3.15.2	A compile-time error occurs when a strict field is o
 exp.field.con.empty	3.15.2	F {} is legal whether or not F was declared with record syntax	dynamic	run	data T = F Int Int; F {} compiles; case F {} of F _ _ -> 1	hand	Planned		
 exp.field.con.empty.strict	3.15.2	provided F has no strict fields	static	reject	data T = F !Int; F {}	hand	Planned		
 exp.field.con.empty.value	3.15.2	F {} denotes F ⊥1 ... ⊥n, n the arity of F	dynamic	run	components are ⊥ individually	hand	Planned		
-tr.field.con	3.15.2	C { bs } = C (pickC1 bs undefined) ...(pickCk bs undefined), k the arity of C	dynamic	run	literal translation differenced	hand	Planned		
-tr.field.pick	3.15.2	pickCi bs d is v if component i of C has label f and f=v is in bs, else d	dynamic	run	exercised by tr.field.con and tr.field.upd	hand	Planned		
+tr.field.con	3.15.2	C { bs } = C (pickC1 bs undefined) ...(pickCk bs undefined), k the arity of C	dynamic	run	literal translation differenced	hand	Supported		
+tr.field.pick	3.15.2	pickCi bs d is v if component i of C has label f and f=v is in bs, else d	dynamic	run	exercised by tr.field.con and tr.field.upd	hand	Supported		
 exp.field.upd.form	3.15.3	aexp<qcon> { fbind1 , ... , fbindn } with n >= 1	syntax	accept	any aexp but a constructor	hand	Supported		
 exp.field.upd.empty	3.15.3	An update has at least one binding	syntax	reject	r {} for a variable r	hand	Supported		
 exp.field.upd.chain	3.15.3	An update's aexp may itself be an update	syntax	run	r {a = 1} {b = 2}	hand	Planned		
@@ -578,7 +578,7 @@ exp.field.upd.twice	3.15.3	No label may be mentioned more than once	static	rejec
 exp.field.upd.runtime	3.15.3	An execution error occurs when the value lacks a specified label	dynamic	run	(C1 1 2) {f3 = 'a'} terminates as error does	hand	Planned		
 exp.field.upd.strictval	3.15.3	Update on ⊥ is ⊥, by the case of the translation	dynamic	run	seq (undefined {f1 = 1}) () terminates	hand	Planned		
 exp.field.upd.strictfield	3.15.3	An updated strict field is forced, by 4.2.1's replacement of K in the translation	dynamic	run	r {s = undefined} seq'd terminates	hand	Planned		
-tr.field.upd	3.15.3	e { bs } = case e of Ci v1 ... vki -> Ci (pickCi1 bs v1) ... (pickCiki bs vki) for {C1,...,Cj} the constructors containing all labels in bs, then _ -> error "Update error"	dynamic	run	literal translation differenced	hand	Planned		
+tr.field.upd	3.15.3	e { bs } = case e of Ci v1 ... vki -> Ci (pickCi1 bs v1) ... (pickCiki bs vki) for {C1,...,Cj} the constructors containing all labels in bs, then _ -> error "Update error"	dynamic	run	literal translation differenced	hand	Supported		
 tr.field.upd.polymorphic	3.15.3	By the translation, an update may change a type parameter that only the updated fields mention	static	accept	data T a = C {x :: a, y :: Int}; (C 1 2) {x = 'a'}; see readings.md	hand	Supported	R16	
 exp.field.ex.c1	3.15.3	C1 {f1 = 3} is C1 3 undefined	dynamic	run	the Report's table	hand	Planned		
 exp.field.ex.c2	3.15.3	C2 {f1 = 1, f4 = 'A', f3 = 'B'} is C2 1 'B' 'A'	dynamic	run	the Report's table	hand	Planned		
@@ -590,7 +590,7 @@ exp.sig.specific	3.16	The declared type may be more specific than the principal 
 exp.sig.general	3.16	It is an error to give a type more general than the principal type	static	reject	'a' :: a; (+) :: a -> a -> a	hand	Supported		
 exp.sig.incomparable	3.16	or not comparable to it	static	reject	'a' :: Int	hand	Supported		
 exp.sig.scope	3.16	Type variables of the signature are quantified over it alone	static	reject	\x -> (x :: a)	hand	Supported		
-tr.sig	3.16	e :: t = let { v :: t; v = e } in v	dynamic	run	literal translation differenced; typing equal: the let signature rules are those of 4.4.1	hand	Planned		
+tr.sig	3.16	e :: t = let { v :: t; v = e } in v	dynamic	run	literal translation differenced; typing equal: the let signature rules are those of 4.4.1	hand	Supported		
 tr.sig.overload	3.16	By the translation a polymorphic e :: t stays polymorphic at its use	static	accept	(1 :: Num a => a) at Int	hand	Supported		
 pat.ctx.lambda	3.17	Patterns appear in lambda abstractions	syntax	accept	\(x,y) -> x	hand	Supported		
 pat.ctx.function	3.17	in function definitions	syntax	accept	f (x,y) = x	hand	Supported		
@@ -706,29 +706,29 @@ pat.guard.env	3.17.2	The guard's environment is that of the right-hand side	stat
 pat.guard.strict	3.17.2	An otherwise irrefutable pattern may be evaluated because of a guard	dynamic	run	f ~(x,y,z) [a] | (a == y) = 1 evaluates a and y: f undefined [1] terminates as error does, the Report's example	hand	Planned		
 tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs	hand	Planned	R86	
 tr.case.base	3.17.3	All pattern-matching constructs other than case are defined by identities to case, and case by a series of identities	dynamic	none	a statement of method; the rules' completeness is in translations.md	hand	Planned		
-tr.case.a	3.17.3	(a) case e of { alts } = (\v -> case v of { alts }) e, v new	dynamic	run	literal rule differenced; e evaluated at most once, sharing kept by the lambda	hand	Planned		
-tr.case.b	3.17.3	(b) case v of { p1 match1; ... ; pn matchn } = case v of { p1 match1 ; _ -> ... case v of { pn matchn ; _ -> error "No match" }...}	dynamic	run	literal rule differenced, for one to many alternatives	hand	Planned		
-tr.case.b.guards	3.17.3	In (b) each matchi is | gi,1 -> ei,1 ; ... ; | gi,mi -> ei,mi where { declsi }	dynamic	run	guards and where on each alternative	hand	Planned		
-tr.case.b.true	3.17.3	Rule (b) covers a case with no guards: True is substituted for the guards	dynamic	run	value; see readings.md: (c) then produces an unguarded alternative that must not be re-expanded	hand	Planned	R16	
-tr.case.c	3.17.3	(c) case v of { p | g1 -> e1 ; ... | gn -> en where { decls } ; _ -> e' } = case e' of { y -> case v of { p -> let { decls } in if g1 then e1 ... else if gn then en else y ; _ -> y }}, y new	dynamic	run	literal rule differenced; e' shared by y, guards in order	hand	Planned		
-tr.case.d	3.17.3	(d) case v of { ~p -> e; _ -> e' } = (\x1 ... xn -> e ) (case v of { p-> x1 }) ... (case v of { p -> xn}), x1 ... xn all the variables of p	dynamic	run	literal rule differenced; see translations.md: n = 0 leaves a lambda of no arguments, and failure inside goes to error "No match"	hand	Planned		
-tr.case.d.lazy	3.17.3	Rule (d) drops e': a lazy pattern never falls through	dynamic	run	case undefined of { ~(x,y) -> 1; _ -> 2 } is 1	hand	Planned		
-tr.case.e	3.17.3	(e) case v of { x@p -> e; _ -> e' } = case v of { p -> ( \ x -> e ) v ; _ -> e' }	dynamic	run	literal rule differenced	hand	Planned		
-tr.case.f	3.17.3	(f) case v of { _ -> e; _ -> e' } = e	dynamic	run	literal rule differenced; v not forced	hand	Planned		
-tr.case.g	3.17.3	(g) case v of { K p1 ...pn -> e; _ -> e' } = case v of { K x1 ...xn -> case x1 of { p1 -> ... case xn of { pn -> e ; _ -> e' } ... _ -> e' } _ -> e' }, at least one pi not a variable, xi new	dynamic	run	literal rule differenced; left-to-right order of sub-matches; tuples are K	hand	Planned		
-tr.case.h	3.17.3	(h) case v of { k -> e; _ -> e' } = if (v==k) then e else e', k a numeric, character or string literal	dynamic	run	literal rule differenced; defines matching on overloaded constants; negative literals are not named: see readings.md	hand	Planned	R14	
-tr.case.h.strings	3.17.3	Rule (h) takes a string literal whole, by == on lists	dynamic	run	equal in strictness to a list of character patterns on sample partial strings	hand	Planned		
-tr.case.i	3.17.3	(i) case v of { x -> e; _ -> e' } = case v of { x -> e }	dynamic	run	literal rule differenced	hand	Planned		
-tr.case.j	3.17.3	(j) case v of { x -> e } = ( \ x -> e ) v	dynamic	run	literal rule differenced	hand	Planned		
-tr.case.k	3.17.3	(k) case N v of { N p -> e; _ -> e' } = case v of { p -> e; _ -> e' }, N a newtype constructor	dynamic	run	literal rule differenced; a test of the newtype's erasure	hand	Planned		
-tr.case.l	3.17.3	(l) case ⊥ of { N p -> e; _ -> e' } = case ⊥ of { p -> e }, N a newtype constructor	dynamic	run	bottom probe: irrefutable p succeeds, refutable p diverges	hand	Planned		
-tr.case.m	3.17.3	(m) case v of { K { f1 = p1 , f2 = p2 , ... } -> e ; _ -> e' } = case e' of { y -> case v of { K { f1 = p1 } -> case v of { K { f2 = p2 , ... } -> e ; _ -> y }; _ -> y }}, y new	dynamic	run	literal rule differenced; order is the pattern's; K is a data constructor, no rule for newtype: see readings.md	hand	Planned	R16	
-tr.case.n	3.17.3	(n) case v of { K { f = p } -> e ; _ -> e' } = case v of { K p1 ... pn -> e ; _ -> e' }, pi being p if f labels component i, else _	dynamic	run	literal rule differenced	hand	Planned		
-tr.case.o	3.17.3	(o) case v of { K {} -> e ; _ -> e' } = case v of { K _ ... _ -> e ; _ -> e' }	dynamic	run	literal rule differenced; forces v, fields not	hand	Planned		
-tr.case.p	3.17.3	(p) case (K' e1 ... em) of { K x1 ... xn -> e; _ -> e' } = e', K and K' distinct data constructors of arity n and m	dynamic	run	fields not forced	hand	Planned		
-tr.case.q	3.17.3	(q) case (K e1 ... en) of { K x1 ... xn -> e; _ -> e' } = (\x1 ... xn -> e) e1 ... en, K a data constructor of arity n	dynamic	run	fields bound lazily; a strict K has already forced by 4.2.1	hand	Planned		
-tr.case.r	3.17.3	(r) case ⊥ of { K x1 ... xn -> e; _ -> e' } = ⊥, K a data constructor of arity n	dynamic	run	bottom probe; arity 0 too	hand	Planned		
-tr.case.s	3.17.3	(s) case v of { x+k -> e; _ -> e' } = if v >= k then (\x -> e) (v-k) else e', k a numeric literal	dynamic	run	literal rule differenced; see readings.md: numeric here, integer in 3.17.2 and the grammar	hand	Planned	R15	
+tr.case.a	3.17.3	(a) case e of { alts } = (\v -> case v of { alts }) e, v new	dynamic	run	literal rule differenced; e evaluated at most once, sharing kept by the lambda	hand	Supported		
+tr.case.b	3.17.3	(b) case v of { p1 match1; ... ; pn matchn } = case v of { p1 match1 ; _ -> ... case v of { pn matchn ; _ -> error "No match" }...}	dynamic	run	literal rule differenced, for one to many alternatives	hand	Supported		
+tr.case.b.guards	3.17.3	In (b) each matchi is | gi,1 -> ei,1 ; ... ; | gi,mi -> ei,mi where { declsi }	dynamic	run	guards and where on each alternative	hand	Supported		
+tr.case.b.true	3.17.3	Rule (b) covers a case with no guards: True is substituted for the guards	dynamic	run	value; see readings.md: (c) then produces an unguarded alternative that must not be re-expanded	hand	Supported	R16	
+tr.case.c	3.17.3	(c) case v of { p | g1 -> e1 ; ... | gn -> en where { decls } ; _ -> e' } = case e' of { y -> case v of { p -> let { decls } in if g1 then e1 ... else if gn then en else y ; _ -> y }}, y new	dynamic	run	literal rule differenced; e' shared by y, guards in order	hand	Supported		
+tr.case.d	3.17.3	(d) case v of { ~p -> e; _ -> e' } = (\x1 ... xn -> e ) (case v of { p-> x1 }) ... (case v of { p -> xn}), x1 ... xn all the variables of p	dynamic	run	literal rule differenced; see translations.md: n = 0 leaves a lambda of no arguments, and failure inside goes to error "No match"	hand	Supported		
+tr.case.d.lazy	3.17.3	Rule (d) drops e': a lazy pattern never falls through	dynamic	run	case undefined of { ~(x,y) -> 1; _ -> 2 } is 1	hand	Supported		
+tr.case.e	3.17.3	(e) case v of { x@p -> e; _ -> e' } = case v of { p -> ( \ x -> e ) v ; _ -> e' }	dynamic	run	literal rule differenced	hand	Supported		
+tr.case.f	3.17.3	(f) case v of { _ -> e; _ -> e' } = e	dynamic	run	literal rule differenced; v not forced	hand	Supported		
+tr.case.g	3.17.3	(g) case v of { K p1 ...pn -> e; _ -> e' } = case v of { K x1 ...xn -> case x1 of { p1 -> ... case xn of { pn -> e ; _ -> e' } ... _ -> e' } _ -> e' }, at least one pi not a variable, xi new	dynamic	run	literal rule differenced; left-to-right order of sub-matches; tuples are K	hand	Supported		
+tr.case.h	3.17.3	(h) case v of { k -> e; _ -> e' } = if (v==k) then e else e', k a numeric, character or string literal	dynamic	run	literal rule differenced; defines matching on overloaded constants; negative literals are not named: see readings.md	hand	Supported	R14	
+tr.case.h.strings	3.17.3	Rule (h) takes a string literal whole, by == on lists	dynamic	run	equal in strictness to a list of character patterns on sample partial strings	hand	Supported		
+tr.case.i	3.17.3	(i) case v of { x -> e; _ -> e' } = case v of { x -> e }	dynamic	run	literal rule differenced	hand	Supported		
+tr.case.j	3.17.3	(j) case v of { x -> e } = ( \ x -> e ) v	dynamic	run	literal rule differenced	hand	Supported		
+tr.case.k	3.17.3	(k) case N v of { N p -> e; _ -> e' } = case v of { p -> e; _ -> e' }, N a newtype constructor	dynamic	run	literal rule differenced; a test of the newtype's erasure	hand	Supported		
+tr.case.l	3.17.3	(l) case ⊥ of { N p -> e; _ -> e' } = case ⊥ of { p -> e }, N a newtype constructor	dynamic	run	bottom probe: irrefutable p succeeds, refutable p diverges	hand	Supported		
+tr.case.m	3.17.3	(m) case v of { K { f1 = p1 , f2 = p2 , ... } -> e ; _ -> e' } = case e' of { y -> case v of { K { f1 = p1 } -> case v of { K { f2 = p2 , ... } -> e ; _ -> y }; _ -> y }}, y new	dynamic	run	literal rule differenced; order is the pattern's; K is a data constructor, no rule for newtype: see readings.md	hand	Supported	R16	
+tr.case.n	3.17.3	(n) case v of { K { f = p } -> e ; _ -> e' } = case v of { K p1 ... pn -> e ; _ -> e' }, pi being p if f labels component i, else _	dynamic	run	literal rule differenced	hand	Supported		
+tr.case.o	3.17.3	(o) case v of { K {} -> e ; _ -> e' } = case v of { K _ ... _ -> e ; _ -> e' }	dynamic	run	literal rule differenced; forces v, fields not	hand	Supported		
+tr.case.p	3.17.3	(p) case (K' e1 ... em) of { K x1 ... xn -> e; _ -> e' } = e', K and K' distinct data constructors of arity n and m	dynamic	run	fields not forced	hand	Supported		
+tr.case.q	3.17.3	(q) case (K e1 ... en) of { K x1 ... xn -> e; _ -> e' } = (\x1 ... xn -> e) e1 ... en, K a data constructor of arity n	dynamic	run	fields bound lazily; a strict K has already forced by 4.2.1	hand	Supported		
+tr.case.r	3.17.3	(r) case ⊥ of { K x1 ... xn -> e; _ -> e' } = ⊥, K a data constructor of arity n	dynamic	run	bottom probe; arity 0 too	hand	Supported		
+tr.case.s	3.17.3	(s) case v of { x+k -> e; _ -> e' } = if v >= k then (\x -> e) (v-k) else e', k a numeric literal	dynamic	run	literal rule differenced; see readings.md: numeric here, integer in 3.17.2 and the grammar	hand	Supported	R15	
 tr.case.terms	3.17.3	In the figures v, x, xi are variables; K, K' are data constructors, tuples included; N is a newtype constructor	dynamic	none	notation; pins that a tuple match is rule (g)	hand	Planned		
 tr.case.h.operator	3.17.3	Rule (h) involves overloaded ==: it defines pattern matching on overloaded constants, so the type needs Eq	static	reject	a Num type without Eq cannot exist in Haskell 98 (Num has Eq as superclass); a Char-like user type cannot be a literal, so reject at f :: (a -> a) -> Int; f 0 = 1	hand	Supported		
 tr.case.static	3.17.3	These identities all preserve the static semantics	static	none	a claim about the text; the monomorphism rows test its visible part	hand	Planned		
@@ -850,8 +850,8 @@ dec.strict.varsym	4.2.1	`!` is an ordinary varsym, not a reservedop	lex	accept	`
 dec.strict.onlydata	4.2.1	`!` has its significance only in the argument types of a data declaration	syntax	reject	`f :: !Int -> Int` and `newtype N = N !Int` are refused	hand	Supported		
 dec.strict.atype	4.2.1	a strictness flag takes an atype	syntax	reject	`data T = C !Maybe Int` means two fields, of which Maybe has the wrong kind, and is refused; `C !(Maybe Int)` compiles	hand	Supported		
 tr.dec.strict.lambda	4.2.1	K in an expression is replaced by \ x1...xn -> (((K op1 x1) op2 x2) ...) opn xn, opi being $ or $!	dynamic	run	the translation literal at -O0, differenced against the compiled form	hand	Planned		
-tr.dec.strict.partial	4.2.1	by that lambda a partial application is a value though an argument so far is ⊥	dynamic	run	`seq (K undefined) 1` is 1 for `data T = K !Int !Int`	hand	Planned		
-tr.dec.strict.pattern	4.2.1	pattern matching on K is not affected by strictness flags	dynamic	run	a match on a value built through the wrapper behaves as on an ordinary constructor	hand	Planned		
+tr.dec.strict.partial	4.2.1	by that lambda a partial application is a value though an argument so far is ⊥	dynamic	run	`seq (K undefined) 1` is 1 for `data T = K !Int !Int`	hand	Supported		
+tr.dec.strict.pattern	4.2.1	pattern matching on K is not affected by strictness flags	dynamic	run	a match on a value built through the wrapper behaves as on an ordinary constructor	hand	Supported		
 tr.dec.strict.order	4.2.1	the translation forces the flagged arguments last-first	dynamic	none	all ⊥ are one denotation (3.1), so which is forced first shows only in which error is reported; see readings.md	hand	Planned	R24	
 tr.dec.strict.prelude	4.2.1	the translation's $ and $! are the Prelude's, whatever is in scope	dynamic	accept	a strict constructor under `import Prelude ()`	hand	Planned		
 dec.type.basic	4.2.2	`type T u1...uk = t` introduces T, and (T t1...tk) is equivalent to t[t1/u1,...,tk/uk]	static	accept	a value used at both spellings	hand	Supported		
@@ -1109,10 +1109,10 @@ dec.fun.where.patvars	4.4.3.1	the where sees the clause's pattern variables	stat
 dec.fun.nomatch	4.4.3.1	a call matching no clause is ⊥	dynamic	run	bottom probe by exit status	hand	Planned		
 dec.fun.shorthand	4.4.3.1	`= e where {decls}` is shorthand for `| True = e where {decls}`	dynamic	run	differential of the two forms	hand	Planned		
 tr.dec.fun	4.4.3.1	a function binding is x = \ x1...xk -> case (x1,...,xk) of (p11,...,p1k) match1 ... (pn1,...,pnk) matchn	dynamic	run	literal at -O0, differenced against decision trees	hand	Planned		
-tr.dec.fun.lefttoright	4.4.3.1	by that translation arguments are matched left to right, clause by clause	dynamic	run	`f 0 _ = 1; f _ 0 = 2`: f ⊥ 0 diverges; `g _ 0 = 1; g 0 _ = 2`: g ⊥ 0 is 1	hand	Planned		
+tr.dec.fun.lefttoright	4.4.3.1	by that translation arguments are matched left to right, clause by clause	dynamic	run	`f 0 _ = 1; f _ 0 = 2`: f ⊥ 0 diverges; `g _ 0 = 1; g 0 _ = 2`: g ⊥ 0 is 1	hand	Supported		
 tr.dec.fun.semantic	4.4.3.1	the translation is semantic only: the equation is a simple pattern binding, a function binding is not restricted	static	accept	a function binding stays overloaded though its translation would fall under 4.5.5	hand	Supported		
-tr.dec.fun.seq	4.4.3.1	by the translation a function of k>=1 patterns is a lambda, so its partial application at fewer than k is not ⊥	dynamic	run	`f x 0 = 1`: `seq (f undefined) 1` is 1, and `seq f 1` is 1	hand	Planned	R35	
-tr.dec.fun.seq.arity	4.4.3.1	arity is that of the patterns, not of a lambda after them	dynamic	run	`f 0 = \ y -> y`: `seq (f undefined) 1` diverges; `g 0 y = y`: it does not	hand	Planned		
+tr.dec.fun.seq	4.4.3.1	by the translation a function of k>=1 patterns is a lambda, so its partial application at fewer than k is not ⊥	dynamic	run	`f x 0 = 1`: `seq (f undefined) 1` is 1, and `seq f 1` is 1	hand	Supported	R35	
+tr.dec.fun.seq.arity	4.4.3.1	arity is that of the patterns, not of a lambda after them	dynamic	run	`f 0 = \ y -> y`: `seq (f undefined) 1` diverges; `g 0 y = y`: it does not	hand	Supported		
 dec.pat.simple.form	4.4.3.2	a simple pattern binding p = e is matched lazily, as if there were an implicit ~	dynamic	run	`let (x, y) = undefined in 1` is 1	hand	Planned		
 dec.pat.lazy.demand	4.4.3.2	the match happens when a variable of p is demanded	dynamic	run	`let (x, y) = undefined in x` diverges: bottom probe	hand	Planned		
 dec.pat.refutable	4.4.3.2	a failed match shows only on demand	dynamic	run	`let [x] = [] in 1` is 1, `let [x] = [] in x` diverges	hand	Planned		
@@ -1122,8 +1122,8 @@ dec.pat.recursive	4.4.3.2	a pattern binding may be recursive	dynamic	run	`(xs, n
 dec.pat.guarded	4.4.3.2	a pattern binding may have guards and a where	dynamic	run	`(a, b) | c = (1, 2) | otherwise = (3, 4) where c = True`	hand	Planned		
 dec.pat.guarded.var	4.4.3.2	that holds with a single variable	dynamic	run	`x | c = 1 | otherwise = 2`	hand	Planned		
 tr.dec.pat.guards	4.4.3.2	`p | g1 = e1 ... | gm = em where decls` is p = let decls in if g1 then e1 else ... if gm then em else error "Unmatched pattern"	dynamic	run	literal at -O0, differenced against the compiled form	hand	Planned		
-tr.dec.pat.nomatch	4.4.3.2	when no guard holds the right-hand side is the error, on demand	dynamic	run	`x | False = 1` unused prints; used diverges	hand	Planned		
-tr.dec.pat.fallthrough	4.4.3.2	a pattern binding has no next clause	dynamic	run	the error above rather than a fall-through	hand	Planned		
+tr.dec.pat.nomatch	4.4.3.2	when no guard holds the right-hand side is the error, on demand	dynamic	run	`x | False = 1` unused prints; used diverges	hand	Supported		
+tr.dec.pat.fallthrough	4.4.3.2	a pattern binding has no next clause	dynamic	run	the error above rather than a fall-through	hand	Supported		
 dec.note.funbind.plus	4.4.3.2	`x + 1 = ...` is a function binding that defines (+), as `(+) x 1 = ...`	syntax	run	the local + is applied, with Prelude.+ hidden from the use	hand	Planned		
 dec.note.patbind.npk	4.4.3.2	`(x + 1) = ...` is a pattern binding that defines x	syntax	run	`(x + 1) = 5` gives x = 4	hand	Planned		
 dec.note.funbind.star	4.4.3.2	`(x + 1) * y = ...` is a function binding that defines (*), as `(*) (x+1) y = ...`	syntax	run	the local * has an n+k first argument	hand	Planned		

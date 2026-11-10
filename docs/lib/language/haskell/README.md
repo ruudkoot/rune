@@ -50,6 +50,15 @@ block in braces, by layout, or exactly as its file was (D28), and [`HsDump`](str
 as text. [`HsSource`](str/HsSource.md) holds spans and the front end's errors, [`HsChar`](str/HsChar.md) the
 Report's classes of characters.
 
+Desugaring (`desugar.build`, the roadmap's M15) makes a checked program
+the Core it means: [`HsDesugar`](str/HsDesugar.md) applies the Report's translations of
+chapters 3 and 4 literally (D34's A), each class a data type of
+dictionaries and each overloaded use its type and dictionary arguments as
+the checker's evidence records give them (D31). [`HsMatch`](str/HsMatch.md) matches patterns
+in the Report's order, or as decision trees in Sestoft's order for D34's
+measurement; [`HsDsEnv`](str/HsDsEnv.md) is what desugaring knows of the program, its names,
+types and records in Core, and [`HsDsCore`](str/HsDsCore.md) builds Core with its types.
+
 The roadmap is `docs/plans/language/haskell98.md`.
 
 [How to read these pages](../../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [z](index/z.md)
@@ -71,6 +80,9 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_CHAR`](sig/HS_CHAR.md) | The classes of characters of the Haskell 98 Report's lexical syntax (chapter 2, section 9.2), by code point. |
 | [`HS_CLASSES`](sig/HS_CLASSES.md) | The classes and instances of Haskell 98's checker (the haskell98 roadmap's M13; the Report's 4.3): every class and instance of the program, for entailment. Instances are not names: every instance a program declares, or derives, is in force in all of it. |
 | [`HS_DERIVE`](sig/HS_DERIVE.md) | Haskell 98's derived instances (the Report's chapter 10; the haskell98 roadmap's M14, D33's C): the methods of a derived `Eq`, `Ord`, `Enum`, `Bounded`, `Ix`, `Show` or `Read` instance, made as the renamed tree a user would write, with chapter 10's text as the specification, so that the checker elaborates them as it does a user's instance and HsLint checks them as any instance (D54). |
+| [`HS_DESUGAR`](sig/HS_DESUGAR.md) | Desugaring to Core (the haskell98 roadmap's M15, D34): a checked program made the Core program it means. |
+| [`HS_DS_CORE`](sig/HS_DS_CORE.md) | Core as desugaring builds it (the haskell98 roadmap's M15): each expression with its type. |
+| [`HS_DS_ENV`](sig/HS_DS_ENV.md) | What desugaring knows of a checked program (the haskell98 roadmap's M15): its names, types, records and dictionaries in Core. |
 | [`HS_DUMP`](sig/HS_DUMP.md) | The abstract syntax of Haskell 98 as text, for `rhc --dump-ast` and for the tree round trip of a test that compares trees by their text. |
 | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | The evidence records of Haskell 98's checker (the haskell98 roadmap's D31, M13): what inference chose at each node of the renamed tree, by node, in the manner of Rune's `Witness` (lib/compiler/elab/witness.sml), for desugaring to Core (M15) to translate and HsLint (M16, D54) to check: each overloaded use's dictionaries, each binder's type and the dictionary parameters it is abstracted over, each instance's dictionaries, and each defaulting, with what it chose from. |
 | [`HS_FIXITY`](sig/HS_FIXITY.md) | Haskell 98's fixity resolution (the Report's 10.6, 3.4, 3.5 and 4.4.2; the haskell98 roadmap's M12): the flat sequences of operators the parser leaves, [`HsAst.ESeq`](sig/HS_AST.md#con-eseq) and [`HsAst.PSeq`](sig/HS_AST.md#con-pseq), made into trees by the fixities of the operators' entities, read after names (D29), so that a renamed tree is resolved with no iteration. |
@@ -80,6 +92,7 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_LEXER`](sig/HS_LEXER.md) | The lexer of Haskell 98: the Report's chapter 2 and section 9.2, over program text. |
 | [`HS_LINT`](sig/HS_LINT.md) | HsLint (the haskell98 roadmap's M16, D54): the independent check of rhc's types, as AstLint is Rune's. Its first part is a second inference: a transliteration of Typing Haskell in Haskell (Jones 1999) in the form its 11.6.3 calls conformant, with kinds and dependency groups recomputed, the monomorphism restriction and defaulting as the roadmap's D32 reads the Report (R18, R20, R21, R22), over the renamed tree. It shares nothing with rhc's checker but the renamer: its unifier, its kinds and its context reduction are its own, so that a disagreement between the two is a finding. rhc runs it among the checks of level 2 (`--lint=2`, `RUNE_LINT=2`), where a refusal of a program the compile accepts is a bug of rhc's. |
 | [`HS_LITERATE`](sig/HS_LITERATE.md) | Literate Haskell (the Report's section 9.4): the program text of a literate file. |
+| [`HS_MATCH`](sig/HS_MATCH.md) | Pattern matching in the Report's order (the haskell98 roadmap's M15, D34), and decision trees in Sestoft's order as an option. |
 | [`HS_MODULES`](sig/HS_MODULES.md) | The names of Haskell 98's modules (the Report's chapter 5; the haskell98 roadmap's D29, D30): what each module defines, what it exports, and what is in scope in it, over a group of modules that import one another. |
 | [`HS_PARSER`](sig/HS_PARSER.md) | The parser of Haskell 98: recursive descent over the grammar of the Report's section 9.5, on the layout of [`HsLayout`](str/HsLayout.md) (the haskell98 roadmap's D27). |
 | [`HS_PRINT`](sig/HS_PRINT.md) | Printers of Haskell 98's abstract syntax (the haskell98 roadmap's D28). |

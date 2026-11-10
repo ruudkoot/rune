@@ -3,18 +3,22 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) **u** [v](v.md) [w](w.md) [z](z.md)
 
 - `UNDERSCORE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-underscore)
+- `unfold` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unfold)
 - `unify` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unify)
 - `unifyKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unifykind)
 - `Unit` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-unit)
 - `unit` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unit)
 - `unit_` (type): [HS_MODULES](../sig/HS_MODULES.md#type-unit_)
 - `unitCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unitcon)
+- `unitTy` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unitty)
+- `unitVal` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unitval)
 - `Unknown` (con): [HS_CHAR](../sig/HS_CHAR.md#con-unknown)
 - `Unlifted` (con): [CORE](../sig/CORE.md#con-unlifted)
 - `unlit` (val): [HS_LITERATE](../sig/HS_LITERATE.md#val-unlit)
 - `unresolved` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-unresolved)
 - `Unsupported` (exn): [CORE_TO_MID](../sig/CORE_TO_MID.md#exn-unsupported)
 - `Use` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-use)
+- `useOf` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-useof)
 - `UTuple` (con): [CORE](../sig/CORE.md#con-utuple)
 
 ---
