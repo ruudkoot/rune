@@ -6,7 +6,7 @@
 - `keyOf` (val): [HS_KINDS](../sig/HS_KINDS.md#val-keyof)
 - `KFree` (con): [HS_TYPES](../sig/HS_TYPES.md#con-kfree)
 - `KFun` (con): [HS_TYPES](../sig/HS_TYPES.md#con-kfun)
-- `kind` (type): [CORE](../sig/CORE.md#type-kind), [HS_TYPES](../sig/HS_TYPES.md#type-kind)
+- `kind` (type): [CORE](../sig/CORE.md#type-kind), [HS_LINT](../sig/HS_LINT.md#type-kind), [HS_TYPES](../sig/HS_TYPES.md#type-kind)
 - `KindMismatch` (exn): [HS_TYPES](../sig/HS_TYPES.md#exn-kindmismatch)
 - `kindRepr` (val): [HS_TYPES](../sig/HS_TYPES.md#val-kindrepr)
 - `KLink` (con): [HS_TYPES](../sig/HS_TYPES.md#con-klink)

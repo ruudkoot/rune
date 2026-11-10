@@ -15,7 +15,7 @@
 - `Mismatch` (exn): [HS_TYPES](../sig/HS_TYPES.md#exn-mismatch)
 - `MODULE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-module)
 - `Module` (con): [HS_AST](../sig/HS_AST.md#con-module)
-- `module` (type): [HS_AST](../sig/HS_AST.md#type-module)
+- `module` (type): [HS_AST](../sig/HS_AST.md#type-module), [HS_LINT](../sig/HS_LINT.md#type-module)
 - `module` (val): [HS_DUMP](../sig/HS_DUMP.md#val-module)
 - `module_` (type): [HS_INFER](../sig/HS_INFER.md#type-module_)
 - `moduleName` (val): [HS_MODULES](../sig/HS_MODULES.md#val-modulename)

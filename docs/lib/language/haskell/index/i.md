@@ -8,7 +8,7 @@
 - `Import` (con): [HS_AST](../sig/HS_AST.md#con-import)
 - `import` (type): [HS_AST](../sig/HS_AST.md#type-import)
 - `IN` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-in)
-- `infer` (val): [HS_KINDS](../sig/HS_KINDS.md#val-infer)
+- `infer` (val): [HS_KINDS](../sig/HS_KINDS.md#val-infer), [HS_LINT](../sig/HS_LINT.md#val-infer)
 - `INFIX` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-infix)
 - `Infix` (con): [HS_AST](../sig/HS_AST.md#con-infix)
 - `INFIXL` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-infixl)

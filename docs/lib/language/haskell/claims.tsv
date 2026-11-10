@@ -17,6 +17,7 @@ HS_INFER	signature			required	declared	lib/language/haskell/infer_sig.sml
 HS_KINDS	signature			required	declared	lib/language/haskell/kinds_sig.sml
 HS_LAYOUT	signature			required	declared	lib/language/haskell/layout_sig.sml
 HS_LEXER	signature			required	declared	lib/language/haskell/lexer_sig.sml
+HS_LINT	signature			required	declared	lib/language/haskell/hslint_sig.sml
 HS_LITERATE	signature			required	declared	lib/language/haskell/literate_sig.sml
 HS_MODULES	signature			required	declared	lib/language/haskell/modules_sig.sml
 HS_PARSER	signature			required	declared	lib/language/haskell/parser_sig.sml
@@ -45,6 +46,7 @@ HsInfer	structure	HS_INFER		required	claimed	lib/language/haskell/infer.sml
 HsKinds	structure	HS_KINDS		required	claimed	lib/language/haskell/kinds.sml
 HsLayout	structure	HS_LAYOUT		required	claimed	lib/language/haskell/layout.sml
 HsLexer	structure	HS_LEXER		required	claimed	lib/language/haskell/lexer.sml
+HsLint	structure	HS_LINT		required	claimed	lib/language/haskell/hslint.sml
 HsLiterate	structure	HS_LITERATE		required	claimed	lib/language/haskell/literate.sml
 HsModules	structure	HS_MODULES		required	claimed	lib/language/haskell/modules.sml
 HsParser	structure	HS_PARSER		required	claimed	lib/language/haskell/parser.sml
