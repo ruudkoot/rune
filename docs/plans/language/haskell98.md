@@ -90,7 +90,7 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M27. Retire | | S | | not started |
 | M28. `Ty` with application and forall | A | L | D4 | done; on `57a5306a4` |
 | M29. Mid `Case` | A | L | D8 | done (a fix of Simplify's tag facts in a closure, made after `57a5306a4`, merging) |
-| M30. Multi-value return, built to be measured | A | L | D9 | to build, on the register VM, to be measured |
+| M30. Multi-value return, built to be measured | A | L | D9 | built and measured on `hs-a-m30`; the owner took A (2026-11-10), so it does not land |
 | M31. `IntInf` immediate | A | M | D20 | done; on `57a5306a4` |
 
 Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
