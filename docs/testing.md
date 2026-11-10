@@ -576,8 +576,7 @@ roadmap's M11; [tests/hs/syntax/README.md](../tests/hs/syntax/README.md)).
 rhc's commands for the round trips are `--print`, `--print-layout`,
 `--print-exact`, `--dump-tokens` and `--dump-ast --no-spans`, and its
 generator is `bin/rune-hs-syntax generate-files`, the syntax generator of
-D55; `--typecheck-only`, which judges an accept program, checks as far as
-rhc goes, its parse. Besides the clause programs of the parser's rows,
+D55. Besides the clause programs of the parser's rows,
 `tests/hs/roundtrip` holds the parser's own fixtures: a file for each part of
 the grammar and the lexical syntax, the crafted cases of the roadmap's E10
 that the syntax accepts, and, for rows of the layout rules and the lexical
@@ -597,6 +596,22 @@ file's parsed tree against its dump of the file's explicit print
 (`hs/syntax/ghc`; E10's 1,662 files of the corpus too, with
 `RUNE_HS_SYNTAX_GHC_LIST` and `RUNE_HS_SYNTAX_GHC_ROOT`), its known
 differences in `tests/hs/syntax/ghc-dump.tsv`.
+
+**Names, modules and fixity** (`lib/language/haskell`'s `names.build` and
+`src/rhc`'s graph and names, the roadmap's M12;
+[tests/hs/names/README.md](../tests/hs/names/README.md)). `--typecheck-only`,
+which judges an accept program, and a compile, which judges an error program,
+check as far as rhc goes: the program's modules, found from the file given and
+in `share/rhc/haskell98` (the wrapper `bin/rhc` passes `--share`), their
+exports and scopes, every name, and fixity. `tests/runner/hsnames.sml`'s jobs
+`hs/names/*` compare `bin/rhc --dump-names` of each fixture of
+`tests/hs/names` with its expected files: the Report's 20 modules whole,
+against E16's export pairs, fixities and instances; E16's fixtures under both
+fixpoints (`--names=least|greatest`); a program's own `Char`; fixity by
+entity; a cycle of three signed modules; a dotted module name. And
+`hs/names/mutants` builds the dump with one edit at a time, each of which a
+fixture must catch: the greatest fixpoint for the least, a hidden module
+importable, fixity read before names.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
