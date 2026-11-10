@@ -26,9 +26,10 @@ data Element b = Undefined | Defined b | Multiple
 
 array       :: (Ix a) => (a,a) -> [(a,b)] -> Array a b
 array b ivs =
-    if and [inRange b i | (i,_) <- ivs]
+    rangeSize b `seq`       -- strict in the bounds, as 16.1 says (ruling 35)
+    (if and [inRange b i | (i,_) <- ivs]
         then MkArray b (place b ivs)
-        else error "Array.array: out-of-range array association"
+        else error "Array.array: out-of-range array association")
 
 -- the elements of an array, put in place the first time one is read
 place       :: (Ix a) => (a,a) -> [(a,b)] -> Arr (Element b)

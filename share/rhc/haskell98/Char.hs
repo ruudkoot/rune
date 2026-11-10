@@ -146,16 +146,20 @@ lexLitChar ('\\':s) =  map (prefix '\\') (lexEsc s)
           lexEsc (c:s)     | c `elem` "abfnrtv\\\"'" = [([c],s)]
           lexEsc ('^':c:s) | c >= '@' && c <= '_'    = [(['^',c],s)]
 
-          -- Numeric escapes
-          lexEsc ('o':s)               = [prefix 'o' (span isOctDigit s)]
-          lexEsc ('x':s)               = [prefix 'x' (span isHexDigit s)]
+          -- Numeric escapes, of a digit at least, as readEsc reads them (R154)
+          lexEsc ('o':s@(d:_)) | isOctDigit d = [prefix 'o' (span isOctDigit s)]
+          lexEsc ('x':s@(d:_)) | isHexDigit d = [prefix 'x' (span isHexDigit s)]
           lexEsc s@(d:_)   | isDigit d = [span isDigit s]
 
-          -- Very crude approximation to \XYZ.
-          lexEsc s@(c:_)   | isUpper c = [span isCharName s]
+          -- A mnemonic of readEsc's table, the first that matches, as
+          -- readEsc takes it (R154; the code printed a crude approximation)
+          lexEsc s@(c:_)   | isUpper c =
+                             case [(mne,s') | mne <- "DEL" : elems asciiTab,
+                                              ([],s') <- [match mne s]] of
+                               (pr:_) -> [pr]
+                               []     -> []
           lexEsc _                     = []
 
-          isCharName c   = isUpper c || isDigit c
           prefix c (t,s) = (c:t, s)
 
 lexLitChar (c:s)    =  [([c],s)]
