@@ -833,6 +833,41 @@ struct
         end
     end
 
+  (* ---- the names --passes, --dump-before and --dump-after give: one that
+     no optional pass or stage has is refused, with the names there are
+     (the haskell98 roadmap's M4: it was accepted, and ran no optional pass
+     or printed nothing), and the others are taken, none at all among them *)
+  fun passNames () =
+    let
+      val dir = run ^ "/compiler/pass-names"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun rune (n, flags) =
+        exec {cmd = ["bin/rune", "--no-prelude"] @ flags @ ["-o", f (n ^ ".rbc"), "tests/ir/mid.sml"], dir = NONE, stdin = "",
+              stdout = f (n ^ ".out"), stderr = f (n ^ ".err"), timeout = 300}
+      val optional = "expand, shake, lift, workers, simplify, refs, trees, inline, specialise, equality, results"
+      val stages = "lex, select, parse, elaborate, translate, mid, midcanon, expand, shake, lift, workers, simplify, refs, "
+                   ^ "lower, stack, registers, emit, all"
+      val refused =
+        [("passes", ["--passes=shake,nosuchpass"], "rune: --passes=P,... requires an optional pass of " ^ optional ^ ", not nosuchpass"),
+         ("passes-stage", ["--passes=lower"], "rune: --passes=P,... requires an optional pass of " ^ optional ^ ", not lower"),
+         ("dump-after", ["--dump-after=nosuchpass"], "rune: --dump-after=P requires a stage of " ^ stages ^ ", not nosuchpass"),
+         ("dump-before", ["--dump-before=nosuchpass"], "rune: --dump-before=P requires a stage of " ^ stages ^ ", not nosuchpass")]
+      val taken = [("none", ["--passes="]), ("some", ["--passes=shake,simplify,inline"]), ("dump", ["--dump-after=simplify"]),
+                   ("all", ["--dump-before=all", "--dump-after=all"])]
+    in
+      List.app (fn (n, flags, msg) =>
+                  if rune (n, flags) = 0 then fail ("compiler.pass-names: " ^ n ^ ": accepted")
+                  else if firstLine (f (n ^ ".err")) = msg then ()
+                  else fail ("compiler.pass-names: " ^ n ^ ": refused with " ^ firstLine (f (n ^ ".err")) ^ ", not " ^ msg))
+               refused;
+      List.app (fn (n, flags) =>
+                  if rune (n, flags) = 0 then ()
+                  else fail ("compiler.pass-names: " ^ n ^ ": refused: " ^ firstLine (f (n ^ ".err"))))
+               taken;
+      if contains (f "dump.out", "(* after simplify *)") then () else fail "compiler.pass-names: --dump-after=simplify printed no dump"
+    end
+
   (* ---- the lints' negative tests (docs/testing.md; the linting roadmap,
      M4): a fault made in a program after a stage (RUNE_FAULT,
      lib/compiler/backend/fault.sml), which the check of that stage refuses
@@ -1216,6 +1251,7 @@ struct
     | ["overloading-cache"] => SOME overloadingCache
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["compiler-lint-rules"] => SOME lintRules
+    | ["compiler-pass-names"] => SOME passNames
     | ["fault-one", spec] => SOME (fn () => faultOne spec)
     | ["compiler-astlint-faults"] => SOME astlintFaultTests
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
@@ -1313,6 +1349,7 @@ struct
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))
              :: tagged ["test"] (job ("lint-rules", ["compiler-lint-rules"], [], 800, 900))
+             :: tagged ["test"] (job ("pass-names", ["compiler-pass-names"], [], 500, 600))
              :: tagged ["test"] (job ("astlint-faults", ["compiler-astlint-faults"], [], 500, 600))
              :: List.map (fn h => Test.requires [h] (tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600))))
                          ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"])),

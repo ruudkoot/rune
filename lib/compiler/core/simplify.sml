@@ -1965,10 +1965,12 @@ struct
   fun functorFun ({label, ...} : fundef) : bool =
     case label of SOME n => String.isPrefix "functor " n | NONE => false
 
-  fun program (p : program) : program =
+  (* What simplify does besides shrinking, which its caller says
+     (Pipeline.simplifyOptions): each is woven into its rounds. *)
+  type options = {inline : bool, specialise : bool, equality : bool}
+
+  fun program ({inline, specialise, equality} : options) (p : program) : program =
     let
-      (* inlining is an optional pass of its own name, which runs here *)
-      val inline = Pass.enabled ("inline", 1)
       val () = inlining := inline
       val uses = globalUses p
       fun calledOnce g = IntTable.find (uses, g) = SOME (1, 1)
@@ -1992,10 +1994,9 @@ struct
                          if calledOnce (#name f) andalso not (names (#name f, #body f)) andalso not (functorFun f)
                          then IntTable.insert (!once, #name f, SOME f) else ()
                      | _ => ()) p
-      val () = equalities := Pass.enabled ("equality", 2)
+      val () = equalities := equality
       val () = eqFuns := StringMap.empty
       val () = pendingEqs := []
-      val specialise = Pass.enabled ("specialise", 1)
       val () = specialisable := IntTable.table 64
       val () = copies := StringMap.empty
       val () = pendingCopies := []

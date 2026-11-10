@@ -46,8 +46,8 @@ of results in globals (see *Low*).
 | Option | What it does |
 |---|---|
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
-| `--passes=P,...` | run these optional passes, whatever the level |
-| `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
+| `--passes=P,...` | run these optional passes, whatever the level (none, given none); a name that is not an optional pass's, of the pass list or a stage's part (`Pipeline.optionalNames`), is refused |
+| `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`); a name that is no stage's is refused |
 | `--lint`, `--lint=LEVEL` | check what the passes make, at the level given (*Levels*, below; a bare `--lint` is 2, every pass), and stop with `Error.Bug`, which names the check, at the first breach; `RUNE_LINT=LEVEL` does the same where no flag reaches (the REPL, the compiler library), and every test sets `RUNE_LINT=2` ([testing.md](testing.md), *Running the tests*). A check changes nothing of what the compiler makes, the same bytes at every level, units and their bases too (`make check-levels`), and moves none of its counters of names -- stamps, type names, functions, labels -- which `Pass.checkAt` holds every check to, since one that took fresh names hid a bug it should have caught |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then each check, at every depth, as `check KEY: N runs, T s, I instructions` (the instructions where the runtime counts them, as Rune's own build does); then `total: T s processor time, S s in the stages (P%)` (below) |

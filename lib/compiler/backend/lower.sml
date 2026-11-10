@@ -545,6 +545,8 @@ struct
      program only (Pass.whole: a unit after this one would call it the
      usual way), and not where the debugger reads the program (-g), whose
      stops could come between a return and the reads. *)
+  val resultsOn = ref false
+  val () = CompilerState.cellRoot ("Lower.resultsOn", resultsOn)
   val slotFuns : int IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Lower.slotFuns", slotFuns)
   val slotGlobals : int list IntMap.map ref = ref IntMap.empty
@@ -846,8 +848,7 @@ struct
         in
           IntMap.filteri (fn (g, _) => not (isSome (IntTable.find (bad, g)))) cands
         end
-      val () = slotFuns := (if Pass.enabled ("results", 1) andalso !Pass.whole andalso not (!debugInfo)
-                            then IntMap.map #1 (found cands1) else IntMap.empty)
+      val () = slotFuns := (if !resultsOn then IntMap.map #1 (found cands1) else IntMap.empty)
       (* what each call reads: the fields it takes, where it only takes
          them, all of them where it needs the tuple, none where it passes
          them on (a tail call of one of n from one of n) *)
@@ -875,7 +876,7 @@ struct
         | _ => ()
     in
       sumFuns := IntMap.empty; sumGlobals := IntMap.empty;
-      if Pass.enabled ("results", 1) andalso !Pass.whole andalso not (!debugInfo) then findSumFuns (p, asValue) else ();
+      if !resultsOn then findSumFuns (p, asValue) else ();
       slotNeeded := IntMap.empty;
       List.app (fn M.Val (_, _, e) => callIn NONE e
                  | M.Funs fs => List.app (fn f => callIn (IntMap.find (!slotFuns, #name f)) (#body f)) fs
@@ -1395,8 +1396,9 @@ struct
        pos = pos, reps = reps, result = result, captures = captures}
     end
 
-  fun program (p : M.program) : L.program =
+  fun program {results : bool} (p : M.program) : L.program =
     let
+      val () = resultsOn := (results andalso not (!debugInfo))
       (* the types of the variables, kept where their shapes are checked *)
       val () = (keepTys := !shapesChecked (); lastTys := IntTable.table (if !keepTys then 256 else 1))
       val () = (useCounts := IntTable.table 4096; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];

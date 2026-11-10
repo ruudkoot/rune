@@ -146,6 +146,22 @@ struct
   type midPass = {name : string, from : int, gate : unit -> bool, run : Mid.program -> Mid.program}
   fun pass (name : string, run : Mid.program -> Mid.program) : midPass =
     {name = name, from = 1, gate = fn () => true, run = run}
+  (* What a stage does inside it, by the names --passes and the levels go
+     by, with the level each runs from: no stages of their own (docs/ir.md,
+     The pipeline). `trees` is how translate compiles a match, which
+     MatchComp asks of Pass itself. *)
+  val parts : (string * string * int) list =
+    [("translate", "trees", 1), ("simplify", "inline", 1), ("simplify", "specialise", 1), ("simplify", "equality", 2),
+     ("lower", "results", 1)]
+  fun partEnabled (name : string) : bool =
+    case List.find (fn (_, n, _) => n = name) parts of
+      SOME (_, _, from) => Pass.enabled (name, from)
+    | NONE => Error.bug ("no part " ^ name)
+  (* what Simplify and Lower are told to do besides *)
+  fun simplifyOptions () : Simplify.options =
+    {inline = partEnabled "inline", specialise = partEnabled "specialise", equality = partEnabled "equality"}
+  fun lowerOptions () : {results : bool} = {results = partEnabled "results" andalso !Pass.whole}
+
   (* the program's top level is all there is (Pass.whole): Shake goes by it *)
   fun wholeOnly (name : string, run : Mid.program -> Mid.program) : midPass =
     {name = name, from = 1, gate = fn () => !Pass.whole, run = run}
@@ -162,10 +178,10 @@ struct
      wholeOnly ("shake", Shake.program),
      pass ("lift", fn m => Lift.program (targetInfo ()) m),
      pass ("workers", fn m => Workers.program (targetInfo ()) m),
-     pass ("simplify", Simplify.program),
+     pass ("simplify", fn m => Simplify.program (simplifyOptions ()) m),
      pass ("refs", Refs.program),
      {name = "shake", from = 1, run = Shake.program,
-      gate = fn () => !Pass.whole andalso Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1)}]
+      gate = fn () => !Pass.whole andalso Pass.enabled ("simplify", 1) andalso partEnabled "inline"}]
   val midPasses : midPass list ref = ref standardPasses
   val () = CompilerState.cellRoot ("Pipeline.midPasses", midPasses)
   fun passNames () : string list = List.map #name (!midPasses)
@@ -185,6 +201,16 @@ struct
   (* p in place of every pass of that name *)
   fun replacePass (name : string, p : midPass) : unit =
     midPasses := List.map (fn q => if #name q = name then p else q) (!midPasses)
+
+  fun distinct (names : string list) : string list =
+    List.foldl (fn (n, ns) => if List.exists (fn m => m = n) ns then ns else ns @ [n]) [] names
+  (* The names --passes may give: each pass of the list, and what a stage
+     does inside it (parts) *)
+  fun optionalNames () : string list = distinct (passNames () @ List.map #2 parts)
+  (* The stages from Lambda to the target's code, by the names Pass.stage
+     gives them, which --dump-before and --dump-after may give *)
+  fun stageNames () : string list =
+    ["translate", "mid", "midcanon"] @ distinct (passNames ()) @ ["lower", "stack", "registers"]
 
   (* Mid to Low: the optional passes, and Lower. Shake runs on a whole
      program only (Pass.whole), which is renumbered canonically first, as
@@ -218,7 +244,7 @@ struct
     in
       Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = fn p => (Pass.checkAt ("lower", 1) LowLint.check p; LowShapes.stage p),
                   size = Low.size}
-                 (fn m => lowered (Fault.low ("lower", Lower.program m))) mid
+                 (fn m => lowered (Fault.low ("lower", Lower.program (lowerOptions ()) m))) mid
     end
 
   (* Lambda to Low: Mid, the optional passes on it, and Lower *)
