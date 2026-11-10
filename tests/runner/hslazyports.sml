@@ -63,7 +63,8 @@ struct
                       {cmd = cmd, dir = SOME dir, stdin = stdin, stdout = log ^ "." ^ tag ^ ".out",
                        stderr = log ^ "." ^ tag ^ ".err", timeout = timeout}
         in (s, read (log ^ "." ^ tag ^ ".out"), firstNonEmpty (log ^ "." ^ tag ^ ".err")) end
-      (* the first variant rhc compiles, then its run *)
+      (* the first variant rhc compiles, then its run; or what rhc says of the
+         last *)
       fun go [] first = first
         | go (v :: vs) first =
             let
@@ -74,7 +75,7 @@ struct
               val rd = work ^ "/" ^ v ^ "-run"
               val () = if cs = 0 then (HsCorpus.copyTree (up, rd); HsCorpus.copyFile (p ^ "/main.rbc", rd ^ "/main.rbc")) else ()
             in
-              if cs <> 0 then go vs (case first of NONE => SOME (if cs = 124 then "timeout" else "reject", cerr) | s => s)
+              if cs <> 0 then go vs (SOME (if cs = 124 then "timeout" else "reject", cerr))
               else
                 let
                   val stdin = if #stdin r = "" then "" else rd ^ "/" ^ #stdin r

@@ -51,11 +51,11 @@ struct
   (* rhc's check of a prepared program: accept; reject, a diagnostic of the
      program's (`FILE:LINE:COL: error: ...`, status 1); timeout; or crash,
      any other end, an uncaught exception among them *)
-  fun checkOne log (p, m) =
+  fun checkOne log flags (p, m) =
     let
       val () = mkdirs (OS.Path.dir log)
       val status = execProcess false limits (fn e => e)
-                     {cmd = [rhc (), "--typecheck-only", m], dir = SOME p, stdin = "", stdout = log ^ ".out",
+                     {cmd = [rhc (), "--typecheck-only"] @ flags @ [m], dir = SOME p, stdin = "", stdout = log ^ ".out",
                       stderr = log ^ ".err", timeout = 300}
       val err = read (log ^ ".err")
       fun diagnostic () = List.exists (fn l => String.isSubstring ": error: " l) (lines err)
@@ -75,7 +75,11 @@ struct
   fun noHarness id = String.isPrefix "nofib/parallel/" id orelse String.isPrefix "nofib/smp/" id
 
   (* a program in the variants the oracles judge it in, the first rhc
-     accepts; M13's rows in h98 alone *)
+     accepts, or what rhc says of the last, the one the most prepared
+     (h98, the import rewrite, the compat layer); M13's rows in h98 alone.
+     Last, the most prepared again under `--dotted-names`, the flag D35
+     gives the corpus for hierarchical names; an acceptance under it says
+     so *)
   fun one only13 (row, c : HsCorpus.candidate) =
     let
       val id = #id c
@@ -86,11 +90,18 @@ struct
         if only13 then ["h98"]
         else ["h98"] @ (if null rewritable then [] else ["rewrite"])
              @ (if #set c = "nofib-2019" andalso not (noHarness id) then ["harness"] else [])
+      val last = List.last variants
+      val tries = List.map (fn v => (v, [])) variants @ [(last, ["--dotted-names"])]
       fun go [] first = first
-        | go (v :: vs) first =
-            let val r = checkOne (log ^ "." ^ v) (HsCorpus.prepare (c, v, files, work ^ "/" ^ v))
-            in if #1 r = "accept" then SOME r else go vs (case first of NONE => SOME r | s => s) end
-      val (got, said) = case go variants NONE of SOME r => r | NONE => ("accept", "")
+        | go ((v, flags) :: vs) first =
+            let
+              val tag = v ^ (if null flags then "" else ".dotted")
+              val r = checkOne (log ^ "." ^ tag) flags (HsCorpus.prepare (c, v, files, work ^ "/" ^ tag))
+            in
+              if #1 r = "accept" then SOME (if null flags then r else ("accept", "under --dotted-names (D35)"))
+              else go vs (SOME r)
+            end
+      val (got, said) = case go tries NONE of SOME r => r | NONE => ("accept", "")
     in rmTree work; {id = id, label = "check", got = got, said = said, passed = got = "accept", judged = judgesAccept row,
                      want = "GHC and Hugs accept it"} : outcome end
     handle e => (note (out () ^ "/logs/" ^ #id c ^ ".exn", exnMessage e ^ "\n");
