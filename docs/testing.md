@@ -940,7 +940,9 @@ IO family's positions of files and errors of the system's), and the system's
 family's (`prims-sys`: a command's exit, the environment, the program's name
 and arguments, the clock and the zone; `prims-sys-files`: directories, a
 file's kind, access, mode and time, a listing, renames and the working
-directory). `end-*.core` hold the line an escaping IOError ends a program
+directory); `runtime-rw`, a file opened to read and to write through one
+handle, h_open's mode 3 (ReadWriteMode), its reads and writes turned and
+sought. `end-*.core` hold the line an escaping IOError ends a program
 with to the library's Show IOError, a user's "user error (TEXT)".
 `lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
