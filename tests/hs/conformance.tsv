@@ -49,7 +49,7 @@ lex.munch.eqeq	2.2	= is reserved, == is not	lex	accept	`==` lexes as one varsym 
 lex.munch.tildeeq	2.2	~= is not reserved though = and ~ are	lex	accept	`~=` is one varsym and may be defined	hand	Supported		
 lex.any.invalid	2.2	Characters not in ANY are not valid in programs and should give a lexing error	lex	reject	a raw U+0001, U+007F and NUL in a program, in a comment and in a literal are refused	hand	Supported		
 lex.any.def	2.2	ANY -> graphic | whitechar	lex	accept	every class named holds in a nested comment	hand	Supported		
-lex.any.linecomment	2.2	any -> graphic | space | tab: a line comment holds no other whitespace	lex	reject	VT or uniWhite inside `--` comment is outside the production; see readings.md	hand	Planned	R4	
+lex.any.linecomment	2.2	any -> graphic | space | tab: a line comment holds no other whitespace	lex	reject	VT or uniWhite inside `--` comment is outside the production; see readings.md	hand	Supported	R4	accept/lex.any.linecomment_uniwhite
 lex.graphic.classes	2.2	graphic -> small | large | symbol | digit | special | : | " | '	lex	accept	each in a comment	hand	Supported		
 lex.graphic.gap	2.2	A Unicode letter neither lower, upper nor title case (Lo, Lm), a mark or a letter number is in no class, so outside graphic	lex	reject	by the letter a lexing error even in a comment or literal; GHC treats Lo as lower; see readings.md	hand	Supported	R5	
 lex.small.asc	2.2	small includes ascSmall a to z	lex	accept	identifiers	hand	Supported		
@@ -68,7 +68,7 @@ lex.hexit	2.2	hexit -> digit | A to F | a to f	lex	accept	both cases; note digit
 lex.comment.dashcolon	2.2	`--:` is a varsym and begins no comment: comment -> dashes [any<symbol | :> {any}] newline	lex	accept	an operator `--:` defined and used; the production as erratum Dec 2005 amends it	hand	Supported		
 lex.comment.valid	2.3	Comments are valid whitespace	lex	accept	a comment separates lexemes	hand	Supported		
 lex.comment.line	2.3	An ordinary comment begins with two or more dashes and extends to the following newline	lex	accept	text after `--` and after `-----` is ignored	hand	Supported		
-lex.comment.line.eof	2.3	comment -> dashes [any<symbol | :> {any}] newline requires a newline, so a line comment ending at end of file is outside the production	lex	accept	accept as every implementation does; a pinned deviation; the production as erratum Dec 2005 amends it; see readings.md	hand	Planned	R4	
+lex.comment.line.eof	2.3	comment -> dashes [any<symbol | :> {any}] newline requires a newline, so a line comment ending at end of file is outside the production	lex	accept	accept as every implementation does; a pinned deviation; the production as erratum Dec 2005 amends it; see readings.md	hand	Supported	R4	accept/lex.comment.line.eof_noeol
 lex.comment.legallexeme	2.3	The dashes must not form part of a legal lexeme	lex	accept	see the four cases below	hand	Supported		
 lex.comment.arrow	2.3	"-->" does not begin a comment	lex	accept	`-->` lexes as one varsym and may be defined	hand	Supported		
 lex.comment.bardash	2.3	"|--" does not begin a comment	lex	accept	`|--` lexes as one varsym and may be defined	hand	Supported		
@@ -2313,7 +2313,7 @@ lay.first.implicit	9.3	If the first lexeme of a module is not { or module, it is
 lay.first.module	9.3	A first lexeme module gets no {n}	layout	accept	the header is outside any context	hand	Supported		
 lay.first.brace	9.3	A first lexeme { gets no {n}	layout	accept	`{ main = return () }` as a whole module	hand	Supported		
 lay.first.indented	9.3	A body-only module may start at any column	layout	accept	all declarations at column 5	hand	Supported		
-lay.first.empty	9.3	A file with no lexeme gets no token at all, and L gives nothing, so by the grammar it is no module	layout	accept	the Report has no rule: refuse or take as an empty Main; see readings.md	hand	Planned	R4	
+lay.first.empty	9.3	A file with no lexeme gets no token at all, and L gives nothing, so by the grammar it is no module	layout	accept	the Report has no rule: refuse or take as an empty Main; see readings.md	hand	Supported	R4	errors/lay.first.empty_nomain
 lay.angle.rule	9.3	A lexeme preceded only by white space on its line is preceded by <n>, n its indentation	layout	accept	annotated token dump	hand	Supported		
 lay.angle.notbrace	9.3	No <n> where the lexeme already has {n}	layout	accept	`where` newline `x = 1`: {n} and no <n> before x	hand	Supported		
 lay.angle.comment	9.3	White space includes comments: a lexeme after a comment on its line is still the first	layout	accept	`{- c -} x = 1`: <n> carries x's column, not the comment's	hand	Supported		
@@ -2326,7 +2326,7 @@ lay.col.newlinechars	9.3	newline, return, linefeed and formfeed all start a new 
 lay.col.first	9.3	The first column is column 1, not 0	layout	accept	annotated token dump	hand	Supported		
 lay.col.tab	9.3	Tab stops are 8 characters apart	layout	accept	a tab from column 1 gives column 9, from 8 gives 9, from 9 gives 17	hand	Supported		
 lay.col.tabalign	9.3	A tab inserts enough spaces to align with the next tab stop	layout	accept	spaces then tab mixed: alignment by columns, not by characters	hand	Supported		
-lay.col.vt	9.3	The Report does not say how a vertical tab moves the column	layout	none	silence: rhc chooses, one column, and documents it; see readings.md	hand	Planned	R4	
+lay.col.vt	9.3	The Report does not say how a vertical tab moves the column	layout	none	silence: rhc chooses, one column, and documents it; see readings.md	hand	Supported	R4	accept/lex.any.linecomment_uniwhite
 lay.col.unicode	9.3	Unicode characters are of the same, fixed width as an ASCII character for the layout rule	layout	accept	a wide CJK or combining character counts one column; code point, not grapheme or byte	hand	Supported		
 lay.col.advice	9.3	Programmers should avoid layout whose meaning depends on the width of non-space characters	layout	none	advice to programmers	hand	Planned		
 lay.input.application	9.3	L tokens [] delivers the layout-insensitive translation of the annotated lexeme stream of a module	layout	accept	the implementation's output equals a separate executable L written from this section, on the corpus	hand	Supported		
@@ -2388,7 +2388,7 @@ lit.bird.blank	9.4	A line is blank if it consists only of whitespace	lex	accept	
 lit.bird.startfile	9.4	A program line as the file's first or last line needs no blank neighbour	lex	accept	a .lhs of only program lines	hand	Supported		
 lit.ext.hs	9.4	By convention .hs is a usual Haskell file	lex	accept	the driver treats it as non-literate; a leading `>` line there is a parse error	hand	Supported		
 lit.ext.lhs	9.4	By convention .lhs is a literate Haskell file	lex	accept	the driver treats it as literate	hand	Supported		
-lit.example.factorial	9.4	The factorial example of 9.4	lex	accept	it uses `readLine`, which no Report module defines: as printed it fails to compile with `readLine`; see readings.md	hand	Planned	R52	
+lit.example.factorial	9.4	The factorial example of 9.4	lex	accept	it uses `readLine`, which no Report module defines: as printed it fails to compile with `readLine`; see readings.md	hand	Supported	R52	
 lit.latex.begin	9.4	Program code begins on the first line following a line that begins \begin{code}	lex	accept	the example of 20 factorials runs	hand	Supported		
 lit.latex.end	9.4	Program code ends just before a subsequent line that begins \end{code}, ignoring string literals	lex	accept	a string holding \end{code} at a line start ends the block	hand	Supported		
 lit.latex.comment	9.4	Everything outside the delimiters is comment	lex	accept	LaTeX text around code, with no blank lines needed	hand	Supported		

@@ -290,6 +290,40 @@ Rows: `def.pick.first`.
 **Ruling.** A program whose modules import each other is written by hand, its output from the text alone (D52): none
 of GHC (without its boot files), Hugs or nhc98 compiles it as written. Rows: `mod.inst.recursive`.
 
+## The owner's calls on E9's readings (2026-11-10)
+
+E9 left these three to the owner (its readings.md in the drafts; the roadmap records the calls). Each is written here
+with the programs that pin it.
+
+### R4. Texts that are not in the grammar: a comment at end of file, white space in a line comment, an empty file
+> comment  |   ->  |  dashes [ any<symbol>  {any}] newline (2.2)
+> any  |   ->  |  graphic  |  space  |  tab (2.2)
+
+**The owner's call.** As E9's seed reads it, each acceptance a deviation from the grammar taken literally, pinned by a
+program (`tests/hs/deviations.tsv`): a line comment that ends the file without a newline is accepted, the end of the
+file ending it (`accept/lex.comment.line.eof_noeol`); a vertical tab and the other Unicode white space in a line
+comment are accepted, and a vertical tab moves the column by one, as nothing else is stated
+(`accept/lex.any.linecomment_uniwhite`, which pins both); a file with no lexeme is the module `Main` with no `main`,
+5.1's abbreviation, refused by chapter 5's rule and not by the grammar (`errors/lay.first.empty_nomain`, a file of
+comment only, which L sees as it sees an empty one). **GHC**, **Hugs** and **nhc98** accept the comment at end of
+file; **nhc98** and **MicroHs** refuse the second program; **Hugs** loads the third, asking for no `main`.
+Rows: `lex.comment.line.eof`, `lex.any.linecomment`, `lay.col.vt`, `lay.first.empty`.
+
+### R15. `n+0`
+> Matching an n+k pattern (where n is a variable and k is a positive integer literal) against a value v succeeds if x >= k (3.17.2)
+> pat  |   ->  |   var + integer  |  (successor pattern) (3.17.1)
+
+**The owner's call.** `n+0` is refused, by 3.17.2's "positive integer literal" over the grammar's `integer`, as
+**Hugs** refuses it ("Integer k in (n+k) pattern must be > 0"); **GHC** and **nhc98** accept it. 3.17.3's rule (s)
+is read with that `k`. Not a deviation: the prose is followed. Rows: `pat.m.npk.positive` (`errors/pat.m.npk.positive`),
+`tr.case.s`.
+
+### R52. 9.4's `readLine`
+**The owner's call.** A mistake in the Report, recorded as such and not copied: no module of the Report defines
+`readLine`, and the factorial example is tested with `getLine`, its likely meaning (`lang/lit.example.factorial`, the
+example as the HTML Report prints it, its blank lines kept, run on the input 5). R92 applies the same to the other
+misprints. Rows: `lit.example.factorial`.
+
 ## The readings of the libraries' clause programs (M19, chapters 12 to 27)
 
 These come from the clause programs of the Report's libraries, `tests/hs/lang` and `tests/hs/accept` from `lib.`, put to
