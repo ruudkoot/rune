@@ -799,12 +799,14 @@ bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
 # where that is bin/rhc.rbc's (bin/rhc.identity), and reads and checks
 # only a program's own modules; `bin/rhc --whole`, or a library or --share
 # other than the image's, goes the whole way. The directory it names is
-# the one bin/rhc gives, $(CURDIR)/bin/../share/rhc.
+# the one bin/rhc gives, $(CURDIR)/bin/../share/rhc. It is made at
+# RUNE_LINT=2, so that HsLint replays every record of the library once,
+# which a program from the world replays only for the modules it reaches.
 RHC_SHARE := $(shell find share/rhc -type f 2>/dev/null)
 bin/rhc.identity: bin/rhc.rbc bin/runevm
 	bin/runevm bin/rhc.rbc --identity > $@
 bin/rhc.img: bin/rhc.rbc bin/runevm $(RHC_SHARE)
-	bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --make-world $@ < /dev/null
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --make-world $@ < /dev/null
 bin/rhc: bin/rhc.rbc bin/rhc.identity bin/rhc.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\na=; b=\n[ -f "$$d/rhc.identity" ] && read -r a < "$$d/rhc.identity"\n[ -f "$$d/rhc.img.identity" ] && read -r b < "$$d/rhc.img.identity"\nif [ -n "$$a" ] && [ "$$a" = "$$b" ] && [ -f "$$d/rhc.img" ]; then exec "$$d/runevm" --restore "$$d/rhc.img" -- --share "$$d/../share/rhc" "$$@"; fi\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" "$$@"\n' > $@
 	chmod +x $@
