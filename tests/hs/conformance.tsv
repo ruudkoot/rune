@@ -41,7 +41,7 @@ lex.white.newline.ff	2.2	formfeed is a newline	lex	accept	layout treats the next
 lex.white.vertab	2.2	a vertical tab is whitechar	lex	accept	separates lexemes; 9.3 does not say how it moves the column: see readings.md	hand	Supported	R4	
 lex.white.space	2.2	a space is whitechar	lex	accept	token dump	hand	Supported		
 lex.white.tab	2.2	a horizontal tab is whitechar	lex	accept	token dump	hand	Supported		
-lex.white.uniwhite	2.2	uniWhite: any Unicode character defined as whitespace is whitechar	lex	accept	U+00A0 and U+2003 between lexemes; "defined as whitespace" is not a category: see readings.md	hand	Planned	R4	
+lex.white.uniwhite	2.2	uniWhite: any Unicode character defined as whitespace is whitechar	lex	accept	U+00A0 and U+2003 between lexemes; "defined as whitespace" is not a category: see readings.md	hand	Supported	R4	
 lex.delimiter	2.2	Any kind of whitespace is a proper delimiter for lexemes	lex	accept	`case` and `x` split by each whitechar and by a comment	hand	Supported		
 lex.munch.rule	2.2	Maximal munch: at each point the longest lexeme satisfying the production is read	lex	accept	token dump on the cases below	hand	Supported		
 lex.munch.cases	2.2	case is reserved, cases is not	lex	accept	`cases` is a varid and may be bound	hand	Supported		
@@ -53,16 +53,16 @@ lex.any.linecomment	2.2	any -> graphic | space | tab: a line comment holds no ot
 lex.graphic.classes	2.2	graphic -> small | large | symbol | digit | special | : | " | '	lex	accept	each in a comment	hand	Supported		
 lex.graphic.gap	2.2	A Unicode letter neither lower, upper nor title case (Lo, Lm), a mark or a letter number is in no class, so outside graphic	lex	reject	by the letter a lexing error even in a comment or literal; GHC treats Lo as lower; see readings.md	hand	Supported	R5	
 lex.small.asc	2.2	small includes ascSmall a to z	lex	accept	identifiers	hand	Supported		
-lex.small.uni	2.2	small includes uniSmall: any Unicode lowercase letter	lex	accept	an identifier starting with lower-case Greek is a varid	hand	Planned		
+lex.small.uni	2.2	small includes uniSmall: any Unicode lowercase letter	lex	accept	an identifier starting with lower-case Greek is a varid	hand	Supported		
 lex.small.underscore	2.2	small includes _	lex	accept	`_x` is a varid	hand	Supported		
 lex.large.asc	2.2	large includes ascLarge A to Z	lex	accept	identifiers	hand	Supported		
-lex.large.upper	2.2	large includes any uppercase Unicode letter	lex	accept	an identifier starting with upper-case Greek is a conid	hand	Planned		
-lex.large.title	2.2	large includes any titlecase Unicode letter	lex	accept	U+01C5 starts a conid	hand	Planned		
+lex.large.upper	2.2	large includes any uppercase Unicode letter	lex	accept	an identifier starting with upper-case Greek is a conid	hand	Supported		
+lex.large.title	2.2	large includes any titlecase Unicode letter	lex	accept	U+01C5 starts a conid	hand	Supported		
 lex.symbol.asc	2.2	ascSymbol is ! # $ % & * + . / < = > ? @ \ ^ | - ~	lex	accept	each alone or with another forms an operator or a reservedop as listed	hand	Supported		
 lex.symbol.notcolon	2.2	: is not a symbol but continues one: varsym -> symbol {symbol | :}	lex	accept	`+:` is a varsym, `:+` a consym	hand	Supported		
-lex.symbol.uni	2.2	uniSymbol: any Unicode symbol or punctuation, less special, _, :, ", '	lex	accept	U+2200 and U+00A7 form operators	hand	Planned		
+lex.symbol.uni	2.2	uniSymbol: any Unicode symbol or punctuation, less special, _, :, ", '	lex	accept	U+2200 and U+00A7 form operators	hand	Supported		
 lex.digit.asc	2.2	ascDigit 0 to 9	lex	accept	literals	hand	Supported		
-lex.digit.uni	2.2	digit includes uniDigit: any Unicode decimal digit	lex	accept	continues an identifier; as a numeral see lex.int.unidigit	hand	Planned		
+lex.digit.uni	2.2	digit includes uniDigit: any Unicode decimal digit	lex	accept	continues an identifier; as a numeral see lex.int.unidigit	hand	Supported		
 lex.octit	2.2	octit -> 0 to 7	lex	accept	`0o7`, and `0o8` lexes as `0` `o8`	hand	Supported		
 lex.hexit	2.2	hexit -> digit | A to F | a to f	lex	accept	both cases; note digit holds uniDigit	hand	Supported		
 lex.comment.dashcolon	2.2	`--:` is a varsym and begins no comment: comment -> dashes [any<symbol | :> {any}] newline	lex	accept	an operator `--:` defined and used; the production as erratum Dec 2005 amends it	hand	Supported		

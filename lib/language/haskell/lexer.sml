@@ -410,8 +410,8 @@ struct
                    | _ =>
                        if cp >= 128 then
                          failAt (!i, !i + #2 (decode (!i)),
-                                 "the character " ^ hexCode cp ^ " outside a comment or a literal: classes above ASCII "
-                                 ^ "wait for Unicode's general category in lib/unicode")
+                                 "the character " ^ hexCode cp ^ " outside a comment or a literal: its general category, " ^
+                                 CodePoint.abbreviation (CodePoint.category cp) ^ ", is of none of the Report's classes")
                        else fail ("the character " ^ hexCode cp ^ " outside a comment or a literal")
                  end);
             loop ()

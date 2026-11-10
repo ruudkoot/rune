@@ -20,9 +20,18 @@ struct
         else Unknown
       end)
 
-  (* Above ASCII: the general category of lib/unicode, which D21 adds; until
-     then no class. *)
-  fun wide (_ : int) = Unknown
+  (* Above ASCII, by the general category of lib/unicode (D21): uniSmall a
+     lowercase letter, uniLarge an uppercase or titlecase one, uniDigit a
+     decimal digit, uniSymbol a symbol or a punctuation mark, uniWhite a
+     space separator. *)
+  fun wide c =
+    case CodePoint.category c of
+      CodePoint.LowercaseLetter => Small
+    | CodePoint.UppercaseLetter => Large
+    | CodePoint.TitlecaseLetter => Large
+    | CodePoint.DecimalNumber => Digit
+    | CodePoint.SpaceSeparator => White
+    | g => (case CodePoint.major g of CodePoint.Punctuation => Symbol | CodePoint.Symbol => Symbol | _ => Unknown)
 
   fun classify c =
     if c < 0 then Unknown

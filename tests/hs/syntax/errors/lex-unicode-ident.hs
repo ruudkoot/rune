@@ -1,2 +1,2 @@
 module M where
-f = é
+f = あ

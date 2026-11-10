@@ -1,1 +1,1 @@
-lex-unicode-ident.hs:2:5: error: the character U+00E9 outside a comment or a literal: classes above ASCII wait for Unicode's general category in lib/unicode
+lex-unicode-ident.hs:2:5: error: the character U+3042 outside a comment or a literal: its general category, Lo, is of none of the Report's classes

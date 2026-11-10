@@ -4,11 +4,12 @@
    Above ASCII the Report's classes are those of Unicode's general
    category: `uniSmall` a lowercase letter, `uniLarge` an uppercase or
    titlecase one, `uniDigit` a decimal digit, `uniSymbol` a symbol or a
-   punctuation mark, `uniWhite` a space. Rune's `lib/unicode` does not
-   give the general category yet (the haskell98 roadmap's D21), so above
-   ASCII every character is of class `Unknown` until it does, and the
-   lexer refuses one outside a comment or a literal; it reads any
-   character in a comment or a literal (the reading R5).
+   punctuation mark, `uniWhite` a space, by the general category of
+   Rune's `lib/unicode` (the haskell98 roadmap's D21). A character of no
+   class, a letter of no case (Lo, Lm), a mark, a number not decimal, a
+   control or a format character, is refused outside a comment or a
+   literal; the lexer reads any character in a comment or a literal (the
+   reading R5).
 
    Area: Languages *)
 signature HS_CHAR =
@@ -23,7 +24,7 @@ sig
     | Special  (* `special`: one of `(),;[]` and the backquote and braces *)
     | Colon    (* `:`, which begins a constructor operator *)
     | Quote    (* the two quotation marks, `"` and `'` *)
-    | Unknown  (* no class: a control character, or a character above ASCII until `lib/unicode` classifies it *)
+    | Unknown  (* no class: a control character, or a character above ASCII of none of the classes above *)
 
   (* `classify c` is the class of the code point `c`; `Unknown` for a
      negative `c`. *)
