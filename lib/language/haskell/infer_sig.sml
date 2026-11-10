@@ -60,6 +60,15 @@ sig
                evidence : HsEvidence.table}
               -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
 
+  (* `renumber n` makes the checker's next fresh variables, and HsTypes',
+     number from `n`.
+
+     A program's are then numbered alike however much of the library was
+     checked before it (rhc's saved world).
+
+     Raises: `Fail` where a variable has had `n` already. *)
+  val renumber : int -> unit
+
   (* `valueScheme (env, key)` is the type of the value of `key`. *)
   val valueScheme : env * string -> HsTypes.scheme option
 

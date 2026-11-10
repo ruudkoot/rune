@@ -73,12 +73,77 @@ struct
     A.Import (A.noAnn, {qualified = false, module = A.Name (A.noAnn, {qual = "", name = "Prelude"}), as_ = NONE,
                         hiding = false, spec = NONE})
 
-  (* `load {roots, dotted}` reads the program whose files are `roots`, the
-     first of them beside the program's other modules.
+  fun member (x, xs) = List.exists (fn y => y = x) xs
+
+  (* `xs` in order of `key`, by insertion: the lists here are short *)
+  fun sortBy key xs =
+    let
+      fun insert (x, []) = [x]
+        | insert (x, y :: ys) = if String.< (key x, key y) then x :: y :: ys else y :: insert (x, ys)
+    in
+      List.foldl insert [] xs
+    end
+
+  (* The library's groups in an order of their own, whatever a program
+     reached them by: of the groups whose imports are all taken, the one
+     whose least identity is least first, its modules in order of
+     identity. Of a set of the library's modules that holds what they
+     import, this is the order the whole library's groups give it, so that
+     a program checks and desugars its modules of the library alike whether
+     they were read now or restored from the saved world (RhcWorld). *)
+  fun canonical (groups : node list list) : node list list =
+    let
+      val sorted = List.map (sortBy #id) groups
+
+      fun imports g = List.concat (List.map (fn (n : node) => List.map #2 (#imports n)) g)
+      fun go ([], _, acc) = List.rev acc
+        | go (pending, taken, acc) =
+            let
+              val pendingIds = List.concat (List.map (List.map #id) pending)
+              val own = fn g => List.map #id g
+              fun ready g =
+                List.all (fn d => member (d, taken) orelse member (d, own g) orelse not (member (d, pendingIds))) (imports g)
+              val first =
+                List.foldl (fn (g, NONE) => if ready g then SOME g else NONE
+                             | (g, SOME b) => if ready g andalso String.< (#id (hd g), #id (hd b)) then SOME g else SOME b)
+                  NONE pending
+            in
+              case first of
+                SOME g => go (List.filter (fn h => #id (hd h) <> #id (hd g)) pending, own g @ taken, g :: acc)
+              | NONE => List.rev acc @ pending       (* no group is ready: a cycle among groups, which Tarjan's leave none of *)
+            end
+    in
+      go (sorted, [], [])
+    end
+
+  (* the files of the library's modules, by module name *)
+  fun libraryFiles () : (string * string) list =
+    case RhcLibrary.dir () of
+      NONE => []
+    | SOME d =>
+        let
+          val s = OS.FileSys.openDir d
+          fun loop acc =
+            case OS.FileSys.readDir s of
+              NONE => acc
+            | SOME f =>
+                (case OS.Path.splitBaseExt f of
+                   {base, ext = SOME "hs"} => loop ((base, OS.Path.concat (d, f)) :: acc)
+                 | {base, ext = SOME "lhs"} => loop ((base, OS.Path.concat (d, f)) :: acc)
+                 | _ => loop acc)
+        in
+          sortBy #1 (loop []) before OS.FileSys.closeDir s
+        end
+
+  (* `loadFrom {roots, dotted, known, library}` reads the program whose
+     files are `roots`, the first of them beside the program's other
+     modules, or with `library` every module of the library and no
+     program. A module whose identity `known` has is not read again: it is
+     in no group of this graph, its group taken before (RhcWorld).
 
      Raises: `HsSource.Error` for a file that does not lex or parse, which
      stops rhc. *)
-  fun load {roots : string list, dotted : bool} : graph =
+  fun loadFrom {roots : string list, dotted : bool, known : node M.map, library : bool} : graph =
     let
       val nodes : node M.map ref = ref M.empty
       val order : string list ref = ref []
@@ -129,7 +194,8 @@ struct
         end
 
       fun visit (id, file, library, expected) =
-        if M.member (!nodes, id) then () else add (id, file, library, expected, parse (file, library))
+        if M.member (!nodes, id) orelse M.member (known, id) then ()
+        else add (id, file, library, expected, parse (file, library))
 
       and add (id, file, library, expected, ast) =
         let
@@ -157,6 +223,10 @@ struct
             targets
         end
 
+      val () =
+        if library then List.app (fn (m, f) => visit (RhcLibrary.identity m, f, true, SOME m)) (libraryFiles ())
+        else ()
+
       val rootIds =
         List.map
           (fn file =>
@@ -167,7 +237,7 @@ struct
                if M.member (!nodes, id) then () else add (id, file, false, NONE, ast);
                id
              end)
-          roots
+          (if library then [] else roots)
 
       (* Tarjan's algorithm: a group is complete once its root is *)
       val index : int M.map ref = ref M.empty
@@ -207,7 +277,21 @@ struct
           else ()
         end
       val () = List.app (fn v => if M.member (!index, v) then () else connect v) (List.rev (!order))
+      (* the library's groups first, in their own order, then the program's *)
+      val (ofLibrary, ofProgram) = List.partition (fn g => List.all #library g) (List.rev (!groups))
     in
-      {groups = List.rev (!groups), roots = rootIds, diags = List.rev (!diags)}
+      {groups = canonical ofLibrary @ ofProgram, roots = rootIds, diags = List.rev (!diags)}
     end
+
+  (* `load {roots, dotted}` reads the program whose files are `roots`, the
+     first of them beside the program's other modules, and the modules of
+     the library it imports.
+
+     Raises: `HsSource.Error` for a file that does not lex or parse, which
+     stops rhc. *)
+  fun load {roots, dotted} = loadFrom {roots = roots, dotted = dotted, known = M.empty, library = false}
+
+  (* `loadLibrary ()` reads every module of the library, a graph of no
+     program (RhcWorld). *)
+  fun loadLibrary () = loadFrom {roots = [], dotted = false, known = M.empty, library = true}
 end

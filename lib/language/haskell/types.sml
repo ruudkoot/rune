@@ -98,6 +98,10 @@ struct
   val counter = ref 0
   fun newMeta (level, home) = (counter := !counter + 1; TMeta (ref (Free {id = !counter, level = level, home = home})))
 
+  fun renumber n =
+    if !counter >= n orelse !kcounter >= n then raise Fail "HsTypes.renumber: a variable has had that number"
+    else (counter := n; kcounter := n)
+
   fun zonk t =
     case repr t of
       TAp (a, b) => TAp (zonk a, zonk b)

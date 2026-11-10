@@ -119,8 +119,27 @@ struct
     | a :: rest => a :: share rest
     | [] => []
 
+  (* --whole, a program read and checked whole without the saved world;
+     --world, what of it there is (RhcWorld); --identity, rhc's own
+     (Config), which the Makefile writes to bin/rhc.identity *)
+  fun world args =
+    case args of
+      "--whole" :: rest => (RhcWorld.whole := true; world rest)
+    | a :: rest => a :: world rest
+    | [] => []
+
   fun run (args : string list) : int =
-    let val args = share args in
+    let val args = world (share args) in
+    case args of
+      ["--make-world", image] =>
+        (* the saved world, made: the world that saves it stops here, and
+           one bin/rhc restores goes on with its own command line *)
+        (case RhcWorld.make image of
+           Runtime.Saved => 0
+         | Runtime.Restored => run (CommandLine.arguments ()))
+    | ["--world"] => (print (RhcWorld.describe () ^ "\n"); 0)
+    | ["--identity"] => (print (Config.identity ^ "\n"); 0)
+    | _ =>
     case RhcSyntax.command args of
       SOME syntax => if OS.Process.isSuccess (syntax ()) then 0 else 1
     | NONE =>

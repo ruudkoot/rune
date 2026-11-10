@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 7 of 7 entries documented |
+| Documentation | 8 of 8 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/infer\_sig.sml](../../../../../lib/language/haskell/infer_sig.sml) |
 
@@ -58,6 +58,7 @@ sig
                <a href="#fld-check.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-check.fixity">fixity</a> : string -&gt; (HsAst.fixity * int) option,
                <a href="#fld-check.evidence">evidence</a> : HsEvidence.table}
               -&gt; {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
+  val <a href="#val-renumber">renumber</a> : int -&gt; unit
   val <a href="#val-valuescheme">valueScheme</a> : env * string -&gt; HsTypes.scheme option
   val <a href="#val-classes">classes</a> : env -&gt; HsClasses.env
 end
@@ -146,6 +147,20 @@ translations name: [`Bool`](../../../basis/str/Bool.md), [`Char`](../../../basis
 | <a name="fld-check.prelude"></a>`prelude` | `string * string -> string option` |  |
 | <a name="fld-check.fixity"></a>`fixity` | `string -> (HsAst.fixity * int) option` |  |
 | <a name="fld-check.evidence"></a>`evidence` | `HsEvidence.table` |  |
+
+### <a name="val-renumber"></a>`renumber`
+
+```sml
+val renumber : int -> unit
+```
+
+`renumber n` makes the checker's next fresh variables, and HsTypes',
+number from `n`.
+
+A program's are then numbered alike however much of the library was
+checked before it (rhc's saved world).
+
+**Raises** [`Fail`](../../../basis/sig/GENERAL.md#exn-fail) where a variable has had `n` already.
 
 ### <a name="val-valuescheme"></a>`valueScheme`
 

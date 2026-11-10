@@ -82,15 +82,22 @@ struct
      its groups and, in a file, of the source. *)
   fun program (mode, files) =
     let
-      val g = RhcGraph.load {roots = files, dotted = !dotted}
       (* the checker runs but for the views of names and of HsLint, which
          stand without it (D54) *)
-      val r = RhcNames.run (g, !fixpoint,
-                            case mode of
-                              DumpNames => NONE
-                            | DumpBinders => NONE
-                            | DumpHsLint _ => NONE
-                            | _ => SOME (case !cycleDefault of PerModule => HsInfer.PerModule | PerGroup => HsInfer.PerGroup))
+      val check =
+        case mode of
+          DumpNames => NONE
+        | DumpBinders => NONE
+        | DumpHsLint _ => NONE
+        | _ => SOME (case !cycleDefault of PerModule => HsInfer.PerModule | PerGroup => HsInfer.PerGroup)
+      (* a check or a compile from the saved world where it can (RhcWorld,
+         D45's B); the views, whole *)
+      val (g, r) =
+        if mode = Check orelse mode = Compile then
+          RhcWorld.program {roots = files, dotted = !dotted, fixpoint = !fixpoint, check = check}
+        else
+          let val g = RhcGraph.load {roots = files, dotted = !dotted}
+          in (g, RhcNames.run (g, !fixpoint, check)) end
       val fileOrder =
         #2 (List.foldl (fn ({file, ...} : RhcGraph.node, (k, m)) => (k + 1, HsStringMap.insert (m, file, k)))
               (0, HsStringMap.empty) (List.concat (#groups g)))

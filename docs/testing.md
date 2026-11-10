@@ -700,6 +700,24 @@ checker infers. `bin/rhc --dump-evidence` prints a program's evidence records
 --dump-derived` the methods of its derived instances, which HsDerive makes as
 trees inside the checker (D33's C) and the checker checks as a user's.
 
+**The saved world** (`src/rhc/world.sml`, the roadmap's D45, its B;
+`tests/runner/hsworld.sml`). `bin/rhc` restores `bin/rhc.img`, rhc with its
+library read, named and checked, saved as a VM image as `bin/rune-repl.img`
+is, and reads and checks only a program's own modules against it; `make
+bin/rhc` makes the image again when rhc, the VM or a file of `share/rhc`
+changes, and `bin/rhc` restores it only where `bin/rhc.img.identity`, the
+identity of the rhc that made it, is `bin/rhc.identity`, `bin/rhc.rbc`'s.
+`bin/rhc --whole` reads and checks the library too, the reference, as does
+any option that changes the library's reading, and `bin/rhc --world` says
+which a check takes. The jobs `hs/world/*` hold the two to printing alike:
+`image` that `bin/rhc` goes from a world this rhc made, newer than every
+file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and `lang/K-of-4`
+every program of the directory checked both ways, with its `.cargs`, to the
+same standard output, standard error and status; the first shard of each in
+make check, the others nightly; `bin/rune-test hs-world-one KIND NAME`
+judges one. A mutant's tree (`hs-mutants`) has no image, so a mutant goes
+the whole way.
+
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
 the independent check of rhc's types, as AstLint is Rune's. Its first part
