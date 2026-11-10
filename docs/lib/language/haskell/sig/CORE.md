@@ -95,6 +95,7 @@ sig
       <a href="#con-data">Data</a> of string * (string * kind) list * (string * ty list) list
     | <a href="#con-newtype">Newtype</a> of string * (string * kind) list * string * ty
     | <a href="#con-val">Val</a> of string * ty * exp
+    | <a href="#con-import">Import</a> of string * ty
   type <a href="#type-program">program</a> = decl list
   val <a href="#val-builtintypes">builtinTypes</a> : (string * kind) list
   val <a href="#val-builtindata">builtinData</a> : decl list
@@ -275,6 +276,7 @@ datatype decl =
     Data of string * (string * kind) list * (string * ty list) list
   | Newtype of string * (string * kind) list * string * ty
   | Val of string * ty * exp
+  | Import of string * ty
 ```
 
 A declaration of a program. Every value of the top level is in the
@@ -285,6 +287,7 @@ scope of all of them.
 | <a name="con-data"></a>`Data` | `string * (string * kind) list * (string * ty list) list` | a data type, its parameters and its constructors, each with the types of its fields |
 | <a name="con-newtype"></a>`Newtype` | `string * (string * kind) list * string * ty` | a newtype, its parameters, its constructor and the type it wraps |
 | <a name="con-val"></a>`Val` | `string * ty * exp` | a value of the top level |
+| <a name="con-import"></a>`Import` | `string * ty` | a value of another unit, at its type (the haskell98 roadmap's M21): in scope as a value of the top level is, defined by the unit that exports it; a program of several units joined has its definition (CoreUnits.join) |
 
 ### <a name="type-program"></a>`program`
 

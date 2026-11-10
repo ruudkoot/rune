@@ -6,6 +6,7 @@ From the **Raises** paragraphs of the documented entries.
 
 - `CoreText.Error`: [`program`](sig/CORE_RUNTIME.md#val-program) of CORE_RUNTIME
 - `Error`: [`check`](sig/CORE_LINT.md#val-check) of CORE_LINT, [`parse`](sig/CORE_TEXT.md#val-parse) of CORE_TEXT, [`parseType`](sig/CORE_TEXT.md#val-parsetype) of CORE_TEXT
+- `Fail`: [`program`](sig/HS_DESUGAR.md#val-program) of HS_DESUGAR, [`fieldsAt`](sig/HS_DS_CORE.md#val-fieldsat) of HS_DS_CORE, [`params`](sig/HS_DS_CORE.md#val-params) of HS_DS_CORE, [`caseCon`](sig/HS_DS_CORE.md#val-casecon) of HS_DS_CORE, [`prelude`](sig/HS_DS_ENV.md#val-prelude) of HS_DS_ENV, [`toHaskell`](sig/HS_DS_ENV.md#val-tohaskell) of HS_DS_ENV, [`renumber`](sig/HS_INFER.md#val-renumber) of HS_INFER, [`renumber`](sig/HS_TYPES.md#val-renumber) of HS_TYPES
 - `HsSource.Error`: [`checkType`](sig/HS_KINDS.md#val-checktype) of HS_KINDS, [`convert`](sig/HS_KINDS.md#val-convert) of HS_KINDS, [`advance`](sig/HS_LAYOUT.md#val-advance) of HS_LAYOUT, [`fail`](sig/HS_LAYOUT.md#val-fail) of HS_LAYOUT, [`tokens`](sig/HS_LEXER.md#val-tokens) of HS_LEXER, [`unlit`](sig/HS_LITERATE.md#val-unlit) of HS_LITERATE, [`parse`](sig/HS_PARSER.md#val-parse) of HS_PARSER, [`parseTraced`](sig/HS_PARSER.md#val-parsetraced) of HS_PARSER, [`parseFile`](sig/HS_PARSER.md#val-parsefile) of HS_PARSER
 - `KindMismatch`: [`unifyKind`](sig/HS_TYPES.md#val-unifykind) of HS_TYPES
 - `Mismatch`: [`unify`](sig/HS_TYPES.md#val-unify) of HS_TYPES

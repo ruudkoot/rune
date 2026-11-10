@@ -39,61 +39,100 @@ struct
 
   (* ---- The data ---- *)
 
-  (* ---- The vendored programs (M19-O7; README.md, The licences) ---- *)
+  (* ---- The vendored programs (M19-O7, O8; README.md, The licences) ---- *)
 
-  (* the files of the vendored candidates, by their paths under the trees'
-     root, as the harness reads them from the root in force: each one's
-     closure and boot files, and its run's input and expected output; and
-     the licence files of their trees *)
-  fun vendoredFiles () =
+  (* a vendored candidate's files, by their paths under the trees' root, as
+     the harness reads them from the root in force: of a set whose program is
+     its directory, the directory whole but a sub-directory that is a program
+     of its own, and the parent's sources (as HsCorpus.prepare copies them);
+     of another, its closure and boot files; nofib's NofibUtils where it is
+     imported; and its run's input and expected output *)
+  fun programFiles (c : HsCorpus.candidate) =
     let
-      val ids = HsCorpusRun.vendored ()
-      val cs = List.filter (fn (c : HsCorpus.candidate) => member (#id c) ids) (HsCorpus.candidates ())
-      val runs = HsCorpus.rows "run.tsv"
       val root = HsCorpus.root ()
-      fun one (c : HsCorpus.candidate) =
-        let
-          val {files, ...} = HsCorpus.closureOf c
-          val dir = HsCorpus.dirname (HsCorpus.tree (#path c))
-          val boots = List.filter (fn f => List.exists (fn (_, sc : HsSource.scan) =>
-                                                          List.exists (fn b => b = hd (String.fields (fn ch => ch = #".") (OS.Path.file f))) (#boot sc)) files)
-                                  (glob (dir, ".hs-boot") @ glob (dir, ".lhs-boot"))
-          val run = case List.find (fn r => HsCorpus.field r "id" = #id c) runs of
-                      SOME r => List.filter (fn x => x <> "") [HsCorpus.field r "expected", HsCorpus.field r "stdin"]
-                    | NONE => []
-        in List.map (fn (f, _) => HsCorpus.relative (root, f)) files @ List.map (fn f => HsCorpus.relative (root, f)) boots @ run end
-      val sets = HsSource.dedup (List.map #set cs)
-      val licences = List.mapPartial (fn r => if member (HsCorpus.field r "set") sets then SOME (HsCorpus.field r "licence") else NONE)
-                                     (HsCorpus.rows "trees.tsv")
-    in HsSource.dedup (List.concat (List.map one cs) @ licences) end
+      fun rel f = HsCorpus.relative (root, f)
+      val {files, ...} = HsCorpus.closureOf c
+      val dir = HsCorpus.dirname (HsCorpus.tree (#path c))
+      (* a symbolic link is not copied: nofib's program directories link
+         NofibUtils.hs to common/NofibUtils.hs, which is vendored once *)
+      fun under d = List.concat (List.map (fn n => let val p = d ^ "/" ^ n in
+                                                     if OS.FileSys.isLink p then []
+                                                     else if isDir p then (if exists (p ^ "/Main.hs") then [] else under p) else [p] end)
+                                          (sort (entries d)))
+      val boots = List.filter (fn f => List.exists (fn (_, sc : HsSource.scan) =>
+                                                      List.exists (fn b => b = hd (String.fields (fn ch => ch = #".") (OS.Path.file f))) (#boot sc)) files)
+                              (glob (dir, ".hs-boot") @ glob (dir, ".lhs-boot"))
+      (* nofib's fixtures of its fast and slow modes, which E8's runs do not
+         read, are left in the trees *)
+      fun fixture f = List.exists (fn e => String.isSuffix e f) [".faststdout", ".slowstdout", ".faststdin", ".slowstdin"]
+      val own = if HsCorpus.whole (#set c) then List.filter (not o fixture) (under dir) else List.map #1 files @ boots
+      val parent = if #parent c <> "-" then glob (HsCorpus.tree (#parent c), ".hs") else []
+      val utils = HsCorpus.tree (HsCorpus.common ^ "/NofibUtils.hs")
+      val nofibUtils = if exists utils andalso List.exists (fn (_, sc : HsSource.scan) => List.exists (fn m => m = "NofibUtils") (#imports sc)) files
+                       then [utils] else []
+      val run = case List.find (fn r => HsCorpus.field r "id" = #id c) (HsCorpus.rows "run.tsv") of
+                  SOME r => List.filter (fn x => x <> "") [HsCorpus.field r "expected", HsCorpus.field r "stdin"]
+                | NONE => []
+    in HsSource.dedup (List.map rel (own @ parent @ nofibUtils) @ run) end
 
-  (* hs-corpus-vendor: the vendored candidates' files copied from the trees
-     under RUNE_HS_CORPUS into tests/hs/corpus/vendored, as they are *)
+  (* the vendored rows of licences.tsv: each candidate and its notice, the
+     LICENSE of its tree or the PROVENANCE of its origin, a path under
+     tests/hs/corpus/vendored *)
+  fun vendoredRows () =
+    List.map (fn r => (HsCorpus.field r "id", HsCorpus.field r "notice"))
+             (List.filter (fn r => HsCorpus.field r "vendor" = "vendored") (HsCorpus.rows "licences.tsv"))
+  fun candidatesOf ids = List.filter (fn (c : HsCorpus.candidate) => member (#id c) ids) (HsCorpus.candidates ())
+
+  (* every vendored program's file; and the notices, LICENSE files copied
+     from their trees and PROVENANCE files written here *)
+  fun vendoredFiles () =
+    let val rows = vendoredRows ()
+    in HsSource.dedup (List.concat (List.map programFiles (candidatesOf (List.map #1 rows)))) end
+  fun notices () = HsSource.dedup (List.map #2 (vendoredRows ()))
+  fun isLicence f = OS.Path.file f = "LICENSE"
+
+  (* hs-corpus-vendor: the vendored candidates' files and their trees'
+     LICENSE files copied from the trees under RUNE_HS_CORPUS into
+     tests/hs/corpus/vendored, as they are; a PROVENANCE is this project's,
+     and stays as written *)
   fun vendor () =
     let
       val dst = HsCorpusRun.vendoredRoot ()
-      val files = vendoredFiles ()
+      val files = vendoredFiles () @ List.filter isLicence (notices ())
     in
       List.app (fn f => HsCorpus.copyFile (HsCorpus.tree f, dst ^ "/" ^ f)) files;
-      say ("vendored " ^ Int.toString (length files) ^ " files of " ^ Int.toString (length (HsCorpusRun.vendored ()))
+      say ("vendored " ^ Int.toString (length files) ^ " files of " ^ Int.toString (length (vendoredRows ()))
            ^ " programs under " ^ dst ^ "\n")
     end
 
-  (* hs-corpus/vendored (nightly, with the trees): the vendored files are the
-     trees' at their pinned commits, byte for byte, and no more nor fewer *)
+  (* hs-corpus/vendored (nightly, with the trees): the vendored files and
+     LICENSE files are the trees' at their pinned commits, byte for byte,
+     and no more nor fewer *)
   fun vendoredUpstream () =
     let
-      val fromTrees = vendoredFiles ()
-      val inTree = HsCorpusRun.fromVendored vendoredFiles
+      val fromTrees = vendoredFiles () @ List.filter isLicence (notices ())
+      val inTree = HsCorpusRun.fromVendored vendoredFiles @ List.filter isLicence (notices ())
       val dst = HsCorpusRun.vendoredRoot ()
-      val () = List.app (fn r => HsOracles.pinned (HsCorpus.field r "set") handle HsOracles.Failed m => need (false, m))
-                        (List.filter (fn r => member (HsCorpus.field r "tree") ["ghc", "jhc"]) (HsCorpus.rows "trees.tsv"))
-      val () = List.app (fn f => need (member f inTree, f ^ ": the trees' closure has it, tests/hs/corpus/vendored does not")) fromTrees
-      val () = List.app (fn f => need (member f fromTrees, f ^ ": vendored, and in no vendored program's closure from the trees")) inTree
+      val sets = HsSource.dedup (List.map #set (candidatesOf (List.map #1 (vendoredRows ()))))
+      val () = List.app (fn s => HsOracles.pinned s handle HsOracles.Failed m => need (false, m)) sets
+      val () = List.app (fn f => need (member f inTree, f ^ ": the trees have it for a vendored program, tests/hs/corpus/vendored does not"))
+                        fromTrees
+      val () = List.app (fn f => need (member f fromTrees, f ^ ": vendored, and of no vendored program in the trees")) inTree
       val () = List.app (fn f => need (not (exists (dst ^ "/" ^ f)) orelse read (dst ^ "/" ^ f) = read (HsCorpus.tree f),
                                        f ^ ": the vendored copy is not the tree's")) fromTrees
     in finish "tests/hs/corpus/vendored against the trees" end
     handle HsCorpus.Bad m => (need (false, m); finish "tests/hs/corpus/vendored against the trees")
+
+  (* the notice that covers a vendored file: the nearest LICENSE or
+     PROVENANCE in its directory or above it, under vendored *)
+  fun noticeOf (root, f) =
+    let
+      fun up d =
+        if d = "" orelse d = "." then NONE
+        else case List.find (fn n => exists (root ^ "/" ^ d ^ "/" ^ n)) ["PROVENANCE", "LICENSE"] of
+               SOME n => SOME (d ^ "/" ^ n)
+             | NONE => up (OS.Path.dir d)
+    in up (OS.Path.dir f) end
 
   fun data () =
     let
@@ -142,17 +181,43 @@ struct
       val own = ["README.md", "trees.tsv", "licences.tsv", "candidates.tsv", "accept.tsv", "reject.tsv", "run.tsv",
                  "conformance.tsv", "compat/NofibCompat.hs", "compat/NofibUtils.hs"]
       (* and the vendored programs, each a candidate licences.tsv marks
-         vendored, of D56's 188, with its tree's licence file beside it *)
-      val vendoredIds = List.map (fn r => HsCorpus.field r "id") (List.filter (fn r => HsCorpus.field r "vendor" = "vendored") lic)
-      val () = List.app (fn i => need (member i d56, i ^ ": vendored, and not of D56's 188")) vendoredIds
-      val vfiles = List.map (fn f => "vendored/" ^ f) (HsCorpusRun.fromVendored vendoredFiles)
-      val () = List.app (fn f => need (exists (root ^ "/" ^ f), f ^ ": a vendored program's file or its tree's licence is missing"))
-                        vfiles
+         vendored, of D56's 188, under the notice it names: its tree's
+         LICENSE or its origin's PROVENANCE, the nearest above each of its
+         files; no vendored file without one *)
+      val vrows = vendoredRows ()
+      val () = List.app (fn (i, _) => need (member i d56, i ^ ": vendored, and not of D56's 188")) vrows
+      val () = List.app (fn (i, n) => need (member (OS.Path.file n) ["LICENSE", "PROVENANCE"],
+                                            i ^ ": vendored with no notice, a LICENSE or a PROVENANCE, in licences.tsv")) vrows
+      val vroot = HsCorpusRun.vendoredRoot ()
+      val byProgram = HsCorpusRun.fromVendored (fn () =>
+                        List.map (fn (c : HsCorpus.candidate) => (#id c, programFiles c)) (candidatesOf (List.map #1 vrows)))
+      val () = List.app (fn (i, fs) =>
+                 let val n = case List.find (fn (j, _) => j = i) vrows of SOME (_, n) => n | NONE => ""
+                 in List.app (fn f => need (noticeOf (vroot, f) = SOME n,
+                                            "vendored/" ^ f ^ " (" ^ i ^ "): " ^ (case noticeOf (vroot, f) of
+                                                                                     SOME m => "under " ^ m ^ ", not " ^ n
+                                                                                   | NONE => "no LICENSE or PROVENANCE beside it or above it")))
+                              fs end) byProgram
+      (* a PROVENANCE names its upstream and commit and quotes the owner's rule *)
+      val () = List.app (fn n =>
+                 if OS.Path.file n <> "PROVENANCE" then ()
+                 else
+                   let val t = if exists (vroot ^ "/" ^ n) then read (vroot ^ "/" ^ n) else ""
+                       val tree = hd (String.fields (fn ch => ch = #"/") n)
+                       val pins = List.filter (fn r => HsCorpus.field r "tree" = tree) trees
+                   in need (List.exists (fn r => String.isSubstring (HsCorpus.field r "upstream") t
+                                                 andalso String.isSubstring (HsCorpus.field r "commit") t) pins
+                            andalso String.isSubstring "If you want to vendor code without a license add a PROVENANCE alongside it instead." t,
+                            "vendored/" ^ n ^ ": a PROVENANCE names its upstream and its commit (trees.tsv) and quotes the owner's rule")
+                   end) (notices ())
+      val vfiles = List.map (fn f => "vendored/" ^ f) (List.concat (List.map #2 byProgram) @ notices ())
+      val () = List.app (fn f => need (exists (root ^ "/" ^ f), f ^ ": a vendored program's file or its notice is missing")) vfiles
       val () = List.app (fn p =>
                  let val r = HsCorpus.relative (root, p)
                  in need (member r own orelse member r vfiles orelse (String.isPrefix "compat/" r andalso String.isSuffix ".sed" r),
                           r ^ " is under tests/hs/corpus, and is neither its data, its compat layer nor a vendored "
-                          ^ "program's file or licence: a program lands only with a surveyed licence (README.md)") end) (walk root)
+                          ^ "program's file or notice: a program lands only under a LICENSE or a PROVENANCE (README.md)") end)
+                (walk root)
     in finish "rhc's corpus data" end
     handle HsCorpus.Bad m => (need (false, m); finish "rhc's corpus data")
 

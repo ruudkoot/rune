@@ -1,0 +1,67 @@
+PROVENANCE
+
+The files in this directory and below it are yhc's own regression tests: the programs of
+tests/conformance98 in the repository of yhc, the York Haskell Compiler, which grew from nhc98.
+Three of them (Enum/succ, IO/overwrite, layout/tullsen3) share their names with tests of nhc98's
+tests/conformance98, but their files differ.
+
+They are vendored here without a licence, under the rule of this repository's owner, quoted:
+
+    "If you want to vendor code without a license add a PROVENANCE alongside it instead."
+
+rhc, the Haskell 98 compiler of this repository, compiles and runs them in its tests
+(tests/hs/corpus: the programs of D56 of the haskell98 roadmap, which tests/hs/corpus/licences.tsv
+lists with this file as their notice).
+
+Upstream
+    repository  https://github.com/haskell-implementations/yhc.git
+    commit      c669451c1cb60193f61fe897a301de633f674be3, as tests/hs/corpus/trees.tsv pins it
+    path        tests/conformance98/ in that repository: a file at P below this directory
+                is tests/conformance98/P upstream
+    fetched     2026-10-27, by git clone; the pinned commit was the head it fetched
+    copied      2026-11-10, byte for byte, by `bin/rune-test hs-corpus-vendor`; the nightly test
+                hs-corpus/vendored compares every file here with the pinned tree
+
+Licence
+    No licence is stated for these files, and no file of them carries a notice. yhc's repository has
+    licence files only for parts of its source (src/libraries/core/LICENSE, and the third-party
+    files of src/translator/js), none for its tests; src/compiler98/yhc.cabal says "License: GPL" of
+    the compiler.
+
+Programs
+    Each program by its id in tests/hs/corpus/candidates.tsv: its files, as paths below this
+    directory; then what the files' own headers name of its authors and origin, and any notice,
+    quoted as FILE:LINE and the line (tabs expanded, trailing blanks dropped). A program with no
+    "named" names no author or origin in its files; one with no "notice" carries none.
+
+yhc-conformance/Enum/list
+    files   Enum/list/Main.hs Enum/list/expected.stdout
+
+yhc-conformance/Enum/succ
+    files   Enum/succ/Main.hs Enum/succ/expected.stdout
+
+yhc-conformance/IO/overwrite
+    files   IO/overwrite/Main.hs IO/overwrite/expected.stdout
+
+yhc-conformance/WheelSieve
+    files   WheelSieve/Main.hs WheelSieve/expected.stdout
+    named   WheelSieve/Main.hs:1: -- Mark II lazy wheel-sieve.
+            WheelSieve/Main.hs:2: -- Colin Runciman (colin@cs.york.ac.uk); March 1996.
+
+yhc-conformance/bugs/CaseApp
+    files   bugs/CaseApp/Main.hs bugs/CaseApp/expected.stdout
+
+yhc-conformance/getargs
+    files   getargs/Main.hs getargs/expected.stdout
+
+yhc-conformance/infix/derived
+    files   infix/derived/Main.hs infix/derived/expected.stdout
+
+yhc-conformance/iomonad
+    files   iomonad/Main.hs iomonad/expected.stdout
+
+yhc-conformance/layout/tullsen3
+    files   layout/tullsen3/Main.hs layout/tullsen3/dead.txt layout/tullsen3/expected.stdout
+
+yhc-conformance/parsing/rational_lits
+    files   parsing/rational_lits/Main.hs parsing/rational_lits/expected.stdout

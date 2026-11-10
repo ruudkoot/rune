@@ -1,0 +1,380 @@
+PROVENANCE
+
+The files in this directory and below it are the copy of the nofib benchmark suite (the collection
+of Haskell programs that Will Partain gathered at Glasgow from many authors) that nhc98, a Haskell
+98 compiler, keeps among its regression tests, tests/nofib in its repository. The CVS log kept in
+real/grep/StringMatch.hs, lines 11 to 17, records the arrival of nhc98's tests, as revision 1.1 of
+2004/08/05 by malcolm: "Add a regression testsuite for the nhc98 compiler.  It isn't very good, but
+it is better than nothing. [...] It includes a slightly altered version of the nofib suite."
+
+They are vendored here without a licence, under the rule of this repository's owner, quoted:
+
+    "If you want to vendor code without a license add a PROVENANCE alongside it instead."
+
+rhc, the Haskell 98 compiler of this repository, compiles and runs them in its tests
+(tests/hs/corpus: the programs of D56 of the haskell98 roadmap, which tests/hs/corpus/licences.tsv
+lists with this file as their notice).
+
+Upstream
+    repository  https://github.com/8l/nhc98.git
+    commit      b4d41520ae51f1db61ff6fb899775200e4cae731, as tests/hs/corpus/trees.tsv pins it
+    path        tests/nofib/ in that repository: a file at P below this directory
+                is tests/nofib/P upstream
+    fetched     2026-10-27, by git clone; the pinned commit was the head it fetched
+    copied      2026-11-10, byte for byte, by `bin/rune-test hs-corpus-vendor`; the nightly test
+                hs-corpus/vendored compares every file here with the pinned tree
+
+Licence
+    No licence is stated for these files. nofib states none, and nhc98's COPYRIGHT (at the root of
+    its tree, not vendored) names what its licence covers: "the nhc98 Haskell compiler, libraries,
+    and runtime system", and the tools hmake, hmake interactive, hmake-config and hp2graph; it does
+    not name the tests. What notices single files carry is quoted below, program by program: gamteb
+    and pic carry the Regents of the University of California's copyright and permission; multiplier
+    its author's copyright, with no permission stated; boyer the Status "Public Domain" of its own
+    header and of the header of the Scheme original it quotes; mandel the copyright line of the
+    ppm(5) manual page it quotes.
+
+Programs
+    Each program by its id in tests/hs/corpus/candidates.tsv: its files, as paths below this
+    directory; then what the files' own headers name of its authors and origin, and any notice,
+    quoted as FILE:LINE and the line (tabs expanded, trailing blanks dropped). A program with no
+    "named" names no author or origin in its files; one with no "notice" carries none.
+
+nhcnofib/UNUSED/nfib
+    files   UNUSED/nfib/Main.hs UNUSED/nfib/nfib.stdout
+
+nhcnofib/UNUSED/nfib_overloaded
+    files   UNUSED/nfib_overloaded/Main.hs UNUSED/nfib_overloaded/nfib_overloaded.stdout
+
+nhcnofib/imaginary/exp3_8
+    files   imaginary/exp3_8/Main.hs imaginary/exp3_8/exp3_8.stdout
+    named   imaginary/exp3_8/Main.hs:3: From: augustss@cs.chalmers.se (Lennart Augustsson)
+            imaginary/exp3_8/Main.hs:4: Newsgroups: comp.lang.functional
+            imaginary/exp3_8/Main.hs:5: Subject: Re: some kindof benchmark
+
+nhcnofib/imaginary/gen_regexps
+    files   imaginary/gen_regexps/Main.hs imaginary/gen_regexps/gen_regexps.stdin
+            imaginary/gen_regexps/gen_regexps.stdout
+    named   imaginary/gen_regexps/Main.hs:1: -- !!! Wentworth's version of a program to generate
+            imaginary/gen_regexps/Main.hs:2: -- !!! all the expansions of a generalised regular expression
+
+nhcnofib/imaginary/paraffins
+    files   imaginary/paraffins/Main.hs imaginary/paraffins/paraffins.stdin
+            imaginary/paraffins/paraffins.stdout
+    named   imaginary/paraffins/Main.hs:2: - Id Example Program
+            imaginary/paraffins/Main.hs:3: - Ensnaffled by SLPJ from MIT via
+            imaginary/paraffins/Main.hs:4: - RPaul <rpaul@juicy-juice.lcs.mit.edu> 93/08/26.
+            imaginary/paraffins/Main.hs:5: - Original author: Steve Heller
+
+nhcnofib/imaginary/primes
+    files   imaginary/primes/Main.hs imaginary/primes/primes.stdout
+
+nhcnofib/imaginary/queens
+    files   imaginary/queens/Main.hs imaginary/queens/queens.stdout
+    named   imaginary/queens/Main.hs:2: -- (grabbed from LML dist)
+
+nhcnofib/imaginary/rfib
+    files   imaginary/rfib/Main.hs imaginary/rfib/rfib.stdout
+
+nhcnofib/imaginary/tak
+    files   imaginary/tak/Main.hs imaginary/tak/tak.stdout
+    named   imaginary/tak/Main.hs:1: -- code of unknown provenance (partain 95/01/25)
+
+nhcnofib/imaginary/wheel-sieve2
+    files   imaginary/wheel-sieve2/Main.hs imaginary/wheel-sieve2/wheel-sieve2.stdout
+    named   imaginary/wheel-sieve2/Main.hs:1: -- Mark II lazy wheel-sieve.
+            imaginary/wheel-sieve2/Main.hs:2: -- Colin Runciman (colin@cs.york.ac.uk); March 1996.
+
+nhcnofib/imaginary/x2n1
+    files   imaginary/x2n1/Main.hs imaginary/x2n1/x2n1.stdout
+    named   imaginary/x2n1/Main.hs:3: From: Lennart Augustsson <augustss@cs.chalmers.se>
+
+nhcnofib/real/bspt
+    files   real/bspt/BSPT.lhs real/bspt/Euclid.lhs real/bspt/EuclidGMS.lhs real/bspt/GeomNum.lhs
+            real/bspt/Init.lhs real/bspt/Input.lhs real/bspt/Interface.lhs real/bspt/Interpret.lhs
+            real/bspt/Libfuns.lhs real/bspt/MGRlib.lhs real/bspt/Main.lhs real/bspt/Merge.lhs
+            real/bspt/Params.lhs real/bspt/Prog.lhs real/bspt/Rationals.lhs real/bspt/Render.lhs
+            real/bspt/Stdlib.lhs real/bspt/bspt.stdin real/bspt/bspt.stdout
+
+nhcnofib/real/fem
+    files   real/fem/Assemble_loadvec.hs real/fem/Assemble_stiffness.hs real/fem/Basics.hs
+            real/fem/DB_interface.hs real/fem/Database.hs real/fem/Degrees.hs
+            real/fem/Displacement.hs real/fem/Elemforce.hs real/fem/Elemstif.hs real/fem/Main.hs
+            real/fem/Matrix.hs real/fem/Pre_assemble.hs real/fem/PrintSource.hs
+            real/fem/Printuvwforce.hs real/fem/VBlldecomp.hs real/fem/VBmatrix.hs real/fem/Vector.hs
+            real/fem/fem-98.stdout real/fem/fem.stdin real/fem/fem.stdout
+    named   real/fem/Main.hs:1: -- Glasgow Haskell 0.403 : FINITE ELEMENT PROGRAM V2
+
+nhcnofib/real/fluid
+    files   real/fluid/Asb_routs.hs real/fluid/C_matrix.hs real/fluid/Chl_decomp.hs
+            real/fluid/Chl_method.hs real/fluid/Chl_routs.hs real/fluid/Defs.hs real/fluid/Elefac.hs
+            real/fluid/Input_proc.hs real/fluid/Jcb_method.hs real/fluid/L_matrix.hs
+            real/fluid/Main.hs real/fluid/Min_degree.hs real/fluid/Norm.hs
+            real/fluid/Rhs_Asb_routs.hs real/fluid/S_Array.hs real/fluid/S_matrix.hs
+            real/fluid/TG_iter.hs real/fluid/Tol_cal.hs real/fluid/chan8.dat
+            real/fluid/fluid.hmakerr real/fluid/fluid.stdin real/fluid/fluid.stdout
+    named   real/fluid/Asb_routs.hs:4: XZ, 24/10/91
+
+nhcnofib/real/gamteb
+    files   real/gamteb/Compton.hs real/gamteb/Consts.hs real/gamteb/Distance.hs
+            real/gamteb/GamtebMain.hs real/gamteb/GamtebType.hs real/gamteb/InitTable.hs
+            real/gamteb/Main.hs real/gamteb/Output.hs real/gamteb/Pair.hs real/gamteb/PhotoElec.hs
+            real/gamteb/RoulSplit.hs real/gamteb/TransPort.hs real/gamteb/Utils.hs
+            real/gamteb/gamteb.hmakerr real/gamteb/gamteb.stderr real/gamteb/gamteb.stdin
+            real/gamteb/gamteb.stdout real/gamteb/ndiv2.hs
+    named   real/gamteb/Main.hs:2: --      Patricia Fasel
+            real/gamteb/Main.hs:3: --      Los Alamos National Laboratory
+            real/gamteb/Main.hs:4: --      1990 August
+    notice  real/gamteb/GamtebMain.hs:6: -- Copyright, 1990, The Regents of the University of California.
+            real/gamteb/GamtebMain.hs:7: -- This software was produced under a U.S. Government contract (W-7405-ENG-36)
+            real/gamteb/GamtebMain.hs:8: -- by the Los Alamos National Laboratory, which is operated by the University
+            real/gamteb/GamtebMain.hs:9: -- of California for the U.S. Department of Energy.  The U.S. Government is
+            real/gamteb/GamtebMain.hs:10: -- licensed to use, reproduce, and distribute this software.  Permission is
+            real/gamteb/GamtebMain.hs:11: -- granted to the public to copy and use this software without charge, provided
+            real/gamteb/GamtebMain.hs:12: -- that this notice and any statement of authorship are reproduced on all
+            real/gamteb/GamtebMain.hs:13: -- copies.  Neither the Government nor the University makes any warranty,
+            real/gamteb/GamtebMain.hs:14: -- express or implied, or assumes any liability for the use of this software.
+
+nhcnofib/real/gg
+    files   real/gg/Activity.hs real/gg/GRIP.hs real/gg/Graph.hs real/gg/Main.hs real/gg/PSlib.hs
+            real/gg/Parse.hs real/gg/Pool.hs real/gg/Spark.hs real/gg/StdLib.hs real/gg/gg.hmakerr
+            real/gg/gg.stderr real/gg/gg.stdin real/gg/gg.stdout
+
+nhcnofib/real/grep
+    files   real/grep/Main.lhs real/grep/Parsers.hs real/grep/StringMatch.hs real/grep/grep.stdout
+    named   real/grep/StringMatch.hs:3: -- Author          : Peter Thiemann
+
+nhcnofib/real/infer
+    files   real/infer/Environment.hs real/infer/FiniteMap.hs real/infer/Infer.hs
+            real/infer/InferMonad.hs real/infer/Main.hs real/infer/Maybe.hs real/infer/MyList.hs
+            real/infer/Parse.hs real/infer/Shows.hs real/infer/State.hs real/infer/StateX.hs
+            real/infer/Substitution.hs real/infer/Term.hs real/infer/TestTerm.hs
+            real/infer/TestType.hs real/infer/Type.hs real/infer/infer.stdin real/infer/infer.stdout
+
+nhcnofib/real/maillist
+    files   real/maillist/Main.hs real/maillist/addresses real/maillist/maillist.stdin
+            real/maillist/maillist.stdout
+    named   real/maillist/Main.hs:5: Written by Paul Hudak, January 1992.
+
+nhcnofib/real/parser
+    files   real/parser/Main.hs real/parser/big_big_test.hs real/parser/parser.stdin
+            real/parser/parser.stdout
+
+nhcnofib/real/pic
+    files   real/pic/ChargeDensity.hs real/pic/Consts.hs real/pic/ElecField.hs real/pic/Main.hs
+            real/pic/Pic.hs real/pic/PicType.hs real/pic/Potential.hs real/pic/PushParticle.hs
+            real/pic/Utils.hs real/pic/pic.stderr real/pic/pic.stdin real/pic/pic.stdout
+    named   real/pic/Main.hs:2: --      Patricia Fasel
+            real/pic/Main.hs:3: --      Los Alamos National Laboratory
+            real/pic/Main.hs:4: --      1990 August
+    notice  real/pic/Pic.hs:6: -- Copyright, 1990, The Regents of the University of California.
+            real/pic/Pic.hs:7: -- This software was produced under a U.S. Government contract (W-7405-ENG-36)
+            real/pic/Pic.hs:8: -- by the Los Alamos National Laboratory, which is operated by the University
+            real/pic/Pic.hs:9: -- of California for the U.S. Department of Energy.  The U.S. Government is
+            real/pic/Pic.hs:10: -- licensed to use, reproduce, and distribute this software.  Permission is
+            real/pic/Pic.hs:11: -- granted to the public to copy and use this software without charge, provided
+            real/pic/Pic.hs:12: -- that this notice and any statement of authorship are reproduced on all
+            real/pic/Pic.hs:13: -- copies.  Neither the Government nor the University makes any warranty,
+            real/pic/Pic.hs:14: -- express or implied, or assumes any liability for the use of this software.
+
+nhcnofib/real/prolog
+    files   real/prolog/Engine.hs real/prolog/Interact.hs real/prolog/Main.hs real/prolog/Parse.hs
+            real/prolog/PrologData.hs real/prolog/PureEngine.hs real/prolog/StackEngine.hs
+            real/prolog/Subst.hs real/prolog/Version.hs real/prolog/prolog.stdin
+            real/prolog/prolog.stdout real/prolog/stdlib
+    named   real/prolog/Main.hs:3: -- Mark P. Jones November 1990
+            real/prolog/PrologData.hs:7: -- partain: some changes taken from Hugs 1.0 demo version
+
+nhcnofib/real/reptile
+    files   real/reptile/Auxprogfuns.hs real/reptile/Diff.hs real/reptile/Drawfuns.hs
+            real/reptile/Geomfuns.hs real/reptile/Help.hs real/reptile/Interstate.hs
+            real/reptile/Layout.hs real/reptile/Main.hs real/reptile/Mgrfuns.hs
+            real/reptile/Progfuns.hs real/reptile/Psfuns.hs real/reptile/Rational.hs
+            real/reptile/Tilefuns.hs real/reptile/reptile.stdin real/reptile/reptile.stdout
+    named   real/reptile/Main.hs:1: -- LML original: Sandra Foubister, 1990
+            real/reptile/Main.hs:2: -- Haskell translation: Colin Runciman, May 1991
+
+nhcnofib/real/rsa
+    files   real/rsa/Main.hs real/rsa/Rsa.hs real/rsa/rsa.stdin real/rsa/rsa.stdout
+
+nhcnofib/real/symalg
+    files   real/symalg/Ast.hs real/symalg/BasicNumber.hs real/symalg/BasicNumberApprox.hs
+            real/symalg/Env.hs real/symalg/Eval.hs real/symalg/Lexer.hs real/symalg/Main.hs
+            real/symalg/Op.hs real/symalg/Parser.hs real/symalg/Print.hs real/symalg/RealM.hs
+            real/symalg/symalg.stdin real/symalg/symalg.stdout
+
+nhcnofib/spectral/ansi
+    files   spectral/ansi/Main.hs spectral/ansi/ansi.stdout
+
+nhcnofib/spectral/atom
+    files   spectral/atom/Main.hs spectral/atom/atom.stdout
+    named   spectral/atom/Main.hs:1: {-      A kernel fragment from a program written by
+            spectral/atom/Main.hs:2: Ron Legere  -- http://www.its.caltech.edu/~legere
+            spectral/atom/Main.hs:3: Caltech Quantum Optics
+
+nhcnofib/spectral/awards
+    files   spectral/awards/Hack.hs spectral/awards/Main.hs spectral/awards/QSort.hs
+            spectral/awards/awards.stdout
+    named   spectral/awards/Main.hs:3: From: kh@dcs.gla.ac.uk
+            spectral/awards/Main.hs:6: Subject: nofib submission
+            spectral/awards/QSort.hs:9: Author: Lennart Augustsson
+
+nhcnofib/spectral/banner
+    files   spectral/banner/Main.hs spectral/banner/banner.stdin spectral/banner/banner.stdout
+    named   spectral/banner/Main.hs:2: -- A simple banner program:                             Mark P Jones, 1992
+
+nhcnofib/spectral/boyer
+    files   spectral/boyer/Main.lhs spectral/boyer/boyer.stdout
+    named   spectral/boyer/Main.lhs:3: %File:         boyer.lhs
+            spectral/boyer/Main.lhs:4: %Description:  The Boyer benchmark
+            spectral/boyer/Main.lhs:5: %Author:       Bob Boyer
+            spectral/boyer/Main.lhs:6: %Created:      05-Apr-1985 Bob Boyer?
+            spectral/boyer/Main.lhs:7: %Modified:     10-Apr-1985 Bob Shaw
+            spectral/boyer/Main.lhs:8: %              22-Jul-1987 Will Clinger
+            spectral/boyer/Main.lhs:9: %              21-Jul-1992 Converted from Scheme to Haskell
+            spectral/boyer/Main.lhs:10: %Language:     Haskell
+            spectral/boyer/Main.lhs:11: %Status:       Public Domain
+            spectral/boyer/Main.lhs:12: %Scheme version FTP'ed from anonymous@nexus.cs.yorku.ca:pub/scheme
+            spectral/boyer/Main.lhs:16: \author{Bob Boyer \\
+            spectral/boyer/Main.lhs:17: Converted from Scheme to Haskell by \\
+            spectral/boyer/Main.lhs:18: Denis Howe {\tt <dbh\@doc.ic.ac.uk>} \\
+            spectral/boyer/Main.lhs:19: Imperial College}
+            spectral/boyer/Main.lhs:445: ; File:         boyer.sch
+            spectral/boyer/Main.lhs:446: ; Description:  The Boyer benchmark
+            spectral/boyer/Main.lhs:447: ; Author:       Bob Boyer
+            spectral/boyer/Main.lhs:448: ; Created:      5-Apr-85
+            spectral/boyer/Main.lhs:449: ; Modified:     10-Apr-85 14:52:20 (Bob Shaw)
+            spectral/boyer/Main.lhs:450: ;               22-Jul-87 (Will Clinger)
+            spectral/boyer/Main.lhs:451: ; Language:     Scheme (but see note)
+    notice  spectral/boyer/Main.lhs:11: %Status:       Public Domain
+            spectral/boyer/Main.lhs:452: ; Status:       Public Domain
+
+nhcnofib/spectral/boyer2
+    files   spectral/boyer2/Checker.hs spectral/boyer2/Lisplikefns.hs spectral/boyer2/Main.hs
+            spectral/boyer2/Rewritefns.hs spectral/boyer2/Rulebasetext.hs
+            spectral/boyer2/boyer2.stdout
+    named   spectral/boyer2/Main.hs:2: Haskell version of ...
+            spectral/boyer2/Main.hs:4: !            Hope+ version of the Gabriel benchmark Boyer
+            spectral/boyer2/Main.hs:5: ! Started on 30th March 1988 by Tony Kitto
+            spectral/boyer2/Main.hs:13: 23-06-93 JSM initial version
+
+nhcnofib/spectral/calendar
+    files   spectral/calendar/Main.hs spectral/calendar/calendar.stdout
+    named   spectral/calendar/Main.hs:1: -- This is a modification of the calendar program described in section 4.5
+            spectral/calendar/Main.hs:2: -- of Bird and Wadler's ``Introduction to functional programming'', with
+
+nhcnofib/spectral/cichelli
+    files   spectral/cichelli/Auxil.hs spectral/cichelli/Interval.hs spectral/cichelli/Key.lhs
+            spectral/cichelli/Main.hs spectral/cichelli/Prog.hs spectral/cichelli/cichelli.stdout
+
+nhcnofib/spectral/clausify
+    files   spectral/clausify/Main.hs spectral/clausify/clausify.stdout
+    named   spectral/clausify/Main.hs:2: From: dw@minster.york.ac.uk
+            spectral/clausify/Main.hs:11: written by Colin Runciman in various functional languages over the years,
+            spectral/clausify/Main.hs:35: -- batch mode version David Wakeling, February 1992
+
+nhcnofib/spectral/cse
+    files   spectral/cse/Main.hs spectral/cse/StateMonad.hs spectral/cse/cse.stdout
+    named   spectral/cse/Main.hs:13: -- Mark P. Jones, 1992
+
+nhcnofib/spectral/eliza
+    files   spectral/eliza/Main.hs spectral/eliza/eliza.stdin spectral/eliza/eliza.stdout
+    named   spectral/eliza/Main.hs:3: -- Hugs version by Mark P. Jones, January 12 1992
+            spectral/eliza/Main.hs:5: -- Adapted from a pascal implementation provided as part of an experimental
+            spectral/eliza/Main.hs:6: -- package from James Risner (risner@ms.uky.edu), Univ. of KY. with original
+            spectral/eliza/Main.hs:7: -- pascal code apparently provided by Robert Migliaccio (mig@ms.uky.edu).
+
+nhcnofib/spectral/expert
+    files   spectral/expert/Knowledge.hs spectral/expert/Main.hs spectral/expert/Match.hs
+            spectral/expert/Result.hs spectral/expert/Search.hs spectral/expert/Table.hs
+            spectral/expert/animals spectral/expert/expert.stdin spectral/expert/expert.stdout
+
+nhcnofib/spectral/fft2
+    files   spectral/fft2/Complex_Vectors.lhs spectral/fft2/Fourier.lhs spectral/fft2/Main.lhs
+            spectral/fft2/fft2.stdout
+    named   spectral/fft2/Main.lhs:2: > where             --     Rex Page (rpage@trc.amoco.com)
+            spectral/fft2/Main.lhs:3: > import Fourier    --     Amoco Production Research, Sep 1992
+
+nhcnofib/spectral/fish
+    files   spectral/fish/Fish_lines.hs spectral/fish/Fun_geom.hs spectral/fish/Main.hs
+            spectral/fish/Vector.hs spectral/fish/fish.stdout
+
+nhcnofib/spectral/gcd
+    files   spectral/gcd/Main.hs spectral/gcd/gcd.stdout
+    named   spectral/gcd/Main.hs:1: -- Test Integer performanc, from Sergey Mechveliani
+
+nhcnofib/spectral/hartel/nucleic2
+    files   spectral/hartel/nucleic2/Main.hs spectral/hartel/nucleic2/RA.hs
+            spectral/hartel/nucleic2/RC.hs spectral/hartel/nucleic2/RG.hs
+            spectral/hartel/nucleic2/RU.hs spectral/hartel/nucleic2/Types.hs
+            spectral/hartel/nucleic2/nucleic2.stdout spectral/hartel/nucleic2/nucleic2.stdout1
+            spectral/hartel/nucleic2/nucleic2.stdout2 spectral/hartel/nucleic2/nucleic2.stdout3
+            spectral/hartel/nucleic2/unboxery.h
+    named   spectral/hartel/nucleic2/Main.hs:45: --  Author: Marc Feeley (feeley@iro.umontreal.ca)
+            spectral/hartel/nucleic2/Main.hs:49: --  This program is a modified version of the program described in the paper:
+            spectral/hartel/nucleic2/Main.hs:50: --
+            spectral/hartel/nucleic2/Main.hs:51: --    M. Feeley, M. Turcotte, G. Lapalme, "Using Multilisp for Solving
+            spectral/hartel/nucleic2/Main.hs:52: --    Constraint Satisfaction Problems: an Application to Nucleic Acid 3D
+            spectral/hartel/nucleic2/Main.hs:53: --    Structure Determination" published in the journal "Lisp and Symbolic
+            spectral/hartel/nucleic2/Main.hs:54: --    Computation".
+
+nhcnofib/spectral/life
+    files   spectral/life/Main.hs spectral/life/life.stdout
+    named   spectral/life/Main.hs:2: -- (from John Launchbury)
+
+nhcnofib/spectral/mandel
+    files   spectral/mandel/Main.lhs spectral/mandel/Mandel.lhs spectral/mandel/MandelOld.lhs
+            spectral/mandel/PortablePixmap.lhs spectral/mandel/mandel.stderr
+            spectral/mandel/mandel.stdin spectral/mandel/mandel.stdout
+    named   spectral/mandel/PortablePixmap.lhs:126: showString "#\tPortablePixmap.lhs (Jon.Hill 28/5/92)\n"
+    notice  spectral/mandel/PortablePixmap.lhs:92: AUTHOR
+            spectral/mandel/PortablePixmap.lhs:93:      Copyright (C) 1989, 1991 by Jef Poskanzer.
+
+nhcnofib/spectral/mandel2
+    files   spectral/mandel2/Main.hs spectral/mandel2/mandel2.stdout
+    named   spectral/mandel2/Main.hs:2: -- DAVID HANLEY 11/03/1992
+
+nhcnofib/spectral/minimax
+    files   spectral/minimax/Board.hs spectral/minimax/Game.hs spectral/minimax/Main.hs
+            spectral/minimax/Prog.hs spectral/minimax/Tree.hs spectral/minimax/Wins.hs
+            spectral/minimax/minimax.stdout
+
+nhcnofib/spectral/multiplier
+    files   spectral/multiplier/Main.hs spectral/multiplier/multiplier.stdout
+    named   spectral/multiplier/Main.hs:3: -- John O'Donnell, University of Glasgow. jtod@dcs.glasgow.ac.uk
+    notice  spectral/multiplier/Main.hs:4: -- Copyright (c) 1992 by John T. O'Donnell
+            spectral/multiplier/Main.hs:5: -- version July 1992
+
+nhcnofib/spectral/pretty
+    files   spectral/pretty/CharSeq.hs spectral/pretty/Main.hs spectral/pretty/Pretty.hs
+            spectral/pretty/pretty.stdout
+
+nhcnofib/spectral/primetest
+    files   spectral/primetest/IntLib.lhs spectral/primetest/Main.lhs spectral/primetest/Prime.lhs
+            spectral/primetest/Random.lhs spectral/primetest/primetest.stdin
+            spectral/primetest/primetest.stdout
+    named   spectral/primetest/Main.lhs:2: \def\author{David Lester}
+            spectral/primetest/Random.lhs:23: infinite list of random Ints. (Algorithm due to Lennart Augustsson)
+
+nhcnofib/spectral/puzzle
+    files   spectral/puzzle/Main.hs spectral/puzzle/puzzle.stdout
+    named   spectral/puzzle/Main.hs:1: -- !!! Brute force soln to a puzzle. Sent to us by Stephen Eldridge
+
+nhcnofib/spectral/rewrite
+    files   spectral/rewrite/Main.lhs spectral/rewrite/rewrite.stdout
+    named   spectral/rewrite/Main.lhs:1: [converted to Haskell by partain]
+            spectral/rewrite/Main.lhs:5: From:    Mike.Spivey@prg.oxford.ac.uk
+            spectral/rewrite/Main.lhs:6: To:      simonpj
+            spectral/rewrite/Main.lhs:7: Subject: Orwell benchmark
+
+nhcnofib/spectral/scc
+    files   spectral/scc/Digraph.hs spectral/scc/Main.hs spectral/scc/scc.stdout
+    named   spectral/scc/Main.hs:2: -- (courtesy mainly of John Launchbury)
+
+nhcnofib/spectral/sorting
+    files   spectral/sorting/Main.hs spectral/sorting/Sort.hs spectral/sorting/sorting.stdin
+            spectral/sorting/sorting.stdout
+
+nhcnofib/spectral/treejoin
+    files   spectral/treejoin/27000.1 spectral/treejoin/27000.2 spectral/treejoin/Main.hs
+            spectral/treejoin/treejoin.hmakerr spectral/treejoin/treejoin.stdout

@@ -1479,10 +1479,18 @@ struct
 
   and keepFun (c, env, fs, body) =
     let
-      (* a function's body is in no handler's region of its own *)
+      (* a function's body is in no handler's region of its own, and knows
+         no tag of a Case around it (tagFacts): its code is a function's of
+         its own, which Lower lowers alone, so a Decon in it keeps the test
+         before it in that function (the shapes lint) -- a copy of it
+         specialised elsewhere too *)
       fun inside b =
         let val saved = !inHandler
-        in inHandler := 0; let val b = simp (c, env, b) in inHandler := saved; b end end
+            val facts = !tagFacts
+        in
+          inHandler := 0; tagFacts := IntMap.empty;
+          let val b = simp (c, env, b) in inHandler := saved; tagFacts := facts; b end
+        end
       val fs =
         List.map (fn {name, label, tyvars, params, result, body = b} =>
                     {name = name, label = label, tyvars = tyvars, params = params, result = result, body = inside b}) fs

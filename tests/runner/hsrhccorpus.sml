@@ -3,7 +3,8 @@
    bin/rhc in the variants the oracles judge it in (HsCorpus.prepare), as
    far as rhc goes: `--typecheck-only`, which stops after names and fixity
    until M13 lands and then checks the types. The trees are read through
-   RUNE_HS_CORPUS, as the oracles' jobs read them, since none is vendored.
+   RUNE_HS_CORPUS, as the oracles' jobs read them; D56's 188, vendored,
+   go through the same in make check (HsCorpusRun).
 
    A program both judges accept (D52: GHC and Hugs) and rhc refuses is a
    finding: it fails its job unless a line of tests/hs/rhc-corpus.txt says

@@ -34,13 +34,24 @@ struct
       fun paren (x as A.E (_, y)) =
         case y of
           A.EApp _ => e (A.EParen x) | A.ESeq _ => e (A.EParen x) | A.ELam _ => e (A.EParen x)
-        | A.ECase _ => e (A.EParen x) | A.EIf _ => e (A.EParen x)
+        | A.ECase _ => e (A.EParen x) | A.EIf _ => e (A.EParen x) | A.ESig _ => e (A.EParen x)
         | _ => x
       fun app (f, args) = List.foldl (fn (a, f) => e (A.EApp (f, paren a))) f args
       fun binop (l, n, r) = e (A.ESeq [A.EA (paren l), A.EO (A.VarOp (gname n)), A.EA (paren r)])
-      fun codes s = List.map Char.ord (String.explode s)
+      (* a name's code points, as the lexer read them from its UTF-8, and
+         the string literal of them as Haskell writes it *)
+      fun codes s = Utf8.explode s
+      fun quoted s =
+        let
+          fun one (c, (prevNumeric, acc)) =
+            if c >= 32 andalso c < 127 andalso c <> 34 andalso c <> 92 then
+              (false, (if prevNumeric andalso c >= 48 andalso c <= 57 then "\\&" else "") ^ str (Char.chr c) :: acc)
+            else (true, "\\" ^ Int.toString c :: acc)
+        in
+          "\"" ^ String.concat (List.rev (#2 (List.foldl one (false, []) (codes s)))) ^ "\""
+        end
       fun lit l = A.Lit (ann (), l)
-      fun str s = e (A.ELit (lit (A.LString (codes s, "\"" ^ String.toString s ^ "\""))))
+      fun str s = e (A.ELit (lit (A.LString (codes s, quoted s))))
       fun chr c = e (A.ELit (lit (A.LChar (Char.ord c, "'" ^ Char.toString c ^ "'"))))
       fun int n = e (A.ELit (lit (A.LInt (IntInf.fromInt n, Int.toString n))))
       fun pvar n = p (A.PVar (lname n))
@@ -48,7 +59,7 @@ struct
         let val q = p (A.PCon (conOf c, ps))
         in if null ps then q else p (A.PParen q) end
       fun pany (c : constr) = p (A.PRec (conOf c, []))
-      fun pstr s = p (A.PLit (lit (A.LString (codes s, "\"" ^ String.toString s ^ "\""))))
+      fun pstr s = p (A.PLit (lit (A.LString (codes s, quoted s))))
       fun pint n = p (A.PLit (lit (A.LInt (IntInf.fromInt n, Int.toString n))))
       val pwild = fn () => p A.PWild
       fun ptuple ps = p (A.PTuple ps)
@@ -71,8 +82,13 @@ struct
       fun isSymbolic (c : constr) = case #name c of A.Name (_, q) => A.isSymbolic q
       fun cname (c : constr) = case #name c of A.Name (_, {name, ...}) => name
       fun fname (f : A.name) = case f of A.Name (_, {name, ...}) => name
-      (* a constructor's position, as an Int, by a case *)
-      fun tag x = ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i)) (constrs, List.tabulate (length constrs, fn i => i)))
+      (* a constructor's position, an Int by its signature, by a case: a
+         literal alone would take its type from the module's `default` *)
+      fun intType () = A.T (ann (), A.TCon (named ("t", "Int")))
+      fun tag x =
+        e (A.ESig (e (A.EParen (ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i))
+                                             (constrs, List.tabulate (length constrs, fn i => i))))),
+                   NONE, intType ()))
       val enumeration = List.all (fn (c : constr) => #arity c = 0) constrs
       val first = hd constrs
       val last = List.last constrs
@@ -252,8 +268,11 @@ struct
                in
                  app (var "readParen", [cond, reader, lvar "r"])
                end
+             (* the infix constructors' alternatives first, as 10.5's figure
+                has `:^:` before `Leaf` (der.tree.read.alternatives) *)
+             val (infixes, others) = List.partition (fn (c : constr) => #isInfix c andalso #arity c = 2) constrs
            in
-             [clause ("readsPrec", [pvar "d", pvar "r"], appendAll (List.map one constrs))]
+             [clause ("readsPrec", [pvar "d", pvar "r"], appendAll (List.map one (infixes @ others)))]
            end
          else raise Missing cls)
     end

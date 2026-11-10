@@ -88,6 +88,11 @@ sig
       (* a newtype, its parameters, its constructor and the type it wraps *)
     | Newtype of string * (string * kind) list * string * ty
     | Val of string * ty * exp                 (* a value of the top level *)
+      (* a value of another unit, at its type (the haskell98 roadmap's M21):
+         in scope as a value of the top level is, defined by the unit that
+         exports it; a program of several units joined has its definition
+         (CoreUnits.join) *)
+    | Import of string * ty
 
   (* A program: what it declares, in order. `main`, of type
      `World -> (utuple World T)`, is what runs. *)

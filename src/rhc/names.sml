@@ -35,48 +35,83 @@ struct
 
   fun entityText ({space, home, name} : Mo.entity) = spaceText space ^ home ^ " " ^ name
 
-  (* `run (g, fixpoint, check)`: with `check`, each group is checked too,
-     its types, classes and instances (HsInfer, M13), under the setting
-     of --cycle-default *)
-  fun run (g : G.graph, fixpoint : Mo.fixpoint, check : HsInfer.cycleDefault option) : result =
+  (* What the groups of a graph leave for the groups after them: the
+     tables of every module's entities and fixities, whether a file is the
+     library's, and what names and the checker have found so far. The
+     saved world (RhcWorld) is the state the library's groups leave. *)
+  type state = {defs : Mo.def M.map, universe : Mo.entity list, fixities : (A.fixity * int) M.map,
+                library : bool M.map, exports : Mo.entity list M.map, diags : G.diag list,
+                modules : (G.node * A.module) list, derived : (string * string * A.decl list) list,
+                evidence : HsEvidence.table, types : HsInfer.env}
+
+  (* the entities of rhc's modules of primitives `leaves` *)
+  fun leafEntities leaves =
+    List.concat
+      (List.map (fn (l, names) => List.map (fn n => {space = Mo.Value, home = RhcLibrary.identity l, name = n}) names)
+         leaves)
+
+  (* rhc's modules of primitives that a module of `nodes` imports *)
+  fun leavesOf (nodes : G.node list) =
+    List.filter (fn (l, _) => List.exists (fn (n : G.node) => List.exists (fn (_, t) => t = RhcLibrary.identity l) (#imports n))
+                                nodes)
+      RhcLibrary.leaves
+
+  (* `extend (s, nodes)` is `s` with the entities and fixities of `nodes`,
+     which follow its groups *)
+  fun extend (s : state, nodes : G.node list) : state =
     let
-      val nodes = List.concat (#groups g)
-      val libraryFiles = List.foldl (fn (n : G.node, s) => M.insert (s, #file n, #library n)) M.empty nodes
-      fun isLibrary (span : HsSource.span) = getOpt (M.find (libraryFiles, #file span), false)
-      (* rhc's modules of primitives, where a module imports them *)
-      val leaves =
-        List.filter (fn (l, _) => List.exists (fn (n : G.node) => List.exists (fn (_, t) => t = RhcLibrary.identity l) (#imports n))
-                                    nodes)
-          RhcLibrary.leaves
-      val leafDefs =
-        List.concat
-          (List.map
-             (fn (l, names) =>
-                List.map (fn n => {entity = {space = Mo.Value, home = RhcLibrary.identity l, name = n}, sort = Mo.Var,
-                                   parent = NONE, arity = 0, span = HsSource.noSpan}) names)
-             leaves)
-      val defs = leafDefs @ List.concat (List.map (fn (n : G.node) => Mo.defs (#id n, #ast n)) nodes)
-      val defTable = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) M.empty defs
+      val defs = List.concat (List.map (fn (n : G.node) => Mo.defs (#id n, #ast n)) nodes)
+    in
+      {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) (#defs s) defs,
+       universe = #universe s @ List.map #entity defs,
+       fixities = List.foldl (fn ((k, f), t) => M.insert (t, k, f)) (#fixities s)
+                    (List.concat (List.map (fn (n : G.node) => HsRename.topFixities (#id n, #ast n)) nodes)),
+       library = List.foldl (fn (n : G.node, t) => M.insert (t, #file n, #library n)) (#library s) nodes,
+       exports = #exports s, diags = #diags s, modules = #modules s, derived = #derived s, evidence = #evidence s,
+       types = #types s}
+    end
+
+  (* the state before any group: rhc's modules of primitives `leaves`,
+     which no file holds, and nothing found *)
+  fun initial leaves : state =
+    let
+      val leafDefs = List.map (fn e => {entity = e, sort = Mo.Var, parent = NONE, arity = 0, span = HsSource.noSpan})
+                       (leafEntities leaves)
+    in
+      {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) M.empty leafDefs,
+       universe = List.map #entity leafDefs, fixities = M.empty, library = M.empty,
+       exports = List.foldl (fn ((l, names), m) =>
+                               M.insert (m, RhcLibrary.identity l,
+                                         List.map (fn n => {space = Mo.Value, home = RhcLibrary.identity l, name = n}) names))
+                   M.empty leaves,
+       diags = [], modules = [], derived = [], evidence = HsEvidence.empty (),
+       types = HsInfer.initial {primitives = List.map Mo.key (leafEntities leaves)}}
+    end
+
+  (* The first number a program's own fresh type variables and kinds take,
+     past any the library's checking takes, so that they are numbered alike
+     whether the library was checked now or restored (RhcWorld). *)
+  val programCounters = 100000000
+
+  (* `groups (s, gs, fixpoint, check)`: each group of `gs` solved for its
+     exports and scopes, its modules renamed and resolved, and with
+     `check`, each group checked too, its types, classes and instances
+     (HsInfer, M13), under the setting of --cycle-default *)
+  fun groups (s : state, gs : G.node list list, fixpoint : Mo.fixpoint, check : HsInfer.cycleDefault option) : state =
+    let
+      val defTable = #defs s
       fun defOf k = M.find (defTable, k)
-      val universe = List.map #entity defs
-      val fixTable =
-        List.foldl (fn ((k, f), t) => M.insert (t, k, f)) M.empty
-          (List.concat (List.map (fn (n : G.node) => HsRename.topFixities (#id n, #ast n)) nodes))
-      val exports : Mo.entity list M.map ref =
-        ref (List.foldl (fn ((l, names), m) =>
-                           M.insert (m, RhcLibrary.identity l,
-                                     List.map (fn n => {space = Mo.Value, home = RhcLibrary.identity l, name = n}) names))
-               M.empty leaves)
+      val universe = #universe s
+      val fixTable = #fixities s
+      fun isLibrary (span : HsSource.span) = getOpt (M.find (#library s, #file span), false)
+      val exports = ref (#exports s)
       fun exportsOf id = getOpt (M.find (!exports, id), [])
-      val diags : G.diag list ref = ref []
+      val diags = ref (#diags s)
       fun add errs = diags := !diags @ List.map (fn (sp, msg) => {span = sp, msg = msg, library = isLibrary sp}) errs
-      val out : (G.node * A.module) list ref = ref []
-      val derivedOut : (string * string * A.decl list) list ref = ref []
-      val evidence = HsEvidence.empty ()
-      val types =
-        ref (HsInfer.initial {primitives = List.concat (List.map (fn (l, names) =>
-                                                                     List.map (fn n => Mo.key {space = Mo.Value, home = RhcLibrary.identity l,
-                                                                                               name = n}) names) leaves)})
+      val out = ref (#modules s)
+      val derivedOut = ref (#derived s)
+      val evidence = #evidence s
+      val types = ref (#types s)
       (* the entity the Prelude exports under a name; Ix's Ix too *)
       fun prelude (space, name) =
         let
@@ -87,6 +122,7 @@ struct
         in
           Option.map Mo.key (List.find (fn (e : Mo.entity) => #space e = sp andalso #name e = name) (exportsOf from))
         end
+      val programStarted = ref false
       fun group members =
         let
           val units = List.map (fn (n : G.node) => {id = #id n, name = #name n, ast = #ast n, imports = #imports n}) members
@@ -117,6 +153,10 @@ struct
           | (_, true) => ()
           | (SOME cycleDefault, false) =>
               let
+                val () =
+                  if !programStarted orelse List.all #library members then ()
+                  else
+                    (HsInfer.renumber programCounters; programStarted := true)
                 val resolved = List.filter (fn (n, _) => List.exists (fn (m : G.node) => #id m = #id n) members) (!out)
                 val {env, errors, derived} =
                   HsInfer.check {env = !types, cycleDefault = cycleDefault, prelude = prelude, evidence = evidence,
@@ -129,10 +169,22 @@ struct
               end
         end
     in
-      List.app group (#groups g);
-      {modules = List.rev (!out), exports = !exports, diags = !diags,
-       types = Option.map (fn _ => !types) check, evidence = evidence, derived = !derivedOut}
+      List.app group gs;
+      {defs = defTable, universe = universe, fixities = fixTable, library = #library s, exports = !exports, diags = !diags,
+       modules = !out, derived = !derivedOut, evidence = evidence, types = !types}
     end
+
+  (* the result of a state, for a check (`checked`) or not *)
+  fun result (s : state, checked : bool) : result =
+    {modules = List.rev (#modules s), exports = #exports s, diags = #diags s,
+     types = if checked then SOME (#types s) else NONE, evidence = #evidence s, derived = #derived s}
+
+  (* `run (g, fixpoint, check)`: with `check`, each group is checked too,
+     its types, classes and instances (HsInfer, M13), under the setting
+     of --cycle-default *)
+  fun run (g : G.graph, fixpoint : Mo.fixpoint, check : HsInfer.cycleDefault option) : result =
+    let val nodes = List.concat (#groups g)
+    in result (groups (extend (initial (leavesOf nodes), nodes), #groups g, fixpoint, check), isSome check) end
 
   (* ---- --dump-names ---- *)
 

@@ -360,9 +360,12 @@ three fields, of every way) by the engine for the laws
 rhc, the Haskell 98 compiler of `docs/plans/language/haskell98.md`, is judged against oracles and a corpus that
 stay outside the tree (M3, D52). The corpus's licences, its manifests and its compat layer are
 `tests/hs/corpus/` (README.md there): the programs are read through `RUNE_HS_CORPUS`, a directory holding the trees
-that `tests/hs/corpus/trees.tsv` pins, but for the 45 of D56's set whose trees grant a licence, vendored in
-`tests/hs/corpus/vendored/` with their trees' licence files (GHC's testsuite's BSD-3, jhc's MIT; the owner's rule:
-code not under CC0 lands with its licence beside it). The oracles are GHC 9.4.7 with
+that `tests/hs/corpus/trees.tsv` pins, but for the 188 of D56's set, vendored in `tests/hs/corpus/vendored/` under
+a notice each, the nearest `LICENSE` or `PROVENANCE` above them: 45 with their trees' licence files (GHC's
+testsuite's BSD-3, jhc's MIT), and 143 that no licence covers with a `PROVENANCE` written here (their upstream and
+commit, the upstream paths, the authors and origin their headers name, what notice there is, and the date). The
+owner's rules: code not under CC0 lands with its licence beside it, and code under no licence with a `PROVENANCE`
+beside it. The oracles are GHC 9.4.7 with
 a strict shim, Hugs, nhc98 and MicroHs (`tests/hs/oracles/README.md`: each oracle's variable, pin and recipe, and
 the shims, which the run builds). The family is `tests/runner/hssource.sml`, `hscorpus.sml`, `hsoracles.sml` and
 `hschecks.sml`:
@@ -401,12 +404,16 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   the SML port is validated against. The manifest says why each other port is held; a finding is a line of
   `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
 - `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc and run in D56's three ways (`test`, `register`,
-  `register-opt`), its output E8's expected one (the same, the same words, or numbers equal to about five digits) and
-  its status 0; the 45 vendored in `check`, the 143 others `nightly` with `hs-corpus`; all held while rhc runs no
-  program (the row `prog.main.value` Planned). `hs-rhc-corpus/vendored`, in `check`, puts the 45 through
-  `--typecheck-only` as the nightly jobs above put the whole corpus. `hs-corpus/vendored` (nightly, with the trees)
-  holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and `hs-corpus/data` to the vendored
-  programs' files and licences and nothing more; `bin/rune-test hs-corpus-vendor` makes it again from the trees.
+  `register-opt`), its output E8's expected one (the same, the same words, or numbers equal to about five digits)
+  and its status 0; all 188 vendored and in `check`, all held while rhc runs no program (the row `prog.main.value`
+  Planned). `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
+  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
+  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
+  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
+  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
+  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
+  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
+  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.
@@ -693,6 +700,24 @@ checker infers. `bin/rhc --dump-evidence` prints a program's evidence records
 --dump-derived` the methods of its derived instances, which HsDerive makes as
 trees inside the checker (D33's C) and the checker checks as a user's.
 
+**The saved world** (`src/rhc/world.sml`, the roadmap's D45, its B;
+`tests/runner/hsworld.sml`). `bin/rhc` restores `bin/rhc.img`, rhc with its
+library read, named and checked, saved as a VM image as `bin/rune-repl.img`
+is, and reads and checks only a program's own modules against it; `make
+bin/rhc` makes the image again when rhc, the VM or a file of `share/rhc`
+changes, and `bin/rhc` restores it only where `bin/rhc.img.identity`, the
+identity of the rhc that made it, is `bin/rhc.identity`, `bin/rhc.rbc`'s.
+`bin/rhc --whole` reads and checks the library too, the reference, as does
+any option that changes the library's reading, and `bin/rhc --world` says
+which a check takes. The jobs `hs/world/*` hold the two to printing alike:
+`image` that `bin/rhc` goes from a world this rhc made, newer than every
+file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and `lang/K-of-4`
+every program of the directory checked both ways, with its `.cargs`, to the
+same standard output, standard error and status; the first shard of each in
+make check, the others nightly; `bin/rune-test hs-world-one KIND NAME`
+judges one. A mutant's tree (`hs-mutants`) has no image, so a mutant goes
+the whole way.
+
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
 the independent check of rhc's types, as AstLint is Rune's. Its first part
@@ -830,6 +855,26 @@ bottom one bottom. A program the interpreter alone can run says so on a line
 `-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
 program's rows are `Planned`; M15's done-when and G1 rest on it.
 
+**rhc's desugaring** (`tests/runner/hsdesugar.sml`, `hs/desugar/*`; the
+roadmap's M15, D34). Each program of `tests/hs/desugar` through rhc to
+Core, read back at `--lint=3`, and run on Core's interpreter with its
+matches in the Report's order (`hs/desugar/report/NAME`) and as decision
+trees in Sestoft's order (`hs/desugar/sestoft/NAME`, `--match=sestoft`),
+each printing `NAME.expected` and ending with `NAME.exitcode`, 0 where there
+is none; compiled through Mid and run on the VM the same
+(`hs/desugar/vm/NAME`); and printed with explicit braces (`rhc --print`),
+which desugars to the same Core text (`hs/desugar/braces/NAME`, `rhc
+--desugar-only --dump-after=desugar`). Each pair `relations/NAME.hs` and
+`NAME.parens.hs`, the program with every application of an operator in
+parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`). Over
+the run programs of `tests/hs/lang` the two orders agree on what they print
+and on a value or a bottom (`hs/desugar/orders/NAME`), held while the
+program's rows are `Planned`. The programs avoid what M14's deriving and
+the runtime's arrays are still to give, and their expected output is GHC's.
+The seeds for desugaring (clause order reversed, `~` made strict, a
+`newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
+that `report/order`, `report/lazy` and `report/newtype` catch.
+
 **rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
 FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
 path as its last argument, exits 0: delta debugging over the top-level
@@ -871,8 +916,12 @@ FLAGS`, the same for a dump of a stage; `; fail: MESSAGE`, refused with
 MESSAGE on standard error; `; refuse: FLAGS | MESSAGE`, refused with MESSAGE
 when compiled through Mid with FLAGS, which make a fault of Core to Mid on
 purpose (`--fault`, the roadmap's *rhc's mutants*): a suspension in a typed
-slot, which MidLint refuses at the boundary into Mid (`fault-*.core`). `--accept` writes the `.expected` files, to be
-read line by line. At level 3 rhc prints what it read, reads it back and
+slot, which MidLint refuses at the boundary into Mid, and a force made a
+cast, which form C's lint refuses as a force forgotten (`fault-*.core`);
+`; forces: N FLAGS`, compiled with the dump of Core to Mid, which holds N
+`thunk_force` nodes, one for each force of Core, which the file counts by
+hand (`forces.core`). `--accept` writes the `.expected` files, to be read
+line by line. At level 3 rhc prints what it read, reads it back and
 prints it again, so print, read, print is the identity on every test.
 `tests/hs/core/lib/base.core` is what the run tests share, read before each
 by its flags. A run reads `NAME.stdin` as its standard input where there is
@@ -887,9 +936,13 @@ written in Core) has `prims-*.core`, Core's primitives on their edges
 print the same), files, standard input read across the edge of a chunk, the
 classes and mappings of `Char`, and what the library's PreludeRuntime names
 beside the Report's (`runtime-library`: arrays, an IOError's details, the
-IO family's positions of files and errors of the system's). `end-*.core`
-hold the line an escaping IOError ends a program with to the library's Show
-IOError, a user's "user error (TEXT)". `lib/language/haskell/coreruntime`
+IO family's positions of files and errors of the system's), and the system's
+family's (`prims-sys`: a command's exit, the environment, the program's name
+and arguments, the clock and the zone; `prims-sys-files`: directories, a
+file's kind, access, mode and time, a listing, renames and the working
+directory). `end-*.core` hold the line an escaping IOError ends a program
+with to the library's Show IOError, a user's "user error (TEXT)".
+`lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
 `lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
 and the first and the last of each range and run of its data.
@@ -932,6 +985,26 @@ same at both, at `-O0` and `-O2`, interpreted and at tier 2
 SIZE1 SIZE2` holds what `--count` counts at the second to at most 2.2 times
 the first (`hs/core/budget/NAME`), a sharing budget, rhc's policy and not the
 Report's, which a lost share, growing exponentially, breaks (D6).
+
+## rhc in units
+
+rhc's separate compilation (the haskell98 roadmap's M21) has its tests under
+`tests/hs/units`, run by the family `hs/units/*` (`tests/runner/hsunits.sml`;
+tier `test-rhc`, part of `make check`). `hs/units/store` compiles
+`tests/hs/units/store.sml` with Pickle, `UnitStore` and rhc's `RhcStore` and
+nothing of a compiler, as `tests/lib/compiler/store.sml` tests Rune's store,
+and runs it: an entry is found by its key and stands by its usages judged
+against what is given now, an absent name present now refuses it (H1, H2);
+one checked at a lower level of the lint is refused; a key is over every
+member and its text (H8); the overlay is read before the layers, a layer is
+read and never written, one configuration's entries are not another's; a
+damaged entry is a miss; a head is read back as it was written. Core in
+units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
+that takes a value of another by an import (`(import x TYPE)`) and a type by
+a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
+import no unit defines, a type two units declare apart and an import at
+another type than its definition's, each refused; an import printed and
+read back, in a unit checked alone (`--typecheck-only`).
 
 ## The three oracles
 

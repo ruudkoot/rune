@@ -1,5 +1,6 @@
 # derive under --cycle-default=scc
 TYPE	All	check	Bool
+TYPE	NoDefault	check	(Ordering, [E], [E], Int)
 INSTANCE	All	(Eq a, Show a) => Show (Set a)	derived
 INSTANCE	All	Bounded Colour	derived
 INSTANCE	All	Bounded Point	derived
@@ -35,3 +36,10 @@ INSTANCE	All	Show Sum	derived
 INSTANCE	All	Show a => Show (Pair a b)	derived
 INSTANCE	All	Show a => Show (Tree a)	derived
 INSTANCE	All	Show a => Show (Wrap a)	derived
+INSTANCE	NoDefault	Bounded E	derived
+INSTANCE	NoDefault	Enum E	derived
+INSTANCE	NoDefault	Eq E	derived
+INSTANCE	NoDefault	Ix E	derived
+INSTANCE	NoDefault	Ord E	derived
+INSTANCE	NoDefault	Read E	derived
+INSTANCE	NoDefault	Show E	derived

@@ -5,6 +5,7 @@
 module All () where
 
 import Ix (Ix, range, index, inRange)
+import NoDefault ()
 
 -- an enumeration: every class
 data Colour = Red | Green | Blue deriving (Eq, Ord, Enum, Bounded, Ix, Show, Read)

@@ -16,7 +16,7 @@ struct
   exception Failed
 
   (* the stages there are, for --dump-after: rhc's, then those from Mid on *)
-  val stages = ["read", "coretomid"] @ MidPipeline.stageNames MidPipeline.standardPasses
+  val stages = ["read", "desugar", "coretomid"] @ MidPipeline.stageNames MidPipeline.standardPasses
 
   fun version () = print ("rhc " ^ Config.version ^ " (identity " ^ Config.identity ^ ")\n")
 
@@ -37,9 +37,12 @@ struct
       else ()
     end
 
-  (* the program of the files, read in order, after what it reaches of rhc's
-     runtime (CoreRuntime) *)
-  fun readCore (strings, files : string list) : Core.program =
+  (* the program of the files, read in order, each a unit, after what it
+     reaches of rhc's runtime (CoreRuntime): the units joined, an import
+     given its definition and a type declared once (CoreUnits), and every
+     import defined where the program is run or compiled (whole); a unit
+     checked alone (--typecheck-only) may import what it does not define *)
+  fun readCore (strings, files : string list, whole : bool) : Core.program =
     let
       fun one file =
         CoreText.parse (readFile file)
@@ -47,7 +50,14 @@ struct
       fun runtime p =
         CoreRuntime.link strings p
         handle CoreText.Error (line, msg) => raise Error.Bug ("rhc's runtime does not read, at line " ^ Int.toString line ^ ": " ^ msg)
-      val read = fn () => runtime (List.concat (List.map one files))
+      fun failed msg = (eprint (String.concatWith ", " files ^ ": error: " ^ msg ^ "\n"); raise Failed)
+      fun defined p =
+        case (whole, CoreUnits.unresolved p) of
+          (false, _) => p
+        | (true, []) => p
+        | (true, xs) => failed ("imported and defined by no unit: " ^ String.concatWith ", " xs)
+      val read = fn () => defined (CoreUnits.join [runtime (List.concat (List.map one files))])
+                          handle CoreUnits.Error msg => failed msg
     in
       Pass.stage {name = "read", showIn = NONE, show = CoreText.show,
                   check = Pass.checkAt ("read", 3) roundTrip, size = List.length} read ()
@@ -66,6 +76,8 @@ struct
     let
       val out = fn s => TextIO.output (TextIO.stdOut, s)
       val err = fn s => (TextIO.flushOut TextIO.stdOut; TextIO.output (TextIO.stdErr, s))
+      (* the program's name, command_name's: the file read last (ruling 33) *)
+      val () = case #readCore opts of [] => () | files => CorePrimSys.program := {name = List.last files, args = []}
       val {outcome, ...} =
         Pass.stage {name = "interpret", showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0}
                    CoreInterp.run {program = p, steps = #steps opts, depth = #depth opts, out = out, err = err}
@@ -86,18 +98,53 @@ struct
     let
       val text =
         Pass.stage {name = "coretomid", showIn = NONE, show = fn s => s, check = fn _ => (), size = String.size}
-                   (fn p => CoreToMid.program ({form = #thunks opts, fault = #fault opts}, p)) p
-      (* Mid's text that Mid's reader refuses is a bug of Core to Mid, or, for
-         --thunks=c, a tree without form C's suspensions *)
+                   (fn p => CoreToMid.program ({fault = #fault opts}, p)) p
+      (* Mid's text that Mid's reader refuses is a bug of Core to Mid *)
       fun parse text =
         MidText.parse text
         handle MidText.Syntax msg => raise Error.Bug ("Mid's reader refuses what Core to Mid wrote: " ^ msg)
       val mid = MidPipeline.midStage NONE parse text
       val low = MidPipeline.lowOfMid MidPipeline.standardPasses mid
+      (* the register machine's names in a dump of its code, as rune's
+         driver sets them; the stack machine's are Code's own *)
+      val () = if !CompilerSettings.target = "registers" then Code.opcodeNames := RegCodes.names else ()
       val code = MidPipeline.targetStage low
     in Emit.writeFileAs (MidPipeline.fingerprint (), out, code); 0 end
     handle CoreToMid.Unsupported msg =>
       (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
+
+  (* a program of Haskell, checked (RhcSyntax), desugared to Core (M15)
+     with what it reaches of rhc's runtime, checked by CoreLint, and run on
+     the Core interpreter or, with -o, compiled; `args` are the options of
+     the command line that are not the syntax's *)
+  fun haskell (file : string) (args : string list, desugar : CoreRuntime.strings -> Core.program) : int =
+    let
+      (* --match=report|sestoft: the order of matching (D34) *)
+      val (orders, args) = List.partition (String.isPrefix "--match=") args
+      val () = List.app (fn "--match=report" => HsMatch.order := HsMatch.Report
+                          | "--match=sestoft" => HsMatch.order := HsMatch.Sestoft
+                          | a => raise RhcOptions.Usage ("--match takes report or sestoft: " ^ a)) orders
+      (* --desugar-only: as far as Core and CoreLint, and run nothing *)
+      val (only, args) = List.partition (fn a => a = "--desugar-only") args
+      val opts = RhcOptions.parse args
+      val () = List.app (fn s => if s = "all" orelse List.exists (fn t => t = s) stages then ()
+                                 else raise RhcOptions.Usage ("--dump-after: no stage " ^ s ^ " (the stages: "
+                                                              ^ String.concatWith ", " stages ^ ")"))
+                        (!Pass.dumpAfter)
+      val () = Pass.startup ()
+      val p =
+        Pass.stage {name = "desugar", showIn = NONE, show = CoreText.show,
+                    check = Pass.checkAt ("desugar", 3) roundTrip, size = List.length} desugar (#strings opts)
+        handle Fail msg => raise Error.Bug ("rhc's desugaring fails, a bug of rhc's: " ^ msg)
+      val () = lint ([file], p)
+      val status =
+        if not (null only) then 0
+        else case #output opts of SOME out => compile (opts, p, out) | NONE => interpret (opts, p)
+    in
+      Pass.finish (); status
+    end
+    handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
+         | Failed => 1
 
   (* --share DIR, where rhc's library is, which the wrapper bin/rhc gives *)
   fun share args =
@@ -107,10 +154,40 @@ struct
     | a :: rest => a :: share rest
     | [] => []
 
+  (* --whole, a program read and checked whole without the saved world;
+     --world, what of it there is (RhcWorld); --identity, rhc's own
+     (Config), which the Makefile writes to bin/rhc.identity *)
+  fun world args =
+    case args of
+      "--whole" :: rest => (RhcWorld.whole := true; world rest)
+    | a :: rest => a :: world rest
+    | [] => []
+
   fun run (args : string list) : int =
-    let val args = share args in
+    let val args = world (share args) in
+    case args of
+      ["--make-world", image] =>
+        (* the saved world, made: the world that saves it stops here, and
+           one bin/rhc restores goes on with its own command line *)
+        (case RhcWorld.make image of
+           Runtime.Saved => 0
+         | Runtime.Restored => run (CommandLine.arguments ()))
+    | ["--world"] => (print (RhcWorld.describe () ^ "\n"); 0)
+    | ["--identity"] => (print (Config.identity ^ "\n"); 0)
+    | _ =>
     case RhcSyntax.command args of
-      SOME syntax => if OS.Process.isSuccess (syntax ()) then 0 else 1
+      SOME syntax =>
+        let
+          (* the status of a program run, which a status of success or
+             failure would lose *)
+          val code = ref NONE
+          val file = getOpt (List.find RhcSyntax.isSource args, "")
+          val () = RhcSyntax.compile := (fn x => let val n = haskell file x
+                                                 in code := SOME n; if n = 0 then OS.Process.success else OS.Process.failure end)
+          val ok = OS.Process.isSuccess (syntax ())
+        in
+          case !code of SOME n => n | NONE => if ok then 0 else 1
+        end
     | NONE =>
     let
       val opts = RhcOptions.parse args
@@ -130,7 +207,7 @@ struct
             else
               let
                 val () = Pass.startup ()
-                val p = readCore (#strings opts, #readCore opts)
+                val p = readCore (#strings opts, #readCore opts, not (#typecheckOnly opts))
                 val () = lint (#readCore opts, p)
                 val () =
                   if #typecheckOnly opts orelse isSome (#output opts)

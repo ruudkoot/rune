@@ -479,7 +479,42 @@ struct
             [M.Val (46, ([], Ty.arrow (Ty.int, Ty.int)),
                     M.Fun ([{name = 58, label = NONE, tyvars = [], params = [(59, Ty.int)], result = Ty.int,
                              body = M.Return (M.Atom (M.Global (47, [])))}], M.Return (M.Atom (M.Var (58, []))))),
-             valR (47, Ty.int, M.Atom one)], "")
+             valR (47, Ty.int, M.Atom one)], "");
+      suspensions ()
+    end
+
+  (* the rules of suspensions (docs/ir.md, Suspensions; the haskell98
+     roadmap's D4, D57): a suspension of int, its code a function of unit
+     that says thunk_blackhole and thunk_self_update *)
+  and suspensions () =
+    let
+      val susp = Ty.con (#stamp Types.suspTycon, "susp", [Ty.int])
+      val unitToInt = Ty.arrow (Ty.unit, Ty.int)
+      fun code f : M.fundef =
+        {name = f, label = NONE, tyvars = [], params = [(f + 1, Ty.unit)], result = Ty.int,
+         body = M.Let (f + 2, ([], Ty.unit), M.Prim ("thunk_blackhole", Ty.arrow (Ty.unit, Ty.unit), [M.Unit]),
+                       M.Let (f + 3, ([], Ty.unit), M.Prim ("thunk_self_update", Ty.arrow (Ty.int, Ty.unit), [one]),
+                              M.Return (M.Atom one)))}
+      fun make a = M.Prim ("thunk_make", Ty.arrow (unitToInt, susp), [a])
+      val made = M.Val (70, ([], susp), M.Fun ([code 60], M.Return (make (M.Var (60, [])))))
+    in
+      midP ("a suspension made of its code", [made], "");
+      midP ("a suspension's code named elsewhere too",
+            [M.Val (70, ([], susp), M.Fun ([code 60], M.Let (64, ([], Ty.int), M.App (M.Var (60, []), [M.Unit]),
+                                                           M.Return (make (M.Var (60, []))))))],
+            "is named elsewhere too");
+      midP ("a suspension's code called and not made", [M.Funs [code 60], valR (72, Ty.int, M.App (M.Global (60, []), [M.Unit]))],
+            "is named where no thunk_make makes it");
+      midP ("thunk_self_update outside a function",
+            [valR (71, Ty.unit, M.Prim ("thunk_self_update", Ty.arrow (Ty.int, Ty.unit), [one]))], "outside a function");
+      midP ("thunk_make of a closure a function is given",
+            [M.Funs [{name = 80, label = NONE, tyvars = [], params = [(81, unitToInt)], result = susp, body = M.Return (make (M.Var (81, [])))}]], "");
+      midP ("a cast into a suspension", [valR (76, susp, M.Prim ("unsafe_cast", Ty.arrow (Ty.int, susp), [one]))], "");
+      midP ("a cast of a suspension to what is none, a force forgotten",
+            [made, valR (75, Ty.int, M.Prim ("unsafe_cast", Ty.arrow (susp, Ty.int), [M.Global (70, [])]))], "a force forgotten");
+      midP ("a force of a suspension", [made, valR (77, Ty.int, M.Prim ("thunk_force", Ty.arrow (susp, Ty.int), [M.Global (70, [])]))], "");
+      midP ("a force of what is no suspension", [valR (77, Ty.int, M.Prim ("thunk_force", Ty.arrow (Ty.int, Ty.int), [one]))],
+            "which is no instance of its description")
     end
 
   (* ---- the forms of Ty another front end makes (haskell98 M28, D4): a

@@ -1,0 +1,5 @@
+(* after read *)
+(import elsewhere (forall (a) (-> a (List a))))
+(data List (a) (Nil) (Cons a (List a)))
+(val one (List Int) (elsewhere @Int 1))
+

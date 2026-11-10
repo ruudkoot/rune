@@ -35,10 +35,14 @@ library language/haskell lib/language/haskell
   export signature CORE_RUNTIME
   export signature CORE_TEXT
   export signature CORE_TO_MID
+  export signature CORE_UNITS
   export signature HS_AST
   export signature HS_CHAR
   export signature HS_CLASSES
   export signature HS_DERIVE
+  export signature HS_DESUGAR
+  export signature HS_DS_CORE
+  export signature HS_DS_ENV
   export signature HS_DUMP
   export signature HS_EVIDENCE
   export signature HS_FIXITY
@@ -48,6 +52,7 @@ library language/haskell lib/language/haskell
   export signature HS_LEXER
   export signature HS_LINT
   export signature HS_LITERATE
+  export signature HS_MATCH
   export signature HS_MODULES
   export signature HS_PARSER
   export signature HS_PRINT
@@ -66,10 +71,14 @@ library language/haskell lib/language/haskell
   export structure CoreRuntime
   export structure CoreText
   export structure CoreToMid
+  export structure CoreUnits
   export structure HsAst
   export structure HsChar
   export structure HsClasses
   export structure HsDerive
+  export structure HsDesugar
+  export structure HsDsCore
+  export structure HsDsEnv
   export structure HsDump
   export structure HsEvidence
   export structure HsFixity
@@ -79,6 +88,7 @@ library language/haskell lib/language/haskell
   export structure HsLexer
   export structure HsLint
   export structure HsLiterate
+  export structure HsMatch
   export structure HsModules
   export structure HsParser
   export structure HsPrint
@@ -155,10 +165,14 @@ library language/haskell lib/language/haskell
     unit language/haskell:coremap.sml lib/language/haskell/coremap.sml ascii demand
     unit language/haskell:coretext_sig.sml lib/language/haskell/coretext_sig.sml ascii demand
     unit language/haskell:coretext.sml lib/language/haskell/coretext.sml ascii demand
+    unit language/haskell:coreunits_sig.sml lib/language/haskell/coreunits_sig.sml ascii demand
+    unit language/haskell:coreunits.sml lib/language/haskell/coreunits.sml ascii demand
     unit language/haskell:corefiles.sml lib/language/haskell/corefiles.sml ascii demand
     unit language/haskell:coreprimfamily_sig.sml lib/language/haskell/coreprimfamily_sig.sml ascii demand
     unit language/haskell:coreprimfamily.sml lib/language/haskell/coreprimfamily.sml ascii demand
     unit language/haskell:coreprimio.sml lib/language/haskell/coreprimio.sml ascii demand
+    unit language/haskell:coreprimsys_sig.sml lib/language/haskell/coreprimsys_sig.sml ascii demand
+    unit language/haskell:coreprimsys.sml lib/language/haskell/coreprimsys.sml ascii demand
     unit language/haskell:coreprim_sig.sml lib/language/haskell/coreprim_sig.sml ascii demand
     unit language/haskell:coreprim.sml lib/language/haskell/coreprim.sml ascii demand
     unit language/haskell:coreruntime_sig.sml lib/language/haskell/coreruntime_sig.sml ascii demand
@@ -171,6 +185,16 @@ library language/haskell lib/language/haskell
     unit language/haskell:coregen.sml lib/language/haskell/coregen.sml ascii demand
     unit language/haskell:coretomid_sig.sml lib/language/haskell/coretomid_sig.sml ascii demand
     unit language/haskell:coretomid.sml lib/language/haskell/coretomid.sml ascii demand
+  end
+  use lib/language/haskell/desugar.build
+    unit language/haskell:desugar_core_sig.sml lib/language/haskell/desugar_core_sig.sml ascii demand
+    unit language/haskell:desugar_core.sml lib/language/haskell/desugar_core.sml ascii demand
+    unit language/haskell:desugar_env_sig.sml lib/language/haskell/desugar_env_sig.sml ascii demand
+    unit language/haskell:desugar_env.sml lib/language/haskell/desugar_env.sml ascii demand
+    unit language/haskell:match_sig.sml lib/language/haskell/match_sig.sml ascii demand
+    unit language/haskell:match.sml lib/language/haskell/match.sml ascii demand
+    unit language/haskell:desugar_sig.sml lib/language/haskell/desugar_sig.sml ascii demand
+    unit language/haskell:desugar.sml lib/language/haskell/desugar.sml ascii demand
   end
 end
 library json lib/json
@@ -245,21 +269,26 @@ program
   unit src/rhc/library.sml src/rhc/library.sml ascii
   unit src/rhc/graph.sml src/rhc/graph.sml ascii
   unit src/rhc/names.sml src/rhc/names.sml ascii
+  unit src/rhc/world.sml src/rhc/world.sml ascii
   unit src/rhc/lint.sml src/rhc/lint.sml ascii
+  unit src/rhc/desugar.sml src/rhc/desugar.sml ascii
   unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
+  unit src/rhc/store.sml src/rhc/store.sml ascii
+  unit src/rhc/storeconfig.sml src/rhc/storeconfig.sml ascii
   unit src/rhc/main.sml src/rhc/main.sml ascii
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build 101eea4bed6b77774c05ab41bc88314cdcd28c2db92a0741e4b8f6d75f7e02fe
+  input rhc.build 5aaf67ce9f69c57bb885a92f07ee325c4216fba4441fcc26dc0f551d935d6a10
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
-  input lib/language/haskell/library.build 444d0ee7a2532782aec0304e8f75fa055870dd2537c35e1678f02ce4ec8aae1d
+  input lib/language/haskell/library.build 9fdd6aea19e1eaa2dd4197b7e14f10084e4a2dbf597bd5acb6bf200dcdcabd08
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
   input lib/language/haskell/types.build 070f2c855a3a6ca976bd77085d92acb876f16d060e28bc1805aecee9ef19a736
   input lib/language/haskell/hslint.build 69a5ac241d7d13b48b05de9f9d8c330ba9f2f9945cadd93c70d658bb442ce4a4
-  input lib/language/haskell/core.build 6bac6a6c0d1ff9c9a07a0f65b8e94bf5a9a89df721ec7743909b28d9ca9c46ef
+  input lib/language/haskell/core.build af9419b8663fcd975e48babc55f1620ab8ba15d2766b50c395429795d7d03eaf
+  input lib/language/haskell/desugar.build 2f2d4325b72d7b38c53d61974f92d02243122fcd36b98f4a6923b2353266481a
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

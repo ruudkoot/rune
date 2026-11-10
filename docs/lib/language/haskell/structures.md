@@ -23,10 +23,14 @@ the signature names and no others.
 | [`CoreRuntime`](str/CoreRuntime.md) | :> | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) |  |  | [lib/language/haskell/coreruntime.sml](../../../../lib/language/haskell/coreruntime.sml) |
 | [`CoreText`](str/CoreText.md) | : | [`CORE_TEXT`](sig/CORE_TEXT.md) |  |  | [lib/language/haskell/coretext.sml](../../../../lib/language/haskell/coretext.sml) |
 | [`CoreToMid`](str/CoreToMid.md) | : | [`CORE_TO_MID`](sig/CORE_TO_MID.md) |  |  | [lib/language/haskell/coretomid.sml](../../../../lib/language/haskell/coretomid.sml) |
+| [`CoreUnits`](str/CoreUnits.md) | :> | [`CORE_UNITS`](sig/CORE_UNITS.md) |  |  | [lib/language/haskell/coreunits.sml](../../../../lib/language/haskell/coreunits.sml) |
 | [`HsAst`](str/HsAst.md) | :> | [`HS_AST`](sig/HS_AST.md) |  |  | [lib/language/haskell/ast.sml](../../../../lib/language/haskell/ast.sml) |
 | [`HsChar`](str/HsChar.md) | :> | [`HS_CHAR`](sig/HS_CHAR.md) |  |  | [lib/language/haskell/char.sml](../../../../lib/language/haskell/char.sml) |
 | [`HsClasses`](str/HsClasses.md) | :> | [`HS_CLASSES`](sig/HS_CLASSES.md) |  |  | [lib/language/haskell/classes.sml](../../../../lib/language/haskell/classes.sml) |
 | [`HsDerive`](str/HsDerive.md) | :> | [`HS_DERIVE`](sig/HS_DERIVE.md) |  |  | [lib/language/haskell/derive.sml](../../../../lib/language/haskell/derive.sml) |
+| [`HsDesugar`](str/HsDesugar.md) | :> | [`HS_DESUGAR`](sig/HS_DESUGAR.md) |  |  | [lib/language/haskell/desugar.sml](../../../../lib/language/haskell/desugar.sml) |
+| [`HsDsCore`](str/HsDsCore.md) | :> | [`HS_DS_CORE`](sig/HS_DS_CORE.md) |  |  | [lib/language/haskell/desugar\_core.sml](../../../../lib/language/haskell/desugar_core.sml) |
+| [`HsDsEnv`](str/HsDsEnv.md) | :> | [`HS_DS_ENV`](sig/HS_DS_ENV.md) |  |  | [lib/language/haskell/desugar\_env.sml](../../../../lib/language/haskell/desugar_env.sml) |
 | [`HsDump`](str/HsDump.md) | :> | [`HS_DUMP`](sig/HS_DUMP.md) |  |  | [lib/language/haskell/dump.sml](../../../../lib/language/haskell/dump.sml) |
 | [`HsEvidence`](str/HsEvidence.md) | :> | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) |  |  | [lib/language/haskell/evidence.sml](../../../../lib/language/haskell/evidence.sml) |
 | [`HsFixity`](str/HsFixity.md) | :> | [`HS_FIXITY`](sig/HS_FIXITY.md) |  |  | [lib/language/haskell/fixity.sml](../../../../lib/language/haskell/fixity.sml) |
@@ -36,6 +40,7 @@ the signature names and no others.
 | [`HsLexer`](str/HsLexer.md) | :> | [`HS_LEXER`](sig/HS_LEXER.md) |  |  | [lib/language/haskell/lexer.sml](../../../../lib/language/haskell/lexer.sml) |
 | [`HsLint`](str/HsLint.md) | :> | [`HS_LINT`](sig/HS_LINT.md) |  |  | [lib/language/haskell/hslint.sml](../../../../lib/language/haskell/hslint.sml) |
 | [`HsLiterate`](str/HsLiterate.md) | :> | [`HS_LITERATE`](sig/HS_LITERATE.md) |  |  | [lib/language/haskell/literate.sml](../../../../lib/language/haskell/literate.sml) |
+| [`HsMatch`](str/HsMatch.md) | :> | [`HS_MATCH`](sig/HS_MATCH.md) |  |  | [lib/language/haskell/match.sml](../../../../lib/language/haskell/match.sml) |
 | [`HsModules`](str/HsModules.md) | :> | [`HS_MODULES`](sig/HS_MODULES.md) |  |  | [lib/language/haskell/modules.sml](../../../../lib/language/haskell/modules.sml) |
 | [`HsParser`](str/HsParser.md) | :> | [`HS_PARSER`](sig/HS_PARSER.md) |  |  | [lib/language/haskell/parser.sml](../../../../lib/language/haskell/parser.sml) |
 | [`HsPrint`](str/HsPrint.md) | :> | [`HS_PRINT`](sig/HS_PRINT.md) |  |  | [lib/language/haskell/print.sml](../../../../lib/language/haskell/print.sml) |

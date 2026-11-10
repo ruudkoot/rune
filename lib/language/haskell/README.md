@@ -17,7 +17,10 @@ parser. `CoreLint` checks a program, `CoreInterp` runs it, `CorePrim` is
 what it can do that is not Core, and `CoreGen` makes programs to test them
 with. `CoreToMid` lowers a program to Mid's text, a lazy position a
 suspension and an evaluated one its value, which rhc gives to the passes of
-`lib/compiler` from Mid on.
+`lib/compiler` from Mid on. A program may be in units (M21): a unit takes a
+value of another by an import, `(import x TYPE)`, and a type by a copy of
+its declaration, and `CoreUnits` joins units into one program, which the
+interpreter runs.
 
 `CoreRuntime` is rhc's runtime, written in Core over `CorePrim` (M17, D26's
 A: no SML below Haskell), so that the interpreter and the VM run one text:
@@ -32,7 +35,10 @@ rounded to binary32 after each operation (D23). rhc links into a program
 what it reaches of the runtime. A family of primitives (`CorePrimFamily`) is
 a file of its own, each primitive with what the interpreter does and the Mid
 function it is lowered to: `CorePrimIo` gives the IO library's positions of
-files and errors of the system's, over `CoreFiles`, the interpreter's files.
+files and errors of the system's, over `CoreFiles`, the interpreter's files;
+`CorePrimSys` the operating system's file system, process, environment,
+clock, time zone and randomness, which Directory, System, Time, CPUTime and
+Random read (the roadmap's M18), each over a primitive of Mid's.
 
 The syntax (`syntax.build`, the roadmap's M11) reads a file of Haskell 98 to
 a tree that keeps all of it. `HsLiterate` gives a literate file's program
@@ -45,5 +51,14 @@ every node and every node's own tokens; `HsPrint` prints a tree with every
 block in braces, by layout, or exactly as its file was (D28), and `HsDump`
 as text. `HsSource` holds spans and the front end's errors, `HsChar` the
 Report's classes of characters.
+
+Desugaring (`desugar.build`, the roadmap's M15) makes a checked program
+the Core it means: `HsDesugar` applies the Report's translations of
+chapters 3 and 4 literally (D34's A), each class a data type of
+dictionaries and each overloaded use its type and dictionary arguments as
+the checker's evidence records give them (D31). `HsMatch` matches patterns
+in the Report's order, or as decision trees in Sestoft's order for D34's
+measurement; `HsDsEnv` is what desugaring knows of the program, its names,
+types and records in Core, and `HsDsCore` builds Core with its types.
 
 The roadmap is `docs/plans/language/haskell98.md`.

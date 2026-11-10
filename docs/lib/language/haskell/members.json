@@ -63,7 +63,7 @@
     {
      "kind": "datatype",
      "name": "decl",
-     "spec": "datatype decl =\n    Data of string * (string * kind) list * (string * ty list) list\n  | Newtype of string * (string * kind) list * string * ty\n  | Val of string * ty * exp",
+     "spec": "datatype decl =\n    Data of string * (string * kind) list * (string * ty list) list\n  | Newtype of string * (string * kind) list * string * ty\n  | Val of string * ty * exp\n  | Import of string * ty",
      "doc": "A declaration of a program. Every value of the top level is in the\nscope of all of them.\n\n",
      "page": "sig/CORE.md#type-decl"
     },
@@ -249,7 +249,7 @@
      "kind": "val",
      "name": "families",
      "spec": "val families : CorePrimFamily.family list",
-     "doc": "`families` is the families of primitives (CORE\\_PRIM\\_FAMILY), each of a\nfile of its own.\n\n`prims` lists their primitives after its own: the IO library's\nhandles and the system's errors (CorePrimIo).\n\n",
+     "doc": "`families` is the families of primitives (CORE\\_PRIM\\_FAMILY), each of a\nfile of its own.\n\n`prims` lists their primitives after its own: the IO library's\nhandles and the system's errors (CorePrimIo), and the operating\nsystem's file system, process, clock and randomness, which Directory,\nSystem, Time, CPUTime and Random read (CorePrimSys).\n\n",
      "page": "sig/CORE_PRIM.md#val-families"
     },
     {
@@ -411,13 +411,6 @@
    "members": [
     {
      "kind": "datatype",
-     "name": "form",
-     "spec": "datatype form = FormC | Runtime",
-     "doc": "How suspensions are made and forced: by form C's primitives, or by\nfunctions of E1's runtime in today's Mid.\n\n`FormC` is the roadmap's M9: `thunk_make`, `thunk_force`,\n`thunk_blackhole` and `thunk_self_update`, force one primitive node.\n`Runtime` is for a tree that has not got them.\n\n",
-     "page": "sig/CORE_TO_MID.md#type-form"
-    },
-    {
-     "kind": "datatype",
      "name": "fault",
      "spec": "datatype fault = ThunkInSlot | ForceBehindCast",
      "doc": "A fault made on purpose, for the tests of what catches it.\n\nThey are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a\nsuspension used where its value is wanted, unforced; `ForceBehindCast`,\na force made a cast from the suspension to its value.\n\n",
@@ -427,15 +420,42 @@
      "kind": "exception",
      "name": "Unsupported",
      "spec": "exception Unsupported of string",
-     "doc": "A construct Core has and the Mid of this tree cannot say yet: what it\nwaits on, and where.\n\n",
+     "doc": "A construct Core has and Core to Mid does not lower: what it is, and\nwhere.\n\n",
      "page": "sig/CORE_TO_MID.md#exn-unsupported"
     },
     {
      "kind": "val",
      "name": "program",
-     "spec": "val program : {form : form, fault : fault option} * Core.program -> string",
-     "doc": "`program ({form, fault}, p)` is the text of Mid of the Core program\n`p`, which CoreLint passed, with the fault made where it is `SOME`.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, an IOError's text as the\nlibrary's Show IOError gives it, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
+     "spec": "val program : {fault : fault option} * Core.program -> string",
+     "doc": "`program ({fault}, p)` is the text of Mid of the Core program `p`,\nwhich CoreLint passed, with the fault made where it is `SOME`.\n\nA suspension is form C's (the roadmap's M9): made by `thunk_make`,\nforced by one `thunk_force` node, its code saying `thunk_blackhole`\nfirst and `thunk_self_update` last.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, an IOError's text as the\nlibrary's Show IOError gives it, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
      "page": "sig/CORE_TO_MID.md#val-program"
+    }
+   ]
+  },
+  "CORE_UNITS": {
+   "doc": "Core in units (the haskell98 roadmap's M21): a program of several units,\neach a Core program that names what it takes of the others, a value by\nan import (`(import x TYPE)`) and a type by a copy of its declaration,\njoined into one program, which Core's interpreter runs and a compile\nwhole takes.\n\n",
+   "page": "sig/CORE_UNITS.md",
+   "members": [
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of string",
+     "doc": "what makes units that do not join: a type two units declare apart, or\nan import at another type than its definition's\n\n",
+     "page": "sig/CORE_UNITS.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "join",
+     "spec": "val join : Core.program list -> Core.program",
+     "doc": "`join units` is the program of the units, in order, each type\ndeclared once and each import given its definition.\n\nA data type or newtype is kept where it is first declared, every unit\nthat declares it declaring the same; an import is dropped where a unit\ndefines its value, at the type the import gives it, and kept where\nnone does.\n\n",
+     "page": "sig/CORE_UNITS.md#val-join"
+    },
+    {
+     "kind": "val",
+     "name": "unresolved",
+     "spec": "val unresolved : Core.program -> string list",
+     "doc": "`unresolved p` is the imports of p that no declaration of p defines,\nin order\n\n",
+     "page": "sig/CORE_UNITS.md#val-unresolved"
     }
    ]
   },
@@ -911,6 +931,647 @@
     }
    ]
   },
+  "HS_DESUGAR": {
+   "doc": "Desugaring to Core (the haskell98 roadmap's M15, D34): a checked\nprogram made the Core program it means.\n\nThe program's renamed and resolved trees and the checker's evidence\nrecords (D31) are translated by chapter 3's translations and 4.4.3's,\ntaken literally (`-O0`, D34's A), with dictionaries for classes.\n\n- Expressions: a literal is `fromInteger` or `fromRational` of its value\n  (3.2), but where the checker chose the Prelude's `Int`, `Integer`,\n  `Float` or `Double`, whose value it is; `e1 op e2` is `(op) e1 e2`\n  and `-e` the Prelude's `negate` (3.4); a section is a lambda, its\n  operand bound once outside it (3.5, R11's sharing); `if` a `case` on\n  `True` and `False` (3.6); a list the constructors it abbreviates\n  (3.7); an arithmetic sequence the method of `Enum` (3.10); a list\n  comprehension `concatMap` over a local `ok` (3.11); `let` a `let` or\n  a `letrec` by dependency, a pattern binding each of its variables a\n  lazy match of its own (3.12, rule (d)); `do` `>>=`, `>>` and `fail`\n  (3.14); records by their constructors' fields (3.15); `e :: t` a\n  binding of its own scheme (3.16); a string literal unpacked lazily\n  by the runtime (D24).\n- Bindings: a function's clauses one lambda of as many parameters as\n  its patterns, matched in the Report's order (4.4.3.1, HsMatch); a\n  guarded binding falls to the next clause, or for a pattern binding to\n  an error (4.4.3.2); a binding the checker generalised a type lambda\n  over its variables and a lambda over its dictionaries, in the order\n  of its scheme, so that every use is the variable at its types and its\n  dictionaries, as the use's record gives them.\n- Classes and instances: a class the data type of its dictionaries,\n  with a selector for each method and each direct superclass, and a\n  value for each default method; an instance a function of its\n  context's dictionaries giving its dictionary, a method it does not\n  define its class's default, or an error where there is none (4.3.2).\n- A strict constructor used as a value forces its strict arguments,\n  the last first (4.2.1, defect 17); a newtype's constructor is a cast.\n- `main` is the program's main as Core's `main` wants it.\n\nThe names a translation uses are the Prelude's entities, whatever a\nprogram defines (3, E9): `translationNames` lists them, with Ratio's\n`:%`, for a cache's key (H9).\n\n",
+   "page": "sig/HS_DESUGAR.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "module_",
+     "spec": "type module_ = {id : string, ast : HsAst.module, library : bool}",
+     "doc": "A module of the program: its identity, its renamed tree with fixity\nresolved, and whether it is the library's.\n\n",
+     "page": "sig/HS_DESUGAR.md#type-module_"
+    },
+    {
+     "kind": "val",
+     "name": "program",
+     "spec": "val program : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,\n               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option, entity : string * string * string -> string,\n               runtime : Core.program, leaves : (string * string list) list, main : string}\n              -> Core.program",
+     "doc": "`program {modules, infer, evidence, derived, prelude, entity, runtime, leaves, main}` is the Core program of the checked `modules`.\n\nThe modules are every module of the program and of the library it\nreaches, whose checking left the environment `infer`, the records\n`evidence` and the methods of the derived instances, `derived`, each\nwith its module and its instance's identity (HsDerive, M14), which are\ndesugared as a written instance's.\n\n`prelude` and `entity` find what the translations name (HsDsEnv);\n`runtime` is rhc's runtime in Core, whose types it is written against\nand which it does not repeat; `leaves` are the modules of primitives\nthat no file holds, each with what it exports, the runtime's values of\nthose names; `main` is the key of the program's `main`. The result\nholds what `main` reaches, and the data types of the program.\n\n**Raises** `Fail` for what the checker should have refused, or a form\nthis desugaring does not take, with a message.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-program"
+    },
+    {
+     "kind": "val",
+     "name": "translationNames",
+     "spec": "val translationNames : (string * string * string) list",
+     "doc": "`translationNames` is each entity the translations name, by its\nspace, its module and its name.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-translationnames"
+    },
+    {
+     "kind": "val",
+     "name": "missingPrimitives",
+     "spec": "val missingPrimitives : unit -> string list",
+     "doc": "`missingPrimitives ()` is each primitive of the library that the last\n`program` found neither in Core nor in the runtime, or of another type.\n\nEach is an error where it is used.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-missingprimitives"
+    }
+   ]
+  },
+  "HS_DS_CORE": {
+   "doc": "Core as desugaring builds it (the haskell98 roadmap's M15): each\nexpression with its type.\n\nAn expression is made with its type, worked out from its parts as\nCoreLint works it out, so that an argument that is not an atom can be\nbound by a `let` of its type; and the declarations of the program being\nbuilt are kept, by which a constructor's fields and a newtype's\nunfolding are known.\n\nA name made here starts with `%`, which no name of Haskell's holds,\nneither a top-level entity's nor a local's (`x#3`).\n\n",
+   "page": "sig/HS_DS_CORE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "texp",
+     "spec": "type texp = Core.exp * Core.ty",
+     "doc": "An expression and its type.\n\n",
+     "page": "sig/HS_DS_CORE.md#type-texp"
+    },
+    {
+     "kind": "datatype",
+     "name": "shape",
+     "spec": "datatype shape =\n    DataS of (string * Core.ty list) list\n  | NewS of string * Core.ty\n  | PrimS",
+     "doc": "What a type constructor of the program is.\n\n",
+     "page": "sig/HS_DS_CORE.md#type-shape"
+    },
+    {
+     "kind": "val",
+     "name": "reset",
+     "spec": "val reset : unit -> unit",
+     "doc": "`reset ()` forgets every declaration and starts the names again.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-reset"
+    },
+    {
+     "kind": "val",
+     "name": "fresh",
+     "spec": "val fresh : string -> string",
+     "doc": "`fresh base` is a new name, `%base` and a number.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-fresh"
+    },
+    {
+     "kind": "val",
+     "name": "declare",
+     "spec": "val declare : Core.decl -> unit",
+     "doc": "`declare d` adds the data type, newtype or value `d` to what is known.\n\nA value is known by its type.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-declare"
+    },
+    {
+     "kind": "val",
+     "name": "tycon",
+     "spec": "val tycon : string -> ((string * Core.kind) list * shape) option",
+     "doc": "`tycon c` is the parameters and the shape of the type constructor `c`,\nCore's built-in ones among them.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-tycon"
+    },
+    {
+     "kind": "val",
+     "name": "conInfo",
+     "spec": "val conInfo : string -> {tycon : string, params : (string * Core.kind) list, fields : Core.ty list} option",
+     "doc": "`conInfo k` is the type constructor of the constructor `k`, its\nparameters and its fields' types over them.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-coninfo"
+    },
+    {
+     "kind": "val",
+     "name": "fieldsAt",
+     "spec": "val fieldsAt : string * Core.ty list -> Core.ty list",
+     "doc": "`fieldsAt (k, args)` is the types of the fields of the constructor `k`\nof a type applied to `args`.\n\n**Raises** `Fail` where `k` is not declared.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-fieldsat"
+    },
+    {
+     "kind": "val",
+     "name": "valueType",
+     "spec": "val valueType : string -> Core.ty option",
+     "doc": "`valueType x` is the type of the value `x` of the top level, or of\nrhc's runtime.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-valuetype"
+    },
+    {
+     "kind": "val",
+     "name": "unfold",
+     "spec": "val unfold : Core.ty -> Core.ty option",
+     "doc": "`unfold t` is `t` unfolded once, where a newtype is at its head.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-unfold"
+    },
+    {
+     "kind": "val",
+     "name": "dataArgs",
+     "spec": "val dataArgs : Core.ty -> (string * Core.ty list) option",
+     "doc": "`dataArgs t` is the type constructor at the head of `t`, a data type's\nor a newtype's, and its arguments.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-dataargs"
+    },
+    {
+     "kind": "val",
+     "name": "kindOf",
+     "spec": "val kindOf : (string * Core.kind) list * Core.ty -> Core.kind",
+     "doc": "`kindOf (vars, t)` is the kind of the type `t`, whose variables have\nthe kinds `vars` or are of `*`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-kindof"
+    },
+    {
+     "kind": "val",
+     "name": "inferKinds",
+     "spec": "val inferKinds : string list * (string -> Core.kind option) * Core.ty list -> (string * Core.kind) list",
+     "doc": "`inferKinds (vars, known, tys)` is the kind of each of `vars`, which\nthe types `tys` of kind `*` hold.\n\nEach is worked out from where it stands, and is `*` where nothing\nsays; `known` gives the kinds of the other variables.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-inferkinds"
+    },
+    {
+     "kind": "val",
+     "name": "instantiate",
+     "spec": "val instantiate : Core.ty * Core.ty list -> Core.ty",
+     "doc": "`instantiate (t, tys)` is `t` without its first foralls, their\nvariables replaced by `tys`, in order.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-instantiate"
+    },
+    {
+     "kind": "val",
+     "name": "applyType",
+     "spec": "val applyType : Core.ty * Core.arg list -> Core.ty",
+     "doc": "`applyType (t, args)` is the type of a function of type `t` given\n`args`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-applytype"
+    },
+    {
+     "kind": "val",
+     "name": "params",
+     "spec": "val params : Core.ty * int -> Core.ty list * Core.ty",
+     "doc": "`params (t, n)` is the types of the first `n` parameters of a\nfunction of type `t`, and the type of what it gives then.\n\n**Raises** `Fail` where `t` takes fewer.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-params"
+    },
+    {
+     "kind": "val",
+     "name": "lazyTy",
+     "spec": "val lazyTy : Core.ty -> Core.ty",
+     "doc": "`lazyTy t` is `t` as a lazy binding holds it: without `!`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-lazyty"
+    },
+    {
+     "kind": "val",
+     "name": "atom",
+     "spec": "val atom : texp * (Core.atom * Core.ty -> texp) -> texp",
+     "doc": "`atom (x, k)` gives `k` the atom of `x`: itself where it is one,\notherwise a variable bound to it by a lazy `let`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-atom"
+    },
+    {
+     "kind": "val",
+     "name": "atoms",
+     "spec": "val atoms : texp list * ((Core.atom * Core.ty) list -> texp) -> texp",
+     "doc": "`atoms (xs, k)` is `atom` over each of `xs`, left to right.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-atoms"
+    },
+    {
+     "kind": "val",
+     "name": "var",
+     "spec": "val var : string * Core.ty -> texp",
+     "doc": "`var (x, t)` is the variable `x` of type `t`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-var"
+    },
+    {
+     "kind": "val",
+     "name": "app",
+     "spec": "val app : texp * Core.arg list -> texp",
+     "doc": "`app (f, args)` is `f` applied to `args`; `f` itself where there are\nnone.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-app"
+    },
+    {
+     "kind": "val",
+     "name": "appAtoms",
+     "spec": "val appAtoms : texp * texp list -> texp",
+     "doc": "`appAtoms (f, xs)` is `f` applied to the atoms of `xs`, each bound by\n`atom`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-appatoms"
+    },
+    {
+     "kind": "val",
+     "name": "lam",
+     "spec": "val lam : Core.binder list * texp -> texp",
+     "doc": "`lam (binders, body)` is a lambda of `binders`; `body` itself where\nthere are none.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-lam"
+    },
+    {
+     "kind": "val",
+     "name": "let_",
+     "spec": "val let_ : string * Core.ty * texp * texp -> texp",
+     "doc": "`let_ (x, t, rhs, body)` is `let x : t = rhs in body`, `t` lazy.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-let_"
+    },
+    {
+     "kind": "val",
+     "name": "letrec",
+     "spec": "val letrec : (string * Core.ty * texp) list * texp -> texp",
+     "doc": "`letrec (bs, body)` binds `bs`, each with its lazy type, in each\nother and in `body`; `body` itself where there are none.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-letrec"
+    },
+    {
+     "kind": "val",
+     "name": "force",
+     "spec": "val force : texp * (string * Core.ty -> texp) -> texp",
+     "doc": "`force (x, k)` evaluates `x` by a `case` and gives `k` the evaluated\nvariable and its type.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-force"
+    },
+    {
+     "kind": "val",
+     "name": "caseCon",
+     "spec": "val caseCon : Core.atom * Core.ty * (string * ((string * Core.ty) list -> texp)) list * texp option -> texp",
+     "doc": "`caseCon (x, ty, alts, default)` is a `case` on the atom `x` of the\ndata type `ty`.\n\nIt has an alternative for each constructor of `alts`, made of its\nfields' names and types, and `default` for the others, left out where\n`alts` covers them all.\n\n**Raises** `Fail` where `ty` is not a data type.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-casecon"
+    },
+    {
+     "kind": "val",
+     "name": "ifBool",
+     "spec": "val ifBool : texp * texp * texp -> texp",
+     "doc": "`ifBool (c, t, e)` is `case c of True -> t; False -> e`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-ifbool"
+    },
+    {
+     "kind": "val",
+     "name": "con",
+     "spec": "val con : string * Core.ty list * texp list -> texp",
+     "doc": "`con (k, tys, xs)` is the constructor `k` at the types `tys` applied\nto the atoms of `xs`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-con"
+    },
+    {
+     "kind": "val",
+     "name": "cast",
+     "spec": "val cast : texp * Core.ty -> texp",
+     "doc": "`cast (x, t)` is `x` cast to the type `t`, into or out of a newtype.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-cast"
+    },
+    {
+     "kind": "val",
+     "name": "fail",
+     "spec": "val fail : string * string * Core.ty -> texp",
+     "doc": "`fail (kind, message, t)` is an expression of type `t` that raises\nthe exception the primitive `kind` makes of `message`.\n\n`kind` is `exn_pattern` for a match that fails, `exn_error` for\n`error`'s. It calls one of `raisers`, at `t`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-fail"
+    },
+    {
+     "kind": "val",
+     "name": "mentions",
+     "spec": "val mentions : string * Core.exp -> bool",
+     "doc": "`mentions (x, e)` is whether the variable `x` occurs in `e`, which\nbinds no other `x`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-mentions"
+    },
+    {
+     "kind": "val",
+     "name": "names",
+     "spec": "val names : Core.exp -> string list",
+     "doc": "`names e` is every variable `e` holds, bound in it or not, and every\nconstructor, each once.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-names"
+    },
+    {
+     "kind": "val",
+     "name": "raisers",
+     "spec": "val raisers : Core.decl list",
+     "doc": "`raisers` is the values `fail` calls, a declaration each, which a\nprogram that uses `fail` holds.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-raisers"
+    },
+    {
+     "kind": "val",
+     "name": "unitTy",
+     "spec": "val unitTy : Core.ty",
+     "doc": "`unitTy` is the type of Haskell's `()`, rhc's runtime's.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-unitty"
+    },
+    {
+     "kind": "val",
+     "name": "unitVal",
+     "spec": "val unitVal : unit -> texp",
+     "doc": "`unitVal ()` is the value `()`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-unitval"
+    }
+   ]
+  },
+  "HS_DS_ENV": {
+   "doc": "What desugaring knows of a checked program (the haskell98 roadmap's\nM15): its names, types, records and dictionaries in Core.\n\nIt holds the names the program's entities have in Core, its types made\nCore's, the checker's evidence records (D31) by node, its dictionaries,\nand the primitives of rhc's library made functions of Haskell's types.\n\nAn entity of the top level is named in Core by its module's identity, a\ndot and its name, haskell98:Prelude.map or Main.f; a local keeps the\nrenamer's unique name, x\\#3. What desugaring makes has a name starting\nwith %: a class's dictionary constructor, %dict:C, an instance's\ndictionary function, %inst:C@T, a superclass's selector, %super:C\\>S, a\nclass's default method, %dm:m.\n\nTypes: a type constructor of the program is named as its entity; the\nPrelude's `Bool` is Core's `Bool`, and a type that a module of the\nlibrary declares with no constructor is Core's own (`Int`, `Integer`,\n`Char`, `Float`, `Double`, `Str`, `Ref`), PreludeIO's `IOError` Core's\n`Exn`, and `IO` the newtype `IO` over `World -> (utuple World a)` (D25),\na type constructor of its own so that `Monad IO` has a dictionary. A\nclass is the data type of its dictionaries, of the same name: its\ndirect superclasses' dictionaries, then its methods, each of the type\nof its own scheme.\n\n",
+   "page": "sig/HS_DS_ENV.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "program",
+     "spec": "type program = {infer : HsInfer.env, evidence : HsEvidence.table, prelude : string * string -> string option,\n                library : string -> bool, entity : string * string * string -> string}",
+     "doc": "What a desugaring is given: the checker's environment and records, and\nhow to find the entities the translations name.\n\nThey are the checker's environment after the last unit, its evidence\nrecords, the key of what the Prelude exports by space (`\"v\"` or `\"t\"`)\nand name, whether a module's identity is the library's, and the key of\nan entity of a module of the library by its space, the module's name\nand its name: Ratio's `:%`, which a floating literal is made of, though\nthe Prelude does not export it (E9).\n\n",
+     "page": "sig/HS_DS_ENV.md#type-program"
+    },
+    {
+     "kind": "val",
+     "name": "start",
+     "spec": "val start : program -> unit",
+     "doc": "`start p` makes `p` the program desugared, forgetting the last.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-start"
+    },
+    {
+     "kind": "val",
+     "name": "classes",
+     "spec": "val classes : unit -> HsClasses.env",
+     "doc": "`classes ()` is the program's classes and instances.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-classes"
+    },
+    {
+     "kind": "val",
+     "name": "valueScheme",
+     "spec": "val valueScheme : string -> HsTypes.scheme option",
+     "doc": "`valueScheme key` is the type the checker gave the value `key`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-valuescheme"
+    },
+    {
+     "kind": "val",
+     "name": "prelude",
+     "spec": "val prelude : string * string -> string",
+     "doc": "`prelude (space, name)` is the key of what the Prelude exports.\n\n**Raises** `Fail` where it exports no such name, a fault of the\nlibrary.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-prelude"
+    },
+    {
+     "kind": "val",
+     "name": "isLibrary",
+     "spec": "val isLibrary : string -> bool",
+     "doc": "`isLibrary id` is whether the module of identity `id` is the\nlibrary's.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-islibrary"
+    },
+    {
+     "kind": "val",
+     "name": "libraryEntity",
+     "spec": "val libraryEntity : string * string * string -> string",
+     "doc": "`libraryEntity (space, module, name)` is the key of an entity of a\nmodule of the library.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-libraryentity"
+    },
+    {
+     "kind": "val",
+     "name": "setFields",
+     "spec": "val setFields : string * string list -> unit",
+     "doc": "`setFields (con, fields)` records the fields of the constructor\n`con`, by their keys in order, `\"\"` for one without a name.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-setfields"
+    },
+    {
+     "kind": "val",
+     "name": "fieldsOf",
+     "spec": "val fieldsOf : string -> string list",
+     "doc": "`fieldsOf con` is the fields of the constructor `con`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-fieldsof"
+    },
+    {
+     "kind": "val",
+     "name": "coreName",
+     "spec": "val coreName : string -> string",
+     "doc": "`coreName key` is the Core name of the entity `key`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-corename"
+    },
+    {
+     "kind": "val",
+     "name": "valueKey",
+     "spec": "val valueKey : HsAst.name -> string",
+     "doc": "`valueKey n` is the key of the value the name `n` of the renamed tree\nstands for.\n\nIt is a top-level entity's key, a local's own name, or a built-in\nconstructor's (`()`, `[]`, `:`, `(,)`).\n\n",
+     "page": "sig/HS_DS_ENV.md#val-valuekey"
+    },
+    {
+     "kind": "val",
+     "name": "homeOf",
+     "spec": "val homeOf : string -> string",
+     "doc": "`homeOf key` and `nameOf key` are the parts of an entity's key.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-homeof"
+    },
+    {
+     "kind": "val",
+     "name": "nameOf",
+     "spec": "val nameOf : string -> string",
+     "doc": "`homeOf key` and `nameOf key` are the parts of an entity's key.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-nameof"
+    },
+    {
+     "kind": "val",
+     "name": "tyconName",
+     "spec": "val tyconName : string -> string",
+     "doc": "`tyconName key` is the type constructor of Core that the type\nconstructor `key` is.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-tyconname"
+    },
+    {
+     "kind": "val",
+     "name": "conName",
+     "spec": "val conName : string -> string",
+     "doc": "`conName key` is the constructor of Core that the data constructor\n`key` is.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-conname"
+    },
+    {
+     "kind": "val",
+     "name": "primType",
+     "spec": "val primType : string * string -> unit",
+     "doc": "`primType (key, core)` makes the type `key`, which a module of the\nlibrary declares with no constructor, Core's type `core`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-primtype"
+    },
+    {
+     "kind": "val",
+     "name": "isPrimType",
+     "spec": "val isPrimType : string -> bool",
+     "doc": "`isPrimType key` is whether the type `key` is Core's own.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-isprimtype"
+    },
+    {
+     "kind": "val",
+     "name": "builtinCon",
+     "spec": "val builtinCon : string * string -> unit",
+     "doc": "`builtinCon (key, core)` makes the constructor `key` Core's `core`,\nas the Prelude's `True` is Core's.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-builtincon"
+    },
+    {
+     "kind": "val",
+     "name": "dictCon",
+     "spec": "val dictCon : string -> string",
+     "doc": "`dictCon cls` is the constructor of the dictionaries of the class\n`cls`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-dictcon"
+    },
+    {
+     "kind": "val",
+     "name": "dfunName",
+     "spec": "val dfunName : string -> string",
+     "doc": "`dfunName id` is the dictionary function of the instance `id`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-dfunname"
+    },
+    {
+     "kind": "val",
+     "name": "superName",
+     "spec": "val superName : string * string -> string",
+     "doc": "`superName (cls, super)` is the selector of the superclass `super`\nfrom a dictionary of `cls`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-supername"
+    },
+    {
+     "kind": "val",
+     "name": "defaultName",
+     "spec": "val defaultName : string -> string",
+     "doc": "`defaultName method` is the default of the method `method`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-defaultname"
+    },
+    {
+     "kind": "type",
+     "name": "env",
+     "spec": "type env",
+     "doc": "What is in scope where an expression is desugared.\n\nIt holds the variables, each the atom of Core it is and its type,\ndictionary parameters among them, and the type variables with their\nkinds.\n\n",
+     "page": "sig/HS_DS_ENV.md#type-env"
+    },
+    {
+     "kind": "val",
+     "name": "empty",
+     "spec": "val empty : env",
+     "doc": "`empty` is the scope of the top level.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-empty"
+    },
+    {
+     "kind": "val",
+     "name": "bind",
+     "spec": "val bind : env * string * Core.atom * Core.ty -> env",
+     "doc": "`bind (env, x, atom, t)` is `env` with `x` the atom `atom` of type\n`t`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-bind"
+    },
+    {
+     "kind": "val",
+     "name": "lookup",
+     "spec": "val lookup : env * string -> (Core.atom * Core.ty) option",
+     "doc": "`lookup (env, x)` is the atom `x` is and its type.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-lookup"
+    },
+    {
+     "kind": "val",
+     "name": "bindTypes",
+     "spec": "val bindTypes : env * (string * Core.kind) list -> env",
+     "doc": "`bindTypes (env, vars)` is `env` with the type variables `vars`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-bindtypes"
+    },
+    {
+     "kind": "val",
+     "name": "typeVars",
+     "spec": "val typeVars : env -> (string * Core.kind) list",
+     "doc": "`typeVars env` is the type variables in scope.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-typevars"
+    },
+    {
+     "kind": "val",
+     "name": "ty",
+     "spec": "val ty : env -> HsTypes.ty -> Core.ty",
+     "doc": "`ty env t` is the Core type of `t`, a closed type of the records.\n\nA rigid variable not in scope stands for nothing a value can be of, a\nvariable of another binding of a group that this one's type does not\nhold, and is `()`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-ty"
+    },
+    {
+     "kind": "val",
+     "name": "tyGen",
+     "spec": "val tyGen : env * Core.ty list -> HsTypes.ty -> Core.ty",
+     "doc": "`tyGen (env, gens) t` is the Core type of `t`, whose `TGen i` is the\n`i`th of `gens`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-tygen"
+    },
+    {
+     "kind": "val",
+     "name": "predTy",
+     "spec": "val predTy : env -> HsTypes.pred -> Core.ty",
+     "doc": "`predTy env p` is the type of the dictionaries of the predicate `p`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-predty"
+    },
+    {
+     "kind": "val",
+     "name": "scheme",
+     "spec": "val scheme : env -> HsEvidence.scheme -> Core.ty * (string * Core.kind) list",
+     "doc": "`scheme env s` is the type of a value of the scheme `s` of the\nrecords, and its variables with their kinds.\n\nThe type is a forall over its variables, with their kinds, of a\nfunction of its context's dictionaries, in order, giving its type.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-scheme"
+    },
+    {
+     "kind": "val",
+     "name": "genScheme",
+     "spec": "val genScheme : HsTypes.scheme -> Core.ty",
+     "doc": "`genScheme s` is the type of a value of the checker's scheme `s`, its\nvariables named `g1`, `g2` and on.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-genscheme"
+    },
+    {
+     "kind": "val",
+     "name": "ioTy",
+     "spec": "val ioTy : Core.ty -> Core.ty",
+     "doc": "`ioTy t` is `IO t`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-ioty"
+    },
+    {
+     "kind": "val",
+     "name": "records",
+     "spec": "val records : string * HsSource.span -> HsEvidence.record list",
+     "doc": "`records (kind, span)` is the records at a node.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-records"
+    },
+    {
+     "kind": "val",
+     "name": "useOf",
+     "spec": "val useOf : HsSource.span -> {tys : HsTypes.ty list, dicts : HsEvidence.dict list}",
+     "doc": "`useOf span` is the types and dictionaries of the variable or\nconstructor used at `span`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-useof"
+    },
+    {
+     "kind": "val",
+     "name": "bindOf",
+     "spec": "val bindOf : HsSource.span -> HsEvidence.record option",
+     "doc": "`bindOf span` is the record of the binder at `span`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-bindof"
+    },
+    {
+     "kind": "val",
+     "name": "overloadedOf",
+     "spec": "val overloadedOf : string * HsSource.span -> HsTypes.ty * (string * HsEvidence.dict) list",
+     "doc": "`overloadedOf (kind, span)` is the type and the dictionaries by class\nof a construct the Report translates through a class.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-overloadedof"
+    },
+    {
+     "kind": "val",
+     "name": "dict",
+     "spec": "val dict : env -> HsEvidence.dict -> HsDsCore.texp",
+     "doc": "`dict env d` is the dictionary `d`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-dict"
+    },
+    {
+     "kind": "val",
+     "name": "instantiate",
+     "spec": "val instantiate : env -> HsDsCore.texp * HsTypes.ty list * HsEvidence.dict list -> HsDsCore.texp",
+     "doc": "`instantiate env (f, tys, dicts)` is `f` at the types `tys` and the\ndictionaries `dicts`, as a use's record gives them.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-instantiate"
+    },
+    {
+     "kind": "val",
+     "name": "global",
+     "spec": "val global : string -> HsDsCore.texp",
+     "doc": "`global key` is the value `key` of the top level, at its type, before\nany is given it.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-global"
+    },
+    {
+     "kind": "val",
+     "name": "method",
+     "spec": "val method : env -> string * Core.ty list * HsDsCore.texp list -> HsDsCore.texp",
+     "doc": "`method env (key, tys, dicts)` is the value `key`, a method of the\nPrelude's or a function, at the Core types `tys` and the dictionaries\n`dicts`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-method"
+    },
+    {
+     "kind": "val",
+     "name": "superDict",
+     "spec": "val superDict : env -> HsEvidence.dict * string * string -> HsEvidence.dict",
+     "doc": "`superDict env (d, cls, super)` is the dictionary of `super`, a\nsuperclass of `cls`, taken from `d`, a dictionary of `cls`.\n\nIt goes by the path of direct superclasses between them.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-superdict"
+    },
+    {
+     "kind": "val",
+     "name": "integerLit",
+     "spec": "val integerLit : env -> IntInf.int * HsTypes.ty * HsEvidence.dict -> HsDsCore.texp",
+     "doc": "`integerLit env (i, t, num)` is the integer literal `i` at the type\n`t`, of which `num` is the `Num` dictionary.\n\nIt is `fromInteger i` (3.2), but an `Int` in range or an `Integer`\nitself, where `num` is the Prelude's instance at that type.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-integerlit"
+    },
+    {
+     "kind": "val",
+     "name": "rationalLit",
+     "spec": "val rationalLit : env -> string * HsTypes.ty * HsEvidence.dict -> HsDsCore.texp",
+     "doc": "`rationalLit env (text, t, fractional)` is the floating literal\nwritten `text` at the type `t`.\n\nIt is `fromRational` of Ratio's `n :% d`, `n/d` its value in lowest\nterms (3.2), but a `Double` or a `Float` itself where `fractional` is\nthe Prelude's instance at that type.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-rationallit"
+    },
+    {
+     "kind": "val",
+     "name": "stringLit",
+     "spec": "val stringLit : int list -> HsDsCore.texp",
+     "doc": "`stringLit chars` is a string literal of the code points `chars`.\n\nIts bytes in UTF-8 are unpacked lazily by the runtime's\n`primUnpackString` (D24's A).\n\n",
+     "page": "sig/HS_DS_ENV.md#val-stringlit"
+    },
+    {
+     "kind": "val",
+     "name": "toHaskell",
+     "spec": "val toHaskell : HsDsCore.texp * Core.ty -> HsDsCore.texp",
+     "doc": "`toHaskell (x, want)` is `x`, a value of a type of Core's own making,\nas a value of `want`, the Core type of a Haskell type.\n\nA primitive's `!` parameters are forced, and an action\n`World -> (utuple World a)` is made `IO a`.\n\n**Raises** `Fail` where the two differ otherwise.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-tohaskell"
+    },
+    {
+     "kind": "val",
+     "name": "matchType",
+     "spec": "val matchType : Core.ty * string list * Core.ty -> Core.ty list option",
+     "doc": "`matchType (pattern, vars, t)` is the types that `vars`, variables of\n`pattern`, stand for where `pattern` is `t`.\n\nThe two are compared as `toHaskell` sees them; `NONE` where they\ndiffer.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-matchtype"
+    },
+    {
+     "kind": "val",
+     "name": "haskellForm",
+     "spec": "val haskellForm : Core.ty -> Core.ty",
+     "doc": "`haskellForm t` is the type of Core's own making `t` as Haskell sees\nit: no `!`, and `IO a` for `World -> (utuple World a)`.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-haskellform"
+    }
+   ]
+  },
   "HS_DUMP": {
    "doc": "The abstract syntax of Haskell 98 as text, for `rhc --dump-ast` and for\nthe tree round trip of a test that compares trees by their text.\n\nA node is a line: its constructor and what it holds that is not a node,\na name, a literal as written, an associativity; the nodes below it\nfollow, each on its line, two spaces further in. With spans, a node's\nline ends with its span, `@START-STOP` in bytes of its file; without\nthem, two trees print the same exactly where they are equal read with\nno annotations. A node's own tokens are not shown.\n\n",
    "page": "sig/HS_DUMP.md",
@@ -1086,6 +1747,13 @@
      "spec": "val check : {env : env, unit : module_ list, cycleDefault : cycleDefault,\n             prelude : string * string -> string option, fixity : string -> (HsAst.fixity * int) option,\n             evidence : HsEvidence.table}\n            -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}",
      "doc": "`check {env, unit, cycleDefault, prelude, fixity, evidence}` checks\nthe modules of `unit`, recording into `evidence`.\n\nIt gives the environment with the unit's types, constructors,\nclasses, instances and values, the errors, and the derived\ninstances' methods, made by HsDerive (M14), each with its module and\nits instance's identity. `fixity key` is the fixity of the operator\nof `key`, for a derived `Show` and `Read`. `prelude (space, name)` is\nthe key of the entity the Prelude exports under `name`, `\"t\"` for a\ntype or class and `\"v\"` for a value, for what the Report's\ntranslations name: `Bool`, `Char`, `Integer`, `Double`, `Num`,\n`Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`.\n\n",
      "page": "sig/HS_INFER.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "renumber",
+     "spec": "val renumber : int -> unit",
+     "doc": "`renumber n` makes the checker's next fresh variables, and HsTypes',\nnumber from `n`.\n\nA program's are then numbered alike however much of the library was\nchecked before it (rhc's saved world).\n\n**Raises** `Fail` where a variable has had `n` already.\n\n",
+     "page": "sig/HS_INFER.md#val-renumber"
     },
     {
      "kind": "val",
@@ -1438,6 +2106,68 @@
      "spec": "val unlit : string * string -> string",
      "doc": "`unlit (file, bytes)` is the program text of the literate file\n`file`, whose bytes are `bytes`.\n\nA line that begins with `>` is a program line, and so is every line\nbetween a line that begins with `\\begin{code}` and one that begins\nwith `\\end{code}`; every other line is commentary.\n\n**Raises** `HsSource.Error` for a program line next to a line of\ncommentary that is not blank, for a `\\begin{code}` that no\n`\\end{code}` closes, and for an `\\end{code}` that no `\\begin{code}`\nopened.\n\n",
      "page": "sig/HS_LITERATE.md#val-unlit"
+    }
+   ]
+  },
+  "HS_MATCH": {
+   "doc": "Pattern matching in the Report's order (the haskell98 roadmap's M15,\nD34), and decision trees in Sestoft's order as an option.\n\nThe rules of 3.17.3 are taken literally, at `-O0`; the trees are built\nfor D34's measurement.\n\nThe Report's order: the clauses one after another, and in each the\npatterns from left to right, each from the outside in (3.17.2). A\nclause that fails goes to the next, which a lazy `let` of the rest of\nthe match holds (rule (c)'s `y`), so no clause is copied (defect 14).\nA constructor's pattern forces its value and matches its fields left\nto right (rule (g)); a newtype's casts and forces nothing (rules (k),\n(l)); a numeric literal compares by `==` at its type with the\ndictionaries the checker chose (rule (h)), a character literal by a\ncase on its code point, a string literal as the list of its characters\n(defect 7); `~p` binds each variable of `p` to a match of its own that\nis made only when the variable is forced (rule (d)); `x@p` binds `x`\nto the value (rule (e)); `n+k` compares by `>=` and binds `n` to the\nvalue less `k` (rule (s)); a record pattern tests its constructor and\nmatches its fields in the pattern's order (rules (m) to (o)).\n\nSestoft's order (Sestoft 1996) matches the same patterns in the same\norder, but makes no test whose outcome the tests made already decide:\na decision tree whose right-hand sides are functions of their\nvariables, so that none is copied. Its only freedom is in tests on\nvalues already forced (D34). A clause with a pattern it does not take\napart (a literal, `~p`, `n+k`, a newtype's or a record's) is matched\nfrom there on in the Report's way.\n\n",
+   "page": "sig/HS_MATCH.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "order",
+     "spec": "datatype order = Report | Sestoft",
+     "doc": "How clauses are matched.\n\n",
+     "page": "sig/HS_MATCH.md#type-order"
+    },
+    {
+     "kind": "val",
+     "name": "order",
+     "spec": "val order : order ref",
+     "doc": "`order` is the order of every match: `Report`, `-O0`'s, unless rhc is\ntold otherwise.\n\n",
+     "page": "sig/HS_MATCH.md#val-order"
+    },
+    {
+     "kind": "type",
+     "name": "occurrence",
+     "spec": "type occurrence = Core.atom * Core.ty",
+     "doc": "What is matched: an atom of Core and its type.\n\n",
+     "page": "sig/HS_MATCH.md#type-occurrence"
+    },
+    {
+     "kind": "type",
+     "name": "clause",
+     "spec": "type clause = HsAst.pat list * (HsDsEnv.env * HsDsCore.texp -> HsDsCore.texp)",
+     "doc": "A clause: its patterns, and its right-hand side, made in the scope of\nthe patterns' variables and given what to do where its guards all\nfail.\n\n",
+     "page": "sig/HS_MATCH.md#type-clause"
+    },
+    {
+     "kind": "val",
+     "name": "clauses",
+     "spec": "val clauses : HsDsEnv.env * occurrence list * clause list * (Core.ty -> HsDsCore.texp) -> HsDsCore.texp",
+     "doc": "`clauses (env, occurrences, rows, failure)` matches the occurrences\nagainst each clause of `rows` in turn.\n\nEach pattern is matched against its occurrence; the match is the\nright-hand side of the first clause that matches, or `failure t` where\nnone does, `t` the type of the match.\n\n",
+     "page": "sig/HS_MATCH.md#val-clauses"
+    },
+    {
+     "kind": "val",
+     "name": "pattern",
+     "spec": "val pattern : HsDsEnv.env * occurrence * HsAst.pat * (HsDsEnv.env -> HsDsCore.texp) * HsDsCore.texp\n              -> HsDsCore.texp",
+     "doc": "`pattern (env, occurrence, p, success, failure)` matches one\noccurrence against `p` in the Report's way.\n\nIt is `success` in the scope of `p`'s variables where it matches, and\n`failure`, an atom, where it does not.\n\n",
+     "page": "sig/HS_MATCH.md#val-pattern"
+    },
+    {
+     "kind": "val",
+     "name": "variables",
+     "spec": "val variables : HsAst.pat -> HsAst.name list",
+     "doc": "`variables p` is the variables `p` binds, in order, by their names in\nthe renamed tree.\n\n",
+     "page": "sig/HS_MATCH.md#val-variables"
+    },
+    {
+     "kind": "val",
+     "name": "lazy",
+     "spec": "val lazy : HsAst.pat -> bool",
+     "doc": "`lazy p` is whether `p` never fails and forces nothing: a variable,\n`_`, `~p` and `x@p` of one of these.\n\n",
+     "page": "sig/HS_MATCH.md#val-lazy"
     }
    ]
   },
@@ -2083,6 +2813,13 @@
     },
     {
      "kind": "val",
+     "name": "renumber",
+     "spec": "val renumber : int -> unit",
+     "doc": "`renumber n` makes the next fresh unification and kind variables\nnumber from `n`.\n\nWhat follows is then numbered alike however much came before (rhc's\nsaved world).\n\n**Raises** `Fail` where a variable has had `n` already.\n\n",
+     "page": "sig/HS_TYPES.md#val-renumber"
+    },
+    {
+     "kind": "val",
      "name": "repr",
      "spec": "val repr : ty -> ty",
      "doc": "`repr t` follows `t`'s links to its head.\n\n",
@@ -2206,10 +2943,14 @@
   "CoreRuntime": "CORE_RUNTIME",
   "CoreText": "CORE_TEXT",
   "CoreToMid": "CORE_TO_MID",
+  "CoreUnits": "CORE_UNITS",
   "HsAst": "HS_AST",
   "HsChar": "HS_CHAR",
   "HsClasses": "HS_CLASSES",
   "HsDerive": "HS_DERIVE",
+  "HsDesugar": "HS_DESUGAR",
+  "HsDsCore": "HS_DS_CORE",
+  "HsDsEnv": "HS_DS_ENV",
   "HsDump": "HS_DUMP",
   "HsEvidence": "HS_EVIDENCE",
   "HsFixity": "HS_FIXITY",
@@ -2219,6 +2960,7 @@
   "HsLexer": "HS_LEXER",
   "HsLint": "HS_LINT",
   "HsLiterate": "HS_LITERATE",
+  "HsMatch": "HS_MATCH",
   "HsModules": "HS_MODULES",
   "HsParser": "HS_PARSER",
   "HsPrint": "HS_PRINT",

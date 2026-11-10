@@ -147,6 +147,13 @@ struct
             case peek () of
               ID s => if s = "*" then t else (advance (); loop (TyCon ([t], ([], s), spanFrom start, freshId ())))
             | LONGID (p, s) => (advance (); loop (TyCon ([t], (p, s), spanFrom start, freshId ())))
+            | PRIM =>
+                (* `t _prim "name"`: a type of the VM's of one argument, as
+                   `_prim "name"` below is one of none (a suspension, susp) *)
+                (advance ();
+                 case next () of
+                   STRING s => loop (TyCon ([t], ([], "_" ^ s), spanFrom start, freshId ()))
+                 | _ => err "expected string literal after _prim")
             | _ => t
         in
           loop (parseAtTy ())

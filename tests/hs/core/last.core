@@ -1,6 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core --read-core tests/hs/core/lib/size-1000.core
 ; residency: lib/size-1000.core lib/size-2000.core
-; vm: no: the release of what a suspension captured, at BLACKHOLE, is form C's (M9), which this tree has not; E1's runtime keeps xs
 ; E2's last, through rhc (D12): a suspension whose code is last xs, a loop
 ; over a list made as it is walked. Where the suspension or its frame keeps
 ; xs, every cell stays live; under form C its code reads what it captured

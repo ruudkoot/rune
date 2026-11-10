@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_TYPES`](../sig/HS_TYPES.md) |
 | Status | required |
-| Members | 41 |
+| Members | 42 |
 | Tests | not listed |
 | Source | [lib/language/haskell/types.sml](../../../../../lib/language/haskell/types.sml) |
 
@@ -48,6 +48,7 @@ What each means is on [`HS_TYPES`](../sig/HS_TYPES.md); the types are this struc
 | val | [`nameOfKey`](../sig/HS_TYPES.md#val-nameofkey) | `string -> string` |
 | val | [`newKind`](../sig/HS_TYPES.md#val-newkind) | `unit -> kind` |
 | val | [`newMeta`](../sig/HS_TYPES.md#val-newmeta) | `int * string -> ty` |
+| val | [`renumber`](../sig/HS_TYPES.md#val-renumber) | `int -> unit` |
 | val | [`repr`](../sig/HS_TYPES.md#val-repr) | `ty -> ty` |
 | val | [`setLevel`](../sig/HS_TYPES.md#val-setlevel) | `meta ref * int -> unit` |
 | val | [`show`](../sig/HS_TYPES.md#val-show) | `ty -> string` |

@@ -590,6 +590,14 @@ static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
     if (vm->gc.marking) gc_shade_old(vm, o, *f);
     if (vm->gc.nursery && val_is_ptr(v) && heap_is_young(vm, val_ptr(v)) && !heap_is_young(vm, o)) gc_write(o, f);
 }
+/* A suspension goes under evaluation (BLACKHOLE): what it captured is let
+   go as if each field were overwritten, which the snapshot of the
+   low-pause collector's cycle may reach by those fields alone. */
+static inline void vm_blackhole(VM *vm, Obj *o) {
+    if (vm->gc.marking)
+        for (uint32_t i = 1; i < obj_scanned_fields(o); i++) gc_shade_old(vm, o, obj_field(o, i));
+    obj_blackhole(o);
+}
 
 /* heap.c */
 void heap_init(VM *vm, size_t size);   /* a heap of that size (runtime/gc/) */
