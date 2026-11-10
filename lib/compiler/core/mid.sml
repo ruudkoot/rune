@@ -264,17 +264,44 @@ struct
     in go (e, z) end
 
   (* Each step of e given to f, in the order e names them, those of the
-     functions made in e among them, each at its place. *)
+     functions made in e among them, each at its place: as fold walks e,
+     with a body of its own, which makes no pair of a part and what the
+     parts before made, for the walkers that run on every copy Expand
+     makes (Expand.copyExpWith). *)
   fun appRhs (f : rhs -> unit) (e : exp) : unit =
-    fold {rhs = fn (r, ()) => f r, atom = fn (_, ()) => (), jump = fn (_, ()) => (),
-          fundef = fn (g : fundef, ()) => appRhs f (#body g)} () e
+    let
+      fun go e =
+        case e of
+          Let (_, _, r, b) => (f r; go b)
+        | Fun (fs, b) => (List.app (fn (g : fundef) => go (#body g)) fs; go b)
+        | Join (_, _, body, sc) => (go body; go sc)
+        | Jump _ => ()
+        | If (_, t, e') => (go t; go e')
+        | Handle (a, _, h) => (go a; go h)
+        | Raise _ => ()
+        | Return r => f r
+        | Mark (_, a) => go a
+        | Case (_, arms, d) => (List.app (fn (_, a) => go a) arms; Option.app go d)
+    in go e end
 
   (* Whether p holds of some step of e, a function's made in e among them:
      the steps are asked in the order appRhs gives them, and none after the
      first p holds of. *)
   fun existsRhs (p : rhs -> bool) (e : exp) : bool =
-    let exception Found
-    in (appRhs (fn r => if p r then raise Found else ()) e; false) handle Found => true end
+    let
+      fun go e =
+        case e of
+          Let (_, _, r, b) => p r orelse go b
+        | Fun (fs, b) => List.exists (fn (g : fundef) => go (#body g)) fs orelse go b
+        | Join (_, _, body, sc) => go body orelse go sc
+        | Jump _ => false
+        | If (_, t, e') => go t orelse go e'
+        | Handle (a, _, h) => go a orelse go h
+        | Raise _ => false
+        | Return r => p r
+        | Mark (_, a) => go a
+        | Case (_, arms, d) => List.exists (fn (_, a) => go a) arms orelse (case d of SOME a => go a | NONE => false)
+    in go e end
 
   (* The definition with every type it writes made what f makes of it,
      given the type variables in scope there (Mid is System F: a Let's

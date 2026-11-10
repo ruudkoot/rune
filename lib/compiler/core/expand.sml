@@ -562,7 +562,28 @@ struct
              else case IntTable.find (!globalAliases, g) of SOME h => Global (h, ts) | NONE => a)
     | _ => a
 
-  fun rwRhs (st : state) (r : rhs) : rhs = mapRhs (rwAtom st) r
+  (* each form its own arm, as Mid.mapRhs has them, with rwAtom called and
+     not passed: a closure made for every step rewritten cost each copy
+     Expand makes, which the budgets of functors' applications count *)
+  fun rwRhs (st : state) (r : rhs) : rhs =
+    let fun atom a = rwAtom st a
+    in
+      case r of
+        Atom a => Atom (atom a)
+      | App (f, xs) => App (atom f, List.map atom xs)
+      | Prim (p, t, xs) => Prim (p, t, List.map atom xs)
+      | Tuple xs => Tuple (List.map atom xs)
+      | Select (i, a) => Select (i, atom a)
+      | Con (tag, t, a) => Con (tag, t, atom a)
+      | Decon (tag, t, a) => Decon (tag, t, atom a)
+      | ConTag a => ConTag (atom a)
+      | NewExn _ => r
+      | BuiltinExn _ => r
+      | MkExn (c, a) => MkExn (atom c, atom a)
+      | ExnCon a => ExnCon (atom a)
+      | ExnArg (t, a) => ExnArg (t, atom a)
+      | SetGlobal (g, a) => SetGlobal (g, atom a)
+    end
 
   (* A step made simpler by what is known, and whether it was: a field of a
      known tuple; a cast to the same type; a cast back through unit of what
@@ -631,7 +652,17 @@ struct
          made there *)
       fun inFun (f : fundef) = appRhs rhs (#body f)
       fun outside e =
-        Mid.fold {rhs = fn _ => (), atom = fn _ => (), jump = fn _ => (), fundef = fn (f, ()) => inFun f} () e
+        case e of
+          Let (_, _, _, b) => outside b
+        | Fun (fs, b) => (List.app inFun fs; outside b)
+        | Join (_, _, b, sc) => (outside b; outside sc)
+        | Jump _ => ()
+        | If (_, t, f) => (outside t; outside f)
+        | Handle (a, _, h) => (outside a; outside h)
+        | Raise _ => ()
+        | Return _ => ()
+        | Mark (_, a) => outside a
+        | Case (_, arms, d) => (List.app (fn (_, a) => outside a) arms; Option.app outside d)
     in
       List.app (fn Val (_, _, e) => outside e
                  | Do (_, e) => outside e
