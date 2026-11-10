@@ -23,14 +23,15 @@ struct
     "usage: rhc [OPTION...] --read-core FILE...\n\
     \       rhc [--parse-only | --print | --print-layout | --print-exact | --dump-tokens\n\
     \            | --dump-ast [--no-spans]] FILE.hs\n\
-    \       rhc [--typecheck-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
+    \       rhc [--typecheck-only | --desugar-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
     \       rhc --dump-types | --dump-evidence | --dump-derived [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
-    \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
-    \Core, its typed lazy intermediate language, checks it and runs it on\n\
-    \Core's interpreter; and it reads a program of Haskell, a file and the\n\
-    \modules it imports, no further than its names, fixity and types.\n\
+    \rhc is the Haskell 98 compiler of the haskell98 roadmap. It reads Core,\n\
+    \its typed lazy intermediate language, checks it and runs it on Core's\n\
+    \interpreter, or with -o compiles it; and it reads a program of Haskell,\n\
+    \a file and the modules it imports, checks it, desugars it to Core and\n\
+    \runs or compiles that.\n\
     \\n\
     \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop\n\
     \  --print               print it with every block in braces\n\
@@ -63,11 +64,14 @@ struct
     \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
     \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
     \                        names, fixity, kinds, types and classes\n\
+    \  --whole               read and check the library too, not from the saved world that\n\
+    \                        bin/rhc restores (bin/rhc.img, D45); --world says which\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
     \                        2 runs HsLint on a program of Haskell, 3 reads Core's text\n\
     \                        back after every stage (RUNE_LINT too)\n\
-    \  --dump-after=STAGE    print what a stage makes: read, coretomid (Mid's text), mid, a\n\
-    \                        pass on Mid, lower, registers or stack, or all\n\
+    \  --dump-after=STAGE    print what a stage makes: read, desugar (Haskell's Core),\n\
+    \                        coretomid (Mid's text), mid, a pass on Mid, lower, registers\n\
+    \                        or stack, or all\n\
     \  --pass-stats          the time and size of every stage, on standard error\n\
     \  --steps=N             stop the interpreter after N steps, a bottom (default: none)\n\
     \  --depth=N             the deepest the interpreter's stack may go, a bottom past it\n\
@@ -82,6 +86,11 @@ struct
     \                        on purpose: thunk-in-slot or force-behind-cast\n\
     \  --strings=S           a string literal's list: lazy, a cell as it is read (default),\n\
     \                        or whole, every cell at once, for D24's measurement\n\
+    \  --desugar-only        on a program of Haskell: check it, desugar it to Core, CoreLint\n\
+    \                        that, and run nothing (with --dump-after=desugar, print it)\n\
+    \  --match=M             the order of a match in Haskell: report, the Report's, a clause\n\
+    \                        after another (default), or sestoft, decision trees that make no\n\
+    \                        test the tests made decide, for D34's measurement\n\
     \  --lint-rules          print the name of each rule of CoreLint, one a line\n\
     \  --generate-core=SEED  print a well-typed Core program made from SEED (D55)\n\
     \  --version             print the version and the identity of rhc\n\

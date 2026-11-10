@@ -2,15 +2,18 @@
    compiler (docs/plans/language/haskell98.md): the syntax, its lexer,
    layout, parser and printers, in syntax.build (M11), on lib/unicode;
    modules, the renamer and fixity in names.build (M12); kinds, types,
-   classes and evidence in types.build (M13); HsLint, the independent
-   check of types, in hslint.build (M16); Core, its text,
-   CoreLint, its interpreter and Core to Mid in core.build. Rune alone
+   classes and evidence in types.build (M13); Core, its text, CoreLint,
+   its interpreter and Core to Mid in core.build; HsLint, the independent
+   check of types and of the Core made of them, in hslint.build (M16);
+   desugaring to Core in desugar.build (M15). Rune alone
    builds it (D42). Its friends see what it does not export: rhc's build,
    which is a friend of lib/compiler too. *)
 requires unicode end
 exports (structure Core, signature CORE, structure CoreText, signature CORE_TEXT, structure CoreUnits, signature CORE_UNITS, structure CorePrim, structure CorePrimFamily, signature CORE_PRIM_FAMILY, structure CoreRuntime, signature CORE_RUNTIME,
          signature CORE_PRIM, structure CoreLint, signature CORE_LINT, structure CoreInterp, signature CORE_INTERP,
          structure CoreGen, signature CORE_GEN, structure CoreToMid, signature CORE_TO_MID,
+         structure HsDesugar, signature HS_DESUGAR, structure HsDsCore, signature HS_DS_CORE,
+         structure HsDsEnv, signature HS_DS_ENV, structure HsMatch, signature HS_MATCH,
          structure HsAst, structure HsChar, structure HsClasses, structure HsDerive, structure HsDump, structure HsEvidence,
          structure HsFixity, structure HsInfer, structure HsKinds, structure HsLayout, structure HsLexer,
          structure HsLint, structure HsLiterate, structure HsModules, structure HsParser, structure HsPrint,
@@ -26,6 +29,7 @@ annotate "demand" in
   use syntax.build
   use names.build
   use types.build
-  use hslint.build
   use core.build
+  use hslint.build
+  use desugar.build
 end

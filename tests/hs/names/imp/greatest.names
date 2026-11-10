@@ -1,5 +1,5 @@
 # E16: 693 pairs at the greatest fixpoint, where T1's map circulates through the Prelude, PreludeList and List.
-pairs 955
+pairs 958
 ERROR	T1:4:9	`P.map` is ambiguous: it is T1's and PreludeList's
 ERROR	T3:3:5	`map` is ambiguous: it is T1's and PreludeList's
 ERROR	T3:4:5	the variable `P.map` is not in scope

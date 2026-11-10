@@ -14,6 +14,7 @@ files
   backend/prims.sml
   settings.sml
   driver/unitstore.sml
+  driver/storepolicy.sml
   core/lambda.sml
   core/irrules.sml
   core/mid.sml

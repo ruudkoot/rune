@@ -259,7 +259,23 @@ struct
       val src : source = {names = ref M.empty, lits = ref M.empty, binders = ref M.empty, decls = ref [],
                           instances = ref []}
       val () = List.app (fn {id, ast, ...} => walk (id, ast, src)) modules
-      val all = V.all records
+      (* the records of the modules given, and of their derived instances'
+         methods: a saved world's records hold the whole library's, of
+         modules the program does not reach (RhcWorld) *)
+      val files =
+        List.foldl (fn (f, m) => M.insert (m, f, ()))
+          M.empty
+          (List.map (fn {ast = A.Module ({span, ...}, _), ...} : E.module => #file span) modules
+           @ List.concat (List.map (fn (mid, _, decls) =>
+                                      if List.exists (fn {id, ...} : E.module => id = mid) modules
+                                      then List.map (fn A.D ({span, ...}, _) => #file span) decls
+                                      else [])
+                            derived))
+      fun given key =
+        case CharVector.findi (fn (_, c) => c = #"@") key of
+          SOME (i, _) => M.member (files, #file (spanOfKey (String.extract (key, i + 1, NONE))))
+        | NONE => false
+      val all = List.filter (fn (key, _) => given key) (V.all records)
       (* a derived instance's methods, made as a user's would be (D54): its
          record is at its class's name in the deriving clause *)
       val instanceAt =

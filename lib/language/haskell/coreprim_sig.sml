@@ -64,7 +64,9 @@ sig
      file of its own.
 
      `prims` lists their primitives after its own: the IO library's
-     handles and the system's errors (CorePrimIo). *)
+     handles and the system's errors (CorePrimIo), and the operating
+     system's file system, process, clock and randomness, which Directory,
+     System, Time, CPUTime and Random read (CorePrimSys). *)
   val families : CorePrimFamily.family list
 
   (* `familyOf name` is the family of the primitive called `name` and the

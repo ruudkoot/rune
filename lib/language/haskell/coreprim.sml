@@ -114,7 +114,7 @@ struct
         "runs an action, and the handler on what it raises: every exception, which the Prelude narrows")]
 
   (* the families of primitives, each of a file of its own *)
-  val families : CorePrimFamily.family list = [CorePrimIo.family]
+  val families : CorePrimFamily.family list = [CorePrimIo.family, CorePrimSys.family]
 
   val prims =
     List.map (fn (name, ty, doc) => {name = name, ty = CoreText.parseType ty, doc = doc})

@@ -7,7 +7,10 @@
    more than it judges and takes, the bytes are those docs/units.md
    describes, what is kept by a name beside the entries is read back only
    as it was, a time is kept where an overlay's file is taken, and trim
-   removes by age and then by size. *)
+   removes by age and then by size. And the store's policy (StorePolicy;
+   the haskell98 roadmap's M20), linked with the settings it reads and no
+   UnitCache: where a compile's store is, its layers, and a trim after a
+   compile, which spares a layer. *)
 structure UnitStoreTests =
 struct
   structure S = UnitStore
@@ -311,6 +314,54 @@ struct
       val () = need (S.clean (a, LargeInt.fromInt 1762214403) andalso not (S.clean (a, LargeInt.fromInt 1762214402)),
                      "racily clean at two seconds and no less")
     in () end
+
+  fun policy () =
+    let
+      val saved = (!CompilerSettings.noCache, !CompilerSettings.cacheDir, !CompilerSettings.storeHome,
+                   !CompilerSettings.inputs, !CompilerSettings.libDir)
+      fun restore (n, c, h, i, l) =
+        (CompilerSettings.noCache := n; CompilerSettings.cacheDir := c; CompilerSettings.storeHome := h;
+         CompilerSettings.inputs := i; CompilerSettings.libDir := l)
+      val lib = scratch ()
+      val store = scratch ()
+      val layer = OS.Path.joinDirFile {dir = lib, file = "cache"}
+      fun check () =
+        let
+          val () = CompilerSettings.noCache := true
+          val () = CompilerSettings.libDir := SOME lib
+          val () = need (StorePolicy.directory () = NONE andalso StorePolicy.frozen () = NONE, "--no-cache: no store, no layer")
+          val () = CompilerSettings.noCache := false
+          val () = CompilerSettings.cacheDir := SOME "elsewhere"
+          val () = need (StorePolicy.directory () = SOME "elsewhere", "--cache-dir first")
+          val () = CompilerSettings.cacheDir := NONE
+          val () =
+            case OS.Process.getEnv "RUNE_CACHE" of
+              SOME d => need (StorePolicy.directory () = (if d = "" then NONE else SOME d), "RUNE_CACHE next")
+            | NONE =>
+                (CompilerSettings.storeHome := SOME "home";
+                 need (StorePolicy.directory () = SOME (StorePolicy.storeIn "home"), "then the workspace's .rune");
+                 CompilerSettings.storeHome := NONE;
+                 CompilerSettings.inputs := ["src/a.sml"];
+                 need (StorePolicy.directory () = SOME (StorePolicy.storeIn "src"), "else beside the first input");
+                 CompilerSettings.inputs := [];
+                 need (StorePolicy.directory () = SOME ".rune", "else here"))
+          val () = need (StorePolicy.frozen () = NONE andalso null (StorePolicy.layers ()), "no cache beside the library: no layer")
+          val () = S.mkdirs layer
+          val () = need (StorePolicy.frozen () = SOME layer andalso StorePolicy.layers () = [layer], "the library's cache, a layer")
+          val () = need (StorePolicy.isLayer (OS.Path.joinDirFile {dir = OS.Path.joinDirFile {dir = lib, file = "."}, file = "cache"})
+                         andalso not (StorePolicy.isLayer store), "a layer however its path is spelled, and only it")
+          val () = StorePolicy.maxAge := SOME StorePolicy.week
+          val () = StorePolicy.maxSize := NONE
+          val () = need (StorePolicy.limits () = {age = SOME StorePolicy.week, size = NONE}, "the limits as set")
+          val () = StorePolicy.trimAfter store
+          val () = need (not (S.trimDue S.hour store), "a store trimmed after a compile, and marked")
+          val () = StorePolicy.trimAfter layer
+          val () = need (S.trimDue S.hour layer, "a layer never trimmed")
+        in () end
+    in
+      (check () handle e => (restore saved; removeTree lib; removeTree store; raise e));
+      restore saved; removeTree lib; removeTree store
+    end
 end
 
 structure UnitStoreTestMain = Main (struct
@@ -319,6 +370,7 @@ structure UnitStoreTestMain = Main (struct
                 [Test.it "found" UnitStoreTests.found, Test.it "bytes" UnitStoreTests.bytes,
                  Test.it "heads" UnitStoreTests.heads, Test.it "damaged" UnitStoreTests.damaged,
                  Test.it "sides" UnitStoreTests.sides, Test.it "times" UnitStoreTests.times,
-                 Test.it "trimmed" UnitStoreTests.trimmed, Test.it "stamps" UnitStoreTests.stamps]
+                 Test.it "trimmed" UnitStoreTests.trimmed, Test.it "stamps" UnitStoreTests.stamps,
+                 Test.it "policy" UnitStoreTests.policy]
 end)
 val () = UnitStoreTestMain.main ()

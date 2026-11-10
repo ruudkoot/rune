@@ -690,7 +690,7 @@ struct
      that cannot be removed stays, and one another compile took or wrote
      since it was looked at may go: a compile that does not find what it
      looks for compiles it again. Never during a build: a compile trims
-     after its own work is done (UnitCache.trimAfter) *)
+     after its own work is done (StorePolicy.trimAfter) *)
   fun trim ({age, size} : limits) (dir : string) : trimmed =
     let
       val now = Time.now ()

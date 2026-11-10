@@ -8,6 +8,7 @@
 - `KFun` (con): [HS_TYPES](../sig/HS_TYPES.md#con-kfun)
 - `kind` (type): [CORE](../sig/CORE.md#type-kind), [HS_LINT](../sig/HS_LINT.md#type-kind), [HS_TYPES](../sig/HS_TYPES.md#type-kind)
 - `KindMismatch` (exn): [HS_TYPES](../sig/HS_TYPES.md#exn-kindmismatch)
+- `kindOf` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-kindof)
 - `kindRepr` (val): [HS_TYPES](../sig/HS_TYPES.md#val-kindrepr)
 - `KLink` (con): [HS_TYPES](../sig/HS_TYPES.md#con-klink)
 - `KStar` (con): [HS_TYPES](../sig/HS_TYPES.md#con-kstar)

@@ -467,11 +467,11 @@ struct
         fun configsOf dir=case StringMap.find (!configs,dir) of SOME found => found | NONE =>
           let val found=UnitCache.configurationsFor dir in configs:=StringMap.insert (!configs,dir,found);found end
         (* a compile's entry of a key: in the store, then in its layers, the
-           frozen libraries (UnitCache.layers), which are only read *)
+           frozen libraries (StorePolicy.layers), which are only read *)
         fun entryFor (dir,k)=case UnitCache.findStatic {overlay=true} (dir,configsOf dir,k) of
             SOME found => SOME found
           | NONE => List.foldl (fn (layer,found) => case found of SOME _ => found
-              | NONE => UnitCache.findStatic {overlay=false} (layer,configsOf layer,k)) NONE (UnitCache.layers ())
+              | NONE => UnitCache.findStatic {overlay=false} (layer,configsOf layer,k)) NONE (StorePolicy.layers ())
         val ()=CompilerSettings.target:=target
         val ()=CompilerSettings.libDir:=lib
         val ()=BasisManifest.roots:= #libraries scope
@@ -808,7 +808,7 @@ struct
           List.app (fn d => List.app (fn config => List.app (fn e:UnitCache.entry =>
               let val {uname,digest,static,...}=UnitBasis.header (#pickle e)
               in if uname ^ "@" ^ static=identity then UnitBasis.alias (uname ^ "@" ^ digest,identity) else () end
-              handle Pickle.Bad _ => ()) (UnitCache.entriesAt (d,config,k))) (configsOf d)) (dir::UnitCache.layers ())
+              handle Pickle.Bad _ => ()) (UnitCache.entriesAt (d,config,k))) (configsOf d)) (dir::StorePolicy.layers ())
         fun storedUnit (dir,{file,text,mode}:source,name,allow,here,(k,source)) =
           let (* why not, as an observation (store-missed): 1 no entry holds,
                  2 no sidecar, 3 another compiler's, 4 another unit's, 5 a

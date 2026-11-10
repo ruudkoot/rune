@@ -91,6 +91,15 @@ sig
   (* `newMeta (level, home)` is a fresh unification variable. *)
   val newMeta : int * string -> ty
 
+  (* `renumber n` makes the next fresh unification and kind variables
+     number from `n`.
+
+     What follows is then numbered alike however much came before (rhc's
+     saved world).
+
+     Raises: `Fail` where a variable has had `n` already. *)
+  val renumber : int -> unit
+
   (* `repr t` follows `t`'s links to its head. *)
   val repr : ty -> ty
 

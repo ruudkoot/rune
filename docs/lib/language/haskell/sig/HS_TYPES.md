@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 41 of 41 entries documented |
+| Documentation | 42 of 42 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/types\_sig.sml](../../../../../lib/language/haskell/types_sig.sml) |
 
@@ -71,6 +71,7 @@ sig
   val <a href="#val-apply">apply</a> : ty * ty list -&gt; ty
   val <a href="#val-spine">spine</a> : ty -&gt; ty * ty list
   val <a href="#val-newmeta">newMeta</a> : int * string -&gt; ty
+  val <a href="#val-renumber">renumber</a> : int -&gt; unit
   val <a href="#val-repr">repr</a> : ty -&gt; ty
   val <a href="#val-zonk">zonk</a> : ty -&gt; ty
   val <a href="#val-metas">metas</a> : ty -&gt; meta ref list
@@ -343,6 +344,20 @@ val newMeta : int * string -> ty
 ```
 
 `newMeta (level, home)` is a fresh unification variable.
+
+### <a name="val-renumber"></a>`renumber`
+
+```sml
+val renumber : int -> unit
+```
+
+`renumber n` makes the next fresh unification and kind variables
+number from `n`.
+
+What follows is then numbered alike however much came before (rhc's
+saved world).
+
+**Raises** [`Fail`](../../../basis/sig/GENERAL.md#exn-fail) where a variable has had `n` already.
 
 ### <a name="val-repr"></a>`repr`
 

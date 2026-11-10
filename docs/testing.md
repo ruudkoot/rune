@@ -700,6 +700,26 @@ checker infers. `bin/rhc --dump-evidence` prints a program's evidence records
 --dump-derived` the methods of its derived instances, which HsDerive makes as
 trees inside the checker (D33's C) and the checker checks as a user's.
 
+**The saved world** (`src/rhc/world.sml`, the roadmap's D45, its B;
+`tests/runner/hsworld.sml`). `bin/rhc` restores `bin/rhc.img`, rhc with its
+library read, named and checked, saved as a VM image as `bin/rune-repl.img`
+is, and reads and checks only a program's own modules against it; `make
+bin/rhc` makes the image again when rhc, the VM or a file of `share/rhc`
+changes, and `bin/rhc` restores it only where `bin/rhc.img.identity`, the
+identity of the rhc that made it, is `bin/rhc.identity`, `bin/rhc.rbc`'s.
+`bin/rhc --whole` reads and checks the library too, the reference, as does
+any option that changes the library's reading, and `bin/rhc --world` says
+which a check takes. The jobs `hs/world/*` hold the two to printing alike:
+`image` that `bin/rhc` goes from a world this rhc made, newer than every
+file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and `lang/K-of-4`
+every program of the directory checked both ways at `--lint=2`, with its
+`.cargs`, to the same standard output, standard error and status, so that
+HsLint replays each way the records of the modules the program reaches; the
+first shard of each in make check, the others nightly;
+`bin/rune-test hs-world-one KIND NAME` judges one. The image is made at
+`RUNE_LINT=2`, so that HsLint replays every record of the library once. A
+mutant's tree (`hs-mutants`) has no image, so a mutant goes the whole way.
+
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
 the independent check of rhc's types, as AstLint is Rune's. Its first part
@@ -716,9 +736,10 @@ the kinds, the derived instances' contexts and the defaults it chose, or
 what it must find: `dump/NAME` each fixture of `tests/hs/hslint` against its
 expected dump, reviewed line by line (under `--cycle-default=scc` and with
 the library's unsigned bindings, `--dump-hslint=library`, where it has those
-files), then the checker on it at level 2, which must accept what the dump
-infers and refuse what it refuses while HsLint replays its records, so that
-rhc's mutants of the checker (HK01 to HK05) fail a fixture's job;
+files), then its compile at level 2 as far as Core (`--desugar-only`), which
+must accept what the dump infers and refuse what it refuses while HsLint
+replays the checker's records and holds them and the Core to its inference,
+so that rhc's mutants of the checker (HK01 to HK05) fail a fixture's job;
 `accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
 and `tests/hs/lang` inferred, whatever its rows' status, since the second
 inference waits on no stage of the compile; and `errors/K-of-4`, every
@@ -749,25 +770,38 @@ inference. A derived instance, which HsDerive makes as the tree a user would
 write (M14), is checked as any instance is: the second inference types its
 methods at the head and the least context it derived itself (10.1, the data
 type's context with it), and replay reads their records and their methods'
-types. `faults` holds each rule to refusing its fault, as
-`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, its records
-and its own expected dump, is accepted, and with `RHC_HSLINT_FAULT=RULE`,
-which reads the first claim or record RULE checks corrupted, refused with
-`[RULE]`.
+types. Once the program is desugared and CoreLint has typed its Core by
+its rules, the target check holds that Core to the second inference, Hall
+et al.'s soundness of the translation (D54's first part): each value of the
+top level, each selector and default method is of the translation of its
+source type, HsLint's own (`[target]`), each class's data type holds its
+superclasses' dictionaries then its methods in order (`[dictionary]`), and
+each instance's dictionary function takes its context's dictionaries and
+gives the class's at its head (`[dfun]`), up to the names and order of the
+variables and the order of the dictionaries, so that any route to a
+superclass is right. `faults` holds each rule to refusing its fault, as
+`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, desugared,
+with its records, its Core and its own expected dump, is accepted, and with
+`RHC_HSLINT_FAULT=RULE`, which reads the first claim, record or Core type
+RULE checks corrupted, refused with `[RULE]`. `levels` builds each fixture
+the dump infers at level 2 and at level 0, which must be the same bytes, as
+`levelsOne` holds Rune's builds: no check changes what rhc makes.
 
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,
 with the Report's code as printed in `pristine/`; D36, D37, D38).
-`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report
-while no compiler runs it: `overlay`, each module's tokens against
+`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report:
+`overlay`, each module's tokens against
 `pristine/`'s, a line at a time, white space and comments dropped, every
 line where they differ an entry of `overlay.tsv` marked applied, and every
 file the Report has no text of an entry's `new:`; `pristine`, the printed
-code byte for byte as `pristine/MANIFEST.tsv` records it; and `report`,
+code byte for byte as `pristine/MANIFEST.tsv` records it; `report`,
 `bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
 Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
 instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
-each with its entry.
+each with its entry; and `compile`, `bin/rhc --whole` compiling
+`tests/hs/library/All20.hs`, a program over a name of each of the 20
+modules, which the VM runs to `All20.expected` (M18: the 20 modules compile).
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
@@ -837,6 +871,26 @@ bottom one bottom. A program the interpreter alone can run says so on a line
 `-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
 program's rows are `Planned`; M15's done-when and G1 rest on it.
 
+**rhc's desugaring** (`tests/runner/hsdesugar.sml`, `hs/desugar/*`; the
+roadmap's M15, D34). Each program of `tests/hs/desugar` through rhc to
+Core, read back at `--lint=3`, and run on Core's interpreter with its
+matches in the Report's order (`hs/desugar/report/NAME`) and as decision
+trees in Sestoft's order (`hs/desugar/sestoft/NAME`, `--match=sestoft`),
+each printing `NAME.expected` and ending with `NAME.exitcode`, 0 where there
+is none; compiled through Mid and run on the VM the same
+(`hs/desugar/vm/NAME`); and printed with explicit braces (`rhc --print`),
+which desugars to the same Core text (`hs/desugar/braces/NAME`, `rhc
+--desugar-only --dump-after=desugar`). Each pair `relations/NAME.hs` and
+`NAME.parens.hs`, the program with every application of an operator in
+parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`). Over
+the run programs of `tests/hs/lang` the two orders agree on what they print
+and on a value or a bottom (`hs/desugar/orders/NAME`), held while the
+program's rows are `Planned`. The programs avoid what M14's deriving and
+the runtime's arrays are still to give, and their expected output is GHC's.
+The seeds for desugaring (clause order reversed, `~` made strict, a
+`newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
+that `report/order`, `report/lazy` and `report/newtype` catch.
+
 **rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
 FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
 path as its last argument, exits 0: delta debugging over the top-level
@@ -898,9 +952,13 @@ written in Core) has `prims-*.core`, Core's primitives on their edges
 print the same), files, standard input read across the edge of a chunk, the
 classes and mappings of `Char`, and what the library's PreludeRuntime names
 beside the Report's (`runtime-library`: arrays, an IOError's details, the
-IO family's positions of files and errors of the system's). `end-*.core`
-hold the line an escaping IOError ends a program with to the library's Show
-IOError, a user's "user error (TEXT)". `lib/language/haskell/coreruntime`
+IO family's positions of files and errors of the system's), and the system's
+family's (`prims-sys`: a command's exit, the environment, the program's name
+and arguments, the clock and the zone; `prims-sys-files`: directories, a
+file's kind, access, mode and time, a listing, renames and the working
+directory). `end-*.core` hold the line an escaping IOError ends a program
+with to the library's Show IOError, a user's "user error (TEXT)".
+`lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
 `lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
 and the first and the last of each range and run of its data.

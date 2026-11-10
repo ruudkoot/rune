@@ -324,9 +324,11 @@ bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
 bin/rune-compiler-state-tests.rbc: $(RUNE) tests/compiler/state-tests.build FORCE
 	$(RUNE) --build tests/compiler/state-tests.build -o $@
-# the store of units alone, with a client of its own and no compiler (the build-system roadmap's M6)
+# the store of units alone, with a client of its own and no compiler (the build-system roadmap's M6), and its
+# policy, with the settings it reads and no UnitCache (the haskell98 roadmap's M20)
 STORE_TEST_SRCS := lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml \
-                   lib/compiler/util/pickle.sml lib/compiler/driver/unitstore.sml tests/lib/compiler/store.sml
+                   lib/compiler/util/pickle.sml lib/compiler/driver/unitstore.sml lib/compiler/settings.sml \
+                   lib/compiler/driver/storepolicy.sml tests/lib/compiler/store.sml
 bin/rune-compiler-store-tests.rbc: $(RUNE) $(STORE_TEST_SRCS) FORCE
 	$(RUNE) --library test/unit $(STORE_TEST_SRCS) -o $@
 # the syntax's node ids, the elaborator's witnesses and SourceTy (the linting roadmap's M11)
@@ -791,8 +793,24 @@ src/rhc/config.sml: FORCE | $(VERSIONGEN)
 bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
 	@mkdir -p bin
 	$(RUNE) --build rhc.build -o $@
-bin/rhc: bin/rhc.rbc bin/runevm Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" "$$@"\n' > $@
+# rhc's saved world (the roadmap's D45, its B; src/rhc/world.sml): rhc with
+# its library read, named and checked, saved as a VM image as
+# bin/rune-repl.img is, made again when rhc, the VM or a file of share/rhc
+# changes, with bin/rhc.img.identity beside it, the identity of the rhc
+# that made it (Config, a digest of rhc.plan's closure). bin/rhc restores it
+# where that is bin/rhc.rbc's (bin/rhc.identity), and reads and checks
+# only a program's own modules; `bin/rhc --whole`, or a library or --share
+# other than the image's, goes the whole way. The directory it names is
+# the one bin/rhc gives, $(CURDIR)/bin/../share/rhc. It is made at
+# RUNE_LINT=2, so that HsLint replays every record of the library once,
+# which a program from the world replays only for the modules it reaches.
+RHC_SHARE := $(shell find share/rhc -type f 2>/dev/null)
+bin/rhc.identity: bin/rhc.rbc bin/runevm
+	bin/runevm bin/rhc.rbc --identity > $@
+bin/rhc.img: bin/rhc.rbc bin/runevm $(RHC_SHARE)
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --make-world $@ < /dev/null
+bin/rhc: bin/rhc.rbc bin/rhc.identity bin/rhc.img bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\na=; b=\n[ -f "$$d/rhc.identity" ] && read -r a < "$$d/rhc.identity"\n[ -f "$$d/rhc.img.identity" ] && read -r b < "$$d/rhc.img.identity"\nif [ -n "$$a" ] && [ "$$a" = "$$b" ] && [ -f "$$d/rhc.img" ]; then exec "$$d/runevm" --restore "$$d/rhc.img" -- --share "$$d/../share/rhc" "$$@"; fi\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" "$$@"\n' > $@
 	chmod +x $@
 check-tools: bin/rhc
 
@@ -2190,8 +2208,8 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
                tests/runner/hssyntax.sml tests/runner/hsnames.sml tests/runner/hslibrary.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
-               tests/runner/hsmeta.sml tests/runner/hsgen.sml tests/runner/hsreduce.sml tests/runner/hsinterp.sml tests/runner/hsperf.sml tests/runner/hslint.sml \
-               tests/runner/hssource.sml tests/runner/hscorpus.sml tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hschecks.sml tests/runner/hsunits.sml \
+               tests/runner/hsmeta.sml tests/runner/hsgen.sml tests/runner/hsreduce.sml tests/runner/hsinterp.sml tests/runner/hsdesugar.sml tests/runner/hsperf.sml tests/runner/hslint.sml tests/runner/hssource.sml tests/runner/hscorpus.sml \
+               tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hsworld.sml tests/runner/hschecks.sml tests/runner/hsunits.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
