@@ -13,6 +13,7 @@ struct
   type report = {bindings : binding list, defaults : default list, kinds : kind list, derived : derived list,
                  classes : class_ list}
   type claims = HsLintClaims.claims
+  type target = HsLintTarget.target
 
   exception Refused of HsSource.span * string
 
@@ -120,8 +121,9 @@ struct
 
   (* `check {groups, main, cycleDefault, records, claims, where_, fault}`:
      the second inference, then replay of the checker's records and those
-     records held to the inference as claims, then the claims given *)
-  fun check {groups : module list list, main, cycleDefault, records, claims, where_, fault} : report =
+     records held to the inference as claims, then the claims given; and
+     what the target check reads, kept *)
+  fun check {groups : module list list, main, cycleDefault, records, claims, where_, fault} : report * target =
     let
       val derived = case records of SOME {derived, ...} => derived | NONE => []
       val () = run {groups = groups, main = main, cycleDefault = cycleDefault, derived = derived}
@@ -136,11 +138,18 @@ struct
              compare (r, HsLintReplay.claimsOf {modules = modules, records = table, derived = derived}, where_, fault))
         | NONE => ()
       val () = case claims of SOME c => compare (r, c, where_, fault) | NONE => ()
+      val t = HsLintTarget.collect (List.map (fn {id, scheme, ...} => {id = id, scheme = scheme}) (!HsLintInfer.bindings))
     in
-      clear (); r
+      clear (); (r, t)
     end
     handle T.Refuse (span, msg) => (clear (); raise Refused (span, msg))
          | e => (clear (); raise e)
+
+  val targetRules = HsLintTarget.rules
+
+  fun target (t, p, fault) =
+    HsLintTarget.check (t, p, fault)
+    handle T.Refuse (span, msg) => raise Refused (span, msg)
 
   fun dump ({bindings, defaults, kinds, derived, ...} : report, where_, library) =
     let

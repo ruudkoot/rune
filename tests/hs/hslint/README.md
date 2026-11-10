@@ -10,9 +10,10 @@ Each program here, a file `NAME.hs` or a directory `NAME` whose `Main.hs` import
 `bin/rhc --dump-hslint` in `NAME.expected`, of `--dump-hslint --cycle-default=scc` in `NAME.scc.expected`, and of
 `--dump-hslint=library` in `NAME.library.expected`, where those are. The dump's lines are those `src/rhc/lint.sml`
 describes: `KIND`, `DERIVED`, `TYPE`, `SIGNED`, `DEFAULT`, or `REFUSED` and why. Each file was reviewed line by line.
-Its job then runs the checker on it at level 2 (`bin/rhc --typecheck-only --lint=2`), where HsLint replays the
-checker's evidence records and holds them to its own inference: the checker accepts what the dump infers and refuses
-what the dump refuses, so that a bug seeded in the checker (rhc's mutants HK01 to HK05) fails a fixture's job.
+Its job then compiles it at level 2 as far as Core (`bin/rhc --desugar-only --lint=2`), where HsLint replays the
+checker's evidence records and holds them, and the Core desugaring makes (its target check), to its own inference: the
+compile accepts what the dump infers and refuses what the dump refuses, so that a bug seeded in the checker (rhc's
+mutants HK01 to HK05) fails a fixture's job.
 
 | Fixture | What it pins |
 |---|---|
@@ -29,6 +30,9 @@ what the dump refuses, so that a bug seeded in the checker (rhc's mutants HK01 t
 | `cyclefix` | A module of a cycle fixing another's monomorphic type: refused under `--cycle-default=module`, the default, and taken under `scc` (D30) |
 | `faults` | A program in which every rule of HsLint's comparison and of its replay has a claim or a record to check: its records replayed, held to its own expected dump by `--hslint-claims`, and refused by each rule with its fault (`hs/hslint/faults`) |
 | `report` | The Report's library, every module a program may import with the Prelude's 11-module cycle, as one unit: its unsigned values (E16's 7, and the overlay's own, `PreludeRuntime`'s `Handle` accessors among them) and the defaults its code chooses, among them `floatToDigits`'s (E16) |
+
+`hs/hslint/levels` builds each fixture the dump infers (`bin/rhc -o`) at level 2, with HsLint's checks, and at level 0:
+the two builds have the same status and the same bytes, since no check changes what rhc makes.
 
 `RUNE_TEST_ACCEPT=1 bin/rune-test run 'hs/hslint/dump/*'` writes the expected files again from what rhc prints; read
 them line by line before committing.

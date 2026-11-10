@@ -10,7 +10,7 @@ From the **Raises** paragraphs of the documented entries.
 - `HsSource.Error`: [`checkType`](sig/HS_KINDS.md#val-checktype) of HS_KINDS, [`convert`](sig/HS_KINDS.md#val-convert) of HS_KINDS, [`advance`](sig/HS_LAYOUT.md#val-advance) of HS_LAYOUT, [`fail`](sig/HS_LAYOUT.md#val-fail) of HS_LAYOUT, [`tokens`](sig/HS_LEXER.md#val-tokens) of HS_LEXER, [`unlit`](sig/HS_LITERATE.md#val-unlit) of HS_LITERATE, [`parse`](sig/HS_PARSER.md#val-parse) of HS_PARSER, [`parseTraced`](sig/HS_PARSER.md#val-parsetraced) of HS_PARSER, [`parseFile`](sig/HS_PARSER.md#val-parsefile) of HS_PARSER
 - `KindMismatch`: [`unifyKind`](sig/HS_TYPES.md#val-unifykind) of HS_TYPES
 - `Mismatch`: [`unify`](sig/HS_TYPES.md#val-unify) of HS_TYPES
-- `Refused`: [`infer`](sig/HS_LINT.md#val-infer) of HS_LINT, [`compare`](sig/HS_LINT.md#val-compare) of HS_LINT, [`check`](sig/HS_LINT.md#val-check) of HS_LINT
+- `Refused`: [`infer`](sig/HS_LINT.md#val-infer) of HS_LINT, [`compare`](sig/HS_LINT.md#val-compare) of HS_LINT, [`check`](sig/HS_LINT.md#val-check) of HS_LINT, [`target`](sig/HS_LINT.md#val-target) of HS_LINT
 - `Stuck`: [`run`](sig/CORE_INTERP.md#val-run) of CORE_INTERP
 - `Unsupported`: [`program`](sig/CORE_TO_MID.md#val-program) of CORE_TO_MID
 

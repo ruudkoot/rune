@@ -137,6 +137,9 @@ struct
                     check = Pass.checkAt ("desugar", 3) roundTrip, size = List.length} desugar (#strings opts)
         handle Fail msg => raise Error.Bug ("rhc's desugaring fails, a bug of rhc's: " ^ msg)
       val () = lint ([file], p)
+      (* HsLint's target check at level 2: the Core at the translation of
+         its source types (RhcLint.target, D54) *)
+      val () = RhcLint.target p
       val status =
         if not (null only) then 0
         else

@@ -97,10 +97,17 @@ sig
      brackets: `[bindg] ...`. *)
   val replayRules : (string * string) list
 
-  (* `check {groups, main, cycleDefault, records, claims, where_, fault}`
-     is `infer`'s report, the checker's records replayed and compared.
+  (* What the second inference found that the target check reads.
 
-     With `records`, the checker's evidence records and environment
+     They are the types of the top level, the selectors and default
+     methods, the classes' dictionaries and the instances' dictionary
+     functions, as Core's types. *)
+  type target
+
+  (* `check {groups, main, cycleDefault, records, claims, where_, fault}`
+     is `infer`'s report, with the checker's records replayed and compared.
+
+     It gives what the target check reads with the report. With `records`, the checker's evidence records and environment
      (HsEvidence, HsInfer) and the derived instances it made as trees
      (HsDerive: each one's module, identity and methods), the second
      inference checks those instances' methods as any instance's, each
@@ -113,7 +120,26 @@ sig
   val check : {groups : module list list, main : string option, cycleDefault : bool,
                records : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
-               claims : claims option, where_ : HsSource.span -> string, fault : string} -> report
+               claims : claims option, where_ : HsSource.span -> string, fault : string} -> report * target
+
+  (* `targetRules` is each rule of the target check with what it holds,
+     its name the first word of its breach's message, in brackets:
+     `[target] ...`. *)
+  val targetRules : (string * string) list
+
+  (* `target (t, program, fault)` holds `program`, the Core made of what
+     `check` read, to `t`, what the second inference found.
+
+     The program is what desugaring made and CoreLint accepted. Each value
+     of the top level, selector and default method, each class's
+     dictionary and each instance's dictionary function is held to the
+     translation of its source type, as the second inference has it (Hall
+     et al.'s soundness of the translation), up to the names and order of
+     its variables and the order of its dictionaries. `fault` is as
+     `compare`'s.
+
+     Raises: `Refused` at the first breach. *)
+  val target : target * Core.program * string -> unit
 
   (* `dump (report, where_, library)` is the report as text, a line each.
 
