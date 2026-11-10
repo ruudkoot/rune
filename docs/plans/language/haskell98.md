@@ -57,7 +57,7 @@ What it rests on:
 
 ## Status
 
-Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" names the merge on which `make check` last passed; "on X" means `make check` ran on merge X with no failure of that milestone's. On `57a5306a4`, 29,044 tests: 24,274 pass, 4,768 held, one failure (Simplify's tag facts in a closure, M29, fixed since) and one timeout under load (`make/test-lsp-oracle`, which passes alone). G1, hello on the interpreter and the VM, passes on the interim suspension form; under form C it waits for M10. The decisions are in the table at the head of *Decisions*, and the nine still to be taken on the figures in *Decisions on the numbers*.
+Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" names the merge on which `make check` last passed; "on X" means `make check` ran on merge X with no failure of that milestone's. On `0f44dafbe`, 29,938 tests: 24,843 pass, 5,091 held, two timeouts under load (`make/test-lsp-oracle` and SML/NJ's `err.ty_astra-inference-limit`, which pass alone) and two failures: HsLint's dump of the library, whose expected order the next merge fixed, and `kernel/notebook-pipe`, a race in master's Jupyter kernel under load that passes alone and touches nothing of this branch. G1 passed on 2026-11-10 under form C: 546 of the 555 clause programs print the same on Core's interpreter and on the VM, from the saved world and compiled whole alike. The decisions are in the table at the head of *Decisions*, and the six still to be taken on the figures in *Decisions on the numbers* (D3, D9 and D16 were taken on them on 2026-11-10).
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
@@ -70,30 +70,30 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M7. Lints and the two Simplify fixes | A | S | D5 | done; on `57a5306a4` |
 | M8. Core, its text, CoreLint, a Core interpreter | B | L | D2, D41 | done; on `57a5306a4` |
 | M9. Thunks through the engines | B | L | D3-D6, D11-D14, D18, D19, D57 | done: form C on both instruction sets, every engine and tier; 115 of 115 lazy ports; bytes held but the fingerprint. Departure: the stack VM still retains `last`'s dead suspension (the owner's list) |
-| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | under way: Core to Mid on form C, M28's types; G1's programs run on the interim form |
+| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | done on form C, writing Mid's `Case` and M28's types, by units as well as whole; G1 passed on it. Under way: the rule that no `susp` heads a type argument, checked in Core to Mid at lint level 2 (MidLint cannot hold it, since SML uses polymorphic functions at `T susp`) |
 | M11. Lexer, layout, parser, printers | F | L | D27, D28 | done; on `57a5306a4` |
 | M12. Renamer, modules, fixity, recursive modules | F | L | D29, D30, D35, D36 | done; on `57a5306a4` |
 | M13. Kinds, types, classes | F | L | D30, D31, D32, D33 | done: the Report's 20 modules and the 11-module unit check; 798 of 808 corpus programs; on `57a5306a4` |
-| M14. Deriving | F | M | D33 | done (one fix open: derived `Ord`/`Ix` tags take the module's `default`) |
-| M15. Desugaring to Core | F | L | D17, D34 | done on its branch: `rhc hello.hs` prints hello on Core's interpreter and on the VM; 520 of 555 clause programs agree on both; 80 of 92 `tr.*` rows Supported; merging |
-| M16. HsLint | F | L | D54 | second inference, replay of Faxén's rules, two judges held to one verdict, and M16's five seeds caught; the target check waits for M15 |
-| M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | the Report's libraries as text and the overlay as code over rhc's runtime in Core (CoreRuntime, 25 more primitives); probes held until programs run |
-| M18. The Report's libraries | L | M | D36 | the nine modules' overlay; the system primitives under way |
-| M19. Conformance: the table worked through | T | L | D52, D55, D56 | every row that wants a program has one but the owner's held rows; the harness of D55 (mutants, relations, probes, generator, reducer, budgets) and D56's tiers in place; runs held until rhc compiles each row's programs |
-| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | built; merging |
-| M21. HsIface and rhc's driver | S | L | D43, D44, D45 | not started |
+| M14. Deriving | F | M | D33 | done; on `0f44dafbe` |
+| M15. Desugaring to Core | F | L | D17, D34 | done: 546 of 555 clause programs agree on Core's interpreter and the VM; the library's Core and a program's desugared apart; on `0f44dafbe`. Under way: Core units by binding group |
+| M16. HsLint | F | L | D54 | done: the second inference, replay of Faxén's rules, two judges held to one verdict, and the target check of the Core against the source types, which names the pass that broke it; M16's seeds caught; on `0f44dafbe` |
+| M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | done: the overlay as code over rhc's runtime, the token comparison with the Report, the 15 bottom probes right on the interpreter and the VM; on `0f44dafbe` |
+| M18. The Report's libraries | L | M | D36 | done: the 20 modules compile and run, the 52 examples are programs; on `0f44dafbe`. Under way: `ReadWriteMode`, by the owner's word of 2026-11-10 |
+| M19. Conformance: the table worked through | T | L | D52, D55, D56 | under way: 3,050 of 3,901 rows Supported, 851 Planned; the harness of D55 and D56's tiers in place; the one-second rule per program being applied to every family |
+| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | done; on `0f44dafbe` |
+| M21. HsIface and rhc's driver | S | L | D43, D44, D45 | under way: HsIface, Core by units with a warm path and early cut-off; the library as one frozen unit measured (52 times the bytecode of a whole compile); the link, by the lead's choice within D43 to D45, joins the units' Core, keeps what `main` reaches and compiles it whole, behind a memo |
 | M22. SCC keys | S | M | D30, D36 | not started |
-| M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | not started |
+| M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | built on its branch, to merge after G2 |
 | M24. Strictness | P | M | D50 | not started |
-| M25. What measurement justifies | P | | D15-D17, D19, D51 | not started |
+| M25. What measurement justifies | P | | D15-D17, D19, D51 | under way: D3, D9 and D16 measured and decided; D19's B being measured; D24's and D34's first figures in |
 | M26. Ready for lazy ML | Z | | D57 | not started |
 | M27. Retire | | S | | not started |
 | M28. `Ty` with application and forall | A | L | D4 | done; on `57a5306a4` |
-| M29. Mid `Case` | A | L | D8 | done (a fix of Simplify's tag facts in a closure, made after `57a5306a4`, merging) |
+| M29. Mid `Case` | A | L | D8 | done; on `0f44dafbe` |
 | M30. Multi-value return, built to be measured | A | L | D9 | built and measured on `hs-a-m30`; the owner took A (2026-11-10), so it does not land |
 | M31. `IntInf` immediate | A | M | D20 | done; on `57a5306a4` |
 
-Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
+Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM, passed on 2026-11-10; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
 
 ## Found while writing this roadmap
 
