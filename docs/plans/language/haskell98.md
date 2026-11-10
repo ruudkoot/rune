@@ -6674,7 +6674,7 @@ Rune: none under every option. *The three layouts* in *What the Report says* com
 
 **What would reopen it.** M17 finding the list much longer than 15; legal advice on either open point.
 
-**Decided (owner, 2026-11-09).** Code B and licence A, as recommended: a listed overlay, and `share/rhc/haskell98/LICENSE`, marked modified.
+**Decided (owner, 2026-11-09).** Code B and licence A, as recommended: a listed overlay, and `share/rhc/haskell98/LICENSE`, marked modified. **The owner, 2026-11-10:** "Don't change the toplevel license please and no need for the note": the top-level `LICENSE` stays as it is, with no sentence about `share/rhc/haskell98` and no NOTICE file; `share/rhc/haskell98/LICENSE` alone says that the Report's notice covers that directory and the repository's CC0 dedication does not.
 
 ### D38. Which text
 

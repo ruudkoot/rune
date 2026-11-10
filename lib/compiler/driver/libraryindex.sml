@@ -788,7 +788,7 @@ struct
     writeFactsAt (factsFile (store, name), name, facts)
 
   (* Where a compile keeps the records: the overlay of its store, which
-     --cache-dir, RUNE_CACHE or its home names (UnitCache.directory), where
+     --cache-dir, RUNE_CACHE or its home names (StorePolicy.directory), where
      it has one, then the frozen layer of its libraries, lib/cache, only
      read; a compile with --no-cache reads them and writes none *)
   fun storeDir () : string option =

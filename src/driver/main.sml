@@ -258,7 +258,7 @@ struct
   (* whether this compile writes a layer of the store, lib/cache (make
      basis-cache), which keeps entries and what they need, and no memo of a
      build (UnitMemo) *)
-  fun writesLayer () : bool = case UnitCache.directory () of SOME d => UnitCache.isLayer d | NONE => false
+  fun writesLayer () : bool = case StorePolicy.directory () of SOME d => StorePolicy.isLayer d | NONE => false
   (* the command line, which an up-to-date compile's key holds (UnitMemo) *)
   val commandLine : string list ref = ref []
   (* the key of this compile's record of what it read (UnitMemo), where it
@@ -354,7 +354,7 @@ struct
                                SOME w => List.map (fn root => Workspace.fromHere (onWindows (), root)) (#libraryRoots w)
                              | NONE => []))
   (* Where this compile keeps its store where neither --cache-dir nor
-     RUNE_CACHE says (UnitCache.directory): .rune in its workspace's
+     RUNE_CACHE says (StorePolicy.directory): .rune in its workspace's
      directory, the nearest rune.workspace above its build file or first
      input, else in that file's directory; from here, so that a store at the
      top of a checkout is .rune (the build-system roadmap's D24) *)
@@ -456,7 +456,7 @@ struct
       val () = reachingIn {warn = false} project
       (* a file is read as a compile reads it, through its preprocessor; a
          step is not run (docs/build.md, Generated sources) *)
-      val () = Steps.preprocess {windows = onWindows (), cache = UnitCache.directory (), explain = fn _ => ()}
+      val () = Steps.preprocess {windows = onWindows (), cache = StorePolicy.directory (), explain = fn _ => ()}
                                 (#preprocessors project) (CompilerProject.units (#steps project))
       val imported = List.concat (List.map (fn dir => LibraryIndex.fixities {root = libRoot (), dir = dir})
                                            (LibraryIndex.libraries (libRoot (), #libraries project)))
@@ -647,7 +647,7 @@ struct
          steps read is in what it rests on. Else what it reads from here on
          is kept, for the next to ask *)
       val upKey = upToDateKey project
-      val upHit = case (upKey, UnitCache.directory ()) of
+      val upHit = case (upKey, StorePolicy.directory ()) of
                     (SOME key, SOME dir) => UnitMemo.upToDate (dir, key, LibraryIndex.stillRests)
                   | _ => NONE
       val () = upToDate := (if isSome upHit then NONE else upKey)
@@ -657,9 +657,9 @@ struct
          docs/build.md, Generated sources); what they read is kept with the
          rest, and what the steps made is held by its bytes *)
       fun prepare () =
-        Steps.prepare {project = project, cache = UnitCache.directory (), windows = onWindows (),
+        Steps.prepare {project = project, cache = StorePolicy.directory (), windows = onWindows (),
                        explain = fn message => if !Options.explainRebuild then eprintln message else (),
-                       noteOutput = fn path => case (!upToDate, UnitCache.directory ()) of
+                       noteOutput = fn path => case (!upToDate, StorePolicy.directory ()) of
                                                  (SOME _, SOME dir) => UnitMemo.noteMade (dir, path)
                                                | _ => ()}
     in
@@ -768,7 +768,7 @@ struct
          (docs/units.md, A warm build) *)
       val units = !Options.units
       val keep = if not units then NONE
-                 else case UnitCache.directory () of
+                 else case StorePolicy.directory () of
                         SOME dir => if warmOn () andalso not (editorOverlays ()) andalso not (writesLayer ()) then SOME dir else NONE
                       | NONE => NONE
       val planned = units andalso (isSome keep orelse !Options.jobs > 1)
@@ -876,7 +876,7 @@ struct
       val () = Elaborate.recover := true
       (* --whole: each unit's Mid, as the session names it, for one program
          of them all (the incremental roadmap's M7) *)
-      val () = Pipeline.keepMid := (!Options.wholeFromUnits orelse isSome (UnitCache.directory ()))
+      val () = Pipeline.keepMid := (!Options.wholeFromUnits orelse isSome (StorePolicy.directory ()))
       val mids : MidCanon.unitMid list ref = ref []
       val registers = !Options.target = "registers"
       val () = if registers then Code.opcodeNames := RegCodes.names else ()
@@ -935,7 +935,7 @@ struct
       val () = keepExports := known
       val () = UnitBasis.remapAllowed := not (known orelse (holds runtimeFile andalso isSome (!Options.emitUnits)))
       val () = UnitCache.across := false
-      val () = if judged andalso !UnitBasis.remapAllowed andalso isSome (UnitCache.directory ())
+      val () = if judged andalso !UnitBasis.remapAllowed andalso isSome (StorePolicy.directory ())
                then CompilerState.seal () else ()
       val loadingKeys : Link.key list ref = ref []
       fun judge (name, ident, acc) =
@@ -961,8 +961,8 @@ struct
       (* the cache (UnitCache): its directory and configuration; after a
          unit that failed, the units are elaborated for their errors alone,
          and not looked for *)
-      val cache = Option.map (fn d => (d, UnitCache.configuration ())) (UnitCache.directory ())
-      val frozen = UnitCache.frozen ()
+      val cache = Option.map (fn d => (d, UnitCache.configuration ())) (StorePolicy.directory ())
+      val frozen = StorePolicy.frozen ()
       (* an entry's Mid, read where one program is made of the units' Mid,
          or compared *)
       val () = UnitCache.needMid := (!Options.wholeFromUnits orelse UnitCache.verifying ()
@@ -1648,7 +1648,7 @@ struct
             | _ => (link (), NONE)
           (* what it read, kept for the next compile of the same plan *)
           val () =
-            case (!upToDate, UnitCache.directory ()) of
+            case (!upToDate, StorePolicy.directory ()) of
               (SOME key, SOME dir) =>
                 (UnitMemo.stopReads ();
                  if not (OS.Process.isSuccess status) then ()
@@ -1940,28 +1940,28 @@ struct
     end
 
   (* The store trimmed after a compile in units, its work done, where it
-     was last trimmed a day ago or more (UnitCache.trimAfter); never by a
+     was last trimmed a day ago or more (StorePolicy.trimAfter); never by a
      child of -j, whose parent is still building *)
   fun trimAfter () : unit =
     if not (!Options.units) orelse isSome (!Parallel.child) then ()
-    else Option.app UnitCache.trimAfter (UnitCache.directory ())
+    else Option.app StorePolicy.trimAfter (StorePolicy.directory ())
 
   (* --cache-trim: the store a compile here would write trimmed now,
      whenever it was last (docs/units.md, The store) *)
   fun trimCommand () : OS.Process.status =
     let val () = storeHome ()
     in
-      case UnitCache.directory () of
+      case StorePolicy.directory () of
         NONE => (eprintln "rune: --cache-trim: there is no store (--no-cache, or an empty RUNE_CACHE)"; OS.Process.failure)
       | SOME dir =>
-          if UnitCache.isLayer dir
+          if StorePolicy.isLayer dir
           then (eprintln ("rune: --cache-trim: " ^ dir ^ " is a layer of the store, which is only read"); OS.Process.failure)
           else if not (OS.FileSys.isDir dir handle OS.SysErr _ => false)
           then (println ("rune: there is no store at " ^ dir); OS.Process.success)
           else
             let
               val () = UnitStore.markTrimmed dir
-              val {files, bytes, removed, freed} = UnitStore.trim (UnitCache.limits ()) dir
+              val {files, bytes, removed, freed} = UnitStore.trim (StorePolicy.limits ()) dir
             in
               println ("rune: trimmed the store " ^ dir ^ ": removed " ^ Int.toString removed ^ " of " ^ Int.toString files
                        ^ " files, " ^ LargeInt.toString freed ^ " of " ^ LargeInt.toString bytes ^ " bytes");

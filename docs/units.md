@@ -843,6 +843,14 @@ paths are from the root of the filesystem where a compile in another
 directory could mean another file by them (the stat memo, the link memo), so
 that compiles in several directories share it.
 
+**Whose it is.** The store's code (`UnitStore`) knows nothing of SML: an
+entry's format, head and key are its client's. Where the store is, its
+overlay and its layers, and how it is kept small are `StorePolicy`'s
+(`lib/compiler/driver/storepolicy.sml`, in the layer from Mid on), which a
+compiler of another language takes as it is, from `CompilerSettings`, without
+naming `UnitCache`, which keeps SML's units there (the haskell98 roadmap's
+M20). Two compilers that share a store share its budget for trimming.
+
 **Keys and entries.** A unit's key is its logical name, the hash of its
 text and its settings (*The cache*, above); an entry's head is what the
 client judges it by, which the store holds and never reads, and its

@@ -712,11 +712,13 @@ any option that changes the library's reading, and `bin/rhc --world` says
 which a check takes. The jobs `hs/world/*` hold the two to printing alike:
 `image` that `bin/rhc` goes from a world this rhc made, newer than every
 file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and `lang/K-of-4`
-every program of the directory checked both ways, with its `.cargs`, to the
-same standard output, standard error and status; the first shard of each in
-make check, the others nightly; `bin/rune-test hs-world-one KIND NAME`
-judges one. A mutant's tree (`hs-mutants`) has no image, so a mutant goes
-the whole way.
+every program of the directory checked both ways at `--lint=2`, with its
+`.cargs`, to the same standard output, standard error and status, so that
+HsLint replays each way the records of the modules the program reaches; the
+first shard of each in make check, the others nightly;
+`bin/rune-test hs-world-one KIND NAME` judges one. The image is made at
+`RUNE_LINT=2`, so that HsLint replays every record of the library once. A
+mutant's tree (`hs-mutants`) has no image, so a mutant goes the whole way.
 
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
@@ -776,16 +778,18 @@ which reads the first claim or record RULE checks corrupted, refused with
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,
 with the Report's code as printed in `pristine/`; D36, D37, D38).
-`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report
-while no compiler runs it: `overlay`, each module's tokens against
+`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report:
+`overlay`, each module's tokens against
 `pristine/`'s, a line at a time, white space and comments dropped, every
 line where they differ an entry of `overlay.tsv` marked applied, and every
 file the Report has no text of an entry's `new:`; `pristine`, the printed
-code byte for byte as `pristine/MANIFEST.tsv` records it; and `report`,
+code byte for byte as `pristine/MANIFEST.tsv` records it; `report`,
 `bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
 Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
 instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
-each with its entry.
+each with its entry; and `compile`, `bin/rhc --whole` compiling
+`tests/hs/library/All20.hs`, a program over a name of each of the 20
+modules, which the VM runs to `All20.expected` (M18: the 20 modules compile).
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants

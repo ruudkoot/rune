@@ -116,14 +116,14 @@ struct
     fun root (workspace : t)= #root workspace
     fun libraryRoots (workspace : t)= #libraryRoots workspace
     fun targets (workspace : t)= #targets workspace
-    (* where a compile of file keeps its store (UnitCache.directory), where
+    (* where a compile of file keeps its store (StorePolicy.directory), where
        it is there: an analysis makes none *)
     fun store {file,windows}=
       let fun there dir=if (OS.FileSys.isDir dir handle OS.SysErr _ => false) then SOME dir else NONE
       in case OS.Process.getEnv "RUNE_CACHE" of
            SOME "" => NONE
          | SOME dir => there dir
-         | NONE => there (UnitCache.storeIn (getOpt (W.rootOf {file=file,windows=windows},OS.Path.dir file))) end
+         | NONE => there (StorePolicy.storeIn (getOpt (W.rootOf {file=file,windows=windows},OS.Path.dir file))) end
   end
 
   structure Project =
