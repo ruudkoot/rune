@@ -5,6 +5,7 @@
 - `WHERE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-where)
 - `White` (con): [HS_CHAR](../sig/HS_CHAR.md#con-white)
 - `Whitespace` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-whitespace)
+- `Whole` (con): [CORE_RUNTIME](../sig/CORE_RUNTIME.md#con-whole)
 - `withContext` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-withcontext)
 
 ---

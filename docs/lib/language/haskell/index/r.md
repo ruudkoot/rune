@@ -9,6 +9,7 @@
 - `record` (type): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#type-record)
 - `rename` (val): [HS_RENAME](../sig/HS_RENAME.md#val-rename)
 - `renamed` (type): [HS_RENAME](../sig/HS_RENAME.md#type-renamed)
+- `reportNames` (val): [CORE_RUNTIME](../sig/CORE_RUNTIME.md#val-reportnames)
 - `repr` (val): [HS_TYPES](../sig/HS_TYPES.md#val-repr)
 - `reservedId` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-reservedid)
 - `reservedOp` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-reservedop)
