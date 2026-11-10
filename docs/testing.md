@@ -460,7 +460,10 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `NAME` with a `Main.hs` or `Main.lhs` in it, whose other modules rhc finds
   beside it. Its siblings are named from `NAME` in both cases, beside the
   file or the directory, and are Rune's: `.expected`, `.cargs`, `.args`,
-  `.vmargs`, `.stdin`, `.exitcode`, `.stderr`, `.stderr-head`, `.cwarn`.
+  `.vmargs`, `.stdin`, `.exitcode`, `.stderr`, `.stderr-head`, `.cwarn`,
+  and `.typecheck-ok` beside a refused program that `--typecheck-only`
+  accepts: a check takes a file as the module it holds, and only a compile
+  asks that it be `Main` (the roadmap's D53; `prog.main.name`).
   Two programs of one name in a directory (a `.hs` beside a `.lhs`) are a
   failure of `hs/runner/programs`.
 * **Three directories.** `tests/hs/lang` holds the programs compiled and

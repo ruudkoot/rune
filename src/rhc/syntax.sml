@@ -83,15 +83,16 @@ struct
       val root = hd files
       fun report () = List.app (fn {span, msg, ...} => eprint (message (root, span, msg) ^ "\n")) diags
       (* A program's module is Main, and exports main (5): what a compile
-         asks, and a check of a file Main.hs or of a module Main. *)
+         asks, and a check of a module Main. The Report ties no file name to
+         Main, so a check takes a file as the module it holds, whatever the
+         file is called (the roadmap's D53). *)
       val main = hd (#roots g)
       val exportsMain =
         List.exists (fn {space = HsModules.Value, name = "main", ...} => true | _ => false)
           (getOpt (HsStringMap.find (#exports r, main), []))
-      val mainFile = OS.Path.base (OS.Path.file root) = "Main"
       val mainError =
         if main <> "Main" then
-          if mode = Compile orelse mainFile then
+          if mode = Compile then
             SOME (root ^ ": error: a program's module is `Main`, and " ^ root ^ " holds the module `" ^ main ^ "`")
           else NONE
         else if not exportsMain then SOME (root ^ ": error: the module `Main` does not export `main`, which a program runs (5)")
