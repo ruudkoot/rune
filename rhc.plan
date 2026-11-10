@@ -38,6 +38,7 @@ library language/haskell lib/language/haskell
   export signature HS_AST
   export signature HS_CHAR
   export signature HS_CLASSES
+  export signature HS_DERIVE
   export signature HS_DUMP
   export signature HS_EVIDENCE
   export signature HS_FIXITY
@@ -68,6 +69,7 @@ library language/haskell lib/language/haskell
   export structure HsAst
   export structure HsChar
   export structure HsClasses
+  export structure HsDerive
   export structure HsDump
   export structure HsEvidence
   export structure HsFixity
@@ -130,6 +132,8 @@ library language/haskell lib/language/haskell
     unit language/haskell:evidence.sml lib/language/haskell/evidence.sml ascii demand
     unit language/haskell:kinds_sig.sml lib/language/haskell/kinds_sig.sml ascii demand
     unit language/haskell:kinds.sml lib/language/haskell/kinds.sml ascii demand
+    unit language/haskell:derive_sig.sml lib/language/haskell/derive_sig.sml ascii demand
+    unit language/haskell:derive.sml lib/language/haskell/derive.sml ascii demand
     unit language/haskell:infer_sig.sml lib/language/haskell/infer_sig.sml ascii demand
     unit language/haskell:infer.sml lib/language/haskell/infer.sml ascii demand
   end
@@ -250,10 +254,10 @@ provenance
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
-  input lib/language/haskell/library.build 0e80ba812a56d75a2e78991226cc808aea3845a8d2fcee07df9222143d2bdebe
+  input lib/language/haskell/library.build 444d0ee7a2532782aec0304e8f75fa055870dd2537c35e1678f02ce4ec8aae1d
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
-  input lib/language/haskell/types.build 1a9d4563ad4fad7fb249faba2c9a07a463683e296cc2e54f32af15af1f1d2cb6
+  input lib/language/haskell/types.build 070f2c855a3a6ca976bd77085d92acb876f16d060e28bc1805aecee9ef19a736
   input lib/language/haskell/hslint.build 59af682d6ac4333cb4fa04db0751edd827d95f9b8c5af452c90e3ceec429e3cc
   input lib/language/haskell/core.build 6bac6a6c0d1ff9c9a07a0f65b8e94bf5a9a89df721ec7743909b28d9ca9c46ef
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac

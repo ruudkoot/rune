@@ -27,7 +27,8 @@ struct
   structure G = RhcGraph
 
   type result = {modules : (G.node * A.module) list, exports : Mo.entity list M.map, diags : G.diag list,
-                 types : HsInfer.env option, evidence : HsEvidence.table}
+                 types : HsInfer.env option, evidence : HsEvidence.table,
+                 derived : (string * string * A.decl list) list}
 
   fun spaceText Mo.Value = "v"
     | spaceText Mo.Type = "t"
@@ -70,6 +71,7 @@ struct
       val diags : G.diag list ref = ref []
       fun add errs = diags := !diags @ List.map (fn (sp, msg) => {span = sp, msg = msg, library = isLibrary sp}) errs
       val out : (G.node * A.module) list ref = ref []
+      val derivedOut : (string * string * A.decl list) list ref = ref []
       val evidence = HsEvidence.empty ()
       val types =
         ref (HsInfer.initial {primitives = List.concat (List.map (fn (l, names) =>
@@ -78,7 +80,9 @@ struct
       (* the entity the Prelude exports under a name; Ix's Ix too *)
       fun prelude (space, name) =
         let
-          val from = if name = "Ix" then RhcLibrary.identity "Ix" else RhcLibrary.identity "Prelude"
+          val from =
+            if List.exists (fn n => n = name) ["Ix", "range", "index", "inRange", "rangeSize"] then RhcLibrary.identity "Ix"
+            else RhcLibrary.identity "Prelude"
           val sp = if space = "t" then Mo.Type else Mo.Value
         in
           Option.map Mo.key (List.find (fn (e : Mo.entity) => #space e = sp andalso #name e = name) (exportsOf from))
@@ -114,18 +118,20 @@ struct
           | (SOME cycleDefault, false) =>
               let
                 val resolved = List.filter (fn (n, _) => List.exists (fn (m : G.node) => #id m = #id n) members) (!out)
-                val {env, errors} =
+                val {env, errors, derived} =
                   HsInfer.check {env = !types, cycleDefault = cycleDefault, prelude = prelude, evidence = evidence,
+                                 fixity = fn k => M.find (fixTable, k),
                                  unit = List.map (fn (n : G.node, m) => {id = #id n, ast = m, library = #library n}) resolved}
               in
                 types := env;
+                derivedOut := !derivedOut @ derived;
                 add errors
               end
         end
     in
       List.app group (#groups g);
       {modules = List.rev (!out), exports = !exports, diags = !diags,
-       types = Option.map (fn _ => !types) check, evidence = evidence}
+       types = Option.map (fn _ => !types) check, evidence = evidence, derived = !derivedOut}
     end
 
   (* ---- --dump-names ---- *)
@@ -240,12 +246,28 @@ struct
                                (Mo.defs (#id n, #ast n)))
                  (#modules r))
           val idOfFile = List.foldl (fn (n : G.node, s) => M.insert (s, #file n, #id n)) M.empty (List.concat (#groups g))
+          val programIds = List.mapPartial (fn (n : G.node, _) => if #library n then NONE else SOME (#id n)) (#modules r)
+          val insts =
+            List.mapPartial
+              (fn {cls = c, tycon, home, ctx, vars, derived, ...} : HsClasses.instance =>
+                 if not (List.exists (fn m => m = home) programIds) then NONE
+                 else
+                   let
+                     val names = List.tabulate (vars, fn k => HsTypes.TCon (str (Char.chr (97 + k))))
+                     val shown = List.map (fn {cls, ty} => HsTypes.showPred {cls = cls, ty = HsTypes.substGen (names, ty)}) ctx
+                     val head = HsTypes.showPred {cls = c, ty = HsTypes.apply (HsTypes.TCon tycon, names)}
+                   in
+                     SOME ("INSTANCE\t" ^ home ^ "\t" ^
+                           (case shown of [] => "" | [c] => c ^ " => " | cs => "(" ^ String.concatWith ", " cs ^ ") => ") ^
+                           head ^ "\t" ^ (if derived then "derived" else "written"))
+                   end)
+              (HsClasses.instances (HsInfer.classes env))
           val errs =
             List.map (fn {span, msg, ...} : G.diag =>
                         "LIBRARY-ERROR\t" ^ getOpt (M.find (idOfFile, #file span), #file span) ^ ":" ^ where_ span ^ "\t" ^ msg)
               (List.filter (fn d => #library d) (#diags r))
         in
-          List.app (fn l => print (l ^ "\n")) (sort lines @ sort errs)
+          List.app (fn l => print (l ^ "\n")) (sort lines @ sort insts @ sort errs)
         end
 
   (* ---- --dump-evidence ---- *)
@@ -261,6 +283,22 @@ struct
                               else List.app (fn rec_ => print (k ^ "\t" ^ HsEvidence.showRecord rec_ ^ "\n")) rs)
         (HsEvidence.all (#evidence r))
     end
+
+  (* ---- --dump-derived ---- *)
+
+  (* the derived instances of the program's modules, as HsDerive made
+     them, each printed as an instance declaration *)
+  fun dumpDerived (g : G.graph, r : result) =
+    let val programIds = List.mapPartial (fn (n : G.node, _) => if #library n then NONE else SOME (#id n)) (#modules r)
+    in
+      List.app (fn (h, id, ds) =>
+                  if List.exists (fn m => m = h) programIds then
+                    (print ("-- " ^ h ^ ": instance " ^ HsClasses.showInstance id ^ "\n");
+                     List.app (fn d => print (HsPrint.decl d ^ "\n")) ds)
+                  else ())
+        (#derived r)
+    end
+
   (* ---- --dump-binders ---- *)
 
   (* every occurrence of a local name of the program's own modules, which

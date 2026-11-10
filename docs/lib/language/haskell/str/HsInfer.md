@@ -25,7 +25,7 @@ What each means is on [`HS_INFER`](../sig/HS_INFER.md); the types are this struc
 | datatype | [`cycleDefault`](../sig/HS_INFER.md#type-cycledefault) | `PerModule` &#124; `PerGroup` |
 | type | [`env`](../sig/HS_INFER.md#type-env) | *a type of its own* |
 | type | [`module_`](../sig/HS_INFER.md#type-module_) | `{ast : HsAst.module, id : string, library : bool}` |
-| val | [`check`](../sig/HS_INFER.md#val-check) | `{cycleDefault : cycleDefault, env : env, evidence : HsEvidence.table, prelude : string * string -> string option, unit : module_ list} -> {env : env, errors : ({file : string, start : int, stop : int} * string) list}` |
+| val | [`check`](../sig/HS_INFER.md#val-check) | `{cycleDefault : cycleDefault, env : env, evidence : HsEvidence.table, fixity : string -> (HsAst.fixity * int) option, prelude : string * string -> string option, unit : module_ list} -> {derived : (string * string * HsAst.decl list) list, env : env, errors : ({file : string, start : int, stop : int} * string) list}` |
 | val | [`classes`](../sig/HS_INFER.md#val-classes) | `env -> HsClasses.env` |
 | val | [`initial`](../sig/HS_INFER.md#val-initial) | `{primitives : string list} -> env` |
 | val | [`valueScheme`](../sig/HS_INFER.md#val-valuescheme) | `env * string -> {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int} option` |
