@@ -195,7 +195,8 @@ struct
               | M.ExnCon a => M.ExnCon (atom a)
               | M.ExnArg (t, a) => M.ExnArg (t, atom a)
               | M.SetGlobal (g, a) => M.SetGlobal (g, atom a)
-              | _ => r
+              | M.NewExn _ => r
+              | M.BuiltinExn _ => r
             fun exp e =
               case e of
                 M.Let (x, s as (tvs, t), r, b) =>
@@ -246,7 +247,9 @@ struct
               | M.Handle (a, x, h) => let val a = unset a in M.Handle (a, x, unset h) end
               | M.Mark (pos, a) => M.Mark (pos, unset a)
               | M.Return (M.SetGlobal (g, _)) => if unsetIt g then M.Return (M.Atom M.Unit) else e
-              | _ => e
+              | M.Jump _ => e
+              | M.Raise _ => e
+              | M.Return _ => e
             fun def d =
               case d of
                 M.Val (g, s, e) => M.Val (g, s, exp e)

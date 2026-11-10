@@ -1687,6 +1687,8 @@ struct
          | Ty.Tuple ts => "}" :: list (ts, "{" :: acc)
          | Ty.Arrow (a, b) => ")" :: ty (b, "->" :: ty (a, "(" :: acc))
          | Ty.ExnCon => "exn" :: acc
+         | Ty.App (h, args) => ")" :: list (args, "(" :: ty (h, "@" :: acc))
+         | Ty.Forall (vs, b) => ")" :: ty (b, "." :: list (List.map Ty.gen vs, "(!" :: acc))
        and list ([], acc) = acc
          | list ([t], acc) = ty (t, acc)
          | list (t :: ts, acc) = list (ts, "," :: ty (t, acc))
@@ -2056,6 +2058,14 @@ struct
     | Ty.Tuple ts' => (P.byte (#w e, 3); P.list (fn (_, x_2) => irTy (e, x_2)) (#w e, ts'))
     | Ty.Arrow (a', b') => (P.byte (#w e, 4); irTy (e, a'); irTy (e, b'))
     | Ty.ExnCon => P.byte (#w e, 5)
+    | Ty.App (h', args') =>
+        (P.byte (#w e, 6);
+         irTy (e, h');
+         P.list (fn (_, x_3) => irTy (e, x_3)) (#w e, args'))
+    | Ty.Forall (vs', b') =>
+        (P.byte (#w e, 7);
+         P.list (fn (_, x_4) => nameTo (#w e, e, kTvar, x_4)) (#w e, vs');
+         irTy (e, b'))
 
   and coninfo (e : enc, v : Ast.coninfo) : unit =
     case v of
@@ -3142,6 +3152,12 @@ struct
     | 3 => let val ts' = P.rlist (fn _ => rirTy d) (#r d) in Ty.tuple ts' end
     | 4 => let val a' = rirTy d val b' = rirTy d in Ty.arrow (a', b') end
     | 5 => Ty.exnCon
+    | 6 => let val h' = rirTy d val args' = P.rlist (fn _ => rirTy d) (#r d) in Ty.app (h', args') end
+    | 7 =>
+        let
+          val vs' = P.rlist (fn _ => rnameAt (#r d, d, kTvar)) (#r d)
+          val b' = rirTy d
+        in Ty.forall (vs', b') end
     | _ => raise P.Bad "not a type of the IRs"
 
   and rconinfo (d : dec) : Ast.coninfo =

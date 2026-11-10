@@ -49,6 +49,8 @@ struct
                 | Ty.Tuple ts => Ty.tuple (List.map ty ts)
                 | Ty.Arrow (a, b) => let val a' = ty a in Ty.arrow (a', ty b) end
                 | Ty.ExnCon => Ty.exnCon
+                | Ty.App (h, args) => let val h' = ty h in Ty.app (h', List.map ty args) end
+                | Ty.Forall (vs, b) => let val vs' = List.map tvar vs in Ty.forall (vs', ty b) end
             in IntTable.insert (done, Ty.id t, u); u end
     in ty end
 
@@ -65,22 +67,9 @@ struct
         | Con0 (tag, t) => Con0 (tag, ty t)
         | Unit => Unit
       fun atoms l = List.map atom l
-      fun rhs r =
-        case r of
-          Atom a => Atom (atom a)
-        | App (f, args) => let val f' = atom f in App (f', atoms args) end
-        | Prim (n, t, args) => let val t' = ty t in Prim (n, t', atoms args) end
-        | Tuple args => Tuple (atoms args)
-        | Select (i, a) => Select (i, atom a)
-        | Con (tag, t, a) => let val t' = ty t in Con (tag, t', atom a) end
-        | Decon (tag, t, a) => let val t' = ty t in Decon (tag, t', atom a) end
-        | ConTag a => ConTag (atom a)
-        | NewExn s => NewExn s
-        | BuiltinExn i => BuiltinExn i
-        | MkExn (a, b) => let val a' = atom a in MkExn (a', atom b) end
-        | ExnCon a => ExnCon (atom a)
-        | ExnArg (t, a) => let val t' = ty t in ExnArg (t', atom a) end
-        | SetGlobal (g, a) => let val g' = stamp g in SetGlobal (g', atom a) end
+      (* in the order the step names its parts (Mid.mapRhsWith), as the
+         stamps are given *)
+      val rhs = mapRhsWith {ty = ty, atom = atom, global = stamp}
       fun params ps = List.map (fn (x, t) => let val x' = stamp x in (x', ty t) end) ps
       fun fundef ({name, label, tyvars, params = ps, result, body} : fundef) : fundef =
         let
@@ -286,6 +275,8 @@ struct
               | (Ty.Tuple a, Ty.Tuple a') => tys (a, a')
               | (Ty.Arrow (a, b), Ty.Arrow (a', b')) => (ty (a, a'); ty (b, b'))
               | (Ty.ExnCon, Ty.ExnCon) => ()
+              | (Ty.App (h, a), Ty.App (h', a')) => (ty (h, h'); tys (a, a'))
+              | (Ty.Forall (vs, b), Ty.Forall (vs', b')) => (lists tvar (vs, vs'); ty (b, b'))
               | _ => bug ("type " ^ Ty.toString t ^ " made " ^ Ty.toString t'));
              IntTable.insert (tyDone, Ty.id t, Ty.id t'))
       and tys (a, a') = lists ty (a, a')

@@ -13,7 +13,18 @@
    tree, is n nodes here, and is walked as n (MLton's regression
    exponential.sml; Shao, League and Monnier, ICFP 1998). A node is seen
    through `view` and made by the functions named after its constructors:
-   gen, var, con, tuple, arrow and exnCon.
+   gen, var, con, tuple, arrow, exnCon, app and forall.
+
+   Two forms are for a front end whose types say more than SML's (D4 of
+   docs/plans/language/haskell98.md), which the elaborator never makes: a
+   type variable applied to types (App: Haskell's `m a`), whose variable
+   stands for a type name not yet given its last arguments (a Con with
+   fewer arguments than its datatype's parameters: `maybe`, of `'a maybe`);
+   and a forall in a field (Forall: a dictionary's polymorphic method),
+   which binds its own generic variables. A forall is the same type as
+   another that differs from it only in the names of the variables it
+   binds, so that two foralls are equal where they are the same node or
+   are so (equal), though only the same node is one.
 
    The elaborator fills the tables below as it goes, so that a type can be
    found for what the translation meets: the scheme of every variable, the
@@ -31,14 +42,26 @@ struct
       | Tuple of ty list                  (* a record or tuple; unit is Tuple [] *)
       | Arrow of ty * ty
       | ExnCon                            (* an exception constructor *)
-    (* the node of each view, made where there is none yet *)
+      | App of ty * ty list               (* a type variable, Gen or Var, applied to types *)
+      | Forall of int list * ty           (* a field's polymorphic type: the generic variables it binds, its body *)
+    (* the node of each view, made where there is none yet; app of a type
+       name is the type name given more arguments, of an application the
+       application given more, and of no arguments its head; forall of no
+       variable is its body *)
     val gen : int -> ty
     val var : int -> ty
     val con : int * string * ty list -> ty
     val tuple : ty list -> ty
     val arrow : ty * ty -> ty
     val exnCon : ty
+    val app : ty * ty list -> ty
+    val forall : int list * ty -> ty
     val view : ty -> view
+    (* whether a type has a forall in it, and an application: what no type
+       of SML's has, so that a walk that asks the other forms alone can
+       know it need not look *)
+    val hasForall : ty -> bool
+    val hasApp : ty -> bool
     (* a node's number: two nodes are the same type where theirs are *)
     val id : ty -> int
     (* the number of nodes of a type as a tree, to sizeLimit *)
@@ -49,9 +72,11 @@ struct
     val gens : ty -> int list
   end =
   struct
-    (* its number, its hash, its size, its generic variables and its view,
-       the third and fourth worked out as it is made *)
-    datatype ty = T of int * int * int * int list * view
+    (* its number, its hash, its size, its generic variables, what it has
+       of the forms of other front ends (a forall, 1, and an application,
+       2, in a word's bits) and its view, the third to fifth worked out as
+       it is made *)
+    datatype ty = T of int * int * int * int list * int * view
     and view =
         Gen of int
       | Var of int
@@ -59,12 +84,20 @@ struct
       | Tuple of ty list
       | Arrow of ty * ty
       | ExnCon
+      | App of ty * ty list
+      | Forall of int list * ty
 
-    fun id (T (i, _, _, _, _)) = i
-    fun hashOf (T (_, h, _, _, _)) = h
-    fun size (T (_, _, n, _, _)) = n
-    fun gens (T (_, _, _, g, _)) = g
-    fun view (T (_, _, _, _, v)) = v
+    fun id (T (i, _, _, _, _, _)) = i
+    fun hashOf (T (_, h, _, _, _, _)) = h
+    fun size (T (_, _, n, _, _, _)) = n
+    fun gens (T (_, _, _, g, _, _)) = g
+    fun forms (T (_, _, _, _, f, _)) = f
+    fun view (T (_, _, _, _, _, v)) = v
+    fun hasForall t = forms t mod 2 = 1
+    fun hasApp t = forms t div 2 mod 2 = 1
+    (* the forms of the parts, joined: bits, as a number below 4 *)
+    fun join (a, b) = if a = b then a else if a = 0 then b else if b = 0 then a else 3
+    fun formsOf ts = List.foldl (fn (t, f) => join (forms t, f)) 0 ts
     val sizeLimit = 1000000
 
     (* the nodes by a hash of their view -- its constructor, its numbers and
@@ -112,13 +145,13 @@ struct
 
     fun bucket h = let val a = !buckets in Array.sub (a, h mod Array.length a) end
 
-    (* a node not made yet, of its hash, its size, its variables and its
-       view *)
-    fun new (h, n, g, v) =
+    (* a node not made yet, of its hash, its size, its variables, its
+       forms and its view *)
+    fun new (h, n, g, f, v) =
       let
         val a = !buckets
         val i = h mod Array.length a
-        val t = T (!next, h, n, g, v)
+        val t = T (!next, h, n, g, f, v)
       in
         next := !next + 1;
         Array.update (a, i, t :: Array.sub (a, i));
@@ -132,24 +165,24 @@ struct
     fun gen x =
       let
         val h = final (mix (0w1, x))
-        fun find [] = new (h, 1, [x], Gen x)
-          | find ((t as T (_, h', _, _, v)) :: rest) =
+        fun find [] = new (h, 1, [x], 0, Gen x)
+          | find ((t as T (_, h', _, _, _, v)) :: rest) =
               if h <> h' then find rest else case v of Gen x' => if x = x' then t else find rest | _ => find rest
       in find (bucket h) end
 
     fun var x =
       let
         val h = final (mix (0w2, x))
-        fun find [] = new (h, 1, [], Var x)
-          | find ((t as T (_, h', _, _, v)) :: rest) =
+        fun find [] = new (h, 1, [], 0, Var x)
+          | find ((t as T (_, h', _, _, _, v)) :: rest) =
               if h <> h' then find rest else case v of Var x' => if x = x' then t else find rest | _ => find rest
       in find (bucket h) end
 
     fun con (s, name, ts) =
       let
         val h = final (ids (mix (0w3, s), ts))
-        fun find [] = new (h, sizes ts, gensOf ts, Con (s, name, ts))
-          | find ((t as T (_, h', _, _, v)) :: rest) =
+        fun find [] = new (h, sizes ts, gensOf ts, formsOf ts, Con (s, name, ts))
+          | find ((t as T (_, h', _, _, _, v)) :: rest) =
               if h <> h' then find rest
               else case v of Con (s', _, ts') => if s = s' andalso sameIds (ts, ts') then t else find rest | _ => find rest
       in find (bucket h) end
@@ -157,8 +190,8 @@ struct
     fun tuple ts =
       let
         val h = final (ids (0w4, ts))
-        fun find [] = new (h, sizes ts, gensOf ts, Tuple ts)
-          | find ((t as T (_, h', _, _, v)) :: rest) =
+        fun find [] = new (h, sizes ts, gensOf ts, formsOf ts, Tuple ts)
+          | find ((t as T (_, h', _, _, _, v)) :: rest) =
               if h <> h' then find rest else case v of Tuple ts' => if sameIds (ts, ts') then t else find rest | _ => find rest
       in find (bucket h) end
 
@@ -166,13 +199,42 @@ struct
       let
         val (i, j) = (id a, id b)
         val h = final (mix (mix (0w5, i), j))
-        fun find [] = new (h, add (b, add (a, 1)), union (b, gens a), Arrow (a, b))
-          | find ((t as T (_, h', _, _, v)) :: rest) =
+        fun find [] = new (h, add (b, add (a, 1)), union (b, gens a), join (forms a, forms b), Arrow (a, b))
+          | find ((t as T (_, h', _, _, _, v)) :: rest) =
               if h <> h' then find rest
               else case v of Arrow (a', b') => if i = id a' andalso j = id b' then t else find rest | _ => find rest
       in find (bucket h) end
 
-    val exnCon = new (final 0w6, 1, [], ExnCon)
+    val exnCon = new (final 0w6, 1, [], 0, ExnCon)
+
+    (* its arguments' variables, then its head's, as the text writes it *)
+    fun app (h, ts) =
+      case (view h, ts) of
+        (_, []) => h
+      | (Con (s, name, xs), _) => con (s, name, xs @ ts)
+      | (App (h', xs), _) => app (h', xs @ ts)
+      | _ =>
+          let
+            val hh = final (ids (mix (0w7, id h), ts))
+            fun find [] = new (hh, add (h, sizes ts), union (h, gensOf ts), join (2, join (forms h, formsOf ts)), App (h, ts))
+              | find ((t as T (_, h', _, _, _, v)) :: rest) =
+                  if hh <> h' then find rest
+                  else case v of App (g, ts') => if id g = id h andalso sameIds (ts, ts') then t else find rest | _ => find rest
+          in find (bucket hh) end
+
+    (* its body's variables but those it binds *)
+    fun forall (vs, b) =
+      case vs of
+        [] => b
+      | _ =>
+          let
+            val h = final (mix (List.foldl (fn (v, h) => mix (h, v)) 0w8 vs, id b))
+            fun find [] = new (h, add (b, 1), List.filter (fn g => not (List.exists (fn v => v = g) vs)) (gens b),
+                               join (1, forms b), Forall (vs, b))
+              | find ((t as T (_, h', _, _, _, v)) :: rest) =
+                  if h <> h' then find rest
+                  else case v of Forall (ws, c) => if ws = vs andalso id c = id b then t else find rest | _ => find rest
+          in find (bucket h) end
   end
   open Node
 
@@ -514,8 +576,44 @@ struct
 
   (* ---- comparing and instantiating ---- *)
 
-  (* the same type: the same node *)
-  fun equal (a : ty, b : ty) : bool = id a = id b
+  (* The same type: the same node, or two with foralls in them that differ
+     only in the names of the variables those bind. *)
+  fun alpha (a : ty, b : ty) : bool =
+    let
+      (* each forall's variables around, of a and of b, by their places *)
+      fun go (ra, rb, n, a, b) =
+        if n = 0 andalso not (hasForall a) andalso not (hasForall b) then id a = id b
+        else
+          case (view a, view b) of
+            (Gen x, Gen y) =>
+              (case (IntMap.find (ra, x), IntMap.find (rb, y)) of
+                 (SOME i, SOME j) => i = j
+               | (NONE, NONE) => x = y
+               | _ => false)
+          | (Var x, Var y) => x = y
+          | (Con (s, _, xs), Con (s', _, ys)) => s = s' andalso all (ra, rb, n, xs, ys)
+          | (Tuple xs, Tuple ys) => all (ra, rb, n, xs, ys)
+          | (Arrow (x1, x2), Arrow (y1, y2)) => go (ra, rb, n, x1, y1) andalso go (ra, rb, n, x2, y2)
+          | (ExnCon, ExnCon) => true
+          | (App (g, xs), App (h, ys)) => go (ra, rb, n, g, h) andalso all (ra, rb, n, xs, ys)
+          | (Forall (vs, c), Forall (ws, d)) =>
+              List.length vs = List.length ws
+              andalso let
+                        fun places (us, k, r) = List.foldl (fn (u, (k, r)) => (k + 1, IntMap.insert (r, u, k))) (k, r) us
+                        val (n', ra') = places (vs, n, ra)
+                        val (_, rb') = places (ws, n, rb)
+                      in go (ra', rb', n', c, d) end
+          | _ => false
+      and all (ra, rb, n, xs, ys) =
+        List.length xs = List.length ys andalso ListPair.all (fn (x, y) => go (ra, rb, n, x, y)) (xs, ys)
+    in go (IntMap.empty, IntMap.empty, 0, a, b) end
+  fun equal (a : ty, b : ty) : bool = id a = id b orelse (hasForall a andalso hasForall b andalso alpha (a, b))
+
+  (* Generic variables no type of a program names, for a forall's own made
+     anew where a substitution would capture them (subst) *)
+  val nextBound = ref 0
+  val () = CompilerState.cellRoot ("Ty.nextBound", nextBound)
+  fun freshBound () = (nextBound := !nextBound - 1; !nextBound - 1000000000)
 
   (* The generic variables of a scheme made the types an instance gives
      them: SOME the substitution where the instance is one, NONE where it is
@@ -549,14 +647,39 @@ struct
             if List.length xs = List.length ys then ListPair.foldl (fn (x, y, s) => go (x, y, s)) s (xs, ys)
             else raise No
         | (Arrow (x1, x2), Arrow (y1, y2)) => go (x2, y2, go (x1, y1, s))
+        (* an application at a type name given at least as many arguments,
+           or at another application: its variable the type name, or the
+           application, given those before its own *)
+        | (App (h, xs), Con (a, n, ys)) => apps (h, xs, fn k => con (a, n, k), ys, s)
+        | (App (h, xs), App (g, ys)) => apps (h, xs, fn k => app (g, k), ys, s)
+        | (Forall (vs, b), Forall (ws, c)) =>
+            if List.length vs <> List.length ws then raise No
+            else
+              (* their variables made the same new ones, which match only
+                 themselves *)
+              let
+                val fresh = List.map (fn _ => freshBound ()) vs
+                fun rename us = ListPair.foldl (fn (u, f, m) => IntMap.insert (m, u, gen f)) IntMap.empty (us, fresh)
+                val s' = go (subst (rename vs) b, subst (rename ws) c, s)
+                fun itself f = case IntMap.find (s', f) of SOME t => equal (t, gen f) | NONE => true
+              in
+                if List.all itself fresh then List.foldl (fn (f, m) => if IntMap.member (m, f) then IntMap.remove (m, f) else m) s' fresh
+                else raise No
+              end
         | _ => if equal (x, y) then s else raise No
+      and apps (h, xs, head, ys, s) =
+        let val k = List.length ys - List.length xs
+        in
+          if k < 0 then raise No
+          else ListPair.foldl (fn (x, y, s) => go (x, y, s)) (go (h, head (List.take (ys, k)), s)) (xs, List.drop (ys, k))
+        end
     in
       SOME (go (scheme, inst, IntMap.empty)) handle No => NONE
     end
 
   (* A type with its generic variables made what s says: each node once,
      and a node that names none of s's as it is. *)
-  fun subst (s : ty IntMap.map) (t : ty) : ty =
+  and subst (s : ty IntMap.map) (t : ty) : ty =
     if IntMap.isEmpty s then t
     else if size t <= smallType then
       let
@@ -569,7 +692,12 @@ struct
           | Arrow (a, b) =>
               let val (a', b') = (tree a, tree b)
               in if id a = id a' andalso id b = id b' then t else arrow (a', b') end
-          | _ => t
+          | App (h, xs) =>
+              let val (h', ys) = (tree h, List.map tree xs)
+              in if id h = id h' andalso same (xs, ys) then t else app (h', ys) end
+          | Forall (vs, b) => under (s, vs, b)
+          | Var _ => t
+          | ExnCon => t
       in tree t end
     else
       let
@@ -587,9 +715,36 @@ struct
                     | Con (a, n, xs) => con (a, n, List.map go xs)
                     | Tuple xs => tuple (List.map go xs)
                     | Arrow (a, b) => arrow (go a, go b)
-                    | _ => t
+                    | App (h, xs) => app (go h, List.map go xs)
+                    | Forall (vs, b) => under (s, vs, b)
+                    | Var _ => t
+                    | ExnCon => t
                 in IntTable.insert (done, id t, u); u end
       in go t end
+  (* A forall's body with s made of its free variables, those it binds
+     made anew where a type s gives names one of them *)
+  and under (s : ty IntMap.map, vs : int list, b : ty) : ty =
+    let
+      val s = List.foldl (fn (v, s) => if IntMap.member (s, v) then IntMap.remove (s, v) else s) s vs
+      val given = List.mapPartial (fn g => IntMap.find (s, g)) (gens b)
+    in
+      if List.exists (fn v => List.exists (fn t => List.exists (fn g => g = v) (gens t)) given) vs then
+        let
+          val ws = List.map (fn _ => freshBound ()) vs
+          val s = ListPair.foldl (fn (v, w, s) => IntMap.insert (s, v, gen w)) s (vs, ws)
+        in forall (ws, subst s b) end
+      else forall (vs, subst s b)
+    end
+
+  (* A forall's body at the types given for the variables it binds: what a
+     polymorphic field is at an instance (MidLint) *)
+  fun instantiate (t : ty, args : ty list) : ty option =
+    case view t of
+      Forall (vs, b) =>
+        if List.length vs = List.length args then
+          SOME (subst (ListPair.foldl (fn (v, a, s) => IntMap.insert (s, v, a)) IntMap.empty (vs, args)) b)
+        else NONE
+    | _ => NONE
 
   (* The argument of the constructor with a tag, of a datatype at the
      arguments given, where the datatype is one and it has that constructor:
@@ -634,6 +789,10 @@ struct
         | Tuple xs => String.concatWith " * " (List.map atomic xs)
         | Arrow (a, b) => atomic a ^ " -> " ^ go b
         | ExnCon => "exncon"
+        (* a variable applied as a type name is, after its arguments *)
+        | App (h, [a]) => atomic a ^ " " ^ go h
+        | App (h, xs) => "(" ^ String.concatWith ", " (List.map go xs) ^ ") " ^ go h
+        | Forall (vs, b) => "(forall [" ^ String.concatWith " " (List.map gen vs) ^ "] " ^ go b ^ ")"
       and atomic t =
         case abbrev t of
           SOME s => s

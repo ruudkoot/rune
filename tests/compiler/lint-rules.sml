@@ -482,6 +482,85 @@ struct
              valR (47, Ty.int, M.Atom one)], "")
     end
 
+  (* ---- the forms of Ty another front end makes (haskell98 M28, D4): a
+     type variable applied to types, and a forall in a field -- each
+     through Mid's text and its codec, and refused where it is ill-applied,
+     each by its message *)
+  fun midForms () =
+    let
+      val gm = Ty.gen 78
+      val gb = Ty.gen 79
+      val listOf = Ty.con (#stamp Types.listTycon, "list", [])          (* list, given no argument *)
+      val idTy = Ty.forall ([79], Ty.arrow (gb, gb))                    (* forall 'b. 'b -> 'b *)
+      val dict = Ty.tuple [idTy]
+      fun ident f : M.fundef =
+        {name = f, label = NONE, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
+      (* over a type variable applied: fn ['m 'a] (x : 'a 'm) : 'a 'm *)
+      val over : M.fundef =
+        {name = 63, label = NONE, tyvars = [78, 77], params = [(64, Ty.app (gm, [ga]))], result = Ty.app (gm, [ga]),
+         body = M.Return (M.Atom (M.Var (64, [])))}
+      (* a dictionary of the identity, its method taken at a scheme and used
+         at int; the function over 'm at list *)
+      val dictP = [M.Funs [ident 51], valR (60, dict, M.Tuple [M.Global (51, [])]),
+                   M.Val (61, ([], Ty.int),
+                          M.Let (62, ([80], Ty.arrow (Ty.gen 80, Ty.gen 80)), M.Select (0, M.Global (60, [])),
+                                 M.Return (M.App (M.Var (62, [Ty.int]), [one]))))]
+      val nilInt = M.Con0 (Types.nilTag (), Ty.list Ty.int)
+      val overP = [M.Funs [over], valR (66, Ty.list Ty.int, M.App (M.Global (63, [listOf, Ty.int]), [nilInt]))]
+      fun fn1 (f, tyvars, ps, result) : M.fundef =
+        {name = f, label = NONE, tyvars = tyvars, params = ps, result = result, body = M.Return (M.Atom (M.Var (#1 (hd ps), [])))}
+      (* a function through MidCodec and back, each name a number *)
+      fun codec (f : M.fundef) : M.fundef =
+        let
+          val w = Pickle.writer ()
+          fun n x = Pickle.nat (w, x)
+          val () = MidCodec.write (w, {stamp = n, tycon = n, tvar = n, file = fn _ => (), position = fn _ => ()}) f
+          val r = Pickle.reader (Pickle.contents w)
+          fun rn () = Pickle.rnat r
+        in MidCodec.read (r, {stamp = rn, tycon = rn, tvar = rn, file = fn () => "", local' = fn i => 1000 + i}) end
+      fun sameThrough (what, f) =
+        report ("forms: " ^ what ^ " through the codec", MidText.show [M.Funs [codec f]] = MidText.show [M.Funs [f]],
+                MidText.show [M.Funs [codec f]])
+    in
+      midP ("a polymorphic field, made of a function at no types and taken at a scheme", dictP, "");
+      midP ("a type variable applied, at a type name given no argument", overP, "");
+      checked ("forms: a polymorphic field and a type variable applied through Mid's text",
+               fn () => MidText.roundTrip (dictP @ overP), "");
+      sameThrough ("a type variable applied", over);
+      sameThrough ("a polymorphic field", fn1 (70, [], [(71, dict)], dict));
+      report ("forms: a forall is the same type as one that binds other names",
+              Ty.equal (idTy, Ty.forall ([81], Ty.arrow (Ty.gen 81, Ty.gen 81)))
+              andalso not (Ty.equal (idTy, Ty.forall ([81], Ty.arrow (Ty.gen 81, gb)))), Ty.toString idTy);
+      report ("forms: a type variable applied, given a type name, is the type name given more",
+              Ty.equal (Ty.subst (IntMap.insert (IntMap.empty, 78, listOf)) (Ty.app (gm, [Ty.int])), Ty.list Ty.int), "");
+      midP ("a forall where a value's type is wanted", [M.Funs [ident 51], valR (67, idTy, M.Atom (M.Global (51, [])))],
+            "is polymorphic");
+      midP ("a polymorphic field bound where a value's type is wanted",
+            [M.Funs [ident 51], valR (60, dict, M.Tuple [M.Global (51, [])]),
+             M.Val (68, ([], Ty.int), M.Let (69, ([], Ty.arrow (Ty.int, Ty.int)), M.Select (0, M.Global (60, [])),
+                                             M.Return (M.App (M.Var (69, []), [one]))))],
+            "where int -> int is wanted");
+      midP ("a polymorphic variable at no types given where a value is wanted",
+            [M.Funs [ident 51], valR (67, Ty.arrow (Ty.int, Ty.int), M.Atom (M.Global (51, [])))],
+            "abstracts over 1 variables and is given 0 types");
+      midP ("a forall in a field that binds a variable in scope",
+            [M.Funs [fn1 (72, [77], [(73, Ty.tuple [Ty.forall ([77], Ty.arrow (ga, ga))])], Ty.tuple [Ty.forall ([77], Ty.arrow (ga, ga))])]],
+            "binds 'a77 again");
+      midP ("a type variable applied to two numbers of types",
+            [M.Funs [fn1 (74, [78, 77], [(75, Ty.app (gm, [ga])), (76, Ty.app (gm, [ga, ga]))], Ty.app (gm, [ga]))]],
+            "applies 'a78 to 2 types, and elsewhere to 1");
+      midP ("a type variable applied where a value's type is wanted unapplied",
+            [M.Funs [fn1 (74, [78, 77], [(75, Ty.app (gm, [ga])), (76, gm)], Ty.app (gm, [ga]))]],
+            "applies 'a78 to 0 types, and elsewhere to 1");
+      midP ("an application of what is no type variable", [valR (67, Ty.app (Ty.tuple [], [Ty.int]), M.Atom M.Unit)],
+            "applies what is no type variable");
+      midP ("a type name given fewer arguments where a value's type is wanted", [valR (67, listOf, M.Atom nilInt)],
+            "gives type name list 0 arguments, of its 1");
+      midP ("a type name given more arguments than it has parameters",
+            [M.Funs [over], valR (66, Ty.list Ty.int, M.App (M.Global (63, [Ty.con (#stamp Types.listTycon, "list", [Ty.int, Ty.int]), Ty.int]), [nilInt]))],
+            "gives type name list 2 arguments, of its 1")
+    end
+
   (* ---- MidText's reader (the haskell98 roadmap's M7): a type takes the
      arguments its declaration says, an abstract type's too *)
   fun textP (what, text, wanted) =
@@ -653,6 +732,7 @@ struct
      renamings2 ();
      lambdaRules ();
      midRules ();
+     midForms ();
      textRules ();
      lowRules ();
      codes ();

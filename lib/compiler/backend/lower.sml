@@ -135,21 +135,7 @@ struct
           M.Var (x, _) => var (x, acc)
         | _ => acc
       fun atoms (xs, acc) = List.foldl atom acc xs
-      fun rhs (r, acc) =
-        case r of
-          M.Atom a => atom (a, acc)
-        | M.App (f, xs) => atoms (f :: xs, acc)
-        | M.Prim (_, _, xs) => atoms (xs, acc)
-        | M.Tuple xs => atoms (xs, acc)
-        | M.Select (_, a) => atom (a, acc)
-        | M.Con (_, _, a) => atom (a, acc)
-        | M.Decon (_, _, a) => atom (a, acc)
-        | M.ConTag a => atom (a, acc)
-        | M.MkExn (c, a) => atoms ([c, a], acc)
-        | M.ExnCon a => atom (a, acc)
-        | M.ExnArg (_, a) => atom (a, acc)
-        | M.SetGlobal (_, a) => atom (a, acc)
-        | _ => acc
+      fun rhs (r, acc) = atoms (M.atomsOfRhs r, acc)
       fun bind x = IntTable.insert (bound, x, ())
       fun go (e, acc) =
         case e of
@@ -283,6 +269,10 @@ struct
     | Ty.ExnCon => L.RPtr
     | Ty.Gen _ => L.RAny
     | Ty.Var _ => L.RAny
+    (* a type variable applied: what it stands for is not known here *)
+    | Ty.App _ => L.RAny
+    (* a polymorphic field's value is its body's: no type is passed *)
+    | Ty.Forall (_, b) => repOfTy b
     | Ty.Con (stamp, name, _) =>
         if stamp = #stamp Types.intTycon then L.RInt
         else if stamp = #stamp Types.wordTycon then L.RWord
@@ -409,7 +399,11 @@ struct
     | M.Fun (_, b) => straight b
     | M.Mark (_, a) => straight a
     | M.Return _ => true
-    | _ => false
+    | M.Join _ => false
+    | M.Jump _ => false
+    | M.If _ => false
+    | M.Handle _ => false
+    | M.Raise _ => false
 
   (* Whether f calls itself in tail position of its body, where no handler
      is pushed: the calls a loop makes of it. *)
@@ -427,7 +421,9 @@ struct
         | M.Handle (_, _, h) => tail h      (* its body is no tail position *)
         | M.Return (M.App (g, xs)) => self g andalso List.length xs = List.length (#params f)
         | M.Mark (_, a) => tail a
-        | _ => false
+        | M.Jump _ => false
+        | M.Raise _ => false
+        | M.Return _ => false
     in tail (#body f) end
 
   (* ---- lowering ---- *)
@@ -620,7 +616,17 @@ struct
        M.Prim (_, pt, _) => (case Ty.view pt of Ty.Arrow (_, res) => setTy (b, v, res) | _ => ())
      | M.Con (_, t, _) => setTy (b, v, t)
      | M.ExnArg (t, _) => setTy (b, v, t)
-     | _ => ();
+     | M.Atom _ => ()
+     | M.App _ => ()
+     | M.Tuple _ => ()
+     | M.Select _ => ()
+     | M.Decon _ => ()
+     | M.ConTag _ => ()
+     | M.NewExn _ => ()
+     | M.BuiltinExn _ => ()
+     | M.MkExn _ => ()
+     | M.ExnCon _ => ()
+     | M.SetGlobal _ => ();
      v)
 
   (* what an operation makes, where its shape says: a primitive's result
@@ -639,7 +645,10 @@ struct
     | M.ExnCon _ => L.RPtr
     | M.ExnArg (t, _) => repOfTy t
     | M.SetGlobal _ => L.RUnit
-    | _ => L.RAny
+    | M.Atom _ => L.RAny
+    | M.App _ => L.RAny
+    | M.Select _ => L.RAny
+    | M.Decon _ => L.RAny
 
   (* x bound to r, where its value need not be made there (virt) *)
   and virtualised (b, cx, x : int, r : M.rhs) : bool =
