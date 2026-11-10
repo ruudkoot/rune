@@ -476,8 +476,10 @@ struct
       | NONE =>
           case CoreMap.find (#known env, y) of
             SOME (KLam (bs, body)) =>
+              (* small alone: a lambda bound once is put where it is used by
+                 its let, which goes; one copied here keeps its binding *)
               if length (#stack env) < maxDepth andalso saturates (bs, args)
-                 andalso (B.sizeUpTo inlineSize body <= inlineSize orelse #n (occ y) = 1)
+                 andalso B.sizeUpTo inlineSize body <= inlineSize
                  andalso inlining () andalso B.tick "inline-local"
               then beta (copyEnv (env, "" :: #stack env), bs, body, args)
               else plain
