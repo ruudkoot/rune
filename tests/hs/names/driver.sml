@@ -17,7 +17,7 @@ struct
         | go ("--dotted-names" :: rest, files) = (dotted := true; go (rest, files))
         | go (f :: rest, files) = go (rest, f :: files)
       val files = go (CommandLine.arguments (), [])
-      val g = RhcGraph.load {roots = files, dotted = !dotted, types = false}
+      val g = RhcGraph.load {roots = files, dotted = !dotted}
     in
       RhcNames.dump (g, RhcNames.run (g, !fixpoint, NONE));
       OS.Process.success

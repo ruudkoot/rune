@@ -35,6 +35,7 @@ the signature names and no others.
 | [`HsKinds`](str/HsKinds.md) | :> | [`HS_KINDS`](sig/HS_KINDS.md) |  |  | [lib/language/haskell/kinds.sml](../../../../lib/language/haskell/kinds.sml) |
 | [`HsLayout`](str/HsLayout.md) | :> | [`HS_LAYOUT`](sig/HS_LAYOUT.md) |  |  | [lib/language/haskell/layout.sml](../../../../lib/language/haskell/layout.sml) |
 | [`HsLexer`](str/HsLexer.md) | :> | [`HS_LEXER`](sig/HS_LEXER.md) |  |  | [lib/language/haskell/lexer.sml](../../../../lib/language/haskell/lexer.sml) |
+| [`HsLint`](str/HsLint.md) | :> | [`HS_LINT`](sig/HS_LINT.md) |  |  | [lib/language/haskell/hslint.sml](../../../../lib/language/haskell/hslint.sml) |
 | [`HsLiterate`](str/HsLiterate.md) | :> | [`HS_LITERATE`](sig/HS_LITERATE.md) |  |  | [lib/language/haskell/literate.sml](../../../../lib/language/haskell/literate.sml) |
 | [`HsMatch`](str/HsMatch.md) | :> | [`HS_MATCH`](sig/HS_MATCH.md) |  |  | [lib/language/haskell/match.sml](../../../../lib/language/haskell/match.sml) |
 | [`HsModules`](str/HsModules.md) | :> | [`HS_MODULES`](sig/HS_MODULES.md) |  |  | [lib/language/haskell/modules.sml](../../../../lib/language/haskell/modules.sml) |

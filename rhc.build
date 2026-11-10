@@ -15,6 +15,7 @@ files
   src/rhc/library.sml
   src/rhc/graph.sml
   src/rhc/names.sml
+  src/rhc/lint.sml
   src/rhc/desugar.sml
   src/rhc/syntax.sml
   src/rhc/main.sml

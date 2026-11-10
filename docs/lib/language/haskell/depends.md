@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 186 requirements between the 64 files become 88 arrows.
+library and not a wall of lines: the 137 requirements between the 58 files become 77 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(64)"]
+  a0["Languages<br>(58)"]
 ```
 
 ## Languages
@@ -70,30 +70,24 @@ flowchart TD
   n37["HsKinds"]
   n38(["HS_INFER"])
   n39["HsInfer"]
-  n40(["CORE"])
-  n41["Core"]
-  n42(["CORE_TEXT"])
-  n43["CoreText"]
-  n44(["CORE_PRIM"])
-  n45["CorePrim"]
-  n46(["CORE_RUNTIME"])
-  n47["CoreRuntime"]
-  n48(["CORE_LINT"])
-  n49["CoreLint"]
-  n50(["CORE_INTERP"])
-  n51["CoreInterp"]
-  n52(["CORE_GEN"])
-  n53["CoreGen"]
-  n54(["CORE_TO_MID"])
-  n55["CoreToMid"]
-  n56(["HS_DS_CORE"])
-  n57["HsDsCore"]
-  n58(["HS_DS_ENV"])
-  n59["HsDsEnv"]
-  n60(["HS_MATCH"])
-  n61["HsMatch"]
-  n62(["HS_DESUGAR"])
-  n63["HsDesugar"]
+  n40(["HS_LINT"])
+  n41["HsLint"]
+  n42(["CORE"])
+  n43["Core"]
+  n44(["CORE_TEXT"])
+  n45["CoreText"]
+  n46(["CORE_PRIM"])
+  n47["CorePrim"]
+  n48(["CORE_RUNTIME"])
+  n49["CoreRuntime"]
+  n50(["CORE_LINT"])
+  n51["CoreLint"]
+  n52(["CORE_INTERP"])
+  n53["CoreInterp"]
+  n54(["CORE_GEN"])
+  n55["CoreGen"]
+  n56(["CORE_TO_MID"])
+  n57["CoreToMid"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -147,41 +141,30 @@ flowchart TD
   n38 --> n35
   n39 --> n38
   n39 --> n37
+  n40 --> n13
   n41 --> n40
-  n42 --> n41
+  n41 --> n23
   n43 --> n42
-  n44 --> n41
+  n44 --> n43
   n45 --> n44
-  n45 --> n43
-  n46 --> n41
+  n46 --> n43
   n47 --> n46
-  n47 --> n43
-  n48 --> n41
+  n47 --> n45
+  n48 --> n43
   n49 --> n48
   n49 --> n45
-  n50 --> n41
+  n50 --> n43
   n51 --> n50
-  n51 --> n45
-  n52 --> n41
+  n51 --> n47
+  n52 --> n43
   n53 --> n52
-  n53 --> n43
-  n54 --> n41
+  n53 --> n47
+  n54 --> n43
   n55 --> n54
   n55 --> n45
-  n56 --> n41
-  n57 --> n43
+  n56 --> n43
   n57 --> n56
-  n57 --> n21
-  n58 --> n57
-  n58 --> n39
-  n59 --> n58
-  n60 --> n59
-  n61 --> n60
-  n62 --> n41
-  n62 --> n39
-  n63 --> n45
-  n63 --> n62
-  n63 --> n61
+  n57 --> n47
 ```
 
 ---

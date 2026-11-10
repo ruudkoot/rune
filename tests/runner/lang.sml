@@ -232,7 +232,8 @@ struct
      wayTags : way -> string list,
      needs : string -> Run.command Test.tree -> Run.command Test.tree,
      wayNeeds : way -> Run.command Test.tree -> Run.command Test.tree,
-     selected : string -> string -> bool, pending : program -> string option}
+     selected : string -> string -> bool, pending : program -> string option,
+     programTags : string -> program -> string list}
 
   (* a job's path in a suite's group *)
   fun path (s : suite) p = if #group s = "" then p else #group s ^ "/" ^ p
@@ -383,25 +384,32 @@ struct
       val errorPrograms = programsIn (#errors s, "errors")
       val covers = #covers s
       fun held p t = case #pending s p of SOME why => Test.pending why t | NONE => t
+      (* a program's job of a kind (compile/C, errors/C, errors/typecheck,
+         lang/WAY, lang/typecheck, accept), with the program's own tags: a
+         suite whose groups carry no tier gives each program its own *)
+      fun job kind p t = tagged (#programTags s kind p) (held p t)
       (* the programs checked with the suite's command; not for a compiler
          of bin/rune-suite's *)
       fun typecheckTests accepts programs =
         case #typecheck s of
           SOME command =>
             if selectedCompiler <> "" then []
-            else [tagged (#typecheckTags s @ covers) (Test.describe "typecheck" (List.map (fn p => held p (typecheck (command, accepts) p)) programs))]
+            else [tagged (#typecheckTags s @ covers)
+                    (Test.describe "typecheck"
+                       (List.map (fn p => job (if accepts then "lang/typecheck" else "errors/typecheck") p (typecheck (command, accepts) p))
+                                 programs))]
         | NONE => []
       val accepted =
         case (#accept s, #typecheck s) of
           (SOME dir, SOME command) =>
             [tagged (#typecheckTags s @ covers)
-               (Test.describe "accept" (List.map (fn p => held p (typecheck (command, true) p)) (programsIn (dir, "accept"))))]
+               (Test.describe "accept" (List.map (fn p => job "accept" p (typecheck (command, true) p)) (programsIn (dir, "accept"))))]
         | _ => []
     in
       Test.describe (#group s)
         ([Test.describe "compile"
             (List.map (fn (c, command, _) =>
-                         #needs s c (tagged (#compileTags s @ covers) (Test.describe c (List.map (fn p => held p (compile s (c, command) p)) langPrograms))))
+                         #needs s c (tagged (#compileTags s @ covers) (Test.describe c (List.map (fn p => job ("compile/" ^ c) p (compile s (c, command) p)) langPrograms))))
                       (#compilers s)
              @ (if #stackDone s then
                   [tagged (#compileTags s @ covers)
@@ -412,7 +420,7 @@ struct
           Test.describe "errors"
             (List.map (fn (c as (name, command, _)) =>
                          #needs s name (tagged (#errorTags s c @ covers)
-                           (Test.describe name (List.map (fn p => held p (if name<>"suite" then error s (name,command) p else
+                           (Test.describe name (List.map (fn p => job ("errors/" ^ name) p (if name<>"suite" then error s (name,command) p else
                                                              case selectedSkip (#name p) of
                                                                SOME row => Test.pending (Expectations.describe row) (error s (name,command) p)
                                                              | NONE => error s (name,command) p)) errorPrograms))))
@@ -421,7 +429,7 @@ struct
           Test.describe "lang"
             (List.map (fn w => #wayNeeds s w (#needs s (#compiler w) (tagged (#wayTags s w @ covers)
                                  (Test.describe (#name w)
-                                    (List.map (fn p => held p (
+                                    (List.map (fn p => job ("lang/" ^ #name w) p (
                                                  case (if #name w="suite" then selectedSkip (#name p) else Option.mapPartial (fn f => Expectations.skipped (expectationsOf f, {way = #name w, path = #name p})) (#skip w)) of
                                                    SOME l => Test.pending (#category l ^ ": " ^ #reason l) (run s w p)
                                                  | NONE => run s w p))
@@ -438,7 +446,8 @@ struct
      out = rbcDir, scratch = "", writer = stackCompiler, writerWay = "test",
      typecheck = SOME "bin/rune --typecheck-only", stackDone = true, covers = covers,
      compileTags = ["check"], errorTags = errorTags, typecheckTags = ["check", "test"],
-     wayTags = wayTags, needs = needs, wayNeeds = wayNeeds, selected = selectedName, pending = fn _ => NONE}
+     wayTags = wayTags, needs = needs, wayNeeds = wayNeeds, selected = selectedName, pending = fn _ => NONE,
+     programTags = fn _ => fn _ => []}
 
-  val tests = tree rune
+  fun tests () = tree rune
 end

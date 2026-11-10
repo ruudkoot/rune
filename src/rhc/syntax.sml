@@ -14,6 +14,11 @@
                                        and errors of names (RhcNames)
      rhc --dump-types FILE.hs          the types of the program's top-level values
      rhc --dump-evidence FILE.hs       the checker's evidence records (HsEvidence)
+     rhc --dump-binders FILE.hs        each local name of the program's own
+                                       modules: its binding sites and uses
+     rhc --dump-hslint FILE.hs         the types HsLint's second inference gives
+                                       the program's bindings (RhcLint); with
+                                       =library, the library's unsigned ones too
 
    `rhc --typecheck-only FILE.hs` checks the program as far as rhc goes,
    its names, fixity, kinds, types and classes (M13); `rhc FILE.hs` checks
@@ -23,13 +28,17 @@
    `FILE:LINE:COL: error: MESSAGE`, on standard error, each in the order
    of the source, and status 1. The options of names: `--names=least` or
    `greatest` (D29), `--cycle-default=module` or `scc` (D30, which M13
-   reads), `--dotted-names` (D35). *)
+   reads), `--dotted-names` (D35). At `--lint=2` (or `RUNE_LINT=2`) a
+   program whose names resolve is checked by HsLint too (RhcLint, M16), held
+   to a record's claims with `--hslint-claims=FILE`; `rhc --hslint-rules`
+   names the rules of that comparison. *)
 structure RhcSyntax =
 struct
   fun eprint s = TextIO.output (TextIO.stdErr, s)
 
-  datatype mode = ParseOnly | Print | PrintLayout | PrintExact | DumpTokens | DumpAst | DumpNames | DumpTypes | DumpEvidence
-                | Check | Compile
+  datatype mode =
+      ParseOnly | Print | PrintLayout | PrintExact | DumpTokens | DumpAst | DumpNames | DumpTypes | DumpEvidence
+    | DumpBinders | DumpHsLint of bool | Check | Compile
 
   fun isSource a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
 
@@ -44,6 +53,9 @@ struct
     | "--dump-names" => SOME DumpNames
     | "--dump-types" => SOME DumpTypes
     | "--dump-evidence" => SOME DumpEvidence
+    | "--dump-binders" => SOME DumpBinders
+    | "--dump-hslint" => SOME (DumpHsLint false)
+    | "--dump-hslint=library" => SOME (DumpHsLint true)
     | _ => NONE
 
   (* the options of names, which M13 reads too *)
@@ -76,10 +88,15 @@ struct
      its groups and, in a file, of the source. *)
   fun program (mode, files, rest) =
     let
-      val g = RhcGraph.load {roots = files, dotted = !dotted, types = mode <> DumpNames}
+      val g = RhcGraph.load {roots = files, dotted = !dotted}
+      (* the checker runs but for the views of names and of HsLint, which
+         stand without it (D54) *)
       val r = RhcNames.run (g, !fixpoint,
-                            if mode = DumpNames then NONE
-                            else SOME (case !cycleDefault of PerModule => HsInfer.PerModule | PerGroup => HsInfer.PerGroup))
+                            case mode of
+                              DumpNames => NONE
+                            | DumpBinders => NONE
+                            | DumpHsLint _ => NONE
+                            | _ => SOME (case !cycleDefault of PerModule => HsInfer.PerModule | PerGroup => HsInfer.PerGroup))
       val fileOrder =
         #2 (List.foldl (fn ({file, ...} : RhcGraph.node, (k, m)) => (k + 1, HsStringMap.insert (m, file, k)))
               (0, HsStringMap.empty) (List.concat (#groups g)))
@@ -91,32 +108,40 @@ struct
       val root = hd files
       fun report () = List.app (fn {span, msg, ...} => eprint (message (root, span, msg) ^ "\n")) diags
       (* A program's module is Main, and exports main (5): what a compile
-         asks, and a check of a file Main.hs or of a module Main. *)
+         asks, and a check of a module Main. The Report ties no file name to
+         Main, so a check takes a file as the module it holds, whatever the
+         file is called (the roadmap's D53). *)
       val main = hd (#roots g)
       val exportsMain =
         List.exists (fn {space = HsModules.Value, name = "main", ...} => true | _ => false)
           (getOpt (HsStringMap.find (#exports r, main), []))
-      val mainFile = OS.Path.base (OS.Path.file root) = "Main"
       val mainError =
         if main <> "Main" then
-          if mode = Compile orelse mainFile then
+          if mode = Compile then
             SOME (root ^ ": error: a program's module is `Main`, and " ^ root ^ " holds the module `" ^ main ^ "`")
           else NONE
         else if not exportsMain then SOME (root ^ ": error: the module `Main` does not export `main`, which a program runs (5)")
         else NONE
+      val perGroup = !cycleDefault = PerGroup
     in
       case mode of
         DumpNames => (RhcNames.dump (g, r); OS.Process.success)
       | DumpTypes => (report (); RhcNames.dumpTypes (g, r); OS.Process.success)
       | DumpEvidence => (report (); RhcNames.dumpEvidence (g, r); OS.Process.success)
+      | DumpBinders => (RhcNames.dumpBinders (g, r); OS.Process.success)
       | _ =>
           if not (null diags) then (report (); OS.Process.failure)
+          else if (case mode of DumpHsLint _ => true | _ => false) then
+            RhcLint.dump (g, r, perGroup, mode = DumpHsLint true)
           else
             case mainError of
               SOME m => (eprint (m ^ "\n"); OS.Process.failure)
             | NONE =>
-                if mode = Check then OS.Process.success
-                else (!compile) (rest, fn strings => RhcDesugar.program (g, r, strings))
+                (* HsLint's second inference, at --lint=2, on what the
+                   checker accepted (RhcLint; its records are #evidence r) *)
+                (RhcLint.check (g, r, perGroup);
+                 if mode = Check then OS.Process.success
+                 else (!compile) (rest, fn strings => RhcDesugar.program (g, r, strings)))
     end
     handle HsSource.Error (span, msg) => (eprint (message (hd files, span, msg) ^ "\n"); OS.Process.failure)
 
@@ -147,8 +172,9 @@ struct
 
   (* `command args` is what rhc does with a command line that names a file
      of Haskell, or asks for one of the commands above; NONE for any other.
-     The compiler's own options that a compile of a file may have, `-o`
-     and its file, `--target=`, `-O`, `--thunks=`, `--lint`, `--dump-after=`,
+     `--lint[=N]` sets the level of the checks, as for Core (HsLint runs
+     at 2). The compiler's own options that a compile of a file may have,
+     `-o` and its file, `--target=`, `-O`, `--thunks=`, `--dump-after=`,
      `--pass-stats`, `--strings=`, `--steps=`, `--depth=`, `--match=` and
      `--desugar-only`, are taken and given to `compile`. *)
   fun command (args : string list) : (unit -> OS.Process.status) option =
@@ -156,7 +182,8 @@ struct
       val modes = List.mapPartial modeOf args
       val files = List.filter isSource args
     in
-      if null modes andalso null files then NONE
+      if args = ["--hslint-rules"] then SOME RhcLint.rules
+      else if null modes andalso null files then NONE
       else
         SOME (fn () =>
           let
@@ -168,14 +195,27 @@ struct
               | "--cycle-default=module" => (cycleDefault := PerModule; true)
               | "--cycle-default=scc" => (cycleDefault := PerGroup; true)
               | "--dotted-names" => (dotted := true; true)
+              | "--lint" => (Pass.lintGiven := SOME 2; true)
               | _ =>
+                  if String.isPrefix "--hslint-claims=" a then
+                    (RhcLint.claims := SOME (String.extract (a, size "--hslint-claims=", NONE)); true)
+                  else
                   if String.isPrefix "--names=" a then raise RhcOptions.Usage ("--names takes least or greatest: " ^ a)
                   else if String.isPrefix "--cycle-default=" a then
                     raise RhcOptions.Usage ("--cycle-default takes module or scc: " ^ a)
+                  else if String.isPrefix "--lint=" a then
+                    let val l = String.extract (a, size "--lint=", NONE)
+                    in
+                      case Pass.levelOf l of
+                        SOME n => if l = "off" orelse CharVector.all Char.isDigit l andalso n >= 0 andalso n <= 3
+                                  then (Pass.lintGiven := SOME n; true)
+                                  else raise RhcOptions.Usage ("--lint takes off or 0 to 3: " ^ l)
+                      | NONE => raise RhcOptions.Usage "--lint= takes a level"
+                    end
                   else false
             fun known a =
               isSource a orelse isSome (modeOf a) orelse a = "--no-spans" orelse a = "--typecheck-only"
-              orelse String.isPrefix "--target=" a orelse String.isPrefix "--lint" a orelse String.isPrefix "-O" a
+              orelse String.isPrefix "--target=" a orelse String.isPrefix "-O" a
               orelse String.isPrefix "--thunks=" a orelse String.isPrefix "--dump-after=" a orelse a = "--pass-stats"
               orelse String.isPrefix "--strings=" a orelse String.isPrefix "--steps=" a orelse String.isPrefix "--depth=" a
               orelse String.isPrefix "--match=" a orelse a = "--desugar-only"
@@ -188,19 +228,22 @@ struct
             fun own a =
               isSource a orelse isSome (modeOf a) orelse a = "--no-spans" orelse a = "--typecheck-only"
               orelse a = "--dotted-names" orelse String.isPrefix "--names=" a orelse String.isPrefix "--cycle-default=" a
+              orelse String.isPrefix "--hslint-claims=" a
             val rest = List.filter (not o own) args
             val mode =
               case modes of
                 [] => if List.exists (fn a => a = "--typecheck-only") args then Check else Compile
               | [m] => m
               | _ => raise RhcOptions.Usage
-                       "one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens, --dump-ast, --dump-names, --dump-types and --dump-evidence"
+                       ("one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens, --dump-ast, " ^
+                        "--dump-names, --dump-types, --dump-evidence, --dump-binders and --dump-hslint")
           in
             case (mode, files) of
               (_, []) => raise RhcOptions.Usage "no file of Haskell to read: give FILE.hs"
             | (DumpNames, _) => program (DumpNames, files, rest)
             | (DumpTypes, _) => program (DumpTypes, files, rest)
             | (DumpEvidence, _) => program (DumpEvidence, files, rest)
+            | (DumpBinders, [file]) => program (DumpBinders, [file], rest)
             | (_, [file]) => go (mode, spans, file, rest)
             | _ => raise RhcOptions.Usage "one file of Haskell at a time, the program's Main, but for --dump-names"
           end)

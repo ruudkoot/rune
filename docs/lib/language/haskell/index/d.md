@@ -18,6 +18,7 @@
 - `declare` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-declare)
 - `def` (type): [HS_MODULES](../sig/HS_MODULES.md#type-def)
 - `DEFAULT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-default)
+- `default` (type): [HS_LINT](../sig/HS_LINT.md#type-default)
 - `default` (val): [HS_FIXITY](../sig/HS_FIXITY.md#val-default)
 - `Defaulted` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-defaulted)
 - `defaultKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-defaultkind)
@@ -26,6 +27,7 @@
 - `defs` (val): [HS_MODULES](../sig/HS_MODULES.md#val-defs)
 - `Deriv` (con): [HS_AST](../sig/HS_AST.md#con-deriv)
 - `deriv` (type): [HS_AST](../sig/HS_AST.md#type-deriv)
+- `derived` (type): [HS_LINT](../sig/HS_LINT.md#type-derived)
 - `DERIVING` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-deriving)
 - `describe` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-describe)
 - `DFixity` (con): [HS_AST](../sig/HS_AST.md#con-dfixity)
@@ -45,6 +47,7 @@
 - `DSig` (con): [HS_AST](../sig/HS_AST.md#con-dsig)
 - `DSuper` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-dsuper)
 - `DType` (con): [HS_AST](../sig/HS_AST.md#con-dtype)
+- `dump` (val): [HS_LINT](../sig/HS_LINT.md#val-dump)
 
 ---
 

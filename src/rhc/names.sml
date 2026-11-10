@@ -261,4 +261,27 @@ struct
                               else List.app (fn rec_ => print (k ^ "\t" ^ HsEvidence.showRecord rec_ ^ "\n")) rs)
         (HsEvidence.all (#evidence r))
     end
+  (* ---- --dump-binders ---- *)
+
+  (* every occurrence of a local name of the program's own modules, which
+     HsRename makes x#k: a pattern's a binding site (BIND), an expression's
+     or an operator's a use (USE), with its renamed name and its file and
+     bytes start-end, in order. D55's renaming relation edits a program by
+     these (tests/runner/hsmeta.sml) *)
+  fun dumpBinders (g : G.graph, r : result) =
+    List.app
+      (fn ((n : G.node), m) =>
+         if #library n then ()
+         else
+           List.app
+             (fn l =>
+                case String.tokens Char.isSpace l of
+                  kind :: name :: at :: _ =>
+                    if String.isSubstring "#" name andalso String.isPrefix "@" at then
+                      print ((if String.isPrefix "E" kind orelse String.isSuffix "Op" kind then "USE" else "BIND") ^ "\t" ^ name
+                             ^ "\t" ^ #file n ^ ":" ^ String.extract (at, 1, NONE) ^ "\n")
+                    else ()
+                | _ => ())
+             (String.fields (fn c => c = #"\n") (HsDump.module {spans = true} m)))
+      (#modules r)
 end

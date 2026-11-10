@@ -47,6 +47,7 @@ struct
         | Raise a => kill a
         | Return r => killAll r
         | Mark (_, a) => killExp a
+        | Case (a, arms, d) => (kill a; List.app killExp (caseExps (arms, d)))
       fun rhs (r, tail) =
         case r of
           Prim ("ref_get", _, [Var _]) => ()
@@ -76,6 +77,7 @@ struct
         | Raise a => kill a
         | Return r => rhs (r, true)
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => (kill a; List.app exp (caseExps (arms, d)))
     in
       if not (Array.exists (fn c => c) cand) then []
       else (exp (#body f); List.filter (fn i => Array.sub (cand, i)) (List.tabulate (n, fn i => i)))
@@ -113,6 +115,7 @@ struct
             | Handle (a, _, h) => go a orelse go h
             | Return r => rhs r
             | Mark (_, a) => go a
+            | Case (_, arms, d) => List.exists go (caseExps (arms, d))
             | Raise _ => false
         in go e end
       fun go (e, cur : atom IntMap.map) : exp =
@@ -151,6 +154,7 @@ struct
                                         (List.tabulate (List.length args, fn i => i), args)))
             else e
         | Mark (sp, a) => Mark (sp, go (a, cur))
+        | Case (a, arms, d) => let val (arms, d) = mapCase (fn e => go (e, cur)) (arms, d) in Case (a, arms, d) end
         | Raise _ => e
         | Return _ => e
       val cur0 = List.foldl (fn (r, m) => IntMap.insert (m, r, Var (r, []))) IntMap.empty refs
@@ -214,6 +218,7 @@ struct
             | Raise a => atom a
             | Return r => appAtomsOfRhs atom r
             | Mark (_, a) => go a
+            | Case (a, arms, d) => (atom a; List.app go (caseExps (arms, d)))
         in go e; t end
       (* a definition's expression, its calls rewritten: fresh holds the
          refs made in this function and used once, with what each was made
@@ -268,6 +273,7 @@ struct
             | Handle (a, x, h) => Handle (go a, x, go h)
             | Return r => Return (call r)
             | Mark (sp, a) => Mark (sp, go a)
+            | Case (a, arms, d) => let val (arms, d) = mapCase go (arms, d) in Case (a, arms, d) end
             | Jump _ => e
             | Raise _ => e
         in go e end
