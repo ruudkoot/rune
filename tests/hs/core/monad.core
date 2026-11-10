@@ -1,0 +1,142 @@
+; run: --read-core tests/hs/core/lib/base.core
+; vm: no: Monad m, a type constructor variable applied, and methods of forall type wait on M28
+; E1's monad, in Core: a class over a type constructor, whose dictionary's
+; methods are polymorphic (fields of forall type), at Maybe and at the lazy
+; state monad, a newtype whose bind takes its pair apart lazily:
+;   class Monad m where { (>>=) :: m a -> (a -> m b) -> m b; return :: a -> m a }
+;   instance Monad Maybe
+;   newtype State s a = State (s -> (a, s)); instance Monad (State s)
+;   sumM :: Monad m => (Int -> m Int) -> [Int] -> m Int
+;   sumM f []     = return 0
+;   sumM f (x:xs) = f x >>= \y -> sumM f xs >>= \z -> return (y + z)
+;   labelM :: Monad m => m Int -> m String
+;   labelM m = m >>= \x -> return (show x)
+;   safe x = if x > 3 then Nothing else Just (x * 2)
+;   tickS x = State (\s -> (x + s, s + 1))
+
+(data Monad ((m (-> * *)))
+  (MkMonad (forall (a b) (-> (m a) (-> a (m b)) (m b))) (forall (a) (-> a (m a)))))
+(newtype State (s a) MkState (-> s (Pair a s)))
+
+(val bind (forall ((m (-> * *)) a b) (-> (Monad m) (m a) (-> a (m b)) (m b)))
+  (\ (@(m (-> * *)) @a @b (d (Monad m)) (x (m a)) (k (-> a (m b))))
+    (case d e ((MkMonad f _) (f @a @b x k)))))
+(val return (forall ((m (-> * *)) a) (-> (Monad m) a (m a)))
+  (\ (@(m (-> * *)) @a (d (Monad m)) (x a))
+    (case d e ((MkMonad _ r) (r @a x)))))
+
+; ---- Maybe
+
+(val bindMaybe (forall (a b) (-> (Maybe a) (-> a (Maybe b)) (Maybe b)))
+  (\ (@a @b (x (Maybe a)) (k (-> a (Maybe b))))
+    (case x v ((Nothing) (con Nothing @b)) ((Just y) (k y)))))
+(val returnMaybe (forall (a) (-> a (Maybe a))) (\ (@a (x a)) (con Just @a x)))
+(val dMaybe (Monad Maybe) (con MkMonad @Maybe bindMaybe returnMaybe))
+
+; ---- State s, lazy: the pair a step gives is taken apart by suspensions
+
+(val runState (forall (s a) (-> (State s a) s (Pair a s)))
+  (\ (@s @a (m (State s a)) (s0 s)) (let (f (-> s (Pair a s)) (cast m (-> s (Pair a s)))) (f s0))))
+(val bindState (forall (s a b) (-> (State s a) (-> a (State s b)) (State s b)))
+  (\ (@s @a @b (m (State s a)) (k (-> a (State s b))))
+    (cast (\ ((s0 s))
+            (let (p (Pair a s) (runState @s @a m s0))
+            (let (x a (case p q ((Pair v _) v)))
+            (let (s1 s (case p q ((Pair _ t) t)))
+            (let (km (State s b) (k x))
+              (runState @s @b km s1))))))
+          (State s b))))
+(val returnState (forall (s a) (-> a (State s a)))
+  (\ (@s @a (x a)) (cast (\ ((s0 s)) (con Pair @a @s x s0)) (State s a))))
+(val dState (forall (s) (Monad (State s)))
+  (\ (@s)
+    (let (b (forall (a b) (-> (State s a) (-> a (State s b)) (State s b))) (bindState @s))
+      (let (r (forall (a) (-> a (State s a))) (returnState @s))
+        (con MkMonad @(State s) b r)))))
+
+; ---- the functions, at any monad
+
+(val sumM (forall ((m (-> * *))) (-> (Monad m) (-> Int (m Int)) (List Int) (m Int)))
+  (\ (@(m (-> * *)) (d (Monad m)) (f (-> Int (m Int))) (xs (List Int)))
+    (case xs v
+      ((Nil) (return @m @Int d 0))
+      ((Cons x rest)
+        (let (fx (m Int) (f x))
+          (let (k1 (-> Int (m Int))
+                 (\ ((y Int))
+                   (let (sr (m Int) (sumM @m d f rest))
+                     (let (k2 (-> Int (m Int))
+                            (\ ((z Int))
+                              (let (s Int (case y yv (_ (case z zv (_ (prim int_add yv zv))))))
+                                (return @m @Int d s))))
+                       (bind @m @Int @Int d sr k2)))))
+            (bind @m @Int @Int d fx k1)))))))
+
+(val labelM (forall ((m (-> * *))) (-> (Monad m) (m Int) (m Str)))
+  (\ (@(m (-> * *)) (d (Monad m)) (mx (m Int)))
+    (let (k (-> Int (m Str))
+           (\ ((x Int)) (let (s Str (case x v (_ (showInt v)))) (return @m @Str d s))))
+      (bind @m @Int @Str d mx k))))
+
+(val safe (-> Int (Maybe Int))
+  (\ ((x Int))
+    (case x v
+      (_ (case (prim int_gt v 3) b
+           ((True) (con Nothing @Int))
+           ((False) (let (y Int (prim int_mul v 2)) (con Just @Int y))))))))
+
+(val tickS (-> Int (State Int Int))
+  (\ ((x Int))
+    (cast (\ ((s Int))
+            (let (v Int (case x xv (_ (case s sv (_ (prim int_add xv sv))))))
+              (let (n Int (case s sv (_ (prim int_add sv 1))))
+                (con Pair @Int @Int v n))))
+          (State Int Int))))
+
+(val upto (-> !Int !Int (List Int))
+  (\ ((i !Int) (j !Int))
+    (case (prim int_gt i j) b
+      ((True) (con Nil @Int))
+      ((False) (case (prim int_add i 1) k (_ (let (r (List Int) (upto k j)) (con Cons @Int i r))))))))
+
+(val printMaybeInt (-> (Maybe Int) World (utuple World Unit))
+  (\ ((x (Maybe Int)) (w World))
+    (case x v
+      ((Nothing) (putStrLn "Nothing" w))
+      ((Just y) (case y yv (_ (case (showInt yv) s (_ (case (prim str_concat "Just " s) t (_ (putStrLn t w)))))))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (l3 (List Int) (upto 1 3))
+    (let (l4 (List Int) (upto 1 4))
+    (let (r1 (Maybe Int) (sumM @Maybe dMaybe safe l3))
+    (case (printMaybeInt r1 w) o1
+      ((utuple w1 _)
+        (let (r2 (Maybe Int) (sumM @Maybe dMaybe safe l4))
+        (case (printMaybeInt r2 w1) o2
+          ((utuple w2 _)
+            ; the same sumM at the state monad
+            (let (ds (Monad (State Int)) (dState @Int))
+            (let (r3 (State Int Int) (sumM @(State Int) ds tickS l3))
+            (case (runState @Int @Int r3 0) p3
+              ((Pair v3 s3)
+                (case (printInt v3 w2) o3
+                  ((utuple w3 _)
+                    (case (printInt s3 w3) o4
+                      ((utuple w4 _)
+                        ; a method at two types in one function, at two monads
+                        (let (j (Maybe Int) (safe 1))
+                        (case (labelM @Maybe dMaybe j) r4
+                          ((Nothing) (putStrLn "impossible" w4))
+                          ((Just s4)
+                            (case s4 t4
+                              (_ (case (prim str_concat "Just " t4) u4
+                                   (_ (case (putStrLn u4 w4) o5
+                                        ((utuple w5 _)
+                                          (let (t1 (State Int Int) (tickS 1))
+                                          (let (r5 (State Int Str) (labelM @(State Int) ds t1))
+                                          (case (runState @Int @Str r5 10) p5
+                                            ((Pair v5 s5)
+                                              (case v5 t5
+                                                (_ (case (putStrLn t5 w5) o6
+                                                     ((utuple w6 _) (printInt s5 w6))))))))))))))))))))))))))))))))))))

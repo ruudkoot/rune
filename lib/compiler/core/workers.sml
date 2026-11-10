@@ -26,7 +26,7 @@ structure Workers =
 struct
   open Mid
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   (* Whether x is used in e only as the tuple of a Select. *)
   fun onlySelected (x : var, e : exp) : bool =
@@ -35,19 +35,8 @@ struct
       fun oks xs = List.all ok xs
       fun rhs r =
         case r of
-          Atom a => ok a
-        | App (f, xs) => oks (f :: xs)
-        | Prim (_, _, xs) => oks xs
-        | Tuple xs => oks xs
-        | Select _ => true
-        | Con (_, _, a) => ok a
-        | Decon (_, _, a) => ok a
-        | ConTag a => ok a
-        | MkExn (c, a) => oks [c, a]
-        | ExnCon a => ok a
-        | ExnArg (_, a) => ok a
-        | SetGlobal (_, a) => ok a
-        | _ => true
+          Select _ => true
+        | _ => oks (atomsOfRhs r)
       fun exp e =
         case e of
           Let (_, _, r, b) => rhs r andalso exp b
@@ -81,20 +70,8 @@ struct
       fun rhs (v, t) r =
         case r of
           Atom (Var (y, [])) => if isName y then (names := v :: !names; true) else true
-        | Atom a => ok a
-        | App (f, xs) => oks (f :: xs)
-        | Prim (_, _, xs) => oks xs
-        | Tuple xs => oks xs
         | Select (i, Var (y, _)) => (if isName y then fields := (i, v, t) :: !fields else (); true)
-        | Select (_, a) => ok a
-        | Con (_, _, a) => ok a
-        | Decon (_, _, a) => ok a
-        | ConTag a => ok a
-        | MkExn (c, a) => oks [c, a]
-        | ExnCon a => ok a
-        | ExnArg (_, a) => ok a
-        | SetGlobal (_, a) => ok a
-        | _ => true
+        | _ => oks (atomsOfRhs r)
       (* a field returned is taken whole: ~1 for its variable *)
       fun ret r =
         case r of
@@ -150,21 +127,7 @@ struct
         case a of
           Var (x, _) => IntTable.bump (uses, x)
         | _ => ()
-      fun rhs r =
-        case r of
-          Atom a => atom a
-        | App (f, xs) => List.app atom (f :: xs)
-        | Prim (_, _, xs) => List.app atom xs
-        | Tuple xs => List.app atom xs
-        | Select (_, a) => atom a
-        | Con (_, _, a) => atom a
-        | Decon (_, _, a) => atom a
-        | ConTag a => atom a
-        | MkExn (c, a) => (atom c; atom a)
-        | ExnCon a => atom a
-        | ExnArg (_, a) => atom a
-        | SetGlobal (_, a) => atom a
-        | _ => ()
+      fun rhs r = List.app atom (atomsOfRhs r)
       fun exp e =
         case e of
           Let (_, _, r, b) => (rhs r; exp b)
@@ -185,42 +148,46 @@ struct
      function's own, then one for each function inside -- and the type of
      what it returns, and the body of the innermost. A level's function
      abstracts over no type variables and names itself nowhere. *)
-  fun levels (f : fundef) : ((var * Ty.ty) list * Ty.ty) list * exp =
+  fun levels (f : fundef) : ((var * Ty.ty) list * Ty.ty * string option) list * exp =
     let
       fun mentions (x, e) =
         let val t = IntTable.table 16
         in count t e; isSome (IntTable.find (t, x)) end
       fun go (acc, e) =
         case unmark e of
-          Fun ([{name, tyvars = [], params = [p], result, body}], Return (Atom (Var (n, [])))) =>
-            if n = name andalso not (mentions (name, body)) then go (([p], result) :: acc, body)
+          Fun ([{name, label, tyvars = [], params = [p], result, body}], Return (Atom (Var (n, [])))) =>
+            if n = name andalso not (mentions (name, body)) then go (([p], result, label) :: acc, body)
             else (List.rev acc, e)
         | _ => (List.rev acc, e)
     in
-      go ([(#params f, #result f)], #body f)
+      go ([(#params f, #result f, #label f)], #body f)
     end
 
   datatype shape =
       Flat of field list option list      (* for each parameter, its fields where it is flattened *)
-    | Curried of ((var * Ty.ty) list * Ty.ty) list * exp  (* the levels, and the innermost body *)
+    | Curried of ((var * Ty.ty) list * Ty.ty * string option) list * exp  (* the levels, and the innermost body *)
 
   type worker = {worker : var, tyvars : int list, shape : shape}
 
-  fun program (p : program) : program =
+  fun program (target : Target.t) (p : program) : program =
     let
       (* the functions that get a worker, by name; each is one rewrite *)
-      fun fits n = n <= #maxArgs Target.stack
+      fun fits n = n <= #maxArgs target
       fun candidate (f as {name, tyvars, params, body, ...} : fundef, m) =
         case levels f of
           (ls as _ :: _ :: _, inner) =>
-            if fits (List.foldl (fn ((ps, _), n) => n + List.length ps) 0 ls) andalso Pass.spend () then
+            if fits (List.foldl (fn ((ps, _, _), n) => n + List.length ps) 0 ls) andalso Pass.spend () then
               IntMap.insert (m, name, {worker = freshStamp (), tyvars = tyvars, shape = Curried (ls, inner)})
             else m
         | _ =>
             let
+              (* a tuple with a polymorphic field stays one: a parameter's
+                 type is no forall (Mid.fundef, Ty.Forall) *)
               val specs =
-                List.map (fn (x, t) => case Ty.view t of Ty.Tuple ts => if List.length ts >= 2 then flatFields (x, ts, body) else NONE
-                           | _ => NONE) params
+                List.map (fn (x, t) => case Ty.view t of
+                                         Ty.Tuple ts => if List.length ts >= 2 andalso not (Ty.hasForall t) then flatFields (x, ts, body)
+                                                        else NONE
+                                       | _ => NONE) params
               val arity = List.foldl (fn (SOME fs, n) => n + List.length (leaves fs) | (NONE, n) => n + 1) 0 specs
             in
               if List.exists isSome specs andalso fits arity andalso Pass.spend () then
@@ -254,21 +221,7 @@ struct
             | Raise a => atom a
             | Return r => rhs r
             | Mark (_, a) => exp a
-          and rhs r =
-            case r of
-              Atom a => atom a
-            | App (f, xs) => List.app atom (f :: xs)
-            | Prim (_, _, xs) => List.app atom xs
-            | Tuple xs => List.app atom xs
-            | Select (_, a) => atom a
-            | Con (_, _, a) => atom a
-            | Decon (_, _, a) => atom a
-            | ConTag a => atom a
-            | MkExn (c, a) => (atom c; atom a)
-            | ExnCon a => atom a
-            | ExnArg (_, a) => atom a
-            | SetGlobal (_, a) => atom a
-            | _ => ()
+          and rhs r = List.app atom (atomsOfRhs r)
         in exp e; !any end
       val touched =
         List.map (fn d as Val (_, _, e) => (d, refsIn e)
@@ -381,22 +334,16 @@ struct
                  else Return r
              | _ => Return r)
         | Mark (sp, a) => Mark (sp, exp a)
-        | _ => e
-      and fundef ({name, tyvars, params, result, body} : fundef) : fundef =
-        {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
+        | Jump _ => e
+        | Raise _ => e
+        | Return _ => e
+      and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
+        {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
 
-      (* a new parameter named as the one it stands for, for traces *)
-      fun renamed (x : var) : var =
-        let val x' = freshStamp ()
-        in
-          case IntMap.find (!Translate.funNames, x) of
-            SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, x', n)
-          | NONE => ();
-          x'
-        end
+      fun renamed (_ : var) : var = freshStamp ()
 
       (* A function with a worker: the worker and the wrapper. *)
-      fun split (f as {name, tyvars, params, result, body} : fundef) : fundef list =
+      fun split (f as {name, label, tyvars, params, result, body} : fundef) : fundef list =
         case IntMap.find (workers, name) of
           SOME {worker, shape = Flat specs, ...} =>
             let
@@ -426,8 +373,8 @@ struct
                      | NONE => Let (v, s, r, sel b))
                 | Let (v, s, r, b) => Let (v, s, r, sel b)
                 | Fun (fs, b) =>
-                    Fun (List.map (fn {name, tyvars, params, result, body} =>
-                                     {name = name, tyvars = tyvars, params = params, result = result, body = sel body}) fs,
+                    Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                                     {name = name, label = label, tyvars = tyvars, params = params, result = result, body = sel body}) fs,
                          sel b)
                 | Join (j, ps, jb, sc) => Join (j, ps, sel jb, sel sc)
                 | If (c, t, e) => If (c, sel t, sel e)
@@ -437,12 +384,14 @@ struct
                        SOME (PNest ps) => (case List.nth (ps, i) of PLeaf y => Return (Atom (Var (y, []))) | _ => e)
                      | _ => e)
                 | Mark (sp, a) => Mark (sp, sel a)
-                | _ => e
+                | Jump _ => e
+                | Raise _ => e
+                | Return _ => e
               val workerParams =
                 List.concat (List.map (fn ((x, t), NONE) => [(x, t)]
                                         | ((x, _), SOME fs) => ListPair.zip (partLeaves (valOf (IntTable.find (parts, x))), leaves fs))
                                       ps)
-              val workerDef = {name = worker, tyvars = tyvars, params = workerParams, result = result, body = sel (exp body)}
+              val workerDef = {name = worker, label = label, tyvars = tyvars, params = workerParams, result = result, body = sel (exp body)}
               (* the wrapper: a kept parameter renamed and passed on, a
                  flattened one taken apart *)
               val wrapperParams = List.map (fn ((x, t), NONE) => (renamed x, t) | ((x, t), SOME _) => (x, t)) ps
@@ -450,24 +399,24 @@ struct
                 takeApart (IntMap.empty, ListPair.map (fn ((x, _), spec) => (Var (x, []), spec)) (wrapperParams, specs))
               val call = App (Global (worker, List.map Ty.gen tyvars), List.rev args)
             in
-              [workerDef, {name = name, tyvars = tyvars, params = wrapperParams, result = result, body = lets (Return call)}]
+              [workerDef, {name = name, label = label, tyvars = tyvars, params = wrapperParams, result = result, body = lets (Return call)}]
             end
         | SOME {worker, shape = Curried (ls, inner), ...} =>
             let
               (* the worker has every level's parameters and the innermost
                  body; the wrapper takes them level by level again, in
                  closures of its own *)
-              val workerDef = {name = worker, tyvars = tyvars, params = List.concat (List.map #1 ls),
+              val workerDef = {name = worker, label = label, tyvars = tyvars, params = List.concat (List.map #1 ls),
                                result = #2 (List.last ls), body = exp inner}
-              val ls' = List.map (fn (ps, r) => (List.map (fn (x, t) => (renamed x, t)) ps, r)) ls
+              val ls' = List.map (fn (ps, r, l) => (List.map (fn (x, t) => (renamed x, t)) ps, r, l)) ls
               val call = App (Global (worker, List.map Ty.gen tyvars),
                               List.map (fn (x, _) => Var (x, [])) (List.concat (List.map #1 ls')))
               fun level [] = Return call
-                | level ((ps, r) :: rest) =
+                | level ((ps, r, l) :: rest) =
                     let val g = freshStamp ()
-                    in Fun ([{name = g, tyvars = [], params = ps, result = r, body = level rest}], Return (Atom (Var (g, [])))) end
+                    in Fun ([{name = g, label = l, tyvars = [], params = ps, result = r, body = level rest}], Return (Atom (Var (g, [])))) end
             in
-              [workerDef, {name = name, tyvars = tyvars, params = #1 (hd ls'), result = #2 (hd ls'), body = level (tl ls')}]
+              [workerDef, {name = name, label = label, tyvars = tyvars, params = #1 (hd ls'), result = #2 (hd ls'), body = level (tl ls')}]
             end
         | NONE => [fundef f]
     in

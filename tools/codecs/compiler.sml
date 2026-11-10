@@ -172,7 +172,10 @@ struct
           args ("Ty.Con", [field ("s", Leaf "tyname"), field ("n", Leaf "string"), field ("args", List (Type "irty"))]) |> built "Ty.con",
           args ("Ty.Tuple", [field ("ts", List (Type "irty"))]) |> built "Ty.tuple",
           args ("Ty.Arrow", [field ("a", Type "irty"), field ("b", Type "irty")]) |> built "Ty.arrow",
-          nullary "Ty.ExnCon" |> built "Ty.exnCon"])
+          nullary "Ty.ExnCon" |> built "Ty.exnCon",
+          (* the forms another front end makes (D4 of the haskell98 roadmap) *)
+          args ("Ty.App", [field ("h", Type "irty"), field ("args", List (Type "irty"))]) |> built "Ty.app",
+          args ("Ty.Forall", [field ("vs", List (Leaf "tvar")), field ("b", Type "irty")]) |> built "Ty.forall"])
     |> viewed "Ty.view" |> noFp |> noSame
 
   (* ---- Mid ---- *)
@@ -181,11 +184,11 @@ struct
   fun midRecord (name, sml, p) = recordType (name, sml, p) |> noFp |> noSame
 
   val const =
-    mid ("const", "Lambda.const",
-         [args ("Lambda.CInt", [field ("i", Leaf "bigint")]), args ("Lambda.CWord", [field ("i", Leaf "bigint")]),
-          args ("Lambda.CInt64", [field ("i", Leaf "bigint")]), args ("Lambda.CWord64", [field ("i", Leaf "bigint")]),
-          args ("Lambda.CReal", [field ("s", Leaf "string")]), args ("Lambda.CString", [field ("s", Leaf "string")]),
-          args ("Lambda.CChar", [field ("n", Leaf "nat")])])
+    mid ("const", "Literal.const",
+         [args ("Literal.CInt", [field ("i", Leaf "bigint")]), args ("Literal.CWord", [field ("i", Leaf "bigint")]),
+          args ("Literal.CInt64", [field ("i", Leaf "bigint")]), args ("Literal.CWord64", [field ("i", Leaf "bigint")]),
+          args ("Literal.CReal", [field ("s", Leaf "string")]), args ("Literal.CString", [field ("s", Leaf "string")]),
+          args ("Literal.CChar", [field ("n", Leaf "nat")])])
 
   val scheme = Tuple [List (Leaf "tvar"), Type "irty"]
   val params = List (Tuple [Leaf "binder", Type "irty"])
@@ -231,9 +234,11 @@ struct
           args ("Mid.Return", [field ("r", Type "rhs")]),
           args ("Mid.Mark", [field ("pos", Tuple [Type "span", List (Type "frame")]), field ("b", Type "exp")])])
 
+  (* label: the name a person knows the function by (Mid.fundef) *)
   val fundef =
     midRecord ("fundef", "Mid.fundef",
-               record ("", [field ("name", Leaf "binder"), field ("tyvars", List (Leaf "tvar")), field ("params", params),
+               record ("", [field ("name", Leaf "binder"), field ("label", Option (Leaf "string")),
+                            field ("tyvars", List (Leaf "tvar")), field ("params", params),
                             field ("result", Type "irty"), field ("body", Type "exp")]))
 
   (* a function a basis keeps: its name is a global, the caller's *)
@@ -253,12 +258,11 @@ struct
                record ("", [field ("params", List (Leaf "tvar")),
                             field ("cons", List (Tuple [Leaf "nat", Leaf "string", Option (Type "irty")]))]))
 
-  (* a unit's Mid, with the datatypes its types name, its functions' names,
-     the layouts a body fixed and the open datatypes *)
+  (* a unit's Mid, with the datatypes its types name, the layouts a body
+     fixed and the open datatypes *)
   val unitMid =
     midRecord ("unitMid", "MidCanon.unitMid",
                record ("", [field ("mid", List (Type "def")), field ("datatypes", List (Tuple [Leaf "tyname", Type "datatypeInfo"])),
-                            field ("funNames", List (Tuple [Leaf "stamp", Leaf "string"])),
                             field ("pins", List (Tuple [Leaf "tyname", List (Tuple [Leaf "nat", Option (Leaf "nat")])])),
                             field ("opens", List (Leaf "tyname"))]))
 

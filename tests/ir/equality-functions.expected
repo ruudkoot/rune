@@ -1,7 +1,7 @@
 (* after simplify *)
 (datatype t () (0 "A") (1 "B" : int) (2 "C" : string * t list))
 (funs
-  (fn g1 ((v1 : t list) (v2 : t list)) : bool
+  (fn g1 ((v1 : t list) (v2 : t list)) : bool "="
     (let (v3 : int) (tag v1)
     (let (v4 : int) (tag v2)
     (let (v5 : bool) (prim imm_eq v3 v4 : (int * int) -> bool)
@@ -32,12 +32,12 @@
             (return (con0 0 : bool))))))))))
         (return (con0 0 : bool)))))
       (return (con0 0 : bool)))))))
-  (fn g3 ((v20 : t list) (v21 : t list)) : bool
+  (fn g3 ((v20 : t list) (v21 : t list)) : bool "="
     (let (v22 : bool) (prim ptr_eq v20 v21 : (t list * t list) -> bool)
     (if v22
       (return (con0 1 : bool))
       (return (app g1 v20 v21)))))
-  (fn g2 ((v23 : t) (v24 : t)) : bool
+  (fn g2 ((v23 : t) (v24 : t)) : bool "="
     (let (v25 : int) (tag v23)
     (let (v26 : int) (tag v24)
     (let (v27 : bool) (prim imm_eq v25 v26 : (int * int) -> bool)
@@ -66,13 +66,13 @@
             (return (con0 0 : bool))))))))
           (return (con0 0 : bool))))))))
       (return (con0 0 : bool)))))))
-  (fn g4 ((v42 : t) (v43 : t)) : bool
+  (fn g4 ((v42 : t) (v43 : t)) : bool "="
     (let (v44 : bool) (prim ptr_eq v42 v43 : (t * t) -> bool)
     (if v44
       (return (con0 1 : bool))
       (return (app g2 v42 v43))))))
 (funs
-  (fn g5 ((v45 : t) (v46 : t)) : bool
+  (fn g5 ((v45 : t) (v46 : t)) : bool "same"
     (let (v47 : bool) (prim ptr_eq v45 v46 : (t * t) -> bool)
     (if v47
       (return (con0 1 : bool))

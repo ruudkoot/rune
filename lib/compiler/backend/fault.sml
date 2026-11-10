@@ -11,7 +11,7 @@
    by representation, each aimed at a rule:
      Lambda: scope twice jump jump-out con select const-type const-kind
              const-range mkexn prim-name cast functor-cast dynamic-cast
-             open-cast inst fail letrec global
+             open-cast inst letrec global
      Mid:    scope twice jump jump-out type poly rebind tyargs select con mkexn
              mkexn-copy prim-name const-kind const-range do-drop do-unset
              nary cast functor-cast dynamic-cast open-cast
@@ -112,9 +112,7 @@ struct
               | L.Inst (a, t) =>
                   if kind = "inst" andalso hit "a use at an instance made one at no instance" then L.Inst (a, Ty.exn)
                   else L.Inst (go a, t)
-              | L.Fn (x, t, b) =>
-                  if kind = "fail" andalso hit "a function's body given a Fail first" then L.Fn (x, t, L.Seq (L.Fail, b))
-                  else L.Fn (x, t, go b)
+              | L.Fn (x, t, b) => L.Fn (x, t, go b)
               | L.LetRec (bs, b) =>
                   if kind = "letrec" andalso hit "a letrec's function made unit" then L.LetRec (List.map (fn (x, t, _) => (x, t, L.Unit)) bs, b)
                   else L.LetRec (List.map (fn (x, t, r) => (x, t, go r)) bs, go b)
@@ -127,7 +125,6 @@ struct
               | L.Decon (tag, a) => L.Decon (tag, go a)
               | L.ConTag a => L.ConTag (go a)
               | L.If (c, t, f) => let val c = go c val t = go t in L.If (c, t, go f) end
-              | L.Try (a, b) => let val a = go a in L.Try (a, go b) end
               | L.Join (j, ps, b, s) => let val b = go b in L.Join (j, ps, b, go s) end
               | L.Raise a => L.Raise (go a)
               | L.Handle (a, x, h) => let val a = go a in L.Handle (a, x, go h) end
@@ -165,11 +162,11 @@ struct
                   if kind = "tyargs" andalso not (null args) andalso hit ("g" ^ Int.toString g ^ " given one type fewer")
                   then M.Global (g, tl args)
                   else a
-              | M.Const (c as Lambda.CInt i, t) =>
+              | M.Const (c as Literal.CInt i, t) =>
                   if kind = "const-kind" andalso Ty.equal (t, Ty.int) andalso hit "an int constant made a word of type int"
-                  then M.Const (Lambda.CWord (IntInf.abs i), t)
+                  then M.Const (Literal.CWord (IntInf.abs i), t)
                   else if kind = "const-range" andalso Ty.equal (t, Ty.int) andalso hit "an int constant made one beyond 63 bits"
-                  then M.Const (Lambda.CInt (IntInf.pow (IntInf.fromInt 2, 70)), t)
+                  then M.Const (Literal.CInt (IntInf.pow (IntInf.fromInt 2, 70)), t)
                   else a
               | _ => a
             fun rhs r =
@@ -198,7 +195,8 @@ struct
               | M.ExnCon a => M.ExnCon (atom a)
               | M.ExnArg (t, a) => M.ExnArg (t, atom a)
               | M.SetGlobal (g, a) => M.SetGlobal (g, atom a)
-              | _ => r
+              | M.NewExn _ => r
+              | M.BuiltinExn _ => r
             fun exp e =
               case e of
                 M.Let (x, s as (tvs, t), r, b) =>
@@ -234,7 +232,7 @@ struct
                 val body = exp (#body f)
               in
                 around := saved;
-                {name = #name f, tyvars = tyvars, params = #params f, result = #result f, body = body}
+                {name = #name f, label = #label f, tyvars = tyvars, params = #params f, result = #result f, body = body}
               end
             (* a Do's expression with its first SetGlobal made unit *)
             fun unsetIt g = hit ("g" ^ Int.toString g ^ " no longer set by its Do")
@@ -249,7 +247,9 @@ struct
               | M.Handle (a, x, h) => let val a = unset a in M.Handle (a, x, unset h) end
               | M.Mark (pos, a) => M.Mark (pos, unset a)
               | M.Return (M.SetGlobal (g, _)) => if unsetIt g then M.Return (M.Atom M.Unit) else e
-              | _ => e
+              | M.Jump _ => e
+              | M.Raise _ => e
+              | M.Return _ => e
             fun def d =
               case d of
                 M.Val (g, s, e) => M.Val (g, s, exp e)
@@ -337,7 +337,7 @@ struct
                 val reps =
                   if kind <> "rep" then #reps f
                   else
-                    case List.find (fn (W.Def (x, W.Const (Lambda.CInt _))) => true | _ => false) (List.concat (List.map #instrs blocks)) of
+                    case List.find (fn (W.Def (x, W.Const (Literal.CInt _))) => true | _ => false) (List.concat (List.map #instrs blocks)) of
                       SOME (W.Def (x, _)) =>
                         if hit ("v" ^ Int.toString x ^ ", an int, given rep ptr") then Vector.mapi (fn (y, r) => if y = x then W.RPtr else r) (#reps f)
                         else #reps f

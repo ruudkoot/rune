@@ -1,0 +1,1 @@
+parse-varop-pattern.hs:2:6: error: the variable operator `+` in a pattern: only a constructor operator can stand there

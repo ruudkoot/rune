@@ -1,0 +1,5 @@
+module M where
+f = a where
+  a = b where
+    b = 1
+c = 2

@@ -538,6 +538,54 @@ struct
   fun intinf_power _ : bool * string = raise Fail "GMP unavailable on this host"
   fun intinf_decimal _ : string = raise Fail "GMP unavailable on this host"
 
+  (* ---- IntInf.int: the host's, which `_prim "intinf"` in a type is here
+     (gen-host-basis.sh). A number is small, as an immediate is on Rune,
+     where the host's int holds it; its parts are its sign and its
+     magnitude as little-endian bytes with no high zero byte, worked out
+     with the host's arithmetic. The budget is intinf_max_bits's. ---- *)
+  type intinf = IntInf.int
+  val intinf_add = IntInf.+
+  val intinf_sub = IntInf.-
+  val intinf_mul = IntInf.*
+  val intinf_div = IntInf.div
+  val intinf_mod = IntInf.mod
+  val intinf_quot = IntInf.quot
+  val intinf_rem = IntInf.rem
+  val intinf_neg = IntInf.~
+  val intinf_lt = IntInf.<
+  val intinf_le = IntInf.<=
+  val intinf_gt = IntInf.>
+  val intinf_ge = IntInf.>=
+  val intinf_order = IntInf.compare
+  val intinf_from_int = IntInf.fromInt
+  val intinf_to_int = IntInf.toInt
+  local
+    val lo = IntInf.fromInt (valOf Int.minInt)
+    val hi = IntInf.fromInt (valOf Int.maxInt)
+    val byteBase = IntInf.fromInt 256
+    fun bitsOf (s : string) =
+      let val n = String.size s
+          fun top (c, k) = if c = 0 then k else top (c div 2, k + 1)
+      in if n = 0 then 0 else (n - 1) * 8 + top (Char.ord (String.sub (s, n - 1)), 0) end
+  in
+    fun intinf_is_small i = IntInf.>= (i, lo) andalso IntInf.<= (i, hi)
+    fun intinf_parts i =
+      let fun bytes (m, acc) =
+            if m = IntInf.fromInt 0 then String.implode (List.rev acc)
+            else bytes (IntInf.div (m, byteBase), Char.chr (IntInf.toInt (IntInf.mod (m, byteBase))) :: acc)
+          val s = bytes (IntInf.abs i, [])
+      in intinf_check_bits (bitsOf s); (IntInf.< (i, IntInf.fromInt 0), s) end
+    fun intinf_make (neg, s) =
+      let val n = String.size s
+          val () = if n > 0 andalso String.sub (s, n - 1) = #"\000" then raise Fail "noncanonical magnitude" else ()
+          val () = intinf_check_bits (bitsOf s)
+          fun loop (i, acc) =
+            if i < 0 then acc
+            else loop (i - 1, IntInf.+ (IntInf.* (acc, byteBase), IntInf.fromInt (Char.ord (String.sub (s, i)))))
+          val m = loop (n - 1, IntInf.fromInt 0)
+      in if neg then IntInf.~ m else m end
+  end
+
   (* Packed storage, independently of the runtime's C implementation. A
      narrow host's IntInf kernel requests 15-bit digits, a wide one 30. *)
   fun intinf_width bits = if bits = 15 orelse bits = 30 then () else raise Fail "invalid limb width"

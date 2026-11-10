@@ -25,7 +25,7 @@ Library is what every program starts with.
 
 | Library |  |
 | --- | --- |
-| [Unicode](unicode/README.md) `unicode` | UTF-8, read and written strictly, the display width of a code point, grapheme clusters as Unicode Standard Annex \#29 defines them, the normalisation forms NFC and NFD of Annex \#15, the identifiers of Annex \#31 with the profile that Rune takes for Standard ML, and the security mechanisms of Unicode Technical Standard \#39. |
+| [Unicode](unicode/README.md) `unicode` | UTF-8, read and written strictly, the display width of a code point, grapheme clusters as Unicode Standard Annex \#29 defines them, the normalisation forms NFC and NFD of Annex \#15, the identifiers of Annex \#31 with the profile that Rune takes for Standard ML, the security mechanisms of Unicode Technical Standard \#39, and the general category and the simple case mappings of a code point. |
 | [Pretty printing](pretty/README.md) `pretty` | Documents laid out at a width: Wadler's prettier printer, as Lindig wrote it, with annotations a renderer turns into styles and budgets that cut a deep or long value short. |
 | [Markdown](markdown/README.md) `markdown` | Markdown: CommonMark's blocks and inlines, with GitHub's tables, parsed into a tree and written back as HTML or as a document of `Pretty`. |
 | [Terminal](terminal/README.md) `terminal` | A terminal as a line editor uses it. Colours and attributes, the keys a terminal sends, the device in raw mode, and an emulator for tests. The history of a prompt is kept in a file several sessions share, and the editor draws one line or many. |
@@ -58,6 +58,7 @@ Library is what every program starts with.
 | Library |  |
 | --- | --- |
 | [C declaration frontend](language/c/README.md) `language/c` | This library preprocesses and parses C interface descriptions in Standard ML. It has no dependency on a C compiler or an FFI runtime. Include loading is an explicit resolver, and target predefinitions and expression widths are caller-supplied. It does not infer SML names, ownership or errors. |
+| [Haskell 98 front end](language/haskell/README.md) `language/haskell` | This library is the front end and the intermediate language of rhc, the Haskell 98 compiler of the haskell98 roadmap. Rune alone builds it (the roadmap's D42): the other SML systems may compile it, and nothing holds them to it. |
 
 ## Foreign interfaces
 

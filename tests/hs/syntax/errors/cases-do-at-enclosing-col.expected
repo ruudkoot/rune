@@ -1,0 +1,1 @@
+cases-do-at-enclosing-col.hs:1:8: error: a `do` block with no statements

@@ -1,0 +1,3 @@
+; fail: [prim] in val x: int_add takes 2 arguments, and is given 1
+; CoreLint, prim: a primitive saturated
+(val x Int (prim int_add 1))

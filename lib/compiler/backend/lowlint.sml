@@ -229,13 +229,13 @@ struct
       (* what an operation makes, where it alone says *)
       fun makes (oper : operation) : rep =
         case oper of
-          Const (Lambda.CInt _) => RInt
-        | Const (Lambda.CWord _) => RWord
-        | Const (Lambda.CInt64 _) => RInt64
-        | Const (Lambda.CWord64 _) => RWord64
-        | Const (Lambda.CReal _) => RReal
-        | Const (Lambda.CString _) => RPtr
-        | Const (Lambda.CChar _) => RChar
+          Const (Literal.CInt _) => RInt
+        | Const (Literal.CWord _) => RWord
+        | Const (Literal.CInt64 _) => RInt64
+        | Const (Literal.CWord64 _) => RWord64
+        | Const (Literal.CReal _) => RReal
+        | Const (Literal.CString _) => RPtr
+        | Const (Literal.CChar _) => RChar
         | Unit => RUnit
         | Con0 _ => RCon0
         | Self => RPtr

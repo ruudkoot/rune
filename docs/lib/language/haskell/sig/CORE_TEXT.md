@@ -1,0 +1,162 @@
+# signature CORE_TEXT
+
+[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; **CORE_TEXT**
+
+|  |  |
+| --- | --- |
+| Status | required |
+| Implementations | 1 |
+| Documentation | 9 of 9 entries documented |
+| Tests | not listed |
+| Source | [lib/language/haskell/coretext\_sig.sml](../../../../../lib/language/haskell/coretext_sig.sml) |
+
+## Synopsis
+
+```sml
+signature CORE_TEXT
+structure CoreText : CORE_TEXT
+```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| [`CoreText`](../str/CoreText.md) | Core's text: a lexer into tokens, a reader of parenthesised forms, the forms read as Core, and Core printed through the same forms (coretext\_sig.sml). | [lib/language/haskell/coretext.sml](../../../../../lib/language/haskell/coretext.sml) |
+
+Core as text, and back (the haskell98 roadmap, D2): the contract between
+the front end, which writes Core, and Core to Mid, which reads it. [`show`](#val-show)
+prints a program for a dump (rhc --dump-after) or a test (tests/hs/core),
+and [`parse`](#val-parse) reads what it prints, so that print, read, print is the
+identity; rhc checks that at lint level 3.
+
+The text is of parenthesised forms. A comment runs from `;` to the end
+of its line.
+
+```sml
+program := decl ...
+decl    := (data T (TYPARAM ...) (C TYPE ...) ...)
+         | (newtype T (TYPARAM ...) C TYPE)
+         | (val x TYPE EXP)
+typaram := a | (a KIND)                  a alone is of kind *
+kind    := * | # | (-> KIND KIND ...)    # is unlifted
+type    := T | a | (TYPE TYPE ...) | (-> TYPE TYPE ...)
+         | (forall (TYPARAM ...) TYPE) | (utuple TYPE ...) | !TYPE
+exp     := ATOM | (EXP ARG ...) | (\ (BINDER ...) EXP)
+         | (let (x TYPE EXP) EXP) | (letrec ((x TYPE EXP) ...) EXP)
+         | (case EXP x ALT ...) | (con C @TYPE ... ATOM ...)
+         | (prim P @TYPE ... ATOM ...) | (utuple ATOM ...) | (cast EXP TYPE)
+binder  := (x TYPE) | @a | @(a KIND)
+arg     := ATOM | @TYPE
+alt     := ((C x ...) EXP) | (LITERAL EXP) | ((utuple x ...) EXP) | (_ EXP)
+atom    := x | LITERAL
+literal := 42 | -42 | 42I | 2.5 | 2.5e-3 | 2.5F | 'c' | '\955' | "bytes"
+```
+
+A word in a type is a variable where a `forall`, a type binder or the
+parameters of a declaration bind it, and a type constructor elsewhere.
+A literal ending in `I` is an `Integer`, one with a point or an exponent
+a `Double`, or a `Float` ending in `F`. A string's escapes are `\\`,
+`\"`, `\n`, `\t` and `\DDD`, a byte in three decimal digits; a
+character's are those, `\'` and `\D...`, a code point in decimal. A name
+that is a word of the syntax (`let`, `case`, `*`, `_`, ...), that starts
+as a literal, [`@`](../../../basis/sig/LIST.md#val-op-at) or [`!`](../../../basis/sig/GENERAL.md#val-op-bang) would, or that holds a space, a parenthesis, a
+quotation mark, `;` or a backquote, is written between backquotes, with
+`\\` and a backslashed backquote inside.
+
+## Interface
+
+<pre>
+signature CORE_TEXT =
+sig
+  exception <a href="#exn-error">Error</a> of int * string
+  val <a href="#val-parse">parse</a> : string -&gt; Core.program
+  val <a href="#val-parsetype">parseType</a> : string -&gt; Core.ty
+  val <a href="#val-show">show</a> : Core.program -&gt; string
+  val <a href="#val-showty">showTy</a> : Core.ty -&gt; string
+  val <a href="#val-showkind">showKind</a> : Core.kind -&gt; string
+  val <a href="#val-showexp">showExp</a> : Core.exp -&gt; string
+  val <a href="#val-showlit">showLit</a> : Core.lit -&gt; string
+  val <a href="#val-showname">showName</a> : string -&gt; string
+end
+</pre>
+
+### <a name="exn-error"></a>`Error`
+
+```sml
+exception Error of int * string
+```
+
+A fault in the text: the line it is on, and what is wrong.
+
+### <a name="val-parse"></a>`parse`
+
+```sml
+val parse : string -> Core.program
+```
+
+`parse text` is the program `text` holds.
+
+**Raises** [`Error`](#exn-error) where `text` is not a program.
+
+### <a name="val-parsetype"></a>`parseType`
+
+```sml
+val parseType : string -> Core.ty
+```
+
+`parseType text` is the type `text` holds, whose variables a `forall`
+binds.
+
+**Raises** [`Error`](#exn-error) where `text` is not one type.
+
+### <a name="val-show"></a>`show`
+
+```sml
+val show : Core.program -> string
+```
+
+`show program` is the text of `program`, which [`parse`](#val-parse) reads back as
+`program`.
+
+### <a name="val-showty"></a>`showTy`
+
+```sml
+val showTy : Core.ty -> string
+```
+
+`showTy t` is the text of the type `t`, on one line.
+
+### <a name="val-showkind"></a>`showKind`
+
+```sml
+val showKind : Core.kind -> string
+```
+
+`showKind k` is the text of the kind `k`.
+
+### <a name="val-showexp"></a>`showExp`
+
+```sml
+val showExp : Core.exp -> string
+```
+
+`showExp e` is the text of the expression `e`.
+
+### <a name="val-showlit"></a>`showLit`
+
+```sml
+val showLit : Core.lit -> string
+```
+
+`showLit l` is the text of the literal `l`.
+
+### <a name="val-showname"></a>`showName`
+
+```sml
+val showName : string -> string
+```
+
+`showName x` is the name `x` as the text writes it, between backquotes
+where it must be.
+
+---
+
+<sub>Generated by runedoc from lib/language/haskell/coretext\_sig.sml; do not edit.</sub>

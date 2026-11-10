@@ -18,31 +18,15 @@
      function inside it binds -- and those of a lifted function it calls,
      before its own, and every call gives them as themselves -- the call is
      inside those functions too (Mid is System F: the linting roadmap's M5).
-   * It is named as the local function was (Translate.funNames), for
+   * It is named as the local function was (its label), for
      traces. *)
 structure Lift =
 struct
   open Mid
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   (* ---- what an expression names ---- *)
-
-  fun atomsOfRhs (r : rhs) : atom list =
-    case r of
-      Atom a => [a]
-    | App (f, xs) => f :: xs
-    | Prim (_, _, xs) => xs
-    | Tuple xs => xs
-    | Select (_, a) => [a]
-    | Con (_, _, a) => [a]
-    | Decon (_, _, a) => [a]
-    | ConTag a => [a]
-    | MkExn (c, a) => [c, a]
-    | ExnCon a => [a]
-    | ExnArg (_, a) => [a]
-    | SetGlobal (_, a) => [a]
-    | _ => []
 
   (* What is free in each group of functions and the type variables it
      names, by its first member, worked out once: a group inside another is
@@ -117,17 +101,7 @@ struct
         | Const (_, t) => gensOfTy (t, acc)
         | Con0 (_, t) => gensOfTy (t, acc)
         | Unit => acc
-      fun rhs (r, acc) =
-        let
-          val acc = List.foldl atom acc (atomsOfRhs r)
-        in
-          case r of
-            Prim (_, t, _) => gensOfTy (t, acc)
-          | Con (_, t, _) => gensOfTy (t, acc)
-          | Decon (_, t, _) => gensOfTy (t, acc)
-          | ExnArg (t, _) => gensOfTy (t, acc)
-          | _ => acc
-        end
+      fun rhs (r, acc) = List.foldl gensOfTy (List.foldl atom acc (atomsOfRhs r)) (typesOfRhs r)
       fun without (tvs, m) = List.foldl (fn (a, m) => IntMap.remove (m, a)) m tvs
     in
       case e of
@@ -162,7 +136,9 @@ struct
     | If (_, t, f) => hasFun t orelse hasFun f
     | Handle (a, _, h) => hasFun a orelse hasFun h
     | Mark (_, a) => hasFun a
-    | _ => false
+    | Jump _ => false
+    | Raise _ => false
+    | Return _ => false
 
   fun defHasFun (d : def) : bool =
     case d of
@@ -172,7 +148,7 @@ struct
 
   (* ---- the program ---- *)
 
-  fun program (p : program) : program =
+  fun program (target : Target.t) (p : program) : program =
     let
       val () = (groupFree := IntTable.table 256; groupGens := IntTable.table 256)
       (* every binder's scheme, and how each variable is used: in all, and
@@ -241,7 +217,7 @@ struct
                  val extra = IntMap.listKeys extra
                in
                  if (null extra orelse List.all (fn f => onlyCalled (#name f)) fs) andalso List.all monomorphic extra
-                    andalso List.all (fn f => List.length extra + List.length (#params f) <= #maxArgs Target.stack) fs
+                    andalso List.all (fn f => List.length extra + List.length (#params f) <= #maxArgs target) fs
                     andalso Pass.spend () then
                    let
                      val own = List.foldl (fn (f, m) => List.foldl (fn (a, m) => IntMap.insert (m, a, ())) m (#tyvars f))
@@ -272,7 +248,9 @@ struct
         | If (_, t, f) => (find t; find f)
         | Handle (a, _, h) => (find a; find h)
         | Mark (_, a) => find a
-        | _ => ()
+        | Jump _ => ()
+        | Raise _ => ()
+        | Return _ => ()
       (* each definition, and whether it lifts anything *)
       val marked =
         List.map (fn (d, false) => (d, false)
@@ -308,47 +286,21 @@ struct
         | _ => a
       fun rhs r =
         case r of
-          Atom a => Atom (atom a)
-        | App (Var (f, ts), args) =>
+          App (Var (f, ts), args) =>
             (case call (f, ts, List.map atom args) of SOME r' => r' | NONE => App (Var (f, ts), List.map atom args))
-        | App (f, xs) => App (atom f, List.map atom xs)
-        | Prim (q, t, xs) => Prim (q, t, List.map atom xs)
-        | Tuple xs => Tuple (List.map atom xs)
-        | Select (i, a) => Select (i, atom a)
-        | Con (tag, t, a) => Con (tag, t, atom a)
-        | Decon (tag, t, a) => Decon (tag, t, atom a)
-        | ConTag a => ConTag (atom a)
-        | MkExn (c, a) => MkExn (atom c, atom a)
-        | ExnCon a => ExnCon (atom a)
-        | ExnArg (t, a) => ExnArg (t, atom a)
-        | SetGlobal (g, a) => SetGlobal (g, atom a)
-        | _ => r
+        | _ => mapRhs atom r
 
       (* e with each atom's variable renamed where s says *)
       fun rename (s : var IntMap.map) (e : exp) : exp =
         let
           fun atom a = case a of Var (x, ts) => (case IntMap.find (s, x) of SOME y => Var (y, ts) | NONE => a) | _ => a
-          fun r' r =
-            case r of
-              Atom a => Atom (atom a)
-            | App (f, xs) => App (atom f, List.map atom xs)
-            | Prim (q, t, xs) => Prim (q, t, List.map atom xs)
-            | Tuple xs => Tuple (List.map atom xs)
-            | Select (i, a) => Select (i, atom a)
-            | Con (tag, t, a) => Con (tag, t, atom a)
-            | Decon (tag, t, a) => Decon (tag, t, atom a)
-            | ConTag a => ConTag (atom a)
-            | MkExn (c, a) => MkExn (atom c, atom a)
-            | ExnCon a => ExnCon (atom a)
-            | ExnArg (t, a) => ExnArg (t, atom a)
-            | SetGlobal (g, a) => SetGlobal (g, atom a)
-            | _ => r
+          val r' = mapRhs atom
           fun go e =
             case e of
               Let (x, sc, r, b) => Let (x, sc, r' r, go b)
             | Fun (fs, b) =>
-                Fun (List.map (fn {name, tyvars, params, result, body} =>
-                                 {name = name, tyvars = tyvars, params = params, result = result, body = go body}) fs,
+                Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                                 {name = name, label = label, tyvars = tyvars, params = params, result = result, body = go body}) fs,
                      go b)
             | Join (j, ps, body, sc) => Join (j, ps, go body, go sc)
             | Jump (j, xs) => Jump (j, List.map atom xs)
@@ -375,12 +327,12 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (sp, a) => Mark (sp, exp a)
-      and fundef ({name, tyvars, params, result, body} : fundef) : fundef =
-        {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
+      and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
+        {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
 
       (* a member of a lifted group, as a function of the top level: what it
          is given its first parameters, renamed in its body *)
-      and lift ({name, tyvars, params, result, body} : fundef) : fundef =
+      and lift ({name, label, tyvars, params, result, body} : fundef) : fundef =
         let
           val {global, extra, outer} = valOf (IntTable.find (lifted, name))
           val fresh = List.map (fn x => (x, freshStamp ())) extra
@@ -389,16 +341,8 @@ struct
           val () = List.app (fn (x, y) => Ty.copyExn (x, y, fn t => t)) fresh
           val s = List.foldl (fn ((x, y), m) => IntMap.insert (m, x, y)) IntMap.empty fresh
           val ps = List.map (fn (x, y) => (y, case IntTable.find (schemes, x) of SOME (_, t) => t | NONE => Ty.unit)) fresh
-          (* named as it was, by its first parameter now *)
-          val () =
-            case (fresh, params) of
-              ((_, y) :: _, (x, _) :: _) =>
-                (case IntMap.find (!Translate.funNames, x) of
-                   SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, y, n)
-                 | NONE => ())
-            | _ => ()
         in
-          {name = global, tyvars = outer @ tyvars, params = ps @ params, result = result, body = rename s (exp body)}
+          {name = global, label = label, tyvars = outer @ tyvars, params = ps @ params, result = result, body = rename s (exp body)}
         end
 
       fun def d =

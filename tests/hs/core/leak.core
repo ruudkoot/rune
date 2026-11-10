@@ -1,0 +1,21 @@
+; run: --read-core tests/hs/core/lib/base.core --read-core tests/hs/core/lib/size-1000.core
+; residency: lib/size-1000.core lib/size-2000.core
+; vm: no: the release of what a suspension captured, at BLACKHOLE, is form C's (M9), which this tree has not; E1's runtime keeps xs
+; E2's leak, through rhc (D12): a suspension running sum xs, a list made as
+; it is summed, holds xs no longer, though its code does more after the
+; loop; the most live is the same at either size.
+(data L () (LNil) (LCons !Int L))
+(val from (-> !Int !Int L)
+  (\ ((i !Int) (n !Int))
+    (case (prim int_gt i n) b
+      ((True) (con LNil))
+      ((False) (case (prim int_add i 1) j (_ (let (t L (from j n)) (con LCons i t))))))))
+(val sum (-> L !Int Int)
+  (\ ((l L) (acc !Int))
+    (case l v ((LNil) acc) ((LCons x t) (case (prim int_add acc x) a (_ (sum t a)))))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case size n
+      (_ (let (xs L (from 1 n))
+           (let (t Int (case (sum xs 0) s (_ (prim int_add 1 s))))
+             (case t r (_ (case (showInt r) s (_ (case (prim str_concat "leak " s) u (_ (putStrLn u w)))))))))))))

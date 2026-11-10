@@ -1,0 +1,5 @@
+; fail: [tyscope] in val k: the type variable a is bound again in its own scope
+; CoreLint, tyscope: a lambda that binds a type variable in scope again would
+; make the type of x, the outer a, read as the inner one
+(val k (forall (a) (-> a (forall (a) (-> a a))))
+  (\ (@a (x a)) (\ (@a (y a)) y)))

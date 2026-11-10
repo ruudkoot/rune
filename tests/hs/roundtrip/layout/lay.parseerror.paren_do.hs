@@ -1,0 +1,3 @@
+module M where
+f = (do a; b)
+g x = (case x of y -> y)

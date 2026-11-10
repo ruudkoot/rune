@@ -1,6 +1,7 @@
 (* Observe the clock calls of the real Pass implementation. The two
    compiler services are irrelevant to this isolated stage contract. *)
 structure CompilerState = struct fun cellRoot _ = () end
+structure Stamp = struct val counter = ref 0 end
 structure Error = struct exception Bug of string end
 structure PassClock =
 struct

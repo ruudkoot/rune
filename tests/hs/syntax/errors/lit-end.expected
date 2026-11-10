@@ -1,0 +1,1 @@
+lit-end.lhs:1:1: error: literate source: an \end{code} that no \begin{code} opened

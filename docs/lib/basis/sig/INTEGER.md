@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 9 |
 | Documentation | 30 of 30 entries documented |
-| Tests | 437 checks of 30 entries |
+| Tests | 697 checks of 30 entries |
 | Source | [lib/basis/int\_sig.sml](../../../../lib/basis/int_sig.sml) |
 
 ## Synopsis
@@ -33,7 +33,7 @@ structure Position :> INTEGER
 | [`Int32`](../str/Int32.md) | Int32: integers of 32 bits. | [lib/basis/int32.sml](../../../../lib/basis/int32.sml) |
 | [`Int64`](../str/Int64.md) | Int64: the 64-bit integers, and FixedInt, the largest of the fixed-precision ones, which is the same structure. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
 | [`Int8`](../str/Int8.md) | Int8: integers of 8 bits. | [lib/basis/int8.sml](../../../../lib/basis/int8.sml) |
-| [`IntInf`](../str/IntInf.md) | IntInf: canonical small integers or signed immutable packed magnitudes. The bytes are little endian, independent of the arithmetic workspace's limb width. Arrays below are private scratch and never escape in a value. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`IntInf`](../str/IntInf.md) | IntInf: an immediate where the number fits the word, else a sign and an immutable packed magnitude (haskell98 M31, D20 D). The VM's primitives add, subtract, multiply, divide and compare, two immediates in line and the rest in the runtime (runtime/intinf.c); this structure does the rest over the parts of a number, its sign and its magnitude, whose bytes are little endian, independent of the workspace's limb width. Arrays below are private scratch and never escape in a value. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 | [`LargeInt`](../str/IntInf.md) | The largest integers are the arbitrary precision ones. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 | [`Position`](../str/Position.md) | Position: the positions in a file and in a stream of I/O, as `lseek` and `ftruncate` take them and `fileSize` gives them: 64 bits, as a file offset of the system has, and a type of its own. It is [`Int64`](../str/Int64.md) behind, but not [`Int.int`](#type-int) nor [`Int64.int`](#type-int), as the specification makes it the same as neither and other implementations keep it apart from [`Int`](../str/Int.md) (MLton's and SML/NJ's are [`Int64`](../str/Int64.md), Poly/ML's [`LargeInt`](../str/IntInf.md)). A program converts with [`fromInt`](#val-fromint), [`toInt`](#val-toint), [`fromLarge`](#val-fromlarge) and [`toLarge`](#val-tolarge). | [lib/basis/position.sml](../../../../lib/basis/position.sml) |
 
@@ -369,9 +369,9 @@ val + : int * int -> int
 
 </details>
 
-<details><summary>Tests (31)</summary>
+<details><summary>Tests (51)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^63-twice` &middot; `carry-chain` &middot; `as-Int*` &middot; `associative*` &middot; `is-IntInf.+`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^63-twice` &middot; `carry-chain` &middot; `as-Int*` &middot; `associative*` &middot; `edge-2^62-1-plus-1` &middot; `edge-2^62-1-minus-itself` &middot; `edge-2^62-plus-1` &middot; `edge-2^62-minus-itself` &middot; `edge-~2^62-plus-1` &middot; `edge-~2^62-minus-itself` &middot; `edge-~2^62-1-plus-1` &middot; `edge-~2^62-1-minus-itself` &middot; `edge-2^63-1-plus-1` &middot; `edge-2^63-1-minus-itself` &middot; `edge-~2^63-plus-1` &middot; `edge-~2^63-minus-itself` &middot; `edge-~2^63-1-plus-1` &middot; `edge-~2^63-1-minus-itself` &middot; `edge-2^31-1-plus-1` &middot; `edge-2^31-1-minus-itself` &middot; `edge-~2^31-plus-1` &middot; `edge-~2^31-minus-itself` &middot; `edge-2^64-1-plus-1` &middot; `edge-2^64-1-minus-itself` &middot; `is-IntInf.+`
 
 For `LargeInt`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `is-IntInf.+`
 
@@ -407,9 +407,9 @@ val - : int * int -> int
 
 </details>
 
-<details><summary>Tests (20)</summary>
+<details><summary>Tests (30)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `10^30-minus-one` &middot; `one-minus-10^30` &middot; `as-Int*` &middot; `inverse-of-plus*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `10^30-minus-one` &middot; `one-minus-10^30` &middot; `as-Int*` &middot; `inverse-of-plus*` &middot; `edge-2^62-1-minus-1` &middot; `edge-2^62-minus-1` &middot; `edge-~2^62-minus-1` &middot; `edge-~2^62-1-minus-1` &middot; `edge-2^63-1-minus-1` &middot; `edge-~2^63-minus-1` &middot; `edge-~2^63-1-minus-1` &middot; `edge-2^31-1-minus-1` &middot; `edge-~2^31-minus-1` &middot; `edge-2^64-1-minus-1`
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*` &middot; `toplevel-Overflow` (raises Overflow)
 
@@ -435,9 +435,9 @@ val * : int * int -> int
 
 </details>
 
-<details><summary>Tests (40)</summary>
+<details><summary>Tests (70)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^64-squared` &middot; `2^50-squared` &middot; `factorial-20` &middot; `factorial-25` &middot; `factorial-30` &middot; `negative-factorial` &middot; `10^15+1-times-10^15-1` &middot; `as-Int*` &middot; `difference-of-squares*` &middot; `distributive*` &middot; `commutative*` &middot; `associative*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^64-squared` &middot; `2^50-squared` &middot; `factorial-20` &middot; `factorial-25` &middot; `factorial-30` &middot; `negative-factorial` &middot; `10^15+1-times-10^15-1` &middot; `as-Int*` &middot; `difference-of-squares*` &middot; `distributive*` &middot; `commutative*` &middot; `associative*` &middot; `edge-2^62-1-times-2` &middot; `edge-2^62-1-times-~1` &middot; `edge-2^62-1-squared` &middot; `edge-2^62-times-2` &middot; `edge-2^62-times-~1` &middot; `edge-2^62-squared` &middot; `edge-~2^62-times-2` &middot; `edge-~2^62-times-~1` &middot; `edge-~2^62-squared` &middot; `edge-~2^62-1-times-2` &middot; `edge-~2^62-1-times-~1` &middot; `edge-~2^62-1-squared` &middot; `edge-2^63-1-times-2` &middot; `edge-2^63-1-times-~1` &middot; `edge-2^63-1-squared` &middot; `edge-~2^63-times-2` &middot; `edge-~2^63-times-~1` &middot; `edge-~2^63-squared` &middot; `edge-~2^63-1-times-2` &middot; `edge-~2^63-1-times-~1` &middot; `edge-~2^63-1-squared` &middot; `edge-2^31-1-times-2` &middot; `edge-2^31-1-times-~1` &middot; `edge-2^31-1-squared` &middot; `edge-~2^31-times-2` &middot; `edge-~2^31-times-~1` &middot; `edge-~2^31-squared` &middot; `edge-2^64-1-times-2` &middot; `edge-2^64-1-times-~1` &middot; `edge-2^64-1-squared`
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*` &middot; `toplevel-Overflow` (raises Overflow)
 
@@ -466,9 +466,9 @@ It rounds down, where [`quot`](#val-quot) rounds towards zero: `quot (~7, 2)` is
 
 </details>
 
-<details><summary>Tests (32)</summary>
+<details><summary>Tests (72)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `factorial-30-by-factorial-25` &middot; `2^64-by-10^9` &middot; `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `factorial-30-by-factorial-25` &middot; `2^64-by-10^9` &middot; `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*` &middot; `edge-2^62-1-by-3` &middot; `edge-2^62-1-by-~3` &middot; `edge-2^62-1-by-~1` &middot; `edge-2^62-1-by-itself` &middot; `edge-2^62-by-3` &middot; `edge-2^62-by-~3` &middot; `edge-2^62-by-~1` &middot; `edge-2^62-by-itself` &middot; `edge-~2^62-by-3` &middot; `edge-~2^62-by-~3` &middot; `edge-~2^62-by-~1` &middot; `edge-~2^62-by-itself` &middot; `edge-~2^62-1-by-3` &middot; `edge-~2^62-1-by-~3` &middot; `edge-~2^62-1-by-~1` &middot; `edge-~2^62-1-by-itself` &middot; `edge-2^63-1-by-3` &middot; `edge-2^63-1-by-~3` &middot; `edge-2^63-1-by-~1` &middot; `edge-2^63-1-by-itself` &middot; `edge-~2^63-by-3` &middot; `edge-~2^63-by-~3` &middot; `edge-~2^63-by-~1` &middot; `edge-~2^63-by-itself` &middot; `edge-~2^63-1-by-3` &middot; `edge-~2^63-1-by-~3` &middot; `edge-~2^63-1-by-~1` &middot; `edge-~2^63-1-by-itself` &middot; `edge-2^31-1-by-3` &middot; `edge-2^31-1-by-~3` &middot; `edge-2^31-1-by-~1` &middot; `edge-2^31-1-by-itself` &middot; `edge-~2^31-by-3` &middot; `edge-~2^31-by-~3` &middot; `edge-~2^31-by-~1` &middot; `edge-~2^31-by-itself` &middot; `edge-2^64-1-by-3` &middot; `edge-2^64-1-by-~3` &middot; `edge-2^64-1-by-~1` &middot; `edge-2^64-1-by-itself`
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*` &middot; `toplevel-floor` &middot; `toplevel-Div` (raises Div) &middot; `toplevel-Overflow` (raises Overflow)
 
@@ -508,9 +508,9 @@ the largest int, though the quotient and the remainder are not.
 
 </details>
 
-<details><summary>Tests (29)</summary>
+<details><summary>Tests (49)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `factorial-30-by-factorial-25` &middot; `2^64-by-10^9` &middot; `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `factorial-30-by-factorial-25` &middot; `2^64-by-10^9` &middot; `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*` &middot; `edge-2^62-1-by-3` &middot; `edge-2^62-1-by-~3` &middot; `edge-2^62-by-3` &middot; `edge-2^62-by-~3` &middot; `edge-~2^62-by-3` &middot; `edge-~2^62-by-~3` &middot; `edge-~2^62-1-by-3` &middot; `edge-~2^62-1-by-~3` &middot; `edge-2^63-1-by-3` &middot; `edge-2^63-1-by-~3` &middot; `edge-~2^63-by-3` &middot; `edge-~2^63-by-~3` &middot; `edge-~2^63-1-by-3` &middot; `edge-~2^63-1-by-~3` &middot; `edge-2^31-1-by-3` &middot; `edge-2^31-1-by-~3` &middot; `edge-~2^31-by-3` &middot; `edge-~2^31-by-~3` &middot; `edge-2^64-1-by-3` &middot; `edge-2^64-1-by-~3`
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*` &middot; `toplevel-sign-of-divisor` &middot; `toplevel-Div` (raises Div)
 
@@ -538,9 +538,9 @@ It rounds towards zero, where [`div`](#val-div) rounds down: `~7 div 2` is `~4`.
 
 </details>
 
-<details><summary>Tests (22)</summary>
+<details><summary>Tests (52)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*` &middot; `edge-2^62-1-by-~3` &middot; `edge-2^62-1-by-~1` &middot; `edge-2^62-1-square-by-it` &middot; `edge-2^62-by-~3` &middot; `edge-2^62-by-~1` &middot; `edge-2^62-square-by-it` &middot; `edge-~2^62-by-~3` &middot; `edge-~2^62-by-~1` &middot; `edge-~2^62-square-by-it` &middot; `edge-~2^62-1-by-~3` &middot; `edge-~2^62-1-by-~1` &middot; `edge-~2^62-1-square-by-it` &middot; `edge-2^63-1-by-~3` &middot; `edge-2^63-1-by-~1` &middot; `edge-2^63-1-square-by-it` &middot; `edge-~2^63-by-~3` &middot; `edge-~2^63-by-~1` &middot; `edge-~2^63-square-by-it` &middot; `edge-~2^63-1-by-~3` &middot; `edge-~2^63-1-by-~1` &middot; `edge-~2^63-1-square-by-it` &middot; `edge-2^31-1-by-~3` &middot; `edge-2^31-1-by-~1` &middot; `edge-2^31-1-square-by-it` &middot; `edge-~2^31-by-~3` &middot; `edge-~2^31-by-~1` &middot; `edge-~2^31-square-by-it` &middot; `edge-2^64-1-by-~3` &middot; `edge-2^64-1-by-~1` &middot; `edge-2^64-1-square-by-it`
 
 In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `Div` &middot; `Div-negative` &middot; `Div-zero-by-zero` &middot; `Overflow-minInt-by-minus-one` &middot; `Div-minInt` &middot; `minInt-by-two` &middot; `maxInt-by-minus-one` &middot; `next-to-minInt-by-minus-one` &middot; `minInt-by-maxInt` &middot; `maxInt-by-minInt` &middot; `minInt-by-minInt` &middot; `one-by-minInt` &middot; `2^200+1-by-~2^200` &middot; `~2^400-by-2^200` &middot; `Div-2^200` &middot; `law*` &middot; `by-one*`
 
@@ -576,9 +576,9 @@ dividing by zero, and `quot (valOf minInt, ~1) * ~1 + rem (valOf minInt, ~1) = v
 
 </details>
 
-<details><summary>Tests (20)</summary>
+<details><summary>Tests (40)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*` &middot; `edge-2^62-1-by-~3` &middot; `edge-2^62-1-by-~1` &middot; `edge-2^62-by-~3` &middot; `edge-2^62-by-~1` &middot; `edge-~2^62-by-~3` &middot; `edge-~2^62-by-~1` &middot; `edge-~2^62-1-by-~3` &middot; `edge-~2^62-1-by-~1` &middot; `edge-2^63-1-by-~3` &middot; `edge-2^63-1-by-~1` &middot; `edge-~2^63-by-~3` &middot; `edge-~2^63-by-~1` &middot; `edge-~2^63-1-by-~3` &middot; `edge-~2^63-1-by-~1` &middot; `edge-2^31-1-by-~3` &middot; `edge-2^31-1-by-~1` &middot; `edge-~2^31-by-~3` &middot; `edge-~2^31-by-~1` &middot; `edge-2^64-1-by-~3` &middot; `edge-2^64-1-by-~1`
 
 In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `Div` &middot; `Div-negative` &middot; `Div-zero-by-zero` &middot; `minInt-by-minus-one` &middot; `Div-minInt` &middot; `minInt-by-two` &middot; `minInt-by-maxInt` &middot; `maxInt-by-minInt` &middot; `minInt-by-minInt` &middot; `one-by-minInt` &middot; `2^200+1-by-~2^200` &middot; `Div-2^200` &middot; `sign-of-dividend*` &middot; `magnitude*` &middot; `by-one*`
 
@@ -604,9 +604,9 @@ val compare : int * int -> order
 
 </details>
 
-<details><summary>Tests (15)</summary>
+<details><summary>Tests (35)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*` &middot; `successor*` &middot; `difference*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*` &middot; `successor*` &middot; `difference*` &middot; `edge-2^62-1-below-next` &middot; `edge-2^62-1-above-previous` &middot; `edge-2^62-below-next` &middot; `edge-2^62-above-previous` &middot; `edge-~2^62-below-next` &middot; `edge-~2^62-above-previous` &middot; `edge-~2^62-1-below-next` &middot; `edge-~2^62-1-above-previous` &middot; `edge-2^63-1-below-next` &middot; `edge-2^63-1-above-previous` &middot; `edge-~2^63-below-next` &middot; `edge-~2^63-above-previous` &middot; `edge-~2^63-1-below-next` &middot; `edge-~2^63-1-above-previous` &middot; `edge-2^31-1-below-next` &middot; `edge-2^31-1-above-previous` &middot; `edge-~2^31-below-next` &middot; `edge-~2^31-above-previous` &middot; `edge-2^64-1-below-next` &middot; `edge-2^64-1-above-previous`
 
 In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt-maxInt` &middot; `maxInt-minInt` &middot; `minInt-minInt` &middot; `maxInt-maxInt` &middot; `minInt-zero` &middot; `2^200-and-successor` &middot; `2^200-and-~2^200` &middot; `2^200-equal` &middot; `~2^200-and-~2^201` &middot; `model*` &middot; `reflexive*`
 
@@ -633,9 +633,9 @@ val >= : int * int -> bool
 
 </details>
 
-<details><summary>Tests (11)</summary>
+<details><summary>Tests (31)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*` &middot; `edge-2^62-1-below-next` &middot; `edge-2^62-below-next` &middot; `edge-~2^62-below-next` &middot; `edge-~2^62-1-below-next` &middot; `edge-2^63-1-below-next` &middot; `edge-~2^63-below-next` &middot; `edge-~2^63-1-below-next` &middot; `edge-2^31-1-below-next` &middot; `edge-~2^31-below-next` &middot; `edge-2^64-1-below-next` &middot; `edge-2^62-1-not-below-previous` &middot; `edge-2^62-not-below-previous` &middot; `edge-~2^62-not-below-previous` &middot; `edge-~2^62-1-not-below-previous` &middot; `edge-2^63-1-not-below-previous` &middot; `edge-~2^63-not-below-previous` &middot; `edge-~2^63-1-not-below-previous` &middot; `edge-2^31-1-not-below-previous` &middot; `edge-~2^31-not-below-previous` &middot; `edge-2^64-1-not-below-previous`
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*`
 
@@ -663,9 +663,9 @@ val ~ : int -> int
 
 </details>
 
-<details><summary>Tests (16)</summary>
+<details><summary>Tests (26)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*` &middot; `minus-from-zero*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*` &middot; `minus-from-zero*` &middot; `edge-2^62-1-negated` &middot; `edge-2^62-negated` &middot; `edge-~2^62-negated` &middot; `edge-~2^62-1-negated` &middot; `edge-2^63-1-negated` &middot; `edge-~2^63-negated` &middot; `edge-~2^63-1-negated` &middot; `edge-2^31-1-negated` &middot; `edge-~2^31-negated` &middot; `edge-2^64-1-negated`
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*` &middot; `toplevel-Overflow` (raises Overflow)
 
@@ -700,9 +700,9 @@ val abs : int -> int
 
 </details>
 
-<details><summary>Tests (13)</summary>
+<details><summary>Tests (23)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*` &middot; `edge-2^62-1-abs` &middot; `edge-2^62-abs` &middot; `edge-~2^62-abs` &middot; `edge-~2^62-1-abs` &middot; `edge-2^63-1-abs` &middot; `edge-~2^63-abs` &middot; `edge-~2^63-1-abs` &middot; `edge-2^31-1-abs` &middot; `edge-~2^31-abs` &middot; `edge-2^64-1-abs`
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*` &middot; `toplevel-Overflow` (raises Overflow)
 
@@ -780,9 +780,9 @@ val sign : int -> Int.int
 
 </details>
 
-<details><summary>Tests (12)</summary>
+<details><summary>Tests (22)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*` &middot; `edge-2^62-1` &middot; `edge-2^62` &middot; `edge-~2^62` &middot; `edge-~2^62-1` &middot; `edge-2^63-1` &middot; `edge-~2^63` &middot; `edge-~2^63-1` &middot; `edge-2^31-1` &middot; `edge-~2^31` &middot; `edge-2^64-1`
 
 In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `positive` &middot; `negative` &middot; `zero` &middot; `one` &middot; `minus-one` &middot; `minInt` &middot; `maxInt` &middot; `zero-times-2^200` &middot; `2^200` &middot; `~2^200` &middot; `model*`
 
@@ -866,9 +866,9 @@ val toString : int -> string
 
 </details>
 
-<details><summary>Tests (16)</summary>
+<details><summary>Tests (26)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `10^30` &middot; `power-*` &middot; `negative-power-*` &middot; `below-power-*` &middot; `immutable-*` &middot; `~10^30` &middot; `as-Int*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `10^30` &middot; `power-*` &middot; `negative-power-*` &middot; `below-power-*` &middot; `immutable-*` &middot; `~10^30` &middot; `as-Int*` &middot; `edge-2^62-1-text` &middot; `edge-2^62-text` &middot; `edge-~2^62-text` &middot; `edge-~2^62-1-text` &middot; `edge-2^63-1-text` &middot; `edge-~2^63-text` &middot; `edge-~2^63-1-text` &middot; `edge-2^31-1-text` &middot; `edge-~2^31-text` &middot; `edge-2^64-1-text`
 
 In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt` &middot; `maxInt` &middot; `next-to-minInt` &middot; `2^200` &middot; `~2^200` &middot; `2^200-1` &middot; `model*`
 
@@ -946,9 +946,9 @@ It reads decimal digits only, so a prefix of base 16 stops it after the
 
 </details>
 
-<details><summary>Tests (27)</summary>
+<details><summary>Tests (37)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^64` &middot; `factorial-30` &middot; `~2^128` &middot; `as-Int*` &middot; `toString*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^64` &middot; `factorial-30` &middot; `~2^128` &middot; `as-Int*` &middot; `toString*` &middot; `edge-2^62-1` &middot; `edge-2^62` &middot; `edge-~2^62` &middot; `edge-~2^62-1` &middot; `edge-2^63-1` &middot; `edge-~2^63` &middot; `edge-~2^63-1` &middot; `edge-2^31-1` &middot; `edge-~2^31` &middot; `edge-2^64-1`
 
 In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt` &middot; `minInt-with-minus` &middot; `maxInt` &middot; `maxInt-with-plus` &middot; `maxInt-then-letters` &middot; `maxInt-with-leading-zeros` &middot; `minInt-with-leading-zeros` &middot; `Overflow-maxInt-plus-one` &middot; `Overflow-minInt-minus-one` &middot; `Overflow-maxInt-times-ten` &middot; `Overflow-minInt-times-ten` &middot; `Overflow-after-whitespace` &middot; `Overflow-many-digits` &middot; `2^200` &middot; `~2^200` &middot; `-2^200` &middot; `2^200-then-letters` &middot; `model*` &middot; `other-sign*` &middot; `round-trip*`
 
