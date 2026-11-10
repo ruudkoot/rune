@@ -1,0 +1,3 @@
+; fail: [tycon] in val f: the type constructor Nat of the binder x is not declared
+; CoreLint, tycon: every type constructor declared or built in
+(val f (-> Int Int) (\ ((x Nat)) 0))

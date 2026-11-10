@@ -1,0 +1,20 @@
+; run: --read-core tests/hs/core/lib/base.core
+; Unboxed tuples, the several results of a function, which no let binds: a
+; case takes them apart. A component may be evaluated or lazy: divMod's
+; quotient is a value and its remainder a suspension, never forced here
+; when the divisor is 0.
+(val divMod (-> !Int !Int (utuple !Int Int))
+  (\ ((a !Int) (b !Int))
+    (case (prim int_eq b 0) z
+      ((True) (let (r Int (prim int_mod a b)) (utuple 0 r)))
+      ((False) (case (prim int_div a b) q (_ (let (r Int (prim int_mod a b)) (utuple q r))))))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (divMod 17 5) t
+      ((utuple q r)
+        (case (printInt q w) o1
+          ((utuple w1 _)
+            (case (printInt r w1) o2
+              ((utuple w2 _)
+                (case (divMod 1 0) t2
+                  ((utuple q2 _) (printInt q2 w2)))))))))))

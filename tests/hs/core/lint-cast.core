@@ -1,0 +1,3 @@
+; fail: [cast] in val x: a cast from Int to Bool unfolds no newtype at its head
+; CoreLint, cast: a cast goes into or out of a newtype at its head, and nothing else
+(val x Bool (cast 1 Bool))

@@ -1,0 +1,10 @@
+; refuse: --fault=thunk-in-slot --read-core tests/hs/core/lib/base.core | lint after mid: internal compiler error: the value of
+; rhc's mutant of Core to Mid, a thunk in a typed slot (the roadmap's rhc's
+; mutants): a suspension given where its value is wanted, unforced. Tier 2
+; trusts a typed slot, so the VM would read it blind (E2); MidLint, which
+; holds a suspension's type apart from its value's, refuses it at the
+; boundary into Mid.
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (x Int (prim int_add 1 2))
+      (printInt x w))))

@@ -1,0 +1,22 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A newtype is a cast, which forces nothing: a match on its constructor
+; is irrefutable (the Report, 4.2.3), so f (MkN _) = 1 gives 1 at a bottom;
+; and a newtype can wrap itself, which System F cannot say (D2):
+;   newtype N = MkN Int;  f (MkN _) = 1;  print (f undefined)       1
+;   newtype Fix = Fix (Fix -> Int)
+;   self (Fix g) = g (Fix g);  print (self (Fix (\_ -> 2)))          2
+(newtype N () MkN Int)
+(newtype Fix () MkFix (-> Fix Int))
+(val f (-> N Int) (\ ((n N)) (let (x Int (cast n Int)) 1)))
+(val self (-> Fix Int)
+  (\ ((x Fix)) (let (g (-> Fix Int) (cast x (-> Fix Int))) (g x))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (b N (error @N "undefined"))
+    (let (one Int (f b))
+    (case (printInt one w) o1
+      ((utuple w1 _)
+        (let (k (-> Fix Int) (\ ((y Fix)) 2))
+        (let (fx Fix (cast k Fix))
+        (let (two Int (self fx))
+          (printInt two w1))))))))))

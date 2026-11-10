@@ -1,6 +1,10 @@
-(* IntInf: canonical small integers or signed immutable packed magnitudes.
-   The bytes are little endian, independent of the arithmetic workspace's
-   limb width. Arrays below are private scratch and never escape in a value.
+(* IntInf: an immediate where the number fits the word, else a sign and an
+   immutable packed magnitude (haskell98 M31, D20 D). The VM's primitives
+   add, subtract, multiply, divide and compare, two immediates in line and
+   the rest in the runtime (runtime/intinf.c); this structure does the
+   rest over the parts of a number, its sign and its magnitude, whose bytes
+   are little endian, independent of the workspace's limb width. Arrays
+   below are private scratch and never escape in a value.
 
    Implements: INT_INF
 
@@ -10,7 +14,7 @@
 structure IntInf =
 struct
   type limb = int
-  datatype int = S of limb | B of bool * string
+  type int = _prim "intinf"
 
   val intQuot = _prim "int_quot" : limb * limb -> limb
   val intRem = _prim "int_rem" : limb * limb -> limb
@@ -33,9 +37,29 @@ struct
   fun pow2 k = fromWord(shiftWord(0w1,toWord k))
   val base = pow2 limbBits
   val mask = base - 1
-  val smallTop = pow2 ((machineBits-1) mod 8)
-  val zero = S 0
-  val one = S 1
+  val fromInt = _prim "intinf_from_int" : limb -> int
+  val toInt = _prim "intinf_to_int" : int -> limb
+  (* whether a number is an immediate, which toInt gives *)
+  val isSmall = _prim "intinf_is_small" : int -> bool
+  (* a number's sign and canonical magnitude, and the number of a pair *)
+  val parts = _prim "intinf_parts" : int -> bool * string
+  val make = _prim "intinf_make" : bool * string -> int
+  val addI = _prim "intinf_add" : int * int -> int
+  val subI = _prim "intinf_sub" : int * int -> int
+  val mulI = _prim "intinf_mul" : int * int -> int
+  val negI = _prim "intinf_neg" : int -> int
+  val quotI = _prim "intinf_quot" : int * int -> int
+  val remI = _prim "intinf_rem" : int * int -> int
+  val divI = _prim "intinf_div" : int * int -> int
+  val modI = _prim "intinf_mod" : int * int -> int
+  val ltI = _prim "intinf_lt" : int * int -> bool
+  val leI = _prim "intinf_le" : int * int -> bool
+  val gtI = _prim "intinf_gt" : int * int -> bool
+  val geI = _prim "intinf_ge" : int * int -> bool
+  val compare = _prim "intinf_order" : int * int -> order
+  val zero = fromInt 0
+  val one = fromInt 1
+  val minusOne = fromInt (~1)
 
   fun byte (s,i) = ord (strSub (s,i))
   fun bput (a,i,n) = RuneBytes.update (a,i,chr n)
@@ -43,7 +67,6 @@ struct
   val maxBits = _prim "intinf_max_bits" : unit -> limb
   val checkBits = _prim "intinf_check_bits" : limb -> unit
   val gmpBinary = _prim "intinf_binary" : limb * bool * string * bool * string -> bool * string
-  val gmpDivMod = _prim "intinf_divmod" : bool * bool * string * bool * string -> (bool * string) * (bool * string)
   val gmpShift = _prim "intinf_shift" : bool * bool * string * word -> bool * string
   val gmpPower = _prim "intinf_power" : bool * string * limb -> bool * string
   val gmpDecimal = _prim "intinf_decimal" : string -> string
@@ -56,33 +79,15 @@ struct
          in if strSize s <= limit div 8 then ()
             else if strSize s > limit div 8 + 1 then checkBits(limit+1)
             else checkBits(magBits s) end
-  (* All callers supply a canonical, budget-checked magnitude: pack and
-     GMP export enforce that contract, and an existing magnitude is checked
-     before reuse. The bytewise left shift selects its significant length.
-     Test the signed boundary before decoding, without an Overflow handler. *)
-  fun make (neg,s) =
-    let val n = strSize s
-        fun lowZero i = i < 0 orelse (byte(s,i) = 0 andalso lowZero(i-1))
-        fun fits () = n < smallBytes orelse byte(s,n-1) < smallTop orelse
-          (neg andalso byte(s,n-1) = smallTop andalso lowZero(n-2))
-        fun small (i,acc) =
-          if i < 0 then S acc
-          else small (i-1, if neg then acc*256-byte(s,i) else acc*256+byte(s,i))
-    in if n = 0 then zero
-       else if n > smallBytes then B (neg,s)
-       else if fits() then small (n-1,0) else B (neg,s)
-    end
   fun smallMag n =
     let val out = RuneBytes.new (smallBytes,0)
         fun loop (x,i) = if x = 0 then RuneBytes.extract (out,0,i)
           else let val r = intRem (x,256)
                in bput (out,i,if r < 0 then ~r else r); loop (intQuot(x,256),i+1) end
     in loop (n,0) end
-  fun magnitude (S n) = smallMag n | magnitude (B (_,s)) = (checkMag s; s)
-  fun negative (S n) = n < 0 | negative (B (n,_)) = n
-  fun isZero (S 0) = true | isZero _ = false
-  fun fromInt n = S n
-  fun toInt (S n) = n | toInt _ = raise Overflow
+  fun magnitude x = #2 (parts x)
+  fun negative x = ltI (x,zero)
+  fun isZero x = x = zero
 
   (* The workspace is a little-endian array plus its significant length. *)
   fun trim (a,n) = if n > 0 andalso at(a,n-1) = 0 then trim(a,n-1) else (a,n)
@@ -94,12 +99,6 @@ struct
         val () = if n = 0 orelse n <= maxBits() div limbBits then ()
                  else checkBits((n-1)*limbBits+digitBits(at(a,n-1)))
     in packBytes(a,n,limbBits) end
-  fun cmpMag (a,b) =
-    let val na = strSize a and nb = strSize b
-        fun loop i = if i < 0 then EQUAL
-          else let val x = byte(a,i) and y = byte(b,i)
-               in if x < y then LESS else if x > y then GREATER else loop(i-1) end
-    in if na < nb then LESS else if na > nb then GREATER else loop(na-1) end
   fun carryDigits (a,n,c) =
     if c = 0 then (a,n)
     else let val r = anew(n+1,0)
@@ -116,63 +115,11 @@ struct
         fun lowZero i = i < 0 orelse (at(a,i) = 0 andalso lowZero(i-1))
         fun fits () = n < smallLimbs orelse at(a,n-1) < smallLimbTop orelse
           (neg andalso at(a,n-1) = smallLimbTop andalso lowZero(n-2))
-        fun small(i,v) = if i < 0 then S v else
+        fun small(i,v) = if i < 0 then fromInt v else
           small(i-1,if neg then v*base-at(a,i) else v*base+at(a,i))
     in if n = 0 then zero
        else if n <= smallLimbs andalso fits() then small(n-1,0)
-       else B(neg,pack(a,n)) end
-  (* the longer in limbs first: two magnitudes of as many bytes may be of
-     two lengths in limbs, a limb not being a whole number of bytes *)
-  fun addMag (sa,sb) =
-    let val (a,na) = unpack sa and (b,nb) = unpack sb
-        val ((a,na),(b,nb)) = if na < nb then ((b,nb),(a,na)) else ((a,na),(b,nb))
-        fun loop(i,c) = if i = na then c
-          else let val v = at(a,i) + (if i < nb then at(b,i) else 0) + c
-               in if v >= base then (put(a,i,v-base); loop(i+1,1))
-                  else (put(a,i,v); loop(i+1,0)) end
-    in carryDigits(a,na,loop(0,0)) end
-  fun subMag (sa,sb) =
-    let val (a,na) = unpack sa and (b,nb) = unpack sb
-        fun loop(i,c) = if i = na then ()
-          else let val v = at(a,i) - (if i < nb then at(b,i) else 0) - c
-               in put(a,i,if v < 0 then v+base else v); loop(i+1,if v < 0 then 1 else 0) end
-        val () = loop(0,0)
-    in (a,na) end
-  fun mulDigits ((a,na),(b,nb)) =
-    let val r = anew(na+nb,0)
-        fun row(i,j,c) = if j = nb then put(r,i+nb,c)
-          else let val v = at(a,i)*at(b,j)+at(r,i+j)+c
-               in put(r,i+j,v mod base); row(i,j+1,v div base) end
-        fun loop i = if i = na then () else (row(i,0,0); loop(i+1))
-        val () = if na = 0 orelse nb = 0 then () else loop 0
-    in pack(r,na+nb) end
-  fun mulMag (sa,sb) = mulDigits(unpack sa,unpack sb)
-  (* The machine multiply has already proved that the result needs B.
-     Keep its inputs boxed until promotion and put the shorter magnitude
-     in the outer multiplication loop. The at-most-once tail swap also keeps
-     this cold routine separate from mulI's small fast path. *)
-  fun mulOverflow (a,b) =
-    let
-      val x = case a of S x => x | _ => raise Match
-      val y = case b of S y => y | _ => raise Match
-      val nx = if x > 0 then ~x else x
-      val ny = if y > 0 then ~y else y
-    in if nx < ny then mulOverflow(b,a)
-       else let
-          fun bits v =
-            let val q = intQuot(v,base)
-            in if q = 0 then digitBits(if v < 0 then ~v else v)
-               else limbBits + bits q end
-          val () = if maxBits() >= machineBits+machineBits then ()
-                   else checkBits(bits x+bits y-1)
-          fun digits v =
-            let val a = anew((machineBits+limbBits-1) div limbBits,0)
-                fun loop(v,i) = if v = 0 then (a,i)
-                  else let val d = intRem(v,base)
-                       in put(a,i,if d < 0 then ~d else d); loop(intQuot(v,base),i+1) end
-            in loop(v,0) end
-        in B((x < 0) <> (y < 0),mulDigits(digits x,digits y)) end
-    end
+       else make(neg,pack(a,n)) end
   fun scale ((a,n),d) =
     let val r = anew(n+1,0)
         fun loop(i,c) = if i = n then put(r,n,c)
@@ -180,190 +127,19 @@ struct
                in put(r,i,v mod base); loop(i+1,v div base) end
         val () = loop(0,0)
     in (r,n) end
-  fun divideSmall ((a,n),d) =
-    let val q = anew(n,0)
-        fun loop(i,r) = if i < 0 then (trim(q,n),r)
-          else let val v = r*base+at(a,i)
-               in put(q,i,v div d); loop(i-1,v mod d) end
-    in loop(n-1,0) end
-  fun divModMag (sa,sb) =
-    if cmpMag(sa,sb) = LESS then ("",sa)
-    else
-      let val (a,m) = unpack sa and (b,n) = unpack sb
-      in
-        if n = 1 then
-          let val (q,r) = divideSmall((a,m),at(b,0))
-          in (pack q,smallMag r) end
-        else
-          let
-            val d = base div (at(b,n-1)+1)
-            val (u,_) = scale((a,m),d)
-            val (v,_) = scale((b,n),d)
-            val q = anew(m-n+1,0)
-            val top = at(v,n-1)
-            fun correct(qh,rh,j) =
-              if rh < base andalso qh*at(v,n-2) > rh*base+at(u,j+n-2)
-              then correct(qh-1,rh+top,j) else qh
-            fun subtract(j,qh,i,c,bw) =
-              if i = n then
-                let val t = at(u,j+n)-c-bw
-                in put(u,j+n,if t < 0 then t+base else t); t < 0 end
-              else let val p = qh*at(v,i)+c
-                       val t = at(u,j+i)-(p mod base)-bw
-                   in put(u,j+i,if t < 0 then t+base else t);
-                      subtract(j,qh,i+1,p div base,if t < 0 then 1 else 0) end
-            fun addBack(j,i,c) =
-              if i = n then put(u,j+n,(at(u,j+n)+c) mod base)
-              else let val t = at(u,j+i)+at(v,i)+c
-                   in put(u,j+i,t mod base); addBack(j,i+1,t div base) end
-            fun loop j = if j < 0 then ()
-              else let val num = at(u,j+n)*base+at(u,j+n-1)
-                       val estimate = if at(u,j+n) = top then base-1 else num div top
-                       val qh = correct(estimate,num-estimate*top,j)
-                       val borrowed = subtract(j,qh,0,0,0)
-                       val () = if borrowed then addBack(j,0,0) else ()
-                   in put(q,j,if borrowed then qh-1 else qh); loop(j-1) end
-            val () = loop(m-n)
-            val (r,_) = divideSmall((u,n),d)
-          in (pack(q,m-n+1),pack r) end
-      end
-
-  fun negI (S n) = (S (~n) handle Overflow => B(false,smallMag n))
-    | negI (B (neg,s)) = (checkMag s; make(not neg,s))
   fun absI x = if negative x then negI x else x
-  (* A large magnitude is at least the magnitude of every small value.
-     Update a private copy only as far as carry/borrow propagates; the rest
-     is copied in bulk. Signed quot/rem also handle the minimum machine int. *)
-  fun addLargeSmall (neg,s,x) =
-    let val () = checkMag s
-        val n = strSize s
-        val adding = neg = (x < 0)
-        val out = RuneBytes.new(n+1,0)
-        val () = RuneBytes.blitString(s,0,out,0,n)
-        fun step(i,d,q,c) =
-          let val a = if i < n then byte(s,i) else 0
-              val t = if adding then a+d+c else a-d-c
-          in if t < 0 then (bput(out,i,t+256); loop(i+1,q,1))
-             else if t >= 256 then (bput(out,i,t-256); loop(i+1,q,1))
-             else (bput(out,i,t); loop(i+1,q,0)) end
-        and loop(i,v,c) =
-          if v = 0 andalso c = 0 then if i > n then i else n
-          else if v > ~256 andalso v < 256 then step(i,if v < 0 then ~v else v,0,c)
-          else let val r = intRem(v,256)
-               in step(i,if r < 0 then ~r else r,intQuot(v,256),c) end
-        val used = loop(0,x,0)
-        fun top i = if i > 0 andalso RuneBytes.sub(out,i-1) = #"\000" then top(i-1) else i
-        val count = if adding then used else top used
-        (* Check the exact boundary before allocating the immutable result. *)
-        val () = if count <= 8 then ()
-          else let val limit = maxBits()
-               in if count <= limit div 8 then ()
-                  else if count > limit div 8 + 1 then checkBits(limit+1)
-                  else checkBits((count-1)*8+digitBits(ord(RuneBytes.sub(out,count-1)))) end
-        val result = RuneBytes.extract(out,0,count)
-    in if adding then B(neg,result) else make(neg,result) end
-  (* Callers supply two large values, or a failed machine addition. With
-     equal signs their sum cannot return to the small representation. *)
-  fun addPacked (na,ma,nb,mb) =
-    let val () = checkMag ma
-        val () = checkMag mb
-    in if na = nb then
-         B(na,if gmpAvailable() then #2(gmpBinary(0,na,ma,nb,mb)) else pack(addMag(ma,mb)))
-       else if gmpAvailable() then make(gmpBinary(0,na,ma,nb,mb))
-       else if cmpMag(ma,mb) = LESS then finish(nb,subMag(mb,ma))
-       else finish(na,subMag(ma,mb)) end
-  fun addBig (a,b) = addPacked(negative a,magnitude a,negative b,magnitude b)
-  (* Destructure the arguments once so known calls can pass the operands
-     directly, without allocating an argument tuple on the small path. *)
-  fun addI (a,b) =
-    case a of
-      S x => (case b of S y => (S(x+y) handle Overflow => addBig(a,b))
-                     | B (neg,s) => if x = 0 then b else addLargeSmall(neg,s,x))
-    | B (neg,s) => (case b of S 0 => a | S x => addLargeSmall(neg,s,x)
-                           | B (nb,mb) => addPacked(neg,s,nb,mb))
-  fun subI (S a,S b) = (S(a-b) handle Overflow => addBig(S a,negI(S b)))
-    | subI (a,b) = addI(a,negI b)
-  fun mulBig (a,b) =
-    let val ma = magnitude a and mb = magnitude b
-        val () = if strSize ma + strSize mb <= maxBits() div 8 then ()
-                 else checkBits(magBits ma+magBits mb-1)
-    in if gmpAvailable() then make(gmpBinary(2,negative a,ma,negative b,mb))
-       else make(negative a <> negative b,mulMag(ma,mb)) end
-  fun mulLargeSmall (large as B (neg,s),x) =
-    if x = ~1 then negI large
-    else if x <= ~base orelse x >= base orelse gmpAvailable() then mulBig(large,S x)
-    else let val () = checkMag s
-             val d = if x < 0 then ~x else x
-             val () = if strSize s <= (maxBits()-limbBits) div 8 then ()
-                      else checkBits(magBits s+digitBits d-1)
-             val (a,n) = unpack s
-             fun loop(i,c) = if i = n then c
-               else let val v = at(a,i)*d+c
-                    in put(a,i,v mod base); loop(i+1,v div base) end
-         in finish(neg <> (x < 0),carryDigits(a,n,loop(0,0))) end
-    | mulLargeSmall (a,x) = mulBig(a,S x)
-  fun mulI (a,b) =
-    case a of
-      S x => (case b of S y => (S(x*y) handle Overflow => mulOverflow(a,b))
-                     | _ => if x = 0 then zero else if x = 1 then b else mulLargeSmall(b,x))
-    | _ => (case b of S 0 => zero | S 1 => a | S x => mulLargeSmall(a,x)
-                     | _ => mulBig(a,b))
-  fun quotBig (a,b) =
-    if isZero b then raise Div
-    else let val ma = magnitude a and mb = magnitude b
-         in if strSize ma < strSize mb then (zero,a)
-            else if gmpAvailable() then
-              let val (q,r) = gmpDivMod(false,negative a,ma,negative b,mb)
-              in (make q,make r) end
-            else let val (q,r) = divModMag(ma,mb)
-                 in (make(negative a <> negative b,q),make(negative a,r)) end
-         end
-  fun quotRemI (a,S 1) = (a,zero)
-    | quotRemI (a,S (~1)) = (negI a,zero)
-    | quotRemI (S a,S b) = ((S(intQuot(a,b)),S(intRem(a,b)))
-                           handle Overflow => quotBig(S a,S b))
-    (* A canonical large magnitude exceeds every nonnegative small value.
-       A negative small value can tie the positive large boundary, so that
-       case still uses the general division path. *)
-    | quotRemI (a as S n,b as B (neg,s)) =
-        if n >= 0 orelse neg orelse strSize s > smallBytes then (zero,a)
-        else quotBig(a,b)
-    | quotRemI p = quotBig p
-  fun floorFromTrunc (a,b) =
-    let val (q,r) = quotRemI(a,b)
-    in if isZero r orelse negative a = negative b then (q,r)
-       else (subI(q,one),addI(r,b)) end
-  fun divModI (a,S 1) = (a,zero)
-    | divModI (a,S (~1)) = (negI a,zero)
-    | divModI (a as S _,b) = floorFromTrunc(a,b)
-    | divModI (a,b) =
-      if isZero b then raise Div
-      else if gmpAvailable() then
-        let val ma = magnitude a and mb = magnitude b
-        in if strSize ma < strSize mb then
-             if negative a = negative b then (zero,a) else (S (~1),addI(a,b))
-           else let val (q,r) = gmpDivMod(true,negative a,ma,negative b,mb)
-                in (make q,make r) end
-        end
-      else floorFromTrunc(a,b)
-  fun compare (S a,S b) = if a < b then LESS else if a > b then GREATER else EQUAL
-    (* Canonical large values lie outside the machine range. Mixed
-       comparisons therefore need neither conversion nor allocation. *)
-    | compare (S _,B (neg,_)) = if neg then GREATER else LESS
-    | compare (B (neg,_),S _) = if neg then LESS else GREATER
-    | compare (B (na,a),B (nb,b)) =
-        if na <> nb then (if na then LESS else GREATER)
-        else if na then cmpMag(b,a) else cmpMag(a,b)
-  fun sign (S n) = if n = 0 then 0 else if n < 0 then ~1 else 1
-    | sign (B (neg,_)) = if neg then ~1 else 1
+  fun sign x = case compare (x,zero) of LESS => ~1 | EQUAL => 0 | GREATER => 1
+  (* one division, and the remainder of it *)
+  fun quotRemI (a,b) = let val q = quotI (a,b) in (q,subI (a,mulI (q,b))) end
+  fun divModI (a,b) = let val q = divI (a,b) in (q,subI (a,mulI (q,b))) end
   fun pow (x,n) =
     if n < 0 then if isZero x then raise Div
       else if x = one then one
-      else if x = S (~1) then (if intRem(n,2) = 0 then one else x)
+      else if x = minusOne then (if intRem(n,2) = 0 then one else x)
       else zero
     else if n = 0 then one
     else if isZero x orelse x = one then x
-    else if x = S (~1) then (if n mod 2 = 0 then one else x)
+    else if x = minusOne then (if n mod 2 = 0 then one else x)
     else let val m = magnitude x
              val bits = magBits m
              val limit = maxBits()
@@ -396,11 +172,12 @@ struct
                   val t = if first then t else concat(zeros(decimalDigits-strSize t,[t]))
               in t::render(false,cs) end
       in concat(render(true,chunks(n,[]))) end
-  fun toString (S n) = intToString n
-    | toString (B (neg,s)) =
-      let val () = checkBits(magBits s)
-          val text = if gmpAvailable() then gmpDecimal s else decimalSml s
-      in if neg then "~" ^ text else text end
+  fun toString x =
+    if isSmall x then intToString (toInt x)
+    else let val (neg,s) = parts x
+             val () = checkBits(magBits s)
+             val text = if gmpAvailable() then gmpDecimal s else decimalSml s
+         in if neg then "~" ^ text else text end
   fun log2 x = if sign x <= 0 then raise Domain else magBits(magnitude x)-1
   fun radixBase StringCvt.BIN = 2 | radixBase StringCvt.OCT = 8
     | radixBase StringCvt.DEC = 10 | radixBase StringCvt.HEX = 16
@@ -480,8 +257,8 @@ struct
                             val (_,n) = trim(a,n+1)
                         in big(rest,a,n) end
                  end
-             | NONE => (S(if neg then ~v else v),src))
-        | NONE => (S(if neg then ~v else v),src)
+             | NONE => (fromInt(if neg then ~v else v),src))
+        | NONE => (fromInt(if neg then ~v else v),src)
     in if digitNext src then SOME(small(src,0)) else NONE end
   fun fromString s = StringCvt.scanString (scan StringCvt.DEC) s
 
@@ -519,7 +296,7 @@ struct
      top bit. Copy the unchanged high bytes and visit only the low ones. *)
   fun bitPositive (f,s,x) =
     let val () = checkMag s
-    in if x = 0 then B(false,s)
+    in if x = 0 then make(false,s)
        else let val n = strSize s
                 val out = RuneBytes.new(n,0)
                 val () = RuneBytes.blitString(s,0,out,0,n)
@@ -527,7 +304,7 @@ struct
                   else (bput(out,i,wordToInt(f(wordFromInt(byte(s,i)),wordFromInt(v mod 256))));
                         loop(i+1,v div 256))
                 val () = loop(0,x)
-            in B(false,RuneBytes.extract(out,0,n)) end
+            in make(false,RuneBytes.extract(out,0,n)) end
     end
   fun bitPositiveLarge (code,f,sa,sb) =
     let val () = checkMag sa
@@ -543,18 +320,22 @@ struct
                 val () = loop 0
             in finish(false,(out,n)) end
     end
+  (* the operations are symmetric: a small operand and a large one are
+     taken in either order *)
   fun bitwise (code,f,signOf) (a,b) =
-    case a of
-      S x => (case b of
-                S y => S(wordToIntX(f(wordFromInt x,wordFromInt y)))
-              | B (neg,s) => if code <> 3 andalso not neg andalso x >= 0
-                  then bitPositive(f,s,x) else bitwiseBig(code,f,signOf,a,b))
-    | B (neg,s) => (case b of
-                S x => if code <> 3 andalso not neg andalso x >= 0
-                  then bitPositive(f,s,x) else bitwiseBig(code,f,signOf,a,b)
-              | B (nb,mb) => if not neg andalso not nb
-                  then bitPositiveLarge(code,f,s,mb)
-                  else bitwiseBig(code,f,signOf,a,b))
+    let fun mixed (x,large) =
+          let val (neg,s) = parts large
+          in if code <> 3 andalso not neg andalso x >= 0
+             then bitPositive(f,s,x) else bitwiseBig(code,f,signOf,a,b) end
+    in case (isSmall a,isSmall b) of
+         (true,true) => fromInt(wordToIntX(f(wordFromInt(toInt a),wordFromInt(toInt b))))
+       | (true,false) => mixed(toInt a,b)
+       | (false,true) => mixed(toInt b,a)
+       | (false,false) =>
+           let val (na,sa) = parts a and (nb,sb) = parts b
+           in if not na andalso not nb then bitPositiveLarge(code,f,sa,sb)
+              else bitwiseBig(code,f,signOf,a,b) end
+    end
   val andb = bitwise(3,wordAnd,fn(a,b)=>a andalso b)
   val orb = bitwise(4,wordOr,fn(a,b)=>a orelse b)
   val xorb = bitwise(5,wordXor,fn(a,b)=>a <> b)
@@ -589,7 +370,7 @@ struct
         val neg = negative x
         val m = magnitude x
         fun shifted () =
-          if k < 0 orelse k >= magBits m then if neg then S (~1) else zero
+          if k < 0 orelse k >= magBits m then if neg then minusOne else zero
           else let val (digits,n) = unpack m
                    val whole = k div limbBits and bits = k mod limbBits
                    val factor = pow2 bits
@@ -621,16 +402,16 @@ struct
   val abs = absI
   val quotRem = quotRemI
   val divMod = divModI
-  val quot = fn (a,b) => #1(quotRemI(a,b))
-  val rem = fn (a,b) => #2(quotRemI(a,b))
-  val op div = fn (a,b) => #1(divModI(a,b))
-  val op mod = fn (a,b) => #2(divModI(a,b))
-  val op < = fn (a,b) => compare(a,b) = LESS
-  val op <= = fn (a,b) => compare(a,b) <> GREATER
-  val op > = fn (a,b) => compare(a,b) = GREATER
-  val op >= = fn (a,b) => compare(a,b) <> LESS
-  fun min (a,b) = if compare(a,b) = GREATER then b else a
-  fun max (a,b) = if compare(a,b) = LESS then b else a
+  val quot = quotI
+  val rem = remI
+  val op div = divI
+  val op mod = modI
+  val op < = ltI
+  val op <= = leI
+  val op > = gtI
+  val op >= = geI
+  fun min (a,b) = if gtI(a,b) then b else a
+  fun max (a,b) = if ltI(a,b) then b else a
   fun sameSign (a,b) = sign a = sign b
 end
 

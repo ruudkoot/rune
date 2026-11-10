@@ -1,0 +1,45 @@
+; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
+; E1's cafs, in Core: mutually recursive CAFs, a CAF on a later CAF's value,
+; and one never forced, whose error never runs; limit runs once:
+;   ones, twos :: [Int]
+;   ones = 1 : twos
+;   twos = 2 : ones
+;   nums = 0 : map (+1) nums
+;   limit = length (take 3 ones) + offset      -- a CAF on a later CAF's value
+;   offset = 10 * k
+;   k = 4
+;   bad = error "never forced"
+;   main = print (take 5 ones) >> print (take 3 twos) >> print (take 4 nums)
+;          >> print limit >> print limit >> print (the times limit ran)
+
+(val runs (Ref Int) (case (con Unit) u (_ (newCounter u))))
+
+(val ones (List Int) (con Cons @Int 1 twos))
+(val twos (List Int) (con Cons @Int 2 ones))
+(val nums (List Int)
+  (let (inc (-> Int Int) (\ ((x Int)) (case x v (_ (prim int_add v 1)))))
+    (let (t (List Int) (map @Int @Int inc nums)) (con Cons @Int 0 t))))
+(val limit Int
+  (case (tick runs) _
+    (_ (let (t (List Int) (take @Int 3 ones))
+         (case (length @Int t) n (_ (case offset o (_ (prim int_add n o)))))))))
+(val offset Int (case k v (_ (prim int_mul 10 v))))
+(val k Int 4)
+(val bad Int (error @Int "never forced"))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (a (List Int) (take @Int 5 ones))
+    (case (printIntList a w) r1
+      ((utuple w1 _)
+        (let (b (List Int) (take @Int 3 twos))
+        (case (printIntList b w1) r2
+          ((utuple w2 _)
+            (let (c (List Int) (take @Int 4 nums))
+            (case (printIntList c w2) r3
+              ((utuple w3 _)
+                (case (printInt limit w3) r4
+                  ((utuple w4 _)
+                    (case (printInt limit w4) r5
+                      ((utuple w5 _) (printCount runs w5))))))))))))))))
