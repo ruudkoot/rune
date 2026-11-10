@@ -219,7 +219,9 @@ struct
      - `stackDone`: whether `compile/stack-done` waits for the stack
        compiler's bytecode, which test-opt and test-native read;
      - `covers`, the tags of each part, what a compiler and a way need, and
-       which programs bin/rune-suite selects *)
+       which programs bin/rune-suite selects;
+     - `pending`: why a program's jobs are listed and not run, if they are
+       (rhc's, while the rows they test are Planned: tests/runner/hsconformance.sml) *)
   type suite =
     {group : string, lang : string, errors : string, accept : string option,
      suffixes : string list, mains : string list, compilers : compiler list, errorCompilers : compiler list,
@@ -230,7 +232,7 @@ struct
      wayTags : way -> string list,
      needs : string -> Run.command Test.tree -> Run.command Test.tree,
      wayNeeds : way -> Run.command Test.tree -> Run.command Test.tree,
-     selected : string -> string -> bool}
+     selected : string -> string -> bool, pending : program -> string option}
 
   (* a job's path in a suite's group *)
   fun path (s : suite) p = if #group s = "" then p else #group s ^ "/" ^ p
@@ -380,25 +382,26 @@ struct
       val langPrograms = programsIn (#lang s, "lang")
       val errorPrograms = programsIn (#errors s, "errors")
       val covers = #covers s
+      fun held p t = case #pending s p of SOME why => Test.pending why t | NONE => t
       (* the programs checked with the suite's command; not for a compiler
          of bin/rune-suite's *)
       fun typecheckTests accepts programs =
         case #typecheck s of
           SOME command =>
             if selectedCompiler <> "" then []
-            else [tagged (#typecheckTags s @ covers) (Test.describe "typecheck" (List.map (typecheck (command, accepts)) programs))]
+            else [tagged (#typecheckTags s @ covers) (Test.describe "typecheck" (List.map (fn p => held p (typecheck (command, accepts) p)) programs))]
         | NONE => []
       val accepted =
         case (#accept s, #typecheck s) of
           (SOME dir, SOME command) =>
             [tagged (#typecheckTags s @ covers)
-               (Test.describe "accept" (List.map (typecheck (command, true)) (programsIn (dir, "accept"))))]
+               (Test.describe "accept" (List.map (fn p => held p (typecheck (command, true) p)) (programsIn (dir, "accept"))))]
         | _ => []
     in
       Test.describe (#group s)
         ([Test.describe "compile"
             (List.map (fn (c, command, _) =>
-                         #needs s c (tagged (#compileTags s @ covers) (Test.describe c (List.map (compile s (c, command)) langPrograms))))
+                         #needs s c (tagged (#compileTags s @ covers) (Test.describe c (List.map (fn p => held p (compile s (c, command) p)) langPrograms))))
                       (#compilers s)
              @ (if #stackDone s then
                   [tagged (#compileTags s @ covers)
@@ -409,19 +412,19 @@ struct
           Test.describe "errors"
             (List.map (fn (c as (name, command, _)) =>
                          #needs s name (tagged (#errorTags s c @ covers)
-                           (Test.describe name (List.map (fn p => if name<>"suite" then error s (name,command) p else
+                           (Test.describe name (List.map (fn p => held p (if name<>"suite" then error s (name,command) p else
                                                              case selectedSkip (#name p) of
                                                                SOME row => Test.pending (Expectations.describe row) (error s (name,command) p)
-                                                             | NONE => error s (name,command) p) errorPrograms))))
+                                                             | NONE => error s (name,command) p)) errorPrograms))))
                       (#errorCompilers s)
              @ typecheckTests false errorPrograms),
           Test.describe "lang"
             (List.map (fn w => #wayNeeds s w (#needs s (#compiler w) (tagged (#wayTags s w @ covers)
                                  (Test.describe (#name w)
-                                    (List.map (fn p =>
+                                    (List.map (fn p => held p (
                                                  case (if #name w="suite" then selectedSkip (#name p) else Option.mapPartial (fn f => Expectations.skipped (expectationsOf f, {way = #name w, path = #name p})) (#skip w)) of
                                                    SOME l => Test.pending (#category l ^ ": " ^ #reason l) (run s w p)
-                                                 | NONE => run s w p)
+                                                 | NONE => run s w p))
                                               langPrograms)))))
                       (#ways s)
              @ typecheckTests true langPrograms)]
@@ -435,7 +438,7 @@ struct
      out = rbcDir, scratch = "", writer = stackCompiler, writerWay = "test",
      typecheck = SOME "bin/rune --typecheck-only", stackDone = true, covers = covers,
      compileTags = ["check"], errorTags = errorTags, typecheckTags = ["check", "test"],
-     wayTags = wayTags, needs = needs, wayNeeds = wayNeeds, selected = selectedName}
+     wayTags = wayTags, needs = needs, wayNeeds = wayNeeds, selected = selectedName, pending = fn _ => NONE}
 
   val tests = tree rune
 end

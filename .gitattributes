@@ -21,3 +21,6 @@ ffi/win32/generated/**/shims.c whitespace=-blank-at-eof
 # tabs and the blanks at the ends of its lines
 # (share/rhc/haskell98/pristine/MANIFEST.tsv).
 share/rhc/haskell98/** -whitespace
+# rhc's clause programs of the line ends of the Report's 2.2 keep their CR LF
+# and their CR (tests/hs/accept; docs/testing.md, rhc's conformance table).
+tests/hs/accept/lex.white.newline.cr*.hs -text
