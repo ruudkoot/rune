@@ -1,0 +1,1 @@
+lex.string.newline_raw.hs:2:5: error: unterminated string literal: no `"` closes it on its line

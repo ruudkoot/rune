@@ -1,0 +1,1 @@
+lex.char.backslash_unescaped.hs:2:5: error: unterminated character literal: no `'` closes it

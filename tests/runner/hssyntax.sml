@@ -188,6 +188,130 @@ struct
       else ()
     end
 
+  (* ---- GHC's parser as an independent check of the tree's shape ---- *)
+
+  (* E10's check (the roadmap's section Round trips): GHC's dump of the parsed
+     tree (-ddump-parsed, as Haskell 98) of a file, its LANGUAGE and OPTIONS
+     pragmas blanked, is its dump of the explicit print of the file. A
+     file whose source GHC refuses, with NondecreasingIndentation and
+     without, is not compared. The files are those of tests/hs/roundtrip,
+     and those a file named by RUNE_HS_SYNTAX_GHC_LIST names, a path a line,
+     as E10's corpus; the differences known, each with its reason, are the
+     lines of tests/hs/syntax/ghc-dump.tsv whose path ends the file's. *)
+  val ghcFlags = ["-c", "-fno-code", "-XHaskell98", "-ddump-parsed", "-dsuppress-all", "-dsuppress-uniques",
+                  "-fforce-recomp", "-w"]
+
+  (* the source with its LANGUAGE and OPTIONS pragmas made spaces, lines kept *)
+  fun blankPragmas text =
+    let
+      val n = size text
+      val out = CharArray.tabulate (n, fn i => String.sub (text, i))
+      fun pragmaAt i = i + 2 < n andalso String.substring (text, i, 3) = "{-#"
+      fun word i =
+        let
+          fun skip j = if j < n andalso Char.isSpace (String.sub (text, j)) then skip (j + 1) else j
+          val a = skip (i + 3)
+          fun take j = if j < n andalso (Char.isAlpha (String.sub (text, j)) orelse String.sub (text, j) = #"_") then take (j + 1) else j
+        in
+          String.map Char.toUpper (String.substring (text, a, take a - a))
+        end
+      fun close j = if j + 2 >= n then n else if String.substring (text, j, 3) = "#-}" then j + 3 else close (j + 1)
+      fun go i =
+        if i >= n then ()
+        else if pragmaAt i andalso (String.isPrefix "LANGUAGE" (word i) orelse String.isPrefix "OPTIONS" (word i)) then
+          let val e = close i
+          in
+            List.app (fn k => if String.sub (text, k) = #"\n" then () else CharArray.update (out, k, #" "))
+              (List.tabulate (e - i, fn k => i + k));
+            go e
+          end
+        else go (i + 1)
+    in
+      go 0; CharArray.vector out
+    end
+
+  (* GHC's dump of the file DIR/NAME, if it parses it *)
+  fun ghcDump (work, name, extra) =
+    let
+      val out = work ^ "/" ^ name ^ ".ghc"
+      val _ = exec {cmd = ["ghc"] @ ghcFlags @ extra @ [name], dir = SOME work, stdin = "", stdout = out,
+                    stderr = out ^ ".err", timeout = 120}
+      val text = read out
+      val marker = "==================== Parser"
+      fun find i = if i + size marker > size text then NONE
+                   else if String.substring (text, i, size marker) = marker then SOME i else find (i + 1)
+    in
+      case find 0 of
+        NONE => NONE
+      | SOME i =>
+          let val rest = String.extract (text, i, NONE)
+          in SOME (case String.fields (fn c => c = #"\n") rest of _ :: body => String.concatWith "\n" body | [] => "") end
+    end
+
+  fun ghcCheck () =
+    let
+      val work = run ^ "/hs-syntax-ghc"
+      val () = (rmTree work; mkdirs work)
+      val known =
+        List.mapPartial (fn l => case String.fields (fn c => c = #"\t") l of
+                                   p :: why :: _ => if String.isPrefix "#" p then NONE else SOME (p, why)
+                                 | _ => NONE)
+          (lines (read (fromRoot (dir ^ "/ghc-dump.tsv"))))
+      fun knownOf file = List.find (fn (p, _) => String.isSuffix p file) known
+      val listed =
+        case env ("RUNE_HS_SYNTAX_GHC_LIST", "") of
+          "" => []
+        | f => lines (read f)
+      (* E10's corpus has dotted module names, which bin/rune-hs-syntax
+         reads with --hier; Haskell 98's files are read as rhc reads them *)
+      val files = List.map (fn f => (f, false)) (corpus ()) @ List.map (fn f => (f, true)) listed
+      val compared = ref 0
+      val same = ref 0
+      val refused = ref 0
+      fun one (k, (file, hier)) =
+        let
+          val ext = if String.isSuffix ".lhs" file then ".lhs" else ".hs"
+          val w = work ^ "/" ^ Int.toString k
+          val () = mkdirs w
+          val () = write (w ^ "/Source" ^ ext, blankPragmas (read file))
+          val source =
+            case ghcDump (w, "Source" ^ ext, ["-XNoNondecreasingIndentation"]) of
+              SOME d => SOME d
+            | NONE => ghcDump (w, "Source" ^ ext, ["-XNondecreasingIndentation"])
+        in
+          case source of
+            NONE => refused := !refused + 1
+          | SOME a =>
+              let
+                val status = exec {cmd = [fromRoot "bin/rune-hs-syntax"] @ (if hier then ["--hier"] else []) @ ["explicit", file],
+                                   dir = NONE, stdin = "",
+                                   stdout = w ^ "/Printed.hs", stderr = w ^ "/Printed.err", timeout = 120}
+                val printed = if status = 0 then ghcDump (w, "Printed.hs", ["-XNoNondecreasingIndentation"]) else NONE
+                val () = compared := !compared + 1
+              in
+                case (printed, knownOf file) of
+                  (SOME b, NONE) =>
+                    if a = b then same := !same + 1
+                    else fail ("hs/syntax/ghc: GHC parses the explicit print of " ^ file ^ " to another tree than the file " ^
+                               "(the dumps are in " ^ w ^ ")")
+                | (SOME b, SOME (_, why)) =>
+                    if a = b then fail ("hs/syntax/ghc: " ^ file ^ " is listed in " ^ dir ^ "/ghc-dump.tsv (" ^ why ^
+                                        "), and GHC now parses its print to the same tree: remove the line")
+                    else ()
+                | (NONE, NONE) => fail ("hs/syntax/ghc: GHC refuses the explicit print of " ^ file ^ " (" ^ w ^ ")")
+                | (NONE, SOME _) => ()
+              end
+        end
+    in
+      List.app one (ListPair.zip (List.tabulate (length files, fn k => k), files));
+      say ("ghc: " ^ Int.toString (length files) ^ " files, " ^ Int.toString (!refused) ^ " GHC refuses, " ^
+           Int.toString (!compared) ^ " compared, " ^ Int.toString (!same) ^ " the same\n")
+    end
+
+  (* GHC, the judge of E10's check *)
+  val capabilities =
+    [{name = "ghc", probe = "command -v ghc", hint = "install GHC (apt: ghc), whose parser checks the shape of rhc's trees (hs/syntax/ghc)"}]
+
   (* ---- the tree ---- *)
 
   fun job (name, cmd, timeout) =
@@ -198,18 +322,24 @@ struct
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
+  val covers = ["covers:lib/language/haskell/*", "covers:tests/hs/syntax/*", "covers:tests/hs/roundtrip/*",
+                "covers:tests/runner/hssyntax.sml", "covers:lib/unicode/*", "covers:src/rhc/*"]
+
   val tree =
-    tagged ["check", "hs", "test-hs-syntax", "covers:lib/language/haskell/*", "covers:tests/hs/syntax/*",
-            "covers:tests/hs/roundtrip/*", "covers:tests/runner/hssyntax.sml", "covers:lib/unicode/*"]
-      (Test.describe "hs/syntax"
-        [tagged ["quick"] (job ("expansions", "bin/rune-hs-syntax expansions tests/hs/roundtrip", 300)),
-         tagged ["quick"] (job ("generated", "bin/rune-hs-syntax generate 1 2000 3 && bin/rune-hs-syntax generate 5000 500 4", 600)),
-         job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-mutants", 1800),
-         job ("budget", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-budget", 600)])
+    Test.describe "hs/syntax"
+      [tagged (["check", "hs", "test-hs-syntax"] @ covers)
+         (Test.describe ""
+            [tagged ["quick"] (job ("expansions", "bin/rune-hs-syntax expansions tests/hs/roundtrip", 300)),
+             tagged ["quick"] (job ("generated", "bin/rune-hs-syntax generate 1 2000 3 && bin/rune-hs-syntax generate 5000 500 4", 600)),
+             job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-mutants", 1800),
+             job ("budget", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-budget", 600)]),
+       Test.requires ["ghc"]
+         (tagged (["nightly", "hs"] @ covers) (job ("ghc", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-ghc", 7200)))]
 
   fun command args =
     case args of
       ["hs-syntax-mutants"] => SOME mutantsAll
     | ["hs-syntax-budget"] => SOME budget
+    | ["hs-syntax-ghc"] => SOME ghcCheck
     | _ => NONE
 end

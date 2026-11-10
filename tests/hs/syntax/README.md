@@ -11,15 +11,17 @@ runners of `tests/runner` (docs/testing.md, *rhc's tests*):
   grammar of the Report's section 9.5 and of its lexical syntax, with
   literate files of both styles, comments and pragmas, a CRLF file, a byte
   order mark and a form feed; `cases/` the cases of E10 that the syntax
-  accepts; `layout/` a program for each row of the Report's layout (2.7 and
-  9.3) that the parser alone decides, named by its row as the conformance
-  table names it (`ID_rest.hs`), with, where the Report or the row gives
-  one, its expansion written by hand beside it (`ID_rest.braces`).
+  accepts; `layout/` and `lexical/` a program for each row of the Report's
+  layout (2.7 and 9.3) and of its lexical syntax (chapter 2) that the parser
+  alone decides, named by its row as the conformance table names it
+  (`ID_rest.hs`), with, where the Report or the row gives one, its expansion
+  written by hand beside it (`ID_rest.braces`): the layout's braces and
+  semicolons, or the tokens a lexeme splits into, written apart.
 - `tests/hs/errors/`: files the syntax refuses, each with the text of its
   first diagnostic in `NAME.expected` (`hs/errors/...`): the lexer's, the
   literate reader's, layout's and the parser's (`lex-`, `lit-`, `lay-`,
   `parse-`), the cases of E10 that the syntax refuses (`cases-`), and the
-  rows of the layout table it refuses.
+  rows of the layout and the lexical syntax it refuses.
 
 `cases.tsv` is E10's 46 crafted cases (the roadmap's evidence,
 `results/E10/cases/`): each, whether the syntax of the Report as E10 read it
@@ -48,7 +50,13 @@ runners of rhc do not hold it to (`tests/runner/hssyntax.sml`, the jobs
   exact print sees, each built and run over `tests/hs/roundtrip`;
 - the cost of a token (`hs/syntax/budget`): what lexing and parsing the files
   of `tests/hs/roundtrip` costs in `runevm --count`'s instructions, bytes and
-  objects, within `budget`.
+  objects, within `budget`;
+- GHC's parser as an independent check of the tree's shape (`hs/syntax/ghc`,
+  nightly, where `ghc` is there): GHC 9.4's dump of the parsed tree of a file
+  is its dump of the file's explicit print, on `tests/hs/roundtrip` and on
+  the files that `RUNE_HS_SYNTAX_GHC_LIST` names, E10's corpus; the
+  differences known, by GHC's own readings or a pragma the print leaves
+  out, are `ghc-dump.tsv`.
 
 Its other commands are for a person: `check`, `roundtrip`, `explicit`,
 `implicit`, `exact`, `tokens`, `dump`, `speed`, `cases`, `errors`, and

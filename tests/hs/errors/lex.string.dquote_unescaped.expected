@@ -1,0 +1,1 @@
+lex.string.dquote_unescaped.hs:2:7: error: unterminated string literal: no `"` closes it on its line

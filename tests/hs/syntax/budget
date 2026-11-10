@@ -7,11 +7,11 @@
 # instructions a token, against the spike's 560.5 with spans as lines and
 # columns (the haskell98 roadmap's E10): names are nodes with spans of their
 # own, and diagnostics cost nothing until an error.
-spans tokens 11400
-spans instructions 7181103
-spans bytes 6956989
-spans objects 249579
-full tokens 11400
-full instructions 8426352
-full bytes 9635507
-full objects 350337
+spans tokens 13881
+spans instructions 8773409
+spans bytes 8619371
+spans objects 307272
+full tokens 13881
+full instructions 10284912
+full bytes 11869580
+full objects 429518

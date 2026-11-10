@@ -1,0 +1,1 @@
+lex.comment.dashesnotvarsym_define.hs:3:1: error: expected `=` or a guard in a declaration, found the end of a layout block

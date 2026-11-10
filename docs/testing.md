@@ -513,8 +513,8 @@ rhc's commands for the round trips are `--print`, `--print-layout`,
 generator is `bin/rune-hs-syntax generate-files`, the syntax generator of
 D55. `tests/hs/roundtrip` holds a file for each part of the grammar and the
 lexical syntax, the crafted cases of the roadmap's E10 that the syntax
-accepts, and a program for each row of the layout rules that the parser
-alone decides; `tests/hs/errors` the diagnostics of the lexer, layout and
+accepts, and a program for each row of the layout rules and the lexical
+syntax that the parser alone decides; `tests/hs/errors` the diagnostics of the lexer, layout and
 the parser and the cases the syntax refuses. What those runners do not
 hold the syntax to is `tests/runner/hssyntax.sml`'s, the jobs `hs/syntax/*`
 (`make test-hs-syntax`) of `bin/rune-hs-syntax`: the tokens of the layout
@@ -523,9 +523,13 @@ algorithm against an expansion written by hand, where a file of
 generator printed both ways and read back in one process; the parser's
 mutants, E10's five, which the tree test cannot see and the token test
 must, and a lexer that drops a comment, which only the exact print sees,
-each built and run over `tests/hs/roundtrip`; and the cost of a token in
+each built and run over `tests/hs/roundtrip`; the cost of a token in
 `runevm --count`'s instructions, bytes and objects, within
-`tests/hs/syntax/budget`.
+`tests/hs/syntax/budget`; and, nightly where GHC is installed (the
+capability `ghc`), GHC's dump of each file's parsed tree against its dump of
+the file's explicit print (`hs/syntax/ghc`; E10's 1,662 files of the corpus
+too, with `RUNE_HS_SYNTAX_GHC_LIST`), its known differences in
+`tests/hs/syntax/ghc-dump.tsv`.
 
 ## The three oracles
 

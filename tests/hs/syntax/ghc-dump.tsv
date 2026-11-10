@@ -1,0 +1,54 @@
+# The files whose explicit print GHC 9.4.7 parses to another tree than the file, each with why: a path's end, then
+# the reason (tests/runner/hssyntax.sml, hs/syntax/ghc). Of E10's corpus (RUNE_HS_SYNTAX_GHC_LIST), from
+# /home/ruud/haskell as E10 read it; and of tests/hs/roundtrip.
+ghc/testsuite/tests/parser/should_compile/OpaqueParseWarn1.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_compile/T15730a.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_compile/T3303A.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_compile/T504.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_compile/proposal-229e.hs	white space only: GHC dumps a pragma or a layout of its own
+ghc/testsuite/tests/parser/should_compile/read008.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_fail/NoNumericUnderscores0.hs	white space only: GHC dumps a pragma or a layout of its own
+ghc/testsuite/tests/parser/should_fail/OpaqueParseFail4.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_fail/T15730.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_fail/T15730b.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_fail/T18251b.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+ghc/testsuite/tests/parser/should_fail/proposal-229c.hs	white space only: GHC dumps a pragma or a layout of its own
+ghc/testsuite/tests/parser/should_fail/unpack_inside_type.hs	a pragma, which the explicit print does not print
+ghc/testsuite/tests/parser/should_run/NumericUnderscores0.hs	white space only: GHC dumps a pragma or a layout of its own
+ghc/testsuite/tests/parser/should_run/NumericUnderscores1.hs	white space only: GHC dumps a pragma or a layout of its own
+jhc/regress/tests/0_parse/2_pass/ghc/read008.hs	a pragma, which the explicit print does not print
+jhc/regress/tests/1_typecheck/2_pass/ghc/T2497.hs	a pragma, which the explicit print does not print
+jhc/regress/tests/1_typecheck/2_pass/ghc/tc095.hs	a pragma, which the explicit print does not print
+jhc/regress/tests/1_typecheck/2_pass/ghc/tc111.hs	a pragma, which the explicit print does not print
+jhc/regress/tests/1_typecheck/2_pass/ghc/uncat/tc212.hs	a pragma, which the explicit print does not print
+jhc/regress/tests/1_typecheck/4_fail/ghc/T3966.hs	a pragma, which the explicit print does not print
+jhc/regress/tests/1_typecheck/4_fail/ghc/T5084.hs	a pragma, which the explicit print does not print
+jhc/regress/tests/1_typecheck/4_fail/ghc/tcfail162.hs	a pragma, which the explicit print does not print
+jhc/regress/tests/8_shootout/PartialSums.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nhc98/tests/conformance98/Array/timeLargeArray/Main.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nhc98/tests/nofib/real/HMMS/NativeIO.lhs	a pragma, which the explicit print does not print
+nhc98/tests/nofib/real/veritas/Kernel.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nhc98/tests/nofib/real/veritas/Sub_Core1.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nhc98/tests/nofib/real/veritas/Sub_Core2.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nhc98/tests/nofib/spectral/fibheaps/Main.lhs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nofib/gc/fibheaps/Main.lhs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nofib/gc/happy/AttrGrammarParser.hs	a pragma, which the explicit print does not print
+nofib/gc/happy/Parser.hs	a pragma, which the explicit print does not print
+nofib/gc/happy/ProduceGLRCode.lhs	a pragma, which the explicit print does not print
+nofib/parallel/gray/Eval.hs	a pragma, which the explicit print does not print
+nofib/parallel/gray/Geometry.hs	a pragma, which the explicit print does not print
+nofib/parallel/gray/Intersections.hs	a pragma, which the explicit print does not print
+nofib/parallel/linsolv/ModArithm.hs	a pragma, which the explicit print does not print
+nofib/real/eff/S/Main.hs	a pragma, which the explicit print does not print
+nofib/real/veritas/Kernel.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nofib/real/veritas/Sub_Core1.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nofib/real/veritas/Sub_Core2.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nofib/spectral/boyer/Main.lhs	a pragma, which the explicit print does not print
+nofib/spectral/clausify/Main.hs	a pragma, which the explicit print does not print
+nofib/spectral/fibheaps/Main.lhs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+nofib/spectral/rewrite/Main.lhs	a pragma, which the explicit print does not print
+tests/hs/roundtrip/cases/module-dot-chain.hs	GHC reads M.N.x as a hierarchical name, which Haskell 98 does not have (D35)
+tests/hs/roundtrip/cases/tilde-space.hs	GHC -XHaskell98 misreads @, ~ or ! by their spacing in the source (E10)
+tests/hs/roundtrip/syntax/Comments.hs	a pragma, which the explicit print does not print
+tests/hs/roundtrip/lexical/lex.int.underscore_split.hs	GHC reads 1_000 as one literal (NumericUnderscores, on in GHC 9.4 by default), which Haskell 98 does not have
+tests/hs/roundtrip/lexical/lex.qual.twodots_three.hs	GHC reads M.N.x as a hierarchical name, which Haskell 98 does not have (D35)

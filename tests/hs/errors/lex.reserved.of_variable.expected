@@ -1,0 +1,1 @@
+lex.reserved.of_variable.hs:2:3: error: expected `=` or a guard in a declaration, found `of`

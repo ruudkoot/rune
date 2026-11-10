@@ -1,0 +1,1 @@
+lex.char.nullesc_amp.hs:2:5: error: `\&` in a character literal, which holds one character

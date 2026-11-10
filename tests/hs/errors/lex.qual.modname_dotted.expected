@@ -1,0 +1,1 @@
+lex.qual.modname_dotted.hs:2:8: error: a dotted module name after `import`, `A.B`, which Haskell 98 does not have

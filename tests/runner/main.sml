@@ -127,7 +127,7 @@ struct
         hint="install jupyter_client and pyzmq for python3 (Ubuntu: python3-jupyter-client python3-zmq)"}]
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities @ TerminalJobs.capabilities
     @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
-    @ HsLang.capabilities
+    @ HsLang.capabilities @ HsSyntax.capabilities
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.

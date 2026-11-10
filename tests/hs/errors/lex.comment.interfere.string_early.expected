@@ -1,0 +1,1 @@
+lex.comment.interfere.string_early.hs:2:11: error: unterminated string literal: no `"` closes it on its line
