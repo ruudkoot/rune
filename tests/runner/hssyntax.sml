@@ -197,7 +197,8 @@ struct
      without, is not compared. The files are those of tests/hs/roundtrip,
      and those a file named by RUNE_HS_SYNTAX_GHC_LIST names, a path a line,
      as E10's corpus; the differences known, each with its reason, are the
-     lines of tests/hs/syntax/ghc-dump.tsv whose path ends the file's. *)
+     lines of tests/hs/syntax/ghc-dump.tsv, each a path from the repository's
+     root or from the corpus's, RUNE_HS_SYNTAX_GHC_ROOT. *)
   val ghcFlags = ["-c", "-fno-code", "-XHaskell98", "-ddump-parsed", "-dsuppress-all", "-dsuppress-uniques",
                   "-fforce-recomp", "-w"]
 
@@ -257,7 +258,11 @@ struct
                                    p :: why :: _ => if String.isPrefix "#" p then NONE else SOME (p, why)
                                  | _ => NONE)
           (lines (read (fromRoot (dir ^ "/ghc-dump.tsv"))))
-      fun knownOf file = List.find (fn (p, _) => String.isSuffix p file) known
+      (* a line's path is from the repository's root, or from the corpus's,
+         RUNE_HS_SYNTAX_GHC_ROOT *)
+      val corpusRoot = env ("RUNE_HS_SYNTAX_GHC_ROOT", "")
+      fun knownOf file =
+        List.find (fn (p, _) => file = fromRoot p orelse (corpusRoot <> "" andalso file = corpusRoot ^ "/" ^ p)) known
       val listed =
         case env ("RUNE_HS_SYNTAX_GHC_LIST", "") of
           "" => []

@@ -1,0 +1,1 @@
+syn.r.subordinate.trailing_comma.hs:2:15: error: expected a name in the list of an entity, found `)`

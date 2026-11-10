@@ -1,0 +1,1 @@
+syn.r.newconstr.onefield_strict.hs:2:13: error: a `newtype` whose constructor has other than one field, or a strict one

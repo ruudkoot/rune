@@ -1,0 +1,1 @@
+syn.r.pat.lambda_cons.hs:2:7: error: expected `->` after the patterns of a lambda, found `:`

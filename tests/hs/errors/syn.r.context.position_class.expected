@@ -1,0 +1,1 @@
+syn.r.context.position_class.hs:2:10: error: a class assertion on other than a type variable, in the context of a class or an instance declaration

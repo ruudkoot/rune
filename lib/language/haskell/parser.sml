@@ -748,9 +748,18 @@ struct
   and fexp () =
     let
       val s = mark ()
+      (* what reaches to the right is no argument but in parentheses *)
+      fun open' t =
+        case t of
+          T.BACKSLASH => SOME "a lambda" | T.LET => SOME "a `let` expression" | T.IF => SOME "an `if` expression"
+        | T.CASE => SOME "a `case` expression" | T.DO => SOME "a `do` block"
+        | _ => NONE
       fun loop acc =
         if startsAexp (!cur) then let val a = aexp () in loop (mkE s (A.EApp (acc, a))) end
-        else acc
+        else
+          case open' (!cur) of
+            SOME what => fail (what ^ " as the argument of an application: Haskell 98 wants it in parentheses")
+          | NONE => acc
     in
       loop (aexp ())
     end

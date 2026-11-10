@@ -1,0 +1,1 @@
+syn.r.inst.distinct_tuple.hs:2:12: error: the type variable `a` twice in an instance head

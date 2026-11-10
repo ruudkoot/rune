@@ -1,6 +1,6 @@
-# The files whose explicit print GHC 9.4.7 parses to another tree than the file, each with why: a path's end, then
-# the reason (tests/runner/hssyntax.sml, hs/syntax/ghc). Of E10's corpus (RUNE_HS_SYNTAX_GHC_LIST), from
-# /home/ruud/haskell as E10 read it; and of tests/hs/roundtrip.
+# The files whose explicit print GHC 9.4.7 parses to another tree than the file, each with why: a path, then
+# the reason (tests/runner/hssyntax.sml, hs/syntax/ghc). Of E10's corpus (RUNE_HS_SYNTAX_GHC_LIST), by its path from
+# the corpus's root (RUNE_HS_SYNTAX_GHC_ROOT; /home/ruud/haskell as E10 read it); and of tests/hs/roundtrip.
 ghc/testsuite/tests/parser/should_compile/OpaqueParseWarn1.hs	a pragma, which the explicit print does not print
 ghc/testsuite/tests/parser/should_compile/T15730a.hs	a pragma, which the explicit print does not print
 ghc/testsuite/tests/parser/should_compile/T3303A.hs	a pragma, which the explicit print does not print

@@ -528,7 +528,7 @@ each built and run over `tests/hs/roundtrip`; the cost of a token in
 `tests/hs/syntax/budget`; and, nightly where GHC is installed (the
 capability `ghc`), GHC's dump of each file's parsed tree against its dump of
 the file's explicit print (`hs/syntax/ghc`; E10's 1,662 files of the corpus
-too, with `RUNE_HS_SYNTAX_GHC_LIST`), its known differences in
+too, with `RUNE_HS_SYNTAX_GHC_LIST` and `RUNE_HS_SYNTAX_GHC_ROOT`), its known differences in
 `tests/hs/syntax/ghc-dump.tsv`.
 
 ## The three oracles

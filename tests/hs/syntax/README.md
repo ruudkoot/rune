@@ -21,7 +21,8 @@ runners of `tests/runner` (docs/testing.md, *rhc's tests*):
   first diagnostic in `NAME.expected` (`hs/errors/...`): the lexer's, the
   literate reader's, layout's and the parser's (`lex-`, `lit-`, `lay-`,
   `parse-`), the cases of E10 that the syntax refuses (`cases-`), and the
-  rows of the layout and the lexical syntax it refuses.
+  rows of the layout, the lexical syntax and the grammar (`syn.r.*`) it
+  refuses that need no fixity.
 
 `cases.tsv` is E10's 46 crafted cases (the roadmap's evidence,
 `results/E10/cases/`): each, whether the syntax of the Report as E10 read it
@@ -54,7 +55,8 @@ runners of rhc do not hold it to (`tests/runner/hssyntax.sml`, the jobs
 - GHC's parser as an independent check of the tree's shape (`hs/syntax/ghc`,
   nightly, where `ghc` is there): GHC 9.4's dump of the parsed tree of a file
   is its dump of the file's explicit print, on `tests/hs/roundtrip` and on
-  the files that `RUNE_HS_SYNTAX_GHC_LIST` names, E10's corpus; the
+  the files that `RUNE_HS_SYNTAX_GHC_LIST` names, E10's corpus, from its root
+  `RUNE_HS_SYNTAX_GHC_ROOT`; the
   differences known, by GHC's own readings or a pragma the print leaves
   out, are `ghc-dump.tsv`.
 
