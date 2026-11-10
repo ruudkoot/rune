@@ -200,8 +200,24 @@ struct
     | SetGlobal (g, a) => SetGlobal (global g, atom a)
 
   (* The step with each atom what f makes of it, in the order it names
-     them, and its types and globals as they are. *)
-  fun mapRhs (f : atom -> atom) (r : rhs) : rhs = mapRhsWith {ty = fn t => t, atom = f, global = fn g => g} r
+     them, and its types and globals as they are: mapRhsWith, made for the
+     walkers that run most (Simplify's substitution), with no record. *)
+  fun mapRhs (f : atom -> atom) (r : rhs) : rhs =
+    case r of
+      Atom a => Atom (f a)
+    | App (g, xs) => App (f g, List.map f xs)
+    | Prim (p, t, xs) => Prim (p, t, List.map f xs)
+    | Tuple xs => Tuple (List.map f xs)
+    | Select (i, a) => Select (i, f a)
+    | Con (tag, t, a) => Con (tag, t, f a)
+    | Decon (tag, t, a) => Decon (tag, t, f a)
+    | ConTag a => ConTag (f a)
+    | NewExn _ => r
+    | BuiltinExn _ => r
+    | MkExn (c, a) => MkExn (f c, f a)
+    | ExnCon a => ExnCon (f a)
+    | ExnArg (t, a) => ExnArg (t, f a)
+    | SetGlobal (g, a) => SetGlobal (g, f a)
 
   (* What fold gives its members of each part of an expression, with what
      the parts before it have made. *)
