@@ -6,9 +6,9 @@
    (tests/runner/hssyntax.sml) are another kind, edits applied in the
    runner's own process to the parser's round trips; these build an rhc of
    their own, as Rune's do (tests/runner/compilermutantlist.sml), and are
-   judged by the suites as they run. Core's code has no caller in rhc yet,
-   and CoreLint and Core's interpreter are not in the tree: their sites come
-   with them. *)
+   judged by the suites as they run: rhc's lexer, literate reader, layout and
+   parser, and since M8 CoreLint, Core's interpreter and Core's text reader,
+   whose jobs are hs/core's. *)
 structure HsMutantList =
 struct
   type mutant = {id : string, stage : string, note : string, edits : CompilerMutantList.edit list, caughtBy : string list}
@@ -45,5 +45,23 @@ struct
           ["hs/roundtrip/rhc/accept/syn.pat.1_tour.hs"]),
      one ("HP04", "parser", "prefix negation dropped (3.4)",
           "parser.sml", "operand2 (A.ENeg :: acc)", "operand2 acc",
-          ["hs/roundtrip/rhc/accept/exp.neg.form_positions.hs"])]
+          ["hs/roundtrip/rhc/accept/exp.neg.form_positions.hs"]),
+     one ("HC01", "CoreLint", "an unbound variable passes the scope rule",
+          "corelint.sml", "| NONE => breach (env, \"scope\", \"the variable \" ^ x ^ \" is not bound\"))",
+          "| NONE => TEval (litTy (LInt (IntInf.fromInt 0))))",
+          ["hs/core/lint-scope"]),
+     one ("HC02", "CoreLint", "a Char one past Unicode's range passes the lit rule",
+          "corelint.sml", "orelse c > 1114111 then breach", "orelse c > 1114112 then breach",
+          ["hs/core/lint-lit"]),
+     one ("HI01", "interpreter", "a thunk forced is not updated with its value: it stays a hole, and sharing is lost",
+          "coreinterp.sml", "| Update (c, _, _) :: rest => (c := Value v; loop (Return v, rest, depth - 1, steps))",
+          "| Update (c, _, _) :: rest => (loop (Return v, rest, depth - 1, steps))",
+          ["hs/core/sharing", "hs/core/knot"]),
+     one ("HT01", "Core's text", "the escape \\n of a string reads as a space",
+          "coretext.sml", "| #\"n\" => (10, i + 1)", "| #\"n\" => (32, i + 1)",
+          ["hs/core/text-forms", "hs/core/prims"]),
+     one ("HT02", "Core's text", "a keyword is let through where a name is wanted",
+          "coretext.sml", "if isKeyword w then fail (l, \"a word of the syntax where a name is wanted: \"",
+          "if false then fail (l, \"a word of the syntax where a name is wanted: \"",
+          ["hs/core/text-keyword"])]
 end

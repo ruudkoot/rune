@@ -613,8 +613,10 @@ fails, else `UNCAUGHT`, or `UNEXERCISED` where no output differs, or
 run. `make check` holds the list to the sources (`hs-mutants/prepare`, a
 `built-ID` job for each); `make test-rhc-mutants`, nightly, judges them
 (`HS_MUTANTS=HL01,HP02` for some; `bin/rune-test hs-mutant-tree ID` builds a
-mutant's tree for a job to be run against it by hand). The first nine seed
-rhc's lexer, its literate reader, its layout and its parser. F's parser
+mutant's tree for a job to be run against it by hand). The first fourteen
+seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
+Core's interpreter and Core's text reader, these last seen by `hs/core`'s
+jobs. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
 
 **rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of
