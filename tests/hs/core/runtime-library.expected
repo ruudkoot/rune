@@ -1,0 +1,26 @@
+double_pow 2 10 1024.0
+double_pow 1 NaN 1.0
+double_pow -1 inf 1.0
+double_pow 0 -1 inf
+double_mantissa 1.5 6755399441055744
+double_exponent 1.5 -52
+arr_size 3
+arr_set 1 9, arr_read 1 9
+arr_get 2 7
+arr_get 3 raised Subscript
+str_eq ab ab True
+str_eq ab abc False
+exn_io_full 2 [x.txt] 3 no such file
+exn_io 0 [] -1 a user's
+exn_error 0 [] -1 an error
+unsafe_perform_io 42
+primPackString 6
+ref_set, IO-shaped 5
+primReady 0 0 True
+a file: write, open, h_tell 0
+h_read 3, h_tell, h_seek 7, h_read 5 hel 3 0 world
+os_file_size lib.tmp 12
+os_file_size missing, sys_errno, its name, its text -1 ENOENT No such file or directory
+h_open missing, h_errno ENOENT
+readFile missing 2 [/nonexistent/rhc] -1 No such file or directory
+writeFile a directory 6 [.] -1 Is a directory
