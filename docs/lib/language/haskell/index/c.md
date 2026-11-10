@@ -34,7 +34,7 @@
 - `conInfo` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-coninfo)
 - `conName` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-conname)
 - `ConOp` (con): [HS_AST](../sig/HS_AST.md#con-conop)
-- `constr` (type): [HS_AST](../sig/HS_AST.md#type-constr)
+- `constr` (type): [HS_AST](../sig/HS_AST.md#type-constr), [HS_DERIVE](../sig/HS_DERIVE.md#type-constr)
 - `constr_` (type): [HS_AST](../sig/HS_AST.md#type-constr_)
 - `CONSYM` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-consym)
 - `contextPreds` (val): [HS_KINDS](../sig/HS_KINDS.md#val-contextpreds)

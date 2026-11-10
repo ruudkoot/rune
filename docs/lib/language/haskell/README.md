@@ -73,6 +73,7 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_AST`](sig/HS_AST.md) | The abstract syntax of Haskell 98, the Report's chapter 10, before names and fixity are resolved (the haskell98 roadmap's D28). |
 | [`HS_CHAR`](sig/HS_CHAR.md) | The classes of characters of the Haskell 98 Report's lexical syntax (chapter 2, section 9.2), by code point. |
 | [`HS_CLASSES`](sig/HS_CLASSES.md) | The classes and instances of Haskell 98's checker (the haskell98 roadmap's M13; the Report's 4.3): every class and instance of the program, for entailment. Instances are not names: every instance a program declares, or derives, is in force in all of it. |
+| [`HS_DERIVE`](sig/HS_DERIVE.md) | Haskell 98's derived instances (the Report's chapter 10; the haskell98 roadmap's M14, D33's C): the methods of a derived `Eq`, `Ord`, `Enum`, `Bounded`, `Ix`, `Show` or `Read` instance, made as the renamed tree a user would write, with chapter 10's text as the specification, so that the checker elaborates them as it does a user's instance and HsLint checks them as any instance (D54). |
 | [`HS_DESUGAR`](sig/HS_DESUGAR.md) | Desugaring to Core (the haskell98 roadmap's M15, D34): a checked program made the Core program it means. |
 | [`HS_DS_CORE`](sig/HS_DS_CORE.md) | Core as desugaring builds it (the haskell98 roadmap's M15): each expression with its type. |
 | [`HS_DS_ENV`](sig/HS_DS_ENV.md) | What desugaring knows of a checked program (the haskell98 roadmap's M15): its names, types, records and dictionaries in Core. |

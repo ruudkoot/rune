@@ -15,6 +15,7 @@
 - `metas` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metas)
 - `Method` (con): [HS_MODULES](../sig/HS_MODULES.md#con-method)
 - `method` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-method)
+- `methods` (val): [HS_DERIVE](../sig/HS_DERIVE.md#val-methods)
 - `Mismatch` (exn): [HS_TYPES](../sig/HS_TYPES.md#exn-mismatch)
 - `missingPrimitives` (val): [HS_DESUGAR](../sig/HS_DESUGAR.md#val-missingprimitives)
 - `MODULE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-module)

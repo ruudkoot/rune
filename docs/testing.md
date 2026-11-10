@@ -682,13 +682,16 @@ fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
 
 **Kinds, types and classes** (`lib/language/haskell`'s `types.build`, the
-roadmap's M13; [tests/hs/types/README.md](../tests/hs/types/README.md)). The
-same runner's jobs `hs/types/*` compare `bin/rhc --dump-types` of each fixture
-of `tests/hs/types` under both settings of `--cycle-default` with its expected
-files: the Report's libraries checked as one unit, a cycle of modules with
-unsigned bindings and a type group across it, and D30's readings of `default`
-and Rule 2 in a cycle. `bin/rhc --dump-evidence` prints a program's evidence
-records (HsEvidence), what desugaring (M15) and HsLint (M16) read.
+roadmap's M13 and M14; [tests/hs/types/README.md](../tests/hs/types/README.md)).
+The same runner's jobs `hs/types/*` compare `bin/rhc --dump-types` of each
+fixture of `tests/hs/types` under both settings of `--cycle-default` with its
+expected files: the Report's libraries checked as one unit, a cycle of modules
+with unsigned bindings and a type group across it, D30's readings of `default`
+and Rule 2 in a cycle, and deriving, each derived instance with the context the
+checker infers. `bin/rhc --dump-evidence` prints a program's evidence records
+(HsEvidence), what desugaring (M15) and HsLint (M16) read, and `bin/rhc
+--dump-derived` the methods of its derived instances, which HsDerive makes as
+trees inside the checker (D33's C) and the checker checks as a user's.
 
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),

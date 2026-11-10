@@ -1,15 +1,15 @@
 id	section	statement	class	test	how	source	status	reading	deviation
 intro.implementation	1	How programs are manipulated, interpreted or compiled, and the error messages for undefined programs, are implementation dependent	dynamic	none	leaves a choice open, nothing to observe	hand	Planned		
-intro.program	1.1	A Haskell program is a set of modules	module	accept	a program of two modules compiles and links	hand	Planned		
+intro.program	1.1	A Haskell program is a set of modules	module	accept	a program of two modules compiles and links	hand	Supported		
 intro.kernel	1.2	Sugar means its translation into a kernel, which "is not formally specified"	dynamic	none	no normative kernel to test against; chapter 3's translations are tested one by one; see translations.md	hand	Planned		
-intro.values	1.3	Values and types are not mixed	static	reject	a type constructor used as an expression, and a variable used as a type, are refused	hand	Planned		
-intro.typesystem	1.3	Parametric polymorphism (Hindley-Milner) and ad hoc polymorphism by type classes	static	accept	a program using both compiles; detail in chapter 4 rows	hand	Planned		
+intro.values	1.3	Values and types are not mixed	static	reject	a type constructor used as an expression, and a variable used as a type, are refused	hand	Supported		
+intro.typesystem	1.3	Parametric polymorphism (Hindley-Milner) and ad hoc polymorphism by type classes	static	accept	a program using both compiles; detail in chapter 4 rows	hand	Supported		
 intro.errors	1.3	Errors are semantically bottom, not distinguishable from nontermination, and the language has no mechanism for detecting or acting on them	dynamic	run	`catch` does not see `error`; contradicts nothing here but see readings.md on 3.1, 7.3, 23	hand	Planned	R36	
-intro.ns.six	1.4	Six kinds of names: variables, constructors, type variables, type constructors, type classes, modules	static	accept	one spelling used in the namespaces that permit it compiles	hand	Planned		
-intro.ns.lower	1.4	Variables and type variables begin with a lowercase letter or underscore	static	reject	an upper-case type variable or a lower-case data constructor is refused	hand	Planned		
-intro.ns.upper	1.4	The other four kinds of name begin with an uppercase letter	static	reject	`data t = C`, `class c a`, `module m where` are refused	hand	Planned		
-intro.ns.tycls	1.4	An identifier must not name both a type constructor and a class in the same scope	static	reject	`data T = A` with `class T a` in one module is refused; also across an import when used	hand	Planned		
-intro.ns.free	1.4	These are the only constraints: Int may be a module, a class and a constructor in one scope	static	accept	a program doing so, with the Prelude's type Int hidden, compiles	hand	Planned		
+intro.ns.six	1.4	Six kinds of names: variables, constructors, type variables, type constructors, type classes, modules	static	accept	one spelling used in the namespaces that permit it compiles	hand	Supported		
+intro.ns.lower	1.4	Variables and type variables begin with a lowercase letter or underscore	static	reject	an upper-case type variable or a lower-case data constructor is refused	hand	Supported		
+intro.ns.upper	1.4	The other four kinds of name begin with an uppercase letter	static	reject	`data t = C`, `class c a`, `module m where` are refused	hand	Supported		
+intro.ns.tycls	1.4	An identifier must not name both a type constructor and a class in the same scope	static	reject	`data T = A` with `class T a` in one module is refused; also across an import when used	hand	Supported		
+intro.ns.free	1.4	These are the only constraints: Int may be a module, a class and a constructor in one scope	static	accept	a program doing so, with the Prelude's type Int hidden, compiles	hand	Supported		
 lex.notation	2.1	Notational conventions for the lexical syntax; whitespace explicit, no implicit space between juxtaposed symbols	lex	none	metalanguage; the productions below are the rows	hand	Planned		
 lex.unicode.charset	2.1	Haskell uses the Unicode character set	lex	run	a non-ASCII character in a string literal has its code point at run time	hand	Planned		
 lex.unicode.properties	2.1	The syntax depends on properties of Unicode characters as defined by the Unicode consortium	lex	run	uniSmall, uniLarge, uniSymbol, uniDigit, uniWhite are each decided by the character's general category; one test character per class	hand	Planned		
@@ -730,7 +730,7 @@ tr.case.q	3.17.3	(q) case (K e1 ... en) of { K x1 ... xn -> e; _ -> e' } = (\x1 
 tr.case.r	3.17.3	(r) case ⊥ of { K x1 ... xn -> e; _ -> e' } = ⊥, K a data constructor of arity n	dynamic	run	bottom probe; arity 0 too	hand	Supported		
 tr.case.s	3.17.3	(s) case v of { x+k -> e; _ -> e' } = if v >= k then (\x -> e) (v-k) else e', k a numeric literal	dynamic	run	literal rule differenced; see readings.md: numeric here, integer in 3.17.2 and the grammar	hand	Planned	R15	
 tr.case.terms	3.17.3	In the figures v, x, xi are variables; K, K' are data constructors, tuples included; N is a newtype constructor	dynamic	none	notation; pins that a tuple match is rule (g)	hand	Planned		
-tr.case.h.operator	3.17.3	Rule (h) involves overloaded ==: it defines pattern matching on overloaded constants, so the type needs Eq	static	reject	a Num type without Eq cannot exist in Haskell 98 (Num has Eq as superclass); a Char-like user type cannot be a literal, so reject at f :: (a -> a) -> Int; f 0 = 1	hand	Planned		
+tr.case.h.operator	3.17.3	Rule (h) involves overloaded ==: it defines pattern matching on overloaded constants, so the type needs Eq	static	reject	a Num type without Eq cannot exist in Haskell 98 (Num has Eq as superclass); a Char-like user type cannot be a literal, so reject at f :: (a -> a) -> Int; f 0 = 1	hand	Supported		
 tr.case.static	3.17.3	These identities all preserve the static semantics	static	none	a claim about the text; the monomorphism rows test its visible part	hand	Planned		
 tr.case.mono	3.17.3	Rules (d), (e), (j), (q) and (s) use a lambda rather than a let: variables bound by case are monomorphically typed	static	reject	case id of f -> (f 1, f 'a')	hand	Supported		
 tr.case.mono.lazy	3.17.3	That holds for a lazy pattern too	static	reject	case id of ~f -> (f 1, f 'a')	hand	Supported		
@@ -796,8 +796,8 @@ ty.ctx.parens	4.1.3	the outer parentheses may be omitted when n=1	syntax	accept	
 ty.ctx.reject.const	4.1.3	an assertion's head is a type variable, not a type constructor	syntax	reject	`f :: Eq Int => Int` is refused	hand	Supported		
 ty.ctx.reject.list	4.1.3	an assertion's type is not a list or tuple type	syntax	reject	`f :: Eq [a] => a` and `f :: Eq (a,b) => a` are refused	hand	Supported		
 ty.ctx.reject.twoargs	4.1.3	a class takes one argument	syntax	reject	`f :: C a b => a -> b` is refused	hand	Supported		
-ty.ctx.vars	4.1.3	the context must only contain type variables referenced in t	static	reject	`f :: Eq b => a -> a` is refused	hand	Planned		
-ty.sem.form	4.1.4	in a type forall u. cx=>t, a variable free in cx must also be free in t	static	reject	an inferred or written type breaking this is ambiguous and refused	hand	Planned		
+ty.ctx.vars	4.1.3	the context must only contain type variables referenced in t	static	reject	`f :: Eq b => a -> a` is refused	hand	Supported		
+ty.sem.form	4.1.4	in a type forall u. cx=>t, a variable free in cx must also be free in t	static	reject	an inferred or written type breaking this is ambiguous and refused	hand	Supported		
 ty.sem.valid.one	4.1.4	`Eq a => a -> a` is a valid type	static	accept	a signature at it	hand	Supported		
 ty.sem.valid.two	4.1.4	`(Eq a, Show a, Eq b) => [a] -> [b] -> String` is a valid type	static	accept	a signature at it	hand	Supported		
 ty.sem.valid.three	4.1.4	`(Eq (f a), Functor f) => (a -> b) -> f a -> f b -> Bool` is a valid type, whose constraint Eq (f a) cannot be simplified	static	accept	a signature at it	hand	Supported		
@@ -983,7 +983,7 @@ cls.derive.emptyform	4.3.3	omitting the form is equivalent to `deriving ()`	stat
 der.superclass	4.3.3	Deriving C needs instances of all superclasses of C	static	reject	`data T = A deriving Ord` with no Eq is refused	hand	Supported		
 der.superclass.explicit	4.3.3	The superclass instance may be explicit	static	accept	`data T = A deriving Ord; instance Eq T where _ == _ = True` compiles	hand	Supported		
 def.ambig.expr	4.3.4	an expression with an ambiguous type is ill-typed	static	reject	`let x = read "..." in show x` is refused	hand	Supported		
-def.ambig.def	4.3.4	e is ambiguous if, in forall u. cx=>t, some u occurs in cx but not in t; such types are invalid	static	reject	`f :: Show a => Int` and an inferred type of that shape are refused	hand	Planned		
+def.ambig.def	4.3.4	e is ambiguous if, in forall u. cx=>t, some u occurs in cx but not in t; such types are invalid	static	reject	`f :: Show a => Int` and an inferred type of that shape are refused	hand	Supported		
 def.ambig.annot	4.3.4	an expression type-signature resolves an ambiguity	static	accept	`let x = read "..." in show (x::Bool)`	hand	Supported		
 def.ambig.astypeof	4.3.4	asTypeOf forces its arguments to one type and resolves an ambiguity	static	accept	``approxSqrt x = encodeFloat 1 (exponent x `div` 2) `asTypeOf` x``	hand	Supported		
 def.decl.form	4.3.4	default (t1,...,tn), n>=0	syntax	accept	with zero, one and two types	hand	Supported		
@@ -2625,45 +2625,45 @@ syn.qconop.1	9.5	qconop -> gconsym | `qconid ` | (qualified constructor operator
 syn.op.1	9.5	op -> varop | conop | (operator)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Supported		
 syn.qop.1	9.5	qop -> qvarop | qconop | (qualified operator)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Supported		
 syn.gconsym.1	9.5	gconsym -> : | qconsym	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Supported		
-der.form.generated	10	A derived instance is generated with a data or newtype declaration, its body derived syntactically from the type's definition	static	accept	a deriving clause compiles and the instance is usable with no instance declaration	hand	Planned		
-der.form.scope	10	Derived instances are possible only for classes known to the compiler: those defined in the Prelude or a standard library	static	reject	`class C a; data T = A deriving C` is refused	hand	Planned		
-der.cond.class.eq	10	Condition 1: Eq is derivable	static	accept	`data T = A deriving Eq` compiles	hand	Planned		
-der.cond.class.ord	10	Condition 1: Ord is derivable	static	accept	`data T = A deriving (Eq, Ord)` compiles	hand	Planned		
-der.cond.class.enum	10	Condition 1: Enum is derivable	static	accept	`data T = A | B deriving Enum` compiles	hand	Planned		
-der.cond.class.bounded	10	Condition 1: Bounded is derivable	static	accept	`data T = A | B deriving Bounded` compiles	hand	Planned		
-der.cond.class.show	10	Condition 1: Show is derivable	static	accept	`data T = A deriving Show` compiles	hand	Planned		
-der.cond.class.read	10	Condition 1: Read is derivable	static	accept	`data T = A deriving Read` compiles	hand	Planned		
-der.cond.class.num	10	Condition 1: a Prelude class outside the six is not derivable	static	reject	`data T = A deriving Num` is refused	hand	Planned		
-der.cond.class.functor	10	Condition 1: Functor is not derivable	static	reject	`data T a = A a deriving Functor` is refused in Haskell 98	hand	Planned		
-der.cond.class.monad	10	Condition 1: Monad is not derivable	static	reject	`data T a = A a deriving Monad` is refused	hand	Planned		
-der.cond.constituent	10	Condition 2: there must be a context cx' with cx' => C tij for every constituent type tij	static	reject	`data T = T (Int -> Int) deriving Eq` is refused	hand	Planned		
-der.cond.constituent.user	10	Condition 2 holds for a user type only if that type is an instance	static	reject	`data U = U; data T = T U deriving Show` is refused	hand	Planned		
-der.cond.constituent.mutual	10	Condition 2 may rest on the derived instance of a type being declared in the same group	static	accept	two mutually recursive types deriving Eq compile	hand	Planned		
-der.cond.bounded.enum	10	Condition 3: Bounded on an enumeration	static	accept	`data T = A | B | C deriving Bounded` compiles	hand	Planned		
-der.cond.bounded.single	10	Condition 3: Bounded on a single constructor with fields	static	accept	`data T = T Bool Char deriving Bounded` compiles	hand	Planned		
-der.cond.bounded.neither	10	Condition 3: Bounded on neither an enumeration nor a single constructor	static	reject	`data T = A Int | B deriving Bounded` is refused	hand	Planned		
-der.cond.enum.fields	10	Condition 4: Enum requires an enumeration	static	reject	`data T = A Int deriving Enum` is refused	hand	Planned		
-der.cond.enum.mixed	10	Condition 4: one constructor with a field disqualifies the type	static	reject	`data T = A | B Int deriving Enum` is refused	hand	Planned		
-der.cond.noexplicit	10	Condition 5: no explicit instance elsewhere in the program may make T an instance of C	static	reject	`data T = A deriving Eq; instance Eq T` is refused	hand	Planned		
+der.form.generated	10	A derived instance is generated with a data or newtype declaration, its body derived syntactically from the type's definition	static	accept	a deriving clause compiles and the instance is usable with no instance declaration	hand	Supported		
+der.form.scope	10	Derived instances are possible only for classes known to the compiler: those defined in the Prelude or a standard library	static	reject	`class C a; data T = A deriving C` is refused	hand	Supported		
+der.cond.class.eq	10	Condition 1: Eq is derivable	static	accept	`data T = A deriving Eq` compiles	hand	Supported		
+der.cond.class.ord	10	Condition 1: Ord is derivable	static	accept	`data T = A deriving (Eq, Ord)` compiles	hand	Supported		
+der.cond.class.enum	10	Condition 1: Enum is derivable	static	accept	`data T = A | B deriving Enum` compiles	hand	Supported		
+der.cond.class.bounded	10	Condition 1: Bounded is derivable	static	accept	`data T = A | B deriving Bounded` compiles	hand	Supported		
+der.cond.class.show	10	Condition 1: Show is derivable	static	accept	`data T = A deriving Show` compiles	hand	Supported		
+der.cond.class.read	10	Condition 1: Read is derivable	static	accept	`data T = A deriving Read` compiles	hand	Supported		
+der.cond.class.num	10	Condition 1: a Prelude class outside the six is not derivable	static	reject	`data T = A deriving Num` is refused	hand	Supported		
+der.cond.class.functor	10	Condition 1: Functor is not derivable	static	reject	`data T a = A a deriving Functor` is refused in Haskell 98	hand	Supported		
+der.cond.class.monad	10	Condition 1: Monad is not derivable	static	reject	`data T a = A a deriving Monad` is refused	hand	Supported		
+der.cond.constituent	10	Condition 2: there must be a context cx' with cx' => C tij for every constituent type tij	static	reject	`data T = T (Int -> Int) deriving Eq` is refused	hand	Supported		
+der.cond.constituent.user	10	Condition 2 holds for a user type only if that type is an instance	static	reject	`data U = U; data T = T U deriving Show` is refused	hand	Supported		
+der.cond.constituent.mutual	10	Condition 2 may rest on the derived instance of a type being declared in the same group	static	accept	two mutually recursive types deriving Eq compile	hand	Supported		
+der.cond.bounded.enum	10	Condition 3: Bounded on an enumeration	static	accept	`data T = A | B | C deriving Bounded` compiles	hand	Supported		
+der.cond.bounded.single	10	Condition 3: Bounded on a single constructor with fields	static	accept	`data T = T Bool Char deriving Bounded` compiles	hand	Supported		
+der.cond.bounded.neither	10	Condition 3: Bounded on neither an enumeration nor a single constructor	static	reject	`data T = A Int | B deriving Bounded` is refused	hand	Supported		
+der.cond.enum.fields	10	Condition 4: Enum requires an enumeration	static	reject	`data T = A Int deriving Enum` is refused	hand	Supported		
+der.cond.enum.mixed	10	Condition 4: one constructor with a field disqualifies the type	static	reject	`data T = A | B Int deriving Enum` is refused	hand	Supported		
+der.cond.noexplicit	10	Condition 5: no explicit instance elsewhere in the program may make T an instance of C	static	reject	`data T = A deriving Eq; instance Eq T` is refused	hand	Supported		
 der.cond.noexplicit.module	10	Condition 5 reads "elsewhere in the program": an explicit instance in another module also conflicts	module	reject	a second module with `instance Eq T` for the derived T is refused; whole-program check, see readings.md	hand	Planned	R26 R91	
-der.newtype.asdata	10	For derived instances a newtype is treated as a data declaration with a single constructor	static	accept	`newtype N = N Int deriving (Eq, Ord, Show, Read)` compiles	hand	Planned		
+der.newtype.asdata	10	For derived instances a newtype is treated as a data declaration with a single constructor	static	accept	`newtype N = N Int deriving (Eq, Ord, Show, Read)` compiles	hand	Supported		
 der.newtype.show	10	A derived Show of a newtype shows its constructor	dynamic	run	`show (N 1)` is "N 1"	hand	Planned		
 der.newtype.record	10	A newtype with a field label derives Show as record syntax	dynamic	run	`show (Age {unAge = 3})` uses braces	hand	Planned		
-der.newtype.enum	10	A newtype is a single constructor with a field, so not an enumeration	static	reject	`newtype N = N Int deriving Enum` is refused	hand	Planned		
+der.newtype.enum	10	A newtype is a single constructor with a field, so not an enumeration	static	reject	`newtype N = N Int deriving Enum` is refused	hand	Supported		
 der.newtype.bounded	10	A newtype derives Bounded as a single-constructor type	dynamic	run	`minBound :: N` is `N minBound`	hand	Planned		
-der.static.impossible	10	If the derived instance is impossible for any Ci a static error results	static	reject	`data T = T (Int->Int) deriving (Show, Eq)` is refused	hand	Planned		
-der.deriving.empty	10	`deriving ()` derives nothing	static	reject	`data T = A deriving (); x = show A` is refused	hand	Planned		
-der.deriving.empty.accept	10	The form `deriving ()` is legal	syntax	accept	compiles	hand	Planned		
-der.deriving.omit	10	Omitting the form derives nothing	static	reject	`data T = A; x = A == A` is refused	hand	Planned		
-der.deriving.single	10	The parentheses may be omitted when m=1	syntax	accept	`deriving Eq` compiles	hand	Planned		
-der.deriving.multi	10	An instance is generated over each class Ci	static	accept	all classes of a list usable	hand	Planned		
-der.deriving.qualified	10	A derived class is named by qtycls and may be qualified	module	accept	`import qualified Prelude as P; data T = A deriving P.Eq` compiles	hand	Planned		
-der.inst.form	10	Each derived instance has the form instance (cx, cx') => Ci (T u1 ... uk) where { d }	static	accept	the instance context is the one the program's uses need	hand	Planned		
-der.inst.context.datatype	10	The datatype context cx is part of the derived instance's context	static	reject	`data Eq a => T a = T a deriving Show` shown at a type without Eq is refused	hand	Planned		
-der.inst.context.smallest	10	cx' is the smallest context satisfying condition 2: a phantom parameter is unconstrained	static	accept	`data T a b = T a deriving Eq`: `T 1 == (T 1 :: T Int (Int->Int))` compiles	hand	Planned		
-der.inst.context.fixpoint	10	For mutually recursive types the compiler may need a fixpoint to compute cx'	static	accept	`data A a = N | A (B a) deriving Eq; data B a = B (A a) a deriving Eq` compiles at the context Eq a	hand	Planned		
-der.inst.context.nested	10	The fixpoint reaches a nested datatype's context by context reduction	static	accept	`data T a = N | C a (T [a]) deriving Eq` compiles with context Eq a	hand	Planned		
-der.inst.context.notsimple	10	A derived context must reduce to simple constraints (4.5.3)	static	reject	`data Apply a b = App (a b) deriving Show` is refused	hand	Planned		
+der.static.impossible	10	If the derived instance is impossible for any Ci a static error results	static	reject	`data T = T (Int->Int) deriving (Show, Eq)` is refused	hand	Supported		
+der.deriving.empty	10	`deriving ()` derives nothing	static	reject	`data T = A deriving (); x = show A` is refused	hand	Supported		
+der.deriving.empty.accept	10	The form `deriving ()` is legal	syntax	accept	compiles	hand	Supported		
+der.deriving.omit	10	Omitting the form derives nothing	static	reject	`data T = A; x = A == A` is refused	hand	Supported		
+der.deriving.single	10	The parentheses may be omitted when m=1	syntax	accept	`deriving Eq` compiles	hand	Supported		
+der.deriving.multi	10	An instance is generated over each class Ci	static	accept	all classes of a list usable	hand	Supported		
+der.deriving.qualified	10	A derived class is named by qtycls and may be qualified	module	accept	`import qualified Prelude as P; data T = A deriving P.Eq` compiles	hand	Supported		
+der.inst.form	10	Each derived instance has the form instance (cx, cx') => Ci (T u1 ... uk) where { d }	static	accept	the instance context is the one the program's uses need	hand	Supported		
+der.inst.context.datatype	10	The datatype context cx is part of the derived instance's context	static	reject	`data Eq a => T a = T a deriving Show` shown at a type without Eq is refused	hand	Supported		
+der.inst.context.smallest	10	cx' is the smallest context satisfying condition 2: a phantom parameter is unconstrained	static	accept	`data T a b = T a deriving Eq`: `T 1 == (T 1 :: T Int (Int->Int))` compiles	hand	Supported		
+der.inst.context.fixpoint	10	For mutually recursive types the compiler may need a fixpoint to compute cx'	static	accept	`data A a = N | A (B a) deriving Eq; data B a = B (A a) a deriving Eq` compiles at the context Eq a	hand	Supported		
+der.inst.context.nested	10	The fixpoint reaches a nested datatype's context by context reduction	static	accept	`data T a = N | C a (T [a]) deriving Eq` compiles with context Eq a	hand	Supported		
+der.inst.context.notsimple	10	A derived context must reduce to simple constraints (4.5.3)	static	reject	`data Apply a b = App (a b) deriving Show` is refused	hand	Supported		
 der.free.prelude	10	Free variables and constructors of the derived code always refer to the Prelude's entities	module	run	a module hiding `&&`, `showParen` and `lex`, defining its own, still derives correctly	hand	Planned		
 der.free.noprelude	10	Deriving works with no Prelude name in scope	module	run	`import Prelude ()`-style module with a qualified class name derives and runs	hand	Planned		
 der.eq.methods	10.1	Derived Eq introduces (==) and (/=)	dynamic	run	both work on values	hand	Planned		
@@ -2716,7 +2716,7 @@ der.bounded.enum.min	10.3	For an enumeration minBound is the first constructor l
 der.bounded.enum.max	10.3	For an enumeration maxBound is the last constructor listed	dynamic	run	prints it	hand	Planned		
 der.bounded.single	10.3	For a single constructor, the constructor applied to the bounds of the constituent types	dynamic	run	`minBound :: T` for `T Bool Char`	hand	Planned		
 der.bounded.example.pair	10.3	Example: `data Pair a b = Pair a b deriving Bounded` generates the instance shown, with context (Bounded a, Bounded b)	dynamic	run	`maxBound :: Pair Bool Char`	hand	Planned		
-der.bounded.example.context	10.3	The Pair instance needs Bounded of each parameter	static	reject	`minBound :: Pair Integer Bool` is refused	hand	Planned		
+der.bounded.example.context	10.3	The Pair instance needs Bounded of each parameter	static	reject	`minBound :: Pair Integer Bool` is refused	hand	Supported		
 der.show.methods	10.4	Derived Show introduces showsPrec and showList	dynamic	run	both usable, show by the class default	hand	Planned		
 der.read.methods	10.4	Derived Read introduces readsPrec and readList	dynamic	run	both usable	hand	Planned		
 der.show.prec.range	10.4	showsPrec d takes a precedence level d from 0 to 11	dynamic	run	the results at each d are as these rows say	hand	Planned		
@@ -2777,8 +2777,8 @@ der.notes.formatting	10.4	There is no user control over the printing of Prelude 
 der.show.infix.args	10.5	Both arguments of an infix constructor are shown at the constructor's precedence plus one	dynamic	run	Figure 10.1	hand	Planned		
 der.show.infix.spaces	10.5	An infix constructor is separated by one space on each side	dynamic	run	Figure 10.1's " :^: "	hand	Planned		
 der.read.ordering.results	10.5	Results of alternatives are concatenated in constructor order	dynamic	run	the order of `reads` on an ambiguous sample	hand	Planned		
-der.tree.noenum	10.5	Enum is not derivable for Tree, not an enumeration	static	reject	`data Tree a = Leaf a | Tree a :^: Tree a deriving Enum` is refused	hand	Planned		
-der.tree.nobounded	10.5	Bounded is not derivable for Tree, neither enumeration nor single-constructor	static	reject	refused	hand	Planned		
+der.tree.noenum	10.5	Enum is not derivable for Tree, not an enumeration	static	reject	`data Tree a = Leaf a | Tree a :^: Tree a deriving Enum` is refused	hand	Supported		
+der.tree.nobounded	10.5	Bounded is not derivable for Tree, neither enumeration nor single-constructor	static	reject	refused	hand	Supported		
 der.tree.eq	10.5	Figure 10.1's Eq (Tree a): leaves by value, nodes by both sides, otherwise False	dynamic	run	differential against the figure's instance typed in by hand	hand	Planned		
 der.tree.ord.defaults	10.5	Figure 10.1's Ord defines <= alone; the other methods come from the class defaults	dynamic	run	differential: derived against the figure on every method	hand	Planned		
 der.tree.ord.le	10.5	u:^:v <= x:^:y = u<x || u==x && v<=y; Leaf <= any node is True; node <= Leaf is False	dynamic	run	differential	hand	Planned		
@@ -2789,26 +2789,26 @@ der.tree.read.node	10.5	readsPrec d for :^: is readParen (d > up_prec) over (u,s
 der.tree.read.leaf	10.5	readsPrec d for Leaf is readParen (d > app_prec) over ("Leaf",s) from lex and m at app_prec+1	dynamic	run	differential	hand	Planned		
 der.tree.read.alternatives	10.5	The two alternatives are appended, :^: first	dynamic	run	result order on a sample	hand	Planned		
 der.tree.read.terminates	10.5	The left-recursive reader terminates, the recursive call at precedence 6 needing parentheses	dynamic	run	`read` at d = 0 returns on a deep tree	hand	Planned		
-der.tree.fixity	10.5	The figure assumes `infixr 5 :^:`, a declaration the text's own datatype leaves out	static	accept	with the declaration the figure's numbers hold; without it they are 9: see readings.md	hand	Planned	R52 R92	
+der.tree.fixity	10.5	The figure assumes `infixr 5 :^:`, a declaration the text's own datatype leaves out	static	accept	with the declaration the figure's numbers hold; without it they are 9: see readings.md	hand	Supported	R52 R92	
 prag.notlanguage	11	Pragmas give hints, do not form part of the language proper and do not change a program's semantics	lex	accept	a program with and without pragmas gives equal output	hand	Planned		
 prag.notrequired	11	An implementation is not required to respect any pragma	lex	none	permission: nothing to observe	hand	Planned		
-prag.unknown	11	A pragma the implementation is not prepared to handle should be ignored	lex	accept	`{-# FROB x #-}` compiles, also where no declaration may stand	hand	Planned		
-prag.lexical	11	Lexically pragmas appear as comments, with the enclosing syntax {-# #-}	lex	accept	no layout tokens arise, and they nest with comments	hand	Planned		
-prag.inline	11.1	decl -> {-# INLINE qvars #-}	syntax	accept	accepted at each decl position; `qvars` is defined nowhere: see readings.md	hand	Planned	R52 R92	
-prag.noinline	11.1	decl -> {-# NOINLINE qvars #-}	syntax	accept	as INLINE	hand	Planned		
+prag.unknown	11	A pragma the implementation is not prepared to handle should be ignored	lex	accept	`{-# FROB x #-}` compiles, also where no declaration may stand	hand	Supported		
+prag.lexical	11	Lexically pragmas appear as comments, with the enclosing syntax {-# #-}	lex	accept	no layout tokens arise, and they nest with comments	hand	Supported		
+prag.inline	11.1	decl -> {-# INLINE qvars #-}	syntax	accept	accepted at each decl position; `qvars` is defined nowhere: see readings.md	hand	Supported	R52 R92	
+prag.noinline	11.1	decl -> {-# NOINLINE qvars #-}	syntax	accept	as INLINE	hand	Supported		
 prag.inline.meaning	11.1	INLINE instructs the compiler to inline; NOINLINE may prevent automatic inlining	dynamic	none	a hint, with no observable semantics	hand	Planned		
-prag.specialize	11.2	decl -> {-# SPECIALIZE spec1 , ... , speck #-}, k>=1; spec -> vars :: type	syntax	accept	the Report's factorial example compiles	hand	Planned		
+prag.specialize	11.2	decl -> {-# SPECIALIZE spec1 , ... , speck #-}, k>=1; spec -> vars :: type	syntax	accept	the Report's factorial example compiles	hand	Supported		
 prag.specialize.meaning	11.2	Calls at the given types use specialised versions	dynamic	none	a hint, with no observable semantics	hand	Planned		
 prag.specialize.example	11.2	The example's `factorial 0 = 0` makes every result 0	dynamic	run	a printing error in the Report's example; with the pragma the result is unchanged, which is all that is required	hand	Planned		
-lib.r.ratio.anyintegral	12	For each Integral type t there is a type Ratio t	library	accept	Ratio Int and Ratio Integer used	hand	Planned		
-lib.r.ratio.noninteger	12	Ratio needs an Integral component: the datatype context restricts its constructor	library	reject	`1 % 2 :: Ratio Float` is refused	hand	Planned		
-lib.r.ratio.rational	12	Rational is a synonym for Ratio Integer	library	accept	interchangeable in signatures	hand	Planned		
+lib.r.ratio.anyintegral	12	For each Integral type t there is a type Ratio t	library	accept	Ratio Int and Ratio Integer used	hand	Supported		
+lib.r.ratio.noninteger	12	Ratio needs an Integral component: the datatype context restricts its constructor	library	reject	`1 % 2 :: Ratio Float` is refused	hand	Supported		
+lib.r.ratio.rational	12	Rational is a synonym for Ratio Integer	library	accept	interchangeable in signatures	hand	Supported		
 lib.r.ratio.lift	12	Each instance of Ratio t lifts the operations over t	library	run	instances Eq Ord Num Real Fractional RealFrac Enum Read Show on samples	hand	Planned		
 lib.r.ratio.bounded	12	If t is bounded results may be unpredictable, e.g. overflow of Ratio Int	library	none	a licence, not a requirement	hand	Planned		
 lib.r.ratio.percent.reduce	12	(%) reduces to terms with no common factor	library	run	`numerator (12 % 8)` is 3	hand	Planned		
 lib.r.ratio.percent.sign	12	(%) gives a positive denominator	library	run	`denominator (1 % (-2))` is 2	hand	Planned		
 lib.r.ratio.components	12	numerator and denominator are in reduced form with a positive denominator	library	run	on negative inputs	hand	Planned		
-lib.r.ratio.abstract	12	Ratio is an abstract type: :% is not exported	library	reject	`import Ratio; x = 1 :% 2` is refused	hand	Planned		
+lib.r.ratio.abstract	12	Ratio is an abstract type: :% is not exported	library	reject	`import Ratio; x = 1 :% 2` is refused	hand	Supported		
 lib.r.ratio.example.1	12	Example: 12 % 8 is reduced to 3/2	library	run	prints "3 % 2"	hand	Planned		
 lib.r.ratio.example.2	12	Example: 12 % (-8) is reduced to (-3)/2	library	run	prints "(-3) % 2"	hand	Planned		
 lib.r.ratio.approx.simplest	12	approxRational x eps returns the simplest rational in the interval around x	library	run	`approxRational 3.14 0.01` as the code gives	hand	Planned		
@@ -2819,8 +2819,8 @@ lib.r.ratio.percent.zero	12.1	x % 0 is an error	library	run	exits as error "Rati
 lib.r.ratio.show.prec	12.1	show of a ratio is at precedence 7, its parts at 8	library	run	`showsPrec 8 (1 % 2) ""` is parenthesised, the numerator's sign too	hand	Planned		
 lib.ratio.fixity.7percent	12.1	fixity declaration `7 %` holds for the operators it names	library	run	parse of an unparenthesised mix of the operators, shown by evaluation	generated	Planned		
 lib.ratio.ratprec.def	12.1	ratPrec (no signature in the Report) has its Report definition's meaning	library	run	differential against the literal definition	generated	Planned		
-lib.ratio.data.integrala	12.1	type (Integral a) is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Planned		
-lib.ratio.type.rational	12.1	type synonym Rational as the Report gives it	library	accept	interchangeable with its expansion in a test program	generated	Planned		
+lib.ratio.data.integrala	12.1	type (Integral a) is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		
+lib.ratio.type.rational	12.1	type synonym Rational as the Report gives it	library	accept	interchangeable with its expansion in a test program	generated	Supported		
 lib.ratio.percent	12.1	% has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.ratio.numerator	12.1	numerator has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.ratio.denominator	12.1	denominator has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
@@ -2835,12 +2835,12 @@ lib.ratio.inst.enumratioa	12.1	instance Enum Ratioa exists and behaves as the Re
 lib.ratio.inst.readratioa	12.1	instance Read Ratioa exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
 lib.ratio.inst.showratioa	12.1	instance Show Ratioa exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
 lib.ratio.inst.eqratioa	12.1	instance Eq Ratioa exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
-lib.ratio.export.ratio	12.1	module Ratio exports Ratio	module	accept	import Ratio (Ratio) compiles and the name is usable	generated	Planned		
-lib.ratio.export.rational	12.1	module Ratio exports Rational	module	accept	import Ratio (Rational) compiles and the name is usable	generated	Planned		
-lib.ratio.export.percent	12.1	module Ratio exports (%)	module	accept	import Ratio ((%)) compiles and the name is usable	generated	Planned		
-lib.ratio.export.numerator	12.1	module Ratio exports numerator	module	accept	import Ratio (numerator) compiles and the name is usable	generated	Planned		
-lib.ratio.export.denominator	12.1	module Ratio exports denominator	module	accept	import Ratio (denominator) compiles and the name is usable	generated	Planned		
-lib.ratio.export.approxrational	12.1	module Ratio exports approxRational	module	accept	import Ratio (approxRational) compiles and the name is usable	generated	Planned		
+lib.ratio.export.ratio	12.1	module Ratio exports Ratio	module	accept	import Ratio (Ratio) compiles and the name is usable	generated	Supported		
+lib.ratio.export.rational	12.1	module Ratio exports Rational	module	accept	import Ratio (Rational) compiles and the name is usable	generated	Supported		
+lib.ratio.export.percent	12.1	module Ratio exports (%)	module	accept	import Ratio ((%)) compiles and the name is usable	generated	Supported		
+lib.ratio.export.numerator	12.1	module Ratio exports numerator	module	accept	import Ratio (numerator) compiles and the name is usable	generated	Supported		
+lib.ratio.export.denominator	12.1	module Ratio exports denominator	module	accept	import Ratio (denominator) compiles and the name is usable	generated	Supported		
+lib.ratio.export.approxrational	12.1	module Ratio exports approxRational	module	accept	import Ratio (approxRational) compiles and the name is usable	generated	Supported		
 lib.r.complex.algebraic	13	Complex is an algebraic type whose constructor :+ is exported	library	run	pattern match on :+ in a client	hand	Planned		
 lib.r.complex.strict.real	13	:+ is strict: a bottom real part makes the number bottom	library	run	`seq (undefined :+ 1) ()` exits as error	hand	Planned		
 lib.r.complex.strict.imag	13	:+ is strict: a bottom imaginary part makes the number bottom	library	run	`seq (1 :+ undefined) ()` exits as error	hand	Planned		
@@ -2855,11 +2855,11 @@ lib.r.complex.conjugate	13	conjugate computes the conjugate	library	run	exact	ha
 lib.r.complex.abs	13	abs z = magnitude z :+ 0	library	run	positive real direction	hand	Planned		
 lib.r.complex.signum.zero	13	signum 0 = 0	library	run	exact	hand	Planned		
 lib.r.complex.signum	13	signum z = x/r :+ y/r with r the magnitude: unit magnitude, z's phase	library	run	within a tolerance	hand	Planned		
-lib.r.complex.context	13.1	Complex needs a RealFloat component	library	reject	`(1 :+ 2) :: Complex Int` is refused	hand	Planned		
-lib.r.complex.noord	13.1	Complex has no Ord instance (nor Real)	library	reject	`(1:+0) < (2:+0)` is refused	hand	Planned		
+lib.r.complex.context	13.1	Complex needs a RealFloat component	library	reject	`(1 :+ 2) :: Complex Int` is refused	hand	Supported		
+lib.r.complex.noord	13.1	Complex has no Ord instance (nor Real)	library	reject	`(1:+0) < (2:+0)` is refused	hand	Supported		
 lib.r.complex.show	13.1	Complex derives Show at infix 6	library	run	`show (1.5 :+ 2)`, with the float reading of readings.md on negatives	hand	Planned	R42 R49	
 lib.complex.fixity.6colonplus	13.1	fixity declaration `6 :+` holds for the operators it names	library	run	parse of an unparenthesised mix of the operators, shown by evaluation	generated	Planned		
-lib.complex.data.realfloata	13.1	type (RealFloat a) is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Planned		
+lib.complex.data.realfloata	13.1	type (RealFloat a) is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		
 lib.complex.realpart	13.1	realPart has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.complex.imagpart	13.1	imagPart has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.complex.conjugate	13.1	conjugate has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
@@ -2875,15 +2875,15 @@ lib.complex.inst.eqcomplexa	13.1	instance Eq Complexa exists and behaves as the 
 lib.complex.inst.readcomplexa	13.1	instance Read Complexa exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
 lib.complex.inst.showcomplexa	13.1	instance Show Complexa exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
 lib.complex.inst.floatingcomplexa	13.1	instance Floating Complexa exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
-lib.complex.export.complexcolonplus	13.1	module Complex exports Complex((:+))	module	accept	import Complex (Complex((:+))) compiles and the name is usable	generated	Planned		
-lib.complex.export.realpart	13.1	module Complex exports realPart	module	accept	import Complex (realPart) compiles and the name is usable	generated	Planned		
-lib.complex.export.imagpart	13.1	module Complex exports imagPart	module	accept	import Complex (imagPart) compiles and the name is usable	generated	Planned		
-lib.complex.export.conjugate	13.1	module Complex exports conjugate	module	accept	import Complex (conjugate) compiles and the name is usable	generated	Planned		
-lib.complex.export.mkpolar	13.1	module Complex exports mkPolar	module	accept	import Complex (mkPolar) compiles and the name is usable	generated	Planned		
-lib.complex.export.cis	13.1	module Complex exports cis	module	accept	import Complex (cis) compiles and the name is usable	generated	Planned		
-lib.complex.export.polar	13.1	module Complex exports polar	module	accept	import Complex (polar) compiles and the name is usable	generated	Planned		
-lib.complex.export.magnitude	13.1	module Complex exports magnitude	module	accept	import Complex (magnitude) compiles and the name is usable	generated	Planned		
-lib.complex.export.phase	13.1	module Complex exports phase	module	accept	import Complex (phase) compiles and the name is usable	generated	Planned		
+lib.complex.export.complexcolonplus	13.1	module Complex exports Complex((:+))	module	accept	import Complex (Complex((:+))) compiles and the name is usable	generated	Supported		
+lib.complex.export.realpart	13.1	module Complex exports realPart	module	accept	import Complex (realPart) compiles and the name is usable	generated	Supported		
+lib.complex.export.imagpart	13.1	module Complex exports imagPart	module	accept	import Complex (imagPart) compiles and the name is usable	generated	Supported		
+lib.complex.export.conjugate	13.1	module Complex exports conjugate	module	accept	import Complex (conjugate) compiles and the name is usable	generated	Supported		
+lib.complex.export.mkpolar	13.1	module Complex exports mkPolar	module	accept	import Complex (mkPolar) compiles and the name is usable	generated	Supported		
+lib.complex.export.cis	13.1	module Complex exports cis	module	accept	import Complex (cis) compiles and the name is usable	generated	Supported		
+lib.complex.export.polar	13.1	module Complex exports polar	module	accept	import Complex (polar) compiles and the name is usable	generated	Supported		
+lib.complex.export.magnitude	13.1	module Complex exports magnitude	module	accept	import Complex (magnitude) compiles and the name is usable	generated	Supported		
+lib.complex.export.phase	13.1	module Complex exports phase	module	accept	import Complex (phase) compiles and the name is usable	generated	Supported		
 lib.r.numeric.showsigned	14.1	showSigned show prec val shows a possibly negative Real, parenthesising by the enclosing precedence	library	run	`showSigned showInt 7 (-3) ""` is "(-3)"; at 6 it is "-3"	hand	Planned		
 lib.r.numeric.showintatbase	14.1	showIntAtBase shows a non-negative Integral in the given base by the given digit function	library	run	`showIntAtBase 2 intToDigit 5 ""` is "101"	hand	Planned		
 lib.r.numeric.showint	14.1	showInt shows a non-negative Integral in base 10	library	run	exact	hand	Planned		
@@ -2943,24 +2943,24 @@ lib.numeric.floattodigits	14.4	floatToDigits has its Report type and its Report 
 lib.numeric.readfloat	14.4	readFloat has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.numeric.lexdigits	14.4	lexDigits has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.numeric.nonnull	14.4	nonnull has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
-lib.numeric.export.fromrat	14.4	module Numeric exports fromRat	module	accept	import Numeric (fromRat) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showsigned	14.4	module Numeric exports showSigned	module	accept	import Numeric (showSigned) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showintatbase	14.4	module Numeric exports showIntAtBase	module	accept	import Numeric (showIntAtBase) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showint	14.4	module Numeric exports showInt	module	accept	import Numeric (showInt) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showoct	14.4	module Numeric exports showOct	module	accept	import Numeric (showOct) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showhex	14.4	module Numeric exports showHex	module	accept	import Numeric (showHex) compiles and the name is usable	generated	Planned		
-lib.numeric.export.readsigned	14.4	module Numeric exports readSigned	module	accept	import Numeric (readSigned) compiles and the name is usable	generated	Planned		
-lib.numeric.export.readint	14.4	module Numeric exports readInt	module	accept	import Numeric (readInt) compiles and the name is usable	generated	Planned		
-lib.numeric.export.readdec	14.4	module Numeric exports readDec	module	accept	import Numeric (readDec) compiles and the name is usable	generated	Planned		
-lib.numeric.export.readoct	14.4	module Numeric exports readOct	module	accept	import Numeric (readOct) compiles and the name is usable	generated	Planned		
-lib.numeric.export.readhex	14.4	module Numeric exports readHex	module	accept	import Numeric (readHex) compiles and the name is usable	generated	Planned		
-lib.numeric.export.floattodigits	14.4	module Numeric exports floatToDigits	module	accept	import Numeric (floatToDigits) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showefloat	14.4	module Numeric exports showEFloat	module	accept	import Numeric (showEFloat) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showffloat	14.4	module Numeric exports showFFloat	module	accept	import Numeric (showFFloat) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showgfloat	14.4	module Numeric exports showGFloat	module	accept	import Numeric (showGFloat) compiles and the name is usable	generated	Planned		
-lib.numeric.export.showfloat	14.4	module Numeric exports showFloat	module	accept	import Numeric (showFloat) compiles and the name is usable	generated	Planned		
-lib.numeric.export.readfloat	14.4	module Numeric exports readFloat	module	accept	import Numeric (readFloat) compiles and the name is usable	generated	Planned		
-lib.numeric.export.lexdigits	14.4	module Numeric exports lexDigits	module	accept	import Numeric (lexDigits) compiles and the name is usable	generated	Planned		
+lib.numeric.export.fromrat	14.4	module Numeric exports fromRat	module	accept	import Numeric (fromRat) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showsigned	14.4	module Numeric exports showSigned	module	accept	import Numeric (showSigned) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showintatbase	14.4	module Numeric exports showIntAtBase	module	accept	import Numeric (showIntAtBase) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showint	14.4	module Numeric exports showInt	module	accept	import Numeric (showInt) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showoct	14.4	module Numeric exports showOct	module	accept	import Numeric (showOct) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showhex	14.4	module Numeric exports showHex	module	accept	import Numeric (showHex) compiles and the name is usable	generated	Supported		
+lib.numeric.export.readsigned	14.4	module Numeric exports readSigned	module	accept	import Numeric (readSigned) compiles and the name is usable	generated	Supported		
+lib.numeric.export.readint	14.4	module Numeric exports readInt	module	accept	import Numeric (readInt) compiles and the name is usable	generated	Supported		
+lib.numeric.export.readdec	14.4	module Numeric exports readDec	module	accept	import Numeric (readDec) compiles and the name is usable	generated	Supported		
+lib.numeric.export.readoct	14.4	module Numeric exports readOct	module	accept	import Numeric (readOct) compiles and the name is usable	generated	Supported		
+lib.numeric.export.readhex	14.4	module Numeric exports readHex	module	accept	import Numeric (readHex) compiles and the name is usable	generated	Supported		
+lib.numeric.export.floattodigits	14.4	module Numeric exports floatToDigits	module	accept	import Numeric (floatToDigits) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showefloat	14.4	module Numeric exports showEFloat	module	accept	import Numeric (showEFloat) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showffloat	14.4	module Numeric exports showFFloat	module	accept	import Numeric (showFFloat) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showgfloat	14.4	module Numeric exports showGFloat	module	accept	import Numeric (showGFloat) compiles and the name is usable	generated	Supported		
+lib.numeric.export.showfloat	14.4	module Numeric exports showFloat	module	accept	import Numeric (showFloat) compiles and the name is usable	generated	Supported		
+lib.numeric.export.readfloat	14.4	module Numeric exports readFloat	module	accept	import Numeric (readFloat) compiles and the name is usable	generated	Supported		
+lib.numeric.export.lexdigits	14.4	module Numeric exports lexDigits	module	accept	import Numeric (lexDigits) compiles and the name is usable	generated	Supported		
 lib.r.ix.index	15	index maps a bounding pair and a subscript to an integer	library	run	on each instance	hand	Planned		
 lib.r.ix.range	15	range enumerates all subscripts	library	run	on each instance	hand	Planned		
 lib.r.ix.inrange	15	inRange tells whether a subscript lies in the bounding pair's range	library	run	on each instance	hand	Planned		
@@ -2971,9 +2971,9 @@ lib.r.ix.assume	15	An implementation is entitled to assume the laws	library	none
 lib.r.ix.tuples	15.1	Ix instances for tuples up to at least size 15	library	run	size 15 used; 6.1.4's list of size-15 instances leaves Ix out	hand	Planned		
 lib.r.ix.derive.enum	15.1	Ix is derivable for enumerations	static	accept	`data C = R | G deriving (Eq, Ord, Ix)` compiles	hand	Planned		
 lib.r.ix.derive.single	15.1	Ix is derivable for single-constructor datatypes whose constituents are instances of Ix	static	accept	`data P = P Int Int deriving (Eq, Ord, Ix)` compiles	hand	Planned		
-lib.r.ix.derive.multi	15.1	Ix is not derivable for a multi-constructor type with fields	static	reject	`data T = A Int | B deriving (Eq, Ord, Ix)` is refused	hand	Planned		
-lib.r.ix.derive.constituent	15.1	A constituent must be an instance of Ix	static	reject	`data P = P Double deriving (Eq, Ord, Ix)` is refused	hand	Planned		
-lib.r.ix.derive.superclass	15.1	Ix's superclass Ord must exist	static	reject	`data C = R deriving Ix` with no Ord is refused	hand	Planned		
+lib.r.ix.derive.multi	15.1	Ix is not derivable for a multi-constructor type with fields	static	reject	`data T = A Int | B deriving (Eq, Ord, Ix)` is refused	hand	Supported		
+lib.r.ix.derive.constituent	15.1	A constituent must be an instance of Ix	static	reject	`data P = P Double deriving (Eq, Ord, Ix)` is refused	hand	Supported		
+lib.r.ix.derive.superclass	15.1	Ix's superclass Ord must exist	static	reject	`data C = R deriving Ix` with no Ord is refused	hand	Supported		
 lib.r.ix.derive.numbering	15.1	For an enumeration the constructors are numbered 0 to n-1, as by Enum	library	run	on Colour	hand	Planned		
 lib.r.ix.example.range	15.1	Example: range (Yellow,Blue) == [Yellow,Green,Blue]	library	run	exact	hand	Planned		
 lib.r.ix.example.index	15.1	Example: index (Yellow,Blue) Green == 1	library	run	exact	hand	Planned		
@@ -2985,7 +2985,7 @@ lib.r.ix.tuple.scheme	15.1	The k-tuple scheme of Figure 15.1 gives range, index 
 lib.r.ix.rangesize	15.2	rangeSize b is 0 for an empty range, otherwise index b h + 1	library	run	default method, on empty and non-empty ranges	hand	Planned		
 lib.r.ix.index.error	15.2	index out of range is an error	library	run	exits as error "Ix.index: Index out of range."	hand	Planned		
 lib.r.ix.instances	15.2	Ix has instances for Char, Int, Integer, tuples, Bool, Ordering and ()	library	run	one test per instance; Ordering and () are in the implementation, not in the synopsis	hand	Planned		
-lib.ix.class.ix	15.2	class Ix is declared as the Report gives it: superclasses, methods, defaults	library	accept	instance with the minimal complete definition compiles and every default behaves as written	generated	Planned		
+lib.ix.class.ix	15.2	class Ix is declared as the Report gives it: superclasses, methods, defaults	library	accept	instance with the minimal complete definition compiles and every default behaves as written	generated	Supported		
 lib.ix.inst.ixchar	15.2	instance Ix Char exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
 lib.ix.inst.ixint	15.2	instance Ix Int exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
 lib.ix.inst.ixinteger	15.2	instance Ix Integer exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
@@ -2997,9 +2997,9 @@ lib.ix.class.ix.range	15.2	Ix method range has its Report type; its default, if 
 lib.ix.class.ix.index	15.2	Ix method index has its Report type; its default, if any, is the Report's	library	run	instance omitting the method uses the default; a defined method overrides it	generated	Planned		
 lib.ix.class.ix.inrange	15.2	Ix method inRange has its Report type; its default, if any, is the Report's	library	run	instance omitting the method uses the default; a defined method overrides it	generated	Planned		
 lib.ix.class.ix.rangesize	15.2	Ix method rangeSize has its Report type; its default, if any, is the Report's	library	run	instance omitting the method uses the default; a defined method overrides it	generated	Planned		
-lib.ix.export.ixrangecindexcinrangecrangesize	15.2	module Ix exports Ix(range, index, inRange, rangeSize)	module	accept	import Ix (Ix(range, index, inRange, rangeSize)) compiles and the name is usable	generated	Planned		
-lib.r.array.exportsix	16	Array exports module Ix, so importers need not import both	library	accept	`import Array; f = range (1,2)` compiles	hand	Planned		
-lib.r.array.abstract	16	Array is an abstract type: arrays are data, not general functions	library	reject	the constructor MkArray is not exported	hand	Planned		
+lib.ix.export.ixrangecindexcinrangecrangesize	15.2	module Ix exports Ix(range, index, inRange, rangeSize)	module	accept	import Ix (Ix(range, index, inRange, rangeSize)) compiles and the name is usable	generated	Supported		
+lib.r.array.exportsix	16	Array exports module Ix, so importers need not import both	library	accept	`import Array; f = range (1,2)` compiles	hand	Supported		
+lib.r.array.abstract	16	Array is an abstract type: arrays are data, not general functions	library	reject	the constructor MkArray is not exported	hand	Supported		
 lib.r.array.rapid	16	A programmer may reasonably expect rapid access to the components	library	run	`--count` budget: (!) is not linear in the array's size; the Report's MkArray code is a function, not this	hand	Planned		
 lib.r.array.bounds.lowhigh	16.1	The bounds are the lowest and highest indices, in that order	library	run	`bounds (array (1,10) [])`; one-origin 10 by 10 has ((1,1),(10,10))	hand	Planned		
 lib.r.array.assoc	16.1	An association (i,x) defines the value at index i to be x	library	run	read back with (!)	hand	Planned		
@@ -3039,9 +3039,9 @@ lib.r.array.example.diag	16.3	Figure 16.2: diag	library	run	exact	hand	Planned
 lib.r.array.example.firstarray	16.3	Figure 16.2: firstArray	library	run	exact	hand	Planned		
 lib.r.array.show	16.4	show of an array is "array bounds assocs", parenthesised by arrPrec	library	run	exact, and read of the same string	hand	Planned		
 lib.r.array.eq	16.4	Eq compares bounds and elements; Ord compares assocs	library	run	on samples, empty arrays too	hand	Planned		
-lib.r.array.functor.context	16.4	The synopsis gives Functor (Array a) no context, the implementation (Ix a)	library	accept	the instance's context a user sees: see readings.md	hand	Planned	R49 R152	
+lib.r.array.functor.context	16.4	The synopsis gives Functor (Array a) no context, the implementation (Ix a)	library	accept	the instance's context a user sees: see readings.md	hand	Supported	R49 R152	
 lib.array.fixity.9bangcslashslash	16.4	fixity declaration `9 !,//` holds for the operators it names	library	run	parse of an unparenthesised mix of the operators, shown by evaluation	generated	Planned		
-lib.array.data.ixa	16.4	type (Ix a) is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Planned		
+lib.array.data.ixa	16.4	type (Ix a) is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		
 lib.array.array	16.4	array has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.array.listarray	16.4	listArray has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.array.bang	16.4	! has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
@@ -3059,18 +3059,18 @@ lib.array.inst.ordarrayab	16.4	instance Ord Arrayab exists and behaves as the Re
 lib.array.inst.showarrayab	16.4	instance Show Arrayab exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
 lib.array.inst.readarrayab	16.4	instance Read Arrayab exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
 lib.array.arrprec.def	16.4	arrPrec (no signature in the Report) has its Report definition's meaning	library	run	differential against the literal definition	generated	Planned		
-lib.array.export.array	16.4	module Array exports Array	module	accept	import Array (Array) compiles and the name is usable	generated	Planned		
-lib.array.export.array.2	16.4	module Array exports array	module	accept	import Array (array) compiles and the name is usable	generated	Planned		
-lib.array.export.listarray	16.4	module Array exports listArray	module	accept	import Array (listArray) compiles and the name is usable	generated	Planned		
-lib.array.export.bang	16.4	module Array exports (!)	module	accept	import Array ((!)) compiles and the name is usable	generated	Planned		
-lib.array.export.bounds	16.4	module Array exports bounds	module	accept	import Array (bounds) compiles and the name is usable	generated	Planned		
-lib.array.export.indices	16.4	module Array exports indices	module	accept	import Array (indices) compiles and the name is usable	generated	Planned		
-lib.array.export.elems	16.4	module Array exports elems	module	accept	import Array (elems) compiles and the name is usable	generated	Planned		
-lib.array.export.assocs	16.4	module Array exports assocs	module	accept	import Array (assocs) compiles and the name is usable	generated	Planned		
-lib.array.export.accumarray	16.4	module Array exports accumArray	module	accept	import Array (accumArray) compiles and the name is usable	generated	Planned		
-lib.array.export.slashslash	16.4	module Array exports (//)	module	accept	import Array ((//)) compiles and the name is usable	generated	Planned		
-lib.array.export.accum	16.4	module Array exports accum	module	accept	import Array (accum) compiles and the name is usable	generated	Planned		
-lib.array.export.ixmap	16.4	module Array exports ixmap	module	accept	import Array (ixmap) compiles and the name is usable	generated	Planned		
+lib.array.export.array	16.4	module Array exports Array	module	accept	import Array (Array) compiles and the name is usable	generated	Supported		
+lib.array.export.array.2	16.4	module Array exports array	module	accept	import Array (array) compiles and the name is usable	generated	Supported		
+lib.array.export.listarray	16.4	module Array exports listArray	module	accept	import Array (listArray) compiles and the name is usable	generated	Supported		
+lib.array.export.bang	16.4	module Array exports (!)	module	accept	import Array ((!)) compiles and the name is usable	generated	Supported		
+lib.array.export.bounds	16.4	module Array exports bounds	module	accept	import Array (bounds) compiles and the name is usable	generated	Supported		
+lib.array.export.indices	16.4	module Array exports indices	module	accept	import Array (indices) compiles and the name is usable	generated	Supported		
+lib.array.export.elems	16.4	module Array exports elems	module	accept	import Array (elems) compiles and the name is usable	generated	Supported		
+lib.array.export.assocs	16.4	module Array exports assocs	module	accept	import Array (assocs) compiles and the name is usable	generated	Supported		
+lib.array.export.accumarray	16.4	module Array exports accumArray	module	accept	import Array (accumArray) compiles and the name is usable	generated	Supported		
+lib.array.export.slashslash	16.4	module Array exports (//)	module	accept	import Array ((//)) compiles and the name is usable	generated	Supported		
+lib.array.export.accum	16.4	module Array exports accum	module	accept	import Array (accum) compiles and the name is usable	generated	Supported		
+lib.array.export.ixmap	16.4	module Array exports ixmap	module	accept	import Array (ixmap) compiles and the name is usable	generated	Supported		
 lib.r.list.elemindex	17.1	elemIndex val list gives Just the index of the first occurrence, Nothing if absent	library	run	exact	hand	Planned		
 lib.r.list.elemindices	17.1	elemIndices gives an in-order list of the occurrences' indices	library	run	exact	hand	Planned		
 lib.r.list.find	17.1	find gives the first element satisfying a predicate, or Nothing	library	run	exact	hand	Planned		
@@ -3108,7 +3108,7 @@ lib.r.list.by.insert	17.6	insertBy is the By variant of insert	library	run	exact
 lib.r.list.by.maximum	17.6	maximumBy is the By variant of maximum; the empty list is an error	library	run	exact and an error exit	hand	Planned		
 lib.r.list.by.minimum	17.6	minimumBy is the By variant of minimum; the empty list is an error	library	run	exact and an error exit	hand	Planned		
 lib.r.list.by.assume	17.6	A By predicate is assumed to define an equivalence, or a total ordering	library	none	an assumption on the caller	hand	Planned		
-lib.r.list.noelemby	17.6	The library does not provide elemBy, nor By variants of elemIndex, elemIndices, isPrefixOf, isSuffixOf	library	reject	`import List (elemBy)` is refused	hand	Planned		
+lib.r.list.noelemby	17.6	The library does not provide elemBy, nor By variants of elemIndex, elemIndices, isPrefixOf, isSuffixOf	library	reject	`import List (elemBy)` is refused	hand	Supported		
 lib.r.list.generic.length	17.7	genericLength is a generalised length, typed Integral a => [b] -> a here though 4.5.5 types it Num a	library	run	at Integer and Int: see readings.md	hand	Planned	R48	
 lib.r.list.generic.take	17.7	genericTake generalises take, and takes a negative count as 0	library	run	the definition of erratum September 2008, an entry of the overlay (D37); see readings.md	hand	Planned	R48	
 lib.r.list.generic.drop	17.7	genericDrop generalises drop, and takes a negative count as 0	library	run	the definition of erratum September 2008	hand	Planned		
@@ -3117,7 +3117,7 @@ lib.r.list.generic.index	17.7	genericIndex generalises (!!), with its errors	lib
 lib.r.list.generic.replicate	17.7	genericReplicate generalises replicate	library	run	exact	hand	Planned		
 lib.r.list.zip	17.8	zip, zipWith and unzip for 4, 5, 6 and 7 arguments	library	run	size 7 of each	hand	Planned		
 lib.r.list.zip.text	17.8	The text says "these same three operations" of a list of six names	library	none	a slip in the prose: the export list decides	hand	Planned		
-lib.r.list.difference.nonassoc	17.9	(\\) is non-associative: `infix 5 \\`	library	reject	`a \\ b \\ c` is refused	hand	Planned		
+lib.r.list.difference.nonassoc	17.9	(\\) is non-associative: `infix 5 \\`	library	reject	`a \\ b \\ c` is refused	hand	Supported		
 lib.list.fixity.5bsbs	17.9	fixity declaration `5 \\` holds for the operators it names	library	run	parse of an unparenthesised mix of the operators, shown by evaluation	generated	Planned		
 lib.list.elemindex	17.9	elemIndex has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.list.elemindices	17.9	elemIndices has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
@@ -3170,110 +3170,110 @@ lib.list.unzip4	17.9	unzip4 has its Report type and its Report definition's mean
 lib.list.unzip5	17.9	unzip5 has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.list.unzip6	17.9	unzip6 has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.list.unzip7	17.9	unzip7 has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
-lib.list.export.elemindex	17.9	module List exports elemIndex	module	accept	import List (elemIndex) compiles and the name is usable	generated	Planned		
-lib.list.export.elemindices	17.9	module List exports elemIndices	module	accept	import List (elemIndices) compiles and the name is usable	generated	Planned		
-lib.list.export.find	17.9	module List exports find	module	accept	import List (find) compiles and the name is usable	generated	Planned		
-lib.list.export.findindex	17.9	module List exports findIndex	module	accept	import List (findIndex) compiles and the name is usable	generated	Planned		
-lib.list.export.findindices	17.9	module List exports findIndices	module	accept	import List (findIndices) compiles and the name is usable	generated	Planned		
-lib.list.export.nub	17.9	module List exports nub	module	accept	import List (nub) compiles and the name is usable	generated	Planned		
-lib.list.export.nubby	17.9	module List exports nubBy	module	accept	import List (nubBy) compiles and the name is usable	generated	Planned		
-lib.list.export.delete	17.9	module List exports delete	module	accept	import List (delete) compiles and the name is usable	generated	Planned		
-lib.list.export.deleteby	17.9	module List exports deleteBy	module	accept	import List (deleteBy) compiles and the name is usable	generated	Planned		
-lib.list.export.bsbs	17.9	module List exports (\\)	module	accept	import List ((\\)) compiles and the name is usable	generated	Planned		
-lib.list.export.deletefirstsby	17.9	module List exports deleteFirstsBy	module	accept	import List (deleteFirstsBy) compiles and the name is usable	generated	Planned		
-lib.list.export.union	17.9	module List exports union	module	accept	import List (union) compiles and the name is usable	generated	Planned		
-lib.list.export.unionby	17.9	module List exports unionBy	module	accept	import List (unionBy) compiles and the name is usable	generated	Planned		
-lib.list.export.intersect	17.9	module List exports intersect	module	accept	import List (intersect) compiles and the name is usable	generated	Planned		
-lib.list.export.intersectby	17.9	module List exports intersectBy	module	accept	import List (intersectBy) compiles and the name is usable	generated	Planned		
-lib.list.export.intersperse	17.9	module List exports intersperse	module	accept	import List (intersperse) compiles and the name is usable	generated	Planned		
-lib.list.export.transpose	17.9	module List exports transpose	module	accept	import List (transpose) compiles and the name is usable	generated	Planned		
-lib.list.export.partition	17.9	module List exports partition	module	accept	import List (partition) compiles and the name is usable	generated	Planned		
-lib.list.export.group	17.9	module List exports group	module	accept	import List (group) compiles and the name is usable	generated	Planned		
-lib.list.export.groupby	17.9	module List exports groupBy	module	accept	import List (groupBy) compiles and the name is usable	generated	Planned		
-lib.list.export.inits	17.9	module List exports inits	module	accept	import List (inits) compiles and the name is usable	generated	Planned		
-lib.list.export.tails	17.9	module List exports tails	module	accept	import List (tails) compiles and the name is usable	generated	Planned		
-lib.list.export.isprefixof	17.9	module List exports isPrefixOf	module	accept	import List (isPrefixOf) compiles and the name is usable	generated	Planned		
-lib.list.export.issuffixof	17.9	module List exports isSuffixOf	module	accept	import List (isSuffixOf) compiles and the name is usable	generated	Planned		
-lib.list.export.mapaccuml	17.9	module List exports mapAccumL	module	accept	import List (mapAccumL) compiles and the name is usable	generated	Planned		
-lib.list.export.mapaccumr	17.9	module List exports mapAccumR	module	accept	import List (mapAccumR) compiles and the name is usable	generated	Planned		
-lib.list.export.sort	17.9	module List exports sort	module	accept	import List (sort) compiles and the name is usable	generated	Planned		
-lib.list.export.sortby	17.9	module List exports sortBy	module	accept	import List (sortBy) compiles and the name is usable	generated	Planned		
-lib.list.export.insert	17.9	module List exports insert	module	accept	import List (insert) compiles and the name is usable	generated	Planned		
-lib.list.export.insertby	17.9	module List exports insertBy	module	accept	import List (insertBy) compiles and the name is usable	generated	Planned		
-lib.list.export.maximumby	17.9	module List exports maximumBy	module	accept	import List (maximumBy) compiles and the name is usable	generated	Planned		
-lib.list.export.minimumby	17.9	module List exports minimumBy	module	accept	import List (minimumBy) compiles and the name is usable	generated	Planned		
-lib.list.export.genericlength	17.9	module List exports genericLength	module	accept	import List (genericLength) compiles and the name is usable	generated	Planned		
-lib.list.export.generictake	17.9	module List exports genericTake	module	accept	import List (genericTake) compiles and the name is usable	generated	Planned		
-lib.list.export.genericdrop	17.9	module List exports genericDrop	module	accept	import List (genericDrop) compiles and the name is usable	generated	Planned		
-lib.list.export.genericsplitat	17.9	module List exports genericSplitAt	module	accept	import List (genericSplitAt) compiles and the name is usable	generated	Planned		
-lib.list.export.genericindex	17.9	module List exports genericIndex	module	accept	import List (genericIndex) compiles and the name is usable	generated	Planned		
-lib.list.export.genericreplicate	17.9	module List exports genericReplicate	module	accept	import List (genericReplicate) compiles and the name is usable	generated	Planned		
-lib.list.export.zip4	17.9	module List exports zip4	module	accept	import List (zip4) compiles and the name is usable	generated	Planned		
-lib.list.export.zip5	17.9	module List exports zip5	module	accept	import List (zip5) compiles and the name is usable	generated	Planned		
-lib.list.export.zip6	17.9	module List exports zip6	module	accept	import List (zip6) compiles and the name is usable	generated	Planned		
-lib.list.export.zip7	17.9	module List exports zip7	module	accept	import List (zip7) compiles and the name is usable	generated	Planned		
-lib.list.export.zipwith4	17.9	module List exports zipWith4	module	accept	import List (zipWith4) compiles and the name is usable	generated	Planned		
-lib.list.export.zipwith5	17.9	module List exports zipWith5	module	accept	import List (zipWith5) compiles and the name is usable	generated	Planned		
-lib.list.export.zipwith6	17.9	module List exports zipWith6	module	accept	import List (zipWith6) compiles and the name is usable	generated	Planned		
-lib.list.export.zipwith7	17.9	module List exports zipWith7	module	accept	import List (zipWith7) compiles and the name is usable	generated	Planned		
-lib.list.export.unzip4	17.9	module List exports unzip4	module	accept	import List (unzip4) compiles and the name is usable	generated	Planned		
-lib.list.export.unzip5	17.9	module List exports unzip5	module	accept	import List (unzip5) compiles and the name is usable	generated	Planned		
-lib.list.export.unzip6	17.9	module List exports unzip6	module	accept	import List (unzip6) compiles and the name is usable	generated	Planned		
-lib.list.export.unzip7	17.9	module List exports unzip7	module	accept	import List (unzip7) compiles and the name is usable	generated	Planned		
-lib.list.export.unfoldr	17.9	module List exports unfoldr	module	accept	import List (unfoldr) compiles and the name is usable	generated	Planned		
-lib.list.export.map	17.9	module List exports map	module	accept	import List (map) compiles and the name is usable	generated	Planned		
-lib.list.export.plusplus	17.9	module List exports (++)	module	accept	import List ((++)) compiles and the name is usable	generated	Planned		
-lib.list.export.concat	17.9	module List exports concat	module	accept	import List (concat) compiles and the name is usable	generated	Planned		
-lib.list.export.filter	17.9	module List exports filter	module	accept	import List (filter) compiles and the name is usable	generated	Planned		
-lib.list.export.head	17.9	module List exports head	module	accept	import List (head) compiles and the name is usable	generated	Planned		
-lib.list.export.last	17.9	module List exports last	module	accept	import List (last) compiles and the name is usable	generated	Planned		
-lib.list.export.tail	17.9	module List exports tail	module	accept	import List (tail) compiles and the name is usable	generated	Planned		
-lib.list.export.init	17.9	module List exports init	module	accept	import List (init) compiles and the name is usable	generated	Planned		
-lib.list.export.null	17.9	module List exports null	module	accept	import List (null) compiles and the name is usable	generated	Planned		
-lib.list.export.length	17.9	module List exports length	module	accept	import List (length) compiles and the name is usable	generated	Planned		
-lib.list.export.bangbang	17.9	module List exports (!!)	module	accept	import List ((!!)) compiles and the name is usable	generated	Planned		
-lib.list.export.foldl	17.9	module List exports foldl	module	accept	import List (foldl) compiles and the name is usable	generated	Planned		
-lib.list.export.foldl1	17.9	module List exports foldl1	module	accept	import List (foldl1) compiles and the name is usable	generated	Planned		
-lib.list.export.scanl	17.9	module List exports scanl	module	accept	import List (scanl) compiles and the name is usable	generated	Planned		
-lib.list.export.scanl1	17.9	module List exports scanl1	module	accept	import List (scanl1) compiles and the name is usable	generated	Planned		
-lib.list.export.foldr	17.9	module List exports foldr	module	accept	import List (foldr) compiles and the name is usable	generated	Planned		
-lib.list.export.foldr1	17.9	module List exports foldr1	module	accept	import List (foldr1) compiles and the name is usable	generated	Planned		
-lib.list.export.scanr	17.9	module List exports scanr	module	accept	import List (scanr) compiles and the name is usable	generated	Planned		
-lib.list.export.scanr1	17.9	module List exports scanr1	module	accept	import List (scanr1) compiles and the name is usable	generated	Planned		
-lib.list.export.iterate	17.9	module List exports iterate	module	accept	import List (iterate) compiles and the name is usable	generated	Planned		
-lib.list.export.repeat	17.9	module List exports repeat	module	accept	import List (repeat) compiles and the name is usable	generated	Planned		
-lib.list.export.replicate	17.9	module List exports replicate	module	accept	import List (replicate) compiles and the name is usable	generated	Planned		
-lib.list.export.cycle	17.9	module List exports cycle	module	accept	import List (cycle) compiles and the name is usable	generated	Planned		
-lib.list.export.take	17.9	module List exports take	module	accept	import List (take) compiles and the name is usable	generated	Planned		
-lib.list.export.drop	17.9	module List exports drop	module	accept	import List (drop) compiles and the name is usable	generated	Planned		
-lib.list.export.splitat	17.9	module List exports splitAt	module	accept	import List (splitAt) compiles and the name is usable	generated	Planned		
-lib.list.export.takewhile	17.9	module List exports takeWhile	module	accept	import List (takeWhile) compiles and the name is usable	generated	Planned		
-lib.list.export.dropwhile	17.9	module List exports dropWhile	module	accept	import List (dropWhile) compiles and the name is usable	generated	Planned		
-lib.list.export.span	17.9	module List exports span	module	accept	import List (span) compiles and the name is usable	generated	Planned		
-lib.list.export.break	17.9	module List exports break	module	accept	import List (break) compiles and the name is usable	generated	Planned		
-lib.list.export.lines	17.9	module List exports lines	module	accept	import List (lines) compiles and the name is usable	generated	Planned		
-lib.list.export.words	17.9	module List exports words	module	accept	import List (words) compiles and the name is usable	generated	Planned		
-lib.list.export.unlines	17.9	module List exports unlines	module	accept	import List (unlines) compiles and the name is usable	generated	Planned		
-lib.list.export.unwords	17.9	module List exports unwords	module	accept	import List (unwords) compiles and the name is usable	generated	Planned		
-lib.list.export.reverse	17.9	module List exports reverse	module	accept	import List (reverse) compiles and the name is usable	generated	Planned		
-lib.list.export.and	17.9	module List exports and	module	accept	import List (and) compiles and the name is usable	generated	Planned		
-lib.list.export.or	17.9	module List exports or	module	accept	import List (or) compiles and the name is usable	generated	Planned		
-lib.list.export.any	17.9	module List exports any	module	accept	import List (any) compiles and the name is usable	generated	Planned		
-lib.list.export.all	17.9	module List exports all	module	accept	import List (all) compiles and the name is usable	generated	Planned		
-lib.list.export.elem	17.9	module List exports elem	module	accept	import List (elem) compiles and the name is usable	generated	Planned		
-lib.list.export.notelem	17.9	module List exports notElem	module	accept	import List (notElem) compiles and the name is usable	generated	Planned		
-lib.list.export.lookup	17.9	module List exports lookup	module	accept	import List (lookup) compiles and the name is usable	generated	Planned		
-lib.list.export.sum	17.9	module List exports sum	module	accept	import List (sum) compiles and the name is usable	generated	Planned		
-lib.list.export.product	17.9	module List exports product	module	accept	import List (product) compiles and the name is usable	generated	Planned		
-lib.list.export.maximum	17.9	module List exports maximum	module	accept	import List (maximum) compiles and the name is usable	generated	Planned		
-lib.list.export.minimum	17.9	module List exports minimum	module	accept	import List (minimum) compiles and the name is usable	generated	Planned		
-lib.list.export.concatmap	17.9	module List exports concatMap	module	accept	import List (concatMap) compiles and the name is usable	generated	Planned		
-lib.list.export.zip	17.9	module List exports zip	module	accept	import List (zip) compiles and the name is usable	generated	Planned		
-lib.list.export.zip3	17.9	module List exports zip3	module	accept	import List (zip3) compiles and the name is usable	generated	Planned		
-lib.list.export.zipwith	17.9	module List exports zipWith	module	accept	import List (zipWith) compiles and the name is usable	generated	Planned		
-lib.list.export.zipwith3	17.9	module List exports zipWith3	module	accept	import List (zipWith3) compiles and the name is usable	generated	Planned		
-lib.list.export.unzip	17.9	module List exports unzip	module	accept	import List (unzip) compiles and the name is usable	generated	Planned		
-lib.list.export.unzip3	17.9	module List exports unzip3	module	accept	import List (unzip3) compiles and the name is usable	generated	Planned		
+lib.list.export.elemindex	17.9	module List exports elemIndex	module	accept	import List (elemIndex) compiles and the name is usable	generated	Supported		
+lib.list.export.elemindices	17.9	module List exports elemIndices	module	accept	import List (elemIndices) compiles and the name is usable	generated	Supported		
+lib.list.export.find	17.9	module List exports find	module	accept	import List (find) compiles and the name is usable	generated	Supported		
+lib.list.export.findindex	17.9	module List exports findIndex	module	accept	import List (findIndex) compiles and the name is usable	generated	Supported		
+lib.list.export.findindices	17.9	module List exports findIndices	module	accept	import List (findIndices) compiles and the name is usable	generated	Supported		
+lib.list.export.nub	17.9	module List exports nub	module	accept	import List (nub) compiles and the name is usable	generated	Supported		
+lib.list.export.nubby	17.9	module List exports nubBy	module	accept	import List (nubBy) compiles and the name is usable	generated	Supported		
+lib.list.export.delete	17.9	module List exports delete	module	accept	import List (delete) compiles and the name is usable	generated	Supported		
+lib.list.export.deleteby	17.9	module List exports deleteBy	module	accept	import List (deleteBy) compiles and the name is usable	generated	Supported		
+lib.list.export.bsbs	17.9	module List exports (\\)	module	accept	import List ((\\)) compiles and the name is usable	generated	Supported		
+lib.list.export.deletefirstsby	17.9	module List exports deleteFirstsBy	module	accept	import List (deleteFirstsBy) compiles and the name is usable	generated	Supported		
+lib.list.export.union	17.9	module List exports union	module	accept	import List (union) compiles and the name is usable	generated	Supported		
+lib.list.export.unionby	17.9	module List exports unionBy	module	accept	import List (unionBy) compiles and the name is usable	generated	Supported		
+lib.list.export.intersect	17.9	module List exports intersect	module	accept	import List (intersect) compiles and the name is usable	generated	Supported		
+lib.list.export.intersectby	17.9	module List exports intersectBy	module	accept	import List (intersectBy) compiles and the name is usable	generated	Supported		
+lib.list.export.intersperse	17.9	module List exports intersperse	module	accept	import List (intersperse) compiles and the name is usable	generated	Supported		
+lib.list.export.transpose	17.9	module List exports transpose	module	accept	import List (transpose) compiles and the name is usable	generated	Supported		
+lib.list.export.partition	17.9	module List exports partition	module	accept	import List (partition) compiles and the name is usable	generated	Supported		
+lib.list.export.group	17.9	module List exports group	module	accept	import List (group) compiles and the name is usable	generated	Supported		
+lib.list.export.groupby	17.9	module List exports groupBy	module	accept	import List (groupBy) compiles and the name is usable	generated	Supported		
+lib.list.export.inits	17.9	module List exports inits	module	accept	import List (inits) compiles and the name is usable	generated	Supported		
+lib.list.export.tails	17.9	module List exports tails	module	accept	import List (tails) compiles and the name is usable	generated	Supported		
+lib.list.export.isprefixof	17.9	module List exports isPrefixOf	module	accept	import List (isPrefixOf) compiles and the name is usable	generated	Supported		
+lib.list.export.issuffixof	17.9	module List exports isSuffixOf	module	accept	import List (isSuffixOf) compiles and the name is usable	generated	Supported		
+lib.list.export.mapaccuml	17.9	module List exports mapAccumL	module	accept	import List (mapAccumL) compiles and the name is usable	generated	Supported		
+lib.list.export.mapaccumr	17.9	module List exports mapAccumR	module	accept	import List (mapAccumR) compiles and the name is usable	generated	Supported		
+lib.list.export.sort	17.9	module List exports sort	module	accept	import List (sort) compiles and the name is usable	generated	Supported		
+lib.list.export.sortby	17.9	module List exports sortBy	module	accept	import List (sortBy) compiles and the name is usable	generated	Supported		
+lib.list.export.insert	17.9	module List exports insert	module	accept	import List (insert) compiles and the name is usable	generated	Supported		
+lib.list.export.insertby	17.9	module List exports insertBy	module	accept	import List (insertBy) compiles and the name is usable	generated	Supported		
+lib.list.export.maximumby	17.9	module List exports maximumBy	module	accept	import List (maximumBy) compiles and the name is usable	generated	Supported		
+lib.list.export.minimumby	17.9	module List exports minimumBy	module	accept	import List (minimumBy) compiles and the name is usable	generated	Supported		
+lib.list.export.genericlength	17.9	module List exports genericLength	module	accept	import List (genericLength) compiles and the name is usable	generated	Supported		
+lib.list.export.generictake	17.9	module List exports genericTake	module	accept	import List (genericTake) compiles and the name is usable	generated	Supported		
+lib.list.export.genericdrop	17.9	module List exports genericDrop	module	accept	import List (genericDrop) compiles and the name is usable	generated	Supported		
+lib.list.export.genericsplitat	17.9	module List exports genericSplitAt	module	accept	import List (genericSplitAt) compiles and the name is usable	generated	Supported		
+lib.list.export.genericindex	17.9	module List exports genericIndex	module	accept	import List (genericIndex) compiles and the name is usable	generated	Supported		
+lib.list.export.genericreplicate	17.9	module List exports genericReplicate	module	accept	import List (genericReplicate) compiles and the name is usable	generated	Supported		
+lib.list.export.zip4	17.9	module List exports zip4	module	accept	import List (zip4) compiles and the name is usable	generated	Supported		
+lib.list.export.zip5	17.9	module List exports zip5	module	accept	import List (zip5) compiles and the name is usable	generated	Supported		
+lib.list.export.zip6	17.9	module List exports zip6	module	accept	import List (zip6) compiles and the name is usable	generated	Supported		
+lib.list.export.zip7	17.9	module List exports zip7	module	accept	import List (zip7) compiles and the name is usable	generated	Supported		
+lib.list.export.zipwith4	17.9	module List exports zipWith4	module	accept	import List (zipWith4) compiles and the name is usable	generated	Supported		
+lib.list.export.zipwith5	17.9	module List exports zipWith5	module	accept	import List (zipWith5) compiles and the name is usable	generated	Supported		
+lib.list.export.zipwith6	17.9	module List exports zipWith6	module	accept	import List (zipWith6) compiles and the name is usable	generated	Supported		
+lib.list.export.zipwith7	17.9	module List exports zipWith7	module	accept	import List (zipWith7) compiles and the name is usable	generated	Supported		
+lib.list.export.unzip4	17.9	module List exports unzip4	module	accept	import List (unzip4) compiles and the name is usable	generated	Supported		
+lib.list.export.unzip5	17.9	module List exports unzip5	module	accept	import List (unzip5) compiles and the name is usable	generated	Supported		
+lib.list.export.unzip6	17.9	module List exports unzip6	module	accept	import List (unzip6) compiles and the name is usable	generated	Supported		
+lib.list.export.unzip7	17.9	module List exports unzip7	module	accept	import List (unzip7) compiles and the name is usable	generated	Supported		
+lib.list.export.unfoldr	17.9	module List exports unfoldr	module	accept	import List (unfoldr) compiles and the name is usable	generated	Supported		
+lib.list.export.map	17.9	module List exports map	module	accept	import List (map) compiles and the name is usable	generated	Supported		
+lib.list.export.plusplus	17.9	module List exports (++)	module	accept	import List ((++)) compiles and the name is usable	generated	Supported		
+lib.list.export.concat	17.9	module List exports concat	module	accept	import List (concat) compiles and the name is usable	generated	Supported		
+lib.list.export.filter	17.9	module List exports filter	module	accept	import List (filter) compiles and the name is usable	generated	Supported		
+lib.list.export.head	17.9	module List exports head	module	accept	import List (head) compiles and the name is usable	generated	Supported		
+lib.list.export.last	17.9	module List exports last	module	accept	import List (last) compiles and the name is usable	generated	Supported		
+lib.list.export.tail	17.9	module List exports tail	module	accept	import List (tail) compiles and the name is usable	generated	Supported		
+lib.list.export.init	17.9	module List exports init	module	accept	import List (init) compiles and the name is usable	generated	Supported		
+lib.list.export.null	17.9	module List exports null	module	accept	import List (null) compiles and the name is usable	generated	Supported		
+lib.list.export.length	17.9	module List exports length	module	accept	import List (length) compiles and the name is usable	generated	Supported		
+lib.list.export.bangbang	17.9	module List exports (!!)	module	accept	import List ((!!)) compiles and the name is usable	generated	Supported		
+lib.list.export.foldl	17.9	module List exports foldl	module	accept	import List (foldl) compiles and the name is usable	generated	Supported		
+lib.list.export.foldl1	17.9	module List exports foldl1	module	accept	import List (foldl1) compiles and the name is usable	generated	Supported		
+lib.list.export.scanl	17.9	module List exports scanl	module	accept	import List (scanl) compiles and the name is usable	generated	Supported		
+lib.list.export.scanl1	17.9	module List exports scanl1	module	accept	import List (scanl1) compiles and the name is usable	generated	Supported		
+lib.list.export.foldr	17.9	module List exports foldr	module	accept	import List (foldr) compiles and the name is usable	generated	Supported		
+lib.list.export.foldr1	17.9	module List exports foldr1	module	accept	import List (foldr1) compiles and the name is usable	generated	Supported		
+lib.list.export.scanr	17.9	module List exports scanr	module	accept	import List (scanr) compiles and the name is usable	generated	Supported		
+lib.list.export.scanr1	17.9	module List exports scanr1	module	accept	import List (scanr1) compiles and the name is usable	generated	Supported		
+lib.list.export.iterate	17.9	module List exports iterate	module	accept	import List (iterate) compiles and the name is usable	generated	Supported		
+lib.list.export.repeat	17.9	module List exports repeat	module	accept	import List (repeat) compiles and the name is usable	generated	Supported		
+lib.list.export.replicate	17.9	module List exports replicate	module	accept	import List (replicate) compiles and the name is usable	generated	Supported		
+lib.list.export.cycle	17.9	module List exports cycle	module	accept	import List (cycle) compiles and the name is usable	generated	Supported		
+lib.list.export.take	17.9	module List exports take	module	accept	import List (take) compiles and the name is usable	generated	Supported		
+lib.list.export.drop	17.9	module List exports drop	module	accept	import List (drop) compiles and the name is usable	generated	Supported		
+lib.list.export.splitat	17.9	module List exports splitAt	module	accept	import List (splitAt) compiles and the name is usable	generated	Supported		
+lib.list.export.takewhile	17.9	module List exports takeWhile	module	accept	import List (takeWhile) compiles and the name is usable	generated	Supported		
+lib.list.export.dropwhile	17.9	module List exports dropWhile	module	accept	import List (dropWhile) compiles and the name is usable	generated	Supported		
+lib.list.export.span	17.9	module List exports span	module	accept	import List (span) compiles and the name is usable	generated	Supported		
+lib.list.export.break	17.9	module List exports break	module	accept	import List (break) compiles and the name is usable	generated	Supported		
+lib.list.export.lines	17.9	module List exports lines	module	accept	import List (lines) compiles and the name is usable	generated	Supported		
+lib.list.export.words	17.9	module List exports words	module	accept	import List (words) compiles and the name is usable	generated	Supported		
+lib.list.export.unlines	17.9	module List exports unlines	module	accept	import List (unlines) compiles and the name is usable	generated	Supported		
+lib.list.export.unwords	17.9	module List exports unwords	module	accept	import List (unwords) compiles and the name is usable	generated	Supported		
+lib.list.export.reverse	17.9	module List exports reverse	module	accept	import List (reverse) compiles and the name is usable	generated	Supported		
+lib.list.export.and	17.9	module List exports and	module	accept	import List (and) compiles and the name is usable	generated	Supported		
+lib.list.export.or	17.9	module List exports or	module	accept	import List (or) compiles and the name is usable	generated	Supported		
+lib.list.export.any	17.9	module List exports any	module	accept	import List (any) compiles and the name is usable	generated	Supported		
+lib.list.export.all	17.9	module List exports all	module	accept	import List (all) compiles and the name is usable	generated	Supported		
+lib.list.export.elem	17.9	module List exports elem	module	accept	import List (elem) compiles and the name is usable	generated	Supported		
+lib.list.export.notelem	17.9	module List exports notElem	module	accept	import List (notElem) compiles and the name is usable	generated	Supported		
+lib.list.export.lookup	17.9	module List exports lookup	module	accept	import List (lookup) compiles and the name is usable	generated	Supported		
+lib.list.export.sum	17.9	module List exports sum	module	accept	import List (sum) compiles and the name is usable	generated	Supported		
+lib.list.export.product	17.9	module List exports product	module	accept	import List (product) compiles and the name is usable	generated	Supported		
+lib.list.export.maximum	17.9	module List exports maximum	module	accept	import List (maximum) compiles and the name is usable	generated	Supported		
+lib.list.export.minimum	17.9	module List exports minimum	module	accept	import List (minimum) compiles and the name is usable	generated	Supported		
+lib.list.export.concatmap	17.9	module List exports concatMap	module	accept	import List (concatMap) compiles and the name is usable	generated	Supported		
+lib.list.export.zip	17.9	module List exports zip	module	accept	import List (zip) compiles and the name is usable	generated	Supported		
+lib.list.export.zip3	17.9	module List exports zip3	module	accept	import List (zip3) compiles and the name is usable	generated	Supported		
+lib.list.export.zipwith	17.9	module List exports zipWith	module	accept	import List (zipWith) compiles and the name is usable	generated	Supported		
+lib.list.export.zipwith3	17.9	module List exports zipWith3	module	accept	import List (zipWith3) compiles and the name is usable	generated	Supported		
+lib.list.export.unzip	17.9	module List exports unzip	module	accept	import List (unzip) compiles and the name is usable	generated	Supported		
+lib.list.export.unzip3	17.9	module List exports unzip3	module	accept	import List (unzip3) compiles and the name is usable	generated	Supported		
 lib.r.maybe.purpose	18	Maybe deals with illegal or optional values without terminating and without IOError	library	none	a statement of purpose	hand	Planned		
 lib.r.maybe.monadic	18	Other operations on Maybe are part of the Prelude's monadic classes	library	run	fmap and >>= on Maybe need no import	hand	Planned		
 lib.r.maybe.fromjust	18.1	fromJust Nothing is an error	library	run	exits as error "Maybe.fromJust: Nothing"	hand	Planned		
@@ -3285,16 +3285,16 @@ lib.maybe.maybetolist	18.1	maybeToList has its Report type and its Report defini
 lib.maybe.listtomaybe	18.1	listToMaybe has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.maybe.catmaybes	18.1	catMaybes has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.maybe.mapmaybe	18.1	mapMaybe has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
-lib.maybe.export.isjust	18.1	module Maybe exports isJust	module	accept	import Maybe (isJust) compiles and the name is usable	generated	Planned		
-lib.maybe.export.isnothing	18.1	module Maybe exports isNothing	module	accept	import Maybe (isNothing) compiles and the name is usable	generated	Planned		
-lib.maybe.export.fromjust	18.1	module Maybe exports fromJust	module	accept	import Maybe (fromJust) compiles and the name is usable	generated	Planned		
-lib.maybe.export.frommaybe	18.1	module Maybe exports fromMaybe	module	accept	import Maybe (fromMaybe) compiles and the name is usable	generated	Planned		
-lib.maybe.export.listtomaybe	18.1	module Maybe exports listToMaybe	module	accept	import Maybe (listToMaybe) compiles and the name is usable	generated	Planned		
-lib.maybe.export.maybetolist	18.1	module Maybe exports maybeToList	module	accept	import Maybe (maybeToList) compiles and the name is usable	generated	Planned		
-lib.maybe.export.catmaybes	18.1	module Maybe exports catMaybes	module	accept	import Maybe (catMaybes) compiles and the name is usable	generated	Planned		
-lib.maybe.export.mapmaybe	18.1	module Maybe exports mapMaybe	module	accept	import Maybe (mapMaybe) compiles and the name is usable	generated	Planned		
-lib.maybe.export.maybenothingcjust	18.1	module Maybe exports Maybe(Nothing, Just)	module	accept	import Maybe (Maybe(Nothing, Just)) compiles and the name is usable	generated	Planned		
-lib.maybe.export.maybe	18.1	module Maybe exports maybe	module	accept	import Maybe (maybe) compiles and the name is usable	generated	Planned		
+lib.maybe.export.isjust	18.1	module Maybe exports isJust	module	accept	import Maybe (isJust) compiles and the name is usable	generated	Supported		
+lib.maybe.export.isnothing	18.1	module Maybe exports isNothing	module	accept	import Maybe (isNothing) compiles and the name is usable	generated	Supported		
+lib.maybe.export.fromjust	18.1	module Maybe exports fromJust	module	accept	import Maybe (fromJust) compiles and the name is usable	generated	Supported		
+lib.maybe.export.frommaybe	18.1	module Maybe exports fromMaybe	module	accept	import Maybe (fromMaybe) compiles and the name is usable	generated	Supported		
+lib.maybe.export.listtomaybe	18.1	module Maybe exports listToMaybe	module	accept	import Maybe (listToMaybe) compiles and the name is usable	generated	Supported		
+lib.maybe.export.maybetolist	18.1	module Maybe exports maybeToList	module	accept	import Maybe (maybeToList) compiles and the name is usable	generated	Supported		
+lib.maybe.export.catmaybes	18.1	module Maybe exports catMaybes	module	accept	import Maybe (catMaybes) compiles and the name is usable	generated	Supported		
+lib.maybe.export.mapmaybe	18.1	module Maybe exports mapMaybe	module	accept	import Maybe (mapMaybe) compiles and the name is usable	generated	Supported		
+lib.maybe.export.maybenothingcjust	18.1	module Maybe exports Maybe(Nothing, Just)	module	accept	import Maybe (Maybe(Nothing, Just)) compiles and the name is usable	generated	Supported		
+lib.maybe.export.maybe	18.1	module Maybe exports maybe	module	accept	import Maybe (maybe) compiles and the name is usable	generated	Supported		
 lib.r.char.ascii	19	The first 128 entries of the character set are ASCII	library	run	`fromEnum 'A'` is 65	hand	Planned		
 lib.r.char.latin1	19	The next 128 entries complete Latin-1	library	run	`fromEnum '\xE9'` is 233	hand	Planned		
 lib.r.char.limited	19	The library offers a limited view: the full Unicode attributes are not accessible	library	none	a statement of absence	hand	Planned		
@@ -3310,7 +3310,7 @@ lib.r.char.table.digit.print	19	Digits: isPrint True	library	run	'7' and a non-A
 lib.r.char.table.digit.alnum	19	Digits: isAlphaNum True, isAlpha False	library	run	as above	hand	Planned		
 lib.r.char.table.printable	19	Other printable: isPrint True, isAlphaNum, isAlpha, isUpper, isLower False	library	run	'+', a non-ASCII symbol	hand	Planned		
 lib.r.char.table.nonprint	19	Non-printing: every predicate False	library	run	'\n', '\xAD'-class characters	hand	Planned		
-lib.r.char.digitident	19	Numeric digits may be part of identifiers	library	accept	an identifier holding a non-ASCII digit compiles	hand	Planned		
+lib.r.char.digitident	19	Numeric digits may be part of identifiers	library	accept	an identifier holding a non-ASCII digit compiles	hand	Supported		
 lib.r.char.digitreader	19	Digits outside the ASCII range are not used by the reader to represent numbers	library	run	`reads "\x0661" :: [(Int,String)]` is []; whether "reader" means the lexer: see readings.md	hand	Planned	R6	
 lib.r.char.isdigit	19	isDigit selects only ASCII characters	library	run	False on a non-ASCII digit	hand	Planned		
 lib.r.char.isoctdigit	19	isOctDigit selects only ASCII	library	run	exact	hand	Planned		
@@ -3360,29 +3360,29 @@ lib.char.showlitchar	19.1	showLitChar has its Report type and its Report definit
 lib.char.protectesc.def	19.1	protectEsc (no signature in the Report) has its Report definition's meaning	library	run	differential against the literal definition	generated	Planned		
 lib.char.asciitab.def	19.1	asciiTab (no signature in the Report) has its Report definition's meaning	library	run	differential against the literal definition	generated	Planned		
 lib.char.lexlitchar	19.1	lexLitChar has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned	R154	
-lib.char.export.isascii	19.1	module Char exports isAscii	module	accept	import Char (isAscii) compiles and the name is usable	generated	Planned		
-lib.char.export.islatin1	19.1	module Char exports isLatin1	module	accept	import Char (isLatin1) compiles and the name is usable	generated	Planned		
-lib.char.export.iscontrol	19.1	module Char exports isControl	module	accept	import Char (isControl) compiles and the name is usable	generated	Planned		
-lib.char.export.isprint	19.1	module Char exports isPrint	module	accept	import Char (isPrint) compiles and the name is usable	generated	Planned		
-lib.char.export.isspace	19.1	module Char exports isSpace	module	accept	import Char (isSpace) compiles and the name is usable	generated	Planned		
-lib.char.export.isupper	19.1	module Char exports isUpper	module	accept	import Char (isUpper) compiles and the name is usable	generated	Planned		
-lib.char.export.islower	19.1	module Char exports isLower	module	accept	import Char (isLower) compiles and the name is usable	generated	Planned		
-lib.char.export.isalpha	19.1	module Char exports isAlpha	module	accept	import Char (isAlpha) compiles and the name is usable	generated	Planned		
-lib.char.export.isdigit	19.1	module Char exports isDigit	module	accept	import Char (isDigit) compiles and the name is usable	generated	Planned		
-lib.char.export.isoctdigit	19.1	module Char exports isOctDigit	module	accept	import Char (isOctDigit) compiles and the name is usable	generated	Planned		
-lib.char.export.ishexdigit	19.1	module Char exports isHexDigit	module	accept	import Char (isHexDigit) compiles and the name is usable	generated	Planned		
-lib.char.export.isalphanum	19.1	module Char exports isAlphaNum	module	accept	import Char (isAlphaNum) compiles and the name is usable	generated	Planned		
-lib.char.export.digittoint	19.1	module Char exports digitToInt	module	accept	import Char (digitToInt) compiles and the name is usable	generated	Planned		
-lib.char.export.inttodigit	19.1	module Char exports intToDigit	module	accept	import Char (intToDigit) compiles and the name is usable	generated	Planned		
-lib.char.export.toupper	19.1	module Char exports toUpper	module	accept	import Char (toUpper) compiles and the name is usable	generated	Planned		
-lib.char.export.tolower	19.1	module Char exports toLower	module	accept	import Char (toLower) compiles and the name is usable	generated	Planned		
-lib.char.export.ord	19.1	module Char exports ord	module	accept	import Char (ord) compiles and the name is usable	generated	Planned		
-lib.char.export.chr	19.1	module Char exports chr	module	accept	import Char (chr) compiles and the name is usable	generated	Planned		
-lib.char.export.readlitchar	19.1	module Char exports readLitChar	module	accept	import Char (readLitChar) compiles and the name is usable	generated	Planned		
-lib.char.export.showlitchar	19.1	module Char exports showLitChar	module	accept	import Char (showLitChar) compiles and the name is usable	generated	Planned		
-lib.char.export.lexlitchar	19.1	module Char exports lexLitChar	module	accept	import Char (lexLitChar) compiles and the name is usable	generated	Planned		
-lib.char.export.char	19.1	module Char exports Char	module	accept	import Char (Char) compiles and the name is usable	generated	Planned		
-lib.char.export.string	19.1	module Char exports String	module	accept	import Char (String) compiles and the name is usable	generated	Planned		
+lib.char.export.isascii	19.1	module Char exports isAscii	module	accept	import Char (isAscii) compiles and the name is usable	generated	Supported		
+lib.char.export.islatin1	19.1	module Char exports isLatin1	module	accept	import Char (isLatin1) compiles and the name is usable	generated	Supported		
+lib.char.export.iscontrol	19.1	module Char exports isControl	module	accept	import Char (isControl) compiles and the name is usable	generated	Supported		
+lib.char.export.isprint	19.1	module Char exports isPrint	module	accept	import Char (isPrint) compiles and the name is usable	generated	Supported		
+lib.char.export.isspace	19.1	module Char exports isSpace	module	accept	import Char (isSpace) compiles and the name is usable	generated	Supported		
+lib.char.export.isupper	19.1	module Char exports isUpper	module	accept	import Char (isUpper) compiles and the name is usable	generated	Supported		
+lib.char.export.islower	19.1	module Char exports isLower	module	accept	import Char (isLower) compiles and the name is usable	generated	Supported		
+lib.char.export.isalpha	19.1	module Char exports isAlpha	module	accept	import Char (isAlpha) compiles and the name is usable	generated	Supported		
+lib.char.export.isdigit	19.1	module Char exports isDigit	module	accept	import Char (isDigit) compiles and the name is usable	generated	Supported		
+lib.char.export.isoctdigit	19.1	module Char exports isOctDigit	module	accept	import Char (isOctDigit) compiles and the name is usable	generated	Supported		
+lib.char.export.ishexdigit	19.1	module Char exports isHexDigit	module	accept	import Char (isHexDigit) compiles and the name is usable	generated	Supported		
+lib.char.export.isalphanum	19.1	module Char exports isAlphaNum	module	accept	import Char (isAlphaNum) compiles and the name is usable	generated	Supported		
+lib.char.export.digittoint	19.1	module Char exports digitToInt	module	accept	import Char (digitToInt) compiles and the name is usable	generated	Supported		
+lib.char.export.inttodigit	19.1	module Char exports intToDigit	module	accept	import Char (intToDigit) compiles and the name is usable	generated	Supported		
+lib.char.export.toupper	19.1	module Char exports toUpper	module	accept	import Char (toUpper) compiles and the name is usable	generated	Supported		
+lib.char.export.tolower	19.1	module Char exports toLower	module	accept	import Char (toLower) compiles and the name is usable	generated	Supported		
+lib.char.export.ord	19.1	module Char exports ord	module	accept	import Char (ord) compiles and the name is usable	generated	Supported		
+lib.char.export.chr	19.1	module Char exports chr	module	accept	import Char (chr) compiles and the name is usable	generated	Supported		
+lib.char.export.readlitchar	19.1	module Char exports readLitChar	module	accept	import Char (readLitChar) compiles and the name is usable	generated	Supported		
+lib.char.export.showlitchar	19.1	module Char exports showLitChar	module	accept	import Char (showLitChar) compiles and the name is usable	generated	Supported		
+lib.char.export.lexlitchar	19.1	module Char exports lexLitChar	module	accept	import Char (lexLitChar) compiles and the name is usable	generated	Supported		
+lib.char.export.char	19.1	module Char exports Char	module	accept	import Char (Char) compiles and the name is usable	generated	Supported		
+lib.char.export.string	19.1	module Char exports String	module	accept	import Char (String) compiles and the name is usable	generated	Supported		
 lib.r.monad.naming	20.1	Naming conventions: postfix M, postfix _, prefix m	library	none	a convention	hand	Planned		
 lib.r.monad.filterm	20.1	filterM has the type shown, generalising filter	library	run	the list monad's powerset behaviour	hand	Planned		
 lib.r.monad.msum	20.1	msum generalises sum to MonadPlus	library	run	on list and Maybe	hand	Planned		
@@ -3422,30 +3422,30 @@ lib.monad.liftm4	20.4	liftM4 has its Report type and its Report definition's mea
 lib.monad.liftm5	20.4	liftM5 has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.monad.class.monadplus.mzero	20.4	MonadPlus method mzero has its Report type; its default, if any, is the Report's	library	run	instance omitting the method uses the default; a defined method overrides it	generated	Planned		
 lib.monad.class.monadplus.mplus	20.4	MonadPlus method mplus has its Report type; its default, if any, is the Report's	library	run	instance omitting the method uses the default; a defined method overrides it	generated	Planned		
-lib.monad.export.monadplusmzerocmplus	20.4	module Monad exports MonadPlus(mzero, mplus)	module	accept	import Monad (MonadPlus(mzero, mplus)) compiles and the name is usable	generated	Planned		
-lib.monad.export.join	20.4	module Monad exports join	module	accept	import Monad (join) compiles and the name is usable	generated	Planned		
-lib.monad.export.guard	20.4	module Monad exports guard	module	accept	import Monad (guard) compiles and the name is usable	generated	Planned		
-lib.monad.export.when	20.4	module Monad exports when	module	accept	import Monad (when) compiles and the name is usable	generated	Planned		
-lib.monad.export.unless	20.4	module Monad exports unless	module	accept	import Monad (unless) compiles and the name is usable	generated	Planned		
-lib.monad.export.ap	20.4	module Monad exports ap	module	accept	import Monad (ap) compiles and the name is usable	generated	Planned		
-lib.monad.export.msum	20.4	module Monad exports msum	module	accept	import Monad (msum) compiles and the name is usable	generated	Planned		
-lib.monad.export.filterm	20.4	module Monad exports filterM	module	accept	import Monad (filterM) compiles and the name is usable	generated	Planned		
-lib.monad.export.mapandunzipm	20.4	module Monad exports mapAndUnzipM	module	accept	import Monad (mapAndUnzipM) compiles and the name is usable	generated	Planned		
-lib.monad.export.zipwithm	20.4	module Monad exports zipWithM	module	accept	import Monad (zipWithM) compiles and the name is usable	generated	Planned		
-lib.monad.export.zipwithmu	20.4	module Monad exports zipWithM_	module	accept	import Monad (zipWithM_) compiles and the name is usable	generated	Planned		
-lib.monad.export.foldm	20.4	module Monad exports foldM	module	accept	import Monad (foldM) compiles and the name is usable	generated	Planned		
-lib.monad.export.liftm	20.4	module Monad exports liftM	module	accept	import Monad (liftM) compiles and the name is usable	generated	Planned		
-lib.monad.export.liftm2	20.4	module Monad exports liftM2	module	accept	import Monad (liftM2) compiles and the name is usable	generated	Planned		
-lib.monad.export.liftm3	20.4	module Monad exports liftM3	module	accept	import Monad (liftM3) compiles and the name is usable	generated	Planned		
-lib.monad.export.liftm4	20.4	module Monad exports liftM4	module	accept	import Monad (liftM4) compiles and the name is usable	generated	Planned		
-lib.monad.export.liftm5	20.4	module Monad exports liftM5	module	accept	import Monad (liftM5) compiles and the name is usable	generated	Planned		
-lib.monad.export.monadgtgteqcgtgtcreturncfail	20.4	module Monad exports Monad((>>=), (>>), return, fail)	module	accept	import Monad (Monad((>>=), (>>), return, fail)) compiles and the name is usable	generated	Planned		
-lib.monad.export.functorfmap	20.4	module Monad exports Functor(fmap)	module	accept	import Monad (Functor(fmap)) compiles and the name is usable	generated	Planned		
-lib.monad.export.mapm	20.4	module Monad exports mapM	module	accept	import Monad (mapM) compiles and the name is usable	generated	Planned		
-lib.monad.export.mapmu	20.4	module Monad exports mapM_	module	accept	import Monad (mapM_) compiles and the name is usable	generated	Planned		
-lib.monad.export.sequence	20.4	module Monad exports sequence	module	accept	import Monad (sequence) compiles and the name is usable	generated	Planned		
-lib.monad.export.sequenceu	20.4	module Monad exports sequence_	module	accept	import Monad (sequence_) compiles and the name is usable	generated	Planned		
-lib.monad.export.eqltlt	20.4	module Monad exports (=<<)	module	accept	import Monad ((=<<)) compiles and the name is usable	generated	Planned		
+lib.monad.export.monadplusmzerocmplus	20.4	module Monad exports MonadPlus(mzero, mplus)	module	accept	import Monad (MonadPlus(mzero, mplus)) compiles and the name is usable	generated	Supported		
+lib.monad.export.join	20.4	module Monad exports join	module	accept	import Monad (join) compiles and the name is usable	generated	Supported		
+lib.monad.export.guard	20.4	module Monad exports guard	module	accept	import Monad (guard) compiles and the name is usable	generated	Supported		
+lib.monad.export.when	20.4	module Monad exports when	module	accept	import Monad (when) compiles and the name is usable	generated	Supported		
+lib.monad.export.unless	20.4	module Monad exports unless	module	accept	import Monad (unless) compiles and the name is usable	generated	Supported		
+lib.monad.export.ap	20.4	module Monad exports ap	module	accept	import Monad (ap) compiles and the name is usable	generated	Supported		
+lib.monad.export.msum	20.4	module Monad exports msum	module	accept	import Monad (msum) compiles and the name is usable	generated	Supported		
+lib.monad.export.filterm	20.4	module Monad exports filterM	module	accept	import Monad (filterM) compiles and the name is usable	generated	Supported		
+lib.monad.export.mapandunzipm	20.4	module Monad exports mapAndUnzipM	module	accept	import Monad (mapAndUnzipM) compiles and the name is usable	generated	Supported		
+lib.monad.export.zipwithm	20.4	module Monad exports zipWithM	module	accept	import Monad (zipWithM) compiles and the name is usable	generated	Supported		
+lib.monad.export.zipwithmu	20.4	module Monad exports zipWithM_	module	accept	import Monad (zipWithM_) compiles and the name is usable	generated	Supported		
+lib.monad.export.foldm	20.4	module Monad exports foldM	module	accept	import Monad (foldM) compiles and the name is usable	generated	Supported		
+lib.monad.export.liftm	20.4	module Monad exports liftM	module	accept	import Monad (liftM) compiles and the name is usable	generated	Supported		
+lib.monad.export.liftm2	20.4	module Monad exports liftM2	module	accept	import Monad (liftM2) compiles and the name is usable	generated	Supported		
+lib.monad.export.liftm3	20.4	module Monad exports liftM3	module	accept	import Monad (liftM3) compiles and the name is usable	generated	Supported		
+lib.monad.export.liftm4	20.4	module Monad exports liftM4	module	accept	import Monad (liftM4) compiles and the name is usable	generated	Supported		
+lib.monad.export.liftm5	20.4	module Monad exports liftM5	module	accept	import Monad (liftM5) compiles and the name is usable	generated	Supported		
+lib.monad.export.monadgtgteqcgtgtcreturncfail	20.4	module Monad exports Monad((>>=), (>>), return, fail)	module	accept	import Monad (Monad((>>=), (>>), return, fail)) compiles and the name is usable	generated	Supported		
+lib.monad.export.functorfmap	20.4	module Monad exports Functor(fmap)	module	accept	import Monad (Functor(fmap)) compiles and the name is usable	generated	Supported		
+lib.monad.export.mapm	20.4	module Monad exports mapM	module	accept	import Monad (mapM) compiles and the name is usable	generated	Supported		
+lib.monad.export.mapmu	20.4	module Monad exports mapM_	module	accept	import Monad (mapM_) compiles and the name is usable	generated	Supported		
+lib.monad.export.sequence	20.4	module Monad exports sequence	module	accept	import Monad (sequence) compiles and the name is usable	generated	Supported		
+lib.monad.export.sequenceu	20.4	module Monad exports sequence_	module	accept	import Monad (sequence_) compiles and the name is usable	generated	Supported		
+lib.monad.export.eqltlt	20.4	module Monad exports (=<<)	module	accept	import Monad ((=<<)) compiles and the name is usable	generated	Supported		
 lib.io.try	21	try has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.io.bracket	21	bracket has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.io.bracketu	21	bracket_ has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
@@ -3498,73 +3498,73 @@ lib.io.isusererror	21	isUserError is provided at its Report type (no definition 
 lib.io.ioegeterrorstring	21	ioeGetErrorString is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
 lib.io.ioegethandle	21	ioeGetHandle is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
 lib.io.ioegetfilename	21	ioeGetFileName is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
-lib.io.export.handle	21	module IO exports Handle	module	accept	import IO (Handle) compiles and the name is usable	generated	Planned		
-lib.io.export.handleposn	21	module IO exports HandlePosn	module	accept	import IO (HandlePosn) compiles and the name is usable	generated	Planned		
-lib.io.export.iomodereadmodecwritemodecappendmodecreadwritemod	21	module IO exports IOMode(ReadMode,WriteMode,AppendMode,ReadWriteMode)	module	accept	import IO (IOMode(ReadMode,WriteMode,AppendMode,ReadWriteMode)) compiles and the name is usable	generated	Planned		
-lib.io.export.buffermodenobufferingclinebufferingcblockbufferi	21	module IO exports BufferMode(NoBuffering,LineBuffering,BlockBuffering)	module	accept	import IO (BufferMode(NoBuffering,LineBuffering,BlockBuffering)) compiles and the name is usable	generated	Planned		
-lib.io.export.seekmodeabsoluteseekcrelativeseekcseekfromend	21	module IO exports SeekMode(AbsoluteSeek,RelativeSeek,SeekFromEnd)	module	accept	import IO (SeekMode(AbsoluteSeek,RelativeSeek,SeekFromEnd)) compiles and the name is usable	generated	Planned		
-lib.io.export.stdin	21	module IO exports stdin	module	accept	import IO (stdin) compiles and the name is usable	generated	Planned		
-lib.io.export.stdout	21	module IO exports stdout	module	accept	import IO (stdout) compiles and the name is usable	generated	Planned		
-lib.io.export.stderr	21	module IO exports stderr	module	accept	import IO (stderr) compiles and the name is usable	generated	Planned		
-lib.io.export.openfile	21	module IO exports openFile	module	accept	import IO (openFile) compiles and the name is usable	generated	Planned		
-lib.io.export.hclose	21	module IO exports hClose	module	accept	import IO (hClose) compiles and the name is usable	generated	Planned		
-lib.io.export.hfilesize	21	module IO exports hFileSize	module	accept	import IO (hFileSize) compiles and the name is usable	generated	Planned		
-lib.io.export.hiseof	21	module IO exports hIsEOF	module	accept	import IO (hIsEOF) compiles and the name is usable	generated	Planned		
-lib.io.export.iseof	21	module IO exports isEOF	module	accept	import IO (isEOF) compiles and the name is usable	generated	Planned		
-lib.io.export.hsetbuffering	21	module IO exports hSetBuffering	module	accept	import IO (hSetBuffering) compiles and the name is usable	generated	Planned		
-lib.io.export.hgetbuffering	21	module IO exports hGetBuffering	module	accept	import IO (hGetBuffering) compiles and the name is usable	generated	Planned		
-lib.io.export.hflush	21	module IO exports hFlush	module	accept	import IO (hFlush) compiles and the name is usable	generated	Planned		
-lib.io.export.hgetposn	21	module IO exports hGetPosn	module	accept	import IO (hGetPosn) compiles and the name is usable	generated	Planned		
-lib.io.export.hsetposn	21	module IO exports hSetPosn	module	accept	import IO (hSetPosn) compiles and the name is usable	generated	Planned		
-lib.io.export.hseek	21	module IO exports hSeek	module	accept	import IO (hSeek) compiles and the name is usable	generated	Planned		
-lib.io.export.hwaitforinput	21	module IO exports hWaitForInput	module	accept	import IO (hWaitForInput) compiles and the name is usable	generated	Planned		
-lib.io.export.hready	21	module IO exports hReady	module	accept	import IO (hReady) compiles and the name is usable	generated	Planned		
-lib.io.export.hgetchar	21	module IO exports hGetChar	module	accept	import IO (hGetChar) compiles and the name is usable	generated	Planned		
-lib.io.export.hgetline	21	module IO exports hGetLine	module	accept	import IO (hGetLine) compiles and the name is usable	generated	Planned		
-lib.io.export.hlookahead	21	module IO exports hLookAhead	module	accept	import IO (hLookAhead) compiles and the name is usable	generated	Planned		
-lib.io.export.hgetcontents	21	module IO exports hGetContents	module	accept	import IO (hGetContents) compiles and the name is usable	generated	Planned		
-lib.io.export.hputchar	21	module IO exports hPutChar	module	accept	import IO (hPutChar) compiles and the name is usable	generated	Planned		
-lib.io.export.hputstr	21	module IO exports hPutStr	module	accept	import IO (hPutStr) compiles and the name is usable	generated	Planned		
-lib.io.export.hputstrln	21	module IO exports hPutStrLn	module	accept	import IO (hPutStrLn) compiles and the name is usable	generated	Planned		
-lib.io.export.hprint	21	module IO exports hPrint	module	accept	import IO (hPrint) compiles and the name is usable	generated	Planned		
-lib.io.export.hisopen	21	module IO exports hIsOpen	module	accept	import IO (hIsOpen) compiles and the name is usable	generated	Planned		
-lib.io.export.hisclosed	21	module IO exports hIsClosed	module	accept	import IO (hIsClosed) compiles and the name is usable	generated	Planned		
-lib.io.export.hisreadable	21	module IO exports hIsReadable	module	accept	import IO (hIsReadable) compiles and the name is usable	generated	Planned		
-lib.io.export.hiswritable	21	module IO exports hIsWritable	module	accept	import IO (hIsWritable) compiles and the name is usable	generated	Planned		
-lib.io.export.hisseekable	21	module IO exports hIsSeekable	module	accept	import IO (hIsSeekable) compiles and the name is usable	generated	Planned		
-lib.io.export.isalreadyexistserror	21	module IO exports isAlreadyExistsError	module	accept	import IO (isAlreadyExistsError) compiles and the name is usable	generated	Planned		
-lib.io.export.isdoesnotexisterror	21	module IO exports isDoesNotExistError	module	accept	import IO (isDoesNotExistError) compiles and the name is usable	generated	Planned		
-lib.io.export.isalreadyinuseerror	21	module IO exports isAlreadyInUseError	module	accept	import IO (isAlreadyInUseError) compiles and the name is usable	generated	Planned		
-lib.io.export.isfullerror	21	module IO exports isFullError	module	accept	import IO (isFullError) compiles and the name is usable	generated	Planned		
-lib.io.export.iseoferror	21	module IO exports isEOFError	module	accept	import IO (isEOFError) compiles and the name is usable	generated	Planned		
-lib.io.export.isillegaloperation	21	module IO exports isIllegalOperation	module	accept	import IO (isIllegalOperation) compiles and the name is usable	generated	Planned		
-lib.io.export.ispermissionerror	21	module IO exports isPermissionError	module	accept	import IO (isPermissionError) compiles and the name is usable	generated	Planned		
-lib.io.export.isusererror	21	module IO exports isUserError	module	accept	import IO (isUserError) compiles and the name is usable	generated	Planned		
-lib.io.export.ioegeterrorstring	21	module IO exports ioeGetErrorString	module	accept	import IO (ioeGetErrorString) compiles and the name is usable	generated	Planned		
-lib.io.export.ioegethandle	21	module IO exports ioeGetHandle	module	accept	import IO (ioeGetHandle) compiles and the name is usable	generated	Planned		
-lib.io.export.ioegetfilename	21	module IO exports ioeGetFileName	module	accept	import IO (ioeGetFileName) compiles and the name is usable	generated	Planned		
-lib.io.export.try	21	module IO exports try	module	accept	import IO (try) compiles and the name is usable	generated	Planned		
-lib.io.export.bracket	21	module IO exports bracket	module	accept	import IO (bracket) compiles and the name is usable	generated	Planned		
-lib.io.export.bracketu	21	module IO exports bracket_	module	accept	import IO (bracket_) compiles and the name is usable	generated	Planned		
-lib.io.export.io	21	module IO exports IO	module	accept	import IO (IO) compiles and the name is usable	generated	Planned		
-lib.io.export.filepath	21	module IO exports FilePath	module	accept	import IO (FilePath) compiles and the name is usable	generated	Planned		
-lib.io.export.ioerror	21	module IO exports IOError	module	accept	import IO (IOError) compiles and the name is usable	generated	Planned		
-lib.io.export.ioerror.2	21	module IO exports ioError	module	accept	import IO (ioError) compiles and the name is usable	generated	Planned		
-lib.io.export.usererror	21	module IO exports userError	module	accept	import IO (userError) compiles and the name is usable	generated	Planned		
-lib.io.export.catch	21	module IO exports catch	module	accept	import IO (catch) compiles and the name is usable	generated	Planned		
-lib.io.export.interact	21	module IO exports interact	module	accept	import IO (interact) compiles and the name is usable	generated	Planned		
-lib.io.export.putchar	21	module IO exports putChar	module	accept	import IO (putChar) compiles and the name is usable	generated	Planned		
-lib.io.export.putstr	21	module IO exports putStr	module	accept	import IO (putStr) compiles and the name is usable	generated	Planned		
-lib.io.export.putstrln	21	module IO exports putStrLn	module	accept	import IO (putStrLn) compiles and the name is usable	generated	Planned		
-lib.io.export.print	21	module IO exports print	module	accept	import IO (print) compiles and the name is usable	generated	Planned		
-lib.io.export.getchar	21	module IO exports getChar	module	accept	import IO (getChar) compiles and the name is usable	generated	Planned		
-lib.io.export.getline	21	module IO exports getLine	module	accept	import IO (getLine) compiles and the name is usable	generated	Planned		
-lib.io.export.getcontents	21	module IO exports getContents	module	accept	import IO (getContents) compiles and the name is usable	generated	Planned		
-lib.io.export.readfile	21	module IO exports readFile	module	accept	import IO (readFile) compiles and the name is usable	generated	Planned		
-lib.io.export.writefile	21	module IO exports writeFile	module	accept	import IO (writeFile) compiles and the name is usable	generated	Planned		
-lib.io.export.appendfile	21	module IO exports appendFile	module	accept	import IO (appendFile) compiles and the name is usable	generated	Planned		
-lib.io.export.readio	21	module IO exports readIO	module	accept	import IO (readIO) compiles and the name is usable	generated	Planned		
-lib.io.export.readln	21	module IO exports readLn	module	accept	import IO (readLn) compiles and the name is usable	generated	Planned		
+lib.io.export.handle	21	module IO exports Handle	module	accept	import IO (Handle) compiles and the name is usable	generated	Supported		
+lib.io.export.handleposn	21	module IO exports HandlePosn	module	accept	import IO (HandlePosn) compiles and the name is usable	generated	Supported		
+lib.io.export.iomodereadmodecwritemodecappendmodecreadwritemod	21	module IO exports IOMode(ReadMode,WriteMode,AppendMode,ReadWriteMode)	module	accept	import IO (IOMode(ReadMode,WriteMode,AppendMode,ReadWriteMode)) compiles and the name is usable	generated	Supported		
+lib.io.export.buffermodenobufferingclinebufferingcblockbufferi	21	module IO exports BufferMode(NoBuffering,LineBuffering,BlockBuffering)	module	accept	import IO (BufferMode(NoBuffering,LineBuffering,BlockBuffering)) compiles and the name is usable	generated	Supported		
+lib.io.export.seekmodeabsoluteseekcrelativeseekcseekfromend	21	module IO exports SeekMode(AbsoluteSeek,RelativeSeek,SeekFromEnd)	module	accept	import IO (SeekMode(AbsoluteSeek,RelativeSeek,SeekFromEnd)) compiles and the name is usable	generated	Supported		
+lib.io.export.stdin	21	module IO exports stdin	module	accept	import IO (stdin) compiles and the name is usable	generated	Supported		
+lib.io.export.stdout	21	module IO exports stdout	module	accept	import IO (stdout) compiles and the name is usable	generated	Supported		
+lib.io.export.stderr	21	module IO exports stderr	module	accept	import IO (stderr) compiles and the name is usable	generated	Supported		
+lib.io.export.openfile	21	module IO exports openFile	module	accept	import IO (openFile) compiles and the name is usable	generated	Supported		
+lib.io.export.hclose	21	module IO exports hClose	module	accept	import IO (hClose) compiles and the name is usable	generated	Supported		
+lib.io.export.hfilesize	21	module IO exports hFileSize	module	accept	import IO (hFileSize) compiles and the name is usable	generated	Supported		
+lib.io.export.hiseof	21	module IO exports hIsEOF	module	accept	import IO (hIsEOF) compiles and the name is usable	generated	Supported		
+lib.io.export.iseof	21	module IO exports isEOF	module	accept	import IO (isEOF) compiles and the name is usable	generated	Supported		
+lib.io.export.hsetbuffering	21	module IO exports hSetBuffering	module	accept	import IO (hSetBuffering) compiles and the name is usable	generated	Supported		
+lib.io.export.hgetbuffering	21	module IO exports hGetBuffering	module	accept	import IO (hGetBuffering) compiles and the name is usable	generated	Supported		
+lib.io.export.hflush	21	module IO exports hFlush	module	accept	import IO (hFlush) compiles and the name is usable	generated	Supported		
+lib.io.export.hgetposn	21	module IO exports hGetPosn	module	accept	import IO (hGetPosn) compiles and the name is usable	generated	Supported		
+lib.io.export.hsetposn	21	module IO exports hSetPosn	module	accept	import IO (hSetPosn) compiles and the name is usable	generated	Supported		
+lib.io.export.hseek	21	module IO exports hSeek	module	accept	import IO (hSeek) compiles and the name is usable	generated	Supported		
+lib.io.export.hwaitforinput	21	module IO exports hWaitForInput	module	accept	import IO (hWaitForInput) compiles and the name is usable	generated	Supported		
+lib.io.export.hready	21	module IO exports hReady	module	accept	import IO (hReady) compiles and the name is usable	generated	Supported		
+lib.io.export.hgetchar	21	module IO exports hGetChar	module	accept	import IO (hGetChar) compiles and the name is usable	generated	Supported		
+lib.io.export.hgetline	21	module IO exports hGetLine	module	accept	import IO (hGetLine) compiles and the name is usable	generated	Supported		
+lib.io.export.hlookahead	21	module IO exports hLookAhead	module	accept	import IO (hLookAhead) compiles and the name is usable	generated	Supported		
+lib.io.export.hgetcontents	21	module IO exports hGetContents	module	accept	import IO (hGetContents) compiles and the name is usable	generated	Supported		
+lib.io.export.hputchar	21	module IO exports hPutChar	module	accept	import IO (hPutChar) compiles and the name is usable	generated	Supported		
+lib.io.export.hputstr	21	module IO exports hPutStr	module	accept	import IO (hPutStr) compiles and the name is usable	generated	Supported		
+lib.io.export.hputstrln	21	module IO exports hPutStrLn	module	accept	import IO (hPutStrLn) compiles and the name is usable	generated	Supported		
+lib.io.export.hprint	21	module IO exports hPrint	module	accept	import IO (hPrint) compiles and the name is usable	generated	Supported		
+lib.io.export.hisopen	21	module IO exports hIsOpen	module	accept	import IO (hIsOpen) compiles and the name is usable	generated	Supported		
+lib.io.export.hisclosed	21	module IO exports hIsClosed	module	accept	import IO (hIsClosed) compiles and the name is usable	generated	Supported		
+lib.io.export.hisreadable	21	module IO exports hIsReadable	module	accept	import IO (hIsReadable) compiles and the name is usable	generated	Supported		
+lib.io.export.hiswritable	21	module IO exports hIsWritable	module	accept	import IO (hIsWritable) compiles and the name is usable	generated	Supported		
+lib.io.export.hisseekable	21	module IO exports hIsSeekable	module	accept	import IO (hIsSeekable) compiles and the name is usable	generated	Supported		
+lib.io.export.isalreadyexistserror	21	module IO exports isAlreadyExistsError	module	accept	import IO (isAlreadyExistsError) compiles and the name is usable	generated	Supported		
+lib.io.export.isdoesnotexisterror	21	module IO exports isDoesNotExistError	module	accept	import IO (isDoesNotExistError) compiles and the name is usable	generated	Supported		
+lib.io.export.isalreadyinuseerror	21	module IO exports isAlreadyInUseError	module	accept	import IO (isAlreadyInUseError) compiles and the name is usable	generated	Supported		
+lib.io.export.isfullerror	21	module IO exports isFullError	module	accept	import IO (isFullError) compiles and the name is usable	generated	Supported		
+lib.io.export.iseoferror	21	module IO exports isEOFError	module	accept	import IO (isEOFError) compiles and the name is usable	generated	Supported		
+lib.io.export.isillegaloperation	21	module IO exports isIllegalOperation	module	accept	import IO (isIllegalOperation) compiles and the name is usable	generated	Supported		
+lib.io.export.ispermissionerror	21	module IO exports isPermissionError	module	accept	import IO (isPermissionError) compiles and the name is usable	generated	Supported		
+lib.io.export.isusererror	21	module IO exports isUserError	module	accept	import IO (isUserError) compiles and the name is usable	generated	Supported		
+lib.io.export.ioegeterrorstring	21	module IO exports ioeGetErrorString	module	accept	import IO (ioeGetErrorString) compiles and the name is usable	generated	Supported		
+lib.io.export.ioegethandle	21	module IO exports ioeGetHandle	module	accept	import IO (ioeGetHandle) compiles and the name is usable	generated	Supported		
+lib.io.export.ioegetfilename	21	module IO exports ioeGetFileName	module	accept	import IO (ioeGetFileName) compiles and the name is usable	generated	Supported		
+lib.io.export.try	21	module IO exports try	module	accept	import IO (try) compiles and the name is usable	generated	Supported		
+lib.io.export.bracket	21	module IO exports bracket	module	accept	import IO (bracket) compiles and the name is usable	generated	Supported		
+lib.io.export.bracketu	21	module IO exports bracket_	module	accept	import IO (bracket_) compiles and the name is usable	generated	Supported		
+lib.io.export.io	21	module IO exports IO	module	accept	import IO (IO) compiles and the name is usable	generated	Supported		
+lib.io.export.filepath	21	module IO exports FilePath	module	accept	import IO (FilePath) compiles and the name is usable	generated	Supported		
+lib.io.export.ioerror	21	module IO exports IOError	module	accept	import IO (IOError) compiles and the name is usable	generated	Supported		
+lib.io.export.ioerror.2	21	module IO exports ioError	module	accept	import IO (ioError) compiles and the name is usable	generated	Supported		
+lib.io.export.usererror	21	module IO exports userError	module	accept	import IO (userError) compiles and the name is usable	generated	Supported		
+lib.io.export.catch	21	module IO exports catch	module	accept	import IO (catch) compiles and the name is usable	generated	Supported		
+lib.io.export.interact	21	module IO exports interact	module	accept	import IO (interact) compiles and the name is usable	generated	Supported		
+lib.io.export.putchar	21	module IO exports putChar	module	accept	import IO (putChar) compiles and the name is usable	generated	Supported		
+lib.io.export.putstr	21	module IO exports putStr	module	accept	import IO (putStr) compiles and the name is usable	generated	Supported		
+lib.io.export.putstrln	21	module IO exports putStrLn	module	accept	import IO (putStrLn) compiles and the name is usable	generated	Supported		
+lib.io.export.print	21	module IO exports print	module	accept	import IO (print) compiles and the name is usable	generated	Supported		
+lib.io.export.getchar	21	module IO exports getChar	module	accept	import IO (getChar) compiles and the name is usable	generated	Supported		
+lib.io.export.getline	21	module IO exports getLine	module	accept	import IO (getLine) compiles and the name is usable	generated	Supported		
+lib.io.export.getcontents	21	module IO exports getContents	module	accept	import IO (getContents) compiles and the name is usable	generated	Supported		
+lib.io.export.readfile	21	module IO exports readFile	module	accept	import IO (readFile) compiles and the name is usable	generated	Supported		
+lib.io.export.writefile	21	module IO exports writeFile	module	accept	import IO (writeFile) compiles and the name is usable	generated	Supported		
+lib.io.export.appendfile	21	module IO exports appendFile	module	accept	import IO (appendFile) compiles and the name is usable	generated	Supported		
+lib.io.export.readio	21	module IO exports readIO	module	accept	import IO (readIO) compiles and the name is usable	generated	Supported		
+lib.io.export.readln	21	module IO exports readLn	module	accept	import IO (readLn) compiles and the name is usable	generated	Supported		
 lib.r.io.iserror.exists	21.1	isAlreadyExistsError: an argument already exists	library	run	createDirectory on an existing directory	hand	Planned		
 lib.r.io.iserror.notexist	21.1	isDoesNotExistError: an argument does not exist	library	run	openFile of a missing file	hand	Planned		
 lib.r.io.iserror.inuse	21.1	isAlreadyInUseError: a single-use resource is in use	library	run	opening a file twice for writing	hand	Planned		
@@ -3724,20 +3724,20 @@ lib.directory.doesdirectoryexist	22	doesDirectoryExist is provided at its Report
 lib.directory.getpermissions	22	getPermissions is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
 lib.directory.setpermissions	22	setPermissions is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
 lib.directory.getmodificationtime	22	getModificationTime is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
-lib.directory.export.permissionspermissionscreadablecwritablecexecuta	22	module Directory exports Permissions( Permissions, readable, writable, executable, searchable )	module	accept	import Directory (Permissions( Permissions, readable, writable, executable, searchable )) compiles and the name is usable	generated	Planned		
-lib.directory.export.createdirectory	22	module Directory exports createDirectory	module	accept	import Directory (createDirectory) compiles and the name is usable	generated	Planned		
-lib.directory.export.removedirectory	22	module Directory exports removeDirectory	module	accept	import Directory (removeDirectory) compiles and the name is usable	generated	Planned		
-lib.directory.export.removefile	22	module Directory exports removeFile	module	accept	import Directory (removeFile) compiles and the name is usable	generated	Planned		
-lib.directory.export.renamedirectory	22	module Directory exports renameDirectory	module	accept	import Directory (renameDirectory) compiles and the name is usable	generated	Planned		
-lib.directory.export.renamefile	22	module Directory exports renameFile	module	accept	import Directory (renameFile) compiles and the name is usable	generated	Planned		
-lib.directory.export.getdirectorycontents	22	module Directory exports getDirectoryContents	module	accept	import Directory (getDirectoryContents) compiles and the name is usable	generated	Planned		
-lib.directory.export.getcurrentdirectory	22	module Directory exports getCurrentDirectory	module	accept	import Directory (getCurrentDirectory) compiles and the name is usable	generated	Planned		
-lib.directory.export.setcurrentdirectory	22	module Directory exports setCurrentDirectory	module	accept	import Directory (setCurrentDirectory) compiles and the name is usable	generated	Planned		
-lib.directory.export.doesfileexist	22	module Directory exports doesFileExist	module	accept	import Directory (doesFileExist) compiles and the name is usable	generated	Planned		
-lib.directory.export.doesdirectoryexist	22	module Directory exports doesDirectoryExist	module	accept	import Directory (doesDirectoryExist) compiles and the name is usable	generated	Planned		
-lib.directory.export.getpermissions	22	module Directory exports getPermissions	module	accept	import Directory (getPermissions) compiles and the name is usable	generated	Planned		
-lib.directory.export.setpermissions	22	module Directory exports setPermissions	module	accept	import Directory (setPermissions) compiles and the name is usable	generated	Planned		
-lib.directory.export.getmodificationtime	22	module Directory exports getModificationTime	module	accept	import Directory (getModificationTime) compiles and the name is usable	generated	Planned		
+lib.directory.export.permissionspermissionscreadablecwritablecexecuta	22	module Directory exports Permissions( Permissions, readable, writable, executable, searchable )	module	accept	import Directory (Permissions( Permissions, readable, writable, executable, searchable )) compiles and the name is usable	generated	Supported		
+lib.directory.export.createdirectory	22	module Directory exports createDirectory	module	accept	import Directory (createDirectory) compiles and the name is usable	generated	Supported		
+lib.directory.export.removedirectory	22	module Directory exports removeDirectory	module	accept	import Directory (removeDirectory) compiles and the name is usable	generated	Supported		
+lib.directory.export.removefile	22	module Directory exports removeFile	module	accept	import Directory (removeFile) compiles and the name is usable	generated	Supported		
+lib.directory.export.renamedirectory	22	module Directory exports renameDirectory	module	accept	import Directory (renameDirectory) compiles and the name is usable	generated	Supported		
+lib.directory.export.renamefile	22	module Directory exports renameFile	module	accept	import Directory (renameFile) compiles and the name is usable	generated	Supported		
+lib.directory.export.getdirectorycontents	22	module Directory exports getDirectoryContents	module	accept	import Directory (getDirectoryContents) compiles and the name is usable	generated	Supported		
+lib.directory.export.getcurrentdirectory	22	module Directory exports getCurrentDirectory	module	accept	import Directory (getCurrentDirectory) compiles and the name is usable	generated	Supported		
+lib.directory.export.setcurrentdirectory	22	module Directory exports setCurrentDirectory	module	accept	import Directory (setCurrentDirectory) compiles and the name is usable	generated	Supported		
+lib.directory.export.doesfileexist	22	module Directory exports doesFileExist	module	accept	import Directory (doesFileExist) compiles and the name is usable	generated	Supported		
+lib.directory.export.doesdirectoryexist	22	module Directory exports doesDirectoryExist	module	accept	import Directory (doesDirectoryExist) compiles and the name is usable	generated	Supported		
+lib.directory.export.getpermissions	22	module Directory exports getPermissions	module	accept	import Directory (getPermissions) compiles and the name is usable	generated	Supported		
+lib.directory.export.setpermissions	22	module Directory exports setPermissions	module	accept	import Directory (setPermissions) compiles and the name is usable	generated	Supported		
+lib.directory.export.getmodificationtime	22	module Directory exports getModificationTime	module	accept	import Directory (getModificationTime) compiles and the name is usable	generated	Supported		
 lib.r.system.illegal	23	Any System operation could raise isIllegalOperation, and an unsupported operation must	library	none	a licence to the implementation	hand	Planned		
 lib.r.system.exitcode	23	ExitSuccess is successful termination, ExitFailure code is failure with value code	library	run	the process's status	hand	Planned		
 lib.r.system.exitcode.prohibited	23	Some codes may be prohibited, e.g. 0 on POSIX	library	none	the Report does not say what exitWith (ExitFailure 0) does: see readings.md	hand	Planned	R37	
@@ -3761,16 +3761,16 @@ lib.system.getenv	23	getEnv is provided at its Report type (no definition given:
 lib.system.system	23	system is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
 lib.system.exitwith	23	exitWith is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
 lib.system.exitfailure	23	exitFailure is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
-lib.system.export.exitcodeexitsuccesscexitfailure	23	module System exports ExitCode(ExitSuccess,ExitFailure)	module	accept	import System (ExitCode(ExitSuccess,ExitFailure)) compiles and the name is usable	generated	Planned		
-lib.system.export.getargs	23	module System exports getArgs	module	accept	import System (getArgs) compiles and the name is usable	generated	Planned		
-lib.system.export.getprogname	23	module System exports getProgName	module	accept	import System (getProgName) compiles and the name is usable	generated	Planned		
-lib.system.export.getenv	23	module System exports getEnv	module	accept	import System (getEnv) compiles and the name is usable	generated	Planned		
-lib.system.export.system	23	module System exports system	module	accept	import System (system) compiles and the name is usable	generated	Planned		
-lib.system.export.exitwith	23	module System exports exitWith	module	accept	import System (exitWith) compiles and the name is usable	generated	Planned		
-lib.system.export.exitfailure	23	module System exports exitFailure	module	accept	import System (exitFailure) compiles and the name is usable	generated	Planned		
+lib.system.export.exitcodeexitsuccesscexitfailure	23	module System exports ExitCode(ExitSuccess,ExitFailure)	module	accept	import System (ExitCode(ExitSuccess,ExitFailure)) compiles and the name is usable	generated	Supported		
+lib.system.export.getargs	23	module System exports getArgs	module	accept	import System (getArgs) compiles and the name is usable	generated	Supported		
+lib.system.export.getprogname	23	module System exports getProgName	module	accept	import System (getProgName) compiles and the name is usable	generated	Supported		
+lib.system.export.getenv	23	module System exports getEnv	module	accept	import System (getEnv) compiles and the name is usable	generated	Supported		
+lib.system.export.system	23	module System exports system	module	accept	import System (system) compiles and the name is usable	generated	Supported		
+lib.system.export.exitwith	23	module System exports exitWith	module	accept	import System (exitWith) compiles and the name is usable	generated	Supported		
+lib.system.export.exitfailure	23	module System exports exitFailure	module	accept	import System (exitFailure) compiles and the name is usable	generated	Supported		
 lib.r.time.utc	24	The library follows RFC 1129 in its use of UTC	library	none	a reference, tested through toUTCTime	hand	Planned		
 lib.r.time.clocktime	24	ClockTime is abstract; clock times may be compared directly	library	run	Eq and Ord on two readings	hand	Planned		
-lib.r.time.clocktime.abstract	24	ClockTime's representation is not visible	library	reject	`import Time(ClockTime(..))` gives no constructor	hand	Planned		
+lib.r.time.clocktime.abstract	24	ClockTime's representation is not visible	library	reject	`import Time(ClockTime(..))` gives no constructor	hand	Supported		
 lib.r.time.range.day	24	ctDay is in 1..31	library	run	conversion results on a sample	hand	Planned		
 lib.r.time.range.hour	24	ctHour is in 0..23	library	run	as above	hand	Planned		
 lib.r.time.range.min	24	ctMin is in 0..59	library	run	as above	hand	Planned		
@@ -3810,32 +3810,32 @@ lib.time.formatcalendartime	24.1	formatCalendarTime has its Report type and its 
 lib.time.show2	24.1	show2 has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.time.show2p	24.1	show2' has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.time.show3	24.1	show3 has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
-lib.time.export.clocktime	24.1	module Time exports ClockTime	module	accept	import Time (ClockTime) compiles and the name is usable	generated	Planned		
-lib.time.export.monthjanuarycfebruarycmarchcaprilcmaycjunecjulyc	24.1	module Time exports Month(January,February,March,April,May,June, July,August,September,October,November,December)	module	accept	import Time (Month(January,February,March,April,May,June, July,August,September,October,November,December)) compiles and the name is usable	generated	Planned		
-lib.time.export.daysundaycmondayctuesdaycwednesdaycthursdaycfrid	24.1	module Time exports Day(Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday)	module	accept	import Time (Day(Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday)) compiles and the name is usable	generated	Planned		
-lib.time.export.calendartimecalendartimecctyearcctmonthcctdaycct	24.1	module Time exports CalendarTime(CalendarTime, ctYear, ctMonth, ctDay, ctHour, ctMin, ctSec, ctPicosec, ctWDay, ctYDay, ctTZName, ctTZ, ctIsDST)	module	accept	import Time (CalendarTime(CalendarTime, ctYear, ctMonth, ctDay, ctHour, ctMin, ctSec, ctPicosec, ctWDay, ctYDay, ctTZName, ctTZ, ctIsDST)) compiles and the name is usable	generated	Planned		
-lib.time.export.timedifftimediffctdyearctdmonthctddayctdhourctdm	24.1	module Time exports TimeDiff(TimeDiff, tdYear, tdMonth, tdDay, tdHour, tdMin, tdSec, tdPicosec)	module	accept	import Time (TimeDiff(TimeDiff, tdYear, tdMonth, tdDay, tdHour, tdMin, tdSec, tdPicosec)) compiles and the name is usable	generated	Planned		
-lib.time.export.getclocktime	24.1	module Time exports getClockTime	module	accept	import Time (getClockTime) compiles and the name is usable	generated	Planned		
-lib.time.export.addtoclocktime	24.1	module Time exports addToClockTime	module	accept	import Time (addToClockTime) compiles and the name is usable	generated	Planned		
-lib.time.export.diffclocktimes	24.1	module Time exports diffClockTimes	module	accept	import Time (diffClockTimes) compiles and the name is usable	generated	Planned		
-lib.time.export.tocalendartime	24.1	module Time exports toCalendarTime	module	accept	import Time (toCalendarTime) compiles and the name is usable	generated	Planned		
-lib.time.export.toutctime	24.1	module Time exports toUTCTime	module	accept	import Time (toUTCTime) compiles and the name is usable	generated	Planned		
-lib.time.export.toclocktime	24.1	module Time exports toClockTime	module	accept	import Time (toClockTime) compiles and the name is usable	generated	Planned		
-lib.time.export.calendartimetostring	24.1	module Time exports calendarTimeToString	module	accept	import Time (calendarTimeToString) compiles and the name is usable	generated	Planned		
-lib.time.export.formatcalendartime	24.1	module Time exports formatCalendarTime	module	accept	import Time (formatCalendarTime) compiles and the name is usable	generated	Planned		
+lib.time.export.clocktime	24.1	module Time exports ClockTime	module	accept	import Time (ClockTime) compiles and the name is usable	generated	Supported		
+lib.time.export.monthjanuarycfebruarycmarchcaprilcmaycjunecjulyc	24.1	module Time exports Month(January,February,March,April,May,June, July,August,September,October,November,December)	module	accept	import Time (Month(January,February,March,April,May,June, July,August,September,October,November,December)) compiles and the name is usable	generated	Supported		
+lib.time.export.daysundaycmondayctuesdaycwednesdaycthursdaycfrid	24.1	module Time exports Day(Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday)	module	accept	import Time (Day(Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday)) compiles and the name is usable	generated	Supported		
+lib.time.export.calendartimecalendartimecctyearcctmonthcctdaycct	24.1	module Time exports CalendarTime(CalendarTime, ctYear, ctMonth, ctDay, ctHour, ctMin, ctSec, ctPicosec, ctWDay, ctYDay, ctTZName, ctTZ, ctIsDST)	module	accept	import Time (CalendarTime(CalendarTime, ctYear, ctMonth, ctDay, ctHour, ctMin, ctSec, ctPicosec, ctWDay, ctYDay, ctTZName, ctTZ, ctIsDST)) compiles and the name is usable	generated	Supported		
+lib.time.export.timedifftimediffctdyearctdmonthctddayctdhourctdm	24.1	module Time exports TimeDiff(TimeDiff, tdYear, tdMonth, tdDay, tdHour, tdMin, tdSec, tdPicosec)	module	accept	import Time (TimeDiff(TimeDiff, tdYear, tdMonth, tdDay, tdHour, tdMin, tdSec, tdPicosec)) compiles and the name is usable	generated	Supported		
+lib.time.export.getclocktime	24.1	module Time exports getClockTime	module	accept	import Time (getClockTime) compiles and the name is usable	generated	Supported		
+lib.time.export.addtoclocktime	24.1	module Time exports addToClockTime	module	accept	import Time (addToClockTime) compiles and the name is usable	generated	Supported		
+lib.time.export.diffclocktimes	24.1	module Time exports diffClockTimes	module	accept	import Time (diffClockTimes) compiles and the name is usable	generated	Supported		
+lib.time.export.tocalendartime	24.1	module Time exports toCalendarTime	module	accept	import Time (toCalendarTime) compiles and the name is usable	generated	Supported		
+lib.time.export.toutctime	24.1	module Time exports toUTCTime	module	accept	import Time (toUTCTime) compiles and the name is usable	generated	Supported		
+lib.time.export.toclocktime	24.1	module Time exports toClockTime	module	accept	import Time (toClockTime) compiles and the name is usable	generated	Supported		
+lib.time.export.calendartimetostring	24.1	module Time exports calendarTimeToString	module	accept	import Time (calendarTimeToString) compiles and the name is usable	generated	Supported		
+lib.time.export.formatcalendartime	24.1	module Time exports formatCalendarTime	module	accept	import Time (formatCalendarTime) compiles and the name is usable	generated	Supported		
 lib.r.locale.purpose	25	The library adapts to local conventions, at present time and date only	library	none	a statement of purpose	hand	Planned		
 lib.r.locale.used	25	It is used by calendarTimeToString	library	run	a user TimeLocale through formatCalendarTime changes month names	hand	Planned		
 lib.r.locale.default	25.1	defaultTimeLocale has the values listed	library	run	each field, exact	hand	Planned		
 lib.locale.data.timelocale	25.1	type TimeLocale is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Planned		
 lib.locale.defaulttimelocale	25.1	defaultTimeLocale has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
-lib.locale.export.timelocaledotdot	25.1	module Locale exports TimeLocale(..)	module	accept	import Locale (TimeLocale(..)) compiles and the name is usable	generated	Planned		
-lib.locale.export.defaulttimelocale	25.1	module Locale exports defaultTimeLocale	module	accept	import Locale (defaultTimeLocale) compiles and the name is usable	generated	Planned		
+lib.locale.export.timelocaledotdot	25.1	module Locale exports TimeLocale(..)	module	accept	import Locale (TimeLocale(..)) compiles and the name is usable	generated	Supported		
+lib.locale.export.defaulttimelocale	25.1	module Locale exports defaultTimeLocale	module	accept	import Locale (defaultTimeLocale) compiles and the name is usable	generated	Supported		
 lib.r.cputime.get	26	getCPUTime returns the picoseconds of CPU time used by the program	library	run	non-negative and grows across a busy loop	hand	Planned		
 lib.r.cputime.precision	26	cpuTimePrecision is the smallest measurable difference, in picoseconds	library	run	positive; a multiple relation with getCPUTime values	hand	Planned		
 lib.cputime.getcputime	26	getCPUTime is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
 lib.cputime.cputimeprecision	26	cpuTimePrecision is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Planned		
-lib.cputime.export.getcputime	26	module CPUTime exports getCPUTime	module	accept	import CPUTime (getCPUTime) compiles and the name is usable	generated	Planned		
-lib.cputime.export.cputimeprecision	26	module CPUTime exports cpuTimePrecision	module	accept	import CPUTime (cpuTimePrecision) compiles and the name is usable	generated	Planned		
+lib.cputime.export.getcputime	26	module CPUTime exports getCPUTime	module	accept	import CPUTime (getCPUTime) compiles and the name is usable	generated	Supported		
+lib.cputime.export.cputimeprecision	26	module CPUTime exports cpuTimePrecision	module	accept	import CPUTime (cpuTimePrecision) compiles and the name is usable	generated	Supported		
 lib.r.random.layers	27	Two layers: RandomGen supplies bits, Random extracts values	library	none	a description	hand	Planned		
 lib.random.class.randomgen	27	class RandomGen is declared as the Report gives it: superclasses, methods, defaults	library	accept	instance with the minimal complete definition compiles and every default behaves as written	generated	Planned		
 lib.random.data.stdgen	27	type StdGen is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Planned		
@@ -3863,14 +3863,14 @@ lib.random.class.random.randomrs	27	Random method randomRs has its Report type; 
 lib.random.class.random.randoms	27	Random method randoms has its Report type; its default, if any, is the Report's	library	run	instance omitting the method uses the default; a defined method overrides it	generated	Planned		
 lib.random.class.random.randomrio	27	Random method randomRIO has its Report type; its default, if any, is the Report's	library	run	instance omitting the method uses the default; a defined method overrides it	generated	Planned		
 lib.random.class.random.randomio	27	Random method randomIO has its Report type; its default, if any, is the Report's	library	run	instance omitting the method uses the default; a defined method overrides it	generated	Planned		
-lib.random.export.randomgennextcsplitcgenrange	27	module Random exports RandomGen(next, split, genRange)	module	accept	import Random (RandomGen(next, split, genRange)) compiles and the name is usable	generated	Planned		
-lib.random.export.stdgen	27	module Random exports StdGen	module	accept	import Random (StdGen) compiles and the name is usable	generated	Planned		
-lib.random.export.mkstdgen	27	module Random exports mkStdGen	module	accept	import Random (mkStdGen) compiles and the name is usable	generated	Planned		
-lib.random.export.randomrandomcrandomrcrandomscrandomrscrandomiocr	27	module Random exports Random( random, randomR, randoms, randomRs, randomIO, randomRIO )	module	accept	import Random (Random( random, randomR, randoms, randomRs, randomIO, randomRIO )) compiles and the name is usable	generated	Planned		
-lib.random.export.getstdrandom	27	module Random exports getStdRandom	module	accept	import Random (getStdRandom) compiles and the name is usable	generated	Planned		
-lib.random.export.getstdgen	27	module Random exports getStdGen	module	accept	import Random (getStdGen) compiles and the name is usable	generated	Planned		
-lib.random.export.setstdgen	27	module Random exports setStdGen	module	accept	import Random (setStdGen) compiles and the name is usable	generated	Planned		
-lib.random.export.newstdgen	27	module Random exports newStdGen	module	accept	import Random (newStdGen) compiles and the name is usable	generated	Planned		
+lib.random.export.randomgennextcsplitcgenrange	27	module Random exports RandomGen(next, split, genRange)	module	accept	import Random (RandomGen(next, split, genRange)) compiles and the name is usable	generated	Supported		
+lib.random.export.stdgen	27	module Random exports StdGen	module	accept	import Random (StdGen) compiles and the name is usable	generated	Supported		
+lib.random.export.mkstdgen	27	module Random exports mkStdGen	module	accept	import Random (mkStdGen) compiles and the name is usable	generated	Supported		
+lib.random.export.randomrandomcrandomrcrandomscrandomrscrandomiocr	27	module Random exports Random( random, randomR, randoms, randomRs, randomIO, randomRIO )	module	accept	import Random (Random( random, randomR, randoms, randomRs, randomIO, randomRIO )) compiles and the name is usable	generated	Supported		
+lib.random.export.getstdrandom	27	module Random exports getStdRandom	module	accept	import Random (getStdRandom) compiles and the name is usable	generated	Supported		
+lib.random.export.getstdgen	27	module Random exports getStdGen	module	accept	import Random (getStdGen) compiles and the name is usable	generated	Supported		
+lib.random.export.setstdgen	27	module Random exports setStdGen	module	accept	import Random (setStdGen) compiles and the name is usable	generated	Supported		
+lib.random.export.newstdgen	27	module Random exports newStdGen	module	accept	import Random (newStdGen) compiles and the name is usable	generated	Supported		
 lib.r.random.genrange.lt	27.1	If (a,b) = genRange g then a < b	library	run	on StdGen	hand	Planned		
 lib.r.random.genrange.lazy	27.1	genRange _|_ /= _|_	library	run	`genRange (undefined :: StdGen)`	hand	Planned		
 lib.r.random.genrange.default	27.1	The default genRange is (minBound,maxBound)	library	run	a user instance omitting it	hand	Planned		
@@ -3885,7 +3885,7 @@ lib.r.random.read.any	27.1	read on StdGen succeeds on any string	library	run	the
 lib.r.random.read.finite	27.1	It consumes only a finite portion of the string	library	run	an infinite string	hand	Planned		
 lib.r.random.read.distinct	27.1	Different strings are likely to give different results	library	run	a small sample	hand	Planned		
 lib.r.random.mkstdgen	27.1	mkStdGen maps an Int into a generator; distinct arguments likely give distinct generators	library	run	a small sample	hand	Planned		
-lib.r.random.userinstance	27.1	Programmers may supply their own RandomGen instances	library	accept	a user instance works with Random's methods	hand	Planned		
+lib.r.random.userinstance	27.1	Programmers may supply their own RandomGen instances	library	accept	a user instance works with Random's methods	hand	Supported		
 lib.r.random.randomr	27.2	randomR (lo,hi) g is uniform on [lo,hi], with a new generator	library	run	values in range at each instance	hand	Planned		
 lib.r.random.randomr.inverted	27.2	What happens if lo > hi is unspecified	library	none	unspecified	hand	Planned		
 lib.r.random.randomr.continuous	27.2	For continuous types lo and hi need not ever be produced	library	none	a licence	hand	Planned		

@@ -14,6 +14,7 @@
                                        and errors of names (RhcNames)
      rhc --dump-types FILE.hs          the types of the program's top-level values
      rhc --dump-evidence FILE.hs       the checker's evidence records (HsEvidence)
+     rhc --dump-derived FILE.hs        the derived instances' methods (HsDerive)
      rhc --dump-binders FILE.hs        each local name of the program's own
                                        modules: its binding sites and uses
      rhc --dump-hslint FILE.hs         the types HsLint's second inference gives
@@ -38,7 +39,7 @@ struct
 
   datatype mode =
       ParseOnly | Print | PrintLayout | PrintExact | DumpTokens | DumpAst | DumpNames | DumpTypes | DumpEvidence
-    | DumpBinders | DumpHsLint of bool | Check | Compile
+    | DumpDerived | DumpBinders | DumpHsLint of bool | Check | Compile
 
   fun isSource a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
 
@@ -53,6 +54,7 @@ struct
     | "--dump-names" => SOME DumpNames
     | "--dump-types" => SOME DumpTypes
     | "--dump-evidence" => SOME DumpEvidence
+    | "--dump-derived" => SOME DumpDerived
     | "--dump-binders" => SOME DumpBinders
     | "--dump-hslint" => SOME (DumpHsLint false)
     | "--dump-hslint=library" => SOME (DumpHsLint true)
@@ -128,6 +130,7 @@ struct
         DumpNames => (RhcNames.dump (g, r); OS.Process.success)
       | DumpTypes => (report (); RhcNames.dumpTypes (g, r); OS.Process.success)
       | DumpEvidence => (report (); RhcNames.dumpEvidence (g, r); OS.Process.success)
+      | DumpDerived => (report (); RhcNames.dumpDerived (g, r); OS.Process.success)
       | DumpBinders => (RhcNames.dumpBinders (g, r); OS.Process.success)
       | _ =>
           if not (null diags) then (report (); OS.Process.failure)
@@ -236,13 +239,14 @@ struct
               | [m] => m
               | _ => raise RhcOptions.Usage
                        ("one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens, --dump-ast, " ^
-                        "--dump-names, --dump-types, --dump-evidence, --dump-binders and --dump-hslint")
+                        "--dump-names, --dump-types, --dump-evidence, --dump-derived, --dump-binders and --dump-hslint")
           in
             case (mode, files) of
               (_, []) => raise RhcOptions.Usage "no file of Haskell to read: give FILE.hs"
             | (DumpNames, _) => program (DumpNames, files, rest)
             | (DumpTypes, _) => program (DumpTypes, files, rest)
             | (DumpEvidence, _) => program (DumpEvidence, files, rest)
+            | (DumpDerived, _) => program (DumpDerived, files, rest)
             | (DumpBinders, [file]) => program (DumpBinders, [file], rest)
             | (_, [file]) => go (mode, spans, file, rest)
             | _ => raise RhcOptions.Usage "one file of Haskell at a time, the program's Main, but for --dump-names"

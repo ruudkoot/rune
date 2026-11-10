@@ -55,8 +55,9 @@ sig
   datatype <a href="#type-cycledefault">cycleDefault</a> = <a href="#con-permodule">PerModule</a> | <a href="#con-pergroup">PerGroup</a>
   type <a href="#type-module_">module_</a> = {<a href="#fld-module_.id">id</a> : string, <a href="#fld-module_.ast">ast</a> : HsAst.module, <a href="#fld-module_.library">library</a> : bool}
   val <a href="#val-check">check</a> : {<a href="#fld-check.env">env</a> : env, <a href="#fld-check.unit">unit</a> : module_ list, <a href="#fld-check.cycledefault">cycleDefault</a> : cycleDefault,
-               <a href="#fld-check.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-check.evidence">evidence</a> : HsEvidence.table}
-              -&gt; {env : env, errors : (HsSource.span * string) list}
+               <a href="#fld-check.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-check.fixity">fixity</a> : string -&gt; (HsAst.fixity * int) option,
+               <a href="#fld-check.evidence">evidence</a> : HsEvidence.table}
+              -&gt; {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
   val <a href="#val-valuescheme">valueScheme</a> : env * string -&gt; HsTypes.scheme option
   val <a href="#val-classes">classes</a> : env -&gt; HsClasses.env
 end
@@ -119,19 +120,23 @@ whether it is the library's.
 
 ```sml
 val check : {env : env, unit : module_ list, cycleDefault : cycleDefault,
-             prelude : string * string -> string option, evidence : HsEvidence.table}
-            -> {env : env, errors : (HsSource.span * string) list}
+             prelude : string * string -> string option, fixity : string -> (HsAst.fixity * int) option,
+             evidence : HsEvidence.table}
+            -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
 ```
 
-`check {env, unit, cycleDefault, prelude, evidence}` checks the
-modules of `unit`, recording into `evidence`.
+`check {env, unit, cycleDefault, prelude, fixity, evidence}` checks
+the modules of `unit`, recording into `evidence`.
 
 It gives the environment with the unit's types, constructors,
-classes, instances and values, and the errors. `prelude (space, name)` is the key of
-the entity the Prelude exports under `name`, `"t"` for a type or
-class and `"v"` for a value, for what the Report's translations
-name: [`Bool`](../../../basis/str/Bool.md), [`Char`](../../../basis/str/Char.md), `Integer`, `Double`, `Num`, `Fractional`,
-`Eq`, `Ord`, `Enum`, `Integral`, `Monad`.
+classes, instances and values, the errors, and the derived
+instances' methods, made by HsDerive (M14), each with its module and
+its instance's identity. `fixity key` is the fixity of the operator
+of `key`, for a derived `Show` and `Read`. `prelude (space, name)` is
+the key of the entity the Prelude exports under `name`, `"t"` for a
+type or class and `"v"` for a value, for what the Report's
+translations name: [`Bool`](../../../basis/str/Bool.md), [`Char`](../../../basis/str/Char.md), `Integer`, `Double`, `Num`,
+`Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -139,6 +144,7 @@ name: [`Bool`](../../../basis/str/Bool.md), [`Char`](../../../basis/str/Char.md)
 | <a name="fld-check.unit"></a>`unit` | `module_ list` |  |
 | <a name="fld-check.cycledefault"></a>`cycleDefault` | `cycleDefault` |  |
 | <a name="fld-check.prelude"></a>`prelude` | `string * string -> string option` |  |
+| <a name="fld-check.fixity"></a>`fixity` | `string -> (HsAst.fixity * int) option` |  |
 | <a name="fld-check.evidence"></a>`evidence` | `HsEvidence.table` |  |
 
 ### <a name="val-valuescheme"></a>`valueScheme`

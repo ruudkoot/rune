@@ -11,6 +11,7 @@ CORE_TO_MID	signature			required	declared	lib/language/haskell/coretomid_sig.sml
 HS_AST	signature			required	declared	lib/language/haskell/ast_sig.sml
 HS_CHAR	signature			required	declared	lib/language/haskell/char_sig.sml
 HS_CLASSES	signature			required	declared	lib/language/haskell/classes_sig.sml
+HS_DERIVE	signature			required	declared	lib/language/haskell/derive_sig.sml
 HS_DESUGAR	signature			required	declared	lib/language/haskell/desugar_sig.sml
 HS_DS_CORE	signature			required	declared	lib/language/haskell/desugar_core_sig.sml
 HS_DS_ENV	signature			required	declared	lib/language/haskell/desugar_env_sig.sml
@@ -45,6 +46,7 @@ CoreToMid	structure	CORE_TO_MID		required	ascribed	lib/language/haskell/coretomi
 HsAst	structure	HS_AST		required	claimed	lib/language/haskell/ast.sml
 HsChar	structure	HS_CHAR		required	claimed	lib/language/haskell/char.sml
 HsClasses	structure	HS_CLASSES		required	claimed	lib/language/haskell/classes.sml
+HsDerive	structure	HS_DERIVE		required	claimed	lib/language/haskell/derive.sml
 HsDesugar	structure	HS_DESUGAR		required	claimed	lib/language/haskell/desugar.sml
 HsDsCore	structure	HS_DS_CORE		required	claimed	lib/language/haskell/desugar_core.sml
 HsDsEnv	structure	HS_DS_ENV		required	claimed	lib/language/haskell/desugar_env.sml
