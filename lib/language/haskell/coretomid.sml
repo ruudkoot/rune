@@ -179,6 +179,18 @@ struct
      "    (handle vhX (return (prim file_read_vec vhH vhN : (int * int) -> string))",
      "      (let (vhI : (string * int * string * int)) (tuple \"read failed\" 8 \"\" vhH)",
      "      (let (vhE : exn) (mkexn grtIOError vhI) (raise vhE)))))",
+     "  (fn grtEndText ((vetE : exn)) : string \"end_text\"",
+     "    (let (vetM : string) (app grtExnMessage vetE)",
+     "    (let (vetK : int) (app grtExnKind vetE)",
+     "    (let (vetI : bool) (prim poly_eq vetK 1 : (int * int) -> bool)",
+     "    (if vetI",
+     "      (let (vetC : int) (app grtIoCode vetE)",
+     "      (let (vetU : bool) (prim poly_eq vetC 0 : (int * int) -> bool)",
+     "      (if vetU",
+     "        (let (vetA : string) (prim string_concat \"user error (\" vetM : (string * string) -> string)",
+     "        (return (prim string_concat vetA \")\" : (string * string) -> string)))",
+     "        (return vetM))))",
+     "      (return vetM))))))",
      "  (fn grtIoCode ((vicE : exn)) : int \"exn_io_code\"",
      "    (let (vicK : int) (app grtExnKind vicE)",
      "    (let (vicB : bool) (prim poly_eq vicK 1 : (int * int) -> bool)",
@@ -1417,7 +1429,7 @@ struct
                 atomValue (genv, Var "main", fn (m, _) => letv (R, "(app " ^ m ^ " ())", fn _ => "(return ())"))
               val handler =
                 letv ("string", "(app grtExnName " ^ x ^ ")", fn n =>
-                  letv ("string", "(app grtExnMessage " ^ x ^ ")", fn msg =>
+                  letv ("string", "(app grtEndText " ^ x ^ ")", fn msg =>
                     letv ("string", "(prim string_concat \"rhc: bottom: \" " ^ n ^ " : (string * string) -> string)", fn a =>
                       letv ("string", "(prim string_concat " ^ a ^ " \": \" : (string * string) -> string)", fn b =>
                         letv ("string", "(prim string_concat " ^ b ^ " " ^ msg ^ " : (string * string) -> string)", fn d =>

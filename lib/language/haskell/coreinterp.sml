@@ -312,6 +312,11 @@ struct
          | Size => (Throw (exn ("Subscript", "index out of range")), [])
          | Domain => (Throw (exn ("Domain", "domain")), [])
 
+  (* what the end of a program says of an exception no handler took: an
+     IOError's text as the library's Show IOError gives it, a user's
+     "user error (TEXT)"; any other's message *)
+  fun endText (k, m, code) = if k = kindNumber "IOError" andalso code = 0 then "user error (" ^ m ^ ")" else m
+
   (* ---- The machine ---- *)
 
   fun run {program, steps = limit, depth = most, out, err} =
@@ -437,7 +442,7 @@ struct
                  | Catch _ :: rest => loop (Return v, rest, depth - 1, steps))
             | Throw e =>
                 (case stack of
-                   [] => {outcome = case e of VExn (k, m, _) => Raised (List.nth (CorePrim.exnKinds, k), m)
+                   [] => {outcome = case e of VExn (k, m, (code, _, _)) => Raised (List.nth (CorePrim.exnKinds, k), endText (k, m, code))
                                             | _ => Raised ("?", ""),
                           steps = steps}
                  | Update (c, e', env) :: rest => (c := Thunk (e', env); loop (Throw e, rest, depth - 1, steps))

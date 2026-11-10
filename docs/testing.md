@@ -810,7 +810,9 @@ written in Core) has `prims-*.core`, Core's primitives on their edges
 print the same), files, standard input read across the edge of a chunk, the
 classes and mappings of `Char`, and what the library's PreludeRuntime names
 beside the Report's (`runtime-library`: arrays, an IOError's details, the
-IO family's positions of files and errors of the system's). `lib/language/haskell/coreruntime`
+IO family's positions of files and errors of the system's). `end-*.core`
+hold the line an escaping IOError ends a program with to the library's Show
+IOError, a user's "user error (TEXT)". `lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
 `lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
 and the first and the last of each range and run of its data.

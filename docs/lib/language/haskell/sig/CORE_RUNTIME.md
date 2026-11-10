@@ -49,7 +49,14 @@ interleaving primitive, and end their list at an error of reading
 (21.2.2); standard output is written before standard input is read.
 `getChar` and `getContents` share standard input's buffer. An IOError
 the runtime raises has its kind (`exn_io_full`): a failure of the
-system's by the name of its error, the end of standard input 5.
+system's by the name of its error, its text "what: the system's text"
+as the library's, the end of standard input 5.
+
+A program ends with every file it opened written (21's text): the VM's
+end flushes every file the program holds, and the interpreter's writes
+are unbuffered. An exception no handler takes ends it with status 1 and
+a line on standard error, an IOError's text as the library's Show
+IOError gives it, a user's as "user error (TEXT)" (7.3, 23).
 
 The general category and the simple case mappings are lib/unicode's
 (CodePoint, D21), at its version, in tables written from its data:

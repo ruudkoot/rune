@@ -22,5 +22,5 @@ h_read 3, h_tell, h_seek 7, h_read 5 hel 3 0 world
 os_file_size lib.tmp 12
 os_file_size missing, sys_errno, its name, its text -1 ENOENT No such file or directory
 h_open missing, h_errno ENOENT
-readFile missing 2 [/nonexistent/rhc] -1 No such file or directory
-writeFile a directory 6 [.] -1 Is a directory
+readFile missing 2 [/nonexistent/rhc] -1 openFile: /nonexistent/rhc: No such file or directory
+writeFile a directory 6 [.] -1 openFile: .: Is a directory
