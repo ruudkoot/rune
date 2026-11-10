@@ -68,18 +68,18 @@ struct
         | go (v :: vs) first =
             let
               val (p, m) = HsCorpus.prepare (c, v, files, work ^ "/" ^ v)
-              (* the upstream's inputs beside the program *)
-              val () = List.app (fn n => let val s = up ^ "/" ^ n and d = p ^ "/" ^ n
-                                         in if exists d then () else if isDir s then HsCorpus.copyTree (s, d)
-                                            else HsCorpus.copyFile (s, d) end) (sort (entries up))
               val (cs, _, cerr) = call (v ^ ".rhc", [HsRhcCorpus.rhc (), m, "-o", "main.rbc"], p, "", 1800)
+              (* the program runs among the upstream's files as they are, its
+                 own sources among them, which a program may read (sorting) *)
+              val rd = work ^ "/" ^ v ^ "-run"
+              val () = if cs = 0 then (HsCorpus.copyTree (up, rd); HsCorpus.copyFile (p ^ "/main.rbc", rd ^ "/main.rbc")) else ()
             in
               if cs <> 0 then go vs (case first of NONE => SOME (if cs = 124 then "timeout" else "reject", cerr) | s => s)
               else
                 let
-                  val stdin = if #stdin r = "" then "" else p ^ "/" ^ #stdin r
+                  val stdin = if #stdin r = "" then "" else rd ^ "/" ^ #stdin r
                   val (rs, output, rerr) = call (v ^ ".run", [runevm (), "main.rbc"] @ String.tokens Char.isSpace (#args r),
-                                                 p, stdin, 1800)
+                                                 rd, stdin, 1800)
                 in
                   SOME (if rs = 124 then "timeout" else if output = want then (if rs = 0 then "ok" else "rtfail")
                         else if rs = 0 then "diff" else "rtfail",

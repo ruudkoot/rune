@@ -17,7 +17,7 @@ circsim-nofib-lazy	held					the upstream has no Main: a kernel or a library, run
 clausify-lazy	ready	Main.hs	1		clausify.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
 comp_lab_nozift-lazy	held	Main.hs	2		comp_lab_zift.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:10:2: error:
 comp_lab_zift-lazy	held	Main.hs	2		comp_lab_zift.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:10:2: error:
-compress-lazy	ready	Main.hs		compress.stdin	compress.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+compress-lazy	held	Main.hs		compress.stdin	compress.stdout	its Haskell 98 form needs the compat layer (its NofibUtils is GHC's), whose hash prints otherwise than nofib's fixture: under GHC with the strict shim it prints 4109 bytes against 4063
 compress2-lazy	held	Main.hs		compress2.stdin	compress2.stdout	imports modules outside the Report and the corpus's rewrite and compat layer: GHC.Base
 constraints-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
 cryptarithm1-lazy	ready	Main.hs	1		cryptarithm1.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
