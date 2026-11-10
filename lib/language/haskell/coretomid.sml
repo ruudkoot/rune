@@ -1129,9 +1129,12 @@ struct
         let
           val {ty = pty, ...} = case CorePrim.find p of SOME x => x | NONE => raise Fail ("CoreToMid: no primitive " ^ p)
           val inst = List.foldl (fn (t, TForall (a, _, b)) => substTy ([(a, t)], b) | (_, t) => t) pty tys
-          fun params (TFun (q, r)) = let val (qs, res) = params r in (q :: qs, res) end
-            | params t = ([], t)
-          val (ps, res) = params inst
+          (* the parameters a primitive is given, as many as its atoms, and
+             what it gives: a result of a function type, as `raise` at one,
+             is no more parameters *)
+          fun params (TFun (q, r), n) = if n = 0 then ([], TFun (q, r)) else let val (qs, res) = params (r, n - 1) in (q :: qs, res) end
+            | params (t, _) = ([], t)
+          val (ps, res) = params (inst, length atoms)
           fun out (rhsTy, rhs) = letv (rhsTy, rhs, fn r => deliver (env, c, r, res))
           (* a primitive of Mid of the arguments Core keeps, the state token's dropped *)
           fun kept xs = ListPair.foldr (fn (x, q, acc) => if isWorld q then acc else x :: acc) [] (xs, ps)
