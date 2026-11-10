@@ -1382,6 +1382,8 @@ The rest of the 54, by what they are: lexing corners R4, R6, R8; expressions and
 R19, R23 to R25, R27, R28; modules R26, R29 to R34, below; runtime R35, R39, R40, R43 to R46; library text and smaller
 matters R47 to R54. R15, R21 and part of R38 are marked for the owner's call.
 
+**The owner's calls of 2026-11-10.** R4: as its seed reads it, with each acceptance recorded as a deviation from the grammar taken literally, pinned by a program: a line comment that ends the file without a newline is accepted (end of file ends it); vertical tab and the other Unicode white space in a line comment are accepted, a vertical tab counting one column; an empty file is the module `Main` with no `main`, refused by chapter 5's rule, not by the grammar. R15: `n+0` is refused, as Hugs refuses it, by 3.17.2's "positive integer literal" over the grammar's `integer`; GHC and nhc98 accept it. R52: 9.4's `readLine` is a mistake in the Report, recorded as such; the example is tested with `getLine`, its likely meaning.
+
 ### What the Report does not say and a compiler must decide
 
 Chapter 1 reserves the ground:
