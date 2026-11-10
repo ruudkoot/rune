@@ -1,6 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core --read-core tests/hs/core/lib/size-1000.core
 ; residency: lib/size-1000.core lib/size-2000.core
-; vm: no: the release of what a suspension captured, at BLACKHOLE, is form C's (M9), which this tree has not; E1's runtime keeps xs
 ; E2's leak, through rhc (D12): a suspension running sum xs, a list made as
 ; it is summed, holds xs no longer, though its code does more after the
 ; loop; the most live is the same at either size.

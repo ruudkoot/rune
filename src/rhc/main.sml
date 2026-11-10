@@ -86,9 +86,8 @@ struct
     let
       val text =
         Pass.stage {name = "coretomid", showIn = NONE, show = fn s => s, check = fn _ => (), size = String.size}
-                   (fn p => CoreToMid.program ({form = #thunks opts, fault = #fault opts}, p)) p
-      (* Mid's text that Mid's reader refuses is a bug of Core to Mid, or, for
-         --thunks=c, a tree without form C's suspensions *)
+                   (fn p => CoreToMid.program ({fault = #fault opts}, p)) p
+      (* Mid's text that Mid's reader refuses is a bug of Core to Mid *)
       fun parse text =
         MidText.parse text
         handle MidText.Syntax msg => raise Error.Bug ("Mid's reader refuses what Core to Mid wrote: " ^ msg)
