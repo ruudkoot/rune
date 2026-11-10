@@ -729,9 +729,10 @@ its own, and forcing one is one step.
   no call of it, runs a suspension's code twice; and `thunk_blackhole` and
   `thunk_self_update` are said only by the own code of a function that nothing but
   `thunk_make` names (the roadmap's D57, item 2). A front end applies the primitives
-  where it makes a suspension; a program of SML that binds one to a name (`val make =
-  _prim "thunk_make" : ...`) calls a function of its own, which says them where no
-  suspension is made, and is refused.
+  where it makes a suspension. A program of SML that binds one to a name (`val update =
+  _prim "thunk_self_update" : ...`) has a function of its own that says it, which an
+  application in the program makes the primitive again (`Translate`), and which is
+  refused where something names it, a structure's record that holds it for one.
 * **Below Mid**: `Low.hoistEnv` reads each value a suspension's code captured once, at
   its entry, where it is still unevaluated: after `BLACKHOLE` the collector follows none
   of its fields. Each target makes a force `FORCE`, and where the value is an

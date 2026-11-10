@@ -22,15 +22,15 @@
    from inside a suspension and goes on there when restored; last and leak
    keep nothing an element, the most live with a collection at every
    allocation the same at n = 1000 and 2000 on the register VM, interpreted
-   and at tier 2 (the stack VM keeps every local of a waiting frame, so it
-   is not asked); a chain of 10^7 suspensions fits the default stack (D18);
-   and wrongslot's suspensions where a type says a list or a function stop
-   the interpreter and tier 1, a suspension read as a ref stops every
-   tier, and MidLint refuses each; cast's casts print the same with
-   --check-casts, and forget's force forgotten behind a cast stops every
-   engine under it, and the lint refuses it at -O2; results' suspensions,
-   read back from where a function's results return a datatype, are
-   forced at every level. *)
+   and at tier 2, under the copier and the low-pause collector (the stack
+   VM keeps every local of a waiting frame, so it is not asked); a chain
+   of 10^7 suspensions fits the default stack (D18); and wrongslot's
+   suspensions where a type says a list or a function stop the interpreter
+   and tier 1, a suspension read as a ref stops every tier, and MidLint
+   refuses each; cast's casts print the same with --check-casts, and
+   forget's force forgotten behind a cast stops every engine under it, and
+   the lint refuses it at -O2; results' suspensions, read back from where
+   a function's results return a datatype, are forced at every level. *)
 structure Thunks =
 struct
   open Sh
@@ -185,12 +185,18 @@ struct
                [("S0", ["--target=stack", "-O0"]), ("S2", ["--target=stack", "-O2"])]
     end
 
-  (* the most live, with a collection at every allocation into the old space *)
+  (* the most live, with a collection at every allocation: each a full one
+     of the copier (with a nursery the old space keeps what minor
+     collections promoted until a full one), or a step of the low-pause
+     collector's cycle, which shades what a suspension lets go while it
+     marks *)
+  val collectors = [("copy", ["--nursery", "0", "--old-space", "copy", "--gc-stress", "1"]),
+                    ("lowpause", ["--gc", "low-pause", "--gc-stress", "1", "--gc-stress-cycles"])]
   fun maxLive (dir, name, vm, opts, rbc, n) =
     let
       val d = dir ^ "/live-" ^ name
       val () = scratch d
-      val _ = exec {cmd = [fromRoot vm] @ opts @ ["--stats", "--nursery", "0", "--old-space", "copy", "--gc-stress", "1", rbc, n],
+      val _ = exec {cmd = [fromRoot vm] @ opts @ ["--stats", rbc, n],
                     dir = SOME d, stdin = "", stdout = d ^ "/stdout", stderr = d ^ "/stderr", timeout = 600}
       val key = "max live "
       val at = #2 (Substring.position key (Substring.full (read (d ^ "/stderr"))))
@@ -218,7 +224,9 @@ struct
                                                       ^ Int.toString y ^ " at 2000)")
                                     | _ => fail (k, #1 b ^ " " ^ w ^ ": no most live in --stats")
                                   end)
-                               [("off", ["--jit=off"]), ("opt", ["--jit=all", "--jit-tier=2"])]
+                               (List.concat (List.map (fn (c, copts) =>
+                                                          [("off-" ^ c, "--jit=off" :: copts),
+                                                           ("opt-" ^ c, ["--jit=all", "--jit-tier=2"] @ copts)]) collectors))
                   | NONE => ())
                [("O0", ["-O0"]), ("O2", ["-O2"])]
     end
