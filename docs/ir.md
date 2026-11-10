@@ -323,14 +323,11 @@ records for it only at 2.
 * **Unique stamps:** every binder's stamp is bound once in the whole
   program. Every representation after it relies on it: what a pass knows
   of a variable is kept by its stamp.
-* **`Fail`:** every `Fail` is in tail position of the body of a `Try` of the
-  same function, where it jumps to the `Try`'s fallback with the stack as
-  the `Try` found it. Tail position runs through a `Let`'s body, the second
-  of a `Seq`, both arms of an `If`, the fallback of an inner `Try`, a
-  handler and a mark.
 * **`Jump`:** every `Jump` is in tail position of the scope of its `Join`,
-  in the same function, with an argument of each parameter's type. Only a
-  match compiled as a decision tree makes them (below).
+  in the same function, with an argument of each parameter's type. Tail
+  position runs through a `Let`'s body, the second of a `Seq`, both arms of
+  an `If`, the body and the scope of an inner `Join`, a handler and a mark.
+  Only a match makes them (*Matches*, below).
 * **`LetRec`:** every right-hand side is a function.
 * **Types:** it is well typed, as below.
 * **What its types alone do not say** (`IrRules`, which `MidLint` shares;
@@ -419,7 +416,7 @@ it (`src/isa/prims.sml`) is checked by the `xc1` configurations of the
 Basis Library suite, which compile `lib/basis` on the hosts with each
 `_prim` replaced by a value of the description's type
 (`bin/rune-generate host-basis`). A
-`Raise` or a `Fail` never returns, and fits wherever a type is wanted. A
+`Raise` or a `Jump` never returns, and fits wherever a type is wanted. A
 `Let` binds its variable at the type of what it binds; the variables of a
 function, a letrec and a handler have the types their binders give them.
 
@@ -615,11 +612,10 @@ top level a list of definitions (decision D1 of the plan).
   jump is a variable, a global or a constant, and the datatype says so. A
   step (`rhs`) makes one value from atoms; `Let` names it.
 * **Join points:** `Join (j, params, body, scope)` binds a label that
-  `scope` jumps to, in tail position only. A `Try` of `Lambda` is one
-  without parameters, its `Fail` a jump to it; a `Join` of `Lambda` (a
-  rule of a match) is one with its parameters; the rest of an expression
-  that branches, where more follows it, is one whose parameter is the
-  value.
+  `scope` jumps to, in tail position only. A `Join` of `Lambda` is one
+  with its parameters: a rule of a match, with its variables, or the rest
+  of a match where a rule fails, with none; the rest of an expression that
+  branches, where more follows it, is one whose parameter is the value.
 * **`Handle`** is a region: its body and handler are in tail position of
   it, and a jump out of the body leaves it. A call in tail position of the
   body is no tail call.
@@ -791,8 +787,9 @@ inlined function frames agree across optimization levels.
 `MatchComp` compiles a match two ways:
 
 * **Rule by rule** (at `-O0`, for a match of one rule, and where a tree
-  would grow too big): each rule's tests in turn, a failing one a `Fail`
-  to the next rule's `Try`.
+  would grow too big): each rule's tests in turn, each rule the scope of a
+  join point without parameters that is the next rule, which a failing
+  test jumps to.
 * **As a decision tree** (the optional pass `trees`, from `-O1`, after
   Maranget 2008): the rules are a matrix of patterns against the values in
   hand. The first row's first pattern that tests something picks the

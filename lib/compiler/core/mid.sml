@@ -5,9 +5,9 @@
    * A-normal form: every operand of a call, a primitive or a constructor is
      an atom, a variable or a constant, and the datatype says so.
    * Join points: `Join (j, params, body, scope)` binds a label that `scope`
-     jumps to, in tail position only, and that no function captures. A Try
-     of Lambda is one without parameters; the rest of an expression that
-     branches, one with.
+     jumps to, in tail position only, and that no function captures. The
+     rest of a match where a rule fails is one without parameters; the rest
+     of an expression that branches, one with.
    * Functions take a list of parameters; the calling convention (M8) makes
      them n-ary, and until then each takes one.
    * The top level is a list of definitions, not one term nested once per

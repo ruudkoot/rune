@@ -11,7 +11,7 @@
    by representation, each aimed at a rule:
      Lambda: scope twice jump jump-out con select const-type const-kind
              const-range mkexn prim-name cast functor-cast dynamic-cast
-             open-cast inst fail letrec global
+             open-cast inst letrec global
      Mid:    scope twice jump jump-out type poly rebind tyargs select con mkexn
              mkexn-copy prim-name const-kind const-range do-drop do-unset
              nary cast functor-cast dynamic-cast open-cast
@@ -112,9 +112,7 @@ struct
               | L.Inst (a, t) =>
                   if kind = "inst" andalso hit "a use at an instance made one at no instance" then L.Inst (a, Ty.exn)
                   else L.Inst (go a, t)
-              | L.Fn (x, t, b) =>
-                  if kind = "fail" andalso hit "a function's body given a Fail first" then L.Fn (x, t, L.Seq (L.Fail, b))
-                  else L.Fn (x, t, go b)
+              | L.Fn (x, t, b) => L.Fn (x, t, go b)
               | L.LetRec (bs, b) =>
                   if kind = "letrec" andalso hit "a letrec's function made unit" then L.LetRec (List.map (fn (x, t, _) => (x, t, L.Unit)) bs, b)
                   else L.LetRec (List.map (fn (x, t, r) => (x, t, go r)) bs, go b)
@@ -127,7 +125,6 @@ struct
               | L.Decon (tag, a) => L.Decon (tag, go a)
               | L.ConTag a => L.ConTag (go a)
               | L.If (c, t, f) => let val c = go c val t = go t in L.If (c, t, go f) end
-              | L.Try (a, b) => let val a = go a in L.Try (a, go b) end
               | L.Join (j, ps, b, s) => let val b = go b in L.Join (j, ps, b, go s) end
               | L.Raise a => L.Raise (go a)
               | L.Handle (a, x, h) => let val a = go a in L.Handle (a, x, go h) end

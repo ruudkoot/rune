@@ -960,7 +960,7 @@ struct
          ("select", "of a tuple of"), ("const-type", "a constant 1 of type string"), ("const-kind", "a constant 0w"),
          ("const-range", range), ("mkexn", payload), ("prim-name", word),
          ("functor-cast", "a functor_cast from string to int, neither unit"), ("open-cast", "neither unit nor flat"),
-         ("inst", "a use at exn of what has type"), ("fail", "a Fail is not in tail position of a Try"),
+         ("inst", "a use at exn of what has type"),
          ("letrec", "binds what is no function"), ("global", "has no type")]
       @ at ("translate", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
       @ at ("mid", "faults")

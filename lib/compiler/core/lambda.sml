@@ -28,8 +28,6 @@ struct
     | Decon of int * lexp                 (* the argument of a value made by the constructor with the tag *)
     | ConTag of lexp
     | If of lexp * lexp * lexp
-    | Try of lexp * lexp                  (* body, fallback taken when body executes Fail *)
-    | Fail
     | Join of int * (int * Ty.ty) list * lexp * lexp  (* a join point: its label, its parameters, its body,
                                                           and the scope that jumps to it (a match's rule) *)
     | Jump of int * lexp list             (* to a join point, in tail position of its scope *)
@@ -86,8 +84,6 @@ struct
         | Decon (_, a) => "decon " ^ go a
         | ConTag a => "tag " ^ go a
         | If (c, t, f) => "(if " ^ go c ^ " then " ^ go t ^ " else " ^ go f ^ ")"
-        | Try (a, b) => "(try " ^ go a ^ " else " ^ go b ^ ")"
-        | Fail => "FAIL"
         | Join (j, ps, b, sc) =>
             "(join j" ^ Int.toString j ^ " (" ^ String.concatWith " " (List.map (v o #1) ps) ^ ") = " ^ go b
             ^ " in " ^ go sc ^ ")"
@@ -140,7 +136,6 @@ struct
         | Const (c, _) => SOME (constToString c)
         | Unit => SOME "()"
         | Con0 (t, _) => SOME ("C" ^ Int.toString t)
-        | Fail => SOME "fail"
         | NewExn n => SOME ("(newexn " ^ n ^ ")")
         | BuiltinExn k => SOME ("(builtinexn " ^ Int.toString k ^ ")")
         | Mark (_, e) => atom e
@@ -149,7 +144,7 @@ struct
       fun isAtom e =
         case e of
           Var _ => true | Global _ => true | Const _ => true | Unit => true | Con0 _ => true
-        | Fail => true | NewExn _ => true | BuiltinExn _ => true
+        | NewExn _ => true | BuiltinExn _ => true
         | Mark (_, e) => isAtom e
         | Rest e => isAtom e
         | _ => false
@@ -192,7 +187,6 @@ struct
               | Decon (t, a) => node (fn () => "decon " ^ Int.toString t, [a])
               | ConTag a => node (fn () => "tag", [a])
               | If (c, t, f) => node (fn () => "if", [c, t, f])
-              | Try (a, b) => node (fn () => "try", [a, b])
               | Join (j, ps, b, sc) =>
                   node (fn () => let val j = lab j
                                  in "join " ^ j ^ " (" ^ String.concatWith " " (List.map (fn (x, t) => "(" ^ v x ^ " : " ^ ty t ^ ")") ps) ^ ")" end,
@@ -230,7 +224,6 @@ struct
     | Decon (_, a) => 1 + size a
     | ConTag a => 1 + size a
     | If (c, t, f) => 1 + size c + size t + size f
-    | Try (a, b) => 1 + size a + size b
     | Join (_, _, b, sc) => 1 + size b + size sc
     | Jump (_, args) => List.foldl (fn (e, n) => n + size e) 1 args
     | Raise a => 1 + size a

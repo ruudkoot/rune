@@ -1,7 +1,7 @@
 (* From Lambda to Mid (docs/ir.md). The translation names every value that
-   is not an atom, in the order Lambda evaluates it; makes a Try a join
-   point without parameters and its Fail a jump to it, and a join point of
-   Lambda (a match's rule) one of Mid; gives what follows an
+   is not an atom, in the order Lambda evaluates it; makes a join point of
+   Lambda (a match's rule, or the rest where a rule fails) one of Mid; gives
+   what follows an
    expression that branches a join point with the value as its parameter,
    so that it is not copied into every branch; and splits the top level at
    each `Rest` into a list of definitions.
@@ -56,16 +56,13 @@ struct
 
   (* What the translation of an expression is in:
      * scope: the generic variables the binders around it abstract over;
-     * fail: the join point a Fail jumps to, that of the innermost Try whose
-       body it is in tail position of;
      * env: the scheme of each local variable. *)
-  type state = {scope : unit IntMap.map, fail : M.label option, env : M.scheme IntTable.table}
+  type state = {scope : unit IntMap.map, env : M.scheme IntTable.table}
 
   (* one table for the program, since each variable is bound once *)
   fun bindLocal (st : state, x, s) : state = (IntTable.insert (#env st, x, s); st)
-  fun withFail ({scope, env, ...} : state, fail) : state = {scope = scope, fail = fail, env = env}
   fun inFunction ({scope, env, ...} : state, tyvars) : state =
-    {scope = List.foldl (fn (a, m) => IntMap.insert (m, a, ())) scope tyvars, fail = NONE, env = env}
+    {scope = List.foldl (fn (a, m) => IntMap.insert (m, a, ())) scope tyvars, env = env}
 
   (* The variables a binder of type t abstracts over. *)
   fun own ({scope, ...} : state, t : Ty.ty) : int list =
@@ -233,14 +230,6 @@ struct
         | L.ConTag a => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.ConTag aa, Ty.int)))
         | L.If (c, t, f) =>
             atom (c, st, fn (ca, _) => branch (ctx, fn ctx => M.If (ca, exp (t, st, ctx), exp (f, st, ctx))))
-        | L.Try (a, b) =>
-            branch (ctx, fn ctx =>
-                           let val j = fresh ()
-                           in M.Join (j, [], exp (b, st, ctx), exp (a, withFail (st, SOME j), ctx)) end)
-        | L.Fail =>
-            (case #fail st of
-               SOME j => M.Jump (j, [])
-             | NONE => bug "a Fail outside a Try")
         | L.Join (j, ps, b, sc) =>
             branch (ctx, fn ctx =>
                            M.Join (j, ps, exp (b, List.foldl (fn ((x, t), st) => bindLocal (st, x, ([], t))) st ps, ctx),
@@ -249,7 +238,7 @@ struct
         | L.Raise a => atom (a, st, fn (aa, _) => M.Raise aa)
         | L.Handle (a, x, h) =>
             branch (ctx, fn ctx =>
-                           M.Handle (exp (a, withFail (st, NONE), ctx), x, exp (h, bindLocal (st, x, ([], Ty.exn)), ctx)))
+                           M.Handle (exp (a, st, ctx), x, exp (h, bindLocal (st, x, ([], Ty.exn)), ctx)))
         | L.NewExn n => deliver (ctx, st, R (M.NewExn n, Ty.exnCon))
         | L.BuiltinExn k => deliver (ctx, st, R (M.BuiltinExn k, Ty.exnCon))
         | L.MkExn (c, p) =>
@@ -334,7 +323,7 @@ struct
         in {name = f, label = IntMap.find (!Translate.funNames, x), tyvars = tyvars, params = [(x, domain t)], result = codomain t,
             body = exp (body, st', Ret)} end
 
-      val top : state = {scope = IntMap.empty, fail = NONE, env = IntTable.table 4096}
+      val top : state = {scope = IntMap.empty, env = IntTable.table 4096}
 
       (* ---- the top level ---- *)
 
@@ -348,10 +337,6 @@ struct
         | L.Let (x, a, b) => let val (b', r) = split b in (L.Let (x, a, b'), r) end
         | L.LetRec (bs, b) => let val (b', r) = split b in (L.LetRec (bs, b'), r) end
         | L.Mark (sp, a) => let val (a', r) = split a in (L.Mark (sp, a'), r) end
-        | L.Try (a, b) =>
-            (case split a of
-               (a', SOME r) => (L.Try (a', b), SOME r)
-             | (_, NONE) => let val (b', r) = split b in (L.Try (a, b'), r) end)
         | L.If (c, t, f) =>
             (case split t of
                (t', SOME r) => (L.If (c, t', f), SOME r)
@@ -383,7 +368,6 @@ struct
           | L.Decon (_, a) => sets (a, acc)
           | L.ConTag a => sets (a, acc)
           | L.If (c, t, f) => all ([c, t, f], acc)
-          | L.Try (a, b) => all ([a, b], acc)
           | L.Join (_, _, b, sc) => all ([b, sc], acc)
           | L.Jump (_, es) => all (es, acc)
           | L.Raise a => sets (a, acc)

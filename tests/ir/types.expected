@@ -15,14 +15,10 @@
     (seq
       (set g3
         (fn (v3 : 'b list) : int
-          (try
-            (if
-              (prim poly_eq
-                (tag v3)
-                0)
-              0
-              fail)
-            (try
+          (join j1 ()
+            (join j2 ()
+              (raise
+                (mkexn (builtinexn 0) ()))
               (if
                 (prim poly_eq
                   (tag v3)
@@ -36,9 +32,13 @@
                       (prim int_add
                         1
                         (app g3 v6)))))
-                fail)
-              (raise
-                (mkexn (builtinexn 0) ()))))))
+                (jump j2)))
+            (if
+              (prim poly_eq
+                (tag v3)
+                0)
+              0
+              (jump j1)))))
       (seq
         (set g4
           (app
@@ -78,7 +78,8 @@
                           (mkexn
                             g9
                             (tuple 1 "one")))
-                        (try
+                        (join j3 ()
+                          (raise v13)
                           (if
                             (prim ptr_eq
                               (exncon v13)
@@ -88,6 +89,5 @@
                               (let v15
                                 (select 0 v14)
                                 (let v16 v15 v16)))
-                            fail)
-                          (raise v13))))
+                            (jump j3)))))
                     ()))))))))))
