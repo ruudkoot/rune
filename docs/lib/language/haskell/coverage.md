@@ -22,7 +22,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_DUMP`](sig/HS_DUMP.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | 11 | 11 | 100% | 7 | 7 |
 | [`HS_FIXITY`](sig/HS_FIXITY.md) | 4 | 4 | 100% | 2 | 2 |
-| [`HS_INFER`](sig/HS_INFER.md) | 7 | 7 | 100% | 4 | 4 |
+| [`HS_INFER`](sig/HS_INFER.md) | 8 | 8 | 100% | 5 | 5 |
 | [`HS_KINDS`](sig/HS_KINDS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_LAYOUT`](sig/HS_LAYOUT.md) | 13 | 13 | 100% | 11 | 11 |
 | [`HS_LEXER`](sig/HS_LEXER.md) | 3 | 3 | 100% | 1 | 1 |
@@ -36,8 +36,8 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_SOURCE`](sig/HS_SOURCE.md) | 10 | 10 | 100% | 6 | 6 |
 | [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 8 | 8 | 100% | 6 | 6 |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
-| [`HS_TYPES`](sig/HS_TYPES.md) | 41 | 41 | 100% | 27 | 27 |
-| **all** | 285 | 285 | 100% | 151 | 151 |
+| [`HS_TYPES`](sig/HS_TYPES.md) | 42 | 42 | 100% | 28 | 28 |
+| **all** | 287 | 287 | 100% | 153 | 153 |
 
 ## Members a signature describes
 
@@ -46,7 +46,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-31 structures have a page, with 285 members, of which 285 (100%) are described by a signature.
+31 structures have a page, with 287 members, of which 287 (100%) are described by a signature.
 
 ---
 

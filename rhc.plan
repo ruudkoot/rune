@@ -244,13 +244,14 @@ program
   unit src/rhc/library.sml src/rhc/library.sml ascii
   unit src/rhc/graph.sml src/rhc/graph.sml ascii
   unit src/rhc/names.sml src/rhc/names.sml ascii
+  unit src/rhc/world.sml src/rhc/world.sml ascii
   unit src/rhc/lint.sml src/rhc/lint.sml ascii
   unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
   unit src/rhc/main.sml src/rhc/main.sml ascii
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build 101eea4bed6b77774c05ab41bc88314cdcd28c2db92a0741e4b8f6d75f7e02fe
+  input rhc.build 1770d6c12c5a34e0bea42460da83046a0c0cd9a9a36319c1a032b37d13c32092
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f

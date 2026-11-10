@@ -98,6 +98,9 @@ struct
   val counter = ref 0
   fun fresh prefix = (counter := !counter + 1; prefix ^ Int.toString (!counter))
 
+  fun renumber n =
+    if !counter >= n then raise General.Fail "HsInfer.renumber: a variable has had that number" else (counter := n; T.renumber n)
+
   (* the environment of the unit being checked *)
   val genv : env ref = ref (initial {primitives = []})
   val preludeKey : (string * string -> string option) ref = ref (fn _ => NONE)

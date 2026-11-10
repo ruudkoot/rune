@@ -1089,6 +1089,13 @@
     },
     {
      "kind": "val",
+     "name": "renumber",
+     "spec": "val renumber : int -> unit",
+     "doc": "`renumber n` makes the checker's next fresh variables, and HsTypes',\nnumber from `n`.\n\nA program's are then numbered alike however much of the library was\nchecked before it (rhc's saved world).\n\n**Raises** `Fail` where a variable has had `n` already.\n\n",
+     "page": "sig/HS_INFER.md#val-renumber"
+    },
+    {
+     "kind": "val",
      "name": "valueScheme",
      "spec": "val valueScheme : env * string -> HsTypes.scheme option",
      "doc": "`valueScheme (env, key)` is the type of the value of `key`.\n\n",
@@ -2066,6 +2073,13 @@
      "spec": "val newMeta : int * string -> ty",
      "doc": "`newMeta (level, home)` is a fresh unification variable.\n\n",
      "page": "sig/HS_TYPES.md#val-newmeta"
+    },
+    {
+     "kind": "val",
+     "name": "renumber",
+     "spec": "val renumber : int -> unit",
+     "doc": "`renumber n` makes the next fresh unification and kind variables\nnumber from `n`.\n\nWhat follows is then numbered alike however much came before (rhc's\nsaved world).\n\n**Raises** `Fail` where a variable has had `n` already.\n\n",
+     "page": "sig/HS_TYPES.md#val-renumber"
     },
     {
      "kind": "val",
