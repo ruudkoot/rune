@@ -48,6 +48,15 @@ sig
      A value is known by its type. *)
   val declare : Core.decl -> unit
 
+  (* `tupleArity c` is the number of components of the tuple whose type and
+     constructor are named `c`, `(,...,)`; `tupleData n` is the declaration
+     of the tuple of `n`. A tuple is of arbitrary length (3.8): one not
+     declared is declared where it is first wanted, by `tycon`, `conInfo`
+     and the other lookups, and `valueType` gives its constructor as a
+     function its type. *)
+  val tupleArity : string -> int option
+  val tupleData : int -> Core.decl
+
   (* `tycon c` is the parameters and the shape of the type constructor `c`,
      Core's built-in ones among them. *)
   val tycon : string -> ((string * Core.kind) list * shape) option

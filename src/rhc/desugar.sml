@@ -32,7 +32,16 @@ struct
 
   fun leaves () = List.map (fn (l, names) => (RhcLibrary.identity l, names)) RhcLibrary.leaves
 
-  fun mainOf (g : RhcGraph.graph) = Mo.key {space = Mo.Value, home = hd (#roots g), name = "main"}
+  (* the key of the program's main: what Main exports by the name, wherever
+     it is defined (5: Main may import it and export it again) *)
+  fun mainOf (g : RhcGraph.graph, r : RhcNames.result) =
+    let val root = hd (#roots g)
+    in
+      case List.find (fn (e : Mo.entity) => #space e = Mo.Value andalso #name e = "main")
+             (getOpt (M.find (#exports r, root), [])) of
+        SOME e => Mo.key e
+      | NONE => Mo.key {space = Mo.Value, home = root, name = "main"}
+    end
 
   (* `program (g, r, strings)` is the Core program of the program of the
      graph `g`, checked as `r`, its string literals unpacked as `strings`
@@ -44,7 +53,7 @@ struct
       CoreRuntime.link strings
         (HsDesugar.program
            {modules = modules, infer = infer, evidence = evidence, derived = derived, prelude = prelude, entity = entity,
-            runtime = CoreRuntime.program strings, leaves = leaves (), main = mainOf g})
+            runtime = CoreRuntime.program strings, leaves = leaves (), main = mainOf (g, r)})
     end
 
   (* `library r` is the library's part of the desugaring of `r`, the
@@ -72,6 +81,6 @@ struct
       CoreRuntime.link strings
         (HsDesugar.programOn
            (lib, {modules = modules, infer = infer, evidence = evidence, derived = derived, prelude = prelude,
-                  entity = entity, main = mainOf g}))
+                  entity = entity, main = mainOf (g, r)}))
     end
 end

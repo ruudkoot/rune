@@ -903,7 +903,8 @@ struct
     | Core.Cast (b, t) => t :: typesOf (b, acc)
 
   (* the data types and newtypes the values name, through the fields of
-     those they name *)
+     those they name, and a tuple no declaration of `types` has (3.8: of
+     arbitrary length), after them *)
   fun reachableTypes (types : Core.decl list, vals : Core.decl list) =
     let
       val table = List.foldl (fn (d as Core.Data (t, _, _), m) => M.insert (m, t, d)
@@ -913,6 +914,7 @@ struct
                                | (Core.Newtype (t, _, c, _), m) => M.insert (m, c, t)
                                | (_, m) => m) M.empty types
       val seen = ref M.empty
+      val tuples : Core.decl list ref = ref []
       fun visit c =
         if M.member (!seen, c) then ()
         else
@@ -920,16 +922,20 @@ struct
            case M.find (table, c) of
              SOME (Core.Data (_, _, cs)) => List.app visit (List.foldl (fn ((_, fs), acc) => List.foldl tycons acc fs) [] cs)
            | SOME (Core.Newtype (_, _, _, f)) => List.app visit (tycons (f, []))
-           | _ => ())
+           | _ => (case C.tupleArity c of SOME n => tuples := C.tupleData n :: !tuples | NONE => ()))
       val () =
         List.app (fn Core.Val (_, t, e) =>
                        (List.app visit (List.foldl tycons [] (t :: typesOf (e, [])));
-                        List.app (fn n => case M.find (conOf, n) of SOME t => visit t | NONE => ()) (C.names e))
+                        List.app (fn n => case M.find (conOf, n) of
+                                            SOME t => visit t
+                                          | NONE => if isSome (C.tupleArity n) then visit n else ())
+                          (C.names e))
                    | _ => ())
           vals
     in
       List.filter (fn Core.Data (t, _, _) => M.member (!seen, t) | Core.Newtype (t, _, _, _) => M.member (!seen, t) | _ => true)
         types
+      @ List.rev (!tuples)
     end
 
   (* what is reached from main: the values, by name, each made when it is
@@ -938,6 +944,19 @@ struct
     let
       val table = List.foldl (fn ((x, t, mk), m) => M.insert (m, x, (t, mk))) M.empty vals
       val made : Core.decl M.map ref = ref M.empty
+      (* a tuple's constructor as a function, of a tuple of no declaration
+         (3.8), made where it is reached *)
+      val tuples : string list ref = ref []
+      fun tupleFunction (x, n) =
+        let
+          val ps = List.tabulate (n, fn i => "a" ^ Int.toString (i + 1))
+          val xs = List.tabulate (n, fn i => "%x" ^ Int.toString (i + 1))
+        in
+          Core.Val (x, valOf (C.valueType x),
+                    Core.Lam (List.map (fn a => Core.TyBinder (a, Core.Star)) ps
+                              @ ListPair.map (fn (y, a) => Core.ValBinder (y, Core.TVar a)) (xs, ps),
+                              Core.Con (x, List.map Core.TVar ps, List.map Core.Var xs)))
+        end
       fun visit x =
         if M.member (!made, x) then ()
         else
@@ -949,10 +968,13 @@ struct
                 made := M.insert (!made, x, Core.Val (x, getOpt (t, C.lazyTy et), e));
                 List.app visit (C.names e)
               end
-          | NONE => ()
+          | NONE =>
+              (case C.tupleArity x of
+                 SOME n => (made := M.insert (!made, x, tupleFunction (x, n)); tuples := x :: !tuples)
+               | NONE => ())
     in
       visit "main";
-      List.mapPartial (fn (x, _, _) => M.find (!made, x)) vals
+      List.mapPartial (fn (x, _, _) => M.find (!made, x)) vals @ List.mapPartial (fn x => M.find (!made, x)) (List.rev (!tuples))
     end
 
   (* ---- The program's declarations ---- *)
@@ -1339,11 +1361,17 @@ struct
       (* ---- Instances ---- *)
 
       val instances = List.filter (fn (i : HsClasses.instance) => ownsInstance (#home i)) (HsClasses.instances (V.classes ()))
+      (* an instance's head, its type constructor at its variables: `->` Core's
+         function type *)
+      fun headType (tycon, args) =
+        case (tycon = T.arrowCon, args) of
+          (true, [a, b]) => Core.TFun (a, b)
+        | _ => Core.apply (Core.TCon (V.tyconName tycon), args)
       fun dfunType (i : HsClasses.instance) =
         let
           val names = List.tabulate (#vars i, fn j => "a" ^ Int.toString (j + 1))
           val gens = List.map Core.TVar names
-          val head = Core.apply (Core.TCon (V.tyconName (#tycon i)), gens)
+          val head = headType (#tycon i, gens)
           val dts = List.map (fn {cls, ty} => Core.TApp (Core.TCon (V.tyconName cls), V.tyGen (V.empty, gens) ty)) (#ctx i)
           val result = Core.TApp (Core.TCon (V.tyconName (#cls i)), head)
           val ks = C.inferKinds (names, fn _ => NONE, dts @ [result])
@@ -1406,7 +1434,7 @@ struct
                    val dts = List.map (fn t => Core.substTy (subst, t)) dts0
                    val env1 = V.bindTypes (V.empty, tks)
                    val env2 = ListPair.foldl (fn (p, t, e) => V.bind (e, p, Core.Var p, t)) env1 (params, dts)
-                   val headTy = Core.apply (Core.TCon (V.tyconName (#tycon i)), List.map (Core.TVar o #1) tks)
+                   val headTy = headType (#tycon i, List.map (Core.TVar o #1) tks)
                    val dictTy = Core.TApp (Core.TCon (V.tyconName (#cls i)), headTy)
                    val {supers = superClasses, methods, ...} =
                      case HsClasses.findClass (V.classes (), #cls i) of

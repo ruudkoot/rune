@@ -85,6 +85,30 @@ struct
          cons := M.insert (!cons, c, {tycon = t, params = ps, fields = [f]}))
     | Core.Val (x, t, _) => values := M.insert (!values, x, t)
 
+  (* a tuple of n components, its type and its constructor `(,...,)`, of
+     arbitrary length (3.8): each declared where it is first wanted *)
+  fun tupleArity c =
+    let val n = String.size c
+    in
+      if n >= 3 andalso String.sub (c, 0) = #"(" andalso String.sub (c, n - 1) = #")"
+         andalso CharVector.all (fn ch => ch = #",") (String.substring (c, 1, n - 2))
+      then SOME (n - 1)
+      else NONE
+    end
+
+  fun tupleData n =
+    let
+      val name = "(" ^ CharVector.tabulate (n - 1, fn _ => #",") ^ ")"
+      val ps = List.tabulate (n, fn i => ("a" ^ Int.toString (i + 1), Core.Star))
+    in
+      Core.Data (name, ps, [(name, List.map (Core.TVar o #1) ps)])
+    end
+
+  fun findTycon c =
+    case M.find (!tycons, c) of
+      SOME i => SOME i
+    | NONE => (case tupleArity c of SOME n => (declare (tupleData n); M.find (!tycons, c)) | NONE => NONE)
+
   (* a function that raises the exception a primitive makes of a message,
      at every type: so raise's own result is never a function, which Core
      to Mid takes a primitive's never to be *)
@@ -116,9 +140,9 @@ struct
      List.app declare Core.builtinData;
      List.app declare raisers)
 
-  fun tycon c = Option.map (fn {params, shape, ...} => (params, shape)) (M.find (!tycons, c))
+  fun tycon c = Option.map (fn {params, shape, ...} => (params, shape)) (findTycon c)
 
-  fun conInfo k = M.find (!cons, k)
+  fun conInfo k = (ignore (findTycon k); M.find (!cons, k))
 
   fun fieldsAt (k, args) =
     case conInfo k of
@@ -127,12 +151,25 @@ struct
         else List.map (fn f => Core.substTy (ListPair.map (fn ((a, _), t) => (a, t)) (params, args), f)) fields
     | NONE => raise Fail ("HsDsCore: the constructor " ^ k ^ " is not declared")
 
-  fun valueType x = M.find (!values, x)
+  (* a tuple's constructor as a function is of the type a declared one
+     would be, made where it is reached (HsDesugar) *)
+  fun valueType x =
+    case M.find (!values, x) of
+      SOME t => SOME t
+    | NONE =>
+        case tupleArity x of
+          SOME n =>
+            let val ps = List.tabulate (n, fn i => "a" ^ Int.toString (i + 1))
+            in
+              SOME (List.foldr (fn (a, t) => Core.TForall (a, Core.Star, t))
+                      (List.foldr Core.TFun (Core.apply (Core.TCon x, List.map Core.TVar ps)) (List.map Core.TVar ps)) ps)
+            end
+        | NONE => NONE
 
   fun dataArgs t =
     case Core.spine (Core.stripEval t) of
       (Core.TCon c, args) =>
-        (case M.find (!tycons, c) of
+        (case findTycon c of
            SOME {params, ...} => if length params = length args then SOME (c, args) else NONE
          | NONE => NONE)
     | _ => NONE
@@ -140,7 +177,7 @@ struct
   fun unfold t =
     case dataArgs t of
       SOME (c, args) =>
-        (case M.find (!tycons, c) of
+        (case findTycon c of
            SOME {shape = NewS (k, _), ...} => SOME (hd (fieldsAt (k, args)))
          | _ => NONE)
     | NONE => NONE
@@ -187,7 +224,7 @@ struct
   fun ikindOf (vars : ikind M.map) t =
     case t of
       Core.TVar a => (case M.find (vars, a) of SOME k => k | NONE => IStar)
-    | Core.TCon c => (case M.find (!tycons, c) of SOME {kind, ...} => fromKind kind | NONE => IStar)
+    | Core.TCon c => (case findTycon c of SOME {kind, ...} => fromKind kind | NONE => IStar)
     | Core.TApp (f, a) =>
         let
           val kf = ikindOf vars f
