@@ -1,0 +1,57 @@
+rune-plan 1
+basis demand
+library language/haskell lib/language/haskell
+  form header
+  export signature CORE
+  export structure Core
+  friend ../../../rhc.build
+  use lib/language/haskell/core.build
+    unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
+    unit language/haskell:core.sml lib/language/haskell/core.sml ascii demand
+  end
+end
+library unicode lib/unicode
+  form open
+  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii demand
+  unit unicode:utf8.sml lib/unicode/utf8.sml ascii demand
+  unit unicode:width_data.sml lib/unicode/width_data.sml ascii demand
+  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii demand
+  unit unicode:display_width.sml lib/unicode/display_width.sml ascii demand
+  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii demand
+  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii demand
+  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii demand
+  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii demand
+  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii demand
+  unit unicode:normalize.sml lib/unicode/normalize.sml ascii demand
+  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii demand
+  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii demand
+  unit unicode:identifier.sml lib/unicode/identifier.sml ascii demand
+  unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
+  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
+  unit unicode:security.sml lib/unicode/security.sml ascii demand
+end
+program
+  requires language/haskell
+  requires unicode
+  unit src/rhc/config.sml src/rhc/config.sml ascii
+  use lib/compiler/util.build
+    unit compiler:util/scon.sml lib/compiler/util/scon.sml ascii
+    unit compiler:util/ordmap.sml lib/compiler/util/ordmap.sml ascii
+    unit compiler:util/inttable.sml lib/compiler/util/inttable.sml ascii
+    unit compiler:state_sig.sml lib/compiler/state_sig.sml ascii
+    unit compiler:state.sml lib/compiler/state.sml ascii
+  end
+  unit compiler:util/source.sml lib/compiler/util/source.sml ascii
+  unit compiler:util/error.sml lib/compiler/util/error.sml ascii
+  unit compiler:util/pass.sml lib/compiler/util/pass.sml ascii
+  unit src/rhc/options.sml src/rhc/options.sml ascii
+  unit src/rhc/main.sml src/rhc/main.sml ascii
+  unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
+end
+provenance
+  input rhc.build 097d2776d40d8c3efe816ce408a53d282208aa3f4004be50753cd99059b4a4ba
+  input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
+  input lib/language/haskell/library.build 67e0babfa47cb282c241231c4f536d88363323cc408ee5b1f3c8de239be35f9e
+  input lib/language/haskell/core.build 3455d71efcb4494bdd21f81dc8c29d79b640ddb223231ac3cbe92c73b4de2b67
+  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+end
