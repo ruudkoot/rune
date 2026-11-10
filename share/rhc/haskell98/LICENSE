@@ -14,11 +14,18 @@ What was changed:
     the online Report (pristine/MANIFEST.tsv). It is kept unchanged, as the
     text the modules here are compared with.
   * The 20 modules here are that code with the published errata of the
-    Revised Report applied, and a comment at the head of each saying so.
-    errata.tsv lists every erratum and what was done with it; the errata are
+    Revised Report applied, and the changes rhc makes to it, its overlay,
+    and a comment at the head of each saying so. errata.tsv lists every
+    erratum and what was done with it; the errata are
     https://www.haskell.org/definition/haskell98-revised-bugs.html
   * overlay.tsv lists every change made to the Report's code, or to be made
     to it, each with its reason.
+  * PreludeEnum.hs holds 14 lines of the Report's Prelude, moved there.
+
+PreludeBuiltin.hs and UnicodePrims.hs are rhc's own, not the Report's (the
+modules of primitives the Report's code names and does not define), and are
+under the CC0 1.0 Universal dedication of the rest of the Rune repository;
+UnicodePrims.hs copies the tables of Rune's lib/unicode/code_point_data.sml.
 
 The Report's notice, as the online Report gives it:
 
@@ -32,5 +39,6 @@ The Report's notice, as the online Report gives it:
   version is clearly presented as such, and that it does not claim to be
   a definition of the language Haskell 98.
 
-These files are distributed under that notice. The CC0 dedication of the rest
-of the Rune repository, in the LICENSE at its top, does not apply to them.
+The other files of this directory are distributed under that notice. The CC0
+dedication of the rest of the Rune repository, in the LICENSE at its top, does
+not apply to them.

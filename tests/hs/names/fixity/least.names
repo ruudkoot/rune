@@ -1,5 +1,5 @@
 # No error: every operator resolves by its entity's fixity.
-pairs 533
+pairs 797
 EXPORT	A	tA Pair
 EXPORT	A	vA +++
 EXPORT	A	vA :&
