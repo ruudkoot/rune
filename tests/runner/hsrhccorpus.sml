@@ -15,9 +15,10 @@
    results, not judged: the names and fixity rhc has checked so far say
    nothing of what the judges refuse.
 
-   M13's own list is its own jobs, `m13-SET`: the 815 rows both judges
-   accept that need nothing (`nothing` or `nothing+cpp`), in the variant
-   `h98`; `rest-SET` takes the other rows of the set. Once rhc compiles, M13
+   M13's own list is its own jobs, `m13-SET`: the rows both judges accept
+   that need nothing (`nothing` or `nothing+cpp`), in the variant `h98`,
+   812 of the 815 E8 counted, the three R3 refuses aside; `rest-SET` takes
+   the other rows of the set. Once rhc compiles, M13
    holds `--typecheck-only` to agree with the compile on each of the 815:
    that comparison joins these jobs then. Nightly, by capability: rhc and
    the corpus. *)
@@ -43,8 +44,12 @@ struct
 
   fun judgesAccept r = HsCorpus.field r "v_ghc" = "accept" andalso HsCorpus.field r "v_hugs" = "accept"
   fun needsNothing r = let val n = HsCorpus.field r "needs" in n = "nothing" orelse n = "nothing+cpp" end
-  (* M13's done-when: the rows both judges accept that need nothing *)
-  fun m13 r = judgesAccept r andalso needsNothing r
+  (* M13's done-when: the rows both judges accept that need nothing, but
+     the three that put a do at its enclosing block's column, which the
+     decided reading of 9.3 refuses (R3, the lead's ruling 43): they go to
+     rest-SET, where tests/hs/rhc-corpus.txt records the oracles' departure *)
+  val outOfM13 = ["ghc/module/mod103", "hse/NonDecreasing.hs", "jhc/1_typecheck/2_pass/fixed_bugs/flat_do_where.hs"]
+  fun m13 r = judgesAccept r andalso needsNothing r andalso not (List.exists (fn x => x = HsCorpus.field r "id") outOfM13)
 
   (* ---- rhc on a program ---- *)
 

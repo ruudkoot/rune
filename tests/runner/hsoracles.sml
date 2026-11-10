@@ -12,11 +12,21 @@ structure HsOracles =
 struct
   open Sh
 
-  fun out () = fromRoot (env ("RUNE_HS_OUT", run ^ "/hs-oracles"))
-  fun oraclesFile () = env ("RUNE_HS_ORACLES_TXT", fromRoot "tests/hs/oracles.txt")
+  (* what the jobs read and where they write, by the environment, or set by
+     a check of the harness that runs them in its own process (the faults
+     of tests/runner/hschecks.sml), which also takes what they say and gives
+     their children more of the environment *)
+  val outOverride = ref (NONE : string option)
+  val oraclesOverride = ref (NONE : string option)
+  val ghcOverride = ref (NONE : string option)
+  val extraEnv = ref ([] : (string * string) list)
+  val sink = ref say
+  fun tell s = !sink s
+  fun out () = case !outOverride of SOME d => d | NONE => fromRoot (env ("RUNE_HS_OUT", run ^ "/hs-oracles"))
+  fun oraclesFile () = case !oraclesOverride of SOME f => f | NONE => env ("RUNE_HS_ORACLES_TXT", fromRoot "tests/hs/oracles.txt")
   val oracles = ["ghc", "hugs", "nhc98", "mhs"]
   val shims = "tests/hs/oracles"
-  fun ghc () = env ("RUNE_HS_GHC", "ghc")
+  fun ghc () = case !ghcOverride of SOME g => g | NONE => env ("RUNE_HS_GHC", "ghc")
   fun ghcPkg () = env ("RUNE_HS_GHC_PKG", "ghc-pkg")
   fun hugsDir () = env ("RUNE_HS_HUGS", "")
   fun nhcDir () = env ("RUNE_HS_NHC98", "")
@@ -41,7 +51,7 @@ struct
   fun call log {cmd, dir, stdin, timeout, changes} =
     let
       val () = mkdirs (OS.Path.dir log)
-      fun envf e = List.foldl (fn ((k, v), e) => setEnv (k, v) e) (unsetEnv ["FORCE_COLOR", "CLICOLOR_FORCE"] e) changes
+      fun envf e = List.foldl (fn ((k, v), e) => setEnv (k, v) e) (unsetEnv ["FORCE_COLOR", "CLICOLOR_FORCE"] e) (!extraEnv @ changes)
       val status = execProcess false limits envf {cmd = cmd, dir = SOME dir, stdin = stdin, stdout = log ^ ".out",
                                                    stderr = log ^ ".err", timeout = timeout}
     in {status = status, output = read (log ^ ".out"), errors = read (log ^ ".err")} : ran end
@@ -143,9 +153,9 @@ struct
       package {name = "haskell98-shim", src = src, modules = strictModules, flags = ["-XPackageImports", "-XHaskell2010"],
                db = strictDb ()};
       package {name = "haskell98-compat", src = csrc, modules = compatModules, flags = ["-XHaskell2010"], db = compatDb ()};
-      say ("PASS the GHC shim: " ^ strictDb () ^ ", " ^ compatDb () ^ "\n")
+      tell ("PASS the GHC shim: " ^ strictDb () ^ ", " ^ compatDb () ^ "\n")
     end
-    handle Failed m => say ("FAIL the GHC shim: " ^ m ^ "\n")
+    handle Failed m => tell ("FAIL the GHC shim: " ^ m ^ "\n")
 
   (* MicroHs's shim: its own modules, and the GHC shim's where they are the
      same *)
@@ -218,9 +228,9 @@ struct
       val failures = List.mapPartial (fn (_, Failure m) => SOME m | _ => NONE) vs
       val explained = List.length (List.filter (fn (_, Explained _) => true | _ => false) vs)
     in
-      List.app (fn m => say ("FAIL " ^ m ^ "\n")) failures;
-      if null os then say ("FAIL " ^ oracle ^ " " ^ job ^ ": nothing was judged\n")
-      else say ((if null failures then "PASS " else "SUMMARY ") ^ oracle ^ " " ^ job ^ ": " ^ Int.toString (length os)
+      List.app (fn m => tell ("FAIL " ^ m ^ "\n")) failures;
+      if null os then tell ("FAIL " ^ oracle ^ " " ^ job ^ ": nothing was judged\n")
+      else tell ((if null failures then "PASS " else "SUMMARY ") ^ oracle ^ " " ^ job ^ ": " ^ Int.toString (length os)
                 ^ " outcomes, " ^ Int.toString explained ^ " explained by " ^ oraclesFile () ^ ", "
                 ^ Int.toString (length failures) ^ " failures\n")
     end
@@ -239,9 +249,9 @@ struct
       val bad = List.filter (fn l => Expectations.meaning (#category l) = SOME Expectations.Strict
                                      andalso Expectations.glob (#way l, oracle) andalso ran l andalso not (used l)) ls
     in
-      if null rs then say ("FAIL " ^ oracle ^ ": no job of it left results\n") else ();
-      List.app (fn l => say ("FAIL stale " ^ oracle ^ ": " ^ Expectations.describe l ^ "\n")) bad;
-      if null bad andalso not (null rs) then say ("PASS " ^ oracle ^ ": no line of " ^ oraclesFile () ^ " is stale\n") else ()
+      if null rs then tell ("FAIL " ^ oracle ^ ": no job of it left results\n") else ();
+      List.app (fn l => tell ("FAIL stale " ^ oracle ^ ": " ^ Expectations.describe l ^ "\n")) bad;
+      if null bad andalso not (null rs) then tell ("PASS " ^ oracle ^ ": no line of " ^ oraclesFile () ^ " is stale\n") else ()
     end
 
   (* ---- Each oracle holds to a known output first ---- *)
@@ -266,9 +276,9 @@ struct
     in
       case r of
         SOME {status = 0, output = "hello\n", ...} => true
-      | SOME r => (say ("FAIL " ^ oracle ^ " does not run hello: exit " ^ Int.toString (#status r) ^ ", printed "
+      | SOME r => (tell ("FAIL " ^ oracle ^ " does not run hello: exit " ^ Int.toString (#status r) ^ ", printed "
                         ^ Int.toString (size (#output r)) ^ " bytes (" ^ d ^ ")\n"); false)
-      | NONE => (say ("FAIL " ^ oracle ^ " does not build hello: " ^ firstNonEmpty (log ^ ".err") ^ firstNonEmpty (log ^ ".out")
+      | NONE => (tell ("FAIL " ^ oracle ^ " does not build hello: " ^ firstNonEmpty (log ^ ".err") ^ firstNonEmpty (log ^ ".out")
                       ^ " (" ^ d ^ ")\n"); false)
     end
 
@@ -345,7 +355,7 @@ struct
      if oracle = "mhs" then assembleMhsShim () else ();
      if probe oracle then report (oracle, "conformance", List.map (conformanceOne oracle) (HsCorpus.rows "conformance.tsv"))
      else ())
-    handle Failed m => say ("FAIL " ^ oracle ^ " conformance: " ^ m ^ "\n")
+    handle Failed m => tell ("FAIL " ^ oracle ^ " conformance: " ^ m ^ "\n")
 
   (* ---- E8's verdicts ---- *)
 
@@ -428,7 +438,7 @@ struct
          val cs = List.filter (fn c => #set c = set andalso only (#id c)) (HsCorpus.candidates ())
        in report (oracle, "judge-" ^ set, List.concat (List.map (judgeOne (oracle, records, openf)) cs)) end
      else ())
-    handle Failed m => say ("FAIL " ^ oracle ^ " judge " ^ set ^ ": " ^ m ^ "\n")
+    handle Failed m => tell ("FAIL " ^ oracle ^ " judge " ^ set ^ ": " ^ m ^ "\n")
 
   (* ---- The run set ---- *)
 
@@ -524,7 +534,7 @@ struct
                                   (HsCorpus.rows "run.tsv")
        in report (oracle, "run-" ^ set, List.map (runOne (oracle, cs)) rows) end
      else ())
-    handle Failed m => say ("FAIL " ^ oracle ^ " run " ^ set ^ ": " ^ m ^ "\n")
+    handle Failed m => tell ("FAIL " ^ oracle ^ " run " ^ set ^ ": " ^ m ^ "\n")
 
   (* ---- The inventory ---- *)
 
@@ -559,7 +569,7 @@ struct
   fun inProcess (name, args, tags) =
     List.foldl (fn (t, tree) => Test.tag t tree) (job (name, args, [], 600, 500)) tags
 
-  val tree =
+  fun tree () =
     Test.tag "covers:tests/hs/*" (Test.tag "covers:tests/runner/hs*.sml"
       (Test.describe ""
         [Test.tag "nightly" (Test.describe "hs-oracles"

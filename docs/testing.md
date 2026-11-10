@@ -497,6 +497,13 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `hs/errors/typecheck/NAME` and `hs/accept/NAME`. They need the capability
   `rhc` (`bin/rhc`); where there is no program there is no job. With
   `--accept`, the way `register` writes `.expected`.
+* **Tiers** (the roadmap's D56, B; the lead's ruling 45). A program of
+  `tests/hs/lang` runs in `check` in the three ways, with its two compiles
+  and its check, unless `tests/hs/lang-nightly.txt` names it (a program
+  over D56's second, with its measured time), when all its jobs are
+  `nightly`; `hs/errors/register/NAME` is `check` and `hs/errors/typecheck/NAME`
+  `nightly`; `hs/accept/NAME` is `check`. The register way and the refused
+  programs are also `quick`.
 * **What they cover.** `covers:` tags for `tests/hs`, `lib/language/haskell`,
   `src/rhc`, `share/rhc` and `rhc.build`, so that `--affected` runs rhc's
   tests alone for a change there, and everything for a change to the
@@ -519,7 +526,9 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
 
 **Round trips** (the roadmap's D28; `tests/runner/hsroundtrip.sml`). On every
 file of `tests/hs/lang`, `tests/hs/accept` and `tests/hs/roundtrip`
-(`hs/roundtrip/rhc/PATH`, from `tests/hs`):
+(`hs/roundtrip/rhc/PATH`, from `tests/hs`, with the explicit print's two tests,
+in `check`; `hs/roundtrip/rhc-printers/PATH` with the implicit and exact
+prints', `nightly`):
 
 * the **tree test:** the file printed with explicit braces parses to the
   tree the file does, its locations erased;
@@ -656,7 +665,7 @@ exports and scopes, every name, and fixity. `tests/runner/hsnames.sml`'s jobs
 against E16's export pairs, fixities and instances; E16's fixtures under both
 fixpoints (`--names=least|greatest`); a program's own `Char`; fixity by
 entity; a cycle of three signed modules; a dotted module name. And
-`hs/names/mutants` builds the dump with one edit at a time, each of which a
+`hs/names/mutants` (nightly) builds the dump with one edit at a time, each of which a
 fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
 
@@ -721,8 +730,9 @@ differ from the good rhc's, and runs the jobs it names in a tree of links to
 the root in which `bin/rhc.rbc` is the mutant's: `CAUGHT` by the first that
 fails, else `UNCAUGHT`, or `UNEXERCISED` where no output differs, or
 `STILLBORN`, each but the first a failure, as is a named job that does not
-run. `make check` holds the list to the sources (`hs-mutants/prepare`, a
-`built-ID` job for each); `make test-rhc-mutants`, nightly, judges them
+run. `make check` holds the list to the sources (`hs-mutants/prepare`, and
+the first mutant's `built-ID`, a canary); `make test-rhc-mutants`, nightly,
+builds the others and judges them
 (`HS_MUTANTS=HL01,HP02` for some; `bin/rune-test hs-mutant-tree ID` builds a
 mutant's tree for a job to be run against it by hand). The first fourteen
 seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
@@ -746,7 +756,8 @@ multi-module form of a joined program; none is made where a `default`
 declaration or a name qualified by `Main` would change the program). A pair
 is held while its program's rows, or the rows its relation cites, are
 `Planned`; what runs today is rhc's names on both programs of the two new
-relations, on an even sample of 30 (`hs/meta/names/*`): as many scope errors
+relations, on an even sample of 30 (`hs/meta/names/*`; `reorder` in `check`, the others
+nightly, as the mechanical relations but `braces` are): as many scope errors
 in the program's own modules, and Main's exports, fixities and instances the
 same (a split's moved to `Lib`). Renaming bound variables mechanically waits
 for a dump of rhc's binding sites; the `rename` pairs are by hand.
@@ -767,7 +778,7 @@ use (`USE`): its renamed name and its bytes. `hs/meta/rename` renames each to
 binding's span covers more, as a function binding's head does, is left.
 
 **rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
-`hs/interp-vm/NAME`). Each run program of `tests/hs/lang` through rhc to
+`hs/interp-vm/NAME`, nightly). Each run program of `tests/hs/lang` through rhc to
 Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
 Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
 `.stdin`: the VM prints what the interpreter printed and ends as it did, every
@@ -849,8 +860,10 @@ the bottom the generator puts in its input, and `hs/core/@silent` holds the
 judge of a run to failing a silent one.
 
 Each run test is also compiled by rhc through Mid (the roadmap's M10: `bin/rhc
--o FILE`) at `-O0`, `-O1` and `-O2` to both bytecodes, and run on the register
-VM interpreted and at tier 2 and on the stack VM (`hs/core/vm/NAME`): it
+-o FILE`) at `-O0` and `-O2` to the register bytecode and run on its VM
+interpreted and at tier 2 (`hs/core/vm/NAME`, `check`), and at `-O1` there and
+at each level to the stack bytecode on the stack VM (`hs/core/vm-rest/NAME`,
+nightly): it
 prints what Core's interpreter printed and ends as it did, every bottom one
 bottom, a status other than 0. E1's programs, each with a line `; ways: E1`,
 also run nightly in E1's forty-five ways, twelve modes of the register VM and

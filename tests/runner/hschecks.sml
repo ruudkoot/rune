@@ -298,21 +298,27 @@ struct
       val () = write (ghc, fakeGhc)
       val () = Posix.FileSys.chmod (ghc, Posix.FileSys.S.irwxu)
       val counter = ref 0
-      fun job (args, lines, hello) =
+      (* the jobs run here, in this process, on the fake data and the fake
+         GHC: what they say is taken, not printed, so that their planted
+         failures are not the check's *)
+      fun job (runs, lines, hello) =
         let
           val () = counter := !counter + 1
           val n = Int.toString (!counter)
           val txt = d ^ "/oracles-" ^ n ^ ".txt"
           val () = write (txt, String.concatWith "\n" lines ^ "\n")
-          val changes = [("RUNE_HS_DATA", dataDir), ("RUNE_HS_CORPUS", corpus), ("RUNE_HS_GHC", ghc),
-                         ("RUNE_HS_OUT", d ^ "/out-" ^ n), ("RUNE_HS_ORACLES_TXT", txt), ("HELLO", hello)]
-          fun one a = (execEnv (fn e => List.foldl (fn ((k, v), e) => setEnv (k, v) e) e changes)
-                         {cmd = [fromRoot "bin/rune-test"] @ a, dir = NONE, stdin = "", stdout = d ^ "/stdout-" ^ n,
-                          stderr = d ^ "/stderr-" ^ n, timeout = 300};
-                       read (d ^ "/stdout-" ^ n))
-        in String.concat (List.map one args) end
-      val judge = ["hs-oracle", "judge", "ghc", "ghc-legacy"]
-      val stale = ["hs-oracle", "stale", "ghc"]
+          val said = ref []
+          fun set (data, root, g, outDir, oracles, extra, sink) =
+            (HsCorpus.dataOverride := data; HsCorpus.rootOverride := root; HsOracles.ghcOverride := g;
+             HsOracles.outOverride := outDir; HsOracles.oraclesOverride := oracles; HsOracles.extraEnv := extra;
+             HsOracles.sink := sink)
+          fun reset () = set (NONE, NONE, NONE, NONE, NONE, [], say)
+          val () = set (SOME dataDir, SOME corpus, SOME ghc, SOME (d ^ "/out-" ^ n), SOME txt, [("HELLO", hello)],
+                        fn s => said := s :: !said)
+          val () = (List.app (fn f => f ()) runs; reset ()) handle e => (reset (); raise e)
+        in String.concat (rev (!said)) end
+      val judge = fn () => HsOracles.judge ("ghc", "ghc-legacy")
+      val stale = fn () => HsOracles.stale "ghc"
       fun saw (what, text, s) = need (String.isSubstring s text, what ^ ": no " ^ String.toString s ^ " in " ^ String.toString text)
       fun not' (what, text, s) = need (not (String.isSubstring s text), what ^ ": " ^ String.toString s ^ " in " ^ String.toString text)
       val bLine = "ghc | ghc/x/B::judge | HOST-BUG | reject: planted"
@@ -336,7 +342,7 @@ struct
       val () = records ("accept", "reject")
       val t = job ([judge, stale], [], "hello\\n")
       val () = not' ("the record agreeing", t, "FAIL")
-      val t = job ([["hs-oracle", "judge", "ghc", "jhc"]], [], "hello\\n")
+      val t = job ([fn () => HsOracles.judge ("ghc", "jhc")], [], "hello\\n")
       val () = saw ("a set with no candidate", t, "nothing was judged")
     in finish "the oracle harness on fake oracles" end
 

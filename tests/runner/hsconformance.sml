@@ -478,7 +478,7 @@ struct
        args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ String.concatWith " " (List.map quote args)],
        env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 600, cap = 0, cpus = 1, memory = 1000,
        pools = [], exclusive = false, after = [], judge = failLines} : Run.command Test.tree
-  val tree =
+  fun tree () =
     List.foldl (fn (tag, t) => Test.tag tag t)
       (Test.describe "hs/conformance" [job ("table", ["hs-conformance"]), job ("faults", ["hs-conformance-faults"])])
       ["check", "hs", "quick", "covers:tests/hs/conformance.tsv", "covers:tests/hs/errata.tsv", "covers:tests/hs/deviations.tsv", "covers:tests/hs/readings.md",
