@@ -1,24 +1,24 @@
 # Roadmap: rhc, a Haskell 98 compiler on Rune's back end
 
-**Rune can host a Haskell 98 compiler with no new instruction and no new kind of object, though with eight primitives for thunks and ten for `Integer`, in line at tier 2, which move both fingerprints. No Mid pass changes in behaviour but for two small fixes. What does change there is code, not output: E11-5 and E11-9, which held bytes, and M6's walkers, which should.**
+**The owner decided this roadmap on 2026-11-09. rhc lowers a lazy typed Core of its own to Rune's Mid, where a lazy position has the abstract type `susp T` and force is one node, lowered to form C: a flat `K_THUNK` and four instructions, `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE`, on both bytecodes. Mid's `Ty` gains variable-headed application and a forall, Mid gains a `Case`, and Mid, Low and both instruction sets gain multi-value return, which takes away the pair of `IO`'s state token. `IntInf` takes the immediate representation, which rhc's `Integer` shares. These change Rune more than the recommendations did, and each says by how much under the standing gate. Eight options are still to be measured, and the owner decides them on the figures: D3's `Force` right-hand side, eval/apply, pointer code 11, selector thunks, CAF tables, two forms of string literal, Sestoft-order trees and GHC's eta (*Decisions on the numbers*).**
 - **The hook is Mid,** beneath a lazy typed Core that rhc owns. Hand-written Mid for knot-tied lists, mutually recursive CAFs, monad dictionaries and polymorphic recursion ran on both bytecode VMs and their tiers, not in native code, two of its ten programs only with D5's Simplify fixes (E1).
-- **A thunk is a marked closure, and force is one Mid node.** That costs 1.05 of dedicated `FORCE` and `UPDATE` instructions on 113 lazy programs, and 1.02-1.22 on output shaped as rhc's will be (E2, E5).
-- **Mid stays strict,** and a lazy position has a type of its own. That is what keeps its passes safe and tier 2 from reading a thunk blind. With casts erased a forgotten force is a fatal rather than a wrong answer, except in a function-typed slot, where MidLint alone stands (D4, D11).
+- **A thunk is a flat `K_THUNK`, and force is one Mid node lowered to `FORCE`** (D3, D11, D13). Form C is the base of E2's ratios. Rune could have hosted Haskell with no new instruction and no new kind of object: form G, a marked closure with force lowered to a test, a value read and `CALL`, cost 1.05 of form C on 113 lazy programs and 1.02-1.22 on output shaped as rhc's will be (E2, E5). The owner took C as "cleanest and most performant". The stack bytecode takes the instructions too, about 115 lines more [estimate] (D14).
+- **Mid stays strict,** and a lazy position has a type of its own. That is what keeps its passes safe and tier 2 from reading a thunk blind. With casts erased a forgotten force is a fatal rather than a wrong answer, and in a function-typed slot `CALL` stops a `K_THUNK` (D4, D11). With `Ty` extended, `Any` is left for what `Ty` cannot say (D4).
 - **rhc's cost, before any optimiser:** 3.4 to 5.2 times `ghc -O0` on three whole programs, 13 to 23 on Prelude-bound kernels, in instructions at tier 2. That is the kindest measure: in cycles the same runs give 5.8 to 7.0 and 18.8 to 42.8, and against `ghc -O2` the whole programs are 4.5 to 49.5. Four optimisations in Core take whole programs to 1.3 to 3.7 at Rune `-O2` (E5). These rest on hand-lowering, not on a compiler.
-- **The cache needs +338 -231 in three files,** leaves Rune's bytes unchanged, and on a toy language with no front end gives one unit per module cycle at no cost to the store or the linker (E13).
+- **The store rhc needs has landed** with build-system-v2, built from E13's split: rhc writes its own format, head, key and settings, with no change to Rune (D43). On a toy language with no front end, one unit per module cycle cost the store and the linker nothing (E13).
 - **The Report has been read clause by clause:** 3,901 rows, 54 readings, 16 of 18 errata unapplied in the text the brief links (E9). All three oracles now run. Of 82 conformance tests 48 show a disagreement, counting MicroHs and the expected result: 20 hard, 16 not Haskell 98, 7 oracle gaps, 5 environment (E7).
 - **The Report's own recursive libraries are compiled as they stand (D36).** Its 11-module cycle is mostly scoping: no binding group crosses a module, though one type group needs kind inference across Prelude and Ratio and one expression depends on defaulting. The recursive-module work lands in the front end before the Prelude (M12, M13) and needs no cache, and a mechanical fallback exists: a small tool can derive the merged layout if the joined checker runs late (E16).
-- **Lazy ML works on the same thunks.** All 10 of the spec's programs pass with no line changed in a Mid pass and no Core. It found a collector fault Haskell cannot reach, which would have stayed hidden had this roadmap stopped at Haskell (E14).
+- **Lazy ML works on the same thunks.** All 10 of the spec's programs pass with no line changed in a Mid pass and no Core. It found a collector fault Haskell cannot reach, which would have stayed hidden had this roadmap stopped at Haskell (E14). It ran on form G, so M26 runs the checklist again on form C (D57).
 
-**In what order: neither roadmap waits on the other.** rhc needs no milestone of build-system-v2. It asks that six of that roadmap's decisions be taken with a second language in view (D46, *What rhc asks of build-system-v2*); refused, none of the six stops rhc. The two can run side by side. An owner who runs one at a time should take v2 first: it is the smaller, it fixes real cache holes, and rhc's track S then sits on a finished store rather than a moving one. There is no technical dependence either way.
+**In what order: build-system-v2 is done.** It landed in origin/master `697724da5`, and implementation starts there. rhc's six questions of it were taken with a second language in view, and rhc uses its store, its friends and its identity per compiler (*What build-system-v2 gave rhc*). What may start at once: M1 to M8, M9 without D3's measured variant, and M31; then M28 to M30 after M6's walkers, and the rest as *The order* gives it.
 
 This roadmap plans eight tracks:
 - **T, tests:** the conformance table, the runners, the oracles, the corpus.
-- **A, Rune's contract:** E11's patches, Mid to bytecode, walkers, lints. They stand on their own, whatever becomes of rhc.
+- **A, Rune's contract:** E11's patches, Mid to bytecode, walkers and a fold, lints, and the owner's changes to `Ty`, Mid's `Case`, multi-value return and `IntInf`. They stand on their own, whatever becomes of rhc.
 - **B, back:** Core, thunks through the engines, Core to Mid.
 - **F, front:** parser, modules, the checker, deriving, desugaring, HsLint.
 - **L, libraries:** the Report's Prelude and libraries.
-- **S, separate compilation:** the store split, HsIface, keys over a cycle.
+- **S, separate compilation:** HsIface and rhc's driver on the landed store, keys over a cycle.
 - **P, optimisation:** the first Core optimiser.
 - **Z, lazy ML:** a checklist that has been run.
 
@@ -26,21 +26,21 @@ This roadmap plans eight tracks:
 - **Lambda as the hook:** it is not close to Core, and no optional pass runs on it (W1).
 - **Separate compilation as the biggest decision:** the laziness boundary is harder to reverse (W5).
 - **Haskell first as enough for lazy ML:** Haskell cannot reach two collector faults that lazy ML does (W6).
-- **`K_THUNK` and a force instruction,** expected since the heap-layout roadmap: neither is needed (D11, D13).
+- **`K_THUNK` and a force instruction,** expected since the heap-layout roadmap: neither is needed (D11, D13). The owner took both.
 - **The nofib left for this work as the corpus:** nhc98's older snapshot is the better one, though the brief's is closer than it looks (W7).
 
-**Five questions are the owner's and need a judgement rather than evidence:**
-- **G0:** the hook, `susp`, the force protocol and the library layout: D1-D6, D11-D13, D36.
-- **Where the Report and every implementation part.** rhc follows the text unless it is wrong, contradictory, ambiguous or cannot be implemented, the last being a ground the brief does not name; unanimity of implementations alone is no ground. So R1, R2 and R5 depart, each with its ground, and `Just.let`, R21(b) and R38 follow the text, marked for the owner. Letting unanimity win remains the alternative, a new rule (D38).
-- **`default` and Rule 2 in a module cycle:** no implementation gives each module its own `default`, which is the Report's reading; rhc does, and refuses only a variable whose constraints arose in modules whose `default`s differ. Rule 2 closes at the end of each module, as 4.5.5 says; the end of the SCC is the alternative, an extension (D30).
-- **Blackholing:** G, which detects re-entry at once, against L, which saves 0.6% on the ports and 0.2% to 1.6% on E5's output, and detects it after a collection (D12).
-- **A Rune-only `lib/language/haskell`** needs a written exception to the library rule (D42).
+**Five questions were the owner's, needing a judgement rather than evidence, and the owner has answered them:**
+- **G0** (D1-D6, D11-D13, D36): Mid beneath rhc's Core; `susp` an abstract tycon and force one node, lowered to form C's instructions, with a `Force` right-hand side built and measured against it; `Ty` extended; the evaluated invariant written and linted, with a checked `Any` in checked builds only; recursion through a cell; the Report's library layout.
+- **Where the Report and every implementation part:** the text, with the one rule. R1, R2 and R5 depart, each with its ground, and `Just.let`, R21(b) and R38 follow the text (D38).
+- **`default` and Rule 2 in a module cycle:** each module its own `default`, and Rule 2 closing at the end of each module, as recommended. At the owner's request an option, `--cycle-default=scc`, gives one `default` per SCC and the SCC's end, an extension off by default (D30); another, `--names=greatest`, gives the greatest fixpoint of names (D29).
+- **Blackholing:** not applicable. Form C blackholes at entry, so re-entry is found at once and the captures are released then (D12).
+- **A Rune-only `lib/language/haskell`:** Rune alone is required, other hosts informational, with the exception to the library rule written down (D42).
 
-**What is not established.** No prototype has been through `make check`, or on aarch64, 32-bit, PowerPC or Windows. rhc's compile time and space behaviour are unknown, the front end's 12-20k lines are an estimate, and K rests on three hand-lowered programs and four kernels with no `Read` and no real `IO`.
+**What is not established.** No prototype has been through `make check`, or on aarch64, 32-bit, PowerPC or Windows. rhc's compile time and space behaviour are unknown, the front end's 12-20k lines are an estimate, and K rests on three hand-lowered programs and four kernels with no `Read` and no real `IO`. Form C's figures in E2 come from one prototype stage, `bin10`, which V2 reran on G's stage, `bin12`, with `--count` identical; form C never ran on the stack VM or in native code. The lazy ML checklist (D57) ran on form G. None of the owner's changes to Mid's IR, D4, D8, D9 and D10, was built: each is sized by E4's or E12's counts alone.
 
 Writing it found 8 defects, two of them live on master and reproduced by hand: `=` on a non-uniform datatype overflows the compiler's stack at `-O2`, and an unknown pass name is silently accepted (*Found while writing*).
 
-It was written on 2026-11-01 against master `b12141ecc`. It lives in a worktree, on branch `haskell98`.
+It was written on 2026-11-01 against master `b12141ecc`, and its citations stay against that tree; a citation of origin/master `697724da5` says so. It lives in a worktree, on branch `haskell98`.
 
 What it rests on:
 - **The code:** a reading of the IRs, the runtime, the pipeline, the units and the tests (*Where we are*).
@@ -57,39 +57,43 @@ What it rests on:
 
 ## Status
 
-Written, and undecided. Nothing is implemented. The decisions are the owner's: see the table at the head of *Decisions*.
+Decided on 2026-11-09. Nothing is implemented. The decisions are in the table at the head of *Decisions*, and the eight still to be taken on the figures in *Decisions on the numbers*.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
 | M1. The conformance table and its enforcement | T | M | D38, D53 | not started |
 | M2. Runners generalised; round-trip harness | T | M | D28 | not started |
 | M3. Oracle harness and the corpus imported | T | L | D52 | not started |
-| M4. Rune's contract: E11's patches | A | L | D7, D39, D40, D41 | not started |
-| M5. Mid to bytecode, Mid units | A | S | D1, D26 | not started |
-| M6. Walkers | A | M | D10 | not started |
+| M4. Rune's contract: E11's patches, as decided | A | M | D7, D39, D40, D41 | not started |
+| M5. Mid to bytecode, Mid text with labels | A | S | D1, D26 | not started |
+| M6. Walkers and a fold | A | M | D10 | not started |
 | M7. Lints and the two Simplify fixes | A | S | D5 | not started |
-| M8. Core, its text, CoreLint, a Core interpreter | B | L | D2 | not started |
-| M9. Thunks through the engines | B | L | D3, D4, D11-D14, D18, D19, D57 | not started |
-| M10. Core to Mid | B | L | D4, D6 | not started |
-| M11. Lexer, layout, parser, printer | F | L | D27, D28 | not started |
+| M8. Core, its text, CoreLint, a Core interpreter | B | L | D2, D41 | not started |
+| M9. Thunks through the engines | B | L | D3-D6, D11-D14, D18, D19, D57 | not started |
+| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | not started |
+| M11. Lexer, layout, parser, printers | F | L | D27, D28 | not started |
 | M12. Renamer, modules, fixity, recursive modules | F | L | D29, D30, D35, D36 | not started |
-| M13. Kinds, types, classes | F | L | D30, D31, D32 | not started |
+| M13. Kinds, types, classes | F | L | D30, D31, D32, D33 | not started |
 | M14. Deriving | F | M | D33 | not started |
-| M15. Desugaring to Core | F | L | D34 | not started |
+| M15. Desugaring to Core | F | L | D17, D34 | not started |
 | M16. HsLint | F | L | D54 | not started |
 | M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | not started |
 | M18. The Report's libraries | L | M | D36 | not started |
 | M19. Conformance: the table worked through | T | L | D52, D55, D56 | not started |
-| M20. The store split | S | M | D43 | not started |
-| M21. HsIface and rhc's driver | S | L | D44, D45, D46 | not started |
+| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | not started |
+| M21. HsIface and rhc's driver | S | L | D43, D44, D45 | not started |
 | M22. SCC keys | S | M | D30, D36 | not started |
 | M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | not started |
 | M24. Strictness | P | M | D50 | not started |
-| M25. What measurement justifies | P | | D15, D17, D51 | not started |
+| M25. What measurement justifies | P | | D15-D17, D19, D51 | not started |
 | M26. Ready for lazy ML | Z | | D57 | not started |
 | M27. Retire | | S | | not started |
+| M28. `Ty` with application and forall | A | L | D4 | not started |
+| M29. Mid `Case` | A | L | D8 | not started |
+| M30. Multi-value return | A | L | D9 | not started |
+| M31. `IntInf` immediate | A | M | D20 | not started |
 
-Gates: G0, the owner's decisions; G1, hello on the interpreter and the VM; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
+Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
 
 ## Found while writing this roadmap
 
@@ -168,6 +172,71 @@ The owner added one direction while this roadmap was being written, on 2026-11-0
 > since i'm interested in make a compiler close to the report it is very likely we'll support recurisve modules then and may also follow the report on its recursive structures. so these should be possible decions in the roadmap
 
 D30 and D36 are those decisions. Where convenience and the Report's text pull apart, this roadmap leans to the text and states what that costs.
+
+The owner decided on 2026-11-09, in this message:
+
+> - the new build system has landed in origin/master. please work from origin/master when starting the implementation
+> - the missing references are available at /mnt/h/Rune/haskell98. let me know if you still miss anything. let me know if this changes any recommendations.
+> - please record my decisions as follow and let me know if you have any objections:
+> - D1: A (as recommended)
+> - D2: C (as recommended)
+> - D3: B but with form C instead of form G. please also build C (a Force right-hand side) and benchmark it against B with form C.
+> - D4: C (safest and also useful for higher-rank and higher-kinded type in rune)
+> - D5: B (as recommended) (an C for checked builds/vms only if no perfomance impact on non-checked versions)
+> - D6: A (as recommended). For the D3 = C (a Force right-hand side) variant please us C (a recursive form in Mid)
+> - D7: B (as recommended)
+> - D8: C (let's fix it now instead of later)
+> - D9: B (let's do it now instead of later)
+> - D10: C (let's fix it now instead of later)
+> - D11: C: flat K_THUNK, four instructions (cleanest and most performant)
+> - D12: n/a (I decided on Form C)
+> - D13: C
+> - D14: B if it doesn't leak into Low; otherwise C
+> - D15: please build C and benchmark how it fares on rhc (and rune if that applies). then we decide if we take it over A based on the numbers.
+> - D16: please build B and benchmark how it fares on rhc (and rune if that applies). then we decide if we take it over A based on the numbers.
+> - D17: please build B and benchmark how it fares on rhc (and rune if that applies). then we decide if we take it over A based on the numbers.
+> - D18: A (as recommended)
+> - D19: please build B and benchmark how it fares on rhc. then we decide if we take it over A based on the numbers.
+> - D20: D (rune should benefit from this)
+> - D21: Representation: A; Tables: D (as recommended)
+> - D22: A (as recommended)
+> - D23: B (as recommended)
+> - D24: A (as recommended) please also build and benchmark B and D but we are unlikely to take D even if it wins as there is no use in rune. just for the record.
+> - D25: B (we will do Haskell2010 in the next roadmap)
+> - D26: A (please port IntInf if we need it; Haskell/SML interop is a future roadmap)
+> - D27: A (as recommended)
+> - D28: C
+> - D29: A (as recommended) but can we make least/greatest fixpoint a language/compiler option please as we did in rune for some of the sml97 ambiguities
+> - D30: A & Each module its own default (both as recommended) but can we make default per module/per scc a language/compiler option please as we did in rune for some of the sml97 ambiguities
+> - D31: A (as recommended)
+> - D32: as recommended
+> - D33: C
+> - D34: please build B and benchmark how it fares on rhc. then we decide if we take it over A based on the numbers.
+> - D35: B (as recommended)
+> - D36: A (as recommended)
+> - D37: Code: B and License: A (as recommended)
+> - D38: B (as recommendad)
+> - D39: D (leave it)
+> - D40: B and C (as recommended)
+> - D41: please review what build-system-v2 has changed and you decide based on that
+> - D42: C (as recommended)
+> - D43: please review what build-system-v2 has changed and you decide based on that
+> - D44: C (as recommended)
+> - D45: A, with B until M21 lands (as recommended)
+> - D46: n/a (build-system-v2 is done)
+> - D47: C (as recommended)
+> - D48: C (as recommended) please also build D and benchmark it against C
+> - D49: C (as recommended)
+> - D50: C (as recommended)
+> - D51: C (as recommended)
+> - D52: C (as recommended)
+> - D53: C (as recommended)
+> - D54: C
+> - D55: B (as recommended)
+> - D56: B (as recommended)
+> - D57: C (as recommended)
+
+The decisions are recorded in *Decisions*: at the end of each section, and in the table at its head.
 
 ## What the brief gets wrong, leaves open, or makes dangerous
 
@@ -1722,36 +1791,44 @@ from the version read, which *References* names and which is not always the publ
 **Status of a reference.** *References* gives each one's status: **full**, **sections** (which ones), **abstract**, or
 **memory**, which means no text was seen and the claim comes from the reader's memory or from other papers. Below, a
 paper with no mark was read at least in the sections cited. **[abstract]** and **[memory]** mark the rest where they are
-used, and *second hand* says whose account is being repeated. The papers a decision leans on most that could not be read
-are Faxén 2000, Augustsson 1993, Augustsson 1985, Sparud 1993 and Röjemo 1995. *References* lists them for the owner.
+used, and *second hand* says whose account is being repeated. The five papers a decision leans on most that E15 could
+not read, Faxén 2000, Augustsson 1993, Augustsson 1985, Sparud 1993 and Röjemo 1995, the owner supplied on 2026-11-09
+with most of the rest. E15b read them; its notes give a page or section for every claim, one file per paper
+(`results/E15b/P1/`, `P2/`, `P3/`, mapped in `results/E15b/map.tsv`). *References* lists what is still missing.
 **[inference]** marks a step of a reader's or the writer's: no paper says it. A bare number such as 3.1 is a section of
 the Report, and §3.1 a section of the paper named.
 
 **The age of the evidence.** Most run-time figures below are 15 to 35 years old, on native code. None predicts Rune's
 VM. Rates of updates and thunks are properties of programs and compilers and age moderately, though GHC's optimiser has
 changed them. Cache, predictor and pipeline figures belong to their machines. The only interpreter figures are Hartel et
-al. 1996 and Sestoft 1997; the only JVM figures are Wakeling 1999; the only JIT figures are Schilling 2013's, a tracing
+al. 1996, Sestoft 1997, Seward 1992's G-machine interpreter, Röjemo 1995's factor of four for nhc's bytecode, and Rohou
+et al. 2015's on dispatch; the only JVM figures are Wakeling 1999; the only JIT figures are Schilling 2013's, a tracing
 JIT. So a figure here ranks a mechanism and sizes nothing. Rune's own numbers are in *The experiments*. The papers that
 carry numbers:
 
 | Paper | Machine and compiler | Programs |
 |---|---|---|
 | Appel 1989 | VAX-8650, SML/NJ, 1988 | the SML compiler |
+| Hammond, Blott 1990 | Sun-3/60, a prototype Haskell compiler against Chalmers LML | 4 small programs |
 | Richard Jones 1992 | unnamed, a G-machine | 7 small programs |
 | Peyton Jones 1992 | unnamed, early GHC, no optimiser | one type checker, 600 lines |
 | Sansom, Peyton Jones 1993 | Sun 4/60, 12 MB, GHC | hsc, anna, pic, primes |
 | Peyton Jones, Partain 1993 | SPARC 10, GHC of November 1993 | 17 nofib real |
+| Augustsson 1993 | SparcStation2, hbc, collection excluded | 6, transformed by hand |
 | Santos 1995 | SPARC counts, ghc-0.23 | nofib |
 | Hartel et al. 1996 | SUN 4/690, 25-odd compilers | Pseudoknot alone |
 | Peyton Jones et al. 1996 | SPARC counts, ghc-0.26 | 15 real |
+| Gill 1996 | instruction counts, GHC 0.26 | nofib, 52 |
 | Sestoft 1997 | 486DX4/100, SML/NJ 108.13 | primes |
 | Boquist 1999 | UltraSPARC-I 140 MHz, ghc 4.01, hbc | 16, single-file, overloading removed by hand |
 | Wakeling 1999 | 143 MHz UltraSPARC, JDK 1.2 | small programs |
+| Faxén 2000, 2001 | Sun Ultra 5 at 270 MHz, Shade counts, a prototype compiler for "Plain" | 8 and 6, up to about 700 lines |
 | Ennals, Peyton Jones 2003 | Pentium III, GHC of 2003 | 21 programs |
 | Cheadle et al. 2004 | 500 MHz Pentium III, GHC 6.2 | nofib, 36 |
 | Marlow, Peyton Jones 2006 | 1 GHz Pentium III, about GHC 5.04 | nofib, 88 |
 | Marlow et al. 2007 | Opteron 250, 2.4 GHz Xeon, GHC of 2007 | nofib, 91 |
 | Sergey et al. 2014 | i7, GHC of 2014 | nofib |
+| Rohou et al. 2015 | Nehalem, Sandy Bridge, Haswell | interpreters: Python, JavaScript, CLI |
 
 ### Where the literature corrects the plan
 
@@ -1780,7 +1857,7 @@ carry numbers:
 9. **Core needs a simplifier, with eta, and the plan omitted both (D47, D48).** Every strictness and floating figure was
    taken with a simplifier running after the pass in the same IR.
 10. **The specialiser and strictness cannot be cut apart (D49, D50).** On `sum = foldl (+) 0` an unknown `(+)` hides
-    everything from the analyser [inference].
+    everything from the analyser (Augustsson 1993, §5.3).
 11. **"Decision trees" can only mean Sestoft's order (D34),** and Rune's `trees` cannot be reused as it stands.
 12. **HsLint's basis is half right (D54).** Neither Faxén nor THIH checks elaborated output, and a target check cannot
     see ambiguity.
@@ -1830,8 +1907,11 @@ Evidence on strict platforms is thin, and none of it is this hook:
 - **Wakeling 1999** on the JVM: see D13.
 - **GHC's JS backend** keeps the STG machine with its own stack and a trampoline (`ghc/compiler/GHC/StgToJS.hs:36`): the
   platform is a machine, not a strict language.
-- **Eta** maps calls to JVM calls with opt-in trampolining (slides, ICFP 2018; no paper found). **Mu** is a
-  strict-by-default dialect (HIW 2021 and 2022 abstracts), so a different language. **Frege:** no paper located.
+- **Eta** maps calls to JVM calls with opt-in trampolining (slides, ICFP 2018; no paper found). **Mu** is a different
+  language: "The runtime is strict, but some constructs have lazy operational semantics", laziness comes by pragma, and
+  the whole program is monomorphised, with no run-time dictionaries (Dijkstra, Magalhães, Néron 2024, §2.3.1, §2.3.8).
+  Its planned pipeline lowers GHC Core into Mu's strict IR and bytecode, the shape of rhc's hook; neither that report
+  nor the two slide decks says how laziness is mapped or what it costs. **Frege:** no paper located.
 
 **D2: Core, owned by rhc, and typed.** Support for typing is strong and anecdotal. Peyton Jones and Meijer 1997 (Henk):
 after every transformation "the huge majority of transformation bugs can be nailed in short order". Peyton Jones 1996:
@@ -1849,8 +1929,9 @@ How much type system: an IL must be explicitly typed, since inference is not pre
 then needs no unification (Henk, §2.2). Haskell needs F omega: higher-kinded variables, and rank-2 dictionary components
 (Peyton Jones et al. 1998, §2; Faxén 2002 uses polymorphic constructor fields). FC is not needed; its features are GADTs
 and type functions. One coercion is: `newtype T = MkT (T -> T)` has no System F encoding (Sulzmann et al. 2007, §2.4).
-Hall et al. 1996 keep explicit polymorphism because it survives transformation. Henk argues for a concrete syntax, which
-D2's Core text is. Join points are bound in it if Core does case of case (Maurer et al. 2017).
+Hall et al. 1996 keep explicit polymorphism because it survives transformation, the argument Peyton Jones and Wadler's
+draft already makes (p 4). Henk argues for a concrete syntax, which D2's Core text is. Join points are bound in it if
+Core does case of case (Maurer et al. 2017).
 
 Peyton Jones 1996 adds requirements on Core's form. Arguments are atomic, so every allocation is a visible `let`. `case`
 is the only force. Above all, **evaluated and unevaluated values must be distinguishable in Core's types.** That is what
@@ -1894,6 +1975,11 @@ programs. GHC keeps System FC through Core, with `Any` for unconstrained variabl
 needed kind polymorphism, with a "steady stream of bug reports". The nearest precedent to D4 is SML/NJ: FLINT casts to
 and from `void` through typed WRAP and UNWRAP (`smlnj/compiler/FLINT/reps/rttype.sml:59-60`), a strict typed IR with a
 top type and explicit casts, in production. Nothing here supports extending `Ty` with higher kinds for rhc's sake.
+Faxén's target has the shape D4 C takes, polymorphic constructor fields and higher-order polymorphism (abstract, §2.5).
+Once `Ty` has type variables, whether one may be instantiated at `susp T` needs an answer [inference]. Strict Core's,
+taken above for `Any`, is never. Launchbury and Paterson 1996 answer with a class: `Pointed` records which type
+parameters recursion needs pointed, and `seq` takes only lifted types (§3, §5), so Haskell 98's `seq` at every type lies
+outside their system.
 
 One hazard for casts: GHC redesigned `unsafeCoerce` because a cast floated above the runtime test that justified it
 (ticket #16893). Haskell 98 has no dynamic type tests, so a cast is justified by Core's types, not a branch. `Decon`
@@ -1916,9 +2002,10 @@ A CAF is an updatable closure with no free variables that the frame must reach b
 
 **Dictionaries are recursive values,** and that is the case that bites. Faxén's instance translation is literally
 circular, with default methods reaching the instance's own methods through `vd` (fig 26), and all module-level bindings
-in one `rec` (§4.5). Hall et al. tie the same knot with a fixpoint that "uses laziness in an essential way". For Haskell
-98 the recursion usually goes through a method's lambda, so building the record terminates even strictly. Three things
-break that [inference from these schemes]:
+in one `rec` (§4.5); Peyton Jones and Wadler's draft ties the same knot with `let rec dvar = ... in dvar` (pp 27-28).
+Hall et al. tie the same knot with a fixpoint that "uses laziness in an essential way". For Haskell 98 the recursion
+usually goes through a method's lambda, so building the record terminates even strictly. Three things break that
+[inference from these schemes]:
 - a method that is not a function, such as `maxBound`, makes a dictionary field that refers to its own dictionary;
 - Faxén's `xdef (chi alpha) vd` applies a function to the dictionary being defined;
 - lifting a sub-dictionary out of a method, the fix recommended everywhere for repeated construction, turns
@@ -1930,7 +2017,8 @@ polymorphic recursion dictionaries must be built at run time without bound: "the
 recursion" (Peyton Jones et al. 1997, §4.3). Constant instances can be top-level CAFs; dictionary functions stay code.
 Gofer allocates and indexes before filling, which gives cycles and sharing with no laziness, but only because Gofer had
 no polymorphic recursion (Jones 1994, Gofer, §7.5). Superclasses are embedded in all sources; flattening trades
-construction for selection, effect "not yet known" (Peterson, Jones 1993, §8.1).
+construction for selection, effect "not yet known" (Peterson, Jones 1993, §8.1); on hbc it took nfibI from 264 to 204
+seconds, one program (Augustsson 1993, Table 1).
 
 ### IRs (D7-D10)
 
@@ -1947,14 +2035,14 @@ rhc's Core has. What rhc's matches need of Mid is parameterised join points and 
 added its scrutinee must be evaluated, so force stays outside it. E12's reasons for it are compile time and clarity, not
 rhc.
 
-**D9: multi-value return.** First class in Strict Core (§3.1, §5.3), as CPR without a separate mechanism, unmeasured.
-GHC's unboxed tuples are "merely Haskell syntax for tying multiple values together" (Eisenberg 2017, §2.3). Baker-Finch
-et al. 2004: CPR pays only if the function allocates the product, not by type, since returning an existing pair unboxed
-re-allocates: run time -2.8%, allocation -5.4%, half of the programs under 3% (GHC 5.04, §6.2). Mid's `results` is CPR
-for tuples in whole programs (E12: turning it off gives -0.76% instructions, +4.4% allocation on the compiler). So no
-multi-value return on rhc's account. Worth knowing: the Mid form stops at units and at tuples, and user
-single-constructor types were a large share of strict arguments in Peyton Jones and Partain 1993 Table 6 (72% in hidden,
-44% in bspt), which `workers` will miss unless Core lowers them as tuples [inference].
+**D9: multi-value return.** First class in Strict Core (§3.1, §5.3), as CPR without a separate mechanism, unmeasured,
+and in Lambdachine's bytecode (D13). GHC's unboxed tuples are "merely Haskell syntax for tying multiple values together"
+(Eisenberg 2017, §2.3). Baker-Finch et al. 2004: CPR pays only if the function allocates the product, not by type, since
+returning an existing pair unboxed re-allocates: run time -2.8%, allocation -5.4%, half of the programs under 3% (GHC
+5.04, §6.2). Mid's `results` is CPR for tuples in whole programs (E12: turning it off gives -0.76% instructions, +4.4%
+allocation on the compiler). So no multi-value return on rhc's account. Worth knowing: the Mid form stops at units and
+at tuples, and user single-constructor types were a large share of strict arguments in Peyton Jones and Partain 1993
+Table 6 (72% in hidden, 44% in bspt), which `workers` will miss unless Core lowers them as tuples [inference].
 
 ### Runtime (D11-D19)
 
@@ -1981,9 +2069,11 @@ What the numbers carry over, as directions:
   (Marlow, Peyton Jones 2006, Fig 8, on a Pentium III); skipping whnf update elimination costs up to 1.22 (Boquist, Fig
   9.7).
 - **A test against an indirect jump on recent hardware:** no paper here gives it. Marlow et al. 2007 report mispredicts
-  of 10-12 and 24 cycles. Rohou et al. 2015 [abstract] say that on Haswell indirect-branch accuracy is no longer
-  critical for interpreters. The nearest recent data is Rune's own: 1.50G cycles entering against 0.99G by header when
-  all scrutinees are values, and no difference once 1% are thunks (`docs/plans/heap-layout.md:635-646`).
+  of 10-12 and 24 cycles. Rohou et al. 2015 measure the dispatch branch of switch-based interpreters: mispredictions
+  fall from 12-20 per thousand instructions on Nehalem to 0.5-2 on Haswell, and threaded code gains 10.1%, 4.2% and 2.8%
+  on Nehalem, Sandy Bridge and Haswell (§1, §2.2). That is dispatch, not the enter jump of compiled lazy code [inference
+  that it carries]. The nearest recent data is Rune's own: 1.50G cycles entering against 0.99G by header when all
+  scrutinees are values, and no difference once 1% are thunks (`docs/plans/heap-layout.md:635-646`).
 - **An updated thunk stops a tracing JIT's allocation removal.** Schilling 2013 §8.7: "Laziness further prevents some
   crucial allocation optimisations from becoming applicable." Rune's JIT compiles functions
   (`docs/performance.md:65-66`), so trace selection does not carry over and this does [inference]. A thunk form that
@@ -2035,8 +2125,11 @@ program; an `IO` action runs inside a thunk only through lazy input; and a lazy-
 procedure of the intermediate language, with `fetch`, `case` and `update` explicit, which is the library form. It can do
 so because GRIN can inspect a closure without forcing it, "something that can never be done" in STG's language (§2.5.2),
 so a Mid-level force needs that inspection as a primitive: form G's `thunk_fready`. nhc98 and hbc have an EVAL
-instruction. Sestoft 1997's final machine has twelve instructions and treats update as a stack marker. E2's 30%
-threshold has no literature behind it either way.
+instruction. Lambdachine's register bytecode has `eval` and `update`, eval/apply calls and a multi-value `ret`
+(Schilling 2012, §4.1): a precedent for D13 C, D15 C and D9 B, unmeasured. The one figure for a bytecode with thunks
+against native code is nhc's, a factor of four slower and four times smaller (Röjemo 1995, §1, p 283); it isolates
+neither force nor update. Sestoft 1997's final machine has twelve instructions and treats update as a stack marker. E2's
+30% threshold has no literature behind it either way.
 
 Wakeling 1999 is the nearest thing to a lazy language on a foreign VM. He lists allocation cost, no tail calls, no
 usable reduction stack and no in-place update, and answers with heap frames and a trampoline. Rune controls its VM:
@@ -2081,6 +2174,10 @@ computed on Real.
 Arity tags in pointers gained 1-2% in a preliminary test (Marlow et al. 2007, §6.3). `seq` on an unknown closure must
 test for a function (Marlow, Peyton Jones 2006, §6.3), which is trivial with kinds.
 
+Hammond and Blott 1990 measure the state conformance runs in until track P, run-time dictionaries against resolved
+overloading, at 4.9 to 11.3 times; see D49. It agrees with D15's ground for A, and nothing in it argues against building
+C.
+
 **D16: pointer code 11.** Marlow et al. 2007, GHC of 2007, nofib, 91 programs. Semi-tagging alone: -7.2% on Opteron,
 -9.4% on P4, code +1.5%, +2.2%. Pointer tagging: -13.7%, -12.8% (Opteron -37.3 to +10.6, P4 -44.4 to +11.4), code +2.4%,
 +2.6%, L1 accesses -13.9%, L2 misses -20.1%. Three or fewer constructors cover 96.1% of cases. Tags cost about 600
@@ -2090,27 +2187,41 @@ The further 5.5% and 3.4% "comes from reduced cache activity": the constructor t
 is never touched. One code cannot hold a constructor, and Rune's tag is in the object's own header, on the line the case
 reads anyway (`docs/plans/heap-layout.md:647-652`: 0.94G against 0.99G, inside noise). Code 11 is an evaluatedness bit,
 which the paper does not measure alone and for functions dismisses ("Little would be gained"). Rune's low bit already
-tells an immediate from a pointer, so its supply of bits is tighter than GHC's. So D16's none stands on the paper as
+tells an immediate from a pointer, so its supply of bits is tighter than GHC's. Nethercote and Mycroft 2002 propose an
+evaluatedness bit in the pointer, to replace GHC's indirect enter jump by a better predicted local one, and do not
+measure it (§5.4, pp 51-52). Rune's force takes no such jump, so code 11 can save only the header load, a memory access,
+which would show in cycles and cache misses rather than instructions [inference]. So D16's none stands on the paper as
 well as on E2.
 
 **D17: selector thunks.** Wadler 1987: the collector rewrites `fst (x,y)` to `x` when the argument is already an
 evaluated pair, and never calls the evaluator. With all lazy patterns translated through a tuple, no other rules are
 needed. It breaks Hughes's result that `break` leaks under any sequential evaluator, since the collector counts as a
-second evaluator. No implementation, no numbers. Sparud 1993 [abstract; second hand through Gustavsson, Sands 2001]
-instead makes a pattern binding a construct of the core language that the evaluator treats specially, with no collector
-rule. Gustavsson and Sands adopt that: Wadler's rule "would destroy many of the nice properties of our theory".
+second evaluator. No implementation, no numbers. Sparud 1993 fixes the leak in the evaluator instead, with no collector
+rule, and not by a construct of the core language: a pattern binding is desugared into the tuple form with selectors,
+plus an impure compiler-internal `updatePat`, which "overwrites every vi with an indirection to the corresponding vi'"
+(§3.3, p 119). For a typed IR he says to keep that form, his equation (8), and to optimise further only when generating
+code (§4, p 120). The construct is Gustavsson and Sands' reformulation, and they adopt it: Wadler's rule "would destroy
+many of the nice properties of our theory". hbc has it as an option, off by default (*What the implementations do*).
 
 Measured: one figure was found. Runciman and Wakeling 1993, clausify under an LML G-machine: 47,548 to 34,083
-byte-seconds, -28%, after black-holing had already taken 1,666,647 to 480,706. What Röjemo 1995 measured [abstract]
-could not be read. No paper says how often this leak bites across real programs.
+byte-seconds, -28%, after black-holing had already taken 1,666,647 to 480,706. Sparud gives heap profiles only, of
+`surprise` and a Fudgets mail reader, and says a program that does not leak "will run somewhat slower with our method",
+unsized (§4, p 120). Röjemo 1995 measures nothing on selector thunks: it is about the compiler's own heap, and
+"selector" does not occur in it (p 283). No paper says how often this leak bites across real programs.
 
 Where it bites: two components of a lazily matched pair consumed at different rates. The Report's own Prelude is built
 that way: `span` is `where (ys,zs) = span p xs'`, `lines` binds `(l, s') = break ...`, `unzip` uses `~(as,bs)`. So under
 a literal Prelude a line of length n holds n pairs until the consumer reaches `s'`, then a chain n deep is forced
 [inference; Wadler's `surprise` is the same program]. The cost is bounded by the longest line, or the distance between
 two consumers, which is why it can wait. For rhc the choice is three-way: Wadler in Rune's collector, needing a
-recognisable selector shape; Sparud in Core, needing an update of a sibling thunk at Mid's surface; or neither until a
-program needs it, D17's ruling.
+recognisable selector shape; Sparud's desugaring, needing an impure update of sibling thunks at Mid's surface; or
+neither until a program needs it, D17's ruling. Sparud's method needs the tuple form, and the Report's kernel is the
+per-variable one: 3.12 gives `let p = e1 in e0` = `case e1 of ~p -> e0`, and 3.17.3 rule (d) gives one
+`case v of { p -> xi }` per variable, which is Augustsson's form (5), measured faster for patterns of under about five
+variables (Sparud, §3.2, p 119). So Sparud's form is a different desugaring of pattern bindings and `~p`, which touches
+D34 [inference]. It does not fix `partition` written with two `filter`s (§5, p 121). What it needs under form C is in
+D17: the write cannot be a `K_IND` to an unevaluated component, and the sibling under evaluation must be skipped, or
+D11's pin becomes Haskell's [inference from §3.3 and E2's patch].
 
 **D18: depth.** Stack discipline first. Marlow and Peyton Jones 2006 §5.2: stubbing dead pointers by hand was needed
 under conservative walking and frame layouts avoid it, "this turns out to be very important in practice". Shao and Appel
@@ -2140,15 +2251,23 @@ Harris et al. 2005 §4.1 stop at the first frame already handled, and Rune has a
 of instructions and a barrier about 4 instructions plus 4 at collection. Sansom and Peyton Jones 1993, Sun 4/60: 16.7 to
 35.0 pointer updates per KB allocated, 20,200 to 49,800 a second. Rune's ports: strict twins store 5 times, lazy forms
 71 thousand to 16 million (`docs/plans/heap-layout.md:609`). Most fall in the young generation: 95% of closures updated
-within 100 KB of allocation, over 99% within 1 MB. Cost of the test: 2.0% and 1.6% on the two large programs (Sansom,
-Fig 10); on GHC 6.2, 15 instructions on a block-structured heap against 2 on a contiguous one, and removing it
-altogether gains 1.67% or 0.51% (Cheadle et al. 2004). The authors keep it. E2 found the existing path sufficient.
+within 100 KB of allocation, over 99% within 1 MB. Seward 1992, in a G-machine interpreter, finds the barrier "virtually
+zero" in cost, and "Ignoring Primes, ... at worst 97.6% of all updates are not in old-space" (abstract; §3.2.3). Cost of
+the test: 2.0% and 1.6% on the two large programs (Sansom, Fig 10); on GHC 6.2, 15 instructions on a block-structured
+heap against 2 on a contiguous one, and removing it altogether gains 1.67% or 0.51% (Cheadle et al. 2004). The authors
+keep it. E2 found the existing path sufficient.
 
 Promotion is the laziness-specific damage (Sansom §5.4): a promoted thunk roots its later value in the old generation,
-unseen by minor collections; 6% of hsc's allocation was promoted dead at a 100 KB area. The answers are aging; never
-promoting unevaluated thunks (§6.1, and Röjemo 1995, generational [abstract]); and eager promotion of what an old
-immutable object points to, -6.8% GC time, -18.4 to +36.6 (Marlow et al. 2008). Add-on-entry needs eager black-holing
-(Cheadle §5), so it conflicts with D12's L.
+unseen by minor collections; 6% of hsc's allocation was promoted dead at a 100 KB area. Promoting every survivor of a
+minor collection, which Rune's nursery does (`runtime/gc/minor.c:1-7`), made sieve's collection take "nearly ten times"
+the two-space collector's time (Röjemo 1995b, §5.1, p 155). The answers are aging; never promoting unevaluated thunks
+(Sansom §6.1; Röjemo 1992, where it also removes the test on update); and eager promotion of what an old immutable
+object points to, -6.8% GC time, -18.4 to +36.6 (Marlow et al. 2008). Röjemo 1995b ages, by a family of tags per node
+kind, and found never tenuring updatable nodes "a bad idea" on lmlcomp, where the young heap fills with old updatable
+nodes (§4, §5.4, p 159). Its old thunks add themselves to the remembered set on entry, with no test at update (§3, p
+150). Add-on-entry needs eager black-holing (Cheadle §5), so it conflicted with form L; under form C, which the owner
+took (D11), `BLACKHOLE` writes at entry and the conflict is gone. It is still no reason to change the barrier, which
+needs nothing new [inference].
 
 CAFs: Peyton Jones 1987 §18.6.2 calls per-supercombinator CAF lists "essential to prevent ever-expanding CAFs from
 filling up the machine". Peyton Jones 1992 §10.8 keeps a list and retains every entered CAF for ever, "slightly
@@ -2163,17 +2282,24 @@ Core-to-Mid, is the known fix. If CAFs stay roots, constant floating needs Santo
 ### Data (D20-D26)
 
 **D20: `Integer`.** Nothing measures defaulting. Literals are `fromInteger (dict) integer`, and Faxén 2002 §8.2 cites
-Augustsson [memory] that "there are programs where the bulk of the execution time is spent in constructing literals".
-One indirect sign: `Integer` as a share of strict arguments is 96.9% in rsa, 38.4% in gg, 33.0% in gamteb and 25.1% in
-uid, small or blank elsewhere (Peyton Jones, Partain 1993, Table 6, read from the table's layout). A defaulted site
-knows `Num Integer` at compile time, so known-instance selection applies directly. E5 is the only evidence.
+Augustsson that "there are programs where the bulk of the execution time is spent in constructing literals". Augustsson
+1993 §4.3 says it: "the biggest cost, by far, is the cost of computing the constant!", with `fromRational` worse;
+precomputed literals took hinc from 242 s to 1.55 s on hbc (Table 1), under Haskell 1.2's default of `(Int, Double)`,
+not Haskell 98's. Hammond and Blott's literal rewrite alone regained "a factor of 4" on Nfib (1990, p 282). One indirect
+sign: `Integer` as a share of strict arguments is 96.9% in rsa, 38.4% in gg, 33.0% in gamteb and 25.1% in uid, small or
+blank elsewhere (Peyton Jones, Partain 1993, Table 6, read from the table's layout). A defaulted site knows
+`Num Integer` at compile time, so known-instance selection applies directly. E5 is the only evidence.
 
 **D21: `Char`; D24: string literals; D26: library boundary.** No paper bears on these. Implementations do, and D26 rests
 on E1 and E13.
 
 **D22: `Int`.** No paper on the width. One consequence: an addition that can raise is not cheap-eager and not
-`exprOkForSpeculation`. So D22's checked prims close D51's local form for `Int` arithmetic, and only a path that cannot
-raise, such as the word prims, keeps it open [inference]. Strictness is unaffected.
+`exprOkForSpeculation`. Faxén says so: "If such overflow is trapped, integer addition is an unsafe operation, but if
+overflow just wraps around, as we will assume in this paper, it is safe" (2000, §3, p 152), with a footnote citing the
+Report's 6.4. So D22's checked prims close D51's local form for `Int` arithmetic, and only a path that cannot raise,
+such as the word prims, keeps it open. Every figure in Faxén 2000 assumes a wrapping `Int`, so his local column under
+D51 is an upper bound on what the checked prims give up [inference]. MLj drops SML's `Overflow` and measures nothing
+(Benton et al. 1998, §6.1). Strictness is unaffected.
 
 **D23: `Float`.** No paper. E7 finds Hugs printing `Float` and `Double` in 7 and 15 digits against GHC's and nhc98's
 shortest form, which the Report's `showFloat` defines, so the literal `Numeric` is the reference. Hartel et al. 1996's
@@ -2264,12 +2390,17 @@ pinned deviation, is the direction all took.
 blanked; `utils/check-exact` reproduces the source and needs annotations in every node. HSE has the same pair, and calls
 itself "on life support". The first is what D28 calls the tree test. Nothing argues that a batch compiler needs exact
 printing: Programatica rendered source by decorating the lexer's output, "preserving layout and comments" (Hallgren
-2003). What the tree test needs of the AST is parentheses as nodes, since chains are flat until fixity is resolved, and
-brackets can change meaning: `n + 1 = 7` defines `+`, `(n + 1) = 7` binds `n` (Hudak et al. 2007). A corpus does not
-check a printer: Duregård et al. 2012 enumerate ASTs by size and found `StringL "\n"` printed as `""` and `[Con..]`,
-with HSE as parser oracle. Erdweg's method is the one that tests layout: print each AST explicit and implicit, and
-require one parse. A printer that only prints braces never exercises L. E10's mutants add a token test, which is D28's
-second round trip.
+2003). Amorim et al. 2018, which derives a parser and a printer from declarative layout rules, is not exact either: its
+printer is "correct if the same abstract syntax tree" comes of parsing the original and the printed program (§5), it
+"discards comments altogether" (§8), and 5 of 22,191 Haskell files printed wrong, from a ripple effect in its layout
+fixer (§6.2); its parser costs 1.72 times the same files with explicit layout. An exact printer, D28 C, cannot print a
+tree that carries no annotations, one a generator or a reducer made, so it comes beside the tree printer and its round
+trips, as GHC keeps both tests [inference]. What the tree test needs of the AST is parentheses as nodes, since chains
+are flat until fixity is resolved, and brackets can change meaning: `n + 1 = 7` defines `+`, `(n + 1) = 7` binds `n`
+(Hudak et al. 2007). A corpus does not check a printer: Duregård et al. 2012 enumerate ASTs by size and found
+`StringL "\n"` printed as `""` and `[Con..]`, with HSE as parser oracle. Erdweg's method is the one that tests layout:
+print each AST explicit and implicit, and require one parse. A printer that only prints braces never exercises L. E10's
+mutants add a token test, which is D28's second round trip.
 
 **D29: names and fixity.** Use Diatchki, Jones and Hallgren 2002, not Faxén's section 4. It is about 200 lines of
 relations, a name mapping to zero, one or many entities with errors only on use, and it computes in-scope and export
@@ -2295,15 +2426,19 @@ so this is a negative result about a search.
 That is not as bad as it sounds [inference; no paper makes the comparison]. The ML literature names two hard problems,
 type checking and initialisation. Initialisation is a problem of strictness: Leroy 2003 spends most of a note on it. In
 rhc every top-level binding is a thunk, so a cycle across modules is a recursive binding group, and an ill-founded one
-is bottom. Type checking is hard in ML because modules carry abstraction and generativity, hence recursively dependent
-signatures (Crary et al. 1999) and double vision (Kilpatrick et al.). Haskell 98 modules are name-space control only, so
-pooling declarations under already unique names is enough, as jhc and Programatica do. Typing an SCC as one unit is then
-the only option that accepts unsigned cross-module recursion and keeps dependency analysis uniform.
+is bottom; Yang 2017 says as much, "a binding like x = x can simply be compiled into a thunk which infinite loops when
+forced" (appendix B.2, p 101). Type checking is hard in ML because modules carry abstraction and generativity, hence
+recursively dependent signatures (Crary et al. 1999) and double vision (Kilpatrick et al.). Haskell 98 modules are
+name-space control only, so pooling declarations under already unique names is enough, as jhc and Programatica do.
+Typing an SCC as one unit is then the only option that accepts unsigned cross-module recursion and keeps dependency
+analysis uniform.
 
 No paper says why GHC needs boot files. Diatchki et al. call the mechanism the programmer "essentially implementing this
-aspect of the module system manually". The likeliest account is Yang 2017 [abstract], unread. GHC's own notes give the
-cost, in *What the implementations do*. That boot files are incomplete comes from a forum post, checked by running it;
-no paper says it.
+aspect of the module system manually". Yang 2017 takes them as given and does not say either. The nearest it comes is
+that Haskell code "assumes an implicit ordering specified by the import statements", so ordering a signature among
+modules needs "an hs-boot style {-# SOURCE #-} import syntax" (appendix B.1, p 101), and that an incremental GHC must
+have "No backwards propagation" (B.2, p 102). GHC's own notes give the cost, in *What the implementations do*. That boot
+files are incomplete comes from a forum post, checked by running it; no paper says it.
 
 What remains is small and Haskell's own: `default` and the end of Rule 2 are per module, and a join loses the module.
 E9's R20 seeds one rule per SCC as an extension; the literature offers nothing better. Build systems agree on the unit:
@@ -2320,7 +2455,7 @@ defaulting.
 | Damas, Milner 1982 monotypes | Robinson mgu, occurs check | yes |
 | Generalisation of implicit groups | free variables minus environment | yes, with set difference |
 | Dependency analysis (4.5.1) | SCCs of the binding graph | no: a graph pass before typing |
-| Signatures, polymorphic recursion | check against a declared scheme (`tiExpl`) | no inference: semi-decidable (Mycroft 1984), undecidable (Henglein 1993, Kfoury et al. 1993, both [memory]) |
+| Signatures, polymorphic recursion | check against a declared scheme (`tiExpl`) | no inference: semi-decidable (Mycroft 1984), undecidable (Henglein 1993, Kfoury et al. 1993) |
 | Predicates, entailment | `bySuper`, `byInst`, one-way `match`, backward chaining | no: never binds a variable of the goal |
 | Context reduction | `toHnf`, then `simplify` (Jones 1999, §7.4) | no; "only informal hints" in the Report |
 | Ambiguity check | a variable-set test on the scheme | no |
@@ -2379,7 +2514,12 @@ exponentially slower", and the committee would not make that depend on optimisat
 Report's single context for a group can make a member ambiguous from outside, which is R21.
 
 Faxén's Definition 2 agrees with Rule 1 and does not state Rule 2 or defaulting. THIH states Rule 2 as one line in
-`tiProgram`. **Programs that differ by reading:**
+`tiProgram`. Nothing before it states them. Peyton Jones and Wadler's draft gives the restriction one sentence, on its
+BIND-PRED rule, "Haskell's (rather unsatisfactory) 'monomorphic pattern binding' rule" (p 31); its section on ambiguity
+ends "These predicates are ambiguous. Should really say more here." (§9.3.3, p 35); it has no Rule 2 and no defaulting.
+Nipkow and Prehofer 1995 "have not introduced ambiguity formally" (§8, p 223), though Hall et al. cite them for its
+treatment. Hammond and Blott 1990 default per module, `default (Int, Float)` when none is given (§3.5), and do not treat
+the restriction; nhc in 1995 had neither (Röjemo 1995, §1). **Programs that differ by reading:**
 1. `n = 60; a :: Int; a = n + 1` at top level. By Rule 2, `n` stays open to the module's end and becomes `Int`; a reader
    who defaults per group rejects. E7 runs it: GHC prints 61, Hugs `+98` refuses, and nhc98 prints 61 by having no
    restriction at all (`results/E7/hard/mr/out.txt`). THIH agrees with the Report.
@@ -2412,8 +2552,10 @@ question for E8 and the conformance table.
 never mentions it. But 10.1 defines the context as the smallest satisfying a condition, by a fixed point for mutually
 recursive types, and that condition is entailment over the instance environment. So derived code can come from syntax,
 on the renamed AST as D33 says, while the derived context must be computed after kinds and instance heads are known and
-before value bindings are typed [inference]. The methods then enter as ordinary instance bodies. `deriving` occurrences
-do not count as dependencies (Faxén, Definition 1).
+before value bindings are typed [inference]. The methods then enter as ordinary instance bodies. Faxén has no rules for
+deriving (§1.3), so only a derived instance made as AST and elaborated like a user's comes under replay and the second
+inference (D54); the minimality of a derived context is then checked by conformance rows alone [inference]. `deriving`
+occurrences do not count as dependencies (Faxén, Definition 1).
 
 **D34: desugaring and match compilation.** Faxén's order is the conformant one, not THIH's: "we do only that desugaring
 which is directly related to resolution of overloading or to modules" (§8.4), since the Report's translations are
@@ -2422,13 +2564,17 @@ compiler (§9.1). His target grammar omits char and string patterns, a slip.
 
 The Report's rule, 3.17.2: "Pattern matching proceeds from left to right, and outside to inside". So the order of
 forcing is a function of the values seen. A compiler is free only in tests on values already forced, and in sharing
-(that argument is E15's). Three things follow:
+(that argument is E15's). It is Augustsson 1985's: the patterns "are checked from top to bottom, and each pattern is
+checked from left to right", and the scrutinee "is evaluated exactly as much as is needed to determine which pattern is
+the first to match" (p 371). His scheme backtracks, with `default` as the failure join, which is D34 A, and measures
+nothing. Three things follow:
 
 - **Maranget's lazy result is about another semantics.** Maranget 1992: for
   `F (true,true)=1; F (_,false)=2; F (false,true)=3`, left to right `F bottom false` loops, right to left gives 2, and
   he calls the second correct. Under the Report the answer is bottom. A compiler that gives 2 is more defined than the
   Report and fails conformance. Maranget 2008 accepts the rule: "a match compiler for Haskell must preserve the
-  termination behavior of Augustsson (1985)". Necessity heuristics are therefore unavailable.
+  termination behavior of Augustsson (1985)". Necessity heuristics are therefore unavailable, and so are the necessity
+  semantics of Laville 1991 and Puel and Suárez 1993.
 - **Decision trees are legal only in Sestoft's order:** "Our naive matcher, and hence our match compiler, implements
   pattern matching as required by the Haskell report" (Sestoft 1996, §8). Rune's `trees` picks the first row's first
   testing pattern, the same order (`lib/compiler/core/matchcomp.sml:238-245`). But it makes no test for a tuple or
@@ -2439,7 +2585,10 @@ forcing is a function of the values seen. A compiler is free only in tests on va
   heuristics change nothing in most programs and at most tens of percent in size, with run-time correlation r at most
   0.30 (Scott, Ramsey 2000). GAML image: trees 110%, failure automata 101% (Maranget 1994). Coq binaries within 2%.
   Bytecode interpretation is the one setting where tests were visible, with a path of 6.33 against 3.14 (Maranget 2008,
-  §9.3), a reason to watch this on Rune's VM.
+  §9.3), a reason to watch this on Rune's VM. Pettersson 1992's automaton holds for lazy languages only "with strict
+  top-down, left-right evaluation" (p 270), so its "any column will do" (p 264) needs Sestoft's order; on his own SML
+  system it gave no reduction in code size, 38 of 1,671 states shared (2.3%) over 231 constructs. So decision trees
+  would show on rhc in tests executed, not in size [inference].
 
 Repeated tests left by backtracking are removed in Core by case on a known variable (Peyton Jones 1996, §5.3). Literals
 resist merging: a numeric literal is `==` at an overloaded type and may diverge. A probe for each match: put bottom at
@@ -2466,20 +2615,20 @@ oracle for strictness, and the literal Prelude is the reference. Text and code c
 a reading.
 
 **D38: which text, and Faxén's deviations.** "Many small flaws", four years of shake-down (Hudak et al. 2007): expect
-E9's list to grow. Faxén 2002 has about 44 figures of named rules, so a checker can cite rule names, contrary to the
-plan's "no rule numbers". The Lean project carries them (haskell-spec, version 0.1.0, proving nothing, with the same
-hole on ambiguity). Its last section says more investigation "is indeed needed before these inference rules can be used
-as a specification of the language". Citing it needs this list of where it leaves or goes against the Report, for the
-conformance table: kind defaulting only sketched, and his Definition 1 on what counts as a dependence (§3.1, §10.3);
-default method typing "not very explicit"; labelled fields, where update may change type (§5.2); ambiguity, where his
-rules allow ambiguous schemes (§7.2.3, §10.2); defaulting in prose only; principal types (§10.1); coherence (§10.2);
-polymorphic recursion "treated rather briefly"; import lists and qualified names (§4.3); separate type and class name
-spaces (§2.2); qualified reference to one's own top-level names (§4.2); top-level names against imports (§4.2); mutually
-recursive modules, left out (§1.3); data type contexts, "dubious" (§8.4, §10.3); eager context reduction, which he reads
-4.5.3 as mandating (§7.2.1); the class variable in a method's context (§6.2, §8.1); and overloaded patterns needing
-constructs absent from the Report's translation (§9.1). Items of formal convenience go against the Report. His policy,
-the Report beats implementations and vagueness is resolved by usefulness and "the simplest formal description", is close
-to D38's and is not a licence.
+E9's list to grow. Faxén 2002 has 44 figures, 32 of them of inference rules by their captions, so a checker can cite
+rule names, contrary to the plan's "no rule numbers". The Lean project carries them (haskell-spec, version 0.1.0,
+proving nothing, with the same hole on ambiguity). Its last section says more investigation "is indeed needed before
+these inference rules can be used as a specification of the language". Citing it needs this list of where it leaves or
+goes against the Report, for the conformance table: kind defaulting only sketched, and his Definition 1 on what counts
+as a dependence (§3.1, §10.3); default method typing "not very explicit"; labelled fields, where update may change type
+(§5.2); ambiguity, where his rules allow ambiguous schemes (§7.2.3, §10.2); defaulting in prose only; principal types
+(§10.1); coherence (§10.2); polymorphic recursion "treated rather briefly"; import lists and qualified names (§4.3);
+separate type and class name spaces (§2.2); qualified reference to one's own top-level names (§4.2); top-level names
+against imports (§4.2); mutually recursive modules, left out (§1.3); data type contexts, "dubious" (§8.4, §10.3); eager
+context reduction, which he reads 4.5.3 as mandating (§7.2.1); the class variable in a method's context (§6.2, §8.1);
+and overloaded patterns needing constructs absent from the Report's translation (§9.1). Items of formal convenience go
+against the Report. His policy, the Report beats implementations and vagueness is resolved by usefulness and "the
+simplest formal description", is close to D38's and is not a licence.
 
 ### Architecture (D39-D42)
 
@@ -2570,7 +2719,9 @@ libraries rebuilt each way. Ratios of allocation should travel better than ratio
 | SpecConstr | -10% time, code +3-4% | | 2007 GHC | Peyton Jones 2007 |
 | Cardinality | few %, 8.8% best | | 2014 GHC | Sergey et al. 2014 |
 | Call Arity alone | -0.2% | -0.0% | GHC 2014 | Breitner 2015 |
-| Specialisation of overloading | none published | none published | | see D49 |
+| Arity and enhanced occurrence analysis on | -1%, maillist -19%, 46 of 52 unchanged | | GHC 0.26, nofib | Gill 1996, Table 5.7 |
+| Inliner: INLINE pragmas; thresholds tuned | 10% faster, most of it one package; 22-27% tuned | | GHC 8.10.3, Hackage packages | Hollenbeck et al. 2022, abstract, §6.1 |
+| Specialisation of overloading, within a module | 9.2 times faster on nfib; 1.9 on choleski, idInt, hinc; 1.03 on sched | | hbc, by hand, 1993 | Augustsson 1993, Table 1; D49 |
 
 Santos's Table 4.1 shows what off-by-one hides: from minimal, the simplifier gets 11%, strictness takes that to 19%,
 everything else in -O to 51%. The separately measured passes do not obviously account for the gap, and the unmeasured
@@ -2614,8 +2765,11 @@ absence, worker/wrapper, let to case, simplify; lower. Left out deliberately: fl
 compiler for a non-strict language should implement (a) local floating to expose values ... (b) floating out of
 constants" (Peyton Jones et al. 1996, §7). On let-floating generally: the three floats hit different targets and their
 costs add up; what pays is local floating, which is simplifier work, and floating constants out. Full laziness is uneven
-and can leak. Santos floated only bindings judged non-leaky for half the gain, worst residency 1.18 times against 2.10.
-Peyton Jones 1987 §23.3.1 has the classic case, in which `f = drop 1000` comes to drag a graph 1000 levels deep.
+and can leak. Augustsson and Johnsson 1989 hold the opposite, "a transformer to full laziness is an essential part of a
+serious compiler", after three places in one program where losing it cost "an order of magnitude in time" (§4, p 138):
+one anecdote, against T3's measured +7.3%. Santos floated only bindings judged non-leaky for half the gain, worst
+residency 1.18 times against 2.10. Peyton Jones 1987 §23.3.1 has the classic case, in which `f = drop 1000` comes to
+drag a graph 1000 levels deep.
 
 **D48: a Core simplifier with eta.** Eta costs about 8% of instructions and allocation when off, more than full
 laziness. `let f = \x -> let ... in \y -> E` may become arity 2 if `f` is always applied to two arguments (Peyton Jones,
@@ -2627,27 +2781,47 @@ head is already a value. Mid's `workers` is safe: nothing sits between the lambd
 of GHC's unsound rewrites it refuses: foldr/build is unsound under `seq` (Hudak et al. 2007, §10.3), and full laziness
 changes strictness (Pałka 2012). Core Lint belongs in the first version.
 
+Arity raising beyond the simplifier has one measurement. Gill 1996's arity analysis raises arity wherever sharing is
+kept, and considers neither `seq` nor bottoms (§4.4); its own example moves a lambda out through an `if`, which D48's D
+allows and C refuses [deduced]. With enhanced occurrence analysis it gives a geometric mean of 0.99 of instructions on
+52 nofib programs, maillist 0.81 and 46 unchanged (Table 5.7), and earns most after deforestation, which rhc refuses.
+Augustsson 1993 §4.2's method-arity eta, which "may loose full lazyness", is the other precedent; both predate
+polymorphic `seq`. MLj raises arity only where effect types show termination (Benton et al. 1998, p 134), the
+strict-language form of the pedantic rule. Johann and Voigtländer 2004 give foldr/build's condition under `seq`:
+equality holds when `c` of two bottoms is not bottom and `n` is not bottom (§8.2).
+
 **D49: known dictionaries and specialisation.** Jones 1995 (dictionary-free) is whole program: each overloaded function
 at constant dictionaries becomes a clone, and members at known dictionaries are selected at compile time. It terminates
 because Gofer's dictionaries are finite. Under polymorphic recursion "The set of dictionaries ... is infinite and the
 specialization algorithm will not terminate". He wrote that of a suggested extension; Haskell 98 has it (4.4.1). So rhc
-cannot go dictionary-free: dictionaries stay, and specialisation is an optimisation with a fuel limit. Separate
-compilation is "the biggest outstanding problem". Code got smaller on all seven programs, 3.8% on anna, 45% on calendar,
-since unused methods go; 15,000 lines at most, 1993-94, Gofer.
+cannot go dictionary-free: dictionaries stay, and specialisation is an optimisation with a fuel limit. Augustsson 1993
+gives such a function, `f x = if x == x then x else head (f [x])`, which has no bounded set of specialisations (§5.4,
+fig 9). Separate compilation is "the biggest outstanding problem". Code got smaller on all seven programs, 3.8% on anna,
+45% on calendar, since unused methods go; 15,000 lines at most, 1993-94, Gofer.
 
-How much a program loses: one number. An overloaded `sum (map fact (nums 1))` at `Int` on hbc takes 13.6 s and 43 MB,
+How much a program loses. An overloaded `sum (map fact (nums 1))` at `Int` on hbc takes 13.6 s and 43 MB,
 hand-specialised 2.1 s and 9 MB, flagged as atypically heavy. Int signatures on small benchmarks "sometimes give a
-ten-fold improvement", real programs far less. Under Gofer's naive code generator the gain is marginal, so **the gain is
-the optimiser's, not the dispatch's**. Dispatch is cheap: "a reference to a tuple element followed by a function call"
-(Peterson, Jones, §9). The cost is that methods are unknown, so strictness, unboxing and inlining stop. Augustsson 1993
-[memory] is said to have the measurements. A Core-level specialiser has barely a paper: a sentence in each of Peyton
-Jones, Santos 1998 and Peyton Jones 1996. `ghc/compiler/GHC/Core/Opt/Specialise.hs` is the documentation. So E5 is the
-roadmap's only evidence, with E3's L1, the simplifier and the class-op rule with specialisation off: thunks -47%, bytes -38% in total, -26.2% and -17.7% for the median program.
+ten-fold improvement", real programs far less. Augustsson 1993's Table 1 has six programs on hbc, transformed by hand,
+collection excluded: automatic specialisation within a module gives 9.2 times on nfib (87 s to 9.5 s), 1.9 on choleski,
+idInt and hinc, and 1.03 on sched, which has monomorphic signatures throughout [the rows read as cumulative, inferred].
+Hammond and Blott 1990 put the naive translation against LML's built-in overloading on a Sun-3/60: 11.29 times on 8
+Queens, 9.72 on Primes, 10.24 on Nfib and 4.89 on KWIC, and 2.74, 2.06, 0.98 and 4.47 after four local rewrites (§3.6,
+§4). Under Gofer's naive code generator the gain is marginal, so **the gain is the optimiser's, not the dispatch's**.
+Dispatch is cheap there: "a reference to a tuple element followed by a function call" (Peterson, Jones, §9). On hbc's
+G-machine it was not: a method call took about 15 memory references against 6 for a known function (Augustsson 1993,
+§4.1), and the dictionary representation alone gave 2.2 times on nfib; the specialiser still gave more. The cost is that
+methods are unknown, so strictness, unboxing and inlining stop. Augustsson's table is the one figure for a specialiser;
+for GHC's, at Core level, there is a sentence in each of Peyton Jones, Santos 1998 and Peyton Jones 1996, and
+`ghc/compiler/GHC/Core/Opt/Specialise.hs` is the documentation. So E5 is the roadmap's only evidence on rhc's own
+programs, with E3's L1, the simplifier and the class-op rule with specialisation off: thunks -47%, bytes -38% in total,
+-26.2% and -17.7% for the median program.
 
 Order: specialise before strictness (`ghc/compiler/GHC/Core/Opt/Pipeline.hs:216`). `sum` and `product` are
 `foldl (+) 0`, `elem` is `any (== x)`, `(^)` has two class constraints. With `Integer` defaulting, dictionaries are
 constant at the call, so a known-dictionary specialiser sees what it needs at the use site [inference]. Peyton Jones,
-Partain 1993 §2.2 note dictionaries are tuples, so strictness with unpacking also catches some.
+Partain 1993 §2.2 note dictionaries are tuples, so strictness with unpacking also catches some. Augustsson 1993 adds two
+things a specialiser must cover: local overloaded bindings, since a specialised `sum` whose local `sum'` stays
+overloaded "is hardly an improvement" (§5.4, fig 10); and `fromRational` as well as `fromInteger` (§4.3).
 
 **D50: strictness.** The simple analyser is higher order, over top, bottom, functions and finite products, with each
 iterate widened to one demand per argument (Peyton Jones, Partain 1993). Absence is a second interpretation, not
@@ -2675,20 +2849,38 @@ Danger for conformance: strictness may evaluate before an IO action what the sou
 bug changes behaviour. If `IO` is a function in Core, the analyser needs this rule from the start. Which `error` a
 failing program reports does change, legally (Peyton Jones et al. 1999).
 
-**D51: cheap eagerness.** Faxén 2000 [memory; second hand through Ennals, Peyton Jones 2003 and Ennals 2004, to be
-checked before use]: a static analysis finds expressions certain to be cheap and safe, and evaluates them eagerly. "Is a
-thunk for x+1 cheap? It depends on whether x is evaluated", hence a whole-program flow analysis. Speedups 0-25% against
-a prototype with a "very simple" strictness analyser, on small benchmarks. Ennals warns that gains may shrink on a
-mature baseline.
+**D51: cheap eagerness.** Faxén 2000: a static analysis finds expressions certain to be cheap and safe, and evaluates
+them before it is known that their values are needed. Without knowing the global flow of control and which variables are
+evaluated, "even a variable reference is a potentially unsafe expression" (abstract), hence a whole-program flow
+analysis, and "separate compilation is impossible" (§6). Ennals and Peyton Jones put the point as "Is a thunk for x+1
+cheap? It depends on whether x is evaluated" (2003, §7.1). The setting is a prototype compiler for a language "Plain",
+eight programs of at most about 700 lines, Shade instruction counts, against a baseline with "a very simple strictness
+analyser" (§4, p 157). Table 1 gives 0% (sort) to 52% (qf) fewer instructions and 1% to 58% less time; on the three
+programs past toy size, event, sched and tc, 26%, 5% and 11% fewer instructions. The "0-25%" often quoted is Ennals
+2004's summary. The gain does not come from thunks never run: those removed have "an about average probability of being
+evaluated", and much of it comes from evals removed and unboxing that speculation enables (p 157). Every figure assumes
+a wrapping `Int` (D22). Ennals warns that gains may shrink on a mature baseline.
 
 A local version is old. GHC around 1995 floated a `case` out of a `let` for "cheap non-failing" primitives on unboxed
 values, on Core, with no flow analysis (Santos 1995, §3.5). GHC 9.14 case-binds arguments that are
 `exprOkForSpeculation`: reach WHNF, soon, no write side effect, cannot throw, so no division
 (`ghc/compiler/GHC/CoreToStg/Prep.hs:1859`, Note [Speculative evaluation]), with a "Very Nasty Wrinkle": speculating a
-recursive dictionary function loops. No paper gives a figure for the local form. What it needs from rhc [inference]:
-types that say a variable is evaluated, in place of the flow analysis; and total primitives. `Int` `+` qualifies only if
-it cannot raise, which D22's checked prims do not give, `div` is out, and `Integer` operations are unbounded, so out,
-which excludes much defaulted code until small paths are visible.
+recursive dictionary function loops. Faxén's "All evals expensive" column is a figure for the local form: it marks
+expensive every thunk body that contains an eval and every lambda whose body is not another lambda, which "corresponds
+roughly to what one can accomplish without a special cheap eagerness analysis" (pp 156-157). It keeps all of the gain on
+the three queens programs, and gives 16%, 1% and 8% fewer instructions on event, sched and tc. With a wrapping `Int` and
+a weak strictness baseline, that is a ceiling for rhc, not a measure [inference]. What the local form needs from rhc
+[inference]: types that say a variable is evaluated, in place of the flow analysis; and total primitives. `Int` `+`
+qualifies only if it cannot raise, which D22's checked prims do not give, and `div` is out; Faxén proposes testing a
+divisor and building the thunk only when it is zero, and did not build it (§6). Under D20 D an `Integer` add of two
+immediates cannot raise, but the big path is unbounded work and fails at `INTINF_DEFAULT_BITS` (`runtime/intinf.h:6`),
+so only speculation guarded by a test for immediates qualifies, which is the form Faxén 2001 measured.
+
+Faxén 2001 defers the choice to run time: speculate only if no variable the body evaluates is bound to a thunk, and in
+one variant only while a depth counter is positive (§2). A test costs 7-8 instructions (§4.1); it cuts thunks built by
+5% to 90%, but "hardly improves run-times and instructions counts at all for most programs" (§5): event, sched and infer
+run at 99% to 106% of the static form's instructions (Table 1). The static form enables unboxing and the removal of
+evals; the dynamic one does not, since later passes must still allow for a thunk (§5).
 
 The prize is update avoidance. Sansom and Peyton Jones Fig 4, thunks evaluated zero, once, more: hsc 4.6/77.4/17.9, anna
 16.3/56.2/27.5, pic 1.4/79.3/19.3, primes 14.2/50.1/35.7. E3 at `-O0` has 91% of thunks entered. Peyton Jones 1992 §4.3:
@@ -2705,6 +2897,7 @@ February 2006, read through a fetch). For Rune [inference; no paper tries it]: t
 and doubled code, are a static compiler's. A tiered VM has counters and could compile one side. The hard part remains:
 abortion captures a running computation as a heap suspension. A subset without abortion can speculate only what is
 proved total, which is cheap eagerness steered by a profile: a possible later tier-2 milestone, not part of this plan.
+Faxén 2001's measured run-time test weighs against it, unless that tier compiles a specialised side [inference].
 
 ### Testing (D52-D56)
 
@@ -2722,8 +2915,8 @@ unexpectedly repeated", and in a note on `f = \x -> \y -> x+y`. GHC gives up sha
 "runs the risk of reducing sharing", `ghc/docs/users_guide/using-optimisation.rst:1017-1020`). So `--count` budgets are
 rhc's policy, labelled so, outside the clause matrix, and ceilings: floating and strictness change counts freely. A
 `--count` test beside each 4.5.5 test is the one budget with a clause to point to. No paper tests that a compiler
-preserves call-by-need. The nearest is Moran and Sands 1999 [abstract and page 1]: count steps, require no increase in
-any context. GHC's practice is perf tests with tolerances.
+preserves call-by-need. The nearest is Moran and Sands 1999: count steps, every transition of Sestoft's machine
+(Definition 3.1), and require no increase in any context. GHC's practice is perf tests with tolerances.
 
 **`-O0` is a reference only by audit.** Pałka 2012 held the hypothesis that `-O0` is right and found a program that
 `-O0` miscompiled and `-O` fixed ("not always true"). He generated `[Int] -> [Int]` terms with `seq`, printed unbuffered
@@ -2770,34 +2963,45 @@ only published typing of a Haskell elaboration is Hall et al. 1996 §5.2, which 
 elaborated output,** and a target check cannot see what the plan most fears: `show (read "True")` elaborated at `Int`
 and at `Bool` are both well typed at `[Char]`, with different meanings (Faxén, §10.2).
 
-An independent check is therefore three layers [synthesis; the papers give the parts]:
+An independent check is therefore three layers, all of which D54 C takes [synthesis; the papers give the parts]:
 - *Target typing.* Type-check the elaborated term as a System-F-like term with kinds, by Faxén's target grammar (figs 5,
   6) and rules in the style of Hall's calculus (figs 15-18). It needs no unification. This is close to CoreLint; the
   owner should decide if they are one tool. Its obligation is Hall's soundness statement.
 - *Rule replay.* Check (source, elaborated) pairs against Faxén's judgements. His rules guess types in premises; the
   elaboration recorded the guesses, so replay is deterministic. Messages cite his rule names. The `min` premises of kind
-  inference are obligations no rule discharges, so kinds are recomputed.
+  inference are obligations no rule discharges, so kinds are recomputed. Faxén names the two places a recorded choice is
+  needed: where both his "dict inst" and "dict super" rules apply, and premises whose types are absent from the
+  conclusion, as in the app rule (§10.2.2, p 355). His `bindg` rule with Definition 2 states Rule 1 of 4.5.5 (p 338), so
+  replay checks Rule 1. It cannot refuse ambiguity, since his rules admit ambiguous schemes (§7.2.3), and has nothing
+  for Rule 2, defaulting, deriving, newtype, strictness flags or recursive modules (§1.3). His module rules are per
+  module, so an SCC needs a rule of rhc's own, and his deviations of §2.2, §4.2 and §4.3 (D38) are amended first
+  [inference].
 - *Second inference.* A transliteration of THIH's `tiImpls`, `split`, `candidates`, `tiProgram`, in its conformant form,
-  re-derives each group's scheme, ambiguity, deferred predicates and default choice. Only this layer can check 4.3.4 and
-  4.5.5. It still depends on rhc's renamer, dependency analysis and kinds.
+  re-derives each group's scheme, ambiguity, deferred predicates and default choice. Only this layer can check Rule 2 of
+  4.5.5, ambiguity and defaulting (4.3.4). It still depends on rhc's renamer, dependency analysis and kinds.
 
 Superclass paths give several correct elaborations (Faxén, §10.2.2; Bottu et al.), so the first two layers must accept
 any route. No machine-checked work on Haskell 98 was found in Coq or Isabelle. No paper studies an independent check of
 a Haskell front end's output as such. Core Lint's success depends on Core being typed to the end; below it `Any` leaves
 MidLint weaker, so CoreLint must run just before the crossing and the translation must be small. The draft Faxén started
-from, Peyton Jones and Wadler 1991, could not be reached.
+from, Peyton Jones and Wadler's, read now in a copy dated February 19, 1992, is no second basis: it lists imports,
+ambiguity, `deriving` clauses, default methods in classes, and constant and n+k patterns as not covered (§1.2, p 5), and
+has 22 judgement forms and 78 rule names by its index. It already says the rules admit several derivations (pp 5, 34),
+which is why replay needs the recorded choices. E15 had held it under Faxén's key without knowing it
+(`downloads/papers/faxen02.pdf`, the same md5).
 
 **D55: generators and metamorphic relations.** Csmith's authors conclude "fixed test suites ... are an inadequate
 mechanism for quality control". The only Haskell work is Pałka's, plus smaller efforts (Fetscher et al. 2015 [abstract],
 declarative type rules doubling as a generator, beaten by a hand-built one). Applying with no authority (Chen et al.
-2020): cross-optimisation, most effective on optimisation bugs; EMI (Le et al. 2014), needing no second compiler, whose
-lazy form replaces a thunk unforced on input I by `undefined` [inference]; and metamorphic pairs, where Pałka's caught
-what cross-optimisation missed (ticket 5557). Metamorphic relations fit the Report better than C: it defines its
-semantics by translations, so each translation (`results/E9/translations.md`) is a relation citing a clause. Reduction:
-McKeeman's 23 transformations to a fixpoint; Regehr et al. 2012 [abstract], reducers must stay valid; with an AST
-printer a reducer is small. Lazy SmallCheck's refinement picks partial inputs by demand (Runciman et al. 2008);
-StrictCheck compares demand as data (Foner et al. 2018); both need instrumentation Haskell 98 lacks, so they belong in
-the Core interpreter. Depth enumeration suits Prelude functions, not programs (Duregård et al.).
+2020; measured on GCC and LLVM by Chen et al. 2016, §1): cross-optimisation, most effective and most efficient on
+optimisation bugs; EMI (Le et al. 2014), the weakest and least efficient oracle, needing no second compiler, whose lazy
+form replaces a thunk unforced on input I by `undefined` [inference]; and metamorphic pairs, where Pałka's caught what
+cross-optimisation missed (ticket 5557). Metamorphic relations fit the Report better than C: it defines its semantics by
+translations, so each translation (`results/E9/translations.md`) is a relation citing a clause. Reduction: McKeeman's 23
+transformations to a fixpoint; Regehr et al. 2012 [abstract], reducers must stay valid; with an AST printer a reducer is
+small. Lazy SmallCheck's refinement picks partial inputs by demand (Runciman et al. 2008); StrictCheck compares demand
+as data (Foner et al. 2018); both need instrumentation Haskell 98 lacks, so they belong in the Core interpreter. Depth
+enumeration suits Prelude functions, not programs (Duregård et al.).
 
 **D56: budget, and nofib.** Partain 1992 is a position paper with no results. Real is "by far the most important";
 Imaginary "distinctly unimportant". "The initial nofib suite will have no value as a predictive tool". Its standard is
@@ -4879,35 +5083,43 @@ E1 has 1,063 definition-to-instance edges: 172 true, 891 spurious, and it misses
 - 2026-10-21: designs for code the compiler runs are chosen by speed and correctness on Rune at tier 2, and other hosts are informational. `AGENTS.md`'s library rule has `lib/language/c` running on hosts, so a Rune-only `lib/language/haskell` needs a written exception (D42).
 - 2026-10-10: highly generic, reusable functionality goes into its own well-tested library under `lib/`, which is D21's ground for the Unicode tables.
 
-**The standing gate.** After any change to Rune, SML budgets and bootstrap bytes stay put unless a decision says otherwise, and that decision says by how much. Where a prototype here moved nothing, the milestone must show the same. One such exception is known: the primitives of D3 change both instruction-set fingerprints, so every `.rbc` changes once and the compiler's budgets re-base (deduced, not measured). M9 reports what moved.
+**From the owner's decisions of 2026-11-09, and the tree they name:**
+- **Work from origin/master `697724da5`,** where build-system-v2 has landed. The roadmap's citations stay against `b12141ecc`, where it was written; each is checked again on the new tree before its milestone, and a citation of the new tree says so.
+- **v2's friend rule.** A build that names a file or sub-build of a library with a header is refused unless the header names it a friend (v2's M14; `lib/compiler/driver/project.sml:286-313`, origin/master). So `rhc.build` is a friend of `lib/compiler`, as `rune.build` is (D41).
+- **Identity per compiler.** A second compiler links its own `Config`, which `scripts/gen-version.sh --config PLAN FILE` writes over its own plan; through `libraries compiler` it would take Rune's (v2's M11; D41).
+- **Codecs are generated.** Mid's codecs come from `tools/codecs/compiler.sml` by `make codecs`, and `make check-codecs` refuses stale output (`Makefile:677-680`, origin/master). A change to a constructor of Mid, to `fundef` or to `Ty` is a change to that description (M4, M28, M29, M30).
+
+**The standing gate.** After any change to Rune, SML budgets and bootstrap bytes stay put unless a decision says otherwise, and that decision says by how much. Where a prototype here moved nothing, the milestone must show the same. Exceptions are known. The primitives and form C's instructions of D3, D11 and D13 change both instruction-set fingerprints, so every `.rbc` changes once and the compiler's budgets re-base (deduced, not measured); M9 reports what moved. The owner's D8, D9 and D20 move more, and M29, M30 and M31 say by how much.
 
 **From the Report's licence.** `share/rhc/haskell98` is a modified version of the Report's code: it says so, and does not claim to define Haskell 98 (D37). The corpus has licences of its own, which no experiment surveyed; M3 starts there.
 
 ## The architecture
 
-**A lazy typed Core that rhc owns, lowered to a strict Mid with suspensions explicit in its types.** Everything above Mid is Haskell's. Everything from Mid down is Rune's, and changes there are decisions. Every recommendation below is a recommendation: D1-D57 are the owner's.
+**A lazy typed Core that rhc owns, lowered to a strict Mid with suspensions explicit in its types.** Everything above Mid is Haskell's. Everything from Mid down is Rune's, and changes there are decisions. D1-D57 are the owner's, decided on 2026-11-09, and this is the design they give; eight options are still measured (*Decisions on the numbers*).
 
 ```text
 .hs, .lhs     literate source, Unicode
    |
 Lexer, layout          closeImplicit, no fixity needed            D27
 Parser                 flat operator sequences, spans             D27, D28
-   |  AST              printer, tree and token round trips        D28
-Modules, names         least fixpoint over each SCC               D29, D30
+   |  AST              printers: tree, token and exact trips      D28
+Modules, names         least fixpoint over each SCC; --names      D29, D30
 Fixity                 an attribute, read after names             D29
    |  renamed AST
 Kinds, instance heads  joined over an SCC                         D30, D31
-Deriving               chapter 10, on the renamed AST             D33
 Types, classes         joined over an SCC; evidence records       D30, D31, D32
-   |                                                     HsLint   D54
+Deriving               in the checker; instances made as AST      D33
+   |                                     HsLint, three parts      D54
 Desugaring, matching   chapter 3's translations                   D34
    |  Core             typed, lazy; text form is a contract       D2
 Core simplifier        known dictionaries, then strictness        D47-D51   (track P)
    |                                                     CoreLint D2
 Core to Mid            lazy position: susp T; evaluated: T        D3, D4, D5, D6
-   |  Mid              strict, System F, unchanged in kind        MidLint
-shake, lift, workers, simplify, refs                              as today; no expand (D39)
-   |  Low, bytecode    both bytecodes, every tier                 D13, D14
+   |  Mid              strict; Ty with f a and forall; Case;      D4, D8, D9
+   |                   multi-value return                         MidLint
+Mid's passes           as today, through Pipeline.lowOfMid        D39, D10
+   |  Low, bytecode    FORCE ENTER BLACKHOLE UPDATE, K_THUNK      D11, D13, D14
+   |                   both bytecodes, every tier
 ```
 
 ### Ownership
@@ -4917,9 +5129,9 @@ shake, lift, workers, simplify, refs                              as today; no e
 | Lexer through Core to Mid | `lib/language/haskell` | rhc's roadmap, freely |
 | rhc's driver: graph discovery, SCCs, the loop | `src/rhc` | rhc's roadmap, freely |
 | The Report's code | `share/rhc/haskell98`, with its `LICENSE` | Report text plus a listed overlay (D37) |
-| Mid and its layer of passes | `lib/compiler/mid.build` (D41) | decisions only |
+| Mid and its layer of passes | `lib/compiler/mid.build` if E11-8 lands, else `internal.build`, rhc a friend of `lib/compiler` (D41) | decisions only |
 | Low, bytecode, VM, collector | `lib/compiler/backend`, `src/isa`, `runtime` | decisions only |
-| Store, `UnitFile`, `Link`, `MidCodec`, usage recorder | `lib/compiler` | decisions only (D43) |
+| Store (`UnitStore`, landed with build-system-v2), `UnitFile`, `Link`, `MidCodec`, usage recorder | `lib/compiler` | decisions only (D43) |
 
 rhc's interface, usages and fingerprints are rhc's own: `Types.ty` holds no class context or variable-headed application, and `UnitBasis` assumes one flat scope and an ordered prefix.
 
@@ -4937,16 +5149,17 @@ rhc's interface, usages and fingerprints are rhc's own: `Types.ty` holds no clas
 
 - **A lazy position of type T is `susp T`,** an abstract tycon. It gets `RAny`, so every engine keeps its tests (E2).
 - **Functions take `susp` where lazy and return evaluated,** so a value of a datatype is always evaluated.
-- **Force is one node,** a primitive lowered to a test, a value read and `CALL`. As a library function it costs 1.17 of the instruction form where one node costs 1.05, because a body passes the inlining budget [V's inference] (E2).
-- **A thunk is a flat `K_CLOSURE` with a non-zero `contag`:** unevaluated or under evaluation. Evaluated is `K_IND`, which the collector shortcuts. `CALL`, `ENV`, `SELF` and the runeopt templates stay as they are. The collector and images do change: `obj_scanned_fields`, `K_LAST`, `put_object` and the frame check in `image.c` (D11).
-- **The update is in the thunk's own code,** so hot `RET` is untouched.
-- **A running thunk's free variables are released** by the next collection at the latest. Reading captures at entry and blackholing gives it at once (D12).
-- **Higher-kinded positions and a polymorphic method's dictionary slot cross as `Any`,** meaning evaluated, with a lazy one as `susp Any`. An ordinary type variable stays a Mid type variable, so `queens` has no `any` cast at all. The common cast is a value into a `susp` slot: 118-124 a program against 0-31 of `any` (E4). Casts are erased in `Lower`, under a lint (D4).
-- **Recursive values** are patched through a cell, and **CAFs** are thunks in globals (D6). Neither needs a change to Mid.
+- **Force is one node,** the primitive `thunk_force`, which `Regs` lowers to `FORCE`: a value or an evaluated thunk gives its value at once, and otherwise it falls to `ENTER`, which finds a running thunk a loop (D3, D13; `regops.h` in `patches/E2-all-forms.patch`). As a library function force cost 1.17 of the instruction form where one node cost 1.05 under G, because a body passes the inlining budget [V's inference] (E2). A `Force` right-hand side is built and measured against the primitive (D3).
+- **A thunk is a flat `K_THUNK`:** unevaluated, or under evaluation once its code says `BLACKHOLE`. Evaluated is `K_IND`, which the collector shortcuts. `CALL` stops a `K_THUNK`, so a thunk in a function-typed slot stops on every engine. The collector and images change: `obj_scanned_fields`, `K_LAST`, `put_object` and the frame check in `image.c` (D11). Both bytecodes have the four instructions (D14).
+- **The update is in the thunk's own code,** `UPDATE`, so a thunk adds nothing to `RET`.
+- **A running thunk's free variables are released at entry:** its code reads its captures and says `BLACKHOLE`, and the collector follows none of its fields from there, so re-entry is found at once (D12, not applicable under form C).
+- **Types.** `Ty` gains variable-headed application and a forall (D4), so a higher-kinded position and a dictionary's polymorphic method have Mid types. `Any`, meaning evaluated, is left for what `Ty` cannot say, with a lazy one as `susp Any`, and no type variable is instantiated at `susp T`, as in Strict Core. The common cast, a value into a `susp` slot, 117-124 a program at E5's step `D0` against 0-31 of `any` (E4, `results/E4/casts.out`), stays, erased in `Lower` under a lint (D4).
+- **Recursive values** are patched through a cell, and **CAFs** are thunks in globals (D6). For D3's measured variant, a recursive form in Mid instead.
+- **Matching and returns.** A `case` of Core lowers to Mid's `Case` (D8), and an unboxed product, `IO`'s state and value among them, to multi-value return (D9, D25).
 
 ### What is shared with lazy ML
 
-`susp`, the thunk object, force and the collector, given a guard on the `K_IND` shortcut and a pin: a `K_IND` that a frame still runs is not shortcut, since a lazy ML body can outlive its own update. E14 found that failure by running; Haskell cannot reach it. Not Core, whose strictness analysis and dictionary work lazy ML has no use for: its extension took +239 -30 in 17 files, with no line in a Mid pass. What separates a lazy ML body from a Haskell one is that it does not blackhole and does not release: a body may be run again. No release bit is needed (D12, D57).
+`susp`, the thunk object, force and the collector, given a guard on the `K_IND` shortcut and a pin: a `K_IND` that a frame still runs is not shortcut, since a lazy ML body can outlive its own update. E14 found that failure by running; Haskell cannot reach it. Not Core, whose strictness analysis and dictionary work lazy ML has no use for: its extension took +239 -30 in 17 files, with no line in a Mid pass. What separates a lazy ML body from a Haskell one is that it does not blackhole and does not release: a body may be run again. No release bit is needed (D12, D57). E14 showed this on form G. Under form C lazy ML's reading is E2's `CmX`, whose thunk does not say `BLACKHOLE`, and M26 runs the checklist again on it.
 
 ### Modules
 
@@ -4962,84 +5175,88 @@ E13's obligations H1-H9, set out with their holes in *The experiments*: every na
 
 The brief keeps these in mind and does not build them. For each: which decision keeps it open, and what would close it. None adds a milestone, and the reasoning is this section's own [inference] unless it cites a result.
 
-- **Other tools on `lib/language/haskell`.** D28 keeps it open: the AST holds spans, parentheses, flat operators and literals as written, and a tool that needs comments can take the token stream. D31's evidence is tables by node, so a tool can read what the checker chose. M8 gives the library a `library.build`, though M11's measured size has no signature files, which a library for others will want. It closes if the front end comes to depend on `src/rhc`'s driver state. **D42 pulls against this:** a Rune-only library runs on no other host, so a tool built by another compiler cannot link it. Taking D42's exception as a `LibHosts` entry, with failures recorded as `HOST-BUG`, costs less of this than a sentence in `AGENTS.md`.
+- **Other tools on `lib/language/haskell`.** D28 keeps it open: the AST holds spans, parentheses, flat operators and literals as written, and under the owner's C annotations in every node, with comments, pragmas and layout, behind an exact printer. D31's evidence is tables by node, so a tool can read what the checker chose. M8 gives the library a `library.build`, though M11's measured size has no signature files, which a library for others will want. It closes if the front end comes to depend on `src/rhc`'s driver state. **D42 pulls against this:** a Rune-only library runs on no other host, so a tool built by another compiler cannot link it. Taking D42's exception as a `LibHosts` entry, with failures recorded as `HOST-BUG`, costs less of this than a sentence in `AGENTS.md`.
 - **Haskell 2010.** The brief's future language mode. D35 keeps its dotted names behind a flag, D38's rule names one text so a mode can name another, and D53's table is keyed by clause id, so a second text is a second set of rows. It closes if a Haskell 98 reading is written into the front end with no switch where 2010 differs, as `modid` would be without D35's flag.
-- **Extensions.** D2 keeps these open: Core is typed and rhc's own, so it can move, and D2's reopening names the limit, an extension whose elaboration wants System FC. D25's opaque `IO` holds until a roadmap adds `ST`, which it names as a reopening, and D12 records the raise repair that a catchable `error` would bring back. Core's text is a contract between tracks, so it closes the door a little with each tool that reads it. E14 shows that lazy ML, the extension the brief names first, needs no Core at all.
+- **Extensions.** D2 keeps these open: Core is typed and rhc's own, so it can move, and D2's reopening names the limit, an extension whose elaboration wants System FC. D25's state token is the form `ST` and Haskell 2010 will want, which is the owner's reason for it, and D12 records the raise repair that a catchable `error` would bring back. Core's text is a contract between tracks, so it closes the door a little with each tool that reads it. E14 shows that lazy ML, the extension the brief names first, needs no Core at all.
 - **A second inference engine.** D31 keeps this open: desugaring and HsLint read evidence records by node, not the inferencer's state, so a second inferencer that writes the same records can sit beside the first. D54's second inference is a working precedent over one renamed AST. It closes if M15 reads the checker's ref cells directly instead of the records. An OutsideIn(X) engine would also want equalities in its evidence, which reopens D2.
-- **Parity with GHC.** The brief's "then later feature parity with current ghc". Nothing here builds towards it, and no decision is taken for it. What keeps it open is what can be added later without moving the boundary: `FORCE` (D13), eval/apply (D15), a Core optimiser that can grow (D47), a state token if `IO` needs one (D25), and Core itself, since System FC is a later change in a library rhc owns. What would close it is cost and not design: every pass written against Core makes System FC dearer, and parity also means compiling GHC's dialect of the libraries, which the brief puts outside this roadmap.
+- **Parity with GHC.** The brief's "then later feature parity with current ghc". Nothing here builds towards it, and no decision is taken for it. What keeps it open is what can be added later without moving the boundary, or is taken already: `FORCE` and multi-value return, taken (D13, D9), eval/apply, measured (D15), a Core optimiser that can grow (D47), a state token, taken (D25), and Core itself, since System FC is a later change in a library rhc owns. What would close it is cost and not design: every pass written against Core makes System FC dearer, and parity also means compiling GHC's dialect of the libraries, which the brief puts outside this roadmap.
 
 ## Decisions
 
-Fifty-seven decisions, each with its options, the evidence and a recommendation. None is decided: they are the owner's.
-Where a decision reverses something earlier, or something the brief expects, it says so.
+Fifty-seven decisions, each with its options, the evidence and a recommendation. The owner decided them on 2026-11-09
+(*The request*), and each section ends with the decision. Where the owner chose against the recommendation, the section's
+text stays as the evidence it was written on, and the decision says what was chosen and the owner's reason in the owner's
+words. Eight are taken on the numbers: what is built for them, and how it is measured, is *Decisions on the numbers*,
+after *Gates*. Where a decision reverses something earlier, or something the brief expects, it says so.
 
 Every change to Rune is graded on the brief's scale: **large**, optimal for Haskell; **medium**, good for both languages;
 **small**, Haskell can live with it; **none**, rhc works around it. Paths are as in *Where we are*. `tables/` is
 `results/E2/tables/`. Machine instructions are `instructions:u` at tier 2.
 
-| | Decision | Recommended | Status |
+| | Decision | Recommended | Status, 2026-11-09 |
 |---|---|---|---|
-| D1 | Hook point | Mid, beneath a Core that rhc owns | undecided |
-| D2 | Core | Owned by rhc in `lib/language/haskell`: System F plus `f a`, lazy `let` and `letrec`, forcing `case`; typed, with a text form | undecided |
-| D3 | Mid's laziness surface | Small: `susp` an abstract tycon, force one primitive node, no new constructor | undecided |
-| D4 | `Any` against extending `Ty` | `Any` stands: evaluated, `susp Any` where lazy; casts erased in `Lower`, with a lint, and `any_check` in test builds | undecided |
-| D5 | The evaluated-datatype invariant | Written in `docs/ir.md`, linted where a lint can reach | undecided |
-| D6 | Recursive values and CAFs | Cell-patched recursion, CAFs as thunks in globals, no change to Mid | undecided |
-| D7 | Lambda | Stays, private to SML; no front end enters there; `Try` and `Fail` may go | undecided |
-| D8 | Mid `Case` | None in this roadmap; recorded as medium, for clarity and compile time, for a later roadmap | undecided |
-| D9 | Multi-value return | None now | undecided |
-| D10 | Walkers | Small: `atomsOfRhs` and `mapRhs` first | undecided |
-| D11 | Thunk object | `K_CLOSURE` with non-zero `contag`, evaluated is `K_IND`; `K_THUNK`'s reservation released | undecided |
-| D12 | Release, blackholing, raise | Form G, form L the alternative; no raise repair for Haskell 98 | undecided |
-| D13 | Library, prims or instructions | No new instruction; `FORCE` stays additive | undecided |
-| D14 | Stack bytecode and runeopt parity | Parity by G: force in `stack.sml`, +22 as built in E14, nothing in runeopt | undecided |
-| D15 | Eval/apply | Not now: M25, on measurement | undecided |
-| D16 | Pointer code 11 | None: force loads the header | undecided |
-| D17 | Selector thunks | After leaks are measured on the corpus | undecided |
-| D18 | Depth | None: a 10^7 chain fits 1 GiB under G | undecided |
-| D19 | CAF roots and the barrier | CAFs stay roots at first, measured on the corpus; the barrier needs nothing new | undecided |
-| D20 | `Integer` | C: an immediate small `Integer`, primitives in line; the bignum path built first | undecided |
-| D21 | `Char` | Mid `int`, Unicode 18.0.0; general category and case mapping added to `lib/unicode` | undecided |
-| D22 | `Int` width and overflow | The checked prims: overflow an error, as 6.4 allows; the corpus's `hash` a compat function over `Integer`; reopened by a program outside `hash` that overflows | undecided |
-| D23 | `Float` | Re-rounding by `real_to_single`, as `Real32` does | undecided |
-| D24 | String literals | Lazily unpacked from a constant | undecided |
-| D25 | `IO` and lazy I/O | `IO a` a function of unit, no state token; `getContents` through one interleaving primitive | undecided |
-| D26 | Library boundary | Haskell over prims and a frozen SML support unit, SML names confined to that unit | undecided |
-| D27 | Parser and layout | Hand-written recursive descent, `closeImplicit` | undecided |
-| D28 | AST fidelity and printer | Spans, parentheses, flat operators, literals as written; tree and token round trips | undecided |
-| D29 | Names and fixity | Least fixpoint; the Prelude does not import itself; fixity resolved after names | undecided |
-| D30 | Recursive modules | One unit per SCC, joined checker, no extra files; a variable defaults by the module its constraints arose in, refused where those modules' `default`s differ; Rule 2 closes at the end of each module | undecided |
-| D31 | Checker structure and evidence records | In the manner of `Witness`; unification plus kinds, context reduction, dependency analysis, MR, defaulting, derived contexts; no OutsideIn | undecided |
-| D32 | Monomorphism and defaulting | The readings R18, R20, R21 | undecided |
-| D33 | Deriving | On the renamed AST, chapter 10's text the specification | undecided |
-| D34 | Desugaring and match compilation | rhc's own, to Core; `-O0` keeps the Report's order; Sestoft-order trees optional | undecided |
-| D35 | Hierarchical names | Refused by default, a documented flag for the corpus | undecided |
-| D36 | Library layout | The literal layout: the Report's graph compiled as one unit; the merged form a fallback, built only if the joined checker runs late | undecided |
-| D37 | Prelude overlay and licence | A listed overlay; `share/rhc/haskell98/LICENSE`, marked modified | undecided |
-| D38 | Which text | The December 2002 text plus the published errata, all listed; rhc follows it unless it is wrong, contradictory, ambiguous or cannot be implemented, and unanimity of implementations alone is no ground | undecided |
-| D39 | Pipeline as data | E11-4, 6, 8; bytes held | undecided |
-| D40 | Front-end independence | `Stamp`, `label` on `fundef`, `Literal`, `Target` passed in: E11-1, 2, 3, 5, 9 | undecided |
-| D41 | What `lib/compiler` exports | A third layer, `lib/compiler/mid.build` | undecided |
-| D42 | Which hosts build rhc | Rune alone is required; other hosts informational | undecided |
-| D43 | Store option | Generalise: +338 -231 in 3 files, Rune byte-identical | undecided |
-| D44 | HsIface | Names, types, classes, instances, fixities, by entity; the Prelude's unfoldings from the start, a program's own later | undecided |
-| D45 | Prelude snapshot | A frozen unit through the store; until M21, the saved world | undecided |
-| D46 | Order with build-system-v2 | Side by side, neither waits; one at a time, v2 first; rhc asks that v2's D5, D6, D8, D14, D24, D25 be taken with a second language in view | undecided |
-| D47 | Where optimisation lives | In Core; Mid unchanged | undecided |
-| D48 | A Core simplifier with eta | Yes: every strictness and floating result assumes one | undecided |
-| D49 | Known-dictionary resolution and specialisation | First: E3's L1, thunks -47%, bytes -38% in total, -26.2%, -17.7% median; Rune's figures from E5 | undecided |
-| D50 | Strictness | Next: E3, a further -20%, -11% in total, -11.5%, -5.4% median | undecided |
-| D51 | Cheap eagerness, and what stops `inline` copying a thunk | Decided together with D22, whose checked prims close the local form for `Int` arithmetic [inference] | undecided |
-| D52 | Oracle policy | GHC-strict plus Hugs as judges, nhc98 third; every expected result cites a clause; a disagreement yields a reading | undecided |
-| D53 | Conformance table | Generated TSV of 3,901 rows, enforced by id | undecided |
-| D54 | HsLint | A target check and a second inference, on the elaborated output | undecided |
-| D55 | Generators and metamorphic relations | Both, with rhc's mutants | undecided |
-| D56 | Budget | The 188 programs under 1 s in `make check`, in 3 of `Lang.ways`' 18 ways, the rest nightly; K from E5 | undecided |
-| D57 | What "ready for lazy ML" means | A checklist of six, run by E14: the pin, a MidLint rule, stack force, the spec's programs, flag off, `susp` documented | undecided |
+| D1 | Hook point | Mid, beneath a Core that rhc owns | decided: A |
+| D2 | Core | Owned by rhc in `lib/language/haskell`: System F plus `f a`, lazy `let` and `letrec`, forcing `case`; typed, with a text form | decided: C |
+| D3 | Mid's laziness surface | Small: `susp` an abstract tycon, force one primitive node, no new constructor | decided: B, with form C; measure C |
+| D4 | `Any` against extending `Ty` | `Any` stands: evaluated, `susp Any` where lazy; casts erased in `Lower`, with a lint, and `any_check` in test builds | decided: C |
+| D5 | The evaluated-datatype invariant | Written in `docs/ir.md`, linted where a lint can reach | decided: B; C in checked builds only |
+| D6 | Recursive values and CAFs | Cell-patched recursion, CAFs as thunks in globals, no change to Mid | decided: A; C for D3's measured C |
+| D7 | Lambda | Stays, private to SML; no front end enters there; `Try` and `Fail` may go | decided: B |
+| D8 | Mid `Case` | None in this roadmap; recorded as medium, for clarity and compile time, for a later roadmap | decided: C, now |
+| D9 | Multi-value return | None now | decided: B, now |
+| D10 | Walkers | Small: `atomsOfRhs` and `mapRhs` first | decided: C, now |
+| D11 | Thunk object | `K_CLOSURE` with non-zero `contag`, evaluated is `K_IND`; `K_THUNK`'s reservation released | decided: C |
+| D12 | Release, blackholing, raise | Form G, form L the alternative; no raise repair for Haskell 98 | n/a: form C |
+| D13 | Library, prims or instructions | No new instruction; `FORCE` stays additive | decided: C |
+| D14 | Stack bytecode and runeopt parity | Parity by G: force in `stack.sml`, +22 as built in E14, nothing in runeopt | decided: C, by the owner's rule |
+| D15 | Eval/apply | Not now: M25, on measurement | measure C against A |
+| D16 | Pointer code 11 | None: force loads the header | measure B against A |
+| D17 | Selector thunks | After leaks are measured on the corpus | measure B against A |
+| D18 | Depth | None: a 10^7 chain fits 1 GiB under G | decided: A |
+| D19 | CAF roots and the barrier | CAFs stay roots at first, measured on the corpus; the barrier needs nothing new | measure B against A; barrier as recommended |
+| D20 | `Integer` | C: an immediate small `Integer`, primitives in line; the bignum path built first | decided: D |
+| D21 | `Char` | Mid `int`, Unicode 18.0.0; general category and case mapping added to `lib/unicode` | decided: A; tables D |
+| D22 | `Int` width and overflow | The checked prims: overflow an error, as 6.4 allows; the corpus's `hash` a compat function over `Integer`; reopened by a program outside `hash` that overflows | decided: A |
+| D23 | `Float` | Re-rounding by `real_to_single`, as `Real32` does | decided: B |
+| D24 | String literals | Lazily unpacked from a constant | decided: A; measure B and D |
+| D25 | `IO` and lazy I/O | `IO a` a function of unit, no state token; `getContents` through one interleaving primitive | decided: B |
+| D26 | Library boundary | Haskell over prims and a frozen SML support unit, SML names confined to that unit | decided: A |
+| D27 | Parser and layout | Hand-written recursive descent, `closeImplicit` | decided: A |
+| D28 | AST fidelity and printer | Spans, parentheses, flat operators, literals as written; tree and token round trips | decided: C |
+| D29 | Names and fixity | Least fixpoint; the Prelude does not import itself; fixity resolved after names | decided: A; greatest an option |
+| D30 | Recursive modules | One unit per SCC, joined checker, no extra files; a variable defaults by the module its constraints arose in, refused where those modules' `default`s differ; Rule 2 closes at the end of each module | decided: A, each module its own; per SCC an option |
+| D31 | Checker structure and evidence records | In the manner of `Witness`; unification plus kinds, context reduction, dependency analysis, MR, defaulting, derived contexts; no OutsideIn | decided: A |
+| D32 | Monomorphism and defaulting | The readings R18, R20, R21 | decided: as recommended |
+| D33 | Deriving | On the renamed AST, chapter 10's text the specification | decided: C |
+| D34 | Desugaring and match compilation | rhc's own, to Core; `-O0` keeps the Report's order; Sestoft-order trees optional | measure B against A |
+| D35 | Hierarchical names | Refused by default, a documented flag for the corpus | decided: B |
+| D36 | Library layout | The literal layout: the Report's graph compiled as one unit; the merged form a fallback, built only if the joined checker runs late | decided: A |
+| D37 | Prelude overlay and licence | A listed overlay; `share/rhc/haskell98/LICENSE`, marked modified | decided: code B, licence A |
+| D38 | Which text | The December 2002 text plus the published errata, all listed; rhc follows it unless it is wrong, contradictory, ambiguous or cannot be implemented, and unanimity of implementations alone is no ground | decided: B |
+| D39 | Pipeline as data | E11-4, 6, 8; bytes held | decided: D |
+| D40 | Front-end independence | `Stamp`, `label` on `fundef`, `Literal`, `Target` passed in: E11-1, 2, 3, 5, 9 | decided: B and C |
+| D41 | What `lib/compiler` exports | A third layer, `lib/compiler/mid.build` | decided by the lead: C if E11-8 lands, else D; the owner asked |
+| D42 | Which hosts build rhc | Rune alone is required; other hosts informational | decided: C |
+| D43 | Store option | Generalise: +338 -231 in 3 files, Rune byte-identical | decided by the lead: B, as landed |
+| D44 | HsIface | Names, types, classes, instances, fixities, by entity; the Prelude's unfoldings from the start, a program's own later | decided: C |
+| D45 | Prelude snapshot | A frozen unit through the store; until M21, the saved world | decided: A, with B until M21 |
+| D46 | Order with build-system-v2 | Side by side, neither waits; one at a time, v2 first; rhc asks that v2's D5, D6, D8, D14, D24, D25 be taken with a second language in view | n/a: v2 has landed |
+| D47 | Where optimisation lives | In Core; Mid unchanged | decided: C |
+| D48 | A Core simplifier with eta | Yes: every strictness and floating result assumes one | decided: C; measure D |
+| D49 | Known-dictionary resolution and specialisation | First: E3's L1, thunks -47%, bytes -38% in total, -26.2%, -17.7% median; Rune's figures from E5 | decided: C |
+| D50 | Strictness | Next: E3, a further -20%, -11% in total, -11.5%, -5.4% median | decided: C |
+| D51 | Cheap eagerness, and what stops `inline` copying a thunk | Decided together with D22, whose checked prims close the local form for `Int` arithmetic, as Faxén 2000 §3 says | decided: C |
+| D52 | Oracle policy | GHC-strict plus Hugs as judges, nhc98 third; every expected result cites a clause; a disagreement yields a reading | decided: C |
+| D53 | Conformance table | Generated TSV of 3,901 rows, enforced by id | decided: C |
+| D54 | HsLint | A target check and a second inference, on the elaborated output | decided: C |
+| D55 | Generators and metamorphic relations | Both, with rhc's mutants | decided: B |
+| D56 | Budget | The 188 programs under 1 s in `make check`, in 3 of `Lang.ways`' 18 ways, the rest nightly; K from E5 | decided: B |
+| D57 | What "ready for lazy ML" means | A checklist of six, run by E14: the pin, a MidLint rule, stack force, the spec's programs, flag off, `susp` documented | decided: C; run again on form C |
 
-**G0 needs D1-D6, D11-D13 and D36.** They fix the boundary between Core and Mid, the thunk and the layout of the
-libraries, and each is expensive to reverse once code stands on it. The others can be taken as the milestones resting on
-them come up.
+**G0 is passed.** It needed D1-D6, D11-D13 and D36, which fix the boundary between Core and Mid, the thunk and the layout
+of the libraries, each expensive to reverse once code stands on it. The owner decided them with the rest on 2026-11-09.
+What G0 leaves open is D3's measured variant, a `Force` right-hand side, which M9 builds and the owner takes or not on the
+numbers. A decision is "by the lead" where the owner asked the lead to decide it (D41, D43).
 
 ### D1. The hook point
 
@@ -5142,6 +5359,8 @@ pass that cannot be made safe, reopens it at once. Lazy ML proving to need more 
 compilation, reopens a Core shared with lazy ML (D2). Taking the other side
 of D47 reopens D3, not this. Lands in M5.
 
+**Decided (owner, 2026-11-09).** A, as recommended: Mid, beneath a Core that rhc owns.
+
 ### D2. Core
 
 What stands between the type-checked program and Mid, and who owns it? No option changes Rune: Core lives in
@@ -5180,6 +5399,8 @@ answer is the asymmetry: dropping types later is easy, and adding them is not.
 
 **What would reopen it.** Compile time dominated by Core's types once type nodes are shared. An extension whose
 elaboration wants System FC, which is a later roadmap's. Lands in M8.
+
+**Decided (owner, 2026-11-09).** C, as recommended: System F with `f a`, lazy `let` and `letrec`, forcing `case`, typed, with a text form.
 
 ### D3. Mid's laziness surface
 
@@ -5247,6 +5468,10 @@ six primitives of the compiler's own that `Lower` alone translates (`src/isa/pri
 **What would reopen it.** The owner taking the other side of D47, which makes C the better footing. A pass found to drop,
 copy or move a force. rhc's measured density putting G too far from C, which is D13's question and leaves the surface as it is.
 Lands in M9.
+
+**Decided (owner, 2026-11-09).** B, with form C in place of form G: "B but with form C instead of form G". `susp` is an abstract tycon and force is one node of Mid, lowered to form C's instructions (D11, D13), not to form G's test, value read and `CALL`. In E2's form C that node is the primitive `thunk_force`, beside `thunk_make`, `thunk_blackhole` and `thunk_self_update`, which `Regs` makes into `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE` (`results/E2/delay/Chs/lazy.sml`, `patches/E2-all-forms.patch`). *SML* above holds for C as for G: C moves the same fingerprints, and the register set's opcode table with them (D13).
+
+**To be measured:** C, a `Force` right-hand side, built and benchmarked against B with form C, with D6's C, a recursive form in Mid, for that variant. The owner takes C over B, or not, on the numbers (*Decisions on the numbers*). Lands in M9, and the variant is built there too, after M6's walkers.
 
 ### D4. `Any` against extending `Ty`
 
@@ -5316,6 +5541,12 @@ refusing legal code on SML's Mid. The owner taking the other side of D47, when M
 global dictionaries. Lands in M9: the erasure, the lint and `any_check`, with the primitives they concern. None is in M7,
 and M10 is what emits the casts.
 
+**Decided (owner, 2026-11-09).** C, against the recommendation: `Ty` gains variable-headed application and a forall in fields. The owner's reason: "safest and also useful for higher-rank and higher-kinded type in rune". The section above stays as the evidence it was written on.
+
+*Lead's note.* E4 sized C at 300 to 500 lines over 12 or more files [estimate], with 96 `Ty.view` sites, 82 of them ending in a catch-all (`results/E4/tyview.out`, a heuristic), so it lands after D10's walkers, in M28, before M10. `Any` stays for what `Ty` cannot say, and still means evaluated. Value-to-`susp` casts remain, 117 to 124 a program at E5's step `D0` (`results/E4/casts.out`), and with them the erasure in `Lower` and the lint that no cast leaves a `susp`, which C does not replace [inference]; C removes the `any` casts. Since build-system-v2's M5 Mid's codecs are generated: `Ty.ty` is described at `tools/codecs/compiler.sml:168-176` (origin/master `697724da5`), so a new form of `Ty` is described there and `make codecs` run.
+
+*From the papers (E15b).* With type variables in Mid the roadmap must say whether one may be instantiated at `susp T`: never, as Strict Core has it for `Any`; Launchbury and Paterson's `Pointed` class, with `seq` only at lifted types, is the alternative (*What the literature says*, D4).
+
 ### D5. The evaluated-datatype invariant
 
 **A datatype-typed variable is evaluated.** `removable`, `Workers`, the constructor folds and tier 2's `ms_trusts` all
@@ -5362,6 +5593,8 @@ worth more than the lints.
 **What would reopen it.** `any_check`, at E4's +3% to +18% over erased, proving cheap enough on the corpus to leave on under `RUNE_LINT=2`. A wrong answer at
 tier 2 on output CoreLint passed, which would raise this to C. Lands in M7.
 
+**Decided (owner, 2026-11-09).** B, as recommended: the invariant written in `docs/ir.md`, site by site, and linted where a lint can. And C, "for checked builds/vms only if no perfomance impact on non-checked versions": a checked `Any` at run time behind a compile-time switch, as E4's `any_check` was, shown to leave a build without it byte-identical and its `--count` unchanged. The lints land in M7, the switch in M9.
+
 ### D6. Recursive values and CAFs
 
 Mid cannot say a recursive value or code with no parameter: `Fun` binds functions, `Let` is not recursive
@@ -5399,6 +5632,8 @@ with only D5's new lint behind it.
 **What would reopen it.** Recursive bindings hot in E5's kernels or on the corpus. D3's option C, which would make C here
 cheap. Lands in M10.
 
+**Decided (owner, 2026-11-09).** A, as recommended: recursion through a cell, CAFs as thunks in globals. For D3's measured variant, a `Force` right-hand side, the owner chose C here: "For the D3 = C (a Force right-hand side) variant please us C (a recursive form in Mid)". That form is built with the variant in M9, after M6's walkers, and measured with it (*Decisions on the numbers*). A lands in M10.
+
 ### D7. Lambda
 
 Should Lambda change, given that no front end enters there? The review is in *The IRs, reviewed*.
@@ -5421,6 +5656,8 @@ asked for a review of the IRs.
 
 **What would reopen it.** `Translate` needing to be rewritten for another reason would change C's price. Lands in M4, if
 taken.
+
+**Decided (owner, 2026-11-09).** B, as recommended: Lambda stays, private to SML, and `Try` and `Fail` may go (E11-10). E11-10's change to `core/matchcomp.sml` still applies to origin/master `697724da5`; its line in the test build list, `tests/compiler/mid-only.build`, which E11-9 creates, does not (`git apply --check`, run while recording this). Lands in M4.
 
 ### D8. Mid `Case`
 
@@ -5447,6 +5684,10 @@ for clarity and compile time, for a later roadmap.
 **What would reopen it.** A later roadmap taking it up after D10, which should first make a compile with `Case` to show the
 time saved. rhc's Mid turning out to be tag tests in a proportion that changes the sums. It has no milestone here.
 
+**Decided (owner, 2026-11-09).** C, against the recommendation: a `Case` in Mid, now and not in a later roadmap. The owner's reason: "let's fix it now instead of later". The section above stays as the evidence.
+
+*Lead's note.* It comes after D10's walkers, since it adds an arm to at least 88 of them. Bytes and budgets may move, since `Lower`'s own reconstruction of the table gives way to the node; the milestone says by how much, under the standing gate. `Case` is a new constructor of `exp`, so it is described in `tools/codecs/compiler.sml` (origin/master `697724da5`, `exp` at `:222-232`). Lands in M29.
+
 ### D9. Multi-value return
 
 Mid's `Return` gives one value (`core/mid.sml:71`), and `RET` gives one, which `RESULT` takes (`src/isa/regs.sml:247`).
@@ -5469,6 +5710,10 @@ Core lowers them as tuples [inference].
 **What would reopen it.** rhc's own measurements of unboxed returns, once track P runs. After D10 the price falls and it
 is worth asking again. It may not ride on this review.
 
+**Decided (owner, 2026-11-09).** B, against the recommendation: multi-value return, now. The owner's reason: "let's do it now instead of later". `Return` of several atoms, a `Let` of several variables, `Low.Return` of a list, and `RET` and `RESULT` of several in both instruction sets. The section above stays as the evidence.
+
+*Lead's note.* E12 found that in a whole compile it wins what `results` already wins, and the rest only in units, where `results` does not run. It touches 126 walkers, both bytecodes, the JIT and runeopt, and moves both fingerprints. It lands before D25's state token, whose returned pair it removes. Raised with the owner: whether it lands behind a measurement, as D15 does; until the owner says so, it lands as decided. Lands in M30.
+
 ### D10. Walkers
 
 Mid has no walker of its own, so each pass writes its own (*The IRs, reviewed*). A new step of Mid means at least 38
@@ -5489,6 +5734,8 @@ lines: a new constructor falls into `| _ =>` without a word, as having no atoms 
 **Against.** rhc does not need it, so it is scope (X6). If nothing adds a step to Mid, the catch-alls never fire.
 
 **What would reopen it.** The owner taking D3's option C, or D8, makes it first and required. Lands in M6.
+
+**Decided (owner, 2026-11-09).** C, now, going past the recommendation of B: `Mid.atomsOfRhs` and `Mid.mapRhs` first, then a `Mid.fold` over `exp`. The owner's reason: "let's fix it now instead of later". It comes first of D4, D8 and D9, since each adds an arm. Lands in M6.
 
 ### D11. The thunk object
 
@@ -5549,6 +5796,10 @@ kind value that is otherwise spare.
 
 **What would reopen it.** A bug of that class on the corpus. Selector thunks needing a kind of their own. A new front end
 for which a closure and a thunk must differ in the header. Lands in M9; the guard and the pin, in M26.
+
+**Decided (owner, 2026-11-09).** C, against the recommendation: a flat `K_THUNK`, entered by four instructions, `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE`. The owner's reason: "cleanest and most performant". `K_THUNK` keeps heap-layout's reservation. The section's case for G stays as the evidence.
+
+*Note.* The changes to the collector and images above are shared by every form but A, so they land under C too, about 45 lines of the table's ~305. The loss of defence that *Against* names does not arise: `CALL` stops a `K_THUNK`. The guard on the shortcut and the pin stay lazy ML's and go with M26, unless D17's B makes the pin Haskell's too (*Decisions on the numbers*). Lands in M9.
 
 ### D12. Release, blackholing, raise
 
@@ -5630,6 +5881,8 @@ in a collector with no second user.
 under rhc, which L has not shown. Anything that makes `error` catchable, such as `Control.Exception`, brings the repair
 back. Lands in M9.
 
+**Decided (owner, 2026-11-09).** Not applicable: "I decided on Form C" (D11). Under form C a thunk's code reads its captures and says `BLACKHOLE` at entry, so re-entry is found at once and the captures are released then: E2's `last` leak is cleared on C (`tables/last.txt`). No raise repair for Haskell 98, for the reasons above. Lazy ML's reading, without blackhole or release, is form C's `CmX` in E2, and D57's checklist runs again on it (M26).
+
 ### D13. Library, prims or instructions
 
 How is force made, on the register target? The options and their figures are the table in D11.
@@ -5672,6 +5925,8 @@ and the interpreters do pay that dispatch.
 **What would reopen it.** rhc's measured gap to C on the corpus proving large against K, on a line the owner sets. Fusing
 G's test and value in tier 2 may close some of it first; not tried. Lands in M9.
 
+**Decided (owner, 2026-11-09).** C, against the recommendation: four instructions, `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE`, on the register set, about 260 lines over those shared and about 115 more for parity (D14) [estimate, not built]. It is D11's choice, for D11's reason. The section above stays as the evidence. Lands in M9.
+
 ### D14. Stack bytecode and runeopt parity
 
 The stack bytecode is read by `runevm-stack` and by `runeopt`. Must rhc's output run there?
@@ -5699,6 +5954,10 @@ language no one has asked to run natively.
 
 **What would reopen it.** The Stack lowering failing under Haskell's reading. A wish for fast lazy native code, which
 would want `fastPrim` entries and an owner. Lands in M9.
+
+**Decided (owner, 2026-11-09).** The owner's rule, "B if it doesn't leak into Low; otherwise C", gives C: parity by form C, about 115 lines [estimate, not built], with the instructions on the stack set too, runeopt's templates, `tests/opt/every-opcode.rasm`, `x64.sml`, `native.c` and rows in `docs/bytecode.md`.
+
+*Lead's note.* Low's datatype does not change between the targets. Force is one primitive there, which the register target expands, and E2's patch adds to `low.sml` only `Low.hoistEnv`, a function over Low's existing operations that both targets call (`patches/E2-all-forms.patch:1-60`). But B as written is parity by form G, and under form C a thunk is a flat `K_THUNK`, which the stack VM's `CALL` cannot enter (`EXPECT (cv, K_CLOSURE, ...)`, `runtime/stack/interp_cases.h:185`), and a C primitive cannot push a frame. So the stack bytecode needs the instructions too, and the rule gives C. Form C never ran on the stack VM in E2. Lands in M9.
 
 ### D15. Eval/apply
 
@@ -5762,6 +6021,8 @@ and SML's curried calls would gain from B too [inferred]. The 55 is an inference
 **What would reopen it.** Chains on the corpus after M23 well above E5's after step `D1`. K at `-O0` putting D56's budget
 out of reach before track P starts. A built path that gains SML enough to pay for itself. Lands in M25, if at all.
 
+**Decided (owner, 2026-11-09).** To be measured: C, eval/apply proper, built and benchmarked on rhc's programs "and rune if that applies", which it does, since SML's curried calls would take the same path [inferred]; then A or C on the numbers. Until then A stands. Built in M25 (*Decisions on the numbers*).
+
 ### D16. Pointer code 11
 
 The two bits beside a pointer's immediate bit are reserved for a code meaning "a headered object, known to be evaluated"
@@ -5787,6 +6048,8 @@ from C (D13). Nobody has measured code 11 alone on lazy code.
 **What would reopen it.** A measured evaluated-force cost on the corpus that fusing G's test and value cannot reach. The
 bits stay reserved, so nothing is lost by waiting.
 
+**Decided (owner, 2026-11-09).** To be measured: B, pointer code 11, built and benchmarked on rhc's programs and on Rune's; then A or B on the numbers. Until then A stands. Built in M25 (*Decisions on the numbers*).
+
 ### D17. Selector thunks
 
 `fst p` unevaluated keeps the whole pair alive after `p` is evaluated. The Report's own Prelude has the shape: `span` is
@@ -5794,15 +6057,23 @@ bits stay reserved, so nothing is lost by waiting.
 of length n holds n pairs until the consumer reaches `s'` [inference].
 
 - **A. None for now.** **Recommended.** Measure leaks on the corpus first. Half the systems ship this leak.
-- **B. Small, in Core.** Sparud's form: a pattern binding is a construct of Core, whose evaluation updates its sibling. It
-  needs a primitive to update another thunk. hbc has it behind `-fpat-bin-update`, off by default. Not built.
+- **B. Small, in Core's desugaring.** Sparud's method: a pattern binding desugared to the tuple form with selectors, plus an
+  impure compiler-internal `updatePat`, which "overwrites every vi with an indirection to the corresponding vi'" (Sparud
+  1993, §3.3, p 119). It is not a construct of Core: that is Gustavsson and Sands' reformulation, and for a typed IR Sparud
+  keeps the tuple form, his equation (8) (p 120). It needs a primitive to update another thunk. hbc has it behind
+  `-fpat-bin-update`, off by default. Not built.
 - **C. Medium: Wadler's rule in the collector.** A thunk marked as a selector, reduced by the collector once its argument
   is evaluated. Good for lazy ML too [inferred]. Not built, no lines. GHC caps nesting at 16; Yhc does one step. Under
   form G the mark would be a `contag` state with the field number in it [deduced from
   `docs/plans/heap-layout.md:5075-5077`].
 
 **The evidence.** E2 did not test this. One figure exists: clausify under an LML G-machine, 47,548 to 34,083 byte-seconds,
--28% (Runciman, Wakeling 1993). No paper says how often it bites across real programs. The cost is bounded by the longest
+-28% (Runciman, Wakeling 1993). Sparud gives no numbers, only heap profiles, and says a program that does not leak runs
+"somewhat slower" under his method (§4, p 120); `partition` written with two `filter`s still leaks under it (§5, p 121).
+Röjemo 1995 measures nothing on selector thunks. No paper says how often it bites across real programs. The Report's
+kernel is the form Sparud cannot fix: 3.12 gives `let p = e1 in e0 = case e1 of ~p -> e0`, and 3.17.3's rule (d) makes
+that one projection per variable, so B means a different desugaring of pattern bindings and `~p`, which touches D34
+(*What the literature says*, D17). The cost is bounded by the longest
 line, or the distance between two consumers [inference], which is why it can wait. *SML.* A moves nothing. C adds a test
 to the collector's path for closures, on top of D11's; not measured.
 
@@ -5811,6 +6082,10 @@ leak that was known in 1987.
 
 **What would reopen it.** A corpus program whose residency is explained by selector chains. Lands in M25, if measurement
 justifies it.
+
+**Decided (owner, 2026-11-09).** To be measured: B, Sparud's method, built and benchmarked on rhc's programs, and on Rune's where it applies; then A or B on the numbers. Until then A stands. Built in M25 (*Decisions on the numbers*).
+
+*From the papers (E15b).* B is a desugaring of pattern bindings plus an impure `updatePat`, not a Core construct (Sparud 1993, §3.3). Under form C a sibling's component may be unevaluated, and `FORCE` takes what a `K_IND` holds as the value (`patches/E2-all-forms.patch:1566`), so the write may not be a `K_IND` to a thunk: it retargets the sibling's code and capture, or is made only when the component is evaluated. And the sibling whose force ran the match is under evaluation when `updatePat` runs, so overwriting it is E14's case of a body outliving its own update, which would make D11's pin Haskell's and move it from M26 to M25. The write skips any sibling that is not unevaluated, which avoids both [P1's inference; nothing built]. B changes how pattern bindings and `~p` are desugared, so it touches D34.
 
 ### D18. Depth
 
@@ -5834,6 +6109,8 @@ may overflow until strictness (D50) arrives. The memory is real as well: a doubl
 
 **What would reopen it.** Any corpus program that overflows at the default. Option B is then the first answer. Lands in
 M9.
+
+**Decided (owner, 2026-11-09).** A, as recommended: the stack limit stays, and `--stack-size` raises it. Form C takes the same 80 bytes a level as G on `chain` (`tables/depth2.txt`).
 
 ### D19. CAF roots and the barrier
 
@@ -5865,10 +6142,16 @@ shipped module).
 **Against.** CAFs held for ever are X5's named risk, and a program over a long lazy CAF list loses the corpus with no
 warning. Promotion is the other: a promoted thunk roots its later value in the old generation, unseen by minor collections
 (Sansom, Peyton Jones 1993, §5.4), and nothing here measures that on Rune. Add-on-entry, one of the literature's answers,
-needs eager blackholing, so it would go against L (D12).
+adds an old thunk to the remembered set when it is entered (Röjemo 1995b, §3, p 150); it needs eager blackholing, and so
+went against L (D12). Under form C, whose `BLACKHOLE` writes at entry, that conflict is gone; it is still no reason for a
+barrier of its own. Röjemo measured what promoting every survivor of a minor collection costs, which Rune's nursery does
+(`runtime/gc/minor.c:1-7`): on sieve the simple collector "takes nearly ten times more time than the two-space
+collector" (§5.1, p 155).
 
 **What would reopen it.** A corpus program whose residency is a CAF, or whose old generation is thunks promoted dead.
 Lands in M9.
+
+**Decided (owner, 2026-11-09).** To be measured: B, a table of the CAFs a function's code reaches and a collector that uses it, built and benchmarked on rhc's programs; then A or B on the numbers. Until then A stands, and CAFs are roots. The barrier stays as recommended: nothing new. Built in M25 (*Decisions on the numbers*), whose figures include the promoted bytes that die in the old generation (Röjemo 1995b, §5.1).
 
 ### D20. `Integer`
 
@@ -5888,7 +6171,7 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 - *Precedent.* No system has an immediate small `Integer`, beyond Hugs's zero (*What the implementations do*). GHC's `IS Int#` is boxed. B, C and D would be new.
 - *The literature.* Nothing measures defaulting. One indirect sign: `Integer` is 96.9% of strict arguments in rsa and 38.4% in gg (Peyton Jones, Partain 1993, Table 6, *What the literature says*).
 - *Overlap with D49.* A defaulted site knows `Num Integer` at compile time, so known-instance resolution applies directly. The two savings must not be counted twice.
-- *Overlap with D51.* `Integer` operations are unbounded, so none is cheap-eager under any option here [inferred].
+- *Overlap with D51.* Under A an `Integer` operation is unbounded, so none is cheap-eager. Under B, C and D an add of two immediates cannot raise and does bounded work, while the big path is unbounded and fails at `INTINF_DEFAULT_BITS`; so only speculation guarded by a test of the immediate bit qualifies, the form Faxén 2001 measured and found to hardly improve (*What the literature says*, D51) [inferred].
 - *E3 cannot answer it.* `Integer` stays uninstrumented in both of its variants.
 
 **E5's result.** E5 measured two forms and no bignum path: I0, `IntInf`'s fast paths ported to Mid, and I1, which is option C, with a slow path that stops. **Option B was not measured:** `mrhc.py` names an I2 and there is no runtime for it. D is unprototyped. Per add, in a loop of 10^7 (`results/E5/intinf/run.out`):
@@ -5908,6 +6191,10 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 **Recommendation.** C, an immediate small `Integer` with primitives in line, and **the bignum path is the first thing to build,** since nothing yet shows the small path keeps its 24 with one behind it. D is for Rune to take separately. **The strongest argument against:** only this form was built, and what makes it an `Integer` was not. The 24 is the cost of an add that never overflows. C moves the fingerprint and takes a slow path in every engine, for a gain Int programs never see, and B, one primitive and a `Handle`, might come near it with less: nobody knows, because B was not measured. No system but Hugs's zero has tried an immediate small `Integer`, so nothing here has a precedent.
 
 **What would reopen it.** B measured close to C. The bignum path costing the fast path, or a program crossing the small range often. Specialisation leaving `Integer` rare on the corpus. The owner taking D for Rune, which gives rhc the representation with no primitive of its own. Lands in M17.
+
+**Decided (owner, 2026-11-09).** D: `IntInf` takes the immediate representation too, with C's primitives in line. The owner's reason: "rune should benefit from this". The recommendation was C, with D left for Rune to take separately; the section above stays as the evidence.
+
+*Lead's note.* The bignum path is the first thing to build, as for C. Hosts compile Rune's `lib/basis` in the `xc1` configurations, with the VM's primitives written on the host's library (`tests/basis/host/rune-prim.sml`, `docs/basis-compat.md`), so each new primitive has a host version there and `make matrix-quick` runs. rhc's `Integer` shares the representation and the small path (D26). Under D an add of two immediates cannot raise, which changes D51's sentence on `Integer` (above, *Overlap with D51*). Lands in M31; rhc's `Integer` on it in M17.
 
 ### D21. `Char`
 
@@ -5934,6 +6221,8 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 
 **What would reopen it.** The generated tables moving an SML budget or bootstrap bytes; the owner calling R38 contradictory; a corpus program printing a class of a letter with no case.
 
+**Decided (owner, 2026-11-09).** Representation A, a code point in a Mid `int`; tables D, general category and simple case mapping in `lib/unicode`; both as recommended, with the readings as above.
+
 ### D22. `Int` width and overflow
 
 **Decided with D51.** Read this with D51: the choice here sets what cheap eagerness may do.
@@ -5956,11 +6245,13 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
   - 13 of the 19 have nhc98 and Hugs both differing and the other 6 have an oracle absent, which fits E8's suspicion of 32-bit `Int` [inferred].
 - *Neither `Int` option matches them.* A stops. B prints another number wherever the expected value is outside 63 bits, as `4837159772545863515` and `-8791092626015977392` are: 13 of the 19 print at least one such value (recounted from the expected files). The other 6, `bspt`, `fulsom`, `gamteb`, `gg`, `parser` and `sphere`, print only values that fit, and B would reproduce those by congruence [deduced, not run]. So this does not decide A against B. It removes their stated difference on the corpus, and G2 needs more than either: **the corpus's `hash` becomes a compat function over `Integer` printing the 64-bit result,** with `sphere`'s own among them. That is a change to the test harness, like the rest of the compat layer, not to the language.
 
-**With D51.** A checked `+` can raise, so it may not run before its demand. That closes the local form of cheap eagerness for `Int` arithmetic [inferred]: GHC's `exprOkForSpeculation` requires that the expression cannot throw (`ghc/compiler/GHC/Core/Utils.hs:1791-1792`). B keeps it open for `+`, `-`, `*`, not for `div`. Strictness is unaffected. No paper gives a figure for the local form (*What the literature says*), so what A gives up is unknown. A third road keeps both: the word prims with a range test, and on overflow a thunk that raises. It is untested and costs more instructions than either [inferred].
+**With D51.** A checked `+` can raise, so it may not run before its demand. That closes the local form of cheap eagerness for `Int` arithmetic, as Faxén says himself: "If such overflow is trapped, integer addition is an unsafe operation" (Faxén 2000, §3, p 152). GHC's `exprOkForSpeculation` requires that the expression cannot throw (`ghc/compiler/GHC/Core/Utils.hs:1791-1792`). B keeps it open for `+`, `-`, `*`, not for `div`. Strictness is unaffected. What A gives up has one bound. Faxén's "All evals expensive" column, which he says "corresponds roughly to what one can accomplish without a special cheap eagerness analysis", saves up to 16%, 1% and 8% of instructions on event, sched and tc, his three programs larger than toys (Table 1, p 157). Every figure in his paper assumes a wrapping `Int`, against a very simple strictness analyser, so for rhc it is an upper bound, not a measure [inference] (*What the literature says*, D51). A third road keeps both: the word prims with a range test, and on overflow a thunk that raises. It is untested and costs more instructions than either [inferred].
 
 **Recommendation.** A, the checked prims, now with B's cost measured against it. **The strongest argument against:** hash functions and generators in real programs wrap on purpose: 19 of 223 do. Under A a program that runs on every oracle stops with an error. Conformance is untouched, but the corpus is what proves rhc, and A closes D51's local form as well, for a stop that only a buggy program benefits from. The answer is that B does not rescue those programs and costs every `Int` add 7 instructions.
 
 **What would reopen it.** A program outside `hash` that overflows; M25 showing cheap eagerness on `Int` is worth having.
+
+**Decided (owner, 2026-11-09).** A, as recommended: the checked prims, overflow an error; the corpus's `hash` a compat function over `Integer`. What it costs cheap eagerness is bounded by Faxén's figures above.
 
 ### D23. `Float`
 
@@ -5977,6 +6268,8 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 
 **What would reopen it.** The corpus's `Float`-heavy programs showing the cost, which brings in C; or the corpus proving not to depend on binary32.
 
+**Decided (owner, 2026-11-09).** B, as recommended: `Float` re-rounded to binary32 by `real_to_single` after each operation.
+
 ### D24. String literals
 
 **Question.** What is `"hello"` at run time? 2.6 calls string literals "abbreviations for lists of characters", and `[Char]` is a lazy list. R14 makes a string a kernel constant. Mid's constant is `Lambda.CString`, bytes (`lib/compiler/core/lambda.sml:16`). Rune's `list` cannot be the Haskell list: its tail would be a `susp`.
@@ -5991,6 +6284,8 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 **Recommendation.** A. **The strongest argument against:** for the common case it is the worst of the three. Most literals are short and read to the end, so `putStrLn "hello"` pays a thunk per character for laziness nothing can observe. B, or chunks of cells per thunk, is cheaper and just as conforming. A is recommended as the plain baseline with the same shape as every other lazy list, and neither alternative needs a change to Rune, so the choice can be remade by one function.
 
 **What would reopen it.** `--count` on string-heavy corpus programs showing the unpacking dominate: then chunks.
+
+**Decided (owner, 2026-11-09).** A, as recommended: a constant, lazily unpacked. To be measured for the record: B and D, built and benchmarked; the owner: "we are unlikely to take D even if it wins as there is no use in rune. just for the record." Built in M17, measured as *Decisions on the numbers* says.
 
 ### D25. `IO` and lazy I/O
 
@@ -6011,6 +6306,10 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 
 **What would reopen it.** Closures per `IO` action dominating I/O-heavy corpus programs after M23; a roadmap adding `ST`.
 
+**Decided (owner, 2026-11-09).** B, against the recommendation: a state token. The owner's reason: "we will do Haskell2010 in the next roadmap". The section above stays as the evidence.
+
+*Lead's note.* The token's returned pair goes away with D9's multi-value return, which lands first (M30). GHC's "state hack" is an eta-expansion through `IO` that D48's pedantic rule does not allow, so D48's measurement of D includes `IO`-heavy programs. With a token `IO` is ordinary Core, and Core takes on the rules B names above. Lands in M17.
+
 ### D26. The library boundary
 
 **Question.** What may Haskell library code call? `share/rhc/haskell98` has `prim*` names and names `PreludeBuiltin` and `UnicodePrims`, defined nowhere (R47), and needs big-number arithmetic, number text and buffered handles from somewhere.
@@ -6029,6 +6328,10 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 **Recommendation.** B. **The strongest argument against:** E1's route resolves names through `Env` and `UnitBasis`, so rhc links SML's elaborator, which goes against D41's layer with no front end, and every Haskell program carries the Basis in its link. A has none of this, and its libraries run whole in the Core interpreter. B stands on `IntInf`: porting 651 lines of tested arithmetic into a new language is the larger risk. A generated table of the unit's exports could replace the lookup through `Env`; that is unbuilt [inferred].
 
 **What would reopen it.** D20 choosing arithmetic that needs no SML, which leaves the unit nearly empty and favours A; M21 finding the unit will not freeze; a need for SML names from user code, which is an extension and out of scope.
+
+**Decided (owner, 2026-11-09).** A, against the recommendation: primitives only, no SML below Haskell. The owner: "please port IntInf if we need it; Haskell/SML interop is a future roadmap". The section above stays as the evidence.
+
+*Lead's note.* The bignum core is primitives already: `intinf_binary`, `intinf_divmod`, `intinf_shift`, `intinf_power`, `intinf_decimal` (`src/isa/prims.sml:828-847`, the same lines at origin/master `697724da5`). So the port is the representation and the small path over them, which D20's D shares, not 651 lines of arithmetic. The support unit of B does not land, nor the lookup through `Env` and `UnitBasis` that went against D41's layer; M5's Mid unit that names SML globals is not needed by rhc. Lands in M17 and M18.
 
 ### D27. Parser and layout
 
@@ -6058,6 +6361,8 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 
 **What would reopen it.** A file or crafted case on which A and an automaton disagree. That is what would have flipped E10.
 
+**Decided (owner, 2026-11-09).** A, as recommended: hand-written recursive descent, with `closeImplicit`.
+
 ### D28. AST fidelity and the printer
 
 **Question.** How much of the source does the AST keep, and which round trips hold it honest? The brief asks for a pretty printer to check round tripping, and `lib/language/haskell` may serve other tools. Rune: none. It has no AST round trip of its own: `Ast.decToString` is a debug printer nothing reparses (`lib/compiler/frontend/ast.sml:381`).
@@ -6075,6 +6380,12 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 **Recommendation.** A. **The strongest argument against:** a printer that prints only braces never exercises `L`, so these tests prove less about layout than they appear to. Erdweg's method prints each AST explicit and implicit and requires one parse, and a corpus does not test a printer at all (Duregård et al. 2012). So M2 adds an implicit print and generated ASTs (D55). The AST's weight, spans on every node, is paid in a batch compiler that does not need them; nothing has measured it.
 
 **What would reopen it.** A tool on `lib/language/haskell` that needs comments in the tree; the AST's size showing in compile time.
+
+**Decided (owner, 2026-11-09).** C, against the recommendation: an exact printer, with annotations in every node. The section above stays as the evidence.
+
+*Lead's note.* E10's AST drops comments, pragmas and layout, and C keeps them, so M11 grows, unmeasured.
+
+*From the papers (E15b).* C comes on top of A's printer and its two round trips, not in place of them. An exact printer cannot print a tree that carries no annotations: generated ASTs, the reducer's output, M2's implicit print. GHC keeps both `check-ppr` and `check-exact`, and Amorim 2018's printer, the nearest published, is not exact: it holds `parse(p) = parse(prettyPrint(parse(p)))` and drops comments (*What the literature says*, D28). Lands in M11.
 
 ### D29. Names and fixity
 
@@ -6097,6 +6408,8 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 **Recommendation.** A. The Prelude's self-import is a deviation from 5.6.1 read literally, recorded as such. **The strongest argument against:** the least fixpoint is a choice the Report does not make. Chapter 5 is satisfied by either solution, so this refuses a reading the text leaves open, on the strength of one paper. It is taken because a larger solution lets an export justify itself, and because the Report was revised partly on that paper's work (*What the literature says*). Which three pairs separate E16's 690 from 693 was not listed.
 
 **What would reopen it.** A legal program whose meaning needs a larger solution; an erratum on the point.
+
+**Decided (owner, 2026-11-09).** A, as recommended: the least fixpoint, with the Prelude not importing itself and fixity read after names. And at the owner's request, "can we make least/greatest fixpoint a language/compiler option please as we did in rune for some of the sml97 ambiguities": an option, `--names=least|greatest`, least by default, as Rune has `--flex-records`, `--overloading` and `--free-tyvars` for SML '97's (`src/driver/options.sml:90-96`). Chapter 5 is satisfied by either, so the greatest is a reading of the text, not a deviation. Lands in M12.
 
 ### D30. Recursive modules
 
@@ -6156,6 +6469,12 @@ The libraries do not need any of this: E16 finds no `default` declaration in the
 
 **What would reopen it.** M22's real compile times, which would bring in Flatt and Felleisen's way of keeping a cycle apart, or B as an optional cut inside A where every edge is signed (E16 shows that the Report's text would allow one); the owner taking the simpler `default` rule, or the end of the SCC for Rule 2; a cycle that a join cannot type; v2's D5 and D6 fixing a written order for every language (`results/E13/toy/p7.out`).
 
+**Decided (owner, 2026-11-09).** A and each module its own `default`, both as recommended. And at the owner's request, "can we make default per module/per scc a language/compiler option please as we did in rune for some of the sml97 ambiguities": an option, `--cycle-default=module|scc`, `module` by default.
+
+*Lead's note.* Rule 2's closing point, the end of each module or of the SCC, is offered under the same option, since the two are the same choice about where a module of a cycle ends.
+
+*Note.* The `scc` setting is outside D38's deviation rule, as the section says of both: it refuses a program chapter 5 calls legal, or accepts what 4.5.5 forbids. So it is an extension the owner asked for, off by default and documented as one. Lands in M12 and M13.
+
 ### D31. Checker structure and evidence records
 
 **Question.** How is the type checker built, and what does it leave for Core and for HsLint? Rune: none under every option. `Types.ty` holds no class context and no variable-headed application (`lib/compiler/elab/types.sml:8-12`), so rhc has its own types; `Witness` is a model and not code to share.
@@ -6176,6 +6495,8 @@ The libraries do not need any of this: E16 finds no `default` declaration in the
 **Recommendation.** A. **The strongest argument against:** inference and elaboration share one pass and one set of ref cells, so a bug in resolving a placeholder yields well-typed Core that means the wrong thing. `show (read "True")` elaborated at `Int` and at `Bool` is well typed at `[Char]` either way, and CoreLint cannot see it. A does not protect itself; D54's second inference is what does, and without it A should not stand. C would also spare a second inferencer for Haskell 2010.
 
 **What would reopen it.** D54 finding the records too weak to check against; the roadmap for later languages being brought forward.
+
+**Decided (owner, 2026-11-09).** A, as recommended: one inference over the renamed AST, with evidence recorded by node.
 
 ### D32. Monomorphism and defaulting readings
 
@@ -6200,6 +6521,8 @@ The libraries do not need any of this: E16 finds no `default` declaration in the
 
 **What would reopen it.** HsLint's second inference disagreeing on a corpus program; the owner's call on R21; a corpus program refused only by R21(b).
 
+**Decided (owner, 2026-11-09).** The table, as recommended: R18 by 4.5.5, R19 refused, R20 at the end of the module, R21(c) by Typing Haskell in Haskell's split, R21(a) and (b) by the text, and R22 by the text.
+
 ### D33. Deriving
 
 **Question.** Where is derived code made, and what specifies it? Rune: none.
@@ -6221,6 +6544,10 @@ The libraries do not need any of this: E16 finds no `default` declaration in the
 
 **What would reopen it.** Derived `Read` being unusable: its exponential cost on nested parentheses is the Report's own ("very inefficient", 10.4), and nhc98 exhausts its heap or time on `infix/derived` (E7).
 
+**Decided (owner, 2026-11-09).** C, against the recommendation: deriving inside the checker, from the typed constructor, as GHC, MicroHs and Programatica do. The section above stays as the evidence.
+
+*From the papers (E15b).* With D54's C, a derived instance made only as typed output gives neither replay nor the second inference a source phrase to check. So the instance is made as AST, after the checker has inferred its context, and is elaborated like a user's, which is GHC's route; HsLint then checks it as it checks any instance. Faxén has no deriving rules, so the minimality of a derived context (10.1) is checked by no layer of HsLint, only by conformance rows. Lands in M13 and M14.
+
 ### D34. Desugaring and match compilation
 
 **Question.** How does the renamed, typed AST become Core, and in what order are patterns tested? 3.17.2: "Pattern matching proceeds from left to right, and outside to inside". A compiler is free only in tests on values already forced, and in sharing.
@@ -6240,6 +6567,8 @@ The libraries do not need any of this: E16 finds no `default` declaration in the
 **Recommendation.** A at first; B when a program shows the need. **The strongest argument against:** Rune already has a tested decision-tree compiler, and A writes a second match compiler that is slower on a bytecode by the literature's one figure. But `trees` would have to learn to force, down to a one-constructor type, and to carry the dictionaries of overloaded patterns, on an IR rhc does not use. Repeated tests left by backtracking go in Core by case on a known variable.
 
 **What would reopen it.** `--count` on the corpus showing repeated tests dominate after D47's simplifier, which brings B forward.
+
+**Decided (owner, 2026-11-09).** To be measured: B, Sestoft-order decision trees as an option, built and benchmarked on rhc's programs; then A or B on the numbers. Until then A stands. M15 builds it (*Decisions on the numbers*). Pettersson 1992 found no gain in code size from a matching automaton, so B is judged in VM instructions on match-heavy programs, not in size. D17's B, if taken, changes how pattern bindings and `~p` are desugared, which this decision's A covers.
 
 ### D35. Hierarchical names
 
@@ -6264,6 +6593,8 @@ The libraries do not need any of this: E16 finds no `default` declaration in the
 **Recommendation.** B: a flag, off by default and documented, used by the corpus harness, with `mod.name.modid`'s row pinned on the default. **The strongest argument against:** a corpus run under the flag runs under a lexer that is not the Report's, so the tests prove a slightly different language from the one claimed. Each flag is also a mode to keep working. D avoids that for most of the 2019 nofib. B is kept because nhc98's compiler, the largest realistic target (E8), cannot be reached otherwise, and because the flag is four lines.
 
 **What would reopen it.** The Haskell 2010 roadmap, whose mode has it on.
+
+**Decided (owner, 2026-11-09).** B, as recommended: dotted names refused by default, with a documented flag for the corpus.
 
 ### D36. Library layout
 
@@ -6308,6 +6639,8 @@ Rune: none under every option. *The three layouts* in *What the Report says* com
 
 **What would reopen it.** The owner, at G0. The joined checker running late against M17, which brings in D. D30 taken as refused, which leaves B. M21 or M22 showing the literal unit far dearer to compile than the merged one: no one has published a cost, and jhc's largest SCC is 10. Library edits being frequent enough that 2.6 times matters, which brings in C for rhc's own use.
 
+**Decided (owner, 2026-11-09).** A, as recommended: the Report's graph compiled as one unit, with D as the fallback, built only if the joined checker runs late.
+
 ### D37. Prelude overlay and licence
 
 **Question.** What is shipped in `share/rhc/haskell98` beyond the Report's text, and under what terms? Rune: none in the compiler; one sentence in the top-level licence.
@@ -6328,6 +6661,8 @@ Rune: none under every option. *The three layouts* in *What the Report says* com
 **Recommendation.** B and A. **The strongest argument against:** "about 15" is a hand count, and an overlay that can change `Array`'s representation can change anything, so an exit test that allows the overlay is only as strict as the list is short. Text and code disagree in further places where E9 says no change is needed (R49), and each of those is a test that pins one side. On the licence: not legal advice, and it is not established whether a code listing is separately protected, nor what bytecode linking these libraries owes.
 
 **What would reopen it.** M17 finding the list much longer than 15; legal advice on either open point.
+
+**Decided (owner, 2026-11-09).** Code B and licence A, as recommended: a listed overlay, and `share/rhc/haskell98/LICENSE`, marked modified.
 
 ### D38. Which text
 
@@ -6367,6 +6702,8 @@ The errata do not reach the worst of it. R7's `[LT..]`, R42's `Show Float` and R
 
 **What would reopen it.** The owner's call on that rule; a further erratum; a mode for Haskell 2010, which has its own text.
 
+**Decided (owner, 2026-11-09).** B, as recommended: the December 2002 text plus the published errata, all listed, with the one rule for departures above; `Just.let`, R21(b) and R38 follow the text, as the recommendation has them.
+
 ### D39. The pipeline as data
 
 **Question.** The brief wants a pipeline in which "optimization passes can be swapped in and out cleanly". Today `Pipeline.lowOfMid` is a fixed run of calls (`driver/pipeline.sml:177-186`), `--passes` can only filter it (`util/pass.sml:91-94`), and `Pipeline` names the elaborator and `UnitBasis` as it loads (`driver/pipeline.sml:8-10`). Should the pass list be data, and how far should that go?
@@ -6405,6 +6742,10 @@ E11-7 and E11-11 have no other decision, and land here. E11-11 is needed: the st
 
 **What would reopen it.** A client's order breaking something a lint should have seen, which is the case for B; `make check` or a host refusing a patch; Rune wanting `inline` as a stage for reasons of its own.
 
+**Decided (owner, 2026-11-09).** D, against the recommendation: "D (leave it)". The pipeline stays as it is: E11-4, E11-6 and E11-8 do not land, nor E11-7 and E11-11, which had no other decision. The section above stays as the evidence, and *What remains* stays work for Rune that no milestone holds.
+
+*Lead's note.* The lead's objection, on one point: D41's layer needs `driver/midpipeline.sml`, which is E11-8, part of C: without it the Mid half of `pipeline.sml` names the front end, and the layer cannot exist. The owner is asked whether E11-8 alone lands with D41 (D41). Under D rhc calls `Pipeline.lowOfMid` as it is, cannot leave out `expand` at link time, and links Rune's front end. The `--passes` defect stays on master unless it is fixed on its own.
+
 ### D40. Front-end independence
 
 **Question.** What ties Mid and everything below it to Rune's front end, and which ties does rhc need cut? Stamps come from `Elaborate.freshStamp` (`elab/elaborate.sml:9`, read by `core/lift.sml:27`, `core/workers.sml:29`, `core/simplify.sml:277`, `core/refs.sml:20`). Function names live in `Translate.funNames`, read by every pass that wants one (`core/simplify.sml:803`, `core/workers.sml:392`, `core/refs.sml:178`). `Workers` and `Lift` read the stack target's `maxArgs` whatever the target is (`core/workers.sml:212`, `core/lift.sml:244`). `Mid.Const` holds `Lambda.const` (`core/lambda.sml:10`).
@@ -6432,6 +6773,10 @@ Sources and bytes as in D39.
 
 **What would reopen it.** M4's host builds or `make check` refusing a patch; a front-end tie these patches do not cut, as `Target.intBits` is left uncut today, turning out to matter.
 
+**Decided (owner, 2026-11-09).** B and C, as recommended: E11-1, E11-2, E11-3, E11-5 and E11-9, and the built-in tycons out of `Types` when rhc's first type name needs them.
+
+*Note.* The patches were made on `b12141ecc`. On origin/master `697724da5` E11-2 applies and the others do not (Y, `git apply --check`, and again while recording this), so M4 rewrites them there. Mid's codecs are generated now, so E11-5's `label` on `fundef` is described in `tools/codecs/compiler.sml` (`fundef` at `:234-237`) and `make codecs` run, in place of E11-5's hand edits of `midcodec.sml` and `unitmid.sml`; `make check-codecs` refuses stale output.
+
 ### D41. What `lib/compiler` exports
 
 **Question.** `lib/compiler/library.build` exposes `RuneCompiler` and nothing else, and reaches Mid only as bytes. `lib/compiler/internal.build` exposes every structure of its files, and drivers use it (`rune.build:24`). Which should rhc use, and what makes "no front end" a fact?
@@ -6446,6 +6791,10 @@ Sources and bytes as in D39.
 **Recommendation.** C. **The strongest argument against:** v2 is about to say how a program reaches into a library. Under its D10 a `use` of `lib/compiler/mid.build` is reaching in: a warning from v2's M1, an error after its M14. Under its D11 the five drivers become friends. A third hand-kept build list goes the wrong way, and v2's named view is the proper form of the same thing, since a view's files are "the `requires` closure of those exports". The answer is order. rhc cannot wait for v2's M8 (D46), so the layer lands as a `use`, and it becomes a view or a friend entry when v2's M8 and M14 land. rhc is then a sixth driver on v2's list. That asks nothing new of v2's D10 or D11, which is why they are not among D46's six.
 
 **What would reopen it.** The reordering moving bytes; a pass of the layer coming to need the elaborator; v2's D8 decided without views, when the layer stays a build list.
+
+**Decided (owner, 2026-11-09).** The owner asked the lead to decide after reviewing what build-system-v2 changed: "please review what build-system-v2 has changed and you decide based on that". The lead's decision: C, `lib/compiler/mid.build`, with rhc's root build, `rhc.build` (M8), a friend of `lib/compiler` and rhc linking its own `Config` (`scripts/gen-version.sh --config PLAN FILE`). It holds if E11-8 lands; otherwise D. The owner is asked (D39).
+
+*Lead's note.* At origin/master `697724da5` reaching into a library with a header is an error unless the reaching build is a friend (v2's M14), and one line in `friends` of `lib/compiler/library.build` lets the `use` through, so C's worry above is gone. A named view, B under v2's D8, must be a subset of the exports, so it would make `lib/compiler` export Mid, Low, `Ty` and the passes to every client, which is A, and through `libraries` it gives rhc Rune's identity, the hole v2's M11 found. v2's own text says the layer "becomes a named view of lib/compiler (D8), not a friend" (`build-system-v2.md:5791`); its M11 contradicts that, and the line should say a friend. The layer exists only if the Mid half of `pipeline.sml` moves out, which is E11-8; under D39's D it falls back to D, `internal.build` through the same friend entry, and rhc links all of Rune's front end. Lands in M4.
 
 ### D42. Which hosts build rhc
 
@@ -6462,6 +6811,8 @@ Sources and bytes as in D39.
 **Recommendation.** C. **The strongest argument against:** rhc's speed is unknown, and a native build is the cheapest answer if it is slow: `make check` may run up to 3,781 clause programs (D45), and E10's parser alone costs about 560 VM instructions per token. And other SML compilers are a free differential test of Rune itself on 12-20k lines of new SML [E10's estimate, through Core]: a host that disagrees has found a bug in one of them. The answer is that the first is met better by D45's snapshot, that a native build can be added any day because the sources are Standard ML, and that the second is a benefit to Rune which can be had informationally.
 
 **What would reopen it.** rhc's measured compile time keeping `make check` out of budget after M21; a host finding a Rune miscompile in rhc's sources.
+
+**Decided (owner, 2026-11-09).** C, as recommended: Rune alone is required, other hosts informational, with the exception to the library rule written down.
 
 ### D43. The store
 
@@ -6486,6 +6837,10 @@ Under all of these rhc's interface, usages and driver are its own (D44).
 **Recommendation.** B. **The strongest argument against:** Do not move 231 lines out from under v2's M3, M4, M6 and M7 in the same file, for no gain to Rune today; let rhc start on `as is`, and generalise when v2's M7 redesigns the store anyway. The toy says `as is` is sound. The answer: `as is` gives no per-entity cut-off, so rhc's usage work would be written against a configuration that holds Rune's settings and then moved. And the split needs nothing from v2's M3: v2's prototypes all carry the same `unitcache.sml` hunks (`v2/patches.out`), so what is moved is known.
 
 **What would reopen it.** A hold at scale, unmeasured, or rhc's real interface size changing the store's shape; the owner deciding v2's D24 against a split entry; `make check` or a host refusing the patch, since neither has run on it.
+
+**Decided (owner, 2026-11-09).** The owner asked the lead to decide after reviewing build-system-v2. The lead's decision: B, as landed. v2's M6 and M7 built `lib/compiler/driver/unitstore.sml` from E13's prototype: an `('h, 's) format`, sections hashed apart, a client's head judged by `holds`, settings passed in, keys of several parts, eviction by age and size (Y; 746 lines at origin/master `697724da5`). rhc writes its own format, head, `holds`, key and settings. No change to Rune is needed.
+
+*Lead's note.* Moving the store's location and trim policy out of `unitcache.sml` (`:223-275`, `:565-583` at origin/master), about 60 lines, is optional, and is what remains of M20. `unitstore.sml` sits in `frontend.build`, so under D41's C it moves into the Mid layer (Y). If rhc shares `.rune`, its entries and Rune's share one budget for trimming [Y's inference]. C would now mean Rune's settings and Rune's head; A and D lose for their old reasons.
 
 ### D44. HsIface
 
@@ -6517,6 +6872,8 @@ A fingerprint is per recursive group, and it is compared, not assumed: Rule 2 an
 
 **What would reopen it.** That measurement showing by entity saving little on real programs; M23 showing a program's own unfoldings matter on Rune as `real/fulsom`'s do on GHC; a hold at scale proving too dear.
 
+**Decided (owner, 2026-11-09).** C, as recommended: by entity, with the Prelude's unfoldings from the start and a program's own later.
+
 ### D45. The Prelude snapshot
 
 **Question.** A whole-program compile carries the Report's 11-module unit, 14,965 tokens per program, of which the Prelude's four modules are 6,908 (E16's text through E10's spike, rerun by V2 and for this section; no file holds the counts), and the conformance suite is up to 3,781 clause programs (E9: 3,901 rows less the 120 whose `test` is `none`). At E10's 560 VM instructions per token that is 8.4M instructions to parse each time [deduced]; the checker and Core passes are unmeasured. What does rhc do about it, and when?
@@ -6543,6 +6900,8 @@ A rough rate [V2's estimate]: the compiler's own compile is 2.158G VM instructio
 **Recommendation.** A, with B until M21 lands. **The strongest argument against:** A snapshot is a second path. Every program then runs on the frozen Prelude, while whole-program stays the reference, so the two must be held equal (`unitsOne`, *Testing and conformance*), and a snapshot taken before track P, or without unfoldings, understates every later result [inference, Peyton Jones, Marlow 2002]. The link size and start-up of a frozen unit are not established: hello reaches 19 definitions of 525 (E16), and a unit links whole, since Shake runs only on a whole program (`driver/pipeline.sml:166`). If rhc's compile turns out cheap, whole-program with Shake might do. The answer is the arithmetic above: at 3,781 programs a small per-compile cost is a real share of `make check`, and the saved world shows the path works before the store is needed.
 
 **What would reopen it.** M21 finding start-up of the frozen unit worse than a whole compile; rhc's measured compile making whole-program affordable; D36's literal layout needing a unit the store cannot freeze.
+
+**Decided (owner, 2026-11-09).** A, with B until M21 lands, as recommended: a frozen unit through the store, and the saved world until then.
 
 ### D46. Order with build-system-v2
 
@@ -6588,6 +6947,8 @@ The last three cost a sentence each, and change no byte of Rune. Refused, none o
 
 **What would reopen it.** v2 going further in its M3 than its table: names rather than numbers in imports change `Link.key`, `remapKeys` and `.rbu`, and rhc's link numbers, hashed by name, have collisions unchecked (E13); a v2 milestone making `Link`, `UnitFile` or `Usage` carry SML, which today they do not; the owner deciding any of the six the other way, which costs rhc what is said above.
 
+**Decided (owner, 2026-11-09).** Not applicable: "build-system-v2 is done". It landed in origin/master `697724da5`, and implementation starts there. Its D5, D6, D8, D14, D24 and D25 were taken with a second language in view (Y); *What build-system-v2 gave rhc* says what rhc takes from it. The section above is the record of what was asked.
+
 ### D47. Where the optimiser lives
 
 **Question.** Rune has an optimiser, on Mid. Haskell needs transformations that move lazy bindings. Do they go in Core, in Mid, or in both?
@@ -6618,6 +6979,8 @@ The last three cost a sentence each, and change no byte of Rune. Refused, none o
 **The evidence.** The literature (*What the literature says*, D47), not an experiment: nothing here built either side. E12 measures Mid's passes on strict code. E3 sizes GHC's Core passes (D48).
 
 **What would reopen it.** Real programs showing Mid alone recovering most of a known-dictionary rung, which E5's do not; M23 showing a Core simplifier out of proportion to what it gains on Rune; lazy ML's programs needing more than force facts (D57). B can be taken at any time, by itself, as M25's measurements justify.
+
+**Decided (owner, 2026-11-09).** C, as recommended: rhc's optimiser in Core; Mid unchanged by it.
 
 ### D48. A Core simplifier, with eta
 
@@ -6654,6 +7017,8 @@ The last three cost a sentence each, and change no byte of Rune. Refused, none o
 
 **What would reopen it.** M23 finding on the corpus what E5 found on seven programs, that eta alone moves almost nothing; bottom probes showing the rule too hard to hold.
 
+**Decided (owner, 2026-11-09).** C, as recommended: a simplifier, with eta under the pedantic rule. To be measured: D, GHC's default eta, built and benchmarked against C (*Decisions on the numbers*). D is not conforming, so taking it would need a deviation D38's rule does not cover, or the owner's word. Built in M23.
+
 ### D49. Known dictionaries and specialisation
 
 **Question.** Dictionary passing hides every method: at `-O0`, 57.9% of calls are `KNOWN_CALL_EXTRA_ARGS`, a method through its selector, and 63.1% of calls apply two or more arguments, median 56.9% (E3, `compare.txt`). What does rhc resolve, and in what order? Changes to Rune under every option: **none**.
@@ -6664,8 +7029,8 @@ The last three cost a sentence each, and change no byte of Rune. Refused, none o
 - **D. Dictionary-free, whole program** (Jones 1995). Not possible: Haskell 98 has polymorphic recursion (4.4.1), and "The set of dictionaries ... is infinite and the specialization algorithm will not terminate". Dictionaries stay, and specialisation is an optimisation.
 
 **The evidence.**
-- *E3:* thunks -47%, bytes -38% in total, -26.2% and -17.7% median, and 2+ applies falling from 63.1% to 12.0% of calls, median 2.9, on the first step. D48 says how far that carries: that step is the simplifier and the class-op rule, with GHC's specialiser off. It is the one measure this decision has on a corpus, and it measures something next door. No paper gives a figure for a Core specialiser (*What the literature says*).
-- *Order:* GHC specialises before strictness (`ghc/compiler/GHC/Core/Opt/Pipeline.hs:216`). `sum` and `product` are `foldl (+) 0`: an unknown `(+)` hides everything from a strictness analyser [inference].
+- *E3:* thunks -47%, bytes -38% in total, -26.2% and -17.7% median, and 2+ applies falling from 63.1% to 12.0% of calls, median 2.9, on the first step. D48 says how far that carries: that step is the simplifier and the class-op rule, with GHC's specialiser off. It is the one measure this decision has on a corpus, and it measures something next door. The one published figure for a specialiser is Augustsson 1993's Table 1, on hbc, by hand transformation within a module, the collector excluded: 9.2 times on nfib, 1.9 on choleski, idInt and hinc, 1.03 on sched, whose signatures were already monomorphic, with the table's rows read as cumulative, which the paper does not say (*What the literature says*, D49).
+- *Order:* GHC specialises before strictness (`ghc/compiler/GHC/Core/Opt/Pipeline.hs:216`). `sum` and `product` are `foldl (+) 0`: an unknown `(+)` hides everything from a strictness analyser, as Augustsson 1993 §5.3 says.
 - *On Rune:* E5 ran the ladder by hand-lowering, on three whole nofib programs and four kernels: `mrhc.py` is no compiler, and its steps, in code type, are not decisions. M instructions at Rune `-O0`, tier 2 (`results/E5/k.txt`; E5 has the rest):
 
 | Step | `queens` | `primes` | `exp3_8` | `sum` | `list` | `showk` |
@@ -6680,9 +7045,13 @@ The last three cost a sentence each, and change no byte of Rune. Refused, none o
 
 Step `D1` saves 21% to 27% of instructions on whole programs and no thunk: `queens` makes 13.3M at `D0` and at `D1`, and strictness then takes that to 5.3M (`results/E5/density.txt`). On `sum` it saves 0.2%, and `list` rises 1.9%, unexplained. `sum` needs specialisation and strictness together: 3,247 with strictness alone, 809 with both, which confirms the order above. Mid does not do this by itself: Rune's `-O2` on `D0` output saves 3.0%, 2.0% and -0.8% on the whole programs, against 21.3%, 25.8% and 27.2% for `D1`, and that answers D47's third argument on these programs. **The first optimiser is four things:** known dictionaries with literals, eta from visible arity, dictionary and static-function specialisation, first-order strictness without worker/wrapper: 15, 20, 143 and 95 lines of the throwaway `mrhc.py`. Eta's place is the least measured: alone it saves 0.0% to 1.1%, and no step ran strictness without it.
 
-**Recommendation.** C, first in track P. **The strongest argument against:** "The gain is the optimiser's, not the dispatch's." Dispatch is cheap, "a reference to a tuple element followed by a function call" (Peterson, Jones, §9), and under Gofer's naive code generator specialisation gains little. So resolving a method buys nothing by itself on a compiler with no optimiser behind it; the gain comes from what is then known. That is why D48 comes with it, and why E3's first step cannot be read as this decision's alone. On Rune E5 splits this: resolution alone saves 21% to 27% of instructions on whole programs, and on `sum` and `sumint` 0.2% and 0.4%, and no thunk on any. The other argument is D47's third: Mid's `specialise` may already do part of this. E5 finds little of it, above.
+**Recommendation.** C, first in track P. **The strongest argument against:** "The gain is the optimiser's, not the dispatch's." Dispatch is cheap, "a reference to a tuple element followed by a function call" (Peterson, Jones, §9), and under Gofer's naive code generator specialisation gains little. On hbc it was not cheap: a method call took about 15 memory references against 6 for a known call, and the dictionary's representation alone gained 2.2 times on nfib (Augustsson 1993, §4.1, Table 1); specialisation gained most there all the same, so the point stands. So resolving a method buys nothing by itself on a compiler with no optimiser behind it; the gain comes from what is then known. That is why D48 comes with it, and why E3's first step cannot be read as this decision's alone. On Rune E5 splits this: resolution alone saves 21% to 27% of instructions on whole programs, and on `sum` and `sumint` 0.2% and 0.4%, and no thunk on any. The other argument is D47's third: Mid's `specialise` may already do part of this. E5 finds little of it, above.
 
 **What would reopen it.** M23's counts on the corpus showing resolution alone moving nothing, as on `sum` in E5, when track P starts from D50 or from Mid.
+
+**Decided (owner, 2026-11-09).** C, as recommended: resolution at known dictionaries, then specialisation with a fuel limit, first in track P.
+
+*From the papers (E15b).* Augustsson 1993 adds three things C must do. It specialises local overloaded bindings: a SPECIALIZE'd `sum` "is hardly an improvement" while its local `sum'` stays overloaded (§5.4, fig 10). It folds `fromRational` as well as `fromInteger` (§4.3). And it keeps its fuel, since polymorphic recursion defeats specialisation (fig 9). Lands in M23.
 
 ### D50. Strictness
 
@@ -6700,19 +7069,21 @@ Step `D1` saves 21% to 27% of instructions on whole programs and no thunk: `quee
 
 **What would reopen it.** M23's counts on Rune leaving too few thunks for this to matter; a force on Rune proving too cheap to repay it.
 
+**Decided (owner, 2026-11-09).** C, as recommended: one backward analysis with signatures, in M24.
+
 ### D51. Cheap eagerness, and what stops `inline` copying a thunk
 
 **Question.** Two questions, decided together with D22, because each is about what may run early or twice. May rhc evaluate a cheap expression instead of building a thunk? And what stops a pass copying a thunk, so that its work runs twice?
 
-**Cheap eagerness.** D22's checked prims mean `int_add` raises (`src/isa/prims.sml:27`, `effects = [Raises]`). So `Int +` is not speculable: run early, it can stop a program that would never have demanded it. That closes the local form of cheap eagerness for `Int` arithmetic [inference]. `div` is out on any reading, and `Integer` is unbounded, which excludes much defaulted code.
+**Cheap eagerness.** D22's checked prims mean `int_add` raises (`src/isa/prims.sml:27`, `effects = [Raises]`). So `Int +` is not speculable: run early, it can stop a program that would never have demanded it. That closes the local form of cheap eagerness for `Int` arithmetic, as Faxén says himself (Faxén 2000, §3, p 152). `div` is out on any reading. Under D20's D an `Integer` add of two immediates cannot raise, but the big path is unbounded, so only speculation guarded by a test of the immediate bit qualifies, the form Faxén 2001 measured [inference].
 
-- **A. Small: a primitive that cannot raise.** D22's C, or one that reports overflow, so that a site can speculate and fall back to a thunk [inference; no paper, not built]. One primitive per operation, through `src/isa` on every engine.
+- **A. Small: a primitive that cannot raise.** D22's C, or one that reports overflow, so that a site can speculate and fall back to a thunk. Faxén 2000 §6 proposes that form for division and did not build it; not built here. One primitive per operation, through `src/isa` on every engine.
 - **B. None: reopen D22.** Its B: `Int` wraps through the word prims, and `+` is total. The cost falls on every `Int` operation: +7 machine instructions on an add, +3 on a mul-mod loop (`results/V2/word/`).
 - **C. None: total operations only.** **Recommended, and not before M25.** Speculate what cannot raise, on values Core's types say are evaluated: GHC's `exprOkForSpeculation` (`ghc/compiler/GHC/Core/Utils.hs:1791-1792`), with the warning about recursive dictionary functions in its Note (`ghc/compiler/GHC/CoreToStg/Prep.hs:1859`). Constructors of values, and moving bounded work out of a thunk to expose a head normal form.
 - **D. None: no speculation.**
-- **E. Rejected: flow analysis** (Faxén 2000, [memory], second hand): whole program.
+- **E. Rejected: flow analysis** (Faxén 2000): whole program; "separate compilation is impossible" (§6, p 158).
 
-**The evidence.** None on rhc's question. E3 has no rung for this, and D48's limits apply. What it does give is that 91.3% of thunks are entered at `-O0` (`compare.txt`), so few are saved by never running them. No paper gives a figure for the local form. The prize elsewhere is update avoidance (Sansom, Peyton Jones; Sergey et al. 2014), up to 25% against a weak baseline (Faxén 2000, second hand), and Ennals warns such gains shrink on a mature one.
+**The evidence.** None on rhc's question. E3 has no rung for this, and D48's limits apply. It gives that 91.3% of thunks are entered at `-O0` (`compare.txt`), which is beside the point: Faxén's gain is in thunks not built, evals removed and unboxing, from thunks with "an about average probability of being evaluated" (Faxén 2000, p 157). His Table 1 gives 0% (sort) to 52% (qf) fewer instructions, and 26%, 5% and 11% on event, sched and tc, his three programs larger than toys, with a wrapping `Int`, programs of at most 700 lines and a very simple strictness analyser. His "All evals expensive" column is a figure for the local form: 16%, 1% and 8% on those three, a ceiling for rhc (D22). "0-25%" is Ennals's summary, and Ennals warns such gains shrink on a mature baseline. The dynamic form costs 7 to 8 instructions a test and "hardly improves run-times and instructions counts at all for most programs" (Faxén 2001, §5), which weighs against A, and against cheap eagerness steered by a profile, unless that tier compiles a specialised side [inference]. The prize elsewhere is update avoidance (Sansom, Peyton Jones; Sergey et al. 2014).
 
 **What stops `inline` copying a thunk.** A distinct type stops a blind read. It does not stop a copy, and "safe" is not "shared" (W2).
 - **D3's surface does the first half.** A thunk is not a `fundef`. It is the result of a primitive bound by `Let`, and force is a primitive, so nothing calls the thunk's code by name for `inline` to copy (`docs/ir.md:856-862`; deduced from `patches/E2-all-forms.patch`). No test counts re-evaluation under Simplify.
@@ -6723,6 +7094,8 @@ Step `D1` saves 21% to 27% of instructions on whole programs and no thunk: `quee
 **Recommendation.** C, not before M25; for copies, the sharing budget and D3's surface. **The strongest argument against** taking the two together: cheap eagerness is an optimisation and D22 is a language choice, and letting a late pass decide `Int` arithmetic gets the order wrong. So D22 stands by itself, on the Report and on cost, and this decision only records that it closes the door, and what it would take to open it.
 
 **What would reopen it.** A program outside `hash` overflowing, which reopens D22 and with it this; M25 finding cheap `Int` thunks dominating on Rune; a sharing budget catching a copy under D3's surface.
+
+**Decided (owner, 2026-11-09).** C, as recommended: total operations only, not before M25; for copies, the sharing budget and D3's surface. Under D20's D an `Integer` add of two immediates is total, so a site guarded by a test of the immediate bit may speculate it; Faxén 2001's figures say not to expect much of that.
 
 ### D52. Oracle policy
 
@@ -6738,6 +7111,8 @@ Step `D1` saves 21% to 27% of instructions on whole programs and no thunk: `quee
 
 **What would reopen it.** A judge's build ceasing to work where it runs nightly; the shim proving to be the source of a verdict.
 
+**Decided (owner, 2026-11-09).** C, as recommended: GHC with the strict shim and Hugs `+98` as judges, nhc98 third, MicroHs a smoke oracle.
+
 ### D53. The conformance table
 
 **Question.** `docs/language.md` is kept honest by id, in both directions, and has 200 rows. rhc's clause matrix has 3,901 (E9, `results/E9/clauses.tsv`). Changes to Rune: **small,** in `tests/runner`: a check over a TSV, beside `DocChecks.features`, about 250 lines [M1's estimate]. Design: *Testing and conformance*.
@@ -6752,19 +7127,27 @@ Step `D1` saves 21% to 27% of instructions on whole programs and no thunk: `quee
 
 **What would reopen it.** E9's first readings proving wrong often enough that the rows must be rebuilt; D38's errata changing the structure rather than rows.
 
+**Decided (owner, 2026-11-09).** C, as recommended: a generated TSV of 3,901 rows, enforced by id.
+
 ### D54. HsLint
 
 **Question.** The brief: "add an independent type checking lint pass as for sml 97". AstLint cannot be copied: it checks the Definition's rules from the elaborator's records and "never unifies" (`elab/astlint.sml:16`), and the Report has no rules. Changes to Rune: **none:** HsLint is in `lib/language/haskell`. Design: *Testing and conformance*. Size: about 3k lines for HsLint and CoreLint together [E10's estimate], 2,000 to 2,500 of it HsLint [M16's estimate], against AstLint's 1,957 and MidLint's 457.
 
 - **A. A target check alone.** Close to CoreLint. It cannot see that `show (read "True")` elaborated at `Int` and at `Bool` are both well typed at `[Char]`, with different meanings (Faxén, §10.2).
-- **B. A target check and a second inference, on the elaborated output.** **Recommended.** Hall's soundness statement, and a transliteration of THIH's `tiImpls`, `split`, `candidates` and `tiProgram` in its conformant form, compared with rhc's evidence records. Only this part can check 4.3.4 and 4.5.5.
-- **C. Those, and replay of Faxén's rules.** What it adds is messages that cite his rule names. Left out.
+- **B. A target check and a second inference, on the elaborated output.** **Recommended.** Hall's soundness statement, and a transliteration of THIH's `tiImpls`, `split`, `candidates` and `tiProgram` in its conformant form, compared with rhc's evidence records. Only this part can check Rule 2 of 4.5.5, ambiguity and 4.3.4's defaulting; Rule 1 has a second check under C.
+- **C. Those, and replay of Faxén's rules.** It adds messages that cite his rule names, and a check of Rule 1: his `bindg` with Definition 2 states it (Faxén 2002, p 338). It cannot refuse ambiguity, since his rules admit ambiguous schemes (§7.2.3), and it has nothing for deriving, `newtype`, strictness flags or recursive modules (§1.3). Not recommended.
 
 **The evidence.** The literature, not an experiment. Faxén 2002 and THIH are the bases; neither checks elaborated output, Faxén was never implemented, and THIH omits the implementation of overloading. The only published typing of a Haskell elaboration is Hall et al. 1996 §5.2 (*What the literature says*).
 
 **Recommendation.** B. **The strongest argument against:** A second inference by the same author, from the same reading of R18, R20, R21 and R22, shares its misreadings with the first, and it shares the renamer outright. It is a second type checker to keep. The answer is that it catches the slip and not the misreading, as AstLint does, and that the misreading is what D52's oracles are for.
 
 **What would reopen it.** Mutants of the second inference's rules surviving it; its costing more than the checker it checks.
+
+**Decided (owner, 2026-11-09).** C, against the recommendation: a target check, a second inference, and replay of Faxén's rules. The section above stays as the evidence, corrected: replay checks Rule 1.
+
+*Lead's note.* Faxén's rules leave out recursive modules, so replay cannot check a module cycle by his rules.
+
+*From the papers (E15b).* His rules leave out deriving, `newtype` and strictness flags too (§1.3), and their module rules are per module, so an SCC under D30 needs a rule of rhc's own [inference]. They admit ambiguous schemes (§7.2.3), so replay cannot refuse ambiguity: Rule 2, ambiguity and defaulting stay the second inference's alone. His deviations from the Report in §2.2, §4.2 and §4.3 are amended before replay runs. Replay needs recorded choices at two places, "dict inst" against "dict super" and premise types absent from the conclusion (§10.2.2, p 355), which rhc's evidence records must hold (D31) [inference]. With D33's C, derived instances made as AST give replay something to check. Lands in M16.
 
 ### D55. Generators, metamorphic relations and rhc's mutants
 
@@ -6778,6 +7161,8 @@ Step `D1` saves 21% to 27% of instructions on whole programs and no thunk: `quee
 **Recommendation.** B. **The strongest argument against:** Cost. Rune's mutants are a job of their own, and generated programs must stay inside what the judges can compare, which E15's "hold still" list narrows. The answer is the order: syntax and Core generators need no type checker and run before a front end exists, and the rest is nightly.
 
 **What would reopen it.** Generators finding nothing the suites do not, over a long run. Mutants showing a stage no test sees is a finding, not a reason to stop.
+
+**Decided (owner, 2026-11-09).** B, as recommended: three generators, cheapest first, metamorphic relations, bottom probes and rhc's mutants.
 
 ### D56. What rhc costs `make check`
 
@@ -6797,6 +7182,8 @@ K comes from hand-lowering three programs and four kernels. It prices running, n
 **Recommendation.** B. **The strongest argument against:** The figure that decides this is the one not measured. A budget set on three hand-lowered programs and four kernels, for a compiler that does not exist, may be off by an order of magnitude, and the recommendation fixes a count of programs instead of a share of the time. At K = 20 the estimate above is half of `make check`, which this set cannot carry. So what binds is the share: M19 measures it, and programs or the stack way move to nightly if it is too high.
 
 **What would reopen it.** M19's measured K or compile time putting the set above what the owner gives `make check`.
+
+**Decided (owner, 2026-11-09).** B, as recommended: the 188 programs under 1 s in `make check`, in 3 of `Lang.ways`' 18 ways, the rest nightly.
 
 ### D57. What "ready for lazy ML" means
 
@@ -6827,11 +7214,13 @@ Items 2, 3 and 6 are Haskell's too, and land in M9. Items 1, 4 and 5 are M26's, 
 
 **What would reopen it.** The extension being scheduled, when this checklist becomes its first milestone.
 
+**Decided (owner, 2026-11-09).** C, as recommended: a checklist that has been run. E14 ran it on form G, and the owner took form C, so M26 runs it again on form C: the pin, the MidLint rule, the stack target's force, the spec's 10 programs, flag off, and `susp` documented. Lazy ML's reading under C is E2's `CmX`, without `BLACKHOLE` and without release.
+
 ## The milestones
 
 Each milestone is one commit or a few, and each commit leaves `make check` green. One that touches the compiler's sources also passes the host builds and `make check-cross`; one that touches units or the cache passes `make check-units` and `make test-incremental`; one that touches `runtime/register` also runs `make test-register-asan`, `make test-stress` and the Windows and portability rules (`AGENTS.md:168-170`). rhc's own sources are built by Rune alone (D42).
 
-A heading gives the track, the size and the order. **What** says what lands, by file. **Starts from** names the prototype, if there is one. **Rests on** names the decisions, and what changes if the owner decides otherwise. **Gate** appears on every change to Rune, and says what the standing gate asks of that change. **Done when** is what a test can show. Paths under `lib/language/haskell`, `src/rhc`, `share/rhc` and `tests/hs`, and new files in `tests/runner`, are proposals. Line numbers are of `b12141ecc`, and are checked again before each milestone.
+A heading gives the track, the size and the order. **What** says what lands, by file. **Starts from** names the prototype, if there is one. **Rests on** names the decisions, and what changes if the owner decides otherwise. **Gate** appears on every change to Rune, and says what the standing gate asks of that change. **Done when** is what a test can show. Paths under `lib/language/haskell`, `src/rhc`, `share/rhc` and `tests/hs`, and new files in `tests/runner`, are proposals. Line numbers are of `b12141ecc`, where the roadmap was written, and stay so. Implementation starts from origin/master `697724da5`, where build-system-v2 has landed, so each is checked there before its milestone, and a citation of that tree says so.
 
 **A prototype is evidence, not code to land.** Every patch under `patches/` and every spike under `results/` was written to answer a question. They carry comments marked throwaway, hold several forms at once, or skip what a landing needs. A milestone takes from one its design, its tests and its numbers, writes what lands, and shows the gate again on what it wrote.
 
@@ -6846,51 +7235,50 @@ A heading gives the track, the size and the order. **What** says what lands, by 
 | M15 | 1,000 to 2,000 | [estimate] nhc98 `Case*.hs` 839; MicroHs `Desugar.hs` 695; both before the dictionaries |
 | CoreLint in M8, M16 | about 3,000 | [estimate] E10, from AstLint's 1,957 and MidLint's 457 |
 
-These parts sum to 12.5-19.5k, which is E10's range. The range has no line for Core's own definitions or its interpreter [deduced from E10's sum], so M8 adds to it, as M10 does. There is no calendar here. D8, D9 and D16 are decisions for no change, so they have no milestone; D46 is an order, given below.
+These parts sum to 12.5-19.5k, which is E10's range. The range has no line for Core's own definitions or its interpreter [deduced from E10's sum], so M8 adds to it, as M10 does, and D28's exact printer adds to M11, unmeasured. There is no calendar here. The owner's decisions of 2026-11-09 add four milestones, numbered after M27 so that nothing renumbers: M28, `Ty` with application and forall (D4); M29, Mid `Case` (D8); M30, multi-value return (D9); M31, `IntInf` immediate (D20). What is built only to be measured sits in the milestone where it belongs, and *Decisions on the numbers* gathers it. D46 is not applicable: build-system-v2 has landed.
 
 ### The order
 
 ```text
-at once, side by side with build-system-v2
+at once, from origin/master 697724da5; G0 passed on 2026-11-09
   T    M1 table     M2 runners     M3 oracles, corpus
-  A    M4 contract -> M5 Mid to bytecode, Mid units     M6 walkers     M7 lints, Simplify
-
-G0   the owner: D1-D6, D11-D13, D36
-
-  B    M8 Core -+-> M10 Core to Mid
-       M9 thunks+
-  F    M11 parser -> M12 names, modules -> M13 types, classes -> M14 deriving, M15 desugaring, M16 HsLint
-  L    M17 Prelude, in the Report's layout -> M18 libraries
+  A    M4 contract -> M5 Mid to bytecode     M7 lints, Simplify
+       M6 walkers -> M28 Ty, M29 Case, M30 multi-value return
+       M31 IntInf immediate, the bignum path first
+  B    M8 Core -+-> M10 Core to Mid, after M28
+       M9 thunks, form C; D3's measured variant after M6
+  F    M11 parser, after M2 -> M12 names, modules -> M13 types, classes -> M14 deriving, M15 desugaring, M16 HsLint
+  L    M17 Prelude, in the Report's layout, after M30 and M31 -> M18 libraries
 
 G1   hello
 
-  T    M19 the bulk of conformance, on the saved world until M21
-  S    M20 store split -> M21 HsIface, driver, beside M19
+  T    M19 the bulk of conformance, on the saved world until M21; the first measurements on the run set
+  S    M20 the store's policy, optional     M21 HsIface, driver, beside M19
   S    M22 SCC keys
 
 G2   the Report
 
-  P    M23 -> M24 -> M25
-  Z    M26
+  P    M23 -> M24 -> M25, with the measurements of Decisions on the numbers
+  Z    M26, on form C
        M27
 ```
 
-**At once: M1 to M7, side by side with build-system-v2.** Neither roadmap waits for the other (D46). E11 changes nothing in `main.sml`, no v2 Touches list from M1 to M7 names `pipeline.sml`, and the seven places E11 shares with v2's milestones overlap in lines that force no order (E11). M5's hunk in `src/driver/main.sml` meets several v2 milestones in that file, inside `readMid`, a function none of them names [read]. Landing E11-5 and E11-9 before v2's M5 is cheaper, since M5's generated codec must carry them. What rhc asks of v2 is decisions, not milestones: *What rhc asks of build-system-v2*.
+**At once, from origin/master `697724da5`.** build-system-v2 has landed there, and the owner's decisions are taken, so G0 is passed. What may start at once: M1, M2, M3, M4, M5, M6, M7, M8, M9 without D3's variant, and M31. M11 follows M2; M28, M29 and M30 follow M6, since each adds an arm to Mid's walkers, as does D3's variant in M9. M10 follows M28, whose `Ty` it emits. M30 comes before M17, whose state token it serves (D25), and M31 before M17, whose `Integer` shares its representation (D20, D26). E11's patches were made on `b12141ecc`: on origin/master E11-2 applies, and of the rest only E11-10's hunk in `matchcomp.sml` (`git apply --check`), so M4 rewrites them. Mid's codecs are generated now: a change to a constructor of Mid, to `fundef` or to `Ty` is a change to `tools/codecs/compiler.sml` and a run of `make codecs`, which `make check-codecs` holds to (M4, M28, M29, M30). What rhc took from build-system-v2 is *What build-system-v2 gave rhc*.
 
-M5 and M7 rest on decisions that G0 holds, and can start before it all the same. `--read-mid` to bytecode is a test tool under any hook, and E1's Simplify fixes are Rune's own bugs. M5's Mid units wait for D1 and D26, and M7's lints for D5.
+M5 keeps `--read-mid` to bytecode and the label in Mid's text. Its Mid unit that names SML globals is not needed under D26's A, since no SML lies below Haskell.
 
-**After G0: tracks B, F and L.** Core text stands between B and F, so B needs no parser: M9 runs on E2's kernels and M10 on Core written by hand, as E1 ran on Mid written by hand. M8 and M9 go side by side, and M10 needs both. F goes in the order of its heading; M14, M15 and M16 overlap once M13 stands. M17's text is written as M12 and M13 need it, since names and types are tested on the Report's own modules, and it first runs after M10 and M15. So cycles and the joined checker land before the Prelude first runs, and the Report's layout needs no fallback (D36). If M13 runs late against M17, D36's option D is the fallback, built only then.
+**Tracks B, F and L.** Core text stands between B and F, so B needs no parser: M9 runs on E2's kernels and M10 on Core written by hand, as E1 ran on Mid written by hand. M8 and M9 go side by side, and M10 needs both and M28. F goes in the order of its heading; M14, M15 and M16 overlap once M13 stands. M17's text is written as M12 and M13 need it, since names and types are tested on the Report's own modules, and it first runs after M10 and M15. So cycles and the joined checker land before the Prelude first runs, and the Report's layout needs no fallback (D36). If M13 runs late against M17, D36's option D is the fallback, built only then.
 
 G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to M15 and M17. If it passes sooner, M16 and M18 go on behind it, and the bulk of M19 waits for them.
 
-**After G1: the bulk of M19, with M20 and M21 beside it, M22, then G2.** M19 runs on a frozen Prelude, the saved world (D45's option B) until M21. M20 and M21 do not gate it: the case for landing them first asked for a frozen Prelude, not for those milestones, and M21 would fix HsIface before conformance has shaken out classes and instances (D45). M22 comes before G2, since recursive modules are in the Report's exit. M20 itself waits on nothing: E13 applied it to master, and if v2's M6 or M7 wants the split first it can land first.
+**After G1: the bulk of M19, with M20 and M21 beside it, M22, then G2.** M19 runs on a frozen Prelude, the saved world (D45's option B) until M21. M20 and M21 do not gate it: the case for landing them first asked for a frozen Prelude, not for those milestones, and M21 would fix HsIface before conformance has shaken out classes and instances (D45). M22 comes before G2, since recursive modules are in the Report's exit. M20 is what remains of the store split now that build-system-v2 has built the store: an optional move of its policy, on no milestone (D43).
 
 **After G2: tracks P and Z, then M27.**
 
 | Track | Milestones |
 |---|---|
 | T, tests | M1, M2, M3, M19 |
-| A, Rune's contract | M4 to M7 |
+| A, Rune's contract | M4 to M7, M28 to M31 |
 | B, back | M8 to M10 |
 | F, front | M11 to M16 |
 | L, libraries | M17, M18 |
@@ -6944,53 +7332,49 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - each of the 20 hard cases has a reading, or is one of the two that need none.
 * **Touches:** `tests/hs/`, `tests/runner/`, `LICENSE`, `docs/testing.md`, `Makefile`.
 
-### M4. Rune's contract: E11's patches (A; L, +1,073 -967 in 42 files, measured; at once)
+### M4. Rune's contract: E11's patches, as decided (A; M, +391 -390 by the patches' own counts for E11-1, 2, 3, 5, 9 and 10, rewritten on origin/master, and E11-8's +187 -167 if it lands; at once)
 
 * **What:**
-  - **Front-end independence (D40):** E11-1 `util/stamp.sml`, E11-2 `Target` passed in, E11-3 counters registered where they live, E11-5 `label` on `fundef`, E11-9 `util/literal.sml`.
-  - **The pipeline as data (D39):** E11-4 the pass list, E11-6 options explicit, E11-8 `driver/midpipeline.sml`; E11-7 `backend/results.sml`, with E11-11's root names after 7 and 8.
-  - **What `lib/compiler` exports (D41):** `lib/compiler/mid.build`, from the prototype's `tests/compiler/mid-only.build`: 48 of the 80 files after the patches (master has 76; four are new), with no lexer, parser, elaborator, Translate, ToMid or Expand.
-  - **`Try` and `Fail` (D7):** E11-10, if the owner takes it, with four expected dumps reviewed line by line and the constructors removed, which E11 left in the datatype.
-  - **The clients as tests:** `tests/compiler/pipeline-client.sml`, `mid-client.sml`.
-  - **What E11 left stale:** `docs/ir.md` takes `results/E11/contract.md`; `tests/runner/compilermutantlist.sml` follows E11-7's move out of `lower.sml`, since a mutant that no longer applies is a FAIL.
-  - **The defect:** a pass list that is data can refuse a name it does not hold, so `--passes=nosuchpass` and `--dump-after=nosuchpass` stop being accepted (`results/defects/passes-unknown-name/`).
-* **Starts from:** `patches/E11-1-stamps.patch` to `E11-11-roots.patch`, in that order. Patches 5 and 9 go before v2's M5.
-* **Rests on:** D7, D39, D40, D41. Without D39 rhc copies the pass list into `src/rhc` and follows every change to it. Without D40 rhc links the SML front end, since Mid's passes name `Elaborate`, `Lambda.const` and `Translate.funNames` (E1, E11). Without D41 "no front end" stays a file list in a test. Without D7's drop, `Try` and `Fail` stay and nothing else moves.
-* **Gate:** bytes stay put, and budgets stay put. E11 held bytes on every patch (`results/E11/verify-summary.txt`) and the compiler's own compile fell 0.81% in instructions and 0.64% in allocation (`results/E11/compile-cost.txt`, at E11-10), so no budget need move. Each commit shows the same test: stage1 equals stage2, and the edited compiler on the sources before the edit gives that tree's `bin/rune.rbc`, at stack, `-O0` and `-O2`, on both targets. It also runs what E11 did not: `make check`, the host builds, `make check-units`, `make check-docs`, the compiler mutants.
+  - **Front-end independence (D40):** E11-1 `util/stamp.sml`, E11-2 `Target` passed in, E11-3 counters registered where they live, E11-5 `label` on `fundef`, E11-9 `util/literal.sml`. Mid's codecs are generated since build-system-v2's M5, so E11-5's `label` is a field of `fundef` in `tools/codecs/compiler.sml` (`:234-237` at origin/master `697724da5`) and E11-9's `Literal` changes the type `const` describes there (`:183-188`, `Lambda.const` today), each followed by `make codecs`, in place of E11's hand edits of `core/midcodec.sml` and `driver/unitmid.sml`.
+  - **The pipeline stays as it is (D39's D).** E11-4, E11-6, E11-7 and E11-11 do not land, and neither does E11-8 unless the owner lets it land alone for D41: the lead's objection, in D39.
+  - **What `lib/compiler` exports (D41, the lead's).** If E11-8 lands: `lib/compiler/mid.build`, from the prototype's `tests/compiler/mid-only.build`, with no lexer, parser, elaborator, Translate, ToMid or Expand, `use`d by `internal.build`; `internal.build` and `frontend.build` reordered so that the layer comes first, with `unitstore.sml` and `pickle.sml` moved into it (Y). If not: no layer, and rhc will use `internal.build` (D41's D). Either way a client of the layer is a friend of `lib/compiler`, since at origin/master a build that reaches into a library with a header and is not a friend is refused (v2's M14). rhc's own entry in `friends` comes with `rhc.build` in M8.
+  - **`Try` and `Fail` (D7):** E11-10, with four expected dumps reviewed line by line and the constructors removed, which E11 left in the datatype. Its change to `core/matchcomp.sml` still applies at origin/master.
+  - **The client as a test,** if E11-8 lands: `tests/compiler/mid-client.sml`, Mid text to bytecode through the layer with Rune's pass list. `pipeline-client.sml`, which edits the list, goes with E11-4.
+  - **What E11 left stale:** `docs/ir.md` takes `results/E11/contract.md`, less what D39's D leaves out.
+* **Starts from:** `patches/E11-1-stamps.patch`, `E11-2`, `E11-3`, `E11-5`, `E11-9`, `E11-10`, and `E11-8` if it lands, in that order, rewritten on origin/master. As they stand only E11-2 applies there; E11-10's `matchcomp.sml` hunk applies, and its line in `tests/compiler/mid-only.build`, which E11-9 creates, does not (`git apply --check`, by Y and again while recording the decisions). Each patch is a design and a test; what lands is written on the new tree.
+* **Rests on:** D7, D39, D40, D41, as decided. Under D39's D rhc calls `Pipeline.lowOfMid` as it is, cannot leave out `expand` at link time, and links Rune's front end through `Pipeline` unless E11-8 lands. The `--passes` defect (`results/defects/passes-unknown-name/`) was to be fixed by the list as data; under D it stays on master unless it is fixed on its own.
+* **Gate:** bytes stay put, and budgets stay put. E11 held bytes on every patch on `b12141ecc` (`results/E11/verify-summary.txt`), so the rewritten patches must show the same on origin/master: stage1 equals stage2, and the edited compiler on the sources before the edit gives that tree's `bin/rune.rbc`, at stack, `-O0` and `-O2`, on both targets. `make check-codecs` passes after each change to the description. It also runs what E11 did not: `make check`, the host builds, `make check-units`, `make check-docs`, the compiler mutants.
 * **Done when:**
   - the gate, on each commit;
-  - `tests/compiler/mid-client.sml` built from `lib/compiler/mid.build` writes the same bytes as the client on `internal.build`, at `RUNE_LINT=3`;
-  - that client, with `workers` and `refs` removed from its list, allocates as E11 saw, 304 bytes against 87,091,544: the swap is real;
-  - an unknown pass name is refused.
-* **Touches:** the 42 files of `patches/E11-all.patch`, among them `lib/compiler/driver/pipeline.sml`, `lib/compiler/core/{mid,midtext,midcodec,simplify}.sml`, `lib/compiler/backend/lower.sml`, `lib/compiler/internal.build`; new `lib/compiler/util/{stamp,literal}.sml`, `lib/compiler/backend/results.sml`, `lib/compiler/driver/midpipeline.sml`, `lib/compiler/mid.build`; `tests/compiler/`, `tests/runner/compilermutantlist.sml`, `tests/ir/`, `docs/ir.md`, `docs/architecture.md`.
+  - if E11-8 lands, `tests/compiler/mid-client.sml` built from `lib/compiler/mid.build` writes the same bytes as the client on `internal.build`, at `RUNE_LINT=3`, and a name of the elaborator in it fails to compile.
+* **Touches:** the files of E11-1, 2, 3, 5, 9 and 10 at origin/master, among them `lib/compiler/core/{mid,midtext,simplify,matchcomp}.sml`, `lib/compiler/backend/lower.sml`; new `lib/compiler/util/{stamp,literal}.sml`; `tools/codecs/compiler.sml` and the generated regions of `core/midcodec.sml` and `driver/unitmid.sml`; if E11-8 lands, `lib/compiler/driver/{pipeline,midpipeline}.sml`, `lib/compiler/{mid,internal,frontend}.build`; `tests/compiler/`, `tests/ir/`, `docs/ir.md`, `docs/architecture.md`.
 
-### M5. Mid to bytecode, Mid units (A; S, about 70, from +14 -2, +14 -2 and +43 -4 measured; at once, its second step after E11-5)
+### M5. Mid to bytecode, Mid text with labels (A; S, about 30, from +14 -2 and +14 -2 measured; at once, its second step after E11-5)
 
 * **What:**
-  - **`rune --read-mid FILE -o OUT` reaches bytecode** (`src/driver/main.sml:218`, whose comment says there is none yet).
+  - **`rune --read-mid FILE -o OUT` reaches bytecode** (`src/driver/main.sml:218` at `b12141ecc`, whose comment says there is none yet; `main.sml` has grown at origin/master and the hunk is placed again there).
   - **Mid text carries a function's `label`,** so a functor's function read from text stays one. `Expand.isFunctor` (`core/expand.sml:190`) and `Simplify.functorFun` (`core/simplify.sml:1982`) depend on that name, and without it Basis Mid read back from text breaks a lint at `-O1` and `-O2` (`results/E1/link/run.out`).
-  - **A Mid unit:** a `.mid` file after the Basis's units, resolving `gimp_NAME` and type names through `Env` (D26). `Pipeline.unitOf` takes `Ast.dec list` (`driver/pipeline.sml:245`), so it gets a way in for Mid.
-* **Starts from:** `patches/E1-readmid.patch`, `E1-midtext-functor-name.patch`, `E1-all-prototypes.patch`. The second reads `Translate.funNames`, which E11-5 takes away, so it is rewritten on the label. The third's `midUnit` is a `ref` marked throwaway, and M4's `driver/midpipeline.sml` is where its proper form goes. E1 resolves names through `Env` and `UnitBasis`, which `lib/compiler/mid.build` leaves out: a generated table of the support unit's exports could replace that lookup, unbuilt, or rhc links them and D41 says so (D26).
-* **Rests on:** D1, D26. If D1 goes to another hook, `--read-mid` to bytecode stays as a test tool and Mid units drop. If D26 lets Haskell call compiled SML units freely, each use of an SML name must be recorded as a usage, which needs a `UnitBasis` session (E13).
+  - **No Mid unit that names SML** (D26's A). E1's Mid unit resolved `gimp_NAME` and type names through `Env` and `UnitBasis`; rhc's library is Haskell over primitives, so that part of `patches/E1-all-prototypes.patch` does not land.
+* **Starts from:** `patches/E1-readmid.patch` and `E1-midtext-functor-name.patch`. The second reads `Translate.funNames`, which E11-5 takes away, so it is rewritten on the label.
+* **Rests on:** D1, D26, as decided.
 * **Gate:** bytes stay put. With E1's prototypes on top of its read-mid patch the compiler's sources compiled to identical bytes at `-O1` and `-O2` (`results/E1/out/selfcheck.txt`), and the read-mid change is outside SML's path [deduced]. The same test as M4. Mid's text changes, so a dump in `tests/ir` that shows a labelled function is reviewed by hand; the round trip at level 3 holds.
 * **Done when:**
-  - E1's programs, `results/E1/prog/*.mid` over `rts.mid`, are tests in `tests/ir`'s form, compiled and run on both targets at three levels, against E1's hand-derived `.expected`;
-  - Basis Mid read back from text compiles at `-O1` and `-O2` at lint 2;
-  - a Mid unit links from `.rbi` alone, from the cache and under `--emit-units`, none of which E1 tried;
-  - E13's `results/E13/midunit/` case, warm `hello !` against cold `from lib2 hello`, cannot recur: a Mid unit that names an SML name outside the frozen unit is refused.
-* **Touches:** `src/driver/main.sml`, `lib/compiler/core/midtext.sml`, `lib/compiler/driver/{pipeline,midpipeline}.sml`, `tests/ir/`, `docs/ir.md`, `docs/units.md`.
+  - E1's programs, `results/E1/prog/*.mid` over `rts.mid`, are tests in `tests/ir`'s form, compiled and run on both targets at three levels, against E1's hand-derived `.expected`, those that call SML through a Mid unit rewritten over primitives or left out;
+  - Basis Mid read back from text compiles at `-O1` and `-O2` at lint 2.
+* **Touches:** `src/driver/main.sml`, `lib/compiler/core/midtext.sml`, `tests/ir/`, `docs/ir.md`.
 
-### M6. Walkers (A; M, removes most of 479 lines [deduced], not prototyped; at once)
+### M6. Walkers and a fold (A; M, removes most of 479 lines [deduced], not prototyped; at once, before M28, M29, M30 and D3's variant)
 
-* **What:** `Mid.atomsOfRhs` and `Mid.mapRhs` in `core/mid.sml`. The 25 `rhs` walkers that list their atoms or loop over them move to the first, and the 12 that rebuild to the second (*The IRs, reviewed*). `Lift.atomsOfRhs` and `Refs.atomsOf` become one (`core/lift.sml:31`, `core/refs.sml:27`). A `fold` over `exp` is a second step, only where a walker's arms are all the default.
-* **Why here:** for Rune alone. Under D3's recommendation a primitive has an arm in every walker, so rhc does not wait on this.
+* **What:** `Mid.atomsOfRhs` and `Mid.mapRhs` in `core/mid.sml`. The 25 `rhs` walkers that list their atoms or loop over them move to the first, and the 12 that rebuild to the second (*The IRs, reviewed*). `Lift.atomsOfRhs` and `Refs.atomsOf` become one (`core/lift.sml:31`, `core/refs.sml:27`). Then D10's C, taken now: `Mid.fold` over `exp`, where a walker's arms are all the default; 43 of the 88 walkers over `exp` end in a catch-all (`results/E12/walker-defaults.tsv`).
+* **Why here:** M28, M29 and M30 each add a form to Mid's types, expressions or returns, and D3's measured variant an `rhs`, and a new form falls into a catch-all without a word. So the walkers come first.
 * **Starts from:** no patch. `results/E12/walker-shapes.tsv`, `walker-defaults.tsv`, lower bounds by a heuristic.
-* **Rests on:** D10. If the owner takes D3's medium option, a `Force` right-hand side, or D8, M6 must land first. If D10 is declined under D3's recommendation, nothing in rhc changes.
+* **Rests on:** D10, decided: C, now.
 * **Gate:** bytes stay put, deduced and not prototyped. The same test as M4; budgets as M4.
 * **Done when:**
   - the gate;
   - the 28 of 38 `rhs` walkers that end in a catch-all fall to a listed few, each with its reason;
-  - a scratch constructor added to `rhs` draws "match is not exhaustive" (`elab/exhaust.sml:274`) at both new functions.
+  - a scratch constructor added to `rhs` draws "match is not exhaustive" (`elab/exhaust.sml:274`) at both new functions, and one added to `exp` at `fold`;
+  - the 43 of 88 `exp` walkers that end in a catch-all fall to a listed few, each with its reason.
 * **Touches:** the files of `results/E12/walkers.tsv`: `lib/compiler/core/{mid,simplify,workers,expand,lift,shake,midtext,midcanon,refs,midcodec}.sml`, `lib/compiler/backend/lower.sml`, `lib/compiler/driver/unitmid.sml`, `docs/ir.md`.
 
 ### M7. Lints and the two Simplify fixes (A; S, +10 -4 measured and about 150 of lints [estimate]; at once)
@@ -6998,10 +7382,10 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
 * **What:**
   - **E1's two Simplify fixes, together.** `staticParams` refuses a function that calls itself at other types (`core/simplify.sml:896`), and `makeCopy` compares type arguments (`:1182`). The second alone makes specialise diverge (`results/E1/fixA-only.sh`). SML cannot reach this. Mid written by rhc can, and at the default lint level it compiles to ill-typed Mid in silence (`results/defects/specialise-polyrec/`).
   - **The equality bound.** Past a type of size 256, `eqKindOf` takes `poly_eq` (`core/simplify.sml:349`). **This also fixes a defect on master in plain SML:** `=` on a non-uniform datatype at `-O2` overflows the compiler's stack (`results/defects/equality-nonuniform/`).
-  - **D5's lints:** `ConTag` only of a datatype (`core/midlint.sml:271` passes `tag` of a `susp`, a fatal at run time on every engine); no forward read of a `Val`, which no lint sees and on which `-O0` and `-O1` disagree (`results/E1/out/neg/unset.txt`); abstract arity (`core/midtext.sml:648` reads it and checks nothing). D5's assertion after a cast is `any_check`, and lands in M9 with the rest of D4.
+  - **D5's lints:** `ConTag` only of a datatype (`core/midlint.sml:271` passes `tag` of a `susp`, a fatal at run time on every engine); no forward read of a `Val`, which no lint sees and on which `-O0` and `-O1` disagree (`results/E1/out/neg/unset.txt`); abstract arity (`core/midtext.sml:648` reads it and checks nothing). D5's C, a checked `Any` at run time, is `any_check` behind a compile-time switch, and lands in M9 with the casts.
   - **D5 written down** in `docs/ir.md`, with what no lint can reach: `results/E11/contract.md`'s rule, held only by types.
 * **Starts from:** `patches/E1-simplify-polyrec.patch`. The lints were not prototyped.
-* **Rests on:** D5, for the lints. The Simplify half stands whatever the owner decides, since one of its three parts is a bug on master. If the owner declines the rest, rhc can live without it, by typing a polymorphically recursive function at `any` (`results/E1/prog/nest_any.mid`) and never emitting `poly_eq` on a datatype (E1).
+* **Rests on:** D5, decided: B, for the lints. The Simplify half stands whatever the owner decides, since one of its three parts is a bug on master. If the owner declines the rest, rhc can live without it, by typing a polymorphically recursive function at `any` (`results/E1/prog/nest_any.mid`) and never emitting `poly_eq` on a datatype (E1).
 * **Gate:** bytes stay put. With the fixes the compiler's sources compiled to identical bytes at `-O1` and `-O2` (`results/E1/out/selfcheck.txt`). Budgets count level 0 (`docs/testing.md:95-96`), where these lints do not run [deduced], and `levelsOne` holds a linted build to a plain one (`tests/runner/oracles.sml:99`). No lint here has been run over SML's own Mid, so `ConTag` to datatypes may need an exception [inferred]; any exception is named in `docs/ir.md`, not a quiet weakening.
 * **Done when:**
   - `nest.sml`, the defect's reproducer, compiles at `-O2` and prints what `-O0` prints, as a test;
@@ -7009,7 +7393,7 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - each new lint refuses its fault with its message in `tests/compiler/lint-rules.sml`.
 * **Touches:** `lib/compiler/core/{simplify,midlint,midtext}.sml`, `tests/compiler/lint-rules.sml`, `tests/ir/`, `tests/lang/`, `docs/ir.md`.
 
-### M8. Core, its text, CoreLint, a Core interpreter (B; L, about 2,000 [estimate]; after G0)
+### M8. Core, its text, CoreLint, a Core interpreter (B; L, about 2,000 [estimate]; at once)
 
 * **What:**
   - `lib/language/haskell/core.sml`: System F with type application `f a`, lazy `let` and `letrec`, forcing `case`, and types that separate evaluated from unevaluated (D2).
@@ -7017,99 +7401,104 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - `lib/language/haskell/corelint.sml`: syntax-directed, with no unification, run at each boundary and on text read by `--read-core`, and last just before the crossing into Mid (*HsLint and CoreLint*).
   - `lib/language/haskell/coreinterp.sml`: Launchbury as specification, Sestoft's machine as program, slow by design.
   - `src/rhc/{main,options}.sml`, `rhc.build`, `bin/rhc` in the `Makefile`, with `--read-core`, `--dump-after`, `--lint`.
+  - **rhc's identity and its place in `lib/compiler`.** `rhc.build` lists `src/rhc/config.sml` first, which `scripts/gen-version.sh --config rhc.plan src/rhc/config.sml` writes over rhc's own committed plan, so rhc's identity is its own and Rune's stays as it was (v2's M11; `tests/runner/buildchecks.sml:467-489` tests a second compiler doing it, origin/master `697724da5`). `rhc.build` is named in the `friends` of `lib/compiler/library.build`, since a build that reaches into a library with a header and is not a friend is refused (D41).
   - `tests/hs/core/`, in `tests/ir`'s form (`tests/runner/tools.sml:27-44`), and the Core generator of D55.
   - `lib/language/haskell/library.build`, `README.md`.
 * **Starts from:** no patch. E1's `results/E1/prog/*.mid` are what Core text must be able to say one level up, and they are its first tests.
-* **Rests on:** D2, D42. An untyped Core would leave CoreLint nothing to check and strictness results nowhere to go; dropping types later is easy, adding them is not. If D42 takes more hosts, `rhc.build` joins `make check-cross`.
+* **Rests on:** D2, D41, D42, as decided. An untyped Core would leave CoreLint nothing to check and strictness results nowhere to go; dropping types later is easy, adding them is not.
 * **Done when:**
   - print, read, print is the identity on every Core test, at level 3;
   - each CoreLint rule refuses its fault with its message, as `astlintFaults` does (`tests/runner/tools.sml:783`);
   - the interpreter runs E1's eight programs rewritten in Core text and prints their `.expected`, with `knot`'s sharing count right;
   - loop, abort and stack overflow are one bottom in its results, and a run that prints nothing fails.
-* **Touches:** `lib/language/haskell/`, `src/rhc/`, `rhc.build`, `Makefile`, `tests/hs/core/`, `tests/runner/`, `docs/testing.md`.
+* **Touches:** `lib/language/haskell/`, `src/rhc/`, `rhc.build`, `rhc.plan`, `lib/compiler/library.build`, `Makefile`, `tests/hs/core/`, `tests/runner/`, `docs/testing.md`.
 
-### M9. Thunks through the engines (B; L, about 330: about 255 by hand from E2, +22 measured in E14, +45 and +7 from E4, and D57's lint, not built; after G0)
+### M9. Thunks through the engines (B; L, about 420 by hand for form C with parity [estimate; not built as one], +45 and +7 from E4, and D57's lint, not built; D3's measured variant beside it, not sized; at once, the variant after M6)
 
-* **What, under D3 and D11 to D14 as recommended, which is form G:**
-  - **The object.** A thunk is a flat `K_CLOSURE` with a non-zero `contag`, and evaluated is `K_IND` (D11). `CALL`, `ENV`, `SELF` and the runeopt templates stay as they are. `obj_scanned_fields` reads a closure's `contag`, so the collector skips a blackholed thunk's fields, and `K_LAST` moves. `K_THUNK`'s reservation is released (`runtime/value.h:72`).
-  - **`susp` in `Types.builtinTycons`,** so that force types as `'a susp -> 'a` and MidLint holds it to its suspension. The prototype's `'b -> 'a` cannot (D3).
-  - **The primitives,** eight: the seven of E2's `delay/Ghs/lazy.sml`, `thunk_fmake`, `thunk_fready`, `thunk_value`, `thunk_fcast`, `thunk_fbh`, `thunk_fupd`, `thunk_fforce`, and `thunk_move`, which `Low.hoistEnv` uses, at the end of the list (`src/isa/prims.sml:1-3`), through `make isa`, in `runtime/prims.c`, `runtime/register/fastprim.h` and `runtime/register/jit/emit.c`.
-  - **Force is one Mid node.** `thunk_fforce` stays a `Prim` through every pass, and `Regs` lowers it to the test, the value and `CALL`. A library `force` costs 1.17 of the instruction form against 1.05 for one node (E2, `results/E2/tables/summary.txt`), because a body passes the inlining budget [V's inference]. `removable` asks a primitive's description (`core/simplify.sml:113`): force's says `anything`, so it is never dropped and not moved across an effect, which `seq` needs, and `thunk_fmake`'s must say what is true (D3).
-  - **The stack target, D57's item 3:** the same lowering, +22 in `backend/stack.sml` as built in E14 (`patches/E14-lazy.patch`), where it ran under lazy ML's reading; in E2's patch `thunk_fforce` is a fatal stub there (D14). runeopt: no change, as the primitives are C calls.
-  - **The release (D12).** A thunk's code reads its captures at entry (`Low.hoistEnv`) and blackholes.
-  - **CAFs and the barrier (D19).** CAFs stay roots at first, and the update writes through `ms_set_field`, with nothing new.
+* **What, under D3's B with form C, D11's C, D13's C and D14's C:**
+  - **The object.** A thunk is a flat `K_THUNK`, entered by `ENTER`, under evaluation once its code says `BLACKHOLE`, and evaluated as `K_IND` (D11). `K_THUNK` keeps heap-layout's reservation (`runtime/value.h:72`). The collector skips a blackholed thunk's fields, which is release, and `K_LAST` moves. `CALL` stops a `K_THUNK`, so a thunk in a function-typed slot stops on every engine, where under form G only MidLint stood (D11).
+  - **`susp` in `Types.builtinTycons`,** so that force types as `'a susp -> 'a` and MidLint holds it to its suspension (D3).
+  - **The primitives and the instructions.** Mid sees primitives, E2's form C names among them `thunk_make`, `thunk_force`, `thunk_blackhole` and `thunk_self_update`, and `thunk_move`, which `Low.hoistEnv` uses; `Regs` makes them `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE` (`results/E2/delay/Chs/lazy.sml`, `patches/E2-all-forms.patch`). The primitives go at the end of their list, the instructions after `FIELD`, through `make isa`: `src/isa/{prims,regs}.sml`, `runtime/prims.c`, `runtime/register/isa_regs.c`, `runtime/register/jit/{emit.c,compile.c,compile.h,masm.h}`, `lib/compiler/backend/{low,regs}.sml`. About 305 lines with the 45 shared by every form (D11's table).
+  - **Force is one Mid node.** `thunk_force` stays a `Prim` through every pass, and `Regs` makes it `FORCE`, with `ENTER` and `RESULT` on its slow path. `removable` asks a primitive's description (`core/simplify.sml:113`): force's says `anything`, so it is never dropped and not moved across an effect, which `seq` needs, and `thunk_make`'s must say what is true (D3).
+  - **Parity by form C (D14), which is D57's item 3:** the four instructions on the stack set too, in `src/isa/stack.sml`, the Stack target, `runtime/stack/`, runeopt's templates and `src/opt/x64.sml`, `runtime/native/native.c`, `tests/opt/every-opcode.rasm` and `docs/bytecode.md`: about 115 lines [estimate, not built]. Form C never ran on the stack VM or in native code in E2; only forms B and F did (`tables/stack-vm.txt`, `F-stack-native.txt`).
+  - **Release and re-entry (D12, not applicable under C).** A thunk's code reads its captures at entry (`Low.hoistEnv`) and says `BLACKHOLE`, so its captures are released and re-entry is found at once.
+  - **CAFs and the barrier (D19).** CAFs stay roots until D19's measurement decides (M25), and the update writes through the barrier that exists, with nothing new.
   - **`K_IND` made live.** Three latent faults come alive with the first thunk: `share.c`'s `contents_hash` and `same_contents`, `image.c`'s `put_object`, and `runtime/image.c:906`, which refuses a frame whose closure is no longer a `K_CLOSURE` (`results/defects/latent-k-ind/`).
-  - **Casts (D4).** The cast erased in `Lower`, with a Lower rule dropping a force of a known non-thunk and a `RegVerify` exception that lets `CALL` see a non-closure on force's slow path; `any_check` in test builds, which is D5's assertion after a cast, since a forgotten force behind a cast runs silently at tier 2 even under `--checked` (`results/E1/out/neg/forget.txt`); and always the lint that no cast leaves a `susp`. They land here with the primitives they concern. `patches/E4-cast-modes.patch` holds four modes and does not land as it stands.
-  - **D57's item 2, which is Haskell's too:** a function given to `thunk_fmake` is named by nothing else, and `thunk_fupd` appears nowhere else. Without it `inline` can copy a thunk's update into another closure's function with every lint passing (`results/E14/tables/claim-fun-held.txt`, through `_prim`). `results/E14/scripts/midshape.py` is the rule as a script: 634 thunk functions, 0 violations.
-  - **Docs:** `docs/ir.md` for `susp` and force, `docs/bytecode.md` for the primitives, with no instruction rows, `runtime/register/README.md`.
+  - **Casts (D4, D5).** Value-to-`susp` casts remain under D4's C (M28 removes the `any` ones): the cast erased in `Lower`, with a Lower rule dropping a force of a known non-thunk, and always the lint that no cast leaves a `susp`. D5's C, a checked `Any` at run time, is `any_check` behind a compile-time switch, in checked builds and VMs only, since a forgotten force behind a cast runs silently at tier 2 even under `--checked` (`results/E1/out/neg/forget.txt`). E4's `RegVerify` exception let `CALL` see a non-closure on form G's slow path; whether form C needs one is shown here [inference: `FORCE` gives a value that is not an unevaluated thunk as itself, `regops.h` in E2's patch]. `patches/E4-cast-modes.patch` holds four modes and does not land as it stands.
+  - **D57's item 2, which is Haskell's too:** a function given to `thunk_make` is named by nothing else, and `thunk_self_update` appears nowhere else. Without it `inline` can copy a thunk's update into another closure's function with every lint passing (`results/E14/tables/claim-fun-held.txt`, through `_prim`, on form G). `results/E14/scripts/midshape.py` is the rule as a script, for G's names.
+  - **Docs:** `docs/ir.md` for `susp` and force, `docs/bytecode.md` for the primitives and the four instructions on both sets, `runtime/register/README.md`.
   - **`susp` in `tests/ir`,** with its documentation D57's item 6, which is Haskell's too.
+  - **D3's measured variant, after M6:** C, a `Force` right-hand side, a fifteenth `rhs` with an arm in every walker, and D6's C with it, a recursive form in Mid for thunks; described in `tools/codecs/compiler.sml` and lowered to the same instructions as B's primitive. It is built on a branch beside B, measured as *Decisions on the numbers* says, and lands only if the owner takes it.
 * **What does not land:**
-  - the other forms' primitives and the instructions `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE`, all in the same patch;
+  - the other forms' primitives in the same patch: form G's, `thunk_fforce` among them, and those of B, F and L;
   - the raise repair, with `THUNK_FAILED` and the spare field: neither language needs them, so there is no failed state (D12);
   - closure liveness (`-DRUNE_CLOSURE_LIVE`);
-  - the guard on the collector's shortcut (`runtime/gc/minor.c:151`, `runtime/gc/mark.c:155`), which Haskell cannot reach and which costs its thunks +0.84% (`results/E2/tables/guard-cost.txt`), and the pin (`gc_pin_running`), which Haskell cannot reach either: both are lazy ML's, and go with M26. G's figures hold the guard, so what lands here is not quite what E2 measured, though `--count` should not move [deduced];
+  - the guard on the collector's shortcut (`runtime/gc/minor.c:151`, `runtime/gc/mark.c:155`), which Haskell cannot reach and which cost Haskell's thunks +0.84% on form G (`results/E2/tables/guard-cost.txt`), and the pin (`gc_pin_running`), which Haskell cannot reach either: both are lazy ML's, and go with M26, unless D17's B is taken, which makes the pin Haskell's (*Decisions on the numbers*);
   - `susp` in SML's initial basis. E2's line in `Env.builtinTysNow` (`elab/env.sml:416`) is for its SML kernels and would change what every SML program accepts, and rhc does not need it (D3). A test in SML takes `_prim` syntax, as `_int64` does (`elab/env.sml:428-430`).
-* **Starts from:** `patches/E2-all-forms.patch`, which holds every form at once and cannot land as it stands. `results/E2/INDEX.txt` says which build is which; `results/E2/kernels/` are the tests.
-* **Rests on:** D3, D4, D11, D12, D13, D14, D18, D19, D57. Otherwise:
-  - D3 **none**, form A: no change to Rune, and M9 is tests alone. It costs 1.36 of the instruction form and 64 bytes a delay, and a 10^7 chain overflows 1 GiB (`results/E2/tables/depth-1e7.txt`).
-  - D3 **medium**, a `Force` right-hand side: M6 first, and an arm in every walker.
-  - D13, form C, the base of these ratios: about 260 lines and about 115 more for parity, not built [estimate], with templates, `tests/opt/every-opcode.rasm` and instruction rows.
-  - D12, form L: about 50 lines more, saving 0.6%, with `<<loop>>` seen only after a collection.
-* **Gate:** E2's forms have not been through `make check`, bootstrap bytes on the final form, `make test-native`, or the other machines: aarch64, 32-bit, PowerPC, Windows. M9 runs all of these, with `make check-isa`, `make bootstrap`, `make check-cross`, `make check-templates`, `make test-register-asan`, `make test-stress`, `make test-windows`, `make test-portability`, `make test-census` and `make perf-check`.
-  - **Bytes move once, by one word.** A new primitive changes each set's fingerprint by itself (`AGENTS.md:75-77`), which every `.rbc` and image carries (`docs/bytecode.md:18`) and the cache's configuration holds (`driver/unitcache.sml:126`). Existing primitives keep their numbers. So the edited compiler on the unedited sources gives `bin/rune.rbc` but for that word, and any other byte fails [deduced, not run]. D3 is the decision that says so.
-  - **SML programs' budgets stay put.** E2 saw identical `--count` on 12 strict ports, and 1.0056 in machine instructions (`results/E2/tables/sml-cost.txt`), on an earlier stage, `bin10`, without G's node. The machine figure is taken again on the final form and recorded in D3.
-  - **The compiler's own budgets re-base** [deduced, not measured]. Its image grows by the tables, by how much is not known. A budget is a ceiling, 10% over the count when written (`tests/runner/budgets.sml:111`), so a small rise may pass unchanged. M9 reports what moved, and re-bases in the commit that moves them (`docs/testing.md:670-673`). This is the one place the standing gate is known to give.
+* **Starts from:** `patches/E2-all-forms.patch`, form C (`ChX` on `bin10`, rerun by V2 as `ChY` on `bin12`), which holds every form at once and cannot land as it stands. `results/E2/INDEX.txt` says which build is which; `results/E2/kernels/` are the tests.
+* **Rests on:** D3, D4, D5, D6, D11, D12, D13, D14, D18, D19, D57, as decided. What the numbers may change: D3's C, which replaces force's primitive by an `rhs`, with D6's C; D17's B, which brings the pin here or to M25; D19's B, which changes what the collector roots.
+* **Gate:** E2's forms have not been through `make check`, bootstrap bytes on the final form, `make test-native`, or the other machines: aarch64, 32-bit, PowerPC, Windows. M9 runs all of these, with `make check-isa`, `make bootstrap`, `make check-cross`, `make check-templates`, `make test-opt`, `make test-register-asan`, `make test-stress`, `make test-windows`, `make test-portability`, `make test-census` and `make perf-check`.
+  - **Bytes move once, by one word.** New primitives and instructions change each set's fingerprint (`AGENTS.md:75-77`), which every `.rbc` and image carries (`docs/bytecode.md:18`) and the cache's configuration holds. Existing primitives and opcodes keep their numbers. So the edited compiler on the unedited sources gives `bin/rune.rbc` but for that word, and any other byte fails [deduced, not run]. D3 is the decision that says so.
+  - **SML programs' budgets stay put.** E2 saw identical `--count` on 12 strict ports, and 1.0056 in machine instructions (`results/E2/tables/sml-cost.txt`), on `bin10`, the stage that holds form C's instructions (D13). The machine figure is taken again on the final form and recorded in D3.
+  - **The compiler's own budgets re-base** [deduced, not measured]. Its image grows by the tables, by how much is not known. A budget is a ceiling, 10% over the count when written (`tests/runner/budgets.sml:111`), so a small rise may pass unchanged. M9 reports what moved, and re-bases in the commit that moves them (`docs/testing.md:670-673`).
+  - **`any_check` off moves nothing:** a build without the switch is byte-identical to one without the code, and its `--count` unchanged (D5).
 * **Done when:**
   - the gate;
   - E2's kernels are tests on every tier, in Haskell's reading, in `tests/thunks/` under `--allow-prim`: `chain`, `tailchain`, `knot`, `share`, `reenter`, `barrier`, `image`, `wrongslot`, `last` and `leak`;
   - `last` and `leak` keep 0 bytes an element (`results/E2/tables/last.txt`), and a 10^7 chain fits 1 GiB (D18);
-  - a thunk typed `susp` in a mistyped read stops on all three engines, as `RAny` did in E2;
+  - a thunk typed `susp` in a mistyped read stops on all three engines, as `RAny` did in E2, and a thunk in a function-typed slot stops at `CALL`;
   - evaluated, unevaluated and under-evaluation thunks survive an image (`results/E2/tables/image.txt`);
   - E2's stress modes pass with `--count` compared, 504 runs and 0 bad there (`results/E2/tables/stress.txt`), and both bytecodes allocate alike;
-  - G through the Stack target under Haskell's reading, which E14 ran under lazy ML's alone, and the census build, which E2 did not run, pass the same; release under the low-pause collector, skipped while marking in E2, is tested or stated;
-  - `susp` has its cases in `tests/ir`;
+  - form C through the Stack target, in native code and in the census build, none of which E2 ran, pass the same; release under the low-pause collector, skipped while marking in E2, is tested or stated;
+  - `susp` has its cases in `tests/ir`, and each of the four instructions its line in `tests/opt/every-opcode.rasm`;
   - programs that do cast print the same with casts kept and erased, and each new lint refuses its fault with its message in `tests/compiler/lint-rules.sml`. The compiler's own bytes show nothing here, since it has no such cast (D4);
-  - **force stays one node:** a `dump:` test finds `thunk_fforce` as one `Prim` after every pass at every level, and E2's 113 ports on the final form stay at or under `GhY`'s 303.46 G of `--count` (`results/E2/tables/summary.txt`), any rise explained before landing.
-* **Touches:** `src/isa/prims.sml` and what `make isa` writes, `runtime/{value.h,prims.c,image.c,runtime.c,vm.h}`, `runtime/gc/`, `runtime/census/census.c`, `runtime/register/{fastprim.h,isa_regs.c,README.md}`, `runtime/register/jit/`, `lib/compiler/backend/{low,lower,regs,stack,regverify}.sml`, `lib/compiler/core/midlint.sml`, `lib/compiler/elab/types.sml`, `tests/thunks/`, `tests/ir/`, `tests/compiler/lint-rules.sml`, `tests/runner/`, `docs/ir.md`, `docs/bytecode.md`.
+  - **force stays one node:** a `dump:` test finds `thunk_force` as one `Prim` after every pass at every level, and E2's 113 ports on the final form stay at or under `ChX`'s 268.86 G of `--count` (`results/E2/tables/summary.txt`), any rise explained before landing;
+  - D3's variant is measured and the owner's choice recorded in D3.
+* **Touches:** `src/isa/{prims,regs,stack}.sml` and what `make isa` writes, `runtime/{value.h,prims.c,image.c,runtime.c,vm.h}`, `runtime/gc/`, `runtime/census/census.c`, `runtime/stack/`, `runtime/register/{fastprim.h,isa_regs.c,README.md}`, `runtime/register/jit/`, `runtime/native/native.c`, `src/opt/`, `lib/compiler/backend/{low,lower,regs,stack,regverify}.sml`, `lib/compiler/core/midlint.sml`, `lib/compiler/elab/types.sml`, `tests/thunks/`, `tests/ir/`, `tests/opt/every-opcode.rasm`, `tests/compiler/lint-rules.sml`, `tests/runner/`, `docs/ir.md`, `docs/bytecode.md`; for the variant, `tools/codecs/compiler.sml` and the walkers M6 left.
 
-### M10. Core to Mid (B; L, about 1,000 to 1,500 [estimate]; after M4, M5, M8, M9)
+### M10. Core to Mid (B; L, about 1,000 to 1,500 [estimate]; after M4, M5, M8, M9, M28)
 
 * **What:** `lib/language/haskell/coretomid.sml`:
   - a lazy position of type T is `susp T`; functions take `susp` where lazy and return evaluated, so a datatype-typed variable is evaluated (D5);
-  - **every force is one `thunk_fforce` node,** never a call of a library function and never its test written out, or rhc pays the 1.17 of M9;
-  - a thunk's code takes `unit`, since `Fun` needs a parameter (`core/midlint.sml:333`); its first act is `thunk_fbh` and its last `thunk_fupd`;
-  - recursive values through a cell, and CAFs as thunks in globals (D6), as E1 wrote them;
-  - higher-kinded positions and a polymorphic method's dictionary slot cross as `Any`, meaning evaluated, with a lazy one as `susp Any`, and an ordinary type variable stays a Mid type variable, as D4 and E4 settle it;
-  - n-ary functions through curried wrappers where they are values (E1), and a tag test in the same function before each `Decon`, as LowShapes demands (`backend/lowshapes.sml:376`);
-  - the output handed to `MidPipeline`, as `results/E11/contract.md` says.
+  - **every force is one `thunk_force` node,** never a call of a library function and never its test written out;
+  - a thunk's code takes `unit`, since `Fun` needs a parameter (`core/midlint.sml:333`); after reading its captures its first act is `thunk_blackhole` and its last `thunk_self_update`;
+  - recursive values through a cell, and CAFs as thunks in globals (D6), as E1 wrote them; for D3's measured variant, the recursive form of D6's C, emitted only where that variant is measured;
+  - **types in M28's `Ty`:** a higher-kinded position and a dictionary's polymorphic method have types of their own, and `Any`, meaning evaluated, is left for what `Ty` cannot say, with a lazy one as `susp Any`. A type variable is never instantiated at `susp T`, as Strict Core has it (D4). Value-to-`susp` casts remain, erased in `Lower` under M9's lint;
+  - a `case` of Core lowered to M29's `Case` once it has landed, and until then to a tag test in the same function before each `Decon`, as LowShapes demands (`backend/lowshapes.sml:376`);
+  - n-ary functions through curried wrappers where they are values (E1), unless D15's C is taken (M25);
+  - several results through M30's multi-value return, where Core returns an unboxed product, among them `IO`'s state and value (D25);
+  - the output handed to `Pipeline.lowOfMid` as it is (D39's D), or to `MidPipeline` if E11-8 lands, as `results/E11/contract.md` says.
   - Two small steps in Rune, if wanted: the built-in tycons out of `Types` when rhc's first type name needs them, about 40 lines [inferred] (D40); `ToMid`'s builder lifted out of `core/tomid.sml:108,130,145`.
-* **Starts from:** no patch. `results/E1/prog/rts.mid` and `monad.mid` are the hand lowering, and `results/E2/delay/Ghs/lazy.sml` a thunk's shape.
-* **Rests on:** D4, whose erasure and lint M9 lands, D6, and D3 and D5 through M7 and M9. If D4 goes to extending `Ty`, that is a change to Rune in 18 files that read `Ty.view`, with a gate of its own. If D3 goes to none, `susp` is a ref encoding and force a library function: M10 is simpler and its output carries E2's 1.36.
-* **Gate:** no change to Rune but the two small steps, each with M4's test. The cast erasure and lint this output needs are M9's. Force stays one Mid node, shown below.
+* **Starts from:** no patch. `results/E1/prog/rts.mid` and `monad.mid` are the hand lowering, and `results/E2/delay/Chs/lazy.sml` a thunk's shape under form C.
+* **Rests on:** D3, D4, D5, D6, D8, D9, D25, as decided. If the owner takes D3's C on the numbers, force is the `Force` right-hand side and recursive thunks D6's recursive form.
+* **Gate:** no change to Rune but the two small steps, each with M4's test. `Ty`, `Case` and multi-value return are M28's, M29's and M30's; the cast erasure and lint M9's. Force stays one Mid node, shown below.
 * **Done when:**
   - E1's programs, through Core text, pass the ways E1's hand-written Mid passed: 45 each, on both targets;
   - the Core interpreter and the VM print the same on every Core test (*Differential self-oracles*), loop, abort and stack overflow being one bottom;
-  - a `dump:` test finds one `thunk_fforce` for each force in Core;
+  - a `dump:` test finds one `thunk_force` for each force in Core;
   - CoreLint and MidLint are clean at level 2, and the two seeds of *rhc's mutants* for Core to Mid are caught: a force forgotten behind a cast, a thunk in a typed slot;
+  - no type variable is instantiated at `susp T`, by a rule of MidLint or CoreLint with its fault;
   - E2's `last` and `leak` go through rhc as residency tests at two sizes;
   - the sharing budgets for recursive values run (D6).
 * **Touches:** `lib/language/haskell/`, `src/rhc/`, `tests/hs/core/`, and for the two small steps `lib/compiler/elab/types.sml`, `lib/compiler/core/{ty,tomid}.sml`.
 
-### M11. Lexer, layout, parser, printer (F; L, 2,207 and printer 258, measured, plus real diagnostics; after G0, M2)
+### M11. Lexer, layout, parser, printers (F; L, 2,207 and printer 258, measured, plus real diagnostics and D28's exact printer, unmeasured; after M2)
 
 * **What:**
   - `lib/language/haskell/{token,lexer,layout,ast,parser,print}.sml`: literate source and Unicode in the lexer; layout pulled a token at a time, with `closeImplicit`; operators flat, patterns parsed relaxed and checked afterwards (D27).
   - The AST of D28: spans on every node, parentheses, negation as an item, literals and contexts as written; a printer with an explicit-brace print and an implicit one.
+  - **D28's C, on top of that:** annotations in every node, keeping comments, pragmas and layout, which E10's AST drops, and an exact printer whose print of a parsed file is that file. It comes beside the tree printer and its two round trips, not in place of them: an exact printer cannot print a tree that carries no annotations, such as a generated AST, the reducer's output or M2's implicit print. GHC keeps `check-ppr` and `check-exact` both, and Amorim 2018's printer, the nearest published, is not exact (*What the literature says*, D28).
   - Real diagnostics, which E10 did not assess: the size above does not count them.
   - `src/rhc`: `--parse-only`, `--dump-ast`.
   - **The general category of D21,** added to `lib/unicode` by `rune-generate unicode` (`tools/generate/README.md:26`). The lexer needs it first, so this half of D21 lands here and the case mappings with M17. E10's `gen_unicode.py` does not land.
 * **Starts from:** no patch: `results/E10/spike/hs_{token,lexer,layout,ast,parser,print}.sml`, without signatures or diagnostics, and it has no fixity pass.
-* **Rests on:** D27, D28. An automaton instead takes 146 grammar lines, 109 of driver, bison in the build and 1,262.9 instructions a token against 560.5, and still has no AST (E10). S1, the token rule, refuses 9 of 36 legal crafted programs.
+* **Rests on:** D27, D28, as decided. An automaton instead takes 146 grammar lines, 109 of driver, bison in the build and 1,262.9 instructions a token against 560.5, and still has no AST (E10). S1, the token rule, refuses 9 of 36 legal crafted programs.
 * **Gate:** rhc's own code needs none. The addition to `lib/unicode` is a library change: `make check-docs` with every new member documented, and `make matrix-quick`. The compiler shares `lib/unicode` file by file (`rune.build:4`), so the addition goes in new files that `rune.build` does not list, and M4's test shows the compiler's output unchanged.
 * **Done when:**
   - the 1,723 files E10 accepted parse, as E10 ran them, with 0 tree and 0 token failures;
   - E10's 46 crafted cases give their `results/E10/cases/cases.tsv` results;
   - each of E10's five parser mutants fails the token test;
+  - the exact print of each of those files is the file, byte for byte, and a mutant that drops a comment fails it;
   - the syntax generator of D55 runs from a fixed seed in `check`;
   - GHC's dump runs nightly under the judges' capability, with E10's 47 known differences as expectations;
   - a budget holds the cost per token against E10's 560.5, with what diagnostics add stated;
@@ -7119,16 +7508,17 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
 ### M12. Renamer, modules, fixity, recursive modules (F; L, 2,000 to 3,500 [estimate]; after M11)
 
 * **What:**
-  - `lib/language/haskell/modules.sml`: export and import resolution as the least fixpoint over each SCC; Prelude does not import itself (D29); a list of modules that cannot be imported; a module's identity includes its library, since `nhc98/tests/nofib/real/infer` has a `module Maybe` of its own (E16).
+  - `lib/language/haskell/modules.sml`: export and import resolution as the least fixpoint over each SCC; Prelude does not import itself (D29); the greatest fixpoint under `--names=greatest`, an option the owner asked for, least by default, documented as Rune documents `--flex-records` (`src/driver/options.sml:90-96`);
+  - `--cycle-default=module|scc`, `module` by default, which M13 reads (D30); a list of modules that cannot be imported; a module's identity includes its library, since `nhc98/tests/nofib/real/infer` has a `module Maybe` of its own (E16).
   - `lib/language/haskell/rename.sml`: entities by origin, as H7 will need.
   - `lib/language/haskell/fixity.sml`: an entity's attribute, read after names, with no iteration; flat sequences resolved here, with R1, R9 and R10's refusals.
   - `src/rhc/graph.sml`: modules found by scanning imports, SCCs, the search path over `share/rhc/haskell98`. rhc does not use `Deps`, which refuses cycles (`driver/deps.sml:270`). Whole-program is the one-unit case.
   - Dotted names refused, with a documented flag (D35).
   - The Report's 11-module SCC resolved as one unit, with `PreludeList`, `PreludeText` and `PreludeIO` on the list of modules that cannot be imported (D36).
 * **Starts from:** no patch: `results/E16/hs_modules.sml`, 364 lines, and its fixtures `results/E16/tests/{imp,gfp,cyc,hidden}`.
-* **Rests on:** D29, D30, D35, D36. For D30: signatures in the module, 5.7's words, cost about 12 lines plus hand-kept signatures, and a value through one is an internal error (`backend/link.sml:202`) until forward links exist, unbuilt (E13). Boot files cannot express every legal cycle (E15, one tested arrangement and an argument). Refusal saves about 45 of the toy's 766 lines (E13) and is outside the deviation rule. If D35 accepts dotted names by default, `modid` is widened with a deviation pinned.
+* **Rests on:** D29, D30, D35, D36, as decided, with the two options the owner asked for. Chapter 5 is satisfied by either fixpoint, so `--names=greatest` reads the text; `--cycle-default=scc` is an extension (D30).
 * **Done when:**
-  - E16's fixtures give the least fixpoint: 690 pairs on `imp`, one solution on `gfp`, an answer of no on `cyc`, a refusal on `hidden`;
+  - E16's fixtures give the least fixpoint: 690 pairs on `imp`, one solution on `gfp`, an answer of no on `cyc`, a refusal on `hidden`; and under `--names=greatest`, 693 on `imp` (`results/E16/tests/imp.out`);
   - the Report's 20 modules resolve at E16's 683 pairs, with the 8 unresolved names reported until M17's overlay;
   - `do a == b == c`, which E10 parsed flat, is refused, as all four oracles refuse it;
   - a module named `Char` in a program does not meet the library's;
@@ -7142,23 +7532,25 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - kind inference, dependency analysis, unification, context reduction, the monomorphism restriction, defaulting and derived contexts; no OutsideIn (D31);
   - joined over an SCC, so a user cycle with unsigned bindings checks, and type groups and kinds cross modules (R28, D30);
   - evidence records in the manner of `Witness`, which are what M15 translates and M16 reads;
-  - R18, R20 and R21 as D32 reads them; and in a cycle a variable defaulting by the `default` of the module its constraints arose in, refused where those modules' `default`s differ, with Rule 2 closing at the end of each module, a refusal where another member's use would fix a type (D30);
+  - R18, R20 and R21 as D32 reads them; and in a cycle a variable defaulting by the `default` of the module its constraints arose in, refused where those modules' `default`s differ, with Rule 2 closing at the end of each module, a refusal where another member's use would fix a type (D30); and under `--cycle-default=scc`, one `default` per SCC with differing ones refused, and Rule 2 closing at the end of the SCC, documented as an extension (D30);
+  - derived contexts inferred here, for M14's instances made as AST (D33's C);
   - `reject` rows' messages, which are rhc's own and pinned, and real diagnostics, not counted in the size.
 * **Starts from:** no patch. `results/E16/ghc/changes.txt` shows what the Report's text asks of a checker.
-* **Rests on:** D30, D31, D32. A different reading of R18, R20 or R21 is one row and one program changed, not a redesign. Rule 2 resolved early, as Hugs does, is simpler and refuses legal programs (R20, E7).
+* **Rests on:** D30, D31, D32, D33, as decided. A different reading of R18, R20 or R21 is one row and one program changed, not a redesign. Rule 2 resolved early, as Hugs does, is simpler and refuses legal programs (R20, E7).
 * **Done when:**
   - the Report's 11-module unit checks as one unit, with no annotation at the one expression in `floatToDigits` that depends on defaulting (E16);
   - the programs for R18, R20 and R21 pin their readings, 4.5.5's examples among them;
   - a user cycle with unsigned bindings, a type group across modules, and fixity and instances across a cycle check (*Recursive modules have no oracle*);
+  - both settings of `--cycle-default` are pinned by programs, among them D30's tie-break case;
   - the corpus programs both judges accept that need nothing, 815 rows of `results/E8/accept.tsv`, pass `--typecheck-only`, and it agrees with the compile on each; a difference is a reading or a bug, never an expectation accepted blind;
   - the E7 rows mapped to R10, R20, R22, R32, R34, R41 and R43 have programs.
 * **Touches:** `lib/language/haskell/`, `src/rhc/`, `tests/hs/`.
 
 ### M14. Deriving (F; M, about 1,000 [estimate]; after M13)
 
-* **What:** `lib/language/haskell/derive.sml`: `Eq`, `Ord`, `Enum`, `Bounded`, `Ix`, `Show` and `Read` on the renamed AST, with chapter 10's text as the specification (D33). A derived instance names entities, not text, since derived `Ix` in `Time` needs methods `Time` did not import (E16). Derived contexts are inferred by the checker, and move with imports, as H5 will need. R41 and R42 as read.
+* **What:** `lib/language/haskell/derive.sml`: `Eq`, `Ord`, `Enum`, `Bounded`, `Ix`, `Show` and `Read` inside the checker, from the typed constructor (D33's C), with chapter 10's text as the specification of the code. M13 infers the context; the instance is then made as AST and elaborated like a user's, so that HsLint's three parts check it as any instance (D54). No layer of HsLint checks that a derived context is the least (10.1), since Faxén has no deriving rules: conformance rows do. A derived instance names entities, not text, since derived `Ix` in `Time` needs methods `Time` did not import (E16). Derived contexts are inferred by the checker, and move with imports, as H5 will need. R41 and R42 as read.
 * **Starts from:** no patch. E9's chapter 10 rows; E16's table of derived instances.
-* **Rests on:** D33. Deriving on Core instead would give up chapter 10 as the specification and lose the renamed names.
+* **Rests on:** D33, decided: C. Made only as typed output, a derived instance would leave HsLint no source phrase to check (D54).
 * **Done when:**
   - chapter 10's programs run on the Prelude's types, 165 rows of which 120 are `run` rows, compared with the judges where they agree and against R41 and R42's pins where they do not;
   - `read` of `show` holds at each derived type, as a law;
@@ -7167,9 +7559,9 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
 
 ### M15. Desugaring to Core (F; L, 1,000 to 2,000 [estimate]; after M8, M13)
 
-* **What:** `lib/language/haskell/{desugar,match}.sml`: chapter 3's translations and pattern matching in the Report's order, as `-O0`; dictionaries from M13's evidence records; Sestoft-order trees as an option (D34). Translations name entities a program cannot shadow, `Ratio.%` and `fix` among them, though neither is a Prelude entity (E9), and H9 holds those names in a key. Rune's `trees` is not reused (D34).
+* **What:** `lib/language/haskell/{desugar,match}.sml`: chapter 3's translations and pattern matching in the Report's order, as `-O0`; dictionaries from M13's evidence records; Sestoft-order trees as an option, built for D34's measurement and kept only if the owner takes B (*Decisions on the numbers*). Translations name entities a program cannot shadow, `Ratio.%` and `fix` among them, though neither is a Prelude entity (E9), and H9 holds those names in a key. Rune's `trees` is not reused (D34).
 * **Starts from:** no patch. `results/E9/translations.md`, with its 20 defects.
-* **Rests on:** D34. Trees as the only form would lose the literal `-O0` that the Report licenses as a semantics. Reusing `trees` would first need it to test a one-constructor type, as `f () = 1` must.
+* **Rests on:** D34: A, with B measured. If D17's B is taken, pattern bindings and `~p` are desugared Sparud's way (M25). Trees as the only form would lose the literal `-O0` that the Report licenses as a semantics. Reusing `trees` would first need it to test a one-constructor type, as `f () = 1` must.
 * **Done when:**
   - every Core output passes CoreLint, and its text round-trips;
   - each translation has its relation (*Generators and metamorphic relations*): the 92 `tr.*` rows, stdout compared, and braces and parentheses compared as Core text;
@@ -7178,41 +7570,48 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - the seeds for desugaring are caught: clause order reversed, `~` made strict, a `newtype` pattern forcing.
 * **Touches:** `lib/language/haskell/`, `src/rhc/`, `tests/hs/`.
 
-### M16. HsLint (F; L, about 2,000 to 2,500 [estimate]; after M13, M15)
+### M16. HsLint (F; L, about 2,000 to 2,500 [estimate], and replay, not sized; after M13, M15)
 
-* **What:** `lib/language/haskell/hslint.sml`, in two parts (D54; *HsLint and CoreLint*): a target check, that the elaborated term types by CoreLint's rules at the translation of its source type; and a second inference, a transliteration of THIH's `tiImpls`, `split`, `candidates` and `tiProgram` in the conformant form, with kinds and dependency groups recomputed. It shares only the renamer with the checker, and its unifier is its own. Run through `Pass.checkAt` at level 2.
+* **What:** `lib/language/haskell/hslint.sml`, in three parts (D54's C; *HsLint and CoreLint*): a target check, that the elaborated term types by CoreLint's rules at the translation of its source type; a second inference, a transliteration of THIH's `tiImpls`, `split`, `candidates` and `tiProgram` in the conformant form, with kinds and dependency groups recomputed; and replay of Faxén's rules on (source, elaborated) pairs, with messages that cite his rule names. It shares only the renamer with the checker, and its unifiers are its own. Run through `Pass.checkAt` at level 2.
+  - **What replay checks:** Rule 1, which his `bindg` with Definition 2 states (Faxén 2002, p 338). Not Rule 2, ambiguity or defaulting, which stay the second inference's: his rules admit ambiguous schemes (§7.2.3).
+  - **What it cannot:** deriving, `newtype`, strictness flags and recursive modules have no rules of his (§1.3), and his module rules are per module, so an SCC under D30 needs a rule of rhc's own [inference]. Derived instances made as AST (M14) are checked as instances.
+  - **Before it runs:** his deviations from the Report in §2.2, §4.2 and §4.3 are amended. Where his rules need a recorded choice, "dict inst" against "dict super" and premise types absent from the conclusion (§10.2.2, p 355), replay reads rhc's evidence records (D31).
 * **Starts from:** no patch.
-* **Rests on:** D54. A target check alone cannot see `show (read "True")` elaborated at `Int` against `Bool` (Faxén, section 10.2). If the owner takes it alone, M16 is smaller, and 4.3.4 and 4.5.5 have no independent check.
+* **Rests on:** D54, decided: C. A target check alone cannot see `show (read "True")` elaborated at `Int` against `Bool` (Faxén, section 10.2).
 * **Done when:**
   - each rule has a fault that corrupts its datum and is refused with its message, as `astlintFaults`;
-  - the seeds for types and classes are caught by the second inference and the target check: Rule 1 off, Rule 2 by group, defaulting without a numeric class, a superclass path wrong, a method slot swapped;
+  - the seeds for types and classes are caught by the second inference and the target check: Rule 1 off, Rule 2 by group, defaulting without a numeric class, a superclass path wrong, a method slot swapped; and Rule 1 off is caught by replay too, citing his rule;
+  - replay's rule for an SCC has a fault of its own, refused with its message;
   - every suite is clean under `RUNE_LINT=2`, and a linted build equals a plain one at level 0, as `levelsOne`.
 * **Touches:** `lib/language/haskell/`, `src/rhc/`, `tests/hs/`, `tests/runner/`, `docs/testing.md`.
 
-### M17. The Prelude: primitives, overlay (L; L, 2,436 lines of the Report's Haskell, and about 1,000 of SML and overlay [estimate]; after G0; first runs after M10, M15)
+### M17. The Prelude: primitives, overlay (L; L, 2,436 lines of the Report's Haskell, and about 1,000 of overlay and rhc's runtime [estimate], with `IntInf`'s representation and small path over its primitives; first runs after M10, M15; after M30, M31)
 
 * **What:**
   - **`share/rhc/haskell98/`:** the Report's 11 modules as printed, 525 definitions and 2,436 file lines (E16), plus D38's errata, in the Report's layout: `Prelude`, `PreludeList`, `PreludeText`, `PreludeIO`, `Ratio`, `Numeric`, `Char`, `Ix`, `Array`, `Maybe`, `List`. rhc compiles the 11 as one unit, whole-program, with no merged form (D36).
   - **`share/rhc/haskell98/LICENSE`,** which says the files are modified and do not claim to define Haskell 98, and a sentence in the top-level `LICENSE` (D37).
   - **The overlay, listed:** the 8 unresolved names, among them `interact`'s and `numericEnum*`, the `...` forms and `prim*` uses of these modules, and about 15 named definitions [hand count, E9].
-  - **The primitives:** `Integer` (D20), `Char` as Mid `int`, with the case mappings of D21 in `lib/unicode`, `Int` on the checked primitives (D22), `Float` by `real_to_single` (D23), string literals unpacked lazily (D24), `IO a` as a function of unit, whose result is `susp a` or a box as this milestone settles, with one interleaving primitive for `getContents` (D25).
-  - **The frozen SML support unit** of D26, under `lib/language/haskell/support/`, since `lib` is where SML goes and `share` is Haskell; SML names are confined to it.
-* **Starts from:** no patch: `results/E9/report-libs/`, with its `primitives.tsv` and `literal.tsv`, and `results/E16/overlay.py`. E5's kernels and `results/E5/core/`.
-* **Rests on:** D20 to D26, D36, D37.
+  - **The primitives, and no SML below Haskell (D26's A):** every `prim*` is a Core constant lowered to Mid's primitives, so all of them run in the Core interpreter too.
+    - `Integer` (D20's D, D26's A): M31's representation, an immediate small value and `IntInf`'s signed magnitudes, with its small path, ported to rhc's runtime over the primitives `IntInf` itself uses (`intinf_binary`, `intinf_divmod`, `intinf_shift`, `intinf_power`, `intinf_decimal`, `src/isa/prims.sml:828-847`) and M31's in-line ones; ported as far as rhc needs it.
+    - `Char` as Mid `int`, with the case mappings of D21 in `lib/unicode`; `Int` on the checked primitives (D22); `Float` by `real_to_single` (D23).
+    - String literals unpacked lazily (D24's A), and, for D24's measurement, B, the whole list on first force, in rhc's runtime, and D, a primitive that unpacks, as a patch to Rune that lands only if the owner takes it (*Decisions on the numbers*).
+    - `IO` with a state token (D25's B): an action takes the state and returns it with its value through M30's multi-value return, so no pair is built; `getContents` through one interleaving primitive, whose body ends its list on a read error (21.2.2).
+* **Starts from:** no patch: `results/E9/report-libs/`, with its `primitives.tsv` and `literal.tsv`, and `results/E16/overlay.py`. E5's kernels and `results/E5/core/`, whose `rts-i1.mid` is the small path with no bignum behind it.
+* **Rests on:** D20 to D26, D36, D37, as decided.
   - D36's fallback, if M13 runs late: the merged form, derived at build time by a small tool in SML under `src/rhc`, since `merge.py` does not land (`tests/runner/migration.sml:2,10`). The tool makes the check `merge.py` claimed and did not make, that no two of the 11 modules define one name, and it needs one rule outside the Report: the internal module has no implicit Prelude. Layered: 59 definitions, 329 lines, move beneath the Prelude, and the bottom layer is 1,720 of 2,436 lines (E16).
-  - D22 wrapping: through the word primitives, at +7 machine instructions on an add and +3 on a mul-mod loop. D23 plain `real`: legal, and output cannot compare with the oracles.
-  - D26 calling SML freely: see M5.
+  - D25's B makes `IO` ordinary Core, so Core takes on the rules that keep the token's order: never duplicate a redex, never lose the chain, no CSE across dummies (D25).
 * **Done when:**
   - `check_merge.py`'s table as a test in SML: all 20 modules' 663 export pairs, 35 fixities and 164 instances as E16 found them, once M18 has the other 9;
   - G1's check passes;
   - `PreludeList`, `PreludeText` and `PreludeIO` cannot be imported by a program;
   - a token comparison against the pristine transcription, as `DocChecks.signatures` (`tests/runner/docchecks.sml:203-254`), finds nothing outside the overlay, by module;
-  - the bottom probes on the literal Prelude agree with the overlay on each listed definition.
+  - the bottom probes on the literal Prelude agree with the overlay on each listed definition;
+  - `Integer` agrees with `IntInf` on both paths, across the small range's edges, in the Core interpreter and on the VM.
 * **Touches:** `share/rhc/haskell98/`, `lib/language/haskell/`, `lib/unicode/`, `tools/generate/`, `src/rhc/`, `LICENSE`, `Makefile`, `tests/hs/`.
 
 ### M18. The Report's libraries (L; M, 511 lines of the Report's Haskell, and about 500 of SML and overlay [estimate]; after M17)
 
-* **What:** the 9 modules outside the unit, `Complex`, `Monad`, `IO`, `Directory`, `System`, `Time`, `Locale`, `CPUTime`, `Random`, in `share/rhc/haskell98/`, and what M17 left of chapters 12 to 19. The Report gives no code for `IO`'s handles, for `System` and `CPUTime`, or for much of `Directory`, `Time` and `Random` (`results/E9/report-libs/primitives.tsv`), so these go through D26's support unit over the Basis. A primitive that needs the operating system goes behind `runtime/sys/sys.h` in every layer, and that is a change to Rune with a decision of its own; none is expected [inferred].
+* **What:** the 9 modules outside the unit, `Complex`, `Monad`, `IO`, `Directory`, `System`, `Time`, `Locale`, `CPUTime`, `Random`, in `share/rhc/haskell98/`, and what M17 left of chapters 12 to 19. The Report gives no code for `IO`'s handles, for `System` and `CPUTime`, or for much of `Directory`, `Time` and `Random` (`results/E9/report-libs/primitives.tsv`), so these go through primitives, those the Basis itself calls, with no SML below Haskell (D26's A). A primitive that needs the operating system goes behind `runtime/sys/sys.h` in every layer, and that is a change to Rune with a decision of its own; none is expected [inferred].
 * **Starts from:** no patch. `results/E9/report-libs/`.
 * **Rests on:** D36. Under another layout the 9 modules are the same, and only their imports change.
 * **Done when:**
@@ -7220,7 +7619,7 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - the 663 export pairs pass, table-driven (*The conformance table*);
   - the Report's 52 examples (`results/E9/report-libs/examples/`) are tests, as far as each is a program;
   - the bottom probes cover chapters 12 to 27's `run` rows that need them.
-* **Touches:** `share/rhc/haskell98/`, `lib/language/haskell/support/`, `tests/hs/`.
+* **Touches:** `share/rhc/haskell98/`, `lib/language/haskell/`, `tests/hs/`.
 
 ### M19. Conformance: the table worked through (T; L, 3,781 rows of programs and about 1,500 lines of harness [estimate]; first rows with M11, the bulk after G1, on a frozen Prelude)
 
@@ -7230,31 +7629,33 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - **D56's tiers:** `quick`, `check`, `nightly`, `test-rhc-mutants`, with the run set in three ways in `check`.
   - **Bottom probes, sharing budgets** in `tests/hs/perf/*.budget`, labelled rhc's policy, **generators** and the reducer, **metamorphic relations,** and **rhc's mutants** in `tests/runner/hsmutants.sml`.
   - **`-lazy` ports:** rhc's output against `examples/benchmarks`' hand-written lazy SML.
+  - **The first measurements on the run set** of *Decisions on the numbers*, once it compiles: D3's variant against B, D24's B and D against A, and D34's B against A at `-O0`, each for the owner to decide before G2.
 * **On a frozen Prelude:** the saved world (D45's option B) until M21, then the store. Up to 3,781 programs, each carrying the 11-module unit's 14,965 tokens, is what a whole-program compile means, and D45's rough rate makes that a budget matter for `make check`. M20 and M21 run beside this milestone and do not gate it.
 * **Starts from:** no patch. `results/E9/clauses.tsv`, `results/E8/*.tsv`, `results/E8/compat/`.
 * **Rests on:** D52, D55, D56. D56 rests on K, which E5 gives from three programs and four kernels. What binds is the share of `make check`, not a count of programs: M19 measures K and the compile, and programs move to nightly by Rune's rule, with D56's 112 programs the next step down. If the owner drops D55, *The conformance table*'s warning stands: a full table does not show strong tests.
 * **Done when:** every line of G2's table in *The gates' exits* passes.
 * **Touches:** `tests/hs/`, `tests/runner/`, `Makefile`, `docs/testing.md`.
 
-### M20. The store split (S; M, +338 -231 in 3 files, measured; after G1 in the order, beside M19, on no milestone)
+### M20. The store's policy out of `UnitCache` (S; S, about 60 lines [Y's estimate], optional; beside M19, on no milestone)
 
-* **What:** `driver/unitcache.sml` split into `driver/unitstore.sml`, 264 lines, with sections as a type variable (`'a format`) that the store cannot read and a `holds` callback, and `UnitCache`, down from 437 lines to 279. E13 found seven welds between the store and SML, among them the hash, the lint gate, `remapAllowed` and `RegVerify.injecting` [read]; each becomes something the client passes in. `tests/` gains the store's test with no compiler.
-* **Starts from:** `patches/E13-1-store.patch`. `E13-3-parts.patch` is a trial of v2's D24 and does not land here.
-* **Rests on:** D43. As is: 0 lines, with no per-entity cut-off, a stopgap at most. Wholly apart: about 1,560 lines [inferred], missing frozen layers, dist, v2's M6 and later cache fixes. rhc's interface, usages and driver are its own under all three. Alone the split is net +107 lines with the warm count flat; it pays with v2's M6 and M7. D46 asks for v2's D24 before M20 if it can be, since that fixes a format; M20 does not wait for it.
-* **Gate:** bytes stay put and cache files too, and no budget moves. E13: the fixed point and five variants byte for byte (`results/E13/split/verify.out`); `rune.build` in units, 494 unit files and 493 cache files, 0 differ (`units2.out`); 371 programs on both targets, 0 differ (`programs.out`); warm count 1,063,193,748 to 1,063,190,918. The milestone shows the same, and runs what E13 did not: `make check`, the host builds, the loader jobs, `units-stack`, the REPL's incremental scenarios on a rebuilt REPL.
-* **Done when:** the gate; `make check-units` and `make test-incremental` pass; `results/E13/split/storetest/` is a test that links no compiler.
-* **Touches:** `lib/compiler/driver/{unitcache,unitstore}.sml`, `lib/compiler/internal.build`, `tests/`, `docs/units.md`.
+* **What:** build-system-v2's M6 and M7 built the store rhc needs, from E13's split: `lib/compiler/driver/unitstore.sml`, 746 lines at origin/master `697724da5`, with an `('h, 's) format` whose sections are hashed apart, a head the client defines and judges by `holds`, settings passed in, keys of several parts, layers, and eviction by age and size (D43, decided by the lead: B, as landed). What is left is optional: the store's location, `.rune` in the workspace, and its trim policy, a week and 4 GiB, sit in `driver/unitcache.sml` (`:223-275`, `:565-583` at origin/master), which names SML's modules. Moved where a client can call them without `UnitCache`, about 60 lines, rhc need not copy them. Under D41's C, `unitstore.sml` also moves from `frontend.build` into the Mid layer (M4).
+* **Starts from:** origin/master. `patches/E13-1-store.patch` landed there through v2, in a more general form.
+* **Rests on:** D43. Taken or not, rhc writes its own format, head, `holds`, key and settings; if it shares `.rune`, its entries and Rune's share one budget for trimming [inferred].
+* **Gate:** bytes stay put and cache files too, and no budget moves: the test as M4's, with `make check-units`, `make test-incremental` and the REPL's incremental scenarios.
+* **Done when:** the gate; `tests/lib/compiler/store.sml`, a client that is not a compiler, passes, and a test of the moved policy links no `UnitCache`.
+* **Touches:** `lib/compiler/driver/{unitcache,unitstore}.sml`, `lib/compiler/frontend.build`, `docs/units.md`.
 
-### M21. HsIface and rhc's driver (S; L, about 1,500 [estimate]; after M13, M17, M20; beside M19)
+### M21. HsIface and rhc's driver (S; L, about 1,500 [estimate]; after M13, M17; beside M19)
 
 * **What:**
   - `lib/language/haskell/hsiface.sml`: names, types, classes, instances and fixities by entity, and a section for unfoldings in the format from the start (D44). The Prelude's are written when M23 has something to put there, and a program's own later: 1.04 without them against 2.00 without the libraries' (E6).
   - **rhc's usages and fingerprints,** which hold the obligations H1 to H9 (*What a cache hit must satisfy*).
-  - `src/rhc/driver.sml`: the loop over the graph through the store, with `--whole` as one flag.
+  - `src/rhc/driver.sml`: the loop over the graph through the store, with `--whole` as one flag. rhc is its own driver: it scans imports and takes SCCs itself, since `Deps` still refuses a cycle (`lib/compiler/driver/deps.sml:394` at origin/master `697724da5`), and drives `Pipeline`, `Link`, `UnitFile`, `UnitStore` and `UnitMemo`. Its main sets `UnitStore.stat` and `lstat` as `src/main/rune-main.sml:4-17` does, or no stat memo is kept. It uses none of `CompilerPlan`, `LibraryScope`, `LibraryIndex`, `CompilerPrelude` or `Workspace` [Y's reading].
+  - **rhc's entries in the store (D43):** its own `('h, 's) format`, head, `holds`, key and settings over `UnitStore`, with no change to Rune.
   - **The Prelude snapshot:** the 11-module unit frozen through the store, with its key over every member (D45).
-  - **rhc's identity,** over `rhc.build`'s closure and not `Config.identity`, which hashes `rune.build` alone (`scripts/gen-version.sh:51`). The store takes settings, so a source hash fixes it (E13).
-* **Starts from:** `patches/E13-2-toy.patch`, a toy language with no front end, `results/E13/toy/p5.sh`, a frozen 11-module unit with toy bodies, and `results/E13/model/model.sml`, 293 lines. The toy's bodies are Mid text and its numbers are toy ratios.
-* **Rests on:** D44, D45, D46. It comes after conformance has begun, so that HsIface is fixed once classes and instances have been shaken out (D45). If D45 is declined, E13's saved world stays: 583M machine instructions against 1,142M with nothing kept, on the toy, VM only, at 5,560,282 bytes against 185,590. If D44 drops the Prelude's unfoldings, E6's 2.00, on GHC's optimiser, is the measure of what M23 loses.
+  - **rhc's identity** is its own `Config` (M8), which `scripts/gen-version.sh --config` writes over rhc's plan and closure (v2's M11), and it goes in the store's settings, so rhc's entries have a configuration of their own [inferred].
+* **Starts from:** origin/master's `unitstore.sml` and `unitmemo.sml`, which is language-neutral but for `Config.identity` and the `Source.reading` hooks (Y); `patches/E13-2-toy.patch`, a toy language with no front end, `results/E13/toy/p5.sh`, a frozen 11-module unit with toy bodies, and `results/E13/model/model.sml`, 293 lines. The toy's bodies are Mid text and its numbers are toy ratios.
+* **Rests on:** D43, D44, D45, as decided; D46 is not applicable. It comes after conformance has begun, so that HsIface is fixed once classes and instances have been shaken out (D45). If D44's Prelude unfoldings were dropped, E6's 2.00, on GHC's optimiser, would be the measure of what M23 loses.
 * **Gate:** no change to Rune. Should M21 need one of the store, it is M20's gate.
 * **Done when:**
   - each of H1 to H8 has a test that fails with its hole, E13's holes as mutants of the usages, and `results/E13/ghc/` as the two cases GHC shows; H9, which E13's model leaves out, has tests of its own;
@@ -7268,7 +7669,7 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
 ### M22. SCC keys (S; M, about 300 [estimate]; after M12, M21; before G2)
 
 * **What:** a key and an identity over every member of an SCC, fingerprints by recursive group, and the unit's name in a usage (H8). User cycles have compiled whole since M13, and the Report's own layout since M17; this makes a cycle incremental.
-* **Starts from:** `results/E13/toy/p3.sh`, `p5.sh`: a cycle's key, and a frozen 11-module unit with toy bodies.
+* **Starts from:** `results/E13/toy/p3.sh`, `p5.sh`: a cycle's key, and a frozen 11-module unit with toy bodies. `UnitStore`'s keys take several parts at origin/master, which is what a key over every member needs (Y).
 * **Rests on:** D30, D36. If D30 goes to refusal there is no key to write, chapter 5's rows on cycles become a deviation outside the rule, and D36 falls to the merged form. If D36 takes its fallback, M22 also compiles the Report's graph as one unit, frozen through the store, and then the literal and merged layouts must print the same on every run program. If D30 takes 5.7's signatures, forward links must be built first (M12).
 * **Gate:** no change to Rune. One unit per SCC costs the store, `Link` and `UnitFile` nothing (E13).
 * **Done when:**
@@ -7277,53 +7678,59 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
 
 ### M23. Core simplifier, known dictionaries (P; L, about 2,000 [estimate]; after G2)
 
-* **What:** `lib/language/haskell/coresimplify.sml`: a Core simplifier with eta (D48), and known-dictionary resolution and specialisation first (D49), through `Pass.stage` with CoreLint after each pass and `Pass.spend` before each rewrite, and it writes the Prelude's unfoldings into the section M21 left for them. The comparison is `core/simplify.sml`, 2,090 lines with its inlining and specialisation, and no rate exists.
+* **What:** `lib/language/haskell/coresimplify.sml`: a Core simplifier with eta (D48), and known-dictionary resolution and specialisation first (D49), through `Pass.stage` with CoreLint after each pass and `Pass.spend` before each rewrite, and it writes the Prelude's unfoldings into the section M21 left for them.
+  - **D49's C, with what Augustsson 1993 adds:** the specialiser clones local overloaded bindings too, since a specialised `sum` "is hardly an improvement" while its local `sum'` stays overloaded (§5.4); literal folding covers `fromRational` as well as `fromInteger` (§4.3); and fuel bounds it, since polymorphic recursion defeats specialisation (fig 9).
+  - **For D48's measurement:** D, GHC's default eta, as an option of the simplifier, measured against C as *Decisions on the numbers* says, and landed only if the owner takes it. Under C the pedantic rule refuses GHC's state hack, an eta-expansion through `IO` (D25).
+  - **D34's B measured again** after the simplifier, as its reopening asks. The comparison is `core/simplify.sml`, 2,090 lines with its inlining and specialisation, and no rate exists.
 * **Why first in P:** E3's first step is the largest rhc can reach first, on GHC's simplifier and class-op rule with specialisation off: thunks -47%, bytes -38% in total, -26.2% and -17.7% for the median program. Those are GHC's figures, and that rung holds more than known dictionaries (D48). E5 gives Rune's.
 * **Starts from:** no patch.
-* **Rests on:** D47, D48, D49. If D47 goes to one optimiser in Mid, shared with lazy ML, this is a change to Rune: Mid's passes learn `susp`, with a gate that says by how much. If D48 is declined, M24's and the floating results lose what they assume.
+* **Rests on:** D47, D48, D49, as decided.
 * **Done when:**
   - `-O0` against optimised agrees on stdout and on bottom or not, over every run program;
   - sharing budgets and bottom probes hold at every setting, both bytecodes;
   - every lint holds at any `--fuel`, and a bottom probe holds eta under `seq`, where a wrong rewrite is silent and no oracle helps (D48);
   - G2's lines are shown again at the new top level;
-  - E3's ladder is measured on rhc, `--count` over the 188 before and after, with a program that rises listed and explained. E3's percentages are for comparison, not a target.
+  - E3's ladder is measured on rhc, `--count` over the 188 before and after, with a program that rises listed and explained. E3's percentages are for comparison, not a target;
+  - D48's measurement is taken and the owner's choice recorded in D48.
 * **Touches:** `lib/language/haskell/`, `src/rhc/`, `tests/hs/`, `docs/ir.md`.
 
 ### M24. Strictness (P; M, about 800 [estimate]; after M23)
 
-* **What:** `lib/language/haskell/corestrict.sml`: one backward analysis with signatures, which go in HsIface, and its result in Core's types, the evaluated and unevaluated distinction of D2. A strict parameter lowers to `T` and a lazy one to `susp T`, and Mid's `workers` then flattens tuples, so nothing changes in Rune (D50). With `IO` a function in Core (D25), the analyser must not evaluate before an I/O action what the source evaluates after it. No rate exists; `core/workers.sml` is 492 lines.
+* **What:** `lib/language/haskell/corestrict.sml`: one backward analysis with signatures, which go in HsIface, and its result in Core's types, the evaluated and unevaluated distinction of D2. A strict parameter lowers to `T` and a lazy one to `susp T`, and Mid's `workers` then flattens tuples, so nothing changes in Rune (D50). With `IO` a state token in Core (D25), the analyser must not evaluate before an I/O action what the source evaluates after it. No rate exists; `core/workers.sml` is 492 lines.
 * **Starts from:** no patch.
 * **Rests on:** D50. E3 gives a further -20% of thunks and -11% of bytes, on GHC. It cannot be cut apart from M23 on `sum = foldl (+) 0` [inferred], so declining M23 declines most of this.
 * **Done when:** as M23, with the bottom probes as the first line: a result that is too strict shows there and nowhere else; a mutant that marks a lazy argument strict is caught; a test holds the order of an `error` and an I/O action; E3's L2 step is measured on rhc.
 * **Touches:** `lib/language/haskell/`, `tests/hs/`.
 
-### M25. What measurement justifies: eval/apply, cheap eagerness, selector thunks (P; not sized; after M24, each only on a measured case)
+### M25. What measurement justifies: eval/apply, pointer code 11, selector thunks, CAF tables, cheap eagerness (P; not sized; after M24, each built and measured, and landed only if the owner takes it)
 
-* **What:** each of these lands only if a measurement of rhc's own output asks for it, and is otherwise closed with that measurement.
-  - **Eval/apply (D15):** E3's 63% of calls at `-O0` is 3.5% at `-O2`, and the verdict depends on the tier. `CALL` takes one argument (`src/isa/regs.sml:122-124`), so this one is a change to Rune, with a gate that says by how much.
-  - **Cheap eagerness (D51):** decided with D22. Under checked primitives `Int +` is not speculable, and the local form is closed for `Int` arithmetic [inference]. M25 also settles what stops `inline` copying a thunk held in a `Fun` group, whatever else it does.
-  - **Selector thunks (D17):** after leaks are measured on the corpus, with `last` and `leak`'s residency test as the form.
-* **Starts from:** no patch.
-* **Rests on:** D15, D17, D51. Selector thunks and eval/apply are on the list of what is cut first.
-* **Gate:** any change to the VM, the bytecode or Mid takes M9's list and states its budget.
-* **Done when:** each item is landed with its test or closed with its figures; the sharing budget for what `inline` could copy passes in every case.
+* **What:** each of the first four is built here, measured on rhc's own output as *Decisions on the numbers* says, and taken or closed by the owner on the figures.
+  - **Eval/apply (D15's C, its measurement):** arity tested by the caller, a partial-application object, over-application by a pushed continuation, on every engine, with `Low.Call`, MidLint's rule and `RegVerify`'s. `CALL` takes one argument today (`src/isa/regs.sml:122-124`), so this is a change to Rune, measured on Rune's programs too.
+  - **Pointer code 11 (D16's B):** set by the copier when it shortcuts an indirection, masked at every pointer read in C, in `masm.c` and in runeopt's templates; measured on Rune's programs too.
+  - **Selector thunks (D17's B):** Sparud's desugaring of pattern bindings and `~p` with an impure `updatePat`, whose write skips any sibling not unevaluated, so that D11's pin need not come here; if it must, the pin lands here and not in M26.
+  - **CAF tables (D19's B):** a table per function of the CAFs its code reaches, emitted at or below Core to Mid, and a collector that traces from live code.
+  - **Cheap eagerness (D51's C):** total operations only, on values Core's types say are evaluated; under D20's D an `Integer` add of two immediates, behind a test of the immediate bit. M25 also settles what stops `inline` copying a thunk held in a `Fun` group, if D3's C put thunks there.
+* **Starts from:** no patch. E5's `results/E5/ncall/` and `stats.jsonl` for eval/apply; E2's `last` and `leak` for residency.
+* **Rests on:** D15, D16, D17, D19, D51. Selector thunks and eval/apply are on the list of what is cut first.
+* **Gate:** any change to the VM, the bytecode or Mid takes M9's list and states its budget; each built variant is measured against the standing gate before the owner decides, and what is not taken does not land.
+* **Done when:** each item is landed with its test or closed with its figures, and the owner's choice recorded in its decision; the sharing budget for what `inline` could copy passes in every case.
 * **Touches:** as each decision says.
 
 ### M26. Ready for lazy ML (Z; size set by D57; after G2)
 
-* **What:** the checklist D57 names:
+* **What:** the checklist D57 names, run again on form C, since E14 ran it on form G. Lazy ML's reading under C is E2's `CmX`, whose thunk does not say `BLACKHOLE` and releases nothing (`results/E2/delay/Cml/lazy.sml`):
 
   1. **The pin landed:** a `K_IND` a frame still runs is not shortcut (`gc_pin_running`), with `k_outlive*` and `outlive_nullary` on both engines. The guard on the shortcut, looking through forwarding, lands with it. M26's.
-  2. **A MidLint rule:** a function given to `thunk_fmake` is named by nothing else, and `thunk_fupd` appears nowhere else. Haskell's too: M9.
+  2. **A MidLint rule:** a function given to `thunk_make` is named by nothing else, and `thunk_self_update` appears nowhere else. Haskell's too: M9.
   3. **The stack target lowers force.** Haskell's too: M9.
   4. **The spec's 10 programs green** over E14's mode table plus `--lint=3`, with raise, re-entry, effects, nesting, rule order and equality pinned. M26's, on E14's patch brought up to the landed tree.
   5. **Flag off:** bytes and `--count` unchanged, and `susp` unbound. M26's, on the same patch.
   6. **`susp` documented** and in `tests/ir`. Haskell's too: M9.
 
-  So M26 itself holds items 1, 4 and 5: +24 -3 in the collector, `value.h` and the loader flag as E14 measured them, with E2's guard. No surface syntax lands in this roadmap. Whatever the checklist needs of Rune lands as tests, or as a change that keeps M9's gate. The pin's programs use `$`, so what stays in `make check` is them rewritten under `--allow-prim`, as E2's kernels are [inference, not built].
-* **Starts from:** E14's drafts patch, which stays in the drafts.
+  So M26 itself holds items 1, 4 and 5: +24 -3 in the collector, `value.h` and the loader flag as E14 measured them on form G, with E2's guard, measured again on form C. No surface syntax lands in this roadmap. Whatever the checklist needs of Rune lands as tests, or as a change that keeps M9's gate. The pin's programs use `$`, so what stays in `make check` is them rewritten under `--allow-prim`, as E2's kernels are [inference, not built].
+* **Starts from:** E14's drafts patch, on form G, brought to form C; it stays in the drafts.
 * **Rests on:** D57. Lazy ML itself is a later roadmap, and this milestone says only that the stack is ready for it.
-* **Gate:** bytes and budgets stay put, or the decision says by how much. E2 priced the guard on the collector's shortcut at +0.84% on Haskell's thunks and +0.90% on lazy ML's (`results/E2/tables/guard-cost.txt`). E14 priced the pin at 1.0003 over the guard on lazy ML's ports, 1.0036 before the shortcut's test was forced in line (`results/E14/tables/portcost-final.txt`, `portcost.txt`). It returns at once in a program that blackholes [read].
+* **Gate:** bytes and budgets stay put, or the decision says by how much. E2 priced the guard on the collector's shortcut at +0.84% on Haskell's thunks and +0.90% on lazy ML's (`results/E2/tables/guard-cost.txt`). E14 priced the pin at 1.0003 over the guard on lazy ML's ports, 1.0036 before the shortcut's test was forced in line (`results/E14/tables/portcost-final.txt`, `portcost.txt`). It returns at once in a program that blackholes [read]. Both figures are form G's; M26 takes them again on form C.
 * **Done when:** each line of the checklist is shown by a test in a named tier.
 * **Touches:** as the checklist says; `docs/ir.md`, `tests/ir/`, `docs/plans/lazy-evaluation.md`.
 
@@ -7335,9 +7742,62 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - *At the close*, as earlier roadmaps did, with the Status table finished;
   - the worktrees named there removed with the owner's word.
 
+### M28. `Ty` with application and forall (A; L, 300 to 500 lines over 12 or more files [E4's estimate]; after M6, before M10)
+
+* **What:** D4's C. `Ty.ty` gains variable-headed application and a forall in fields, which `core/ty.sml:27-33` has neither of. Each pass that reads types takes a rule for them: 96 `Ty.view` sites in 18 files, 82 ending in a catch-all (`results/E4/tyview.out`, a heuristic). `Ty.ty` is described at `tools/codecs/compiler.sml:168-176` (origin/master `697724da5`), so the forms go there and `make codecs` runs. `Any` stays for what `Ty` cannot say, and still means evaluated; the `any` casts, 0 to 2.2% of nodes at E5's step `D0` (E4), go where `Ty` can say the type. Value-to-`susp` casts stay (M9). MidLint refuses a type variable instantiated at `susp T`, as Strict Core has it; Launchbury and Paterson's `Pointed` is the alternative not taken (D4).
+* **Starts from:** no patch. E4 sized it and built nothing.
+* **Rests on:** D4, decided: C, "safest and also useful for higher-rank and higher-kinded type in rune".
+* **Gate:** SML's front end makes neither form, so SML programs keep their bytes [deduced], shown by M4's test; the compiler's own compile is measured, and its budgets move only by what this milestone states. `make check-codecs`.
+* **Done when:**
+  - the gate, with the figures;
+  - each new form round-trips through Mid's text and codec at level 3;
+  - MidLint refuses each form ill-applied, and a type variable instantiated at `susp T`, each with its message in `tests/compiler/lint-rules.sml`;
+  - E1's `monad`, written with the new forms in place of its `any` casts, passes the ways E1's did;
+  - a scratch form added to `Ty.ty` draws "match is not exhaustive" at each site that M6 and this milestone left without a catch-all.
+* **Touches:** the 18 files of `results/E4/tyview.out`, among them `lib/compiler/core/{ty,midlint,midtext,midcanon,simplify,workers,refs,expand}.sml` and `lib/compiler/backend/{lower,lowshapes,rep}.sml`; `tools/codecs/compiler.sml` and the generated regions of `core/midcodec.sml` and `driver/unitmid.sml`; `tests/ir/`, `tests/compiler/lint-rules.sml`, `docs/ir.md`.
+
+### M29. Mid `Case` (A; L, not built or sized: an arm in at least 88 walkers, and Simplify's rounds [E12]; after M6, beside M28)
+
+* **What:** D8's C. A `Case` in Mid's `exp`: a test of a constructor's tag with an arm for each and a default, whose arms may bind what `Decon` takes. `Lower` lowers it to the `SWITCH` and tests it makes today, so its own recovery of the table from `ConTag`, an equality primitive and `If` gives way, and the 96 lines of peephole in three places that must agree become one. The guard on `Decon` becomes a rule of MidLint. `MidText`, `UnitMid`, `MidCanon` and `Fault` take it, and the codec's description of `exp` (`tools/codecs/compiler.sml:222-232` at origin/master); Simplify's rounds learn it, which is where the risk is. Rune's front end emits it where it emits tag tests now [inference], and rhc's Core to Mid once it lands (M10).
+* **Starts from:** no patch. E12: 12,061 of 12,064 tag tests are recovered, 472 of 484 chains become `SWITCH`, and only 31 tests are answered by a dominating test, so `Case` saves no code; it would save 11.7% of Mid's nodes, or 16.7% if arms bind [deduced] (D8).
+* **Rests on:** D8, decided: C, now: "let's fix it now instead of later".
+* **Gate:** bytes and budgets may move, since `Lower`'s own reconstruction gives way to the node. The milestone measures by how much, states it, and budgets move only by that. E12 deduced that no byte need move if `Lower` lowers `Case` as it lowers the tests now; no compile with a `Case` was made.
+* **Done when:**
+  - the gate, with the figures;
+  - the compiler's own compile time is measured before and after, which E12 could not do;
+  - a scratch arm left out of a walker draws "match is not exhaustive", or goes through M6's `fold`;
+  - every `tests/ir` dump that shows a match is reviewed by hand.
+* **Touches:** `lib/compiler/core/{mid,midtext,midcanon,midlint,simplify,workers,lift,refs,shake,expand,tomid}.sml`, `lib/compiler/backend/{lower,lowshapes,fault}.sml`, `lib/compiler/driver/unitmid.sml`, `tools/codecs/compiler.sml` and the generated codecs, `tests/ir/`, `docs/ir.md`.
+
+### M30. Multi-value return (A; L, not built or sized: 126 walkers and both instruction sets [E12]; after M6, before M17)
+
+* **What:** D9's B. `Return` of several atoms and a `Let` of several variables in Mid; `Low.Return` of a list; `RET` and `RESULT` of several values in both instruction sets: `src/isa/{regs,stack}.sml`, both VMs, the JIT, runeopt's templates and native code, `tests/opt/every-opcode.rasm` and `docs/bytecode.md`; and the codec's description of Mid. It would retire `Slot`, the facts in `Pipeline.lowered` and `LowLint.results` (D9). rhc uses it for `IO`'s state and value (D25's B, M17) and for products Core returns unboxed.
+* **Starts from:** no patch. E12: in a whole compile it wins what `results` already wins; in units, where `results` does not run (`backend/lower.sml:849`), about 4.4% of the compiler's allocation [deduced], and nothing in instructions.
+* **Rests on:** D9, decided: B, now: "let's do it now instead of later". Raised with the owner: whether it lands behind a measurement, as D15's C does. Until the owner says so, it lands.
+* **Gate:** both instruction sets' fingerprints and opcode tables move, and every `.rbc` with them. Whether SML's code changes depends on whether `Lower` uses it for SML's products, which this milestone decides and states, with the figures; budgets move only by that. M9's list of checks for a change to the engines applies.
+* **Done when:**
+  - the gate, with the figures;
+  - the compiler's allocation in a whole compile and in a unit build is measured before and after, against E12's;
+  - a function returning two values makes no tuple, by `--count`, on both bytecodes and in native code;
+  - each new form of `RET` and `RESULT` has its line in `tests/opt/every-opcode.rasm`.
+* **Touches:** Mid's and Low's walkers, `lib/compiler/backend/{low,lower,lowlint,regs,stack,regverify}.sml`, `lib/compiler/driver/pipeline.sml`, `src/isa/`, `runtime/register/`, `runtime/stack/`, `runtime/native/`, `src/opt/`, `tools/codecs/compiler.sml`, `tests/opt/every-opcode.rasm`, `tests/ir/`, `docs/ir.md`, `docs/bytecode.md`.
+
+### M31. `IntInf` immediate (A; M, not sized: `lib/basis/intinf.sml` is 651 lines, and E5's ten primitives are +70 -2 with no bignum path; at once, before M17)
+
+* **What:** D20's D. `IntInf.int` takes the immediate representation: a small value an immediate `int`, a big one `IntInf`'s signed magnitudes, with C's primitives in line, `integer_add` and the others compiled as `int_add` is (`runtime/register/fastprim.h:136`), each with a slow path of its own. **The bignum path is built first,** since nothing yet shows the small path keeps its 24 instructions an add with one behind it (E5). The hosts compile `lib/basis` in the `xc1` configurations with the VM's primitives written on their own library, so each new primitive has a host version in `tests/basis/host/rune-prim.sml` (`docs/basis-compat.md`). `docs/plans/heap-layout.md:4999` then becomes true. rhc's `Integer` shares the representation and the small path (M17, D26).
+* **Starts from:** `patches/E5-integer-prims.patch`, ten primitives whose slow paths are a fatal, and `results/E5/core/rts-i1.mid`.
+* **Rests on:** D20, decided: D, "rune should benefit from this".
+* **Gate:** `IntInf` changes representation, so SML programs that use it change in bytes and counts, the compiler among them, whose constants are `IntInf` [deduced], and the primitives move both fingerprints. The milestone states by how much on `tests/perf` and the bootstrap, and budgets move only by that. `make matrix-quick`, `make test-basis`, `make check-cross`.
+* **Done when:**
+  - the gate, with the figures;
+  - `IntInf` agrees with the hosts' on both paths and across the small range's edges, in `tests/basis` and under `xc1`;
+  - E5's loop of 10^7 adds over small values stays at 24 instructions an add with the bignum path in place (`results/E5/intinf/run.out`), or the rise is stated;
+  - `INTINF_DEFAULT_BITS` still bounds a big value.
+* **Touches:** `lib/basis/intinf.sml`, `src/isa/prims.sml` and what `make isa` writes, `runtime/prims.c`, `runtime/register/fastprim.h`, `runtime/register/jit/emit.c`, `tests/basis/host/rune-prim.sml`, `tests/basis/`, `docs/bytecode.md`, `docs/plans/heap-layout.md`.
+
 ## Gates
 
-**G0: the owner's decisions.** The owner decides D1 to D6, D11 to D13 and D36: the hook, Core, Mid's laziness surface, the evaluated invariant, recursive values, the thunk and the library layout. Tracks B, F and L stand behind it, because a change to any of these rewrites what they build. M1 to M7 do not wait for it (*The order*). Each milestone's **Rests on** says what follows from the other options.
+**G0: the owner's decisions. Passed on 2026-11-09.** The owner decided D1 to D57, among them D1 to D6, D11 to D13 and D36: the hook, Core, Mid's laziness surface, the evaluated invariant, recursive values, the thunk and the library layout, on which tracks B, F and L stand. What it leaves open is measured, and decided by the owner on the figures: *Decisions on the numbers*.
 
 **G1: hello.** The Report's Prelude, in the Report's layout, runs hello on the Core interpreter and on the VM, with identical output. *The gates' exits* gives the check, and what it does not show. It needs M8 to M10, M11 to M15 and M17, and it opens M20, M21 and the bulk of M19.
 
@@ -7346,8 +7806,60 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
 **The standing gate.** After any change to Rune, SML budgets and bootstrap bytes stay put unless a decision says otherwise, and that decision says by how much. Where a prototype here moved nothing, the milestone must show the same.
 - **SML budgets** are `tests/perf/*.budget` under `make perf-check`, counted at level 0 (`docs/testing.md:95-96`). None is re-based to let a change of this roadmap pass unless a decision says so, with the figure.
 - **Bootstrap bytes:** `make bootstrap` and `make check-cross`, and, for a change that means to leave the compiler's output alone, E11's test: the edited compiler on the sources before the edit gives that tree's `bin/rune.rbc`, at stack, `-O0` and `-O2`, on both targets. A compiler's own image differs once its sources do, so a plain comparison of images says nothing.
-- **What moved in the prototypes:** E11's patches and E13's split moved no byte. E1's Simplify fixes moved no byte of the compiler. E2 is the exception, since it was never run against this gate: M9 is where its bytes are shown. Its primitives move the fingerprint word and the compiler's own budgets, which D3 states.
+- **What moved in the prototypes:** E11's patches and E13's split moved no byte. E1's Simplify fixes moved no byte of the compiler. E2 is the exception, since it was never run against this gate: M9 is where its bytes are shown. Its primitives and form C's instructions move the fingerprint word and the compiler's own budgets, which D3 states.
+- **What the owner's decisions move:** form C's instructions, both opcode tables (M9); multi-value return, both instruction sets and perhaps SML's code (M30); `IntInf`'s representation, SML's programs that use it and the compiler (M31); `Case`, SML's compiled code by `Lower`'s change (M29); `Ty`'s forms, the compiler's own code (M28). M6's walkers should hold bytes. Each of these milestones measures what moved and says by how much, and that is the only room the gate gives it.
 - **Rune's own rules apply on top,** by what a change touches: `AGENTS.md` for `src/isa`, `runtime/register`, native code and a pass of the compiler. rhc's own code under `lib/language/haskell`, `src/rhc` and `share/rhc` is not under this gate, and any later change a milestone finds it needs in Rune is a decision graded as the brief asks, never a silent edit.
+
+## Decisions on the numbers
+
+The owner took eight decisions on measurement: build the option, measure it, and decide on the figures. Until then the option the owner kept, or the recommended one, stands. This section says, for each, what is built, against what, on what, in which milestone, what figures the owner sees, and who decides.
+
+**What every one shares.**
+- **On what.** rhc's programs: E5's hand-lowered set, `queens`, `primes` and `exp3_8` and the kernels `sum`, `sumint`, `list` and `showk` (`results/E5/`), until rhc runs; then D56's run set, the 223 run programs, the 188 of `make check` and the 35 nightly. Rune's programs where the owner said "and rune if that applies": D15 and D16, and D17 where it applies. Rune's programs are E2's 113 lazy ports and 12 strict ports, `tests/perf`'s budgeted programs and the compiler's own compile.
+- **What the owner sees.** Instructions at tier 2, `instructions:u`, and `runevm --count`, which are the claims (*Measuring*); per program, with totals, geomeans and medians, and every program that moves the wrong way named. Cycles, best of N with the load stated, where E1's and E2's lessons say instructions mislead: on the ports G ran 13% more bytecodes than C for 5% more machine instructions, so `--count` overstates a gap there; and E5's K is 3.4 to 5.2 in instructions against 5.8 to 7.0 in cycles on the whole programs (`results/E5/k.txt`). D16 is such a case.
+- **Who decides:** the owner, on the figures. Each decision records the choice at its end.
+
+**D3: C, a `Force` right-hand side, against B with form C.**
+- *Built:* a fifteenth `rhs`, `Force`, lowered to the same instructions as B's `thunk_force`, with D6's C for recursive thunks, a recursive form in Mid; on M6's walkers, and described in `tools/codecs/compiler.sml`. M9 builds it on a branch beside the landed B.
+- *On:* E5's set, lowered by hand to both, in M9; then the run set, with M10 emitting either, in M19.
+- *Figures:* instructions at tier 2 and `--count`, at Rune `-O0` and `-O2`; the compiler's own compile time and bytes, since SML pays an arm in every walker; and whether any pass drops, copies or moves a force under either, with the sharing budget of D51.
+
+**D15: C, eval/apply proper, against A.**
+- *Built:* arity tested by the caller, a partial-application object, over-application by a pushed continuation, on every engine, with `Low.Call`, MidLint's rule and `RegVerify`'s; in M25.
+- *On:* the run set at `-O0` and at the top level after M23 and M24; and Rune's programs, since SML's curried calls take the same `CALL` (D15).
+- *Figures:* instructions at tier 2 and `--count`; chains of two or more arguments and partial applications made, as E5 counted them (`results/E5/stats.jsonl`); bytes allocated. E5 priced a curried call at 116 instructions and 24 bytes against a known call's 43, and guessed an n-ary path at about 55 [N's inference].
+
+**D16: B, pointer code 11, against A.**
+- *Built:* the code set by the copier when it shortcuts an indirection, and masked at every pointer read in C, in `masm.c` and in runeopt's templates; in M25.
+- *On:* the run set, and Rune's programs, since every pointer read moves.
+- *Figures:* instructions at tier 2 and `--count`, and cycles and cache misses, best of N. Code 11 can save only the header load: Rune's `FORCE` has no indirect enter jump for it to spare, unlike GHC's, where Nethercote 2002 §5.4 proposes the bit, unmeasured. On heap-layout's kernels the code was within noise (D16).
+
+**D17: B, Sparud's method, against A.**
+- *Built:* pattern bindings and `~p` desugared to Sparud's tuple form with selectors, his equation (8), plus an impure `updatePat` that overwrites each sibling. It is a desugaring and a primitive, not a Core construct (Sparud 1993, §3.3). Under form C the write skips any sibling that is not unevaluated, and is not a `K_IND` to an unevaluated component: it retargets the sibling's code and capture, or is made only when the component is evaluated. Otherwise the sibling whose force ran the match outlives its own update, E14's case, and D11's pin becomes Haskell's and lands with B, not in M26 [P1's inference]. B changes D34's desugaring. In M25.
+- *On:* the run set, and programs over `lines`, `span`, `break` and `unzip` on long input, with E2's `last` and `leak` as residency tests at two sizes, the form M10 set. On Rune it applies only through a lazy pattern binding, which SML has not; lazy ML's would be one, and this roadmap does not land it, so Rune's figure is that nothing moves [inference].
+- *Figures:* residency, peak and byte-seconds, as Runciman and Wakeling gave for clausify, 47,548 to 34,083 byte-seconds; bytes allocated; and instructions at tier 2, since Sparud says a program that does not leak runs "somewhat slower".
+
+**D19: B, CAF tables, against A.**
+- *Built:* a table per function of the CAFs its code reaches, emitted at or below Core to Mid, and a collector that traces from live code; in M25.
+- *On:* the run set, with the programs whose residency is a CAF named.
+- *Figures:* residency and peak RSS; the collector's time; instructions at tier 2; and the bytes promoted that die in the old generation. Rune's nursery promotes every survivor of a minor collection (`runtime/gc/minor.c:1-7`), and Röjemo 1995b measured that policy on sieve at "nearly ten times" the two-space collector's time (§5.1, p 155).
+
+**D24: B and D, against A, for the record.**
+- *Built:* B, the whole list on first force, a loop in rhc's runtime; D, a primitive that unpacks a constant, as nhc98's `STRING`, a change to `src/isa` and every engine that moves the fingerprint, kept as a patch; both in M17.
+- *On:* the run set, in M19, with string-heavy programs named.
+- *Figures:* instructions at tier 2, `--count` and bytes allocated.
+- *Who:* the owner, who said D is unlikely to be taken whatever it shows, "as there is no use in rune". D conforms as B does; what taking it needs is the owner's word for a change to Rune that Rune does not use.
+
+**D34: B, Sestoft-order decision trees, against A.**
+- *Built:* an option of M15's match compiler, off at `-O0` and differenced against it.
+- *On:* the run set at `-O0` in M19, and again after M23's simplifier, with match-heavy programs named.
+- *Figures:* VM instructions at tier 2 and `--count`, not code size: Pettersson 1992's automaton gave no reduction in size. Compile time too.
+
+**D48: D, GHC's default eta, against C.**
+- *Built:* an option of M23's simplifier, eta through `case` as GHC's default has it; in M23.
+- *On:* the run set at M23's top level, with `IO`-heavy programs among them, since under D25's state token GHC's state hack is an eta-expansion through `IO` that C refuses.
+- *Figures:* instructions at tier 2 and `--count`; per program, the expansions D makes and C refuses; and D55's bottom probe run on D, which C passes and D is expected to fail on `(f bot) seq 1`. Gill 1996's arity analysis gave 0.99 of instructions by geomean on 52 nofib programs, mostly after foldr/build, which rhc refuses, so D's margin over C should be about 1% or less [P3's inference].
+- *Who:* the owner. D is not conforming, so taking it would need a deviation that D38's rule does not cover, or the owner's word.
 
 ## Testing and conformance
 
@@ -7493,11 +8005,10 @@ AstLint is the pattern, and cannot be the plan. It is "A checker, not an inferen
 
 **CoreLint** (M8) checks Core: explicitly typed, so syntax-directed, with no unification. It runs at each boundary and, at level 2, after each Core pass, through `Pass.stage`. It also runs on text read by `--read-core`, so that track B is tested before a parser exists. It must run just before the crossing into Mid, because below that point `Any` positions leave MidLint weaker, and the translation must stay small (D4, E15). It is first-version work: "One of the dumbest things we did was to delay writing Core Lint" (*What the literature says*).
 
-**HsLint** (M16) checks elaboration. A target check alone cannot see what matters most: `show (read "True")` elaborated at `Int` and at `Bool` are both well typed at `[Char]`, with different meanings (Faxén, §10.2). Neither Faxén nor THIH checks elaborated output. So D54 has two parts, on rhc's own evidence records (D31):
+**HsLint** (M16) checks elaboration. A target check alone cannot see what matters most: `show (read "True")` elaborated at `Int` and at `Bool` are both well typed at `[Char]`, with different meanings (Faxén, §10.2). Neither Faxén nor THIH checks elaborated output. So D54, as the owner decided it, has three parts, on rhc's own evidence records (D31):
 1. **A target check.** The elaborated term types in the System-F-like target, by CoreLint's rules, and its type is the translation of the source type: Hall's soundness statement. It must accept any route to a superclass, since several elaborations are correct.
-2. **A second inference.** A transliteration of THIH's `tiImpls`, `split`, `candidates` and `tiProgram`, in the conformant form its §11.6.3 describes, re-derives each group's scheme, ambiguity, deferred predicates and default choice, and compares them with the records. Only this part can check 4.3.4 and 4.5.5. Kinds and dependency groups are recomputed.
-
-E15's third layer, replaying Faxén's rules on (source, elaborated) pairs, is not in D54. What it would add is messages that cite his rule names.
+2. **A second inference.** A transliteration of THIH's `tiImpls`, `split`, `candidates` and `tiProgram`, in the conformant form its §11.6.3 describes, re-derives each group's scheme, ambiguity, deferred predicates and default choice, and compares them with the records. Only this part can check Rule 2 of 4.5.5, ambiguity and 4.3.4's defaulting. Kinds and dependency groups are recomputed.
+3. **Replay of Faxén's rules** on (source, elaborated) pairs, E15's third layer, taken by the owner (D54's C). It gives messages that cite his rule names, and a second check of Rule 1, which his `bindg` with Definition 2 states (Faxén 2002, p 338). It cannot refuse ambiguity, since his rules admit ambiguous schemes (§7.2.3), and has no rules for deriving, `newtype`, strictness flags or recursive modules (§1.3), so an SCC needs a rule of rhc's own and derived instances are checked as the AST M14 makes of them. His deviations in §2.2, §4.2 and §4.3 are amended before it runs.
 
 **Independence and its limit.** HsLint shares no code with the checker but rhc's renamer, so a renaming bug is outside it. Unlike AstLint it does unify, so its unifier is its own. A citation of Faxén is checked against E15's list of 17 places where his rules depart from or are silent on the Report.
 
@@ -7662,87 +8173,111 @@ K is a ratio of instructions laid on seconds of `ghc -O0`, and it is tier 2's. T
 
 Sharing budgets, generators and bottom probes are not lines of the Report's exit: the first because the Report asks nothing of sharing, the others because they find bugs and state no coverage. Each runs from the milestone that makes it possible, and from then on it is a test like any other.
 
-## What rhc asks of build-system-v2
+## What build-system-v2 gave rhc
 
-Neither roadmap waits on the other. rhc needs no milestone of build-system-v2: the store split applies to master with Rune's bytes unchanged (E13), so v2's M7 can build on it, and whole-program compilation with a Prelude snapshot serves until then. What rhc asks is six of v2's decisions taken with a second language in view: refused, none of them stops rhc, and they cost little to take now and more to change later. D46 sets out each, what E13's toy showed, and the order to take them in.
+build-system-v2 landed in origin/master `697724da5`, and rhc's implementation starts there (D46). This is a review of what it built against what this roadmap asked of it, and every citation in it is of that tree (`agents/Y-v2-review.md` in the drafts).
 
-| v2's decision | As recommended | What a second language needs |
+**The six decisions rhc asked about were taken with a second language in view.** None needed another option than the one v2 recommended, and v2's text names rhc in each:
+
+| v2's decision | What rhc asked | What v2 says |
 |---|---|---|
-| D14 | `Config.identity` hashes `rune.build` | Identity per root, over its closure |
-| D24 | One store, one head | A head the client defines |
-| D25 | A hit loads no basis | A hit may read imports' exports and the instance closure |
-| D8 | Export kinds are SML's | Kinds are the language's; a boundary cannot hide instances (5.4) |
-| D5, D6 | Units in written order | Written order per language; a plan can carry discovered edges and SCC groups |
+| D5, the plan | A plan can carry discovered edges and SCC groups | "rhc scans imports"; the schema "leaves room for discovered edges and SCC groups and builds neither" (`build-system-v2.md:5090`) |
+| D6, the one way | Written order per language | "Written order is per language"; rhc "uses neither `Deps` nor `group`" (`:5108`) |
+| D8, boundaries | Kinds of export are the language's | "Kinds of export are the language's", and a boundary cannot hide an instance (`:5140`) |
+| D14, identity | Identity per root, over its closure | "One identity per compiler", over the compiler's own closure (`:5212`) |
+| D24, the store | A head the client defines | "The head belongs to the client", judged by a `holds` callback; rhc's key "covers every member of an SCC" (`:5383-5384`) |
+| D25, the warm path | A hit may read imports' exports and instances; memos in `lib/compiler/driver` | "A hit may read a head"; "Memos go in `lib/compiler/driver`" (`:5408-5409`) |
 
-Two smaller points. The `fundef` label (E11-5) and `Literal` (E11-9) are cheaper before v2's M5, whose generated codec must carry them. v2's M6 should keep its memos in `lib/compiler/driver`, not `src/driver/main.sml`, where rhc cannot link them.
+**What rhc uses of it:**
+- **The store.** `lib/compiler/driver/unitstore.sml`, 746 lines, built in v2's M6 and M7 from E13's prototype: an `('h, 's) format` with sections hashed apart, a head judged by `holds`, settings passed in, keys of several parts, layers, eviction by age and size. It knows nothing of SML. rhc writes its own format, head, `holds`, key and settings, so D43's B is done (D43). The store's location and trim policy still sit in `unitcache.sml` (`:223-275`, `:565-583`), about 60 lines, which M20 may move.
+- **Friends.** Naming a file or sub-build of a library with a header is an error unless the header names the build a friend (`lib/compiler/driver/project.sml:286-313`), and `rune.build` is one. One line in `lib/compiler/library.build`'s `friends` lets `rhc.build` in (D41).
+- **Identity per compiler.** `scripts/gen-version.sh --config PLAN FILE` writes another compiler's `Config` over its own plan (`:27-30`, `:119-123`); a toy second compiler is tested doing so with Rune's identity unchanged (`tests/runner/buildchecks.sml:467-489`). Through `libraries compiler` rhc would get Rune's `Config` instead, the hole v2's M11 found, since `Link.provenance` and `UnitMemo` both name it. So rhc links its own (M8).
+- **The memos.** `unitmemo.sml` is language-neutral but for `Config.identity` and the `Source.reading` hooks, and right once rhc links its own `Config`. The warm walk itself stayed in `src/driver/main.sml`, which grew from 1,309 lines to 1,996, so a second driver gets the memos and not the walk.
+- **Generated codecs.** Mid's codecs are generated from `tools/codecs/compiler.sml` (`fundef` at `:234-237`, `Ty` at `:168-176`), and `make check-codecs` refuses stale output. A `label` on `fundef`, a `Case`, a multi-value `Return` or a form of `Ty` is an edit of that description and `make codecs` (M4, M28 to M30).
+
+**What it leaves to rhc:**
+- **`edge` and `scc` are reserved and refused** in plans of version 1 (`lib/compiler/driver/plan.sml:52-56`), and `Deps` still refuses a cycle (`lib/compiler/driver/deps.sml:394`). So rhc is its own driver: it scans imports, takes SCCs and drives the pipeline, `Link`, `UnitFile`, `UnitStore` and `UnitMemo` itself, setting `UnitStore.stat` and `lstat` as `src/main/rune-main.sml:4-17` does (M21). It uses none of `CompilerPlan`, `LibraryScope`, `LibraryIndex`, `CompilerPrelude` or `Workspace`, which pulls in `CompilerProject`, `Deps` and `Ast` [Y's reading].
+- **A view where a friend is right.** v2's text says rhc's `lib/compiler/mid.build` "becomes a named view of `lib/compiler` (D8), not a friend" (`build-system-v2.md:5791`). A view must be a subset of the exports, so it would make `lib/compiler` export Mid, Low, `Ty` and the passes to every client, which is D41's A, and through `libraries` it would give rhc Rune's identity. v2's own M11 contradicts the line, and it should say a friend (D41).
+- **`pipeline.sml` still names the front end,** essentially as at `b12141ecc`: the elaborator's counters, `Env.inlinedValue`, `Translate.funNames` in `lowOfMid`, `ToMid`, `Ast`, `UnitBasis` and `Fixity`. Under D39's D it stays so, and D41's layer needs E11-8 (D39, D41).
+- **E11's patches no longer apply** but for E11-2, and E11-10's compiler hunk (`git apply --check`): M4 rewrites them on the new tree.
 
 ## Every change to Rune
 
 The brief's rule: no silent changes. This is the whole list. Grades are the brief's. A size is the prototype's by `git apply --numstat`, files first, over `lib`, `src` and `runtime` with tests apart; a hand count or an estimate says so.
 
-"Bytes held" is E11's test on each patch, which compares bootstrap bytes: stage 1 equals stage 2, and the edited compiler on the unedited sources gives `bin/rune.rbc`, at stack, `-O0` and `-O2` (`results/E11/verify-summary.txt`, all 12 lines hold). Suites are another test, pass or fail, and ran on a subset: `results/E11/suite.sh`, with results for the base tree, patches 4 and 8, the final tree and the tree without patch 10. None has been through `make check`, a host build or another machine.
+"Bytes held" is E11's test on each patch, which compares bootstrap bytes: stage 1 equals stage 2, and the edited compiler on the unedited sources gives `bin/rune.rbc`, at stack, `-O0` and `-O2` (`results/E11/verify-summary.txt`, all 12 lines hold). Suites are another test, pass or fail, and ran on a subset: `results/E11/suite.sh`, with results for the base tree, patches 4 and 8, the final tree and the tree without patch 10. None has been through `make check`, a host build or another machine. The prototypes were made on `b12141ecc`; at origin/master `697724da5` only E11-2 applies as it stands, so their sizes are the prototypes' and what lands is rewritten.
 
 | Change | Grade | Decision | Milestone | Size | Effect on SML |
 |---|---|---|---|---|---|
 | `tests/runner`: `Lang`, `LangChecks`, `Oracles`, `ExternalChecks` and `CompilerMutants` take their roots and programs as arguments; the table's enforcement, the oracle harness, the round trips and rhc's mutants added | small | D52, D53, D55 | M1, M2, M3, M19 | about 400 changed, 250 and 500 new [estimates] | Rune's inventory unchanged; no compiler source |
-| `Stamp`, out of `Elaborate` (E11-1) | small | D40 | M4 | 16 files, +30 -20 | bytes held |
-| `Target` passed in (E11-2) | small | D40 | M4 | 5, +13 -17 | bytes held |
-| Counters register where they live (E11-3) | small | D40 | M4 | 8, +21 -17 | bytes held |
-| Pass list as data (E11-4) | small | D39 | M4 | 1, +50 -16 | bytes held |
-| `label` on `fundef` (E11-5) | medium | D40 | M4 | 17, +158 -193 | bytes held |
-| Simplify and Lower take options (E11-6) | small | D39 | M4 | 5, +49 -14 | bytes held |
-| `backend/results.sml` (E11-7) | small | D39 | M4 | 3, +470 -454, a move | bytes held |
-| `driver/midpipeline.sml` (E11-8) | small | D39 | M4 | 3, +187 -167, a move | bytes held |
-| `Literal`, `Ty.constAt` (E11-9) | small | D40 | M4 | 22, +147 -137 | bytes held |
+| `Stamp`, out of `Elaborate` (E11-1) | small | D40 | M4 | 16 files, +30 -20, rewritten on origin/master | bytes held |
+| `Target` passed in (E11-2) | small | D40 | M4 | 5, +13 -17; applies on origin/master | bytes held |
+| Counters register where they live (E11-3) | small | D40 | M4 | 8, +21 -17, rewritten | bytes held |
+| `label` on `fundef` (E11-5), described in `tools/codecs/compiler.sml` | medium | D40 | M4 | 17, +158 -193, rewritten on the codecs' description | bytes held |
+| `Literal`, `Ty.constAt` (E11-9) | small | D40 | M4 | 22, +147 -137, rewritten | bytes held |
 | MatchComp stops making `Try`, `Fail` (E11-10), and the constructors go | small | D7 | M4 | 1, +22 -6; the removal not built | bytes held; four expected dumps change |
-| Root names after E11-7 and E11-8 (E11-11) | small | D39 | M4 | 2, +17 -17 | bytes held |
-| `--passes` and `--dump-after` refuse an unknown name | small | D39 | M4 | not prototyped | a CLI change, which fixes a defect on master |
-| `lib/compiler/mid.build` | small | D41 | M4 | not built | none expected |
-| `atomsOfRhs`, `mapRhs` | small | D10 | M6 | not built | should hold bytes [inferred] |
+| `driver/midpipeline.sml` (E11-8), only if the owner lets it land for D41 | small | D39, D41 | M4 | 3, +187 -167, a move | bytes held |
+| `lib/compiler/mid.build`, if E11-8 lands | small | D41 | M4 | not built | none expected |
+| `rhc.build` in `lib/compiler/library.build`'s `friends` | small | D41 | M8 | one line | none |
+| `atomsOfRhs`, `mapRhs`, then `Mid.fold` over `exp` | medium | D10 | M6 | not built | should hold bytes [inferred] |
 | `--read-mid` to bytecode | small | D1 | M5 | 1, +14 -2 | none |
 | Mid text carries `label` | small | D40 | M5 | 1, +14 -2, rewritten on E11-5's label | dumps change; the compiler's bytes identical at `-O1` and `-O2` with E1's prototypes |
-| Mid units with imports | small | D26 | M5 | +43 -4, by difference | none |
 | `staticParams`, `makeCopy`, equality bound | small | D5 | M7 | 1, +10 -4 | a lesser test than bytes held: the compiler's sources at `-O1` and `-O2` alone, with no fixed point, no suites and no stack target (`results/E1/selfcheck.sh`). It fixes a defect on master, and its bound `Ty.size t <= 256` can change a large program's `=` at `-O2` [deduced from the patch] |
 | Lints: `ConTag`, forward `Val`, abstract arity | small | D5 | M7 | not built | lint only |
 | Exception to the library rule | small | D42 | M8 | a sentence in `AGENTS.md`, or a `LibHosts` entry | none |
-| `susp` tycon, eight thunk prims, force lowered in Regs: form G | small | D3, D11, D13 | M9 | about 255 by hand, the 45 below among them, of 39 files and +1,051 -73 for all forms | both instruction-set fingerprints move, so every `.rbc` changes once; strict ports 1.0056 on `bin10`, which lacks G's node |
+| Form C on the register set: `susp` tycon, thunk primitives, `FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE` | large | D3, D11, D13 | M9 | about 305 by hand, the 45 below among them, of 39 files and +1,051 -73 for all forms | both instruction-set fingerprints and the register set's opcode table move, so every `.rbc` changes once; strict ports 1.0056 in machine instructions on `bin10`, which holds C's instructions, `--count` identical |
+| The four instructions on the stack set, runeopt's templates and native code | large | D14 | M9 | about 115 [estimate, not built] | the stack set's fingerprint and opcode table move |
 | The collector and images: `obj_scanned_fields`, `K_LAST`, `put_object`, the frame check at `runtime/image.c:906`, `share.c` | small | D11 | M9 | about 45 by hand, shared by all forms but A; `image.c` +4 -2 | the collector tests each object, which is that 1.0056 |
-| Force in the Stack target | small | D14 | M9 | 1, +22 | none on SML |
-| Cast erased in Lower, with a Lower rule dropping a force of a known non-thunk and a `RegVerify` exception letting `CALL` see a non-closure | small | D4 | M9 | 3 files, +45, holding four modes | not known: `rune.rbc` identical kept and erased shows nothing, since the compiler has no such cast. M9 tests programs that do cast |
+| Cast erased in Lower, with a Lower rule dropping a force of a known non-thunk | small | D4 | M9 | in 3 files, +45, holding four modes, with form G's `RegVerify` exception | not known: `rune.rbc` identical kept and erased shows nothing, since the compiler has no such cast. M9 tests programs that do cast |
 | Lint: no cast leaves a `susp` | small | D4 | M9 | 1, +7 | lint only |
-| Lint: a thunk's function named by nothing else, `thunk_fupd` nowhere else (D57's item 2) | small | D57 | M9 | not built | lint only |
-| `any_check` | small | D4 | M9 | in `E5-integer-prims.patch` | test builds only |
+| Lint: a thunk's function named by nothing else, `thunk_self_update` nowhere else (D57's item 2) | small | D57 | M9 | not built | lint only |
+| `any_check`, behind a compile-time switch, in checked builds and VMs only | small | D5 | M9 | in `E5-integer-prims.patch` | none on a build without it, shown by bytes and `--count` |
+| `Ty` with variable-headed application and a forall | large | D4 | M28 | 300 to 500 over 12 or more files [E4's estimate], 96 view sites | SML programs' bytes held [deduced: SML makes neither form]; the compiler's own code and budgets move by what M28 states |
+| A `Case` in Mid | medium | D8 | M29 | not built: an arm in at least 88 walkers, and Simplify's rounds | bytes and budgets may move, since `Lower`'s reconstruction gives way; M29 says by how much |
+| Multi-value return in Mid, Low and both instruction sets | large | D9 | M30 | not built: 126 walkers, both sets, the JIT, runeopt | both fingerprints move; SML's code as M30 decides and states |
+| `IntInf` immediate, with in-line primitives and their host versions in `tests/basis/host/rune-prim.sml` | medium | D20 | M31 | E5's ten primitives, +70 -2 with no bignum path; `lib/basis/intinf.sml` is 651 lines | SML programs that use `IntInf` change, the compiler among them; fingerprints move; M31 says by how much |
 | Built-in tycons out of `Types` | small | D40 | M10 | about 40 [inferred] | M4's test, not run |
 | `ToMid`'s builder lifted out | small | D7 | M10 | not sized | M4's test, not run |
-| Immediate `Integer` prims | medium | D20 | M17 | 4 files, +70 -2, ten primitives with no bignum path | prims move the fingerprint |
 | General category and case mapping in `lib/unicode` | small | D21 | M11, M17 | not measured | a library addition; none on the compiler [deduced] |
 | A sentence in the top-level `LICENSE` | small | D37 | M17 | a sentence | none |
-| The store split (E13) | medium | D43 | M20 | 3 files, +338 -231 | bytes held; net +107, warm flat |
-| Guard on the `K_IND` shortcut, in `minor.c` and `mark.c` | small | D57 | M26 | in E2's patch | Haskell's thunks +0.84% if taken; none on SML |
-| The pin, `gc_pin_running` | small | D57 | M26 | +24 -3 with the flag and loader | ports 1.0003 |
+| The store's location and trim policy out of `unitcache.sml`, optional | small | D43 | M20 | about 60 [Y's estimate] | bytes held |
+| Guard on the `K_IND` shortcut, in `minor.c` and `mark.c` | small | D57 | M26 | in E2's patch | Haskell's thunks +0.84% on form G if taken; none on SML |
+| The pin, `gc_pin_running` | small | D57, D17 | M26, or M25 if D17's B needs it | +24 -3 with the flag and loader | ports 1.0003 on form G |
 
-**What does not change:** no Mid pass changes in behaviour but for the two fixes; no constructor is added to Lambda, Mid or Low; the instruction sets, in instructions; `K_THUNK`, which stays unused and whose reservation can go; pointer codes; frames; hot `RET`.
+**Built for measurement, landing only if the owner takes it** (*Decisions on the numbers*):
 
-**What does change there, in code and not in output, by test for E11 and by deduction for M6.** E11-5 adds `label` to `fundef` and rewrites `expand`, `lift`, `refs`, `shake`, `simplify`, `workers`, `midcanon`, `midcodec` and `midtext`. E11-9 changes `Mid.Const` and `Low.Const`, `lambda.sml` and `simplify.sml`. M4 removes `Try` and `Fail` from Lambda. M6 rewrites Mid's walkers.
+| Change | Grade | Decision | Milestone | Size | Effect on SML |
+|---|---|---|---|---|---|
+| A `Force` right-hand side, with a recursive form in Mid | medium | D3, D6 | M9 | not built: an arm in every walker after M6 | measured on the compiler's own compile |
+| Eval/apply proper on every engine | large | D15 | M25 | not built | SML's curried calls take it too; measured on Rune's programs |
+| Pointer code 11 | large | D16 | M25 | not built | every pointer read; measured on Rune's programs |
+| Sparud's `updatePat`, a primitive that updates another thunk | small | D17 | M25 | not built | none [deduced: SML has no lazy pattern binding] |
+| CAF tables and a collector that traces from live code | medium | D19 | M25 | not built | the collector's roots; measured |
+| A primitive that unpacks a string constant | small | D24 | M17 | not built | the fingerprint moves; Rune has no use for it |
+
+**What does not change:** Lambda, but for `Try` and `Fail`; pointer codes, unless D16's B is taken; frames. The rest of what this list once held still moves only by decision, and the owner's decisions move much of it: Mid gains `Case` and multi-value return, `Ty` two forms, Low a `Return` of a list, both instruction sets `FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE` and a multi-value `RET` and `RESULT`, and `K_THUNK` is used. E11-4, E11-6, E11-7 and E11-11 do not land (D39).
+
+**What does change there, in code and not in output, by test for E11 and by deduction for M6.** E11-5 adds `label` to `fundef` and rewrites `expand`, `lift`, `refs`, `shake`, `simplify`, `workers`, `midcanon`, `midtext` and the codecs' description. E11-9 changes `Mid.Const` and `Low.Const`, `lambda.sml` and `simplify.sml`. M4 removes `Try` and `Fail` from Lambda. M6 rewrites Mid's walkers and adds a fold.
 
 **The collector and images do change.** D11 and M9 change `obj_scanned_fields`, `K_LAST`, `share.c`, `put_object` and the frame check at `runtime/image.c:906`, and M26 the shortcut in `minor.c` and `mark.c`.
 
 ## Risks
 
 1. **Scope.** A compiler, a lazy runtime and an architecture review in one roadmap. The front end is the mass: 12-20k lines of SML through Core, an estimate, against 2,207 measured for the parser. *What is cut first* is the answer, and M4-M7 stand alone if rhc stops.
-2. **Silent unsafety.** With casts kept, a wrong cast puts a thunk in a trusted slot, and tier 2 gives a wrong answer with no fault (E2, E1). With casts erased, as D4 recommends, that is a fatal on every engine, and the lint of D4, `any_check` in test builds and the interpreter as oracle are the defence. In a function-typed slot, MidLint is the only one.
-3. **Space.** The Report sets no bound, and the corpus can still die of CAFs held as roots, no selector thunks or retained closures. D17 and D19 wait for real programs, which is the right order and leaves this unknown until G1.
+2. **Silent unsafety.** With casts kept, a wrong cast puts a thunk in a trusted slot, and tier 2 gives a wrong answer with no fault (E2, E1). With casts erased, as D4 recommended for the casts that remain, that is a fatal on every engine, and the lint of D4, `any_check` in checked builds and the interpreter as oracle are the defence. In a function-typed slot `CALL` now stops a `K_THUNK` (D11).
+3. **Space.** The Report sets no bound, and the corpus can still die of CAFs held as roots, no selector thunks or retained closures. D17's B and D19's B are built and measured on real programs (M25), which is the right order and leaves this unknown until then.
 4. **Speed.** Integer defaulting, dictionaries and curried calls compound. K is from three hand-lowered programs and four kernels with no `Read` and no real `IO`. Nothing in the roadmap depends on K's being small, but D56's budget does.
 5. **Recursive modules have no oracle.** No candidate in 3,089 has a plain import cycle, and all three oracles refuse one. Tests rest on the Report and on conversion to a single module, which is an inference. Under D36 the Prelude is such a cycle, so a fault in the joined checker first shows as a broken Prelude, and D36's fallback is the answer.
 6. **Oracles are not authorities.** 48 of 82 conformance tests show a disagreement (E7). Following the text sets rhc against all of them in places (`Just.let`, R21(b), R38): a reader may take that for a bug. D38 lets the owner choose otherwise.
-7. **The prototypes have been on one machine.** No form has been through `make check`, bootstrap bytes on its final form, aarch64, 32-bit, PowerPC or Windows. G against C now stands on one stage, by V2's rerun (E2).
+7. **The prototypes have been on one machine.** No form has been through `make check`, bootstrap bytes on its final form, aarch64, 32-bit, PowerPC or Windows. Form C's figures are from one prototype stage, `bin10`, with V2's rerun on `bin12`, and form C never ran on the stack VM or in native code (E2). The lazy ML checklist ran on form G (D57).
 8. **The budgets.** A rise in the compiler's image from the prims is deduced, not measured. Budgets are ceilings 10% over the count.
-9. **Master moves.** Every citation is to `b12141ecc`; `unitbasis.sml`, `unitmid.sml` and `midcodec.sml` are also v2's.
+9. **Master has moved.** Every citation is to `b12141ecc`, and implementation starts from origin/master `697724da5`, where v2 has split the store out of `unitcache.sml`, generated `midcodec.sml`'s and `unitmid.sml`'s codecs, and grown `src/driver/main.sml` from 1,309 lines to 1,996. Each milestone checks its citations there.
 10. **The corpus's licences** were not surveyed, and a skip is an error in `make check` (`AGENTS.md:311-313`). M3 starts there.
+11. **The IR changes the owner took at once.** `Ty` with application and forall (300 to 500 lines over 12 or more files, 96 view sites, D4), Mid's `Case` (at least 88 walkers and Simplify's rounds, the riskiest edit E12 found, D8), multi-value return (126 walkers, both instruction sets, the JIT and runeopt, D9) and the fold over `exp` (D10). None was built. Each changes code that SML compiles through, so a fault in one is a fault in Rune's own compiler, and each moves SML's code under the standing gate by what its milestone states. M6's walkers come first, so that a new form cannot fall into a catch-all without a word, and each milestone runs E11's test of bytes before it says what moved.
 
 ## What is cut first
 
-In order: what the review of the IRs adds and rhc does not need, D7's `Try` and `Fail` and M6's walkers; selector thunks; eval/apply; cheap eagerness; then track P as a whole, which leaves a conforming and slow compiler.
+In order: D7's `Try` and `Fail`; the options built for measurement, which land only if the owner takes them; cheap eagerness; then track P as a whole, which leaves a conforming and slow compiler. The owner took D4, D8, D9 and D10 now; cutting one is the owner's call, and M6 can go only with all of M28 to M30.
 
 **Never cut:** literate Haskell, the Report's libraries, Unicode `Char`. Recursive modules are a decision (D30), expected to be taken for support, and on no list to cut, and under D36's recommendation the Prelude depends on them.
 
@@ -7758,9 +8293,9 @@ Written at M27.
 
 ## References
 
-The papers E15 read, as far as *What the literature says* and *What the implementations do* use them. Each DOI in the
-list below is in `results/E15/dois.tsv`, checked against Crossref on 2026-11-01, unless the entry says otherwise; "no
-DOI" means Crossref had no match and the text itself was read. Each entry ends in its status: **Full**, **Sections**
+The papers E15 and E15b read, as far as *What the literature says* and *What the implementations do* use them. Each DOI
+in the list below is in `results/E15/dois.tsv`, checked against Crossref on 2026-11-01, unless the entry says otherwise;
+"no DOI" means Crossref had no match and the text itself was read. Each entry ends in its status: **Full**, **Sections**
 (which), **Abstract**, or **Memory**, the last meaning that no text was seen. The version read is noted where it differs
 from the published one. E15's full list holds 193 references, with notes per paper (`results/E15/literature.md`,
 `results/E15/lit/`).
@@ -7768,21 +8303,37 @@ from the published one. E15's full list holds 193 references, with notes per pap
 E15's table classes as *abstract* some papers whose abstract was read and then sections. Those are given here as
 Sections, with the sections named.
 
+E15b read the papers the owner supplied on 2026-11-09, 53 files from `/mnt/h/Rune/haskell98`, copied to
+`downloads/owner-papers/` and mapped to E15's keys in `results/E15b/map.tsv`. Its notes are one file per paper in
+`results/E15b/P1/`, `P2/` and `P3/`, with a page or section for every claim, and its entries say (E15b). A DOI of an
+E15b entry comes from E15's list for the owner or from the PDF, and is marked where it is not in `dois.tsv`.
+
 - Adams. Principled parsing for indentation-sensitive languages: revisiting Landin's offside rule. POPL 2013.
   doi:10.1145/2480359.2429129. Sections 1, 3.1-3.2, 5.8, 6, 7
 - Afroozeh, Izmaylova. One parser to rule them all. Onward! 2015. doi:10.1145/2814228.2814242. Sections 1, 3.5, the
   Haskell evaluation
+- de Souza Amorim, Steindorfer, Erdweg, Visser. Declarative specification of indentation rules: a tooling perspective on
+  parsing and pretty-printing layout-sensitive languages. SLE 2018, 3-15. doi:10.1145/3276604.3276607, not in
+  `dois.tsv`. Sections: abstract, 1, 2.1, 5, 6, 8 (E15b). Cited as Amorim et al. 2018
 - Appel. Simple generational garbage collection and fast allocation. Software: Practice and Experience 19(2), 1989,
   171-183. doi:10.1002/spe.4380190206. Full, as Princeton TR-143-88. `downloads/papers/appel89.pdf` is another paper;
   the text is `appel89sgc`
-- Augustsson. Compiling pattern matching. FPCA 1985. doi:10.1007/3-540-15975-4_48. Memory, through Scott and Ramsey,
-  Maranget, Sestoft, Peyton Jones 1987
-- Augustsson. Implementing Haskell overloading. FPCA 1993. doi:10.1145/165180.165191. Memory, through Jones 1995
-  (dictionary-free), Peterson and Jones
+- Augustsson. A compiler for lazy ML. LFP 1984, 218-227. doi:10.1145/800055.802038. Sections 3.7-3.9, 5; the rest
+  skimmed (E15b)
+- Augustsson. Compiling pattern matching. FPCA 1985, LNCS 201, 368-381. doi:10.1007/3-540-15975-4_48. Full (E15b), an
+  OCR text
+- Augustsson. Implementing Haskell overloading. FPCA 1993, 65-73. doi:10.1145/165180.165191. Full (E15b); Table 1 read
+  from the page image
 - Augustsson. MicroHs: a small compiler for Haskell. Haskell Symposium 2024. doi:10.1145/3677999.3678280. Sections 1-5
   and part of 6
+- Augustsson, Johnsson. The Chalmers Lazy-ML compiler. The Computer Journal 32(2), 1989, 127-141.
+  doi:10.1093/comjnl/32.2.127. Pages 127 and 134-138, read as images (E15b); pages 128-133 and 139-141 not read
 - Baker-Finch, Glynn, Peyton Jones. Constructed product result analysis for Haskell. JFP, 2004.
   doi:10.1017/s0956796803004751. Sections 1, 2.3, 3.7, 3.11, 5, 6, 8
+- Bakewell, Runciman. A model for comparing the space usage of lazy evaluators. PPDP 2000. doi:10.1145/351268.351287.
+  Sections 1-2, the opening of 4; the rest skimmed (E15b)
+- Benton, Kennedy, Russell. Compiling Standard ML to Java bytecodes. ICFP 1998. doi:10.1145/289423.289435, not in
+  `dois.tsv`. Sections 1-6 and the tables; 7-9 skimmed (E15b)
 - Bolingbroke, Peyton Jones. Types are calling conventions. Haskell Symposium 2009. doi:10.1145/1596638.1596640. Full,
   as the preprint of 2009/5/14
 - Boquist. Code Optimisation Techniques for Lazy Functional Languages. PhD thesis, Chalmers, 1999. ISBN 91-7197-792-9.
@@ -7792,8 +8343,12 @@ Sections, with the sections named.
 - Breitner. The correctness of Launchbury's natural semantics for lazy evaluation. arXiv:1405.3099, 2014. Sections 1,
   the start of 2.3. The JFP successor, doi:10.1017/s0956796817000144, not read
 - Breitner. Call Arity. TFP 2014, LNCS, 2015. doi:10.1007/978-3-319-14675-1_3. Full, as the preprint of 2014/5/25
+- Burn, Hankin, Abramsky. Strictness analysis for higher-order functions. Science of Computer Programming 7, 1986,
+  249-278. doi:10.1016/0167-6423(86)90010-9. Sections: abstract, introduction; the rest skimmed (E15b)
 - Cheadle, Field, Marlow, Peyton Jones, While. Exploring the barrier to entry: incremental generational garbage
   collection for Haskell. ISMM 2004. doi:10.1145/1029873.1029893. Sections 1-3, 4.1, 4.6, 5, 6
+- Chen, Hu, Hao, Xiong, Zhang, Zhang, Xie. An empirical comparison of compiler testing techniques. ICSE 2016.
+  doi:10.1145/2884781.2884878, not in `dois.tsv`. Sections: abstract, the findings of 1 (E15b)
 - Chen, Patra, Pradel, Xiong, Zhang, Hao, Zhang. A survey of compiler testing. ACM Computing Surveys 53(1), 2020.
   doi:10.1145/3363562. Sections 1, 3.3.3, 3.4.1, 4, 7
 - Claessen, Hughes. QuickCheck: a lightweight tool for random testing of Haskell programs. ICFP 2000.
@@ -7805,10 +8360,19 @@ Sections, with the sections named.
   values. MPC 2004. doi:10.1007/978-3-540-27764-4_6. Sections 1-2, 5, 9
 - Diatchki, Jones, Hallgren. A formal specification of the Haskell 98 module system. Haskell Workshop 2002.
   doi:10.1145/581690.581692. Sections 1-5, 7-9, section 6's checks in part
+- Dijkstra, Fokker, Swierstra. The structure of the Essential Haskell compiler, or coping with compiler complexity. IFL
+  2007. doi:10.1007/978-3-540-85373-2_4. Sections 1-3 and the opening of 4, in the draft proceedings, Kent TR 12-07
+  (E15b)
 - Dijkstra, Fokker, Swierstra. The architecture of the Utrecht Haskell compiler. Haskell Symposium 2009.
   doi:10.1145/1596638.1596650. Sections 1, 2.2, 4 (introduction), 5
+- Dijkstra, Magalhães, Néron. Functional programming in financial markets (experience report). PACMPL 8 (ICFP), 2024,
+  article 244. doi:10.1145/3674633, printed on the paper, not in `dois.tsv`. Section 2 in full, the rest skimmed (E15b).
+  With two slide decks on Mu: Agren, Haskell reinterpreted, HIW, 22 August 2021, read in full; Magalhães, ACM TechTalk,
+  20 August 2025, skimmed
 - Downen, Sullivan, Ariola, Peyton Jones. Making a faster curry with extensional types. Haskell Symposium 2019.
   doi:10.1145/3331545.3342594. Sections 1, 2, 7, 8
+- Dreyer. A type system for recursive modules. ICFP 2007. doi:10.1145/1291151.1291196. Sections: abstract, 1, the
+  openings of 2.1-2.2 (E15b)
 - Duregård, Jansson, Wang. Feat: functional enumeration of algebraic types. Haskell Symposium 2012.
   doi:10.1145/2364506.2364515. Sections 1, 7, 8
 - Eisenberg, Peyton Jones. Levity polymorphism. PLDI 2017. doi:10.1145/3140587.3062357. Sections 1-5, statements of 6,
@@ -7819,15 +8383,20 @@ Sections, with the sections named.
   doi:10.1145/944705.944731. Full
 - Erdweg, Rendel, Kästner, Ostermann. Layout-sensitive generalized parsing. SLE 2012. doi:10.1007/978-3-642-36089-3_14.
   Sections 1-2, 4.1-4.2, 5
-- Faxén. Cheap eagerness: speculative evaluation in a lazy functional language. ICFP 2000. doi:10.1145/351240.351255.
-  Memory, through Ennals and Peyton Jones 2003 and Ennals 2004
+- Faxén. Cheap eagerness: speculative evaluation in a lazy functional language. ICFP 2000, 150-161.
+  doi:10.1145/351240.351255. Full (E15b); Tables 1 and 2 checked against the page images
+- Faxén. Dynamic cheap eagerness. IFL 2001, LNCS 2312, 105-120, Springer 2002. No DOI printed on the paper. Full (E15b)
 - Faxén. A static semantics for Haskell. JFP 12(4-5), 2002, 295-357. doi:10.1017/s0956796802004380. Full, the published
   text
 - Fetscher, Claessen, Pałka, Hughes, Findler. Making random judgments: automatically generating well-typed terms from
   the definition of a type-system. ESOP 2015. doi:10.1007/978-3-662-46669-8_16. Sections: abstract and 1
+- Finne, Burn. Assessing the evaluation transformer model of reduction on the Spineless G-machine. FPCA 1993.
+  doi:10.1145/165180.165229. Full (E15b)
 - Flatt, Felleisen. Units: cool modules for HOT languages. PLDI 1998. doi:10.1145/277650.277730. Abstract
 - Foner, Zhang, Lampropoulos. Keep your laziness in check. PACMPL 2 (ICFP), 2018. doi:10.1145/3236797. Sections 1, 1.1,
   related work
+- Gill. Cheap deforestation for non-strict functional languages. PhD thesis, Glasgow, 1996.
+  http://theses.gla.ac.uk/4817/ (no DOI). Sections 4.3, 4.4, 5.3, 5.4.2-5.4.4; 2.4 skimmed (E15b)
 - Gill, Launchbury, Peyton Jones. A short cut to deforestation. FPCA 1993. doi:10.1145/165180.165214. Sections 1, 3.3
   (start), 7.1, 9
 - Gustavsson, Sands. A foundation for space-safe transformations of call-by-need programs. ENTCS, 1999.
@@ -7839,6 +8408,9 @@ Sections, with the sections named.
 - Hallgren. Haskell tools from the Programatica project. Haskell Workshop 2003 (demo). doi:10.1145/871895.871907. Full
 - Hallgren, Hook, Jones, Kieburtz. An overview of the Programatica toolset. 2004 (no DOI). Sections on the front end and
   the tool list, by search
+- Hammond, Blott. Implementing Haskell type classes. In Davis, Hughes (eds), Functional Programming, Glasgow 1989,
+  Springer 1990, 266-286. doi:10.1007/978-1-4471-3166-3_18, not in `dois.tsv`. Full, in a copy of the whole volume
+  (E15b)
 - Harris, Marlow, Peyton Jones. Haskell on a shared-memory multiprocessor. Haskell Workshop 2005.
   doi:10.1145/1088348.1088354. Sections 1-4, 6
 - Hartel, Feeley, Alt, Augustsson, et al. Benchmarking implementations of functional languages with 'Pseudoknot', a
@@ -7848,13 +8420,23 @@ Sections, with the sections named.
   DOI). Sections 3 (introduction), 10.3, 10.6, 12
 - haskell-spec. Mechanization of the Haskell Language Report. Lean 4, version 0.1.0.
   https://github.com/haskell-spec/haskell-spec. Full, of README and DIFFERENCES.md; no Lean source read
-- Henglein. Type inference with polymorphic recursion. TOPLAS 15(2), 1993, 253-289. doi:10.1145/169701.169692. Memory,
-  as cited by Jones 1999 and Faxén 2002
+- Henglein. Type inference with polymorphic recursion. TOPLAS 15(2), 1993, 253-289. doi:10.1145/169701.169692. Sections:
+  abstract, 1.1, and searches of the rest (E15b)
+- Hieb, Dybvig, Bruggeman. Representing control in the presence of first-class continuations. PLDI 1990.
+  doi:10.1145/93542.93554, not in `dois.tsv`. Sections: abstract, 1-3; the rest skimmed (E15b)
+- Hinze, Peyton Jones. Derivable type classes. ENTCS 41(1), 2001. doi:10.1016/s1571-0661(05)80542-0, not in `dois.tsv`.
+  Sections: abstract, 1 (E15b)
+- Hollenbeck, O'Boyle, Steuwer. Investigating magic numbers: improving the inlining heuristic in the Glasgow Haskell
+  Compiler. Haskell Symposium 2022. doi:10.1145/3546189.3549918. Sections: abstract, 1, the opening of 6.1 (E15b)
 - Hudak, Hughes, Peyton Jones, Wadler. A history of Haskell: being lazy with class. HOPL III, 2007.
   doi:10.1145/1238844.1238856. Sections 2.5 (part), 3.1, 3.4, 3.7 (part), 4.1, 5.2, 5.4, 5.7, 6.2, 6.3, 7.1, 7.3 (part),
   9.1-9.6, 10
 - Hudak, Sundaresh. On the expressiveness of purely functional I/O systems. Yale YALEU/DCS/RR-665, 1989 (no DOI).
   Sections 1, 2.3, part of 2.4
+- Johann, Voigtländer. Free theorems in the presence of seq. POPL 2004. doi:10.1145/964001.964010, not in `dois.tsv`.
+  Sections 1, 8; 2-7 skimmed (E15b)
+- Johnsson. Efficient compilation of lazy evaluation. SIGPLAN Symposium on Compiler Construction 1984, 58-69.
+  doi:10.1145/502949.502880. Sections 3-5, 7.3; the rest skimmed (E15b)
 - Jones, Mark P. Coherence for qualified types. Yale RR-989, 1993. https://web.cecs.pdx.edu/~mpj/pubs/RR-989.pdf (no
   DOI). Sections 1-3, 7-8 by search; the proofs not read
 - Jones, Mark P. Qualified Types: Theory and Practice. CUP, 1994. doi:10.1017/cbo9780511663086. Sections 6-7 of the
@@ -7870,19 +8452,28 @@ Sections, with the sections named.
 - Jones, Mark P. Typing Haskell in Haskell (THIH). Haskell Workshop 1999; revised 23 November 2000 (no DOI). Full, the
   revised version
 - Jones, Richard. Tail recursion without space leaks. JFP 2(1), 1992, 73-79. doi:10.1017/s0956796800000277. Full
+- Kaes. Parametric overloading in polymorphic programming languages. ESOP 1988. doi:10.1007/3-540-19027-9_9. Sections:
+  abstract, 1; the rest skimmed (E15b)
 - Keep, Dybvig. A nanopass framework for commercial compiler development. ICFP 2013. doi:10.1145/2500365.2500618.
   Sections: abstract, 1, 3 (introduction), 4
 - Kennedy. Compiling with continuations, continued. ICFP 2007. doi:10.1145/1291220.1291179. Sections 1, 2.3, 2.4, 3
   (opening), 4.3 (opening), 6
 - Kfoury, Tiuryn, Urzyczyn. Type reconstruction in the presence of polymorphic recursion. TOPLAS 15(2), 1993, 290-311.
-  doi:10.1145/169701.169687. Memory, as cited by Faxén 2002 and Jones 1999
+  doi:10.1145/169701.169687. Sections: abstract, the opening of 1 (E15b)
 - Kilpatrick, Dreyer, Peyton Jones, Marlow. Backpack: retrofitting Haskell with interfaces. POPL 2014.
   doi:10.1145/2578855.2535884. Section 3 on recursive modules and the double-vision passages of section 2
+- Lämmel, Peyton Jones. Scrap your boilerplate with class: extensible generic functions. ICFP 2005.
+  doi:10.1145/1086365.1086391, not in `dois.tsv`. Section 5 (E15b). Its recursive dictionaries come from instance
+  contexts Haskell 98 forbids, not D6's kind
 - Landin. The next 700 programming languages. CACM 9(3), 1966. doi:10.1145/365230.365257. The offside-rule passage
 - Launchbury. A natural semantics for lazy evaluation. POPL 1993. doi:10.1145/158511.158618. Full, an OCR text with
   errors
 - Launchbury, Peyton Jones. State in Haskell. Lisp and Symbolic Computation 8(4), 1995. doi:10.1007/bf01018827. Sections
   4 (opening), 9, 10 (opening), 10.1
+- Launchbury, Paterson. Parametricity and unboxing with unpointed types. ESOP 1996, LNCS 1058.
+  doi:10.1007/3-540-61055-3_38, not in `dois.tsv`. Full (E15b)
+- Laville. Comparison of priority rules in pattern matching and term rewriting. Journal of Symbolic Computation 11,
+  1991, 321-347. doi:10.1016/s0747-7171(08)80109-5. Sections: abstract, 1, 4.5 (E15b)
 - Le, Afshari, Su. Compiler validation via equivalence modulo inputs. PLDI 2014. doi:10.1145/2594291.2594334. Sections:
   abstract, 1
 - Leroy. A proposal for recursive modules in Objective Caml. INRIA note, version 1.1, 13 May 2003 (no DOI). Section 1
@@ -7918,20 +8509,33 @@ Sections, with the sections named.
 - Mitchell. Rethinking supercompilation. ICFP 2010. doi:10.1145/1863543.1863588. Sections 1, 4, the author's version
 - Mokhov, Mitchell, Peyton Jones. Build systems à la carte. PACMPL 2 (ICFP), 2018. doi:10.1145/3236774. Sections 2, 3.6,
   4.2, 6.5, 6.6, others in part. E15's key is `mitchell18`
-- Moran, Sands. Improvement in a lazy context: an operational theory for call-by-need. POPL 1999.
-  doi:10.1145/292540.292547. Abstract and page 1; the extended version's text layer is garbled
+- Moran, Sands. Improvement in a lazy context: an operational theory for call-by-need. POPL 1999, 43-56.
+  doi:10.1145/292540.292547. Sections 1-4 of the POPL text, which is clean (E15b); the extended version's text layer is
+  garbled
+- Morris. Type classes and instance chains: a relational approach. PhD thesis, Portland State, 2013.
+  doi:10.15760/etd.1010, not in `dois.tsv`. Sections: abstract, the opening of 5.3, 5.5, and searches (E15b)
 - Mycroft. The theory and practice of transforming call-by-need into call-by-value. LNCS, 1980.
   doi:10.1007/3-540-09981-6_19. Full, formulas partly garbled
 - Mycroft. Polymorphic type schemes and recursive definitions. International Symposium on Programming 1984.
   doi:10.1007/3-540-12925-1_41. Sections 1, 7, 8
 - Nakata, Garrigue. Recursive modules for programming. ICFP 2006. doi:10.1145/1159803.1159813. The introduction
+- Nethercote, Mycroft. The cache behaviour of large lazy functional programs on stock hardware. MSP 2002, 44-55.
+  doi:10.1145/773146.773044, not in `dois.tsv`. Sections 1, 5; 6-8 skimmed (E15b)
+- Nipkow, Prehofer. Type reconstruction for type classes. JFP 5(2), 1995, 201-224. doi:10.1017/s0956796800001325, not in
+  `dois.tsv`. Sections: abstract, the openings of 1-2.1, 8 (E15b). Hall et al. cite its conference version for "a good
+  treatment of ambiguity"; its §8 says ambiguity is not introduced formally
+- Nöcker. Strictness analysis using abstract reduction. FPCA 1993. doi:10.1145/165180.165219. Sections 1-2, 4.8, 5
+  (E15b)
 - Odersky, Sulzmann, Wehr. Type inference with constrained types. TAPOS 5(1), 1999, 35-55.
   doi:10.1002/(sici)1096-9942(199901/03)5:1<35::aid-tapo4>3.0.co;2-4. Sections 1, 2, 8
 - Pałka, Claessen, Russo, Hughes. Testing an optimising compiler by generating random lambda terms. AST 2011.
-  doi:10.1145/1982595.1982615. Sections 1, 4, 4.1-4.5 of Pałka's licentiate thesis of that title, Chalmers 2012, which
-  extends it. The paper itself was not seen; cited as Pałka 2012
+  doi:10.1145/1982595.1982615. Sections: abstract, 1, 6.3-6.5 (E15b): one failure in about 20,000 terms, `-O0` against
+  `-O1`, which agrees with the thesis. And sections 1, 4, 4.1-4.5 of Pałka's licentiate thesis of that title, Chalmers
+  2012, which extends it; cited as Pałka 2012
 - Partain. The nofib benchmark suite of Haskell programs. Glasgow workshop 1992. doi:10.1007/978-1-4471-3215-8_17. Full
 - Peterson, Jones. Implementing type classes. PLDI 1993. doi:10.1145/173262.155112. Sections 1-6, 8-10
+- Pettersson. A term pattern-match compiler inspired by finite automata theory. CC 1992, LNCS 641, 258-270.
+  doi:10.1007/3-540-55984-1_24. Full (E15b)
 - Peyton Jones. The Implementation of Functional Programming Languages. Prentice Hall, 1987.
   https://www.microsoft.com/en-us/research/wp-content/uploads/1987/01/slpj-book-1987.pdf (no DOI). Sections 5.2.6-5.2.7,
   12.4, 18.6.2, 23.3
@@ -7966,6 +8570,8 @@ Sections, with the sections named.
   doi:10.1145/232627.232630. Full
 - Peyton Jones, Reid, Hoare, Marlow, Henderson. A semantics for imprecise exceptions. PLDI 1999.
   doi:10.1145/301631.301637. Sections 1-3, the case rule of 4.3, 4.5 (opening), 5, 6, 7
+- Peyton Jones, Salkild. The Spineless Tagless G-machine. FPCA 1989, 184-201. doi:10.1145/99370.99385. Sections 4-5; the
+  rest skimmed (E15b). Superseded by Peyton Jones 1992
 - Peyton Jones, Santos. A transformation-based optimiser for Haskell. Science of Computer Programming 32, 1998.
   doi:10.1016/s0167-6423(97)00029-4. Sections 6.3.1, 8-11, the authors' preprint
 - Peyton Jones, Sestoft, Hughes. Demand analysis. Draft, 26 July 2006.
@@ -7975,19 +8581,29 @@ Sections, with the sections named.
 - Peyton Jones, Tolmach, Hoare. Playing by the rules: rewriting as a practical optimisation technique in GHC. Haskell
   Workshop 2001. https://www.microsoft.com/en-us/research/wp-content/uploads/2001/09/rules.pdf (no DOI). Sections 1-3,
   the start of 4
+- Peyton Jones, Wadler. A static semantics for Haskell. Glasgow draft, dated February 19, 1992 in the copy read; Faxén
+  and Hall et al. give 1991 (no DOI). Pages 1-14, 16-20, 24, 26-38 and 42-46, the rest skimmed, read as images (E15b).
+  E15 held the same file as `downloads/papers/faxen02.pdf` without knowing it
 - Peyton Jones, Wadler. Imperative functional programming. POPL 1993. doi:10.1145/158511.158524. Sections 1-5.2, 5.3
   (opening)
+- Puel, Suárez. Compiling pattern matching by term decomposition. Journal of Symbolic Computation 15, 1993, 1-26.
+  doi:10.1006/jsco.1993.1001. Pages 1-2, read as images (E15b)
 - PyHaskell: Trace-based just-in-time compiler for Haskell with RPython. Master's thesis, NTNU, 2013, author not
   confirmed. https://hdl.handle.net/11250/253137. Abstract, as search-result text
 - Regehr, Chen, Cuoq, Eide, Ellison, Yang. Test-case reduction for C compiler bugs. PLDI 2012.
   doi:10.1145/2254064.2254104. Abstract
 - Reid. Putting the spine back in the Spineless Tagless G-machine: an implementation of resumable black-holes. IFL 1998.
   doi:10.1007/3-540-48515-5_12. Full
-- Rohou et al. Branch prediction and the performance of interpreters: don't trust folklore. CGO 2015.
-  doi:10.1109/cgo.2015.7054191. Abstract. The DOI is from the reader's list, not in `dois.tsv`
-- Röjemo. Highlights from nhc: a space-efficient Haskell compiler. FPCA 1995. doi:10.1145/224164.224217. Abstract
-- Röjemo. Generational garbage collection without temporary space leaks for lazy functional languages. IWMM 1995.
-  doi:10.1007/3-540-60368-9_22. Abstract of the thesis that contains it
+- Rohou, Narasimha Swamy, Seznec. Branch prediction and the performance of interpreters: don't trust folklore. CGO 2015.
+  doi:10.1109/cgo.2015.7054191, not in `dois.tsv`. Sections 1-2, 5 skimmed (E15b). Cited as Rohou et al. 2015
+- Röjemo. A concurrent generational garbage collector for a parallel graph reducer. IWMM 1992, LNCS 637, from memory:
+  the PDF prints no venue (no DOI). Abstract, introduction and 2; the rest skimmed (E15b). A chapter of Röjemo's thesis,
+  and the collector that never tenures updatable nodes
+- Röjemo. Highlights from nhc: a space-efficient Haskell compiler. FPCA 1995, 282-291. doi:10.1145/224164.224217. Full
+  (E15b). It measures the compiler's own heap, nothing on selector thunks
+- Röjemo. Generational garbage collection without temporary space leaks for lazy functional languages. IWMM 1995, LNCS
+  986, 146-162. doi:10.1007/3-540-60368-9_22. Full (E15b). Cited as Röjemo 1995b. It ages nodes, and finds never
+  tenuring updatable nodes "a bad idea" on lmlcomp (§5.4); that policy is Röjemo 1992's
 - Rossberg. HaMLet: to be or not to be Standard ML. Version 2.0.1 manual.
   https://people.mpi-sws.org/~rossberg/hamlet/hamlet-2.0.1.pdf; with Defects in the Revised Definition of Standard ML.
   Sections 1.2, the conclusion on test cases, change log entries
@@ -7995,6 +8611,8 @@ Sections, with the sections named.
   Symposium 2008. doi:10.1145/1411286.1411292. Sections 1, 4, 5 in part
 - Runciman, Wakeling. Heap profiling of lazy functional programs. JFP 3(2), 1993, 217-245.
   doi:10.1017/s0956796800000708. Sections 3-4 in part
+- Russo. Recursive structures for Standard ML. ICFP 2001. doi:10.1145/507643.507644. Sections: abstract, 1, the opening
+  of 2 (E15b)
 - Sansom, Peyton Jones. Generational garbage collection for Haskell. FPCA 1993. doi:10.1145/165180.165195. Full
 - Santos. Compilation by transformation in non-strict functional languages. PhD thesis, Glasgow, 1995.
   https://www.microsoft.com/en-us/research/wp-content/uploads/2017/03/santos-thesis.pdf (no DOI). Sections 2.4, 3.5,
@@ -8003,6 +8621,8 @@ Sections, with the sections named.
   Sections 1-2
 - Sato. Proposal: Fix a "bug" in the layout interpretation algorithm in Section 10.3 of Report 2010. haskell-prime, 29
   April 2019. https://mail.haskell.org/pipermail/haskell-prime/2019-April/004450.html. Full
+- Schilling. Challenges for a trace-based just-in-time compiler for Haskell. IFL 2011, LNCS, 2012.
+  doi:10.1007/978-3-642-34407-7_4. Sections 3-4 (E15b). Cited as Schilling 2012; superseded by his thesis
 - Schilling. Trace-based just-in-time compilation for lazy functional programming languages. PhD thesis, Kent, 2013 (no
   DOI). Sections 1.3, 2.6, 3.10, 3.11, 6.3, 6.6, 6.8 (start), 7.4.1, 8.3, conclusions, from a copy attached to a GitHub
   issue
@@ -8013,18 +8633,22 @@ Sections, with the sections named.
   doi:10.1007/3-540-61580-6_22. Sections 7.3, 7.5 (start), 8
 - Sestoft. Deriving a lazy abstract machine. JFP 7(3), 1997, 231-264. doi:10.1017/s0956796897002712. Sections 1-3.3,
   3.5, 4, 5 (start), 7, 8, 9
+- Seward. Generational garbage collection for lazy graph reduction. IWMM 1992, LNCS 637, 200-217.
+  doi:10.1007/bfb0017191. Sections 1-3; 4 skimmed (E15b)
 - Shao, Appel. Efficient and safe-for-space closure conversion. TOPLAS 22(1), 2000. doi:10.1145/345099.345125. Sections
   1-2, OCR text
 - Shao, League, Monnier. Implementing typed intermediate languages. ICFP 1998. doi:10.1145/289423.289460. Sections 1, 3
   (opening)
-- Sparud. Fixing some space leaks without a garbage collector. FPCA 1993. doi:10.1145/165180.165196. Abstract,
-  truncated, and through Gustavsson and Sands 2001
+- Sparud. Fixing some space leaks without a garbage collector. FPCA 1993, 117-122. doi:10.1145/165180.165196. Full
+  (E15b)
 - Sulzmann, Chakravarty, Peyton Jones, Donnelly. System F with type equality coercions. TLDI 2007.
   doi:10.1145/1190315.1190324. Sections 1, 2 (opening), 2.4, 3.8-3.10, as the 2011 version
 - Sulzmann, Odersky, Wehr. Type inference with constrained types. Karlsruhe, about 1997.
   https://publikationen.bibliothek.kit.edu/26696/1987 (no DOI). Section 6
 - Tarditi, Morrisett, Cheng, Stone, Harper, Lee. TIL: a type-directed optimizing compiler for ML. PLDI 1996.
   doi:10.1145/249069.231414. Sections 1, 2 (openings)
+- Turner. A new implementation technique for applicative languages. Software: Practice and Experience 9, 1979, 31-49.
+  doi:10.1002/spe.4380090105. Sections: abstract, introduction; the rest skimmed (E15b)
 - Volpano, Smith. On the complexity of ML typability with overloading. FPCA 1991. doi:10.1007/3540543961_2. Abstract
 - Vytiniotis, Peyton Jones, Schrijvers. Let should not be generalized. TLDI 2010. doi:10.1145/1708016.1708023. Sections
   1-3.3, 6.3
@@ -8043,8 +8667,9 @@ Sections, with the sections named.
   over the type rules, as the technical report. `downloads/papers/wansbrough99.pdf` is the talk slides
 - Yang, Chen, Eide, Regehr. Finding and understanding bugs in C compilers. PLDI 2011. doi:10.1145/2345156.1993532.
   Sections 1, 2.1, 2.2, 2.6, 3 (introduction), 3.1, 3.3, 3.5, 4
-- Yang. Backpack: towards practical mix-in linking in Haskell. PhD thesis, Stanford, 2017.
-  https://purl.stanford.edu/zf998bz8716 (no DOI). Abstract
+- Yang. Backpack: towards practical mix-in linking in Haskell. PhD thesis, Stanford, 2017, the "augmented" edition.
+  https://purl.stanford.edu/zf998bz8716 (no DOI). Sections 9.1-9.2, appendix B.1-B.2, and searches of the rest (E15b).
+  It gives no account of why GHC needs boot files
 
 **Sources** under `/home/ruud/haskell`, cited in place, at these revisions:
 - GHC `902339d332`, tag `ghc-9.14.1-release`, also `/home/ruud/reference/ghc`. The binary run is 9.4.7
@@ -8073,85 +8698,25 @@ Sections, with the sections named.
   read through a fetch on 2026-11-01
 - "There are mutually recursive programs that GHC can't compile", Haskell Discourse, 2026-06-25:
   https://discourse.haskell.org/t/there-are-mutually-recursive-programs-that-ghc-cant-compile/14316
-- Eta, slides, ICFP 2018; Mu, HIW 2021 and 2022 abstracts (icfp21.sigplan.org, icfp22.sigplan.org)
+- Eta, slides, ICFP 2018; Mu, HIW 2021 and 2022 abstracts (icfp21.sigplan.org, icfp22.sigplan.org), now with the
+  report and slides under Dijkstra, Magalhães, Néron 2024
 - Peyton Jones, glasgow-haskell-users, 8 February 2006, on optimistic evaluation:
   https://mail.haskell.org/pipermail/glasgow-haskell-users/2006-February/009658.html, read through a fetch
 
 ### Papers for the owner
 
-E15 could not read these: ACM and Springer refused automated fetches, archive copies were refused by this session's
-permissions, and that was not worked around. The owner offers PDFs. Anything said of them above is marked [abstract] or
-[memory]. A DOI here comes from the reader's list and, unless the paper is also in the list above, is not in `dois.tsv`:
-each was seen on Crossref or the publisher's page by its reader, not by the check of 2026-11-01.
+The owner supplied 53 files on 2026-11-09. They cover 47 of the 54 keys E15 asked for, and the papers they hold are in
+the list above. Still missing, of what a decision cites:
+- Peyton Jones 1987, the book (D19, D31). E15 read sections of Microsoft's copy, listed above; the dependency analysis
+  the Report cites in 4.5.1 was not among them.
+- Röjemo's thesis in full: *Garbage Collection, and Memory Efficiency, in Lazy Functional Languages*, Chalmers 1995,
+  ISBN 91-7197-126-2, https://research.chalmers.se/en/publication/1353. One chapter came, the 1992 collector.
+- Hall et al. The Glasgow Haskell compiler: a retrospective. 1992. doi:10.1007/978-1-4471-3215-8_6 (D39, D40). Only its
+  abstract was seen.
+- Flatt, Felleisen 1998, above (D30): the precedent for keeping a cycle's units apart, if one unit per SCC is too slow.
+- PyHaskell, the NTNU thesis of 2013, above (D47): the repository gave no PDF.
 
-**The seven that matter most, and what each would settle:**
-
-1. **Faxén. Cheap eagerness: speculative evaluation in a lazy functional language. ICFP 2000.**
-   doi:10.1145/351240.351255. D51. What it does and needs is known only through Ennals. It would settle whether cheap
-   eagerness needs the whole-program flow analysis, or whether a local form on Core with types that say a variable is
-   evaluated keeps most of the gain. The single most wanted PDF.
-2. **Augustsson. Implementing Haskell overloading. FPCA 1993.** doi:10.1145/165180.165191. D49, D20. Said to hold the
-   measurements of what gives the speedup in overloaded code. It would settle whether selection at a known dictionary is
-   the main gain, which the roadmap argues from Jones and Peterson qualitatively, and what literals cost.
-3. **Augustsson. Compiling pattern matching. FPCA 1985.** doi:10.1007/3-540-15975-4_48. D34. The semantics Haskell
-   adopted, known here second hand. It would confirm that the left-to-right rule D34 relies on is the one Maranget 2008
-   means.
-4. **Sparud. Fixing some space leaks without a garbage collector. FPCA 1993.** doi:10.1145/165180.165196. D17, D3. The
-   alternative to Wadler's collector rule, in Core. It would settle whether a sibling-update operation is needed at
-   Mid's surface.
-5. **Röjemo. Highlights from nhc: a space-efficient Haskell compiler. FPCA 1995.** doi:10.1145/224164.224217. D17, D11.
-   What was measured for selector thunks, on the closest precedent to a bytecode VM with thunks. His thesis is the
-   cheapest single thing to supply: *Garbage Collection, and Memory Efficiency, in Lazy Functional Languages*, Chalmers
-   1995, ISBN 91-7197-126-2, https://research.chalmers.se/en/publication/1353, which contains this paper and the
-   generational one.
-6. **Peyton Jones, Wadler. A static semantics for Haskell. Glasgow draft, 1991** (no DOI). D54, D32. Over 30 judgement
-   forms and over 100 rules, and by Hall et al. treating the monomorphism restriction, default resolution and default
-   methods at length. It is Faxén's starting point, and would fill what Faxén leaves out. The MSR page blocked the fetch
-   and the Internet Archive was offline.
-7. **Yang. Backpack: towards practical mix-in linking in Haskell. PhD thesis, Stanford, 2017.**
-   https://purl.stanford.edu/zf998bz8716. D30. The likeliest published account of why GHC needs boot files. Only the
-   catalogue record was seen.
-
-**The rest, by decision:**
-- *Runtime (D11-D13, D18, D19):* Johnsson, Efficient compilation of lazy evaluation, 1984, doi:10.1145/502949.502880
-  (the G-machine's update); Augustsson, Johnsson, The Chalmers Lazy-ML Compiler, 1989, doi:10.1093/comjnl/32.2.127;
-  Seward, Generational garbage collection for lazy graph reduction, 1992, doi:10.1007/bfb0017191 (the setting nearest
-  tier 0); Nethercote, The cache behaviour of large lazy functional programs on stock hardware, 2002,
-  doi:10.1145/773146.773044; Rohou et al. 2015, above (the only recent data on the cost pointer tagging rests on); Hieb,
-  Representing control in the presence of first-class continuations, 1990, doi:10.1145/93542.93554 (stack segments, the
-  alternative to one 1 GiB stack).
-- *Hook, data (D4, D25):* Launchbury, Parametricity and unboxing with unpointed types, 1996,
-  doi:10.1007/3-540-61055-3_38 (the alternative to a plain `Any`); Benton, Compiling Standard ML to Java bytecodes,
-  1998, doi:10.1145/289423.289435 (the only implemented monadic IL here, and Wakeling's strict comparator).
-- *Types (D31, D32, D33):* Hammond, Implementing Haskell type classes, 1990, doi:10.1007/978-1-4471-3166-3_18; Nipkow,
-  Prehofer, Type reconstruction for type classes, 1995, doi:10.1017/s0956796800001325 (the good treatment of ambiguity,
-  by Hall et al.); Hinze, Derivable type classes, 2001, doi:10.1016/s1571-0661(05)80542-0; Lämmel, Scrap your
-  boilerplate with class, 2005, doi:10.1145/1086365.1086391 (recursive dictionaries); Henglein 1993 and Kfoury et al.
-  1993, above; Kaes, Parametric overloading, 1988, doi:10.1007/3-540-19027-9_9; Morris, Type classes and instance
-  chains, 2013, doi:10.15760/etd.1010.
-- *Optimisation (D48, D50, D51):* Gill, Cheap deforestation for non-strict functional languages, PhD thesis, Glasgow,
-  1996 (chapter 4 is the source for eta and arity); Finne, Burn, 1993, doi:10.1145/165180.165229 (evidence for stopping
-  at products); Nöcker, Strictness analysis using abstract reduction, 1993, doi:10.1145/165180.165219 (Clean's
-  analyser); Faxén, Dynamic cheap eagerness, IFL 2001 (no DOI confirmed); Johann, Free theorems in the presence of seq,
-  2004, doi:10.1145/964001.964010; Hollenbeck, Investigating magic numbers, 2022, doi:10.1145/3546189.3549918 (the only
-  modern inlining figures found); Burn et al. 1986, doi:10.1016/0167-6423(86)90010-9, low priority.
-- *Testing, layout (D28, D52):* Chen et al., An empirical comparison of compiler testing techniques, 2016,
-  doi:10.1145/2884781.2884878; Amorim, Declarative specification of indentation rules, 2018,
-  doi:10.1145/3276604.3276607; Pałka et al., AST 2011, above, to check that the thesis's numbers agree; a clean PDF of
-  Moran and Sands 1999 for the tick-algebra sections; Bakewell, Runciman, A model for comparing the space usage of lazy
-  evaluators, 2000, doi:10.1145/351268.351287.
-- *Architecture, separate compilation (D30, D39, D40):* Dijkstra et al., The structure of the Essential Haskell
-  compiler, 2007, doi:10.1007/978-3-540-85373-2_4; Hall et al., The Glasgow Haskell compiler: a retrospective, 1992,
-  doi:10.1007/978-1-4471-3215-8_6; Flatt, Felleisen 1998, above (keeping a cycle's units apart, if one unit per SCC is
-  too slow); Dreyer, A type system for recursive modules, 2007, doi:10.1145/1291151.1291196; Russo, Recursive structures
-  for Standard ML, 2001, doi:10.1145/507643.507644.
-- *Strict-platform precedents (D1, D18):* no paper was found for Frege or Eta, and Mu has only HIW abstracts. Slides for
-  Mu, if the owner has them, would be the only industrial report on Haskell source over a strict runtime. Schilling's
-  IFL 2011 paper, doi:10.1007/978-3-642-34407-7_4, is superseded by his thesis.
-- *History, low priority:* Turner 1979, doi:10.1002/spe.4380090105; Augustsson 1984, doi:10.1145/800055.802038; Peyton
-  Jones, Salkild 1989, doi:10.1145/99370.99385, superseded by Peyton Jones 1992; Laville 1991,
-  doi:10.1016/s0747-7171(08)80109-5; Pettersson 1992, doi:10.1007/3-540-55984-1_24; Puel, Suarez 1993,
-  doi:10.1006/jsco.1993.1001.
+Frege and Eta have no paper to supply: none was located for Frege, and Eta has only its ICFP 2018 slides.
 
 ## Appendix: defects
 
