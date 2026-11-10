@@ -1,0 +1,3 @@
+; The size of the residency and budget tests (tests/runner/hscore.sml), read
+; after the program at two sizes.
+(val size Int 2000)

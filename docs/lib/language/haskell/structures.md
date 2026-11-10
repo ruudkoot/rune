@@ -20,6 +20,7 @@ the signature names and no others.
 | [`CoreLint`](str/CoreLint.md) | : | [`CORE_LINT`](sig/CORE_LINT.md) |  |  | [lib/language/haskell/corelint.sml](../../../../lib/language/haskell/corelint.sml) |
 | [`CorePrim`](str/CorePrim.md) | : | [`CORE_PRIM`](sig/CORE_PRIM.md) |  |  | [lib/language/haskell/coreprim.sml](../../../../lib/language/haskell/coreprim.sml) |
 | [`CoreText`](str/CoreText.md) | : | [`CORE_TEXT`](sig/CORE_TEXT.md) |  |  | [lib/language/haskell/coretext.sml](../../../../lib/language/haskell/coretext.sml) |
+| [`CoreToMid`](str/CoreToMid.md) | : | [`CORE_TO_MID`](sig/CORE_TO_MID.md) |  |  | [lib/language/haskell/coretomid.sml](../../../../lib/language/haskell/coretomid.sml) |
 
 ---
 

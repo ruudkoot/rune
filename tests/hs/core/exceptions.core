@@ -1,4 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core
+; vm: no: a suspension that raised is forced again (raised ErrorCall: again, twice, and NonTermination, twice), which the interpreter puts back and form C leaves under evaluation (D12): not Haskell 98, whose catch takes IOError alone, but the harness's try
 ; E1's exceptions, in Core: seq, error, a failed match, catch over an
 ; IOError and over nothing else, a suspension forced again after it raised
 ; (it raises again), one forced under its own evaluation (NonTermination,

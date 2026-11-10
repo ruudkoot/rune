@@ -15,6 +15,8 @@ to. Its text, `CoreText`, is a contract between the front end, which writes
 it, and Core to Mid, which reads it: a program in it runs before there is a
 parser. `CoreLint` checks a program, `CoreInterp` runs it, `CorePrim` is
 what it can do that is not Core, and `CoreGen` makes programs to test them
-with.
+with. `CoreToMid` lowers a program to Mid's text, a lazy position a
+suspension and an evaluated one its value, which rhc gives to the passes of
+`lib/compiler` from Mid on.
 
 The roadmap is `docs/plans/language/haskell98.md`.

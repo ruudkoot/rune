@@ -1,4 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core
+; vm: no: Monad m, a type constructor variable applied, and methods of forall type wait on M28
 ; E1's monad, in Core: a class over a type constructor, whose dictionary's
 ; methods are polymorphic (fields of forall type), at Maybe and at the lazy
 ; state monad, a newtype whose bind takes its pair apart lazily:

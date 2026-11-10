@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [k](k.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) **u** [v](v.md)
 
 - `Unlifted` (con): [CORE](../sig/CORE.md#con-unlifted)
+- `Unsupported` (exn): [CORE_TO_MID](../sig/CORE_TO_MID.md#exn-unsupported)
 - `UTuple` (con): [CORE](../sig/CORE.md#con-utuple)
 
 ---

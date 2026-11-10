@@ -15,8 +15,8 @@ struct
   (* a fault of the input, said already *)
   exception Failed
 
-  (* the stages there are, for --dump-after *)
-  val stages = ["read"]
+  (* the stages there are, for --dump-after: rhc's, then those from Mid on *)
+  val stages = ["read", "coretomid"] @ MidPipeline.stageNames MidPipeline.standardPasses
 
   fun version () = print ("rhc " ^ Config.version ^ " (identity " ^ Config.identity ^ ")\n")
 
@@ -75,6 +75,21 @@ struct
     end
     handle CoreInterp.Stuck msg => (flush (); eprint ("rhc: the Core interpreter is stuck: " ^ msg ^ "\n"); 1)
 
+  (* the bytecode of p, written to out: Core to Mid's text, read as Mid,
+     the passes any front end may run (MidPipeline.standardPasses: Rune's,
+     with no expand, which is SML's), Lower and the target *)
+  fun compile (opts : RhcOptions.options, p : Core.program, out : string) : int =
+    let
+      val text =
+        Pass.stage {name = "coretomid", showIn = NONE, show = fn s => s, check = fn _ => (), size = String.size}
+                   (fn p => CoreToMid.program (#thunks opts, p)) p
+      val mid = MidPipeline.midStage NONE MidText.parse text
+      val low = MidPipeline.lowOfMid MidPipeline.standardPasses mid
+      val code = MidPipeline.targetStage low
+    in Emit.writeFileAs (MidPipeline.fingerprint (), out, code); 0 end
+    handle CoreToMid.Unsupported msg =>
+      (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
+
   fun run (args : string list) : int =
     let
       val opts = RhcOptions.parse args
@@ -97,11 +112,14 @@ struct
                 val p = readCore (#readCore opts)
                 val () = lint (#readCore opts, p)
                 val () =
-                  if #typecheckOnly opts orelse List.exists (fn Core.Val ("main", _, _) => true | _ => false) p then ()
+                  if #typecheckOnly opts orelse isSome (#output opts)
+                     orelse List.exists (fn Core.Val ("main", _, _) => true | _ => false) p then ()
                   else (eprint (String.concatWith ", " (#readCore opts)
                                 ^ ": error: the program has no main to run (--typecheck-only checks one that has none)\n");
                         raise Failed)
-                val status = if #typecheckOnly opts then 0 else interpret (opts, p)
+                val status =
+                  if #typecheckOnly opts then 0
+                  else case #output opts of SOME out => compile (opts, p, out) | NONE => interpret (opts, p)
               in Pass.finish (); status end
     end
 

@@ -1,4 +1,5 @@
 ; run: --depth=1000 --read-core tests/hs/core/lib/base.core
+; vm: no: --depth is a bound of the interpreter's; the VM's stack takes 5000
 ; A bottom: the stack deeper than --depth gives, by the length of a list of
 ; 5000, which is no tail call; the same bottom as a loop and an error.
 (val upto (-> !Int (List Int))

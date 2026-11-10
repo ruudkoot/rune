@@ -38,7 +38,7 @@ struct
     @ [("double_neg", unary ("Double", "Double"), "the negation")]
     @ comparisons ("double", "Double")
     @ [("double_from_int", unary ("Int", "Double"), "the Double nearest an Int"),
-       ("double_to_str", unary ("Double", "Str"), "the text Rune's real_to_string gives")]
+       ("double_to_str", unary ("Double", "Str"), "the text Mid's real_to_string gives: 12 digits, ~ for a minus, .0 where there is no point")]
     @ [("str_size", unary ("Str", "Int"), "the number of bytes"),
        ("str_byte", binary' ("Str", "Int", "Int"), "the byte at an index, from 0; Subscript outside"),
        ("str_concat", binary ("Str", "Str"), "the bytes of one, then the other's"),

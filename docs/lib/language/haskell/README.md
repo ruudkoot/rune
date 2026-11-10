@@ -13,7 +13,9 @@ to. Its text, [`CoreText`](str/CoreText.md), is a contract between the front end
 it, and Core to Mid, which reads it: a program in it runs before there is a
 parser. [`CoreLint`](str/CoreLint.md) checks a program, [`CoreInterp`](str/CoreInterp.md) runs it, [`CorePrim`](str/CorePrim.md) is
 what it can do that is not Core, and [`CoreGen`](str/CoreGen.md) makes programs to test them
-with.
+with. [`CoreToMid`](str/CoreToMid.md) lowers a program to Mid's text, a lazy position a
+suspension and an evaluated one its value, which rhc gives to the passes of
+`lib/compiler` from Mid on.
 
 The roadmap is `docs/plans/language/haskell98.md`.
 
@@ -29,6 +31,7 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`CORE_LINT`](sig/CORE_LINT.md) | CoreLint (the haskell98 roadmap, D2, D54): the check of a Core program. Core is explicitly typed, so the check is syntax-directed and unifies nothing: it works out the type of every expression from its parts and holds each to what its place wants. rhc runs it on Core read as text, at each boundary, and last before the crossing into Mid, where `Any` leaves MidLint weaker; a forgotten force, a lazy atom where `!T` is wanted, is the breach it is for above all. |
 | [`CORE_PRIM`](sig/CORE_PRIM.md) | The primitives of Core (the haskell98 roadmap, D26): what Core can do that is not a function of Core, each with its type. An argument a primitive reads is evaluated, `!T`; one it may leave suspended, a function or a value it stores, is lazy. A primitive that does I/O takes the state token and gives it back, so that its order is its data's. |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | Core as text, and back (the haskell98 roadmap, D2): the contract between the front end, which writes Core, and Core to Mid, which reads it. `show` prints a program for a dump (rhc --dump-after) or a test (tests/hs/core), and `parse` reads what it prints, so that print, read, print is the identity; rhc checks that at lint level 3. |
+| [`CORE_TO_MID`](sig/CORE_TO_MID.md) | Core to Mid (the haskell98 roadmap, M10): a Core program as a program of Mid's text, which rhc reads with Mid's own reader and gives to the passes from Mid on (MidPipeline), its list without expand. |
 
 ---
 

@@ -8,12 +8,14 @@ library language/haskell lib/language/haskell
   export signature CORE_LINT
   export signature CORE_PRIM
   export signature CORE_TEXT
+  export signature CORE_TO_MID
   export structure Core
   export structure CoreGen
   export structure CoreInterp
   export structure CoreLint
   export structure CorePrim
   export structure CoreText
+  export structure CoreToMid
   friend ../../../rhc.build
   use lib/language/haskell/core.build
     unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
@@ -29,6 +31,8 @@ library language/haskell lib/language/haskell
     unit language/haskell:coreinterp.sml lib/language/haskell/coreinterp.sml ascii demand
     unit language/haskell:coregen_sig.sml lib/language/haskell/coregen_sig.sml ascii demand
     unit language/haskell:coregen.sml lib/language/haskell/coregen.sml ascii demand
+    unit language/haskell:coretomid_sig.sml lib/language/haskell/coretomid_sig.sml ascii demand
+    unit language/haskell:coretomid.sml lib/language/haskell/coretomid.sml ascii demand
   end
 end
 library unicode lib/unicode
@@ -127,8 +131,8 @@ provenance
   input rhc.build 5f0b7bec2f7311829fc9b899a53cdc9452678fbf3f5bba0b07c08c00431f3c6c
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
-  input lib/language/haskell/library.build 977dc990b968ec70f6459700501bbffc344ce1788f04ddf68a0022eb5aaf1eef
-  input lib/language/haskell/core.build 0f36e5aac40b386c85e511c915c7658103e067154e6090b313352c3ea3d1db70
+  input lib/language/haskell/library.build d24749e53924f3bfe30524515747398f5250194b1165e7fbff896b76f62cdfc2
+  input lib/language/haskell/core.build 23f6e8905127977948510fd0522271664b50ae89a5f805908692fe1e11d96ea7
   input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

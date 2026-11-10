@@ -82,6 +82,15 @@ struct
       else b (240 + c div 262144) ^ cont (c, 12) ^ cont (c, 6) ^ cont (c, 0)
     end
 
+  (* the text of a real as Mid's real_to_string gives it (format_real of
+     runtime/prims.c): twelve significant digits, ~ for a minus, E for the
+     exponent, and .0 where there is neither point nor exponent *)
+  fun realText d =
+    if Real.isNan d then "nan"
+    else
+      let val s = Real.fmt (StringCvt.GEN (SOME 12)) d
+      in if CharVector.exists (fn c => c = #"." orelse c = #"E" orelse c = #"i") s then s else s ^ ".0" end
+
   (* the arithmetic of a type, by the name after its prefix *)
   fun arith (name, get, make, ops) args =
     case args of
@@ -126,7 +135,7 @@ struct
         | ("char_chr", _) =>
             let val c = int (one args) in if c < 0 orelse c > 1114111 then Throw (exn ("Chr", "chr")) else Return (VChar c) end
         | ("double_from_int", _) => Return (VDouble (Real.fromInt (int (one args))))
-        | ("double_to_str", _) => Return (VStr (Real.toString (double (one args))))
+        | ("double_to_str", _) => Return (VStr (realText (double (one args))))
         | ("str_size", _) => Return (VInt (size (str (one args))))
         | ("str_byte", [s, i]) => Return (VInt (Char.ord (String.sub (str s, int i))))
         | ("str_concat", [a, b]) => Return (VStr (str a ^ str b))

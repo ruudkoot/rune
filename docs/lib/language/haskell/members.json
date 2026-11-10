@@ -322,6 +322,33 @@
      "page": "sig/CORE_TEXT.md#val-showname"
     }
    ]
+  },
+  "CORE_TO_MID": {
+   "doc": "Core to Mid (the haskell98 roadmap, M10): a Core program as a program\nof Mid's text, which rhc reads with Mid's own reader and gives to the\npasses from Mid on (MidPipeline), its list without expand.\n\nA lazy position of type T is `T susp` in Mid and an evaluated one `T`:\na binder, a parameter, a field and a component of an unboxed tuple of\ntype `!T` is the value, one of a lifted `T` a suspension. A function\ntakes each argument in its slot and returns its value evaluated, so a\ndatatype-typed variable of Mid is evaluated. A `let` of a value -- a\nlambda, a constructor, a literal -- binds the value, and of anything else\na suspension, whose code says it is under evaluation first and updates\nit with its value last. A `case` forces its scrutinee and tests its tag;\na value given to a lazy slot is cast into it. A `letrec` of values goes\nthrough cells (D6's A), and a value of the top level that is no function\nis a suspension in a global, a CAF. The state token is erased (D25): an\naction of Core, `World -> (utuple World T)`, is `unit -> T` in Mid, its\norder the order of its lets.\n\nWhat a later milestone gives is behind one function each: a type\nconstructor applied by a variable and a forall inside a type (M28, Mid's\n`Ty` with application and forall), and `Integer` (M31).\n\n",
+   "page": "sig/CORE_TO_MID.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "form",
+     "spec": "datatype form = FormC | Runtime",
+     "doc": "How suspensions are made and forced: by form C's primitives, or by\nfunctions of E1's runtime in today's Mid.\n\n`FormC` is the roadmap's M9: `thunk_make`, `thunk_force`,\n`thunk_blackhole` and `thunk_self_update`, force one primitive node.\n`Runtime` is for a tree that has not got them.\n\n",
+     "page": "sig/CORE_TO_MID.md#type-form"
+    },
+    {
+     "kind": "exception",
+     "name": "Unsupported",
+     "spec": "exception Unsupported of string",
+     "doc": "A construct Core has and the Mid of this tree cannot say yet: what it\nwaits on, and where.\n\n",
+     "page": "sig/CORE_TO_MID.md#exn-unsupported"
+    },
+    {
+     "kind": "val",
+     "name": "program",
+     "spec": "val program : form * Core.program -> string",
+     "doc": "`program (form, p)` is the text of Mid of the Core program `p`, which\nCoreLint passed.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
+     "page": "sig/CORE_TO_MID.md#val-program"
+    }
+   ]
   }
  },
  "structures": {
@@ -330,6 +357,7 @@
   "CoreInterp": "CORE_INTERP",
   "CoreLint": "CORE_LINT",
   "CorePrim": "CORE_PRIM",
-  "CoreText": "CORE_TEXT"
+  "CoreText": "CORE_TEXT",
+  "CoreToMid": "CORE_TO_MID"
  }
 }

@@ -599,6 +599,25 @@ D55), each of which must pass CoreLint at level 3 and run to a value or to
 the bottom the generator puts in its input, and `hs/core/@silent` holds the
 judge of a run to failing a silent one.
 
+Each run test is also compiled by rhc through Mid (the roadmap's M10: `bin/rhc
+-o FILE`) at `-O0`, `-O1` and `-O2` to both bytecodes, and run on the register
+VM interpreted and at tier 2 and on the stack VM (`hs/core/vm/NAME`): it
+prints what Core's interpreter printed and ends as it did, every bottom one
+bottom, a status other than 0. A test whose answer is the interpreter's alone
+says why on a line `; vm: no: REASON`, and is the interpreter's only: one
+whose answer depends on a suspension that raised being forced again, which
+the interpreter puts back and form C leaves under evaluation (the roadmap's
+D12; Haskell 98 cannot tell, since its `catch` takes `IOError` alone), one on
+a bound only the interpreter has, `--steps` or `--depth`, and one that waits
+on a milestone. A line `; residency: SIZE1 SIZE2` compiles the program with
+each of two files of `tests/hs/core/lib` that define `size`, and holds the
+most live with a collection at every allocation (`runevm --stats`) to the
+same at both, at `-O0` and `-O2`, interpreted and at tier 2
+(`hs/core/residency/NAME`: E2's `last` and `leak`, D12); a line `; budget:
+SIZE1 SIZE2` holds what `--count` counts at the second to at most 2.2 times
+the first (`hs/core/budget/NAME`), a sharing budget, rhc's policy and not the
+Report's, which a lost share, growing exponentially, breaks (D6).
+
 ## The three oracles
 
 **The output.** A program under `tests/` runs with `--checked` and its

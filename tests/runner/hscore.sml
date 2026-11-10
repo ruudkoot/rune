@@ -13,7 +13,28 @@
    print, read, print is the identity on every test. Besides the files:
    every rule of CoreLint has its fault, lint-RULE.core, refused with its
    message; programs from the generator of D55 pass CoreLint and run to an
-   outcome, a value or a bottom; and a silent run is judged a failure. *)
+   outcome, a value or a bottom; and a silent run is judged a failure.
+
+   A run test is also compiled by rhc through Mid (the roadmap's M10) at
+   -O0, -O1 and -O2 to both bytecodes, and run on the register VM
+   interpreted and at tier 2 and on the stack VM (hs/core/vm/NAME): it
+   prints what the interpreter printed, and ends as it did, every bottom
+   one bottom, a status other than 0. A test whose answer is the
+   interpreter's alone says so on a line `; vm: no: REASON`: one whose
+   answer depends on a suspension that raised being forced again, which
+   the interpreter puts back and form C leaves under evaluation (D12), or
+   on a bound only the interpreter has, --steps or --depth, or on what a
+   milestone is to give; a residency or budget test that says so is not
+   run either.
+
+   Two more kinds of test read a program at two sizes, files of
+   tests/hs/core/lib that define `size`, after tests/hs/core/lib/base.core:
+   a line `; residency: SIZE1 SIZE2` holds the most live, with a collection
+   at every allocation (runevm --stats), to the same at both sizes, at -O0
+   and -O2, interpreted and at tier 2 (E2's last and leak, D12); a line
+   `; budget: SIZE1 SIZE2` holds the instructions --count gives at the
+   second to at most 2.2 times those at the first, so that a lost share,
+   which grows exponentially, is caught (D6; rhc's policy). *)
 structure HsCore =
 struct
   open Sh
@@ -52,6 +73,143 @@ struct
     if out = "" then SOME "the run printed nothing"
     else if out <> expected then SOME "what it printed differs from its .expected"
     else NONE
+
+  (* the reason a run test is the interpreter's alone, if it is *)
+  fun interpreterOnly src =
+    Option.map (fn l => String.extract (l, size "; vm: no:", NONE))
+               (List.find (String.isPrefix "; vm: no:") (lines (read src)))
+
+  (* the run test src compiled through Mid and run on the VMs, each way
+     printing its .expected and ending as its .exitcode says *)
+  fun vmOne src =
+    let
+      val n = nameOf src
+      val outDir = run ^ "/hs-core/vm"
+      val () = mkdirs outDir
+      fun f ext = outDir ^ "/" ^ n ^ ext
+      val expected = read (dir ^ "/" ^ n ^ ".expected")
+      val want = wanted n
+      val flags = case marker src of SOME ("run", flags) => String.tokens Char.isSpace flags | _ => []
+      fun one (level, target, runs) =
+        let
+          val rbc = f ("." ^ level ^ "." ^ target ^ ".rbc")
+          val code = exec {cmd = [rhc, "--lint=2", "-" ^ level, "--target=" ^ target] @ flags @ ["--read-core", src, "-o", rbc],
+                           dir = NONE, stdin = "", stdout = f ".compile", stderr = f ".compile", timeout = 600}
+          fun runOn (vm, vmFlags, way) =
+            let
+              val o' = f ("." ^ level ^ "." ^ target ^ "." ^ way)
+              val status = exec {cmd = [vm] @ vmFlags @ [rbc], dir = NONE, stdin = "", stdout = o' ^ ".out", stderr = o' ^ ".err",
+                                 timeout = 120}
+              val ends = if want = 1 then status <> 0 else status = want
+            in
+              case judgeRun (read (o' ^ ".out"), expected) of
+                SOME why => fail ("hs.core.vm." ^ n ^ ": at -" ^ level ^ " on " ^ target ^ " (" ^ way ^ "): " ^ why ^ ": "
+                                  ^ firstLine (o' ^ ".out") ^ " / " ^ firstLine (o' ^ ".err"))
+              | NONE => if ends then ()
+                        else fail ("hs.core.vm." ^ n ^ ": at -" ^ level ^ " on " ^ target ^ " (" ^ way ^ ") status "
+                                   ^ Int.toString status ^ " where " ^ Int.toString want ^ " is wanted: " ^ firstLine (o' ^ ".err"))
+            end
+        in
+          if code <> 0 then fail ("hs.core.vm." ^ n ^ ": -" ^ level ^ " to " ^ target ^ " did not compile: " ^ firstLine (f ".compile"))
+          else List.app runOn runs
+        end
+    in
+      List.app (fn level =>
+                  (one (level, "registers", [("bin/runevm", ["--jit=off"], "interpreted"),
+                                             ("bin/runevm", ["--jit=all", "--jit-tier=2"], "tier2")]);
+                   one (level, "stack", [("bin/runevm-stack", [], "stack")])))
+               ["O0", "O1", "O2"]
+    end
+
+  (* the two size files of a `; KEY: SIZE1 SIZE2` line of src *)
+  fun sizes (key, src) =
+    case List.find (String.isPrefix ("; " ^ key ^ ":")) (lines (read src)) of
+      SOME l => (case String.tokens Char.isSpace (String.extract (l, size key + 3, NONE)) of
+                   [a, b] => SOME (dir ^ "/" ^ a, dir ^ "/" ^ b)
+                 | _ => NONE)
+    | NONE => NONE
+
+  (* src with the size file sz compiled to rbc at the flags *)
+  fun compileAt (n, src, sz, flags, rbc, log) =
+    exec {cmd = [rhc] @ flags @ ["--read-core", dir ^ "/lib/base.core", "--read-core", sz, "--read-core", src, "-o", rbc],
+          dir = NONE, stdin = "", stdout = log, stderr = log, timeout = 600} = 0
+
+  (* what the stderr of a VM's run says after key, a number *)
+  fun after (key, f) =
+    let val at = #2 (Substring.position key (Substring.full (read f)))
+    in if Substring.isEmpty at then NONE
+       else Int.fromString (Substring.string (Substring.takel Char.isDigit (Substring.triml (size key) at))) end
+
+  fun residency src =
+    let
+      val n = nameOf src
+      val outDir = run ^ "/hs-core/residency"
+      val () = mkdirs outDir
+      fun f ext = outDir ^ "/" ^ n ^ ext
+      val stress = ["--nursery", "0", "--old-space", "copy", "--gc-stress", "1", "--stats"]
+      fun live (rbc, way, vmFlags, tag) =
+        let val o' = f ("." ^ tag ^ "." ^ way)
+            val _ = exec {cmd = ["bin/runevm"] @ vmFlags @ stress @ [rbc], dir = NONE, stdin = "", stdout = o' ^ ".out",
+                          stderr = o' ^ ".err", timeout = 600}
+        in after ("max live ", o' ^ ".err") end
+    in
+      case sizes ("residency", src) of
+        NONE => fail ("hs.core.residency." ^ n ^ ": no line ; residency: SIZE1 SIZE2")
+      | SOME (a, b) =>
+          List.app (fn level =>
+                      let
+                        val ra = f ("." ^ level ^ ".a.rbc")
+                        val rb = f ("." ^ level ^ ".b.rbc")
+                      in
+                        if not (compileAt (n, src, a, ["-" ^ level], ra, f ".compile")
+                                andalso compileAt (n, src, b, ["-" ^ level], rb, f ".compile"))
+                        then fail ("hs.core.residency." ^ n ^ ": -" ^ level ^ " did not compile: " ^ firstLine (f ".compile"))
+                        else
+                          List.app (fn (way, vmFlags) =>
+                                      case (live (ra, way, vmFlags, level ^ ".a"), live (rb, way, vmFlags, level ^ ".b")) of
+                                        (SOME x, SOME y) =>
+                                          if x = y then ()
+                                          else fail ("hs.core.residency." ^ n ^ ": at -" ^ level ^ " (" ^ way ^ ") the most live is "
+                                                     ^ Int.toString x ^ " at the first size and " ^ Int.toString y ^ " at the second")
+                                      | _ => fail ("hs.core.residency." ^ n ^ ": at -" ^ level ^ " (" ^ way ^ ") no most live in --stats"))
+                                   [("interpreted", ["--jit=off"]), ("tier2", ["--jit=all", "--jit-tier=2"])]
+                      end)
+                   ["O0", "O2"]
+    end
+
+  fun budget src =
+    let
+      val n = nameOf src
+      val outDir = run ^ "/hs-core/budget"
+      val () = mkdirs outDir
+      fun f ext = outDir ^ "/" ^ n ^ ext
+      fun count (rbc, tag) =
+        let val o' = f ("." ^ tag)
+            val _ = exec {cmd = ["bin/runevm", "--count", rbc], dir = NONE, stdin = "", stdout = o' ^ ".out", stderr = o' ^ ".err",
+                          timeout = 600}
+        in after ("count: ", o' ^ ".err") end
+    in
+      case sizes ("budget", src) of
+        NONE => fail ("hs.core.budget." ^ n ^ ": no line ; budget: SIZE1 SIZE2")
+      | SOME (a, b) =>
+          List.app (fn level =>
+                      let
+                        val ra = f ("." ^ level ^ ".a.rbc")
+                        val rb = f ("." ^ level ^ ".b.rbc")
+                      in
+                        if not (compileAt (n, src, a, ["-" ^ level], ra, f ".compile")
+                                andalso compileAt (n, src, b, ["-" ^ level], rb, f ".compile"))
+                        then fail ("hs.core.budget." ^ n ^ ": -" ^ level ^ " did not compile: " ^ firstLine (f ".compile"))
+                        else
+                          case (count (ra, level ^ ".a"), count (rb, level ^ ".b")) of
+                            (SOME x, SOME y) =>
+                              if 10 * y <= 22 * x then ()
+                              else fail ("hs.core.budget." ^ n ^ ": at -" ^ level ^ " " ^ Int.toString y ^ " instructions at the second size, "
+                                         ^ "more than 2.2 times the " ^ Int.toString x ^ " at the first: a lost share")
+                          | _ => fail ("hs.core.budget." ^ n ^ ": at -" ^ level ^ " no count")
+                      end)
+                   ["O0", "O1", "O2"]
+    end
 
   fun one src =
     let
@@ -154,6 +312,9 @@ struct
   fun command args =
     case args of
       ["hs-core-one", src] => SOME (fn () => one src)
+    | ["hs-core-vm", src] => SOME (fn () => vmOne src)
+    | ["hs-core-residency", src] => SOME (fn () => residency src)
+    | ["hs-core-budget", src] => SOME (fn () => budget src)
     | ["hs-core-rules"] => SOME rules
     | ["hs-core-generated", n] => SOME (fn () => generated (getOpt (Int.fromString n, 16)))
     | ["hs-core-silent"] => SOME silent
@@ -166,6 +327,18 @@ struct
             "covers:tests/hs/core/*", "covers:tests/runner/hscore.sml"]
       (Test.describe "hs/core"
          (List.map (fn s => Tools.job (nameOf s, ["hs-core-one", s], [], 300, 600)) (glob (dir, ".core"))
+          @ List.mapPartial (fn s => case (marker s, interpreterOnly s) of
+                                       (SOME ("run", _), NONE) => SOME (Tools.job ("vm/" ^ nameOf s, ["hs-core-vm", s], [], 500, 1800))
+                                     | _ => NONE)
+                            (glob (dir, ".core"))
+          @ List.mapPartial (fn s => case (sizes ("residency", s), interpreterOnly s) of
+                                       (SOME _, NONE) => SOME (Tools.job ("residency/" ^ nameOf s, ["hs-core-residency", s], [], 500, 1800))
+                                     | _ => NONE)
+                            (glob (dir, ".core"))
+          @ List.mapPartial (fn s => case (sizes ("budget", s), interpreterOnly s) of
+                                       (SOME _, NONE) => SOME (Tools.job ("budget/" ^ nameOf s, ["hs-core-budget", s], [], 500, 1800))
+                                     | _ => NONE)
+                            (glob (dir, ".core"))
           @ [Tools.job ("@rules", ["hs-core-rules"], [], 100, 120),
              Tools.job ("@generated", ["hs-core-generated", "32"], [], 300, 1200),
              Tools.job ("@silent", ["hs-core-silent"], [], 100, 60)]))

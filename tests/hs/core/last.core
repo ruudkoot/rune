@@ -1,0 +1,23 @@
+; run: --read-core tests/hs/core/lib/base.core --read-core tests/hs/core/lib/size-1000.core
+; residency: lib/size-1000.core lib/size-2000.core
+; vm: no: the release of what a suspension captured, at BLACKHOLE, is form C's (M9), which this tree has not; E1's runtime keeps xs
+; E2's last, through rhc (D12): a suspension whose code is last xs, a loop
+; over a list made as it is walked. Where the suspension or its frame keeps
+; xs, every cell stays live; under form C its code reads what it captured
+; and says it is under evaluation, which releases xs, so the most live with
+; a collection at every allocation is the same at either size.
+(data L () (LNil) (LCons !Int L))
+(val from (-> !Int !Int L)
+  (\ ((i !Int) (n !Int))
+    (case (prim int_gt i n) b
+      ((True) (con LNil))
+      ((False) (case (prim int_add i 1) j (_ (let (t L (from j n)) (con LCons i t))))))))
+(val last (-> !Int L Int)
+  (\ ((acc !Int) (l L))
+    (case l v ((LNil) acc) ((LCons x t) (last x t)))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case size n
+      (_ (let (xs L (from 1 n))
+           (let (t Int (last 0 xs))
+             (case t r (_ (case (showInt r) s (_ (case (prim str_concat "last " s) u (_ (putStrLn u w)))))))))))))

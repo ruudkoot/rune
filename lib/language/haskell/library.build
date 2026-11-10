@@ -5,7 +5,7 @@
    lib/compiler too. *)
 exports (structure Core, signature CORE, structure CoreText, signature CORE_TEXT, structure CorePrim,
          signature CORE_PRIM, structure CoreLint, signature CORE_LINT, structure CoreInterp, signature CORE_INTERP,
-         structure CoreGen, signature CORE_GEN)
+         structure CoreGen, signature CORE_GEN, structure CoreToMid, signature CORE_TO_MID)
 friends ../../../rhc.build end
 annotate "demand" in
   use core.build

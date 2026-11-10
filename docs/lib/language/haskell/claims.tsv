@@ -5,9 +5,11 @@ CORE_INTERP	signature			required	declared	lib/language/haskell/coreinterp_sig.sm
 CORE_LINT	signature			required	declared	lib/language/haskell/corelint_sig.sml
 CORE_PRIM	signature			required	declared	lib/language/haskell/coreprim_sig.sml
 CORE_TEXT	signature			required	declared	lib/language/haskell/coretext_sig.sml
+CORE_TO_MID	signature			required	declared	lib/language/haskell/coretomid_sig.sml
 Core	structure	CORE		required	ascribed	lib/language/haskell/core.sml
 CoreGen	structure	CORE_GEN		required	ascribed	lib/language/haskell/coregen.sml
 CoreInterp	structure	CORE_INTERP		required	ascribed	lib/language/haskell/coreinterp.sml
 CoreLint	structure	CORE_LINT		required	ascribed	lib/language/haskell/corelint.sml
 CorePrim	structure	CORE_PRIM		required	ascribed	lib/language/haskell/coreprim.sml
 CoreText	structure	CORE_TEXT		required	ascribed	lib/language/haskell/coretext.sml
+CoreToMid	structure	CORE_TO_MID		required	ascribed	lib/language/haskell/coretomid.sml

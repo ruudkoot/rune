@@ -3,6 +3,8 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [i](i.md) [k](k.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md)
 
 - `find` (val): [CORE_PRIM](../sig/CORE_PRIM.md#val-find)
+- `form` (type): [CORE_TO_MID](../sig/CORE_TO_MID.md#type-form)
+- `FormC` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-formc)
 - `freeTyVars` (val): [CORE](../sig/CORE.md#val-freetyvars)
 
 ---

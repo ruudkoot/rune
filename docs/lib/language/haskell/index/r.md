@@ -5,6 +5,7 @@
 - `Raised` (con): [CORE_INTERP](../sig/CORE_INTERP.md#con-raised)
 - `rules` (val): [CORE_LINT](../sig/CORE_LINT.md#val-rules)
 - `run` (val): [CORE_INTERP](../sig/CORE_INTERP.md#val-run)
+- `Runtime` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-runtime)
 
 ---
 

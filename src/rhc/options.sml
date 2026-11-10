@@ -12,6 +12,8 @@ struct
      depth : int,                     (* --depth=N: its bound on the depth of its stack *)
      lintRules : bool,                (* --lint-rules: print CoreLint's rules *)
      generate : int option,           (* --generate-core=SEED: print a generated program *)
+     output : string option,          (* -o FILE: compile to bytecode, through Mid, in place of running *)
+     thunks : CoreToMid.form,         (* --thunks=c|runtime: how Mid makes and forces suspensions *)
      help : bool,
      version : bool}
 
@@ -25,11 +27,17 @@ struct
     \  --typecheck-only      read and check, and run nothing\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
     \                        3 reads Core's text back after every stage (RUNE_LINT too)\n\
-    \  --dump-after=STAGE    print the Core a stage makes: read, or all\n\
+    \  --dump-after=STAGE    print what a stage makes: read, coretomid (Mid's text), mid, a\n\
+    \                        pass on Mid, lower, registers or stack, or all\n\
     \  --pass-stats          the time and size of every stage, on standard error\n\
     \  --steps=N             stop the interpreter after N steps, a bottom (default: none)\n\
     \  --depth=N             the deepest the interpreter's stack may go, a bottom past it\n\
     \                        (default: 10000000)\n\
+    \  -o FILE               compile to bytecode, through Mid, in place of running\n\
+    \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1)\n\
+    \  --target=T            the bytecode: registers (default) or stack\n\
+    \  --thunks=F            suspensions in Mid: c, form C's primitives, or runtime,\n\
+    \                        functions of E1's runtime in today's Mid (default: runtime)\n\
     \  --lint-rules          print the name of each rule of CoreLint, one a line\n\
     \  --generate-core=SEED  print a well-typed Core program made from SEED (D55)\n\
     \  --version             print the version and the identity of rhc\n\
@@ -52,6 +60,8 @@ struct
       val depth = ref 10000000
       val lintRules = ref false
       val generate = ref NONE
+      val output = ref NONE
+      val thunks = ref CoreToMid.Runtime
       val help = ref false
       val version = ref false
       fun stages s = List.filter (fn x => x <> "") (String.fields (fn c => c = #",") s)
@@ -64,6 +74,15 @@ struct
         | go ("--lint-rules" :: rest) = (lintRules := true; go rest)
         | go ("--help" :: rest) = (help := true; go rest)
         | go ("--version" :: rest) = (version := true; go rest)
+        | go ("-o" :: file :: rest) = (output := SOME file; go rest)
+        | go ["-o"] = raise Usage "-o takes a file"
+        | go ("-O0" :: rest) = (Pass.level := 0; go rest)
+        | go ("-O1" :: rest) = (Pass.level := 1; go rest)
+        | go ("-O2" :: rest) = (Pass.level := 2; go rest)
+        | go ("--target=registers" :: rest) = (CompilerSettings.target := "registers"; go rest)
+        | go ("--target=stack" :: rest) = (CompilerSettings.target := "stack"; go rest)
+        | go ("--thunks=c" :: rest) = (thunks := CoreToMid.FormC; go rest)
+        | go ("--thunks=runtime" :: rest) = (thunks := CoreToMid.Runtime; go rest)
         | go (arg :: rest) =
             (case (after ("--lint=", arg), after ("--dump-after=", arg), after ("--steps=", arg),
                    after ("--depth=", arg), after ("--generate-core=", arg)) of
@@ -82,6 +101,7 @@ struct
     in
       go args;
       {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
-       lintRules = !lintRules, generate = !generate, help = !help, version = !version}
+       lintRules = !lintRules, generate = !generate, output = !output, thunks = !thunks, help = !help,
+       version = !version}
     end
 end

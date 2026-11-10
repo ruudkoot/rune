@@ -15,4 +15,6 @@ files
   coreinterp.sml
   coregen_sig.sml
   coregen.sml
+  coretomid_sig.sml
+  coretomid.sml
 end
