@@ -1,4 +1,4 @@
--- rows: dec.fix.notinscope dec.fix.entity
+-- rows: dec.fix.notinscope dec.fix.entity R25
 -- Report 4.4.2, 5: a fixity is its entity's: A declares <-> infixr 5, B re-exports it and C, imported as X... X.<->
 -- has A's; importing <-> alone brings its fixity; another module's <-> keeps its own, infixl 6.
 module Main (main) where

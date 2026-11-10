@@ -1,4 +1,4 @@
--- rows: dec.data.contype dec.data.cxi dec.data.ctx.inferred dec.data.ctx.noother dec.data.ctx.unusedvar dec.data.kind dec.data.partial dec.field.syntax dec.field.mixed dec.field.shared.same dec.field.shared.synonym
+-- rows: dec.data.contype dec.data.cxi dec.data.ctx.inferred dec.data.ctx.noother dec.data.ctx.unusedvar dec.data.kind dec.data.partial dec.field.syntax dec.field.mixed dec.field.shared.same dec.field.shared.synonym R23
 -- Report 4.2.1: data declarations and their constructors' types, the Report's Set with its context (whose constructor
 -- NilSet has none), a context with no other effect, kinds by inference, partial application of a type
 -- constructor, field labels shared with the same type (after synonyms), and labelled and plain constructors mixed.
