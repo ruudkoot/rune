@@ -29,6 +29,39 @@ struct
   fun valueScheme ({values, ...} : env, k) = M.find (values, k)
   fun classes ({classes, ...} : env) = classes
 
+  (* ---- a module's part of the environment (M21's interfaces) ---- *)
+
+  type part = {values : (string * T.scheme) list, tycons : K.tycon list, classes : C.class list,
+               instances : C.instance list, cons : (string * coninfo) list, fields : (string * fieldinfo) list,
+               methods : (string * methodinfo) list}
+
+  (* the module of an entity's key, `space home TAB name` *)
+  fun homeOfKey k =
+    case String.fields (fn c => c = #"\t") k of
+      [sh, _] => if size sh > 1 then String.extract (sh, 1, NONE) else ""
+    | _ => ""
+
+  fun part (env : env, mine : string -> bool) : part =
+    let
+      fun own m = List.filter (fn (k, _) => mine (homeOfKey k)) (M.listItems m)
+    in
+      {values = own (#values env), tycons = List.map #2 (own (#tycons env)),
+       classes = List.filter (fn (c : C.class) => mine (homeOfKey (#key c))) (C.classList (#classes env)),
+       instances = List.filter (fn (i : C.instance) => mine (#home i)) (C.instances (#classes env)),
+       cons = own (#cons env), fields = own (#fields env), methods = own (#methods env)}
+    end
+
+  fun extend (env : env, p : part) : env =
+    let
+      fun add (m, kvs) = List.foldl (fn ((k, v), m) => M.insert (m, k, v)) m kvs
+    in
+      {values = add (#values env, #values p),
+       tycons = List.foldl (fn (t : K.tycon, m) => M.insert (m, #key t, t)) (#tycons env) (#tycons p),
+       classes = List.foldl (fn (i, e) => C.addInstance (e, i))
+                   (List.foldl (fn (c, e) => C.addClass (e, c)) (#classes env) (#classes p)) (#instances p),
+       cons = add (#cons env, #cons p), fields = add (#fields env, #fields p), methods = add (#methods env, #methods p)}
+    end
+
   (* ---- the built-in constructors ---- *)
 
   val listScheme : T.scheme = {vars = 1, ctx = [], ty = T.list (T.TGen 0)}
@@ -98,8 +131,7 @@ struct
   val counter = ref 0
   fun fresh prefix = (counter := !counter + 1; prefix ^ Int.toString (!counter))
 
-  fun renumber n =
-    if !counter >= n then raise General.Fail "HsInfer.renumber: a variable has had that number" else (counter := n; T.renumber n)
+  fun renumber n = (if !counter < n then counter := n else (); T.renumber n)
 
   (* the environment of the unit being checked *)
   val genv : env ref = ref (initial {primitives = []})

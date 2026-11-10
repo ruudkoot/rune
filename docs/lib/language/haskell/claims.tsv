@@ -27,6 +27,7 @@ HS_LINT	signature			required	declared	lib/language/haskell/hslint_sig.sml
 HS_LITERATE	signature			required	declared	lib/language/haskell/literate_sig.sml
 HS_MATCH	signature			required	declared	lib/language/haskell/match_sig.sml
 HS_MODULES	signature			required	declared	lib/language/haskell/modules_sig.sml
+HS_MOD_IFACE	signature			required	declared	lib/language/haskell/modiface_sig.sml
 HS_PARSER	signature			required	declared	lib/language/haskell/parser_sig.sml
 HS_PRINT	signature			required	declared	lib/language/haskell/print_sig.sml
 HS_RENAME	signature			required	declared	lib/language/haskell/rename_sig.sml
@@ -35,6 +36,7 @@ HS_SOURCE	signature			required	declared	lib/language/haskell/source_sig.sml
 HS_STRING_MAP	signature			required	declared	lib/language/haskell/strmap_sig.sml
 HS_TOKEN	signature			required	declared	lib/language/haskell/token_sig.sml
 HS_TYPES	signature			required	declared	lib/language/haskell/types_sig.sml
+HS_USAGE	signature			required	declared	lib/language/haskell/usage_sig.sml
 Core	structure	CORE		required	ascribed	lib/language/haskell/core.sml
 CoreGen	structure	CORE_GEN		required	ascribed	lib/language/haskell/coregen.sml
 CoreInterp	structure	CORE_INTERP		required	ascribed	lib/language/haskell/coreinterp.sml
@@ -62,6 +64,7 @@ HsLexer	structure	HS_LEXER		required	claimed	lib/language/haskell/lexer.sml
 HsLint	structure	HS_LINT		required	claimed	lib/language/haskell/hslint.sml
 HsLiterate	structure	HS_LITERATE		required	claimed	lib/language/haskell/literate.sml
 HsMatch	structure	HS_MATCH		required	claimed	lib/language/haskell/match.sml
+HsModIface	structure	HS_MOD_IFACE		required	claimed	lib/language/haskell/modiface.sml
 HsModules	structure	HS_MODULES		required	claimed	lib/language/haskell/modules.sml
 HsParser	structure	HS_PARSER		required	claimed	lib/language/haskell/parser.sml
 HsPrint	structure	HS_PRINT		required	claimed	lib/language/haskell/print.sml
@@ -71,3 +74,4 @@ HsSource	structure	HS_SOURCE		required	claimed	lib/language/haskell/source.sml
 HsStringMap	structure	HS_STRING_MAP		required	claimed	lib/language/haskell/strmap.sml
 HsToken	structure	HS_TOKEN		required	claimed	lib/language/haskell/token.sml
 HsTypes	structure	HS_TYPES		required	claimed	lib/language/haskell/types.sml
+HsUsage	structure	HS_USAGE		required	claimed	lib/language/haskell/usage.sml

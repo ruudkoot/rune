@@ -39,8 +39,8 @@ struct
 
   fun rhc () = fromRoot "bin/rhc"
 
-  (* the first line where `a` and `b` differ *)
-  fun firstDifference (a, b) =
+  (* the first line where `a` and `b` differ, `a` from `way`, `b` whole *)
+  fun firstDifferenceBy way (a, b) =
     let
       fun go (n, x :: xs, y :: ys) = if x = y then go (n + 1, xs, ys) else (n, x, y)
         | go (n, x :: _, []) = (n, x, "(nothing)")
@@ -48,13 +48,16 @@ struct
         | go (n, [], []) = (n, "", "")
       val (n, x, y) = go (1, String.fields (fn c => c = #"\n") a, String.fields (fn c => c = #"\n") b)
     in
-      "line " ^ Int.toString n ^ ": `" ^ x ^ "` from the saved world, `" ^ y ^ "` whole"
+      "line " ^ Int.toString n ^ ": `" ^ x ^ "` " ^ way ^ ", `" ^ y ^ "` whole"
     end
 
-  (* a program checked both ways *)
-  fun compareOne (kind, p : Lang.program) =
+  val firstDifference = firstDifferenceBy "from the saved world"
+
+  (* a program checked both ways: `way`, with `flags`, and whole; the
+     family's jobs are `family/KIND/...` *)
+  fun compareWith {family : string, way : string, flags : string list} (kind, p : Lang.program) =
     let
-      val out = run ^ "/hs-world/" ^ kind ^ "/" ^ #name p
+      val out = run ^ "/" ^ String.translate (fn #"/" => "-" | c => str c) family ^ "/" ^ kind ^ "/" ^ #name p
       val () = mkdirs out
       val cargs = words (#base p ^ ".cargs")
       fun check (tag, flags) =
@@ -65,16 +68,18 @@ struct
         in
           (status, read (file ^ ".out"), read (file ^ ".err"))
         end
-      val (s1, o1, e1) = check ("world", ["--lint=2"])
+      val (s1, o1, e1) = check ("way", flags @ ["--lint=2"])
       val (s2, o2, e2) = check ("whole", ["--whole", "--lint=2"])
-      val what = "hs/world/" ^ kind ^ "/" ^ #name p
+      val what = family ^ "/" ^ kind ^ "/" ^ #name p
     in
       if s1 <> s2 then
-        fail (what ^ ": status " ^ Int.toString s1 ^ " from the saved world, " ^ Int.toString s2 ^ " whole")
-      else if o1 <> o2 then fail (what ^ ": standard output: " ^ firstDifference (o1, o2))
-      else if e1 <> e2 then fail (what ^ ": standard error: " ^ firstDifference (e1, e2))
+        fail (what ^ ": status " ^ Int.toString s1 ^ " " ^ way ^ ", " ^ Int.toString s2 ^ " whole")
+      else if o1 <> o2 then fail (what ^ ": standard output: " ^ firstDifferenceBy way (o1, o2))
+      else if e1 <> e2 then fail (what ^ ": standard error: " ^ firstDifferenceBy way (e1, e2))
       else ()
     end
+
+  val compareOne = compareWith {family = "hs/world", way = "from the saved world", flags = []}
 
   fun shardOf (kind, k, n) =
     let

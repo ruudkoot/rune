@@ -94,6 +94,7 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_LITERATE`](sig/HS_LITERATE.md) | Literate Haskell (the Report's section 9.4): the program text of a literate file. |
 | [`HS_MATCH`](sig/HS_MATCH.md) | Pattern matching in the Report's order (the haskell98 roadmap's M15, D34), and decision trees in Sestoft's order as an option. |
 | [`HS_MODULES`](sig/HS_MODULES.md) | The names of Haskell 98's modules (the Report's chapter 5; the haskell98 roadmap's D29, D30): what each module defines, what it exports, and what is in scope in it, over a group of modules that import one another. |
+| [`HS_MOD_IFACE`](sig/HS_MOD_IFACE.md) | A module's interface as the renamer and the checker make it (the haskell98 roadmap's M21, D44): what a client of the module needs of it to be named and checked against it in place of its source, by entity, and the fingerprints a store's usages compare (E13's H5, H6). HsIface, rhc's interface of a unit, holds one for each of its modules beside its Core, and codes them. |
 | [`HS_PARSER`](sig/HS_PARSER.md) | The parser of Haskell 98: recursive descent over the grammar of the Report's section 9.5, on the layout of [`HsLayout`](str/HsLayout.md) (the haskell98 roadmap's D27). |
 | [`HS_PRINT`](sig/HS_PRINT.md) | Printers of Haskell 98's abstract syntax (the haskell98 roadmap's D28). |
 | [`HS_RENAME`](sig/HS_RENAME.md) | Haskell 98's renamer (the haskell98 roadmap's M12): every name of a module's tree resolved to what it stands for, in the scope that [`HsModules`](str/HsModules.md) gives the module and the scopes its own bindings make. |
@@ -102,6 +103,7 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | Maps keyed by strings, as the front end's scopes, exports and tables need them: persistent, ordered by the keys, and balanced (red-black trees, inserting only), so that a fold visits the keys in order and a result does not depend on the order things were added. |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | The lexemes of Haskell 98 (the Report's chapter 2 and section 9.2), with what lies between them. |
 | [`HS_TYPES`](sig/HS_TYPES.md) | The types of Haskell 98's checker (the haskell98 roadmap's M13, D31): kinds, types with unification variables, predicates and schemes, and first-order unification with levels. |
+| [`HS_USAGE`](sig/HS_USAGE.md) | What a compile of a unit reads of the units it imports (the haskell98 roadmap's M21, E13's obligations H1, H2, H7 and H9), noted where the renamer, the checker and the translations read it, so that a store's entry of the unit is used only where each read gives now what it gave then. A read is noted found or not: a name a module looks up and does not find is read too, since an import that comes to export it changes the module (5.5.2). The note is a no-op until a driver sets it (rhc's, src/rhc/iface.sml). |
 
 ## Not yet assigned to an area
 

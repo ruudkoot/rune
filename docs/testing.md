@@ -740,6 +740,20 @@ shards nightly, and in make check `accept/sample`, `errors/sample` and
 `RUNE_LINT=2`, so that HsLint replays every record of the library once. A
 mutant's tree (`hs-mutants`) has no image, so a mutant goes the whole way.
 
+**Interfaces and usages** (`src/rhc/iface.sml`, `lib/language/haskell`'s
+`modiface.sml` and `usage.sml`, the roadmap's M21; `tests/runner/hsiface.sml`).
+A module's interface is what the renamer and the checker leave of it, and a
+unit's compile notes what it reads of its imports, found or not. The jobs
+`hs/iface/*`: `units/accept/K-of-4`, `units/errors/K-of-4` and
+`units/lang/K-of-4` check every program of the directory group by group from
+the interfaces of the groups before it (`bin/rhc --typecheck-only
+--by-interface`), to what a whole check prints, nightly; `fingerprints/CASE` holds each case of
+`tests/hs/iface/fingerprints`, a program before and after an edit, to the
+items its `moves` lists as moving (`bin/rhc --dump-iface`), every other
+staying; `usages/NAME` each program of `tests/hs/iface/usages` to its
+`.usages`, what `bin/rhc --dump-usages` says it reads, written again with
+`--accept`.
+
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
 the independent check of rhc's types, as AstLint is Rune's. Its first part
