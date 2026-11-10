@@ -16,7 +16,14 @@
    too; or `REFUSED FILE:LINE:COL: MESSAGE` and status 1 where it refuses
    the program. Until the checker of M13 lands, the compile goes no further
    than names, and HsLint is held to the programs' expectations instead
-   (tests/runner/hslint.sml). *)
+   (tests/runner/hslint.sml).
+
+   `--hslint-claims=FILE` holds the inference to a record's claims in the
+   dump's form, each difference refused by the rule it breaks
+   (`[rule1] ...`); `RHC_HSLINT_FAULT=RULE` reads the first claim that RULE
+   checks corrupted, for the test that each rule refuses its fault
+   (`hs/hslint/faults`), and `--hslint-rules` names the rules. Once the
+   checker's evidence records exist (M13), they are its claims. *)
 structure RhcLint =
 struct
   structure G = RhcGraph
@@ -54,12 +61,34 @@ struct
   fun infer (g, r, cycleDefault) =
     HsLint.infer {groups = groups (g, r), main = mainOf g, cycleDefault = cycleDefault}
 
-  (* the check at level 2: a refusal is a bug of the compile's *)
+  (* --hslint-claims=FILE: a record's claims to hold the inference to, in
+     the dump's form, until the checker's evidence records are its claims
+     (M13) *)
+  val claims : string option ref = ref NONE
+
+  fun readFile path =
+    let val ins = TextIO.openIn path
+    in TextIO.inputAll ins before TextIO.closeIn ins end
+
+  (* the check at level 2: a refusal is a bug of the compile's; where claims
+     are given, each held to what the inference found, and
+     RHC_HSLINT_FAULT=RULE reads the first claim RULE checks corrupted *)
   fun check (g : G.graph, r : RhcNames.result, cycleDefault : bool) =
     Pass.checkAt ("hslint", 2)
-      (fn () => ignore (infer (g, r, cycleDefault))
-                handle HsLint.Refused (span, msg) => raise Error.Bug (place span ^ ": " ^ msg))
+      (fn () =>
+         let val report = infer (g, r, cycleDefault)
+         in
+           case !claims of
+             SOME file =>
+               HsLint.compare (report, HsLint.claims (readFile file), fn sp => getOpt (lineColumn sp, "0:0"),
+                               getOpt (OS.Process.getEnv "RHC_HSLINT_FAULT", ""))
+           | NONE => ()
+         end
+         handle HsLint.Refused (span, msg) => raise Error.Bug (place span ^ ": " ^ msg))
       ()
+
+  (* --hslint-rules: each rule of HsLint's comparison and what it holds *)
+  fun rules () = (List.app (fn (r, what) => print (r ^ "\t" ^ what ^ "\n")) HsLint.rules; OS.Process.success)
 
   (* --dump-hslint *)
   fun dump (g : G.graph, r : RhcNames.result, cycleDefault : bool, library : bool) : OS.Process.status =

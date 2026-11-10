@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 9 of 9 entries documented |
+| Documentation | 14 of 14 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint\_sig.sml](../../../../../lib/language/haskell/hslint_sig.sml) |
 
@@ -39,13 +39,20 @@ program the compile accepts is a bug of rhc's.
 signature HS_LINT =
 sig
   type <a href="#type-module">module</a> = {<a href="#fld-module.id">id</a> : string, <a href="#fld-module.ast">ast</a> : HsAst.module, <a href="#fld-module.library">library</a> : bool}
-  type <a href="#type-binding">binding</a> = {<a href="#fld-binding.module">module</a> : string, <a href="#fld-binding.name">name</a> : string, <a href="#fld-binding.scheme">scheme</a> : string, <a href="#fld-binding.signed">signed</a> : bool, <a href="#fld-binding.span">span</a> : HsSource.span}
-  type <a href="#type-default">default</a> = {<a href="#fld-default.module">module</a> : string, <a href="#fld-default.span">span</a> : HsSource.span, <a href="#fld-default.preds">preds</a> : string, <a href="#fld-default.choice">choice</a> : string}
+  type <a href="#type-binding">binding</a> = {<a href="#fld-binding.module">module</a> : string, <a href="#fld-binding.name">name</a> : string, <a href="#fld-binding.scheme">scheme</a> : string, <a href="#fld-binding.signed">signed</a> : bool, <a href="#fld-binding.restricted">restricted</a> : bool,
+                  <a href="#fld-binding.span">span</a> : HsSource.span}
+  type <a href="#type-default">default</a> = {<a href="#fld-default.module">module</a> : string, <a href="#fld-default.span">span</a> : HsSource.span, <a href="#fld-default.preds">preds</a> : string, <a href="#fld-default.choice">choice</a> : string, <a href="#fld-default.ruletwo">ruleTwo</a> : bool}
   type <a href="#type-kind">kind</a> = {<a href="#fld-kind.module">module</a> : string, <a href="#fld-kind.name">name</a> : string, <a href="#fld-kind.kind">kind</a> : string}
+  type <a href="#type-class_">class_</a> = {<a href="#fld-class_.name">name</a> : string, <a href="#fld-class_.numeric">numeric</a> : bool, <a href="#fld-class_.standard">standard</a> : bool}
   type <a href="#type-derived">derived</a> = {<a href="#fld-derived.module">module</a> : string, <a href="#fld-derived.instance">instance</a> : string}
-  type <a href="#type-report">report</a> = {<a href="#fld-report.bindings">bindings</a> : binding list, <a href="#fld-report.defaults">defaults</a> : default list, <a href="#fld-report.kinds">kinds</a> : kind list, <a href="#fld-report.derived">derived</a> : derived list}
+  type <a href="#type-report">report</a> = {<a href="#fld-report.bindings">bindings</a> : binding list, <a href="#fld-report.defaults">defaults</a> : default list, <a href="#fld-report.kinds">kinds</a> : kind list, <a href="#fld-report.derived">derived</a> : derived list,
+                 <a href="#fld-report.classes">classes</a> : class_ list}
   exception <a href="#exn-refused">Refused</a> of HsSource.span * string
   val <a href="#val-infer">infer</a> : {<a href="#fld-infer.groups">groups</a> : module list list, <a href="#fld-infer.main">main</a> : string option, <a href="#fld-infer.cycledefault">cycleDefault</a> : bool} -&gt; report
+  type <a href="#type-claims">claims</a>
+  val <a href="#val-claims">claims</a> : string -&gt; claims
+  val <a href="#val-rules">rules</a> : (string * string) list
+  val <a href="#val-compare">compare</a> : report * claims * (HsSource.span -&gt; string) * string -&gt; unit
   val <a href="#val-dump">dump</a> : report * (HsSource.span -&gt; string) * bool -&gt; string
 end
 </pre>
@@ -69,13 +76,15 @@ one of rhc's library's.
 ### <a name="type-binding"></a>`binding`
 
 ```sml
-type binding = {module : string, name : string, scheme : string, signed : bool, span : HsSource.span}
+type binding = {module : string, name : string, scheme : string, signed : bool, restricted : bool,
+                span : HsSource.span}
 ```
 
 A binding of the top level as the second inference left it: its
 module, its name, its type as text, whether a signature declared it.
 
-The type is written as the Report writes one, `Eq a => [a] -> a -> Bool`.
+`restricted` is whether its group is restricted (4.5.5, Rule 1). The
+type is written as the Report writes one, `Eq a => [a] -> a -> Bool`.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -83,16 +92,19 @@ The type is written as the Report writes one, `Eq a => [a] -> a -> Bool`.
 | <a name="fld-binding.name"></a>`name` | `string` |  |
 | <a name="fld-binding.scheme"></a>`scheme` | `string` |  |
 | <a name="fld-binding.signed"></a>`signed` | `bool` |  |
+| <a name="fld-binding.restricted"></a>`restricted` | `bool` |  |
 | <a name="fld-binding.span"></a>`span` | `HsSource.span` |  |
 
 ### <a name="type-default"></a>`default`
 
 ```sml
-type default = {module : string, span : HsSource.span, preds : string, choice : string}
+type default = {module : string, span : HsSource.span, preds : string, choice : string, ruleTwo : bool}
 ```
 
 A default the second inference chose (4.3.4): the module, where, the
 predicates it resolved and the type, as text.
+
+`ruleTwo` is whether Rule 2 chose it, where the module was inferred.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -100,6 +112,7 @@ predicates it resolved and the type, as text.
 | <a name="fld-default.span"></a>`span` | `HsSource.span` |  |
 | <a name="fld-default.preds"></a>`preds` | `string` |  |
 | <a name="fld-default.choice"></a>`choice` | `string` |  |
+| <a name="fld-default.ruletwo"></a>`ruleTwo` | `bool` |  |
 
 ### <a name="type-kind"></a>`kind`
 
@@ -115,6 +128,20 @@ the module, the name and the kind, as text.
 | <a name="fld-kind.module"></a>`module` | `string` |  |
 | <a name="fld-kind.name"></a>`name` | `string` |  |
 | <a name="fld-kind.kind"></a>`kind` | `string` |  |
+
+### <a name="type-class_"></a>`class_`
+
+```sml
+type class_ = {name : string, numeric : bool, standard : bool}
+```
+
+A class by its name: whether it is numeric and standard (4.3.4).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-class_.name"></a>`name` | `string` |  |
+| <a name="fld-class_.numeric"></a>`numeric` | `bool` |  |
+| <a name="fld-class_.standard"></a>`standard` | `bool` |  |
 
 ### <a name="type-derived"></a>`derived`
 
@@ -133,11 +160,12 @@ the module of its type, and the instance as text, `Eq a => Eq (T a)`.
 ### <a name="type-report"></a>`report`
 
 ```sml
-type report = {bindings : binding list, defaults : default list, kinds : kind list, derived : derived list}
+type report = {bindings : binding list, defaults : default list, kinds : kind list, derived : derived list,
+               classes : class_ list}
 ```
 
-What the second inference found: bindings, defaults, kinds and
-derived instances.
+What the second inference found: bindings, defaults, kinds, derived
+instances and classes.
 
 The bindings of the top level of every module and the defaults are in
 the order it met them; the kinds are of the type constructors and the
@@ -149,6 +177,7 @@ classes.
 | <a name="fld-report.defaults"></a>`defaults` | `default list` |  |
 | <a name="fld-report.kinds"></a>`kinds` | `kind list` |  |
 | <a name="fld-report.derived"></a>`derived` | `derived list` |  |
+| <a name="fld-report.classes"></a>`classes` | `class_ list` |  |
 
 ### <a name="exn-refused"></a>`Refused`
 
@@ -182,6 +211,49 @@ the second inference finds.
 | <a name="fld-infer.groups"></a>`groups` | `module list list` |  |
 | <a name="fld-infer.main"></a>`main` | `string option` |  |
 | <a name="fld-infer.cycledefault"></a>`cycleDefault` | `bool` |  |
+
+### <a name="type-claims"></a>`claims`
+
+```sml
+type claims
+```
+
+What a record claims of a program, in the form [`dump`](#val-dump) prints.
+
+The claims are kinds, derived instances, the types of the bindings of
+its modules' top levels and the defaults.
+
+### <a name="val-claims"></a>`claims`
+
+```sml
+val claims : string -> claims
+```
+
+`claims text` is the claims of `text`, lines in the form of [`dump`](#val-dump);
+a line of another form claims nothing.
+
+### <a name="val-rules"></a>`rules`
+
+```sml
+val rules : (string * string) list
+```
+
+[`rules`](#val-rules) is each rule of [`compare`](#val-compare) with what it holds, its name being
+the first word of its breach's message, in brackets: `[rule1] ...`.
+
+### <a name="val-compare"></a>`compare`
+
+```sml
+val compare : report * claims * (HsSource.span -> string) * string -> unit
+```
+
+`compare (report, claims, where_, fault)` holds the claims to the
+report, of the program's modules, `where_` giving a default's place.
+
+`fault`, a rule's name or "", reads the first claim that rule checks
+corrupted, so that the rule must refuse it.
+
+**Raises** [`Refused`](#exn-refused) at the first claim a rule refuses.
 
 ### <a name="val-dump"></a>`dump`
 

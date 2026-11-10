@@ -84,12 +84,14 @@ struct
   val current = ref ""
   val inLibrary = ref false
 
-  (* A default the inference chose: where, the predicates and the type. *)
-  type default = {module : string, span : HsSource.span, preds : T.pred list, choice : T.ty}
+  (* A default the inference chose: where, the predicates and the type,
+     and whether Rule 2 chose it, where the module was inferred. *)
+  type default = {module : string, span : HsSource.span, preds : T.pred list, choice : T.ty, ruleTwo : bool}
   val chosen : default list ref = ref []
 
-  (* A binding of the top level as the inference left it. *)
-  type binding = {module : string, id : T.id, scheme : T.scheme, signed : bool, span : HsSource.span}
+  (* A binding of the top level as the inference left it, and whether its
+     group is restricted (Rule 1). *)
+  type binding = {module : string, id : T.id, scheme : T.scheme, signed : bool, restricted : bool, span : HsSource.span}
   val bindings : binding list ref = ref []
 
   fun reset () = (preds := []; tops := M.empty; topMono := []; current := ""; inLibrary := false; chosen := [];
@@ -700,7 +702,8 @@ struct
 
   and bindDefaults (span, defs) =
     List.app (fn (v, qs, t) =>
-                (chosen := !chosen @ [{module = !current, span = span, preds = List.map (generic v) qs, choice = t}];
+                (chosen := !chosen @ [{module = !current, span = span, preds = List.map (generic v) qs, choice = t,
+                                       ruleTwo = false}];
                  T.unify (T.TVar v, t)))
       defs
 
@@ -710,7 +713,7 @@ struct
   (* `tiGroup (env, group, sigs)`: a declaration group, its explicit
      bindings checked after its implicit ones are inferred as one list;
      its deferred predicates and the schemes of what it binds *)
-  and tiGroup (env : env, group : bind list, sigs) : T.pred list * (T.id * T.scheme * bool) list =
+  and tiGroup (env : env, group : bind list, sigs) : T.pred list * (T.id * T.scheme * bool) list * bool =
     let
       fun sigOf id = Option.map #1 (M.find (sigs, T.idKey id))
       fun signed id = isSome (sigOf id)
@@ -769,7 +772,7 @@ struct
         List.map (fn (id, sc) => (id, sc, true)) declared
         @ List.mapPartial (fn (id, sc) => if signed id then NONE else SOME (id, sc, false)) inferred
     in
-      (ds1 @ ds2 @ ds3, schemes)
+      (ds1 @ ds2 @ ds3, schemes, restricted)
     end
 
   (* tiImpls, in the conformant form: a restricted group's constrained
@@ -850,7 +853,7 @@ struct
       val sigs = sigsOf decls
       fun go (env, []) = env
         | go (env, group :: rest) =
-            let val (ds, schemes) = tiGroup (env, group, sigs)
+            let val (ds, schemes, _) = tiGroup (env, group, sigs)
             in push ds; go (extend (env, List.map (fn (id, sc, _) => (T.idKey id, sc)) schemes), rest) end
     in
       go (env, groupsOf (bindsOf decls))
@@ -903,7 +906,7 @@ struct
         let
           val (mid, lib) = whose (hd bs)
           val () = (current := mid; inLibrary := lib; T.ruleTwo := (if cycleDefault then "" else mid))
-          val (ds, schemes) = tiGroup (empty, bs, sigs)
+          val (ds, schemes, restricted) = tiGroup (empty, bs, sigs)
           val () = deferred := !deferred @ List.map (fn p => (p, mid, bindSpan (hd bs))) ds
           val () = List.app (fn (id, sc, signed) =>
                                (tops := M.insert (!tops, T.idKey id, sc);
@@ -913,7 +916,8 @@ struct
                      schemes
         in
           bindings := !bindings @ List.map (fn (id, sc, signed) => {module = #qual id, id = id, scheme = sc, signed = signed,
-                                                                    span = bindSpan (hd bs)}) schemes
+                                                                    restricted = restricted, span = bindSpan (hd bs)})
+                                    schemes
         end
       val () = List.app group' (groupsOf (List.map #1 tagged))
       fun libraryOf mid = Vector.exists (fn {id, library, ...} => id = mid andalso library) mods
@@ -1043,7 +1047,7 @@ struct
              current := hd ms;
              case C.candidates (ds, (v, qs)) of
                t :: _ => (chosen := !chosen @ [{module = hd ms, span = sp, preds = List.map (generic v) (C.simplify qs),
-                                                choice = t}];
+                                                choice = t, ruleTwo = true}];
                           T.unify (T.TVar v, t))
              | [] => refuseWith (sp, fn () => "Rule 2: a monomorphic type variable left when the module is inferred, " ^
                                               "constrained by " ^ String.concatWith ", " (List.map (T.showPred o T.zonkPred) qs) ^

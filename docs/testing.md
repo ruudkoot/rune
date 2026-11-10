@@ -664,7 +664,14 @@ since a job of `bin/rune-test` costs several times what rhc does on one
 program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. A program on
 which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
 why, and its job holds the disagreement to still being there, so that a fix
-on either side is seen.
+on either side is seen. HsLint also holds the inference to a record's
+claims of it, in the dump's form (`--hslint-claims=FILE`), each difference
+refused by the rule it breaks, `[rule1] ...` (`bin/rhc --hslint-rules`
+names them); the checker's evidence records are to be its claims (M13).
+`faults` holds each rule to refusing its fault, as `astlintFaults` holds
+AstLint's: `tests/hs/hslint/faults.hs`, held to its own expected dump, is
+accepted, and with `RHC_HSLINT_FAULT=RULE`, which reads the first claim
+RULE checks corrupted, refused with `[RULE]`.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants

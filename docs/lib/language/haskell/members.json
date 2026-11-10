@@ -931,15 +931,15 @@
     {
      "kind": "type",
      "name": "binding",
-     "spec": "type binding = {module : string, name : string, scheme : string, signed : bool, span : HsSource.span}",
-     "doc": "A binding of the top level as the second inference left it: its\nmodule, its name, its type as text, whether a signature declared it.\n\nThe type is written as the Report writes one, `Eq a => [a] -> a -> Bool`.\n\n",
+     "spec": "type binding = {module : string, name : string, scheme : string, signed : bool, restricted : bool,\n                span : HsSource.span}",
+     "doc": "A binding of the top level as the second inference left it: its\nmodule, its name, its type as text, whether a signature declared it.\n\n`restricted` is whether its group is restricted (4.5.5, Rule 1). The\ntype is written as the Report writes one, `Eq a => [a] -> a -> Bool`.\n\n",
      "page": "sig/HS_LINT.md#type-binding"
     },
     {
      "kind": "type",
      "name": "default",
-     "spec": "type default = {module : string, span : HsSource.span, preds : string, choice : string}",
-     "doc": "A default the second inference chose (4.3.4): the module, where, the\npredicates it resolved and the type, as text.\n\n",
+     "spec": "type default = {module : string, span : HsSource.span, preds : string, choice : string, ruleTwo : bool}",
+     "doc": "A default the second inference chose (4.3.4): the module, where, the\npredicates it resolved and the type, as text.\n\n`ruleTwo` is whether Rule 2 chose it, where the module was inferred.\n\n",
      "page": "sig/HS_LINT.md#type-default"
     },
     {
@@ -951,6 +951,13 @@
     },
     {
      "kind": "type",
+     "name": "class_",
+     "spec": "type class_ = {name : string, numeric : bool, standard : bool}",
+     "doc": "A class by its name: whether it is numeric and standard (4.3.4).\n\n",
+     "page": "sig/HS_LINT.md#type-class_"
+    },
+    {
+     "kind": "type",
      "name": "derived",
      "spec": "type derived = {module : string, instance : string}",
      "doc": "A derived instance with the context inferred for it (4.3.3, 10.1):\nthe module of its type, and the instance as text, `Eq a => Eq (T a)`.\n\n",
@@ -959,8 +966,8 @@
     {
      "kind": "type",
      "name": "report",
-     "spec": "type report = {bindings : binding list, defaults : default list, kinds : kind list, derived : derived list}",
-     "doc": "What the second inference found: bindings, defaults, kinds and\nderived instances.\n\nThe bindings of the top level of every module and the defaults are in\nthe order it met them; the kinds are of the type constructors and the\nclasses.\n\n",
+     "spec": "type report = {bindings : binding list, defaults : default list, kinds : kind list, derived : derived list,\n               classes : class_ list}",
+     "doc": "What the second inference found: bindings, defaults, kinds, derived\ninstances and classes.\n\nThe bindings of the top level of every module and the defaults are in\nthe order it met them; the kinds are of the type constructors and the\nclasses.\n\n",
      "page": "sig/HS_LINT.md#type-report"
     },
     {
@@ -976,6 +983,34 @@
      "spec": "val infer : {groups : module list list, main : string option, cycleDefault : bool} -> report",
      "doc": "`infer {groups, main, cycleDefault}` is the report of the second\ninference over the program whose groups of modules are `groups`.\n\nThe groups are the strongly connected ones, dependencies first;\n`main` is the identity of the module whose `main` must have the type\n`IO t` (5), if any; and `cycleDefault` is whether a group's modules\nshare one `default` and Rule 2 closes at the group's end (D30's\n`--cycle-default=scc`) rather than each module's.\n\n**Raises** `Refused` at the first breach of the Report's static rules\nthe second inference finds.\n\n",
      "page": "sig/HS_LINT.md#val-infer"
+    },
+    {
+     "kind": "type",
+     "name": "claims",
+     "spec": "type claims",
+     "doc": "What a record claims of a program, in the form `dump` prints.\n\nThe claims are kinds, derived instances, the types of the bindings of\nits modules' top levels and the defaults.\n\n",
+     "page": "sig/HS_LINT.md#type-claims"
+    },
+    {
+     "kind": "val",
+     "name": "claims",
+     "spec": "val claims : string -> claims",
+     "doc": "`claims text` is the claims of `text`, lines in the form of `dump`;\na line of another form claims nothing.\n\n",
+     "page": "sig/HS_LINT.md#val-claims"
+    },
+    {
+     "kind": "val",
+     "name": "rules",
+     "spec": "val rules : (string * string) list",
+     "doc": "`rules` is each rule of `compare` with what it holds, its name being\nthe first word of its breach's message, in brackets: `[rule1] ...`.\n\n",
+     "page": "sig/HS_LINT.md#val-rules"
+    },
+    {
+     "kind": "val",
+     "name": "compare",
+     "spec": "val compare : report * claims * (HsSource.span -> string) * string -> unit",
+     "doc": "`compare (report, claims, where_, fault)` holds the claims to the\nreport, of the program's modules, `where_` giving a default's place.\n\n`fault`, a rule's name or \"\", reads the first claim that rule checks\ncorrupted, so that the rule must refuse it.\n\n**Raises** `Refused` at the first claim a rule refuses.\n\n",
+     "page": "sig/HS_LINT.md#val-compare"
     },
     {
      "kind": "val",

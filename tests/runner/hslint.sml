@@ -24,6 +24,13 @@
    FAIL for each program it fails, and `bin/rune-test hs-hslint-expect
    KIND NAME` judges one.
 
+   - `hs/hslint/faults`: each rule of HsLint's comparison refuses its fault
+     (as `astlintFaults` holds AstLint's): tests/hs/hslint/faults.hs, held
+     by `--hslint-claims` to its own expected dump, is accepted, and with
+     RHC_HSLINT_FAULT=RULE, which reads the first claim RULE checks
+     corrupted, refused with `lint after hslint` and `[RULE]`; and the
+     faults are the rules `bin/rhc --hslint-rules` names, both ways.
+
    A program on which HsLint and its expectation disagree is a finding: a
    reading, a bug of HsLint's, or a program that does not mean what it
    says. tests/hs/hslint/disagreements.tsv lists those not settled yet,
@@ -159,6 +166,50 @@ struct
 
   fun expectShard (kind, k, n) = List.app (fn (p : Lang.program) => expectOne (kind, #name p)) (shardOf (kind, k, n))
 
+  (* ---- the faults of the comparison's rules ---- *)
+
+  val faultProgram = dir ^ "/faults.hs"
+  val faultClaims = dir ^ "/faults.expected"
+
+  (* each rule's fault: the rule it must reach *)
+  val faults = ["kind", "derive", "binding", "rule1", "type", "numeric", "standard", "rule2", "default"]
+
+  fun faultsAll () =
+    let
+      val out = run ^ "/hs-hslint/faults"
+      val () = mkdirs out
+      fun rhcWith (fault, file) =
+        execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
+          {cmd = [fromRoot "bin/rhc", "--lint=2", "--typecheck-only", "--hslint-claims=" ^ faultClaims, faultProgram],
+           dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
+      val listed = out ^ "/rules"
+      val _ = exec {cmd = [fromRoot "bin/rhc", "--hslint-rules"], dir = SOME root, stdin = "", stdout = listed,
+                    stderr = listed ^ ".err", timeout = 300}
+      val rules = List.mapPartial (fn l => case String.fields (fn c => c = #"\t") l of r :: _ => SOME r | [] => NONE)
+                    (lines (read listed))
+      val clean = out ^ "/none.out"
+    in
+      if null rules then fail ("hs/hslint/faults: bin/rhc --hslint-rules names no rule: " ^ firstLine (listed ^ ".err")) else ();
+      List.app (fn r => if List.exists (fn f => f = r) faults then ()
+                        else fail ("hs/hslint/faults: the rule " ^ r ^ " has no fault")) rules;
+      List.app (fn f => if List.exists (fn r => r = f) rules then ()
+                        else fail ("hs/hslint/faults: the fault " ^ f ^ " is no rule of bin/rhc --hslint-rules")) faults;
+      if rhcWith ("", clean) = 0 then ()
+      else fail ("hs/hslint/faults: the program is refused with its own claims: " ^ firstLine clean);
+      List.app
+        (fn f =>
+           let
+             val file = out ^ "/" ^ f ^ ".out"
+             val status = rhcWith (f, file)
+             val text = read file
+           in
+             if status = 0 then fail ("hs/hslint/faults: " ^ f ^ ": accepted")
+             else if String.isSubstring "lint after hslint" text andalso String.isSubstring ("[" ^ f ^ "]") text then ()
+             else fail ("hs/hslint/faults: " ^ f ^ ": not refused by [" ^ f ^ "]: " ^ firstLine file)
+           end)
+        faults
+    end
+
   (* ---- the tree ---- *)
 
   fun job (name, cmd, timeout) =
@@ -193,12 +244,14 @@ struct
         [tagged (["check", "hs"] @ covers)
            (Test.requires ["rhc"]
               (Test.describe ""
-                 (dumps @ expect "accept" @ expect "lang" @ expect "errors")))]
+                 (dumps @ [job ("faults", cmd ^ "hs-hslint-faults", 1200)]
+                  @ expect "accept" @ expect "lang" @ expect "errors")))]
     end
 
   fun command args =
     case args of
       ["hs-hslint-dump", name, mode] => SOME (fn () => dumpOne (name, mode))
+    | ["hs-hslint-faults"] => SOME faultsAll
     | ["hs-hslint-expect", kind, name] => SOME (fn () => expectOne (kind, name))
     | ["hs-hslint-expect-shard", kind, kn] =>
         (case String.fields (fn c => c = #"-") kn of

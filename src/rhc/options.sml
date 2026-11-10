@@ -41,6 +41,9 @@ struct
     \                        FILE.hs... and its library, and its errors of names, sorted\n\
     \  --dump-hslint         print the type HsLint's second inference gives each binding of\n\
     \                        the top level of FILE.hs's program, and the defaults it chose\n\
+    \  --hslint-claims=FILE  at level 2, hold HsLint's inference to a record's claims, lines\n\
+    \                        of the dump's form; RHC_HSLINT_FAULT=RULE corrupts one, for tests\n\
+    \  --hslint-rules        print the name of each rule of HsLint's comparison, one a line\n\
     \  --names=least|greatest  the solution of a cycle's exports (D29): the least fixpoint,\n\
     \                        the default, or the greatest; chapter 5 is met by either\n\
     \  --cycle-default=module|scc  in a cycle of modules, each module's default declaration\n\

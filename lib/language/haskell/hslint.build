@@ -2,8 +2,9 @@
    rhc's types. Its second inference, a transliteration of Typing Haskell
    in Haskell: its types and unifier, its dependency analysis, its classes
    and context reduction, its kinds, its reading of a program's
-   declarations and its inference, each its own, sharing nothing with the
-   checker but the renamer of names.build. *)
+   declarations, its inference and its comparison with a record's claims,
+   each its own, sharing nothing with the checker but the renamer of
+   names.build. *)
 files
   hslint_types.sml
   hslint_scc.sml
@@ -11,6 +12,7 @@ files
   hslint_kinds.sml
   hslint_env.sml
   hslint_infer.sml
+  hslint_claims.sml
   hslint_sig.sml
   hslint.sml
 end

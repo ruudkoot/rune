@@ -24,7 +24,9 @@
    of the source, and status 1. The options of names: `--names=least` or
    `greatest` (D29), `--cycle-default=module` or `scc` (D30, which M13
    reads), `--dotted-names` (D35). At `--lint=2` (or `RUNE_LINT=2`) a
-   program whose names resolve is checked by HsLint too (RhcLint, M16). *)
+   program whose names resolve is checked by HsLint too (RhcLint, M16), held
+   to a record's claims with `--hslint-claims=FILE`; `rhc --hslint-rules`
+   names the rules of that comparison. *)
 structure RhcSyntax =
 struct
   fun eprint s = TextIO.output (TextIO.stdErr, s)
@@ -155,7 +157,8 @@ struct
       val modes = List.mapPartial modeOf args
       val files = List.filter isSource args
     in
-      if null modes andalso null files then NONE
+      if args = ["--hslint-rules"] then SOME RhcLint.rules
+      else if null modes andalso null files then NONE
       else
         SOME (fn () =>
           let
@@ -169,6 +172,9 @@ struct
               | "--dotted-names" => (dotted := true; true)
               | "--lint" => (Pass.lintGiven := SOME 2; true)
               | _ =>
+                  if String.isPrefix "--hslint-claims=" a then
+                    (RhcLint.claims := SOME (String.extract (a, size "--hslint-claims=", NONE)); true)
+                  else
                   if String.isPrefix "--names=" a then raise RhcOptions.Usage ("--names takes least or greatest: " ^ a)
                   else if String.isPrefix "--cycle-default=" a then
                     raise RhcOptions.Usage ("--cycle-default takes module or scc: " ^ a)
