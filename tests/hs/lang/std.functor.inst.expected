@@ -1,0 +1,11 @@
+([2,3],Just 2)
+2
+(True,True)
+([],Nothing)
+(True,True,True)
+True
+(Just [1,2],[[1,3],[2,3]],Just [2,4],Nothing)
+(Just 10,Nothing,Just ())
+1
+2
+ab

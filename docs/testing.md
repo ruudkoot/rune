@@ -514,9 +514,11 @@ each clause of the Haskell 98 Report: E9's 3,901, each with its `id`,
 `none`) and `how`, from a reading of the text that no program has checked
 yet, and three columns of rhc's: `status` (`Supported`, `Partial` or
 `Planned`, the words of [language.md](language.md)), `reading` (the R
-numbers of E9's readings that concern the row, which the roadmap's *What
-the Report says* cites) and `deviation` (empty, or the program that pins it,
-`DIR/NAME` from `tests/hs`). The table lands as data: only errata and
+numbers of the readings that concern the row: E9's R1 to R54, which the
+roadmap's *What the Report says* cites, and those after, each with its
+heading in `tests/hs/readings.md`, where the oracles part from the Report)
+and `deviation` (empty, or the program that pins it, `DIR/NAME` from
+`tests/hs`). The table lands as data: only errata and
 readings edit it, and no script lands to make it (`runner/migration-inventory`).
 Its text is the December 2002 Report with the published errata applied
 (D38): `tests/hs/errata.tsv` lists the page's 18 errata, each with the rows
@@ -548,8 +550,10 @@ rows it covers (a production's rows, a definition's), the readings it pins
 
 With those, the table's form: its header and the errata list's, no row or id
 twice, the classes, tests, statuses and sources of E9's columns, readings R1
-to R54, every row accounted for (3,901 and what the errata add), and every
-row whose text names an erratum listed by one, and back.
+to R54 or headed in `tests/hs/readings.md`, every row accounted for (3,901
+and what the errata add), and every row whose text names an erratum listed
+by one, and back. A program's first line ends at Haskell's first newline, a
+return, a line feed or a form feed.
 `hs/conformance/faults` plants each breach in a private tree and wants it
 refused, and a tree that keeps every rule, with a row of each class
 supported and a deviation pinned, accepted. A row leaves `Planned` when its

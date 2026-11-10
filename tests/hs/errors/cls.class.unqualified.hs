@@ -1,3 +1,4 @@
+-- rows: R71
 -- Report 4.3.1: the class declared is an unqualified tycls: not class M.C a.
 module Main (main) where
 

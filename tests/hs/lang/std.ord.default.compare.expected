@@ -1,0 +1,7 @@
+(LT,EQ,GT)
+(True,True,True)
+(True,True,True,False)
+1b 1a
+(True,True)
+[LT,GT,EQ,GT,LT,LT,GT,LT]
+(True,GT,True)
