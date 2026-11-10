@@ -464,6 +464,10 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   nothing must fail every program for its output (`hs/runner/silent/NAME`,
   whose judge is the run's turned round), as the oracle `jit` fails a run
   that prints nothing where it should.
+* **The oracle `jit`** (`tests/runner/oracles.sml`) takes the compiler and
+  the path a program's siblings are named from (`bin/rune-test jit-one-with
+  COMPILER BASE SOURCE`), and runs rhc's programs nightly, interpreted and in
+  every mode of the JIT (`hs/jit/NAME`), beside D56's three ways in `check`.
 
 **Round trips** (the roadmap's D28; `tests/runner/hsroundtrip.sml`). On every
 file of `tests/hs/lang`, `tests/hs/accept` and `tests/hs/roundtrip`

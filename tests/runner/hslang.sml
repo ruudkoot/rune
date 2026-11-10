@@ -25,7 +25,7 @@
    prints it. A stub VM that prints nothing must fail each program
    (`hs/runner/silent/NAME`, whose judge is the run's turned round), as the
    oracle jit fails a program that prints nothing where it should print
-   (Oracles.jitOne). *)
+   (Oracles.jitOne), which also runs rhc's programs nightly (`hs/jit/NAME`). *)
 structure HsLang =
 struct
   open Sh
@@ -204,9 +204,15 @@ struct
 
   (* ---- the tree *)
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
+  (* the oracle jit of Rune's programs (Oracles.jitOneWith) on rhc's:
+     interpreted and in each mode of the JIT, the same output, counts and
+     errors; nightly, with the ways beyond D56's three *)
+  fun jit (p : Lang.program) = Oracles.jobIn ("", #name p, ["jit-one-with", "bin/rhc", #base p, #src p], [], 1, 600, 3600)
   val tree =
     Test.describe ""
       [Lang.tree rhc,
+       Test.requires ["rhc"] (tagged (["nightly", "hs"] @ covers)
+                                (Test.describe "hs/jit" (List.map jit (Lang.programsOf (#lang rhc, suffixes, mains))))),
        tagged (runnerTags @ runnerCovers)
          (Test.describe "hs/runner"
             [Test.describe "silent" (List.map silent (Lang.programsOf (#lang stub, suffixes, mains))),
