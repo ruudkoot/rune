@@ -1,0 +1,25 @@
+(* The syntax of Haskell 98 (the haskell98 roadmap's M11): the lexer with
+   literate source, layout with closeImplicit, the parser to a tree that
+   keeps every token of the source, and its printers. It is written on the
+   Basis Library and lib/unicode alone, and is used by the library's
+   library.build. *)
+files
+  source_sig.sml
+  source.sml
+  char_sig.sml
+  char.sml
+  token_sig.sml
+  token.sml
+  literate_sig.sml
+  literate.sml
+  lexer_sig.sml
+  lexer.sml
+  layout_sig.sml
+  layout.sml
+  ast_sig.sml
+  ast.sml
+  parser_sig.sml
+  parser.sml
+  print_sig.sml
+  print.sml
+end

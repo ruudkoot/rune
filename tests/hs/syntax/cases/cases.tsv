@@ -1,0 +1,46 @@
+r2-record	accept	R2: `}` closes an implicit block in a record; 9.3 Note 3 alone says reject
+r2-let	accept	R2 in let braces
+comma-sig-in-paren	accept	a comma that belongs to the block, inside a bracket
+close-by-then	accept	then closes a block
+close-by-else	accept	else closes a block
+close-by-of	accept	of closes a block
+close-by-bar-guard	accept	| of the next guard closes a do
+close-by-bar-comp	accept	| after a complete alt closes the block
+guard-in-comp	accept	| after a pattern is a guard, no close; same tokens to its left
+r1-do-eq-eq	accept	R1: flat, so the parser accepts; `do {a == b} == c` per Note 5 needs fixity; rejected at resolution
+report-let-semi	accept	9.3 own example
+where-after-alts	accept	where at the column of the alts: ; then close
+let-in-do-same-col	reject	`in` at the do column: ; before it, and no statement can end in a let
+op-at-do-column	accept	; then an operator: the do closes
+case-in-op	accept	explicit case then operator
+let-trailing-semi	accept	`;` then `in`
+do-at-enclosing-col	reject	R3: Note 1, n = m gives an empty do
+nested-do-same-col	reject	R3: the same nested; GHC Haskell98 and Hugs accept
+tuple-closes	accept	, closes the block
+two-blocks-one-token	accept	) closes two blocks
+if-then-semi	reject	R12: then at the do column
+sig-in-block	accept	:: inside a block closed by )
+left-section-open-block	reject	the do cannot close after an operator
+qual-keyword	accept	R7: Just.let is Just . let
+enum-LT-dots	reject	R7: LT.. is a qualified operator, 6.3.4 notwithstanding
+enum-LT-space	accept	R7: with the space
+as-space	accept	the Report has no rule about spaces round @
+tilde-space	accept	nor round ~
+bang-op	accept	f !x defines (!)
+neg-section	accept	(- 1) is negation
+minus-after-op	accept	flat; refused at resolution, not parsing, as by GHC and MicroHs
+where-empty	accept	where with nothing after it
+class-no-where	accept	class with no body then a declaration at column 1
+tabs	accept	a tab goes to column 9
+dash-bar-op	accept	--| is an operator
+eof-comment	accept	R4: comment at end of file without a newline
+string-escapes	accept	longest ascii escape, gap, \&
+bad-tab-string	reject	a tab is not in string
+module-dot-chain	accept	M.N.x: modid is one conid, so this is M.N . x; the renamer refuses it
+where-brace-col1	reject	<n> before a `{` on a new line: ; at column 1 of an implicit block
+empty-case	reject	R13: case with no alternatives
+do-let-last	reject	do ending in let
+negative-literal-pat	accept	lpat6
+nplusk	accept	n+k in a case alt and a parenthesised lhs
+funlhs-paren	accept	( funlhs ) apat
+opdef-pat-binding	accept	x + 1 = defines +; (x+1) = is a pattern
