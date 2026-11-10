@@ -208,12 +208,67 @@ struct
 
   fun var (x, t) = (Core.Atom (Core.Var x), t)
 
+  (* e with the type variables of ts and the variables of xs replaced *)
+  fun subst (ts, xs) e =
+    let
+      fun ty t = if null ts then t else Core.substTy (ts, t)
+      fun atom (a as Core.Var x) = (case List.find (fn (y, _) => y = x) xs of SOME (_, b) => b | NONE => a)
+        | atom a = a
+      fun arg (Core.TyArg t) = Core.TyArg (ty t)
+        | arg (Core.ValArg a) = Core.ValArg (atom a)
+      fun binder (Core.ValBinder (x, t)) = Core.ValBinder (x, ty t)
+        | binder b = b
+      fun go e =
+        case e of
+          Core.Atom a => Core.Atom (atom a)
+        | Core.App (f, args) => Core.App (go f, List.map arg args)
+        | Core.Lam (bs, b) => Core.Lam (List.map binder bs, go b)
+        | Core.Let (x, t, r, b) => Core.Let (x, ty t, go r, go b)
+        | Core.LetRec (bs, b) => Core.LetRec (List.map (fn (x, t, r) => (x, ty t, go r)) bs, go b)
+        | Core.Case (sc, b, alts) =>
+            Core.Case (go sc, b, List.map (fn Core.AltCon (k, xs, r) => Core.AltCon (k, xs, go r)
+                                            | Core.AltLit (l, r) => Core.AltLit (l, go r)
+                                            | Core.AltUTuple (xs, r) => Core.AltUTuple (xs, go r)
+                                            | Core.AltDefault r => Core.AltDefault (go r)) alts)
+        | Core.Con (k, tys, atoms) => Core.Con (k, List.map ty tys, List.map atom atoms)
+        | Core.Prim (p, tys, atoms) => Core.Prim (p, List.map ty tys, List.map atom atoms)
+        | Core.UTuple atoms => Core.UTuple (List.map atom atoms)
+        | Core.Cast (b, t) => Core.Cast (go b, ty t)
+    in
+      go e
+    end
+
   fun app ((f, t), []) = (f, t)
     | app ((f, t), args) =
         let val r = applyType (t, args)
         in
           case f of
             Core.App (g, args0) => (Core.App (g, args0 @ args), r)
+          | Core.Lam (bs, body) =>
+              (* a lambda applied where it is made: its body with what it is
+                 given, every argument an atom, so nothing is copied *)
+              let
+                fun go (b :: bs, a :: args, ts, xs) =
+                      (case (b, a) of
+                         (Core.TyBinder (x, _), Core.TyArg u) => go (bs, args, (x, u) :: ts, xs)
+                       | (Core.ValBinder (x, _), Core.ValArg v) => go (bs, args, ts, (x, v) :: xs)
+                       | _ => NONE)
+                  | go (bs, args, ts, xs) = SOME (bs, args, ts, xs)
+              in
+                case go (bs, args, [], []) of
+                  SOME (left, more, ts, xs) =>
+                    let
+                      val body' = subst (ts, xs) body
+                      val e = case left of
+                                [] => body'
+                              | _ => (case subst (ts, []) (Core.Lam (left, Core.Atom (Core.Var "_"))) of
+                                        Core.Lam (left', _) => Core.Lam (left', body')
+                                      | _ => raise Fail "HsDsCore: a lambda")
+                    in
+                      (case more of [] => e | _ => Core.App (e, more), r)
+                    end
+                | NONE => (Core.App (f, args), r)
+              end
           | _ => (Core.App (f, args), r)
         end
 

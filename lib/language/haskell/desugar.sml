@@ -827,11 +827,13 @@ struct
           C.lam (List.map Core.TyBinder ks, C.fail ("exn_error", "rhc has no primitive " ^ name ^ why, body))
         end
     in
-      case CorePrim.find name of
-        SOME {ty, ...} => (V.toHaskell (primFunction (name, ty), want) handle Fail msg => stub (": " ^ msg))
+      (* the runtime's value first: where both have a name, the runtime's
+         is the primitive made IO-shaped *)
+      case C.valueType name of
+        SOME t => (V.toHaskell (C.var (name, t), want) handle Fail msg => stub (": " ^ msg))
       | NONE =>
-          case C.valueType name of
-            SOME t => (V.toHaskell (C.var (name, t), want) handle Fail msg => stub (": " ^ msg))
+          case CorePrim.find name of
+            SOME {ty, ...} => (V.toHaskell (primFunction (name, ty), want) handle Fail msg => stub (": " ^ msg))
           | NONE => stub ""
     end
 
