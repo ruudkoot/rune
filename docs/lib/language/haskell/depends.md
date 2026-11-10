@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 137 requirements between the 58 files become 77 arrows.
+library and not a wall of lines: the 142 requirements between the 60 files become 79 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(58)"]
+  a0["Languages<br>(60)"]
 ```
 
 ## Languages
@@ -76,18 +76,20 @@ flowchart TD
   n43["Core"]
   n44(["CORE_TEXT"])
   n45["CoreText"]
-  n46(["CORE_PRIM"])
-  n47["CorePrim"]
-  n48(["CORE_RUNTIME"])
-  n49["CoreRuntime"]
-  n50(["CORE_LINT"])
-  n51["CoreLint"]
-  n52(["CORE_INTERP"])
-  n53["CoreInterp"]
-  n54(["CORE_GEN"])
-  n55["CoreGen"]
-  n56(["CORE_TO_MID"])
-  n57["CoreToMid"]
+  n46(["CORE_PRIM_FAMILY"])
+  n47["CorePrimFamily"]
+  n48(["CORE_PRIM"])
+  n49["CorePrim"]
+  n50(["CORE_RUNTIME"])
+  n51["CoreRuntime"]
+  n52(["CORE_LINT"])
+  n53["CoreLint"]
+  n54(["CORE_INTERP"])
+  n55["CoreInterp"]
+  n56(["CORE_GEN"])
+  n57["CoreGen"]
+  n58(["CORE_TO_MID"])
+  n59["CoreToMid"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -147,24 +149,26 @@ flowchart TD
   n43 --> n42
   n44 --> n43
   n45 --> n44
-  n46 --> n43
   n47 --> n46
-  n47 --> n45
   n48 --> n43
+  n48 --> n47
   n49 --> n48
   n49 --> n45
   n50 --> n43
   n51 --> n50
-  n51 --> n47
+  n51 --> n45
   n52 --> n43
   n53 --> n52
-  n53 --> n47
+  n53 --> n49
   n54 --> n43
   n55 --> n54
-  n55 --> n45
+  n55 --> n49
   n56 --> n43
   n57 --> n56
-  n57 --> n47
+  n57 --> n45
+  n58 --> n43
+  n59 --> n58
+  n59 --> n49
 ```
 
 ---

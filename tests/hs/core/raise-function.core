@@ -1,0 +1,19 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A primitive at a function type, as M15's desugaring writes a failed match
+; of a function: raise at (-> Int Int) takes one argument, the exception,
+; and gives the function, whose application raises. Core to Mid takes as
+; many parameters of a primitive as it is given atoms (D's Core, 2026-11-10).
+(val partial (-> Int (-> Int Int))
+  (\ ((n Int))
+    (case n m
+      (0 (\ ((x Int)) x))
+      (_ (case (prim exn_pattern "partial: no clause") e (_ (prim raise @(-> Int Int) e)))))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (f (-> Int Int) (partial 0))
+    (let (y Int (f 41))
+    (case (printInt y w) o
+      ((utuple w1 _)
+        (let (t (-> World (utuple World Unit))
+               (\ ((v World)) (let (g (-> Int Int) (partial 1)) (let (z Int (g 2)) (printInt z v)))))
+          (try t w1))))))))

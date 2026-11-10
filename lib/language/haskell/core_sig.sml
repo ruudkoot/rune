@@ -96,8 +96,8 @@ sig
   (* ---- What is built in ---- *)
 
   (* `builtinTypes` is each type constructor built in with its kind: `Int`,
-     `Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`
-     and `Ref`. *)
+     `Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,
+     `Ref` and `Arr`. *)
   val builtinTypes : (string * kind) list
   (* `builtinData` is the data types built in: `Bool`, whose constructors
      `False` and `True` are 0 and 1, as Mid's `bool`. *)
