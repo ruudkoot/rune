@@ -22,7 +22,8 @@
    taking every N-th program from the K-th, since a job of bin/rune-test
    costs several times what rhc does on one program; each prints a line
    FAIL for each program it fails, and `bin/rune-test hs-hslint-expect
-   KIND NAME` judges one.
+   KIND NAME` judges one. The first shard of each is make check's, the
+   others nightly (the roadmap's D56, the lead's ruling 45).
 
    - `hs/hslint/faults`: each rule of HsLint's comparison refuses its fault
      (as `astlintFaults` holds AstLint's): tests/hs/hslint/faults.hs, held
@@ -235,16 +236,20 @@ struct
                                         cmd ^ "hs-hslint-dump " ^ quote (#name p) ^ " " ^ quote m, 600))
                          ms)
              (fixtures ()))
+      (* the first shard of a directory in make check, the others nightly
+         (the roadmap's D56, the lead's ruling 45: about 10% of make check
+         for rhc's families) *)
       fun expect kind =
         List.tabulate (shards, fn i =>
                                  let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
-                                 in job (kind ^ "/" ^ k, cmd ^ "hs-hslint-expect-shard " ^ kind ^ " " ^ k, 3600) end)
+                                 in Test.tag (if i = 0 then "check" else "nightly")
+                                      (job (kind ^ "/" ^ k, cmd ^ "hs-hslint-expect-shard " ^ kind ^ " " ^ k, 3600)) end)
     in
       Test.describe "hs/hslint"
-        [tagged (["check", "hs"] @ covers)
+        [tagged (["hs"] @ covers)
            (Test.requires ["rhc"]
               (Test.describe ""
-                 (dumps @ [job ("faults", cmd ^ "hs-hslint-faults", 1200)]
+                 (List.map (Test.tag "check") (dumps @ [job ("faults", cmd ^ "hs-hslint-faults", 1200)])
                   @ expect "accept" @ expect "lang" @ expect "errors")))]
     end
 

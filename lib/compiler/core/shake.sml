@@ -48,6 +48,7 @@ struct
         | Raise a => (atom (a, #1 st), true)
         | Return r => rhs (r, st)
         | Mark (_, a) => exp (a, st)
+        | Case (a, arms, d) => List.foldl exp (atom (a, #1 st), #2 st) (caseExps (arms, d))
     in exp (e, (acc, effect)) end
 
   (* A global bound to another -- `val foldl = foldl` in structure List -- is
@@ -87,6 +88,7 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (sp, a) => Mark (sp, exp a)
+        | Case (a, arms, d) => let val a = atom a val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
       and fundef {name, label, tyvars, params, result, body} =
         {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
     in

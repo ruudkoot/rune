@@ -27,7 +27,10 @@ same name. An action passes the state token (D25), and `getContents` and
 string literal is unpacked as its list is read (D24); a `Char` is a code
 point, classed and mapped by `lib/unicode`'s tables (D21); a `Float` is
 rounded to binary32 after each operation (D23). rhc links into a program
-what it reaches of the runtime.
+what it reaches of the runtime. A family of primitives ([`CorePrimFamily`](str/CorePrimFamily.md)) is
+a file of its own, each primitive with what the interpreter does and the Mid
+function it is lowered to: `CorePrimIo` gives the IO library's positions of
+files and errors of the system's, over `CoreFiles`, the interpreter's files.
 
 The syntax (`syntax.build`, the roadmap's M11) reads a file of Haskell 98 to
 a tree that keeps all of it. [`HsLiterate`](str/HsLiterate.md) gives a literate file's program
@@ -54,6 +57,7 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`CORE_INTERP`](sig/CORE_INTERP.md) | The Core interpreter (the haskell98 roadmap, M8): Launchbury's natural semantics of laziness as the specification, and Sestoft's machine as the program, slow by design. A `let` puts a suspension in the heap; a variable forced is evaluated once, under a marker that blackholes it, and updated with its value; a `case` waits on the stack for its scrutinee. Types are erased. |
 | [`CORE_LINT`](sig/CORE_LINT.md) | CoreLint (the haskell98 roadmap, D2, D54): the check of a Core program. Core is explicitly typed, so the check is syntax-directed and unifies nothing: it works out the type of every expression from its parts and holds each to what its place wants. rhc runs it on Core read as text, at each boundary, and last before the crossing into Mid, where `Any` leaves MidLint weaker; a forgotten force, a lazy atom where `!T` is wanted, is the breach it is for above all. |
 | [`CORE_PRIM`](sig/CORE_PRIM.md) | The primitives of Core (the haskell98 roadmap, D26): what Core can do that is not a function of Core, each with its type. An argument a primitive reads is evaluated, `!T`; one it may leave suspended, a function or a value it stores, is lazy. A primitive that does I/O takes the state token and gives it back, so that its order is its data's. |
+| [`CORE_PRIM_FAMILY`](sig/CORE_PRIM_FAMILY.md) | A family of Core's primitives, defined in a file of its own (the haskell98 roadmap, M17, M18): each primitive with its type, what the Core interpreter does for it, and the Mid function Core to Mid lowers it to, defined in the family's Mid text. CorePrim lists each family's primitives after its own, CoreInterp runs them and CoreToMid lowers them, so that a family is added with no edit of any of the three but a line of CorePrim's. |
 | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) | rhc's runtime, in Core (the haskell98 roadmap, M17; D24 to D26): what the Report's modules name and never define, written in Core over CorePrim's primitives, so that the Core interpreter and Core to Mid run one text and no SML stands below Haskell (D26's A). |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | Core as text, and back (the haskell98 roadmap, D2): the contract between the front end, which writes Core, and Core to Mid, which reads it. `show` prints a program for a dump (rhc --dump-after) or a test (tests/hs/core), and `parse` reads what it prints, so that print, read, print is the identity; rhc checks that at lint level 3. |
 | [`CORE_TO_MID`](sig/CORE_TO_MID.md) | Core to Mid (the haskell98 roadmap, M10): a Core program as a program of Mid's text, which rhc reads with Mid's own reader and gives to the passes from Mid on (MidPipeline), its list without expand. |

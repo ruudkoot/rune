@@ -31,6 +31,7 @@ library language/haskell lib/language/haskell
   export signature CORE_INTERP
   export signature CORE_LINT
   export signature CORE_PRIM
+  export signature CORE_PRIM_FAMILY
   export signature CORE_RUNTIME
   export signature CORE_TEXT
   export signature CORE_TO_MID
@@ -61,6 +62,7 @@ library language/haskell lib/language/haskell
   export structure CoreInterp
   export structure CoreLint
   export structure CorePrim
+  export structure CorePrimFamily
   export structure CoreRuntime
   export structure CoreText
   export structure CoreToMid
@@ -152,6 +154,10 @@ library language/haskell lib/language/haskell
     unit language/haskell:coremap.sml lib/language/haskell/coremap.sml ascii demand
     unit language/haskell:coretext_sig.sml lib/language/haskell/coretext_sig.sml ascii demand
     unit language/haskell:coretext.sml lib/language/haskell/coretext.sml ascii demand
+    unit language/haskell:corefiles.sml lib/language/haskell/corefiles.sml ascii demand
+    unit language/haskell:coreprimfamily_sig.sml lib/language/haskell/coreprimfamily_sig.sml ascii demand
+    unit language/haskell:coreprimfamily.sml lib/language/haskell/coreprimfamily.sml ascii demand
+    unit language/haskell:coreprimio.sml lib/language/haskell/coreprimio.sml ascii demand
     unit language/haskell:coreprim_sig.sml lib/language/haskell/coreprim_sig.sml ascii demand
     unit language/haskell:coreprim.sml lib/language/haskell/coreprim.sml ascii demand
     unit language/haskell:coreruntime_sig.sml lib/language/haskell/coreruntime_sig.sml ascii demand
@@ -248,11 +254,11 @@ provenance
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
-  input lib/language/haskell/library.build aeecf585962b610db50cf01c40d9713fdedc5e6182c1a16ba55eaa6c00e26071
+  input lib/language/haskell/library.build 444d0ee7a2532782aec0304e8f75fa055870dd2537c35e1678f02ce4ec8aae1d
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
   input lib/language/haskell/types.build 070f2c855a3a6ca976bd77085d92acb876f16d060e28bc1805aecee9ef19a736
   input lib/language/haskell/hslint.build 59af682d6ac4333cb4fa04db0751edd827d95f9b8c5af452c90e3ceec429e3cc
-  input lib/language/haskell/core.build 74d103c3b38efdc149ddb13aa2455fb310da7b407216ab2039e81b1e007cc448
+  input lib/language/haskell/core.build 6bac6a6c0d1ff9c9a07a0f65b8e94bf5a9a89df721ec7743909b28d9ca9c46ef
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

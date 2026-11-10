@@ -5,6 +5,7 @@
 - `UNDERSCORE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-underscore)
 - `unify` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unify)
 - `unifyKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unifykind)
+- `Unit` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-unit)
 - `unit` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unit)
 - `unit_` (type): [HS_MODULES](../sig/HS_MODULES.md#type-unit_)
 - `unitCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unitcon)

@@ -1047,7 +1047,7 @@ struct
       @ at ("mid", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
       @ at ("midcanon", "faults")
           [("scope", "renamed to"), ("twice", "is the new name of"), ("jump", "a list of another length"),
-           ("type", "the built-in type name"), ("select", "a field changed"), ("con", "a tag changed"),
+           ("type", "renamed two ways"), ("select", "a field changed"), ("con", "a tag changed"),
            ("mkexn", "an atom of another kind"), ("prim-name", "a primitive changed"), ("const-kind", "a constant changed"),
            ("do-unset", "a right-hand side of another kind"), ("functor-cast", "renamed two ways")]
       @ at ("expand", "faults")

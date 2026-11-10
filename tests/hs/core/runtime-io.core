@@ -4,7 +4,8 @@
 ; token (D25's B): writeFile, appendFile and readFile, whose list is read a
 ; chunk at a time as it is used, through interleave, D25's one
 ; interleaving primitive; readFile of a file that is not there, an IOError
-; that catch takes, its message the path and the system's reason; catch
+; that catch takes, of the kind 2, does not exist, its file the path and its
+; text the system's reason; catch
 ; taking an IOError and nothing else, so that error passes through it to
 ; the harness's try (R36); bind and return; seq; and interleave's action
 ; run when its value is first forced and not again. It writes files where
@@ -17,10 +18,16 @@
 
 (val str (-> !Str ([] Char)) (\ ((s !Str)) (primUnpackString s)))
 
-; the handler of the tests: the message of what it is given, on a line
+; the handler of the tests: the code, the file and the message of the
+; IOError it is given, on a line
 (val said (-> Exn World (utuple World `()`))
   (\ ((e Exn) (w World))
-    (case e ev (_ (case (prim exn_message ev) m (_ (case (putStrLn m w) o ((utuple w1 _) (let (u `()` (con `()`)) (utuple w1 u))))))))))
+    (case e ev
+      (_ (case (prim exn_io_code ev) c (_ (case (showInt c) cs
+        (_ (case (prim exn_io_file ev) f (_ (case (prim exn_message ev) m
+          (_ (case (prim str_concat cs " [") a (_ (case (prim str_concat a f) b (_ (case (prim str_concat b "] ") d
+            (_ (case (prim str_concat d m) l
+              (_ (case (putStrLn l w) o ((utuple w1 _) (let (u `()` (con `()`)) (utuple w1 u))))))))))))))))))))))))
 
 (val main (-> World (utuple World Unit))
   (\ ((w World))

@@ -1,0 +1,5 @@
+# The programs of tests/hs/lang whose jobs are nightly, not make check's (tests/runner/hslang.sml; the roadmap's D56,
+# B, and the lead's ruling 45): a program goes here once its run, measured in a way of make check, is over D56's
+# second, with its time. None runs yet: their rows are Planned.
+#
+# NAME  SECONDS  (the way, and when measured)

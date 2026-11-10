@@ -331,7 +331,7 @@ struct
   val covers = ["covers:lib/language/haskell/*", "covers:tests/hs/syntax/*", "covers:tests/hs/roundtrip/*",
                 "covers:tests/runner/hssyntax.sml", "covers:lib/unicode/*", "covers:src/rhc/*"]
 
-  val tree =
+  fun tree () =
     Test.describe "hs/syntax"
       [tagged (["check", "hs", "test-hs-syntax"] @ covers)
          (Test.describe ""
