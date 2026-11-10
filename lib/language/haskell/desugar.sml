@@ -939,7 +939,7 @@ struct
       T.KFun (a, b) => Core.Arrow (coreKind a, coreKind b)
     | _ => Core.Star
 
-  fun program {modules : module_ list, infer, evidence, prelude, entity, runtime, leaves, main} =
+  fun program {modules : module_ list, infer, evidence, derived, prelude, entity, runtime, leaves, main} =
     let
       val () = C.reset ()
       val () = leafKeys := M.empty
@@ -950,6 +950,7 @@ struct
       val () = V.start {infer = infer, evidence = evidence, prelude = prelude, library = fn id => M.member (libraryIds, id),
                         entity = entity}
       val () = List.app C.declare runtime
+      val derivedMethods = derived
       val decls = List.concat (List.map (fn {id, ast = A.Module (_, {decls, ...}), library} =>
                                             List.map (fn d => (id, library, d)) decls) modules)
       val types : Core.decl list ref = ref []
@@ -1325,7 +1326,11 @@ struct
                   case derived of
                     SOME (name, cs) =>
                       if id = #home i andalso K.keyOf name = #tycon i then
-                        Option.map (fn c => (V.records ("instance", nameSpan c), false, [])) (List.find (fn c => K.keyOf c = #cls i) cs)
+                        Option.map (fn c => case List.find (fn (_, inst, _) => inst = #id i) derivedMethods of
+                                              (* the methods deriving made, desugared as a written instance's *)
+                                              SOME (_, _, ds) => (V.records ("instance", nameSpan c), true, collect ds)
+                                            | NONE => (V.records ("instance", nameSpan c), false, []))
+                          (List.find (fn c => K.keyOf c = #cls i) cs)
                       else NONE
                   | NONE => NONE
                 end

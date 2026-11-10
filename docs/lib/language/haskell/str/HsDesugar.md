@@ -24,7 +24,7 @@ What each means is on [`HS_DESUGAR`](../sig/HS_DESUGAR.md); the types are this s
 | --- | --- | --- |
 | type | [`module_`](../sig/HS_DESUGAR.md#type-module_) | `{ast : HsAst.module, id : string, library : bool}` |
 | val | [`missingPrimitives`](../sig/HS_DESUGAR.md#val-missingprimitives) | `unit -> string list` |
-| val | [`program`](../sig/HS_DESUGAR.md#val-program) | `{entity : string * string * string -> string, evidence : HsEvidence.table, infer : HsInfer.env, leaves : (string * string list) list, main : string, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> Core.decl list` |
+| val | [`program`](../sig/HS_DESUGAR.md#val-program) | `{derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, infer : HsInfer.env, leaves : (string * string list) list, main : string, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> Core.decl list` |
 | val | [`translationNames`](../sig/HS_DESUGAR.md#val-translationnames) | `(string * string * string) list` |
 
 ---

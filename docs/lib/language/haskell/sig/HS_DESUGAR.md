@@ -68,7 +68,7 @@ signature HS_DESUGAR =
 sig
   type <a href="#type-module_">module_</a> = {<a href="#fld-module_.id">id</a> : string, <a href="#fld-module_.ast">ast</a> : HsAst.module, <a href="#fld-module_.library">library</a> : bool}
   val <a href="#val-program">program</a> : {<a href="#fld-program.modules">modules</a> : module_ list, <a href="#fld-program.infer">infer</a> : HsInfer.env, <a href="#fld-program.evidence">evidence</a> : HsEvidence.table,
-                 <a href="#fld-program.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-program.entity">entity</a> : string * string * string -&gt; string,
+                 <a href="#fld-program.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-program.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-program.entity">entity</a> : string * string * string -&gt; string,
                  <a href="#fld-program.runtime">runtime</a> : Core.program, <a href="#fld-program.leaves">leaves</a> : (string * string list) list, <a href="#fld-program.main">main</a> : string}
                 -&gt; Core.program
   val <a href="#val-translationnames">translationNames</a> : (string * string * string) list
@@ -95,16 +95,18 @@ resolved, and whether it is the library's.
 
 ```sml
 val program : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
-               prelude : string * string -> string option, entity : string * string * string -> string,
+               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option, entity : string * string * string -> string,
                runtime : Core.program, leaves : (string * string list) list, main : string}
               -> Core.program
 ```
 
-`program {modules, infer, evidence, prelude, entity, runtime, leaves, main}` is the Core program of the checked `modules`.
+`program {modules, infer, evidence, derived, prelude, entity, runtime, leaves, main}` is the Core program of the checked `modules`.
 
 The modules are every module of the program and of the library it
-reaches, whose checking left the environment `infer` and the records
-`evidence`.
+reaches, whose checking left the environment `infer`, the records
+`evidence` and the methods of the derived instances, `derived`, each
+with its module and its instance's identity (HsDerive, M14), which are
+desugared as a written instance's.
 
 `prelude` and `entity` find what the translations name (HsDsEnv);
 `runtime` is rhc's runtime in Core, whose types it is written against
@@ -121,6 +123,7 @@ this desugaring does not take, with a message.
 | <a name="fld-program.modules"></a>`modules` | `module_ list` |  |
 | <a name="fld-program.infer"></a>`infer` | `HsInfer.env` |  |
 | <a name="fld-program.evidence"></a>`evidence` | `HsEvidence.table` |  |
+| <a name="fld-program.derived"></a>`derived` | `(string * string * HsAst.decl list) list` |  |
 | <a name="fld-program.prelude"></a>`prelude` | `string * string -> string option` |  |
 | <a name="fld-program.entity"></a>`entity` | `string * string * string -> string` |  |
 | <a name="fld-program.runtime"></a>`runtime` | `Core.program` |  |

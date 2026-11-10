@@ -45,12 +45,14 @@ sig
      resolved, and whether it is the library's. *)
   type module_ = {id : string, ast : HsAst.module, library : bool}
 
-  (* `program {modules, infer, evidence, prelude, entity, runtime, leaves,
-     main}` is the Core program of the checked `modules`.
+  (* `program {modules, infer, evidence, derived, prelude, entity, runtime,
+     leaves, main}` is the Core program of the checked `modules`.
 
      The modules are every module of the program and of the library it
-     reaches, whose checking left the environment `infer` and the records
-     `evidence`.
+     reaches, whose checking left the environment `infer`, the records
+     `evidence` and the methods of the derived instances, `derived`, each
+     with its module and its instance's identity (HsDerive, M14), which are
+     desugared as a written instance's.
 
      `prelude` and `entity` find what the translations name (HsDsEnv);
      `runtime` is rhc's runtime in Core, whose types it is written against
@@ -62,7 +64,7 @@ sig
      Raises: `Fail` for what the checker should have refused, or a form
      this desugaring does not take, with a message. *)
   val program : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
-                 prelude : string * string -> string option, entity : string * string * string -> string,
+                 derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option, entity : string * string * string -> string,
                  runtime : Core.program, leaves : (string * string list) list, main : string}
                 -> Core.program
 

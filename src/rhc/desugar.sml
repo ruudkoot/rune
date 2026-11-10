@@ -26,7 +26,7 @@ struct
       val p =
         HsDesugar.program
           {modules = List.map (fn (n : RhcGraph.node, m) => {id = #id n, ast = m, library = #library n}) (#modules r),
-           infer = infer, evidence = #evidence r, prelude = prelude, entity = entity, runtime = runtime,
+           infer = infer, evidence = #evidence r, derived = #derived r, prelude = prelude, entity = entity, runtime = runtime,
            leaves = List.map (fn (l, names) => (RhcLibrary.identity l, names)) RhcLibrary.leaves,
            main = Mo.key {space = Mo.Value, home = hd (#roots g), name = "main"}}
     in
