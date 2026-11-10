@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`CORE_PRIM`](../sig/CORE_PRIM.md) |
 | Status | required |
-| Members | 4 |
+| Members | 6 |
 | Tests | not listed |
 | Source | [lib/language/haskell/coreprim.sml](../../../../../lib/language/haskell/coreprim.sml) |
 
@@ -27,6 +27,8 @@ What each means is on [`CORE_PRIM`](../sig/CORE_PRIM.md); the types are this str
 | --- | --- | --- |
 | type | [`prim`](../sig/CORE_PRIM.md#type-prim) | `{doc : string, name : string, ty : Core.ty}` |
 | val | [`exnKinds`](../sig/CORE_PRIM.md#val-exnkinds) | `string list` |
+| val | [`families`](../sig/CORE_PRIM.md#val-families) | `{midText : string, name : string, prims : {doc : string, mid : string, name : string, run : CorePrimFamily.value list -> CorePrimFamily.value, ty : string} list} list` |
+| val | [`familyOf`](../sig/CORE_PRIM.md#val-familyof) | `string -> ({midText : string, name : string, prims : {doc : string, mid : string, name : string, run : CorePrimFamily.value list -> CorePrimFamily.value, ty : string} list} * {doc : string, mid : string, name : string, run : CorePrimFamily.value list -> CorePrimFamily.value, ty : string}) option` |
 | val | [`find`](../sig/CORE_PRIM.md#val-find) | `string -> prim option` |
 | val | [`prims`](../sig/CORE_PRIM.md#val-prims) | `prim list` |
 

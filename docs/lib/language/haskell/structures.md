@@ -19,12 +19,14 @@ the signature names and no others.
 | [`CoreInterp`](str/CoreInterp.md) | : | [`CORE_INTERP`](sig/CORE_INTERP.md) |  |  | [lib/language/haskell/coreinterp.sml](../../../../lib/language/haskell/coreinterp.sml) |
 | [`CoreLint`](str/CoreLint.md) | : | [`CORE_LINT`](sig/CORE_LINT.md) |  |  | [lib/language/haskell/corelint.sml](../../../../lib/language/haskell/corelint.sml) |
 | [`CorePrim`](str/CorePrim.md) | : | [`CORE_PRIM`](sig/CORE_PRIM.md) |  |  | [lib/language/haskell/coreprim.sml](../../../../lib/language/haskell/coreprim.sml) |
+| [`CorePrimFamily`](str/CorePrimFamily.md) | : | [`CORE_PRIM_FAMILY`](sig/CORE_PRIM_FAMILY.md) |  |  | [lib/language/haskell/coreprimfamily.sml](../../../../lib/language/haskell/coreprimfamily.sml) |
 | [`CoreRuntime`](str/CoreRuntime.md) | :> | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) |  |  | [lib/language/haskell/coreruntime.sml](../../../../lib/language/haskell/coreruntime.sml) |
 | [`CoreText`](str/CoreText.md) | : | [`CORE_TEXT`](sig/CORE_TEXT.md) |  |  | [lib/language/haskell/coretext.sml](../../../../lib/language/haskell/coretext.sml) |
 | [`CoreToMid`](str/CoreToMid.md) | : | [`CORE_TO_MID`](sig/CORE_TO_MID.md) |  |  | [lib/language/haskell/coretomid.sml](../../../../lib/language/haskell/coretomid.sml) |
 | [`HsAst`](str/HsAst.md) | :> | [`HS_AST`](sig/HS_AST.md) |  |  | [lib/language/haskell/ast.sml](../../../../lib/language/haskell/ast.sml) |
 | [`HsChar`](str/HsChar.md) | :> | [`HS_CHAR`](sig/HS_CHAR.md) |  |  | [lib/language/haskell/char.sml](../../../../lib/language/haskell/char.sml) |
 | [`HsClasses`](str/HsClasses.md) | :> | [`HS_CLASSES`](sig/HS_CLASSES.md) |  |  | [lib/language/haskell/classes.sml](../../../../lib/language/haskell/classes.sml) |
+| [`HsDerive`](str/HsDerive.md) | :> | [`HS_DERIVE`](sig/HS_DERIVE.md) |  |  | [lib/language/haskell/derive.sml](../../../../lib/language/haskell/derive.sml) |
 | [`HsDump`](str/HsDump.md) | :> | [`HS_DUMP`](sig/HS_DUMP.md) |  |  | [lib/language/haskell/dump.sml](../../../../lib/language/haskell/dump.sml) |
 | [`HsEvidence`](str/HsEvidence.md) | :> | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) |  |  | [lib/language/haskell/evidence.sml](../../../../lib/language/haskell/evidence.sml) |
 | [`HsFixity`](str/HsFixity.md) | :> | [`HS_FIXITY`](sig/HS_FIXITY.md) |  |  | [lib/language/haskell/fixity.sml](../../../../lib/language/haskell/fixity.sml) |

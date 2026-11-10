@@ -12,14 +12,28 @@
    `IOError` is `Exn` and `IO a` is `World -> (utuple World a)` (D25's
    state token). Beside them it has `primSeq`, `primReturnIO` and
    `primBindIO` (ov.prelude.seq, ov.prelude.io) and `primUnpackString`,
-   which makes a string literal, UTF-8 in a `Str`, its list of characters.
+   which makes a string literal, UTF-8 in a `Str`, its list of characters;
+   and what the library's PreludeRuntime names beside the Report's:
+   `double_mantissa` and `double_exponent`, `unsafe_perform_io`,
+   `primPackString`, `primReady`, and `ref_set`, `arr_set`, `h_close`,
+   `h_flush` and `exit` as actions giving `()`, which Haskell names as
+   `IO ()`, over CorePrim's of the same names, whose actions give `World`.
 
    Input and output are UTF-8; a byte that starts no sequence of UTF-8 is
    read as the character of its number. `getContents` and `readFile` read
    a chunk at a time as their list is read, through `interleave`, the one
    interleaving primitive, and end their list at an error of reading
    (21.2.2); standard output is written before standard input is read.
-   `getChar` and `getContents` share standard input's buffer.
+   `getChar` and `getContents` share standard input's buffer. An IOError
+   the runtime raises has its kind (`exn_io_full`): a failure of the
+   system's by the name of its error, its text "what: the system's text"
+   as the library's, the end of standard input 5.
+
+   A program ends with every file it opened written (21's text): the VM's
+   end flushes every file the program holds, and the interpreter's writes
+   are unbuffered. An exception no handler takes ends it with status 1 and
+   a line on standard error, an IOError's text as the library's Show
+   IOError gives it, a user's as "user error (TEXT)" (7.3, 23).
 
    The general category and the simple case mappings are lib/unicode's
    (CodePoint, D21), at its version, in tables written from its data:

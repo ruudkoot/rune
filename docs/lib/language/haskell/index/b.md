@@ -10,6 +10,7 @@
 - `Binding` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-binding)
 - `binding` (type): [HS_LINT](../sig/HS_LINT.md#type-binding)
 - `BlockComment` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-blockcomment)
+- `Bool` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-bool)
 - `builtinData` (val): [CORE](../sig/CORE.md#val-builtindata)
 - `builtinKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-builtinkind)
 - `builtinTypes` (val): [CORE](../sig/CORE.md#val-builtintypes)

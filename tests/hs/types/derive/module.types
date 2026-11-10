@@ -1,0 +1,37 @@
+# derive under --cycle-default=module
+TYPE	All	check	Bool
+INSTANCE	All	(Eq a, Show a) => Show (Set a)	derived
+INSTANCE	All	Bounded Colour	derived
+INSTANCE	All	Bounded Point	derived
+INSTANCE	All	Enum Colour	derived
+INSTANCE	All	Eq Age	derived
+INSTANCE	All	Eq Colour	derived
+INSTANCE	All	Eq Point	derived
+INSTANCE	All	Eq Rec	derived
+INSTANCE	All	Eq Sum	derived
+INSTANCE	All	Eq a => Eq (Pair a b)	derived
+INSTANCE	All	Eq a => Eq (Set a)	derived
+INSTANCE	All	Eq a => Eq (Tree a)	derived
+INSTANCE	All	Eq a => Eq (Wrap a)	derived
+INSTANCE	All	Ix Colour	derived
+INSTANCE	All	Ix Point	derived
+INSTANCE	All	Ord Age	derived
+INSTANCE	All	Ord Colour	derived
+INSTANCE	All	Ord Point	derived
+INSTANCE	All	Ord Sum	derived
+INSTANCE	All	Ord a => Ord (Pair a b)	derived
+INSTANCE	All	Ord a => Ord (Tree a)	derived
+INSTANCE	All	Read Age	derived
+INSTANCE	All	Read Colour	derived
+INSTANCE	All	Read Rec	derived
+INSTANCE	All	Read Sum	derived
+INSTANCE	All	Read a => Read (Pair a b)	derived
+INSTANCE	All	Read a => Read (Tree a)	derived
+INSTANCE	All	Show Age	derived
+INSTANCE	All	Show Colour	derived
+INSTANCE	All	Show Point	derived
+INSTANCE	All	Show Rec	derived
+INSTANCE	All	Show Sum	derived
+INSTANCE	All	Show a => Show (Pair a b)	derived
+INSTANCE	All	Show a => Show (Tree a)	derived
+INSTANCE	All	Show a => Show (Wrap a)	derived

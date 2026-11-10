@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 142 requirements between the 58 files become 76 arrows.
+library and not a wall of lines: the 151 requirements between the 62 files become 81 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(58)"]
+  a0["Languages<br>(62)"]
 ```
 
 ## Languages
@@ -68,26 +68,30 @@ flowchart TD
   n35["HsEvidence"]
   n36(["HS_KINDS"])
   n37["HsKinds"]
-  n38(["HS_INFER"])
-  n39["HsInfer"]
-  n40(["HS_LINT"])
-  n41["HsLint"]
-  n42(["CORE"])
-  n43["Core"]
-  n44(["CORE_TEXT"])
-  n45["CoreText"]
-  n46(["CORE_PRIM"])
-  n47["CorePrim"]
-  n48(["CORE_RUNTIME"])
-  n49["CoreRuntime"]
-  n50(["CORE_LINT"])
-  n51["CoreLint"]
-  n52(["CORE_INTERP"])
-  n53["CoreInterp"]
-  n54(["CORE_GEN"])
-  n55["CoreGen"]
-  n56(["CORE_TO_MID"])
-  n57["CoreToMid"]
+  n38(["HS_DERIVE"])
+  n39["HsDerive"]
+  n40(["HS_INFER"])
+  n41["HsInfer"]
+  n42(["HS_LINT"])
+  n43["HsLint"]
+  n44(["CORE"])
+  n45["Core"]
+  n46(["CORE_TEXT"])
+  n47["CoreText"]
+  n48(["CORE_PRIM_FAMILY"])
+  n49["CorePrimFamily"]
+  n50(["CORE_PRIM"])
+  n51["CorePrim"]
+  n52(["CORE_RUNTIME"])
+  n53["CoreRuntime"]
+  n54(["CORE_LINT"])
+  n55["CoreLint"]
+  n56(["CORE_INTERP"])
+  n57["CoreInterp"]
+  n58(["CORE_GEN"])
+  n59["CoreGen"]
+  n60(["CORE_TO_MID"])
+  n61["CoreToMid"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -138,32 +142,37 @@ flowchart TD
   n37 --> n23
   n37 --> n29
   n38 --> n13
-  n38 --> n35
   n39 --> n38
-  n39 --> n37
-  n40 --> n39
+  n40 --> n13
+  n40 --> n35
   n41 --> n40
+  n41 --> n39
+  n41 --> n37
+  n42 --> n41
   n43 --> n42
-  n44 --> n43
   n45 --> n44
-  n46 --> n43
+  n46 --> n45
   n47 --> n46
-  n47 --> n45
-  n48 --> n43
   n49 --> n48
-  n49 --> n45
-  n50 --> n43
+  n50 --> n45
+  n50 --> n49
   n51 --> n50
   n51 --> n47
-  n52 --> n43
+  n52 --> n45
   n53 --> n52
   n53 --> n47
-  n54 --> n43
+  n54 --> n45
   n55 --> n54
-  n55 --> n45
-  n56 --> n43
+  n55 --> n51
+  n56 --> n45
   n57 --> n56
-  n57 --> n47
+  n57 --> n51
+  n58 --> n45
+  n59 --> n58
+  n59 --> n47
+  n60 --> n45
+  n61 --> n60
+  n61 --> n51
 ```
 
 ---

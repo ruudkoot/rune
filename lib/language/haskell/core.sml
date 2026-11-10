@@ -52,7 +52,8 @@ struct
 
   val builtinTypes =
     [("Int", Star), ("Integer", Star), ("Char", Star), ("Double", Star), ("Float", Star), ("Str", Star),
-     ("Exn", Star), ("Bool", Star), ("World", Unlifted), ("Ref", Arrow (Star, Star))]
+     ("Exn", Star), ("Bool", Star), ("World", Unlifted), ("Ref", Arrow (Star, Star)),
+     ("Arr", Arrow (Star, Star))]
 
   val builtinData = [Data ("Bool", [], [("False", []), ("True", [])])]
 

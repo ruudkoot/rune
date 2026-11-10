@@ -682,13 +682,16 @@ fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
 
 **Kinds, types and classes** (`lib/language/haskell`'s `types.build`, the
-roadmap's M13; [tests/hs/types/README.md](../tests/hs/types/README.md)). The
-same runner's jobs `hs/types/*` compare `bin/rhc --dump-types` of each fixture
-of `tests/hs/types` under both settings of `--cycle-default` with its expected
-files: the Report's libraries checked as one unit, a cycle of modules with
-unsigned bindings and a type group across it, and D30's readings of `default`
-and Rule 2 in a cycle. `bin/rhc --dump-evidence` prints a program's evidence
-records (HsEvidence), what desugaring (M15) and HsLint (M16) read.
+roadmap's M13 and M14; [tests/hs/types/README.md](../tests/hs/types/README.md)).
+The same runner's jobs `hs/types/*` compare `bin/rhc --dump-types` of each
+fixture of `tests/hs/types` under both settings of `--cycle-default` with its
+expected files: the Report's libraries checked as one unit, a cycle of modules
+with unsigned bindings and a type group across it, D30's readings of `default`
+and Rule 2 in a cycle, and deriving, each derived instance with the context the
+checker infers. `bin/rhc --dump-evidence` prints a program's evidence records
+(HsEvidence), what desugaring (M15) and HsLint (M16) read, and `bin/rhc
+--dump-derived` the methods of its derived instances, which HsDerive makes as
+trees inside the checker (D33's C) and the checker checks as a user's.
 
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
@@ -873,8 +876,12 @@ written in Core) has `prims-*.core`, Core's primitives on their edges
 (`Int` at 63 bits, `Integer` across the edges of IntInf's small range,
 `Double`, `Float` rounded to binary32), and
 `runtime-*.core`: strings unpacked lazily and at once (D24's A and B, which
-print the same), files, standard input read across the edge of a chunk, and
-the classes and mappings of `Char`. `lib/language/haskell/coreruntime`
+print the same), files, standard input read across the edge of a chunk, the
+classes and mappings of `Char`, and what the library's PreludeRuntime names
+beside the Report's (`runtime-library`: arrays, an IOError's details, the
+IO family's positions of files and errors of the system's). `end-*.core`
+hold the line an escaping IOError ends a program with to the library's Show
+IOError, a user's "user error (TEXT)". `lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
 `lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
 and the first and the last of each range and run of its data.
