@@ -27,3 +27,7 @@ tests/hs/accept/lex.white.newline.cr*.hs -text
 tests/hs/roundtrip/syntax/Crlf.hs -text
 tests/hs/roundtrip/layout/lay.col.newlinechars_ff.hs -text
 tests/hs/roundtrip/layout/lay.col.newlinechars_ff.braces -text
+# The vendored corpus programs keep the bytes of their trees at the commits
+# tests/hs/corpus/trees.tsv pins, a CR LF and white space as they are
+# (tests/hs/corpus/README.md; hs-corpus/vendored compares them).
+tests/hs/corpus/vendored/** -text -whitespace

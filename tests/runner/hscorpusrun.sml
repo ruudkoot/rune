@@ -5,16 +5,17 @@
    E8's expected output as E8 compared it (the same, the same words, or the
    same but for numbers equal to about five digits) and its exit status 0.
 
-   The programs whose licence lets them be copied are vendored under
-   tests/hs/corpus/vendored (the owner's decision: a program lands with its
-   tree's LICENSE beside it), and their jobs are make check's: 45 of the
-   188, GHC's tests (BSD-3) and jhc's (MIT). The rest are read through
-   RUNE_HS_CORPUS, nightly, with the capability hs-corpus. Every job waits
-   while rhc runs no program: until the row prog.main.value of
-   tests/hs/conformance.tsv is no longer Planned.
+   The programs are vendored under tests/hs/corpus/vendored (the owner's
+   rules: code lands with its LICENSE beside it, or, without a licence,
+   with a PROVENANCE), so their jobs are make check's: all 188, 45 under
+   their trees' licences (GHC's tests, BSD-3; jhc's, MIT) and 143 under
+   PROVENANCE files. A program not vendored would be read through
+   RUNE_HS_CORPUS, nightly, with the capability hs-corpus; none is now.
+   Every job waits while rhc runs no program: until the row prog.main.value
+   of tests/hs/conformance.tsv is no longer Planned.
 
-   tests/hs/corpus/vendored is also where `hs-rhc-corpus/vendored`, in
-   make check, puts the vendored programs through `bin/rhc
+   tests/hs/corpus/vendored is also where `hs-rhc-corpus/vendored-SET`, in
+   make check, a job a set, puts the vendored programs through `bin/rhc
    --typecheck-only` as the nightly corpus jobs put the whole corpus
    (tests/runner/hsrhccorpus.sml). *)
 structure HsCorpusRun =
@@ -86,22 +87,35 @@ struct
     handle HsOracles.Failed msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
          | HsCorpus.Bad msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
 
-  (* the vendored programs through rhc --typecheck-only, in make check *)
-  fun namesVendored () =
-    fromVendored (fn () =>
-      let
-        val ids = vendored ()
-        val cs = HsCorpus.candidates ()
-        val rows = List.filter (fn r => List.exists (fn v => v = HsCorpus.field r "id") ids) (HsCorpus.rows "accept.tsv")
-        fun cand r = case List.find (fn (c : HsCorpus.candidate) => #id c = HsCorpus.field r "id") cs of
-                       SOME c => c | NONE => raise HsOracles.Failed ("no candidate " ^ HsCorpus.field r "id")
-      in HsRhcCorpus.report ("vendored", List.map (fn r => HsRhcCorpus.one false (r, cand r)) rows) end)
-    handle HsOracles.Failed m => say ("FAIL rhc vendored: " ^ m ^ "\n")
-         | HsCorpus.Bad m => say ("FAIL rhc vendored: " ^ m ^ "\n")
+  (* the sets of the vendored programs, each a job of its own *)
+  fun vendoredSets () =
+    List.foldr (fn (s, acc) => if List.exists (fn t => t = s) acc then acc else s :: acc) []
+               (List.map (fn r => HsCorpus.field r "set") (List.filter (fn r => HsCorpus.field r "vendor" = "vendored") (d56 ())))
+
+  (* the vendored programs of a set (or of all, NONE) through rhc
+     --typecheck-only, in make check *)
+  fun namesVendored set () =
+    let val job = "vendored" ^ (case set of SOME s => "-" ^ s | NONE => "")
+    in
+      fromVendored (fn () =>
+        let
+          val ids = List.map (fn r => HsCorpus.field r "id")
+                             (List.filter (fn r => HsCorpus.field r "vendor" = "vendored"
+                                                   andalso (case set of SOME s => HsCorpus.field r "set" = s | NONE => true))
+                                          (d56 ()))
+          val cs = HsCorpus.candidates ()
+          val rows = List.filter (fn r => List.exists (fn v => v = HsCorpus.field r "id") ids) (HsCorpus.rows "accept.tsv")
+          fun cand r = case List.find (fn (c : HsCorpus.candidate) => #id c = HsCorpus.field r "id") cs of
+                         SOME c => c | NONE => raise HsOracles.Failed ("no candidate " ^ HsCorpus.field r "id")
+        in HsRhcCorpus.report (job, List.map (fn r => HsRhcCorpus.one false (r, cand r)) rows) end)
+      handle HsOracles.Failed m => say ("FAIL rhc " ^ job ^ ": " ^ m ^ "\n")
+           | HsCorpus.Bad m => say ("FAIL rhc " ^ job ^ ": " ^ m ^ "\n")
+    end
 
   fun command ["hs-corpus-run", id] =
         SOME (fn () => if isVendored id then fromVendored (fn () => runOne id) else runOne id)
-    | command ["hs-rhc-corpus-vendored"] = SOME namesVendored
+    | command ["hs-rhc-corpus-vendored"] = SOME (namesVendored NONE)
+    | command ["hs-rhc-corpus-vendored", set] = SOME (namesVendored (SOME set))
     | command _ = NONE
 
   fun tree () =
@@ -111,6 +125,7 @@ struct
       fun job id = HsOracles.job (id, ["hs-corpus-run", id], [], 3600, 2000)
       fun hold t = case held of SOME why => Test.pending why t | NONE => t
       val (inTree, outside) = List.partition (fn r => HsCorpus.field r "vendor" = "vendored") rows
+      val sets = vendoredSets () handle HsCorpus.Bad _ => []
       val covers = ["covers:tests/hs/corpus/*", "covers:tests/runner/hscorpusrun.sml", "covers:lib/language/haskell/*",
                     "covers:src/rhc/*"]
     in
@@ -122,7 +137,7 @@ struct
                  Test.tag "nightly" (Test.requires ["hs-corpus"]
                    (Test.describe "" (List.map (fn r => hold (job (HsCorpus.field r "id"))) outside)))],
               Test.tag "check" (Test.describe "hs-rhc-corpus"
-                [HsOracles.job ("vendored", ["hs-rhc-corpus-vendored"], [], 1800, 2000)])]))
+                (List.map (fn s => HsOracles.job ("vendored-" ^ s, ["hs-rhc-corpus-vendored", s], [], 1800, 2000)) sets))]))
         ("hs" :: covers)
     end
 end
