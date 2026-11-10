@@ -834,7 +834,16 @@ struct
         | (_, Atom (Var y)) => let val b = lookup (env, y) in k (bindVal (env, x, {rep = #rep b, ty = t, arity = #arity b})) end
         | (_, Atom (Lit l)) => k (bindVal (env, x, {rep = Value (constText l), ty = t, arity = 0}))
         | (_, Con (c, tys, atoms)) => con (env, c, tys, atoms, fn (a, _) => k (bindVal (env, x, {rep = Value a, ty = t, arity = 0})))
-        | (_, Cast (e, _)) => if valTy env (typeOf env e) = valTy env t then bind (env, x, t, e, k) else thunk (env, x, t, rhs, k)
+        | (_, Cast (e, _)) =>
+            (* a cast erased: e bound at its own type, a lambda a function
+               of it, and x given the cast's *)
+            let val te = stripEval (typeOf env e)
+            in
+              if valTy env te = valTy env t then
+                bind (env, x, te, e, fn env' => let val b = lookup (env', x)
+                                                in k (bindVal (env', x, {rep = #rep b, ty = t, arity = #arity b})) end)
+              else thunk (env, x, t, rhs, k)
+            end
         | _ => thunk (env, x, t, rhs, k)
 
       (* a suspension of rhs, of type t, bound to x *)
@@ -988,7 +997,9 @@ struct
             let
               fun go (_, [], [], env) = k env
                 | go (i, x :: xs, f :: fs, env) =
-                    if x = "_" orelse isWorld f then go (i + 1, xs, fs, env)
+                    if x = "_" then go (i + 1, xs, fs, env)
+                    (* the state token, erased, which typeOf still reads *)
+                    else if isWorld f then go (i + 1, xs, fs, bindVal (env, x, slotBinding (f, "()")))
                     else field i (fn a => go (i + 1, xs, fs, bindVal (env, x, slotBinding (f, a))))
                 | go _ = raise Fail "CoreToMid: binders and fields differ in number"
             in go (0, xs, fs, env) end
