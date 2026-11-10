@@ -4996,7 +4996,10 @@ alignment or tags of its own; walked through, it needs neither.
   may choose error (⊥, semantically), a truncated value, or a special
   value", section 6.4). SML's `Overflow` and a wrap both conform, and
   the 32-bit VMs' 31 bits (D13 B) are above the Report's 30. `Integer`
-  is `IntInf`, its small values immediate.
+  is `IntInf`, its small values immediate: since the haskell98
+  roadmap's M31, a number that fits the word's 63 bits is the same
+  word as an `int` of it on every VM, and a larger one a pair of its
+  sign and its magnitude.
 * **Raw typed fields (D1 B).** Haskell 98's strict fields
   (`data T = T !Int !Double`) are the positions a thunk can never
   occupy, and so the ones a raw field may take; a lazy field stays a
