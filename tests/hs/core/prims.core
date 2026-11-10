@@ -1,0 +1,72 @@
+; run: --read-core tests/hs/core/lib/base.core
+; The primitives on their edges, as Mid's do them: Int's division both
+; ways round, Double, a Char past ASCII in UTF-8, the bytes of a Str; and
+; what each raises, caught by the harness's try: Overflow (an Int doubled
+; until it overflows, at whatever width Int has), Div, Chr and Subscript.
+; double_to_str is Mid's real_to_string: twelve digits, ~ for a minus, and
+; .0 where there is no point, so 3.0 is "3.0". Integer's are prims-integer.core's.
+(val showDouble (-> !Double Str) (\ ((d !Double)) (prim double_to_str d)))
+
+(val doubling (-> !Int !Int Int)
+  (\ ((n !Int) (k !Int))
+    (case (prim int_eq k 0) z
+      ((True) n)
+      ((False) (case (prim int_add n n) m (_ (case (prim int_sub k 1) k1 (_ (doubling m k1)))))))))
+
+(val show4 (-> !Str !Str !Str !Str Str)
+  (\ ((a !Str) (b !Str) (c !Str) (d !Str))
+    (case (prim str_concat a " ") a1
+      (_ (case (prim str_concat a1 b) a2
+           (_ (case (prim str_concat a2 " ") a3
+                (_ (case (prim str_concat a3 c) a4
+                     (_ (case (prim str_concat a4 " ") a5 (_ (prim str_concat a5 d)))))))))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (q1 Int (prim int_quot 7 -2)) (let (r1 Int (prim int_rem 7 -2))
+    (let (q2 Int (prim int_div 7 -2)) (let (r2 Int (prim int_mod 7 -2))
+    (let (q3 Int (prim int_div -7 2)) (let (r3 Int (prim int_mod -7 2))
+    (let (n0 (List Int) (con Nil @Int))
+    (let (l6 (List Int) (con Cons @Int r3 n0)) (let (l5 (List Int) (con Cons @Int q3 l6))
+    (let (l4 (List Int) (con Cons @Int r2 l5)) (let (l3 (List Int) (con Cons @Int q2 l4))
+    (let (l2 (List Int) (con Cons @Int r1 l3)) (let (l1 (List Int) (con Cons @Int q1 l2))
+    (case (printIntList l1 w) o1
+      ((utuple w1 _)
+        (case (prim int_le -1 0) b1
+          (_ (case (printBool b1 w1) o2
+               ((utuple w2 _)
+                 (case (prim double_mul 1.5 2.0) d1
+                   (_ (case (prim double_div 1.0 4.0) d2
+                        (_ (case (prim double_from_int 7) d3
+                             (_ (case (prim double_neg 0.5) d4
+                                  (_ (case (showDouble d1) t1
+                                       (_ (case (showDouble d2) t2
+                                            (_ (case (showDouble d3) t3
+                                                 (_ (case (showDouble d4) t4
+                                                      (_ (case (show4 t1 t2 t3 t4) u
+                                                           (_ (case (putStrLn u w2) o3
+                                                                ((utuple w3 _)
+                                                                  (case (prim char_chr 955) lam
+                                                                    (_ (case (prim str_from_char lam) ls
+                                                                         (_ (case (putStrLn ls w3) o4
+                                                                              ((utuple w4 _)
+                                                                                (case (prim str_size ls) sz
+                                                                                  (_ (case (prim str_byte "abc" 1) by
+                                                                                       (_ (case (prim char_ord 'A') oa
+                                                                                            (_ (let (m0 (List Int) (con Nil @Int))
+                                                                                               (let (m3 (List Int) (con Cons @Int oa m0))
+                                                                                               (let (m2 (List Int) (con Cons @Int by m3))
+                                                                                               (let (m1 (List Int) (con Cons @Int sz m2))
+                                                                                               (case (printIntList m1 w4) o5
+                                                                                                 ((utuple w5 _)
+                                                                                                   (let (t8 (-> World (utuple World Unit)) (\ ((v World)) (let (x Int (doubling 1 200)) (printInt x v))))
+                                                                                                   (case (try t8 w5) o6
+                                                                                                     ((utuple w6 _)
+                                                                                                       (let (t9 (-> World (utuple World Unit)) (\ ((v World)) (let (x Int (prim int_mod 1 0)) (printInt x v))))
+                                                                                                       (case (try t9 w6) o7
+                                                                                                         ((utuple w7 _)
+                                                                                                           (let (t10 (-> World (utuple World Unit)) (\ ((v World)) (case (prim char_chr -1) c (_ (putStrLn "no" v)))))
+                                                                                                           (case (try t10 w7) o8
+                                                                                                             ((utuple w8 _)
+                                                                                                               (let (t11 (-> World (utuple World Unit)) (\ ((v World)) (let (x Int (prim str_byte "a" 5)) (printInt x v))))
+                                                                                                                 (try t11 w8))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))

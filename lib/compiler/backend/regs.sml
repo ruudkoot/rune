@@ -22,8 +22,7 @@ struct
   structure R = RegCodes
 
   type code = Code.program
-  val info : Target.t = {name = "registers", machine = Target.Registers, maxArgs = 64, switch = false,
-                         barriers = false, safepoints = false}
+  val info : Target.t = {name = "registers", machine = Target.Registers, maxArgs = 64}
 
   fun bug msg = Error.bug ("Regs: " ^ msg)
 
@@ -218,9 +217,9 @@ struct
         let val d = reg x
         in
           case oper of
-            L.Const (Lambda.CInt i) =>
+            L.Const (Literal.CInt i) =>
               if IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then op' (R.INT, [d, IntInf.toInt i])
-              else op' (R.CONST, [d, C.constIdx (Lambda.CInt i)])
+              else op' (R.CONST, [d, C.constIdx (Literal.CInt i)])
           | L.Const c => op' (R.CONST, [d, C.constIdx c])
           | L.Unit => op' (R.UNIT, [d])
           | L.Con0 t => op' (R.CON0, [d, t])
@@ -258,7 +257,7 @@ struct
           | L.Decon (t, v) => op' (R.DECON, [d, reg v, t])
           | L.Field (t, i, v) => op' (R.FIELD, [d, reg v, t, i])
           | L.ConTag v => op' (R.CONTAG, [d, reg v])
-          | L.NewExn n => op' (R.NEWEXN, [d, C.constIdx (Lambda.CString n)])
+          | L.NewExn n => op' (R.NEWEXN, [d, C.constIdx (Literal.CString n)])
           | L.BuiltinExn k => op' (R.BUILTINEXN, [d, k])
           | L.MkExn (c, p) => op' (R.MKEXN, [d, reg c, reg p])
           | L.ExnCon v => op' (R.EXNCON, [d, reg v])

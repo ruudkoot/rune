@@ -75,21 +75,7 @@ struct
               in resolve (h, List.map (Ty.subst s) ts, n + 1) end
         | NONE => (g, us)
       fun atom a = case a of Global (g, us) => Global (resolve (g, us, 0)) | _ => a
-      fun rhs r =
-        case r of
-          Atom a => Atom (atom a)
-        | App (f, xs) => App (atom f, List.map atom xs)
-        | Prim (q, t, xs) => Prim (q, t, List.map atom xs)
-        | Tuple xs => Tuple (List.map atom xs)
-        | Select (i, a) => Select (i, atom a)
-        | Con (tag, t, a) => Con (tag, t, atom a)
-        | Decon (tag, t, a) => Decon (tag, t, atom a)
-        | ConTag a => ConTag (atom a)
-        | MkExn (c, a) => MkExn (atom c, atom a)
-        | ExnCon a => ExnCon (atom a)
-        | ExnArg (t, a) => ExnArg (t, atom a)
-        | SetGlobal (g, a) => SetGlobal (g, atom a)
-        | _ => r
+      val rhs = mapRhs atom
       fun exp e =
         case e of
           Let (x, sc, r, b) => Let (x, sc, rhs r, exp b)
@@ -101,8 +87,8 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (sp, a) => Mark (sp, exp a)
-      and fundef {name, tyvars, params, result, body} =
-        {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
+      and fundef {name, label, tyvars, params, result, body} =
+        {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
     in
       if IntMap.isEmpty direct orelse not (Pass.spend ()) then p
       else

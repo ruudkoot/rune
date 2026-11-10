@@ -1,0 +1,3 @@
+; fail: text-literal.core:3: error: not a literal: 12x
+; Core's reader: a word that starts as a number and is none
+(val x Int 12x)

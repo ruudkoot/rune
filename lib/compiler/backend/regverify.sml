@@ -229,9 +229,9 @@ struct
       fun constRep k =
         if k < 0 orelse k >= nconsts then ANY
         else case Vector.sub (consts, k) of
-               Lambda.CInt _ => RINT | Lambda.CWord _ => RWORD | Lambda.CInt64 _ => RINT64
-             | Lambda.CWord64 _ => RWORD64 | Lambda.CReal _ => RREAL | Lambda.CString _ => RPTR
-             | Lambda.CChar _ => RCHAR
+               Literal.CInt _ => RINT | Literal.CWord _ => RWORD | Literal.CInt64 _ => RINT64
+             | Literal.CWord64 _ => RWORD64 | Literal.CReal _ => RREAL | Literal.CString _ => RPTR
+             | Literal.CChar _ => RCHAR
 
       (* the labels of the program: the function that has it, where it is
          a handler's what its block begins with, the state of the ways into

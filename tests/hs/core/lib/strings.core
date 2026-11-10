@@ -1,0 +1,61 @@
+; The program of runtime-strings.core and runtime-strings-whole.core, which
+; run it with a literal's cells made as the list is read (D24's A) and all
+; at once (B): rhc's runtime on strings, as runtime-strings.core says.
+(val putS (-> ([] Char) World (utuple World `()`))
+  (\ ((s ([] Char)) (w World))
+    (case s cs
+      (([]) (let (u `()` (con `()`)) (utuple w u)))
+      ((: c rest) (case (primPutChar c w) o ((utuple w1 _) (putS rest w1)))))))
+
+(val putSLn (-> ([] Char) World (utuple World `()`))
+  (\ ((s ([] Char)) (w World))
+    (case (putS s w) o ((utuple w1 _) (case (primPutChar '\10' w1) o2 ((utuple w2 u) (utuple w2 u)))))))
+
+; the code points of a String, as Ints
+(val codes (-> ([] Char) (List Int))
+  (\ ((s ([] Char)))
+    (case s cs
+      (([]) (con Nil @Int))
+      ((: c rest) (let (i Int (primCharToInt c)) (let (r (List Int) (codes rest)) (con Cons @Int i r)))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (hello ([] Char) (primUnpackString "hello, \206\187, \226\130\172 and \240\159\152\128"))
+    (case (putSLn hello w) o1
+      ((utuple w1 _)
+        (let (ch (List Int) (codes hello)) (case (printIntList ch w1) o2
+          ((utuple w2 _)
+            (let (bad ([] Char) (primUnpackString "a\255b\195c\192\128d\226\130"))
+            (let (cb (List Int) (codes bad)) (case (printIntList cb w2) o3
+              ((utuple w3 _)
+                (case (rtPack hello) p
+                  (_ (case (prim str_size p) np
+                       (_ (case (printInt np w3) o4
+                            ((utuple w4 _)
+                              (case (putStrLn p w4) o5
+                                ((utuple w5 _)
+                                  (let (empty ([] Char) (primUnpackString ""))
+                                  (case (rtPack empty) pe
+                                    (_ (case (prim str_size pe) ne
+                                         (_ (case (printInt ne w5) o6
+                                              ((utuple w6 _)
+                                                (let (lam Char (primIntToChar 955))
+                                                (let (one ([] Char) (con [] @Char))
+                                                (let (l ([] Char) (con : @Char lam one))
+                                                (case (putSLn l w6) o7
+                                                  ((utuple w7 _)
+                                                    (let (top Int (primCharToInt primUnicodeMaxChar))
+                                                    (case (printInt top w7) o8
+                                                      ((utuple w8 _)
+                                                        (let (msg ([] Char) (primUnpackString "a user's error"))
+                                                        (case (primUserError msg) e
+                                                          (_ (case (prim exn_message e) m
+                                                               (_ (case (putStrLn m w8) o9
+                                                                    ((utuple w9 _)
+                                                                      (let (past (-> World (utuple World Unit))
+                                                                             (\ ((v World)) (case (primIntToChar 1114112) c (_ (case c d (_ (printInt 0 v)))))))
+                                                                      (case (try past w9) o10
+                                                                        ((utuple w10 _)
+                                                                          (let (boom ([] Char) (primUnpackString "error of a String, \206\187"))
+                                                                          (let (t (-> World (utuple World Unit)) (\ ((v World)) (case (primError @Unit boom) u (_ (utuple v u)))))
+                                                                            (try t w10))))))))))))))))))))))))))))))))))))))))))))))))

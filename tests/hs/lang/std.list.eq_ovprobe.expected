@@ -1,0 +1,4 @@
+probe
+(False,False,True,GT,True)
+(False,False,LT,True,True)
+(GT,True)

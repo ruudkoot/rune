@@ -127,6 +127,7 @@ struct
         hint="install jupyter_client and pyzmq for python3 (Ubuntu: python3-jupyter-client python3-zmq)"}]
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities @ TerminalJobs.capabilities
     @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
+    @ HsLang.capabilities @ HsSyntax.capabilities @ HsOracles.capabilities @ HsLazyPorts.capabilities
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -172,7 +173,7 @@ struct
   val broadInputs = ["src/*", "lib/compiler/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
   val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Thunks.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree ()]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, Thunks.tree, HsCore.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree, HsRoundTrip.tree, HsConformance.tree, HsSyntax.tree, HsNames.tree (), HsMutants.tree (), HsMeta.tree (), HsGen.tree (), HsReduce.tree (), HsInterpVm.tree (), HsOracles.tree, HsLibrary.tree, HsPerf.tree (), HsLintJobs.tree (), HsRhcCorpus.tree (), HsLazyPorts.tree ()]) broadInputs
 
   fun requirements () =
     let val rows = Test.leaves tests
@@ -217,7 +218,21 @@ val () =
   | ["check-requirements"] => Inventory.requirements ()
   | args =>
       case BuildChecks.command args of SOME action => action () | NONE =>
+      case HsOracles.command args of SOME action => action () | NONE =>
+      case HsRhcCorpus.command args of SOME action => action () | NONE =>
+      case HsLazyPorts.command args of SOME action => action () | NONE =>
+      case HsChecks.command args of SOME action => action () | NONE =>
       case CompilerMutants.command args of SOME action => action () | NONE =>
+      case HsSyntax.command args of SOME action => action () | NONE =>
+      case HsNames.command args of SOME action => action () | NONE =>
+      case HsLibrary.command args of SOME action => action () | NONE =>
+      case HsMutants.command args of SOME action => action () | NONE =>
+      case HsMeta.command args of SOME action => action () | NONE =>
+      case HsGen.command args of SOME action => action () | NONE =>
+      case HsReduce.command args of SOME action => action () | NONE =>
+      case HsInterpVm.command args of SOME action => action () | NONE =>
+      case HsPerf.command args of SOME action => action () | NONE =>
+      case HsLintJobs.command args of SOME action => action () | NONE =>
       case WindowsJobs.command args of SOME action => action () | NONE =>
       case Benchmarks.command args of SOME action => action () | NONE =>
       case ScenarioJobs.command args of SOME action => action () | NONE =>
@@ -245,7 +260,19 @@ val () =
       case Thunks.command args of
         SOME f => f ()
       | NONE =>
+      case HsLang.command args of
+        SOME f => f ()
+      | NONE =>
+      case HsRoundTrip.command args of
+        SOME f => f ()
+      | NONE =>
+      case HsConformance.command args of
+        SOME f => f ()
+      | NONE =>
           case Tools.command args of
+            SOME f => f ()
+          | NONE =>
+          case HsCore.command args of
             SOME f => f ()
           | NONE => case Protocols.command args of
                       SOME f => f ()

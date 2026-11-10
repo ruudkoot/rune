@@ -82,43 +82,38 @@ struct
       fun atom a = case a of Var (x, _) => count (named, x) | Global (g, _) => count (named, g) | Const _ => () | Con0 _ => () | Unit => ()
       (* the functions, and of each whether its own code says thunk_blackhole or thunk_self_update *)
       val functions : bool IntTable.table = IntTable.table 64
-      (* own: the function whose own code this is, or NONE at the top level *)
+      (* own: the function whose own code this is, or NONE at the top level;
+         a step's atoms are Mid.atomsOfRhs's (docs/ir.md, Walking Mid) *)
       fun rhs (own : var option, r : rhs) =
-        case r of
-          Atom a => atom a
-        | App (f, xs) => (atom f; List.app atom xs)
-        | Prim (n, _, xs) =>
-            (List.app atom xs;
-             (case (n, xs) of
-                ("thunk_make", [Var (x, _)]) => make x
-              | ("thunk_make", [Global (g, _)]) => make g
-              | _ => ());
-             if not (isThunkPrim n) then ()
-             else case own of
-                    SOME f => IntTable.insert (functions, f, true)
-                  | NONE => bug (n ^ " outside a function: no suspension's code"))
-        | Tuple xs => List.app atom xs
-        | Select (_, a) => atom a
-        | Con (_, _, a) => atom a
-        | Decon (_, _, a) => atom a
-        | ConTag a => atom a
-        | NewExn _ => ()
-        | BuiltinExn _ => ()
-        | MkExn (c, a) => (atom c; atom a)
-        | ExnCon a => atom a
-        | ExnArg (_, a) => atom a
-        | SetGlobal (_, a) => atom a
+        (List.app atom (atomsOfRhs r);
+         case r of
+           Prim (n, _, xs) =>
+             ((case (n, xs) of
+                 ("thunk_make", [Var (x, _)]) => make x
+               | ("thunk_make", [Global (g, _)]) => make g
+               | _ => ());
+              if not (isThunkPrim n) then ()
+              else case own of
+                     SOME f => IntTable.insert (functions, f, true)
+                   | NONE => bug (n ^ " outside a function: no suspension's code"))
+         | Atom _ => ()
+         | App _ => ()
+         | Tuple _ => ()
+         | Select _ => ()
+         | Con _ => ()
+         | Decon _ => ()
+         | ConTag _ => ()
+         | NewExn _ => ()
+         | BuiltinExn _ => ()
+         | MkExn _ => ()
+         | ExnCon _ => ()
+         | ExnArg _ => ()
+         | SetGlobal _ => ())
+      (* an expression's parts, by Mid.fold: the functions it makes walked
+         as their own code *)
       and exp (own, e : exp) =
-        case e of
-          Let (_, _, r, b) => (rhs (own, r); exp (own, b))
-        | Fun (fs, b) => (List.app fundef fs; exp (own, b))
-        | Join (_, _, b, sc) => (exp (own, b); exp (own, sc))
-        | Jump (_, xs) => List.app atom xs
-        | If (c, t, f) => (atom c; exp (own, t); exp (own, f))
-        | Handle (a, _, h) => (exp (own, a); exp (own, h))
-        | Raise a => atom a
-        | Return r => rhs (own, r)
-        | Mark (_, a) => exp (own, a)
+        fold {rhs = fn (r, ()) => rhs (own, r), atom = fn (a, ()) => atom a, jump = fn (_, ()) => (),
+              fundef = fn (f, ()) => fundef f} () e
       and fundef (f : fundef) =
         (if isSome (IntTable.find (functions, #name f)) then ()
          else (IntTable.insert (functions, #name f, false); order := #name f :: !order);
@@ -176,6 +171,71 @@ struct
         else bug (what () ^ " has type " ^ Ty.toString t ^ " where " ^ Ty.toString want ^ " is wanted")
       fun the what () = what
 
+      (* The forms of a type only another front end makes (Ty: D4 of the
+         haskell98 roadmap), applied as they may be: a forall is a field's
+         type alone, and binds no variable in scope or twice; an
+         application's head is a type variable, applied to as many types
+         wherever it is; a type name is given no more arguments than its
+         datatype has parameters, and as many where it is a value's type.
+         Each node once as a value's type and once as an argument, so that a
+         type of 2^n nodes as a tree is n here. *)
+      val formed : unit IntTable.table = IntTable.table 256
+      val formedArg : unit IntTable.table = IntTable.table 64
+      val arities : int IntTable.table = IntTable.table 16
+      fun params s = Option.map (List.length o #params) (Ty.datatypeOf s)
+      fun given (what, t, s, name, args, exact) =
+        case params s of
+          SOME n =>
+            if List.length args > n orelse exact andalso List.length args < n then
+              bug (what () ^ " gives type name " ^ name ^ " " ^ Int.toString (List.length args) ^ " arguments, of its "
+                   ^ Int.toString n ^ ": " ^ Ty.toString t)
+            else ()
+        | NONE => ()
+      fun arityOf (what, t, a, n) =
+        case IntTable.find (arities, a) of
+          SOME m => if m = n then ()
+                    else bug (what () ^ " applies 'a" ^ Int.toString a ^ " to " ^ Int.toString n ^ " types, and elsewhere to "
+                              ^ Int.toString m ^ ": " ^ Ty.toString t)
+        | NONE => IntTable.insert (arities, a, n)
+      (* a value's type: no forall but in a field *)
+      fun valueTy (what, t) =
+        if isSome (IntTable.find (formed, Ty.id t)) then ()
+        else
+          (IntTable.insert (formed, Ty.id t, ());
+           case Ty.view t of
+             Ty.Gen a => arityOf (what, t, a, 0)
+           | Ty.Var _ => ()
+           | Ty.Con (s, n, args) => (given (what, t, s, n, args, true); List.app (fn a => argTy (what, a)) args)
+           | Ty.Tuple ts => List.app (fn u => case Ty.view u of Ty.Forall _ => forallTy (what, u) | _ => valueTy (what, u)) ts
+           | Ty.Arrow (a, b) => (valueTy (what, a); valueTy (what, b))
+           | Ty.ExnCon => ()
+           | Ty.App (h, args) =>
+               ((case Ty.view h of
+                   Ty.Gen a => arityOf (what, t, a, List.length args)
+                 | Ty.Var _ => ()
+                 | _ => bug (what () ^ " applies what is no type variable: " ^ Ty.toString t));
+                List.app (fn a => argTy (what, a)) args)
+           | Ty.Forall _ => bug (what () ^ " is polymorphic, " ^ Ty.toString t ^ ", other than as a field"))
+      (* a field's polymorphic type: its variables bound in its body *)
+      and forallTy (what, t) =
+        case Ty.view t of
+          Ty.Forall (vs, b) =>
+            (List.app (fn v => if isSome (IntTable.find (tyScope, v)) orelse List.length (List.filter (fn w => w = v) vs) > 1
+                               then bug (what () ^ " has a forall that binds 'a" ^ Int.toString v ^ " again: " ^ Ty.toString t)
+                               else ()) vs;
+             bindTvs (what, vs); valueTy (what, b); leaveTvs vs)
+        | _ => valueTy (what, t)
+      (* a type given a type name or a type variable, or at which a use is:
+         of a higher kind where it is a type name given fewer arguments *)
+      and argTy (what, t) =
+        if isSome (IntTable.find (formedArg, Ty.id t)) then ()
+        else
+          (IntTable.insert (formedArg, Ty.id t, ());
+           case Ty.view t of
+             Ty.Con (s, n, args) => (given (what, t, s, n, args, false); List.app (fn a => argTy (what, a)) args)
+           | Ty.Gen _ => ()
+           | _ => valueTy (what, t))
+
       (* the functions, global and local, of other than one parameter: the
          types of their parameters *)
       val nary : Ty.ty list IntTable.table = IntTable.table 256
@@ -198,8 +258,18 @@ struct
                    | Funs fs => List.app (fn f => (define (#name f, schemeOf f); naryOf f)) fs
                    | Do (gs, _) => List.app define gs) p
 
-      fun instance (what : unit -> string, (tyvars, t) : scheme, args) =
-        if List.length tyvars <> List.length args then
+      fun instance (what : unit -> string, (tyvars, t) : scheme, args, poly : bool) =
+        (* at fewer types than its variables, where a polymorphic value may
+           be (a field, or a Let's step at a scheme of its own: fieldAtom),
+           the binder at its scheme, the first variables given: a forall of
+           the rest -- a function Lift took out of one around it is given
+           the outer one's first (Lift.program) *)
+        if poly andalso List.length args < List.length tyvars then
+          let
+            val k = List.length args
+            val s = ListPair.foldl (fn (a, u, s) => IntMap.insert (s, a, u)) IntMap.empty (List.take (tyvars, k), args)
+          in Ty.forall (List.drop (tyvars, k), Ty.subst s t) end
+        else if List.length tyvars <> List.length args then
           bug (what () ^ " abstracts over " ^ Int.toString (List.length tyvars) ^ " variables and is given "
                ^ Int.toString (List.length args) ^ " types")
         else if null tyvars then t
@@ -221,6 +291,8 @@ struct
         | Ty.Tuple ts => List.all ground ts
         | Ty.Arrow (a, b) => ground a andalso ground b
         | Ty.ExnCon => true
+        | Ty.App _ => false
+        | Ty.Forall _ => false
       fun noteCast (x, r) =
         case r of
           Prim ("functor_cast", t, [_]) =>
@@ -254,30 +326,36 @@ struct
 
       (* an atom, which must not be a function of other than one parameter:
          such a one is only called (callee) *)
-      fun atom (a : atom) : Ty.ty =
+      fun atom (a : atom) : Ty.ty = atomAt (false, a)
+      (* an atom where a polymorphic value may be (instance) *)
+      and fieldAtom (a : atom) : Ty.ty = atomAt (true, a)
+      and atomAt (poly, a : atom) : Ty.ty =
         case a of
-          Var (x, _) => if isNary x then bug ("v" ^ Int.toString x ^ ", a function of other than one parameter, used as a value") else callee a
-        | Global (g, _) => if isNary g then bug ("g" ^ Int.toString g ^ ", a function of other than one parameter, used as a value") else callee a
-        | _ => callee a
+          Var (x, _) => if isNary x then bug ("v" ^ Int.toString x ^ ", a function of other than one parameter, used as a value") else calleeAt (poly, a)
+        | Global (g, _) => if isNary g then bug ("g" ^ Int.toString g ^ ", a function of other than one parameter, used as a value") else calleeAt (poly, a)
+        | _ => calleeAt (poly, a)
 
-      and callee (a : atom) : Ty.ty =
+      and callee (a : atom) : Ty.ty = calleeAt (false, a)
+      and calleeAt (poly, a : atom) : Ty.ty =
         case a of
           Var (x, args) =>
-            (List.app (fn t => scoped (fn () => "a use of v" ^ Int.toString x, t)) args;
+            (List.app (fn t => (scoped (fn () => "a use of v" ^ Int.toString x, t); argTy (fn () => "a use of v" ^ Int.toString x, t)))
+                      args;
              case IntTable.find (scope, x) of
-               SOME s => instance (fn () => "v" ^ Int.toString x, s, args)
+               SOME s => instance (fn () => "v" ^ Int.toString x, s, args, poly)
              | NONE => bug ("variable v" ^ Int.toString x ^ " is not in scope"))
         | Global (g, args) =>
-            (List.app (fn t => scoped (fn () => "a use of g" ^ Int.toString g, t)) args;
+            (List.app (fn t => (scoped (fn () => "a use of g" ^ Int.toString g, t); argTy (fn () => "a use of g" ^ Int.toString g, t)))
+                      args;
              case IntTable.find (globals, g) of
-               SOME s => instance (fn () => "g" ^ Int.toString g, s, args)
+               SOME s => instance (fn () => "g" ^ Int.toString g, s, args, poly)
              | NONE =>
                  case outer g of
-                   SOME s => instance (fn () => "g" ^ Int.toString g, s, args)
+                   SOME s => instance (fn () => "g" ^ Int.toString g, s, args, poly)
                  | NONE => bug ("global g" ^ Int.toString g ^ " is not defined"))
         | Const (c, t) => (Option.app bug (IrRules.const (c, t)); t)
         | Con0 (tag, t) =>
-            (scoped (the "a nullary constructor", t);
+            (scoped (the "a nullary constructor", t); valueTy (the "a nullary constructor", t);
              case conArg ("a nullary constructor", t, tag) of
                NONE => t
              | SOME _ => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " is not nullary"))
@@ -309,7 +387,7 @@ struct
             end
         | Prim (p, t, args) =>
             (if String.isPrefix "thunk_" p then suspended := true else ();
-             scoped (fn () => "primitive " ^ p, t);
+             scoped (fn () => "primitive " ^ p, t); valueTy (fn () => "primitive " ^ p, t);
              (case (p, args) of ("functor_cast", [a]) => castBack (t, a) | _ => ());
              (* its description's, and a cast's origin's rule (IrRules.use):
                 a record's slot is unit, a functor_cast to it or from it *)
@@ -332,7 +410,7 @@ struct
                   res)
              | _ => bug ("primitive " ^ p ^ " of type " ^ Ty.toString t)
              end)
-        | Tuple xs => Ty.tuple (List.map atom xs)
+        | Tuple xs => Ty.tuple (List.map fieldAtom xs)
         | Select (i, a) =>
             let val t = atom a
             in
@@ -343,19 +421,25 @@ struct
               | _ => bug ("a field of what has type " ^ Ty.toString t)
             end
         | Con (tag, t, a) =>
-            (scoped (the "a constructor", t);
+            (scoped (the "a constructor", t); valueTy (the "a constructor", t);
              case conArg ("a constructor", t, tag) of
                SOME arg => (expect (the "the argument of a constructor", atom a, arg); t)
              | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " takes no argument"))
         | Decon (tag, t, a) =>
-            (scoped (the "a deconstruction", t);
+            (scoped (the "a deconstruction", t); valueTy (the "a deconstruction", t);
              expect (the "what a deconstruction takes apart", atom a, t);
              case conArg ("a deconstruction", t, tag) of
                SOME arg => arg
              | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " has no argument"))
         | ConTag a =>
             let val t = atom a
-            in case Ty.view t of Ty.Con _ => Ty.int | _ => bug ("the tag of what has type " ^ Ty.toString t) end
+            in
+              case Ty.view t of
+                Ty.Con (stamp, _, _) =>
+                  if isSome (Ty.datatypeOf stamp) then Ty.int
+                  else bug ("the tag of what has type " ^ Ty.toString t ^ ", which is no datatype")
+              | _ => bug ("the tag of what has type " ^ Ty.toString t)
+            end
         | NewExn _ => Ty.exnCon
         | BuiltinExn _ => Ty.exnCon
         | MkExn (c, p) =>
@@ -368,7 +452,9 @@ struct
              end;
              Ty.exn)
         | ExnCon a => (expect (the "an exception", atom a, Ty.exn); Ty.exnCon)
-        | ExnArg (t, a) => (scoped (the "an exception's payload", t); expect (the "an exception", atom a, Ty.exn); t)
+        | ExnArg (t, a) =>
+            (scoped (the "an exception's payload", t); valueTy (the "an exception's payload", t);
+             expect (the "an exception", atom a, Ty.exn); t)
         | SetGlobal (g, a) =>
             (if !inFun > 0 then IntTable.insert (setInFun, g, ()) else ();
              case (IntTable.find (globals, g), if mayOuter then outer g else NONE) of
@@ -383,7 +469,15 @@ struct
           Let (x, s as (tvs, t), r, b) =>
             (bindTvs (fn () => "v" ^ Int.toString x, tvs);
              scoped (fn () => "the type of v" ^ Int.toString x, t);
-             expect (fn () => "the value of v" ^ Int.toString x, rhs r, t);
+             valueTy (fn () => "the type of v" ^ Int.toString x, t);
+             (* a step whose value is polymorphic (a forall: a field's, or a
+                variable's at no types) is bound at its scheme *)
+             let val rt = case (r, tvs) of (Atom a, _ :: _) => fieldAtom a | _ => rhs r
+             in
+               case Ty.view rt of
+                 Ty.Forall _ => expect (fn () => "the value of v" ^ Int.toString x, rt, Ty.forall (tvs, t))
+               | _ => expect (fn () => "the value of v" ^ Int.toString x, rt, t)
+             end;
              leaveTvs tvs;
              bind x;
              noteCast (x, r);
@@ -395,7 +489,8 @@ struct
              List.app (fn f => leave (#name f)) fs)
         | Join (j, params, body, sc) =>
             (bind j;
-             List.app (fn (x, t) => (bind x; scoped (fn () => "the type of v" ^ Int.toString x, t))) params;
+             List.app (fn (x, t) => (bind x; scoped (fn () => "the type of v" ^ Int.toString x, t);
+                                     valueTy (fn () => "the type of v" ^ Int.toString x, t))) params;
              List.app (fn (x, t) => enter (x, ([], t))) params;
              exp (labels, body, want);
              List.app (fn (x, _) => leave x) params;
@@ -418,8 +513,10 @@ struct
         if null params then bug ("function v" ^ Int.toString (#name f) ^ " has no parameter")
         else
           (bindTvs (fn () => "function v" ^ Int.toString (#name f), tyvars);
-           List.app (fn (x, t) => (bind x; scoped (fn () => "the type of v" ^ Int.toString x, t))) params;
+           List.app (fn (x, t) => (bind x; scoped (fn () => "the type of v" ^ Int.toString x, t);
+                                   valueTy (fn () => "the type of v" ^ Int.toString x, t))) params;
            scoped (fn () => "the result of function v" ^ Int.toString (#name f), result);
+           valueTy (fn () => "the result of function v" ^ Int.toString (#name f), result);
            List.app (fn (x, t) => enter (x, ([], t))) params;
            inFun := !inFun + 1;
            exp (IntMap.empty, body, result);
@@ -466,6 +563,7 @@ struct
             (bind g;
              bindTvs (fn () => "g" ^ Int.toString g, tvs);
              scoped (fn () => "the type of g" ^ Int.toString g, t);
+             valueTy (fn () => "the type of g" ^ Int.toString g, t);
              exp (IntMap.empty, e, t);
              leaveTvs tvs;
              Option.app (fn r => noteCast (g, r)) (valueOf e))
@@ -479,7 +577,8 @@ struct
             in
              List.app (fn (g, _) => bind g) gs;
              bindTvs (fn () => "a Do", tvs);
-             List.app (fn (g, (_, t)) => scoped (fn () => "the type of g" ^ Int.toString g, t)) gs;
+             List.app (fn (g, (_, t)) => (scoped (fn () => "the type of g" ^ Int.toString g, t);
+                                         valueTy (fn () => "the type of g" ^ Int.toString g, t))) gs;
              exp (IntMap.empty, e, Ty.unit);
              leaveTvs tvs;
              case sets (IntMap.empty, e) of
@@ -490,9 +589,67 @@ struct
         case List.find (fn (g, _) => not (IntMap.member (set, g) orelse isSome (IntTable.find (setInFun, g)) orelse setter g)) gs of
           SOME (g, _) => bug ("a Do lists g" ^ Int.toString g ^ ", which a way of it that returns does not set")
         | NONE => ()
+      (* A global the top level reads before the definition that gives it
+         its value: what a Val's or a Do's expression reads, outside the
+         functions it makes, of a global a Val or a Do after it defines, or
+         a Val itself; or of a function after it, but for a call of it,
+         which reads no global *)
+      val place : int IntTable.table = IntTable.table 256
+      val functions : unit IntTable.table = IntTable.table 256
+      val _ = List.foldl (fn (d, i) =>
+                             ((case d of
+                                 Val (g, _, _) => IntTable.insert (place, g, i)
+                               | Funs fs => List.app (fn f => (IntTable.insert (place, #name f, i);
+                                                               IntTable.insert (functions, #name f, ()))) fs
+                               | Do (gs, _) => List.app (fn (g, _) => IntTable.insert (place, g, i)) gs);
+                              i + 1)) 0 p
+      fun early (i, own) =
+        let
+          fun read g =
+            case IntTable.find (place, g) of
+              SOME j => if j > i orelse (own andalso j = i)
+                        then bug ("global g" ^ Int.toString g ^ " is read at the top level before its definition")
+                        else ()
+            | NONE => ()
+          fun atom a = case a of Global (g, _) => read g | _ => ()
+          fun rhs r =
+            case r of
+              Atom a => atom a
+            | App (Global (g, _), args) => (if isSome (IntTable.find (functions, g)) then () else read g; List.app atom args)
+            | App (f, args) => (atom f; List.app atom args)
+            | Prim (_, _, args) => List.app atom args
+            | Tuple args => List.app atom args
+            | Select (_, a) => atom a
+            | Con (_, _, a) => atom a
+            | Decon (_, _, a) => atom a
+            | ConTag a => atom a
+            | MkExn (a, b) => (atom a; atom b)
+            | ExnCon a => atom a
+            | ExnArg (_, a) => atom a
+            | SetGlobal (_, a) => atom a
+            | NewExn _ => ()
+            | BuiltinExn _ => ()
+          fun exp e =
+            case e of
+              Let (_, _, r, b) => (rhs r; exp b)
+            | Fun (_, b) => exp b
+            | Join (_, _, b, sc) => (exp b; exp sc)
+            | Jump (_, args) => List.app atom args
+            | If (a, t, f) => (atom a; exp t; exp f)
+            | Handle (a, _, h) => (exp a; exp h)
+            | Raise a => atom a
+            | Return r => rhs r
+            | Mark (_, a) => exp a
+        in exp end
     in
       List.app def p;
       List.app unset (List.rev (!dos));
+      ignore (List.foldl (fn (d, i) =>
+                            ((case d of
+                                Val (_, _, e) => early (i, true) e
+                              | Do (_, e) => early (i, false) e
+                              | Funs _ => ());
+                             i + 1)) 0 p);
       if !suspended then suspensions p else ()
     end
 
@@ -510,27 +667,19 @@ struct
   type context = {schemes : scheme IntTable.table, nary : Ty.ty list IntTable.table, setters : unit IntTable.table}
   fun extend ({schemes, nary, setters} : context) (p : program) : unit =
     let
-      (* the globals a function sets, for a Do's rule *)
-      fun exp (inFun, e) =
-        case e of
-          Let (_, _, r, b) => (rhs (inFun, r); exp (inFun, b))
-        | Fun (fs, b) => (List.app (fn f => exp (true, #body f)) fs; exp (inFun, b))
-        | Join (_, _, b, sc) => (exp (inFun, b); exp (inFun, sc))
-        | If (_, t, f) => (exp (inFun, t); exp (inFun, f))
-        | Handle (a, _, h) => (exp (inFun, a); exp (inFun, h))
-        | Return r => rhs (inFun, r)
-        | Mark (_, a) => exp (inFun, a)
-        | _ => ()
-      and rhs (true, SetGlobal (g, _)) = IntTable.insert (setters, g, ())
-        | rhs _ = ()
+      (* the globals a function sets, for a Do's rule: every SetGlobal in a
+         function's body, and outside one in the functions made there *)
+      fun rhs r = case r of SetGlobal (g, _) => IntTable.insert (setters, g, ()) | _ => ()
+      fun inFun (f : fundef) = appRhs rhs (#body f)
+      fun outside e = fold {rhs = fn _ => (), atom = fn _ => (), jump = fn _ => (), fundef = fn (f, ()) => inFun f} () e
       fun fundef (f : fundef) =
         (IntTable.insert (schemes, #name f, (#tyvars f, funTy f));
          case #params f of [_] => () | ps => IntTable.insert (nary, #name f, List.map #2 ps);
-         exp (true, #body f))
+         inFun f)
     in
-      List.app (fn Val (g, s, e) => (IntTable.insert (schemes, g, s); exp (false, e))
+      List.app (fn Val (g, s, e) => (IntTable.insert (schemes, g, s); outside e)
                  | Funs fs => List.app fundef fs
-                 | Do (gs, e) => (List.app (fn (g, s) => IntTable.insert (schemes, g, s)) gs; exp (false, e))) p
+                 | Do (gs, e) => (List.app (fn (g, s) => IntTable.insert (schemes, g, s)) gs; outside e)) p
     end
   fun context (p : program) : context =
     let val c = {schemes = IntTable.table 1024, nary = IntTable.table 64, setters = IntTable.table 16}

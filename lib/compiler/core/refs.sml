@@ -17,28 +17,12 @@ structure Refs =
 struct
   open Mid
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   fun refArg (t : Ty.ty) : Ty.ty option =
     case Ty.view t of
       Ty.Con (s, _, [a]) => if s = #stamp Types.refTycon then SOME a else NONE
     | _ => NONE
-
-  fun atomsOf (r : rhs) : atom list =
-    case r of
-      Atom a => [a]
-    | App (f, xs) => f :: xs
-    | Prim (_, _, xs) => xs
-    | Tuple xs => xs
-    | Select (_, a) => [a]
-    | Con (_, _, a) => [a]
-    | Decon (_, _, a) => [a]
-    | ConTag a => [a]
-    | MkExn (c, a) => [c, a]
-    | ExnCon a => [a]
-    | ExnArg (_, a) => [a]
-    | SetGlobal (_, a) => [a]
-    | _ => []
 
   (* The places of f's parameters that are refs it only reads and sets and
      gives on to its calls of itself in tail position. *)
@@ -51,7 +35,7 @@ struct
         let fun go i = if i = n then NONE else if #1 (Vector.sub (ps, i)) = x then SOME i else go (i + 1)
         in go 0 end
       fun kill a = case a of Var (x, _) => (case index x of SOME i => Array.update (cand, i, false) | NONE => ()) | _ => ()
-      fun killAll r = List.app kill (atomsOf r)
+      fun killAll r = appAtomsOfRhs kill r
       fun killExp e =
         case e of
           Let (_, _, r, b) => (killAll r; killExp b)
@@ -98,7 +82,7 @@ struct
     end
 
   (* f's copy named f', its refs at the places ks their values. *)
-  fun copyOf (f as {name, tyvars, params, result, body} : fundef, f' : var, ks : int list) : fundef =
+  fun copyOf (f as {name, label, tyvars, params, result, body} : fundef, f' : var, ks : int list) : fundef =
     let
       val ps' = List.map (fn (x, t) => (x, freshStamp (), t)) params
       val renamed = List.foldl (fn ((x, y, _), m) => IntMap.insert (m, x, y)) IntMap.empty ps'
@@ -129,7 +113,7 @@ struct
             | Handle (a, _, h) => go a orelse go h
             | Return r => rhs r
             | Mark (_, a) => go a
-            | _ => false
+            | Raise _ => false
         in go e end
       fun go (e, cur : atom IntMap.map) : exp =
         case e of
@@ -167,20 +151,14 @@ struct
                                         (List.tabulate (List.length args, fn i => i), args)))
             else e
         | Mark (sp, a) => Mark (sp, go (a, cur))
-        | _ => e
+        | Raise _ => e
+        | Return _ => e
       val cur0 = List.foldl (fn (r, m) => IntMap.insert (m, r, Var (r, []))) IntMap.empty refs
       (* the parameters: a ref's is its value now, of the type it holds *)
       val params' = ListPair.map (fn ((_, y, t), i) => (y, if List.exists (fn k => k = i) ks then valOf (refArg t) else t))
                                  (ps', List.tabulate (List.length ps', fn i => i))
-      val () =
-        case (params, ps') of
-          ((x, _) :: _, (_, y, _) :: _) =>
-            (case IntMap.find (!Translate.funNames, x) of
-               SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, y, n)
-             | NONE => ())
-        | _ => ()
     in
-      {name = f', tyvars = tyvars, params = params', result = result, body = go (body, cur0)}
+      {name = f', label = label, tyvars = tyvars, params = params', result = result, body = go (body, cur0)}
     end
 
   fun program (p : program) : program =
@@ -200,17 +178,7 @@ struct
       fun callsOne (e : exp) : bool =
         let
           fun rhs r = case r of App (Global (g, _), _) => isSome (IntTable.find (cands, g)) | _ => false
-          fun go e =
-            case e of
-              Let (_, _, r, b) => rhs r orelse go b
-            | Fun (fs, b) => List.exists (fn f => go (#body f)) fs orelse go b
-            | Join (_, _, jb, sc) => go jb orelse go sc
-            | If (_, t, f) => go t orelse go f
-            | Handle (a, _, h) => go a orelse go h
-            | Return r => rhs r
-            | Mark (_, a) => go a
-            | _ => false
-        in go e end
+        in existsRhs rhs e end
       (* a copy for each function and set of its ref parameters given
          fresh refs *)
       val copies : var StringMap.map ref = ref StringMap.empty
@@ -237,14 +205,14 @@ struct
           fun atom a = case a of Var (x, _) => IntTable.bump (t, x) | _ => ()
           fun go e =
             case e of
-              Let (_, _, r, b) => (List.app atom (atomsOf r); go b)
+              Let (_, _, r, b) => (appAtomsOfRhs atom r; go b)
             | Fun (fs, b) => (List.app (fn f => go (#body f)) fs; go b)
             | Join (_, _, jb, sc) => (go jb; go sc)
             | Jump (_, xs) => List.app atom xs
             | If (a, t, f) => (atom a; go t; go f)
             | Handle (a, _, h) => (go a; go h)
             | Raise a => atom a
-            | Return r => List.app atom (atomsOf r)
+            | Return r => appAtomsOfRhs atom r
             | Mark (_, a) => go a
         in go e; t end
       (* a definition's expression, its calls rewritten: fresh holds the
@@ -292,21 +260,22 @@ struct
             | Fun (fs, b) =>
                 (* a function inside: rewritten for itself, where a ref
                    made outside is not fresh *)
-                Fun (List.map (fn {name, tyvars, params, result, body} =>
-                                 {name = name, tyvars = tyvars, params = params, result = result, body = rewrite body}) fs,
+                Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                                 {name = name, label = label, tyvars = tyvars, params = params, result = result, body = rewrite body}) fs,
                      go b)
             | Join (j, ps, jb, sc) => Join (j, ps, go jb, go sc)
             | If (a, t, f) => If (a, go t, go f)
             | Handle (a, x, h) => Handle (go a, x, go h)
             | Return r => Return (call r)
             | Mark (sp, a) => Mark (sp, go a)
-            | _ => e
+            | Jump _ => e
+            | Raise _ => e
         in go e end
       val p' =
         if not (!any) then p else
         List.map (fn Val (g, s, e) => Val (g, s, rewrite e)
-                   | Funs fs => Funs (List.map (fn {name, tyvars, params, result, body} =>
-                                                   {name = name, tyvars = tyvars, params = params, result = result,
+                   | Funs fs => Funs (List.map (fn {name, label, tyvars, params, result, body} =>
+                                                   {name = name, label = label, tyvars = tyvars, params = params, result = result,
                                                     body = rewrite body}) fs)
                    | Do (gs, e) => Do (gs, rewrite e)) p
       (* the copies' own calls rewritten in turn, which may make more *)
@@ -315,8 +284,8 @@ struct
           [] => acc
         | fs =>
             (made := [];
-             drain (acc @ List.map (fn {name, tyvars, params, result, body} =>
-                                      {name = name, tyvars = tyvars, params = params, result = result, body = rewrite body})
+             drain (acc @ List.map (fn {name, label, tyvars, params, result, body} =>
+                                      {name = name, label = label, tyvars = tyvars, params = params, result = result, body = rewrite body})
                                    (List.rev fs)))
       val copied = drain []
     in

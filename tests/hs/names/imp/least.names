@@ -1,0 +1,11 @@
+# E16: 690 pairs at the least fixpoint; T3's map is ambiguous and its P.map not in scope.
+pairs 952
+ERROR	T3:3:5	`map` is ambiguous: it is T1's and PreludeList's
+ERROR	T3:4:5	the variable `P.map` is not in scope
+EXPORT	T1	vT1 map
+EXPORT	T1	vhaskell98:Prelude Nothing
+EXPORT	T2	vT2 x
+EXPORT	T2	vT2 y
+EXPORT	T2	vT2 z
+EXPORT	T3	vT3 v
+EXPORT	T3	vT3 w

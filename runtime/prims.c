@@ -3242,6 +3242,78 @@ static int p_intinf_decimal(VM *vm) {
     return ret(vm, 1, v);
 }
 
+/* IntInf.int (haskell98 M31, D20 D): an immediate where the number fits
+   63 bits, else a pair of its sign and magnitude (runtime/intinf.h). Two
+   immediates are worked on here, as runtime/register/fastprim.h and the
+   JIT do in line; the rest is runtime/intinf.c's. */
+static int intinf_arith(VM *vm, unsigned op, const char *name) {
+    Value x = ARG(1), y = ARG(0);
+    if (val_is_imm(x) && val_is_imm(y)) {
+        int64_t a = val_imm(x), b = val_imm(y), r;
+        switch (op) {
+        case INTINF_ADD: if (!add_ov64(a, b, &r) && int_fits(r)) return ret(vm, 2, mk_imm(r)); break;
+        case INTINF_SUB: if (!sub_ov64(a, b, &r) && int_fits(r)) return ret(vm, 2, mk_imm(r)); break;
+        case INTINF_MUL: if (!mul_ov64(a, b, &r) && int_fits(r)) return ret(vm, 2, mk_imm(r)); break;
+        default:
+            if (b == 0) return raise_with(vm, 2, EXN_DIV);
+            if (b != -1) {
+                int64_t q = a / b, m = a % b;
+                if ((op == INTINF_DIV || op == INTINF_MOD) && m != 0 && ((m < 0) != (b < 0))) { q -= 1; m += b; }
+                return ret(vm, 2, mk_imm(op == INTINF_QUOT || op == INTINF_DIV ? q : m));
+            }
+        }
+    } else if (op != INTINF_ADD && op != INTINF_SUB && op != INTINF_MUL && vm_intinf_is_zero(vm, y, name)) {
+        vm_intinf_check_value(vm, x, name);
+        return raise_with(vm, 2, EXN_DIV);
+    }
+    return ret(vm, 2, vm_intinf_arith(vm, op, x, y, name));
+}
+static int p_intinf_add(VM *vm) { return intinf_arith(vm, INTINF_ADD, "intinf_add"); }
+static int p_intinf_sub(VM *vm) { return intinf_arith(vm, INTINF_SUB, "intinf_sub"); }
+static int p_intinf_mul(VM *vm) { return intinf_arith(vm, INTINF_MUL, "intinf_mul"); }
+static int p_intinf_div(VM *vm) { return intinf_arith(vm, INTINF_DIV, "intinf_div"); }
+static int p_intinf_mod(VM *vm) { return intinf_arith(vm, INTINF_MOD, "intinf_mod"); }
+static int p_intinf_quot(VM *vm) { return intinf_arith(vm, INTINF_QUOT, "intinf_quot"); }
+static int p_intinf_rem(VM *vm) { return intinf_arith(vm, INTINF_REM, "intinf_rem"); }
+static int p_intinf_neg(VM *vm) { return ret(vm, 1, vm_intinf_negate(vm, ARG(0), "intinf_neg")); }
+static int p_intinf_lt(VM *vm) { return ret(vm, 2, mk_bool(vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_lt") < 0)); }
+static int p_intinf_le(VM *vm) { return ret(vm, 2, mk_bool(vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_le") <= 0)); }
+static int p_intinf_gt(VM *vm) { return ret(vm, 2, mk_bool(vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_gt") > 0)); }
+static int p_intinf_ge(VM *vm) { return ret(vm, 2, mk_bool(vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_ge") >= 0)); }
+static int p_intinf_order(VM *vm) { return ret(vm, 2, mk_con0(1 + vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_order"))); }
+/* an int as itself where it is an immediate; under RUNE_INT64 one past 63
+   bits is a box, whose number is a large IntInf.int */
+static int p_intinf_from_int(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "intinf_from_int");
+    if (val_is_imm(ARG(0))) return ret(vm, 1, ARG(0));
+    return ret(vm, 1, vm_intinf_of_int64(vm, val_int(ARG(0))));
+}
+static int p_intinf_to_int(VM *vm) {
+    int64_t i;
+    if (!vm_intinf_to_int64(vm, ARG(0), &i, "intinf_to_int") || !int_fits_lang(i)) return raise_with(vm, 1, EXN_OVERFLOW);
+    return ret(vm, 1, mk_int(i));
+}
+static int p_intinf_is_small(VM *vm) { return ret(vm, 1, mk_bool(vm_intinf_check_value(vm, ARG(0), "intinf_is_small"))); }
+/* (negative, magnitude): a large value's own pair, or one made of an immediate */
+static int p_intinf_parts(VM *vm) {
+    if (!vm_intinf_check_value(vm, ARG(0), "intinf_parts")) return ret(vm, 1, ARG(0));
+    int64_t i = val_imm(ARG(0));
+    vm_push(vm, vm_intinf_magnitude_of_small(vm, i));
+    Obj *pair = vm_alloc_fields(vm, K_TUPLE, 0, 2);
+    obj_fill_field(pair, 0, mk_bool(i < 0));
+    obj_fill_field(pair, 1, vm_pop(vm));
+    return ret(vm, 1, mk_ptr(pair));
+}
+static int p_intinf_make(VM *vm) {
+    int neg = intinf_boolean(vm, ARG(1));
+    int64_t small;
+    if (vm_intinf_fits(vm, neg, ARG(0), &small, "intinf_make")) return ret(vm, 2, mk_imm(small));
+    Obj *pair = vm_alloc_fields(vm, K_TUPLE, 0, 2);
+    obj_fill_field(pair, 0, mk_bool(neg));
+    obj_fill_field(pair, 1, ARG(0));   /* the magnitude, rooted as an argument across the allocation */
+    return ret(vm, 2, mk_ptr(pair));
+}
+
 /* Pseudo-terminal ownership stays in the system layer; SML gets only a
    session token and borrowed descriptors, and reaps its ordinary child. */
 static int p_pty_spawn(VM *vm) {

@@ -1,0 +1,4 @@
+; fail: [con] in val x: Just has 1 fields, and is given 2
+; CoreLint, con: a constructor given its fields
+(data Maybe (a) (Nothing) (Just a))
+(val x (Maybe Int) (con Just @Int 1 2))

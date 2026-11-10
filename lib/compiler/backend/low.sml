@@ -39,7 +39,7 @@ struct
   type pos = Source.span * {name : string, site : Source.span option} list
 
   datatype operation =
-      Const of Lambda.const
+      Const of Literal.const
     | Unit
     | Con0 of int                         (* a nullary constructor, by its tag *)
     | Global of int
@@ -251,7 +251,7 @@ struct
       fun vs xs = String.concatWith " " (List.map v xs)
       fun opText oper =
         case oper of
-          Const c => "const " ^ Lambda.constToString c
+          Const c => "const " ^ Literal.toString c
         | Unit => "()"
         | Con0 t => "con0 " ^ Int.toString t
         | Global x => "global " ^ g x

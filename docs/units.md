@@ -725,8 +725,8 @@ the cache (S65).
 **One program of the units' Mid** (`--units --whole`; the incremental
 roadmap's M7 and D6). A compile in units links its units' code; with
 `--whole` it makes one program as a whole-program compile does. Each unit's
-Mid -- what `ToMid` made of it, before the optional passes, with the
-datatypes its types name and its functions' names, which the next unit's
+Mid -- what `ToMid` made of it, before the optional passes, its functions
+with their labels, with the datatypes its types name, which the next unit's
 compile does not keep -- is written with its names by key, as a basis
 writes them (`UnitMid`), kept in its cache entry, and read back as the
 session names it, whether the unit was compiled or taken from the cache;

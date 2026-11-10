@@ -1,0 +1,9 @@
+# No error: every operator resolves by its entity's fixity.
+pairs 798
+EXPORT	A	tA Pair
+EXPORT	A	vA +++
+EXPORT	A	vA :&
+EXPORT	A	vA <+>
+FIX	vA +++	infix	4
+FIX	vA :&	infixl	6
+FIX	vA <+>	infixr	5

@@ -1,0 +1,3 @@
+module M where
+{- c -} f = 1
+{- d -} g = 2

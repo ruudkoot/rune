@@ -39,15 +39,32 @@ is how `translate` compiles a match (see *Matches*), then `expand` (under
 inlined (see *The optimisations of Mid*); `inline` and `specialise` are
 what `simplify` does besides shrinking, each of which may be left out, as
 is `equality`, which only `-O2` runs; and `results` is what `lower` does
-of results in globals (see *Low*).
+of results in globals (see *Low*). These five are the parts of stages
+(`MidPipeline.parts`, `Pipeline.parts`), which have no stage of their own.
+
+The passes on Mid are a list, which is data: a pass is a record `{name,
+from, gate, run}` -- its name, the level it runs from, what else must hold
+where it runs (`shake` needs a whole program), and the pass -- run in order
+by `MidPipeline.lowOfMid`, each as a stage of Mid, linted at level 2 and
+read back at level 3. `MidPipeline.standardPasses` are the passes any front
+end may run, from `shake` on; Rune's list, `Pipeline.midPasses`, is
+`expand` and those. A client edits a list with `removePass`,
+`insertBefore`, `insertAfter` and `replacePass` before it compiles
+(`tests/compiler/mid-client.sml`, which takes Mid's text to bytecode
+through each kind of edit, and `pipeline-client.sml`, which edits Rune's).
+`Simplify` and `Lower` are told what they do besides by their caller
+(`MidPipeline.simplifyOptions`, `lowerOptions`). The list is a seam, not a
+proof that a pass needs nothing else: the passes still read `Pass`'s
+settings and `Target.intBits` (*What a front end gives Mid*, below), and a
+list in another order is a compiler no test has seen.
 
 ## Options
 
 | Option | What it does |
 |---|---|
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given; `-O2` adds `equality` (see *The optimisations of Mid*) |
-| `--passes=P,...` | run these optional passes, whatever the level |
-| `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`) |
+| `--passes=P,...` | run these optional passes, whatever the level (none, given none); a name that is not an optional pass's, of the pass list or a stage's part (`Pipeline.optionalNames`), is refused |
+| `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=registers` (`stack` with `--target=stack`); a name that is no stage's is refused |
 | `--lint`, `--lint=LEVEL` | check what the passes make, at the level given (*Levels*, below; a bare `--lint` is 2, every pass), and stop with `Error.Bug`, which names the check, at the first breach; `RUNE_LINT=LEVEL` does the same where no flag reaches (the REPL, the compiler library), and every test sets `RUNE_LINT=2` ([testing.md](testing.md), *Running the tests*). A check changes nothing of what the compiler makes, the same bytes at every level, units and their bases too (`make check-levels`), and moves none of its counters of names -- stamps, type names, functions, labels -- which `Pass.checkAt` holds every check to, since one that took fresh names hid a bug it should have caught |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every stage makes and its processor time, on standard error, as `pass NAME: N nodes, T s`; then each check, at every depth, as `check KEY: N runs, T s, I instructions` (the instructions where the runtime counts them, as Rune's own build does); then `total: T s processor time, S s in the stages (P%)` (below) |
@@ -55,7 +72,7 @@ of results in globals (see *Low*).
 | `--pass-stats=expand` | `--pass-stats`, and after the expansion a line `expand: N applications expanded, M left calls (B past the budget), P copies not all definitions; at most S nodes copied for a top-level application` (*Functors compiled once* below) |
 | `--pass-stats=hash` | `--pass-stats`, and at the end what the compile hashed: a line `hash PHASE:SITE: B bytes, N hashes` for each part of a compile in units (`usages`, `find`, `export`, `load`, `cache`) and place that hashed, and `memo PHASE: H hits, M misses` for the memo of fingerprints (*What a compile in units hashes* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
-| `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
+| `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would; with `-o`, make its code too, as a whole program's: the passes on Mid, `Lower` and the target, as from `Lambda` |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same, after `mid` (the check `mid-roundtrip`); what it reads is numbered by counters of its own, so that a unit's basis is what it is without it |
 | `--functor-budget=N` | the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
 
@@ -306,14 +323,11 @@ records for it only at 2.
 * **Unique stamps:** every binder's stamp is bound once in the whole
   program. Every representation after it relies on it: what a pass knows
   of a variable is kept by its stamp.
-* **`Fail`:** every `Fail` is in tail position of the body of a `Try` of the
-  same function, where it jumps to the `Try`'s fallback with the stack as
-  the `Try` found it. Tail position runs through a `Let`'s body, the second
-  of a `Seq`, both arms of an `If`, the fallback of an inner `Try`, a
-  handler and a mark.
 * **`Jump`:** every `Jump` is in tail position of the scope of its `Join`,
-  in the same function, with an argument of each parameter's type. Only a
-  match compiled as a decision tree makes them (below).
+  in the same function, with an argument of each parameter's type. Tail
+  position runs through a `Let`'s body, the second of a `Seq`, both arms of
+  an `If`, the body and the scope of an inner `Join`, a handler and a mark.
+  Only a match makes them (*Matches*, below).
 * **`LetRec`:** every right-hand side is a function.
 * **Types:** it is well typed, as below.
 * **What its types alone do not say** (`IrRules`, which `MidLint` shares;
@@ -402,7 +416,7 @@ it (`src/isa/prims.sml`) is checked by the `xc1` configurations of the
 Basis Library suite, which compile `lib/basis` on the hosts with each
 `_prim` replaced by a value of the description's type
 (`bin/rune-generate host-basis`). A
-`Raise` or a `Fail` never returns, and fits wherever a type is wanted. A
+`Raise` or a `Jump` never returns, and fits wherever a type is wanted. A
 `Let` binds its variable at the type of what it binds; the variables of a
 function, a letrec and a handler have the types their binders give them.
 
@@ -598,11 +612,10 @@ top level a list of definitions (decision D1 of the plan).
   jump is a variable, a global or a constant, and the datatype says so. A
   step (`rhs`) makes one value from atoms; `Let` names it.
 * **Join points:** `Join (j, params, body, scope)` binds a label that
-  `scope` jumps to, in tail position only. A `Try` of `Lambda` is one
-  without parameters, its `Fail` a jump to it; a `Join` of `Lambda` (a
-  rule of a match) is one with its parameters; the rest of an expression
-  that branches, where more follows it, is one whose parameter is the
-  value.
+  `scope` jumps to, in tail position only. A `Join` of `Lambda` is one
+  with its parameters: a rule of a match, with its variables, or the rest
+  of a match where a rule fails, with none; the rest of an expression that
+  branches, where more follows it, is one whose parameter is the value.
 * **`Handle`** is a region: its body and handler are in tail position of
   it, and a jump out of the body leaves it. A call in tail position of the
   body is no tail call.
@@ -644,6 +657,27 @@ where a use needs no particular type (the `int` of `val (f, n) = (fn x =>
 x, 1)`) -- is made `unit` there (`ToMid.ground`), which is as good a type as
 any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 
+**Types another front end makes** (decision D4 of
+[plans/language/haskell98.md](plans/language/haskell98.md)). `Ty` has two
+forms that SML's elaborator never makes, for a front end whose types say
+more: `App`, a type variable applied to types (Haskell's `m a`, in the
+text `'a 'm`), whose variable stands for a type name given fewer arguments
+than its datatype has parameters (`list`, of `'a list`), so that its
+instance at `list` and `int` is `int list`; and `Forall`, the polymorphic
+type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
+'b)`), which binds its own variables. A forall is the same type as one that
+differs from it only in the names it binds (`Ty.equal`), and a
+substitution renames them where it would capture one. A variable used, as
+a field or as a `Let`'s step at a scheme of its own, at fewer types than
+its binder abstracts over is its binder at its scheme, the first variables
+given: a forall of the rest (at no types, of all; a function `Lift` takes
+out of another is given that one's variables first). So a polymorphic
+function is put in a dictionary and taken out of one, at a scheme, and
+used at the types it is used at. A tuple with a
+polymorphic field stays whole where `Workers`, `flattenJoin` and a lifted
+function would take it apart, since a parameter's type is no forall;
+`Lower` takes an application as `RAny` and a forall as its body.
+
 ### What a `Mid` keeps
 
 `MidLint` checks, after `mid`:
@@ -661,6 +695,13 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 * **Type variables in scope** (Mid is System F, above): a type names only
   the type variables of the binders around it, and no binder binds one
   again where it is in scope.
+* **The forms of another front end** (above): a forall is a field's type
+  alone, never a binder's, a parameter's or a step's but a `Let`'s at a
+  scheme, and binds no variable in scope or twice; an application's head
+  is a type variable, applied to as many types wherever it is; a type name
+  is given no more arguments than its datatype has parameters, and as many
+  where it is a value's type -- fewer only where a type is given a type
+  variable or a type name. Each type once, by its node.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
 * **What its types alone do not say:** constants, primitives, exceptions'
@@ -679,6 +720,22 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
   is given is named by nothing else, and `thunk_blackhole` and
   `thunk_self_update` are said by the own code of such functions alone
   (*Suspensions*, below).
+* **Tags:** `ConTag` is of a datatype, never of a type with no
+  constructors -- an abstract one, as a value not yet evaluated has (the
+  haskell98 roadmap's D5), whose tag is a fatal on every engine.
+* **Evaluated** (the haskell98 roadmap's D5): a variable whose type is a
+  datatype holds a value of it, never one still to be evaluated, since
+  `ConTag` and `Decon` read it as it is, a step that nothing uses may go
+  (`Prims.removable`), and tier 2 trusts its representation. No lint sees
+  this: it holds by types alone, a lazy value having a type that is no
+  datatype (*What a front end gives Mid*, below), and across a cast it
+  holds only as the front end keeps it.
+* **The top level in order:** what a `Val`'s or a `Do`'s expression reads,
+  outside the functions it makes, is a global a definition before it
+  defines, or a function after it that it calls, a known call, which reads
+  no global; read before the definition that gives it its value, a global
+  is a fatal at `-O0` that a pass from `-O1` may hide, so that the levels
+  disagree.
 * **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
@@ -695,6 +752,40 @@ datatype entered again under its new name, its constructors, layout and
 openness the old one's; so it keeps what `MidLint` checked after `mid`. The
 units' `Mid` that `--units --whole` concatenates is linted by `MidLint`
 (`midconcat`), since a unit taken from the cache was not.
+
+### Walking Mid
+
+A few functions of `Mid` name every form of a step and of an expression,
+with no catch-all (decision D10 of
+[plans/language/haskell98.md](plans/language/haskell98.md)), and a walker
+whose arms would only do what one of them does asks it instead:
+
+* `Mid.atomsOfRhs` gives the atoms a step names, in the order it names
+  them, and `Mid.typesOfRhs` the type it says beside them, which comes
+  before its atoms;
+* `Mid.mapRhs` gives the step with each atom mapped, and `Mid.mapRhsWith`
+  with its types, its atoms and the global a `SetGlobal` sets mapped too,
+  each in the order the step names them, so that a walker that numbers
+  what it meets as it goes (`MidCanon.rename`) meets them in that order;
+* `Mid.fold` walks an expression, giving what it is given each step, each
+  atom outside a step (an `If`'s test, a `Jump`'s arguments, a `Raise`'s
+  exception), each jump and each function made in the expression, whose
+  body is the caller's to walk or not; `Mid.appRhs` and `Mid.existsRhs`
+  give, or ask of, every step, those of the functions made there among
+  them.
+
+A walker that does more than these at some form names each form it does
+not end at, rather than ending in `| _ =>`. So a form added to `rhs` or
+`exp` is a match that is not exhaustive (a warning of the compile,
+`elab/exhaust.sml`) in these functions and in each walker that says more of
+it, and is walked as its parts say everywhere else: never taken in silence
+for a step with no atoms or no effect, or for an expression with nothing
+under it. What still ends in a catch-all is a peephole, which knows the
+shapes it rewrites and leaves the rest as they are (`Simplify.known`,
+`Lower.tagTest`); a judgement that holds of any form (`Expand.small`, for
+which what is not a line of steps and `If`s is big); or a comparison of
+two (`MidCanon.checkRenaming`), whose catch-all is the bug of two forms
+that differ.
 
 ### Suspensions
 
@@ -726,9 +817,8 @@ its own, and forcing one is one step.
   refused (`IrRules.leavesSusp`). A value cast where `Lower` does not see the force, one
   a closure captures, is forced as it is: `FORCE` jumps where it is evaluated, and
   `RegVerify` takes its way on for a test that the value is a pointer, which `ENTER`
-  reads. `rune --check-casts`
-  makes each other cast `any_check`, which stops the program where the value is a
-  suspension; without it the code is what it is with none.
+  reads. `rune --check-casts` makes each other cast `any_check`, which stops the
+  program where the value is a suspension; without it the code is what it is with none.
 * **The rules `MidLint` adds** where a program has a primitive of suspensions: a
   function `thunk_make` is given is named by nothing else, so that no copy of it, and
   no call of it, runs a suspension's code twice; and `thunk_blackhole` and
@@ -763,7 +853,8 @@ program written by hand. The grammar is at the head of
   variable no type was found for).
 * A type name is written as it is, with `/N` where two would clash; a
   datatype, or a type without constructors, that is not built in is
-  declared at the head.
+  declared at the head, with the arguments it takes, and the reader refuses
+  a type given another number of them.
 * A constant of the type its kind gives it is written bare; others as
   `(0w5 : word8)`.
 * A type of more than `MidText.bigType` (1000) nodes as a tree is declared
@@ -774,6 +865,57 @@ program written by hand. The grammar is at the head of
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   FRAME ... EXP)`, where a frame is `(in "NAME" "FILE" START STOP)`, or `(in
   "NAME")` for one called in tail position; comments are SML's.
+* A function's label (*What a front end gives Mid*, below) is written after
+  its result's type, `(fn g1 ((v1 : int)) : int "fact" ...)`, so that a
+  function read back keeps its name in the function table and its traces,
+  and a functor's function (a label that begins `functor `) stays one.
+
+## What a front end gives Mid
+
+`lib/compiler/mid.build` is the compiler from Mid on, and nothing of a
+front end: Mid, its lint and its text, the passes on it, `Lower`, Low and
+the targets, `Emit`, the linker and the store, after `Types`, `Ty` and the
+primitives they share with Rune's front end, and `Lambda` for its faults
+(`Fault`). No lexer, parser, elaborator, `Translate`, `ToMid` or `Expand` is
+in it, so a front end of another language that uses it alone cannot name
+one: `tests/compiler/mid-client.build` is such a client, and one that
+names the elaborator does not compile (`compiler/mid-client` of
+`tests/runner/tools.sml`). Rune's own front end comes after it
+(`frontend.build`). A build that uses the layer is a friend of the
+compiler's library (`lib/compiler/library.build`) and lists a `Config` of
+its own first, which `Link` names.
+
+**What a front end hands over** is a `Mid.program` that `MidLint.check`
+accepts; the lints are the contract's checker, and what they do not see is
+said here.
+
+| What | Rule | Checked by |
+|---|---|---|
+| Names | every binder's stamp from `Stamp.fresh`, bound once in the program | `MidLint` |
+| Types | Mid is System F (*Mid*, above) | `MidLint` |
+| Calls | a function has a parameter; one of other than one is only called, with an argument for each, and is a function of the top level: `Lower` stops at a local one at `-O0`, where no pass lifts it (`Lift` runs from `-O1`) | `MidLint`, and `Lower` for a local one |
+| The top level | `Val`, `Funs` and `Do` in order; a global defined once; a `Do` lists what it sets | `MidLint`, and the VM for a global read before it is set |
+| Recursion | only functions are recursive | `MidLint`, and the datatype's shape |
+| Strictness | `Let` is strict and in order, and a variable of a datatype's type is evaluated: `ConTag` and `Decon` read it as it is, a step nothing uses may go (`Prims.removable`), and tier 2 trusts its representation | nothing: the types alone, by `Lower.repOfTy`, so a value not yet evaluated must have a type that is no datatype |
+| `Decon` | under a test of its tag, of the only constructor, or of the rest | `LowShapes`, after `Lower` |
+| Primitives | a name of `src/isa/prims.sml` at an instance of its type; not the casts and markers of Rune's functors (`functor_cast`, `dynamic_cast`, `open_cast`, `functor_marker`, `open_boxed`, `open_layout`) | `IrRules` |
+| Constants | a `Literal.const` (`lib/compiler/util/literal.sml`, which Lambda, Mid and Low share) of its type's kind, as `Ty.constAt` makes it for the 64-bit kinds, and in range | `IrRules.const` |
+| Labels | `fundef`'s `label`, the name the function table and a trace show; none is `fn`. A label that begins `functor ` is a functor's function to `Simplify` and `Expand`, which treat it so | none |
+| Marks | a `Mark`'s place and frames, for traces; optional | none |
+
+**What it declares** in the tables of `Ty` before the program is linted:
+each datatype, by `Ty.bindDatatypeDirect` (as `MidText.parse` does), and a
+new type name's stamp from `Types.freshTycon`. The built-in types are
+`Ty.int`, `Ty.bool` and the rest, on `Types`' stamps; a front end numbers
+its constructors as it likes, but `bool`, `list`, `order` and `option`,
+which primitives make, are numbered as `runtime/value.h` numbers them.
+
+**What it sets:** `Pass.whole` (a whole program or a unit), `Pass.level` and
+`Pass.only` as Rune's options do, `CompilerSettings.target`, and
+`Target.intBits`, which stays a global. **What it calls:**
+`MidPipeline.midStage`, which makes Mid with the lint at the boundary;
+`MidPipeline.lowOfMid` with its list of passes; `MidPipeline.targetStage`;
+and `Emit.writeFileAs` with `MidPipeline.fingerprint ()`.
 
 ## Matches
 
@@ -785,8 +927,9 @@ inlined function frames agree across optimization levels.
 `MatchComp` compiles a match two ways:
 
 * **Rule by rule** (at `-O0`, for a match of one rule, and where a tree
-  would grow too big): each rule's tests in turn, a failing one a `Fail`
-  to the next rule's `Try`.
+  would grow too big): each rule's tests in turn, each rule the scope of a
+  join point without parameters that is the next rule, which a failing
+  test jumps to.
 * **As a decision tree** (the optional pass `trees`, from `-O1`, after
   Maranget 2008): the rules are a matrix of patterns against the values in
   hand. The first row's first pattern that tests something picks the
@@ -905,7 +1048,11 @@ does.
   called, then in a worker the tags, then each field by its own type --
   `imm_eq`, `ptr_eq`, `string_eq`, the function of its type, or `poly_eq`
   where the type is not known. Such a comparison is compiled code: the
-  limit of `--equality-work` on the runtime's walk does not stop it.
+  limit of `--equality-work` on the runtime's walk does not stop it. A type
+  of more than 256 nodes as a tree (`Simplify.eqBound`) has no function,
+  and its `=` is `poly_eq`: a datatype whose constructor takes it at a
+  bigger type, a non-uniform one, has a new type at each level, and
+  functions made for each would never end (`tests/lang/rt.equality_nonuniform`).
 * **`refs`** ([plans/performance.md](plans/performance.md), M8): a
   parameter of a function of the top level that is a ref the function only
   reads and sets, and gives on as it is to its own calls of itself in tail
@@ -963,7 +1110,11 @@ does.
   loop of MLton's `peek` calls a function with the closures it was given,
   and takes apart what it returns). A copy for local functions grows the
   definition the call is in, within the budget of `inline`; a call that
-  finds its copy made already costs nothing.
+  finds its copy made already costs nothing. A function that calls itself
+  at other types than its own (polymorphic recursion, which Mid may have
+  and no SML source makes) has no parameter that is static, since no copy
+  of it would close, and a copy's call of the function is a call of the
+  copy only at the copy's types (`tests/ir/hs-nest-static`).
 
 ## Low
 
@@ -1253,7 +1404,14 @@ holds the link to refusing; a unit so made is not stored in the cache.
   (`(* dump: --dump-after=PASS *)`), which is compared with `NAME.expected`
   and reviewed line by line like any `.expected` file, or says with what
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
-  refuse.
+  refuse, or that a program of Mid's text runs (`(* run: alone *)`, or
+  `(* run: after FILE *)` read after another file of `tests/ir`): it is
+  compiled at `-O0`, `-O1` and `-O2` to both bytecodes and run, the register
+  bytecode interpreted and at tier 2, each run printing what `NAME.expected`
+  says and then `status N`, its exit status. The `hs-` programs are the
+  haskell98 roadmap's E1: Haskell lowered to Mid by hand, over a runtime of
+  thunks in Mid (`hs-rts.mid`), each `.expected` worked out from the Haskell
+  in its head.
 * **`make check-levels`** (the oracle `levels` of `tests/runner/oracles.sml`): every program of
   `tests/lang` and `tests/perf` compiled to both bytecodes at `-O0` and at
   `-O2`, whole and whole of its units' Mid (`--units --whole`), and to the

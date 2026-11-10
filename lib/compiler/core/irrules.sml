@@ -33,28 +33,28 @@ struct
   val zero = IntInf.fromInt 0
 
   (* a constant of type t: what is wrong with it *)
-  fun const (c : Lambda.const, t : Ty.ty) : string option =
+  fun const (c : Literal.const, t : Ty.ty) : string option =
     let
       val st = case Ty.view t of Ty.Con (s, _, _) => s | _ => ~1
       fun within (v, lo, hi) = IntInf.>= (v, lo) andalso IntInf.<= (v, hi)
       (* what is wrong, made only where something is: a char past 255 has
          no character to print *)
       fun shown () = case c of
-                       Lambda.CChar ch => if ch >= 0 andalso ch <= 255 then Lambda.constToString c else "char " ^ Int.toString ch
-                     | _ => Lambda.constToString c
+                       Literal.CChar ch => if ch >= 0 andalso ch <= 255 then Literal.toString c else "char " ^ Int.toString ch
+                     | _ => Literal.toString c
       fun kind (tc : Types.tycon, ok) =
         if st <> #stamp tc then SOME ("a constant " ^ shown () ^ " of type " ^ Ty.toString t)
         else if ok then NONE
         else SOME ("the constant " ^ shown () ^ " out of the range of " ^ Ty.toString t)
     in
       case c of
-        Lambda.CInt i => kind (Types.intTycon, within (i, int63Min, int63Max))
-      | Lambda.CWord w => kind (Types.wordTycon, within (w, zero, int64Max))
-      | Lambda.CInt64 i => kind (Types.int64Tycon, within (i, int64Min, int64Max))
-      | Lambda.CWord64 w => kind (Types.word64Tycon, within (w, zero, word64Max))
-      | Lambda.CReal _ => kind (Types.realTycon, true)
-      | Lambda.CString _ => kind (Types.stringTycon, true)
-      | Lambda.CChar ch => kind (Types.charTycon, ch >= 0 andalso ch <= 255)
+        Literal.CInt i => kind (Types.intTycon, within (i, int63Min, int63Max))
+      | Literal.CWord w => kind (Types.wordTycon, within (w, zero, int64Max))
+      | Literal.CInt64 i => kind (Types.int64Tycon, within (i, int64Min, int64Max))
+      | Literal.CWord64 w => kind (Types.word64Tycon, within (w, zero, word64Max))
+      | Literal.CReal _ => kind (Types.realTycon, true)
+      | Literal.CString _ => kind (Types.stringTycon, true)
+      | Literal.CChar ch => kind (Types.charTycon, ch >= 0 andalso ch <= 255)
     end
 
   (* the compiler's own primitives, whose rules are their own *)

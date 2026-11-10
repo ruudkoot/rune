@@ -1,0 +1,6 @@
+[True,True,True,False]
+(LT,True,True)
+[True,False,True,True]
+(LT,EQ,GT)
+[True,False,False,True]
+(GT,C 100,C (-100))

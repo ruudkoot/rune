@@ -429,6 +429,9 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_int_add: case PRIM_int_sub: case PRIM_int_mul: case PRIM_int_div: case PRIM_int_mod:
     case PRIM_int_quot: case PRIM_int_rem: case PRIM_int_neg: case PRIM_int_lt: case PRIM_int_le:
     case PRIM_int_gt: case PRIM_int_ge: case PRIM_int_order: case PRIM_int_to_char:
+    case PRIM_intinf_add: case PRIM_intinf_sub: case PRIM_intinf_mul: case PRIM_intinf_div: case PRIM_intinf_mod:
+    case PRIM_intinf_quot: case PRIM_intinf_rem: case PRIM_intinf_neg: case PRIM_intinf_lt: case PRIM_intinf_le:
+    case PRIM_intinf_gt: case PRIM_intinf_ge: case PRIM_intinf_order: case PRIM_intinf_from_int: case PRIM_intinf_to_int:
     case PRIM_word_add: case PRIM_word_sub: case PRIM_word_mul: case PRIM_word_div: case PRIM_word_mod:
     case PRIM_word_lt: case PRIM_word_le: case PRIM_word_gt: case PRIM_word_ge: case PRIM_word_order:
     case PRIM_word_andb: case PRIM_word_orb: case PRIM_word_xorb: case PRIM_word_notb:
@@ -467,6 +470,27 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     s->a = p; s->b = d; s->L = L;
     int which = M->nslow - 1;
     AsmLabel *slow = &M->slow[which]->here;
+    /* IntInf.int (haskell98 M31): of two immediates, an int's operation,
+       and so the int's code; the slow path, set above, is the IntInf.int's
+       own primitive, which takes a large operand and makes a large result.
+       Its registers are of no representation the section vouches for
+       (ms_imm_trusted), so that code tests every tag. */
+    switch (p) {
+    case PRIM_intinf_add: p = PRIM_int_add; break;
+    case PRIM_intinf_sub: p = PRIM_int_sub; break;
+    case PRIM_intinf_mul: p = PRIM_int_mul; break;
+    case PRIM_intinf_div: p = PRIM_int_div; break;
+    case PRIM_intinf_mod: p = PRIM_int_mod; break;
+    case PRIM_intinf_quot: p = PRIM_int_quot; break;
+    case PRIM_intinf_rem: p = PRIM_int_rem; break;
+    case PRIM_intinf_neg: p = PRIM_int_neg; break;
+    case PRIM_intinf_lt: p = PRIM_int_lt; break;
+    case PRIM_intinf_le: p = PRIM_int_le; break;
+    case PRIM_intinf_gt: p = PRIM_int_gt; break;
+    case PRIM_intinf_ge: p = PRIM_int_ge; break;
+    case PRIM_intinf_order: p = PRIM_int_order; break;
+    default: break;
+    }
     switch (p) {
     case PRIM_poly_eq: equal(j, d, x, y, 1, slow); break;
     case PRIM_imm_eq: equal(j, d, x, y, 0, slow); break;
@@ -532,6 +556,9 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_int_ge: compare(j, d, x, y, T_INT, CC_GE, slow); break;
     case PRIM_int_order: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
     case PRIM_int_to_char: ms_one_imm(M, x, T_INT, slow); ms_int_to_char(M, slow); ms_set_num(M, d, T_CHAR, R_S0, slow); break;
+    /* an immediate is the same word as an int and as an IntInf.int: under
+       RUNE_INT64 ms_one_imm sends a box to the primitive */
+    case PRIM_intinf_from_int: case PRIM_intinf_to_int: ms_one_imm(M, x, T_INT, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
 
     case PRIM_word_add: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_ADD, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_sub: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_SUB, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;

@@ -1,0 +1,3 @@
+; fail: text-escape.core:3: error: a byte of a string is three decimal digits after \
+; Core's reader: an escape of a string is a byte in three digits
+(val s Str "a\12b")

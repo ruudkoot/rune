@@ -1,0 +1,376 @@
+(* run: after hs-rts.mid *)
+(* class Eq a where { (==), (/=) :: a -> a -> Bool; x /= y = not (x == y) }
+   class Eq a => Ord a where { (<), (<=) :: a -> a -> Bool; x <= y = x < y || x == y }
+   instance Eq Int; instance Ord Int; instance Eq Double; instance Ord Double
+   data Color = Red | Green | Blue; instance Eq Color; instance Ord Color
+   instance Eq a => Eq [a]; instance Ord a => Ord [a]
+   maxL :: Ord a => [a] -> a;  elemO :: Ord a => a -> [a] -> Bool (by the superclass)
+
+   No method here is polymorphic beyond the class's variable, so the
+   dictionaries are typed datatypes and nothing crosses `any`. Default methods
+   take the dictionary; an instance's dictionary is a global whose methods
+   read that global when they run. A dictionary function builds a cycle
+   through a cell (ghole, gpatch), since a closure cannot name a tuple that
+   holds it. *)
+(datatype deq ('a) (0 "DEq" : ('a susp -> 'a susp -> bool) * ('a susp -> 'a susp -> bool)))
+(datatype dord ('a) (0 "DOrd" : 'a deq * ('a susp -> 'a susp -> bool) * ('a susp -> 'a susp -> bool)))
+(datatype color () (0 "Red") (1 "Green") (2 "Blue"))
+
+(funs
+  (fn gcEq ['a] ((vceD : 'a deq) (vceX : 'a susp) (vceY : 'a susp)) : bool
+    (let (vceT : ('a susp -> 'a susp -> bool) * ('a susp -> 'a susp -> bool)) (decon 0 vceD : 'a deq)
+    (let (vceM : 'a susp -> 'a susp -> bool) (select 0 vceT)
+    (let (vceM1 : 'a susp -> bool) (app vceM vceX)
+    (return (app vceM1 vceY)))))))
+(funs
+  (fn gcNe ['a] ((vcnD : 'a deq) (vcnX : 'a susp) (vcnY : 'a susp)) : bool
+    (let (vcnT : ('a susp -> 'a susp -> bool) * ('a susp -> 'a susp -> bool)) (decon 0 vcnD : 'a deq)
+    (let (vcnM : 'a susp -> 'a susp -> bool) (select 1 vcnT)
+    (let (vcnM1 : 'a susp -> bool) (app vcnM vcnX)
+    (return (app vcnM1 vcnY)))))))
+(funs
+  (fn gcSuper ['a] ((vcsD : 'a dord)) : 'a deq
+    (let (vcsT : 'a deq * ('a susp -> 'a susp -> bool) * ('a susp -> 'a susp -> bool)) (decon 0 vcsD : 'a dord)
+    (return (select 0 vcsT)))))
+(funs
+  (fn gcLt ['a] ((vclD : 'a dord) (vclX : 'a susp) (vclY : 'a susp)) : bool
+    (let (vclT : 'a deq * ('a susp -> 'a susp -> bool) * ('a susp -> 'a susp -> bool)) (decon 0 vclD : 'a dord)
+    (let (vclM : 'a susp -> 'a susp -> bool) (select 1 vclT)
+    (let (vclM1 : 'a susp -> bool) (app vclM vclX)
+    (return (app vclM1 vclY)))))))
+(funs
+  (fn gcLe ['a] ((vcqD : 'a dord) (vcqX : 'a susp) (vcqY : 'a susp)) : bool
+    (let (vcqT : 'a deq * ('a susp -> 'a susp -> bool) * ('a susp -> 'a susp -> bool)) (decon 0 vcqD : 'a dord)
+    (let (vcqM : 'a susp -> 'a susp -> bool) (select 2 vcqT)
+    (let (vcqM1 : 'a susp -> bool) (app vcqM vcqX)
+    (return (app vcqM1 vcqY)))))))
+(* the default methods *)
+(funs
+  (fn gdefNe ['a] ((vdnD : 'a deq) (vdnX : 'a susp) (vdnY : 'a susp)) : bool
+    (let (vdnE : bool) (app gcEq['a] vdnD vdnX vdnY)
+    (if vdnE
+      (return (con0 0 : bool))
+      (return (con0 1 : bool))))))
+(funs
+  (fn gdefLe ['a] ((vdlD : 'a dord) (vdlX : 'a susp) (vdlY : 'a susp)) : bool
+    (let (vdlL : bool) (app gcLt['a] vdlD vdlX vdlY)
+    (if vdlL
+      (return (con0 1 : bool))
+      (let (vdlS : 'a deq) (app gcSuper['a] vdlD)
+      (return (app gcEq['a] vdlS vdlX vdlY)))))))
+(* a curried method from a function of two forced arguments *)
+(funs
+  (fn gcurryStrict ['a] ((vcuF : 'a * 'a -> bool)) : 'a susp -> 'a susp -> bool
+    (fun
+      (fn vcuA ((vcuX : 'a susp)) : 'a susp -> bool
+        (fun
+          (fn vcuB ((vcuY : 'a susp)) : bool
+            (let (vcuXV : 'a) (app gforce['a] vcuX)
+            (let (vcuYV : 'a) (app gforce['a] vcuY)
+            (let (vcuT : 'a * 'a) (tuple vcuXV vcuYV)
+            (return (app vcuF vcuT))))))
+          (return vcuB)))
+      (return vcuA))))
+(funs
+  (fn geqI ((vqi : int * int)) : bool
+    (let (vqiA : int) (select 0 vqi)
+    (let (vqiB : int) (select 1 vqi)
+    (return (prim poly_eq vqiA vqiB : (int * int) -> bool)))))
+  (fn gltI ((vqj : int * int)) : bool
+    (let (vqjA : int) (select 0 vqj)
+    (let (vqjB : int) (select 1 vqj)
+    (return (prim int_lt vqjA vqjB : (int * int) -> bool)))))
+  (fn geqD ((vqk : real * real)) : bool
+    (let (vqkA : real) (select 0 vqk)
+    (let (vqkB : real) (select 1 vqk)
+    (return (prim real_eq vqkA vqkB : (real * real) -> bool)))))
+  (fn gltD ((vql : real * real)) : bool
+    (let (vqlA : real) (select 0 vql)
+    (let (vqlB : real) (select 1 vql)
+    (return (prim real_lt vqlA vqlB : (real * real) -> bool)))))
+  (fn geqC ((vqm : color * color)) : bool
+    (let (vqmA : color) (select 0 vqm)
+    (let (vqmB : color) (select 1 vqm)
+    (let (vqmX : int) (tag vqmA)
+    (let (vqmY : int) (tag vqmB)
+    (return (prim poly_eq vqmX vqmY : (int * int) -> bool)))))))
+  (fn gltC ((vqn : color * color)) : bool
+    (let (vqnA : color) (select 0 vqn)
+    (let (vqnB : color) (select 1 vqn)
+    (let (vqnX : int) (tag vqnA)
+    (let (vqnY : int) (tag vqnB)
+    (return (prim int_lt vqnX vqnY : (int * int) -> bool))))))))
+(* The six instances; /= and <= are the defaults, at the global dictionary *)
+(funs
+  (fn gneIntA ((vniA : int susp)) : int susp -> bool
+    (fun
+      (fn vniK ((vniB : int susp)) : bool
+        (return (app gdefNe[int] gdEqInt vniA vniB)))
+      (return vniK)))
+  (fn gleIntA ((vliA : int susp)) : int susp -> bool
+    (fun
+      (fn vliK ((vliB : int susp)) : bool
+        (return (app gdefLe[int] gdOrdInt vliA vliB)))
+      (return vliK)))
+  (fn gneDblA ((vndA : real susp)) : real susp -> bool
+    (fun
+      (fn vndK ((vndB : real susp)) : bool
+        (return (app gdefNe[real] gdEqDbl vndA vndB)))
+      (return vndK)))
+  (fn gleDblA ((vldA : real susp)) : real susp -> bool
+    (fun
+      (fn vldK ((vldB : real susp)) : bool
+        (return (app gdefLe[real] gdOrdDbl vldA vldB)))
+      (return vldK)))
+  (fn gneColA ((vncA : color susp)) : color susp -> bool
+    (fun
+      (fn vncK ((vncB : color susp)) : bool
+        (return (app gdefNe[color] gdEqCol vncA vncB)))
+      (return vncK)))
+  (fn gleColA ((vlcA : color susp)) : color susp -> bool
+    (fun
+      (fn vlcK ((vlcB : color susp)) : bool
+        (return (app gdefLe[color] gdOrdCol vlcA vlcB)))
+      (return vlcK))))
+(val gdEqInt : int deq
+  (let (viE : int susp -> int susp -> bool) (app gcurryStrict[int] geqI)
+  (let (viT : (int susp -> int susp -> bool) * (int susp -> int susp -> bool)) (tuple viE gneIntA)
+  (return (con 0 viT : int deq)))))
+(val gdOrdInt : int dord
+  (let (vjL : int susp -> int susp -> bool) (app gcurryStrict[int] gltI)
+  (let (vjT : int deq * (int susp -> int susp -> bool) * (int susp -> int susp -> bool)) (tuple gdEqInt vjL gleIntA)
+  (return (con 0 vjT : int dord)))))
+(val gdEqDbl : real deq
+  (let (vdE : real susp -> real susp -> bool) (app gcurryStrict[real] geqD)
+  (let (vdT : (real susp -> real susp -> bool) * (real susp -> real susp -> bool)) (tuple vdE gneDblA)
+  (return (con 0 vdT : real deq)))))
+(val gdOrdDbl : real dord
+  (let (veL : real susp -> real susp -> bool) (app gcurryStrict[real] gltD)
+  (let (veT : real deq * (real susp -> real susp -> bool) * (real susp -> real susp -> bool)) (tuple gdEqDbl veL gleDblA)
+  (return (con 0 veT : real dord)))))
+(val gdEqCol : color deq
+  (let (vcE : color susp -> color susp -> bool) (app gcurryStrict[color] geqC)
+  (let (vcT : (color susp -> color susp -> bool) * (color susp -> color susp -> bool)) (tuple vcE gneColA)
+  (return (con 0 vcT : color deq)))))
+(val gdOrdCol : color dord
+  (let (vkL : color susp -> color susp -> bool) (app gcurryStrict[color] gltC)
+  (let (vkT : color deq * (color susp -> color susp -> bool) * (color susp -> color susp -> bool)) (tuple gdEqCol vkL gleColA)
+  (return (con 0 vkT : color dord)))))
+
+(* instance Eq a => Eq [a] *)
+(funs
+  (fn gdEqList ['a] ((vqaD : 'a deq)) : 'a hlist deq
+    (let (vqaC : 'a hlist deq susp) (app ghole['a hlist deq] ())
+    (fun
+      (fn vqaCode ((vqaU : unit)) : 'a hlist deq
+        (fun
+          (fn vqaEq ((vqaX : 'a hlist susp)) : 'a hlist susp -> bool
+            (fun
+              (fn vqaEq2 ((vqaY : 'a hlist susp)) : bool
+                (let (vqaXV : 'a hlist) (app gforce['a hlist] vqaX)
+                (let (vqaYV : 'a hlist) (app gforce['a hlist] vqaY)
+                (let (vqaXT : int) (tag vqaXV)
+                (let (vqaYT : int) (tag vqaYV)
+                (let (vqaXC : bool) (prim poly_eq vqaXT 1 : (int * int) -> bool)
+                (let (vqaYC : bool) (prim poly_eq vqaYT 1 : (int * int) -> bool)
+                (if vqaXC
+                  (if vqaYC
+                    (let (vqaXP : 'a susp * 'a hlist susp) (decon 1 vqaXV : 'a hlist)
+                    (let (vqaYP : 'a susp * 'a hlist susp) (decon 1 vqaYV : 'a hlist)
+                    (let (vqaXH : 'a susp) (select 0 vqaXP)
+                    (let (vqaYH : 'a susp) (select 0 vqaYP)
+                    (let (vqaHE : bool) (app gcEq['a] vqaD vqaXH vqaYH)
+                    (if vqaHE
+                      (let (vqaXR : 'a hlist susp) (select 1 vqaXP)
+                      (let (vqaYR : 'a hlist susp) (select 1 vqaYP)
+                      (let (vqaSelf : 'a hlist deq) (app gforce['a hlist deq] vqaC)
+                      (return (app gcEq['a hlist] vqaSelf vqaXR vqaYR)))))
+                      (return (con0 0 : bool))))))))
+                    (return (con0 0 : bool)))
+                  (if vqaYC
+                    (return (con0 0 : bool))
+                    (return (con0 1 : bool)))))))))))
+              (return vqaEq2)))
+          (fn vqaNe ((vqaNX : 'a hlist susp)) : 'a hlist susp -> bool
+            (fun
+              (fn vqaNe2 ((vqaNY : 'a hlist susp)) : bool
+                (let (vqaSelf2 : 'a hlist deq) (app gforce['a hlist deq] vqaC)
+                (return (app gdefNe['a hlist] vqaSelf2 vqaNX vqaNY))))
+              (return vqaNe2)))
+          (let (vqaTup : ('a hlist susp -> 'a hlist susp -> bool) * ('a hlist susp -> 'a hlist susp -> bool)) (tuple vqaEq vqaNe)
+          (return (con 0 vqaTup : 'a hlist deq)))))
+      (let (vqaU1 : unit) (app gpatch['a hlist deq] vqaC vqaCode)
+      (return (app gforce['a hlist deq] vqaC)))))))
+(* instance Ord a => Ord [a]; its superclass is Eq [a] from a's superclass *)
+(funs
+  (fn gdOrdList ['a] ((vobD : 'a dord)) : 'a hlist dord
+    (let (vobC : 'a hlist dord susp) (app ghole['a hlist dord] ())
+    (fun
+      (fn vobCode ((vobU : unit)) : 'a hlist dord
+        (let (vobS : 'a deq) (app gcSuper['a] vobD)
+        (let (vobES : 'a hlist deq) (app gdEqList['a] vobS)
+        (fun
+          (fn vobLt ((vobX : 'a hlist susp)) : 'a hlist susp -> bool
+            (fun
+              (fn vobLt2 ((vobY : 'a hlist susp)) : bool
+                (let (vobXV : 'a hlist) (app gforce['a hlist] vobX)
+                (let (vobYV : 'a hlist) (app gforce['a hlist] vobY)
+                (let (vobXT : int) (tag vobXV)
+                (let (vobYT : int) (tag vobYV)
+                (let (vobXC : bool) (prim poly_eq vobXT 1 : (int * int) -> bool)
+                (let (vobYC : bool) (prim poly_eq vobYT 1 : (int * int) -> bool)
+                (if vobYC
+                  (if vobXC
+                    (let (vobXP : 'a susp * 'a hlist susp) (decon 1 vobXV : 'a hlist)
+                    (let (vobYP : 'a susp * 'a hlist susp) (decon 1 vobYV : 'a hlist)
+                    (let (vobXH : 'a susp) (select 0 vobXP)
+                    (let (vobYH : 'a susp) (select 0 vobYP)
+                    (let (vobL : bool) (app gcLt['a] vobD vobXH vobYH)
+                    (if vobL
+                      (return (con0 1 : bool))
+                      (let (vobE : bool) (app gcEq['a] vobS vobXH vobYH)
+                      (if vobE
+                        (let (vobXR : 'a hlist susp) (select 1 vobXP)
+                        (let (vobYR : 'a hlist susp) (select 1 vobYP)
+                        (let (vobSelf : 'a hlist dord) (app gforce['a hlist dord] vobC)
+                        (return (app gcLt['a hlist] vobSelf vobXR vobYR)))))
+                        (return (con0 0 : bool))))))))))
+                    (return (con0 1 : bool)))
+                  (return (con0 0 : bool))))))))))
+              (return vobLt2)))
+          (fn vobLe ((vobNX : 'a hlist susp)) : 'a hlist susp -> bool
+            (fun
+              (fn vobLe2 ((vobNY : 'a hlist susp)) : bool
+                (let (vobSelf2 : 'a hlist dord) (app gforce['a hlist dord] vobC)
+                (return (app gdefLe['a hlist] vobSelf2 vobNX vobNY))))
+              (return vobLe2)))
+          (let (vobTup : 'a hlist deq * ('a hlist susp -> 'a hlist susp -> bool) * ('a hlist susp -> 'a hlist susp -> bool)) (tuple vobES vobLt vobLe)
+          (return (con 0 vobTup : 'a hlist dord)))))))
+      (let (vobU1 : unit) (app gpatch['a hlist dord] vobC vobCode)
+      (return (app gforce['a hlist dord] vobC)))))))
+
+(* maxL (x:xs), a list of at least one *)
+(funs
+  (fn gmaxL ['a] ((vmxD : 'a dord) (vmxL : 'a hlist susp)) : 'a
+    (let (vmxV : 'a hlist) (app gforce['a hlist] vmxL)
+    (let (vmxT : int) (tag vmxV)
+    (let (vmxC : bool) (prim poly_eq vmxT 1 : (int * int) -> bool)
+    (if vmxC
+      (let (vmxP : 'a susp * 'a hlist susp) (decon 1 vmxV : 'a hlist)
+      (let (vmxH : 'a susp) (select 0 vmxP)
+      (let (vmxR : 'a hlist susp) (select 1 vmxP)
+      (let (vmxRV : 'a hlist) (app gforce['a hlist] vmxR)
+      (let (vmxRT : int) (tag vmxRV)
+      (let (vmxRC : bool) (prim poly_eq vmxRT 0 : (int * int) -> bool)
+      (if vmxRC
+        (return (app gforce['a] vmxH))
+        (fun
+          (fn vmxM ((vmxU : unit)) : 'a
+            (return (app gmaxL['a] vmxD vmxR)))
+          (let (vmxMS : 'a susp) (app gdelay['a] vmxM)
+          (let (vmxLe : bool) (app gcLe['a] vmxD vmxH vmxMS)
+          (if vmxLe
+            (return (app gforce['a] vmxMS))
+            (return (app gforce['a] vmxH)))))))))))))
+      (let (vmxE : exn) (mkexn gexnPat "maxL: empty list")
+      (raise vmxE))))))))
+(funs
+  (fn gelemO ['a] ((veoD : 'a dord) (veoX : 'a susp) (veoL : 'a hlist susp)) : bool
+    (let (veoV : 'a hlist) (app gforce['a hlist] veoL)
+    (let (veoT : int) (tag veoV)
+    (let (veoC : bool) (prim poly_eq veoT 1 : (int * int) -> bool)
+    (if veoC
+      (let (veoP : 'a susp * 'a hlist susp) (decon 1 veoV : 'a hlist)
+      (let (veoH : 'a susp) (select 0 veoP)
+      (let (veoS : 'a deq) (app gcSuper['a] veoD)
+      (let (veoE : bool) (app gcEq['a] veoS veoX veoH)
+      (if veoE
+        (return (con0 1 : bool))
+        (let (veoR : 'a hlist susp) (select 1 veoP)
+        (return (app gelemO['a] veoD veoX veoR))))))))
+      (return (con0 0 : bool))))))))
+(* [x, ...] from a Mid list of forced values, as a literal would be *)
+(funs
+  (fn gcons ['a] ((vcoH : 'a) (vcoT : 'a hlist)) : 'a hlist
+    (let (vcoHS : 'a susp) (app gdone['a] vcoH)
+    (let (vcoTS : 'a hlist susp) (app gdone['a hlist] vcoT)
+    (let (vcoP : 'a susp * 'a hlist susp) (tuple vcoHS vcoTS)
+    (return (con 1 vcoP : 'a hlist)))))))
+(funs
+  (fn gputBool ((vpbB : bool)) : unit
+    (if vpbB
+      (return (app gputs "True"))
+      (return (app gputs "False")))))
+(funs
+  (fn gputColor ((vpcC : color)) : unit
+    (let (vpcT : int) (tag vpcC)
+    (let (vpcZ : bool) (prim poly_eq vpcT 0 : (int * int) -> bool)
+    (if vpcZ
+      (return (app gputs "Red"))
+      (let (vpcO : bool) (prim poly_eq vpcT 1 : (int * int) -> bool)
+      (if vpcO
+        (return (app gputs "Green"))
+        (return (app gputs "Blue")))))))))
+(do ()
+  (let (vli1 : int hlist) (app gcons[int] 2 (con0 0 : int hlist))
+  (let (vli2 : int hlist) (app gcons[int] 1 vli1)
+  (let (vli3 : int hlist) (app gcons[int] 3 vli2)
+  (let (vli3S : int hlist susp) (app gdone[int hlist] vli3)
+  (let (vm1 : int) (app gmaxL[int] gdOrdInt vli3S)
+  (let (vu1 : unit) (app gputInt vm1)
+  (let (vld1 : real hlist) (app gcons[real] 0.5 (con0 0 : real hlist))
+  (let (vld2 : real hlist) (app gcons[real] 2.5 vld1)
+  (let (vld3 : real hlist) (app gcons[real] 1.5 vld2)
+  (let (vld3S : real hlist susp) (app gdone[real hlist] vld3)
+  (let (vm2 : real) (app gmaxL[real] gdOrdDbl vld3S)
+  (let (vm2S : string) (prim real_to_string vm2 : real -> string)
+  (let (vu2 : unit) (app gputs vm2S)
+  (let (vlc1 : color hlist) (app gcons[color] (con0 1 : color) (con0 0 : color hlist))
+  (let (vlc2 : color hlist) (app gcons[color] (con0 2 : color) vlc1)
+  (let (vlc3 : color hlist) (app gcons[color] (con0 0 : color) vlc2)
+  (let (vlc3S : color hlist susp) (app gdone[color hlist] vlc3)
+  (let (vm3 : color) (app gmaxL[color] gdOrdCol vlc3S)
+  (let (vu3 : unit) (app gputColor vm3)
+  (* [1,2] /= [1,2], [1,2] /= [1,3]: the list instance's default method *)
+  (let (va1 : int hlist) (app gcons[int] 2 (con0 0 : int hlist))
+  (let (va2 : int hlist) (app gcons[int] 1 va1)
+  (let (va2S : int hlist susp) (app gdone[int hlist] va2)
+  (let (vb1 : int hlist) (app gcons[int] 2 (con0 0 : int hlist))
+  (let (vb2 : int hlist) (app gcons[int] 1 vb1)
+  (let (vb2S : int hlist susp) (app gdone[int hlist] vb2)
+  (let (vc1 : int hlist) (app gcons[int] 3 (con0 0 : int hlist))
+  (let (vc2 : int hlist) (app gcons[int] 1 vc1)
+  (let (vc2S : int hlist susp) (app gdone[int hlist] vc2)
+  (let (vdEL : int hlist deq) (app gdEqList[int] gdEqInt)
+  (let (vb1R : bool) (app gcNe[int hlist] vdEL va2S vb2S)
+  (let (vu4 : unit) (app gputBool vb1R)
+  (let (vb2R : bool) (app gcNe[int hlist] vdEL va2S vc2S)
+  (let (vu5 : unit) (app gputBool vb2R)
+  (* maxL [[1,2],[1,3],[0,9]], at Ord [Int] *)
+  (let (vd1 : int hlist) (app gcons[int] 9 (con0 0 : int hlist))
+  (let (vd2 : int hlist) (app gcons[int] 0 vd1)
+  (let (vll1 : int hlist hlist) (app gcons[int hlist] vd2 (con0 0 : int hlist hlist))
+  (let (vll2 : int hlist hlist) (app gcons[int hlist] vc2 vll1)
+  (let (vll3 : int hlist hlist) (app gcons[int hlist] vb2 vll2)
+  (let (vll3S : int hlist hlist susp) (app gdone[int hlist hlist] vll3)
+  (let (vdOL : int hlist dord) (app gdOrdList[int] gdOrdInt)
+  (let (vm4 : int hlist) (app gmaxL[int hlist] vdOL vll3S)
+  (let (vm4S : int hlist susp) (app gdone[int hlist] vm4)
+  (let (vu6 : unit) (app gputInts vm4S)
+  (* elemO 2 [3,1,2]; elemO 9.5 [1.5,2.5,0.5] : by the superclass *)
+  (let (vtwo : int susp) (app gdone[int] 2)
+  (let (ve1 : bool) (app gelemO[int] gdOrdInt vtwo vli3S)
+  (let (vu7 : unit) (app gputBool ve1)
+  (let (vnine : real susp) (app gdone[real] 9.5)
+  (let (ve2 : bool) (app gelemO[real] gdOrdDbl vnine vld3S)
+  (let (vu8 : unit) (app gputBool ve2)
+  (* [Red,Green] <= [Red,Blue] : Ord [Color], the default <= at a list, Color's <, and its == *)
+  (let (vp1 : color hlist) (app gcons[color] (con0 1 : color) (con0 0 : color hlist))
+  (let (vp2 : color hlist) (app gcons[color] (con0 0 : color) vp1)
+  (let (vp2S : color hlist susp) (app gdone[color hlist] vp2)
+  (let (vq1 : color hlist) (app gcons[color] (con0 2 : color) (con0 0 : color hlist))
+  (let (vq2 : color hlist) (app gcons[color] (con0 0 : color) vq1)
+  (let (vq2S : color hlist susp) (app gdone[color hlist] vq2)
+  (let (vdOC : color hlist dord) (app gdOrdList[color] gdOrdCol)
+  (let (vcmp : bool) (app gcLe[color hlist] vdOC vp2S vq2S)
+  (return (app gputBool vcmp))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))

@@ -1,0 +1,1 @@
+lex-escape-range.hs:2:6: error: a numeric escape above 0x10FFFF in a character literal

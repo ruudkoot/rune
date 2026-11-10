@@ -4,7 +4,8 @@
    variable -- given a number by where it first appears, from a base of its
    kind, and the tables Mid's passes read by those names entered again
    under the new ones: each datatype's constructors (Ty.datatypes, as
-   Ty.datatypeOf gives them) and each function's name (Translate.funNames).
+   Ty.datatypeOf gives them); a function's name is its label, which comes
+   with it.
    The counters the passes take fresh names from are set after the last.
 
    So two programs that say the same are the same program whatever stamps
@@ -23,6 +24,7 @@ struct
      declare *)
   val nextTycon = ref base
   val () = CompilerState.cellRoot ("MidCanon.nextTycon", nextTycon)
+  val () = Pass.counter nextTycon
 
   (* p with each name of each kind renamed by the functions given -- stamp
      for a variable, global or join point, tycon for a type name, tvar for a
@@ -47,6 +49,8 @@ struct
                 | Ty.Tuple ts => Ty.tuple (List.map ty ts)
                 | Ty.Arrow (a, b) => let val a' = ty a in Ty.arrow (a', ty b) end
                 | Ty.ExnCon => Ty.exnCon
+                | Ty.App (h, args) => let val h' = ty h in Ty.app (h', List.map ty args) end
+                | Ty.Forall (vs, b) => let val vs' = List.map tvar vs in Ty.forall (vs', ty b) end
             in IntTable.insert (done, Ty.id t, u); u end
     in ty end
 
@@ -63,30 +67,17 @@ struct
         | Con0 (tag, t) => Con0 (tag, ty t)
         | Unit => Unit
       fun atoms l = List.map atom l
-      fun rhs r =
-        case r of
-          Atom a => Atom (atom a)
-        | App (f, args) => let val f' = atom f in App (f', atoms args) end
-        | Prim (n, t, args) => let val t' = ty t in Prim (n, t', atoms args) end
-        | Tuple args => Tuple (atoms args)
-        | Select (i, a) => Select (i, atom a)
-        | Con (tag, t, a) => let val t' = ty t in Con (tag, t', atom a) end
-        | Decon (tag, t, a) => let val t' = ty t in Decon (tag, t', atom a) end
-        | ConTag a => ConTag (atom a)
-        | NewExn s => NewExn s
-        | BuiltinExn i => BuiltinExn i
-        | MkExn (a, b) => let val a' = atom a in MkExn (a', atom b) end
-        | ExnCon a => ExnCon (atom a)
-        | ExnArg (t, a) => let val t' = ty t in ExnArg (t', atom a) end
-        | SetGlobal (g, a) => let val g' = stamp g in SetGlobal (g', atom a) end
+      (* in the order the step names its parts (Mid.mapRhsWith), as the
+         stamps are given *)
+      val rhs = mapRhsWith {ty = ty, atom = atom, global = stamp}
       fun params ps = List.map (fn (x, t) => let val x' = stamp x in (x', ty t) end) ps
-      fun fundef ({name, tyvars, params = ps, result, body} : fundef) : fundef =
+      fun fundef ({name, label, tyvars, params = ps, result, body} : fundef) : fundef =
         let
           val name' = stamp name
           val tyvars' = List.map tvar tyvars
           val ps' = params ps
           val result' = ty result
-        in {name = name', tyvars = tyvars', params = ps', result = result', body = exp body} end
+        in {name = name', label = label, tyvars = tyvars', params = ps', result = result', body = exp body} end
       and fundefs fs =
         (* the names first, which the bodies call one another by *)
         (List.app (fn (f : fundef) => ignore (stamp (#name f))) fs; List.map fundef fs)
@@ -119,10 +110,10 @@ struct
 
   (* What a unit's Mid needs of the compile's tables, which the compile of
      the next unit does not keep: each datatype its types name, and those
-     theirs name, by stamp; each function's name (Translate.funNames) *)
-  (* and the layouts a body fixed of the
-     datatypes (Ty.pinned) and those a parameter leaves open (Ty.openTypes) *)
-  type unitMid = {mid : program, datatypes : (int * datatypeInfo) list, funNames : (int * string) list,
+     theirs name, by stamp; and the layouts a body fixed of the datatypes
+     (Ty.pinned) and those a parameter leaves open (Ty.openTypes). Its
+     functions' names are their labels (Mid.fundef). *)
+  type unitMid = {mid : program, datatypes : (int * datatypeInfo) list,
                   pins : (int * (int * int option) list) list, opens : int list}
 
   fun capture (p : program) : unitMid =
@@ -142,13 +133,13 @@ struct
       val _ = rename {stamp = fn x => x, tycon = fn c => (visit c; c), tvar = fn v => v} p
       val found = List.rev (!found)
     in
-      {mid = p, datatypes = found, funNames = IntMap.listItemsi (!Translate.funNames),
+      {mid = p, datatypes = found,
        pins = List.mapPartial (fn (s, _) => Option.map (fn l => (s, l)) (IntMap.find (!Ty.pinned, s))) found,
        opens = List.mapPartial (fn (s, _) => if Ty.isOpen s then SOME s else NONE) found}
     end
 
   (* a unit's Mid with its names renamed, its tables' too *)
-  fun renameUnit (names as {stamp, tycon, tvar}) ({mid, datatypes, funNames, pins, opens} : unitMid) : unitMid =
+  fun renameUnit (names as {tycon, tvar, ...}) ({mid, datatypes, pins, opens} : unitMid) : unitMid =
     let val ty = renamer {tycon = tycon, tvar = tvar}
     in
       {mid = rename names mid,
@@ -156,7 +147,6 @@ struct
                                (tycon s, {params = List.map tvar params,
                                           cons = List.map (fn (t, n, a) => (t, n, Option.map ty a)) cons}))
                             datatypes,
-       funNames = List.map (fn (s, n) => (stamp s, n)) funNames,
        pins = List.map (fn (s, l) => (tycon s, l)) pins, opens = List.map tycon opens}
     end
 
@@ -164,8 +154,6 @@ struct
   fun concat (us : unitMid list) : program =
     (List.app (fn {datatypes, ...} => List.app Ty.bindDatatypeDirect datatypes) us;
      List.app (fn {pins, opens, ...} => (List.app Ty.pinLayout pins; List.app Ty.markOpen opens)) us;
-     Translate.funNames := List.foldl (fn ({funNames, ...}, m) => List.foldl (fn ((s, n), m) => IntMap.insert (m, s, n)) m funNames)
-                                      (!Translate.funNames) us;
      List.concat (List.map #mid us))
 
   fun program (p : program) : program =
@@ -235,14 +223,9 @@ struct
              enter ())
       val () = enter ()
       val () = List.app Ty.bindDatatypeDirect (List.rev (!entered))
-      (* each function's name, under its new stamp *)
-      val () =
-        Translate.funNames :=
-          IntMap.foldli (fn (s, n, m) => case IntTable.find (stamps, s) of SOME s' => IntMap.insert (m, s', n) | NONE => m)
-                        (!Translate.funNames) (!Translate.funNames)
     in
       (* fresh names after the last: the same in every build that says the same *)
-      Elaborate.stampCounter := base + !nstamps;
+      Stamp.counter := base + !nstamps;
       nextTycon := base + !ntycons;
       p'
     end
@@ -292,6 +275,8 @@ struct
               | (Ty.Tuple a, Ty.Tuple a') => tys (a, a')
               | (Ty.Arrow (a, b), Ty.Arrow (a', b')) => (ty (a, a'); ty (b, b'))
               | (Ty.ExnCon, Ty.ExnCon) => ()
+              | (Ty.App (h, a), Ty.App (h', a')) => (ty (h, h'); tys (a, a'))
+              | (Ty.Forall (vs, b), Ty.Forall (vs', b')) => (lists tvar (vs, vs'); ty (b, b'))
               | _ => bug ("type " ^ Ty.toString t ^ " made " ^ Ty.toString t'));
              IntTable.insert (tyDone, Ty.id t, Ty.id t'))
       and tys (a, a') = lists ty (a, a')

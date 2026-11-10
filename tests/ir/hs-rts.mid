@@ -1,0 +1,152 @@
+(* run: alone *)
+(* E1: what rhc's runtime would be, in today's Mid, by hand.
+
+   'a susp is an abstract type name: no datatype, so Lower gives it RAny and
+   no engine trusts anything of it. At run time it is a ref to a thunkst.
+   A Haskell function of type a -> b is 'a susp -> 'b: arguments lazy, the
+   result in weak head normal form. *)
+(abstract susp 1)
+(abstract any 0)
+(datatype thunkst ('a) (0 "Delayed" : unit -> 'a) (1 "Done" : 'a) (2 "Hole"))
+(datatype hlist ('a) (0 "Nil") (1 "Cons" : 'a susp * 'a hlist susp))
+
+(val gexnLoop : exncon (return (newexn "NonTermination")))
+(val gexnError : exncon (return (newexn "ErrorCall")))
+(val gexnPat : exncon (return (newexn "PatternMatchFail")))
+(val gexnIO : exncon (return (newexn "IOError")))
+
+(* force: Done, return; Delayed, blackhole, run the code under a handler that
+   puts the code back (a raise must leave the thunk re-forceable), update;
+   Hole, a loop. *)
+(funs
+  (fn gforce ['a] ((vfS : 'a susp)) : 'a
+    (let (vfR : 'a thunkst ref) (prim unsafe_cast vfS : 'a susp -> 'a thunkst ref)
+    (let (vfV : 'a thunkst) (prim ref_get vfR : 'a thunkst ref -> 'a thunkst)
+    (let (vfT : int) (tag vfV)
+    (let (vfD : bool) (prim poly_eq vfT 1 : (int * int) -> bool)
+    (if vfD
+      (return (decon 1 vfV : 'a thunkst))
+      (let (vfE : bool) (prim poly_eq vfT 0 : (int * int) -> bool)
+      (if vfE
+        (let (vfC : unit -> 'a) (decon 0 vfV : 'a thunkst)
+        (let (vfU1 : unit) (prim ref_set vfR (con0 2 : 'a thunkst) : ('a thunkst ref * 'a thunkst) -> unit)
+        (join jfDone ((vfRes : 'a))
+          (let (vfDn : 'a thunkst) (con 1 vfRes : 'a thunkst)
+          (let (vfU2 : unit) (prim ref_set vfR vfDn : ('a thunkst ref * 'a thunkst) -> unit)
+          (return vfRes)))
+        (handle vfX
+          (let (vfR2 : 'a) (app vfC ())
+          (jump jfDone vfR2))
+          (let (vfU3 : unit) (prim ref_set vfR vfV : ('a thunkst ref * 'a thunkst) -> unit)
+          (raise vfX))))))
+        (let (vfLoop : exn) (mkexn gexnLoop ())
+        (raise vfLoop)))))))))))
+(funs
+  (fn gdelay ['a] ((vdF : unit -> 'a)) : 'a susp
+    (let (vdS : 'a thunkst) (con 0 vdF : 'a thunkst)
+    (let (vdR : 'a thunkst ref) (prim ref_new vdS : 'a thunkst -> 'a thunkst ref)
+    (return (prim unsafe_cast vdR : 'a thunkst ref -> 'a susp))))))
+(funs
+  (fn gdone ['a] ((vnV : 'a)) : 'a susp
+    (let (vnS : 'a thunkst) (con 1 vnV : 'a thunkst)
+    (let (vnR : 'a thunkst ref) (prim ref_new vnS : 'a thunkst -> 'a thunkst ref)
+    (return (prim unsafe_cast vnR : 'a thunkst ref -> 'a susp))))))
+(* a cell for a recursive value: a Hole, patched once what closes over it exists *)
+(funs
+  (fn ghole ['a] ((vhU : unit)) : 'a susp
+    (let (vhR : 'a thunkst ref) (prim ref_new (con0 2 : 'a thunkst) : 'a thunkst -> 'a thunkst ref)
+    (return (prim unsafe_cast vhR : 'a thunkst ref -> 'a susp)))))
+(funs
+  (fn gpatch ['a] ((vpS : 'a susp) (vpF : unit -> 'a)) : unit
+    (let (vpR : 'a thunkst ref) (prim unsafe_cast vpS : 'a susp -> 'a thunkst ref)
+    (let (vpD : 'a thunkst) (con 0 vpF : 'a thunkst)
+    (return (prim ref_set vpR vpD : ('a thunkst ref * 'a thunkst) -> unit))))))
+
+(* map f xs: every argument lazy, as a naive translation has it *)
+(funs
+  (fn gmap ['a 'b] ((vmF : ('a susp -> 'b) susp) (vmXs : 'a hlist susp)) : 'b hlist
+    (let (vmL : 'a hlist) (app gforce['a hlist] vmXs)
+    (let (vmT : int) (tag vmL)
+    (let (vmC : bool) (prim poly_eq vmT 1 : (int * int) -> bool)
+    (if vmC
+      (let (vmP : 'a susp * 'a hlist susp) (decon 1 vmL : 'a hlist)
+      (let (vmY : 'a susp) (select 0 vmP)
+      (let (vmYs : 'a hlist susp) (select 1 vmP)
+      (fun (fn vmH ((vmU1 : unit)) : 'b
+             (let (vmF1 : 'a susp -> 'b) (app gforce['a susp -> 'b] vmF)
+             (return (app vmF1 vmY))))
+      (fun (fn vmR ((vmU2 : unit)) : 'b hlist
+             (return (app gmap['a, 'b] vmF vmYs)))
+      (let (vmSh : 'b susp) (app gdelay['b] vmH)
+      (let (vmSt : 'b hlist susp) (app gdelay['b hlist] vmR)
+      (let (vmPr : 'b susp * 'b hlist susp) (tuple vmSh vmSt)
+      (return (con 1 vmPr : 'b hlist))))))))))
+      (return (con0 0 : 'b hlist))))))))
+
+(* take n xs *)
+(funs
+  (fn gtake ['a] ((vtN : int susp) (vtXs : 'a hlist susp)) : 'a hlist
+    (let (vtI : int) (app gforce[int] vtN)
+    (let (vtZ : bool) (prim int_le vtI 0 : (int * int) -> bool)
+    (if vtZ
+      (return (con0 0 : 'a hlist))
+      (let (vtL : 'a hlist) (app gforce['a hlist] vtXs)
+      (let (vtT : int) (tag vtL)
+      (let (vtC : bool) (prim poly_eq vtT 1 : (int * int) -> bool)
+      (if vtC
+        (let (vtP : 'a susp * 'a hlist susp) (decon 1 vtL : 'a hlist)
+        (let (vtY : 'a susp) (select 0 vtP)
+        (let (vtYs : 'a hlist susp) (select 1 vtP)
+        (fun (fn vtM ((vtU1 : unit)) : int
+               (return (prim int_sub vtI 1 : (int * int) -> int)))
+        (let (vtNs : int susp) (app gdelay[int] vtM)
+        (fun (fn vtR ((vtU2 : unit)) : 'a hlist
+               (return (app gtake['a] vtNs vtYs)))
+        (let (vtSt : 'a hlist susp) (app gdelay['a hlist] vtR)
+        (let (vtPr : 'a susp * 'a hlist susp) (tuple vtY vtSt)
+        (return (con 1 vtPr : 'a hlist))))))))))
+        (return (con0 0 : 'a hlist)))))))))))
+
+(* show of a list of Int, to its closing bracket *)
+(funs
+  (fn gshowTail ((vstL : int hlist susp)) : string
+    (let (vstV : int hlist) (app gforce[int hlist] vstL)
+    (let (vstT : int) (tag vstV)
+    (let (vstC : bool) (prim poly_eq vstT 1 : (int * int) -> bool)
+    (if vstC
+      (let (vstP : int susp * int hlist susp) (decon 1 vstV : int hlist)
+      (let (vstH : int susp) (select 0 vstP)
+      (let (vstS : int hlist susp) (select 1 vstP)
+      (let (vstI : int) (app gforce[int] vstH)
+      (let (vstA : string) (prim int_to_string vstI : int -> string)
+      (let (vstB : string) (app gshowTail vstS)
+      (let (vstC1 : string) (prim string_concat "," vstA : (string * string) -> string)
+      (return (prim string_concat vstC1 vstB : (string * string) -> string)))))))))
+      (return "]")))))))
+(funs
+  (fn gshowInts ((vsL : int hlist susp)) : string
+    (let (vsV : int hlist) (app gforce[int hlist] vsL)
+    (let (vsT : int) (tag vsV)
+    (let (vsC : bool) (prim poly_eq vsT 1 : (int * int) -> bool)
+    (if vsC
+      (let (vsP : int susp * int hlist susp) (decon 1 vsV : int hlist)
+      (let (vsH : int susp) (select 0 vsP)
+      (let (vsS : int hlist susp) (select 1 vsP)
+      (let (vsI : int) (app gforce[int] vsH)
+      (let (vsA : string) (prim int_to_string vsI : int -> string)
+      (let (vsB : string) (app gshowTail vsS)
+      (let (vsC1 : string) (prim string_concat "[" vsA : (string * string) -> string)
+      (return (prim string_concat vsC1 vsB : (string * string) -> string)))))))))
+      (return "[]")))))))
+(funs
+  (fn gputs ((vpuS : string)) : unit
+    (let (vpuU : unit) (prim print vpuS : string -> unit)
+    (return (prim print "\n" : string -> unit)))))
+(funs
+  (fn gputInts ((vpiL : int hlist susp)) : unit
+    (let (vpiS : string) (app gshowInts vpiL)
+    (return (app gputs vpiS)))))
+(funs
+  (fn gputInt ((vpnI : int)) : unit
+    (let (vpnS : string) (prim int_to_string vpnI : int -> string)
+    (return (app gputs vpnS)))))

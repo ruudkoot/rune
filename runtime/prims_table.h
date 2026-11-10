@@ -417,11 +417,29 @@ enum Prim {
   PRIM_foreign = 411,
   PRIM_foreign_callback = 412,
   PRIM_rt_linked_units = 413,
-  PRIM_thunk_make = 414,
-  PRIM_thunk_force = 415,
-  PRIM_thunk_blackhole = 416,
-  PRIM_thunk_self_update = 417,
-  PRIM_any_check = 418,
+  PRIM_intinf_add = 414,
+  PRIM_intinf_sub = 415,
+  PRIM_intinf_mul = 416,
+  PRIM_intinf_div = 417,
+  PRIM_intinf_mod = 418,
+  PRIM_intinf_quot = 419,
+  PRIM_intinf_rem = 420,
+  PRIM_intinf_neg = 421,
+  PRIM_intinf_lt = 422,
+  PRIM_intinf_le = 423,
+  PRIM_intinf_gt = 424,
+  PRIM_intinf_ge = 425,
+  PRIM_intinf_order = 426,
+  PRIM_intinf_from_int = 427,
+  PRIM_intinf_to_int = 428,
+  PRIM_intinf_is_small = 429,
+  PRIM_intinf_parts = 430,
+  PRIM_intinf_make = 431,
+  PRIM_thunk_make = 432,
+  PRIM_thunk_force = 433,
+  PRIM_thunk_blackhole = 434,
+  PRIM_thunk_self_update = 435,
+  PRIM_any_check = 436,
   PRIM__COUNT
 };
 
@@ -840,6 +858,24 @@ static const char *const prim_names[] = {
   "foreign",
   "foreign_callback",
   "rt_linked_units",
+  "intinf_add",
+  "intinf_sub",
+  "intinf_mul",
+  "intinf_div",
+  "intinf_mod",
+  "intinf_quot",
+  "intinf_rem",
+  "intinf_neg",
+  "intinf_lt",
+  "intinf_le",
+  "intinf_gt",
+  "intinf_ge",
+  "intinf_order",
+  "intinf_from_int",
+  "intinf_to_int",
+  "intinf_is_small",
+  "intinf_parts",
+  "intinf_make",
   "thunk_make",
   "thunk_force",
   "thunk_blackhole",
@@ -1262,6 +1298,24 @@ static const unsigned char prim_arity[] = {
   5,
   3,
   1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  1,
+  1,
+  1,
+  1,
+  2,
   1,
   1,
   1,
@@ -1689,6 +1743,24 @@ static const unsigned char prim_result[] = {
   7,
   0,
   0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  5,
+  5,
+  5,
+  5,
+  5,
+  0,
+  1,
+  5,
+  0,
+  0,
+  0,
+  0,
   8,
   8,
   0,
@@ -2109,6 +2181,24 @@ static const unsigned char prim_result[] = {
   X(foreign) \
   X(foreign_callback) \
   X(rt_linked_units) \
+  X(intinf_add) \
+  X(intinf_sub) \
+  X(intinf_mul) \
+  X(intinf_div) \
+  X(intinf_mod) \
+  X(intinf_quot) \
+  X(intinf_rem) \
+  X(intinf_neg) \
+  X(intinf_lt) \
+  X(intinf_le) \
+  X(intinf_gt) \
+  X(intinf_ge) \
+  X(intinf_order) \
+  X(intinf_from_int) \
+  X(intinf_to_int) \
+  X(intinf_is_small) \
+  X(intinf_parts) \
+  X(intinf_make) \
   X(thunk_make) \
   X(thunk_force) \
   X(thunk_blackhole) \

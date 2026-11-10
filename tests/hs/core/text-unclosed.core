@@ -1,0 +1,3 @@
+; fail: text-unclosed.core:3: error: a list that starts on this line is not closed
+; Core's reader: a list not closed
+(val x Int (prim int_add 1 2)

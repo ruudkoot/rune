@@ -13,21 +13,26 @@
 
    See also: `INTEGER`, `WORD`
 
-   Implementation: `IntInf.int/limbs`. A small machine integer or a sign
-   and immutable little-endian magnitude bytes. The register VM optionally
-   uses GMP through temporary native objects; the independent SML backend
-   uses indexed 30-bit scratch digits (15-bit on narrow hosts). Storage
-   primitives pack and unpack the bytes. Normalization gives equal numbers
-   equal values, so `=` compares them. `LargeInt` is `IntInf`. Both backends
-   enforce a finite operational magnitude budget (134217728 bits by default),
-   with a runtime-limit failure rather than `Overflow` when it is exceeded.
-   The budget is configurable and does not change `precision = NONE`.
-   Unit divisors and clearly smaller dividends use direct SML results;
-   small/large addition updates a private byte copy, and machine multiply
-   overflow converts directly to arithmetic digits. Normalization checks
-   the machine boundary without raising an exception. The fallback reuses
-   private scratch digits for addition, subtraction, single-digit scaling,
-   bit operations and right shifts, returning small results without packing
+   Implementation: `IntInf.int/limbs`. A type of the VM's: a number that
+   fits 63 bits is an immediate, the same word as an `int` of it, and a
+   larger one a sign and immutable little-endian magnitude bytes.
+   Normalization gives equal numbers equal values, so `=` compares them.
+   `LargeInt` is `IntInf`. Addition, subtraction, multiplication, the four
+   divisions, negation, the comparisons and the conversions from and to
+   `int` are primitives of the VM, which do two immediates in line, as an
+   `int`'s are done, and the rest in the runtime: with GMP's multiplication
+   and division where the register VM selects GMP and an operand is large,
+   and otherwise with its own 32-bit digits, in memory of its own freed
+   before the primitive returns. The bit operations, the shifts, `pow` and
+   the conversions to text and from it are SML over a number's sign and
+   magnitude, with indexed 30-bit scratch digits (15-bit on narrow hosts)
+   that storage primitives pack and unpack, or GMP's where it is selected.
+   Every path enforces a finite operational magnitude budget (134217728 bits
+   by default), with a runtime-limit failure rather than `Overflow` when it
+   is exceeded. The budget is configurable and does not change
+   `precision = NONE`. Normalization checks the machine boundary without
+   raising an exception. The SML paths reuse private scratch digits for bit
+   operations and right shifts, returning small results without packing
    them first. Positive OR/XOR with a small operand visits only low bytes.
    Public values remain immutable.
 
