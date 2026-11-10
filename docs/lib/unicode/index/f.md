@@ -2,7 +2,10 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) **f** [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
+- `FinalPunctuation` (con): [CODE_POINT](../sig/CODE_POINT.md#con-finalpunctuation)
 - `foldl` (val): [UTF8](../sig/UTF8.md#val-foldl)
+- `Format` (con): [CODE_POINT](../sig/CODE_POINT.md#con-format)
+- `fromAbbreviation` (val): [CODE_POINT](../sig/CODE_POINT.md#val-fromabbreviation)
 
 ---
 

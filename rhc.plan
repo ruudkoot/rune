@@ -19,6 +19,9 @@ library unicode lib/unicode
   unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
   unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
   unit unicode:security.sml lib/unicode/security.sml ascii demand
+  unit unicode:code_point_data.sml lib/unicode/code_point_data.sml ascii demand
+  unit unicode:code_point_sig.sml lib/unicode/code_point_sig.sml ascii demand
+  unit unicode:code_point.sml lib/unicode/code_point.sml ascii demand
 end
 library language/haskell lib/language/haskell
   form header
@@ -175,7 +178,7 @@ provenance
   input rhc.build a1df80b66039bc3637a73b823db2b7b52dd971bf05c7a7acf99eaa9c2c7607ed
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
-  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+  input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
   input lib/language/haskell/library.build c93153d5190703d681b07a7ad0e6e22f7b45aa72acb283e42843c27844b953b8
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/core.build 23f6e8905127977948510fd0522271664b50ae89a5f805908692fe1e11d96ea7
