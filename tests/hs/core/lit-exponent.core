@@ -1,0 +1,10 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A floating literal written with the sign of its exponent, as Haskell may
+; write one (1.5e+3, 2.5e-1): Core keeps its digits as written, and Core to
+; Mid writes it as Mid's reader reads a real (O's lazy/sphere-lazy met a +
+; there).
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim double_to_str 1.5e+3) s
+      (_ (case (putStrLn s w) r
+           ((utuple w1 _) (case (prim double_to_str 2.5e-1) t (_ (putStrLn t w1)))))))))

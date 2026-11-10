@@ -509,7 +509,7 @@ struct
         case l of
           LInt i => IntInf.toString i
         | LChar c => Int.toString c
-        | LDouble s => String.translate (fn #"-" => "~" | #"e" => "E" | c => String.str c) s
+        | LDouble s => String.translate (fn #"-" => "~" | #"e" => "E" | #"+" => "" | c => String.str c) s
         | LFloat s => Real.fmt (StringCvt.SCI (SOME 16)) (Real32.toLarge (valOf (Real32.fromString s)))
         | LStr s => quote s
         | LInteger i => integerGlobal i
