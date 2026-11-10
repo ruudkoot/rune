@@ -19,9 +19,11 @@
 
    The programs of a directory are judged in `shards` jobs, the K-th
    taking every N-th from the K-th, each a line FAIL for each program
-   that differs; the first shard is make check's, the others nightly (the
-   roadmap's D56, the lead's ruling 45). `bin/rune-test hs-world-one KIND
-   NAME` judges one. *)
+   that differs, all nightly; make check's job of a directory, `sample`,
+   takes the sample of ruling 47 (HsLang.sampled: one program in
+   HsLang.sampleOneIn, by its name's hash, never one of lang-nightly.txt)
+   (the roadmap's D56, the lead's rulings 45 and 47). `bin/rune-test
+   hs-world-one KIND NAME` judges one. *)
 structure HsWorldJobs =
 struct
   open Sh
@@ -85,6 +87,7 @@ struct
     end
 
   fun compareShard (kind, k, n) = List.app (fn p => compareOne (kind, p)) (shardOf (kind, k, n))
+  fun compareSample kind = List.app (fn p => compareOne (kind, p)) (List.filter (fn (p : Lang.program) => HsLang.sampled (#name p)) (programs kind))
 
   fun compareNamed (kind, name) =
     case List.find (fn (p : Lang.program) => #name p = name) (programs kind) of
@@ -140,10 +143,10 @@ struct
     let
       val cmd = "\"$RUNE_TEST_ROOT\"/bin/rune-test "
       fun shardJobs kind =
-        List.tabulate (shards, fn i =>
-                                 let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
-                                 in Test.tag (if i = 0 then "check" else "nightly")
-                                      (job (kind ^ "/" ^ k, cmd ^ "hs-world-shard " ^ kind ^ " " ^ k, 3600)) end)
+        Test.tag "check" (job (kind ^ "/sample", cmd ^ "hs-world-shard " ^ kind ^ " sample", 3600))
+        :: List.tabulate (shards, fn i =>
+                                    let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
+                                    in Test.tag "nightly" (job (kind ^ "/" ^ k, cmd ^ "hs-world-shard " ^ kind ^ " " ^ k, 3600)) end)
     in
       Test.describe "hs/world"
         [tagged (["hs"] @ covers)
@@ -157,6 +160,7 @@ struct
     case args of
       ["hs-world-image"] => SOME image
     | ["hs-world-one", kind, name] => SOME (fn () => compareNamed (kind, name))
+    | ["hs-world-shard", kind, "sample"] => SOME (fn () => compareSample kind)
     | ["hs-world-shard", kind, kn] =>
         (case String.fields (fn c => c = #"-") kn of
            [k, "of", n] =>

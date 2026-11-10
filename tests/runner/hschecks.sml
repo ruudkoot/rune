@@ -337,10 +337,16 @@ struct
                      what ^ ": names no program of accept.tsv that both judges accept");
                need (member word ["reject", "crash", "timeout", "harness-error"], what ^ ": the outcome is reject, crash or timeout"))
           | SOME "run" =>
-              (need (List.exists (fn r => Expectations.glob (#path l, "lazy/" ^ #port r)) ready,
-                     what ^ ": names no ready -lazy port");
-               need (member word ["reject", "timeout", "diff", "rtfail", "harness-error"],
-                     what ^ ": the outcome is reject, timeout, diff or rtfail"))
+              if String.isPrefix "lazy/" (#path l) then
+                (need (List.exists (fn r => Expectations.glob (#path l, "lazy/" ^ #port r)) ready,
+                       what ^ ": names no ready -lazy port");
+                 need (member word ["reject", "timeout", "diff", "rtfail", "harness-error"],
+                       what ^ ": the outcome is reject, timeout, diff or rtfail"))
+              else
+                (* a run of D56's 188 (tests/runner/hscorpusrun.sml) *)
+                (need (List.exists (fn id => Expectations.glob (#path l, id)) (List.map (fn r => HsCorpus.field r "id") (HsCorpusRun.d56 ())),
+                       what ^ ": names no run of D56's 188 (licences.tsv) nor a ready -lazy port");
+                 need (member word ["compile", "exit", "diff"], what ^ ": the outcome of a corpus run is compile, exit or diff"))
           | _ => need (false, what ^ ": the label is check or run")
         end
       val () = List.app one ls

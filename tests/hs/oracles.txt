@@ -441,3 +441,11 @@ mhs | hs/lang/lib.r.io.semi.state_neither::run | SPEC-AMBIGUOUS | diff: R156: im
 ghc | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R157: GHC's floatToDigits takes Burger and Dybvig's low margin b^e at a power of the radix, where the printed code takes b: 2^70 is 1.1805916207174113e21 and 1.1805916e21, not the code's ...114e21 and 1.18059163e21
 mhs | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R157: MicroHs's floatToDigits takes Burger and Dybvig's low margin b^e at a power of the radix, where the printed code takes b
 hugs | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R55: Hugs's show of a Double and a Float is %.15g and %.7g, not showFloat's digits (its Numeric follows the code)
+
+# T's programs for the owner's calls on R4, R15 and R52 (2026-11-10)
+nhc98 | hs/accept/lex.any.linecomment_uniwhite::judge | SPEC-AMBIGUOUS | reject: R4: nhc98 does not count a vertical tab as one column, so the where block's y (after a vertical tab and three spaces) is not at x's column; the Report is silent and rhc counts one (the owner's call)
+mhs | hs/accept/lex.any.linecomment_uniwhite::judge | SPEC-AMBIGUOUS | reject: R4: MicroHs refuses the vertical tab or the Unicode spaces in a line comment, which the grammar's any excludes; rhc accepts them, a deviation (the owner's call)
+hugs | hs/errors/lay.first.empty_nomain::judge | HOST-BUG | accept: R4: Hugs loads a file with no lexeme as a module and asks for no main when it only loads; rhc refuses it by chapter 5's rule (the owner's call)
+ghc | hs/errors/pat.m.npk.positive::judge | SPEC-AMBIGUOUS | accept: R15: GHC takes the grammar's integer for k and accepts n+0; the owner's call refuses it by 3.17.2's "positive integer literal", as Hugs does
+nhc98 | hs/errors/pat.m.npk.positive::judge | SPEC-AMBIGUOUS | accept: R15: nhc98 takes the grammar's integer for k and accepts n+0; the owner's call refuses it by 3.17.2's "positive integer literal", as Hugs does
+mhs | hs/lang/lit.example.factorial::run | HOST-BUG | reject: MicroHs does not read 9.4's bird tracks after a block of commentary (Main.lhs:6:4: syntax error), where GHC, Hugs and nhc98 run it
