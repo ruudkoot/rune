@@ -156,6 +156,13 @@ struct
   fun pending p = if planned p then SOME "the rows it tests are Planned (tests/hs/conformance.tsv)" else NONE
   (* the same of a file of a program of tests/hs/lang or tests/hs/accept,
      a module of a directory among them *)
+  (* the programs of a directory, listed once: every job's runner builds the
+     whole tree, and the relations ask of each program *)
+  val programsCache : (string * Lang.program list) list ref = ref []
+  fun programsIn d =
+    case List.find (fn (x, _) => x = d) (!programsCache) of
+      SOME (_, ps) => ps
+    | NONE => let val ps = Lang.programsOf (d, [".hs", ".lhs"], ["Main.hs", "Main.lhs"]) in programsCache := (d, ps) :: !programsCache; ps end
   fun pendingFile file =
     case List.find (fn d => String.isPrefix (d ^ "/") file) ["tests/hs/lang", "tests/hs/accept"] of
       NONE => NONE
@@ -163,7 +170,7 @@ struct
         let val first = hd (String.fields (fn c => c = #"/") (String.extract (file, size d + 1, NONE)))
         in
           case List.find (fn (p : Lang.program) => #src p = file orelse String.isPrefix (d ^ "/" ^ first ^ "/") (#src p))
-                         (Lang.programsOf (d, [".hs", ".lhs"], ["Main.hs", "Main.lhs"])) of
+                         (programsIn d) of
             SOME p => pending p
           | NONE => NONE
         end
