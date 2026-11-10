@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 36 of 36 entries documented |
+| Documentation | 42 of 42 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_core\_sig.sml](../../../../../lib/language/haskell/desugar_core_sig.sml) |
 
@@ -51,7 +51,13 @@ sig
     | <a href="#con-prims">PrimS</a>
   val <a href="#val-reset">reset</a> : unit -&gt; unit
   val <a href="#val-fresh">fresh</a> : string -&gt; string
+  type <a href="#type-saved">saved</a>
+  val <a href="#val-save">save</a> : unit -&gt; saved
+  val <a href="#val-restore">restore</a> : saved -&gt; unit
+  val <a href="#val-canonical">canonical</a> : Core.exp -&gt; Core.exp
   val <a href="#val-declare">declare</a> : Core.decl -&gt; unit
+  val <a href="#val-tuplearity">tupleArity</a> : string -&gt; int option
+  val <a href="#val-tupledata">tupleData</a> : int -&gt; Core.decl
   val <a href="#val-tycon">tycon</a> : string -&gt; ((string * Core.kind) list * shape) option
   val <a href="#val-coninfo">conInfo</a> : string -&gt; {<a href="#fld-coninfo.tycon">tycon</a> : string, <a href="#fld-coninfo.params">params</a> : (string * Core.kind) list, <a href="#fld-coninfo.fields">fields</a> : Core.ty list} option
   val <a href="#val-fieldsat">fieldsAt</a> : string * Core.ty list -&gt; Core.ty list
@@ -127,6 +133,42 @@ val fresh : string -> string
 
 `fresh base` is a new name, `%base` and a number.
 
+### <a name="type-saved"></a>`saved`
+
+```sml
+type saved
+```
+
+What is known of the declarations, kept: so that a desugaring of the
+library's modules, made once, is where each program's starts.
+
+### <a name="val-save"></a>`save`
+
+```sml
+val save : unit -> saved
+```
+
+`save ()` is what is known now.
+
+### <a name="val-restore"></a>`restore`
+
+```sml
+val restore : saved -> unit
+```
+
+`restore s` makes `s` what is known.
+
+### <a name="val-canonical"></a>`canonical`
+
+```sml
+val canonical : Core.exp -> Core.exp
+```
+
+`canonical e` is `e` with each name made here that it binds numbered
+again, from 1 in the order they are bound, its base kept.
+
+So a value's Core is the same whatever was made before it.
+
 ## The declarations
 
 ### <a name="val-declare"></a>`declare`
@@ -138,6 +180,27 @@ val declare : Core.decl -> unit
 `declare d` adds the data type, newtype or value `d` to what is known.
 
 A value is known by its type.
+
+### <a name="val-tuplearity"></a>`tupleArity`
+
+```sml
+val tupleArity : string -> int option
+```
+
+`tupleArity c` is the number of components of the tuple whose type and
+constructor are named `c`, `(,...,)`.
+
+A tuple is of arbitrary length (3.8): one not declared is declared
+where it is first wanted, by [`tycon`](#val-tycon), [`conInfo`](#val-coninfo) and the other lookups,
+and [`valueType`](#val-valuetype) gives its constructor as a function its type.
+
+### <a name="val-tupledata"></a>`tupleData`
+
+```sml
+val tupleData : int -> Core.decl
+```
+
+`tupleData n` is the declaration of the tuple of `n` components.
 
 ### <a name="val-tycon"></a>`tycon`
 

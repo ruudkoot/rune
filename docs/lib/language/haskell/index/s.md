@@ -3,7 +3,8 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) **s** [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `S` (con): [HS_AST](../sig/HS_AST.md#con-s)
-- `save` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-save)
+- `save` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-save), [HS_DS_ENV](../sig/HS_DS_ENV.md#val-save), [HS_LAYOUT](../sig/HS_LAYOUT.md#val-save)
+- `saved` (type): [HS_DS_CORE](../sig/HS_DS_CORE.md#type-saved), [HS_DS_ENV](../sig/HS_DS_ENV.md#type-saved)
 - `SBind` (con): [HS_AST](../sig/HS_AST.md#con-sbind)
 - `sccs` (val): [HS_SCC](../sig/HS_SCC.md#val-sccs)
 - `scheme` (type): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#type-scheme), [HS_TYPES](../sig/HS_TYPES.md#type-scheme)

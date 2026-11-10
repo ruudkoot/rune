@@ -950,6 +950,34 @@
      "page": "sig/HS_DESUGAR.md#val-program"
     },
     {
+     "kind": "type",
+     "name": "library",
+     "spec": "type library",
+     "doc": "The library's part: what its declarations left known, its types and\nits values, each value's body made the first time it is wanted.\n\n",
+     "page": "sig/HS_DESUGAR.md#type-library"
+    },
+    {
+     "kind": "val",
+     "name": "library",
+     "spec": "val library : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,\n               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,\n               entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list}\n              -> library",
+     "doc": "`library p` is the library's part of the modules of `p` marked\n`library`.\n\n`p` is a checking of the library alone (every instance of its\nenvironment is the library's), in `program`'s form without `main`.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-library"
+    },
+    {
+     "kind": "val",
+     "name": "prepare",
+     "spec": "val prepare : library -> unit",
+     "doc": "`prepare lib` makes every body of `lib` now, as a saved world keeps\nthem; a body that fails is failed again where a program reaches it.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-prepare"
+    },
+    {
+     "kind": "val",
+     "name": "programOn",
+     "spec": "val programOn : library * {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,\n                           derived : (string * string * HsAst.decl list) list,\n                           prelude : string * string -> string option, entity : string * string * string -> string,\n                           main : string}\n                -> Core.program",
+     "doc": "`programOn (lib, p)` is `program` of `p` with the library's part\n`lib`: the modules of `p` not marked `library` desugared against it.\n\nThe modules, environment, records and derived instances of `p` are the\nwhole checking's, the library's among them, as `program` takes them;\na value of the library is `lib`'s.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-programon"
+    },
+    {
      "kind": "val",
      "name": "translationNames",
      "spec": "val translationNames : (string * string * string) list",
@@ -960,7 +988,7 @@
      "kind": "val",
      "name": "missingPrimitives",
      "spec": "val missingPrimitives : unit -> string list",
-     "doc": "`missingPrimitives ()` is each primitive of the library that the last\n`program` found neither in Core nor in the runtime, or of another type.\n\nEach is an error where it is used.\n\n",
+     "doc": "`missingPrimitives ()` is each primitive of the library that the last\ndesugaring found neither in Core nor in the runtime, or of another\ntype.\n\nIt is of the bodies the desugaring made, the library's made once among\nthem.\n\nEach is an error where it is used.\n\n",
      "page": "sig/HS_DESUGAR.md#val-missingprimitives"
     }
    ]
@@ -998,11 +1026,53 @@
      "page": "sig/HS_DS_CORE.md#val-fresh"
     },
     {
+     "kind": "type",
+     "name": "saved",
+     "spec": "type saved",
+     "doc": "What is known of the declarations, kept: so that a desugaring of the\nlibrary's modules, made once, is where each program's starts.\n\n",
+     "page": "sig/HS_DS_CORE.md#type-saved"
+    },
+    {
+     "kind": "val",
+     "name": "save",
+     "spec": "val save : unit -> saved",
+     "doc": "`save ()` is what is known now.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-save"
+    },
+    {
+     "kind": "val",
+     "name": "restore",
+     "spec": "val restore : saved -> unit",
+     "doc": "`restore s` makes `s` what is known.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-restore"
+    },
+    {
+     "kind": "val",
+     "name": "canonical",
+     "spec": "val canonical : Core.exp -> Core.exp",
+     "doc": "`canonical e` is `e` with each name made here that it binds numbered\nagain, from 1 in the order they are bound, its base kept.\n\nSo a value's Core is the same whatever was made before it.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-canonical"
+    },
+    {
      "kind": "val",
      "name": "declare",
      "spec": "val declare : Core.decl -> unit",
      "doc": "`declare d` adds the data type, newtype or value `d` to what is known.\n\nA value is known by its type.\n\n",
      "page": "sig/HS_DS_CORE.md#val-declare"
+    },
+    {
+     "kind": "val",
+     "name": "tupleArity",
+     "spec": "val tupleArity : string -> int option",
+     "doc": "`tupleArity c` is the number of components of the tuple whose type and\nconstructor are named `c`, `(,...,)`.\n\nA tuple is of arbitrary length (3.8): one not declared is declared\nwhere it is first wanted, by `tycon`, `conInfo` and the other lookups,\nand `valueType` gives its constructor as a function its type.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-tuplearity"
+    },
+    {
+     "kind": "val",
+     "name": "tupleData",
+     "spec": "val tupleData : int -> Core.decl",
+     "doc": "`tupleData n` is the declaration of the tuple of `n` components.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-tupledata"
     },
     {
      "kind": "val",
@@ -1240,6 +1310,34 @@
      "spec": "val start : program -> unit",
      "doc": "`start p` makes `p` the program desugared, forgetting the last.\n\n",
      "page": "sig/HS_DS_ENV.md#val-start"
+    },
+    {
+     "kind": "val",
+     "name": "continue",
+     "spec": "val continue : program -> unit",
+     "doc": "`continue p` makes `p` the program desugared, keeping what is known of\nits types and constructors: a program's, after its library's.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-continue"
+    },
+    {
+     "kind": "type",
+     "name": "saved",
+     "spec": "type saved",
+     "doc": "What is known of the types and constructors, kept.\n\n",
+     "page": "sig/HS_DS_ENV.md#type-saved"
+    },
+    {
+     "kind": "val",
+     "name": "save",
+     "spec": "val save : unit -> saved",
+     "doc": "`save ()` is what is known now.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-save"
+    },
+    {
+     "kind": "val",
+     "name": "restore",
+     "spec": "val restore : saved -> unit",
+     "doc": "`restore s` makes `s` what is known.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-restore"
     },
     {
      "kind": "val",

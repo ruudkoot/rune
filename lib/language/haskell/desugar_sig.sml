@@ -83,10 +83,11 @@ sig
      its values, each value's body made the first time it is wanted. *)
   type library
 
-  (* `library {modules, ...}` is the library's part of the modules marked
-     `library`, of a checking whose environment and records are the
-     library's alone (every instance of `infer` is the library's); the
-     arguments are `program`'s. *)
+  (* `library p` is the library's part of the modules of `p` marked
+     `library`.
+
+     `p` is a checking of the library alone (every instance of its
+     environment is the library's), in `program`'s form without `main`. *)
   val library : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
                  derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
                  entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list}
@@ -96,11 +97,12 @@ sig
      them; a body that fails is failed again where a program reaches it. *)
   val prepare : library -> unit
 
-  (* `programOn (lib, {modules, ...})` is `program` of the modules with the
-     library's part `lib`: the modules not marked `library` desugared
-     against it. `modules`, `infer`, `evidence` and `derived` are the whole
-     checking's, the library's modules among them, as `program` takes
-     them; a value of the library is `lib`'s. *)
+  (* `programOn (lib, p)` is `program` of `p` with the library's part
+     `lib`: the modules of `p` not marked `library` desugared against it.
+
+     The modules, environment, records and derived instances of `p` are the
+     whole checking's, the library's among them, as `program` takes them;
+     a value of the library is `lib`'s. *)
   val programOn : library * {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
                              derived : (string * string * HsAst.decl list) list,
                              prelude : string * string -> string option, entity : string * string * string -> string,
@@ -113,7 +115,10 @@ sig
 
   (* `missingPrimitives ()` is each primitive of the library that the last
      desugaring found neither in Core nor in the runtime, or of another
-     type, as far as the bodies it made.
+     type.
+
+     It is of the bodies the desugaring made, the library's made once among
+     them.
 
      Each is an error where it is used. *)
   val missingPrimitives : unit -> string list

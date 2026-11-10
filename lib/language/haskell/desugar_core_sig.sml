@@ -32,13 +32,16 @@ sig
      library's modules, made once, is where each program's starts. *)
   type saved
 
-  (* `save ()` is what is known now; `restore s` makes it what is known. *)
+  (* `save ()` is what is known now. *)
   val save : unit -> saved
+
+  (* `restore s` makes `s` what is known. *)
   val restore : saved -> unit
 
   (* `canonical e` is `e` with each name made here that it binds numbered
-     again, from 1 in the order they are bound, its base kept: so that a
-     value's Core is the same whatever was made before it. *)
+     again, from 1 in the order they are bound, its base kept.
+
+     So a value's Core is the same whatever was made before it. *)
   val canonical : Core.exp -> Core.exp
 
   (* ---- The declarations ---- *)
@@ -49,12 +52,14 @@ sig
   val declare : Core.decl -> unit
 
   (* `tupleArity c` is the number of components of the tuple whose type and
-     constructor are named `c`, `(,...,)`; `tupleData n` is the declaration
-     of the tuple of `n`. A tuple is of arbitrary length (3.8): one not
-     declared is declared where it is first wanted, by `tycon`, `conInfo`
-     and the other lookups, and `valueType` gives its constructor as a
-     function its type. *)
+     constructor are named `c`, `(,...,)`.
+
+     A tuple is of arbitrary length (3.8): one not declared is declared
+     where it is first wanted, by `tycon`, `conInfo` and the other lookups,
+     and `valueType` gives its constructor as a function its type. *)
   val tupleArity : string -> int option
+
+  (* `tupleData n` is the declaration of the tuple of `n` components. *)
   val tupleData : int -> Core.decl
 
   (* `tycon c` is the parameters and the shape of the type constructor `c`,

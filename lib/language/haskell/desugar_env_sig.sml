@@ -46,10 +46,13 @@ sig
      its types and constructors: a program's, after its library's. *)
   val continue : program -> unit
 
-  (* What is known of the types and constructors, kept, and made known
-     again. *)
+  (* What is known of the types and constructors, kept. *)
   type saved
+
+  (* `save ()` is what is known now. *)
   val save : unit -> saved
+
+  (* `restore s` makes `s` what is known. *)
   val restore : saved -> unit
 
   (* `classes ()` is the program's classes and instances. *)
