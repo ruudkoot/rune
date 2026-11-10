@@ -727,14 +727,29 @@ program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. The first of
 the four is in `check`, the other three `nightly` (D56; the lead's ruling 45). A program on
 which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
 why, and its job holds the disagreement to still being there, so that a fix
-on either side is seen. HsLint also holds the inference to a record's
+on either side is seen. The same jobs hold the two judges to one verdict on
+every program, the checker alone (`--typecheck-only --lint=off`) and
+HsLint's second inference alone (`--dump-hslint`): where they part, the
+program is listed in `tests/hs/hslint/judges.tsv` with why, and held there
+the same way. HsLint also holds the inference to a record's
 claims of it, in the dump's form (`--hslint-claims=FILE`), each difference
 refused by the rule it breaks, `[rule1] ...` (`bin/rhc --hslint-rules`
-names them); the checker's evidence records are to be its claims (M13).
-`faults` holds each rule to refusing its fault, as `astlintFaults` holds
-AstLint's: `tests/hs/hslint/faults.hs`, held to its own expected dump, is
-accepted, and with `RHC_HSLINT_FAULT=RULE`, which reads the first claim
-RULE checks corrupted, refused with `[RULE]`.
+names them); the checker's evidence records are its claims too (M13).
+Where the checker accepts a program, HsLint replays Faxén's rules on its
+evidence records (D31): Rule 1 by his `bindg` with Definition 2, every
+dictionary by his `dict tuple`, `dict var`, `dict inst` and `dict super`
+against HsLint's own classes and instances, an instance's superclasses'
+dictionaries and its methods' types, and rhc's own rule for a cycle of
+modules (`[scc]`); then holds the records, read as claims, to the second
+inference. A derived instance, which HsDerive makes as the tree a user would
+write (M14), is checked as any instance is: the second inference types its
+methods at the head and the least context it derived itself (10.1, the data
+type's context with it), and replay reads their records and their methods'
+types. `faults` holds each rule to refusing its fault, as
+`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, its records
+and its own expected dump, is accepted, and with `RHC_HSLINT_FAULT=RULE`,
+which reads the first claim or record RULE checks corrupted, refused with
+`[RULE]`.
 
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,

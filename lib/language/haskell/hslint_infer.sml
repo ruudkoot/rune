@@ -877,11 +877,16 @@ struct
       T.quantify (vs, qual)
     end
 
-  (* `modules {group, main, cycleDefault}`: a strongly connected group of
-     modules (tiProgram): the declaration groups of its top level in their
-     order, then its classes' default methods and its instances' methods,
-     explicitly typed bindings both, the type of `main`, and Rule 2 *)
-  fun modules {group : E.module list, main : string option, cycleDefault : bool} =
+  (* `modules {group, main, cycleDefault, derived}`: a strongly connected
+     group of modules (tiProgram): the declaration groups of its top level
+     in their order, then its classes' default methods and its instances'
+     methods, explicitly typed bindings both, a derived instance's made as
+     the tree a user would write (`derived`: its module, its identity
+     `CLS@TYCON` and its methods; D54) as any instance's, at the head and
+     the least context this inference derived, the type of `main`, and
+     Rule 2 *)
+  fun modules {group : E.module list, main : string option, cycleDefault : bool,
+               derived : (string * string * A.decl list) list} =
     let
       val mods = Vector.fromList group
       (* the bindings of the top level, each with its module *)
@@ -947,27 +952,46 @@ struct
                         (bindsOf decls)
                     else ())
           (!E.classDecls)
+      (* an instance's methods, each at its class's type for the instance *)
+      fun instanceMethods (module, class, head, context, arity, decls) =
+        let
+          val kinds = case T.spine head of
+                        (T.TCon {kind, ...}, _) => (List.take (E.argKinds kind, arity) handle Subscript => [])
+                      | _ => []
+        in
+          List.app (fn b =>
+                      case M.find (!E.methods, T.idKey (hd (bound b))) of
+                        SOME (m as {class = c, ...}) =>
+                          if T.idEq (c, class) then
+                            method (module, b, methodInInstance (m, head, context, arity, kinds))
+                          else refuse (bindSpan b, "`" ^ plain (hd (bound b)) ^ "` is not a method of `" ^
+                                                   plain class ^ "`")
+                      | NONE => refuse (bindSpan b, "`" ^ plain (hd (bound b)) ^ "` is not a method of `" ^
+                                                    plain class ^ "`"))
+            (bindsOf decls)
+        end
       val () =
         List.app (fn {class, head, context, arity, decls, module, span} =>
+                    if inGroup module then instanceMethods (module, class, head, context, arity, decls) else ())
+          (!E.instances)
+      (* a derived instance's methods, at what this inference derived *)
+      val () =
+        List.app (fn (module, inst, decls) =>
                     if inGroup module then
                       let
-                        val kinds = case T.spine head of
-                                      (T.TCon {kind, ...}, _) => (List.take (E.argKinds kind, arity) handle Subscript => [])
-                                    | _ => []
+                        val (class, tc) = E.ofInstanceId inst
+                        val span = case decls of A.D ({span, ...}, _) :: _ => span | [] => HsSource.noSpan
                       in
-                        List.app (fn b =>
-                                    case M.find (!E.methods, T.idKey (hd (bound b))) of
-                                      SOME (m as {class = c, ...}) =>
-                                        if T.idEq (c, class) then
-                                          method (module, b, methodInInstance (m, head, context, arity, kinds))
-                                        else refuse (bindSpan b, "`" ^ plain (hd (bound b)) ^ "` is not a method of `" ^
-                                                                 plain class ^ "`")
-                                    | NONE => refuse (bindSpan b, "`" ^ plain (hd (bound b)) ^ "` is not a method of `" ^
-                                                                  plain class ^ "`"))
-                          (bindsOf decls)
+                        case List.find (fn {head, derived, ...} : C.inst =>
+                                          derived andalso (case E.headTycon head of SOME t => T.idEq (t, tc) | NONE => false))
+                               (C.instsOf class) of
+                          SOME {head = T.IsIn (_, h), context, arity, ...} =>
+                            instanceMethods (module, class, h, context, arity, decls)
+                        | NONE => refuse (span, "a derived instance of `" ^ plain class ^ "` at `" ^ plain tc ^
+                                                "` is made, which no deriving clause asks for")
                       end
                     else ())
-          (!E.instances)
+          derived
       (* main has the type IO t (5) *)
       val () =
         case main of
