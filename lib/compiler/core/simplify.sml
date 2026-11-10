@@ -362,7 +362,6 @@ struct
             val () = eqFuns := StringMap.insert (!eqFuns, key, h)
             val x = freshStamp ()
             val y = freshStamp ()
-            val () = Translate.funNames := IntMap.insert (!Translate.funNames, x, "=")
             val cons = case consAt t of SOME cs => cs | NONE => []
             val withArg = List.filter (fn (_, a) => isSome a) cons
             fun arm (tag, arg) =
@@ -404,13 +403,12 @@ struct
             val w = freshStamp ()
             val a = freshStamp ()
             val b = freshStamp ()
-            val () = Translate.funNames := IntMap.insert (!Translate.funNames, a, "=")
             val wrapper =
-              {name = h, tyvars = [], params = [(a, t), (b, t)], result = Ty.bool,
+              {name = h, label = SOME "=", tyvars = [], params = [(a, t), (b, t)], result = Ty.bool,
                body = Let (same, ([], Ty.bool), Prim ("ptr_eq", eqTy t, [Var (a, []), Var (b, [])]),
                            If (Var (same, []), Return (Atom (boolAtom true)),
                                Return (App (Global (w, []), [Var (a, []), Var (b, [])]))))}
-            val worker = {name = w, tyvars = [], params = [(x, t), (y, t)], result = Ty.bool, body = rest}
+            val worker = {name = w, label = SOME "=", tyvars = [], params = [(x, t), (y, t)], result = Ty.bool, body = rest}
           in
             if !inlining then IntTable.insert (!inlinable, h, wrapper) else ();
             pendingEqs := wrapper :: worker :: !pendingEqs;
@@ -526,8 +524,8 @@ struct
         | ExnArg (t, a) => ExnArg (ty t, f a)
         | SetGlobal (g, a) => SetGlobal (g, f a)
         | _ => r
-      fun fundef ({name, tyvars, params, result, body} : fundef) =
-        {name = name, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty t)) params, result = ty result,
+      fun fundef ({name, label, tyvars, params, result, body} : fundef) =
+        {name = name, label = label, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty t)) params, result = ty result,
          body = exp body}
       and exp e =
         case e of
@@ -549,8 +547,8 @@ struct
         case e of
           Let (x, s, r, b) => Let (x, s, f r, go b)
         | Fun (fs, b) =>
-            Fun (List.map (fn {name, tyvars, params, result, body} =>
-                             {name = name, tyvars = tyvars, params = params, result = result, body = go body}) fs,
+            Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                             {name = name, label = label, tyvars = tyvars, params = params, result = result, body = go body}) fs,
                  go b)
         | Join (j, ps, jb, sc) => Join (j, ps, go jb, go sc)
         | If (a, t, e) => If (a, go t, go e)
@@ -605,7 +603,7 @@ struct
 
   (* e with every binder in it bound afresh, and its uses renamed to match:
      a copy that can stand beside the original. A function copied keeps its
-     name for traces (Translate.funNames, by its first parameter). *)
+     name for traces (its label). *)
   fun copy (e : exp) : exp = copyWith (IntMap.empty, e)
 
   (* A copy in which the variables free in e that s0 names are renamed too:
@@ -654,17 +652,11 @@ struct
         | Fun (fs, b) =>
             let
               val () = List.app (fn f => ignore (fresh (#name f))) fs
-              fun fundef ({name = f, tyvars, params = ps, result, body} : fundef) =
+              fun fundef ({name = f, label, tyvars, params = ps, result, body} : fundef) =
                 let
                   val ps' = params ps
                 in
-                  case (ps, ps') of
-                    ((x, _) :: _, (y, _) :: _) =>
-                      (case IntMap.find (!Translate.funNames, x) of
-                         SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, y, n)
-                       | NONE => ())
-                  | _ => ();
-                  {name = name f, tyvars = tyvars, params = ps', result = result, body = exp body}
+                  {name = name f, label = label, tyvars = tyvars, params = ps', result = result, body = exp body}
                 end
             in Fun (List.map fundef fs, exp b) end
         | Join (j, ps, body, sc) =>
@@ -798,10 +790,7 @@ struct
   val inHandler = ref 0
   val () = CompilerState.cellRoot ("Simplify.inHandler", inHandler)
 
-  fun nameOf (f : fundef) : string =
-    case #params f of
-      (x, _) :: _ => (case IntMap.find (!Translate.funNames, x) of SOME n => n | NONE => "fn")
-    | [] => "fn"
+  fun nameOf (f : fundef) : string = getOpt (#label f, "fn")
 
   (* A call of g at ts with args, which may be inlined: g's body, copied,
      its type variables those types, its parameters bound to the
@@ -1133,9 +1122,6 @@ struct
             | NONE => List.map (fn (x, t) => (x, freshStamp (), t)) params
           val s0 = List.foldl (fn ((x, y, _), m) => if x < 0 then m else IntMap.insert (m, x, y)) IntMap.empty (caps' @ ps')
           val params' = List.map (fn (_, y, t) => (y, t)) (caps' @ ps')
-          val () = case params' of
-                     (y, _) :: _ => Translate.funNames := IntMap.insert (!Translate.funNames, y, nameOf f)
-                   | [] => ()
           val body' = copyWith (s0, body)
           val body' =
             case flat of
@@ -1143,7 +1129,7 @@ struct
                 mapRhs (fn r as Select (i, Var (y, _)) => if y = p then Atom (Var (#2 (List.nth (ps', i)), [])) else r
                          | r => r) body'
             | NONE => body'
-          val f' = {name = g, tyvars = [], params = params', result = result, body = body'}
+          val f' = {name = g, label = SOME (nameOf f), tyvars = [], params = params', result = result, body = body'}
           val l = (g, Option.map #2 flat)
         in
           IntTable.insert (!liftedFuns, name, l);
@@ -1156,7 +1142,7 @@ struct
 
   (* f's copy named h', at the types ts, with the static parameters fixed
      given those atoms, and its calls of itself calls of the copy. *)
-  fun makeCopy (f as {name, tyvars, params, result, body} : fundef, h' : var, ts : Ty.ty list,
+  fun makeCopy (f as {name, label, tyvars, params, result, body} : fundef, h' : var, ts : Ty.ty list,
                 fixed : (int * fix) list) : fundef =
     let
       val inst = ListPair.foldl (fn (a, t, s) => IntMap.insert (s, a, t)) IntMap.empty (tyvars, ts)
@@ -1198,8 +1184,8 @@ struct
         case e of
           Let (x, sc, r, b) => call (r, fn r' => Let (x, sc, r', exp b))
         | Fun (fs, b) =>
-            Fun (List.map (fn {name, tyvars, params, result, body} =>
-                             {name = name, tyvars = tyvars, params = params, result = result, body = exp body}) fs,
+            Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                             {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}) fs,
                  exp b)
         | Join (j, ps, jb, sc) => Join (j, ps, exp jb, exp sc)
         | If (a, t, e) => If (a, exp t, exp e)
@@ -1222,18 +1208,15 @@ struct
                                    let val z = freshStamp () val w = freshStamp ()
                                    in
                                      IntTable.insert (!wrapperFuns, w, ());
-                                     SOME (p, {name = w, tyvars = [], params = [(z, a)], result = b,
+                                     SOME (p, {name = w, label = NONE, tyvars = [], params = [(z, a)], result = b,
                                                body = call (App (Var (p, []), [Var (z, [])]), Return)})
                                    end
                                | _ => NONE
                              end) extra
-      (* named as f, for traces *)
-      val () =
-        case kept of
-          (_, y, _) :: _ => Translate.funNames := IntMap.insert (!Translate.funNames, y, nameOf f)
-        | [] => ()
     in
-      {name = h', tyvars = [], params = List.map (fn (_, y, t) => (y, t)) kept @ extraParams, result = Ty.subst inst result,
+      (* named as f, for traces *)
+      {name = h', label = if null kept then NONE else SOME (nameOf f), tyvars = [],
+       params = List.map (fn (_, y, t) => (y, t)) kept @ extraParams, result = Ty.subst inst result,
        body = List.foldl (fn ((p, w), e) => Fun ([w], substVar (p, Var (#name w, [])) e)) (exp body) wrappers}
     end
 
@@ -1482,8 +1465,8 @@ struct
         let val saved = !inHandler
         in inHandler := 0; let val b = simp (c, env, b) in inHandler := saved; b end end
       val fs =
-        List.map (fn {name, tyvars, params, result, body = b} =>
-                    {name = name, tyvars = tyvars, params = params, result = result, body = inside b}) fs
+        List.map (fn {name, label, tyvars, params, result, body = b} =>
+                    {name = name, label = label, tyvars = tyvars, params = params, result = result, body = inside b}) fs
       (* one alone in its group, which a copy may be specialised on *)
       val () =
         case fs of
@@ -1979,10 +1962,8 @@ struct
      names it so), which is not put where it is called: that is the
      expansion's (functors-units.md, M6), with its budget, and M5's
      applications are calls *)
-  fun functorFun ({params, ...} : fundef) : bool =
-    case params of
-      (x, _) :: _ => (case IntMap.find (!Translate.funNames, x) of SOME n => String.isPrefix "functor " n | NONE => false)
-    | [] => false
+  fun functorFun ({label, ...} : fundef) : bool =
+    case label of SOME n => String.isPrefix "functor " n | NONE => false
 
   fun program (p : program) : program =
     let
@@ -2033,11 +2014,11 @@ struct
         (roundParams := []; budget := size e + 32; here := (Source.noSpan, []); inHandler := 1; rounds (3, e))
       (* a function is put where it is called as it is simplified, where it
          still may be, and specialised as it is, where it may be *)
-      fun fundef ({name, tyvars, params, result, body} : fundef) =
+      fun fundef ({name, label, tyvars, params, result, body} : fundef) =
         let
           val () = roundParams := params
           val () = currentDepth := (case IntTable.find (!closureDepth, name) of SOME d => d | NONE => 0)
-          val f' = {name = name, tyvars = tyvars, params = params, result = result, body = simplify body}
+          val f' = {name = name, label = label, tyvars = tyvars, params = params, result = result, body = simplify body}
           val () = currentDepth := 0
         in
           if isSome (onceOf name) then IntTable.insert (!once, name, SOME f') else ();

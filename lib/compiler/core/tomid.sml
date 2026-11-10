@@ -324,14 +324,15 @@ struct
         in go (e, NONE) end
 
       and markDef (NONE, f : M.fundef) = f
-        | markDef (SOME sp, {name, tyvars, params, result, body}) =
-            {name = name, tyvars = tyvars, params = params, result = result, body = mark (sp, body)}
+        | markDef (SOME sp, {name, label, tyvars, params, result, body}) =
+            {name = name, label = label, tyvars = tyvars, params = params, result = result, body = mark (sp, body)}
 
       (* The function named f, abstracting over tyvars, of parameter x and
          type t; st has f in it where f is recursive. *)
       and fundef (st, f, tyvars, x, t, body) : M.fundef =
         let val st' = bindLocal (inFunction (st, tyvars), x, ([], domain t))
-        in {name = f, tyvars = tyvars, params = [(x, domain t)], result = codomain t, body = exp (body, st', Ret)} end
+        in {name = f, label = IntMap.find (!Translate.funNames, x), tyvars = tyvars, params = [(x, domain t)], result = codomain t,
+            body = exp (body, st', Ret)} end
 
       val top : state = {scope = IntMap.empty, fail = NONE, env = IntTable.table 4096}
 

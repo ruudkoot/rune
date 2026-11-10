@@ -69,10 +69,6 @@ struct
   val () = CompilerState.refRoot ("Expand.declaredBodies", declaredBodies, IntTable.copy)
   val imported : fundef IntTable.table ref = ref (IntTable.table 16)
   val () = CompilerState.refRoot ("Expand.imported", imported, IntTable.copy)
-  (* and the names of the functions each binds (Translate.funNames, which
-     each unit's translation begins empty), entered where it is copied *)
-  val importedNames : (int * string) list IntTable.table ref = ref (IntTable.table 16)
-  val () = CompilerState.refRoot ("Expand.importedNames", importedNames, IntTable.copy)
 
   (* Functions inlined across units (functors-units M10;
      Elaborate.inlineValues): the marked functions a unit declares, as its
@@ -84,8 +80,6 @@ struct
   val () = CompilerState.refRoot ("Expand.declaredValues", declaredValues, IntTable.copy)
   val importedValues : fundef IntTable.table ref = ref (IntTable.table 16)
   val () = CompilerState.refRoot ("Expand.importedValues", importedValues, IntTable.copy)
-  val importedValueNames : (int * string) list IntTable.table ref = ref (IntTable.table 16)
-  val () = CompilerState.refRoot ("Expand.importedValueNames", importedValueNames, IntTable.copy)
   (* whether the session has one: a unit that has none to copy is not walked *)
   val anyImported = ref false
   val () = CompilerState.cellRoot ("Expand.anyImported", anyImported)
@@ -186,13 +180,8 @@ struct
     if !Pass.whole then let val s = !MidCanon.nextTycon in MidCanon.nextTycon := s + 1; s end
     else #stamp (Types.freshTycon ("", 0, false))
 
-  (* a function's name is its first parameter's (Translate.funNames) *)
-  fun isFunctor ({params, ...} : fundef) : bool =
-    case params of
-      (p, _) :: _ => (case IntMap.find (!Translate.funNames, p) of
-                        SOME n => String.isPrefix "functor " n
-                      | NONE => false)
-    | [] => false
+  fun isFunctor ({label, ...} : fundef) : bool =
+    case label of SOME n => String.isPrefix "functor " n | NONE => false
 
   (* ---- the types an application substitutes ---- *)
 
@@ -466,11 +455,8 @@ struct
       val labels : int IntTable.table = IntTable.table 64
       fun rename x = let val x' = fresh () in IntTable.insert (vars, x, Var (x', [])); x' end
       fun label j = let val j' = fresh () in IntTable.insert (labels, j, j'); j' end
-      fun named (x, x') = case IntMap.find (!Translate.funNames, x) of
-                            SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, x', n)
-                          | NONE => ()
-      (* a parameter, renamed, and the function's name with it *)
-      fun param (x, t) = let val x' = rename x in named (x, x'); (x', ty t) end
+      (* a parameter, renamed *)
+      fun param (x, t) = let val x' = rename x in (x', ty t) end
       val () = List.app (fn (x, a) => IntTable.insert (vars, x, a)) given
       fun atom a =
         case a of
@@ -538,9 +524,9 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (pos, b) => Mark (pos, exp b)
-      and fundef ({tyvars, params, result, body, ...} : fundef, name') : fundef =
+      and fundef ({label, tyvars, params, result, body, ...} : fundef, name') : fundef =
         let val ps = List.map param params
-        in {name = name', tyvars = tyvars, params = ps, result = ty result, body = exp body} end
+        in {name = name', label = label, tyvars = tyvars, params = ps, result = ty result, body = exp body} end
       val e = exp e0
       val () =
         List.app (fn (c, c') =>
@@ -813,8 +799,8 @@ struct
             let val r' = #1 (fold st (rwRhs st r))
             in case primCall st r' of SOME (steps, r'') => withSteps (steps, Return r'') | NONE => Return r' end
         | Mark (pos, b) => Mark (pos, exp b)
-      and fundef ({name, tyvars, params, result, body} : fundef) : fundef =
-        {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
+      and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
+        {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
     in exp e end
 
   (* ---- the declarations of a copy as definitions ---- *)
@@ -927,7 +913,7 @@ struct
               val schemes = List.map (fn (f : fundef) => globalScheme (#name f, (#tyvars f, funTy f))) fs
             in
               emit (Funs (ListPair.map (fn (f : fundef, (tvs, _)) =>
-                                          {name = #name f, tyvars = tvs, params = #params f,
+                                          {name = #name f, label = #label f, tyvars = tvs, params = #params f,
                                            result = #result f, body = rewrite st (#body f)}) (fs, schemes)));
               go (mark, b)
             end
@@ -1067,8 +1053,8 @@ struct
             | Raise a => Raise (atom a)
             | Return r => Return (rhs r)
             | Mark (pos, b) => Mark (pos, exp b)
-          and fundef ({name = f, tyvars, params, result, body} : fundef) : fundef =
-            {name = name f, tyvars = tyvars, params = params, result = result, body = exp body}
+          and fundef ({name = f, label, tyvars, params, result, body} : fundef) : fundef =
+            {name = name f, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
         in
           List.mapPartial (fn d =>
                              case d of
@@ -1128,8 +1114,8 @@ struct
         | Raise a => Raise (fa a)
         | Return r => Return (rhs r)
         | Mark (pos, b) => Mark (pos, exp b)
-      and fundef ({name, tyvars, params, result, body} : fundef) : fundef =
-        {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
+      and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
+        {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
       fun def d =
         case d of
           Val (g, s, e) => Val (g, s, exp e)
@@ -1261,19 +1247,10 @@ struct
         fun copy (h, g') : def =
           let
             val f = valOf (IntTable.find (!importedValues, h))
-            val () = case IntTable.find (!importedValueNames, h) of
-                       SOME l => List.app (fn (x, n) => Translate.funNames := IntMap.insert (!Translate.funNames, x, n)) l
-                     | NONE => ()
-            val ps = List.map (fn (x, t) =>
-                                 let val x' = fresh ()
-                                 in (case IntMap.find (!Translate.funNames, x) of
-                                       SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, x', n)
-                                     | NONE => ());
-                                    (x, x', t)
-                                 end) (#params f)
+            val ps = List.map (fn (x, t) => (x, fresh (), t)) (#params f)
             val body = copyExp (st, IntMap.empty, List.map (fn (x, x', _) => (x, Var (x', []))) ps, #body f)
           in
-            Funs [{name = g', tyvars = #tyvars f, params = List.map (fn (_, x', t) => (x', t)) ps, result = #result f,
+            Funs [{name = g', label = #label f, tyvars = #tyvars f, params = List.map (fn (_, x', t) => (x', t)) ps, result = #result f,
                    body = body}]
           end
         (* the copies, each one's own marked functions copied in turn *)
@@ -1324,7 +1301,7 @@ struct
       fun rewriteDef d =
         case d of
           Val (g, s, e) => Val (g, s, rewrite st e)
-        | Funs fs => Funs (List.map (fn (f : fundef) => {name = #name f, tyvars = #tyvars f, params = #params f,
+        | Funs fs => Funs (List.map (fn (f : fundef) => {name = #name f, label = #label f, tyvars = #tyvars f, params = #params f,
                                                          result = #result f, body = rewrite st (#body f)}) fs)
         | Do (gs, e) => Do (gs, rewrite st e)
       (* the definitions left, each with its root, its depth and whether it
@@ -1418,9 +1395,6 @@ struct
                                                                      Ty.Con (c', _, _) => SOME (c, c')
                                                                    | _ => NONE)
                                                               | _ => NONE) gs
-                                 val () = case IntTable.find (!importedNames, #name f) of
-                                            SOME l => List.app (fn (x, n) => Translate.funNames := IntMap.insert (!Translate.funNames, x, n)) l
-                                          | NONE => ()
                                  val body = copyBody (st, sigma, named, f, a')
                                  val body = case mark of SOME pos => Mark (pos, body) | NONE => body
                                  val nMade = List.length (!made)
@@ -1430,9 +1404,7 @@ struct
                                     as at -O0 (the review of M6, finding 4): not the
                                     steps before the call, nor its functions, which run
                                     in activations of their own *)
-                                 val name = case #params f of
-                                              (p, _) :: _ => getOpt (IntMap.find (!Translate.funNames, p), "functor")
-                                            | [] => "functor"
+                                 val name = getOpt (#label f, "functor")
                                  fun frame d =
                                    case mark of
                                      SOME (sp, outer) =>

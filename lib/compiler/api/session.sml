@@ -150,7 +150,6 @@ struct
                 val lo=Vector.sub (#base unit,UnitBasis.kStamp)
                 val hi=lo+Vector.sub (#count unit,UnitBasis.kStamp)
                 val ()=Lower.knownBefore:=IntMap.filteri (fn (s,_) => s<lo orelse s>=hi) (!Lower.knownBefore)
-                val ()=Translate.funNames:= IntMap.fromList (#funNames um)
                 val low=Pipeline.lowOfMid (#mid um)
                 val code=Pipeline.targetStage low
                 val sc : Link.sessionCode={code=code,globals=IntMap.listItemsi (!Code.globals),defines=Link.defines low,

@@ -22,10 +22,8 @@ Elaborate.dataCons	basis	filled by each unit loaded from its basis, whose identi
 Translate.primAliases	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Lower.knownBefore	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.importedValues	basis	filled by each unit loaded from its basis, whose identity a usage holds
-Expand.importedValueNames	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.anyImported	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.imported	basis	filled by each unit loaded from its basis, whose identity a usage holds
-Expand.importedNames	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.globalAliases	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.primGlobals	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Overload.table	basis	filled by each unit loaded from its basis, whose identity a usage holds

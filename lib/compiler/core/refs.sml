@@ -98,7 +98,7 @@ struct
     end
 
   (* f's copy named f', its refs at the places ks their values. *)
-  fun copyOf (f as {name, tyvars, params, result, body} : fundef, f' : var, ks : int list) : fundef =
+  fun copyOf (f as {name, label, tyvars, params, result, body} : fundef, f' : var, ks : int list) : fundef =
     let
       val ps' = List.map (fn (x, t) => (x, freshStamp (), t)) params
       val renamed = List.foldl (fn ((x, y, _), m) => IntMap.insert (m, x, y)) IntMap.empty ps'
@@ -172,15 +172,8 @@ struct
       (* the parameters: a ref's is its value now, of the type it holds *)
       val params' = ListPair.map (fn ((_, y, t), i) => (y, if List.exists (fn k => k = i) ks then valOf (refArg t) else t))
                                  (ps', List.tabulate (List.length ps', fn i => i))
-      val () =
-        case (params, ps') of
-          ((x, _) :: _, (_, y, _) :: _) =>
-            (case IntMap.find (!Translate.funNames, x) of
-               SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, y, n)
-             | NONE => ())
-        | _ => ()
     in
-      {name = f', tyvars = tyvars, params = params', result = result, body = go (body, cur0)}
+      {name = f', label = label, tyvars = tyvars, params = params', result = result, body = go (body, cur0)}
     end
 
   fun program (p : program) : program =
@@ -292,8 +285,8 @@ struct
             | Fun (fs, b) =>
                 (* a function inside: rewritten for itself, where a ref
                    made outside is not fresh *)
-                Fun (List.map (fn {name, tyvars, params, result, body} =>
-                                 {name = name, tyvars = tyvars, params = params, result = result, body = rewrite body}) fs,
+                Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                                 {name = name, label = label, tyvars = tyvars, params = params, result = result, body = rewrite body}) fs,
                      go b)
             | Join (j, ps, jb, sc) => Join (j, ps, go jb, go sc)
             | If (a, t, f) => If (a, go t, go f)
@@ -305,8 +298,8 @@ struct
       val p' =
         if not (!any) then p else
         List.map (fn Val (g, s, e) => Val (g, s, rewrite e)
-                   | Funs fs => Funs (List.map (fn {name, tyvars, params, result, body} =>
-                                                   {name = name, tyvars = tyvars, params = params, result = result,
+                   | Funs fs => Funs (List.map (fn {name, label, tyvars, params, result, body} =>
+                                                   {name = name, label = label, tyvars = tyvars, params = params, result = result,
                                                     body = rewrite body}) fs)
                    | Do (gs, e) => Do (gs, rewrite e)) p
       (* the copies' own calls rewritten in turn, which may make more *)
@@ -315,8 +308,8 @@ struct
           [] => acc
         | fs =>
             (made := [];
-             drain (acc @ List.map (fn {name, tyvars, params, result, body} =>
-                                      {name = name, tyvars = tyvars, params = params, result = result, body = rewrite body})
+             drain (acc @ List.map (fn {name, label, tyvars, params, result, body} =>
+                                      {name = name, label = label, tyvars = tyvars, params = params, result = result, body = rewrite body})
                                    (List.rev fs)))
       val copied = drain []
     in

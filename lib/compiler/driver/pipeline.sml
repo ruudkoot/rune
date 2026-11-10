@@ -218,7 +218,7 @@ struct
     in
       Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = fn p => (Pass.checkAt ("lower", 1) LowLint.check p; LowShapes.stage p),
                   size = Low.size}
-                 (fn m => lowered (Fault.low ("lower", Lower.program (m, !Translate.funNames)))) mid
+                 (fn m => lowered (Fault.low ("lower", Lower.program m))) mid
     end
 
   (* Lambda to Low: Mid, the optional passes on it, and Lower *)

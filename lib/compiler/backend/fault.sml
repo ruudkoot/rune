@@ -234,7 +234,7 @@ struct
                 val body = exp (#body f)
               in
                 around := saved;
-                {name = #name f, tyvars = tyvars, params = #params f, result = #result f, body = body}
+                {name = #name f, label = #label f, tyvars = tyvars, params = #params f, result = #result f, body = body}
               end
             (* a Do's expression with its first SetGlobal made unit *)
             fun unsetIt g = hit ("g" ^ Int.toString g ^ " no longer set by its Do")

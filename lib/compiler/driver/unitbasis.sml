@@ -1850,12 +1850,11 @@ struct
   (* What a basis is written from that is not in the environment: the names
      of the signatures and functors the unit declared, in their order, the
      functions it declares that are copied where they are named and the
-     schemes those name, a marked functor's function's body, the name of a
-     function a body binds, and whether a kept body's hash is to be written
-     as it was read (exportAgain) rather than worked out *)
+     schemes those name, a marked functor's function's body, and whether a
+     kept body's hash is to be written as it was read (exportAgain) rather
+     than worked out *)
   type writing = {sigs : string list, funs : string list, values : (int * Mid.fundef) list,
-                  schemes : (int * (int list * Ty.ty)) list, body : int -> Mid.fundef option,
-                  funName : int -> string option, again : bool}
+                  schemes : (int * (int list * Ty.ty)) list, body : int -> Mid.fundef option, again : bool}
 
   type enc = {w : P.writer,                            (* the layer being written *)
               a : P.writer,                            (* the ABI layer *)
@@ -2595,7 +2594,7 @@ struct
                   MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
                                       tvar = fn v => name (e, kTvar, v),
                                       file = fn f => P.option P.string (w, if f = #file e then NONE else SOME f),
-                                      position = linePosition lines, funName = #funName k}) f;
+                                      position = linePosition lines}) f;
                   P.list (fn (_, c) => name (e, kTycon, c))
                          (w, List.filter Ty.isOpen (List.map #stamp (#bound paramSig)));
                   keepHash (e, k, code, p0, List.rev (!named), lines)
@@ -2629,7 +2628,7 @@ struct
       MidCodec.write (w, {stamp = global, tycon = fn c => name (e, kTycon, c),
                           tvar = fn v => name (e, kTvar, v),
                           file = fn f => P.option P.string (w, fileName f),
-                          position = linePosition lines, funName = #funName k}) f;
+                          position = linePosition lines}) f;
       keepHash (e, k, s, p0, List.rev (!named), lines)
     end
 
@@ -2882,8 +2881,9 @@ struct
       val () = P.list (fn (w, (g, (vs, t))) =>
                          MidCodec.write (w, {stamp = fn s => name (ea, kStamp, s), tycon = fn c => name (ea, kTycon, c),
                                              tvar = fn v => name (ea, kTvar, v), file = fn _ => P.option P.string (w, NONE),
-                                             position = fn _ => (), funName = fn _ => NONE})
-                                        {name = g, tyvars = vs, params = [], result = t, body = Mid.Return (Mid.Atom Mid.Unit)})
+                                             position = fn _ => ()})
+                                        {name = g, label = NONE, tyvars = vs, params = [], result = t,
+                                         body = Mid.Return (Mid.Atom Mid.Unit)})
                       (a, #schemes k)
       val () = abiTables ea
       val static = P.contents w
@@ -2939,7 +2939,7 @@ struct
               values = List.mapPartial (fn s => Option.map (fn f => (s, f)) (IntTable.find (!Expand.declaredValues, s)))
                                        (!Expand.declaredOrder),
               schemes = !Expand.declaredSchemes, body = fn g => IntTable.find (!Expand.declaredBodies, g),
-              funName = fn x => IntMap.find (!Translate.funNames, x), again = false}, a)
+              again = false}, a)
     end
 
   (* ---- a unit's code, by keys ---- *)
@@ -4141,7 +4141,7 @@ struct
               val base = !privateNext
               val most = ref 0
               fun local' i = (if i > !most then most := i else (); base - i)
-              val (body, names) =
+              val body =
                 MidCodec.read (a, {stamp = fn () => rname (da, kStamp), tycon = fn () => rname (da, kTycon),
                                    tvar = fn () => rname (da, kTvar),
                                    file = fn () => getOpt (P.roption P.rstring a, file), local' = local'})
@@ -4152,7 +4152,6 @@ struct
               val h = P.rstring a
             in
               privateNext := base - !most - 1;
-              IntTable.insert (!Expand.importedNames, code, names);
               List.app Ty.markOpen opens;
               IntTable.insert (!Expand.imported, code, body);
               IntTable.insert (!Elaborate.inlinedFunctions, code, ());
@@ -4179,7 +4178,7 @@ struct
                                    | NONE => n
                                 end
                            else f
-                     val (body, names) =
+                     val body =
                        MidCodec.read (a, {stamp = fn () => rname (da, kStamp), tycon = fn () => rname (da, kTycon),
                                           tvar = fn () => rname (da, kTvar),
                                           file = fn () => fileOf (P.roption P.rstring a), local' = local'})
@@ -4187,7 +4186,6 @@ struct
                      val h = P.rstring a
                    in
                      privateNext := base - !most - 1;
-                     IntTable.insert (!Expand.importedValueNames, s, names);
                      IntTable.insert (!Expand.importedValues, s, body);
                      Expand.anyImported := true;
                      IntTable.insert (!inlineHashes, s, h);
@@ -4197,7 +4195,7 @@ struct
         if only then [] else
         P.rlist (fn a =>
                    let
-                     val ({name = g, tyvars, result, ...}, _) =
+                     val {name = g, tyvars, result, ...} =
                        MidCodec.read (a, {stamp = fn () => rname (da, kStamp), tycon = fn () => rname (da, kTycon),
                                           tvar = fn () => rname (da, kTvar), file = fn () => (P.roption P.rstring a; file),
                                           local' = fn i => ~1 - i})
@@ -4679,23 +4677,12 @@ struct
      (sameAgain); of an entry loaded across a unit that changed it names the
      new unit, and is what compiling it would give. *)
   fun exportAgain ({start : start, name : string, file : string, mode : Source.mode}, l : result) : exported =
-    let
-      val names : string IntTable.table = IntTable.table 64
-      fun named table key =
-        Option.app (List.app (fn (x, n) => IntTable.insert (names, x, n))) (IntTable.find (table, key))
-      val () = List.app (named (!Expand.importedValueNames)) (#values l)
-      val () = List.app (fn n => case StringMap.find (!Elaborate.funs, n) of
-                                   SOME (Elaborate.FunInfo {code, ...}) => named (!Expand.importedNames) code
-                                 | NONE => ()) (#funs l)
-    in
       write ({sigs = #sigs l, funs = #funs l,
               values = List.map (fn s => (s, valOf (IntTable.find (!Expand.importedValues, s)))) (#values l),
               schemes = List.map (fn g => (g, valOf (IntTable.find (!ToMid.importedSchemes, g)))) (#schemes l),
-              body = fn g => IntTable.find (!Expand.imported, g),
-              funName = fn x => IntTable.find (names, x), again = true},
+              body = fn g => IntTable.find (!Expand.imported, g), again = true},
              {start = start, name = name, file = file, text = fn () => "", mode = mode, delta = #delta l,
               fixity = Fixity.extend (#fixity start, #directives l)})
-    end
 
   (* a pickle's basis, past what its compile counted and its source's hash *)
   fun basisOf (pickle : string) : string =

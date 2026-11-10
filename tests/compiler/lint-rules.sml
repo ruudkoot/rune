@@ -391,21 +391,21 @@ struct
   fun midRules () =
     let
       val add = M.Prim ("int_add", pairToInt, [one, one])
-      val two : M.fundef = {name = 43, tyvars = [], params = [(44, Ty.int), (45, Ty.int)], result = Ty.int, body = M.Return add}
+      val two : M.fundef = {name = 43, label = NONE, tyvars = [], params = [(44, Ty.int), (45, Ty.int)], result = Ty.int, body = M.Return add}
       val unitRet = M.Return (M.Atom M.Unit)
       fun setting x = M.Let (x, ([], Ty.unit), M.SetGlobal (48, one), unitRet)
       val raising = M.Let (51, ([], Ty.exnCon), M.BuiltinExn 0,
                            M.Let (52, ([], Ty.exn), M.MkExn (M.Var (51, []), M.Unit), M.Raise (M.Var (52, []))))
       val g48 = [(48, ([], Ty.int))]
       val yes = M.Con0 (1, Ty.bool)
-      val setter : M.fundef = {name = 50, tyvars = [], params = [(54, Ty.unit)], result = Ty.unit, body = setting 55}
-      fun ident f : M.fundef = {name = f, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
+      val setter : M.fundef = {name = 50, label = NONE, tyvars = [], params = [(54, Ty.unit)], result = Ty.unit, body = setting 55}
+      fun ident f : M.fundef = {name = f, label = NONE, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
       fun castBack t =
         [M.Val (46, ([], t), M.Let (47, ([], Ty.unit), M.Prim ("functor_cast", Ty.arrow (Ty.int, Ty.unit), [one]),
                                     M.Return (M.Prim ("functor_cast", Ty.arrow (Ty.unit, t), [M.Var (47, [])]))))]
     in
       midP ("a global defined twice", [valR (41, Ty.int, M.Atom one), valR (41, Ty.int, M.Atom one)], "is defined twice");
-      midP ("a function of no parameter", [M.Funs [{name = 42, tyvars = [], params = [], result = Ty.int, body = M.Return (M.Atom one)}]],
+      midP ("a function of no parameter", [M.Funs [{name = 42, label = NONE, tyvars = [], params = [], result = Ty.int, body = M.Return (M.Atom one)}]],
             "has no parameter");
       midP ("a function of two parameters given both", [M.Funs [two], valR (46, Ty.int, M.App (M.Global (43, []), [one, one]))], "");
       midP ("a function of two parameters given one argument", [M.Funs [two], valR (46, Ty.int, M.App (M.Global (43, []), [one]))],
@@ -442,7 +442,7 @@ struct
       midP ("a type of a variable no binder binds", [valR (46, Ty.arrow (ga, ga), M.Atom (M.Global (51, [ga]))), M.Funs [ident 51]],
             "names 'a77, which no binder around it binds");
       midP ("a function's variable bound again inside it",
-            [M.Funs [{name = 51, tyvars = [77], params = [(52, ga)], result = ga,
+            [M.Funs [{name = 51, label = NONE, tyvars = [77], params = [(52, ga)], result = ga,
                       body = M.Let (53, ([77], ga), M.Atom (M.Var (52, [])), M.Return (M.Atom (M.Var (53, [ga]))))}]],
             "v53 binds 'a77 again")
     end

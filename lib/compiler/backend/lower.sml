@@ -309,8 +309,6 @@ struct
   val nextFuncId = ref 0
   val () = CompilerState.cellRoot ("Lower.nextFuncId", nextFuncId)
   val () = Pass.counter nextFuncId
-  val funNames : string IntMap.map ref = ref IntMap.empty
-  val () = CompilerState.cellRoot ("Lower.funNames", funNames)
 
   (* The functions of the top level, by their globals: known ones, and the
      id each is made with, which a known call made before it is given at
@@ -891,10 +889,10 @@ struct
       val id = !nextFuncId
       val () = nextFuncId := id + 1
       val cs = capturesOf f
-      val param = case #params f of (x, _) :: _ => x | [] => bug "a function of no parameter"
+      val () = if null (#params f) then bug "a function of no parameter" else ()
       val recursive = group > 1 orelse IntMap.find (!selfRefs, #name f) = SOME true
       val name =
-        case IntMap.find (!funNames, param) of
+        case #label f of
           SOME n => n
         | NONE => if recursive then "fn" ^ Int.toString (#name f) else "fn"
       val b : builder = {fid = id, blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
@@ -1397,7 +1395,7 @@ struct
        pos = pos, reps = reps, result = result, captures = captures}
     end
 
-  fun program (p : M.program, names : string IntMap.map) : L.program =
+  fun program (p : M.program) : L.program =
     let
       (* the types of the variables, kept where their shapes are checked *)
       val () = (keepTys := !shapesChecked (); lastTys := IntTable.table (if !keepTys then 256 else 1))
@@ -1412,7 +1410,7 @@ struct
                                | (M.Do (gs, _), m) => List.foldl (fn ((g, (_, t)), m) => IntMap.insert (m, g, repOfTy t)) m gs)
                              IntMap.empty p;
                 selectUses := IntTable.table 1024; selectFields := IntTable.table 1024; sumUses := IntTable.table 1024; sumRead := IntTable.table 1024; binderFn := IntTable.table 4096; nextFn := 0; virtuals := IntTable.table 1024;
-                nextFuncId := 0; funNames := names; globalFids := IntMap.empty; imported := IntMap.empty;
+                nextFuncId := 0; globalFids := IntMap.empty; imported := IntMap.empty;
                 debugVars := []; binds := [];
                 knownFuns := List.foldl (fn (M.Funs fs, m) => List.foldl (fn (f, m) => IntMap.insert (m, #name f, ())) m fs
                                           | (_, m) => m)

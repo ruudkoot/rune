@@ -236,7 +236,7 @@ struct
                exp (n, a); emit ")")
             else exp (n, a)
       and fundef (n, f) = fundefNamed (n, v, f)
-      and fundefNamed (n, named, {name, tyvars, params = ps, result, body} : fundef) =
+      and fundefNamed (n, named, {name, tyvars, params = ps, result, body, ...} : fundef) =
         let val name = named name val tvs = tyvarList tyvars val ps = params ps
         in nl n; emit ("(fn " ^ name ^ " " ^ tvs ^ ps ^ " : " ^ ty result); exp (n + 2, body); emit ")" end
 
@@ -579,7 +579,7 @@ struct
           val () = eat COLON
           val result = ty ()
           val body = exp ()
-        in eat RP; {name = name, tyvars = tvs, params = ps, result = result, body = body} end
+        in eat RP; {name = name, label = NONE, tyvars = tvs, params = ps, result = result, body = body} end
 
       and exp () : exp =
         let
