@@ -1,8 +1,8 @@
 -- Module PreludeIO, section 8.3 of the Haskell 98 Report.
--- The code of the online Revised Report of December 2002 with its published
--- errata applied: a modified version of the Report's code, which does not
--- define Haskell 98. LICENSE says what was changed; errata.tsv and
--- overlay.tsv list each change, and pristine/ holds the code as printed.
+-- The code of the online Revised Report of December 2002, with its published
+-- errata and rhc's overlay applied: a modified version of the Report's code,
+-- which does not define Haskell 98. LICENSE says what was changed; errata.tsv
+-- and overlay.tsv list each change, and pristine/ holds the code as printed.
 
 module PreludeIO (
     FilePath, IOError, ioError, userError, catch,
@@ -12,6 +12,8 @@ module PreludeIO (
   ) where
 
 import PreludeBuiltin
+import PreludeRuntime (IOErrorKind(..), ioErrorKind, ioErrorText, ioErrorFile, ioErrorHandle)  -- (rhc's)
+import IO (hSetBuffering, stdin, stdout, BufferMode(..), hGetLine)  -- interact's, getLine's (rhc's)
 
 
 
@@ -19,11 +21,17 @@ type  FilePath = String
 
 
 data IOError    -- The internals of this type are system dependent
+                -- (rhc's primitive: Core's Exn, its details PreludeRuntime's)
 
 
-instance  Show IOError  where ...
+instance  Show IOError  where
+    showsPrec _ e  =  case ioErrorKind e of
+                        User -> showString "user error (" . showString (ioErrorText e) . showChar ')'
+                        _    -> showString (ioErrorText e)
 
-instance  Eq IOError  where ...
+instance  Eq IOError  where
+    e == e'        =  ioErrorKind e == ioErrorKind e' && ioErrorText e == ioErrorText e'
+                      && ioErrorFile e == ioErrorFile e' && ioErrorHandle e == ioErrorHandle e'
 
 
 ioError    ::  IOError -> IO a 
@@ -60,10 +68,7 @@ getChar    =  primGetChar
 	   
 
 getLine    :: IO String
-getLine    =  do c <- getChar
-                 if c == '\n' then return "" else 
-                    do s <- getLine
-                       return (c:s)
+getLine    =  hGetLine stdin   -- 21.9.2: the last line returned at the end of the file (R46)
             
 
 getContents :: IO String

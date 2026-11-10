@@ -1,8 +1,8 @@
 -- Module Prelude, section 8 of the Haskell 98 Report.
--- The code of the online Revised Report of December 2002 with its published
--- errata applied: a modified version of the Report's code, which does not
--- define Haskell 98. LICENSE says what was changed; errata.tsv and
--- overlay.tsv list each change, and pristine/ holds the code as printed.
+-- The code of the online Revised Report of December 2002, with its published
+-- errata and rhc's overlay applied: a modified version of the Report's code,
+-- which does not define Haskell 98. LICENSE says what was changed; errata.tsv
+-- and overlay.tsv list each change, and pristine/ holds the code as printed.
 
 module Prelude (
     module PreludeList, module PreludeText, module PreludeIO,
@@ -53,6 +53,9 @@ import PreludeList
 import PreludeText
 import PreludeIO
 import Ratio( Rational )
+import PreludeEnum                         -- numericEnumFrom... (rhc's)
+import Numeric( fromRat )                  -- Float's and Double's fromRational
+import PreludeRuntime                      -- Core's primitives, by name (rhc's)
 
 infixr 9  .
 infixr 8  ^, ^^, **
@@ -360,8 +363,25 @@ f =<< x          =  x >>= f
 -- Trivial type
 
 
-data  ()  =  ()  deriving (Eq, Ord, Enum, Bounded)
-	-- Not legal Haskell; for illustration only
+-- () is built-in syntax: the instances its deriving clause names, as
+-- chapter 10 derives them (overlay ov.prelude.unit)
+
+instance  Eq ()  where
+    () == ()         =  True
+
+instance  Ord ()  where
+    compare () ()    =  EQ
+
+instance  Enum ()  where
+    toEnum 0         =  ()
+    toEnum _         =  error "Prelude.Enum.().toEnum: bad argument"
+    fromEnum ()      =  0
+    enumFrom x       =  enumFromTo x ()
+    enumFromThen x y =  enumFromThenTo x y ()
+
+instance  Bounded ()  where
+    minBound         =  ()
+    maxBound         =  ()
 
 -- Function type
 
@@ -387,7 +407,7 @@ flip f x y       =  f y x
 
 
 seq :: a -> b -> b
-seq = ...       -- Primitive
+seq =  primSeq   -- Primitive
 
 -- right-associating infix application operators 
 -- (useful in continuation-passing style)
@@ -424,7 +444,7 @@ otherwise        =  True
 -- Character type
 
 
-data Char = ... 'a' | 'b' ... -- Unicode values
+data Char       -- Unicode values: a code point, 0 to 0x10FFFF (rhc's primitive)
 
 
 instance  Eq Char  where
@@ -488,7 +508,7 @@ either f g (Right y) =  g y
 -- IO type
 
 
-data IO a = ... 	-- abstract
+data IO a       -- abstract (rhc's primitive: a state token, D25)
 
 
 instance  Functor IO where
@@ -496,8 +516,8 @@ instance  Functor IO where
 
 
 instance Monad IO where
-   (>>=)  = ...
-   return = ...
+   (>>=)  = primBindIO
+   return = primReturnIO
    fail s = ioError (userError s)
 
 -- Ordering type
@@ -512,74 +532,284 @@ data  Ordering  =  LT | EQ | GT
 -- far too large.
 
 
-data  Int  =  minBound ... -1 | 0 | 1 ... maxBound
+-- Int is rhc's primitive, Mid's int, on the checked primitives: an
+-- arithmetic past its range is an error (D22), and its Enum is bounded (R40)
+data  Int
 
-instance  Eq       Int  where ...
+instance  Eq       Int  where
+    (==)             =  int_eq
+    (/=)             =  int_ne
 
-instance  Ord      Int  where ...
+instance  Ord      Int  where
+    (<)              =  int_lt
+    (<=)             =  int_le
+    (>=)             =  int_ge
+    (>)              =  int_gt
+    compare x y
+      | int_lt x y   =  LT
+      | int_eq x y   =  EQ
+      | otherwise    =  GT
 
-instance  Num      Int  where ...
+instance  Num      Int  where
+    (+)              =  int_add
+    (-)              =  int_sub
+    (*)              =  int_mul
+    negate           =  int_neg
+    abs x            =  if int_lt x 0 then int_neg x else x
+    signum x
+      | int_gt x 0   =  1
+      | int_lt x 0   =  -1
+      | otherwise    =  0
+    fromInteger      =  integer_to_int
 
-instance  Real     Int  where ...
+instance  Real     Int  where
+    toRational x     =  toRational (toInteger x)
 
-instance  Integral Int  where ...
+instance  Integral Int  where
+    quot             =  int_quot
+    rem              =  int_rem
+    div              =  int_div
+    mod              =  int_mod
+    quotRem x y      =  (int_quot x y, int_rem x y)
+    divMod x y       =  (int_div x y, int_mod x y)
+    toInteger        =  integer_from_int
 
-instance  Enum     Int  where ...
+instance  Enum     Int  where
+    succ x           =  x + 1
+    pred x           =  x - 1
+    toEnum x         =  x
+    fromEnum x       =  x
+    enumFrom x       =  enumFromTo x maxBound
+    enumFromThen x y =  enumFromThenTo x y (if y >= x then maxBound else minBound)
+    enumFromTo x y   =  if x > y then [] else up x
+                        where up i = i : (if i == y then [] else up (i + 1))
+    enumFromThenTo x y z =
+                        map fromInteger (enumFromThenTo (toInteger x) (toInteger y) (toInteger z))
 
-instance  Bounded  Int  where ...
-
-
-data  Integer  =  ... -1 | 0 | 1 ...
-
-instance  Eq       Integer  where ...
-
-instance  Ord      Integer  where ...
-
-instance  Num      Integer  where ...
-
-instance  Real     Integer  where ...
-
-instance  Integral Integer  where ...
-
-instance  Enum     Integer  where ...
+instance  Bounded  Int  where
+    minBound         =  negate maxBound - 1
+    maxBound         =  4611686018427387903   -- 2^62 - 1: Mid's int, 63 bits (D22)
 
 
+-- Integer is rhc's primitive, IntInf's representation (D20, M31)
+data  Integer
+
+instance  Eq       Integer  where
+    (==)             =  integer_eq
+    (/=)             =  integer_ne
+
+instance  Ord      Integer  where
+    (<)              =  integer_lt
+    (<=)             =  integer_le
+    (>=)             =  integer_ge
+    (>)              =  integer_gt
+    compare x y
+      | integer_lt x y = LT
+      | integer_eq x y = EQ
+      | otherwise      = GT
+
+instance  Num      Integer  where
+    (+)              =  integer_add
+    (-)              =  integer_sub
+    (*)              =  integer_mul
+    negate           =  integer_neg
+    abs x            =  if integer_lt x 0 then integer_neg x else x
+    signum x
+      | integer_gt x 0 = 1
+      | integer_lt x 0 = -1
+      | otherwise      = 0
+    fromInteger x    =  x
+
+instance  Real     Integer  where
+    toRational x     =  fromInteger x
+
+instance  Integral Integer  where
+    quot             =  integer_quot
+    rem              =  integer_rem
+    div              =  integer_div
+    mod              =  integer_mod
+    quotRem x y      =  (integer_quot x y, integer_rem x y)
+    divMod x y       =  (integer_div x y, integer_mod x y)
+    toInteger x      =  x
+
+instance  Enum     Integer  where
+    succ x           =  x + 1
+    pred x           =  x - 1
+    toEnum           =  integer_from_int
+    fromEnum         =  integer_to_int
+    enumFrom x       =  x `seq` (x : enumFrom (x + 1))
+    enumFromThen x y =  x `seq` y `seq` (x : enumFromThen y (y + y - x))
+    enumFromTo x y   =  if x > y then [] else x : enumFromTo (x + 1) y
+    enumFromThenTo x y z
+      | y >= x       =  if x > z then [] else x : enumFromThenTo y (y + y - x) z
+      | otherwise    =  if x < z then [] else x : enumFromThenTo y (y + y - x) z
+
+
+-- Float is rhc's primitive: a Double that binary32 represents, each result
+-- rounded to binary32, as Rune's Real32 is (D23)
 data  Float
 
-instance  Eq         Float  where ...
+-- a function of Double's, taken to Float's
+viaDouble        :: (Double -> Double) -> Float -> Float
+viaDouble f x    =  float_from_double (f (float_to_double x))
 
-instance  Ord        Float  where ...
+-- `encodeVia limit enc m e` is m * 2^e by `enc`, which takes a mantissa
+-- of Int below `limit` and rounds once: a greater mantissa is cut to that,
+-- its lowest bit set where a bit cut is not 0, so that the one rounding is
+-- the exact value's (rounding to nearest needs two bits past the type's)
+encodeVia        :: Integer -> (Int -> Int -> a) -> Integer -> Int -> a
+encodeVia limit enc m e = cut (abs m) e False
+  where
+    cut n k lost
+      | n >= limit * 4294967296 = case quotRem n 4294967296 of
+                                    (q, r) -> cut q (k + 32) (lost || r /= 0)
+      | n >= limit   = case quotRem n 2 of (q, r) -> cut q (k + 1) (lost || r /= 0)
+      | otherwise    = enc (fromInteger (signum m * (if lost && even n then n + 1 else n))) k
 
-instance  Num        Float  where ...
+instance  Eq         Float  where
+    (==)             =  float_eq
+    (/=)             =  float_ne
 
-instance  Real       Float  where ...
+instance  Ord        Float  where
+    (<)              =  float_lt
+    (<=)             =  float_le
+    (>=)             =  float_ge
+    (>)              =  float_gt
+    compare x y
+      | float_lt x y =  LT
+      | float_eq x y =  EQ
+      | otherwise    =  GT
 
-instance  Fractional Float  where ...
+instance  Num        Float  where
+    (+)              =  float_add
+    (-)              =  float_sub
+    (*)              =  float_mul
+    negate           =  float_neg
+    abs x            =  if x < 0 || float_is_negative_zero x then float_neg x else x
+    signum x
+      | x > 0        =  1
+      | x < 0        =  -1
+      | otherwise    =  x
+    fromInteger n    =  encodeFloat n 0
 
-instance  Floating   Float  where ...
+instance  Real       Float  where
+    toRational x     =  toRational (float_to_double x)
 
-instance  RealFrac   Float  where ...
+instance  Fractional Float  where
+    (/)              =  float_div
+    fromRational     =  fromRat
 
-instance  RealFloat  Float  where ...
+instance  Floating   Float  where
+    pi               =  float_from_double pi
+    exp              =  float_exp
+    log              =  float_log
+    sqrt             =  float_sqrt
+    x ** y           =  float_from_double (float_to_double x ** float_to_double y)
+    sin              =  float_sin
+    cos              =  float_cos
+    tan              =  float_tan
+    asin             =  viaDouble asin
+    acos             =  viaDouble acos
+    atan             =  float_atan
+    sinh             =  float_sinh
+    cosh             =  float_cosh
+    tanh             =  float_tanh
+    asinh            =  viaDouble asinh
+    acosh            =  viaDouble acosh
+    atanh            =  viaDouble atanh
+
+instance  RealFrac   Float  where
+    properFraction x =  case properFraction (float_to_double x) of
+                          (n, f) -> (n, float_from_double f)
+
+instance  RealFloat  Float  where
+    floatRadix _     =  2
+    floatDigits _    =  24
+    floatRange _     =  (-125, 128)
+    decodeFloat x    =  case decodeFloat (float_to_double x) of
+                          (m, e) -> if m == 0 then (0, 0) else (m `quot` 536870912, e + 29)
+    encodeFloat      =  encodeVia 9007199254740992 float_encode   -- 2^53: exact in a Double
+    isNaN            =  float_is_nan
+    isInfinite       =  float_is_infinite
+    isDenormalized   =  float_is_denormalized
+    isNegativeZero   =  float_is_negative_zero
+    isIEEE _         =  True
 
 
+-- Double is rhc's primitive, Mid's real, a binary64
 data  Double
 
-instance  Eq         Double  where ...
+instance  Eq         Double  where
+    (==)             =  double_eq
+    (/=)             =  double_ne
 
-instance  Ord        Double  where ...
+instance  Ord        Double  where
+    (<)              =  double_lt
+    (<=)             =  double_le
+    (>=)             =  double_ge
+    (>)              =  double_gt
+    compare x y
+      | double_lt x y = LT
+      | double_eq x y = EQ
+      | otherwise     = GT
 
-instance  Num        Double  where ...
+instance  Num        Double  where
+    (+)              =  double_add
+    (-)              =  double_sub
+    (*)              =  double_mul
+    negate           =  double_neg
+    abs x            =  if x < 0 || double_is_negative_zero x then double_neg x else x
+    signum x
+      | x > 0        =  1
+      | x < 0        =  -1
+      | otherwise    =  x
+    fromInteger n    =  encodeFloat n 0
 
-instance  Real       Double  where ...
+instance  Real       Double  where
+    toRational x     =  fromInteger m * fromInteger (floatRadix x) ^^ n
+                        where (m,n) = decodeFloat x
 
-instance  Fractional Double  where ...
+instance  Fractional Double  where
+    (/)              =  double_div
+    fromRational     =  fromRat
 
-instance  Floating   Double  where ...
+instance  Floating   Double  where
+    pi               =  3.141592653589793238
+    exp              =  double_exp
+    log              =  double_log
+    sqrt             =  double_sqrt
+    (**)             =  double_pow
+    sin              =  double_sin
+    cos              =  double_cos
+    tan              =  double_tan
+    asin x           =  double_atan2 x (double_sqrt (1 - x*x))
+    acos x           =  double_atan2 (double_sqrt (1 - x*x)) x
+    atan             =  double_atan
+    sinh             =  double_sinh
+    cosh             =  double_cosh
+    tanh             =  double_tanh
+    asinh x          =  log (x + sqrt (x*x + 1))
+    acosh x          =  log (x + sqrt (x*x - 1))
+    atanh x          =  (log (1 + x) - log (1 - x)) / 2
 
-instance  RealFrac   Double  where ...
+instance  RealFrac   Double  where
+    properFraction x
+      | e >= 0       =  (fromInteger m * 2 ^ e, 0)
+      | otherwise    =  (fromInteger q, encodeFloat r e)
+      where (m,e) = decodeFloat x
+            (q,r) = quotRem m (2 ^ negate e)
 
-instance  RealFloat  Double  where ...
+instance  RealFloat  Double  where
+    floatRadix _     =  2
+    floatDigits _    =  53
+    floatRange _     =  (-1021, 1024)
+    decodeFloat x    =  (toInteger (double_mantissa x), double_exponent x)
+    encodeFloat      =  encodeVia 4611686018427387904 double_encode   -- 2^62: Int's
+    isNaN            =  double_is_nan
+    isInfinite       =  double_is_infinite
+    isDenormalized   =  double_is_denormalized
+    isNegativeZero   =  double_is_negative_zero
+    isIEEE _         =  True
 
 -- The Enum instances for Floats and Doubles are slightly unusual.
 -- The `toEnum' function truncates numbers to Int.  The definitions
@@ -611,26 +841,28 @@ instance  Enum Double  where
     enumFromThenTo   =  numericEnumFromThenTo
 
 
-numericEnumFrom         :: (Fractional a) => a -> [a]
-
-numericEnumFromThen     :: (Fractional a) => a -> a -> [a]
-
-numericEnumFromTo       :: (Fractional a, Ord a) => a -> a -> [a]
-
-numericEnumFromThenTo   :: (Fractional a, Ord a) => a -> a -> a -> [a]
-numericEnumFrom         =  iterate (+1)
-numericEnumFromThen n m =  iterate (+(m-n)) n
-numericEnumFromTo n m   =  takeWhile (<= m+1/2) (numericEnumFrom n)
-numericEnumFromThenTo n n' m = takeWhile p (numericEnumFromThen n n')
-                             where
-                               p | n' >= n   = (<= m + (n'-n)/2)
-                                 | otherwise = (>= m + (n'-n)/2)
+-- numericEnumFrom, numericEnumFromThen, numericEnumFromTo and
+-- numericEnumFromThenTo are in PreludeEnum, which Ratio imports too
+-- (overlay ov.prelude.numericenum)
 
 -- Lists
 
 
-data  [a]  =  [] | a : [a]  deriving (Eq, Ord)
-	-- Not legal Haskell; for illustration only
+-- [a] is built-in syntax: the instances its deriving clause names, as
+-- chapter 10 derives them (overlay ov.prelude.list)
+
+instance  (Eq a) => Eq [a]  where
+    []     == []     =  True
+    (x:xs) == (y:ys) =  x == y && xs == ys
+    _      == _      =  False
+
+instance  (Ord a) => Ord [a]  where
+    compare []     []     =  EQ
+    compare []     (_:_)  =  LT
+    compare (_:_)  []     =  GT
+    compare (x:xs) (y:ys) =  case compare x y of
+                                 EQ    -> compare xs ys
+                                 other -> other
 
 
 instance Functor [] where
@@ -645,10 +877,183 @@ instance  Monad []  where
 -- Tuples
 
 
-data  (a,b)   =  (a,b)    deriving (Eq, Ord, Bounded)
+-- Tuples are built-in syntax: the instances their deriving clauses name,
+-- as chapter 10 derives them, at every size to 15 (6.1.4; overlay
+-- ov.prelude.tuples, ov.tuples.fifteen)
 
-data  (a,b,c) =  (a,b,c)  deriving (Eq, Ord, Bounded)
-	-- Not legal Haskell; for illustration only
+instance  (Eq a, Eq b) => Eq (a,b)  where
+    (a1,a2) == (b1,b2) =
+        a1 == b1 && a2 == b2
+
+instance  (Ord a, Ord b) => Ord (a,b)  where
+    compare (a1,a2) (b1,b2) =
+        lexOrder [compare a1 b1, compare a2 b2]
+
+instance  (Bounded a, Bounded b) => Bounded (a,b)  where
+    minBound = (minBound,minBound)
+    maxBound = (maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c) => Eq (a,b,c)  where
+    (a1,a2,a3) == (b1,b2,b3) =
+        a1 == b1 && a2 == b2 && a3 == b3
+
+instance  (Ord a, Ord b, Ord c) => Ord (a,b,c)  where
+    compare (a1,a2,a3) (b1,b2,b3) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3]
+
+instance  (Bounded a, Bounded b, Bounded c) => Bounded (a,b,c)  where
+    minBound = (minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d) => Eq (a,b,c,d)  where
+    (a1,a2,a3,a4) == (b1,b2,b3,b4) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4
+
+instance  (Ord a, Ord b, Ord c, Ord d) => Ord (a,b,c,d)  where
+    compare (a1,a2,a3,a4) (b1,b2,b3,b4) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d) => Bounded (a,b,c,d)  where
+    minBound = (minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e) => Eq (a,b,c,d,e)  where
+    (a1,a2,a3,a4,a5) == (b1,b2,b3,b4,b5) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e) => Ord (a,b,c,d,e)  where
+    compare (a1,a2,a3,a4,a5) (b1,b2,b3,b4,b5) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e) => Bounded (a,b,c,d,e)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f) => Eq (a,b,c,d,e,f)  where
+    (a1,a2,a3,a4,a5,a6) == (b1,b2,b3,b4,b5,b6) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f) => Ord (a,b,c,d,e,f)  where
+    compare (a1,a2,a3,a4,a5,a6) (b1,b2,b3,b4,b5,b6) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f) => Bounded (a,b,c,d,e,f)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g) => Eq (a,b,c,d,e,f,g)  where
+    (a1,a2,a3,a4,a5,a6,a7) == (b1,b2,b3,b4,b5,b6,b7) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g) => Ord (a,b,c,d,e,f,g)  where
+    compare (a1,a2,a3,a4,a5,a6,a7) (b1,b2,b3,b4,b5,b6,b7) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g) => Bounded (a,b,c,d,e,f,g)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h) => Eq (a,b,c,d,e,f,g,h)  where
+    (a1,a2,a3,a4,a5,a6,a7,a8) == (b1,b2,b3,b4,b5,b6,b7,b8) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7 && a8 == b8
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g, Ord h) => Ord (a,b,c,d,e,f,g,h)  where
+    compare (a1,a2,a3,a4,a5,a6,a7,a8) (b1,b2,b3,b4,b5,b6,b7,b8) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7, compare a8 b8]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g, Bounded h) => Bounded (a,b,c,d,e,f,g,h)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h, Eq i) => Eq (a,b,c,d,e,f,g,h,i)  where
+    (a1,a2,a3,a4,a5,a6,a7,a8,a9) == (b1,b2,b3,b4,b5,b6,b7,b8,b9) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7 && a8 == b8 && a9 == b9
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g, Ord h, Ord i) => Ord (a,b,c,d,e,f,g,h,i)  where
+    compare (a1,a2,a3,a4,a5,a6,a7,a8,a9) (b1,b2,b3,b4,b5,b6,b7,b8,b9) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7, compare a8 b8, compare a9 b9]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g, Bounded h, Bounded i) => Bounded (a,b,c,d,e,f,g,h,i)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h, Eq i, Eq j) => Eq (a,b,c,d,e,f,g,h,i,j)  where
+    (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) == (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7 && a8 == b8 && a9 == b9 && a10 == b10
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g, Ord h, Ord i, Ord j) => Ord (a,b,c,d,e,f,g,h,i,j)  where
+    compare (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7, compare a8 b8, compare a9 b9, compare a10 b10]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g, Bounded h, Bounded i, Bounded j) => Bounded (a,b,c,d,e,f,g,h,i,j)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h, Eq i, Eq j, Eq k) => Eq (a,b,c,d,e,f,g,h,i,j,k)  where
+    (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) == (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7 && a8 == b8 && a9 == b9 && a10 == b10 && a11 == b11
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g, Ord h, Ord i, Ord j, Ord k) => Ord (a,b,c,d,e,f,g,h,i,j,k)  where
+    compare (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11) (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7, compare a8 b8, compare a9 b9, compare a10 b10, compare a11 b11]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g, Bounded h, Bounded i, Bounded j, Bounded k) => Bounded (a,b,c,d,e,f,g,h,i,j,k)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h, Eq i, Eq j, Eq k, Eq l) => Eq (a,b,c,d,e,f,g,h,i,j,k,l)  where
+    (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12) == (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7 && a8 == b8 && a9 == b9 && a10 == b10 && a11 == b11 && a12 == b12
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g, Ord h, Ord i, Ord j, Ord k, Ord l) => Ord (a,b,c,d,e,f,g,h,i,j,k,l)  where
+    compare (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12) (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7, compare a8 b8, compare a9 b9, compare a10 b10, compare a11 b11, compare a12 b12]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g, Bounded h, Bounded i, Bounded j, Bounded k, Bounded l) => Bounded (a,b,c,d,e,f,g,h,i,j,k,l)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h, Eq i, Eq j, Eq k, Eq l, Eq m) => Eq (a,b,c,d,e,f,g,h,i,j,k,l,m)  where
+    (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13) == (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7 && a8 == b8 && a9 == b9 && a10 == b10 && a11 == b11 && a12 == b12 && a13 == b13
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g, Ord h, Ord i, Ord j, Ord k, Ord l, Ord m) => Ord (a,b,c,d,e,f,g,h,i,j,k,l,m)  where
+    compare (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13) (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7, compare a8 b8, compare a9 b9, compare a10 b10, compare a11 b11, compare a12 b12, compare a13 b13]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g, Bounded h, Bounded i, Bounded j, Bounded k, Bounded l, Bounded m) => Bounded (a,b,c,d,e,f,g,h,i,j,k,l,m)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h, Eq i, Eq j, Eq k, Eq l, Eq m, Eq n) => Eq (a,b,c,d,e,f,g,h,i,j,k,l,m,n)  where
+    (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14) == (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7 && a8 == b8 && a9 == b9 && a10 == b10 && a11 == b11 && a12 == b12 && a13 == b13 && a14 == b14
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g, Ord h, Ord i, Ord j, Ord k, Ord l, Ord m, Ord n) => Ord (a,b,c,d,e,f,g,h,i,j,k,l,m,n)  where
+    compare (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14) (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7, compare a8 b8, compare a9 b9, compare a10 b10, compare a11 b11, compare a12 b12, compare a13 b13, compare a14 b14]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g, Bounded h, Bounded i, Bounded j, Bounded k, Bounded l, Bounded m, Bounded n) => Bounded (a,b,c,d,e,f,g,h,i,j,k,l,m,n)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+instance  (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h, Eq i, Eq j, Eq k, Eq l, Eq m, Eq n, Eq o) => Eq (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)  where
+    (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) == (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15) =
+        a1 == b1 && a2 == b2 && a3 == b3 && a4 == b4 && a5 == b5 && a6 == b6 && a7 == b7 && a8 == b8 && a9 == b9 && a10 == b10 && a11 == b11 && a12 == b12 && a13 == b13 && a14 == b14 && a15 == b15
+
+instance  (Ord a, Ord b, Ord c, Ord d, Ord e, Ord f, Ord g, Ord h, Ord i, Ord j, Ord k, Ord l, Ord m, Ord n, Ord o) => Ord (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)  where
+    compare (a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) (b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15) =
+        lexOrder [compare a1 b1, compare a2 b2, compare a3 b3, compare a4 b4, compare a5 b5, compare a6 b6, compare a7 b7, compare a8 b8, compare a9 b9, compare a10 b10, compare a11 b11, compare a12 b12, compare a13 b13, compare a14 b14, compare a15 b15]
+
+instance  (Bounded a, Bounded b, Bounded c, Bounded d, Bounded e, Bounded f, Bounded g, Bounded h, Bounded i, Bounded j, Bounded k, Bounded l, Bounded m, Bounded n, Bounded o) => Bounded (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)  where
+    minBound = (minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound,minBound)
+    maxBound = (maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound,maxBound)
+
+-- the order of a tuple: its components', the first that differs
+lexOrder         :: [Ordering] -> Ordering
+lexOrder []      =  EQ
+lexOrder (EQ:os) =  lexOrder os
+lexOrder (o:_)   =  o
 
 -- component projections for pairs:
 -- (NB: not provided for triples, quadruples, etc.)

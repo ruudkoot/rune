@@ -1,8 +1,8 @@
 -- Module PreludeText, section 8.2 of the Haskell 98 Report.
--- The code of the online Revised Report of December 2002 with its published
--- errata applied: a modified version of the Report's code, which does not
--- define Haskell 98. LICENSE says what was changed; errata.tsv and
--- overlay.tsv list each change, and pristine/ holds the code as printed.
+-- The code of the online Revised Report of December 2002, with its published
+-- errata and rhc's overlay applied: a modified version of the Report's code,
+-- which does not define Haskell 98. LICENSE says what was changed; errata.tsv
+-- and overlay.tsv list each change, and pristine/ holds the code as printed.
 
 module PreludeText (
     ReadS, ShowS,
@@ -168,7 +168,7 @@ instance  Read Integer  where
 
 
 instance  Show Float  where 
-    showsPrec p         = showFloat
+    showsPrec p         = showSigned showFloat p   -- parenthesised (R42)
            
 
 instance  Read Float  where
@@ -176,7 +176,7 @@ instance  Read Float  where
 
 
 instance  Show Double  where
-    showsPrec p         = showFloat
+    showsPrec p         = showSigned showFloat p   -- parenthesised (R42)
 
 
 instance  Read Double  where
@@ -238,7 +238,450 @@ instance  (Read a, Read b) => Read (a,b)  where
                                                  (y,v)   <- reads u,
                                                  (")",w) <- lex v ] )
 
--- Other tuples have similar Read and Show instances
+-- Other tuples have similar Read and Show instances: to size 15 (6.1.4;
+-- overlay ov.tuples.fifteen)
+
+instance  (Show a, Show b, Show c) => Show (a,b,c)  where
+    showsPrec p (x1,x2,x3) = showChar '(' . shows x1 .
+                             showChar ',' . shows x2 .
+                             showChar ',' . shows x3 .
+                             showChar ')'
+
+instance  (Read a, Read b, Read c) => Read (a,b,c)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3), s6) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (")",s6) <- lex s5])
+
+instance  (Show a, Show b, Show c, Show d) => Show (a,b,c,d)  where
+    showsPrec p (x1,x2,x3,x4) = showChar '(' . shows x1 .
+                                showChar ',' . shows x2 .
+                                showChar ',' . shows x3 .
+                                showChar ',' . shows x4 .
+                                showChar ')'
+
+instance  (Read a, Read b, Read c, Read d) => Read (a,b,c,d)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4), s8) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (")",s8) <- lex s7])
+
+instance  (Show a, Show b, Show c, Show d, Show e) => Show (a,b,c,d,e)  where
+    showsPrec p (x1,x2,x3,x4,x5) = showChar '(' . shows x1 .
+                                   showChar ',' . shows x2 .
+                                   showChar ',' . shows x3 .
+                                   showChar ',' . shows x4 .
+                                   showChar ',' . shows x5 .
+                                   showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e) => Read (a,b,c,d,e)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5), s10) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (")",s10) <- lex s9])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f) => Show (a,b,c,d,e,f)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6) = showChar '(' . shows x1 .
+                                      showChar ',' . shows x2 .
+                                      showChar ',' . shows x3 .
+                                      showChar ',' . shows x4 .
+                                      showChar ',' . shows x5 .
+                                      showChar ',' . shows x6 .
+                                      showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f) => Read (a,b,c,d,e,f)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6), s12) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (")",s12) <- lex s11])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g) => Show (a,b,c,d,e,f,g)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7) = showChar '(' . shows x1 .
+                                         showChar ',' . shows x2 .
+                                         showChar ',' . shows x3 .
+                                         showChar ',' . shows x4 .
+                                         showChar ',' . shows x5 .
+                                         showChar ',' . shows x6 .
+                                         showChar ',' . shows x7 .
+                                         showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g) => Read (a,b,c,d,e,f,g)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7), s14) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (")",s14) <- lex s13])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g, Show h) => Show (a,b,c,d,e,f,g,h)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7,x8) = showChar '(' . shows x1 .
+                                            showChar ',' . shows x2 .
+                                            showChar ',' . shows x3 .
+                                            showChar ',' . shows x4 .
+                                            showChar ',' . shows x5 .
+                                            showChar ',' . shows x6 .
+                                            showChar ',' . shows x7 .
+                                            showChar ',' . shows x8 .
+                                            showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g, Read h) => Read (a,b,c,d,e,f,g,h)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7,x8), s16) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (",",s14) <- lex s13,
+                                 (x8,s15) <- reads s14,
+                                 (")",s16) <- lex s15])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g, Show h, Show i) => Show (a,b,c,d,e,f,g,h,i)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7,x8,x9) = showChar '(' . shows x1 .
+                                               showChar ',' . shows x2 .
+                                               showChar ',' . shows x3 .
+                                               showChar ',' . shows x4 .
+                                               showChar ',' . shows x5 .
+                                               showChar ',' . shows x6 .
+                                               showChar ',' . shows x7 .
+                                               showChar ',' . shows x8 .
+                                               showChar ',' . shows x9 .
+                                               showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g, Read h, Read i) => Read (a,b,c,d,e,f,g,h,i)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7,x8,x9), s18) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (",",s14) <- lex s13,
+                                 (x8,s15) <- reads s14,
+                                 (",",s16) <- lex s15,
+                                 (x9,s17) <- reads s16,
+                                 (")",s18) <- lex s17])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g, Show h, Show i, Show j) => Show (a,b,c,d,e,f,g,h,i,j)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) = showChar '(' . shows x1 .
+                                                   showChar ',' . shows x2 .
+                                                   showChar ',' . shows x3 .
+                                                   showChar ',' . shows x4 .
+                                                   showChar ',' . shows x5 .
+                                                   showChar ',' . shows x6 .
+                                                   showChar ',' . shows x7 .
+                                                   showChar ',' . shows x8 .
+                                                   showChar ',' . shows x9 .
+                                                   showChar ',' . shows x10 .
+                                                   showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g, Read h, Read i, Read j) => Read (a,b,c,d,e,f,g,h,i,j)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10), s20) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (",",s14) <- lex s13,
+                                 (x8,s15) <- reads s14,
+                                 (",",s16) <- lex s15,
+                                 (x9,s17) <- reads s16,
+                                 (",",s18) <- lex s17,
+                                 (x10,s19) <- reads s18,
+                                 (")",s20) <- lex s19])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g, Show h, Show i, Show j, Show k) => Show (a,b,c,d,e,f,g,h,i,j,k)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11) = showChar '(' . shows x1 .
+                                                       showChar ',' . shows x2 .
+                                                       showChar ',' . shows x3 .
+                                                       showChar ',' . shows x4 .
+                                                       showChar ',' . shows x5 .
+                                                       showChar ',' . shows x6 .
+                                                       showChar ',' . shows x7 .
+                                                       showChar ',' . shows x8 .
+                                                       showChar ',' . shows x9 .
+                                                       showChar ',' . shows x10 .
+                                                       showChar ',' . shows x11 .
+                                                       showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g, Read h, Read i, Read j, Read k) => Read (a,b,c,d,e,f,g,h,i,j,k)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11), s22) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (",",s14) <- lex s13,
+                                 (x8,s15) <- reads s14,
+                                 (",",s16) <- lex s15,
+                                 (x9,s17) <- reads s16,
+                                 (",",s18) <- lex s17,
+                                 (x10,s19) <- reads s18,
+                                 (",",s20) <- lex s19,
+                                 (x11,s21) <- reads s20,
+                                 (")",s22) <- lex s21])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g, Show h, Show i, Show j, Show k, Show l) => Show (a,b,c,d,e,f,g,h,i,j,k,l)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12) = showChar '(' . shows x1 .
+                                                           showChar ',' . shows x2 .
+                                                           showChar ',' . shows x3 .
+                                                           showChar ',' . shows x4 .
+                                                           showChar ',' . shows x5 .
+                                                           showChar ',' . shows x6 .
+                                                           showChar ',' . shows x7 .
+                                                           showChar ',' . shows x8 .
+                                                           showChar ',' . shows x9 .
+                                                           showChar ',' . shows x10 .
+                                                           showChar ',' . shows x11 .
+                                                           showChar ',' . shows x12 .
+                                                           showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g, Read h, Read i, Read j, Read k, Read l) => Read (a,b,c,d,e,f,g,h,i,j,k,l)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12), s24) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (",",s14) <- lex s13,
+                                 (x8,s15) <- reads s14,
+                                 (",",s16) <- lex s15,
+                                 (x9,s17) <- reads s16,
+                                 (",",s18) <- lex s17,
+                                 (x10,s19) <- reads s18,
+                                 (",",s20) <- lex s19,
+                                 (x11,s21) <- reads s20,
+                                 (",",s22) <- lex s21,
+                                 (x12,s23) <- reads s22,
+                                 (")",s24) <- lex s23])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g, Show h, Show i, Show j, Show k, Show l, Show m) => Show (a,b,c,d,e,f,g,h,i,j,k,l,m)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13) = showChar '(' . shows x1 .
+                                                               showChar ',' . shows x2 .
+                                                               showChar ',' . shows x3 .
+                                                               showChar ',' . shows x4 .
+                                                               showChar ',' . shows x5 .
+                                                               showChar ',' . shows x6 .
+                                                               showChar ',' . shows x7 .
+                                                               showChar ',' . shows x8 .
+                                                               showChar ',' . shows x9 .
+                                                               showChar ',' . shows x10 .
+                                                               showChar ',' . shows x11 .
+                                                               showChar ',' . shows x12 .
+                                                               showChar ',' . shows x13 .
+                                                               showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g, Read h, Read i, Read j, Read k, Read l, Read m) => Read (a,b,c,d,e,f,g,h,i,j,k,l,m)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13), s26) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (",",s14) <- lex s13,
+                                 (x8,s15) <- reads s14,
+                                 (",",s16) <- lex s15,
+                                 (x9,s17) <- reads s16,
+                                 (",",s18) <- lex s17,
+                                 (x10,s19) <- reads s18,
+                                 (",",s20) <- lex s19,
+                                 (x11,s21) <- reads s20,
+                                 (",",s22) <- lex s21,
+                                 (x12,s23) <- reads s22,
+                                 (",",s24) <- lex s23,
+                                 (x13,s25) <- reads s24,
+                                 (")",s26) <- lex s25])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g, Show h, Show i, Show j, Show k, Show l, Show m, Show n) => Show (a,b,c,d,e,f,g,h,i,j,k,l,m,n)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14) = showChar '(' . shows x1 .
+                                                                   showChar ',' . shows x2 .
+                                                                   showChar ',' . shows x3 .
+                                                                   showChar ',' . shows x4 .
+                                                                   showChar ',' . shows x5 .
+                                                                   showChar ',' . shows x6 .
+                                                                   showChar ',' . shows x7 .
+                                                                   showChar ',' . shows x8 .
+                                                                   showChar ',' . shows x9 .
+                                                                   showChar ',' . shows x10 .
+                                                                   showChar ',' . shows x11 .
+                                                                   showChar ',' . shows x12 .
+                                                                   showChar ',' . shows x13 .
+                                                                   showChar ',' . shows x14 .
+                                                                   showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g, Read h, Read i, Read j, Read k, Read l, Read m, Read n) => Read (a,b,c,d,e,f,g,h,i,j,k,l,m,n)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14), s28) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (",",s14) <- lex s13,
+                                 (x8,s15) <- reads s14,
+                                 (",",s16) <- lex s15,
+                                 (x9,s17) <- reads s16,
+                                 (",",s18) <- lex s17,
+                                 (x10,s19) <- reads s18,
+                                 (",",s20) <- lex s19,
+                                 (x11,s21) <- reads s20,
+                                 (",",s22) <- lex s21,
+                                 (x12,s23) <- reads s22,
+                                 (",",s24) <- lex s23,
+                                 (x13,s25) <- reads s24,
+                                 (",",s26) <- lex s25,
+                                 (x14,s27) <- reads s26,
+                                 (")",s28) <- lex s27])
+
+instance  (Show a, Show b, Show c, Show d, Show e, Show f, Show g, Show h, Show i, Show j, Show k, Show l, Show m, Show n, Show o) => Show (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)  where
+    showsPrec p (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15) = showChar '(' . shows x1 .
+                                                                       showChar ',' . shows x2 .
+                                                                       showChar ',' . shows x3 .
+                                                                       showChar ',' . shows x4 .
+                                                                       showChar ',' . shows x5 .
+                                                                       showChar ',' . shows x6 .
+                                                                       showChar ',' . shows x7 .
+                                                                       showChar ',' . shows x8 .
+                                                                       showChar ',' . shows x9 .
+                                                                       showChar ',' . shows x10 .
+                                                                       showChar ',' . shows x11 .
+                                                                       showChar ',' . shows x12 .
+                                                                       showChar ',' . shows x13 .
+                                                                       showChar ',' . shows x14 .
+                                                                       showChar ',' . shows x15 .
+                                                                       showChar ')'
+
+instance  (Read a, Read b, Read c, Read d, Read e, Read f, Read g, Read h, Read i, Read j, Read k, Read l, Read m, Read n, Read o) => Read (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)  where
+    readsPrec p = readParen False
+                    (\r -> [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15), s30) | ("(",s0) <- lex r,
+                                 (x1,s1) <- reads s0,
+                                 (",",s2) <- lex s1,
+                                 (x2,s3) <- reads s2,
+                                 (",",s4) <- lex s3,
+                                 (x3,s5) <- reads s4,
+                                 (",",s6) <- lex s5,
+                                 (x4,s7) <- reads s6,
+                                 (",",s8) <- lex s7,
+                                 (x5,s9) <- reads s8,
+                                 (",",s10) <- lex s9,
+                                 (x6,s11) <- reads s10,
+                                 (",",s12) <- lex s11,
+                                 (x7,s13) <- reads s12,
+                                 (",",s14) <- lex s13,
+                                 (x8,s15) <- reads s14,
+                                 (",",s16) <- lex s15,
+                                 (x9,s17) <- reads s16,
+                                 (",",s18) <- lex s17,
+                                 (x10,s19) <- reads s18,
+                                 (",",s20) <- lex s19,
+                                 (x11,s21) <- reads s20,
+                                 (",",s22) <- lex s21,
+                                 (x12,s23) <- reads s22,
+                                 (",",s24) <- lex s23,
+                                 (x13,s25) <- reads s24,
+                                 (",",s26) <- lex s25,
+                                 (x14,s27) <- reads s26,
+                                 (",",s28) <- lex s27,
+                                 (x15,s29) <- reads s28,
+                                 (")",s30) <- lex s29])
 
 
 
