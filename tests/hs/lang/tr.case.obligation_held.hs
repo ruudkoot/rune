@@ -1,3 +1,4 @@
+-- rows: tr.dec.strict.lambda tr.dec.fun tr.dec.pat.guards
 -- rows: R86
 -- Report 3.17.3, readings.md R86: the obligation is -O0's literal rules against decision trees over the corpus and generated
 -- programs, which waits for rhc compiling them; this program runs now, the overlapping patterns its first sample.
