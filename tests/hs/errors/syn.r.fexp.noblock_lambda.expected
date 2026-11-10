@@ -1,1 +1,1 @@
-expected `)` to close an expression in parentheses, found `\`
+a lambda as the argument of an application: Haskell 98 wants it in parentheses

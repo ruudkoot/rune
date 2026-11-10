@@ -258,13 +258,26 @@ struct
     | T.LPAREN => true | T.LBRACKET => true
     | _ => false
 
+  (* A type of a guard of an alternative stops before an arrow outside
+     brackets, which the alternative's is (3.13's note) *)
+  val stopArrow = ref false
+
+  fun inside f =
+    let val old = !stopArrow
+    in
+      stopArrow := false;
+      (f () before stopArrow := old) handle e => (stopArrow := old; raise e)
+    end
+
   fun ty () : A.ty =
     let
       val s = mark ()
       val b = btype ()
     in
       case !cur of
-        T.RARROW => (advance (); let val r = ty () in mkT s (A.TFun (b, r)) end)
+        T.RARROW =>
+          if !stopArrow then b
+          else (advance (); let val r = ty () in mkT s (A.TFun (b, r)) end)
       | _ => b
     end
 
@@ -289,9 +302,10 @@ struct
           (advance ();
            case !cur of
              T.RBRACKET => (advance (); mkT s (A.TCon (mkName s (q0 "[]"))))
-           | _ => let val t = ty () in expect (T.RBRACKET, "to close a list type"); mkT s (A.TList t) end)
+           | _ => let val t = inside ty in expect (T.RBRACKET, "to close a list type"); mkT s (A.TList t) end)
       | T.LPAREN =>
           (advance ();
+           inside (fn () =>
            case !cur of
              T.RPAREN => (advance (); mkT s (A.TCon (mkName s (q0 "()"))))
            | T.RARROW =>
@@ -313,7 +327,7 @@ struct
                        mkT s (A.TTuple (more [t]))
                      end
                  | _ => expected ("`,` or `)`", "in a type in parentheses")
-               end)
+               end))
       | _ => expected ("a type", "")
     end
 
@@ -997,7 +1011,20 @@ struct
                   let
                     val g = mark ()
                     val () = advance ()
-                    val c = opExp ()
+                    (* In an alternative, a type in the guard that took the
+                       alternative's arrow is read again stopping before it:
+                       `| let b = not a in b :: Bool -> a` (3.13's note). *)
+                    val st = save ()
+                    val c =
+                      if sep <> T.RARROW then opExp ()
+                      else
+                        case ((let val c = opExp () in if !cur = sep then SOME c else NONE end)
+                              handle HsSource.Error _ => NONE) of
+                          SOME c => c
+                        | NONE =>
+                            (restore st;
+                             stopArrow := true;
+                             (opExp () before stopArrow := false) handle e => (stopArrow := false; raise e))
                     val () = expect (sep, "after a guard of " ^ whose)
                     val e = exp ()
                   in
@@ -1524,7 +1551,7 @@ struct
 
   fun run ({lexer = {hierarchical}, annotations} : options, f, items, traced) =
     (mode := annotations; file := (if f = "" then "<input>" else f); dotted := hierarchical;
-     seq := 0; pending := []; tracing := traced; trace := [];
+     seq := 0; pending := []; tracing := traced; trace := []; stopArrow := false;
      starts := (case annotations of Bare => Array.array (0, 0) | _ => Array.array (2 * Vector.length items + 64, 0));
      L.start (!file, items);
      let val m = moduleTop ()

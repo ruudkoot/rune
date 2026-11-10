@@ -24,7 +24,8 @@ struct
     \Core's interpreter; and it reads a file of Haskell no further than its\n\
     \parser.\n\
     \\n\
-    \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop\n\
+    \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop; on a file of\n\
+    \                        Haskell, --typecheck-only checks as far as this, until M13\n\
     \  --print               print it with every block in braces\n\
     \  --print-layout        print it with every block by layout\n\
     \  --print-exact         print it from its tree, comments and layout as they were\n\

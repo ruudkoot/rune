@@ -10,8 +10,11 @@
      rhc --dump-tokens FILE.hs         the tokens of the Report's L, one a line
      rhc --dump-ast [--no-spans] FILE.hs  the tree as text (HsDump)
 
-   An error of the file's is its first diagnostic, `FILE:LINE:COL: error:
-   MESSAGE`, on standard error, and status 1. *)
+   `rhc --typecheck-only FILE.hs` checks the file as far as rhc goes, its
+   parse, until the checker lands (M13), so that a program the parse
+   accepts is accepted; `rhc FILE.hs -o OUT` reads the file and says it can
+   go no further. An error of the file's is its first diagnostic,
+   `FILE:LINE:COL: error: MESSAGE`, on standard error, and status 1. *)
 structure RhcSyntax =
 struct
   fun eprint s = TextIO.output (TextIO.stdErr, s)
@@ -69,8 +72,8 @@ struct
   (* `command args` is what rhc does with a command line that names a file
      of Haskell, or asks for one of the commands above; NONE for any other.
      The compiler's own options that a compile of a file may have, `-o`
-     and its file, `--target=` and `--typecheck-only`, are taken and, past
-     the parser, change nothing yet. *)
+     and its file and `--target=`, are taken and change nothing yet;
+     `--typecheck-only` checks as far as the parse. *)
   fun command (args : string list) : (unit -> OS.Process.status) option =
     let
       val modes = List.mapPartial modeOf args
@@ -90,7 +93,7 @@ struct
             val () = check args
             val mode =
               case modes of
-                [] => Compile
+                [] => if List.exists (fn a => a = "--typecheck-only") args then ParseOnly else Compile
               | [m] => m
               | _ => raise RhcOptions.Usage "one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens and --dump-ast"
           in
