@@ -20,8 +20,8 @@ sig
 
      - `decl`, a name declared once, a newtype's field without `!`;
      - `scope`, every variable bound;
-     - `tyscope`, every type variable bound, and none with the name of a
-       type constructor;
+     - `tyscope`, every type variable bound, none with the name of a type
+       constructor, and none that a lambda binds bound already;
      - `tycon`, every type constructor declared or built in;
      - `kind`, every type of the kind its place wants;
      - `eval`, `!` only at a binder, a parameter, a field or a component of

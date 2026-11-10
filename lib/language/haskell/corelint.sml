@@ -12,7 +12,7 @@ struct
   val rules =
     [("decl", "a name declared once; a newtype's field without !"),
      ("scope", "every variable bound"),
-     ("tyscope", "every type variable bound, none with a type constructor's name"),
+     ("tyscope", "every type variable bound, none with a type constructor's name, none bound again in its scope"),
      ("tycon", "every type constructor declared or built in"),
      ("kind", "every type of the kind its place wants"),
      ("eval", "! only at a binder, a parameter, a field or a component of an unboxed tuple, of a lifted type"),
@@ -176,8 +176,14 @@ struct
 
   fun bindVal (env : env, x, t) =
     if x = "_" then env else {g = #g env, where' = #where' env, vals = CoreMap.insert (#vals env, x, t), tyvars = #tyvars env}
+  (* a type variable bound by a lambda or a declaration: not one in scope
+     already, whose name the types of the variables in scope may hold, which
+     would then mean the new one *)
   fun bindTy (env : env, a, k) =
-    (fresh (env, a); {g = #g env, where' = #where' env, vals = #vals env, tyvars = CoreMap.insert (#tyvars env, a, k)})
+    (fresh (env, a);
+     if CoreMap.member (#tyvars env, a) then breach (env, "tyscope", "the type variable " ^ a ^ " is bound again in its own scope")
+     else ();
+     {g = #g env, where' = #where' env, vals = #vals env, tyvars = CoreMap.insert (#tyvars env, a, k)})
 
   fun litCheck (env, l) =
     case l of

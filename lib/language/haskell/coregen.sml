@@ -85,7 +85,7 @@ struct
     in
       if d <= 0 then leaf ()
       else
-        case below g 9 of
+        case below g 8 of
           0 => leaf ()
         | 1 =>
             let val (a, b) = (fresh g "a", fresh g "b")
@@ -118,7 +118,7 @@ struct
     in
       if d <= 0 then leaf ()
       else
-        case below g 10 of
+        case below g 9 of
           0 => leaf ()
         | 1 =>
             let val (h, t) = (fresh g "h", fresh g "t")
@@ -165,7 +165,12 @@ struct
     let
       val g = {seed = ref (IntInf.fromInt (1 + Int.abs seed mod 2147483646)), names = ref 0}
       val _ = below g 2
-      val body = genList (g, [("input", GList)], 6)
+      (* a body that is more than a leaf, in a few draws *)
+      fun leaf (Atom _) = true
+        | leaf (Con (_, _, [])) = true
+        | leaf _ = false
+      fun draw k = let val b = genList (g, [("input", GList)], 6) in if leaf b andalso k > 0 then draw (k - 1) else b end
+      val body = draw 8
       val f = Val ("f", TFun (list, list), Lam ([ValBinder ("input", list)], body))
       val main =
         Val ("main", TFun (TCon "World", TUTuple [TCon "World", int]),
