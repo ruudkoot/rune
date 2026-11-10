@@ -5483,6 +5483,8 @@ Lands in M9.
 
 **Decided (owner, 2026-11-09).** B, with form C in place of form G: "B but with form C instead of form G". `susp` is an abstract tycon and force is one node of Mid, lowered to form C's instructions (D11, D13), not to form G's test, value read and `CALL`. In E2's form C that node is the primitive `thunk_force`, beside `thunk_make`, `thunk_blackhole` and `thunk_self_update`, which `Regs` makes into `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE` (`results/E2/delay/Chs/lazy.sml`, `patches/E2-all-forms.patch`). *SML* above holds for C as for G: C moves the same fingerprints, and the register set's opcode table with them (D13).
 
+**Measured and decided (owner, 2026-11-10): B, as M9 landed it.** C was built on the register VM (branch `hs-r-d3`, `47a9f3c36`): `Force` a fifteenth step of Mid, and D6's C, a `Thunks` group of suspension codes, for recursive ones. On every program measured C gives B's bytecode byte for byte: the 115 lazy ports at `-O0` and `-O2` (`--count` 236.618 G and 469.038 G under both), E2's kernels and E5's four under both lowerings. D6's C saves 7 to 14 instructions and 24 to 64 bytes a recursive binding (30 knots: 420 and 210 instructions at `-O0` and `-O2`). The compiler's image grows by 0.79% and its own compile by 0.03% at tier 2. C is not taken; the branch is kept as the record (`impl/r/d3/` in the drafts).
+
 **To be measured:** C, a `Force` right-hand side, built and benchmarked against B with form C, with D6's C, a recursive form in Mid, for that variant. The owner takes C over B, or not, on the numbers (*Decisions on the numbers*). Lands in M9, and the variant is built there too, after M6's walkers.
 
 ### D4. `Any` against extending `Ty`
@@ -5723,6 +5725,8 @@ Core lowers them as tuples [inference].
 is worth asking again. It may not ride on this review.
 
 **Decided (owner, 2026-11-10).** To be measured: B, multi-value return, built and measured against A, today's four attacks on tuples; then A or B on the numbers, as for D15. The owner's answer: "land behind a measurement". It supersedes the answer of 2026-11-09, "B (let's do it now instead of later)". Until the owner adopts B, A stands. Built in M30 on the register VM, and landed only if adopted (*Decisions on the numbers*).
+
+**Measured and decided (owner, 2026-11-10): A, today's attacks on tuples.** B was built on the register VM (M30, branch `hs-a-m30`, `8ce317123`): Mid's `Values` and `Lets`, the pass `values`, Low's `RetVal` and `ReturnN`, and the instructions `RETN` and `RETV`. On Rune's compiler compiling itself, with `results` on as today, values adds nothing (-0.03% instructions at tier 2, bytes unchanged); in place of `results` it wins back only part of `results`' saving (bytes -0.64% against neither's +4.63%). On 22 numerical benchmarks both together allocate about 2% less on f-arith and the mandelbrot family. In rhc's shapes (E5's kernels, E1's programs) the pass finds nothing, since pairs pass through closures, dictionaries and suspensions. M30 does not land; D25's token keeps its pair as a tuple. The branch is kept as the record (`impl/a/m30/summary.txt`).
 
 *Lead's note.* E12 found that in a whole compile it wins what `results` already wins, and the rest only in units, where `results` does not run. Landed, it touches 126 walkers, both bytecodes, the JIT and runeopt, and moves both fingerprints; the build for measurement is Mid, Low and the register set, its interpreter and JIT. D25's state token does not wait on it: until B is adopted the token's returned pair is a tuple, or erased. Since every `IO` action returns that pair, rhc's programs are measured as well as Rune's compiler and benchmarks.
 
@@ -5969,6 +5973,8 @@ would want `fastPrim` entries and an owner. Lands in M9.
 
 **Decided (owner, 2026-11-09; confirmed 2026-11-10).** The owner's rule, "B if it doesn't leak into Low; otherwise C", gives C: parity by form C, about 115 lines [estimate, not built], with the instructions on the stack set too, runeopt's templates, `tests/opt/every-opcode.rasm`, `x64.sml`, `native.c` and rows in `docs/bytecode.md`. The owner confirmed C on 2026-11-10: "D14: C".
 
+**The owner, 2026-11-10:** the stack VM keeps `last`'s dead suspension alive (48 to 56 bytes an element), because it keeps every local of a waiting frame; the register VM releases it (M9). It is not fixed: the stack VM is for differential testing.
+
 *Lead's note.* Low's datatype does not change between the targets. Force is one primitive there, which the register target expands, and E2's patch adds to `low.sml` only `Low.hoistEnv`, a function over Low's existing operations that both targets call (`patches/E2-all-forms.patch:1-60`). But B as written is parity by form G, and under form C a thunk is a flat `K_THUNK`, which the stack VM's `CALL` cannot enter (`EXPECT (cv, K_CLOSURE, ...)`, `runtime/stack/interp_cases.h:185`), and a C primitive cannot push a frame. So the stack bytecode needs the instructions too, and the rule gives C. Form C never ran on the stack VM in E2. Lands in M9.
 
 ### D15. Eval/apply
@@ -6061,6 +6067,8 @@ from C (D13). Nobody has measured code 11 alone on lazy code.
 bits stay reserved, so nothing is lost by waiting.
 
 **Decided (owner, 2026-11-09).** To be measured: B, pointer code 11, built and benchmarked on rhc's programs and on Rune's; then A or B on the numbers. Until then A stands. Built in M25 (*Decisions on the numbers*).
+
+**Measured and decided (owner, 2026-11-10): A.** B was built on the register VM (branch `hs-w-d16`, `cf6a69552`): code 11 set by the copier where it shortcuts an indirection to an evaluated object, masked at every pointer read in C and `masm.c`, and `FORCE` skipping the header for it. B against A at tier 2 (`instructions:u`; `--count` is equal by construction): Rune's compiler compiling itself 1.111 (cycles 1.073); 32 SML benchmarks, the masks' cost alone, geomean 1.0445 (cycles 1.029), none faster; 24 lazy ports on form C, through `FORCE`'s code-11 path, geomean 1.1215 (cycles 1.110), all slower. The masks are an upper bound, and cache misses were not taken. Code 11 is not used as an evaluated mark; the branch is kept as the record (`impl/w/d16/figures.md`); `heap-layout.md` records the same.
 
 ### D17. Selector thunks
 
@@ -7838,6 +7846,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *Built:* a fifteenth `rhs`, `Force`, lowered to the same instructions as B's `thunk_force`, with D6's C for recursive thunks, a recursive form in Mid; on M6's walkers, and described in `tools/codecs/compiler.sml`. M9 builds it on a branch beside the landed B, for the register target; the Stack target lowers it only once it is taken.
 - *On:* E5's set, lowered by hand to both, in M9; then the run set, with M10 emitting either, in M19.
 - *Figures:* instructions at tier 2 and `--count`, at Rune `-O0` and `-O2`; the compiler's own compile time and bytes, since SML pays an arm in every walker; and whether any pass drops, copies or moves a force under either, with the sharing budget of D51.
+- *Measured, decided (2026-11-10):* B, as landed; C gives the same bytecode on every program measured (D3's section).
 
 **D9: B, multi-value return, against A, today's four attacks on tuples.**
 - *Built:* `Return` of several atoms and a `Let` of several variables in Mid, `Low.Return` of a list, and `RET` and `RESULT` of several values in the register set, its interpreter and JIT; in M30, after M6, on a branch. The build says whether `Lower` uses it for SML's products. The stack set, runeopt and native code take it only once adopted.
@@ -7845,6 +7854,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *On:* Rune's compiler compiling itself, as a whole compile and as a unit build, since E12 found B's gain only in units, where `results` does not run (`backend/lower.sml:849`); Rune's benchmarks, `tests/perf`'s budgeted programs and the 17 numerical benchmarks E12 ran (`results/E12/bench-summary.tsv`); and rhc's programs, since D25's state token returns a pair with every action: E5's hand-lowered set, which erases `IO`, until rhc runs, then the run set in M19 with `IO`-heavy programs named.
 - *Figures:* instructions at tier 2, `--count` and bytes allocated, per program, in a whole compile and in units. E12's figure for units, about 4.4% of the compiler's allocation and nothing in instructions, is deduced from the whole-program figures; this measures it.
 - *Who:* the owner. If B is taken, M30 lands with the stack set, runeopt and native code, and D25's pair goes through it.
+- *Measured, decided (2026-11-10):* A; M30 does not land (D9's section).
 
 **D15: C, eval/apply proper, against A.**
 - *Built:* arity tested by the caller, a partial-application object, over-application by a pushed continuation, on the register VM, its interpreter and JIT, with `Low.Call`, MidLint's rule and `RegVerify`'s; in M25. The stack VM, runeopt and native code take it only once adopted.
@@ -7855,6 +7865,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *Built:* the code set by the copier when it shortcuts an indirection, and masked at every pointer read in C and in `masm.c`, on the register VM; in M25. The stack VM and runeopt's templates take it only once adopted.
 - *On:* the run set, and Rune's programs, since every pointer read moves.
 - *Figures:* instructions at tier 2 and `--count`, and cycles and cache misses, best of N. Code 11 can save only the header load: Rune's `FORCE` has no indirect enter jump for it to spare, unlike GHC's, where Nethercote 2002 §5.4 proposes the bit, unmeasured. On heap-layout's kernels the code was within noise (D16).
+- *Measured, decided (2026-11-10):* A; B costs 4.5% to 12% at tier 2 everywhere measured (D16's section).
 
 **D17: B, Sparud's method, against A.**
 - *Built:* pattern bindings and `~p` desugared to Sparud's tuple form with selectors, his equation (8), plus an impure `updatePat` that overwrites each sibling. It is a desugaring and a primitive, not a Core construct (Sparud 1993, §3.3). Under form C the write skips any sibling that is not unevaluated, and is not a `K_IND` to an unevaluated component: it retargets the sibling's code and capture, or is made only when the component is evaluated. Otherwise the sibling whose force ran the match outlives its own update, E14's case, and D11's pin becomes Haskell's and lands with B, not in M26 [P1's inference]. B changes D34's desugaring. In M25.
