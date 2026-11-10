@@ -7,6 +7,7 @@
 - `BAR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-bar)
 - `Bare` (con): [HS_PARSER](../sig/HS_PARSER.md#con-bare)
 - `binder` (type): [CORE](../sig/CORE.md#type-binder)
+- `binding` (type): [HS_LINT](../sig/HS_LINT.md#type-binding)
 - `BlockComment` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-blockcomment)
 - `builtinData` (val): [CORE](../sig/CORE.md#val-builtindata)
 - `builtinTypes` (val): [CORE](../sig/CORE.md#val-builtintypes)

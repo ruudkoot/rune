@@ -4,8 +4,10 @@
 
 From the **Raises** paragraphs of the documented entries.
 
+- `CoreText.Error`: [`program`](sig/CORE_RUNTIME.md#val-program) of CORE_RUNTIME
 - `Error`: [`check`](sig/CORE_LINT.md#val-check) of CORE_LINT, [`parse`](sig/CORE_TEXT.md#val-parse) of CORE_TEXT, [`parseType`](sig/CORE_TEXT.md#val-parsetype) of CORE_TEXT
 - `HsSource.Error`: [`advance`](sig/HS_LAYOUT.md#val-advance) of HS_LAYOUT, [`fail`](sig/HS_LAYOUT.md#val-fail) of HS_LAYOUT, [`tokens`](sig/HS_LEXER.md#val-tokens) of HS_LEXER, [`unlit`](sig/HS_LITERATE.md#val-unlit) of HS_LITERATE, [`parse`](sig/HS_PARSER.md#val-parse) of HS_PARSER, [`parseTraced`](sig/HS_PARSER.md#val-parsetraced) of HS_PARSER, [`parseFile`](sig/HS_PARSER.md#val-parsefile) of HS_PARSER
+- `Refused`: [`infer`](sig/HS_LINT.md#val-infer) of HS_LINT
 - `Stuck`: [`run`](sig/CORE_INTERP.md#val-run) of CORE_INTERP
 - `Unsupported`: [`program`](sig/CORE_TO_MID.md#val-program) of CORE_TO_MID
 

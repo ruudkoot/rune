@@ -15,11 +15,13 @@
 - `decl_` (type): [HS_AST](../sig/HS_AST.md#type-decl_)
 - `def` (type): [HS_MODULES](../sig/HS_MODULES.md#type-def)
 - `DEFAULT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-default)
+- `default` (type): [HS_LINT](../sig/HS_LINT.md#type-default)
 - `default` (val): [HS_FIXITY](../sig/HS_FIXITY.md#val-default)
 - `defaults` (val): [HS_LEXER](../sig/HS_LEXER.md#val-defaults), [HS_PARSER](../sig/HS_PARSER.md#val-defaults)
 - `defs` (val): [HS_MODULES](../sig/HS_MODULES.md#val-defs)
 - `Deriv` (con): [HS_AST](../sig/HS_AST.md#con-deriv)
 - `deriv` (type): [HS_AST](../sig/HS_AST.md#type-deriv)
+- `derived` (type): [HS_LINT](../sig/HS_LINT.md#type-derived)
 - `DERIVING` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-deriving)
 - `describe` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-describe)
 - `DFixity` (con): [HS_AST](../sig/HS_AST.md#con-dfixity)
@@ -32,6 +34,7 @@
 - `DPat` (con): [HS_AST](../sig/HS_AST.md#con-dpat)
 - `DSig` (con): [HS_AST](../sig/HS_AST.md#con-dsig)
 - `DType` (con): [HS_AST](../sig/HS_AST.md#con-dtype)
+- `dump` (val): [HS_LINT](../sig/HS_LINT.md#val-dump)
 
 ---
 
