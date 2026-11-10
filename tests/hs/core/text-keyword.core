@@ -1,0 +1,3 @@
+; fail: text-keyword.core:3: error: a word of the syntax where a name is wanted: case (write `case`)
+; Core's reader: a keyword where a name is wanted
+(val case Int 1)

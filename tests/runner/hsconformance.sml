@@ -168,6 +168,13 @@ struct
           | NONE => NONE
         end
 
+  (* held while any of ids is Planned: what needs every row it names, as
+     a metamorphic relation or a generated program does *)
+  fun pendingUntil ids =
+    case List.filter (fn id => case statusOf id of SOME "Planned" => true | NONE => true | SOME _ => false) ids of
+      [] => NONE
+    | id :: _ => SOME ("it needs " ^ id ^ ", which is Planned (tests/hs/conformance.tsv)")
+
   (* the directories whose programs serve a row's test *)
   fun serves test = case test of "accept" => ["accept", "lang"] | "run" => ["lang"] | "reject" => ["errors"] | _ => []
 

@@ -400,6 +400,12 @@ struct
       val yes = M.Con0 (1, Ty.bool)
       val setter : M.fundef = {name = 50, label = NONE, tyvars = [], params = [(54, Ty.unit)], result = Ty.unit, body = setting 55}
       fun ident f : M.fundef = {name = f, label = NONE, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
+      (* a type with no constructors, as a lazy value's is, and a function
+         of one parameter *)
+      val susp = Ty.con (900002, "susp", [Ty.int])
+      fun inc f : M.fundef =
+        {name = f, label = NONE, tyvars = [], params = [(f + 1, Ty.int)], result = Ty.int,
+         body = M.Return (M.Prim ("int_add", pairToInt, [M.Var (f + 1, []), one]))}
       fun castBack t =
         [M.Val (46, ([], t), M.Let (47, ([], Ty.unit), M.Prim ("functor_cast", Ty.arrow (Ty.int, Ty.unit), [one]),
                                     M.Return (M.Prim ("functor_cast", Ty.arrow (Ty.unit, t), [M.Var (47, [])]))))]
@@ -444,8 +450,131 @@ struct
       midP ("a function's variable bound again inside it",
             [M.Funs [{name = 51, label = NONE, tyvars = [77], params = [(52, ga)], result = ga,
                       body = M.Let (53, ([77], ga), M.Atom (M.Var (52, [])), M.Return (M.Atom (M.Var (53, [ga]))))}]],
-            "v53 binds 'a77 again")
+            "v53 binds 'a77 again");
+      (* D5's (the haskell98 roadmap's M7): a tag only of a datatype, which
+         an abstract type, a lazy value's, is not; and no global read at the
+         top level before the definition that gives it its value *)
+      midP ("the tag of a datatype", [valR (46, Ty.int, M.ConTag (M.Con0 (0, dty)))], "");
+      midP ("the tag of what has an abstract type",
+            [M.Val (46, ([], Ty.int), M.Let (47, ([], susp), M.Prim ("unsafe_cast", Ty.arrow (Ty.int, susp), [one]),
+                                             M.Return (M.ConTag (M.Var (47, [])))))],
+            "which is no datatype");
+      midP ("a global read before its definition", [valR (46, Ty.int, M.Atom (M.Global (47, []))), valR (47, Ty.int, M.Atom one)],
+            "global g47 is read at the top level before its definition");
+      midP ("a global read in its own definition", [valR (46, Ty.int, M.Prim ("int_add", pairToInt, [M.Global (46, []), one]))],
+            "global g46 is read at the top level before its definition");
+      midP ("a function read before its definition", [valR (46, Ty.arrow (Ty.int, Ty.int), M.Atom (M.Global (43, []))),
+                                                       M.Funs [inc 43]],
+            "global g43 is read at the top level before its definition");
+      midP ("a Do that reads a global defined after it",
+            [M.Do (g48, M.Let (57, ([], Ty.int), M.Atom (M.Global (46, [])), setting 53)), valR (46, Ty.int, M.Atom one)],
+            "global g46 is read at the top level before its definition");
+      midP ("a call of a function defined after it", [valR (46, Ty.int, M.App (M.Global (43, []), [one])), M.Funs [inc 43]], "");
+      midP ("a global read after its definition", [valR (47, Ty.int, M.Atom one), valR (46, Ty.int, M.Atom (M.Global (47, [])))], "");
+      midP ("a function that reads a global defined after it",
+            [M.Funs [{name = 43, label = NONE, tyvars = [], params = [(44, Ty.int)], result = Ty.int,
+                      body = M.Return (M.Atom (M.Global (47, [])))}],
+             valR (47, Ty.int, M.Atom one)], "");
+      midP ("a local function that reads a global defined after it",
+            [M.Val (46, ([], Ty.arrow (Ty.int, Ty.int)),
+                    M.Fun ([{name = 58, label = NONE, tyvars = [], params = [(59, Ty.int)], result = Ty.int,
+                             body = M.Return (M.Atom (M.Global (47, [])))}], M.Return (M.Atom (M.Var (58, []))))),
+             valR (47, Ty.int, M.Atom one)], "")
     end
+
+  (* ---- the forms of Ty another front end makes (haskell98 M28, D4): a
+     type variable applied to types, and a forall in a field -- each
+     through Mid's text and its codec, and refused where it is ill-applied,
+     each by its message *)
+  fun midForms () =
+    let
+      val gm = Ty.gen 78
+      val gb = Ty.gen 79
+      val listOf = Ty.con (#stamp Types.listTycon, "list", [])          (* list, given no argument *)
+      val idTy = Ty.forall ([79], Ty.arrow (gb, gb))                    (* forall 'b. 'b -> 'b *)
+      val dict = Ty.tuple [idTy]
+      fun ident f : M.fundef =
+        {name = f, label = NONE, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
+      (* over a type variable applied: fn ['m 'a] (x : 'a 'm) : 'a 'm *)
+      val over : M.fundef =
+        {name = 63, label = NONE, tyvars = [78, 77], params = [(64, Ty.app (gm, [ga]))], result = Ty.app (gm, [ga]),
+         body = M.Return (M.Atom (M.Var (64, [])))}
+      (* a dictionary of the identity, its method taken at a scheme and used
+         at int; the function over 'm at list *)
+      val dictP = [M.Funs [ident 51], valR (60, dict, M.Tuple [M.Global (51, [])]),
+                   M.Val (61, ([], Ty.int),
+                          M.Let (62, ([80], Ty.arrow (Ty.gen 80, Ty.gen 80)), M.Select (0, M.Global (60, [])),
+                                 M.Return (M.App (M.Var (62, [Ty.int]), [one]))))]
+      val nilInt = M.Con0 (Types.nilTag (), Ty.list Ty.int)
+      val overP = [M.Funs [over], valR (66, Ty.list Ty.int, M.App (M.Global (63, [listOf, Ty.int]), [nilInt]))]
+      fun fn1 (f, tyvars, ps, result) : M.fundef =
+        {name = f, label = NONE, tyvars = tyvars, params = ps, result = result, body = M.Return (M.Atom (M.Var (#1 (hd ps), [])))}
+      (* a function through MidCodec and back, each name a number *)
+      fun codec (f : M.fundef) : M.fundef =
+        let
+          val w = Pickle.writer ()
+          fun n x = Pickle.nat (w, x)
+          val () = MidCodec.write (w, {stamp = n, tycon = n, tvar = n, file = fn _ => (), position = fn _ => ()}) f
+          val r = Pickle.reader (Pickle.contents w)
+          fun rn () = Pickle.rnat r
+        in MidCodec.read (r, {stamp = rn, tycon = rn, tvar = rn, file = fn () => "", local' = fn i => 1000 + i}) end
+      fun sameThrough (what, f) =
+        report ("forms: " ^ what ^ " through the codec", MidText.show [M.Funs [codec f]] = MidText.show [M.Funs [f]],
+                MidText.show [M.Funs [codec f]])
+    in
+      midP ("a polymorphic field, made of a function at no types and taken at a scheme", dictP, "");
+      midP ("a type variable applied, at a type name given no argument", overP, "");
+      checked ("forms: a polymorphic field and a type variable applied through Mid's text",
+               fn () => MidText.roundTrip (dictP @ overP), "");
+      sameThrough ("a type variable applied", over);
+      sameThrough ("a polymorphic field", fn1 (70, [], [(71, dict)], dict));
+      report ("forms: a forall is the same type as one that binds other names",
+              Ty.equal (idTy, Ty.forall ([81], Ty.arrow (Ty.gen 81, Ty.gen 81)))
+              andalso not (Ty.equal (idTy, Ty.forall ([81], Ty.arrow (Ty.gen 81, gb)))), Ty.toString idTy);
+      report ("forms: a type variable applied, given a type name, is the type name given more",
+              Ty.equal (Ty.subst (IntMap.insert (IntMap.empty, 78, listOf)) (Ty.app (gm, [Ty.int])), Ty.list Ty.int), "");
+      midP ("a forall where a value's type is wanted", [M.Funs [ident 51], valR (67, idTy, M.Atom (M.Global (51, [])))],
+            "is polymorphic");
+      midP ("a polymorphic field bound where a value's type is wanted",
+            [M.Funs [ident 51], valR (60, dict, M.Tuple [M.Global (51, [])]),
+             M.Val (68, ([], Ty.int), M.Let (69, ([], Ty.arrow (Ty.int, Ty.int)), M.Select (0, M.Global (60, [])),
+                                             M.Return (M.App (M.Var (69, []), [one]))))],
+            "where int -> int is wanted");
+      midP ("a polymorphic variable at no types given where a value is wanted",
+            [M.Funs [ident 51], valR (67, Ty.arrow (Ty.int, Ty.int), M.Atom (M.Global (51, [])))],
+            "abstracts over 1 variables and is given 0 types");
+      midP ("a forall in a field that binds a variable in scope",
+            [M.Funs [fn1 (72, [77], [(73, Ty.tuple [Ty.forall ([77], Ty.arrow (ga, ga))])], Ty.tuple [Ty.forall ([77], Ty.arrow (ga, ga))])]],
+            "binds 'a77 again");
+      midP ("a type variable applied to two numbers of types",
+            [M.Funs [fn1 (74, [78, 77], [(75, Ty.app (gm, [ga])), (76, Ty.app (gm, [ga, ga]))], Ty.app (gm, [ga]))]],
+            "applies 'a78 to 2 types, and elsewhere to 1");
+      midP ("a type variable applied where a value's type is wanted unapplied",
+            [M.Funs [fn1 (74, [78, 77], [(75, Ty.app (gm, [ga])), (76, gm)], Ty.app (gm, [ga]))]],
+            "applies 'a78 to 0 types, and elsewhere to 1");
+      midP ("an application of what is no type variable", [valR (67, Ty.app (Ty.tuple [], [Ty.int]), M.Atom M.Unit)],
+            "applies what is no type variable");
+      midP ("a type name given fewer arguments where a value's type is wanted", [valR (67, listOf, M.Atom nilInt)],
+            "gives type name list 0 arguments, of its 1");
+      midP ("a type name given more arguments than it has parameters",
+            [M.Funs [over], valR (66, Ty.list Ty.int, M.App (M.Global (63, [Ty.con (#stamp Types.listTycon, "list", [Ty.int, Ty.int]), Ty.int]), [nilInt]))],
+            "gives type name list 2 arguments, of its 1")
+    end
+
+  (* ---- MidText's reader (the haskell98 roadmap's M7): a type takes the
+     arguments its declaration says, an abstract type's too *)
+  fun textP (what, text, wanted) =
+    (ignore (MidText.parse text); report ("mid text: " ^ what, wanted = "", "accepted"))
+    handle MidText.Syntax m => report ("mid text: " ^ what, wanted <> "" andalso String.isSubstring wanted m, "refused: " ^ m)
+  fun textRules () =
+    (textP ("an abstract type at its arity", "(abstract box 1)\n(val g1 : int box box (return (prim unsafe_cast 1 : int -> int box box)))", "");
+     textP ("an abstract type given two arguments for one",
+            "(abstract box 1)\n(val g1 : (int, int) box (return (prim unsafe_cast 1 : int -> (int, int) box)))",
+            "the type box takes 1 argument, not 2");
+     textP ("a datatype given none for one", "(datatype pair ('a) (0 \"P\" : 'a * 'a))\n(val g1 : pair (return (con0 0 : pair)))",
+            "the type pair takes 1 argument, not 0");
+     textP ("a built-in type given an argument it does not take", "(val g1 : int int (return 1))",
+            "the type int takes 0 arguments, not 1"))
 
   (* ---- the levels (M3): a check runs from its level up; one that is
      always on says so, and how to turn it off; one at a boundary, found
@@ -603,6 +732,8 @@ struct
      renamings2 ();
      lambdaRules ();
      midRules ();
+     midForms ();
+     textRules ();
      lowRules ();
      codes ();
      bases ();

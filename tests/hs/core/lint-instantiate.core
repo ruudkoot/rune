@@ -1,0 +1,4 @@
+; fail: [instantiate] in val g: the type variable a of id is instantiated at an evaluated type !Int
+; CoreLint, instantiate: no type variable is instantiated at an evaluated type, as none is at susp T in Mid
+(val id (forall (a) (-> a a)) (\ (@a (x a)) x))
+(val g (-> !Int Int) (\ ((n !Int)) (id @!Int n)))

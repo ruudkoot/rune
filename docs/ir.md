@@ -657,6 +657,27 @@ where a use needs no particular type (the `int` of `val (f, n) = (fn x =>
 x, 1)`) -- is made `unit` there (`ToMid.ground`), which is as good a type as
 any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 
+**Types another front end makes** (decision D4 of
+[plans/language/haskell98.md](plans/language/haskell98.md)). `Ty` has two
+forms that SML's elaborator never makes, for a front end whose types say
+more: `App`, a type variable applied to types (Haskell's `m a`, in the
+text `'a 'm`), whose variable stands for a type name given fewer arguments
+than its datatype has parameters (`list`, of `'a list`), so that its
+instance at `list` and `int` is `int list`; and `Forall`, the polymorphic
+type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
+'b)`), which binds its own variables. A forall is the same type as one that
+differs from it only in the names it binds (`Ty.equal`), and a
+substitution renames them where it would capture one. A variable used, as
+a field or as a `Let`'s step at a scheme of its own, at fewer types than
+its binder abstracts over is its binder at its scheme, the first variables
+given: a forall of the rest (at no types, of all; a function `Lift` takes
+out of another is given that one's variables first). So a polymorphic
+function is put in a dictionary and taken out of one, at a scheme, and
+used at the types it is used at. A tuple with a
+polymorphic field stays whole where `Workers`, `flattenJoin` and a lifted
+function would take it apart, since a parameter's type is no forall;
+`Lower` takes an application as `RAny` and a forall as its body.
+
 ### What a `Mid` keeps
 
 `MidLint` checks, after `mid`:
@@ -674,6 +695,13 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 * **Type variables in scope** (Mid is System F, above): a type names only
   the type variables of the binders around it, and no binder binds one
   again where it is in scope.
+* **The forms of another front end** (above): a forall is a field's type
+  alone, never a binder's, a parameter's or a step's but a `Let`'s at a
+  scheme, and binds no variable in scope or twice; an application's head
+  is a type variable, applied to as many types wherever it is; a type name
+  is given no more arguments than its datatype has parameters, and as many
+  where it is a value's type -- fewer only where a type is given a type
+  variable or a type name. Each type once, by its node.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
 * **What its types alone do not say:** constants, primitives, exceptions'
@@ -687,6 +715,22 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
   module's slots are set by the function the runtime is given, at the load
   and at each reload (`Translate`, `RuneDynamic.take`; a `dynamic_cast` of
   each slot from `unit`), which `Lift` may take out of the `Do`.
+* **Tags:** `ConTag` is of a datatype, never of a type with no
+  constructors -- an abstract one, as a value not yet evaluated has (the
+  haskell98 roadmap's D5), whose tag is a fatal on every engine.
+* **Evaluated** (the haskell98 roadmap's D5): a variable whose type is a
+  datatype holds a value of it, never one still to be evaluated, since
+  `ConTag` and `Decon` read it as it is, a step that nothing uses may go
+  (`Prims.removable`), and tier 2 trusts its representation. No lint sees
+  this: it holds by types alone, a lazy value having a type that is no
+  datatype (*What a front end gives Mid*, below), and across a cast it
+  holds only as the front end keeps it.
+* **The top level in order:** what a `Val`'s or a `Do`'s expression reads,
+  outside the functions it makes, is a global a definition before it
+  defines, or a function after it that it calls, a known call, which reads
+  no global; read before the definition that gives it its value, a global
+  is a fatal at `-O0` that a pass from `-O1` may hide, so that the levels
+  disagree.
 * **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
@@ -704,6 +748,40 @@ openness the old one's; so it keeps what `MidLint` checked after `mid`. The
 units' `Mid` that `--units --whole` concatenates is linted by `MidLint`
 (`midconcat`), since a unit taken from the cache was not.
 
+### Walking Mid
+
+A few functions of `Mid` name every form of a step and of an expression,
+with no catch-all (decision D10 of
+[plans/language/haskell98.md](plans/language/haskell98.md)), and a walker
+whose arms would only do what one of them does asks it instead:
+
+* `Mid.atomsOfRhs` gives the atoms a step names, in the order it names
+  them, and `Mid.typesOfRhs` the type it says beside them, which comes
+  before its atoms;
+* `Mid.mapRhs` gives the step with each atom mapped, and `Mid.mapRhsWith`
+  with its types, its atoms and the global a `SetGlobal` sets mapped too,
+  each in the order the step names them, so that a walker that numbers
+  what it meets as it goes (`MidCanon.rename`) meets them in that order;
+* `Mid.fold` walks an expression, giving what it is given each step, each
+  atom outside a step (an `If`'s test, a `Jump`'s arguments, a `Raise`'s
+  exception), each jump and each function made in the expression, whose
+  body is the caller's to walk or not; `Mid.appRhs` and `Mid.existsRhs`
+  give, or ask of, every step, those of the functions made there among
+  them.
+
+A walker that does more than these at some form names each form it does
+not end at, rather than ending in `| _ =>`. So a form added to `rhs` or
+`exp` is a match that is not exhaustive (a warning of the compile,
+`elab/exhaust.sml`) in these functions and in each walker that says more of
+it, and is walked as its parts say everywhere else: never taken in silence
+for a step with no atoms or no effect, or for an expression with nothing
+under it. What still ends in a catch-all is a peephole, which knows the
+shapes it rewrites and leaves the rest as they are (`Simplify.known`,
+`Lower.tagTest`); a judgement that holds of any form (`Expand.small`, for
+which what is not a line of steps and `If`s is big); or a comparison of
+two (`MidCanon.checkRenaming`), whose catch-all is the bug of two forms
+that differ.
+
 ### Mid as text
 
 `MidText.show` prints a program (`--dump-after=mid`), and `MidText.parse`
@@ -718,7 +796,8 @@ program written by hand. The grammar is at the head of
   variable no type was found for).
 * A type name is written as it is, with `/N` where two would clash; a
   datatype, or a type without constructors, that is not built in is
-  declared at the head.
+  declared at the head, with the arguments it takes, and the reader refuses
+  a type given another number of them.
 * A constant of the type its kind gives it is written bare; others as
   `(0w5 : word8)`.
 * A type of more than `MidText.bigType` (1000) nodes as a tree is declared
@@ -912,7 +991,11 @@ does.
   called, then in a worker the tags, then each field by its own type --
   `imm_eq`, `ptr_eq`, `string_eq`, the function of its type, or `poly_eq`
   where the type is not known. Such a comparison is compiled code: the
-  limit of `--equality-work` on the runtime's walk does not stop it.
+  limit of `--equality-work` on the runtime's walk does not stop it. A type
+  of more than 256 nodes as a tree (`Simplify.eqBound`) has no function,
+  and its `=` is `poly_eq`: a datatype whose constructor takes it at a
+  bigger type, a non-uniform one, has a new type at each level, and
+  functions made for each would never end (`tests/lang/rt.equality_nonuniform`).
 * **`refs`** ([plans/performance.md](plans/performance.md), M8): a
   parameter of a function of the top level that is a ref the function only
   reads and sets, and gives on as it is to its own calls of itself in tail
@@ -970,7 +1053,11 @@ does.
   loop of MLton's `peek` calls a function with the closures it was given,
   and takes apart what it returns). A copy for local functions grows the
   definition the call is in, within the budget of `inline`; a call that
-  finds its copy made already costs nothing.
+  finds its copy made already costs nothing. A function that calls itself
+  at other types than its own (polymorphic recursion, which Mid may have
+  and no SML source makes) has no parameter that is static, since no copy
+  of it would close, and a copy's call of the function is a call of the
+  copy only at the copy's types (`tests/ir/hs-nest-static`).
 
 ## Low
 

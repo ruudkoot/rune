@@ -172,7 +172,10 @@ struct
           args ("Ty.Con", [field ("s", Leaf "tyname"), field ("n", Leaf "string"), field ("args", List (Type "irty"))]) |> built "Ty.con",
           args ("Ty.Tuple", [field ("ts", List (Type "irty"))]) |> built "Ty.tuple",
           args ("Ty.Arrow", [field ("a", Type "irty"), field ("b", Type "irty")]) |> built "Ty.arrow",
-          nullary "Ty.ExnCon" |> built "Ty.exnCon"])
+          nullary "Ty.ExnCon" |> built "Ty.exnCon",
+          (* the forms another front end makes (D4 of the haskell98 roadmap) *)
+          args ("Ty.App", [field ("h", Type "irty"), field ("args", List (Type "irty"))]) |> built "Ty.app",
+          args ("Ty.Forall", [field ("vs", List (Leaf "tvar")), field ("b", Type "irty")]) |> built "Ty.forall"])
     |> viewed "Ty.view" |> noFp |> noSame
 
   (* ---- Mid ---- *)

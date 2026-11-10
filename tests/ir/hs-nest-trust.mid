@@ -1,0 +1,74 @@
+(* run: after hs-rts.mid *)
+(* The same copy of a polymorphically recursive function, where the element
+   goes through the function at the type the copy gave it. Compiled with the
+   default lint a copy treats a nest of pairs as a nest of ints.
+     keep :: (Int -> Int) -> Nest a -> Nest a   -- f is static
+     keep f Nil = Nil
+     keep f (Cons x r) = let n = f 1 in Cons x (keep f r)
+     first :: Nest a -> [a]...  *)
+(datatype nest ('a) (0 "NNil") (1 "NCons" : 'a * ('a * 'a) nest))
+(funs
+  (fn gbuild ['a] ((vbN : int) (vbX : 'a)) : 'a nest
+    (let (vbZ : bool) (prim poly_eq vbN 0 : (int * int) -> bool)
+    (if vbZ
+      (return (con0 0 : 'a nest))
+      (let (vbP : 'a * 'a) (tuple vbX vbX)
+      (let (vbN1 : int) (prim int_sub vbN 1 : (int * int) -> int)
+      (let (vbR : ('a * 'a) nest) (app gbuild['a * 'a] vbN1 vbP)
+      (let (vbC : 'a * ('a * 'a) nest) (tuple vbX vbR)
+      (return (con 1 vbC : 'a nest))))))))))
+(funs
+  (fn gsize ['a] ((vzN : 'a nest)) : int
+    (let (vzT : int) (tag vzN)
+    (let (vzC : bool) (prim poly_eq vzT 1 : (int * int) -> bool)
+    (if vzC
+      (let (vzP : 'a * ('a * 'a) nest) (decon 1 vzN : 'a nest)
+      (let (vzR : ('a * 'a) nest) (select 1 vzP)
+      (let (vzS : int) (app gsize['a * 'a] vzR)
+      (let (vzM : int) (prim int_mul 2 vzS : (int * int) -> int)
+      (return (prim int_add 1 vzM : (int * int) -> int))))))
+      (return 0))))))
+(funs
+  (fn gsumDeep ['a] ((vsdF : 'a -> int) (vsdN : 'a nest)) : int
+    (let (vsdT : int) (tag vsdN)
+    (let (vsdC : bool) (prim poly_eq vsdT 1 : (int * int) -> bool)
+    (if vsdC
+      (let (vsdP : 'a * ('a * 'a) nest) (decon 1 vsdN : 'a nest)
+      (let (vsdX : 'a) (select 0 vsdP)
+      (let (vsdR : ('a * 'a) nest) (select 1 vsdP)
+      (let (vsdH : int) (app vsdF vsdX)
+      (fun
+        (fn vsdG ((vsdQ : 'a * 'a)) : int
+          (let (vsdA : 'a) (select 0 vsdQ)
+          (let (vsdB : 'a) (select 1 vsdQ)
+          (let (vsdFA : int) (app vsdF vsdA)
+          (let (vsdFB : int) (app vsdF vsdB)
+          (return (prim int_add vsdFA vsdFB : (int * int) -> int)))))))
+        (let (vsdS : int) (app gsumDeep['a * 'a] vsdG vsdR)
+        (return (prim int_add vsdH vsdS : (int * int) -> int))))))))
+      (return 0))))))
+(funs
+  (fn gkeep ['a] ((vkF : int -> int) (vkN : 'a nest)) : 'a nest
+    (let (vkT : int) (tag vkN)
+    (let (vkC : bool) (prim poly_eq vkT 1 : (int * int) -> bool)
+    (if vkC
+      (let (vkP : 'a * ('a * 'a) nest) (decon 1 vkN : 'a nest)
+      (let (vkX : 'a) (select 0 vkP)
+      (let (vkR : ('a * 'a) nest) (select 1 vkP)
+      (let (vkH : int) (app vkF 1)
+      (let (vkS : ('a * 'a) nest) (app gkeep['a * 'a] vkF vkR)
+      (let (vkT2 : 'a * ('a * 'a) nest) (tuple vkX vkS)
+      (return (con 1 vkT2 : 'a nest))))))))
+      (return (con0 0 : 'a nest)))))))
+(funs
+  (fn gdbl ((vdbX : int)) : int
+    (return (prim int_mul 2 vdbX : (int * int) -> int)))
+  (fn gid ((vidX : int)) : int
+    (return vidX)))
+(do ()
+  (let (vn : int nest) (app gbuild[int] 8 3)
+  (let (vk : int nest) (app gkeep[int] gdbl vn)
+  (let (vs : int) (app gsize[int] vk)
+  (let (vu : unit) (app gputInt vs)
+  (let (vt : int) (app gsumDeep[int] gid vk)
+  (return (app gputInt vt))))))))

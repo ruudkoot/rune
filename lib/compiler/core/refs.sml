@@ -24,22 +24,6 @@ struct
       Ty.Con (s, _, [a]) => if s = #stamp Types.refTycon then SOME a else NONE
     | _ => NONE
 
-  fun atomsOf (r : rhs) : atom list =
-    case r of
-      Atom a => [a]
-    | App (f, xs) => f :: xs
-    | Prim (_, _, xs) => xs
-    | Tuple xs => xs
-    | Select (_, a) => [a]
-    | Con (_, _, a) => [a]
-    | Decon (_, _, a) => [a]
-    | ConTag a => [a]
-    | MkExn (c, a) => [c, a]
-    | ExnCon a => [a]
-    | ExnArg (_, a) => [a]
-    | SetGlobal (_, a) => [a]
-    | _ => []
-
   (* The places of f's parameters that are refs it only reads and sets and
      gives on to its calls of itself in tail position. *)
   fun refParams (f : fundef) : int list =
@@ -51,7 +35,7 @@ struct
         let fun go i = if i = n then NONE else if #1 (Vector.sub (ps, i)) = x then SOME i else go (i + 1)
         in go 0 end
       fun kill a = case a of Var (x, _) => (case index x of SOME i => Array.update (cand, i, false) | NONE => ()) | _ => ()
-      fun killAll r = List.app kill (atomsOf r)
+      fun killAll r = List.app kill (atomsOfRhs r)
       fun killExp e =
         case e of
           Let (_, _, r, b) => (killAll r; killExp b)
@@ -129,7 +113,7 @@ struct
             | Handle (a, _, h) => go a orelse go h
             | Return r => rhs r
             | Mark (_, a) => go a
-            | _ => false
+            | Raise _ => false
         in go e end
       fun go (e, cur : atom IntMap.map) : exp =
         case e of
@@ -167,7 +151,8 @@ struct
                                         (List.tabulate (List.length args, fn i => i), args)))
             else e
         | Mark (sp, a) => Mark (sp, go (a, cur))
-        | _ => e
+        | Raise _ => e
+        | Return _ => e
       val cur0 = List.foldl (fn (r, m) => IntMap.insert (m, r, Var (r, []))) IntMap.empty refs
       (* the parameters: a ref's is its value now, of the type it holds *)
       val params' = ListPair.map (fn ((_, y, t), i) => (y, if List.exists (fn k => k = i) ks then valOf (refArg t) else t))
@@ -193,17 +178,7 @@ struct
       fun callsOne (e : exp) : bool =
         let
           fun rhs r = case r of App (Global (g, _), _) => isSome (IntTable.find (cands, g)) | _ => false
-          fun go e =
-            case e of
-              Let (_, _, r, b) => rhs r orelse go b
-            | Fun (fs, b) => List.exists (fn f => go (#body f)) fs orelse go b
-            | Join (_, _, jb, sc) => go jb orelse go sc
-            | If (_, t, f) => go t orelse go f
-            | Handle (a, _, h) => go a orelse go h
-            | Return r => rhs r
-            | Mark (_, a) => go a
-            | _ => false
-        in go e end
+        in existsRhs rhs e end
       (* a copy for each function and set of its ref parameters given
          fresh refs *)
       val copies : var StringMap.map ref = ref StringMap.empty
@@ -230,14 +205,14 @@ struct
           fun atom a = case a of Var (x, _) => IntTable.bump (t, x) | _ => ()
           fun go e =
             case e of
-              Let (_, _, r, b) => (List.app atom (atomsOf r); go b)
+              Let (_, _, r, b) => (List.app atom (atomsOfRhs r); go b)
             | Fun (fs, b) => (List.app (fn f => go (#body f)) fs; go b)
             | Join (_, _, jb, sc) => (go jb; go sc)
             | Jump (_, xs) => List.app atom xs
             | If (a, t, f) => (atom a; go t; go f)
             | Handle (a, _, h) => (go a; go h)
             | Raise a => atom a
-            | Return r => List.app atom (atomsOf r)
+            | Return r => List.app atom (atomsOfRhs r)
             | Mark (_, a) => go a
         in go e; t end
       (* a definition's expression, its calls rewritten: fresh holds the
@@ -293,7 +268,8 @@ struct
             | Handle (a, x, h) => Handle (go a, x, go h)
             | Return r => Return (call r)
             | Mark (sp, a) => Mark (sp, go a)
-            | _ => e
+            | Jump _ => e
+            | Raise _ => e
         in go e end
       val p' =
         if not (!any) then p else

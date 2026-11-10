@@ -1,0 +1,182 @@
+(* run: after hs-rts.mid *)
+(* data Nest a = Nil | Cons a (Nest (a,a))     with signatures: polymorphic recursion
+
+   Strict first, !a and !(Nest (a,a)), so that nothing hides behind a thunk:
+     build :: Int -> a -> Nest a
+     build 0 x = Nil
+     build n x = Cons x (build (n-1) (x,x))
+     size :: Nest a -> Int
+     size Nil = 0
+     size (Cons _ r) = 1 + 2 * size r
+     sumN :: (a -> Int) -> Nest a -> Int
+     sumN f Nil = 0
+     sumN f (Cons x r) = f x + sumN (\(a,b) -> f a + f b) r
+     mapN :: (a -> b) -> Nest a -> Nest b
+     mapN f Nil = Nil
+     mapN f (Cons x r) = Cons (f x) (mapN (\(a,b) -> (f a, f b)) r)
+   sumN and mapN pass a function known at each call that grows at each level:
+   a specialiser that copies for a known function has no fixed point here.
+   
+   Then the lazy form, with a dictionary built at each level:
+     data LNest a = LNil | LCons a (LNest (a,a))
+     class Show a where show :: a -> String
+     instance Show Int; instance (Show a, Show b) => Show (a,b)
+     instance Show a => Show (LNest a) where
+       show LNil = "Nil"
+       show (LCons x r) = show x ++ ":" ++ show r    -- at (a,a), a dictionary made here
+     infinite :: a -> LNest a                         -- an infinite nest, shown to a depth
+     infinite x = LCons x (infinite (x,x)) *)
+(datatype nest ('a) (0 "NNil") (1 "NCons" : 'a * ('a * 'a) nest))
+(funs
+  (fn gbuild ['a] ((vbN : int) (vbX : 'a)) : 'a nest
+    (let (vbZ : bool) (prim poly_eq vbN 0 : (int * int) -> bool)
+    (if vbZ
+      (return (con0 0 : 'a nest))
+      (let (vbP : 'a * 'a) (tuple vbX vbX)
+      (let (vbN1 : int) (prim int_sub vbN 1 : (int * int) -> int)
+      (let (vbR : ('a * 'a) nest) (app gbuild['a * 'a] vbN1 vbP)
+      (let (vbC : 'a * ('a * 'a) nest) (tuple vbX vbR)
+      (return (con 1 vbC : 'a nest))))))))))
+(funs
+  (fn gsize ['a] ((vzN : 'a nest)) : int
+    (let (vzT : int) (tag vzN)
+    (let (vzC : bool) (prim poly_eq vzT 1 : (int * int) -> bool)
+    (if vzC
+      (let (vzP : 'a * ('a * 'a) nest) (decon 1 vzN : 'a nest)
+      (let (vzR : ('a * 'a) nest) (select 1 vzP)
+      (let (vzS : int) (app gsize['a * 'a] vzR)
+      (let (vzM : int) (prim int_mul 2 vzS : (int * int) -> int)
+      (return (prim int_add 1 vzM : (int * int) -> int))))))
+      (return 0))))))
+(funs
+  (fn gsumN ['a] ((vsuF : 'a -> int) (vsuN : 'a nest)) : int
+    (let (vsuT : int) (tag vsuN)
+    (let (vsuC : bool) (prim poly_eq vsuT 1 : (int * int) -> bool)
+    (if vsuC
+      (let (vsuP : 'a * ('a * 'a) nest) (decon 1 vsuN : 'a nest)
+      (let (vsuX : 'a) (select 0 vsuP)
+      (let (vsuR : ('a * 'a) nest) (select 1 vsuP)
+      (let (vsuH : int) (app vsuF vsuX)
+      (fun
+        (fn vsuG ((vsuQ : 'a * 'a)) : int
+          (let (vsuA : 'a) (select 0 vsuQ)
+          (let (vsuB : 'a) (select 1 vsuQ)
+          (let (vsuFA : int) (app vsuF vsuA)
+          (let (vsuFB : int) (app vsuF vsuB)
+          (return (prim int_add vsuFA vsuFB : (int * int) -> int)))))))
+        (let (vsuS : int) (app gsumN['a * 'a] vsuG vsuR)
+        (return (prim int_add vsuH vsuS : (int * int) -> int))))))))
+      (return 0))))))
+(funs
+  (fn gmapN ['a 'b] ((vmnF : 'a -> 'b) (vmnN : 'a nest)) : 'b nest
+    (let (vmnT : int) (tag vmnN)
+    (let (vmnC : bool) (prim poly_eq vmnT 1 : (int * int) -> bool)
+    (if vmnC
+      (let (vmnP : 'a * ('a * 'a) nest) (decon 1 vmnN : 'a nest)
+      (let (vmnX : 'a) (select 0 vmnP)
+      (let (vmnR : ('a * 'a) nest) (select 1 vmnP)
+      (let (vmnH : 'b) (app vmnF vmnX)
+      (fun
+        (fn vmnG ((vmnQ : 'a * 'a)) : 'b * 'b
+          (let (vmnA : 'a) (select 0 vmnQ)
+          (let (vmnB : 'a) (select 1 vmnQ)
+          (let (vmnFA : 'b) (app vmnF vmnA)
+          (let (vmnFB : 'b) (app vmnF vmnB)
+          (return (tuple vmnFA vmnFB)))))))
+        (let (vmnS : ('b * 'b) nest) (app gmapN['a * 'a, 'b * 'b] vmnG vmnR)
+        (let (vmnQ2 : 'b * ('b * 'b) nest) (tuple vmnH vmnS)
+        (return (con 1 vmnQ2 : 'b nest)))))))))
+      (return (con0 0 : 'b nest)))))))
+(funs
+  (fn gid ((vidX : int)) : int
+    (return vidX))
+  (fn gdbl ((vdbX : int)) : int
+    (return (prim int_mul 2 vdbX : (int * int) -> int))))
+
+(* the lazy one *)
+(datatype lnest ('a) (0 "LNil") (1 "LCons" : 'a susp * ('a, 'a) lpair lnest susp))
+(datatype lpair ('a 'b) (0 "LPair" : 'a susp * 'b susp))
+(datatype dshow ('a) (0 "DShow" : 'a susp -> string))
+(funs
+  (fn gshow ['a] ((vshD : 'a dshow) (vshX : 'a susp)) : string
+    (let (vshM : 'a susp -> string) (decon 0 vshD : 'a dshow)
+    (return (app vshM vshX))))
+  (fn gshowIntM ((vsiX : int susp)) : string
+    (let (vsiI : int) (app gforce[int] vsiX)
+    (return (prim int_to_string vsiI : int -> string)))))
+(val gdShowInt : int dshow (return (con 0 gshowIntM : int dshow)))
+(funs
+  (fn gdShowPair ['a 'b] ((vspA : 'a dshow) (vspB : 'b dshow)) : ('a, 'b) lpair dshow
+    (fun
+      (fn vspS ((vspX : ('a, 'b) lpair susp)) : string
+        (let (vspV : ('a, 'b) lpair) (app gforce[('a, 'b) lpair] vspX)
+        (let (vspT : 'a susp * 'b susp) (decon 0 vspV : ('a, 'b) lpair)
+        (let (vspL : 'a susp) (select 0 vspT)
+        (let (vspR : 'b susp) (select 1 vspT)
+        (let (vspLS : string) (app gshow['a] vspA vspL)
+        (let (vspRS : string) (app gshow['b] vspB vspR)
+        (let (vsp1 : string) (prim string_concat "(" vspLS : (string * string) -> string)
+        (let (vsp2 : string) (prim string_concat vsp1 "," : (string * string) -> string)
+        (let (vsp3 : string) (prim string_concat vsp2 vspRS : (string * string) -> string)
+        (return (prim string_concat vsp3 ")" : (string * string) -> string))))))))))))
+      (return (con 0 vspS : ('a, 'b) lpair dshow)))))
+(* showTo: show to a depth, the dictionary for this level; the recursive call at (a,a), with a dictionary made here *)
+(funs
+  (fn gshowTo ['a] ((vstoD : 'a dshow) (vstoN : int) (vstoX : 'a lnest susp)) : string
+    (let (vstoZ : bool) (prim poly_eq vstoN 0 : (int * int) -> bool)
+    (if vstoZ
+      (return "...")
+      (let (vstoV : 'a lnest) (app gforce['a lnest] vstoX)
+      (let (vstoT : int) (tag vstoV)
+      (let (vstoC : bool) (prim poly_eq vstoT 1 : (int * int) -> bool)
+      (if vstoC
+        (let (vstoP : 'a susp * ('a, 'a) lpair lnest susp) (decon 1 vstoV : 'a lnest)
+        (let (vstoH : 'a susp) (select 0 vstoP)
+        (let (vstoR : ('a, 'a) lpair lnest susp) (select 1 vstoP)
+        (let (vstoHS : string) (app gshow['a] vstoD vstoH)
+        (let (vstoD2 : ('a, 'a) lpair dshow) (app gdShowPair['a, 'a] vstoD vstoD)
+        (let (vstoN1 : int) (prim int_sub vstoN 1 : (int * int) -> int)
+        (let (vstoRS : string) (app gshowTo[('a, 'a) lpair] vstoD2 vstoN1 vstoR)
+        (let (vsto1 : string) (prim string_concat vstoHS ":" : (string * string) -> string)
+        (return (prim string_concat vsto1 vstoRS : (string * string) -> string))))))))))
+        (return "Nil")))))))))
+(funs
+  (fn ginfinite ['a] ((vinX : 'a susp)) : 'a lnest
+    (fun
+      (fn vinR ((vinU : unit)) : ('a, 'a) lpair lnest
+        (let (vinT : 'a susp * 'a susp) (tuple vinX vinX)
+        (let (vinP : ('a, 'a) lpair) (con 0 vinT : ('a, 'a) lpair)
+        (let (vinPS : ('a, 'a) lpair susp) (app gdone[('a, 'a) lpair] vinP)
+        (return (app ginfinite[('a, 'a) lpair] vinPS))))))
+      (let (vinRS : ('a, 'a) lpair lnest susp) (app gdelay[('a, 'a) lpair lnest] vinR)
+      (let (vinC : 'a susp * ('a, 'a) lpair lnest susp) (tuple vinX vinRS)
+      (return (con 1 vinC : 'a lnest)))))))
+(do ()
+  (let (vn : int nest) (app gbuild[int] 12 1)
+  (let (vs : int) (app gsize[int] vn)
+  (let (vu1 : unit) (app gputInt vs)
+  (let (vt : int) (app gsumN[int] gid vn)
+  (let (vu2 : unit) (app gputInt vt)
+  (let (vn2 : int nest) (app gmapN[int, int] gdbl vn)
+  (let (vt2 : int) (app gsumN[int] gid vn2)
+  (let (vu3 : unit) (app gputInt vt2)
+  (* a nest of strings: the same functions at another type *)
+  (let (vns : string nest) (app gbuild[string] 3 "x")
+  (let (vsn : int) (app gsize[string] vns)
+  (let (vu4 : unit) (app gputInt vsn)
+  (let (veq : bool) (prim poly_eq vn vn2 : (int nest * int nest) -> bool)
+  (join jAfter ((vu4c : unit))
+    (let (vseven : int susp) (app gdone[int] 7)
+    (fun
+      (fn vinf ((vinfU : unit)) : int lnest (return (app ginfinite[int] vseven)))
+      (let (vinfS : int lnest susp) (app gdelay[int lnest] vinf)
+      (let (vshown : string) (app gshowTo[int] gdShowInt 3 vinfS)
+      (let (vu5 : unit) (app gputs vshown)
+      (let (vshown2 : string) (app gshowTo[int] gdShowInt 12 vinfS)
+      (let (vl : int) (prim string_size vshown2 : string -> int)
+      (return (app gputInt vl)))))))))
+    (if veq
+      (let (vu4d : unit) (app gputs "same")
+      (jump jAfter vu4d))
+      (let (vu4e : unit) (app gputs "differ")
+      (jump jAfter vu4e)))))))))))))))))

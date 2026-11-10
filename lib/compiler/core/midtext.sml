@@ -116,16 +116,27 @@ struct
            case Ty.view t of
              Ty.Con (stamp, name, args) =>
                (List.app collect args;
-                if isBuiltin stamp orelse IntMap.member (!tycons, stamp) then ()
+                if isBuiltin stamp then ()
                 else
-                  (tycons := IntMap.insert (!tycons, stamp, (nameFor (stamp, name), List.length args));
-                   order := stamp :: !order;
-                   case Ty.datatypeOf stamp of
-                     SOME {cons, ...} => List.app (fn (_, _, SOME a) => collect a | _ => ()) cons
-                   | NONE => ()))
+                  case IntMap.find (!tycons, stamp) of
+                    (* a type name may be met given fewer arguments, as a
+                       type variable applied stands for it (Ty.App): an
+                       abstract one's arity is the most it is given *)
+                    SOME (n, k) => if List.length args > k then tycons := IntMap.insert (!tycons, stamp, (n, List.length args))
+                                   else ()
+                  | NONE =>
+                      (tycons := IntMap.insert (!tycons, stamp, (nameFor (stamp, name), List.length args));
+                       order := stamp :: !order;
+                       case Ty.datatypeOf stamp of
+                         SOME {cons, ...} => List.app (fn (_, _, SOME a) => collect a | _ => ()) cons
+                       | NONE => ()))
            | Ty.Tuple ts => List.app collect ts
            | Ty.Arrow (a, b) => (collect a; collect b)
-           | _ => ();
+           | Ty.App (h, args) => (List.app collect args; collect h)
+           | Ty.Forall (_, b) => collect b
+           | Ty.Gen _ => ()
+           | Ty.Var _ => ()
+           | Ty.ExnCon => ();
            if Ty.size t > bigType then
              (IntTable.insert (abbrevs, Ty.id t, List.length (!abbrevOrder) + 1); abbrevOrder := t :: !abbrevOrder)
            else ())
@@ -136,21 +147,8 @@ struct
         | Const (_, t) => collect t
         | Con0 (_, t) => collect t
         | Unit => ()
-      fun collectRhs r =
-        case r of
-          Atom a => collectAtom a
-        | App (f, xs) => List.app collectAtom (f :: xs)
-        | Prim (_, t, xs) => (collect t; List.app collectAtom xs)
-        | Tuple xs => List.app collectAtom xs
-        | Select (_, a) => collectAtom a
-        | Con (_, t, a) => (collect t; collectAtom a)
-        | Decon (_, t, a) => (collect t; collectAtom a)
-        | ConTag a => collectAtom a
-        | MkExn (c, a) => (collectAtom c; collectAtom a)
-        | ExnCon a => collectAtom a
-        | ExnArg (t, a) => (collect t; collectAtom a)
-        | SetGlobal (_, a) => collectAtom a
-        | _ => ()
+      (* a step's own type is before its atoms *)
+      fun collectRhs r = (List.app collect (typesOfRhs r); List.app collectAtom (atomsOfRhs r))
       fun collectExp e =
         case e of
           Let (_, (_, t), r, b) => (collect t; collectRhs r; collectExp b)
@@ -414,13 +412,15 @@ struct
         | NONE => let val x = freshStamp () in tyvarIds := StringMap.insert (!tyvarIds, s, x); x end
       fun tyvar () = case next () of TYVAR s => tyvarId s | _ => fail "a type variable"
 
-      (* type names: the built-in ones, and those the text declares *)
-      val tycons : (int * string) StringMap.map ref =
-        ref (List.foldl (fn ((stamp, n), m) => StringMap.insert (m, n, (stamp, n))) StringMap.empty builtinNames)
+      (* type names: the built-in ones, and those the text declares, each
+         with the number of arguments it takes *)
+      val tycons : (int * string * int) StringMap.map ref =
+        ref (List.foldl (fn (c : Types.tycon, m) => StringMap.insert (m, #name c, (#stamp c, #name c, #arity c)))
+                        StringMap.empty Types.builtinTycons)
       fun base n = case String.fields (fn c => c = #"/") n of b :: _ => b | [] => n
-      fun declare (n, _ : int) =
+      fun declare (n, arity : int) =
         let val c = freshTycon ()
-        in tycons := StringMap.insert (!tycons, n, (c, base n)); c end
+        in tycons := StringMap.insert (!tycons, n, (c, base n, arity)); c end
 
       (* every type the text declares, first, since a datatype may use one
          declared after it *)
@@ -448,9 +448,13 @@ struct
           fun more acc = if peek () = SOME STAR then (ignore (next ()); more (app () :: acc)) else List.rev acc
         in case more [app ()] of [t] => t | ts => Ty.tuple ts end
       and app () = postfix (atomic ())
+      (* a type name after its arguments, or a type variable applied as one
+         (Ty.App): no type is followed by a type variable otherwise *)
       and postfix args =
         case peek () of
           SOME (ID n) => (ignore (next ()); postfix [named (n, args)])
+        | SOME (TYVAR s) =>
+            (ignore (next ()); postfix [Ty.app (if String.isPrefix "'_" s then Ty.var (tyvarId s) else Ty.gen (tyvarId s), args)])
         | _ => (case args of [t] => t | _ => fail "a type name after a list of types")
       and named (n, args) =
         case (n, args) of
@@ -458,7 +462,11 @@ struct
         | ("exncon", []) => Ty.exnCon
         | _ =>
             (case StringMap.find (!tycons, n) of
-               SOME (stamp, b) => Ty.con (stamp, b, args)
+               SOME (stamp, b, arity) =>
+                 if List.length args = arity then Ty.con (stamp, b, args)
+                 else raise Syntax ("the type " ^ n ^ " takes " ^ Int.toString arity
+                                    ^ (if arity = 1 then " argument, not " else " arguments, not ")
+                                    ^ Int.toString (List.length args) ^ where' ())
              | NONE => raise Syntax ("an undeclared type " ^ n ^ where' ()))
       and atomic () : Ty.ty list =
         case next () of
@@ -469,7 +477,18 @@ struct
                SOME t => [t]
              | NONE => raise Syntax ("an undefined abbreviation " ^ n ^ where' ()))
         | LBRACE => let val t = ty () in eat RBRACE; [Ty.tuple [t]] end
+        (* a field's polymorphic type (Ty.Forall), which no type name
+           followed by [ is *)
         | LP =>
+            if peek () = SOME (ID "forall") andalso peek2 () = SOME LB then
+              let
+                val () = ignore (next ())
+                val () = eat LB
+                fun vars acc = if peek () = SOME RB then (eat RB; List.rev acc) else vars (tyvar () :: acc)
+                val vs = vars []
+                val b = ty ()
+              in eat RP; [Ty.forall (vs, b)] end
+            else
             let
               fun more acc =
                 case next () of
@@ -640,7 +659,7 @@ struct
               val () = eat LP
               fun params acc = if peek () = SOME RP then (eat RP; List.rev acc) else params (tyvar () :: acc)
               val ps = params []
-              val stamp = case StringMap.find (!tycons, n) of SOME (stamp, _) => stamp | NONE => fail "a declared type"
+              val stamp = case StringMap.find (!tycons, n) of SOME (stamp, _, _) => stamp | NONE => fail "a declared type"
               fun cons acc =
                 if peek () = SOME RP then (eat RP; List.rev acc)
                 else

@@ -1,0 +1,3 @@
+; fail: [lambda] in val f: a lambda binds x twice
+; CoreLint, lambda: each name bound once
+(val f (-> Int Int Int) (\ ((x Int) (x Int)) x))

@@ -135,7 +135,8 @@ struct
   (* `command args` is what rhc does with a command line that names a file
      of Haskell, or asks for one of the commands above; NONE for any other.
      The compiler's own options that a compile of a file may have, `-o`
-     and its file and `--target=`, are taken and change nothing yet. *)
+     and its file, `--target=`, `-O`, `--thunks=`, `--lint`, `--dump-after=`
+     and `--pass-stats`, are taken and change nothing yet. *)
   fun command (args : string list) : (unit -> OS.Process.status) option =
     let
       val modes = List.mapPartial modeOf args
@@ -160,7 +161,9 @@ struct
                   else false
             fun known a =
               isSource a orelse isSome (modeOf a) orelse a = "--no-spans" orelse a = "--typecheck-only"
-              orelse String.isPrefix "--target=" a orelse String.isPrefix "--lint" a orelse option a
+              orelse String.isPrefix "--target=" a orelse String.isPrefix "--lint" a orelse String.isPrefix "-O" a
+              orelse String.isPrefix "--thunks=" a orelse String.isPrefix "--dump-after=" a orelse a = "--pass-stats"
+              orelse option a
             fun check [] = ()
               | check ("-o" :: _ :: rest) = check rest
               | check (a :: rest) = if known a then check rest else raise RhcOptions.Usage ("unknown option or argument: " ^ a)

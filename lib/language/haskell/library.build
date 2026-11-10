@@ -2,11 +2,13 @@
    compiler (docs/plans/language/haskell98.md): the syntax, its lexer,
    layout, parser and printers, in syntax.build (M11), on lib/unicode;
    modules, the renamer and fixity in names.build (M12); Core, its text,
-   CoreLint and its interpreter in core.build. Rune alone
+   CoreLint, its interpreter and Core to Mid in core.build. Rune alone
    builds it (D42). Its friends see what it does not export: rhc's build,
    which is a friend of lib/compiler too. *)
 requires unicode end
-exports (structure Core, signature CORE,
+exports (structure Core, signature CORE, structure CoreText, signature CORE_TEXT, structure CorePrim,
+         signature CORE_PRIM, structure CoreLint, signature CORE_LINT, structure CoreInterp, signature CORE_INTERP,
+         structure CoreGen, signature CORE_GEN, structure CoreToMid, signature CORE_TO_MID,
          structure HsAst, structure HsChar, structure HsDump, structure HsFixity, structure HsLayout,
          structure HsLexer, structure HsLiterate, structure HsModules, structure HsParser, structure HsPrint,
          structure HsRename, structure HsSource, structure HsStringMap, structure HsToken,
