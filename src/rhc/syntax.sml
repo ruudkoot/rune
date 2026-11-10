@@ -12,6 +12,8 @@
      rhc --dump-ast [--no-spans] FILE.hs  the tree as text (HsDump)
      rhc --dump-names FILE.hs...       the program's exports, fixities, instances
                                        and errors of names (RhcNames)
+     rhc --dump-binders FILE.hs        each local name of the program's own
+                                       modules: its binding sites and uses
 
    `rhc --typecheck-only FILE.hs` checks the program as far as rhc goes,
    its names and fixity, until the checker lands (M13), so that a program
@@ -25,7 +27,7 @@ structure RhcSyntax =
 struct
   fun eprint s = TextIO.output (TextIO.stdErr, s)
 
-  datatype mode = ParseOnly | Print | PrintLayout | PrintExact | DumpTokens | DumpAst | DumpNames | Check | Compile
+  datatype mode = ParseOnly | Print | PrintLayout | PrintExact | DumpTokens | DumpAst | DumpNames | DumpBinders | Check | Compile
 
   fun isSource a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
 
@@ -38,6 +40,7 @@ struct
     | "--dump-tokens" => SOME DumpTokens
     | "--dump-ast" => SOME DumpAst
     | "--dump-names" => SOME DumpNames
+    | "--dump-binders" => SOME DumpBinders
     | _ => NONE
 
   (* the options of names, which M13 reads too *)
@@ -93,6 +96,7 @@ struct
     in
       case mode of
         DumpNames => (RhcNames.dump (g, r); OS.Process.success)
+      | DumpBinders => (RhcNames.dumpBinders (g, r); OS.Process.success)
       | _ =>
           if not (null diags) then (report (); OS.Process.failure)
           else
@@ -173,11 +177,12 @@ struct
                 [] => if List.exists (fn a => a = "--typecheck-only") args then Check else Compile
               | [m] => m
               | _ => raise RhcOptions.Usage
-                       "one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens, --dump-ast and --dump-names"
+                       "one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens, --dump-ast, --dump-names and --dump-binders"
           in
             case (mode, files) of
               (_, []) => raise RhcOptions.Usage "no file of Haskell to read: give FILE.hs"
             | (DumpNames, _) => program (DumpNames, files)
+            | (DumpBinders, [file]) => program (DumpBinders, [file])
             | (_, [file]) => go (mode, spans, file)
             | _ => raise RhcOptions.Usage "one file of Haskell at a time, the program's Main, but for --dump-names"
           end)

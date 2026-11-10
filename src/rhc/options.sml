@@ -38,6 +38,8 @@ struct
     \  --dump-ast            print its tree, with --no-spans without where each node is\n\
     \  --dump-names          print the exports, fixities and instances of the program of\n\
     \                        FILE.hs... and its library, and its errors of names, sorted\n\
+    \  --dump-binders        print each local name of FILE.hs's own modules, a line for each\n\
+    \                        binding site (BIND) and use (USE): its renamed name, file:start-end\n\
     \  --names=least|greatest  the solution of a cycle's exports (D29): the least fixpoint,\n\
     \                        the default, or the greatest; chapter 5 is met by either\n\
     \  --cycle-default=module|scc  in a cycle of modules, each module's default declaration\n\
