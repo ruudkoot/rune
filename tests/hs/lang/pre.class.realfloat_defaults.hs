@@ -1,4 +1,4 @@
--- rows: pre.class.realfloat pre.class.realfloat.floatradix pre.class.realfloat.floatdigits pre.class.realfloat.floatrange pre.class.realfloat.decodefloat pre.class.realfloat.encodefloat pre.class.realfloat.exponent pre.class.realfloat.significand pre.class.realfloat.scalefloat pre.class.realfloat.atan2
+-- rows: std.trig.atan2.default pre.class.realfloat pre.class.realfloat.floatradix pre.class.realfloat.floatdigits pre.class.realfloat.floatrange pre.class.realfloat.decodefloat pre.class.realfloat.encodefloat pre.class.realfloat.exponent pre.class.realfloat.significand pre.class.realfloat.scalefloat pre.class.realfloat.atan2
 -- Report 8: class RealFloat's defaults: exponent, significand and scaleFloat from decodeFloat and encodeFloat, and
 -- atan2 by quadrant; the rest are the instance's; every method defined overrides its default.
 module Main (main) where

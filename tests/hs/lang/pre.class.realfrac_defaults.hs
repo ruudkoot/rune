@@ -1,4 +1,4 @@
--- rows: pre.class.realfrac pre.class.realfrac.properfraction pre.class.realfrac.truncate pre.class.realfrac.round pre.class.realfrac.ceiling pre.class.realfrac.floor
+-- rows: std.coerce.defined pre.class.realfrac pre.class.realfrac.properfraction pre.class.realfrac.truncate pre.class.realfrac.round pre.class.realfrac.ceiling pre.class.realfrac.floor
 -- Report 8: class RealFrac's defaults from properFraction: truncate, round (to even at the half), ceiling and floor;
 -- every method defined overrides its default.
 module Main (main) where
