@@ -1,4 +1,4 @@
--- rows: pre.even pre.odd pre.gcd pre.lcm pre.caret pre.caretcaret pre.fromintegral pre.realtofrac pre.sequence pre.sequenceu pre.mapm pre.mapmu pre.eqltlt.def pre.id pre.const pre.dot pre.flip pre.seq pre.dollar pre.dollarbang pre.ampamp.def pre.not pre.otherwise pre.maybe pre.either pre.fst pre.snd pre.curry pre.uncurry pre.until pre.astypeof
+-- rows: pre.f.def pre.even pre.odd pre.gcd pre.lcm pre.caret pre.caretcaret pre.fromintegral pre.realtofrac pre.sequence pre.sequenceu pre.mapm pre.mapmu pre.eqltlt.def pre.id pre.const pre.dot pre.flip pre.seq pre.dollar pre.dollarbang pre.ampamp.def pre.not pre.otherwise pre.maybe pre.either pre.fst pre.snd pre.curry pre.uncurry pre.until pre.astypeof
 -- Report 8 (Prelude): each function against the Report's own definition, copied under a new name, on samples and on
 -- partial values that show how lazy the definition is.
 module Main (main) where

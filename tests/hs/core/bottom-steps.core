@@ -1,0 +1,7 @@
+; run: --steps=100000 --read-core tests/hs/core/lib/base.core
+; vm: no: --steps is a bound of the interpreter's; on the VM the loop has none
+; A bottom: a loop that never ends, stopped where the steps run out.
+(val loop (-> !Int Int) (\ ((n !Int)) (case (prim int_add n 1) m (_ (loop m)))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (putStrLn "before" w) r ((utuple w1 _) (let (n Int (loop 0)) (printInt n w1))))))

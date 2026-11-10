@@ -416,7 +416,25 @@ struct
     ("pty_close", 410, 1),
     ("foreign", 411, 5),
     ("foreign_callback", 412, 3),
-    ("rt_linked_units", 413, 1)
+    ("rt_linked_units", 413, 1),
+    ("intinf_add", 414, 2),
+    ("intinf_sub", 415, 2),
+    ("intinf_mul", 416, 2),
+    ("intinf_div", 417, 2),
+    ("intinf_mod", 418, 2),
+    ("intinf_quot", 419, 2),
+    ("intinf_rem", 420, 2),
+    ("intinf_neg", 421, 1),
+    ("intinf_lt", 422, 2),
+    ("intinf_le", 423, 2),
+    ("intinf_gt", 424, 2),
+    ("intinf_ge", 425, 2),
+    ("intinf_order", 426, 2),
+    ("intinf_from_int", 427, 1),
+    ("intinf_to_int", 428, 1),
+    ("intinf_is_small", 429, 1),
+    ("intinf_parts", 430, 1),
+    ("intinf_make", 431, 2)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -557,6 +575,19 @@ struct
     "string_eq",
     "array_to_vector",
     "rt_linked_units",
+    "intinf_add",
+    "intinf_sub",
+    "intinf_mul",
+    "intinf_neg",
+    "intinf_lt",
+    "intinf_le",
+    "intinf_gt",
+    "intinf_ge",
+    "intinf_order",
+    "intinf_from_int",
+    "intinf_is_small",
+    "intinf_parts",
+    "intinf_make",
     (* the compiler's own (PrimIsa.compilerOwn), which Lower makes others of *)
     "functor_cast",
     "functor_marker",
@@ -991,7 +1022,25 @@ struct
             (* pty_close *) ([1], 1),
             (* foreign *) ([1, 10, 10, 6, 6], 6),
             (* foreign_callback *) ([6, 6, 6], 6),
-            (* rt_linked_units *) ([8], 7)]);
+            (* rt_linked_units *) ([8], 7),
+            (* intinf_add *) ([0, 0], 0),
+            (* intinf_sub *) ([0, 0], 0),
+            (* intinf_mul *) ([0, 0], 0),
+            (* intinf_div *) ([0, 0], 0),
+            (* intinf_mod *) ([0, 0], 0),
+            (* intinf_quot *) ([0, 0], 0),
+            (* intinf_rem *) ([0, 0], 0),
+            (* intinf_neg *) ([0], 0),
+            (* intinf_lt *) ([0, 0], 5),
+            (* intinf_le *) ([0, 0], 5),
+            (* intinf_gt *) ([0, 0], 5),
+            (* intinf_ge *) ([0, 0], 5),
+            (* intinf_order *) ([0, 0], 5),
+            (* intinf_from_int *) ([1], 0),
+            (* intinf_to_int *) ([0], 1),
+            (* intinf_is_small *) ([0], 5),
+            (* intinf_parts *) ([0], 6),
+            (* intinf_make *) ([5, 6], 0)]);
          repsAt i)
   fun repsOf name = case find name of SOME (i, _) => repsAt i | NONE => NONE
 end
@@ -1429,7 +1478,25 @@ struct
              (* pty_close *) ([Con ("int", [])], Con ("int", [])),
              (* foreign *) ([Con ("int", []), Con ("Word64.word", []), Con ("Word64.word", []), Con ("string", []), Con ("string", [])], Tuple [Con ("bool", []), Con ("Word64.word", []), Con ("string", []), Con ("string", []), Con ("int", []), Con ("Word32.word", [])]),
              (* foreign_callback *) ([Con ("string", []), Con ("string", []), Arrow (Con ("string", []), Con ("string", []))], Tuple [Con ("bool", []), Con ("Word64.word", []), Con ("string", []), Con ("int", []), Con ("Word32.word", [])]),
-             (* rt_linked_units *) ([Con ("unit", [])], Con ("list", [Con ("string", [])]))]
+             (* rt_linked_units *) ([Con ("unit", [])], Con ("list", [Con ("string", [])])),
+             (* intinf_add *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("IntInf.int", [])),
+             (* intinf_sub *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("IntInf.int", [])),
+             (* intinf_mul *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("IntInf.int", [])),
+             (* intinf_div *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("IntInf.int", [])),
+             (* intinf_mod *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("IntInf.int", [])),
+             (* intinf_quot *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("IntInf.int", [])),
+             (* intinf_rem *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("IntInf.int", [])),
+             (* intinf_neg *) ([Con ("IntInf.int", [])], Con ("IntInf.int", [])),
+             (* intinf_lt *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("bool", [])),
+             (* intinf_le *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("bool", [])),
+             (* intinf_gt *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("bool", [])),
+             (* intinf_ge *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("bool", [])),
+             (* intinf_order *) ([Con ("IntInf.int", []), Con ("IntInf.int", [])], Con ("order", [])),
+             (* intinf_from_int *) ([Con ("int", [])], Con ("IntInf.int", [])),
+             (* intinf_to_int *) ([Con ("IntInf.int", [])], Con ("int", [])),
+             (* intinf_is_small *) ([Con ("IntInf.int", [])], Con ("bool", [])),
+             (* intinf_parts *) ([Con ("IntInf.int", [])], Tuple [Con ("bool", []), Con ("string", [])]),
+             (* intinf_make *) ([Con ("bool", []), Con ("string", [])], Con ("IntInf.int", []))]
         in types := SOME v; v end
   (* find name = SOME (parameters, result) *)
   fun find name = case Prims.find name of SOME (i, _) => SOME (Vector.sub (all (), i)) | NONE => NONE

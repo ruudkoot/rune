@@ -1,0 +1,3 @@
+; fail: [main] in val main: main is of type Int, where World -> (utuple World T) is wanted
+; CoreLint, main: main is an action
+(val main Int 0)

@@ -1,0 +1,3 @@
+; fail: [let] in val f: the binder w of a let is of kind #: World
+; CoreLint, let: a let suspends, and an unlifted value is never suspended
+(val f (-> World Int) (\ ((v World)) (let (w World v) 0)))

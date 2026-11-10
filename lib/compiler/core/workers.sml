@@ -35,19 +35,8 @@ struct
       fun oks xs = List.all ok xs
       fun rhs r =
         case r of
-          Atom a => ok a
-        | App (f, xs) => oks (f :: xs)
-        | Prim (_, _, xs) => oks xs
-        | Tuple xs => oks xs
-        | Select _ => true
-        | Con (_, _, a) => ok a
-        | Decon (_, _, a) => ok a
-        | ConTag a => ok a
-        | MkExn (c, a) => oks [c, a]
-        | ExnCon a => ok a
-        | ExnArg (_, a) => ok a
-        | SetGlobal (_, a) => ok a
-        | _ => true
+          Select _ => true
+        | _ => allAtomsOfRhs ok r
       fun exp e =
         case e of
           Let (_, _, r, b) => rhs r andalso exp b
@@ -81,20 +70,8 @@ struct
       fun rhs (v, t) r =
         case r of
           Atom (Var (y, [])) => if isName y then (names := v :: !names; true) else true
-        | Atom a => ok a
-        | App (f, xs) => oks (f :: xs)
-        | Prim (_, _, xs) => oks xs
-        | Tuple xs => oks xs
         | Select (i, Var (y, _)) => (if isName y then fields := (i, v, t) :: !fields else (); true)
-        | Select (_, a) => ok a
-        | Con (_, _, a) => ok a
-        | Decon (_, _, a) => ok a
-        | ConTag a => ok a
-        | MkExn (c, a) => oks [c, a]
-        | ExnCon a => ok a
-        | ExnArg (_, a) => ok a
-        | SetGlobal (_, a) => ok a
-        | _ => true
+        | _ => allAtomsOfRhs ok r
       (* a field returned is taken whole: ~1 for its variable *)
       fun ret r =
         case r of
@@ -150,21 +127,7 @@ struct
         case a of
           Var (x, _) => IntTable.bump (uses, x)
         | _ => ()
-      fun rhs r =
-        case r of
-          Atom a => atom a
-        | App (f, xs) => List.app atom (f :: xs)
-        | Prim (_, _, xs) => List.app atom xs
-        | Tuple xs => List.app atom xs
-        | Select (_, a) => atom a
-        | Con (_, _, a) => atom a
-        | Decon (_, _, a) => atom a
-        | ConTag a => atom a
-        | MkExn (c, a) => (atom c; atom a)
-        | ExnCon a => atom a
-        | ExnArg (_, a) => atom a
-        | SetGlobal (_, a) => atom a
-        | _ => ()
+      fun rhs r = appAtomsOfRhs atom r
       fun exp e =
         case e of
           Let (_, _, r, b) => (rhs r; exp b)
@@ -218,9 +181,13 @@ struct
             else m
         | _ =>
             let
+              (* a tuple with a polymorphic field stays one: a parameter's
+                 type is no forall (Mid.fundef, Ty.Forall) *)
               val specs =
-                List.map (fn (x, t) => case Ty.view t of Ty.Tuple ts => if List.length ts >= 2 then flatFields (x, ts, body) else NONE
-                           | _ => NONE) params
+                List.map (fn (x, t) => case Ty.view t of
+                                         Ty.Tuple ts => if List.length ts >= 2 andalso not (Ty.hasForall t) then flatFields (x, ts, body)
+                                                        else NONE
+                                       | _ => NONE) params
               val arity = List.foldl (fn (SOME fs, n) => n + List.length (leaves fs) | (NONE, n) => n + 1) 0 specs
             in
               if List.exists isSome specs andalso fits arity andalso Pass.spend () then
@@ -254,21 +221,7 @@ struct
             | Raise a => atom a
             | Return r => rhs r
             | Mark (_, a) => exp a
-          and rhs r =
-            case r of
-              Atom a => atom a
-            | App (f, xs) => List.app atom (f :: xs)
-            | Prim (_, _, xs) => List.app atom xs
-            | Tuple xs => List.app atom xs
-            | Select (_, a) => atom a
-            | Con (_, _, a) => atom a
-            | Decon (_, _, a) => atom a
-            | ConTag a => atom a
-            | MkExn (c, a) => (atom c; atom a)
-            | ExnCon a => atom a
-            | ExnArg (_, a) => atom a
-            | SetGlobal (_, a) => atom a
-            | _ => ()
+          and rhs r = appAtomsOfRhs atom r
         in exp e; !any end
       val touched =
         List.map (fn d as Val (_, _, e) => (d, refsIn e)
@@ -381,7 +334,9 @@ struct
                  else Return r
              | _ => Return r)
         | Mark (sp, a) => Mark (sp, exp a)
-        | _ => e
+        | Jump _ => e
+        | Raise _ => e
+        | Return _ => e
       and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
         {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
 
@@ -429,7 +384,9 @@ struct
                        SOME (PNest ps) => (case List.nth (ps, i) of PLeaf y => Return (Atom (Var (y, []))) | _ => e)
                      | _ => e)
                 | Mark (sp, a) => Mark (sp, sel a)
-                | _ => e
+                | Jump _ => e
+                | Raise _ => e
+                | Return _ => e
               val workerParams =
                 List.concat (List.map (fn ((x, t), NONE) => [(x, t)]
                                         | ((x, _), SOME fs) => ListPair.zip (partLeaves (valOf (IntTable.find (parts, x))), leaves fs))

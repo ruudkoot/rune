@@ -1,0 +1,9 @@
+# E16: 7 pairs at the greatest, where C's c is exported by A and B, which never import C.
+pairs 7
+EXPORT	A	vA a
+EXPORT	A	vB b
+EXPORT	A	vC c
+EXPORT	B	vA a
+EXPORT	B	vB b
+EXPORT	B	vC c
+EXPORT	C	vC c

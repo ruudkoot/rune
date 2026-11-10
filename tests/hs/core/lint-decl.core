@@ -1,0 +1,3 @@
+; fail: [decl] in data T: the constructor A is declared twice
+; CoreLint, decl: a name declared once
+(data T () (A) (A))

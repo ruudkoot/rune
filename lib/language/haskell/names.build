@@ -1,0 +1,15 @@
+(* The names of Haskell 98 (the haskell98 roadmap's M12): modules, their
+   exports and scopes over a recursive group by a fixpoint, the renamer
+   that resolves every name of a module's tree to its entity, and fixity
+   resolution, read after names. It is written on the Basis Library and
+   syntax.build alone, and is used by the library's library.build. *)
+files
+  strmap_sig.sml
+  strmap.sml
+  modules_sig.sml
+  modules.sml
+  fixity_sig.sml
+  fixity.sml
+  rename_sig.sml
+  rename.sml
+end

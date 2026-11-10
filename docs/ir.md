@@ -657,6 +657,27 @@ where a use needs no particular type (the `int` of `val (f, n) = (fn x =>
 x, 1)`) -- is made `unit` there (`ToMid.ground`), which is as good a type as
 any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 
+**Types another front end makes** (decision D4 of
+[plans/language/haskell98.md](plans/language/haskell98.md)). `Ty` has two
+forms that SML's elaborator never makes, for a front end whose types say
+more: `App`, a type variable applied to types (Haskell's `m a`, in the
+text `'a 'm`), whose variable stands for a type name given fewer arguments
+than its datatype has parameters (`list`, of `'a list`), so that its
+instance at `list` and `int` is `int list`; and `Forall`, the polymorphic
+type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
+'b)`), which binds its own variables. A forall is the same type as one that
+differs from it only in the names it binds (`Ty.equal`), and a
+substitution renames them where it would capture one. A variable used, as
+a field or as a `Let`'s step at a scheme of its own, at fewer types than
+its binder abstracts over is its binder at its scheme, the first variables
+given: a forall of the rest (at no types, of all; a function `Lift` takes
+out of another is given that one's variables first). So a polymorphic
+function is put in a dictionary and taken out of one, at a scheme, and
+used at the types it is used at. A tuple with a
+polymorphic field stays whole where `Workers`, `flattenJoin` and a lifted
+function would take it apart, since a parameter's type is no forall;
+`Lower` takes an application as `RAny` and a forall as its body.
+
 ### What a `Mid` keeps
 
 `MidLint` checks, after `mid`:
@@ -674,6 +695,13 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 * **Type variables in scope** (Mid is System F, above): a type names only
   the type variables of the binders around it, and no binder binds one
   again where it is in scope.
+* **The forms of another front end** (above): a forall is a field's type
+  alone, never a binder's, a parameter's or a step's but a `Let`'s at a
+  scheme, and binds no variable in scope or twice; an application's head
+  is a type variable, applied to as many types wherever it is; a type name
+  is given no more arguments than its datatype has parameters, and as many
+  where it is a value's type -- fewer only where a type is given a type
+  variable or a type name. Each type once, by its node.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
 * **What its types alone do not say:** constants, primitives, exceptions'
@@ -719,6 +747,40 @@ datatype entered again under its new name, its constructors, layout and
 openness the old one's; so it keeps what `MidLint` checked after `mid`. The
 units' `Mid` that `--units --whole` concatenates is linted by `MidLint`
 (`midconcat`), since a unit taken from the cache was not.
+
+### Walking Mid
+
+A few functions of `Mid` name every form of a step and of an expression,
+with no catch-all (decision D10 of
+[plans/language/haskell98.md](plans/language/haskell98.md)), and a walker
+whose arms would only do what one of them does asks it instead:
+
+* `Mid.atomsOfRhs` gives the atoms a step names, in the order it names
+  them, and `Mid.typesOfRhs` the type it says beside them, which comes
+  before its atoms;
+* `Mid.mapRhs` gives the step with each atom mapped, and `Mid.mapRhsWith`
+  with its types, its atoms and the global a `SetGlobal` sets mapped too,
+  each in the order the step names them, so that a walker that numbers
+  what it meets as it goes (`MidCanon.rename`) meets them in that order;
+* `Mid.fold` walks an expression, giving what it is given each step, each
+  atom outside a step (an `If`'s test, a `Jump`'s arguments, a `Raise`'s
+  exception), each jump and each function made in the expression, whose
+  body is the caller's to walk or not; `Mid.appRhs` and `Mid.existsRhs`
+  give, or ask of, every step, those of the functions made there among
+  them.
+
+A walker that does more than these at some form names each form it does
+not end at, rather than ending in `| _ =>`. So a form added to `rhs` or
+`exp` is a match that is not exhaustive (a warning of the compile,
+`elab/exhaust.sml`) in these functions and in each walker that says more of
+it, and is walked as its parts say everywhere else: never taken in silence
+for a step with no atoms or no effect, or for an expression with nothing
+under it. What still ends in a catch-all is a peephole, which knows the
+shapes it rewrites and leaves the rest as they are (`Simplify.known`,
+`Lower.tagTest`); a judgement that holds of any form (`Expand.small`, for
+which what is not a line of steps and `If`s is big); or a comparison of
+two (`MidCanon.checkRenaming`), whose catch-all is the bug of two forms
+that differ.
 
 ### Mid as text
 

@@ -58,10 +58,11 @@ sig
   val advance : unit -> unit
 
   (* `closeImplicit ()` is the equation of `t` with `parse-error(t)`: the
-     parser can go no further with the current token in the block it is
-     in. Where that block is implicit it is closed and the result is
-     `true`; where it is explicit, or there is none, nothing changes and
-     the result is `false`. *)
+     parser can go no further with the current token in its block.
+
+     Where that block is implicit it is closed and the result is `true`;
+     where it is explicit, or there is none, nothing changes and the
+     result is `false`. *)
   val closeImplicit : unit -> bool
 
   (* `peek k` is the `k`th written token after the current one, from 0,

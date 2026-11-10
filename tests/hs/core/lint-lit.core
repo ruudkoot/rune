@@ -1,0 +1,3 @@
+; fail: [lit] in val c: the Char 1114112 is past Unicode's range
+; CoreLint, lit: a Char is a code point of Unicode
+(val c Char '\1114112')

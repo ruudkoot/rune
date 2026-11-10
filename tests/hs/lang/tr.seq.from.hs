@@ -1,4 +1,4 @@
--- rows: tr.seq.fromthen tr.seq.fromto tr.seq.fromthento exp.seq.instance
+-- rows: std.enum.seq tr.seq.fromthen tr.seq.fromto tr.seq.fromthento exp.seq.instance
 -- Report 3.10: [e1..], [e1,e2..], [e1..e3] and [e1,e2..e3] are enumFrom, enumFromThen, enumFromTo and enumFromThenTo:
 -- a user instance's methods are obeyed, whatever they do.
 module Main (main) where

@@ -65,6 +65,8 @@ struct
     | Ty.ExnCon => Opaque "exception constructor"
     | Ty.Gen _ => Unknown
     | Ty.Var _ => Unknown
+    | Ty.App _ => Unknown
+    | Ty.Forall (_, b) => ofTy consOf b
     | Ty.Con (stamp, _, _) =>
         if List.exists (fn s => s = stamp) immediates then Imm
         else if stamp = #stamp Types.stringTycon orelse stamp = #stamp Types.bytearrayTycon then Opaque "bytes"

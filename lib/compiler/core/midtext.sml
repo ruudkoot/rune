@@ -116,16 +116,27 @@ struct
            case Ty.view t of
              Ty.Con (stamp, name, args) =>
                (List.app collect args;
-                if isBuiltin stamp orelse IntMap.member (!tycons, stamp) then ()
+                if isBuiltin stamp then ()
                 else
-                  (tycons := IntMap.insert (!tycons, stamp, (nameFor (stamp, name), List.length args));
-                   order := stamp :: !order;
-                   case Ty.datatypeOf stamp of
-                     SOME {cons, ...} => List.app (fn (_, _, SOME a) => collect a | _ => ()) cons
-                   | NONE => ()))
+                  case IntMap.find (!tycons, stamp) of
+                    (* a type name may be met given fewer arguments, as a
+                       type variable applied stands for it (Ty.App): an
+                       abstract one's arity is the most it is given *)
+                    SOME (n, k) => if List.length args > k then tycons := IntMap.insert (!tycons, stamp, (n, List.length args))
+                                   else ()
+                  | NONE =>
+                      (tycons := IntMap.insert (!tycons, stamp, (nameFor (stamp, name), List.length args));
+                       order := stamp :: !order;
+                       case Ty.datatypeOf stamp of
+                         SOME {cons, ...} => List.app (fn (_, _, SOME a) => collect a | _ => ()) cons
+                       | NONE => ()))
            | Ty.Tuple ts => List.app collect ts
            | Ty.Arrow (a, b) => (collect a; collect b)
-           | _ => ();
+           | Ty.App (h, args) => (List.app collect args; collect h)
+           | Ty.Forall (_, b) => collect b
+           | Ty.Gen _ => ()
+           | Ty.Var _ => ()
+           | Ty.ExnCon => ();
            if Ty.size t > bigType then
              (IntTable.insert (abbrevs, Ty.id t, List.length (!abbrevOrder) + 1); abbrevOrder := t :: !abbrevOrder)
            else ())
@@ -136,21 +147,8 @@ struct
         | Const (_, t) => collect t
         | Con0 (_, t) => collect t
         | Unit => ()
-      fun collectRhs r =
-        case r of
-          Atom a => collectAtom a
-        | App (f, xs) => List.app collectAtom (f :: xs)
-        | Prim (_, t, xs) => (collect t; List.app collectAtom xs)
-        | Tuple xs => List.app collectAtom xs
-        | Select (_, a) => collectAtom a
-        | Con (_, t, a) => (collect t; collectAtom a)
-        | Decon (_, t, a) => (collect t; collectAtom a)
-        | ConTag a => collectAtom a
-        | MkExn (c, a) => (collectAtom c; collectAtom a)
-        | ExnCon a => collectAtom a
-        | ExnArg (t, a) => (collect t; collectAtom a)
-        | SetGlobal (_, a) => collectAtom a
-        | _ => ()
+      (* a step's own type is before its atoms *)
+      fun collectRhs r = (List.app collect (typesOfRhs r); List.app collectAtom (atomsOfRhs r))
       fun collectExp e =
         case e of
           Let (_, (_, t), r, b) => (collect t; collectRhs r; collectExp b)
@@ -442,6 +440,24 @@ struct
             | [] => ()
         in scan (!toks) end
 
+      (* A type name given fewer arguments than it takes is a type only as an
+         argument -- of a type name, of a type variable applied, or of a use
+         (Ty.App) -- and where a value's type is read (valueTy), one is
+         refused with the message it was made with. *)
+      val partials : string IntTable.table = IntTable.table 8
+      val saturatedOnes : unit IntTable.table = IntTable.table 64
+      fun saturated (t : Ty.ty) : unit =
+        if isSome (IntTable.find (saturatedOnes, Ty.id t)) then ()
+        else
+          (case IntTable.find (partials, Ty.id t) of
+             SOME msg => raise Syntax msg
+           | NONE =>
+               (case Ty.view t of
+                  Ty.Tuple ts => List.app saturated ts
+                | Ty.Arrow (a, b) => (saturated a; saturated b)
+                | Ty.Forall (_, b) => saturated b
+                | _ => ());
+           IntTable.insert (saturatedOnes, Ty.id t, ()))
       fun ty () : Ty.ty =
         let val t = tuple ()
         in if peek () = SOME ARROW then (ignore (next ()); Ty.arrow (t, ty ())) else t end
@@ -450,9 +466,13 @@ struct
           fun more acc = if peek () = SOME STAR then (ignore (next ()); more (app () :: acc)) else List.rev acc
         in case more [app ()] of [t] => t | ts => Ty.tuple ts end
       and app () = postfix (atomic ())
+      (* a type name after its arguments, or a type variable applied as one
+         (Ty.App): no type is followed by a type variable otherwise *)
       and postfix args =
         case peek () of
           SOME (ID n) => (ignore (next ()); postfix [named (n, args)])
+        | SOME (TYVAR s) =>
+            (ignore (next ()); postfix [Ty.app (if String.isPrefix "'_" s then Ty.var (tyvarId s) else Ty.gen (tyvarId s), args)])
         | _ => (case args of [t] => t | _ => fail "a type name after a list of types")
       and named (n, args) =
         case (n, args) of
@@ -461,10 +481,16 @@ struct
         | _ =>
             (case StringMap.find (!tycons, n) of
                SOME (stamp, b, arity) =>
-                 if List.length args = arity then Ty.con (stamp, b, args)
-                 else raise Syntax ("the type " ^ n ^ " takes " ^ Int.toString arity
-                                    ^ (if arity = 1 then " argument, not " else " arguments, not ")
-                                    ^ Int.toString (List.length args) ^ where' ())
+                 let
+                   val msg = "the type " ^ n ^ " takes " ^ Int.toString arity
+                             ^ (if arity = 1 then " argument, not " else " arguments, not ")
+                             ^ Int.toString (List.length args) ^ where' ()
+                   val t = Ty.con (stamp, b, args)
+                 in
+                   if List.length args > arity then raise Syntax msg
+                   else if List.length args < arity then (IntTable.insert (partials, Ty.id t, msg); t)
+                   else t
+                 end
              | NONE => raise Syntax ("an undeclared type " ^ n ^ where' ()))
       and atomic () : Ty.ty list =
         case next () of
@@ -475,7 +501,18 @@ struct
                SOME t => [t]
              | NONE => raise Syntax ("an undefined abbreviation " ^ n ^ where' ()))
         | LBRACE => let val t = ty () in eat RBRACE; [Ty.tuple [t]] end
+        (* a field's polymorphic type (Ty.Forall), which no type name
+           followed by [ is *)
         | LP =>
+            if peek () = SOME (ID "forall") andalso peek2 () = SOME LB then
+              let
+                val () = ignore (next ())
+                val () = eat LB
+                fun vars acc = if peek () = SOME RB then (eat RB; List.rev acc) else vars (tyvar () :: acc)
+                val vs = vars []
+                val b = ty ()
+              in eat RP; [Ty.forall (vs, b)] end
+            else
             let
               fun more acc =
                 case next () of
@@ -485,6 +522,10 @@ struct
             in more [ty ()] end
         | _ => fail "a type"
 
+      (* a value's type: no type name in it given fewer arguments than it
+         takes, but as an argument *)
+      fun valueTy () : Ty.ty = let val t = ty () in saturated t; t end
+
       fun tyvars () =
         if peek () = SOME LB then
           let
@@ -492,7 +533,7 @@ struct
             fun more acc = if peek () = SOME RB then (eat RB; List.rev acc) else more (tyvar () :: acc)
           in more [] end
         else []
-      fun scheme () : scheme = let val tvs = tyvars () in (tvs, ty ()) end
+      fun scheme () : scheme = let val tvs = tyvars () in (tvs, valueTy ()) end
       fun tyargs () =
         if peek () = SOME LB then
           let
@@ -529,7 +570,7 @@ struct
         | LP =>
             (case next () of
                RP => Unit
-             | ID "con0" => let val tag = int () val () = eat COLON val t = ty () in eat RP; Con0 (tag, t) end
+             | ID "con0" => let val tag = int () val () = eat COLON val t = valueTy () in eat RP; Con0 (tag, t) end
              | t =>
                  let
                    val c = case t of
@@ -538,7 +579,7 @@ struct
                            | CHR c => Literal.CChar c
                            | _ => fail "a constant"
                    val () = eat COLON
-                   val t = ty ()
+                   val t = valueTy ()
                  in eat RP; Const (Ty.constAt (c, t), t) end)
         | _ => fail "an atom"
       fun atomsUntil stop =
@@ -557,23 +598,23 @@ struct
                   case k of
                     "app" => let val f = atom () in App (f, atomsUntil RP) end
                   | "prim" =>
-                      let val p = id () val xs = atomsUntil COLON val () = eat COLON in Prim (p, ty (), xs) end
+                      let val p = id () val xs = atomsUntil COLON val () = eat COLON in Prim (p, valueTy (), xs) end
                   | "tuple" => Tuple (atomsUntil RP)
                   | "select" => let val i = int () in Select (i, atom ()) end
-                  | "con" => let val tag = int () val a = atom () val () = eat COLON in Con (tag, ty (), a) end
-                  | "decon" => let val tag = int () val a = atom () val () = eat COLON in Decon (tag, ty (), a) end
+                  | "con" => let val tag = int () val a = atom () val () = eat COLON in Con (tag, valueTy (), a) end
+                  | "decon" => let val tag = int () val a = atom () val () = eat COLON in Decon (tag, valueTy (), a) end
                   | "tag" => ConTag (atom ())
                   | "newexn" => NewExn (str ())
                   | "builtinexn" => BuiltinExn (int ())
                   | "mkexn" => let val c = atom () in MkExn (c, atom ()) end
                   | "exncon" => ExnCon (atom ())
-                  | "exnarg" => let val a = atom () val () = eat COLON in ExnArg (ty (), a) end
+                  | "exnarg" => let val a = atom () val () = eat COLON in ExnArg (valueTy (), a) end
                   | _ => let val g = var "g" () in SetGlobal (g, atom ()) end
               in eat RP; r end
             else Atom (atom ())
         | _ => Atom (atom ())
 
-      fun binder () = let val () = eat LP val x = var "v" () val () = eat COLON val t = ty () in eat RP; (x, t) end
+      fun binder () = let val () = eat LP val x = var "v" () val () = eat COLON val t = valueTy () in eat RP; (x, t) end
       fun binders () =
         let
           val () = eat LP
@@ -588,7 +629,7 @@ struct
           val tvs = tyvars ()
           val ps = binders ()
           val () = eat COLON
-          val result = ty ()
+          val result = valueTy ()
           val label = case peek () of SOME (STR _) => SOME (str ()) | _ => NONE
           val body = exp ()
         in eat RP; {name = name, label = label, tyvars = tvs, params = ps, result = result, body = body} end
@@ -654,7 +695,7 @@ struct
                     val () = eat LP
                     val tag = int ()
                     val cname = str ()
-                    val arg = if peek () = SOME COLON then (eat COLON; SOME (ty ())) else NONE
+                    val arg = if peek () = SOME COLON then (eat COLON; SOME (valueTy ())) else NONE
                   in eat RP; cons ((tag, cname, arg) :: acc) end
             in Ty.bindDatatypeDirect (stamp, {params = ps, cons = cons []}); top acc end
         | (SOME LP, SOME (ID "abstract")) =>

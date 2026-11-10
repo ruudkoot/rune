@@ -1,0 +1,4 @@
+; fail: text-argument.core:4: error: an argument is an atom or @TYPE: let-bind it
+; Core's reader: arguments are atoms, so every allocation is a let
+(val f (-> Int Int) (\ ((x Int)) x))
+(val y Int (f (f 1)))

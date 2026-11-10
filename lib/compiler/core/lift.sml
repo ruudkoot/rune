@@ -28,22 +28,6 @@ struct
 
   (* ---- what an expression names ---- *)
 
-  fun atomsOfRhs (r : rhs) : atom list =
-    case r of
-      Atom a => [a]
-    | App (f, xs) => f :: xs
-    | Prim (_, _, xs) => xs
-    | Tuple xs => xs
-    | Select (_, a) => [a]
-    | Con (_, _, a) => [a]
-    | Decon (_, _, a) => [a]
-    | ConTag a => [a]
-    | MkExn (c, a) => [c, a]
-    | ExnCon a => [a]
-    | ExnArg (_, a) => [a]
-    | SetGlobal (_, a) => [a]
-    | _ => []
-
   (* What is free in each group of functions and the type variables it
      names, by its first member, worked out once: a group inside another is
      not walked again for the one around it. *)
@@ -75,7 +59,7 @@ struct
         | _ => acc
       fun go (e, acc) =
         case e of
-          Let (x, _, r, b) => let val acc = List.foldl atom acc (atomsOfRhs r) in bind x; go (b, acc) end
+          Let (x, _, r, b) => let val acc = foldAtomsOfRhs atom acc r in bind x; go (b, acc) end
         | Fun (fs, b) =>
             let
               val inGroup = groupFreeOf fs
@@ -87,7 +71,7 @@ struct
         | If (c, t, f) => go (f, go (t, atom (c, acc)))
         | Handle (a, x, h) => let val acc = go (a, acc) in bind x; go (h, acc) end
         | Raise a => atom (a, acc)
-        | Return r => List.foldl atom acc (atomsOfRhs r)
+        | Return r => foldAtomsOfRhs atom acc r
         | Mark (_, a) => go (a, acc)
     in
       go (e, acc)
@@ -117,17 +101,7 @@ struct
         | Const (_, t) => gensOfTy (t, acc)
         | Con0 (_, t) => gensOfTy (t, acc)
         | Unit => acc
-      fun rhs (r, acc) =
-        let
-          val acc = List.foldl atom acc (atomsOfRhs r)
-        in
-          case r of
-            Prim (_, t, _) => gensOfTy (t, acc)
-          | Con (_, t, _) => gensOfTy (t, acc)
-          | Decon (_, t, _) => gensOfTy (t, acc)
-          | ExnArg (t, _) => gensOfTy (t, acc)
-          | _ => acc
-        end
+      fun rhs (r, acc) = List.foldl gensOfTy (foldAtomsOfRhs atom acc r) (typesOfRhs r)
       fun without (tvs, m) = List.foldl (fn (a, m) => IntMap.remove (m, a)) m tvs
     in
       case e of
@@ -162,7 +136,9 @@ struct
     | If (_, t, f) => hasFun t orelse hasFun f
     | Handle (a, _, h) => hasFun a orelse hasFun h
     | Mark (_, a) => hasFun a
-    | _ => false
+    | Jump _ => false
+    | Raise _ => false
+    | Return _ => false
 
   fun defHasFun (d : def) : bool =
     case d of
@@ -190,7 +166,7 @@ struct
         case e of
           Let (x, s, r, b) =>
             (IntTable.insert (schemes, x, s);
-             List.app useAtom (atomsOfRhs r);
+             appAtomsOfRhs useAtom r;
              case r of App (Var (f, _), _) => bump (calls, f) | _ => ();
              scan b)
         | Fun (fs, b) => (List.app (fn f => IntTable.insert (funs, #name f, ())) fs; List.app scanFun fs; scan b)
@@ -200,7 +176,7 @@ struct
         | Handle (a, x, h) => (IntTable.insert (schemes, x, ([], Ty.exn)); scan a; scan h)
         | Raise a => useAtom a
         | Return r =>
-            (List.app useAtom (atomsOfRhs r);
+            (appAtomsOfRhs useAtom r;
              case r of App (Var (f, _), _) => bump (calls, f) | _ => ())
         | Mark (_, a) => scan a
       and scanFun (f : fundef) =
@@ -272,7 +248,9 @@ struct
         | If (_, t, f) => (find t; find f)
         | Handle (a, _, h) => (find a; find h)
         | Mark (_, a) => find a
-        | _ => ()
+        | Jump _ => ()
+        | Raise _ => ()
+        | Return _ => ()
       (* each definition, and whether it lifts anything *)
       val marked =
         List.map (fn (d, false) => (d, false)
@@ -308,41 +286,15 @@ struct
         | _ => a
       fun rhs r =
         case r of
-          Atom a => Atom (atom a)
-        | App (Var (f, ts), args) =>
+          App (Var (f, ts), args) =>
             (case call (f, ts, List.map atom args) of SOME r' => r' | NONE => App (Var (f, ts), List.map atom args))
-        | App (f, xs) => App (atom f, List.map atom xs)
-        | Prim (q, t, xs) => Prim (q, t, List.map atom xs)
-        | Tuple xs => Tuple (List.map atom xs)
-        | Select (i, a) => Select (i, atom a)
-        | Con (tag, t, a) => Con (tag, t, atom a)
-        | Decon (tag, t, a) => Decon (tag, t, atom a)
-        | ConTag a => ConTag (atom a)
-        | MkExn (c, a) => MkExn (atom c, atom a)
-        | ExnCon a => ExnCon (atom a)
-        | ExnArg (t, a) => ExnArg (t, atom a)
-        | SetGlobal (g, a) => SetGlobal (g, atom a)
-        | _ => r
+        | _ => mapRhs atom r
 
       (* e with each atom's variable renamed where s says *)
       fun rename (s : var IntMap.map) (e : exp) : exp =
         let
           fun atom a = case a of Var (x, ts) => (case IntMap.find (s, x) of SOME y => Var (y, ts) | NONE => a) | _ => a
-          fun r' r =
-            case r of
-              Atom a => Atom (atom a)
-            | App (f, xs) => App (atom f, List.map atom xs)
-            | Prim (q, t, xs) => Prim (q, t, List.map atom xs)
-            | Tuple xs => Tuple (List.map atom xs)
-            | Select (i, a) => Select (i, atom a)
-            | Con (tag, t, a) => Con (tag, t, atom a)
-            | Decon (tag, t, a) => Decon (tag, t, atom a)
-            | ConTag a => ConTag (atom a)
-            | MkExn (c, a) => MkExn (atom c, atom a)
-            | ExnCon a => ExnCon (atom a)
-            | ExnArg (t, a) => ExnArg (t, atom a)
-            | SetGlobal (g, a) => SetGlobal (g, atom a)
-            | _ => r
+          val r' = mapRhs atom
           fun go e =
             case e of
               Let (x, sc, r, b) => Let (x, sc, r' r, go b)

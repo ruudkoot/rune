@@ -79,7 +79,8 @@ struct
         | M.Handle (a, _, h) => (go a; go h)
         | M.Return r => sel r
         | M.Mark (_, a) => go a
-        | _ => ()
+        | M.Jump _ => ()
+        | M.Raise _ => ()
     in go e end
   fun selectsOf x = case IntTable.find (!selectUses, x) of SOME n => n | NONE => 0
 
@@ -87,21 +88,7 @@ struct
   fun usesOf x = case IntTable.find (!useCounts, x) of SOME n => n | NONE => 0
 
   fun countAtom a = case a of M.Var (x, _) => count x | _ => ()
-  fun countRhs r =
-    case r of
-      M.Atom a => countAtom a
-    | M.App (f, xs) => List.app countAtom (f :: xs)
-    | M.Prim (_, _, xs) => List.app countAtom xs
-    | M.Tuple xs => List.app countAtom xs
-    | M.Select (_, a) => countAtom a
-    | M.Con (_, _, a) => countAtom a
-    | M.Decon (_, _, a) => countAtom a
-    | M.ConTag a => countAtom a
-    | M.MkExn (c, a) => (countAtom c; countAtom a)
-    | M.ExnCon a => countAtom a
-    | M.ExnArg (_, a) => countAtom a
-    | M.SetGlobal (_, a) => countAtom a
-    | _ => ()
+  fun countRhs r = M.appAtomsOfRhs countAtom r
 
   fun countExp e =
     case e of
@@ -202,19 +189,7 @@ struct
       fun rhs r =
         case r of
           M.Select (_, M.Var _) => 0
-        | M.Atom v => a v
-        | M.App (f, xs) => atoms (f :: xs)
-        | M.Prim (_, _, xs) => atoms xs
-        | M.Tuple xs => atoms xs
-        | M.Select (_, v) => a v
-        | M.Con (_, _, v) => a v
-        | M.Decon (_, _, v) => a v
-        | M.ConTag v => a v
-        | M.MkExn (c, v) => atoms [c, v]
-        | M.ExnCon v => a v
-        | M.ExnArg (_, v) => a v
-        | M.SetGlobal (_, v) => a v
-        | _ => 0
+        | _ => M.foldAtomsOfRhs (fn (v, n) => n + a v) 0 r
       fun mentions e = go e > 0
       and go e =
         case e of
@@ -276,7 +251,8 @@ struct
              | (NONE, M.App (M.Global (g, _), _)) => if isSome (stampOf g) then no g else ()
              | (NONE, _) => ())
         | M.Mark (_, a) => visit own a
-        | _ => ()
+        | M.Jump _ => ()
+        | M.Raise _ => ()
       val () =
         List.app (fn M.Val (_, _, e) => visit NONE e
                    | M.Funs fs => List.app (fn f => visit (if isSome (stampOf (#name f)) then SOME (#name f) else NONE) (#body f)) fs
@@ -326,20 +302,8 @@ struct
       fun atom a = case a of M.Global (g, _) => IntTable.insert (asValue, g, ()) | _ => ()
       fun rhs r =
         case r of
-          M.Atom a => atom a
-        | M.App (M.Global _, xs) => List.app atom xs
-        | M.App (f, xs) => List.app atom (f :: xs)
-        | M.Prim (_, _, xs) => List.app atom xs
-        | M.Tuple xs => List.app atom xs
-        | M.Select (_, a) => atom a
-        | M.Con (_, _, a) => atom a
-        | M.Decon (_, _, a) => atom a
-        | M.ConTag a => atom a
-        | M.MkExn (c, a) => (atom c; atom a)
-        | M.ExnCon a => atom a
-        | M.ExnArg (_, a) => atom a
-        | M.SetGlobal (_, a) => atom a
-        | _ => ()
+          M.App (M.Global _, xs) => List.app atom xs
+        | _ => M.appAtomsOfRhs atom r
       fun exp e =
         case e of
           M.Let (_, _, r, b) => (rhs r; exp b)
@@ -367,7 +331,8 @@ struct
             (case IntMap.find (cands, g) of SOME (m, _) => m = n | NONE => false)
         | M.Return _ => false
         | M.Mark (_, a) => returns (cands, n) a
-        | _ => true
+        | M.Jump _ => true
+        | M.Raise _ => true
       (* the candidates that cannot be: some call of them needs the tuple
          whole -- its value used other than by taking its fields, or
          returned by a function that does not return as it does -- where
@@ -414,7 +379,9 @@ struct
                  | (SOME _, NONE) => no g
                  | (NONE, _) => ())
             | M.Mark (_, a) => visit own a
-            | _ => ()
+            | M.Jump _ => ()
+            | M.Raise _ => ()
+            | M.Return _ => ()
           val () =
             List.app (fn M.Val (_, _, e) => visit NONE e
                        | M.Funs fs => List.app (fn f => visit (ownOf (#name f)) (#body f)) fs
@@ -455,7 +422,9 @@ struct
                SOME n => if own = SOME n then () else need (n, all n)
              | NONE => ())
         | M.Mark (_, a) => callIn own a
-        | _ => ()
+        | M.Jump _ => ()
+        | M.Raise _ => ()
+        | M.Return _ => ()
     in
       sumFuns := IntMap.empty; sumGlobals := IntMap.empty;
       if !resultsOn then findSumFuns (p, asValue) else ();
