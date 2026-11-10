@@ -197,7 +197,8 @@ struct
       val unsigned = if String.isPrefix "-" body then String.extract (body, 1, NONE) else body
       fun integer () = case IntInf.fromString (if String.isPrefix "-" body then "~" ^ unsigned else unsigned) of
                          SOME i => i | NONE => bad ()
-      (* digits [. digits] [e [-] digits], with a point or an exponent *)
+      (* digits [. digits] [e [+-] digits], with a point or an exponent, as
+         Haskell writes one (2.5's float) *)
       fun floating s =
         let
           val (mant, ex) = case String.fields (fn c => c = #"e" orelse c = #"E") s of
@@ -206,7 +207,8 @@ struct
                          [a] => digitsOnly a | [a, b] => digitsOnly a andalso digitsOnly b | _ => false
           val okEx = case ex of
                        NONE => true
-                     | SOME e => digitsOnly (if String.isPrefix "-" e then String.extract (e, 1, NONE) else e)
+                     | SOME e => digitsOnly (if String.isPrefix "-" e orelse String.isPrefix "+" e then String.extract (e, 1, NONE)
+                                             else e)
         in okMant andalso okEx andalso (isSome ex orelse CharVector.exists (fn c => c = #".") mant) end
     in
       if suffix = "I" then if digitsOnly unsigned then LInteger (integer ()) else bad ()
