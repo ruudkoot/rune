@@ -7,7 +7,8 @@
    A row has E9's columns -- id, section, statement, class, test (accept,
    reject, run or none), how, source -- and three more: status (Supported,
    Partial or Planned), reading (the R numbers of E9's readings that concern
-   it, or nothing) and deviation (the program that pins it, `DIR/NAME` from
+   it, or nothing: E9's R1 to R54, or one with a heading of its own in
+   tests/hs/readings.md) and deviation (the program that pins it, `DIR/NAME` from
    tests/hs, or nothing). A program of tests/hs/lang, tests/hs/accept or
    tests/hs/errors names the row of its name's id, the part before its
    first `_`, and on its first line, `-- rows: ...`, the further rows it
@@ -51,6 +52,8 @@ struct
   val statuses = ["Supported", "Partial", "Planned"]
   val sources = ["hand", "generated"]
   val grounds = ["wrong", "contradictory", "ambiguous", "cannot be implemented"]
+  (* E9's readings, which its readings.md in the drafts holds; those after
+     have their headings in tests/hs/readings.md *)
   val readings = 54
   val dirs = ["lang", "accept", "errors"]
 
@@ -88,14 +91,26 @@ struct
   fun goodId id =
     id <> "" andalso Char.isLower (String.sub (id, 0))
     andalso CharVector.all (fn c => Char.isLower c orelse Char.isDigit c orelse c = #".") id
-  fun goodReading r =
+  (* the readings of tests/hs/readings.md under root: its headings ### Rn. *)
+  fun readingsOf root =
+    List.mapPartial (fn l => case String.tokens Char.isSpace l of
+                               "###" :: r :: _ => if size r > 2 andalso String.sub (r, 0) = #"R" andalso String.isSuffix "." r
+                                                  then Int.fromString (String.substring (r, 1, size r - 2)) else NONE
+                             | _ => NONE)
+                    (String.fields (fn c => c = #"\n") (read (root ^ "/tests/hs/readings.md")))
+  fun goodReading more r =
     size r > 1 andalso String.sub (r, 0) = #"R" andalso CharVector.all Char.isDigit (String.extract (r, 1, NONE))
-    andalso (case Int.fromString (String.extract (r, 1, NONE)) of SOME n => n >= 1 andalso n <= readings | NONE => false)
+    andalso (case Int.fromString (String.extract (r, 1, NONE)) of
+               SOME n => (n >= 1 andalso n <= readings) orelse List.exists (fn m => m = n) more
+             | NONE => false)
   fun isReading w = size w > 1 andalso String.sub (w, 0) = #"R" andalso CharVector.all Char.isDigit (String.extract (w, 1, NONE))
 
   (* ---- the programs *)
   type program = {dir : string, path : string, name : string, ids : string list, pins : string list, deviation : bool,
                   expected : string}
+  (* the first line of the file f, to Haskell's first newline: a return, a
+     line feed or a form feed (2.2) *)
+  fun firstLine f = hd (String.fields (fn c => c = #"\n" orelse c = #"\r" orelse c = #"\f") (read f))
   (* the words of a program's first line after `-- rows:`, a literate one's
      after a bird track too *)
   fun firstWords src =
@@ -167,6 +182,7 @@ struct
       val table = tsv ("tests/hs/conformance.tsv", header)
       val errata = tsv ("tests/hs/errata.tsv", errataHeader)
       val notes = tsv ("tests/hs/deviations.tsv", deviationsHeader)
+      val more = readingsOf root
       (* the table's form *)
       val rows : row list =
         List.map (fn fs =>
@@ -179,8 +195,9 @@ struct
           in
             if goodId id then () else fail ("table: the id " ^ id ^ " is not lower-case letters, digits and dots");
             one ("class", classes); one ("test", testKinds); one ("status", statuses); one ("source", sources);
-            List.app (fn r => if goodReading r then () else fail ("table: " ^ id ^ " has the reading " ^ r ^ ", not R1 to R"
-                                                              ^ Int.toString readings)) reading;
+            List.app (fn r => if goodReading more r then ()
+                              else fail ("table: " ^ id ^ " has the reading " ^ r ^ ", neither one of R1 to R" ^ Int.toString readings
+                                         ^ " nor one of tests/hs/readings.md")) reading;
             {id = id, section = field (fs, "section"), statement = field (fs, "statement"), test = field (fs, "test"),
              how = field (fs, "how"), status = field (fs, "status"), reading = reading, deviation = field (fs, "deviation")}
           end) table
@@ -300,7 +317,7 @@ struct
 
   (* ---- breaches planted in a private tree *)
   (* the base of each: the tree's table with every row Planned and no
-     deviation, none noted, and the tree's errata; no program *)
+     deviation, none noted, and the tree's errata and readings; no program *)
   val deviationsHead = String.concatWith "\t" deviationsHeader ^ "\n"
   fun tableText () =
     String.concatWith "\n"
@@ -314,6 +331,7 @@ struct
   fun copyTree (dir, edits : (string * string) list) =
     let
       val base = [("tests/hs/conformance.tsv", tableText ()), ("tests/hs/errata.tsv", read (fromRoot "tests/hs/errata.tsv")),
+                  ("tests/hs/readings.md", read (fromRoot "tests/hs/readings.md")),
                   ("tests/hs/deviations.tsv", deviationsHead)]
       fun one (file, text) = write (dir ^ "/" ^ file, case List.find (fn (f, _) => f = file) edits of
                                                         SOME (_, edited) => edited
@@ -367,15 +385,19 @@ struct
       fun table sets = [(t, setFields (text, sets))]
       val errata = read (fromRoot "tests/hs/errata.tsv")
       (* rows of each kind, from the table: an accept row, a run row with a
-         reading, a reject row, a row with no test *)
+         reading, two reject rows, the second with no reading, a row with no
+         test *)
       val accept = "lex.comment.dashcolon"
       val run = "exp.parse.letnonassoc"
       val runReading = "R9"
       val reject = "lex.any.invalid"
-      val reject2 = "lex.char.tab"
+      val reject2 = "lex.comment.unterminated"
       val none = "intro.implementation"
       val () = if String.isSubstring ("\t" ^ runReading ^ "\t") (lineOf (text, run)) then ()
                else say ("FAIL hs-conformance faults: " ^ run ^ " no longer has the reading " ^ runReading ^ "; choose another row\n")
+      (* reject2's pin pins no reading, so reject2 must have none *)
+      val () = if String.isSubstring "\tPlanned\t\t" (lineOf (text, reject2)) then ()
+               else say ("FAIL hs-conformance faults: " ^ reject2 ^ " is no longer Planned with no reading; choose another row\n")
     in
       attempt ("keeps-the-rules",
                table [(accept, "status", "Supported"), (run, "status", "Partial"), (reject, "status", "Supported"),
@@ -445,6 +467,6 @@ struct
   val tree =
     List.foldl (fn (tag, t) => Test.tag tag t)
       (Test.describe "hs/conformance" [job ("table", ["hs-conformance"]), job ("faults", ["hs-conformance-faults"])])
-      ["check", "hs", "quick", "covers:tests/hs/conformance.tsv", "covers:tests/hs/errata.tsv", "covers:tests/hs/deviations.tsv",
+      ["check", "hs", "quick", "covers:tests/hs/conformance.tsv", "covers:tests/hs/errata.tsv", "covers:tests/hs/deviations.tsv", "covers:tests/hs/readings.md",
        "covers:tests/hs/lang/*", "covers:tests/hs/accept/*", "covers:tests/hs/errors/*", "covers:tests/runner/hsconformance.sml"]
 end

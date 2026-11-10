@@ -17,10 +17,20 @@ struct
 
   val usage =
     "usage: rhc [OPTION...] --read-core FILE...\n\
+    \       rhc [--parse-only | --print | --print-layout | --print-exact | --dump-tokens\n\
+    \            | --dump-ast [--no-spans]] FILE.hs\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
     \Core, its typed lazy intermediate language, checks it and runs it on\n\
-    \Core's interpreter.\n\
+    \Core's interpreter; and it reads a file of Haskell no further than its\n\
+    \parser.\n\
     \\n\
+    \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop; on a file of\n\
+    \                        Haskell, --typecheck-only checks as far as this, until M13\n\
+    \  --print               print it with every block in braces\n\
+    \  --print-layout        print it with every block by layout\n\
+    \  --print-exact         print it from its tree, comments and layout as they were\n\
+    \  --dump-tokens         print the tokens of its layout (the Report's L), one a line\n\
+    \  --dump-ast            print its tree, with --no-spans without where each node is\n\
     \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
     \  --typecheck-only      read and check, and run nothing\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\

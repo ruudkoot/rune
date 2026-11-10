@@ -1,4 +1,4 @@
--- rows: lay.note4.pattern lay.note4.nosemi
+-- rows: lay.note4.pattern lay.note4.nosemi R63
 -- Report 9.3, Note 4: "all brace pairs are treated as explicit layout contexts, including labelled construction and update
 -- (Section 3.15)": a record's lines may stand left of the do block, and its lines get no ;.
 module Main (main) where

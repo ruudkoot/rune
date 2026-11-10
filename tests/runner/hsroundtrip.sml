@@ -6,7 +6,8 @@
      tree the file does, its locations erased.
    - The token test: the tokens of that print are the tokens the layout
      algorithm makes of the file (the Report's L), but for empty items (a
-     `;` after `{` or `;`, or before `}`) and a trailing comma before `)`.
+     `;` after `{` or `;`, or before `}`) and a trailing comma before `)`,
+     an empty list of imports or exports `(,)` among them.
      A parser that drops something from the tree prints without it, and the
      reparse agrees with itself: only this test sees it (E10's mutants).
    - The same two of the print with layout, the implicit print, since a
@@ -46,7 +47,8 @@ struct
      here when rhc has it *)
   val rhc : tool =
     {name = "rhc", print = "bin/rhc --print", implicit = SOME "bin/rhc --print-layout", exact = SOME "bin/rhc --print-exact",
-     tokens = "bin/rhc --dump-tokens", tree = "bin/rhc --dump-ast --no-spans", generate = NONE}
+     tokens = "bin/rhc --dump-tokens", tree = "bin/rhc --dump-ast --no-spans",
+     generate = SOME "bin/rune-hs-syntax generate-files"}
   fun stubWith fault : tool =
     let val c = "bin/rune-test hs-stub-syntax" ^ (if fault = "" then "" else " --fault " ^ fault) ^ " "
     in {name = "stub", print = c ^ "print", implicit = SOME (c ^ "implicit"), exact = SOME (c ^ "exact"),
@@ -68,12 +70,25 @@ struct
              | _ => semis (r, ";" :: acc))
         | semis ("}" :: r, ";" :: acc) = semis ("}" :: r, acc)
         | semis (t :: r, acc) = semis (r, t :: acc)
+      (* `(,)` as the list of an import or of a module's exports, an empty
+         list with a trailing comma, which the tree keeps as an empty list,
+         is `()`: the words before it, after `import` or `module`, say so *)
+      fun word w = size w > 0 andalso Char.isAlpha (String.sub (w, 0))
+      fun lists ([], acc) = List.rev acc
+        | lists (t :: r, acc) =
+            if t = "import" orelse t = "module" then
+              let
+                fun head ("(" :: "," :: ")" :: rest, acc) = lists (rest, ")" :: "(" :: acc)
+                  | head (u :: rest, acc) = if word u then head (rest, u :: acc) else lists (u :: rest, acc)
+                  | head ([], acc) = lists ([], acc)
+              in head (r, t :: acc) end
+            else lists (r, t :: acc)
       (* a comma before `)` goes, but in a tuple's constructor, `(,)` *)
       fun commas ([], acc) = List.rev acc
         | commas ("," :: ")" :: r, acc as p :: _) =
             if p = "(" orelse p = "," then commas (")" :: r, "," :: acc) else commas (")" :: r, acc)
         | commas (t :: r, acc) = commas (r, t :: acc)
-    in commas (semis (ts, []), []) end
+    in commas (semis (lists (ts, []), []), []) end
 
   (* ---- one file *)
   datatype kind = Command | Empty | Tree | Token | Exact | Generated
@@ -316,7 +331,10 @@ struct
               (["(", ",", ")"], ["(", ",", ")"]),
               (["(", ",", ",", ")"], ["(", ",", ",", ")"]),
               (["[", "a", ",", "]"], ["[", "a", ",", "]"]),
-              (["f", "(", "a", ",", ")", ";", "}"], ["f", "(", "a", ")", "}"])]
+              (["f", "(", "a", ",", ")", ";", "}"], ["f", "(", "a", ")", "}"]),
+              (["import", "qualified", "M", "as", "N", "(", ",", ")"], ["import", "qualified", "M", "as", "N", "(", ")"]),
+              (["module", "M", "(", ",", ")", "where"], ["module", "M", "(", ")", "where"]),
+              (["f", "M", "(", ",", ")"], ["f", "M", "(", ",", ")"])]
 
   fun command args =
     case args of

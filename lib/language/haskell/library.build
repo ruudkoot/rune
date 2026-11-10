@@ -1,10 +1,17 @@
 (* The Haskell 98 front end and Core of rhc, the haskell98 roadmap's
-   compiler (docs/plans/language/haskell98.md): Core, its text, CoreLint
-   and its interpreter in core.build. Rune alone builds it (D42). Its
-   friends see what it does not export: rhc's build, which is a friend of
-   lib/compiler too. *)
-exports (structure Core, signature CORE)
+   compiler (docs/plans/language/haskell98.md): the syntax, its lexer,
+   layout, parser and printers, in syntax.build (M11), on lib/unicode;
+   Core, its text, CoreLint and its interpreter in core.build. Rune alone
+   builds it (D42). Its friends see what it does not export: rhc's build,
+   which is a friend of lib/compiler too. *)
+requires unicode end
+exports (structure Core, signature CORE,
+         structure HsAst, structure HsChar, structure HsDump, structure HsLayout, structure HsLexer,
+         structure HsLiterate, structure HsParser, structure HsPrint, structure HsSource, structure HsToken,
+         signature HS_AST, signature HS_CHAR, signature HS_DUMP, signature HS_LAYOUT, signature HS_LEXER,
+         signature HS_LITERATE, signature HS_PARSER, signature HS_PRINT, signature HS_SOURCE, signature HS_TOKEN)
 friends ../../../rhc.build end
 annotate "demand" in
+  use syntax.build
   use core.build
 end
