@@ -1,0 +1,47 @@
+(* The compiler from Mid on, with nothing of a front end: no lexer, parser,
+   elaborator, Translate, ToMid or Expand, so that a front end of another
+   language that uses this and no more cannot name one (docs/ir.md, What a
+   front end gives Mid). Its passes, Lower, the targets and their files, the
+   linker and the store, after the types they share with the front end
+   (Types, Ty) and the primitives; Lambda for its faults (Fault). Rune's
+   front end comes after it (frontend.build); a friend of the library
+   (library.build) may use it alone, with a Config of its own first. *)
+use util.build
+files
+  elab/types.sml
+  core/ty.sml
+  backend/opcodes.sml
+  backend/prims.sml
+  settings.sml
+  driver/unitstore.sml
+  core/lambda.sml
+  core/irrules.sml
+  core/mid.sml
+  core/midlint.sml
+  core/midtext.sml
+  core/midcodec.sml
+  core/midcanon.sml
+  core/target.sml
+  core/shake.sml
+  core/lift.sml
+  core/simplify.sml
+  core/workers.sml
+  core/refs.sml
+  backend/code.sml
+  backend/low.sml
+  backend/target.sml
+  backend/lowlint.sml
+  backend/rep.sml
+  backend/results.sml
+  backend/lower.sml
+  backend/lowshapes.sml
+  backend/fault.sml
+  backend/stack.sml
+  backend/regcodes.sml
+  backend/regs.sml
+  backend/regverify.sml
+  backend/emit.sml
+  backend/link.sml
+  backend/unitfile.sml
+  driver/midpipeline.sml
+end

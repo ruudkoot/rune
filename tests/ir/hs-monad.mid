@@ -1,0 +1,275 @@
+(* run: after hs-rts.mid *)
+(* class Monad m where { (>>=) :: m a -> (a -> m b) -> m b; return :: a -> m a }
+   instance Monad Maybe; instance Monad (State s), newtype State s a = State (s -> (a, s)),
+   the lazy state monad: its bind matches the pair lazily, by selector thunks.
+
+   sumM :: Monad m => (Int -> m Int) -> [Int] -> m Int
+   sumM f []     = return 0
+   sumM f (x:xs) = f x >>= \y -> sumM f xs >>= \z -> return (y + z)
+
+   labelM :: Monad m => m Int -> m String
+   labelM m = m >>= \x -> return (show x)
+
+   Mid has no `m a`: a dictionary is a tuple of `any`, each method cast at its
+   use. A newtype is erased. *)
+(datatype maybe ('a) (0 "Nothing") (1 "Just" : 'a susp))
+(datatype pair ('a 'b) (0 "Pair" : 'a susp * 'b susp))
+(type %1 any * any)
+(type %2 any susp -> (any susp -> any) susp -> any)
+(type %3 any susp -> any)
+(type %4 any susp -> (any, any) pair)
+(type %5 (any susp -> any susp -> (any, any) pair))
+
+(funs
+  (fn gbindMaybe ['a 'b] ((vbmM : 'a maybe susp) (vbmK : ('a susp -> 'b maybe) susp)) : 'b maybe
+    (let (vbmV : 'a maybe) (app gforce['a maybe] vbmM)
+    (let (vbmT : int) (tag vbmV)
+    (let (vbmC : bool) (prim poly_eq vbmT 1 : (int * int) -> bool)
+    (if vbmC
+      (let (vbmX : 'a susp) (decon 1 vbmV : 'a maybe)
+      (let (vbmF : 'a susp -> 'b maybe) (app gforce['a susp -> 'b maybe] vbmK)
+      (return (app vbmF vbmX))))
+      (return (con0 0 : 'b maybe))))))))
+(funs
+  (fn gretMaybe ['a] ((vrmX : 'a susp)) : 'a maybe
+    (return (con 1 vrmX : 'a maybe))))
+(val gdMaybe : %1
+  (fun
+    (fn vdmB1 ((vdmM : any maybe susp)) : (any susp -> any maybe) susp -> any maybe
+      (fun
+        (fn vdmB2 ((vdmK : (any susp -> any maybe) susp)) : any maybe
+          (return (app gbindMaybe[any, any] vdmM vdmK)))
+        (return vdmB2)))
+    (let (vdmBA : any) (prim unsafe_cast vdmB1 : (any maybe susp -> (any susp -> any maybe) susp -> any maybe) -> any)
+    (let (vdmRA : any) (prim unsafe_cast gretMaybe[any] : (any susp -> any maybe) -> any)
+    (return (tuple vdmBA vdmRA))))))
+
+(funs
+  (fn gbindState ['s 'a 'b] ((vbsM : ('s susp -> ('a, 's) pair) susp)
+                             (vbsK : ('a susp -> 's susp -> ('b, 's) pair) susp)
+                             (vbsS : 's susp)) : ('b, 's) pair
+    (fun
+      (fn vbsP ((vbsU : unit)) : ('a, 's) pair
+        (let (vbsMF : 's susp -> ('a, 's) pair) (app gforce['s susp -> ('a, 's) pair] vbsM)
+        (return (app vbsMF vbsS))))
+      (let (vbsPS : ('a, 's) pair susp) (app gdelay[('a, 's) pair] vbsP)
+      (fun
+        (fn vbsFst ((vbsU1 : unit)) : 'a
+          (let (vbsPV : ('a, 's) pair) (app gforce[('a, 's) pair] vbsPS)
+          (let (vbsPT : 'a susp * 's susp) (decon 0 vbsPV : ('a, 's) pair)
+          (let (vbsA1 : 'a susp) (select 0 vbsPT)
+          (return (app gforce['a] vbsA1))))))
+        (fn vbsSnd ((vbsU2 : unit)) : 's
+          (let (vbsPV2 : ('a, 's) pair) (app gforce[('a, 's) pair] vbsPS)
+          (let (vbsPT2 : 'a susp * 's susp) (decon 0 vbsPV2 : ('a, 's) pair)
+          (let (vbsA2 : 's susp) (select 1 vbsPT2)
+          (return (app gforce['s] vbsA2))))))
+        (let (vbsAS : 'a susp) (app gdelay['a] vbsFst)
+        (let (vbsSS : 's susp) (app gdelay['s] vbsSnd)
+        (let (vbsKF : 'a susp -> 's susp -> ('b, 's) pair) (app gforce['a susp -> 's susp -> ('b, 's) pair] vbsK)
+        (let (vbsKA : 's susp -> ('b, 's) pair) (app vbsKF vbsAS)
+        (return (app vbsKA vbsSS)))))))))))
+(val gdState : %1
+  (fun
+    (fn vdsB1 ((vdsM : %4 susp)) : %5 susp -> %4
+      (fun
+        (fn vdsB2 ((vdsK : %5 susp)) : %4
+          (fun
+            (fn vdsB3 ((vdsS : any susp)) : (any, any) pair
+              (return (app gbindState[any, any, any] vdsM vdsK vdsS)))
+            (return vdsB3)))
+        (return vdsB2)))
+    (fun
+      (fn vdsR1 ((vdsX : any susp)) : %4
+        (fun
+          (fn vdsR2 ((vdsS2 : any susp)) : (any, any) pair
+            (let (vdsT : any susp * any susp) (tuple vdsX vdsS2)
+            (return (con 0 vdsT : (any, any) pair))))
+          (return vdsR2)))
+      (let (vdsBA : any) (prim unsafe_cast vdsB1 : (%4 susp -> %5 susp -> %4) -> any)
+      (let (vdsRA : any) (prim unsafe_cast vdsR1 : (any susp -> %4) -> any)
+      (return (tuple vdsBA vdsRA)))))))
+
+(funs
+  (fn gsumM ((vsmD : %1) (vsmF : (int susp -> any) susp) (vsmL : int hlist susp)) : any
+    (let (vsmV : int hlist) (app gforce[int hlist] vsmL)
+    (let (vsmT : int) (tag vsmV)
+    (let (vsmC : bool) (prim poly_eq vsmT 1 : (int * int) -> bool)
+    (if vsmC
+      (let (vsmP : int susp * int hlist susp) (decon 1 vsmV : int hlist)
+      (let (vsmX : int susp) (select 0 vsmP)
+      (let (vsmXs : int hlist susp) (select 1 vsmP)
+      (let (vsmB : any) (select 0 vsmD)
+      (let (vsmBT : %2) (prim unsafe_cast vsmB : any -> %2)
+      (fun
+        (fn vsmA ((vsmU : unit)) : any
+          (let (vsmF1 : int susp -> any) (app gforce[int susp -> any] vsmF)
+          (return (app vsmF1 vsmX))))
+        (let (vsmAS : any susp) (app gdelay[any] vsmA)
+        (fun
+          (fn vsmK1 ((vsmY : any susp)) : any
+            (fun
+              (fn vsmRest ((vsmU2 : unit)) : any
+                (return (app gsumM vsmD vsmF vsmXs)))
+              (let (vsmRS : any susp) (app gdelay[any] vsmRest)
+              (fun
+                (fn vsmK2 ((vsmZ : any susp)) : any
+                  (fun
+                    (fn vsmSum ((vsmU3 : unit)) : int
+                      (let (vsmYS : int susp) (prim unsafe_cast vsmY : any susp -> int susp)
+                      (let (vsmZS : int susp) (prim unsafe_cast vsmZ : any susp -> int susp)
+                      (let (vsmYI : int) (app gforce[int] vsmYS)
+                      (let (vsmZI : int) (app gforce[int] vsmZS)
+                      (return (prim int_add vsmYI vsmZI : (int * int) -> int)))))))
+                    (let (vsmSS : int susp) (app gdelay[int] vsmSum)
+                    (let (vsmSA : any susp) (prim unsafe_cast vsmSS : int susp -> any susp)
+                    (let (vsmR : any) (select 1 vsmD)
+                    (let (vsmRT : %3) (prim unsafe_cast vsmR : any -> %3)
+                    (return (app vsmRT vsmSA))))))))
+                (let (vsmK2S : (any susp -> any) susp) (app gdone[any susp -> any] vsmK2)
+                (let (vsmB2 : any) (select 0 vsmD)
+                (let (vsmB2T : %2) (prim unsafe_cast vsmB2 : any -> %2)
+                (let (vsmB21 : (any susp -> any) susp -> any) (app vsmB2T vsmRS)
+                (return (app vsmB21 vsmK2S))))))))))
+          (let (vsmK1S : (any susp -> any) susp) (app gdone[any susp -> any] vsmK1)
+          (let (vsmB1 : (any susp -> any) susp -> any) (app vsmBT vsmAS)
+          (return (app vsmB1 vsmK1S))))))))))))
+      (let (vsmZero : int susp) (app gdone[int] 0)
+      (let (vsmZA : any susp) (prim unsafe_cast vsmZero : int susp -> any susp)
+      (let (vsmR0 : any) (select 1 vsmD)
+      (let (vsmR0T : %3) (prim unsafe_cast vsmR0 : any -> %3)
+      (return (app vsmR0T vsmZA))))))))))))
+
+(funs
+  (fn glabelM ((vlbD : %1) (vlbM : any susp)) : any
+    (let (vlbB : any) (select 0 vlbD)
+    (let (vlbBT : %2) (prim unsafe_cast vlbB : any -> %2)
+    (fun
+      (fn vlbK ((vlbX : any susp)) : any
+        (fun
+          (fn vlbSh ((vlbU : unit)) : string
+            (let (vlbXI : int susp) (prim unsafe_cast vlbX : any susp -> int susp)
+            (let (vlbI : int) (app gforce[int] vlbXI)
+            (return (prim int_to_string vlbI : int -> string)))))
+          (let (vlbSS : string susp) (app gdelay[string] vlbSh)
+          (let (vlbSA : any susp) (prim unsafe_cast vlbSS : string susp -> any susp)
+          (let (vlbR : any) (select 1 vlbD)
+          (let (vlbRT : %3) (prim unsafe_cast vlbR : any -> %3)
+          (return (app vlbRT vlbSA))))))))
+      (let (vlbKS : (any susp -> any) susp) (app gdone[any susp -> any] vlbK)
+      (let (vlbB1 : (any susp -> any) susp -> any) (app vlbBT vlbM)
+      (return (app vlbB1 vlbKS)))))))))
+
+(* safe x = if x > 3 then Nothing else Just (x * 2) *)
+(funs
+  (fn gsafe ((vsfX : int susp)) : int maybe
+    (let (vsfI : int) (app gforce[int] vsfX)
+    (let (vsfC : bool) (prim int_gt vsfI 3 : (int * int) -> bool)
+    (if vsfC
+      (return (con0 0 : int maybe))
+      (fun
+        (fn vsfD ((vsfU : unit)) : int
+          (return (prim int_mul vsfI 2 : (int * int) -> int)))
+        (let (vsfDS : int susp) (app gdelay[int] vsfD)
+        (return (con 1 vsfDS : int maybe)))))))))
+(* tick x = State (\s -> (x + s, s + 1)) *)
+(funs
+  (fn gtick ((vtkX : int susp)) : int susp -> (int, int) pair
+    (fun
+      (fn vtkF ((vtkS : int susp)) : (int, int) pair
+        (fun
+          (fn vtkV ((vtkU : unit)) : int
+            (let (vtkXI : int) (app gforce[int] vtkX)
+            (let (vtkSI : int) (app gforce[int] vtkS)
+            (return (prim int_add vtkXI vtkSI : (int * int) -> int)))))
+          (fn vtkN ((vtkU2 : unit)) : int
+            (let (vtkSI2 : int) (app gforce[int] vtkS)
+            (return (prim int_add vtkSI2 1 : (int * int) -> int))))
+          (let (vtkVS : int susp) (app gdelay[int] vtkV)
+          (let (vtkNS : int susp) (app gdelay[int] vtkN)
+          (let (vtkP : int susp * int susp) (tuple vtkVS vtkNS)
+          (return (con 0 vtkP : (int, int) pair)))))))
+      (return vtkF))))
+(funs
+  (fn gupto ((vupL : int) (vupH : int)) : int hlist
+    (let (vupD : bool) (prim int_gt vupL vupH : (int * int) -> bool)
+    (if vupD
+      (return (con0 0 : int hlist))
+      (let (vupN : int) (prim int_add vupL 1 : (int * int) -> int)
+      (fun
+        (fn vupR ((vupU : unit)) : int hlist
+          (return (app gupto vupN vupH)))
+        (let (vupRS : int hlist susp) (app gdelay[int hlist] vupR)
+        (let (vupHS : int susp) (app gdone[int] vupL)
+        (let (vupP : int susp * int hlist susp) (tuple vupHS vupRS)
+        (return (con 1 vupP : int hlist)))))))))))
+(funs
+  (fn gputMaybeInt ((vpmM : int maybe)) : unit
+    (let (vpmT : int) (tag vpmM)
+    (let (vpmC : bool) (prim poly_eq vpmT 1 : (int * int) -> bool)
+    (if vpmC
+      (let (vpmX : int susp) (decon 1 vpmM : int maybe)
+      (let (vpmI : int) (app gforce[int] vpmX)
+      (let (vpmS : string) (prim int_to_string vpmI : int -> string)
+      (let (vpmJ : string) (prim string_concat "Just " vpmS : (string * string) -> string)
+      (return (app gputs vpmJ))))))
+      (return (app gputs "Nothing")))))))
+(val gsafeA : int susp -> any (return (prim unsafe_cast gsafe : (int susp -> int maybe) -> (int susp -> any))))
+(val gtickA : int susp -> any
+  (return (prim unsafe_cast gtick : (int susp -> int susp -> (int, int) pair) -> (int susp -> any))))
+(do ()
+  (let (vone : int susp) (app gdone[int] 1)
+  (let (vsafeS : (int susp -> any) susp) (app gdone[int susp -> any] gsafeA)
+  (let (vl3 : int hlist) (app gupto 1 3)
+  (let (vl3S : int hlist susp) (app gdone[int hlist] vl3)
+  (let (vl4 : int hlist) (app gupto 1 4)
+  (let (vl4S : int hlist susp) (app gdone[int hlist] vl4)
+  (let (vr1 : any) (app gsumM gdMaybe vsafeS vl3S)
+  (let (vr1M : int maybe) (prim unsafe_cast vr1 : any -> int maybe)
+  (let (vu1 : unit) (app gputMaybeInt vr1M)
+  (let (vr2 : any) (app gsumM gdMaybe vsafeS vl4S)
+  (let (vr2M : int maybe) (prim unsafe_cast vr2 : any -> int maybe)
+  (let (vu2 : unit) (app gputMaybeInt vr2M)
+  (* the same sumM at the state monad *)
+  (let (vtickS : (int susp -> any) susp) (app gdone[int susp -> any] gtickA)
+  (let (vr3 : any) (app gsumM gdState vtickS vl3S)
+  (let (vr3F : int susp -> (int, int) pair) (prim unsafe_cast vr3 : any -> (int susp -> (int, int) pair))
+  (let (vzero : int susp) (app gdone[int] 0)
+  (let (vp3 : (int, int) pair) (app vr3F vzero)
+  (let (vp3T : int susp * int susp) (decon 0 vp3 : (int, int) pair)
+  (let (vp3V : int susp) (select 0 vp3T)
+  (let (vp3S : int susp) (select 1 vp3T)
+  (let (vp3VI : int) (app gforce[int] vp3V)
+  (let (vu3 : unit) (app gputInt vp3VI)
+  (let (vp3SI : int) (app gforce[int] vp3S)
+  (let (vu4 : unit) (app gputInt vp3SI)
+  (* a method at two types in one function: >>= from Int to String, at two monads *)
+  (let (vjust : int maybe) (app gsafe vone)
+  (let (vjustS : int maybe susp) (app gdone[int maybe] vjust)
+  (let (vjustA : any susp) (prim unsafe_cast vjustS : int maybe susp -> any susp)
+  (let (vr4 : any) (app glabelM gdMaybe vjustA)
+  (let (vr4M : string maybe) (prim unsafe_cast vr4 : any -> string maybe)
+  (let (vr4T : int) (tag vr4M)
+  (let (vr4C : bool) (prim poly_eq vr4T 1 : (int * int) -> bool)
+  (if vr4C
+    (let (vr4X : string susp) (decon 1 vr4M : string maybe)
+    (let (vr4S : string) (app gforce[string] vr4X)
+    (let (vr4J : string) (prim string_concat "Just " vr4S : (string * string) -> string)
+    (let (vu5 : unit) (app gputs vr4J)
+    (fun
+      (fn vt1 ((vt1U : unit)) : int susp -> (int, int) pair
+        (return (app gtick vone)))
+      (let (vt1S : (int susp -> (int, int) pair) susp) (app gdelay[int susp -> (int, int) pair] vt1)
+      (let (vt1A : any susp) (prim unsafe_cast vt1S : (int susp -> (int, int) pair) susp -> any susp)
+      (let (vr5 : any) (app glabelM gdState vt1A)
+      (let (vr5F : int susp -> (string, int) pair) (prim unsafe_cast vr5 : any -> (int susp -> (string, int) pair))
+      (let (vten : int susp) (app gdone[int] 10)
+      (let (vp5 : (string, int) pair) (app vr5F vten)
+      (let (vp5T : string susp * int susp) (decon 0 vp5 : (string, int) pair)
+      (let (vp5V : string susp) (select 0 vp5T)
+      (let (vp5S : int susp) (select 1 vp5T)
+      (let (vp5VS : string) (app gforce[string] vp5V)
+      (let (vu6 : unit) (app gputs vp5VS)
+      (let (vp5SI : int) (app gforce[int] vp5S)
+      (return (app gputInt vp5SI)))))))))))))))))))
+    (return (app gputs "impossible")))))))))))))))))))))))))))))))))))

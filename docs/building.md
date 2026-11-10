@@ -664,7 +664,8 @@ Remote WSL, checkout library configuration and publishing.
   `rune.build` only, then `make plans`.**
 * `runedoc.build` is the same for `runedoc`: the libraries it is written on
   (`libraries unicode json`), `build/config.sml`, the compiler's utilities,
-  frontend and elaborator through `lib/compiler/frontend.build`, which the
+  frontend and elaborator through `lib/compiler/frontend.build`, which come
+  after the compiler from Mid on (`lib/compiler/mid.build`) and which the
   library names it a friend to use, then `src/doc`. The
   script makes `build/runedoc.mlb`, `build/runedoc.cm`,
   `build/runedoc-polyml-build.sml` and `build/runedoc-mlkit.mlb` from it;

@@ -234,9 +234,9 @@ struct
           fun op' (opc, args) = (restore p; emit (C.Op (opc, args)))
         in
         case oper of
-          L.Const (Lambda.CInt i) =>
+          L.Const (Literal.CInt i) =>
             if IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then op' (Opcodes.INT, [IntInf.toInt i])
-            else op' (Opcodes.CONST, [C.constIdx (Lambda.CInt i)])
+            else op' (Opcodes.CONST, [C.constIdx (Literal.CInt i)])
         | L.Const c => op' (Opcodes.CONST, [C.constIdx c])
         | L.Unit => op' (Opcodes.UNIT, [])
         | L.Con0 t => op' (Opcodes.CON0, [t])
@@ -255,7 +255,7 @@ struct
         | L.Decon (t, v) => (load v; op' (Opcodes.DECON, [t]))
         | L.Field (t, i, v) => (load v; op' (Opcodes.FIELD, [t, i]))
         | L.ConTag v => (load v; op' (Opcodes.CONTAG, []))
-        | L.NewExn n => op' (Opcodes.NEWEXN, [C.constIdx (Lambda.CString n)])
+        | L.NewExn n => op' (Opcodes.NEWEXN, [C.constIdx (Literal.CString n)])
         | L.BuiltinExn k => op' (Opcodes.BUILTINEXN, [k])
         | L.MkExn (c, p) => (load c; load p; op' (Opcodes.MKEXN, []))
         | L.ExnCon v => (load v; op' (Opcodes.EXNCON, []))

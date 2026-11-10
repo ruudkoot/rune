@@ -18,13 +18,13 @@
      function inside it binds -- and those of a lifted function it calls,
      before its own, and every call gives them as themselves -- the call is
      inside those functions too (Mid is System F: the linting roadmap's M5).
-   * It is named as the local function was (Translate.funNames), for
+   * It is named as the local function was (its label), for
      traces. *)
 structure Lift =
 struct
   open Mid
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   (* ---- what an expression names ---- *)
 
@@ -172,7 +172,7 @@ struct
 
   (* ---- the program ---- *)
 
-  fun program (p : program) : program =
+  fun program (target : Target.t) (p : program) : program =
     let
       val () = (groupFree := IntTable.table 256; groupGens := IntTable.table 256)
       (* every binder's scheme, and how each variable is used: in all, and
@@ -241,7 +241,7 @@ struct
                  val extra = IntMap.listKeys extra
                in
                  if (null extra orelse List.all (fn f => onlyCalled (#name f)) fs) andalso List.all monomorphic extra
-                    andalso List.all (fn f => List.length extra + List.length (#params f) <= #maxArgs Target.stack) fs
+                    andalso List.all (fn f => List.length extra + List.length (#params f) <= #maxArgs target) fs
                     andalso Pass.spend () then
                    let
                      val own = List.foldl (fn (f, m) => List.foldl (fn (a, m) => IntMap.insert (m, a, ())) m (#tyvars f))
@@ -347,8 +347,8 @@ struct
             case e of
               Let (x, sc, r, b) => Let (x, sc, r' r, go b)
             | Fun (fs, b) =>
-                Fun (List.map (fn {name, tyvars, params, result, body} =>
-                                 {name = name, tyvars = tyvars, params = params, result = result, body = go body}) fs,
+                Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                                 {name = name, label = label, tyvars = tyvars, params = params, result = result, body = go body}) fs,
                      go b)
             | Join (j, ps, body, sc) => Join (j, ps, go body, go sc)
             | Jump (j, xs) => Jump (j, List.map atom xs)
@@ -375,12 +375,12 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (sp, a) => Mark (sp, exp a)
-      and fundef ({name, tyvars, params, result, body} : fundef) : fundef =
-        {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
+      and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
+        {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
 
       (* a member of a lifted group, as a function of the top level: what it
          is given its first parameters, renamed in its body *)
-      and lift ({name, tyvars, params, result, body} : fundef) : fundef =
+      and lift ({name, label, tyvars, params, result, body} : fundef) : fundef =
         let
           val {global, extra, outer} = valOf (IntTable.find (lifted, name))
           val fresh = List.map (fn x => (x, freshStamp ())) extra
@@ -389,16 +389,8 @@ struct
           val () = List.app (fn (x, y) => Ty.copyExn (x, y, fn t => t)) fresh
           val s = List.foldl (fn ((x, y), m) => IntMap.insert (m, x, y)) IntMap.empty fresh
           val ps = List.map (fn (x, y) => (y, case IntTable.find (schemes, x) of SOME (_, t) => t | NONE => Ty.unit)) fresh
-          (* named as it was, by its first parameter now *)
-          val () =
-            case (fresh, params) of
-              ((_, y) :: _, (x, _) :: _) =>
-                (case IntMap.find (!Translate.funNames, x) of
-                   SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, y, n)
-                 | NONE => ())
-            | _ => ()
         in
-          {name = global, tyvars = outer @ tyvars, params = ps @ params, result = result, body = rename s (exp body)}
+          {name = global, label = label, tyvars = outer @ tyvars, params = ps @ params, result = result, body = rename s (exp body)}
         end
 
       fun def d =
