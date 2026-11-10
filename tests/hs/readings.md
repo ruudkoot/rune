@@ -273,3 +273,14 @@ property holds exactly in bases 2 and 16, where the digits are `r`'s own, and in
 `r`: `fromRational` of `0.d1...dn * 10^e` is `r`. The other properties hold as written. **GHC**, **Hugs**, **nhc98** and
 **MicroHs** agree with the code. **rhc** follows the code; the program checks the property exactly in bases 2 and 16
 and to the nearest float in base 10. Rows: `lib.r.numeric.floattodigits.value`.
+
+### R152. `Functor (Array a)` has the context `(Ix a)`
+> instance Functor (Array a) where ... (16, the synopsis)
+> instance (Ix a) => Functor (Array a) where (16.4, Array)
+
+**What the text says.** The synopsis gives the instance no context and the code gives it `(Ix a)`; E9's R49 lists the
+pair among the library's prose against its code. The code is the text, so `fmap` on an `Array a b` needs `Ix a`:
+`g :: Array a Int -> Array a Int; g = fmap (+ 1)` is refused, and with `(Ix a) =>` in its signature accepted. **Hugs**,
+**nhc98** and **MicroHs** refuse the first form, as the code does; **GHC**'s instance has no context and takes it.
+**rhc** follows the code; the accepted program uses the form with the context, which both readings take.
+Rows: `lib.r.array.functor.context`.

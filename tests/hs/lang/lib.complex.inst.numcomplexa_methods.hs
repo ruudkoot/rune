@@ -1,8 +1,8 @@
--- rows: lib.complex.inst.fractionalcomplexa lib.complex.inst.floatingcomplexawherepieqpicolonplus0expxcolonplusyeqexpxstarcosycolonplusexpxstarsiny lib.complex.inst.floatingcomplexa lib.complex.inst.eqcomplexa lib.complex.inst.readcomplexa lib.complex.inst.showcomplexa lib.r.complex.abs lib.r.complex.signum.zero lib.r.complex.signum lib.r.complex.show R49
+-- rows: lib.complex.inst.fractionalcomplexa lib.complex.inst.floatingcomplexawherepieqpicolonplus0expxcolonplusyeqexpxstarcosycolonplusexpxstarsiny lib.complex.inst.floatingcomplexa lib.complex.inst.eqcomplexa lib.complex.inst.readcomplexa lib.complex.inst.showcomplexa lib.r.complex.abs lib.r.complex.signum.zero lib.r.complex.signum lib.r.complex.show R42 R49
 -- Report 13.1: the instances of Complex a, each method on samples against the Report's own code copied under new names,
 -- to a tolerance (a method's copy calls the instance's other methods, each checked here too): abs z is
 -- magnitude z :+ 0, signum 0 is 0 and signum z of magnitude 1 and z's phase; Eq, Read and Show derived, Show at
--- infix 6. A negative component's show waits for R42 and is not shown here.
+-- infix 6 (a negative component's show: lib.r.complex.show_negative).
 module Main (main) where
 
 import Complex
