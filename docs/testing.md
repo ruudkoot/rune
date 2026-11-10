@@ -891,6 +891,32 @@ The seeds for desugaring (clause order reversed, `~` made strict, a
 `newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
 that `report/order`, `report/lazy` and `report/newtype` catch.
 
+**rhc's Core simplifier** (`tests/runner/hssimplify.sml`, `hs/simplify/*`; the
+roadmap's M23, D48, D49). rhc's optimiser on Core runs at `-O2`: its passes
+(`core-simplify`, `core-specialise`, `core-eta`, `core-simplify-2`) each
+through `Pass.stage`, with CoreLint and HsLint's target check after each at
+level 2 and Core's text read back at level 3. Each program of
+`tests/hs/simplify` runs on Core's interpreter at `-O0` and `-O2` and on the
+VM at both (`hs/simplify/run/NAME`), printing `NAME.expected` and ending as
+`NAME.exitcode` says, with `NAME.stdin` as its input; one with a line `--
+fuel:` is compiled at `-O2` with its rewrites stopped after each of several
+counts (`--fuel=N`), every lint holding and the output the same
+(`hs/simplify/fuel/NAME`); one with `-- budget: SIZE1 SIZE2` is a sharing
+budget, its instructions at the second size given on standard input at
+most 2.2 times those at the first, at `-O0` and `-O2`, so that a thunk
+copied into a lambda or work moved under one by eta shows
+(`hs/simplify/budget/NAME`). `eta.hs` is D48's bottom probe: `seq` of a
+function whose lambda is behind a case, given bottom, is bottom under the
+pedantic rule, which GHC's default (`--eta=ghc`, built to be measured) breaks.
+Over the run programs of `tests/hs/lang` (nightly, held while their rows
+are `Planned`), the VM prints at `-O2` what it prints at `-O0` and ends
+alike (`hs/simplify/lang/NAME`). The expected outputs are GHC 9.4.7's
+(`monad.hs` with the Functor and Applicative instances GHC's Monad wants).
+The seeds for the simplifier (a thunk copied into a lambda, eta through an
+expensive let, eta through a case under the pedantic rule, a specialisation
+given the wrong dictionaries, specialisation without fuel) are mutants of
+`lib/language/haskell/coresimplify_*.sml` (`tests/runner/hsmutantlist.sml`).
+
 **rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
 FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
 path as its last argument, exits 0: delta debugging over the top-level
