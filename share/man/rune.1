@@ -598,6 +598,12 @@ would; no bytecode is written.
 .B \-\-mid\-roundtrip
 Check that Mid printed with its positions, read and printed again is the same.
 .TP
+.B \-\-check\-casts
+Check at run time that a cast whose result is no suspension is given a value
+that is evaluated, and stop where it is not: for testing a front end that
+makes suspensions (docs/ir.md, Suspensions). Without it the code is what it
+is with none of these checks.
+.TP
 .BI \-\-target= T
 The bytecode to make:
 .B registers

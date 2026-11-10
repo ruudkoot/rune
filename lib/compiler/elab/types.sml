@@ -90,10 +90,17 @@ struct
      equality is its identity. *)
   val bytearrayTycon = mk ("bytearray", 14, 0, true)
   val realarrayTycon = mk ("realarray", 15, 0, true)
+  (* A suspension of a lazy front end (docs/ir.md, Suspensions;
+     docs/plans/language/haskell98.md, D3): a value of type t, or what
+     evaluates to one when it is forced (thunk_force). No datatype, so that
+     Lower gives it no representation (RAny) and tier 2 keeps every test on
+     it. A program of SML names it `t _prim "susp"`, with --allow-prim, and
+     has no value of it but through the primitives. *)
+  val suspTycon = mk ("susp", 16, 1, false)
 
   val builtinTycons =
     [intTycon, wordTycon, realTycon, charTycon, stringTycon, boolTycon, listTycon, refTycon,
-     exnTycon, arrayTycon, vectorTycon, int64Tycon, word64Tycon, bytearrayTycon, realarrayTycon]
+     exnTycon, arrayTycon, vectorTycon, int64Tycon, word64Tycon, bytearrayTycon, realarrayTycon, suspTycon]
 
   val intTy = TCon (intTycon, [])
   val wordTy = TCon (wordTycon, [])

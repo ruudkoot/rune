@@ -139,6 +139,13 @@ address the frame returns to, is never written into an image.
   answer with the native code to go on at: for a value that is no closure,
   an index out of range, a full array of frames, and the RET of the top
   level, which ends the run.
+* **FORCE** (a suspension's, [ir.md](ir.md), *Suspensions*) takes what an
+  indirection holds in its place, or leaves a value that is no unevaluated
+  suspension as it is, and jumps; an unevaluated one goes on to `ENTER`,
+  which is `native_enter`, the interpreter's case taken out of the loop as
+  `native_call` is, and `BLACKHOLE` and `UPDATE` call the glue
+  (`native_blackhole`, `native_update`), which calls the bodies the
+  interpreter shares (`runtime/stack/ops.h`).
 * **RAISE** calls `native_raise`: `vm_raise` unwinds as it does for the
   interpreter, and `native_handler` finds the handler's code by its pc in
   `rune_handlers`. A handler's code reloads the frame.

@@ -489,6 +489,11 @@ struct
      in on a stack. *)
   val debugInfo = ref false
   val () = CompilerState.cellRoot ("Lower.debugInfo", debugInfo)
+  (* rune --check-casts (docs/ir.md, Suspensions; the haskell98 roadmap's
+     D5): each cast whose result is no suspension asks that its value be
+     evaluated (any_check). Off, the code is what it would be without it. *)
+  val checkCasts = ref false
+  val () = CompilerState.cellRoot ("Lower.checkCasts", checkCasts)
   val debugVars : {id : int, vars : (int * L.var) list, env : (int * int) list} list ref = ref []
   val () = CompilerState.cellRoot ("Lower.debugVars", debugVars)
   (* and, from the register target, the register of each variable of Low
@@ -940,10 +945,11 @@ struct
         else ()
       val () = binds := outer
     in
-      funcs := {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
-                blocks = List.rev (!(#blocks b)), pos = pos,
-                reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny),
-                result = result, captures = []}
+      (* a suspension's code reads what it captured where it begins (Low.hoistEnv) *)
+      funcs := L.hoistEnv {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
+                           blocks = List.rev (!(#blocks b)), pos = pos,
+                           reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny),
+                           result = result, captures = []}
                :: !funcs;
       id
     end
@@ -990,6 +996,8 @@ struct
       | M.Prim ("functor_marker", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
       | M.Prim ("open_boxed", _, xs) => L.Prim ("imm_eq", List.map at xs)
       | M.Prim ("open_layout", t, [M.Const (Lambda.CInt tag, _)]) => L.Const (Lambda.CInt (IntInf.fromInt (openLayout (t, IntInf.toInt tag))))
+      (* BLACKHOLE takes no operand: the unit is not made *)
+      | M.Prim ("thunk_blackhole", _, _) => L.Prim ("thunk_blackhole", [])
       | M.Prim (p, _, xs) => L.Prim (p, List.map at xs)
       | M.Tuple xs => L.Tuple (List.map at xs)
       | M.Select (i, a) =>
@@ -1048,6 +1056,22 @@ struct
   and value (b, cx, r : M.rhs) : L.var =
     case r of
       M.Atom a => atom (b, cx, a)
+    (* a cast into a suspension is no instruction: its value, under another
+       name (docs/ir.md, Suspensions) *)
+    | M.Prim ("unsafe_cast", pt, [a]) =>
+        if castsToSusp pt then atom (b, cx, a)
+        else if !checkCasts then tyOfRhs (b, defAs (b, L.Prim ("any_check", [atom (b, cx, a)]), repOfRhs r), r)
+        else tyOfRhs (b, defAs (b, oper (b, cx, r), repOfRhs r), r)
+    (* and a force of what the code knows is no suspension, which such a
+       cast made: the value itself, which a register of a representation
+       holds (a suspension's is any) *)
+    | M.Prim ("thunk_force", _, [a]) =>
+        let val v = atom (b, cx, a)
+        in
+          (* the table holds no variable of any (setRep) *)
+          if isSome (IntTable.find (#reps b, v)) then v
+          else tyOfRhs (b, defAs (b, L.Prim ("thunk_force", [v]), repOfRhs r), r)
+        end
     | M.App (M.Global (g, _), xs) =>
         (case IntMap.find (!slotFuns, g) of
            SOME n => def (b, L.Tuple (slotParts (b, cx, g, n, xs, List.tabulate (n, fn _ => Ty.var 0), NONE)))
@@ -1064,6 +1088,12 @@ struct
               | SOME n => def (b, L.Tuple (List.take (vs, n))))
          | _ => tyOfRhs (b, defAs (b, oper (b, cx, r), repOfRhs r), r))
     | _ => tyOfRhs (b, defAs (b, oper (b, cx, r), repOfRhs r), r)
+
+  (* whether a cast's type, at its use, gives a suspension *)
+  and castsToSusp (pt : Ty.ty) : bool =
+    case Ty.view pt of
+      Ty.Arrow (_, res) => (case Ty.view res of Ty.Con (stamp, _, _) => stamp = #stamp Types.suspTycon | _ => false)
+    | _ => false
 
   (* its type where the operation's own says, as repOfRhs: a primitive's
      result at this use, a constructor's datatype, an exception's argument *)

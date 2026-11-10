@@ -233,6 +233,20 @@ struct
           | L.CallK (fid, vs) =>
               (expectCall (fid, List.map repOf vs, regRepOf x);
                op' (R.CALLK, fid :: List.length vs :: List.map reg vs); op' (R.RESULT, [d]))
+          (* a suspension's (docs/ir.md, Suspensions): a force is FORCE, and
+             where the value is an unevaluated suspension ENTER, with unit,
+             and RESULT; the code of one says BLACKHOLE and UPDATE *)
+          | L.Prim ("thunk_force", [s]) =>
+              let val l = C.newLabel ()
+              in
+                emit (C.Ops (R.FORCE, [C.I d, C.I (reg s), C.L l]));
+                op' (R.UNIT, [scratch]);
+                op' (R.ENTER, [reg s, scratch]);
+                op' (R.RESULT, [d]);
+                emit (C.Lab l)
+              end
+          | L.Prim ("thunk_blackhole", _) => (op' (R.BLACKHOLE, []); if usesOf x > 0 then op' (R.UNIT, [d]) else ())
+          | L.Prim ("thunk_self_update", [v]) => (op' (R.UPDATE, [reg v]); if usesOf x > 0 then op' (R.UNIT, [d]) else ())
           | L.Prim (p, vs) =>
               if List.exists (fn q => q = p) imagePrims then
                 (op' (R.PRIMPUSH, C.primIdx p :: List.map reg vs); op' (R.RESULT, [d]))

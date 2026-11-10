@@ -472,3 +472,10 @@ foreign_callback 3  string * string * (string -> string) -> bool * Word64.word *
 
 # --- linked unit inventory (compiler library sessions) ---
 rt_linked_units  1  unit -> string list      Identities of successfully linked units in first-link order, each once; the reserved top-level export is the marker. Does not imply execution of initializers.
+
+# --- suspensions of a lazy front end (docs/plans/language/haskell98.md, D3, D11, D13; docs/ir.md, Suspensions) ---
+thunk_make       1  (unit -> 'a) -> 'a susp   A suspension of the closure, unevaluated: the closure itself made a K_THUNK in place, which must be fresh and named by nothing else; a copy where it captures nothing. The closure's code says thunk_blackhole first and thunk_self_update last.
+thunk_force      1  'a susp -> 'a            The value of a suspension: what an indirection holds, the suspension's code run where it is unevaluated, a value that is no suspension itself. Each target makes it FORCE, ENTER and RESULT; no primitive runs.
+thunk_blackhole  1  unit -> unit             In a suspension's code, after what it captured has been read: the suspension under evaluation, a second force of it a loop. Each target makes it BLACKHOLE; no primitive runs.
+thunk_self_update 1  'a -> unit               In a suspension's code: the suspension running becomes an indirection to the value. Each target makes it UPDATE; no primitive runs.
+any_check        1  'a -> 'a                 Its argument, which a fatal error stops where it is a suspension or an indirection: what a compile with --check-casts puts after each cast whose result is no suspension, which says that the value is evaluated (docs/ir.md, Suspensions).

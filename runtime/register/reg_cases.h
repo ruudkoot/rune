@@ -79,9 +79,10 @@ CASE(ENV) {
     TRACE(ROP_ENV, a, b, 0);
     pc += 9;
     count++;
-    /* the header's closure: a closure, or unit where the frame has none */
+    /* the header's closure: a closure, a suspension whose code has not
+       yet said BLACKHOLE, or unit where the frame has none */
     Value cv = CLOSURE();
-    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE || (uint32_t)b + 1 >= obj_len(val_ptr(cv))) FATAL("environment slot %d out of range", b);
+    if (!val_is_ptr(cv) || !obj_has_env(val_ptr(cv)) || (uint32_t)b + 1 >= obj_len(val_ptr(cv))) FATAL("environment slot %d out of range", b);
     R(a) = obj_field(val_ptr(cv), b + 1);
     NEXT;
 }
@@ -91,7 +92,7 @@ CASE(SELF) {
     pc += 5;
     count++;
     Value cv = CLOSURE();
-    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE) FATAL("SELF outside a closure");
+    if (!val_is_ptr(cv) || (obj_kind(val_ptr(cv)) != K_CLOSURE && obj_kind(val_ptr(cv)) != K_THUNK)) FATAL("SELF outside a closure");
     R(a) = cv;
     NEXT;
 }
@@ -584,5 +585,66 @@ CASE(FIELD) {
     if (vm->checked && obj_contag(o) != c) FATAL("FIELD of a constructor of tag %d where %d is wanted", (int)obj_contag(o), (int)c);
     if ((uint32_t)d >= obj_len(o)) FATAL("constructor field %d out of range", d);
     R(a) = obj_field(o, d);
+    NEXT;
+}
+CASE(FORCE) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    int32_t c = read_i32(code + pc + 9);
+    TRACE(ROP_FORCE, a, b, c);
+    pc += 13;
+    count++;
+    Value v = R(b);
+    if (val_is_ptr(v)) {
+      int k = obj_kind(val_ptr(v));
+      if (k == K_THUNK) NEXT;
+      if (k == K_IND) v = obj_field(val_ptr(v), 0);
+    }
+    R(a) = v;
+    pc = (uint32_t)c;
+    NEXT;
+}
+CASE(ENTER) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    TRACE(ROP_ENTER, a, b, 0);
+    pc += 9;
+    count++;
+    POLL(9);
+    Value arg = R(b);
+    Obj *c = EXPECT(R(a), K_THUNK, "suspension");
+    if (obj_contag(c) == THUNK_BLACKHOLE) FATAL("<<loop>>: a suspension forced while it is evaluated");
+    int64_t fidx = val_imm(obj_field(c, 0));
+    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;
+    ROOM(top, fn);
+    HEADER(top, pc, mk_ptr(c));
+    vm->fp = top;
+    vm->func = (uint32_t)fidx;
+    Value *slot = vm->stack + top;
+    slot[0] = arg;
+    for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
+    HANDOVER((uint32_t)fidx);
+    NEXT;
+}
+CASE(BLACKHOLE) {
+    TRACE(ROP_BLACKHOLE, 0, 0, 0);
+    pc += 1;
+    count++;
+    Value cv = CLOSURE();
+    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL("BLACKHOLE outside a suspension");
+    vm_blackhole(vm, val_ptr(cv));
+    NEXT;
+}
+CASE(UPDATE) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(ROP_UPDATE, a, 0, 0);
+    pc += 5;
+    count++;
+    Value cv = CLOSURE();
+    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL("UPDATE outside a suspension");
+    obj_become_ind(vm, val_ptr(cv), R(a));
     NEXT;
 }

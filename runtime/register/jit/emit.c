@@ -1398,8 +1398,8 @@ static void called(Jit *j, uint32_t pc) {
    representation would choose the address a call jumps to (the linting
    roadmap's D8); rcx := the table of calls (CallInfo, M6), read from the
    VM, which a unit loaded grows and may move */
-static void closure_function(Jit *j, int32_t a, int obj) {
-    ms_load_obj(M, obj, a, K_CLOSURE, jit_fatal(j, FATAL_CALL, 0, 0, 0));
+static void closure_function(Jit *j, int32_t a, int obj, int kind) {
+    ms_load_obj(M, obj, a, kind, jit_fatal(j, kind == K_THUNK ? FATAL_ENTER : FATAL_CALL, 0, 0, 0));
     ms_load_field_bits(M, R_S6, obj, 0);   /* field 0: the function, its word */
     as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
     as_lea(A, R_S3, R_S3, R_S3, 1, 1);   /* the word of the number of functions */
@@ -1472,8 +1472,10 @@ static void fill_unit_dynamic(Jit *j) {
 /* A call through a closure reads a home last where it stores the
    argument, and until then keeps what it found in rax, rcx, rdx, r8 and
    r11 alone: every other general register may be a home (asm.h), and a
-   slow path writes the homes back. After it they are free. */
-void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
+   slow path writes the homes back. After it they are free. ENTER is the
+   same call of a suspension, of kind K_THUNK, which is a loop where its
+   code has said BLACKHOLE. */
+static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
     if (result_at(j, j->next) < 0) { jit_unsupported(j); return; }   /* a call the compiler follows by RESULT, always */
     AsmLabel after; as_label_init(&after);   /* the landing (M6) */
     /* before the restart label: the slots stay right across a restart (M9);
@@ -1487,7 +1489,12 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     int grow = grow_slow(j);
     if (grow < 0) { as_label_free(&after); return; }
     ms_role(M, MR_CLOS);
-    closure_function(j, a, R_S2);
+    closure_function(j, a, R_S2, kind);
+    if (kind == K_THUNK) {
+        ms_load_contag(M, R_S3, R_S2);
+        as_cmp_ri(A, R_S3, THUNK_BLACKHOLE);
+        as_jcc(A, CC_E, jit_fatal(j, FATAL_LOOP, 0, 0, 0));
+    }
     called(j, pc);
     ms_role(M, MR_ROOM);
     room_dynamic(j, grow, j->m.nlocals + MS_HEADER);
@@ -1519,6 +1526,64 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     call_landing(j, &after);
     as_label_free(&after);
 }
+void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, b, K_CLOSURE); }
+void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, b, K_THUNK); }
+/* ---- suspensions (docs/ir.md, Suspensions) ----
+   FORCE: a branch to o with the value, where register s holds no
+   unevaluated suspension -- what an indirection holds, else s's word; on
+   to the ENTER after it where it holds one. A value of any kind is tested
+   whatever the section says: no representation is a suspension's alone. */
+void emit_FORCE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
+    (void)pc;
+    AsmLabel have, thunk; as_label_init(&have); as_label_init(&thunk);
+    ms_need_word(M, b);
+    ms_load_bits(M, R_S0, b);
+    ms_jump_if_immediate(M, R_S0, &have);
+    ms_load_kind(M, R_S1, R_S0);
+    as_cmp_ri(A, R_S1, K_THUNK);
+    as_jcc(A, CC_E, &thunk);
+    as_cmp_ri(A, R_S1, K_IND);
+    as_jcc(A, CC_NE, &have);
+    ms_load_field_bits(M, R_S0, R_S0, 0);
+    as_bind(A, &have);
+    ms_set_bits(M, a, R_S0);
+    as_jmp(A, jit_label(j, (uint32_t)c));
+    as_bind(A, &thunk);
+    as_label_free(&have); as_label_free(&thunk);
+}
+/* the running frame's closure into rax, which must be a suspension */
+static void suspension(Jit *j, int what) {
+    closure(j, what);
+    ms_load_kind(M, R_S1, R_S0);
+    as_cmp_ri(A, R_S1, K_THUNK);
+    as_jcc(A, CC_NE, jit_fatal(j, what, 0, 0, 0));
+}
+/* BLACKHOLE and UPDATE: a write of the suspension's header, and UPDATE's
+   of its first field through the barrier; while the low-pause collector's
+   cycle marks, the whole in C (compile.c, SLOW_THUNK), which shades what
+   the suspension let go */
+void emit_BLACKHOLE(Jit *j, uint32_t pc) {
+    (void)pc;
+    suspension(j, FATAL_BLACKHOLE);
+    Slow *s = ms_slow(M, SLOW_THUNK, j->next);
+    if (!s) return;
+    s->a = -1;
+    ms_need_unmarked(M, &s->here);
+    ms_blackhole(M, R_S0);
+    as_bind(A, &s->back);
+}
+void emit_UPDATE(Jit *j, uint32_t pc, int32_t a) {
+    (void)pc;
+    ms_need_word(M, a);
+    suspension(j, FATAL_UPDATE);
+    Slow *s = ms_slow(M, SLOW_THUNK, j->next);
+    if (!s) return;
+    s->a = a;
+    ms_need_unmarked(M, &s->here);
+    ms_set_kind(M, R_S0, K_IND, R_S1);
+    ms_set_field(M, R_S0, 0, a);
+    as_bind(A, &s->back);
+}
 void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     /* the frame is replaced: of its homes only the argument is wanted, and
        under --jit-profile every one, which the profile's helper (called)
@@ -1529,7 +1594,7 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     int grow = grow_slow(j);
     if (grow < 0) return;
     ms_role(M, MR_CLOS);
-    closure_function(j, a, R_S2);
+    closure_function(j, a, R_S2, K_CLOSURE);
     called(j, pc);
     ms_role(M, MR_ROOM);
     room_dynamic(j, grow, 0);

@@ -1284,6 +1284,23 @@ void ms_load_kind(Masm *m, int r, int obj) {
     as_and_ri(&m->a, r, OBJ_KIND_MASK);
 #endif
 }
+/* ---- suspensions (value.h: K_THUNK, K_IND, obj_become_thunk,
+   obj_blackhole, obj_become_ind's kind; docs/ir.md, Suspensions) ---- */
+void ms_jump_if_immediate(Masm *m, int r, AsmLabel *to) {
+    as_test_ri(&m->a, r, 1);
+    as_jcc(&m->a, CC_NE, to);
+}
+void ms_set_kind(Masm *m, int obj, int kind, int r) {
+    as_ld8(&m->a, r, obj, (int32_t)offsetof(Obj, kind));
+    as_and_ri(&m->a, r, OBJ_GC_BITS);
+    as_or_ri(&m->a, r, kind);
+    as_st8(&m->a, obj, (int32_t)offsetof(Obj, kind), r);
+}
+/* the contag's low byte, its high one being THUNK_UNEVALUATED's, on the
+   JIT's machines, which are little-endian */
+_Static_assert(THUNK_UNEVALUATED == 0 && THUNK_BLACKHOLE > 0 && THUNK_BLACKHOLE < 256,
+               "a suspension goes under evaluation by the low byte of its contag");
+void ms_blackhole(Masm *m, int obj) { as_st8i(&m->a, obj, (int32_t)offsetof(Obj, contag), THUNK_BLACKHOLE); }
 /* `=` in line (masm.h): values_equal's answers that need no walk. A
    string's bytes are compared a word at a time, its last word's bytes past
    the length -- the high ones on the JIT's machines, which are

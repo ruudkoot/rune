@@ -417,6 +417,11 @@ enum Prim {
   PRIM_foreign = 411,
   PRIM_foreign_callback = 412,
   PRIM_rt_linked_units = 413,
+  PRIM_thunk_make = 414,
+  PRIM_thunk_force = 415,
+  PRIM_thunk_blackhole = 416,
+  PRIM_thunk_self_update = 417,
+  PRIM_any_check = 418,
   PRIM__COUNT
 };
 
@@ -835,6 +840,11 @@ static const char *const prim_names[] = {
   "foreign",
   "foreign_callback",
   "rt_linked_units",
+  "thunk_make",
+  "thunk_force",
+  "thunk_blackhole",
+  "thunk_self_update",
+  "any_check",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1251,6 +1261,11 @@ static const unsigned char prim_arity[] = {
   1,
   5,
   3,
+  1,
+  1,
+  1,
+  1,
+  1,
   1,
 };
 
@@ -1672,6 +1687,11 @@ static const unsigned char prim_result[] = {
   0,
   0,
   7,
+  0,
+  0,
+  8,
+  8,
+  0,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -2088,6 +2108,11 @@ static const unsigned char prim_result[] = {
   X(pty_close) \
   X(foreign) \
   X(foreign_callback) \
-  X(rt_linked_units)
+  X(rt_linked_units) \
+  X(thunk_make) \
+  X(thunk_force) \
+  X(thunk_blackhole) \
+  X(thunk_self_update) \
+  X(any_check)
 
 #endif

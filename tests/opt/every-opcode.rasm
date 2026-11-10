@@ -237,6 +237,40 @@ h3:
   PRIM print
   POP
 a3:
+  # suspensions: PRIM thunk_make of a closure of susp over 30, FORCE, ENTER,
+  # and in susp's code BLACKHOLE and UPDATE: 34 when it runs, 34 again from
+  # the indirection it becomes, and 5, which is no suspension
+  INT 30
+  CLOSURE &susp 1
+  PRIM thunk_make
+  SETLOCAL 1
+  LOCAL 1
+  FORCE @s1
+  UNIT
+  ENTER
+s1:
+  PRIM int_to_string
+  PRIM print
+  POP
+  LOCAL 1
+  FORCE @s2
+  UNIT
+  ENTER
+s2:
+  PRIM int_to_string
+  PRIM print
+  POP
+  INT 5
+  FORCE @s3
+  UNIT
+  ENTER
+s3:
+  PRIM int_to_string
+  PRIM print
+  POP
+  CONST %nl
+  PRIM print
+  POP
   CONST %done
   PRIM print
   POP
@@ -267,6 +301,18 @@ function minus 3
   LOCAL 1
   LOCAL 0
   TAILCALLK &flip 2
+
+function susp 2
+  ENV 0
+  SETLOCAL 1
+  BLACKHOLE
+  LOCAL 1
+  INT 4
+  PRIM int_add
+  TEELOCAL 1
+  UPDATE
+  LOCAL 1
+  RET
 
 function flip 2
   LOCAL 1

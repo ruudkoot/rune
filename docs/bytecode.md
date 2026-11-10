@@ -435,6 +435,8 @@ exponent allows it -- or a pointer to a heap object. Heap objects:
 | EXNCON | name string | exception constructors; identity is the address |
 | REAL | 8 raw bytes | a real that has no immediate: zero, a subnormal, an infinity, NaN, or a number outside 2^-511 to 2^513 |
 | BOX | 8 raw bytes | an `Int64.int` or a `Word64.word` that needs its 64th bit |
+| THUNK | function index, captured fields; its state in the tag | a suspension of a lazy front end ([ir.md](ir.md), *Suspensions*): unevaluated (0), or under evaluation (1) once its code has said `BLACKHOLE`, when the collector follows none of its fields |
+| IND | its value, then dead fields | a suspension that has its value, made in place by `UPDATE`; a force reads it, and the collector gives what points to one its value |
 
 Booleans are `CON0 0` (`false`) and `CON0 1` (`true`). Records store their
 fields sorted by label (numeric labels first, in numeric order, then
@@ -513,11 +515,15 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `MKEXN` | | Pop payload, pop constructor, push an exception value. |
 | `EXNCON` / `EXNARG` | | Pop an exception value, push its constructor / payload. |
 | `PRIM p` | primitive | Invoke primitive `p`: pops its arguments (first pushed is the first argument) and pushes the result, or raises. |
+| `FORCE o` | offset | Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to `o`; else leave it for the `ENTER` after ([ir.md](ir.md), *Suspensions*). |
+| `ENTER` | | Pop argument, pop a suspension, and enter it as `CALL` enters a closure; one under evaluation is a loop, a fatal error (`<<loop>>`). |
+| `BLACKHOLE` | | The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. |
+| `UPDATE` | | Pop a value; the suspension running becomes an indirection to it. |
 
 ## The register bytecode (runtime/register)
 
 `runtime/register`'s loop (`bin/runevm`, `runtime/register/interp.c`; `runtime/register/README.md`
-is the VM as built) runs a second instruction set, of 41 registers
+is the VM as built) runs a second instruction set, of 45 registers
 instructions (`src/isa/regs.sml`; decision D4 of
 [plans/middle-end.md](plans/middle-end.md)). `rune` makes it unless told
 `--target=stack`, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
@@ -648,6 +654,9 @@ refuses the other's file and image.
 | `PUSHHANDLER o` / `POPHANDLER` | offset | Install / remove an exception handler. |
 | `CATCH d` | register | `d :=` the exception a raise left for the handler this begins. |
 | `RAISE s` | register | Raise the exception in `s`. |
+| `FORCE d s o` | registers, offset | Where `s` holds no unevaluated suspension, `d :=` its value -- what an indirection holds, else what `s` holds -- and jump to `o`; else on to the `ENTER` after it ([ir.md](ir.md), *Suspensions*). |
+| `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, a fatal error (`<<loop>>`). |
+| `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`. |
 
 ## Primitives
 
@@ -680,6 +689,7 @@ raised as noted.
 | IntInf GMP arithmetic | `intinf_binary intinf_divmod intinf_shift intinf_power` use transient GMP objects and signed canonical little-endian magnitude strings. Primitive identities and bytecode fingerprints are identical in GMP-enabled and GMP-free builds; SML owns normalization and public exception rules. Magnitudes remain byte-ordered Rune strings across platform and backend image round trips. |
 | IntInf decimal conversion | `intinf_decimal : string -> string` converts a canonical unsigned little-endian magnitude to decimal digits with GMP; the empty magnitude returns `"0"`. SML adds any `~` sign. Magnitude and tracked GMP allocation limits apply. The argument stays rooted through the Rune result allocation, all native buffers are freed before returning, and a VM without the selected GMP backend rejects a direct call. SML selects its independent formatter when GMP is unavailable. Adding this primitive changes the fingerprint in every backend build; bytecode and saved images must be rebuilt together. |
 | Arrays of reals (`RealArray`, `RealVector`; the doubles themselves side by side) | `reals_new reals_length reals_sub reals_update reals_blit` — `reals_new` raises `Size` for a length that is negative or above 100000000; indexing and a run that leaves the array raise `Subscript` |
+| Suspensions of a lazy front end ([ir.md](ir.md), *Suspensions*) | `thunk_make` makes a suspension of a fresh closure, the closure itself retagged in place (a copy of one that captures nothing, which may be shared), and is done in the register loop and by the JIT in line; `thunk_force`, `thunk_blackhole` and `thunk_self_update` are what each target makes `FORCE` with `ENTER`, `BLACKHOLE` and `UPDATE` of, and as primitives stop the program; `any_check` gives its argument, and stops the program where it is a suspension or an indirection (`rune --check-casts`) |
 | I/O and system | `print print_err flush_out input_line input_all exit command_args command_name` — `input_line` returns `string option`; `exit` terminates the process |
 | Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
 

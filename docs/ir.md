@@ -674,6 +674,11 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
   module's slots are set by the function the runtime is given, at the load
   and at each reload (`Translate`, `RuneDynamic.take`; a `dynamic_cast` of
   each slot from `unit`), which `Lift` may take out of the `Do`.
+* **Suspensions:** no cast gives what is no suspension of a suspension, and
+  where the program has a primitive of suspensions, a function `thunk_make`
+  is given is named by nothing else, and `thunk_blackhole` and
+  `thunk_self_update` are said by the own code of such functions alone
+  (*Suspensions*, below).
 * **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
@@ -690,6 +695,53 @@ datatype entered again under its new name, its constructors, layout and
 openness the old one's; so it keeps what `MidLint` checked after `mid`. The
 units' `Mid` that `--units --whole` concatenates is linted by `MidLint`
 (`midconcat`), since a unit taken from the cache was not.
+
+### Suspensions
+
+A lazy front end -- rhc, the Haskell 98 compiler of
+[plans/language/haskell98.md](plans/language/haskell98.md) (D3, D11, D13) -- hands Mid
+its lazy positions as suspensions, and Mid stays strict: a suspension is a value of a type of
+its own, and forcing one is one step.
+
+* **`susp T`** is a type the compiler builds in (`Types.suspTycon`), of one argument
+  and no datatype, so that `Lower` gives it no representation (`RAny`) and every engine
+  tests what a register of it holds, tier 2 too (`ms_trusts`). A program of SML has no
+  such type: one compiled with `--allow-prim` names it `T _prim "susp"`, and makes and
+  forces suspensions through the primitives alone.
+* **The primitives** (`src/isa/prims.sml`): `thunk_make : (unit -> 'a) -> 'a susp`
+  makes a suspension of a closure, `thunk_force : 'a susp -> 'a` gives its value, and a
+  suspension's code says `thunk_blackhole ()` once it has read what it captured and
+  `thunk_self_update v` with its value before it returns it:
+  `thunk_make (fn () => let val () = thunk_blackhole () val v = BODY val () = thunk_self_update v in v end)`.
+  Force is one step through every pass, never a call of a function of the library, and
+  its effects are every one, so that no pass drops it or moves it across an effect
+  (`Prims.removable`); `thunk_make`'s are an allocation alone.
+* **What a variable whose type is no `susp` holds is evaluated**: neither a suspension
+  nor what one has become. That holds by types, but across a cast (`unsafe_cast`): a
+  cast into a suspension is no instruction (`Lower` gives its value another name), a
+  force of what `Lower` knows is no suspension -- a register of a representation, which
+  such a cast left -- is the value itself, and a cast of a suspension to what is none,
+  which is a force forgotten, is refused (`IrRules.leavesSusp`). `rune --check-casts`
+  makes each other cast `any_check`, which stops the program where the value is a
+  suspension; without it the code is what it is with none.
+* **The rules `MidLint` adds** where a program has a primitive of suspensions: a
+  function `thunk_make` is given is named by nothing else, so that no copy of it, and
+  no call of it, runs a suspension's code twice; and `thunk_blackhole` and
+  `thunk_self_update` are said only by the own code of a function that nothing but
+  `thunk_make` names (the roadmap's D57, item 2). A front end applies the primitives
+  where it makes a suspension; a program of SML that binds one to a name (`val make =
+  _prim "thunk_make" : ...`) calls a function of its own, which says them where no
+  suspension is made, and is refused.
+* **Below Mid**: `Low.hoistEnv` reads each value a suspension's code captured once, at
+  its entry, where it is still unevaluated: after `BLACKHOLE` the collector follows none
+  of its fields. Each target makes a force `FORCE`, and where the value is an
+  unevaluated suspension `ENTER` with unit; the code's two steps are `BLACKHOLE` and
+  `UPDATE` ([bytecode.md](bytecode.md)). A suspension is the closure `thunk_make` was
+  given, made a `K_THUNK` in place (or a copy of one that captures nothing, which may
+  be shared); `UPDATE` makes it an indirection to its value (`K_IND`), which a force
+  reads and the collector shortcuts. A suspension forced while its code runs is a loop,
+  a fatal error (`<<loop>>`), and so is one that code left by a raise: Haskell 98's
+  errors end the program (the roadmap's D12).
 
 ### Mid as text
 

@@ -281,6 +281,10 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
     case PRIM_string_sub:
         OBJ(x, K_STRING); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
         r = mk_char((unsigned char)obj_bytes(val_ptr(*x))[val_imm(*y)]); break;
+    /* a suspension of a fresh closure that captures, made in place
+       (runtime/prims.c, p_thunk_make); the copy of one that does not is the
+       primitive's */
+    case PRIM_thunk_make: OBJ(x, K_CLOSURE); if (obj_len(val_ptr(*x)) < 2) return 0; obj_become_thunk(val_ptr(*x)); r = *x; break;
     case PRIM_ref_get: OBJ(x, K_REF); r = obj_field(val_ptr(*x), 0); break;
     case PRIM_ref_set: OBJ(x, K_REF); HEAP_STORE(val_ptr(*x), 0, *y); r = mk_unit(); break;
     case PRIM_array_length: OBJ(x, K_ARRAY); FAST_INT(obj_len(val_ptr(*x))); break;

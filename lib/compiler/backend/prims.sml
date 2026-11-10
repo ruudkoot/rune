@@ -416,7 +416,12 @@ struct
     ("pty_close", 410, 1),
     ("foreign", 411, 5),
     ("foreign_callback", 412, 3),
-    ("rt_linked_units", 413, 1)
+    ("rt_linked_units", 413, 1),
+    ("thunk_make", 414, 1),
+    ("thunk_force", 415, 1),
+    ("thunk_blackhole", 416, 1),
+    ("thunk_self_update", 417, 1),
+    ("any_check", 418, 1)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -557,6 +562,7 @@ struct
     "string_eq",
     "array_to_vector",
     "rt_linked_units",
+    "thunk_make",
     (* the compiler's own (PrimIsa.compilerOwn), which Lower makes others of *)
     "functor_cast",
     "functor_marker",
@@ -991,7 +997,12 @@ struct
             (* pty_close *) ([1], 1),
             (* foreign *) ([1, 10, 10, 6, 6], 6),
             (* foreign_callback *) ([6, 6, 6], 6),
-            (* rt_linked_units *) ([8], 7)]);
+            (* rt_linked_units *) ([8], 7),
+            (* thunk_make *) ([6], 0),
+            (* thunk_force *) ([0], 0),
+            (* thunk_blackhole *) ([8], 8),
+            (* thunk_self_update *) ([0], 8),
+            (* any_check *) ([0], 0)]);
          repsAt i)
   fun repsOf name = case find name of SOME (i, _) => repsAt i | NONE => NONE
 end
@@ -1429,7 +1440,12 @@ struct
              (* pty_close *) ([Con ("int", [])], Con ("int", [])),
              (* foreign *) ([Con ("int", []), Con ("Word64.word", []), Con ("Word64.word", []), Con ("string", []), Con ("string", [])], Tuple [Con ("bool", []), Con ("Word64.word", []), Con ("string", []), Con ("string", []), Con ("int", []), Con ("Word32.word", [])]),
              (* foreign_callback *) ([Con ("string", []), Con ("string", []), Arrow (Con ("string", []), Con ("string", []))], Tuple [Con ("bool", []), Con ("Word64.word", []), Con ("string", []), Con ("int", []), Con ("Word32.word", [])]),
-             (* rt_linked_units *) ([Con ("unit", [])], Con ("list", [Con ("string", [])]))]
+             (* rt_linked_units *) ([Con ("unit", [])], Con ("list", [Con ("string", [])])),
+             (* thunk_make *) ([Arrow (Con ("unit", []), Var 0)], Con ("susp", [Var 0])),
+             (* thunk_force *) ([Con ("susp", [Var 0])], Var 0),
+             (* thunk_blackhole *) ([Con ("unit", [])], Con ("unit", [])),
+             (* thunk_self_update *) ([Var 0], Con ("unit", [])),
+             (* any_check *) ([Var 0], Var 0)]
         in types := SOME v; v end
   (* find name = SOME (parameters, result) *)
   fun find name = case Prims.find name of SOME (i, _) => SOME (Vector.sub (all (), i)) | NONE => NONE
