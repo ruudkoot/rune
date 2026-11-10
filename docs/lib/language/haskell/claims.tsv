@@ -10,6 +10,7 @@ CORE_TO_MID	signature			required	declared	lib/language/haskell/coretomid_sig.sml
 HS_AST	signature			required	declared	lib/language/haskell/ast_sig.sml
 HS_CHAR	signature			required	declared	lib/language/haskell/char_sig.sml
 HS_CLASSES	signature			required	declared	lib/language/haskell/classes_sig.sml
+HS_DERIVE	signature			required	declared	lib/language/haskell/derive_sig.sml
 HS_DUMP	signature			required	declared	lib/language/haskell/dump_sig.sml
 HS_EVIDENCE	signature			required	declared	lib/language/haskell/evidence_sig.sml
 HS_FIXITY	signature			required	declared	lib/language/haskell/fixity_sig.sml
@@ -39,6 +40,7 @@ CoreToMid	structure	CORE_TO_MID		required	ascribed	lib/language/haskell/coretomi
 HsAst	structure	HS_AST		required	claimed	lib/language/haskell/ast.sml
 HsChar	structure	HS_CHAR		required	claimed	lib/language/haskell/char.sml
 HsClasses	structure	HS_CLASSES		required	claimed	lib/language/haskell/classes.sml
+HsDerive	structure	HS_DERIVE		required	claimed	lib/language/haskell/derive.sml
 HsDump	structure	HS_DUMP		required	claimed	lib/language/haskell/dump.sml
 HsEvidence	structure	HS_EVIDENCE		required	claimed	lib/language/haskell/evidence.sml
 HsFixity	structure	HS_FIXITY		required	claimed	lib/language/haskell/fixity.sml

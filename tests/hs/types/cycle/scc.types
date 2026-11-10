@@ -5,3 +5,4 @@ TYPE	A	sumU	U -> Int
 TYPE	All	check	(Bool, Int)
 TYPE	B	<+>	Int -> Int -> Int
 TYPE	B	isOdd	Num a => a -> Bool
+INSTANCE	B	Shape U	written

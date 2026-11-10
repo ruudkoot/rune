@@ -25,6 +25,7 @@ the signature names and no others.
 | [`HsAst`](str/HsAst.md) | :> | [`HS_AST`](sig/HS_AST.md) |  |  | [lib/language/haskell/ast.sml](../../../../lib/language/haskell/ast.sml) |
 | [`HsChar`](str/HsChar.md) | :> | [`HS_CHAR`](sig/HS_CHAR.md) |  |  | [lib/language/haskell/char.sml](../../../../lib/language/haskell/char.sml) |
 | [`HsClasses`](str/HsClasses.md) | :> | [`HS_CLASSES`](sig/HS_CLASSES.md) |  |  | [lib/language/haskell/classes.sml](../../../../lib/language/haskell/classes.sml) |
+| [`HsDerive`](str/HsDerive.md) | :> | [`HS_DERIVE`](sig/HS_DERIVE.md) |  |  | [lib/language/haskell/derive.sml](../../../../lib/language/haskell/derive.sml) |
 | [`HsDump`](str/HsDump.md) | :> | [`HS_DUMP`](sig/HS_DUMP.md) |  |  | [lib/language/haskell/dump.sml](../../../../lib/language/haskell/dump.sml) |
 | [`HsEvidence`](str/HsEvidence.md) | :> | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) |  |  | [lib/language/haskell/evidence.sml](../../../../lib/language/haskell/evidence.sml) |
 | [`HsFixity`](str/HsFixity.md) | :> | [`HS_FIXITY`](sig/HS_FIXITY.md) |  |  | [lib/language/haskell/fixity.sml](../../../../lib/language/haskell/fixity.sml) |

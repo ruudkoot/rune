@@ -63,5 +63,11 @@ struct
      one ("HT02", "Core's text", "a keyword is let through where a name is wanted",
           "coretext.sml", "if isKeyword w then fail (l, \"a word of the syntax where a name is wanted: \"",
           "if false then fail (l, \"a word of the syntax where a name is wanted: \"",
-          ["hs/core/text-keyword"])]
+          ["hs/core/text-keyword"]),
+     one ("HD01", "deriving", "a derived instance's context leaves out its data type's own context (4.3.3)",
+          "infer.sml", "simplify (dataCtx @ List.concat", "simplify (List.concat",
+          ["hs/types/derive/module"]),
+     one ("HD02", "deriving", "a derived instance's context too wide: each parameter's, not the fields' types' (10.1)",
+          "infer.sml", "reduce {cls = cls, ty = f}) fields)", "reduce {cls = cls, ty = f}) (fields @ List.tabulate (vars, T.TGen)))",
+          ["hs/types/derive/module"])]
 end

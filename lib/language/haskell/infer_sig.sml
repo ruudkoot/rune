@@ -43,19 +43,22 @@ sig
      whether it is the library's. *)
   type module_ = {id : string, ast : HsAst.module, library : bool}
 
-  (* `check {env, unit, cycleDefault, prelude, evidence}` checks the
-     modules of `unit`, recording into `evidence`.
+  (* `check {env, unit, cycleDefault, prelude, fixity, evidence}` checks
+     the modules of `unit`, recording into `evidence`.
 
      It gives the environment with the unit's types, constructors,
-     classes, instances and values, and the errors. `prelude (space,
-     name)` is the key of
-     the entity the Prelude exports under `name`, `"t"` for a type or
-     class and `"v"` for a value, for what the Report's translations
-     name: `Bool`, `Char`, `Integer`, `Double`, `Num`, `Fractional`,
-     `Eq`, `Ord`, `Enum`, `Integral`, `Monad`. *)
+     classes, instances and values, the errors, and the derived
+     instances' methods, made by HsDerive (M14), each with its module and
+     its instance's identity. `fixity key` is the fixity of the operator
+     of `key`, for a derived `Show` and `Read`. `prelude (space, name)` is
+     the key of the entity the Prelude exports under `name`, `"t"` for a
+     type or class and `"v"` for a value, for what the Report's
+     translations name: `Bool`, `Char`, `Integer`, `Double`, `Num`,
+     `Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`. *)
   val check : {env : env, unit : module_ list, cycleDefault : cycleDefault,
-               prelude : string * string -> string option, evidence : HsEvidence.table}
-              -> {env : env, errors : (HsSource.span * string) list}
+               prelude : string * string -> string option, fixity : string -> (HsAst.fixity * int) option,
+               evidence : HsEvidence.table}
+              -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
 
   (* `valueScheme (env, key)` is the type of the value of `key`. *)
   val valueScheme : env * string -> HsTypes.scheme option

@@ -104,6 +104,7 @@ struct
   val cycle : cycleDefault ref = ref PerModule
   val unitModules : string list ref = ref []
   val defaultsOf : (T.ty list * bool) M.map ref = ref M.empty   (* a module's default list, and whether written *)
+  val fixityOfKey : (string -> (A.fixity * int) option) ref = ref (fn _ => NONE)
   val crossFixings : (string * string * HsSource.span * int) list ref = ref []   (* home, fixing module, where, variable *)
 
   fun record (kind, span, f) = pendingRecords := (E.node (kind, span), f) :: !pendingRecords
@@ -1588,19 +1589,33 @@ struct
 
   (* the derived instances of a data type, their contexts empty until the
      fixpoint; each with the types of its fields *)
+  (* a constructor as deriving reads it *)
+  fun derivedConstr (A.C (_, x)) : HsDerive.constr =
+    let
+      val (n, arity, fields, isInf) =
+        case x of
+          A.CPlain (n, args) => (n, length args, [], false)
+        | A.CInfix (_, n, _) => (n, 2, [], true)
+        | A.CRec (n, fs) => let val vs = List.concat (List.map (fn A.Field (_, vs, _, _) => vs) fs) in (n, length vs, vs, false) end
+    in
+      {name = n, arity = arity, fields = fields, isInfix = isInf, fixity = getOpt (!fixityOfKey (nameKey n), (A.Infixl, 9))}
+    end
+
   fun derivedInstances (h, A.D ({span, ...}, x)) =
     let
       val parts =
         case x of
-          A.DData (_, c, vs, cs, SOME (A.Deriv (_, _, classes))) => SOME (c, vs, cs, classes)
-        | A.DNewtype (_, c, vs, k, SOME (A.Deriv (_, _, classes))) => SOME (c, vs, [k], classes)
+          A.DData (cx, c, vs, cs, SOME (A.Deriv (_, _, classes))) => SOME (cx, c, vs, cs, classes)
+        | A.DNewtype (cx, c, vs, k, SOME (A.Deriv (_, _, classes))) => SOME (cx, c, vs, [k], classes)
         | _ => NONE
     in
       case parts of
         NONE => []
-      | SOME (c, vs, cs, classes) =>
+      | SOME (cx, c, vs, cs, classes) =>
           let
             val names = typeVarNames vs
+            (* 4.3.3: a derived instance's context has the data type's *)
+            val dataCtx = K.contextPreds (#tycons (!genv), varIndex names) cx
             val tc = K.keyOf c
             val fields = List.concat (List.map (fn k => let val (_, tys, _) = constrParts k
                                                         in List.map (K.convert (#tycons (!genv), varIndex names)) tys end) cs)
@@ -1622,7 +1637,8 @@ struct
                    else
                      (addInstance ({id = C.instanceId (cls, tc), cls = cls, tycon = tc, vars = length names, ctx = [], derived = true,
                                     home = h}, nameSpan cn);
-                      SOME (C.instanceId (cls, tc), cls, length names, fields, nameSpan cn))
+                      SOME {id = C.instanceId (cls, tc), cls = cls, vars = length names, fields = fields, dataCtx = dataCtx, span = nameSpan cn,
+                            home = h, tycon = tc, constrs = List.map derivedConstr cs})
                  end)
               classes
           end
@@ -1658,11 +1674,11 @@ struct
             let
               val changed =
                 List.foldl
-                  (fn ((id, cls, vars, fields, span), changed) =>
+                  (fn ({id, cls, vars, fields, span, dataCtx, ...}, changed) =>
                      if List.exists (fn f => f = id) (!failed) then changed
                      else
                        let
-                         val ctx = simplify (List.concat (List.map (fn f => reduce {cls = cls, ty = f}) fields))
+                         val ctx = simplify (dataCtx @ List.concat (List.map (fn f => reduce {cls = cls, ty = f}) fields))
                                    handle NoInstance p =>
                                      (failed := id :: !failed;
                                       err (span, "`" ^ T.nameOfKey cls ^ "` cannot be derived: no instance for `" ^
@@ -1686,7 +1702,8 @@ struct
               if changed then round (n - 1) else ()
             end
     in
-      round 50
+      round 50;
+      !failed
     end
 
   (* an instance's context's dictionaries and its class's superclasses'
@@ -1721,6 +1738,31 @@ struct
     end
 
   (* the methods of an instance, each checked at the instance's type *)
+  (* the methods of an instance, each checked at the instance's type *)
+  fun checkMethods (h, span, cls, headTy, params, body : A.decl list) =
+    List.app
+      (fn b =>
+         let
+           val n = case b of FunB {name, ...} => name | PatB {vars = v :: _, ...} => v | _ => raise Fail (span, "a method")
+         in
+           case M.find (#methods (!genv), nameKey n) of
+             SOME {cls = mc, scheme = own} =>
+               if mc <> cls then err (nameSpan n, "`" ^ nameText n ^ "` is no method of the class `" ^ T.nameOfKey cls ^ "`")
+               else
+                 let
+                   val ownNames = List.tabulate (#vars own - 1, fn i => "m" ^ Int.toString (i + 1))
+                   val s = {vars = #vars own, ctx = #ctx own, ty = #ty own}
+                   val (vars, ctx, ps, ty) = checkAgainst (b, ownNames, s, [headTy], params, nameSpan n)
+                 in
+                   record ("bind", nameSpan n, fn () => E.Binding {scheme = {vars = vars, ctx = List.map (fn {cls, ty} => {cls = cls, ty = T.zonk ty}) ctx,
+                                                                            ty = T.zonk ty},
+                                                                   params = ps})
+                 end
+           | NONE => err (nameSpan n, "`" ^ nameText n ^ "` is no method of the class `" ^ T.nameOfKey cls ^ "`")
+         end
+         handle Fail e => err e)
+      (collect (List.map (fn d => (h, d)) body))
+
   fun instanceBodies (h, A.D ({span, ...}, A.DInstance (cx, c, t, body))) =
         (let
            val cls = K.keyOf c
@@ -1732,31 +1774,8 @@ struct
                else
                  let
                    val (rigids, params) = instanceEvidence (span, i, names)
-                   val headTy = T.apply (T.TCon tc, rigids)
-                   val more = List.map (fn (n, p) => (n, p)) params
                  in
-                   List.app
-                     (fn b =>
-                        let
-                          val n = case b of FunB {name, ...} => name | PatB {vars = v :: _, ...} => v | _ => raise Fail (span, "a method")
-                        in
-                          case M.find (#methods (!genv), nameKey n) of
-                            SOME {cls = mc, scheme = own} =>
-                              if mc <> cls then err (nameSpan n, "`" ^ nameText n ^ "` is no method of the class `" ^ T.nameOfKey cls ^ "`")
-                              else
-                                let
-                                  val ownNames = List.tabulate (#vars own - 1, fn i => "m" ^ Int.toString (i + 1))
-                                  val s = {vars = #vars own, ctx = #ctx own, ty = #ty own}
-                                  val (vars, ctx, ps, ty) = checkAgainst (b, ownNames, s, [headTy], more, nameSpan n)
-                                in
-                                  record ("bind", nameSpan n, fn () => E.Binding {scheme = {vars = vars, ctx = List.map (fn {cls, ty} => {cls = cls, ty = T.zonk ty}) ctx,
-                                                                                           ty = T.zonk ty},
-                                                                                  params = ps})
-                                end
-                          | NONE => err (nameSpan n, "`" ^ nameText n ^ "` is no method of the class `" ^ T.nameOfKey cls ^ "`")
-                        end
-                        handle Fail e => err e)
-                     (collect (List.map (fn d => (h, d)) (getOpt (body, []))))
+                   checkMethods (h, span, cls, T.apply (T.TCon tc, rigids), params, getOpt (body, []))
                  end
            | NONE => ()
          end
@@ -1823,11 +1842,11 @@ struct
     | T.TAp (a, b) => T.TAp (ground a, ground b)
     | t' => t'
 
-  fun check {env, unit, cycleDefault, prelude = pre, evidence} =
+  fun check {env, unit, cycleDefault, prelude = pre, fixity, evidence} =
     let
       val () = (errors := []; said := []; monoOwners := []; argOf := ""; curBinding := ""; level := 0; wanted := []; givens := []; rigidLevels := M.empty; pendingRecords := [];
                 genv := env; preludeKey := pre; cycle := cycleDefault; unitModules := List.map #id unit; defaultsOf := M.empty;
-                crossFixings := []; locals := M.empty; unitValues := M.empty;
+                crossFixings := []; locals := M.empty; unitValues := M.empty; fixityOfKey := fixity;
                 standard := (fn cls => String.isPrefix "thaskell98:" cls))
       val decls = List.concat (List.map declsOf unit)
       (* kinds, then the type constructors, classes, constructors *)
@@ -1845,20 +1864,33 @@ struct
       (* instances, written and derived *)
       val () = List.app writtenInstance decls
       val derived = List.concat (List.map (fn d => (derivedInstances d handle Fail e => (err e; []) | HsSource.Error e => (err e; []))) decls)
-      val () = deriveContexts derived
+      val underived = deriveContexts derived
       val () = List.app defaultDecl decls
       (* the values of the unit, joined *)
       val values = List.filter (fn (_, A.D (_, x)) => case x of A.DFun _ => true | A.DPat _ => true | A.DSig _ => true | _ => false) decls
       val () = groupsOf (values, true)
       (* the derived instances' evidence, and the bodies of classes and instances *)
-      val () =
-        List.app (fn (id, cls, vars, _, span) =>
-                    case List.find (fn i => #id i = id) (C.instances (#classes (!genv))) of
-                      SOME i => ignore (instanceEvidence (span, i, List.tabulate (vars, fn k => "a" ^ Int.toString (k + 1))))
-                    | NONE => ())
-          derived
       val () = List.app classBodies decls
       val () = List.app instanceBodies decls
+      (* the derived instances: their evidence, and their methods made by
+         HsDerive (D33's C) and checked as a user's (M14) *)
+      val generated =
+        List.mapPartial
+          (fn {id, cls, vars, span, home = h, tycon, constrs, ...} =>
+             if List.exists (fn f => f = id) underived then NONE      (* an instance that cannot be derived, said *)
+             else
+             case List.find (fn i => #id i = id) (C.instances (#classes (!genv))) of
+               SOME i =>
+                 let
+                   val (rigids, params) = instanceEvidence (span, i, List.tabulate (vars, fn k => "a" ^ Int.toString (k + 1)))
+                   val file = "derived " ^ C.showInstance id ^ " in " ^ h
+                 in
+                   case HsDerive.methods {cls = cls, constrs = constrs, entity = !preludeKey, file = file} of
+                     SOME ds => (home := h; checkMethods (h, span, cls, T.apply (T.TCon tycon, rigids), params, ds); SOME (h, id, ds))
+                   | NONE => NONE
+                 end
+             | NONE => NONE)
+          derived
       (* Rule 2: what the top level left open, defaulted at the end of the module *)
       val () = defaultAll (solve (!wanted), ", left open by the monomorphism restriction to the end of its module (4.5.5, R20)")
       val () = wanted := []
@@ -1905,7 +1937,7 @@ struct
       val result = {values = values, tycons = tycons, classes = classes, cons = cons, fields = fields, methods = methods}
     in
       unitValues := M.empty; locals := M.empty;
-      {env = result, errors = List.rev (!errors)}
+      {env = result, errors = List.rev (!errors), derived = generated}
     end
 
   and closeRecord r =

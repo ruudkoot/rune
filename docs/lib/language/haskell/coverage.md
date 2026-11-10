@@ -17,6 +17,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_AST`](sig/HS_AST.md) | 44 | 44 | 100% | 8 | 8 |
 | [`HS_CHAR`](sig/HS_CHAR.md) | 4 | 4 | 100% | 3 | 3 |
 | [`HS_CLASSES`](sig/HS_CLASSES.md) | 14 | 14 | 100% | 10 | 10 |
+| [`HS_DERIVE`](sig/HS_DERIVE.md) | 2 | 2 | 100% | 1 | 1 |
 | [`HS_DUMP`](sig/HS_DUMP.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | 11 | 11 | 100% | 7 | 7 |
 | [`HS_FIXITY`](sig/HS_FIXITY.md) | 4 | 4 | 100% | 2 | 2 |
@@ -35,7 +36,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 8 | 8 | 100% | 6 | 6 |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 41 | 41 | 100% | 27 | 27 |
-| **all** | 277 | 277 | 100% | 149 | 149 |
+| **all** | 279 | 279 | 100% | 150 | 150 |
 
 ## Members a signature describes
 
@@ -44,7 +45,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-29 structures have a page, with 277 members, of which 277 (100%) are described by a signature.
+30 structures have a page, with 279 members, of which 279 (100%) are described by a signature.
 
 ---
 
