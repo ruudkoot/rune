@@ -27,7 +27,46 @@ struct
   open Sh
 
   val mechanical = [("braces", ["lay.intro.optional"]), ("layout", ["lay.intro.optional"]), ("import", ["mod.imp.list.empty"]),
-                    ("reorder", ["dec.dep.order", "dec.scope.decls.top"]), ("split", ["mod.flatten"])]
+                    ("reorder", ["dec.dep.order", "dec.scope.decls.top"]), ("split", ["mod.flatten"]),
+                    ("rename", ["tr.lambda.fresh", "exp.let.lexical"])]
+
+  (* rename: every local name of the program's own module, as rhc's names
+     resolve it (bin/rhc --dump-binders: BIND and USE, its renamed name x#k
+     and its bytes), renamed x'k at each occurrence; a symbolic one is kept *)
+  fun rename (src, text) =
+    let
+      val out = run ^ "/hs-meta/binders-" ^ OS.Path.base (OS.Path.file src)
+      val _ = exec {cmd = [fromRoot "bin/rhc", "--dump-binders", src], dir = NONE, stdin = "", stdout = out, stderr = out ^ ".err",
+                    timeout = 300}
+      fun edit l =
+        case String.fields (fn c => c = #"\t") l of
+          [_, name, place] =>
+            (case (String.fields (fn c => c = #"#") name, List.rev (String.fields (fn c => c = #":") place)) of
+               ([orig, k], range :: _) =>
+                 (case String.fields (fn c => c = #"-") range of
+                    [a, b] => (case (Int.fromString a, Int.fromString b) of
+                                 (SOME a, SOME b) => if size orig > 0 andalso Char.isAlpha (String.sub (orig, 0))
+                                                     then SOME (a, b, orig, orig ^ "'" ^ k, name) else NONE
+                               | _ => NONE)
+                  | _ => NONE)
+             | _ => NONE)
+        | _ => NONE
+      val all = List.mapPartial edit (lines (read out))
+      (* a name is renamed only where every occurrence's span is the name
+         itself (or it in backquotes): a span that covers more, as a function
+         binding's head does, is left, and with it every occurrence of the name *)
+      fun exact (a, b, orig, _, _) = b - a = size orig orelse b - a = size orig + 2
+      val inexact = List.map #5 (List.filter (not o exact) all)
+      val edits = List.map (fn (a, b, orig, new, _) => (a, b, orig, new))
+                    (List.filter (fn e => not (List.exists (fn n => n = #5 e) inexact)) all)
+      (* each at its span, where the name stands in it, from the last *)
+      fun apply ((a, b, orig, new), t) =
+        if b > size t then t
+        else case CompilerMutants.places (String.substring (t, a, b - a), orig) of
+               i :: _ => String.substring (t, 0, a + i) ^ new ^ String.extract (t, a + i + size orig, NONE)
+             | [] => t
+      val sorted = List.foldl (fn (e, acc) => let fun ins [] = [e] | ins (x :: xs) = if #1 e > #1 x then e :: x :: xs else x :: ins xs in ins acc end) [] edits
+    in List.foldl apply text sorted end
 
   (* a program's text as its header -- its first lines to the module's
      header and its imports -- and its top-level blocks: runs of lines
@@ -100,6 +139,7 @@ struct
                       | SOME why => (say ("FAIL " ^ why ^ "\n"); NONE)))
       | "import" => (write (b, addImport (read (fromRoot src))); SOME b)
       | "reorder" => (write (b, reorder (read (fromRoot src))); SOME b)
+      | "rename" => (write (b, rename (fromRoot src, read (fromRoot src))); SOME b)
       | "split" =>
           (case split (read (fromRoot src)) of
              SOME (m, l) => (mkdirs (work ^ "/split"); write (work ^ "/split/Main.hs", m); write (work ^ "/split/Lib.hs", l);
@@ -232,7 +272,7 @@ struct
     in
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "check" (Test.tag "hs" (Test.describe "hs" [Test.describe "meta"
-           (List.concat (List.map mech mechanical) @ List.map pair pairs @ names "reorder" @ names "split")])))
+           (List.concat (List.map mech mechanical) @ List.map pair pairs @ names "reorder" @ names "split" @ names "rename")])))
         covers
     end
 end
