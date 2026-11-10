@@ -1,5 +1,5 @@
 # E16: PreludeList and PreludeBuiltin cannot be imported.
-pairs 945
+pairs 946
 ERROR	User:2:1	the module `PreludeList` cannot be imported: it is a part of rhc's library that a program does not see (the Report's chapter 8)
 ERROR	User:3:1	the module `PreludeBuiltin` cannot be imported: it is a part of rhc's library that a program does not see (the Report's chapter 8)
 EXPORT	User	vUser main

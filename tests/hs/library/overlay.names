@@ -1,24 +1,20 @@
 # The lines by which share/rhc/haskell98, overlay written, changes the Report's names (report.names): `-` a line of the
 # table no longer printed, `+` a line printed that is not the table's, each with the entry of overlay.tsv it is of
 # (hs/library/report).
--	EXPORT	haskell98:Prelude	thaskell98:PreludeIO IOError	ov.preludeio.ioerror
--	EXPORT	haskell98:PreludeIO	thaskell98:PreludeIO IOError	ov.preludeio.ioerror
 -	EXPORT	haskell98:Time	thaskell98:Time ClockTime	ov.time.clocktime
 -	INSTANCE	haskell98:Directory	thaskell98:Prelude Eq	thaskell98:Directory Permissions	written	ov.directory.permissions
 -	INSTANCE	haskell98:Directory	thaskell98:Prelude Ord	thaskell98:Directory Permissions	written	ov.directory.permissions
 -	INSTANCE	haskell98:Directory	thaskell98:PreludeText Read	thaskell98:Directory Permissions	written	ov.directory.permissions
 -	INSTANCE	haskell98:Directory	thaskell98:PreludeText Show	thaskell98:Directory Permissions	written	ov.directory.permissions
--	INSTANCE	haskell98:PreludeIO	thaskell98:Prelude Eq	thaskell98:PreludeIO IOError	written	ov.preludeio.ioerror
--	INSTANCE	haskell98:PreludeIO	thaskell98:PreludeText Show	thaskell98:PreludeIO IOError	written	ov.preludeio.ioerror
 -	INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time ClockTime	written	ov.time.clocktime
 -	INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time ClockTime	written	ov.time.clocktime
 +	EXPORT	haskell98:IO	thaskell98:IO BufferMode	ov.io.interface
 +	EXPORT	haskell98:IO	thaskell98:IO IOMode	ov.io.interface
 +	EXPORT	haskell98:IO	thaskell98:IO SeekMode	ov.io.interface
 +	EXPORT	haskell98:IO	thaskell98:Prelude IO	ov.io.interface
-+	EXPORT	haskell98:IO	thaskell98:PreludeBuiltin Handle	ov.io.interface
-+	EXPORT	haskell98:IO	thaskell98:PreludeBuiltin HandlePosn	ov.io.interface
-+	EXPORT	haskell98:IO	thaskell98:PreludeBuiltin IOError	ov.preludeio.ioerror
++	EXPORT	haskell98:IO	thaskell98:PreludeRuntime Handle	ov.io.interface
++	EXPORT	haskell98:IO	thaskell98:PreludeRuntime HandlePosn	ov.io.interface
++	EXPORT	haskell98:IO	thaskell98:PreludeIO IOError	ov.io.interface
 +	EXPORT	haskell98:IO	thaskell98:PreludeIO FilePath	ov.io.interface
 +	EXPORT	haskell98:IO	vhaskell98:IO AbsoluteSeek	ov.io.interface
 +	EXPORT	haskell98:IO	vhaskell98:IO AppendMode	ov.io.interface
@@ -86,9 +82,7 @@
 +	EXPORT	haskell98:IO	vhaskell98:PreludeIO readLn	ov.io.interface
 +	EXPORT	haskell98:IO	vhaskell98:PreludeIO userError	ov.io.interface
 +	EXPORT	haskell98:IO	vhaskell98:PreludeIO writeFile	ov.io.interface
-+	EXPORT	haskell98:Prelude	thaskell98:PreludeBuiltin IOError	ov.preludeio.ioerror
-+	EXPORT	haskell98:PreludeIO	thaskell98:PreludeBuiltin IOError	ov.preludeio.ioerror
-+	EXPORT	haskell98:Time	thaskell98:PreludeBuiltin ClockTime	ov.time.clocktime
++	EXPORT	haskell98:Time	thaskell98:PreludeRuntime ClockTime	ov.time.clocktime
 +	INSTANCE	haskell98:Directory	thaskell98:Prelude Eq	thaskell98:Directory Permissions	derived	ov.directory.permissions
 +	INSTANCE	haskell98:Directory	thaskell98:Prelude Ord	thaskell98:Directory Permissions	derived	ov.directory.permissions
 +	INSTANCE	haskell98:Directory	thaskell98:PreludeText Read	thaskell98:Directory Permissions	derived	ov.directory.permissions
@@ -102,8 +96,8 @@
 +	INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:IO BufferMode	derived	ov.io.interface
 +	INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:IO IOMode	derived	ov.io.interface
 +	INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:IO SeekMode	derived	ov.io.interface
-+	INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:PreludeBuiltin Handle	written	ov.io.handles
-+	INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:PreludeBuiltin HandlePosn	written	ov.io.handles
++	INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:PreludeRuntime Handle	written	ov.io.handles
++	INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:PreludeRuntime HandlePosn	written	ov.io.handles
 +	INSTANCE	haskell98:IO	thaskell98:Prelude Ord	thaskell98:IO BufferMode	derived	ov.io.interface
 +	INSTANCE	haskell98:IO	thaskell98:Prelude Ord	thaskell98:IO IOMode	derived	ov.io.interface
 +	INSTANCE	haskell98:IO	thaskell98:Prelude Ord	thaskell98:IO SeekMode	derived	ov.io.interface
@@ -113,8 +107,8 @@
 +	INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:IO BufferMode	derived	ov.io.interface
 +	INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:IO IOMode	derived	ov.io.interface
 +	INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:IO SeekMode	derived	ov.io.interface
-+	INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:PreludeBuiltin Handle	written	ov.io.misprints
-+	INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:PreludeBuiltin HandlePosn	written	ov.io.misprints
++	INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:PreludeRuntime Handle	written	ov.io.misprints
++	INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:PreludeRuntime HandlePosn	written	ov.io.misprints
 +	INSTANCE	haskell98:Ix	thaskell98:Ix Ix	t (,,)	written	ov.tuples.fifteen
 +	INSTANCE	haskell98:Ix	thaskell98:Ix Ix	t (,,,)	written	ov.tuples.fifteen
 +	INSTANCE	haskell98:Ix	thaskell98:Ix Ix	t (,,,,)	written	ov.tuples.fifteen
@@ -164,8 +158,6 @@
 +	INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	t (,,,,,,,,,,,,)	written	ov.tuples.fifteen
 +	INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	t (,,,,,,,,,,,,,)	written	ov.tuples.fifteen
 +	INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	t (,,,,,,,,,,,,,,)	written	ov.tuples.fifteen
-+	INSTANCE	haskell98:PreludeIO	thaskell98:Prelude Eq	thaskell98:PreludeBuiltin IOError	written	ov.preludeio.ioerror
-+	INSTANCE	haskell98:PreludeIO	thaskell98:PreludeText Show	thaskell98:PreludeBuiltin IOError	written	ov.preludeio.ioerror
 +	INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t (,,)	written	ov.tuples.fifteen
 +	INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t (,,,)	written	ov.tuples.fifteen
 +	INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t (,,,,)	written	ov.tuples.fifteen
@@ -192,5 +184,5 @@
 +	INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	t (,,,,,,,,,,,,)	written	ov.tuples.fifteen
 +	INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	t (,,,,,,,,,,,,,)	written	ov.tuples.fifteen
 +	INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	t (,,,,,,,,,,,,,,)	written	ov.tuples.fifteen
-+	INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:PreludeBuiltin ClockTime	written	ov.time.clocktime
-+	INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:PreludeBuiltin ClockTime	written	ov.time.clocktime
++	INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:PreludeRuntime ClockTime	written	ov.time.clocktime
++	INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:PreludeRuntime ClockTime	written	ov.time.clocktime

@@ -22,10 +22,12 @@ What was changed:
     to it, each with its reason.
   * PreludeEnum.hs holds 14 lines of the Report's Prelude, moved there.
 
-PreludeBuiltin.hs and UnicodePrims.hs are rhc's own, not the Report's (the
-modules of primitives the Report's code names and does not define), and are
-under the CC0 1.0 Universal dedication of the rest of the Rune repository;
-UnicodePrims.hs copies the tables of Rune's lib/unicode/code_point_data.sml.
+PreludeRuntime.hs is rhc's own, not the Report's (the primitives the library
+builds on, and in Haskell over them IOError's details, IO's handles and the
+system's calls), and is under the CC0 1.0 Universal dedication of the rest of
+the Rune repository. PreludeBuiltin and UnicodePrims, the modules of
+primitives the Report's code names and does not define, are no files here:
+they are rhc's runtime, lib/language/haskell/coreruntime.sml.
 
 The Report's notice, as the online Report gives it:
 

@@ -646,12 +646,11 @@ while no compiler runs it: `overlay`, each module's tokens against
 `pristine/`'s, a line at a time, white space and comments dropped, every
 line where they differ an entry of `overlay.tsv` marked applied, and every
 file the Report has no text of an entry's `new:`; `pristine`, the printed
-code byte for byte as `pristine/MANIFEST.tsv` records it; `unicode`,
-`UnicodePrims.hs`'s tables as `lib/unicode/code_point_data.sml` writes them;
-`report`, `bin/rhc --dump-names` of the Report's 20 modules against E16's
-table of the Report (`tests/hs/library/report.names`: 663 export pairs, 35
-fixities, 164 instances), changed exactly by the lines of
-`tests/hs/library/overlay.names`, each with its entry.
+code byte for byte as `pristine/MANIFEST.tsv` records it; and `report`,
+`bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
+Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
+instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
+each with its entry.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants

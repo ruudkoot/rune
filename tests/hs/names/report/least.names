@@ -1,7 +1,8 @@
 # whole
-# The Report's 20 modules: E16's 663 export pairs, 35 fixities and 164 instances, with the 20 pairs of rhc's two modules
-# of primitives (683), and the 10 uses of 8 names that do not resolve as printed, until M17's overlay.
-pairs 944
+# The Report's 20 modules, the overlay written: E16's 663 export pairs, 35 fixities and 164 instances, changed as
+# tests/hs/library/overlay.names says (737 pairs), with rhc's modules: the runtime's PreludeBuiltin and UnicodePrims (20
+# pairs), PreludeRuntime (184) and PreludeEnum (4).
+pairs 945
 EXPORT	haskell98:Array	thaskell98:Array Array
 EXPORT	haskell98:Array	thaskell98:Ix Ix
 EXPORT	haskell98:Array	vhaskell98:Array !
@@ -77,10 +78,10 @@ EXPORT	haskell98:IO	thaskell98:IO BufferMode
 EXPORT	haskell98:IO	thaskell98:IO IOMode
 EXPORT	haskell98:IO	thaskell98:IO SeekMode
 EXPORT	haskell98:IO	thaskell98:Prelude IO
-EXPORT	haskell98:IO	thaskell98:PreludeBuiltin Handle
-EXPORT	haskell98:IO	thaskell98:PreludeBuiltin HandlePosn
-EXPORT	haskell98:IO	thaskell98:PreludeBuiltin IOError
 EXPORT	haskell98:IO	thaskell98:PreludeIO FilePath
+EXPORT	haskell98:IO	thaskell98:PreludeIO IOError
+EXPORT	haskell98:IO	thaskell98:PreludeRuntime Handle
+EXPORT	haskell98:IO	thaskell98:PreludeRuntime HandlePosn
 EXPORT	haskell98:IO	vhaskell98:IO AbsoluteSeek
 EXPORT	haskell98:IO	vhaskell98:IO AppendMode
 EXPORT	haskell98:IO	vhaskell98:IO BlockBuffering
@@ -354,8 +355,8 @@ EXPORT	haskell98:Prelude	thaskell98:Prelude Real
 EXPORT	haskell98:Prelude	thaskell98:Prelude RealFloat
 EXPORT	haskell98:Prelude	thaskell98:Prelude RealFrac
 EXPORT	haskell98:Prelude	thaskell98:Prelude String
-EXPORT	haskell98:Prelude	thaskell98:PreludeBuiltin IOError
 EXPORT	haskell98:Prelude	thaskell98:PreludeIO FilePath
+EXPORT	haskell98:Prelude	thaskell98:PreludeIO IOError
 EXPORT	haskell98:Prelude	thaskell98:PreludeText Read
 EXPORT	haskell98:Prelude	thaskell98:PreludeText ReadS
 EXPORT	haskell98:Prelude	thaskell98:PreludeText Show
@@ -566,208 +567,25 @@ EXPORT	haskell98:Prelude	vhaskell98:PreludeText showParen
 EXPORT	haskell98:Prelude	vhaskell98:PreludeText showString
 EXPORT	haskell98:Prelude	vhaskell98:PreludeText shows
 EXPORT	haskell98:Prelude	vhaskell98:PreludeText showsPrec
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin Arr
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin ClockTime
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin Exn
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin Handle
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin HandlePosn
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin IOError
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin IOErrorKind
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin Ref
-EXPORT	haskell98:PreludeBuiltin	thaskell98:PreludeBuiltin Str
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin AlreadyExists
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin AlreadyInUse
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin ClockTime
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin DoesNotExist
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin EOF
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin Full
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin Handle
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin HandlePosn
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin IOError
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin IllegalOperation
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin Other
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin Permission
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin User
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin arr_get
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin arr_new
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin arr_read
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin arr_set
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin arr_size
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin char_chr
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin char_ord
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin command_arg
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin command_arg_count
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin command_name
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin date_is_dst
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin date_offset
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin date_zone_name
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_abs
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_add
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_atan
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_atan2
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_cos
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_cosh
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_div
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_encode
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_eq
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_exp
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_exponent
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_from_int
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_ge
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_gt
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_is_nan
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_le
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_log
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_lt
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_mantissa
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_mul
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_ne
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_neg
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_pow
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_sin
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_sinh
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_sqrt
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_sub
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_tan
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin double_tanh
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_avail
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_close
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_errno
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_error
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_flush
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_open
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_read
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_seek
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_size
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_tell
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_wait
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin file_write
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin float_from_double
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin float_to_double
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_add
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_div
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_eq
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_ge
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_gt
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_le
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_lt
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_max
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_min
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_mod
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_mul
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_ne
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_neg
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_quot
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_rem
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin int_sub
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_add
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_div
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_eq
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_from_int
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_ge
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_gt
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_le
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_lt
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_mod
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_mul
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_ne
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_neg
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_quot
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_rem
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_sub
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_to_double
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin integer_to_int
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin io_bind
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin io_interleave
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin io_return
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_access
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_chdir
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_close_dir
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_file_kind
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_file_mode
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_getcwd
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_getenv
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_has_env
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_mkdir
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_mod_time
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_open_dir
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_read_dir
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_remove
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_rename
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_rmdir
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_set_mode
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin os_system
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primAppendFile
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primCatch
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primCharToInt
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primDecode
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primElided
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primErrnoKind
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primError
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primExit
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primFailWith
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primFlushAll
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primGetChar
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primGetContents
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHClose
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHFileSize
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHFlush
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHGetBuffering
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHGetChar
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHGetContents
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHGetLine
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHGetPosn
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHIsClosed
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHIsEOF
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHIsOpen
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHIsReadable
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHIsSeekable
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHIsWritable
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHLookAhead
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHPutChar
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHPutStr
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHSeek
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHSetBuffering
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHWaitForInput
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHandleEq
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primHandleShow
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primIOError
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primIntToChar
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primNewHandle
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primOpenFile
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primPackStr
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primPutChar
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primReadFile
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primRunMain
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primSeq
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primStderr
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primStdin
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primStdout
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primSystemCall
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primUnpackStr
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primUnpackStrFrom
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primUserError
 EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin primWriteFile
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin random_seed
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin ref_get
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin ref_new
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin ref_set
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin str_byte
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin str_concat
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin str_empty
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin str_from_char
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin str_size
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin sys_errno
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin sys_error_message
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin time_cpu
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin time_now
-EXPORT	haskell98:PreludeBuiltin	vhaskell98:PreludeBuiltin unsafe_perform_io
 EXPORT	haskell98:PreludeEnum	vhaskell98:PreludeEnum numericEnumFrom
 EXPORT	haskell98:PreludeEnum	vhaskell98:PreludeEnum numericEnumFromThen
 EXPORT	haskell98:PreludeEnum	vhaskell98:PreludeEnum numericEnumFromThenTo
 EXPORT	haskell98:PreludeEnum	vhaskell98:PreludeEnum numericEnumFromTo
-EXPORT	haskell98:PreludeIO	thaskell98:PreludeBuiltin IOError
 EXPORT	haskell98:PreludeIO	thaskell98:PreludeIO FilePath
+EXPORT	haskell98:PreludeIO	thaskell98:PreludeIO IOError
 EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO appendFile
 EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO catch
 EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO getChar
@@ -837,6 +655,190 @@ EXPORT	haskell98:PreludeList	vhaskell98:PreludeList zip
 EXPORT	haskell98:PreludeList	vhaskell98:PreludeList zip3
 EXPORT	haskell98:PreludeList	vhaskell98:PreludeList zipWith
 EXPORT	haskell98:PreludeList	vhaskell98:PreludeList zipWith3
+EXPORT	haskell98:PreludeRuntime	thaskell98:PreludeRuntime Arr
+EXPORT	haskell98:PreludeRuntime	thaskell98:PreludeRuntime ClockTime
+EXPORT	haskell98:PreludeRuntime	thaskell98:PreludeRuntime Handle
+EXPORT	haskell98:PreludeRuntime	thaskell98:PreludeRuntime HandlePosn
+EXPORT	haskell98:PreludeRuntime	thaskell98:PreludeRuntime IOErrorKind
+EXPORT	haskell98:PreludeRuntime	thaskell98:PreludeRuntime Ref
+EXPORT	haskell98:PreludeRuntime	thaskell98:PreludeRuntime Str
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime AlreadyExists
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime AlreadyInUse
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ClockTime
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime DoesNotExist
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime EOF
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime Full
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime HandlePosn
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime IllegalOperation
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime Other
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime Permission
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime User
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime arr_get
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime arr_new
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime arr_read
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime arr_set
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime char_chr
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime char_ord
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime command_arg
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime command_arg_count
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime command_name
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime date_is_dst
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime date_offset
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime date_zone_name
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_add
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_atan
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_atan2
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_cos
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_cosh
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_div
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_encode
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_eq
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_exp
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_exponent
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_ge
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_gt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_is_denormalized
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_is_infinite
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_is_nan
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_is_negative_zero
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_le
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_log
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_lt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_mantissa
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_mul
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_ne
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_neg
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_pow
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_sin
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_sinh
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_sqrt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_sub
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_tan
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime double_tanh
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_add
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_atan
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_atan2
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_cos
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_cosh
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_div
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_encode
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_eq
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_exp
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_from_double
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_ge
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_gt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_is_denormalized
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_is_infinite
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_is_nan
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_is_negative_zero
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_le
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_log
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_lt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_mul
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_ne
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_neg
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_sin
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_sinh
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_sqrt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_sub
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_tan
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_tanh
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime float_to_double
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_add
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_div
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_eq
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_ge
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_gt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_le
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_lt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_mod
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_mul
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_ne
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_neg
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_quot
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_rem
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime int_sub
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_add
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_div
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_eq
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_from_int
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_ge
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_gt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_le
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_lt
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_mod
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_mul
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_ne
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_neg
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_quot
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_rem
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_sub
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime integer_to_int
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ioErrorFile
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ioErrorHandle
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ioErrorKind
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ioErrorText
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_access
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_chdir
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_close_dir
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_file_kind
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_file_mode
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_getcwd
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_getenv
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_has_env
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_mkdir
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_mod_time
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_open_dir
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_read_dir
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_remove
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_rename
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_rmdir
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_set_mode
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_system
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primBindIO
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primExit
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primFailWith
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHClose
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHFileSize
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHFlush
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHGetBuffering
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHGetChar
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHGetContents
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHGetLine
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHGetPosn
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHIsClosed
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHIsEOF
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHIsOpen
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHIsReadable
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHIsSeekable
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHIsWritable
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHLookAhead
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHPutChar
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHPutStr
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHSeek
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHSetBuffering
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHWaitForInput
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHandleEq
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHandleShow
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primMakeIOError
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primOpenFile
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primPackString
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primReturnIO
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primSeq
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primStderr
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primStdin
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primStdout
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primSystemCall
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primUnpackString
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime random_seed
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ref_get
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ref_new
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ref_set
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime str_size
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime sys_errno
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime time_cpu
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime time_now
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime unsafe_perform_io
 EXPORT	haskell98:PreludeText	thaskell98:PreludeText Read
 EXPORT	haskell98:PreludeText	thaskell98:PreludeText ReadS
 EXPORT	haskell98:PreludeText	thaskell98:PreludeText Show
@@ -886,7 +888,7 @@ EXPORT	haskell98:System	vhaskell98:System getArgs
 EXPORT	haskell98:System	vhaskell98:System getEnv
 EXPORT	haskell98:System	vhaskell98:System getProgName
 EXPORT	haskell98:System	vhaskell98:System system
-EXPORT	haskell98:Time	thaskell98:PreludeBuiltin ClockTime
+EXPORT	haskell98:Time	thaskell98:PreludeRuntime ClockTime
 EXPORT	haskell98:Time	thaskell98:Time CalendarTime
 EXPORT	haskell98:Time	thaskell98:Time Day
 EXPORT	haskell98:Time	thaskell98:Time Month
@@ -976,8 +978,6 @@ FIX	vhaskell98:Prelude quot	infixl	7
 FIX	vhaskell98:Prelude rem	infixl	7
 FIX	vhaskell98:Prelude seq	infixr	0
 FIX	vhaskell98:Prelude ||	infixr	2
-FIX	vhaskell98:PreludeBuiltin >>>	infixl	1
-FIX	vhaskell98:PreludeBuiltin >>>=	infixl	1
 FIX	vhaskell98:PreludeList !!	infixl	9
 FIX	vhaskell98:PreludeList ++	infixr	5
 FIX	vhaskell98:PreludeList elem	infix	4
@@ -1007,8 +1007,8 @@ INSTANCE	haskell98:IO	thaskell98:Prelude Enum	thaskell98:IO SeekMode	derived
 INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:IO BufferMode	derived
 INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:IO IOMode	derived
 INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:IO SeekMode	derived
-INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:PreludeBuiltin Handle	written
-INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:PreludeBuiltin HandlePosn	written
+INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:PreludeRuntime Handle	written
+INSTANCE	haskell98:IO	thaskell98:Prelude Eq	thaskell98:PreludeRuntime HandlePosn	written
 INSTANCE	haskell98:IO	thaskell98:Prelude Ord	thaskell98:IO BufferMode	derived
 INSTANCE	haskell98:IO	thaskell98:Prelude Ord	thaskell98:IO IOMode	derived
 INSTANCE	haskell98:IO	thaskell98:Prelude Ord	thaskell98:IO SeekMode	derived
@@ -1018,8 +1018,8 @@ INSTANCE	haskell98:IO	thaskell98:PreludeText Read	thaskell98:IO SeekMode	derived
 INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:IO BufferMode	derived
 INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:IO IOMode	derived
 INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:IO SeekMode	derived
-INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:PreludeBuiltin Handle	written
-INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:PreludeBuiltin HandlePosn	written
+INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:PreludeRuntime Handle	written
+INSTANCE	haskell98:IO	thaskell98:PreludeText Show	thaskell98:PreludeRuntime HandlePosn	written
 INSTANCE	haskell98:Ix	thaskell98:Ix Ix	t ()	written
 INSTANCE	haskell98:Ix	thaskell98:Ix Ix	t (,)	written
 INSTANCE	haskell98:Ix	thaskell98:Ix Ix	t (,,)	written
@@ -1154,8 +1154,9 @@ INSTANCE	haskell98:Prelude	thaskell98:PreludeText Show	thaskell98:Prelude Bool	d
 INSTANCE	haskell98:Prelude	thaskell98:PreludeText Show	thaskell98:Prelude Either	derived
 INSTANCE	haskell98:Prelude	thaskell98:PreludeText Show	thaskell98:Prelude Maybe	derived
 INSTANCE	haskell98:Prelude	thaskell98:PreludeText Show	thaskell98:Prelude Ordering	derived
-INSTANCE	haskell98:PreludeIO	thaskell98:Prelude Eq	thaskell98:PreludeBuiltin IOError	written
-INSTANCE	haskell98:PreludeIO	thaskell98:PreludeText Show	thaskell98:PreludeBuiltin IOError	written
+INSTANCE	haskell98:PreludeIO	thaskell98:Prelude Eq	thaskell98:PreludeIO IOError	written
+INSTANCE	haskell98:PreludeIO	thaskell98:PreludeText Show	thaskell98:PreludeIO IOError	written
+INSTANCE	haskell98:PreludeRuntime	thaskell98:Prelude Eq	thaskell98:PreludeRuntime IOErrorKind	derived
 INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t ()	written
 INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t (,)	written
 INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t (,,)	written
@@ -1226,12 +1227,12 @@ INSTANCE	haskell98:Time	thaskell98:Prelude Bounded	thaskell98:Time Day	derived
 INSTANCE	haskell98:Time	thaskell98:Prelude Bounded	thaskell98:Time Month	derived
 INSTANCE	haskell98:Time	thaskell98:Prelude Enum	thaskell98:Time Day	derived
 INSTANCE	haskell98:Time	thaskell98:Prelude Enum	thaskell98:Time Month	derived
-INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:PreludeBuiltin ClockTime	written
+INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:PreludeRuntime ClockTime	written
 INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time CalendarTime	derived
 INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time Day	derived
 INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time Month	derived
 INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time TimeDiff	derived
-INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:PreludeBuiltin ClockTime	written
+INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:PreludeRuntime ClockTime	written
 INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time CalendarTime	derived
 INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time Day	derived
 INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time Month	derived

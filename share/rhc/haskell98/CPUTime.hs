@@ -6,7 +6,7 @@
 
 module CPUTime ( getCPUTime, cpuTimePrecision ) where
 
-import PreludeBuiltin (time_cpu)        -- (rhc's)
+import PreludeRuntime (time_cpu)        -- (rhc's)
 
 -- picoseconds, of the processor time the system counts in microseconds
 getCPUTime        :: IO Integer

@@ -55,6 +55,7 @@ import PreludeIO
 import Ratio( Rational )
 import PreludeEnum                         -- numericEnumFrom... (rhc's)
 import Numeric( fromRat )                  -- Float's and Double's fromRational
+import PreludeRuntime                      -- Core's primitives, by name (rhc's)
 
 infixr 9  .
 infixr 8  ^, ^^, **
@@ -515,8 +516,8 @@ instance  Functor IO where
 
 
 instance Monad IO where
-   (>>=)  = io_bind
-   return = io_return
+   (>>=)  = primBindIO
+   return = primReturnIO
    fail s = ioError (userError s)
 
 -- Ordering type
@@ -586,8 +587,8 @@ instance  Enum     Int  where
                         map fromInteger (enumFromThenTo (toInteger x) (toInteger y) (toInteger z))
 
 instance  Bounded  Int  where
-    minBound         =  int_min
-    maxBound         =  int_max
+    minBound         =  negate maxBound - 1
+    maxBound         =  4611686018427387903   -- 2^62 - 1: Mid's int, 63 bits (D22)
 
 
 -- Integer is rhc's primitive, IntInf's representation (D20, M31)
@@ -644,61 +645,75 @@ instance  Enum     Integer  where
       | otherwise    =  if x < z then [] else x : enumFromThenTo y (y + y - x) z
 
 
--- Float is rhc's primitive: a binary64 rounded to binary32 after each
--- operation, as Rune's Real32 is (D23)
+-- Float is rhc's primitive: a Double that binary32 represents, each result
+-- rounded to binary32, as Rune's Real32 is (D23)
 data  Float
 
 -- a function of Double's, taken to Float's
 viaDouble        :: (Double -> Double) -> Float -> Float
 viaDouble f x    =  float_from_double (f (float_to_double x))
 
-viaDouble2       :: (Double -> Double -> Double) -> Float -> Float -> Float
-viaDouble2 f x y =  float_from_double (f (float_to_double x) (float_to_double y))
+-- `encodeVia limit enc m e` is m * 2^e by `enc`, which takes a mantissa
+-- of Int below `limit` and rounds once: a greater mantissa is cut to that,
+-- its lowest bit set where a bit cut is not 0, so that the one rounding is
+-- the exact value's (rounding to nearest needs two bits past the type's)
+encodeVia        :: Integer -> (Int -> Int -> a) -> Integer -> Int -> a
+encodeVia limit enc m e = cut (abs m) e False
+  where
+    cut n k lost
+      | n >= limit * 4294967296 = case quotRem n 4294967296 of
+                                    (q, r) -> cut q (k + 32) (lost || r /= 0)
+      | n >= limit   = case quotRem n 2 of (q, r) -> cut q (k + 1) (lost || r /= 0)
+      | otherwise    = enc (fromInteger (signum m * (if lost && even n then n + 1 else n))) k
 
 instance  Eq         Float  where
-    x == y           =  float_to_double x == float_to_double y
+    (==)             =  float_eq
+    (/=)             =  float_ne
 
 instance  Ord        Float  where
-    x <  y           =  float_to_double x <  float_to_double y
-    x <= y           =  float_to_double x <= float_to_double y
-    x >= y           =  float_to_double x >= float_to_double y
-    x >  y           =  float_to_double x >  float_to_double y
-    compare x y      =  compare (float_to_double x) (float_to_double y)
+    (<)              =  float_lt
+    (<=)             =  float_le
+    (>=)             =  float_ge
+    (>)              =  float_gt
+    compare x y
+      | float_lt x y =  LT
+      | float_eq x y =  EQ
+      | otherwise    =  GT
 
 instance  Num        Float  where
-    (+)              =  viaDouble2 (+)
-    (-)              =  viaDouble2 (-)
-    (*)              =  viaDouble2 (*)
-    negate           =  viaDouble negate
-    abs              =  viaDouble abs
-    signum           =  viaDouble signum
-    fromInteger n
-      | abs n < 9007199254740992 = float_from_double (integer_to_double n)
-      | otherwise    =  fromRat (fromInteger n)
+    (+)              =  float_add
+    (-)              =  float_sub
+    (*)              =  float_mul
+    negate           =  float_neg
+    abs x            =  if x < 0 || float_is_negative_zero x then float_neg x else x
+    signum x
+      | x > 0        =  1
+      | x < 0        =  -1
+      | otherwise    =  x
+    fromInteger n    =  encodeFloat n 0
 
 instance  Real       Float  where
     toRational x     =  toRational (float_to_double x)
 
 instance  Fractional Float  where
-    (/)              =  viaDouble2 (/)
+    (/)              =  float_div
     fromRational     =  fromRat
 
 instance  Floating   Float  where
     pi               =  float_from_double pi
-    exp              =  viaDouble exp
-    log              =  viaDouble log
-    sqrt             =  viaDouble sqrt
-    (**)             =  viaDouble2 (**)
-    logBase          =  viaDouble2 logBase
-    sin              =  viaDouble sin
-    cos              =  viaDouble cos
-    tan              =  viaDouble tan
+    exp              =  float_exp
+    log              =  float_log
+    sqrt             =  float_sqrt
+    x ** y           =  float_from_double (float_to_double x ** float_to_double y)
+    sin              =  float_sin
+    cos              =  float_cos
+    tan              =  float_tan
     asin             =  viaDouble asin
     acos             =  viaDouble acos
-    atan             =  viaDouble atan
-    sinh             =  viaDouble sinh
-    cosh             =  viaDouble cosh
-    tanh             =  viaDouble tanh
+    atan             =  float_atan
+    sinh             =  float_sinh
+    cosh             =  float_cosh
+    tanh             =  float_tanh
     asinh            =  viaDouble asinh
     acosh            =  viaDouble acosh
     atanh            =  viaDouble atanh
@@ -713,11 +728,11 @@ instance  RealFloat  Float  where
     floatRange _     =  (-125, 128)
     decodeFloat x    =  case decodeFloat (float_to_double x) of
                           (m, e) -> if m == 0 then (0, 0) else (m `quot` 536870912, e + 29)
-    encodeFloat m e  =  float_from_double (encodeFloat m e)
-    isNaN x          =  isNaN (float_to_double x)
-    isInfinite x     =  isInfinite (float_to_double x)
-    isDenormalized x =  x /= 0 && not (isNaN x) && abs x < encodeFloat 1 (-126)
-    isNegativeZero x =  isNegativeZero (float_to_double x)
+    encodeFloat      =  encodeVia 9007199254740992 float_encode   -- 2^53: exact in a Double
+    isNaN            =  float_is_nan
+    isInfinite       =  float_is_infinite
+    isDenormalized   =  float_is_denormalized
+    isNegativeZero   =  float_is_negative_zero
     isIEEE _         =  True
 
 
@@ -743,12 +758,12 @@ instance  Num        Double  where
     (-)              =  double_sub
     (*)              =  double_mul
     negate           =  double_neg
-    abs              =  double_abs
+    abs x            =  if x < 0 || double_is_negative_zero x then double_neg x else x
     signum x
       | x > 0        =  1
       | x < 0        =  -1
       | otherwise    =  x
-    fromInteger      =  integer_to_double
+    fromInteger n    =  encodeFloat n 0
 
 instance  Real       Double  where
     toRational x     =  fromInteger m * fromInteger (floatRadix x) ^^ n
@@ -788,12 +803,12 @@ instance  RealFloat  Double  where
     floatRadix _     =  2
     floatDigits _    =  53
     floatRange _     =  (-1021, 1024)
-    decodeFloat x    =  (double_mantissa x, double_exponent x)
-    encodeFloat      =  double_encode
+    decodeFloat x    =  (toInteger (double_mantissa x), double_exponent x)
+    encodeFloat      =  encodeVia 4611686018427387904 double_encode   -- 2^62: Int's
     isNaN            =  double_is_nan
-    isInfinite x     =  not (isNaN x) && x /= 0 && x + x == x
-    isDenormalized x =  x /= 0 && not (isNaN x) && abs x < encodeFloat 1 (-1022)
-    isNegativeZero x =  x == 0 && 1 / x < 0
+    isInfinite       =  double_is_infinite
+    isDenormalized   =  double_is_denormalized
+    isNegativeZero   =  double_is_negative_zero
     isIEEE _         =  True
 
 -- The Enum instances for Floats and Doubles are slightly unusual.

@@ -21,9 +21,9 @@ module Time (
 import Ix(Ix)
 import Locale(TimeLocale(..),defaultTimeLocale)
 import Char ( intToDigit )
-import PreludeBuiltin                   -- ClockTime's representation, the clock (rhc's)
+import PreludeRuntime                   -- ClockTime's representation, the clock (rhc's)
 
--- ClockTime is PreludeBuiltin's: seconds since 1970-01-01 00:00 UTC, and
+-- ClockTime is PreludeRuntime's: seconds since 1970-01-01 00:00 UTC, and
 -- picoseconds (overlay ov.time.clocktime)
 instance Ord  ClockTime where
     compare (ClockTime s p) (ClockTime s' p') = compare (s, p) (s', p')
@@ -80,7 +80,7 @@ toCalendarTime (ClockTime s p) =
                            date_offset t >>= \off ->
                            date_zone_name t >>= \name ->
                            date_is_dst t >>= \dst ->
-                           return (calendar s p off (primUnpackStr name) dst)
+                           return (calendar s p off (primUnpackString name) dst)
 
 toUTCTime               :: ClockTime    -> CalendarTime
 toUTCTime (ClockTime s p) = calendar s p 0 "UTC" False

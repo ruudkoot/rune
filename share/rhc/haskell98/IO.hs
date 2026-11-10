@@ -31,9 +31,9 @@ module IO (
     ) where
 
 import Ix(Ix)
-import PreludeBuiltin                      -- Handle, HandlePosn, IOError (rhc's)
+import PreludeRuntime                      -- Handle, HandlePosn, IOError's details (rhc's)
 
--- Handle and HandlePosn are PreludeBuiltin's (overlay ov.io.handles); the
+-- Handle and HandlePosn are PreludeRuntime's (overlay ov.io.handles); the
 -- two Show instances were printed `where ..` and `where ---` (ov.io.misprints)
 instance Eq Handle where
     h == h'          =  primHandleEq h h'
@@ -78,7 +78,7 @@ hSetBuffering h (BlockBuffering m) =
     case m of
       Nothing            -> primHSetBuffering h 2 0
       Just n | n > 0     -> primHSetBuffering h 2 n
-             | otherwise -> ioError (IOError IllegalOperation "hSetBuffering: the size of a block is not positive" (Just h) Nothing)
+             | otherwise -> ioError (primMakeIOError IllegalOperation "hSetBuffering: the size of a block is not positive" (Just h) Nothing)
 hGetBuffering         :: Handle  -> IO BufferMode
 hGetBuffering h       =  primHGetBuffering h >>= \(m, n) ->
                          return (if m == 0 then NoBuffering
@@ -126,36 +126,28 @@ hIsSeekable           :: Handle -> IO Bool
 hIsSeekable           =  primHIsSeekable
 
 isAlreadyExistsError  :: IOError -> Bool
-isAlreadyExistsError (IOError AlreadyExists _ _ _) = True
-isAlreadyExistsError _ = False
+isAlreadyExistsError e =  ioErrorKind e == AlreadyExists
 isDoesNotExistError   :: IOError -> Bool
-isDoesNotExistError (IOError DoesNotExist _ _ _) = True
-isDoesNotExistError _  = False
+isDoesNotExistError e =  ioErrorKind e == DoesNotExist
 isAlreadyInUseError   :: IOError -> Bool
-isAlreadyInUseError (IOError AlreadyInUse _ _ _) = True
-isAlreadyInUseError _  = False
+isAlreadyInUseError e =  ioErrorKind e == AlreadyInUse
 isFullError           :: IOError -> Bool
-isFullError (IOError Full _ _ _) = True
-isFullError _          = False
+isFullError e         =  ioErrorKind e == Full
 isEOFError            :: IOError -> Bool
-isEOFError (IOError EOF _ _ _) = True
-isEOFError _           = False
+isEOFError e          =  ioErrorKind e == EOF
 isIllegalOperation    :: IOError -> Bool
-isIllegalOperation (IOError IllegalOperation _ _ _) = True
-isIllegalOperation _   = False
+isIllegalOperation e  =  ioErrorKind e == IllegalOperation
 isPermissionError     :: IOError -> Bool
-isPermissionError (IOError Permission _ _ _) = True
-isPermissionError _    = False
+isPermissionError e   =  ioErrorKind e == Permission
 isUserError           :: IOError -> Bool
-isUserError (IOError User _ _ _) = True
-isUserError _          = False
+isUserError e         =  ioErrorKind e == User
 
 ioeGetErrorString     :: IOError -> String
-ioeGetErrorString (IOError _ s _ _) = s
+ioeGetErrorString e   =  ioErrorText e
 ioeGetHandle          :: IOError -> Maybe Handle
-ioeGetHandle (IOError _ _ h _) = h
+ioeGetHandle          =  ioErrorHandle
 ioeGetFileName        :: IOError -> Maybe FilePath
-ioeGetFileName (IOError _ _ _ f) = f
+ioeGetFileName        =  ioErrorFile
 
 -- try, bracket and bracket_: their signatures and code are 21.11's, below
 

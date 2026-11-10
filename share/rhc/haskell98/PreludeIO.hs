@@ -12,6 +12,7 @@ module PreludeIO (
   ) where
 
 import PreludeBuiltin
+import PreludeRuntime (IOErrorKind(..), ioErrorKind, ioErrorText, ioErrorFile, ioErrorHandle)  -- (rhc's)
 import IO (hSetBuffering, stdin, stdout, BufferMode(..), hGetLine)  -- interact's, getLine's (rhc's)
 
 
@@ -19,23 +20,18 @@ import IO (hSetBuffering, stdin, stdout, BufferMode(..), hGetLine)  -- interact'
 type  FilePath = String
 
 
--- IOError, whose internals are system dependent, is PreludeBuiltin's, as
--- IO's predicates and selectors read them (overlay ov.preludeio.ioerror)
+data IOError    -- The internals of this type are system dependent
+                -- (rhc's primitive: Core's Exn, its details PreludeRuntime's)
+
 
 instance  Show IOError  where
-    showsPrec _ (IOError k s _ _) =
-                           case k of
-                             User -> showString "user error (" . showString s . showChar ')'
-                             _    -> showString s
+    showsPrec _ e  =  case ioErrorKind e of
+                        User -> showString "user error (" . showString (ioErrorText e) . showChar ')'
+                        _    -> showString (ioErrorText e)
 
 instance  Eq IOError  where
-    IOError k s h f == IOError k' s' h' f' =
-                           kind k == kind k' && s == s' && h == h' && f == f'
-      where kind :: IOErrorKind -> Int
-            kind k = case k of
-                       AlreadyExists -> 0; DoesNotExist -> 1; AlreadyInUse -> 2
-                       Full -> 3; EOF -> 4; IllegalOperation -> 5
-                       Permission -> 6; User -> 7; Other -> 8
+    e == e'        =  ioErrorKind e == ioErrorKind e' && ioErrorText e == ioErrorText e'
+                      && ioErrorFile e == ioErrorFile e' && ioErrorHandle e == ioErrorHandle e'
 
 
 ioError    ::  IOError -> IO a 

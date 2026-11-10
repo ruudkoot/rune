@@ -1,5 +1,5 @@
 # E16: one solution, 686 pairs.
-pairs 947
+pairs 948
 EXPORT	T1	vT1 mapp
 EXPORT	T1	vhaskell98:Prelude Nothing
 EXPORT	T1	vhaskell98:PreludeList map

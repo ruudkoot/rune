@@ -11,7 +11,7 @@ module  Array (
 
 import Ix
 import List( (\\) )
-import PreludeBuiltin (Arr, arr_new, arr_read, arr_get, arr_set, unsafe_perform_io)  -- (rhc's)
+import PreludeRuntime (Arr, arr_new, arr_read, arr_get, arr_set, unsafe_perform_io)  -- (rhc's)
 
 infixl 9  !, //
 

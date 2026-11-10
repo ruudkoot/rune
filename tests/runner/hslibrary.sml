@@ -11,8 +11,6 @@
      their transcription.
    - hs/library/pristine: pristine/ is what its MANIFEST.tsv says, byte for
      byte, by SHA-256.
-   - hs/library/unicode: UnicodePrims.hs's tables are lib/unicode's
-     (lib/unicode/code_point_data.sml), as written there.
    - hs/library/report: the names of the Report's 20 modules, by
      `bin/rhc --dump-names`, are E16's table of the Report (663 export
      pairs, 35 fixities, 164 instances: tests/hs/library/report.names),
@@ -333,54 +331,6 @@ struct
       say ("hs/library/pristine: " ^ Int.toString (length files) ^ " files as MANIFEST.tsv records them\n")
     end
 
-  (* the characters of the string literal after the first `name =` of a
-     text, its gaps taken out: SML's and Haskell's gaps are written alike *)
-  fun literalAfter (text, name) =
-    let
-      fun find i = if i >= size text then NONE else if isPrefixAt (text, i, name) then SOME i else find (i + 1)
-    in
-      case find 0 of
-        NONE => NONE
-      | SOME i =>
-          let
-            fun quote k = if k >= size text then NONE else if String.sub (text, k) = #"\"" then SOME k else quote (k + 1)
-          in
-            case quote i of
-              NONE => NONE
-            | SOME q =>
-                let
-                  fun go (k, acc) =
-                    if k >= size text then NONE
-                    else
-                      case String.sub (text, k) of
-                        #"\"" => SOME (String.implode (List.rev acc))
-                      | #"\\" =>
-                          if Char.isSpace (String.sub (text, k + 1)) then
-                            let fun gap j = if String.sub (text, j) = #"\\" then j + 1 else gap (j + 1)
-                            in go (gap (k + 1), acc) end
-                          else go (k + 2, String.sub (text, k + 1) :: #"\\" :: acc)
-                      | c => go (k + 1, c :: acc)
-                in
-                  go (q + 1, [])
-                end
-          end
-    end
-
-  fun unicode () =
-    let
-      val sml = read (fromRoot "lib/unicode/code_point_data.sml")
-      val hs = read (fromRoot (share ^ "/UnicodePrims.hs"))
-      val tables = [("val latin1 =", "latin1             =\n"), ("val category :", "categoryTable      =\n"),
-                    ("val upper :", "upperTable         =\n"), ("val lower :", "lowerTable         =\n")]
-      fun one (s, h) =
-        case (literalAfter (sml, s), literalAfter (hs, h)) of
-          (SOME a, SOME b) => if a = b then () else fail ("hs/library/unicode: UnicodePrims.hs's " ^ h ^ " is not lib/unicode's " ^ s)
-        | _ => fail ("hs/library/unicode: no table after " ^ s ^ " or " ^ h)
-    in
-      List.app one tables;
-      say ("hs/library/unicode: " ^ Int.toString (length tables) ^ " tables as lib/unicode writes them\n")
-    end
-
   (* the Report's 20 modules *)
   val reportModules =
     ["Prelude", "PreludeList", "PreludeText", "PreludeIO", "Ratio", "Complex", "Numeric", "Ix", "Array", "List", "Maybe",
@@ -452,20 +402,19 @@ struct
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
   val covers = ["covers:share/rhc/*", "covers:tests/hs/library/*", "covers:tests/runner/hslibrary.sml",
-                "covers:lib/unicode/code_point_data.sml", "covers:src/rhc/*", "covers:lib/language/haskell/*"]
+                "covers:src/rhc/*", "covers:lib/language/haskell/*"]
 
   val tree =
     Test.describe "hs/library"
       [tagged (["check", "hs", "quick"] @ covers)
          (Test.describe ""
             [job ("overlay", "hs-library-overlay"), job ("pristine", "hs-library-pristine"),
-             job ("unicode", "hs-library-unicode"), job ("report", "hs-library-report")])]
+             job ("report", "hs-library-report")])]
 
   fun command args =
     case args of
       ["hs-library-overlay"] => SOME overlay
     | ["hs-library-pristine"] => SOME pristine
-    | ["hs-library-unicode"] => SOME unicode
     | ["hs-library-report"] => SOME report
     | _ => NONE
 end

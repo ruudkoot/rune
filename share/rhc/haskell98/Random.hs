@@ -14,7 +14,7 @@ module Random (
   ) where
 	
 import Char (ord, chr)
-import PreludeBuiltin (Ref, ref_new, ref_get, ref_set, unsafe_perform_io, random_seed)  -- (rhc's)
+import PreludeRuntime (Ref, ref_new, ref_get, ref_set, unsafe_perform_io, random_seed)  -- (rhc's)
 
 ---------------- The RandomGen class ------------------------
 
