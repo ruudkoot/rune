@@ -129,6 +129,40 @@ struct
   (* the primitives no Core has, for a message *)
   val missing : string list ref = ref []
 
+  (* what a part of a desugaring leaves the next: the library's, a
+     program's (HsDsCore's and HsDsEnv's declarations, and these) *)
+  type state = {core : C.saved, env : V.saved, leafKeys : unit M.map, tyconCons : string list M.map,
+                defaults : unit M.map, missing : string list}
+
+  fun saveState () : state =
+    {core = C.save (), env = V.save (), leafKeys = !leafKeys, tyconCons = !tyconCons, defaults = !defaults,
+     missing = !missing}
+
+  fun restoreState (s : state) =
+    (C.restore (#core s); V.restore (#env s); leafKeys := #leafKeys s; tyconCons := #tyconCons s;
+     defaults := #defaults s; missing := #missing s)
+
+  (* a value: its name, its type (`NONE` for the one its body has once
+     made) and how its body is made *)
+  type value_ = string * Core.ty option * (unit -> C.texp)
+
+  type library = {state : state, types : Core.decl list, values : value_ list}
+
+  (* a body made the first time it is wanted and kept, or what failed in
+     its making, raised again *)
+  datatype kept = Todo | Made of C.texp | Failed of exn
+
+  fun once (mk : unit -> C.texp) : unit -> C.texp =
+    let
+      val r = ref Todo
+    in
+      fn () =>
+        case !r of
+          Made v => v
+        | Failed e => raise e
+        | Todo => (let val v = mk () in r := Made v; v end handle e => (r := Failed e; raise e))
+    end
+
   (* ---- Types of patterns ---- *)
 
   (* the type of the value of a binder, by its record *)
@@ -685,7 +719,9 @@ struct
       val gvars =
         List.foldl (fn (E.Binding {scheme = {vars, ...}, ...}, acc) => acc @ List.filter (fn a => not (List.exists (fn b => b = a) acc)) vars
                      | (_, acc) => acc) [] (List.mapPartial (fn x => x) records)
-      val tname = C.fresh "pat"
+      (* the value's name, after its first variable's: so that one of the
+         top level is named the same whatever was made before it *)
+      val tname = case vars of v :: _ => "%pat:" ^ coreOf v | [] => C.fresh "pat"
       val made : Core.ty option ref = ref NONE
       val value : C.texp option ref = ref NONE
       fun valueDef env' =
@@ -939,31 +975,33 @@ struct
       T.KFun (a, b) => Core.Arrow (coreKind a, coreKind b)
     | _ => Core.Star
 
-  fun program {modules : module_ list, infer, evidence, derived, prelude, entity, runtime, leaves, main} =
+  (* the declarations of a part of the program, the library's (`first`, with
+     Core's own types and the leaves') or a program's, after the library's:
+     the types they declare and the values they define, in order, and, in a
+     program's, main. `ownsInstance home` is whether an instance of the
+     module `home` is this part's. *)
+  fun part {first : bool, modules : module_ list, derived, leaves, entity, main : string option,
+            ownsInstance : string -> bool} : Core.decl list * value_ list =
     let
-      val () = C.reset ()
-      val () = leafKeys := M.empty
-      val () = tyconCons := M.empty
-      val () = defaults := M.empty
-      val () = missing := []
-      val libraryIds = List.foldl (fn ({id, library, ...}, m) => if library then M.insert (m, id, ()) else m) M.empty modules
-      val () = V.start {infer = infer, evidence = evidence, prelude = prelude, library = fn id => M.member (libraryIds, id),
-                        entity = entity}
-      val () = List.app C.declare runtime
       val derivedMethods = derived
       val decls = List.concat (List.map (fn {id, ast = A.Module (_, {decls, ...}), library} =>
                                             List.map (fn d => (id, library, d)) decls) modules)
+      (* the type constructors the parts before declared *)
+      val earlier = !tyconCons
       val types : Core.decl list ref = ref []
       fun emitType d = (C.declare d; types := d :: !types)
-      (* each value: its name, its type and how its body is made *)
-      val values : (string * Core.ty option * (unit -> C.texp)) list ref = ref []
+      (* each value: its name, its type and how its body is made, its names
+         numbered from the first (HsDsCore.canonical), so that it is the
+         same whatever was made before it *)
+      val values : value_ list ref = ref []
       (* a value whose type is the one its body has once made, `NONE`, is
          known by no other's body *)
       fun valueOpt (x, t, mk) =
-        (C.declare (Core.Val (x, getOpt (t, C.unitTy), Core.Atom (Core.Var x))); values := (x, t, mk) :: !values)
+        (C.declare (Core.Val (x, getOpt (t, C.unitTy), Core.Atom (Core.Var x)));
+         values := (x, t, fn () => let val (e, et) = mk () in (C.canonical e, et) end) :: !values)
       fun value (x, t, mk) = valueOpt (x, SOME t, mk)
       (* what raises the exceptions of a match that fails and of an error *)
-      val () = List.app (fn Core.Val (x, t, e) => value (x, t, fn () => (e, t)) | _ => ()) C.raisers
+      val () = if first then List.app (fn Core.Val (x, t, e) => value (x, t, fn () => (e, t)) | _ => ()) C.raisers else ()
 
       (* ---- Types ---- *)
 
@@ -974,32 +1012,36 @@ struct
                        if isPrimData (name, cs) then V.primType (K.keyOf name, primCoreName (nameText name)) else ()
                    | _ => ())
           decls
-      val () = V.primType (V.prelude ("t", "Bool"), "Bool")
-      val () = V.builtinCon (V.prelude ("v", "True"), "True")
-      val () = V.builtinCon (V.prelude ("v", "False"), "False")
-
-      (* IO, a newtype over the state token's function (D25), so that a
-         class may be at it *)
       val world = Core.TCon "World"
-      val () = emitType (Core.Newtype ("IO", [("a", Core.Star)], "IO", Core.TFun (world, Core.TUTuple [world, Core.TVar "a"])))
+      fun builtins () =
+        let
+          val () = V.primType (V.prelude ("t", "Bool"), "Bool")
+          val () = V.builtinCon (V.prelude ("v", "True"), "True")
+          val () = V.builtinCon (V.prelude ("v", "False"), "False")
 
-      (* the unit and the list as the runtime has them, and the tuples *)
-      val () = emitType (Core.Data ("()", [], [("()", [])]))
-      val () = emitType (Core.Data ("[]", [("a", Core.Star)],
-                                    [("[]", []), (":", [Core.TVar "a", Core.TApp (Core.TCon "[]", Core.TVar "a")])]))
-      val () = V.setFields (":", ["", ""])
-      val () = tyconCons := M.insert (!tyconCons, "[]", ["[]", ":"])
-      val () =
-        List.app (fn n =>
-                    let
-                      val name = T.tupleCon n
-                      val ps = List.tabulate (n, fn i => ("a" ^ Int.toString (i + 1), Core.Star))
-                    in
-                      emitType (Core.Data (name, ps, [(name, List.map (Core.TVar o #1) ps)]));
-                      V.setFields (name, List.tabulate (n, fn _ => ""));
-                      tyconCons := M.insert (!tyconCons, name, [name])
-                    end)
-          (List.tabulate (14, fn i => i + 2))
+          (* IO, a newtype over the state token's function (D25), so that a
+             class may be at it *)
+          val () = emitType (Core.Newtype ("IO", [("a", Core.Star)], "IO", Core.TFun (world, Core.TUTuple [world, Core.TVar "a"])))
+
+          (* the unit and the list as the runtime has them, and the tuples *)
+          val () = emitType (Core.Data ("()", [], [("()", [])]))
+          val () = emitType (Core.Data ("[]", [("a", Core.Star)],
+                                        [("[]", []), (":", [Core.TVar "a", Core.TApp (Core.TCon "[]", Core.TVar "a")])]))
+          val () = V.setFields (":", ["", ""])
+          val () = tyconCons := M.insert (!tyconCons, "[]", ["[]", ":"])
+        in
+          List.app (fn n =>
+                      let
+                        val name = T.tupleCon n
+                        val ps = List.tabulate (n, fn i => ("a" ^ Int.toString (i + 1), Core.Star))
+                      in
+                        emitType (Core.Data (name, ps, [(name, List.map (Core.TVar o #1) ps)]));
+                        V.setFields (name, List.tabulate (n, fn _ => ""));
+                        tyconCons := M.insert (!tyconCons, name, [name])
+                      end)
+            (List.tabulate (14, fn i => i + 2))
+        end
+      val () = if first then builtins () else ()
 
       (* the program's data types and newtypes, their kinds worked out
          together: each type, its parameters, its constructors (key, Core
@@ -1256,7 +1298,9 @@ struct
                    value (k, ty, fn () => C.lam (List.map Core.TyBinder params @ ListPair.map Core.ValBinder (xs, ft), body ()))
                  end
              | _ => ())
-          (List.map V.conName (List.concat (List.map #2 (M.listItems (!tyconCons)))))
+          (* this part's data types' *)
+          (List.map V.conName (List.concat (List.mapPartial (fn (t, cs) => if M.member (earlier, t) then NONE else SOME cs)
+                                                              (M.listItems (!tyconCons)))))
 
       (* fields' selectors (3.15.1): the constructors that have the field,
          and a match that fails for the others *)
@@ -1294,7 +1338,7 @@ struct
 
       (* ---- Instances ---- *)
 
-      val instances = HsClasses.instances (V.classes ())
+      val instances = List.filter (fn (i : HsClasses.instance) => ownsInstance (#home i)) (HsClasses.instances (V.classes ()))
       fun dfunType (i : HsClasses.instance) =
         let
           val names = List.tabulate (#vars i, fn j => "a" ^ Int.toString (j + 1))
@@ -1421,30 +1465,89 @@ struct
 
       (* ---- main ---- *)
 
-      val mainName = V.coreName main
-      val () =
-        case C.valueType mainName of
-          SOME mt =>
-            let
-              val (ks, mbody) = peel mt
-              val inst = List.map (fn _ => C.unitTy) ks
-              val io = C.instantiate (mt, inst)
-              val t = case io of Core.TApp (Core.TCon "IO", t) => t | _ => bug ("main is of type " ^ CoreText.showTy mbody)
-              val rep = Core.TFun (world, Core.TUTuple [world, t])
-              val w = C.fresh "w"
-            in
-              value ("main", rep,
-                     fn () => C.lam ([Core.ValBinder (w, world)],
-                                     C.app (C.cast (C.app (C.var (mainName, mt), List.map Core.TyArg inst), rep),
-                                            [Core.ValArg (Core.Var w)])))
-            end
-        | NONE => bug "the program has no main"
-
-      (* ---- The bodies ---- *)
-
-      val vals = reachable (List.rev (!values))
+      fun mainOf main =
+        let val mainName = V.coreName main
+        in
+          case C.valueType mainName of
+            SOME mt =>
+              let
+                val (ks, mbody) = peel mt
+                val inst = List.map (fn _ => C.unitTy) ks
+                val io = C.instantiate (mt, inst)
+                val t = case io of Core.TApp (Core.TCon "IO", t) => t | _ => bug ("main is of type " ^ CoreText.showTy mbody)
+                val rep = Core.TFun (world, Core.TUTuple [world, t])
+                val w = C.fresh "w"
+              in
+                value ("main", rep,
+                       fn () => C.lam ([Core.ValBinder (w, world)],
+                                       C.app (C.cast (C.app (C.var (mainName, mt), List.map Core.TyArg inst), rep),
+                                              [Core.ValArg (Core.Var w)])))
+              end
+          | NONE => bug "the program has no main"
+        end
+      val () = Option.app mainOf main
     in
-      reachableTypes (List.rev (!types), vals) @ vals
+      (List.rev (!types), List.rev (!values))
+    end
+
+  (* ---- The library's part, once, and a program's ---- *)
+
+  fun idsOf (ms : module_ list) = List.foldl (fn ({id, ...} : module_, m) => M.insert (m, id, ())) M.empty ms
+  fun isLibrary (m : module_) = #library m
+
+  (* the library's part, whose instances are those of every module but the
+     program's, `others` *)
+  fun libraryWith ({modules : module_ list, infer, evidence, derived, prelude, entity, runtime, leaves}, others) : library =
+    let
+      val () = C.reset ()
+      val () = leafKeys := M.empty
+      val () = tyconCons := M.empty
+      val () = defaults := M.empty
+      val () = missing := []
+      val own = List.filter isLibrary modules
+      val ids = idsOf own
+      val () = V.start {infer = infer, evidence = evidence, prelude = prelude, library = fn id => M.member (ids, id),
+                        entity = entity}
+      val () = List.app C.declare runtime
+      val (types, values) =
+        part {first = true, modules = own, derived = derived, leaves = leaves, entity = entity, main = NONE,
+              ownsInstance = fn h => not (M.member (others, h))}
+    in
+      {state = saveState (), types = types, values = List.map (fn (x, t, mk) => (x, t, once mk)) values}
+    end
+
+  fun library args = libraryWith (args, M.empty)
+
+  fun prepare (lib : library) =
+    (restoreState (#state lib);
+     List.app (fn (_, _, mk) => ignore (mk ()) handle _ => ()) (#values lib);
+     restoreState (#state lib))
+
+  fun programOn (lib : library, {modules : module_ list, infer, evidence, derived, prelude, entity, main}) =
+    let
+      val () = restoreState (#state lib)
+      val libraryIds = idsOf (List.filter isLibrary modules)
+      val () = V.continue {infer = infer, evidence = evidence, prelude = prelude, library = fn id => M.member (libraryIds, id),
+                           entity = entity}
+      val own = List.filter (not o isLibrary) modules
+      val ids = idsOf own
+      val (types, values) =
+        part {first = false, modules = own, derived = derived, leaves = [], entity = entity, main = SOME main,
+              ownsInstance = fn h => M.member (ids, h)}
+      (* ---- The bodies ---- *)
+      val vals = reachable (#values lib @ values)
+    in
+      reachableTypes (#types lib @ types, vals) @ vals
+    end
+
+  fun program {modules : module_ list, infer, evidence, derived, prelude, entity, runtime, leaves, main} =
+    let
+      val lib = libraryWith ({modules = modules, infer = infer, evidence = evidence, derived = derived, prelude = prelude,
+                              entity = entity, runtime = runtime, leaves = leaves},
+                             idsOf (List.filter (not o isLibrary) modules))
+    in
+      programOn (lib, {modules = modules, infer = infer, evidence = evidence, derived = derived, prelude = prelude,
+                       entity = entity, main = main})
     end
 
   fun missingPrimitives () = List.rev (!missing)

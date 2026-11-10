@@ -68,12 +68,52 @@ sig
                  runtime : Core.program, leaves : (string * string list) list, main : string}
                 -> Core.program
 
+  (* ---- The library's part, once ----
+
+     `program` is the library's part and then the program's: the first
+     declares Core's own types, the leaves' values and every type, class,
+     instance and value of the library's modules, and the second those of
+     the program's modules and main, against the first. So a saved world
+     (D45's B) may make the library's part once, with every body, and each
+     program only its own: a value's Core is the same either way, its names
+     numbered from the first within it (HsDsCore.canonical) and a pattern
+     binding of the top level named after its first variable. *)
+
+  (* The library's part: what its declarations left known, its types and
+     its values, each value's body made the first time it is wanted. *)
+  type library
+
+  (* `library {modules, ...}` is the library's part of the modules marked
+     `library`, of a checking whose environment and records are the
+     library's alone (every instance of `infer` is the library's); the
+     arguments are `program`'s. *)
+  val library : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
+                 derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
+                 entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list}
+                -> library
+
+  (* `prepare lib` makes every body of `lib` now, as a saved world keeps
+     them; a body that fails is failed again where a program reaches it. *)
+  val prepare : library -> unit
+
+  (* `programOn (lib, {modules, ...})` is `program` of the modules with the
+     library's part `lib`: the modules not marked `library` desugared
+     against it. `modules`, `infer`, `evidence` and `derived` are the whole
+     checking's, the library's modules among them, as `program` takes
+     them; a value of the library is `lib`'s. *)
+  val programOn : library * {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
+                             derived : (string * string * HsAst.decl list) list,
+                             prelude : string * string -> string option, entity : string * string * string -> string,
+                             main : string}
+                  -> Core.program
+
   (* `translationNames` is each entity the translations name, by its
      space, its module and its name. *)
   val translationNames : (string * string * string) list
 
   (* `missingPrimitives ()` is each primitive of the library that the last
-     `program` found neither in Core nor in the runtime, or of another type.
+     desugaring found neither in Core nor in the runtime, or of another
+     type, as far as the bodies it made.
 
      Each is an error where it is used. *)
   val missingPrimitives : unit -> string list

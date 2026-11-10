@@ -17,6 +17,62 @@ struct
 
   fun fresh base = (counter := !counter + 1; "%" ^ base ^ Int.toString (!counter))
 
+  type saved = {counter : int, tycons : tyconInfo M.map, cons : conInfo_ M.map, values : Core.ty M.map}
+
+  fun save () = {counter = !counter, tycons = !tycons, cons = !cons, values = !values}
+
+  fun restore (s : saved) = (counter := #counter s; tycons := #tycons s; cons := #cons s; values := #values s)
+
+  (* a name made here, `%`, a base and a number, and its base *)
+  fun made x =
+    String.size x > 1 andalso String.sub (x, 0) = #"%" andalso Char.isDigit (String.sub (x, String.size x - 1))
+
+  fun baseOf x =
+    let fun go i = if i > 1 andalso Char.isDigit (String.sub (x, i - 1)) then go (i - 1) else i
+    in String.substring (x, 0, go (String.size x)) end
+
+  (* the names a value binds, numbered again; one it does not bind (of the
+     top level, whose made names hold a `:`, or of the runtime) is kept *)
+  fun canonical e =
+    let
+      val n = ref 0
+      fun bind (m, x) =
+        if made x then (n := !n + 1; let val y = baseOf x ^ Int.toString (!n) in (M.insert (m, x, y), y) end)
+        else (m, x)
+      fun binds (m, xs) =
+        let val (m', ys) = List.foldl (fn (x, (m, acc)) => let val (m', y) = bind (m, x) in (m', y :: acc) end) (m, []) xs
+        in (m', List.rev ys) end
+      fun name m x = getOpt (M.find (m, x), x)
+      fun atom m a = case a of Core.Var x => Core.Var (name m x) | Core.Lit _ => a
+      fun arg m a = case a of Core.ValArg x => Core.ValArg (atom m x) | Core.TyArg _ => a
+      fun binder (b, (m, acc)) =
+        case b of
+          Core.ValBinder (x, t) => let val (m', y) = bind (m, x) in (m', Core.ValBinder (y, t) :: acc) end
+        | Core.TyBinder _ => (m, b :: acc)
+      fun exp m e =
+        case e of
+          Core.Atom a => Core.Atom (atom m a)
+        | Core.App (f, args) => Core.App (exp m f, List.map (arg m) args)
+        | Core.Lam (bs, b) => let val (m', bs') = List.foldl binder (m, []) bs in Core.Lam (List.rev bs', exp m' b) end
+        | Core.Let (x, t, e1, e2) => let val e1' = exp m e1 val (m', y) = bind (m, x) in Core.Let (y, t, e1', exp m' e2) end
+        | Core.LetRec (bs, b) =>
+            let val (m', ys) = binds (m, List.map #1 bs)
+            in Core.LetRec (ListPair.map (fn ((_, t, e), y) => (y, t, exp m' e)) (bs, ys), exp m' b) end
+        | Core.Case (s, x, alts) => let val s' = exp m s val (m', y) = bind (m, x) in Core.Case (s', y, List.map (alt m') alts) end
+        | Core.Con (c, ts, xs) => Core.Con (c, ts, List.map (atom m) xs)
+        | Core.Prim (p, ts, xs) => Core.Prim (p, ts, List.map (atom m) xs)
+        | Core.UTuple xs => Core.UTuple (List.map (atom m) xs)
+        | Core.Cast (b, t) => Core.Cast (exp m b, t)
+      and alt m a =
+        case a of
+          Core.AltCon (c, xs, b) => let val (m', ys) = binds (m, xs) in Core.AltCon (c, ys, exp m' b) end
+        | Core.AltLit (l, b) => Core.AltLit (l, exp m b)
+        | Core.AltUTuple (xs, b) => let val (m', ys) = binds (m, xs) in Core.AltUTuple (ys, exp m' b) end
+        | Core.AltDefault b => Core.AltDefault (exp m b)
+    in
+      exp M.empty e
+    end
+
   fun kindOfParams ps = List.foldr (fn ((_, k), r) => Core.Arrow (k, r)) Core.Star ps
 
   fun declare d =

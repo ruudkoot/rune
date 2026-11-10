@@ -28,6 +28,19 @@ sig
   (* `fresh base` is a new name, `%base` and a number. *)
   val fresh : string -> string
 
+  (* What is known of the declarations, kept: so that a desugaring of the
+     library's modules, made once, is where each program's starts. *)
+  type saved
+
+  (* `save ()` is what is known now; `restore s` makes it what is known. *)
+  val save : unit -> saved
+  val restore : saved -> unit
+
+  (* `canonical e` is `e` with each name made here that it binds numbered
+     again, from 1 in the order they are bound, its base kept: so that a
+     value's Core is the same whatever was made before it. *)
+  val canonical : Core.exp -> Core.exp
+
   (* ---- The declarations ---- *)
 
   (* `declare d` adds the data type, newtype or value `d` to what is known.

@@ -16,6 +16,14 @@ struct
 
   fun start p = (current := SOME p; primTypes := M.empty; builtinCons := M.empty; conFields := M.empty)
 
+  fun continue p = current := SOME p
+
+  type saved = {primTypes : string M.map, builtinCons : string M.map, conFields : string list M.map}
+
+  fun save () = {primTypes = !primTypes, builtinCons = !builtinCons, conFields = !conFields}
+
+  fun restore (s : saved) = (primTypes := #primTypes s; builtinCons := #builtinCons s; conFields := #conFields s)
+
   fun prog () = case !current of SOME p => p | NONE => raise Fail "HsDsEnv: no program"
 
   fun classes () = HsInfer.classes (#infer (prog ()))
