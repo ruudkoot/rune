@@ -14,7 +14,7 @@ friends
   ../../tests/compiler/mid-client.build ../../tests/compiler/mid-client-elab.build ../../tests/compiler/pipeline-client.build
   ../../tests/compiler/witness-tests.build ../../tests/lsp/syntax-tests.build
   ../../tools/compiler/state-audit.build ../../tools/lsp/bench.build ../../tools/lsp/syntax-bench.build
-  ../../tools/migrate/migrate.build
+  ../../tools/migrate/migrate.build ../../tests/hs/units/named.build
 end
 annotate "demand" in
   config.sml
