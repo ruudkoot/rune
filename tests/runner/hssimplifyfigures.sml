@@ -36,7 +36,8 @@ struct
 
   (* a program ready to compile: where, its main file, where it runs, its
      arguments and standard input, and what it must print *)
-  type prog = {dir : string, main : string, runDir : string, args : string list, stdin : string, expected : string}
+  type prog = {dir : string, main : string, runDir : string, fresh : bool, args : string list, stdin : string,
+               expected : string}
 
   fun call (cmd, dir, stdin, out, err, timeout) =
     execProcess false limits (fn e => e) {cmd = cmd, dir = SOME dir, stdin = stdin, stdout = out, stderr = err, timeout = timeout}
@@ -60,13 +61,18 @@ struct
                            timeout = 10} = 0
       val o0out = ref NONE
       val i0out = ref NONE
+      (* where a run runs: with `fresh`, a directory of its own, empty, so
+         that what one way's run writes no other's sees *)
+      fun runIn tag =
+        if #fresh p then let val d = #runDir p ^ "/run." ^ tag in rmTree d; mkdirs d; d end
+        else #runDir p
       (* on Core's interpreter: its output against the program's and iO0's *)
       fun interp (name, flags) =
         let
           fun f x = #dir p ^ "/" ^ name ^ "." ^ x
           (* the interpreter is slow by design: a run past 300 s is not
              compared, its status 124 *)
-          val rs = call ([fromRoot "bin/rhc", #main p] @ flags @ (case #args p of [] => [] | a => "--" :: a), #runDir p, #stdin p,
+          val rs = call ([fromRoot "bin/rhc", #main p] @ flags @ (case #args p of [] => [] | a => "--" :: a), runIn name, #stdin p,
                          f "out", f "err", 300)
           val output = read (f "out")
           val () = if name = "iO0" then i0out := SOME output else ()
@@ -83,7 +89,7 @@ struct
             if cs <> 0 then [name, "no", "-", "-", "-", "-", "-", "-", "-", "-"]
             else
               let
-                val rs = call ([runevm, "--count", rbc] @ #args p, #runDir p, #stdin p, f "out", f "err", 1800)
+                val rs = call ([runevm, "--count", rbc] @ #args p, runIn (name ^ ".count"), #stdin p, f "out", f "err", 1800)
                 val output = read (f "out")
                 val () = if name = "O0" then o0out := SOME output else ()
                 val count = getOpt (lineAfter (f "err", "runevm: count: "), "")
@@ -98,14 +104,15 @@ struct
                       (* no forced collection: the census collects where the
                          stock VM does (docs/census.md) *)
                       val _ = call ([census, "--census-dir", d, "--census-every", "0", "--census-summary", rbc] @ #args p,
-                                    #runDir p, #stdin p,
+                                    runIn (name ^ ".census"), #stdin p,
                                     "/dev/null", f "census.err", 1800)
                       val t = if exists (d ^ "/census.txt") then getOpt (lineAfter (d ^ "/census.txt", "THUNK\t"), "-") else "-"
                     in rmTree d; firstNumber t end
                 val tier2 =
                   if not havePerf then "-"
                   else
-                    let val _ = call (["perf", "stat", "-x", ",", "-e", "instructions:u", runevm, rbc] @ #args p, #runDir p, #stdin p,
+                    let val _ = call (["perf", "stat", "-x", ",", "-e", "instructions:u", runevm, rbc] @ #args p, runIn (name ^ ".perf"),
+                                      #stdin p,
                                       "/dev/null", f "perf", 1800)
                     in case List.find (fn l => String.isSubstring "instructions" l) (lines (read (f "perf"))) of
                          SOME l => (case String.fields (fn c => c = #",") l of n :: _ => n | [] => "-")
@@ -154,7 +161,7 @@ struct
           val stdin = if exists (#base p ^ ".stdin") then fromRoot (#base p ^ ".stdin") else ""
           val expected = if exists (#base p ^ ".expected") then read (fromRoot (#base p ^ ".expected")) else ""
         in
-          measure ("lang", name, {dir = work, main = fromRoot (#src p), runDir = work, args = [], stdin = stdin,
+          measure ("lang", name, {dir = work, main = fromRoot (#src p), runDir = work, fresh = true, args = [], stdin = stdin,
                                   expected = expected}, out, chosen);
           rmTree work
         end
@@ -178,7 +185,8 @@ struct
         val expected = HsSource.universal (read (HsCorpus.tree (HsCorpus.field row "expected")))
         val args = String.tokens Char.isSpace (HsCorpus.field row "args")
       in
-        measure ("corpus", id, {dir = p, main = m, runDir = p, args = args, stdin = stdin, expected = expected}, out, chosen);
+        measure ("corpus", id, {dir = p, main = m, runDir = p, fresh = false, args = args, stdin = stdin, expected = expected},
+                 out, chosen);
         rmTree work
       end)
     handle HsOracles.Failed msg => say ("FAIL hs-simplify-figures " ^ id ^ ": " ^ msg ^ "\n")
@@ -215,7 +223,8 @@ struct
                 val () = HsCorpus.copyTree (up, rd)
                 val stdin = if #stdin r = "" then "" else rd ^ "/" ^ #stdin r
               in
-                measure ("lazy", port, {dir = p, main = m, runDir = rd, args = String.tokens Char.isSpace (#args r), stdin = stdin,
+                measure ("lazy", port, {dir = p, main = m, runDir = rd, fresh = false, args = String.tokens Char.isSpace (#args r),
+                                        stdin = stdin,
                                         expected = read (up ^ "/" ^ #expected r)}, out, chosen);
                 rmTree work
               end
