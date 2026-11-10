@@ -456,6 +456,20 @@
      "spec": "val unresolved : Core.program -> string list",
      "doc": "`unresolved p` is the imports of p that no declaration of p defines,\nin order\n\n",
      "page": "sig/CORE_UNITS.md#val-unresolved"
+    },
+    {
+     "kind": "val",
+     "name": "interface",
+     "spec": "val interface : Core.program * string list -> Core.program",
+     "doc": "`interface (p, exports)` is what a client of the unit p needs of the\nnames it exports, as Core: each type it mentions declared, and each\nvalue imported.\n\nEach exported value is an import at its type, and each exported type\nand every type the exports' types mention, through the types' own\nfields, is declared as p declares it, in p's order; a name p does not\ndeclare is a built-in type's, or another unit's the client has.\n\n",
+     "page": "sig/CORE_UNITS.md#val-interface"
+    },
+    {
+     "kind": "val",
+     "name": "fingerprints",
+     "spec": "val fingerprints : (string -> string) -> Core.program -> (string * string) list",
+     "doc": "`fingerprints hash iface` is each declaration of the interface by its\nname with its fingerprint, which moves where what a client reads of it\nmoves.\n\nA type's is its recursive group's: the hash of the group's\ndeclarations and of the fingerprints of the types outside it that they\nmention, so that a group hashes as one. A value's is the hash of its\ntype and of the fingerprints of the types it mentions. A type no\ndeclaration of the interface gives is its name.\n\n",
+     "page": "sig/CORE_UNITS.md#val-fingerprints"
     }
    ]
   },

@@ -21,4 +21,25 @@ sig
   (* `unresolved p` is the imports of p that no declaration of p defines,
      in order *)
   val unresolved : Core.program -> string list
+
+  (* `interface (p, exports)` is what a client of the unit p needs of the
+     names it exports, as Core: each type it mentions declared, and each
+     value imported.
+
+     Each exported value is an import at its type, and each exported type
+     and every type the exports' types mention, through the types' own
+     fields, is declared as p declares it, in p's order; a name p does not
+     declare is a built-in type's, or another unit's the client has. *)
+  val interface : Core.program * string list -> Core.program
+
+  (* `fingerprints hash iface` is each declaration of the interface by its
+     name with its fingerprint, which moves where what a client reads of it
+     moves.
+
+     A type's is its recursive group's: the hash of the group's
+     declarations and of the fingerprints of the types outside it that they
+     mention, so that a group hashes as one. A value's is the hash of its
+     type and of the fingerprints of the types it mentions. A type no
+     declaration of the interface gives is its name. *)
+  val fingerprints : (string -> string) -> Core.program -> (string * string) list
 end

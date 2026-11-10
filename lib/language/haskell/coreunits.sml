@@ -39,6 +39,116 @@ struct
             end
     in List.rev (#2 (List.foldl keep (CoreMap.empty, []) all)) end
 
+  (* the type constructors a type mentions *)
+  fun tyCons (t : ty, acc : string list) : string list =
+    case t of
+      TVar _ => acc
+    | TCon c => c :: acc
+    | TApp (a, b) => tyCons (a, tyCons (b, acc))
+    | TFun (a, b) => tyCons (a, tyCons (b, acc))
+    | TForall (_, _, b) => tyCons (b, acc)
+    | TEval a => tyCons (a, acc)
+    | TUTuple ts => List.foldl tyCons acc ts
+
+  (* the types a declaration mentions, and its name *)
+  fun mentions (d : decl) : string list =
+    case d of
+      Data (_, _, cons) => List.foldl (fn ((_, fs), acc) => List.foldl tyCons acc fs) [] cons
+    | Newtype (_, _, _, f) => tyCons (f, [])
+    | Val (_, t, _) => tyCons (t, [])
+    | Import (_, t) => tyCons (t, [])
+  fun nameOf (d : decl) : string =
+    case d of Data (t, _, _) => t | Newtype (t, _, _, _) => t | Val (x, _, _) => x | Import (x, _) => x
+  fun isType (d : decl) : bool = case d of Data _ => true | Newtype _ => true | _ => false
+
+  fun member (x : string, xs : string list) = List.exists (fn y => y = x) xs
+  fun distinct (xs : string list) : string list =
+    List.rev (List.foldl (fn (x, acc) => if member (x, acc) then acc else x :: acc) [] xs)
+  fun insertSorted (x : string, []) = [x]
+    | insertSorted (x, y :: ys) = if x <= y then x :: y :: ys else y :: insertSorted (x, ys)
+  fun sort (xs : string list) : string list = List.foldl insertSorted [] xs
+
+  fun interface (p : program, exports : string list) : program =
+    let
+      val types = List.foldl (fn (d, m) => if isType d then CoreMap.insert (m, nameOf d, d) else m) CoreMap.empty p
+      val values = List.filter (fn d => case d of Val (x, _, _) => member (x, exports) | Import (x, _) => member (x, exports)
+                                                | _ => false) p
+      fun reach ([], seen) = seen
+        | reach (t :: rest, seen) =
+            if member (t, seen) then reach (rest, seen)
+            else case CoreMap.find (types, t) of
+                   SOME d => reach (mentions d @ rest, t :: seen)
+                 | NONE => reach (rest, seen)
+      val roots = List.filter (fn x => CoreMap.member (types, x)) exports @ List.concat (List.map mentions values)
+      val reached = reach (roots, [])
+    in
+      List.filter (fn d => isType d andalso member (nameOf d, reached)) p
+      @ List.map (fn Val (x, t, _) => Import (x, t) | d => d) values
+    end
+
+  fun fingerprints (hash : string -> string) (iface : program) : (string * string) list =
+    let
+      val typeDecls = List.filter isType iface
+      val types = List.foldl (fn (d, m) => CoreMap.insert (m, nameOf d, d)) CoreMap.empty typeDecls
+      fun edges t = case CoreMap.find (types, t) of SOME d => List.filter (fn u => CoreMap.member (types, u)) (distinct (mentions d))
+                                                  | NONE => []
+      (* the recursive groups of the types (Tarjan), each after the groups it
+         mentions *)
+      val index = ref (CoreMap.empty : int CoreMap.map)
+      val low = ref (CoreMap.empty : int CoreMap.map)
+      val onStack = ref (CoreMap.empty : bool CoreMap.map)
+      fun isOnStack w = CoreMap.find (!onStack, w) = SOME true
+      val stack = ref ([] : string list)
+      val counter = ref 0
+      val groups = ref ([] : string list list)
+      fun lowOf v = valOf (CoreMap.find (!low, v))
+      fun setLow (v, n) = low := CoreMap.insert (!low, v, n)
+      fun visit v =
+        let
+          val () = (index := CoreMap.insert (!index, v, !counter); setLow (v, !counter); counter := !counter + 1;
+                    stack := v :: !stack; onStack := CoreMap.insert (!onStack, v, true))
+          val () =
+            List.app (fn w =>
+                        case CoreMap.find (!index, w) of
+                          NONE => (visit w; setLow (v, Int.min (lowOf v, lowOf w)))
+                        | SOME i => if isOnStack w then setLow (v, Int.min (lowOf v, i)) else ())
+                     (edges v)
+        in
+          if lowOf v = valOf (CoreMap.find (!index, v)) then
+            let
+              fun pop acc =
+                case !stack of
+                  w :: rest => (stack := rest; onStack := CoreMap.insert (!onStack, w, false);
+                                if w = v then w :: acc else pop (w :: acc))
+                | [] => acc
+            in groups := pop [] :: !groups end
+          else ()
+        end
+      val () = List.app (fn d => if CoreMap.member (!index, nameOf d) then () else visit (nameOf d)) typeDecls
+      (* Tarjan gives a group after every group it reaches *)
+      val ordered = List.rev (!groups)
+      val prints = ref (CoreMap.empty : string CoreMap.map)
+      fun printOf t = case CoreMap.find (!prints, t) of SOME f => f | NONE => t
+      fun outside (names : string list, ms : string list) : string =
+        String.concatWith "\000" (List.map (fn u => u ^ "=" ^ printOf u)
+                                           (sort (List.filter (fn u => not (member (u, names))) (distinct ms))))
+      val () =
+        List.app (fn g =>
+                    let
+                      val ds = List.map (fn t => valOf (CoreMap.find (types, t))) g
+                      val text = String.concat (sort (List.map declText ds))
+                      val f = hash ("type\000" ^ text ^ "\000" ^ outside (g, List.concat (List.map mentions ds)))
+                    in List.app (fn t => prints := CoreMap.insert (!prints, t, f)) g end)
+                 ordered
+    in
+      List.map (fn d =>
+                  if isType d then (nameOf d, printOf (nameOf d))
+                  else
+                    let val t = case d of Val (_, t, _) => t | Import (_, t) => t | _ => raise Fail "CoreUnits: a type"
+                    in (nameOf d, hash ("value\000" ^ CoreText.showTy t ^ "\000" ^ outside ([], tyCons (t, [])))) end)
+               iface
+    end
+
   fun unresolved (p : program) : string list =
     let val defined = List.foldl (fn (Val (x, _, _), m) => CoreMap.insert (m, x, ()) | (_, m) => m) CoreMap.empty p
     in List.mapPartial (fn Import (x, _) => if CoreMap.member (defined, x) then NONE else SOME x | _ => NONE) p end

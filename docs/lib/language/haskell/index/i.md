@@ -25,6 +25,7 @@
 - `instantiate` (val): [HS_TYPES](../sig/HS_TYPES.md#val-instantiate)
 - `Int` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-int)
 - `INTEGER` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-integer)
+- `interface` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-interface)
 - `IOError` (exn): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#exn-ioerror)
 - `isEval` (val): [CORE](../sig/CORE.md#val-iseval)
 - `isIdent` (val): [HS_CHAR](../sig/HS_CHAR.md#val-isident)
