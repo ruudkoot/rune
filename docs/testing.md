@@ -659,6 +659,20 @@ entity; a cycle of three signed modules; a dotted module name. And
 fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
 
+**rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
+Report's 20 modules in its own layout, its errata and rhc's overlay applied,
+with the Report's code as printed in `pristine/`; D36, D37, D38).
+`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report
+while no compiler runs it: `overlay`, each module's tokens against
+`pristine/`'s, a line at a time, white space and comments dropped, every
+line where they differ an entry of `overlay.tsv` marked applied, and every
+file the Report has no text of an entry's `new:`; `pristine`, the printed
+code byte for byte as `pristine/MANIFEST.tsv` records it; and `report`,
+`bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
+Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
+instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
+each with its entry.
+
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
 with rhc in Rune's place: a mutant is exact edits of a file of `rhc.plan`,
@@ -688,8 +702,34 @@ again by layout (`hs/meta/layout`), and the program with `import Char ()`
 added (`hs/meta/import`, 5.3.1); and the pairs written by hand in
 `tests/hs/meta`, `NAME.hs` and `NAME.pair.hs`, the relation first in NAME:
 `rename` (bound variables renamed, 3.3, 3.12) and `reorder` (declarations
-reordered, 4.5.1 and the top level). A pair is held while its program's
-rows, or the rows its relation cites, are `Planned`.
+reordered, 4.5.1 and the top level). Two more are made from each program:
+`hs/meta/reorder`, its top-level blocks (runs of lines between blank ones) in
+the reverse order, and `hs/meta/split`, the program split into a module
+`Lib` holding every block but `main`'s and a `Main` that imports it (5, the
+multi-module form of a joined program; none is made where a `default`
+declaration or a name qualified by `Main` would change the program). A pair
+is held while its program's rows, or the rows its relation cites, are
+`Planned`; what runs today is rhc's names on both programs of the two new
+relations, on an even sample of 30 (`hs/meta/names/*`): as many scope errors
+in the program's own modules, and Main's exports, fixities and instances the
+same (a split's moved to `Lib`). Renaming bound variables mechanically waits
+for a dump of rhc's binding sites; the `rename` pairs are by hand.
+
+**rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
+`hs/interp-vm/NAME`). Each run program of `tests/hs/lang` through rhc to
+Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
+Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
+`.stdin`: the VM prints what the interpreter printed and ends as it did, every
+bottom one bottom. A program the interpreter alone can run says so on a line
+`-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
+program's rows are `Planned`; M15's done-when and G1 rest on it.
+
+**rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
+FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
+path as its last argument, exits 0: delta debugging over the top-level
+blocks, the header kept, then over the lines, every candidate a whole file.
+It writes FILE.reduced. `hs/reduce/@self` reduces 64 lines to the one
+declaration that a predicate on rhc's parser and a marker wants.
 
 **Bottom probes** (D55; the roadmap's *Bottom probes*). Run programs of
 `tests/hs/lang` named `ROW_probeN`: a marker printed, then a term that
