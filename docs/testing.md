@@ -712,6 +712,26 @@ bottom one bottom. A program the interpreter alone can run says so on a line
 `-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
 program's rows are `Planned`; M15's done-when and G1 rest on it.
 
+**rhc's desugaring** (`tests/runner/hsdesugar.sml`, `hs/desugar/*`; the
+roadmap's M15, D34). Each program of `tests/hs/desugar` through rhc to
+Core, read back at `--lint=3`, and run on Core's interpreter with its
+matches in the Report's order (`hs/desugar/report/NAME`) and as decision
+trees in Sestoft's order (`hs/desugar/sestoft/NAME`, `--match=sestoft`),
+each printing `NAME.expected` and ending with `NAME.exitcode`, 0 where there
+is none; compiled through Mid and run on the VM the same
+(`hs/desugar/vm/NAME`); and printed with explicit braces (`rhc --print`),
+which desugars to the same Core text (`hs/desugar/braces/NAME`, `rhc
+--desugar-only --dump-after=desugar`). Each pair `relations/NAME.hs` and
+`NAME.parens.hs`, the program with every application of an operator in
+parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`). Over
+the run programs of `tests/hs/lang` the two orders agree on what they print
+and on a value or a bottom (`hs/desugar/orders/NAME`), held while the
+program's rows are `Planned`. The programs avoid what M14's deriving and
+the runtime's arrays are still to give, and their expected output is GHC's.
+The seeds for desugaring (clause order reversed, `~` made strict, a
+`newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
+that `report/order`, `report/lazy` and `report/newtype` catch.
+
 **rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
 FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
 path as its last argument, exits 0: delta debugging over the top-level
