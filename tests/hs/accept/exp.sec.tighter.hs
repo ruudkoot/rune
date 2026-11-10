@@ -1,3 +1,4 @@
+-- rows: R67
 -- Report 3.5: a section's operand may hold operators that bind tighter: (a * b +) and (+ a * b).
 module Main (main) where
 

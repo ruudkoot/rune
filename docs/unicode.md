@@ -410,6 +410,7 @@ compiler is built with.
 | [UAX #9](https://www.unicode.org/reports/tr9/), Unicode Bidirectional Algorithm | which characters are the explicit bidi controls | the lexer, the REPL's printer, diagnostics |
 | [UAX #29](https://www.unicode.org/reports/tr29/), Unicode Text Segmentation | grapheme clusters; tested on `GraphemeBreakTest.txt` | `Grapheme`, diagnostics' excerpts |
 | [UAX #11](https://www.unicode.org/reports/tr11/), East Asian Width | how many columns a character takes | `DisplayWidth`, diagnostics' carets |
+| [UAX #44](https://www.unicode.org/reports/tr44/), Unicode Character Database | the general category and the simple case mappings; tested on all of `UnicodeData.txt` | `CodePoint`, which the compiler does not use: `WideChar`'s classes are ASCII's |
 | [Unicode Character Encoding Stability Policies](https://www.unicode.org/policies/stability_policy.html) | identifiers and normalisation do not change; the security data may | why names follow XID and NFC as rules, and UTS #39 as warnings |
 
 And for the threats: Nicholas Boucher and Ross Anderson, ["Trojan Source:

@@ -317,6 +317,10 @@ struct
   fun openLayout (t : Ty.ty) : bool =
     case Ty.view t of Ty.Con (stamp, _, _) => Ty.isOpen stamp | _ => false
 
+  (* the largest type, in nodes as a tree (Ty.size), that = has a function
+     of its own at *)
+  val eqBound = 256
+
   fun eqKindOf (t : Ty.ty) : eqKind =
     case eqByType (t, []) of
       SOME p => EqPrim p
@@ -324,7 +328,11 @@ struct
         (case Ty.view t of
            Ty.Tuple [] => EqTrue
          | Ty.Tuple ts => EqTuple ts
-         | _ => if groundTy t andalso isSome (consAt t) andalso not (openLayout t) then EqFun else EqPrim "poly_eq")
+         (* a function of = for each type: past eqBound, the runtime's walk,
+            since a datatype whose constructors name it at a bigger type
+            (a non-uniform one) gives a type at each level, without end *)
+         | _ => if groundTy t andalso Ty.size t <= eqBound andalso isSome (consAt t) andalso not (openLayout t) then EqFun
+                else EqPrim "poly_eq")
 
   fun eqTy t = Ty.arrow (Ty.tuple [t, t], Ty.bool)
 
@@ -835,11 +843,15 @@ struct
              given (i + 1, rest))
       fun rhs r =
         case r of
-          App (Global (g, _), args) =>
+          App (Global (g, ts), args) =>
             if g <> #name f then ()
             else
               (self := true;
-               if List.length args <> n then Array.modify (fn _ => false) static else given (0, args))
+               (* a call of itself at other types (polymorphic recursion,
+                  which Mid may have and SML does not make) has no copy
+                  that closes: no parameter of it is static *)
+               if List.length args <> n orelse not (ListPair.allEq Ty.equal (ts, List.map Ty.gen (#tyvars f)))
+               then Array.modify (fn _ => false) static else given (0, args))
         | _ => ()
       val () = appRhs rhs (#body f)
     in
@@ -1074,7 +1086,9 @@ struct
          its argument, where its function takes the fields *)
       fun call (r, k : rhs -> exp) =
         case r of
-          App (Global (g, _), args) => k (if g = name then App (Global (h', []), dropFixed (fixed, args) @ extraArgs) else r)
+          App (Global (g, ts'), args) =>
+            k (if g = name andalso ListPair.allEq Ty.equal (ts', ts)
+               then App (Global (h', []), dropFixed (fixed, args) @ extraArgs) else r)
         | App (Var (p, _), args) =>
             (case closureOf p of
                SOME (_, g, ys, NONE) => k (App (Global (g, []), List.map (fn (y, _) => Var (y, [])) ys @ args))

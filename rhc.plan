@@ -1,15 +1,5 @@
 rune-plan 1
 basis demand
-library language/haskell lib/language/haskell
-  form header
-  export signature CORE
-  export structure Core
-  friend ../../../rhc.build
-  use lib/language/haskell/core.build
-    unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
-    unit language/haskell:core.sml lib/language/haskell/core.sml ascii demand
-  end
-end
 library unicode lib/unicode
   form open
   unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii demand
@@ -29,6 +19,62 @@ library unicode lib/unicode
   unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
   unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
   unit unicode:security.sml lib/unicode/security.sml ascii demand
+  unit unicode:code_point_data.sml lib/unicode/code_point_data.sml ascii demand
+  unit unicode:code_point_sig.sml lib/unicode/code_point_sig.sml ascii demand
+  unit unicode:code_point.sml lib/unicode/code_point.sml ascii demand
+end
+library language/haskell lib/language/haskell
+  form header
+  requires unicode
+  export signature CORE
+  export signature HS_AST
+  export signature HS_CHAR
+  export signature HS_DUMP
+  export signature HS_LAYOUT
+  export signature HS_LEXER
+  export signature HS_LITERATE
+  export signature HS_PARSER
+  export signature HS_PRINT
+  export signature HS_SOURCE
+  export signature HS_TOKEN
+  export structure Core
+  export structure HsAst
+  export structure HsChar
+  export structure HsDump
+  export structure HsLayout
+  export structure HsLexer
+  export structure HsLiterate
+  export structure HsParser
+  export structure HsPrint
+  export structure HsSource
+  export structure HsToken
+  friend ../../../rhc.build
+  use lib/language/haskell/syntax.build
+    unit language/haskell:source_sig.sml lib/language/haskell/source_sig.sml ascii demand
+    unit language/haskell:source.sml lib/language/haskell/source.sml ascii demand
+    unit language/haskell:char_sig.sml lib/language/haskell/char_sig.sml ascii demand
+    unit language/haskell:char.sml lib/language/haskell/char.sml ascii demand
+    unit language/haskell:token_sig.sml lib/language/haskell/token_sig.sml ascii demand
+    unit language/haskell:token.sml lib/language/haskell/token.sml ascii demand
+    unit language/haskell:literate_sig.sml lib/language/haskell/literate_sig.sml ascii demand
+    unit language/haskell:literate.sml lib/language/haskell/literate.sml ascii demand
+    unit language/haskell:lexer_sig.sml lib/language/haskell/lexer_sig.sml ascii demand
+    unit language/haskell:lexer.sml lib/language/haskell/lexer.sml ascii demand
+    unit language/haskell:layout_sig.sml lib/language/haskell/layout_sig.sml ascii demand
+    unit language/haskell:layout.sml lib/language/haskell/layout.sml ascii demand
+    unit language/haskell:ast_sig.sml lib/language/haskell/ast_sig.sml ascii demand
+    unit language/haskell:ast.sml lib/language/haskell/ast.sml ascii demand
+    unit language/haskell:parser_sig.sml lib/language/haskell/parser_sig.sml ascii demand
+    unit language/haskell:parser.sml lib/language/haskell/parser.sml ascii demand
+    unit language/haskell:print_sig.sml lib/language/haskell/print_sig.sml ascii demand
+    unit language/haskell:print.sml lib/language/haskell/print.sml ascii demand
+    unit language/haskell:dump_sig.sml lib/language/haskell/dump_sig.sml ascii demand
+    unit language/haskell:dump.sml lib/language/haskell/dump.sml ascii demand
+  end
+  use lib/language/haskell/core.build
+    unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
+    unit language/haskell:core.sml lib/language/haskell/core.sml ascii demand
+  end
 end
 library json lib/json
   form header
@@ -99,15 +145,17 @@ program
     unit compiler:driver/midpipeline.sml lib/compiler/driver/midpipeline.sml ascii
   end
   unit src/rhc/options.sml src/rhc/options.sml ascii
+  unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
   unit src/rhc/main.sml src/rhc/main.sml ascii
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build 5f0b7bec2f7311829fc9b899a53cdc9452678fbf3f5bba0b07c08c00431f3c6c
+  input rhc.build a1df80b66039bc3637a73b823db2b7b52dd971bf05c7a7acf99eaa9c2c7607ed
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
-  input lib/language/haskell/library.build 67e0babfa47cb282c241231c4f536d88363323cc408ee5b1f3c8de239be35f9e
+  input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
+  input lib/language/haskell/library.build 74faf82a11f11c8970b8921d15978c7b374275f1c3dce68dba320ac13987ed08
+  input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/core.build 3455d71efcb4494bdd21f81dc8c29d79b640ddb223231ac3cbe92c73b4de2b67
-  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

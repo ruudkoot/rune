@@ -1,3 +1,4 @@
+-- rows: R67
 -- Report 3.5: "(a+b+) is valid", as + is left associative (the Report's example).
 module Main (main) where
 

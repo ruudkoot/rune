@@ -6,13 +6,14 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
+| [`CODE_POINT`](sig/CODE_POINT.md) | 10 | 10 | 100% | 7 | 7 |
 | [`DISPLAY_WIDTH`](sig/DISPLAY_WIDTH.md) | 4 | 4 | 100% | 3 | 3 |
 | [`GRAPHEME`](sig/GRAPHEME.md) | 6 | 6 | 100% | 4 | 4 |
 | [`IDENTIFIER`](sig/IDENTIFIER.md) | 9 | 9 | 100% | 7 | 7 |
 | [`NORMALIZE`](sig/NORMALIZE.md) | 11 | 11 | 100% | 9 | 9 |
 | [`UNICODE_SECURITY`](sig/UNICODE_SECURITY.md) | 12 | 12 | 100% | 8 | 8 |
 | [`UTF8`](sig/UTF8.md) | 10 | 10 | 100% | 9 | 9 |
-| **all** | 52 | 52 | 100% | 40 | 40 |
+| **all** | 62 | 62 | 100% | 47 | 47 |
 
 ## Members a signature describes
 
@@ -21,10 +22,11 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-11 structures have a page, with 101 members, of which 52 (51%) are described by a signature.
+13 structures have a page, with 121 members, of which 62 (51%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
+| [`UnicodeCodePointData`](str/UnicodeCodePointData.md) | 10 | 0 | 0% |
 | [`UnicodeGraphemeData`](str/UnicodeGraphemeData.md) | 6 | 0 | 0% |
 | [`UnicodeIdentifierData`](str/UnicodeIdentifierData.md) | 12 | 0 | 0% |
 | [`UnicodeNormalizeData`](str/UnicodeNormalizeData.md) | 13 | 0 | 0% |
@@ -34,12 +36,12 @@ is one a program can name and nothing explains: it is a name beyond the signatur
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 48 of them, in [`DISPLAY_WIDTH`](sig/DISPLAY_WIDTH.md) (4), [`GRAPHEME`](sig/GRAPHEME.md) (6), [`IDENTIFIER`](sig/IDENTIFIER.md) (9), [`NORMALIZE`](sig/NORMALIZE.md) (8), [`UNICODE_SECURITY`](sig/UNICODE_SECURITY.md) (11), [`UTF8`](sig/UTF8.md) (10).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 62 of them, 1 of them counterexamples, in [`CODE_POINT`](sig/CODE_POINT.md) (14), [`DISPLAY_WIDTH`](sig/DISPLAY_WIDTH.md) (4), [`GRAPHEME`](sig/GRAPHEME.md) (6), [`IDENTIFIER`](sig/IDENTIFIER.md) (9), [`NORMALIZE`](sig/NORMALIZE.md) (8), [`UNICODE_SECURITY`](sig/UNICODE_SECURITY.md) (11), [`UTF8`](sig/UTF8.md) (10).
 
 ## Laws that are run
 
 Every law is elaborated when these pages are made, with its variables typed and given an arbitrary
-to draw them from, and `make test-laws` holds it at every structure that implements its signature: 5 of them, in [`NORMALIZE`](sig/NORMALIZE.md) (3), [`UTF8`](sig/UTF8.md) (2).
+to draw them from, and `make test-laws` holds it at every structure that implements its signature: 8 of them, in [`CODE_POINT`](sig/CODE_POINT.md) (3), [`NORMALIZE`](sig/NORMALIZE.md) (3), [`UTF8`](sig/UTF8.md) (2).
 
 ---
 

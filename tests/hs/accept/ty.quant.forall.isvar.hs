@@ -1,3 +1,4 @@
+-- rows: R66
 -- Report 4.1.2: forall is no reserved word, so in a type it is a type variable.
 module Main (main) where
 
