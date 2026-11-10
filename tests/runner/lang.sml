@@ -209,6 +209,8 @@ struct
        and run, of those refused, and of those only checked, if it has one;
      - `suffixes`, `mains`: what a program's file ends with, and the main
        modules a directory may have to be a program (`programsOf`);
+     - `compilers`, `errorCompilers`: who compiles the programs, and who
+       the refused ones;
      - `out`: where a compiler's bytecode goes, as the shell names it;
        `scratch`: where, under the run's directory, the other files go;
      - `writer`, `writerWay`: the compiler and the way whose output
@@ -220,7 +222,8 @@ struct
        which programs bin/rune-suite selects *)
   type suite =
     {group : string, lang : string, errors : string, accept : string option,
-     suffixes : string list, mains : string list, compilers : compiler list, ways : way list,
+     suffixes : string list, mains : string list, compilers : compiler list, errorCompilers : compiler list,
+     ways : way list,
      out : string -> string, scratch : string, writer : string, writerWay : string,
      typecheck : string option, stackDone : bool, covers : string list,
      compileTags : string list, errorTags : compiler -> string list, typecheckTags : string list,
@@ -410,7 +413,7 @@ struct
                                                              case selectedSkip (#name p) of
                                                                SOME row => Test.pending (Expectations.describe row) (error s (name,command) p)
                                                              | NONE => error s (name,command) p) errorPrograms))))
-                      (#compilers s)
+                      (#errorCompilers s)
              @ typecheckTests false errorPrograms),
           Test.describe "lang"
             (List.map (fn w => #wayNeeds s w (#needs s (#compiler w) (tagged (#wayTags s w @ covers)
@@ -428,7 +431,7 @@ struct
   (* Rune's programs: tests/lang and tests/errors *)
   val rune : suite =
     {group = "", lang = "tests/lang", errors = "tests/errors", accept = NONE,
-     suffixes = [".sml"], mains = [], compilers = compilers, ways = ways,
+     suffixes = [".sml"], mains = [], compilers = compilers, errorCompilers = compilers, ways = ways,
      out = rbcDir, scratch = "", writer = stackCompiler, writerWay = "test",
      typecheck = SOME "bin/rune --typecheck-only", stackDone = true, covers = covers,
      compileTags = ["check"], errorTags = errorTags, typecheckTags = ["check", "test"],

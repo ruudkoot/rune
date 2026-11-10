@@ -127,6 +127,7 @@ struct
         hint="install jupyter_client and pyzmq for python3 (Ubuntu: python3-jupyter-client python3-zmq)"}]
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities @ TerminalJobs.capabilities
     @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
+    @ HsLang.capabilities
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -172,7 +173,7 @@ struct
   val broadInputs = ["src/*", "lib/compiler/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
   val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree ()]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree, HsRoundTrip.tree]) broadInputs
 
   fun requirements () =
     let val rows = Test.leaves tests
@@ -240,6 +241,12 @@ val () =
         SOME f => f ()
       | NONE =>
       case Oracles.command args of
+        SOME f => f ()
+      | NONE =>
+      case HsLang.command args of
+        SOME f => f ()
+      | NONE =>
+      case HsRoundTrip.command args of
         SOME f => f ()
       | NONE =>
           case Tools.command args of
