@@ -435,6 +435,11 @@ enum Prim {
   PRIM_intinf_is_small = 429,
   PRIM_intinf_parts = 430,
   PRIM_intinf_make = 431,
+  PRIM_thunk_make = 432,
+  PRIM_thunk_force = 433,
+  PRIM_thunk_blackhole = 434,
+  PRIM_thunk_self_update = 435,
+  PRIM_any_check = 436,
   PRIM__COUNT
 };
 
@@ -871,6 +876,11 @@ static const char *const prim_names[] = {
   "intinf_is_small",
   "intinf_parts",
   "intinf_make",
+  "thunk_make",
+  "thunk_force",
+  "thunk_blackhole",
+  "thunk_self_update",
+  "any_check",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1306,6 +1316,11 @@ static const unsigned char prim_arity[] = {
   1,
   1,
   2,
+  1,
+  1,
+  1,
+  1,
+  1,
 };
 
 /* what each primitive's result is (the representations of
@@ -1744,6 +1759,11 @@ static const unsigned char prim_result[] = {
   5,
   0,
   0,
+  0,
+  0,
+  8,
+  8,
+  0,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -2178,6 +2198,11 @@ static const unsigned char prim_result[] = {
   X(intinf_to_int) \
   X(intinf_is_small) \
   X(intinf_parts) \
-  X(intinf_make)
+  X(intinf_make) \
+  X(thunk_make) \
+  X(thunk_force) \
+  X(thunk_blackhole) \
+  X(thunk_self_update) \
+  X(any_check)
 
 #endif

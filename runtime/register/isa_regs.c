@@ -90,7 +90,10 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
             bad = !operand_ok(p, fi, RK_REGISTER, read_i32(at + 1 + 4 * (rop_nfixed[op] + i)));
         if (bad) { free(starts); snprintf(err, errlen, "bad register for %s at %u", rop_names[op], pc); return NULL; }
         if ((op == ROP_PRIM || op == ROP_PRIMPUSH) && n > p->funcs[fi].maxstack) p->funcs[fi].maxstack = n;
-        if (op == ROP_ENV || op == ROP_SELF) p->funcs[fi].reads_closure = 1;
+        /* what reads the frame's closure (ReadsClosure, src/isa/regs.sml):
+           its captures, itself, or the suspension a suspension's code makes
+           under evaluation and updates */
+        if (op == ROP_ENV || op == ROP_SELF || op == ROP_BLACKHOLE || op == ROP_UPDATE) p->funcs[fi].reads_closure = 1;
         starts[pc - base] = 1;
         pc += len;
     }

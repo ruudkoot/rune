@@ -35,9 +35,12 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
-  fun remat (oper : L.operation) : bool =
+  (* Whether an operation is made again where its value is used, rather
+     than kept: but a captured value in a suspension's code, which reads
+     them at its entry, before it goes under evaluation (Low.hoistEnv) *)
+  fun remat (suspension : bool) (oper : L.operation) : bool =
     case oper of
-      L.Const _ => true | L.Unit => true | L.Con0 _ => true | L.Global _ => true | L.Env _ => true | L.Self => true
+      L.Const _ => true | L.Unit => true | L.Con0 _ => true | L.Global _ => true | L.Env _ => not suspension | L.Self => true
     | _ => false
 
   (* Whether an operation leaves a value on the stack. *)
@@ -45,10 +48,13 @@ struct
     case oper of
       L.SetGlobal _ => false
     | L.SetEnv _ => false
+    | L.Prim ("thunk_blackhole", _) => false
+    | L.Prim ("thunk_self_update", _) => false
     | _ => true
 
   fun func (f : L.func) : C.func =
     let
+      val remat = remat (L.suspensionCode f)
       val blocks = Vector.fromList (#blocks f)
       val nblocks = Vector.length blocks
       val nv = Int.max (#nvars f, 1)
@@ -247,6 +253,17 @@ struct
         | L.Self => op' (Opcodes.SELF, [])
         | L.Call (f, a) => (load f; load a; op' (Opcodes.CALL, []))
         | L.CallK (fid, vs) => (List.app load vs; op' (Opcodes.CALLK, [fid, List.length vs]))
+        (* a suspension's (docs/ir.md, Suspensions): a force is FORCE, and
+           where the value is an unevaluated suspension UNIT and ENTER; the
+           code of one says BLACKHOLE, of no operand (Lower), and UPDATE *)
+        | L.Prim ("thunk_force", [v]) =>
+            let val l = C.newLabel ()
+            in
+              load v; restore p; emit (C.OpLab (Opcodes.FORCE, l)); op' (Opcodes.UNIT, []); op' (Opcodes.ENTER, []);
+              emit (C.Lab l)
+            end
+        | L.Prim ("thunk_blackhole", _) => op' (Opcodes.BLACKHOLE, [])
+        | L.Prim ("thunk_self_update", [v]) => (load v; op' (Opcodes.UPDATE, []))
         | L.Prim (p, vs) => (List.app load vs; op' (Opcodes.PRIM, [C.primIdx p]))
         | L.Tuple vs => (List.app load vs; op' (Opcodes.TUPLE, [List.length vs]))
         | L.Select (i, v) => (load v; op' (Opcodes.SELECT, [i]))

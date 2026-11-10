@@ -65,15 +65,25 @@ enum ObjKind {
     K_BYTES,      /* an array of bytes: len bytes, laid out as a string's and as C has them; it can be written, and its
                      identity is the address (Word8Array, CharArray; heap-layout M8) */
     K_REALS,      /* reals side by side: len doubles, raw, as C has an array of them (RealArray, RealVector) */
-    /* Reserved for a lazy front end (docs/plans/heap-layout.md, *A lazy front
-       end*): a suspension, and what it becomes once it has its value. No
-       program of SML makes one, and the collector, the images and the
-       loader take a kind past K_LAST for a corrupt heap. */
+    /* A suspension of a lazy front end (docs/plans/language/haskell98.md,
+       D11): a flat closure of a function of one argument, field 0 the
+       function's index and the others what it captured, which ENTER enters
+       as CALL enters a K_CLOSURE; its contag is its state (THUNK_*, below).
+       No program of SML makes one: thunk_make makes it of a fresh closure. */
     K_THUNK,
+    /* What a suspension becomes once it has its value, in place
+       (obj_become_ind): field 0 is the value, the others are dead. The
+       collector gives a field that points to one what it holds. */
     K_IND
 };
-#define K_LAST K_REALS   /* the last kind an object has today */
+#define K_LAST K_IND   /* the last kind an object has */
 _Static_assert(K_IND < 16, "a kind fits four bits, which is what the header keeps for it (D4 A)");
+/* A K_THUNK's state, in its contag: unevaluated, or under evaluation once
+   its code has said BLACKHOLE, having read what it captured first. Under
+   evaluation the collector follows none of its fields, which is how the
+   captures of a thunk that runs are let go (D12), and a second ENTER is a
+   loop. */
+enum { THUNK_UNEVALUATED = 0, THUNK_BLACKHOLE = 1 };
 
 struct Obj {
     uint8_t kind;
@@ -315,28 +325,50 @@ static inline void obj_set_field(struct VM *vm, Obj *o, uint32_t i, Value v) {
     gc_barrier(vm, o, f, v);
     *f = v;
 }
-/* An object becomes an indirection to a value, in place: the header's kind
-   is rewritten and the first field is the value, which is what a lazy front
-   end's update of a suspension is (docs/plans/heap-layout.md, *A lazy front
-   end*; no program of SML does it). The store goes through the barrier, the
-   object existing and the value being newer. The length stays, so the
-   object keeps its size; the collector follows the first field alone
-   (runtime/heap.c), the others being dead from here on. */
-static inline void obj_become_ind(struct VM *vm, Obj *o, Value v) {
-    /* the fields after the first are let go as if overwritten: what a
-       snapshot reaches by them is kept (the low-pause collector's cycle) */
-    for (uint32_t i = 1; i < o->len; i++) gc_barrier(vm, o, &OBJ_FIELDS(o)[i], mk_unit());
-    gc_barrier(vm, o, &OBJ_FIELDS(o)[0], v);
-    o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_IND);
-    OBJ_FIELDS(o)[0] = v;
-}
 /* whether the object's payload holds values the collector follows */
 static inline int obj_has_fields(const Obj *o) {
     int k = obj_kind(o);
     return k != K_STRING && k != K_REAL && k != K_BOX && k != K_BYTES && k != K_REALS;
 }
-/* how many of them it follows: every field, or an indirection's one */
-static inline uint32_t obj_scanned_fields(const Obj *o) { return obj_kind(o) == K_IND ? 1 : o->len; }
+/* how many of them it follows, from the first: every field; an
+   indirection's one; none of a suspension under evaluation. The kinds
+   below K_THUNK, every one a program of SML makes, take one comparison. */
+static inline uint32_t obj_scanned_fields(const Obj *o) {
+    int k = obj_kind(o);
+    if (k < K_THUNK) return o->len;
+    return k == K_IND ? 1 : o->contag == THUNK_BLACKHOLE ? 0 : o->len;
+}
+/* whether a frame's closure has the environment its code reads (ENV): a
+   closure's, or a suspension's until its code says BLACKHOLE */
+static inline int obj_has_env(const Obj *o) {
+    int k = obj_kind(o);
+    return k == K_CLOSURE || (k == K_THUNK && o->contag == THUNK_UNEVALUATED);
+}
+/* A fresh closure becomes a suspension of the same fields, in place
+   (thunk_make): the kind rewritten beside the collector's bits. */
+static inline void obj_become_thunk(Obj *o) { o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_THUNK); }
+/* A suspension goes under evaluation (BLACKHOLE): a header write. What it
+   held is let go; while the low-pause collector's cycle marks, the caller
+   shades it first, as a store over it would (vm_blackhole, runtime/vm.h). */
+static inline void obj_blackhole(Obj *o) { o->contag = THUNK_BLACKHOLE; }
+/* An object becomes an indirection to a value, in place: the header's kind
+   is rewritten and the first field is the value, which is what a lazy front
+   end's update of a suspension is (UPDATE; no program of SML does it). The
+   store goes through the barrier, the object existing and the value being
+   newer. The length stays, so the object keeps its size; the collector
+   follows the first field alone, the others being dead from here on. */
+static inline void obj_become_ind(struct VM *vm, Obj *o, Value v) {
+    /* the fields after the first that the collector followed are let go as
+       if overwritten: what a snapshot reaches by them is kept (the
+       low-pause collector's cycle). Those of a suspension under evaluation
+       were let go when it went under (obj_blackhole), and hold what may be
+       gone since. */
+    uint32_t n = obj_scanned_fields(o);
+    for (uint32_t i = 1; i < n; i++) gc_barrier(vm, o, &OBJ_FIELDS(o)[i], mk_unit());
+    gc_barrier(vm, o, &OBJ_FIELDS(o)[0], v);
+    o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_IND);
+    OBJ_FIELDS(o)[0] = v;
+}
 
 /* ---- sizes ---- */
 /* the payload of an object, rounded to what the heap allocates: PAYLOAD_MIN

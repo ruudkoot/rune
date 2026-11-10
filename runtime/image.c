@@ -157,8 +157,12 @@ static void put_object(Stream *s, Obj *o, VM *vm) {
         } else if (!obj_has_fields(o)) {
             put(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
+            /* the fields the collector does not follow are dead, and may
+               point to what is gone: an indirection's but the first, a
+               suspension's under evaluation (value.h, obj_scanned_fields) */
             Value *f = obj_fields(o);
-            for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, f[i], vm);
+            uint32_t live = obj_scanned_fields(o);
+            for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, i < live ? f[i] : mk_unit(), vm);
         }
 }
 
@@ -903,7 +907,9 @@ static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char 
                 ok = fr[i].func < p->nfuncs
                      && fr[i].base <= vm->sp
                      && (i == 0 || (fr[i].ret_pc < p->code_len && starts[fr[i].ret_pc]))
-                     && (!fr[i].closure || obj_kind(fr[i].closure) == K_CLOSURE);
+                     && (!fr[i].closure || obj_kind(fr[i].closure) == K_CLOSURE
+                         /* a suspension's code runs with it as its closure, which may have its value since */
+                         || obj_kind(fr[i].closure) == K_THUNK || obj_kind(fr[i].closure) == K_IND);
         }
         for (size_t i = 0; ok && i < vm->hp; i++)
             ok = vm->handlers[i].pc < p->code_len && starts[vm->handlers[i].pc]
