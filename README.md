@@ -64,7 +64,7 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 | `docs/` | the documentation; `docs/lib/` is generated from the libraries in `lib/` |
 | `examples/` | small programs and benchmarks |
 | `scripts/` | generators, consistency checks, `doctor.sh`, `install.sh` |
-| `share/` | man pages and shell completions |
+| `share/` | man pages and shell completions; `share/rhc/haskell98/`, the code of the Haskell 98 Report's Prelude and libraries, under the Report's own notice (its `LICENSE`) |
 
 ## Documentation
 
