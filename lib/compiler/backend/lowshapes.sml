@@ -84,7 +84,7 @@ struct
   (* what an operation makes, where it alone says *)
   fun made (oper : operation) : shape =
     case oper of
-      Const (Lambda.CString _) => Opaque "bytes"
+      Const (Literal.CString _) => Opaque "bytes"
     | Const _ => Imm
     | Unit => Imm
     | Tuple [] => Imm
@@ -496,7 +496,7 @@ struct
                       let
                         fun parts (t, k) =
                           case (makesOf (t), makesOf (k)) of
-                            (SOME (ConTag y), SOME (Const (Lambda.CInt n))) =>
+                            (SOME (ConTag y), SOME (Const (Literal.CInt n))) =>
                               if IntInf.>= (n, IntInf.fromInt 0) andalso IntInf.< (n, IntInf.fromInt 65536)
                               then SOME (OfTag (y, IntInf.toInt n)) else NONE
                           | (SOME (ConTag y), SOME (ConTag z)) => SOME (Same (y, z))

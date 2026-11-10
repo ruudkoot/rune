@@ -7,14 +7,7 @@
    constant's -- is written on the node; LambdaLint checks it. *)
 structure Lambda =
 struct
-  datatype const =
-      CInt of IntInf.int
-    | CWord of IntInf.int
-    | CInt64 of IntInf.int                (* an Int64.int: 64 bits where int is the VM's 63 *)
-    | CWord64 of IntInf.int               (* a Word64.word *)
-    | CReal of string                     (* SML literal text *)
-    | CString of string
-    | CChar of int
+  datatype const = datatype Literal.const
 
   datatype lexp =
       Var of int                          (* local variable *)
@@ -66,24 +59,8 @@ struct
 
   fun raiseBuiltin k = Raise (MkExn (BuiltinExn k, Unit))
 
-  (* A constant at its type: the digits of an Int64.int or a Word64.word are
-     the 64-bit constant, which is another representation where int and word
-     are the VM's 63 bits. *)
-  fun constAt (c : const, t : Ty.ty) : const =
-    case (c, Ty.view t) of
-      (CInt i, Ty.Con (stamp, _, _)) => if stamp = #stamp Types.int64Tycon then CInt64 i else c
-    | (CWord w, Ty.Con (stamp, _, _)) => if stamp = #stamp Types.word64Tycon then CWord64 w else c
-    | _ => c
-
-  fun constToString c =
-    case c of
-      CInt i => IntInf.toString i
-    | CWord w => "0w" ^ IntInf.toString w
-    | CInt64 i => IntInf.toString i
-    | CWord64 w => "0w" ^ IntInf.toString w
-    | CReal r => r
-    | CString s => "\"" ^ String.toString s ^ "\""
-    | CChar c => "#\"" ^ Char.toString (Char.chr c) ^ "\""
+  val constAt = Ty.constAt
+  val constToString = Literal.toString
 
   fun toString (e : lexp) : string =
     let

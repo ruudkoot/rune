@@ -80,7 +80,7 @@ struct
               | unmark (e, sp) = (e, sp)
           in
             case unmark (body, NONE) of
-              (M.Let (c, _, M.Prim (eq, _, [M.Var (x', _), M.Const (Lambda.CInt i, _)]), rest), sp1) =>
+              (M.Let (c, _, M.Prim (eq, _, [M.Var (x', _), M.Const (Literal.CInt i, _)]), rest), sp1) =>
                 if (eq = "poly_eq" orelse eq = "imm_eq") andalso x' = x andalso usesOf c = 1 andalso IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then
                   (case unmark (rest, sp1) of
                      (M.If (M.Var (c', _), t, f), sp2) =>
@@ -537,7 +537,7 @@ struct
       | M.Prim ("open_cast", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
       | M.Prim ("functor_marker", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
       | M.Prim ("open_boxed", _, xs) => L.Prim ("imm_eq", List.map at xs)
-      | M.Prim ("open_layout", t, [M.Const (Lambda.CInt tag, _)]) => L.Const (Lambda.CInt (IntInf.fromInt (openLayout (t, IntInf.toInt tag))))
+      | M.Prim ("open_layout", t, [M.Const (Literal.CInt tag, _)]) => L.Const (Literal.CInt (IntInf.fromInt (openLayout (t, IntInf.toInt tag))))
       | M.Prim (p, _, xs) => L.Prim (p, List.map at xs)
       | M.Tuple xs => L.Tuple (List.map at xs)
       | M.Select (i, a) =>

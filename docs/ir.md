@@ -763,7 +763,7 @@ said here.
 | Strictness | `Let` is strict and in order, and a variable of a datatype's type is evaluated: `ConTag` and `Decon` read it as it is, a step nothing uses may go (`Prims.removable`), and tier 2 trusts its representation | nothing: the types alone, by `Lower.repOfTy`, so a value not yet evaluated must have a type that is no datatype |
 | `Decon` | under a test of its tag, of the only constructor, or of the rest | `LowShapes`, after `Lower` |
 | Primitives | a name of `src/isa/prims.sml` at an instance of its type; not the casts and markers of Rune's functors (`functor_cast`, `dynamic_cast`, `open_cast`, `functor_marker`, `open_boxed`, `open_layout`) | `IrRules` |
-| Constants | of their type's kind, and in range | `IrRules.const` |
+| Constants | a `Literal.const` (`lib/compiler/util/literal.sml`, which Lambda, Mid and Low share) of its type's kind, as `Ty.constAt` makes it for the 64-bit kinds, and in range | `IrRules.const` |
 | Labels | `fundef`'s `label`, the name the function table and a trace show; none is `fn`. A label that begins `functor ` is a functor's function to `Simplify` and `Expand`, which treat it so | none |
 | Marks | a `Mark`'s place and frames, for traces; optional | none |
 

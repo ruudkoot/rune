@@ -140,25 +140,25 @@ struct
   fun fold (p : string, pty : Ty.ty, xs : atom list) : atom option =
     let
       val result = case Ty.view pty of Ty.Arrow (_, r) => r | _ => Ty.int
-      fun ints () = case xs of [Const (Lambda.CInt a, _), Const (Lambda.CInt b, _)] => SOME (a, b) | _ => NONE
-      fun words () = case xs of [Const (Lambda.CWord a, _), Const (Lambda.CWord b, _)] => SOME (a, b) | _ => NONE
+      fun ints () = case xs of [Const (Literal.CInt a, _), Const (Literal.CInt b, _)] => SOME (a, b) | _ => NONE
+      fun words () = case xs of [Const (Literal.CWord a, _), Const (Literal.CWord b, _)] => SOME (a, b) | _ => NONE
       fun int f = case ints () of
-                    SOME (a, b) => let val r = f (a, b) in if fitsInt r then SOME (Const (Lambda.CInt r, result)) else NONE end
+                    SOME (a, b) => let val r = f (a, b) in if fitsInt r then SOME (Const (Literal.CInt r, result)) else NONE end
                   | NONE => NONE
       (* a division by 0 raises Div, and the least int's div or quot by ~1
          Overflow (its quotient fits no int): those are left to run *)
       fun intDiv f = case ints () of SOME (_, b) => if IntInf.sign b = 0 then NONE else int f | NONE => NONE
       fun intCmp f = case ints () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
-      fun word f = case words () of SOME (a, b) => SOME (Const (Lambda.CWord (wrapWord (f (a, b))), result)) | NONE => NONE
+      fun word f = case words () of SOME (a, b) => SOME (Const (Literal.CWord (wrapWord (f (a, b))), result)) | NONE => NONE
       fun wordDiv f = case words () of SOME (_, b) => if IntInf.sign b = 0 then NONE else word f | NONE => NONE
       fun wordCmp f = case words () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
       fun eqs () =
         case xs of
-          [Const (Lambda.CInt a, _), Const (Lambda.CInt b, _)] => SOME (boolAtom (a = b))
-        | [Const (Lambda.CWord a, _), Const (Lambda.CWord b, _)] => SOME (boolAtom (a = b))
-        | [Const (Lambda.CChar a, _), Const (Lambda.CChar b, _)] => SOME (boolAtom (a = b))
+          [Const (Literal.CInt a, _), Const (Literal.CInt b, _)] => SOME (boolAtom (a = b))
+        | [Const (Literal.CWord a, _), Const (Literal.CWord b, _)] => SOME (boolAtom (a = b))
+        | [Const (Literal.CChar a, _), Const (Literal.CChar b, _)] => SOME (boolAtom (a = b))
         | [Con0 (a, _), Con0 (b, _)] => SOME (boolAtom (a = b))
-        | [Const (Lambda.CString a, _), Const (Lambda.CString b, _)] => SOME (boolAtom (a = b))
+        | [Const (Literal.CString a, _), Const (Literal.CString b, _)] => SOME (boolAtom (a = b))
         | _ => NONE
     in
       case p of
@@ -381,7 +381,7 @@ struct
               let val k = freshStamp () val e = freshStamp ()
               in
                 Let (k, ([], Ty.int), ConTag (Var (x, [])),
-                     Let (e, ([], Ty.bool), Prim ("imm_eq", eqTy Ty.int, [Var (k, []), Const (Lambda.CInt (IntInf.fromInt tag), Ty.int)]),
+                     Let (e, ([], Ty.bool), Prim ("imm_eq", eqTy Ty.int, [Var (k, []), Const (Literal.CInt (IntInf.fromInt tag), Ty.int)]),
                           If (Var (e, []), arm c, no)))
               end
             val same = freshStamp ()
@@ -495,9 +495,9 @@ struct
            | _ => r)
       | ConTag a =>
           (case (a, madeOf a) of
-             (Con0 (tag, _), _) => if spend () then Atom (Const (Lambda.CInt (IntInf.fromInt tag), Ty.int)) else r
+             (Con0 (tag, _), _) => if spend () then Atom (Const (Literal.CInt (IntInf.fromInt tag), Ty.int)) else r
            | (_, SOME (Made (Con (tag, _, _)))) =>
-               if spend () then Atom (Const (Lambda.CInt (IntInf.fromInt tag), Ty.int)) else r
+               if spend () then Atom (Const (Literal.CInt (IntInf.fromInt tag), Ty.int)) else r
            | _ => r)
       | Prim (p, t, xs) =>
           (case fold (p, t, xs) of

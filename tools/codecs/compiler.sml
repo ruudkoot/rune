@@ -181,11 +181,11 @@ struct
   fun midRecord (name, sml, p) = recordType (name, sml, p) |> noFp |> noSame
 
   val const =
-    mid ("const", "Lambda.const",
-         [args ("Lambda.CInt", [field ("i", Leaf "bigint")]), args ("Lambda.CWord", [field ("i", Leaf "bigint")]),
-          args ("Lambda.CInt64", [field ("i", Leaf "bigint")]), args ("Lambda.CWord64", [field ("i", Leaf "bigint")]),
-          args ("Lambda.CReal", [field ("s", Leaf "string")]), args ("Lambda.CString", [field ("s", Leaf "string")]),
-          args ("Lambda.CChar", [field ("n", Leaf "nat")])])
+    mid ("const", "Literal.const",
+         [args ("Literal.CInt", [field ("i", Leaf "bigint")]), args ("Literal.CWord", [field ("i", Leaf "bigint")]),
+          args ("Literal.CInt64", [field ("i", Leaf "bigint")]), args ("Literal.CWord64", [field ("i", Leaf "bigint")]),
+          args ("Literal.CReal", [field ("s", Leaf "string")]), args ("Literal.CString", [field ("s", Leaf "string")]),
+          args ("Literal.CChar", [field ("n", Leaf "nat")])])
 
   val scheme = Tuple [List (Leaf "tvar"), Type "irty"]
   val params = List (Tuple [Leaf "binder", Type "irty"])

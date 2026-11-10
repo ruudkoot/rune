@@ -41,7 +41,7 @@ struct
   datatype atom =
       Var of var * Ty.ty list             (* a local variable, at these types for its variables *)
     | Global of var * Ty.ty list
-    | Const of Lambda.const * Ty.ty
+    | Const of Literal.const * Ty.ty
     | Con0 of int * Ty.ty                 (* a nullary constructor, by its tag, and its datatype *)
     | Unit
 

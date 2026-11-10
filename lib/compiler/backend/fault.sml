@@ -165,11 +165,11 @@ struct
                   if kind = "tyargs" andalso not (null args) andalso hit ("g" ^ Int.toString g ^ " given one type fewer")
                   then M.Global (g, tl args)
                   else a
-              | M.Const (c as Lambda.CInt i, t) =>
+              | M.Const (c as Literal.CInt i, t) =>
                   if kind = "const-kind" andalso Ty.equal (t, Ty.int) andalso hit "an int constant made a word of type int"
-                  then M.Const (Lambda.CWord (IntInf.abs i), t)
+                  then M.Const (Literal.CWord (IntInf.abs i), t)
                   else if kind = "const-range" andalso Ty.equal (t, Ty.int) andalso hit "an int constant made one beyond 63 bits"
-                  then M.Const (Lambda.CInt (IntInf.pow (IntInf.fromInt 2, 70)), t)
+                  then M.Const (Literal.CInt (IntInf.pow (IntInf.fromInt 2, 70)), t)
                   else a
               | _ => a
             fun rhs r =
@@ -337,7 +337,7 @@ struct
                 val reps =
                   if kind <> "rep" then #reps f
                   else
-                    case List.find (fn (W.Def (x, W.Const (Lambda.CInt _))) => true | _ => false) (List.concat (List.map #instrs blocks)) of
+                    case List.find (fn (W.Def (x, W.Const (Literal.CInt _))) => true | _ => false) (List.concat (List.map #instrs blocks)) of
                       SOME (W.Def (x, _)) =>
                         if hit ("v" ^ Int.toString x ^ ", an int, given rep ptr") then Vector.mapi (fn (y, r) => if y = x then W.RPtr else r) (#reps f)
                         else #reps f

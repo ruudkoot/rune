@@ -6,6 +6,7 @@ files
   state_sig.sml
   state.sml
   util/stamp.sml
+  util/literal.sml
   util/ident.sml
   util/source.sml
   util/error.sml

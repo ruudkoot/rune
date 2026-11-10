@@ -42,17 +42,17 @@ struct
   fun isBuiltin stamp = List.exists (fn (s, _) => s = stamp) builtinNames
   val reserved = "unit" :: "exncon" :: List.map #2 builtinNames
 
-  fun defaultTy (c : Lambda.const) : Ty.ty =
+  fun defaultTy (c : Literal.const) : Ty.ty =
     case c of
-      Lambda.CInt _ => Ty.int
-    | Lambda.CWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
+      Literal.CInt _ => Ty.int
+    | Literal.CWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
     (* never the default: a 64-bit constant is written with its type, which
        is what tells it from the int or word of the same digits *)
-    | Lambda.CInt64 _ => Ty.int
-    | Lambda.CWord64 _ => Ty.con (#stamp Types.wordTycon, "word", [])
-    | Lambda.CReal _ => Ty.con (#stamp Types.realTycon, "real", [])
-    | Lambda.CString _ => Ty.string
-    | Lambda.CChar _ => Ty.con (#stamp Types.charTycon, "char", [])
+    | Literal.CInt64 _ => Ty.int
+    | Literal.CWord64 _ => Ty.con (#stamp Types.wordTycon, "word", [])
+    | Literal.CReal _ => Ty.con (#stamp Types.realTycon, "real", [])
+    | Literal.CString _ => Ty.string
+    | Literal.CChar _ => Ty.con (#stamp Types.charTycon, "char", [])
 
   (* A type of more nodes than bigType as a tree is written once, at the
      head, as an abbreviation (type %N TYPE), and as %N where it is: a type
@@ -180,9 +180,9 @@ struct
 
       fun constText c =
         case c of
-          Lambda.CString s => "\"" ^ String.toString s ^ "\""
-        | Lambda.CChar c => "#\"" ^ Char.toString (Char.chr c) ^ "\""
-        | _ => Lambda.constToString c
+          Literal.CString s => "\"" ^ String.toString s ^ "\""
+        | Literal.CChar c => "#\"" ^ Char.toString (Char.chr c) ^ "\""
+        | _ => Literal.toString c
       fun args [] = ""
         | args ts = "[" ^ String.concatWith ", " (List.map ty ts) ^ "]"
       fun atom a =
@@ -494,16 +494,16 @@ struct
           in more [ty ()] end
         else []
 
-      fun const (s : string) : Lambda.const * Ty.ty =
+      fun const (s : string) : Literal.const * Ty.ty =
         if String.isPrefix "0w" s then
           (case IntInf.fromString (String.extract (s, 2, NONE)) of
-             SOME w => (Lambda.CWord w, defaultTy (Lambda.CWord w))
+             SOME w => (Literal.CWord w, defaultTy (Literal.CWord w))
            | NONE => fail "a word")
         else if CharVector.exists (fn c => c = #"." orelse c = #"E" orelse c = #"e") s then
-          (Lambda.CReal s, defaultTy (Lambda.CReal s))
+          (Literal.CReal s, defaultTy (Literal.CReal s))
         else
           (case IntInf.fromString s of
-             SOME i => (Lambda.CInt i, Ty.int)
+             SOME i => (Literal.CInt i, Ty.int)
            | NONE => fail "a number")
 
       fun atom () : atom =
@@ -513,8 +513,8 @@ struct
             else if String.isPrefix "g" s then Global (stampOf s, tyargs ())
             else fail "a variable"
         | NUM s => Const (const s)
-        | STR s => Const (Lambda.CString s, Ty.string)
-        | CHR c => Const (Lambda.CChar c, defaultTy (Lambda.CChar c))
+        | STR s => Const (Literal.CString s, Ty.string)
+        | CHR c => Const (Literal.CChar c, defaultTy (Literal.CChar c))
         | LP =>
             (case next () of
                RP => Unit
@@ -523,12 +523,12 @@ struct
                  let
                    val c = case t of
                              NUM s => #1 (const s)
-                           | STR s => Lambda.CString s
-                           | CHR c => Lambda.CChar c
+                           | STR s => Literal.CString s
+                           | CHR c => Literal.CChar c
                            | _ => fail "a constant"
                    val () = eat COLON
                    val t = ty ()
-                 in eat RP; Const (Lambda.constAt (c, t), t) end)
+                 in eat RP; Const (Ty.constAt (c, t), t) end)
         | _ => fail "an atom"
       fun atomsUntil stop =
         let fun more acc = if peek () = SOME stop then List.rev acc else more (atom () :: acc)
