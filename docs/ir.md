@@ -687,6 +687,22 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
   module's slots are set by the function the runtime is given, at the load
   and at each reload (`Translate`, `RuneDynamic.take`; a `dynamic_cast` of
   each slot from `unit`), which `Lift` may take out of the `Do`.
+* **Tags:** `ConTag` is of a datatype, never of a type with no
+  constructors -- an abstract one, as a value not yet evaluated has (the
+  haskell98 roadmap's D5), whose tag is a fatal on every engine.
+* **Evaluated** (the haskell98 roadmap's D5): a variable whose type is a
+  datatype holds a value of it, never one still to be evaluated, since
+  `ConTag` and `Decon` read it as it is, a step that nothing uses may go
+  (`Prims.removable`), and tier 2 trusts its representation. No lint sees
+  this: it holds by types alone, a lazy value having a type that is no
+  datatype (*What a front end gives Mid*, below), and across a cast it
+  holds only as the front end keeps it.
+* **The top level in order:** what a `Val`'s or a `Do`'s expression reads,
+  outside the functions it makes, is a global a definition before it
+  defines, or a function after it that it calls, a known call, which reads
+  no global; read before the definition that gives it its value, a global
+  is a fatal at `-O0` that a pass from `-O1` may hide, so that the levels
+  disagree.
 * **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
