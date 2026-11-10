@@ -64,7 +64,7 @@ struct
      wayTags = fn (w : Lang.way) => ["check", "hs"] @ (if #name w = "register" then ["quick"] else []),
      (* a permission refusal (NAME.err.perm) cannot be seen by root: skipped
         there, with that reason (the lead's ruling 32) *)
-     needs = fn (p : Lang.program) => Test.requires (["rhc"] @ (if String.isSubstring ".err.perm" (#name p) then ["unprivileged"] else [])),
+     needs = fn (n : string) => Test.requires (["rhc"] @ (if String.isSubstring ".err.perm" n then ["unprivileged"] else [])),
      wayNeeds = fn _ => fn t => t,
      selected = fn _ => fn _ => true, pending = HsConformance.pending}
 
