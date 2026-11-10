@@ -181,9 +181,13 @@ struct
             else m
         | _ =>
             let
+              (* a tuple with a polymorphic field stays one: a parameter's
+                 type is no forall (Mid.fundef, Ty.Forall) *)
               val specs =
-                List.map (fn (x, t) => case Ty.view t of Ty.Tuple ts => if List.length ts >= 2 then flatFields (x, ts, body) else NONE
-                           | _ => NONE) params
+                List.map (fn (x, t) => case Ty.view t of
+                                         Ty.Tuple ts => if List.length ts >= 2 andalso not (Ty.hasForall t) then flatFields (x, ts, body)
+                                                        else NONE
+                                       | _ => NONE) params
               val arity = List.foldl (fn (SOME fs, n) => n + List.length (leaves fs) | (NONE, n) => n + 1) 0 specs
             in
               if List.exists isSome specs andalso fits arity andalso Pass.spend () then

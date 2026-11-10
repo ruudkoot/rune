@@ -657,6 +657,27 @@ where a use needs no particular type (the `int` of `val (f, n) = (fn x =>
 x, 1)`) -- is made `unit` there (`ToMid.ground`), which is as good a type as
 any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 
+**Types another front end makes** (decision D4 of
+[plans/language/haskell98.md](plans/language/haskell98.md)). `Ty` has two
+forms that SML's elaborator never makes, for a front end whose types say
+more: `App`, a type variable applied to types (Haskell's `m a`, in the
+text `'a 'm`), whose variable stands for a type name given fewer arguments
+than its datatype has parameters (`list`, of `'a list`), so that its
+instance at `list` and `int` is `int list`; and `Forall`, the polymorphic
+type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
+'b)`), which binds its own variables. A forall is the same type as one that
+differs from it only in the names it binds (`Ty.equal`), and a
+substitution renames them where it would capture one. A variable used, as
+a field or as a `Let`'s step at a scheme of its own, at fewer types than
+its binder abstracts over is its binder at its scheme, the first variables
+given: a forall of the rest (at no types, of all; a function `Lift` takes
+out of another is given that one's variables first). So a polymorphic
+function is put in a dictionary and taken out of one, at a scheme, and
+used at the types it is used at. A tuple with a
+polymorphic field stays whole where `Workers`, `flattenJoin` and a lifted
+function would take it apart, since a parameter's type is no forall;
+`Lower` takes an application as `RAny` and a forall as its body.
+
 ### What a `Mid` keeps
 
 `MidLint` checks, after `mid`:
@@ -674,6 +695,13 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
 * **Type variables in scope** (Mid is System F, above): a type names only
   the type variables of the binders around it, and no binder binds one
   again where it is in scope.
+* **The forms of another front end** (above): a forall is a field's type
+  alone, never a binder's, a parameter's or a step's but a `Let`'s at a
+  scheme, and binds no variable in scope or twice; an application's head
+  is a type variable, applied to as many types wherever it is; a type name
+  is given no more arguments than its datatype has parameters, and as many
+  where it is a value's type -- fewer only where a type is given a type
+  variable or a type name. Each type once, by its node.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
 * **What its types alone do not say:** constants, primitives, exceptions'

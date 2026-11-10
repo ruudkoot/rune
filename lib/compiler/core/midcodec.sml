@@ -64,7 +64,9 @@ struct
          P.list (fn (_, x_1) => ty (c, x_1)) (#w c, args'))
     | Ty.Tuple ts' => (P.byte (#w c, 3); P.list (fn (_, x_2) => ty (c, x_2)) (#w c, ts'))
     | Ty.Arrow (a', b') => (P.byte (#w c, 4); ty (c, a'); ty (c, b'))
-    | Ty.ExnCon => P.byte (#w c, 5));
+    | Ty.ExnCon => P.byte (#w c, 5)
+    | Ty.App (h', args') => (P.byte (#w c, 7); ty (c, h'); P.list (fn (_, x_3) => ty (c, x_3)) (#w c, args'))
+    | Ty.Forall (vs', b') => (P.byte (#w c, 8); P.list (fn (_, x_4) => #tvar c x_4) (#w c, vs'); ty (c, b')));
        IntTable.insert (#written c, Ty.id v, !(#nwritten c)); #nwritten c := !(#nwritten c) + 1)
 
   and span (c : wctx, v : Source.span) : unit =
@@ -201,6 +203,8 @@ struct
             | 3 => let val ts' = P.rlist (fn _ => rty c) (#r c) in Ty.tuple ts' end
             | 4 => let val a' = rty c val b' = rty c in Ty.arrow (a', b') end
             | 5 => Ty.exnCon
+            | 7 => let val h' = rty c val args' = P.rlist (fn _ => rty c) (#r c) in Ty.app (h', args') end
+            | 8 => let val vs' = P.rlist (fn _ => #tvar c ()) (#r c) val b' = rty c in Ty.forall (vs', b') end
             | _ => raise Bad "not a type"
         in IntTable.insert (#read' c, !(#nread c), t); #nread c := !(#nread c) + 1; t end
 

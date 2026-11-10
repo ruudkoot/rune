@@ -269,6 +269,10 @@ struct
     | Ty.ExnCon => L.RPtr
     | Ty.Gen _ => L.RAny
     | Ty.Var _ => L.RAny
+    (* a type variable applied: what it stands for is not known here *)
+    | Ty.App _ => L.RAny
+    (* a polymorphic field's value is its body's: no type is passed *)
+    | Ty.Forall (_, b) => repOfTy b
     | Ty.Con (stamp, name, _) =>
         if stamp = #stamp Types.intTycon then L.RInt
         else if stamp = #stamp Types.wordTycon then L.RWord

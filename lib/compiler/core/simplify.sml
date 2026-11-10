@@ -1019,8 +1019,10 @@ struct
           val flat =
             case params of
               [(p, t)] =>
+                (* not one with a polymorphic field, which no parameter may be
+                   (Ty.Forall) *)
                 (case Ty.view t of
-                   Ty.Tuple (ts as _ :: _ :: _) => if selectedOnly (p, body) then SOME (p, ts) else NONE
+                   Ty.Tuple (ts as _ :: _ :: _) => if not (Ty.hasForall t) andalso selectedOnly (p, body) then SOME (p, ts) else NONE
                  | _ => NONE)
             | _ => NONE
           val ps' =
@@ -1625,7 +1627,10 @@ struct
         List.mapPartial (fn (k, (x, t)) =>
                            case Ty.view t of
                              Ty.Tuple (ts as _ :: _) =>
-                               if onlySelected (x, jbody) andalso List.exists (isSome o madeOf) (argsAt (k, scope))
+                               (* one with a polymorphic field stays whole: a
+                                  join point's parameter is no forall *)
+                               if not (Ty.hasForall t) andalso onlySelected (x, jbody)
+                                  andalso List.exists (isSome o madeOf) (argsAt (k, scope))
                                then SOME (k, ts) else NONE
                            | _ => NONE) indexed
     in

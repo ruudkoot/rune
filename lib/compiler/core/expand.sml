@@ -202,7 +202,10 @@ struct
           | Ty.Con (s, n, args) => Ty.con (s, n, List.map go args)
           | Ty.Tuple ts => Ty.tuple (List.map go ts)
           | Ty.Arrow (a, b) => Ty.arrow (go a, go b)
-          | _ => t
+          | Ty.App (h, args) => Ty.app (go h, List.map go args)
+          | Ty.Forall (vs, b) => Ty.forall (vs, go b)
+          | Ty.Gen _ => t
+          | Ty.ExnCon => t
       in go t end
 
   (* The marker of an application (Translate.callExp): the pairs of its
@@ -248,7 +251,11 @@ struct
       Ty.Con (s, _, args) => List.foldl namesIn (IntMap.insert (acc, s, ())) args
     | Ty.Tuple ts => List.foldl namesIn acc ts
     | Ty.Arrow (a, b) => namesIn (b, namesIn (a, acc))
-    | _ => acc
+    | Ty.App (h, args) => List.foldl namesIn (namesIn (h, acc)) args
+    | Ty.Forall (_, b) => namesIn (b, acc)
+    | Ty.Gen _ => acc
+    | Ty.Var _ => acc
+    | Ty.ExnCon => acc
 
   (* ---- the program's state through the pass ---- *)
 
@@ -381,7 +388,11 @@ struct
             end
         | Ty.Tuple ts => Ty.tuple (List.map ty ts)
         | Ty.Arrow (a, b) => Ty.arrow (ty a, ty b)
-        | _ => t
+        | Ty.App (h, args) => Ty.app (ty h, List.map ty args)
+        | Ty.Forall (vs, b) => Ty.forall (vs, ty b)
+        | Ty.Gen _ => t
+        | Ty.Var _ => t
+        | Ty.ExnCon => t
       (* a datatype of the body's over what sigma substitutes, copied: once
          for what the names it reaches are made, which two copies share
          where both make them the same -- an instance two applications
@@ -426,6 +437,8 @@ struct
             | Ty.Gen i => "g" ^ Int.toString i
             | Ty.Var i => "v" ^ Int.toString i
             | Ty.ExnCon => "e"
+            | Ty.App (h, args) => "p(" ^ tyKey h ^ ";" ^ String.concatWith "," (List.map tyKey args) ^ ")"
+            | Ty.Forall (vs, b) => "f(" ^ String.concatWith "," (List.map Int.toString vs) ^ ";" ^ tyKey b ^ ")"
           fun imageKey (Name c) = "n" ^ Int.toString c
             | imageKey (Body (vs, body)) = "b" ^ String.concatWith "," (List.map Int.toString vs) ^ ":" ^ tyKey body
           fun walk n =
