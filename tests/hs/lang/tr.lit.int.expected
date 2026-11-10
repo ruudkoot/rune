@@ -1,0 +1,5 @@
+fromInteger 5
+(fromInteger 15,fromInteger 15)
+fromRational 5 % 2
+seven
+other

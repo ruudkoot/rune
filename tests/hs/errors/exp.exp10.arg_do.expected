@@ -1,1 +1,1 @@
-expected the end of the module, found `do`
+a `do` block as the argument of an application: Haskell 98 wants it in parentheses

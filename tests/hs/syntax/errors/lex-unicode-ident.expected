@@ -1,0 +1,1 @@
+lex-unicode-ident.hs:2:5: error: the character U+3042 outside a comment or a literal: its general category, Lo, is of none of the Report's classes

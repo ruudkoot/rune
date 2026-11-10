@@ -1,3 +1,4 @@
+-- rows: R58
 -- Report 2.5: decimal -> digit{digit}, with no separator: `1_000` is `1` then the varid `_000`, two patterns of f.
 module Main (main) where
 
