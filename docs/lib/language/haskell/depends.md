@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 137 requirements between the 58 files become 77 arrows.
+library and not a wall of lines: the 193 requirements between the 66 files become 91 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(58)"]
+  a0["Languages<br>(66)"]
 ```
 
 ## Languages
@@ -88,6 +88,14 @@ flowchart TD
   n55["CoreGen"]
   n56(["CORE_TO_MID"])
   n57["CoreToMid"]
+  n58(["HS_DS_CORE"])
+  n59["HsDsCore"]
+  n60(["HS_DS_ENV"])
+  n61["HsDsEnv"]
+  n62(["HS_MATCH"])
+  n63["HsMatch"]
+  n64(["HS_DESUGAR"])
+  n65["HsDesugar"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -165,6 +173,20 @@ flowchart TD
   n56 --> n43
   n57 --> n56
   n57 --> n47
+  n58 --> n43
+  n59 --> n45
+  n59 --> n58
+  n59 --> n21
+  n60 --> n59
+  n60 --> n39
+  n61 --> n60
+  n62 --> n61
+  n63 --> n62
+  n64 --> n43
+  n64 --> n39
+  n65 --> n47
+  n65 --> n64
+  n65 --> n63
 ```
 
 ---

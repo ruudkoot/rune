@@ -234,6 +234,7 @@ val () =
       case HsGen.command args of SOME action => action () | NONE =>
       case HsReduce.command args of SOME action => action () | NONE =>
       case HsInterpVm.command args of SOME action => action () | NONE =>
+      case HsDesugarJobs.command args of SOME action => action () | NONE =>
       case HsPerf.command args of SOME action => action () | NONE =>
       case HsLintJobs.command args of SOME action => action () | NONE =>
       case WindowsJobs.command args of SOME action => action () | NONE =>
