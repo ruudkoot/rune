@@ -13,10 +13,12 @@
    program's expected output and what -O0 printed, then instructions,
    bytes, objects, suspensions and instructions:u (- where not measured).
    The ways are O0, O2 (the pedantic rule, the Report's order), O2-ghc
-   (D48's D), O2-sestoft and O0-sestoft (D34's B); all of them where none
-   is named. A program of tests/hs/lang is prepared as tests/runner/hslang.sml
-   runs it, one of the corpus as hs-corpus-run, a lazy port as hs-lazy-ports
-   (the first variant rhc compiles). *)
+   (D48's D), O2-sestoft and O0-sestoft (D34's B), all of them where none
+   is named or where `all` is; and, where named, iO0 and iO2, the program
+   run on Core's interpreter, whose sameness is to iO0's. A program of
+   tests/hs/lang is prepared as tests/runner/hslang.sml runs it, one of the
+   corpus as hs-corpus-run, a lazy port as hs-lazy-ports (the first variant
+   rhc compiles). *)
 structure HsSimplifyFigures =
 struct
   open Sh
@@ -26,6 +28,9 @@ struct
 
   val ways = [("O0", ["-O0"]), ("O2", ["-O2"]), ("O2-ghc", ["-O2", "--eta=ghc"]), ("O2-sestoft", ["-O2", "--match=sestoft"]),
               ("O0-sestoft", ["-O0", "--match=sestoft"])]
+  (* the ways on Core's interpreter, named and never all: iO0 and iO2, the
+     program run by rhc itself, its output held to iO0's *)
+  val interpreted = [("iO0", ["-O0"]), ("iO2", ["-O2"])]
 
   (* a program ready to compile: where, its main file, where it runs, its
      arguments and standard input, and what it must print *)
@@ -52,6 +57,21 @@ struct
       val havePerf = exec {cmd = ["sh", "-c", "command -v perf"], dir = NONE, stdin = "", stdout = "/dev/null", stderr = "/dev/null",
                            timeout = 10} = 0
       val o0out = ref NONE
+      val i0out = ref NONE
+      (* on Core's interpreter: its output against the program's and iO0's *)
+      fun interp (name, flags) =
+        let
+          fun f x = #dir p ^ "/" ^ name ^ "." ^ x
+          (* the interpreter is slow by design: a run past 300 s is not
+             compared, its status 124 *)
+          val rs = call ([fromRoot "bin/rhc", #main p] @ flags @ (case #args p of [] => [] | a => "--" :: a), #runDir p, #stdin p,
+                         f "out", f "err", 300)
+          val output = read (f "out")
+          val () = if name = "iO0" then i0out := SOME output else ()
+          val row = [name, "yes", Int.toString rs, if output = #expected p then "yes" else "no",
+                     case !i0out of SOME first => if output = first then "yes" else "no" | NONE => "-",
+                     "-", "-", "-", "-", "-"]
+        in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
       fun one (name, flags) =
         let
           val rbc = #dir p ^ "/" ^ name ^ ".rbc"
@@ -73,7 +93,10 @@ struct
                     let
                       val d = f "census"
                       val () = rmTree d
-                      val _ = call ([census, "--census-dir", d, "--census-summary", rbc] @ #args p, #runDir p, #stdin p,
+                      (* no forced collection: the census collects where the
+                         stock VM does (docs/census.md) *)
+                      val _ = call ([census, "--census-dir", d, "--census-every", "0", "--census-summary", rbc] @ #args p,
+                                    #runDir p, #stdin p,
                                     "/dev/null", f "census.err", 1800)
                       val t = if exists (d ^ "/census.txt") then getOpt (lineAfter (d ^ "/census.txt", "THUNK\t"), "-") else "-"
                     in rmTree d; firstNumber t end
@@ -92,8 +115,9 @@ struct
                  nth 0, nth 1, nth 2, thunks, tier2]
               end
         in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
-      val selected = case chosen of [] => ways | ns => List.filter (fn (n, _) => List.exists (fn m => m = n) ns) ways
-    in List.app one selected end
+      fun pick ws = List.filter (fn (n, _) => List.exists (fn m => m = n) chosen) ws
+      val selected = if null chosen orelse List.exists (fn m => m = "all") chosen then ways else pick ways
+    in List.app one selected; List.app interp (pick interpreted) end
 
   (* ---- The sets ---- *)
 
