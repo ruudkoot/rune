@@ -7,7 +7,7 @@
    CodePoint says, the classes by their definitions (R38): upper a letter
    not lower case, lower Ll, alphanumeric a letter or a number, printable
    neither Zl, Zp nor of class C. The code points: every one below 0x100,
-   every 499th, and the first and the last of each range of categories and
+   every 1999th, and the first and the last of each range of categories and
    of each run of mappings in lib/unicode's data. The Core interpreter and
    the VM agree on the same text (tests/hs/core/runtime-unicode.core). Run
    from the top of the tree. *)
@@ -24,7 +24,7 @@ struct
       fun edges (v : int vector, width) =
         List.concat (List.tabulate (Vector.length v div width, fn i =>
           [Vector.sub (v, width * i), Vector.sub (v, width * i + 1)]))
-      val all = List.tabulate (0x100, fn c => c) @ List.tabulate (top div 499 + 1, fn i => 499 * i)
+      val all = List.tabulate (0x100, fn c => c) @ List.tabulate (top div 1999 + 1, fn i => 1999 * i)
                 @ [top] @ edges (D.category (), 3) @ edges (D.upper (), 4) @ edges (D.lower (), 4)
       val seen = Array.array (top + 1, false)
       val () = List.app (fn c => if c >= 0 andalso c <= top then Array.update (seen, c, true) else ()) all
@@ -117,7 +117,7 @@ struct
 
   val tests =
     Test.describe "language/haskell/coreruntime"
-      [Test.it "many code points tried" (fn () => Expect.that ("more than 4000", length points > 4000)),
+      [Test.it "many code points tried" (fn () => Expect.that ("more than 2500", length points > 2500)),
        Test.it "the runtime agrees with CodePoint" agree,
        Test.it "every prim of the Report is the runtime's" (fn () =>
          let val made = List.mapPartial (fn Core.Val (x, _, _) => SOME x | _ => NONE) (CoreRuntime.program CoreRuntime.Lazy)

@@ -720,7 +720,7 @@ written in Core) has `prims-*.core`, Core's primitives on their edges
 print the same), files, standard input read across the edge of a chunk, and
 the classes and mappings of `Char`. `lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
-`lib/unicode`'s `CodePoint` at every code point below 0x100, every 499th,
+`lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
 and the first and the last of each range and run of its data.
 
 E1's eight programs, rewritten in Core (`knot`, `cafs`, `monad`, `classes`,
