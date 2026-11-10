@@ -680,6 +680,21 @@ in the program's own modules, and Main's exports, fixities and instances the
 same (a split's moved to `Lib`). Renaming bound variables mechanically waits
 for a dump of rhc's binding sites; the `rename` pairs are by hand.
 
+**rhc's sharing budgets** (`tests/runner/hsperf.sml`, `hs/perf/NAME`). A
+program of `tests/hs/perf` that costs far more when what the Report leaves
+unsaid is not shared (a section's operand, a file read on demand, an array's
+components) has `NAME.budget`, rhc's policy: lines `a:`, `b:` and `ratio:`.
+Compiled by rhc and run twice under `bin/runevm --count`, on the line a and
+the line b as its standard input, the first's instructions are at most the
+ratio times the second's: a ratio separates linear from quadratic and holds
+on any machine. Held while the row the name gives is `Planned`.
+
+**Renaming, by rhc's names.** `bin/rhc --dump-binders FILE` prints each local
+name of the program's own modules, a line for each binding site (`BIND`) and
+use (`USE`): its renamed name and its bytes. `hs/meta/rename` renames each to
+`x'k` where every occurrence's span is the name itself; a name whose
+binding's span covers more, as a function binding's head does, is left.
+
 **rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
 `hs/interp-vm/NAME`). Each run program of `tests/hs/lang` through rhc to
 Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
