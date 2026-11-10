@@ -36,8 +36,12 @@ library language/haskell lib/language/haskell
   export signature CORE_TO_MID
   export signature HS_AST
   export signature HS_CHAR
+  export signature HS_CLASSES
   export signature HS_DUMP
+  export signature HS_EVIDENCE
   export signature HS_FIXITY
+  export signature HS_INFER
+  export signature HS_KINDS
   export signature HS_LAYOUT
   export signature HS_LEXER
   export signature HS_LINT
@@ -46,9 +50,11 @@ library language/haskell lib/language/haskell
   export signature HS_PARSER
   export signature HS_PRINT
   export signature HS_RENAME
+  export signature HS_SCC
   export signature HS_SOURCE
   export signature HS_STRING_MAP
   export signature HS_TOKEN
+  export signature HS_TYPES
   export structure Core
   export structure CoreGen
   export structure CoreInterp
@@ -59,8 +65,12 @@ library language/haskell lib/language/haskell
   export structure CoreToMid
   export structure HsAst
   export structure HsChar
+  export structure HsClasses
   export structure HsDump
+  export structure HsEvidence
   export structure HsFixity
+  export structure HsInfer
+  export structure HsKinds
   export structure HsLayout
   export structure HsLexer
   export structure HsLint
@@ -69,9 +79,11 @@ library language/haskell lib/language/haskell
   export structure HsParser
   export structure HsPrint
   export structure HsRename
+  export structure HsScc
   export structure HsSource
   export structure HsStringMap
   export structure HsToken
+  export structure HsTypes
   friend ../../../rhc.build
   use lib/language/haskell/syntax.build
     unit language/haskell:source_sig.sml lib/language/haskell/source_sig.sml ascii demand
@@ -104,6 +116,20 @@ library language/haskell lib/language/haskell
     unit language/haskell:fixity.sml lib/language/haskell/fixity.sml ascii demand
     unit language/haskell:rename_sig.sml lib/language/haskell/rename_sig.sml ascii demand
     unit language/haskell:rename.sml lib/language/haskell/rename.sml ascii demand
+  end
+  use lib/language/haskell/types.build
+    unit language/haskell:scc_sig.sml lib/language/haskell/scc_sig.sml ascii demand
+    unit language/haskell:scc.sml lib/language/haskell/scc.sml ascii demand
+    unit language/haskell:types_sig.sml lib/language/haskell/types_sig.sml ascii demand
+    unit language/haskell:types.sml lib/language/haskell/types.sml ascii demand
+    unit language/haskell:classes_sig.sml lib/language/haskell/classes_sig.sml ascii demand
+    unit language/haskell:classes.sml lib/language/haskell/classes.sml ascii demand
+    unit language/haskell:evidence_sig.sml lib/language/haskell/evidence_sig.sml ascii demand
+    unit language/haskell:evidence.sml lib/language/haskell/evidence.sml ascii demand
+    unit language/haskell:kinds_sig.sml lib/language/haskell/kinds_sig.sml ascii demand
+    unit language/haskell:kinds.sml lib/language/haskell/kinds.sml ascii demand
+    unit language/haskell:infer_sig.sml lib/language/haskell/infer_sig.sml ascii demand
+    unit language/haskell:infer.sml lib/language/haskell/infer.sml ascii demand
   end
   use lib/language/haskell/hslint.build
     unit language/haskell:hslint_types.sml lib/language/haskell/hslint_types.sml ascii demand
@@ -218,9 +244,10 @@ provenance
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
-  input lib/language/haskell/library.build c1e6b72ed17494c7c23fc274a51afa430ce13e7915c78a1c027de4a7821959a0
+  input lib/language/haskell/library.build 7ec2458aec686a3c4d39f06d6a8c5581b1b7b788396710ed8358329a2509cd9d
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
+  input lib/language/haskell/types.build 1a9d4563ad4fad7fb249faba2c9a07a463683e296cc2e54f32af15af1f1d2cb6
   input lib/language/haskell/hslint.build 59af682d6ac4333cb4fa04db0751edd827d95f9b8c5af452c90e3ceec429e3cc
   input lib/language/haskell/core.build 74d103c3b38efdc149ddb13aa2455fb310da7b407216ab2039e81b1e007cc448
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac

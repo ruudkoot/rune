@@ -145,6 +145,15 @@ struct
   fun conid ctx =
     case !cur of
       T.CONID s => let val m = mark () in advance (); mkName m (q0 s) end
+    | T.LBRACKET =>
+        (case L.peek 0 of
+           T.RBRACKET => fail ("`[]` " ^ ctx ^ ": the list's constructor is built-in syntax, which no declaration defines")
+         | _ => expected ("a constructor", ctx))
+    | T.LPAREN =>
+        (case L.peek 0 of
+           T.RPAREN => fail ("`()` " ^ ctx ^ ": the unit's constructor is built-in syntax, which no declaration defines")
+         | T.COMMA => fail ("a tuple's constructor " ^ ctx ^ ": it is built-in syntax, which no declaration defines")
+         | _ => expected ("a constructor", ctx))
     | _ => expected ("a constructor", ctx)
 
   val dotted = ref false
@@ -200,6 +209,10 @@ struct
               (advance (); expect (T.RPAREN, "after a constructor operator in parentheses"); mkName m (q0 s))
           | _ => expected ("a constructor operator in parentheses", ctx)
         end
+    | T.LBRACKET =>
+        (case L.peek 0 of
+           T.RBRACKET => fail ("`[]` " ^ ctx ^ ": the list's constructor is built-in syntax, which no declaration defines")
+         | _ => expected ("a constructor", ctx))
     | _ => expected ("a constructor", ctx)
 
   fun isOpTok t =

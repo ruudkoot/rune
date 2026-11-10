@@ -1,0 +1,4 @@
+# defaults under --cycle-default=scc
+tests/hs/types/defaults/A.hs:12:10: error: the type variable of `(Num a, Show a)` arose in a cycle of modules whose default declarations differ (B, A), so it has no one default (D30): under --cycle-default=scc a cycle has one default
+TYPE	A	a	[Char]
+TYPE	B	b	Int

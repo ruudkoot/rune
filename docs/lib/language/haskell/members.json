@@ -739,6 +739,110 @@
     }
    ]
   },
+  "HS_CLASSES": {
+   "doc": "The classes and instances of Haskell 98's checker (the haskell98\nroadmap's M13; the Report's 4.3): every class and instance of the\nprogram, for entailment. Instances are not names: every instance a\nprogram declares, or derives, is in force in all of it.\n\n",
+   "page": "sig/HS_CLASSES.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "class",
+     "spec": "type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind}",
+     "doc": "A class: its key, its direct superclasses, its methods' keys, in\norder, and the kind of its variable.\n\n",
+     "page": "sig/HS_CLASSES.md#type-class"
+    },
+    {
+     "kind": "type",
+     "name": "instance",
+     "spec": "type instance = {id : string, cls : string, tycon : string, vars : int, ctx : HsTypes.pred list,\n                 derived : bool, home : string}",
+     "doc": "An instance `C (T a1 ... an)`: its identity, class, type constructor\nand the number of its head's variables.\n\nWith them, its context over `TGen 0` to `TGen (n - 1)`, whether it is\nderived, and the module that declares it.\n\n",
+     "page": "sig/HS_CLASSES.md#type-instance"
+    },
+    {
+     "kind": "type",
+     "name": "env",
+     "spec": "type env",
+     "doc": "The classes and instances of a program.\n\n",
+     "page": "sig/HS_CLASSES.md#type-env"
+    },
+    {
+     "kind": "val",
+     "name": "empty",
+     "spec": "val empty : env",
+     "doc": "No class and no instance.\n\n",
+     "page": "sig/HS_CLASSES.md#val-empty"
+    },
+    {
+     "kind": "val",
+     "name": "addClass",
+     "spec": "val addClass : env * class -> env",
+     "doc": "`addClass (env, c)` is `env` with the class `c`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-addclass"
+    },
+    {
+     "kind": "val",
+     "name": "addInstance",
+     "spec": "val addInstance : env * instance -> env",
+     "doc": "`addInstance (env, i)` is `env` with the instance `i`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-addinstance"
+    },
+    {
+     "kind": "val",
+     "name": "withContext",
+     "spec": "val withContext : env * string * HsTypes.pred list -> env",
+     "doc": "`withContext (env, id, ctx)` is `env` with the context of the\ninstance `id` replaced, as deriving's fixpoint does.\n\n",
+     "page": "sig/HS_CLASSES.md#val-withcontext"
+    },
+    {
+     "kind": "val",
+     "name": "findClass",
+     "spec": "val findClass : env * string -> class option",
+     "doc": "`findClass (env, key)` is the class of `key`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-findclass"
+    },
+    {
+     "kind": "val",
+     "name": "findInstance",
+     "spec": "val findInstance : env * string * string -> instance option",
+     "doc": "`findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-findinstance"
+    },
+    {
+     "kind": "val",
+     "name": "instances",
+     "spec": "val instances : env -> instance list",
+     "doc": "`instances env` is every instance of `env`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-instances"
+    },
+    {
+     "kind": "val",
+     "name": "instanceId",
+     "spec": "val instanceId : string * string -> string",
+     "doc": "`instanceId (cls, tycon)` is the identity of the instance of `cls`\nat `tycon`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-instanceid"
+    },
+    {
+     "kind": "val",
+     "name": "showInstance",
+     "spec": "val showInstance : string -> string",
+     "doc": "`showInstance id` is the instance `id` as a message names it: its\nclass and its type constructor.\n\n",
+     "page": "sig/HS_CLASSES.md#val-showinstance"
+    },
+    {
+     "kind": "val",
+     "name": "superPath",
+     "spec": "val superPath : env * string * string -> string list option",
+     "doc": "`superPath (env, c, s)` is the classes from `c` to its superclass `s`,\n`c` first and `s` last.\n\nEach is the direct superclass of the one before; NONE where `s` is no\nsuperclass of `c`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-superpath"
+    },
+    {
+     "kind": "val",
+     "name": "superclasses",
+     "spec": "val superclasses : env * string -> string list",
+     "doc": "`superclasses (env, c)` is every superclass of `c`, through.\n\n",
+     "page": "sig/HS_CLASSES.md#val-superclasses"
+    }
+   ]
+  },
   "HS_DUMP": {
    "doc": "The abstract syntax of Haskell 98 as text, for `rhc --dump-ast` and for\nthe tree round trip of a test that compares trees by their text.\n\nA node is a line: its constructor and what it holds that is not a node,\na name, a literal as written, an associativity; the nodes below it\nfollow, each on its line, two spaces further in. With spans, a node's\nline ends with its span, `@START-STOP` in bytes of its file; without\nthem, two trees print the same exactly where they are equal read with\nno annotations. A node's own tokens are not shown.\n\n",
    "page": "sig/HS_DUMP.md",
@@ -756,6 +860,89 @@
      "spec": "val exp : {spans : bool} -> HsAst.exp -> string",
      "doc": "`exp {spans} e` is the expression `e` as text, as `module` writes it.\n\n",
      "page": "sig/HS_DUMP.md#val-exp"
+    }
+   ]
+  },
+  "HS_EVIDENCE": {
+   "doc": "The evidence records of Haskell 98's checker (the haskell98 roadmap's\nD31, M13): what inference chose at each node of the renamed tree, by\nnode, in the manner of Rune's `Witness` (lib/compiler/elab/witness.sml),\nfor desugaring to Core (M15) to translate and HsLint (M16, D54) to\ncheck: each overloaded use's dictionaries, each binder's type and the\ndictionary parameters it is abstracted over, each instance's\ndictionaries, and each defaulting, with what it chose from.\n\nA type here is closed: a constructor applied to types and the type\nvariables of schemes, signatures and instance heads, each a rigid\nvariable with a name unique to the program (`HsTypes.TRigid`); a\nscheme's variables are those names. A dictionary is Faxén's `dict`\njudgement made explicit: a parameter in scope, an instance's dictionary\nfunction at the types of its head's variables applied to the\ndictionaries of its context (\"dict inst\"), or a superclass's taken from\na dictionary of its subclass (\"dict super\").\n\nA node is the kind of record and the span of the node of the renamed\ntree it belongs to, `KIND@FILE:START-STOP`: the name of a variable or a\nconstructor where it is used or bound, a literal, a negation, an\nenumeration, a `do`, a pattern, an instance declaration.\n\n",
+   "page": "sig/HS_EVIDENCE.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "dict",
+     "spec": "datatype dict =\n    DParam of string\n  | DInst of {inst : string, tys : HsTypes.ty list, args : dict list}\n  | DSuper of {dict : dict, cls : string, super : string}",
+     "doc": "A dictionary.\n\n",
+     "page": "sig/HS_EVIDENCE.md#type-dict"
+    },
+    {
+     "kind": "type",
+     "name": "scheme",
+     "spec": "type scheme = {vars : string list, ctx : HsTypes.pred list, ty : HsTypes.ty}",
+     "doc": "A scheme as the records hold it: its variables by name, its context\nand its type, over those names.\n\n",
+     "page": "sig/HS_EVIDENCE.md#type-scheme"
+    },
+    {
+     "kind": "datatype",
+     "name": "record",
+     "spec": "datatype record =\n    Use of {tys : HsTypes.ty list, dicts : dict list}\n  | Overloaded of {ty : HsTypes.ty, dicts : (string * dict) list}\n  | Binding of {scheme : scheme, params : string list}\n  | Mono of HsTypes.ty\n  | Instance of {inst : string, vars : string list, params : string list, supers : dict list}\n  | Class of {param : string}\n  | Defaulted of {var : string, preds : HsTypes.pred list, candidates : HsTypes.ty list, module_ : string,\n                  choice : HsTypes.ty}",
+     "doc": "A record.\n\n",
+     "page": "sig/HS_EVIDENCE.md#type-record"
+    },
+    {
+     "kind": "val",
+     "name": "node",
+     "spec": "val node : string * HsSource.span -> string",
+     "doc": "`node (kind, span)` is the key of a node.\n\n",
+     "page": "sig/HS_EVIDENCE.md#val-node"
+    },
+    {
+     "kind": "type",
+     "name": "table",
+     "spec": "type table",
+     "doc": "A table of records by node.\n\n",
+     "page": "sig/HS_EVIDENCE.md#type-table"
+    },
+    {
+     "kind": "val",
+     "name": "empty",
+     "spec": "val empty : unit -> table",
+     "doc": "`empty ()` is a new table with no record.\n\n",
+     "page": "sig/HS_EVIDENCE.md#val-empty"
+    },
+    {
+     "kind": "val",
+     "name": "add",
+     "spec": "val add : table * string * record -> unit",
+     "doc": "`add (t, node, r)` adds the record `r` at `node`, after any there.\n\n",
+     "page": "sig/HS_EVIDENCE.md#val-add"
+    },
+    {
+     "kind": "val",
+     "name": "find",
+     "spec": "val find : table * string -> record list",
+     "doc": "`find (t, node)` is the records at `node`, in the order added.\n\n",
+     "page": "sig/HS_EVIDENCE.md#val-find"
+    },
+    {
+     "kind": "val",
+     "name": "all",
+     "spec": "val all : table -> (string * record list) list",
+     "doc": "`all t` is every record, by node, in the order of the nodes' keys.\n\n",
+     "page": "sig/HS_EVIDENCE.md#val-all"
+    },
+    {
+     "kind": "val",
+     "name": "showDict",
+     "spec": "val showDict : dict -> string",
+     "doc": "`showDict d` and `showRecord r` are as a dump prints them.\n\n",
+     "page": "sig/HS_EVIDENCE.md#val-showdict"
+    },
+    {
+     "kind": "val",
+     "name": "showRecord",
+     "spec": "val showRecord : record -> string",
+     "doc": "`showDict d` and `showRecord r` are as a dump prints them.\n\n",
+     "page": "sig/HS_EVIDENCE.md#val-showrecord"
     }
    ]
   },
@@ -790,6 +977,137 @@
      "spec": "val resolve : {fixityOf : HsAst.qname -> fixity option} -> HsAst.module\n              -> HsAst.module * (HsSource.span * string) list",
      "doc": "`resolve {fixityOf} m` is the renamed module `m` with every sequence\nof operators resolved, and the errors of resolution in source order.\n\n`fixityOf q` is the fixity of the operator named `q` in the renamed\ntree, `NONE` for the default.\n\n",
      "page": "sig/HS_FIXITY.md#val-resolve"
+    }
+   ]
+  },
+  "HS_INFER": {
+   "doc": "Haskell 98's type checker (the haskell98 roadmap's M13, D30, D31, D32,\nD33): one inference over the renamed, fixity-resolved trees of a unit,\nthe modules of one strongly connected group, joined, so that a binding\ngroup or a type group may cross its modules, with what it chose\nrecorded by node in HsEvidence's table.\n\nTypes by first-order unification with levels; kinds by HsKinds;\nclasses, instances and the derived instances' contexts, by the fixpoint\n10\\.1 allows, in HsClasses; each overloaded use leaves a placeholder,\nresolved at generalisation as a dictionary parameter, an instance's\ndictionary, a superclass's, deferred outward, or defaulted. Declaration\ngroups by dependency, explicitly typed bindings apart (Typing Haskell in\nHaskell's split, R21(c)), one context for each implicit group (R21(a)),\nthe contexts of a group's signatures identical up to renaming (R21(b)),\na signature on a pattern binding that is not simple refused (R19), and\nthe monomorphism restriction by 4.5.5's simple pattern binding (R18).\nA restricted group's constrained variables stay open, and at the top\nlevel are defaulted at the end of the module (R20), by the `default` of\nthe module their constraints arose in, refused where two modules'\ndiffer, and refused where another module of the cycle fixes one (D30);\nunder `--cycle-default=scc`, by the group's one `default`, and closed at\nthe end of the group (an extension). Defaulting by 4.3.4's conditions\n(R22).\n\n",
+   "page": "sig/HS_INFER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "env",
+     "spec": "type env",
+     "doc": "What the checker knows of the program before a unit: the types of\nits values, its type constructors, classes and instances.\n\n",
+     "page": "sig/HS_INFER.md#type-env"
+    },
+    {
+     "kind": "val",
+     "name": "initial",
+     "spec": "val initial : {primitives : string list} -> env",
+     "doc": "`initial {primitives}` is the environment with the built-in types and\nconstructors alone, and the values `primitives`.\n\nEach primitive has the type `forall a. a`, until the overlay types\nthem (M17).\n\n",
+     "page": "sig/HS_INFER.md#val-initial"
+    },
+    {
+     "kind": "datatype",
+     "name": "cycleDefault",
+     "spec": "datatype cycleDefault = PerModule | PerGroup",
+     "doc": "Where Rule 2 closes and which `default` holds in a cycle (D30).\n\n",
+     "page": "sig/HS_INFER.md#type-cycledefault"
+    },
+    {
+     "kind": "type",
+     "name": "module_",
+     "spec": "type module_ = {id : string, ast : HsAst.module, library : bool}",
+     "doc": "A module of a unit: its identity, its renamed and resolved tree, and\nwhether it is the library's.\n\n",
+     "page": "sig/HS_INFER.md#type-module_"
+    },
+    {
+     "kind": "val",
+     "name": "check",
+     "spec": "val check : {env : env, unit : module_ list, cycleDefault : cycleDefault,\n             prelude : string * string -> string option, evidence : HsEvidence.table}\n            -> {env : env, errors : (HsSource.span * string) list}",
+     "doc": "`check {env, unit, cycleDefault, prelude, evidence}` checks the\nmodules of `unit`, recording into `evidence`.\n\nIt gives the environment with the unit's types, constructors,\nclasses, instances and values, and the errors. `prelude (space, name)` is the key of\nthe entity the Prelude exports under `name`, `\"t\"` for a type or\nclass and `\"v\"` for a value, for what the Report's translations\nname: `Bool`, `Char`, `Integer`, `Double`, `Num`, `Fractional`,\n`Eq`, `Ord`, `Enum`, `Integral`, `Monad`.\n\n",
+     "page": "sig/HS_INFER.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "valueScheme",
+     "spec": "val valueScheme : env * string -> HsTypes.scheme option",
+     "doc": "`valueScheme (env, key)` is the type of the value of `key`.\n\n",
+     "page": "sig/HS_INFER.md#val-valuescheme"
+    },
+    {
+     "kind": "val",
+     "name": "classes",
+     "spec": "val classes : env -> HsClasses.env",
+     "doc": "`classes env` is the classes and instances of `env`.\n\n",
+     "page": "sig/HS_INFER.md#val-classes"
+    }
+   ]
+  },
+  "HS_KINDS": {
+   "doc": "The type constructors of Haskell 98's checker and their kinds (the\nhaskell98 roadmap's M13; the Report's 4.6): kind inference over a\nunit's `data`, `newtype`, `type` and `class` declarations by dependency\ngroup, a kind left open defaulting to `*`, so that a type group may\ncross the modules of a cycle (R28, D30); the kind checking of every\nother type a program writes; and the types of the tree made the\nchecker's, synonyms expanded.\n\n",
+   "page": "sig/HS_KINDS.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "tycon",
+     "spec": "type tycon = {key : string, kind : HsTypes.kind, params : int, synonym : HsTypes.ty option,\n              cons : string list, newtype : bool}",
+     "doc": "A type constructor: its key, its kind and the number of its\nparameters.\n\nWith them, its right-hand side over `TGen 0` and on, for a synonym,\nits constructors' keys, for `data` and `newtype`, and whether it is a\nnewtype.\n\n",
+     "page": "sig/HS_KINDS.md#type-tycon"
+    },
+    {
+     "kind": "type",
+     "name": "env",
+     "spec": "type env = tycon HsStringMap.map",
+     "doc": "The type constructors of a program, by key.\n\n",
+     "page": "sig/HS_KINDS.md#type-env"
+    },
+    {
+     "kind": "val",
+     "name": "find",
+     "spec": "val find : env * string -> tycon option",
+     "doc": "`find (env, key)` is the type constructor of `key`, the built-in\nones among them.\n\n",
+     "page": "sig/HS_KINDS.md#val-find"
+    },
+    {
+     "kind": "val",
+     "name": "keyOf",
+     "spec": "val keyOf : HsAst.name -> string",
+     "doc": "`keyOf n` is the key of the type constructor or class the name `n`\nof the renamed tree stands for.\n\n",
+     "page": "sig/HS_KINDS.md#val-keyof"
+    },
+    {
+     "kind": "val",
+     "name": "infer",
+     "spec": "val infer : {env : env, classKind : string -> HsTypes.kind option, decls : (string * HsAst.decl) list}\n            -> {env : env, classKinds : (string * HsTypes.kind) list, errors : (HsSource.span * string) list}",
+     "doc": "`infer {env, classKind, decls}` infers the kinds of `decls`, the\ntype-level declarations of a unit, each with its module's identity.\n\nIt gives the environment with their type constructors, the kinds of\nthe unit's classes' variables, by the class's key, and the errors.\n`classKind` gives the kind of a class of an earlier unit.\n\n",
+     "page": "sig/HS_KINDS.md#val-infer"
+    },
+    {
+     "kind": "val",
+     "name": "checkType",
+     "spec": "val checkType : {env : env, classKind : string -> HsTypes.kind option, vars : HsTypes.kind HsStringMap.map ref}\n                -> HsAst.ty * HsTypes.kind -> unit",
+     "doc": "`checkType {env, classKind, vars} (t, want)` checks that the type `t`\nis well kinded, of kind `want`.\n\nIts variables' kinds are in `vars`, which it extends.\n\n**Raises** `HsSource.Error` for a type ill kinded.\n\n",
+     "page": "sig/HS_KINDS.md#val-checktype"
+    },
+    {
+     "kind": "val",
+     "name": "checkContext",
+     "spec": "val checkContext : {env : env, classKind : string -> HsTypes.kind option, vars : HsTypes.kind HsStringMap.map ref}\n                   -> HsAst.ty option -> unit",
+     "doc": "`checkContext {env, classKind, vars} ctx` checks each class\nassertion of the context `ctx`.\n\n",
+     "page": "sig/HS_KINDS.md#val-checkcontext"
+    },
+    {
+     "kind": "val",
+     "name": "convert",
+     "spec": "val convert : env * (string -> HsTypes.ty) -> HsAst.ty -> HsTypes.ty",
+     "doc": "`convert (env, var) t` is the type `t` as the checker's, its\nvariables by `var`.\n\nIts synonyms are expanded.\n\n**Raises** `HsSource.Error` for a synonym not applied to all its\nparameters.\n\n",
+     "page": "sig/HS_KINDS.md#val-convert"
+    },
+    {
+     "kind": "val",
+     "name": "contextPreds",
+     "spec": "val contextPreds : env * (string -> HsTypes.ty) -> HsAst.ty option -> HsTypes.pred list",
+     "doc": "`contextPreds (env, var) ctx` is the predicates of a context.\n\n",
+     "page": "sig/HS_KINDS.md#val-contextpreds"
+    },
+    {
+     "kind": "val",
+     "name": "tyVars",
+     "spec": "val tyVars : HsAst.ty -> string list",
+     "doc": "`tyVars t` is the type variables of `t`, each once, in order.\n\n",
+     "page": "sig/HS_KINDS.md#val-tyvars"
     }
    ]
   },
@@ -1282,6 +1600,19 @@
     }
    ]
   },
+  "HS_SCC": {
+   "doc": "Strongly connected components, for the dependency analyses of Haskell\n98's checker: of type declarations for kinds (4.6), and of bindings for\ndeclaration groups (4.5.1).\n\n",
+   "page": "sig/HS_SCC.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "sccs",
+     "spec": "val sccs : string list * (string -> string list) -> string list list",
+     "doc": "`sccs (nodes, edges)` is the components of the graph of `nodes`, each\nafter every one it depends on.\n\n`edges n` is the nodes `n` depends on, those not among `nodes`\nignored; a component's members are in the order of `nodes`.\n\n",
+     "page": "sig/HS_SCC.md#val-sccs"
+    }
+   ]
+  },
   "HS_SOURCE": {
    "doc": "Haskell source text: spans, positions and the errors of the front end.\n\nA position is a byte offset of the file everywhere inside the front end,\nas it is inside Rune's compiler (docs/diagnostics.md, Columns), and a\nspan is the compiler's span, as lib/compiler's Source has it, so that a\ndriver can show a diagnostic of `lib/language/haskell` as it shows its own. A line and a\ncolumn are worked out only where a diagnostic is shown.\n\n",
    "page": "sig/HS_SOURCE.md",
@@ -1488,6 +1819,299 @@
      "page": "sig/HS_TOKEN.md#val-plain"
     }
    ]
+  },
+  "HS_TYPES": {
+   "doc": "The types of Haskell 98's checker (the haskell98 roadmap's M13, D31):\nkinds, types with unification variables, predicates and schemes, and\nfirst-order unification with levels.\n\nA type constructor is named by the key of its entity (`HsModules.key`),\nor is one of the built-in ones, named as the renamer leaves them: `()`,\n`[]`, `->`, and the tuples' `(,)`, `(,,)` and on. A unification\nvariable is a cell, linked once it is solved; its level is the depth of\nthe binding group that made it, so that generalisation takes the\nvariables deeper than the group's level, and its home is the module\nwhose code made it, which Rule 2 in a cycle reads (D30). A variable of a\nsignature or of an instance head, fixed while it is checked, is rigid.\n\n",
+   "page": "sig/HS_TYPES.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "kind",
+     "spec": "datatype kind = KStar | KFun of kind * kind | KVar of kvar ref",
+     "doc": "A kind, with variables that kind inference solves.\n\n",
+     "page": "sig/HS_TYPES.md#type-kind"
+    },
+    {
+     "kind": "datatype",
+     "name": "kvar",
+     "spec": "datatype kvar = KFree of int | KLink of kind",
+     "doc": "A kind variable: unsolved, by its number, or linked to a kind.\n\n",
+     "page": "sig/HS_TYPES.md#type-kvar"
+    },
+    {
+     "kind": "val",
+     "name": "newKind",
+     "spec": "val newKind : unit -> kind",
+     "doc": "`newKind ()` is a fresh kind variable.\n\n",
+     "page": "sig/HS_TYPES.md#val-newkind"
+    },
+    {
+     "kind": "val",
+     "name": "kindRepr",
+     "spec": "val kindRepr : kind -> kind",
+     "doc": "`kindRepr k` follows the links of `k`'s variable, if it has one.\n\n",
+     "page": "sig/HS_TYPES.md#val-kindrepr"
+    },
+    {
+     "kind": "val",
+     "name": "defaultKind",
+     "spec": "val defaultKind : kind -> kind",
+     "doc": "`defaultKind k` is `k` with every unsolved variable made `*`.\n\n",
+     "page": "sig/HS_TYPES.md#val-defaultkind"
+    },
+    {
+     "kind": "val",
+     "name": "showKind",
+     "spec": "val showKind : kind -> string",
+     "doc": "`showKind k` is `k` as the Report writes one.\n\n",
+     "page": "sig/HS_TYPES.md#val-showkind"
+    },
+    {
+     "kind": "exception",
+     "name": "KindMismatch",
+     "spec": "exception KindMismatch of kind * kind",
+     "doc": "Two kinds that cannot be one.\n\n",
+     "page": "sig/HS_TYPES.md#exn-kindmismatch"
+    },
+    {
+     "kind": "val",
+     "name": "unifyKind",
+     "spec": "val unifyKind : kind * kind -> unit",
+     "doc": "`unifyKind (a, b)` makes `a` and `b` one kind.\n\n**Raises** `KindMismatch` where they cannot be.\n\n",
+     "page": "sig/HS_TYPES.md#val-unifykind"
+    },
+    {
+     "kind": "type",
+     "name": "rigid",
+     "spec": "type rigid = {id : int, name : string}",
+     "doc": "A rigid variable: a number for itself and its name as written.\n\n",
+     "page": "sig/HS_TYPES.md#type-rigid"
+    },
+    {
+     "kind": "datatype",
+     "name": "ty",
+     "spec": "datatype ty =\n    TCon of string\n  | TAp of ty * ty\n  | TMeta of meta ref\n  | TGen of int\n  | TRigid of rigid",
+     "doc": "A type. `TGen i` is the `i`th variable a scheme binds.\n\n",
+     "page": "sig/HS_TYPES.md#type-ty"
+    },
+    {
+     "kind": "datatype",
+     "name": "meta",
+     "spec": "datatype meta =\n    Free of {id : int, level : int, home : string}\n  | Link of ty",
+     "doc": "A unification variable: unsolved, with its number, its level and its\nhome module, or linked to the type it was solved as.\n\n",
+     "page": "sig/HS_TYPES.md#type-meta"
+    },
+    {
+     "kind": "type",
+     "name": "pred",
+     "spec": "type pred = {cls : string, ty : ty}",
+     "doc": "A predicate, `C t`: a class, by the key of its entity, and a type.\n\n",
+     "page": "sig/HS_TYPES.md#type-pred"
+    },
+    {
+     "kind": "type",
+     "name": "scheme",
+     "spec": "type scheme = {vars : int, ctx : pred list, ty : ty}",
+     "doc": "A scheme: the number of variables it binds, its context and its type,\nover `TGen 0` to `TGen (vars - 1)`.\n\n",
+     "page": "sig/HS_TYPES.md#type-scheme"
+    },
+    {
+     "kind": "val",
+     "name": "unitCon",
+     "spec": "val unitCon : string",
+     "doc": "The unit's type constructor, `()`.\n\n",
+     "page": "sig/HS_TYPES.md#val-unitcon"
+    },
+    {
+     "kind": "val",
+     "name": "listCon",
+     "spec": "val listCon : string",
+     "doc": "The list's type constructor, `[]`.\n\n",
+     "page": "sig/HS_TYPES.md#val-listcon"
+    },
+    {
+     "kind": "val",
+     "name": "arrowCon",
+     "spec": "val arrowCon : string",
+     "doc": "The function's type constructor, `->`.\n\n",
+     "page": "sig/HS_TYPES.md#val-arrowcon"
+    },
+    {
+     "kind": "val",
+     "name": "tupleCon",
+     "spec": "val tupleCon : int -> string",
+     "doc": "`tupleCon n` is the type constructor of the tuples of `n` components.\n\n",
+     "page": "sig/HS_TYPES.md#val-tuplecon"
+    },
+    {
+     "kind": "val",
+     "name": "builtinKind",
+     "spec": "val builtinKind : string -> kind option",
+     "doc": "`builtinKind name` is the kind of a built-in type constructor.\n\n",
+     "page": "sig/HS_TYPES.md#val-builtinkind"
+    },
+    {
+     "kind": "val",
+     "name": "fn_",
+     "spec": "val fn_ : ty * ty -> ty",
+     "doc": "`fn_ (a, b)` is the type `a -> b`.\n\n",
+     "page": "sig/HS_TYPES.md#val-fn_"
+    },
+    {
+     "kind": "val",
+     "name": "list",
+     "spec": "val list : ty -> ty",
+     "doc": "`list t` is the type `[t]`.\n\n",
+     "page": "sig/HS_TYPES.md#val-list"
+    },
+    {
+     "kind": "val",
+     "name": "tuple",
+     "spec": "val tuple : ty list -> ty",
+     "doc": "`tuple ts` is the tuple of the types `ts`.\n\n",
+     "page": "sig/HS_TYPES.md#val-tuple"
+    },
+    {
+     "kind": "val",
+     "name": "unit",
+     "spec": "val unit : ty",
+     "doc": "The unit's type, `()`.\n\n",
+     "page": "sig/HS_TYPES.md#val-unit"
+    },
+    {
+     "kind": "val",
+     "name": "apply",
+     "spec": "val apply : ty * ty list -> ty",
+     "doc": "`apply (t, args)` is `t` applied to `args`, left to right.\n\n",
+     "page": "sig/HS_TYPES.md#val-apply"
+    },
+    {
+     "kind": "val",
+     "name": "spine",
+     "spec": "val spine : ty -> ty * ty list",
+     "doc": "`spine t` is the head of `t` and its arguments.\n\n",
+     "page": "sig/HS_TYPES.md#val-spine"
+    },
+    {
+     "kind": "val",
+     "name": "newMeta",
+     "spec": "val newMeta : int * string -> ty",
+     "doc": "`newMeta (level, home)` is a fresh unification variable.\n\n",
+     "page": "sig/HS_TYPES.md#val-newmeta"
+    },
+    {
+     "kind": "val",
+     "name": "repr",
+     "spec": "val repr : ty -> ty",
+     "doc": "`repr t` follows `t`'s links to its head.\n\n",
+     "page": "sig/HS_TYPES.md#val-repr"
+    },
+    {
+     "kind": "val",
+     "name": "zonk",
+     "spec": "val zonk : ty -> ty",
+     "doc": "`zonk t` is `t` with every solved variable replaced, through.\n\n",
+     "page": "sig/HS_TYPES.md#val-zonk"
+    },
+    {
+     "kind": "val",
+     "name": "metas",
+     "spec": "val metas : ty -> meta ref list",
+     "doc": "`metas t` is the unsolved variables of `t`, each once, in order.\n\n",
+     "page": "sig/HS_TYPES.md#val-metas"
+    },
+    {
+     "kind": "val",
+     "name": "metaId",
+     "spec": "val metaId : meta ref -> int",
+     "doc": "`metaId m` is the number of an unsolved variable.\n\n",
+     "page": "sig/HS_TYPES.md#val-metaid"
+    },
+    {
+     "kind": "val",
+     "name": "metaLevel",
+     "spec": "val metaLevel : meta ref -> int",
+     "doc": "`metaLevel m` is the level of an unsolved variable.\n\n",
+     "page": "sig/HS_TYPES.md#val-metalevel"
+    },
+    {
+     "kind": "val",
+     "name": "metaHome",
+     "spec": "val metaHome : meta ref -> string",
+     "doc": "`metaHome m` is the module whose code made an unsolved variable.\n\n",
+     "page": "sig/HS_TYPES.md#val-metahome"
+    },
+    {
+     "kind": "val",
+     "name": "setLevel",
+     "spec": "val setLevel : meta ref * int -> unit",
+     "doc": "`setLevel (m, l)` moves an unsolved variable to the level `l`.\n\n",
+     "page": "sig/HS_TYPES.md#val-setlevel"
+    },
+    {
+     "kind": "exception",
+     "name": "Mismatch",
+     "spec": "exception Mismatch of ty * ty",
+     "doc": "Two types that differ, which unification cannot make one.\n\n",
+     "page": "sig/HS_TYPES.md#exn-mismatch"
+    },
+    {
+     "kind": "exception",
+     "name": "Occurs",
+     "spec": "exception Occurs of ty * ty",
+     "doc": "A variable that occurs in the type unification would make it.\n\n",
+     "page": "sig/HS_TYPES.md#exn-occurs"
+    },
+    {
+     "kind": "val",
+     "name": "unify",
+     "spec": "val unify : (meta ref * ty -> unit) -> ty * ty -> unit",
+     "doc": "`unify watch (a, b)` makes `a` and `b` one type, solving variables.\n\nOn each variable it solves, `watch` is told it and the type.\n\n**Raises** `Mismatch` where the types differ, and `Occurs` where a\nvariable would contain itself.\n\n",
+     "page": "sig/HS_TYPES.md#val-unify"
+    },
+    {
+     "kind": "val",
+     "name": "instantiate",
+     "spec": "val instantiate : scheme * int * string -> ty list * pred list * ty",
+     "doc": "`instantiate (s, level, home)` is `s`'s type and context with fresh\nvariables for its own, and those variables.\n\n",
+     "page": "sig/HS_TYPES.md#val-instantiate"
+    },
+    {
+     "kind": "val",
+     "name": "substGen",
+     "spec": "val substGen : ty list * ty -> ty",
+     "doc": "`substGen (ts, t)` replaces `TGen i` by the `i`th of `ts`.\n\n",
+     "page": "sig/HS_TYPES.md#val-substgen"
+    },
+    {
+     "kind": "val",
+     "name": "nameOfKey",
+     "spec": "val nameOfKey : string -> string",
+     "doc": "`nameOfKey k` is the name of the entity of key `k`, as a message shows\nit; a built-in name is itself.\n\n",
+     "page": "sig/HS_TYPES.md#val-nameofkey"
+    },
+    {
+     "kind": "val",
+     "name": "show",
+     "spec": "val show : ty -> string",
+     "doc": "`show t` is `t` as Haskell writes it.\n\nIts unsolved variables are named `t1`, `t2` and on by their numbers,\na rigid variable by its name as written.\n\n",
+     "page": "sig/HS_TYPES.md#val-show"
+    },
+    {
+     "kind": "val",
+     "name": "showPred",
+     "spec": "val showPred : pred -> string",
+     "doc": "`showPred p` is the predicate `p` as a context writes it.\n\n",
+     "page": "sig/HS_TYPES.md#val-showpred"
+    },
+    {
+     "kind": "val",
+     "name": "showScheme",
+     "spec": "val showScheme : scheme -> string",
+     "doc": "`showScheme s` is the scheme `s` as a signature writes it, its\nvariables `a`, `b` and on.\n\n",
+     "page": "sig/HS_TYPES.md#val-showscheme"
+    }
+   ]
   }
  },
  "structures": {
@@ -1501,8 +2125,12 @@
   "CoreToMid": "CORE_TO_MID",
   "HsAst": "HS_AST",
   "HsChar": "HS_CHAR",
+  "HsClasses": "HS_CLASSES",
   "HsDump": "HS_DUMP",
+  "HsEvidence": "HS_EVIDENCE",
   "HsFixity": "HS_FIXITY",
+  "HsInfer": "HS_INFER",
+  "HsKinds": "HS_KINDS",
   "HsLayout": "HS_LAYOUT",
   "HsLexer": "HS_LEXER",
   "HsLint": "HS_LINT",
@@ -1511,8 +2139,10 @@
   "HsParser": "HS_PARSER",
   "HsPrint": "HS_PRINT",
   "HsRename": "HS_RENAME",
+  "HsScc": "HS_SCC",
   "HsSource": "HS_SOURCE",
   "HsStringMap": "HS_STRING_MAP",
-  "HsToken": "HS_TOKEN"
+  "HsToken": "HS_TOKEN",
+  "HsTypes": "HS_TYPES"
  }
 }

@@ -19,7 +19,7 @@ struct
       val files = go (CommandLine.arguments (), [])
       val g = RhcGraph.load {roots = files, dotted = !dotted}
     in
-      RhcNames.dump (g, RhcNames.run (g, !fixpoint));
+      RhcNames.dump (g, RhcNames.run (g, !fixpoint, NONE));
       OS.Process.success
     end
     handle HsSource.Error (_, msg) => (TextIO.output (TextIO.stdErr, msg ^ "\n"); OS.Process.failure)

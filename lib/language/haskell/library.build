@@ -1,8 +1,9 @@
 (* The Haskell 98 front end and Core of rhc, the haskell98 roadmap's
    compiler (docs/plans/language/haskell98.md): the syntax, its lexer,
    layout, parser and printers, in syntax.build (M11), on lib/unicode;
-   modules, the renamer and fixity in names.build (M12); HsLint, the
-   independent check of types, in hslint.build (M16); Core, its text,
+   modules, the renamer and fixity in names.build (M12); kinds, types,
+   classes and evidence in types.build (M13); HsLint, the independent
+   check of types, in hslint.build (M16); Core, its text,
    CoreLint, its interpreter and Core to Mid in core.build. Rune alone
    builds it (D42). Its friends see what it does not export: rhc's build,
    which is a friend of lib/compiler too. *)
@@ -10,16 +11,21 @@ requires unicode end
 exports (structure Core, signature CORE, structure CoreText, signature CORE_TEXT, structure CorePrim, structure CoreRuntime, signature CORE_RUNTIME,
          signature CORE_PRIM, structure CoreLint, signature CORE_LINT, structure CoreInterp, signature CORE_INTERP,
          structure CoreGen, signature CORE_GEN, structure CoreToMid, signature CORE_TO_MID,
-         structure HsAst, structure HsChar, structure HsDump, structure HsFixity, structure HsLayout,
-         structure HsLexer, structure HsLiterate, structure HsModules, structure HsParser, structure HsPrint,
-         structure HsLint, structure HsRename, structure HsSource, structure HsStringMap, structure HsToken,
-         signature HS_AST, signature HS_CHAR, signature HS_DUMP, signature HS_FIXITY, signature HS_LAYOUT,
-         signature HS_LEXER, signature HS_LINT, signature HS_LITERATE, signature HS_MODULES, signature HS_PARSER,
-         signature HS_PRINT, signature HS_RENAME, signature HS_SOURCE, signature HS_STRING_MAP, signature HS_TOKEN)
+         structure HsAst, structure HsChar, structure HsClasses, structure HsDump, structure HsEvidence,
+         structure HsFixity, structure HsInfer, structure HsKinds, structure HsLayout, structure HsLexer,
+         structure HsLint, structure HsLiterate, structure HsModules, structure HsParser, structure HsPrint,
+         structure HsRename, structure HsScc, structure HsSource, structure HsStringMap, structure HsToken,
+         structure HsTypes,
+         signature HS_AST, signature HS_CHAR, signature HS_CLASSES, signature HS_DUMP, signature HS_EVIDENCE,
+         signature HS_FIXITY, signature HS_INFER, signature HS_KINDS, signature HS_LAYOUT, signature HS_LEXER,
+         signature HS_LINT, signature HS_LITERATE, signature HS_MODULES, signature HS_PARSER, signature HS_PRINT,
+         signature HS_RENAME, signature HS_SCC, signature HS_SOURCE, signature HS_STRING_MAP, signature HS_TOKEN,
+         signature HS_TYPES)
 friends ../../../rhc.build end
 annotate "demand" in
   use syntax.build
   use names.build
+  use types.build
   use hslint.build
   use core.build
 end

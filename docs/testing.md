@@ -482,7 +482,10 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `NAME` with a `Main.hs` or `Main.lhs` in it, whose other modules rhc finds
   beside it. Its siblings are named from `NAME` in both cases, beside the
   file or the directory, and are Rune's: `.expected`, `.cargs`, `.args`,
-  `.vmargs`, `.stdin`, `.exitcode`, `.stderr`, `.stderr-head`, `.cwarn`.
+  `.vmargs`, `.stdin`, `.exitcode`, `.stderr`, `.stderr-head`, `.cwarn`,
+  and `.typecheck-ok` beside a refused program that `--typecheck-only`
+  accepts: a check takes a file as the module it holds, and only a compile
+  asks that it be `Main` (the roadmap's D53; `prog.main.name`).
   Two programs of one name in a directory (a `.hs` beside a `.lhs`) are a
   failure of `hs/runner/programs`.
 * **Three directories.** `tests/hs/lang` holds the programs compiled and
@@ -650,7 +653,7 @@ differences in `tests/hs/syntax/ghc-dump.tsv`.
 which judges an accept program, and a compile, which judges an error program,
 check as far as rhc goes: the program's modules, found from the file given and
 in `share/rhc/haskell98` (the wrapper `bin/rhc` passes `--share`), their
-exports and scopes, every name, and fixity. `tests/runner/hsnames.sml`'s jobs
+exports and scopes, every name, fixity, and (M13) kinds, types and classes. `tests/runner/hsnames.sml`'s jobs
 `hs/names/*` compare `bin/rhc --dump-names` of each fixture of
 `tests/hs/names` with its expected files: the Report's 20 modules whole,
 against E16's export pairs, fixities and instances; E16's fixtures under both
@@ -660,6 +663,15 @@ entity; a cycle of three signed modules; a dotted module name. And
 fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
 
+**Kinds, types and classes** (`lib/language/haskell`'s `types.build`, the
+roadmap's M13; [tests/hs/types/README.md](../tests/hs/types/README.md)). The
+same runner's jobs `hs/types/*` compare `bin/rhc --dump-types` of each fixture
+of `tests/hs/types` under both settings of `--cycle-default` with its expected
+files: the Report's libraries checked as one unit, a cycle of modules with
+unsigned bindings and a type group across it, and D30's readings of `default`
+and Rule 2 in a cycle. `bin/rhc --dump-evidence` prints a program's evidence
+records (HsEvidence), what desugaring (M15) and HsLint (M16) read.
+
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
 the independent check of rhc's types, as AstLint is Rune's. Its first part
@@ -667,9 +679,9 @@ is a second inference: a transliteration of Typing Haskell in Haskell in the
 form its 11.6.3 calls conformant, with kinds and dependency groups recomputed
 and D32's readings of the monomorphism restriction and defaulting, which
 shares nothing with the checker but the renamer. rhc runs it through
-`Pass.checkAt` at level 2, after names (`--lint=2`, and `RUNE_LINT=2`, which
-`bin/rune-test` sets), so a program whose names resolve and which HsLint
-refuses fails any compile of it, `lint after hslint: FILE:LINE:COL: WHY`;
+`Pass.checkAt` at level 2, after names and the checker (`--lint=2`, and
+`RUNE_LINT=2`, which `bin/rune-test` sets), so a program the checker accepts
+and HsLint refuses fails any compile of it, `lint after hslint: FILE:LINE:COL: WHY`;
 `bin/rhc --dump-hslint FILE.hs` prints what it infers, each binding's type,
 the kinds, the derived instances' contexts and the defaults it chose, or
 `REFUSED` and why. `tests/runner/hslint.sml`'s jobs `hs/hslint/*` hold it to

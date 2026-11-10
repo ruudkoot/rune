@@ -1,15 +1,17 @@
 # Index: B
 
-[Overview](../README.md) &middot; [a](a.md) **b** [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) **b** [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `BACKQUOTE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-backquote)
 - `BACKSLASH` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-backslash)
 - `BAR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-bar)
 - `Bare` (con): [HS_PARSER](../sig/HS_PARSER.md#con-bare)
 - `binder` (type): [CORE](../sig/CORE.md#type-binder)
+- `Binding` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-binding)
 - `binding` (type): [HS_LINT](../sig/HS_LINT.md#type-binding)
 - `BlockComment` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-blockcomment)
 - `builtinData` (val): [CORE](../sig/CORE.md#val-builtindata)
+- `builtinKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-builtinkind)
 - `builtinTypes` (val): [CORE](../sig/CORE.md#val-builtintypes)
 - `ByteOrderMark` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-byteordermark)
 - `bytes` (val): [HS_SOURCE](../sig/HS_SOURCE.md#val-bytes)

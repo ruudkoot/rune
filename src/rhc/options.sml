@@ -25,11 +25,12 @@ struct
     \            | --dump-ast [--no-spans]] FILE.hs\n\
     \       rhc [--typecheck-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
+    \       rhc --dump-types | --dump-evidence [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
     \Core, its typed lazy intermediate language, checks it and runs it on\n\
     \Core's interpreter; and it reads a program of Haskell, a file and the\n\
-    \modules it imports, no further than its names and fixity.\n\
+    \modules it imports, no further than its names, fixity and types.\n\
     \\n\
     \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop\n\
     \  --print               print it with every block in braces\n\
@@ -39,6 +40,10 @@ struct
     \  --dump-ast            print its tree, with --no-spans without where each node is\n\
     \  --dump-names          print the exports, fixities and instances of the program of\n\
     \                        FILE.hs... and its library, and its errors of names, sorted\n\
+    \  --dump-types          print the type of each top-level value of the program's modules,\n\
+    \                        and the library's errors (M13)\n\
+    \  --dump-evidence       print the checker's evidence records of the program's modules:\n\
+    \                        each overloaded use's dictionaries, each binder's type (D31)\n\
     \  --dump-hslint         print the type HsLint's second inference gives each binding of\n\
     \                        the top level of FILE.hs's program, and the defaults it chose\n\
     \  --hslint-claims=FILE  at level 2, hold HsLint's inference to a record's claims, lines\n\
@@ -56,7 +61,7 @@ struct
     \  --share DIR           where rhc's library is, DIR/haskell98 (bin/rhc gives it)\n\
     \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
     \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
-    \                        names and fixity, until the checker lands (M13)\n\
+    \                        names, fixity, kinds, types and classes\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
     \                        2 runs HsLint on a program of Haskell, 3 reads Core's text\n\
     \                        back after every stage (RUNE_LINT too)\n\

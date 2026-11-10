@@ -1,0 +1,5 @@
+# rule2 under --cycle-default=module
+tests/hs/types/rule2/B.hs:6:5: error: `x` of A, which its restriction leaves monomorphic (4.5.5), takes its type from a use in B, while Rule 2 closes it at the end of its own module (D30; --cycle-default=scc closes it at the end of the cycle)
+TYPE	A	double	Int
+TYPE	A	x	Int
+TYPE	B	y	Int

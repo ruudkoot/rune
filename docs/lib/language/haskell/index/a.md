@@ -1,8 +1,12 @@
 # Index: A
 
-[Overview](../README.md) &middot; **a** [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; **a** [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
+- `add` (val): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-add)
+- `addClass` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-addclass)
+- `addInstance` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-addinstance)
 - `advance` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-advance)
+- `all` (val): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-all)
 - `Alt` (con): [HS_AST](../sig/HS_AST.md#con-alt)
 - `alt` (type): [CORE](../sig/CORE.md#type-alt), [HS_AST](../sig/HS_AST.md#type-alt)
 - `AltCon` (con): [CORE](../sig/CORE.md#con-altcon)
@@ -12,9 +16,10 @@
 - `ann` (type): [HS_AST](../sig/HS_AST.md#type-ann)
 - `annotations` (type): [HS_PARSER](../sig/HS_PARSER.md#type-annotations)
 - `App` (con): [CORE](../sig/CORE.md#con-app)
-- `apply` (val): [CORE](../sig/CORE.md#val-apply)
+- `apply` (val): [CORE](../sig/CORE.md#val-apply), [HS_TYPES](../sig/HS_TYPES.md#val-apply)
 - `arg` (type): [CORE](../sig/CORE.md#type-arg)
 - `Arrow` (con): [CORE](../sig/CORE.md#con-arrow)
+- `arrowCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-arrowcon)
 - `AT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-at)
 - `Atom` (con): [CORE](../sig/CORE.md#con-atom)
 - `atom` (type): [CORE](../sig/CORE.md#type-atom)
