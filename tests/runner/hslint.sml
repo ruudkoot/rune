@@ -10,6 +10,11 @@
      `NAME.scc.expected`, with the library's unsigned bindings
      (`--dump-hslint=library`) against `NAME.library.expected`, where
      those are; reviewed line by line, and written again with --accept.
+     Then the checker on it at level 2 (`--typecheck-only --lint=2`),
+     where HsLint replays its records and holds them to the second
+     inference: it accepts what the dump infers and refuses, with its own
+     error, what the dump refuses, so that a bug seeded in the checker
+     that its records show (rhc's mutants HK01 to HK05) fails the job.
    - `hs/hslint/accept/K-of-N`, `hs/hslint/lang/K-of-N`: every program of
      tests/hs/accept and tests/hs/lang infers, whatever its rows' status,
      since the second inference does not wait on the checker; a program
@@ -91,14 +96,36 @@ struct
         | SOME (_, flags) =>
             let
               val file = fromRoot (expectedOf (#base p, mode))
+              val job = "hs/hslint/dump/" ^ name ^ (if mode = "" then "" else "/" ^ mode)
               val out = run ^ "/hs-hslint/dump/" ^ slug name ^ (if mode = "" then "" else "." ^ mode) ^ ".out"
               val (_, got) = rhc (flags, #src p, out)
             in
               if accepting then (write (file, got); say ("ACCEPTED " ^ file ^ "\n"))
-              else if got = read file then ()
-              else fail ("hs/hslint/dump/" ^ name ^ (if mode = "" then "" else "/" ^ mode) ^ ": the dump differs from " ^
-                         expectedOf (#base p, mode) ^ ": " ^ out)
+              else if got = read file then checked (job, p, mode, String.isPrefix "REFUSED" got, out)
+              else fail (job ^ ": the dump differs from " ^ expectedOf (#base p, mode) ^ ": " ^ out)
             end
+
+  (* the checker on a fixture at level 2, where HsLint replays its records
+     and holds them to the second inference (HsLint.check): it accepts what
+     the dump infers, or refuses with its own error what the dump refuses *)
+  and checked (job, p : Lang.program, mode, refused, out) =
+    if mode = "library" then ()
+    else
+      let
+        val checkOut = out ^ ".check"
+        val (status, text) = rhc (["--typecheck-only", "--lint=2"] @ (if mode = "scc" then ["--cycle-default=scc"] else []),
+                                  #src p, checkOut)
+        val text = text ^ read (checkOut ^ ".err")
+        val first = case lines text of l :: _ => l | [] => ""
+      in
+        if String.isSubstring "lint after hslint" text then
+          fail (job ^ ": the checker accepts, and HsLint refuses at level 2: " ^ first ^ " (" ^ checkOut ^ ")")
+        else if refused andalso status = 0 then
+          fail (job ^ ": the checker accepts what HsLint refuses (" ^ checkOut ^ ")")
+        else if not refused andalso status <> 0 then
+          fail (job ^ ": the checker refuses: " ^ first ^ " (" ^ checkOut ^ ")")
+        else ()
+      end
 
   (* ---- the expectations of tests/hs ---- *)
 
@@ -209,7 +236,7 @@ struct
 
   (* each rule's fault: the rule it must reach *)
   val faults = ["kind", "derive", "binding", "rule1", "type", "numeric", "standard", "rule2", "default",
-                "bindg", "dict tuple", "dict var", "dict inst", "dict super", "super", "method", "scc"]
+                "bindg", "dict tuple", "dict var", "dict inst", "dict super", "super", "method", "slot", "scc"]
 
   fun faultsAll () =
     let

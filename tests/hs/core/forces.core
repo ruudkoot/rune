@@ -1,0 +1,30 @@
+; forces: 5
+; Each force of Core is one thunk_force node in Mid (the roadmap's M10):
+; the dump of Core to Mid holds five, one for each force here, and no
+; more, for a value a let binds, a field read and a suspension passed on
+; are none. The forces:
+;   1, 2. sum's cases of its lazy x and y;
+;   3. pick's case of its lazy b;
+;   4. main's call of f, a suspension of pick t;
+;   5. main's case of s, a suspension of f l r.
+; p is bound to a constructor, a value, and its fields l and r go to f
+; still suspended, l the CAF two, which sum forces as its x.
+(data P () (P Int Int))
+
+(val two Int (prim int_add 1 1))
+
+(val sum (-> Int Int Int)
+  (\ ((x Int) (y Int)) (case x a (_ (case y b (_ (prim int_add a b)))))))
+
+(val pick (-> Bool (-> Int Int Int))
+  (\ ((b Bool)) (case b c ((True) sum) ((False) sum))))
+
+(val main (-> World (utuple World Int))
+  (\ ((w World))
+    (let (t Bool (con True))
+    (let (f (-> Int Int Int) (pick t))
+    (let (p P (con P two 3))
+    (case p q
+      ((P l r)
+        (let (s Int (f l r))
+          (case s v (_ (utuple w v)))))))))))

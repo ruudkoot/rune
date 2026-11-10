@@ -30,7 +30,6 @@
 - `RPAREN` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rparen)
 - `rules` (val): [CORE_LINT](../sig/CORE_LINT.md#val-rules), [HS_LINT](../sig/HS_LINT.md#val-rules)
 - `run` (val): [CORE_INTERP](../sig/CORE_INTERP.md#val-run)
-- `Runtime` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-runtime)
 
 ---
 

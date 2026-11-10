@@ -10,6 +10,9 @@ Each program here, a file `NAME.hs` or a directory `NAME` whose `Main.hs` import
 `bin/rhc --dump-hslint` in `NAME.expected`, of `--dump-hslint --cycle-default=scc` in `NAME.scc.expected`, and of
 `--dump-hslint=library` in `NAME.library.expected`, where those are. The dump's lines are those `src/rhc/lint.sml`
 describes: `KIND`, `DERIVED`, `TYPE`, `SIGNED`, `DEFAULT`, or `REFUSED` and why. Each file was reviewed line by line.
+Its job then runs the checker on it at level 2 (`bin/rhc --typecheck-only --lint=2`), where HsLint replays the
+checker's evidence records and holds them to its own inference: the checker accepts what the dump infers and refuses
+what the dump refuses, so that a bug seeded in the checker (rhc's mutants HK01 to HK05) fails a fixture's job.
 
 | Fixture | What it pins |
 |---|---|
@@ -20,6 +23,8 @@ describes: `KIND`, `DERIVED`, `TYPE`, `SIGNED`, `DEFAULT`, or `REFUSED` and why.
 | `defaults` | A module's `default` declaration, and 4.3.4's conditions (R22) |
 | `simple` | 4.5.5's simple pattern binding: guards allowed, `(y)` and `~z` not simple (R18) |
 | `classes` | Kinds inferred and defaulted (4.6), derived contexts by the fixpoint (4.3.3, 10.1), a synonym, a constructor class |
+| `dicts` | Superclasses through chains of two steps and more, the Prelude's and the program's own, and a class of three methods used through its dictionary, with a default method and two instances: replay's [dict super] and [slot] read them (HK04, HK05) |
+| `ambiguous` | An ambiguous type variable whose classes include no numeric one is not defaulted (4.3.4, R22): refused, by the checker too (HK03) |
 | `cycle` | A declaration group across a cycle of modules, each module's restricted binding fixed by itself (D30) |
 | `cyclefix` | A module of a cycle fixing another's monomorphic type: refused under `--cycle-default=module`, the default, and taken under `scc` (D30) |
 | `faults` | A program in which every rule of HsLint's comparison and of its replay has a claim or a record to check: its records replayed, held to its own expected dump by `--hslint-claims`, and refused by each rule with its fault (`hs/hslint/faults`) |

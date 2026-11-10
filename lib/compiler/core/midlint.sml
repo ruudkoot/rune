@@ -260,7 +260,8 @@ struct
 
       fun instance (what : unit -> string, (tyvars, t) : scheme, args, poly : bool) =
         (* at fewer types than its variables, where a polymorphic value may
-           be (a field, or a Let's step at a scheme of its own: fieldAtom),
+           be (a field, a tuple's component or a constructor's argument, or
+           a Let's step at a scheme of its own: fieldAtom),
            the binder at its scheme, the first variables given: a forall of
            the rest -- a function Lift took out of one around it is given
            the outer one's first (Lift.program) *)
@@ -423,7 +424,8 @@ struct
         | Con (tag, t, a) =>
             (scoped (the "a constructor", t); valueTy (the "a constructor", t);
              case conArg ("a constructor", t, tag) of
-               SOME arg => (expect (the "the argument of a constructor", atom a, arg); t)
+               (* a field, which may be polymorphic, as a tuple's component *)
+               SOME arg => (expect (the "the argument of a constructor", fieldAtom a, arg); t)
              | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " takes no argument"))
         | Decon (tag, t, a) =>
             (scoped (the "a deconstruction", t); valueTy (the "a deconstruction", t);

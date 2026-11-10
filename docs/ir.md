@@ -686,7 +686,8 @@ type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
 'b)`), which binds its own variables. A forall is the same type as one that
 differs from it only in the names it binds (`Ty.equal`), and a
 substitution renames them where it would capture one. A variable used, as
-a field or as a `Let`'s step at a scheme of its own, at fewer types than
+a field (a tuple's component, or the argument of a constructor of one
+field) or as a `Let`'s step at a scheme of its own, at fewer types than
 its binder abstracts over is its binder at its scheme, the first variables
 given: a forall of the rest (at no types, of all; a function `Lift` takes
 out of another is given that one's variables first). So a polymorphic

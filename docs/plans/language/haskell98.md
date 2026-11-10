@@ -57,30 +57,30 @@ What it rests on:
 
 ## Status
 
-Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" below names the merge on which `make check` last passed; "merged" means in `haskell98`, its check still to run. The decisions are in the table at the head of *Decisions*, and the nine still to be taken on the figures in *Decisions on the numbers*.
+Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" names the merge on which `make check` last passed; "on X" means `make check` ran on merge X with no failure of that milestone's. On `57a5306a4`, 29,044 tests: 24,274 pass, 4,768 held, one failure (Simplify's tag facts in a closure, M29, fixed since) and one timeout under load (`make/test-lsp-oracle`, which passes alone). G1, hello on the interpreter and the VM, passes on the interim suspension form; under form C it waits for M10. The decisions are in the table at the head of *Decisions*, and the nine still to be taken on the figures in *Decisions on the numbers*.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
-| M1. The conformance table and its enforcement | T | M | D38, D53 | done; green on `6793f7ee1` (23,523 tests) |
-| M2. Runners generalised; round-trip harness | T | M | D28 | done; green on `6793f7ee1` |
-| M3. Oracle harness and the corpus imported | T | L | D52 | under way: the corpus's licences surveyed (74 of 188 may be vendored; nothing vendored, the owner's choice), E7's and E8's judgements as data, readings R55 and R56; the harness in progress |
-| M4. Rune's contract: E11's patches, as decided | A | L | D7, D39, D40, D41 | done; green on `6793f7ee1` |
-| M5. Mid to bytecode, Mid text with labels | A | S | D1, D26 | done; green on `6793f7ee1` |
-| M6. Walkers and a fold | A | M | D10 | done; merged |
-| M7. Lints and the two Simplify fixes | A | S | D5 | done; merged |
-| M8. Core, its text, CoreLint, a Core interpreter | B | L | D2, D41 | done; merged (the skeleton green on `6793f7ee1`) |
-| M9. Thunks through the engines | B | L | D3-D6, D11-D14, D18, D19, D57 | built (115 of 115 lazy ports pass on form C, `--count` 0.916 of E2's closure form); its heavy checks running |
-| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | under way |
-| M11. Lexer, layout, parser, printers | F | L | D27, D28 | done, D21's tables in `lib/unicode` with it; merged (the parser green on `6793f7ee1`) |
-| M12. Renamer, modules, fixity, recursive modules | F | L | D29, D30, D35, D36 | under way (the qualified-operator lexeme merged) |
-| M13. Kinds, types, classes | F | L | D30, D31, D32, D33 | not started |
-| M14. Deriving | F | M | D33 | not started |
-| M15. Desugaring to Core | F | L | D17, D34 | not started |
-| M16. HsLint | F | L | D54 | not started |
-| M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | the Report's libraries as text, errata applied, overlay listed: green on `6793f7ee1`; the primitives under way |
-| M18. The Report's libraries | L | M | D36 | not started |
-| M19. Conformance: the table worked through | T | L | D52, D55, D56 | under way: 2,314 of the 3,781 rows that want a program have one, held while the row is `Planned`; D55's harness (rhc's mutants, metamorphic relations, bottom probes, the generator) merged |
-| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | under way |
+| M1. The conformance table and its enforcement | T | M | D38, D53 | done; green on `6793f7ee1` (23,523 tests) and on `57a5306a4` |
+| M2. Runners generalised; round-trip harness | T | M | D28 | done; green on `6793f7ee1` and `57a5306a4` |
+| M3. Oracle harness and the corpus imported | T | L | D52 | done: oracle harness, E7's and E8's data, all 188 of D56's programs vendored (45 under their LICENSE, 143 under a PROVENANCE, by the owner's rules of 2026-11-10) |
+| M4. Rune's contract: E11's patches, as decided | A | L | D7, D39, D40, D41 | done; green on `6793f7ee1` and `57a5306a4` |
+| M5. Mid to bytecode, Mid text with labels | A | S | D1, D26 | done; green on `6793f7ee1` and `57a5306a4` |
+| M6. Walkers and a fold | A | M | D10 | done, every budget recovered (the compiler's own compile 3.2% fewer instructions than before M6); on `57a5306a4` |
+| M7. Lints and the two Simplify fixes | A | S | D5 | done; on `57a5306a4` |
+| M8. Core, its text, CoreLint, a Core interpreter | B | L | D2, D41 | done; on `57a5306a4` |
+| M9. Thunks through the engines | B | L | D3-D6, D11-D14, D18, D19, D57 | done: form C on both instruction sets, every engine and tier; 115 of 115 lazy ports; bytes held but the fingerprint. Departure: the stack VM still retains `last`'s dead suspension (the owner's list) |
+| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | under way: Core to Mid on form C, M28's types; G1's programs run on the interim form |
+| M11. Lexer, layout, parser, printers | F | L | D27, D28 | done; on `57a5306a4` |
+| M12. Renamer, modules, fixity, recursive modules | F | L | D29, D30, D35, D36 | done; on `57a5306a4` |
+| M13. Kinds, types, classes | F | L | D30, D31, D32, D33 | done: the Report's 20 modules and the 11-module unit check; 798 of 808 corpus programs; on `57a5306a4` |
+| M14. Deriving | F | M | D33 | done (one fix open: derived `Ord`/`Ix` tags take the module's `default`) |
+| M15. Desugaring to Core | F | L | D17, D34 | done on its branch: `rhc hello.hs` prints hello on Core's interpreter and on the VM; 520 of 555 clause programs agree on both; 80 of 92 `tr.*` rows Supported; merging |
+| M16. HsLint | F | L | D54 | second inference, replay of Faxén's rules, two judges held to one verdict, and M16's five seeds caught; the target check waits for M15 |
+| M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | the Report's libraries as text and the overlay as code over rhc's runtime in Core (CoreRuntime, 25 more primitives); probes held until programs run |
+| M18. The Report's libraries | L | M | D36 | the nine modules' overlay; the system primitives under way |
+| M19. Conformance: the table worked through | T | L | D52, D55, D56 | every row that wants a program has one but the owner's held rows; the harness of D55 (mutants, relations, probes, generator, reducer, budgets) and D56's tiers in place; runs held until rhc compiles each row's programs |
+| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | built; merging |
 | M21. HsIface and rhc's driver | S | L | D43, D44, D45 | not started |
 | M22. SCC keys | S | M | D30, D36 | not started |
 | M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | not started |
@@ -88,10 +88,10 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M25. What measurement justifies | P | | D15-D17, D19, D51 | not started |
 | M26. Ready for lazy ML | Z | | D57 | not started |
 | M27. Retire | | S | | not started |
-| M28. `Ty` with application and forall | A | L | D4 | done; merged |
-| M29. Mid `Case` | A | L | D8 | under way |
-| M30. Multi-value return, built to be measured | A | L | D9 | to build after M20, on the register VM, to be measured |
-| M31. `IntInf` immediate | A | M | D20 | done; merged |
+| M28. `Ty` with application and forall | A | L | D4 | done; on `57a5306a4` |
+| M29. Mid `Case` | A | L | D8 | done (a fix of Simplify's tag facts in a closure, made after `57a5306a4`, merging) |
+| M30. Multi-value return, built to be measured | A | L | D9 | to build, on the register VM, to be measured |
+| M31. `IntInf` immediate | A | M | D20 | done; on `57a5306a4` |
 
 Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
 

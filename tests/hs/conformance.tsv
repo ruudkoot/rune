@@ -2320,7 +2320,7 @@ lay.angle.comment	9.3	White space includes comments: a lexeme after a comment on
 lay.angle.notfirst	9.3	A lexeme not first on its line gets no <n>	layout	accept	annotated token dump	hand	Supported		
 lay.angle.stringgap	9.3	No <n> before the \Bill of a multi-line string, nor before the following comma: the Report's fragment	layout	accept	`f = ("Hello \` then `\Bill", "Jake")` at a smaller column parses	hand	Supported		
 lay.stack.zero	9.3	Context 0: the enclosing context is explicit, and no layout tokens are inserted until it ends or a new context is pushed	layout	accept	inside explicit braces, lines at any column insert nothing	hand	Supported		
-lay.stack.positive	9.3	A positive context is the indentation column of the enclosing layout context	layout	accept	stack dump	hand	Planned		
+lay.stack.positive	9.3	A positive context is the indentation column of the enclosing layout context	layout	accept	stack dump	hand	Supported		
 lay.col.indentation	9.3	The indentation of a lexeme is the column of its first character; of a line, that of its leftmost lexeme	layout	accept	annotated token dump	hand	Supported		
 lay.col.newlinechars	9.3	newline, return, linefeed and formfeed all start a new line	layout	accept	a lexeme after FF or lone CR has column 1	hand	Supported	R57	
 lay.col.first	9.3	The first column is column 1, not 0	layout	accept	annotated token dump	hand	Supported		
@@ -2329,7 +2329,7 @@ lay.col.tabalign	9.3	A tab inserts enough spaces to align with the next tab stop
 lay.col.vt	9.3	The Report does not say how a vertical tab moves the column	layout	none	silence: rhc chooses, one column, and documents it; see readings.md	hand	Planned	R4	
 lay.col.unicode	9.3	Unicode characters are of the same, fixed width as an ASCII character for the layout rule	layout	accept	a wide CJK or combining character counts one column; code point, not grapheme or byte	hand	Supported		
 lay.col.advice	9.3	Programmers should avoid layout whose meaning depends on the width of non-space characters	layout	none	advice to programmers	hand	Planned		
-lay.input.application	9.3	L tokens [] delivers the layout-insensitive translation of the annotated lexeme stream of a module	layout	accept	the implementation's output equals a separate executable L written from this section, on the corpus	hand	Planned		
+lay.input.application	9.3	L tokens [] delivers the layout-insensitive translation of the annotated lexeme stream of a module	layout	accept	the implementation's output equals a separate executable L written from this section, on the corpus	hand	Supported		
 lay.l.1	9.3	L (<n>:ts) (m:ms) = ; : L ts (m:ms) if m = n	layout	accept	new line at the context's column gives ;	hand	Supported		
 lay.l.2	9.3	L (<n>:ts) (m:ms) = } : L (<n>:ts) ms if n < m	layout	accept	dedent gives } and the same <n> is tried again	hand	Supported		
 lay.l.2.repeat	9.3	Equation 2 keeps <n>, so one line gives } } ;	layout	accept	the }}; of Figure 2.2	hand	Supported		
