@@ -1023,10 +1023,19 @@ struct
                            end
                          val conAlts = List.mapPartial (fn AltCon (k, xs, rhs) => SOME (k, xs, rhs) | _ => NONE) alts
                          val exhaustive = length conAlts = length cs
+                         (* the tag of a constructor of no field, written as
+                            Mid's constant: its arm alone, since Lower, at
+                            -O0, would take the constant apart in the others
+                            too *)
+                         val known = if String.isPrefix "(con0 " v then Int.fromString (String.extract (v, 6, NONE)) else NONE
                        in
-                         case (cs, conAlts) of
-                           ([_], [(k, xs, rhs)]) => conBranch (env, k, xs, rhs, c)
-                         | (_, []) => (case default () of SOME rhs => exp (env, rhs, c) | NONE => raise Fail "CoreToMid: no alternative")
+                         case (cs, conAlts, known) of
+                           ([_], [(k, xs, rhs)], _) => conBranch (env, k, xs, rhs, c)
+                         | (_, [], _) => (case default () of SOME rhs => exp (env, rhs, c) | NONE => raise Fail "CoreToMid: no alternative")
+                         | (_, _, SOME t) =>
+                             (case List.find (fn (k, _, _) => #tag (conInfo k) = t) conAlts of
+                                SOME (k, xs, rhs) => conBranch (env, k, xs, rhs, c)
+                              | NONE => (case default () of SOME rhs => exp (env, rhs, c) | NONE => raiseBuiltin 0))
                          | _ =>
                              (* Mid's case on the tag (M29), whose switch Lower
                                 makes: an arm a constructor, and the default
