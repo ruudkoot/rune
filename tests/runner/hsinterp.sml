@@ -4,7 +4,8 @@
    Core's interpreter (`bin/rhc --lint=3 FILE`, as hs/core runs `--read-core
    FILE`), and compiled through Mid to the VM (`bin/rhc --lint=2 FILE -o
    OUT`, bin/runevm OUT), each with the program's .stdin, the VM with its
-   .vmargs. What the VM prints
+   .vmargs; a program of one file interpreted as a copy named prog.hs, so
+   that getProgName is prog both ways. What the VM prints
    is what the interpreter printed, and it ends as the interpreter did: a
    status of 0, or every bottom one bottom, a status other than 0. A program
    the interpreter alone can run says so on a line `-- vm: no: REASON`
@@ -39,7 +40,14 @@ struct
           val () = (rmTree work; mkdirs work)
           fun f x = work ^ "/" ^ x
           val src = fromRoot (#src p)
-          val ic = exec {cmd = [fromRoot rhc, "--lint=3", src], dir = SOME work, stdin = stdinOf p, stdout = f "interp.out",
+          (* a program of one file is interpreted as prog.hs, a copy, so that
+             its getProgName, the source's base name on the interpreter, is
+             prog, as the VM's prog.rbc gives (the lead's ruling 33) *)
+          val isrc =
+            if String.isPrefix (#base p ^ "/") (#src p) then src
+            else let val copy = f ("prog" ^ (if String.isSuffix ".lhs" src then ".lhs" else ".hs"))
+                 in write (copy, read src); copy end
+          val ic = exec {cmd = [fromRoot rhc, "--lint=3", isrc], dir = SOME work, stdin = stdinOf p, stdout = f "interp.out",
                          stderr = f "interp.err", timeout = 600}
           val cc = exec {cmd = [fromRoot rhc, "--lint=2", src, "-o", f "prog.rbc"], dir = SOME work, stdin = "", stdout = f "c.err",
                          stderr = f "c.err", timeout = 600}
