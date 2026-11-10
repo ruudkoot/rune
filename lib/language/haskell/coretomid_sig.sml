@@ -16,9 +16,11 @@
    action of Core, `World -> (utuple World T)`, is `unit -> T` in Mid, its
    order the order of its lets.
 
-   What a later milestone gives is behind one function each: a type
+   An `Integer` is Mid's `IntInf.int`, an immediate within 63 bits and a
+   sign and a magnitude past them (M31, D20's D), each literal a global made
+   once. What a later milestone gives is behind one function: a type
    constructor applied by a variable and a forall inside a type (M28, Mid's
-   `Ty` with application and forall), and `Integer` (M31).
+   `Ty` with application and forall).
 
    Area: Languages *)
 signature CORE_TO_MID =

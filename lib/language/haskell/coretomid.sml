@@ -19,8 +19,6 @@ struct
 
   (* a position that needs Mid's Ty with application and forall *)
   fun waitsOnM28 what = raise Unsupported (what ^ ": it waits on M28, Mid's Ty with application and forall")
-  (* Integer, which shares IntInf's immediate representation *)
-  fun waitsOnM31 what = raise Unsupported (what ^ ": it waits on M31, IntInf immediate")
 
   (* ---- Bindings ---- *)
 
@@ -81,7 +79,8 @@ struct
      the primitives that are no primitive of Mid: an exception's kind, name
      and message, a code point's character, and its bytes in UTF-8 *)
   val prelude = String.concatWith "\n"
-    ["(val grtErrorCall : exncon (return (newexn \"ErrorCall\")))",
+    ["(datatype option ('a) (0 \"NONE\") (1 \"SOME\" : 'a))",
+     "(val grtErrorCall : exncon (return (newexn \"ErrorCall\")))",
      "(val grtIOError : exncon (return (newexn \"IOError\")))",
      "(val grtPatternMatchFail : exncon (return (newexn \"PatternMatchFail\")))",
      "(val grtNonTermination : exncon (return (newexn \"NonTermination\")))",
@@ -104,7 +103,9 @@ struct
      "    (let (vrt6 : bool) (prim poly_eq vrtN \"Subscript\" : (string * string) -> bool)",
      "    (if vrt6 (return 6)",
      "    (let (vrt7 : bool) (prim poly_eq vrtN \"Chr\" : (string * string) -> bool)",
-     "    (if vrt7 (return 7) (return ~1))))))))))))))))))))",
+     "    (if vrt7 (return 7)",
+     "    (let (vrt8 : bool) (prim poly_eq vrtN \"Domain\" : (string * string) -> bool)",
+     "    (if vrt8 (return 8) (return ~1))))))))))))))))))))))",
      "  (fn grtExnName ((vrnE : exn)) : string \"exn_name\"",
      "    (let (vrnK : int) (app grtExnKind vrnE)",
      "    (let (vrn0 : bool) (prim poly_eq vrnK 0 : (int * int) -> bool) (if vrn0 (return \"ErrorCall\")",
@@ -115,7 +116,8 @@ struct
      "    (let (vrn5 : bool) (prim poly_eq vrnK 5 : (int * int) -> bool) (if vrn5 (return \"Overflow\")",
      "    (let (vrn6 : bool) (prim poly_eq vrnK 6 : (int * int) -> bool) (if vrn6 (return \"Subscript\")",
      "    (let (vrn7 : bool) (prim poly_eq vrnK 7 : (int * int) -> bool) (if vrn7 (return \"Chr\")",
-     "    (return (prim exn_name vrnE : exn -> string))))))))))))))))))))",
+     "    (let (vrn8 : bool) (prim poly_eq vrnK 8 : (int * int) -> bool) (if vrn8 (return \"Domain\")",
+     "    (return (prim exn_name vrnE : exn -> string))))))))))))))))))))))",
      "  (fn grtExnMessage ((vrmE : exn)) : string \"exn_message\"",
      "    (let (vrmK : int) (app grtExnKind vrmE)",
      "    (let (vrmS : bool) (prim int_lt vrmK 3 : (int * int) -> bool)",
@@ -126,7 +128,8 @@ struct
      "    (let (vrm5 : bool) (prim poly_eq vrmK 5 : (int * int) -> bool) (if vrm5 (return \"arithmetic overflow\")",
      "    (let (vrm6 : bool) (prim poly_eq vrmK 6 : (int * int) -> bool) (if vrm6 (return \"index out of range\")",
      "    (let (vrm7 : bool) (prim poly_eq vrmK 7 : (int * int) -> bool) (if vrm7 (return \"chr\")",
-     "    (return \"\"))))))))))))))))",
+     "    (let (vrm8 : bool) (prim poly_eq vrmK 8 : (int * int) -> bool) (if vrm8 (return \"domain\")",
+     "    (return \"\"))))))))))))))))))",
      "  (fn grtChr ((vrcC : int)) : int \"chr\"",
      "    (let (vrcL : bool) (prim int_lt vrcC 0 : (int * int) -> bool)",
      "    (let (vrcH : bool) (prim int_gt vrcC 1114111 : (int * int) -> bool)",
@@ -165,7 +168,37 @@ struct
      "    (let (vruB4 : string) (app grtByte vruH4)",
      "    (let (vruT4 : string) (prim string_concat vruB4 vruN : (string * string) -> string)",
      "    (let (vruU4 : string) (prim string_concat vruT4 vruM : (string * string) -> string)",
-     "    (return (prim string_concat vruU4 vruL : (string * string) -> string))))))))))))))))))\n"]
+     "    (return (prim string_concat vruU4 vruL : (string * string) -> string)))))))))))))))))",
+     "  (fn grtRead ((vhH : int) (vhN : int)) : string \"read\"",
+     "    (handle vhX (return (prim file_read_vec vhH vhN : (int * int) -> string))",
+     "      (let (vhE : exn) (mkexn grtIOError \"read failed\") (raise vhE))))",
+     "  (fn grtIsInfinite ((viX : real)) : bool \"is_infinite\"",
+     "    (let (viN : bool) (prim real_is_nan viX : real -> bool)",
+     "    (if viN (return (con0 0 : bool))",
+     "      (let (viD : real) (prim real_sub viX viX : (real * real) -> real)",
+     "      (return (prim real_is_nan viD : real -> bool))))))",
+     "  (fn grtIsNegativeZero ((vzX : real)) : bool \"is_negative_zero\"",
+     "    (let (vzZ : bool) (prim real_eq vzX 0.0 : (real * real) -> bool)",
+     "    (if vzZ (return (prim real_sign_bit vzX : real -> bool)) (return (con0 0 : bool)))))",
+     "  (fn grtIsDenormal ((vdX : real) (vdN : real)) : bool \"is_denormalized\"",
+     "    (let (vdZ : bool) (prim real_eq vdX 0.0 : (real * real) -> bool)",
+     "    (if vdZ (return (con0 0 : bool))",
+     "      (let (vdA : real) (prim real_abs vdX : real -> real)",
+     "      (return (prim real_lt vdA vdN : (real * real) -> bool))))))",
+     "  (fn grtDecode ((vcX : real) (vcB : int)) : (int * int) \"decode\"",
+     "    (let (vcZ : bool) (prim real_eq vcX 0.0 : (real * real) -> bool)",
+     "    (if vcZ (return (tuple 0 0))",
+     "      (let (vcM : real) (prim real_frexp_man vcX : real -> real)",
+     "      (let (vcE : int) (prim real_frexp_exp vcX : real -> int)",
+     "      (let (vcS : real) (prim real_ldexp vcM vcB : (real * int) -> real)",
+     "      (let (vcI : int) (prim real_trunc vcS : real -> int)",
+     "      (let (vcF : int) (prim int_sub vcE vcB : (int * int) -> int)",
+     "      (return (tuple vcI vcF))))))))))",
+     "  (fn grtOpen ((voP : string) (voM : int)) : int \"open\"",
+     "    (let (voO : int option) (prim file_open voP voM : (string * int) -> int option)",
+     "    (let (voT : int) (tag voO)",
+     "    (let (voS : bool) (prim poly_eq voT 1 : (int * int) -> bool)",
+     "    (if voS (return (decon 1 voO : int option)) (return ~1)))))))\n"]
 
   (* what the form of suspensions declares: nothing for form C, whose susp
      is Mid's; E1's runtime its abstract susp and the states of a cell *)
@@ -292,7 +325,7 @@ struct
         | TCon "Str" => "string"
         | TCon "Exn" => "exn"
         | TCon "World" => "unit"
-        | TCon "Integer" => waitsOnM31 "the type Integer"
+        | TCon "Integer" => "IntInf.int"
         | TFun (p, r) => "(" ^ slotTy env p ^ " -> " ^ valTy env r ^ ")"
         | TUTuple ts =>
             (case List.filter (not o isWorld) ts of
@@ -353,14 +386,34 @@ struct
       fun letv (ty, rhs, body : string -> string) =
         let val v = freshVar () in "(let (" ^ v ^ " : " ^ ty ^ ") " ^ rhs ^ " " ^ body v ^ ")" end
 
+      (* Integer's literals, IntInf.int in Mid (M31, D20's D): each a global,
+         made once, from an Int where it fits Mid's and otherwise from its
+         sign and the bytes of its magnitude, the least significant first *)
+      val integerLits : (IntInf.int * string) list ref = ref []
+      fun integerGlobal i =
+        case List.find (fn (j, _) => j = i) (!integerLits) of
+          SOME (_, g) => g
+        | NONE => let val g = fresh "gI" in integerLits := (i, g) :: !integerLits; g end
+      fun integerDef (i, g) =
+        let
+          val bound = IntInf.pow (2, 62)
+          fun bytes n = if n = 0 then [] else Char.chr (IntInf.toInt (IntInf.mod (n, 256))) :: bytes (IntInf.div (n, 256))
+          val rhs =
+            if IntInf.<= (IntInf.~ bound, i) andalso IntInf.< (i, bound) then
+              "(prim intinf_from_int " ^ IntInf.toString i ^ " : int -> IntInf.int)"
+            else
+              "(prim intinf_make (con0 " ^ (if IntInf.< (i, 0) then "1" else "0") ^ " : bool) "
+              ^ quote (String.implode (bytes (IntInf.abs i))) ^ " : (bool * string) -> IntInf.int)"
+        in "(val " ^ g ^ " : IntInf.int (return " ^ rhs ^ "))\n" end
+
       fun constText l =
         case l of
           LInt i => IntInf.toString i
         | LChar c => Int.toString c
         | LDouble s => String.translate (fn #"-" => "~" | #"e" => "E" | c => String.str c) s
-        | LFloat s => String.translate (fn #"-" => "~" | #"e" => "E" | c => String.str c) s
+        | LFloat s => Real.fmt (StringCvt.SCI (SOME 16)) (Real32.toLarge (valOf (Real32.fromString s)))
         | LStr s => quote s
-        | LInteger _ => waitsOnM31 "an Integer literal"
+        | LInteger i => integerGlobal i
 
       fun raiseBuiltin k = letv ("exncon", "(builtinexn " ^ Int.toString k ^ ")", fn c =>
                              letv ("exn", "(mkexn " ^ c ^ " ())", fn e => "(raise " ^ e ^ ")"))
@@ -890,13 +943,13 @@ struct
                    | _ =>
                        (case (tc, List.filter (fn AltLit _ => true | _ => false) alts) of
                           (_, []) => (case default () of SOME rhs => exp (env, rhs, c) | NONE => raise Fail "CoreToMid: no alternative")
-                        | ("Integer", _) => waitsOnM31 "a case on Integer literals"
                         | (_, lits) =>
                             branching (env, c, fn c =>
                               let
+                                val eqTy = if tc = "Integer" then "(IntInf.int * IntInf.int)" else "(int * int)"
                                 fun chain [] = exp (env, valOf (default ()), c)
                                   | chain (AltLit (l, rhs) :: rest) =
-                                      letv ("bool", "(prim poly_eq " ^ v ^ " " ^ constText l ^ " : (int * int) -> bool)",
+                                      letv ("bool", "(prim poly_eq " ^ v ^ " " ^ constText l ^ " : " ^ eqTy ^ " -> bool)",
                                             fn bv => "(if " ^ bv ^ " " ^ exp (env, rhs, c) ^ " " ^ chain rest ^ ")")
                                   | chain (_ :: rest) = chain rest
                               in chain lits end)))
@@ -939,23 +992,32 @@ struct
             atomSlots (env, atoms, ps, fn xs =>
               letv (resTy, "(prim " ^ name ^ " " ^ argText xs ^ " : " ^ ty ^ ")", fn r => deliver (env, c, r, res)))
           fun call f = atomSlots (env, atoms, ps, fn xs => out (valTy env res, "(app " ^ f ^ " " ^ argText xs ^ ")"))
+          (* a primitive of Mid whose real result is rounded to binary32 *)
+          fun rounded (name, ty) =
+            atomSlots (env, atoms, ps, fn xs =>
+              letv ("real", "(prim " ^ name ^ " " ^ argText xs ^ " : " ^ ty ^ ")", fn r =>
+                out ("real", "(prim real_to_single " ^ r ^ " : real -> real)")))
           fun notOf (name, ty) =
             atomSlots (env, atoms, ps, fn xs =>
               letv ("bool", "(prim " ^ name ^ " " ^ String.concatWith " " xs ^ " : " ^ ty ^ ")", fn b =>
                 branching (env, c, fn c => "(if " ^ b ^ " " ^ deliver (env, c, "(con0 0 : bool)", res) ^ " "
                                            ^ deliver (env, c, "(con0 1 : bool)", res) ^ ")")))
           val i2 = "(int * int)"
+          val n2 = "(IntInf.int * IntInf.int)"
           val r2 = "(real * real)"
           fun suffix s = String.extract (p, size s, NONE)
           val S = case tys of [a] => slotTy env a | _ => ""
         in
-          if String.isPrefix "integer_" p then waitsOnM31 ("the primitive " ^ p)
-          else
           case p of
             "int_neg" => mid ("int_neg", "int -> int")
           | "int_eq" => mid ("poly_eq", i2 ^ " -> bool")
           | "int_ne" => notOf ("poly_eq", i2 ^ " -> bool")
           | "char_eq" => mid ("poly_eq", i2 ^ " -> bool")
+          | "integer_eq" => mid ("poly_eq", n2 ^ " -> bool")
+          | "integer_ne" => notOf ("poly_eq", n2 ^ " -> bool")
+          | "integer_neg" => mid ("intinf_neg", "IntInf.int -> IntInf.int")
+          | "integer_from_int" => mid ("intinf_from_int", "int -> IntInf.int")
+          | "integer_to_int" => mid ("intinf_to_int", "IntInf.int -> int")
           | "char_ne" => notOf ("poly_eq", i2 ^ " -> bool")
           | "char_ord" => atomSlots (env, atoms, ps, fn [x] => deliver (env, c, x, res) | _ => raise Fail "char_ord")
           | "char_chr" => call "grtChr"
@@ -964,6 +1026,31 @@ struct
           | "double_ne" => notOf ("real_eq", r2 ^ " -> bool")
           | "double_from_int" => mid ("int_to_real", "int -> real")
           | "double_to_str" => mid ("real_to_string", "real -> string")
+          | "float_to_str" => mid ("real_to_string", "real -> string")
+          | "float_neg" => mid ("real_neg", "real -> real")
+          | "float_from_int" => rounded ("int_to_real", "int -> real")
+          | "float_from_double" => mid ("real_to_single", "real -> real")
+          | "float_to_double" => atomSlots (env, atoms, ps, fn [x] => deliver (env, c, x, res) | _ => raise Fail "float_to_double")
+          | "str_extract" => mid ("string_extract", "(string * int * int) -> string")
+          | "h_open" => call "grtOpen"
+          | "h_close" => midAs ("file_close", "int -> unit", "unit")
+          | "h_read" => call "grtRead"
+          | "h_write" => mid ("file_write", "(int * string) -> bool")
+          | "h_flush" => midAs ("file_flush", "int -> unit", "unit")
+          | "h_error" => mid ("file_error", "unit -> string")
+          | "interleave" =>
+              (* a lazy let of the action run with a state of its own, so
+                 that its suspension is the form's, as any other *)
+              (case (tys, atoms) of
+                 ([a], [act, w]) =>
+                   let
+                     val r = "rhc'interleaved"
+                     val w' = "rhc'world"
+                     val run = Case (Prim ("real_world", [], []), w',
+                                     [AltDefault (Case (App (Atom act, [ValArg (Var w')]), "rhc'result",
+                                                        [AltUTuple (["_", "rhc'value"], Atom (Var "rhc'value"))]))])
+                   in exp (env, Let (r, a, run, UTuple [w, Var r]), c) end
+               | _ => raise Fail "interleave")
           | "str_size" => mid ("string_size", "string -> int")
           | "str_byte" =>
               atomSlots (env, atoms, ps, fn xs =>
@@ -1008,17 +1095,60 @@ struct
                    end
                | _ => raise Fail "catch")
           | _ =>
-              if String.isPrefix "int_" p orelse String.isPrefix "char_" p then
+              if String.isPrefix "integer_" p then
+                let val op' = suffix "integer_"
+                in
+                  if member (op', ["lt", "le", "gt", "ge"]) then mid ("intinf_" ^ op', n2 ^ " -> bool")
+                  else mid ("intinf_" ^ op', n2 ^ " -> IntInf.int")
+                end
+              else if String.isPrefix "int_" p orelse String.isPrefix "char_" p then
                 let val op' = if String.isPrefix "int_" p then suffix "int_" else suffix "char_"
                 in
                   if member (op', ["lt", "le", "gt", "ge"]) then mid ("int_" ^ op', i2 ^ " -> bool")
                   else mid ("int_" ^ op', i2 ^ " -> int")
                 end
-              else if String.isPrefix "double_" p then
-                let val op' = suffix "double_"
+              else if String.isPrefix "double_" p orelse String.isPrefix "float_" p then
+                let
+                  val float = String.isPrefix "float_" p
+                  val op' = if float then suffix "float_" else suffix "double_"
+                  (* the result of Mid's primitive, rounded where the type is Float *)
+                  fun real (name, ty) = if float then rounded (name, ty) else mid (name, ty)
+                  val elementary = ["sqrt", "exp", "sin", "cos", "tan", "atan", "sinh", "cosh", "tanh"]
                 in
                   if member (op', ["lt", "le", "gt", "ge"]) then mid ("real_" ^ op', r2 ^ " -> bool")
-                  else mid ("real_" ^ op', r2 ^ " -> real")
+                  else if op' = "eq" then mid ("real_eq", r2 ^ " -> bool")
+                  else if op' = "ne" then notOf ("real_eq", r2 ^ " -> bool")
+                  else if member (op', elementary) then real ("real_" ^ op', "real -> real")
+                  else
+                    case op' of
+                      "log" => real ("real_ln", "real -> real")
+                    | "truncate" => mid ("real_trunc", "real -> int")
+                    | "floor" => mid ("real_floor", "real -> int")
+                    | "ceiling" => mid ("real_ceil", "real -> int")
+                    | "round" =>
+                        atomSlots (env, atoms, ps, fn xs =>
+                          letv ("real", "(prim real_round_r " ^ argText xs ^ " : real -> real)", fn r =>
+                            out ("int", "(prim real_trunc " ^ r ^ " : real -> int)")))
+                    | "is_nan" => mid ("real_is_nan", "real -> bool")
+                    | "is_infinite" => call "grtIsInfinite"
+                    | "is_negative_zero" => call "grtIsNegativeZero"
+                    | "is_denormalized" =>
+                        atomSlots (env, atoms, ps, fn xs =>
+                          out ("bool", "(app grtIsDenormal " ^ argText xs ^ " "
+                                       ^ (if float then "1.1754943508222875E~38" else "2.2250738585072014E~308") ^ ")"))
+                    | "decode" => atomSlots (env, atoms, ps, fn xs =>
+                                    out ("(int * int)", "(app grtDecode " ^ argText xs ^ " " ^ (if float then "24" else "53") ^ ")"))
+                    | "encode" =>
+                        atomSlots (env, atoms, ps, fn xs =>
+                          case xs of
+                            [m, e] =>
+                              letv ("real", "(prim int_to_real " ^ m ^ " : int -> real)", fn r =>
+                                if float then
+                                  letv ("real", "(prim real_ldexp " ^ r ^ " " ^ e ^ " : (real * int) -> real)", fn x =>
+                                    out ("real", "(prim real_to_single " ^ x ^ " : real -> real)"))
+                                else out ("real", "(prim real_ldexp " ^ r ^ " " ^ e ^ " : (real * int) -> real)"))
+                          | _ => raise Fail "encode")
+                    | _ => real ("real_" ^ op', r2 ^ " -> real")
                 end
               else raise Fail ("CoreToMid: no lowering of the primitive " ^ p)
         end
@@ -1132,6 +1262,7 @@ struct
             in "(do () (handle " ^ x ^ " " ^ run ^ " " ^ handler ^ "))\n" end
     in
       concat (List.map (fn d => d ^ "\n") (runtimeDecls form) @ datatypes @ [prelude, runtimeDefs form]
+              @ List.map integerDef (List.rev (!integerLits))
               @ (if null functions then [] else ["(funs\n  " ^ String.concatWith "\n  " functions ^ ")\n"])
               @ cafs @ [main])
     end
