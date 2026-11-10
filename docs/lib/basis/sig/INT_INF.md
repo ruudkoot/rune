@@ -262,6 +262,12 @@ val xorb : int * int -> int
 
 **Example** `xorb (12, 10) = 6`
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (64-bit), SML/NJ development** &mdash; IntInf.xorb (2^62 - 1, \~1) is 0, not \~2^62, which notb (2^62 - 1) gives; 2^62 - 1 and \~2^62 are its Int.maxInt and Int.minInt
+
+</details>
+
 <details><summary>Tests (17)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200+2^100-xor-2^100` &middot; `~2^200-xor-2^200-1` &middot; `minus-one-xor-2^200` &middot; `edge-2^62-1-with-~1` &middot; `edge-2^62-with-~1` &middot; `edge-~2^62-with-~1` &middot; `edge-~2^62-1-with-~1` &middot; `edge-2^63-1-with-~1` &middot; `edge-~2^63-with-~1` &middot; `edge-~2^63-1-with-~1` &middot; `edge-2^31-1-with-~1` &middot; `edge-~2^31-with-~1` &middot; `edge-2^64-1-with-~1` &middot; `model*` &middot; `orb-minus-andb*` &middot; `self*`

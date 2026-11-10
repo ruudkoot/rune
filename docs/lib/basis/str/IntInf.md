@@ -99,7 +99,7 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 > them first. Positive OR/XOR with a small operand visits only low bytes.
 > Public values remain immutable.
 
-<details><summary>Other implementations (11)</summary>
+<details><summary>Other implementations (12)</summary>
 
 - **SML/NJ** &mdash; IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
 - **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
@@ -111,6 +111,7 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 - **SML/NJ** &mdash; IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
 - **SML/NJ** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
 - **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is SOME (98, ""), not SOME (1, "\~2")
+- **SML/NJ (64-bit), SML/NJ development** &mdash; IntInf.xorb (2^62 - 1, \~1) is 0, not \~2^62, which notb (2^62 - 1) gives; 2^62 - 1 and \~2^62 are its Int.maxInt and Int.minInt
 - **Poly/ML 5.9.2** &mdash; IntInf.\~\>\> of a negative number that does not fit a machine word rounds towards zero, not down (\~2^100 \~\>\> 0w101 is 0, not \~1); 5.7.1 rounds down
 
 </details>
