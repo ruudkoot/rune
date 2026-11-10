@@ -3,17 +3,39 @@
    names (the wrapper bin/rhc gives it), what of it a program cannot
    import, and the two modules the Report names and never defines.
 
-   Until the overlay's entries are written (M17, M18), the Report's
-   illustrations are read as E16 read them (results/E16/norm_libs.py), so
-   that the modules parse and their names resolve: an instance whose body
-   is `...` has an empty body, `= ...` is `= primElided`, a type whose
-   constructors are elided or not given is `data T = PrimT`, the built-in
-   types' `data` lines are the instances their `deriving` names, and a
-   signature with no binding (Directory's 13) is a primitive. Each change
-   keeps the line it is on, so a diagnostic of the library points at the
-   Report's text. The modules PreludeBuiltin and UnicodePrims are rhc's
-   primitives (ov.prelude.imports): their exports are the names of
-   primitives the library uses, and nothing else is in them. *)
+   Interim, until the overlay's entries are written (M17, M18; L tells F
+   in impl/progress/f.md when a rule can go): the Report's illustrations
+   are read as E16 read them (results/E16/norm_libs.py), so that the
+   modules parse and their names resolve, each rule keeping the line it is
+   on, so that a diagnostic of the library points at the Report's text.
+   Each rule, and the entries of share/rhc/haskell98/overlay.tsv that
+   replace it:
+
+   - I1. The built-in types' `data` lines are the instances their
+     `deriving` clauses name: ov.prelude.unit, ov.prelude.list,
+     ov.prelude.tuples.
+   - I2. An instance whose body is `...` has an empty body:
+     ov.prelude.int, ov.prelude.integer, ov.prelude.float,
+     ov.prelude.double, ov.preludeio.ioerror, ov.directory.permissions,
+     ov.time.clocktime, ov.random.stdgen, ov.random.instances.
+   - I3. A type whose constructors are elided or not given is
+     `data T = PrimT`: ov.prelude.char, ov.prelude.io, ov.prelude.int,
+     ov.prelude.integer, ov.prelude.float, ov.prelude.double,
+     ov.preludeio.ioerror, ov.time.clocktime, ov.random.stdgen.
+   - I4. `= ...` is `= primElided`: ov.prelude.seq, ov.prelude.io,
+     ov.time.functions, ov.time.decodes.
+   - I5. A signature with no binding is a primitive's, `x = primElided`:
+     ov.directory.prims (and ov.io.handles, ov.cputime.prims,
+     ov.system.prims, ov.random.global, where their names are so given).
+   - I6. A module that names primElided imports it from PreludeBuiltin:
+     goes with I4 and I5.
+   - I7. PreludeBuiltin and UnicodePrims are no files, and export the
+     names of the primitives the library uses, with primElided:
+     ov.prelude.imports, ov.preludeio.import, ov.preludeio.prims,
+     ov.prelude.error, ov.char.prims.
+
+   A program's own module of any of these names is the program's: a
+   module of the library has the identity `haskell98:` and its name. *)
 structure RhcLibrary =
 struct
   (* the library's name, the prefix of its modules' identities *)
