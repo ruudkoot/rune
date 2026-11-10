@@ -704,7 +704,7 @@ pat.guard.after	3.17.2	A guard is evaluated only after all arguments have matche
 pat.guard.true	3.17.2	It must be true for the overall match to succeed	dynamic	run	False guard falls to the next clause	hand	Planned		
 pat.guard.env	3.17.2	The guard's environment is that of the right-hand side	static	run	guard uses the where bindings and the pattern variables	hand	Planned		
 pat.guard.strict	3.17.2	An otherwise irrefutable pattern may be evaluated because of a guard	dynamic	run	f ~(x,y,z) [a] | (a == y) = 1 evaluates a and y: f undefined [1] terminates as error does, the Report's example	hand	Planned		
-tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs	hand	Planned		
+tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs	hand	Planned	R86	
 tr.case.base	3.17.3	All pattern-matching constructs other than case are defined by identities to case, and case by a series of identities	dynamic	none	a statement of method; the rules' completeness is in translations.md	hand	Planned		
 tr.case.a	3.17.3	(a) case e of { alts } = (\v -> case v of { alts }) e, v new	dynamic	run	literal rule differenced; e evaluated at most once, sharing kept by the lambda	hand	Planned		
 tr.case.b	3.17.3	(b) case v of { p1 match1; ... ; pn matchn } = case v of { p1 match1 ; _ -> ... case v of { pn matchn ; _ -> error "No match" }...}	dynamic	run	literal rule differenced, for one to many alternatives	hand	Planned		
@@ -1621,7 +1621,7 @@ std.enum.derive	6.3.4	Enum may be derived for an enumeration type	prelude	run	ch
 std.enum.bounded.succ	6.3.4	For a Bounded and Enum type succ maxBound should be a runtime error	prelude	run	on Bool, Ordering, (), Char, and Int: see readings.md, 6.3.4 also says succ adds 1	hand	Planned	R40	
 std.enum.bounded.pred	6.3.4	pred minBound should be a runtime error	prelude	run	same types; see readings.md	hand	Planned	R40	
 std.enum.bounded.toenum	6.3.4	toEnum should be a runtime error if the result is not representable	prelude	run	toEnum 7 :: Bool is an error, the Report's example	hand	Planned		
-std.enum.bounded.fromenum	6.3.4	fromEnum should be a runtime error if the result is not representable	prelude	run	a user Bounded type wider than Int; a type's Prelude instance cannot reach it	hand	Planned		
+std.enum.bounded.fromenum	6.3.4	fromEnum should be a runtime error if the result is not representable	prelude	run	a user Bounded type wider than Int; a type's Prelude instance cannot reach it	hand	Planned	R81	
 std.enum.bounded.from	6.3.4	enumFrom x = enumFromTo x maxBound for such a type	prelude	run	[True ..] is finite, ['a' ..] ends at maxBound	hand	Planned		
 std.enum.bounded.then	6.3.4	enumFromThen x y uses an implicit bound of maxBound or minBound by direction	prelude	run	[False, True ..] and [True, False ..]	hand	Planned		
 std.enum.inst.unit	6.3.4	() is in Enum, by chapter 10	prelude	run	[() ..]	hand	Planned		
@@ -1648,8 +1648,8 @@ std.enum.float.neg	6.3.4	For negative i it ends below e3+i/2	prelude	run	[3.0,2.
 std.enum.float.to.nonempty	6.3.4	So a list the rule for Int would call empty may have an element	prelude	run	[1.0..0.5] is [1.0], by chapter 8's code; see readings.md	hand	Planned	R39	
 std.enum.float.accum	6.3.4	The elements are chapter 8's accumulated sums	prelude	run	the exact doubles of [0,0.1..1], against the literal definition; see readings.md, GHC multiplies	hand	Planned	R39	
 std.enum.float.count	6.3.4	Chapter 8: [0,0.1 .. 0.95] may have 10 or 11 elements by how 0.1 is represented	prelude	run	a fixed count at Double, by the literal definition	hand	Planned		
-std.enum.strict.int	6.3.4	The enumFrom family is strict in all its arguments at Int	prelude	run	seq [undefined ..] and each argument of each method	hand	Planned		
-std.enum.strict.integer	6.3.4	Likewise at Integer	prelude	run	same	hand	Planned		
+std.enum.strict.int	6.3.4	The enumFrom family is strict in all its arguments at Int	prelude	run	seq [undefined ..] and each argument of each method	hand	Planned	R80	
+std.enum.strict.integer	6.3.4	Likewise at Integer	prelude	run	same	hand	Planned	R80	
 std.enum.strict.float	6.3.4	Likewise at Float and Double, whose instances in chapter 8 get a seq	prelude	run	the fix erratum May 2003 presumes, an entry of the overlay (D37); see readings.md	hand	Planned	R39	
 der.enum.unit	6.3.4	The semantics of Enum on (), Bool and Ordering are those of this chapter	dynamic	run	`[LT ..]` is [LT,EQ,GT]	hand	Planned		
 std.functor.class	6.3.5	Functor has method fmap, for types that can be mapped over	prelude	accept	a user instance at a type constructor	hand	Planned		
@@ -1728,15 +1728,15 @@ std.pow.zero	6.4.3	x^0 is 1 for any x, including zero	prelude	run	0^0 is 1	hand	
 std.pow.zero.frac	6.4.3	x^^0 is 1 for any x, including zero	prelude	run	0^^0 is 1	hand	Planned		
 std.pow.undefined	6.4.3	0**y is undefined	prelude	none	undefined here means unspecified or bottom? see readings.md	hand	Planned	R45	
 std.sign.law	6.4.4	abs x * signum x == x	prelude	run	at each numeric type, signs and zero	hand	Planned		
-std.sign.abs	6.4.4	For real numbers abs x is x if x >= 0, -x if x < 0	prelude	run	at each type; -0.0 and NaN under this definition: see readings.md	hand	Planned	R45	
-std.sign.signum	6.4.4	For real numbers signum x is 1, 0 or -1	prelude	run	at each type; -0.0 and NaN: see readings.md	hand	Planned	R45	
+std.sign.abs	6.4.4	For real numbers abs x is x if x >= 0, -x if x < 0	prelude	run	at each type; -0.0 and NaN under this definition: see readings.md	hand	Planned	R45 R78	
+std.sign.signum	6.4.4	For real numbers signum x is 1, 0 or -1	prelude	run	at each type; -0.0 and NaN: see readings.md	hand	Planned	R45 R78	
 std.trig.funcs	6.4.5	Floating gives the circular and hyperbolic sine, cosine, tangent and their inverses	prelude	run	each at Float and Double, to a tolerance	hand	Planned		
 std.trig.defaults	6.4.5	Default implementations of tan, tanh, logBase, ** and sqrt are provided	prelude	run	a user Floating instance omitting them	hand	Planned		
 std.trig.atan2.range	6.4.5	atan2 y x gives the angle of the vector to (x,y), in [-pi, pi]	prelude	run	all four quadrants	hand	Planned		
 std.trig.atan2.origin	6.4.5	At the origin it follows Common Lisp where signed zeroes are supported	prelude	run	atan2 of the four signed-zero pairs against chapter 8's default	hand	Planned		
 std.trig.atan2.one	6.4.5	atan2 y 1 should return the same value as atan y	prelude	run	sampled	hand	Planned		
 std.trig.atan2.default	6.4.5	A default atan2 is provided	prelude	run	a user RealFloat instance omitting it	hand	Planned		
-std.trig.cl	6.4.5	The precise definition of these functions is as in Common Lisp, following Penfield	prelude	run	branch cuts sampled at Complex; the definition is by external reference: see readings.md	hand	Planned	R45	
+std.trig.cl	6.4.5	The precise definition of these functions is as in Common Lisp, following Penfield	prelude	run	branch cuts sampled at Complex; the definition is by external reference: see readings.md	hand	Planned	R45 R79	
 std.coerce.ceiling	6.4.6	ceiling x returns the least integer not less than x	prelude	run	positive and negative, and an exact integer	hand	Planned		
 std.coerce.floor	6.4.6	floor x returns the greatest integer not greater than x	prelude	run	same	hand	Planned		
 std.coerce.truncate	6.4.6	truncate x yields the integer nearest x between 0 and x, inclusive	prelude	run	same	hand	Planned		
@@ -1788,9 +1788,9 @@ io.getline	7.1	getLine reads a line	dynamic	run	from stdin	hand	Planned
 io.getline.eof	7.1	getLine raises under the same circumstances as hGetLine	dynamic	run	end-of-file at the first character raises	hand	Planned		
 io.getline.partial	7.1	At end-of-file within a line hGetLine returns the partial line; chapter 8's getLine raises	dynamic	run	a last line with no newline; the Report contradicts itself: see readings.md	hand	Planned	R46	
 io.getcontents	7.1	getContents returns all user input as a single string	dynamic	run	from stdin	hand	Planned		
-io.getcontents.lazy	7.1	The string is read lazily as it is needed	dynamic	run	a program that prints a prompt between reading items of a pipe the test feeds in steps	hand	Planned		
+io.getcontents.lazy	7.1	The string is read lazily as it is needed	dynamic	run	a program that prints a prompt between reading items of a pipe the test feeds in steps	hand	Planned	R83	
 io.interact	7.1	interact passes the entire input to its function and writes the result to standard output	dynamic	run	interact (map toUpper) with import Char	hand	Planned		
-io.interact.example	7.1	Example: main = interact (filter isAscii) removes non-ASCII characters	dynamic	run	needs import Char, which the text omits; see readings.md	hand	Planned	R47	
+io.interact.example	7.1	Example: main = interact (filter isAscii) removes non-ASCII characters	dynamic	run	needs import Char, which the text omits; see readings.md	hand	Planned	R47 R85	
 io.readio.ok	7.1	readIO is like read	dynamic	run	readIO "1" :: IO Int	hand	Planned		
 io.readio.fail	7.1	readIO signals parse failure to the I/O monad instead of ending the program	dynamic	run	caught by catch, isUserError by chapter 8	hand	Planned		
 io.readln	7.1	readLn combines getLine and readIO	dynamic	run	from stdin	hand	Planned		
@@ -1799,7 +1799,7 @@ io.filename	7.1	Files are named by strings in some implementation-specific way	d
 io.writefile	7.1	writeFile writes the string, its second argument, to the file, its first	dynamic	run	read back	hand	Planned		
 io.appendfile	7.1	appendFile appends the string to the file	dynamic	run	read back	hand	Planned		
 io.readfile	7.1	readFile returns the contents of the file as a string	dynamic	run	read a known file	hand	Planned		
-io.readfile.lazy	7.1	The file is read lazily, on demand	dynamic	run	reading only the head of a very large file costs a bounded count; 21.2.3's lock shows it too	hand	Planned		
+io.readfile.lazy	7.1	The file is read lazily, on demand	dynamic	run	reading only the head of a very large file costs a bounded count; 21.2.3's lock shows it too	hand	Planned	R84	
 io.writefile.literal	7.1	writeFile and appendFile write a literal string, and show gives a value's	dynamic	run	the example appendFile "squares" (show [(x,x*x) | x <- [0,0.1..2]])	hand	Planned		
 io.seq.instance	7.2	IO is in Monad, with >>= and >> at the given types	prelude	run	both used	hand	Planned		
 io.seq.then	7.2	>> is used where the first result is uninteresting	dynamic	run	two actions in order	hand	Planned		
@@ -1827,7 +1827,7 @@ io.exc.ch21	7.3	The exceptions raised by the Prelude's I/O functions are those o
 pre.r.spec	8	The chapter constitutes a specification for the Prelude	prelude	none	tested through the generated pre.* rows	hand	Planned		
 pre.r.notasis	8	It is not required that the specification be implemented as shown	prelude	none	a permission; rhc's overlay is the list of its uses of it	hand	Planned		
 pre.r.default.method	8	A default method definition specifies only the default method, not the method in all instances	prelude	none	a limit on what the code means: no instance's method is tested against a default unless it uses it	hand	Planned		
-pre.r.default.enumfrom	8	Example: the default enumFrom fails for types wider than Int, as fromEnum cannot map them	prelude	run	a user type with only toEnum and fromEnum wider than Int; Integer's instance does not use it	hand	Planned		
+pre.r.default.enumfrom	8	Example: the default enumFrom fails for types wider than Int, as fromEnum cannot map them	prelude	run	a user type with only toEnum and fromEnum wider than Int; Integer's instance does not use it	hand	Planned	R81	
 pre.r.structure	8	The organisation into Prelude, PreludeList, PreludeText and PreludeIO is purely presentational	prelude	none	an implementation need not use it	hand	Planned		
 pre.r.significant	8	Only the exports of module Prelude are significant	module	reject	numericEnumFrom, showLitChar, primError and each other name not exported: refused unqualified and as Prelude.x	hand	Planned		
 pre.r.imports	8	The imports of library modules are not part of the specification: more or fewer may be imported	prelude	none	so no module's names may leak through the Prelude: the row above tests that	hand	Planned		
@@ -2210,8 +2210,8 @@ pre.list.export.zipwith	8.1	module Prelude exports zipWith	module	accept	import 
 pre.list.export.zipwith3	8.1	module Prelude exports zipWith3	module	accept	import Prelude (zipWith3) compiles and the name is usable	generated	Planned		
 pre.list.export.unzip	8.1	module Prelude exports unzip	module	accept	import Prelude (unzip) compiles and the name is usable	generated	Planned		
 pre.list.export.unzip3	8.1	module Prelude exports unzip3	module	accept	import Prelude (unzip3) compiles and the name is usable	generated	Planned		
-pre.r.lex.limits	8.2	lex is not faithful to the lexical syntax: qualified names, octal and hexadecimal, comments	prelude	run	lex "0x10" gives "0" first; 10.4 says readsPrec parses any valid representation: see readings.md	hand	Planned	R43	
-pre.r.lex.idinit	8.2	lex reads an identifier that begins with an underscore as one lexeme	prelude	run	lex "_a" is [("_a","")]: isIdInit of erratum Feb 2003, an entry of the overlay (D37); see readings.md	hand	Planned	R43	
+pre.r.lex.limits	8.2	lex is not faithful to the lexical syntax: qualified names, octal and hexadecimal, comments	prelude	run	lex "0x10" gives "0" first; 10.4 says readsPrec parses any valid representation: see readings.md	hand	Planned	R43 R82	
+pre.r.lex.idinit	8.2	lex reads an identifier that begins with an underscore as one lexeme	prelude	run	lex "_a" is [("_a","")]: isIdInit of erratum Feb 2003, an entry of the overlay (D37); see readings.md	hand	Planned	R43 R82	
 pre.r.int.minint	8.2	Show Int and Read Int go through Integer, avoiding difficulty with minInt	prelude	run	show minBound and read of it round trip	hand	Planned		
 pre.text.type.reads	8.2	type synonym ReadS as the Report gives it	prelude	accept	interchangeable with its expansion in a test program	generated	Planned		
 pre.text.type.shows	8.2	type synonym ShowS as the Report gives it	prelude	accept	interchangeable with its expansion in a test program	generated	Planned		
@@ -2259,7 +2259,7 @@ pre.text.export.showstring	8.2	module Prelude exports showString	module	accept	i
 pre.text.export.readparen	8.2	module Prelude exports readParen	module	accept	import Prelude (readParen) compiles and the name is usable	generated	Planned		
 pre.text.export.showparen	8.2	module Prelude exports showParen	module	accept	import Prelude (showParen) compiles and the name is usable	generated	Planned		
 pre.r.interact.scope	8.3	interact is written with hSetBuffering, stdin, stdout and NoBuffering, none of which PreludeIO imports	prelude	none	the code as printed does not compile: see readings.md	hand	Planned	R47	
-pre.r.interact.buffering	8.3	interact sets stdin and stdout unbuffered first, for interactive behaviour	prelude	run	output appears before the pipe closes	hand	Planned		
+pre.r.interact.buffering	8.3	interact sets stdin and stdout unbuffered first, for interactive behaviour	prelude	run	output appears before the pipe closes	hand	Planned	R83	
 pre.io.type.filepath	8.3	type synonym FilePath as the Report gives it	prelude	accept	interchangeable with its expansion in a test program	generated	Planned		
 pre.io.data.ioerror	8.3	type IOError is declared as the Report gives it	prelude	accept	constructors, deriving and kinds used by a test program	generated	Planned		
 pre.io.inst.showioerror	8.3	instance Show IOError exists and behaves as the Report gives it	prelude	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Planned		
