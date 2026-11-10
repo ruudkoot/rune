@@ -25,9 +25,17 @@ structure HsRhcCorpus =
 struct
   open Sh
 
-  fun out () = fromRoot (env ("RUNE_HS_OUT", run ^ "/hs-rhc-corpus"))
-  fun expectations () = env ("RUNE_HS_RHC_TXT", fromRoot "tests/hs/rhc-corpus.txt")
-  fun rhc () = env ("RUNE_HS_RHC", fromRoot "bin/rhc")
+  (* what the jobs read and where they write, by the environment, or set
+     here by a check of the harness that runs it in its own process (the
+     faults of tests/runner/hschecks.sml), which also takes what it says *)
+  val outOverride = ref (NONE : string option)
+  val expectOverride = ref (NONE : string option)
+  val rhcOverride = ref (NONE : string option)
+  val sink = ref say
+  fun out () = case !outOverride of SOME d => d | NONE => fromRoot (env ("RUNE_HS_OUT", run ^ "/hs-rhc-corpus"))
+  fun expectations () = case !expectOverride of SOME f => f | NONE => env ("RUNE_HS_RHC_TXT", fromRoot "tests/hs/rhc-corpus.txt")
+  fun rhc () = case !rhcOverride of SOME f => f | NONE => env ("RUNE_HS_RHC", fromRoot "bin/rhc")
+  fun tell s = !sink s
   val gib = 1024 * 1024 * 1024
   val limits = {addressSpace = SOME (6 * gib), cpuTime = NONE, fileSize = SOME gib, core = SOME 0}
 
@@ -127,9 +135,9 @@ struct
       fun count p = List.length (List.filter p vs)
       val failures = List.mapPartial (fn (_, Failure m) => SOME m | _ => NONE) vs
     in
-      List.app (fn m => say ("FAIL " ^ m ^ "\n")) failures;
-      if null os then say ("FAIL rhc " ^ job ^ ": nothing was checked\n")
-      else say ((if null failures then "PASS " else "SUMMARY ") ^ "rhc " ^ job ^ ": " ^ Int.toString (length os)
+      List.app (fn m => tell ("FAIL " ^ m ^ "\n")) failures;
+      if null os then tell ("FAIL rhc " ^ job ^ ": nothing was checked\n")
+      else tell ((if null failures then "PASS " else "SUMMARY ") ^ "rhc " ^ job ^ ": " ^ Int.toString (length os)
                 ^ " programs, " ^ Int.toString (count (fn (x, _) => #passed x)) ^ " as wanted, "
                 ^ Int.toString (count (fn (_, v) => case v of Explained _ => true | _ => false)) ^ " refusals explained by "
                 ^ expectations () ^ ", " ^ Int.toString (count (fn (_, v) => v = Recorded))
@@ -150,9 +158,9 @@ struct
       val bad = List.filter (fn l => Expectations.meaning (#category l) = SOME Expectations.Strict andalso ran l
                                      andalso not (used l)) ls
     in
-      if null rs then say "FAIL rhc: no job left results\n" else ();
-      List.app (fn l => say ("FAIL stale rhc: " ^ Expectations.describe l ^ "\n")) bad;
-      if null bad andalso not (null rs) then say ("PASS rhc: no line of " ^ expectations () ^ " is stale\n") else ()
+      if null rs then tell "FAIL rhc: no job left results\n" else ();
+      List.app (fn l => tell ("FAIL stale rhc: " ^ Expectations.describe l ^ "\n")) bad;
+      if null bad andalso not (null rs) then tell ("PASS rhc: no line of " ^ expectations () ^ " is stale\n") else ()
     end
 
   (* ---- The jobs ---- *)
@@ -170,10 +178,10 @@ struct
 
   fun check (part, set) =
     (HsOracles.pinned set;
-     if not (exists (rhc ())) then say ("FAIL rhc " ^ part ^ "-" ^ set ^ ": no " ^ rhc () ^ " (make bin/rhc)\n")
+     if not (exists (rhc ())) then tell ("FAIL rhc " ^ part ^ "-" ^ set ^ ": no " ^ rhc () ^ " (make bin/rhc)\n")
      else report (part ^ "-" ^ set, List.map (one (part = "m13")) (rowsOf (part, set))))
-    handle HsOracles.Failed m => say ("FAIL rhc " ^ part ^ "-" ^ set ^ ": " ^ m ^ "\n")
-         | HsCorpus.Bad m => say ("FAIL rhc " ^ part ^ "-" ^ set ^ ": " ^ m ^ "\n")
+    handle HsOracles.Failed m => tell ("FAIL rhc " ^ part ^ "-" ^ set ^ ": " ^ m ^ "\n")
+         | HsCorpus.Bad m => tell ("FAIL rhc " ^ part ^ "-" ^ set ^ ": " ^ m ^ "\n")
 
   val sets = HsOracles.judgeSets
   (* every set has rows of both parts (accept.tsv); the tree reads no data,

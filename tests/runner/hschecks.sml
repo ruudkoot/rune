@@ -377,21 +377,25 @@ struct
       val () = write (rhc, fakeRhc)
       val () = Posix.FileSys.chmod (rhc, Posix.FileSys.S.irwxu)
       val counter = ref 0
-      fun job (args, lines) =
+      (* the jobs run here, in this process, on the fake data: what they say
+         is taken, not printed, so that their planted failures are not the
+         check's *)
+      fun job (runs, lines) =
         let
           val () = counter := !counter + 1
           val n = Int.toString (!counter)
           val txt = d ^ "/rhc-corpus-" ^ n ^ ".txt"
           val () = write (txt, String.concatWith "\n" lines ^ "\n")
-          val changes = [("RUNE_HS_DATA", dataDir), ("RUNE_HS_CORPUS", corpus), ("RUNE_HS_RHC", rhc),
-                         ("RUNE_HS_OUT", d ^ "/out-" ^ n), ("RUNE_HS_RHC_TXT", txt)]
-          fun one a = (execEnv (fn e => List.foldl (fn ((k, v), e) => setEnv (k, v) e) e changes)
-                         {cmd = [fromRoot "bin/rune-test"] @ a, dir = NONE, stdin = "", stdout = d ^ "/stdout-" ^ n,
-                          stderr = d ^ "/stderr-" ^ n, timeout = 300};
-                       read (d ^ "/stdout-" ^ n))
-        in String.concat (List.map one args) end
-      val m13 = ["hs-rhc-corpus", "m13", "ghc-legacy"]
-      val stale = ["hs-rhc-corpus", "stale"]
+          val said = ref []
+          fun set (data, root, r, outDir, expect, sink) =
+            (HsCorpus.dataOverride := data; HsCorpus.rootOverride := root; HsRhcCorpus.rhcOverride := r;
+             HsRhcCorpus.outOverride := outDir; HsRhcCorpus.expectOverride := expect; HsRhcCorpus.sink := sink)
+          fun reset () = set (NONE, NONE, NONE, NONE, NONE, say)
+          val () = set (SOME dataDir, SOME corpus, SOME rhc, SOME (d ^ "/out-" ^ n), SOME txt, fn s => said := s :: !said)
+          val () = (List.app (fn f => f ()) runs; reset ()) handle e => (reset (); raise e)
+        in String.concat (rev (!said)) end
+      val m13 = fn () => HsRhcCorpus.check ("m13", "ghc-legacy")
+      val stale = HsRhcCorpus.stale
       fun saw (what, text, s) = need (String.isSubstring s text, what ^ ": no " ^ String.toString s ^ " in " ^ String.toString text)
       fun not' (what, text, s) = need (not (String.isSubstring s text), what ^ ": " ^ String.toString s ^ " in " ^ String.toString text)
       val bLine = "rhc | ghc/x/B::check | RUNE-DEV | reject: planted"
@@ -400,7 +404,7 @@ struct
       val () = saw ("a refusal of what the judges accept", t, "FAIL rhc ghc/x/B::check: reject")
       val () = saw ("a crash", t, "FAIL rhc ghc/x/C::check: crash")
       val () = not' ("what rhc accepts", t, "ghc/x/A")
-      val t = job ([["hs-rhc-corpus", "rest", "ghc-legacy"]], [])
+      val t = job ([fn () => HsRhcCorpus.check ("rest", "ghc-legacy")], [])
       val () = not' ("a refusal of what the judges do not both accept", t, "FAIL")
       val () = saw ("a refusal of what the judges do not both accept", t, "1 recorded")
       val t = job ([m13, stale], [bLine, cLine])
@@ -412,7 +416,7 @@ struct
       val () = saw ("a line for what rhc accepts", t, "FAIL rhc ghc/x/A::check: accept, where")
       val t = job ([m13, stale], [bLine, cLine, "rhc | ghc/x/* | RUNE-DEV | reject: planted again"])
       val () = saw ("a line that no refusal uses", t, "FAIL stale rhc")
-      val t = job ([["hs-rhc-corpus", "m13", "jhc"]], [])
+      val t = job ([fn () => HsRhcCorpus.check ("m13", "jhc")], [])
       val () = saw ("a part with no row", t, "nothing was checked")
     in finish "rhc's corpus jobs on a fake rhc" end
 
