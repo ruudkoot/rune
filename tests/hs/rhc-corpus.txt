@@ -14,3 +14,36 @@ rhc | ghc/module/mod103::check | HOST-BUG | reject: R3: a nested do at the colum
 rhc | hse/NonDecreasing.hs::check | HOST-BUG | reject: R3: a do at the column of the enclosing do (NondecreasingIndentation, on in GHC's Haskell98 mode); 9.3 gives it an empty block; out of M13's list (ruling 43)
 rhc | jhc/1_typecheck/2_pass/fixed_bugs/flat_do_where.hs::check | HOST-BUG | reject: R3: nested dos at the enclosing do's column (NondecreasingIndentation, on in GHC's Haskell98 mode); 9.3 gives them empty blocks; out of M13's list (ruling 43)
 rhc | hse/RelaxedDo.hs::check | HOST-BUG | reject: R3: a do at the column of the enclosing do (its LANGUAGE NondecreasingIndentation, blanked by the preparation, and on in GHC's Haskell98 mode); 9.3 gives it an empty block
+
+# rhc's runs of D56's 188 (tests/runner/hscorpusrun.sml, `hs-corpus-run/ID`): a program both judges ran right
+# (E8's run.tsv) that rhc does not run right in D56's three ways, by its cause, the outcome first: compile (rhc
+# refuses it, in E8's variant, rewritten and under --dotted-names), exit (a status not 0) or diff (another output)
+
+# modules outside the Report's libraries, which the judges' own libraries have: rhc takes a dotted name only under
+# --dotted-names (D35), and its library holds the Report's modules alone
+rhc | jhc/3_io/Array.hs::run | HOST-BUG | compile: Data.Array, the hierarchical name of the Report's Array (D35); E8's import rewrite makes it Array, which is then the program's own file, Array.hs
+rhc | jhc/3_io/IORef.hs::run | HOST-BUG | compile: Data.IORef, outside the Report's libraries (D35)
+rhc | jhc/3_io/enum.hs::run | HOST-BUG | compile: Data.Word, outside the Report's libraries (D35)
+rhc | jhc/7_large/fastest_fib.hs::run | HOST-BUG | compile: Data.List, Data.Word and Data.Int; the last two are outside the Report's libraries (D35)
+rhc | nofib/smp/threads001::run | HOST-BUG | compile: Control.Concurrent, outside the Report's libraries (D35)
+rhc | ghc/typecheck/should_run/tcrun040::run | HOST-BUG | compile: Foreign, of the FFI addendum, not a library of the Report
+
+# R73: a method's context may not constrain the class variable (4.3.1); GHC and Hugs accept it
+rhc | ghc/typecheck/should_run/tcrun037::run | HOST-BUG | compile: R73: a method's context constrains its class's variable (4.3.1)
+rhc | ghc/typecheck/should_fail/tcfail149::run | HOST-BUG | compile: R73: a method's context constrains its class's variable (4.3.1)
+
+# rhc's own faults, each with the milestone it belongs to
+rhc | conformance98/IO/overwrite::run | FAILS | exit: rhc's IO refuses openFile in ReadWriteMode ("ReadWriteMode is not supported"), M18's system primitives
+rhc | yhc-conformance/IO/overwrite::run | FAILS | exit: rhc's IO refuses openFile in ReadWriteMode ("ReadWriteMode is not supported"), M18's system primitives
+rhc | ghc/typecheck/should_run/tcrun001::run | FAILS | compile: rhc's desugaring fails: "HsDsEnv: the function type constructor applied to other than two types" (M15)
+rhc | jhc/6_fixed_bugs/StrictNewtype.hs::run | FAILS | compile: rhc's lint of its Core refuses its desugaring: "[case] in val Main.Foo: a case on Main.TID, a newtype: cast it" (M15)
+rhc | nhcnofib/real/parser::run | FAILS | compile: HsLint at level 2 (RUNE_LINT=2) refuses the checker's type of paAExpr (Main.hs:920): claimed with a list of a type variable where it is [Char] (M13 or M16)
+
+# performance (the lead's ruling 47): a finding for track P (M23-M25), not chased in M19
+rhc | nofib/real/maillist::run | FAILS | exit: killed at the 600 s a way allows, in all three ways (status 124), where GHC -O0 runs it in 0.95 s (E8's run.tsv): rhc's code or its Prelude at -O0, for track P (M23-M25); Hugs timed out on it too (E8), so its run is recorded where the judges do not both run it right
+
+# the -lazy ports (tests/runner/hslazyports.sml, `hs-lazy-ports/PORT`, nightly): the Haskell beside a port that rhc
+# does not run to nofib's output
+rhc | lazy/eliza-lazy::run | HOST-BUG | reject: Main.hs's `import Prelude hiding (Word)` hides what the Prelude does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
+rhc | lazy/scs-lazy::run | HOST-BUG | reject: Parse.hs's `import Data.List hiding (List)`, which the harness's import rewrite makes `import List hiding (List)`, hides what List does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
+rhc | lazy/sphere-lazy::run | FAILS | reject: Mid's reader refuses the text Core to Mid wrote ("an unexpected + at 1286878"), a fault of rhc's (M10)

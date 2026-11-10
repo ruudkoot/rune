@@ -266,12 +266,14 @@ struct
     let
       val progs = glob ("tests/hs/lang", ".hs")
       val pairs = List.filter (fn f => not (String.isSuffix ".pair.hs" f)) (glob (dir, ".hs"))
-      fun mechIn ps (relation, rows) =
+      fun mechOf srcs (relation, rows) =
         List.map (fn src =>
                     let val n = OS.Path.base (OS.Path.file src)
                     in hold (case HsConformance.pendingFile src of SOME w => SOME w | NONE => HsConformance.pendingUntil rows,
                              Test.requires ["rhc"] (job (relation ^ "/" ^ n, ["hs-meta", relation, src])))
-                    end) ps
+                    end) srcs
+      val mech = mechOf progs
+      fun base src = OS.Path.base (OS.Path.file src)
       (* rhc's names on an even sample, which runs today *)
       fun names relation =
         List.map (fn src => Test.requires ["rhc"] (job ("names/" ^ relation ^ "/" ^ OS.Path.base (OS.Path.file src), ["hs-meta-names", relation, src])))
@@ -279,16 +281,16 @@ struct
       fun pair src =
         let val n = OS.Path.base (OS.Path.file src)
         in hold (HsConformance.pendingUntil (rowsOf src), Test.requires ["rhc"] (job ("pairs/" ^ n, ["hs-meta-pair", src]))) end
-      (* make check's: one mechanical relation (braces), the pairs and one
-         relation of names (reorder); the others nightly (the roadmap's D56,
-         the lead's ruling 45), and braces too on a program whose own jobs
-         are nightly (tests/hs/lang-nightly.txt, HsLang.tiers) *)
+      (* make check's: one mechanical relation (braces) on the sample of
+         ruling 47 (HsLang.sampled, never a program of lang-nightly.txt), the
+         pairs and one relation of names (reorder); nightly every program in
+         every relation (the roadmap's D56, the lead's rulings 45 and 47) *)
       fun inCheck (relation, _) = relation = "braces"
-      val progsNightly = List.filter (fn src => List.exists (fn n => n = OS.Path.base (OS.Path.file src)) HsLang.listedNightly) progs
-      val progsCheck = List.filter (fn src => not (List.exists (fn s => s = src) progsNightly)) progs
-      val checked = List.concat (List.map (mechIn progsCheck) (List.filter inCheck mechanical)) @ List.map pair pairs @ names "reorder"
-      val nightly = List.concat (List.map (mechIn progsNightly) (List.filter inCheck mechanical))
-                    @ List.concat (List.map (mechIn progs) (List.filter (not o inCheck) mechanical)) @ names "split" @ names "rename"
+      val (inSample, rest) = List.partition (HsLang.sampled o base) progs
+      val checked = List.map (Test.tag "nightly") (List.concat (List.map (mechOf inSample) (List.filter inCheck mechanical)))
+                    @ List.map pair pairs @ names "reorder"
+      val nightly = List.concat (List.map (mechOf rest) (List.filter inCheck mechanical))
+                    @ List.concat (List.map mech (List.filter (not o inCheck) mechanical)) @ names "split" @ names "rename"
     in
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "hs" (Test.describe "hs" [Test.describe "meta"

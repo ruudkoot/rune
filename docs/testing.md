@@ -403,17 +403,24 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
   the SML port is validated against. The manifest says why each other port is held; a finding is a line of
   `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
-- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc and run in D56's three ways (`test`, `register`,
-  `register-opt`), its output E8's expected one (the same, the same words, or numbers equal to about five digits)
-  and its status 0; all 188 vendored and in `check`, all held while rhc runs no program (the row `prog.main.value`
-  Planned). `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
-  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
-  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
-  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
-  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
-  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
-  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
-  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
+- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc (refused, then again under `--dotted-names`, D35's
+  flag for the corpus) and run in D56's three ways (`test`, `register`, `register-opt`), its output E8's expected
+  one (the same, the same words, or numbers equal to about five digits) and its status 0; all 188 vendored and in
+  `check`, but those `tests/hs/corpus-nightly.txt` names, whose run is over D56's second in a way of `check` (the
+  lead's ruling 47), `nightly`; held while the row `prog.main.value` is Planned. Each step's wall time is kept
+  beside the logs (`LOG.times`). A program both judges ran right (GHC's and Hugs's outputs E8's) that rhc refuses
+  (`compile`), ends otherwise (`exit`) or prints otherwise (`diff`) is a finding, and fails its job unless a line of
+  `tests/hs/rhc-corpus.txt` gives its cause (`rhc | ID::run | CATEGORY | OUTCOME: ...`); what it does where the
+  judges do not both run it right is kept in the results. `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line
+  that explains no failure of a job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45
+  under a `LICENSE` through `--typecheck-only` as the nightly jobs above put the whole corpus, and
+  `hs-rhc-corpus/provenance-SET`, nightly, the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in
+  `check`, not a names job, and the nightly jobs above check the 143 too). `hs-corpus/vendored` (nightly, with the
+  trees) holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and `hs-corpus/data` to the
+  vendored programs' files and notices and nothing more: it refuses a file with no `LICENSE` or `PROVENANCE` beside
+  it or above it, or under another notice than its row of `licences.tsv` names, and a `PROVENANCE` that does not
+  name its tree's upstream and commit or quote the owner's rule. `bin/rune-test hs-corpus-vendor` makes it again
+  from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.
@@ -519,14 +526,21 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `NAME/prog.rbc` in the run's directory (`Lang.suite`'s `binary`), so that
   `getProgName`, the bytecode file's base name (the lead's ruling 33), is
   `prog` in every way, as in `hs/jit` and `hs/interp-vm`.
-* **Tiers** (the roadmap's D56, B; the lead's ruling 45). A program of
+* **Tiers** (the roadmap's D56, B; the lead's rulings 45, 47 and 48). A program of
   `tests/hs/lang` runs in `check` in the three ways, with its two compiles
   and its check, unless `tests/hs/lang-nightly.txt` names it (a program
-  over D56's second, with its measured time, Core's interpreter's runs in
-  `hs/desugar/orders` among those ways), when all its jobs are `nightly`,
-  its `hs/meta/braces` and `hs/desugar/orders` too; `hs/errors/register/NAME` is `check` and `hs/errors/typecheck/NAME`
+  over D56's second in any of the three ways, or whose run on Core's
+  interpreter, as `hs/desugar/orders` makes it, is past a minute, with its
+  measured time), when all its jobs are `nightly`, in every family;
+  `hs/errors/register/NAME` is `check` and `hs/errors/typecheck/NAME`
   `nightly`; `hs/accept/NAME` is `check`. The register way and the refused
-  programs are also `quick`.
+  programs are also `quick`. The families that repeat a program
+  (`hs/desugar/orders`, `hs/meta`'s relations, `hs/roundtrip/rhc`,
+  `hs/interp-vm`, and the shards of `hs/world` and `hs/hslint`) run in
+  `check` a fixed sample, one program in `HsLang.sampleOneIn` (16), those
+  whose name's FNV-1a hash is 0 modulo it, and never one of
+  `lang-nightly.txt`; `nightly`, every program (`tests/runner/hslang.sml`,
+  `HsLang.sampled`).
 * **What they cover.** `covers:` tags for `tests/hs`, `lib/language/haskell`,
   `src/rhc`, `share/rhc` and `rhc.build`, so that `--affected` runs rhc's
   tests alone for a change there, and everything for a change to the
@@ -550,7 +564,8 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
 **Round trips** (the roadmap's D28; `tests/runner/hsroundtrip.sml`). On every
 file of `tests/hs/lang`, `tests/hs/accept` and `tests/hs/roundtrip`
 (`hs/roundtrip/rhc/PATH`, from `tests/hs`, with the explicit print's two tests,
-in `check`; `hs/roundtrip/rhc-printers/PATH` with the implicit and exact
+`nightly`, and in `check` (and `quick`) the sample of ruling 47 by the file's
+base name; `hs/roundtrip/rhc-printers/PATH` with the implicit and exact
 prints', `nightly`):
 
 * the **tree test:** the file printed with explicit braces parses to the
@@ -719,7 +734,8 @@ file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and `lang/K-of-4`
 every program of the directory checked both ways at `--lint=2`, with its
 `.cargs`, to the same standard output, standard error and status, so that
 HsLint replays each way the records of the modules the program reaches; the
-first shard of each in make check, the others nightly;
+shards nightly, and in make check `accept/sample`, `errors/sample` and
+`lang/sample`, the sample of ruling 47 (*Tiers*);
 `bin/rune-test hs-world-one KIND NAME` judges one. The image is made at
 `RUNE_LINT=2`, so that HsLint replays every record of the library once. A
 mutant's tree (`hs-mutants`) has no image, so a mutant goes the whole way.
@@ -751,8 +767,9 @@ program of `tests/hs/errors` whose row is of the classes static, prelude or
 library refused, by HsLint or before it. A directory's programs are judged
 in four jobs, each every fourth program and a line FAIL for each it fails,
 since a job of `bin/rune-test` costs several times what rhc does on one
-program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. The first of
-the four is in `check`, the other three `nightly` (D56; the lead's ruling 45). A program on
+program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. The four are
+`nightly`, and `KIND/sample`, the sample of ruling 47 (*Tiers*), is `check`
+(D56; the lead's rulings 45 and 47). A program on
 which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
 why, and its job holds the disagreement to still being there, so that a fix
 on either side is seen. The same jobs hold the two judges to one verdict on
@@ -868,7 +885,7 @@ use (`USE`): its renamed name and its bytes. `hs/meta/rename` renames each to
 binding's span covers more, as a function binding's head does, is left.
 
 **rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
-`hs/interp-vm/NAME`, nightly). Each run program of `tests/hs/lang` through rhc to
+`hs/interp-vm/NAME`, nightly, and the sample of ruling 47 in `check`). Each run program of `tests/hs/lang` through rhc to
 Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
 Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
 `.stdin` and the VM with its `.vmargs` (as `hs/meta`'s runs are), a program of
@@ -891,8 +908,8 @@ which desugars to the same Core text (`hs/desugar/braces/NAME`, `rhc
 `NAME.parens.hs`, the program with every application of an operator in
 parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`). Over
 the run programs of `tests/hs/lang` the two orders agree on what they print
-and on a value or a bottom (`hs/desugar/orders/NAME`), held while the
-program's rows are `Planned`. The programs avoid what M14's deriving and
+and on a value or a bottom (`hs/desugar/orders/NAME`: nightly, and the
+sample of ruling 47 in `check`), held while the program's rows are `Planned`. The programs avoid what M14's deriving and
 the runtime's arrays are still to give, and their expected output is GHC's.
 The seeds for desugaring (clause order reversed, `~` made strict, a
 `newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
