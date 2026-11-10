@@ -414,13 +414,15 @@ struct
         | NONE => let val x = freshStamp () in tyvarIds := StringMap.insert (!tyvarIds, s, x); x end
       fun tyvar () = case next () of TYVAR s => tyvarId s | _ => fail "a type variable"
 
-      (* type names: the built-in ones, and those the text declares *)
-      val tycons : (int * string) StringMap.map ref =
-        ref (List.foldl (fn ((stamp, n), m) => StringMap.insert (m, n, (stamp, n))) StringMap.empty builtinNames)
+      (* type names: the built-in ones, and those the text declares, each
+         with the number of arguments it takes *)
+      val tycons : (int * string * int) StringMap.map ref =
+        ref (List.foldl (fn (c : Types.tycon, m) => StringMap.insert (m, #name c, (#stamp c, #name c, #arity c)))
+                        StringMap.empty Types.builtinTycons)
       fun base n = case String.fields (fn c => c = #"/") n of b :: _ => b | [] => n
-      fun declare (n, _ : int) =
+      fun declare (n, arity : int) =
         let val c = freshTycon ()
-        in tycons := StringMap.insert (!tycons, n, (c, base n)); c end
+        in tycons := StringMap.insert (!tycons, n, (c, base n, arity)); c end
 
       (* every type the text declares, first, since a datatype may use one
          declared after it *)
@@ -458,7 +460,11 @@ struct
         | ("exncon", []) => Ty.exnCon
         | _ =>
             (case StringMap.find (!tycons, n) of
-               SOME (stamp, b) => Ty.con (stamp, b, args)
+               SOME (stamp, b, arity) =>
+                 if List.length args = arity then Ty.con (stamp, b, args)
+                 else raise Syntax ("the type " ^ n ^ " takes " ^ Int.toString arity
+                                    ^ (if arity = 1 then " argument, not " else " arguments, not ")
+                                    ^ Int.toString (List.length args) ^ where' ())
              | NONE => raise Syntax ("an undeclared type " ^ n ^ where' ()))
       and atomic () : Ty.ty list =
         case next () of
@@ -640,7 +646,7 @@ struct
               val () = eat LP
               fun params acc = if peek () = SOME RP then (eat RP; List.rev acc) else params (tyvar () :: acc)
               val ps = params []
-              val stamp = case StringMap.find (!tycons, n) of SOME (stamp, _) => stamp | NONE => fail "a declared type"
+              val stamp = case StringMap.find (!tycons, n) of SOME (stamp, _, _) => stamp | NONE => fail "a declared type"
               fun cons acc =
                 if peek () = SOME RP then (eat RP; List.rev acc)
                 else

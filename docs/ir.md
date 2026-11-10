@@ -734,7 +734,8 @@ program written by hand. The grammar is at the head of
   variable no type was found for).
 * A type name is written as it is, with `/N` where two would clash; a
   datatype, or a type without constructors, that is not built in is
-  declared at the head.
+  declared at the head, with the arguments it takes, and the reader refuses
+  a type given another number of them.
 * A constant of the type its kind gives it is written bare; others as
   `(0w5 : word8)`.
 * A type of more than `MidText.bigType` (1000) nodes as a tree is declared

@@ -482,6 +482,21 @@ struct
              valR (47, Ty.int, M.Atom one)], "")
     end
 
+  (* ---- MidText's reader (the haskell98 roadmap's M7): a type takes the
+     arguments its declaration says, an abstract type's too *)
+  fun textP (what, text, wanted) =
+    (ignore (MidText.parse text); report ("mid text: " ^ what, wanted = "", "accepted"))
+    handle MidText.Syntax m => report ("mid text: " ^ what, wanted <> "" andalso String.isSubstring wanted m, "refused: " ^ m)
+  fun textRules () =
+    (textP ("an abstract type at its arity", "(abstract box 1)\n(val g1 : int box box (return (prim unsafe_cast 1 : int -> int box box)))", "");
+     textP ("an abstract type given two arguments for one",
+            "(abstract box 1)\n(val g1 : (int, int) box (return (prim unsafe_cast 1 : int -> (int, int) box)))",
+            "the type box takes 1 argument, not 2");
+     textP ("a datatype given none for one", "(datatype pair ('a) (0 \"P\" : 'a * 'a))\n(val g1 : pair (return (con0 0 : pair)))",
+            "the type pair takes 1 argument, not 0");
+     textP ("a built-in type given an argument it does not take", "(val g1 : int int (return 1))",
+            "the type int takes 0 arguments, not 1"))
+
   (* ---- the levels (M3): a check runs from its level up; one that is
      always on says so, and how to turn it off; one at a boundary, found
      below level 2, how to find the pass *)
@@ -638,6 +653,7 @@ struct
      renamings2 ();
      lambdaRules ();
      midRules ();
+     textRules ();
      lowRules ();
      codes ();
      bases ();
