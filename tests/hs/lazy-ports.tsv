@@ -1,0 +1,116 @@
+port	status	main	args	stdin	expected	reason
+anna-lazy	held	Main.hs		anna.stdin	anna.stdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:21:1: error:
+ansi-lazy	ready	Main.hs	150		ansi.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+atom-lazy	ready	Main.hs	1000		atom.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+awards-lazy	held	Main.hs	2000			nofib gives no output fixture (NAME.stdout) to hold a run to
+banner-lazy	held	Main.hs				nofib gives no output fixture (NAME.stdout) to hold a run to
+bernouilli-lazy	ready	Main.hs	60		bernouilli.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+boyer-nofib-lazy	ready	Main.lhs	2		boyer.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+boyer2-lazy	ready	Main.hs	60		boyer2.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+bspt-lazy	ready	Main.hs	2500	bspt.stdin	bspt.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+cacheprof-lazy	held	Main.hs		cacheprof.stdin	cacheprof.stdout	GHC 9.4.7's run in nofib's fast mode does not print nofib's fixture (differs)
+cacheprof-nofib-lazy	held	Main.hs				nofib gives no output fixture (NAME.stdout) to hold a run to
+calendar-lazy	ready	Main.hs	1993 1000		calendar.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+cichelli-lazy	ready	Main.hs	6		cichelli.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+circsim-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+circsim-nofib-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+clausify-lazy	ready	Main.hs	1		clausify.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+comp_lab_nozift-lazy	held	Main.hs	2		comp_lab_zift.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:10:2: error:
+comp_lab_zift-lazy	held	Main.hs	2		comp_lab_zift.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:10:2: error:
+compress-lazy	ready	Main.hs		compress.stdin	compress.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+compress2-lazy	held	Main.hs		compress2.stdin	compress2.stdout	imports modules outside the Report and the corpus's rewrite and compat layer: GHC.Base
+constraints-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+cryptarithm1-lazy	ready	Main.hs	1		cryptarithm1.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+cryptarithm2-lazy	held	Main.hs	30		cryptarithm2.faststdout	imports modules outside the Report and the corpus's rewrite and compat layer: Control.Monad.Trans.Class, Control.Monad.Trans.State
+digits-of-e1-lazy	held	Main.lhs	50		digits-of-e1.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.lhs:7:3: error:
+digits-of-e2-lazy	held	Main.lhs	90		digits-of-e2.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.lhs:7:3: error:
+eliza-lazy	ready	Main.hs	1300	eliza.stdin	eliza.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+event-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+exact-reals-lazy	ready	Main.hs	60		exact-reals.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+exp3_8-lazy	held	Main.hs	8			nofib gives no output fixture (NAME.stdout) to hold a run to
+expert-lazy	ready	Main.hs	1000	expert.stdin	expert.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+fem-lazy	held	Main.hs	20 # 10 is too unstable			nofib gives no output fixture (NAME.stdout) to hold a run to
+fft-nofib-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+fft2-lazy	ready	Main.lhs	70		fft2.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+fibheaps-lazy	held	Main.lhs			fibheaps.stdout	GHC 9.4.7's run in nofib's fast mode does not print nofib's fixture (exit 1)
+fibheaps-nofib-lazy	held	Main.lhs	500			nofib gives no output fixture (NAME.stdout) to hold a run to
+fish-lazy	held	Main.hs	30			nofib gives no output fixture (NAME.stdout) to hold a run to
+fluid-lazy	held	Main.hs	35			nofib gives no output fixture (NAME.stdout) to hold a run to
+fulsom-lazy	held	Main.hs	7			nofib gives no output fixture (NAME.stdout) to hold a run to
+fulsom-nofib-lazy	ready	Main.hs	4		fulsom.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+gamteb-lazy	ready	Main.hs	100		gamteb.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+gcd-lazy	ready	Main.hs	400		gcd.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+gen_regexps-lazy	ready	Main.hs	[a-j][a-j][a-j][0-9]		gen_regexps.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+genfft-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+gg-lazy	ready	Main.hs	150	gg.faststdin	gg.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+gg-pool-lazy	held					no Haskell beside the port (no upstream directory)
+gg-spark-lazy	held					no Haskell beside the port (no upstream directory)
+grep-lazy	ready	Main.lhs	100 .*:..*	grep.faststdin	grep.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+happy-lazy	held	Main.lhs				nofib gives no output fixture (NAME.stdout) to hold a run to
+hidden-lazy	held	Main.hs	runtime_files/houses.plate			nofib gives no output fixture (NAME.stdout) to hold a run to
+hpg-lazy	held	Main.lhs	-nt 8 -dt 4 -nv 10 -dv 6 -de 6		hpg.faststdout	GHC 9.4.7 does not build the upstream as it stands: Utils.lhs:17:3: error:
+ida-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+infer-lazy	ready	Main.hs		infer.stdin	infer.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+integer-lazy	held	Main.hs	-2100000000 14000001 2100000000			nofib gives no output fixture (NAME.stdout) to hold a run to
+integrate-lazy	ready	Main.hs	False 100000		integrate.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+knights-array-lazy	held					no Haskell beside the port (no upstream directory)
+knights-lazy	ready	Main.lhs	8 1		knights.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+lambda-monad-lazy	held					no Haskell beside the port (no upstream directory)
+lambda-simple-lazy	held	Main.hs	80		lambda.faststdout	imports modules outside the Report and the corpus's rewrite and compat layer: Control.Monad.Trans.State.Strict, Data.Functor.Identity
+last-piece-lazy	held	Main.hs			last-piece.stdout	imports modules outside the Report and the corpus's rewrite and compat layer: Data.Map, Text.PrettyPrint
+lcss-lazy	ready	Main.hs	1 2 2000 1000 1001 2000		lcss.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+lcss-nofib-lazy	ready	Main.hs	1 2 60 30 31 90		lcss.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+life-nofib-lazy	ready	Main.hs	15		life.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+lift-lazy	ready	Main.lhs	400		lift.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+linear-lazy	held					no Haskell beside the port (no upstream directory)
+linear-nofib-gc-lazy	held					no Haskell beside the port (no upstream directory)
+listcompr-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+listcopy-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+mandel-lazy	held	Main.hs	-2.0 -2.0 2.0 2.0 25 25 75			nofib gives no output fixture (NAME.stdout) to hold a run to
+mandel-old-lazy	held	Main.hs	-2.0 -2.0 2.0 2.0 25 25 75			nofib gives no output fixture (NAME.stdout) to hold a run to
+mandel2-lazy	held	Main.hs	2			nofib gives no output fixture (NAME.stdout) to hold a run to
+mate-lazy	ready	Main.hs	runtime_files/heathcote3.prob		mate.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+minimax-lazy	held	Main.hs	180000			nofib gives no output fixture (NAME.stdout) to hold a run to
+mkhprog-lazy	held	Main.lhs	350			nofib gives no output fixture (NAME.stdout) to hold a run to
+multiplier-count-lazy	held					no Haskell beside the port (no upstream directory)
+multiplier-lazy	ready	Main.hs	32		multiplier.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+nucleic2-lazy	held	Main.hs	3			nofib gives no output fixture (NAME.stdout) to hold a run to
+nucleic2-shared-lazy	held					no Haskell beside the port (no upstream directory)
+para-lazy	held	Main.lhs	1 runtime_files/input-data			nofib gives no output fixture (NAME.stdout) to hold a run to
+paraffins-lazy	ready	Main.hs	11		paraffins.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+parser-lazy	held	Main.hs		parser.stdin	parser.stdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:11:1: error:
+parstof-lazy	held	Main.hs	1		parstof.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:10:2: error:
+pic-lazy	held	Main.hs	200 18			nofib gives no output fixture (NAME.stdout) to hold a run to
+pidigits-nofib-lazy	ready	Main.hs	3500		pidigits.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+pretty-lazy	ready	Main.hs			pretty.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+primes-lazy	held					no Haskell beside the port (no upstream directory)
+primetest-lazy	ready	Main.lhs		primetest.stdin	primetest.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+prolog-lazy	ready	Main.hs		prolog.stdin	prolog.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+prolog-tree-lazy	held					no Haskell beside the port (no upstream directory)
+puzzle-lazy	held	Main.hs	2			nofib gives no output fixture (NAME.stdout) to hold a run to
+queens-lazy	ready	Main.hs	12		queens.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+reptile-lazy	held	Main.hs		reptile.stdin	reptile.stdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:14:1: error:
+rewrite-lazy	ready	Main.lhs	20000		rewrite.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+rsa-lazy	ready	Main.hs	100	rsa.faststdin	rsa.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+scc-lazy	ready	Main.hs			scc.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+sched-lazy	held	Main.hs	200 10		sched.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:10:2: error:
+scs-lazy	ready	Main.hs	runtime_files/inverter 345 10n 2u 1		scs.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+secretary-lazy	held	Main.lhs			secretary.stdout	GHC 9.4.7 does not build the upstream as it stands: Main.lhs:15:1: error:
+simple-nofib-lazy	held	Main.hs	1			nofib gives no output fixture (NAME.stdout) to hold a run to
+simple-nofib-report-lazy	held	Main.hs	1			nofib gives no output fixture (NAME.stdout) to hold a run to
+solid-lazy	held	Main.hs	5		solid.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:10:2: error:
+sorting-lazy	ready	Main.hs	600 Main.hs		sorting.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+spellcheck-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+sphere-lazy	ready	Main.lhs	30		sphere.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+symalg-lazy	ready	Main.hs		symalg.stdin	symalg.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+tak-nofib-lazy	held	Main.hs	31 16 8		tak.stdout	GHC 9.4.7's run in nofib's fast mode does not print nofib's fixture (differs)
+transform-lazy	held	Main.hs	300		transform.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:9:2: error:
+treejoin-lazy	ready	Main.hs	27000.1 27000.2		treejoin.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+treejoin-nofib-lazy	ready	Main.hs	runtime_files/1500.1 runtime_files/1500.2		treejoin.stdout	GHC 9.4.7 prints nofib's fixture in fast mode
+typecheck-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+veritas-lazy	held	Main.hs	400	veritas.stdin	veritas.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:43:1: error:
+wang-lazy	held					the upstream has no Main: a kernel or a library, run only through the SML port
+wave4main-lazy	held	Main.hs	8		wave4main.faststdout	GHC 9.4.7 does not build the upstream as it stands: Main.hs:10:2: error:
+wheel-sieve1-lazy	ready	Main.hs	3000		wheel-sieve1.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+wheel-sieve2-lazy	ready	Main.hs	700		wheel-sieve2.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode
+x2n1-lazy	ready	Main.hs	1000000		x2n1.faststdout	GHC 9.4.7 prints nofib's fixture in fast mode

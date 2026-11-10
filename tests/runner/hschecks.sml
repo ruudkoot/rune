@@ -177,6 +177,63 @@ struct
     handle HsCorpus.Bad m => (need (false, m); finish "tests/hs/oracles.txt against the record")
          | Expectations.Parse m => (need (false, m); finish "tests/hs/oracles.txt against the record")
 
+  (* ---- rhc's findings and the -lazy ports' manifest ---- *)
+
+  (* a line of tests/hs/rhc-corpus.txt names rhc, a candidate of accept.tsv
+     whose judges both accept it (::check) or a ready -lazy port (::run),
+     a cause after its outcome, and only readings that exist; each port of
+     examples/benchmarks is in lazy-ports.tsv once, and a ready one names
+     its upstream main and its fixture *)
+  fun rhcText () =
+    let
+      val ports = HsLazyPorts.ports ()
+      val ready = List.filter (fn r => #status r = "ready") ports
+      val accept = HsCorpus.rows "accept.tsv"
+      val both = List.map (fn r => HsCorpus.field r "id") (List.filter HsRhcCorpus.judgesAccept accept)
+      val readingsText = read (fromRoot "tests/hs/readings.md")
+      val ls = Expectations.read (HsRhcCorpus.expectations ())
+      fun one (l : Expectations.line) =
+        let
+          val what = Expectations.describe l
+          val word = HsOracles.firstWord (#reason l)
+          val cause = HsOracles.trim (String.extract (#reason l, Int.min (size (#reason l), size word + 1), NONE))
+        in
+          need (#way l = "rhc", what ^ ": the way is rhc");
+          need (isSome (Expectations.meaning (#category l)), what ^ ": no category " ^ #category l);
+          need (size cause >= 10, what ^ ": a refusal is listed with its cause, never alone");
+          List.app (fn n => need (n <= 54 orelse String.isSubstring ("### R" ^ Int.toString n ^ ".") readingsText,
+                                  what ^ ": R" ^ Int.toString n ^ " is not in tests/hs/readings.md")) (readings (#reason l));
+          case #label l of
+            SOME "check" =>
+              (need (List.exists (fn id => Expectations.glob (#path l, id)) both,
+                     what ^ ": names no program of accept.tsv that both judges accept");
+               need (member word ["reject", "crash", "timeout", "harness-error"], what ^ ": the outcome is reject, crash or timeout"))
+          | SOME "run" =>
+              (need (List.exists (fn r => Expectations.glob (#path l, "lazy/" ^ #port r)) ready,
+                     what ^ ": names no ready -lazy port");
+               need (member word ["reject", "timeout", "diff", "rtfail", "harness-error"],
+                     what ^ ": the outcome is reject, timeout, diff or rtfail"))
+          | _ => need (false, what ^ ": the label is check or run")
+        end
+      val () = List.app one ls
+      val bench = fromRoot "examples/benchmarks"
+      val lazy = List.filter (fn n => String.isSuffix "-lazy" n andalso isDir (bench ^ "/" ^ n)) (sort (entries bench))
+      val names = List.map #port ports
+      val () = List.app (fn n => need (List.length (List.filter (fn m => m = n) names) = 1,
+                                       "tests/hs/lazy-ports.tsv: " ^ n ^ " is not there once")) lazy
+      val () = List.app (fn n => need (member n lazy, "tests/hs/lazy-ports.tsv: no port " ^ n ^ " in examples/benchmarks")) names
+      val () = List.app (fn r => need (member (#status r) ["ready", "held"] andalso #reason r <> "",
+                                       "tests/hs/lazy-ports.tsv: " ^ #port r ^ " is ready or held, with why")) ports
+      val () = List.app (fn r =>
+                 let val up = bench ^ "/" ^ #port r ^ "/upstream/"
+                 in need (exists (up ^ #main r) andalso exists (up ^ #expected r)
+                          andalso (#stdin r = "" orelse exists (up ^ #stdin r)),
+                          "tests/hs/lazy-ports.tsv: " ^ #port r ^ " names a main, a fixture or an input not in its upstream")
+                 end) ready
+    in finish "tests/hs/rhc-corpus.txt and tests/hs/lazy-ports.tsv" end
+    handle HsCorpus.Bad m => (need (false, m); finish "tests/hs/rhc-corpus.txt and tests/hs/lazy-ports.tsv")
+         | Expectations.Parse m => (need (false, m); finish "tests/hs/rhc-corpus.txt and tests/hs/lazy-ports.tsv")
+
   (* ---- The source rewrites, on planted text ---- *)
 
   fun source () =
@@ -283,8 +340,84 @@ struct
       val () = saw ("a set with no candidate", t, "nothing was judged")
     in finish "the oracle harness on fake oracles" end
 
-  fun command ["hs-corpus-data"] = SOME (fn () => (data (); oraclesText ()))
+  (* ---- rhc's corpus jobs on a fake rhc (tests/runner/hsrhccorpus.sml) ---- *)
+
+  (* a fake rhc: a source that says REFUSE has a diagnostic, one that says
+     CRASH an uncaught exception *)
+  val fakeRhc =
+    "#!/bin/sh\nfor a; do last=$a; done\n"
+    ^ "if grep -q CRASH \"$last\"; then echo 'rhc: uncaught exception Fail' >&2; exit 1; fi\n"
+    ^ "if grep -q REFUSE \"$last\"; then echo \"$last:1:1: error: planted\" >&2; exit 1; fi\nexit 0\n"
+
+  fun rhcFaults () =
+    let
+      val d = run ^ "/hs-rhc-faults"
+      val () = (rmTree d; mkdirs d)
+      val corpus = d ^ "/corpus"
+      val dataDir = d ^ "/data"
+      val x = corpus ^ "/ghc/testsuite/tests/x"
+      val () = mkdirs x
+      val () = List.app (fn (n, t) => write (x ^ "/" ^ n ^ ".hs", t))
+                 [("A", "main = print 1\n"), ("B", "-- REFUSE\nmain = print 2\n"), ("C", "-- CRASH\nmain = print 3\n"),
+                  ("D", "-- REFUSE\nmain = print 4\n")]
+      val () = mkdirs dataDir
+      val () = write (dataDir ^ "/trees.tsv", "set\ttree\tdir\tupstream\tcommit\tlicence\nghc-legacy\tghc\ttestsuite/tests\t-\t-\t-\n"
+                                              ^ "jhc\tjhc\tregress/tests\t-\t-\t-\n")
+      val () = mkdirs (corpus ^ "/jhc")
+      val () = write (dataDir ^ "/candidates.tsv",
+                      "id\tset\tpath\tparent\texpect\texpect_src\n"
+                      ^ String.concat (List.map (fn n => "ghc/x/" ^ n ^ "\tghc-legacy\tghc/testsuite/tests/x/" ^ n ^ ".hs\t-\tcompile\t\n")
+                                                ["A", "B", "C", "D"]))
+      (* D is one the judges do not both accept: rhc's refusal is recorded *)
+      val () = write (dataDir ^ "/accept.tsv",
+                      "id\tset\tneeds\tv_hugs\tv_ghc\n"
+                      ^ String.concat (List.map (fn (n, h) => "ghc/x/" ^ n ^ "\tghc-legacy\tnothing\t" ^ h ^ "\taccept\n")
+                                                [("A", "accept"), ("B", "accept"), ("C", "accept"), ("D", "reject")]))
+      val rhc = d ^ "/rhc"
+      val () = write (rhc, fakeRhc)
+      val () = Posix.FileSys.chmod (rhc, Posix.FileSys.S.irwxu)
+      val counter = ref 0
+      fun job (args, lines) =
+        let
+          val () = counter := !counter + 1
+          val n = Int.toString (!counter)
+          val txt = d ^ "/rhc-corpus-" ^ n ^ ".txt"
+          val () = write (txt, String.concatWith "\n" lines ^ "\n")
+          val changes = [("RUNE_HS_DATA", dataDir), ("RUNE_HS_CORPUS", corpus), ("RUNE_HS_RHC", rhc),
+                         ("RUNE_HS_OUT", d ^ "/out-" ^ n), ("RUNE_HS_RHC_TXT", txt)]
+          fun one a = (execEnv (fn e => List.foldl (fn ((k, v), e) => setEnv (k, v) e) e changes)
+                         {cmd = [fromRoot "bin/rune-test"] @ a, dir = NONE, stdin = "", stdout = d ^ "/stdout-" ^ n,
+                          stderr = d ^ "/stderr-" ^ n, timeout = 300};
+                       read (d ^ "/stdout-" ^ n))
+        in String.concat (List.map one args) end
+      val m13 = ["hs-rhc-corpus", "m13", "ghc-legacy"]
+      val stale = ["hs-rhc-corpus", "stale"]
+      fun saw (what, text, s) = need (String.isSubstring s text, what ^ ": no " ^ String.toString s ^ " in " ^ String.toString text)
+      fun not' (what, text, s) = need (not (String.isSubstring s text), what ^ ": " ^ String.toString s ^ " in " ^ String.toString text)
+      val bLine = "rhc | ghc/x/B::check | RUNE-DEV | reject: planted"
+      val cLine = "rhc | ghc/x/C::check | RUNE-DEV | crash: planted"
+      val t = job ([m13], [])
+      val () = saw ("a refusal of what the judges accept", t, "FAIL rhc ghc/x/B::check: reject")
+      val () = saw ("a crash", t, "FAIL rhc ghc/x/C::check: crash")
+      val () = not' ("what rhc accepts", t, "ghc/x/A")
+      val t = job ([["hs-rhc-corpus", "rest", "ghc-legacy"]], [])
+      val () = not' ("a refusal of what the judges do not both accept", t, "FAIL")
+      val () = saw ("a refusal of what the judges do not both accept", t, "1 recorded")
+      val t = job ([m13, stale], [bLine, cLine])
+      val () = not' ("lines that explain each refusal", t, "FAIL")
+      val () = saw ("lines that explain each refusal", t, "2 refusals explained")
+      val t = job ([m13], [bLine, "rhc | ghc/x/C::check | RUNE-DEV | reject: planted"])
+      val () = saw ("a line of another outcome", t, "says reject")
+      val t = job ([m13], [bLine, cLine, "rhc | ghc/x/A::check | RUNE-DEV | reject: planted"])
+      val () = saw ("a line for what rhc accepts", t, "FAIL rhc ghc/x/A::check: accept, where")
+      val t = job ([m13, stale], [bLine, cLine, "rhc | ghc/x/* | RUNE-DEV | reject: planted again"])
+      val () = saw ("a line that no refusal uses", t, "FAIL stale rhc")
+      val t = job ([["hs-rhc-corpus", "m13", "jhc"]], [])
+      val () = saw ("a part with no row", t, "nothing was checked")
+    in finish "rhc's corpus jobs on a fake rhc" end
+
+  fun command ["hs-corpus-data"] = SOME (fn () => (data (); oraclesText (); rhcText ()))
     | command ["hs-source"] = SOME source
-    | command ["hs-faults"] = SOME faults
+    | command ["hs-faults"] = SOME (fn () => (faults (); rhcFaults ()))
     | command _ = NONE
 end

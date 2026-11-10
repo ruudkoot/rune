@@ -12,7 +12,10 @@ struct
   (* where the corpus's data is: tests/hs/corpus, or another for a test of
      the harness *)
   fun data () = env ("RUNE_HS_DATA", fromRoot "tests/hs/corpus")
-  fun root () = env ("RUNE_HS_CORPUS", "")
+  (* the root of the trees; another for programs read from elsewhere, as the
+     -lazy ports' Haskell sources are (tests/runner/hslazyports.sml) *)
+  val rootOverride = ref (NONE : string option)
+  fun root () = case !rootOverride of SOME r => r | NONE => env ("RUNE_HS_CORPUS", "")
   fun tree p = root () ^ "/" ^ p
 
   (* a TSV of the corpus: its header, and each row as a lookup by column *)

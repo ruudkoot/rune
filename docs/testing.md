@@ -380,6 +380,27 @@ A job is also a command: `bin/rune-test hs-oracle conformance hugs`, `hs-oracle 
 `hs-oracle run nhc98 jhc`, `hs-oracle stale ghc`, `hs-oracle ghc-shim`; `RUNE_HS_OUT` moves their output from the
 run's directory.
 
+rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.sml`), in the tier `nightly`:
+
+- `hs-rhc-corpus/m13-SET` and `rest-SET`, needing `rhc` and `hs-corpus`: each program of
+  `tests/hs/corpus/accept.tsv`, prepared in the variants the oracles judge it in, through
+  `bin/rhc --typecheck-only`, which stops after names and fixity until M13 lands and then checks types.
+  `m13-SET` are the rows of M13's done-when, both judges accepting and nothing needed (815 in all, in `h98`);
+  `rest-SET` the others. A program both judges accept and rhc refuses is a finding: it fails its job unless a
+  line of `tests/hs/rhc-corpus.txt` names its cause, in the format of *Expectations* with the outcome first
+  (`rhc | ghc/should_compile/x::check | RUNE-DEV | reject: ...`); what rhc says of a program the judges do not
+  both accept is kept in the job's results and judged by nothing. `@stale` fails a line that explains no
+  refusal of a job that ran.
+- `hs-lazy-ports/PORT`, needing `rhc` and `rhc-compiles` (which compiles and runs hello, so held until rhc
+  compiles): the Haskell beside each `-lazy` port of `examples/benchmarks` that `tests/hs/lazy-ports.tsv` marks
+  `ready` (GHC prints nofib's fixture in fast mode, and its imports reach the Report), prepared as the corpus is,
+  compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
+  the SML port is validated against. The manifest says why each other port is held; a finding is a line of
+  `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
+- `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
+  `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
+  `RUNE_HS_LAZY_PORTS` stand in other tools and files.
+
 ## Generated functor programs
 
 `bin/rune-functor-gen` (`tests/runner/functorgen.sml`) draws programs of

@@ -1,0 +1,5 @@
+# rhc on E8's corpus (tests/runner/hsrhccorpus.sml; docs/testing.md, rhc's oracles and corpus): a program of
+# tests/hs/corpus/accept.tsv that both judges (GHC, Hugs) accept and rhc refuses, each line with its cause, the outcome
+# first in its reason. A line that explains no refusal of a job that ran is stale.
+#
+# WAY | SET/ID::check | CATEGORY | OUTCOME: why
