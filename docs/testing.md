@@ -613,6 +613,34 @@ entity; a cycle of three signed modules; a dotted module name. And
 fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
 
+**HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
+the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
+the independent check of rhc's types, as AstLint is Rune's. Its first part
+is a second inference: a transliteration of Typing Haskell in Haskell in the
+form its 11.6.3 calls conformant, with kinds and dependency groups recomputed
+and D32's readings of the monomorphism restriction and defaulting, which
+shares nothing with the checker but the renamer. rhc runs it through
+`Pass.checkAt` at level 2, after names (`--lint=2`, and `RUNE_LINT=2`, which
+`bin/rune-test` sets), so a program whose names resolve and which HsLint
+refuses fails any compile of it, `lint after hslint: FILE:LINE:COL: WHY`;
+`bin/rhc --dump-hslint FILE.hs` prints what it infers, each binding's type,
+the kinds, the derived instances' contexts and the defaults it chose, or
+`REFUSED` and why. `tests/runner/hslint.sml`'s jobs `hs/hslint/*` hold it to
+what it must find: `dump/NAME` each fixture of `tests/hs/hslint` against its
+expected dump, reviewed line by line (under `--cycle-default=scc` and with
+the library's unsigned bindings, `--dump-hslint=library`, where it has those
+files); `accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
+and `tests/hs/lang` inferred, whatever its rows' status, since the second
+inference waits on no stage of the compile; and `errors/K-of-4`, every
+program of `tests/hs/errors` whose row is of the classes static, prelude or
+library refused, by HsLint or before it. A directory's programs are judged
+in four jobs, each every fourth program and a line FAIL for each it fails,
+since a job of `bin/rune-test` costs several times what rhc does on one
+program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. A program on
+which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
+why, and its job holds the disagreement to still being there, so that a fix
+on either side is seen.
+
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
 with rhc in Rune's place: a mutant is exact edits of a file of `rhc.plan`,

@@ -1,0 +1,6 @@
+SIGNED	Main	genericLength' :: Num a => [b] -> a
+TYPE	Main	len1 :: Ratio Integer
+TYPE	Main	len2 :: Ratio Integer
+TYPE	Main	n :: Int
+SIGNED	Main	a :: Int
+SIGNED	Main	main :: IO ()

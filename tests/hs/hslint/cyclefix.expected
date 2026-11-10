@@ -1,0 +1,1 @@
+REFUSED tests/hs/hslint/cyclefix/B.hs:5:5: an operator's operands: t1 -> t1 -> t1 against t1 -> Int -> t2 (the monomorphic type of a binding of the module A is fixed by a use in B: in a cycle Rule 2 holds each module's to the module alone (D30))
