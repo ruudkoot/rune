@@ -776,16 +776,18 @@ which reads the first claim or record RULE checks corrupted, refused with
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,
 with the Report's code as printed in `pristine/`; D36, D37, D38).
-`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report
-while no compiler runs it: `overlay`, each module's tokens against
+`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report:
+`overlay`, each module's tokens against
 `pristine/`'s, a line at a time, white space and comments dropped, every
 line where they differ an entry of `overlay.tsv` marked applied, and every
 file the Report has no text of an entry's `new:`; `pristine`, the printed
-code byte for byte as `pristine/MANIFEST.tsv` records it; and `report`,
+code byte for byte as `pristine/MANIFEST.tsv` records it; `report`,
 `bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
 Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
 instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
-each with its entry.
+each with its entry; and `compile`, `bin/rhc --whole` compiling
+`tests/hs/library/All20.hs`, a program over a name of each of the 20
+modules, which the VM runs to `All20.expected` (M18: the 20 modules compile).
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants

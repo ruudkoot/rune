@@ -1,5 +1,5 @@
 # The program's Char beside the library's, which Time imports.
-pairs 860
+pairs 863
 EXPORT	Char	tChar Shout
 EXPORT	Char	vChar shout
 EXPORT	Char	vChar toUpper
