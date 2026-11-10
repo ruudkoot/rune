@@ -6,6 +6,7 @@
 - `Ignorable` (con): [IDENTIFIER](../sig/IDENTIFIER.md#con-ignorable)
 - `implode` (val): [UTF8](../sig/UTF8.md#val-implode)
 - `Inclusion` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-inclusion)
+- `InitialPunctuation` (con): [CODE_POINT](../sig/CODE_POINT.md#con-initialpunctuation)
 - `isAlphanumeric` (val): [IDENTIFIER](../sig/IDENTIFIER.md#val-isalphanumeric)
 - `isConfusable` (val): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#val-isconfusable)
 - `isContinue` (val): [IDENTIFIER](../sig/IDENTIFIER.md#val-iscontinue)

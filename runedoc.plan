@@ -19,6 +19,9 @@ library unicode lib/unicode
   unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
   unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
   unit unicode:security.sml lib/unicode/security.sml ascii demand
+  unit unicode:code_point_data.sml lib/unicode/code_point_data.sml ascii demand
+  unit unicode:code_point_sig.sml lib/unicode/code_point_sig.sml ascii demand
+  unit unicode:code_point.sml lib/unicode/code_point.sml ascii demand
 end
 library json lib/json
   form header
@@ -102,6 +105,6 @@ provenance
   input runedoc.build e9eae6d804b7f52078eb7dbb0e46aee385bf60e28104c66fe3e8710d8a6a5c46
   input lib/compiler/frontend.build 6d35ea98aba55a7b636242c2228a0eb606bd63e0f5b46ad5b66c94f1e9d6c4b4
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
-  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+  input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end
