@@ -89,8 +89,9 @@ nearest `LICENSE` or `PROVENANCE` in its directory or above it, and that is the 
 A `PROVENANCE` gives the upstream repository and the commit `trees.tsv` pins, the path in it, the date the tree was
 fetched and the files copied, why no licence covers the files (or what notice there is, quoted), the owner's rule,
 quoted, and then each program: its files, by their paths below it (which it maps to their upstream paths), and what
-their own headers name of its authors and origin, quoted by file and line. The runs of all 188 are `make check`'s
-(`hs-corpus-run/ID`); their pass through `--typecheck-only` is `make check`'s for the 45 under a `LICENSE`
+their own headers name of its authors and origin, quoted by file and line. The runs of the 188 are `make check`'s
+(`hs-corpus-run/ID`), but for those `tests/hs/corpus-nightly.txt` names, whose run in a way takes over D56's second,
+which are nightly (ruling 47); their pass through `--typecheck-only` is `make check`'s for the 45 under a `LICENSE`
 (`hs-rhc-corpus/vendored-SET`) and nightly for the 143 under a `PROVENANCE` (`hs-rhc-corpus/provenance-SET`; ruling 46).
 `bin/rune-test hs-corpus-vendor` makes `vendored/` from the trees again, copying the programs' files and the `LICENSE`s
 and leaving each `PROVENANCE` as written; `hs-corpus/data` holds `vendored/` to the vendored candidates' files and

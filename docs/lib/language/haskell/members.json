@@ -426,9 +426,23 @@
     {
      "kind": "datatype",
      "name": "fault",
-     "spec": "datatype fault = ThunkInSlot | ForceBehindCast",
-     "doc": "A fault made on purpose, for the tests of what catches it.\n\nThey are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a\nsuspension used where its value is wanted, unforced; `ForceBehindCast`,\na force made a cast from the suspension to its value.\n\n",
+     "spec": "datatype fault = ThunkInSlot | ForceBehindCast | SuspTypeArg",
+     "doc": "A fault made on purpose, for the tests of what catches it.\n\nThey are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a\nsuspension used where its value is wanted, unforced; `ForceBehindCast`,\na force made a cast from the suspension to its value; `SuspTypeArg`, a\nuse's first type argument a slot's type, a suspension's.\n\n",
      "page": "sig/CORE_TO_MID.md#type-fault"
+    },
+    {
+     "kind": "val",
+     "name": "checking",
+     "spec": "val checking : bool ref",
+     "doc": "Whether Core to Mid holds what it writes to its own rules, which rhc\nsets at lint level 2 (M10b).\n\nA use's type argument is a value's type, never one with `susp` at its\nhead (D4); the rule is Core to Mid's and not MidLint's, since SML uses\nits polymorphic functions at `T susp`.\n\n",
+     "page": "sig/CORE_TO_MID.md#val-checking"
+    },
+    {
+     "kind": "exception",
+     "name": "Breach",
+     "spec": "exception Breach of string",
+     "doc": "A breach of Core to Mid's rules, where `checking` holds: what it is.\n\n",
+     "page": "sig/CORE_TO_MID.md#exn-breach"
     },
     {
      "kind": "exception",
@@ -454,8 +468,8 @@
     {
      "kind": "val",
      "name": "unit",
-     "spec": "val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.program\n           -> {text : string, names : (string * string) list, abi : (string * abi) list}",
-     "doc": "`unit ({fault, imports, makesShared}, p)` is the text of Mid of the\nunit `p` (the haskell98 roadmap's M21).\n\nEach import of another unit is bound as `imports` says that unit's\nCore to Mid made it. Its `names` is the name in the text of each value of the top level,\nthe unit's own and its imports, by its Core name; its `abi` how each\nof its own is made. An import is declared in the text as a global of\nits scheme whose expression is a placeholder, which the client drops\nafter reading the text, its scheme MidLint's for the import\n(MidLint.importedScheme). The text calls `main` where the unit\ndefines it, as `program`'s does.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got, or an\nimport `imports` does not give.\n\n",
+     "spec": "val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool, newtypes : (string * bool) list}\n           * Core.program\n           -> {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list}",
+     "doc": "`unit ({fault, imports, makesShared}, p)` is the text of Mid of the\nunit `p` (the haskell98 roadmap's M21).\n\nEach import of another unit is bound as `imports` says that unit's\nCore to Mid made it, and each newtype of another unit is a box where\n`newtypes` says that unit made it one (an ABI fact, H9); its `boxed`\nsays so of each newtype the unit declares itself. Its `names` is the name in the text of each value of the top level,\nthe unit's own and its imports, by its Core name; its `abi` how each\nof its own is made. An import is declared in the text as a global of\nits scheme whose expression is a placeholder, which the client drops\nafter reading the text, its scheme MidLint's for the import\n(MidLint.importedScheme). The text calls `main` where the unit\ndefines it, as `program`'s does.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got, or an\nimport `imports` does not give.\n\n",
      "page": "sig/CORE_TO_MID.md#val-unit"
     },
     {
@@ -491,6 +505,20 @@
      "spec": "val unresolved : Core.program -> string list",
      "doc": "`unresolved p` is the imports of p that no declaration of p defines,\nin order\n\n",
      "page": "sig/CORE_UNITS.md#val-unresolved"
+    },
+    {
+     "kind": "val",
+     "name": "uses",
+     "spec": "val uses : Core.decl -> {values : string list, types : string list, cons : string list}",
+     "doc": "`uses d` is what the declaration `d` names of the top level, each once.\n\nIts values are the variables it names that no binder of it binds; its\ntypes the type constructors it names; its constructors those it makes\nor takes apart. A name may be in more than one, as `:` is a value of\nthe runtime and a constructor of the list.\n\n",
+     "page": "sig/CORE_UNITS.md#val-uses"
+    },
+    {
+     "kind": "val",
+     "name": "reach",
+     "spec": "val reach : Core.program * string list -> Core.program",
+     "doc": "`reach (p, roots)` is what the values `roots` reach of p, in p's order.\n\nA value reaches the values, types and constructors it names, a\nconstructor its type, and a type the types of its fields; an import\nreached is kept, as a whole program has none (the haskell98 roadmap's\nM21: units joined and compiled whole, what main reaches).\n\n",
+     "page": "sig/CORE_UNITS.md#val-reach"
     },
     {
      "kind": "val",

@@ -149,6 +149,80 @@ struct
                iface
     end
 
+  fun uses (d : decl) : {values : string list, types : string list, cons : string list} =
+    let
+      val values = ref ([] : string list)
+      val types = ref ([] : string list)
+      val cons = ref ([] : string list)
+      fun ty t = types := tyCons (t, !types)
+      fun bind (bound, x) = CoreMap.insert (bound, x, ())
+      fun atom bound (Var x) = if CoreMap.member (bound, x) then () else values := x :: !values
+        | atom _ (Lit _) = ()
+      fun exp bound e =
+        case e of
+          Atom a => atom bound a
+        | App (f, args) => (exp bound f; List.app (fn TyArg t => ty t | ValArg a => atom bound a) args)
+        | Lam (bs, body) =>
+            (List.app (fn ValBinder (_, t) => ty t | TyBinder _ => ()) bs;
+             exp (List.foldl (fn (ValBinder (x, _), m) => bind (m, x) | (_, m) => m) bound bs) body)
+        | Let (x, t, rhs, body) => (ty t; exp bound rhs; exp (bind (bound, x)) body)
+        | LetRec (bs, body) =>
+            let val bound' = List.foldl (fn ((x, _, _), m) => bind (m, x)) bound bs
+            in List.app (fn (_, t, rhs) => (ty t; exp bound' rhs)) bs; exp bound' body end
+        | Case (scrut, b, alts) => (exp bound scrut; List.app (alt (bind (bound, b))) alts)
+        | Con (c, ts, atoms) => (cons := c :: !cons; List.app ty ts; List.app (atom bound) atoms)
+        | Prim (_, ts, atoms) => (List.app ty ts; List.app (atom bound) atoms)
+        | UTuple atoms => List.app (atom bound) atoms
+        | Cast (e, t) => (ty t; exp bound e)
+      and alt bound a =
+        case a of
+          AltCon (c, xs, rhs) => (cons := c :: !cons; exp (List.foldl (fn (x, m) => bind (m, x)) bound xs) rhs)
+        | AltLit (_, rhs) => exp bound rhs
+        | AltUTuple (xs, rhs) => exp (List.foldl (fn (x, m) => bind (m, x)) bound xs) rhs
+        | AltDefault rhs => exp bound rhs
+      val () =
+        case d of
+          Data (_, _, cs) => List.app (fn (_, fs) => List.app ty fs) cs
+        | Newtype (_, _, _, f) => ty f
+        | Val (_, t, e) => (ty t; exp CoreMap.empty e)
+        | Import (_, t) => ty t
+    in {values = distinct (List.rev (!values)), types = distinct (List.rev (!types)), cons = distinct (List.rev (!cons))} end
+
+  fun reach (p : program, roots : string list) : program =
+    let
+      val values = List.foldl (fn (d as Val (x, _, _), m) => CoreMap.insert (m, x, d)
+                                | (d as Import (x, _), m) => if CoreMap.member (m, x) then m else CoreMap.insert (m, x, d)
+                                | (_, m) => m) CoreMap.empty p
+      val types = List.foldl (fn (d as Data (t, _, _), m) => CoreMap.insert (m, t, d)
+                               | (d as Newtype (t, _, _, _), m) => CoreMap.insert (m, t, d)
+                               | (_, m) => m) CoreMap.empty p
+      val conType = List.foldl (fn (Data (t, _, cs), m) => List.foldl (fn ((c, _), m) => CoreMap.insert (m, c, t)) m cs
+                                 | (Newtype (t, _, c, _), m) => CoreMap.insert (m, c, t)
+                                 | (_, m) => m) CoreMap.empty p
+      val seenV = ref (CoreMap.empty : unit CoreMap.map)
+      val seenT = ref (CoreMap.empty : unit CoreMap.map)
+      fun typ t =
+        if CoreMap.member (!seenT, t) then ()
+        else (seenT := CoreMap.insert (!seenT, t, ());
+              case CoreMap.find (types, t) of
+                SOME d => let val {types = ts, ...} = uses d in List.app typ ts end
+              | NONE => ())
+      fun value x =
+        if CoreMap.member (!seenV, x) then ()
+        else (seenV := CoreMap.insert (!seenV, x, ());
+              case CoreMap.find (values, x) of
+                SOME d =>
+                  let val {values = vs, types = ts, cons = cs} = uses d
+                  in List.app typ ts; List.app (fn c => Option.app typ (CoreMap.find (conType, c))) cs; List.app value vs end
+              | NONE => ())
+      val () = List.app value roots
+    in
+      List.filter (fn Val (x, _, _) => CoreMap.member (!seenV, x)
+                    | Import (x, _) => CoreMap.member (!seenV, x)
+                    | Data (t, _, _) => CoreMap.member (!seenT, t)
+                    | Newtype (t, _, _, _) => CoreMap.member (!seenT, t)) p
+    end
+
   fun unresolved (p : program) : string list =
     let val defined = List.foldl (fn (Val (x, _, _), m) => CoreMap.insert (m, x, ()) | (_, m) => m) CoreMap.empty p
     in List.mapPartial (fn Import (x, _) => if CoreMap.member (defined, x) then NONE else SOME x | _ => NONE) p end

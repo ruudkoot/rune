@@ -12,6 +12,7 @@
 - `CHAR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-char)
 - `check` (val): [CORE_LINT](../sig/CORE_LINT.md#val-check), [HS_INFER](../sig/HS_INFER.md#val-check), [HS_LINT](../sig/HS_LINT.md#val-check)
 - `checkContext` (val): [HS_KINDS](../sig/HS_KINDS.md#val-checkcontext)
+- `checking` (val): [CORE_TO_MID](../sig/CORE_TO_MID.md#val-checking)
 - `checkType` (val): [HS_KINDS](../sig/HS_KINDS.md#val-checktype)
 - `CInfix` (con): [HS_AST](../sig/HS_AST.md#con-cinfix)
 - `claims` (type): [HS_LINT](../sig/HS_LINT.md#type-claims)
