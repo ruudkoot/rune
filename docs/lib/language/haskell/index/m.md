@@ -9,7 +9,7 @@
 - `Method` (con): [HS_MODULES](../sig/HS_MODULES.md#con-method)
 - `MODULE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-module)
 - `Module` (con): [HS_AST](../sig/HS_AST.md#con-module)
-- `module` (type): [HS_AST](../sig/HS_AST.md#type-module)
+- `module` (type): [HS_AST](../sig/HS_AST.md#type-module), [HS_LINT](../sig/HS_LINT.md#type-module)
 - `module` (val): [HS_DUMP](../sig/HS_DUMP.md#val-module)
 - `moduleName` (val): [HS_MODULES](../sig/HS_MODULES.md#val-modulename)
 

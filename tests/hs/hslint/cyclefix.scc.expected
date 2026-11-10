@@ -1,0 +1,3 @@
+TYPE	A	n :: Int
+TYPE	B	k :: Int
+SIGNED	Main	main :: IO ()
