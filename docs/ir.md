@@ -912,7 +912,11 @@ does.
   called, then in a worker the tags, then each field by its own type --
   `imm_eq`, `ptr_eq`, `string_eq`, the function of its type, or `poly_eq`
   where the type is not known. Such a comparison is compiled code: the
-  limit of `--equality-work` on the runtime's walk does not stop it.
+  limit of `--equality-work` on the runtime's walk does not stop it. A type
+  of more than 256 nodes as a tree (`Simplify.eqBound`) has no function,
+  and its `=` is `poly_eq`: a datatype whose constructor takes it at a
+  bigger type, a non-uniform one, has a new type at each level, and
+  functions made for each would never end (`tests/lang/rt.equality_nonuniform`).
 * **`refs`** ([plans/performance.md](plans/performance.md), M8): a
   parameter of a function of the top level that is a ref the function only
   reads and sets, and gives on as it is to its own calls of itself in tail
@@ -970,7 +974,11 @@ does.
   loop of MLton's `peek` calls a function with the closures it was given,
   and takes apart what it returns). A copy for local functions grows the
   definition the call is in, within the budget of `inline`; a call that
-  finds its copy made already costs nothing.
+  finds its copy made already costs nothing. A function that calls itself
+  at other types than its own (polymorphic recursion, which Mid may have
+  and no SML source makes) has no parameter that is static, since no copy
+  of it would close, and a copy's call of the function is a call of the
+  copy only at the copy's types (`tests/ir/hs-nest-static`).
 
 ## Low
 
