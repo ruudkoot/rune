@@ -411,13 +411,6 @@
    "members": [
     {
      "kind": "datatype",
-     "name": "form",
-     "spec": "datatype form = FormC | Runtime",
-     "doc": "How suspensions are made and forced: by form C's primitives, or by\nfunctions of E1's runtime in today's Mid.\n\n`FormC` is the roadmap's M9: `thunk_make`, `thunk_force`,\n`thunk_blackhole` and `thunk_self_update`, force one primitive node.\n`Runtime` is for a tree that has not got them.\n\n",
-     "page": "sig/CORE_TO_MID.md#type-form"
-    },
-    {
-     "kind": "datatype",
      "name": "fault",
      "spec": "datatype fault = ThunkInSlot | ForceBehindCast",
      "doc": "A fault made on purpose, for the tests of what catches it.\n\nThey are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a\nsuspension used where its value is wanted, unforced; `ForceBehindCast`,\na force made a cast from the suspension to its value.\n\n",
@@ -427,14 +420,14 @@
      "kind": "exception",
      "name": "Unsupported",
      "spec": "exception Unsupported of string",
-     "doc": "A construct Core has and the Mid of this tree cannot say yet: what it\nwaits on, and where.\n\n",
+     "doc": "A construct Core has and Core to Mid does not lower: what it is, and\nwhere.\n\n",
      "page": "sig/CORE_TO_MID.md#exn-unsupported"
     },
     {
      "kind": "val",
      "name": "program",
-     "spec": "val program : {form : form, fault : fault option} * Core.program -> string",
-     "doc": "`program ({form, fault}, p)` is the text of Mid of the Core program\n`p`, which CoreLint passed, with the fault made where it is `SOME`.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, an IOError's text as the\nlibrary's Show IOError gives it, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
+     "spec": "val program : {fault : fault option} * Core.program -> string",
+     "doc": "`program ({fault}, p)` is the text of Mid of the Core program `p`,\nwhich CoreLint passed, with the fault made where it is `SOME`.\n\nA suspension is form C's (the roadmap's M9): made by `thunk_make`,\nforced by one `thunk_force` node, its code saying `thunk_blackhole`\nfirst and `thunk_self_update` last.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, an IOError's text as the\nlibrary's Show IOError gives it, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
      "page": "sig/CORE_TO_MID.md#val-program"
     }
    ]
