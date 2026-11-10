@@ -3039,7 +3039,7 @@ lib.r.array.example.diag	16.3	Figure 16.2: diag	library	run	exact	hand	Planned
 lib.r.array.example.firstarray	16.3	Figure 16.2: firstArray	library	run	exact	hand	Planned		
 lib.r.array.show	16.4	show of an array is "array bounds assocs", parenthesised by arrPrec	library	run	exact, and read of the same string	hand	Planned		
 lib.r.array.eq	16.4	Eq compares bounds and elements; Ord compares assocs	library	run	on samples, empty arrays too	hand	Planned		
-lib.r.array.functor.context	16.4	The synopsis gives Functor (Array a) no context, the implementation (Ix a)	library	accept	the instance's context a user sees: see readings.md	hand	Planned	R49	
+lib.r.array.functor.context	16.4	The synopsis gives Functor (Array a) no context, the implementation (Ix a)	library	accept	the instance's context a user sees: see readings.md	hand	Planned	R49 R152	
 lib.array.fixity.9bangcslashslash	16.4	fixity declaration `9 !,//` holds for the operators it names	library	run	parse of an unparenthesised mix of the operators, shown by evaluation	generated	Planned		
 lib.array.data.ixa	16.4	type (Ix a) is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Planned		
 lib.array.array	16.4	array has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		

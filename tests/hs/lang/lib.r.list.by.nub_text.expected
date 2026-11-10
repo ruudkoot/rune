@@ -1,0 +1,6 @@
+("abd","abd",True)
+("bcde","abcde","acde")
+("abcdey","xyzad","be")
+(["ab","c","d"],[[2,4],[1,3],[6]])
+("beacd","benacd",[3,2,1])
+("d","b",(1,'z'))

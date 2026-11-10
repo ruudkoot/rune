@@ -289,3 +289,36 @@ mhs | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | diff: MicroHs's readFloat
 hugs | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | exit: Hugs's isNaN, isInfinite and isNegativeZero answer False at IEEE Double, so formatRealFloat fails on NaN and drops -0's sign (6.4.6, 14.4)
 nhc98 | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | exit: nhc98's isNaN, isInfinite and isNegativeZero answer False at IEEE Double, so formatRealFloat fails on NaN and drops -0's sign (6.4.6, 14.4)
 hugs | hs/lang/lib.r.numeric.showsigned_text::run | HOST-BUG | diff: R55: Hugs shows 1.0e-2 as 0.01
+mhs | hs/lang/lib.ix.class.ix.rangesize_defaults::run | HOST-BUG | exit: MicroHs's class Ix has no default of rangeSize (15.2)
+nhc98 | hs/lang/lib.ix.inst.ixchar_methods::run | HOST-BUG | reject: nhc98 has no Ix instance for () (15.2)
+hugs | hs/lang/lib.r.ix.tuples_fifteen::run | HOST-BUG | reject: Hugs has no Ix instance for a 15-tuple, which 15.1 requires
+mhs | hs/lang/lib.r.ix.tuples_fifteen::run | HOST-BUG | reject: MicroHs has no Ix instance for a 15-tuple, which 15.1 requires
+hugs | hs/lang/lib.array.array_literal::run | HOST-BUG | diff: Hugs shows and reads an array at precedence 9, not the Report's arrPrec 10 (16.3), so showsPrec 10 parenthesises and readsPrec 10 reads nothing
+nhc98 | hs/lang/lib.array.array_literal::run | HOST-BUG | diff: nhc98's (==) on arrays compares the bounds, where 16.3 compares the assocs alone, and its showsPrec 11 of an array leaves out the parentheses
+mhs | hs/lang/lib.array.array_literal::run | HOST-BUG | reject: MicroHs has no Read instance for Array (16.3)
+mhs | hs/lang/lib.r.array.bounds.lowhigh_text::run | HOST-BUG | reject: MicroHs has no Read instance for Array (16.3)
+ghc | hs/lang/lib.r.array.duplicate_error::run | HOST-BUG | diff: GHC's array keeps the last of two associations with one index, where 16.1 makes the array undefined
+nhc98 | hs/lang/lib.r.array.duplicate_error::run | HOST-BUG | diff: nhc98's array keeps the last of two associations with one index, where 16.1 makes the array undefined
+mhs | hs/lang/lib.r.array.duplicate_error::run | HOST-BUG | diff: MicroHs's array keeps the first of two associations with one index, where 16.1 makes the array undefined
+ghc | hs/lang/lib.r.array.update.unique_error::run | HOST-BUG | diff: GHC's (//) keeps the last of two updates of one index, where 16.2 makes the result undefined
+nhc98 | hs/lang/lib.r.array.update.unique_error::run | HOST-BUG | diff: nhc98's (//) keeps the last of two updates of one index, where 16.2 makes the result undefined
+mhs | hs/lang/lib.r.array.update.unique_error::run | HOST-BUG | diff: MicroHs's (//) keeps the first of two updates of one index, where 16.2 makes the result undefined
+mhs | hs/lang/lib.list.fixity.5bsbs_mix::run | HOST-BUG | reject: MicroHs gives `elem` no fixity, where the Report's Prelude declares infix 4 `elem`, so 2 `elem` xs \\ ys does not parse as the Report's
+hugs | hs/lang/lib.list.genericlength_literal::run | HOST-BUG | exit: Hugs's genericTake is an error at a negative count, where erratum September 2008 makes it 0 (17.9)
+nhc98 | hs/lang/lib.list.genericlength_literal::run | HOST-BUG | exit: nhc98's genericTake is an error at a negative count, where erratum September 2008 makes it 0 (17.9)
+hugs | hs/lang/lib.r.list.generic.length_text::run | HOST-BUG | exit: Hugs's genericTake is an error at a negative count, where erratum September 2008 makes it 0 (17.7)
+nhc98 | hs/lang/lib.r.list.generic.length_text::run | HOST-BUG | exit: nhc98's genericTake is an error at a negative count, where erratum September 2008 makes it 0 (17.7)
+ghc | hs/lang/lib.list.inits_probe1::run | HOST-BUG | diff: GHC's inits is lazier than the Report's: it gives inits (1 : 2 : undefined)'s third element, which the code's map over inits undefined does not
+mhs | hs/lang/lib.list.inits_probe1::run | HOST-BUG | diff: MicroHs's inits is lazier than the Report's: it gives inits (1 : 2 : undefined)'s third element, which the code's map over inits undefined does not
+ghc | hs/lang/lib.list.intersperse_probe1::run | HOST-BUG | diff: GHC's intersperse is lazier than the Report's: intersperse 0 (1 : undefined) gives 1 first, where the code's [x] clause forces the tail
+mhs | hs/lang/lib.list.intersperse_probe1::run | HOST-BUG | diff: MicroHs's intersperse is lazier than the Report's: intersperse 0 (1 : undefined) gives 1 first, where the code's [x] clause forces the tail
+ghc | hs/lang/lib.list.issuffixof_probe1::run | HOST-BUG | exit: GHC's isSuffixOf forces its second list where the first is empty; the code's reverse [] `isPrefixOf` _ does not
+ghc | hs/lang/lib.list.minimumby_probe1::run | HOST-BUG | exit: GHC's minimumBy forces the first element, where the code's foldl1 min with a comparison that ignores it does not
+mhs | hs/lang/lib.list.partition_probe1::run | HOST-BUG | exit: MicroHs's partition is strict in the spine, where the code's (filter p xs, filter (not . p) xs) gives the elements of a partial list
+mhs | hs/lang/lib.list.intersperse_literal::run | HOST-BUG | exit: MicroHs's partition is strict in the spine: fst (partition even [1 ..]) overflows the stack, where the code's filter gives it lazily
+mhs | hs/lang/lib.r.list.example.intersperse_text::run | HOST-BUG | exit: MicroHs's partition is strict in the spine: fst (partition even [1 ..]) overflows the stack, where 17.3's partition p xs == (filter p xs, filter (not . p) xs) gives it
+mhs | hs/lang/lib.list.unzip4_probe1::run | HOST-BUG | exit: MicroHs's unzip4 is strict in the spine, where the code's foldr with a lazy pattern is not
+mhs | hs/lang/lib.list.unzip5_probe1::run | HOST-BUG | exit: MicroHs's unzip5 is strict in the spine, where the code's foldr with a lazy pattern is not
+mhs | hs/lang/lib.list.unzip6_probe1::run | HOST-BUG | exit: MicroHs's unzip6 is strict in the spine, where the code's foldr with a lazy pattern is not
+mhs | hs/lang/lib.list.zip4_literal::run | HOST-BUG | exit: MicroHs's unzip4 and unzip7 are strict in the spine: of an infinite list they overflow the stack, where the code's foldr with a lazy pattern is not
+nhc98 | hs/errors/lib.r.list.noelemby::judge | HOST-BUG | accept: nhc98's List exports elemBy, which 17.6 says the library does not provide
