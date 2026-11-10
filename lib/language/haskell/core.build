@@ -1,6 +1,20 @@
 (* Core, rhc's typed lazy intermediate language (D2; the roadmap's M8), in
-   load order. *)
+   load order: its terms, its text, its primitives, its check, its
+   interpreter and a generator of its programs (D55). *)
 files
   core_sig.sml
   core.sml
+  coremap.sml
+  coretext_sig.sml
+  coretext.sml
+  coreprim_sig.sml
+  coreprim.sml
+  corelint_sig.sml
+  corelint.sml
+  coreinterp_sig.sml
+  coreinterp.sml
+  coregen_sig.sml
+  coregen.sml
+  coretomid_sig.sml
+  coretomid.sml
 end

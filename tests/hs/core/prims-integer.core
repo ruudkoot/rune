@@ -1,0 +1,33 @@
+; run: --read-core tests/hs/core/lib/base.core
+; vm: no: Integer waits on M31, IntInf immediate, whose representation it shares (D20)
+; Integer's primitives past Int's range: 2^100 and its negation, and what
+; integer_to_int raises of it, Overflow.
+(val showInteger (-> !Integer Str)
+  (\ ((n !Integer))
+    (case (prim integer_lt n 0I) neg
+      ((True) (case (prim integer_neg n) m (_ (case (showInteger m) s (_ (prim str_concat "-" s))))))
+      ((False)
+        (case (prim integer_lt n 10I) small
+          ((True) (case (prim integer_to_int n) d (_ (showInt d))))
+          ((False)
+            (case (prim integer_quot n 10I) q
+              (_ (case (prim integer_rem n 10I) r
+                   (_ (case (showInteger q) a
+                        (_ (case (prim integer_to_int r) d (_ (case (showInt d) b (_ (prim str_concat a b)))))))))))))))))
+(val pow (-> !Integer !Int Integer)
+  (\ ((b !Integer) (e !Int))
+    (case (prim int_eq e 0) z
+      ((True) 1I)
+      ((False) (case (prim int_sub e 1) e1 (_ (case (pow b e1) p (_ (prim integer_mul b p)))))))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (pow 2I 100) big
+      (_ (case (showInteger big) s
+           (_ (case (putStrLn s w) o1
+                ((utuple w1 _)
+                  (case (prim integer_sub 0I big) nbig
+                    (_ (case (showInteger nbig) s2
+                         (_ (case (putStrLn s2 w1) o2
+                              ((utuple w2 _)
+                                (let (t (-> World (utuple World Unit)) (\ ((v World)) (let (x Int (prim integer_to_int big)) (printInt x v))))
+                                  (try t w2))))))))))))))))

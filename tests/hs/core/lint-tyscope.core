@@ -1,0 +1,3 @@
+; fail: [tyscope] in val f: the type variable Int has the name of a type constructor
+; CoreLint, tyscope: a type variable with the name of a type constructor would read back as the constructor
+(val f (forall (Int) (-> Int Int)) (\ (@Int (x Int)) x))

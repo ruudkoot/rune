@@ -1,0 +1,55 @@
+; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
+; E1's letpoly, in Core: a polymorphic CAF, one suspension at every type,
+; whose code runs once; a local polymorphic function; a let-bound value of
+; a polymorphic type:
+;   empty :: [a]
+;   empty = (count it) `seq` []
+;   main = do
+;     let pairUp x = (x, x)
+;         e = []
+;     print (fst (pairUp 3)); putStrLn (fst (pairUp "s"))
+;     print (length (1 : e)); print (length ("a" : e))
+;     print (length (1 : empty)); print (length ("a" : empty))
+;     print (the times empty ran)
+
+(val runs (Ref Int) (case (con Unit) u (_ (newCounter u))))
+
+(val empty (forall (a) (List a))
+  (\ (@a) (case (tick runs) _ (_ (con Nil @a)))))
+
+(val fst (forall (a b) (-> (Pair a b) a))
+  (\ (@a @b (p (Pair a b))) (case p q ((Pair x _) x))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (pairUp (forall (a) (-> a (Pair a a))) (\ (@a (x a)) (con Pair @a @a x x)))
+    (let (e (forall (a) (List a)) (\ (@a) (con Nil @a)))
+    (let (p1 (Pair Int Int) (pairUp @Int 3))
+    (let (f1 Int (fst @Int @Int p1))
+    (case (printInt f1 w) r1
+      ((utuple w1 _)
+        (let (p2 (Pair Str Str) (pairUp @Str "s"))
+        (case (fst @Str @Str p2) s
+          (_ (case (putStrLn s w1) r2
+               ((utuple w2 _)
+                 (let (e1 (List Int) (e @Int))
+                 (let (l1 (List Int) (con Cons @Int 1 e1))
+                 (let (n1 Int (length @Int l1))
+                 (case (printInt n1 w2) r3
+                   ((utuple w3 _)
+                     (let (e2 (List Str) (e @Str))
+                     (let (l2 (List Str) (con Cons @Str "a" e2))
+                     (let (n2 Int (length @Str l2))
+                     (case (printInt n2 w3) r4
+                       ((utuple w4 _)
+                         (let (m1 (List Int) (empty @Int))
+                         (let (l3 (List Int) (con Cons @Int 1 m1))
+                         (let (n3 Int (length @Int l3))
+                         (case (printInt n3 w4) r5
+                           ((utuple w5 _)
+                             (let (m2 (List Str) (empty @Str))
+                             (let (l4 (List Str) (con Cons @Str "a" m2))
+                             (let (n4 Int (length @Str l4))
+                             (case (printInt n4 w5) r6
+                               ((utuple w6 _) (printCount runs w6))))))))))))))))))))))))))))))))))

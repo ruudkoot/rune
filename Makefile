@@ -781,8 +781,11 @@ bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 # Config is its own, over rhc.plan (scripts/gen-version.sh --config;
 # docs/building.md, The compiler's identity): written on every make, as
 # build/config.sml is, and only when it changes.
-.PHONY: rhc
+.PHONY: rhc test-rhc
 rhc: bin/rhc
+# rhc's tests (tests/hs/core; tests/runner/hscore.sml), part of make check
+test-rhc: bin/rhc bin/rune-test
+	$(RUNE_TEST) --tier test-rhc
 src/rhc/config.sml: FORCE | $(VERSIONGEN)
 	@sh scripts/gen-version.sh --config rhc.plan $@
 bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
@@ -1687,7 +1690,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) FORCE
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) lib/compiler/*.sml lib/compiler/*/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/language/haskell/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) lib/compiler/*.sml lib/compiler/*/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1695,6 +1698,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) FORCE
 	$(RUNEDOC) $(DOCS_UNIT) --check
 	$(RUNEDOC) $(DOCS_RUNNER) --check
 	$(RUNEDOC) $(DOCS_C) --check
+	$(RUNEDOC) $(DOCS_HASKELL) --check
 	$(RUNEDOC) $(DOCS_FFI_MODEL) --check
 	$(RUNEDOC) $(DOCS_FFI_MARSHAL) --check
 	$(RUNEDOC) $(DOCS_FFI_RUNTIME) --check
@@ -1758,6 +1762,9 @@ DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis
                   --conventions ../../conventions.md
 DOCS_C := --lib lib --library language/c --out docs/lib/language/c --basis-docs ../../basis \
           --conventions ../../conventions.md
+# rhc's front end and Core (docs/plans/language/haskell98.md, M8)
+DOCS_HASKELL := --lib lib --library language/haskell --out docs/lib/language/haskell --basis-docs ../../basis \
+                --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
 # docs/lib/NAME (DOC_LIBS). The heading of the library's
 # README.md is its name, on its pages and in the overview below.
@@ -1788,6 +1795,7 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page jupyter \
 	--library-page digest \
 	--library-page language/c \
+	--library-page language/haskell \
 	--library-page ffi/model \
 	--library-page ffi/marshal \
 	--library-page ffi/runtime \
@@ -1806,6 +1814,7 @@ docs: $(RUNEDOC) FORCE
 	$(RUNEDOC) $(DOCS_UNIT)
 	$(RUNEDOC) $(DOCS_RUNNER)
 	$(RUNEDOC) $(DOCS_C)
+	$(RUNEDOC) $(DOCS_HASKELL)
 	$(RUNEDOC) $(DOCS_FFI_MODEL)
 	$(RUNEDOC) $(DOCS_FFI_MARSHAL)
 	$(RUNEDOC) $(DOCS_FFI_RUNTIME)
@@ -2177,7 +2186,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/storechecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
-               tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
+               tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/hscore.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
                tests/runner/hssyntax.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
