@@ -141,6 +141,92 @@ struct
     | TailCallK (_, vs) => vs
     | Raise v => [v]
 
+  (* An operation and a transfer with each variable they read given by f. *)
+  fun mapOperation (f : var -> var) (oper : operation) : operation =
+    case oper of
+      Const c => Const c
+    | Unit => Unit
+    | Con0 t => Con0 t
+    | Global g => Global g
+    | Slot g => Slot g
+    | SetGlobal (g, v) => SetGlobal (g, f v)
+    | Env i => Env i
+    | Self => Self
+    | Call (c, a) => Call (f c, f a)
+    | CallK (k, vs) => CallK (k, List.map f vs)
+    | Prim (p, vs) => Prim (p, List.map f vs)
+    | Tuple vs => Tuple (List.map f vs)
+    | Select (i, v) => Select (i, f v)
+    | Con (t, vs) => Con (t, List.map f vs)
+    | Decon (t, v) => Decon (t, f v)
+    | Field (t, i, v) => Field (t, i, f v)
+    | ConTag v => ConTag (f v)
+    | NewExn n => NewExn n
+    | BuiltinExn k => BuiltinExn k
+    | MkExn (c, p) => MkExn (f c, f p)
+    | ExnCon v => ExnCon (f v)
+    | ExnArg v => ExnArg (f v)
+    | Closure (k, vs) => Closure (k, List.map (Option.map f) vs)
+    | SetEnv (c, i, v) => SetEnv (f c, i, f v)
+  fun mapTransfer (f : var -> var) (t : transfer) : transfer =
+    case t of
+      Goto (l, vs) => Goto (l, List.map f vs)
+    | If (v, a, b) => If (f v, a, b)
+    | IfTag (v, tag, a, b) => IfTag (f v, tag, a, b)
+    | Switch (v, cases, d) => Switch (f v, cases, d)
+    | Return v => Return (f v)
+    | TailCall (c, a) => TailCall (f c, f a)
+    | TailCallK (k, vs) => TailCallK (k, List.map f vs)
+    | Raise v => Raise (f v)
+
+  (* Whether a function is a suspension's code (docs/ir.md, Suspensions):
+     one that says thunk_blackhole in its entry block, where it goes under
+     evaluation. *)
+  fun suspensionCode (f : func) : bool =
+    case #blocks f of
+      {instrs, ...} :: _ => List.exists (fn Def (_, Prim ("thunk_blackhole", _)) => true | _ => false) instrs
+    | [] => false
+
+  (* A suspension's code with what it captured read at its entry, before it
+     goes under evaluation, after which the collector follows none of its
+     closure's fields (BLACKHOLE): each slot read once, by the first read of
+     it, moved to the entry block's start, and every other read of the slot
+     that variable. Any other function as it is. *)
+  fun hoistEnv (f : func) : func =
+    if not (suspensionCode f) then f
+    else
+      let
+        (* the variable read of each slot, and what each other read is *)
+        val reads : (int * var) list ref = ref []
+        val renamed : var IntMap.map ref = ref IntMap.empty
+        val () =
+          List.app (fn ({instrs, ...} : block) =>
+                      List.app (fn Def (x, Env i) =>
+                                     (case List.find (fn (j, _) => j = i) (!reads) of
+                                        SOME (_, y) => renamed := IntMap.insert (!renamed, x, y)
+                                      | NONE => reads := (i, x) :: !reads)
+                                 | _ => ()) instrs)
+                   (#blocks f)
+        fun name x = case IntMap.find (!renamed, x) of SOME y => y | NONE => x
+        fun instr (Def (_, Env _)) = NONE
+          | instr (Def (x, oper)) = SOME (Def (x, mapOperation name oper))
+          | instr i = SOME i
+        val blocks =
+          List.map (fn {label, params, instrs, transfer} =>
+                      {label = label, params = params, instrs = List.mapPartial instr instrs,
+                       transfer = mapTransfer name transfer})
+                   (#blocks f)
+        val hoisted = List.map (fn (i, x) => Def (x, Env i)) (List.rev (!reads))
+        val blocks =
+          case blocks of
+            {label, params, instrs, transfer} :: rest =>
+              {label = label, params = params, instrs = hoisted @ instrs, transfer = transfer} :: rest
+          | [] => []
+      in
+        {id = #id f, name = #name f, params = #params f, ncaptured = #ncaptured f, nvars = #nvars f, blocks = blocks,
+         pos = #pos f, reps = #reps f, result = #result f, captures = #captures f}
+      end
+
   fun size (p : program) : int =
     List.foldl (fn ({blocks, ...} : func, n) =>
                   List.foldl (fn ({instrs, ...} : block, n) => n + 1 + List.length instrs) n blocks) 0 p

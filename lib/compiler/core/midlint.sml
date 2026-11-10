@@ -21,6 +21,14 @@
    * constants, primitives, exceptions' payloads and the casts the
      compiler makes, by IrRules (linting roadmap, M4); a Do sets each
      global it lists on every way that returns;
+   * suspensions (docs/ir.md, Suspensions; the haskell98 roadmap's D4 and
+     D57): no cast gives what is no suspension of a suspension, which is a
+     force forgotten; a function thunk_make is given is named by nothing
+     else, so that no copy of it or call of it runs a suspension's code
+     twice; and thunk_blackhole and thunk_self_update are said only by the
+     own code of a function, which nothing but thunk_make names. Checked
+     where the program has a primitive of suspensions, and so not of
+     SML's;
    * casts (functors-units.md, D3) of a
      record's slots (functor_cast, which only Translate's records make: a
      program's own unsafe_cast is not checked): each is to unit or from
@@ -57,6 +65,75 @@ struct
      whether it may set such a global. *)
   type surround = {global : int -> scheme option, nary : int -> Ty.ty list option, sets : bool, setter : int -> bool}
 
+  (* The rules of suspensions over the whole of p (the header's): what
+     each function's own code says of them, and how often each function is
+     named, and named by thunk_make. *)
+  fun suspensions (p : program) : unit =
+    let
+      fun bug msg = Error.bug msg
+      fun isThunkPrim n = n = "thunk_blackhole" orelse n = "thunk_self_update"
+      (* every atom's name, counted; thunk_make's arguments, counted *)
+      val named : int IntTable.table = IntTable.table 64
+      val made : int IntTable.table = IntTable.table 16
+      fun count (t, x) = IntTable.bump (t, x)
+      (* the functions, in the order the walk meets them *)
+      val order : var list ref = ref []
+      fun make x = count (made, x)
+      fun atom a = case a of Var (x, _) => count (named, x) | Global (g, _) => count (named, g) | Const _ => () | Con0 _ => () | Unit => ()
+      (* the functions, and of each whether its own code says thunk_blackhole or thunk_self_update *)
+      val functions : bool IntTable.table = IntTable.table 64
+      (* own: the function whose own code this is, or NONE at the top level;
+         a step's atoms are Mid.atomsOfRhs's (docs/ir.md, Walking Mid) *)
+      fun rhs (own : var option, r : rhs) =
+        (List.app atom (atomsOfRhs r);
+         case r of
+           Prim (n, _, xs) =>
+             ((case (n, xs) of
+                 ("thunk_make", [Var (x, _)]) => make x
+               | ("thunk_make", [Global (g, _)]) => make g
+               | _ => ());
+              if not (isThunkPrim n) then ()
+              else case own of
+                     SOME f => IntTable.insert (functions, f, true)
+                   | NONE => bug (n ^ " outside a function: no suspension's code"))
+         | Atom _ => ()
+         | App _ => ()
+         | Tuple _ => ()
+         | Select _ => ()
+         | Con _ => ()
+         | Decon _ => ()
+         | ConTag _ => ()
+         | NewExn _ => ()
+         | BuiltinExn _ => ()
+         | MkExn _ => ()
+         | ExnCon _ => ()
+         | ExnArg _ => ()
+         | SetGlobal _ => ())
+      (* an expression's parts, by Mid.fold: the functions it makes walked
+         as their own code *)
+      and exp (own, e : exp) =
+        fold {rhs = fn (r, ()) => rhs (own, r), atom = fn (a, ()) => atom a, jump = fn (_, ()) => (),
+              fundef = fn (f, ()) => fundef f} () e
+      and fundef (f : fundef) =
+        (if isSome (IntTable.find (functions, #name f)) then ()
+         else (IntTable.insert (functions, #name f, false); order := #name f :: !order);
+         exp (SOME (#name f), #body f))
+      val () =
+        List.app (fn Val (_, _, e) => exp (NONE, e) | Funs fs => List.app fundef fs | Do (_, e) => exp (NONE, e)) p
+      fun uses t x = getOpt (IntTable.find (t, x), 0)
+    in
+      List.app (fn f =>
+                  let val says = getOpt (IntTable.find (functions, f), false)
+                  in
+                    if uses made f > 0 andalso uses named f > uses made f then
+                      bug ("v" ^ Int.toString f ^ ", a suspension's code (thunk_make), is named elsewhere too")
+                    else if says andalso uses named f > uses made f then
+                      bug ("v" ^ Int.toString f ^ " says thunk_blackhole or thunk_self_update, and is named where no thunk_make makes it")
+                    else ()
+                  end)
+               (List.rev (!order))
+    end
+
   fun checkWith ({global = outer, nary = outerNary, sets, setter} : surround) (p : program) : unit =
     let
       fun bug msg = Error.bug msg
@@ -65,6 +142,8 @@ struct
          functions the walk is in *)
       val setInFun : unit IntTable.table = IntTable.table 16
       val inFun = ref 0
+      (* whether the program has a primitive of suspensions (suspensions) *)
+      val suspended = ref false
       val bound : unit IntTable.table = IntTable.table 256
       fun bind x =
         case IntTable.find (bound, x) of
@@ -307,7 +386,8 @@ struct
               | _ => wrong ()
             end
         | Prim (p, t, args) =>
-            (scoped (fn () => "primitive " ^ p, t); valueTy (fn () => "primitive " ^ p, t);
+            (if String.isPrefix "thunk_" p then suspended := true else ();
+             scoped (fn () => "primitive " ^ p, t); valueTy (fn () => "primitive " ^ p, t);
              (case (p, args) of ("functor_cast", [a]) => castBack (t, a) | _ => ());
              (* its description's, and a cast's origin's rule (IrRules.use):
                 a record's slot is unit, a functor_cast to it or from it *)
@@ -595,7 +675,8 @@ struct
                                 Val (_, _, e) => early (i, true) e
                               | Do (_, e) => early (i, false) e
                               | Funs _ => ());
-                             i + 1)) 0 p)
+                             i + 1)) 0 p);
+      if !suspended then suspensions p else ()
     end
 
   (* A whole program, or a unit's, whose globals of units before it are

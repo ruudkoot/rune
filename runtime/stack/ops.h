@@ -79,4 +79,21 @@ static inline void op_CONN(VM *vm, int32_t a, int32_t b) {
     vm_push(vm, mk_ptr(c));
 }
 
+static inline void op_BLACKHOLE(VM *vm, int32_t a, int32_t b) {
+    Program *p = &vm->prog;
+    (void)p; (void)a; (void)b;
+    Obj *c = vm->frames[vm->fp].closure;
+    if (!c || obj_kind(c) != K_THUNK) vm_fatal(vm, "BLACKHOLE outside a suspension");
+    vm_blackhole(vm, c);
+}
+
+static inline void op_UPDATE(VM *vm, int32_t a, int32_t b) {
+    Program *p = &vm->prog;
+    (void)p; (void)a; (void)b;
+    Value v = vm_pop(vm);
+    Obj *c = vm->frames[vm->fp].closure;
+    if (!c || obj_kind(c) != K_THUNK) vm_fatal(vm, "UPDATE outside a suspension");
+    obj_become_ind(vm, c, v);
+}
+
 #endif

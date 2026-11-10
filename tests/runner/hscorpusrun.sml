@@ -5,18 +5,20 @@
    E8's expected output as E8 compared it (the same, the same words, or the
    same but for numbers equal to about five digits) and its exit status 0.
 
-   The programs whose licence lets them be copied are vendored under
-   tests/hs/corpus/vendored (the owner's decision: a program lands with its
-   tree's LICENSE beside it), and their jobs are make check's: 45 of the
-   188, GHC's tests (BSD-3) and jhc's (MIT). The rest are read through
-   RUNE_HS_CORPUS, nightly, with the capability hs-corpus. Every job waits
-   while rhc runs no program: until the row prog.main.value of
-   tests/hs/conformance.tsv is no longer Planned.
+   The programs are vendored under tests/hs/corpus/vendored (the owner's
+   rules: code lands with its LICENSE beside it, or, without a licence,
+   with a PROVENANCE), so their jobs are make check's: all 188, 45 under
+   their trees' licences (GHC's tests, BSD-3; jhc's, MIT) and 143 under
+   PROVENANCE files. A program not vendored would be read through
+   RUNE_HS_CORPUS, nightly, with the capability hs-corpus; none is now.
+   Every job waits while rhc runs no program: until the row prog.main.value
+   of tests/hs/conformance.tsv is no longer Planned.
 
-   tests/hs/corpus/vendored is also where `hs-rhc-corpus/vendored`, in
-   make check, puts the vendored programs through `bin/rhc
+   tests/hs/corpus/vendored is also where `hs-rhc-corpus/vendored-SET`, in
+   make check, a job a set, puts the 45 under a LICENSE through `bin/rhc
    --typecheck-only` as the nightly corpus jobs put the whole corpus
-   (tests/runner/hsrhccorpus.sml). *)
+   (tests/runner/hsrhccorpus.sml), and `hs-rhc-corpus/provenance-SET`,
+   nightly, the 143 under a PROVENANCE (ruling 46). *)
 structure HsCorpusRun =
 struct
   open Sh
@@ -86,22 +88,39 @@ struct
     handle HsOracles.Failed msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
          | HsCorpus.Bad msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
 
-  (* the vendored programs through rhc --typecheck-only, in make check *)
-  fun namesVendored () =
+  (* the vendored programs by their notice: under their tree's LICENSE (45),
+     whose names jobs are make check's, or under a PROVENANCE (143), whose
+     names jobs are nightly (ruling 46: D56 puts the 188's runs in check, not
+     a names job, and the nightly m13 and rest jobs check the 143 as well);
+     each set's of a kind a job *)
+  fun vendoredRows () = List.filter (fn r => HsCorpus.field r "vendor" = "vendored") (d56 ())
+  fun underLicence r = OS.Path.file (HsCorpus.field r "notice") = "LICENSE"
+  fun setsOf rows =
+    List.foldr (fn (s, acc) => if List.exists (fn t => t = s) acc then acc else s :: acc) []
+               (List.map (fn r => HsCorpus.field r "set") rows)
+
+  (* the vendored programs whose rows of licences.tsv `keep` holds of,
+     through rhc --typecheck-only, reported as the job `job` *)
+  fun namesVendored (job, keep) () =
     fromVendored (fn () =>
       let
-        val ids = vendored ()
+        val ids = List.map (fn r => HsCorpus.field r "id") (List.filter keep (vendoredRows ()))
         val cs = HsCorpus.candidates ()
         val rows = List.filter (fn r => List.exists (fn v => v = HsCorpus.field r "id") ids) (HsCorpus.rows "accept.tsv")
         fun cand r = case List.find (fn (c : HsCorpus.candidate) => #id c = HsCorpus.field r "id") cs of
                        SOME c => c | NONE => raise HsOracles.Failed ("no candidate " ^ HsCorpus.field r "id")
-      in HsRhcCorpus.report ("vendored", List.map (fn r => HsRhcCorpus.one false (r, cand r)) rows) end)
-    handle HsOracles.Failed m => say ("FAIL rhc vendored: " ^ m ^ "\n")
-         | HsCorpus.Bad m => say ("FAIL rhc vendored: " ^ m ^ "\n")
+      in HsRhcCorpus.report (job, List.map (fn r => HsRhcCorpus.one false (r, cand r)) rows) end)
+    handle HsOracles.Failed m => say ("FAIL rhc " ^ job ^ ": " ^ m ^ "\n")
+         | HsCorpus.Bad m => say ("FAIL rhc " ^ job ^ ": " ^ m ^ "\n")
+  fun ofSet set r = HsCorpus.field r "set" = set
 
   fun command ["hs-corpus-run", id] =
         SOME (fn () => if isVendored id then fromVendored (fn () => runOne id) else runOne id)
-    | command ["hs-rhc-corpus-vendored"] = SOME namesVendored
+    | command ["hs-rhc-corpus-vendored"] = SOME (namesVendored ("vendored", fn _ => true))
+    | command ["hs-rhc-corpus-vendored", "licence", set] =
+        SOME (namesVendored ("vendored-" ^ set, fn r => ofSet set r andalso underLicence r))
+    | command ["hs-rhc-corpus-vendored", "provenance", set] =
+        SOME (namesVendored ("provenance-" ^ set, fn r => ofSet set r andalso not (underLicence r)))
     | command _ = NONE
 
   fun tree () =
@@ -111,6 +130,10 @@ struct
       fun job id = HsOracles.job (id, ["hs-corpus-run", id], [], 3600, 2000)
       fun hold t = case held of SOME why => Test.pending why t | NONE => t
       val (inTree, outside) = List.partition (fn r => HsCorpus.field r "vendor" = "vendored") rows
+      val vrows = vendoredRows () handle HsCorpus.Bad _ => []
+      fun names (kind, prefix, keep) =
+        List.map (fn s => HsOracles.job (prefix ^ s, ["hs-rhc-corpus-vendored", kind, s], [], 1800, 2000))
+                 (setsOf (List.filter keep vrows))
       val covers = ["covers:tests/hs/corpus/*", "covers:tests/runner/hscorpusrun.sml", "covers:lib/language/haskell/*",
                     "covers:src/rhc/*"]
     in
@@ -121,8 +144,9 @@ struct
                 [Test.tag "check" (Test.describe "" (List.map (fn r => hold (job (HsCorpus.field r "id"))) inTree)),
                  Test.tag "nightly" (Test.requires ["hs-corpus"]
                    (Test.describe "" (List.map (fn r => hold (job (HsCorpus.field r "id"))) outside)))],
-              Test.tag "check" (Test.describe "hs-rhc-corpus"
-                [HsOracles.job ("vendored", ["hs-rhc-corpus-vendored"], [], 1800, 2000)])]))
+              Test.describe "hs-rhc-corpus"
+                [Test.tag "check" (Test.describe "" (names ("licence", "vendored-", underLicence))),
+                 Test.tag "nightly" (Test.describe "" (names ("provenance", "provenance-", not o underLicence)))]]))
         ("hs" :: covers)
     end
 end

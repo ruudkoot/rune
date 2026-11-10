@@ -89,7 +89,8 @@ enum JitFatal {
     FATAL_EXPECT_TUPLE, FATAL_EXPECT_CON, FATAL_EXPECT_CON_FIELDS, FATAL_EXPECT_CLOSURE, FATAL_EXPECT_EXN,
     FATAL_GLOBAL_UNSET, FATAL_ENV_RANGE, FATAL_SELF, FATAL_TUPLE_INDEX, FATAL_DECON_TAG, FATAL_CONTAG,
     FATAL_MKEXN, FATAL_JUMPIF, FATAL_JUMPIFNOT, FATAL_JUMPIFNOTTAG, FATAL_SWITCH, FATAL_FIELD_TAG, FATAL_FIELD_INDEX,
-    FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD, FATAL_HOME_SLOT
+    FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD, FATAL_HOME_SLOT,
+    FATAL_ENTER, FATAL_LOOP, FATAL_BLACKHOLE, FATAL_UPDATE
 };
 
 /* a known call to function f, which has no code yet: its jump at off in
@@ -121,6 +122,8 @@ Site *jit_site(Jit *j, int kind, uint32_t pc);
 int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v);
+void jit_h_blackhole(VM *vm);
+void jit_h_update(VM *vm, int32_t v);
 int jit_h_return(VM *vm, uint64_t value);
 const void *jit_h_barrier(VM *vm, const Value *regs);
 int jit_h_enter_interp(VM *vm);

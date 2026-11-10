@@ -8,8 +8,9 @@
    vectors or constructed values of the same constructor whose fields are
    equal, strings of the same bytes, reals and boxed words of the same bits,
    and exception values of the same constructor and argument. A ref, an
-   array, an array of bytes or of reals, an exception constructor and a
-   closure keep their identity and are never one with another. Nothing
+   array, an array of bytes or of reals, an exception constructor, a
+   closure and a suspension, evaluated or not, keep their identity and are
+   never one with another. Nothing
    writes into an object of the other kinds once it is made -- a closure's
    environment is the one thing filled after (SETENV), and a vector or a
    string is made whole by its primitive -- so an object the stack points
@@ -56,7 +57,7 @@ static uint64_t contents_hash(Share *s, const Obj *o) {
         for (size_t i = 0; i < raw_len(o); i++) h = mix(h, b[i]);
         return h;
     }
-    for (uint32_t i = 0; i < obj_len(o); i++) {
+    for (uint32_t i = 0; i < obj_scanned_fields(o); i++) {
         Value f = obj_field(o, i);
         h = mix(h, is_ptr(f) ? ((uint64_t)node(s, val_ptr(f))->id << 1) : (uint64_t)f);
     }
@@ -65,7 +66,7 @@ static uint64_t contents_hash(Share *s, const Obj *o) {
 static int same_contents(Share *s, const Obj *a, const Obj *b) {
     if (obj_kind(a) != obj_kind(b) || obj_contag(a) != obj_contag(b) || obj_len(a) != obj_len(b)) return 0;
     if (!obj_has_fields(a)) return memcmp(obj_bytes_c(a), obj_bytes_c(b), raw_len(a)) == 0;
-    for (uint32_t i = 0; i < obj_len(a); i++) {
+    for (uint32_t i = 0; i < obj_scanned_fields(a); i++) {
         Value x = obj_field(a, i), y = obj_field(b, i);
         if (is_ptr(x) != is_ptr(y)) return 0;
         if (is_ptr(x) ? node(s, val_ptr(x))->id != node(s, val_ptr(y))->id : x != y) return 0;
@@ -130,7 +131,7 @@ static int number_all(Share *s, Obj *root) {
         /* a field whose object is still open is a cycle, which only a
            mutable object closes: the object keeps its identity */
         if (merge && obj_has_fields(o))
-            for (uint32_t i = 0; i < obj_len(o); i++) {
+            for (uint32_t i = 0; i < obj_scanned_fields(o); i++) {
                 Value v = obj_field(o, i);
                 if (is_ptr(v) && (node(s, val_ptr(v))->state & 3) == 1) { merge = 0; break; }
             }

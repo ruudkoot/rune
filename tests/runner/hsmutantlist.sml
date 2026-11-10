@@ -69,5 +69,16 @@ struct
           ["hs/types/derive/module"]),
      one ("HD02", "deriving", "a derived instance's context too wide: each parameter's, not the fields' types' (10.1)",
           "infer.sml", "reduce {cls = cls, ty = f}) fields)", "reduce {cls = cls, ty = f}) (fields @ List.tabulate (vars, T.TGen)))",
-          ["hs/types/derive/module"])]
+          ["hs/types/derive/module"]),
+     (* the roadmap's seeds for types and classes (M16), in F's checker: two
+        are seen today, Rule 1 off by the checker's own tests (hs/types), Rule
+        2 by group by the Rule 2 test; HsLint's jobs see neither, and three
+        more seeds (defaulting without a numeric class, a superclass path
+        wrong, a method slot swapped) no job sees yet: impl/progress/t.md *)
+     one ("HK01", "checker", "Rule 1 off: a restricted group's constrained variables are generalised (4.5.5)",
+          "infer.sml", "val restricted = List.exists (fn PatB _ => true | _ => false) bs", "val restricted = false",
+          ["hs/types/defaults/module"]),
+     one ("HK02", "checker", "Rule 2 by group: what a group leaves open is defaulted at its end, not the module's (4.5.5, R20)",
+          "infer.sml", "      wanted := deferred @ savedW\n    end", "      (defaultAll (deferred, \" by group\"); wanted := savedW)\n    end",
+          ["hs/hslint/dump/rule2", "hs/types/rule2/module"])]
 end

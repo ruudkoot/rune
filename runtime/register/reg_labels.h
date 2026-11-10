@@ -42,3 +42,7 @@
 &&L_SWITCH,
 &&L_CONN,
 &&L_FIELD,
+&&L_FORCE,
+&&L_ENTER,
+&&L_BLACKHOLE,
+&&L_UPDATE,

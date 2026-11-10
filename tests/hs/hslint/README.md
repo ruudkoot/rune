@@ -22,7 +22,7 @@ describes: `KIND`, `DERIVED`, `TYPE`, `SIGNED`, `DEFAULT`, or `REFUSED` and why.
 | `classes` | Kinds inferred and defaulted (4.6), derived contexts by the fixpoint (4.3.3, 10.1), a synonym, a constructor class |
 | `cycle` | A declaration group across a cycle of modules, each module's restricted binding fixed by itself (D30) |
 | `cyclefix` | A module of a cycle fixing another's monomorphic type: refused under `--cycle-default=module`, the default, and taken under `scc` (D30) |
-| `faults` | A program in which every rule of HsLint's comparison has a claim to check: held to its own expected dump by `--hslint-claims`, and refused by each rule with its fault (`hs/hslint/faults`) |
+| `faults` | A program in which every rule of HsLint's comparison and of its replay has a claim or a record to check: its records replayed, held to its own expected dump by `--hslint-claims`, and refused by each rule with its fault (`hs/hslint/faults`) |
 | `report` | The Report's library, every module a program may import with the Prelude's 11-module cycle, as one unit: its unsigned values (E16's 7, and the overlay's own, `PreludeRuntime`'s `Handle` accessors among them) and the defaults its code chooses, among them `floatToDigits`'s (E16) |
 
 `RUNE_TEST_ACCEPT=1 bin/rune-test run 'hs/hslint/dump/*'` writes the expected files again from what rhc prints; read
@@ -33,3 +33,10 @@ them line by line before committing.
 `disagreements.tsv` lists the programs of `tests/hs` on which HsLint and the program's expectation part, and why: a
 reading, a bug of HsLint's, or a program that does not mean what it says. Each is held to still disagreeing, so that a
 fix on either side shows; its line is removed then.
+
+## The two judges
+
+The same jobs run the checker alone (`bin/rhc --typecheck-only --lint=off`) and HsLint's second inference alone
+(`bin/rhc --dump-hslint`) on every program of `tests/hs/accept`, `tests/hs/lang` and the type rows of `tests/hs/errors`,
+and want one verdict, refused or not. `judges.tsv` lists the programs on which they part, each with why: a gap or a bug
+of one of them, or a reading; each is held to still parting, so that a fix shows.

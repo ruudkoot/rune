@@ -19,7 +19,9 @@
      record slot's, to or from unit; dynamic_cast, a dynamic module's slot,
      to or from unit; open_cast, an open constructor's, to or from unit, a
      tuple of units (Ty.flatArg) or a flat datatype (Ty.flat); the
-     program's own unsafe_cast is anything. *)
+     program's own unsafe_cast is anything but a cast of a suspension to
+     what is none, which is a force forgotten (docs/ir.md, Suspensions;
+     the haskell98 roadmap's D4). *)
 structure IrRules =
 struct
   fun pow2 n = IntInf.pow (IntInf.fromInt 2, n)
@@ -140,8 +142,21 @@ struct
         end
     | _ => SOME ("a " ^ name ^ " of type " ^ Ty.toString t)
 
+  (* the program's cast at type t, which gives no suspension what is none *)
+  fun isSusp t = case Ty.view t of Ty.Con (s, _, _) => s = #stamp Types.suspTycon | _ => false
+  fun leavesSusp (name : string, t : Ty.ty) : string option =
+    if name <> "unsafe_cast" then NONE
+    else
+      case Ty.view t of
+        Ty.Arrow (d, c) =>
+          if isSusp d andalso not (isSusp c)
+          then SOME ("a cast from " ^ Ty.toString d ^ " to " ^ Ty.toString c ^ ", which is no suspension: a force forgotten")
+          else NONE
+      | _ => NONE
+
   (* a primitive's use at type t: what is wrong with it, by its description
-     (prim) and, for a cast the compiler makes, by its origin's rule (cast).
+     (prim), for a cast the compiler makes by its origin's rule (cast), and
+     for the program's by leavesSusp.
      What was found right once is not looked at again: a primitive is used
      at few types, again and again, and a type is one node (Ty is
      hash-consed), whose id keys the uses found right *)
@@ -152,7 +167,7 @@ struct
     in
       if List.exists (fn n => n = name) seen then NONE
       else
-        case (case prim (name, t) of NONE => cast (name, t) | wrong => wrong) of
+        case (case prim (name, t) of NONE => (case cast (name, t) of NONE => leavesSusp (name, t) | wrong => wrong) | wrong => wrong) of
           NONE => (IntTable.insert (checked, Ty.id t, name :: seen); NONE)
         | wrong => wrong
     end

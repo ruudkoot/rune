@@ -194,6 +194,10 @@ struct
     \                    make and check it as the pass mid would; with -o, its\n\
     \                    bytecode too, as a whole program's\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
+    \  --check-casts     check at run time that a cast whose result is no\n\
+    \                    suspension is given what is evaluated (any_check), for\n\
+    \                    testing a front end that makes suspensions (docs/ir.md,\n\
+    \                    Suspensions); the code is what it is without it elsewhere\n\
     \  --target=T        the bytecode to make: registers (runevm's, the default,\n\
     \                    from -O1) or stack (runevm-stack's)\n\
     \  --version         print the version and exit\n\
@@ -345,6 +349,7 @@ struct
     | "--read-mid" :: f :: rest => (readMid := SOME f; parse rest)
     | ["--read-mid"] => raise Usage "--read-mid requires a file"
     | "--mid-roundtrip" :: rest => (midRoundTrip := true; parse rest)
+    | "--check-casts" :: rest => (Lower.checkCasts := true; parse rest)
     | "--pass-stats" :: rest => (Pass.stats := true; parse rest)
     | "--version" :: rest => (showVersion := true; parse rest)
     | "--help" :: rest => (showHelp := true; parse rest)

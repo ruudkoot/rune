@@ -52,7 +52,7 @@ struct
       go (0, [])
     end
 
-  fun isVar w = size w > 0 andalso Char.isLower (String.sub (w, 0))
+  fun isVar w = size w > 0 andalso (Char.isLower (String.sub (w, 0)) orelse String.sub (w, 0) = #"_")
 
   (* type := btype [-> type]; btype := atype atype*; atype := name | ( ... ) | [ ... ] *)
   fun parseType ts =
@@ -204,9 +204,13 @@ struct
   type derived = {module : string, instance : string}
   type binding = {module : string, name : string, scheme : string, signed : bool}
   type default = {module : string, place : string, preds : string, choice : string}
-  type claims = {kinds : kind list, derived : derived list, bindings : binding list, defaults : default list}
+  (* What a record claims; `whole` is whether it claims every kind and
+     derived instance, which the dump's text does and the checker's
+     records do not, and a default's place "" matches any place. *)
+  type claims = {kinds : kind list, derived : derived list, bindings : binding list, defaults : default list,
+                 whole : bool}
 
-  val none : claims = {kinds = [], derived = [], bindings = [], defaults = []}
+  val none : claims = {kinds = [], derived = [], bindings = [], defaults = [], whole = true}
 
   (* the claims of a dump's text; a line of another form is not one *)
   fun read (text : string) : claims =
@@ -227,23 +231,23 @@ struct
           ["KIND", m, rest] =>
             (case named rest of
                SOME (n, k) => {kinds = #kinds c @ [{module = m, name = n, kind = k}], derived = #derived c,
-                               bindings = #bindings c, defaults = #defaults c}
+                               bindings = #bindings c, defaults = #defaults c, whole = true}
              | NONE => c)
         | ["DERIVED", m, inst] =>
             {kinds = #kinds c, derived = #derived c @ [{module = m, instance = inst}], bindings = #bindings c,
-             defaults = #defaults c}
+             defaults = #defaults c, whole = true}
         | [tag, m, rest] =>
             if tag = "TYPE" orelse tag = "SIGNED" then
               case named rest of
                 SOME (n, sc) => {kinds = #kinds c, derived = #derived c,
                                  bindings = #bindings c @ [{module = m, name = n, scheme = sc, signed = tag = "SIGNED"}],
-                                 defaults = #defaults c}
+                                 defaults = #defaults c, whole = true}
               | NONE => c
             else c
         | ["DEFAULT", m, place, rest] =>
             (case arrow rest of
                SOME (ps, t) => {kinds = #kinds c, derived = #derived c, bindings = #bindings c,
-                                defaults = #defaults c @ [{module = m, place = place, preds = ps, choice = t}]}
+                                defaults = #defaults c @ [{module = m, place = place, preds = ps, choice = t}], whole = true}
              | NONE => c)
         | _ => c
     in
@@ -328,15 +332,17 @@ struct
              end)
           (#derived claims)
       val () =
-        List.app (fn d => if List.exists (fn (c : derived) => #module c = #module d
-                                                              andalso head (#instance c) = head (#instance d))
-                                           (#derived claims)
+        List.app (fn d => if not (#whole claims)
+                             orelse List.exists (fn (c : derived) => #module c = #module d
+                                                                   andalso head (#instance c) = head (#instance d))
+                                                (#derived claims)
                           then ()
                           else breach (here, "derive", "no context is claimed for the derived instance " ^ #instance d))
           derived
       (* defaults: by their place and predicates *)
       fun same (c : default, d : chosen) =
-        #module c = #module d andalso #place c = #place d andalso canonicalPreds (#preds c) = canonicalPreds (#preds d)
+        #module c = #module d andalso (#place c = #place d orelse #place c = "")
+        andalso canonicalPreds (#preds c) = canonicalPreds (#preds d)
       val claimedDefaults =
         List.map (fn (c : default) =>
                     if faulty "numeric" then {module = #module c, place = #place c, preds = "Show a", choice = #choice c}

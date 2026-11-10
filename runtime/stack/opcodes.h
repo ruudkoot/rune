@@ -46,6 +46,10 @@ enum Opcode {
   OP_TAILCALLK = 38,  /* Like CALLK, but the current frame is replaced. */
   OP_CONN = 39,  /* Pop n values (first pushed is field 0) and push constructor t made of them: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11). */
   OP_FIELD = 40,  /* Pop a constructor value that CONN made, of tag t, and push its field i; runevm-stack --checked stops where the tag is another. */
+  OP_FORCE = 41,  /* Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to o; else leave it for the ENTER after. */
+  OP_ENTER = 42,  /* Pop argument, pop a suspension, and enter it as CALL enters a closure; one under evaluation is a loop, a fatal error. */
+  OP_BLACKHOLE = 43,  /* The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. */
+  OP_UPDATE = 44,  /* Pop a value; the suspension running becomes an indirection to it. */
   OP__COUNT
 };
 
@@ -91,6 +95,10 @@ static const char *const op_names[] = {
   "TAILCALLK",
   "CONN",
   "FIELD",
+  "FORCE",
+  "ENTER",
+  "BLACKHOLE",
+  "UPDATE",
 };
 
 static const unsigned char op_nargs[] = {
@@ -135,6 +143,10 @@ static const unsigned char op_nargs[] = {
   2,
   2,
   2,
+  1,
+  0,
+  0,
+  0,
 };
 
 /* What each opcode pops: a number (op_pops_fixed), the value of an
@@ -184,6 +196,10 @@ static const signed char op_pops_fixed[] = {
   -1,
   -1,
   1,
+  1,
+  2,
+  0,
+  1,
 };
 static const signed char op_pops_operand[] = {
   -1,
@@ -227,6 +243,10 @@ static const signed char op_pops_operand[] = {
   1,
   1,
   -1,
+  -1,
+  -1,
+  -1,
+  -1,
 };
 static const signed char op_pops_arity[] = {
   -1,
@@ -263,6 +283,10 @@ static const signed char op_pops_arity[] = {
   -1,
   -1,
   0,
+  -1,
+  -1,
+  -1,
+  -1,
   -1,
   -1,
   -1,
@@ -313,6 +337,10 @@ static const unsigned char op_pushes[] = {
   0,
   1,
   1,
+  1,
+  1,
+  0,
+  0,
 };
 
 /* Where control goes after each (src/isa/isa.sml, flow; the enum is
@@ -357,6 +385,10 @@ static const unsigned char op_flow[] = {
   FLOW_CALL,
   FLOW_SWITCH,
   FLOW_TAILCALL,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_BRANCH,
+  FLOW_CALL,
   FLOW_NEXT,
   FLOW_NEXT,
 };
@@ -423,6 +455,10 @@ static const unsigned char op_kinds[][2] = {
   {7, 11},  /* TAILCALLK */
   {3, 11},  /* CONN */
   {3, 12},  /* FIELD */
+  {8, 0},  /* FORCE */
+  {0, 0},  /* ENTER */
+  {0, 0},  /* BLACKHOLE */
+  {0, 0},  /* UPDATE */
 };
 
 #endif

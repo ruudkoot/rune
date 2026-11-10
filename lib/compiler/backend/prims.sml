@@ -434,7 +434,12 @@ struct
     ("intinf_to_int", 428, 1),
     ("intinf_is_small", 429, 1),
     ("intinf_parts", 430, 1),
-    ("intinf_make", 431, 2)
+    ("intinf_make", 431, 2),
+    ("thunk_make", 432, 1),
+    ("thunk_force", 433, 1),
+    ("thunk_blackhole", 434, 1),
+    ("thunk_self_update", 435, 1),
+    ("any_check", 436, 1)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -588,6 +593,7 @@ struct
     "intinf_is_small",
     "intinf_parts",
     "intinf_make",
+    "thunk_make",
     (* the compiler's own (PrimIsa.compilerOwn), which Lower makes others of *)
     "functor_cast",
     "functor_marker",
@@ -1040,7 +1046,12 @@ struct
             (* intinf_to_int *) ([0], 1),
             (* intinf_is_small *) ([0], 5),
             (* intinf_parts *) ([0], 6),
-            (* intinf_make *) ([5, 6], 0)]);
+            (* intinf_make *) ([5, 6], 0),
+            (* thunk_make *) ([6], 0),
+            (* thunk_force *) ([0], 0),
+            (* thunk_blackhole *) ([8], 8),
+            (* thunk_self_update *) ([0], 8),
+            (* any_check *) ([0], 0)]);
          repsAt i)
   fun repsOf name = case find name of SOME (i, _) => repsAt i | NONE => NONE
 end
@@ -1496,7 +1507,12 @@ struct
              (* intinf_to_int *) ([Con ("IntInf.int", [])], Con ("int", [])),
              (* intinf_is_small *) ([Con ("IntInf.int", [])], Con ("bool", [])),
              (* intinf_parts *) ([Con ("IntInf.int", [])], Tuple [Con ("bool", []), Con ("string", [])]),
-             (* intinf_make *) ([Con ("bool", []), Con ("string", [])], Con ("IntInf.int", []))]
+             (* intinf_make *) ([Con ("bool", []), Con ("string", [])], Con ("IntInf.int", [])),
+             (* thunk_make *) ([Arrow (Con ("unit", []), Var 0)], Con ("susp", [Var 0])),
+             (* thunk_force *) ([Con ("susp", [Var 0])], Var 0),
+             (* thunk_blackhole *) ([Con ("unit", [])], Con ("unit", [])),
+             (* thunk_self_update *) ([Var 0], Con ("unit", [])),
+             (* any_check *) ([Var 0], Var 0)]
         in types := SOME v; v end
   (* find name = SOME (parameters, result) *)
   fun find name = case Prims.find name of SOME (i, _) => SOME (Vector.sub (all (), i)) | NONE => NONE

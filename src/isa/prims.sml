@@ -912,7 +912,18 @@ struct
          {name = "intinf_parts", arity = 1, ty = "IntInf.int -> bool * string", effects = [Allocates],
           doc = "Whether the number is negative, and its canonical little-endian magnitude: a large value's own pair, a new one for an immediate. The magnitude budget applies."},
          {name = "intinf_make", arity = 2, ty = "bool * string -> IntInf.int", effects = [Allocates],
-          doc = "The number of a sign and a canonical magnitude, an immediate where it fits; the empty magnitude is 0. The magnitude budget applies; a magnitude with a high zero byte is a bytecode error."}]]
+          doc = "The number of a sign and a canonical magnitude, an immediate where it fits; the empty magnitude is 0. The magnitude budget applies; a magnitude with a high zero byte is a bytecode error."}],
+       group "suspensions of a lazy front end (docs/plans/language/haskell98.md, D3, D11, D13; docs/ir.md, Suspensions)"
+        [{name = "thunk_make", arity = 1, ty = "(unit -> 'a) -> 'a susp", effects = [Allocates],
+          doc = "A suspension of the closure, unevaluated: the closure itself made a K_THUNK in place, which must be fresh and named by nothing else; a copy where it captures nothing. The closure's code says thunk_blackhole first and thunk_self_update last."},
+         {name = "thunk_force", arity = 1, ty = "'a susp -> 'a", effects = anything,
+          doc = "The value of a suspension: what an indirection holds, the suspension's code run where it is unevaluated, a value that is no suspension itself. Each target makes it FORCE, ENTER and RESULT; no primitive runs."},
+         {name = "thunk_blackhole", arity = 1, ty = "unit -> unit", effects = anything,
+          doc = "In a suspension's code, after what it captured has been read: the suspension under evaluation, a second force of it a loop. Each target makes it BLACKHOLE; no primitive runs."},
+         {name = "thunk_self_update", arity = 1, ty = "'a -> unit", effects = anything,
+          doc = "In a suspension's code: the suspension running becomes an indirection to the value. Each target makes it UPDATE; no primitive runs."},
+         {name = "any_check", arity = 1, ty = "'a -> 'a", effects = anything,
+          doc = "Its argument, which a fatal error stops where it is a suspension or an indirection: what a compile with --check-casts puts after each cast whose result is no suspension, which says that the value is evaluated (docs/ir.md, Suspensions)."}]]
 
   (* The compiler's own primitives, which Translate makes for the code of
      functors, of dynamic modules' slots and of open constructors, and

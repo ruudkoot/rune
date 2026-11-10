@@ -631,6 +631,22 @@ struct
       (T.TCon {id, ...}, _) => SOME id
     | _ => NONE
 
+  (* an entity of a key, `SPACE HOME \t NAME` (HsModules.key), or a
+     built-in name *)
+  fun idOfKey (k : string) : T.id =
+    if k = "->" then {qual = "", name = "(->)"}
+    else
+      case CharVector.findi (fn (_, c) => c = #"\t") k of
+        SOME (i, _) => {qual = String.substring (k, 1, i - 1), name = String.extract (k, i + 1, NONE)}
+      | NONE => {qual = "", name = k}
+
+  (* the class and the type constructor of an instance's identity,
+     `CLS@TYCON` (HsClasses.instanceId) *)
+  fun ofInstanceId (inst : string) : T.id * T.id =
+    case CharVector.findi (fn (_, c) => c = #"@") inst of
+      SOME (i, _) => (idOfKey (String.substring (inst, 0, i)), idOfKey (String.extract (inst, i + 1, NONE)))
+    | NONE => (idOfKey inst, idOfKey "")
+
   (* the instance of the class for the same type constructor, if any:
      one per class and type in the program (cls.inst.once) *)
   fun existing (cls, tc) =
@@ -752,7 +768,7 @@ struct
     let
       (* what is to be derived: the class, the type constructor, its
          arity and constructors, where *)
-      fun wanted (TData {id, deriv = SOME (A.Deriv (_, _, cs)), params, cons = cs', span, ...}) =
+      fun wanted (TData {id, deriv = SOME (A.Deriv (_, _, cs)), params, cons = cs', cx, span, ...}) =
             List.map
               (fn c =>
                  let
@@ -776,7 +792,7 @@ struct
                                                           "(cls.derive.impossible)")
                      | _ => ()
                  in
-                   {cls = cls, tycon = id, arity = length params,
+                   {cls = cls, tycon = id, arity = length params, cx = cx, params = params,
                     cons = List.map (fn k => nameOf (#1 (conArgs k))) cs', span = spanOfName c}
                  end)
               cs
@@ -794,9 +810,10 @@ struct
                         C.addInst {head = T.IsIn (cls, headOf d), context = Array.sub (contexts, i), arity = arity,
                                    span = span, derived = true})
            todo)
-      (* the least context: each field's type in the class, reduced to
-         predicates on the type's variables (dec.ctx.derive.simple) *)
-      fun contextOf {cls, tycon, arity, cons = ks, span} =
+      (* the least context: each field's type in the class, with the data
+         type's own context (10.1's cx), reduced to predicates on the
+         type's variables (dec.ctx.derive.simple) *)
+      fun contextOf {cls, tycon, arity, cons = ks, span, cx, params} =
         let
           val kinds = List.take (argKinds (getOpt (tyconKind tycon, T.Star)), arity)
           val vs = List.map T.newTVar kinds
@@ -805,7 +822,16 @@ struct
           (* a predicate with the type's variables as its parameters, a, b *)
           fun shown (T.IsIn (d, t)) =
             T.showPred (T.IsIn (d, abstract (List.mapPartial (fn T.TVar v => SOME v | _ => NONE) vs) t))
-          val reduced = C.reduce (List.map (fn t => T.IsIn (cls, t)) fieldTys)
+          (* the data declaration's own context, cx of 10.1's
+             `instance (cx, cx') => C (T u1 ... uk)` *)
+          val byName = ListPair.map (fn (p, v) => (plain (nameOf p), v)) (params, vs)
+          fun var (A.Name ({span, ...}, {name, ...})) =
+            case List.find (fn (m, _) => m = name) byName of
+              SOME (_, t) => t
+            | NONE => refuse (span, "the type variable `" ^ name ^ "` is not a parameter of the declaration " ^
+                                    "(dec.data.vars.ctx)")
+          val dataCtx = List.map (fn (c, t) => T.IsIn (nameOf c, convert var t)) (predsOf cx)
+          val reduced = C.reduce (List.map (fn t => T.IsIn (cls, t)) fieldTys @ dataCtx)
                         handle C.NoInstance p =>
                           refuse (span, "`" ^ plain cls ^ "` cannot be derived for `" ^ plain tycon ^ "`: no instance " ^
                                         shown p ^ " (cls.derive.impossible)")

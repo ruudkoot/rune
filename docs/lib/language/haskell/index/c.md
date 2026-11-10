@@ -9,7 +9,7 @@
 - `Cast` (con): [CORE](../sig/CORE.md#con-cast)
 - `cast` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-cast)
 - `CHAR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-char)
-- `check` (val): [CORE_LINT](../sig/CORE_LINT.md#val-check), [HS_INFER](../sig/HS_INFER.md#val-check)
+- `check` (val): [CORE_LINT](../sig/CORE_LINT.md#val-check), [HS_INFER](../sig/HS_INFER.md#val-check), [HS_LINT](../sig/HS_LINT.md#val-check)
 - `checkContext` (val): [HS_KINDS](../sig/HS_KINDS.md#val-checkcontext)
 - `checkType` (val): [HS_KINDS](../sig/HS_KINDS.md#val-checktype)
 - `CInfix` (con): [HS_AST](../sig/HS_AST.md#con-cinfix)

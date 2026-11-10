@@ -360,9 +360,12 @@ three fields, of every way) by the engine for the laws
 rhc, the Haskell 98 compiler of `docs/plans/language/haskell98.md`, is judged against oracles and a corpus that
 stay outside the tree (M3, D52). The corpus's licences, its manifests and its compat layer are
 `tests/hs/corpus/` (README.md there): the programs are read through `RUNE_HS_CORPUS`, a directory holding the trees
-that `tests/hs/corpus/trees.tsv` pins, but for the 45 of D56's set whose trees grant a licence, vendored in
-`tests/hs/corpus/vendored/` with their trees' licence files (GHC's testsuite's BSD-3, jhc's MIT; the owner's rule:
-code not under CC0 lands with its licence beside it). The oracles are GHC 9.4.7 with
+that `tests/hs/corpus/trees.tsv` pins, but for the 188 of D56's set, vendored in `tests/hs/corpus/vendored/` under
+a notice each, the nearest `LICENSE` or `PROVENANCE` above them: 45 with their trees' licence files (GHC's
+testsuite's BSD-3, jhc's MIT), and 143 that no licence covers with a `PROVENANCE` written here (their upstream and
+commit, the upstream paths, the authors and origin their headers name, what notice there is, and the date). The
+owner's rules: code not under CC0 lands with its licence beside it, and code under no licence with a `PROVENANCE`
+beside it. The oracles are GHC 9.4.7 with
 a strict shim, Hugs, nhc98 and MicroHs (`tests/hs/oracles/README.md`: each oracle's variable, pin and recipe, and
 the shims, which the run builds). The family is `tests/runner/hssource.sml`, `hscorpus.sml`, `hsoracles.sml` and
 `hschecks.sml`:
@@ -401,12 +404,16 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   the SML port is validated against. The manifest says why each other port is held; a finding is a line of
   `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
 - `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc and run in D56's three ways (`test`, `register`,
-  `register-opt`), its output E8's expected one (the same, the same words, or numbers equal to about five digits) and
-  its status 0; the 45 vendored in `check`, the 143 others `nightly` with `hs-corpus`; all held while rhc runs no
-  program (the row `prog.main.value` Planned). `hs-rhc-corpus/vendored`, in `check`, puts the 45 through
-  `--typecheck-only` as the nightly jobs above put the whole corpus. `hs-corpus/vendored` (nightly, with the trees)
-  holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and `hs-corpus/data` to the vendored
-  programs' files and licences and nothing more; `bin/rune-test hs-corpus-vendor` makes it again from the trees.
+  `register-opt`), its output E8's expected one (the same, the same words, or numbers equal to about five digits)
+  and its status 0; all 188 vendored and in `check`, all held while rhc runs no program (the row `prog.main.value`
+  Planned). `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
+  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
+  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
+  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
+  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
+  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
+  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
+  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.
@@ -720,14 +727,29 @@ program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. The first of
 the four is in `check`, the other three `nightly` (D56; the lead's ruling 45). A program on
 which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
 why, and its job holds the disagreement to still being there, so that a fix
-on either side is seen. HsLint also holds the inference to a record's
+on either side is seen. The same jobs hold the two judges to one verdict on
+every program, the checker alone (`--typecheck-only --lint=off`) and
+HsLint's second inference alone (`--dump-hslint`): where they part, the
+program is listed in `tests/hs/hslint/judges.tsv` with why, and held there
+the same way. HsLint also holds the inference to a record's
 claims of it, in the dump's form (`--hslint-claims=FILE`), each difference
 refused by the rule it breaks, `[rule1] ...` (`bin/rhc --hslint-rules`
-names them); the checker's evidence records are to be its claims (M13).
-`faults` holds each rule to refusing its fault, as `astlintFaults` holds
-AstLint's: `tests/hs/hslint/faults.hs`, held to its own expected dump, is
-accepted, and with `RHC_HSLINT_FAULT=RULE`, which reads the first claim
-RULE checks corrupted, refused with `[RULE]`.
+names them); the checker's evidence records are its claims too (M13).
+Where the checker accepts a program, HsLint replays Faxén's rules on its
+evidence records (D31): Rule 1 by his `bindg` with Definition 2, every
+dictionary by his `dict tuple`, `dict var`, `dict inst` and `dict super`
+against HsLint's own classes and instances, an instance's superclasses'
+dictionaries and its methods' types, and rhc's own rule for a cycle of
+modules (`[scc]`); then holds the records, read as claims, to the second
+inference. A derived instance, which HsDerive makes as the tree a user would
+write (M14), is checked as any instance is: the second inference types its
+methods at the head and the least context it derived itself (10.1, the data
+type's context with it), and replay reads their records and their methods'
+types. `faults` holds each rule to refusing its fault, as
+`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, its records
+and its own expected dump, is accepted, and with `RHC_HSLINT_FAULT=RULE`,
+which reads the first claim or record RULE checks corrupted, refused with
+`[RULE]`.
 
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,
