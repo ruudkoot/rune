@@ -580,7 +580,10 @@ what to do with it: `; run: FLAGS`, run by `bin/rhc --lint=3 FLAGS
 `NAME.expected` and its status to `NAME.exitcode` (0 where there is none),
 and a run that prints nothing a failure, whatever is expected; `; dump:
 FLAGS`, the same for a dump of a stage; `; fail: MESSAGE`, refused with
-MESSAGE on standard error. `--accept` writes the `.expected` files, to be
+MESSAGE on standard error; `; refuse: FLAGS | MESSAGE`, refused with MESSAGE
+when compiled through Mid with FLAGS, which make a fault of Core to Mid on
+purpose (`--fault`, the roadmap's *rhc's mutants*): a suspension in a typed
+slot, which MidLint refuses at the boundary into Mid (`fault-*.core`). `--accept` writes the `.expected` files, to be
 read line by line. At level 3 rhc prints what it read, reads it back and
 prints it again, so print, read, print is the identity on every test.
 `tests/hs/core/lib/base.core` is what the run tests share, read before each
@@ -603,7 +606,12 @@ Each run test is also compiled by rhc through Mid (the roadmap's M10: `bin/rhc
 -o FILE`) at `-O0`, `-O1` and `-O2` to both bytecodes, and run on the register
 VM interpreted and at tier 2 and on the stack VM (`hs/core/vm/NAME`): it
 prints what Core's interpreter printed and ends as it did, every bottom one
-bottom, a status other than 0. A test whose answer is the interpreter's alone
+bottom, a status other than 0. E1's programs, each with a line `; ways: E1`,
+also run nightly in E1's forty-five ways, twelve modes of the register VM and
+three of the stack VM at each level (`hs/core/vm45/NAME`; the roadmap's D56
+puts three ways of a run in `make check` and the rest nightly), and
+`hs/core/@generated` compiles each of its programs too, which must print on
+the VM what the interpreter printed and end in a bottom where it did. A test whose answer is the interpreter's alone
 says why on a line `; vm: no: REASON`, and is the interpreter's only: one
 whose answer depends on a suspension that raised being forced again, which
 the interpreter puts back and form C leaves under evaluation (the roadmap's

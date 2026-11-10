@@ -1,4 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
 ; E1's nest2, in Core: polymorphic recursion in each shape a pass of Mid
 ; rewrites calls in -- a pair it only takes apart, a curried function, a
 ; cell given on in a tail call at another type, mutual recursion at growing

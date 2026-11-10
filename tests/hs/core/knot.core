@@ -1,4 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
 ; E1's knot, in Core: knots tied by letrec, a chain 2000 deep, and how many
 ; times the shared (+1) ran, 2007, which sharing gives:
 ;   main = do

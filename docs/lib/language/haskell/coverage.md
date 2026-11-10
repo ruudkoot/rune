@@ -12,8 +12,8 @@ documented when a comment describes it, alone or together with the entry before 
 | [`CORE_LINT`](sig/CORE_LINT.md) | 3 | 3 | 100% | 1 | 1 |
 | [`CORE_PRIM`](sig/CORE_PRIM.md) | 4 | 4 | 100% | 1 | 1 |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | 9 | 9 | 100% | 8 | 8 |
-| [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 3 | 3 | 100% | 1 | 1 |
-| **all** | 44 | 44 | 100% | 22 | 22 |
+| [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 4 | 4 | 100% | 1 | 1 |
+| **all** | 45 | 45 | 100% | 22 | 22 |
 
 ## Members a signature describes
 
@@ -22,7 +22,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-7 structures have a page, with 44 members, of which 44 (100%) are described by a signature.
+7 structures have a page, with 45 members, of which 45 (100%) are described by a signature.
 
 ---
 

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 3 of 3 entries documented |
+| Documentation | 4 of 4 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid\_sig.sml](../../../../../lib/language/haskell/coretomid_sig.sml) |
 
@@ -49,8 +49,9 @@ constructor applied by a variable and a forall inside a type (M28, Mid's
 signature CORE_TO_MID =
 sig
   datatype <a href="#type-form">form</a> = <a href="#con-formc">FormC</a> | <a href="#con-runtime">Runtime</a>
+  datatype <a href="#type-fault">fault</a> = <a href="#con-thunkinslot">ThunkInSlot</a> | <a href="#con-forcebehindcast">ForceBehindCast</a>
   exception <a href="#exn-unsupported">Unsupported</a> of string
-  val <a href="#val-program">program</a> : form * Core.program -&gt; string
+  val <a href="#val-program">program</a> : {<a href="#fld-program.form">form</a> : form, <a href="#fld-program.fault">fault</a> : fault option} * Core.program -&gt; string
 end
 </pre>
 
@@ -72,6 +73,23 @@ functions of E1's runtime in today's Mid.
 | <a name="con-formc"></a>`FormC` |  |  |
 | <a name="con-runtime"></a>`Runtime` |  |  |
 
+### <a name="type-fault"></a>`fault`
+
+```sml
+datatype fault = ThunkInSlot | ForceBehindCast
+```
+
+A fault made on purpose, for the tests of what catches it.
+
+They are the roadmap's rhc's mutants of Core to Mid: [`ThunkInSlot`](#con-thunkinslot), a
+suspension used where its value is wanted, unforced; [`ForceBehindCast`](#con-forcebehindcast),
+a force made a cast from the suspension to its value.
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-thunkinslot"></a>`ThunkInSlot` |  |  |
+| <a name="con-forcebehindcast"></a>`ForceBehindCast` |  |  |
+
 ### <a name="exn-unsupported"></a>`Unsupported`
 
 ```sml
@@ -84,16 +102,21 @@ waits on, and where.
 ### <a name="val-program"></a>`program`
 
 ```sml
-val program : form * Core.program -> string
+val program : {form : form, fault : fault option} * Core.program -> string
 ```
 
-`program (form, p)` is the text of Mid of the Core program `p`, which
-CoreLint passed.
+`program ({form, fault}, p)` is the text of Mid of the Core program
+`p`, which CoreLint passed, with the fault made where it is `SOME`.
 
 The text's `do` calls `main`, and prints what an exception no handler
 takes is, as Core's interpreter does, and ends with status 1.
 
 **Raises** [`Unsupported`](#exn-unsupported) where `p` needs what Mid has not got.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-program.form"></a>`form` | `form` |  |
+| <a name="fld-program.fault"></a>`fault` | `fault option` |  |
 
 ---
 

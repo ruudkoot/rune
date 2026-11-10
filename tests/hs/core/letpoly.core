@@ -1,4 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
 ; E1's letpoly, in Core: a polymorphic CAF, one suspension at every type,
 ; whose code runs once; a local polymorphic function; a let-bound value of
 ; a polymorphic type:

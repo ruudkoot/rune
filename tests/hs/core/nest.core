@@ -1,4 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
 ; E1's nest, in Core: polymorphic recursion, first over a nest with strict
 ; fields, so that nothing hides behind a suspension, then over a lazy one,
 ; infinite, shown to a depth with a dictionary made at each level:

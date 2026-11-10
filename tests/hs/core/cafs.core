@@ -1,4 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
 ; E1's cafs, in Core: mutually recursive CAFs, a CAF on a later CAF's value,
 ; and one never forced, whose error never runs; limit runs once:
 ;   ones, twos :: [Int]

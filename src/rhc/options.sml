@@ -14,6 +14,7 @@ struct
      generate : int option,           (* --generate-core=SEED: print a generated program *)
      output : string option,          (* -o FILE: compile to bytecode, through Mid, in place of running *)
      thunks : CoreToMid.form,         (* --thunks=c|runtime: how Mid makes and forces suspensions *)
+     fault : CoreToMid.fault option,  (* --fault=NAME: a fault of Core to Mid made on purpose, for its tests *)
      help : bool,
      version : bool}
 
@@ -38,6 +39,8 @@ struct
     \  --target=T            the bytecode: registers (default) or stack\n\
     \  --thunks=F            suspensions in Mid: c, form C's primitives, or runtime,\n\
     \                        functions of E1's runtime in today's Mid (default: runtime)\n\
+    \  --fault=F             for the tests of what catches it, a fault of Core to Mid made\n\
+    \                        on purpose: thunk-in-slot or force-behind-cast\n\
     \  --lint-rules          print the name of each rule of CoreLint, one a line\n\
     \  --generate-core=SEED  print a well-typed Core program made from SEED (D55)\n\
     \  --version             print the version and the identity of rhc\n\
@@ -62,6 +65,7 @@ struct
       val generate = ref NONE
       val output = ref NONE
       val thunks = ref CoreToMid.Runtime
+      val fault = ref NONE
       val help = ref false
       val version = ref false
       fun stages s = List.filter (fn x => x <> "") (String.fields (fn c => c = #",") s)
@@ -83,6 +87,8 @@ struct
         | go ("--target=stack" :: rest) = (CompilerSettings.target := "stack"; go rest)
         | go ("--thunks=c" :: rest) = (thunks := CoreToMid.FormC; go rest)
         | go ("--thunks=runtime" :: rest) = (thunks := CoreToMid.Runtime; go rest)
+        | go ("--fault=thunk-in-slot" :: rest) = (fault := SOME CoreToMid.ThunkInSlot; go rest)
+        | go ("--fault=force-behind-cast" :: rest) = (fault := SOME CoreToMid.ForceBehindCast; go rest)
         | go (arg :: rest) =
             (case (after ("--lint=", arg), after ("--dump-after=", arg), after ("--steps=", arg),
                    after ("--depth=", arg), after ("--generate-core=", arg)) of
@@ -101,7 +107,7 @@ struct
     in
       go args;
       {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
-       lintRules = !lintRules, generate = !generate, output = !output, thunks = !thunks, help = !help,
+       lintRules = !lintRules, generate = !generate, output = !output, thunks = !thunks, fault = !fault, help = !help,
        version = !version}
     end
 end

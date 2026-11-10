@@ -82,7 +82,7 @@ struct
     let
       val text =
         Pass.stage {name = "coretomid", showIn = NONE, show = fn s => s, check = fn _ => (), size = String.size}
-                   (fn p => CoreToMid.program (#thunks opts, p)) p
+                   (fn p => CoreToMid.program ({form = #thunks opts, fault = #fault opts}, p)) p
       val mid = MidPipeline.midStage NONE MidText.parse text
       val low = MidPipeline.lowOfMid MidPipeline.standardPasses mid
       val code = MidPipeline.targetStage low

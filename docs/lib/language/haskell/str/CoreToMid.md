@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`CORE_TO_MID`](../sig/CORE_TO_MID.md) |
 | Status | required |
-| Members | 3 |
+| Members | 4 |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid.sml](../../../../../lib/language/haskell/coretomid.sml) |
 
@@ -30,9 +30,10 @@ What each means is on [`CORE_TO_MID`](../sig/CORE_TO_MID.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
+| datatype | [`fault`](../sig/CORE_TO_MID.md#type-fault) | `ThunkInSlot` &#124; `ForceBehindCast` |
 | datatype | [`form`](../sig/CORE_TO_MID.md#type-form) | `FormC` &#124; `Runtime` |
 | exception | [`Unsupported`](../sig/CORE_TO_MID.md#exn-unsupported) | `of string` |
-| val | [`program`](../sig/CORE_TO_MID.md#val-program) | `form * Core.decl list -> string` |
+| val | [`program`](../sig/CORE_TO_MID.md#val-program) | `{fault : fault option, form : form} * Core.decl list -> string` |
 
 ---
 

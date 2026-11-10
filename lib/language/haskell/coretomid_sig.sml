@@ -31,16 +31,23 @@ sig
      `Runtime` is for a tree that has not got them. *)
   datatype form = FormC | Runtime
 
+  (* A fault made on purpose, for the tests of what catches it.
+
+     They are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a
+     suspension used where its value is wanted, unforced; `ForceBehindCast`,
+     a force made a cast from the suspension to its value. *)
+  datatype fault = ThunkInSlot | ForceBehindCast
+
   (* A construct Core has and the Mid of this tree cannot say yet: what it
      waits on, and where. *)
   exception Unsupported of string
 
-  (* `program (form, p)` is the text of Mid of the Core program `p`, which
-     CoreLint passed.
+  (* `program ({form, fault}, p)` is the text of Mid of the Core program
+     `p`, which CoreLint passed, with the fault made where it is `SOME`.
 
      The text's `do` calls `main`, and prints what an exception no handler
      takes is, as Core's interpreter does, and ends with status 1.
 
      Raises: `Unsupported` where `p` needs what Mid has not got. *)
-  val program : form * Core.program -> string
+  val program : {form : form, fault : fault option} * Core.program -> string
 end

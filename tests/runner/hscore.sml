@@ -9,6 +9,10 @@
                       where there is none. A run that prints nothing fails.
      ; dump: FLAGS    the same, for what is not a run: a dump of a stage
      ; fail: MESSAGE  bin/rhc refuses it, with MESSAGE on standard error.
+     ; refuse: FLAGS | MESSAGE
+                      bin/rhc --lint=2 FLAGS --read-core FILE -o OUT refuses
+                      it, with MESSAGE: a fault of Core to Mid made on
+                      purpose (--fault) and what catches it.
    At level 3 every program is printed, read back and printed again, so
    print, read, print is the identity on every test. Besides the files:
    every rule of CoreLint has its fault, lint-RULE.core, refused with its
@@ -17,7 +21,10 @@
 
    A run test is also compiled by rhc through Mid (the roadmap's M10) at
    -O0, -O1 and -O2 to both bytecodes, and run on the register VM
-   interpreted and at tier 2 and on the stack VM (hs/core/vm/NAME): it
+   interpreted and at tier 2 and on the stack VM (hs/core/vm/NAME), and
+   one with a line `; ways: E1` nightly in E1's forty-five ways too, twelve
+   modes of the register VM and three of the stack VM a level
+   (hs/core/vm45/NAME, results/E1/run.sh): it
    prints what the interpreter printed, and ends as it did, every bottom
    one bottom, a status other than 0. A test whose answer is the
    interpreter's alone says so on a line `; vm: no: REASON`: one whose
@@ -54,10 +61,11 @@ struct
       fun after m = if String.isPrefix ("; " ^ m ^ ":") line1
                     then SOME (String.extract (line1, size m + 3, NONE)) else NONE
     in
-      case (after "run", after "dump", after "fail") of
-        (SOME flags, _, _) => SOME ("run", flags)
-      | (_, SOME flags, _) => SOME ("dump", flags)
-      | (_, _, SOME msg) => SOME ("fail", String.extract (msg, if String.isPrefix " " msg then 1 else 0, NONE))
+      case (after "run", after "dump", after "fail", after "refuse") of
+        (SOME flags, _, _, _) => SOME ("run", flags)
+      | (_, SOME flags, _, _) => SOME ("dump", flags)
+      | (_, _, SOME msg, _) => SOME ("fail", String.extract (msg, if String.isPrefix " " msg then 1 else 0, NONE))
+      | (_, _, _, SOME both) => SOME ("refuse", both)
       | _ => NONE
     end
 
@@ -81,7 +89,23 @@ struct
 
   (* the run test src compiled through Mid and run on the VMs, each way
      printing its .expected and ending as its .exitcode says *)
-  fun vmOne src =
+  (* the ways a run test runs on the VMs: by default the register VM
+     interpreted and at tier 2, and the stack VM; for a line `; ways: E1`,
+     E1's forty-five, twelve modes of the register VM and three of the stack
+     VM at each level (results/E1/run.sh) *)
+  val defaultWays = ([("interpreted", ["--jit=off"]), ("tier2", ["--jit=all", "--jit-tier=2"])], [("stack", [])])
+  val e1Ways =
+    ([("plain", []), ("interpreted", ["--jit=off"]), ("baseline", ["--jit=baseline", "--jit-calls=1", "--jit-work=1"]),
+      ("all", ["--jit=all"]), ("tier2", ["--jit=all", "--jit-tier=2"]), ("tier2checked", ["--jit=all", "--jit-tier=2", "--checked"]),
+      ("tier2odd", ["--jit=all", "--jit-only=odd", "--jit-tier=2"]),
+      ("jitstress", ["--jit=baseline", "--jit-calls=1", "--jit-work=1", "--jit-stress=5"]),
+      ("jitstress2", ["--jit=all", "--jit-tier=2", "--jit-stress=3"]), ("deopt1", ["--jit=all", "--jit-tier=2", "--deopt-stress=1"]),
+      ("deopt7", ["--jit=all", "--jit-tier=2", "--deopt-stress=7"]),
+      ("gcstress", ["--gc-stress", "3", "--gc-verify", "--jit=all", "--jit-tier=2"])],
+     [("stack", []), ("stackchecked", ["--checked"]), ("stackgcstress", ["--gc-stress", "3", "--gc-verify"])])
+  fun hasE1Ways src = List.exists (fn l => l = "; ways: E1") (lines (read src))
+
+  fun vmOne (src, (regWays, stackWays)) =
     let
       val n = nameOf src
       val outDir = run ^ "/hs-core/vm"
@@ -93,13 +117,13 @@ struct
       fun one (level, target, runs) =
         let
           val rbc = f ("." ^ level ^ "." ^ target ^ ".rbc")
-          val code = exec {cmd = [rhc, "--lint=2", "-" ^ level, "--target=" ^ target] @ flags @ ["--read-core", src, "-o", rbc],
+          val code = exec {cmd = [rhc, "--lint=3", "-" ^ level, "--target=" ^ target] @ flags @ ["--read-core", src, "-o", rbc],
                            dir = NONE, stdin = "", stdout = f ".compile", stderr = f ".compile", timeout = 600}
           fun runOn (vm, vmFlags, way) =
             let
               val o' = f ("." ^ level ^ "." ^ target ^ "." ^ way)
-              val status = exec {cmd = [vm] @ vmFlags @ [rbc], dir = NONE, stdin = "", stdout = o' ^ ".out", stderr = o' ^ ".err",
-                                 timeout = 120}
+              val status = exec {cmd = [vm, "--stack-size", "268435456"] @ vmFlags @ [rbc], dir = NONE, stdin = "",
+                                 stdout = o' ^ ".out", stderr = o' ^ ".err", timeout = 120}
               val ends = if want = 1 then status <> 0 else status = want
             in
               case judgeRun (read (o' ^ ".out"), expected) of
@@ -115,9 +139,8 @@ struct
         end
     in
       List.app (fn level =>
-                  (one (level, "registers", [("bin/runevm", ["--jit=off"], "interpreted"),
-                                             ("bin/runevm", ["--jit=all", "--jit-tier=2"], "tier2")]);
-                   one (level, "stack", [("bin/runevm-stack", [], "stack")])))
+                  (one (level, "registers", List.map (fn (w, fl) => ("bin/runevm", fl, w)) regWays);
+                   one (level, "stack", List.map (fn (w, fl) => ("bin/runevm-stack", fl, w)) stackWays)))
                ["O0", "O1", "O2"]
     end
 
@@ -222,7 +245,19 @@ struct
                                stdout = f ".out", stderr = f ".err", timeout = 600}
     in
       case marker src of
-        SOME ("fail", msg) =>
+        SOME ("refuse", both) =>
+          let
+            val (flags, msg) = case String.fields (fn c => c = #"|") both of
+                                 [fl, m] => (String.tokens Char.isSpace fl, String.extract (m, if String.isPrefix " " m then 1 else 0, NONE))
+                               | _ => ([], both)
+            val status = exec {cmd = [rhc, "--lint=2"] @ flags @ ["--read-core", src, "-o", f ".rbc"], dir = NONE, stdin = "",
+                               stdout = f ".out", stderr = f ".err", timeout = 600}
+          in
+            if status = 0 then fail ("hs.core." ^ n ^ ": compiled, where it should stop with: " ^ msg)
+            else if contains (f ".err", msg) then ()
+            else fail ("hs.core." ^ n ^ ": stopped with: " ^ firstLine (f ".err"))
+          end
+      | SOME ("fail", msg) =>
           if rhcRun [] = 0 then fail ("hs.core." ^ n ^ ": accepted, where it should stop with: " ^ msg)
           else if contains (f ".err", msg) then ()
           else fail ("hs.core." ^ n ^ ": stopped with: " ^ firstLine (f ".err"))
@@ -291,10 +326,27 @@ struct
             let val status = exec {cmd = [rhc, "--lint=3", "--steps=5000000", "--read-core", src], dir = NONE, stdin = "",
                                    stdout = f ".out", stderr = f ".err", timeout = 120}
             in
-              if status = 0 andalso read (f ".err") = "" then ()
-              else if status = 1 andalso read (f ".err") = "rhc: bottom: ErrorCall: bottom\n" then ()
-              else fail ("hs.core.@generated: seed " ^ Int.toString s ^ ": status " ^ Int.toString status ^ ": "
+              if not (status = 0 andalso read (f ".err") = "" orelse
+                      status = 1 andalso read (f ".err") = "rhc: bottom: ErrorCall: bottom\n")
+              then fail ("hs.core.@generated: seed " ^ Int.toString s ^ ": status " ^ Int.toString status ^ ": "
                          ^ firstLine (f ".err") ^ " (" ^ src ^ ")")
+              (* the same program through Mid on the VM: what the interpreter
+                 printed, and a bottom where it ended in one *)
+              else if exec {cmd = [rhc, "--lint=2", "--read-core", src, "-o", f ".rbc"], dir = NONE, stdin = "",
+                            stdout = f ".compile", stderr = f ".compile", timeout = 300} <> 0
+              then fail ("hs.core.@generated: seed " ^ Int.toString s ^ ": no bytecode: " ^ firstLine (f ".compile"))
+              else
+                let val vm = exec {cmd = ["bin/runevm", f ".rbc"], dir = NONE, stdin = "", stdout = f ".vm.out",
+                                   stderr = f ".vm.err", timeout = 120}
+                in
+                  if read (f ".vm.out") <> read (f ".out") then
+                    fail ("hs.core.@generated: seed " ^ Int.toString s ^ ": the VM printed " ^ firstLine (f ".vm.out")
+                          ^ " where the interpreter printed " ^ firstLine (f ".out") ^ " (" ^ src ^ ")")
+                  else if (vm = 0) <> (status = 0) then
+                    fail ("hs.core.@generated: seed " ^ Int.toString s ^ ": status " ^ Int.toString vm ^ " on the VM, "
+                          ^ Int.toString status ^ " on the interpreter (" ^ src ^ ")")
+                  else ()
+                end
             end
         end
       fun go s = if s > n then () else (seed s; go (s + 1))
@@ -312,7 +364,8 @@ struct
   fun command args =
     case args of
       ["hs-core-one", src] => SOME (fn () => one src)
-    | ["hs-core-vm", src] => SOME (fn () => vmOne src)
+    | ["hs-core-vm", src] => SOME (fn () => vmOne (src, defaultWays))
+    | ["hs-core-vm45", src] => SOME (fn () => vmOne (src, e1Ways))
     | ["hs-core-residency", src] => SOME (fn () => residency src)
     | ["hs-core-budget", src] => SOME (fn () => budget src)
     | ["hs-core-rules"] => SOME rules
@@ -322,9 +375,18 @@ struct
 
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
+  val covers = ["covers:lib/language/haskell/*", "covers:src/rhc/*", "covers:rhc.build", "covers:tests/hs/core/*",
+                "covers:tests/runner/hscore.sml"]
+  (* E1's forty-five ways of E1's programs, nightly (D56: three ways of the
+     run set in make check, the rest nightly) *)
+  val nightly =
+    tagged (["nightly", "test-rhc"] @ covers)
+      (Test.describe "hs/core"
+         (List.mapPartial (fn s => if hasE1Ways s andalso not (isSome (interpreterOnly s))
+                                   then SOME (Tools.job ("vm45/" ^ nameOf s, ["hs-core-vm45", s], [], 500, 3600)) else NONE)
+                          (glob (dir, ".core"))))
   val tree =
-    tagged ["check", "test-rhc", "covers:lib/language/haskell/*", "covers:src/rhc/*", "covers:rhc.build",
-            "covers:tests/hs/core/*", "covers:tests/runner/hscore.sml"]
+    Test.describe "" [nightly, tagged (["check", "test-rhc"] @ covers)
       (Test.describe "hs/core"
          (List.map (fn s => Tools.job (nameOf s, ["hs-core-one", s], [], 300, 600)) (glob (dir, ".core"))
           @ List.mapPartial (fn s => case (marker s, interpreterOnly s) of
@@ -341,5 +403,5 @@ struct
                             (glob (dir, ".core"))
           @ [Tools.job ("@rules", ["hs-core-rules"], [], 100, 120),
              Tools.job ("@generated", ["hs-core-generated", "32"], [], 300, 1200),
-             Tools.job ("@silent", ["hs-core-silent"], [], 100, 60)]))
+             Tools.job ("@silent", ["hs-core-silent"], [], 100, 60)]))]
 end

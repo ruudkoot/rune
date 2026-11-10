@@ -7,6 +7,7 @@
 - `TEval` (con): [CORE](../sig/CORE.md#con-teval)
 - `TForall` (con): [CORE](../sig/CORE.md#con-tforall)
 - `TFun` (con): [CORE](../sig/CORE.md#con-tfun)
+- `ThunkInSlot` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-thunkinslot)
 - `TooDeep` (con): [CORE_INTERP](../sig/CORE_INTERP.md#con-toodeep)
 - `TUTuple` (con): [CORE](../sig/CORE.md#con-tutuple)
 - `TVar` (con): [CORE](../sig/CORE.md#con-tvar)

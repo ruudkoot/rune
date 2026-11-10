@@ -1,4 +1,5 @@
 ; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
 ; E1's classes, in Core: dictionaries as data, a superclass, default
 ; methods that take the dictionary, instances whose methods read their own
 ; dictionary, and dictionary functions, whose cycles a letrec ties:

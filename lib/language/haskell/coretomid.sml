@@ -11,6 +11,8 @@ struct
 
   datatype form = FormC | Runtime
 
+  datatype fault = ThunkInSlot | ForceBehindCast
+
   exception Unsupported of string
 
   (* ---- What later milestones give ---- *)
@@ -209,7 +211,7 @@ struct
          "    (return (prim unsafe_cast vnR : 'a grtThunk ref -> 'a susp)))))",
          ")\n"]
 
-  fun program (form : form, prog : program) : string =
+  fun program ({form : form, fault : fault option}, prog : program) : string =
     let
       (* ---- The declarations ---- *)
       val decls = builtinData @ prog
@@ -327,9 +329,11 @@ struct
           FormC => "(prim thunk_make " ^ code ^ " : (unit -> " ^ V ^ ") -> (" ^ V ^ " susp))"
         | Runtime => "(app grtDelay[" ^ V ^ "] " ^ code ^ ")"
       fun forceSusp (V, s) =
-        case form of
-          FormC => "(prim thunk_force " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
-        | Runtime => "(app grtForce[" ^ V ^ "] " ^ s ^ ")"
+        case (fault, form) of
+          (SOME ThunkInSlot, _) => s
+        | (SOME ForceBehindCast, _) => "(prim unsafe_cast " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
+        | (NONE, FormC) => "(prim thunk_force " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
+        | (NONE, Runtime) => "(app grtForce[" ^ V ^ "] " ^ s ^ ")"
       fun valueToSusp (V, a) =
         case form of
           FormC => "(prim unsafe_cast " ^ a ^ " : " ^ V ^ " -> (" ^ V ^ " susp))"
