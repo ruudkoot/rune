@@ -197,3 +197,53 @@ none. At `F` the longest lexeme is therefore `F.-`, then `-`: `F.--1` is `F.- - 
 refuses. The row's first reading, `F` then the varsym `.--`, overlooks the shorter qualified operator. **GHC**, **Hugs**
 and **nhc98** all read one qualified symbol `F.--` and refuse it as out of scope. **rhc** follows 2.4; the row needs a
 refused program, and stays without one until its test is read again. Rows: `lex.qual.dashes`.
+
+## The lead's rulings on rows the text leaves open (impl/rulings.md, 2026-11-10)
+
+Each applies the seed of a reading of E9's (the roadmap's *What the Report says*) where the text stops. Where the choice
+is the implementation's (D53), it says so, and the program pins rhc's choice; an oracle that chose otherwise is recorded
+in tests/hs/oracles.txt, not followed.
+
+### R78. `abs` and `signum` at IEEE's negative zero and NaN
+The Report's instances for `Float` and `Double` are primitive, and 6.4.4 says only that `abs x * signum x == x`.
+**Ruling.** IEEE, as R45's seed has it where Rune's real is: `abs` clears the sign, so `abs (-0.0)` is `0.0` and
+`abs` of NaN is NaN; `signum (-0.0)` is `-0.0` and `signum` of NaN is NaN, so that the law holds at `-0.0` too.
+Implementation-defined. Rows: `std.sign.abs`, `std.sign.signum`.
+
+### R79. Complex's branch cuts are its code's
+6.4.5 defines the branch cuts by reference to Common Lisp. **Ruling.** The Report's own `Complex` code (chapter 11) is
+the text: the cuts are what that code computes, signed zeros and all. Rows: `std.trig.cl`.
+
+### R80. `Enum Int` and `Enum Integer` are strict once forced
+The Report omits these instances. **Ruling.** As the erratum of May 2003 makes the `Float` family (R39): an enumeration
+is strict in its arguments once the list is forced to weak head normal form, not before. Implementation-defined.
+Rows: `std.enum.strict.int`, `std.enum.strict.integer`.
+
+### R81. `fromEnum` beyond `Int`
+A user type wider than `Int` meets the default `enumFrom` through `fromEnum`. **Ruling.** 6.4's exceptional condition on
+a fixed-precision type, by D22's checked primitives: `fromInteger` out of `Int`'s range is an error, so `fromEnum` and
+the default `enumFrom` of such a value are bottom, ending the program as `error` does. Implementation-defined.
+Rows: `std.enum.bounded.fromenum`, `pre.r.default.enumfrom`.
+
+### R82. `lex` is the code, with the erratum of February 2003
+**Ruling.** R43's seed: the Prelude's `lex`, with `isIdInit`, decides what `read` accepts: `lex "_a"` is
+`[("_a","")]`, and `read "0x10" :: Int` fails, `lex` reading `0` and leaving `x10`. Rows: `pre.r.lex.limits`,
+`pre.r.lex.idinit`.
+
+### R83. Laziness of standard input, and its buffering
+**Ruling.** A test that feeds standard input in steps and checks the output between them waits for a runner that can
+(about 150 lines of tests/runner, or held). Buffering is implementation-defined; rhc's choice is written when M17's I/O
+lands. Rows: `io.getcontents.lazy`, `pre.r.interact.buffering`.
+
+### R84. `readFile`'s laziness is a cost
+**Ruling.** Reading the head of a large file costs a bounded count: held for a `--count` budget, as `tr.sec.sharing`.
+Rows: `io.readfile.lazy`.
+
+### R85. `interact`'s example on ASCII input
+The example needs `import Char`, which the text omits. **Ruling.** The ASCII form now; non-ASCII standard input is held
+until M17 states the encoding of I/O (R5 covers the source alone). Rows: `io.interact.example`.
+
+### R86. The pattern-match obligation is a corpus difference
+**Ruling.** `-O0`'s literal rules against decision trees over the corpus and generated programs: held until rhc
+compiles them. Rows: `tr.case.obligation`.
+
