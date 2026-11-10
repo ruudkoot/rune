@@ -1,0 +1,87 @@
+(* rhc's command line (the haskell98 roadmap, M8): what is read, how far it
+   goes, and the options it shares with rune through Pass -- the level of
+   lint, the stages to print. *)
+structure RhcOptions =
+struct
+  exception Usage of string
+
+  type options =
+    {readCore : string list,          (* --read-core FILE: Core text, read in order as one program *)
+     typecheckOnly : bool,            (* stop after the checks *)
+     steps : int option,              (* --steps=N: the interpreter's bound on its steps *)
+     depth : int,                     (* --depth=N: its bound on the depth of its stack *)
+     lintRules : bool,                (* --lint-rules: print CoreLint's rules *)
+     generate : int option,           (* --generate-core=SEED: print a generated program *)
+     help : bool,
+     version : bool}
+
+  val usage =
+    "usage: rhc [OPTION...] --read-core FILE...\n\
+    \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
+    \Core, its typed lazy intermediate language, checks it and runs it on\n\
+    \Core's interpreter.\n\
+    \\n\
+    \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
+    \  --typecheck-only      read and check, and run nothing\n\
+    \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
+    \                        3 reads Core's text back after every stage (RUNE_LINT too)\n\
+    \  --dump-after=STAGE    print the Core a stage makes: read, or all\n\
+    \  --pass-stats          the time and size of every stage, on standard error\n\
+    \  --steps=N             stop the interpreter after N steps, a bottom (default: none)\n\
+    \  --depth=N             the deepest the interpreter's stack may go, a bottom past it\n\
+    \                        (default: 10000000)\n\
+    \  --lint-rules          print the name of each rule of CoreLint, one a line\n\
+    \  --generate-core=SEED  print a well-typed Core program made from SEED (D55)\n\
+    \  --version             print the version and the identity of rhc\n\
+    \  --help                print this\n"
+
+  (* N of --NAME=N, a count of at least `least` *)
+  fun count (name, least, s) =
+    case Int.fromString s of
+      SOME n => if n >= least andalso CharVector.all Char.isDigit s then n
+                else raise Usage (name ^ " takes a number of at least " ^ Int.toString least ^ ": " ^ s)
+    | NONE => raise Usage (name ^ " takes a number: " ^ s)
+
+  fun after (prefix, s) = if String.isPrefix prefix s then SOME (String.extract (s, size prefix, NONE)) else NONE
+
+  fun parse (args : string list) : options =
+    let
+      val readCore = ref []
+      val typecheckOnly = ref false
+      val steps = ref NONE
+      val depth = ref 10000000
+      val lintRules = ref false
+      val generate = ref NONE
+      val help = ref false
+      val version = ref false
+      fun stages s = List.filter (fn x => x <> "") (String.fields (fn c => c = #",") s)
+      fun go [] = ()
+        | go ("--read-core" :: file :: rest) = (readCore := !readCore @ [file]; go rest)
+        | go ["--read-core"] = raise Usage "--read-core takes a file"
+        | go ("--typecheck-only" :: rest) = (typecheckOnly := true; go rest)
+        | go ("--lint" :: rest) = (Pass.lintGiven := SOME 2; go rest)
+        | go ("--pass-stats" :: rest) = (Pass.stats := true; go rest)
+        | go ("--lint-rules" :: rest) = (lintRules := true; go rest)
+        | go ("--help" :: rest) = (help := true; go rest)
+        | go ("--version" :: rest) = (version := true; go rest)
+        | go (arg :: rest) =
+            (case (after ("--lint=", arg), after ("--dump-after=", arg), after ("--steps=", arg),
+                   after ("--depth=", arg), after ("--generate-core=", arg)) of
+               (SOME l, _, _, _, _) =>
+                 (case Pass.levelOf l of
+                    SOME n => if l = "off" orelse CharVector.all Char.isDigit l andalso n >= 0 andalso n <= 3
+                              then Pass.lintGiven := SOME n
+                              else raise Usage ("--lint takes off or 0 to 3: " ^ l)
+                  | NONE => raise Usage "--lint= takes a level")
+             | (_, SOME s, _, _, _) => Pass.dumpAfter := !Pass.dumpAfter @ stages s
+             | (_, _, SOME n, _, _) => steps := SOME (count ("--steps", 1, n))
+             | (_, _, _, SOME n, _) => depth := count ("--depth", 1, n)
+             | (_, _, _, _, SOME n) => generate := SOME (count ("--generate-core", 0, n))
+             | _ => raise Usage ("unknown option or argument: " ^ arg);
+             go rest)
+    in
+      go args;
+      {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
+       lintRules = !lintRules, generate = !generate, help = !help, version = !version}
+    end
+end

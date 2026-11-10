@@ -401,14 +401,17 @@ struct
 
   fun jitName src = String.translate (fn #"/" => "_" | c => str c) (base src)
 
-  fun jitOne src =
+  (* a program compiled by a compiler, its siblings named from b: Rune's
+     by bin/rune, and another language's by its own (rhc's, whose program
+     may be a directory: tests/runner/hslang.sml) *)
+  fun jitOneWith (compiler, b, src) =
     let
-      val b = base src and n = jitName src
+      val n = String.translate (fn #"/" => "_" | c => str c) b
       val dir = jitDir () ^ "/" ^ n
       val () = mkdirs dir
       fun f x = dir ^ "/" ^ x
     in
-      if exec {cmd = ["bin/rune"] @ sib (b, ".cargs") @ [src, "-o", f "prog.rbc"], dir = NONE, stdin = "", stdout = "",
+      if exec {cmd = [compiler] @ sib (b, ".cargs") @ [src, "-o", f "prog.rbc"], dir = NONE, stdin = "", stdout = "",
                stderr = f "cerr", timeout = 0} <> 0
       then say ("FAIL jit." ^ n ^ ": " ^ firstNonEmpty (f "cerr") ^ "\n")
       else
@@ -456,6 +459,7 @@ struct
                          jitModes
         end
     end
+  fun jitOne src = jitOneWith ("bin/rune", base src, src)
 
   (* the probe: one program, run as each of the others is, interpreted and
      at tier 2, prints what it is expected to, and the VM is one that can be
@@ -1337,6 +1341,7 @@ struct
     | ["call-index"] => SOME callIndex
     | ["rbccheck-one", kind] => SOME (fn () => rbccheckOne kind)
     | ["jit-one", src] => SOME (fn () => jitOne src)
+    | ["jit-one-with", compiler, b, src] => SOME (fn () => jitOneWith (compiler, b, src))
     | ["jit-probe"] => SOME jitProbe
     | ["jit-every-opcode"] => SOME jitEveryOpcode
     | ["jit-fatal", which] => SOME (fn () => jitFatal which)

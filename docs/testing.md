@@ -153,6 +153,7 @@ A tier or a profile is a tag (`--tier T`, `--profile P`):
 | `windows`, `portability` | `make test-windows`, `test-portability` |
 | `docs` | `make check-docs` and `test-doc` |
 | `nightly` | what `make check` does not run: the profiles' extras, the VMs of other machines, every configuration of the matrix, native code under stress and the sanitizers; once a day in CI (`.github/workflows/nightly.yml`) |
+| `hs` | rhc's tests (*rhc's tests* below): its programs and round trips, and the runner's own checks of that machinery |
 
 The profiles `vm` and `library` hold what `make check` does not run; the
 others are parts of it, to run alone while iterating.
@@ -199,7 +200,8 @@ generated programs of functors, `functors/*`, below;
 `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
 `scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
 `diagnostics/*`, `serve/*`, `repl-protocol/*`, `dap/*`, `kernel/*`,
-`incremental/*`; `tests/runner/protocols.sml`). Scenario and protocol policy
+`incremental/*`; `tests/runner/protocols.sml`), and rhc's (`hs/*`, *rhc's
+tests* below; `tests/runner/hslang.sml`, `tests/runner/hsroundtrip.sml`). Scenario and protocol policy
 is Standard ML. Heap, benchmark, native, terminal and low-level checks also
 have individual SML jobs. Make builds prerequisites; the three retained
 compatibility jobs for generated docs, benchmark coverage and ISA checks
@@ -418,6 +420,91 @@ is shrunk and kept in `DIR/failures/seedS-caseN`: its units, `program.sml`
 each mode compiled with and printed; the run goes on with the next seed.
 `bin/rune-functor-gen show --seed 0xHEX --size N` prints the program of a
 failure's replay token `HEX:N`, as it was drawn.
+
+## rhc's tests
+
+rhc, the Haskell 98 compiler of [plans/language/haskell98.md](plans/language/haskell98.md),
+has its programs under `tests/hs`, run by the machinery that runs
+`tests/lang` (`tests/runner/lang.sml`): a suite there is a value of the
+record `Lang.suite`, which says where its programs are and what their files
+end with, who compiles and runs them, and its tags, and `Lang.tree` makes its
+jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
+
+* **Programs.** A program is a file `NAME.hs` or `NAME.lhs`, or a directory
+  `NAME` with a `Main.hs` or `Main.lhs` in it, whose other modules rhc finds
+  beside it. Its siblings are named from `NAME` in both cases, beside the
+  file or the directory, and are Rune's: `.expected`, `.cargs`, `.args`,
+  `.vmargs`, `.stdin`, `.exitcode`, `.stderr`, `.stderr-head`, `.cwarn`.
+  Two programs of one name in a directory (a `.hs` beside a `.lhs`) are a
+  failure of `hs/runner/programs`.
+* **Three directories.** `tests/hs/lang` holds the programs compiled and
+  run, `tests/hs/errors` those refused, with the text of their `.expected`
+  in the first line of what rhc says, and `tests/hs/accept` those only
+  checked, which `bin/rhc --typecheck-only` accepts saying nothing (or their
+  `.cwarn`). The jobs are `hs/compile/COMPILER/NAME`, by `bin/rhc
+  --target=stack` (`stack`) and `bin/rhc` (`register`);
+  `hs/errors/register/NAME`; `hs/lang/WAY/NAME` in the three ways of the
+  roadmap's D56, `test` (`bin/runevm-stack`), `register` (`bin/runevm`) and
+  `register-opt` (tier 2); `hs/lang/typecheck/NAME`,
+  `hs/errors/typecheck/NAME` and `hs/accept/NAME`. They need the capability
+  `rhc` (`bin/rhc`); where there is no program there is no job. With
+  `--accept`, the way `register` writes `.expected`.
+* **What they cover.** `covers:` tags for `tests/hs`, `lib/language/haskell`,
+  `src/rhc`, `share/rhc` and `rhc.build`, so that `--affected` runs rhc's
+  tests alone for a change there, and everything for a change to the
+  compiler, as for any test.
+* **The runner's own suite.** The same machinery is held to its work without
+  rhc: `hs/runner/...` is a suite of the same kind over `tests/hs/runner`,
+  whose compiler and VM are a stub, commands of `bin/rune-test`
+  (`hs-stub-compile`, `hs-stub-run`). It compiles and runs a `.hs`, a `.lhs`
+  and a program of two modules in a directory, one that exits with a
+  status and one that warns, refuses one and checks one. The stub's
+  bytecode is what the program's `putStrLn`s print, so a program that the
+  runner hands the wrong file prints something else. A stub VM that prints
+  nothing must fail every program for its output (`hs/runner/silent/NAME`,
+  whose judge is the run's turned round), as the oracle `jit` fails a run
+  that prints nothing where it should.
+* **The oracle `jit`** (`tests/runner/oracles.sml`) takes the compiler and
+  the path a program's siblings are named from (`bin/rune-test jit-one-with
+  COMPILER BASE SOURCE`), and runs rhc's programs nightly, interpreted and in
+  every mode of the JIT (`hs/jit/NAME`), beside D56's three ways in `check`.
+
+**Round trips** (the roadmap's D28; `tests/runner/hsroundtrip.sml`). On every
+file of `tests/hs/lang`, `tests/hs/accept` and `tests/hs/roundtrip`
+(`hs/roundtrip/rhc/PATH`, from `tests/hs`):
+
+* the **tree test:** the file printed with explicit braces parses to the
+  tree the file does, its locations erased;
+* the **token test:** the tokens of that print are the tokens the layout
+  algorithm makes of the file, but for empty items (a `;` after `{` or `;`,
+  or before `}`) and a trailing comma before `)`. A parser that drops a part
+  of the tree prints without it, and the reparse agrees with itself, so the
+  tree test passes; only this test sees it;
+* both again on the **implicit print**, with layout, since a printer that
+  prints only braces never exercises the layout algorithm;
+* the **exact test:** the exact print of the file is the file, byte for byte;
+* and, where the tool has a generator, the **generated trees:** from a fixed
+  seed, each printed tree parses to the tree it was printed from, and goes
+  round as a file does (`hs/roundtrip/rhc/@generated`).
+
+A tool is the commands that do these, each given a file and printing to
+its standard output: `print`, `implicit`, `exact`, `tokens` (one token a
+line, a token of the layout algorithm as `{`, `;` or `}`), `tree` (the tree
+as text, locations erased) and `generate SEED COUNT DIR`, which writes
+`DIR/gen-K.hs` and its tree `DIR/gen-K.tree`. rhc's are options of `bin/rhc`
+(`HsRoundTrip.rhc`), turned on as its driver gains them. A command that
+refuses a file, or prints nothing for one that is not empty, fails the
+test. The harness is held to its tests by a stub of a toy syntax of words
+(`hs-stub-syntax`), which passes on `tests/hs/runner/roundtrip`
+(`hs/roundtrip/stub/...`) through the shell as rhc's commands run; with a
+fault planted it must fail the test that sees it (`hs/roundtrip/@faults`):
+a parser that drops `where`, the token test and not the tree test; a printer
+that drops parentheses, the tree test; an exact printer that drops a
+comment, the exact test; a tree command that prints nothing; an implicit
+printer that swaps two items. `hs/roundtrip/@normalise` holds the
+normalisation to examples. The stub's commands run in the runner's process
+in those two checks and its generator's, since a command of
+`bin/rune-test` starts in about half a second.
 
 ## The syntax of Haskell 98
 
