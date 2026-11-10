@@ -10,8 +10,9 @@ bytecode generation, units, caches and build/dependency parsing.
 driver. `frontend.build` provides the subset shared with runedoc, after
 `mid.build`, the compiler from Mid on with nothing of a front end, which a
 front end of another language uses alone (docs/ir.md, What a front end
-gives Mid), and `util.build` the small utility prefix. Unicode and JSON are dependencies;
-the command-line parser and executable entrypoints remain under `src`.
+gives Mid), and `util.build` the small utility prefix. Unicode and JSON are
+dependencies; the command-line parser and executable entrypoints remain
+under `src`.
 `CompilerSettings` owns settings used by library passes; the CLI aliases
 those refs instead of being a library dependency.
 
