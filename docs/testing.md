@@ -806,7 +806,8 @@ builds the others and judges them
 mutant's tree for a job to be run against it by hand). The first fourteen
 seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
 Core's interpreter and Core's text reader, these last seen by `hs/core`'s
-jobs. F's parser
+jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
+deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
 
 **rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of
@@ -873,7 +874,8 @@ program's rows are `Planned`. The programs avoid what M14's deriving and
 the runtime's arrays are still to give, and their expected output is GHC's.
 The seeds for desugaring (clause order reversed, `~` made strict, a
 `newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
-that `report/order`, `report/lazy` and `report/newtype` catch.
+that `report/order`, `report/lazy` and `report/newtype` catch (HM01 to
+HM03 of rhc's mutants).
 
 **rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
 FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
