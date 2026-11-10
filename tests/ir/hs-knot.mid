@@ -1,0 +1,83 @@
+(* run: after hs-rts.mid *)
+(* main = do
+     let xs = 1 : map (+1) xs
+     print (take 5 xs)
+     let evens = 0 : map (+1) odds
+         odds  = map (+1) evens
+     print (take 4 evens)
+     print (take 4 odds)
+     print (take 4 xs)                -- the same cells again
+     print (xs !! 2000)   (forces a chain 2000 deep)
+     print (count of evaluations of a shared thunk)
+*)
+(val gtrace : int ref (return (prim ref_new 0 : int -> int ref)))
+(funs
+  (fn ginc ((viA : int susp)) : int
+    (let (viI : int) (app gforce[int] viA)
+    (let (viN : int) (prim ref_get gtrace : int ref -> int)
+    (let (viN1 : int) (prim int_add viN 1 : (int * int) -> int)
+    (let (viU : unit) (prim ref_set gtrace viN1 : (int ref * int) -> unit)
+    (return (prim int_add viI 1 : (int * int) -> int))))))))
+(funs
+  (fn gindex ['a] ((vxL : 'a hlist susp) (vxN : int)) : 'a
+    (let (vxV : 'a hlist) (app gforce['a hlist] vxL)
+    (let (vxTg : int) (tag vxV)
+    (let (vxC : bool) (prim poly_eq vxTg 1 : (int * int) -> bool)
+    (if vxC
+      (let (vxP : 'a susp * 'a hlist susp) (decon 1 vxV : 'a hlist)
+      (let (vxZ : bool) (prim poly_eq vxN 0 : (int * int) -> bool)
+      (if vxZ
+        (let (vxH : 'a susp) (select 0 vxP)
+        (return (app gforce['a] vxH)))
+        (let (vxT : 'a hlist susp) (select 1 vxP)
+        (let (vxN1 : int) (prim int_sub vxN 1 : (int * int) -> int)
+        (return (app gindex['a] vxT vxN1)))))))
+      (let (vxE : exn) (mkexn gexnPat "!!: index too large")
+      (raise vxE))))))))
+(do ()
+  (let (vincS : (int susp -> int) susp) (app gdone[int susp -> int] ginc)
+  (let (vfive : int susp) (app gdone[int] 5)
+  (let (vfour : int susp) (app gdone[int] 4)
+  (* let xs = 1 : map (+1) xs *)
+  (let (vxs : int hlist susp) (app ghole[int hlist] ())
+  (fun (fn vxsCode ((vxsU : unit)) : int hlist
+         (let (vxsOne : int susp) (app gdone[int] 1)
+         (fun (fn vxsTl ((vxsU2 : unit)) : int hlist
+                (return (app gmap[int, int] vincS vxs)))
+         (let (vxsTS : int hlist susp) (app gdelay[int hlist] vxsTl)
+         (let (vxsP : int susp * int hlist susp) (tuple vxsOne vxsTS)
+         (return (con 1 vxsP : int hlist)))))))
+  (let (vu1 : unit) (app gpatch[int hlist] vxs vxsCode)
+  (fun (fn vt1 ((vt1U : unit)) : int hlist (return (app gtake[int] vfive vxs)))
+  (let (vt1S : int hlist susp) (app gdelay[int hlist] vt1)
+  (let (vu2 : unit) (app gputInts vt1S)
+  (* let evens = 0 : map (+1) odds; odds = map (+1) evens *)
+  (let (vevens : int hlist susp) (app ghole[int hlist] ())
+  (let (vodds : int hlist susp) (app ghole[int hlist] ())
+  (fun (fn vevCode ((vevU : unit)) : int hlist
+         (let (vevZ : int susp) (app gdone[int] 0)
+         (fun (fn vevTl ((vevU2 : unit)) : int hlist
+                (return (app gmap[int, int] vincS vodds)))
+         (let (vevTS : int hlist susp) (app gdelay[int hlist] vevTl)
+         (let (vevP : int susp * int hlist susp) (tuple vevZ vevTS)
+         (return (con 1 vevP : int hlist)))))))
+  (fun (fn voddCode ((voddU : unit)) : int hlist
+         (return (app gmap[int, int] vincS vevens)))
+  (let (vu3 : unit) (app gpatch[int hlist] vevens vevCode)
+  (let (vu4 : unit) (app gpatch[int hlist] vodds voddCode)
+  (fun (fn vt2 ((vt2U : unit)) : int hlist (return (app gtake[int] vfour vevens)))
+  (let (vt2S : int hlist susp) (app gdelay[int hlist] vt2)
+  (let (vu5 : unit) (app gputInts vt2S)
+  (fun (fn vt3 ((vt3U : unit)) : int hlist (return (app gtake[int] vfour vodds)))
+  (let (vt3S : int hlist susp) (app gdelay[int hlist] vt3)
+  (let (vu6 : unit) (app gputInts vt3S)
+  (* the same cells of xs again: nothing evaluated twice *)
+  (fun (fn vt4 ((vt4U : unit)) : int hlist (return (app gtake[int] vfour vxs)))
+  (let (vt4S : int hlist susp) (app gdelay[int hlist] vt4)
+  (let (vu7 : unit) (app gputInts vt4S)
+  (* a chain 2000 deep; every element's thunk forces the one before it *)
+  (let (vdeep : int) (app gindex[int] vxs 2000)
+  (let (vu8 : unit) (app gputInt vdeep)
+  (* (+1) ran once per element: xs 2000, evens and odds 3 + 4 = 7 *)
+  (let (vcount : int) (prim ref_get gtrace : int ref -> int)
+  (return (app gputInt vcount))))))))))))))))))))))))))))))

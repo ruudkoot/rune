@@ -680,4 +680,13 @@ struct
   (* the exception x, declared where it was at the types f makes of its
      argument's *)
   fun retypeExn (x : int, f : ty -> ty) : unit = copyExn (x, x, f)
+
+  (* A constant at its type: the digits of an Int64.int or a Word64.word are
+     the 64-bit constant, which is another representation where int and word
+     are the VM's 63 bits. *)
+  fun constAt (c : Literal.const, t : ty) : Literal.const =
+    case (c, view t) of
+      (Literal.CInt i, Con (stamp, _, _)) => if stamp = #stamp Types.int64Tycon then Literal.CInt64 i else c
+    | (Literal.CWord w, Con (stamp, _, _)) => if stamp = #stamp Types.word64Tycon then Literal.CWord64 w else c
+    | _ => c
 end

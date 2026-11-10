@@ -36,28 +36,66 @@ program
   requires json
   unit build/config.sml build/config.sml ascii
   use lib/compiler/frontend.build
-    use lib/compiler/util.build
-      unit compiler:util/scon.sml lib/compiler/util/scon.sml ascii
-      unit compiler:util/ordmap.sml lib/compiler/util/ordmap.sml ascii
-      unit compiler:util/inttable.sml lib/compiler/util/inttable.sml ascii
-      unit compiler:state_sig.sml lib/compiler/state_sig.sml ascii
-      unit compiler:state.sml lib/compiler/state.sml ascii
+    use lib/compiler/mid.build
+      use lib/compiler/util.build
+        unit compiler:util/scon.sml lib/compiler/util/scon.sml ascii
+        unit compiler:util/ordmap.sml lib/compiler/util/ordmap.sml ascii
+        unit compiler:util/inttable.sml lib/compiler/util/inttable.sml ascii
+        unit compiler:state_sig.sml lib/compiler/state_sig.sml ascii
+        unit compiler:state.sml lib/compiler/state.sml ascii
+        unit compiler:util/stamp.sml lib/compiler/util/stamp.sml ascii
+        unit compiler:util/literal.sml lib/compiler/util/literal.sml ascii
+        unit compiler:util/ident.sml lib/compiler/util/ident.sml ascii
+        unit compiler:util/source.sml lib/compiler/util/source.sml ascii
+        unit compiler:util/error.sml lib/compiler/util/error.sml ascii
+        unit compiler:util/color.sml lib/compiler/util/color.sml ascii
+        unit compiler:util/diagnostic.sml lib/compiler/util/diagnostic.sml ascii
+        unit compiler:util/pass.sml lib/compiler/util/pass.sml ascii
+        unit compiler:util/usage.sml lib/compiler/util/usage.sml ascii
+        unit compiler:util/pickle.sml lib/compiler/util/pickle.sml ascii
+      end
+      unit compiler:elab/types.sml lib/compiler/elab/types.sml ascii
+      unit compiler:core/ty.sml lib/compiler/core/ty.sml ascii
+      unit compiler:backend/opcodes.sml lib/compiler/backend/opcodes.sml ascii
+      unit compiler:backend/prims.sml lib/compiler/backend/prims.sml ascii
+      unit compiler:settings.sml lib/compiler/settings.sml ascii
+      unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
+      unit compiler:core/lambda.sml lib/compiler/core/lambda.sml ascii
+      unit compiler:core/irrules.sml lib/compiler/core/irrules.sml ascii
+      unit compiler:core/mid.sml lib/compiler/core/mid.sml ascii
+      unit compiler:core/midlint.sml lib/compiler/core/midlint.sml ascii
+      unit compiler:core/midtext.sml lib/compiler/core/midtext.sml ascii
+      unit compiler:core/midcodec.sml lib/compiler/core/midcodec.sml ascii
+      unit compiler:core/midcanon.sml lib/compiler/core/midcanon.sml ascii
+      unit compiler:core/target.sml lib/compiler/core/target.sml ascii
+      unit compiler:core/shake.sml lib/compiler/core/shake.sml ascii
+      unit compiler:core/lift.sml lib/compiler/core/lift.sml ascii
+      unit compiler:core/simplify.sml lib/compiler/core/simplify.sml ascii
+      unit compiler:core/workers.sml lib/compiler/core/workers.sml ascii
+      unit compiler:core/refs.sml lib/compiler/core/refs.sml ascii
+      unit compiler:backend/code.sml lib/compiler/backend/code.sml ascii
+      unit compiler:backend/low.sml lib/compiler/backend/low.sml ascii
+      unit compiler:backend/target.sml lib/compiler/backend/target.sml ascii
+      unit compiler:backend/lowlint.sml lib/compiler/backend/lowlint.sml ascii
+      unit compiler:backend/rep.sml lib/compiler/backend/rep.sml ascii
+      unit compiler:backend/results.sml lib/compiler/backend/results.sml ascii
+      unit compiler:backend/lower.sml lib/compiler/backend/lower.sml ascii
+      unit compiler:backend/lowshapes.sml lib/compiler/backend/lowshapes.sml ascii
+      unit compiler:backend/fault.sml lib/compiler/backend/fault.sml ascii
+      unit compiler:backend/stack.sml lib/compiler/backend/stack.sml ascii
+      unit compiler:backend/regcodes.sml lib/compiler/backend/regcodes.sml ascii
+      unit compiler:backend/regs.sml lib/compiler/backend/regs.sml ascii
+      unit compiler:backend/regverify.sml lib/compiler/backend/regverify.sml ascii
+      unit compiler:backend/emit.sml lib/compiler/backend/emit.sml ascii
+      unit compiler:backend/link.sml lib/compiler/backend/link.sml ascii
+      unit compiler:backend/unitfile.sml lib/compiler/backend/unitfile.sml ascii
+      unit compiler:driver/midpipeline.sml lib/compiler/driver/midpipeline.sml ascii
     end
-    unit compiler:util/ident.sml lib/compiler/util/ident.sml ascii
-    unit compiler:util/source.sml lib/compiler/util/source.sml ascii
-    unit compiler:util/error.sml lib/compiler/util/error.sml ascii
-    unit compiler:util/color.sml lib/compiler/util/color.sml ascii
-    unit compiler:util/diagnostic.sml lib/compiler/util/diagnostic.sml ascii
-    unit compiler:util/pass.sml lib/compiler/util/pass.sml ascii
-    unit compiler:util/usage.sml lib/compiler/util/usage.sml ascii
-    unit compiler:util/pickle.sml lib/compiler/util/pickle.sml ascii
     unit compiler:frontend/token.sml lib/compiler/frontend/token.sml ascii
     unit compiler:frontend/lexer.sml lib/compiler/frontend/lexer.sml ascii
     unit compiler:elab/elabstats.sml lib/compiler/elab/elabstats.sml ascii
-    unit compiler:elab/types.sml lib/compiler/elab/types.sml ascii
     unit compiler:elab/sourcety.sml lib/compiler/elab/sourcety.sml ascii
     unit compiler:elab/witness.sml lib/compiler/elab/witness.sml ascii
-    unit compiler:core/ty.sml lib/compiler/core/ty.sml ascii
     unit compiler:elab/overload.sml lib/compiler/elab/overload.sml ascii
     unit compiler:frontend/ast.sml lib/compiler/frontend/ast.sml ascii
     unit compiler:frontend/fixity.sml lib/compiler/frontend/fixity.sml ascii
@@ -66,8 +104,6 @@ program
     unit compiler:elab/env.sml lib/compiler/elab/env.sml ascii
     unit compiler:elab/sigmatch.sml lib/compiler/elab/sigmatch.sml ascii
     unit compiler:elab/exhaust.sml lib/compiler/elab/exhaust.sml ascii
-    unit compiler:backend/opcodes.sml lib/compiler/backend/opcodes.sml ascii
-    unit compiler:backend/prims.sml lib/compiler/backend/prims.sml ascii
     unit compiler:elab/elaborate.sml lib/compiler/elab/elaborate.sml ascii
     unit compiler:elab/astlint.sml lib/compiler/elab/astlint.sml ascii
     unit compiler:driver/basismanifest.sml lib/compiler/driver/basismanifest.sml ascii
@@ -75,8 +111,6 @@ program
     unit compiler:driver/buildfile.sml lib/compiler/driver/buildfile.sml ascii
     unit compiler:driver/deps.sml lib/compiler/driver/deps.sml ascii
     unit compiler:driver/project.sml lib/compiler/driver/project.sml ascii
-    unit compiler:settings.sml lib/compiler/settings.sml ascii
-    unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
     unit compiler:driver/libraryindex.sml lib/compiler/driver/libraryindex.sml ascii
   end
   unit src/doc/docsource.sml src/doc/docsource.sml ascii
@@ -103,8 +137,9 @@ program
 end
 provenance
   input runedoc.build e9eae6d804b7f52078eb7dbb0e46aee385bf60e28104c66fe3e8710d8a6a5c46
-  input lib/compiler/frontend.build 6d35ea98aba55a7b636242c2228a0eb606bd63e0f5b46ad5b66c94f1e9d6c4b4
-  input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
+  input lib/compiler/frontend.build 7a5119344cc494b5398efc5f23d1def1b248a3ea337cf6b0b6174eed17b0b0fb
+  input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
+  input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

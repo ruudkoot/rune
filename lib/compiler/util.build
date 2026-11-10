@@ -5,4 +5,14 @@ files
   util/inttable.sml
   state_sig.sml
   state.sml
+  util/stamp.sml
+  util/literal.sml
+  util/ident.sml
+  util/source.sml
+  util/error.sml
+  util/color.sml
+  util/diagnostic.sml
+  util/pass.sml
+  util/usage.sml
+  util/pickle.sml
 end

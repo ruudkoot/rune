@@ -118,6 +118,9 @@ RUNEOPT ?= bin/runeopt
 # refuses to build past. Each list is without build/config.sml, which each
 # program loads first, and the program's entry point, which is each system's own.
 PLANS    := rune.plan runedoc.plan runeopt.plan runeisa.plan runeffi.plan
+# the plans of the programs Rune alone builds, which no host reads: rhc's,
+# over which scripts/gen-version.sh --config works out its identity
+RUNE_ONLY_PLANS := rhc.plan
 plan-sources = $(filter-out build/config.sml src/main/%,$(shell sh scripts/plan-files.sh $(1)))
 SOURCES  := $(call plan-sources,rune.plan)
 GEN_SML  := lib/compiler/backend/opcodes.sml lib/compiler/backend/prims.sml lib/compiler/backend/regcodes.sml
@@ -126,6 +129,7 @@ SOURCES_DOC := $(call plan-sources,runedoc.plan)
 SOURCES_OPT := $(call plan-sources,runeopt.plan)
 SOURCES_ISA := $(call plan-sources,runeisa.plan)
 SOURCES_FFI := $(call plan-sources,runeffi.plan)
+SOURCES_RHC := $(call plan-sources,rhc.plan)
 BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb
 VERSIONGEN := build/config.sml runtime/version.h lib/compiler/config.sml
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
@@ -610,7 +614,7 @@ $(BUILDFILES) &: $(PLANS) scripts/plan-files.sh scripts/gen-build-files.sh
 # its list). make check compares each with what the compiler prints.
 .PHONY: plans
 plans:
-	@for p in $(PLANS); do $(RUNE) --plan $${p%.plan}.build > $$p.$$$$ && mv -f $$p.$$$$ $$p || { rm -f $$p.$$$$; exit 1; }; done
+	@for p in $(PLANS) $(RUNE_ONLY_PLANS); do $(RUNE) --plan $${p%.plan}.build > $$p.$$$$ && mv -f $$p.$$$$ $$p || { rm -f $$p.$$$$; exit 1; }; done
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
 # written only when it changes, so that a new commit, a checkout or the first
@@ -771,7 +775,25 @@ bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-mlkit.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
-# ---------------------------------------------------------------- runedoc
+# ---------------------------------------------------------------- rhc
+# rhc, the Haskell 98 compiler of the haskell98 roadmap
+# (docs/plans/language/haskell98.md), which Rune alone builds (D42). Its
+# Config is its own, over rhc.plan (scripts/gen-version.sh --config;
+# docs/building.md, The compiler's identity): written on every make, as
+# build/config.sml is, and only when it changes.
+.PHONY: rhc
+rhc: bin/rhc
+src/rhc/config.sml: FORCE | $(VERSIONGEN)
+	@sh scripts/gen-version.sh --config rhc.plan $@
+bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
+	@mkdir -p bin
+	$(RUNE) --build rhc.build -o $@
+bin/rhc: bin/rhc.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rhc.rbc" "$$@"\n' > $@
+	chmod +x $@
+check-tools: bin/rhc
+
+# ---------------------------------------------------------------- runeffi
 # Runeffi is an SML program. Header processing is an explicit command and
 # never an action executed from the .build language.
 .PHONY: runeffi runeffi-host-builds ffi check-ffi-generated
@@ -2157,6 +2179,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/storechecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
+               tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)

@@ -1,21 +1,12 @@
-(* The shared compiler frontend, in dependency order. *)
-use util.build
+(* The shared compiler frontend, in dependency order, after the layer from
+   Mid on (mid.build). *)
+use mid.build
 files
-  util/ident.sml
-  util/source.sml
-  util/error.sml
-  util/color.sml
-  util/diagnostic.sml
-  util/pass.sml
-  util/usage.sml
-  util/pickle.sml
   frontend/token.sml
   frontend/lexer.sml
   elab/elabstats.sml
-  elab/types.sml
   elab/sourcety.sml
   elab/witness.sml
-  core/ty.sml
   elab/overload.sml
   frontend/ast.sml
   frontend/fixity.sml
@@ -24,8 +15,6 @@ files
   elab/env.sml
   elab/sigmatch.sml
   elab/exhaust.sml
-  backend/opcodes.sml
-  backend/prims.sml
   elab/elaborate.sml
   elab/astlint.sml
   driver/basismanifest.sml
@@ -33,7 +22,5 @@ files
   driver/buildfile.sml
   driver/deps.sml
   driver/project.sml
-  settings.sml
-  driver/unitstore.sml
   driver/libraryindex.sml
 end

@@ -1,0 +1,6 @@
+(* Core, rhc's typed lazy intermediate language (D2; the roadmap's M8), in
+   load order. *)
+files
+  core_sig.sml
+  core.sml
+end

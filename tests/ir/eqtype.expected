@@ -2,33 +2,33 @@
 (datatype t () (0 "A") (1 "B" : int))
 (datatype u () (0 "X") (1 "Y"))
 (funs
-  (fn g1 ((v1 : int ref * int ref)) : bool
+  (fn g1 ((v1 : int ref * int ref)) : bool "r"
     (let (v2 : int ref) (select 0 v1)
     (let (v3 : int ref) (select 1 v1)
     (return (prim ptr_eq v2 v3 : (int ref * int ref) -> bool))))))
 (funs
-  (fn g2 ((v4 : t)) : bool
+  (fn g2 ((v4 : t)) : bool "n"
     (return (prim ptr_eq v4 (con0 0 : t) : (t * t) -> bool))))
 (funs
-  (fn g3 ((v5 : int list)) : bool
+  (fn g3 ((v5 : int list)) : bool "l"
     (return (prim ptr_eq v5 (con0 0 : int list) : (int list * int list) -> bool))))
 (funs
-  (fn g4 ((v6 : string * string)) : bool
+  (fn g4 ((v6 : string * string)) : bool "s"
     (let (v7 : string) (select 0 v6)
     (let (v8 : string) (select 1 v6)
     (return (prim string_eq v7 v8 : (string * string) -> bool))))))
 (funs
-  (fn g5 ((v9 : int * int)) : bool
+  (fn g5 ((v9 : int * int)) : bool "i"
     (let (v10 : int) (select 0 v9)
     (let (v11 : int) (select 1 v9)
     (return (prim imm_eq v10 v11 : (int * int) -> bool))))))
 (funs
-  (fn g6 ((v12 : u * u)) : bool
+  (fn g6 ((v12 : u * u)) : bool "e"
     (let (v13 : u) (select 0 v12)
     (let (v14 : u) (select 1 v12)
     (return (prim imm_eq v13 v14 : (u * u) -> bool))))))
 (funs
-  (fn g7 ((v15 : (int * int) * (int * int))) : bool
+  (fn g7 ((v15 : (int * int) * (int * int))) : bool "p"
     (let (v16 : int * int) (select 0 v15)
     (let (v17 : int * int) (select 1 v15)
     (return (prim poly_eq v16 v17 : ((int * int) * (int * int)) -> bool))))))
