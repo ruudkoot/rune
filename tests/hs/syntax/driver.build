@@ -1,5 +1,4 @@
 (* The driver of the syntax tests of Haskell 98 (tests/hs/syntax/README.md),
    on the syntax of lib/language/haskell. *)
-libraries unicode end
-use ../../../lib/language/haskell/syntax.build
+libraries language/haskell unicode end
 files generate.sml driver.sml end

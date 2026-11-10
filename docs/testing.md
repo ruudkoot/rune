@@ -506,21 +506,26 @@ normalisation to examples. The stub's commands run in the runner's process
 in those two checks and its generator's, since a command of
 `bin/rune-test` starts in about half a second.
 
-## The syntax of Haskell 98
-
-`make test-hs-syntax` runs the tests of the lexer, layout, parser and
-printers of `lib/language/haskell` (`syntax.build`; the haskell98 roadmap's
-M11), the jobs `hs/syntax/*` of `tests/runner/hssyntax.sml` over the driver
-`bin/rune-hs-syntax` ([tests/hs/syntax/README.md](../tests/hs/syntax/README.md)),
-until the round-trip harness of the roadmap's M2 takes them over: E10's 46
-crafted cases, accepted or refused as they should be; the round trips of
-every file the parser accepts, the tree and the token test for the explicit
-and the implicit print and the exact print, byte for byte; the first line of
-each diagnostic of `tests/hs/syntax/errors`; 2,500 trees of the syntax
-generator from a fixed seed, each printed both ways and read back; the
-parser's mutants, each caught by the test that alone can see it; and the
-cost of a token in `runevm --count`'s instructions, bytes and objects,
-within `tests/hs/syntax/budget`.
+**The syntax of Haskell 98** (`lib/language/haskell`'s `syntax.build`, the
+roadmap's M11; [tests/hs/syntax/README.md](../tests/hs/syntax/README.md)).
+rhc's commands for the round trips are `--print`, `--print-layout`,
+`--print-exact`, `--dump-tokens` and `--dump-ast --no-spans`, and its
+generator is `bin/rune-hs-syntax generate-files`, the syntax generator of
+D55. `tests/hs/roundtrip` holds a file for each part of the grammar and the
+lexical syntax, the crafted cases of the roadmap's E10 that the syntax
+accepts, and a program for each row of the layout rules that the parser
+alone decides; `tests/hs/errors` the diagnostics of the lexer, layout and
+the parser and the cases the syntax refuses. What those runners do not
+hold the syntax to is `tests/runner/hssyntax.sml`'s, the jobs `hs/syntax/*`
+(`make test-hs-syntax`) of `bin/rune-hs-syntax`: the tokens of the layout
+algorithm against an expansion written by hand, where a file of
+`tests/hs/roundtrip` has one (`NAME.braces`); 2,500 trees of the syntax
+generator printed both ways and read back in one process; the parser's
+mutants, E10's five, which the tree test cannot see and the token test
+must, and a lexer that drops a comment, which only the exact print sees,
+each built and run over `tests/hs/roundtrip`; and the cost of a token in
+`runevm --count`'s instructions, bytes and objects, within
+`tests/hs/syntax/budget`.
 
 ## The three oracles
 

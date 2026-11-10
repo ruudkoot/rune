@@ -1,10 +1,10 @@
-(* The syntax tests of Haskell 98 (tests/hs/syntax/README.md; the haskell98
-   roadmap's M11): the crafted cases, the round trips of the files of
-   tests/hs/syntax/grammar, the diagnostics of tests/hs/syntax/errors, the
-   syntax generator from a fixed seed, the parser's mutants and the cost of
-   a token, each a job of bin/rune-hs-syntax or of bin/rune-test that prints
-   a line FAIL for what it finds. The round-trip harness of tests/runner
-   (M2) takes them over. *)
+(* What the round trips of rhc (tests/runner/hsroundtrip.sml) and its
+   refusals (tests/runner/hslang.sml) do not hold the syntax of Haskell 98
+   to (tests/hs/syntax/README.md; the haskell98 roadmap's M11): the parser's
+   mutants, each caught by the test that alone can see it; the layout of
+   the files of tests/hs/roundtrip that have an expansion written by hand
+   beside them; and the cost of a token. Each is a job of bin/rune-test or
+   of bin/rune-hs-syntax that prints a line FAIL for what it finds. *)
 structure HsSyntax =
 struct
   open Sh
@@ -17,8 +17,8 @@ struct
   (* ---- the parser's mutants ---- *)
 
   (* A mutant: an edit of a file of lib/language/haskell, which must occur
-     `count` times, and the test that must catch it on some file of the
-     grammar or of the cases: the token test (E10's five parser mutants,
+     `count` times, and the test that must catch it on some file of
+     tests/hs/roundtrip: the token test (E10's five parser mutants,
      which the tree test cannot see, since both sides of it lose the field)
      or the exact print (a comment lost, which no token shows). *)
   type mutant = {name : string, file : string, old : string, new : string, count : int, catches : string}
@@ -63,14 +63,18 @@ struct
 
   fun slug s = String.translate (fn c => if Char.isAlphaNum c then str (Char.toLower c) else "-") s
 
-  (* the files the mutants run on: the grammar and the cases the syntax accepts *)
+  (* the files the mutants and the budget run on: those of tests/hs/roundtrip,
+     which the syntax accepts *)
   fun corpus () =
-    List.map (fn f => fromRoot (dir ^ "/grammar/" ^ f)) (sort (entries (fromRoot (dir ^ "/grammar"))))
-    @ List.mapPartial
-        (fn l => case String.fields (fn c => c = #"\t") l of
-                   n :: "accept" :: _ => SOME (fromRoot (dir ^ "/cases/" ^ n ^ "/Main.hs"))
-                 | _ => NONE)
-        (lines (read (fromRoot (dir ^ "/cases/cases.tsv"))))
+    let
+      fun under d =
+        List.concat (List.map (fn n => let val p = d ^ "/" ^ n
+                                       in if isDir p then under p
+                                          else if String.isSuffix ".hs" n orelse String.isSuffix ".lhs" n then [p] else [] end)
+                              (sort (entries d)))
+    in
+      under (fromRoot "tests/hs/roundtrip")
+    end
 
   fun mutantOne ({name, file, old, new, count, catches} : mutant) =
     let
@@ -120,7 +124,7 @@ struct
   (* ---- the cost of a token ---- *)
 
   (* The instructions, bytes and objects that lexing and parsing the files
-     of the grammar and the cases three times costs, less those of no time,
+     of tests/hs/roundtrip three times costs, less those of no time,
      by runevm --count, with spans and with every annotation; within the
      budget tests/hs/syntax/budget, which RUNE_TEST_ACCEPT=1 writes again
      at 10% over the counts. *)
@@ -128,10 +132,7 @@ struct
     let
       val out = run ^ "/hs-syntax-budget"
       val () = mkdirs out
-      val files =
-        List.map (fn f => fromRoot (dir ^ "/grammar/" ^ f)) (sort (entries (fromRoot (dir ^ "/grammar"))))
-        @ List.map (fn d => fromRoot (dir ^ "/cases/" ^ d ^ "/Main.hs"))
-            (List.filter (fn d => isDir (fromRoot (dir ^ "/cases/" ^ d))) (sort (entries (fromRoot (dir ^ "/cases")))))
+      val files = corpus ()
       fun counts (mode, rounds) =
         let
           val tag = mode ^ Int.toString rounds
@@ -198,16 +199,13 @@ struct
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
   val tree =
-    tagged ["check", "test-hs-syntax", "covers:lib/language/haskell/*", "covers:tests/hs/syntax/*",
-            "covers:tests/runner/hssyntax.sml", "covers:lib/unicode/*"]
-      (Test.describe "hs"
-        [Test.describe "syntax"
-          [tagged ["quick"] (job ("cases", "bin/rune-hs-syntax cases " ^ dir ^ "/cases", 300)),
-           tagged ["quick"] (job ("roundtrip", "bin/rune-hs-syntax check-roundtrip " ^ dir ^ "/grammar/*", 300)),
-           tagged ["quick"] (job ("errors", "bin/rune-hs-syntax errors " ^ dir ^ "/errors", 300)),
-           tagged ["quick"] (job ("generated", "bin/rune-hs-syntax generate 1 2000 3 && bin/rune-hs-syntax generate 5000 500 4", 600)),
-           job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-mutants", 1800),
-           job ("budget", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-budget", 600)]])
+    tagged ["check", "hs", "test-hs-syntax", "covers:lib/language/haskell/*", "covers:tests/hs/syntax/*",
+            "covers:tests/hs/roundtrip/*", "covers:tests/runner/hssyntax.sml", "covers:lib/unicode/*"]
+      (Test.describe "hs/syntax"
+        [tagged ["quick"] (job ("expansions", "bin/rune-hs-syntax expansions tests/hs/roundtrip", 300)),
+         tagged ["quick"] (job ("generated", "bin/rune-hs-syntax generate 1 2000 3 && bin/rune-hs-syntax generate 5000 500 4", 600)),
+         job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-mutants", 1800),
+         job ("budget", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-budget", 600)])
 
   fun command args =
     case args of

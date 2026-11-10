@@ -17,6 +17,7 @@ files
 end
 files
   src/rhc/options.sml
+  src/rhc/syntax.sml
   src/rhc/main.sml
 end
 src/main/rhc-main.sml

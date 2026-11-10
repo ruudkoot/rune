@@ -10,6 +10,7 @@
      hs-syntax [--hier] tokens FILE          the tokens of L, a line each
      hs-syntax [--hier] dump FILE            the tree as text, with spans (dump-bare: without)
      hs-syntax generate-files SEED N DIR     N trees of the generator as DIR/gen-K.hs and DIR/gen-K.tree
+     hs-syntax expansions DIR                L of each NAME.hs under DIR against the expansion NAME.braces
      hs-syntax [--hier] speed N FILE...      lex and parse every file N times
      hs-syntax cases DIR                     the crafted cases of DIR/cases.tsv
      hs-syntax check-roundtrip FILE...       the round trips, a line FAIL for each that fails
@@ -366,6 +367,48 @@ struct
       List.app one (List.tabulate (count, fn k => k))
     end
 
+  (* Each file NAME.braces under DIR, and the NAME.hs or NAME.lhs beside it:
+     the tokens of the Report's L on NAME are those of NAME.braces, an
+     expansion of its layout written by hand, braces for braces and
+     semicolons for semicolons, a line FAIL where they are not. *)
+  fun expansions dir =
+    let
+      fun entries d =
+        let
+          val h = OS.FileSys.openDir d
+          fun go acc = case OS.FileSys.readDir h of SOME e => go (e :: acc) | NONE => acc
+        in
+          sort (go []) before OS.FileSys.closeDir h
+        end
+      fun under d =
+        List.concat (List.map (fn e => let val p = d ^ "/" ^ e
+                                       in if OS.FileSys.isDir p then under p
+                                          else if String.isSuffix ".braces" e then [p] else [] end)
+                              (entries d))
+      val total = ref 0
+      val failed = ref 0
+      fun traceOf path =
+        let val (_, t) = P.parseTraced (opts P.Bare, path, tokensOf (path, program (path, readFile path)))
+        in List.map T.plain (List.filter (fn T.EOF => false | _ => true) t) end
+      fun one braces =
+        let
+          val base = String.substring (braces, 0, size braces - size ".braces")
+          val source = if OS.FileSys.access (base ^ ".hs", []) then base ^ ".hs" else base ^ ".lhs"
+        in
+          total := !total + 1;
+          case firstDiff (traceOf source, traceOf braces, 0) of
+            NONE => ()
+          | SOME (k, x, y) =>
+              (failed := !failed + 1;
+               say ("FAIL expansions " ^ source ^ ": layout's token " ^ Int.toString k ^ " is " ^ x ^
+                    " where its expansion has " ^ y ^ "\n"))
+        end
+        handle e => (failed := !failed + 1; say ("FAIL expansions " ^ braces ^ ": " ^ clean (failure (braces, "", e)) ^ "\n"))
+    in
+      List.app one (under dir);
+      say ("expansions\t" ^ Int.toString (!total) ^ "\tfailed\t" ^ Int.toString (!failed) ^ "\n")
+    end
+
   fun readList path = String.tokens (fn c => c = #"\n") (readFile path)
 
   fun files args =
@@ -395,6 +438,7 @@ struct
         | ["cases", d] => cases d
         | "check-roundtrip" :: r => checkRoundTrips (files r)
         | ["errors", d] => errors d
+        | ["expansions", d] => expansions d
         | ["generate", a, n, d] => generate (valOf (Int.fromString a), valOf (Int.fromString n), valOf (Int.fromString d))
         | _ => (say "usage: hs-syntax [--hier] check|roundtrip|explicit|implicit|exact|tokens|speed|cases ...\n";
                 OS.Process.exit OS.Process.failure)

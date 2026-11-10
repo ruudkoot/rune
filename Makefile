@@ -2192,7 +2192,7 @@ bin/rune-test: bin/rune-test.rbc bin/runevm Makefile bin/rune-generate bin/rune-
 # The syntax of Haskell 98 in lib/language/haskell (the haskell98 roadmap's
 # M11): the driver of its tests, tests/hs/syntax/README.md, and their jobs,
 # tests/runner/hssyntax.sml.
-HS_SYNTAX_SRCS := lib/language/haskell/syntax.build $(wildcard lib/language/haskell/*.sml) \
+HS_SYNTAX_SRCS := lib/language/haskell/library.build lib/language/haskell/syntax.build $(wildcard lib/language/haskell/*.sml) \
                   tests/hs/syntax/driver.build tests/hs/syntax/generate.sml tests/hs/syntax/driver.sml
 check-tools: bin/rune-hs-syntax
 bin/rune-hs-syntax.rbc: $(RUNE) $(HS_SYNTAX_SRCS) FORCE

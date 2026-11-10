@@ -21,4 +21,6 @@ ffi/win32/generated/**/shims.c whitespace=-blank-at-eof
 # tabs and the blanks at the ends of its lines
 # (share/rhc/haskell98/pristine/MANIFEST.tsv).
 share/rhc/haskell98/** -whitespace
-tests/hs/syntax/grammar/Crlf.hs -text
+tests/hs/roundtrip/syntax/Crlf.hs -text
+tests/hs/roundtrip/layout/lay.col.newlinechars_ff.hs -text
+tests/hs/roundtrip/layout/lay.col.newlinechars_ff.braces -text
