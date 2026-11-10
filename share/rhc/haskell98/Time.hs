@@ -1,8 +1,8 @@
 -- Module Time, section 24.1 of the Haskell 98 Report.
--- The code of the online Revised Report of December 2002 with its published
--- errata applied: a modified version of the Report's code, which does not
--- define Haskell 98. LICENSE says what was changed; errata.tsv and
--- overlay.tsv list each change, and pristine/ holds the code as printed.
+-- The code of the online Revised Report of December 2002, with its published
+-- errata and rhc's overlay applied: a modified version of the Report's code,
+-- which does not define Haskell 98. LICENSE says what was changed; errata.tsv
+-- and overlay.tsv list each change, and pristine/ holds the code as printed.
 
 module Time (
         ClockTime, 
@@ -21,10 +21,14 @@ module Time (
 import Ix(Ix)
 import Locale(TimeLocale(..),defaultTimeLocale)
 import Char ( intToDigit )
+import PreludeBuiltin                   -- ClockTime's representation, the clock (rhc's)
 
-data ClockTime = ...                    -- Implementation-dependent
-instance Ord  ClockTime where ...
-instance Eq   ClockTime where ...
+-- ClockTime is PreludeBuiltin's: seconds since 1970-01-01 00:00 UTC, and
+-- picoseconds (overlay ov.time.clocktime)
+instance Ord  ClockTime where
+    compare (ClockTime s p) (ClockTime s' p') = compare (s, p) (s', p')
+instance Eq   ClockTime where
+    ClockTime s p == ClockTime s' p' = s == s' && p == p'
 
 data Month =  January   | February | March    | April
            |  May       | June     | July     | August
@@ -54,22 +58,77 @@ data TimeDiff = TimeDiff {
 
 
 getClockTime            :: IO ClockTime
-getClockTime            = ...           -- Implementation-dependent
+getClockTime            =  time_now >>= \t ->     -- microseconds
+                           return (ClockTime (toInteger t `div` 1000000)
+                                             (toInteger t `mod` 1000000 * 1000000))
 
 addToClockTime          :: TimeDiff     -> ClockTime -> ClockTime
-addToClockTime td ct    =  ...          -- Implementation-dependent
+addToClockTime (TimeDiff year mon day hour min sec psec) (ClockTime s p) =
+                           let (carry, p') = (p + psec) `divMod` 1000000000000
+                               s' = s + carry + toInteger (sec + 60 * min + 3600 * hour + 86400 * day)
+                               cal = toUTCTime (ClockTime s' p')
+                               (years, m) = (fromEnum (ctMonth cal) + mon + 12 * year) `divMod` 12
+                           in  toClockTime (cal { ctYear = ctYear cal + years, ctMonth = toEnum m })
 
 diffClockTimes          :: ClockTime    -> ClockTime -> TimeDiff
-diffClockTimes ct1 ct2  =  ...          -- Implementation-dependent
+diffClockTimes (ClockTime s1 p1) (ClockTime s2 p2) =
+                           TimeDiff 0 0 0 0 0 (fromInteger (s1 - s2)) (p1 - p2)
 
 toCalendarTime          :: ClockTime    -> IO CalendarTime
-toCalendarTime ct       =  ...          -- Implementation-dependent
+toCalendarTime (ClockTime s p) =
+                           let t = fromInteger s in
+                           date_offset t >>= \off ->
+                           date_zone_name t >>= \name ->
+                           date_is_dst t >>= \dst ->
+                           return (calendar s p off (primUnpackStr name) dst)
 
 toUTCTime               :: ClockTime    -> CalendarTime
-toUTCTime ct            =  ...          -- Implementation-dependent
+toUTCTime (ClockTime s p) = calendar s p 0 "UTC" False
 
 toClockTime             :: CalendarTime -> ClockTime
-toClockTime cal         =  ...          -- Implementation-dependent
+toClockTime (CalendarTime year mon day hour min sec psec _ _ _ tz _) =
+                           let (carry, p) = psec `divMod` 1000000000000
+                           in  ClockTime (daysFrom (toInteger year) (fromEnum mon + 1) day * 86400
+                                          + toInteger (3600 * hour + 60 * min + sec - tz) + carry)
+                                         p
+
+-- The time `s` seconds and `p` picoseconds after the epoch, `off` seconds
+-- ahead of UTC, in the zone `name`, in summer time or not; by the
+-- Gregorian calendar, before 1582 too
+calendar                :: Integer -> Integer -> Int -> String -> Bool -> CalendarTime
+calendar s p off name dst =
+                           let local = s + toInteger off
+                               days = local `div` 86400
+                               t = fromInteger (local `mod` 86400)
+                               (y, m, d) = dateOf days
+                           in  CalendarTime { ctYear = fromInteger y, ctMonth = toEnum (m - 1), ctDay = d,
+                                              ctHour = t `div` 3600, ctMin = t `mod` 3600 `div` 60,
+                                              ctSec = t `mod` 60, ctPicosec = p,
+                                              ctWDay = toEnum (fromInteger ((days + 4) `mod` 7)),
+                                              ctYDay = fromInteger (days - daysFrom y 1 1),
+                                              ctTZName = name, ctTZ = off, ctIsDST = dst }
+
+-- the days from 1970-01-01 to a year, a month (1 to 12) and a day, and the
+-- date of a day (H. Hinnant's algorithms)
+daysFrom                :: Integer -> Int -> Int -> Integer
+daysFrom y m d          =  let y' = if m <= 2 then y - 1 else y
+                               era = y' `div` 400
+                               yoe = y' - era * 400
+                               mp = toInteger ((m + 9) `mod` 12)
+                               doy = (153 * mp + 2) `div` 5 + toInteger d - 1
+                               doe = yoe * 365 + yoe `div` 4 - yoe `div` 100 + doy
+                           in  era * 146097 + doe - 719468
+
+dateOf                  :: Integer -> (Integer, Int, Int)
+dateOf z                =  let z' = z + 719468
+                               era = z' `div` 146097
+                               doe = z' - era * 146097
+                               yoe = (doe - doe `div` 1460 + doe `div` 36524 - doe `div` 146096) `div` 365
+                               doy = doe - (365 * yoe + yoe `div` 4 - yoe `div` 100)
+                               mp = (5 * doy + 2) `div` 153
+                               d = fromInteger (doy - (153 * mp + 2) `div` 5 + 1)
+                               m = fromInteger (if mp < 10 then mp + 3 else mp - 9)
+                           in  (yoe + era * 400 + (if m <= 2 then 1 else 0), m, d)
 
 calendarTimeToString    :: CalendarTime -> String
 calendarTimeToString    =  formatCalendarTime defaultTimeLocale "%c"
@@ -109,7 +168,7 @@ formatCalendarTime l fmt ct@(CalendarTime year mon day hour min sec sdec
         decode 'T' = doFmt "%H:%M:%S"
         decode 't' = "\t"
         decode 'S' = show2 sec
-        decode 's' = ...                -- Implementation-dependent
+        decode 's' = case toClockTime ct of ClockTime s _ -> show s   -- seconds since the epoch (rhc's)
         decode 'U' = show2 ((yday + 7 - fromEnum wday) `div` 7)
         decode 'u' = show (let n = fromEnum wday in 
                            if n == 0 then 7 else n)
