@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 86 requirements between the 42 files become 51 arrows.
+library and not a wall of lines: the 102 requirements between the 48 files become 59 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(42)"]
+  a0["Languages<br>(48)"]
 ```
 
 ## Languages
@@ -58,20 +58,26 @@ flowchart TD
   n25["HsFixity"]
   n26(["HS_RENAME"])
   n27["HsRename"]
-  n28(["CORE"])
-  n29["Core"]
-  n30(["CORE_TEXT"])
-  n31["CoreText"]
-  n32(["CORE_PRIM"])
-  n33["CorePrim"]
-  n34(["CORE_LINT"])
-  n35["CoreLint"]
-  n36(["CORE_INTERP"])
-  n37["CoreInterp"]
-  n38(["CORE_GEN"])
-  n39["CoreGen"]
-  n40(["CORE_TO_MID"])
-  n41["CoreToMid"]
+  n28(["HS_LINT"])
+  n29["HsLint"]
+  n30(["CORE"])
+  n31["Core"]
+  n32(["CORE_TEXT"])
+  n33["CoreText"]
+  n34(["CORE_PRIM_FAMILY"])
+  n35["CorePrimFamily"]
+  n36(["CORE_PRIM"])
+  n37["CorePrim"]
+  n38(["CORE_RUNTIME"])
+  n39["CoreRuntime"]
+  n40(["CORE_LINT"])
+  n41["CoreLint"]
+  n42(["CORE_INTERP"])
+  n43["CoreInterp"]
+  n44(["CORE_GEN"])
+  n45["CoreGen"]
+  n46(["CORE_TO_MID"])
+  n47["CoreToMid"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -105,24 +111,32 @@ flowchart TD
   n25 --> n24
   n26 --> n23
   n27 --> n26
+  n28 --> n13
   n29 --> n28
-  n30 --> n29
+  n29 --> n23
   n31 --> n30
-  n32 --> n29
+  n32 --> n31
   n33 --> n32
-  n33 --> n31
-  n34 --> n29
   n35 --> n34
-  n35 --> n33
-  n36 --> n29
+  n36 --> n31
+  n36 --> n35
   n37 --> n36
   n37 --> n33
-  n38 --> n29
+  n38 --> n31
   n39 --> n38
-  n39 --> n31
-  n40 --> n29
+  n39 --> n33
+  n40 --> n31
   n41 --> n40
-  n41 --> n33
+  n41 --> n37
+  n42 --> n31
+  n43 --> n42
+  n43 --> n37
+  n44 --> n31
+  n45 --> n44
+  n45 --> n33
+  n46 --> n31
+  n47 --> n46
+  n47 --> n37
 ```
 
 ---

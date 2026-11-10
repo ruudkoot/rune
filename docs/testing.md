@@ -638,6 +638,41 @@ entity; a cycle of three signed modules; a dotted module name. And
 fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
 
+**HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
+the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
+the independent check of rhc's types, as AstLint is Rune's. Its first part
+is a second inference: a transliteration of Typing Haskell in Haskell in the
+form its 11.6.3 calls conformant, with kinds and dependency groups recomputed
+and D32's readings of the monomorphism restriction and defaulting, which
+shares nothing with the checker but the renamer. rhc runs it through
+`Pass.checkAt` at level 2, after names (`--lint=2`, and `RUNE_LINT=2`, which
+`bin/rune-test` sets), so a program whose names resolve and which HsLint
+refuses fails any compile of it, `lint after hslint: FILE:LINE:COL: WHY`;
+`bin/rhc --dump-hslint FILE.hs` prints what it infers, each binding's type,
+the kinds, the derived instances' contexts and the defaults it chose, or
+`REFUSED` and why. `tests/runner/hslint.sml`'s jobs `hs/hslint/*` hold it to
+what it must find: `dump/NAME` each fixture of `tests/hs/hslint` against its
+expected dump, reviewed line by line (under `--cycle-default=scc` and with
+the library's unsigned bindings, `--dump-hslint=library`, where it has those
+files); `accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
+and `tests/hs/lang` inferred, whatever its rows' status, since the second
+inference waits on no stage of the compile; and `errors/K-of-4`, every
+program of `tests/hs/errors` whose row is of the classes static, prelude or
+library refused, by HsLint or before it. A directory's programs are judged
+in four jobs, each every fourth program and a line FAIL for each it fails,
+since a job of `bin/rune-test` costs several times what rhc does on one
+program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. A program on
+which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
+why, and its job holds the disagreement to still being there, so that a fix
+on either side is seen. HsLint also holds the inference to a record's
+claims of it, in the dump's form (`--hslint-claims=FILE`), each difference
+refused by the rule it breaks, `[rule1] ...` (`bin/rhc --hslint-rules`
+names them); the checker's evidence records are to be its claims (M13).
+`faults` holds each rule to refusing its fault, as `astlintFaults` holds
+AstLint's: `tests/hs/hslint/faults.hs`, held to its own expected dump, is
+accepted, and with `RHC_HSLINT_FAULT=RULE`, which reads the first claim
+RULE checks corrupted, refused with `[RULE]`.
+
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,
 with the Report's code as printed in `pristine/`; D36, D37, D38).
@@ -693,6 +728,21 @@ relations, on an even sample of 30 (`hs/meta/names/*`): as many scope errors
 in the program's own modules, and Main's exports, fixities and instances the
 same (a split's moved to `Lib`). Renaming bound variables mechanically waits
 for a dump of rhc's binding sites; the `rename` pairs are by hand.
+
+**rhc's sharing budgets** (`tests/runner/hsperf.sml`, `hs/perf/NAME`). A
+program of `tests/hs/perf` that costs far more when what the Report leaves
+unsaid is not shared (a section's operand, a file read on demand, an array's
+components) has `NAME.budget`, rhc's policy: lines `a:`, `b:` and `ratio:`.
+Compiled by rhc and run twice under `bin/runevm --count`, on the line a and
+the line b as its standard input, the first's instructions are at most the
+ratio times the second's: a ratio separates linear from quadratic and holds
+on any machine. Held while the row the name gives is `Planned`.
+
+**Renaming, by rhc's names.** `bin/rhc --dump-binders FILE` prints each local
+name of the program's own modules, a line for each binding site (`BIND`) and
+use (`USE`): its renamed name and its bytes. `hs/meta/rename` renames each to
+`x'k` where every occurrence's span is the name itself; a name whose
+binding's span covers more, as a function binding's head does, is left.
 
 **rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
 `hs/interp-vm/NAME`). Each run program of `tests/hs/lang` through rhc to
