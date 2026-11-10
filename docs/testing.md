@@ -692,7 +692,8 @@ program of `tests/hs/errors` whose row is of the classes static, prelude or
 library refused, by HsLint or before it. A directory's programs are judged
 in four jobs, each every fourth program and a line FAIL for each it fails,
 since a job of `bin/rune-test` costs several times what rhc does on one
-program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. A program on
+program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. The first of
+the four is in `check`, the other three `nightly` (D56; the lead's ruling 45). A program on
 which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
 why, and its job holds the disagreement to still being there, so that a fix
 on either side is seen. HsLint also holds the inference to a record's
