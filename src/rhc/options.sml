@@ -19,10 +19,10 @@ struct
      version : bool}
 
   val usage =
-    "usage: rhc [OPTION...] --read-core FILE...\n\
+    "usage: rhc [OPTION...] --read-core FILE... [-- ARG...]\n\
     \       rhc [--parse-only | --print | --print-layout | --print-exact | --dump-tokens\n\
     \            | --dump-ast [--no-spans]] FILE.hs\n\
-    \       rhc [--typecheck-only | --desugar-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
+    \       rhc [--typecheck-only | --desugar-only] [NAME OPTION...] FILE.hs [-o OUT | -- ARG...]\n\
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
     \       rhc --dump-types | --dump-evidence | --dump-derived [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
@@ -76,6 +76,8 @@ struct
     \  --depth=N             the deepest the interpreter's stack may go, a bottom past it\n\
     \                        (default: 10000000)\n\
     \  -o FILE               compile to bytecode, through Mid, in place of running\n\
+    \  -- ARG...             the arguments of the program, where rhc runs it on Core's\n\
+    \                        interpreter (getArgs), as runevm takes them after its file\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1)\n\
     \  --target=T            the bytecode: registers (default) or stack\n\
     \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
