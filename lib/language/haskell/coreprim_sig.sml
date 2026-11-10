@@ -31,8 +31,9 @@ sig
        `double_atan2`; the conversions to `Int` `double_truncate`,
        `double_round` (to even at a half), `double_ceiling`, `double_floor`;
        the classes `double_is_nan`, `double_is_infinite`,
-       `double_is_negative_zero`, `double_is_denormalized`; and
-       `double_decode` and `double_encode`, a mantissa of 53 bits;
+       `double_is_negative_zero`, `double_is_denormalized`;
+       `double_decode` and `double_encode`, a mantissa of 53 bits; and
+       `double_pow`;
      - on `Float`, a `Double` that binary32 represents, every result of
        arithmetic rounded to binary32 by Mid's `real_to_single` (D23):
        `float_add`, `float_sub`, `float_mul`, `float_div`, `float_neg`,
@@ -41,18 +42,32 @@ sig
        from the elementary ones on, `float_sqrt` to `float_encode`, a
        mantissa of 24 bits;
      - on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`,
-       `str_extract`;
+       `str_extract`, `str_eq`;
+     - on `Arr a`, an array of cells each holding a value, unforced, as
+       `Ref a` does one: `arr_new`, `arr_set`, `arr_read`, `arr_get`,
+       `arr_size`;
      - I/O: `print_str`, `print_err`, `exit`; the handles of files, 0 to 2
        standard input, output and error, `h_open`, `h_close`, `h_read`,
        `h_write`, `h_flush`, `h_error`; `interleave`, which defers an
        action until its value is forced (D25's one interleaving
        primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;
-     - exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_pattern`,
-       `exn_kind`, `exn_name`, `exn_message` and `catch`. *)
+     - exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_io_full`,
+       `exn_io_code`, `exn_io_file`, `exn_io_handle`, `exn_pattern`,
+       `exn_kind`, `exn_name`, `exn_message` and `catch`;
+     - then each family's, in the order of `families`. *)
   val prims : prim list
 
   (* `find name` is the primitive called `name`, if there is one. *)
   val find : string -> prim option
+
+  (* `families` is the families of primitives (CORE_PRIM_FAMILY), each of a
+     file of its own, whose primitives `prims` lists after its own: the IO
+     library's handles and the system's errors (CorePrimIo). *)
+  val families : CorePrimFamily.family list
+
+  (* `familyOf name` is the family of the primitive called `name` and the
+     primitive, where a family has it. *)
+  val familyOf : string -> (CorePrimFamily.family * CorePrimFamily.prim) option
 
   (* `exnKinds` is the kinds of exception, by the number `exn_kind` gives.
 

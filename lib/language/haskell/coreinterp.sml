@@ -8,6 +8,8 @@ structure CoreInterp : CORE_INTERP =
 struct
   open Core
 
+  structure F = CorePrimFamily
+
   datatype outcome = Exit of int | Raised of string * string | TooDeep | OutOfSteps
 
   exception Stuck of string
@@ -22,7 +24,8 @@ struct
     | VStr of string
     | VWorld
     | VUTuple of cell vector
-    | VExn of int * string
+    | VExn of int * string * (int * string * int)   (* its kind, its message, an IOError's code, file and handle *)
+    | VArr of cell array
     | VRef of cell ref
   and state = Value of value | Thunk of exp * cell CoreMap.map | Hole of exp * cell CoreMap.map
   withtype cell = state ref
@@ -50,7 +53,7 @@ struct
     let fun go (_, []) = stuck ("no kind of exception " ^ name)
           | go (i, k :: rest) = if k = name then i else go (i + 1, rest)
     in go (0, CorePrim.exnKinds) end
-  fun exn (name, msg) = VExn (kindNumber name, msg)
+  fun exn (name, msg) = VExn (kindNumber name, msg, (0, "", ~1))
   val nonTermination = exn ("NonTermination", "<<loop>>")
 
   (* ---- Primitives ---- *)
@@ -67,6 +70,7 @@ struct
   fun str c = case value c of VStr s => s | _ => stuck "a primitive is given what is not a Str"
   fun exnOf c = case value c of v as VExn _ => v | _ => stuck "a primitive is given what is not an Exn"
   fun refOf c = case value c of VRef r => r | _ => stuck "a primitive is given what is not a Ref"
+  fun arrOf c = case value c of VArr a => a | _ => stuck "a primitive is given what is not an Arr"
   fun cell v : cell = ref (Value v)
   val world = VWorld
 
@@ -113,22 +117,13 @@ struct
       let val {man, exp} = Real.toManExp r
       in (toInt Real.trunc (Real.fromManExp {man = man, exp = bits}), exp - bits) end
 
-  (* ---- Handles ---- *)
-
-  (* the files a program opened, by handle, from 3; 0 to 2 are standard
-     input, output and error. What standard input has given and h_read has
-     not yet, where it gave more than was asked for, waits in `pending`. *)
-  datatype file = Reading of TextIO.instream | Writing of TextIO.outstream | Closed
-  val files : (int * file) list ref = ref []
-  fun fileOf h = Option.map #2 (List.find (fn (k, _) => k = h) (!files))
-  val nextFile = ref 3
-  val pending = ref ""
-  val lastError = ref ""
-  fun ioText e =
-    case e of
-      IO.Io {cause = OS.SysErr (msg, _), ...} => msg
-    | IO.Io {cause, ...} => exnMessage cause
-    | _ => exnMessage e
+  (* C's pow, as Mid's real_pow: 1 for a base of 1 whatever the exponent,
+     and for a base of -1 and an infinite exponent, where the Basis's
+     Math.pow gives NaN *)
+  fun pow (x, y) =
+    if Real.== (x, 1.0) then 1.0
+    else if Real.== (Real.abs x, 1.0) andalso not (Real.isNan y) andalso not (Real.isFinite y) then 1.0
+    else Math.pow (x, y)
 
   (* the arithmetic of a type, by the name after its prefix *)
   fun arith (name, get, make, ops) args =
@@ -149,6 +144,33 @@ struct
                          | _ => stuck ("no comparison " ^ rel)))
         end
     | _ => stuck "a comparison of two arguments is given others"
+
+  (* a primitive of a family (CorePrimFamily): its arguments, the state
+     token left out, given to its run, and its result given as its type
+     says, with the token where it is an action *)
+  fun family (p, run, args) =
+    let
+      val ty = case CorePrim.find p of SOME {ty, ...} => ty | NONE => stuck ("no primitive " ^ p)
+      fun params (TFun (q, r)) = let val (qs, res) = params r in (q :: qs, res) end
+        | params t = ([], t)
+      fun isWorld t = case stripEval t of TCon "World" => true | _ => false
+      val (ps, res) = params ty
+      fun arg (c, q) =
+        if isWorld q then NONE
+        else SOME (case value c of
+                     VInt i => F.Int i
+                   | VStr s => F.Str s
+                   | VCon (t, _) => F.Bool (t = 1)
+                   | _ => stuck (p ^ " is given what is no Int, Str or Bool"))
+      fun back v = case v of F.Int i => VInt i | F.Str s => VStr s | F.Bool b => bool b | F.Unit => world
+      val given = List.mapPartial arg (ListPair.zip (args, ps))
+    in
+      (case stripEval res of
+         TCon "World" => (ignore (run given); Return world)
+       | TUTuple [_, _] => Return (VUTuple (Vector.fromList [cell world, cell (back (run given))]))
+       | _ => Return (back (run given)))
+      handle F.IOError (code, text, file, h) => Throw (VExn (kindNumber "IOError", text, (code, file, h)))
+    end
 
   (* p's result on its argument cells, and the frames it pushes *)
   fun prim (p, args, out, err) : control * frame list =
@@ -191,11 +213,22 @@ struct
         | ("raise_io", [e, _]) => Throw (exnOf e)
         | ("exn_error", _) => Return (exn ("ErrorCall", str (one args)))
         | ("exn_io", _) => Return (exn ("IOError", str (one args)))
+        | ("exn_io_full", [code, text, file, h]) => Return (VExn (kindNumber "IOError", str text, (int code, str file, int h)))
+        | ("exn_io_code", _) => (case exnOf (one args) of VExn (1, _, (c, _, _)) => Return (VInt c) | _ => Return (VInt 0))
+        | ("exn_io_file", _) => (case exnOf (one args) of VExn (1, _, (_, f, _)) => Return (VStr f) | _ => Return (VStr ""))
+        | ("exn_io_handle", _) => (case exnOf (one args) of VExn (1, _, (_, _, h)) => Return (VInt h) | _ => Return (VInt ~1))
+        | ("str_eq", [a, b]) => Return (bool (str a = str b))
+        | ("double_pow", [a, b]) => Return (VDouble (pow (double a, double b)))
+        | ("arr_new", [n, x, _]) => Return (VUTuple (Vector.fromList [cell world, cell (VArr (Array.array (int n, x)))]))
+        | ("arr_set", [a, i, x, _]) => (Array.update (arrOf a, int i, x); Return world)
+        | ("arr_read", [a, i, _]) => Return (VUTuple (Vector.fromList [cell world, Array.sub (arrOf a, int i)]))
+        | ("arr_size", [a]) => Return (VInt (Array.length (arrOf a)))
+
         | ("exn_pattern", _) => Return (exn ("PatternMatchFail", str (one args)))
-        | ("exn_kind", _) => (case exnOf (one args) of VExn (k, _) => Return (VInt k) | _ => stuck "exn_kind")
-        | ("exn_name", _) => (case exnOf (one args) of VExn (k, _) => Return (VStr (List.nth (CorePrim.exnKinds, k)))
+        | ("exn_kind", _) => (case exnOf (one args) of VExn (k, _, _) => Return (VInt k) | _ => stuck "exn_kind")
+        | ("exn_name", _) => (case exnOf (one args) of VExn (k, _, _) => Return (VStr (List.nth (CorePrim.exnKinds, k)))
                                                      | _ => stuck "exn_name")
-        | ("exn_message", _) => (case exnOf (one args) of VExn (_, m) => Return (VStr m) | _ => stuck "exn_message")
+        | ("exn_message", _) => (case exnOf (one args) of VExn (_, m, _) => Return (VStr m) | _ => stuck "exn_message")
         | ("str_extract", [s, i, n]) => Return (VStr (String.substring (str s, int i, int n)))
         | ("float_neg", _) => Return (VDouble (Real.~ (double (one args))))
         | ("float_from_int", _) => Return (VDouble (single (Real.fromInt (int (one args)))))
@@ -203,59 +236,22 @@ struct
         | ("float_to_double", _) => Return (VDouble (double (one args)))
         | ("float_to_str", _) => Return (VStr (realText (double (one args))))
         | ("h_open", [path, mode, _]) =>
-            (let
-              val f = case int mode of
-                        0 => Reading (TextIO.openIn (str path))
-                      | 1 => Writing (TextIO.openOut (str path))
-                      | _ => Writing (TextIO.openAppend (str path))
-              val h = !nextFile
-            in
-              nextFile := h + 1; files := (h, f) :: !files;
-              Return (VUTuple (Vector.fromList [cell world, cell (VInt h)]))
-            end
-            handle e as IO.Io _ => (lastError := ioText e; Return (VUTuple (Vector.fromList [cell world, cell (VInt ~1)]))))
-        | ("h_close", [h, _]) =>
-            ((case fileOf (int h) of
-                SOME (Reading i) => TextIO.closeIn i
-              | SOME (Writing o') => TextIO.closeOut o'
-              | _ => ());
-             files := List.map (fn (k, f) => if k = int h then (k, Closed) else (k, f)) (!files);
-             Return world)
+            Return (VUTuple (Vector.fromList [cell world, cell (VInt (CoreFiles.openFile (str path, int mode)))]))
+        | ("h_close", [h, _]) => (CoreFiles.close (int h); Return world)
         | ("h_read", [h, n, _]) =>
-            (let
-              val n = int n
-              fun give s = Return (VUTuple (Vector.fromList [cell world, cell (VStr s)]))
-              fun upTo s = if size s <= n then s else (pending := String.extract (s, n, NONE); String.substring (s, 0, n))
-            in
-              if n < 0 then raise Size
-              else if n = 0 then give ""
-              else
-                case int h of
-                  0 => if !pending <> "" then give (upTo (!pending before pending := "")) else give (upTo (TextIO.input TextIO.stdIn))
-                | k => (case fileOf k of
-                          SOME (Reading i) => give (TextIO.inputN (i, n))
-                        | _ => give "")
-            end
-            handle IO.Io _ => Throw (exn ("IOError", "read failed")))
+            (Return (VUTuple (Vector.fromList [cell world, cell (VStr (CoreFiles.read (int h, int n)))]))
+             handle OS.SysErr _ => Throw (VExn (kindNumber "IOError", "read failed", (8, "", int h))))
         | ("h_write", [h, s, _]) =>
-            (let
+            let
               fun gave ok = Return (VUTuple (Vector.fromList [cell world, cell (bool ok)]))
             in
               case int h of
                 1 => (out (str s); gave true)
               | 2 => (err (str s); gave true)
-              | k => (case fileOf k of
-                        SOME (Writing o') => (TextIO.output (o', str s); gave true)
-                      | _ => (lastError := "Bad file descriptor"; gave false))
+              | k => gave (CoreFiles.write (k, str s))
             end
-            handle e as IO.Io _ => (lastError := ioText e; Return (VUTuple (Vector.fromList [cell world, cell (bool false)]))))
-        | ("h_flush", [h, _]) =>
-            ((case (int h, fileOf (int h)) of
-                (1, _) => TextIO.flushOut TextIO.stdOut
-              | (_, SOME (Writing o')) => TextIO.flushOut o'
-              | _ => ());
-             Return world)
-        | ("h_error", [_]) => Return (VUTuple (Vector.fromList [cell world, cell (VStr (!lastError))]))
+        | ("h_flush", [h, _]) => ((if int h = 1 then TextIO.flushOut TextIO.stdOut else ()); Return world)
+        | ("h_error", [_]) => Return (VUTuple (Vector.fromList [cell world, cell (VStr (!CoreFiles.lastError))]))
         | ("interleave", [action, _]) =>
             let
               val env = CoreMap.insert (CoreMap.insert (CoreMap.empty, "action", action), "w", cell world)
@@ -300,10 +296,14 @@ struct
                        | _ => stuck (p ^ " takes two arguments"))
                   | _ => arith (!rest, double, VDouble, if String.isPrefix "float_" p then floatOps else doubleOps) args
               end
-            else stuck ("no primitive " ^ p ^ " of " ^ Int.toString (length args) ^ " arguments")
+            else
+              case CorePrim.familyOf p of
+                SOME (_, {run, ...}) => family (p, run, args)
+              | NONE => stuck ("no primitive " ^ p ^ " of " ^ Int.toString (length args) ^ " arguments")
     in
       case (p, args) of
         ("catch", [action, handler, w]) => (Force action, [Apply [w], Catch (handler, w)])
+      | ("arr_get", [a, i]) => (Force (Array.sub (arrOf a, int i)), [])
       | _ => only (result ())
     end
     handle Overflow => (Throw (exn ("Overflow", "arithmetic overflow")), [])
@@ -437,7 +437,7 @@ struct
                  | Catch _ :: rest => loop (Return v, rest, depth - 1, steps))
             | Throw e =>
                 (case stack of
-                   [] => {outcome = case e of VExn (k, m) => Raised (List.nth (CorePrim.exnKinds, k), m)
+                   [] => {outcome = case e of VExn (k, m, _) => Raised (List.nth (CorePrim.exnKinds, k), m)
                                             | _ => Raised ("?", ""),
                           steps = steps}
                  | Update (c, e', env) :: rest => (c := Thunk (e', env); loop (Throw e, rest, depth - 1, steps))
@@ -445,7 +445,7 @@ struct
                  | _ :: rest => loop (Throw e, rest, depth - 1, steps))
           end
     in
-      files := []; nextFile := 3; pending := ""; lastError := "";
+      CoreFiles.reset ();
       loop (Force main, [Apply [cell world]], 1, 0)
     end
 end
