@@ -576,6 +576,51 @@ struct
      textP ("a built-in type given an argument it does not take", "(val g1 : int int (return 1))",
             "the type int takes 0 arguments, not 1"))
 
+  (* ---- Mid's Case (haskell98 M29, D8): a test of a datatype's value's
+     tag, through Mid's text and its codec, and refused where it breaks a
+     rule, each by its message *)
+  fun midCases () =
+    let
+      val intList = Ty.list Ty.int
+      val nilTag = Types.nilTag ()
+      val consTag = Types.consTag ()
+      (* fn (x : int list) : int, by x's tag *)
+      fun byTag (arms, d) : M.fundef =
+        {name = 90, label = NONE, tyvars = [], params = [(91, intList)], result = Ty.int,
+         body = M.Case (M.Var (91, []), arms, d)}
+      val zero = M.Return (M.Atom (M.Const (Literal.CInt (IntInf.fromInt 0), Ty.int)))
+      val oneRet = M.Return (M.Atom one)
+      fun fnP f = [M.Funs [f]]
+      fun codec (f : M.fundef) : M.fundef =
+        let
+          val w = Pickle.writer ()
+          fun n x = Pickle.nat (w, x)
+          val () = MidCodec.write (w, {stamp = n, tycon = n, tvar = n, file = fn _ => (), position = fn _ => ()}) f
+          val r = Pickle.reader (Pickle.contents w)
+          fun rn () = Pickle.rnat r
+        in MidCodec.read (r, {stamp = rn, tycon = rn, tvar = rn, file = fn () => "", local' = fn i => 1000 + i}) end
+      val both = byTag ([(nilTag, zero), (consTag, oneRet)], NONE)
+      val withDefault = byTag ([(consTag, oneRet)], SOME zero)
+    in
+      midP ("a case of every tag, no default", fnP both, "");
+      midP ("a case of one tag and a default", fnP withDefault, "");
+      checked ("cases: a case through Mid's text", fn () => MidText.roundTrip (fnP both @ [M.Funs [{name = 92, label = NONE, tyvars = [], params = [(93, intList)], result = Ty.int, body = M.Case (M.Var (93, []), [(consTag, oneRet)], SOME zero)}]]), "");
+      report ("cases: a case through the codec", MidText.show [M.Funs [codec both]] = MidText.show [M.Funs [both]],
+              MidText.show [M.Funs [codec both]]);
+      report ("cases: a case and its default through the codec",
+              MidText.show [M.Funs [codec withDefault]] = MidText.show [M.Funs [withDefault]], MidText.show [M.Funs [codec withDefault]]);
+      midP ("a case of what is no datatype",
+            [M.Funs [{name = 90, label = NONE, tyvars = [], params = [(91, Ty.int)], result = Ty.int,
+                      body = M.Case (M.Var (91, []), [(0, zero)], SOME oneRet)}]], "a case of what has type int");
+      midP ("a case with an arm of a tag its datatype has not", fnP (byTag ([(7, zero)], SOME oneRet)), "an arm of tag 7");
+      midP ("a case with two arms of a tag", fnP (byTag ([(consTag, zero), (consTag, oneRet)], SOME zero)), "two arms of tag");
+      midP ("a case with no default and no arm of a tag", fnP (byTag ([(consTag, oneRet)], NONE)),
+            "with no default has no arm of every tag");
+      midP ("a case whose arm has another type than wanted",
+            fnP (byTag ([(consTag, M.Return (M.Atom (M.Const (Literal.CString "x", Ty.string))))], SOME zero)),
+            "has type string where int is wanted")
+    end
+
   (* ---- the levels (M3): a check runs from its level up; one that is
      always on says so, and how to turn it off; one at a boundary, found
      below level 2, how to find the pass *)
@@ -734,6 +779,7 @@ struct
      midRules ();
      midForms ();
      textRules ();
+     midCases ();
      lowRules ();
      codes ();
      bases ();
