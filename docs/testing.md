@@ -638,6 +638,55 @@ entity; a cycle of three signed modules; a dotted module name. And
 fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
 
+**HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
+the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
+the independent check of rhc's types, as AstLint is Rune's. Its first part
+is a second inference: a transliteration of Typing Haskell in Haskell in the
+form its 11.6.3 calls conformant, with kinds and dependency groups recomputed
+and D32's readings of the monomorphism restriction and defaulting, which
+shares nothing with the checker but the renamer. rhc runs it through
+`Pass.checkAt` at level 2, after names (`--lint=2`, and `RUNE_LINT=2`, which
+`bin/rune-test` sets), so a program whose names resolve and which HsLint
+refuses fails any compile of it, `lint after hslint: FILE:LINE:COL: WHY`;
+`bin/rhc --dump-hslint FILE.hs` prints what it infers, each binding's type,
+the kinds, the derived instances' contexts and the defaults it chose, or
+`REFUSED` and why. `tests/runner/hslint.sml`'s jobs `hs/hslint/*` hold it to
+what it must find: `dump/NAME` each fixture of `tests/hs/hslint` against its
+expected dump, reviewed line by line (under `--cycle-default=scc` and with
+the library's unsigned bindings, `--dump-hslint=library`, where it has those
+files); `accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
+and `tests/hs/lang` inferred, whatever its rows' status, since the second
+inference waits on no stage of the compile; and `errors/K-of-4`, every
+program of `tests/hs/errors` whose row is of the classes static, prelude or
+library refused, by HsLint or before it. A directory's programs are judged
+in four jobs, each every fourth program and a line FAIL for each it fails,
+since a job of `bin/rune-test` costs several times what rhc does on one
+program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. A program on
+which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
+why, and its job holds the disagreement to still being there, so that a fix
+on either side is seen. HsLint also holds the inference to a record's
+claims of it, in the dump's form (`--hslint-claims=FILE`), each difference
+refused by the rule it breaks, `[rule1] ...` (`bin/rhc --hslint-rules`
+names them); the checker's evidence records are to be its claims (M13).
+`faults` holds each rule to refusing its fault, as `astlintFaults` holds
+AstLint's: `tests/hs/hslint/faults.hs`, held to its own expected dump, is
+accepted, and with `RHC_HSLINT_FAULT=RULE`, which reads the first claim
+RULE checks corrupted, refused with `[RULE]`.
+
+**rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
+Report's 20 modules in its own layout, its errata and rhc's overlay applied,
+with the Report's code as printed in `pristine/`; D36, D37, D38).
+`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report
+while no compiler runs it: `overlay`, each module's tokens against
+`pristine/`'s, a line at a time, white space and comments dropped, every
+line where they differ an entry of `overlay.tsv` marked applied, and every
+file the Report has no text of an entry's `new:`; `pristine`, the printed
+code byte for byte as `pristine/MANIFEST.tsv` records it; and `report`,
+`bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
+Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
+instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
+each with its entry.
+
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
 with rhc in Rune's place: a mutant is exact edits of a file of `rhc.plan`,
@@ -667,8 +716,49 @@ again by layout (`hs/meta/layout`), and the program with `import Char ()`
 added (`hs/meta/import`, 5.3.1); and the pairs written by hand in
 `tests/hs/meta`, `NAME.hs` and `NAME.pair.hs`, the relation first in NAME:
 `rename` (bound variables renamed, 3.3, 3.12) and `reorder` (declarations
-reordered, 4.5.1 and the top level). A pair is held while its program's
-rows, or the rows its relation cites, are `Planned`.
+reordered, 4.5.1 and the top level). Two more are made from each program:
+`hs/meta/reorder`, its top-level blocks (runs of lines between blank ones) in
+the reverse order, and `hs/meta/split`, the program split into a module
+`Lib` holding every block but `main`'s and a `Main` that imports it (5, the
+multi-module form of a joined program; none is made where a `default`
+declaration or a name qualified by `Main` would change the program). A pair
+is held while its program's rows, or the rows its relation cites, are
+`Planned`; what runs today is rhc's names on both programs of the two new
+relations, on an even sample of 30 (`hs/meta/names/*`): as many scope errors
+in the program's own modules, and Main's exports, fixities and instances the
+same (a split's moved to `Lib`). Renaming bound variables mechanically waits
+for a dump of rhc's binding sites; the `rename` pairs are by hand.
+
+**rhc's sharing budgets** (`tests/runner/hsperf.sml`, `hs/perf/NAME`). A
+program of `tests/hs/perf` that costs far more when what the Report leaves
+unsaid is not shared (a section's operand, a file read on demand, an array's
+components) has `NAME.budget`, rhc's policy: lines `a:`, `b:` and `ratio:`.
+Compiled by rhc and run twice under `bin/runevm --count`, on the line a and
+the line b as its standard input, the first's instructions are at most the
+ratio times the second's: a ratio separates linear from quadratic and holds
+on any machine. Held while the row the name gives is `Planned`.
+
+**Renaming, by rhc's names.** `bin/rhc --dump-binders FILE` prints each local
+name of the program's own modules, a line for each binding site (`BIND`) and
+use (`USE`): its renamed name and its bytes. `hs/meta/rename` renames each to
+`x'k` where every occurrence's span is the name itself; a name whose
+binding's span covers more, as a function binding's head does, is left.
+
+**rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
+`hs/interp-vm/NAME`). Each run program of `tests/hs/lang` through rhc to
+Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
+Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
+`.stdin`: the VM prints what the interpreter printed and ends as it did, every
+bottom one bottom. A program the interpreter alone can run says so on a line
+`-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
+program's rows are `Planned`; M15's done-when and G1 rest on it.
+
+**rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
+FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
+path as its last argument, exits 0: delta debugging over the top-level
+blocks, the header kept, then over the lines, every candidate a whole file.
+It writes FILE.reduced. `hs/reduce/@self` reduces 64 lines to the one
+declaration that a predicate on rhc's parser and a marker wants.
 
 **Bottom probes** (D55; the roadmap's *Bottom probes*). Run programs of
 `tests/hs/lang` named `ROW_probeN`: a marker printed, then a term that
@@ -721,8 +811,12 @@ written in Core) has `prims-*.core`, Core's primitives on their edges
 (`Int` at 63 bits, `Integer` across the edges of IntInf's small range,
 `Double`, `Float` rounded to binary32), and
 `runtime-*.core`: strings unpacked lazily and at once (D24's A and B, which
-print the same), files, standard input read across the edge of a chunk, and
-the classes and mappings of `Char`. `lib/language/haskell/coreruntime`
+print the same), files, standard input read across the edge of a chunk, the
+classes and mappings of `Char`, and what the library's PreludeRuntime names
+beside the Report's (`runtime-library`: arrays, an IOError's details, the
+IO family's positions of files and errors of the system's). `end-*.core`
+hold the line an escaping IOError ends a program with to the library's Show
+IOError, a user's "user error (TEXT)". `lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
 `lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
 and the first and the last of each range and run of its data.

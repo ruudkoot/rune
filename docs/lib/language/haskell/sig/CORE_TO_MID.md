@@ -39,9 +39,12 @@ is a suspension in a global, a CAF. The state token is erased (D25): an
 action of Core, `World -> (utuple World T)`, is `unit -> T` in Mid, its
 order the order of its lets.
 
-What a later milestone gives is behind one function each: a type
-constructor applied by a variable and a forall inside a type (M28, Mid's
-`Ty` with application and forall), and `Integer` (M31).
+An `Integer` is Mid's [`IntInf.int`](../../../basis/sig/INTEGER.md#type-int), an immediate within 63 bits and a
+sign and a magnitude past them (M31, D20's D), each literal a global made
+once. A type variable applied and a forall inside a type are Mid's own
+(M28): a lazy field of a forall holds a suspension at every type, the
+forall outside it, and a newtype given fewer arguments than its
+parameters is a box, as one that reaches itself is.
 
 ## Interface
 
@@ -109,7 +112,8 @@ val program : {form : form, fault : fault option} * Core.program -> string
 `p`, which CoreLint passed, with the fault made where it is `SOME`.
 
 The text's `do` calls `main`, and prints what an exception no handler
-takes is, as Core's interpreter does, and ends with status 1.
+takes is, as Core's interpreter does, an IOError's text as the
+library's Show IOError gives it, and ends with status 1.
 
 **Raises** [`Unsupported`](#exn-unsupported) where `p` needs what Mid has not got.
 

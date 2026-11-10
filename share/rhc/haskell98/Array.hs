@@ -1,8 +1,8 @@
 -- Module Array, section 16.4 of the Haskell 98 Report.
--- The code of the online Revised Report of December 2002 with its published
--- errata applied: a modified version of the Report's code, which does not
--- define Haskell 98. LICENSE says what was changed; errata.tsv and
--- overlay.tsv list each change, and pristine/ holds the code as printed.
+-- The code of the online Revised Report of December 2002, with its published
+-- errata and rhc's overlay applied: a modified version of the Report's code,
+-- which does not define Haskell 98. LICENSE says what was changed; errata.tsv
+-- and overlay.tsv list each change, and pristine/ holds the code as printed.
 
 module  Array ( 
     module Ix,  -- export all of Ix 
@@ -11,28 +11,47 @@ module  Array (
 
 import Ix
 import List( (\\) )
+import PreludeRuntime (Arr, arr_new, arr_read, arr_get, arr_set, unsafe_perform_io)  -- (rhc's)
 
 infixl 9  !, //
 
-data (Ix a) => Array a b = MkArray (a,a) (a -> b) deriving ()
+-- An array is its bounds and its elements, each at its index's place, so
+-- that (!) is a read in constant time, as 16 expects ("rapid access to the
+-- components"): the meaning of each function is the Report's (overlay
+-- ov.array.representation).
+data (Ix a) => Array a b = MkArray (a,a) (Arr (Element b)) deriving ()
+
+-- an element: no association gave it, one did, or several did
+data Element b = Undefined | Defined b | Multiple
 
 array       :: (Ix a) => (a,a) -> [(a,b)] -> Array a b
 array b ivs =
-    if and [inRange b i | (i,_) <- ivs]
-        then MkArray b
-                     (\j -> case [v | (i,v) <- ivs, i == j] of
-                            [v]   -> v
-                            []    -> error "Array.!: \
-                                           \undefined array element"
-                            _     -> error "Array.!: \
-                                           \multiply defined array element")
-        else error "Array.array: out-of-range array association"
+    rangeSize b `seq`       -- strict in the bounds, as 16.1 says (ruling 35)
+    (if and [inRange b i | (i,_) <- ivs]
+        then MkArray b (place b ivs)
+        else error "Array.array: out-of-range array association")
+
+-- the elements of an array, put in place the first time one is read
+place       :: (Ix a) => (a,a) -> [(a,b)] -> Arr (Element b)
+place b ivs =  unsafe_perform_io (do
+                   elems <- arr_new (rangeSize b) Undefined
+                   mapM_ (put elems) ivs
+                   return elems)
+  where put elems (i,v) = do
+          let k = index b i
+          e <- arr_read elems k
+          arr_set elems k (case e of Undefined -> Defined v
+                                     _         -> Multiple)
 
 listArray             :: (Ix a) => (a,a) -> [b] -> Array a b
 listArray b vs        =  array b (zipWith (\ a b -> (a,b)) (range b) vs)
 
 (!)                   :: (Ix a) => Array a b -> a -> b
-(!) (MkArray _ f)     =  f
+(!) (MkArray b elems) i =
+                         case arr_get elems (index b i) of
+                           Defined v -> v
+                           Undefined -> error "Array.!: undefined array element"
+                           Multiple  -> error "Array.!: multiply defined array element"
 
 bounds                :: (Ix a) => Array a b -> (a,a)
 bounds (MkArray b _)  =  b
@@ -66,7 +85,7 @@ ixmap                 :: (Ix a, Ix b) => (a,a) -> (a -> b) -> Array b c
 ixmap b f a           = array b [(i, a ! f i) | i <- range b]
 
 instance  (Ix a)          => Functor (Array a) where
-    fmap fn (MkArray b f) =  MkArray b (fn . f) 
+    fmap fn a@(MkArray b _) = array b [(i, fn (a!i)) | i <- range b]
 
 instance  (Ix a, Eq b)  => Eq (Array a b)  where
     a == a' =  assocs a == assocs a'

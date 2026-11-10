@@ -28,8 +28,10 @@ sig
                   errors : (HsSource.span * string) list}
 
   (* `rename {id, scope, defOf} m` renames the module `m` of identity
-     `id`, whose scope is `scope`, where `defOf` gives the definition of
-     every entity of the program by `HsModules.key`. *)
+     `id`, whose scope is `scope`.
+
+     `defOf` gives the definition of every entity of the program by
+     `HsModules.key`. *)
   val rename : {id : string, scope : HsModules.scope, defOf : string -> HsModules.def option}
                -> HsAst.module -> renamed
 

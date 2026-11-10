@@ -1,13 +1,15 @@
 -- Module Ratio, section 12.1 of the Haskell 98 Report.
--- The code of the online Revised Report of December 2002 with its published
--- errata applied: a modified version of the Report's code, which does not
--- define Haskell 98. LICENSE says what was changed; errata.tsv and
--- overlay.tsv list each change, and pristine/ holds the code as printed.
+-- The code of the online Revised Report of December 2002, with its published
+-- errata and rhc's overlay applied: a modified version of the Report's code,
+-- which does not define Haskell 98. LICENSE says what was changed; errata.tsv
+-- and overlay.tsv list each change, and pristine/ holds the code as printed.
 
 -- Standard functions on rational numbers
 
 module  Ratio (
     Ratio, Rational, (%), numerator, denominator, approxRational ) where
+
+import PreludeEnum   -- numericEnumFrom... (rhc's; overlay ov.prelude.numericenum)
 
 infixl 7  %
 

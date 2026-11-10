@@ -125,10 +125,12 @@ struct
      [("stack", []), ("stackchecked", ["--checked"]), ("stackgcstress", ["--gc-stress", "3", "--gc-verify"])])
   fun hasE1Ways src = List.exists (fn l => l = "; ways: E1") (lines (read src))
 
-  fun vmOne (src, (regWays, stackWays)) =
+  fun vmOne (src, family, (regWays, stackWays)) =
     let
       val n = nameOf src
-      val outDir = run ^ "/hs-core/vm"
+      (* each family its own directory: the three ways and the forty-five of
+         one program run at once in a run, and share every name of a file *)
+      val outDir = run ^ "/hs-core/" ^ family
       val () = mkdirs outDir
       fun f ext = outDir ^ "/" ^ n ^ ext
       val expected = read (dir ^ "/" ^ n ^ ".expected")
@@ -403,8 +405,8 @@ struct
   fun command args =
     case args of
       ["hs-core-one", src] => SOME (fn () => one src)
-    | ["hs-core-vm", src] => SOME (fn () => vmOne (src, defaultWays))
-    | ["hs-core-vm45", src] => SOME (fn () => vmOne (src, e1Ways))
+    | ["hs-core-vm", src] => SOME (fn () => vmOne (src, "vm", defaultWays))
+    | ["hs-core-vm45", src] => SOME (fn () => vmOne (src, "vm45", e1Ways))
     | ["hs-core-residency", src] => SOME (fn () => residency src)
     | ["hs-core-budget", src] => SOME (fn () => budget src)
     | ["hs-core-rules"] => SOME rules

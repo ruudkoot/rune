@@ -304,8 +304,8 @@ val builtinTypes : (string * kind) list
 ```
 
 [`builtinTypes`](#val-builtintypes) is each type constructor built in with its kind: [`Int`](../../../basis/str/Int.md),
-`Integer`, [`Char`](../../../basis/str/Char.md), `Double`, `Float`, `Str`, `Exn`, [`Bool`](../../../basis/str/Bool.md), `World`
-and `Ref`.
+`Integer`, [`Char`](../../../basis/str/Char.md), `Double`, `Float`, `Str`, `Exn`, [`Bool`](../../../basis/str/Bool.md), `World`,
+`Ref` and `Arr`.
 
 ### <a name="val-builtindata"></a>`builtinData`
 

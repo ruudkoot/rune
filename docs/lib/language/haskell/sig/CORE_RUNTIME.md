@@ -1,0 +1,127 @@
+# signature CORE_RUNTIME
+
+[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; **CORE_RUNTIME**
+
+|  |  |
+| --- | --- |
+| Status | required |
+| Implementations | 1 |
+| Documentation | 4 of 4 entries documented |
+| Tests | not listed |
+| Source | [lib/language/haskell/coreruntime\_sig.sml](../../../../../lib/language/haskell/coreruntime_sig.sml) |
+
+## Synopsis
+
+```sml
+signature CORE_RUNTIME
+structure CoreRuntime :> CORE_RUNTIME
+```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| [`CoreRuntime`](../str/CoreRuntime.md) | rhc's runtime in Core (coreruntime\_sig.sml): its text, the tables of lib/unicode's data it reads, and the linking of what a program reaches. | [lib/language/haskell/coreruntime.sml](../../../../../lib/language/haskell/coreruntime.sml) |
+
+rhc's runtime, in Core (the haskell98 roadmap, M17; D24 to D26): what
+the Report's modules name and never define, written in Core over
+CorePrim's primitives, so that the Core interpreter and Core to Mid run
+one text and no SML stands below Haskell (D26's A).
+
+It holds the built-in syntax, the unit `()` and the list `[]` with its
+constructors `[]` and `:` (ov.prelude.unit, ov.prelude.list), and the
+two modules the Report imports and never defines: PreludeBuiltin, whose
+primitives are those of share/rhc/haskell98's Prelude and PreludeIO, and
+UnicodePrims, Char's. Each `prim*` of the Report is a value of it of the
+same name, whose type is the Report's in Core: [`String`](../../../basis/str/String.md) is `([] Char)`,
+`IOError` is `Exn` and `IO a` is `World -> (utuple World a)` (D25's
+state token). Beside them it has `primSeq`, `primReturnIO` and
+`primBindIO` (ov.prelude.seq, ov.prelude.io) and `primUnpackString`,
+which makes a string literal, UTF-8 in a `Str`, its list of characters;
+and what the library's PreludeRuntime names beside the Report's:
+`double_mantissa` and `double_exponent`, `unsafe_perform_io`,
+`primPackString`, `primReady`, and `ref_set`, `arr_set`, `h_close`,
+`h_flush` and `exit` as actions giving `()`, which Haskell names as
+`IO ()`, over CorePrim's of the same names, whose actions give `World`.
+
+Input and output are UTF-8; a byte that starts no sequence of UTF-8 is
+read as the character of its number. `getContents` and `readFile` read
+a chunk at a time as their list is read, through `interleave`, the one
+interleaving primitive, and end their list at an error of reading
+(21.2.2); standard output is written before standard input is read.
+`getChar` and `getContents` share standard input's buffer. An IOError
+the runtime raises has its kind (`exn_io_full`): a failure of the
+system's by the name of its error, its text "what: the system's text"
+as the library's, the end of standard input 5.
+
+A program ends with every file it opened written (21's text): the VM's
+end flushes every file the program holds, and the interpreter's writes
+are unbuffered. An exception no handler takes ends it with status 1 and
+a line on standard error, an IOError's text as the library's Show
+IOError gives it, a user's as "user error (TEXT)" (7.3, 23).
+
+The general category and the simple case mappings are lib/unicode's
+(CodePoint, D21), at its version, in tables written from its data:
+`isUpper` is true of every letter that is not lower case (R38).
+
+## Interface
+
+<pre>
+signature CORE_RUNTIME =
+sig
+  datatype <a href="#type-strings">strings</a> = <a href="#con-lazy">Lazy</a> | <a href="#con-whole">Whole</a>
+  val <a href="#val-reportnames">reportNames</a> : string list
+  val <a href="#val-program">program</a> : strings -&gt; Core.program
+  val <a href="#val-link">link</a> : strings -&gt; Core.program -&gt; Core.program
+end
+</pre>
+
+### <a name="type-strings"></a>`strings`
+
+```sml
+datatype strings = Lazy | Whole
+```
+
+How a string literal becomes its list (D24).
+
+[`Lazy`](#con-lazy) makes a cell as the list is read (A, decided); [`Whole`](#con-whole) makes
+every cell at the first force (B, built for the owner's measurement).
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-lazy"></a>`Lazy` |  |  |
+| <a name="con-whole"></a>`Whole` |  |  |
+
+### <a name="val-reportnames"></a>`reportNames`
+
+```sml
+val reportNames : string list
+```
+
+[`reportNames`](#val-reportnames) is the `prim*` of the Report's modules, each a value of
+the runtime.
+
+### <a name="val-program"></a>`program`
+
+```sml
+val program : strings -> Core.program
+```
+
+`program strings` is the whole runtime, its literals made as `strings`
+says.
+
+**Raises** [`CoreText.Error`](../sig/CORE_TEXT.md#exn-error) where its text does not read, a bug of rhc's.
+
+### <a name="val-link"></a>`link`
+
+```sml
+val link : strings -> Core.program -> Core.program
+```
+
+`link strings p` is `p` after the declarations of the runtime that `p`
+reaches, through the names it mentions and through theirs.
+
+A declaration `p` makes of a name of the runtime is `p`'s own, and the
+runtime's is left out.
+
+---
+
+<sub>Generated by runedoc from lib/language/haskell/coreruntime\_sig.sml; do not edit.</sub>

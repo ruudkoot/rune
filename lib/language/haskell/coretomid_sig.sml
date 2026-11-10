@@ -45,7 +45,8 @@ sig
      first and `thunk_self_update` last.
 
      The text's `do` calls `main`, and prints what an exception no handler
-     takes is, as Core's interpreter does, and ends with status 1.
+     takes is, as Core's interpreter does, an IOError's text as the
+     library's Show IOError gives it, and ends with status 1.
 
      Raises: `Unsupported` where `p` needs what Mid has not got. *)
   val program : {fault : fault option} * Core.program -> string

@@ -1,8 +1,32 @@
 # Index: I
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) **i** [k](k.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) **i** [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
+- `IF` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-if)
+- `implicit` (val): [HS_PRINT](../sig/HS_PRINT.md#val-implicit)
+- `IMPORT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-import)
+- `Import` (con): [HS_AST](../sig/HS_AST.md#con-import)
+- `import` (type): [HS_AST](../sig/HS_AST.md#type-import)
+- `IN` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-in)
+- `infer` (val): [HS_LINT](../sig/HS_LINT.md#val-infer)
+- `INFIX` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-infix)
+- `Infix` (con): [HS_AST](../sig/HS_AST.md#con-infix)
+- `INFIXL` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-infixl)
+- `Infixl` (con): [HS_AST](../sig/HS_AST.md#con-infixl)
+- `INFIXR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-infixr)
+- `Infixr` (con): [HS_AST](../sig/HS_AST.md#con-infixr)
+- `insert` (val): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-insert)
+- `INSTANCE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-instance)
+- `Int` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-int)
+- `INTEGER` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-integer)
+- `IOError` (exn): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#exn-ioerror)
 - `isEval` (val): [CORE](../sig/CORE.md#val-iseval)
+- `isIdent` (val): [HS_CHAR](../sig/HS_CHAR.md#val-isident)
+- `isLiterate` (val): [HS_LITERATE](../sig/HS_LITERATE.md#val-isliterate)
+- `isSpecial` (val): [HS_AST](../sig/HS_AST.md#val-isspecial)
+- `isSymbol` (val): [HS_CHAR](../sig/HS_CHAR.md#val-issymbol)
+- `isSymbolic` (val): [HS_AST](../sig/HS_AST.md#val-issymbolic)
+- `item` (type): [HS_TOKEN](../sig/HS_TOKEN.md#type-item)
 
 ---
 

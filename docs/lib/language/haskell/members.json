@@ -78,7 +78,7 @@
      "kind": "val",
      "name": "builtinTypes",
      "spec": "val builtinTypes : (string * kind) list",
-     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`\nand `Ref`.\n\n",
+     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,\n`Ref` and `Arr`.\n\n",
      "page": "sig/CORE.md#val-builtintypes"
     },
     {
@@ -235,7 +235,7 @@
      "kind": "val",
      "name": "prims",
      "spec": "val prims : prim list",
-     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`;\n- I/O: `print_str`, `print_err`, `exit`, `ref_new`, `ref_get`,\n  `ref_set`, `real_world`;\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`.\n\n",
+     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`; then the elementary functions `double_sqrt`,\n  `double_exp`, `double_log`, `double_sin`, `double_cos`, `double_tan`,\n  `double_atan`, `double_sinh`, `double_cosh`, `double_tanh` and\n  `double_atan2`; the conversions to `Int` `double_truncate`,\n  `double_round` (to even at a half), `double_ceiling`, `double_floor`;\n  the classes `double_is_nan`, `double_is_infinite`,\n  `double_is_negative_zero`, `double_is_denormalized`;\n  `double_decode` and `double_encode`, a mantissa of 53 bits; and\n  `double_pow`;\n- on `Float`, a `Double` that binary32 represents, every result of\n  arithmetic rounded to binary32 by Mid's `real_to_single` (D23):\n  `float_add`, `float_sub`, `float_mul`, `float_div`, `float_neg`,\n  `float_eq` to `float_ge`, `float_from_int`, `float_from_double`,\n  `float_to_double`, `float_to_str`, and the functions of `Double`\n  from the elementary ones on, `float_sqrt` to `float_encode`, a\n  mantissa of 24 bits;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`,\n  `str_extract`, `str_eq`;\n- on `Arr a`, an array of cells each holding a value, unforced, as\n  `Ref a` does one: `arr_new`, `arr_set`, `arr_read`, `arr_get`,\n  `arr_size`;\n- I/O: `print_str`, `print_err`, `exit`; the handles of files, 0 to 2\n  standard input, output and error, `h_open`, `h_close`, `h_read`,\n  `h_write`, `h_flush`, `h_error`; `interleave`, which defers an\n  action until its value is forced (D25's one interleaving\n  primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_io_full`,\n  `exn_io_code`, `exn_io_file`, `exn_io_handle`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`;\n- then each family's, in the order of `families`.\n\n",
      "page": "sig/CORE_PRIM.md#val-prims"
     },
     {
@@ -247,10 +247,92 @@
     },
     {
      "kind": "val",
+     "name": "families",
+     "spec": "val families : CorePrimFamily.family list",
+     "doc": "`families` is the families of primitives (CORE\\_PRIM\\_FAMILY), each of a\nfile of its own.\n\n`prims` lists their primitives after its own: the IO library's\nhandles and the system's errors (CorePrimIo).\n\n",
+     "page": "sig/CORE_PRIM.md#val-families"
+    },
+    {
+     "kind": "val",
+     "name": "familyOf",
+     "spec": "val familyOf : string -> (CorePrimFamily.family * CorePrimFamily.prim) option",
+     "doc": "`familyOf name` is the family of the primitive called `name` and the\nprimitive, where a family has it.\n\n",
+     "page": "sig/CORE_PRIM.md#val-familyof"
+    },
+    {
+     "kind": "val",
      "name": "exnKinds",
      "spec": "val exnKinds : string list",
-     "doc": "`exnKinds` is the kinds of exception, by the number `exn_kind` gives.\n\nThey are `ErrorCall`, `IOError`, `PatternMatchFail`, `NonTermination`\n(a suspension forced again under its own evaluation), `Div`, `Overflow`,\n`Subscript` and `Chr`.\n\n",
+     "doc": "`exnKinds` is the kinds of exception, by the number `exn_kind` gives.\n\nThey are `ErrorCall`, `IOError`, `PatternMatchFail`, `NonTermination`\n(a suspension forced again under its own evaluation), `Div`, `Overflow`,\n`Subscript`, `Chr` and `Domain` (a NaN made an `Int`).\n\n",
      "page": "sig/CORE_PRIM.md#val-exnkinds"
+    }
+   ]
+  },
+  "CORE_PRIM_FAMILY": {
+   "doc": "A family of Core's primitives, defined in a file of its own (the\nhaskell98 roadmap, M17, M18): each primitive with its type, what the\nCore interpreter does for it, and the Mid function Core to Mid lowers it\nto, defined in the family's Mid text. CorePrim lists each family's\nprimitives after its own, CoreInterp runs them and CoreToMid lowers\nthem, so that a family is added with no edit of any of the three but a\nline of CorePrim's.\n\nA primitive of a family takes arguments of `!Int`, `!Str` and `!Bool`,\nand the state token where it is an action, and gives an `Int`, a `Str`\nor a `Bool`; an action gives `(utuple World T)` of one, or `World`.\n\n",
+   "page": "sig/CORE_PRIM_FAMILY.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "value",
+     "spec": "datatype value = Int of int | Str of string | Bool of bool | Unit",
+     "doc": "An argument or a result of a primitive of a family.\n\n",
+     "page": "sig/CORE_PRIM_FAMILY.md#type-value"
+    },
+    {
+     "kind": "exception",
+     "name": "IOError",
+     "spec": "exception IOError of int * string * string * int",
+     "doc": "What a primitive raises in the interpreter where it fails: an\n`IOError` of a code, a text, a file and a handle, as `exn_io_full`\nmakes one.\n\n",
+     "page": "sig/CORE_PRIM_FAMILY.md#exn-ioerror"
+    },
+    {
+     "kind": "type",
+     "name": "prim",
+     "spec": "type prim = {name : string, ty : string, doc : string, run : value list -> value, mid : string}",
+     "doc": "A primitive: its name, its type, what it does, what the interpreter\ndoes for it, and the Mid function it is lowered to.\n\nIts type is Core's text. The interpreter's `run` is given its arguments,\nthe state token left out; the Mid function takes them too, or `()`\nwhere it takes none.\n\n",
+     "page": "sig/CORE_PRIM_FAMILY.md#type-prim"
+    },
+    {
+     "kind": "type",
+     "name": "family",
+     "spec": "type family = {name : string, prims : prim list, midText : string}",
+     "doc": "A family: its name, its primitives, and the Mid text that defines\ntheir functions.\n\nThe text is a group of `funs`, which Core to Mid adds once to a program\nthat names any of the family's primitives.\n\n",
+     "page": "sig/CORE_PRIM_FAMILY.md#type-family"
+    }
+   ]
+  },
+  "CORE_RUNTIME": {
+   "doc": "rhc's runtime, in Core (the haskell98 roadmap, M17; D24 to D26): what\nthe Report's modules name and never define, written in Core over\nCorePrim's primitives, so that the Core interpreter and Core to Mid run\none text and no SML stands below Haskell (D26's A).\n\nIt holds the built-in syntax, the unit `()` and the list `[]` with its\nconstructors `[]` and `:` (ov.prelude.unit, ov.prelude.list), and the\ntwo modules the Report imports and never defines: PreludeBuiltin, whose\nprimitives are those of share/rhc/haskell98's Prelude and PreludeIO, and\nUnicodePrims, Char's. Each `prim*` of the Report is a value of it of the\nsame name, whose type is the Report's in Core: `String` is `([] Char)`,\n`IOError` is `Exn` and `IO a` is `World -> (utuple World a)` (D25's\nstate token). Beside them it has `primSeq`, `primReturnIO` and\n`primBindIO` (ov.prelude.seq, ov.prelude.io) and `primUnpackString`,\nwhich makes a string literal, UTF-8 in a `Str`, its list of characters;\nand what the library's PreludeRuntime names beside the Report's:\n`double_mantissa` and `double_exponent`, `unsafe_perform_io`,\n`primPackString`, `primReady`, and `ref_set`, `arr_set`, `h_close`,\n`h_flush` and `exit` as actions giving `()`, which Haskell names as\n`IO ()`, over CorePrim's of the same names, whose actions give `World`.\n\nInput and output are UTF-8; a byte that starts no sequence of UTF-8 is\nread as the character of its number. `getContents` and `readFile` read\na chunk at a time as their list is read, through `interleave`, the one\ninterleaving primitive, and end their list at an error of reading\n(21.2.2); standard output is written before standard input is read.\n`getChar` and `getContents` share standard input's buffer. An IOError\nthe runtime raises has its kind (`exn_io_full`): a failure of the\nsystem's by the name of its error, its text \"what: the system's text\"\nas the library's, the end of standard input 5.\n\nA program ends with every file it opened written (21's text): the VM's\nend flushes every file the program holds, and the interpreter's writes\nare unbuffered. An exception no handler takes ends it with status 1 and\na line on standard error, an IOError's text as the library's Show\nIOError gives it, a user's as \"user error (TEXT)\" (7.3, 23).\n\nThe general category and the simple case mappings are lib/unicode's\n(CodePoint, D21), at its version, in tables written from its data:\n`isUpper` is true of every letter that is not lower case (R38).\n\n",
+   "page": "sig/CORE_RUNTIME.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "strings",
+     "spec": "datatype strings = Lazy | Whole",
+     "doc": "How a string literal becomes its list (D24).\n\n`Lazy` makes a cell as the list is read (A, decided); `Whole` makes\nevery cell at the first force (B, built for the owner's measurement).\n\n",
+     "page": "sig/CORE_RUNTIME.md#type-strings"
+    },
+    {
+     "kind": "val",
+     "name": "reportNames",
+     "spec": "val reportNames : string list",
+     "doc": "`reportNames` is the `prim*` of the Report's modules, each a value of\nthe runtime.\n\n",
+     "page": "sig/CORE_RUNTIME.md#val-reportnames"
+    },
+    {
+     "kind": "val",
+     "name": "program",
+     "spec": "val program : strings -> Core.program",
+     "doc": "`program strings` is the whole runtime, its literals made as `strings`\nsays.\n\n**Raises** `CoreText.Error` where its text does not read, a bug of rhc's.\n\n",
+     "page": "sig/CORE_RUNTIME.md#val-program"
+    },
+    {
+     "kind": "val",
+     "name": "link",
+     "spec": "val link : strings -> Core.program -> Core.program",
+     "doc": "`link strings p` is `p` after the declarations of the runtime that `p`\nreaches, through the names it mentions and through theirs.\n\nA declaration `p` makes of a name of the runtime is `p`'s own, and the\nruntime's is left out.\n\n",
+     "page": "sig/CORE_RUNTIME.md#val-link"
     }
    ]
   },
@@ -324,7 +406,7 @@
    ]
   },
   "CORE_TO_MID": {
-   "doc": "Core to Mid (the haskell98 roadmap, M10): a Core program as a program\nof Mid's text, which rhc reads with Mid's own reader and gives to the\npasses from Mid on (MidPipeline), its list without expand.\n\nA lazy position of type T is `T susp` in Mid and an evaluated one `T`:\na binder, a parameter, a field and a component of an unboxed tuple of\ntype `!T` is the value, one of a lifted `T` a suspension. A function\ntakes each argument in its slot and returns its value evaluated, so a\ndatatype-typed variable of Mid is evaluated. A `let` of a value -- a\nlambda, a constructor, a literal -- binds the value, and of anything else\na suspension, whose code says it is under evaluation first and updates\nit with its value last. A `case` forces its scrutinee and tests its tag;\na value given to a lazy slot is cast into it. A `letrec` of values goes\nthrough cells (D6's A), and a value of the top level that is no function\nis a suspension in a global, a CAF. The state token is erased (D25): an\naction of Core, `World -> (utuple World T)`, is `unit -> T` in Mid, its\norder the order of its lets.\n\nWhat a later milestone gives is behind one function each: a type\nconstructor applied by a variable and a forall inside a type (M28, Mid's\n`Ty` with application and forall), and `Integer` (M31).\n\n",
+   "doc": "Core to Mid (the haskell98 roadmap, M10): a Core program as a program\nof Mid's text, which rhc reads with Mid's own reader and gives to the\npasses from Mid on (MidPipeline), its list without expand.\n\nA lazy position of type T is `T susp` in Mid and an evaluated one `T`:\na binder, a parameter, a field and a component of an unboxed tuple of\ntype `!T` is the value, one of a lifted `T` a suspension. A function\ntakes each argument in its slot and returns its value evaluated, so a\ndatatype-typed variable of Mid is evaluated. A `let` of a value -- a\nlambda, a constructor, a literal -- binds the value, and of anything else\na suspension, whose code says it is under evaluation first and updates\nit with its value last. A `case` forces its scrutinee and tests its tag;\na value given to a lazy slot is cast into it. A `letrec` of values goes\nthrough cells (D6's A), and a value of the top level that is no function\nis a suspension in a global, a CAF. The state token is erased (D25): an\naction of Core, `World -> (utuple World T)`, is `unit -> T` in Mid, its\norder the order of its lets.\n\nAn `Integer` is Mid's `IntInf.int`, an immediate within 63 bits and a\nsign and a magnitude past them (M31, D20's D), each literal a global made\nonce. A type variable applied and a forall inside a type are Mid's own\n(M28): a lazy field of a forall holds a suspension at every type, the\nforall outside it, and a newtype given fewer arguments than its\nparameters is a box, as one that reaches itself is.\n\n",
    "page": "sig/CORE_TO_MID.md",
    "members": [
     {
@@ -352,8 +434,1106 @@
      "kind": "val",
      "name": "program",
      "spec": "val program : {form : form, fault : fault option} * Core.program -> string",
-     "doc": "`program ({form, fault}, p)` is the text of Mid of the Core program\n`p`, which CoreLint passed, with the fault made where it is `SOME`.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
+     "doc": "`program ({form, fault}, p)` is the text of Mid of the Core program\n`p`, which CoreLint passed, with the fault made where it is `SOME`.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, an IOError's text as the\nlibrary's Show IOError gives it, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
      "page": "sig/CORE_TO_MID.md#val-program"
+    }
+   ]
+  },
+  "HS_AST": {
+   "doc": "The abstract syntax of Haskell 98, the Report's chapter 10, before\nnames and fixity are resolved (the haskell98 roadmap's D28).\n\nIt keeps what the source says: a span on every node, parentheses as\nnodes, operators in flat sequences with negation as an item (fixity is\nresolved after names, D29), literals and contexts as written. Every\nnode also has an annotation that holds its own tokens, those of the\nsource that are not in a node below it, each with the trivia before\nit: comments, pragmas, white space, and the braces and semicolons of\nlayout, written or not. From the annotations `HsPrint.exact` prints a\nmodule as its file, byte for byte. A node that a tool makes has\n`noAnn`, and is printed as `HsPrint.explicit` prints it.\n\nPatterns are read relaxed and checked after, so a sequence of patterns\nwith operators, `PSeq`, holds constructor operators only, and `PJux`\nnever leaves the parser.\n\n",
+   "page": "sig/HS_AST.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "tok",
+     "spec": "type tok = {trivia : HsToken.trivium list, start : int, stop : int}",
+     "doc": "A token of the source as a node owns it: the bytes it covers, none\nfor one of layout's, and the trivia before it.\n\n",
+     "page": "sig/HS_AST.md#type-tok"
+    },
+    {
+     "kind": "type",
+     "name": "ann",
+     "spec": "type ann = {span : HsSource.span, toks : tok list}",
+     "doc": "A node's annotation: its span, and its own tokens in the order of the\nsource.\n\n",
+     "page": "sig/HS_AST.md#type-ann"
+    },
+    {
+     "kind": "val",
+     "name": "noAnn",
+     "spec": "val noAnn : ann",
+     "doc": "The annotation of a node that no source gave, and of every node of a\ntree read with annotations off.\n\n",
+     "page": "sig/HS_AST.md#val-noann"
+    },
+    {
+     "kind": "type",
+     "name": "qname",
+     "spec": "type qname = {qual : string, name : string}",
+     "doc": "A name as written: its qualifier, `\"\"` for none, and the name. The\nspecial constructors are names too: `()`, `[]`, `(,)`, `(,,)` and on,\n`(->)`, and `:`.\n\n",
+     "page": "sig/HS_AST.md#type-qname"
+    },
+    {
+     "kind": "datatype",
+     "name": "name",
+     "spec": "datatype name = Name of ann * qname",
+     "doc": "An identifier or an operator of the source, with its annotation,\nwhose tokens are the parentheses or backquotes around it, if any,\nand the name.\n\n",
+     "page": "sig/HS_AST.md#type-name"
+    },
+    {
+     "kind": "datatype",
+     "name": "lit_",
+     "spec": "datatype lit_ =\n    LInt of IntInf.int * string\n  | LFloat of string\n  | LChar of int * string\n  | LString of int list * string",
+     "doc": "A literal: its value, and its text as written.\n\n",
+     "page": "sig/HS_AST.md#type-lit_"
+    },
+    {
+     "kind": "datatype",
+     "name": "lit",
+     "spec": "datatype lit = Lit of ann * lit_",
+     "doc": "A literal of the source.\n\n",
+     "page": "sig/HS_AST.md#type-lit"
+    },
+    {
+     "kind": "datatype",
+     "name": "qop",
+     "spec": "datatype qop = VarOp of name | ConOp of name",
+     "doc": "An operator where an operator goes: a variable's, `+` or `` `div` ``,\nor a constructor's, `:+` or `` `Cons` ``.\n\n",
+     "page": "sig/HS_AST.md#type-qop"
+    },
+    {
+     "kind": "datatype",
+     "name": "ty",
+     "spec": "datatype ty = T of ann * ty_",
+     "doc": "A type, a context among them, as written.\n\n",
+     "page": "sig/HS_AST.md#type-ty"
+    },
+    {
+     "kind": "datatype",
+     "name": "ty_",
+     "spec": "datatype ty_ =\n    TVar of name\n  | TCon of name\n  | TApp of ty * ty\n  | TFun of ty * ty\n  | TList of ty\n  | TTuple of ty list\n  | TParen of ty",
+     "doc": "The forms of a type.\n\n",
+     "page": "sig/HS_AST.md#type-ty_"
+    },
+    {
+     "kind": "datatype",
+     "name": "pat",
+     "spec": "datatype pat = P of ann * pat_",
+     "doc": "A pattern.\n\n",
+     "page": "sig/HS_AST.md#type-pat"
+    },
+    {
+     "kind": "datatype",
+     "name": "pat_",
+     "spec": "datatype pat_ =\n    PVar of name\n  | PWild\n  | PLit of lit\n  | PNegLit of lit\n  | PCon of name * pat list\n  | PRec of name * (name * pat) list\n  | PTuple of pat list\n  | PList of pat list\n  | PParen of pat\n  | PAs of name * pat\n  | PLazy of pat\n  | PNPlusK of name * lit\n  | PSeq of patitem list\n  | PJux of pat list",
+     "doc": "The forms of a pattern.\n\n",
+     "page": "sig/HS_AST.md#type-pat_"
+    },
+    {
+     "kind": "datatype",
+     "name": "patitem",
+     "spec": "datatype patitem = PA of pat | PO of qop",
+     "doc": "An item of a sequence of patterns.\n\n",
+     "page": "sig/HS_AST.md#type-patitem"
+    },
+    {
+     "kind": "datatype",
+     "name": "exp",
+     "spec": "datatype exp = E of ann * exp_",
+     "doc": "An expression.\n\n",
+     "page": "sig/HS_AST.md#type-exp"
+    },
+    {
+     "kind": "datatype",
+     "name": "exp_",
+     "spec": "datatype exp_ =\n    EVar of name\n  | ECon of name\n  | ELit of lit\n  | EApp of exp * exp\n  | ESeq of expitem list\n  | ELam of pat list * exp\n  | ELet of decl list * exp\n  | EIf of exp * exp * exp\n  | ECase of exp * alt list\n  | EDo of stmt list\n  | ETuple of exp list\n  | EParen of exp\n  | EList of exp list\n  | EEnum of exp * exp option * exp option\n  | EComp of exp * stmt list\n  | ELeftSec of exp * qop\n  | ERightSec of qop * exp\n  | ERecCon of name * (name * exp) list\n  | ERecUpd of exp * (name * exp) list\n  | ESig of exp * ty option * ty",
+     "doc": "The forms of an expression.\n\n",
+     "page": "sig/HS_AST.md#type-exp_"
+    },
+    {
+     "kind": "datatype",
+     "name": "expitem",
+     "spec": "datatype expitem = EA of exp | EO of qop | ENeg",
+     "doc": "An item of a sequence: an operand, an operator, or `-` as negation.\n\n",
+     "page": "sig/HS_AST.md#type-expitem"
+    },
+    {
+     "kind": "datatype",
+     "name": "stmt",
+     "spec": "datatype stmt = S of ann * stmt_",
+     "doc": "A statement of `do`, or a qualifier of a comprehension.\n\n",
+     "page": "sig/HS_AST.md#type-stmt"
+    },
+    {
+     "kind": "datatype",
+     "name": "stmt_",
+     "spec": "datatype stmt_ =\n    SBind of pat * exp\n  | SLet of decl list\n  | SExp of exp",
+     "doc": "The forms of a statement.\n\n",
+     "page": "sig/HS_AST.md#type-stmt_"
+    },
+    {
+     "kind": "datatype",
+     "name": "alt",
+     "spec": "datatype alt = Alt of ann * pat * rhs",
+     "doc": "An alternative of `case`: `p rhs`, where the right-hand side's\narrow is `->`.\n\n",
+     "page": "sig/HS_AST.md#type-alt"
+    },
+    {
+     "kind": "datatype",
+     "name": "rhs",
+     "spec": "datatype rhs = Rhs of ann * rhs_",
+     "doc": "A right-hand side: an expression or guards, with a `where`.\n\n",
+     "page": "sig/HS_AST.md#type-rhs"
+    },
+    {
+     "kind": "datatype",
+     "name": "rhs_",
+     "spec": "datatype rhs_ =\n    Plain of exp * decl list option\n  | Guarded of guard list * decl list option",
+     "doc": "The forms of a right-hand side.\n\n",
+     "page": "sig/HS_AST.md#type-rhs_"
+    },
+    {
+     "kind": "datatype",
+     "name": "guard",
+     "spec": "datatype guard = Guard of ann * exp * exp",
+     "doc": "A guard and its expression: `| g = e`.\n\n",
+     "page": "sig/HS_AST.md#type-guard"
+    },
+    {
+     "kind": "datatype",
+     "name": "funlhs",
+     "spec": "datatype funlhs = F of ann * funlhs_",
+     "doc": "The left-hand side of a function's equation.\n\n",
+     "page": "sig/HS_AST.md#type-funlhs"
+    },
+    {
+     "kind": "datatype",
+     "name": "funlhs_",
+     "spec": "datatype funlhs_ =\n    FPrefix of name * pat list\n  | FInfix of pat * qop * pat\n  | FParen of funlhs * pat list",
+     "doc": "The forms of a left-hand side.\n\n",
+     "page": "sig/HS_AST.md#type-funlhs_"
+    },
+    {
+     "kind": "datatype",
+     "name": "decl",
+     "spec": "datatype decl = D of ann * decl_",
+     "doc": "A declaration.\n\n",
+     "page": "sig/HS_AST.md#type-decl"
+    },
+    {
+     "kind": "datatype",
+     "name": "decl_",
+     "spec": "datatype decl_ =\n    DSig of name list * ty option * ty\n  | DFixity of fixity * lit option * qop list\n  | DFun of funlhs * rhs\n  | DPat of pat * rhs\n  | DType of name * name list * ty\n  | DData of ty option * name * name list * constr list * deriv option\n  | DNewtype of ty option * name * name list * constr * deriv option\n  | DClass of ty option * name * name * decl list option\n  | DInstance of ty option * name * ty * decl list option\n  | DDefault of ty list",
+     "doc": "The forms of a declaration.\n\n",
+     "page": "sig/HS_AST.md#type-decl_"
+    },
+    {
+     "kind": "datatype",
+     "name": "fixity",
+     "spec": "datatype fixity = Infix | Infixl | Infixr",
+     "doc": "The associativity of a fixity declaration.\n\n",
+     "page": "sig/HS_AST.md#type-fixity"
+    },
+    {
+     "kind": "datatype",
+     "name": "constr",
+     "spec": "datatype constr = C of ann * constr_",
+     "doc": "A constructor of `data` or `newtype`.\n\n",
+     "page": "sig/HS_AST.md#type-constr"
+    },
+    {
+     "kind": "datatype",
+     "name": "constr_",
+     "spec": "datatype constr_ =\n    CPlain of name * (bool * ty) list\n  | CInfix of (bool * ty) * name * (bool * ty)\n  | CRec of name * field list",
+     "doc": "The forms of a constructor.\n\n",
+     "page": "sig/HS_AST.md#type-constr_"
+    },
+    {
+     "kind": "datatype",
+     "name": "field",
+     "spec": "datatype field = Field of ann * name list * bool * ty",
+     "doc": "The fields of a record constructor that one type has.\n\n",
+     "page": "sig/HS_AST.md#type-field"
+    },
+    {
+     "kind": "datatype",
+     "name": "deriv",
+     "spec": "datatype deriv = Deriv of ann * bool * name list",
+     "doc": "A `deriving` clause: whether its classes are in parentheses, and\nthem.\n\n",
+     "page": "sig/HS_AST.md#type-deriv"
+    },
+    {
+     "kind": "datatype",
+     "name": "entity",
+     "spec": "datatype entity = Ent of ann * entity_",
+     "doc": "What an export or an import names.\n\n",
+     "page": "sig/HS_AST.md#type-entity"
+    },
+    {
+     "kind": "datatype",
+     "name": "entity_",
+     "spec": "datatype entity_ =\n    EntVar of name\n  | EntType of name * sub option\n  | EntModule of name",
+     "doc": "The forms of an entity.\n\n",
+     "page": "sig/HS_AST.md#type-entity_"
+    },
+    {
+     "kind": "datatype",
+     "name": "sub",
+     "spec": "datatype sub = SubAll | SubList of name list",
+     "doc": "The constructors or methods an entity names: `(..)`, or a list.\n\n",
+     "page": "sig/HS_AST.md#type-sub"
+    },
+    {
+     "kind": "datatype",
+     "name": "import",
+     "spec": "datatype import = Import of ann * {qualified : bool, module : name, as_ : name option, hiding : bool,\n                                   spec : entity list option}",
+     "doc": "An import declaration.\n\n",
+     "page": "sig/HS_AST.md#type-import"
+    },
+    {
+     "kind": "datatype",
+     "name": "module",
+     "spec": "datatype module = Module of ann * {name : name option, exports : entity list option,\n                                   imports : import list, decls : decl list}",
+     "doc": "A module: its header, if any, its imports and its declarations. The\nannotation's last token covers no byte and holds the trivia at the end\nof the file.\n\n",
+     "page": "sig/HS_AST.md#type-module"
+    },
+    {
+     "kind": "val",
+     "name": "qname",
+     "spec": "val qname : string * string -> qname",
+     "doc": "`qname (qual, name)` is the name `name` qualified by `qual`, `\"\"` for\nnone.\n\n",
+     "page": "sig/HS_AST.md#val-qname"
+    },
+    {
+     "kind": "val",
+     "name": "nameText",
+     "spec": "val nameText : qname -> string",
+     "doc": "`nameText q` is the name as the source writes it in a variable's\nplace, qualified: M.x for `x` of `M`, or `+`.\n\n",
+     "page": "sig/HS_AST.md#val-nametext"
+    },
+    {
+     "kind": "val",
+     "name": "isSymbolic",
+     "spec": "val isSymbolic : qname -> bool",
+     "doc": "`isSymbolic q` is whether the name of `q` is an operator's rather\nthan an identifier's: its first character is a symbol or `:`.\n\nThe special constructors but `:` are not.\n\n",
+     "page": "sig/HS_AST.md#val-issymbolic"
+    },
+    {
+     "kind": "val",
+     "name": "isSpecial",
+     "spec": "val isSpecial : qname -> bool",
+     "doc": "`isSpecial q` is whether `q` is one of the special constructors that\nare written with brackets: `()`, `[]`, the tuples', `(->)`.\n\n",
+     "page": "sig/HS_AST.md#val-isspecial"
+    },
+    {
+     "kind": "val",
+     "name": "spanOfExp",
+     "spec": "val spanOfExp : exp -> HsSource.span",
+     "doc": "`spanOfExp e`, `spanOfPat p`, `spanOfTy t` and `spanOfDecl d` are the\nspans of the nodes.\n\n",
+     "page": "sig/HS_AST.md#val-spanofexp"
+    },
+    {
+     "kind": "val",
+     "name": "spanOfPat",
+     "spec": "val spanOfPat : pat -> HsSource.span",
+     "doc": "`spanOfExp e`, `spanOfPat p`, `spanOfTy t` and `spanOfDecl d` are the\nspans of the nodes.\n\n",
+     "page": "sig/HS_AST.md#val-spanofpat"
+    },
+    {
+     "kind": "val",
+     "name": "spanOfTy",
+     "spec": "val spanOfTy : ty -> HsSource.span",
+     "doc": "`spanOfExp e`, `spanOfPat p`, `spanOfTy t` and `spanOfDecl d` are the\nspans of the nodes.\n\n",
+     "page": "sig/HS_AST.md#val-spanofty"
+    },
+    {
+     "kind": "val",
+     "name": "spanOfDecl",
+     "spec": "val spanOfDecl : decl -> HsSource.span",
+     "doc": "`spanOfExp e`, `spanOfPat p`, `spanOfTy t` and `spanOfDecl d` are the\nspans of the nodes.\n\n",
+     "page": "sig/HS_AST.md#val-spanofdecl"
+    }
+   ]
+  },
+  "HS_CHAR": {
+   "doc": "The classes of characters of the Haskell 98 Report's lexical syntax\n(chapter 2, section 9.2), by code point.\n\nAbove ASCII the Report's classes are those of Unicode's general\ncategory: `uniSmall` a lowercase letter, `uniLarge` an uppercase or\ntitlecase one, `uniDigit` a decimal digit, `uniSymbol` a symbol or a\npunctuation mark, `uniWhite` a space, by the general category of\nRune's `lib/unicode` (the haskell98 roadmap's D21). A character of no\nclass, a letter of no case (Lo, Lm), a mark, a number not decimal, a\ncontrol or a format character, is refused outside a comment or a\nliteral; the lexer reads any character in a comment or a literal (the\nreading R5).\n\n",
+   "page": "sig/HS_CHAR.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "class",
+     "spec": "datatype class =\n    Small\n  | Large\n  | Digit\n  | Symbol\n  | White\n  | Special\n  | Colon\n  | Quote\n  | Unknown",
+     "doc": "A class of the lexical syntax.\n\n",
+     "page": "sig/HS_CHAR.md#type-class"
+    },
+    {
+     "kind": "val",
+     "name": "classify",
+     "spec": "val classify : int -> class",
+     "doc": "`classify c` is the class of the code point `c`; `Unknown` for a\nnegative `c`.\n\n",
+     "page": "sig/HS_CHAR.md#val-classify"
+    },
+    {
+     "kind": "val",
+     "name": "isIdent",
+     "spec": "val isIdent : int -> bool",
+     "doc": "`isIdent c` is whether `c` may continue an identifier: a small or a\nlarge letter, a digit or `'`.\n\n",
+     "page": "sig/HS_CHAR.md#val-isident"
+    },
+    {
+     "kind": "val",
+     "name": "isSymbol",
+     "spec": "val isSymbol : int -> bool",
+     "doc": "`isSymbol c` is whether `c` may continue an operator: a symbol or `:`.\n\n",
+     "page": "sig/HS_CHAR.md#val-issymbol"
+    }
+   ]
+  },
+  "HS_DUMP": {
+   "doc": "The abstract syntax of Haskell 98 as text, for `rhc --dump-ast` and for\nthe tree round trip of a test that compares trees by their text.\n\nA node is a line: its constructor and what it holds that is not a node,\na name, a literal as written, an associativity; the nodes below it\nfollow, each on its line, two spaces further in. With spans, a node's\nline ends with its span, `@START-STOP` in bytes of its file; without\nthem, two trees print the same exactly where they are equal read with\nno annotations. A node's own tokens are not shown.\n\n",
+   "page": "sig/HS_DUMP.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "module",
+     "spec": "val module : {spans : bool} -> HsAst.module -> string",
+     "doc": "`module {spans} m` is `m` as text, with every node's span if `spans`.\n\n",
+     "page": "sig/HS_DUMP.md#val-module"
+    },
+    {
+     "kind": "val",
+     "name": "exp",
+     "spec": "val exp : {spans : bool} -> HsAst.exp -> string",
+     "doc": "`exp {spans} e` is the expression `e` as text, as `module` writes it.\n\n",
+     "page": "sig/HS_DUMP.md#val-exp"
+    }
+   ]
+  },
+  "HS_FIXITY": {
+   "doc": "Haskell 98's fixity resolution (the Report's 10.6, 3.4, 3.5 and 4.4.2;\nthe haskell98 roadmap's M12): the flat sequences of operators the parser\nleaves, `HsAst.ESeq` and `HsAst.PSeq`, made into trees by the fixities of\nthe operators' entities, read after names (D29), so that a renamed tree\nis resolved with no iteration.\n\nA resolved sequence is a tree of sequences of two kinds only: an\noperator with its operands, `[EA l, EO op, EA r]`, and a negation,\n`[ENeg, EA e]`; in a pattern `[PA l, PO op, PA r]`, a negative literal\nstaying a `PNegLit`. What is refused, each where the source has it:\n\n- two operators of one precedence, either of them non-associative or\n  the two of different associativity (10.6), `do a == b == c` among\n  them, which the Report's 9.3 gives a parse and every oracle refuses\n  (R1, and R9 for `let`, as D38 pins);\n- a negation where the grammar has none: after an operator of\n  precedence 6 or more, `a * - b` (R10, 3.4);\n- a section whose operator does not bind more loosely than its\n  operand's, or as loosely on the side it associates to: `(a + b ^)`,\n  `(-5 ^)`, `(+ a + b)` (3.5, R10);\n- a left-hand side `p1 op p2` whose operands bind more loosely than\n  its operator, `x : xs +++ ys = ...` with `+++` tighter (4.4.3);\n- a negative literal as the left operand of an operator tighter than\n  negation, in a pattern: `-1 :* x` (the grammar's `lpat`).\n\n",
+   "page": "sig/HS_FIXITY.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "fixity",
+     "spec": "type fixity = HsAst.fixity * int",
+     "doc": "The associativity and the precedence of an operator.\n\n",
+     "page": "sig/HS_FIXITY.md#type-fixity"
+    },
+    {
+     "kind": "val",
+     "name": "default",
+     "spec": "val default : fixity",
+     "doc": "An operator with no fixity declaration: `infixl 9` (4.4.2).\n\n",
+     "page": "sig/HS_FIXITY.md#val-default"
+    },
+    {
+     "kind": "val",
+     "name": "show",
+     "spec": "val show : fixity -> string",
+     "doc": "`show f` is `f` as a declaration writes it: `infixl 6`.\n\n",
+     "page": "sig/HS_FIXITY.md#val-show"
+    },
+    {
+     "kind": "val",
+     "name": "resolve",
+     "spec": "val resolve : {fixityOf : HsAst.qname -> fixity option} -> HsAst.module\n              -> HsAst.module * (HsSource.span * string) list",
+     "doc": "`resolve {fixityOf} m` is the renamed module `m` with every sequence\nof operators resolved, and the errors of resolution in source order.\n\n`fixityOf q` is the fixity of the operator named `q` in the renamed\ntree, `NONE` for the default.\n\n",
+     "page": "sig/HS_FIXITY.md#val-resolve"
+    }
+   ]
+  },
+  "HS_LAYOUT": {
+   "doc": "The layout algorithm of Haskell 98, the function `L` of the Report's\nsection 9.3, run on demand: the parser pulls one token at a time, so\nthat when it takes an implicit close, the side condition\n`parse-error(t)` of the equation for `t`, the stack of layout contexts\nis that of the point it has reached and nothing past that token has\nbeen laid out (the haskell98 roadmap's D27).\n\nThe equations and where they are kept:\n\n- `<n>` with `m = n`, `n < m`, and otherwise: a token first on its line;\n- `{n}` with `n > m`, `n > 0`, and otherwise: a token after `let`,\n  `where`, `do` or `of` that is not `{`, and the first of a module that\n  is neither `{` nor `module`; an empty block makes the next token's\n  `{n}` an `<n>`;\n- `}` with an explicit context on top, `{`, and the end of the input:\n  `advance`;\n- `t` with an implicit context on top and `parse-error(t)`:\n  `closeImplicit`, which the parser calls.\n\nIt makes two readings of the roadmap's evidence (`results/E9/readings.md`):\nR2, an explicit `}` may close an implicit block, as section 2.7 reads,\nwhere 9.3's Note 3 alone would refuse it; and R3, a block opens only\nat a column strictly greater than the enclosing one, so that a `do`\nat the column of its context is empty.\n\nThere is one stream at a time: `start` begins it, and the parser reads\nand moves it.\n\n",
+   "page": "sig/HS_LAYOUT.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "start",
+     "spec": "val start : string * HsToken.item vector -> unit",
+     "doc": "`start (file, tokens)` begins the stream of the tokens of the file\n`file`, laid out, and reads its first token.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-start"
+    },
+    {
+     "kind": "val",
+     "name": "current",
+     "spec": "val current : HsToken.token ref",
+     "doc": "The token the stream is at, written or layout's.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-current"
+    },
+    {
+     "kind": "val",
+     "name": "here",
+     "spec": "val here : unit -> HsSource.span",
+     "doc": "`here ()` is the span of the current token; a token of layout's\ncovers no byte, and stands where the next written token begins.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-here"
+    },
+    {
+     "kind": "val",
+     "name": "currentStart",
+     "spec": "val currentStart : unit -> int",
+     "doc": "`currentStart ()` is where the current token begins: `#start (here ())`.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-currentstart"
+    },
+    {
+     "kind": "val",
+     "name": "trivia",
+     "spec": "val trivia : unit -> HsToken.trivium list",
+     "doc": "`trivia ()` is the trivia before the current token; none for\nlayout's.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-trivia"
+    },
+    {
+     "kind": "val",
+     "name": "lastStop",
+     "spec": "val lastStop : unit -> int",
+     "doc": "`lastStop ()` is where the last written token that `advance` passed\nends: 0 before the first.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-laststop"
+    },
+    {
+     "kind": "val",
+     "name": "advance",
+     "spec": "val advance : unit -> unit",
+     "doc": "`advance ()` passes the current token and reads the next.\n\n**Raises** `HsSource.Error` for a `}` that no `{` opened, and for the\nend of the input inside braces.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-advance"
+    },
+    {
+     "kind": "val",
+     "name": "closeImplicit",
+     "spec": "val closeImplicit : unit -> bool",
+     "doc": "`closeImplicit ()` is the equation of `t` with `parse-error(t)`: the\nparser can go no further with the current token in its block.\n\nWhere that block is implicit it is closed and the result is `true`;\nwhere it is explicit, or there is none, nothing changes and the\nresult is `false`.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-closeimplicit"
+    },
+    {
+     "kind": "val",
+     "name": "peek",
+     "spec": "val peek : int -> HsToken.token",
+     "doc": "`peek k` is the `k`th written token after the current one, from 0,\nas the lexer read it: layout does not see that far.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-peek"
+    },
+    {
+     "kind": "type",
+     "name": "mark",
+     "spec": "type mark",
+     "doc": "Where the stream is, to go back to.\n\n",
+     "page": "sig/HS_LAYOUT.md#type-mark"
+    },
+    {
+     "kind": "val",
+     "name": "save",
+     "spec": "val save : unit -> mark",
+     "doc": "`save ()` is where the stream is now.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-save"
+    },
+    {
+     "kind": "val",
+     "name": "restore",
+     "spec": "val restore : mark -> unit",
+     "doc": "`restore m` puts the stream back where it was at `m`.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-restore"
+    },
+    {
+     "kind": "val",
+     "name": "fail",
+     "spec": "val fail : string -> 'a",
+     "doc": "`fail msg` raises an error at the current token.\n\n**Raises** `HsSource.Error` always.\n\n",
+     "page": "sig/HS_LAYOUT.md#val-fail"
+    }
+   ]
+  },
+  "HS_LEXER": {
+   "doc": "The lexer of Haskell 98: the Report's chapter 2 and section 9.2, over\nprogram text.\n\nThe whole of a file becomes a vector of tokens before anything is\nparsed, and nothing here depends on layout or on the parser, so that\nthis much of the language is a function of the text. Each token keeps\nthe trivia before it, and the end of the input keeps the trivia after\nthe last token, so that every byte of the text is in exactly one\ntoken or one stretch of trivia.\n\nThe readings it makes, of `results/E9/readings.md` in the haskell98\nroadmap's evidence:\n\n- R4: the end of the file ends a line comment.\n- R5: any character at all in a comment or a literal; identifiers and\n  operators by the Report's classes (`HsChar`).\n- R6: ASCII digits only in a numeric literal.\n- R7: `F..` is the operator `.` qualified by `F`; `F.=` is `F` then\n  `.=`; `M.where` is `M`, `.` and `where`; and, by the longest lexeme\n  the text gives, `x F.-- y` is `x F.- - y` (R77), since `--` is dashes\n  and no operator, and `x F.-> y` is `x F.- > y`.\n- R8: `--:` is an operator; a numeric escape above 0x10FFFF is an\n  error.\n- A byte that is not part of a sequence of UTF-8 is read as the code\n  point of its value, as Latin-1 would (the Report is silent on the\n  bytes of a file).\n- A byte order mark at the head of the file is trivia.\n\n",
+   "page": "sig/HS_LEXER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "options",
+     "spec": "type options = {hierarchical : bool}",
+     "doc": "How to read: whether dotted module names are read.\n\n`hierarchical` reads a dotted module name, such as Data.List, as one\nqualifier, which Haskell 98's `modid` is not (the roadmap's D35,\nrefused by default).\n\n",
+     "page": "sig/HS_LEXER.md#type-options"
+    },
+    {
+     "kind": "val",
+     "name": "defaults",
+     "spec": "val defaults : options",
+     "doc": "Haskell 98's: no dotted module names.\n\n",
+     "page": "sig/HS_LEXER.md#val-defaults"
+    },
+    {
+     "kind": "val",
+     "name": "tokens",
+     "spec": "val tokens : options * string * string -> HsToken.item vector",
+     "doc": "`tokens (options, file, text)` is the tokens of the program text\n`text` of the file `file`, the last of them `EOF`.\n\n**Raises** `HsSource.Error` for a lexical error: a character outside\nthe Report's classes, a literal or a nested comment left open, an\nescape that is none.\n\n",
+     "page": "sig/HS_LEXER.md#val-tokens"
+    }
+   ]
+  },
+  "HS_LINT": {
+   "doc": "HsLint (the haskell98 roadmap's M16, D54): the independent check of\nrhc's types, as AstLint is Rune's. Its first part is a second\ninference: a transliteration of Typing Haskell in Haskell (Jones 1999)\nin the form its 11.6.3 calls conformant, with kinds and dependency\ngroups recomputed, the monomorphism restriction and defaulting as the\nroadmap's D32 reads the Report (R18, R20, R21, R22), over the renamed\ntree. It shares nothing with rhc's checker but the renamer: its\nunifier, its kinds and its context reduction are its own, so that a\ndisagreement between the two is a finding. rhc runs it among the\nchecks of level 2 (`--lint=2`, `RUNE_LINT=2`), where a refusal of a\nprogram the compile accepts is a bug of rhc's.\n\n",
+   "page": "sig/HS_LINT.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "module",
+     "spec": "type module = {id : string, ast : HsAst.module, library : bool}",
+     "doc": "A module of a program as HsLint reads it: its identity, its tree as\n`HsRename` renamed it and `HsFixity` resolved it, and whether it is\none of rhc's library's.\n\n",
+     "page": "sig/HS_LINT.md#type-module"
+    },
+    {
+     "kind": "type",
+     "name": "binding",
+     "spec": "type binding = {module : string, name : string, scheme : string, signed : bool, restricted : bool,\n                span : HsSource.span}",
+     "doc": "A binding of the top level as the second inference left it: its\nmodule, its name, its type as text, whether a signature declared it.\n\n`restricted` is whether its group is restricted (4.5.5, Rule 1). The\ntype is written as the Report writes one, `Eq a => [a] -> a -> Bool`.\n\n",
+     "page": "sig/HS_LINT.md#type-binding"
+    },
+    {
+     "kind": "type",
+     "name": "default",
+     "spec": "type default = {module : string, span : HsSource.span, preds : string, choice : string, ruleTwo : bool}",
+     "doc": "A default the second inference chose (4.3.4): the module, where, the\npredicates it resolved and the type, as text.\n\n`ruleTwo` is whether Rule 2 chose it, where the module was inferred.\n\n",
+     "page": "sig/HS_LINT.md#type-default"
+    },
+    {
+     "kind": "type",
+     "name": "kind",
+     "spec": "type kind = {module : string, name : string, kind : string}",
+     "doc": "The kind inferred for a type constructor or a class's variable (4.6):\nthe module, the name and the kind, as text.\n\n",
+     "page": "sig/HS_LINT.md#type-kind"
+    },
+    {
+     "kind": "type",
+     "name": "class_",
+     "spec": "type class_ = {name : string, numeric : bool, standard : bool}",
+     "doc": "A class by its name: whether it is numeric and standard (4.3.4).\n\n",
+     "page": "sig/HS_LINT.md#type-class_"
+    },
+    {
+     "kind": "type",
+     "name": "derived",
+     "spec": "type derived = {module : string, instance : string}",
+     "doc": "A derived instance with the context inferred for it (4.3.3, 10.1):\nthe module of its type, and the instance as text, `Eq a => Eq (T a)`.\n\n",
+     "page": "sig/HS_LINT.md#type-derived"
+    },
+    {
+     "kind": "type",
+     "name": "report",
+     "spec": "type report = {bindings : binding list, defaults : default list, kinds : kind list, derived : derived list,\n               classes : class_ list}",
+     "doc": "What the second inference found: bindings, defaults, kinds, derived\ninstances and classes.\n\nThe bindings of the top level of every module and the defaults are in\nthe order it met them; the kinds are of the type constructors and the\nclasses.\n\n",
+     "page": "sig/HS_LINT.md#type-report"
+    },
+    {
+     "kind": "exception",
+     "name": "Refused",
+     "spec": "exception Refused of HsSource.span * string",
+     "doc": "A refusal of the second inference: where, and why, the why naming the\nrow of the conformance table it is for where there is one.\n\n",
+     "page": "sig/HS_LINT.md#exn-refused"
+    },
+    {
+     "kind": "val",
+     "name": "infer",
+     "spec": "val infer : {groups : module list list, main : string option, cycleDefault : bool} -> report",
+     "doc": "`infer {groups, main, cycleDefault}` is the report of the second\ninference over the program whose groups of modules are `groups`.\n\nThe groups are the strongly connected ones, dependencies first;\n`main` is the identity of the module whose `main` must have the type\n`IO t` (5), if any; and `cycleDefault` is whether a group's modules\nshare one `default` and Rule 2 closes at the group's end (D30's\n`--cycle-default=scc`) rather than each module's.\n\n**Raises** `Refused` at the first breach of the Report's static rules\nthe second inference finds.\n\n",
+     "page": "sig/HS_LINT.md#val-infer"
+    },
+    {
+     "kind": "type",
+     "name": "claims",
+     "spec": "type claims",
+     "doc": "What a record claims of a program, in the form `dump` prints.\n\nThe claims are kinds, derived instances, the types of the bindings of\nits modules' top levels and the defaults.\n\n",
+     "page": "sig/HS_LINT.md#type-claims"
+    },
+    {
+     "kind": "val",
+     "name": "claims",
+     "spec": "val claims : string -> claims",
+     "doc": "`claims text` is the claims of `text`, lines in the form of `dump`;\na line of another form claims nothing.\n\n",
+     "page": "sig/HS_LINT.md#val-claims"
+    },
+    {
+     "kind": "val",
+     "name": "rules",
+     "spec": "val rules : (string * string) list",
+     "doc": "`rules` is each rule of `compare` with what it holds, its name being\nthe first word of its breach's message, in brackets: `[rule1] ...`.\n\n",
+     "page": "sig/HS_LINT.md#val-rules"
+    },
+    {
+     "kind": "val",
+     "name": "compare",
+     "spec": "val compare : report * claims * (HsSource.span -> string) * string -> unit",
+     "doc": "`compare (report, claims, where_, fault)` holds the claims to the\nreport, of the program's modules, `where_` giving a default's place.\n\n`fault`, a rule's name or \"\", reads the first claim that rule checks\ncorrupted, so that the rule must refuse it.\n\n**Raises** `Refused` at the first claim a rule refuses.\n\n",
+     "page": "sig/HS_LINT.md#val-compare"
+    },
+    {
+     "kind": "val",
+     "name": "dump",
+     "spec": "val dump : report * (HsSource.span -> string) * bool -> string",
+     "doc": "`dump (report, where_, library)` is the report as text, a line each.\n\nThe lines are `KIND MODULE NAME :: KIND` for a type constructor or a\nclass, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a\nbinding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's\nmodules, and of the library's too where `library` is set, but its\nsigned bindings.\n\n",
+     "page": "sig/HS_LINT.md#val-dump"
+    }
+   ]
+  },
+  "HS_LITERATE": {
+   "doc": "Literate Haskell (the Report's section 9.4): the program text of a\nliterate file.\n\nThe program text has the length of the file, byte for byte, so that a\nposition of the one is a position of the other: a program line keeps\nits bytes but for its leading `>`, which becomes a space, so that its\ncolumns are the file's, and every byte of a line of commentary but its\nline end becomes a space. Layout sees no line of commentary, and the\ntrivia that an exact print takes from the file keep it.\n\n",
+   "page": "sig/HS_LITERATE.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "isLiterate",
+     "spec": "val isLiterate : string -> bool",
+     "doc": "`isLiterate name` is whether `name` is that of a literate file: it\nends in `.lhs`.\n\n",
+     "page": "sig/HS_LITERATE.md#val-isliterate"
+    },
+    {
+     "kind": "val",
+     "name": "unlit",
+     "spec": "val unlit : string * string -> string",
+     "doc": "`unlit (file, bytes)` is the program text of the literate file\n`file`, whose bytes are `bytes`.\n\nA line that begins with `>` is a program line, and so is every line\nbetween a line that begins with `\\begin{code}` and one that begins\nwith `\\end{code}`; every other line is commentary.\n\n**Raises** `HsSource.Error` for a program line next to a line of\ncommentary that is not blank, for a `\\begin{code}` that no\n`\\end{code}` closes, and for an `\\end{code}` that no `\\begin{code}`\nopened.\n\n",
+     "page": "sig/HS_LITERATE.md#val-unlit"
+    }
+   ]
+  },
+  "HS_MODULES": {
+   "doc": "The names of Haskell 98's modules (the Report's chapter 5; the haskell98\nroadmap's D29, D30): what each module defines, what it exports, and what\nis in scope in it, over a group of modules that import one another.\n\nAn entity is a thing a name can stand for: its name space, the module\nthat defines it, by that module's identity, and its name. A name stands\nfor zero, one or several entities, and is an error only where it is used\nand stands for other than one, in the manner of Diatchki, Jones and\nHallgren 2002. Within a strongly connected group of modules the exports\nand the scopes are defined by each other, and are solved by iteration:\nfrom nothing, the least fixpoint (D29's A, the default), or from\neverything, the greatest. Instances are not names, and every instance a\nprogram declares is visible in all of it.\n\n",
+   "page": "sig/HS_MODULES.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "space",
+     "spec": "datatype space = Value | Type",
+     "doc": "The two name spaces: values (variables, constructors, fields,\nmethods) and types (type constructors, synonyms, classes).\n\n",
+     "page": "sig/HS_MODULES.md#type-space"
+    },
+    {
+     "kind": "type",
+     "name": "entity",
+     "spec": "type entity = {space : space, home : string, name : string}",
+     "doc": "An entity: its space, the identity of the module that defines it, and\nits name.\n\nA module's identity is its name for a module of the program, and its\nlibrary's name, a colon and its name for a library's: a program's\n`Char` is not the library's.\n\n",
+     "page": "sig/HS_MODULES.md#type-entity"
+    },
+    {
+     "kind": "val",
+     "name": "key",
+     "spec": "val key : entity -> string",
+     "doc": "`key e` is `e` as a string, unique to it, for maps and sets.\n\n",
+     "page": "sig/HS_MODULES.md#val-key"
+    },
+    {
+     "kind": "val",
+     "name": "moduleName",
+     "spec": "val moduleName : string -> string",
+     "doc": "`moduleName id` is the name of the module of identity `id`, without\nits library.\n\n",
+     "page": "sig/HS_MODULES.md#val-modulename"
+    },
+    {
+     "kind": "datatype",
+     "name": "sort",
+     "spec": "datatype sort =\n    Var\n  | Con\n  | Field\n  | Method\n  | TyCon\n  | Synonym\n  | Class",
+     "doc": "What a top-level definition is.\n\n",
+     "page": "sig/HS_MODULES.md#type-sort"
+    },
+    {
+     "kind": "type",
+     "name": "def",
+     "spec": "type def = {entity : entity, sort : sort, parent : entity option, arity : int, span : HsSource.span}",
+     "doc": "A top-level definition: its entity, what it is, and where it is.\n\nWith them, the type or class it belongs to, for a constructor, a field\nor a method, and the number of arguments a constructor takes.\n\n",
+     "page": "sig/HS_MODULES.md#type-def"
+    },
+    {
+     "kind": "val",
+     "name": "defs",
+     "spec": "val defs : string * HsAst.module -> def list",
+     "doc": "`defs (id, m)` is what the module `m` of identity `id` defines at its\ntop level, each once, in the order of the source.\n\n",
+     "page": "sig/HS_MODULES.md#val-defs"
+    },
+    {
+     "kind": "type",
+     "name": "unit_",
+     "spec": "type unit_ = {id : string, name : string, ast : HsAst.module, imports : (HsAst.import * string) list}",
+     "doc": "A module as resolution reads it: its identity, its name, its tree,\nand its imports.\n\nEach import has the identity of the module it names, the implicit\nimport of the Prelude among them where the module has one.\n\n",
+     "page": "sig/HS_MODULES.md#type-unit_"
+    },
+    {
+     "kind": "type",
+     "name": "scope",
+     "spec": "type scope = entity list HsStringMap.map",
+     "doc": "What is in scope in a module: the entities a name stands for, by\n`scopeKey`.\n\n",
+     "page": "sig/HS_MODULES.md#type-scope"
+    },
+    {
+     "kind": "val",
+     "name": "scopeKey",
+     "spec": "val scopeKey : space * string * string -> string",
+     "doc": "`scopeKey (space, qual, name)` is the key of the name `name` qualified\nby `qual`, `\"\"` for none, in the space `space`.\n\n",
+     "page": "sig/HS_MODULES.md#val-scopekey"
+    },
+    {
+     "kind": "val",
+     "name": "lookup",
+     "spec": "val lookup : scope * space * string * string -> entity list",
+     "doc": "`lookup (scope, space, qual, name)` is the entities the name stands\nfor: none, one, or several.\n\n",
+     "page": "sig/HS_MODULES.md#val-lookup"
+    },
+    {
+     "kind": "datatype",
+     "name": "fixpoint",
+     "spec": "datatype fixpoint = Least | Greatest",
+     "doc": "The fixpoint to take where a group's exports admit several.\n\n",
+     "page": "sig/HS_MODULES.md#type-fixpoint"
+    },
+    {
+     "kind": "type",
+     "name": "solved",
+     "spec": "type solved = {exports : entity list HsStringMap.map, scopes : scope HsStringMap.map,\n               errors : (HsSource.span * string) list}",
+     "doc": "What `solve` makes of a group: each module's exports and scope, by\nidentity, and the errors of the group's export and import lists.\n\n",
+     "page": "sig/HS_MODULES.md#type-solved"
+    },
+    {
+     "kind": "val",
+     "name": "solve",
+     "spec": "val solve : {group : unit_ list, exportsOf : string -> entity list, defOf : string -> def option,\n             universe : entity list, fixpoint : fixpoint} -> solved",
+     "doc": "`solve {group, exportsOf, defOf, universe, fixpoint}` solves the\nexports and the scopes of the strongly connected group of modules\n`group`.\n\n`exportsOf id` gives the exports of a module outside the group,\nsolved before it, `defOf` gives the definition of every entity of the\nprogram, by `key`, and `universe` is every entity of the program,\nfrom which the greatest fixpoint starts. The errors are\nthose of chapter 5: an export of what is not in scope, of a module\nthat is not imported, two entities exported under one name, an import\nof what a module does not export.\n\n",
+     "page": "sig/HS_MODULES.md#val-solve"
+    }
+   ]
+  },
+  "HS_PARSER": {
+   "doc": "The parser of Haskell 98: recursive descent over the grammar of the\nReport's section 9.5, on the layout of `HsLayout` (the haskell98\nroadmap's D27).\n\nA block's item parser returns as soon as the next token cannot go on\nwith the item, so a block that then sees neither `;` nor its close is\nat `parse-error(t)`, and takes the implicit close there; nothing else\nhere knows of layout. Operators stay in flat sequences, so no fixity is\nneeded (R1: `do a == b == c` parses, and fixity resolution refuses it).\nA declaration's left-hand side and a statement's pattern are read as\nrelaxed patterns and checked once the token after them says what they\nare.\n\n",
+   "page": "sig/HS_PARSER.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "annotations",
+     "spec": "datatype annotations = Bare | Spans | Full",
+     "doc": "How much of the source a tree keeps.\n\n`Bare`, none, so that two trees compare equal where they differ only\nin where they were read; `Spans`, a span on every node; `Full`, spans\nand every node's own tokens with their trivia, which `HsPrint.exact`\nneeds.\n\n",
+     "page": "sig/HS_PARSER.md#type-annotations"
+    },
+    {
+     "kind": "type",
+     "name": "options",
+     "spec": "type options = {lexer : HsLexer.options, annotations : annotations}",
+     "doc": "How to read: the lexer's options, and the annotations.\n\n",
+     "page": "sig/HS_PARSER.md#type-options"
+    },
+    {
+     "kind": "val",
+     "name": "defaults",
+     "spec": "val defaults : options",
+     "doc": "Haskell 98's lexer, and `Full` annotations.\n\n",
+     "page": "sig/HS_PARSER.md#val-defaults"
+    },
+    {
+     "kind": "val",
+     "name": "parse",
+     "spec": "val parse : options * string * HsToken.item vector -> HsAst.module",
+     "doc": "`parse (options, file, tokens)` is the module the tokens of the file\n`file` hold.\n\n**Raises** `HsSource.Error` at the first syntax error.\n\n",
+     "page": "sig/HS_PARSER.md#val-parse"
+    },
+    {
+     "kind": "val",
+     "name": "parseTraced",
+     "spec": "val parseTraced : options * string * HsToken.item vector -> HsAst.module * HsToken.token list",
+     "doc": "`parseTraced (options, file, tokens)` is `parse`'s module, and every\ntoken the parser passed, in order.\n\nThe braces and semicolons of layout are as layout gave them: the\nfunction `L` of section 9.3, on the source.\n\n**Raises** `HsSource.Error` at the first syntax error.\n\n",
+     "page": "sig/HS_PARSER.md#val-parsetraced"
+    },
+    {
+     "kind": "val",
+     "name": "parseFile",
+     "spec": "val parseFile : options * string * string -> HsAst.module",
+     "doc": "`parseFile (options, file, bytes)` is the module that the file\n`file`, whose bytes are `bytes`, holds.\n\nIt is unlit first where its name is a literate file's (`HsLiterate`),\nthen lexed and parsed.\n\n**Raises** `HsSource.Error` at the first error.\n\n",
+     "page": "sig/HS_PARSER.md#val-parsefile"
+    }
+   ]
+  },
+  "HS_PRINT": {
+   "doc": "Printers of Haskell 98's abstract syntax (the haskell98 roadmap's D28).\n\nThree prints share one walk of the tree. `explicit` writes every block\nin braces with semicolons, so that no layout rule applies to what it\nwrites; `implicit` writes every block by layout, each item on a line of\nits own; both print every token a node stands for and nothing else, so\nthat reading a print back gives the tree printed, and its tokens are\nthose of `L` of the source but for empty items and a trailing comma\n(the tree and token round trips of the roadmap's section Round trips).\n`exact` prints a tree read with `Full` annotations as its file, byte for\nbyte: every token where the source had it, with the comments, pragmas\nand white space before it. A node with no annotation, which a tool made,\nis printed by `exact` as `explicit` prints it.\n\n",
+   "page": "sig/HS_PRINT.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "explicit",
+     "spec": "val explicit : HsAst.module -> string",
+     "doc": "`explicit m` is `m` with every block in braces.\n\n",
+     "page": "sig/HS_PRINT.md#val-explicit"
+    },
+    {
+     "kind": "val",
+     "name": "implicit",
+     "spec": "val implicit : HsAst.module -> string",
+     "doc": "`implicit m` is `m` with every block by layout, but an empty one,\nwhich is `{}`.\n\n",
+     "page": "sig/HS_PRINT.md#val-implicit"
+    },
+    {
+     "kind": "val",
+     "name": "exact",
+     "spec": "val exact : string * HsAst.module -> string",
+     "doc": "`exact (bytes, m)` is the file whose bytes, `bytes`, `m` was read\nfrom with `Full` annotations; for a tree a tool changed, the file with\nthe change.\n\n",
+     "page": "sig/HS_PRINT.md#val-exact"
+    },
+    {
+     "kind": "val",
+     "name": "exp",
+     "spec": "val exp : HsAst.exp -> string",
+     "doc": "`exp e`, `pat p`, `ty t` and `decl d` are nodes as `explicit` prints\nthem, for a message.\n\n",
+     "page": "sig/HS_PRINT.md#val-exp"
+    },
+    {
+     "kind": "val",
+     "name": "pat",
+     "spec": "val pat : HsAst.pat -> string",
+     "doc": "`exp e`, `pat p`, `ty t` and `decl d` are nodes as `explicit` prints\nthem, for a message.\n\n",
+     "page": "sig/HS_PRINT.md#val-pat"
+    },
+    {
+     "kind": "val",
+     "name": "ty",
+     "spec": "val ty : HsAst.ty -> string",
+     "doc": "`exp e`, `pat p`, `ty t` and `decl d` are nodes as `explicit` prints\nthem, for a message.\n\n",
+     "page": "sig/HS_PRINT.md#val-ty"
+    },
+    {
+     "kind": "val",
+     "name": "decl",
+     "spec": "val decl : HsAst.decl -> string",
+     "doc": "`exp e`, `pat p`, `ty t` and `decl d` are nodes as `explicit` prints\nthem, for a message.\n\n",
+     "page": "sig/HS_PRINT.md#val-decl"
+    }
+   ]
+  },
+  "HS_RENAME": {
+   "doc": "Haskell 98's renamer (the haskell98 roadmap's M12): every name of a\nmodule's tree resolved to what it stands for, in the scope that\n`HsModules` gives the module and the scopes its own bindings make.\n\nThe renamed tree is a tree of `HsAst`, with every name rewritten: a name\nof the top level is its entity, qualified by the identity of the module\nthat defines it (`{qual = home, name = name}`), and a local one, a\nvariable a pattern or a local declaration binds, is unqualified and made\nunique with a `#` and a number, which no name of the source can hold.\nType variables and the built-in names (`()`, `[]`, `:`, the tuples',\n`(->)`) stay as they are written. The static checks that need names\nare made here: a name in scope, and standing for one entity; a\nconstructor applied to as many patterns as it takes; one definition of a\nname in a group of bindings, its clauses together; a signature or a\nfixity declaration only for what its group defines; an instance's method\none of its class's.\n\n",
+   "page": "sig/HS_RENAME.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "fixity",
+     "spec": "type fixity = HsAst.fixity * int",
+     "doc": "The associativity and the precedence of an operator.\n\n",
+     "page": "sig/HS_RENAME.md#type-fixity"
+    },
+    {
+     "kind": "type",
+     "name": "renamed",
+     "spec": "type renamed = {module : HsAst.module, localFixities : fixity HsStringMap.map,\n                errors : (HsSource.span * string) list}",
+     "doc": "What a module's renaming gives: the tree, the fixities declared for\nits local operators, by their unique names, and the errors, in the\norder of the source.\n\n",
+     "page": "sig/HS_RENAME.md#type-renamed"
+    },
+    {
+     "kind": "val",
+     "name": "rename",
+     "spec": "val rename : {id : string, scope : HsModules.scope, defOf : string -> HsModules.def option}\n             -> HsAst.module -> renamed",
+     "doc": "`rename {id, scope, defOf} m` renames the module `m` of identity\n`id`, whose scope is `scope`.\n\n`defOf` gives the definition of every entity of the program by\n`HsModules.key`.\n\n",
+     "page": "sig/HS_RENAME.md#val-rename"
+    },
+    {
+     "kind": "val",
+     "name": "topFixities",
+     "spec": "val topFixities : string * HsAst.module -> (string * fixity) list",
+     "doc": "`topFixities (id, m)` is the fixities that the module `m` of identity\n`id` declares at its top level and in its classes, by the key of the\noperator's entity.\n\n",
+     "page": "sig/HS_RENAME.md#val-topfixities"
+    }
+   ]
+  },
+  "HS_SOURCE": {
+   "doc": "Haskell source text: spans, positions and the errors of the front end.\n\nA position is a byte offset of the file everywhere inside the front end,\nas it is inside Rune's compiler (docs/diagnostics.md, Columns), and a\nspan is the compiler's span, as lib/compiler's Source has it, so that a\ndriver can show a diagnostic of `lib/language/haskell` as it shows its own. A line and a\ncolumn are worked out only where a diagnostic is shown.\n\n",
+   "page": "sig/HS_SOURCE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "span",
+     "spec": "type span = {file : string, start : int, stop : int}",
+     "doc": "The bytes from `start` up to `stop` of the file named `file`.\n\n",
+     "page": "sig/HS_SOURCE.md#type-span"
+    },
+    {
+     "kind": "val",
+     "name": "noSpan",
+     "spec": "val noSpan : span",
+     "doc": "The span of no text, for a node that a tool made rather than the\nparser read.\n\n",
+     "page": "sig/HS_SOURCE.md#val-nospan"
+    },
+    {
+     "kind": "val",
+     "name": "join",
+     "spec": "val join : span * span -> span",
+     "doc": "`join (a, b)` is the span from the first byte of either to the last\nof either; the file is `a`'s.\n\n",
+     "page": "sig/HS_SOURCE.md#val-join"
+    },
+    {
+     "kind": "type",
+     "name": "text",
+     "spec": "type text",
+     "doc": "A file's name and bytes, with where each of its lines begins.\n\n",
+     "page": "sig/HS_SOURCE.md#type-text"
+    },
+    {
+     "kind": "val",
+     "name": "text",
+     "spec": "val text : {file : string, bytes : string} -> text",
+     "doc": "`text {file, bytes}` is the text of a file, with its table of lines.\n\n",
+     "page": "sig/HS_SOURCE.md#val-text"
+    },
+    {
+     "kind": "val",
+     "name": "file",
+     "spec": "val file : text -> string",
+     "doc": "`file t` is the name `t` was made with.\n\n",
+     "page": "sig/HS_SOURCE.md#val-file"
+    },
+    {
+     "kind": "val",
+     "name": "bytes",
+     "spec": "val bytes : text -> string",
+     "doc": "`bytes t` is the bytes `t` was made with.\n\n",
+     "page": "sig/HS_SOURCE.md#val-bytes"
+    },
+    {
+     "kind": "val",
+     "name": "position",
+     "spec": "val position : text * int -> {line : int, column : int}",
+     "doc": "`position (t, offset)` is the line of the byte `offset`, from 1, and\nits column, from 1, counting the characters before it on its line.\n\nA code point of UTF-8 counts one, and so does a byte that is not\nUTF-8. A tab counts one, as rustc and Emacs count\n(docs/diagnostics.md).\n\n",
+     "page": "sig/HS_SOURCE.md#val-position"
+    },
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of span * string",
+     "doc": "An error of the front end: where, and what, in a message that starts\nlowercase and names the construct.\n\n",
+     "page": "sig/HS_SOURCE.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "message",
+     "spec": "val message : text * span * string -> string",
+     "doc": "`message (t, span, msg)` is the first line of a diagnostic, as Rune's\ncompiler prints it.\n\nIt is `FILE:LINE:COL: error: MESSAGE`, where `FILE` has its control\ncharacters escaped as `\\u{1B}`.\n\n",
+     "page": "sig/HS_SOURCE.md#val-message"
+    }
+   ]
+  },
+  "HS_STRING_MAP": {
+   "doc": "Maps keyed by strings, as the front end's scopes, exports and tables\nneed them: persistent, ordered by the keys, and balanced (red-black\ntrees, inserting only), so that a fold visits the keys in order and a\nresult does not depend on the order things were added.\n\n",
+   "page": "sig/HS_STRING_MAP.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "map",
+     "spec": "type 'a map",
+     "doc": "A map from strings to values of type `'a`.\n\n",
+     "page": "sig/HS_STRING_MAP.md#type-map"
+    },
+    {
+     "kind": "val",
+     "name": "empty",
+     "spec": "val empty : 'a map",
+     "doc": "The map with no key.\n\n",
+     "page": "sig/HS_STRING_MAP.md#val-empty"
+    },
+    {
+     "kind": "val",
+     "name": "insert",
+     "spec": "val insert : 'a map * string * 'a -> 'a map",
+     "doc": "`insert (m, k, v)` is `m` with `k` mapped to `v`, in place of what `m`\nmapped it to.\n\n",
+     "page": "sig/HS_STRING_MAP.md#val-insert"
+    },
+    {
+     "kind": "val",
+     "name": "find",
+     "spec": "val find : 'a map * string -> 'a option",
+     "doc": "`find (m, k)` is what `m` maps `k` to, if anything.\n\n",
+     "page": "sig/HS_STRING_MAP.md#val-find"
+    },
+    {
+     "kind": "val",
+     "name": "member",
+     "spec": "val member : 'a map * string -> bool",
+     "doc": "`member (m, k)` is whether `m` maps `k`.\n\n",
+     "page": "sig/HS_STRING_MAP.md#val-member"
+    },
+    {
+     "kind": "val",
+     "name": "foldl",
+     "spec": "val foldl : (string * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b",
+     "doc": "`foldl f init m` folds `f` over the keys and values of `m` in the\norder of the keys.\n\n",
+     "page": "sig/HS_STRING_MAP.md#val-foldl"
+    },
+    {
+     "kind": "val",
+     "name": "listItems",
+     "spec": "val listItems : 'a map -> (string * 'a) list",
+     "doc": "`listItems m` is the pairs of `m` in the order of the keys.\n\n",
+     "page": "sig/HS_STRING_MAP.md#val-listitems"
+    },
+    {
+     "kind": "val",
+     "name": "size",
+     "spec": "val size : 'a map -> int",
+     "doc": "`size m` is the number of keys of `m`.\n\n",
+     "page": "sig/HS_STRING_MAP.md#val-size"
+    }
+   ]
+  },
+  "HS_TOKEN": {
+   "doc": "The lexemes of Haskell 98 (the Report's chapter 2 and section 9.2), with\nwhat lies between them.\n\nThree tokens are the layout algorithm's (section 9.3) and never the\nlexer's: `VLBRACE`, `VSEMI` and `VRBRACE`, the braces and semicolon it\nputs in. They stay apart from the written ones, so that a trace shows\nwhat layout did. Comments, pragmas and white space are not tokens: each\ntoken keeps the trivia before it, so that a tree can be printed back as\nits file (the haskell98 roadmap's D28).\n\n",
+   "page": "sig/HS_TOKEN.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "token",
+     "spec": "datatype token =\n    VARID of string\n  | CONID of string\n  | QVARID of string * string\n  | QCONID of string * string\n  | VARSYM of string\n  | CONSYM of string\n  | QVARSYM of string * string\n  | QCONSYM of string * string\n  | INTEGER of IntInf.int * string\n  | FLOAT of string\n  | CHAR of int * string\n  | STRING of int list * string\n  | LPAREN | RPAREN | COMMA | SEMI | LBRACKET | RBRACKET | BACKQUOTE | LBRACE\n  | RBRACE\n  | DOTDOT | COLON | DCOLON | EQUALS | BACKSLASH | BAR | LARROW | RARROW | AT | TILDE\n  | DARROW\n  | CASE | CLASS | DATA | DEFAULT | DERIVING | DO | ELSE | IF | IMPORT | IN | INFIX\n  | INFIXL | INFIXR | INSTANCE | LET | MODULE | NEWTYPE | OF | THEN | TYPE | WHERE\n  | UNDERSCORE\n  | VLBRACE\n  | VSEMI\n  | VRBRACE\n  | EOF",
+     "doc": "A lexeme. A qualified name is its qualifier and its name; a literal\nkeeps its value and its text as written.\n\n",
+     "page": "sig/HS_TOKEN.md#type-token"
+    },
+    {
+     "kind": "datatype",
+     "name": "trivia",
+     "spec": "datatype trivia =\n    Whitespace\n  | LineComment\n  | BlockComment\n  | Pragma\n  | ByteOrderMark",
+     "doc": "What a stretch of trivia is.\n\n",
+     "page": "sig/HS_TOKEN.md#type-trivia"
+    },
+    {
+     "kind": "type",
+     "name": "trivium",
+     "spec": "type trivium = {kind : trivia, start : int, stop : int}",
+     "doc": "A stretch of trivia, by the bytes of the file it covers.\n\n",
+     "page": "sig/HS_TOKEN.md#type-trivium"
+    },
+    {
+     "kind": "type",
+     "name": "item",
+     "spec": "type item = {token : token, start : int, stop : int, line : int, column : int, first : bool,\n             trivia : trivium list}",
+     "doc": "A token as the lexer reads it, with where it is.\n\nThe bytes it covers, the line it is on, its column as layout counts\nit (a tab to the next multiple of eight, plus one), whether it is the\nfirst token of its line, and the trivia before it.\n\n",
+     "page": "sig/HS_TOKEN.md#type-item"
+    },
+    {
+     "kind": "val",
+     "name": "reservedId",
+     "spec": "val reservedId : string -> token option",
+     "doc": "`reservedId s` is the keyword `s` is, if it is one; `_` among them.\n\n",
+     "page": "sig/HS_TOKEN.md#val-reservedid"
+    },
+    {
+     "kind": "val",
+     "name": "reservedOp",
+     "spec": "val reservedOp : string -> token option",
+     "doc": "`reservedOp s` is the reserved operator `s` is, if it is one.\n\n",
+     "page": "sig/HS_TOKEN.md#val-reservedop"
+    },
+    {
+     "kind": "val",
+     "name": "show",
+     "spec": "val show : token -> string",
+     "doc": "`show t` is the text `t` stands for, `{v`, `v;` and `v}` for layout's\ntokens and `<eof>` for the end.\n\n",
+     "page": "sig/HS_TOKEN.md#val-show"
+    },
+    {
+     "kind": "val",
+     "name": "describe",
+     "spec": "val describe : token -> string",
+     "doc": "`describe t` names `t` in a diagnostic: its text in backquotes, and\nlayout's tokens and the end by what they are.\n\n",
+     "page": "sig/HS_TOKEN.md#val-describe"
+    },
+    {
+     "kind": "val",
+     "name": "plain",
+     "spec": "val plain : token -> token",
+     "doc": "`plain t` is the written token that layout's `t` stands for, and `t`\nwhen it is not layout's.\n\n",
+     "page": "sig/HS_TOKEN.md#val-plain"
     }
    ]
   }
@@ -364,7 +1544,24 @@
   "CoreInterp": "CORE_INTERP",
   "CoreLint": "CORE_LINT",
   "CorePrim": "CORE_PRIM",
+  "CorePrimFamily": "CORE_PRIM_FAMILY",
+  "CoreRuntime": "CORE_RUNTIME",
   "CoreText": "CORE_TEXT",
-  "CoreToMid": "CORE_TO_MID"
+  "CoreToMid": "CORE_TO_MID",
+  "HsAst": "HS_AST",
+  "HsChar": "HS_CHAR",
+  "HsDump": "HS_DUMP",
+  "HsFixity": "HS_FIXITY",
+  "HsLayout": "HS_LAYOUT",
+  "HsLexer": "HS_LEXER",
+  "HsLint": "HS_LINT",
+  "HsLiterate": "HS_LITERATE",
+  "HsModules": "HS_MODULES",
+  "HsParser": "HS_PARSER",
+  "HsPrint": "HS_PRINT",
+  "HsRename": "HS_RENAME",
+  "HsSource": "HS_SOURCE",
+  "HsStringMap": "HS_STRING_MAP",
+  "HsToken": "HS_TOKEN"
  }
 }

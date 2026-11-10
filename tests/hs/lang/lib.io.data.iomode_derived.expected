@@ -1,0 +1,8 @@
+([ReadMode,WriteMode,AppendMode,ReadWriteMode],[ReadMode,WriteMode,AppendMode,ReadWriteMode],2,False)
+(True,WriteMode,3,AppendMode,(ReadMode,ReadWriteMode))
+([NoBuffering,LineBuffering,BlockBuffering Nothing,BlockBuffering (Just 4)],True,True)
+(BlockBuffering (Just 8),NoBuffering,True)
+([AbsoluteSeek,RelativeSeek,SeekFromEnd],[AbsoluteSeek,RelativeSeek,SeekFromEnd],RelativeSeek,GT)
+(True,False,True,True,True)
+(True,False,True,True,True)
+('a',True,False,True)

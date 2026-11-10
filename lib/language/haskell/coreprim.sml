@@ -59,6 +59,7 @@ struct
     @ [("double_from_int", unary ("Int", "Double"), "the Double nearest an Int"),
        ("double_to_str", unary ("Double", "Str"), "the text Mid's real_to_string gives: 12 digits, ~ for a minus, .0 where there is no point")]
     @ floating ("double", "Double", "")
+    @ [("double_pow", binary ("Double", "Double"), "the first to the power of the second, as C's pow")]
     @ List.map (fn (n, d) => ("float_" ^ n, binary ("Float", "Float"), d ^ ", rounded to binary32"))
                [("add", "the sum"), ("sub", "the difference"), ("mul", "the product"), ("div", "the quotient")]
     @ [("float_neg", unary ("Float", "Float"), "the negation")]
@@ -72,7 +73,13 @@ struct
        ("str_byte", binary' ("Str", "Int", "Int"), "the byte at an index, from 0; Subscript outside"),
        ("str_concat", binary ("Str", "Str"), "the bytes of one, then the other's"),
        ("str_from_char", unary ("Char", "Str"), "the bytes of a character in UTF-8"),
-       ("str_extract", "(-> !Str !Int !Int Str)", "the bytes from an index, as many as the length; Subscript outside")]
+       ("str_extract", "(-> !Str !Int !Int Str)", "the bytes from an index, as many as the length; Subscript outside"),
+       ("str_eq", binary ("Str", "Bool"), "whether the bytes are the same")]
+    @ [("arr_new", "(forall (a) (-> !Int a " ^ io "!(Arr a)" ^ "))", "a new array of so many cells, each holding the value, unforced"),
+       ("arr_set", "(forall (a) (-> !(Arr a) !Int a World World))", "puts a value in a cell, unforced; Subscript outside"),
+       ("arr_read", "(forall (a) (-> !(Arr a) !Int " ^ io "a" ^ "))", "what a cell holds; Subscript outside"),
+       ("arr_get", "(forall (a) (-> !(Arr a) !Int a))", "what a cell of an array no one writes again holds; Subscript outside"),
+       ("arr_size", "(forall (a) (-> !(Arr a) Int))", "the number of cells")]
     @ [("print_str", "(-> !Str World World)", "writes the bytes to standard output"),
        ("print_err", "(-> !Str World World)", "writes the bytes to standard error"),
        ("exit", "(-> !Int World World)", "ends the program with a status, standard output written"),
@@ -93,7 +100,12 @@ struct
     @ [("raise", "(forall (a) (-> !Exn a))", "raises an exception"),
        ("raise_io", "(forall (a) (-> !Exn " ^ io "a" ^ "))", "an action that raises an exception, ioError's"),
        ("exn_error", unary ("Str", "Exn"), "the exception error raises, ErrorCall"),
-       ("exn_io", unary ("Str", "Exn"), "an IOError, the one exception catch sees in Haskell 98"),
+       ("exn_io", unary ("Str", "Exn"), "an IOError, the one exception catch sees in Haskell 98: a user's, of no file and no handle"),
+       ("exn_io_full", "(-> !Int !Str !Str !Int Exn)",
+        "an IOError of a kind's code (0 a user's, 1 already exists, 2 does not exist, 3 in use, 4 full, 5 end of file, 6 illegal, 7 permission, 8 other), a text, a file (\"\" for none) and a handle (~1)"),
+       ("exn_io_code", unary ("Exn", "Int"), "an IOError's code; 0 for any other exception"),
+       ("exn_io_file", unary ("Exn", "Str"), "an IOError's file; \"\" for any other exception"),
+       ("exn_io_handle", unary ("Exn", "Int"), "an IOError's handle; ~1 for any other exception"),
        ("exn_pattern", unary ("Str", "Exn"), "the exception of a failed match, PatternMatchFail"),
        ("exn_kind", unary ("Exn", "Int"), "the number of an exception's kind, in exnKinds"),
        ("exn_name", unary ("Exn", "Str"), "the name of an exception's kind"),
@@ -101,7 +113,18 @@ struct
        ("catch", "(forall (a) (-> " ^ io "a" ^ " (-> !Exn " ^ io "a" ^ ") " ^ io "a" ^ "))",
         "runs an action, and the handler on what it raises: every exception, which the Prelude narrows")]
 
-  val prims = List.map (fn (name, ty, doc) => {name = name, ty = CoreText.parseType ty, doc = doc}) table
+  (* the families of primitives, each of a file of its own *)
+  val families : CorePrimFamily.family list = [CorePrimIo.family]
+
+  val prims =
+    List.map (fn (name, ty, doc) => {name = name, ty = CoreText.parseType ty, doc = doc})
+             (table @ List.concat (List.map (fn {prims, ...} => List.map (fn {name, ty, doc, ...} => (name, ty, doc)) prims) families))
+
+  fun familyOf name =
+    List.foldl (fn (f as {prims, ...} : CorePrimFamily.family, NONE) =>
+                     Option.map (fn p => (f, p)) (List.find (fn {name = n, ...} : CorePrimFamily.prim => n = name) prims)
+                 | (_, found) => found)
+               NONE families
 
   fun find name = List.find (fn {name = n, ...} => n = name) prims
 

@@ -124,6 +124,8 @@ struct
      "    (let (vrmK : int) (app grtExnKind vrmE)",
      "    (let (vrmS : bool) (prim int_lt vrmK 3 : (int * int) -> bool)",
      "    (let (vrmP : bool) (prim int_ge vrmK 0 : (int * int) -> bool)",
+     "    (let (vrm1 : bool) (prim poly_eq vrmK 1 : (int * int) -> bool)",
+     "    (if vrm1 (let (vrmI : (string * int * string * int)) (exnarg vrmE : (string * int * string * int)) (return (select 0 vrmI)))",
      "    (if vrmS (if vrmP (return (exnarg vrmE : string)) (return \"\"))",
      "    (let (vrm3 : bool) (prim poly_eq vrmK 3 : (int * int) -> bool) (if vrm3 (return \"<<loop>>\")",
      "    (let (vrm4 : bool) (prim poly_eq vrmK 4 : (int * int) -> bool) (if vrm4 (return \"divide by zero\")",
@@ -131,7 +133,7 @@ struct
      "    (let (vrm6 : bool) (prim poly_eq vrmK 6 : (int * int) -> bool) (if vrm6 (return \"index out of range\")",
      "    (let (vrm7 : bool) (prim poly_eq vrmK 7 : (int * int) -> bool) (if vrm7 (return \"chr\")",
      "    (let (vrm8 : bool) (prim poly_eq vrmK 8 : (int * int) -> bool) (if vrm8 (return \"domain\")",
-     "    (return \"\"))))))))))))))))))",
+     "    (return \"\"))))))))))))))))))))",
      "  (fn grtChr ((vrcC : int)) : int \"chr\"",
      "    (let (vrcL : bool) (prim int_lt vrcC 0 : (int * int) -> bool)",
      "    (let (vrcH : bool) (prim int_gt vrcC 1114111 : (int * int) -> bool)",
@@ -173,7 +175,32 @@ struct
      "    (return (prim string_concat vruU4 vruL : (string * string) -> string)))))))))))))))))",
      "  (fn grtRead ((vhH : int) (vhN : int)) : string \"read\"",
      "    (handle vhX (return (prim file_read_vec vhH vhN : (int * int) -> string))",
-     "      (let (vhE : exn) (mkexn grtIOError \"read failed\") (raise vhE))))",
+     "      (let (vhI : (string * int * string * int)) (tuple \"read failed\" 8 \"\" vhH)",
+     "      (let (vhE : exn) (mkexn grtIOError vhI) (raise vhE)))))",
+     "  (fn grtEndText ((vetE : exn)) : string \"end_text\"",
+     "    (let (vetM : string) (app grtExnMessage vetE)",
+     "    (let (vetK : int) (app grtExnKind vetE)",
+     "    (let (vetI : bool) (prim poly_eq vetK 1 : (int * int) -> bool)",
+     "    (if vetI",
+     "      (let (vetC : int) (app grtIoCode vetE)",
+     "      (let (vetU : bool) (prim poly_eq vetC 0 : (int * int) -> bool)",
+     "      (if vetU",
+     "        (let (vetA : string) (prim string_concat \"user error (\" vetM : (string * string) -> string)",
+     "        (return (prim string_concat vetA \")\" : (string * string) -> string)))",
+     "        (return vetM))))",
+     "      (return vetM))))))",
+     "  (fn grtIoCode ((vicE : exn)) : int \"exn_io_code\"",
+     "    (let (vicK : int) (app grtExnKind vicE)",
+     "    (let (vicB : bool) (prim poly_eq vicK 1 : (int * int) -> bool)",
+     "    (if vicB (let (vicI : (string * int * string * int)) (exnarg vicE : (string * int * string * int)) (return (select 1 vicI))) (return 0)))))",
+     "  (fn grtIoFile ((vifE : exn)) : string \"exn_io_file\"",
+     "    (let (vifK : int) (app grtExnKind vifE)",
+     "    (let (vifB : bool) (prim poly_eq vifK 1 : (int * int) -> bool)",
+     "    (if vifB (let (vifI : (string * int * string * int)) (exnarg vifE : (string * int * string * int)) (return (select 2 vifI))) (return \"\")))))",
+     "  (fn grtIoHandle ((vihE : exn)) : int \"exn_io_handle\"",
+     "    (let (vihK : int) (app grtExnKind vihE)",
+     "    (let (vihB : bool) (prim poly_eq vihK 1 : (int * int) -> bool)",
+     "    (if vihB (let (vihI : (string * int * string * int)) (exnarg vihE : (string * int * string * int)) (return (select 3 vihI))) (return ~1)))))",
      "  (fn grtIsInfinite ((viX : real)) : bool \"is_infinite\"",
      "    (let (viN : bool) (prim real_is_nan viX : real -> bool)",
      "    (if viN (return (con0 0 : bool))",
@@ -338,6 +365,7 @@ struct
         | t =>
             case spine t of
               (TCon "Ref", [a]) => "(" ^ slotTy env a ^ " ref)"
+            | (TCon "Arr", [a]) => "(" ^ slotTy env a ^ " array)"
             | (TCon c, args) =>
                 (case tyconInfo c of
                    SOME {shape = NewT field, params, ...} => valTy env (hd (instFields (params, args, [field])))
@@ -399,6 +427,10 @@ struct
 
       fun letv (ty, rhs, body : string -> string) =
         let val v = freshVar () in "(let (" ^ v ^ " : " ^ ty ^ ") " ^ rhs ^ " " ^ body v ^ ")" end
+
+      (* the families of primitives a program names (CorePrimFamily), whose
+         Mid text it has once *)
+      val familiesUsed : string list ref = ref []
 
       (* Integer's literals, IntInf.int in Mid (M31, D20's D): each a global,
          made once, from an Int where it fits Mid's and otherwise from its
@@ -1044,9 +1076,12 @@ struct
         let
           val {ty = pty, ...} = case CorePrim.find p of SOME x => x | NONE => raise Fail ("CoreToMid: no primitive " ^ p)
           val inst = List.foldl (fn (t, TForall (a, _, b)) => substTy ([(a, t)], b) | (_, t) => t) pty tys
-          fun params (TFun (q, r)) = let val (qs, res) = params r in (q :: qs, res) end
-            | params t = ([], t)
-          val (ps, res) = params inst
+          (* the parameters a primitive is given, as many as its atoms, and
+             what it gives: a result of a function type, as `raise` at one,
+             is no more parameters *)
+          fun params (TFun (q, r), n) = if n = 0 then ([], TFun (q, r)) else let val (qs, res) = params (r, n - 1) in (q :: qs, res) end
+            | params (t, _) = ([], t)
+          val (ps, res) = params (inst, length atoms)
           fun out (rhsTy, rhs) = letv (rhsTy, rhs, fn r => deliver (env, c, r, res))
           (* a primitive of Mid of the arguments Core keeps, the state token's dropped *)
           fun kept xs = ListPair.foldr (fn (x, q, acc) => if isWorld q then acc else x :: acc) [] (xs, ps)
@@ -1134,7 +1169,29 @@ struct
           | "raise" => atomSlots (env, atoms, ps, fn [e] => "(raise " ^ e ^ ")" | _ => raise Fail "raise")
           | "raise_io" => atomSlots (env, atoms, ps, fn (e :: _) => "(raise " ^ e ^ ")" | _ => raise Fail "raise_io")
           | "exn_error" => atomSlots (env, atoms, ps, fn [s] => out ("exn", "(mkexn grtErrorCall " ^ s ^ ")") | _ => raise Fail "exn_error")
-          | "exn_io" => atomSlots (env, atoms, ps, fn [s] => out ("exn", "(mkexn grtIOError " ^ s ^ ")") | _ => raise Fail "exn_io")
+          | "exn_io" =>
+              atomSlots (env, atoms, ps, fn [s] =>
+                letv ("(string * int * string * int)", "(tuple " ^ s ^ " 0 \"\" ~1)", fn t => out ("exn", "(mkexn grtIOError " ^ t ^ ")"))
+                | _ => raise Fail "exn_io")
+          | "exn_io_full" =>
+              atomSlots (env, atoms, ps, fn [code, text, file, h] =>
+                letv ("(string * int * string * int)", "(tuple " ^ text ^ " " ^ code ^ " " ^ file ^ " " ^ h ^ ")", fn t =>
+                  out ("exn", "(mkexn grtIOError " ^ t ^ ")"))
+                | _ => raise Fail "exn_io_full")
+          | "exn_io_code" => call "grtIoCode"
+          | "exn_io_file" => call "grtIoFile"
+          | "exn_io_handle" => call "grtIoHandle"
+          | "str_eq" => mid ("string_eq", "(string * string) -> bool")
+          | "double_pow" => mid ("real_pow", "(real * real) -> real")
+          | "arr_new" => midAs ("array_new", "(int * " ^ S ^ ") -> (" ^ S ^ " array)", "(" ^ S ^ " array)")
+          | "arr_set" => midAs ("array_update", "((" ^ S ^ " array) * int * " ^ S ^ ") -> unit", "unit")
+          | "arr_read" => midAs ("array_sub", "((" ^ S ^ " array) * int) -> " ^ S, S)
+          | "arr_size" => mid ("array_length", "(" ^ S ^ " array) -> int")
+          | "arr_get" =>
+              (* the cell's suspension, forced: a primitive gives a value *)
+              atomSlots (env, atoms, ps, fn xs =>
+                letv (S, "(prim array_sub " ^ argText xs ^ " : ((" ^ S ^ " array) * int) -> " ^ S ^ ")", fn sv =>
+                  letv (valTy env res, forceSusp (valTy env res, sv), fn v => deliver (env, c, v, res))))
           | "exn_pattern" => atomSlots (env, atoms, ps, fn [s] => out ("exn", "(mkexn grtPatternMatchFail " ^ s ^ ")") | _ => raise Fail "exn_pattern")
           | "exn_kind" => call "grtExnKind"
           | "exn_name" => call "grtExnName"
@@ -1216,7 +1273,11 @@ struct
                           | _ => raise Fail "encode")
                     | _ => real ("real_" ^ op', r2 ^ " -> real")
                 end
-              else raise Fail ("CoreToMid: no lowering of the primitive " ^ p)
+              else
+                case CorePrim.familyOf p of
+                  SOME ({name = fam, ...}, {mid = f, ...}) =>
+                    ((if member (fam, !familiesUsed) then () else familiesUsed := fam :: !familiesUsed); call f)
+                | NONE => raise Fail ("CoreToMid: no lowering of the primitive " ^ p)
         end
 
 
@@ -1318,7 +1379,7 @@ struct
                 atomValue (genv, Var "main", fn (m, _) => letv (R, "(app " ^ m ^ " ())", fn _ => "(return ())"))
               val handler =
                 letv ("string", "(app grtExnName " ^ x ^ ")", fn n =>
-                  letv ("string", "(app grtExnMessage " ^ x ^ ")", fn msg =>
+                  letv ("string", "(app grtEndText " ^ x ^ ")", fn msg =>
                     letv ("string", "(prim string_concat \"rhc: bottom: \" " ^ n ^ " : (string * string) -> string)", fn a =>
                       letv ("string", "(prim string_concat " ^ a ^ " \": \" : (string * string) -> string)", fn b =>
                         letv ("string", "(prim string_concat " ^ b ^ " " ^ msg ^ " : (string * string) -> string)", fn d =>
@@ -1328,6 +1389,9 @@ struct
             in "(do () (handle " ^ x ^ " " ^ run ^ " " ^ handler ^ "))\n" end
     in
       concat (datatypes @ [prelude]
+              @ List.mapPartial (fn {name, midText, ...} : CorePrimFamily.family =>
+                                   if member (name, !familiesUsed) then SOME midText else NONE)
+                                CorePrim.families
               @ List.map integerDef (List.rev (!integerLits))
               @ (if null functions then [] else ["(funs\n  " ^ String.concatWith "\n  " functions ^ ")\n"])
               @ cafs @ [main])
