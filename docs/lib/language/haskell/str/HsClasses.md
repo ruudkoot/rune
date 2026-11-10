@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_CLASSES`](../sig/HS_CLASSES.md) |
 | Status | required |
-| Members | 14 |
+| Members | 15 |
 | Tests | not listed |
 | Source | [lib/language/haskell/classes.sml](../../../../../lib/language/haskell/classes.sml) |
 
@@ -27,6 +27,7 @@ What each means is on [`HS_CLASSES`](../sig/HS_CLASSES.md); the types are this s
 | type | [`instance`](../sig/HS_CLASSES.md#type-instance) | `{cls : string, ctx : {cls : string, ty : HsTypes.ty} list, derived : bool, home : string, id : string, tycon : string, vars : int}` |
 | val | [`addClass`](../sig/HS_CLASSES.md#val-addclass) | `env * class -> env` |
 | val | [`addInstance`](../sig/HS_CLASSES.md#val-addinstance) | `env * instance -> env` |
+| val | [`classList`](../sig/HS_CLASSES.md#val-classlist) | `env -> class list` |
 | val | [`empty`](../sig/HS_CLASSES.md#val-empty) | `env` |
 | val | [`findClass`](../sig/HS_CLASSES.md#val-findclass) | `env * string -> class option` |
 | val | [`findInstance`](../sig/HS_CLASSES.md#val-findinstance) | `env * string * string -> instance option` |

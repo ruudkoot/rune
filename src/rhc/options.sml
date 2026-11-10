@@ -52,6 +52,11 @@ struct
     \  --hslint-rules        print the name of each rule of HsLint's comparison, one a line\n\
     \  --dump-binders        print each local name of FILE.hs's own modules, a line for each\n\
     \                        binding site (BIND) and use (USE): its renamed name, file:start-end\n\
+    \  --dump-iface          print each of FILE.hs's modules' interface: its items' text and\n\
+    \                        fingerprints (M21)\n\
+    \  --dump-usages         print what each unit of FILE.hs's program reads of its imports (M21)\n\
+    \  --by-interface        with --typecheck-only, check each group of the program from the\n\
+    \                        interfaces of the groups before it (M21)\n\
     \  --names=least|greatest  the solution of a cycle's exports (D29): the least fixpoint,\n\
     \                        the default, or the greatest; chapter 5 is met by either\n\
     \  --cycle-default=module|scc  in a cycle of modules, each module's default declaration\n\

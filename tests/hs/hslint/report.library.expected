@@ -2,9 +2,9 @@ TYPE	haskell98:Array	arrPrec :: Int
 TYPE	haskell98:Char	asciiTab :: Array Char [Char]
 TYPE	haskell98:Char	protectEsc :: (Char -> Bool) -> ([Char] -> a) -> [Char] -> a
 TYPE	haskell98:PreludeRuntime	handleId :: Handle -> Int
+TYPE	haskell98:PreludeRuntime	handleState :: Handle -> Ref Int
 TYPE	haskell98:PreludeRuntime	handleWrites :: Handle -> Bool
 TYPE	haskell98:PreludeRuntime	handleName :: Handle -> [Char]
-TYPE	haskell98:PreludeRuntime	handleState :: Handle -> Ref Int
 TYPE	haskell98:PreludeRuntime	handleFd :: Handle -> Int
 TYPE	haskell98:PreludeRuntime	handleSeeks :: Handle -> Bool
 TYPE	haskell98:PreludeRuntime	handleAhead :: Handle -> Ref [Char]

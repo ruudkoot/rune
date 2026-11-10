@@ -15,7 +15,7 @@
    --share names are not those it was saved with. Either way the program
    reaches the same modules of the library, in the same order
    (RhcGraph.canonical), and the same numbers for its own fresh variables
-   (RhcNames.programCounters), so that the two print alike: the jobs
+   (RhcNames.unitCounters), so that the two print alike: the jobs
    hs/world/* hold them to it. *)
 structure RhcWorld =
 struct
@@ -125,7 +125,6 @@ struct
           val known = List.foldl (fn (n : G.node, m) => M.insert (m, #id n, n)) M.empty (List.concat libraryGroups)
           val gp = G.loadFrom {roots = roots, dotted = dotted, known = known, library = false}
           val nodes = List.concat (#groups gp)
-          val s = RhcNames.groups (RhcNames.extend (#state w, nodes), #groups gp, fixpoint, check)
           (* the modules of the library the program reaches *)
           fun reach (id, seen) =
             if M.member (seen, id) then seen
@@ -136,17 +135,41 @@ struct
           val reached = List.foldl (fn (n : G.node, s) => List.foldl (fn ((_, t), s) => reach (t, s)) s (#imports n))
                           M.empty nodes
           fun keeps (n : G.node) = not (#library n) orelse M.member (reached, #id n)
+          (* a module of the program's, or of the library's it reaches: rhc's
+             modules of primitives too, which are no files *)
+          fun keepsHome h = not (M.member (known, h)) orelse M.member (reached, h)
+          (* the world's state of those modules alone, as a whole check has
+             it: no instance of a module the program does not reach in force
+             while it is checked, no exports of one *)
+          val ws = #state w
+          val from : RhcNames.state =
+            {defs = #defs ws, universe = #universe ws, fixities = #fixities ws, library = #library ws,
+             exports = M.foldl (fn (id, es, m) => if keepsHome id then M.insert (m, id, es) else m) M.empty (#exports ws),
+             scopes = #scopes ws, diags = #diags ws, modules = #modules ws, derived = #derived ws, evidence = #evidence ws,
+             types = HsInfer.extend (HsInfer.initial {primitives = []}, HsInfer.part (#types ws, keepsHome))}
+          val s = RhcNames.groups (RhcNames.extend (from, nodes), #groups gp, fixpoint, check)
           val libraryFiles = List.foldl (fn (n : G.node, m) => M.insert (m, #file n, keeps n)) M.empty (List.concat libraryGroups)
           val r = RhcNames.result (s, isSome check)
-          fun keepsFile f = getOpt (M.find (libraryFiles, f), true)
+          (* a file of a kept module, or a derived instance's, `derived C T
+             in M`, of a kept M *)
+          fun keepsFile f =
+            case M.find (libraryFiles, f) of
+              SOME k => k
+            | NONE =>
+                if String.isPrefix "derived " f then
+                  case List.rev (String.tokens (fn c => c = #" ") f) of
+                    m :: "in" :: _ => keepsHome m
+                  | _ => true
+                else true
         in
           ({groups = List.filter (List.all keeps) libraryGroups @ #groups gp, roots = #roots gp, diags = #diags gp},
            {modules = List.filter (keeps o #1) (#modules r), exports = #exports r,
             diags = List.filter (fn d => not (#library d) orelse keepsFile (#file (#span d))) (#diags r),
+            types = #types r,
             (* the records of the modules kept, which HsLint replays at
                level 2 against those modules alone, as a whole check has
                them *)
-            types = #types r, evidence = evidenceOf (#evidence r, keepsFile),
+            evidence = evidenceOf (#evidence r, keepsFile),
             derived = List.filter (fn (h, _, _) => not (M.member (known, h)) orelse M.member (reached, h)) (#derived r)})
         end
 end

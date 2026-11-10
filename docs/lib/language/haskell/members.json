@@ -885,7 +885,7 @@
      "kind": "val",
      "name": "findInstance",
      "spec": "val findInstance : env * string * string -> instance option",
-     "doc": "`findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`.\n\n",
+     "doc": "`findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`,\na read of the instance's, found or not (HsUsage, H2).\n\n",
      "page": "sig/HS_CLASSES.md#val-findinstance"
     },
     {
@@ -894,6 +894,13 @@
      "spec": "val instances : env -> instance list",
      "doc": "`instances env` is every instance of `env`.\n\n",
      "page": "sig/HS_CLASSES.md#val-instances"
+    },
+    {
+     "kind": "val",
+     "name": "classList",
+     "spec": "val classList : env -> class list",
+     "doc": "`classList env` is every class of `env`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-classlist"
     },
     {
      "kind": "val",
@@ -1766,8 +1773,29 @@
      "kind": "val",
      "name": "renumber",
      "spec": "val renumber : int -> unit",
-     "doc": "`renumber n` makes the checker's next fresh variables, and HsTypes',\nnumber from `n`.\n\nA program's are then numbered alike however much of the library was\nchecked before it (rhc's saved world).\n\n**Raises** `Fail` where a variable has had `n` already.\n\n",
+     "doc": "`renumber n` makes the checker's next fresh variables, and HsTypes',\nnumber from `n`, where they have not passed it.\n\nA program's are then numbered alike however much of the library was\nchecked before them (rhc's saved world, a program checked by\ninterfaces), and stay apart from each other and from the library's,\nsince a dictionary's name is one of them.\n\n",
      "page": "sig/HS_INFER.md#val-renumber"
+    },
+    {
+     "kind": "type",
+     "name": "part",
+     "spec": "type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,\n             instances : HsClasses.instance list,\n             cons : (string * {tycon : string, arity : int, fields : string list}) list,\n             fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,\n             methods : (string * {cls : string, scheme : HsTypes.scheme}) list}",
+     "doc": "What the environment holds of one module's entities, by key.\n\nThat is its values' types (its constructors', fields' and methods'\namong them), its type constructors and synonyms, its classes, the\ninstances it declares or derives, and what the checker keeps of its\nconstructors, fields and methods. A unit's interface holds its\nmodules' parts (HsModIface, the haskell98 roadmap's M21).\n\n",
+     "page": "sig/HS_INFER.md#type-part"
+    },
+    {
+     "kind": "val",
+     "name": "part",
+     "spec": "val part : env * (string -> bool) -> part",
+     "doc": "`part (env, mine)` is what `env` holds of the entities whose module's\nidentity `mine` accepts, and of the instances it declares.\n\n",
+     "page": "sig/HS_INFER.md#val-part"
+    },
+    {
+     "kind": "val",
+     "name": "extend",
+     "spec": "val extend : env * part -> env",
+     "doc": "`extend (env, p)` is `env` with the part `p`, as a client checks\nagainst a module it has only the interface of.\n\n",
+     "page": "sig/HS_INFER.md#val-extend"
     },
     {
      "kind": "val",
@@ -2307,6 +2335,40 @@
      "spec": "val solve : {group : unit_ list, exportsOf : string -> entity list, defOf : string -> def option,\n             universe : entity list, fixpoint : fixpoint} -> solved",
      "doc": "`solve {group, exportsOf, defOf, universe, fixpoint}` solves the\nexports and the scopes of the strongly connected group of modules\n`group`.\n\n`exportsOf id` gives the exports of a module outside the group,\nsolved before it, `defOf` gives the definition of every entity of the\nprogram, by `key`, and `universe` is every entity of the program,\nfrom which the greatest fixpoint starts. The errors are\nthose of chapter 5: an export of what is not in scope, of a module\nthat is not imported, two entities exported under one name, an import\nof what a module does not export.\n\n",
      "page": "sig/HS_MODULES.md#val-solve"
+    }
+   ]
+  },
+  "HS_MOD_IFACE": {
+   "doc": "A module's interface as the renamer and the checker make it (the\nhaskell98 roadmap's M21, D44): what a client of the module needs of it\nto be named and checked against it in place of its source, by entity,\nand the fingerprints a store's usages compare (E13's H5, H6). HsIface,\nrhc's interface of a unit, holds one for each of its modules beside its\nCore, and codes them.\n\n",
+   "page": "sig/HS_MOD_IFACE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t = {id : string, exports : HsModules.entity list, defs : HsModules.def list,\n          fixities : (string * (HsAst.fixity * int)) list, checked : HsInfer.part}",
+     "doc": "A module's interface, what a client is named and checked by.\n\nIt holds the module's identity; what it exports, by entity, as\nHsModules solved them; what it defines at its top level, with its\nsort, parent and arity, which an import of `T(..)` reads; the\nfixities of its operators, by entity key; and its part of the\nchecker's environment.\n\n",
+     "page": "sig/HS_MOD_IFACE.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "make",
+     "spec": "val make : {id : string, exports : HsModules.entity list, defs : HsModules.def list,\n            fixity : string -> (HsAst.fixity * int) option, env : HsInfer.env} -> t",
+     "doc": "`make {id, exports, defs, fixity, env}` is the interface of the module\n`id`, from the program's tables after its unit is checked.\n\n`fixity key` is the fixity of an operator, and `env` the checker's\nenvironment.\n\n",
+     "page": "sig/HS_MOD_IFACE.md#val-make"
+    },
+    {
+     "kind": "val",
+     "name": "canonical",
+     "spec": "val canonical : t -> (string * string) list",
+     "doc": "`canonical t` is each item of the interface by its key, with the text\nthat stands for what a client reads of it.\n\nAn item is a type with its constructors and fields, a class with its\nmethods, a value, or an instance by its identity; its text holds keys,\nkinds, schemes over `TGen` numbers, contexts, and the fixities of its\nnames. Two interfaces that a client reads alike have the same text.\n\n",
+     "page": "sig/HS_MOD_IFACE.md#val-canonical"
+    },
+    {
+     "kind": "val",
+     "name": "fingerprints",
+     "spec": "val fingerprints : (string -> string) -> t * (string -> string option) -> (string * string) list",
+     "doc": "`fingerprints hash (t, external)` is the fingerprint of each entity\nand instance of `t`, by its key or identity.\n\nA type's constructors and fields and a class's methods have their\nparent's.\n\nItems are taken in recursive groups (one mentions another, through a\ntype, a class, a superclass, an instance's class, type or context): a\ngroup's fingerprint is `hash` of its members' canonical text and of\nthe fingerprints of the entities outside the module they mention,\n`external key` (the key itself where that is NONE: a built-in type),\nso that it moves where what a client reads of it moves, and with what\nit mentions.\n\n",
+     "page": "sig/HS_MOD_IFACE.md#val-fingerprints"
     }
    ]
   },
@@ -2850,7 +2912,7 @@
      "kind": "val",
      "name": "renumber",
      "spec": "val renumber : int -> unit",
-     "doc": "`renumber n` makes the next fresh unification and kind variables\nnumber from `n`.\n\nWhat follows is then numbered alike however much came before (rhc's\nsaved world).\n\n**Raises** `Fail` where a variable has had `n` already.\n\n",
+     "doc": "`renumber n` makes the next fresh unification and kind variables\nnumber from `n`, where they have not passed it.\n\nWhat follows is then numbered alike however much came before it below\n`n` (rhc's saved world, a program checked by interfaces).\n\n",
      "page": "sig/HS_TYPES.md#val-renumber"
     },
     {
@@ -2966,6 +3028,47 @@
      "page": "sig/HS_TYPES.md#val-showscheme"
     }
    ]
+  },
+  "HS_USAGE": {
+   "doc": "What a compile of a unit reads of the units it imports (the haskell98\nroadmap's M21, E13's obligations H1, H2, H7 and H9), noted where the\nrenamer, the checker and the translations read it, so that a store's\nentry of the unit is used only where each read gives now what it gave\nthen. A read is noted found or not: a name a module looks up and does\nnot find is read too, since an import that comes to export it changes\nthe module (5.5.2). The note is a no-op until a driver sets it (rhc's,\nsrc/rhc/iface.sml).\n\n",
+   "page": "sig/HS_USAGE.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "read",
+     "spec": "datatype read =\n    Name of {within : string, space : string, qual : string, name : string}\n  | Item of {from : string, space : string, name : string}\n  | Exports of string\n  | Instance of {cls : string, tycon : string}\n  | Standard of {space : string, name : string}\n  | Entity of string",
+     "doc": "A read. Spaces are `\"v\"` for a value and `\"t\"` for a type or class,\nand entities, classes and type constructors are by their keys\n(HsModules.key).\n\n",
+     "page": "sig/HS_USAGE.md#type-read"
+    },
+    {
+     "kind": "val",
+     "name": "setNote",
+     "spec": "val setNote : (read -> unit) -> (read -> unit)",
+     "doc": "`setNote f` makes `f` the recorder, called with each read as it is\nmade, and is the recorder before it: until a driver sets one, a no-op.\n\n",
+     "page": "sig/HS_USAGE.md#val-setnote"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : read -> unit",
+     "doc": "`read r` notes `r`.\n\n",
+     "page": "sig/HS_USAGE.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "key",
+     "spec": "val key : read -> string",
+     "doc": "`key r` is `r` as one line of text, its fields apart by spaces, the\nname of a store's usage.\n\n**Example** `key (Exports \"M\") = \"exports M\"`\n\n",
+     "page": "sig/HS_USAGE.md#val-key"
+    },
+    {
+     "kind": "val",
+     "name": "fromKey",
+     "spec": "val fromKey : string -> read option",
+     "doc": "`fromKey s` is the read whose key is `s`, NONE for none.\n\n",
+     "page": "sig/HS_USAGE.md#val-fromkey"
+    }
+   ]
   }
  },
  "structures": {
@@ -2996,6 +3099,7 @@
   "HsLint": "HS_LINT",
   "HsLiterate": "HS_LITERATE",
   "HsMatch": "HS_MATCH",
+  "HsModIface": "HS_MOD_IFACE",
   "HsModules": "HS_MODULES",
   "HsParser": "HS_PARSER",
   "HsPrint": "HS_PRINT",
@@ -3004,6 +3108,7 @@
   "HsSource": "HS_SOURCE",
   "HsStringMap": "HS_STRING_MAP",
   "HsToken": "HS_TOKEN",
-  "HsTypes": "HS_TYPES"
+  "HsTypes": "HS_TYPES",
+  "HsUsage": "HS_USAGE"
  }
 }

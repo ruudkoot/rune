@@ -16,6 +16,7 @@ files
   src/rhc/graph.sml
   src/rhc/names.sml
   src/rhc/world.sml
+  src/rhc/iface.sml
   src/rhc/lint.sml
   src/rhc/desugar.sml
   src/rhc/syntax.sml

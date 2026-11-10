@@ -18,4 +18,6 @@ files
   derive.sml
   infer_sig.sml
   infer.sml
+  modiface_sig.sml
+  modiface.sml
 end

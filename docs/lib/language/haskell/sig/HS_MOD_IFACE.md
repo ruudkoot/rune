@@ -1,0 +1,125 @@
+# signature HS_MOD_IFACE
+
+[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; **HS_MOD_IFACE**
+
+|  |  |
+| --- | --- |
+| Status | required |
+| Implementations | 1 |
+| Documentation | 4 of 4 entries documented |
+| Tests | not listed |
+| Source | [lib/language/haskell/modiface\_sig.sml](../../../../../lib/language/haskell/modiface_sig.sml) |
+
+## Synopsis
+
+```sml
+signature HS_MOD_IFACE
+structure HsModIface :> HS_MOD_IFACE
+```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| [`HsModIface`](../str/HsModIface.md) |  | [lib/language/haskell/modiface.sml](../../../../../lib/language/haskell/modiface.sml) |
+
+A module's interface as the renamer and the checker make it (the
+haskell98 roadmap's M21, D44): what a client of the module needs of it
+to be named and checked against it in place of its source, by entity,
+and the fingerprints a store's usages compare (E13's H5, H6). HsIface,
+rhc's interface of a unit, holds one for each of its modules beside its
+Core, and codes them.
+
+## Interface
+
+<pre>
+signature HS_MOD_IFACE =
+sig
+  type <a href="#type-t">t</a> = {<a href="#fld-t.id">id</a> : string, <a href="#fld-t.exports">exports</a> : HsModules.entity list, <a href="#fld-t.defs">defs</a> : HsModules.def list,
+            <a href="#fld-t.fixities">fixities</a> : (string * (HsAst.fixity * int)) list, <a href="#fld-t.checked">checked</a> : HsInfer.part}
+  val <a href="#val-make">make</a> : {<a href="#fld-make.id">id</a> : string, <a href="#fld-make.exports">exports</a> : HsModules.entity list, <a href="#fld-make.defs">defs</a> : HsModules.def list,
+              <a href="#fld-make.fixity">fixity</a> : string -&gt; (HsAst.fixity * int) option, <a href="#fld-make.env">env</a> : HsInfer.env} -&gt; t
+  val <a href="#val-canonical">canonical</a> : t -&gt; (string * string) list
+  val <a href="#val-fingerprints">fingerprints</a> : (string -&gt; string) -&gt; t * (string -&gt; string option) -&gt; (string * string) list
+end
+</pre>
+
+### <a name="type-t"></a>`t`
+
+```sml
+type t = {id : string, exports : HsModules.entity list, defs : HsModules.def list,
+          fixities : (string * (HsAst.fixity * int)) list, checked : HsInfer.part}
+```
+
+A module's interface, what a client is named and checked by.
+
+It holds the module's identity; what it exports, by entity, as
+HsModules solved them; what it defines at its top level, with its
+sort, parent and arity, which an import of `T(..)` reads; the
+fixities of its operators, by entity key; and its part of the
+checker's environment.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-t.id"></a>`id` | `string` |  |
+| <a name="fld-t.exports"></a>`exports` | `HsModules.entity list` |  |
+| <a name="fld-t.defs"></a>`defs` | `HsModules.def list` |  |
+| <a name="fld-t.fixities"></a>`fixities` | `(string * (HsAst.fixity * int)) list` |  |
+| <a name="fld-t.checked"></a>`checked` | `HsInfer.part` |  |
+
+### <a name="val-make"></a>`make`
+
+```sml
+val make : {id : string, exports : HsModules.entity list, defs : HsModules.def list,
+            fixity : string -> (HsAst.fixity * int) option, env : HsInfer.env} -> t
+```
+
+`make {id, exports, defs, fixity, env}` is the interface of the module
+`id`, from the program's tables after its unit is checked.
+
+`fixity key` is the fixity of an operator, and `env` the checker's
+environment.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-make.id"></a>`id` | `string` |  |
+| <a name="fld-make.exports"></a>`exports` | `HsModules.entity list` |  |
+| <a name="fld-make.defs"></a>`defs` | `HsModules.def list` |  |
+| <a name="fld-make.fixity"></a>`fixity` | `string -> (HsAst.fixity * int) option` |  |
+| <a name="fld-make.env"></a>`env` | `HsInfer.env` |  |
+
+### <a name="val-canonical"></a>`canonical`
+
+```sml
+val canonical : t -> (string * string) list
+```
+
+`canonical t` is each item of the interface by its key, with the text
+that stands for what a client reads of it.
+
+An item is a type with its constructors and fields, a class with its
+methods, a value, or an instance by its identity; its text holds keys,
+kinds, schemes over `TGen` numbers, contexts, and the fixities of its
+names. Two interfaces that a client reads alike have the same text.
+
+### <a name="val-fingerprints"></a>`fingerprints`
+
+```sml
+val fingerprints : (string -> string) -> t * (string -> string option) -> (string * string) list
+```
+
+`fingerprints hash (t, external)` is the fingerprint of each entity
+and instance of `t`, by its key or identity.
+
+A type's constructors and fields and a class's methods have their
+parent's.
+
+Items are taken in recursive groups (one mentions another, through a
+type, a class, a superclass, an instance's class, type or context): a
+group's fingerprint is `hash` of its members' canonical text and of
+the fingerprints of the entities outside the module they mention,
+`external key` (the key itself where that is NONE: a built-in type),
+so that it moves where what a client reads of it moves, and with what
+it mentions.
+
+---
+
+<sub>Generated by runedoc from lib/language/haskell/modiface\_sig.sml; do not edit.</sub>
