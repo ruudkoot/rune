@@ -383,8 +383,9 @@ run's directory.
 rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.sml`), in the tier `nightly`:
 
 - `hs-rhc-corpus/m13-SET` and `rest-SET`, needing `rhc` and `hs-corpus`: each program of
-  `tests/hs/corpus/accept.tsv`, prepared in the variants the oracles judge it in, through
-  `bin/rhc --typecheck-only`, which stops after names and fixity until M13 lands and then checks types.
+  `tests/hs/corpus/accept.tsv`, prepared in the variants the oracles judge it in and last under D35's
+  `--dotted-names`, through `bin/rhc --typecheck-only`, which stops after names and fixity until M13 lands and then
+  checks types.
   `m13-SET` are the rows of M13's done-when, both judges accepting and nothing needed (815 in all, in `h98`);
   `rest-SET` the others. A program both judges accept and rhc refuses is a finding: it fails its job unless a
   line of `tests/hs/rhc-corpus.txt` names its cause, in the format of *Expectations* with the outcome first
