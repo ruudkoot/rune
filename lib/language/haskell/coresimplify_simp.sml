@@ -383,7 +383,25 @@ struct
     | Lam (bs, b) => let val (bs', env') = binders (env, bs) in mkLam (bs', exp env' b) end
     | Let (x, t, r, b) => letE (env, x, t, r, b)
     | LetRec (bs, b) => letRec (env, bs, b)
-    | Case (s, b, alts) => caseE (env, exp env s, b, alts)
+    | Case (s, b, alts) =>
+        let
+          val s' = exp env s
+          (* the scrutinee's type, where it is known: a polymorphic case
+             given a newtype, by an inlining or a specialisation, is a case
+             on that newtype, which Core has as a case on what it wraps *)
+          val st =
+            case (s, s') of
+              (_, Cast (_, t)) => SOME t
+            | (Atom (Var _), Atom (Var v)) => typeOfVar (env, v)
+            | (Atom (Var x), _) => if CoreMap.member (#inl env, x) then typeOfVar (env, x) else NONE
+            | _ => NONE
+        in
+          case Option.mapPartial (fn t => B.unfold (!dt) (stripEval t)) st of
+            SOME u =>
+              if List.all (fn AltDefault _ => true | _ => false) alts then newtypeCase (env, s', b, alts, stripEval (valOf st), u)
+              else caseE (env, s', b, alts)
+          | NONE => caseE (env, s', b, alts)
+        end
     | Con (c, tys, xs) => Con (c, List.map (ty env) tys, List.map (atom env) xs)
     | Prim (p, tys, xs) =>
         let val xs' = List.map (atom env) xs
@@ -552,7 +570,7 @@ struct
         Atom a => if canSubst (env, x, t', a) andalso B.tick "let-atom" then exp (setSub (env, x, a)) body else keep ()
       | _ =>
           if #n oc = 1 andalso not (#arg oc) andalso (not (#lam oc) orelse B.isValue r') andalso B.tick "inline-once"
-          then exp (setInl (env, x, r')) body
+          then exp (setType (setInl (env, x, r'), x, t')) body
           else keep ()
     end
 
@@ -588,6 +606,24 @@ struct
     end
 
   (* ---- Cases ---- *)
+
+  (* a case of s, of the newtype t that unfolds to u, whose alternatives
+     are a default: a case of s cast to u, its binder, where it is used, t's
+     value. The rewrite is what keeps the Core valid after a substitution,
+     and asks for no fuel *)
+  and newtypeCase (env : env, s : exp, b : string, alts : alt list, t : ty, u : ty) : exp =
+    let
+      val () = B.count "case-newtype"
+      val s'' = cast (env, s, u)
+    in
+      if not (used b) then caseE (env, s'', b, alts)
+      else
+        case s of
+          Atom (Var v) => caseE (setSub (env, b, Var v), s'', "_", alts)
+        | _ =>
+            let val b2 = B.fresh b
+            in caseE (env, s'', b2, List.map (fn AltDefault r => AltDefault (Let (b, t, Cast (Atom (Var b2), t), r)) | a => a) alts) end
+    end
 
   (* case s of alts, binding b, s of the output and the rest of the input *)
   and caseE (env : env, s : exp, b : string, alts : alt list) : exp =
