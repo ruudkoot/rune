@@ -667,8 +667,25 @@ again by layout (`hs/meta/layout`), and the program with `import Char ()`
 added (`hs/meta/import`, 5.3.1); and the pairs written by hand in
 `tests/hs/meta`, `NAME.hs` and `NAME.pair.hs`, the relation first in NAME:
 `rename` (bound variables renamed, 3.3, 3.12) and `reorder` (declarations
-reordered, 4.5.1 and the top level). A pair is held while its program's
-rows, or the rows its relation cites, are `Planned`.
+reordered, 4.5.1 and the top level). Two more are made from each program:
+`hs/meta/reorder`, its top-level blocks (runs of lines between blank ones) in
+the reverse order, and `hs/meta/split`, the program split into a module
+`Lib` holding every block but `main`'s and a `Main` that imports it (5, the
+multi-module form of a joined program; none is made where a `default`
+declaration or a name qualified by `Main` would change the program). A pair
+is held while its program's rows, or the rows its relation cites, are
+`Planned`; what runs today is rhc's names on both programs of the two new
+relations, on an even sample of 30 (`hs/meta/names/*`): as many scope errors
+in the program's own modules, and Main's exports, fixities and instances the
+same (a split's moved to `Lib`). Renaming bound variables mechanically waits
+for a dump of rhc's binding sites; the `rename` pairs are by hand.
+
+**rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
+FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
+path as its last argument, exits 0: delta debugging over the top-level
+blocks, the header kept, then over the lines, every candidate a whole file.
+It writes FILE.reduced. `hs/reduce/@self` reduces 64 lines to the one
+declaration that a predicate on rhc's parser and a marker wants.
 
 **Bottom probes** (D55; the roadmap's *Bottom probes*). Run programs of
 `tests/hs/lang` named `ROW_probeN`: a marker printed, then a term that
