@@ -1,0 +1,16 @@
+# rhc on E8's corpus (tests/runner/hsrhccorpus.sml; docs/testing.md, rhc's oracles and corpus): a program of
+# tests/hs/corpus/accept.tsv that both judges (GHC, Hugs) accept and rhc refuses, each line with its cause, the outcome
+# first in its reason. A line that explains no refusal of a job that ran is stale.
+#
+# WAY | SET/ID::check | CATEGORY | OUTCOME: why
+
+# rhc's own rule (M12): a check of a file Main.hs asks for a program, whose module is Main; the judges check these as modules
+rhc | conformance98/ctxsimpl::check | RUNE-DEV | reject: rhc's --typecheck-only takes a file Main.hs as a program, whose module must be Main (RhcSyntax.program), and this Main.hs holds the module Ctx, which the judges check as a module; M13's list has it: F's
+rhc | conformance98/identifiers/twiddle::check | RUNE-DEV | reject: as conformance98/ctxsimpl, a Main.hs that holds the module Twiddle, which the judges check as a module; M13's list has it: F's
+
+# R3: a do at its enclosing block's column opens no block by 9.3 (n > m), so its block is empty and refused; GHC's
+# -XHaskell98 turns NondecreasingIndentation on, and Hugs relaxes do; rhc follows 9.3, strict by default
+rhc | ghc/module/mod103::check | HOST-BUG | reject: R3: a nested do at the column of the enclosing one (NondecreasingIndentation, which GHC's Haskell98 mode turns on); 9.3 gives it an empty block; in M13's list
+rhc | hse/NonDecreasing.hs::check | HOST-BUG | reject: R3: a do at the column of the enclosing do (NondecreasingIndentation, on in GHC's Haskell98 mode); 9.3 gives it an empty block; in M13's list
+rhc | jhc/1_typecheck/2_pass/fixed_bugs/flat_do_where.hs::check | HOST-BUG | reject: R3: nested dos at the enclosing do's column (NondecreasingIndentation, on in GHC's Haskell98 mode); 9.3 gives them empty blocks; in M13's list
+rhc | hse/RelaxedDo.hs::check | HOST-BUG | reject: R3: a do at the column of the enclosing do (its LANGUAGE NondecreasingIndentation, blanked by the preparation, and on in GHC's Haskell98 mode); 9.3 gives it an empty block

@@ -1,0 +1,6 @@
+TYPE	Main	x :: Int
+TYPE	Main	y :: Double
+TYPE	Main	z :: Integer
+SIGNED	Main	main :: IO ()
+DEFAULT	Main	7:1	Fractional a -> Double
+DEFAULT	Main	8:1	Num a -> Integer

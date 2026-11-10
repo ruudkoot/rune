@@ -1,0 +1,3 @@
+SIGNED	Main	f :: Eq a => a -> Bool
+TYPE	Main	g :: Ord a => a -> Bool
+SIGNED	Main	main :: IO ()

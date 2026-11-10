@@ -14,7 +14,9 @@
                       it, with MESSAGE: a fault of Core to Mid made on
                       purpose (--fault) and what catches it.
    At level 3 every program is printed, read back and printed again, so
-   print, read, print is the identity on every test. Besides the files:
+   print, read, print is the identity on every test. A run reads NAME.stdin
+   where there is one, and one of a test with a line `; files: own`, which
+   writes files, runs in a directory of its own. Besides the files:
    every rule of CoreLint has its fault, lint-RULE.core, refused with its
    message; programs from the generator of D55 pass CoreLint and run to an
    outcome, a value or a bottom; and a silent run is judged a failure.
@@ -82,6 +84,20 @@ struct
     else if out <> expected then SOME "what it printed differs from its .expected"
     else NONE
 
+  (* the standard input of a run of test n: NAME.stdin, or none *)
+  fun stdinOf n = let val f = dir ^ "/" ^ n ^ ".stdin" in if exists f then f else "" end
+
+  (* where a run of src, its output named o', runs: for a test with a line
+     `; files: own`, which writes files where it runs, a directory of its
+     own, which no other run shares; for any other, here. With its
+     arguments: in such a directory, a path that names a file of the tree
+     taken from the root. *)
+  fun whereRuns (src, o', args) =
+    if List.exists (fn l => l = "; files: own") (lines (read src)) then
+      let val d = fromRoot (o' ^ ".d")
+      in mkdirs d; (SOME d, List.map (fn a => if not (String.isPrefix "-" a) andalso exists a then fromRoot a else a) args) end
+    else (NONE, args)
+
   (* the reason a run test is the interpreter's alone, if it is *)
   fun interpreterOnly src =
     Option.map (fn l => String.extract (l, size "; vm: no:", NONE))
@@ -105,10 +121,12 @@ struct
      [("stack", []), ("stackchecked", ["--checked"]), ("stackgcstress", ["--gc-stress", "3", "--gc-verify"])])
   fun hasE1Ways src = List.exists (fn l => l = "; ways: E1") (lines (read src))
 
-  fun vmOne (src, (regWays, stackWays)) =
+  fun vmOne (src, family, (regWays, stackWays)) =
     let
       val n = nameOf src
-      val outDir = run ^ "/hs-core/vm"
+      (* each family its own directory: the three ways and the forty-five of
+         one program run at once in a run, and share every name of a file *)
+      val outDir = run ^ "/hs-core/" ^ family
       val () = mkdirs outDir
       fun f ext = outDir ^ "/" ^ n ^ ext
       val expected = read (dir ^ "/" ^ n ^ ".expected")
@@ -122,7 +140,8 @@ struct
           fun runOn (vm, vmFlags, way) =
             let
               val o' = f ("." ^ level ^ "." ^ target ^ "." ^ way)
-              val status = exec {cmd = [vm, "--stack-size", "268435456"] @ vmFlags @ [rbc], dir = NONE, stdin = "",
+              val (here, args) = whereRuns (src, o', ["--stack-size", "268435456"] @ vmFlags @ [rbc])
+              val status = exec {cmd = vm :: args, dir = here, stdin = stdinOf n,
                                  stdout = o' ^ ".out", stderr = o' ^ ".err", timeout = 120}
               val ends = if want = 1 then status <> 0 else status = want
             in
@@ -241,8 +260,9 @@ struct
       val () = mkdirs outDir
       fun f ext = outDir ^ "/" ^ n ^ ext
       val expected = dir ^ "/" ^ n ^ ".expected"
-      fun rhcRun flags = exec {cmd = [rhc, "--lint=3"] @ flags @ ["--read-core", src], dir = NONE, stdin = "",
-                               stdout = f ".out", stderr = f ".err", timeout = 600}
+      fun rhcRun flags =
+        let val (here, args) = whereRuns (src, f "", ["--lint=3"] @ flags @ ["--read-core", src])
+        in exec {cmd = rhc :: args, dir = here, stdin = stdinOf n, stdout = f ".out", stderr = f ".err", timeout = 600} end
     in
       case marker src of
         SOME ("refuse", both) =>
@@ -364,8 +384,8 @@ struct
   fun command args =
     case args of
       ["hs-core-one", src] => SOME (fn () => one src)
-    | ["hs-core-vm", src] => SOME (fn () => vmOne (src, defaultWays))
-    | ["hs-core-vm45", src] => SOME (fn () => vmOne (src, e1Ways))
+    | ["hs-core-vm", src] => SOME (fn () => vmOne (src, "vm", defaultWays))
+    | ["hs-core-vm45", src] => SOME (fn () => vmOne (src, "vm45", e1Ways))
     | ["hs-core-residency", src] => SOME (fn () => residency src)
     | ["hs-core-budget", src] => SOME (fn () => budget src)
     | ["hs-core-rules"] => SOME rules

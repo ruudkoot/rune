@@ -35,6 +35,7 @@
 - `stmt` (type): [HS_AST](../sig/HS_AST.md#type-stmt)
 - `stmt_` (type): [HS_AST](../sig/HS_AST.md#type-stmt_)
 - `STRING` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-string)
+- `strings` (type): [CORE_RUNTIME](../sig/CORE_RUNTIME.md#type-strings)
 - `stripEval` (val): [CORE](../sig/CORE.md#val-stripeval)
 - `Stuck` (exn): [CORE_INTERP](../sig/CORE_INTERP.md#exn-stuck)
 - `sub` (type): [HS_AST](../sig/HS_AST.md#type-sub)

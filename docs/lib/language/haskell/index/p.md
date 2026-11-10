@@ -32,7 +32,7 @@
 - `prim` (type): [CORE_PRIM](../sig/CORE_PRIM.md#type-prim)
 - `prims` (val): [CORE_PRIM](../sig/CORE_PRIM.md#val-prims)
 - `program` (type): [CORE](../sig/CORE.md#type-program)
-- `program` (val): [CORE_GEN](../sig/CORE_GEN.md#val-program), [CORE_TO_MID](../sig/CORE_TO_MID.md#val-program)
+- `program` (val): [CORE_GEN](../sig/CORE_GEN.md#val-program), [CORE_RUNTIME](../sig/CORE_RUNTIME.md#val-program), [CORE_TO_MID](../sig/CORE_TO_MID.md#val-program)
 - `PSeq` (con): [HS_AST](../sig/HS_AST.md#con-pseq)
 - `PTuple` (con): [HS_AST](../sig/HS_AST.md#con-ptuple)
 - `PVar` (con): [HS_AST](../sig/HS_AST.md#con-pvar)

@@ -223,3 +223,221 @@ ghc | hs/lang/std.monad.default.then::run | HOST-BUG | reject: GHC's base has no
 ghc | hs/lang/std.monad.default.fail::run | HOST-BUG | reject: GHC's base wants an Applicative instance for a Monad, which Haskell 98 has not
 hugs | hs/lang/*::run | HOST-BUG | stdout: Hugs writes a program error on standard output, where 7.3 and R37 have standard error (set aside in judging)
 nhc98 | hs/lang/*::run | HOST-BUG | exit: nhc98 ends an error with status 255; R37's seed is exitFailure's 1 (judged as non-zero)
+
+# rhc's own programs of M19f (T's lines)
+ghc | hs/accept/pre.export.boolfalsectrue_imported::judge | HOST-BUG | reject: GHC's base Prelude has no fail in Monad, so Monad((>>=), (>>), return, fail) cannot be imported
+nhc98 | hs/accept/pre.export.boolfalsectrue_imported::judge | HOST-BUG | reject: nhc98's translations need () and the list's names in scope under an explicit import list
+nhc98 | hs/accept/pre.list.export.map_imported::judge | HOST-BUG | reject: nhc98's translations need () and the list's names in scope under an explicit import list
+nhc98 | hs/accept/pre.io.export.filepath_imported::judge | HOST-BUG | reject: nhc98's translations need () and the list's names in scope under an explicit import list
+nhc98 | hs/accept/pre.text.export.reads_imported::judge | HOST-BUG | reject: nhc98's translations need () and the list's names in scope under an explicit import list
+nhc98 | hs/lang/pre.class.num_defaults::run | HOST-BUG | diff: nhc98 gives negate (C 0) as C 0 where the instance defines negate _ = C 4
+ghc | hs/lang/pre.class.monad_defaults::run | HOST-BUG | reject: GHC's base has no fail in Monad (MonadFail)
+nhc98 | hs/lang/pre.numericenumfrom_literal::run | HOST-BUG | diff: R39: nhc98's Float sequences end before the limit plus half the step
+nhc98 | hs/errors/pre.r.builtin.colon::judge | HOST-BUG | accept: nhc98 takes a fixity declaration for the built-in (:)
+mhs | hs/errors/pre.r.builtin.colon::judge | HOST-BUG | accept: MicroHs takes a fixity declaration for the built-in (:)
+nhc98 | hs/errors/pre.r.significant::judge | HOST-BUG | accept: nhc98's Prelude exports numericEnumFrom, which the Report's does not
+nhc98 | hs/errors/pre.r.prim.hidden::judge | HOST-BUG | accept: nhc98 has a module PreludeBuiltin to import
+nhc98 | hs/errors/pre.r.builtin.export::judge | HOST-BUG | accept: nhc98 lets [] stand in an export list
+mhs | hs/errors/pre.r.builtin.export::judge | HOST-BUG | accept: MicroHs lets [] stand in an export list
+hugs | hs/accept/tr.do.last.nomonad::judge | SPEC-AMBIGUOUS | reject: R56: Hugs refuses do {e} at a type that is no monad's
+hugs | hs/errors/exp.cons.reserved::judge | HOST-BUG | accept: Hugs lets a data declaration declare the constructor (:)
+nhc98 | hs/errors/exp.cons.reserved::judge | HOST-BUG | accept: nhc98 lets a data declaration declare the constructor (:)
+nhc98 | hs/errors/exp.nil.reserved::judge | HOST-BUG | accept: nhc98 lets a data declaration declare the constructor []
+nhc98 | hs/errors/exp.field.once::judge | HOST-BUG | accept: nhc98 takes a constructor that names a field twice
+nhc98 | hs/errors/exp.field.con.twice::judge | HOST-BUG | accept: nhc98 takes a construction that names a field twice
+nhc98 | hs/errors/exp.field.con.strict::judge | HOST-BUG | accept: nhc98 takes a construction that leaves out a strict field
+mhs | hs/errors/exp.field.con.strict::judge | HOST-BUG | accept: MicroHs takes a construction that leaves out a strict field
+nhc98 | hs/errors/exp.field.con.empty.strict::judge | HOST-BUG | accept: nhc98 takes F {} where F has a strict field
+hugs | hs/errors/exp.field.con.empty.strict::judge | HOST-BUG | reject: Hugs refuses with an internal error (depConFlds), not a diagnostic
+nhc98 | hs/errors/exp.field.upd.twice::judge | HOST-BUG | accept: nhc98 takes an update that names a field twice
+mhs | hs/errors/exp.field.upd.twice::judge | HOST-BUG | accept: MicroHs takes an update that names a field twice
+nhc98 | hs/errors/exp.sig.general::judge | HOST-BUG | accept: nhc98 takes 'a' :: a, a signature more general than the type
+nhc98 | hs/errors/exp.sig.scope::judge | HOST-BUG | accept: nhc98 scopes a signature's type variable beyond its signature
+nhc98 | hs/errors/pat.m.label.twice::judge | HOST-BUG | accept: nhc98 takes a field pattern that names a field twice
+nhc98 | hs/errors/pat.class.npk::judge | HOST-BUG | accept: nhc98 takes an n+k pattern at Double, which is no Integral
+nhc98 | hs/errors/io.print.type::judge | HOST-BUG | accept: nhc98 takes print id, with no Show for functions
+ghc | hs/lang/std.enum.float.accum_literal::run | HOST-BUG | diff: R39: GHC computes n + k * step, not the code's iterated sum (Note [Numeric Stability])
+nhc98 | hs/lang/std.enum.strict.float_seq::run | HOST-BUG | diff: R39: nhc98's enumFrom at Double is not strict, as the erratum of May 2003 makes it
+ghc | hs/lang/std.gcd.zero_error::run | SPEC-AMBIGUOUS | diff: R45: GHC gives gcd 0 0 as 0 (Haskell 2010), where Haskell 98's is an error
+mhs | hs/lang/std.gcd.zero_error::run | SPEC-AMBIGUOUS | diff: R45: MicroHs gives gcd 0 0 as 0 (Haskell 2010)
+hugs | hs/lang/std.trig.atan2.origin_default::run | HOST-BUG | diff: Hugs's atan2 of signed zeros is not the default's (no negative zero)
+nhc98 | hs/lang/std.trig.atan2.origin_default::run | HOST-BUG | diff: nhc98's atan2 of the origin is an error
+hugs | hs/lang/std.float.isdenorm_smallest::run | HOST-BUG | diff: Hugs's isDenormalized answers False on the smallest denormal
+nhc98 | hs/lang/std.float.isdenorm_smallest::run | HOST-BUG | diff: nhc98's isDenormalized answers False on the smallest denormal
+ghc | hs/lang/std.eq.neither_loops::run | HOST-BUG | timeout: GHC loops without detecting it; bottom either way
+nhc98 | hs/lang/std.eq.neither_loops::run | HOST-BUG | timeout: nhc98 loops without detecting it; bottom either way
+
+# rhc's own programs of M19h (T's lines; T's IMPL-DEFINED is written SPEC-AMBIGUOUS, implementation-defined (D53))
+hugs | hs/lang/std.sign.abs_ieee::run | SPEC-AMBIGUOUS | diff: R78: implementation-defined (D53): Hugs's signum (-0.0) is 0.0 and its abs and signum of NaN are no NaN
+nhc98 | hs/lang/std.sign.abs_ieee::run | SPEC-AMBIGUOUS | diff: R78: implementation-defined (D53): nhc98's signum (-0.0) is 0.0 and its abs and signum of NaN are no NaN
+mhs | hs/lang/std.sign.abs_ieee::run | SPEC-AMBIGUOUS | diff: R78: implementation-defined (D53): MicroHs keeps the sign in abs (-0.0) and its signum of NaN is no NaN
+hugs | hs/lang/std.enum.strict.int_forced::run | SPEC-AMBIGUOUS | diff: R80: implementation-defined (D53): Hugs's [undefined ..] at Int is lazy in its argument
+nhc98 | hs/lang/std.enum.strict.int_forced::run | SPEC-AMBIGUOUS | diff: R80: implementation-defined (D53): nhc98's [undefined ..] at Int is lazy in its argument
+ghc | hs/lang/std.enum.bounded.fromenum_wide::run | SPEC-AMBIGUOUS | diff: R81: implementation-defined (D53): GHC's fromInteger to Int wraps, where rhc's checked primitive is an error
+nhc98 | hs/lang/std.enum.bounded.fromenum_wide::run | SPEC-AMBIGUOUS | diff: R81: implementation-defined (D53): nhc98's fromInteger to Int wraps
+mhs | hs/lang/std.enum.bounded.fromenum_wide::run | SPEC-AMBIGUOUS | diff: R81: implementation-defined (D53): MicroHs's fromInteger to Int wraps
+ghc | hs/lang/pre.r.default.enumfrom_wide::run | SPEC-AMBIGUOUS | diff: R81: implementation-defined (D53): GHC wraps fromEnum past Int
+nhc98 | hs/lang/pre.r.default.enumfrom_wide::run | SPEC-AMBIGUOUS | diff: R81: implementation-defined (D53): nhc98's default enumFrom keeps the Integer
+mhs | hs/lang/pre.r.default.enumfrom_wide::run | SPEC-AMBIGUOUS | diff: R81: implementation-defined (D53): MicroHs wraps fromEnum past Int
+ghc | hs/lang/pre.r.lex.limits_hex::run | HOST-BUG | diff: R82: GHC's lex and read take 0x10 as one number, where the Report's lex reads 0 and leaves x10
+mhs | hs/lang/pre.r.lex.limits_hex::run | HOST-BUG | diff: R82: MicroHs's lex and read take 0x10 as one number
+hugs | hs/lang/dec.strict.field::run | HOST-BUG | diff: Hugs builds a record construction without forcing its strict field (4.2.1)
+nhc98 | hs/lang/dec.strict.field::run | HOST-BUG | diff: nhc98 builds a record construction without forcing its strict field (4.2.1)
+hugs | hs/lang/dec.strict.vars::run | HOST-BUG | diff: Hugs builds a record construction without forcing its strict field (4.2.1)
+nhc98 | hs/lang/cls.fixity.inclass::run | HOST-BUG | diff: nhc98 ignores a fixity declaration in a class body (4.3.1)
+mhs | hs/lang/cls.fixity.inclass::run | HOST-BUG | diff: MicroHs ignores a fixity declaration in a class body
+hugs | hs/lang/mr.rule2.wholemodule::run | SPEC-AMBIGUOUS | reject: R20: Hugs defaults a restricted variable before the module is checked
+nhc98 | hs/lang/mr.rule2.wholemodule::run | SPEC-AMBIGUOUS | diff: R20: nhc98 defaults x = 1 to Integer before y's use makes it Fractional
+mhs | hs/lang/mr.rule2.wholemodule::run | SPEC-AMBIGUOUS | diff: R20: MicroHs defaults x = 1 to Integer before y's use
+nhc98 | hs/lang/dec.fix.kinds::run | HOST-BUG | diff: nhc98's derived Show leaves out the parentheses of a right-nested infixr constructor (10.4's showsPrec)
+nhc98 | hs/lang/dec.fix.ex.nested::run | HOST-BUG | diff: nhc98 gives a local operator with no fixity declaration the top-level one's (4.4.2)
+nhc98 | hs/lang/dec.fun.equiv::run | HOST-BUG | reject: nhc98 does not parse the funlhs (x `op` y) z (4.4.3)
+nhc98 | hs/lang/dec.note.funbind.plus::run | HOST-BUG | diff: nhc98 misreads the bindings of 4.4.3's note
+mhs | hs/lang/dec.note.funbind.plus::run | HOST-BUG | reject: MicroHs does not parse (n + 1) * y = ... (4.4.3's note)
+hugs | hs/lang/mod.imp.ring.run::run | HOST-BUG | reject: runhugs cannot run a Main with no unqualified >> in scope
+nhc98 | hs/lang/mod.inst.myinstances.run::run | HOST-BUG | reject: nhc98 refuses a user instance Show (a -> b), 5.4's example
+hugs | hs/lang/mod.qual.local::run | HOST-BUG | diff: Hugs takes Main.x to the local x that shadows the top-level one (5.5.1)
+nhc98 | hs/lang/mod.qual.local::run | HOST-BUG | diff: nhc98 takes Main.x to the local x that shadows the top-level one (5.5.1)
+nhc98 | hs/lang/mod.shadow.myprelude.plus::run | HOST-BUG | reject: nhc98's translations need the Prelude's names in scope (5.6.2)
+hugs | hs/lang/mod.shadow.special.scope::run | HOST-BUG | reject: runhugs cannot run a Main with no unqualified >> in scope
+nhc98 | hs/lang/lex.unicode.charset::run | HOST-BUG | diff: nhc98 reads a UTF-8 source as bytes, so a non-ASCII character in a literal is several (R5)
+nhc98 | hs/lang/der.enum.numbering::run | HOST-BUG | diff: nhc98's derived enumFromThen descending stops at its first element (10.2)
+ghc | hs/lang/der.show.methods::run | HOST-BUG | diff: GHC's Read String takes ['a'], where the Report's readList for Char reads only a quoted string (10.4, 8.2)
+nhc98 | hs/lang/der.show.methods::run | HOST-BUG | diff: nhc98's derived Show leaves out parentheses its showsPrec should give (10.4)
+mhs | hs/lang/der.show.methods::run | HOST-BUG | diff: MicroHs's derived Show and Read differ from 10.4's
+nhc98 | hs/lang/der.read.assoc.noparen::run | HOST-BUG | diff: nhc98's derived Read uses associativity, reading 1 :$ 2 :$ NT (10.4)
+nhc98 | hs/lang/der.free.prelude::run | HOST-BUG | reject: nhc98's derived code names the Prelude's entities by the names in scope
+nhc98 | hs/errors/der.cond.bounded.neither::judge | HOST-BUG | accept: nhc98 derives Bounded for a type neither an enumeration nor a single constructor
+mhs | hs/errors/der.cond.bounded.neither::judge | HOST-BUG | accept: MicroHs derives Bounded for a type neither an enumeration nor a single constructor
+ghc | hs/errors/der.inst.context.notsimple::judge | HOST-BUG | accept: GHC derives Show for App (a b) with the context Show (a b), not simple
+mhs | hs/errors/der.inst.context.notsimple::judge | HOST-BUG | accept: MicroHs derives with a context that is not simple
+nhc98 | hs/errors/der.tree.nobounded::judge | HOST-BUG | accept: nhc98 derives Bounded for the figure's Tree
+mhs | hs/errors/der.tree.nobounded::judge | HOST-BUG | accept: MicroHs derives Bounded for the figure's Tree
+hugs | hs/lang/der.free.noprelude::run | HOST-BUG | reject: runhugs cannot run a Main with no unqualified >> in scope
+nhc98 | hs/lang/der.free.noprelude::run | HOST-BUG | reject: nhc98 cannot derive by a qualified class name (P.Eq, P.Show)
+nhc98 | hs/accept/der.deriving.qualified::judge | HOST-BUG | reject: nhc98 cannot derive by a qualified class name
+ghc | hs/lang/der.read.ordering.results::run | HOST-BUG | diff: GHC's derived reads gives the Leaf parse before the infix one; the figure's code tries the infix first (10.4)
+hugs | hs/lang/der.read.ordering.results::run | HOST-BUG | diff: Hugs's derived reads orders its results otherwise than the figure's code (10.4)
+mhs | hs/lang/der.read.ordering.results::run | HOST-BUG | diff: MicroHs's derived reads orders its results otherwise than the figure's code
+ghc | hs/lang/prag.specialize.example::run | HOST-BUG | reject: GHC's base Num has no Eq superclass, so the Report's factorial needs Eq a
+mhs | hs/lang/prag.specialize.example::run | HOST-BUG | reject: MicroHs's Num has no Eq superclass
+ghc | hs/accept/prag.unknown::judge | HOST-BUG | reject: GHC's base Num has no Eq superclass, so the Report's factorial needs Eq a
+mhs | hs/accept/prag.unknown::judge | HOST-BUG | reject: MicroHs's Num has no Eq superclass
+
+# the libraries' programs of M19 (O: chapters 12 to 21; T's of chapters 22 to 27 follow); a program of tests/hs/accept or tests/hs/errors is judged (::judge)
+mhs | hs/lang/lib.r.ratio.percent.zero_error::run | HOST-BUG | exit: MicroHs's x % 0 is no error (12.1)
+mhs | hs/lang/lib.ratio.inst.eqratioa_methods::run | HOST-BUG | diff: MicroHs's [1 % 2 .. 2] at Rational ends at the limit, not the limit plus a half (12.1, numericEnumFromTo)
+nhc98 | hs/lang/lib.complex.fixity.6colonplus_parse::run | HOST-BUG | diff: nhc98's derived Show of an infix constructor has no spaces around it (10.4's showsPrec)
+hugs | hs/lang/lib.complex.inst.numcomplexa_methods::run | HOST-BUG | diff: R55: Hugs shows pi to 15 digits
+nhc98 | hs/lang/lib.complex.inst.numcomplexa_methods::run | HOST-BUG | exit: nhc98's derived Read of an infix constructor does not read 1.5 :+ 2.0, and its derived Show has no spaces (10.4)
+nhc98 | hs/lang/lib.complex.realpart_literal::run | HOST-BUG | diff: nhc98's atan2 0 (-1) is not pi, so its phase leaves (-pi, pi] (6.4.5)
+mhs | hs/lang/lib.complex.realpart_literal::run | HOST-BUG | diff: MicroHs's magnitude (0 :+ 0) is NaN
+ghc | hs/errors/lib.r.complex.context::judge | HOST-BUG | accept: GHC's Complex has no datatype context (RealFloat a), which the shim cannot restore
+mhs | hs/errors/lib.r.complex.context::judge | HOST-BUG | accept: MicroHs's Complex has no datatype context (RealFloat a)
+mhs | hs/lang/lib.numeric.showsigned_literal::run | HOST-BUG | diff: MicroHs's readSigned does not read " - 5" as -5, where the code lexes the - apart (14.2)
+nhc98 | hs/lang/lib.numeric.showsigned_literal::run | HOST-BUG | reject: nhc98 refuses the Report's own Numeric code: a pattern binding (minExp0, _) = floatRange r whose type needs RealFloat (legal, 4.4.3.2)
+ghc | hs/lang/lib.r.numeric.digs.just_ties::run | HOST-BUG | diff: GHC's roundTo takes a half to even, where the code's takes it up, and GHC's showEFloat (Just 0) shows no digit after the point, where the code's max dec 1 shows one (14.4)
+mhs | hs/lang/lib.r.numeric.digs.just_ties::run | HOST-BUG | diff: MicroHs's roundTo takes a half to even, and its showEFloat (Just 0) shows no digit after the point (14.4)
+ghc | hs/lang/lib.r.numeric.floattodigits.zero_exact::run | HOST-BUG | diff: GHC's floatToDigits _ 0 is ([0], 0), where the code's first equation gives ([], 0) (14.4)
+hugs | hs/lang/lib.r.numeric.floattodigits.zero_exact::run | HOST-BUG | diff: Hugs's floatToDigits _ 0 is ([0], 0), where the code's first equation gives ([], 0) (14.4)
+mhs | hs/lang/lib.r.numeric.floattodigits.zero_exact::run | HOST-BUG | diff: MicroHs's floatToDigits _ 0 is ([0], 0), where the code's first equation gives ([], 0) (14.4)
+ghc | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | diff: GHC's readFloat reads neither NaN nor Infinity, which the code's last two generators read (14.4)
+mhs | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | diff: MicroHs's readFloat reads neither NaN nor Infinity (14.4)
+hugs | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | exit: Hugs's isNaN, isInfinite and isNegativeZero answer False at IEEE Double, so formatRealFloat fails on NaN and drops -0's sign (6.4.6, 14.4)
+nhc98 | hs/lang/lib.r.numeric.nan_ieee::run | HOST-BUG | exit: nhc98's isNaN, isInfinite and isNegativeZero answer False at IEEE Double, so formatRealFloat fails on NaN and drops -0's sign (6.4.6, 14.4)
+hugs | hs/lang/lib.r.numeric.showsigned_text::run | HOST-BUG | diff: R55: Hugs shows 1.0e-2 as 0.01
+mhs | hs/lang/lib.ix.class.ix.rangesize_defaults::run | HOST-BUG | exit: MicroHs's class Ix has no default of rangeSize (15.2)
+nhc98 | hs/lang/lib.ix.inst.ixchar_methods::run | HOST-BUG | reject: nhc98 has no Ix instance for () (15.2)
+hugs | hs/lang/lib.r.ix.tuples_fifteen::run | HOST-BUG | reject: Hugs has no Ix instance for a 15-tuple, which 15.1 requires
+mhs | hs/lang/lib.r.ix.tuples_fifteen::run | HOST-BUG | reject: MicroHs has no Ix instance for a 15-tuple, which 15.1 requires
+hugs | hs/lang/lib.array.array_literal::run | HOST-BUG | diff: Hugs shows and reads an array at precedence 9, not the Report's arrPrec 10 (16.3), so showsPrec 10 parenthesises and readsPrec 10 reads nothing
+nhc98 | hs/lang/lib.array.array_literal::run | HOST-BUG | diff: nhc98's (==) on arrays compares the bounds, where 16.3 compares the assocs alone, and its showsPrec 11 of an array leaves out the parentheses
+mhs | hs/lang/lib.array.array_literal::run | HOST-BUG | reject: MicroHs has no Read instance for Array (16.3)
+mhs | hs/lang/lib.r.array.bounds.lowhigh_text::run | HOST-BUG | reject: MicroHs has no Read instance for Array (16.3)
+ghc | hs/lang/lib.r.array.duplicate_error::run | HOST-BUG | diff: GHC's array keeps the last of two associations with one index, where 16.1 makes the array undefined
+nhc98 | hs/lang/lib.r.array.duplicate_error::run | HOST-BUG | diff: nhc98's array keeps the last of two associations with one index, where 16.1 makes the array undefined
+mhs | hs/lang/lib.r.array.duplicate_error::run | HOST-BUG | diff: MicroHs's array keeps the first of two associations with one index, where 16.1 makes the array undefined
+ghc | hs/lang/lib.r.array.update.unique_error::run | HOST-BUG | diff: GHC's (//) keeps the last of two updates of one index, where 16.2 makes the result undefined
+nhc98 | hs/lang/lib.r.array.update.unique_error::run | HOST-BUG | diff: nhc98's (//) keeps the last of two updates of one index, where 16.2 makes the result undefined
+mhs | hs/lang/lib.r.array.update.unique_error::run | HOST-BUG | diff: MicroHs's (//) keeps the first of two updates of one index, where 16.2 makes the result undefined
+mhs | hs/lang/lib.list.fixity.5bsbs_mix::run | HOST-BUG | reject: MicroHs gives `elem` no fixity, where the Report's Prelude declares infix 4 `elem`, so 2 `elem` xs \\ ys does not parse as the Report's
+hugs | hs/lang/lib.list.genericlength_literal::run | HOST-BUG | exit: Hugs's genericTake is an error at a negative count, where erratum September 2008 makes it 0 (17.9)
+nhc98 | hs/lang/lib.list.genericlength_literal::run | HOST-BUG | exit: nhc98's genericTake is an error at a negative count, where erratum September 2008 makes it 0 (17.9)
+hugs | hs/lang/lib.r.list.generic.length_text::run | HOST-BUG | exit: Hugs's genericTake is an error at a negative count, where erratum September 2008 makes it 0 (17.7)
+nhc98 | hs/lang/lib.r.list.generic.length_text::run | HOST-BUG | exit: nhc98's genericTake is an error at a negative count, where erratum September 2008 makes it 0 (17.7)
+ghc | hs/lang/lib.list.inits_probe1::run | HOST-BUG | diff: GHC's inits is lazier than the Report's: it gives inits (1 : 2 : undefined)'s third element, which the code's map over inits undefined does not
+mhs | hs/lang/lib.list.inits_probe1::run | HOST-BUG | diff: MicroHs's inits is lazier than the Report's: it gives inits (1 : 2 : undefined)'s third element, which the code's map over inits undefined does not
+ghc | hs/lang/lib.list.intersperse_probe1::run | HOST-BUG | diff: GHC's intersperse is lazier than the Report's: intersperse 0 (1 : undefined) gives 1 first, where the code's [x] clause forces the tail
+mhs | hs/lang/lib.list.intersperse_probe1::run | HOST-BUG | diff: MicroHs's intersperse is lazier than the Report's: intersperse 0 (1 : undefined) gives 1 first, where the code's [x] clause forces the tail
+ghc | hs/lang/lib.list.issuffixof_probe1::run | HOST-BUG | exit: GHC's isSuffixOf forces its second list where the first is empty; the code's reverse [] `isPrefixOf` _ does not
+ghc | hs/lang/lib.list.minimumby_probe1::run | HOST-BUG | exit: GHC's minimumBy forces the first element, where the code's foldl1 min with a comparison that ignores it does not
+mhs | hs/lang/lib.list.partition_probe1::run | HOST-BUG | exit: MicroHs's partition is strict in the spine, where the code's (filter p xs, filter (not . p) xs) gives the elements of a partial list
+mhs | hs/lang/lib.list.intersperse_literal::run | HOST-BUG | exit: MicroHs's partition is strict in the spine: fst (partition even [1 ..]) overflows the stack, where the code's filter gives it lazily
+mhs | hs/lang/lib.r.list.example.intersperse_text::run | HOST-BUG | exit: MicroHs's partition is strict in the spine: fst (partition even [1 ..]) overflows the stack, where 17.3's partition p xs == (filter p xs, filter (not . p) xs) gives it
+mhs | hs/lang/lib.list.unzip4_probe1::run | HOST-BUG | exit: MicroHs's unzip4 is strict in the spine, where the code's foldr with a lazy pattern is not
+mhs | hs/lang/lib.list.unzip5_probe1::run | HOST-BUG | exit: MicroHs's unzip5 is strict in the spine, where the code's foldr with a lazy pattern is not
+mhs | hs/lang/lib.list.unzip6_probe1::run | HOST-BUG | exit: MicroHs's unzip6 is strict in the spine, where the code's foldr with a lazy pattern is not
+mhs | hs/lang/lib.list.zip4_literal::run | HOST-BUG | exit: MicroHs's unzip4 and unzip7 are strict in the spine: of an infinite list they overflow the stack, where the code's foldr with a lazy pattern is not
+nhc98 | hs/errors/lib.r.list.noelemby::judge | HOST-BUG | accept: nhc98's List exports elemBy, which 17.6 says the library does not provide
+nhc98 | hs/lang/lib.r.complex.show_negative::run | HOST-BUG | exit: nhc98 derives Show of the infix :+ without its spaces or its parentheses at precedence 7 (-1.5:+-2.0), and Read cannot read it back (10.4)
+ghc | hs/lang/lib.char.isascii.def_literal::run | HOST-BUG | diff: GHC's readLitChar and lexLitChar take a \& after an escape with it (readLitChar "\\SO\\&H" leaves "H"), where the code's leave "\\&H"
+nhc98 | hs/lang/lib.char.isascii.def_literal::run | HOST-BUG | diff: nhc98's isLatin1 '\255' is False, and its showLitChar gives a character above '\DEL' as itself, not as \ and its decimal code (19.1)
+mhs | hs/lang/lib.char.isascii.def_literal::run | HOST-BUG | diff: MicroHs's isControl leaves out '\128' to '\159', its showLitChar differs on \SO before H and on '\'', and its readLitChar and lexLitChar read no escape (19.1)
+ghc | hs/lang/lib.char.lexlitchar_probe1::run | HOST-BUG | exit: GHC's lexLitChar forces the rest of the string after a plain character, where the code's (c:s) clause does not
+ghc | hs/lang/lib.char.readlitchar_probe1::run | HOST-BUG | exit: GHC's readLitChar forces the rest of the string after a plain character (to look for \&), where the code's (c:s) clause does not
+ghc | hs/lang/lib.char.readesc_probe1::run | HOST-BUG | exit: GHC's readLitChar forces the rest of the string after \n, where the code's readEsc does not
+mhs | hs/lang/lib.char.readesc_probe1::run | HOST-BUG | diff: MicroHs's readLitChar reads no escape: readLitChar "\\n..." is []
+ghc | hs/lang/lib.char.match_probe1::run | HOST-BUG | exit: GHC's readLitChar forces the rest of the string after \NUL, where the code's match stops at the mnemonic's end
+mhs | hs/lang/lib.char.match_probe1::run | HOST-BUG | exit: MicroHs's readLitChar reads no named escape
+nhc98 | hs/lang/lib.char.showlitchar_probe1::run | HOST-BUG | diff: nhc98's showLitChar gives '\200' as itself, not as \200 (19.1)
+nhc98 | hs/lang/lib.r.char.ascii_text::run | HOST-BUG | diff: nhc98's isLatin1 '\255' is False, and its showLitChar and show give a character above '\DEL' as itself (19, 19.1)
+mhs | hs/lang/lib.r.char.ascii_text::run | HOST-BUG | diff: MicroHs's isControl leaves out '\128' to '\159', its showLitChar drops \& after a numeric escape and \SO, and its lexLitChar and readLitChar read no escape (19.1)
+nhc98 | hs/lang/lib.r.char.chr_error::run | HOST-BUG | diff: nhc98's chr (-1) is no error until it is shown, and then a different one: part of the show is printed first
+hugs | hs/lang/lib.r.char.lexlitchar_named::run | HOST-BUG | diff: R154: Hugs's lexLitChar takes \o or \x with no digit as the code's numeric clauses do, where readLitChar reads nothing
+nhc98 | hs/lang/lib.r.char.lexlitchar_named::run | HOST-BUG | diff: R154: nhc98's lexLitChar takes \o or \x with no digit as the code's numeric clauses do, where readLitChar reads nothing
+mhs | hs/lang/lib.r.char.lexlitchar_named::run | HOST-BUG | diff: MicroHs's lexLitChar reads no escape: it gives the backslash alone
+ghc | hs/lang/lib.r.char.table.other.upper_unicode::run | HOST-BUG | diff: R153: GHC's isUpper is false of a letter of no case, so isAlpha is not isUpper || isLower; and its isSpace is true of U+2003 and U+3000, beyond Latin-1
+hugs | hs/lang/lib.r.char.table.other.upper_unicode::run | HOST-BUG | diff: R153: Hugs's isUpper is false of a letter of no case, so isAlpha is not isUpper || isLower
+nhc98 | hs/lang/lib.r.char.table.other.upper_unicode::run | HOST-BUG | diff: R153: nhc98's Char stops at '\255', so the characters beyond Latin-1 are others
+mhs | hs/lang/lib.r.char.table.other.upper_unicode::run | HOST-BUG | diff: R153: MicroHs's isAlpha, isUpper and isAlphaNum are false of a CJK ideograph, its isSpace true of U+2003 and U+3000, and its lexLitChar and readLitChar read no escape
+hugs | hs/accept/lib.r.char.digitident_unicode::judge | HOST-BUG | reject: Hugs takes no non-ASCII digit in an identifier (19, 2.2's uniDigit)
+nhc98 | hs/accept/lib.r.char.digitident_unicode::judge | HOST-BUG | reject: nhc98 takes no non-ASCII digit in an identifier: its source is Latin-1 at most (R5)
+mhs | hs/accept/lib.r.char.digitident_unicode::judge | HOST-BUG | reject: MicroHs takes no non-ASCII digit in an identifier (19, 2.2's uniDigit)
+ghc | hs/accept/lib.monad.export.monadplusmzerocmplus_imported::judge | HOST-BUG | reject: GHC's base has no fail in Monad, so Monad((>>=), (>>), return, fail) cannot be imported
+ghc | hs/lang/lib.monad.class.monadplus.mzero_user::run | HOST-BUG | reject: GHC's base wants an Applicative instance for a Monad, which Haskell 98 has not
+mhs | hs/lang/lib.monad.class.monadplus.mzero_user::run | HOST-BUG | reject: MicroHs wants an Applicative instance for a Monad, which Haskell 98 has not
+ghc | hs/lang/lib.monad.class.monadplus.mplus_error::run | HOST-BUG | reject: GHC's base wants an Applicative instance for a Monad, which Haskell 98 has not
+mhs | hs/lang/lib.monad.class.monadplus.mplus_error::run | HOST-BUG | reject: MicroHs wants an Applicative instance for a Monad, which Haskell 98 has not
+mhs | hs/accept/lib.io.export.handle_imported::judge | HOST-BUG | reject: MicroHs's IO does not export hIsEOF, and lacks others of 21's names (HandlePosn, hGetPosn, hPrint, isEOF)
+ghc | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | reject: GHC's IOMode and SeekMode have no Bounded instance, which 21 derives
+hugs | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | diff: Hugs shows two handles of different files alike, where 21.2 says the string should identify the handle
+nhc98 | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | diff: nhc98 takes two handles on one file as equal, where 21.2 makes a handle equal only to itself
+mhs | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | reject: MicroHs's IO has no hGetPosn (21.7.1)
+mhs | hs/lang/lib.io.stdin_types::run | HOST-BUG | reject: MicroHs's IO has no HandlePosn (21)
+nhc98 | hs/lang/lib.io.try_literal::run | HOST-BUG | exit: nhc98's IO has no hWaitForInput, so hReady fails (21.9.1)
+mhs | hs/lang/lib.io.try_literal::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+mhs | hs/lang/lib.r.io.example.copy.char_args::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+mhs | hs/lang/lib.r.io.example.copy.char_same_error::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+hugs | hs/lang/lib.r.io.handle.readable_handles::run | HOST-BUG | diff: Hugs's hIsReadable, hIsWritable and hIsSeekable answer on a closed handle, where 21.3.2 makes every operation but hClose fail
+nhc98 | hs/lang/lib.r.io.handle.readable_handles::run | HOST-BUG | exit: nhc98's IO has no hIsOpen (21.8)
+mhs | hs/lang/lib.r.io.handle.readable_handles::run | HOST-BUG | reject: MicroHs's IO has no hPrint (21.9.5)
+hugs | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: Hugs's hReady at end of file is False, where 21.9.1 makes it fail with isEOFError
+nhc98 | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | exit: nhc98's IO has no hLookAhead (21.9.3)
+mhs | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+ghc | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: GHC's hSeek sets a position beyond the end of a file, as POSIX lseek does, where 21.7.2 says it cannot be set
+nhc98 | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | exit: R46: nhc98's getLine is the Prelude's getChar loop, so a last line with no newline fails, where 21.9.2 returns it
+mhs | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | reject: MicroHs's IO has no isEOF (21.5)
+hugs | hs/lang/lib.r.io.iserror.notexist_errors::run | HOST-BUG | diff: Hugs has no locking: a file open for output opens again, where 21.2.3 fails with isAlreadyInUseError
+nhc98 | hs/lang/lib.r.io.iserror.notexist_errors::run | HOST-BUG | exit: nhc98 has no locking (21.2.3), and its error predicates fail on hGetChar's end-of-file error
+mhs | hs/lang/lib.r.io.iserror.notexist_errors::run | HOST-BUG | reject: MicroHs's Directory does not export removeDirectory (22)
+mhs | hs/lang/lib.r.io.iserror.perm_file::run | HOST-BUG | exit: MicroHs's openFile of a file without read permission is no permission error, and its setPermissions then fails
+ghc | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: GHC makes a read of hGetContents's list after hClose an error, where 21.2.2 fixes the list's contents
+hugs | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | diff: Hugs has no locking (21.2.3), and its hGetContents's list loses what a failed read on the semi-closed handle touched
+nhc98 | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: nhc98's IO has no hIsClosed (21.8), and no locking
+mhs | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: MicroHs has no locking (21.2.3), and its semi-closed handle still reads
+mhs | hs/lang/lib.r.array.strict.bounds_empty_error::run | SPEC-AMBIGUOUS | exit: R155: MicroHs's array checks no bounds with no association, as 16.4's code; 16.1's prose, which D52's judges take, makes it bottom
+nhc98 | hs/lang/lib.r.io.semi.state_neither::run | HOST-BUG | exit: nhc98's IO has no hIsOpen (21.8)
+mhs | hs/lang/lib.r.io.semi.state_neither::run | SPEC-AMBIGUOUS | diff: R156: implementation-defined (D53): MicroHs takes a semi-closed handle as open
+ghc | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R157: GHC's floatToDigits takes Burger and Dybvig's low margin b^e at a power of the radix, where the printed code takes b: 2^70 is 1.1805916207174113e21 and 1.1805916e21, not the code's ...114e21 and 1.18059163e21
+mhs | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R157: MicroHs's floatToDigits takes Burger and Dybvig's low margin b^e at a power of the radix, where the printed code takes b
+hugs | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R55: Hugs's show of a Double and a Float is %.15g and %.7g, not showFloat's digits (its Numeric follows the code)

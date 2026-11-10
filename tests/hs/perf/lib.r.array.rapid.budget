@@ -1,0 +1,4 @@
+# rhc's policy (D55; tests/runner/hsperf.sml): n reads of an array of n cost about n.
+a: 4000
+b: 2000
+ratio: 2.6

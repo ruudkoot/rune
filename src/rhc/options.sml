@@ -15,6 +15,7 @@ struct
      output : string option,          (* -o FILE: compile to bytecode, through Mid, in place of running *)
      thunks : CoreToMid.form,         (* --thunks=c|runtime: how Mid makes and forces suspensions *)
      fault : CoreToMid.fault option,  (* --fault=NAME: a fault of Core to Mid made on purpose, for its tests *)
+     strings : CoreRuntime.strings,   (* --strings=lazy|whole: how a string literal becomes its list (D24) *)
      help : bool,
      version : bool}
 
@@ -24,6 +25,7 @@ struct
     \            | --dump-ast [--no-spans]] FILE.hs\n\
     \       rhc [--typecheck-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
+    \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
     \Core, its typed lazy intermediate language, checks it and runs it on\n\
     \Core's interpreter; and it reads a program of Haskell, a file and the\n\
@@ -37,6 +39,13 @@ struct
     \  --dump-ast            print its tree, with --no-spans without where each node is\n\
     \  --dump-names          print the exports, fixities and instances of the program of\n\
     \                        FILE.hs... and its library, and its errors of names, sorted\n\
+    \  --dump-hslint         print the type HsLint's second inference gives each binding of\n\
+    \                        the top level of FILE.hs's program, and the defaults it chose\n\
+    \  --hslint-claims=FILE  at level 2, hold HsLint's inference to a record's claims, lines\n\
+    \                        of the dump's form; RHC_HSLINT_FAULT=RULE corrupts one, for tests\n\
+    \  --hslint-rules        print the name of each rule of HsLint's comparison, one a line\n\
+    \  --dump-binders        print each local name of FILE.hs's own modules, a line for each\n\
+    \                        binding site (BIND) and use (USE): its renamed name, file:start-end\n\
     \  --names=least|greatest  the solution of a cycle's exports (D29): the least fixpoint,\n\
     \                        the default, or the greatest; chapter 5 is met by either\n\
     \  --cycle-default=module|scc  in a cycle of modules, each module's default declaration\n\
@@ -49,7 +58,8 @@ struct
     \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
     \                        names and fixity, until the checker lands (M13)\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
-    \                        3 reads Core's text back after every stage (RUNE_LINT too)\n\
+    \                        2 runs HsLint on a program of Haskell, 3 reads Core's text\n\
+    \                        back after every stage (RUNE_LINT too)\n\
     \  --dump-after=STAGE    print what a stage makes: read, coretomid (Mid's text), mid, a\n\
     \                        pass on Mid, lower, registers or stack, or all\n\
     \  --pass-stats          the time and size of every stage, on standard error\n\
@@ -63,6 +73,8 @@ struct
     \                        functions of E1's runtime in today's Mid (default: runtime)\n\
     \  --fault=F             for the tests of what catches it, a fault of Core to Mid made\n\
     \                        on purpose: thunk-in-slot or force-behind-cast\n\
+    \  --strings=S           a string literal's list: lazy, a cell as it is read (default),\n\
+    \                        or whole, every cell at once, for D24's measurement\n\
     \  --lint-rules          print the name of each rule of CoreLint, one a line\n\
     \  --generate-core=SEED  print a well-typed Core program made from SEED (D55)\n\
     \  --version             print the version and the identity of rhc\n\
@@ -88,6 +100,7 @@ struct
       val output = ref NONE
       val thunks = ref CoreToMid.Runtime
       val fault = ref NONE
+      val strings = ref CoreRuntime.Lazy
       val help = ref false
       val version = ref false
       fun stages s = List.filter (fn x => x <> "") (String.fields (fn c => c = #",") s)
@@ -111,6 +124,8 @@ struct
         | go ("--thunks=runtime" :: rest) = (thunks := CoreToMid.Runtime; go rest)
         | go ("--fault=thunk-in-slot" :: rest) = (fault := SOME CoreToMid.ThunkInSlot; go rest)
         | go ("--fault=force-behind-cast" :: rest) = (fault := SOME CoreToMid.ForceBehindCast; go rest)
+        | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
+        | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)
         | go (arg :: rest) =
             (case (after ("--lint=", arg), after ("--dump-after=", arg), after ("--steps=", arg),
                    after ("--depth=", arg), after ("--generate-core=", arg)) of
@@ -129,7 +144,7 @@ struct
     in
       go args;
       {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
-       lintRules = !lintRules, generate = !generate, output = !output, thunks = !thunks, fault = !fault, help = !help,
-       version = !version}
+       lintRules = !lintRules, generate = !generate, output = !output, thunks = !thunks, fault = !fault,
+       strings = !strings, help = !help, version = !version}
     end
 end

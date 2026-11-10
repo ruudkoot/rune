@@ -1,0 +1,4 @@
+(True,True,True,True,LT)
+(True,True,True,P 1 3,P 1 2)
+(True,EQ,False,False)
+(True,False,LT)

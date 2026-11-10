@@ -235,7 +235,7 @@
      "kind": "val",
      "name": "prims",
      "spec": "val prims : prim list",
-     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`;\n- I/O: `print_str`, `print_err`, `exit`, `ref_new`, `ref_get`,\n  `ref_set`, `real_world`;\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`.\n\n",
+     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`; then the elementary functions `double_sqrt`,\n  `double_exp`, `double_log`, `double_sin`, `double_cos`, `double_tan`,\n  `double_atan`, `double_sinh`, `double_cosh`, `double_tanh` and\n  `double_atan2`; the conversions to `Int` `double_truncate`,\n  `double_round` (to even at a half), `double_ceiling`, `double_floor`;\n  the classes `double_is_nan`, `double_is_infinite`,\n  `double_is_negative_zero`, `double_is_denormalized`; and\n  `double_decode` and `double_encode`, a mantissa of 53 bits;\n- on `Float`, a `Double` that binary32 represents, every result of\n  arithmetic rounded to binary32 by Mid's `real_to_single` (D23):\n  `float_add`, `float_sub`, `float_mul`, `float_div`, `float_neg`,\n  `float_eq` to `float_ge`, `float_from_int`, `float_from_double`,\n  `float_to_double`, `float_to_str`, and the functions of `Double`\n  from the elementary ones on, `float_sqrt` to `float_encode`, a\n  mantissa of 24 bits;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`,\n  `str_extract`;\n- I/O: `print_str`, `print_err`, `exit`; the handles of files, 0 to 2\n  standard input, output and error, `h_open`, `h_close`, `h_read`,\n  `h_write`, `h_flush`, `h_error`; `interleave`, which defers an\n  action until its value is forced (D25's one interleaving\n  primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`.\n\n",
      "page": "sig/CORE_PRIM.md#val-prims"
     },
     {
@@ -249,8 +249,42 @@
      "kind": "val",
      "name": "exnKinds",
      "spec": "val exnKinds : string list",
-     "doc": "`exnKinds` is the kinds of exception, by the number `exn_kind` gives.\n\nThey are `ErrorCall`, `IOError`, `PatternMatchFail`, `NonTermination`\n(a suspension forced again under its own evaluation), `Div`, `Overflow`,\n`Subscript` and `Chr`.\n\n",
+     "doc": "`exnKinds` is the kinds of exception, by the number `exn_kind` gives.\n\nThey are `ErrorCall`, `IOError`, `PatternMatchFail`, `NonTermination`\n(a suspension forced again under its own evaluation), `Div`, `Overflow`,\n`Subscript`, `Chr` and `Domain` (a NaN made an `Int`).\n\n",
      "page": "sig/CORE_PRIM.md#val-exnkinds"
+    }
+   ]
+  },
+  "CORE_RUNTIME": {
+   "doc": "rhc's runtime, in Core (the haskell98 roadmap, M17; D24 to D26): what\nthe Report's modules name and never define, written in Core over\nCorePrim's primitives, so that the Core interpreter and Core to Mid run\none text and no SML stands below Haskell (D26's A).\n\nIt holds the built-in syntax, the unit `()` and the list `[]` with its\nconstructors `[]` and `:` (ov.prelude.unit, ov.prelude.list), and the\ntwo modules the Report imports and never defines: PreludeBuiltin, whose\nprimitives are those of share/rhc/haskell98's Prelude and PreludeIO, and\nUnicodePrims, Char's. Each `prim*` of the Report is a value of it of the\nsame name, whose type is the Report's in Core: `String` is `([] Char)`,\n`IOError` is `Exn` and `IO a` is `World -> (utuple World a)` (D25's\nstate token). Beside them it has `primSeq`, `primReturnIO` and\n`primBindIO` (ov.prelude.seq, ov.prelude.io) and `primUnpackString`,\nwhich makes a string literal, UTF-8 in a `Str`, its list of characters.\n\nInput and output are UTF-8; a byte that starts no sequence of UTF-8 is\nread as the character of its number. `getContents` and `readFile` read\na chunk at a time as their list is read, through `interleave`, the one\ninterleaving primitive, and end their list at an error of reading\n(21.2.2); standard output is written before standard input is read.\n`getChar` and `getContents` share standard input's buffer.\n\nThe general category and the simple case mappings are lib/unicode's\n(CodePoint, D21), at its version, in tables written from its data:\n`isUpper` is true of every letter that is not lower case (R38).\n\n",
+   "page": "sig/CORE_RUNTIME.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "strings",
+     "spec": "datatype strings = Lazy | Whole",
+     "doc": "How a string literal becomes its list (D24).\n\n`Lazy` makes a cell as the list is read (A, decided); `Whole` makes\nevery cell at the first force (B, built for the owner's measurement).\n\n",
+     "page": "sig/CORE_RUNTIME.md#type-strings"
+    },
+    {
+     "kind": "val",
+     "name": "reportNames",
+     "spec": "val reportNames : string list",
+     "doc": "`reportNames` is the `prim*` of the Report's modules, each a value of\nthe runtime.\n\n",
+     "page": "sig/CORE_RUNTIME.md#val-reportnames"
+    },
+    {
+     "kind": "val",
+     "name": "program",
+     "spec": "val program : strings -> Core.program",
+     "doc": "`program strings` is the whole runtime, its literals made as `strings`\nsays.\n\n**Raises** `CoreText.Error` where its text does not read, a bug of rhc's.\n\n",
+     "page": "sig/CORE_RUNTIME.md#val-program"
+    },
+    {
+     "kind": "val",
+     "name": "link",
+     "spec": "val link : strings -> Core.program -> Core.program",
+     "doc": "`link strings p` is `p` after the declarations of the runtime that `p`\nreaches, through the names it mentions and through theirs.\n\nA declaration `p` makes of a name of the runtime is `p`'s own, and the\nruntime's is left out.\n\n",
+     "page": "sig/CORE_RUNTIME.md#val-link"
     }
    ]
   },
@@ -324,7 +358,7 @@
    ]
   },
   "CORE_TO_MID": {
-   "doc": "Core to Mid (the haskell98 roadmap, M10): a Core program as a program\nof Mid's text, which rhc reads with Mid's own reader and gives to the\npasses from Mid on (MidPipeline), its list without expand.\n\nA lazy position of type T is `T susp` in Mid and an evaluated one `T`:\na binder, a parameter, a field and a component of an unboxed tuple of\ntype `!T` is the value, one of a lifted `T` a suspension. A function\ntakes each argument in its slot and returns its value evaluated, so a\ndatatype-typed variable of Mid is evaluated. A `let` of a value -- a\nlambda, a constructor, a literal -- binds the value, and of anything else\na suspension, whose code says it is under evaluation first and updates\nit with its value last. A `case` forces its scrutinee and tests its tag;\na value given to a lazy slot is cast into it. A `letrec` of values goes\nthrough cells (D6's A), and a value of the top level that is no function\nis a suspension in a global, a CAF. The state token is erased (D25): an\naction of Core, `World -> (utuple World T)`, is `unit -> T` in Mid, its\norder the order of its lets.\n\nWhat a later milestone gives is behind one function each: a type\nconstructor applied by a variable and a forall inside a type (M28, Mid's\n`Ty` with application and forall), and `Integer` (M31).\n\n",
+   "doc": "Core to Mid (the haskell98 roadmap, M10): a Core program as a program\nof Mid's text, which rhc reads with Mid's own reader and gives to the\npasses from Mid on (MidPipeline), its list without expand.\n\nA lazy position of type T is `T susp` in Mid and an evaluated one `T`:\na binder, a parameter, a field and a component of an unboxed tuple of\ntype `!T` is the value, one of a lifted `T` a suspension. A function\ntakes each argument in its slot and returns its value evaluated, so a\ndatatype-typed variable of Mid is evaluated. A `let` of a value -- a\nlambda, a constructor, a literal -- binds the value, and of anything else\na suspension, whose code says it is under evaluation first and updates\nit with its value last. A `case` forces its scrutinee and tests its tag;\na value given to a lazy slot is cast into it. A `letrec` of values goes\nthrough cells (D6's A), and a value of the top level that is no function\nis a suspension in a global, a CAF. The state token is erased (D25): an\naction of Core, `World -> (utuple World T)`, is `unit -> T` in Mid, its\norder the order of its lets.\n\nAn `Integer` is Mid's `IntInf.int`, an immediate within 63 bits and a\nsign and a magnitude past them (M31, D20's D), each literal a global made\nonce. A type variable applied and a forall inside a type are Mid's own\n(M28): a lazy field of a forall holds a suspension at every type, the\nforall outside it, and a newtype given fewer arguments than its\nparameters is a box, as one that reaches itself is.\n\n",
    "page": "sig/CORE_TO_MID.md",
    "members": [
     {
@@ -883,6 +917,110 @@
     }
    ]
   },
+  "HS_LINT": {
+   "doc": "HsLint (the haskell98 roadmap's M16, D54): the independent check of\nrhc's types, as AstLint is Rune's. Its first part is a second\ninference: a transliteration of Typing Haskell in Haskell (Jones 1999)\nin the form its 11.6.3 calls conformant, with kinds and dependency\ngroups recomputed, the monomorphism restriction and defaulting as the\nroadmap's D32 reads the Report (R18, R20, R21, R22), over the renamed\ntree. It shares nothing with rhc's checker but the renamer: its\nunifier, its kinds and its context reduction are its own, so that a\ndisagreement between the two is a finding. rhc runs it among the\nchecks of level 2 (`--lint=2`, `RUNE_LINT=2`), where a refusal of a\nprogram the compile accepts is a bug of rhc's.\n\n",
+   "page": "sig/HS_LINT.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "module",
+     "spec": "type module = {id : string, ast : HsAst.module, library : bool}",
+     "doc": "A module of a program as HsLint reads it: its identity, its tree as\n`HsRename` renamed it and `HsFixity` resolved it, and whether it is\none of rhc's library's.\n\n",
+     "page": "sig/HS_LINT.md#type-module"
+    },
+    {
+     "kind": "type",
+     "name": "binding",
+     "spec": "type binding = {module : string, name : string, scheme : string, signed : bool, restricted : bool,\n                span : HsSource.span}",
+     "doc": "A binding of the top level as the second inference left it: its\nmodule, its name, its type as text, whether a signature declared it.\n\n`restricted` is whether its group is restricted (4.5.5, Rule 1). The\ntype is written as the Report writes one, `Eq a => [a] -> a -> Bool`.\n\n",
+     "page": "sig/HS_LINT.md#type-binding"
+    },
+    {
+     "kind": "type",
+     "name": "default",
+     "spec": "type default = {module : string, span : HsSource.span, preds : string, choice : string, ruleTwo : bool}",
+     "doc": "A default the second inference chose (4.3.4): the module, where, the\npredicates it resolved and the type, as text.\n\n`ruleTwo` is whether Rule 2 chose it, where the module was inferred.\n\n",
+     "page": "sig/HS_LINT.md#type-default"
+    },
+    {
+     "kind": "type",
+     "name": "kind",
+     "spec": "type kind = {module : string, name : string, kind : string}",
+     "doc": "The kind inferred for a type constructor or a class's variable (4.6):\nthe module, the name and the kind, as text.\n\n",
+     "page": "sig/HS_LINT.md#type-kind"
+    },
+    {
+     "kind": "type",
+     "name": "class_",
+     "spec": "type class_ = {name : string, numeric : bool, standard : bool}",
+     "doc": "A class by its name: whether it is numeric and standard (4.3.4).\n\n",
+     "page": "sig/HS_LINT.md#type-class_"
+    },
+    {
+     "kind": "type",
+     "name": "derived",
+     "spec": "type derived = {module : string, instance : string}",
+     "doc": "A derived instance with the context inferred for it (4.3.3, 10.1):\nthe module of its type, and the instance as text, `Eq a => Eq (T a)`.\n\n",
+     "page": "sig/HS_LINT.md#type-derived"
+    },
+    {
+     "kind": "type",
+     "name": "report",
+     "spec": "type report = {bindings : binding list, defaults : default list, kinds : kind list, derived : derived list,\n               classes : class_ list}",
+     "doc": "What the second inference found: bindings, defaults, kinds, derived\ninstances and classes.\n\nThe bindings of the top level of every module and the defaults are in\nthe order it met them; the kinds are of the type constructors and the\nclasses.\n\n",
+     "page": "sig/HS_LINT.md#type-report"
+    },
+    {
+     "kind": "exception",
+     "name": "Refused",
+     "spec": "exception Refused of HsSource.span * string",
+     "doc": "A refusal of the second inference: where, and why, the why naming the\nrow of the conformance table it is for where there is one.\n\n",
+     "page": "sig/HS_LINT.md#exn-refused"
+    },
+    {
+     "kind": "val",
+     "name": "infer",
+     "spec": "val infer : {groups : module list list, main : string option, cycleDefault : bool} -> report",
+     "doc": "`infer {groups, main, cycleDefault}` is the report of the second\ninference over the program whose groups of modules are `groups`.\n\nThe groups are the strongly connected ones, dependencies first;\n`main` is the identity of the module whose `main` must have the type\n`IO t` (5), if any; and `cycleDefault` is whether a group's modules\nshare one `default` and Rule 2 closes at the group's end (D30's\n`--cycle-default=scc`) rather than each module's.\n\n**Raises** `Refused` at the first breach of the Report's static rules\nthe second inference finds.\n\n",
+     "page": "sig/HS_LINT.md#val-infer"
+    },
+    {
+     "kind": "type",
+     "name": "claims",
+     "spec": "type claims",
+     "doc": "What a record claims of a program, in the form `dump` prints.\n\nThe claims are kinds, derived instances, the types of the bindings of\nits modules' top levels and the defaults.\n\n",
+     "page": "sig/HS_LINT.md#type-claims"
+    },
+    {
+     "kind": "val",
+     "name": "claims",
+     "spec": "val claims : string -> claims",
+     "doc": "`claims text` is the claims of `text`, lines in the form of `dump`;\na line of another form claims nothing.\n\n",
+     "page": "sig/HS_LINT.md#val-claims"
+    },
+    {
+     "kind": "val",
+     "name": "rules",
+     "spec": "val rules : (string * string) list",
+     "doc": "`rules` is each rule of `compare` with what it holds, its name being\nthe first word of its breach's message, in brackets: `[rule1] ...`.\n\n",
+     "page": "sig/HS_LINT.md#val-rules"
+    },
+    {
+     "kind": "val",
+     "name": "compare",
+     "spec": "val compare : report * claims * (HsSource.span -> string) * string -> unit",
+     "doc": "`compare (report, claims, where_, fault)` holds the claims to the\nreport, of the program's modules, `where_` giving a default's place.\n\n`fault`, a rule's name or \"\", reads the first claim that rule checks\ncorrupted, so that the rule must refuse it.\n\n**Raises** `Refused` at the first claim a rule refuses.\n\n",
+     "page": "sig/HS_LINT.md#val-compare"
+    },
+    {
+     "kind": "val",
+     "name": "dump",
+     "spec": "val dump : report * (HsSource.span -> string) * bool -> string",
+     "doc": "`dump (report, where_, library)` is the report as text, a line each.\n\nThe lines are `KIND MODULE NAME :: KIND` for a type constructor or a\nclass, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a\nbinding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's\nmodules, and of the library's too where `library` is set, but its\nsigned bindings.\n\n",
+     "page": "sig/HS_LINT.md#val-dump"
+    }
+   ]
+  },
   "HS_LITERATE": {
    "doc": "Literate Haskell (the Report's section 9.4): the program text of a\nliterate file.\n\nThe program text has the length of the file, byte for byte, so that a\nposition of the one is a position of the other: a program line keeps\nits bytes but for its leading `>`, which becomes a space, so that its\ncolumns are the file's, and every byte of a line of commentary but its\nline end becomes a space. Layout sees no line of commentary, and the\ntrivia that an exact print takes from the file keep it.\n\n",
    "page": "sig/HS_LITERATE.md",
@@ -1358,6 +1496,7 @@
   "CoreInterp": "CORE_INTERP",
   "CoreLint": "CORE_LINT",
   "CorePrim": "CORE_PRIM",
+  "CoreRuntime": "CORE_RUNTIME",
   "CoreText": "CORE_TEXT",
   "CoreToMid": "CORE_TO_MID",
   "HsAst": "HS_AST",
@@ -1366,6 +1505,7 @@
   "HsFixity": "HS_FIXITY",
   "HsLayout": "HS_LAYOUT",
   "HsLexer": "HS_LEXER",
+  "HsLint": "HS_LINT",
   "HsLiterate": "HS_LITERATE",
   "HsModules": "HS_MODULES",
   "HsParser": "HS_PARSER",
