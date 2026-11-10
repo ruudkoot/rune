@@ -15,7 +15,10 @@
      `bin/rhc --dump-names`, are E16's table of the Report (663 export
      pairs, 35 fixities, 164 instances: tests/hs/library/report.names),
      changed exactly by the lines tests/hs/library/overlay.names gives, each
-     with the entry of overlay.tsv it is of. *)
+     with the entry of overlay.tsv it is of.
+   - hs/library/compile: the 20 modules compile (M18): bin/rhc --whole
+     compiles tests/hs/library/All20.hs, which uses a name of each, and
+     the VM runs it to All20.expected and the status 3 of its exitWith. *)
 structure HsLibrary =
 struct
   open Sh
@@ -393,6 +396,27 @@ struct
               " lines and takes " ^ Int.toString (length removed) ^ "\n"))
     end
 
+  fun compile () =
+    let
+      val out = run ^ "/hs-library"
+      val () = mkdirs out
+      fun f x = out ^ "/" ^ x
+      val cs = exec {cmd = [fromRoot "bin/rhc", "--whole", "--lint=2", fromRoot "tests/hs/library/All20.hs", "-o", f "all20.rbc"],
+                     dir = NONE, stdin = "", stdout = f "all20.c", stderr = f "all20.c", timeout = 900}
+    in
+      if cs <> 0 then fail ("hs/library/compile: bin/rhc does not compile the 20 modules: " ^ firstLine (f "all20.c"))
+      else
+        let
+          val rs = exec {cmd = [fromRoot "bin/runevm", f "all20.rbc"], dir = SOME out, stdin = "", stdout = f "all20.out",
+                         stderr = f "all20.err", timeout = 300}
+        in
+          if rs <> 3 then fail ("hs/library/compile: All20 ends with status " ^ Int.toString rs ^ ", not 3: " ^ firstLine (f "all20.err"))
+          else if read (f "all20.out") <> read (fromRoot "tests/hs/library/All20.expected") then
+            fail ("hs/library/compile: All20 prints otherwise than tests/hs/library/All20.expected (" ^ f "all20.out" ^ ")")
+          else say "hs/library/compile: the 20 modules compiled whole; the program over them prints what it should\n"
+        end
+    end
+
   fun job (name, cmd) =
     Test.it name
       {program = "/bin/sh", args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ cmd],
@@ -409,12 +433,13 @@ struct
       [tagged (["check", "hs", "quick"] @ covers)
          (Test.describe ""
             [job ("overlay", "hs-library-overlay"), job ("pristine", "hs-library-pristine"),
-             job ("report", "hs-library-report")])]
+             job ("report", "hs-library-report"), job ("compile", "hs-library-compile")])]
 
   fun command args =
     case args of
       ["hs-library-overlay"] => SOME overlay
     | ["hs-library-pristine"] => SOME pristine
     | ["hs-library-report"] => SOME report
+    | ["hs-library-compile"] => SOME compile
     | _ => NONE
 end

@@ -50,4 +50,36 @@ sig
 
      Raises: `Unsupported` where `p` needs what Mid has not got. *)
   val program : {fault : fault option} * Core.program -> string
+
+  (* How a value of the top level is in Mid, an ABI fact of its interface.
+
+     A unit that imports it binds it so (H9): a function global, a
+     suspension in a global (a CAF), or a literal in a global. *)
+  datatype abi = Function | Suspension | Literal
+
+  (* `unit ({fault, imports, makesShared}, p)` is the text of Mid of the
+     unit `p` (the haskell98 roadmap's M21).
+
+     Each import of another unit is bound as `imports` says that unit's
+     Core to Mid made it. Its `names` is the name in the text of each value of the top level,
+     the unit's own and its imports, by its Core name; its `abi` how each
+     of its own is made. An import is declared in the text as a global of
+     its scheme whose expression is a placeholder, which the client drops
+     after reading the text, its scheme MidLint's for the import
+     (MidLint.importedScheme). The text calls `main` where the unit
+     defines it, as `program`'s does.
+
+     Raises: `Unsupported` where `p` needs what Mid has not got, or an
+     import `imports` does not give. *)
+  val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.program
+             -> {text : string, names : (string * string) list, abi : (string * abi) list}
+
+  (* `shared` is the globals of every text's prelude that have an
+     identity, Core's exceptions, which one unit of a program makes.
+
+     Each is in `unit`'s `names` by itself, and
+     in its `abi` where the unit makes them (makesShared), which one unit
+     of a program does; in the others' texts they are imports, which their
+     client reads as it reads an import's placeholder. *)
+  val shared : string list
 end

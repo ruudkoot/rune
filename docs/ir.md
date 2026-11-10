@@ -873,7 +873,11 @@ program written by hand. The grammar is at the head of
   `{int}`.
 * Variables, globals, join points and type variables are numbered afresh in
   the order they appear (`v1`, `g1`, `j1`, `'a`, and `'_a` for a type
-  variable no type was found for).
+  variable no type was found for), but for a name the reader's `named`
+  gives a stamp of (`MidText.parseWith`): a front end that compiles in units
+  names another unit's global by its text, and gives its stamp there (the
+  haskell98 roadmap's M21; `tests/hs/units/named.sml`). `MidText.parse`
+  gives none.
 * A type name is written as it is, with `/N` where two would clash; a
   datatype, or a type without constructors, that is not built in is
   declared at the head, with the arguments it takes, and the reader refuses

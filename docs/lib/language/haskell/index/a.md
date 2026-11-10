@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; **a** [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
+- `abi` (type): [CORE_TO_MID](../sig/CORE_TO_MID.md#type-abi)
 - `add` (val): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-add)
 - `addClass` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-addclass)
 - `addInstance` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-addinstance)

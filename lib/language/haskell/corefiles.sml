@@ -103,7 +103,7 @@ struct
     case descriptorOf h of
       SOME fd =>
         ((if h = 0 then pending := "" else ());
-         ignore (Posix.IO.lseek (fd, Position.fromInt pos, Posix.IO.SEEK_SET)); 0
+         (ignore (Posix.IO.lseek (fd, Position.fromInt pos, Posix.IO.SEEK_SET)); 0)
          handle e as OS.SysErr _ => (failed e; ~1))
     | NONE => (lastError := "Bad file descriptor"; lastErrno := 9; ~1)
 

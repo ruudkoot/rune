@@ -736,9 +736,10 @@ the kinds, the derived instances' contexts and the defaults it chose, or
 what it must find: `dump/NAME` each fixture of `tests/hs/hslint` against its
 expected dump, reviewed line by line (under `--cycle-default=scc` and with
 the library's unsigned bindings, `--dump-hslint=library`, where it has those
-files), then the checker on it at level 2, which must accept what the dump
-infers and refuse what it refuses while HsLint replays its records, so that
-rhc's mutants of the checker (HK01 to HK05) fail a fixture's job;
+files), then its compile at level 2 as far as Core (`--desugar-only`), which
+must accept what the dump infers and refuse what it refuses while HsLint
+replays the checker's records and holds them and the Core to its inference,
+so that rhc's mutants of the checker (HK01 to HK05) fail a fixture's job;
 `accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
 and `tests/hs/lang` inferred, whatever its rows' status, since the second
 inference waits on no stage of the compile; and `errors/K-of-4`, every
@@ -769,25 +770,38 @@ inference. A derived instance, which HsDerive makes as the tree a user would
 write (M14), is checked as any instance is: the second inference types its
 methods at the head and the least context it derived itself (10.1, the data
 type's context with it), and replay reads their records and their methods'
-types. `faults` holds each rule to refusing its fault, as
-`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, its records
-and its own expected dump, is accepted, and with `RHC_HSLINT_FAULT=RULE`,
-which reads the first claim or record RULE checks corrupted, refused with
-`[RULE]`.
+types. Once the program is desugared and CoreLint has typed its Core by
+its rules, the target check holds that Core to the second inference, Hall
+et al.'s soundness of the translation (D54's first part): each value of the
+top level, each selector and default method is of the translation of its
+source type, HsLint's own (`[target]`), each class's data type holds its
+superclasses' dictionaries then its methods in order (`[dictionary]`), and
+each instance's dictionary function takes its context's dictionaries and
+gives the class's at its head (`[dfun]`), up to the names and order of the
+variables and the order of the dictionaries, so that any route to a
+superclass is right. `faults` holds each rule to refusing its fault, as
+`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, desugared,
+with its records, its Core and its own expected dump, is accepted, and with
+`RHC_HSLINT_FAULT=RULE`, which reads the first claim, record or Core type
+RULE checks corrupted, refused with `[RULE]`. `levels` builds each fixture
+the dump infers at level 2 and at level 0, which must be the same bytes, as
+`levelsOne` holds Rune's builds: no check changes what rhc makes.
 
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,
 with the Report's code as printed in `pristine/`; D36, D37, D38).
-`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report
-while no compiler runs it: `overlay`, each module's tokens against
+`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report:
+`overlay`, each module's tokens against
 `pristine/`'s, a line at a time, white space and comments dropped, every
 line where they differ an entry of `overlay.tsv` marked applied, and every
 file the Report has no text of an entry's `new:`; `pristine`, the printed
-code byte for byte as `pristine/MANIFEST.tsv` records it; and `report`,
+code byte for byte as `pristine/MANIFEST.tsv` records it; `report`,
 `bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
 Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
 instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
-each with its entry.
+each with its entry; and `compile`, `bin/rhc --whole` compiling
+`tests/hs/library/All20.hs`, a program over a name of each of the 20
+modules, which the VM runs to `All20.expected` (M18: the 20 modules compile).
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
@@ -1000,7 +1014,24 @@ against what is given now, an absent name present now refuses it (H1, H2);
 one checked at a lower level of the lint is refused; a key is over every
 member and its text (H8); the overlay is read before the layers, a layer is
 read and never written, one configuration's entries are not another's; a
-damaged entry is a miss; a head is read back as it was written. Core in
+damaged entry is a miss; a head is read back as it was written.
+`hs/units/named` builds `tests/hs/units/named.build` on Mid's layer of the
+compiler, as rhc is built, and runs it: a unit's Mid text names another
+unit's global, which `MidText.parseWith`'s `named` gives the other's stamp,
+and every other name a fresh one. `hs/units/core/NAME` compiles each run
+test of `hs/core` a VM runs as units (`rhc --units`): rhc's runtime, the
+files its flags read and the test, each compiled apart to a unit file
+against the units before it, taking what it names of them as their
+interface gives it, and linked; what it prints is its `.expected`, and it
+ends as its `.exitcode` says. `hs/units/warm` keeps a program of units in a
+store (`rhc --units --store DIR --show-units`) and edits copies of
+`tests/hs/units/warm`'s files: each step says which units it compiles and
+which it takes from the store, links what a compile without the store
+links, byte for byte past the header, and prints what it should. Nothing
+edited takes every unit; a body's edit compiles its unit alone; a type's
+edit compiles its users too; a unit put before another that declares a name
+the other takes compiles that other, which takes it from there; and without
+it again the other's first entry is taken. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

@@ -17,6 +17,7 @@
 - `findClass` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-findclass)
 - `findInstance` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-findinstance)
 - `FInfix` (con): [HS_AST](../sig/HS_AST.md#con-finfix)
+- `fingerprints` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-fingerprints)
 - `fixity` (type): [HS_AST](../sig/HS_AST.md#type-fixity), [HS_FIXITY](../sig/HS_FIXITY.md#type-fixity), [HS_RENAME](../sig/HS_RENAME.md#type-fixity)
 - `fixpoint` (type): [HS_MODULES](../sig/HS_MODULES.md#type-fixpoint)
 - `FLOAT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-float)
@@ -30,6 +31,7 @@
 - `freeTyVars` (val): [CORE](../sig/CORE.md#val-freetyvars)
 - `fresh` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-fresh)
 - `Full` (con): [HS_PARSER](../sig/HS_PARSER.md#con-full)
+- `Function` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-function)
 - `funlhs` (type): [HS_AST](../sig/HS_AST.md#type-funlhs)
 - `funlhs_` (type): [HS_AST](../sig/HS_AST.md#type-funlhs_)
 
