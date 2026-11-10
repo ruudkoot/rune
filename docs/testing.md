@@ -531,8 +531,10 @@ rows it covers (a production's rows, a definition's), the readings it pins
 1. a row whose test is `accept`, `reject` or `run` and that is not
    `Planned` has a program of its class that names it: `tests/hs/accept` or
    `tests/hs/lang` for `accept`, `tests/hs/lang` for `run`,
-   `tests/hs/errors` for `reject`;
-2. what a program names is a row, of a test its directory serves;
+   `tests/hs/errors` for `reject`; or, where it deviates, its pin, which is
+   of the other class (a row the Report accepts and rhc refuses, R1's);
+2. what a program names is a row, of a test its directory serves, but the
+   row whose deviation it pins;
 3. a row whose test is `none` says why in `how`;
 4. a row with a reading, once it is not `Planned`, has a program that names
    it and pins each of its readings, and a program pins only the readings of

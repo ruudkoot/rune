@@ -1,1 +1,3 @@
 id	ground	pin	note
+lay.parseerror.fixity	cannot be implemented	errors/lay.parseerror.fixity_refused	9.3 gives do a == b == c the parse (do { a == b }) == c by fixity, which layout cannot know before names are resolved; rhc closes blocks by the grammar with operators flat (D27) and fixity resolution refuses the block, as every oracle does (R1, D38)
+lay.note3.implicit	contradictory	accept/lay.note3.implicit_closes	2.7 inserts a close brace where an illegal lexeme meets a legal close, and 9.3 Note 3 refuses an explicit } that meets an implicit open; rhc takes 2.7, as GHC and Hugs do (R2, D38)

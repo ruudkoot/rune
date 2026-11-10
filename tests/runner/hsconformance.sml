@@ -15,8 +15,10 @@
    The rules, each direction a failure:
    1. a row whose test is accept, reject or run and that is not Planned has
       a program of its class that names it (accept: tests/hs/accept or
-      tests/hs/lang; run: tests/hs/lang; reject: tests/hs/errors);
-   2. what a program names is a row, of a test its directory serves;
+      tests/hs/lang; run: tests/hs/lang; reject: tests/hs/errors), or its
+      deviation's pin, which is of the other class;
+   2. what a program names is a row, of a test its directory serves, but
+      the row whose deviation it pins;
    3. a row whose test is none says why in how;
    4. a row with a reading, not Planned, has a program that names it and
       pins each of its readings, and a program pins only readings of the
@@ -215,10 +217,13 @@ struct
                            let
                              val twice = List.filter (fn (q : program) => #dir q = #dir p andalso #name q = #name p) progs
                            in if length twice > 1 then fail ("table: two programs named " ^ #path p) else () end) progs
+      (* a program is a row's pin: it says deviation, and the row names it *)
+      fun pins (p : program, r : row) = #deviation p andalso #deviation r = #path p
       (* rule 1 *)
       val () = List.app (fn (r : row) =>
                            if #status r = "Planned" orelse #test r = "none" then ()
-                           else if List.exists (fn (p : program) => member (#dir p, serves (#test r))) (programsOf (#id r)) then ()
+                           else if List.exists (fn (p : program) => member (#dir p, serves (#test r)) orelse pins (p, r))
+                                               (programsOf (#id r)) then ()
                            else fail ("rule 1: " ^ #id r ^ " is " ^ #status r ^ ", and no program of tests/hs/"
                                       ^ String.concatWith " or tests/hs/" (serves (#test r)) ^ " names it")) rows
       (* rule 2 *)
@@ -226,7 +231,7 @@ struct
                            List.app (fn id =>
                                        case row id of
                                          NONE => fail ("rule 2: " ^ #path p ^ " names " ^ id ^ ", which is no row")
-                                       | SOME r => if member (#dir p, serves (#test r)) then ()
+                                       | SOME r => if member (#dir p, serves (#test r)) orelse pins (p, r) then ()
                                                    else fail ("rule 2: " ^ #path p ^ " names " ^ id ^ ", whose test is " ^ #test r
                                                               ^ ", which tests/hs/" ^ #dir p ^ " does not serve"))
                                     (#ids p)) progs
@@ -294,16 +299,29 @@ struct
     end
 
   (* ---- breaches planted in a private tree *)
+  (* the base of each: the tree's table with every row Planned and no
+     deviation, none noted, and the tree's errata; no program *)
+  val deviationsHead = String.concatWith "\t" deviationsHeader ^ "\n"
+  fun tableText () =
+    String.concatWith "\n"
+      (List.map (fn line =>
+                   case String.fields (fn c => c = #"\t") line of
+                     fs as [_, _, _, _, _, _, _, _, _, _] =>
+                       if hd fs = "id" then line
+                       else String.concatWith "\t" (List.take (fs, 7) @ ["Planned", List.nth (fs, 8), ""])
+                   | _ => line)
+                (String.fields (fn c => c = #"\n") (read (fromRoot "tests/hs/conformance.tsv"))))
   fun copyTree (dir, edits : (string * string) list) =
     let
-      fun one file = write (dir ^ "/" ^ file, case List.find (fn (f, _) => f = file) edits of
-                                                SOME (_, text) => text
-                                              | NONE => read (fromRoot file))
+      val base = [("tests/hs/conformance.tsv", tableText ()), ("tests/hs/errata.tsv", read (fromRoot "tests/hs/errata.tsv")),
+                  ("tests/hs/deviations.tsv", deviationsHead)]
+      fun one (file, text) = write (dir ^ "/" ^ file, case List.find (fn (f, _) => f = file) edits of
+                                                        SOME (_, edited) => edited
+                                                      | NONE => text)
     in
       rmTree dir; List.app (fn d => mkdirs (dir ^ "/tests/hs/" ^ d)) dirs;
-      List.app one ["tests/hs/conformance.tsv", "tests/hs/errata.tsv", "tests/hs/deviations.tsv"]
+      List.app one base
     end
-  val tableText = fn () => read (fromRoot "tests/hs/conformance.tsv")
   (* the table with the fields of some rows set *)
   fun setFields (text, sets : (string * string * string) list) =
     String.concatWith "\n"
@@ -348,24 +366,28 @@ struct
       val t = "tests/hs/conformance.tsv"
       fun table sets = [(t, setFields (text, sets))]
       val errata = read (fromRoot "tests/hs/errata.tsv")
-      val deviationsHead = String.concatWith "\t" deviationsHeader ^ "\n"
       (* rows of each kind, from the table: an accept row, a run row with a
          reading, a reject row, a row with no test *)
       val accept = "lex.comment.dashcolon"
       val run = "exp.parse.letnonassoc"
       val runReading = "R9"
       val reject = "lex.any.invalid"
+      val reject2 = "lex.char.tab"
       val none = "intro.implementation"
       val () = if String.isSubstring ("\t" ^ runReading ^ "\t") (lineOf (text, run)) then ()
                else say ("FAIL hs-conformance faults: " ^ run ^ " no longer has the reading " ^ runReading ^ "; choose another row\n")
     in
       attempt ("keeps-the-rules",
                table [(accept, "status", "Supported"), (run, "status", "Partial"), (reject, "status", "Supported"),
-                      (run, "deviation", "lang/" ^ run ^ "_pin")]
-               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tcannot be implemented\tlang/" ^ run ^ "_pin\tpinned\n")],
+                      (run, "deviation", "lang/" ^ run ^ "_pin"), (reject2, "status", "Supported"),
+                      (reject2, "deviation", "accept/" ^ reject2 ^ "_taken")]
+               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tcannot be implemented\tlang/" ^ run ^ "_pin\tpinned\n"
+                                                ^ reject2 ^ "\tcontradictory\taccept/" ^ reject2 ^ "_taken\ttaken\n")],
                [("accept/" ^ accept ^ "_op", "-- an accepted program", NONE),
                 ("lang/" ^ run ^ "_pin", "-- rows: " ^ runReading ^ " deviation", SOME ""),
-                ("errors/" ^ reject ^ "_raw", "-- rows: " ^ reject, SOME "unexpected character")],
+                ("errors/" ^ reject ^ "_raw", "-- rows: " ^ reject, SOME "unexpected character"),
+                (* a refused row whose deviation is to accept: its pin is accepted *)
+                ("accept/" ^ reject2 ^ "_taken", "-- rows: deviation", NONE)],
                "");
       attempt ("no-program", table [(accept, "status", "Supported")], [], "rule 1");
       attempt ("a-program-of-another-class", table [(reject, "status", "Supported")],

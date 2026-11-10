@@ -2353,7 +2353,7 @@ lay.note1.equal	9.3	n = m does not open a context: a `do` at the same column as 
 lay.note2.empty	9.3	Note 2: a first token not indented more than the enclosing context means an empty block; empty braces are inserted	layout	accept	`f = x where` newline `g = y` at the enclosing column	hand	Planned		
 lay.note2.mimic	9.3	Note 2: {n} becomes <n> to mimic explicit empty braces	layout	accept	the following ; or } appears	hand	Planned		
 lay.note3.match	9.3	Note 3: matching against 0 ensures an explicit close can only match an explicit open	layout	accept	equation 7	hand	Planned		
-lay.note3.implicit	9.3	Note 3: a parse error results if an explicit close brace matches an implicit open brace	layout	reject	by the letter `let {x = do y} in x` and `R {f = do y}` are refused; GHC's `close: error` takes them; see readings.md	hand	Planned	R2	
+lay.note3.implicit	9.3	Note 3: a parse error results if an explicit close brace matches an implicit open brace	layout	reject	by the letter `let {x = do y} in x` and `R {f = do y}` are refused; GHC's `close: error` takes them; see readings.md	hand	Planned	R2	accept/lay.note3.implicit_closes
 lay.note4.allbraces	9.3	Note 4: all brace pairs are explicit contexts, including labelled construction and update	layout	accept	a record expression over several lines left of the block's column inside a `do`	hand	Planned		
 lay.note4.pattern	9.3	The same for field patterns and data declarations' field braces	layout	accept	a record pattern and a declaration over several lines	hand	Planned		
 lay.note4.nosemi	9.3	Inside a record's braces a line at the enclosing column gets no semicolon	layout	accept	the context is 0	hand	Planned		
@@ -2364,7 +2364,7 @@ lay.note6.pending	9.3	Note 6: at end of input any pending close-braces are inser
 lay.note6.explicit	9.3	Note 6: it is an error to be within a non-layout context at end of input	layout	reject	unclosed explicit brace at end of file	hand	Planned		
 lay.notdetected	9.3	"Some error conditions are not detected by the algorithm, although they could be: for example let }"	layout	reject	the grammar refuses it either way; by equations 4 and 8 L does detect the usual case; see readings.md	hand	Planned	R3	
 lay.parseerror.let	9.3	`let x = e; y = x in e'` is valid and translates to `let { x = e; y = x } in e'`	layout	accept	expansion; the prose calls this Note 1, it is Note 5: see readings.md	hand	Planned	R1	
-lay.parseerror.fixity	9.3	`do a == b == c` has the single parse `(do { a == b }) == c` since (==) is non-associative	layout	accept	taking it needs fixity in the parser; the Report says hard to implement; a post-parse fixity pass gets it wrong; see readings.md	hand	Planned	R1	
+lay.parseerror.fixity	9.3	`do a == b == c` has the single parse `(do { a == b }) == c` since (==) is non-associative	layout	accept	taking it needs fixity in the parser; the Report says hard to implement; a post-parse fixity pass gets it wrong; see readings.md	hand	Planned	R1	errors/lay.parseerror.fixity_refused
 lay.parseerror.advice	9.3	Programmers are advised to avoid code needing a closing brace in such situations	layout	none	advice to programmers	hand	Planned		
 lay.parseerror.doif	9.3	`do { if a ; then b ; else c }` is refused: ; is valid only as a stmt end	layout	reject	the layout-free form of the same mistake; Haskell 2010's DoAndIfThenElse is not Haskell 98	hand	Planned		
 lay.parseerror.multiline	9.3	`if` in a do block with then and else indented more parses	layout	accept	no semicolons arise	hand	Planned		
