@@ -406,13 +406,14 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
 - `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc and run in D56's three ways (`test`, `register`,
   `register-opt`), its output E8's expected one (the same, the same words, or numbers equal to about five digits)
   and its status 0; all 188 vendored and in `check`, all held while rhc runs no program (the row `prog.main.value`
-  Planned). `hs-rhc-corpus/vendored-SET`, in `check`, puts the 188 through `--typecheck-only`, a job a set, as the
-  nightly jobs above put the whole corpus. `hs-corpus/vendored` (nightly, with the trees) holds
-  `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and `hs-corpus/data` to the vendored programs'
-  files and notices and nothing more: it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or
-  under another notice than its row of `licences.tsv` names, and a `PROVENANCE` that does not name its tree's
-  upstream and commit or quote the owner's rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees,
-  leaving each `PROVENANCE` as written.
+  Planned). `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
+  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
+  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
+  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
+  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
+  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
+  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
+  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.

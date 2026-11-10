@@ -89,14 +89,16 @@ nearest `LICENSE` or `PROVENANCE` in its directory or above it, and that is the 
 A `PROVENANCE` gives the upstream repository and the commit `trees.tsv` pins, the path in it, the date the tree was
 fetched and the files copied, why no licence covers the files (or what notice there is, quoted), the owner's rule,
 quoted, and then each program: its files, by their paths below it (which it maps to their upstream paths), and what
-their own headers name of its authors and origin, quoted by file and line. The jobs of all 188 are `make check`'s
-(`hs-corpus-run/ID` and `hs-rhc-corpus/vendored-SET`). `bin/rune-test hs-corpus-vendor` makes `vendored/` from the trees
-again, copying the programs' files and the `LICENSE`s and leaving each `PROVENANCE` as written; `hs-corpus/data` holds
-`vendored/` to the vendored candidates' files and notices and nothing more, refuses a file with no `LICENSE` or
-`PROVENANCE` beside it or above it, or under another notice than its row's, and a `PROVENANCE` that does not name its
-tree's upstream and commit or quote the owner's rule; and `hs-corpus/vendored` (nightly, with the trees) holds it to the
-trees' bytes. helium's GPL-3 programs are not of the 188 and stay outside. `examples/benchmarks/*/upstream/` holds
-nofib's originals for its ports, with `NOTICE` files of their own; they are not this corpus.
+their own headers name of its authors and origin, quoted by file and line. The runs of all 188 are `make check`'s
+(`hs-corpus-run/ID`); their pass through `--typecheck-only` is `make check`'s for the 45 under a `LICENSE`
+(`hs-rhc-corpus/vendored-SET`) and nightly for the 143 under a `PROVENANCE` (`hs-rhc-corpus/provenance-SET`; ruling 46).
+`bin/rune-test hs-corpus-vendor` makes `vendored/` from the trees again, copying the programs' files and the `LICENSE`s
+and leaving each `PROVENANCE` as written; `hs-corpus/data` holds `vendored/` to the vendored candidates' files and
+notices and nothing more, refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another
+notice than its row's, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's rule;
+and `hs-corpus/vendored` (nightly, with the trees) holds it to the trees' bytes. helium's GPL-3 programs are not of the
+188 and stay outside. `examples/benchmarks/*/upstream/` holds nofib's originals for its ports, with `NOTICE` files of
+their own; they are not this corpus.
 
 The GHC shim of the oracles (`tests/hs/oracles/ghc-shim/`) holds three modules of GHC's libraries, `Random`,
 `Locale` and `ShimTime` (from `random`, `old-locale` and `old-time`), under the BSD licence of GHC's `base`, which is

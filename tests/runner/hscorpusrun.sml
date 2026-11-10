@@ -15,9 +15,10 @@
    of tests/hs/conformance.tsv is no longer Planned.
 
    tests/hs/corpus/vendored is also where `hs-rhc-corpus/vendored-SET`, in
-   make check, a job a set, puts the vendored programs through `bin/rhc
+   make check, a job a set, puts the 45 under a LICENSE through `bin/rhc
    --typecheck-only` as the nightly corpus jobs put the whole corpus
-   (tests/runner/hsrhccorpus.sml). *)
+   (tests/runner/hsrhccorpus.sml), and `hs-rhc-corpus/provenance-SET`,
+   nightly, the 143 under a PROVENANCE (ruling 46). *)
 structure HsCorpusRun =
 struct
   open Sh
@@ -87,35 +88,39 @@ struct
     handle HsOracles.Failed msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
          | HsCorpus.Bad msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
 
-  (* the sets of the vendored programs, each a job of its own *)
-  fun vendoredSets () =
+  (* the vendored programs by their notice: under their tree's LICENSE (45),
+     whose names jobs are make check's, or under a PROVENANCE (143), whose
+     names jobs are nightly (ruling 46: D56 puts the 188's runs in check, not
+     a names job, and the nightly m13 and rest jobs check the 143 as well);
+     each set's of a kind a job *)
+  fun vendoredRows () = List.filter (fn r => HsCorpus.field r "vendor" = "vendored") (d56 ())
+  fun underLicence r = OS.Path.file (HsCorpus.field r "notice") = "LICENSE"
+  fun setsOf rows =
     List.foldr (fn (s, acc) => if List.exists (fn t => t = s) acc then acc else s :: acc) []
-               (List.map (fn r => HsCorpus.field r "set") (List.filter (fn r => HsCorpus.field r "vendor" = "vendored") (d56 ())))
+               (List.map (fn r => HsCorpus.field r "set") rows)
 
-  (* the vendored programs of a set (or of all, NONE) through rhc
-     --typecheck-only, in make check *)
-  fun namesVendored set () =
-    let val job = "vendored" ^ (case set of SOME s => "-" ^ s | NONE => "")
-    in
-      fromVendored (fn () =>
-        let
-          val ids = List.map (fn r => HsCorpus.field r "id")
-                             (List.filter (fn r => HsCorpus.field r "vendor" = "vendored"
-                                                   andalso (case set of SOME s => HsCorpus.field r "set" = s | NONE => true))
-                                          (d56 ()))
-          val cs = HsCorpus.candidates ()
-          val rows = List.filter (fn r => List.exists (fn v => v = HsCorpus.field r "id") ids) (HsCorpus.rows "accept.tsv")
-          fun cand r = case List.find (fn (c : HsCorpus.candidate) => #id c = HsCorpus.field r "id") cs of
-                         SOME c => c | NONE => raise HsOracles.Failed ("no candidate " ^ HsCorpus.field r "id")
-        in HsRhcCorpus.report (job, List.map (fn r => HsRhcCorpus.one false (r, cand r)) rows) end)
-      handle HsOracles.Failed m => say ("FAIL rhc " ^ job ^ ": " ^ m ^ "\n")
-           | HsCorpus.Bad m => say ("FAIL rhc " ^ job ^ ": " ^ m ^ "\n")
-    end
+  (* the vendored programs whose rows of licences.tsv `keep` holds of,
+     through rhc --typecheck-only, reported as the job `job` *)
+  fun namesVendored (job, keep) () =
+    fromVendored (fn () =>
+      let
+        val ids = List.map (fn r => HsCorpus.field r "id") (List.filter keep (vendoredRows ()))
+        val cs = HsCorpus.candidates ()
+        val rows = List.filter (fn r => List.exists (fn v => v = HsCorpus.field r "id") ids) (HsCorpus.rows "accept.tsv")
+        fun cand r = case List.find (fn (c : HsCorpus.candidate) => #id c = HsCorpus.field r "id") cs of
+                       SOME c => c | NONE => raise HsOracles.Failed ("no candidate " ^ HsCorpus.field r "id")
+      in HsRhcCorpus.report (job, List.map (fn r => HsRhcCorpus.one false (r, cand r)) rows) end)
+    handle HsOracles.Failed m => say ("FAIL rhc " ^ job ^ ": " ^ m ^ "\n")
+         | HsCorpus.Bad m => say ("FAIL rhc " ^ job ^ ": " ^ m ^ "\n")
+  fun ofSet set r = HsCorpus.field r "set" = set
 
   fun command ["hs-corpus-run", id] =
         SOME (fn () => if isVendored id then fromVendored (fn () => runOne id) else runOne id)
-    | command ["hs-rhc-corpus-vendored"] = SOME (namesVendored NONE)
-    | command ["hs-rhc-corpus-vendored", set] = SOME (namesVendored (SOME set))
+    | command ["hs-rhc-corpus-vendored"] = SOME (namesVendored ("vendored", fn _ => true))
+    | command ["hs-rhc-corpus-vendored", "licence", set] =
+        SOME (namesVendored ("vendored-" ^ set, fn r => ofSet set r andalso underLicence r))
+    | command ["hs-rhc-corpus-vendored", "provenance", set] =
+        SOME (namesVendored ("provenance-" ^ set, fn r => ofSet set r andalso not (underLicence r)))
     | command _ = NONE
 
   fun tree () =
@@ -125,7 +130,10 @@ struct
       fun job id = HsOracles.job (id, ["hs-corpus-run", id], [], 3600, 2000)
       fun hold t = case held of SOME why => Test.pending why t | NONE => t
       val (inTree, outside) = List.partition (fn r => HsCorpus.field r "vendor" = "vendored") rows
-      val sets = vendoredSets () handle HsCorpus.Bad _ => []
+      val vrows = vendoredRows () handle HsCorpus.Bad _ => []
+      fun names (kind, prefix, keep) =
+        List.map (fn s => HsOracles.job (prefix ^ s, ["hs-rhc-corpus-vendored", kind, s], [], 1800, 2000))
+                 (setsOf (List.filter keep vrows))
       val covers = ["covers:tests/hs/corpus/*", "covers:tests/runner/hscorpusrun.sml", "covers:lib/language/haskell/*",
                     "covers:src/rhc/*"]
     in
@@ -136,8 +144,9 @@ struct
                 [Test.tag "check" (Test.describe "" (List.map (fn r => hold (job (HsCorpus.field r "id"))) inTree)),
                  Test.tag "nightly" (Test.requires ["hs-corpus"]
                    (Test.describe "" (List.map (fn r => hold (job (HsCorpus.field r "id"))) outside)))],
-              Test.tag "check" (Test.describe "hs-rhc-corpus"
-                (List.map (fn s => HsOracles.job ("vendored-" ^ s, ["hs-rhc-corpus-vendored", s], [], 1800, 2000)) sets))]))
+              Test.describe "hs-rhc-corpus"
+                [Test.tag "check" (Test.describe "" (names ("licence", "vendored-", underLicence))),
+                 Test.tag "nightly" (Test.describe "" (names ("provenance", "provenance-", not o underLicence)))]]))
         ("hs" :: covers)
     end
 end
