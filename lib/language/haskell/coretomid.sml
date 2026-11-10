@@ -15,10 +15,12 @@ struct
 
   exception Unsupported of string
 
-  (* ---- What later milestones give ---- *)
+  (* ---- What is not lowered ---- *)
 
-  (* a position that needs Mid's Ty with application and forall *)
-  fun waitsOnM28 what = raise Unsupported (what ^ ": it waits on M28, Mid's Ty with application and forall")
+  (* a form of polymorphism Mid's types do not say, or Core to Mid does not
+     yet: a function of a forall, a type after a value, a polymorphic value
+     of a letrec or one that is no type lambda *)
+  fun unlowered what = raise Unsupported (what ^ ": a form of polymorphism Core to Mid does not lower")
 
   (* ---- Bindings ---- *)
 
@@ -27,6 +29,8 @@ struct
     | Lazy of string       (* a suspension of the value *)
     | Cell of string       (* a cell holding the suspension: a letrec's value, while the letrec is made *)
     | Erased               (* the state token *)
+    | Partial of string * string list
+                           (* a polymorphic function at its first types, the rest the binding's own *)
 
   (* a variable: how Mid holds it, its Core type, and how many type
      variables its Mid binding abstracts over *)
@@ -274,6 +278,50 @@ struct
             SOME (_, f) => reach ([], namesIn f)
           | NONE => false
         end
+      (* the newtypes given fewer arguments than their parameters somewhere,
+         a type constructor of their own, which Mid can name only where the
+         newtype is a datatype (M28: `int state` where m is State Int) *)
+      val partialNewtypes =
+        let
+          val arity = List.mapPartial (fn Newtype (t, ps, _, _) => SOME (t, length ps) | _ => NONE) decls
+          fun ty (t, acc) =
+            case t of
+              TFun (a, b) => ty (a, ty (b, acc))
+            | TForall (_, _, b) => ty (b, acc)
+            | TEval a => ty (a, acc)
+            | TUTuple ts => List.foldl ty acc ts
+            | _ =>
+                let
+                  val (head, args) = spine t
+                  val acc = case head of
+                              TCon c => (case List.find (fn (n, _) => n = c) arity of
+                                           SOME (_, k) => if length args < k andalso not (member (c, acc)) then c :: acc else acc
+                                         | NONE => acc)
+                            | _ => acc
+                in List.foldl ty acc args end
+          fun atom (_, acc) = acc
+          fun exp (e, acc) =
+            case e of
+              Atom _ => acc
+            | App (f, args) => List.foldl (fn (TyArg t, acc) => ty (t, acc) | (_, acc) => acc) (exp (f, acc)) args
+            | Lam (bs, b) => List.foldl (fn (ValBinder (_, t), acc) => ty (t, acc) | (_, acc) => acc) (exp (b, acc)) bs
+            | Let (_, t, r, b) => ty (t, exp (r, exp (b, acc)))
+            | LetRec (bs, b) => List.foldl (fn ((_, t, r), acc) => ty (t, exp (r, acc))) (exp (b, acc)) bs
+            | Case (sc, _, alts) =>
+                List.foldl (fn (AltCon (_, _, r), acc) => exp (r, acc) | (AltLit (_, r), acc) => exp (r, acc)
+                             | (AltUTuple (_, r), acc) => exp (r, acc) | (AltDefault r, acc) => exp (r, acc))
+                           (exp (sc, acc)) alts
+            | Con (_, ts, _) => List.foldl ty acc ts
+            | Prim (_, ts, _) => List.foldl ty acc ts
+            | UTuple _ => acc
+            | Cast (e, t) => ty (t, exp (e, acc))
+        in
+          List.foldl (fn (Data (_, _, cs), acc) => List.foldl (fn ((_, fs), acc) => List.foldl ty acc fs) acc cs
+                       | (Newtype (_, _, _, f), acc) => ty (f, acc)
+                       | (Val (_, t, e), acc) => ty (t, exp (e, acc)))
+                     [] decls
+        end
+      fun boxedNewtype t = recursiveNewtype t orelse member (t, partialNewtypes)
       val usedNames : string list ref = ref []
       fun midName c =
         let
@@ -286,8 +334,8 @@ struct
         List.app (fn Data ("Bool", [], cons) => tycons := CoreMap.insert (!tycons, "Bool", {name = "bool", params = [], shape = DataT cons})
                    | Data (t, ps, cons) => tycons := CoreMap.insert (!tycons, t, {name = midName t, params = ps, shape = DataT cons})
                    | Newtype (t, ps, c, field) =>
-                       tycons := CoreMap.insert (!tycons, t, {name = if recursiveNewtype t then midName t else t, params = ps,
-                                                              shape = if recursiveNewtype t then BoxT (c, field) else NewT field})
+                       tycons := CoreMap.insert (!tycons, t, {name = if boxedNewtype t then midName t else t, params = ps,
+                                                              shape = if boxedNewtype t then BoxT (c, field) else NewT field})
                    | Val _ => ())
                  decls
       (* each constructor: its type, its tag, the types of its fields *)
@@ -332,7 +380,7 @@ struct
                [] => "unit"
              | [c] => slotTy env c
              | cs => "(" ^ String.concatWith " * " (List.map (slotTy env) cs) ^ ")")
-        | TForall _ => waitsOnM28 ("the type " ^ CoreText.showTy t ^ ", a forall inside a type")
+        | TForall _ => let val (ms, env', body) = forallOf (env, t) in "(forall [" ^ ms ^ "] " ^ valTy env' body ^ ")" end
         | t =>
             case spine t of
               (TCon "Ref", [a]) => "(" ^ slotTy env a ^ " ref)"
@@ -345,14 +393,39 @@ struct
                       | [a] => "(" ^ valTy env a ^ ") " ^ name
                       | _ => "(" ^ commas (List.map (valTy env) args) ^ ") " ^ name)
                  | NONE => raise Fail ("CoreToMid: no type " ^ c))
-            | _ => waitsOnM28 ("the type " ^ CoreText.showTy t ^ ", a type variable applied")
+            | (TVar m, args) =>
+                (case args of
+                   [a] => "(" ^ valTy env a ^ ") " ^ valTy env (TVar m)
+                 | _ => "(" ^ commas (List.map (valTy env) args) ^ ") " ^ valTy env (TVar m))
+            | _ => raise Fail ("CoreToMid: the type " ^ CoreText.showTy t)
+
+      (* the variables a forall binds, named for Mid after their names in Core
+         so that a type's text is one text, the environment that binds them,
+         and the type under them *)
+      and forallOf (env : env, t : ty) : string * env * ty =
+        let
+          fun go (TForall (a, _, b), env, ms) =
+                let val m = "'q" ^ String.translate (fn ch => if Char.isAlphaNum ch orelse ch = #"_" then String.str ch else "_") a
+                in go (b, {vals = #vals env, tyvars = CoreMap.insert (#tyvars env, a, m)}, m :: ms) end
+            | go (b, env, ms) = (String.concatWith " " (List.rev ms), env, b)
+        in go (stripEval t, env, []) end
 
       (* the Mid type of a slot of t: the value where t is evaluated or
-         unlifted, a suspension of it where t is lazy *)
+         unlifted, a suspension of it where t is lazy; a lazy slot of a forall
+         holds a suspension at every type, the forall outside *)
       and slotTy (env : env) (t : ty) : string =
         case t of
           TEval u => valTy env u
+        | TForall _ => let val (ms, env', body) = forallOf (env, t) in "(forall [" ^ ms ^ "] " ^ slotTy env' body ^ ")" end
         | _ => if isUnlifted t then valTy env t else "(" ^ valTy env t ^ " susp)"
+
+      (* the type a let gives what a slot of t holds: a forall's a scheme,
+         the variables it binds the let's own *)
+      fun bindTy (env : env) (t : ty) : string =
+        case t of
+          TForall _ => let val (ms, env', body) = forallOf (env, t) in "[" ^ ms ^ "] " ^ slotTy env' body end
+        | TEval (TForall _) => let val (ms, env', body) = forallOf (env, t) in "[" ^ ms ^ "] " ^ valTy env' body end
+        | _ => slotTy env t
 
       (* ---- Suspensions, by the form ---- *)
 
@@ -429,7 +502,9 @@ struct
         | NONE => raise Fail ("CoreToMid: the variable " ^ x ^ " is not bound")
       (* the binding of a value of type t in a slot of type t held as atom a *)
       fun slotBinding (t, a) : binding =
-        {rep = if isWorld t then Erased else if isEval t orelse isUnlifted t then Value a else Lazy a, ty = t, arity = 0}
+        let fun foralls (TForall (_, _, b)) = 1 + foralls b | foralls _ = 0
+        in {rep = if isWorld t then Erased else if isEval t orelse isUnlifted t then Value a else Lazy a, ty = t,
+            arity = foralls (stripEval t)} end
 
       (* ---- The type of an expression, as CoreLint has it ---- *)
 
@@ -495,7 +570,7 @@ struct
           Lit l => k (constText l, litTy' l)
         | Var x =>
             let val {rep, ty, arity} = lookup (env, x)
-                val () = if arity > 0 then waitsOnM28 ("the polymorphic " ^ x ^ " used at no type") else ()
+                val () = if arity > 0 then unlowered ("the polymorphic " ^ x ^ " used at no type") else ()
                 val V = valTy env ty
             in
               case rep of
@@ -503,12 +578,15 @@ struct
               | Lazy s => letv (V, forceSusp (V, s), fn v => k (v, stripEval ty))
               | Cell c => readCell (env, ty, c, fn s => letv (V, forceSusp (V, s), fn v => k (v, stripEval ty)))
               | Erased => k ("()", ty)
+              | Partial _ => unlowered ("the polymorphic " ^ x ^ " used at no type")
             end
 
       (* atom a in a slot of type p: its value where p is evaluated or
          unlifted, a suspension where p is lazy *)
       fun atomSlot (env : env, a : atom, p : ty, k : string -> string) : string =
         if isWorld p then k "()"
+        else if (case (a, stripEval p) of (Var _, TForall _) => true | _ => false) then
+          polySlot (env, case a of Var x => x | _ => "", p, k)
         else if isEval p orelse isUnlifted p then atomValue (env, a, fn (v, _) => k v)
         else
           let val V = valTy env p
@@ -517,15 +595,39 @@ struct
               Lit l => letv (slotTy env p, valueToSusp (V, constText l), k)
             | Var x =>
                 let val {rep, ty, arity} = lookup (env, x)
-                    val () = if arity > 0 then waitsOnM28 ("the polymorphic " ^ x ^ " given as a value") else ()
+                    val () = if arity > 0 then unlowered ("the polymorphic " ^ x ^ " given as a value") else ()
                 in
                   case rep of
                     Lazy s => k s
                   | Value v => letv (slotTy env p, valueToSusp (V, v), k)
                   | Cell c => readCell (env, ty, c, k)
                   | Erased => k "()"
+                  | Partial _ => unlowered ("the polymorphic " ^ x ^ " given as a value")
                 end
           end
+
+      (* the polymorphic x in a slot of a forall: as it is where it is held
+         as the slot holds it, and otherwise a suspension at every type of
+         the slot's variables *)
+      and polySlot (env : env, x : string, p : ty, k : string -> string) : string =
+        let
+          val {rep, arity, ...} = lookup (env, x)
+          val (ms, env', body) = forallOf (env, p)
+          val vars = String.tokens Char.isSpace ms
+          fun at (v, pre) = v ^ "[" ^ commas (pre @ vars) ^ "]"
+          fun suspended inst =
+            let val V = valTy env' body
+            in letv ("[" ^ ms ^ "] (" ^ V ^ " susp)", valueToSusp (V, inst), k) end
+        in
+          if arity <> length vars then raise Unsupported ("the polymorphic " ^ x ^ " in a slot of another number of types")
+          else
+            case (isEval p, rep) of
+              (true, Value v) => k v
+            | (false, Lazy s) => k s
+            | (false, Value v) => suspended (at (v, []))
+            | (false, Partial (v, pre)) => suspended (at (v, pre))
+            | _ => raise Unsupported ("the polymorphic " ^ x ^ " in a strict slot of " ^ CoreText.showTy p)
+        end
 
       fun atomSlots (env, atoms, ps, k : string list -> string) =
         let
@@ -640,14 +742,14 @@ struct
           fun tyArgs (TyArg t :: rest, acc) = tyArgs (rest, t :: acc)
             | tyArgs (rest, acc) = (List.rev acc, rest)
           val (tys, vals) = tyArgs (args, [])
-          val vals = List.map (fn ValArg a => a | TyArg t => waitsOnM28 ("a type argument " ^ CoreText.showTy t
+          val vals = List.map (fn ValArg a => a | TyArg t => unlowered ("a type argument " ^ CoreText.showTy t
                                                                          ^ " after a value argument")) vals
           fun applyArgs (fv, fty, [], c) = deliver (env, c, fv, fty)
             | applyArgs (fv, fty, a :: rest, c) =
                 (case stripEval fty of
                    TFun (p, r) => atomSlot (env, a, p, fn av => letv (valTy env r, "(app " ^ fv ^ " " ^ av ^ ")",
                                                                        fn rv => applyArgs (rv, r, rest, c)))
-                 | TForall _ => waitsOnM28 "a function polymorphic in a type after a value argument"
+                 | TForall _ => unlowered "a function polymorphic in a type after a value argument"
                  | t => raise Fail ("CoreToMid: " ^ CoreText.showTy t ^ " applied"))
         in
           case f of
@@ -655,7 +757,7 @@ struct
               let val {rep, ty, arity} = lookup (env, x)
               in
                 if arity > 0 then
-                  if length tys <> arity then waitsOnM28 ("the polymorphic " ^ x ^ " at " ^ Int.toString (length tys)
+                  if length tys <> arity then unlowered ("the polymorphic " ^ x ^ " at " ^ Int.toString (length tys)
                                                           ^ " of its " ^ Int.toString arity ^ " types")
                   else
                     let
@@ -666,13 +768,14 @@ struct
                       case rep of
                         Value v => applyArgs (v ^ inst, fty, vals, c)
                       | Lazy s => letv (V, forceSusp (V, s ^ inst), fn fv => applyArgs (fv, stripEval fty, vals, c))
+                      | Partial (v, pre) => applyArgs (v ^ "[" ^ commas (pre @ List.map (valTy env) tys) ^ "]", fty, vals, c)
                       | _ => raise Fail "CoreToMid: a polymorphic cell"
                     end
-                else if not (null tys) then waitsOnM28 ("the type arguments of " ^ x ^ ", which Mid binds at no type")
+                else if not (null tys) then unlowered ("the type arguments of " ^ x ^ ", which Mid binds at no type")
                 else atomValue (env, Var x, fn (fv, fty) => applyArgs (fv, fty, vals, c))
               end
           | _ =>
-              if not (null tys) then waitsOnM28 "type arguments to an expression"
+              if not (null tys) then unlowered "type arguments to an expression"
               else exp (env, f, {dup = false, want = stripEval (typeOf env f),
                                  k = fn fv => applyArgs (fv, stripEval (typeOf env f), vals, c)})
         end
@@ -712,7 +815,7 @@ struct
                       ^ " " ^ text ^ ")", name)
                    end
                | _ => raise Fail "CoreToMid: a value binder where no function is wanted")
-          | TyBinder _ :: _ => waitsOnM28 "a lambda that binds a type after a value"
+          | TyBinder _ :: _ => unlowered "a lambda that binds a type after a value"
           | [] => raise Fail "CoreToMid: a lambda of type binders alone"
         end
 
@@ -784,7 +887,23 @@ struct
                   ^ k (bindVal (env, x, {rep = Lazy s, ty = t, arity = n})) ^ "))"
                 end
             end
-        | _ => waitsOnM28 ("the polymorphic " ^ x ^ ", bound to what is no type lambda")
+        | App (Atom (Var y), args) =>
+            (* a polymorphic function at its first types: the name and those
+               types, given the rest where it is used *)
+            let
+              val b = lookup (env, y)
+              val tys = List.mapPartial (fn TyArg t => SOME t | ValArg _ => NONE) args
+              val given = List.map (valTy env) tys
+            in
+              if length tys <> length args orelse length tys >= #arity b then
+                unlowered ("the polymorphic " ^ x ^ ", bound to what is no type lambda")
+              else
+                case #rep b of
+                  Value v => k (bindVal (env, x, {rep = Partial (v, given), ty = t, arity = #arity b - length tys}))
+                | Partial (v, pre) => k (bindVal (env, x, {rep = Partial (v, pre @ given), ty = t, arity = #arity b - length tys}))
+                | _ => unlowered ("the polymorphic " ^ x ^ ", a suspension at some of its types")
+            end
+        | _ => unlowered ("the polymorphic " ^ x ^ ", bound to what is no type lambda")
 
       (* a letrec: its functions one group, its values suspensions made
          through cells (D6's A), each cell set once all are made *)
@@ -809,7 +928,7 @@ struct
           if null vals then withFuns (funEnv env, k)
           else
             let
-              val () = List.app (fn (x, t, _) => case t of TForall _ => waitsOnM28 ("the polymorphic " ^ x ^ " of a letrec") | _ => ()) vals
+              val () = List.app (fn (x, t, _) => case t of TForall _ => unlowered ("the polymorphic " ^ x ^ " of a letrec") | _ => ()) vals
               (* a cell for each value, holding a placeholder until it is set *)
               fun cells ([], env, acc) = finish (env, List.rev acc)
                 | cells ((x, t, rhs) :: rest, env, acc) =
@@ -907,11 +1026,11 @@ struct
                              fun withArg body =
                                case n of
                                  0 => body (fn _ => fn k => k "()")
-                               | 1 => letv (slotTy env (hd fs), "(decon " ^ Int.toString tag ^ " " ^ v ^ " : " ^ T ^ ")",
+                               | 1 => letv (bindTy env (hd fs), "(decon " ^ Int.toString tag ^ " " ^ v ^ " : " ^ T ^ ")",
                                             fn a => body (fn _ => fn k => k a))
                                | _ => letv ("(" ^ String.concatWith " * " (List.map (slotTy env) fs) ^ ")",
                                             "(decon " ^ Int.toString tag ^ " " ^ v ^ " : " ^ T ^ ")",
-                                            fn p => body (fn i => fn k => letv (slotTy env (List.nth (fs, i)),
+                                            fn p => body (fn i => fn k => letv (bindTy env (List.nth (fs, i)),
                                                                                   "(select " ^ Int.toString i ^ " " ^ p ^ ")", k)))
                            in
                              if List.all (fn x => x = "_") xs then exp (env, rhs, c)
@@ -1191,7 +1310,7 @@ struct
       val datatypes =
         List.mapPartial (fn Data (t, ps, cs) => SOME (datatypeText (t, ps, cs))
                           | Newtype (t, ps, c, field) =>
-                              if recursiveNewtype t then
+                              if boxedNewtype t then
                                 let
                                   val tvs = List.map (fn _ => freshTyvar ()) ps
                                   val env = ListPair.foldl (fn ((a, _), m, env) => bindTyvar (env, a, m)) empty (ps, tvs)
@@ -1227,9 +1346,9 @@ struct
                                  TForall (b, _, w) => let val m = freshTyvar () in go (rest, bindTyvar (env, a, m), substTy ([(b, TVar a)], w), m :: tvs) end
                                | _ => raise Fail "CoreToMid: no forall")
                           | go ([], env, want, tvs) = (env, want, List.rev tvs, body)
-                          | go _ = waitsOnM28 ("the polymorphic CAF " ^ x)
+                          | go _ = unlowered ("the polymorphic CAF " ^ x)
                       in go (bs, genv, t, []) end
-                  | peel (e, TForall _) = waitsOnM28 ("the polymorphic " ^ x ^ ", bound to what is no type lambda")
+                  | peel (e, TForall _) = unlowered ("the polymorphic " ^ x ^ ", bound to what is no type lambda")
                   | peel (e, t) = (genv, t, [], e)
                 val (env, t', tvs, rhs) = peel (e, t)
                 val V = valTy env t'
