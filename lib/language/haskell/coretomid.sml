@@ -227,9 +227,7 @@ struct
      "      (return (tuple vcI vcF))))))))))",
      "  (fn grtOpen ((voP : string) (voM : int)) : int \"open\"",
      "    (let (voO : int option) (prim file_open voP voM : (string * int) -> int option)",
-     "    (let (voT : int) (tag voO)",
-     "    (let (voS : bool) (prim poly_eq voT 1 : (int * int) -> bool)",
-     "    (if voS (return (decon 1 voO : int option)) (return ~1)))))))\n"]
+     "    (case voO (0 (return ~1)) (1 (return (decon 1 voO : int option)))))))\n"]
 
   (* what the form of suspensions declares: nothing for form C, whose susp
      is Mid's; E1's runtime its abstract susp and the states of a cell *)
@@ -1083,21 +1081,17 @@ struct
                            ([_], [(k, xs, rhs)]) => conBranch (env, k, xs, rhs, c)
                          | (_, []) => (case default () of SOME rhs => exp (env, rhs, c) | NONE => raise Fail "CoreToMid: no alternative")
                          | _ =>
-                             letv ("int", "(tag " ^ v ^ ")", fn tg =>
-                               branching (env, c, fn c =>
-                                 let
-                                   fun chain [] =
-                                         (case default () of
-                                            SOME rhs => exp (env, rhs, c)
-                                          | NONE => raiseBuiltin 0)
-                                     | chain ((k, xs, rhs) :: rest) =
-                                         if null rest andalso exhaustive then
-                                           letv ("bool", "(prim poly_eq " ^ tg ^ " " ^ Int.toString (#tag (conInfo k)) ^ " : (int * int) -> bool)",
-                                                 fn bv => "(if " ^ bv ^ " " ^ conBranch (env, k, xs, rhs, c) ^ " " ^ raiseBuiltin 0 ^ ")")
-                                         else
-                                           letv ("bool", "(prim poly_eq " ^ tg ^ " " ^ Int.toString (#tag (conInfo k)) ^ " : (int * int) -> bool)",
-                                                 fn bv => "(if " ^ bv ^ " " ^ conBranch (env, k, xs, rhs, c) ^ " " ^ chain rest ^ ")")
-                                 in chain conAlts end))
+                             (* Mid's case on the tag (M29), whose switch Lower
+                                makes: an arm a constructor, and the default
+                                where the arms are not every constructor *)
+                             branching (env, c, fn c =>
+                               let
+                                 val arms = List.map (fn (k, xs, rhs) => "(" ^ Int.toString (#tag (conInfo k)) ^ " "
+                                                                          ^ conBranch (env, k, xs, rhs, c) ^ ")") conAlts
+                                 val otherwise =
+                                   if exhaustive then []
+                                   else ["(else " ^ (case default () of SOME rhs => exp (env, rhs, c) | NONE => raiseBuiltin 0) ^ ")"]
+                               in "(case " ^ v ^ " " ^ String.concatWith " " (arms @ otherwise) ^ ")" end)
                        end
                    | _ =>
                        (case (tc, List.filter (fn AltLit _ => true | _ => false) alts) of
