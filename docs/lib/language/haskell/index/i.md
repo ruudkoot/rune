@@ -28,6 +28,7 @@
 - `Int` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-int)
 - `INTEGER` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-integer)
 - `integerLit` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-integerlit)
+- `interface` (type): [HS_DESUGAR](../sig/HS_DESUGAR.md#type-interface)
 - `interface` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-interface)
 - `IOError` (exn): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#exn-ioerror)
 - `ioTy` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-ioty)
