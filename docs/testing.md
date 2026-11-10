@@ -680,6 +680,15 @@ in the program's own modules, and Main's exports, fixities and instances the
 same (a split's moved to `Lib`). Renaming bound variables mechanically waits
 for a dump of rhc's binding sites; the `rename` pairs are by hand.
 
+**rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
+`hs/interp-vm/NAME`). Each run program of `tests/hs/lang` through rhc to
+Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
+Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
+`.stdin`: the VM prints what the interpreter printed and ends as it did, every
+bottom one bottom. A program the interpreter alone can run says so on a line
+`-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
+program's rows are `Planned`; M15's done-when and G1 rest on it.
+
 **rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
 FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
 path as its last argument, exits 0: delta debugging over the top-level
