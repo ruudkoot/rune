@@ -16,7 +16,7 @@ struct
   exception Failed
 
   (* the stages there are, for --dump-after: rhc's, then those from Mid on *)
-  val stages = ["read", "coretomid"] @ MidPipeline.stageNames MidPipeline.standardPasses
+  val stages = ["read", "desugar", "coretomid"] @ MidPipeline.stageNames MidPipeline.standardPasses
 
   fun version () = print ("rhc " ^ Config.version ^ " (identity " ^ Config.identity ^ ")\n")
 
@@ -99,6 +99,39 @@ struct
     handle CoreToMid.Unsupported msg =>
       (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
 
+  (* a program of Haskell, checked (RhcSyntax), desugared to Core (M15)
+     with what it reaches of rhc's runtime, checked by CoreLint, and run on
+     the Core interpreter or, with -o, compiled; `args` are the options of
+     the command line that are not the syntax's *)
+  fun haskell (file : string) (args : string list, desugar : CoreRuntime.strings -> Core.program) : int =
+    let
+      (* --match=report|sestoft: the order of matching (D34) *)
+      val (orders, args) = List.partition (String.isPrefix "--match=") args
+      val () = List.app (fn "--match=report" => HsMatch.order := HsMatch.Report
+                          | "--match=sestoft" => HsMatch.order := HsMatch.Sestoft
+                          | a => raise RhcOptions.Usage ("--match takes report or sestoft: " ^ a)) orders
+      (* --desugar-only: as far as Core and CoreLint, and run nothing *)
+      val (only, args) = List.partition (fn a => a = "--desugar-only") args
+      val opts = RhcOptions.parse args
+      val () = List.app (fn s => if s = "all" orelse List.exists (fn t => t = s) stages then ()
+                                 else raise RhcOptions.Usage ("--dump-after: no stage " ^ s ^ " (the stages: "
+                                                              ^ String.concatWith ", " stages ^ ")"))
+                        (!Pass.dumpAfter)
+      val () = Pass.startup ()
+      val p =
+        Pass.stage {name = "desugar", showIn = NONE, show = CoreText.show,
+                    check = Pass.checkAt ("desugar", 3) roundTrip, size = List.length} desugar (#strings opts)
+        handle Fail msg => raise Error.Bug ("rhc's desugaring fails, a bug of rhc's: " ^ msg)
+      val () = lint ([file], p)
+      val status =
+        if not (null only) then 0
+        else case #output opts of SOME out => compile (opts, p, out) | NONE => interpret (opts, p)
+    in
+      Pass.finish (); status
+    end
+    handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
+         | Failed => 1
+
   (* --share DIR, where rhc's library is, which the wrapper bin/rhc gives *)
   fun share args =
     case args of
@@ -110,7 +143,18 @@ struct
   fun run (args : string list) : int =
     let val args = share args in
     case RhcSyntax.command args of
-      SOME syntax => if OS.Process.isSuccess (syntax ()) then 0 else 1
+      SOME syntax =>
+        let
+          (* the status of a program run, which a status of success or
+             failure would lose *)
+          val code = ref NONE
+          val file = getOpt (List.find RhcSyntax.isSource args, "")
+          val () = RhcSyntax.compile := (fn x => let val n = haskell file x
+                                                 in code := SOME n; if n = 0 then OS.Process.success else OS.Process.failure end)
+          val ok = OS.Process.isSuccess (syntax ())
+        in
+          case !code of SOME n => n | NONE => if ok then 0 else 1
+        end
     | NONE =>
     let
       val opts = RhcOptions.parse args

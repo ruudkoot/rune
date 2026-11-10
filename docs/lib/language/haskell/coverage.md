@@ -17,6 +17,9 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_AST`](sig/HS_AST.md) | 44 | 44 | 100% | 8 | 8 |
 | [`HS_CHAR`](sig/HS_CHAR.md) | 4 | 4 | 100% | 3 | 3 |
 | [`HS_CLASSES`](sig/HS_CLASSES.md) | 14 | 14 | 100% | 10 | 10 |
+| [`HS_DESUGAR`](sig/HS_DESUGAR.md) | 4 | 4 | 100% | 2 | 2 |
+| [`HS_DS_CORE`](sig/HS_DS_CORE.md) | 36 | 36 | 100% | 32 | 32 |
+| [`HS_DS_ENV`](sig/HS_DS_ENV.md) | 49 | 49 | 100% | 46 | 46 |
 | [`HS_DUMP`](sig/HS_DUMP.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | 11 | 11 | 100% | 7 | 7 |
 | [`HS_FIXITY`](sig/HS_FIXITY.md) | 4 | 4 | 100% | 2 | 2 |
@@ -25,6 +28,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_LAYOUT`](sig/HS_LAYOUT.md) | 13 | 13 | 100% | 11 | 11 |
 | [`HS_LEXER`](sig/HS_LEXER.md) | 3 | 3 | 100% | 1 | 1 |
 | [`HS_LITERATE`](sig/HS_LITERATE.md) | 2 | 2 | 100% | 2 | 2 |
+| [`HS_MATCH`](sig/HS_MATCH.md) | 8 | 8 | 100% | 4 | 4 |
 | [`HS_MODULES`](sig/HS_MODULES.md) | 14 | 14 | 100% | 6 | 6 |
 | [`HS_PARSER`](sig/HS_PARSER.md) | 6 | 6 | 100% | 3 | 3 |
 | [`HS_PRINT`](sig/HS_PRINT.md) | 7 | 7 | 100% | 7 | 7 |
@@ -34,7 +38,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 8 | 8 | 100% | 6 | 6 |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 41 | 41 | 100% | 27 | 27 |
-| **all** | 263 | 263 | 100% | 145 | 145 |
+| **all** | 360 | 360 | 100% | 229 | 229 |
 
 ## Members a signature describes
 
@@ -43,7 +47,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-28 structures have a page, with 263 members, of which 263 (100%) are described by a signature.
+32 structures have a page, with 360 members, of which 360 (100%) are described by a signature.
 
 ---
 

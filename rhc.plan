@@ -37,6 +37,9 @@ library language/haskell lib/language/haskell
   export signature HS_AST
   export signature HS_CHAR
   export signature HS_CLASSES
+  export signature HS_DESUGAR
+  export signature HS_DS_CORE
+  export signature HS_DS_ENV
   export signature HS_DUMP
   export signature HS_EVIDENCE
   export signature HS_FIXITY
@@ -45,6 +48,7 @@ library language/haskell lib/language/haskell
   export signature HS_LAYOUT
   export signature HS_LEXER
   export signature HS_LITERATE
+  export signature HS_MATCH
   export signature HS_MODULES
   export signature HS_PARSER
   export signature HS_PRINT
@@ -65,6 +69,9 @@ library language/haskell lib/language/haskell
   export structure HsAst
   export structure HsChar
   export structure HsClasses
+  export structure HsDesugar
+  export structure HsDsCore
+  export structure HsDsEnv
   export structure HsDump
   export structure HsEvidence
   export structure HsFixity
@@ -73,6 +80,7 @@ library language/haskell lib/language/haskell
   export structure HsLayout
   export structure HsLexer
   export structure HsLiterate
+  export structure HsMatch
   export structure HsModules
   export structure HsParser
   export structure HsPrint
@@ -148,6 +156,16 @@ library language/haskell lib/language/haskell
     unit language/haskell:coretomid_sig.sml lib/language/haskell/coretomid_sig.sml ascii demand
     unit language/haskell:coretomid.sml lib/language/haskell/coretomid.sml ascii demand
   end
+  use lib/language/haskell/desugar.build
+    unit language/haskell:desugar_core_sig.sml lib/language/haskell/desugar_core_sig.sml ascii demand
+    unit language/haskell:desugar_core.sml lib/language/haskell/desugar_core.sml ascii demand
+    unit language/haskell:desugar_env_sig.sml lib/language/haskell/desugar_env_sig.sml ascii demand
+    unit language/haskell:desugar_env.sml lib/language/haskell/desugar_env.sml ascii demand
+    unit language/haskell:match_sig.sml lib/language/haskell/match_sig.sml ascii demand
+    unit language/haskell:match.sml lib/language/haskell/match.sml ascii demand
+    unit language/haskell:desugar_sig.sml lib/language/haskell/desugar_sig.sml ascii demand
+    unit language/haskell:desugar.sml lib/language/haskell/desugar.sml ascii demand
+  end
 end
 library json lib/json
   form header
@@ -221,19 +239,21 @@ program
   unit src/rhc/library.sml src/rhc/library.sml ascii
   unit src/rhc/graph.sml src/rhc/graph.sml ascii
   unit src/rhc/names.sml src/rhc/names.sml ascii
+  unit src/rhc/desugar.sml src/rhc/desugar.sml ascii
   unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
   unit src/rhc/main.sml src/rhc/main.sml ascii
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build 0d8a9f312ff2e94ffe23fbaac815e2696390e706ab18fba65f986ceb4ec0eeaf
+  input rhc.build 56f2d15f8dca0e4e3d12cd107562ee1a3fccd2eb5d1c943eee7712a0ab45de0f
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
-  input lib/language/haskell/library.build ed6b1694f5da2f45ccab668e8b381fe6a3b0ab497f3cb29a17154d0928b14675
+  input lib/language/haskell/library.build 7473b6bbeec92d8b3511acf5af0dc01e4484938e7b70dee1181c9220a12fd3a9
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
   input lib/language/haskell/types.build 1a9d4563ad4fad7fb249faba2c9a07a463683e296cc2e54f32af15af1f1d2cb6
   input lib/language/haskell/core.build 74d103c3b38efdc149ddb13aa2455fb310da7b407216ab2039e81b1e007cc448
+  input lib/language/haskell/desugar.build 2f2d4325b72d7b38c53d61974f92d02243122fcd36b98f4a6923b2353266481a
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

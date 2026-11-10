@@ -4,10 +4,13 @@
 
 - `Name` (con): [HS_AST](../sig/HS_AST.md#con-name)
 - `name` (type): [HS_AST](../sig/HS_AST.md#type-name)
+- `nameOf` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-nameof)
 - `nameOfKey` (val): [HS_TYPES](../sig/HS_TYPES.md#val-nameofkey)
+- `names` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-names)
 - `nameText` (val): [HS_AST](../sig/HS_AST.md#val-nametext)
 - `newKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-newkind)
 - `newMeta` (val): [HS_TYPES](../sig/HS_TYPES.md#val-newmeta)
+- `NewS` (con): [HS_DS_CORE](../sig/HS_DS_CORE.md#con-news)
 - `NEWTYPE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-newtype)
 - `Newtype` (con): [CORE](../sig/CORE.md#con-newtype)
 - `noAnn` (val): [HS_AST](../sig/HS_AST.md#val-noann)
