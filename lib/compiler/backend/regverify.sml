@@ -694,6 +694,14 @@ struct
                       if t' >= 0 then (if t' = t then () else (arrive (l, 0, ~1, 0); stop ()))
                       else (arrive (l, 0, s, notBase + t); setFact (s, 1 + t))
                     end
+                  else if opc = R.FORCE then
+                    (* FORCE goes on only where its value is a suspension,
+                       a pointer, which ENTER then reads: where it holds an
+                       int -- a value cast into a suspension and captured,
+                       of the closure's slot -- it jumps (by hand; docs/ir.md,
+                       Suspensions) *)
+                    let val s = nth (ops, 1)
+                    in arrive (l, 0, ~1, 0); setCell (s, cell (RPTR, 0)) end
                   else arrive (l, 0, ~1, 0)
               | R.Jump => (arrive (l, 1, ~1, 0); stop ())
               | R.Return => (leaving opc; stop ())

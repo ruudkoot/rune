@@ -30,13 +30,15 @@
    refuses each; cast's casts print the same with --check-casts, and
    forget's force forgotten behind a cast stops every engine under it, and
    the lint refuses it at -O2; results' suspensions, read back from where
-   a function's results return a datatype, are forced at every level. *)
+   a function's results return a datatype, are forced at every level; and
+   castin's values cast into suspensions and forced in a suspension's code,
+   cast there or where the closure is made, pass RegVerify at every level. *)
 structure Thunks =
 struct
   open Sh
 
   val kernels = ["chain", "tailchain", "knot", "share", "reenter", "barrier", "image", "last", "leak", "wrongslot", "cast", "forget",
-                 "results"]
+                 "results", "castin"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 

@@ -718,10 +718,15 @@ its own, and forcing one is one step.
   (`Prims.removable`); `thunk_make`'s are an allocation alone.
 * **What a variable whose type is no `susp` holds is evaluated**: neither a suspension
   nor what one has become. That holds by types, but across a cast (`unsafe_cast`): a
-  cast into a suspension is no instruction (`Lower` gives its value another name), a
-  force of what `Lower` knows is no suspension -- a register of a representation, which
-  such a cast left -- is the value itself, and a cast of a suspension to what is none,
-  which is a force forgotten, is refused (`IrRules.leavesSusp`). `rune --check-casts`
+  cast into a suspension is no instruction (`Lower` gives its value another name, and
+  the representation of the type it is cast from where it has none, as a captured
+  value read in a suspension's code has not), a force of what `Lower` knows is no
+  suspension -- a register of a representation, which such a cast left -- is the value
+  itself, and a cast of a suspension to what is none, which is a force forgotten, is
+  refused (`IrRules.leavesSusp`). A value cast where `Lower` does not see the force, one
+  a closure captures, is forced as it is: `FORCE` jumps where it is evaluated, and
+  `RegVerify` takes its way on for a test that the value is a pointer, which `ENTER`
+  reads. `rune --check-casts`
   makes each other cast `any_check`, which stops the program where the value is a
   suspension; without it the code is what it is with none.
 * **The rules `MidLint` adds** where a program has a primitive of suspensions: a

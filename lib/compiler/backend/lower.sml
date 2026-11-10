@@ -1057,9 +1057,13 @@ struct
     case r of
       M.Atom a => atom (b, cx, a)
     (* a cast into a suspension is no instruction: its value, under another
-       name (docs/ir.md, Suspensions) *)
+       name (docs/ir.md, Suspensions), of the representation of the type it
+       is cast from where it has none yet -- a value the function captured,
+       read here -- so that a force of it is the value itself *)
     | M.Prim ("unsafe_cast", pt, [a]) =>
-        if castsToSusp pt then atom (b, cx, a)
+        if castsToSusp pt then
+          let val v = atom (b, cx, a)
+          in (case Ty.view pt of Ty.Arrow (from, _) => setRep (b, v, repOfTy from) | _ => ()); v end
         else if !checkCasts then tyOfRhs (b, defAs (b, L.Prim ("any_check", [atom (b, cx, a)]), repOfRhs r), r)
         else tyOfRhs (b, defAs (b, oper (b, cx, r), repOfRhs r), r)
     (* and a force of what the code knows is no suspension, which such a
