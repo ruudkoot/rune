@@ -944,6 +944,20 @@ SIZE1 SIZE2` holds what `--count` counts at the second to at most 2.2 times
 the first (`hs/core/budget/NAME`), a sharing budget, rhc's policy and not the
 Report's, which a lost share, growing exponentially, breaks (D6).
 
+## rhc in units
+
+rhc's separate compilation (the haskell98 roadmap's M21) has its tests under
+`tests/hs/units`, run by the family `hs/units/*` (`tests/runner/hsunits.sml`;
+tier `test-rhc`, part of `make check`). `hs/units/store` compiles
+`tests/hs/units/store.sml` with Pickle, `UnitStore` and rhc's `RhcStore` and
+nothing of a compiler, as `tests/lib/compiler/store.sml` tests Rune's store,
+and runs it: an entry is found by its key and stands by its usages judged
+against what is given now, an absent name present now refuses it (H1, H2);
+one checked at a lower level of the lint is refused; a key is over every
+member and its text (H8); the overlay is read before the layers, a layer is
+read and never written, one configuration's entries are not another's; a
+damaged entry is a miss; a head is read back as it was written.
+
 ## The three oracles
 
 **The output.** A program under `tests/` runs with `--checked` and its
