@@ -25,12 +25,14 @@
    KIND NAME` judges one. The first shard of each is make check's, the
    others nightly (the roadmap's D56, the lead's ruling 45).
 
-   - `hs/hslint/faults`: each rule of HsLint's comparison refuses its fault
-     (as `astlintFaults` holds AstLint's): tests/hs/hslint/faults.hs, held
-     by `--hslint-claims` to its own expected dump, is accepted, and with
-     RHC_HSLINT_FAULT=RULE, which reads the first claim RULE checks
-     corrupted, refused with `lint after hslint` and `[RULE]`; and the
-     faults are the rules `bin/rhc --hslint-rules` names, both ways.
+   - `hs/hslint/faults`: each rule of HsLint's comparison and of its replay
+     refuses its fault (as `astlintFaults` holds AstLint's):
+     tests/hs/hslint/faults.hs, its checker's records replayed and held to
+     the second inference, and held by `--hslint-claims` to its own expected
+     dump, is accepted, and with RHC_HSLINT_FAULT=RULE, which reads the
+     first claim or record RULE checks corrupted, refused with `lint after
+     hslint` and `[RULE]`; and the faults are the rules `bin/rhc
+     --hslint-rules` names, both ways.
 
    A program on which HsLint and its expectation disagree is a finding: a
    reading, a bug of HsLint's, or a program that does not mean what it
@@ -173,7 +175,8 @@ struct
   val faultClaims = dir ^ "/faults.expected"
 
   (* each rule's fault: the rule it must reach *)
-  val faults = ["kind", "derive", "binding", "rule1", "type", "numeric", "standard", "rule2", "default"]
+  val faults = ["kind", "derive", "binding", "rule1", "type", "numeric", "standard", "rule2", "default",
+                "bindg", "dict tuple", "dict var", "dict inst", "dict super", "super", "method", "scc"]
 
   fun faultsAll () =
     let

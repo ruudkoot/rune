@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 14 of 14 entries documented |
+| Documentation | 16 of 16 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint\_sig.sml](../../../../../lib/language/haskell/hslint_sig.sml) |
 
@@ -53,6 +53,10 @@ sig
   val <a href="#val-claims">claims</a> : string -&gt; claims
   val <a href="#val-rules">rules</a> : (string * string) list
   val <a href="#val-compare">compare</a> : report * claims * (HsSource.span -&gt; string) * string -&gt; unit
+  val <a href="#val-replayrules">replayRules</a> : (string * string) list
+  val <a href="#val-check">check</a> : {<a href="#fld-check.groups">groups</a> : module list list, <a href="#fld-check.main">main</a> : string option, <a href="#fld-check.cycledefault">cycleDefault</a> : bool,
+               <a href="#fld-check.records">records</a> : {table : HsEvidence.table, env : HsInfer.env} option, <a href="#fld-check.claims">claims</a> : claims option,
+               <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string} -&gt; report
   val <a href="#val-dump">dump</a> : report * (HsSource.span -&gt; string) * bool -&gt; string
 end
 </pre>
@@ -254,6 +258,45 @@ report, of the program's modules, `where_` giving a default's place.
 corrupted, so that the rule must refuse it.
 
 **Raises** [`Refused`](#exn-refused) at the first claim a rule refuses.
+
+### <a name="val-replayrules"></a>`replayRules`
+
+```sml
+val replayRules : (string * string) list
+```
+
+[`replayRules`](#val-replayrules) is each rule of replay with what it holds (Faxén's
+rules and rhc's), its name the first word of its breach's message, in
+brackets: `[bindg] ...`.
+
+### <a name="val-check"></a>`check`
+
+```sml
+val check : {groups : module list list, main : string option, cycleDefault : bool,
+             records : {table : HsEvidence.table, env : HsInfer.env} option, claims : claims option,
+             where_ : HsSource.span -> string, fault : string} -> report
+```
+
+`check {groups, main, cycleDefault, records, claims, where_, fault}`
+is [`infer`](#val-infer)'s report, the checker's records replayed and compared.
+
+With `records`, the checker's evidence records and environment
+(HsEvidence, HsInfer), each record is replayed by Faxén's rules and
+rhc's ([`replayRules`](#val-replayrules)), and the records are then held to the
+inference as claims ([`compare`](#val-compare)); with `claims`, those are too.
+`fault` is as [`compare`](#val-compare)'s, for every rule.
+
+**Raises** [`Refused`](#exn-refused) at the first breach.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-check.groups"></a>`groups` | `module list list` |  |
+| <a name="fld-check.main"></a>`main` | `string option` |  |
+| <a name="fld-check.cycledefault"></a>`cycleDefault` | `bool` |  |
+| <a name="fld-check.records"></a>`records` | `{table : HsEvidence.table, env : HsInfer.env} option` |  |
+| <a name="fld-check.claims"></a>`claims` | `claims option` |  |
+| <a name="fld-check.where_"></a>`where_` | `HsSource.span -> string` |  |
+| <a name="fld-check.fault"></a>`fault` | `string` |  |
 
 ### <a name="val-dump"></a>`dump`
 

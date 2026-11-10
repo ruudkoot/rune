@@ -139,6 +139,7 @@ library language/haskell lib/language/haskell
     unit language/haskell:hslint_env.sml lib/language/haskell/hslint_env.sml ascii demand
     unit language/haskell:hslint_infer.sml lib/language/haskell/hslint_infer.sml ascii demand
     unit language/haskell:hslint_claims.sml lib/language/haskell/hslint_claims.sml ascii demand
+    unit language/haskell:hslint_replay.sml lib/language/haskell/hslint_replay.sml ascii demand
     unit language/haskell:hslint_sig.sml lib/language/haskell/hslint_sig.sml ascii demand
     unit language/haskell:hslint.sml lib/language/haskell/hslint.sml ascii demand
   end
@@ -248,7 +249,7 @@ provenance
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
   input lib/language/haskell/types.build 1a9d4563ad4fad7fb249faba2c9a07a463683e296cc2e54f32af15af1f1d2cb6
-  input lib/language/haskell/hslint.build 59af682d6ac4333cb4fa04db0751edd827d95f9b8c5af452c90e3ceec429e3cc
+  input lib/language/haskell/hslint.build 69a5ac241d7d13b48b05de9f9d8c330ba9f2f9945cadd93c70d658bb442ce4a4
   input lib/language/haskell/core.build 74d103c3b38efdc149ddb13aa2455fb310da7b407216ab2039e81b1e007cc448
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

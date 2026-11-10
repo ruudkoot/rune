@@ -10,6 +10,7 @@
 - `Refused` (exn): [HS_LINT](../sig/HS_LINT.md#exn-refused)
 - `rename` (val): [HS_RENAME](../sig/HS_RENAME.md#val-rename)
 - `renamed` (type): [HS_RENAME](../sig/HS_RENAME.md#type-renamed)
+- `replayRules` (val): [HS_LINT](../sig/HS_LINT.md#val-replayrules)
 - `report` (type): [HS_LINT](../sig/HS_LINT.md#type-report)
 - `reportNames` (val): [CORE_RUNTIME](../sig/CORE_RUNTIME.md#val-reportnames)
 - `repr` (val): [HS_TYPES](../sig/HS_TYPES.md#val-repr)

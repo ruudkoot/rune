@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 137 requirements between the 58 files become 77 arrows.
+library and not a wall of lines: the 142 requirements between the 58 files become 76 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -141,9 +141,8 @@ flowchart TD
   n38 --> n35
   n39 --> n38
   n39 --> n37
-  n40 --> n13
+  n40 --> n39
   n41 --> n40
-  n41 --> n23
   n43 --> n42
   n44 --> n43
   n45 --> n44

@@ -721,10 +721,17 @@ on either side is seen. HsLint also holds the inference to a record's
 claims of it, in the dump's form (`--hslint-claims=FILE`), each difference
 refused by the rule it breaks, `[rule1] ...` (`bin/rhc --hslint-rules`
 names them); the checker's evidence records are to be its claims (M13).
-`faults` holds each rule to refusing its fault, as `astlintFaults` holds
-AstLint's: `tests/hs/hslint/faults.hs`, held to its own expected dump, is
-accepted, and with `RHC_HSLINT_FAULT=RULE`, which reads the first claim
-RULE checks corrupted, refused with `[RULE]`.
+Where the checker accepts a program, HsLint replays Faxén's rules on its
+evidence records (D31): Rule 1 by his `bindg` with Definition 2, every
+dictionary by his `dict tuple`, `dict var`, `dict inst` and `dict super`
+against HsLint's own classes and instances, an instance's superclasses'
+dictionaries and its methods' types, and rhc's own rule for a cycle of
+modules (`[scc]`); then holds the records, read as claims, to the second
+inference. `faults` holds each rule to refusing its fault, as
+`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, its records
+and its own expected dump, is accepted, and with `RHC_HSLINT_FAULT=RULE`,
+which reads the first claim or record RULE checks corrupted, refused with
+`[RULE]`.
 
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,

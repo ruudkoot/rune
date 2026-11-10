@@ -18,6 +18,11 @@
    than names, and HsLint is held to the programs' expectations instead
    (tests/runner/hslint.sml).
 
+   Where the checker has accepted the program, its evidence records (`r`'s
+   `evidence`, with the environment `types`) are replayed by Faxén's rules
+   and held to the inference as claims (HsLint.check), in every check at
+   level 2.
+
    `--hslint-claims=FILE` holds the inference to a record's claims in the
    dump's form, each difference refused by the rule it breaks
    (`[rule1] ...`); `RHC_HSLINT_FAULT=RULE` reads the first claim that RULE
@@ -76,19 +81,17 @@ struct
   fun check (g : G.graph, r : RhcNames.result, cycleDefault : bool) =
     Pass.checkAt ("hslint", 2)
       (fn () =>
-         let val report = infer (g, r, cycleDefault)
-         in
-           case !claims of
-             SOME file =>
-               HsLint.compare (report, HsLint.claims (readFile file), fn sp => getOpt (lineColumn sp, "0:0"),
-                               getOpt (OS.Process.getEnv "RHC_HSLINT_FAULT", ""))
-           | NONE => ()
-         end
+         ignore (HsLint.check {groups = groups (g, r), main = mainOf g, cycleDefault = cycleDefault,
+                               records = Option.map (fn env => {table = #evidence r, env = env}) (#types r),
+                               claims = Option.map (HsLint.claims o readFile) (!claims),
+                               where_ = fn sp => getOpt (lineColumn sp, "0:0"),
+                               fault = getOpt (OS.Process.getEnv "RHC_HSLINT_FAULT", "")})
          handle HsLint.Refused (span, msg) => raise Error.Bug (place span ^ ": " ^ msg))
       ()
 
   (* --hslint-rules: each rule of HsLint's comparison and what it holds *)
-  fun rules () = (List.app (fn (r, what) => print (r ^ "\t" ^ what ^ "\n")) HsLint.rules; OS.Process.success)
+  fun rules () =
+    (List.app (fn (r, what) => print (r ^ "\t" ^ what ^ "\n")) (HsLint.rules @ HsLint.replayRules); OS.Process.success)
 
   (* --dump-hslint *)
   fun dump (g : G.graph, r : RhcNames.result, cycleDefault : bool, library : bool) : OS.Process.status =

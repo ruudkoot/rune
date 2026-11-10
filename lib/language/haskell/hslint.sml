@@ -21,12 +21,17 @@ struct
 
   fun zonkScheme (T.Forall (ks, (ps, t))) = T.Forall (ks, (List.map T.zonkPred ps, T.zonk t))
 
-  fun infer {groups : module list list, main, cycleDefault} : report =
+  (* the second inference, its state kept for the report and replay *)
+  fun run {groups : module list list, main, cycleDefault} =
+    (T.counter := 0;
+     T.names := [];
+     HsLintInfer.reset ();
+     HsLintEnv.build (List.concat groups);
+     List.app (fn g => HsLintInfer.modules {group = g, main = main, cycleDefault = cycleDefault}) groups)
+
+  (* what the inference found, while its state is kept *)
+  fun report () : report =
     let
-      val () = (T.counter := 0; T.names := [])
-      val () = HsLintInfer.reset ()
-      val () = HsLintEnv.build (List.concat groups)
-      val () = List.app (fn g => HsLintInfer.modules {group = g, main = main, cycleDefault = cycleDefault}) groups
       val bindings =
         List.map (fn {module, id, scheme, signed, restricted, span} =>
                     {module = module, name = #name id, scheme = T.showScheme (zonkScheme scheme), signed = signed,
@@ -75,10 +80,12 @@ struct
                              {name = #name id, numeric = HsLintClasses.isNumeric id, standard = std} :: acc)
           [] (!HsLintClasses.classes)
     in
-      clear ();
       {bindings = bindings, defaults = defaults, kinds = List.rev kinds, derived = List.rev derived,
        classes = List.rev classes}
     end
+
+  fun infer args : report =
+    (run args; report () before clear ())
     handle T.Refuse (span, msg) => (clear (); raise Refused (span, msg))
          | e => (clear (); raise e)
 
@@ -108,6 +115,31 @@ struct
        fault = fault}
       claims
     handle T.Refuse (span, msg) => raise Refused (span, msg)
+
+  val replayRules = HsLintReplay.rules
+
+  (* `check {groups, main, cycleDefault, records, claims, where_, fault}`:
+     the second inference, then replay of the checker's records and those
+     records held to the inference as claims, then the claims given *)
+  fun check {groups : module list list, main, cycleDefault, records, claims, where_, fault} : report =
+    let
+      val () = run {groups = groups, main = main, cycleDefault = cycleDefault}
+      val r = report ()
+      val modules = List.concat groups
+      val () =
+        case records of
+          SOME {table, env} =>
+            (HsLintReplay.replay {modules = modules, groups = groups, records = table, env = env,
+                                  cycleDefault = cycleDefault, fault = fault}
+             handle T.Refuse (span, msg) => raise Refused (span, msg);
+             compare (r, HsLintReplay.claimsOf {modules = modules, records = table}, where_, fault))
+        | NONE => ()
+      val () = case claims of SOME c => compare (r, c, where_, fault) | NONE => ()
+    in
+      clear (); r
+    end
+    handle T.Refuse (span, msg) => (clear (); raise Refused (span, msg))
+         | e => (clear (); raise e)
 
   fun dump ({bindings, defaults, kinds, derived, ...} : report, where_, library) =
     let

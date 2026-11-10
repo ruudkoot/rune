@@ -92,6 +92,25 @@ sig
      Raises: `Refused` at the first claim a rule refuses. *)
   val compare : report * claims * (HsSource.span -> string) * string -> unit
 
+  (* `replayRules` is each rule of replay with what it holds (Faxén's
+     rules and rhc's), its name the first word of its breach's message, in
+     brackets: `[bindg] ...`. *)
+  val replayRules : (string * string) list
+
+  (* `check {groups, main, cycleDefault, records, claims, where_, fault}`
+     is `infer`'s report, the checker's records replayed and compared.
+
+     With `records`, the checker's evidence records and environment
+     (HsEvidence, HsInfer), each record is replayed by Faxén's rules and
+     rhc's (`replayRules`), and the records are then held to the
+     inference as claims (`compare`); with `claims`, those are too.
+     `fault` is as `compare`'s, for every rule.
+
+     Raises: `Refused` at the first breach. *)
+  val check : {groups : module list list, main : string option, cycleDefault : bool,
+               records : {table : HsEvidence.table, env : HsInfer.env} option, claims : claims option,
+               where_ : HsSource.span -> string, fault : string} -> report
+
   (* `dump (report, where_, library)` is the report as text, a line each.
 
      The lines are `KIND MODULE NAME :: KIND` for a type constructor or a
