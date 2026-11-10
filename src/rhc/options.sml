@@ -24,6 +24,7 @@ struct
     \            | --dump-ast [--no-spans]] FILE.hs\n\
     \       rhc [--typecheck-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
+    \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
     \Core, its typed lazy intermediate language, checks it and runs it on\n\
     \Core's interpreter; and it reads a program of Haskell, a file and the\n\
@@ -37,6 +38,8 @@ struct
     \  --dump-ast            print its tree, with --no-spans without where each node is\n\
     \  --dump-names          print the exports, fixities and instances of the program of\n\
     \                        FILE.hs... and its library, and its errors of names, sorted\n\
+    \  --dump-hslint         print the type HsLint's second inference gives each binding of\n\
+    \                        the top level of FILE.hs's program, and the defaults it chose\n\
     \  --names=least|greatest  the solution of a cycle's exports (D29): the least fixpoint,\n\
     \                        the default, or the greatest; chapter 5 is met by either\n\
     \  --cycle-default=module|scc  in a cycle of modules, each module's default declaration\n\
@@ -49,7 +52,8 @@ struct
     \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
     \                        names and fixity, until the checker lands (M13)\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
-    \                        3 reads Core's text back after every stage (RUNE_LINT too)\n\
+    \                        2 runs HsLint on a program of Haskell, 3 reads Core's text\n\
+    \                        back after every stage (RUNE_LINT too)\n\
     \  --dump-after=STAGE    print what a stage makes: read, coretomid (Mid's text), mid, a\n\
     \                        pass on Mid, lower, registers or stack, or all\n\
     \  --pass-stats          the time and size of every stage, on standard error\n\
