@@ -239,6 +239,7 @@ name the tools to check.
 | `make test-incremental` | the cache's scenarios: a project edited, reverted, broken, built at two levels, its cache damaged or shared by two compiles, each build holding to what it must compile again (`tests/incremental/SCENARIOS.md`), and a project edited mechanically, each warm build the bytes of compiling everything (`bin/rune-incremental mutate`), and the independent checks of the cache ([testing.md](testing.md), *The checks of the cache*) |
 | `make test-cache-random` | the random edits at length, every warm build verified: what a change to a key runs |
 | `make test-cache-mutants` | the mutants of the cache alone, each against the checks that must see it; `make test-compiler-mutants` includes them |
+| `make test-rhc-mutants` | rhc's mutants (`tests/runner/hsmutantlist.sml`), each built into an rhc of its own and held to the jobs it names; `make check` only builds them |
 | `make test-repl` | the REPL's transcripts on every mode of the JIT ([repl.md](repl.md)) |
 | `make test-terminal` | programs on a terminal: the scripts of `tests/terminal` on the runtime pseudo-terminal and SML screen emulator; native ConPTY on Windows ([testing.md](testing.md), *Programs on a terminal*) |
 | `make test-diagnostics` | diagnostics rendered with colour and excerpts (`tests/diagnostics`), and the contrast of the palette (`tests/color`) ([diagnostics.md](diagnostics.md)) |

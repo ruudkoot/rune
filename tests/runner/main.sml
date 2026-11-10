@@ -173,7 +173,7 @@ struct
   val broadInputs = ["src/*", "lib/compiler/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
   val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree, HsRoundTrip.tree, HsConformance.tree, HsSyntax.tree]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree, HsRoundTrip.tree, HsConformance.tree, HsSyntax.tree, HsMutants.tree (), HsMeta.tree (), HsGen.tree ()]) broadInputs
 
   fun requirements () =
     let val rows = Test.leaves tests
@@ -220,6 +220,9 @@ val () =
       case BuildChecks.command args of SOME action => action () | NONE =>
       case CompilerMutants.command args of SOME action => action () | NONE =>
       case HsSyntax.command args of SOME action => action () | NONE =>
+      case HsMutants.command args of SOME action => action () | NONE =>
+      case HsMeta.command args of SOME action => action () | NONE =>
+      case HsGen.command args of SOME action => action () | NONE =>
       case WindowsJobs.command args of SOME action => action () | NONE =>
       case Benchmarks.command args of SOME action => action () | NONE =>
       case ScenarioJobs.command args of SOME action => action () | NONE =>

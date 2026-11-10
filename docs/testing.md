@@ -598,6 +598,55 @@ file's parsed tree against its dump of the file's explicit print
 `RUNE_HS_SYNTAX_GHC_LIST` and `RUNE_HS_SYNTAX_GHC_ROOT`), its known
 differences in `tests/hs/syntax/ghc-dump.tsv`.
 
+
+**rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
+`tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
+with rhc in Rune's place: a mutant is exact edits of a file of `rhc.plan`,
+built by the good Rune from that plan's files
+(`CompilerMutants.buildFrom`) into an rhc of its own, with no stage two, as
+rhc never compiles itself. Each names the jobs that must fail on it, jobs
+that run (rows out of `Planned`). Its job builds it, says how many of rhc's
+outputs (tokens, tree, check) on an even sample of `tests/hs`'s programs
+differ from the good rhc's, and runs the jobs it names in a tree of links to
+the root in which `bin/rhc.rbc` is the mutant's: `CAUGHT` by the first that
+fails, else `UNCAUGHT`, or `UNEXERCISED` where no output differs, or
+`STILLBORN`, each but the first a failure, as is a named job that does not
+run. `make check` holds the list to the sources (`hs-mutants/prepare`, a
+`built-ID` job for each); `make test-rhc-mutants`, nightly, judges them
+(`HS_MUTANTS=HL01,HP02` for some; `bin/rune-test hs-mutant-tree ID` builds a
+mutant's tree for a job to be run against it by hand). The first nine seed
+rhc's lexer, its literate reader, its layout and its parser. F's parser
+mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
+
+**rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of
+programs that must behave alike, compiled by rhc and run, their exit and
+output compared: each program of `tests/hs/lang` against its print with
+every block in braces (`hs/meta/braces`, 2.7 and 9.3), that print printed
+again by layout (`hs/meta/layout`), and the program with `import Char ()`
+added (`hs/meta/import`, 5.3.1); and the pairs written by hand in
+`tests/hs/meta`, `NAME.hs` and `NAME.pair.hs`, the relation first in NAME:
+`rename` (bound variables renamed, 3.3, 3.12) and `reorder` (declarations
+reordered, 4.5.1 and the top level). A pair is held while its program's
+rows, or the rows its relation cites, are `Planned`.
+
+**Bottom probes** (D55; the roadmap's *Bottom probes*). Run programs of
+`tests/hs/lang` named `ROW_probeN`: a marker printed, then a term that
+applies a Prelude function to partial values, element by element, so that
+the output says how far it got and `.exitcode` whether it then failed. The
+expected output is what the Report's own definition of the function, copied
+under another name, gives; GHC, Hugs and nhc98 agree on each. They are
+clause programs, held as the rest.
+
+**rhc's generated programs** (D55's third generator;
+`tests/runner/hsgen.sml`). Well-typed, terminating programs drawn from a
+seed, with Int, Bool and `[Int]` values, top-level functions, `let`, `case`,
+lambdas, the list functions and `const e undefined`, each with the output its
+own evaluator gives. `hs/generated/@parse` puts 32 through rhc's parser in
+`make check` now; `hs/generated/@run` (16 from seed 1, `check`) and
+`hs/generated/@nightly` (400, `nightly`) compile and run them, held until
+the rows they need are out of `Planned`. `bin/rune-test hs-generate SEED`
+prints a program and its output; `hs-generated FIRST COUNT` runs a range.
+
 ## The three oracles
 
 **The output.** A program under `tests/` runs with `--checked` and its

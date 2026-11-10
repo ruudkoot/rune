@@ -311,35 +311,39 @@ struct
     end
 
   (* ---- a mutant *)
-  fun build (m : mutant) : string option * string =
+  (* a compiler with a mutant's edits, compiled by the good Rune from srcs,
+     in order, into dir/out, with a copy in dir/src of each file the mutant
+     edits: Rune itself from its bootstrap's sources (build), and rhc from
+     rhc.plan's (HsMutants) *)
+  fun buildFrom {id, edits : CompilerMutantList.edit list, srcs, dir = d, out} : string option * string =
     let
-      val d = dirOf (#id m)
       val () = (rmTree d; mkdirs (d ^ "/src"))
-      val srcs = bootSources ()
       (* one edit of a file's text: its old text there once *)
       fun edit file ({old, new, ...} : CompilerMutantList.edit, text) =
         case places (text, old) of
           [i] => String.substring (text, 0, i) ^ new ^ String.extract (text, i + size old, NONE)
-        | _ => raise Failed (#id m ^ ": its old text is not in " ^ file ^ " once")
+        | _ => raise Failed (id ^ ": its old text is not in " ^ file ^ " once")
       (* each file the mutant edits, with every edit of it, in a copy *)
       val files = List.foldl (fn ({file, ...} : CompilerMutantList.edit, fs) =>
-                                if List.exists (fn f => f = file) fs then fs else fs @ [file]) [] (#edits m)
+                                if List.exists (fn f => f = file) fs then fs else fs @ [file]) [] edits
       fun apply (file, srcs) =
         let
-          val text = List.foldl (edit file) (read (fromRoot file)) (List.filter (fn e => #file e = file) (#edits m))
+          val text = List.foldl (edit file) (read (fromRoot file)) (List.filter (fn e => #file e = file) edits)
           val dst = d ^ "/src/" ^ file
           val () = mkdirs (OS.Path.dir dst)
           val () = write (dst, text)
         in
-          need (List.exists (fn s => s = file) srcs, #id m ^ ": " ^ file ^ " is no source of the compiler");
+          need (List.exists (fn s => s = file) srcs, id ^ ": " ^ file ^ " is no source of the compiler");
           List.map (fn s => if s = file then dst else s) srcs
         end
       val srcs = List.foldl apply srcs files
       val err = d ^ "/build.err"
-      val code = execute (900, compiler good @ ["-o", d ^ "/rune.rbc"] @ List.map fromRoot srcs, root, "", err, err)
+      val code = execute (900, compiler good @ ["-o", d ^ "/" ^ out] @ List.map fromRoot srcs, root, "", err, err)
     in
-      if code = 0 then (SOME (d ^ "/rune.rbc"), "built") else (NONE, "stillborn: " ^ errLine (read err))
+      if code = 0 then (SOME (d ^ "/" ^ out), "built") else (NONE, "stillborn: " ^ errLine (read err))
     end
+  fun build (m : mutant) : string option * string =
+    buildFrom {id = #id m, edits = #edits m, srcs = bootSources (), dir = dirOf (#id m), out = "rune.rbc"}
 
   (* what a refused compile says: the stage a lint names, or the first
      words of what stopped it *)
