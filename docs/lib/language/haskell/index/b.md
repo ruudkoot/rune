@@ -9,6 +9,7 @@
 - `binder` (type): [CORE](../sig/CORE.md#type-binder)
 - `binding` (type): [HS_LINT](../sig/HS_LINT.md#type-binding)
 - `BlockComment` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-blockcomment)
+- `Bool` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-bool)
 - `builtinData` (val): [CORE](../sig/CORE.md#val-builtindata)
 - `builtinTypes` (val): [CORE](../sig/CORE.md#val-builtintypes)
 - `ByteOrderMark` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-byteordermark)

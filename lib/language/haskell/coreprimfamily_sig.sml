@@ -21,14 +21,18 @@ sig
      makes one. *)
   exception IOError of int * string * string * int
 
-  (* A primitive: its name and its type in Core's text, what it does, what
-     the interpreter does for it (its arguments, the state token left out),
-     and the name of the Mid function it is lowered to, which takes its
-     arguments, the state token left out, or `()` where it takes none. *)
+  (* A primitive: its name, its type, what it does, what the interpreter
+     does for it, and the Mid function it is lowered to.
+
+     Its type is Core's text. The interpreter's `run` is given its arguments,
+     the state token left out; the Mid function takes them too, or `()`
+     where it takes none. *)
   type prim = {name : string, ty : string, doc : string, run : value list -> value, mid : string}
 
   (* A family: its name, its primitives, and the Mid text that defines
-     their functions, a group of `funs`, which Core to Mid adds once to a
-     program that names any of them. *)
+     their functions.
+
+     The text is a group of `funs`, which Core to Mid adds once to a program
+     that names any of the family's primitives. *)
   type family = {name : string, prims : prim list, midText : string}
 end

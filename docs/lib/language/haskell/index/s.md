@@ -34,6 +34,7 @@
 - `start` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-start)
 - `stmt` (type): [HS_AST](../sig/HS_AST.md#type-stmt)
 - `stmt_` (type): [HS_AST](../sig/HS_AST.md#type-stmt_)
+- `Str` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-str)
 - `STRING` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-string)
 - `strings` (type): [CORE_RUNTIME](../sig/CORE_RUNTIME.md#type-strings)
 - `stripEval` (val): [CORE](../sig/CORE.md#val-stripeval)

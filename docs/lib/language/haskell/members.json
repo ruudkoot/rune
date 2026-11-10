@@ -78,7 +78,7 @@
      "kind": "val",
      "name": "builtinTypes",
      "spec": "val builtinTypes : (string * kind) list",
-     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`\nand `Ref`.\n\n",
+     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,\n`Ref` and `Arr`.\n\n",
      "page": "sig/CORE.md#val-builtintypes"
     },
     {
@@ -235,7 +235,7 @@
      "kind": "val",
      "name": "prims",
      "spec": "val prims : prim list",
-     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`; then the elementary functions `double_sqrt`,\n  `double_exp`, `double_log`, `double_sin`, `double_cos`, `double_tan`,\n  `double_atan`, `double_sinh`, `double_cosh`, `double_tanh` and\n  `double_atan2`; the conversions to `Int` `double_truncate`,\n  `double_round` (to even at a half), `double_ceiling`, `double_floor`;\n  the classes `double_is_nan`, `double_is_infinite`,\n  `double_is_negative_zero`, `double_is_denormalized`; and\n  `double_decode` and `double_encode`, a mantissa of 53 bits;\n- on `Float`, a `Double` that binary32 represents, every result of\n  arithmetic rounded to binary32 by Mid's `real_to_single` (D23):\n  `float_add`, `float_sub`, `float_mul`, `float_div`, `float_neg`,\n  `float_eq` to `float_ge`, `float_from_int`, `float_from_double`,\n  `float_to_double`, `float_to_str`, and the functions of `Double`\n  from the elementary ones on, `float_sqrt` to `float_encode`, a\n  mantissa of 24 bits;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`,\n  `str_extract`;\n- I/O: `print_str`, `print_err`, `exit`; the handles of files, 0 to 2\n  standard input, output and error, `h_open`, `h_close`, `h_read`,\n  `h_write`, `h_flush`, `h_error`; `interleave`, which defers an\n  action until its value is forced (D25's one interleaving\n  primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`.\n\n",
+     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`; then the elementary functions `double_sqrt`,\n  `double_exp`, `double_log`, `double_sin`, `double_cos`, `double_tan`,\n  `double_atan`, `double_sinh`, `double_cosh`, `double_tanh` and\n  `double_atan2`; the conversions to `Int` `double_truncate`,\n  `double_round` (to even at a half), `double_ceiling`, `double_floor`;\n  the classes `double_is_nan`, `double_is_infinite`,\n  `double_is_negative_zero`, `double_is_denormalized`;\n  `double_decode` and `double_encode`, a mantissa of 53 bits; and\n  `double_pow`;\n- on `Float`, a `Double` that binary32 represents, every result of\n  arithmetic rounded to binary32 by Mid's `real_to_single` (D23):\n  `float_add`, `float_sub`, `float_mul`, `float_div`, `float_neg`,\n  `float_eq` to `float_ge`, `float_from_int`, `float_from_double`,\n  `float_to_double`, `float_to_str`, and the functions of `Double`\n  from the elementary ones on, `float_sqrt` to `float_encode`, a\n  mantissa of 24 bits;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`,\n  `str_extract`, `str_eq`;\n- on `Arr a`, an array of cells each holding a value, unforced, as\n  `Ref a` does one: `arr_new`, `arr_set`, `arr_read`, `arr_get`,\n  `arr_size`;\n- I/O: `print_str`, `print_err`, `exit`; the handles of files, 0 to 2\n  standard input, output and error, `h_open`, `h_close`, `h_read`,\n  `h_write`, `h_flush`, `h_error`; `interleave`, which defers an\n  action until its value is forced (D25's one interleaving\n  primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_io_full`,\n  `exn_io_code`, `exn_io_file`, `exn_io_handle`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`;\n- then each family's, in the order of `families`.\n\n",
      "page": "sig/CORE_PRIM.md#val-prims"
     },
     {
@@ -247,6 +247,20 @@
     },
     {
      "kind": "val",
+     "name": "families",
+     "spec": "val families : CorePrimFamily.family list",
+     "doc": "`families` is the families of primitives (CORE\\_PRIM\\_FAMILY), each of a\nfile of its own.\n\n`prims` lists their primitives after its own: the IO library's\nhandles and the system's errors (CorePrimIo).\n\n",
+     "page": "sig/CORE_PRIM.md#val-families"
+    },
+    {
+     "kind": "val",
+     "name": "familyOf",
+     "spec": "val familyOf : string -> (CorePrimFamily.family * CorePrimFamily.prim) option",
+     "doc": "`familyOf name` is the family of the primitive called `name` and the\nprimitive, where a family has it.\n\n",
+     "page": "sig/CORE_PRIM.md#val-familyof"
+    },
+    {
+     "kind": "val",
      "name": "exnKinds",
      "spec": "val exnKinds : string list",
      "doc": "`exnKinds` is the kinds of exception, by the number `exn_kind` gives.\n\nThey are `ErrorCall`, `IOError`, `PatternMatchFail`, `NonTermination`\n(a suspension forced again under its own evaluation), `Div`, `Overflow`,\n`Subscript`, `Chr` and `Domain` (a NaN made an `Int`).\n\n",
@@ -254,8 +268,42 @@
     }
    ]
   },
+  "CORE_PRIM_FAMILY": {
+   "doc": "A family of Core's primitives, defined in a file of its own (the\nhaskell98 roadmap, M17, M18): each primitive with its type, what the\nCore interpreter does for it, and the Mid function Core to Mid lowers it\nto, defined in the family's Mid text. CorePrim lists each family's\nprimitives after its own, CoreInterp runs them and CoreToMid lowers\nthem, so that a family is added with no edit of any of the three but a\nline of CorePrim's.\n\nA primitive of a family takes arguments of `!Int`, `!Str` and `!Bool`,\nand the state token where it is an action, and gives an `Int`, a `Str`\nor a `Bool`; an action gives `(utuple World T)` of one, or `World`.\n\n",
+   "page": "sig/CORE_PRIM_FAMILY.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "value",
+     "spec": "datatype value = Int of int | Str of string | Bool of bool | Unit",
+     "doc": "An argument or a result of a primitive of a family.\n\n",
+     "page": "sig/CORE_PRIM_FAMILY.md#type-value"
+    },
+    {
+     "kind": "exception",
+     "name": "IOError",
+     "spec": "exception IOError of int * string * string * int",
+     "doc": "What a primitive raises in the interpreter where it fails: an\n`IOError` of a code, a text, a file and a handle, as `exn_io_full`\nmakes one.\n\n",
+     "page": "sig/CORE_PRIM_FAMILY.md#exn-ioerror"
+    },
+    {
+     "kind": "type",
+     "name": "prim",
+     "spec": "type prim = {name : string, ty : string, doc : string, run : value list -> value, mid : string}",
+     "doc": "A primitive: its name, its type, what it does, what the interpreter\ndoes for it, and the Mid function it is lowered to.\n\nIts type is Core's text. The interpreter's `run` is given its arguments,\nthe state token left out; the Mid function takes them too, or `()`\nwhere it takes none.\n\n",
+     "page": "sig/CORE_PRIM_FAMILY.md#type-prim"
+    },
+    {
+     "kind": "type",
+     "name": "family",
+     "spec": "type family = {name : string, prims : prim list, midText : string}",
+     "doc": "A family: its name, its primitives, and the Mid text that defines\ntheir functions.\n\nThe text is a group of `funs`, which Core to Mid adds once to a program\nthat names any of the family's primitives.\n\n",
+     "page": "sig/CORE_PRIM_FAMILY.md#type-family"
+    }
+   ]
+  },
   "CORE_RUNTIME": {
-   "doc": "rhc's runtime, in Core (the haskell98 roadmap, M17; D24 to D26): what\nthe Report's modules name and never define, written in Core over\nCorePrim's primitives, so that the Core interpreter and Core to Mid run\none text and no SML stands below Haskell (D26's A).\n\nIt holds the built-in syntax, the unit `()` and the list `[]` with its\nconstructors `[]` and `:` (ov.prelude.unit, ov.prelude.list), and the\ntwo modules the Report imports and never defines: PreludeBuiltin, whose\nprimitives are those of share/rhc/haskell98's Prelude and PreludeIO, and\nUnicodePrims, Char's. Each `prim*` of the Report is a value of it of the\nsame name, whose type is the Report's in Core: `String` is `([] Char)`,\n`IOError` is `Exn` and `IO a` is `World -> (utuple World a)` (D25's\nstate token). Beside them it has `primSeq`, `primReturnIO` and\n`primBindIO` (ov.prelude.seq, ov.prelude.io) and `primUnpackString`,\nwhich makes a string literal, UTF-8 in a `Str`, its list of characters.\n\nInput and output are UTF-8; a byte that starts no sequence of UTF-8 is\nread as the character of its number. `getContents` and `readFile` read\na chunk at a time as their list is read, through `interleave`, the one\ninterleaving primitive, and end their list at an error of reading\n(21.2.2); standard output is written before standard input is read.\n`getChar` and `getContents` share standard input's buffer.\n\nThe general category and the simple case mappings are lib/unicode's\n(CodePoint, D21), at its version, in tables written from its data:\n`isUpper` is true of every letter that is not lower case (R38).\n\n",
+   "doc": "rhc's runtime, in Core (the haskell98 roadmap, M17; D24 to D26): what\nthe Report's modules name and never define, written in Core over\nCorePrim's primitives, so that the Core interpreter and Core to Mid run\none text and no SML stands below Haskell (D26's A).\n\nIt holds the built-in syntax, the unit `()` and the list `[]` with its\nconstructors `[]` and `:` (ov.prelude.unit, ov.prelude.list), and the\ntwo modules the Report imports and never defines: PreludeBuiltin, whose\nprimitives are those of share/rhc/haskell98's Prelude and PreludeIO, and\nUnicodePrims, Char's. Each `prim*` of the Report is a value of it of the\nsame name, whose type is the Report's in Core: `String` is `([] Char)`,\n`IOError` is `Exn` and `IO a` is `World -> (utuple World a)` (D25's\nstate token). Beside them it has `primSeq`, `primReturnIO` and\n`primBindIO` (ov.prelude.seq, ov.prelude.io) and `primUnpackString`,\nwhich makes a string literal, UTF-8 in a `Str`, its list of characters;\nand what the library's PreludeRuntime names beside the Report's:\n`double_mantissa` and `double_exponent`, `unsafe_perform_io`,\n`primPackString`, `primReady`, and `ref_set`, `arr_set`, `h_close`,\n`h_flush` and `exit` as actions giving `()`, which Haskell names as\n`IO ()`, over CorePrim's of the same names, whose actions give `World`.\n\nInput and output are UTF-8; a byte that starts no sequence of UTF-8 is\nread as the character of its number. `getContents` and `readFile` read\na chunk at a time as their list is read, through `interleave`, the one\ninterleaving primitive, and end their list at an error of reading\n(21.2.2); standard output is written before standard input is read.\n`getChar` and `getContents` share standard input's buffer. An IOError\nthe runtime raises has its kind (`exn_io_full`): a failure of the\nsystem's by the name of its error, the end of standard input 5.\n\nThe general category and the simple case mappings are lib/unicode's\n(CodePoint, D21), at its version, in tables written from its data:\n`isUpper` is true of every letter that is not lower case (R38).\n\n",
    "page": "sig/CORE_RUNTIME.md",
    "members": [
     {
@@ -1496,6 +1544,7 @@
   "CoreInterp": "CORE_INTERP",
   "CoreLint": "CORE_LINT",
   "CorePrim": "CORE_PRIM",
+  "CorePrimFamily": "CORE_PRIM_FAMILY",
   "CoreRuntime": "CORE_RUNTIME",
   "CoreText": "CORE_TEXT",
   "CoreToMid": "CORE_TO_MID",

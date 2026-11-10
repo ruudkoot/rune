@@ -61,8 +61,10 @@ sig
   val find : string -> prim option
 
   (* `families` is the families of primitives (CORE_PRIM_FAMILY), each of a
-     file of its own, whose primitives `prims` lists after its own: the IO
-     library's handles and the system's errors (CorePrimIo). *)
+     file of its own.
+
+     `prims` lists their primitives after its own: the IO library's
+     handles and the system's errors (CorePrimIo). *)
   val families : CorePrimFamily.family list
 
   (* `familyOf name` is the family of the primitive called `name` and the
