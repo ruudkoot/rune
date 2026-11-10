@@ -685,6 +685,14 @@ struct
     | M.Raise a => let val v = atom (b, cx, a) in finish (b, L.Raise v) end
     | M.Return r => returnSum (b, cx, r)
     | M.Mark (sp, a) => (emit (b, L.At sp); #span b := SOME (#1 sp); exp (b, a, cx))
+    (* a Case of a constant constructor (which -O0 has not folded): its
+       arm, or the default; the other arms are dead, and would take the
+       constant apart as a constructor it is not (LowShapes) *)
+    | M.Case (M.Con0 (tag, _), arms, d) =>
+        (case (List.find (fn (t, _) => t = tag) arms, d) of
+           (SOME (_, e), _) => exp (b, e, cx)
+         | (NONE, SOME e) => exp (b, e, cx)
+         | (NONE, NONE) => bug ("a case of constant constructor " ^ Int.toString tag ^ " with no arm of its tag"))
     | M.Case (a, arms, d) => caseOf (b, cx, atom (b, cx, a), arms, d)
 
   (* A test of a tag: a Switch where three tags or more fit a table about
