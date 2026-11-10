@@ -62,11 +62,16 @@ struct
      typecheck = SOME "bin/rhc --typecheck-only", stackDone = false, covers = covers,
      compileTags = ["check", "hs"], errorTags = fn _ => ["check", "hs", "quick"], typecheckTags = ["check", "hs"],
      wayTags = fn (w : Lang.way) => ["check", "hs"] @ (if #name w = "register" then ["quick"] else []),
-     needs = fn _ => Test.requires ["rhc"], wayNeeds = fn _ => fn t => t,
+     (* a permission refusal (NAME.err.perm) cannot be seen by root: skipped
+        there, with that reason (the lead's ruling 32) *)
+     needs = fn (p : Lang.program) => Test.requires (["rhc"] @ (if String.isSubstring ".err.perm" (#name p) then ["unprivileged"] else [])),
+     wayNeeds = fn _ => fn t => t,
      selected = fn _ => fn _ => true, pending = HsConformance.pending}
 
   val capabilities =
-    [{name = "rhc", probe = "test -x bin/rhc", hint = "run: make bin/rhc (rhc.build; docs/testing.md, rhc's tests)"}]
+    [{name = "rhc", probe = "test -x bin/rhc", hint = "run: make bin/rhc (rhc.build; docs/testing.md, rhc's tests)"},
+     {name = "unprivileged", probe = "test \"$(id -u)\" -ne 0",
+      hint = "a permission refusal cannot be seen as root: run the tests as another user"}]
 
   (* ---- the runner's own suite *)
   val stubCompile = "bin/rune-test hs-stub-compile"
