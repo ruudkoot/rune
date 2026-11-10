@@ -1,0 +1,38 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A data type of one field of a polymorphic type, as M15 writes the
+; dictionary of a class of one method, Functor (D's
+; impl/d/defects/midlint-fmap, `print (fmap (+ 1) (Just 1))`): the method
+; let-bound at its type, or a polymorphic global, given to the constructor,
+; and taken out by a selector at its types. Core to Mid gives Mid's con the
+; method at its scheme and no types, a field, as a tuple's component is
+; given; MidLint takes it as a field (compiled at --lint=2, as every run).
+(data Functor ((f (-> * *))) (Functor (forall (a b) (-> (-> a b) (f a) (f b)))))
+
+(val functorMaybe (Functor Maybe)
+  (let (m (forall (a b) (-> (-> a b) (Maybe a) (Maybe b)))
+         (\ (@a @b (g (-> a b)) (x (Maybe a)))
+           (case x y
+             ((Nothing) (con Nothing @b))
+             ((Just v) (let (r b (g v)) (con Just @b r))))))
+  (con Functor @Maybe m)))
+
+(val functorList (Functor List) (con Functor @List map))
+
+(val fmap (forall ((f (-> * *)) a b) (-> (Functor f) (-> a b) (f a) (f b)))
+  (\ (@(f (-> * *)) @a @b (d (Functor f))) (case d e ((Functor m) (m @a @b)))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (inc (-> Int Int) (\ ((n Int)) (case n k (_ (prim int_add k 1)))))
+    (let (mj (Maybe Int) (con Just @Int 41))
+    (let (mr (Maybe Int) (fmap @Maybe @Int @Int functorMaybe inc mj))
+    (case mr q
+      ((Nothing) (putStrLn "Nothing" w))
+      ((Just z)
+        (case (printInt z w) o
+          ((utuple w1 _)
+            (let (l0 (List Int) (con Nil @Int))
+            (let (l1 (List Int) (con Cons @Int 2 l0))
+            (let (l2 (List Int) (con Cons @Int 1 l1))
+            (let (lr (List Int) (fmap @List @Int @Int functorList inc l2))
+            (printIntList lr w1))))))))))))))
