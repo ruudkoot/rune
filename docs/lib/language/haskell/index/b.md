@@ -13,6 +13,7 @@
 - `bindOf` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-bindof)
 - `bindTypes` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-bindtypes)
 - `BlockComment` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-blockcomment)
+- `Bool` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-bool)
 - `builtinCon` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-builtincon)
 - `builtinData` (val): [CORE](../sig/CORE.md#val-builtindata)
 - `builtinKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-builtinkind)

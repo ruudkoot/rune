@@ -6,6 +6,7 @@
 - `ValArg` (con): [CORE](../sig/CORE.md#con-valarg)
 - `ValBinder` (con): [CORE](../sig/CORE.md#con-valbinder)
 - `Value` (con): [HS_MODULES](../sig/HS_MODULES.md#con-value)
+- `value` (type): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#type-value)
 - `valueKey` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-valuekey)
 - `valueScheme` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-valuescheme), [HS_INFER](../sig/HS_INFER.md#val-valuescheme)
 - `valueType` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-valuetype)

@@ -36,7 +36,7 @@
 - `predTy` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-predty)
 - `prelude` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-prelude)
 - `Prim` (con): [CORE](../sig/CORE.md#con-prim)
-- `prim` (type): [CORE_PRIM](../sig/CORE_PRIM.md#type-prim)
+- `prim` (type): [CORE_PRIM](../sig/CORE_PRIM.md#type-prim), [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#type-prim)
 - `PrimS` (con): [HS_DS_CORE](../sig/HS_DS_CORE.md#con-prims)
 - `prims` (val): [CORE_PRIM](../sig/CORE_PRIM.md#val-prims)
 - `primType` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-primtype)

@@ -29,7 +29,10 @@ same name. An action passes the state token (D25), and `getContents` and
 string literal is unpacked as its list is read (D24); a `Char` is a code
 point, classed and mapped by `lib/unicode`'s tables (D21); a `Float` is
 rounded to binary32 after each operation (D23). rhc links into a program
-what it reaches of the runtime.
+what it reaches of the runtime. A family of primitives (`CorePrimFamily`) is
+a file of its own, each primitive with what the interpreter does and the Mid
+function it is lowered to: `CorePrimIo` gives the IO library's positions of
+files and errors of the system's, over `CoreFiles`, the interpreter's files.
 
 The syntax (`syntax.build`, the roadmap's M11) reads a file of Haskell 98 to
 a tree that keeps all of it. `HsLiterate` gives a literate file's program

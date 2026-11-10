@@ -4,6 +4,9 @@
 
 - `F` (con): [HS_AST](../sig/HS_AST.md#con-f)
 - `fail` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-fail), [HS_LAYOUT](../sig/HS_LAYOUT.md#val-fail)
+- `families` (val): [CORE_PRIM](../sig/CORE_PRIM.md#val-families)
+- `family` (type): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#type-family)
+- `familyOf` (val): [CORE_PRIM](../sig/CORE_PRIM.md#val-familyof)
 - `fault` (type): [CORE_TO_MID](../sig/CORE_TO_MID.md#type-fault)
 - `Field` (con): [HS_AST](../sig/HS_AST.md#con-field), [HS_MODULES](../sig/HS_MODULES.md#con-field)
 - `field` (type): [HS_AST](../sig/HS_AST.md#type-field)
