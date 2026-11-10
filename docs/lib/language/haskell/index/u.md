@@ -12,6 +12,7 @@
 - `Unknown` (con): [HS_CHAR](../sig/HS_CHAR.md#con-unknown)
 - `Unlifted` (con): [CORE](../sig/CORE.md#con-unlifted)
 - `unlit` (val): [HS_LITERATE](../sig/HS_LITERATE.md#val-unlit)
+- `unresolved` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-unresolved)
 - `Unsupported` (exn): [CORE_TO_MID](../sig/CORE_TO_MID.md#exn-unsupported)
 - `Use` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-use)
 - `UTuple` (con): [CORE](../sig/CORE.md#con-utuple)

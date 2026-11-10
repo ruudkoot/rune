@@ -956,7 +956,13 @@ against what is given now, an absent name present now refuses it (H1, H2);
 one checked at a lower level of the lint is refused; a key is over every
 member and its text (H8); the overlay is read before the layers, a layer is
 read and never written, one configuration's entries are not another's; a
-damaged entry is a miss; a head is read back as it was written.
+damaged entry is a miss; a head is read back as it was written. Core in
+units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
+that takes a value of another by an import (`(import x TYPE)`) and a type by
+a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
+import no unit defines, a type two units declare apart and an import at
+another type than its definition's, each refused; an import printed and
+read back, in a unit checked alone (`--typecheck-only`).
 
 ## The three oracles
 

@@ -8,6 +8,7 @@ CORE_PRIM_FAMILY	signature			required	declared	lib/language/haskell/coreprimfami
 CORE_RUNTIME	signature			required	declared	lib/language/haskell/coreruntime_sig.sml
 CORE_TEXT	signature			required	declared	lib/language/haskell/coretext_sig.sml
 CORE_TO_MID	signature			required	declared	lib/language/haskell/coretomid_sig.sml
+CORE_UNITS	signature			required	declared	lib/language/haskell/coreunits_sig.sml
 HS_AST	signature			required	declared	lib/language/haskell/ast_sig.sml
 HS_CHAR	signature			required	declared	lib/language/haskell/char_sig.sml
 HS_CLASSES	signature			required	declared	lib/language/haskell/classes_sig.sml
@@ -39,6 +40,7 @@ CorePrimFamily	structure	CORE_PRIM_FAMILY		required	ascribed	lib/language/haskel
 CoreRuntime	structure	CORE_RUNTIME		required	ascribed	lib/language/haskell/coreruntime.sml
 CoreText	structure	CORE_TEXT		required	ascribed	lib/language/haskell/coretext.sml
 CoreToMid	structure	CORE_TO_MID		required	ascribed	lib/language/haskell/coretomid.sml
+CoreUnits	structure	CORE_UNITS		required	ascribed	lib/language/haskell/coreunits.sml
 HsAst	structure	HS_AST		required	claimed	lib/language/haskell/ast.sml
 HsChar	structure	HS_CHAR		required	claimed	lib/language/haskell/char.sml
 HsClasses	structure	HS_CLASSES		required	claimed	lib/language/haskell/classes.sml

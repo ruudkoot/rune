@@ -28,7 +28,7 @@ What each means is on [`CORE`](../sig/CORE.md); the types are this structure's o
 | datatype | [`arg`](../sig/CORE.md#type-arg) | `TyArg` &#124; `ValArg` |
 | datatype | [`atom`](../sig/CORE.md#type-atom) | `Var` &#124; `Lit` |
 | datatype | [`binder`](../sig/CORE.md#type-binder) | `TyBinder` &#124; `ValBinder` |
-| datatype | [`decl`](../sig/CORE.md#type-decl) | `Data` &#124; `Newtype` &#124; `Val` |
+| datatype | [`decl`](../sig/CORE.md#type-decl) | `Data` &#124; `Newtype` &#124; `Val` &#124; `Import` |
 | datatype | [`exp`](../sig/CORE.md#type-exp) | `Atom` &#124; `App` &#124; `Lam` &#124; `Let` &#124; `LetRec` &#124; `Case` &#124; `Con` &#124; `Prim` &#124; `UTuple` &#124; `Cast` |
 | datatype | [`kind`](../sig/CORE.md#type-kind) | `Star` &#124; `Unlifted` &#124; `Arrow` |
 | datatype | [`lit`](../sig/CORE.md#type-lit) | `LInt` &#124; `LInteger` &#124; `LChar` &#124; `LDouble` &#124; `LFloat` &#124; `LStr` |

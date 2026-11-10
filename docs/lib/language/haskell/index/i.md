@@ -5,7 +5,7 @@
 - `IF` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-if)
 - `implicit` (val): [HS_PRINT](../sig/HS_PRINT.md#val-implicit)
 - `IMPORT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-import)
-- `Import` (con): [HS_AST](../sig/HS_AST.md#con-import)
+- `Import` (con): [CORE](../sig/CORE.md#con-import), [HS_AST](../sig/HS_AST.md#con-import)
 - `import` (type): [HS_AST](../sig/HS_AST.md#type-import)
 - `IN` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-in)
 - `infer` (val): [HS_KINDS](../sig/HS_KINDS.md#val-infer), [HS_LINT](../sig/HS_LINT.md#val-infer)

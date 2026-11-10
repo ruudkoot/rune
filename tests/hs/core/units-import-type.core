@@ -1,0 +1,5 @@
+; fail: the import of f is at (-> Int Int), and its definition at (-> Int Bool)
+; Core in units: an import is at its definition's type (CoreUnits.join).
+(import f (-> Int Int))
+(val f (-> Int Bool) (\ ((n Int)) (con True)))
+(val main (-> World (utuple World Int)) (\ ((w World)) (utuple w 0)))

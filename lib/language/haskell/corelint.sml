@@ -481,6 +481,9 @@ struct
           | Val (x, t, _) =>
               if CoreMap.member (#vals g, x) then breach (env0 (g, "in val " ^ x), "decl", "the value " ^ x ^ " is declared twice")
               else {tycons = #tycons g, cons = #cons g, vals = CoreMap.insert (#vals g, x, t)}
+          | Import (x, t) =>
+              if CoreMap.member (#vals g, x) then breach (env0 (g, "in import " ^ x), "decl", "the value " ^ x ^ " is declared twice")
+              else {tycons = #tycons g, cons = #cons g, vals = CoreMap.insert (#vals g, x, t)}
         end
       val g = List.foldl declare start decls
       fun one d =
@@ -501,6 +504,11 @@ struct
                        Star => ()
                      | k => breach (env, "kind", "the field of " ^ c ^ " is of kind " ^ showK k)
             end
+        | Import (x, t) =>
+            (* a value of another unit: its type as a value's of the top
+               level is, its definition the unit's that exports it *)
+            let val env = env0 (g, "in import " ^ x)
+            in lifted (env, "the type of " ^ x, "val") t end
         | Val (x, t, e) =>
             let
               val env = env0 (g, "in val " ^ x)

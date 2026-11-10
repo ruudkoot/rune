@@ -9,6 +9,8 @@ files
   coremap.sml
   coretext_sig.sml
   coretext.sml
+  coreunits_sig.sml
+  coreunits.sml
   corefiles.sml
   coreprimfamily_sig.sml
   coreprimfamily.sml

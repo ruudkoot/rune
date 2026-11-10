@@ -1,0 +1,6 @@
+; fail: the type T is declared apart by two units
+; Core in units: a type declared again is the same type only where its
+; declaration is the same (CoreUnits.join), as an interface copies it.
+(data T () (A))
+(data T () (A) (B))
+(val main (-> World (utuple World Int)) (\ ((w World)) (utuple w 0)))

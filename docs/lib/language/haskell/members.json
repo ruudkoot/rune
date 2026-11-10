@@ -63,7 +63,7 @@
     {
      "kind": "datatype",
      "name": "decl",
-     "spec": "datatype decl =\n    Data of string * (string * kind) list * (string * ty list) list\n  | Newtype of string * (string * kind) list * string * ty\n  | Val of string * ty * exp",
+     "spec": "datatype decl =\n    Data of string * (string * kind) list * (string * ty list) list\n  | Newtype of string * (string * kind) list * string * ty\n  | Val of string * ty * exp\n  | Import of string * ty",
      "doc": "A declaration of a program. Every value of the top level is in the\nscope of all of them.\n\n",
      "page": "sig/CORE.md#type-decl"
     },
@@ -429,6 +429,33 @@
      "spec": "val program : {fault : fault option} * Core.program -> string",
      "doc": "`program ({fault}, p)` is the text of Mid of the Core program `p`,\nwhich CoreLint passed, with the fault made where it is `SOME`.\n\nA suspension is form C's (the roadmap's M9): made by `thunk_make`,\nforced by one `thunk_force` node, its code saying `thunk_blackhole`\nfirst and `thunk_self_update` last.\n\nThe text's `do` calls `main`, and prints what an exception no handler\ntakes is, as Core's interpreter does, an IOError's text as the\nlibrary's Show IOError gives it, and ends with status 1.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got.\n\n",
      "page": "sig/CORE_TO_MID.md#val-program"
+    }
+   ]
+  },
+  "CORE_UNITS": {
+   "doc": "Core in units (the haskell98 roadmap's M21): a program of several units,\neach a Core program that names what it takes of the others, a value by\nan import (`(import x TYPE)`) and a type by a copy of its declaration,\njoined into one program, which Core's interpreter runs and a compile\nwhole takes.\n\n",
+   "page": "sig/CORE_UNITS.md",
+   "members": [
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of string",
+     "doc": "what makes units that do not join: a type two units declare apart, or\nan import at another type than its definition's\n\n",
+     "page": "sig/CORE_UNITS.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "join",
+     "spec": "val join : Core.program list -> Core.program",
+     "doc": "`join units` is the program of the units, in order, each type\ndeclared once and each import given its definition.\n\nA data type or newtype is kept where it is first declared, every unit\nthat declares it declaring the same; an import is dropped where a unit\ndefines its value, at the type the import gives it, and kept where\nnone does.\n\n",
+     "page": "sig/CORE_UNITS.md#val-join"
+    },
+    {
+     "kind": "val",
+     "name": "unresolved",
+     "spec": "val unresolved : Core.program -> string list",
+     "doc": "`unresolved p` is the imports of p that no declaration of p defines,\nin order\n\n",
+     "page": "sig/CORE_UNITS.md#val-unresolved"
     }
    ]
   },
@@ -2199,6 +2226,7 @@
   "CoreRuntime": "CORE_RUNTIME",
   "CoreText": "CORE_TEXT",
   "CoreToMid": "CORE_TO_MID",
+  "CoreUnits": "CORE_UNITS",
   "HsAst": "HS_AST",
   "HsChar": "HS_CHAR",
   "HsClasses": "HS_CLASSES",
