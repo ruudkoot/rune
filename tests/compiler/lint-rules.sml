@@ -479,7 +479,42 @@ struct
             [M.Val (46, ([], Ty.arrow (Ty.int, Ty.int)),
                     M.Fun ([{name = 58, label = NONE, tyvars = [], params = [(59, Ty.int)], result = Ty.int,
                              body = M.Return (M.Atom (M.Global (47, [])))}], M.Return (M.Atom (M.Var (58, []))))),
-             valR (47, Ty.int, M.Atom one)], "")
+             valR (47, Ty.int, M.Atom one)], "");
+      suspensions ()
+    end
+
+  (* the rules of suspensions (docs/ir.md, Suspensions; the haskell98
+     roadmap's D4, D57): a suspension of int, its code a function of unit
+     that says thunk_blackhole and thunk_self_update *)
+  and suspensions () =
+    let
+      val susp = Ty.con (#stamp Types.suspTycon, "susp", [Ty.int])
+      val unitToInt = Ty.arrow (Ty.unit, Ty.int)
+      fun code f : M.fundef =
+        {name = f, label = NONE, tyvars = [], params = [(f + 1, Ty.unit)], result = Ty.int,
+         body = M.Let (f + 2, ([], Ty.unit), M.Prim ("thunk_blackhole", Ty.arrow (Ty.unit, Ty.unit), [M.Unit]),
+                       M.Let (f + 3, ([], Ty.unit), M.Prim ("thunk_self_update", Ty.arrow (Ty.int, Ty.unit), [one]),
+                              M.Return (M.Atom one)))}
+      fun make a = M.Prim ("thunk_make", Ty.arrow (unitToInt, susp), [a])
+      val made = M.Val (70, ([], susp), M.Fun ([code 60], M.Return (make (M.Var (60, [])))))
+    in
+      midP ("a suspension made of its code", [made], "");
+      midP ("a suspension's code named elsewhere too",
+            [M.Val (70, ([], susp), M.Fun ([code 60], M.Let (64, ([], Ty.int), M.App (M.Var (60, []), [M.Unit]),
+                                                           M.Return (make (M.Var (60, []))))))],
+            "is named elsewhere too");
+      midP ("a suspension's code called and not made", [M.Funs [code 60], valR (72, Ty.int, M.App (M.Global (60, []), [M.Unit]))],
+            "is named where no thunk_make makes it");
+      midP ("thunk_self_update outside a function",
+            [valR (71, Ty.unit, M.Prim ("thunk_self_update", Ty.arrow (Ty.int, Ty.unit), [one]))], "outside a function");
+      midP ("thunk_make of a closure a function is given",
+            [M.Funs [{name = 80, label = NONE, tyvars = [], params = [(81, unitToInt)], result = susp, body = M.Return (make (M.Var (81, [])))}]], "");
+      midP ("a cast into a suspension", [valR (76, susp, M.Prim ("unsafe_cast", Ty.arrow (Ty.int, susp), [one]))], "");
+      midP ("a cast of a suspension to what is none, a force forgotten",
+            [made, valR (75, Ty.int, M.Prim ("unsafe_cast", Ty.arrow (susp, Ty.int), [M.Global (70, [])]))], "a force forgotten");
+      midP ("a force of a suspension", [made, valR (77, Ty.int, M.Prim ("thunk_force", Ty.arrow (susp, Ty.int), [M.Global (70, [])]))], "");
+      midP ("a force of what is no suspension", [valR (77, Ty.int, M.Prim ("thunk_force", Ty.arrow (Ty.int, Ty.int), [one]))],
+            "which is no instance of its description")
     end
 
   (* ---- the forms of Ty another front end makes (haskell98 M28, D4): a
@@ -575,6 +610,51 @@ struct
             "the type pair takes 1 argument, not 0");
      textP ("a built-in type given an argument it does not take", "(val g1 : int int (return 1))",
             "the type int takes 0 arguments, not 1"))
+
+  (* ---- Mid's Case (haskell98 M29, D8): a test of a datatype's value's
+     tag, through Mid's text and its codec, and refused where it breaks a
+     rule, each by its message *)
+  fun midCases () =
+    let
+      val intList = Ty.list Ty.int
+      val nilTag = Types.nilTag ()
+      val consTag = Types.consTag ()
+      (* fn (x : int list) : int, by x's tag *)
+      fun byTag (arms, d) : M.fundef =
+        {name = 90, label = NONE, tyvars = [], params = [(91, intList)], result = Ty.int,
+         body = M.Case (M.Var (91, []), arms, d)}
+      val zero = M.Return (M.Atom (M.Const (Literal.CInt (IntInf.fromInt 0), Ty.int)))
+      val oneRet = M.Return (M.Atom one)
+      fun fnP f = [M.Funs [f]]
+      fun codec (f : M.fundef) : M.fundef =
+        let
+          val w = Pickle.writer ()
+          fun n x = Pickle.nat (w, x)
+          val () = MidCodec.write (w, {stamp = n, tycon = n, tvar = n, file = fn _ => (), position = fn _ => ()}) f
+          val r = Pickle.reader (Pickle.contents w)
+          fun rn () = Pickle.rnat r
+        in MidCodec.read (r, {stamp = rn, tycon = rn, tvar = rn, file = fn () => "", local' = fn i => 1000 + i}) end
+      val both = byTag ([(nilTag, zero), (consTag, oneRet)], NONE)
+      val withDefault = byTag ([(consTag, oneRet)], SOME zero)
+    in
+      midP ("a case of every tag, no default", fnP both, "");
+      midP ("a case of one tag and a default", fnP withDefault, "");
+      checked ("cases: a case through Mid's text", fn () => MidText.roundTrip (fnP both @ [M.Funs [{name = 92, label = NONE, tyvars = [], params = [(93, intList)], result = Ty.int, body = M.Case (M.Var (93, []), [(consTag, oneRet)], SOME zero)}]]), "");
+      report ("cases: a case through the codec", MidText.show [M.Funs [codec both]] = MidText.show [M.Funs [both]],
+              MidText.show [M.Funs [codec both]]);
+      report ("cases: a case and its default through the codec",
+              MidText.show [M.Funs [codec withDefault]] = MidText.show [M.Funs [withDefault]], MidText.show [M.Funs [codec withDefault]]);
+      midP ("a case of what is no datatype",
+            [M.Funs [{name = 90, label = NONE, tyvars = [], params = [(91, Ty.int)], result = Ty.int,
+                      body = M.Case (M.Var (91, []), [(0, zero)], SOME oneRet)}]], "a case of what has type int");
+      midP ("a case with an arm of a tag its datatype has not", fnP (byTag ([(7, zero)], SOME oneRet)), "an arm of tag 7");
+      midP ("a case with two arms of a tag", fnP (byTag ([(consTag, zero), (consTag, oneRet)], SOME zero)), "two arms of tag");
+      midP ("a case with no default and no arm of a tag", fnP (byTag ([(consTag, oneRet)], NONE)),
+            "with no default has no arm of every tag");
+      midP ("a case whose arm has another type than wanted",
+            fnP (byTag ([(consTag, M.Return (M.Atom (M.Const (Literal.CString "x", Ty.string))))], SOME zero)),
+            "has type string where int is wanted")
+    end
 
   (* ---- the levels (M3): a check runs from its level up; one that is
      always on says so, and how to turn it off; one at a boundary, found
@@ -734,6 +814,7 @@ struct
      midRules ();
      midForms ();
      textRules ();
+     midCases ();
      lowRules ();
      codes ();
      bases ();

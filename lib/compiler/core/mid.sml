@@ -73,6 +73,10 @@ struct
     | Raise of atom
     | Return of rhs                       (* the value of the expression *)
     | Mark of pos * exp                   (* where in the source what follows came from *)
+    | Case of atom * (int * exp) list * exp option
+                                          (* a test of a datatype's value: its tag's arm, each a tag and
+                                             the code where the value has it, and the code where it has
+                                             none of theirs -- NONE where the arms are every tag *)
   withtype fundef = {name : var, label : string option, tyvars : int list, params : (var * Ty.ty) list, result : Ty.ty,
                      body : exp}
 
@@ -219,6 +223,16 @@ struct
     | ExnArg (t, a) => ExnArg (t, f a)
     | SetGlobal (g, a) => SetGlobal (g, f a)
 
+  (* The expressions of a Case's arms and its default, in order. *)
+  fun caseExps (arms : (int * exp) list, d : exp option) : exp list =
+    List.foldr (fn ((_, e), es) => e :: es) (case d of SOME e => [e] | NONE => []) arms
+
+  (* A Case's arms and default, each expression what f makes of it, in
+     order. *)
+  fun mapCase (f : exp -> exp) (arms : (int * exp) list, d : exp option) : (int * exp) list * exp option =
+    let val arms = List.map (fn (t, e) => (t, f e)) arms
+    in (arms, Option.map f d) end
+
   (* What fold gives its members of each part of an expression, with what
      the parts before it have made. *)
   type 'a folder =
@@ -246,20 +260,48 @@ struct
         | Raise a => #atom f (a, acc)
         | Return r => #rhs f (r, acc)
         | Mark (_, a) => go (a, acc)
+        | Case (a, arms, d) => List.foldl go (#atom f (a, acc)) (caseExps (arms, d))
     in go (e, z) end
 
   (* Each step of e given to f, in the order e names them, those of the
-     functions made in e among them, each at its place. *)
+     functions made in e among them, each at its place: as fold walks e,
+     with a body of its own, which makes no pair of a part and what the
+     parts before made, for the walkers that run on every copy Expand
+     makes (Expand.copyExpWith). *)
   fun appRhs (f : rhs -> unit) (e : exp) : unit =
-    fold {rhs = fn (r, ()) => f r, atom = fn (_, ()) => (), jump = fn (_, ()) => (),
-          fundef = fn (g : fundef, ()) => appRhs f (#body g)} () e
+    let
+      fun go e =
+        case e of
+          Let (_, _, r, b) => (f r; go b)
+        | Fun (fs, b) => (List.app (fn (g : fundef) => go (#body g)) fs; go b)
+        | Join (_, _, body, sc) => (go body; go sc)
+        | Jump _ => ()
+        | If (_, t, e') => (go t; go e')
+        | Handle (a, _, h) => (go a; go h)
+        | Raise _ => ()
+        | Return r => f r
+        | Mark (_, a) => go a
+        | Case (_, arms, d) => (List.app (fn (_, a) => go a) arms; Option.app go d)
+    in go e end
 
   (* Whether p holds of some step of e, a function's made in e among them:
      the steps are asked in the order appRhs gives them, and none after the
      first p holds of. *)
   fun existsRhs (p : rhs -> bool) (e : exp) : bool =
-    let exception Found
-    in (appRhs (fn r => if p r then raise Found else ()) e; false) handle Found => true end
+    let
+      fun go e =
+        case e of
+          Let (_, _, r, b) => p r orelse go b
+        | Fun (fs, b) => List.exists (fn (g : fundef) => go (#body g)) fs orelse go b
+        | Join (_, _, body, sc) => go body orelse go sc
+        | Jump _ => false
+        | If (_, t, e') => go t orelse go e'
+        | Handle (a, _, h) => go a orelse go h
+        | Raise _ => false
+        | Return r => p r
+        | Mark (_, a) => go a
+        | Case (_, arms, d) => List.exists (fn (_, a) => go a) arms orelse (case d of SOME a => go a | NONE => false)
+    in go e end
 
   (* The definition with every type it writes made what f makes of it,
      given the type variables in scope there (Mid is System F: a Let's
@@ -291,6 +333,7 @@ struct
         | Raise a => Raise (atom s a)
         | Return r => Return (rhs s r)
         | Mark (pos, a) => Mark (pos, exp s a)
+        | Case (a, arms, d) => let val a = atom s a val (arms, d) = mapCase (exp s) (arms, d) in Case (a, arms, d) end
       and fundef s ({name, label, tyvars, params, result, body} : fundef) : fundef =
         let val s = bind (s, tyvars)
         in {name = name, label = label, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty (s, t))) params,
@@ -348,6 +391,7 @@ struct
         | Raise a => atom s a
         | Return r => rhs s r
         | Mark (_, a) => exp s a
+        | Case (a, arms, d) => (atom s a; List.app (exp s) (caseExps (arms, d)))
       and fundef s ({tyvars, params, result, body, ...} : fundef) =
         let val s = bind (s, tyvars)
         in List.app (fn (_, t) => ty (s, t)) params; ty (s, result); exp s body end
@@ -375,14 +419,36 @@ struct
     | Raise _ => 1
     | Return _ => 1
     | Mark (_, a) => sizeOfExp a
+    | Case (_, arms, d) => List.foldl (fn (e, n) => n + sizeOfExp e) 1 (caseExps (arms, d))
 
-  (* The nodes of a program, for --pass-stats. *)
-  fun size (p : program) : int =
+  (* What an expression weighs to the budgets of the passes that copy code
+     (Simplify's inlining, Expand's copies): its nodes, but that a Case
+     weighs as the tests it stands for, three nodes a tag -- a ConTag, an
+     equality and an If -- so that code weighs what it did before Mid had
+     one. *)
+  fun weightOfExp (e : exp) : int =
+    case e of
+      Let (_, _, _, b) => 1 + weightOfExp b
+    | Fun (fs, b) => List.foldl (fn (f, n) => n + weightOfExp (#body f)) (1 + weightOfExp b) fs
+    | Join (_, _, b, s) => 1 + weightOfExp b + weightOfExp s
+    | Jump _ => 1
+    | If (_, t, f) => 1 + weightOfExp t + weightOfExp f
+    | Handle (a, _, h) => 1 + weightOfExp a + weightOfExp h
+    | Raise _ => 1
+    | Return _ => 1
+    | Mark (_, a) => weightOfExp a
+    | Case (_, arms, d) => List.foldl (fn (e, n) => n + weightOfExp e) (3 * List.length arms) (caseExps (arms, d))
+
+  fun sizeOf (exp : exp -> int) (p : program) : int =
     let
       fun def d =
         case d of
-          Val (_, _, e) => sizeOfExp e
-        | Funs fs => List.foldl (fn (f, n) => n + sizeOfExp (#body f)) 0 fs
-        | Do (_, e) => sizeOfExp e
+          Val (_, _, e) => exp e
+        | Funs fs => List.foldl (fn (f, n) => n + exp (#body f)) 0 fs
+        | Do (_, e) => exp e
     in List.foldl (fn (d, n) => n + def d) 0 p end
+  (* The nodes of a program, for --pass-stats. *)
+  val size = sizeOf sizeOfExp
+  (* What a program weighs (weightOfExp). *)
+  val weight = sizeOf weightOfExp
 end

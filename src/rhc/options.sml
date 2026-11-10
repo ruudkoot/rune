@@ -13,7 +13,6 @@ struct
      lintRules : bool,                (* --lint-rules: print CoreLint's rules *)
      generate : int option,           (* --generate-core=SEED: print a generated program *)
      output : string option,          (* -o FILE: compile to bytecode, through Mid, in place of running *)
-     thunks : CoreToMid.form,         (* --thunks=c|runtime: how Mid makes and forces suspensions *)
      fault : CoreToMid.fault option,  (* --fault=NAME: a fault of Core to Mid made on purpose, for its tests *)
      strings : CoreRuntime.strings,   (* --strings=lazy|whole: how a string literal becomes its list (D24) *)
      help : bool,
@@ -25,11 +24,12 @@ struct
     \            | --dump-ast [--no-spans]] FILE.hs\n\
     \       rhc [--typecheck-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
+    \       rhc --dump-types | --dump-evidence | --dump-derived [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
     \Core, its typed lazy intermediate language, checks it and runs it on\n\
     \Core's interpreter; and it reads a program of Haskell, a file and the\n\
-    \modules it imports, no further than its names and fixity.\n\
+    \modules it imports, no further than its names, fixity and types.\n\
     \\n\
     \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop\n\
     \  --print               print it with every block in braces\n\
@@ -39,6 +39,11 @@ struct
     \  --dump-ast            print its tree, with --no-spans without where each node is\n\
     \  --dump-names          print the exports, fixities and instances of the program of\n\
     \                        FILE.hs... and its library, and its errors of names, sorted\n\
+    \  --dump-types          print the type of each top-level value of the program's modules,\n\
+    \                        and the library's errors (M13)\n\
+    \  --dump-evidence       print the checker's evidence records of the program's modules:\n\
+    \                        each overloaded use's dictionaries, each binder's type (D31)\n\
+    \  --dump-derived        print the methods of the program's derived instances (D33)\n\
     \  --dump-hslint         print the type HsLint's second inference gives each binding of\n\
     \                        the top level of FILE.hs's program, and the defaults it chose\n\
     \  --hslint-claims=FILE  at level 2, hold HsLint's inference to a record's claims, lines\n\
@@ -56,7 +61,7 @@ struct
     \  --share DIR           where rhc's library is, DIR/haskell98 (bin/rhc gives it)\n\
     \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
     \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
-    \                        names and fixity, until the checker lands (M13)\n\
+    \                        names, fixity, kinds, types and classes\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
     \                        2 runs HsLint on a program of Haskell, 3 reads Core's text\n\
     \                        back after every stage (RUNE_LINT too)\n\
@@ -69,8 +74,7 @@ struct
     \  -o FILE               compile to bytecode, through Mid, in place of running\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1)\n\
     \  --target=T            the bytecode: registers (default) or stack\n\
-    \  --thunks=F            suspensions in Mid: c, form C's primitives, or runtime,\n\
-    \                        functions of E1's runtime in today's Mid (default: runtime)\n\
+    \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
     \  --fault=F             for the tests of what catches it, a fault of Core to Mid made\n\
     \                        on purpose: thunk-in-slot or force-behind-cast\n\
     \  --strings=S           a string literal's list: lazy, a cell as it is read (default),\n\
@@ -98,7 +102,6 @@ struct
       val lintRules = ref false
       val generate = ref NONE
       val output = ref NONE
-      val thunks = ref CoreToMid.Runtime
       val fault = ref NONE
       val strings = ref CoreRuntime.Lazy
       val help = ref false
@@ -120,8 +123,7 @@ struct
         | go ("-O2" :: rest) = (Pass.level := 2; go rest)
         | go ("--target=registers" :: rest) = (CompilerSettings.target := "registers"; go rest)
         | go ("--target=stack" :: rest) = (CompilerSettings.target := "stack"; go rest)
-        | go ("--thunks=c" :: rest) = (thunks := CoreToMid.FormC; go rest)
-        | go ("--thunks=runtime" :: rest) = (thunks := CoreToMid.Runtime; go rest)
+        | go ("--thunks=c" :: rest) = go rest
         | go ("--fault=thunk-in-slot" :: rest) = (fault := SOME CoreToMid.ThunkInSlot; go rest)
         | go ("--fault=force-behind-cast" :: rest) = (fault := SOME CoreToMid.ForceBehindCast; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
@@ -144,7 +146,7 @@ struct
     in
       go args;
       {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
-       lintRules = !lintRules, generate = !generate, output = !output, thunks = !thunks, fault = !fault,
+       lintRules = !lintRules, generate = !generate, output = !output, fault = !fault,
        strings = !strings, help = !help, version = !version}
     end
 end

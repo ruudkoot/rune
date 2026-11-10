@@ -60,7 +60,7 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 | `src/` | the compiler: frontend, elaboration, intermediate representations, backend, driver; `src/isa/` describes the instruction set and the primitives |
 | `runtime/` | the runtime in C, shared by both VMs; `runtime/register/` is the register VM and its JIT, `runtime/stack/` the stack VM |
 | `lib/` | the Basis Library in `lib/basis/`, and libraries beside it |
-| `tests/` | `lang/` run tests, `errors/` compile-error tests, `basis/` the Basis Library suite, `perf/` benchmarks with budgets |
+| `tests/` | `lang/` run tests, `errors/` compile-error tests, `basis/` the Basis Library suite, `perf/` benchmarks with budgets; `hs/` rhc's tests, among them `hs/corpus/vendored/`, the 188 corpus programs `make check` runs: 45 of GHC's testsuite and jhc's tests under their trees' licences (each tree's `LICENSE` beside them), and 143 of nofib, nhc98's, yhc's and jhc's tests that state no licence, each tree or origin with a `PROVENANCE` beside it (`hs/corpus/README.md`) |
 | `docs/` | the documentation; `docs/lib/` is generated from the libraries in `lib/` |
 | `examples/` | small programs and benchmarks |
 | `scripts/` | generators, consistency checks, `doctor.sh`, `install.sh` |

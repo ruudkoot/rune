@@ -67,7 +67,9 @@ struct
   val covers = ["covers:tests/runner/hsinterp.sml", "covers:tests/hs/lang/*", "covers:lib/language/haskell/*", "covers:src/rhc/*"]
   fun tree () =
     List.foldl (fn (c, t) => Test.tag c t)
-      (Test.tag "check" (Test.tag "hs" (Test.describe "hs/interp-vm"
+      (* nightly: each program's three ways run in make check (the roadmap's
+         D56, the lead's ruling 45) *)
+      (Test.tag "nightly" (Test.tag "hs" (Test.describe "hs/interp-vm"
          (List.map (fn (p : Lang.program) =>
                       let val t = Test.requires ["rhc"] (Oracles.jobIn ("", #name p, ["hs-interp-vm", #name p], [], 1, 600, 1800))
                       in case HsConformance.pending p of SOME why => Test.pending why t | NONE => t end)

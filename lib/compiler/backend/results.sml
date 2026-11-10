@@ -79,6 +79,8 @@ struct
         | M.Handle (a, _, h) => (go a; go h)
         | M.Return r => sel r
         | M.Mark (_, a) => go a
+        (* a test of a tag, as its ConTag *)
+        | M.Case (a, arms, d) => ((case a of M.Var (y, _) => sum y | _ => ()); List.app go (M.caseExps (arms, d)))
         | M.Jump _ => ()
         | M.Raise _ => ()
     in go e end
@@ -101,6 +103,7 @@ struct
     | M.Raise a => countAtom a
     | M.Return r => countRhs r
     | M.Mark (_, a) => countExp a
+    | M.Case (a, arms, d) => (countAtom a; List.app countExp (M.caseExps (arms, d)))
 
   (* ---- results in globals (performance M8, D8 A, step 2) ---- *)
 
@@ -202,6 +205,7 @@ struct
         | M.Raise v => a v
         | M.Return r => rhs r
         | M.Mark (_, b) => go b
+        | M.Case (v, arms, d) => a v + List.foldl (fn (e, m) => Int.max (go e, m)) 0 (M.caseExps (arms, d))
     in go e end
 
   (* the calls whose tuple is made where it is needed (above) *)
@@ -251,6 +255,7 @@ struct
              | (NONE, M.App (M.Global (g, _), _)) => if isSome (stampOf g) then no g else ()
              | (NONE, _) => ())
         | M.Mark (_, a) => visit own a
+        | M.Case (_, arms, d) => List.app (visit own) (M.caseExps (arms, d))
         | M.Jump _ => ()
         | M.Raise _ => ()
       val () =
@@ -315,6 +320,7 @@ struct
         | M.Raise a => atom a
         | M.Return r => rhs r
         | M.Mark (_, a) => exp a
+        | M.Case (a, arms, d) => (atom a; List.app exp (M.caseExps (arms, d)))
       val () = List.app (fn M.Val (_, _, e) => exp e | M.Funs fs => List.app (exp o #body) fs | M.Do (_, e) => exp e) p
       val cands1 = IntMap.filteri (fn (g, _) => not (isSome (IntTable.find (asValue, g)))) cands0
       (* whether every return of a function's own code is a tuple of n
@@ -331,6 +337,7 @@ struct
             (case IntMap.find (cands, g) of SOME (m, _) => m = n | NONE => false)
         | M.Return _ => false
         | M.Mark (_, a) => returns (cands, n) a
+        | M.Case (_, arms, d) => List.all (returns (cands, n)) (M.caseExps (arms, d))
         | M.Jump _ => true
         | M.Raise _ => true
       (* the candidates that cannot be: some call of them needs the tuple
@@ -379,6 +386,7 @@ struct
                  | (SOME _, NONE) => no g
                  | (NONE, _) => ())
             | M.Mark (_, a) => visit own a
+            | M.Case (_, arms, d) => List.app (visit own) (M.caseExps (arms, d))
             | M.Jump _ => ()
             | M.Raise _ => ()
             | M.Return _ => ()
@@ -422,6 +430,7 @@ struct
                SOME n => if own = SOME n then () else need (n, all n)
              | NONE => ())
         | M.Mark (_, a) => callIn own a
+        | M.Case (_, arms, d) => List.app (callIn own) (M.caseExps (arms, d))
         | M.Jump _ => ()
         | M.Raise _ => ()
         | M.Return _ => ()

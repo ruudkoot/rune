@@ -282,7 +282,46 @@ struct
         "/* the tag is not tested but --checked, as DECON's (decision D14) */",
         "if (vm->checked && obj_contag(c) != a) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)obj_contag(c), (int)a);",
         "if ((uint32_t)b >= obj_len(c)) FATAL(\"constructor field %d out of range\", b);",
-        "PUSH(obj_field(c, b));"]]
+        "PUSH(obj_field(c, b));"],
+     (* Suspensions (docs/ir.md, Suspensions; docs/plans/language/haskell98.md,
+        D11, D14), as in the register set: thunk_force is FORCE, then on its
+        slow path UNIT and ENTER; a suspension's code says BLACKHOLE once it
+        has read what it captured, and UPDATE with its value before it
+        returns it. *)
+     inst ("FORCE", [("o", Label)], (Fixed 1, 1), Branch,
+           "Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to o; else leave it for the ENTER after.")
+       ["Value v = TOP(0);",
+        "if (val_is_ptr(v)) {",
+        "  int k = obj_kind(val_ptr(v));",
+        "  if (k == K_THUNK) NEXT;",
+        "  if (k == K_IND) TOP(0) = obj_field(val_ptr(v), 0);",
+        "}",
+        "JUMP_TO(a);"],
+     inst ("ENTER", [], (Fixed 2, 1), Call,
+           "Pop argument, pop a suspension, and enter it as CALL enters a closure; one under evaluation is a loop, a fatal error.")
+       (["POLL();",
+         "Value arg = POP();",
+         "Value tv = POP();",
+         "Obj *c = EXPECT(tv, K_THUNK, \"suspension\");",
+         "if (obj_contag(c) == THUNK_BLACKHOLE) FATAL(\"<<loop>>: a suspension forced while it is evaluated\");",
+         "int64_t fidx = val_imm(obj_field(c, 0));",
+         "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+         "Function *fn = &p->funcs[fidx];",
+         "size_t at = (size_t)(sp - vm->stack);",
+         "vm_push_frame(vm, (uint32_t)fidx, c, PC, at);"]
+        @ enter),
+     sharedBody
+       (inst ("BLACKHOLE", [], (Fixed 0, 0), Next,
+              "The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows.")
+          ["Obj *c = vm->frames[vm->fp].closure;",
+           "if (!c || obj_kind(c) != K_THUNK) vm_fatal(vm, \"BLACKHOLE outside a suspension\");",
+           "vm_blackhole(vm, c);"]),
+     sharedBody
+       (inst ("UPDATE", [], (Fixed 1, 0), Next, "Pop a value; the suspension running becomes an indirection to it.")
+          ["Value v = vm_pop(vm);",
+           "Obj *c = vm->frames[vm->fp].closure;",
+           "if (!c || obj_kind(c) != K_THUNK) vm_fatal(vm, \"UPDATE outside a suspension\");",
+           "obj_become_ind(vm, c, v);"])]
 
   (* The same by opcode number. *)
   val info : instruction vector = Vector.fromList instructions

@@ -1,7 +1,7 @@
 line one
 line λ
 appended
-2 [/nonexistent/rhc-test] No such file or directory
+2 [/nonexistent/rhc-test] openFile: /nonexistent/rhc-test: No such file or directory
 0 [] a user's IOError
 before its value is forced
 the deferred action runs

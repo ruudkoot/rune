@@ -67,61 +67,10 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
-  (* ConTag of y, poly_eq of it with a tag -- or imm_eq, which the
-     simplifier makes of it -- and an If on that, each used once: y, the
-     tag, and the two branches. *)
-  fun tagTest (x, r, body) =
-    case r of
-      M.ConTag (M.Var (y, _)) =>
-        if usesOf x <> 1 then NONE
-        else
-          let
-            fun unmark (M.Mark (sp, e), _) = unmark (e, SOME sp)
-              | unmark (e, sp) = (e, sp)
-          in
-            case unmark (body, NONE) of
-              (M.Let (c, _, M.Prim (eq, _, [M.Var (x', _), M.Const (Literal.CInt i, _)]), rest), sp1) =>
-                if (eq = "poly_eq" orelse eq = "imm_eq") andalso x' = x andalso usesOf c = 1 andalso IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then
-                  (case unmark (rest, sp1) of
-                     (M.If (M.Var (c', _), t, f), sp2) =>
-                       if c' = c then SOME (y, IntInf.toInt i, sp2, t, f) else NONE
-                   | _ => NONE)
-                else NONE
-            | _ => NONE
-          end
-    | _ => NONE
-
-  (* The tests of y's tag that follow in the else of each other, from the
-     one found: each tag, where it was and what it goes to -- a tag tested
-     again is left out, since the else of its first test is where the value
-     has another -- and the rest, with where it was; where they are three
-     or more, and a table of their tags no more than about four times as
-     big, a Switch. *)
-  fun switchOf (y, found, f) =
-    let
-      fun peel (M.Mark (sp, e), _) = peel (e, SOME sp)
-        | peel (e, sp) = (e, sp)
-      fun collect (acc, f, fsp) =
-        case peel (f, fsp) of
-          (M.Let (x, _, r, body), sp) =>
-            (case tagTest (x, r, body) of
-               SOME (y', tag, sp', t, f') =>
-                 if y' <> y then (List.rev acc, (sp, f))
-                 else if List.exists (fn (t', _, _) => t' = tag) acc then collect (acc, f', sp')
-                 else collect ((tag, sp', t) :: acc, f', sp')
-             | NONE => (List.rev acc, (sp, f)))
-        | (e, sp) => (List.rev acc, (sp, e))
-      val (cases, rest) = collect (List.rev found, f, NONE)
-      val n = List.length cases
-      val top = List.foldl (fn ((t, _, _), m) => Int.max (t, m)) 0 cases
-    in
-      if n >= 3 andalso top < 4 * n + 8 then SOME (cases, rest) else NONE
-    end
-
   (* The free variables of e, those in bound left out, added to acc; each
      function's are worked out once (captures). They are those of the code
      Lower makes of it, so that a closure captures nothing its function
-     never reads: a Switch leaves out the branch of a tag tested again. *)
+     never reads. *)
   fun free (e : M.exp, bound0 : unit IntMap.map, acc : unit IntMap.map) : unit IntMap.map =
     let
       (* what is bound, in one table for the walk: each variable is bound
@@ -140,17 +89,11 @@ struct
       fun go (e, acc) =
         case e of
           M.Let (x, _, r, b) =>
-            (case tagTest (x, r, b) of
-               SOME (y, tag, sp, t, f) =>
-                 (case switchOf (y, [(tag, sp, t)], f) of
-                    SOME (cases, (_, d)) => go (d, List.foldl (fn ((_, _, t), acc) => go (t, acc)) (var (y, acc)) cases)
-                  | NONE => go (f, go (t, var (y, acc))))
-             | NONE =>
-                 (* a tuple or a constructor nothing uses is not made (exp,
-                    below): what it would hold is not read *)
-                 let val acc = if usesOf x = 0 andalso (case r of M.Tuple (_ :: _) => true | M.Con _ => true | _ => false)
-                               then acc else rhs (r, acc)
-                 in bind x; go (b, acc) end)
+            (* a tuple or a constructor nothing uses is not made (exp,
+               below): what it would hold is not read *)
+            let val acc = if usesOf x = 0 andalso (case r of M.Tuple (_ :: _) => true | M.Con _ => true | _ => false)
+                          then acc else rhs (r, acc)
+            in bind x; go (b, acc) end
         | M.Fun (fs, b) =>
             (List.app (fn f => bind (#name f)) fs;
              go (b, List.foldl (fn (f, acc) =>
@@ -163,6 +106,7 @@ struct
         | M.Raise a => atom (a, acc)
         | M.Return r => rhs (r, acc)
         | M.Mark (_, a) => go (a, acc)
+        | M.Case (a, arms, d) => List.foldl go (atom (a, acc)) (M.caseExps (arms, d))
     in
       go (e, acc)
     end
@@ -376,6 +320,11 @@ struct
      in on a stack. *)
   val debugInfo = ref false
   val () = CompilerState.cellRoot ("Lower.debugInfo", debugInfo)
+  (* rune --check-casts (docs/ir.md, Suspensions; the haskell98 roadmap's
+     D5): each cast whose result is no suspension asks that its value be
+     evaluated (any_check). Off, the code is what it would be without it. *)
+  val checkCasts = ref false
+  val () = CompilerState.cellRoot ("Lower.checkCasts", checkCasts)
   val debugVars : {id : int, vars : (int * L.var) list, env : (int * int) list} list ref = ref []
   val () = CompilerState.cellRoot ("Lower.debugVars", debugVars)
   (* and, from the register target, the register of each variable of Low
@@ -404,6 +353,7 @@ struct
     | M.If _ => false
     | M.Handle _ => false
     | M.Raise _ => false
+    | M.Case _ => false
 
   (* Whether f calls itself in tail position of its body, where no handler
      is pushed: the calls a loop makes of it. *)
@@ -421,6 +371,7 @@ struct
         | M.Handle (_, _, h) => tail h      (* its body is no tail position *)
         | M.Return (M.App (g, xs)) => self g andalso List.length xs = List.length (#params f)
         | M.Mark (_, a) => tail a
+        | M.Case (_, arms, d) => List.exists tail (M.caseExps (arms, d))
         | M.Jump _ => false
         | M.Raise _ => false
         | M.Return _ => false
@@ -484,10 +435,11 @@ struct
         else ()
       val () = binds := outer
     in
-      funcs := {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
-                blocks = List.rev (!(#blocks b)), pos = pos,
-                reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny),
-                result = result, captures = []}
+      (* a suspension's code reads what it captured where it begins (Low.hoistEnv) *)
+      funcs := L.hoistEnv {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
+                           blocks = List.rev (!(#blocks b)), pos = pos,
+                           reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny),
+                           result = result, captures = []}
                :: !funcs;
       id
     end
@@ -534,6 +486,8 @@ struct
       | M.Prim ("functor_marker", _, xs) => L.Prim ("unsafe_cast", List.map at xs)
       | M.Prim ("open_boxed", _, xs) => L.Prim ("imm_eq", List.map at xs)
       | M.Prim ("open_layout", t, [M.Const (Literal.CInt tag, _)]) => L.Const (Literal.CInt (IntInf.fromInt (openLayout (t, IntInf.toInt tag))))
+      (* BLACKHOLE takes no operand: the unit is not made *)
+      | M.Prim ("thunk_blackhole", _, _) => L.Prim ("thunk_blackhole", [])
       | M.Prim (p, _, xs) => L.Prim (p, List.map at xs)
       | M.Tuple xs => L.Tuple (List.map at xs)
       | M.Select (i, a) =>
@@ -592,6 +546,29 @@ struct
   and value (b, cx, r : M.rhs) : L.var =
     case r of
       M.Atom a => atom (b, cx, a)
+    (* a cast into a suspension is no instruction: its value, under another
+       name (docs/ir.md, Suspensions), of the representation of the type it
+       is cast from where it has none yet -- a value the function captured,
+       read here -- so that a force of it is the value itself *)
+    | M.Prim ("unsafe_cast", pt, [a]) =>
+        if castsToSusp pt then
+          let val v = atom (b, cx, a)
+          in (case Ty.view pt of Ty.Arrow (from, _) => setRep (b, v, repOfTy from) | _ => ()); v end
+        else if !checkCasts then tyOfRhs (b, defAs (b, L.Prim ("any_check", [atom (b, cx, a)]), repOfRhs r), r)
+        else tyOfRhs (b, defAs (b, oper (b, cx, r), repOfRhs r), r)
+    (* and a force of what the code knows is no suspension, which such a
+       cast made: the value itself, which a register of a representation
+       holds (a suspension's is any) *)
+    | M.Prim ("thunk_force", _, [a]) =>
+        let val v = atom (b, cx, a)
+        in
+          (* not one of any, which defAny says of a global's field that
+             results return a datatype in: it holds what each constructor
+             leaves there *)
+          case IntTable.find (#reps b, v) of
+            SOME rep => if rep = L.RAny then tyOfRhs (b, defAs (b, L.Prim ("thunk_force", [v]), repOfRhs r), r) else v
+          | NONE => tyOfRhs (b, defAs (b, L.Prim ("thunk_force", [v]), repOfRhs r), r)
+        end
     | M.App (M.Global (g, _), xs) =>
         (case IntMap.find (!slotFuns, g) of
            SOME n => def (b, L.Tuple (slotParts (b, cx, g, n, xs, List.tabulate (n, fn _ => Ty.var 0), NONE)))
@@ -608,6 +585,12 @@ struct
               | SOME n => def (b, L.Tuple (List.take (vs, n))))
          | _ => tyOfRhs (b, defAs (b, oper (b, cx, r), repOfRhs r), r))
     | _ => tyOfRhs (b, defAs (b, oper (b, cx, r), repOfRhs r), r)
+
+  (* whether a cast's type, at its use, gives a suspension *)
+  and castsToSusp (pt : Ty.ty) : bool =
+    case Ty.view pt of
+      Ty.Arrow (_, res) => (case Ty.view res of Ty.Con (stamp, _, _) => stamp = #stamp Types.suspTycon | _ => false)
+    | _ => false
 
   (* its type where the operation's own says, as repOfRhs: a primitive's
      result at this use, a constructor's datatype, an exception's argument *)
@@ -677,48 +660,23 @@ struct
   and exp (b : builder, e : M.exp, cx : cx) : unit =
     case e of
       M.Let (x, scheme, r, body) =>
-        (case tagTest (x, r, body) of
-           SOME (y, tag, sp, t, f) =>
-             (case switchOf (y, [(tag, sp, t)], f) of
-                SOME (cases, (dsp, d)) =>
-                  let
-                    val v = var (b, cx, y)
-                    val ls = List.map (fn c => (c, newLabel b)) cases
-                    val ld = newLabel b
-                    fun at sp = case sp of SOME s => emit (b, L.At s) | NONE => ()
-                  in
-                    finish (b, L.Switch (v, List.map (fn ((tag, _, _), l) => (tag, l)) ls, ld));
-                    List.app (fn ((_, sp, t), l) => (start (b, l, []); at sp; exp (b, t, cx))) ls;
-                    start (b, ld, []); at dsp; exp (b, d, cx)
-                  end
-              | NONE =>
-                  let
-                    val v = var (b, cx, y)
-                    val lt = newLabel b
-                    val lf = newLabel b
-                  in
-                    finish (b, L.IfTag (v, tag, lt, lf));
-                    start (b, lt, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, t, cx);
-                    start (b, lf, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, f, cx)
-                  end)
-         | NONE =>
-             case (r, case r of M.App (M.Global (g, _), _) => IntMap.find (!sumFuns, g) | _ => NONE) of
-               (M.App (M.Global (g, _), xs), SOME stamp) =>
-                 (* its tag, and what each global holds, read at once *)
-                 let
-                   val v0 = defAs (b, L.CallK (g, List.map (fn a => atom (b, cx, a)) xs), L.RCon0)
-                   val read = case IntTable.find (!sumRead, x) of SOME n => n | NONE => 0
-                   val vs = List.tabulate (List.length (sumsOf stamp),
-                                           fn i => if i < read then defAny (b, L.Slot (List.nth (sumsOf stamp, i))) else v0)
-                 in setVirtual (b, x, Sum (v0, vs)); exp (b, body, cx) end
-             | (M.Decon (tag, t, a), _) =>
-                 (case virtualOf (b, a) of
-                    SOME (Sum (_, vs)) =>
-                      (case Rep.fields (t, tag) of
-                         NONE => exp (b, body, bindAs (cx, x, hd vs))
-                       | SOME n => (setVirtual (b, x, Parts (List.take (vs, n))); exp (b, body, cx)))
-                  | _ => letRest (b, cx, x, scheme, r, body))
-             | _ => letRest (b, cx, x, scheme, r, body))
+        (case (r, case r of M.App (M.Global (g, _), _) => IntMap.find (!sumFuns, g) | _ => NONE) of
+           (M.App (M.Global (g, _), xs), SOME stamp) =>
+             (* its tag, and what each global holds, read at once *)
+             let
+               val v0 = defAs (b, L.CallK (g, List.map (fn a => atom (b, cx, a)) xs), L.RCon0)
+               val read = case IntTable.find (!sumRead, x) of SOME n => n | NONE => 0
+               val vs = List.tabulate (List.length (sumsOf stamp),
+                                       fn i => if i < read then defAny (b, L.Slot (List.nth (sumsOf stamp, i))) else v0)
+             in setVirtual (b, x, Sum (v0, vs)); exp (b, body, cx) end
+         | (M.Decon (tag, t, a), _) =>
+             (case virtualOf (b, a) of
+                SOME (Sum (_, vs)) =>
+                  (case Rep.fields (t, tag) of
+                     NONE => exp (b, body, bindAs (cx, x, hd vs))
+                   | SOME n => (setVirtual (b, x, Parts (List.take (vs, n))); exp (b, body, cx)))
+              | _ => letRest (b, cx, x, scheme, r, body))
+         | _ => letRest (b, cx, x, scheme, r, body))
     | M.Fun (fs, body) => exp (b, body, closures (b, cx, fs))
     | M.Join (j, ps, jbody, scope) => joinOf (b, cx, j, ps, jbody, scope)
     | M.Jump (j, xs) => jumpOf (b, cx, j, xs)
@@ -727,6 +685,45 @@ struct
     | M.Raise a => let val v = atom (b, cx, a) in finish (b, L.Raise v) end
     | M.Return r => returnSum (b, cx, r)
     | M.Mark (sp, a) => (emit (b, L.At sp); #span b := SOME (#1 sp); exp (b, a, cx))
+    | M.Case (a, arms, d) => caseOf (b, cx, atom (b, cx, a), arms, d)
+
+  (* A test of a tag: a Switch where three tags or more fit a table about
+     four times their number, else a test of the first and the rest after
+     it, as from a test of the first (SWITCH, IFTAG). Where the arms are
+     every tag (no default), the last is where the others are not. *)
+  and caseOf (b, cx, v : L.var, arms : (int * M.exp) list, d : M.exp option) =
+    case (arms, d) of
+      ([], SOME e) => exp (b, e, cx)
+    | ([(_, e)], NONE) => exp (b, e, cx)
+    | ([], NONE) => bug "a case of no arm"
+    | ((tag, e) :: rest, _) =>
+        let
+          val n = List.length arms
+          val top = List.foldl (fn ((t, _), m) => Int.max (t, m)) 0 arms
+        in
+          if n >= 3 andalso top < 4 * n + 8 then
+            let
+              val (tested, default) =
+                case d of
+                  SOME e => (arms, e)
+                | NONE => (List.take (arms, n - 1), #2 (List.last arms))
+              val ls = List.map (fn arm => (arm, newLabel b)) tested
+              val ld = newLabel b
+            in
+              finish (b, L.Switch (v, List.map (fn ((tag, _), l) => (tag, l)) ls, ld));
+              List.app (fn ((_, e), l) => (start (b, l, []); exp (b, e, cx))) ls;
+              start (b, ld, []); exp (b, default, cx)
+            end
+          else
+            let
+              val lt = newLabel b
+              val lf = newLabel b
+            in
+              finish (b, L.IfTag (v, tag, lt, lf));
+              start (b, lt, []); exp (b, e, cx);
+              start (b, lf, []); caseOf (b, cx, v, rest, d)
+            end
+        end
 
   (* a return of a function that returns its datatype in globals: the
      constructor's tag, its argument in the globals *)

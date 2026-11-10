@@ -627,6 +627,24 @@ top level a list of definitions (decision D1 of the plan).
 * **Functions** take a list of parameters. One of other than one
   parameter (a worker) is only called, with an argument for each, and
   never used as a value.
+* **`Case`** tests the tag of a datatype's value: an arm for each tag it
+  tests, and a default where the value has none of theirs, or none where
+  the arms are every tag (decision D8 of
+  [plans/language/haskell98.md](plans/language/haskell98.md)). `ToMid`
+  makes one of a match's test of a variable's tag and the tests of the same
+  variable in the else after it, a tag tested again left out, since the
+  else of its first test is where the value has another; `Simplify`'s
+  equality functions make them too. In `Simplify` a `Case` of a value whose
+  tag is known -- a nullary constructor, one made in the function, or a
+  variable in an arm of a `Case` of it -- is its arm; in the default of a
+  `Case` of a variable the arms of its tags go from a `Case` of it there,
+  and a default that is a `Case` of the same variable is the rest of the
+  outer one's arms, as `Lower` once made one `Switch` of a chain of tests.
+  The budgets of the passes that copy code (`Simplify`'s inlining,
+  `Expand`'s copies) weigh a `Case` as the tests it stands for, three nodes
+  a tag (a `ConTag`, an equality and an `If`: `Mid.weight`), so that code is
+  as big to them as it was before Mid had one; `--pass-stats` counts its
+  nodes.
 
 **Positions.** A `Mark` gives the place in the source of what follows it,
 and the functions it was inlined from on the way (decision D7), innermost
@@ -668,7 +686,8 @@ type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
 'b)`), which binds its own variables. A forall is the same type as one that
 differs from it only in the names it binds (`Ty.equal`), and a
 substitution renames them where it would capture one. A variable used, as
-a field or as a `Let`'s step at a scheme of its own, at fewer types than
+a field (a tuple's component, or the argument of a constructor of one
+field) or as a `Let`'s step at a scheme of its own, at fewer types than
 its binder abstracts over is its binder at its scheme, the first variables
 given: a forall of the rest (at no types, of all; a function `Lift` takes
 out of another is given that one's variables first). So a polymorphic
@@ -704,6 +723,9 @@ function would take it apart, since a parameter's type is no forall;
   variable or a type name. Each type once, by its node.
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
+* **Cases:** the value a `Case` tests is a datatype's; each arm is a
+  constructor of it, once; and one with no default has an arm of every
+  constructor.
 * **What its types alone do not say:** constants, primitives, exceptions'
   payloads and the casts the compiler makes, as in `Lambda` (`IrRules`;
   above). An exception's copies keep their argument's type through every
@@ -715,6 +737,11 @@ function would take it apart, since a parameter's type is no forall;
   module's slots are set by the function the runtime is given, at the load
   and at each reload (`Translate`, `RuneDynamic.take`; a `dynamic_cast` of
   each slot from `unit`), which `Lift` may take out of the `Do`.
+* **Suspensions:** no cast gives what is no suspension of a suspension, and
+  where the program has a primitive of suspensions, a function `thunk_make`
+  is given is named by nothing else, and `thunk_blackhole` and
+  `thunk_self_update` are said by the own code of such functions alone
+  (*Suspensions*, below).
 * **Tags:** `ConTag` is of a datatype, never of a type with no
   constructors -- an abstract one, as a value not yet evaluated has (the
   haskell98 roadmap's D5), whose tag is a fatal on every engine.
@@ -765,7 +792,8 @@ whose arms would only do what one of them does asks it instead:
 * `Mid.fold` walks an expression, giving what it is given each step, each
   atom outside a step (an `If`'s test, a `Jump`'s arguments, a `Raise`'s
   exception), each jump and each function made in the expression, whose
-  body is the caller's to walk or not; `Mid.appRhs` and `Mid.existsRhs`
+  body is the caller's to walk or not (a `Case`'s value is an atom
+  outside a step, before its arms); `Mid.appRhs` and `Mid.existsRhs`
   give, or ask of, every step, those of the functions made there among
   them.
 
@@ -781,6 +809,58 @@ shapes it rewrites and leaves the rest as they are (`Simplify.known`,
 which what is not a line of steps and `If`s is big); or a comparison of
 two (`MidCanon.checkRenaming`), whose catch-all is the bug of two forms
 that differ.
+
+### Suspensions
+
+A lazy front end -- rhc, the Haskell 98 compiler of
+[plans/language/haskell98.md](plans/language/haskell98.md) (D3, D11, D13) -- hands Mid
+its lazy positions as suspensions, and Mid stays strict: a suspension is a value of a type of
+its own, and forcing one is one step.
+
+* **`susp T`** is a type the compiler builds in (`Types.suspTycon`), of one argument
+  and no datatype, so that `Lower` gives it no representation (`RAny`) and every engine
+  tests what a register of it holds, tier 2 too (`ms_trusts`). A program of SML has no
+  such type: one compiled with `--allow-prim` names it `T _prim "susp"`, and makes and
+  forces suspensions through the primitives alone.
+* **The primitives** (`src/isa/prims.sml`): `thunk_make : (unit -> 'a) -> 'a susp`
+  makes a suspension of a closure, `thunk_force : 'a susp -> 'a` gives its value, and a
+  suspension's code says `thunk_blackhole ()` once it has read what it captured and
+  `thunk_self_update v` with its value before it returns it:
+  `thunk_make (fn () => let val () = thunk_blackhole () val v = BODY val () = thunk_self_update v in v end)`.
+  Force is one step through every pass, never a call of a function of the library, and
+  its effects are every one, so that no pass drops it or moves it across an effect
+  (`Prims.removable`); `thunk_make`'s are an allocation alone.
+* **What a variable whose type is no `susp` holds is evaluated**: neither a suspension
+  nor what one has become. That holds by types, but across a cast (`unsafe_cast`): a
+  cast into a suspension is no instruction (`Lower` gives its value another name, and
+  the representation of the type it is cast from where it has none, as a captured
+  value read in a suspension's code has not), a force of what `Lower` knows is no
+  suspension -- a register of a representation, which such a cast left -- is the value
+  itself, and a cast of a suspension to what is none, which is a force forgotten, is
+  refused (`IrRules.leavesSusp`). A value cast where `Lower` does not see the force, one
+  a closure captures, is forced as it is: `FORCE` jumps where it is evaluated, and
+  `RegVerify` takes its way on for a test that the value is a pointer, which `ENTER`
+  reads. `rune --check-casts` makes each other cast `any_check`, which stops the
+  program where the value is a suspension; without it the code is what it is with none.
+* **The rules `MidLint` adds** where a program has a primitive of suspensions: a
+  function `thunk_make` is given is named by nothing else, so that no copy of it, and
+  no call of it, runs a suspension's code twice; and `thunk_blackhole` and
+  `thunk_self_update` are said only by the own code of a function that nothing but
+  `thunk_make` names (the roadmap's D57, item 2). A front end applies the primitives
+  where it makes a suspension. A program of SML that binds one to a name (`val update =
+  _prim "thunk_self_update" : ...`) has a function of its own that says it, which an
+  application in the program makes the primitive again (`Translate`), and which is
+  refused where something names it, a structure's record that holds it for one.
+* **Below Mid**: `Low.hoistEnv` reads each value a suspension's code captured once, at
+  its entry, where it is still unevaluated: after `BLACKHOLE` the collector follows none
+  of its fields. Each target makes a force `FORCE`, and where the value is an
+  unevaluated suspension `ENTER` with unit; the code's two steps are `BLACKHOLE` and
+  `UPDATE` ([bytecode.md](bytecode.md)). A suspension is the closure `thunk_make` was
+  given, made a `K_THUNK` in place (or a copy of one that captures nothing, which may
+  be shared); `UPDATE` makes it an indirection to its value (`K_IND`), which a force
+  reads and the collector shortcuts. A suspension forced while its code runs is a loop,
+  a fatal error (`<<loop>>`), and so is one that code left by a raise: Haskell 98's
+  errors end the program (the roadmap's D12).
 
 ### Mid as text
 
@@ -808,6 +888,8 @@ program written by hand. The grammar is at the head of
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   FRAME ... EXP)`, where a frame is `(in "NAME" "FILE" START STOP)`, or `(in
   "NAME")` for one called in tail position; comments are SML's.
+* A `Case` is `(case ATOM (TAG EXP) ... (else EXP))`, the default left
+  out where it has none.
 * A function's label (*What a front end gives Mid*, below) is written after
   its result's type, `(fn g1 ((v1 : int)) : int "fact" ...)`, so that a
   function read back keeps its name in the function table and its traces,
@@ -1066,8 +1148,9 @@ function is blocks with parameters in SSA form (decision D2), and what Mid
 leaves implicit is explicit.
 
 * **Closures:** `Lower` converts them as it goes. A function captures the
-  variables free in the code it makes of it -- not those of a branch a
-  `Switch` leaves out (*Blocks*) -- in the order of their stamps, less
+  variables free in the code it makes of it -- not those of a tag tested
+  again in a match, which no `Case` has an arm of (*Mid*) -- in the order
+  of their stamps, less
   itself, which it reads as `Self`; captured values are read with `Env i`.
   The functions of a group capture each other, and those not made yet are
   set after (`SetEnv`): flat closures.
@@ -1087,10 +1170,12 @@ leaves implicit is explicit.
   function that captures it is given it whole, made where its closure is,
   and takes it apart.
 * **Blocks:** a join point of Mid is a block whose parameters are the join
-  point's; an `If` two blocks; a match on a constructor's tag one `IfTag`,
-  and three or more of the same value, each in the else of the one before,
-  one `Switch` -- where the highest tag is no more than about four times
-  their number.
+  point's; an `If` two blocks; a `Case` an `IfTag` for each arm, each in
+  the else of the one before, but that three arms or more -- from the
+  first, or from one after it -- are one `Switch` where the highest of
+  their tags is no more than about four times their number. A `Case` with
+  no default is where the value has its last arm's tag, where the others
+  are not.
   Every edge goes forward in the order of the blocks, but one: a function
   that calls itself in tail position, where no handler is pushed, is a
   loop -- its entry jumps to a head block whose parameters are the

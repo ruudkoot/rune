@@ -1,6 +1,6 @@
 # Index: D
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) **d** [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `D` (con): [HS_AST](../sig/HS_AST.md#con-d)
 - `DARROW` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-darrow)
@@ -17,6 +17,8 @@
 - `DEFAULT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-default)
 - `default` (type): [HS_LINT](../sig/HS_LINT.md#type-default)
 - `default` (val): [HS_FIXITY](../sig/HS_FIXITY.md#val-default)
+- `Defaulted` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-defaulted)
+- `defaultKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-defaultkind)
 - `defaults` (val): [HS_LEXER](../sig/HS_LEXER.md#val-defaults), [HS_PARSER](../sig/HS_PARSER.md#val-defaults)
 - `defs` (val): [HS_MODULES](../sig/HS_MODULES.md#val-defs)
 - `Deriv` (con): [HS_AST](../sig/HS_AST.md#con-deriv)
@@ -26,13 +28,17 @@
 - `describe` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-describe)
 - `DFixity` (con): [HS_AST](../sig/HS_AST.md#con-dfixity)
 - `DFun` (con): [HS_AST](../sig/HS_AST.md#con-dfun)
+- `dict` (type): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#type-dict)
 - `Digit` (con): [HS_CHAR](../sig/HS_CHAR.md#con-digit)
+- `DInst` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-dinst)
 - `DInstance` (con): [HS_AST](../sig/HS_AST.md#con-dinstance)
 - `DNewtype` (con): [HS_AST](../sig/HS_AST.md#con-dnewtype)
 - `DO` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-do)
 - `DOTDOT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-dotdot)
+- `DParam` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-dparam)
 - `DPat` (con): [HS_AST](../sig/HS_AST.md#con-dpat)
 - `DSig` (con): [HS_AST](../sig/HS_AST.md#con-dsig)
+- `DSuper` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-dsuper)
 - `DType` (con): [HS_AST](../sig/HS_AST.md#con-dtype)
 - `dump` (val): [HS_LINT](../sig/HS_LINT.md#val-dump)
 

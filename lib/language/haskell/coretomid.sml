@@ -9,8 +9,6 @@ structure CoreToMid : CORE_TO_MID =
 struct
   open Core
 
-  datatype form = FormC | Runtime
-
   datatype fault = ThunkInSlot | ForceBehindCast
 
   exception Unsupported of string
@@ -47,7 +45,7 @@ struct
   (* what is done with a value: the Core type it is wanted at, whether the
      continuation may be copied into each branch, and the Mid it makes of an
      atom of that type *)
-  type cont = {dup : bool, want : ty, k : string -> string}
+  type cont = {dup : bool, tail : bool, want : ty, k : string -> string}
 
   fun member (x, xs) = List.exists (fn y => y = x) xs
   fun concat xs = String.concat xs
@@ -179,6 +177,18 @@ struct
      "    (handle vhX (return (prim file_read_vec vhH vhN : (int * int) -> string))",
      "      (let (vhI : (string * int * string * int)) (tuple \"read failed\" 8 \"\" vhH)",
      "      (let (vhE : exn) (mkexn grtIOError vhI) (raise vhE)))))",
+     "  (fn grtEndText ((vetE : exn)) : string \"end_text\"",
+     "    (let (vetM : string) (app grtExnMessage vetE)",
+     "    (let (vetK : int) (app grtExnKind vetE)",
+     "    (let (vetI : bool) (prim poly_eq vetK 1 : (int * int) -> bool)",
+     "    (if vetI",
+     "      (let (vetC : int) (app grtIoCode vetE)",
+     "      (let (vetU : bool) (prim poly_eq vetC 0 : (int * int) -> bool)",
+     "      (if vetU",
+     "        (let (vetA : string) (prim string_concat \"user error (\" vetM : (string * string) -> string)",
+     "        (return (prim string_concat vetA \")\" : (string * string) -> string)))",
+     "        (return vetM))))",
+     "      (return vetM))))))",
      "  (fn grtIoCode ((vicE : exn)) : int \"exn_io_code\"",
      "    (let (vicK : int) (app grtExnKind vicE)",
      "    (let (vicB : bool) (prim poly_eq vicK 1 : (int * int) -> bool)",
@@ -215,55 +225,9 @@ struct
      "      (return (tuple vcI vcF))))))))))",
      "  (fn grtOpen ((voP : string) (voM : int)) : int \"open\"",
      "    (let (voO : int option) (prim file_open voP voM : (string * int) -> int option)",
-     "    (let (voT : int) (tag voO)",
-     "    (let (voS : bool) (prim poly_eq voT 1 : (int * int) -> bool)",
-     "    (if voS (return (decon 1 voO : int option)) (return ~1)))))))\n"]
+     "    (case voO (0 (return ~1)) (1 (return (decon 1 voO : int option)))))))\n"]
 
-  (* what the form of suspensions declares: nothing for form C, whose susp
-     is Mid's; E1's runtime its abstract susp and the states of a cell *)
-  fun runtimeDecls FormC = []
-    | runtimeDecls Runtime =
-        ["(abstract susp 1)", "(datatype grtThunk ('a) (0 \"Delayed\" : unit -> 'a) (1 \"Done\" : 'a) (2 \"Hole\"))"]
-
-  (* E1's runtime (tests/ir/hs-rts.mid): a suspension a cell of a state,
-     forced by a function that blackholes it, runs its code under a handler
-     that puts the code back where it raises, and updates it *)
-  fun runtimeDefs FormC = ""
-    | runtimeDefs Runtime = String.concatWith "\n"
-        ["(funs",
-         "  (fn grtForce ['a] ((vfS : 'a susp)) : 'a \"force\"",
-         "    (let (vfR : 'a grtThunk ref) (prim unsafe_cast vfS : 'a susp -> 'a grtThunk ref)",
-         "    (let (vfV : 'a grtThunk) (prim ref_get vfR : 'a grtThunk ref -> 'a grtThunk)",
-         "    (let (vfT : int) (tag vfV)",
-         "    (let (vfD : bool) (prim poly_eq vfT 1 : (int * int) -> bool)",
-         "    (if vfD",
-         "      (return (decon 1 vfV : 'a grtThunk))",
-         "      (let (vfE : bool) (prim poly_eq vfT 0 : (int * int) -> bool)",
-         "      (if vfE",
-         "        (let (vfC : unit -> 'a) (decon 0 vfV : 'a grtThunk)",
-         "        (let (vfU1 : unit) (prim ref_set vfR (con0 2 : 'a grtThunk) : ('a grtThunk ref * 'a grtThunk) -> unit)",
-         "        (join jfDone ((vfRes : 'a))",
-         "          (let (vfDn : 'a grtThunk) (con 1 vfRes : 'a grtThunk)",
-         "          (let (vfU2 : unit) (prim ref_set vfR vfDn : ('a grtThunk ref * 'a grtThunk) -> unit)",
-         "          (return vfRes)))",
-         "        (handle vfX",
-         "          (let (vfR2 : 'a) (app vfC ())",
-         "          (jump jfDone vfR2))",
-         "          (let (vfU3 : unit) (prim ref_set vfR vfV : ('a grtThunk ref * 'a grtThunk) -> unit)",
-         "          (raise vfX))))))",
-         "        (let (vfLoop : exn) (mkexn grtNonTermination ())",
-         "        (raise vfLoop))))))))))",
-         "  (fn grtDelay ['a] ((vdF : unit -> 'a)) : 'a susp \"delay\"",
-         "    (let (vdS : 'a grtThunk) (con 0 vdF : 'a grtThunk)",
-         "    (let (vdR : 'a grtThunk ref) (prim ref_new vdS : 'a grtThunk -> 'a grtThunk ref)",
-         "    (return (prim unsafe_cast vdR : 'a grtThunk ref -> 'a susp)))))",
-         "  (fn grtDone ['a] ((vnV : 'a)) : 'a susp \"done\"",
-         "    (let (vnS : 'a grtThunk) (con 1 vnV : 'a grtThunk)",
-         "    (let (vnR : 'a grtThunk ref) (prim ref_new vnS : 'a grtThunk -> 'a grtThunk ref)",
-         "    (return (prim unsafe_cast vnR : 'a grtThunk ref -> 'a susp)))))",
-         ")\n"]
-
-  fun program ({form : form, fault : fault option}, prog : program) : string =
+  fun program ({fault : fault option}, prog : program) : string =
     let
       (* ---- The declarations ---- *)
       val decls = builtinData @ prog
@@ -443,32 +407,19 @@ struct
         | TEval (TForall _) => let val (ms, env', body) = forallOf (env, t) in "[" ^ ms ^ "] " ^ valTy env' body end
         | _ => slotTy env t
 
-      (* ---- Suspensions, by the form ---- *)
+      (* ---- Suspensions, form C's (M9) ---- *)
 
       (* make the suspension of the code fun (of type unit -> V) *)
-      fun makeSusp (V, code) =
-        case form of
-          FormC => "(prim thunk_make " ^ code ^ " : (unit -> " ^ V ^ ") -> (" ^ V ^ " susp))"
-        | Runtime => "(app grtDelay[" ^ V ^ "] " ^ code ^ ")"
+      fun makeSusp (V, code) = "(prim thunk_make " ^ code ^ " : (unit -> " ^ V ^ ") -> (" ^ V ^ " susp))"
       fun forceSusp (V, s) =
-        case (fault, form) of
-          (SOME ThunkInSlot, _) => s
-        | (SOME ForceBehindCast, _) => "(prim unsafe_cast " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
-        | (NONE, FormC) => "(prim thunk_force " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
-        | (NONE, Runtime) => "(app grtForce[" ^ V ^ "] " ^ s ^ ")"
-      fun valueToSusp (V, a) =
-        case form of
-          FormC => "(prim unsafe_cast " ^ a ^ " : " ^ V ^ " -> (" ^ V ^ " susp))"
-        | Runtime => "(app grtDone[" ^ V ^ "] " ^ a ^ ")"
+        case fault of
+          SOME ThunkInSlot => s
+        | SOME ForceBehindCast => "(prim unsafe_cast " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
+        | NONE => "(prim thunk_force " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
+      fun valueToSusp (V, a) = "(prim unsafe_cast " ^ a ^ " : " ^ V ^ " -> (" ^ V ^ " susp))"
       (* the code of a suspension: what it does first, and with its value *)
-      fun thunkEntry body =
-        case form of
-          FormC => "(let (" ^ freshVar () ^ " : unit) (prim thunk_blackhole () : unit -> unit) " ^ body ^ ")"
-        | Runtime => body
-      fun thunkExit (V, a) =
-        case form of
-          FormC => "(let (" ^ freshVar () ^ " : unit) (prim thunk_self_update " ^ a ^ " : " ^ V ^ " -> unit) (return " ^ a ^ "))"
-        | Runtime => "(return " ^ a ^ ")"
+      fun thunkEntry body = "(let (" ^ freshVar () ^ " : unit) (prim thunk_blackhole () : unit -> unit) " ^ body ^ ")"
+      fun thunkExit (V, a) = "(let (" ^ freshVar () ^ " : unit) (prim thunk_self_update " ^ a ^ " : " ^ V ^ " -> unit) (return " ^ a ^ "))"
 
       (* ---- Mid helpers ---- *)
 
@@ -658,7 +609,10 @@ struct
 
       (* ---- Continuations ---- *)
 
-      fun returning t : cont = {dup = true, want = stripEval t, k = fn a => "(return " ^ a ^ ")"}
+      (* a continuation that returns what it is given, as it is (tail): a
+         call given to it is a tail call, `(return (app ...))`, which Mid
+         makes a tail call at every level, -O0 among them *)
+      fun returning t : cont = {dup = true, tail = true, want = stripEval t, k = fn a => "(return " ^ a ^ ")"}
 
       (* a value of type from, where the continuation wants its type: an
          evaluated component of an unboxed tuple cast into its lazy slot *)
@@ -709,7 +663,7 @@ struct
             val v = freshVar ()
           in
             "(join " ^ j ^ " ((" ^ v ^ " : " ^ valTy env (#want c) ^ ")) " ^ #k c v ^ " "
-            ^ f {dup = true, want = #want c, k = fn a => "(jump " ^ j ^ " " ^ a ^ ")"} ^ ")"
+            ^ f {dup = true, tail = false, want = #want c, k = fn a => "(jump " ^ j ^ " " ^ a ^ ")"} ^ ")"
           end
 
       (* ---- Expressions ---- *)
@@ -747,12 +701,12 @@ struct
               case (boxOf from, boxOf t) of
                 (NONE, SOME _) =>
                   (* into a box: the value, boxed *)
-                  exp (env, e, {dup = false, want = from,
+                  exp (env, e, {dup = false, tail = false, want = from,
                                 k = fn v => letv (valTy env t, "(con 0 " ^ v ^ " : " ^ valTy env t ^ ")", fn b => deliver (env, c, b, t))})
               | (SOME _, NONE) =>
-                  exp (env, e, {dup = false, want = from,
+                  exp (env, e, {dup = false, tail = false, want = from,
                                 k = fn v => letv (valTy env t, "(decon 0 " ^ v ^ " : " ^ valTy env from ^ ")", fn u => deliver (env, c, u, t))})
-              | _ => exp (env, e, {dup = #dup c, want = from, k = #k c})
+              | _ => exp (env, e, {dup = #dup c, tail = #tail c, want = from, k = #k c})
             end
 
       (* a function applied: its type arguments to its binding, its value
@@ -767,8 +721,11 @@ struct
           fun applyArgs (fv, fty, [], c) = deliver (env, c, fv, fty)
             | applyArgs (fv, fty, a :: rest, c) =
                 (case stripEval fty of
-                   TFun (p, r) => atomSlot (env, a, p, fn av => letv (valTy env r, "(app " ^ fv ^ " " ^ av ^ ")",
-                                                                       fn rv => applyArgs (rv, r, rest, c)))
+                   TFun (p, r) =>
+                     atomSlot (env, a, p, fn av =>
+                       if null rest andalso #tail c andalso valTy env r = valTy env (#want c)
+                       then "(return (app " ^ fv ^ " " ^ av ^ "))"
+                       else letv (valTy env r, "(app " ^ fv ^ " " ^ av ^ ")", fn rv => applyArgs (rv, r, rest, c)))
                  | TForall _ => unlowered "a function polymorphic in a type after a value argument"
                  | t => raise Fail ("CoreToMid: " ^ CoreText.showTy t ^ " applied"))
         in
@@ -794,9 +751,17 @@ struct
                 else if not (null tys) then unlowered ("the type arguments of " ^ x ^ ", which Mid binds at no type")
                 else atomValue (env, Var x, fn (fv, fty) => applyArgs (fv, fty, vals, c))
               end
+          | Lam (TyBinder _ :: _, _) =>
+              (* a type lambda applied where it is written, as M15 wraps a
+                 primitive: bound to a name, as a let binds it, and that
+                 name applied *)
+              if null tys then raise Fail "CoreToMid: a type lambda applied to no type"
+              else
+                let val x = "lambda " ^ freshVar ()
+                in polyBind (env, x, typeOf env f, f, fn env' => app (env', Atom (Var x), args, c)) end
           | _ =>
               if not (null tys) then unlowered "type arguments to an expression"
-              else exp (env, f, {dup = false, want = stripEval (typeOf env f),
+              else exp (env, f, {dup = false, tail = false, want = stripEval (typeOf env f),
                                  k = fn fv => applyArgs (fv, stripEval (typeOf env f), vals, c)})
         end
 
@@ -870,7 +835,7 @@ struct
         let
           val code = freshVar ()
           val V = valTy env t
-          val body = thunkEntry (exp (env, rhs, {dup = true, want = stripEval t, k = fn a => thunkExit (V, a)}))
+          val body = thunkEntry (exp (env, rhs, {dup = true, tail = false, want = stripEval t, k = fn a => thunkExit (V, a)}))
         in ("(fn " ^ code ^ tyvars ^ " ((" ^ freshVar () ^ " : unit)) : " ^ V ^ " " ^ quote label ^ " " ^ body ^ ")", code) end
 
       (* a binding of a polymorphic type: a polymorphic function, or a
@@ -991,7 +956,7 @@ struct
           val st = stripEval (typeOf env scrut)
           val binderTy = if isUnlifted st then st else TEval st
         in
-          exp (env, scrut, {dup = false, want = st,
+          exp (env, scrut, {dup = false, tail = false, want = st,
                             k = fn v => dispatch (bindVal (env, b, slotBinding (binderTy, v)), v, st, alts, c)})
         end
 
@@ -1058,26 +1023,31 @@ struct
                            end
                          val conAlts = List.mapPartial (fn AltCon (k, xs, rhs) => SOME (k, xs, rhs) | _ => NONE) alts
                          val exhaustive = length conAlts = length cs
+                         (* the tag of a constructor of no field, written as
+                            Mid's constant: its arm alone, since Lower, at
+                            -O0, would take the constant apart in the others
+                            too *)
+                         val known = if String.isPrefix "(con0 " v then Int.fromString (String.extract (v, 6, NONE)) else NONE
                        in
-                         case (cs, conAlts) of
-                           ([_], [(k, xs, rhs)]) => conBranch (env, k, xs, rhs, c)
-                         | (_, []) => (case default () of SOME rhs => exp (env, rhs, c) | NONE => raise Fail "CoreToMid: no alternative")
+                         case (cs, conAlts, known) of
+                           ([_], [(k, xs, rhs)], _) => conBranch (env, k, xs, rhs, c)
+                         | (_, [], _) => (case default () of SOME rhs => exp (env, rhs, c) | NONE => raise Fail "CoreToMid: no alternative")
+                         | (_, _, SOME t) =>
+                             (case List.find (fn (k, _, _) => #tag (conInfo k) = t) conAlts of
+                                SOME (k, xs, rhs) => conBranch (env, k, xs, rhs, c)
+                              | NONE => (case default () of SOME rhs => exp (env, rhs, c) | NONE => raiseBuiltin 0))
                          | _ =>
-                             letv ("int", "(tag " ^ v ^ ")", fn tg =>
-                               branching (env, c, fn c =>
-                                 let
-                                   fun chain [] =
-                                         (case default () of
-                                            SOME rhs => exp (env, rhs, c)
-                                          | NONE => raiseBuiltin 0)
-                                     | chain ((k, xs, rhs) :: rest) =
-                                         if null rest andalso exhaustive then
-                                           letv ("bool", "(prim poly_eq " ^ tg ^ " " ^ Int.toString (#tag (conInfo k)) ^ " : (int * int) -> bool)",
-                                                 fn bv => "(if " ^ bv ^ " " ^ conBranch (env, k, xs, rhs, c) ^ " " ^ raiseBuiltin 0 ^ ")")
-                                         else
-                                           letv ("bool", "(prim poly_eq " ^ tg ^ " " ^ Int.toString (#tag (conInfo k)) ^ " : (int * int) -> bool)",
-                                                 fn bv => "(if " ^ bv ^ " " ^ conBranch (env, k, xs, rhs, c) ^ " " ^ chain rest ^ ")")
-                                 in chain conAlts end))
+                             (* Mid's case on the tag (M29), whose switch Lower
+                                makes: an arm a constructor, and the default
+                                where the arms are not every constructor *)
+                             branching (env, c, fn c =>
+                               let
+                                 val arms = List.map (fn (k, xs, rhs) => "(" ^ Int.toString (#tag (conInfo k)) ^ " "
+                                                                          ^ conBranch (env, k, xs, rhs, c) ^ ")") conAlts
+                                 val otherwise =
+                                   if exhaustive then []
+                                   else ["(else " ^ (case default () of SOME rhs => exp (env, rhs, c) | NONE => raiseBuiltin 0) ^ ")"]
+                               in "(case " ^ v ^ " " ^ String.concatWith " " (arms @ otherwise) ^ ")" end)
                        end
                    | _ =>
                        (case (tc, List.filter (fn AltLit _ => true | _ => false) alts) of
@@ -1117,9 +1087,12 @@ struct
         let
           val {ty = pty, ...} = case CorePrim.find p of SOME x => x | NONE => raise Fail ("CoreToMid: no primitive " ^ p)
           val inst = List.foldl (fn (t, TForall (a, _, b)) => substTy ([(a, t)], b) | (_, t) => t) pty tys
-          fun params (TFun (q, r)) = let val (qs, res) = params r in (q :: qs, res) end
-            | params t = ([], t)
-          val (ps, res) = params inst
+          (* the parameters a primitive is given, as many as its atoms, and
+             what it gives: a result of a function type, as `raise` at one,
+             is no more parameters *)
+          fun params (TFun (q, r), n) = if n = 0 then ([], TFun (q, r)) else let val (qs, res) = params (r, n - 1) in (q :: qs, res) end
+            | params (t, _) = ([], t)
+          val (ps, res) = params (inst, length atoms)
           fun out (rhsTy, rhs) = letv (rhsTy, rhs, fn r => deliver (env, c, r, res))
           (* a primitive of Mid of the arguments Core keeps, the state token's dropped *)
           fun kept xs = ListPair.foldr (fn (x, q, acc) => if isWorld q then acc else x :: acc) [] (xs, ps)
@@ -1417,7 +1390,7 @@ struct
                 atomValue (genv, Var "main", fn (m, _) => letv (R, "(app " ^ m ^ " ())", fn _ => "(return ())"))
               val handler =
                 letv ("string", "(app grtExnName " ^ x ^ ")", fn n =>
-                  letv ("string", "(app grtExnMessage " ^ x ^ ")", fn msg =>
+                  letv ("string", "(app grtEndText " ^ x ^ ")", fn msg =>
                     letv ("string", "(prim string_concat \"rhc: bottom: \" " ^ n ^ " : (string * string) -> string)", fn a =>
                       letv ("string", "(prim string_concat " ^ a ^ " \": \" : (string * string) -> string)", fn b =>
                         letv ("string", "(prim string_concat " ^ b ^ " " ^ msg ^ " : (string * string) -> string)", fn d =>
@@ -1426,7 +1399,7 @@ struct
                               letv ("unit", "(prim exit 1 : int -> unit)", fn _ => "(return ())"))))))))
             in "(do () (handle " ^ x ^ " " ^ run ^ " " ^ handler ^ "))\n" end
     in
-      concat (List.map (fn d => d ^ "\n") (runtimeDecls form) @ datatypes @ [prelude, runtimeDefs form]
+      concat (datatypes @ [prelude]
               @ List.mapPartial (fn {name, midText, ...} : CorePrimFamily.family =>
                                    if member (name, !familiesUsed) then SOME midText else NONE)
                                 CorePrim.families

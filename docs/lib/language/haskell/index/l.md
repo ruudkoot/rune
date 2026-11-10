@@ -1,6 +1,6 @@
 # Index: L
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) **l** [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) **l** [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `Lam` (con): [CORE](../sig/CORE.md#con-lam)
 - `lamTy` (val): [CORE](../sig/CORE.md#val-lamty)
@@ -18,9 +18,12 @@
 - `LetRec` (con): [CORE](../sig/CORE.md#con-letrec)
 - `LFloat` (con): [CORE](../sig/CORE.md#con-lfloat), [HS_AST](../sig/HS_AST.md#con-lfloat)
 - `LineComment` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-linecomment)
+- `Link` (con): [HS_TYPES](../sig/HS_TYPES.md#con-link)
 - `link` (val): [CORE_RUNTIME](../sig/CORE_RUNTIME.md#val-link)
 - `LInt` (con): [CORE](../sig/CORE.md#con-lint), [HS_AST](../sig/HS_AST.md#con-lint)
 - `LInteger` (con): [CORE](../sig/CORE.md#con-linteger)
+- `list` (val): [HS_TYPES](../sig/HS_TYPES.md#val-list)
+- `listCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-listcon)
 - `listItems` (val): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-listitems)
 - `Lit` (con): [CORE](../sig/CORE.md#con-lit), [HS_AST](../sig/HS_AST.md#con-lit)
 - `lit` (type): [CORE](../sig/CORE.md#type-lit), [HS_AST](../sig/HS_AST.md#type-lit)

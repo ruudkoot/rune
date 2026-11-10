@@ -2186,12 +2186,12 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/storechecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
-               tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/hscore.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
+               tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/thunks.sml tests/runner/tools.sml tests/runner/hscore.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
                tests/runner/hssyntax.sml tests/runner/hsnames.sml tests/runner/hslibrary.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
                tests/runner/hsmeta.sml tests/runner/hsgen.sml tests/runner/hsreduce.sml tests/runner/hsinterp.sml tests/runner/hsperf.sml tests/runner/hslint.sml \
-               tests/runner/hssource.sml tests/runner/hscorpus.sml tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hschecks.sml \
+               tests/runner/hssource.sml tests/runner/hscorpus.sml tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hschecks.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)

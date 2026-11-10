@@ -89,6 +89,7 @@ struct
         | Jump (j, args) => let val j' = stamp j in Jump (j', atoms args) end
         | If (a, t, f) => let val a' = atom a val t' = exp t in If (a', t', exp f) end
         | Handle (b, x, h) => let val b' = exp b val x' = stamp x in Handle (b', x', exp h) end
+        | Case (a, arms, d) => let val a' = atom a val (arms', d') = mapCase exp (arms, d) in Case (a', arms', d') end
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (pos, b) => Mark (pos, exp b)
@@ -323,6 +324,13 @@ struct
         | (Raise a, Raise a') => atom (a, a')
         | (Return r, Return r') => rhs (r, r')
         | (Mark (pos, b), Mark (pos', b')) => (same (pos, pos') "a position changed"; exp (b, b'))
+        | (Case (a, arms, d), Case (a', arms', d')) =>
+            (atom (a, a');
+             lists (fn ((t, e), (t', e')) => (same (t, t') "a case's tag changed"; exp (e, e'))) (arms, arms');
+             case (d, d') of
+               (SOME e, SOME e') => exp (e, e')
+             | (NONE, NONE) => ()
+             | _ => bug "a case's default came or went")
         | _ => bug "an expression of another kind"
       fun def (d, d') =
         case (d, d') of

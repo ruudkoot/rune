@@ -1,6 +1,6 @@
 # Index: E
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) **e** [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `E` (con): [HS_AST](../sig/HS_AST.md#con-e)
 - `EA` (con): [HS_AST](../sig/HS_AST.md#con-ea)
@@ -17,7 +17,7 @@
 - `EList` (con): [HS_AST](../sig/HS_AST.md#con-elist)
 - `ELit` (con): [HS_AST](../sig/HS_AST.md#con-elit)
 - `ELSE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-else)
-- `empty` (val): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-empty)
+- `empty` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-empty), [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-empty), [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-empty)
 - `ENeg` (con): [HS_AST](../sig/HS_AST.md#con-eneg)
 - `Ent` (con): [HS_AST](../sig/HS_AST.md#con-ent)
 - `entity` (type): [HS_AST](../sig/HS_AST.md#type-entity), [HS_MODULES](../sig/HS_MODULES.md#type-entity)
@@ -25,6 +25,7 @@
 - `EntModule` (con): [HS_AST](../sig/HS_AST.md#con-entmodule)
 - `EntType` (con): [HS_AST](../sig/HS_AST.md#con-enttype)
 - `EntVar` (con): [HS_AST](../sig/HS_AST.md#con-entvar)
+- `env` (type): [HS_CLASSES](../sig/HS_CLASSES.md#type-env), [HS_INFER](../sig/HS_INFER.md#type-env), [HS_KINDS](../sig/HS_KINDS.md#type-env)
 - `EO` (con): [HS_AST](../sig/HS_AST.md#con-eo)
 - `EOF` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-eof)
 - `EParen` (con): [HS_AST](../sig/HS_AST.md#con-eparen)

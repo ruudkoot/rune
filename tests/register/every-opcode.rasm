@@ -121,6 +121,34 @@ handler2:
   RESULT 4
   CALLK &show 1 4
   RESULT 8
+  # suspensions: PRIM thunk_make of a closure of susp over 30, FORCE, ENTER,
+  # and in susp's code BLACKHOLE and UPDATE: 34 when it runs, 34 again from
+  # the indirection it becomes, and 5, which is no suspension
+  INT 1 30
+  CLOSURE 2 &susp 1 1
+  PRIM thunk_make 3 2
+  FORCE 4 3 @f1
+  UNIT 5
+  ENTER 3 5
+  RESULT 4
+f1:
+  CALLK &show 1 4
+  RESULT 8
+  FORCE 4 3 @f2
+  UNIT 5
+  ENTER 3 5
+  RESULT 4
+f2:
+  CALLK &show 1 4
+  RESULT 8
+  INT 6 5
+  FORCE 4 6 @f3
+  UNIT 5
+  ENTER 6 5
+  RESULT 4
+f3:
+  CALLK &show 1 4
+  RESULT 8
   # PRIMPUSH and RESULT with a primitive that answers and saves nothing,
   # then TAILCALLK into finish, which HALTs
   UNIT 1
@@ -176,6 +204,16 @@ function twiddle 5
 yes:
   ENV 4 0
   RET 4
+
+# susp: a suspension's code, which reads what it captured, goes under
+# evaluation, and becomes its value
+function susp 4
+  ENV 1 0
+  BLACKHOLE
+  INT 2 4
+  PRIM int_add 3 1 2
+  UPDATE 3
+  RET 3
 
 # finish: prints done and stops
 function finish 3

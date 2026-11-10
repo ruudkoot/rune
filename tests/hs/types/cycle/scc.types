@@ -1,0 +1,8 @@
+# cycle under --cycle-default=scc
+TYPE	A	isEven	Num a => a -> Bool
+TYPE	A	sumT	T -> Int
+TYPE	A	sumU	U -> Int
+TYPE	All	check	(Bool, Int)
+TYPE	B	<+>	Int -> Int -> Int
+TYPE	B	isOdd	Num a => a -> Bool
+INSTANCE	B	Shape U	written

@@ -1,0 +1,13 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A case on a constructor of no field, which Core to Mid writes as Mid's
+; constant: the arm of its tag alone, or the default where no arm has it
+; (tests/hs/lang's pat.m.as.fail, x@(Just _) against Nothing, which Lower at
+; -O0 refused after Mid's case: it took the constant apart in Just's arm).
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (n (Maybe Int) (con Nothing @Int))
+    (let (r Int (case (con Nothing @Int) m ((Just y) (case y z (_ z))) (_ 2)))
+    (case (printInt r w) o
+      ((utuple w1 _)
+        (let (s Int (case n m ((Just y) y) ((Nothing) 3)))
+        (printInt s w1))))))))

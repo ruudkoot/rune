@@ -10,8 +10,13 @@ CORE_TEXT	signature			required	declared	lib/language/haskell/coretext_sig.sml
 CORE_TO_MID	signature			required	declared	lib/language/haskell/coretomid_sig.sml
 HS_AST	signature			required	declared	lib/language/haskell/ast_sig.sml
 HS_CHAR	signature			required	declared	lib/language/haskell/char_sig.sml
+HS_CLASSES	signature			required	declared	lib/language/haskell/classes_sig.sml
+HS_DERIVE	signature			required	declared	lib/language/haskell/derive_sig.sml
 HS_DUMP	signature			required	declared	lib/language/haskell/dump_sig.sml
+HS_EVIDENCE	signature			required	declared	lib/language/haskell/evidence_sig.sml
 HS_FIXITY	signature			required	declared	lib/language/haskell/fixity_sig.sml
+HS_INFER	signature			required	declared	lib/language/haskell/infer_sig.sml
+HS_KINDS	signature			required	declared	lib/language/haskell/kinds_sig.sml
 HS_LAYOUT	signature			required	declared	lib/language/haskell/layout_sig.sml
 HS_LEXER	signature			required	declared	lib/language/haskell/lexer_sig.sml
 HS_LINT	signature			required	declared	lib/language/haskell/hslint_sig.sml
@@ -20,9 +25,11 @@ HS_MODULES	signature			required	declared	lib/language/haskell/modules_sig.sml
 HS_PARSER	signature			required	declared	lib/language/haskell/parser_sig.sml
 HS_PRINT	signature			required	declared	lib/language/haskell/print_sig.sml
 HS_RENAME	signature			required	declared	lib/language/haskell/rename_sig.sml
+HS_SCC	signature			required	declared	lib/language/haskell/scc_sig.sml
 HS_SOURCE	signature			required	declared	lib/language/haskell/source_sig.sml
 HS_STRING_MAP	signature			required	declared	lib/language/haskell/strmap_sig.sml
 HS_TOKEN	signature			required	declared	lib/language/haskell/token_sig.sml
+HS_TYPES	signature			required	declared	lib/language/haskell/types_sig.sml
 Core	structure	CORE		required	ascribed	lib/language/haskell/core.sml
 CoreGen	structure	CORE_GEN		required	ascribed	lib/language/haskell/coregen.sml
 CoreInterp	structure	CORE_INTERP		required	ascribed	lib/language/haskell/coreinterp.sml
@@ -34,8 +41,13 @@ CoreText	structure	CORE_TEXT		required	ascribed	lib/language/haskell/coretext.sm
 CoreToMid	structure	CORE_TO_MID		required	ascribed	lib/language/haskell/coretomid.sml
 HsAst	structure	HS_AST		required	claimed	lib/language/haskell/ast.sml
 HsChar	structure	HS_CHAR		required	claimed	lib/language/haskell/char.sml
+HsClasses	structure	HS_CLASSES		required	claimed	lib/language/haskell/classes.sml
+HsDerive	structure	HS_DERIVE		required	claimed	lib/language/haskell/derive.sml
 HsDump	structure	HS_DUMP		required	claimed	lib/language/haskell/dump.sml
+HsEvidence	structure	HS_EVIDENCE		required	claimed	lib/language/haskell/evidence.sml
 HsFixity	structure	HS_FIXITY		required	claimed	lib/language/haskell/fixity.sml
+HsInfer	structure	HS_INFER		required	claimed	lib/language/haskell/infer.sml
+HsKinds	structure	HS_KINDS		required	claimed	lib/language/haskell/kinds.sml
 HsLayout	structure	HS_LAYOUT		required	claimed	lib/language/haskell/layout.sml
 HsLexer	structure	HS_LEXER		required	claimed	lib/language/haskell/lexer.sml
 HsLint	structure	HS_LINT		required	claimed	lib/language/haskell/hslint.sml
@@ -44,6 +56,8 @@ HsModules	structure	HS_MODULES		required	claimed	lib/language/haskell/modules.sm
 HsParser	structure	HS_PARSER		required	claimed	lib/language/haskell/parser.sml
 HsPrint	structure	HS_PRINT		required	claimed	lib/language/haskell/print.sml
 HsRename	structure	HS_RENAME		required	claimed	lib/language/haskell/rename.sml
+HsScc	structure	HS_SCC		required	claimed	lib/language/haskell/scc.sml
 HsSource	structure	HS_SOURCE		required	claimed	lib/language/haskell/source.sml
 HsStringMap	structure	HS_STRING_MAP		required	claimed	lib/language/haskell/strmap.sml
 HsToken	structure	HS_TOKEN		required	claimed	lib/language/haskell/token.sml
+HsTypes	structure	HS_TYPES		required	claimed	lib/language/haskell/types.sml

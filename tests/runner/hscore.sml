@@ -9,6 +9,10 @@
                       where there is none. A run that prints nothing fails.
      ; dump: FLAGS    the same, for what is not a run: a dump of a stage
      ; fail: MESSAGE  bin/rhc refuses it, with MESSAGE on standard error.
+     ; forces: N FLAGS  bin/rhc --lint=2 FLAGS --dump-after=coretomid compiles
+                      it, and the dump of Core to Mid holds N thunk_force
+                      nodes, one for each force of Core, which the file
+                      counts (the roadmap's M10)
      ; refuse: FLAGS | MESSAGE
                       bin/rhc --lint=2 FLAGS --read-core FILE -o OUT refuses
                       it, with MESSAGE: a fault of Core to Mid made on
@@ -68,7 +72,7 @@ struct
       | (_, SOME flags, _, _) => SOME ("dump", flags)
       | (_, _, SOME msg, _) => SOME ("fail", String.extract (msg, if String.isPrefix " " msg then 1 else 0, NONE))
       | (_, _, _, SOME both) => SOME ("refuse", both)
-      | _ => NONE
+      | _ => Option.map (fn rest => ("forces", rest)) (after "forces")
     end
 
   (* the status a test wants: NAME.exitcode, or 0 *)
@@ -121,7 +125,13 @@ struct
      [("stack", []), ("stackchecked", ["--checked"]), ("stackgcstress", ["--gc-stress", "3", "--gc-verify"])])
   fun hasE1Ways src = List.exists (fn l => l = "; ways: E1") (lines (read src))
 
-  fun vmOne (src, family, (regWays, stackWays)) =
+  fun vmOne (src, family, ways) = vmAt (src, family, ways, ["O0", "O1", "O2"], ["O0", "O1", "O2"])
+  (* make check's runs (the roadmap's D56 and the lead's ruling 45): -O0
+     and -O2 on the register engine; nightly's the rest, -O1 on it and every
+     level on the stack's *)
+  and vmCheck src = vmAt (src, "vm", defaultWays, ["O0", "O2"], [])
+  and vmRest src = vmAt (src, "vm-rest", defaultWays, ["O1"], ["O0", "O1", "O2"])
+  and vmAt (src, family, (regWays, stackWays), regLevels, stackLevels) =
     let
       val n = nameOf src
       (* each family its own directory: the three ways and the forty-five of
@@ -157,10 +167,8 @@ struct
           else List.app runOn runs
         end
     in
-      List.app (fn level =>
-                  (one (level, "registers", List.map (fn (w, fl) => ("bin/runevm", fl, w)) regWays);
-                   one (level, "stack", List.map (fn (w, fl) => ("bin/runevm-stack", fl, w)) stackWays)))
-               ["O0", "O1", "O2"]
+      List.app (fn level => one (level, "registers", List.map (fn (w, fl) => ("bin/runevm", fl, w)) regWays)) regLevels;
+      List.app (fn level => one (level, "stack", List.map (fn (w, fl) => ("bin/runevm-stack", fl, w)) stackWays)) stackLevels
     end
 
   (* the two size files of a `; KEY: SIZE1 SIZE2` line of src *)
@@ -277,6 +285,23 @@ struct
             else if contains (f ".err", msg) then ()
             else fail ("hs.core." ^ n ^ ": stopped with: " ^ firstLine (f ".err"))
           end
+      | SOME ("forces", rest) =>
+          (* the dump of Core to Mid, its thunk_force nodes counted *)
+          (case String.tokens Char.isSpace rest of
+             want :: flags =>
+               let
+                 val status = exec {cmd = [rhc, "--lint=2"] @ flags @ ["--dump-after=coretomid", "--read-core", src, "-o", f ".rbc"],
+                                    dir = NONE, stdin = "", stdout = f ".out", stderr = f ".err", timeout = 600}
+                 fun count (text, k) =
+                   let val (_, rest) = Substring.position "(prim thunk_force " text
+                   in if Substring.isEmpty rest then k else count (Substring.triml 1 rest, k + 1) end
+                 val found = count (Substring.full (read (f ".out")), 0)
+               in
+                 if status <> 0 then fail ("hs.core." ^ n ^ ": did not compile: " ^ firstLine (f ".err"))
+                 else if SOME found = Int.fromString want then ()
+                 else fail ("hs.core." ^ n ^ ": " ^ Int.toString found ^ " thunk_force in Mid, where Core has " ^ want ^ " forces")
+               end
+           | [] => fail ("hs.core." ^ n ^ ": ; forces: says no number"))
       | SOME ("fail", msg) =>
           if rhcRun [] = 0 then fail ("hs.core." ^ n ^ ": accepted, where it should stop with: " ^ msg)
           else if contains (f ".err", msg) then ()
@@ -298,7 +323,7 @@ struct
             else if same (f ".out", expected) then ()
             else fail ("hs.core." ^ n ^ ": the dump differs from " ^ expected ^ ": " ^ difference (expected, f ".out"))
           end
-      | NONE => fail ("hs.core." ^ n ^ ": its first line is no ; run:, ; dump: or ; fail:")
+      | NONE => fail ("hs.core." ^ n ^ ": its first line is no ; run:, ; dump:, ; forces:, ; fail: or ; refuse:")
     end
 
   (* every rule of CoreLint has its fault, lint-RULE.core, which names it;
@@ -384,7 +409,8 @@ struct
   fun command args =
     case args of
       ["hs-core-one", src] => SOME (fn () => one src)
-    | ["hs-core-vm", src] => SOME (fn () => vmOne (src, "vm", defaultWays))
+    | ["hs-core-vm", src] => SOME (fn () => vmCheck src)
+    | ["hs-core-vm-rest", src] => SOME (fn () => vmRest src)
     | ["hs-core-vm45", src] => SOME (fn () => vmOne (src, "vm45", e1Ways))
     | ["hs-core-residency", src] => SOME (fn () => residency src)
     | ["hs-core-budget", src] => SOME (fn () => budget src)
@@ -399,14 +425,18 @@ struct
                 "covers:tests/runner/hscore.sml"]
   (* E1's forty-five ways of E1's programs, nightly (D56: three ways of the
      run set in make check, the rest nightly) *)
-  val nightly =
+  fun nightly () =
     tagged (["nightly", "test-rhc"] @ covers)
       (Test.describe "hs/core"
          (List.mapPartial (fn s => if hasE1Ways s andalso not (isSome (interpreterOnly s))
                                    then SOME (Tools.job ("vm45/" ^ nameOf s, ["hs-core-vm45", s], [], 500, 3600)) else NONE)
-                          (glob (dir, ".core"))))
-  val tree =
-    Test.describe "" [nightly, tagged (["check", "test-rhc"] @ covers)
+                          (glob (dir, ".core"))
+          @ List.mapPartial (fn s => case (marker s, interpreterOnly s) of
+                                       (SOME ("run", _), NONE) => SOME (Tools.job ("vm-rest/" ^ nameOf s, ["hs-core-vm-rest", s], [], 500, 1800))
+                                     | _ => NONE)
+                            (glob (dir, ".core"))))
+  fun tree () =
+    Test.describe "" [nightly (), tagged (["check", "test-rhc"] @ covers)
       (Test.describe "hs/core"
          (List.map (fn s => Tools.job (nameOf s, ["hs-core-one", s], [], 300, 600)) (glob (dir, ".core"))
           @ List.mapPartial (fn s => case (marker s, interpreterOnly s) of

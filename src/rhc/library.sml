@@ -29,10 +29,12 @@
      ov.system.prims, ov.random.global, where their names are so given).
    - I6. A module that names primElided imports it from PreludeBuiltin:
      goes with I4 and I5.
-   - I7. PreludeBuiltin and UnicodePrims are no files, and export the
-     names of the primitives the library uses, with primElided:
-     ov.prelude.imports, ov.preludeio.import, ov.preludeio.prims,
-     ov.prelude.error, ov.char.prims.
+   - I7. PreludeBuiltin and UnicodePrims are no files: they are rhc's
+     runtime in Core (CoreRuntime), and export the names of the primitives
+     the library uses, with primElided; this is the library's form, not an
+     interim one (L, M17).
+   - I8. Every primitive has the type `forall a. a` (E16 typed the
+     library so): the overlay's entries of I4, I5 and I7, which type them.
 
    A program's own module of any of these names is the program's: a
    module of the library has the identity `haskell98:` and its name. *)
@@ -49,8 +51,9 @@ struct
   fun dir () = Option.map (fn d => OS.Path.concat (d, name)) (!share)
 
   (* the modules a program cannot import: the three the Prelude is made of
-     (chapter 8, D36), and rhc's two of primitives *)
-  val hidden = ["PreludeList", "PreludeText", "PreludeIO", "PreludeBuiltin", "UnicodePrims"]
+     (chapter 8, D36), rhc's two of primitives, and rhc's own two of the
+     library, PreludeRuntime and PreludeEnum (M17) *)
+  val hidden = ["PreludeList", "PreludeText", "PreludeIO", "PreludeBuiltin", "UnicodePrims", "PreludeRuntime", "PreludeEnum"]
 
   fun isHidden m = List.exists (fn h => h = m) hidden
 

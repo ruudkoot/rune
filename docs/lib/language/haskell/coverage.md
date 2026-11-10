@@ -14,23 +14,30 @@ documented when a comment describes it, alone or together with the entry before 
 | [`CORE_PRIM_FAMILY`](sig/CORE_PRIM_FAMILY.md) | 4 | 4 | 100% | 0 | 0 |
 | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) | 4 | 4 | 100% | 2 | 2 |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | 9 | 9 | 100% | 8 | 8 |
-| [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 4 | 4 | 100% | 1 | 1 |
+| [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 3 | 3 | 100% | 1 | 1 |
 | [`HS_AST`](sig/HS_AST.md) | 44 | 44 | 100% | 8 | 8 |
 | [`HS_CHAR`](sig/HS_CHAR.md) | 4 | 4 | 100% | 3 | 3 |
+| [`HS_CLASSES`](sig/HS_CLASSES.md) | 14 | 14 | 100% | 10 | 10 |
+| [`HS_DERIVE`](sig/HS_DERIVE.md) | 2 | 2 | 100% | 1 | 1 |
 | [`HS_DUMP`](sig/HS_DUMP.md) | 2 | 2 | 100% | 2 | 2 |
+| [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | 11 | 11 | 100% | 7 | 7 |
 | [`HS_FIXITY`](sig/HS_FIXITY.md) | 4 | 4 | 100% | 2 | 2 |
+| [`HS_INFER`](sig/HS_INFER.md) | 7 | 7 | 100% | 4 | 4 |
+| [`HS_KINDS`](sig/HS_KINDS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_LAYOUT`](sig/HS_LAYOUT.md) | 13 | 13 | 100% | 11 | 11 |
 | [`HS_LEXER`](sig/HS_LEXER.md) | 3 | 3 | 100% | 1 | 1 |
-| [`HS_LINT`](sig/HS_LINT.md) | 14 | 14 | 100% | 4 | 4 |
+| [`HS_LINT`](sig/HS_LINT.md) | 16 | 16 | 100% | 5 | 5 |
 | [`HS_LITERATE`](sig/HS_LITERATE.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_MODULES`](sig/HS_MODULES.md) | 14 | 14 | 100% | 6 | 6 |
 | [`HS_PARSER`](sig/HS_PARSER.md) | 6 | 6 | 100% | 3 | 3 |
 | [`HS_PRINT`](sig/HS_PRINT.md) | 7 | 7 | 100% | 7 | 7 |
 | [`HS_RENAME`](sig/HS_RENAME.md) | 4 | 4 | 100% | 2 | 2 |
+| [`HS_SCC`](sig/HS_SCC.md) | 1 | 1 | 100% | 1 | 1 |
 | [`HS_SOURCE`](sig/HS_SOURCE.md) | 10 | 10 | 100% | 6 | 6 |
 | [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 8 | 8 | 100% | 6 | 6 |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
-| **all** | 199 | 199 | 100% | 93 | 93 |
+| [`HS_TYPES`](sig/HS_TYPES.md) | 41 | 41 | 100% | 27 | 27 |
+| **all** | 286 | 286 | 100% | 152 | 152 |
 
 ## Members a signature describes
 
@@ -39,7 +46,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-24 structures have a page, with 199 members, of which 199 (100%) are described by a signature.
+31 structures have a page, with 286 members, of which 286 (100%) are described by a signature.
 
 ---
 

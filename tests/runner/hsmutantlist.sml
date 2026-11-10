@@ -63,5 +63,38 @@ struct
      one ("HT02", "Core's text", "a keyword is let through where a name is wanted",
           "coretext.sml", "if isKeyword w then fail (l, \"a word of the syntax where a name is wanted: \"",
           "if false then fail (l, \"a word of the syntax where a name is wanted: \"",
-          ["hs/core/text-keyword"])]
+          ["hs/core/text-keyword"]),
+     one ("HD01", "deriving", "a derived instance's context leaves out its data type's own context (4.3.3)",
+          "infer.sml", "simplify (dataCtx @ List.concat", "simplify (List.concat",
+          ["hs/types/derive/module"]),
+     one ("HD02", "deriving", "a derived instance's context too wide: each parameter's, not the fields' types' (10.1)",
+          "infer.sml", "reduce {cls = cls, ty = f}) fields)", "reduce {cls = cls, ty = f}) (fields @ List.tabulate (vars, T.TGen)))",
+          ["hs/types/derive/module"]),
+     (* the roadmap's seeds for types and classes (M16), in F's checker, each
+        seen by HsLint's second inference or its replay, as M16's done-when
+        asks (H's hs/hslint/dump jobs, which run the checker at level 2) *)
+     one ("HK01", "checker", "Rule 1 off: a restricted group's constrained variables are generalised (4.5.5)",
+          "infer.sml", "val restricted = List.exists (fn PatB _ => true | _ => false) bs", "val restricted = false",
+          ["hs/hslint/dump/restricted", "hs/hslint/dump/simple", "hs/types/defaults/module"]),
+     one ("HK02", "checker", "Rule 2 by group: what a group leaves open is defaulted at its end, not the module's (4.5.5, R20)",
+          "infer.sml", "      wanted := deferred @ savedW\n    end", "      (defaultAll (deferred, \" by group\"); wanted := savedW)\n    end",
+          ["hs/hslint/dump/rule2", "hs/types/rule2/module"]),
+     one ("HK03", "checker", "defaulting without a numeric class: an ambiguity of standard classes alone is defaulted (4.3.4, R22)",
+          "infer.sml", "if not simple orelse not (List.exists isNumeric classes) orelse not (List.all isStandard classes) then false",
+          "if not simple orelse not (List.all isStandard classes) then false",
+          ["hs/hslint/dump/ambiguous"]),
+     one ("HK04", "checker", "a superclass path wrong: the path to a superclass drops its steps (4.3.1)",
+          "classes.sml", "| (d, NONE) => Option.map (fn p => c :: p) (superPath (env, d, s)))",
+          "| (d, NONE) => Option.map (fn p => p) (superPath (env, d, s)))",
+          ["hs/hslint/dump/dicts"]),
+     one ("HK05", "checker", "a method slot swapped: a class's methods reversed, and its dictionary's slots with them (D31)",
+          "infer.sml", "methods = List.map #1 methods, kind = kind}", "methods = List.rev (List.map #1 methods), kind = kind}",
+          ["hs/hslint/dump/dicts"]),
+     one ("HD03", "deriving", "a derived Ord's and Ix's constructor positions are bare literals, which the module's default types",
+          "derive.sml",
+          "fun tag x =\n        e (A.ESig (e (A.EParen (ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i))\n" ^
+          "                                             (constrs, List.tabulate (length constrs, fn i => i))))),\n" ^
+          "                   NONE, intType ()))",
+          "fun tag x = ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i)) (constrs, List.tabulate (length constrs, fn i => i)))",
+          ["hs/types/derive/module"])]
 end

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 4 of 4 entries documented |
+| Documentation | 3 of 3 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid\_sig.sml](../../../../../lib/language/haskell/coretomid_sig.sml) |
 
@@ -51,30 +51,11 @@ parameters is a box, as one that reaches itself is.
 <pre>
 signature CORE_TO_MID =
 sig
-  datatype <a href="#type-form">form</a> = <a href="#con-formc">FormC</a> | <a href="#con-runtime">Runtime</a>
   datatype <a href="#type-fault">fault</a> = <a href="#con-thunkinslot">ThunkInSlot</a> | <a href="#con-forcebehindcast">ForceBehindCast</a>
   exception <a href="#exn-unsupported">Unsupported</a> of string
-  val <a href="#val-program">program</a> : {<a href="#fld-program.form">form</a> : form, <a href="#fld-program.fault">fault</a> : fault option} * Core.program -&gt; string
+  val <a href="#val-program">program</a> : {<a href="#fld-program.fault">fault</a> : fault option} * Core.program -&gt; string
 end
 </pre>
-
-### <a name="type-form"></a>`form`
-
-```sml
-datatype form = FormC | Runtime
-```
-
-How suspensions are made and forced: by form C's primitives, or by
-functions of E1's runtime in today's Mid.
-
-[`FormC`](#con-formc) is the roadmap's M9: `thunk_make`, `thunk_force`,
-`thunk_blackhole` and `thunk_self_update`, force one primitive node.
-[`Runtime`](#con-runtime) is for a tree that has not got them.
-
-| Constructor | Argument | Description |
-| --- | --- | --- |
-| <a name="con-formc"></a>`FormC` |  |  |
-| <a name="con-runtime"></a>`Runtime` |  |  |
 
 ### <a name="type-fault"></a>`fault`
 
@@ -99,26 +80,30 @@ a force made a cast from the suspension to its value.
 exception Unsupported of string
 ```
 
-A construct Core has and the Mid of this tree cannot say yet: what it
-waits on, and where.
+A construct Core has and Core to Mid does not lower: what it is, and
+where.
 
 ### <a name="val-program"></a>`program`
 
 ```sml
-val program : {form : form, fault : fault option} * Core.program -> string
+val program : {fault : fault option} * Core.program -> string
 ```
 
-`program ({form, fault}, p)` is the text of Mid of the Core program
-`p`, which CoreLint passed, with the fault made where it is `SOME`.
+`program ({fault}, p)` is the text of Mid of the Core program `p`,
+which CoreLint passed, with the fault made where it is `SOME`.
+
+A suspension is form C's (the roadmap's M9): made by `thunk_make`,
+forced by one `thunk_force` node, its code saying `thunk_blackhole`
+first and `thunk_self_update` last.
 
 The text's `do` calls `main`, and prints what an exception no handler
-takes is, as Core's interpreter does, and ends with status 1.
+takes is, as Core's interpreter does, an IOError's text as the
+library's Show IOError gives it, and ends with status 1.
 
 **Raises** [`Unsupported`](#exn-unsupported) where `p` needs what Mid has not got.
 
 | Field | Type | Description |
 | --- | --- | --- |
-| <a name="fld-program.form"></a>`form` | `form` |  |
 | <a name="fld-program.fault"></a>`fault` | `fault option` |  |
 
 ---

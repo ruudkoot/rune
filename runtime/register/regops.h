@@ -46,6 +46,10 @@ enum RegOpcode {
   ROP_SWITCH = 38,  /* Jump to the target of the JUMP of the tag of the constructor value in register s among the n that follow, or past them. */
   ROP_CONN = 39,  /* Register d := constructor t made of the n registers of fields: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11). */
   ROP_FIELD = 40,  /* Register d := field i of the constructor value that CONN made, of tag t, in register s; --checked stops where the tag is another. */
+  ROP_FORCE = 41,  /* Where register s holds no unevaluated suspension, register d := its value -- what an indirection holds, else what s holds -- and jump to o; else on to the ENTER after it. */
+  ROP_ENTER = 42,  /* Enter the suspension in register f, as CALL enters a closure, with register x; RESULT takes its value. One under evaluation is a loop, a fatal error. */
+  ROP_BLACKHOLE = 43,  /* The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. */
+  ROP_UPDATE = 44,  /* The suspension running becomes an indirection to register s. */
   ROP__COUNT
 };
 
@@ -91,6 +95,10 @@ static const char *const rop_names[] = {
   "SWITCH",
   "CONN",
   "FIELD",
+  "FORCE",
+  "ENTER",
+  "BLACKHOLE",
+  "UPDATE",
 };
 
 /* how many operands come before the list, if there is one */
@@ -136,6 +144,10 @@ static const unsigned char rop_nfixed[] = {
   2,
   3,
   4,
+  3,
+  2,
+  0,
+  1,
 };
 
 /* the operand that says how long the list is (-1: no list), and
@@ -182,6 +194,10 @@ static const signed char rop_list_at[] = {
   -1,
   2,
   -1,
+  -1,
+  -1,
+  -1,
+  -1,
 };
 static const unsigned char rop_list_prim[] = {
   0,
@@ -200,6 +216,10 @@ static const unsigned char rop_list_prim[] = {
   0,
   1,
   1,
+  0,
+  0,
+  0,
+  0,
   0,
   0,
   0,
@@ -291,6 +311,10 @@ static const unsigned char rop_kinds[][4] = {
   {14, 11, 0, 0},  /* SWITCH */
   {14, 3, 11, 0},  /* CONN */
   {14, 14, 3, 12},  /* FIELD */
+  {14, 14, 8, 0},  /* FORCE */
+  {14, 14, 0, 0},  /* ENTER */
+  {0, 0, 0, 0},  /* BLACKHOLE */
+  {14, 0, 0, 0},  /* UPDATE */
 };
 
 /* Where control goes after each, whether it may raise, and what it does
@@ -338,6 +362,10 @@ static const unsigned char rop_flow[] = {
   FLOW_SWITCH,
   FLOW_NEXT,
   FLOW_NEXT,
+  FLOW_BRANCH,
+  FLOW_CALL,
+  FLOW_NEXT,
+  FLOW_NEXT,
 };
 static const unsigned char rop_raises[] = {
   0,
@@ -381,6 +409,10 @@ static const unsigned char rop_raises[] = {
   0,
   0,
   0,
+  0,
+  0,
+  0,
+  0,
 };
 /* 0 keeps the handlers, 1 installs one, 2 removes one */
 static const unsigned char rop_handlers[] = {
@@ -418,6 +450,10 @@ static const unsigned char rop_handlers[] = {
   0,
   1,
   2,
+  0,
+  0,
+  0,
+  0,
   0,
   0,
   0,
@@ -471,6 +507,10 @@ static const signed char rop_dest[] = {
   -1,
   0,
   0,
+  0,
+  -1,
+  -1,
+  -1,
 };
 
 #endif

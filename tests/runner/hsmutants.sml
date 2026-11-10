@@ -18,9 +18,9 @@
    redundant line of code, settled as one or the other.
 
    Jobs: prepare (each mutant's old text once in a file of rhc.plan) and
-   built-ID (it builds), in make check, which holds the mutants to the
-   sources; good, ID and final in the tier test-rhc-mutants (make
-   test-rhc-mutants, nightly). HS_MUTANTS=HL01,HP02 runs those alone.
+   built-ID (it builds), the first in make check, a canary that holds the
+   mutants to the sources, and the rest with good, ID and final in the tier
+   test-rhc-mutants (make test-rhc-mutants, nightly). HS_MUTANTS=HL01,HP02 runs those alone.
    `bin/rune-test hs-mutant-tree ID` builds a mutant and its tree and says
    where, for any job to be run against it by hand. *)
 structure HsMutants =
@@ -221,7 +221,11 @@ struct
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.describe "hs-mutants"
            (Test.tag "test-rhc-mutants" (Test.tag "check" (job ("prepare", ["hs-mutants-prepare"], [], 300)))
-            :: List.map (fn i => Test.tag "check" (job ("built-" ^ i, ["hs-mutant-built", i], ["hs-mutants/prepare"], 1500))) ms
+            (* the first mutant's build in make check, a canary of the
+               sources; the others' with their runs (the roadmap's D56, the
+               lead's ruling 45) *)
+            :: List.map (fn i => Test.tag (if SOME i = List.find (fn _ => true) ms then "check" else "test-rhc-mutants")
+                                   (job ("built-" ^ i, ["hs-mutant-built", i], ["hs-mutants/prepare"], 1500))) ms
             @ List.map nightly
                 (job ("good", ["hs-mutants-good"], ["hs-mutants/prepare"], 1500)
                  :: List.map (fn i => job (i, ["hs-mutant", i], ["hs-mutants/good"], 2500)) ms

@@ -1,0 +1,39 @@
+PROVENANCE
+
+The files in this directory and below it are a program of the nofib benchmark suite (the collection
+of Haskell programs that Will Partain gathered at Glasgow), which jhc, John Meacham's Haskell
+compiler, keeps among its regression tests, regress/tests/9_nofib in its repository. Its directory
+names nofib; the program is a variant of nofib's imaginary/primes (compared with that file at
+nofib's commit f34b90b5a6ce46284693119a06d1133908b11856: the imports differ, and the_filter is
+written out by hand).
+
+They are vendored here without a licence, under the rule of this repository's owner, quoted:
+
+    "If you want to vendor code without a license add a PROVENANCE alongside it instead."
+
+rhc, the Haskell 98 compiler of this repository, compiles and runs them in its tests
+(tests/hs/corpus: the programs of D56 of the haskell98 roadmap, which tests/hs/corpus/licences.tsv
+lists with this file as their notice).
+
+Upstream
+    repository  https://github.com/jimcrayne/jhc.git
+    commit      1ff035af3d697f9175f8761c8d08edbffde03b4e, as tests/hs/corpus/trees.tsv pins it
+    path        regress/tests/9_nofib/ in that repository: a file at P below this directory
+                is regress/tests/9_nofib/P upstream
+    fetched     2026-10-27, by git clone; the pinned commit was the head it fetched
+    copied      2026-11-10, byte for byte, by `bin/rune-test hs-corpus-vendor`; the nightly test
+                hs-corpus/vendored compares every file here with the pinned tree
+
+Licence
+    No licence is stated in the file, and it carries no notice. nofib states none, and jhc's LICENSE
+    (the MIT licence, "Copyright (c) 2013 John Meacham", vendored at ../../../LICENSE for the jhc
+    programs of John Meacham's) is not read as covering a program of another origin.
+
+Programs
+    Each program by its id in tests/hs/corpus/candidates.tsv: its files, as paths below this
+    directory; then what the files' own headers name of its authors and origin, and any notice,
+    quoted as FILE:LINE and the line (tabs expanded, trailing blanks dropped). A program with no
+    "named" names no author or origin in its files; one with no "notice" carries none.
+
+jhc/9_nofib/spectral/Primes.hs
+    files   spectral/Primes.expected.stdout spectral/Primes.hs

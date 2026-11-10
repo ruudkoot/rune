@@ -4,7 +4,8 @@
    and context reduction, its kinds, its reading of a program's
    declarations, its inference and its comparison with a record's claims,
    each its own, sharing nothing with the checker but the renamer of
-   names.build. *)
+   names.build; and its replay of Faxén's rules on the checker's evidence
+   records (types.build), which it reads. *)
 files
   hslint_types.sml
   hslint_scc.sml
@@ -13,6 +14,7 @@ files
   hslint_env.sml
   hslint_infer.sml
   hslint_claims.sml
+  hslint_replay.sml
   hslint_sig.sml
   hslint.sml
 end

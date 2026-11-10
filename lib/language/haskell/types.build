@@ -1,0 +1,21 @@
+(* The types of Haskell 98 (the haskell98 roadmap's M13): kinds, types and
+   unification, classes and instances, the evidence records, and the
+   checker, one inference over a unit's renamed trees. It is written on
+   the Basis Library, syntax.build and names.build alone, and is used by
+   the library's library.build. *)
+files
+  scc_sig.sml
+  scc.sml
+  types_sig.sml
+  types.sml
+  classes_sig.sml
+  classes.sml
+  evidence_sig.sml
+  evidence.sml
+  kinds_sig.sml
+  kinds.sml
+  derive_sig.sml
+  derive.sml
+  infer_sig.sml
+  infer.sml
+end
