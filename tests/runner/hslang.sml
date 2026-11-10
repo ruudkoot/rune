@@ -80,7 +80,10 @@ struct
         judges it *)
      errorCompilers = [("register", "bin/rhc", "hs")],
      ways = rhcWays,
-     out = fn compiler => "\"$RUNE_TEST_RUN\"/hs/c/" ^ compiler, scratch = "hs/",
+     out = fn compiler => "\"$RUNE_TEST_RUN\"/hs/c/" ^ compiler,
+     (* each program in a directory of its own as prog.rbc, so that
+        getProgName, the file's base name (the lead's ruling 33), is prog *)
+     binary = fn name => name ^ "/prog.rbc", scratch = "hs/",
      writer = "register", writerWay = "register",
      typecheck = SOME "bin/rhc --typecheck-only", stackDone = false, covers = covers,
      compileTags = ["hs"], errorTags = fn _ => ["hs"], typecheckTags = ["hs"],
@@ -110,7 +113,8 @@ struct
     {group = "hs/runner", lang = "tests/hs/runner/lang", errors = "tests/hs/runner/errors",
      accept = SOME "tests/hs/runner/accept", suffixes = suffixes, mains = mains,
      compilers = [("stub", stubCompile, "hs")], errorCompilers = [("stub", stubCompile, "hs")], ways = [stubWay],
-     out = fn compiler => "\"$RUNE_TEST_RUN\"/hs-runner/c/" ^ compiler, scratch = "hs-runner/",
+     out = fn compiler => "\"$RUNE_TEST_RUN\"/hs-runner/c/" ^ compiler, binary = fn name => name ^ ".rbc",
+     scratch = "hs-runner/",
      (* --accept writes none of the fixtures *)
      writer = "", writerWay = "",
      typecheck = SOME (stubCompile ^ " --typecheck-only"), stackDone = false, covers = runnerCovers,

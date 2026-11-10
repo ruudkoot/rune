@@ -3,7 +3,8 @@
    interpreter against its VM): each program through rhc to Core, run on
    Core's interpreter (`bin/rhc --lint=3 FILE`, as hs/core runs `--read-core
    FILE`), and compiled through Mid to the VM (`bin/rhc --lint=2 FILE -o
-   OUT`, bin/runevm OUT), each with the program's .stdin. What the VM prints
+   OUT`, bin/runevm OUT), each with the program's .stdin, the VM with its
+   .vmargs. What the VM prints
    is what the interpreter printed, and it ends as the interpreter did: a
    status of 0, or every bottom one bottom, a status other than 0. A program
    the interpreter alone can run says so on a line `-- vm: no: REASON`
@@ -25,6 +26,9 @@ struct
       | NONE => NONE
     end
   fun stdinOf (p : Lang.program) = if exists (#base p ^ ".stdin") then fromRoot (#base p ^ ".stdin") else ""
+  (* the VM's options, the program's .vmargs (Lang's header) *)
+  fun vmargsOf (p : Lang.program) =
+    if exists (#base p ^ ".vmargs") then String.tokens Char.isSpace (read (#base p ^ ".vmargs")) else []
 
   fun one (p : Lang.program) () =
     case interpreterOnly (fromRoot (#src p)) of
@@ -43,7 +47,7 @@ struct
           if cc <> 0 then say ("FAIL " ^ #name p ^ ": rhc does not compile it for the VM: " ^ firstNonEmpty (f "c.err") ^ "\n")
           else
             let
-              val vc = exec {cmd = [fromRoot "bin/runevm", f "prog.rbc"], dir = SOME work, stdin = stdinOf p, stdout = f "vm.out",
+              val vc = exec {cmd = [fromRoot "bin/runevm"] @ vmargsOf p @ [f "prog.rbc"], dir = SOME work, stdin = stdinOf p, stdout = f "vm.out",
                              stderr = f "vm.err", timeout = 600}
               fun ends c = if c = 0 then "a value" else "a bottom"
             in

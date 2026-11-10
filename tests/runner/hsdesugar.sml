@@ -162,16 +162,21 @@ struct
     let
       fun family (kind, ps) = Test.describe kind (List.map (fn (p : Lang.program) => job (kind, #name p)) ps)
       val own = programs ()
+      (* the orders of a program of tests/hs/lang-nightly.txt are nightly,
+         as its own jobs are (HsLang.tiers; the roadmap's D56): two runs on
+         Core's interpreter are a way of make check too *)
+      fun tier (p : Lang.program) = if List.exists (fn n => n = #name p) HsLang.listedNightly then "nightly" else "check"
     in
       List.foldl (fn (c, t) => Test.tag c t)
-        (Test.tag "check" (Test.tag "hs" (Test.describe "hs/desugar"
-           [family ("report", own), family ("sestoft", own), family ("vm", own), family ("braces", own),
-            Test.describe "parens" (List.map (fn n => job ("parens", n)) (pairs ())),
+        (Test.tag "hs" (Test.describe "hs/desugar"
+           [Test.tag "check" (Test.describe ""
+              [family ("report", own), family ("sestoft", own), family ("vm", own), family ("braces", own),
+               Test.describe "parens" (List.map (fn n => job ("parens", n)) (pairs ()))]),
             Test.describe "orders"
               (List.map (fn (p : Lang.program) =>
-                           let val t = job ("orders", #name p)
+                           let val t = Test.tag (tier p) (job ("orders", #name p))
                            in case HsConformance.pending p of SOME why => Test.pending why t | NONE => t end)
-                 (langPrograms ()))])))
+                 (langPrograms ()))]))
         covers
     end
 end
