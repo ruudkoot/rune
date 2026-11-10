@@ -1,0 +1,12 @@
+; run: --depth=1000 --read-core tests/hs/core/lib/base.core
+; A bottom: the stack deeper than --depth gives, by the length of a list of
+; 5000, which is no tail call; the same bottom as a loop and an error.
+(val upto (-> !Int (List Int))
+  (\ ((n !Int))
+    (case (prim int_eq n 0) z
+      ((True) (con Nil @Int))
+      ((False) (case (prim int_sub n 1) m (_ (let (r (List Int) (upto m)) (con Cons @Int n r))))))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (putStrLn "before" w) r
+      ((utuple w1 _) (let (xs (List Int) (upto 5000)) (let (n Int (length @Int xs)) (printInt n w1)))))))

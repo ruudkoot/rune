@@ -1,0 +1,96 @@
+; run: --read-core tests/hs/core/lib/base.core
+; E1's exceptions, in Core: seq, error, a failed match, catch over an
+; IOError and over nothing else, a suspension forced again after it raised
+; (it raises again), one forced under its own evaluation (NonTermination,
+; each time), a division by zero, and an error at the end, which ends the
+; program with status 1. `try` is the harness's, a catch of everything, as
+; E1's was, which Haskell 98 has not:
+;   print (seq (1 :: Int) (2 :: Int))
+;   print (const 1 (error "unused"))
+;   try: print (seq (error "boom" :: Int) (3 :: Int))
+;   let t = error "again" :: Int;  try: print t, twice
+;   try: print (head' ([] :: [Int]))
+;   let x = x + 1 :: Int;  try: print x, twice
+;   r <- catch (ioError (userError "bad") >> return 0)
+;              (\e -> putStrLn ("caught: " ++ ioeGetErrorString e) >> return 7)
+;   print r
+;   try: catch (error "not io" >> return ()) (\_ -> putStrLn "wrong")
+;   s <- catch (readFile "/nonexistent/x") (\e -> return "io failed");  putStrLn s
+;   try: print (1 `div` (0 :: Int))
+;   error "final"
+
+(val seq (forall (a b) (-> a b b)) (\ (@a @b (x a) (y b)) (case x _ (_ y))))
+(val const (forall (a b) (-> a b a)) (\ (@a @b (x a) (y b)) x))
+
+(val head' (forall (a) (-> (List a) a))
+  (\ (@a (xs (List a)))
+    (case xs v
+      ((Cons y _) y)
+      (_ (case (prim exn_pattern "exceptions.hs:7:1-20: Non-exhaustive patterns in function head'") e
+           (_ (prim raise @a e)))))))
+
+(val ioError (forall (a) (-> !Str World (utuple World a)))
+  (\ (@a (s !Str) (w World)) (case (prim exn_io s) e (_ (prim raise_io @a e w)))))
+
+; readFile of a file that is not there
+(val readMissing (-> World (utuple World Str))
+  (\ ((w World)) (ioError @Str "openFile: does not exist" w)))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (r1 Int (seq @Int @Int 1 2))
+    (case (printInt r1 w) o1
+      ((utuple w1 _)
+        (let (unused Int (error @Int "unused"))
+        (let (r2 Int (const @Int @Int 1 unused))
+        (case (printInt r2 w1) o2
+          ((utuple w2 _)
+            (let (t3 (-> World (utuple World Unit))
+                   (\ ((v World)) (let (boom Int (error @Int "boom")) (let (r Int (seq @Int @Int boom 3)) (printInt r v)))))
+            (case (try t3 w2) o3
+              ((utuple w3 _)
+                (let (again Int (error @Int "again"))
+                (let (t4 (-> World (utuple World Unit)) (\ ((v World)) (printInt again v)))
+                (case (try t4 w3) o4
+                  ((utuple w4 _)
+                    (case (try t4 w4) o5
+                      ((utuple w5 _)
+                        (let (t5 (-> World (utuple World Unit))
+                               (\ ((v World)) (let (n (List Int) (con Nil @Int)) (let (h Int (head' @Int n)) (printInt h v)))))
+                        (case (try t5 w5) o6
+                          ((utuple w6 _)
+                            (letrec ((x Int (case x xv (_ (prim int_add xv 1)))))
+                            (let (t6 (-> World (utuple World Unit)) (\ ((v World)) (printInt x v)))
+                            (case (try t6 w6) o7
+                              ((utuple w7 _)
+                                (case (try t6 w7) o8
+                                  ((utuple w8 _)
+                                    (let (c1 (-> World (utuple World Int))
+                                           (\ ((v World)) (case (ioError @Unit "bad" v) o ((utuple v1 _) (utuple v1 0)))))
+                                    (let (h1 (-> Str World (utuple World Int))
+                                           (\ ((m Str) (v World))
+                                             (case m ms
+                                               (_ (case (prim str_concat "caught: " ms) l
+                                                    (_ (case (putStrLn l v) o ((utuple v1 _) (utuple v1 7)))))))))
+                                    (case (catchIO @Int c1 h1 w8) o9
+                                      ((utuple w9 r3)
+                                        (case (printInt r3 w9) o10
+                                          ((utuple w10 _)
+                                            (let (c2 (-> World (utuple World Unit))
+                                                   (\ ((v World)) (let (e Unit (error @Unit "not io")) (case e _ (_ (utuple v e))))))
+                                            (let (h2 (-> Str World (utuple World Unit)) (\ ((m Str) (v World)) (putStrLn "wrong" v)))
+                                            (let (t7 (-> World (utuple World Unit)) (\ ((v World)) (catchIO @Unit c2 h2 v)))
+                                            (case (try t7 w10) o11
+                                              ((utuple w11 _)
+                                                (let (h3 (-> Str World (utuple World Str)) (\ ((m Str) (v World)) (utuple v "io failed")))
+                                                (case (catchIO @Str readMissing h3 w11) o12
+                                                  ((utuple w12 s)
+                                                    (case s ss
+                                                      (_ (case (putStrLn ss w12) o13
+                                                           ((utuple w13 _)
+                                                             (let (t8 (-> World (utuple World Unit))
+                                                                    (\ ((v World)) (let (q Int (prim int_div 1 0)) (printInt q v))))
+                                                             (case (try t8 w13) o14
+                                                               ((utuple w14 _)
+                                                                 (let (final Unit (error @Unit "final"))
+                                                                   (case final _ (_ (utuple w14 final))))))))))))))))))))))))))))))))))))))))))))))))))))

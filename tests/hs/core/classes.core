@@ -1,0 +1,203 @@
+; run: --read-core tests/hs/core/lib/base.core
+; E1's classes, in Core: dictionaries as data, a superclass, default
+; methods that take the dictionary, instances whose methods read their own
+; dictionary, and dictionary functions, whose cycles a letrec ties:
+;   class Eq a where { (==), (/=) :: a -> a -> Bool; x /= y = not (x == y) }
+;   class Eq a => Ord a where { (<), (<=) :: a -> a -> Bool; x <= y = x < y || x == y }
+;   instance Eq Int; Ord Int; Eq Double; Ord Double
+;   data Color = Red | Green | Blue; instance Eq Color; instance Ord Color
+;   instance Eq a => Eq [a]; instance Ord a => Ord [a]
+;   maxL :: Ord a => [a] -> a
+;   elemO :: Ord a => a -> [a] -> Bool    -- by the superclass
+
+(data Eq (a) (MkEq (-> a a Bool) (-> a a Bool)))
+(data Ord (a) (MkOrd (Eq a) (-> a a Bool) (-> a a Bool)))
+(data Color () (Red) (Green) (Blue))
+
+; ---- the classes: selectors and default methods
+
+(val eq (forall (a) (-> (Eq a) a a Bool)) (\ (@a (d (Eq a)) (x a) (y a)) (case d e ((MkEq f _) (f x y)))))
+(val ne (forall (a) (-> (Eq a) a a Bool)) (\ (@a (d (Eq a)) (x a) (y a)) (case d e ((MkEq _ f) (f x y)))))
+(val super (forall (a) (-> (Ord a) (Eq a))) (\ (@a (d (Ord a))) (case d e ((MkOrd s _ _) s))))
+(val lt (forall (a) (-> (Ord a) a a Bool)) (\ (@a (d (Ord a)) (x a) (y a)) (case d e ((MkOrd _ f _) (f x y)))))
+(val le (forall (a) (-> (Ord a) a a Bool)) (\ (@a (d (Ord a)) (x a) (y a)) (case d e ((MkOrd _ _ f) (f x y)))))
+
+(val not (-> Bool Bool) (\ ((b Bool)) (case b c ((True) (con False)) ((False) (con True)))))
+
+; x /= y = not (x == y)
+(val dmNe (forall (a) (-> (Eq a) a a Bool))
+  (\ (@a (d (Eq a)) (x a) (y a)) (let (r Bool (eq @a d x y)) (not r))))
+
+; x <= y = x < y || x == y
+(val dmLe (forall (a) (-> (Ord a) a a Bool))
+  (\ (@a (d (Ord a)) (x a) (y a))
+    (case (lt @a d x y) b
+      ((True) (con True))
+      ((False) (let (s (Eq a) (super @a d)) (eq @a s x y))))))
+
+; ---- instances
+
+(val dEqInt (Eq Int)
+  (let (f (-> Int Int Bool) (\ ((x Int) (y Int)) (case x u (_ (case y v (_ (prim int_eq u v)))))))
+    (let (g (-> Int Int Bool) (\ ((x Int) (y Int)) (dmNe @Int dEqInt x y)))
+      (con MkEq @Int f g))))
+(val dOrdInt (Ord Int)
+  (let (f (-> Int Int Bool) (\ ((x Int) (y Int)) (case x u (_ (case y v (_ (prim int_lt u v)))))))
+    (let (g (-> Int Int Bool) (\ ((x Int) (y Int)) (dmLe @Int dOrdInt x y)))
+      (con MkOrd @Int dEqInt f g))))
+
+(val dEqDouble (Eq Double)
+  (let (f (-> Double Double Bool) (\ ((x Double) (y Double)) (case x u (_ (case y v (_ (prim double_eq u v)))))))
+    (let (g (-> Double Double Bool) (\ ((x Double) (y Double)) (dmNe @Double dEqDouble x y)))
+      (con MkEq @Double f g))))
+(val dOrdDouble (Ord Double)
+  (let (f (-> Double Double Bool) (\ ((x Double) (y Double)) (case x u (_ (case y v (_ (prim double_lt u v)))))))
+    (let (g (-> Double Double Bool) (\ ((x Double) (y Double)) (dmLe @Double dOrdDouble x y)))
+      (con MkOrd @Double dEqDouble f g))))
+
+(val colorIndex (-> Color Int) (\ ((c Color)) (case c d ((Red) 0) ((Green) 1) ((Blue) 2))))
+(val dEqColor (Eq Color)
+  (let (f (-> Color Color Bool)
+         (\ ((x Color) (y Color)) (case (colorIndex x) u (_ (case (colorIndex y) v (_ (prim int_eq u v)))))))
+    (let (g (-> Color Color Bool) (\ ((x Color) (y Color)) (dmNe @Color dEqColor x y)))
+      (con MkEq @Color f g))))
+(val dOrdColor (Ord Color)
+  (let (f (-> Color Color Bool)
+         (\ ((x Color) (y Color)) (case (colorIndex x) u (_ (case (colorIndex y) v (_ (prim int_lt u v)))))))
+    (let (g (-> Color Color Bool) (\ ((x Color) (y Color)) (dmLe @Color dOrdColor x y)))
+      (con MkOrd @Color dEqColor f g))))
+
+; instance Eq a => Eq [a]: == by elements; /= the default, at the dictionary itself
+(val eqList (forall (a) (-> (Eq a) (List a) (List a) Bool))
+  (\ (@a (d (Eq a)) (xs (List a)) (ys (List a)))
+    (case xs xv
+      ((Nil) (case ys yv ((Nil) (con True)) (_ (con False))))
+      ((Cons x xr)
+        (case ys yv
+          ((Nil) (con False))
+          ((Cons y yr) (case (eq @a d x y) b ((True) (eqList @a d xr yr)) ((False) (con False)))))))))
+(val dEqList (forall (a) (-> (Eq a) (Eq (List a))))
+  (\ (@a (d (Eq a)))
+    (letrec ((self (Eq (List a))
+               (let (f (-> (List a) (List a) Bool) (\ ((x (List a)) (y (List a))) (eqList @a d x y)))
+                 (let (g (-> (List a) (List a) Bool) (\ ((x (List a)) (y (List a))) (dmNe @(List a) self x y)))
+                   (con MkEq @(List a) f g)))))
+      self)))
+
+; instance Ord a => Ord [a]: < lexicographic; <= the default
+(val ltList (forall (a) (-> (Ord a) (List a) (List a) Bool))
+  (\ (@a (d (Ord a)) (xs (List a)) (ys (List a)))
+    (case xs xv
+      ((Nil) (case ys yv ((Nil) (con False)) (_ (con True))))
+      ((Cons x xr)
+        (case ys yv
+          ((Nil) (con False))
+          ((Cons y yr)
+            (case (lt @a d x y) b
+              ((True) (con True))
+              ((False)
+                (let (s (Eq a) (super @a d))
+                  (case (eq @a s x y) e ((True) (ltList @a d xr yr)) ((False) (con False))))))))))))
+(val dOrdList (forall (a) (-> (Ord a) (Ord (List a))))
+  (\ (@a (d (Ord a)))
+    (letrec ((self (Ord (List a))
+               (let (s (Eq a) (super @a d))
+                 (let (de (Eq (List a)) (dEqList @a s))
+                   (let (f (-> (List a) (List a) Bool) (\ ((x (List a)) (y (List a))) (ltList @a d x y)))
+                     (let (g (-> (List a) (List a) Bool) (\ ((x (List a)) (y (List a))) (dmLe @(List a) self x y)))
+                       (con MkOrd @(List a) de f g)))))))
+      self)))
+
+; ---- the functions
+
+(val maxL (forall (a) (-> (Ord a) (List a) a))
+  (\ (@a (d (Ord a)) (xs (List a)))
+    (letrec ((go (-> a (List a) a)
+               (\ ((m a) (ys (List a)))
+                 (case ys yv
+                   ((Nil) m)
+                   ((Cons y rest) (case (lt @a d m y) b ((True) (go y rest)) ((False) (go m rest))))))))
+      (case xs xv
+        ((Nil) (error @a "maxL: empty"))
+        ((Cons x rest) (go x rest))))))
+
+(val elemO (forall (a) (-> (Ord a) a (List a) Bool))
+  (\ (@a (d (Ord a)) (x a) (xs (List a)))
+    (let (s (Eq a) (super @a d))
+      (letrec ((go (-> (List a) Bool)
+                 (\ ((ys (List a)))
+                   (case ys yv
+                     ((Nil) (con False))
+                     ((Cons y rest) (case (eq @a s x y) b ((True) (con True)) ((False) (go rest))))))))
+        (go xs)))))
+
+(val showColor (-> Color Str) (\ ((c Color)) (case c d ((Red) "Red") ((Green) "Green") ((Blue) "Blue"))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (n0 (List Int) (con Nil @Int))
+    (let (li1 (List Int) (con Cons @Int 2 n0))
+    (let (li2 (List Int) (con Cons @Int 1 li1))
+    (let (li3 (List Int) (con Cons @Int 3 li2))
+    (let (m1 Int (maxL @Int dOrdInt li3))
+    (case (printInt m1 w) r1
+      ((utuple w1 _)
+        (let (nd (List Double) (con Nil @Double))
+        (let (ld1 (List Double) (con Cons @Double 0.5 nd))
+        (let (ld2 (List Double) (con Cons @Double 2.5 ld1))
+        (let (ld3 (List Double) (con Cons @Double 1.5 ld2))
+        (case (maxL @Double dOrdDouble ld3) m2
+          (_ (case (prim double_to_str m2) s2
+               (_ (case (putStrLn s2 w1) r2
+                    ((utuple w2 _)
+                      (let (nc (List Color) (con Nil @Color))
+                      (let (red Color (con Red))
+                      (let (green Color (con Green))
+                      (let (blue Color (con Blue))
+                      (let (lc1 (List Color) (con Cons @Color green nc))
+                      (let (lc2 (List Color) (con Cons @Color blue lc1))
+                      (let (lc3 (List Color) (con Cons @Color red lc2))
+                      (case (maxL @Color dOrdColor lc3) m3
+                        (_ (case (showColor m3) s3
+                             (_ (case (putStrLn s3 w2) r3
+                                  ((utuple w3 _)
+                                    ; [1,2] /= [1,2], [1,2] /= [1,3]: the list instance's default method
+                                    (let (a1 (List Int) (con Cons @Int 2 n0))
+                                    (let (a2 (List Int) (con Cons @Int 1 a1))
+                                    (let (b1 (List Int) (con Cons @Int 2 n0))
+                                    (let (b2 (List Int) (con Cons @Int 1 b1))
+                                    (let (c1 (List Int) (con Cons @Int 3 n0))
+                                    (let (c2 (List Int) (con Cons @Int 1 c1))
+                                    (let (del (Eq (List Int)) (dEqList @Int dEqInt))
+                                    (let (q1 Bool (ne @(List Int) del a2 b2))
+                                    (case (printBool q1 w3) r4
+                                      ((utuple w4 _)
+                                        (let (q2 Bool (ne @(List Int) del a2 c2))
+                                        (case (printBool q2 w4) r5
+                                          ((utuple w5 _)
+                                            ; maxL [[1,2],[1,3],[0,9]], at Ord [Int]
+                                            (let (d1 (List Int) (con Cons @Int 9 n0))
+                                            (let (d2 (List Int) (con Cons @Int 0 d1))
+                                            (let (nl (List (List Int)) (con Nil @(List Int)))
+                                            (let (ll1 (List (List Int)) (con Cons @(List Int) d2 nl))
+                                            (let (ll2 (List (List Int)) (con Cons @(List Int) c2 ll1))
+                                            (let (ll3 (List (List Int)) (con Cons @(List Int) b2 ll2))
+                                            (let (dol (Ord (List Int)) (dOrdList @Int dOrdInt))
+                                            (let (m4 (List Int) (maxL @(List Int) dol ll3))
+                                            (case (printIntList m4 w5) r6
+                                              ((utuple w6 _)
+                                                ; elemO 2 [3,1,2]; elemO 9.5 [1.5,2.5,0.5]: by the superclass
+                                                (let (e1 Bool (elemO @Int dOrdInt 2 li3))
+                                                (case (printBool e1 w6) r7
+                                                  ((utuple w7 _)
+                                                    (let (e2 Bool (elemO @Double dOrdDouble 9.5 ld3))
+                                                    (case (printBool e2 w7) r8
+                                                      ((utuple w8 _)
+                                                        ; [Red,Green] <= [Red,Blue]: Ord [Color], the default <=
+                                                        (let (p1 (List Color) (con Cons @Color green nc))
+                                                        (let (p2 (List Color) (con Cons @Color red p1))
+                                                        (let (q1 (List Color) (con Cons @Color blue nc))
+                                                        (let (q2 (List Color) (con Cons @Color red q1))
+                                                        (let (doc (Ord (List Color)) (dOrdList @Color dOrdColor))
+                                                        (let (cmp Bool (le @(List Color) doc p2 q2))
+                                                          (printBool cmp w8))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))

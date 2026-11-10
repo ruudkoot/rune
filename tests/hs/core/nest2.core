@@ -1,0 +1,136 @@
+; run: --read-core tests/hs/core/lib/base.core
+; E1's nest2, in Core: polymorphic recursion in each shape a pass of Mid
+; rewrites calls in -- a pair it only takes apart, a curried function, a
+; cell given on in a tail call at another type, mutual recursion at growing
+; types with a static function, results that are a pair and a constructor,
+; and a local function over a type that recurs at another and captures a
+; value -- each summed on build 6 1:
+;   data Nest a = Nil | Cons a (Nest (a,a))
+;   flat (n, t), cur n t, refs r t, ev f t / od f t, tup t, sum t, local t
+
+(data Nest (a) (NNil) (NCons a (Nest (Pair a a))))
+(data Res (a) (RNone) (ROne a))
+
+(val build (forall (a) (-> !Int a (Nest a)))
+  (\ (@a (n !Int) (x a))
+    (case (prim int_eq n 0) z
+      ((True) (con NNil @a))
+      ((False)
+        (case (prim int_sub n 1) m
+          (_ (let (p (Pair a a) (con Pair @a @a x x))
+               (let (r (Nest (Pair a a)) (build @(Pair a a) m p))
+                 (con NCons @a x r)))))))))
+
+; a pair it only takes apart
+(val flat (forall (a) (-> (Pair Int (Nest a)) Int))
+  (\ (@a (p (Pair Int (Nest a))))
+    (case p q
+      ((Pair n t)
+        (case t u
+          ((NNil) n)
+          ((NCons _ r)
+            (let (n1 Int (case n v (_ (prim int_add v 1))))
+              (let (p1 (Pair Int (Nest (Pair a a))) (con Pair @Int @(Nest (Pair a a)) n1 r))
+                (flat @(Pair a a) p1)))))))))
+
+; curried
+(val cur (forall (a) (-> Int (-> (Nest a) Int)))
+  (\ (@a (n Int))
+    (\ ((t (Nest a)))
+      (case t u
+        ((NNil) n)
+        ((NCons _ r)
+          (let (n1 Int (case n v (_ (prim int_add v 2))))
+            (let (g (-> (Nest (Pair a a)) Int) (cur @(Pair a a) n1))
+              (g r))))))))
+
+; a cell given on in a tail call at another type
+(val refs (forall (a) (-> !(Ref Int) (Nest a) World (utuple World Int)))
+  (\ (@a (c !(Ref Int)) (t (Nest a)) (w World))
+    (case t u
+      ((NNil) (prim ref_get @Int c w))
+      ((NCons _ r)
+        (case (prim ref_get @Int c w) g
+          ((utuple w1 n)
+            (case n v
+              (_ (case (prim int_add v 3) v1
+                   (_ (case (prim ref_set @Int c v1 w1) w2 (_ (refs @(Pair a a) c r w2)))))))))))))
+
+; mutual recursion, each at its own type, a static function
+(val ev (forall (a) (-> (-> Int Int) (Nest a) Int))
+  (\ (@a (f (-> Int Int)) (t (Nest a)))
+    (case t u
+      ((NNil) 0)
+      ((NCons _ r) (case (f 1) h (_ (case (od @(Pair a a) f r) s (_ (prim int_add h s)))))))))
+(val od (forall (a) (-> (-> Int Int) (Nest a) Int))
+  (\ (@a (f (-> Int Int)) (t (Nest a)))
+    (case t u
+      ((NNil) 0)
+      ((NCons _ r) (case (f 2) h (_ (case (ev @(Pair a a) f r) s (_ (prim int_add h s)))))))))
+
+; a result that is a pair, and one that is a constructor
+(val tup (forall (a) (-> (Nest a) (Pair Int Int)))
+  (\ (@a (t (Nest a)))
+    (case t u
+      ((NNil) (con Pair @Int @Int 0 0))
+      ((NCons _ r)
+        (case (tup @(Pair a a) r) p
+          ((Pair x y)
+            (case x xv
+              (_ (case y yv
+                   (_ (case (prim int_add xv 1) x1 (_ (case (prim int_add yv 2) y1 (_ (con Pair @Int @Int x1 y1)))))))))))))))
+(val sum (forall (a) (-> (Nest a) (Res Int)))
+  (\ (@a (t (Nest a)))
+    (case t u
+      ((NNil) (con RNone @Int))
+      ((NCons _ r)
+        (case (sum @(Pair a a) r) s
+          ((RNone) (con ROne @Int 1))
+          ((ROne v) (case v n (_ (case (prim int_add n 1) n1 (_ (con ROne @Int n1)))))))))))
+
+(val dbl (-> Int Int) (\ ((x Int)) (case x v (_ (prim int_mul 2 v)))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (t (Nest Int) (build @Int 6 1))
+    (let (p (Pair Int (Nest Int)) (con Pair @Int @(Nest Int) 100 t))
+    (let (a Int (flat @Int p))
+    (case (printInt a w) r1
+      ((utuple w1 _)
+        (let (f (-> (Nest Int) Int) (cur @Int 200))
+        (let (b Int (f t))
+        (case (printInt b w1) r2
+          ((utuple w2 _)
+            (case (prim ref_new @Int 300 w2) mk
+              ((utuple w3 c)
+                (case (refs @Int c t w3) r3
+                  ((utuple w4 n)
+                    (case (printInt n w4) r4
+                      ((utuple w5 _)
+                        (let (d Int (ev @Int dbl t))
+                        (case (printInt d w5) r5
+                          ((utuple w6 _)
+                            (case (tup @Int t) e
+                              ((Pair e0 e1)
+                                (case (printInt e0 w6) r6
+                                  ((utuple w7 _)
+                                    (case (printInt e1 w7) r7
+                                      ((utuple w8 _)
+                                        (case (sum @Int t) g
+                                          ((RNone) (putStrLn "impossible" w8))
+                                          ((ROne v)
+                                            (case (printInt v w8) r8
+                                              ((utuple w9 _)
+                                                ; a local function over a type, recurring at another,
+                                                ; capturing k
+                                                (case (prim ref_get @Int c w9) kr
+                                                  ((utuple w10 k)
+                                                    (letrec ((local (forall (b) (-> (Nest b) Int))
+                                                               (\ (@b (s (Nest b)))
+                                                                 (case s su
+                                                                   ((NNil) 0)
+                                                                   ((NCons _ r)
+                                                                     (case (local @(Pair b b) r) l
+                                                                       (_ (case k kv (_ (prim int_add l kv))))))))))
+                                                      (let (h Int (local @Int t))
+                                                        (printInt h w10)))))))))))))))))))))))))))))))))))

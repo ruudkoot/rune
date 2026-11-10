@@ -1,0 +1,4 @@
+; fail: [force] in val g: x, of type Int, may be unevaluated where !Int is wanted, an argument of inc
+; CoreLint, force: a lazy atom given to a strict parameter, a forgotten force
+(val inc (-> !Int Int) (\ ((n !Int)) (prim int_add n 1)))
+(val g (-> Int Int) (\ ((x Int)) (inc x)))

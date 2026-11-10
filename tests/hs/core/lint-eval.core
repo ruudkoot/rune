@@ -1,0 +1,4 @@
+; fail: [eval] in val f: ! on an argument of a type constructor in the binder x: !Int
+; CoreLint, eval: ! stands at a binder, a parameter, a field or a component, and not under a type constructor
+(data Box (a) (Box a))
+(val f (-> (Box Int) Int) (\ ((x (Box !Int))) 0))

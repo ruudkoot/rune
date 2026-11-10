@@ -1,0 +1,42 @@
+; run: --read-core tests/hs/core/lib/base.core
+; E1's knot, in Core: knots tied by letrec, a chain 2000 deep, and how many
+; times the shared (+1) ran, 2007, which sharing gives:
+;   main = do
+;     let xs = 1 : map (+1) xs
+;     print (take 5 xs)
+;     let evens = 0 : map (+1) odds
+;         odds  = map (+1) evens
+;     print (take 4 evens)
+;     print (take 4 odds)
+;     print (take 4 xs)            -- the same cells again
+;     print (xs !! 2000)           -- a chain 2000 deep
+;     print (evaluations of (+1))
+
+(val runs (Ref Int) (case (con Unit) u (_ (newCounter u))))
+
+; (+1), counted each time it runs
+(val inc (-> Int Int)
+  (\ ((x Int))
+    (case (tick runs) _
+      (_ (case x v (_ (prim int_add v 1)))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (letrec ((xs (List Int) (let (t (List Int) (map @Int @Int inc xs)) (con Cons @Int 1 t))))
+      (letrec ((evens (List Int) (let (t (List Int) (map @Int @Int inc odds)) (con Cons @Int 0 t)))
+               (odds (List Int) (map @Int @Int inc evens)))
+        (let (a (List Int) (take @Int 5 xs))
+        (case (printIntList a w) r1
+          ((utuple w1 _)
+            (let (b (List Int) (take @Int 4 evens))
+            (case (printIntList b w1) r2
+              ((utuple w2 _)
+                (let (c (List Int) (take @Int 4 odds))
+                (case (printIntList c w2) r3
+                  ((utuple w3 _)
+                    (let (d (List Int) (take @Int 4 xs))
+                    (case (printIntList d w3) r4
+                      ((utuple w4 _)
+                        (let (e Int (index @Int xs 2000))
+                        (case (printInt e w4) r5
+                          ((utuple w5 _) (printCount runs w5))))))))))))))))))))

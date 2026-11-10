@@ -1,25 +1,116 @@
 (* rhc's driver (the haskell98 roadmap, M8): it reads its command line and
-   runs what it asks for. An error of the user's is a line on standard
-   error and status 1; a bug of rhc's, Error.Bug, says so. *)
+   runs what it asks for. As yet that is Core: read from text, checked by
+   CoreLint and run on the Core interpreter, each stage through Pass.stage
+   so that --dump-after prints it and --lint=3 reads its text back.
+
+   A fault of the input is a line on standard error and status 1; a bug of
+   rhc's, Error.Bug, says so. A run that ends in a bottom -- an exception no
+   handler took, a stack too deep, the steps run out -- says which on
+   standard error, after what the program printed, and ends with status 1;
+   `exit` gives its own status. *)
 structure RhcMain =
 struct
   fun eprint s = TextIO.output (TextIO.stdErr, s)
 
+  (* a fault of the input, said already *)
+  exception Failed
+
+  (* the stages there are, for --dump-after *)
+  val stages = ["read"]
+
   fun version () = print ("rhc " ^ Config.version ^ " (identity " ^ Config.identity ^ ")\n")
 
-  fun run (args : string list) : OS.Process.status =
-    let val opts = RhcOptions.parse args
+  fun readFile path =
+    let val ins = TextIO.openIn path
+    in TextIO.inputAll ins before TextIO.closeIn ins end
+
+  (* Core's text read back, at level 3: print, read, print is the identity *)
+  fun roundTrip (p : Core.program) =
+    let
+      val text = CoreText.show p
+      val again = CoreText.parse text
+                  handle CoreText.Error (line, msg) =>
+                    raise Error.Bug ("Core's text does not read back, at line " ^ Int.toString line ^ ": " ^ msg)
     in
-      if #help opts then (print RhcOptions.usage; OS.Process.success)
-      else if #version opts then (version (); OS.Process.success)
-      else if null (#readCore opts) then raise RhcOptions.Usage "nothing to do: give --read-core FILE"
-      else raise RhcOptions.Usage "--read-core: Core's reader is not built yet"
+      if again <> p then raise Error.Bug "Core's text reads back as another program"
+      else if CoreText.show again <> text then raise Error.Bug "Core's text printed again is other text"
+      else ()
     end
 
-  fun main (_ : string, args : string list) : OS.Process.status =
+  (* the program of the files, read in order *)
+  fun readCore (files : string list) : Core.program =
+    let
+      fun one file =
+        CoreText.parse (readFile file)
+        handle CoreText.Error (line, msg) => (eprint (file ^ ":" ^ Int.toString line ^ ": error: " ^ msg ^ "\n"); raise Failed)
+      val read = fn () => List.concat (List.map one files)
+    in
+      Pass.stage {name = "read", showIn = NONE, show = CoreText.show,
+                  check = Pass.checkAt ("read", 3) roundTrip, size = List.length} read ()
+    end
+
+  (* CoreLint on what was read, a check of the input's, unless --lint=off *)
+  fun lint (files : string list, p : Core.program) =
+    if not (Pass.linting' 0) then ()
+    else CoreLint.check p
+         handle CoreLint.Error msg => (eprint (String.concatWith ", " files ^ ": error: " ^ msg ^ "\n"); raise Failed)
+
+  fun flush () = (TextIO.flushOut TextIO.stdOut; TextIO.flushOut TextIO.stdErr)
+
+  (* the status of a run of p *)
+  fun interpret (opts : RhcOptions.options, p : Core.program) : int =
+    let
+      val out = fn s => TextIO.output (TextIO.stdOut, s)
+      val err = fn s => (TextIO.flushOut TextIO.stdOut; TextIO.output (TextIO.stdErr, s))
+      val {outcome, ...} =
+        Pass.stage {name = "interpret", showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0}
+                   CoreInterp.run {program = p, steps = #steps opts, depth = #depth opts, out = out, err = err}
+      fun bottom why = (flush (); eprint ("rhc: bottom: " ^ why ^ "\n"); 1)
+    in
+      case outcome of
+        CoreInterp.Exit n => (flush (); n)
+      | CoreInterp.Raised (kind, msg) => bottom (kind ^ ": " ^ msg)
+      | CoreInterp.TooDeep => bottom ("the stack went deeper than " ^ Int.toString (#depth opts))
+      | CoreInterp.OutOfSteps => bottom ("the steps ran out, " ^ Int.toString (getOpt (#steps opts, 0)) ^ " of them")
+    end
+    handle CoreInterp.Stuck msg => (flush (); eprint ("rhc: the Core interpreter is stuck: " ^ msg ^ "\n"); 1)
+
+  fun run (args : string list) : int =
+    let
+      val opts = RhcOptions.parse args
+      val () = List.app (fn s => if s = "all" orelse List.exists (fn t => t = s) stages then ()
+                                 else raise RhcOptions.Usage ("--dump-after: no stage " ^ s ^ " (the stages: "
+                                                              ^ String.concatWith ", " stages ^ ")"))
+                        (!Pass.dumpAfter)
+    in
+      if #help opts then (print RhcOptions.usage; 0)
+      else if #version opts then (version (); 0)
+      else if #lintRules opts then (List.app (fn (r, _) => print (r ^ "\n")) CoreLint.rules; 0)
+      else
+        case #generate opts of
+          SOME seed => (print (CoreText.show (CoreGen.program seed)); 0)
+        | NONE =>
+            if null (#readCore opts) then raise RhcOptions.Usage "nothing to do: give --read-core FILE"
+            else
+              let
+                val () = Pass.startup ()
+                val p = readCore (#readCore opts)
+                val () = lint (#readCore opts, p)
+                val () =
+                  if #typecheckOnly opts orelse List.exists (fn Core.Val ("main", _, _) => true | _ => false) p then ()
+                  else (eprint (String.concatWith ", " (#readCore opts)
+                                ^ ": error: the program has no main to run (--typecheck-only checks one that has none)\n");
+                        raise Failed)
+                val status = if #typecheckOnly opts then 0 else interpret (opts, p)
+              in Pass.finish (); status end
+    end
+
+  fun main (_ : string, args : string list) : int =
     run args
-    handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); OS.Process.failure)
-         | Error.Bug msg => (eprint ("rhc: " ^ msg ^ "\n"); OS.Process.failure)
+    handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
+         | Failed => 1
+         | Error.Bug msg => (eprint ("rhc: " ^ msg ^ "\n"); 1)
          | IO.Io {name, function, cause} =>
-             (eprint ("rhc: " ^ name ^ ": " ^ function ^ ": " ^ exnMessage cause ^ "\n"); OS.Process.failure)
+             (eprint ("rhc: " ^ name ^ ": " ^ function ^ ": "
+                      ^ (case cause of OS.SysErr (msg, _) => msg | _ => exnMessage cause) ^ "\n"); 1)
 end

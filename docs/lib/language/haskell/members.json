@@ -1,0 +1,335 @@
+{
+ "signatures": {
+  "CORE": {
+   "doc": "Core, rhc's typed lazy intermediate language (the haskell98 roadmap, D2):\nSystem F with type constructors applied to types (`m a`), a lazy `let`\nand `letrec`, and a `case` that is the only thing that forces. A value\nis passed by an atom, a variable or a literal, so every allocation is a\n`let` and every evaluation a `case`.\n\nA type says whether a value may be unevaluated. A binding of a lifted\ntype `T` may hold a suspension; one of `!T` holds a value evaluated to\nweak head normal form. `!` stands only where a value is bound: at a\nlambda's binder, a function's parameter, a constructor's field and a\ncomponent of an unboxed tuple, and the binder of a `case` and the\nfields it binds are of the evaluated type. So a strictness result has\na type to go to, and Core to Mid knows which positions are `susp T` and\nwhich `T`. Where an evaluated value meets a lazy position, `!T` is taken\nfor `T`; the other way is a `case`.\n\nAn unlifted type, the state token `World` and an unboxed tuple, is\nnever suspended: no `let` binds it, and a `case` takes it apart. `IO a`\nis `World -> (utuple World a)` in the Prelude's Core (D25).\n\n",
+   "page": "sig/CORE.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "kind",
+     "spec": "datatype kind =\n    Star\n  | Unlifted\n  | Arrow of kind * kind",
+     "doc": "The kind of a type.\n\n",
+     "page": "sig/CORE.md#type-kind"
+    },
+    {
+     "kind": "datatype",
+     "name": "ty",
+     "spec": "datatype ty =\n    TVar of string\n  | TCon of string\n  | TApp of ty * ty\n  | TFun of ty * ty\n  | TForall of string * kind * ty\n  | TEval of ty\n  | TUTuple of ty list",
+     "doc": "A type.\n\n",
+     "page": "sig/CORE.md#type-ty"
+    },
+    {
+     "kind": "datatype",
+     "name": "lit",
+     "spec": "datatype lit =\n    LInt of IntInf.int\n  | LInteger of IntInf.int\n  | LChar of int\n  | LDouble of string\n  | LFloat of string\n  | LStr of string",
+     "doc": "A literal. A floating literal keeps the digits it was written with.\n\n",
+     "page": "sig/CORE.md#type-lit"
+    },
+    {
+     "kind": "datatype",
+     "name": "atom",
+     "spec": "datatype atom = Var of string | Lit of lit",
+     "doc": "An argument: a variable or a literal.\n\n",
+     "page": "sig/CORE.md#type-atom"
+    },
+    {
+     "kind": "datatype",
+     "name": "arg",
+     "spec": "datatype arg = TyArg of ty | ValArg of atom",
+     "doc": "What an application gives a function.\n\n",
+     "page": "sig/CORE.md#type-arg"
+    },
+    {
+     "kind": "datatype",
+     "name": "binder",
+     "spec": "datatype binder = TyBinder of string * kind | ValBinder of string * ty",
+     "doc": "What a lambda binds.\n\n",
+     "page": "sig/CORE.md#type-binder"
+    },
+    {
+     "kind": "datatype",
+     "name": "exp",
+     "spec": "datatype exp =\n    Atom of atom\n  | App of exp * arg list\n  | Lam of binder list * exp\n  | Let of string * ty * exp * exp\n  | LetRec of (string * ty * exp) list * exp\n  | Case of exp * string * alt list\n  | Con of string * ty list * atom list\n  | Prim of string * ty list * atom list\n  | UTuple of atom list\n  | Cast of exp * ty",
+     "doc": "An expression. A binder named `_` binds nothing.\n\n",
+     "page": "sig/CORE.md#type-exp"
+    },
+    {
+     "kind": "datatype",
+     "name": "alt",
+     "spec": "datatype alt =\n    AltCon of string * string list * exp\n  | AltLit of lit * exp\n  | AltUTuple of string list * exp\n  | AltDefault of exp",
+     "doc": "An alternative of a `case`.\n\n",
+     "page": "sig/CORE.md#type-alt"
+    },
+    {
+     "kind": "datatype",
+     "name": "decl",
+     "spec": "datatype decl =\n    Data of string * (string * kind) list * (string * ty list) list\n  | Newtype of string * (string * kind) list * string * ty\n  | Val of string * ty * exp",
+     "doc": "A declaration of a program. Every value of the top level is in the\nscope of all of them.\n\n",
+     "page": "sig/CORE.md#type-decl"
+    },
+    {
+     "kind": "type",
+     "name": "program",
+     "spec": "type program = decl list",
+     "doc": "A program: what it declares, in order. `main`, of type\n`World -> (utuple World T)`, is what runs.\n\n",
+     "page": "sig/CORE.md#type-program"
+    },
+    {
+     "kind": "val",
+     "name": "builtinTypes",
+     "spec": "val builtinTypes : (string * kind) list",
+     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`\nand `Ref`.\n\n",
+     "page": "sig/CORE.md#val-builtintypes"
+    },
+    {
+     "kind": "val",
+     "name": "builtinData",
+     "spec": "val builtinData : decl list",
+     "doc": "`builtinData` is the data types built in: `Bool`, whose constructors\n`False` and `True` are 0 and 1, as Mid's `bool`.\n\n",
+     "page": "sig/CORE.md#val-builtindata"
+    },
+    {
+     "kind": "val",
+     "name": "stripEval",
+     "spec": "val stripEval : ty -> ty",
+     "doc": "`stripEval t` is `t` without a `!` at its head.\n\n",
+     "page": "sig/CORE.md#val-stripeval"
+    },
+    {
+     "kind": "val",
+     "name": "isEval",
+     "spec": "val isEval : ty -> bool",
+     "doc": "`isEval t` is whether `t` has a `!` at its head.\n\n",
+     "page": "sig/CORE.md#val-iseval"
+    },
+    {
+     "kind": "val",
+     "name": "spine",
+     "spec": "val spine : ty -> ty * ty list",
+     "doc": "`spine t` is the head of the type application `t` and its arguments.\n\n",
+     "page": "sig/CORE.md#val-spine"
+    },
+    {
+     "kind": "val",
+     "name": "apply",
+     "spec": "val apply : ty * ty list -> ty",
+     "doc": "`apply (t, args)` applies `t` to `args`, left to right.\n\n",
+     "page": "sig/CORE.md#val-apply"
+    },
+    {
+     "kind": "val",
+     "name": "freeTyVars",
+     "spec": "val freeTyVars : ty -> string list",
+     "doc": "`freeTyVars t` is the type variables free in `t`, each once.\n\n",
+     "page": "sig/CORE.md#val-freetyvars"
+    },
+    {
+     "kind": "val",
+     "name": "substTy",
+     "spec": "val substTy : (string * ty) list * ty -> ty",
+     "doc": "`substTy (s, t)` replaces each variable of `s` free in `t` by its type,\nrenaming a binder of `t` that would capture a variable of those types.\n\n",
+     "page": "sig/CORE.md#val-substty"
+    },
+    {
+     "kind": "val",
+     "name": "equalTy",
+     "spec": "val equalTy : ty * ty -> bool",
+     "doc": "`equalTy (a, b)` is whether `a` and `b` are the same type, up to the\nnames of their bound variables.\n\n",
+     "page": "sig/CORE.md#val-equalty"
+    },
+    {
+     "kind": "val",
+     "name": "litTy",
+     "spec": "val litTy : lit -> ty",
+     "doc": "`litTy l` is the type of the literal `l`, without `!`.\n\n",
+     "page": "sig/CORE.md#val-litty"
+    },
+    {
+     "kind": "val",
+     "name": "lamTy",
+     "spec": "val lamTy : binder list * ty -> ty",
+     "doc": "`lamTy (binders, t)` is the type of a lambda of `binders` whose body\nhas type `t`.\n\n",
+     "page": "sig/CORE.md#val-lamty"
+    }
+   ]
+  },
+  "CORE_GEN": {
+   "doc": "A generator of Core programs (the haskell98 roadmap, D55, its second\ngenerator): well-typed lazy programs in Pałka's shape, a function from a\nlist of `Int` to another, made of `map`, `take`, `let`, `letrec`, `case`\nand forcing, applied to a partial list, one with a bottom for an element\nor its tail, and its result printed to twenty elements.\n\nA program it makes passes CoreLint and runs to an outcome, a value or a\nbottom, so that the text, the check, the interpreter and, later, the VM\ncan be held to each other on what nobody wrote by hand.\n\n",
+   "page": "sig/CORE_GEN.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "program",
+     "spec": "val program : int -> Core.program",
+     "doc": "`program seed` is the program of `seed`: the same for the same seed.\n\n",
+     "page": "sig/CORE_GEN.md#val-program"
+    }
+   ]
+  },
+  "CORE_INTERP": {
+   "doc": "The Core interpreter (the haskell98 roadmap, M8): Launchbury's natural\nsemantics of laziness as the specification, and Sestoft's machine as\nthe program, slow by design. A `let` puts a suspension in the heap; a\nvariable forced is evaluated once, under a marker that blackholes it,\nand updated with its value; a `case` waits on the stack for its\nscrutinee. Types are erased.\n\nIt is rhc's nearest reference: what the VM prints of a Core program, the\ninterpreter must print too. An exception that passes a suspension under\nevaluation puts the suspension back, so that it raises again when it is\nforced again; a suspension forced under its own evaluation raises\n`NonTermination`. The stack lives in the heap, so a deep recursion is a\nbound of the interpreter's and not the host's.\n\n",
+   "page": "sig/CORE_INTERP.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "outcome",
+     "spec": "datatype outcome =\n    Exit of int\n  | Raised of string * string\n  | TooDeep\n  | OutOfSteps",
+     "doc": "How a run ended. Every outcome but `Exit 0` is a failure, and a\nraise, a stack too deep and steps run out are one bottom.\n\n",
+     "page": "sig/CORE_INTERP.md#type-outcome"
+    },
+    {
+     "kind": "exception",
+     "name": "Stuck",
+     "spec": "exception Stuck of string",
+     "doc": "The interpreter met Core no rule of CoreLint allows: a variable not\nbound, a suspension given to a strict parameter, a value no\nalternative matches.\n\n",
+     "page": "sig/CORE_INTERP.md#exn-stuck"
+    },
+    {
+     "kind": "val",
+     "name": "run",
+     "spec": "val run : {program : Core.program, steps : int option, depth : int, out : string -> unit, err : string -> unit}\n          -> {outcome : outcome, steps : int}",
+     "doc": "`run {program, steps, depth, out, err}` runs `main` of `program`, a\nprogram CoreLint passed, and says how the run ended and the steps it\ntook.\n\nWhat it prints to standard output goes to `out`, and to standard error\nto `err`. At most `steps` steps are taken where it is `SOME`, and the\nstack is at most `depth` deep.\n\n**Raises** `Stuck` where `program` breaks a rule of Core, and where it has\nno `main`.\n\n",
+     "page": "sig/CORE_INTERP.md#val-run"
+    }
+   ]
+  },
+  "CORE_LINT": {
+   "doc": "CoreLint (the haskell98 roadmap, D2, D54): the check of a Core program.\nCore is explicitly typed, so the check is syntax-directed and unifies\nnothing: it works out the type of every expression from its parts and\nholds each to what its place wants. rhc runs it on Core read as text,\nat each boundary, and last before the crossing into Mid, where `Any`\nleaves MidLint weaker; a forgotten force, a lazy atom where `!T` is\nwanted, is the breach it is for above all.\n\nEach rule has a name, which its breach's message starts with in\nbrackets: `[force] in val main: ...`.\n\n",
+   "page": "sig/CORE_LINT.md",
+   "members": [
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of string",
+     "doc": "A breach of a rule: its message, `[RULE] in val NAME: what is wrong`.\n\n",
+     "page": "sig/CORE_LINT.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "rules",
+     "spec": "val rules : (string * string) list",
+     "doc": "`rules` is each rule's name and what it holds, in the order they are\ndocumented:\n\n- `decl`, a name declared once, a newtype's field without `!`;\n- `scope`, every variable bound;\n- `tyscope`, every type variable bound, and none with the name of a\n  type constructor;\n- `tycon`, every type constructor declared or built in;\n- `kind`, every type of the kind its place wants;\n- `eval`, `!` only at a binder, a parameter, a field or a component of\n  an unboxed tuple, of a lifted type;\n- `instantiate`, a type argument a lifted type without `!`, of its\n  variable's kind;\n- `app`, a function applied to types and values its type takes;\n- `force`, an atom given where an evaluated value is wanted evaluated;\n- `lit`, a literal in its type's range;\n- `lambda`, a lambda that binds something, each name once;\n- `let`, a `let` of a lifted type, bound to an expression of it;\n- `case`, alternatives of the scrutinee's type, that cover it and agree;\n- `con`, a constructor of a data type, given its types and fields;\n- `prim`, a primitive of CorePrim, saturated;\n- `cast`, a cast into or out of a newtype at its head;\n- `val`, a value of the top level of its type;\n- `main`, `main` of type `World -> (utuple World T)`.\n\n",
+     "page": "sig/CORE_LINT.md#val-rules"
+    },
+    {
+     "kind": "val",
+     "name": "check",
+     "spec": "val check : Core.program -> unit",
+     "doc": "`check program` is `()` where `program` keeps every rule.\n\n**Raises** `Error` at the first breach.\n\n",
+     "page": "sig/CORE_LINT.md#val-check"
+    }
+   ]
+  },
+  "CORE_PRIM": {
+   "doc": "The primitives of Core (the haskell98 roadmap, D26): what Core can do\nthat is not a function of Core, each with its type. An argument a\nprimitive reads is evaluated, `!T`; one it may leave suspended, a\nfunction or a value it stores, is lazy. A primitive that does I/O takes\nthe state token and gives it back, so that its order is its data's.\n\nThey are Rune's primitives where Mid has one of the same name, and do\nwhat it does: `int_add` raises `Overflow` past `Int`'s range, as\n`Int.+` does, and a division by zero raises `Div`. Core to Mid lowers\neach; the Core interpreter runs each (CoreInterp).\n\n",
+   "page": "sig/CORE_PRIM.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "prim",
+     "spec": "type prim = {name : string, ty : Core.ty, doc : string}",
+     "doc": "A primitive: its name, its type in Core, and what it does.\n\n",
+     "page": "sig/CORE_PRIM.md#type-prim"
+    },
+    {
+     "kind": "val",
+     "name": "prims",
+     "spec": "val prims : prim list",
+     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`;\n- I/O: `print_str`, `print_err`, `exit`, `ref_new`, `ref_get`,\n  `ref_set`, `real_world`;\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`.\n\n",
+     "page": "sig/CORE_PRIM.md#val-prims"
+    },
+    {
+     "kind": "val",
+     "name": "find",
+     "spec": "val find : string -> prim option",
+     "doc": "`find name` is the primitive called `name`, if there is one.\n\n",
+     "page": "sig/CORE_PRIM.md#val-find"
+    },
+    {
+     "kind": "val",
+     "name": "exnKinds",
+     "spec": "val exnKinds : string list",
+     "doc": "`exnKinds` is the kinds of exception, by the number `exn_kind` gives.\n\nThey are `ErrorCall`, `IOError`, `PatternMatchFail`, `NonTermination`\n(a suspension forced again under its own evaluation), `Div`, `Overflow`,\n`Subscript` and `Chr`.\n\n",
+     "page": "sig/CORE_PRIM.md#val-exnkinds"
+    }
+   ]
+  },
+  "CORE_TEXT": {
+   "doc": "Core as text, and back (the haskell98 roadmap, D2): the contract between\nthe front end, which writes Core, and Core to Mid, which reads it. `show`\nprints a program for a dump (rhc --dump-after) or a test (tests/hs/core),\nand `parse` reads what it prints, so that print, read, print is the\nidentity; rhc checks that at lint level 3.\n\nThe text is of parenthesised forms. A comment runs from `;` to the end\nof its line.\n\n```sml\nprogram := decl ...\ndecl    := (data T (TYPARAM ...) (C TYPE ...) ...)\n         | (newtype T (TYPARAM ...) C TYPE)\n         | (val x TYPE EXP)\ntyparam := a | (a KIND)                  a alone is of kind *\nkind    := * | # | (-> KIND KIND ...)    # is unlifted\ntype    := T | a | (TYPE TYPE ...) | (-> TYPE TYPE ...)\n         | (forall (TYPARAM ...) TYPE) | (utuple TYPE ...) | !TYPE\nexp     := ATOM | (EXP ARG ...) | (\\ (BINDER ...) EXP)\n         | (let (x TYPE EXP) EXP) | (letrec ((x TYPE EXP) ...) EXP)\n         | (case EXP x ALT ...) | (con C @TYPE ... ATOM ...)\n         | (prim P @TYPE ... ATOM ...) | (utuple ATOM ...) | (cast EXP TYPE)\nbinder  := (x TYPE) | @a | @(a KIND)\narg     := ATOM | @TYPE\nalt     := ((C x ...) EXP) | (LITERAL EXP) | ((utuple x ...) EXP) | (_ EXP)\natom    := x | LITERAL\nliteral := 42 | -42 | 42I | 2.5 | 2.5e-3 | 2.5F | 'c' | '\\955' | \"bytes\"\n```\n\nA word in a type is a variable where a `forall`, a type binder or the\nparameters of a declaration bind it, and a type constructor elsewhere.\nA literal ending in `I` is an `Integer`, one with a point or an exponent\na `Double`, or a `Float` ending in `F`. A string's escapes are `\\\\`,\n`\\\"`, `\\n`, `\\t` and `\\DDD`, a byte in three decimal digits; a\ncharacter's are those, `\\'` and `\\D...`, a code point in decimal. A name\nthat is a word of the syntax (`let`, `case`, `*`, `_`, ...), that starts\nas a literal, `@` or `!` would, or that holds a space, a parenthesis, a\nquotation mark, `;` or a backquote, is written between backquotes, with\n`\\\\` and a backslashed backquote inside.\n\n",
+   "page": "sig/CORE_TEXT.md",
+   "members": [
+    {
+     "kind": "exception",
+     "name": "Error",
+     "spec": "exception Error of int * string",
+     "doc": "A fault in the text: the line it is on, and what is wrong.\n\n",
+     "page": "sig/CORE_TEXT.md#exn-error"
+    },
+    {
+     "kind": "val",
+     "name": "parse",
+     "spec": "val parse : string -> Core.program",
+     "doc": "`parse text` is the program `text` holds.\n\n**Raises** `Error` where `text` is not a program.\n\n",
+     "page": "sig/CORE_TEXT.md#val-parse"
+    },
+    {
+     "kind": "val",
+     "name": "parseType",
+     "spec": "val parseType : string -> Core.ty",
+     "doc": "`parseType text` is the type `text` holds, whose variables a `forall`\nbinds.\n\n**Raises** `Error` where `text` is not one type.\n\n",
+     "page": "sig/CORE_TEXT.md#val-parsetype"
+    },
+    {
+     "kind": "val",
+     "name": "show",
+     "spec": "val show : Core.program -> string",
+     "doc": "`show program` is the text of `program`, which `parse` reads back as\n`program`.\n\n",
+     "page": "sig/CORE_TEXT.md#val-show"
+    },
+    {
+     "kind": "val",
+     "name": "showTy",
+     "spec": "val showTy : Core.ty -> string",
+     "doc": "`showTy t` is the text of the type `t`, on one line.\n\n",
+     "page": "sig/CORE_TEXT.md#val-showty"
+    },
+    {
+     "kind": "val",
+     "name": "showKind",
+     "spec": "val showKind : Core.kind -> string",
+     "doc": "`showKind k` is the text of the kind `k`.\n\n",
+     "page": "sig/CORE_TEXT.md#val-showkind"
+    },
+    {
+     "kind": "val",
+     "name": "showExp",
+     "spec": "val showExp : Core.exp -> string",
+     "doc": "`showExp e` is the text of the expression `e`.\n\n",
+     "page": "sig/CORE_TEXT.md#val-showexp"
+    },
+    {
+     "kind": "val",
+     "name": "showLit",
+     "spec": "val showLit : Core.lit -> string",
+     "doc": "`showLit l` is the text of the literal `l`.\n\n",
+     "page": "sig/CORE_TEXT.md#val-showlit"
+    },
+    {
+     "kind": "val",
+     "name": "showName",
+     "spec": "val showName : string -> string",
+     "doc": "`showName x` is the name `x` as the text writes it, between backquotes\nwhere it must be.\n\n",
+     "page": "sig/CORE_TEXT.md#val-showname"
+    }
+   ]
+  }
+ },
+ "structures": {
+  "Core": "CORE",
+  "CoreGen": "CORE_GEN",
+  "CoreInterp": "CORE_INTERP",
+  "CoreLint": "CORE_LINT",
+  "CorePrim": "CORE_PRIM",
+  "CoreText": "CORE_TEXT"
+ }
+}

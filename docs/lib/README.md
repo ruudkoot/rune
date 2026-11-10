@@ -58,6 +58,7 @@ Library is what every program starts with.
 | Library |  |
 | --- | --- |
 | [C declaration frontend](language/c/README.md) `language/c` | This library preprocesses and parses C interface descriptions in Standard ML. It has no dependency on a C compiler or an FFI runtime. Include loading is an explicit resolver, and target predefinitions and expression widths are caller-supplied. It does not infer SML names, ownership or errors. |
+| [Haskell 98 front end](language/haskell/README.md) `language/haskell` | This library is the front end and the intermediate language of rhc, the Haskell 98 compiler of the haskell98 roadmap. Rune alone builds it (the roadmap's D42): the other SML systems may compile it, and nothing holds them to it. |
 
 ## Foreign interfaces
 

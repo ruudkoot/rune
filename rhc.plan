@@ -3,11 +3,32 @@ basis demand
 library language/haskell lib/language/haskell
   form header
   export signature CORE
+  export signature CORE_GEN
+  export signature CORE_INTERP
+  export signature CORE_LINT
+  export signature CORE_PRIM
+  export signature CORE_TEXT
   export structure Core
+  export structure CoreGen
+  export structure CoreInterp
+  export structure CoreLint
+  export structure CorePrim
+  export structure CoreText
   friend ../../../rhc.build
   use lib/language/haskell/core.build
     unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
     unit language/haskell:core.sml lib/language/haskell/core.sml ascii demand
+    unit language/haskell:coremap.sml lib/language/haskell/coremap.sml ascii demand
+    unit language/haskell:coretext_sig.sml lib/language/haskell/coretext_sig.sml ascii demand
+    unit language/haskell:coretext.sml lib/language/haskell/coretext.sml ascii demand
+    unit language/haskell:coreprim_sig.sml lib/language/haskell/coreprim_sig.sml ascii demand
+    unit language/haskell:coreprim.sml lib/language/haskell/coreprim.sml ascii demand
+    unit language/haskell:corelint_sig.sml lib/language/haskell/corelint_sig.sml ascii demand
+    unit language/haskell:corelint.sml lib/language/haskell/corelint.sml ascii demand
+    unit language/haskell:coreinterp_sig.sml lib/language/haskell/coreinterp_sig.sml ascii demand
+    unit language/haskell:coreinterp.sml lib/language/haskell/coreinterp.sml ascii demand
+    unit language/haskell:coregen_sig.sml lib/language/haskell/coregen_sig.sml ascii demand
+    unit language/haskell:coregen.sml lib/language/haskell/coregen.sml ascii demand
   end
 end
 library unicode lib/unicode
@@ -51,7 +72,7 @@ end
 provenance
   input rhc.build 097d2776d40d8c3efe816ce408a53d282208aa3f4004be50753cd99059b4a4ba
   input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
-  input lib/language/haskell/library.build 67e0babfa47cb282c241231c4f536d88363323cc408ee5b1f3c8de239be35f9e
-  input lib/language/haskell/core.build 3455d71efcb4494bdd21f81dc8c29d79b640ddb223231ac3cbe92c73b4de2b67
+  input lib/language/haskell/library.build 977dc990b968ec70f6459700501bbffc344ce1788f04ddf68a0022eb5aaf1eef
+  input lib/language/haskell/core.build 0f36e5aac40b386c85e511c915c7658103e067154e6090b313352c3ea3d1db70
   input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
 end

@@ -1233,7 +1233,7 @@ struct
      library's header) *)
   fun exampleLibraries lib =
     case lib of "terminal" => ["unicode"] | "jsonrpc" => ["json"] | "dap" => ["json"] | "lsp" => ["json"] | _ => []
-  val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter", "lsp", "language/c", "ffi/model", "ffi/marshal", "ffi/runtime", "ffi/win32/common"]
+  val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter", "lsp", "language/c", "language/haskell", "ffi/model", "ffi/marshal", "ffi/runtime", "ffi/win32/common"]
   val native = case OS.Process.getEnv "NATIVE_HOST" of SOME v => v = "yes" | NONE => exists "bin/runevm-native"
 
   val tree =
