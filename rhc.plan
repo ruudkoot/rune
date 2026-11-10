@@ -1,40 +1,5 @@
 rune-plan 1
 basis demand
-library language/haskell lib/language/haskell
-  form header
-  export signature CORE
-  export signature CORE_GEN
-  export signature CORE_INTERP
-  export signature CORE_LINT
-  export signature CORE_PRIM
-  export signature CORE_TEXT
-  export signature CORE_TO_MID
-  export structure Core
-  export structure CoreGen
-  export structure CoreInterp
-  export structure CoreLint
-  export structure CorePrim
-  export structure CoreText
-  export structure CoreToMid
-  friend ../../../rhc.build
-  use lib/language/haskell/core.build
-    unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
-    unit language/haskell:core.sml lib/language/haskell/core.sml ascii demand
-    unit language/haskell:coremap.sml lib/language/haskell/coremap.sml ascii demand
-    unit language/haskell:coretext_sig.sml lib/language/haskell/coretext_sig.sml ascii demand
-    unit language/haskell:coretext.sml lib/language/haskell/coretext.sml ascii demand
-    unit language/haskell:coreprim_sig.sml lib/language/haskell/coreprim_sig.sml ascii demand
-    unit language/haskell:coreprim.sml lib/language/haskell/coreprim.sml ascii demand
-    unit language/haskell:corelint_sig.sml lib/language/haskell/corelint_sig.sml ascii demand
-    unit language/haskell:corelint.sml lib/language/haskell/corelint.sml ascii demand
-    unit language/haskell:coreinterp_sig.sml lib/language/haskell/coreinterp_sig.sml ascii demand
-    unit language/haskell:coreinterp.sml lib/language/haskell/coreinterp.sml ascii demand
-    unit language/haskell:coregen_sig.sml lib/language/haskell/coregen_sig.sml ascii demand
-    unit language/haskell:coregen.sml lib/language/haskell/coregen.sml ascii demand
-    unit language/haskell:coretomid_sig.sml lib/language/haskell/coretomid_sig.sml ascii demand
-    unit language/haskell:coretomid.sml lib/language/haskell/coretomid.sml ascii demand
-  end
-end
 library unicode lib/unicode
   form open
   unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii demand
@@ -54,6 +19,84 @@ library unicode lib/unicode
   unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
   unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
   unit unicode:security.sml lib/unicode/security.sml ascii demand
+end
+library language/haskell lib/language/haskell
+  form header
+  requires unicode
+  export signature CORE
+  export signature CORE_GEN
+  export signature CORE_INTERP
+  export signature CORE_LINT
+  export signature CORE_PRIM
+  export signature CORE_TEXT
+  export signature CORE_TO_MID
+  export signature HS_AST
+  export signature HS_CHAR
+  export signature HS_DUMP
+  export signature HS_LAYOUT
+  export signature HS_LEXER
+  export signature HS_LITERATE
+  export signature HS_PARSER
+  export signature HS_PRINT
+  export signature HS_SOURCE
+  export signature HS_TOKEN
+  export structure Core
+  export structure CoreGen
+  export structure CoreInterp
+  export structure CoreLint
+  export structure CorePrim
+  export structure CoreText
+  export structure CoreToMid
+  export structure HsAst
+  export structure HsChar
+  export structure HsDump
+  export structure HsLayout
+  export structure HsLexer
+  export structure HsLiterate
+  export structure HsParser
+  export structure HsPrint
+  export structure HsSource
+  export structure HsToken
+  friend ../../../rhc.build
+  use lib/language/haskell/syntax.build
+    unit language/haskell:source_sig.sml lib/language/haskell/source_sig.sml ascii demand
+    unit language/haskell:source.sml lib/language/haskell/source.sml ascii demand
+    unit language/haskell:char_sig.sml lib/language/haskell/char_sig.sml ascii demand
+    unit language/haskell:char.sml lib/language/haskell/char.sml ascii demand
+    unit language/haskell:token_sig.sml lib/language/haskell/token_sig.sml ascii demand
+    unit language/haskell:token.sml lib/language/haskell/token.sml ascii demand
+    unit language/haskell:literate_sig.sml lib/language/haskell/literate_sig.sml ascii demand
+    unit language/haskell:literate.sml lib/language/haskell/literate.sml ascii demand
+    unit language/haskell:lexer_sig.sml lib/language/haskell/lexer_sig.sml ascii demand
+    unit language/haskell:lexer.sml lib/language/haskell/lexer.sml ascii demand
+    unit language/haskell:layout_sig.sml lib/language/haskell/layout_sig.sml ascii demand
+    unit language/haskell:layout.sml lib/language/haskell/layout.sml ascii demand
+    unit language/haskell:ast_sig.sml lib/language/haskell/ast_sig.sml ascii demand
+    unit language/haskell:ast.sml lib/language/haskell/ast.sml ascii demand
+    unit language/haskell:parser_sig.sml lib/language/haskell/parser_sig.sml ascii demand
+    unit language/haskell:parser.sml lib/language/haskell/parser.sml ascii demand
+    unit language/haskell:print_sig.sml lib/language/haskell/print_sig.sml ascii demand
+    unit language/haskell:print.sml lib/language/haskell/print.sml ascii demand
+    unit language/haskell:dump_sig.sml lib/language/haskell/dump_sig.sml ascii demand
+    unit language/haskell:dump.sml lib/language/haskell/dump.sml ascii demand
+  end
+  use lib/language/haskell/core.build
+    unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
+    unit language/haskell:core.sml lib/language/haskell/core.sml ascii demand
+    unit language/haskell:coremap.sml lib/language/haskell/coremap.sml ascii demand
+    unit language/haskell:coretext_sig.sml lib/language/haskell/coretext_sig.sml ascii demand
+    unit language/haskell:coretext.sml lib/language/haskell/coretext.sml ascii demand
+    unit language/haskell:coreprim_sig.sml lib/language/haskell/coreprim_sig.sml ascii demand
+    unit language/haskell:coreprim.sml lib/language/haskell/coreprim.sml ascii demand
+    unit language/haskell:corelint_sig.sml lib/language/haskell/corelint_sig.sml ascii demand
+    unit language/haskell:corelint.sml lib/language/haskell/corelint.sml ascii demand
+    unit language/haskell:coreinterp_sig.sml lib/language/haskell/coreinterp_sig.sml ascii demand
+    unit language/haskell:coreinterp.sml lib/language/haskell/coreinterp.sml ascii demand
+    unit language/haskell:coregen_sig.sml lib/language/haskell/coregen_sig.sml ascii demand
+    unit language/haskell:coregen.sml lib/language/haskell/coregen.sml ascii demand
+    unit language/haskell:coretomid_sig.sml lib/language/haskell/coretomid_sig.sml ascii demand
+    unit language/haskell:coretomid.sml lib/language/haskell/coretomid.sml ascii demand
+  end
 end
 library json lib/json
   form header
@@ -124,15 +167,17 @@ program
     unit compiler:driver/midpipeline.sml lib/compiler/driver/midpipeline.sml ascii
   end
   unit src/rhc/options.sml src/rhc/options.sml ascii
+  unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
   unit src/rhc/main.sml src/rhc/main.sml ascii
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build 5f0b7bec2f7311829fc9b899a53cdc9452678fbf3f5bba0b07c08c00431f3c6c
+  input rhc.build a1df80b66039bc3637a73b823db2b7b52dd971bf05c7a7acf99eaa9c2c7607ed
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
-  input lib/language/haskell/library.build d24749e53924f3bfe30524515747398f5250194b1165e7fbff896b76f62cdfc2
-  input lib/language/haskell/core.build 23f6e8905127977948510fd0522271664b50ae89a5f805908692fe1e11d96ea7
   input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+  input lib/language/haskell/library.build c93153d5190703d681b07a7ad0e6e22f7b45aa72acb283e42843c27844b953b8
+  input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
+  input lib/language/haskell/core.build 23f6e8905127977948510fd0522271664b50ae89a5f805908692fe1e11d96ea7
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

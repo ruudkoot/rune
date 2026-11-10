@@ -2189,6 +2189,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/hscore.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
+               tests/runner/hssyntax.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
@@ -2196,6 +2197,21 @@ bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
 bin/rune-test: bin/rune-test.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n: "$${RUNE_LINT=2}"\nexport RUNE_LINT\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
 	chmod +x $@
+
+# The syntax of Haskell 98 in lib/language/haskell (the haskell98 roadmap's
+# M11): the driver of its tests, tests/hs/syntax/README.md, and their jobs,
+# tests/runner/hssyntax.sml.
+HS_SYNTAX_SRCS := lib/language/haskell/library.build lib/language/haskell/syntax.build $(wildcard lib/language/haskell/*.sml) \
+                  tests/hs/syntax/driver.build tests/hs/syntax/generate.sml tests/hs/syntax/driver.sml
+check-tools: bin/rune-hs-syntax
+bin/rune-hs-syntax.rbc: $(RUNE) $(HS_SYNTAX_SRCS) FORCE
+	$(RUNE) -O2 --build tests/hs/syntax/driver.build -o $@
+bin/rune-hs-syntax: bin/rune-hs-syntax.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --equality-work 2000000000 "$$d/rune-hs-syntax.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-hs-syntax
+test-hs-syntax: $(RUNE) vm bin/rune-hs-syntax bin/rune-test
+	$(RUNE_TEST) --tier test-hs-syntax
 
 # Individual SML native checks avoid rebuilding the complete test inventory
 # in every worker process. Scheduling and requirements remain in rune-test.

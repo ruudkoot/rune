@@ -1,0 +1,4 @@
+module M where
+f = y where
+  x = 1
+  y = 2

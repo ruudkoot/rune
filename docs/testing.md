@@ -514,9 +514,11 @@ each clause of the Haskell 98 Report: E9's 3,901, each with its `id`,
 `none`) and `how`, from a reading of the text that no program has checked
 yet, and three columns of rhc's: `status` (`Supported`, `Partial` or
 `Planned`, the words of [language.md](language.md)), `reading` (the R
-numbers of E9's readings that concern the row, which the roadmap's *What
-the Report says* cites) and `deviation` (empty, or the program that pins it,
-`DIR/NAME` from `tests/hs`). The table lands as data: only errata and
+numbers of the readings that concern the row: E9's R1 to R54, which the
+roadmap's *What the Report says* cites, and those after, each with its
+heading in `tests/hs/readings.md`, where the oracles part from the Report)
+and `deviation` (empty, or the program that pins it, `DIR/NAME` from
+`tests/hs`). The table lands as data: only errata and
 readings edit it, and no script lands to make it (`runner/migration-inventory`).
 Its text is the December 2002 Report with the published errata applied
 (D38): `tests/hs/errata.tsv` lists the page's 18 errata, each with the rows
@@ -548,8 +550,10 @@ rows it covers (a production's rows, a definition's), the readings it pins
 
 With those, the table's form: its header and the errata list's, no row or id
 twice, the classes, tests, statuses and sources of E9's columns, readings R1
-to R54, every row accounted for (3,901 and what the errata add), and every
-row whose text names an erratum listed by one, and back.
+to R54 or headed in `tests/hs/readings.md`, every row accounted for (3,901
+and what the errata add), and every row whose text names an erratum listed
+by one, and back. A program's first line ends at Haskell's first newline, a
+return, a line feed or a form feed.
 `hs/conformance/faults` plants each breach in a private tree and wants it
 refused, and a tree that keeps every rule, with a row of each class
 supported and a deviation pinned, accepted. A row leaves `Planned` when its
@@ -566,6 +570,33 @@ the same as rhc grows from a parser to a compiler. Before it lands it is put
 to the oracles of D52 (GHC with the strict shim, Hugs `+98`, nhc98 `-98`,
 MicroHs as a smoke test); where they part from the Report, rhc follows
 D38's rule and the disagreement is recorded as a reading.
+
+**The syntax of Haskell 98** (`lib/language/haskell`'s `syntax.build`, the
+roadmap's M11; [tests/hs/syntax/README.md](../tests/hs/syntax/README.md)).
+rhc's commands for the round trips are `--print`, `--print-layout`,
+`--print-exact`, `--dump-tokens` and `--dump-ast --no-spans`, and its
+generator is `bin/rune-hs-syntax generate-files`, the syntax generator of
+D55; `--typecheck-only`, which judges an accept program, checks as far as
+rhc goes, its parse. Besides the clause programs of the parser's rows,
+`tests/hs/roundtrip` holds the parser's own fixtures: a file for each part of
+the grammar and the lexical syntax, the crafted cases of the roadmap's E10
+that the syntax accepts, and, for rows of the layout rules and the lexical
+syntax, a file with its expansion written by hand beside it (`NAME.braces`).
+What those runners do not hold the syntax to is `tests/runner/hssyntax.sml`'s,
+the jobs `hs/syntax/*` (`make test-hs-syntax`) of `bin/rune-hs-syntax`: the
+first line of each diagnostic of the lexer, layout and the parser and of
+the cases the syntax refuses (`tests/hs/syntax/errors`); the tokens of the
+layout algorithm against the expansions; 2,500 trees of the syntax generator
+printed both ways and read back in one process; the parser's mutants, E10's
+five, which the tree test cannot see and the token test must, and a lexer
+that drops a comment, which only the exact print sees, each built and run
+over `tests/hs/roundtrip`; the cost of a token in `runevm --count`'s
+instructions, bytes and objects, within `tests/hs/syntax/budget`; and,
+nightly where GHC is installed (the capability `ghc`), GHC's dump of each
+file's parsed tree against its dump of the file's explicit print
+(`hs/syntax/ghc`; E10's 1,662 files of the corpus too, with
+`RUNE_HS_SYNTAX_GHC_LIST` and `RUNE_HS_SYNTAX_GHC_ROOT`), its known
+differences in `tests/hs/syntax/ghc-dump.tsv`.
 
 ## rhc's Core
 

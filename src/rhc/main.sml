@@ -96,6 +96,9 @@ struct
       (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
 
   fun run (args : string list) : int =
+    case RhcSyntax.command args of
+      SOME syntax => if OS.Process.isSuccess (syntax ()) then 0 else 1
+    | NONE =>
     let
       val opts = RhcOptions.parse args
       val () = List.app (fn s => if s = "all" orelse List.exists (fn t => t = s) stages then ()

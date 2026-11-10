@@ -24,3 +24,6 @@ share/rhc/haskell98/** -whitespace
 # rhc's clause programs of the line ends of the Report's 2.2 keep their CR LF
 # and their CR (tests/hs/accept; docs/testing.md, rhc's conformance table).
 tests/hs/accept/lex.white.newline.cr*.hs -text
+tests/hs/roundtrip/syntax/Crlf.hs -text
+tests/hs/roundtrip/layout/lay.col.newlinechars_ff.hs -text
+tests/hs/roundtrip/layout/lay.col.newlinechars_ff.braces -text

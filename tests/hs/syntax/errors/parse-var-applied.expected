@@ -1,0 +1,1 @@
+parse-var-applied.hs:2:4: error: in a pattern, the variable `g` applied to arguments: only a constructor can be

@@ -1,0 +1,1 @@
+parse-dotted.hs:2:8: error: a dotted module name after `import`, `Data.List`, which Haskell 98 does not have
