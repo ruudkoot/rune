@@ -66,6 +66,8 @@ struct
     let
       val out = fn s => TextIO.output (TextIO.stdOut, s)
       val err = fn s => (TextIO.flushOut TextIO.stdOut; TextIO.output (TextIO.stdErr, s))
+      (* the program's name, command_name's: the file read last (ruling 33) *)
+      val () = case #readCore opts of [] => () | files => CorePrimSys.program := {name = List.last files, args = []}
       val {outcome, ...} =
         Pass.stage {name = "interpret", showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0}
                    CoreInterp.run {program = p, steps = #steps opts, depth = #depth opts, out = out, err = err}

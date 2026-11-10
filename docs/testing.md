@@ -832,7 +832,11 @@ written in Core) has `prims-*.core`, Core's primitives on their edges
 print the same), files, standard input read across the edge of a chunk, the
 classes and mappings of `Char`, and what the library's PreludeRuntime names
 beside the Report's (`runtime-library`: arrays, an IOError's details, the
-IO family's positions of files and errors of the system's). `lib/language/haskell/coreruntime`
+IO family's positions of files and errors of the system's), and the system's
+family's (`prims-sys`: a command's exit, the environment, the program's name
+and arguments, the clock and the zone; `prims-sys-files`: directories, a
+file's kind, access, mode and time, a listing, renames and the working
+directory). `lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
 `lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
 and the first and the last of each range and run of its data.

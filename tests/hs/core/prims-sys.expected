@@ -1,0 +1,22 @@
+exit 3: 3
+true: 0
+killed: 265
+PATH is set: True
+PATH has a value: True
+an unset variable is set: False
+its value: []
+arguments: 0
+the first: []
+the one before it: []
+the name's last arc starts: [prims-sys]
+it ends .rbc: False
+it ends .core: False
+now is after 2020: True
+processor time: True
+the clock goes on: True
+the offset is of quarter hours: True
+and within 14 hours: True
+the offset moves with summer time: True
+the zone has a name: True
+a seed of 56 bits: True
+raised Domain

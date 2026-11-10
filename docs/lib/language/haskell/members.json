@@ -249,7 +249,7 @@
      "kind": "val",
      "name": "families",
      "spec": "val families : CorePrimFamily.family list",
-     "doc": "`families` is the families of primitives (CORE\\_PRIM\\_FAMILY), each of a\nfile of its own.\n\n`prims` lists their primitives after its own: the IO library's\nhandles and the system's errors (CorePrimIo).\n\n",
+     "doc": "`families` is the families of primitives (CORE\\_PRIM\\_FAMILY), each of a\nfile of its own.\n\n`prims` lists their primitives after its own: the IO library's\nhandles and the system's errors (CorePrimIo), and the operating\nsystem's file system, process, clock and randomness, which Directory,\nSystem, Time, CPUTime and Random read (CorePrimSys).\n\n",
      "page": "sig/CORE_PRIM.md#val-families"
     },
     {
