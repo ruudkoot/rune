@@ -308,10 +308,10 @@ exp.prec.family	3	exp is a family indexed by precedence i in 0..9 and associativ
 exp.fix.disambig	3	Expressions with infix operators are disambiguated by the operators' fixity	syntax	run	declared fixities change the value of an unparenthesised expression	hand	Planned		
 exp.fix.left	3	Consecutive operators of one precedence, both left associative, associate left	syntax	run	a - b - c evaluates as (a - b) - c	hand	Planned		
 exp.fix.right	3	Consecutive operators of one precedence, both right associative, associate right	syntax	run	a ^ b ^ c evaluates as a ^ (b ^ c)	hand	Planned		
-exp.fix.mixlr	3	x op y op' z of one precedence with one left and one right associative operator is a syntax error	syntax	reject	infixl 5 and infixr 5 operators used together unparenthesised	hand	Planned		
-exp.fix.mixln	3	One precedence, one left and one non-associative operator, unparenthesised, is a syntax error	syntax	reject	infixl 4 with == unparenthesised	hand	Planned		
-exp.fix.mixrn	3	One precedence, one right and one non-associative operator, unparenthesised, is a syntax error	syntax	reject	infixr 4 with == unparenthesised	hand	Planned		
-exp.fix.nonassoc	3	Two non-associative operators of one precedence, unparenthesised, are a syntax error	syntax	reject	a == b == c	hand	Planned		
+exp.fix.mixlr	3	x op y op' z of one precedence with one left and one right associative operator is a syntax error	syntax	reject	infixl 5 and infixr 5 operators used together unparenthesised	hand	Supported		
+exp.fix.mixln	3	One precedence, one left and one non-associative operator, unparenthesised, is a syntax error	syntax	reject	infixl 4 with == unparenthesised	hand	Supported		
+exp.fix.mixrn	3	One precedence, one right and one non-associative operator, unparenthesised, is a syntax error	syntax	reject	infixr 4 with == unparenthesised	hand	Supported		
+exp.fix.nonassoc	3	Two non-associative operators of one precedence, unparenthesised, are a syntax error	syntax	reject	a == b == c	hand	Supported		
 exp.fix.paren	3	Parentheses around either pair remove the error	syntax	accept	(a == b) == c and a == (b == c) both compile	hand	Supported		
 exp.fix.differentprec	3	The tighter precedence binds first; associativity matters only at equal precedence	syntax	run	a + b * c, a * b + c	hand	Planned		
 exp.neg.onlyprefix	3	Negation is the only prefix operator: no other operator may be written prefix	syntax	reject	+ x, * x and ! x as expressions	hand	Supported		
@@ -373,7 +373,7 @@ exp.lambda.pats	3.3	A lambda is \ p1 ... pn -> e with n >= 1, the pi being apat	
 exp.lambda.zero	3.3	A lambda has at least one pattern	syntax	reject	\ -> 1	hand	Supported		
 exp.lambda.infixpat	3.3	\x:xs->x is syntactically incorrect	syntax	reject	the Report's example	hand	Supported		
 exp.lambda.infixpat.paren	3.3	\(x:xs)->x is legal	syntax	accept	the Report's example	hand	Supported		
-exp.lambda.conapp	3.3	An unparenthesised constructor application is not an apat	syntax	reject	\Just x -> x	hand	Planned		
+exp.lambda.conapp	3.3	An unparenthesised constructor application is not an apat	syntax	reject	\Just x -> x	hand	Supported		
 exp.lambda.linear	3.3	The set of patterns of a lambda must be linear: no variable twice in the set	static	reject	\x x -> x and \(x,y) x -> x	hand	Planned		
 tr.lambda	3.3	\ p1 ... pn -> e = \ x1 ... xn -> case (x1, ..., xn) of (p1, ..., pn) -> e, the xi new	dynamic	run	literal translation at -O0 differenced against compiled code, including the strictness order	hand	Planned		
 tr.lambda.fresh	3.3	The xi are new identifiers: they capture nothing in e	dynamic	run	source naming x1 in e and in the patterns	hand	Planned		
@@ -390,30 +390,30 @@ exp.neg.nolink	3.4	There is no link between the local meaning of - and unary neg
 exp.neg.e1e2	3.4	e1-e2 parses as infix application of binary -	syntax	run	f-1 subtracts, printer output of the AST	hand	Planned		
 exp.neg.e1paren	3.4	e1(-e2) is the alternative parsing	syntax	run	f(-1) applies	hand	Planned		
 exp.neg.minus.paren	3.4	(-) is (\ x y -> x-y) and does not denote (\ x -> -x)	dynamic	run	(-) 3 1 is 2	hand	Planned		
-exp.neg.afterop	3.4	Negation may not directly follow an operator of higher or equal precedence to 6	syntax	reject	a * - b, a ^ - b, a + - b, by lexp6 -> - exp7	hand	Planned		
+exp.neg.afterop	3.4	Negation may not directly follow an operator of higher or equal precedence to 6	syntax	reject	a * - b, a ^ - b, a + - b, by lexp6 -> - exp7	hand	Supported		
 exp.neg.afterop.low	3.4	Negation may follow an operator of lower precedence than 6	syntax	accept	a == - b, a && - b == c	hand	Supported		
 exp.neg.double	3.4	Negation cannot be applied directly to a negation	syntax	reject	- - a	hand	Supported		
 exp.neg.lefttail	3.4	lexp6 can begin a left-associative chain at level 6	syntax	accept	- a + b - c	hand	Supported		
 exp.neg.rightofcons	3.4	Negation may head the operand of a lower level	syntax	accept	- 1 : [], (-1) : [] both compile, the first parsing as - 1 at level 6 under :	hand	Supported		
 exp.sec.left.form	3.5	A left section is ( e op )	syntax	accept	(a +), (a `op`)	hand	Supported		
 exp.sec.right.form	3.5	A right section is ( op e )	syntax	accept	(+ a), (`op` a)	hand	Supported		
-exp.sec.rule.right	3.5	(op e) is legal if and only if (x op e) parses as (x op (e))	syntax	reject	the ill-formed cases below, by this one rule	hand	Planned		
-exp.sec.rule.left	3.5	(e op) is legal if and only if (e op x) parses as ((e) op x)	syntax	reject	the ill-formed cases below, by this one rule	hand	Planned		
-exp.sec.ex.staraplusb	3.5	(*a+b) is syntactically invalid	syntax	reject	the Report's example	hand	Planned		
+exp.sec.rule.right	3.5	(op e) is legal if and only if (x op e) parses as (x op (e))	syntax	reject	the ill-formed cases below, by this one rule	hand	Supported		
+exp.sec.rule.left	3.5	(e op) is legal if and only if (e op x) parses as ((e) op x)	syntax	reject	the ill-formed cases below, by this one rule	hand	Supported		
+exp.sec.ex.staraplusb	3.5	(*a+b) is syntactically invalid	syntax	reject	the Report's example	hand	Supported		
 exp.sec.ex.plusastarb	3.5	(+a*b) is valid	syntax	accept	the Report's example	hand	Supported		
 exp.sec.ex.starparen	3.5	(*(a+b)) is valid	syntax	accept	the Report's example	hand	Supported		
 exp.sec.ex.aplusb	3.5	(a+b+) is valid, as + is left associative	syntax	accept	the Report's example	hand	Supported	R67	
-exp.sec.ex.plusaplusb	3.5	(+a+b) is invalid	syntax	reject	the Report's example	hand	Planned		
+exp.sec.ex.plusaplusb	3.5	(+a+b) is invalid	syntax	reject	the Report's example	hand	Supported		
 exp.sec.ex.plusparen	3.5	(+(a+b)) is the legal way to write it	syntax	accept	the Report's example	hand	Supported		
 exp.sec.ex.let	3.5	(let n = 10 in n +) is invalid, by the let/lambda meta-rule	syntax	reject	the Report's example	hand	Supported		
 exp.sec.ex.lambda	3.5	(\x -> x +) is invalid, by the same rule	syntax	reject	implied by the rule; see readings.md for a fixity-after-parse implementation	hand	Supported	R10	
 exp.sec.right.assoc	3.5	A right section of a right-associative operator may hold a chain of it	syntax	accept	(^ a ^ b), by ( qop(r,i) rexpi )	hand	Supported		
-exp.sec.left.rightassoc	3.5	A left section of a right-associative operator may not hold a chain of it	syntax	reject	(a ^ b ^)	hand	Planned		
-exp.sec.nonassoc	3.5	A section of a non-associative operator may not hold a chain of it at the same precedence	syntax	reject	(a == b ==), (== a == b)	hand	Planned		
+exp.sec.left.rightassoc	3.5	A left section of a right-associative operator may not hold a chain of it	syntax	reject	(a ^ b ^)	hand	Supported		
+exp.sec.nonassoc	3.5	A section of a non-associative operator may not hold a chain of it at the same precedence	syntax	reject	(a == b ==), (== a == b)	hand	Supported		
 exp.sec.tighter	3.5	A section's operand may hold tighter operators	syntax	accept	(a * b +), (+ a * b)	hand	Supported	R67	
 exp.sec.neg	3.5	(- exp) is not a section but an application of prefix negation	syntax	run	(- 1) is a number, not a function: (- 1) 2 is a type error unless Num on functions	hand	Planned		
 exp.sec.neg.left	3.5	A left section may begin with negation where it is level 6	syntax	accept	(-5 +), by ( lexp6 qop(l,6) )	hand	Supported		
-exp.sec.neg.tighter	3.5	A left section of a tighter operator may not begin with negation	syntax	reject	(-5 *): -5 * x parses as -(5*x), so the rule refuses it; see readings.md	hand	Planned	R10	
+exp.sec.neg.tighter	3.5	A left section of a tighter operator may not begin with negation	syntax	reject	(-5 *): -5 * x parses as -(5*x), so the rule refuses it; see readings.md	hand	Supported	R10	
 exp.sec.subtract	3.5	(subtract exp) is equivalent to the disallowed section	dynamic	run	subtract 1 3 is 2	hand	Planned		
 exp.sec.plusneg	3.5	(+ (- exp)) can serve the same purpose	dynamic	run	value	hand	Planned		
 exp.sec.partial	3.5	A section partially applies a binary operator	dynamic	run	map (2^) and map (^2) give different lists	hand	Planned		
@@ -603,7 +603,7 @@ pat.npk.toplevel	3.17.1	var + integer is a pat, not a pat0: it appears unparenth
 pat.npk.nested	3.17.1	As a sub-pattern it needs parentheses	syntax	accept	f (n+1) = n, Just (n+1)	hand	Supported		
 pat.npk.conarg	3.17.1	Unparenthesised it is no argument of a constructor	syntax	reject	f (Just n+1) = n	hand	Supported		
 pat.infix.fixity	3.17.1	Infix constructor patterns are resolved by fixity with the expression rules	syntax	run	x:y:zs, a :+ b :* c with declared fixities; no rule of 3.17.3 unfolds infix form to K form: see readings.md	hand	Planned	R9	
-pat.infix.nonassoc	3.17.1	Non-associative constructor operators follow the same mixing rule	syntax	reject	a `C` b `C` c for infix C	hand	Planned		
+pat.infix.nonassoc	3.17.1	Non-associative constructor operators follow the same mixing rule	syntax	reject	a `C` b `C` c for infix C	hand	Supported		
 pat.neg.int	3.17.1	A negative integer literal is a pattern, as lpat6	syntax	accept	f (-1) = 0; case x of -1 -> 0	hand	Supported		
 pat.neg.float	3.17.1	A negative float literal is a pattern	syntax	accept	f (-1.5) = 0	hand	Supported		
 pat.neg.only.literal	3.17.1	Only a literal may follow the - of a pattern	syntax	reject	f (-x) = 0	hand	Supported		
@@ -616,7 +616,7 @@ pat.lit.string	3.17.1	string	syntax	accept	f "ab" = 1	hand	Supported
 pat.con.arity.few	3.17.1	The arity of a constructor must match the number of sub-patterns: too few	static	reject	f (Just) = 1, f (C 1) with C of arity 2: one cannot match a partially applied constructor	hand	Planned		
 pat.con.arity.many	3.17.1	too many	static	reject	f (Just 1 2) = 1	hand	Planned		
 pat.con.arity.nullary	3.17.1	A gcon of arity 0 is an apat	syntax	accept	f Nothing x = 1	hand	Supported		
-pat.con.arity.args	3.17.1	A gcon of arity k >= 1 needs parentheses as an apat argument	syntax	reject	f Just x = 1	hand	Planned		
+pat.con.arity.args	3.17.1	A gcon of arity k >= 1 needs parentheses as an apat argument	syntax	reject	f Just x = 1	hand	Supported		
 pat.label.arityfree	3.17.1	A labeled pattern K {} or K {f = p} names any number of sub-patterns: no arity check	static	accept	f (F {}) = 1 for F of arity 2; see readings.md	hand	Planned	R16	
 pat.linear.one	3.17.1	All patterns must be linear: f (x,x) = x is illegal	static	reject	the Report's example	hand	Planned		
 pat.linear.as	3.17.1	An as-pattern's name counts	static	reject	x@(x,y)	hand	Planned		
@@ -779,8 +779,8 @@ ty.list.sugar	4.1.2	[t] is equivalent to [] t	static	accept	a value of one type 
 ty.builtin.sugar.scope	4.1.2	the special forms always denote the built-in constructors, regardless of what is in scope	static	accept	with `import Prelude ()` and a user `data List`, `[Int]`, `(Int,Int)` and `a -> a` still type	hand	Planned		
 ty.builtin.prefix.scope	4.1.2	the prefix constructors (->), [], (), (,) always denote the built-ins	static	accept	the same with the prefix forms, under `import Prelude ()`	hand	Planned		
 ty.builtin.notqualified	4.1.2	the built-in type constructors cannot be qualified	syntax	reject	`x :: Prelude.[] Int` and `Prelude.()` are refused	hand	Supported		
-ty.builtin.noimport	4.1.2	the built-in type constructors cannot be mentioned in import lists	module	reject	`import Prelude ((,))` and `import Prelude ([])` are refused	hand	Planned		
-ty.builtin.noexport	4.1.2	the built-in type constructors cannot be mentioned in export lists	module	reject	`module M ((->)) where` is refused	hand	Planned		
+ty.builtin.noimport	4.1.2	the built-in type constructors cannot be mentioned in import lists	module	reject	`import Prelude ((,))` and `import Prelude ([])` are refused	hand	Supported		
+ty.builtin.noexport	4.1.2	the built-in type constructors cannot be mentioned in export lists	module	reject	`module M ((->)) where` is refused	hand	Supported		
 ty.builtin.semantics	4.1.2	list and tuple types have the semantics of the equivalent user-defined algebraic data types	dynamic	run	differential: lazy matching on a list and on a user list, on a tuple and on a user pair	hand	Planned		
 ty.consistent	4.1.2	if ti is the type of ei then (\ e1 -> e2), [e1], (e1,e2) have types (t1 -> t2), [t1], (t1,t2)	static	accept	each expression under a signature of that form	hand	Planned		
 ty.quant.implicit	4.1.2	type variables in a type expression are universally quantified, with no explicit syntax	static	accept	`a -> a` denotes forall a. a -> a: used at two types	hand	Planned		
@@ -822,7 +822,7 @@ dec.data.vars.rhs	4.2.1	no other type variable may appear on the right-hand side
 dec.data.vars.ctx	4.2.1	no other type variable may appear in cx	static	reject	`data Eq b => T a = C a` is refused	hand	Planned		
 dec.data.kind	4.2.1	the new constant T has kind k1->...->kk->*, the ki given by kind inference	static	accept	`data T f a = C (f a)` used at kind (*->*)->*->*	hand	Planned		
 dec.data.partial	4.2.1	T may be used in type expressions with anywhere between 0 and k arguments	static	accept	`instance Functor (Either a)`-like instances and `T` as an argument to a variable of higher kind	hand	Planned		
-dec.data.visibility	4.2.1	the export list's form of the datatype's name controls the constructors' visibility	module	reject	importing an abstract type and naming its constructor is refused (5.8)	hand	Planned		
+dec.data.visibility	4.2.1	the export list's form of the datatype's name controls the constructors' visibility	module	reject	importing an abstract type and naming its constructor is refused (5.8)	hand	Supported		
 dec.data.deriving.optional	4.2.1	the deriving part is optional	syntax	accept	a data declaration with and without it	hand	Supported		
 dec.data.deriving.forms	4.2.1	deriving takes one class, or a parenthesised list of zero or more, possibly qualified	syntax	accept	`deriving Eq`, `deriving ()`, `deriving (Eq, Prelude.Ord)`	hand	Supported		
 dec.data.infix.prec	4.2.1	constructor application binds tighter than infix constructor application in a constr	syntax	accept	`data T = Int :+ Maybe Int` has (Maybe Int) as its right operand	hand	Supported		
@@ -838,8 +838,8 @@ dec.field.order	4.2.1	positional arguments occur in the order of the labelled fi
 dec.field.shared.same	4.2.1	a field label may be used in several constructors if its type is the same in all	static	accept	`data S = S1 { x :: Int } | S2 { x :: Int }`	hand	Planned		
 dec.field.shared.synonym	4.2.1	that sameness is taken after type synonym expansion	static	accept	`type I = Int; data S = S1 { x :: I } | S2 { x :: Int }`	hand	Planned		
 dec.field.shared.differ	4.2.1	a label with different types in two constructors is an error	static	reject	`data T = T1 { y :: Int } | T2 { y :: Bool }` is refused	hand	Planned		
-dec.field.onetype	4.2.1	a label cannot be shared by more than one type in scope	static	reject	two data declarations of one module with field x are refused	hand	Planned		
-dec.field.namespace	4.2.1	field names share the top-level namespace with variables and class methods and must not conflict	static	reject	a field x and a top-level x, and a field x and a method x, are refused	hand	Planned		
+dec.field.onetype	4.2.1	a label cannot be shared by more than one type in scope	static	reject	two data declarations of one module with field x are refused	hand	Supported		
+dec.field.namespace	4.2.1	field names share the top-level namespace with variables and class methods and must not conflict	static	reject	a field x and a top-level x, and a field x and a method x, are refused	hand	Supported		
 dec.field.pattern.empty	4.2.1	the pattern F {} matches any value built with F, whether or not F was declared with record syntax	dynamic	run	on `data T = F Int Int | G` the pattern matches F ⊥ ⊥ and fails on G	hand	Planned		
 dec.strict.flagged	4.2.1	an argument of a constructor is evaluated if the type has a strictness flag	dynamic	run	`case D undefined of D _ -> 1` diverges for `data D = D !Int`: bottom probe by exit status	hand	Planned		
 dec.strict.unflagged	4.2.1	an argument is evaluated only if the type has a strictness flag	dynamic	run	`case D1 undefined of D1 _ -> 1` is 1 for `data D1 = D1 Int`	hand	Planned		
@@ -901,9 +901,9 @@ cls.class.super.acyclic	4.3.1	the superclass relation must not be cyclic	static	
 cls.class.super.dag	4.3.1	the superclass relation may be a directed acyclic graph	static	accept	a diamond of four classes	hand	Planned		
 cls.method.bysig	4.3.1	the methods are precisely the vi with an explicit type signature in cdecls	static	accept	a signature of several names declares each	hand	Planned		
 cls.method.scope	4.3.1	a method's scope extends outside the class declaration	static	accept	a top-level use	hand	Planned		
-cls.method.clash.top	4.3.1	a method may not have the name of a top-level definition	static	reject	a method x and a top-level `x = 1` in one module	hand	Planned		
-cls.method.clash.field	4.3.1	a method may not have the name of a field	static	reject	a method x and a field x in one module	hand	Planned		
-cls.method.clash.method	4.3.1	a method may not have the name of another method	static	reject	x in two classes of one module, and x twice in one class	hand	Planned		
+cls.method.clash.top	4.3.1	a method may not have the name of a top-level definition	static	reject	a method x and a top-level `x = 1` in one module	hand	Supported		
+cls.method.clash.field	4.3.1	a method may not have the name of a field	static	reject	a method x and a field x in one module	hand	Supported		
+cls.method.clash.method	4.3.1	a method may not have the name of another method	static	reject	x in two classes of one module, and x twice in one class	hand	Supported		
 cls.method.type	4.3.1	the top-level type of vi is forall u,w. (C u, cxi) => ti	static	accept	for `class Foo a where op :: Num b => a -> b -> a`, a signature at `(Foo a, Num b) => a -> b -> a` is accepted	hand	Planned		
 cls.method.mentions	4.3.1	ti must mention u	static	reject	`class C a where m :: Int` is refused	hand	Planned		
 cls.method.othervars	4.3.1	ti may mention other variables, in which the method is polymorphic	static	accept	a method used at two types of w	hand	Planned		
@@ -919,7 +919,7 @@ cls.default.mutual	4.3.1	defaults may refer to each other and to the class's oth
 cls.default.var	4.3.1	the left-hand side of a default method may be a variable	static	accept	`m = id`	hand	Planned		
 cls.default.fun	4.3.1	the left-hand side of a default method may be a function definition	static	accept	`m x = x`, and an infix definition	hand	Planned		
 cls.default.pattern	4.3.1	the left-hand side may not be a pattern	syntax	reject	`class Foo a where { op1, op2 :: a -> a; (op1, op2) = ... }` is refused	hand	Supported		
-cls.default.nonmethod	4.3.1	a default may be given only for the class's own methods	static	reject	a binding of another name in cdecls, and of a method of another class, are refused	hand	Planned		
+cls.default.nonmethod	4.3.1	a default may be given only for the class's own methods	static	reject	a binding of another name in cdecls, and of a method of another class, are refused	hand	Supported		
 cls.default.guards	4.3.1	a default method is a normal value definition	static	accept	with guards and a where	hand	Planned		
 cls.class.onlythese	4.3.1	no other declarations are permitted in cdecls	syntax	reject	a data declaration in a class is refused	hand	Supported		
 cls.class.nowhere	4.3.1	a class declaration may have no where part	syntax	accept	`class (Read a, Show a) => Textual a`	hand	Supported		
@@ -933,7 +933,7 @@ cls.inst.form.tuple	4.3.2	the instance type may be a tuple of distinct variables
 cls.inst.form.list	4.3.2	the instance type may be a list of a variable	syntax	accept	`instance C [a]`	hand	Supported		
 cls.inst.form.fun	4.3.2	the instance type may be a function between distinct variables	syntax	accept	`instance C (a -> b)`	hand	Supported		
 cls.inst.form.parencon	4.3.2	k may be 0 in the parenthesised form	syntax	accept	`instance C (T)`	hand	Supported		
-cls.inst.reject.repeated	4.3.2	the type variables must be distinct	static	reject	`instance C (a,a)`, `instance C (T a a)`, `instance C (a -> a)` are refused	hand	Planned		
+cls.inst.reject.repeated	4.3.2	the type variables must be distinct	static	reject	`instance C (a,a)`, `instance C (T a a)`, `instance C (a -> a)` are refused	hand	Supported		
 cls.inst.reject.concrete	4.3.2	the arguments must be type variables	syntax	reject	`instance C (Int,a)`, `instance C (Maybe Int)` are refused	hand	Supported		
 cls.inst.reject.nested	4.3.2	the arguments must be simple	syntax	reject	`instance C [[a]]` is refused	hand	Supported		
 cls.inst.reject.var	4.3.2	the instance type must have a type constructor at its head	syntax	reject	`instance C a` and `instance C (f a)` are refused	hand	Supported		
@@ -941,7 +941,7 @@ cls.inst.reject.synonym	4.3.2	T must not be a type synonym	static	reject	`instan
 cls.inst.reject.synonymctx	4.3.2	that holds for a synonym which would expand to a legal form	static	reject	`type L = []; instance K L` is refused	hand	Planned		
 cls.inst.ctx.simple	4.3.2	the instance context is an scontext: assertions on bare variables	syntax	reject	`instance Eq (f a) => C (T f a)` is refused	hand	Supported		
 cls.inst.ctx.qualifiedclass	4.3.2	the class of an instance head may be qualified	static	accept	`instance Ix.Ix T where ...`	hand	Planned		
-cls.inst.body.methodsonly	4.3.2	the declarations may hold bindings only for methods of C	static	reject	a binding of another variable, and of a method of another class, are refused	hand	Planned		
+cls.inst.body.methodsonly	4.3.2	the declarations may hold bindings only for methods of C	static	reject	a binding of another variable, and of a method of another class, are refused	hand	Supported		
 cls.inst.body.notinscope	4.3.2	it is illegal to bind a method that is not in scope	static	reject	`import M (C)` without the method, then a binding of the method, is refused	hand	Planned	R76	
 cls.inst.body.anyname	4.3.2	the name under which the method is in scope is immaterial	static	accept	`import qualified Ix; instance Ix.Ix T where range = ...` is legal	hand	Planned		
 cls.inst.body.lhsunqualified	4.3.2	the binding names the method unqualified, whatever the name in scope	syntax	reject	`Ix.range = ...` in an instance is refused	hand	Supported		
@@ -1007,12 +1007,12 @@ def.literal.int	4.3.4	integer literals with nothing to fix their type take the f
 def.literal.exponent	4.3.4	the exponent of (^) is ambiguous and defaults	static	run	`x ^ 2` at a known x compiles, the 2 at Integer	hand	Planned		
 dec.sig.basic	4.4.1	`v1,...,vn :: cx => t` asserts vi :: cx => t for each i	static	accept	a signature of two names, each used at the type	hand	Planned		
 dec.sig.shares.nothing	4.4.1	the names of one signature have independent quantifiers	static	accept	`f, g :: a -> a` with f and g used at different types	hand	Planned		
-dec.sig.needsbinding	4.4.1	each vi must have a value binding in the same declaration list	static	reject	a signature with no binding is refused	hand	Planned		
-dec.sig.outer	4.4.1	it is invalid to give a signature for a variable bound in an outer scope	static	reject	`f = 1; g = let f :: Int in 2` and a lambda variable's signature in a let are refused	hand	Planned		
-dec.sig.imported	4.4.1	that holds for an imported name	static	reject	a top-level `map :: Int` without a local map is refused	hand	Planned		
+dec.sig.needsbinding	4.4.1	each vi must have a value binding in the same declaration list	static	reject	a signature with no binding is refused	hand	Supported		
+dec.sig.outer	4.4.1	it is invalid to give a signature for a variable bound in an outer scope	static	reject	`f = 1; g = let f :: Int in 2` and a lambda variable's signature in a let are refused	hand	Supported		
+dec.sig.imported	4.4.1	that holds for an imported name	static	reject	a top-level `map :: Int` without a local map is refused	hand	Supported		
 dec.sig.patternbound	4.4.1	the binding may be a pattern binding	static	accept	`x, y :: Int; (x, y) = (1, 2)`	hand	Planned		
-dec.sig.once	4.4.1	it is invalid to give more than one signature for a variable	static	reject	two signatures are refused	hand	Planned		
-dec.sig.once.identical	4.4.1	that holds even if the signatures are identical	static	reject	`f :: Int; f :: Int; f = 1` is refused	hand	Planned		
+dec.sig.once	4.4.1	it is invalid to give more than one signature for a variable	static	reject	two signatures are refused	hand	Supported		
+dec.sig.once.identical	4.4.1	that holds even if the signatures are identical	static	reject	`f :: Int; f :: Int; f = 1` is refused	hand	Supported		
 dec.sig.scope	4.4.1	a type variable is scoped only over the signature that contains it	static	reject	`f :: a -> a; f x = x :: a` is refused	hand	Planned		
 dec.sig.scope.local	4.4.1	the same for a local signature	static	reject	`f :: a -> [a]; f x = g where { g :: [a]; g = [x] }` is refused	hand	Planned		
 dec.sig.uses	4.4.1	each use of a variable with a signature has the declared type	static	reject	`sqr :: Int -> Int` then `sqr 0.1` is refused	hand	Planned		
@@ -1029,7 +1029,7 @@ dec.sig.polyrec.dict	4.4.1	polymorphic recursion works with overloading, a diffe
 dec.fix.kinds	4.4.2	there are three kinds of fixity, infix, infixl, infixr	static	run	`1 - 2 - 3` under each: infix is refused, the other two evaluate differently	hand	Planned		
 dec.fix.ops.many	4.4.2	a fixity declaration may name several operators	syntax	accept	``infixl 6 +++, ---, `foo` ``	hand	Supported		
 dec.fix.conop	4.4.2	an op may be a varop or a conop, symbolic or back-quoted	static	run	fixities for `+++`, `:+`, `` `f` ``, `` `C` `` shown by evaluation	hand	Planned		
-dec.fix.range	4.4.2	the integer must be in the range 0 to 9	static	reject	`infixl 10 +++` is refused	hand	Planned		
+dec.fix.range	4.4.2	the integer must be in the range 0 to 9	static	reject	`infixl 10 +++` is refused	hand	Supported		
 dec.fix.range.zero	4.4.2	0 and 9 are in range	static	accept	`infixl 0 +++`, `infixr 9 ---`	hand	Planned		
 dec.fix.integer.form	4.4.2	the grammar's integer is any integer literal	lex	accept	`infixl 0x5 +++` and `infixl 05 +++`; see readings.md	hand	Supported	R25	
 dec.fix.negative	4.4.2	the precedence is an integer token, with no sign	syntax	reject	`infixl -1 +++` is refused	hand	Supported		
@@ -1037,10 +1037,10 @@ dec.fix.default.digit	4.4.2	if the digit is omitted level 9 is assumed	static	ru
 dec.fix.default.none	4.4.2	an operator lacking a fixity declaration is infixl 9	static	run	an undeclared `+++` binds tighter than `*` and to the left	hand	Planned		
 dec.fix.default.backquote	4.4.2	that holds for a back-quoted identifier	static	run	`` 2 * 3 `f` 4 `` parses with `f` tighter	hand	Planned		
 dec.fix.where	4.4.2	a fixity declaration may appear wherever a type signature may	static	accept	at top level, in let, in where, in a class	hand	Planned		
-dec.fix.sameseq	4.4.2	it can only occur in the sequence of declarations that declares the operator	static	reject	a fixity declaration in a let for an outer operator is refused	hand	Planned		
-dec.fix.imported	4.4.2	that excludes an imported operator	module	reject	`infixl 1 +` under the implicit Prelude, with no local +, is refused	hand	Planned		
-dec.fix.unbound	4.4.2	the operator must be declared in that sequence	static	reject	a fixity declaration for a name bound nowhere is refused	hand	Planned		
-dec.fix.once	4.4.2	at most one fixity declaration may be given for an operator	static	reject	two declarations are refused, even if identical	hand	Planned		
+dec.fix.sameseq	4.4.2	it can only occur in the sequence of declarations that declares the operator	static	reject	a fixity declaration in a let for an outer operator is refused	hand	Supported		
+dec.fix.imported	4.4.2	that excludes an imported operator	module	reject	`infixl 1 +` under the implicit Prelude, with no local +, is refused	hand	Supported		
+dec.fix.unbound	4.4.2	the operator must be declared in that sequence	static	reject	a fixity declaration for a name bound nowhere is refused	hand	Supported		
+dec.fix.once	4.4.2	at most one fixity declaration may be given for an operator	static	reject	two declarations are refused, even if identical	hand	Supported		
 dec.fix.local	4.4.2	a local operator may have a local fixity	static	run	a let-bound operator with a fixity declaration beside it	hand	Planned		
 dec.fix.constructor	4.4.2	fixity declarations cover data constructors	static	run	`infixr 5 :+:` for a top-level constructor, in expressions and in patterns	hand	Planned		
 dec.fix.pattern	4.4.2	the fixity of a constructor operator holds in patterns	static	run	`f (a :+: b :+: c) = ...` nests by the declared associativity	hand	Planned		
@@ -1060,14 +1060,14 @@ dec.fix.table.plus	4.4.2	+ is infixl 6	prelude	run	below *, left nesting at a no
 dec.fix.table.minus	4.4.2	- is infixl 6	prelude	run	`1-2-3` is -4	hand	Planned		
 dec.fix.table.colon	4.4.2	: is infixr 5	prelude	run	`1:2:[]` types	hand	Planned		
 dec.fix.table.plusplus	4.4.2	++ is infixr 5	prelude	run	mixed with : without parentheses	hand	Planned		
-dec.fix.table.eqeq	4.4.2	== is infix 4	prelude	reject	`a == b == c` is refused	hand	Planned		
-dec.fix.table.neq	4.4.2	/= is infix 4	prelude	reject	`a /= b /= c` is refused	hand	Planned		
-dec.fix.table.lt	4.4.2	< is infix 4	prelude	reject	`a < b < c` is refused	hand	Planned		
-dec.fix.table.le	4.4.2	<= is infix 4	prelude	reject	`a <= b <= c` is refused	hand	Planned		
-dec.fix.table.gt	4.4.2	> is infix 4	prelude	reject	`a > b > c` is refused	hand	Planned		
-dec.fix.table.ge	4.4.2	>= is infix 4	prelude	reject	`a >= b >= c` is refused	hand	Planned		
-dec.fix.table.elem	4.4.2	`elem` is infix 4	prelude	reject	``a `elem` b `elem` c`` is refused	hand	Planned		
-dec.fix.table.notelem	4.4.2	`notElem` is infix 4	prelude	reject	``a `notElem` b `notElem` c`` is refused	hand	Planned		
+dec.fix.table.eqeq	4.4.2	== is infix 4	prelude	reject	`a == b == c` is refused	hand	Supported		
+dec.fix.table.neq	4.4.2	/= is infix 4	prelude	reject	`a /= b /= c` is refused	hand	Supported		
+dec.fix.table.lt	4.4.2	< is infix 4	prelude	reject	`a < b < c` is refused	hand	Supported		
+dec.fix.table.le	4.4.2	<= is infix 4	prelude	reject	`a <= b <= c` is refused	hand	Supported		
+dec.fix.table.gt	4.4.2	> is infix 4	prelude	reject	`a > b > c` is refused	hand	Supported		
+dec.fix.table.ge	4.4.2	>= is infix 4	prelude	reject	`a >= b >= c` is refused	hand	Supported		
+dec.fix.table.elem	4.4.2	`elem` is infix 4	prelude	reject	``a `elem` b `elem` c`` is refused	hand	Supported		
+dec.fix.table.notelem	4.4.2	`notElem` is infix 4	prelude	reject	``a `notElem` b `notElem` c`` is refused	hand	Supported		
 dec.fix.table.andand	4.4.2	&& is infixr 3	prelude	run	above ||, right nesting by short circuit on ⊥	hand	Planned		
 dec.fix.table.oror	4.4.2	|| is infixr 2	prelude	run	right nesting by short circuit on ⊥	hand	Planned		
 dec.fix.table.thenm	4.4.2	>> is infixl 1	prelude	run	a left nesting at a user monad that records its shape	hand	Planned		
@@ -1090,21 +1090,21 @@ dec.bind.both.local	4.4.3	either binding may appear in a where or let	static	acc
 dec.fun.lhs.var	4.4.3	funlhs may be a variable and one or more apats	syntax	accept	`f x (y:ys) = ...`	hand	Supported		
 dec.fun.lhs.infix	4.4.3	funlhs may be an infix definition of a varop	syntax	accept	``x `plus` y = ...`` and `x +++ y = ...`	hand	Supported		
 dec.fun.lhs.prec	4.4.3	the operands of an infix funlhs are patterns at the operator's precedence	syntax	accept	with `infixl 6 +++`, `a :* b +++ c = ...`, and a left-associative chain of the operator in lpat position	hand	Supported	R68	
-dec.fun.lhs.prec.bad	4.4.3	an operand at a lower precedence than the operator is refused	syntax	reject	with `infixl 9 +++`, `a :+ b +++ c = ...` for a lower-level :+ is refused unparenthesised	hand	Planned		
+dec.fun.lhs.prec.bad	4.4.3	an operand at a lower precedence than the operator is refused	syntax	reject	with `infixl 9 +++`, `a :+ b +++ c = ...` for a lower-level :+ is refused unparenthesised	hand	Supported		
 dec.fun.lhs.paren	4.4.3	a parenthesised funlhs may be applied to further patterns	syntax	accept	``(x `plus` y) z = ...``	hand	Supported		
 dec.fun.lhs.nestedparen	4.4.3	the parenthesised form nests	syntax	accept	`((f x) y) z = ...`	hand	Supported		
 dec.fun.lhs.qualified	4.4.3	the function's name is a var, unqualified	syntax	reject	`M.f x = 1` and ``x `M.f` y = 1`` are refused	hand	Supported		
 dec.fun.equiv	4.4.3.1	the three definitions of plus are equivalent	dynamic	run	`plus x y z = x+y+z`, ``x `plus` y = \ z -> x+y+z``, ``(x `plus` y) z = x+y+z`` give the same results	hand	Planned		
 dec.fun.clauses	4.4.3.1	a function binding is one or more clauses tried in order	dynamic	run	overlapping clauses: the first that matches is taken	hand	Planned		
-dec.fun.contiguous	4.4.3.1	all clauses defining a function must be contiguous	static	reject	`f 0 = 1; g = 2; f n = n` is refused	hand	Planned		
-dec.fun.contiguous.sig	4.4.3.1	a signature between clauses breaks contiguity	static	reject	`f 0 = 1; f :: Int -> Int; f n = n` is refused	hand	Planned		
-dec.fun.samearity	4.4.3.1	the number of patterns in each clause must be the same	static	reject	`f 0 = 1; f x y = 2` is refused	hand	Planned		
-dec.fun.linear	4.4.3.1	no variable may appear more than once in the set of patterns of a clause	static	reject	`f x x = 1` and `f (x, y) [x] = 1` are refused	hand	Planned		
-dec.fun.rebind	4.4.3.1	a variable may have one binding in a declaration list	static	reject	`x = 1; y = 2; x = 3` and `f x = 1; (f, y) = ...` are refused	hand	Planned		
+dec.fun.contiguous	4.4.3.1	all clauses defining a function must be contiguous	static	reject	`f 0 = 1; g = 2; f n = n` is refused	hand	Supported		
+dec.fun.contiguous.sig	4.4.3.1	a signature between clauses breaks contiguity	static	reject	`f 0 = 1; f :: Int -> Int; f n = n` is refused	hand	Supported		
+dec.fun.samearity	4.4.3.1	the number of patterns in each clause must be the same	static	reject	`f 0 = 1; f x y = 2` is refused	hand	Supported		
+dec.fun.linear	4.4.3.1	no variable may appear more than once in the set of patterns of a clause	static	reject	`f x x = 1` and `f (x, y) [x] = 1` are refused	hand	Supported		
+dec.fun.rebind	4.4.3.1	a variable may have one binding in a declaration list	static	reject	`x = 1; y = 2; x = 3` and `f x = 1; (f, y) = ...` are refused	hand	Supported		
 dec.fun.guards	4.4.3.1	a clause may have guards, tried in order	dynamic	run	a guard falling through to the next clause	hand	Planned		
 dec.fun.guards.fallthrough	4.4.3.1	when all guards of a clause fail the next clause is tried	dynamic	run	by the translation's rule (c)	hand	Planned		
 dec.fun.where.scope	4.4.3.1	the where's declarations scope over all the guards and bodies of a clause	static	accept	a where variable used in a guard and in two bodies	hand	Planned		
-dec.fun.where.clause	4.4.3.1	they do not scope over other clauses	static	reject	a where variable of one clause used in the next is refused	hand	Planned		
+dec.fun.where.clause	4.4.3.1	they do not scope over other clauses	static	reject	a where variable of one clause used in the next is refused	hand	Supported		
 dec.fun.where.patvars	4.4.3.1	the where sees the clause's pattern variables	static	accept	`f x = y where y = x`	hand	Planned		
 dec.fun.nomatch	4.4.3.1	a call matching no clause is ⊥	dynamic	run	bottom probe by exit status	hand	Planned		
 dec.fun.shorthand	4.4.3.1	`= e where {decls}` is shorthand for `| True = e where {decls}`	dynamic	run	differential of the two forms	hand	Planned		
@@ -1148,7 +1148,7 @@ dec.gen.group.ambiguous	4.5.2	one context for each variable makes a variable wit
 dec.gen.sig.identical	4.5.2	explicit signatures for several variables of a group must have contexts identical up to renaming	static	reject	`f :: Eq a => a -> Bool; g :: Ord a => a -> Bool`, mutually recursive, is refused; see readings.md	hand	Planned	R21	
 dec.gen.sig.renamed	4.5.2	up to renaming of the type variables	static	accept	the same with `Eq a` and `Eq b`	hand	Planned		
 dec.ctx.hnf	4.5.3	a context constrains only a type variable or a variable applied to types, so types from generalization are reduced to head normal form	static	accept	`f xs y = xs == [y]` has type Eq a => [a] -> a -> Bool: accepted at that signature	hand	Planned		
-dec.ctx.hnf.notlist	4.5.3	the type is not Eq [a] => ...	static	reject	`f :: Eq [a] => [a] -> a -> Bool` is refused by 4.1.3	hand	Planned		
+dec.ctx.hnf.notlist	4.5.3	the type is not Eq [a] => ...	static	reject	`f :: Eq [a] => [a] -> a -> Bool` is refused by 4.1.3	hand	Supported		
 dec.ctx.noinstance	4.5.3	if no instance is in scope for the reduction it is a static error	static	reject	`f x = [x] == [id]`-like comparison at functions is refused	hand	Planned		
 dec.ctx.tvarhead	4.5.3	a constraint C (m t), m a generalised variable, cannot be reduced	static	accept	`f :: (Monad m, Eq (m a)) => a -> m a -> Bool; f x y = return x == y`	hand	Planned		
 dec.ctx.tvarhead.inferred	4.5.3	that context is inferred	static	accept	the same with no signature, used at Maybe Int	hand	Planned		
@@ -1188,8 +1188,8 @@ mr.rule2.wholemodule	4.5.5	the whole module is seen first: a later use determine
 mr.rule2.laterdecl	4.5.5	the determining use may be anywhere in the module	static	accept	`len1 = genericLength "Hello"; len2 = (2*len1) :: Rational` of module M: len1 is Rational	hand	Planned		
 mr.rule2.conflict	4.5.5	two uses at different types conflict	static	reject	`x = 1; a = x :: Int; b = x :: Double` is refused	hand	Planned		
 mr.rule2.m1m2	4.5.5	the exact types of a module's variables are determined by that module alone	module	reject	M1 with `default (Int, Double); len1 = genericLength "Hello"`, M2 with `len2 = (2*len1) :: Rational` is refused	hand	Planned		
-mr.rule2.m1.type	4.5.5	in that example len1 gets type Int	module	accept	`len2 = (2*len1) :: Int` in M2 is accepted	hand	Planned		
-mr.rule2.m1.sig	4.5.5	a signature on len1 solves the problem	module	accept	`len1 :: Num a => a` in M1 makes M2 legal	hand	Planned		
+mr.rule2.m1.type	4.5.5	in that example len1 gets type Int	module	accept	`len2 = (2*len1) :: Int` in M2 is accepted	hand	Supported		
+mr.rule2.m1.sig	4.5.5	a signature on len1 solves the problem	module	accept	`len1 :: Num a => a` in M1 makes M2 legal	hand	Supported		
 mr.rule2.notdefaultable	4.5.5	a remaining variable that is not defaultable is an error	static	reject	`x = read "1"; main = print 1` is refused: read's a has no numeric class	hand	Planned		
 mr.rule2.nested	4.5.5	the issue does not arise for nested bindings: their whole scope is visible	static	accept	`f = let x = 1 in x :: Double`	hand	Planned		
 mr.rule2.mutual	4.5.5	for mutually recursive modules the Report does not say what `an entire module` then means	module	none	5.7 leaves separate compilation open: rhc's reading is a decision; see readings.md	hand	Planned	R20	
@@ -1218,169 +1218,169 @@ kind.consistent	4.6	each constructor and class is used with one kind wherever it
 kind.sig.fun	4.6	the arguments of (->) have kind *	static	reject	`f :: Maybe -> Int` is refused	hand	Planned		
 kind.sig.star	4.6	a signature's type has kind *	static	reject	`x :: Maybe` is refused	hand	Planned		
 kind.sig.toomany	4.6	an application needs a function kind	static	reject	`x :: Int Int` and `x :: Maybe Int Int` are refused	hand	Planned		
-prog.main.name	5	A program must contain a module called Main	module	reject	link a set of modules none of which is Main: refused	hand	Planned		
-prog.main.export	5	Module Main must export the value main	module	reject	module Main () where main = return (): refused	hand	Planned		
-prog.main.defined	5	Module Main must have a main in scope to export	module	reject	module Main (main) where x = 1: refused	hand	Planned		
-prog.main.imported	5	main need only be exported by Main, so it may be imported and re-exported	module	accept	module Main (main) where import M (main); see readings.md, the text says export, not define	hand	Planned	R33	
+prog.main.name	5	A program must contain a module called Main	module	reject	link a set of modules none of which is Main: refused	hand	Supported		
+prog.main.export	5	Module Main must export the value main	module	reject	module Main () where main = return (): refused	hand	Supported		
+prog.main.defined	5	Module Main must have a main in scope to export	module	reject	module Main (main) where x = 1: refused	hand	Supported		
+prog.main.imported	5	main need only be exported by Main, so it may be imported and re-exported	module	accept	module Main (main) where import M (main); see readings.md, the text says export, not define	hand	Supported	R33	
 prog.main.type	5	main must have type IO t for some type t	static	reject	main :: Int; main = 1: refused	hand	Planned		
 prog.main.type.any	5	The t of IO t is any type	static	accept	main :: IO Int; main = return 3	hand	Planned		
 prog.main.type.poly	5	A main of polymorphic type IO a instantiates to IO t	static	accept	main :: IO a; main = ioError (userError "x"); the exit status shows it ran	hand	Planned		
 prog.main.value	5	The value of a program is main in Main; executing the program performs that computation	dynamic	run	output of a main that prints	hand	Planned		
 prog.main.discard	5	The result of main, of type t, is discarded	dynamic	run	main = return undefined exits with success; nothing forces the result	hand	Planned		
 mod.def.entity	5	An entity is a value, type or class defined in, imported into or exported from a module	module	none	a definition of a term; tested through the rows that use it	hand	Planned		
-mod.import.reference	5	Modules reference other modules by explicit import declarations	module	accept	a two-module program	hand	Planned		
+mod.import.reference	5	Modules reference other modules by explicit import declarations	module	accept	a two-module program	hand	Supported		
 mod.recursive	5	Modules may be mutually recursive	module	accept	two modules importing each other compile as one program and run; see readings.md for what 5.7 allows an implementation to demand	hand	Planned	R28 R29	
-mod.recursive.types	5	Mutual recursion covers types and classes as well as values	module	accept	a data type in A uses a type of B and the reverse	hand	Planned		
-mod.recursive.instances	5	Mutual recursion covers instances, each module seeing the other's	module	accept	A defines a class, B an instance A's code uses through the cycle	hand	Planned		
-mod.notfirstclass	5	Modules are not first-class values	module	reject	a module name used as an expression is refused: a conid with no constructor of that name	hand	Planned		
+mod.recursive.types	5	Mutual recursion covers types and classes as well as values	module	accept	a data type in A uses a type of B and the reverse	hand	Supported		
+mod.recursive.instances	5	Mutual recursion covers instances, each module seeing the other's	module	accept	A defines a class, B an instance A's code uses through the cycle	hand	Supported		
+mod.notfirstclass	5	Modules are not first-class values	module	reject	a module name used as an expression is refused: a conid with no constructor of that name	hand	Supported		
 mod.flatten	5	A multi-module program can be converted to one module by renaming and concatenation, keeping its meaning	module	run	the three-module example and its one-module form print the same	hand	Planned		
-mod.flatten.example	5	The example Main importing A and B with main = A.f >> B.f is valid	module	accept	compile and run it	hand	Planned		
+mod.flatten.example	5	The example Main importing A and B with main = A.f >> B.f is valid	module	accept	compile and run it	hand	Supported		
 mod.flatten.default	5	Exception to flattening: a default declaration scopes over a single module	module	run	two modules with different defaults give different results that one module cannot	hand	Planned		
 mod.flatten.mr	5	Exception to flattening: Rule 2 of the monomorphism restriction is affected by module boundaries	module	reject	the M1 and M2 example is refused while its flattened form is accepted	hand	Planned		
-mod.name.flat	5	The module name-space is flat and each module has a unique name	module	reject	two modules of one name in a program: refused	hand	Planned		
+mod.name.flat	5	The module name-space is flat and each module has a unique name	module	reject	two modules of one name in a program: refused	hand	Supported		
 mod.name.modid	5	A module name is a modid, a conid	syntax	reject	module Data.List where: refused by the letter of 5 and 2.4; see readings.md	hand	Supported	R34	
-mod.prelude.default	5	Prelude is imported into all modules by default	module	accept	a module with no imports uses map	hand	Planned		
-mod.libraries.required	5	The standard library modules of Part II may be imported as required	module	accept	one import of each of the 16 library modules	hand	Planned		
-mod.structure.scope	5.1	A module defines a mutually recursive scope of declarations	module	accept	a top-level use before its definition, in both directions	hand	Planned		
-mod.structure.imports.empty	5.1	The list of import declarations may be empty	module	accept	module M where x = 1	hand	Planned		
-mod.structure.topdecls.empty	5.1	The list of top-level declarations may be empty	module	accept	module M where import N; 5.1 and 4 write topdecls n>=1, 9.5 n>=0: see readings.md	hand	Planned	R34	
-mod.structure.body.empty	5.1	A module with neither imports nor declarations is valid	module	accept	module M where {} by an empty impdecl; see readings.md	hand	Planned	R34	
+mod.prelude.default	5	Prelude is imported into all modules by default	module	accept	a module with no imports uses map	hand	Supported		
+mod.libraries.required	5	The standard library modules of Part II may be imported as required	module	accept	one import of each of the 16 library modules	hand	Supported		
+mod.structure.scope	5.1	A module defines a mutually recursive scope of declarations	module	accept	a top-level use before its definition, in both directions	hand	Supported		
+mod.structure.imports.empty	5.1	The list of import declarations may be empty	module	accept	module M where x = 1	hand	Supported		
+mod.structure.topdecls.empty	5.1	The list of top-level declarations may be empty	module	accept	module M where import N; 5.1 and 4 write topdecls n>=1, 9.5 n>=0: see readings.md	hand	Supported	R34	
+mod.structure.body.empty	5.1	A module with neither imports nor declarations is valid	module	accept	module M where {} by an empty impdecl; see readings.md	hand	Supported	R34	
 mod.structure.order	5.1	Import declarations come before top-level declarations	syntax	reject	x = 1 then import M: refused	hand	Supported		
 mod.structure.braces	5.1	A module body may use explicit braces	layout	accept	module M where { x = 1 ; y = 2 }	hand	Supported		
 mod.header.abbrev	5.1	A module of only a body is permitted, the header assumed module Main(main) where	module	run	a file with no header runs as Main	hand	Planned		
-mod.header.abbrev.exports	5.1	An abbreviated module exports main alone	module	reject	a module of a cycle imports another name from a headerless Main: refused	hand	Planned		
-mod.header.abbrev.nomain	5.1	An abbreviated module must have a main, as its assumed header exports one	module	reject	a file x = 1 with no header: refused	hand	Planned		
+mod.header.abbrev.exports	5.1	An abbreviated module exports main alone	module	reject	a module of a cycle imports another name from a headerless Main: refused	hand	Supported		
+mod.header.abbrev.nomain	5.1	An abbreviated module must have a main, as its assumed header exports one	module	reject	a file x = 1 with no header: refused	hand	Supported		
 mod.header.abbrev.layout	5.1	If the first lexeme of an abbreviated module is not { the layout rule applies to its top level	layout	accept	a headerless file of two top-level declarations	hand	Supported		
 mod.header.abbrev.brace	5.1	An abbreviated module may start with {	layout	accept	{ main = return () }	hand	Supported		
-mod.exp.only	5.2	A module may export only an entity it declares or imports	module	reject	module M (nosuch) where x = 1: refused	hand	Planned		
-mod.exp.omitted.local	5.2	With no export list all values, types and classes defined in the module are exported	module	accept	an importer uses each kind	hand	Planned		
-mod.exp.omitted.noimported	5.2	With no export list imported entities are not exported	module	reject	importer of M uses a name M only imported: refused	hand	Planned		
-mod.exp.empty	5.2	An export list may be empty	module	accept	module M () where	hand	Planned		
+mod.exp.only	5.2	A module may export only an entity it declares or imports	module	reject	module M (nosuch) where x = 1: refused	hand	Supported		
+mod.exp.omitted.local	5.2	With no export list all values, types and classes defined in the module are exported	module	accept	an importer uses each kind	hand	Supported		
+mod.exp.omitted.noimported	5.2	With no export list imported entities are not exported	module	reject	importer of M uses a name M only imported: refused	hand	Supported		
+mod.exp.empty	5.2	An export list may be empty	module	accept	module M () where	hand	Supported		
 mod.exp.trailing	5.2	An export list may end with a comma	syntax	accept	module M (x,) where	hand	Supported		
 mod.exp.onlycomma	5.2	With n=0 the grammar gives an export list of one comma	syntax	accept	module M (,) where; see readings.md	hand	Supported	R34	
-mod.exp.value	5.2	A value may be named by its qvar, declared in the module body	module	accept	module M (x) where x = 1	hand	Planned		
-mod.exp.value.imported	5.2	An imported value may be named	module	accept	module M (y) where import N (y)	hand	Planned		
-mod.exp.field	5.2	A field name may be named on its own	module	accept	module M (f) where data T = C { f :: Int }	hand	Planned		
-mod.exp.method	5.2	A class method may be named on its own	module	accept	module M (m) where class C a where m :: a	hand	Planned		
-mod.exp.value.qualified	5.2	The name may be qualified	module	accept	module M (N.y) where import qualified N	hand	Planned		
-mod.exp.value.scope	5.2	The name must be in scope	module	reject	module M (N.z) where import N (y): refused	hand	Planned		
-mod.exp.op	5.2	An operator is enclosed in parentheses	module	accept	module M ((+++)) where	hand	Planned		
+mod.exp.value	5.2	A value may be named by its qvar, declared in the module body	module	accept	module M (x) where x = 1	hand	Supported		
+mod.exp.value.imported	5.2	An imported value may be named	module	accept	module M (y) where import N (y)	hand	Supported		
+mod.exp.field	5.2	A field name may be named on its own	module	accept	module M (f) where data T = C { f :: Int }	hand	Supported		
+mod.exp.method	5.2	A class method may be named on its own	module	accept	module M (m) where class C a where m :: a	hand	Supported		
+mod.exp.value.qualified	5.2	The name may be qualified	module	accept	module M (N.y) where import qualified N	hand	Supported		
+mod.exp.value.scope	5.2	The name must be in scope	module	reject	module M (N.z) where import N (y): refused	hand	Supported		
+mod.exp.op	5.2	An operator is enclosed in parentheses	module	accept	module M ((+++)) where	hand	Supported		
 mod.exp.op.bare	5.2	A bare operator is no export item	syntax	reject	module M (+++) where: refused	hand	Supported		
-mod.exp.type.abs	5.2	The form T names the type but not its constructors or fields	module	reject	importer uses a constructor: refused	hand	Planned		
-mod.exp.type.abs.ok	5.2	The form T makes the type name available	module	accept	importer writes a signature with T	hand	Planned		
-mod.exp.type.abs.field	5.2	The form T does not export field names	module	reject	importer uses a field as a selector: refused	hand	Planned		
-mod.exp.type.some	5.2	The form T(c1,...,cn) names the type and some or all of its constructors and fields	module	accept	importer uses a listed constructor and a listed field	hand	Planned		
-mod.exp.type.some.other	5.2	Constructors not listed are not exported	module	reject	importer uses an unlisted constructor: refused	hand	Planned		
-mod.exp.type.some.empty	5.2	T() is the form with n=0 and names the type alone	module	accept	module M (T()) where; importer uses the type	hand	Planned		
-mod.exp.type.all	5.2	The form T(..) names the type and all its constructors and fields currently in scope	module	accept	importer uses every one	hand	Planned		
-mod.exp.type.all.partial	5.2	T(..) of an imported type exports only what is in scope	module	reject	M imports T(A) of T(A,B) and exports T(..); importer of M uses B: refused	hand	Planned		
-mod.exp.type.all.qualified	5.2	T(..) takes constructors in scope whether qualified or not	module	accept	import qualified N; module M (N.T(..)); importer uses a constructor	hand	Planned		
-mod.exp.type.scope	5.2	The possibly qualified type constructor T must be in scope	module	reject	module M (N.T) where with no such name: refused	hand	Planned		
+mod.exp.type.abs	5.2	The form T names the type but not its constructors or fields	module	reject	importer uses a constructor: refused	hand	Supported		
+mod.exp.type.abs.ok	5.2	The form T makes the type name available	module	accept	importer writes a signature with T	hand	Supported		
+mod.exp.type.abs.field	5.2	The form T does not export field names	module	reject	importer uses a field as a selector: refused	hand	Supported		
+mod.exp.type.some	5.2	The form T(c1,...,cn) names the type and some or all of its constructors and fields	module	accept	importer uses a listed constructor and a listed field	hand	Supported		
+mod.exp.type.some.other	5.2	Constructors not listed are not exported	module	reject	importer uses an unlisted constructor: refused	hand	Supported		
+mod.exp.type.some.empty	5.2	T() is the form with n=0 and names the type alone	module	accept	module M (T()) where; importer uses the type	hand	Supported		
+mod.exp.type.all	5.2	The form T(..) names the type and all its constructors and fields currently in scope	module	accept	importer uses every one	hand	Supported		
+mod.exp.type.all.partial	5.2	T(..) of an imported type exports only what is in scope	module	reject	M imports T(A) of T(A,B) and exports T(..); importer of M uses B: refused	hand	Supported		
+mod.exp.type.all.qualified	5.2	T(..) takes constructors in scope whether qualified or not	module	accept	import qualified N; module M (N.T(..)); importer uses a constructor	hand	Supported		
+mod.exp.type.scope	5.2	The possibly qualified type constructor T must be in scope	module	reject	module M (N.T) where with no such name: refused	hand	Supported		
 mod.exp.sub.unqualified	5.2	The subordinate names of T(c1,...,cn) are unqualified	syntax	reject	module M (T(N.c)) where: refused	hand	Supported	R72	
-mod.exp.sub.belongs	5.2	A subordinate name must name a constructor or field of T	module	reject	a constructor of another type in T's list: refused	hand	Planned		
-mod.exp.sub.scope	5.2	A subordinate name must be in scope in the module body	module	reject	a constructor of T that was not imported: refused	hand	Planned	R72	
-mod.exp.sub.anyqual	5.2	A subordinate name may be in scope under a qualified name only	module	accept	the example module A( Mb.Maybe( Nothing, Just ) ) where import qualified Maybe as Mb	hand	Planned		
-mod.exp.con.bare	5.2	A data constructor cannot be named except as a subordinate name	module	reject	module M (C) where data T = C: refused, C names no type or class	hand	Planned		
-mod.exp.con.sametype	5.2	T in an export list names the type even where a constructor is also T	module	reject	data T = T; module M (T); importer uses constructor T: refused	hand	Planned		
-mod.exp.synonym	5.2	A type synonym is named by the form T	module	accept	module M (S) where type S = Int	hand	Planned		
-mod.exp.synonym.scope	5.2	The synonym must be in scope	module	reject	an unknown S: refused	hand	Planned		
+mod.exp.sub.belongs	5.2	A subordinate name must name a constructor or field of T	module	reject	a constructor of another type in T's list: refused	hand	Supported		
+mod.exp.sub.scope	5.2	A subordinate name must be in scope in the module body	module	reject	a constructor of T that was not imported: refused	hand	Supported	R72	
+mod.exp.sub.anyqual	5.2	A subordinate name may be in scope under a qualified name only	module	accept	the example module A( Mb.Maybe( Nothing, Just ) ) where import qualified Maybe as Mb	hand	Supported		
+mod.exp.con.bare	5.2	A data constructor cannot be named except as a subordinate name	module	reject	module M (C) where data T = C: refused, C names no type or class	hand	Supported		
+mod.exp.con.sametype	5.2	T in an export list names the type even where a constructor is also T	module	reject	data T = T; module M (T); importer uses constructor T: refused	hand	Supported		
+mod.exp.synonym	5.2	A type synonym is named by the form T	module	accept	module M (S) where type S = Int	hand	Supported		
+mod.exp.synonym.scope	5.2	The synonym must be in scope	module	reject	an unknown S: refused	hand	Supported		
 mod.exp.synonym.dotdot	5.2	Only the form T is given for a synonym, though the grammar allows S(..)	module	reject	module M (S(..)) where type S = Int; see readings.md	hand	Planned	R34	
-mod.exp.class.abs	5.2	The form C names the class but not its methods	module	reject	importer calls a method: refused	hand	Planned		
-mod.exp.class.abs.ok	5.2	The form C makes the class name available	module	accept	importer writes a context with C	hand	Planned		
-mod.exp.class.some	5.2	The form C(f1,...,fn) names the class and some or all of its methods	module	accept	importer calls a listed method	hand	Planned		
-mod.exp.class.some.other	5.2	Methods not listed are not exported	module	reject	importer calls an unlisted method: refused	hand	Planned		
-mod.exp.class.all	5.2	The form C(..) names the class and all its methods in scope, qualified or not	module	accept	importer calls each method	hand	Planned		
-mod.exp.class.all.partial	5.2	C(..) of an imported class exports only the methods in scope	module	reject	importer uses a method M did not import: refused	hand	Planned		
-mod.exp.class.scope	5.2	C must be in scope	module	reject	an unknown C: refused	hand	Planned		
-mod.exp.class.sub.belongs	5.2	A subordinate name must be a method of C	module	reject	a method of another class in the list: refused	hand	Planned		
-mod.exp.class.sub.scope	5.2	A subordinate method must be in scope	module	reject	a method not imported: refused	hand	Planned	R72	
-mod.exp.class.sub.anyqual	5.2	A subordinate method may be in scope under a qualified name only	module	accept	module M (N.C(m)) where import qualified N	hand	Planned		
+mod.exp.class.abs	5.2	The form C names the class but not its methods	module	reject	importer calls a method: refused	hand	Supported		
+mod.exp.class.abs.ok	5.2	The form C makes the class name available	module	accept	importer writes a context with C	hand	Supported		
+mod.exp.class.some	5.2	The form C(f1,...,fn) names the class and some or all of its methods	module	accept	importer calls a listed method	hand	Supported		
+mod.exp.class.some.other	5.2	Methods not listed are not exported	module	reject	importer calls an unlisted method: refused	hand	Supported		
+mod.exp.class.all	5.2	The form C(..) names the class and all its methods in scope, qualified or not	module	accept	importer calls each method	hand	Supported		
+mod.exp.class.all.partial	5.2	C(..) of an imported class exports only the methods in scope	module	reject	importer uses a method M did not import: refused	hand	Supported		
+mod.exp.class.scope	5.2	C must be in scope	module	reject	an unknown C: refused	hand	Supported		
+mod.exp.class.sub.belongs	5.2	A subordinate name must be a method of C	module	reject	a method of another class in the list: refused	hand	Supported		
+mod.exp.class.sub.scope	5.2	A subordinate method must be in scope	module	reject	a method not imported: refused	hand	Supported	R72	
+mod.exp.class.sub.anyqual	5.2	A subordinate method may be in scope under a qualified name only	module	accept	module M (N.C(m)) where import qualified N	hand	Supported		
 mod.exp.class.sub.unqualified	5.2	Subordinate method names are unqualified	syntax	reject	module M (C(N.m)): refused; 5.2 writes var, and 9.5 too by erratum Sept 2004; see readings.md	hand	Supported	R30	
-mod.exp.module.set	5.2	module M names all entities in scope with both an unqualified name e and a qualified name M.e	module	accept	an importer sees exactly those entities	hand	Planned		
-mod.exp.module.empty	5.2	The set named by module M may be empty	module	accept	module X (module N) where import N (): accepted, nothing exported	hand	Planned		
-mod.exp.module.qualifiedonly	5.2	An entity imported qualified only is not named by module M	module	reject	import qualified N; module X (module N); importer uses N's name: refused	hand	Planned		
-mod.exp.module.hidden	5.2	An entity hidden on import is not named by module M	module	reject	import N hiding (y); module X (module N); importer uses y: refused	hand	Planned		
+mod.exp.module.set	5.2	module M names all entities in scope with both an unqualified name e and a qualified name M.e	module	accept	an importer sees exactly those entities	hand	Supported		
+mod.exp.module.empty	5.2	The set named by module M may be empty	module	accept	module X (module N) where import N (): accepted, nothing exported	hand	Supported		
+mod.exp.module.qualifiedonly	5.2	An entity imported qualified only is not named by module M	module	reject	import qualified N; module X (module N); importer uses N's name: refused	hand	Supported		
+mod.exp.module.hidden	5.2	An entity hidden on import is not named by module M	module	reject	import N hiding (y); module X (module N); importer uses y: refused	hand	Supported		
 mod.exp.module.shadowed	5.2	An entity with both names is named by module M even if its unqualified name is also another entity's	module	accept	import N as Q; import R, both giving a distinct x: module Q exports N's x, by the letter; see readings.md	hand	Planned	R30	
-mod.exp.module.queue	5.2	Example: module Queue( module Stack, enqueue, dequeue ) with import Stack abbreviates all that Stack gave	module	accept	importer of Queue uses Stack's entities	hand	Planned		
-mod.exp.module.self	5.2	A module can name its own local definitions with module M, as a local declaration brings both names into scope	module	accept	module Mod1 (module Mod1) exports each local definition	hand	Planned		
-mod.exp.module.mod1	5.2	Example: Mod1( module Mod1, module Mod2 ) with import Mod2 and import Mod3 exports local and Mod2 entities	module	accept	importer uses both	hand	Planned		
-mod.exp.module.mod3	5.2	In that example what came from Mod3 is not exported	module	reject	importer uses a Mod3 entity: refused	hand	Planned		
-mod.exp.module.notimported	5.2	It is an error to use module M unless M bears the list or is imported by an import declaration	module	reject	module X (module N) where with no import of N: refused	hand	Planned		
-mod.exp.module.anyimport	5.2	The import naming M may be qualified or unqualified	module	accept	module X (module N) where import qualified N: accepted, with an empty set	hand	Planned		
-mod.exp.module.alias	5.2	The M of module M is matched against qualifiers, which an as clause sets	module	accept	import N as Q; module X (module Q); see readings.md for module N there	hand	Planned	R30	
-mod.exp.cumulative	5.2	Export lists are cumulative: the set exported is the union over the items	module	accept	an item repeated, and T with T(..) together, compile	hand	Planned		
+mod.exp.module.queue	5.2	Example: module Queue( module Stack, enqueue, dequeue ) with import Stack abbreviates all that Stack gave	module	accept	importer of Queue uses Stack's entities	hand	Supported		
+mod.exp.module.self	5.2	A module can name its own local definitions with module M, as a local declaration brings both names into scope	module	accept	module Mod1 (module Mod1) exports each local definition	hand	Supported		
+mod.exp.module.mod1	5.2	Example: Mod1( module Mod1, module Mod2 ) with import Mod2 and import Mod3 exports local and Mod2 entities	module	accept	importer uses both	hand	Supported		
+mod.exp.module.mod3	5.2	In that example what came from Mod3 is not exported	module	reject	importer uses a Mod3 entity: refused	hand	Supported		
+mod.exp.module.notimported	5.2	It is an error to use module M unless M bears the list or is imported by an import declaration	module	reject	module X (module N) where with no import of N: refused	hand	Supported		
+mod.exp.module.anyimport	5.2	The import naming M may be qualified or unqualified	module	accept	module X (module N) where import qualified N: accepted, with an empty set	hand	Supported		
+mod.exp.module.alias	5.2	The M of module M is matched against qualifiers, which an as clause sets	module	accept	import N as Q; module X (module Q); see readings.md for module N there	hand	Supported	R30	
+mod.exp.cumulative	5.2	Export lists are cumulative: the set exported is the union over the items	module	accept	an item repeated, and T with T(..) together, compile	hand	Supported		
 mod.exp.howexported	5.2	It makes no difference to an importer how an entity was exported	module	run	field f exported as f, T(f), T(..) and module M: one importer compiles against each	hand	Planned		
-mod.exp.distinct	5.2	The unqualified names of the entities exported must all be distinct within their namespace	module	reject	the invalid module A ( C.f, C.g, g, module B ): refused	hand	Planned		
-mod.exp.distinct.g	5.2	That example clashes between C.g and g when they are different entities	module	reject	the export list reduced to C.g, g: refused	hand	Planned		
-mod.exp.distinct.b	5.2	That example clashes between module B and C.f when B.f and C.f differ	module	reject	the export list reduced to module B, C.f: refused	hand	Planned		
-mod.exp.distinct.same	5.2	The clash needs different entities: one entity by two routes is fine	module	accept	C.g and g being one entity: accepted	hand	Planned		
-mod.exp.distinct.valid	5.2	That example has no clash within the module itself	module	accept	the same module with no export list	hand	Planned		
-mod.exp.distinct.namespace	5.2	Distinctness is within a namespace	module	accept	a type T and a constructor T exported together	hand	Planned		
-mod.imp.basic	5.3	Entities exported by a module may be brought into scope by an import declaration	module	accept	import M, then a use	hand	Planned		
-mod.imp.multiple	5.3	A single module may be imported by more than one declaration	module	accept	import M (x); import M (y); both in scope	hand	Planned		
-mod.imp.toplevel	5.3	Imported names scope over the entire body of the module	module	accept	uses in every kind of declaration	hand	Planned		
+mod.exp.distinct	5.2	The unqualified names of the entities exported must all be distinct within their namespace	module	reject	the invalid module A ( C.f, C.g, g, module B ): refused	hand	Supported		
+mod.exp.distinct.g	5.2	That example clashes between C.g and g when they are different entities	module	reject	the export list reduced to C.g, g: refused	hand	Supported		
+mod.exp.distinct.b	5.2	That example clashes between module B and C.f when B.f and C.f differ	module	reject	the export list reduced to module B, C.f: refused	hand	Supported		
+mod.exp.distinct.same	5.2	The clash needs different entities: one entity by two routes is fine	module	accept	C.g and g being one entity: accepted	hand	Supported		
+mod.exp.distinct.valid	5.2	That example has no clash within the module itself	module	accept	the same module with no export list	hand	Supported		
+mod.exp.distinct.namespace	5.2	Distinctness is within a namespace	module	accept	a type T and a constructor T exported together	hand	Supported		
+mod.imp.basic	5.3	Entities exported by a module may be brought into scope by an import declaration	module	accept	import M, then a use	hand	Supported		
+mod.imp.multiple	5.3	A single module may be imported by more than one declaration	module	accept	import M (x); import M (y); both in scope	hand	Supported		
+mod.imp.toplevel	5.3	Imported names scope over the entire body of the module	module	accept	uses in every kind of declaration	hand	Supported		
 mod.imp.shadow	5.3	Imported names may be shadowed by local non-top-level bindings	module	run	let map = 1 in map prints 1	hand	Planned		
-mod.imp.toplevel.noshadow	5.3	A top-level definition does not shadow an imported name: both are in scope	module	reject	import M (x); x = 1; y = x: refused as ambiguous	hand	Planned		
-mod.imp.cumulative	5.3	Import declarations are strictly cumulative: an entity is in scope if any declaration imports it	module	accept	import M hiding (x); import M (x): x in scope	hand	Planned		
-mod.imp.order	5.3	The order of import declarations is irrelevant	module	accept	a module and its reordering compile to the same meaning	hand	Planned		
+mod.imp.toplevel.noshadow	5.3	A top-level definition does not shadow an imported name: both are in scope	module	reject	import M (x); x = 1; y = x: refused as ambiguous	hand	Supported		
+mod.imp.cumulative	5.3	Import declarations are strictly cumulative: an entity is in scope if any declaration imports it	module	accept	import M hiding (x); import M (x): x in scope	hand	Supported		
+mod.imp.order	5.3	The order of import declarations is irrelevant	module	accept	a module and its reordering compile to the same meaning	hand	Supported		
 mod.imp.empty	5.3	An import declaration may be empty	syntax	accept	module M where { ; import N ; ; x = 1 }	hand	Supported		
 mod.imp.as.varid	5.3	as is a varid with special meaning only in an import declaration	lex	accept	as = 1 at top level, and as used as a variable	hand	Supported		
 mod.imp.qualified.varid	5.3	qualified is a varid likewise	lex	accept	qualified = 1	hand	Supported		
 mod.imp.hiding.varid	5.3	hiding is a varid likewise	lex	accept	hiding = 1	hand	Supported		
 mod.imp.list.trailing	5.3	An import list may end with a comma	syntax	accept	import M (x,)	hand	Supported		
-mod.imp.list.explicit	5.3.1	Entities may be listed explicitly, and only those come into scope	module	reject	import M (x); a use of y: refused	hand	Planned		
-mod.imp.list.var	5.3.1	A list item may be a variable, field or method	module	accept	import M (x, f, m)	hand	Planned		
-mod.imp.list.op	5.3.1	An operator is enclosed in parentheses	module	accept	import M ((+++))	hand	Planned		
-mod.imp.list.type	5.3.1	A list item may be a type alone	module	accept	import M (T)	hand	Planned		
-mod.imp.list.type.some	5.3.1	A list item may be a type with listed constructors and fields	module	accept	import M (T(A, f))	hand	Planned		
-mod.imp.list.type.none	5.3.1	T() lists no subordinates	module	accept	import M (T())	hand	Planned		
-mod.imp.list.class	5.3.1	A list item may be a class, alone or with methods	module	accept	import M (C, D(m))	hand	Planned		
-mod.imp.list.dotdot	5.3.1	(..) refers to all constructors, methods or fields exported from the module	module	accept	import M (T(..)) gets each one exported	hand	Planned		
-mod.imp.list.dotdot.only	5.3.1	(..) gets no constructor the module did not export	module	reject	T exported abstractly, import M (T(..)), use a constructor: refused	hand	Planned		
+mod.imp.list.explicit	5.3.1	Entities may be listed explicitly, and only those come into scope	module	reject	import M (x); a use of y: refused	hand	Supported		
+mod.imp.list.var	5.3.1	A list item may be a variable, field or method	module	accept	import M (x, f, m)	hand	Supported		
+mod.imp.list.op	5.3.1	An operator is enclosed in parentheses	module	accept	import M ((+++))	hand	Supported		
+mod.imp.list.type	5.3.1	A list item may be a type alone	module	accept	import M (T)	hand	Supported		
+mod.imp.list.type.some	5.3.1	A list item may be a type with listed constructors and fields	module	accept	import M (T(A, f))	hand	Supported		
+mod.imp.list.type.none	5.3.1	T() lists no subordinates	module	accept	import M (T())	hand	Supported		
+mod.imp.list.class	5.3.1	A list item may be a class, alone or with methods	module	accept	import M (C, D(m))	hand	Supported		
+mod.imp.list.dotdot	5.3.1	(..) refers to all constructors, methods or fields exported from the module	module	accept	import M (T(..)) gets each one exported	hand	Supported		
+mod.imp.list.dotdot.only	5.3.1	(..) gets no constructor the module did not export	module	reject	T exported abstractly, import M (T(..)), use a constructor: refused	hand	Supported		
 mod.imp.list.noqual	5.3.1	Qualifiers are not permitted in an import list	syntax	reject	import M (M.x): refused	hand	Supported		
 mod.imp.list.nomodule	5.3.1	The module modid form is not permitted in an import list	syntax	reject	import M (module N): refused	hand	Supported		
-mod.imp.list.exported	5.3.1	The list must name only entities exported by the imported module	module	reject	import M (z) with no such export: refused	hand	Planned		
-mod.imp.list.sub.exported	5.3.1	That holds of subordinate names too	module	reject	import M (T(Hidden)): refused	hand	Planned	R76	
-mod.imp.list.empty	5.3.1	The list may be empty, and then nothing but instances is imported	module	reject	import M (); a use of x: refused	hand	Planned		
-mod.imp.list.con	5.3.1	C in an import list names only a class or type	module	reject	import M (Con) where Con is a data constructor alone: refused	hand	Planned		
-mod.imp.list.con.same	5.3.1	That list item leaves a constructor of the same name out	module	reject	data T = T; import M (T); constructor T used: refused	hand	Planned		
-mod.imp.hiding.basic	5.3.1	hiding imports all exported entities except those named	module	reject	import M hiding (x); a use of x: refused	hand	Planned		
-mod.imp.hiding.rest	5.3.1	The others are imported	module	accept	import M hiding (x); a use of y	hand	Planned		
-mod.imp.hiding.empty	5.3.1	hiding () hides nothing	module	accept	import M hiding (); a use of x	hand	Planned		
-mod.imp.hiding.con	5.3.1	A data constructor may be named directly in a hiding list	module	reject	import M hiding (Con); a use of Con: refused	hand	Planned		
-mod.imp.hiding.c.all	5.3.1	In import M hiding (C) any constructor, class or type named C is excluded	module	reject	uses of type C and of constructor C: each refused	hand	Planned	R75	
-mod.imp.hiding.sub	5.3.1	hiding takes the forms of an import list	module	reject	import M hiding (T(..)); a use of a constructor: refused	hand	Planned		
-mod.imp.hiding.notexported	5.3.1	It is an error to hide an entity not exported by the imported module	module	reject	import M hiding (nosuch): refused; GHC warns only: see readings.md	hand	Planned	R31	
-mod.imp.all	5.3.1	With no impspec all entities exported by the module are imported	module	accept	import M; a use of each	hand	Planned		
-mod.imp.qualified	5.3.2	With qualified only the qualified name is brought into scope	module	reject	import qualified M; a use of x: refused	hand	Planned		
-mod.imp.qualified.ok	5.3.2	The qualified name works	module	accept	import qualified M; a use of M.x	hand	Planned		
-mod.imp.unqualified	5.3.2	Without qualified both names are brought into scope	module	accept	import M; uses of x and M.x	hand	Planned		
-mod.imp.qualifier	5.3.2	The qualifier is the name of the imported module or the alias of its as clause	module	accept	both forms	hand	Planned		
-mod.imp.qualifier.origin	5.3.2	The qualifier is not the module where the entity was declared	module	reject	B re-exports D's d; import B; a use of D.d: refused	hand	Planned		
-mod.imp.qualifier.reexport	5.3.2	It is the imported module's	module	accept	B re-exports D's d; import B; a use of B.d	hand	Planned		
-mod.imp.ring	5.3.2	Example Ring: a locally defined entity can share a name with a qualified import	module	accept	the module compiles with its own + and *	hand	Planned		
+mod.imp.list.exported	5.3.1	The list must name only entities exported by the imported module	module	reject	import M (z) with no such export: refused	hand	Supported		
+mod.imp.list.sub.exported	5.3.1	That holds of subordinate names too	module	reject	import M (T(Hidden)): refused	hand	Supported	R76	
+mod.imp.list.empty	5.3.1	The list may be empty, and then nothing but instances is imported	module	reject	import M (); a use of x: refused	hand	Supported		
+mod.imp.list.con	5.3.1	C in an import list names only a class or type	module	reject	import M (Con) where Con is a data constructor alone: refused	hand	Supported		
+mod.imp.list.con.same	5.3.1	That list item leaves a constructor of the same name out	module	reject	data T = T; import M (T); constructor T used: refused	hand	Supported		
+mod.imp.hiding.basic	5.3.1	hiding imports all exported entities except those named	module	reject	import M hiding (x); a use of x: refused	hand	Supported		
+mod.imp.hiding.rest	5.3.1	The others are imported	module	accept	import M hiding (x); a use of y	hand	Supported		
+mod.imp.hiding.empty	5.3.1	hiding () hides nothing	module	accept	import M hiding (); a use of x	hand	Supported		
+mod.imp.hiding.con	5.3.1	A data constructor may be named directly in a hiding list	module	reject	import M hiding (Con); a use of Con: refused	hand	Supported		
+mod.imp.hiding.c.all	5.3.1	In import M hiding (C) any constructor, class or type named C is excluded	module	reject	uses of type C and of constructor C: each refused	hand	Supported	R75	
+mod.imp.hiding.sub	5.3.1	hiding takes the forms of an import list	module	reject	import M hiding (T(..)); a use of a constructor: refused	hand	Supported		
+mod.imp.hiding.notexported	5.3.1	It is an error to hide an entity not exported by the imported module	module	reject	import M hiding (nosuch): refused; GHC warns only: see readings.md	hand	Supported	R31	
+mod.imp.all	5.3.1	With no impspec all entities exported by the module are imported	module	accept	import M; a use of each	hand	Supported		
+mod.imp.qualified	5.3.2	With qualified only the qualified name is brought into scope	module	reject	import qualified M; a use of x: refused	hand	Supported		
+mod.imp.qualified.ok	5.3.2	The qualified name works	module	accept	import qualified M; a use of M.x	hand	Supported		
+mod.imp.unqualified	5.3.2	Without qualified both names are brought into scope	module	accept	import M; uses of x and M.x	hand	Supported		
+mod.imp.qualifier	5.3.2	The qualifier is the name of the imported module or the alias of its as clause	module	accept	both forms	hand	Supported		
+mod.imp.qualifier.origin	5.3.2	The qualifier is not the module where the entity was declared	module	reject	B re-exports D's d; import B; a use of D.d: refused	hand	Supported		
+mod.imp.qualifier.reexport	5.3.2	It is the imported module's	module	accept	B re-exports D's d; import B; a use of B.d	hand	Supported		
+mod.imp.ring	5.3.2	Example Ring: a locally defined entity can share a name with a qualified import	module	accept	the module compiles with its own + and *	hand	Supported		
 mod.imp.ring.run	5.3.2	In Ring + differs from the Prelude's and Prelude.+ is the Prelude's	module	run	l1 + l2 appends, l1 * l2 is nub of that, succ adds one	hand	Planned		
 mod.imp.ring.default	5.3.2	succ = (Prelude.+ 1) there is defaulted though Integer is not in scope by name	static	run	the default of 4.3.4 refers to Integer as the type, whatever is in scope	hand	Planned		
-mod.alias.qualifier	5.3.3	With import qualified VeryLongModuleName as C entities are referenced as C.	module	accept	a use of C.x	hand	Planned		
-mod.alias.original	5.3.3	They are not referenced with the module's own name	module	reject	a use of VeryLongModuleName.x: refused	hand	Planned		
-mod.alias.shared	5.3.3	More than one module may use one qualifier provided all names still resolve	module	accept	import qualified Foo as A; import qualified Baz as A; x = A.f, with only Foo exporting f	hand	Planned		
-mod.alias.shared.clash	5.3.3	That module is illegal if Foo and Baz both export f	module	reject	a use of A.f with two entities: refused	hand	Planned		
-mod.alias.shared.unused	5.3.3	Two entities under one qualified name clash only if mentioned	module	accept	both export f, no use of A.f	hand	Planned		
-mod.alias.unqualified	5.3.3	An as clause may be used on an unqualified import	module	accept	import Foo as A(f) brings f and A.f into scope	hand	Planned		
-mod.alias.unqualified.not	5.3.3	That import does not bring Foo.f into scope	module	reject	a use of Foo.f: refused	hand	Planned		
-mod.imp.table.1	5.3.4	import A brings x, y, A.x, A.y into scope	module	accept	each name used; A exports x and y; the table's rows are checked in both directions	hand	Planned		
-mod.imp.table.2	5.3.4	import A() brings nothing into scope	module	reject	each of x, y, A.x, A.y refused	hand	Planned		
-mod.imp.table.3	5.3.4	import A(x) brings x, A.x	module	reject	those used; y and A.y each refused	hand	Planned		
-mod.imp.table.4	5.3.4	import qualified A brings A.x, A.y	module	reject	those used; x and y each refused	hand	Planned		
-mod.imp.table.5	5.3.4	import qualified A() brings nothing	module	reject	each name refused	hand	Planned		
-mod.imp.table.6	5.3.4	import qualified A(x) brings A.x	module	reject	it used; x, y, A.y each refused	hand	Planned		
-mod.imp.table.7	5.3.4	import A hiding () brings x, y, A.x, A.y	module	accept	each used	hand	Planned		
-mod.imp.table.8	5.3.4	import A hiding (x) brings y, A.y	module	reject	those used; x and A.x each refused	hand	Planned		
-mod.imp.table.9	5.3.4	import qualified A hiding () brings A.x, A.y	module	reject	those used; x and y each refused	hand	Planned		
-mod.imp.table.10	5.3.4	import qualified A hiding (x) brings A.y	module	reject	it used; x, y, A.x each refused	hand	Planned		
-mod.imp.table.11	5.3.4	import A as B brings x, y, B.x, B.y	module	reject	those used; A.x refused	hand	Planned		
-mod.imp.table.12	5.3.4	import A as B(x) brings x, B.x	module	reject	those used; y, B.y, A.x each refused	hand	Planned		
-mod.imp.table.13	5.3.4	import qualified A as B brings B.x, B.y	module	reject	those used; x and A.x each refused	hand	Planned		
+mod.alias.qualifier	5.3.3	With import qualified VeryLongModuleName as C entities are referenced as C.	module	accept	a use of C.x	hand	Supported		
+mod.alias.original	5.3.3	They are not referenced with the module's own name	module	reject	a use of VeryLongModuleName.x: refused	hand	Supported		
+mod.alias.shared	5.3.3	More than one module may use one qualifier provided all names still resolve	module	accept	import qualified Foo as A; import qualified Baz as A; x = A.f, with only Foo exporting f	hand	Supported		
+mod.alias.shared.clash	5.3.3	That module is illegal if Foo and Baz both export f	module	reject	a use of A.f with two entities: refused	hand	Supported		
+mod.alias.shared.unused	5.3.3	Two entities under one qualified name clash only if mentioned	module	accept	both export f, no use of A.f	hand	Supported		
+mod.alias.unqualified	5.3.3	An as clause may be used on an unqualified import	module	accept	import Foo as A(f) brings f and A.f into scope	hand	Supported		
+mod.alias.unqualified.not	5.3.3	That import does not bring Foo.f into scope	module	reject	a use of Foo.f: refused	hand	Supported		
+mod.imp.table.1	5.3.4	import A brings x, y, A.x, A.y into scope	module	accept	each name used; A exports x and y; the table's rows are checked in both directions	hand	Supported		
+mod.imp.table.2	5.3.4	import A() brings nothing into scope	module	reject	each of x, y, A.x, A.y refused	hand	Supported		
+mod.imp.table.3	5.3.4	import A(x) brings x, A.x	module	reject	those used; y and A.y each refused	hand	Supported		
+mod.imp.table.4	5.3.4	import qualified A brings A.x, A.y	module	reject	those used; x and y each refused	hand	Supported		
+mod.imp.table.5	5.3.4	import qualified A() brings nothing	module	reject	each name refused	hand	Supported		
+mod.imp.table.6	5.3.4	import qualified A(x) brings A.x	module	reject	it used; x, y, A.y each refused	hand	Supported		
+mod.imp.table.7	5.3.4	import A hiding () brings x, y, A.x, A.y	module	accept	each used	hand	Supported		
+mod.imp.table.8	5.3.4	import A hiding (x) brings y, A.y	module	reject	those used; x and A.x each refused	hand	Supported		
+mod.imp.table.9	5.3.4	import qualified A hiding () brings A.x, A.y	module	reject	those used; x and y each refused	hand	Supported		
+mod.imp.table.10	5.3.4	import qualified A hiding (x) brings A.y	module	reject	it used; x, y, A.x each refused	hand	Supported		
+mod.imp.table.11	5.3.4	import A as B brings x, y, B.x, B.y	module	reject	those used; A.x refused	hand	Supported		
+mod.imp.table.12	5.3.4	import A as B(x) brings x, B.x	module	reject	those used; y, B.y, A.x each refused	hand	Supported		
+mod.imp.table.13	5.3.4	import qualified A as B brings B.x, B.y	module	reject	those used; x and A.x each refused	hand	Supported		
 mod.imp.table.instances	5.3.4	In all these cases all instances in scope in A are imported	module	run	each of the 13 forms makes A's instance usable	hand	Planned		
 mod.inst.noname	5.4	Instance declarations cannot be named on import or export lists	syntax	reject	there is no such item: any spelling is a syntax error	hand	Supported		
 mod.inst.exported	5.4	All instances in scope within a module are always exported	module	run	M with an export list naming nothing passes on its instances and those it imported	hand	Planned		
@@ -1390,80 +1390,80 @@ mod.inst.nochain	5.4	An instance is in scope only if such a chain exists	module	
 mod.inst.emptylist	5.4	import M() brings no names but does bring M's instances	module	run	show of M's type obtained another way	hand	Planned		
 mod.inst.qualified	5.4	A qualified import brings the instances	module	run	import qualified M ()	hand	Planned		
 mod.inst.hidden	5.4	A hiding import brings the instances	module	run	import M hiding (T)	hand	Planned		
-mod.inst.myinstances	5.4	Example: a module whose only purpose is instances can have an empty export list	module	accept	module MyInstances() with instance Show (a -> b) and instance Show (IO a)	hand	Planned		
+mod.inst.myinstances	5.4	Example: a module whose only purpose is instances can have an empty export list	module	accept	module MyInstances() with instance Show (a -> b) and instance Show (IO a)	hand	Supported		
 mod.inst.myinstances.run	5.4	Importing it makes those instances available	module	run	import MyInstances (); show id gives <<function>>; show (return ()) gives <<IO action>>	hand	Planned		
 mod.inst.recursive	5.4	An import chain may run through a module cycle	module	run	an instance reached only round a cycle of imports	hand	Planned		
 mod.inst.dup.program	5.4	4.3.2's one instance per class and type holds of the program, so also of modules that do not see each other	static	reject	two unconnected modules define one instance, Main imports both or neither sees the other: see readings.md	hand	Planned	R26	
-mod.qual.toplevel	5.5.1	A top-level declaration brings both the unqualified and the qualified name into scope	module	accept	module M where f x = x; g x = M.f x	hand	Planned		
+mod.qual.toplevel	5.5.1	A top-level declaration brings both the unqualified and the qualified name into scope	module	accept	module M where f x = x; g x = M.f x	hand	Supported		
 mod.qual.def.top	5.5.1	A defining occurrence must use the unqualified name	syntax	reject	M.f x = 1 at top level: refused	hand	Supported		
 mod.qual.def.let	5.5.1	That holds of local definitions	syntax	reject	let M.y = x+1 in y: refused	hand	Supported		
 mod.qual.def.pat	5.5.1	That holds of variables bound by a pattern	syntax	reject	f M.x = 1: refused, as apat takes var	hand	Supported		
 mod.qual.def.type	5.5.1	That holds of type, constructor and class declarations	syntax	reject	data M.T = C, and class M.C a: refused	hand	Supported	R71	
-mod.qual.import	5.5.1	An import always brings the qualified name into scope	module	accept	import M; a use of M.x	hand	Planned		
-mod.qual.swap	5.5.1	A qualified import can be replaced by an unqualified one without changes to the references	module	accept	a module using only M.x compiles under both	hand	Planned		
+mod.qual.import	5.5.1	An import always brings the qualified name into scope	module	accept	import M; a use of M.x	hand	Supported		
+mod.qual.swap	5.5.1	A qualified import can be replaced by an unqualified one without changes to the references	module	accept	a module using only M.x compiles under both	hand	Supported		
 mod.qual.local	5.5.1	A local binding has no qualified name	module	run	module M where x = 1; f = let x = 2 in M.x prints 1	hand	Planned		
-mod.clash.unique	5.5.2	A bound occurrence must resolve to one binding	module	reject	a name two imports give as different entities, used: refused	hand	Planned		
-mod.clash.unique.qualified	5.5.2	That holds of qualified names	module	reject	A.f with two entities: refused	hand	Planned		
-mod.clash.unmentioned	5.5.2	Names that cannot be resolved are no error while the program does not mention them	module	accept	y in the example, exported distinctly by B and C	hand	Planned		
-mod.clash.tup.b	5.5.2	In the tup example b resolves to B's	module	accept	tup = (b, c, d, x) with x removed	hand	Planned		
-mod.clash.tup.c	5.5.2	c resolves to C's	module	accept	same program	hand	Planned		
+mod.clash.unique	5.5.2	A bound occurrence must resolve to one binding	module	reject	a name two imports give as different entities, used: refused	hand	Supported		
+mod.clash.unique.qualified	5.5.2	That holds of qualified names	module	reject	A.f with two entities: refused	hand	Supported		
+mod.clash.unmentioned	5.5.2	Names that cannot be resolved are no error while the program does not mention them	module	accept	y in the example, exported distinctly by B and C	hand	Supported		
+mod.clash.tup.b	5.5.2	In the tup example b resolves to B's	module	accept	tup = (b, c, d, x) with x removed	hand	Supported		
+mod.clash.tup.c	5.5.2	c resolves to C's	module	accept	same program	hand	Supported		
 mod.clash.tup.d	5.5.2	d is one entity by two routes and may be called d, B.d and C.d	module	run	the three names compared equal	hand	Planned		
-mod.clash.tup.x	5.5.2	The reference to x is ambiguous	module	reject	the example as written: refused	hand	Planned		
-mod.clash.tup.x.fixed	5.5.2	It is fixed by writing B.x or C.x	module	accept	both forms	hand	Planned		
-mod.clash.local	5.5.2	A top-level definition and an import of one name clash when mentioned	module	reject	the F module's sin used unqualified: refused	hand	Planned		
-mod.clash.type	5.5.2	Name resolution covers type constructors and classes	module	reject	T from two modules used in a signature: refused	hand	Planned		
-mod.clash.export	5.5.2	A mention in an export list is a mention	module	reject	module X (f) where import A; import B, f ambiguous: refused	hand	Planned		
-mod.clash.sig	5.5.2	The name in a type signature refers to the declaration in the same list	module	accept	the F example: sin :: Float -> Float beside the Prelude's sin	hand	Planned		
+mod.clash.tup.x	5.5.2	The reference to x is ambiguous	module	reject	the example as written: refused	hand	Supported		
+mod.clash.tup.x.fixed	5.5.2	It is fixed by writing B.x or C.x	module	accept	both forms	hand	Supported		
+mod.clash.local	5.5.2	A top-level definition and an import of one name clash when mentioned	module	reject	the F module's sin used unqualified: refused	hand	Supported		
+mod.clash.type	5.5.2	Name resolution covers type constructors and classes	module	reject	T from two modules used in a signature: refused	hand	Supported		
+mod.clash.export	5.5.2	A mention in an export list is a mention	module	reject	module X (f) where import A; import B, f ambiguous: refused	hand	Supported		
+mod.clash.sig	5.5.2	The name in a type signature refers to the declaration in the same list	module	accept	the F example: sin :: Float -> Float beside the Prelude's sin	hand	Supported		
 mod.clash.sig.qualified	5.5.2	The name in a type signature is always unqualified	syntax	reject	F.sin :: Float -> Float: refused	hand	Supported		
-mod.clash.fixity	5.5.2	The name in a fixity declaration refers likewise	module	accept	infixl 6 + beside a local + with the Prelude's implicit	hand	Planned		
+mod.clash.fixity	5.5.2	The name in a fixity declaration refers likewise	module	accept	infixl 6 + beside a local + with the Prelude's implicit	hand	Supported		
 mod.clash.fixity.qualified	5.5.2	The name in a fixity declaration is always unqualified	syntax	reject	infixl 6 F.+: refused	hand	Supported		
-mod.clash.fixity.method	5.5.2	The fixity declaration of a class method may be at top level	module	accept	class C a where (+++) :: a; infixl 6 +++	hand	Planned		
+mod.clash.fixity.method	5.5.2	The fixity declaration of a class method may be at top level	module	accept	class C a where (+++) :: a; infixl 6 +++	hand	Supported		
 mod.clash.f.example	5.5.2	Example: f x = Prelude.sin (F.sin x) with both references qualified	module	run	prints sin of x	hand	Planned		
-mod.closure.mentioned	5.5.3	Every name explicitly mentioned must be defined locally or imported	module	reject	an unbound name: refused	hand	Planned		
-mod.closure.silent	5.5.3	Entities the compiler needs need not be imported if not mentioned	module	accept	import of x with a type and class not imported	hand	Planned		
-mod.closure.class	5.5.3	The classes in a variable's signature need not be imported	module	accept	a function with a context from a module not imported, instance selected correctly	hand	Planned		
-mod.closure.t	5.5.3	Example: M1(x) with T not exported, M2 imports x and defines y = x	module	accept	compiles though T does not escape M1	hand	Planned		
-mod.closure.t.sig	5.5.3	There y can be given no signature, as T is not in scope	module	reject	y :: T: refused	hand	Planned		
-mod.closure.synonym	5.5.3	The type of an exported entity is unaffected by non-exported synonyms	module	accept	module M(x) where type T = Int; x :: T; importer uses x + (1 :: Int)	hand	Planned		
+mod.closure.mentioned	5.5.3	Every name explicitly mentioned must be defined locally or imported	module	reject	an unbound name: refused	hand	Supported		
+mod.closure.silent	5.5.3	Entities the compiler needs need not be imported if not mentioned	module	accept	import of x with a type and class not imported	hand	Supported		
+mod.closure.class	5.5.3	The classes in a variable's signature need not be imported	module	accept	a function with a context from a module not imported, instance selected correctly	hand	Supported		
+mod.closure.t	5.5.3	Example: M1(x) with T not exported, M2 imports x and defines y = x	module	accept	compiles though T does not escape M1	hand	Supported		
+mod.closure.t.sig	5.5.3	There y can be given no signature, as T is not in scope	module	reject	y :: T: refused	hand	Supported		
+mod.closure.synonym	5.5.3	The type of an exported entity is unaffected by non-exported synonyms	module	accept	module M(x) where type T = Int; x :: T; importer uses x + (1 :: Int)	hand	Supported		
 mod.closure.iface	5.5.3	The system silently imports what must accompany an entity	module	none	the means are the compiler's; tested through the rows above	hand	Planned		
 mod.std.fixed	5.6	The semantics of Prelude and library modules, not their implementation, are part of the language	module	none	tested by chapters 6, 8 and 12 to 27	hand	Planned		
 mod.std.optimise	5.6	A compiler may optimise calls to them without consulting their source	module	none	a permission, not a requirement	hand	Planned		
-mod.prel.implicit	5.6.1	The Prelude is imported into all modules as if by import Prelude	module	accept	a module uses Prelude.map and map with no import	hand	Planned		
-mod.prel.implicit.qualified	5.6.1	That implicit import gives the qualified names	module	accept	Prelude.map with no import	hand	Planned		
-mod.prel.explicit.list	5.6.1	An explicit import of Prelude replaces the implicit one: list	module	reject	import Prelude (map); a use of filter: refused	hand	Planned		
-mod.prel.explicit.empty	5.6.1	Likewise an empty list	module	reject	import Prelude (); a use of map: refused	hand	Planned		
-mod.prel.explicit.hiding	5.6.1	Likewise hiding	module	reject	import Prelude hiding (map); a use of map: refused	hand	Planned		
-mod.prel.explicit.qualified	5.6.1	Likewise qualified	module	reject	import qualified Prelude; a use of map: refused	hand	Planned		
-mod.prel.explicit.qualified.ok	5.6.1	That import gives the qualified names	module	accept	import qualified Prelude; a use of Prelude.map	hand	Planned		
-mod.prel.explicit.as	5.6.1	Likewise an as clause, which leaves Prelude.x out of scope	module	reject	import Prelude as P; a use of Prelude.map: refused; map and P.map work	hand	Planned		
-mod.prel.explicit.qualas	5.6.1	Likewise qualified with as	module	reject	import qualified Prelude as P; a use of map: refused	hand	Planned		
-mod.prel.explicit.several	5.6.1	Several explicit imports are cumulative	module	accept	import Prelude (map); import qualified Prelude as P	hand	Planned		
+mod.prel.implicit	5.6.1	The Prelude is imported into all modules as if by import Prelude	module	accept	a module uses Prelude.map and map with no import	hand	Supported		
+mod.prel.implicit.qualified	5.6.1	That implicit import gives the qualified names	module	accept	Prelude.map with no import	hand	Supported		
+mod.prel.explicit.list	5.6.1	An explicit import of Prelude replaces the implicit one: list	module	reject	import Prelude (map); a use of filter: refused	hand	Supported		
+mod.prel.explicit.empty	5.6.1	Likewise an empty list	module	reject	import Prelude (); a use of map: refused	hand	Supported		
+mod.prel.explicit.hiding	5.6.1	Likewise hiding	module	reject	import Prelude hiding (map); a use of map: refused	hand	Supported		
+mod.prel.explicit.qualified	5.6.1	Likewise qualified	module	reject	import qualified Prelude; a use of map: refused	hand	Supported		
+mod.prel.explicit.qualified.ok	5.6.1	That import gives the qualified names	module	accept	import qualified Prelude; a use of Prelude.map	hand	Supported		
+mod.prel.explicit.as	5.6.1	Likewise an as clause, which leaves Prelude.x out of scope	module	reject	import Prelude as P; a use of Prelude.map: refused; map and P.map work	hand	Supported		
+mod.prel.explicit.qualas	5.6.1	Likewise qualified with as	module	reject	import qualified Prelude as P; a use of map: refused	hand	Supported		
+mod.prel.explicit.several	5.6.1	Several explicit imports are cumulative	module	accept	import Prelude (map); import qualified Prelude as P	hand	Supported		
 mod.prel.spec	5.6.1	The semantics of the Prelude's entities is specified by the reference implementation of chapter 8	prelude	none	tested row by row through the generated pre.* rows	hand	Planned		
 mod.prel.primitive	5.6.1	Some types and functions cannot be specified in Haskell and are not formally defined in chapter 8	prelude	none	a statement of the text's limit; chapter 6 is all there is for them: see readings.md	hand	Planned	R32	
 mod.prel.tuples	5.6.1	There should be an infinite family of tuples and instances; the reference gives a scheme	prelude	none	tested to the size 6.1.4 requires	hand	Planned		
-mod.prel.sub.list	5.6.1	PreludeList cannot be imported separately	module	reject	import PreludeList: refused	hand	Planned		
-mod.prel.sub.text	5.6.1	PreludeText cannot be imported separately	module	reject	import PreludeText: refused	hand	Planned		
-mod.prel.sub.io	5.6.1	PreludeIO cannot be imported separately	module	reject	import PreludeIO: refused	hand	Planned		
-mod.shadow.example	5.6.2	Example: module A( null, nonNull ) with import Prelude hiding( null ) redefines null	module	accept	compiles and null 0 is True	hand	Planned		
-mod.shadow.nohiding	5.6.2	The reference to null would be ambiguous without the hiding	module	reject	the same module with no hiding: refused	hand	Planned		
-mod.shadow.def	5.6.2	Defining a Prelude name with no reference to it is legal	module	accept	module M where null = 1, no unqualified use	hand	Planned		
-mod.shadow.importer	5.6.2	A module importing A unqualified and referring to null must resolve the ambiguity	module	reject	import A; x = null 0: refused	hand	Planned		
-mod.shadow.importer.ok	5.6.2	It may do so as A does	module	accept	import A; import Prelude hiding (null)	hand	Planned		
-mod.shadow.myprelude	5.6.2	Example: import Prelude() and import MyPrelude serves a different module in place of the Prelude	module	accept	module B compiles	hand	Planned		
+mod.prel.sub.list	5.6.1	PreludeList cannot be imported separately	module	reject	import PreludeList: refused	hand	Supported		
+mod.prel.sub.text	5.6.1	PreludeText cannot be imported separately	module	reject	import PreludeText: refused	hand	Supported		
+mod.prel.sub.io	5.6.1	PreludeIO cannot be imported separately	module	reject	import PreludeIO: refused	hand	Supported		
+mod.shadow.example	5.6.2	Example: module A( null, nonNull ) with import Prelude hiding( null ) redefines null	module	accept	compiles and null 0 is True	hand	Supported		
+mod.shadow.nohiding	5.6.2	The reference to null would be ambiguous without the hiding	module	reject	the same module with no hiding: refused	hand	Supported		
+mod.shadow.def	5.6.2	Defining a Prelude name with no reference to it is legal	module	accept	module M where null = 1, no unqualified use	hand	Supported		
+mod.shadow.importer	5.6.2	A module importing A unqualified and referring to null must resolve the ambiguity	module	reject	import A; x = null 0: refused	hand	Supported		
+mod.shadow.importer.ok	5.6.2	It may do so as A does	module	accept	import A; import Prelude hiding (null)	hand	Supported		
+mod.shadow.myprelude	5.6.2	Example: import Prelude() and import MyPrelude serves a different module in place of the Prelude	module	accept	module B compiles	hand	Supported		
 mod.shadow.myprelude.tuple	5.6.2	(x,x) and (,) keep referring to the Prelude's tuples	module	run	MyPrelude defines its own pairs and they are not used	hand	Planned		
 mod.shadow.myprelude.list	5.6.2	[x] and [] keep referring to the Prelude's lists	module	run	there is no way to redefine [x]	hand	Planned		
 mod.shadow.myprelude.plus	5.6.2	++ is not special syntax and refers to MyPrelude's	module	run	a ++ of MyPrelude's that shows it ran	hand	Planned		
 mod.shadow.special	5.6.2	Redefining names used by the Prelude does not affect special constructs	module	run	local concatMap, enumFrom, >>=, negate, fromInteger, == and fail change no comprehension, sequence, do, negation, literal or pattern	hand	Planned		
 mod.shadow.special.scope	5.6.2	Those constructs work with none of their names in scope	module	run	import Prelude (); comprehensions, do, literals and [1..] still compile; see readings.md	hand	Planned	R22	
 mod.shadow.instance	5.6.2	Instance declarations in the Prelude cannot be hidden	module	reject	instance Show Char in a user module, under any import form: refused	hand	Planned		
-mod.prel.ordinary	5.6.2	Other than its implicit import the Prelude is an ordinary module	module	accept	it is imported with each import form	hand	Planned		
+mod.prel.ordinary	5.6.2	Other than its implicit import the Prelude is an ordinary module	module	accept	it is imported with each import form	hand	Supported		
 mod.sep.undefined	5.7	The precise details of separate compilation are not defined by the Report	module	none	left to the implementation: rhc's own decision	hand	Planned		
 mod.sep.recursive	5.7	Separate compilation of mutually recursive modules may need additional information	module	none	a permission to the implementation; see readings.md, it qualifies 5's unconditional statement	hand	Planned	R29	
 mod.sep.sigs	5.7	Explicit signatures for all exported values may be necessary for mutual recursion	module	none	whether rhc demands them is a decision; see readings.md	hand	Planned	R20 R29	
-mod.adt.data	5.8	Example: module Stack( StkType, push, pop, empty ) exports a datatype without its constructors	module	accept	importer uses push, pop, empty	hand	Planned		
-mod.adt.data.abstract	5.8	Importers cannot construct values through the constructors	module	reject	a use of Stk or EmptyStk: refused	hand	Planned		
-mod.adt.newtype	5.8	Example: the ADT built on a newtype	module	accept	importer uses push, pop, empty	hand	Planned		
-mod.adt.newtype.abstract	5.8	Its constructor is hidden likewise	module	reject	a use of Stk: refused	hand	Planned		
+mod.adt.data	5.8	Example: module Stack( StkType, push, pop, empty ) exports a datatype without its constructors	module	accept	importer uses push, pop, empty	hand	Supported		
+mod.adt.data.abstract	5.8	Importers cannot construct values through the constructors	module	reject	a use of Stk or EmptyStk: refused	hand	Supported		
+mod.adt.newtype	5.8	Example: the ADT built on a newtype	module	accept	importer uses push, pop, empty	hand	Supported		
+mod.adt.newtype.abstract	5.8	Its constructor is hidden likewise	module	reject	a use of Stk: refused	hand	Supported		
 std.type.syntax	6.1	Some definitions in this chapter are not valid syntax but convey the type's meaning	prelude	none	a remark; each type is tested by its rows	hand	Planned		
 std.bool.data	6.1.1	Bool is the enumeration False | True in that order	prelude	run	False < True, fromEnum True is 1, minBound is False	hand	Planned		
 std.bool.read	6.1.1	Bool is in Read	prelude	run	read "True"	hand	Planned		
@@ -1529,10 +1529,10 @@ std.unit.read	6.1.5	() is in Read	prelude	run	read "()"	hand	Planned
 std.unit.show	6.1.5	() is in Show	prelude	run	show ()	hand	Planned		
 std.fun.abstract	6.1.6	Functions are an abstract type: no constructors create them	prelude	none	the absence of a constructor has no program to test it	hand	Planned		
 std.fun.simple	6.1.6	id, const, (.), flip, ($) and until are found in the Prelude	prelude	run	each applied	hand	Planned		
-std.io.abstract	6.1.7	IO is abstract: no constructors are visible to the user	static	reject	a Prelude export list has none; a constructor of IO named: refused	hand	Planned		
+std.io.abstract	6.1.7	IO is abstract: no constructors are visible to the user	static	reject	a Prelude export list has none; a constructor of IO named: refused	hand	Supported		
 std.io.monad	6.1.7	IO is in Monad	prelude	run	do in IO	hand	Planned		
 std.io.functor	6.1.7	IO is in Functor	prelude	run	fmap on getLine's result	hand	Planned		
-std.ioerror.abstract	6.1.7	IOError is abstract	static	reject	a constructor of IOError named: refused	hand	Planned		
+std.ioerror.abstract	6.1.7	IOError is abstract	static	reject	a constructor of IOError named: refused	hand	Supported		
 std.ioerror.show	6.1.7	IOError is in Show	prelude	run	show (userError "x") succeeds; its text is unspecified	hand	Planned		
 std.ioerror.eq	6.1.7	IOError is in Eq	prelude	run	userError "x" == userError "x"; what equality means is unspecified: see readings.md	hand	Planned	R47	
 std.maybe.data	6.1.8	Maybe is Nothing | Just a, in Eq, Ord, Read, Show	prelude	run	each class; Nothing < Just x	hand	Planned		
@@ -2364,7 +2364,7 @@ lay.note6.pending	9.3	Note 6: at end of input any pending close-braces are inser
 lay.note6.explicit	9.3	Note 6: it is an error to be within a non-layout context at end of input	layout	reject	unclosed explicit brace at end of file	hand	Supported		
 lay.notdetected	9.3	"Some error conditions are not detected by the algorithm, although they could be: for example let }"	layout	reject	the grammar refuses it either way; by equations 4 and 8 L does detect the usual case; see readings.md	hand	Supported	R3	
 lay.parseerror.let	9.3	`let x = e; y = x in e'` is valid and translates to `let { x = e; y = x } in e'`	layout	accept	expansion; the prose calls this Note 1, it is Note 5: see readings.md	hand	Supported	R1	
-lay.parseerror.fixity	9.3	`do a == b == c` has the single parse `(do { a == b }) == c` since (==) is non-associative	layout	accept	taking it needs fixity in the parser; the Report says hard to implement; a post-parse fixity pass gets it wrong; see readings.md	hand	Planned	R1	errors/lay.parseerror.fixity_refused
+lay.parseerror.fixity	9.3	`do a == b == c` has the single parse `(do { a == b }) == c` since (==) is non-associative	layout	accept	taking it needs fixity in the parser; the Report says hard to implement; a post-parse fixity pass gets it wrong; see readings.md	hand	Supported	R1	errors/lay.parseerror.fixity_refused
 lay.parseerror.advice	9.3	Programmers are advised to avoid code needing a closing brace in such situations	layout	none	advice to programmers	hand	Planned		
 lay.parseerror.doif	9.3	`do { if a ; then b ; else c }` is refused: ; is valid only as a stmt end	layout	reject	the layout-free form of the same mistake; Haskell 2010's DoAndIfThenElse is not Haskell 98	hand	Supported		
 lay.parseerror.multiline	9.3	`if` in a do block with then and else indented more parses	layout	accept	no semicolons arise	hand	Supported		
@@ -2422,22 +2422,22 @@ syn.r.constr.strict.infix	9.5	Infix constructor with strict flags: (btype | ! at
 syn.r.fielddecl.strict	9.5	fielddecl -> vars :: (type | ! atype)	syntax	accept	`C { a, b :: !Int }`; `! Maybe Int` is refused as atype	hand	Supported		
 syn.r.newconstr.onefield	9.5	newconstr has exactly one field, unflagged	syntax	reject	`newtype N = N Int Int`, `newtype N = N !Int`, `newtype N = N { a, b :: Int }`	hand	Supported		
 syn.r.funlhs.oneapat	9.5	funlhs -> var apat {apat}: at least one pattern	syntax	accept	`f x = ...` is a function binding, `f = ...` a pattern binding	hand	Supported		
-syn.r.funlhs.prec	9.5	Infix funlhs obeys the operator's fixity and the indexed pats	syntax	reject	an infix definition whose argument pattern has a lower-precedence constructor unparenthesised is refused	hand	Planned		
+syn.r.funlhs.prec	9.5	Infix funlhs obeys the operator's fixity and the indexed pats	syntax	reject	an infix definition whose argument pattern has a lower-precedence constructor unparenthesised is refused	hand	Supported		
 syn.r.funlhs.paren	9.5	( funlhs ) apat {apat}	syntax	accept	`(x `f` y) z = ...`, `(f x) y = ...`	hand	Supported		
 syn.r.decl.pat0	9.5	decl -> (funlhs | pat0) rhs: no unparenthesised n+k at binding level	syntax	accept	`x + 1 = ...` defines (+)	hand	Supported		
 syn.r.cdecl.nopattern	9.5	cdecl and idecl bind a funlhs or a var, never a pattern	syntax	reject	`(a,b) = ...` in a class or instance body	hand	Supported		
 syn.r.idecl.nosig	9.5	idecl has no gendecl	syntax	reject	a signature or fixity declaration in an instance body	hand	Supported		
 syn.r.gd.exp0	9.5	gd -> | exp0: a guard ends without a type signature	syntax	reject	`f x | x :: Bool = 1` is refused; parenthesised it holds	hand	Supported	R65	
 syn.r.exp.sigprec	9.5	exp -> exp0 :: [context =>] type is outermost in exp	syntax	accept	`a + b :: Int` signs the sum	hand	Supported		
-syn.r.exp.nonassoc	9.5	expi -> expi+1 [qop(n,i) expi+1]: non-associative operators do not chain	syntax	reject	`a == b == c`	hand	Planned		
-syn.r.exp.mixassoc	9.5	Left and right associative operators of one precedence do not mix	syntax	reject	user `infixl 6 +++` with `infixr 6 ***`	hand	Planned		
+syn.r.exp.nonassoc	9.5	expi -> expi+1 [qop(n,i) expi+1]: non-associative operators do not chain	syntax	reject	`a == b == c`	hand	Supported		
+syn.r.exp.mixassoc	9.5	Left and right associative operators of one precedence do not mix	syntax	reject	user `infixl 6 +++` with `infixr 6 ***`	hand	Supported		
 syn.r.neg.prec	9.5	lexp6 -> - exp7: prefix minus at level 6, left associative	syntax	accept	`- a * b` is `-(a*b)`, `- a + b` is `(-a)+b`	hand	Supported		
-syn.r.neg.operand	9.5	Prefix minus is not an operand of a tighter or equal operator	syntax	reject	`a * - b`, `a + - b`, `- - a`, `a ^ - b` are refused	hand	Planned		
+syn.r.neg.operand	9.5	Prefix minus is not an operand of a tighter or equal operator	syntax	reject	`a * - b`, `a + - b`, `- - a`, `a ^ - b` are refused	hand	Supported		
 syn.r.neg.lowerop	9.5	Prefix minus may follow a lower-precedence operator	syntax	accept	`a == - b`, `a && - b > c`	hand	Supported		
 syn.r.section.minus	9.5	( qop(a,i)<-> expi+1 ): - is excluded from right sections	syntax	accept	`(- 1)` is a number	hand	Supported		
-syn.r.section.left.level	9.5	Left section operand must bind tighter, or be left-associative at the level	syntax	reject	`(a + b *)` is refused; `(a * b +)` holds	hand	Planned		
-syn.r.section.right.level	9.5	Right section operand likewise	syntax	reject	`(* a + b)` is refused; `(+ a * b)` holds	hand	Planned		
-syn.r.section.neg	9.5	`(-5 *)` is refused: `-5 * x` does not parse as `(-5) * x`	syntax	reject	`(-5 +)` holds, as ( lexp6 qop(l,6) ); see readings.md	hand	Planned	R10	
+syn.r.section.left.level	9.5	Left section operand must bind tighter, or be left-associative at the level	syntax	reject	`(a + b *)` is refused; `(a * b +)` holds	hand	Supported		
+syn.r.section.right.level	9.5	Right section operand likewise	syntax	reject	`(* a + b)` is refused; `(+ a * b)` holds	hand	Supported		
+syn.r.section.neg	9.5	`(-5 *)` is refused: `-5 * x` does not parse as `(-5) * x`	syntax	reject	`(-5 +)` holds, as ( lexp6 qop(l,6) ); see readings.md	hand	Supported	R10	
 syn.r.fexp.noblock	9.5	Arguments of application are aexps: no unparenthesised lambda, let, if, case or do as an argument	syntax	reject	`f \x -> x`, `f do x` are refused	hand	Supported		
 syn.r.exp10.opoperand	9.5	exp10 forms may be the right operand of an operator	syntax	accept	`a + \x -> x`, `a >>= \x -> b`, `z + let y = 1 in y`	hand	Supported		
 syn.r.update.notqcon	9.5	aexp<qcon> { ... } is update, n>=1	syntax	accept	`x {a = 1} {b = 2}` chains; `f x {a = 1}` updates x alone	hand	Supported		
@@ -2453,7 +2453,7 @@ syn.r.decls.empty	9.5	decls has n>=0	syntax	accept	`let {} in e`, `f = x where {
 syn.r.vars.nonempty	9.5	vars has n>=1, a comma list	syntax	accept	`a, b :: Int`	hand	Supported		
 syn.r.fixity.prec	9.5	fixity [integer] ops: the integer token, any radix	syntax	accept	`infixl 6 +++`, `infixl 0x6 +++`, by the production; see readings.md	hand	Planned	R9	
 syn.r.tuple.k	9.5	Tuples have k>=2	syntax	accept	`(a)` is a parenthesis	hand	Supported		
-syn.r.gcon.arity	9.5	pat10 -> gcon apat1 ... apatk (arity gcon = k): the grammar depends on an arity	syntax	reject	a constructor applied to too few or too many patterns; the parser cannot know it: a renamer check	hand	Planned		
+syn.r.gcon.arity	9.5	pat10 -> gcon apat1 ... apatk (arity gcon = k): the grammar depends on an arity	syntax	reject	a constructor applied to too few or too many patterns; the parser cannot know it: a renamer check	hand	Supported		
 syn.r.pat.nplusk.top	9.5	pat -> var + integer is at the top of pat	syntax	accept	`case n of m+1 -> m`, `(n+1)`, in a generator, in a field pattern	hand	Supported		
 syn.r.pat.neg	9.5	lpat6 -> - (integer | float): only a literal may be negated	syntax	accept	`f (-1)`; `f (-x)` is refused	hand	Supported		
 syn.r.pat.notnested.neg	9.5	`f -1 = ...` defines (-), since funlhs comes first	syntax	accept	a function binding	hand	Supported		

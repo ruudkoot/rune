@@ -57,30 +57,30 @@ What it rests on:
 
 ## Status
 
-Decided on 2026-11-09, with the owner's answers of 2026-11-10. Nothing is implemented. The decisions are in the table at the head of *Decisions*, and the nine still to be taken on the figures in *Decisions on the numbers*.
+Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" below names the merge on which `make check` last passed; "merged" means in `haskell98`, its check still to run. The decisions are in the table at the head of *Decisions*, and the nine still to be taken on the figures in *Decisions on the numbers*.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
-| M1. The conformance table and its enforcement | T | M | D38, D53 | not started |
-| M2. Runners generalised; round-trip harness | T | M | D28 | not started |
-| M3. Oracle harness and the corpus imported | T | L | D52 | not started |
-| M4. Rune's contract: E11's patches, as decided | A | L | D7, D39, D40, D41 | not started |
-| M5. Mid to bytecode, Mid text with labels | A | S | D1, D26 | not started |
-| M6. Walkers and a fold | A | M | D10 | not started |
-| M7. Lints and the two Simplify fixes | A | S | D5 | not started |
-| M8. Core, its text, CoreLint, a Core interpreter | B | L | D2, D41 | not started |
-| M9. Thunks through the engines | B | L | D3-D6, D11-D14, D18, D19, D57 | not started |
-| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | not started |
-| M11. Lexer, layout, parser, printers | F | L | D27, D28 | not started |
-| M12. Renamer, modules, fixity, recursive modules | F | L | D29, D30, D35, D36 | not started |
+| M1. The conformance table and its enforcement | T | M | D38, D53 | done; green on `6793f7ee1` (23,523 tests) |
+| M2. Runners generalised; round-trip harness | T | M | D28 | done; green on `6793f7ee1` |
+| M3. Oracle harness and the corpus imported | T | L | D52 | under way: the corpus's licences surveyed (74 of 188 may be vendored; nothing vendored, the owner's choice), E7's and E8's judgements as data, readings R55 and R56; the harness in progress |
+| M4. Rune's contract: E11's patches, as decided | A | L | D7, D39, D40, D41 | done; green on `6793f7ee1` |
+| M5. Mid to bytecode, Mid text with labels | A | S | D1, D26 | done; green on `6793f7ee1` |
+| M6. Walkers and a fold | A | M | D10 | done; merged |
+| M7. Lints and the two Simplify fixes | A | S | D5 | done; merged |
+| M8. Core, its text, CoreLint, a Core interpreter | B | L | D2, D41 | done; merged (the skeleton green on `6793f7ee1`) |
+| M9. Thunks through the engines | B | L | D3-D6, D11-D14, D18, D19, D57 | built (115 of 115 lazy ports pass on form C, `--count` 0.916 of E2's closure form); its heavy checks running |
+| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | under way |
+| M11. Lexer, layout, parser, printers | F | L | D27, D28 | done, D21's tables in `lib/unicode` with it; merged (the parser green on `6793f7ee1`) |
+| M12. Renamer, modules, fixity, recursive modules | F | L | D29, D30, D35, D36 | under way (the qualified-operator lexeme merged) |
 | M13. Kinds, types, classes | F | L | D30, D31, D32, D33 | not started |
 | M14. Deriving | F | M | D33 | not started |
 | M15. Desugaring to Core | F | L | D17, D34 | not started |
 | M16. HsLint | F | L | D54 | not started |
-| M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | not started |
+| M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | the Report's libraries as text, errata applied, overlay listed: green on `6793f7ee1`; the primitives under way |
 | M18. The Report's libraries | L | M | D36 | not started |
-| M19. Conformance: the table worked through | T | L | D52, D55, D56 | not started |
-| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | not started |
+| M19. Conformance: the table worked through | T | L | D52, D55, D56 | under way: 2,314 of the 3,781 rows that want a program have one, held while the row is `Planned`; D55's harness (rhc's mutants, metamorphic relations, bottom probes, the generator) merged |
+| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | under way |
 | M21. HsIface and rhc's driver | S | L | D43, D44, D45 | not started |
 | M22. SCC keys | S | M | D30, D36 | not started |
 | M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | not started |
@@ -88,10 +88,10 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Nothing is implem
 | M25. What measurement justifies | P | | D15-D17, D19, D51 | not started |
 | M26. Ready for lazy ML | Z | | D57 | not started |
 | M27. Retire | | S | | not started |
-| M28. `Ty` with application and forall | A | L | D4 | not started |
-| M29. Mid `Case` | A | L | D8 | not started |
-| M30. Multi-value return, built to be measured | A | L | D9 | not started |
-| M31. `IntInf` immediate | A | M | D20 | not started |
+| M28. `Ty` with application and forall | A | L | D4 | done; merged |
+| M29. Mid `Case` | A | L | D8 | under way |
+| M30. Multi-value return, built to be measured | A | L | D9 | to build after M20, on the register VM, to be measured |
+| M31. `IntInf` immediate | A | M | D20 | done; merged |
 
 Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
 

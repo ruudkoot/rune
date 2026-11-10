@@ -1,0 +1,11 @@
+# One cycle of three modules, no error.
+pairs 538
+EXPORT	A	tA A
+EXPORT	A	vA A
+EXPORT	A	vA a
+EXPORT	B	tB B
+EXPORT	B	vB B
+EXPORT	B	vB b
+EXPORT	C	tC C
+EXPORT	C	vC C
+EXPORT	C	vC c
