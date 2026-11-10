@@ -935,6 +935,12 @@ void emit_CLOSURE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, const ui
     (void)pc; (void)c;
     alloc(j, K_CLOSURE, 0, n + 1, FILL_CLOSURE, a, b, 0, L);
 }
+/* D15 C: a closure of c parameters says c in its contag (src/isa/regs.sml) */
+void emit_CLOSUREN(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d, const uint8_t *L, uint32_t n) {
+    (void)pc; (void)d;
+    if (c < 2) { jit_unsupported(j); return; }
+    alloc(j, K_CLOSURE, c, n + 1, FILL_CLOSURE, a, b, 0, L);
+}
 void emit_SELECT(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
     ms_load_obj(M, R_S0, c, K_TUPLE, jit_fatal(j, FATAL_EXPECT_TUPLE, 0, 0, 0));
@@ -1425,9 +1431,18 @@ static void called(Jit *j, uint32_t pc) {
    representation would choose the address a call jumps to (the linting
    roadmap's D8); rcx := the table of calls (CallInfo, M6), read from the
    VM, which a unit loaded grows and may move */
-static void closure_function(Jit *j, int32_t a, int obj, int kind) {
+static void closure_function(Jit *j, int32_t a, int obj, int kind, AsmLabel *general, uint32_t n) {
     ms_load_obj(M, obj, a, kind, jit_fatal(j, kind == K_THUNK ? FATAL_ENTER : FATAL_CALL, 0, 0, 0));
+    /* D15 C: a closure of another arity than the call gives (its contag,
+       0 for one), or a partial application (field 0 REG_PAP), is the
+       interpreter's general path's (SLOW_APPLY, reg_apply) */
+    if (general) {
+        ms_load_contag(M, R_S6, obj);
+        as_cmp_ri(A, R_S6, n == 1 ? 0 : (int32_t)n);
+        as_jcc(A, CC_NE, general);
+    }
     ms_load_field_bits(M, R_S6, obj, 0);   /* field 0: the function, its word */
+    if (general && n >= 2) { as_cmp_ri(A, R_S6, 0); as_jcc(A, CC_L, general); }
     as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
     as_lea(A, R_S3, R_S3, R_S3, 1, 1);   /* the word of the number of functions */
     as_cmp_rr(A, R_S6, R_S3);
@@ -1502,7 +1517,14 @@ static void fill_unit_dynamic(Jit *j) {
    slow path writes the homes back. After it they are free. ENTER is the
    same call of a suspension, of kind K_THUNK, which is a loop where its
    code has said BLACKHOLE. */
-static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
+static void call_object(Jit *j, uint32_t pc, int32_t a, uint32_t n, const int32_t *args, int kind) {
+    AsmLabel *general = NULL;
+    if (kind == K_CLOSURE) {
+        Slow *g = ms_slow(M, SLOW_APPLY, j->next);
+        if (!g) return;
+        g->a = (int32_t)pc;
+        general = &g->here;
+    }
     if (result_at(j, j->next) < 0) { jit_unsupported(j); return; }   /* a call the compiler follows by RESULT, always */
     AsmLabel after; as_label_init(&after);   /* the landing (M6) */
     /* before the restart label: the slots stay right across a restart (M9);
@@ -1512,11 +1534,11 @@ static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
     if (j->jit->profile) ms_writeback(M, pc);
     else ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));
     ms_role(M, MR_ARGS);
-    ms_need_word(M, b);
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, args[i]);
     int grow = grow_slow(j);
     if (grow < 0) { as_label_free(&after); return; }
     ms_role(M, MR_CLOS);
-    closure_function(j, a, R_S2, kind);
+    closure_function(j, a, R_S2, kind, general, n);
     if (kind == K_THUNK) {
         ms_load_contag(M, R_S3, R_S2);
         as_cmp_ri(A, R_S3, THUNK_BLACKHOLE);
@@ -1530,7 +1552,7 @@ static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
        from register b (the last home read), the rest as the stack's clean
        part has them (M6) or unit where not every function has its arity
        in the section */
-    ms_store_nth(M, BASER, j->m.nlocals + MS_HEADER, b);
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + MS_HEADER + i, args[i]);
     callee_entry(j, R_S5);
     /* r11 stays the function's word, which the stub of the interpreter
        wants (ms_emit_call_interp); the fill its number */
@@ -1553,8 +1575,8 @@ static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
     call_landing(j, &after);
     as_label_free(&after);
 }
-void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, b, K_CLOSURE); }
-void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, b, K_THUNK); }
+void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, 1, &b, K_CLOSURE); }
+void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, 1, &b, K_THUNK); }
 /* ---- suspensions (docs/ir.md, Suspensions) ----
    FORCE: a branch to o with the value, where register s holds no
    unevaluated suspension -- what an indirection holds, else s's word; on
@@ -1611,24 +1633,32 @@ void emit_UPDATE(Jit *j, uint32_t pc, int32_t a) {
     ms_set_field(M, R_S0, 0, a);
     as_bind(A, &s->back);
 }
-void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
+static void tail_object(Jit *j, uint32_t pc, int32_t a, uint32_t n, const int32_t *args) {
+    Slow *g = ms_slow(M, SLOW_APPLY, j->next);
+    if (!g) return;
+    g->a = (int32_t)pc;
+    AsmLabel *general = &g->here;
     /* the frame is replaced: of its homes only the argument is wanted, and
        under --jit-profile every one, which the profile's helper (called)
        loads again (M9) */
     ms_role(M, MR_ARGS);
     if (j->jit->profile) ms_writeback(M, pc);
-    else ms_need_word(M, b);
+    else for (uint32_t i = 0; i < n; i++) ms_need_word(M, args[i]);
     int grow = grow_slow(j);
     if (grow < 0) return;
+    /* more than one argument: above the frame first, since they are read
+       from its registers, which become the callee's (D15 C) */
+    if (n > 1) for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + i, args[i]);
     ms_role(M, MR_CLOS);
-    closure_function(j, a, R_S2, K_CLOSURE);
+    closure_function(j, a, R_S2, K_CLOSURE, general, n);
     called(j, pc);
     ms_role(M, MR_ROOM);
     room_dynamic(j, grow, 0);
     ms_role(M, MR_ARGS);
     /* the callee's registers are this frame's, from its base: register 0
        from register b, the last home read */
-    ms_store_nth(M, BASER, 0, b);
+    if (n == 1) ms_store_nth(M, BASER, 0, args[0]);
+    else for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, BASER, j->m.nlocals + i);
     callee_entry(j, R_S5);
     if (!j->jit->all_meta) {   /* (r11 the function's word again after, as in CALL) */
         as_shr_ri(A, R_S6, 1);
@@ -1646,6 +1676,7 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
     ms_role(M, MR_BODY);
 }
+void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { tail_object(j, pc, a, 1, &b); }
 /* after a CALL or CALLK a RESULT is the callee's RET's to do, and is passed
    over (compile.c, phantom); after a PRIMPUSH it takes what the primitive
    left on the stack, above the registers */
@@ -1796,4 +1827,26 @@ void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
     as_bind(A, &hand);
     ms_handback(M, RUN_INTERP);
     as_label_free(&hand);
+}
+
+/* ---- D15 C: calls of n arguments through a closure ----
+   In line where the closure has n parameters, as CALL is where it has
+   one; any other, and a partial application, the general path's
+   (SLOW_APPLY). Where not every function has its arity in the section, a
+   callee's registers would be filled from the second (fill_unit_dynamic),
+   which an argument is: left to the interpreter. */
+static int call_args(Jit *j, const uint8_t *L, uint32_t n, int32_t *args) {
+    if (n < 2 || n > 64 || !j->jit->all_meta) { jit_unsupported(j); return 0; }
+    for (uint32_t i = 0; i < n; i++) args[i] = read_i32(L + 4 * i);
+    return 1;
+}
+void emit_CALLN(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
+    (void)b;
+    int32_t args[64];
+    if (call_args(j, L, n, args)) call_object(j, pc, a, n, args, K_CLOSURE);
+}
+void emit_TAILCALLN(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
+    (void)b;
+    int32_t args[64];
+    if (call_args(j, L, n, args)) tail_object(j, pc, a, n, args);
 }

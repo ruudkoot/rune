@@ -43,6 +43,17 @@ Value reg_barrier_pass(VM *vm);
 void reg_frames_lower(VM *vm, size_t id);
 void reg_barrier_arm(VM *vm);
 
+/* D15 C (isa_regs.c): the general path of a call through a closure -- of
+   another arity than the call gives, or a partial application (a K_CLOSURE
+   of the function index REG_PAP) -- its closure and n arguments on the
+   stack, the last at vm->sp - 1: a frame made and its function to enter
+   (REG_APPLY_ENTERED: vm->fp, func, sp and pc set), or, for a call that
+   is no tail call, a value left on the stack for its RESULT
+   (REG_APPLY_VALUE). The VM is synced, and the stack may move. */
+enum { REG_PAP = -1, REG_APPLY_ENTERED = 0, REG_APPLY_VALUE = 1 };
+int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc);
+extern uint64_t reg_apply_counts[4];
+
 /* The byte length of the instruction at code, or 0 for an invalid opcode. */
 static inline uint32_t rop_length(const uint8_t *code) {
     uint8_t op = code[0];

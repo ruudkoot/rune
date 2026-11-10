@@ -664,7 +664,9 @@ struct
                 else case idx (nth (ops, #closes info)) of
                        ~1 => ()
                      | i => (Array.update (closed, i, true);
-                             if arityOf i <> 1 then breach ("a closure of f" ^ i2s (nth (ops, #closes info)) ^ ", of arity " ^ i2s (arityOf i)) else ())
+                             (* CLOSUREN's function has the parameters it says (D15 C) *)
+                             if arityOf i <> (if opc = R.CLOSUREN then nth (ops, 2) else 1)
+                             then breach ("a closure of f" ^ i2s (nth (ops, #closes info)) ^ ", of arity " ^ i2s (arityOf i)) else ())
               val () = if #known info < 0 then () else case idx (nth (ops, #known info)) of ~1 => () | i => Array.update (calledKnown, i, true)
               (* the writes *)
               val () = writes (opc, ops, info, #wr info)

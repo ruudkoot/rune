@@ -49,6 +49,8 @@ struct
     | Env of int                          (* a value the running closure captured *)
     | Self                                (* the running closure *)
     | Call of var * var                   (* closure, argument *)
+    | CallN of var * var list             (* closure, two or more arguments: as many calls of one would be
+                                             (D15 C, eval/apply proper; the register target only) *)
     | CallK of int * var list             (* a known function, by its id, and its arguments: no closure *)
     | Prim of string * var list
     | Tuple of var list
@@ -82,6 +84,7 @@ struct
                                                      and the one for the rest *)
     | Return of var
     | TailCall of var * var
+    | TailCallN of var * var list          (* closure, two or more arguments (D15 C) *)
     | TailCallK of int * var list
     | Raise of var
 
@@ -115,6 +118,7 @@ struct
     case oper of
       SetGlobal (_, v) => [v]
     | Call (f, a) => [f, a]
+    | CallN (f, xs) => f :: xs
     | CallK (_, vs) => vs
     | Prim (_, vs) => vs
     | Tuple vs => vs
@@ -138,6 +142,7 @@ struct
     | Switch (v, _, _) => [v]
     | Return v => [v]
     | TailCall (f, a) => [f, a]
+    | TailCallN (f, xs) => f :: xs
     | TailCallK (_, vs) => vs
     | Raise v => [v]
 
@@ -153,6 +158,7 @@ struct
     | Env i => Env i
     | Self => Self
     | Call (c, a) => Call (f c, f a)
+    | CallN (c, xs) => CallN (f c, List.map f xs)
     | CallK (k, vs) => CallK (k, List.map f vs)
     | Prim (p, vs) => Prim (p, List.map f vs)
     | Tuple vs => Tuple (List.map f vs)
@@ -176,6 +182,7 @@ struct
     | Switch (v, cases, d) => Switch (f v, cases, d)
     | Return v => Return (f v)
     | TailCall (c, a) => TailCall (f c, f a)
+    | TailCallN (c, xs) => TailCallN (f c, List.map f xs)
     | TailCallK (k, vs) => TailCallK (k, List.map f vs)
     | Raise v => Raise (f v)
 
@@ -260,6 +267,7 @@ struct
         | Env i => "env " ^ Int.toString i
         | Self => "self"
         | Call (f, a) => "call " ^ vs [f, a]
+        | CallN (f, xs) => "calln " ^ vs (f :: xs)
         | CallK (f, xs) => "callk f" ^ Int.toString f ^ (if null xs then "" else " " ^ vs xs)
         | Prim (p, xs) => "prim " ^ p ^ " " ^ vs xs
         | Tuple xs => "tuple " ^ vs xs
@@ -291,6 +299,7 @@ struct
             "    switch " ^ v x ^ String.concat (List.map (fn (t, b) => " " ^ Int.toString t ^ ":" ^ l b) cases) ^ " else " ^ l d
         | Return x => "    return " ^ v x
         | TailCall (f, a) => "    tailcall " ^ vs [f, a]
+        | TailCallN (f, xs) => "    tailcalln " ^ vs (f :: xs)
         | TailCallK (f, xs) => "    tailcallk f" ^ Int.toString f ^ (if null xs then "" else " " ^ vs xs)
         | Raise x => "    raise " ^ v x
       fun block ({label, params, instrs, transfer = t} : block) =

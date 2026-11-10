@@ -363,6 +363,10 @@ void vm_init(VM *vm, size_t heap) {
     vm->nfiles = 3;
     if (!vm->stack_limit) vm->stack_limit = STACK_LIMIT_DEFAULT;
     vm->unit_return = UINT32_MAX;
+    vm->apply_stubs = NULL;
+    vm->apply_kmax = vm->apply_rmax = 0;
+    vm->apply_return = UINT32_MAX;
+    vm->apply_nfuncs = 0;
     heap_init(vm, heap);
 }
 
@@ -388,6 +392,7 @@ int vm_release(VM *vm) {
     free(vm->unit_sessions);
     free(vm->unit_exports);
     free(vm->unit_table);
+    free(vm->apply_stubs);
     free(vm->stack);
     free(vm->frames);
     free(vm->frame_buf);

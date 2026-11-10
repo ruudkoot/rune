@@ -252,6 +252,7 @@ struct
         | L.Env i => op' (Opcodes.ENV, [i])
         | L.Self => op' (Opcodes.SELF, [])
         | L.Call (f, a) => (load f; load a; op' (Opcodes.CALL, []))
+        | L.CallN _ => bug "a call of more than one argument through a closure: the register target's alone (D15 C)"
         | L.CallK (fid, vs) => (List.app load vs; op' (Opcodes.CALLK, [fid, List.length vs]))
         (* a suspension's (docs/ir.md, Suspensions): a force is FORCE, and
            where the value is an unevaluated suspension UNIT and ENTER; the
@@ -382,6 +383,7 @@ struct
               end
           | L.Return v => (load v; op' (Opcodes.RET, []))
           | L.TailCall (fv, a) => (load fv; load a; op' (Opcodes.TAILCALL, []))
+          | L.TailCallN _ => bug "a tail call of more than one argument through a closure: the register target's alone (D15 C)"
           | L.TailCallK (fid, vs) => (List.app load vs; op' (Opcodes.TAILCALLK, [fid, List.length vs]))
           | L.Raise v => (load v; op' (Opcodes.RAISE, []))
         end

@@ -462,6 +462,7 @@ struct
                       | _ => ())
                  | ConTag y => subject (here, fn () => "a ConTag", y, isData)
                  | Call (fv, _) => subject (here, fn () => "a Call", fv, fn Clo => true | _ => false)
+                 | CallN (fv, _) => subject (here, fn () => "a CallN", fv, fn Clo => true | _ => false)
                  | CallK (g, xs) => callee (here, g, xs)
                  | Closure (g, vs) =>
                      ignore (List.foldl (fn (SOME y, k) => (captured (here, g, k, y); k + 1) | (NONE, k) => k + 1) 0 vs)
@@ -530,6 +531,7 @@ struct
                    edge (d, narrow (facts, y, fn ts => without (ts, List.map #1 cases))))
               | TailCallK (g, xs) => callee (here, g, xs)
               | TailCall (fv, _) => subject (here, fn () => "a TailCall", fv, fn Clo => true | _ => false)
+              | TailCallN (fv, _) => subject (here, fn () => "a TailCallN", fv, fn Clo => true | _ => false)
               | _ => ()
             end
           (* the loops' heads and the handlers' blocks *)

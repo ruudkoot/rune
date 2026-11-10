@@ -8,8 +8,8 @@
 #define RBC_VERSION 6
 #define STACK_ISA_FINGERPRINT 0x00125ed9u
 #define STACK_ISA_FINGERPRINT_HEX "00125ed9"
-#define REG_ISA_FINGERPRINT 0x007efbb4u
-#define REG_ISA_FINGERPRINT_HEX "007efbb4"
+#define REG_ISA_FINGERPRINT 0x00a0919au
+#define REG_ISA_FINGERPRINT_HEX "00a0919a"
 
 /* Where control goes after an instruction (src/isa/isa.sml, flow): what
    each set's table says of its own (op_flow in runtime/stack/opcodes.h,

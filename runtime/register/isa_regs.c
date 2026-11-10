@@ -90,6 +90,10 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
             bad = !operand_ok(p, fi, RK_REGISTER, read_i32(at + 1 + 4 * (rop_nfixed[op] + i)));
         if (bad) { free(starts); snprintf(err, errlen, "bad register for %s at %u", rop_names[op], pc); return NULL; }
         if ((op == ROP_PRIM || op == ROP_PRIMPUSH) && n > p->funcs[fi].maxstack) p->funcs[fi].maxstack = n;
+        /* a call through a closure puts the closure and its arguments above
+           the registers where it takes the general path (D15 C, reg_apply) */
+        if ((op == ROP_CALL || op == ROP_TAILCALL) && 2 > p->funcs[fi].maxstack) p->funcs[fi].maxstack = 2;
+        if ((op == ROP_CALLN || op == ROP_TAILCALLN) && n + 1 > p->funcs[fi].maxstack) p->funcs[fi].maxstack = n + 1;
         /* what reads the frame's closure (ReadsClosure, src/isa/regs.sml):
            its captures, itself, or the suspension a suspension's code makes
            under evaluation and updates */
@@ -152,7 +156,7 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
             case ROP_INT: case ROP_CONTAG: made = REP_INT; break;
             case ROP_UNIT: made = REP_UNIT; break;
             case ROP_CON0: made = REP_CON0; break;
-            case ROP_TUPLE: case ROP_CLOSURE: case ROP_NEWEXN: case ROP_BUILTINEXN: case ROP_MKEXN:
+            case ROP_TUPLE: case ROP_CLOSURE: case ROP_CLOSUREN: case ROP_NEWEXN: case ROP_BUILTINEXN: case ROP_MKEXN:
             case ROP_SELF: case ROP_EXNCON: case ROP_CON: case ROP_CONN: made = REP_PTR; break;
             case ROP_CONST: {
                 int32_t c = read_i32(p->code + at + 5);
@@ -718,4 +722,198 @@ void vm_safepoints_save(const VM *vm, NativeSafepoints *saved) {
 void vm_safepoints_restore(VM *vm, const NativeSafepoints *saved) {
     vm->top_frame = saved->has_top ? (const void *)(vm->stack + saved->top) : NULL;
     vm->verify_frame = saved->has_verify ? (const void *)(vm->stack + saved->verify) : NULL;
+}
+
+/* ---- Eval/apply proper (the haskell98 roadmap's D15 C) ----
+   A call of n arguments through a closure that has not n parameters, or
+   through a partial application, is this general path's (src/isa/regs.sml:
+   CALL, TAILCALL, CALLN, TAILCALLN). The closure and the arguments are on
+   the stack above the running frame's registers, where the collector sees
+   them, the last at vm->sp - 1. A partial application is a K_CLOSURE whose
+   field 0 is REG_PAP, its contag what it still wants, field 1 the closure
+   it applies, and the rest what it was given; a closure of k parameters
+   says k in its contag, 0 for one. */
+
+static void apply_stats(void);
+
+/* <apply K R>: register 0 the closure, 1 to K its arguments, K + 1 to K + R
+   the rest, K + R + 1 what the first call returns, which the rest are given
+   to by a tail call */
+static uint32_t apply_code(uint8_t *out, uint32_t k, uint32_t r, uint32_t *nlocals) {
+    uint32_t n = 0, d = k + r + 1;
+    if (k == 1) { out[n++] = ROP_CALL; write_u32(out + n, 0); n += 4; write_u32(out + n, 1); n += 4; }
+    else {
+        out[n++] = ROP_CALLN; write_u32(out + n, 0); n += 4; write_u32(out + n, k); n += 4;
+        for (uint32_t i = 1; i <= k; i++) { write_u32(out + n, i); n += 4; }
+    }
+    out[n++] = ROP_RESULT; write_u32(out + n, d); n += 4;
+    if (r == 1) { out[n++] = ROP_TAILCALL; write_u32(out + n, d); n += 4; write_u32(out + n, k + 1); n += 4; }
+    else {
+        out[n++] = ROP_TAILCALLN; write_u32(out + n, d); n += 4; write_u32(out + n, r); n += 4;
+        for (uint32_t i = 0; i < r; i++) { write_u32(out + n, k + 1 + i); n += 4; }
+    }
+    *nlocals = d + 1;
+    return n;
+}
+
+/* the table of the general path's functions, by their names, made again
+   where the program has another number of functions than it was made of */
+static void apply_table(VM *vm) {
+    Program *p = &vm->prog;
+    if (vm->apply_nfuncs == p->nfuncs && (vm->apply_stubs || vm->apply_return != UINT32_MAX)) return;
+    uint32_t kmax = 0, rmax = 0;
+    for (uint32_t f = 0; f < p->nfuncs; f++) {
+        unsigned k, r;
+        if (p->funcs[f].name && sscanf(p->funcs[f].name, "<apply %u %u>", &k, &r) == 2) {
+            if (k > kmax) kmax = k;
+            if (r > rmax) rmax = r;
+        }
+    }
+    free(vm->apply_stubs);
+    vm->apply_stubs = NULL;
+    vm->apply_kmax = kmax; vm->apply_rmax = rmax;
+    vm->apply_return = UINT32_MAX;
+    if (kmax && rmax) {
+        vm->apply_stubs = malloc((size_t)kmax * rmax * sizeof(uint32_t));
+        if (!vm->apply_stubs) vm_fatal(vm, "out of memory");
+        for (size_t i = 0; i < (size_t)kmax * rmax; i++) vm->apply_stubs[i] = UINT32_MAX;
+    }
+    for (uint32_t f = 0; f < p->nfuncs; f++) {
+        unsigned k, r;
+        if (!p->funcs[f].name) continue;
+        if (strcmp(p->funcs[f].name, "<apply return>") == 0) vm->apply_return = f;
+        else if (sscanf(p->funcs[f].name, "<apply %u %u>", &k, &r) == 2 && k >= 1 && r >= 1)
+            vm->apply_stubs[(size_t)(k - 1) * rmax + (r - 1)] = f;
+    }
+    vm->apply_nfuncs = p->nfuncs;
+}
+
+/* The general path's functions added to a program that has an n-ary call
+   or closure: <apply return>, and <apply K R> for each K up to the most
+   parameters a closure of it has and each R up to one less than the most
+   arguments a call of it gives. 1, or 0 and why. */
+int vm_isa_after_load(VM *vm, char *err, size_t errlen) {
+    Program *p = &vm->prog;
+    uint32_t amax = 1, nmax = 1;
+    int any = 0;
+    for (uint32_t pc = 0; pc < p->code_len; ) {
+        const uint8_t *at = p->code + pc;
+        uint8_t op = at[0];
+        if (op == ROP_CLOSUREN) { any = 1; uint32_t k = (uint32_t)read_i32(at + 9); if (k > amax) amax = k; }
+        if (op == ROP_CALLN || op == ROP_TAILCALLN) { any = 1; uint32_t n = (uint32_t)read_i32(at + 5); if (n > nmax) nmax = n; }
+        uint32_t l = rop_length(at);
+        if (!l) break;
+        if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(at + 5);
+        pc += l;
+    }
+    { static int once; const char *e = getenv("RUNE_APPLY_STATS"); if (e && *e == '1' && !once) { once = 1; atexit(apply_stats); } }
+    if (!any) return 1;
+    for (uint32_t f = 0; f < p->nfuncs; f++)
+        if (p->funcs[f].name && strncmp(p->funcs[f].name, "<apply ", 7) == 0) return 1;   /* there already (an image's program) */
+    uint8_t code[64];
+    uint32_t nlocals;
+    uint32_t len = return_function_code(code, &nlocals);
+    if (program_add_function(vm, "<apply return>", code, len, nlocals, 1, err, errlen) == UINT32_MAX) return 0;
+    for (uint32_t k = 1; k <= amax; k++)
+        for (uint32_t r = 1; r + 1 <= nmax; r++) {
+            uint8_t *buf = malloc(32 + 4 * (size_t)(k + r));
+            if (!buf) { snprintf(err, errlen, "out of memory"); return 0; }
+            char name[48];
+            snprintf(name, sizeof name, "<apply %u %u>", k, r);
+            len = apply_code(buf, k, r, &nlocals);
+            uint32_t f = program_add_function(vm, name, buf, len, nlocals, k + r + 1, err, errlen);
+            free(buf);
+            if (f == UINT32_MAX) return 0;
+        }
+    vm->apply_nfuncs = 0;
+    apply_table(vm);
+    return 1;
+}
+
+/* the frame of function f entered with the count values at stack[from],
+   its closure cv (unit for none): above the running frame, whose
+   registers end at t, returning to the RESULT at ret_pc; or, for a tail
+   call, in the running frame's place */
+static void apply_enter(VM *vm, uint32_t f, Value cv, size_t t, size_t from, uint32_t count, int tail, uint32_t ret_pc) {
+    const Function *fn = &vm->prog.funcs[f];
+    size_t top = tail ? vm->fp : t + REG_HEADER;
+    size_t need = top + fn->nlocals + fn->maxstack;
+    if (need < from + count) need = from + count;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    memmove(vm->stack + top, vm->stack + from, (size_t)count * sizeof(Value));
+    for (uint32_t i = count; i < fn->nlocals; i++) vm->stack[top + i] = mk_unit();
+    if (tail) vm->stack[top - 2] = cv;   /* the header keeps its caller and its return */
+    else {
+        vm->stack[top - 3] = reg_info(vm->func, ret_pc, REG_INFO_CALLER);
+        vm->stack[top - 2] = cv;
+        vm->stack[top - 1] = vm->ret_word;
+        vm->fp = top;
+    }
+    vm->func = f;
+    vm->sp = top + fn->nlocals;
+    vm->pc = fn->code_offset;
+}
+
+uint64_t reg_apply_counts[4];   /* the general path's: saturated, partial, over-applied, a partial application's */
+static void apply_stats(void) {
+    fprintf(stderr, "runevm: apply: general %llu saturated, %llu partial, %llu over-applied, %llu partial applications applied\n",
+            (unsigned long long)reg_apply_counts[0], (unsigned long long)reg_apply_counts[1],
+            (unsigned long long)reg_apply_counts[2], (unsigned long long)reg_apply_counts[3]);
+}
+
+int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc) {
+    Program *p = &vm->prog;
+    size_t t = vm->sp - (n + 1);   /* the closure; the arguments after it */
+    for (;;) {
+        Value fv = vm->stack[t];
+        if (!val_is(fv, T_PTR) || obj_kind(val_ptr(fv)) != K_CLOSURE) vm_fatal(vm, "expected closure in call");
+        Obj *c = val_ptr(fv);
+        int64_t fidx = val_imm(obj_field(c, 0));
+        if (fidx == REG_PAP) {
+            /* what it was given before the arguments, and the closure it applies */
+            uint32_t s = obj_len(c) - 2;
+            reg_apply_counts[3]++;
+            if (vm->sp + s > vm->stack_cap) { vm_grow_stack(vm, vm->sp + s); c = val_ptr(vm->stack[t]); }
+            memmove(vm->stack + t + 1 + s, vm->stack + t + 1, (size_t)n * sizeof(Value));
+            for (uint32_t i = 0; i < s; i++) vm->stack[t + 1 + i] = obj_field(c, 2 + i);
+            vm->stack[t] = obj_field(c, 1);
+            n += s;
+            vm->sp += s;
+            continue;
+        }
+        if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
+        uint32_t arity = obj_contag(c) ? obj_contag(c) : 1;
+        if (n == arity) {
+            reg_apply_counts[0]++;
+            apply_enter(vm, (uint32_t)fidx, fv, t, t + 1, n, tail, ret_pc);
+            return REG_APPLY_ENTERED;
+        }
+        if (n < arity) {
+            /* a partial application, made with the closure and the
+               arguments where the collector sees them */
+            reg_apply_counts[1]++;
+            Obj *pap = vm_alloc_fields(vm, K_CLOSURE, (uint16_t)(arity - n), n + 2);
+            Value *fs = obj_fields(pap);
+            fs[0] = mk_int(REG_PAP);
+            for (uint32_t i = 0; i <= n; i++) fs[1 + i] = vm->stack[t + i];
+            Value v = mk_ptr(pap);
+            vm->stack[t] = v;
+            vm->sp = t + 1;
+            if (!tail) return REG_APPLY_VALUE;
+            /* in tail position, the frame returns it: <apply return> in its place */
+            apply_table(vm);
+            if (vm->apply_return == UINT32_MAX) vm_fatal(vm, "a partial application in tail position, in a program without <apply return>");
+            apply_enter(vm, vm->apply_return, mk_unit(), t, t, 1, 1, ret_pc);
+            return REG_APPLY_ENTERED;
+        }
+        /* over-applied: <apply K R> given the closure and every argument,
+           which enters it with its K and gives what it returns the rest */
+        reg_apply_counts[2]++;
+        uint32_t k = arity, r = n - arity;
+        apply_table(vm);
+        uint32_t stub = k <= vm->apply_kmax && r <= vm->apply_rmax && vm->apply_stubs ? vm->apply_stubs[(size_t)(k - 1) * vm->apply_rmax + (r - 1)] : UINT32_MAX;
+        if (stub == UINT32_MAX) vm_fatal(vm, "a closure of %u parameters given %u arguments, and no <apply %u %u>", k, n, k, r);
+        apply_enter(vm, stub, mk_unit(), t, t, n + 1, tail, ret_pc);
+        return REG_APPLY_ENTERED;
+    }
 }
