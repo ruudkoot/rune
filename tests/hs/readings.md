@@ -357,17 +357,41 @@ function; the prose does: `lexLitChar` returns the characters that encode the ch
 `lexLitChar s` is `[(the prefix that readLitChar s reads, the rest)]`, and `[]` where `readLitChar s` is `[]`:
 `"\\NUL"` before `"1"`, `"\\SOH"` before `"H"`, nothing for `\Q`, `\o8` or `\x`. **GHC**, **Hugs** and **nhc98** all give
 `"\\NUL"` before `"1"` and nothing for `\Q`; for `\o8` GHC gives nothing and Hugs and nhc98 the code's `"\\o"`. Taken
-as the lead's ruling on R42 took 10.4's text over a code every oracle departs from; for the lead to confirm. **rhc**
+as the lead's ruling on R42 took 10.4's text over a code every oracle departs from; the lead's ruling 36 confirms it. **rhc**
 follows the prose; where the code and the prose agree, the differential holds rhc to the code. Rows:
 `lib.r.char.lexlitchar`, `lib.char.lexlitchar`.
 
-### R155. `array` with bottom bounds and no associations is not bottom
+### R155. `array` is strict in its bounds, with or without associations
 > array is strict in the bounds argument and in the indices of the association list, but nonstrict in the values. (16.1)
 > array b ivs = if and [inRange b i | (i,_) <- ivs] then MkArray b ... (16.4, Array)
 
 **What the text says.** The prose makes `array` strict in its bounds; the code reaches the bounds only through `inRange`
 over the associations, so with none it builds `MkArray b f` without looking at `b`, and `array undefined [] `seq` ()`
-is `()`. With an association to check, both give bottom. **GHC**, **Hugs** and **nhc98** give bottom for the empty
-list, as the prose; **MicroHs** gives `()`, as the code. The lead's ruling 28: the prose would win, by R42's precedent,
-only if all four oracles took it; they split, so the code decides. **rhc** follows the code: the program with an
-association exits as error, the one without prints `()`. Rows: `lib.r.array.strict.bounds`.
+is `()`. With an association to check, both give bottom. D52's judges and third, **GHC**, **Hugs** and **nhc98**, give
+bottom for the empty list, as the prose; **MicroHs**, the smoke oracle, gives `()`, as the code. By R42's precedent the
+prose decides (the lead's ruling 35, correcting 28): an overlay entry (L) makes `array` force its bounds. **rhc**
+follows the prose: both programs exit as error. Rows: `lib.r.array.strict.bounds`.
+
+### R156. A semi-closed handle is neither open nor closed
+> A handle is semi-closed after hGetContents... In this state, hdl is effectively closed, but items are read from hdl on
+> demand (21.2.2)
+> Computation hIsOpen hdl returns True if hdl is open ... hIsClosed hdl returns True if hdl is closed (21.8)
+
+**What the text says.** The text gives no predicate for the semi-closed state and does not say what `hIsOpen` and
+`hIsClosed` answer of a semi-closed handle (E9's R49). The lead's ruling 37: neither, so both are `False`, as **GHC**
+does. Implementation-defined (D53); rhc implements it with M18's IO, and the program that pins it is held until then.
+Rows: `lib.r.io.semi.state`.
+
+### R157. `floatToDigits` at a power of the radix keeps the code's low margin
+> -- Based on "Printing Floating-Point Numbers Quickly and Accurately" by R.G. Burger and R. K. Dybvig (14.4, Numeric)
+> if e >= 0 then let be = b^e in if f == b^(p-1) then (f*be*b*2, 2*b, be*b, b) (14.4, Numeric, floatToDigits)
+
+**What the text says.** At a mantissa that is a power of the radix with `e >= 0`, the code takes the low margin `mDn`
+as `b`, where Burger and Dybvig take `b^e`. Its digits still read back to the number, but they are not always the
+shortest or the closest: `floatToDigits 10 (2^70 :: Double)` ends `...4114`, so `show (2^70 :: Double)` is
+`1.1805916207174114e21`, and `show (2^70 :: Float)` is `1.18059163e21`, nine digits. 14.1 promises only
+`r = 0.d1...dn * b^e` (R151), not the shortest or the closest digits, so the code contradicts no text, and by D38 the
+printed code stands (the lead's ruling, on L's finding). **GHC** and **MicroHs** follow Burger and Dybvig
+(`1.1805916207174113e21`, `1.1805916e21`); **nhc98** keeps the Report's line. Expected output written from GHC at
+such numbers differs from rhc's: a program's expected `show` of a power of two from `2^p` up comes from the code.
+**rhc** follows the code. Rows: `lib.r.numeric.floattodigits.shortest`.
