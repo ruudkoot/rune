@@ -355,6 +355,31 @@ and by `bin/rune-matrix` for the hosts; `tests/basis/law-skips.txt` (lines of
 three fields, of every way) by the engine for the laws
 (`tests/runner/laws.sml`).
 
+## rhc's oracles and corpus
+
+rhc, the Haskell 98 compiler of `docs/plans/language/haskell98.md`, is judged against oracles and a corpus that
+stay outside the tree (M3, D52). The corpus's licences, its manifests and its compat layer are
+`tests/hs/corpus/` (README.md there): the programs are read through `RUNE_HS_CORPUS`, a directory holding the trees
+that `tests/hs/corpus/trees.tsv` pins, and none is vendored until the owner chooses. The oracles are GHC 9.4.7 with
+a strict shim, Hugs, nhc98 and MicroHs (`tests/hs/oracles/README.md`: each oracle's variable, pin and recipe, and
+the shims, which the run builds). The family is `tests/runner/hssource.sml`, `hscorpus.sml`, `hsoracles.sml` and
+`hschecks.sml`:
+
+- `hs-oracles/ORACLE/conformance`, `judge-SET`, `run-SET` and `@stale`, in the tier `nightly`, each requiring its
+  oracle's capability (`hs-ghc`, `hs-hugs`, `hs-nhc98`, `hs-microhs`) and `hs-corpus`: they reproduce E7's 82
+  conformance tests against what their suites expect, and E8's verdicts and run set against what E8 recorded. A
+  difference is a failure unless a line of `tests/hs/oracles.txt` explains it, in the format of *Expectations*
+  with the outcome first in its reason (`hugs | conformance98/layout/do::conformance | HOST-BUG | reject: R56:
+  ...`); `@stale` fails a line that explains no failure of a job that ran. A disagreement on a conformance test
+  cites its reading of the Report (`tests/hs/readings.md` from R55).
+- `hs-corpus/data`, `source` and `faults`, in `check`: the data is whole and agrees with itself and with
+  `oracles.txt`, nothing lands under `tests/hs/corpus/` but its data, each of E7's hard cases has a reading, the
+  source rewrites do what E8's did on planted text, and the harness fails where it must on fake oracles.
+
+A job is also a command: `bin/rune-test hs-oracle conformance hugs`, `hs-oracle judge ghc nofib-2019`,
+`hs-oracle run nhc98 jhc`, `hs-oracle stale ghc`, `hs-oracle ghc-shim`; `RUNE_HS_OUT` moves their output from the
+run's directory.
+
 ## Generated functor programs
 
 `bin/rune-functor-gen` (`tests/runner/functorgen.sml`) draws programs of
@@ -576,8 +601,7 @@ roadmap's M11; [tests/hs/syntax/README.md](../tests/hs/syntax/README.md)).
 rhc's commands for the round trips are `--print`, `--print-layout`,
 `--print-exact`, `--dump-tokens` and `--dump-ast --no-spans`, and its
 generator is `bin/rune-hs-syntax generate-files`, the syntax generator of
-D55; `--typecheck-only`, which judges an accept program, checks as far as
-rhc goes, its parse. Besides the clause programs of the parser's rows,
+D55. Besides the clause programs of the parser's rows,
 `tests/hs/roundtrip` holds the parser's own fixtures: a file for each part of
 the grammar and the lexical syntax, the crafted cases of the roadmap's E10
 that the syntax accepts, and, for rows of the layout rules and the lexical
@@ -598,6 +622,22 @@ file's parsed tree against its dump of the file's explicit print
 `RUNE_HS_SYNTAX_GHC_LIST` and `RUNE_HS_SYNTAX_GHC_ROOT`), its known
 differences in `tests/hs/syntax/ghc-dump.tsv`.
 
+**Names, modules and fixity** (`lib/language/haskell`'s `names.build` and
+`src/rhc`'s graph and names, the roadmap's M12;
+[tests/hs/names/README.md](../tests/hs/names/README.md)). `--typecheck-only`,
+which judges an accept program, and a compile, which judges an error program,
+check as far as rhc goes: the program's modules, found from the file given and
+in `share/rhc/haskell98` (the wrapper `bin/rhc` passes `--share`), their
+exports and scopes, every name, and fixity. `tests/runner/hsnames.sml`'s jobs
+`hs/names/*` compare `bin/rhc --dump-names` of each fixture of
+`tests/hs/names` with its expected files: the Report's 20 modules whole,
+against E16's export pairs, fixities and instances; E16's fixtures under both
+fixpoints (`--names=least|greatest`); a program's own `Char`; fixity by
+entity; a cycle of three signed modules; a dotted module name. And
+`hs/names/mutants` builds the dump with one edit at a time, each of which a
+fixture must catch: the greatest fixpoint for the least, a hidden module
+importable, fixity read before names.
+
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
 with rhc in Rune's place: a mutant is exact edits of a file of `rhc.plan`,
@@ -613,8 +653,10 @@ fails, else `UNCAUGHT`, or `UNEXERCISED` where no output differs, or
 run. `make check` holds the list to the sources (`hs-mutants/prepare`, a
 `built-ID` job for each); `make test-rhc-mutants`, nightly, judges them
 (`HS_MUTANTS=HL01,HP02` for some; `bin/rune-test hs-mutant-tree ID` builds a
-mutant's tree for a job to be run against it by hand). The first nine seed
-rhc's lexer, its literate reader, its layout and its parser. F's parser
+mutant's tree for a job to be run against it by hand). The first fourteen
+seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
+Core's interpreter and Core's text reader, these last seen by `hs/core`'s
+jobs. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
 
 **rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of

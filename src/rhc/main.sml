@@ -99,7 +99,16 @@ struct
     handle CoreToMid.Unsupported msg =>
       (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
 
+  (* --share DIR, where rhc's library is, which the wrapper bin/rhc gives *)
+  fun share args =
+    case args of
+      "--share" :: d :: rest => (RhcLibrary.share := SOME d; share rest)
+    | ["--share"] => raise RhcOptions.Usage "--share takes a directory"
+    | a :: rest => a :: share rest
+    | [] => []
+
   fun run (args : string list) : int =
+    let val args = share args in
     case RhcSyntax.command args of
       SOME syntax => if OS.Process.isSuccess (syntax ()) then 0 else 1
     | NONE =>
@@ -133,6 +142,7 @@ struct
                   if #typecheckOnly opts then 0
                   else case #output opts of SOME out => compile (opts, p, out) | NONE => interpret (opts, p)
               in Pass.finish (); status end
+    end
     end
 
   fun main (_ : string, args : string list) : int =

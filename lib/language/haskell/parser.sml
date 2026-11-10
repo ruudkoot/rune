@@ -335,11 +335,14 @@ struct
      or `qtycls (tyvar atype ...)`; `simpleclass` the first alone, in the
      context of a class or an instance declaration. *)
   fun checkClass simple (A.T (a, x)) =
+    let
+      val cls = case x of A.TApp (A.T (_, A.TCon (A.Name (_, q))), _) => " (`" ^ A.nameText q ^ "`)" | _ => ""
+    in
     case x of
       A.TApp (A.T (_, A.TCon _), A.T (_, A.TVar _)) => ()
     | A.TApp (A.T (_, A.TCon _), A.T (pa, A.TParen t)) =>
         if simple then
-          failAt (pa, "a class assertion on other than a type variable, in the context of a class or an instance declaration")
+          failAt (pa, "a class assertion on other than a type variable, in the context of a class or an instance declaration" ^ cls)
         else
           let
             fun headVar (A.T (_, A.TVar _)) = true
@@ -348,14 +351,15 @@ struct
           in
             case t of
               A.T (_, A.TApp _) =>
-                if headVar t then () else failAt (pa, "a class assertion on a type that a type variable does not head")
-            | _ => failAt (pa, "a class assertion on a type that is neither a type variable nor one applied")
+                if headVar t then () else failAt (pa, "a class assertion on a type that a type variable does not head" ^ cls)
+            | _ => failAt (pa, "a class assertion on a type that is neither a type variable nor one applied" ^ cls)
           end
     | A.TApp (A.T (_, A.TCon _), A.T (pa, _)) =>
         if simple then
-          failAt (pa, "a class assertion on other than a type variable, in the context of a class or an instance declaration")
-        else failAt (pa, "a class assertion on a type that is neither a type variable nor one applied, in parentheses")
+          failAt (pa, "a class assertion on other than a type variable, in the context of a class or an instance declaration" ^ cls)
+        else failAt (pa, "a class assertion on a type that is neither a type variable nor one applied, in parentheses" ^ cls)
     | _ => failAt (a, "a context that is not class assertions, a class applied to a type variable")
+    end
 
   fun checkContext simple (t as A.T (a, x)) =
     case x of
@@ -1065,7 +1069,8 @@ struct
       val prec =
         case !cur of
           T.INTEGER (n, _) =>
-            if IntInf.> (n, IntInf.fromInt 9) then fail "a precedence above 9 in a fixity declaration"
+            if IntInf.> (n, IntInf.fromInt 9) then
+              fail ("the precedence `" ^ IntInf.toString n ^ "` in a fixity declaration, where a precedence is 0 to 9")
             else SOME (literal "")
         | _ => NONE
       fun oneOp () =
@@ -1459,8 +1464,23 @@ struct
              end)
           else fail "a qualified name in an import list"
       | _ =>
-          if inExport then mkEnt s (A.EntVar (qvar "in an export list"))
-          else mkEnt s (A.EntVar (var "in an import list"))
+          let
+            val builtin =
+              case (!cur, L.peek 0) of
+                (T.LBRACKET, T.RBRACKET) => SOME "[]"
+              | (T.LPAREN, T.RPAREN) => SOME "()"
+              | (T.LPAREN, T.COMMA) => SOME "(,)"
+              | (T.LPAREN, T.RARROW) => SOME "->"
+              | _ => NONE
+          in
+            case builtin of
+              SOME b =>
+                fail ("`" ^ b ^ "` in " ^ (if inExport then "an export" else "an import") ^
+                      " list: built-in syntax, which is always in scope and no list names (5.6.2)")
+            | NONE =>
+                if inExport then mkEnt s (A.EntVar (qvar "in an export list"))
+                else mkEnt s (A.EntVar (var "in an import list"))
+          end
     end
 
   fun entityList (inExport : bool) : A.entity list =

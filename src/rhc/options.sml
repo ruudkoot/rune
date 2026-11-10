@@ -23,20 +23,32 @@ struct
     "usage: rhc [OPTION...] --read-core FILE...\n\
     \       rhc [--parse-only | --print | --print-layout | --print-exact | --dump-tokens\n\
     \            | --dump-ast [--no-spans]] FILE.hs\n\
+    \       rhc [--typecheck-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
+    \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap. As yet it reads\n\
     \Core, its typed lazy intermediate language, checks it and runs it on\n\
-    \Core's interpreter; and it reads a file of Haskell no further than its\n\
-    \parser.\n\
+    \Core's interpreter; and it reads a program of Haskell, a file and the\n\
+    \modules it imports, no further than its names and fixity.\n\
     \\n\
-    \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop; on a file of\n\
-    \                        Haskell, --typecheck-only checks as far as this, until M13\n\
+    \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop\n\
     \  --print               print it with every block in braces\n\
     \  --print-layout        print it with every block by layout\n\
     \  --print-exact         print it from its tree, comments and layout as they were\n\
     \  --dump-tokens         print the tokens of its layout (the Report's L), one a line\n\
     \  --dump-ast            print its tree, with --no-spans without where each node is\n\
+    \  --dump-names          print the exports, fixities and instances of the program of\n\
+    \                        FILE.hs... and its library, and its errors of names, sorted\n\
+    \  --names=least|greatest  the solution of a cycle's exports (D29): the least fixpoint,\n\
+    \                        the default, or the greatest; chapter 5 is met by either\n\
+    \  --cycle-default=module|scc  in a cycle of modules, each module's default declaration\n\
+    \                        and Rule 2 at its end, the default, or the cycle's (D30: an\n\
+    \                        extension, which the checker of M13 reads)\n\
+    \  --dotted-names        read a module name with dots, Data.List, as one, which Haskell\n\
+    \                        98's modid is not (D35); module A.B is the file A/B.hs\n\
+    \  --share DIR           where rhc's library is, DIR/haskell98 (bin/rhc gives it)\n\
     \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
-    \  --typecheck-only      read and check, and run nothing\n\
+    \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
+    \                        names and fixity, until the checker lands (M13)\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
     \                        3 reads Core's text back after every stage (RUNE_LINT too)\n\
     \  --dump-after=STAGE    print what a stage makes: read, coretomid (Mid's text), mid, a\n\
