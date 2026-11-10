@@ -100,15 +100,23 @@ struct
          end)
       ()
 
-  (* the target check at level 2, on the Core desugaring made of what the
-     check read and CoreLint accepted (HsLint.target) *)
-  fun target (p : Core.program) =
+  (* `targetAfter (pass, p)`: the target check at level 2 on `p`, the Core
+     as the pass `pass` left it, of what the check read (HsLint.target), a
+     breach named by the pass, `Core after PASS: [RULE] ...`. It may run
+     after every pass: a value the Core no longer has is not compared, and
+     one whose type a pass changed is refused there. *)
+  fun targetAfter (pass : string, p : Core.program) =
     Pass.checkAt ("hslint", 2)
       (fn () =>
          case !kept of
-           SOME t => (HsLint.target (t, p, fault ()) handle HsLint.Refused (_, msg) => raise Error.Bug ("Core: " ^ msg))
+           SOME t => (HsLint.target (t, p, fault ())
+                      handle HsLint.Refused (_, msg) => raise Error.Bug ("Core after " ^ pass ^ ": " ^ msg))
          | NONE => ())
       ()
+
+  (* the target check on the Core desugaring made, once CoreLint has
+     accepted it *)
+  fun target (p : Core.program) = targetAfter ("desugar", p)
 
   (* --hslint-rules: each rule of HsLint's comparison and what it holds *)
   fun rules () =
