@@ -309,8 +309,10 @@ struct
     | a :: rest => a :: world rest
     | [] => []
 
-  (* the library replayed by HsLint, at level 2, when its world is made *)
-  val () = RhcWorld.checkLibrary := (fn (g, r) => RhcLint.check (g, r, false))
+  (* the library replayed by HsLint, at level 2, when its world is made;
+     what the check keeps for the target check is a program's, not the
+     library's, so the saved image holds none *)
+  val () = RhcWorld.checkLibrary := (fn (g, r) => (RhcLint.check (g, r, false); RhcLint.kept := NONE))
 
   fun run (args : string list) : int =
     let
