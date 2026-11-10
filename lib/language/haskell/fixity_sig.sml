@@ -35,10 +35,11 @@ sig
   (* `show f` is `f` as a declaration writes it: `infixl 6`. *)
   val show : fixity -> string
 
-  (* `resolve {fixityOf} m` is the module `m`, a renamed one, with every
-     sequence of operators resolved, and the errors of resolution in the
-     order of the source. `fixityOf q` is the fixity of the operator
-     named `q` in the renamed tree, `NONE` for the default. *)
+  (* `resolve {fixityOf} m` is the renamed module `m` with every sequence
+     of operators resolved, and the errors of resolution in source order.
+
+     `fixityOf q` is the fixity of the operator named `q` in the renamed
+     tree, `NONE` for the default. *)
   val resolve : {fixityOf : HsAst.qname -> fixity option} -> HsAst.module
                 -> HsAst.module * (HsSource.span * string) list
 end

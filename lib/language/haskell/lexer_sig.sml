@@ -17,8 +17,8 @@
    - R6: ASCII digits only in a numeric literal.
    - R7: `F..` is the operator `.` qualified by `F`; `F.=` is `F` then
      `.=`; `M.where` is `M`, `.` and `where`; and, by the longest lexeme
-     the text gives, `F.--` is `F.-` then `-` (R77), since `--` is dashes and no
-     operator, and `F.->` is `F.-` then `>`.
+     the text gives, `x F.-- y` is `x F.- - y` (R77), since `--` is dashes
+     and no operator, and `x F.-> y` is `x F.- > y`.
    - R8: `--:` is an operator; a numeric escape above 0x10FFFF is an
      error.
    - A byte that is not part of a sequence of UTF-8 is read as the code
@@ -29,9 +29,11 @@
    Area: Languages *)
 signature HS_LEXER =
 sig
-  (* How to read: `hierarchical` reads a dotted module name such as
-     `Data.List` as one qualifier, which Haskell 98's `modid` is not (the
-     roadmap's D35, refused by default). *)
+  (* How to read: whether dotted module names are read.
+
+     `hierarchical` reads a dotted module name, such as Data.List, as one
+     qualifier, which Haskell 98's `modid` is not (the roadmap's D35,
+     refused by default). *)
   type options = {hierarchical : bool}
 
   (* Haskell 98's: no dotted module names. *)
