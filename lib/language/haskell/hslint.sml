@@ -22,12 +22,12 @@ struct
   fun zonkScheme (T.Forall (ks, (ps, t))) = T.Forall (ks, (List.map T.zonkPred ps, T.zonk t))
 
   (* the second inference, its state kept for the report and replay *)
-  fun run {groups : module list list, main, cycleDefault} =
+  fun run {groups : module list list, main, cycleDefault, derived} =
     (T.counter := 0;
      T.names := [];
      HsLintInfer.reset ();
      HsLintEnv.build (List.concat groups);
-     List.app (fn g => HsLintInfer.modules {group = g, main = main, cycleDefault = cycleDefault}) groups)
+     List.app (fn g => HsLintInfer.modules {group = g, main = main, cycleDefault = cycleDefault, derived = derived}) groups)
 
   (* what the inference found, while its state is kept *)
   fun report () : report =
@@ -84,8 +84,8 @@ struct
        classes = List.rev classes}
     end
 
-  fun infer args : report =
-    (run args; report () before clear ())
+  fun infer {groups, main, cycleDefault} : report =
+    (run {groups = groups, main = main, cycleDefault = cycleDefault, derived = []}; report () before clear ())
     handle T.Refuse (span, msg) => (clear (); raise Refused (span, msg))
          | e => (clear (); raise e)
 
@@ -123,16 +123,17 @@ struct
      records held to the inference as claims, then the claims given *)
   fun check {groups : module list list, main, cycleDefault, records, claims, where_, fault} : report =
     let
-      val () = run {groups = groups, main = main, cycleDefault = cycleDefault}
+      val derived = case records of SOME {derived, ...} => derived | NONE => []
+      val () = run {groups = groups, main = main, cycleDefault = cycleDefault, derived = derived}
       val r = report ()
       val modules = List.concat groups
       val () =
         case records of
-          SOME {table, env} =>
-            (HsLintReplay.replay {modules = modules, groups = groups, records = table, env = env,
+          SOME {table, env, derived} =>
+            (HsLintReplay.replay {modules = modules, groups = groups, records = table, env = env, derived = derived,
                                   cycleDefault = cycleDefault, fault = fault}
              handle T.Refuse (span, msg) => raise Refused (span, msg);
-             compare (r, HsLintReplay.claimsOf {modules = modules, records = table}, where_, fault))
+             compare (r, HsLintReplay.claimsOf {modules = modules, records = table, derived = derived}, where_, fault))
         | NONE => ()
       val () = case claims of SOME c => compare (r, c, where_, fault) | NONE => ()
     in

@@ -1408,8 +1408,8 @@
     {
      "kind": "val",
      "name": "check",
-     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env} option, claims : claims option,\n             where_ : HsSource.span -> string, fault : string} -> report",
-     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault}`\nis `infer`'s report, the checker's records replayed and compared.\n\nWith `records`, the checker's evidence records and environment\n(HsEvidence, HsInfer), each record is replayed by Faxén's rules and\nrhc's (`replayRules`), and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
+     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report",
+     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault}`\nis `infer`'s report, the checker's records replayed and compared.\n\nWith `records`, the checker's evidence records and environment\n(HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
      "page": "sig/HS_LINT.md#val-check"
     },
     {

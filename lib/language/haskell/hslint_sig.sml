@@ -101,15 +101,19 @@ sig
      is `infer`'s report, the checker's records replayed and compared.
 
      With `records`, the checker's evidence records and environment
-     (HsEvidence, HsInfer), each record is replayed by Faxén's rules and
-     rhc's (`replayRules`), and the records are then held to the
+     (HsEvidence, HsInfer) and the derived instances it made as trees
+     (HsDerive: each one's module, identity and methods), the second
+     inference checks those instances' methods as any instance's, each
+     record is replayed by Faxén's rules and rhc's (`replayRules`), the
+     derived methods' records too, and the records are then held to the
      inference as claims (`compare`); with `claims`, those are too.
      `fault` is as `compare`'s, for every rule.
 
      Raises: `Refused` at the first breach. *)
   val check : {groups : module list list, main : string option, cycleDefault : bool,
-               records : {table : HsEvidence.table, env : HsInfer.env} option, claims : claims option,
-               where_ : HsSource.span -> string, fault : string} -> report
+               records : {table : HsEvidence.table, env : HsInfer.env,
+                          derived : (string * string * HsAst.decl list) list} option,
+               claims : claims option, where_ : HsSource.span -> string, fault : string} -> report
 
   (* `dump (report, where_, library)` is the report as text, a line each.
 

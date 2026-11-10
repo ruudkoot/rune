@@ -55,8 +55,9 @@ sig
   val <a href="#val-compare">compare</a> : report * claims * (HsSource.span -&gt; string) * string -&gt; unit
   val <a href="#val-replayrules">replayRules</a> : (string * string) list
   val <a href="#val-check">check</a> : {<a href="#fld-check.groups">groups</a> : module list list, <a href="#fld-check.main">main</a> : string option, <a href="#fld-check.cycledefault">cycleDefault</a> : bool,
-               <a href="#fld-check.records">records</a> : {table : HsEvidence.table, env : HsInfer.env} option, <a href="#fld-check.claims">claims</a> : claims option,
-               <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string} -&gt; report
+               <a href="#fld-check.records">records</a> : {table : HsEvidence.table, env : HsInfer.env,
+                          derived : (string * string * HsAst.decl list) list} option,
+               <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string} -&gt; report
   val <a href="#val-dump">dump</a> : report * (HsSource.span -&gt; string) * bool -&gt; string
 end
 </pre>
@@ -273,16 +274,20 @@ brackets: `[bindg] ...`.
 
 ```sml
 val check : {groups : module list list, main : string option, cycleDefault : bool,
-             records : {table : HsEvidence.table, env : HsInfer.env} option, claims : claims option,
-             where_ : HsSource.span -> string, fault : string} -> report
+             records : {table : HsEvidence.table, env : HsInfer.env,
+                        derived : (string * string * HsAst.decl list) list} option,
+             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report
 ```
 
 `check {groups, main, cycleDefault, records, claims, where_, fault}`
 is [`infer`](#val-infer)'s report, the checker's records replayed and compared.
 
 With `records`, the checker's evidence records and environment
-(HsEvidence, HsInfer), each record is replayed by Faxén's rules and
-rhc's ([`replayRules`](#val-replayrules)), and the records are then held to the
+(HsEvidence, HsInfer) and the derived instances it made as trees
+(HsDerive: each one's module, identity and methods), the second
+inference checks those instances' methods as any instance's, each
+record is replayed by Faxén's rules and rhc's ([`replayRules`](#val-replayrules)), the
+derived methods' records too, and the records are then held to the
 inference as claims ([`compare`](#val-compare)); with `claims`, those are too.
 `fault` is as [`compare`](#val-compare)'s, for every rule.
 
@@ -293,7 +298,7 @@ inference as claims ([`compare`](#val-compare)); with `claims`, those are too.
 | <a name="fld-check.groups"></a>`groups` | `module list list` |  |
 | <a name="fld-check.main"></a>`main` | `string option` |  |
 | <a name="fld-check.cycledefault"></a>`cycleDefault` | `bool` |  |
-| <a name="fld-check.records"></a>`records` | `{table : HsEvidence.table, env : HsInfer.env} option` |  |
+| <a name="fld-check.records"></a>`records` | `{table : HsEvidence.table, env : HsInfer.env, derived : (string * string * HsAst.decl list) list} option` |  |
 | <a name="fld-check.claims"></a>`claims` | `claims option` |  |
 | <a name="fld-check.where_"></a>`where_` | `HsSource.span -> string` |  |
 | <a name="fld-check.fault"></a>`fault` | `string` |  |

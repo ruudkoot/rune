@@ -31,7 +31,12 @@
    The classes, instances and superclasses replay reads are HsLint's own
    (HsLintEnv, HsLintClasses); of the checker it reads the records and the
    types of the values its uses instantiate (`HsInfer.valueScheme`), which
-   say what a use's types are in order.
+   say what a use's types are in order. A derived instance's methods,
+   which HsDerive makes as the tree a user would write (M14), are read as
+   any instance's (D54); his rules have none for deriving (1.3), so a
+   derived instance's context is HsLint's own, the least the second
+   inference finds by 10.1's fixpoint, and [dict inst] holds the
+   checker's dictionaries to it.
 
    RHC_HSLINT_FAULT=RULE reads the first record RULE checks corrupted, so
    that RULE, and no other, refuses it. *)
@@ -52,13 +57,7 @@ struct
 
   (* ---- the checker's types as HsLint's ---- *)
 
-  (* an entity of a key `SPACE HOME \t NAME`, or a built-in name *)
-  fun idOfKey (k : string) : T.id =
-    if k = "->" then {qual = "", name = "(->)"}
-    else
-      case CharVector.findi (fn (_, c) => c = #"\t") k of
-        SOME (i, _) => {qual = String.substring (k, 1, i - 1), name = String.extract (k, i + 1, NONE)}
-      | NONE => {qual = "", name = k}
+  val idOfKey = E.idOfKey
 
   (* a rigid variable's name, unique to the program: the checker's names
      carry their numbers already *)
@@ -97,13 +96,29 @@ struct
 
   fun spanKey ({file, start, stop} : HsSource.span) = file ^ ":" ^ Int.toString start ^ "-" ^ Int.toString stop
 
+  (* the span of a node's key, `FILE:START-STOP` *)
+  fun spanOfKey k =
+    let
+      fun lastColon i = if i < 0 then NONE else if String.sub (k, i) = #":" then SOME i else lastColon (i - 1)
+    in
+      case lastColon (size k - 1) of
+        SOME i =>
+          (case String.fields (fn c => c = #"-") (String.extract (k, i + 1, NONE)) of
+             [a, b] => {file = String.substring (k, 0, i), start = getOpt (Int.fromString a, 0),
+                        stop = getOpt (Int.fromString b, 0)}
+           | _ => HsSource.noSpan)
+      | NONE => HsSource.noSpan
+    end
+
   type source = {names : A.qname M.map ref, lits : bool M.map ref, binders : HsSource.span M.map ref,
-                 decls : (string * A.decl list) list ref, instances : (HsSource.span * A.name * A.decl list) list ref}
+                 decls : (string * A.decl list) list ref, instances : (HsSource.span * string * A.decl list) list ref}
 
   fun nameSpan (A.Name ({span, ...}, _)) = span
   fun nameOf (A.Name (_, q)) = q
 
-  fun walk (mid, A.Module (_, {decls, ...}), src : source) =
+  (* `walkDecls (mid, decls, src)`: the names, literals, binders and lists
+     of declarations of `decls`, of the module `mid` *)
+  fun walkDecls (mid, decls, src : source) =
     let
       fun name n = #names src := M.insert (!(#names src), spanKey (nameSpan n), nameOf n)
       (* a local's name is unique in its module alone: keyed by its file *)
@@ -171,13 +186,16 @@ struct
         | A.FParen (A.F (_, l'), ps) => (lhs l'; List.app pat ps)
       and locals ds = (#decls src := (mid, ds) :: !(#decls src); List.app decl ds)
     in
-      #decls src := (mid, decls) :: !(#decls src);
-      List.app decl decls;
-      List.app (fn A.D ({span, ...}, A.DInstance (_, c, _, body)) =>
-                     #instances src := (span, c, getOpt (body, [])) :: !(#instances src)
-                 | _ => ())
-        decls
+      List.app decl decls
     end
+
+  fun walk (mid, A.Module (_, {decls, ...}), src : source) =
+    (#decls src := (mid, decls) :: !(#decls src);
+     walkDecls (mid, decls, src);
+     List.app (fn A.D ({span, ...}, A.DInstance (_, c, _, body)) =>
+                    #instances src := (span, #name (nameOf c), getOpt (body, [])) :: !(#instances src)
+                | _ => ())
+       decls)
 
   (* the span of a binder's first name in a list of declarations *)
   fun firstBinder (decls : A.decl list, id : T.id) : HsSource.span option =
@@ -226,34 +244,40 @@ struct
      ("method", "an instance's method is bound at its class's type for it at the instance"),
      ("scc", "a group across a cycle's modules has one context, and is defaulted where its predicates arose (D30)")]
 
-  (* `replay {modules, records, env, cycleDefault, fault}` holds the records
-     to the rules; the classes and instances are HsLintClasses' as the
-     second inference left them. *)
+  (* `replay {modules, records, env, derived, cycleDefault, fault}` holds
+     the records to the rules, the derived instances' methods' (`derived`,
+     as HsDerive made them) as a user's; the classes and instances are
+     HsLintClasses' as the second inference left them. *)
   fun replay {modules : E.module list, groups : E.module list list, records : V.table, env : HsInfer.env,
-              cycleDefault : bool, fault = f} =
+              derived : (string * string * A.decl list) list, cycleDefault : bool, fault = f} =
     let
       val () = fault := f
       val src : source = {names = ref M.empty, lits = ref M.empty, binders = ref M.empty, decls = ref [],
                           instances = ref []}
       val () = List.app (fn {id, ast, ...} => walk (id, ast, src)) modules
       val all = V.all records
+      (* a derived instance's methods, made as a user's would be (D54): its
+         record is at its class's name in the deriving clause *)
+      val instanceAt =
+        List.foldl (fn ((key, recs), m) =>
+                      List.foldl (fn (V.Instance {inst, ...}, m) =>
+                                       if String.isPrefix "instance@" key then M.insert (m, inst, key) else m
+                                   | (_, m) => m)
+                        m recs)
+          M.empty all
+      val () =
+        List.app (fn (mid, inst, decls) =>
+                    (walkDecls (mid, decls, src);
+                     case M.find (instanceAt, inst) of
+                       SOME key => #instances src := (spanOfKey (String.extract (key, size "instance@", NONE)),
+                                                      #name (#1 (E.ofInstanceId inst)), decls)
+                                                     :: !(#instances src)
+                     | NONE => ()))
+          derived
       fun parse key =
         case CharVector.findi (fn (_, c) => c = #"@") key of
           SOME (i, _) => (String.substring (key, 0, i), String.extract (key, i + 1, NONE))
         | NONE => (key, "")
-      (* the span of a node's key, `FILE:START-STOP` *)
-      fun spanOfKey k =
-        let
-          fun lastColon i = if i < 0 then NONE else if String.sub (k, i) = #":" then SOME i else lastColon (i - 1)
-        in
-          case lastColon (size k - 1) of
-            SOME i =>
-              (case String.fields (fn c => c = #"-") (String.extract (k, i + 1, NONE)) of
-                 [a, b] => {file = String.substring (k, 0, i), start = getOpt (Int.fromString a, 0),
-                            stop = getOpt (Int.fromString b, 0)}
-               | _ => HsSource.noSpan)
-          | NONE => HsSource.noSpan
-        end
       fun recordsAt (kind, span) = V.find (records, V.node (kind, span))
       (* the parameters of every abstraction: a binder's, a signature's, an
          instance's context's, a class's (by its class alone) *)
@@ -274,10 +298,7 @@ struct
                      end
                  | V.Instance {inst, vars, params = ps, ...} =>
                      let
-                       val (cls, tc) = case CharVector.findi (fn (_, c) => c = #"@") inst of
-                                         SOME (i, _) => (idOfKey (String.substring (inst, 0, i)),
-                                                         idOfKey (String.extract (inst, i + 1, NONE)))
-                                       | NONE => (idOfKey inst, idOfKey "")
+                       val (cls, tc) = E.ofInstanceId inst
                        val ctx =
                          case List.find (fn ({head = T.IsIn (_, h), ...} : C.inst) =>
                                            case T.spine h of (T.TCon {id, ...}, _) => T.idEq (id, tc) | _ => false)
@@ -423,10 +444,7 @@ struct
                      end
                  | ("instance", V.Instance {inst, vars, supers, ...}) =>
                      let
-                       val (cls, tc) = case CharVector.findi (fn (_, c) => c = #"@") inst of
-                                         SOME (i, _) => (idOfKey (String.substring (inst, 0, i)),
-                                                         idOfKey (String.extract (inst, i + 1, NONE)))
-                                       | NONE => (idOfKey inst, idOfKey "")
+                       val (cls, tc) = E.ofInstanceId inst
                        val kind = getOpt (E.tyconKind tc, T.Star)
                        val head = List.foldl (fn (v, f) => T.TAp (f, rigid v)) (T.TCon {id = tc, kind = kind}) vars
                        val supers = if length supers >= 2 andalso faulty "super" then List.rev supers else supers
@@ -558,16 +576,14 @@ struct
               (HsLintInfer.groupsOf (HsLintInfer.bindsOf tops))
           end
       (* [method]: an instance's methods at their types there *)
-      fun methods (span, cls : A.name, body) =
+      fun methods (span, cls : string, body) =
         let
           val recs = recordsAt ("instance", span)
         in
           case recs of
             V.Instance {inst, vars, ...} :: _ =>
               let
-                val tc = case CharVector.findi (fn (_, c) => c = #"@") inst of
-                           SOME (i, _) => idOfKey (String.extract (inst, i + 1, NONE))
-                         | NONE => idOfKey ""
+                val tc = #2 (E.ofInstanceId inst)
                 val kind = getOpt (E.tyconKind tc, T.Star)
                 val head = List.foldl (fn (v, f) => T.TAp (f, rigid v)) (T.TCon {id = tc, kind = kind}) vars
                 val binds = HsLintInfer.bindsOf body
@@ -605,7 +621,7 @@ struct
                          SOME th =>
                            if HsLintClaims.canonical (T.showTy th) = HsLintClaims.canonical (T.showTy mine) then ()
                            else breach (s, "method", "the method `" ^ HsLintInfer.plain id ^ "` of the instance " ^
-                                                     #name (nameOf cls) ^
+                                                     cls ^
                                                      " " ^ #name tc ^ " is bound at " ^ T.showTy th ^ ", and its type there is " ^
                                                      T.showTy mine ^ " (a method's slot)")
                        | NONE => ()
@@ -622,11 +638,13 @@ struct
       fault := ""
     end
 
-  (* `claimsOf {modules, records}`: the records as claims of the program's
-     modules (HsLintClaims): each binding's type at the top level, and each
-     default, its predicates' classes the least that imply the rest, at no
-     place; no kind or derived instance, which the records do not hold *)
-  fun claimsOf {modules : E.module list, records : V.table} : HsLintClaims.claims =
+  (* `claimsOf {modules, records, derived}`: the records as claims of the
+     program's modules (HsLintClaims): each binding's type at the top
+     level, and each default, its derived instances' methods' too, its
+     predicates' classes the least that imply the rest, at no place; no
+     kind or derived instance, which the records do not hold *)
+  fun claimsOf {modules : E.module list, records : V.table, derived : (string * string * A.decl list) list}
+               : HsLintClaims.claims =
     let
       val program = List.filter (fn {library, ...} => not library) modules
       fun text {vars, ctx, ty} =
@@ -658,7 +676,14 @@ struct
                     (List.concat (List.map HsLintInfer.bound (HsLintInfer.bindsOf decls)))
                 end)
              program)
-      val files = List.map (fn {ast = A.Module ({span, ...}, _), ...} : E.module => #file span) program
+      (* the program's files, and those of its derived instances' methods *)
+      val files =
+        List.map (fn {ast = A.Module ({span, ...}, _), ...} : E.module => #file span) program
+        @ List.concat (List.map (fn (mid, _, decls) =>
+                                   if List.exists (fn {id, ...} : E.module => id = mid) program
+                                   then List.map (fn A.D ({span, ...}, _) => #file span) decls
+                                   else [])
+                         derived)
       fun least classes =
         List.filter (fn c => not (List.exists (fn d => not (T.idEq (c, d))
                                                        andalso List.exists (fn e => T.idEq (e, c)) (C.closure d))

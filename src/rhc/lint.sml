@@ -82,7 +82,8 @@ struct
     Pass.checkAt ("hslint", 2)
       (fn () =>
          ignore (HsLint.check {groups = groups (g, r), main = mainOf g, cycleDefault = cycleDefault,
-                               records = Option.map (fn env => {table = #evidence r, env = env}) (#types r),
+                               records = Option.map (fn env => {table = #evidence r, env = env, derived = #derived r})
+                                           (#types r),
                                claims = Option.map (HsLint.claims o readFile) (!claims),
                                where_ = fn sp => getOpt (lineColumn sp, "0:0"),
                                fault = getOpt (OS.Process.getEnv "RHC_HSLINT_FAULT", "")})

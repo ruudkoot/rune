@@ -31,7 +31,7 @@ What each means is on [`HS_LINT`](../sig/HS_LINT.md); the types are this structu
 | type | [`module`](../sig/HS_LINT.md#type-module) | `{ast : HsAst.module, id : string, library : bool}` |
 | type | [`report`](../sig/HS_LINT.md#type-report) | `{bindings : binding list, classes : class_ list, defaults : default list, derived : derived list, kinds : kind list}` |
 | exception | [`Refused`](../sig/HS_LINT.md#exn-refused) | `of {file : string, start : int, stop : int} * string` |
-| val | [`check`](../sig/HS_LINT.md#val-check) | `{claims : claims option, cycleDefault : bool, fault : string, groups : module list list, main : string option, records : {env : HsInfer.env, table : HsEvidence.table} option, where_ : {file : string, start : int, stop : int} -> string} -> report` |
+| val | [`check`](../sig/HS_LINT.md#val-check) | `{claims : claims option, cycleDefault : bool, fault : string, groups : module list list, main : string option, records : {derived : (string * string * HsAst.decl list) list, env : HsInfer.env, table : HsEvidence.table} option, where_ : {file : string, start : int, stop : int} -> string} -> report` |
 | val | [`claims`](../sig/HS_LINT.md#val-claims) | `string -> claims` |
 | val | [`compare`](../sig/HS_LINT.md#val-compare) | `report * claims * ({file : string, start : int, stop : int} -> string) * string -> unit` |
 | val | [`dump`](../sig/HS_LINT.md#val-dump) | `report * ({file : string, start : int, stop : int} -> string) * bool -> string` |
