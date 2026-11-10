@@ -96,6 +96,7 @@ struct
      with no expand, which is SML's), Lower and the target *)
   fun compile (opts : RhcOptions.options, p : Core.program, out : string) : int =
     let
+      val () = CoreToMid.checking := Pass.linting' 2
       val text =
         Pass.stage {name = "coretomid", showIn = NONE, show = fn s => s, check = fn _ => (), size = String.size}
                    (fn p => CoreToMid.program ({fault = #fault opts}, p)) p
@@ -111,7 +112,8 @@ struct
       val code = MidPipeline.targetStage low
     in Emit.writeFileAs (MidPipeline.fingerprint (), out, code); 0 end
     handle CoreToMid.Unsupported msg =>
-      (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
+             (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
+         | CoreToMid.Breach msg => (eprint ("rhc: lint after coretomid: internal compiler error: " ^ msg ^ "\n"); 1)
 
   (* Each file a unit, after rhc's runtime's, each checked and compiled
      apart against the units before it, which it imports from, and the
@@ -124,6 +126,7 @@ struct
      the same unit, at the same fingerprint and making (RhcStore). *)
   fun compileUnits (opts : RhcOptions.options, out : string) : int =
     let
+      val () = CoreToMid.checking := Pass.linting' 2
       val strings = #strings opts
       fun parsed (file, text) =
         CoreText.parse text
@@ -305,6 +308,7 @@ struct
         end
     in if whole then linkWhole () else (RhcUnits.link (built, out); 0) end
     handle RhcUnits.Error msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
+         | CoreToMid.Breach msg => (eprint ("rhc: lint after coretomid: internal compiler error: " ^ msg ^ "\n"); 1)
          | CoreToMid.Unsupported msg =>
              (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
 

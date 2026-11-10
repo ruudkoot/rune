@@ -94,7 +94,7 @@ struct
     \  --target=T            the bytecode: registers (default) or stack\n\
     \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
     \  --fault=F             for the tests of what catches it, a fault of Core to Mid made\n\
-    \                        on purpose: thunk-in-slot or force-behind-cast\n\
+    \                        on purpose: thunk-in-slot, force-behind-cast or susp-type-arg\n\
     \  --strings=S           a string literal's list: lazy, a cell as it is read (default),\n\
     \                        or whole, every cell at once, for D24's measurement\n\
     \  --desugar-only        on a program of Haskell: check it, desugar it to Core, CoreLint\n\
@@ -162,6 +162,7 @@ struct
         | go ("--thunks=c" :: rest) = go rest
         | go ("--fault=thunk-in-slot" :: rest) = (fault := SOME CoreToMid.ThunkInSlot; go rest)
         | go ("--fault=force-behind-cast" :: rest) = (fault := SOME CoreToMid.ForceBehindCast; go rest)
+        | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
         | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)
         | go (arg :: rest) =

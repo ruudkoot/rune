@@ -63,6 +63,7 @@
 - `superName` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-supername)
 - `superPath` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-superpath)
 - `Suspension` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-suspension)
+- `SuspTypeArg` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-susptypearg)
 - `Symbol` (con): [HS_CHAR](../sig/HS_CHAR.md#con-symbol)
 - `Synonym` (con): [HS_MODULES](../sig/HS_MODULES.md#con-synonym)
 

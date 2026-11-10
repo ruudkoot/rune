@@ -426,9 +426,23 @@
     {
      "kind": "datatype",
      "name": "fault",
-     "spec": "datatype fault = ThunkInSlot | ForceBehindCast",
-     "doc": "A fault made on purpose, for the tests of what catches it.\n\nThey are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a\nsuspension used where its value is wanted, unforced; `ForceBehindCast`,\na force made a cast from the suspension to its value.\n\n",
+     "spec": "datatype fault = ThunkInSlot | ForceBehindCast | SuspTypeArg",
+     "doc": "A fault made on purpose, for the tests of what catches it.\n\nThey are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a\nsuspension used where its value is wanted, unforced; `ForceBehindCast`,\na force made a cast from the suspension to its value; `SuspTypeArg`, a\nuse's first type argument a slot's type, a suspension's.\n\n",
      "page": "sig/CORE_TO_MID.md#type-fault"
+    },
+    {
+     "kind": "val",
+     "name": "checking",
+     "spec": "val checking : bool ref",
+     "doc": "Whether Core to Mid holds what it writes to its own rules, which rhc\nsets at lint level 2 (M10b).\n\nA use's type argument is a value's type, never one with `susp` at its\nhead (D4); the rule is Core to Mid's and not MidLint's, since SML uses\nits polymorphic functions at `T susp`.\n\n",
+     "page": "sig/CORE_TO_MID.md#val-checking"
+    },
+    {
+     "kind": "exception",
+     "name": "Breach",
+     "spec": "exception Breach of string",
+     "doc": "A breach of Core to Mid's rules, where `checking` holds: what it is.\n\n",
+     "page": "sig/CORE_TO_MID.md#exn-breach"
     },
     {
      "kind": "exception",
