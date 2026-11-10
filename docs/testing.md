@@ -734,9 +734,10 @@ the kinds, the derived instances' contexts and the defaults it chose, or
 what it must find: `dump/NAME` each fixture of `tests/hs/hslint` against its
 expected dump, reviewed line by line (under `--cycle-default=scc` and with
 the library's unsigned bindings, `--dump-hslint=library`, where it has those
-files), then the checker on it at level 2, which must accept what the dump
-infers and refuse what it refuses while HsLint replays its records, so that
-rhc's mutants of the checker (HK01 to HK05) fail a fixture's job;
+files), then its compile at level 2 as far as Core (`--desugar-only`), which
+must accept what the dump infers and refuse what it refuses while HsLint
+replays the checker's records and holds them and the Core to its inference,
+so that rhc's mutants of the checker (HK01 to HK05) fail a fixture's job;
 `accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
 and `tests/hs/lang` inferred, whatever its rows' status, since the second
 inference waits on no stage of the compile; and `errors/K-of-4`, every
@@ -767,11 +768,22 @@ inference. A derived instance, which HsDerive makes as the tree a user would
 write (M14), is checked as any instance is: the second inference types its
 methods at the head and the least context it derived itself (10.1, the data
 type's context with it), and replay reads their records and their methods'
-types. `faults` holds each rule to refusing its fault, as
-`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, its records
-and its own expected dump, is accepted, and with `RHC_HSLINT_FAULT=RULE`,
-which reads the first claim or record RULE checks corrupted, refused with
-`[RULE]`.
+types. Once the program is desugared and CoreLint has typed its Core by
+its rules, the target check holds that Core to the second inference, Hall
+et al.'s soundness of the translation (D54's first part): each value of the
+top level, each selector and default method is of the translation of its
+source type, HsLint's own (`[target]`), each class's data type holds its
+superclasses' dictionaries then its methods in order (`[dictionary]`), and
+each instance's dictionary function takes its context's dictionaries and
+gives the class's at its head (`[dfun]`), up to the names and order of the
+variables and the order of the dictionaries, so that any route to a
+superclass is right. `faults` holds each rule to refusing its fault, as
+`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, desugared,
+with its records, its Core and its own expected dump, is accepted, and with
+`RHC_HSLINT_FAULT=RULE`, which reads the first claim, record or Core type
+RULE checks corrupted, refused with `[RULE]`. `levels` builds each fixture
+the dump infers at level 2 and at level 0, which must be the same bytes, as
+`levelsOne` holds Rune's builds: no check changes what rhc makes.
 
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,

@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 212 requirements between the 72 files become 98 arrows.
+library and not a wall of lines: the 214 requirements between the 72 files become 99 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -74,26 +74,26 @@ flowchart TD
   n39["HsDerive"]
   n40(["HS_INFER"])
   n41["HsInfer"]
-  n42(["HS_LINT"])
-  n43["HsLint"]
-  n44(["CORE"])
-  n45["Core"]
-  n46(["CORE_TEXT"])
-  n47["CoreText"]
-  n50(["CORE_PRIM_FAMILY"])
-  n51["CorePrimFamily"]
-  n52(["CORE_PRIM"])
-  n53["CorePrim"]
-  n54(["CORE_RUNTIME"])
-  n55["CoreRuntime"]
-  n56(["CORE_LINT"])
-  n57["CoreLint"]
-  n58(["CORE_INTERP"])
-  n59["CoreInterp"]
-  n60(["CORE_GEN"])
-  n61["CoreGen"]
-  n62(["CORE_TO_MID"])
-  n63["CoreToMid"]
+  n42(["CORE"])
+  n43["Core"]
+  n44(["CORE_TEXT"])
+  n45["CoreText"]
+  n48(["CORE_PRIM_FAMILY"])
+  n49["CorePrimFamily"]
+  n50(["CORE_PRIM"])
+  n51["CorePrim"]
+  n52(["CORE_RUNTIME"])
+  n53["CoreRuntime"]
+  n54(["CORE_LINT"])
+  n55["CoreLint"]
+  n56(["CORE_INTERP"])
+  n57["CoreInterp"]
+  n58(["CORE_GEN"])
+  n59["CoreGen"]
+  n60(["CORE_TO_MID"])
+  n61["CoreToMid"]
+  n62(["HS_LINT"])
+  n63["HsLint"]
   n64(["HS_DS_CORE"])
   n65["HsDsCore"]
   n66(["HS_DS_ENV"])
@@ -158,33 +158,34 @@ flowchart TD
   n41 --> n40
   n41 --> n39
   n41 --> n37
-  n42 --> n41
   n43 --> n42
+  n44 --> n43
   n45 --> n44
-  n46 --> n45
-  n47 --> n46
+  n49 --> n48
+  n50 --> n43
+  n50 --> n49
   n51 --> n50
-  n52 --> n45
-  n52 --> n51
+  n51 --> n45
+  n52 --> n43
   n53 --> n52
-  n53 --> n47
-  n54 --> n45
+  n53 --> n45
+  n54 --> n43
   n55 --> n54
-  n55 --> n47
-  n56 --> n45
+  n55 --> n51
+  n56 --> n43
   n57 --> n56
-  n57 --> n53
-  n58 --> n45
+  n57 --> n51
+  n58 --> n43
   n59 --> n58
-  n59 --> n53
-  n60 --> n45
+  n59 --> n45
+  n60 --> n43
   n61 --> n60
-  n61 --> n47
-  n62 --> n45
+  n61 --> n51
+  n62 --> n43
+  n62 --> n41
   n63 --> n62
-  n63 --> n53
-  n64 --> n45
-  n65 --> n47
+  n64 --> n43
+  n65 --> n45
   n65 --> n64
   n65 --> n21
   n66 --> n65
@@ -192,9 +193,9 @@ flowchart TD
   n67 --> n66
   n68 --> n67
   n69 --> n68
-  n70 --> n45
+  n70 --> n43
   n70 --> n41
-  n71 --> n53
+  n71 --> n51
   n71 --> n70
   n71 --> n69
 ```
@@ -203,9 +204,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  n48(["CORE_UNITS"])
-  n49["CoreUnits"]
-  n49 --> n48
+  n46(["CORE_UNITS"])
+  n47["CoreUnits"]
+  n47 --> n46
 ```
 
 It also needs Languages (2).

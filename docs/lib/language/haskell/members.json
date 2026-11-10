@@ -2074,11 +2074,32 @@
      "page": "sig/HS_LINT.md#val-replayrules"
     },
     {
+     "kind": "type",
+     "name": "target",
+     "spec": "type target",
+     "doc": "What the second inference found that the target check reads.\n\nThey are the types of the top level, the selectors and default\nmethods, the classes' dictionaries and the instances' dictionary\nfunctions, as Core's types.\n\n",
+     "page": "sig/HS_LINT.md#type-target"
+    },
+    {
      "kind": "val",
      "name": "check",
-     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report",
-     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault}`\nis `infer`'s report, the checker's records replayed and compared.\n\nWith `records`, the checker's evidence records and environment\n(HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
+     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report * target",
+     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault}`\nis `infer`'s report, with the checker's records replayed and compared.\n\nIt gives what the target check reads with the report. With `records`, the checker's evidence records and environment\n(HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
      "page": "sig/HS_LINT.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "targetRules",
+     "spec": "val targetRules : (string * string) list",
+     "doc": "`targetRules` is each rule of the target check with what it holds,\nits name the first word of its breach's message, in brackets:\n`[target] ...`.\n\n",
+     "page": "sig/HS_LINT.md#val-targetrules"
+    },
+    {
+     "kind": "val",
+     "name": "target",
+     "spec": "val target : target * Core.program * string -> unit",
+     "doc": "`target (t, program, fault)` holds `program`, the Core made of what\n`check` read, to `t`, what the second inference found.\n\nThe program is what desugaring made and CoreLint accepted. Each value\nof the top level, selector and default method, each class's\ndictionary and each instance's dictionary function is held to the\ntranslation of its source type, as the second inference has it (Hall\net al.'s soundness of the translation), up to the names and order of\nits variables and the order of its dictionaries. `fault` is as\n`compare`'s.\n\n**Raises** `Refused` at the first breach.\n\n",
+     "page": "sig/HS_LINT.md#val-target"
     },
     {
      "kind": "val",

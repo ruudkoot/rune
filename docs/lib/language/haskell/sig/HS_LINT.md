@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 16 of 16 entries documented |
+| Documentation | 19 of 19 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint\_sig.sml](../../../../../lib/language/haskell/hslint_sig.sml) |
 
@@ -54,10 +54,13 @@ sig
   val <a href="#val-rules">rules</a> : (string * string) list
   val <a href="#val-compare">compare</a> : report * claims * (HsSource.span -&gt; string) * string -&gt; unit
   val <a href="#val-replayrules">replayRules</a> : (string * string) list
+  type <a href="#type-target">target</a>
   val <a href="#val-check">check</a> : {<a href="#fld-check.groups">groups</a> : module list list, <a href="#fld-check.main">main</a> : string option, <a href="#fld-check.cycledefault">cycleDefault</a> : bool,
                <a href="#fld-check.records">records</a> : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
-               <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string} -&gt; report
+               <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string} -&gt; report * target
+  val <a href="#val-targetrules">targetRules</a> : (string * string) list
+  val <a href="#val-target">target</a> : target * Core.program * string -&gt; unit
   val <a href="#val-dump">dump</a> : report * (HsSource.span -&gt; string) * bool -&gt; string
 end
 </pre>
@@ -270,19 +273,31 @@ val replayRules : (string * string) list
 rules and rhc's), its name the first word of its breach's message, in
 brackets: `[bindg] ...`.
 
+### <a name="type-target"></a>`target`
+
+```sml
+type target
+```
+
+What the second inference found that the target check reads.
+
+They are the types of the top level, the selectors and default
+methods, the classes' dictionaries and the instances' dictionary
+functions, as Core's types.
+
 ### <a name="val-check"></a>`check`
 
 ```sml
 val check : {groups : module list list, main : string option, cycleDefault : bool,
              records : {table : HsEvidence.table, env : HsInfer.env,
                         derived : (string * string * HsAst.decl list) list} option,
-             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report
+             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report * target
 ```
 
 `check {groups, main, cycleDefault, records, claims, where_, fault}`
-is [`infer`](#val-infer)'s report, the checker's records replayed and compared.
+is [`infer`](#val-infer)'s report, with the checker's records replayed and compared.
 
-With `records`, the checker's evidence records and environment
+It gives what the target check reads with the report. With `records`, the checker's evidence records and environment
 (HsEvidence, HsInfer) and the derived instances it made as trees
 (HsDerive: each one's module, identity and methods), the second
 inference checks those instances' methods as any instance's, each
@@ -302,6 +317,35 @@ inference as claims ([`compare`](#val-compare)); with `claims`, those are too.
 | <a name="fld-check.claims"></a>`claims` | `claims option` |  |
 | <a name="fld-check.where_"></a>`where_` | `HsSource.span -> string` |  |
 | <a name="fld-check.fault"></a>`fault` | `string` |  |
+
+### <a name="val-targetrules"></a>`targetRules`
+
+```sml
+val targetRules : (string * string) list
+```
+
+[`targetRules`](#val-targetrules) is each rule of the target check with what it holds,
+its name the first word of its breach's message, in brackets:
+`[target] ...`.
+
+### <a name="val-target"></a>`target`
+
+```sml
+val target : target * Core.program * string -> unit
+```
+
+`target (t, program, fault)` holds `program`, the Core made of what
+[`check`](#val-check) read, to `t`, what the second inference found.
+
+The program is what desugaring made and CoreLint accepted. Each value
+of the top level, selector and default method, each class's
+dictionary and each instance's dictionary function is held to the
+translation of its source type, as the second inference has it (Hall
+et al.'s soundness of the translation), up to the names and order of
+its variables and the order of its dictionaries. `fault` is as
+[`compare`](#val-compare)'s.
+
+**Raises** [`Refused`](#exn-refused) at the first breach.
 
 ### <a name="val-dump"></a>`dump`
 
