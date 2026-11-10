@@ -91,6 +91,45 @@ struct
       let val s = Real.fmt (StringCvt.GEN (SOME 12)) d
       in if CharVector.exists (fn c => c = #"." orelse c = #"E" orelse c = #"i") s then s else s ^ ".0" end
 
+  (* a Double rounded to binary32, as Mid's real_to_single does: a Float
+     is a Double that binary32 represents (D23) *)
+  fun single r = Real32.toLarge (Real32.fromLarge IEEEReal.TO_NEAREST r)
+
+  (* the elementary functions of Mid's real primitives: Math's, which are
+     those primitives in Rune's Basis *)
+  val elementary =
+    [("sqrt", Math.sqrt), ("exp", Math.exp), ("log", Math.ln), ("sin", Math.sin), ("cos", Math.cos), ("tan", Math.tan),
+     ("atan", Math.atan), ("sinh", Math.sinh), ("cosh", Math.cosh), ("tanh", Math.tanh)]
+
+  (* a conversion to Int, as Mid's real_trunc and the others are: Domain for
+     a NaN, Overflow past Int's range *)
+  fun toInt (f : real -> int) r = if Real.isNan r then raise Domain else f r
+
+  (* m and e of m * 2^e, m an integer of `bits` bits, or 0 and 0 for a zero:
+     as real_frexp_man and real_frexp_exp give them, man in [0.5, 1) *)
+  fun decode bits r =
+    if Real.== (r, 0.0) then (0, 0)
+    else
+      let val {man, exp} = Real.toManExp r
+      in (toInt Real.trunc (Real.fromManExp {man = man, exp = bits}), exp - bits) end
+
+  (* ---- Handles ---- *)
+
+  (* the files a program opened, by handle, from 3; 0 to 2 are standard
+     input, output and error. What standard input has given and h_read has
+     not yet, where it gave more than was asked for, waits in `pending`. *)
+  datatype file = Reading of TextIO.instream | Writing of TextIO.outstream | Closed
+  val files : (int * file) list ref = ref []
+  fun fileOf h = Option.map #2 (List.find (fn (k, _) => k = h) (!files))
+  val nextFile = ref 3
+  val pending = ref ""
+  val lastError = ref ""
+  fun ioText e =
+    case e of
+      IO.Io {cause = OS.SysErr (msg, _), ...} => msg
+    | IO.Io {cause, ...} => exnMessage cause
+    | _ => exnMessage e
+
   (* the arithmetic of a type, by the name after its prefix *)
   fun arith (name, get, make, ops) args =
     case args of
@@ -121,7 +160,8 @@ struct
                     ("div", Int.div), ("mod", Int.mod)]
       val integerOps = [("add", IntInf.+), ("sub", IntInf.-), ("mul", IntInf.* ), ("quot", IntInf.quot),
                         ("rem", IntInf.rem), ("div", IntInf.div), ("mod", IntInf.mod)]
-      val doubleOps = [("add", Real.+), ("sub", Real.-), ("mul", Real.* ), ("div", Real./)]
+      val doubleOps = [("add", Real.+), ("sub", Real.-), ("mul", Real.* ), ("div", Real./), ("atan2", Math.atan2)]
+      val floatOps = List.map (fn (n, f) => (n, single o f)) doubleOps
       val cmp = ["eq", "ne", "lt", "le", "gt", "ge"]
       fun one args = case args of [a] => a | _ => stuck (p ^ " takes one argument")
       fun result () =
@@ -156,6 +196,73 @@ struct
         | ("exn_name", _) => (case exnOf (one args) of VExn (k, _) => Return (VStr (List.nth (CorePrim.exnKinds, k)))
                                                      | _ => stuck "exn_name")
         | ("exn_message", _) => (case exnOf (one args) of VExn (_, m) => Return (VStr m) | _ => stuck "exn_message")
+        | ("str_extract", [s, i, n]) => Return (VStr (String.substring (str s, int i, int n)))
+        | ("float_neg", _) => Return (VDouble (Real.~ (double (one args))))
+        | ("float_from_int", _) => Return (VDouble (single (Real.fromInt (int (one args)))))
+        | ("float_from_double", _) => Return (VDouble (single (double (one args))))
+        | ("float_to_double", _) => Return (VDouble (double (one args)))
+        | ("float_to_str", _) => Return (VStr (realText (double (one args))))
+        | ("h_open", [path, mode, _]) =>
+            (let
+              val f = case int mode of
+                        0 => Reading (TextIO.openIn (str path))
+                      | 1 => Writing (TextIO.openOut (str path))
+                      | _ => Writing (TextIO.openAppend (str path))
+              val h = !nextFile
+            in
+              nextFile := h + 1; files := (h, f) :: !files;
+              Return (VUTuple (Vector.fromList [cell world, cell (VInt h)]))
+            end
+            handle e as IO.Io _ => (lastError := ioText e; Return (VUTuple (Vector.fromList [cell world, cell (VInt ~1)]))))
+        | ("h_close", [h, _]) =>
+            ((case fileOf (int h) of
+                SOME (Reading i) => TextIO.closeIn i
+              | SOME (Writing o') => TextIO.closeOut o'
+              | _ => ());
+             files := List.map (fn (k, f) => if k = int h then (k, Closed) else (k, f)) (!files);
+             Return world)
+        | ("h_read", [h, n, _]) =>
+            (let
+              val n = int n
+              fun give s = Return (VUTuple (Vector.fromList [cell world, cell (VStr s)]))
+              fun upTo s = if size s <= n then s else (pending := String.extract (s, n, NONE); String.substring (s, 0, n))
+            in
+              if n < 0 then raise Size
+              else if n = 0 then give ""
+              else
+                case int h of
+                  0 => if !pending <> "" then give (upTo (!pending before pending := "")) else give (upTo (TextIO.input TextIO.stdIn))
+                | k => (case fileOf k of
+                          SOME (Reading i) => give (TextIO.inputN (i, n))
+                        | _ => give "")
+            end
+            handle IO.Io _ => Throw (exn ("IOError", "read failed")))
+        | ("h_write", [h, s, _]) =>
+            (let
+              fun gave ok = Return (VUTuple (Vector.fromList [cell world, cell (bool ok)]))
+            in
+              case int h of
+                1 => (out (str s); gave true)
+              | 2 => (err (str s); gave true)
+              | k => (case fileOf k of
+                        SOME (Writing o') => (TextIO.output (o', str s); gave true)
+                      | _ => (lastError := "Bad file descriptor"; gave false))
+            end
+            handle e as IO.Io _ => (lastError := ioText e; Return (VUTuple (Vector.fromList [cell world, cell (bool false)]))))
+        | ("h_flush", [h, _]) =>
+            ((case (int h, fileOf (int h)) of
+                (1, _) => TextIO.flushOut TextIO.stdOut
+              | (_, SOME (Writing o')) => TextIO.flushOut o'
+              | _ => ());
+             Return world)
+        | ("h_error", [_]) => Return (VUTuple (Vector.fromList [cell world, cell (VStr (!lastError))]))
+        | ("interleave", [action, _]) =>
+            let
+              val env = CoreMap.insert (CoreMap.insert (CoreMap.empty, "action", action), "w", cell world)
+              val run = Case (App (Atom (Var "action"), [ValArg (Var "w")]), "r", [AltUTuple (["_", "x"], Atom (Var "x"))])
+            in
+              Return (VUTuple (Vector.fromList [cell world, ref (Thunk (run, env))]))
+            end
         | _ =>
             if under ("int_", rest) then
               if List.exists (fn c => c = !rest) cmp then compare (int, Int.<, op =) (!rest, args)
@@ -164,9 +271,35 @@ struct
               if List.exists (fn c => c = !rest) cmp then compare (integer, IntInf.<, op =) (!rest, args)
               else arith (!rest, integer, VInteger, integerOps) args
             else if under ("char_", rest) then compare (char, Int.<, op =) (!rest, args)
-            else if under ("double_", rest) then
-              if List.exists (fn c => c = !rest) cmp then compare (double, Real.<, Real.==) (!rest, args)
-              else arith (!rest, double, VDouble, doubleOps) args
+            else if under ("double_", rest) orelse under ("float_", rest) then
+              let
+                val round = if String.isPrefix "float_" p then single else (fn r => r)
+                val bits = if String.isPrefix "float_" p then 24 else 53
+                (* the least positive normal number of the type *)
+                val normal = if String.isPrefix "float_" p then Real.fromManExp {man = 1.0, exp = ~126} else Real.minNormalPos
+                fun test f = Return (bool (f (double (one args))))
+              in
+                if List.exists (fn c => c = !rest) cmp then compare (double, Real.<, Real.==) (!rest, args)
+                else
+                  case (!rest, List.find (fn (n, _) => n = !rest) elementary) of
+                    (_, SOME (_, f)) => Return (VDouble (round (f (double (one args)))))
+                  | ("truncate", _) => Return (VInt (toInt Real.trunc (double (one args))))
+                  | ("round", _) => Return (VInt (toInt (Real.trunc o Real.realRound) (double (one args))))
+                  | ("ceiling", _) => Return (VInt (toInt Real.ceil (double (one args))))
+                  | ("floor", _) => Return (VInt (toInt Real.floor (double (one args))))
+                  | ("is_nan", _) => test Real.isNan
+                  | ("is_infinite", _) => test (fn r => not (Real.isNan r) andalso Real.isNan (r - r))
+                  | ("is_negative_zero", _) => test (fn r => Real.== (r, 0.0) andalso Real.signBit r)
+                  | ("is_denormalized", _) => test (fn r => not (Real.== (r, 0.0)) andalso Real.< (Real.abs r, normal))
+                  | ("decode", _) =>
+                      let val (m, e) = decode bits (double (one args))
+                      in Return (VUTuple (Vector.fromList [cell (VInt m), cell (VInt e)])) end
+                  | ("encode", _) =>
+                      (case args of
+                         [m, e] => Return (VDouble (round (Real.fromManExp {man = Real.fromInt (int m), exp = int e})))
+                       | _ => stuck (p ^ " takes two arguments"))
+                  | _ => arith (!rest, double, VDouble, if String.isPrefix "float_" p then floatOps else doubleOps) args
+              end
             else stuck ("no primitive " ^ p ^ " of " ^ Int.toString (length args) ^ " arguments")
     in
       case (p, args) of
@@ -176,6 +309,8 @@ struct
     handle Overflow => (Throw (exn ("Overflow", "arithmetic overflow")), [])
          | Div => (Throw (exn ("Div", "divide by zero")), [])
          | Subscript => (Throw (exn ("Subscript", "index out of range")), [])
+         | Size => (Throw (exn ("Subscript", "index out of range")), [])
+         | Domain => (Throw (exn ("Domain", "domain")), [])
 
   (* ---- The machine ---- *)
 
@@ -195,7 +330,7 @@ struct
         | LInteger i => VInteger i
         | LChar c => VChar c
         | LDouble s => VDouble (valOf (Real.fromString s))
-        | LFloat s => VDouble (valOf (Real.fromString s))
+        | LFloat s => VDouble (Real32.toLarge (valOf (Real32.fromString s)))
         | LStr s => VStr s
       fun atomCell env (Var x) = lookup (env, x)
         | atomCell _ (Lit l) = cell (litValue l)
@@ -310,6 +445,7 @@ struct
                  | _ :: rest => loop (Throw e, rest, depth - 1, steps))
           end
     in
+      files := []; nextFile := 3; pending := ""; lastError := "";
       loop (Force main, [Apply [cell world]], 1, 0)
     end
 end

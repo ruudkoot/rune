@@ -25,10 +25,28 @@ sig
      - on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;
      - on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,
        `double_neg`, `double_eq` to `double_ge`, `double_from_int` and
-       `double_to_str`;
-     - on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`;
-     - I/O: `print_str`, `print_err`, `exit`, `ref_new`, `ref_get`,
-       `ref_set`, `real_world`;
+       `double_to_str`; then the elementary functions `double_sqrt`,
+       `double_exp`, `double_log`, `double_sin`, `double_cos`, `double_tan`,
+       `double_atan`, `double_sinh`, `double_cosh`, `double_tanh` and
+       `double_atan2`; the conversions to `Int` `double_truncate`,
+       `double_round` (to even at a half), `double_ceiling`, `double_floor`;
+       the classes `double_is_nan`, `double_is_infinite`,
+       `double_is_negative_zero`, `double_is_denormalized`; and
+       `double_decode` and `double_encode`, a mantissa of 53 bits;
+     - on `Float`, a `Double` that binary32 represents, every result of
+       arithmetic rounded to binary32 by Mid's `real_to_single` (D23):
+       `float_add`, `float_sub`, `float_mul`, `float_div`, `float_neg`,
+       `float_eq` to `float_ge`, `float_from_int`, `float_from_double`,
+       `float_to_double`, `float_to_str`, and the functions of `Double`
+       from the elementary ones on, `float_sqrt` to `float_encode`, a
+       mantissa of 24 bits;
+     - on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`,
+       `str_extract`;
+     - I/O: `print_str`, `print_err`, `exit`; the handles of files, 0 to 2
+       standard input, output and error, `h_open`, `h_close`, `h_read`,
+       `h_write`, `h_flush`, `h_error`; `interleave`, which defers an
+       action until its value is forced (D25's one interleaving
+       primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;
      - exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_pattern`,
        `exn_kind`, `exn_name`, `exn_message` and `catch`. *)
   val prims : prim list
@@ -40,6 +58,6 @@ sig
 
      They are `ErrorCall`, `IOError`, `PatternMatchFail`, `NonTermination`
      (a suspension forced again under its own evaluation), `Div`, `Overflow`,
-     `Subscript` and `Chr`. *)
+     `Subscript`, `Chr` and `Domain` (a NaN made an `Int`). *)
   val exnKinds : string list
 end

@@ -135,7 +135,7 @@ struct
           M.Var (x, _) => var (x, acc)
         | _ => acc
       fun atoms (xs, acc) = List.foldl atom acc xs
-      fun rhs (r, acc) = atoms (M.atomsOfRhs r, acc)
+      fun rhs (r, acc) = M.foldAtomsOfRhs atom acc r
       fun bind x = IntTable.insert (bound, x, ())
       fun go (e, acc) =
         case e of

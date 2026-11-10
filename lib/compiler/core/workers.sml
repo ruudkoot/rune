@@ -36,7 +36,7 @@ struct
       fun rhs r =
         case r of
           Select _ => true
-        | _ => oks (atomsOfRhs r)
+        | _ => allAtomsOfRhs ok r
       fun exp e =
         case e of
           Let (_, _, r, b) => rhs r andalso exp b
@@ -71,7 +71,7 @@ struct
         case r of
           Atom (Var (y, [])) => if isName y then (names := v :: !names; true) else true
         | Select (i, Var (y, _)) => (if isName y then fields := (i, v, t) :: !fields else (); true)
-        | _ => oks (atomsOfRhs r)
+        | _ => allAtomsOfRhs ok r
       (* a field returned is taken whole: ~1 for its variable *)
       fun ret r =
         case r of
@@ -127,7 +127,7 @@ struct
         case a of
           Var (x, _) => IntTable.bump (uses, x)
         | _ => ()
-      fun rhs r = List.app atom (atomsOfRhs r)
+      fun rhs r = appAtomsOfRhs atom r
       fun exp e =
         case e of
           Let (_, _, r, b) => (rhs r; exp b)
@@ -221,7 +221,7 @@ struct
             | Raise a => atom a
             | Return r => rhs r
             | Mark (_, a) => exp a
-          and rhs r = List.app atom (atomsOfRhs r)
+          and rhs r = appAtomsOfRhs atom r
         in exp e; !any end
       val touched =
         List.map (fn d as Val (_, _, e) => (d, refsIn e)

@@ -49,10 +49,11 @@ sig
   (* A stretch of trivia, by the bytes of the file it covers. *)
   type trivium = {kind : trivia, start : int, stop : int}
 
-  (* A token as the lexer reads it: the bytes it covers, the line it is
-     on, its column as layout counts it (a tab to the next multiple of
-     eight, plus one), whether it is the first token of its line, and the
-     trivia before it. *)
+  (* A token as the lexer reads it, with where it is.
+
+     The bytes it covers, the line it is on, its column as layout counts
+     it (a tab to the next multiple of eight, plus one), whether it is the
+     first token of its line, and the trivia before it. *)
   type item = {token : token, start : int, stop : int, line : int, column : int, first : bool,
                trivia : trivium list}
 
