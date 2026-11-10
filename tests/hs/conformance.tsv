@@ -35,9 +35,9 @@ lex.special.lbrace	2.2	{ is special	lex	accept	token dump; `{-` is not a brace	h
 lex.special.rbrace	2.2	} is special	lex	accept	token dump	hand	Planned		
 lex.white.seq	2.2	whitespace -> whitestuff {whitestuff}; whitestuff -> whitechar | comment | ncomment	lex	accept	runs of mixed whitespace and comments separate lexemes	hand	Planned		
 lex.white.newline.crlf	2.2	return linefeed is one newline	lex	accept	lines counted across CR LF; layout sees one line	hand	Planned		
-lex.white.newline.cr	2.2	a lone return is a newline	lex	accept	layout and line numbers treat it as a line end	hand	Planned		
+lex.white.newline.cr	2.2	a lone return is a newline	lex	accept	layout and line numbers treat it as a line end	hand	Planned	R57	
 lex.white.newline.lf	2.2	linefeed is a newline	lex	accept	layout and line numbers	hand	Planned		
-lex.white.newline.ff	2.2	formfeed is a newline	lex	accept	layout treats the next character as column 1; a line comment ends at FF	hand	Planned		
+lex.white.newline.ff	2.2	formfeed is a newline	lex	accept	layout treats the next character as column 1; a line comment ends at FF	hand	Planned	R57	
 lex.white.vertab	2.2	a vertical tab is whitechar	lex	accept	separates lexemes; 9.3 does not say how it moves the column: see readings.md	hand	Planned	R4	
 lex.white.space	2.2	a space is whitechar	lex	accept	token dump	hand	Planned		
 lex.white.tab	2.2	a horizontal tab is whitechar	lex	accept	token dump	hand	Planned		
@@ -116,19 +116,19 @@ lex.reserved.then	2.4	then is reserved	lex	reject	refused as a variable name	han
 lex.reserved.type	2.4	type is reserved	lex	reject	refused as a variable name	hand	Planned		
 lex.reserved.where	2.4	where is reserved	lex	reject	refused as a variable name	hand	Planned		
 lex.reserved.underscore	2.4	_ is reserved	lex	reject	refused as a variable in an expression	hand	Planned		
-lex.reserved.notspecial	2.4	Nothing else is reserved: forall, foreign, mdo, proc, rec, family, role and the like are varids	lex	accept	each bound as a variable	hand	Planned		
+lex.reserved.notspecial	2.4	Nothing else is reserved: forall, foreign, mdo, proc, rec, family, role and the like are varids	lex	accept	each bound as a variable	hand	Planned	R62	
 lex.varsym	2.4	varsym -> (symbol {symbol | :})<reservedop | dashes>	lex	accept	`+`, `+:`, `<=>`, `.` , `!`, `#`	hand	Planned		
 lex.consym	2.4	consym -> (: {symbol | :})<reservedop>	lex	accept	`:+`, `:::`, `:|`; `:` and `::` are not consyms	hand	Planned		
 lex.reservedop.dotdot	2.4	.. is reserved	lex	reject	refused as an operator definition	hand	Planned		
-lex.reservedop.colon	2.4	: is reserved	lex	reject	refused as a constructor definition or in a fixity declaration	hand	Planned		
+lex.reservedop.colon	2.4	: is reserved	lex	reject	refused as a constructor definition or in a fixity declaration	hand	Planned	R60	
 lex.reservedop.coco	2.4	:: is reserved	lex	reject	refused as an operator definition	hand	Planned		
 lex.reservedop.eq	2.4	= is reserved	lex	reject	refused as an operator definition	hand	Planned		
 lex.reservedop.backslash	2.4	\ is reserved	lex	reject	refused as an operator definition; `\\` is a varsym	hand	Planned		
 lex.reservedop.bar	2.4	| is reserved	lex	reject	refused as an operator definition; `||` is a varsym	hand	Planned		
 lex.reservedop.larrow	2.4	<- is reserved	lex	reject	refused as an operator definition	hand	Planned		
 lex.reservedop.rarrow	2.4	-> is reserved	lex	reject	refused as an operator definition	hand	Planned		
-lex.reservedop.at	2.4	@ is reserved	lex	reject	refused as an operator definition	hand	Planned		
-lex.reservedop.tilde	2.4	~ is reserved	lex	reject	refused as an operator definition	hand	Planned		
+lex.reservedop.at	2.4	@ is reserved	lex	reject	refused as an operator definition	hand	Planned	R59	
+lex.reservedop.tilde	2.4	~ is reserved	lex	reject	refused as an operator definition	hand	Planned	R59	
 lex.reservedop.darrow	2.4	=> is reserved	lex	reject	refused as an operator definition	hand	Planned		
 lex.reservedop.notbang	2.4	! is not reserved (repeated in 4.2.1), nor are - and .	lex	accept	`x ! y = ...` defines an operator	hand	Planned		
 lex.op.colonstart	2.4	An operator symbol starting with a colon is a constructor	lex	accept	`:+` usable in a pattern	hand	Planned		
@@ -151,7 +151,7 @@ lex.qual.sample.fdot	2.4	F. lexes as F . (two tokens)	lex	accept	token dump	hand
 lex.qual.enum	2.4	By F.., `[False..]` is a qualified operator and not an enumeration	lex	reject	refused (no module False, or a parse error); `[False ..]` is accepted	hand	Planned		
 lex.qual.reservedid	2.4	varid excludes reservedid, so M.where is not a qvarid: maximal munch gives M . where	lex	accept	`M.where` token dump: three tokens	hand	Planned		
 lex.qual.reservedop	2.4	varsym excludes reservedop, so F.= is not a qvarsym	lex	accept	token dump: F then varsym `.=`; likewise `F.|`, `F.->`: longest lexeme at each point; see readings.md	hand	Planned	R7	
-lex.qual.dashes	2.4	F.-- is not a qvarsym since varsym excludes dashes	lex	accept	F then varsym `.--`	hand	Planned		
+lex.qual.dashes	2.4	F.-- is not a qvarsym since varsym excludes dashes	lex	accept	F then varsym `.--`	hand	Planned	R77	
 lex.qual.twodots	2.4	modid is one conid: M.N.x is qconid M.N, then . , then x, not a variable x of module M.N	lex	accept	token dump; GHC reads it hierarchically; see readings.md	hand	Planned	R7	
 lex.qual.opsym	2.4	A qualified operator is a lexeme: `Prelude.+`, `Prelude..`, `M.:+`	lex	accept	used infix	hand	Planned		
 lex.qual.backquote	2.4	A qualified variable or constructor may be backquoted	lex	accept	`` x `Prelude.div` y ``	hand	Planned		
@@ -166,7 +166,7 @@ lex.int.big	2.5	An integer literal has no length limit	lex	run	a 1000-digit lite
 lex.int.incomplete.hex	2.5	Maximal munch: 0x not followed by a hexit lexes as 0 then x	lex	accept	`0xg` is `0` applied to `xg`: a type error, not a lexical one	hand	Planned		
 lex.int.incomplete.oct	2.5	0o not followed by an octit lexes as 0 then o...	lex	accept	`0o9` token dump	hand	Planned		
 lex.int.binary	2.5	There is no binary literal	lex	accept	`0b1` lexes as 0 then b1	hand	Planned		
-lex.int.underscore	2.5	There is no digit separator	lex	accept	`1_000` lexes as 1 then _000	hand	Planned		
+lex.int.underscore	2.5	There is no digit separator	lex	accept	`1_000` lexes as 1 then _000	hand	Planned	R58	
 lex.int.unidigit	2.5	decimal -> digit{digit} and digit includes uniDigit, yet chapter 19 says digits outside ASCII are not used to represent numbers	lex	none	contradiction: rhc must pick; see readings.md	hand	Planned	R6	
 lex.float.point	2.5	float -> decimal . decimal [exponent]	lex	accept	`1.5`, `1.5e3`	hand	Planned		
 lex.float.exponent	2.5	float -> decimal exponent	lex	accept	`1e3` is a float	hand	Planned		
@@ -181,13 +181,13 @@ lex.char.form	2.6	char -> ' (graphic<' | \> | space | escape<\&>) '	lex	accept	`
 lex.char.quote	2.6	A single quote must be escaped in a character	lex	reject	`'''` is refused; `'\''` holds	hand	Planned		
 lex.char.backslash	2.6	\ must always be escaped	lex	reject	`'\'` is refused	hand	Planned		
 lex.char.empty	2.6	A character literal holds exactly one character	lex	reject	`''` and `'ab'` are refused	hand	Planned		
-lex.char.tab	2.6	Only graphic and space may stand raw: a raw tab is not allowed	lex	reject	`'<TAB>'` is refused	hand	Planned		
+lex.char.tab	2.6	Only graphic and space may stand raw: a raw tab is not allowed	lex	reject	`'<TAB>'` is refused	hand	Planned	R61	
 lex.char.nullesc	2.6	'\&' is disallowed	lex	reject	refused, by escape<\&>	hand	Planned		
 lex.string.form	2.6	string -> " {graphic<" | \> | space | escape | gap} "	lex	accept	`""`, `"Hello"`	hand	Planned		
 lex.string.dquote	2.6	A double quote must be escaped in a string	lex	reject	`"""` is refused; `"\""` holds	hand	Planned		
 lex.string.squote	2.6	A single quote may be used in a string	lex	accept	`"'"`	hand	Planned		
 lex.string.chardquote	2.6	A double quote may be used in a character	lex	accept	`'"'`	hand	Planned		
-lex.string.tab	2.6	A raw tab or other non-space whitespace is not allowed in a string	lex	reject	refused	hand	Planned		
+lex.string.tab	2.6	A raw tab or other non-space whitespace is not allowed in a string	lex	reject	refused	hand	Planned	R61	
 lex.string.newline	2.6	A raw newline is not allowed in a string outside a gap	lex	reject	refused	hand	Planned		
 lex.string.unterminated	2.6	A string needs its closing quote	lex	reject	refused at end of line and at end of file	hand	Planned		
 lex.string.list	2.6	String literals are abbreviations for lists of characters	lex	run	`"ab" == ['a','b']`; the Report's pointer to 3.7 is wrong, 6.1.2 has it; see readings.md	hand	Planned	R14	
@@ -402,7 +402,7 @@ exp.sec.rule.left	3.5	(e op) is legal if and only if (e op x) parses as ((e) op 
 exp.sec.ex.staraplusb	3.5	(*a+b) is syntactically invalid	syntax	reject	the Report's example	hand	Planned		
 exp.sec.ex.plusastarb	3.5	(+a*b) is valid	syntax	accept	the Report's example	hand	Planned		
 exp.sec.ex.starparen	3.5	(*(a+b)) is valid	syntax	accept	the Report's example	hand	Planned		
-exp.sec.ex.aplusb	3.5	(a+b+) is valid, as + is left associative	syntax	accept	the Report's example	hand	Planned		
+exp.sec.ex.aplusb	3.5	(a+b+) is valid, as + is left associative	syntax	accept	the Report's example	hand	Planned	R67	
 exp.sec.ex.plusaplusb	3.5	(+a+b) is invalid	syntax	reject	the Report's example	hand	Planned		
 exp.sec.ex.plusparen	3.5	(+(a+b)) is the legal way to write it	syntax	accept	the Report's example	hand	Planned		
 exp.sec.ex.let	3.5	(let n = 10 in n +) is invalid, by the let/lambda meta-rule	syntax	reject	the Report's example	hand	Planned		
@@ -410,7 +410,7 @@ exp.sec.ex.lambda	3.5	(\x -> x +) is invalid, by the same rule	syntax	reject	imp
 exp.sec.right.assoc	3.5	A right section of a right-associative operator may hold a chain of it	syntax	accept	(^ a ^ b), by ( qop(r,i) rexpi )	hand	Planned		
 exp.sec.left.rightassoc	3.5	A left section of a right-associative operator may not hold a chain of it	syntax	reject	(a ^ b ^)	hand	Planned		
 exp.sec.nonassoc	3.5	A section of a non-associative operator may not hold a chain of it at the same precedence	syntax	reject	(a == b ==), (== a == b)	hand	Planned		
-exp.sec.tighter	3.5	A section's operand may hold tighter operators	syntax	accept	(a * b +), (+ a * b)	hand	Planned		
+exp.sec.tighter	3.5	A section's operand may hold tighter operators	syntax	accept	(a * b +), (+ a * b)	hand	Planned	R67	
 exp.sec.neg	3.5	(- exp) is not a section but an application of prefix negation	syntax	run	(- 1) is a number, not a function: (- 1) 2 is a type error unless Num on functions	hand	Planned		
 exp.sec.neg.left	3.5	A left section may begin with negation where it is level 6	syntax	accept	(-5 +), by ( lexp6 qop(l,6) )	hand	Planned		
 exp.sec.neg.tighter	3.5	A left section of a tighter operator may not begin with negation	syntax	reject	(-5 *): -5 * x parses as -(5*x), so the rule refuses it; see readings.md	hand	Planned	R10	
@@ -522,7 +522,7 @@ exp.case.guard.fallthrough	3.13	If all guards are False, matching continues with
 exp.case.nomatch	3.13	If no match succeeds the result is ⊥	dynamic	run	terminates as error does	hand	Planned		
 exp.case.gd.exp0	3.13	A guard is an exp0, not an exp: it has no top-level type signature	syntax	reject	case x of { y | y :: Bool -> 1 }	hand	Planned		
 exp.case.gd.sigparen	3.13	A parenthesised signature is a legal guard	syntax	accept	case x of { y | (y :: Bool) -> 1 }	hand	Planned		
-exp.case.note.letsig	3.13	case x of { (a,_) | let b = not a in b :: Bool -> a } has the single parse case x of { (a,_) | (let b = not a in b :: Bool) -> a }	syntax	accept	the Report's note; limited lookahead must not reject it	hand	Planned		
+exp.case.note.letsig	3.13	case x of { (a,_) | let b = not a in b :: Bool -> a } has the single parse case x of { (a,_) | (let b = not a in b :: Bool) -> a }	syntax	accept	the Report's note; limited lookahead must not reject it	hand	Planned	R65	
 exp.do.form	3.14	do { stmts }	syntax	accept	explicit and layout forms, each statement form	hand	Planned		
 exp.do.empty	3.14	A do has a final expression: it is not empty	syntax	reject	do {} and do { ; }	hand	Planned		
 exp.do.last.bind	3.14	The last statement must be an expression, not a generator	syntax	reject	do { x <- e }	hand	Planned		
@@ -764,7 +764,7 @@ ty.form.con	4.1.2	a type constructor is an upper-case identifier	static	accept	s
 ty.form.app	4.1.2	if t1 has kind k1->k2 and t2 has kind k1 then t1 t2 is a type of kind k2	static	accept	`Maybe Int`, `IO ()`, `Either Int Bool`	hand	Planned		
 ty.form.app.partial	4.1.2	type application associates to the left	static	accept	`(Either Int) Bool` is `Either Int Bool`	hand	Planned		
 ty.form.paren	4.1.2	a parenthesized type (t) is identical to t	static	accept	`(Int)` and `((Int) -> (Int))`	hand	Planned		
-ty.form.infix.none	4.1.2	infix type constructors are not allowed, other than (->)	syntax	reject	``data a `T` b = C`` and `x :: Int :+: Int` are refused	hand	Planned		
+ty.form.infix.none	4.1.2	infix type constructors are not allowed, other than (->)	syntax	reject	``data a `T` b = C`` and `x :: Int :+: Int` are refused	hand	Planned	R69	
 ty.kind.const	4.1.2	Char, Int, Integer, Float, Double and Bool have kind *	static	reject	`x :: Char Int` is refused	hand	Planned		
 ty.kind.maybe	4.1.2	Maybe and IO have kind *->*	static	accept	`instance C Maybe` for a class over *->*	hand	Planned		
 ty.kind.user	4.1.2	data and newtype add a type constructor whose kind comes from kind inference	static	accept	a user type used at its inferred kind	hand	Planned		
@@ -785,7 +785,7 @@ ty.builtin.semantics	4.1.2	list and tuple types have the semantics of the equiva
 ty.consistent	4.1.2	if ti is the type of ei then (\ e1 -> e2), [e1], (e1,e2) have types (t1 -> t2), [t1], (t1,t2)	static	accept	each expression under a signature of that form	hand	Planned		
 ty.quant.implicit	4.1.2	type variables in a type expression are universally quantified, with no explicit syntax	static	accept	`a -> a` denotes forall a. a -> a: used at two types	hand	Planned		
 ty.quant.noforall	4.1.2	there is no syntax for universal quantification	syntax	reject	`f :: forall a. a -> a` is refused	hand	Planned		
-ty.quant.forall.isvar	4.1.2	forall is no reserved word, so it is an ordinary type variable	syntax	accept	`f :: forall -> forall`	hand	Planned		
+ty.quant.forall.isvar	4.1.2	forall is no reserved word, so it is an ordinary type variable	syntax	accept	`f :: forall -> forall`	hand	Planned	R66	
 ty.quant.classvar	4.1.2	the one exception to universal quantification is the distinguished type variable of a class declaration	static	accept	a class method's signature uses the class variable at one type within an instance	hand	Planned		
 ty.ctx.simple	4.1.3	a class assertion has the form qtycls tyvar	static	accept	`f :: Eq a => a -> a -> Bool`	hand	Planned		
 ty.ctx.app	4.1.3	an assertion may apply a class to a type variable applied to one or more types	static	accept	`f :: Eq (m a) => m a -> Bool`, `f :: Eq (m a [b]) => m a [b] -> Bool`	hand	Planned		
@@ -891,7 +891,7 @@ dec.newtype.deconstruct	4.2.3	the field selector undoes the constructor, and is 
 dec.newtype.vars	4.2.3	the rules for u1...uk are those of data, which the section does not restate	static	reject	`newtype T a a = C a` and `newtype T a = C b` are refused	hand	Planned		
 cls.class.basic	4.3.1	a class declaration introduces a class and its methods	static	accept	a class with methods and an instance	hand	Planned		
 cls.class.onevar	4.3.1	a class has exactly one type variable	syntax	reject	`class C a b where` and `class C where` are refused	hand	Planned		
-cls.class.unqualified	4.3.1	the class being declared is an unqualified tycls	syntax	reject	`class M.C a where` is refused	hand	Planned		
+cls.class.unqualified	4.3.1	the class being declared is an unqualified tycls	syntax	reject	`class M.C a where` is refused	hand	Planned	R71	
 cls.class.varscope	4.3.1	u is scoped only over the method signatures in the class body	static	reject	`class C a where { m :: a -> a; m x = (x :: a) }` is refused: the a of the annotation is its own, forall a. a	hand	Planned		
 cls.class.super	4.3.1	the context specifies the superclasses of C	static	accept	a superclass method used at an instance through the subclass's context	hand	Planned		
 cls.class.super.onlyvar	4.3.1	the only type variable cx may refer to is u	static	reject	`class Eq b => C a` is refused	hand	Planned		
@@ -908,7 +908,7 @@ cls.method.type	4.3.1	the top-level type of vi is forall u,w. (C u, cxi) => ti	s
 cls.method.mentions	4.3.1	ti must mention u	static	reject	`class C a where m :: Int` is refused	hand	Planned		
 cls.method.othervars	4.3.1	ti may mention other variables, in which the method is polymorphic	static	accept	a method used at two types of w	hand	Planned		
 cls.method.ctx.w	4.3.1	cxi may constrain w	static	accept	the example's `op :: Num b => a -> b -> a`	hand	Planned		
-cls.method.ctx.notu	4.3.1	cxi may not constrain u	static	reject	`class C a where m :: Eq a => a -> a` is refused	hand	Planned		
+cls.method.ctx.notu	4.3.1	cxi may not constrain u	static	reject	`class C a where m :: Eq a => a -> a` is refused	hand	Planned	R73	
 cls.fixity.inclass	4.3.1	cdecls may hold a fixity declaration for a method	static	run	an infix method's parse shown by evaluation	hand	Planned		
 cls.fixity.nonmethod	4.3.1	cdecls may hold a fixity declaration for no other value	static	reject	a fixity declaration of a top-level function inside a class is refused	hand	Planned		
 cls.fixity.toplevel	4.3.1	a method's fixity declaration may instead appear at top level	static	run	the same test with the declaration outside the class	hand	Planned		
@@ -942,7 +942,7 @@ cls.inst.reject.synonymctx	4.3.2	that holds for a synonym which would expand to 
 cls.inst.ctx.simple	4.3.2	the instance context is an scontext: assertions on bare variables	syntax	reject	`instance Eq (f a) => C (T f a)` is refused	hand	Planned		
 cls.inst.ctx.qualifiedclass	4.3.2	the class of an instance head may be qualified	static	accept	`instance Ix.Ix T where ...`	hand	Planned		
 cls.inst.body.methodsonly	4.3.2	the declarations may hold bindings only for methods of C	static	reject	a binding of another variable, and of a method of another class, are refused	hand	Planned		
-cls.inst.body.notinscope	4.3.2	it is illegal to bind a method that is not in scope	static	reject	`import M (C)` without the method, then a binding of the method, is refused	hand	Planned		
+cls.inst.body.notinscope	4.3.2	it is illegal to bind a method that is not in scope	static	reject	`import M (C)` without the method, then a binding of the method, is refused	hand	Planned	R76	
 cls.inst.body.anyname	4.3.2	the name under which the method is in scope is immaterial	static	accept	`import qualified Ix; instance Ix.Ix T where range = ...` is legal	hand	Planned		
 cls.inst.body.lhsunqualified	4.3.2	the binding names the method unqualified, whatever the name in scope	syntax	reject	`Ix.range = ...` in an instance is refused	hand	Planned		
 cls.inst.body.ambiguous	4.3.2	the binding resolves through the class, so a clash in the unqualified name does not matter	static	accept	a method binding where the name also has another import	hand	Planned		
@@ -968,7 +968,7 @@ cls.inst.ctx.more	4.3.2	an instance context may be stronger than the methods nee
 cls.inst.ctx.vars	4.3.2	the context's variables are those of the instance type	static	reject	`instance Eq b => C [a]` is refused (4.1.3)	hand	Planned		
 cls.derive.basic	4.3.3	a deriving form generates instance declarations for the datatype in each named class	static	accept	the operations of each class on a user type	hand	Planned		
 cls.derive.newtype	4.3.3	data and newtype declarations both take a deriving form	static	accept	each of the two with deriving	hand	Planned		
-cls.derive.restrictions	4.3.3	derived instances are subject to the same restrictions as user-defined ones	static	reject	a derived instance whose context is not simple is refused (4.5.3)	hand	Planned		
+cls.derive.restrictions	4.3.3	derived instances are subject to the same restrictions as user-defined ones	static	reject	a derived instance whose context is not simple is refused (4.5.3)	hand	Planned	R74	
 cls.derive.super.missing	4.3.3	instances of all superclasses of C must exist for T	static	reject	`data T = A deriving Ord` with no Eq is refused	hand	Planned		
 cls.derive.super.explicit	4.3.3	the superclass instance may be an explicit declaration	static	accept	`data T = A deriving Ord; instance Eq T where ...`	hand	Planned		
 cls.derive.super.derived	4.3.3	or the superclass may be in the deriving clause	static	accept	`deriving (Eq, Ord)`	hand	Planned		
@@ -1089,7 +1089,7 @@ dec.bind.both.top	4.4.3	either binding may appear at the top level	static	accept
 dec.bind.both.local	4.4.3	either binding may appear in a where or let	static	accept	a let and a where with both	hand	Planned		
 dec.fun.lhs.var	4.4.3	funlhs may be a variable and one or more apats	syntax	accept	`f x (y:ys) = ...`	hand	Planned		
 dec.fun.lhs.infix	4.4.3	funlhs may be an infix definition of a varop	syntax	accept	``x `plus` y = ...`` and `x +++ y = ...`	hand	Planned		
-dec.fun.lhs.prec	4.4.3	the operands of an infix funlhs are patterns at the operator's precedence	syntax	accept	with `infixl 6 +++`, `a :* b +++ c = ...`, and a left-associative chain of the operator in lpat position	hand	Planned		
+dec.fun.lhs.prec	4.4.3	the operands of an infix funlhs are patterns at the operator's precedence	syntax	accept	with `infixl 6 +++`, `a :* b +++ c = ...`, and a left-associative chain of the operator in lpat position	hand	Planned	R68	
 dec.fun.lhs.prec.bad	4.4.3	an operand at a lower precedence than the operator is refused	syntax	reject	with `infixl 9 +++`, `a :+ b +++ c = ...` for a lower-level :+ is refused unparenthesised	hand	Planned		
 dec.fun.lhs.paren	4.4.3	a parenthesised funlhs may be applied to further patterns	syntax	accept	``(x `plus` y) z = ...``	hand	Planned		
 dec.fun.lhs.nestedparen	4.4.3	the parenthesised form nests	syntax	accept	`((f x) y) z = ...`	hand	Planned		
@@ -1152,7 +1152,7 @@ dec.ctx.hnf.notlist	4.5.3	the type is not Eq [a] => ...	static	reject	`f :: Eq [
 dec.ctx.noinstance	4.5.3	if no instance is in scope for the reduction it is a static error	static	reject	`f x = [x] == [id]`-like comparison at functions is refused	hand	Planned		
 dec.ctx.tvarhead	4.5.3	a constraint C (m t), m a generalised variable, cannot be reduced	static	accept	`f :: (Monad m, Eq (m a)) => a -> m a -> Bool; f x y = return x == y`	hand	Planned		
 dec.ctx.tvarhead.inferred	4.5.3	that context is inferred	static	accept	the same with no signature, used at Maybe Int	hand	Planned		
-dec.ctx.derive.simple	4.5.3	a derived instance must have a simple context	static	reject	`data Apply a b = App (a b) deriving Show` is refused	hand	Planned		
+dec.ctx.derive.simple	4.5.3	a derived instance must have a simple context	static	reject	`data Apply a b = App (a b) deriving Show` is refused	hand	Planned	R74	
 dec.ctx.derive.reducible	4.5.3	a constituent type's constraint that reduces to variables is simple	static	accept	`data T a = C [a] (Maybe a) deriving Show`	hand	Planned		
 dec.mono.env	4.5.4	a variable free in the environment leaves the binding monomorphic in it	static	accept	`f x = let g y z = ([x,y], z) in (g True, g False)`, forcing x to Bool	hand	Planned		
 dec.mono.fail	4.5.4	a monomorphic variable has a single type at all uses	static	reject	`(g True, g 'c')` is refused	hand	Planned		
@@ -1173,7 +1173,7 @@ mr.rule1.hm	4.5.5	the usual restriction also holds	static	reject	the environment
 mr.simple.def.var	4.5.5	a simple pattern binding is one whose pattern consists of only a single variable	static	reject	4.4.3.2 calls any unguarded p = e simple; the rows below pin the reading; see readings.md	hand	Planned	R18	
 mr.simple.def.guard	4.5.5	a guarded binding of a single variable is restricted without a signature	static	reject	`x | True = 1` at two types is refused	hand	Planned		
 mr.simple.def.guard.sig	4.5.5	with a signature it is unrestricted, if it is simple	static	accept	`x :: Num a => a; x | True = 1` at two types; see readings.md	hand	Planned	R18	
-mr.simple.def.paren	4.5.5	is `(x) = e` a single variable?	static	accept	`x :: Num a => a; (x) = 1` at two types: pinned by a recorded reading; see readings.md	hand	Planned	R18	
+mr.simple.def.paren	4.5.5	is `(x) = e` a single variable?	static	reject	`x :: Num a => a; (x) = 1` at two types is refused: by D32's reading (x) is no single variable, so Rule 1 restricts it and its signature cannot lift that; see readings.md	hand	Planned	R18	
 mr.simple.def.tilde	4.5.5	`~x = e` is not a single variable	static	reject	overloaded `~x` with a signature; see readings.md	hand	Planned	R18	
 mr.ex.len.shared	4.5.5	rule 1 prevents a computation being repeated: `let { len = genericLength xs } in (len, len)` is computed once	static	run	both components at one type; a --count budget shows one traversal	hand	Planned		
 mr.ex.len.twotypes	4.5.5	len has one type	static	reject	`(len :: Int, len :: Double)` is refused	hand	Planned		
@@ -1276,9 +1276,9 @@ mod.exp.type.all	5.2	The form T(..) names the type and all its constructors and 
 mod.exp.type.all.partial	5.2	T(..) of an imported type exports only what is in scope	module	reject	M imports T(A) of T(A,B) and exports T(..); importer of M uses B: refused	hand	Planned		
 mod.exp.type.all.qualified	5.2	T(..) takes constructors in scope whether qualified or not	module	accept	import qualified N; module M (N.T(..)); importer uses a constructor	hand	Planned		
 mod.exp.type.scope	5.2	The possibly qualified type constructor T must be in scope	module	reject	module M (N.T) where with no such name: refused	hand	Planned		
-mod.exp.sub.unqualified	5.2	The subordinate names of T(c1,...,cn) are unqualified	syntax	reject	module M (T(N.c)) where: refused	hand	Planned		
+mod.exp.sub.unqualified	5.2	The subordinate names of T(c1,...,cn) are unqualified	syntax	reject	module M (T(N.c)) where: refused	hand	Planned	R72	
 mod.exp.sub.belongs	5.2	A subordinate name must name a constructor or field of T	module	reject	a constructor of another type in T's list: refused	hand	Planned		
-mod.exp.sub.scope	5.2	A subordinate name must be in scope in the module body	module	reject	a constructor of T that was not imported: refused	hand	Planned		
+mod.exp.sub.scope	5.2	A subordinate name must be in scope in the module body	module	reject	a constructor of T that was not imported: refused	hand	Planned	R72	
 mod.exp.sub.anyqual	5.2	A subordinate name may be in scope under a qualified name only	module	accept	the example module A( Mb.Maybe( Nothing, Just ) ) where import qualified Maybe as Mb	hand	Planned		
 mod.exp.con.bare	5.2	A data constructor cannot be named except as a subordinate name	module	reject	module M (C) where data T = C: refused, C names no type or class	hand	Planned		
 mod.exp.con.sametype	5.2	T in an export list names the type even where a constructor is also T	module	reject	data T = T; module M (T); importer uses constructor T: refused	hand	Planned		
@@ -1293,7 +1293,7 @@ mod.exp.class.all	5.2	The form C(..) names the class and all its methods in scop
 mod.exp.class.all.partial	5.2	C(..) of an imported class exports only the methods in scope	module	reject	importer uses a method M did not import: refused	hand	Planned		
 mod.exp.class.scope	5.2	C must be in scope	module	reject	an unknown C: refused	hand	Planned		
 mod.exp.class.sub.belongs	5.2	A subordinate name must be a method of C	module	reject	a method of another class in the list: refused	hand	Planned		
-mod.exp.class.sub.scope	5.2	A subordinate method must be in scope	module	reject	a method not imported: refused	hand	Planned		
+mod.exp.class.sub.scope	5.2	A subordinate method must be in scope	module	reject	a method not imported: refused	hand	Planned	R72	
 mod.exp.class.sub.anyqual	5.2	A subordinate method may be in scope under a qualified name only	module	accept	module M (N.C(m)) where import qualified N	hand	Planned		
 mod.exp.class.sub.unqualified	5.2	Subordinate method names are unqualified	syntax	reject	module M (C(N.m)): refused; 5.2 writes var, and 9.5 too by erratum Sept 2004; see readings.md	hand	Planned	R30	
 mod.exp.module.set	5.2	module M names all entities in scope with both an unqualified name e and a qualified name M.e	module	accept	an importer sees exactly those entities	hand	Planned		
@@ -1340,7 +1340,7 @@ mod.imp.list.dotdot.only	5.3.1	(..) gets no constructor the module did not expor
 mod.imp.list.noqual	5.3.1	Qualifiers are not permitted in an import list	syntax	reject	import M (M.x): refused	hand	Planned		
 mod.imp.list.nomodule	5.3.1	The module modid form is not permitted in an import list	syntax	reject	import M (module N): refused	hand	Planned		
 mod.imp.list.exported	5.3.1	The list must name only entities exported by the imported module	module	reject	import M (z) with no such export: refused	hand	Planned		
-mod.imp.list.sub.exported	5.3.1	That holds of subordinate names too	module	reject	import M (T(Hidden)): refused	hand	Planned		
+mod.imp.list.sub.exported	5.3.1	That holds of subordinate names too	module	reject	import M (T(Hidden)): refused	hand	Planned	R76	
 mod.imp.list.empty	5.3.1	The list may be empty, and then nothing but instances is imported	module	reject	import M (); a use of x: refused	hand	Planned		
 mod.imp.list.con	5.3.1	C in an import list names only a class or type	module	reject	import M (Con) where Con is a data constructor alone: refused	hand	Planned		
 mod.imp.list.con.same	5.3.1	That list item leaves a constructor of the same name out	module	reject	data T = T; import M (T); constructor T used: refused	hand	Planned		
@@ -1348,7 +1348,7 @@ mod.imp.hiding.basic	5.3.1	hiding imports all exported entities except those nam
 mod.imp.hiding.rest	5.3.1	The others are imported	module	accept	import M hiding (x); a use of y	hand	Planned		
 mod.imp.hiding.empty	5.3.1	hiding () hides nothing	module	accept	import M hiding (); a use of x	hand	Planned		
 mod.imp.hiding.con	5.3.1	A data constructor may be named directly in a hiding list	module	reject	import M hiding (Con); a use of Con: refused	hand	Planned		
-mod.imp.hiding.c.all	5.3.1	In import M hiding (C) any constructor, class or type named C is excluded	module	reject	uses of type C and of constructor C: each refused	hand	Planned		
+mod.imp.hiding.c.all	5.3.1	In import M hiding (C) any constructor, class or type named C is excluded	module	reject	uses of type C and of constructor C: each refused	hand	Planned	R75	
 mod.imp.hiding.sub	5.3.1	hiding takes the forms of an import list	module	reject	import M hiding (T(..)); a use of a constructor: refused	hand	Planned		
 mod.imp.hiding.notexported	5.3.1	It is an error to hide an entity not exported by the imported module	module	reject	import M hiding (nosuch): refused; GHC warns only: see readings.md	hand	Planned	R31	
 mod.imp.all	5.3.1	With no impspec all entities exported by the module are imported	module	accept	import M; a use of each	hand	Planned		
@@ -1398,7 +1398,7 @@ mod.qual.toplevel	5.5.1	A top-level declaration brings both the unqualified and 
 mod.qual.def.top	5.5.1	A defining occurrence must use the unqualified name	syntax	reject	M.f x = 1 at top level: refused	hand	Planned		
 mod.qual.def.let	5.5.1	That holds of local definitions	syntax	reject	let M.y = x+1 in y: refused	hand	Planned		
 mod.qual.def.pat	5.5.1	That holds of variables bound by a pattern	syntax	reject	f M.x = 1: refused, as apat takes var	hand	Planned		
-mod.qual.def.type	5.5.1	That holds of type, constructor and class declarations	syntax	reject	data M.T = C, and class M.C a: refused	hand	Planned		
+mod.qual.def.type	5.5.1	That holds of type, constructor and class declarations	syntax	reject	data M.T = C, and class M.C a: refused	hand	Planned	R71	
 mod.qual.import	5.5.1	An import always brings the qualified name into scope	module	accept	import M; a use of M.x	hand	Planned		
 mod.qual.swap	5.5.1	A qualified import can be replaced by an unqualified one without changes to the references	module	accept	a module using only M.x compiles under both	hand	Planned		
 mod.qual.local	5.5.1	A local binding has no qualified name	module	run	module M where x = 1; f = let x = 2 in M.x prints 1	hand	Planned		
@@ -2322,7 +2322,7 @@ lay.angle.stringgap	9.3	No <n> before the \Bill of a multi-line string, nor befo
 lay.stack.zero	9.3	Context 0: the enclosing context is explicit, and no layout tokens are inserted until it ends or a new context is pushed	layout	accept	inside explicit braces, lines at any column insert nothing	hand	Planned		
 lay.stack.positive	9.3	A positive context is the indentation column of the enclosing layout context	layout	accept	stack dump	hand	Planned		
 lay.col.indentation	9.3	The indentation of a lexeme is the column of its first character; of a line, that of its leftmost lexeme	layout	accept	annotated token dump	hand	Planned		
-lay.col.newlinechars	9.3	newline, return, linefeed and formfeed all start a new line	layout	accept	a lexeme after FF or lone CR has column 1	hand	Planned		
+lay.col.newlinechars	9.3	newline, return, linefeed and formfeed all start a new line	layout	accept	a lexeme after FF or lone CR has column 1	hand	Planned	R57	
 lay.col.first	9.3	The first column is column 1, not 0	layout	accept	annotated token dump	hand	Planned		
 lay.col.tab	9.3	Tab stops are 8 characters apart	layout	accept	a tab from column 1 gives column 9, from 8 gives 9, from 9 gives 17	hand	Planned		
 lay.col.tabalign	9.3	A tab inserts enough spaces to align with the next tab stop	layout	accept	spaces then tab mixed: alignment by columns, not by characters	hand	Planned		
@@ -2354,7 +2354,7 @@ lay.note2.empty	9.3	Note 2: a first token not indented more than the enclosing c
 lay.note2.mimic	9.3	Note 2: {n} becomes <n> to mimic explicit empty braces	layout	accept	the following ; or } appears	hand	Planned		
 lay.note3.match	9.3	Note 3: matching against 0 ensures an explicit close can only match an explicit open	layout	accept	equation 7	hand	Planned		
 lay.note3.implicit	9.3	Note 3: a parse error results if an explicit close brace matches an implicit open brace	layout	reject	by the letter `let {x = do y} in x` and `R {f = do y}` are refused; GHC's `close: error` takes them; see readings.md	hand	Planned	R2	accept/lay.note3.implicit_closes
-lay.note4.allbraces	9.3	Note 4: all brace pairs are explicit contexts, including labelled construction and update	layout	accept	a record expression over several lines left of the block's column inside a `do`	hand	Planned		
+lay.note4.allbraces	9.3	Note 4: all brace pairs are explicit contexts, including labelled construction and update	layout	accept	a record expression over several lines left of the block's column inside a `do`	hand	Planned	R63	
 lay.note4.pattern	9.3	The same for field patterns and data declarations' field braces	layout	accept	a record pattern and a declaration over several lines	hand	Planned		
 lay.note4.nosemi	9.3	Inside a record's braces a line at the enclosing column gets no semicolon	layout	accept	the context is 0	hand	Planned		
 lay.note5.def	9.3	Note 5: parse-error(t) holds if the tokens so far plus t are an invalid prefix of the grammar and the tokens so far plus } are a valid prefix	layout	accept	the parser decides, not the lexer; both conditions tested	hand	Planned		
@@ -2393,7 +2393,7 @@ lit.latex.begin	9.4	Program code begins on the first line following a line that 
 lit.latex.end	9.4	Program code ends just before a subsequent line that begins \end{code}, ignoring string literals	lex	accept	a string holding \end{code} at a line start ends the block	hand	Planned		
 lit.latex.comment	9.4	Everything outside the delimiters is comment	lex	accept	LaTeX text around code, with no blank lines needed	hand	Planned		
 lit.latex.noblank	9.4	No blank lines are needed before or after the delimiters	lex	accept	text directly adjacent	hand	Planned		
-lit.latex.restofline	9.4	Text after \begin{code} or \end{code} on its line is not program: "a line that begins"	lex	accept	`\begin{code} junk`	hand	Planned		
+lit.latex.restofline	9.4	Text after \begin{code} or \end{code} on its line is not program: "a line that begins"	lex	accept	`\begin{code} junk`	hand	Planned	R64	
 lit.latex.unterminated	9.4	The Report does not say what an unterminated \begin{code} means	lex	none	silence: rhc refuses or runs to end of file; see readings.md	hand	Planned	R53	
 lit.latex.sameext	9.4	This style uses the same file extension	lex	accept	.lhs holding the LaTeX style	hand	Planned		
 lit.mixed	9.4	It is not advisable to mix the two styles in one file	lex	none	advice; what a mixed file means is unspecified; rhc chooses and documents it	hand	Planned		
@@ -2402,8 +2402,8 @@ syn.r.impdecl.empty	9.5	An impdecl may be empty	syntax	accept	`module M where { 
 syn.r.imports.first	9.5	All impdecls precede all topdecls	syntax	reject	an import after a declaration is refused	hand	Planned		
 syn.r.exports.trailing	9.5	An export list may end in a comma, and with n=0 may be only a comma	syntax	accept	`module M (a,) where`, `module M (,) where`	hand	Planned		
 syn.r.impspec.trailing	9.5	An import list may end in a comma, with n=0 only a comma	syntax	accept	`import M (a,)`, `import M (,)`, `import M hiding (,)`	hand	Planned		
-syn.r.subordinate.trailing	9.5	cname lists and export subordinate lists have no trailing comma	syntax	reject	`import M (T(A,))` is refused	hand	Planned		
-syn.r.export.classqvar	9.5	export -> qtycls [(..) | (var1, ..., varn)], as 5.2 prints it	syntax	reject	a qualified subordinate name in a class export is refused; the production as erratum Sept 2004 amends it	hand	Planned		
+syn.r.subordinate.trailing	9.5	cname lists and export subordinate lists have no trailing comma	syntax	reject	`import M (T(A,))` is refused	hand	Planned	R70	
+syn.r.export.classqvar	9.5	export -> qtycls [(..) | (var1, ..., varn)], as 5.2 prints it	syntax	reject	a qualified subordinate name in a class export is refused; the production as erratum Sept 2004 amends it	hand	Planned	R72	
 syn.r.import.noqual	9.5	Items of an import list are unqualified	syntax	reject	`import M (N.x)` is refused	hand	Planned		
 syn.r.import.nomodule	9.5	`module M` is no item of an import list	syntax	reject	refused	hand	Planned		
 syn.r.dataconstrs	9.5	data has at least one constructor (= constrs, n>=1)	syntax	reject	`data T` is refused in Haskell 98, though ch. 8 writes `data Float`	hand	Planned		
@@ -2427,7 +2427,7 @@ syn.r.funlhs.paren	9.5	( funlhs ) apat {apat}	syntax	accept	`(x `f` y) z = ...`,
 syn.r.decl.pat0	9.5	decl -> (funlhs | pat0) rhs: no unparenthesised n+k at binding level	syntax	accept	`x + 1 = ...` defines (+)	hand	Planned		
 syn.r.cdecl.nopattern	9.5	cdecl and idecl bind a funlhs or a var, never a pattern	syntax	reject	`(a,b) = ...` in a class or instance body	hand	Planned		
 syn.r.idecl.nosig	9.5	idecl has no gendecl	syntax	reject	a signature or fixity declaration in an instance body	hand	Planned		
-syn.r.gd.exp0	9.5	gd -> | exp0: a guard ends without a type signature	syntax	reject	`f x | x :: Bool = 1` is refused; parenthesised it holds	hand	Planned		
+syn.r.gd.exp0	9.5	gd -> | exp0: a guard ends without a type signature	syntax	reject	`f x | x :: Bool = 1` is refused; parenthesised it holds	hand	Planned	R65	
 syn.r.exp.sigprec	9.5	exp -> exp0 :: [context =>] type is outermost in exp	syntax	accept	`a + b :: Int` signs the sum	hand	Planned		
 syn.r.exp.nonassoc	9.5	expi -> expi+1 [qop(n,i) expi+1]: non-associative operators do not chain	syntax	reject	`a == b == c`	hand	Planned		
 syn.r.exp.mixassoc	9.5	Left and right associative operators of one precedence do not mix	syntax	reject	user `infixl 6 +++` with `infixr 6 ***`	hand	Planned		
@@ -2540,7 +2540,7 @@ syn.inst.4	9.5	inst -> [ tyvar ]	syntax	accept	a program using this alternative 
 syn.inst.5	9.5	inst -> ( tyvar1 -> tyvar2 ) | tyvar1 and tyvar2 distinct	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
 syn.funlhs.1	9.5	funlhs -> var apat {apat }	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
 syn.funlhs.2	9.5	funlhs -> pati+1 varop(a,i) pati+1	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
-syn.funlhs.3	9.5	funlhs -> lpati varop(l,i) pati+1	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
+syn.funlhs.3	9.5	funlhs -> lpati varop(l,i) pati+1	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned	R68	
 syn.funlhs.4	9.5	funlhs -> pati+1 varop(r,i) rpati	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
 syn.funlhs.5	9.5	funlhs -> ( funlhs ) apat {apat }	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
 syn.rhs.1	9.5	rhs -> = exp [where decls]	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
@@ -2571,7 +2571,7 @@ syn.aexp.6	9.5	aexp -> [ exp1 , ... , expk ] | (list, k>=1)	syntax	accept	a prog
 syn.aexp.7	9.5	aexp -> [ exp1 [, exp2] .. [exp3] ] | (arithmetic sequence)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
 syn.aexp.8	9.5	aexp -> [ exp | qual1 , ... , qualn ] | (list comprehension, n>=1)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
 syn.aexp.9	9.5	aexp -> ( expi+1 qop(a,i) ) | (left section)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
-syn.aexp.10	9.5	aexp -> ( lexpi qop(l,i) ) | (left section)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
+syn.aexp.10	9.5	aexp -> ( lexpi qop(l,i) ) | (left section)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned	R67	
 syn.aexp.11	9.5	aexp -> ( qop(a,i)<-> expi+1 ) | (right section)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
 syn.aexp.12	9.5	aexp -> ( qop(r,i)<-> rexpi ) | (right section)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
 syn.aexp.13	9.5	aexp -> qcon { fbind1 , ... , fbindn } | (labeled construction, n>=0)	syntax	accept	a program using this alternative parses, and prints back to the same AST	generated	Planned		
