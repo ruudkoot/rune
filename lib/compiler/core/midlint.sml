@@ -270,7 +270,13 @@ struct
              | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " has no argument"))
         | ConTag a =>
             let val t = atom a
-            in case Ty.view t of Ty.Con _ => Ty.int | _ => bug ("the tag of what has type " ^ Ty.toString t) end
+            in
+              case Ty.view t of
+                Ty.Con (stamp, _, _) =>
+                  if isSome (Ty.datatypeOf stamp) then Ty.int
+                  else bug ("the tag of what has type " ^ Ty.toString t ^ ", which is no datatype")
+              | _ => bug ("the tag of what has type " ^ Ty.toString t)
+            end
         | NewExn _ => Ty.exnCon
         | BuiltinExn _ => Ty.exnCon
         | MkExn (c, p) =>
@@ -405,9 +411,67 @@ struct
         case List.find (fn (g, _) => not (IntMap.member (set, g) orelse isSome (IntTable.find (setInFun, g)) orelse setter g)) gs of
           SOME (g, _) => bug ("a Do lists g" ^ Int.toString g ^ ", which a way of it that returns does not set")
         | NONE => ()
+      (* A global the top level reads before the definition that gives it
+         its value: what a Val's or a Do's expression reads, outside the
+         functions it makes, of a global a Val or a Do after it defines, or
+         a Val itself; or of a function after it, but for a call of it,
+         which reads no global *)
+      val place : int IntTable.table = IntTable.table 256
+      val functions : unit IntTable.table = IntTable.table 256
+      val _ = List.foldl (fn (d, i) =>
+                             ((case d of
+                                 Val (g, _, _) => IntTable.insert (place, g, i)
+                               | Funs fs => List.app (fn f => (IntTable.insert (place, #name f, i);
+                                                               IntTable.insert (functions, #name f, ()))) fs
+                               | Do (gs, _) => List.app (fn (g, _) => IntTable.insert (place, g, i)) gs);
+                              i + 1)) 0 p
+      fun early (i, own) =
+        let
+          fun read g =
+            case IntTable.find (place, g) of
+              SOME j => if j > i orelse (own andalso j = i)
+                        then bug ("global g" ^ Int.toString g ^ " is read at the top level before its definition")
+                        else ()
+            | NONE => ()
+          fun atom a = case a of Global (g, _) => read g | _ => ()
+          fun rhs r =
+            case r of
+              Atom a => atom a
+            | App (Global (g, _), args) => (if isSome (IntTable.find (functions, g)) then () else read g; List.app atom args)
+            | App (f, args) => (atom f; List.app atom args)
+            | Prim (_, _, args) => List.app atom args
+            | Tuple args => List.app atom args
+            | Select (_, a) => atom a
+            | Con (_, _, a) => atom a
+            | Decon (_, _, a) => atom a
+            | ConTag a => atom a
+            | MkExn (a, b) => (atom a; atom b)
+            | ExnCon a => atom a
+            | ExnArg (_, a) => atom a
+            | SetGlobal (_, a) => atom a
+            | NewExn _ => ()
+            | BuiltinExn _ => ()
+          fun exp e =
+            case e of
+              Let (_, _, r, b) => (rhs r; exp b)
+            | Fun (_, b) => exp b
+            | Join (_, _, b, sc) => (exp b; exp sc)
+            | Jump (_, args) => List.app atom args
+            | If (a, t, f) => (atom a; exp t; exp f)
+            | Handle (a, _, h) => (exp a; exp h)
+            | Raise a => atom a
+            | Return r => rhs r
+            | Mark (_, a) => exp a
+        in exp end
     in
       List.app def p;
-      List.app unset (List.rev (!dos))
+      List.app unset (List.rev (!dos));
+      ignore (List.foldl (fn (d, i) =>
+                            ((case d of
+                                Val (_, _, e) => early (i, true) e
+                              | Do (_, e) => early (i, false) e
+                              | Funs _ => ());
+                             i + 1)) 0 p)
     end
 
   (* A whole program, or a unit's, whose globals of units before it are

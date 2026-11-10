@@ -400,6 +400,12 @@ struct
       val yes = M.Con0 (1, Ty.bool)
       val setter : M.fundef = {name = 50, label = NONE, tyvars = [], params = [(54, Ty.unit)], result = Ty.unit, body = setting 55}
       fun ident f : M.fundef = {name = f, label = NONE, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
+      (* a type with no constructors, as a lazy value's is, and a function
+         of one parameter *)
+      val susp = Ty.con (900002, "susp", [Ty.int])
+      fun inc f : M.fundef =
+        {name = f, label = NONE, tyvars = [], params = [(f + 1, Ty.int)], result = Ty.int,
+         body = M.Return (M.Prim ("int_add", pairToInt, [M.Var (f + 1, []), one]))}
       fun castBack t =
         [M.Val (46, ([], t), M.Let (47, ([], Ty.unit), M.Prim ("functor_cast", Ty.arrow (Ty.int, Ty.unit), [one]),
                                     M.Return (M.Prim ("functor_cast", Ty.arrow (Ty.unit, t), [M.Var (47, [])]))))]
@@ -444,8 +450,52 @@ struct
       midP ("a function's variable bound again inside it",
             [M.Funs [{name = 51, label = NONE, tyvars = [77], params = [(52, ga)], result = ga,
                       body = M.Let (53, ([77], ga), M.Atom (M.Var (52, [])), M.Return (M.Atom (M.Var (53, [ga]))))}]],
-            "v53 binds 'a77 again")
+            "v53 binds 'a77 again");
+      (* D5's (the haskell98 roadmap's M7): a tag only of a datatype, which
+         an abstract type, a lazy value's, is not; and no global read at the
+         top level before the definition that gives it its value *)
+      midP ("the tag of a datatype", [valR (46, Ty.int, M.ConTag (M.Con0 (0, dty)))], "");
+      midP ("the tag of what has an abstract type",
+            [M.Val (46, ([], Ty.int), M.Let (47, ([], susp), M.Prim ("unsafe_cast", Ty.arrow (Ty.int, susp), [one]),
+                                             M.Return (M.ConTag (M.Var (47, [])))))],
+            "which is no datatype");
+      midP ("a global read before its definition", [valR (46, Ty.int, M.Atom (M.Global (47, []))), valR (47, Ty.int, M.Atom one)],
+            "global g47 is read at the top level before its definition");
+      midP ("a global read in its own definition", [valR (46, Ty.int, M.Prim ("int_add", pairToInt, [M.Global (46, []), one]))],
+            "global g46 is read at the top level before its definition");
+      midP ("a function read before its definition", [valR (46, Ty.arrow (Ty.int, Ty.int), M.Atom (M.Global (43, []))),
+                                                       M.Funs [inc 43]],
+            "global g43 is read at the top level before its definition");
+      midP ("a Do that reads a global defined after it",
+            [M.Do (g48, M.Let (57, ([], Ty.int), M.Atom (M.Global (46, [])), setting 53)), valR (46, Ty.int, M.Atom one)],
+            "global g46 is read at the top level before its definition");
+      midP ("a call of a function defined after it", [valR (46, Ty.int, M.App (M.Global (43, []), [one])), M.Funs [inc 43]], "");
+      midP ("a global read after its definition", [valR (47, Ty.int, M.Atom one), valR (46, Ty.int, M.Atom (M.Global (47, [])))], "");
+      midP ("a function that reads a global defined after it",
+            [M.Funs [{name = 43, label = NONE, tyvars = [], params = [(44, Ty.int)], result = Ty.int,
+                      body = M.Return (M.Atom (M.Global (47, [])))}],
+             valR (47, Ty.int, M.Atom one)], "");
+      midP ("a local function that reads a global defined after it",
+            [M.Val (46, ([], Ty.arrow (Ty.int, Ty.int)),
+                    M.Fun ([{name = 58, label = NONE, tyvars = [], params = [(59, Ty.int)], result = Ty.int,
+                             body = M.Return (M.Atom (M.Global (47, [])))}], M.Return (M.Atom (M.Var (58, []))))),
+             valR (47, Ty.int, M.Atom one)], "")
     end
+
+  (* ---- MidText's reader (the haskell98 roadmap's M7): a type takes the
+     arguments its declaration says, an abstract type's too *)
+  fun textP (what, text, wanted) =
+    (ignore (MidText.parse text); report ("mid text: " ^ what, wanted = "", "accepted"))
+    handle MidText.Syntax m => report ("mid text: " ^ what, wanted <> "" andalso String.isSubstring wanted m, "refused: " ^ m)
+  fun textRules () =
+    (textP ("an abstract type at its arity", "(abstract box 1)\n(val g1 : int box box (return (prim unsafe_cast 1 : int -> int box box)))", "");
+     textP ("an abstract type given two arguments for one",
+            "(abstract box 1)\n(val g1 : (int, int) box (return (prim unsafe_cast 1 : int -> (int, int) box)))",
+            "the type box takes 1 argument, not 2");
+     textP ("a datatype given none for one", "(datatype pair ('a) (0 \"P\" : 'a * 'a))\n(val g1 : pair (return (con0 0 : pair)))",
+            "the type pair takes 1 argument, not 0");
+     textP ("a built-in type given an argument it does not take", "(val g1 : int int (return 1))",
+            "the type int takes 0 arguments, not 1"))
 
   (* ---- the levels (M3): a check runs from its level up; one that is
      always on says so, and how to turn it off; one at a boundary, found
@@ -603,6 +653,7 @@ struct
      renamings2 ();
      lambdaRules ();
      midRules ();
+     textRules ();
      lowRules ();
      codes ();
      bases ();

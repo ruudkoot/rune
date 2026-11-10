@@ -687,6 +687,22 @@ any where nothing fixes it. `Lambda`'s `Inst` gives the types a use is at.
   module's slots are set by the function the runtime is given, at the load
   and at each reload (`Translate`, `RuneDynamic.take`; a `dynamic_cast` of
   each slot from `unit`), which `Lift` may take out of the `Do`.
+* **Tags:** `ConTag` is of a datatype, never of a type with no
+  constructors -- an abstract one, as a value not yet evaluated has (the
+  haskell98 roadmap's D5), whose tag is a fatal on every engine.
+* **Evaluated** (the haskell98 roadmap's D5): a variable whose type is a
+  datatype holds a value of it, never one still to be evaluated, since
+  `ConTag` and `Decon` read it as it is, a step that nothing uses may go
+  (`Prims.removable`), and tier 2 trusts its representation. No lint sees
+  this: it holds by types alone, a lazy value having a type that is no
+  datatype (*What a front end gives Mid*, below), and across a cast it
+  holds only as the front end keeps it.
+* **The top level in order:** what a `Val`'s or a `Do`'s expression reads,
+  outside the functions it makes, is a global a definition before it
+  defines, or a function after it that it calls, a known call, which reads
+  no global; read before the definition that gives it its value, a global
+  is a fatal at `-O0` that a pass from `-O1` may hide, so that the levels
+  disagree.
 * **Casts** (D3): no value cast to `unit` is
   cast back to another ground type. A record's slot is cast to `unit` and
   back; where the expansion knows the slot's value, a cast left between two
@@ -718,7 +734,8 @@ program written by hand. The grammar is at the head of
   variable no type was found for).
 * A type name is written as it is, with `/N` where two would clash; a
   datatype, or a type without constructors, that is not built in is
-  declared at the head.
+  declared at the head, with the arguments it takes, and the reader refuses
+  a type given another number of them.
 * A constant of the type its kind gives it is written bare; others as
   `(0w5 : word8)`.
 * A type of more than `MidText.bigType` (1000) nodes as a tree is declared
@@ -912,7 +929,11 @@ does.
   called, then in a worker the tags, then each field by its own type --
   `imm_eq`, `ptr_eq`, `string_eq`, the function of its type, or `poly_eq`
   where the type is not known. Such a comparison is compiled code: the
-  limit of `--equality-work` on the runtime's walk does not stop it.
+  limit of `--equality-work` on the runtime's walk does not stop it. A type
+  of more than 256 nodes as a tree (`Simplify.eqBound`) has no function,
+  and its `=` is `poly_eq`: a datatype whose constructor takes it at a
+  bigger type, a non-uniform one, has a new type at each level, and
+  functions made for each would never end (`tests/lang/rt.equality_nonuniform`).
 * **`refs`** ([plans/performance.md](plans/performance.md), M8): a
   parameter of a function of the top level that is a ref the function only
   reads and sets, and gives on as it is to its own calls of itself in tail
@@ -970,7 +991,11 @@ does.
   loop of MLton's `peek` calls a function with the closures it was given,
   and takes apart what it returns). A copy for local functions grows the
   definition the call is in, within the budget of `inline`; a call that
-  finds its copy made already costs nothing.
+  finds its copy made already costs nothing. A function that calls itself
+  at other types than its own (polymorphic recursion, which Mid may have
+  and no SML source makes) has no parameter that is static, since no copy
+  of it would close, and a copy's call of the function is a call of the
+  copy only at the copy's types (`tests/ir/hs-nest-static`).
 
 ## Low
 
