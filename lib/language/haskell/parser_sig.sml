@@ -14,10 +14,12 @@
    Area: Languages *)
 signature HS_PARSER =
 sig
-  (* How much of the source a tree keeps: `Bare`, none, so that two trees
-     compare equal where they differ only in where they were read; `Spans`,
-     a span on every node; `Full`, spans and every node's own tokens with
-     their trivia, which `HsPrint.exact` needs. *)
+  (* How much of the source a tree keeps.
+
+     `Bare`, none, so that two trees compare equal where they differ only
+     in where they were read; `Spans`, a span on every node; `Full`, spans
+     and every node's own tokens with their trivia, which `HsPrint.exact`
+     needs. *)
   datatype annotations = Bare | Spans | Full
 
   (* How to read: the lexer's options, and the annotations. *)
@@ -33,16 +35,19 @@ sig
   val parse : options * string * HsToken.item vector -> HsAst.module
 
   (* `parseTraced (options, file, tokens)` is `parse`'s module, and every
-     token the parser passed, in order, with the braces and semicolons of
-     layout as layout gave them: the function `L` of section 9.3, on the
-     source.
+     token the parser passed, in order.
+
+     The braces and semicolons of layout are as layout gave them: the
+     function `L` of section 9.3, on the source.
 
      Raises: `HsSource.Error` at the first syntax error. *)
   val parseTraced : options * string * HsToken.item vector -> HsAst.module * HsToken.token list
 
   (* `parseFile (options, file, bytes)` is the module that the file
-     `file`, whose bytes are `bytes`, holds: unlit first where its name is
-     a literate file's (`HsLiterate`), then lexed and parsed.
+     `file`, whose bytes are `bytes`, holds.
+
+     It is unlit first where its name is a literate file's (`HsLiterate`),
+     then lexed and parsed.
 
      Raises: `HsSource.Error` at the first error. *)
   val parseFile : options * string * string -> HsAst.module

@@ -191,12 +191,13 @@ sig
   val qname : string * string -> qname
 
   (* `nameText q` is the name as the source writes it in a variable's
-     place, qualified: `M.x` or `+`. *)
+     place, qualified: M.x for `x` of `M`, or `+`. *)
   val nameText : qname -> string
 
   (* `isSymbolic q` is whether the name of `q` is an operator's rather
-     than an identifier's: its first character is a symbol or `:`. The
-     special constructors but `:` are not. *)
+     than an identifier's: its first character is a symbol or `:`.
+
+     The special constructors but `:` are not. *)
   val isSymbolic : qname -> bool
 
   (* `isSpecial q` is whether `q` is one of the special constructors that
