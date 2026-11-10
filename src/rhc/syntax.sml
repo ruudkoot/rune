@@ -68,7 +68,7 @@ struct
      its groups and, in a file, of the source. *)
   fun program (mode, files) =
     let
-      val g = RhcGraph.load {roots = files, dotted = !dotted, types = mode <> DumpNames}
+      val g = RhcGraph.load {roots = files, dotted = !dotted}
       val r = RhcNames.run (g, !fixpoint,
                             if mode = DumpNames then NONE
                             else SOME (case !cycleDefault of PerModule => HsInfer.PerModule | PerGroup => HsInfer.PerGroup))

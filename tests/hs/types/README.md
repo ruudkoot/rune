@@ -11,7 +11,7 @@ the program, a value it defines and the value's type, and `LIBRARY-ERROR`, an er
 
 | Fixture | What it holds |
 |---|---|
-| `report` | The Report's 20 modules: the Prelude's 11-module unit checks as one unit, `floatToDigits` with no annotation where its type depends on defaulting (E16), and the only errors are the 10 uses of 8 names that do not resolve as printed, until M17's overlay |
+| `report` | The Report's 20 modules, with rhc's overlay (M17): the Prelude's unit checks as one unit, `floatToDigits` with no annotation where its type depends on defaulting (E16), with no error |
 | `cycle` | Two modules in a cycle: unsigned bindings mutually recursive across them, one binding group; a type group across them; an operator's fixity and a class's instance across the cycle |
 | `tiebreak` | D30's tie-break case: a type variable whose predicates arose in two modules whose `default`s differ, refused under either setting |
 | `rule2` | Rule 2 in a cycle: a restricted variable of one module fixed by another's use, refused under `module`, an `Int` under `scc` |
