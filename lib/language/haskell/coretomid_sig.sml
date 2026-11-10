@@ -30,8 +30,20 @@ sig
 
      They are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a
      suspension used where its value is wanted, unforced; `ForceBehindCast`,
-     a force made a cast from the suspension to its value. *)
-  datatype fault = ThunkInSlot | ForceBehindCast
+     a force made a cast from the suspension to its value; `SuspTypeArg`, a
+     use's first type argument a slot's type, a suspension's. *)
+  datatype fault = ThunkInSlot | ForceBehindCast | SuspTypeArg
+
+  (* Whether Core to Mid holds what it writes to its own rules, which rhc
+     sets at lint level 2 (M10b).
+
+     A use's type argument is a value's type, never one with `susp` at its
+     head (D4); the rule is Core to Mid's and not MidLint's, since SML uses
+     its polymorphic functions at `T susp`. *)
+  val checking : bool ref
+
+  (* A breach of Core to Mid's rules, where `checking` holds: what it is. *)
+  exception Breach of string
 
   (* A construct Core has and Core to Mid does not lower: what it is, and
      where. *)

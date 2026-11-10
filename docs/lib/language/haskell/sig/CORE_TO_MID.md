@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 6 of 6 entries documented |
+| Documentation | 8 of 8 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid\_sig.sml](../../../../../lib/language/haskell/coretomid_sig.sml) |
 
@@ -51,7 +51,9 @@ parameters is a box, as one that reaches itself is.
 <pre>
 signature CORE_TO_MID =
 sig
-  datatype <a href="#type-fault">fault</a> = <a href="#con-thunkinslot">ThunkInSlot</a> | <a href="#con-forcebehindcast">ForceBehindCast</a>
+  datatype <a href="#type-fault">fault</a> = <a href="#con-thunkinslot">ThunkInSlot</a> | <a href="#con-forcebehindcast">ForceBehindCast</a> | <a href="#con-susptypearg">SuspTypeArg</a>
+  val <a href="#val-checking">checking</a> : bool ref
+  exception <a href="#exn-breach">Breach</a> of string
   exception <a href="#exn-unsupported">Unsupported</a> of string
   val <a href="#val-program">program</a> : {<a href="#fld-program.fault">fault</a> : fault option} * Core.program -&gt; string
   datatype <a href="#type-abi">abi</a> = <a href="#con-function">Function</a> | <a href="#con-suspension">Suspension</a> | <a href="#con-literal">Literal</a>
@@ -65,19 +67,42 @@ end
 ### <a name="type-fault"></a>`fault`
 
 ```sml
-datatype fault = ThunkInSlot | ForceBehindCast
+datatype fault = ThunkInSlot | ForceBehindCast | SuspTypeArg
 ```
 
 A fault made on purpose, for the tests of what catches it.
 
 They are the roadmap's rhc's mutants of Core to Mid: [`ThunkInSlot`](#con-thunkinslot), a
 suspension used where its value is wanted, unforced; [`ForceBehindCast`](#con-forcebehindcast),
-a force made a cast from the suspension to its value.
+a force made a cast from the suspension to its value; [`SuspTypeArg`](#con-susptypearg), a
+use's first type argument a slot's type, a suspension's.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
 | <a name="con-thunkinslot"></a>`ThunkInSlot` |  |  |
 | <a name="con-forcebehindcast"></a>`ForceBehindCast` |  |  |
+| <a name="con-susptypearg"></a>`SuspTypeArg` |  |  |
+
+### <a name="val-checking"></a>`checking`
+
+```sml
+val checking : bool ref
+```
+
+Whether Core to Mid holds what it writes to its own rules, which rhc
+sets at lint level 2 (M10b).
+
+A use's type argument is a value's type, never one with `susp` at its
+head (D4); the rule is Core to Mid's and not MidLint's, since SML uses
+its polymorphic functions at `T susp`.
+
+### <a name="exn-breach"></a>`Breach`
+
+```sml
+exception Breach of string
+```
+
+A breach of Core to Mid's rules, where [`checking`](#val-checking) holds: what it is.
 
 ### <a name="exn-unsupported"></a>`Unsupported`
 

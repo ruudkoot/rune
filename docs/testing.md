@@ -957,8 +957,10 @@ FLAGS`, the same for a dump of a stage; `; fail: MESSAGE`, refused with
 MESSAGE on standard error; `; refuse: FLAGS | MESSAGE`, refused with MESSAGE
 when compiled through Mid with FLAGS, which make a fault of Core to Mid on
 purpose (`--fault`, the roadmap's *rhc's mutants*): a suspension in a typed
-slot, which MidLint refuses at the boundary into Mid, and a force made a
-cast, which form C's lint refuses as a force forgotten (`fault-*.core`);
+slot, which MidLint refuses at the boundary into Mid, a force made a
+cast, which form C's lint refuses as a force forgotten, and a use given a
+type argument of a suspension's type, which Core to Mid's own check refuses
+at lint level 2 (`fault-*.core`);
 `; forces: N FLAGS`, compiled with the dump of Core to Mid, which holds N
 `thunk_force` nodes, one for each force of Core, which the file counts by
 hand (`forces.core`). `--accept` writes the `.expected` files, to be read
