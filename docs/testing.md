@@ -1023,7 +1023,15 @@ test of `hs/core` a VM runs as units (`rhc --units`): rhc's runtime, the
 files its flags read and the test, each compiled apart to a unit file
 against the units before it, taking what it names of them as their
 interface gives it, and linked; what it prints is its `.expected`, and it
-ends as its `.exitcode` says. Core in
+ends as its `.exitcode` says. `hs/units/warm` keeps a program of units in a
+store (`rhc --units --store DIR --show-units`) and edits copies of
+`tests/hs/units/warm`'s files: each step says which units it compiles and
+which it takes from the store, links what a compile without the store
+links, byte for byte past the header, and prints what it should. Nothing
+edited takes every unit; a body's edit compiles its unit alone; a type's
+edit compiles its users too; a unit put before another that declares a name
+the other takes compiles that other, which takes it from there; and without
+it again the other's first entry is taken. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
