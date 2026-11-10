@@ -69,5 +69,17 @@ kept beside them as `BASE-LICENSE`; the rest of it is this project's.
 
 | File | What it is |
 |---|---|
-| `trees.tsv` | each set's tree: its upstream, the commit E7 and E8 read, and its licence file |
+| `trees.tsv` | each set's tree: its upstream, the commit E7 and E8 read, and its licence file; a job refuses a tree at another commit |
 | `licences.tsv` | the survey above, a row a candidate |
+| `candidates.tsv` | E8's 3,089 candidates: each one's main, the parent whose sources it includes, and what its suite expects of it |
+| `accept.tsv`, `reject.tsv` | E8's judgements: each oracle's verdict in Haskell 98 mode, best over the variants, and GHC's `open`, Hugs's and GHC's `ext` where E8 asked them; what a candidate needs, and each oracle's first complaint |
+| `run.tsv` | E8's run set: the 283 programs with an expected output, their inputs and the variant they run in, each oracle's build, exit status and output, and the CPU time and instructions under `ghc -O0` that D56 rests on |
+| `conformance.tsv` | E7's 82 tests: what each suite expects, each oracle's verdict and first complaint, and E7's class of each disagreement |
+| `compat/` | E8's compat layer for the 2019 nofib: `NofibCompat.hs`, the names its harness takes from outside the Report; `NofibUtils.hs`, its `hash` over `Integer` and printing the 64-bit result (D22); and edits, by the path of the file they edit, of `spectral/hartel/Fast2haskell.hs` (the Report's modules, and bit operations by arithmetic) and of `spectral/sphere`'s own `hash` (over `Integer`, as D22 says) |
+
+The data is E7's and E8's (the drafts' `results/E7/`, `results/E8/`), with each path made relative to the corpus's
+directory and nothing else changed. The variants a candidate is judged in, and the compat layer's rewrite of its
+imports, are those of E8, ported to SML in `tests/runner/hssource.sml` and `hscorpus.sml`; on the 6,071 sources of
+the trees they give E8's results character for character. Fast2haskell's bit operations assume a 64-bit `Int` that
+wraps, as nofib's did, which rhc's `Int` (63 bits, overflow an error, D22) does not give: they stand as E8 wrote them,
+for the oracles, until rhc compiles them.
