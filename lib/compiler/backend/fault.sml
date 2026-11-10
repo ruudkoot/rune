@@ -222,6 +222,7 @@ struct
               | M.Raise a => M.Raise (atom a)
               | M.Return r => M.Return (rhs r)
               | M.Mark (pos, a) => M.Mark (pos, exp a)
+              | M.Case (a, arms, d) => let val a = atom a val (arms, d) = M.mapCase exp (arms, d) in M.Case (a, arms, d) end
             and fundef (f : M.fundef) =
               let
                 val tyvars = if kind = "poly" andalso not (null (#tyvars f))
@@ -250,6 +251,7 @@ struct
               | M.Jump _ => e
               | M.Raise _ => e
               | M.Return _ => e
+              | M.Case (a, arms, d) => let val (arms, d) = M.mapCase unset (arms, d) in M.Case (a, arms, d) end
             fun def d =
               case d of
                 M.Val (g, s, e) => M.Val (g, s, exp e)

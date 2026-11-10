@@ -145,6 +145,11 @@ struct
         (P.byte (#w c, 8);
          (case pos' of (x_9, x_10) => (span (c, x_9); P.list (fn (_, x_11) => frame (c, x_11)) (#w c, x_10)));
          exp (c, b'))
+    | Mid.Case (a', arms', d') =>
+        (P.byte (#w c, 9);
+         atom (c, a');
+         P.list (fn (_, x_12) => (case x_12 of (x_13, x_14) => (P.nat (#w c, x_13); exp (c, x_14)))) (#w c, arms');
+         P.option (fn (_, x_15) => exp (c, x_15)) (#w c, d'))
 
   and fundef (c : wctx, v : Mid.fundef) : unit =
     case v of
@@ -280,6 +285,12 @@ struct
           val pos' = let val x_5 = rspan c val x_6 = P.rlist (fn _ => rframe c) (#r c) in (x_5, x_6) end
           val b' = rexp c
         in Mid.Mark (pos', b') end
+    | 9 =>
+        let
+          val a' = ratom c
+          val arms' = P.rlist (fn _ => let val x_7 = P.rnat (#r c) val x_8 = rexp c in (x_7, x_8) end) (#r c)
+          val d' = P.roption (fn _ => rexp c) (#r c)
+        in Mid.Case (a', arms', d') end
     | _ => raise Bad "not an expression"
 
   and rfundef (c : rctx) : Mid.fundef =
@@ -333,6 +344,9 @@ struct
     | Mid.Raise _ => ()
     | Mid.Return _ => ()
     | Mid.Mark (_, b') => bindsExp (t, b')
+    | Mid.Case (_, arms', d') =>
+        (List.app (fn x_4 => (case x_4 of (_, x_5) => bindsExp (t, x_5))) arms';
+         Option.app (fn x_6 => bindsExp (t, x_6)) d')
 
   and bindsFundef (t : unit IntTable.table, v : Mid.fundef) : unit =
     case v of

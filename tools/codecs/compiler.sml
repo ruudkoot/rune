@@ -232,7 +232,10 @@ struct
           args ("Mid.Handle", [field ("b", Type "exp"), field ("x", Leaf "binder"), field ("h", Type "exp")]),
           args ("Mid.Raise", [field ("a", Type "atom")]),
           args ("Mid.Return", [field ("r", Type "rhs")]),
-          args ("Mid.Mark", [field ("pos", Tuple [Type "span", List (Type "frame")]), field ("b", Type "exp")])])
+          args ("Mid.Mark", [field ("pos", Tuple [Type "span", List (Type "frame")]), field ("b", Type "exp")]),
+          (* a test of a tag (D8 of the haskell98 roadmap) *)
+          args ("Mid.Case", [field ("a", Type "atom"), field ("arms", List (Tuple [Leaf "nat", Type "exp"])),
+                             field ("d", Option (Type "exp"))])])
 
   (* label: the name a person knows the function by (Mid.fundef) *)
   val fundef =

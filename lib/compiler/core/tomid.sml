@@ -114,6 +114,15 @@ struct
   fun mark (sp, e as M.Mark _) = e
     | mark (sp, e) = M.Mark ((sp, []), e)
 
+  (* A test MatchComp makes of a variable's tag (testTag, ifTag): the
+     variable and the tag, where the tag fits a host's 31 bits *)
+  fun tagTest (c : L.lexp) : (int * int) option =
+    case c of
+      L.Prim ("poly_eq", _, [L.ConTag (L.Var v), L.Const (Literal.CInt i, _)]) =>
+        if IntInf.>= (i, IntInf.fromInt ~1073741824) andalso IntInf.<= (i, IntInf.fromInt 1073741823) then SOME (v, IntInf.toInt i)
+        else NONE
+    | _ => NONE
+
   fun program (e : L.lexp) : M.program =
     let
       (* the scheme a local variable is bound with, of the value's type: a
@@ -229,7 +238,31 @@ struct
                             | _ => bug ("a deconstruction of what has type " ^ Ty.toString t))
         | L.ConTag a => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.ConTag aa, Ty.int)))
         | L.If (c, t, f) =>
-            atom (c, st, fn (ca, _) => branch (ctx, fn ctx => M.If (ca, exp (t, st, ctx), exp (f, st, ctx))))
+            (case tagTest c of
+               SOME (v, _) =>
+                 (* a test of v's tag, and the tests of it in the else after
+                    it: a Case, an arm a tag, and a tag tested again left
+                    out, since the else of its first test is where v has
+                    another (D8) *)
+                 let
+                   fun tests (e, arms) =
+                     case e of
+                       L.If (c', yes, no) =>
+                         (case tagTest c' of
+                            SOME (v', tag) =>
+                              if v' <> v then (List.rev arms, e)
+                              else tests (no, if List.exists (fn (k, _) => k = tag) arms then arms else (tag, yes) :: arms)
+                          | NONE => (List.rev arms, e))
+                     | _ => (List.rev arms, e)
+                   val (arms, rest) = tests (e, [])
+                 in
+                   atom (L.Var v, st, fn (va, _) =>
+                     branch (ctx, fn ctx =>
+                       let
+                         val arms = List.map (fn (tag, e) => (tag, exp (e, st, ctx))) arms
+                       in M.Case (va, arms, SOME (exp (rest, st, ctx))) end))
+                 end
+             | NONE => atom (c, st, fn (ca, _) => branch (ctx, fn ctx => M.If (ca, exp (t, st, ctx), exp (f, st, ctx)))))
         | L.Join (j, ps, b, sc) =>
             branch (ctx, fn ctx =>
                            M.Join (j, ps, exp (b, List.foldl (fn ((x, t), st) => bindLocal (st, x, ([], t))) st ps, ctx),

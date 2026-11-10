@@ -8,6 +8,11 @@
    * what is known is used: the tag of a constructor made in the same
      function, a field of a tuple or constructor made there, an If on a
      known bool;
+   * a Case of a value whose tag is known is its arm -- a nullary
+     constructor, one made in the function, a variable in an arm of a Case
+     of it; in a Case's default, the arms of its tags go from a Case of the
+     same variable, and a default that is such a Case is the rest of the
+     outer one's arms (Mid.Case);
    * a primitive of int, word or char on constants is folded, at the
      target's precision (Target.t's intBits), unless it would raise, which
      is left to run -- a division by 0, an overflow;
@@ -68,6 +73,7 @@ struct
         | Raise a => atom a
         | Return r => rhs r
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => (atom a; List.app exp (caseExps (arms, d)))
     in
       exp e
     end
@@ -191,6 +197,20 @@ struct
            | _ => eqs ())
       | _ => NONE
     end
+
+  (* What a round knows of a variable's tag where it walks a Case of it:
+     in an arm, the arm's tag; in the default, none of the arms' tags, nor
+     those it knew none of around it. A variable is a stamp, bound once, so
+     a fact holds wherever it is set, and is taken away after (knowing). *)
+  datatype tagFact = TagIs of int | TagNot of int list
+  val tagFacts : tagFact IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Simplify.tagFacts", tagFacts)
+  fun knowing (key : var option, fact : tagFact) (f : unit -> 'a) : 'a =
+    case key of
+      NONE => f ()
+    | SOME x =>
+        let val saved = !tagFacts
+        in tagFacts := IntMap.insert (saved, x, fact); (f () before tagFacts := saved) handle e => (tagFacts := saved; raise e) end
 
   (* ---- the rewriting ---- *)
 
@@ -360,16 +380,18 @@ struct
                argument; the last needs no test where every constructor has
                one, and a nullary one, the same in both, would have been
                the same immediate *)
-            fun dispatch [] = Return (Atom (boolAtom false))
-              | dispatch [c] = if List.length withArg = List.length cons then arm c else test c (dispatch [])
-              | dispatch (c :: rest) = test c (dispatch rest)
-            and test (c as (tag, _)) no =
-              let val k = freshStamp () val e = freshStamp ()
-              in
-                Let (k, ([], Ty.int), ConTag (Var (x, [])),
-                     Let (e, ([], Ty.bool), Prim ("imm_eq", eqTy Ty.int, [Var (k, []), Const (Literal.CInt (IntInf.fromInt tag), Ty.int)]),
-                          If (Var (e, []), arm c, no)))
-              end
+            (* x's tag tested (Case): each constructor's arm, and false where
+               it is none of theirs -- or, where every constructor has an
+               argument, the last one's, which needs no test; the arms made
+               from the last, as the tests that stood for them were *)
+            fun dispatch cs =
+              let
+                val (tested, d) =
+                  if List.length withArg = List.length cons andalso not (null cs)
+                  then let val last = List.last cs in (List.take (cs, List.length cs - 1), arm last) end
+                  else (cs, Return (Atom (boolAtom false)))
+                val arms = List.foldr (fn (c as (tag, _), arms) => (tag, arm c) :: arms) [] tested
+              in if null arms then d else Case (Var (x, []), arms, SOME d) end
             val same = freshStamp ()
             val tx = freshStamp ()
             val ty = freshStamp ()
@@ -510,6 +532,7 @@ struct
         | Raise a => Raise (f a)
         | Return r => Return (rhs r)
         | Mark (sp, a) => Mark (sp, exp a)
+        | Case (a, arms, d) => let val a = f a val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
     in exp e end
 
   (* e with f applied to every step, in the functions made in it too. *)
@@ -529,6 +552,7 @@ struct
         | Raise _ => e
         | Return r => Return (f r)
         | Mark (sp, a) => Mark (sp, go a)
+        | Case (a, arms, d) => let val (arms, d) = mapCase go (arms, d) in Case (a, arms, d) end
     in go e end
 
   (* The body of a function called once where it is made, in place of the
@@ -568,6 +592,7 @@ struct
           | Raise _ => ()
           | Return _ => ()
           | Mark (_, a) => go a
+          | Case (_, arms, d) => List.app go (caseExps (arms, d))
       in if Pass.linting' 1 then go e else (); substTypes s e end
 
   (* e with the variable x, which abstracts over no type, replaced by b. *)
@@ -629,6 +654,7 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (p, a) => Mark (p, exp a)
+        | Case (a, arms, d) => let val a = atom a val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
     in exp e end
 
   (* e's positions with a frame more, outermost -- the function e's code
@@ -647,6 +673,7 @@ struct
         | Raise _ => e
         | Return _ => e
         | Mark ((sp, frames), a) => Mark ((sp, frames @ frame :: outer), go a)
+        | Case (a, arms, d) => let val (arms, d) = mapCase go (arms, d) in Case (a, arms, d) end
     in go e end
 
   (* The calls in tail position of e, outside its handlers' regions, at the
@@ -667,6 +694,7 @@ struct
         | Return (r as App _) => Mark (p, Return r)
         | Return _ => e
         | Mark (sp, a) => Mark (sp, go a)
+        | Case (a, arms, d) => let val (arms, d) = mapCase go (arms, d) in Case (a, arms, d) end
     in go e end
 
   (* The code of the function called name, put where it was called, at p: a
@@ -678,8 +706,10 @@ struct
     if tail andalso not region then inlinedFrom ({name = name, site = NONE}, outer) e
     else markTailCalls p (inlinedFrom ({name = name, site = SOME sp}, outer) e)
 
-  (* The nodes of an expression, for the inliner's sizes and budget. *)
-  val size = sizeOfExp
+  (* The nodes of an expression, for the inliner's sizes and budget: what
+     it weighs (Mid.weightOfExp), a Case as the tests it stands for. *)
+  val size = weightOfExp
+  fun caseWeight (arms : (int * exp) list) : int = 3 * List.length arms
 
   (* Whether e has no more than n nodes, found without counting them all. *)
   fun sizeAtMost (e : exp, n : int) : bool =
@@ -695,6 +725,7 @@ struct
           | If (_, t, f) => go (f, go (t, k + 1))
           | Handle (a, _, h) => go (h, go (a, k + 1))
           | Mark (_, a) => go (a, k)
+          | Case (_, arms, d) => List.foldl go (k + caseWeight arms) (caseExps (arms, d))
           | Jump _ => k + 1
           | Raise _ => k + 1
           | Return _ => k + 1
@@ -735,6 +766,7 @@ struct
     | Handle (a, _, h) => raises a andalso raises h
     | Raise _ => true
     | Mark (_, a) => raises a
+    | Case (_, arms, d) => List.all raises (caseExps (arms, d))
     | Jump _ => false
     | Return _ => false
 
@@ -796,6 +828,7 @@ struct
             | Handle (a, x, h) => Handle (go a, x, go h)
             | Return r => k r
             | Mark (sp, a) => Mark (sp, go a)
+            | Case (a, arms, d) => let val (arms, d) = mapCase go (arms, d) in Case (a, arms, d) end
             | Jump _ => e
             | Raise _ => e
         in go body end
@@ -912,6 +945,7 @@ struct
                 | Raise _ => ()
                 | Return _ => ()
                 | Mark (_, a) => exp a
+                | Case (_, arms, d) => List.app exp (caseExps (arms, d))
             in
               List.app (fn (y, u) => bind (y, ([], u))) (!roundParams); exp (!roundInput); roundTypes := SOME t; t
             end
@@ -950,6 +984,7 @@ struct
         | Raise a => atom a
         | Return r => rhs r
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => (atom a; List.app exp (caseExps (arms, d)))
     in
       List.app (fn (x, _) => bind x) (#params f); exp (#body f);
       IntMap.listKeys (!free)
@@ -995,6 +1030,7 @@ struct
         | Raise a => no a
         | Return r => rhs r
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => no a andalso List.all exp (caseExps (arms, d))
     in exp e end
 
   (* Whether every use of x in e takes a field of it. *)
@@ -1016,6 +1052,7 @@ struct
         | Raise a => no a
         | Return r => rhs r
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => no a andalso List.all exp (caseExps (arms, d))
     in exp e end
 
   (* The local function f made a function of the top level (once): what it
@@ -1115,6 +1152,7 @@ struct
         | Handle (a, x, h) => Handle (exp a, x, exp h)
         | Return r => call (r, Return)
         | Mark (sp, a) => Mark (sp, exp a)
+        | Case (a, arms, d) => let val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
         | Jump _ => e
         | Raise _ => e
       (* a local function given that the copy gives on, to a function
@@ -1309,6 +1347,7 @@ struct
                                | If (a, t, f) => If (a, redirect t, redirect f)
                                | Handle (a, y, h) => Handle (redirect a, y, redirect h)
                                | Mark (sp, a) => Mark (sp, redirect a)
+                               | Case (a, arms, d) => let val (arms, d) = mapCase redirect (arms, d) in Case (a, arms, d) end
                                | Jump _ => e
                                | Raise _ => e
                                | Return _ => e
@@ -1321,6 +1360,60 @@ struct
            Con0 (1, _) => if spend () then simp (c, env, t) else If (Con0 (1, Ty.bool), simp (c, env, t), simp (c, env, f))
          | Con0 (0, _) => if spend () then simp (c, env, f) else If (Con0 (0, Ty.bool), simp (c, env, t), simp (c, env, f))
          | a => If (a, simp (c, env, t), simp (c, env, f)))
+    (* a value whose tag is known -- a nullary constructor, one made in the
+       function, or a variable in an arm of a Case of it -- goes to its arm,
+       or to the default; an arm of a tag the variable has not -- in the
+       default of a Case of it with an arm of that tag -- goes, and a Case
+       left with no arm is its default *)
+    | Case (a, arms, d) =>
+        let
+          val a = substAtom (env, a)
+          val key = case a of Var (x, []) => SOME x | _ => NONE
+          val fact = case key of SOME x => IntMap.find (!tagFacts, x) | NONE => NONE
+          val tag =
+            case a of
+              Con0 (tag, _) => SOME tag
+            | Var (x, []) =>
+                (case (IntTable.find (#known env, x), fact) of
+                   (SOME (Made (Con (tag, _, _))), _) => SOME tag
+                 | (_, SOME (TagIs tag)) => SOME tag
+                 | _ => NONE)
+            | _ => NONE
+          val not' = case fact of SOME (TagNot ts) => ts | _ => []
+          val taken =
+            case tag of
+              SOME t => (case List.find (fn (t', _) => t' = t) arms of SOME (_, e) => SOME e | NONE => d)
+            | NONE => NONE
+          (* a default that is a Case of the same variable is the rest of
+             this one's arms (as Lower made one SWITCH of the tests of a
+             value each in the else of the one before): its arms of tags
+             this one has go, as the else of their first test is where the
+             value has another *)
+          fun peel (Mark (_, e)) = peel e
+            | peel e = e
+          fun kept (arms, d) =
+            let
+              val arms = List.map (fn (t, e) => (t, knowing (key, TagIs t) (fn () => simp (c, env, e)))) arms
+              val d = Option.map (fn e => knowing (key, TagNot (not' @ List.map #1 arms)) (fn () => simp (c, env, e))) d
+            in
+              case (key, Option.map peel d) of
+                (SOME x, SOME (Case (Var (y, []), more, d'))) =>
+                  if x = y andalso spend () then
+                    Case (a, arms @ List.filter (fn (t, _) => not (List.exists (fn (u, _) => u = t) arms)) more, d')
+                  else Case (a, arms, d)
+              | _ => Case (a, arms, d)
+            end
+          val live = List.filter (fn (t, _) => not (List.exists (fn u => u = t) not')) arms
+        in
+          case taken of
+            SOME e => if spend () then simp (c, env, e) else kept (arms, d)
+          | NONE =>
+              if List.length live = List.length arms orelse not (spend ()) then kept (arms, d)
+              else
+                case (live, d) of
+                  ([], SOME e) => simp (c, env, e)
+                | _ => kept (live, d)
+        end
     | Handle (a, x, h) =>
         if raisesHere a andalso spend () then
           let
@@ -1459,6 +1552,7 @@ struct
     | Handle (a, _, h) => calledHere (f, a) orelse calledHere (f, h)
     | Return (App (Var (g, _), [_])) => g = f
     | Mark (_, a) => calledHere (f, a)
+    | Case (_, arms, d) => List.exists (fn e => calledHere (f, e)) (caseExps (arms, d))
     | Jump _ => false
     | Raise _ => false
     | Return _ => false
@@ -1485,6 +1579,7 @@ struct
         | Handle (a, x, h) => Handle (returnsTo (a, k), x, returnsTo (h, k))
         | Return r => k r
         | Mark (sp, a) => Mark (sp, returnsTo (a, k))
+        | Case (a, arms, d) => let val (arms, d) = mapCase (fn e => returnsTo (e, k)) (arms, d) in Case (a, arms, d) end
         | Jump _ => e
         | Raise _ => e
       (* the call of f in e, at the position p, in a handler's region or
@@ -1525,6 +1620,17 @@ struct
                SOME a' => SOME (Handle (a', x, h))
              | NONE => Option.map (fn h' => Handle (a, x, h')) (place (h, p, region)))
         | Mark (sp, a) => Option.map (fn a' => Mark (sp, a')) (place (a, sp, region))
+        | Case (a, arms, d) =>
+            let
+              fun inArms ([], seen) =
+                    (case d of
+                       SOME e => Option.map (fn e' => Case (a, List.rev seen, SOME e')) (place (e, p, region))
+                     | NONE => NONE)
+                | inArms ((t, e) :: rest, seen) =
+                    (case place (e, p, region) of
+                       SOME e' => SOME (Case (a, List.revAppend (seen, (t, e') :: rest), d))
+                     | NONE => inArms (rest, (t, e) :: seen))
+            in inArms (arms, []) end
         | Jump _ => NONE
         | Raise _ => NONE
         | Return _ => NONE
@@ -1553,6 +1659,7 @@ struct
               | If (a, t, f) => If (a, redirect t, redirect f)
               | Handle (a, y, h) => Handle (redirect a, y, redirect h)
               | Mark (sp, a) => Mark (sp, redirect a)
+              | Case (a, arms, d) => let val (arms, d) = mapCase redirect (arms, d) in Case (a, arms, d) end
               | Jump _ => e
               | Raise _ => e
               | Return _ => e
@@ -1586,6 +1693,7 @@ struct
               | If (a, t, f) => If (a, redirect t, redirect f)
               | Handle (a, y, h) => Handle (a, y, redirect h)
               | Mark (sp, a) => Mark (sp, redirect a)
+              | Case (a, arms, d) => let val (arms, d) = mapCase redirect (arms, d) in Case (a, arms, d) end
               | Jump _ => e
               | Raise _ => e
               | Return _ => e
@@ -1614,6 +1722,7 @@ struct
         | If (_, t, f) => (collect t; collect f)
         | Handle (a, _, h) => (collect a; collect h)
         | Mark (_, a) => collect a
+        | Case (_, arms, d) => List.app collect (caseExps (arms, d))
         | Jump _ => ()
         | Raise _ => ()
         | Return _ => ()
@@ -1629,6 +1738,7 @@ struct
         | If (_, t, f) => argsAt (k, t) @ argsAt (k, f)
         | Handle (a, _, h) => argsAt (k, a) @ argsAt (k, h)
         | Mark (_, a) => argsAt (k, a)
+        | Case (_, arms, d) => List.concat (List.map (fn e => argsAt (k, e)) (caseExps (arms, d)))
         | Raise _ => []
         | Return _ => []
       (* the walks only where some parameter is a tuple *)
@@ -1695,6 +1805,7 @@ struct
             | If (a, t, f) => If (a, redirect t, redirect f)
             | Handle (a, y, h) => Handle (redirect a, y, redirect h)
             | Mark (sp, a) => Mark (sp, redirect a)
+            | Case (a, arms, d) => let val (arms, d) = mapCase redirect (arms, d) in Case (a, arms, d) end
             | Raise _ => e
             | Return _ => e
           val scope' = redirect scope
@@ -1723,6 +1834,7 @@ struct
         | Raise a => atom a
         | Return r => rhs r
         | Mark (_, a) => go a
+        | Case (a, arms, d) => atom a andalso List.all go (caseExps (arms, d))
     in go e end
 
   (* Whether a jump in e, not in a handler's region, gives j a nullary
@@ -1736,6 +1848,7 @@ struct
     | If (_, t, f) => constantOutside (j, t) orelse constantOutside (j, f)
     | Handle (_, _, h) => constantOutside (j, h)
     | Mark (_, a) => constantOutside (j, a)
+    | Case (_, arms, d) => List.exists (fn e => constantOutside (j, e)) (caseExps (arms, d))
     | Jump _ => false
     | Raise _ => false
     | Return _ => false
@@ -1750,6 +1863,7 @@ struct
     | If (_, t, f) => jumpsWith (j, t) orelse jumpsWith (j, f)
     | Handle (a, _, h) => jumpsWith (j, a) orelse jumpsWith (j, h)
     | Mark (_, a) => jumpsWith (j, a)
+    | Case (_, arms, d) => List.exists (fn e => jumpsWith (j, e)) (caseExps (arms, d))
     | Jump _ => false
     | Raise _ => false
     | Return _ => false
@@ -1766,6 +1880,7 @@ struct
     | If (_, t, f) => raisesHere t orelse raisesHere f
     | Handle (_, _, h) => raisesHere h
     | Mark (_, a) => raisesHere a
+    | Case (_, arms, d) => List.exists raisesHere (caseExps (arms, d))
     | Jump _ => false
     | Return _ => false
 
@@ -1779,6 +1894,7 @@ struct
     | If (a, t, f) => If (a, raisesTo jh t, raisesTo jh f)
     | Handle (a, x, h) => Handle (a, x, raisesTo jh h)
     | Mark (sp, a) => Mark (sp, raisesTo jh a)
+    | Case (a, arms, d) => let val (arms, d) = mapCase (raisesTo jh) (arms, d) in Case (a, arms, d) end
     | Jump _ => e
     | Return _ => e
 
@@ -1805,6 +1921,15 @@ struct
              | NONE => Option.map (fn f' => If (a, t, f')) (go f))
         | Handle (a, x, h) => Option.map (fn h' => Handle (a, x, h')) (go h)
         | Mark (sp, a) => Option.map (fn a' => Mark (sp, a')) (go a)
+        | Case (a, arms, d) =>
+            let
+              fun inArms ([], seen) =
+                    (case d of SOME e => Option.map (fn e' => Case (a, List.rev seen, SOME e')) (go e) | NONE => NONE)
+                | inArms ((t, e) :: rest, seen) =
+                    (case go e of
+                       SOME e' => SOME (Case (a, List.revAppend (seen, (t, e') :: rest), d))
+                     | NONE => inArms (rest, (t, e) :: seen))
+            in inArms (arms, []) end
         | Raise _ => NONE
         | Return _ => NONE
     in go scope end
@@ -1841,6 +1966,7 @@ struct
         | Raise a => atom a
         | Return r => rhs r
         | Mark (_, a) => go a
+        | Case (a, arms, d) => atom a orelse List.exists go (caseExps (arms, d))
     in go e end
 
   (* How many times each global is named in p, and how many of those are
@@ -1868,6 +1994,7 @@ struct
         | Raise a => atom a
         | Return r => rhs r
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => (atom a; List.app exp (caseExps (arms, d)))
     in
       List.app (fn Val (_, _, e) => exp e | Funs fs => List.app (fn f => exp (#body f)) fs | Do (_, e) => exp e) p;
       t

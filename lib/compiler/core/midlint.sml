@@ -428,6 +428,30 @@ struct
         | Raise a => expect (the "what is raised", atom a, Ty.exn)
         | Return r => expect (the "a result", rhs r, want)
         | Mark (_, a) => exp (labels, a, want)
+        (* a test of the tag of a datatype's value: each arm a constructor of
+           it, once, and a default unless the arms are every constructor *)
+        | Case (a, arms, d) =>
+            let
+              val t = atom a
+              val stamp =
+                case Ty.view t of
+                  Ty.Con (s, _, _) => if isSome (Ty.datatypeOf s) then s else bug ("a case of what has type " ^ Ty.toString t)
+                | _ => bug ("a case of what has type " ^ Ty.toString t)
+              val tags = case Ty.datatypeOf stamp of SOME {cons, ...} => List.map #1 cons | NONE => []
+              fun arm (tag, e) =
+                (if List.exists (fn u => u = tag) tags then ()
+                 else bug ("a case of " ^ Ty.toString t ^ " has an arm of tag " ^ Int.toString tag ^ ", which it has not");
+                 if List.length (List.filter (fn (u, _) => u = tag) arms) > 1
+                 then bug ("a case of " ^ Ty.toString t ^ " has two arms of tag " ^ Int.toString tag) else ();
+                 exp (labels, e, want))
+            in
+              List.app arm arms;
+              case d of
+                SOME e => exp (labels, e, want)
+              | NONE =>
+                  if List.all (fn u => List.exists (fn (v, _) => v = u) arms) tags then ()
+                  else bug ("a case of " ^ Ty.toString t ^ " with no default has no arm of every tag")
+            end
 
       and fundef (f as {tyvars, params, result, body, ...} : fundef) =
         if null params then bug ("function v" ^ Int.toString (#name f) ^ " has no parameter")
@@ -471,6 +495,7 @@ struct
           | Raise _ => NONE
           | Return r => step (r, SOME IntMap.empty)
           | Mark (_, a) => sets (joins, a)
+          | Case (_, arms, d) => List.foldl (fn (e, k) => meet (sets (joins, e), k)) NONE (caseExps (arms, d))
         end
 
       fun valueOf e = case e of Mark (_, e) => valueOf e | Return r => SOME r | _ => NONE
@@ -560,6 +585,7 @@ struct
             | Raise a => atom a
             | Return r => rhs r
             | Mark (_, a) => exp a
+            | Case (a, arms, d) => (atom a; List.app exp (caseExps (arms, d)))
         in exp end
     in
       List.app def p;

@@ -22,45 +22,45 @@
         (let (v14 : exncon) (builtinexn 0)
         (let (v15 : exn) (mkexn v14 ())
         (raise v15)))
-      (let (v16 : int) (tag v13)
-      (let (v17 : bool) (prim poly_eq v16 1 : (int * int) -> bool)
-      (if v17
-        (let (v18 : 'c * 'c list) (decon 1 v13 : 'c list)
-        (let (v19 : 'c list) (select 1 v18)
-        (let (v20 : 'c list) v19
-        (let (v21 : int) (app g4['c] v20)
-        (return (prim int_add 1 v21 : (int * int) -> int))))))
-        (jump j2)))))
-    (let (v22 : int) (tag v13)
-    (let (v23 : bool) (prim poly_eq v22 0 : (int * int) -> bool)
-    (if v23
-      (return 0)
-      (jump j1)))))))
+      (case v13
+        (1
+          (let (v16 : 'c * 'c list) (decon 1 v13 : 'c list)
+          (let (v17 : 'c list) (select 1 v16)
+          (let (v18 : 'c list) v17
+          (let (v19 : int) (app g4['c] v18)
+          (return (prim int_add 1 v19 : (int * int) -> int)))))))
+        (else
+          (jump j2))))
+    (case v13
+      (0
+        (return 0))
+      (else
+        (jump j1))))))
 (val g5 : exncon
   (return (newexn "E")))
 (funs
-  (fn g6 ((v24 : int)) : int "safe"
-    (let (v25 : int) v24
-    (join j3 ((v26 : int))
-      (return (prim int_add 1 v26 : (int * int) -> int))
-    (handle v27
-      (let (v28 : bool) (prim poly_eq v25 0 : (int * int) -> bool)
-      (if v28
-        (let (v29 : exn) (mkexn g5 v25)
-        (raise v29))
-        (jump j3 v25)))
+  (fn g6 ((v20 : int)) : int "safe"
+    (let (v21 : int) v20
+    (join j3 ((v22 : int))
+      (return (prim int_add 1 v22 : (int * int) -> int))
+    (handle v23
+      (let (v24 : bool) (prim poly_eq v21 0 : (int * int) -> bool)
+      (if v24
+        (let (v25 : exn) (mkexn g5 v21)
+        (raise v25))
+        (jump j3 v21)))
       (join j4 ()
-        (raise v27)
-      (let (v30 : exncon) (exncon v27)
-      (let (v31 : bool) (prim ptr_eq v30 g5 : (exncon * exncon) -> bool)
-      (if v31
-        (let (v32 : int) (exnarg v27 : int)
-        (let (v33 : int) v32
-        (jump j3 v33)))
+        (raise v23)
+      (let (v26 : exncon) (exncon v23)
+      (let (v27 : bool) (prim ptr_eq v26 g5 : (exncon * exncon) -> bool)
+      (if v27
+        (let (v28 : int) (exnarg v23 : int)
+        (let (v29 : int) v28
+        (jump j3 v29)))
         (jump j4))))))))))
 (val g7 : int
-  (let (v34 : int) (app g6 0)
-  (let (v35 : int * int list) (tuple g2 (con0 0 : int list))
-  (let (v36 : int list) (con 1 v35 : int list)
-  (let (v37 : int) (app g4[int] v36)
-  (return (prim int_add v34 v37 : (int * int) -> int)))))))
+  (let (v30 : int) (app g6 0)
+  (let (v31 : int * int list) (tuple g2 (con0 0 : int list))
+  (let (v32 : int list) (con 1 v31 : int list)
+  (let (v33 : int) (app g4[int] v32)
+  (return (prim int_add v30 v33 : (int * int) -> int)))))))

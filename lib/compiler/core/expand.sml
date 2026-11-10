@@ -164,6 +164,7 @@ struct
         | If (c, t, f) => If (c, go t, go f)
         | Handle (a, x, h) => Handle (go a, x, go h)
         | Mark ((sp, frames), a) => Mark ((sp, frames @ frame :: outer), go a)
+        | Case (a, arms, d) => let val (arms, d) = mapCase go (arms, d) in Case (a, arms, d) end
         | Jump _ => e
         | Raise _ => e
         | Return _ => e
@@ -514,6 +515,7 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (pos, b) => Mark (pos, exp b)
+        | Case (a, arms, d) => let val a = atom a val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
       and fundef ({label, tyvars, params, result, body, ...} : fundef, name') : fundef =
         let val ps = List.map param params
         in {name = name', label = label, tyvars = tyvars, params = ps, result = ty result, body = exp body} end
@@ -767,6 +769,7 @@ struct
             let val r' = #1 (fold st (rwRhs st r))
             in case primCall st r' of SOME (steps, r'') => withSteps (steps, Return r'') | NONE => Return r' end
         | Mark (pos, b) => Mark (pos, exp b)
+        | Case (a, arms, d) => let val a = atom a val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
       and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
         {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
     in exp e end
@@ -786,6 +789,7 @@ struct
     | Handle (a, _, h) => returns a orelse returns h
     | Jump _ => false
     | Raise _ => false
+    | Case (_, arms, d) => List.exists returns (caseExps (arms, d))
 
   (* e with each jump to j made what k makes of its arguments *)
   fun jumpsTo (j : int, k : atom list -> exp) (e : exp) : exp =
@@ -799,6 +803,7 @@ struct
         | If (a, t, f) => If (a, go t, go f)
         | Handle (b, x, h) => Handle (go b, x, go h)
         | Mark (pos, b) => Mark (pos, go b)
+        | Case (a, arms, d) => let val (arms, d) = mapCase go (arms, d) in Case (a, arms, d) end
         | Raise _ => e
         | Return _ => e
     in go e end
@@ -821,6 +826,8 @@ struct
           | If (_, t, f) => go (f, go (t, n + 1))
           | Return _ => n + 1
           | Raise _ => n + 1
+          (* as the tests it stands for, three nodes a tag (Simplify.size) *)
+          | Case (_, arms, d) => List.foldl go (n + 3 * List.length arms) (caseExps (arms, d))
           | _ => 1000
     in go (e, 0) <= 64 end
 
@@ -932,6 +939,7 @@ struct
         | Jump _ => rest (mark, e)
         | Handle _ => rest (mark, e)
         | Raise _ => rest (mark, e)
+        | Case _ => rest (mark, e)
     in go (NONE, e) end
 
   (* ---- the program ---- *)
@@ -1010,6 +1018,7 @@ struct
             | Raise a => Raise (atom a)
             | Return r => Return (rhs r)
             | Mark (pos, b) => Mark (pos, exp b)
+            | Case (a, arms, d) => let val a = atom a val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
           and fundef ({name = f, label, tyvars, params, result, body} : fundef) : fundef =
             {name = name f, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
         in
@@ -1047,6 +1056,7 @@ struct
         | Raise a => Raise (fa a)
         | Return r => Return (rhs r)
         | Mark (pos, b) => Mark (pos, exp b)
+        | Case (a, arms, d) => let val a = fa a val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
       and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
         {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
       fun def d =
@@ -1117,7 +1127,7 @@ struct
       fun group (s, f) : (int * fundef) list option =
         let
           val members = ref [(s, f)]
-          val size = ref (Mid.size [Funs [f]])
+          val size = ref (Mid.weight [Funs [f]])
           fun member g = List.exists (fn (g', _) => g' = g) (!members) orelse isSome (IntTable.find (kept, g))
           fun add [] = true
             | add (g :: rest) =
@@ -1125,7 +1135,7 @@ struct
                 else
                   case IntTable.find (defs, g) of
                     SOME h =>
-                      let val n = Mid.size [Funs [h]]
+                      let val n = Mid.weight [Funs [h]]
                       in
                         if !size + n <= groupSize
                         then (size := !size + n; members := !members @ [(g, h)]; add (rest @ callees h))
@@ -1208,7 +1218,7 @@ struct
       fun sizeOf (f : fundef) =
         case IntTable.find (sizes, #name f) of
           SOME n => n
-        | NONE => let val n = Mid.size [Funs [f]] in IntTable.insert (sizes, #name f, n); n end
+        | NONE => let val n = Mid.weight [Funs [f]] in IntTable.insert (sizes, #name f, n); n end
       (* each top-level application's budget left, by a number of its own *)
       val budgets : int IntTable.table = IntTable.table 64
       val nroots = ref 0
