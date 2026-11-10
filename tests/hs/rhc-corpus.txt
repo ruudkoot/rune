@@ -46,4 +46,4 @@ rhc | nofib/real/maillist::run | FAILS | exit: killed at the 600 s a way allows,
 # does not run to nofib's output
 rhc | lazy/eliza-lazy::run | HOST-BUG | reject: Main.hs's `import Prelude hiding (Word)` hides what the Prelude does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
 rhc | lazy/scs-lazy::run | HOST-BUG | reject: Parse.hs's `import Data.List hiding (List)`, which the harness's import rewrite makes `import List hiding (List)`, hides what List does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
-rhc | lazy/sphere-lazy::run | FAILS | reject: Mid's reader refuses the text Core to Mid wrote ("an unexpected + at 1286878"), a fault of rhc's (M10)
+rhc | lazy/sphere-lazy::run | FAILS | rtfail: hash's acc*61 passes Int's range ("rhc: bottom: Overflow: arithmetic overflow"), where nofib's fixture is GHC's wrapping Int; rhc's Int arithmetic is checked and raises Overflow, as D22 decides
