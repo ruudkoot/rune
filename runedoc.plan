@@ -39,6 +39,7 @@ program
       unit compiler:util/inttable.sml lib/compiler/util/inttable.sml ascii
       unit compiler:state_sig.sml lib/compiler/state_sig.sml ascii
       unit compiler:state.sml lib/compiler/state.sml ascii
+      unit compiler:util/stamp.sml lib/compiler/util/stamp.sml ascii
     end
     unit compiler:util/ident.sml lib/compiler/util/ident.sml ascii
     unit compiler:util/source.sml lib/compiler/util/source.sml ascii
@@ -101,7 +102,7 @@ end
 provenance
   input runedoc.build e9eae6d804b7f52078eb7dbb0e46aee385bf60e28104c66fe3e8710d8a6a5c46
   input lib/compiler/frontend.build 6d35ea98aba55a7b636242c2228a0eb606bd63e0f5b46ad5b66c94f1e9d6c4b4
-  input lib/compiler/util.build 096598632b6f4e4aabfa5a4589d2bf91dc46070c619620b2efab59ed31d9855c
+  input lib/compiler/util.build 235f8ae3c7d8f32f202057939c83166f1f21a82c55bd754f9e7f30b3cf0207af
   input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

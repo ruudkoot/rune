@@ -3,7 +3,7 @@
 Pass.whole	settings	--units sets it, and every entry is made under it
 Elaborate.inlineFunctors	settings	the configuration's inline and inline-val
 Elaborate.inlineValues	settings	the configuration's inline and inline-val
-Elaborate.stampCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
+Stamp.counter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
 Types.tyconCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
 Types.tvarCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
 Ty.Node.next	names	the supply of names: a basis names its own by place, and a unit after it is given names after those

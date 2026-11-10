@@ -58,7 +58,7 @@ struct
   val () = CompilerState.cellRoot ("Expand.most", most)
 
   fun bug msg = Error.bug ("expand: " ^ msg)
-  fun fresh () = Elaborate.freshStamp ()
+  val fresh = Stamp.fresh
 
   (* Functors inlined across units (M6b; Elaborate.inlineFunctors): the
      functions of the marked functors a unit declares, as ToMid made them,

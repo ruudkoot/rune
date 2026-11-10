@@ -23,6 +23,7 @@ struct
      declare *)
   val nextTycon = ref base
   val () = CompilerState.cellRoot ("MidCanon.nextTycon", nextTycon)
+  val () = Pass.counter nextTycon
 
   (* p with each name of each kind renamed by the functions given -- stamp
      for a variable, global or join point, tycon for a type name, tvar for a
@@ -242,7 +243,7 @@ struct
                         (!Translate.funNames) (!Translate.funNames)
     in
       (* fresh names after the last: the same in every build that says the same *)
-      Elaborate.stampCounter := base + !nstamps;
+      Stamp.counter := base + !nstamps;
       nextTycon := base + !ntycons;
       p'
     end

@@ -17,7 +17,7 @@ structure Refs =
 struct
   open Mid
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   fun refArg (t : Ty.ty) : Ty.ty option =
     case Ty.view t of

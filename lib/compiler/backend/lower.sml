@@ -62,6 +62,7 @@ struct
   val () = CompilerState.refRoot ("Lower.binderFn", binderFn, IntTable.copy)
   val nextFn = ref 0
   val () = CompilerState.cellRoot ("Lower.nextFn", nextFn)
+  val () = Pass.counter nextFn
   (* and the fields each takes (results in globals, below) *)
   val selectFields : int list IntTable.table ref = ref (IntTable.table 16)
   val () = CompilerState.refRoot ("Lower.selectFields", selectFields, IntTable.copy)
@@ -307,6 +308,7 @@ struct
   val () = CompilerState.cellRoot ("Lower.funcs", funcs)
   val nextFuncId = ref 0
   val () = CompilerState.cellRoot ("Lower.nextFuncId", nextFuncId)
+  val () = Pass.counter nextFuncId
   val funNames : string IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Lower.funNames", funNames)
 
@@ -599,7 +601,7 @@ struct
     case IntMap.find (!slotGlobals, n) of
       SOME gs => gs
     | NONE =>
-        let val gs = List.tabulate (n - 1, fn _ => Elaborate.freshStamp ())
+        let val gs = List.tabulate (n - 1, fn _ => Stamp.fresh ())
         in slotGlobals := IntMap.insert (!slotGlobals, n, gs); gs end
 
   fun slotCall (r : M.rhs) : (int * int * M.atom list) option =
@@ -724,7 +726,7 @@ struct
       sumGlobals :=
         List.foldl (fn ((_, stamp, w), m) =>
                       if IntMap.member (m, stamp) then m
-                      else IntMap.insert (m, stamp, List.tabulate (w, fn _ => Elaborate.freshStamp ()))) IntMap.empty (List.rev found)
+                      else IntMap.insert (m, stamp, List.tabulate (w, fn _ => Stamp.fresh ()))) IntMap.empty (List.rev found)
     end
 
   fun findSlotFuns (p : M.program) : unit =

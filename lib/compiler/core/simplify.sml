@@ -274,7 +274,7 @@ struct
     else if isString t then SOME "string_eq"
     else NONE
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   (* a type as a key of a table: its node's number, which is the type's
      (Ty.id) -- a key only looked up, so that the number's order is no

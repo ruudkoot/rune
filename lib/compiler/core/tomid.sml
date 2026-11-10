@@ -22,7 +22,7 @@ struct
   structure M = Mid
 
   fun bug msg = Error.bug ("ToMid: " ^ msg)
-  fun fresh () = Elaborate.freshStamp ()
+  val fresh = Stamp.fresh
 
   (* The generic variables of a type, each once, in the order they appear. *)
   fun gens (t : Ty.ty) : int list = Ty.gens t

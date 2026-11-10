@@ -686,7 +686,7 @@ struct
   (* What --read-mid reads: a program whose names are the compiler's own,
      from the elaborator's counters. *)
   fun parse (text : string) : program =
-    parseWith {stamp = Elaborate.freshStamp, tycon = fn () => #stamp (Types.freshTycon ("", 0, true))} text
+    parseWith {stamp = Stamp.fresh, tycon = fn () => #stamp (Types.freshTycon ("", 0, true))} text
 
   (* Whether printing what `parse` reads of the printed program prints it
      again, positions and all: the check of the two against each other
@@ -709,7 +709,7 @@ struct
       val extras = !Ty.extras
       fun restore () = (Ty.datatypes := datatypes; Ty.extras := extras)
       val again =
-        (showAll (parseWith {stamp = counter (ref (!Elaborate.stampCounter)), tycon = counter scratchTycon} text)
+        (showAll (parseWith {stamp = counter (ref (!Stamp.counter)), tycon = counter scratchTycon} text)
          handle Syntax msg => Error.bug ("MidText.parse: " ^ msg))
         handle e => (restore (); raise e)
       val () = restore ()

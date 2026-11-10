@@ -1015,7 +1015,7 @@ struct
                        SOME (b,u) => mark (#identity u,s-b) | NONE => NONE end) (!shownTypes)
               val typing=if not (keepFacts andalso keepOpen) then NONE else
                 SOME (CompilerNodeTypes.capture {tops=List.rev (!Elaborate.tops),ids=(firstId,!Ast.nextId),
-                  stamps=(Vector.sub (#counters start,UnitBasis.kStamp),!Elaborate.stampCounter),env= !env})
+                  stamps=(Vector.sub (#counters start,UnitBasis.kStamp),!Stamp.counter),env= !env})
               val ()=Elaborate.forgetLintRecords ()
               val holding=hold (priorOf,name)
               val typeDefinitions=IntMap.foldRange (fn (stamp,origin,all) => {id=typeId stamp,origin=holding origin} :: all) []

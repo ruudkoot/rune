@@ -5,4 +5,5 @@ files
   util/inttable.sml
   state_sig.sml
   state.sml
+  util/stamp.sml
 end

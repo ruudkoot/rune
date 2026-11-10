@@ -7,7 +7,7 @@
    the primitives some values are, the functions that may be called by
    name -- in a form that does not depend on what was compiled before it.
 
-   Every name -- a stamp (Elaborate.stampCounter: values, exceptions and the
+   Every name -- a stamp (Stamp.counter: values, exceptions and the
    variables of the IRs), a type name (Types.tyconCounter), a type variable
    (Types.tvarCounter) -- is written as one of three:
    * a built-in one, made before any unit, as itself;
@@ -82,7 +82,7 @@ struct
   val kStamp = 0
   val kTycon = 1
   val kTvar = 2
-  fun counter k = if k = kStamp then Elaborate.stampCounter else if k = kTycon then T.tyconCounter else T.tvarCounter
+  fun counter k = if k = kStamp then Stamp.counter else if k = kTycon then T.tyconCounter else T.tvarCounter
   fun counters () = Vector.tabulate (3, fn k => !(counter k))
   fun setCounters (v : int vector) = Vector.appi (fn (k, c) => counter k := c) v
 
@@ -173,6 +173,7 @@ struct
   fun inlineHash (g : int) : string option = IntTable.find (!inlineHashes, g)
   val privateNext = ref ~2
   val () = CompilerState.cellRoot ("UnitBasis.privateNext", privateNext)
+  val () = Pass.counter privateNext
   val fpMemo : string option StringMap.map ref = ref StringMap.empty
   val () = CompilerState.cellRoot ("UnitBasis.fpMemo", fpMemo)
   (* the static layer's fingerprints of the type names, as tyconFps below *)
@@ -247,7 +248,10 @@ struct
      oracleFile := OS.Process.getEnv "RUNE_FP_ORACLE";
      staticLoad := isSome (OS.Process.getEnv "RUNE_STATIC_LOAD");
      sigLocals := StringMap.empty; targetOrders := StringMap.empty; templates := StringMap.empty;
-     MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE))
+     MidLint.importedScheme := (fn g => SOME (ToMid.globalScheme g) handle Error.Bug _ => NONE);
+     (* a name of a function of an earlier unit's marked to be inlined is a
+        usage of its Mid too (Env.findVal; functors-units M10) *)
+     Env.inlinedValue := (fn g => isSome (Expand.inlinedValue g)))
 
   fun binderOf (key : string) : string = case StringMap.find (!binders, key) of SOME i => i | NONE => ""
 

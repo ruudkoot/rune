@@ -24,7 +24,7 @@ structure Lift =
 struct
   open Mid
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   (* ---- what an expression names ---- *)
 
@@ -172,7 +172,7 @@ struct
 
   (* ---- the program ---- *)
 
-  fun program (p : program) : program =
+  fun program (target : Target.t) (p : program) : program =
     let
       val () = (groupFree := IntTable.table 256; groupGens := IntTable.table 256)
       (* every binder's scheme, and how each variable is used: in all, and
@@ -241,7 +241,7 @@ struct
                  val extra = IntMap.listKeys extra
                in
                  if (null extra orelse List.all (fn f => onlyCalled (#name f)) fs) andalso List.all monomorphic extra
-                    andalso List.all (fn f => List.length extra + List.length (#params f) <= #maxArgs Target.stack) fs
+                    andalso List.all (fn f => List.length extra + List.length (#params f) <= #maxArgs target) fs
                     andalso Pass.spend () then
                    let
                      val own = List.foldl (fn (f, m) => List.foldl (fn (a, m) => IntMap.insert (m, a, ())) m (#tyvars f))

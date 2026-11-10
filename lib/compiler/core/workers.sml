@@ -26,7 +26,7 @@ structure Workers =
 struct
   open Mid
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   (* Whether x is used in e only as the tuple of a Select. *)
   fun onlySelected (x : var, e : exp) : bool =
@@ -206,10 +206,10 @@ struct
 
   type worker = {worker : var, tyvars : int list, shape : shape}
 
-  fun program (p : program) : program =
+  fun program (target : Target.t) (p : program) : program =
     let
       (* the functions that get a worker, by name; each is one rewrite *)
-      fun fits n = n <= #maxArgs Target.stack
+      fun fits n = n <= #maxArgs target
       fun candidate (f as {name, tyvars, params, body, ...} : fundef, m) =
         case levels f of
           (ls as _ :: _ :: _, inner) =>

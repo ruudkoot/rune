@@ -9,7 +9,7 @@ structure MatchComp =
 struct
   open Ast Lambda
 
-  fun freshVar () = Elaborate.freshStamp ()
+  val freshVar = Stamp.fresh
 
   fun bindVar (stamp, isGlobal, value, k) =
     if isGlobal then Seq (SetGlobal (stamp, value), k) else Let (stamp, value, k)
@@ -73,7 +73,7 @@ struct
                       in
                         if not once then SOME make
                         else
-                          let val g = Elaborate.freshStamp ()
+                          let val g = Stamp.fresh ()
                           in Ty.bindVar (g, rt); hoisted := (g, make) :: !hoisted; SOME (Global g) end
                       end
                   | _ => NONE)

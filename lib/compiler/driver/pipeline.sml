@@ -4,11 +4,6 @@
    the linker needs of it (docs/units.md). *)
 structure Pipeline =
 struct
-  (* the counters of names that no check may move (Pass.checkAt) *)
-  val () = Pass.counters := (fn () => [!Elaborate.stampCounter, !Types.tyconCounter, !Types.tvarCounter,
-                                       !Elaborate.nextRecordId, !MidCanon.nextTycon, !Lower.nextFn, !Lower.nextFuncId,
-                                       !Code.nextLabel, !UnitBasis.privateNext])
-
   (* What Lower made of results in globals, checked after every lower, at
      level 0, always on (LowLint.results; docs/ir.md, Levels): its facts, by
      a function's global, which a known call in Low names by its id *)
@@ -137,14 +132,13 @@ struct
   (* a unit's Mid as ToMid made it, with what it needs of the tables, kept
      where a whole program is to be made of its units' (--whole; the
      incremental roadmap's M7) *)
-  (* a name of a function of an earlier unit's marked to be inlined is a
-     usage of its Mid too (Env.findVal; functors-units M10) *)
-  val () = Env.inlinedValue := (fn g => isSome (Expand.inlinedValue g))
-
   val keepMid = ref false
   val () = CompilerState.cellRoot ("Pipeline.keepMid", keepMid)
   val lastMid : MidCanon.unitMid option ref = ref NONE
   val () = CompilerState.cellRoot ("Pipeline.lastMid", lastMid)
+
+  (* what the passes are told of the target --target names *)
+  fun targetInfo () : Target.t = if !CompilerSettings.target = "registers" then Regs.info else Stack.info
 
   (* Mid to Low: the optional passes, and Lower. Shake runs on a whole
      program only (Pass.whole), which is renumbered canonically first, as
@@ -176,8 +170,8 @@ struct
       val () = Expand.knownFunction := (fn g => IntMap.member (!Lower.knownBefore, g))
       val mid = optional ("expand", Expand.program) mid
       val mid = optional ("shake", Shake.program) mid
-      val mid = optional ("lift", Lift.program) mid
-      val mid = optional ("workers", Workers.program) mid
+      val mid = optional ("lift", Lift.program (targetInfo ())) mid
+      val mid = optional ("workers", Workers.program (targetInfo ())) mid
       val mid = optional ("simplify", Simplify.program) mid
       val mid = optional ("refs", Refs.program) mid
       (* what the inliner left of the functions it put in place goes *)

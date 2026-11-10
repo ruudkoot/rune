@@ -72,6 +72,7 @@ struct
   val () = CompilerState.cellRoot ("Code.nglobals", nglobals)
   val nextLabel = ref 0
   val () = CompilerState.cellRoot ("Code.nextLabel", nextLabel)
+  val () = Pass.counter nextLabel
   (* The source files positions refer to, in the order they were first seen;
      an index into this is what the line table holds. *)
   val files : string list ref = ref []
