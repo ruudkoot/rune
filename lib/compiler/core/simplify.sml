@@ -1966,7 +1966,7 @@ struct
     case label of SOME n => String.isPrefix "functor " n | NONE => false
 
   (* What simplify does besides shrinking, which its caller says
-     (Pipeline.simplifyOptions): each is woven into its rounds. *)
+     (MidPipeline.simplifyOptions): each is woven into its rounds. *)
   type options = {inline : bool, specialise : bool, equality : bool}
 
   fun program ({inline, specialise, equality} : options) (p : program) : program =

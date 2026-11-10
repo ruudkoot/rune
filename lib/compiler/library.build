@@ -2,12 +2,15 @@
    the tests of its internals and the tools on them, through `libraries
    compiler`, and the programs the other SML systems build -- rune, runedoc,
    runeisa and runeopt -- which list its files or use internal.build and
-   frontend.build, as a friend may (docs/build.md, A library's header). *)
+   frontend.build, as a friend may (docs/build.md, A library's header); and
+   a front end of another language, which uses the layer from Mid on alone
+   (mid.build), as its tests do. *)
 requires unicode json end
 exports (structure CompilerApi, signature COMPILER_API)
 friends
   ../../rune.build ../../runedoc.build ../../runeisa.build ../../runeopt.build
   ../../tests/compiler/lint-tests.build ../../tests/compiler/state-tests.build
+  ../../tests/compiler/mid-client.build ../../tests/compiler/mid-client-elab.build ../../tests/compiler/pipeline-client.build
   ../../tests/compiler/witness-tests.build ../../tests/lsp/syntax-tests.build
   ../../tools/compiler/state-audit.build ../../tools/lsp/bench.build ../../tools/lsp/syntax-bench.build
   ../../tools/migrate/migrate.build

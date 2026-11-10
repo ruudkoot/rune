@@ -1181,7 +1181,8 @@ struct
       val _ = exec {cmd = ["bin/rune", "--build-list", "rune.build"], dir = NONE, stdin = "", stdout = list, stderr = "", timeout = 0}
     in
       List.app (fn p => (mkdirs (OS.Path.dir (copy ^ "/" ^ p)); write (copy ^ "/" ^ p, read p)))
-        (["rune.build", "rune.workspace", "lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/util.build"] @ lines (read list))
+        (["rune.build", "rune.workspace", "lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/mid.build",
+          "lib/compiler/util.build"] @ lines (read list))
     end
 
   fun reproBuild nm =

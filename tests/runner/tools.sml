@@ -868,6 +868,68 @@ struct
       if contains (f "dump.out", "(* after simplify *)") then () else fail "compiler.pass-names: --dump-after=simplify printed no dump"
     end
 
+  (* ---- a client of the compiler from Mid on (the haskell98 roadmap's M4):
+     built from the layer alone (lib/compiler/mid.build), where a name of
+     the elaborator does not compile; Mid's text through its list of passes,
+     each edit of it, linted at level 3, to the same bytes as through Rune's
+     list (Pipeline); and an edit that is real: without workers and refs the
+     program allocates a tuple at each of its 3,628,800 steps, 304 bytes
+     against 87,091,544 at E11 *)
+  fun midClient () =
+    let
+      val dir = run ^ "/compiler/mid-client"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun build b =
+        exec {cmd = ["bin/rune", "--build", "tests/compiler/" ^ b ^ ".build", "-o", f (b ^ ".rbc")], dir = NONE, stdin = "",
+              stdout = f (b ^ ".cerr"), stderr = f (b ^ ".cerr"), timeout = 600}
+      val lists =
+        [("none", "shake lift workers simplify refs shake", []), ("remove", "shake lift simplify shake", []),
+         ("insert", "shake lift client workers simplify refs shake", ["client saw 2 functions"]),
+         ("replace", "shake lift workers simplify refs shake", [])]
+      fun client (b, e) =
+        exec {cmd = ["/usr/bin/env", "RUNE_LINT=3", "bin/runevm", f (b ^ ".rbc"), e, f (b ^ "-" ^ e ^ ".rbc")], dir = NONE,
+              stdin = "", stdout = f (b ^ "-" ^ e ^ ".out"), stderr = f (b ^ "-" ^ e ^ ".err"), timeout = 300}
+      fun runs (b, e) =
+        exec {cmd = ["bin/runevm", "--count", f (b ^ "-" ^ e ^ ".rbc")], dir = NONE, stdin = "",
+              stdout = f (b ^ "-" ^ e ^ ".run"), stderr = f (b ^ "-" ^ e ^ ".count"), timeout = 300} = 0
+        andalso read (f (b ^ "-" ^ e ^ ".run")) = "6584096534401"
+      (* the bytes the program allocated, from runevm --count *)
+      fun allocated (b, e) =
+        case List.find (String.isPrefix "runevm: count: ") (lines (read (f (b ^ "-" ^ e ^ ".count")))) of
+          SOME l => (case String.tokens Char.isSpace l of
+                       [_, _, _, _, bytes, _, _, _] => Int.fromString bytes
+                     | _ => NONE)
+        | NONE => NONE
+      fun one (e, list, more) =
+        if client ("mid-client", e) <> 0 then fail ("compiler.mid-client: " ^ e ^ ": " ^ firstLine (f ("mid-client-" ^ e ^ ".err")))
+        else if client ("pipeline-client", e) <> 0
+        then fail ("compiler.mid-client: " ^ e ^ " on Pipeline: " ^ firstLine (f ("pipeline-client-" ^ e ^ ".err")))
+        else
+          (if lines (read (f ("mid-client-" ^ e ^ ".out"))) = list :: more then ()
+           else fail ("compiler.mid-client: " ^ e ^ ": printed " ^ firstLine (f ("mid-client-" ^ e ^ ".out")) ^ ", not " ^ list);
+           if lines (read (f ("pipeline-client-" ^ e ^ ".out"))) = ("expand " ^ list) :: more then ()
+           else fail ("compiler.mid-client: " ^ e ^ " on Pipeline: printed " ^ firstLine (f ("pipeline-client-" ^ e ^ ".out")));
+           if same (f ("mid-client-" ^ e ^ ".rbc"), f ("pipeline-client-" ^ e ^ ".rbc")) then ()
+           else fail ("compiler.mid-client: " ^ e ^ ": other bytes than on Pipeline");
+           if runs ("mid-client", e) then () else fail ("compiler.mid-client: " ^ e ^ ": its program printed "
+                                                        ^ firstLine (f ("mid-client-" ^ e ^ ".run"))))
+    in
+      if build "mid-client" <> 0 then fail ("compiler.mid-client: does not compile: " ^ firstLine (f "mid-client.cerr"))
+      else if build "pipeline-client" <> 0
+      then fail ("compiler.mid-client: pipeline-client does not compile: " ^ firstLine (f "pipeline-client.cerr"))
+      else
+        (List.app one lists;
+         case (allocated ("mid-client", "none"), allocated ("mid-client", "remove")) of
+           (SOME a, SOME b) => if a < 1000 andalso b > 80000000 then ()
+                               else fail ("compiler.mid-client: allocated " ^ Int.toString a ^ " bytes, and without workers and refs "
+                                          ^ Int.toString b)
+         | _ => fail "compiler.mid-client: no count");
+      if build "mid-client-elab" = 0 then fail "compiler.mid-client: a name of the elaborator compiles on the layer"
+      else if contains (f "mid-client-elab.cerr", "unbound variable or constructor: Elaborate.freshStamp") then ()
+      else fail ("compiler.mid-client: the elaborator's name refused with " ^ firstLine (f "mid-client-elab.cerr"))
+    end
+
   (* ---- the lints' negative tests (docs/testing.md; the linting roadmap,
      M4): a fault made in a program after a stage (RUNE_FAULT,
      lib/compiler/backend/fault.sml), which the check of that stage refuses
@@ -1252,6 +1314,7 @@ struct
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["compiler-lint-rules"] => SOME lintRules
     | ["compiler-pass-names"] => SOME passNames
+    | ["compiler-mid-client"] => SOME midClient
     | ["fault-one", spec] => SOME (fn () => faultOne spec)
     | ["compiler-astlint-faults"] => SOME astlintFaultTests
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
@@ -1350,6 +1413,7 @@ struct
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))
              :: tagged ["test"] (job ("lint-rules", ["compiler-lint-rules"], [], 800, 900))
              :: tagged ["test"] (job ("pass-names", ["compiler-pass-names"], [], 500, 600))
+             :: tagged ["test"] (job ("mid-client", ["compiler-mid-client"], [], 800, 900))
              :: tagged ["test"] (job ("astlint-faults", ["compiler-astlint-faults"], [], 500, 600))
              :: List.map (fn h => Test.requires [h] (tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600))))
                          ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"])),

@@ -39,7 +39,24 @@ is how `translate` compiles a match (see *Matches*), then `expand` (under
 inlined (see *The optimisations of Mid*); `inline` and `specialise` are
 what `simplify` does besides shrinking, each of which may be left out, as
 is `equality`, which only `-O2` runs; and `results` is what `lower` does
-of results in globals (see *Low*).
+of results in globals (see *Low*). These five are the parts of stages
+(`MidPipeline.parts`, `Pipeline.parts`), which have no stage of their own.
+
+The passes on Mid are a list, which is data: a pass is a record `{name,
+from, gate, run}` -- its name, the level it runs from, what else must hold
+where it runs (`shake` needs a whole program), and the pass -- run in order
+by `MidPipeline.lowOfMid`, each as a stage of Mid, linted at level 2 and
+read back at level 3. `MidPipeline.standardPasses` are the passes any front
+end may run, from `shake` on; Rune's list, `Pipeline.midPasses`, is
+`expand` and those. A client edits a list with `removePass`,
+`insertBefore`, `insertAfter` and `replacePass` before it compiles
+(`tests/compiler/mid-client.sml`, which takes Mid's text to bytecode
+through each kind of edit, and `pipeline-client.sml`, which edits Rune's).
+`Simplify` and `Lower` are told what they do besides by their caller
+(`MidPipeline.simplifyOptions`, `lowerOptions`). The list is a seam, not a
+proof that a pass needs nothing else: the passes still read `Pass`'s
+settings and `Target.intBits` (*What a front end gives Mid*, below), and a
+list in another order is a compiler no test has seen.
 
 ## Options
 
@@ -716,6 +733,53 @@ program written by hand. The grammar is at the head of
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   FRAME ... EXP)`, where a frame is `(in "NAME" "FILE" START STOP)`, or `(in
   "NAME")` for one called in tail position; comments are SML's.
+
+## What a front end gives Mid
+
+`lib/compiler/mid.build` is the compiler from Mid on, and nothing of a
+front end: Mid, its lint and its text, the passes on it, `Lower`, Low and
+the targets, `Emit`, the linker and the store, after `Types`, `Ty` and the
+primitives they share with Rune's front end, and `Lambda` for its faults
+(`Fault`). No lexer, parser, elaborator, `Translate`, `ToMid` or `Expand` is
+in it, so a front end of another language that uses it alone cannot name
+one: `tests/compiler/mid-client.build` is such a client, and one that
+names the elaborator does not compile (`compiler/mid-client` of
+`tests/runner/tools.sml`). Rune's own front end comes after it
+(`frontend.build`). A build that uses the layer is a friend of the
+compiler's library (`lib/compiler/library.build`) and lists a `Config` of
+its own first, which `Link` names.
+
+**What a front end hands over** is a `Mid.program` that `MidLint.check`
+accepts; the lints are the contract's checker, and what they do not see is
+said here.
+
+| What | Rule | Checked by |
+|---|---|---|
+| Names | every binder's stamp from `Stamp.fresh`, bound once in the program | `MidLint` |
+| Types | Mid is System F (*Mid*, above) | `MidLint` |
+| Calls | a function has a parameter; one of other than one is only called, with an argument for each | `MidLint` |
+| The top level | `Val`, `Funs` and `Do` in order; a global defined once; a `Do` lists what it sets | `MidLint`, and the VM for a global read before it is set |
+| Recursion | only functions are recursive | `MidLint`, and the datatype's shape |
+| Strictness | `Let` is strict and in order, and a variable of a datatype's type is evaluated: `ConTag` and `Decon` read it as it is, a step nothing uses may go (`Prims.removable`), and tier 2 trusts its representation | nothing: the types alone, by `Lower.repOfTy`, so a value not yet evaluated must have a type that is no datatype |
+| `Decon` | under a test of its tag, of the only constructor, or of the rest | `LowShapes`, after `Lower` |
+| Primitives | a name of `src/isa/prims.sml` at an instance of its type; not the casts and markers of Rune's functors (`functor_cast`, `dynamic_cast`, `open_cast`, `functor_marker`, `open_boxed`, `open_layout`) | `IrRules` |
+| Constants | of their type's kind, and in range | `IrRules.const` |
+| Labels | `fundef`'s `label`, the name the function table and a trace show; none is `fn`. A label that begins `functor ` is a functor's function to `Simplify` and `Expand`, which treat it so | none |
+| Marks | a `Mark`'s place and frames, for traces; optional | none |
+
+**What it declares** in the tables of `Ty` before the program is linted:
+each datatype, by `Ty.bindDatatypeDirect` (as `MidText.parse` does), and a
+new type name's stamp from `Types.freshTycon`. The built-in types are
+`Ty.int`, `Ty.bool` and the rest, on `Types`' stamps; a front end numbers
+its constructors as it likes, but `bool`, `list`, `order` and `option`,
+which primitives make, are numbered as `runtime/value.h` numbers them.
+
+**What it sets:** `Pass.whole` (a whole program or a unit), `Pass.level` and
+`Pass.only` as Rune's options do, `CompilerSettings.target`, and
+`Target.intBits`, which stays a global. **What it calls:**
+`MidPipeline.midStage`, which makes Mid with the lint at the boundary;
+`MidPipeline.lowOfMid` with its list of passes; `MidPipeline.targetStage`;
+and `Emit.writeFileAs` with `MidPipeline.fingerprint ()`.
 
 ## Matches
 

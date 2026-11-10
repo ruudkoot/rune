@@ -1,0 +1,9 @@
+(* A client of the compiler from Mid on, built from the layer alone
+   (lib/compiler/mid.build), with no module of a front end
+   (tests/runner/tools.sml, compiler/mid-client): a friend of the
+   compiler's library, which may use the layer (docs/build.md, A library's
+   header). *)
+libraries unicode json end
+../../build/config.sml
+use ../../lib/compiler/mid.build
+files ../../tests/compiler/mid-client.sml ../../tests/compiler/mid-client-main.sml end

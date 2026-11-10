@@ -65,7 +65,8 @@ the Basis and checking declarations.
 `runedoc` ([docs/plans/docgen.md](plans/docgen.md)) is a second program built
 from the same sources: `runedoc.build` names the libraries `unicode` and
 `json`, uses the compiler library's `frontend.build` -- its utilities, its
-frontend and elaborator, `BasisManifest` and `LibraryIndex` -- as a friend of
+frontend and elaborator, `BasisManifest` and `LibraryIndex`, which come
+after the compiler from Mid on (`mid.build`) -- as a friend of
 that library ([build.md](build.md), *Reaching in*), and lists `src/doc`. It
 reads a library the way the compiler does (the same lexer, parser,
 elaborator and library index), so what it documents is what the compiler
