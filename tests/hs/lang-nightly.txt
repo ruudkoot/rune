@@ -1,5 +1,10 @@
 # The programs of tests/hs/lang whose jobs are nightly, not make check's (tests/runner/hslang.sml; the roadmap's D56,
 # B, and the lead's ruling 45): a program goes here once its run, measured in a way of make check, is over D56's
-# second, with its time. None runs yet: their rows are Planned.
+# second, with its time; or once Core's interpreter, which hs/desugar/orders runs twice in make check, takes it past a
+# minute (the lead's word on upper_unicode, 2026-11-10). HsMeta's braces relation and D's orders follow this list too.
 #
-# NAME  SECONDS  (the way, and when measured)
+# NAME  SECONDS  (the way, and when measured: CPU seconds, 2026-11-10 on hs-t at 9c758ea40, a loaded machine)
+lib.r.char.table.other.upper_unicode  16.3  (register, 1.4 GB; Core's interpreter over 300 s)
+std.enum.succ  3.9  (register; 4.2 test, 4.3 register-opt; hs/desugar/orders 134.6, 2.4 GB)
+std.eq.neither_loops  109  (Core's interpreter to its depth bound, 6.7 GB; the VM 0.1 s at its .vmargs)
+std.tuple.size15.value  96.4  (hs/desugar/orders; the VM 0.8 s)

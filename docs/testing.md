@@ -515,12 +515,16 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `register-opt` (tier 2); `hs/lang/typecheck/NAME`,
   `hs/errors/typecheck/NAME` and `hs/accept/NAME`. They need the capability
   `rhc` (`bin/rhc`); where there is no program there is no job. With
-  `--accept`, the way `register` writes `.expected`.
+  `--accept`, the way `register` writes `.expected`. A compile writes
+  `NAME/prog.rbc` in the run's directory (`Lang.suite`'s `binary`), so that
+  `getProgName`, the bytecode file's base name (the lead's ruling 33), is
+  `prog` in every way, as in `hs/jit` and `hs/interp-vm`.
 * **Tiers** (the roadmap's D56, B; the lead's ruling 45). A program of
   `tests/hs/lang` runs in `check` in the three ways, with its two compiles
   and its check, unless `tests/hs/lang-nightly.txt` names it (a program
-  over D56's second, with its measured time), when all its jobs are
-  `nightly`; `hs/errors/register/NAME` is `check` and `hs/errors/typecheck/NAME`
+  over D56's second, with its measured time, Core's interpreter's runs in
+  `hs/desugar/orders` among those ways), when all its jobs are `nightly`,
+  its `hs/meta/braces` and `hs/desugar/orders` too; `hs/errors/register/NAME` is `check` and `hs/errors/typecheck/NAME`
   `nightly`; `hs/accept/NAME` is `check`. The register way and the refused
   programs are also `quick`.
 * **What they cover.** `covers:` tags for `tests/hs`, `lib/language/haskell`,
@@ -822,7 +826,8 @@ builds the others and judges them
 mutant's tree for a job to be run against it by hand). The first fourteen
 seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
 Core's interpreter and Core's text reader, these last seen by `hs/core`'s
-jobs. F's parser
+jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
+deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
 
 **rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of
@@ -866,7 +871,7 @@ binding's span covers more, as a function binding's head does, is left.
 `hs/interp-vm/NAME`, nightly). Each run program of `tests/hs/lang` through rhc to
 Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
 Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
-`.stdin`: the VM prints what the interpreter printed and ends as it did, every
+`.stdin` and the VM with its `.vmargs` (as `hs/meta`'s runs are): the VM prints what the interpreter printed and ends as it did, every
 bottom one bottom. A program the interpreter alone can run says so on a line
 `-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
 program's rows are `Planned`; M15's done-when and G1 rest on it.
@@ -889,7 +894,8 @@ program's rows are `Planned`. The programs avoid what M14's deriving and
 the runtime's arrays are still to give, and their expected output is GHC's.
 The seeds for desugaring (clause order reversed, `~` made strict, a
 `newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
-that `report/order`, `report/lazy` and `report/newtype` catch.
+that `report/order`, `report/lazy` and `report/newtype` catch (HM01 to
+HM03 of rhc's mutants).
 
 **rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
 FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
