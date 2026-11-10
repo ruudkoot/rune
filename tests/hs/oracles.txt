@@ -411,3 +411,30 @@ mhs | hs/lang/lib.monad.class.monadplus.mplus_error::run | HOST-BUG | reject: Mi
 ghc | hs/lang/lib.r.array.strict.bounds_empty::run | SPEC-AMBIGUOUS | exit: R155: GHC's array is strict in its bounds with no association, as 16.1's prose; the code, which decides, is not
 hugs | hs/lang/lib.r.array.strict.bounds_empty::run | SPEC-AMBIGUOUS | exit: R155: Hugs's array is strict in its bounds with no association, as 16.1's prose; the code, which decides, is not
 nhc98 | hs/lang/lib.r.array.strict.bounds_empty::run | SPEC-AMBIGUOUS | exit: R155: nhc98's array is strict in its bounds with no association, as 16.1's prose; the code, which decides, is not
+mhs | hs/accept/lib.io.export.handle_imported::judge | HOST-BUG | reject: MicroHs's IO does not export hIsEOF, and lacks others of 21's names (HandlePosn, hGetPosn, hPrint, isEOF)
+ghc | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | reject: GHC's IOMode and SeekMode have no Bounded instance, which 21 derives
+hugs | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | diff: Hugs shows two handles of different files alike, where 21.2 says the string should identify the handle
+nhc98 | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | diff: nhc98 takes two handles on one file as equal, where 21.2 makes a handle equal only to itself
+mhs | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | reject: MicroHs's IO has no hGetPosn (21.7.1)
+mhs | hs/lang/lib.io.stdin_types::run | HOST-BUG | reject: MicroHs's IO has no HandlePosn (21)
+nhc98 | hs/lang/lib.io.try_literal::run | HOST-BUG | exit: nhc98's IO has no hWaitForInput, so hReady fails (21.9.1)
+mhs | hs/lang/lib.io.try_literal::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+mhs | hs/lang/lib.r.io.example.copy.char_args::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+mhs | hs/lang/lib.r.io.example.copy.char_same_error::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+hugs | hs/lang/lib.r.io.handle.readable_handles::run | HOST-BUG | diff: Hugs's hIsReadable, hIsWritable and hIsSeekable answer on a closed handle, where 21.3.2 makes every operation but hClose fail
+nhc98 | hs/lang/lib.r.io.handle.readable_handles::run | HOST-BUG | exit: nhc98's IO has no hIsOpen (21.8)
+mhs | hs/lang/lib.r.io.handle.readable_handles::run | HOST-BUG | reject: MicroHs's IO has no hPrint (21.9.5)
+hugs | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: Hugs's hReady at end of file is False, where 21.9.1 makes it fail with isEOFError
+nhc98 | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | exit: nhc98's IO has no hLookAhead (21.9.3)
+mhs | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+ghc | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: GHC's hSeek sets a position beyond the end of a file, as POSIX lseek does, where 21.7.2 says it cannot be set
+nhc98 | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | exit: R46: nhc98's getLine is the Prelude's getChar loop, so a last line with no newline fails, where 21.9.2 returns it
+mhs | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | reject: MicroHs's IO has no isEOF (21.5)
+hugs | hs/lang/lib.r.io.iserror.notexist_errors::run | HOST-BUG | diff: Hugs has no locking: a file open for output opens again, where 21.2.3 fails with isAlreadyInUseError
+nhc98 | hs/lang/lib.r.io.iserror.notexist_errors::run | HOST-BUG | exit: nhc98 has no locking (21.2.3), and its error predicates fail on hGetChar's end-of-file error
+mhs | hs/lang/lib.r.io.iserror.notexist_errors::run | HOST-BUG | reject: MicroHs's Directory does not export removeDirectory (22)
+mhs | hs/lang/lib.r.io.iserror.perm_file::run | HOST-BUG | exit: MicroHs's openFile of a file without read permission is no permission error, and its setPermissions then fails
+ghc | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: GHC makes a read of hGetContents's list after hClose an error, where 21.2.2 fixes the list's contents
+hugs | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | diff: Hugs has no locking (21.2.3), and its hGetContents's list loses what a failed read on the semi-closed handle touched
+nhc98 | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: nhc98's IO has no hIsClosed (21.8), and no locking
+mhs | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: MicroHs has no locking (21.2.3), and its semi-closed handle still reads
