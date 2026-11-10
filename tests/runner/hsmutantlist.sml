@@ -89,5 +89,12 @@ struct
           ["hs/hslint/dump/dicts"]),
      one ("HK05", "checker", "a method slot swapped: a class's methods reversed, and its dictionary's slots with them (D31)",
           "infer.sml", "methods = List.map #1 methods, kind = kind}", "methods = List.rev (List.map #1 methods), kind = kind}",
-          ["hs/hslint/dump/dicts"])]
+          ["hs/hslint/dump/dicts"]),
+     one ("HD03", "deriving", "a derived Ord's and Ix's constructor positions are bare literals, which the module's default types",
+          "derive.sml",
+          "fun tag x =\n        e (A.ESig (e (A.EParen (ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i))\n" ^
+          "                                             (constrs, List.tabulate (length constrs, fn i => i))))),\n" ^
+          "                   NONE, intType ()))",
+          "fun tag x = ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i)) (constrs, List.tabulate (length constrs, fn i => i)))",
+          ["hs/types/derive/module"])]
 end
