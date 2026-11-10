@@ -787,4 +787,13 @@ struct
                       (ListPair.zip (List.tabulate (List.length runtime, fn i => i), runtime))
       @ p
     end
+
+  fun linkUnit strings (p : program) : program =
+    let
+      val linked = link strings p
+      val runtime = List.take (linked, List.length linked - List.length p)
+      (* what the unit imports itself, it keeps *)
+      val imported = List.mapPartial (fn Import (x, _) => SOME x | _ => NONE) p
+      fun own x = List.exists (fn y => y = x) imported
+    in List.mapPartial (fn Val (x, t, _) => if own x then NONE else SOME (Import (x, t)) | d => SOME d) runtime @ p end
 end

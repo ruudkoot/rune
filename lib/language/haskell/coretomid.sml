@@ -13,6 +13,8 @@ struct
 
   exception Unsupported of string
 
+  datatype abi = Function | Suspension | Literal
+
   (* ---- What is not lowered ---- *)
 
   (* a form of polymorphism Mid's types do not say, or Core to Mid does not
@@ -76,6 +78,12 @@ struct
     | _ => t
 
   (* ---- What every program's Mid has ---- *)
+
+  (* the globals of the prelude that have an identity, the exceptions of
+     Core: in a program of units one unit makes them, the runtime's, and
+     each other one's text declares them as the prelude does, its client
+     reading them as imports (M21) *)
+  val shared = ["grtErrorCall", "grtIOError", "grtPatternMatchFail", "grtNonTermination"]
 
   (* the exceptions of Core, each with its message, and the functions of
      the primitives that are no primitive of Mid: an exception's kind, name
@@ -227,12 +235,15 @@ struct
      "    (let (voO : int option) (prim file_open voP voM : (string * int) -> int option)",
      "    (case voO (0 (return ~1)) (1 (return (decon 1 voO : int option)))))))\n"]
 
-  fun program ({fault : fault option}, prog : program) : string =
+  (* a program compiled whole (imports NONE), or a unit, each import bound
+     as its interface says *)
+  fun compile ({fault : fault option, imports : (string * abi) list option, makesShared : bool}, prog : program)
+              : {text : string, names : (string * string) list, abi : (string * abi) list} =
     let
-      (* a whole program: an import of another unit waits for M21's units *)
+      (* a whole program has no import *)
       val () =
-        case List.find (fn Import _ => true | _ => false) prog of
-          SOME (Import (x, _)) => raise Unsupported ("an import of another unit, " ^ x ^ ", in a program compiled whole")
+        case (imports, List.find (fn Import _ => true | _ => false) prog) of
+          (NONE, SOME (Import (x, _))) => raise Unsupported ("an import of another unit, " ^ x ^ ", in a program compiled whole")
         | _ => ()
       (* ---- The declarations ---- *)
       val decls = builtinData @ prog
@@ -1311,12 +1322,38 @@ struct
 
       val vals = List.mapPartial (fn Val v => SOME v | _ => NONE) prog
       val globals = List.map (fn (x, t, e) => (x, t, e, fresh "g")) vals
+      (* each import of another unit, a global of the text, as its unit made
+         it *)
+      fun abiOf x =
+        case List.find (fn (n, _) => n = x) (getOpt (imports, [])) of
+          SOME (_, a) => a
+        | NONE => raise Unsupported ("an import whose making no interface gives: " ^ x)
+      val importGlobals =
+        List.mapPartial (fn Import (x, t) => SOME (x, t, fresh "g", abiOf x) | _ => NONE) prog
       val genv =
         List.foldl (fn ((x, t, e, g), env) =>
                       bindVal (env, x, {rep = if isFunction e then Value g
                                               else case e of Atom (Lit l) => Value (constText l) | _ => Lazy g,
                                         ty = t, arity = leadingForalls t}))
                    empty globals
+      val genv =
+        List.foldl (fn ((x, t, g, a), env) =>
+                      bindVal (env, x, {rep = case a of Suspension => Lazy g | _ => Value g, ty = t, arity = leadingForalls t}))
+                   genv importGlobals
+      (* an import declared at its scheme, the exporter's: its type under
+         its leading foralls, a suspension's in its susp; the expression a
+         placeholder the client drops *)
+      fun importText (_, t, g, a) =
+        let
+          fun peel (t, env, tvs) =
+            case stripEval t of
+              TForall (b, _, w) => let val m = freshTyvar () in peel (w, bindTyvar (env, b, m), m :: tvs) end
+            | t' => (env, t', List.rev tvs)
+          val (env, body, tvs) = peel (t, genv, [])
+          val V = valTy env body
+          val scheme = (if null tvs then "" else "[" ^ String.concatWith " " tvs ^ "] ")
+                       ^ (case a of Suspension => "(" ^ V ^ " susp)" | _ => V)
+        in "(val " ^ g ^ " : " ^ scheme ^ " (return ()))\n" end
 
       (* the datatypes, each with its type variables *)
       fun datatypeText (t, ps, cs) =
@@ -1406,12 +1443,21 @@ struct
                               letv ("unit", "(prim exit 1 : int -> unit)", fn _ => "(return ())"))))))))
             in "(do () (handle " ^ x ^ " " ^ run ^ " " ^ handler ^ "))\n" end
     in
-      concat (datatypes @ [prelude]
+      {text = concat (datatypes @ [prelude]
               @ List.mapPartial (fn {name, midText, ...} : CorePrimFamily.family =>
                                    if member (name, !familiesUsed) then SOME midText else NONE)
                                 CorePrim.families
               @ List.map integerDef (List.rev (!integerLits))
+              @ List.map importText importGlobals
               @ (if null functions then [] else ["(funs\n  " ^ String.concatWith "\n  " functions ^ ")\n"])
-              @ cafs @ [main])
+              @ cafs @ [main]),
+       names = List.map (fn (x, _, _, g) => (x, g)) globals @ List.map (fn (x, _, g, _) => (x, g)) importGlobals
+               @ List.map (fn g => (g, g)) shared,
+       abi = List.map (fn (x, _, e, _) => (x, if isFunction e then Function
+                                               else case e of Atom (Lit _) => Literal | _ => Suspension)) globals
+             @ (if makesShared then List.map (fn g => (g, Literal)) shared else [])}
     end
+
+  fun program ({fault}, prog) = #text (compile ({fault = fault, imports = NONE, makesShared = true}, prog))
+  fun unit ({fault, imports, makesShared}, prog) = compile ({fault = fault, imports = SOME imports, makesShared = makesShared}, prog)
 end

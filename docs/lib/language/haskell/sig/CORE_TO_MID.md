@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 3 of 3 entries documented |
+| Documentation | 6 of 6 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid\_sig.sml](../../../../../lib/language/haskell/coretomid_sig.sml) |
 
@@ -54,6 +54,10 @@ sig
   datatype <a href="#type-fault">fault</a> = <a href="#con-thunkinslot">ThunkInSlot</a> | <a href="#con-forcebehindcast">ForceBehindCast</a>
   exception <a href="#exn-unsupported">Unsupported</a> of string
   val <a href="#val-program">program</a> : {<a href="#fld-program.fault">fault</a> : fault option} * Core.program -&gt; string
+  datatype <a href="#type-abi">abi</a> = <a href="#con-function">Function</a> | <a href="#con-suspension">Suspension</a> | <a href="#con-literal">Literal</a>
+  val <a href="#val-unit">unit</a> : {<a href="#fld-unit.fault">fault</a> : fault option, <a href="#fld-unit.imports">imports</a> : (string * abi) list, <a href="#fld-unit.makesshared">makesShared</a> : bool} * Core.program
+             -&gt; {text : string, names : (string * string) list, abi : (string * abi) list}
+  val <a href="#val-shared">shared</a> : string list
 end
 </pre>
 
@@ -105,6 +109,65 @@ library's Show IOError gives it, and ends with status 1.
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-program.fault"></a>`fault` | `fault option` |  |
+
+### <a name="type-abi"></a>`abi`
+
+```sml
+datatype abi = Function | Suspension | Literal
+```
+
+How a value of the top level is in Mid, an ABI fact of its interface.
+
+A unit that imports it binds it so (H9): a function global, a
+suspension in a global (a CAF), or a literal in a global.
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-function"></a>`Function` |  |  |
+| <a name="con-suspension"></a>`Suspension` |  |  |
+| <a name="con-literal"></a>`Literal` |  |  |
+
+### <a name="val-unit"></a>`unit`
+
+```sml
+val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.program
+           -> {text : string, names : (string * string) list, abi : (string * abi) list}
+```
+
+`unit ({fault, imports, makesShared}, p)` is the text of Mid of the
+unit `p` (the haskell98 roadmap's M21).
+
+Each import of another unit is bound as `imports` says that unit's
+Core to Mid made it. Its `names` is the name in the text of each value of the top level,
+the unit's own and its imports, by its Core name; its [`abi`](#type-abi) how each
+of its own is made. An import is declared in the text as a global of
+its scheme whose expression is a placeholder, which the client drops
+after reading the text, its scheme MidLint's for the import
+(MidLint.importedScheme). The text calls `main` where the unit
+defines it, as [`program`](#val-program)'s does.
+
+**Raises** [`Unsupported`](#exn-unsupported) where `p` needs what Mid has not got, or an
+import `imports` does not give.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-unit.fault"></a>`fault` | `fault option` |  |
+| <a name="fld-unit.imports"></a>`imports` | `(string * abi) list` |  |
+| <a name="fld-unit.makesshared"></a>`makesShared` | `bool` |  |
+
+### <a name="val-shared"></a>`shared`
+
+```sml
+val shared : string list
+```
+
+[`shared`](#val-shared) is the globals of every text's prelude that have an
+identity, Core's exceptions, which one unit of a program makes.
+
+Each is in [`unit`](#val-unit)'s `names` by itself, and
+in its [`abi`](#type-abi) where the unit makes them (makesShared), which one unit
+of a program does; in the others' texts they are imports, which their
+client reads as it reads an import's placeholder.
 
 ---
 

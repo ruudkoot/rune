@@ -960,7 +960,12 @@ damaged entry is a miss; a head is read back as it was written.
 `hs/units/named` builds `tests/hs/units/named.build` on Mid's layer of the
 compiler, as rhc is built, and runs it: a unit's Mid text names another
 unit's global, which `MidText.parseWith`'s `named` gives the other's stamp,
-and every other name a fresh one. Core in
+and every other name a fresh one. `hs/units/core/NAME` compiles each run
+test of `hs/core` a VM runs as units (`rhc --units`): rhc's runtime, the
+files its flags read and the test, each compiled apart to a unit file
+against the units before it, taking what it names of them as their
+interface gives it, and linked; what it prints is its `.expected`, and it
+ends as its `.exitcode` says. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

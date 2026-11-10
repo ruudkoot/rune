@@ -5,6 +5,7 @@
 - `map` (type): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#type-map)
 - `mark` (type): [HS_LAYOUT](../sig/HS_LAYOUT.md#type-mark)
 - `member` (val): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-member)
+- `mentions` (val): [CORE_RUNTIME](../sig/CORE_RUNTIME.md#val-mentions)
 - `message` (val): [HS_SOURCE](../sig/HS_SOURCE.md#val-message)
 - `meta` (type): [HS_TYPES](../sig/HS_TYPES.md#type-meta)
 - `metaHome` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metahome)

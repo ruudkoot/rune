@@ -12,6 +12,7 @@
 - `SEMI` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-semi)
 - `setLevel` (val): [HS_TYPES](../sig/HS_TYPES.md#val-setlevel)
 - `SExp` (con): [HS_AST](../sig/HS_AST.md#con-sexp)
+- `shared` (val): [CORE_TO_MID](../sig/CORE_TO_MID.md#val-shared)
 - `show` (val): [CORE_TEXT](../sig/CORE_TEXT.md#val-show), [HS_FIXITY](../sig/HS_FIXITY.md#val-show), [HS_TOKEN](../sig/HS_TOKEN.md#val-show), [HS_TYPES](../sig/HS_TYPES.md#val-show)
 - `showDict` (val): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-showdict)
 - `showExp` (val): [CORE_TEXT](../sig/CORE_TEXT.md#val-showexp)
@@ -54,6 +55,7 @@
 - `substTy` (val): [CORE](../sig/CORE.md#val-substty)
 - `superclasses` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-superclasses)
 - `superPath` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-superpath)
+- `Suspension` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-suspension)
 - `Symbol` (con): [HS_CHAR](../sig/HS_CHAR.md#con-symbol)
 - `Synonym` (con): [HS_MODULES](../sig/HS_MODULES.md#con-synonym)
 

@@ -27,6 +27,7 @@
 - `Free` (con): [HS_TYPES](../sig/HS_TYPES.md#con-free)
 - `freeTyVars` (val): [CORE](../sig/CORE.md#val-freetyvars)
 - `Full` (con): [HS_PARSER](../sig/HS_PARSER.md#con-full)
+- `Function` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-function)
 - `funlhs` (type): [HS_AST](../sig/HS_AST.md#type-funlhs)
 - `funlhs_` (type): [HS_AST](../sig/HS_AST.md#type-funlhs_)
 
