@@ -115,56 +115,122 @@ struct
 
   (* Each file a unit, after rhc's runtime's, each checked and compiled
      apart against the units before it, which it imports from, and the
-     units linked (the haskell98 roadmap's M21c): a unit takes what it
-     reaches of the runtime from the runtime's unit (CoreRuntime.linkUnit) *)
+     units linked (the haskell98 roadmap's M21c). A unit takes what it
+     names and does not declare from the latest unit before it that
+     declares it, the runtime's last, as that unit's interface gives it: a
+     value an import, a type a copy (CoreUnits.interface). With --store, a
+     unit is kept in the store, keyed by its name and its text, and taken
+     from it where each name it took gives now what it gave its compile:
+     the same unit, at the same fingerprint and making (RhcStore). *)
   fun compileUnits (opts : RhcOptions.options, out : string) : int =
     let
       val strings = #strings opts
       fun one file =
-        CoreText.parse (readFile file)
-        handle CoreText.Error (line, msg) => (eprint (file ^ ":" ^ Int.toString line ^ ": error: " ^ msg ^ "\n"); raise Failed)
-      (* what a unit names and does not declare, of the units before it:
-         each value an import and each type a copy, as their interface gives
-         them (CoreUnits.interface), a constructor by its type *)
+        let val text = readFile file
+        in
+          (text, CoreText.parse text)
+          handle CoreText.Error (line, msg) => (eprint (file ^ ":" ^ Int.toString line ^ ": error: " ^ msg ^ "\n"); raise Failed)
+        end
       fun declared d =
         case d of
           Core.Data (t, _, cons) => t :: List.map #1 cons
         | Core.Newtype (t, _, c, _) => [t, c]
         | Core.Val (x, _, _) => [x]
         | Core.Import (x, _) => [x]
-      fun taken (earlier : Core.program, p : Core.program) : Core.program =
+      fun member (x, xs) = List.exists (fn y => y = x) xs
+      fun distinct xs = List.rev (List.foldl (fn (x, acc) => if member (x, acc) then acc else x :: acc) [] xs)
+      (* the names p names and does not declare, a constructor by its type *)
+      fun needed (earlier : RhcUnits.compiled list, p : Core.program) : string list =
         let
           val own = List.concat (List.map declared p)
-          fun member (x, xs) = List.exists (fn y => y = x) xs
-          val needed = List.filter (fn n => not (member (n, own))) (List.concat (List.map CoreRuntime.mentions p))
+          val ifaces = List.concat (List.map #iface earlier)
           fun typeOf n =
             case List.find (fn Core.Data (_, _, cons) => List.exists (fn (c, _) => c = n) cons
-                             | Core.Newtype (_, _, c, _) => c = n | _ => false) earlier of
+                             | Core.Newtype (_, _, c, _) => c = n | _ => false) ifaces of
               SOME (Core.Data (t, _, _)) => t
             | SOME (Core.Newtype (t, _, _, _)) => t
             | _ => n
-          (* the units' own: no import, each type its first declaration *)
+        in distinct (List.map typeOf (List.filter (fn n => not (member (n, own))) (List.concat (List.map CoreRuntime.mentions p)))) end
+      (* the unit a name is taken from, the latest that declares it, and
+         the declaration *)
+      fun resolve (earlier : RhcUnits.compiled list, n : string) : (RhcUnits.compiled * Core.decl) option =
+        let
+          fun go [] = NONE
+            | go ((u : RhcUnits.compiled) :: us) =
+                case List.find (fn d => member (n, declared d)) (#iface u) of
+                  SOME d => SOME (u, d)
+                | NONE => go us
+        in go (List.rev earlier) end
+      (* what a name taken gives: its unit, its fingerprint there and its
+         making; "-" where no unit declares it (H1) *)
+      val prints : (string * (string * string) list) list ref = ref []
+      fun printsOf (u : RhcUnits.compiled) =
+        case List.find (fn (n, _) => n = #name u) (!prints) of
+          SOME (_, fps) => fps
+        | NONE => let val fps = CoreUnits.fingerprints Pickle.hash (#iface u)
+                  in prints := (#name u, fps) :: !prints; fps end
+      fun gives (earlier, n) =
+        case resolve (earlier, n) of
+          NONE => "-"
+        | SOME (u, _) =>
+            #name u ^ " " ^ (case List.find (fn (x, _) => x = n) (printsOf u) of SOME (_, f) => f | NONE => "?")
+            ^ (case List.find (fn (x, _) => x = n) (#abi u) of SOME (_, a) => " " ^ RhcUnits.abiName a | NONE => "")
+      (* what p takes of the units before it, the latest first *)
+      fun taken (earlier : RhcUnits.compiled list, p : Core.program) : Core.program =
+        let
           fun firsts ([], _, acc) = List.rev acc
-            | firsts (Core.Import _ :: ds, seen, acc) = firsts (ds, seen, acc)
             | firsts (d :: ds, seen, acc) =
-                (case d of
-                   Core.Val _ => firsts (ds, seen, d :: acc)
-                 | _ => let val t = hd (declared d)
-                        in if member (t, seen) then firsts (ds, seen, acc) else firsts (ds, t :: seen, d :: acc) end)
-        in CoreUnits.interface (firsts (earlier, [], []), List.map typeOf needed) end
-      fun units (earlier, [], acc) = List.rev acc
-        | units (earlier, f :: fs, acc) =
-            let
-              val p = one f
-              val p = taken (earlier, p) @ p
-            in units (earlier @ p, fs, (OS.Path.base (OS.Path.file f), CoreRuntime.linkUnit strings p) :: acc) end
-      val units = ("rhc-runtime", CoreRuntime.program strings) :: units ([], #readCore opts, [])
+                let val n = hd (declared d)
+                in if member (n, seen) then firsts (ds, seen, acc) else firsts (ds, n :: seen, d :: acc) end
+          val ifaces = firsts (List.concat (List.map #iface (List.rev earlier)), [], [])
+        in CoreUnits.interface (ifaces, needed (earlier, p)) end
       fun check (name, p) =
         if not (Pass.linting' 0) then ()
         else CoreLint.check p handle CoreLint.Error msg => (eprint (name ^ ": error: " ^ msg ^ "\n"); raise Failed)
-      fun build ((name, p), done) =
-        (check (name, p);
-         done @ [RhcUnits.compile {name = name, earlier = done, fault = #fault opts} p])
+      val extra = [("strings", case strings of CoreRuntime.Lazy => "lazy" | CoreRuntime.Whole => "whole")]
+      val config = RhcStoreConfig.configuration extra
+      fun say (name, what) = if #showUnits opts then eprint ("rhc: unit " ^ name ^ ": " ^ what ^ "\n") else ()
+      (* the unit name of text and program p, against the units before it *)
+      fun build ((name, text, p), done) =
+        let
+          val usages = List.map (fn n => ("n " ^ n, gives (done, n))) (needed (done, p))
+          val key = RhcStore.key (name, [(name, Pickle.hash text)])
+          fun current k = if String.isPrefix "n " k then gives (done, String.extract (k, 2, NONE)) else "?"
+          val holds = RhcStore.holds {level = RhcStoreConfig.level (), current = current}
+          val found =
+            case #store opts of
+              SOME dir => SOME (RhcStore.find {overlay = dir, layers = #layers opts, config = config, key = key, holds = holds})
+            | NONE =>
+                if null (#layers opts) then NONE
+                else SOME (RhcStore.find {overlay = hd (#layers opts), layers = tl (#layers opts), config = config, key = key,
+                                          holds = holds})
+          fun compile why =
+            let
+              val p' = taken (done, p) @ p
+              val () = check (name, p')
+              val c = RhcUnits.compile {name = name, earlier = done, fault = #fault opts} p'
+              val () =
+                case #store opts of
+                  SOME dir =>
+                    let val iface = RhcUnits.ifaceText c
+                    in
+                      ignore (RhcStore.store {dir = dir, settings = RhcStoreConfig.settings extra, config = config, key = key,
+                                              entry = {head = {usages = usages, exports = Pickle.hash iface,
+                                                               level = RhcStoreConfig.level ()},
+                                                       sections = {iface = iface, code = RhcUnits.codeBytes c}}})
+                    end
+                | NONE => ()
+            in say (name, "compiled" ^ why); c end
+        in
+          done @ [case found of
+                    SOME (UnitStore.Found ({sections, ...}, _)) => (say (name, "taken"); RhcUnits.fromEntry (name, sections))
+                  | SOME (UnitStore.FoundBehind ({sections, ...}, _)) => (say (name, "taken"); RhcUnits.fromEntry (name, sections))
+                  | SOME (UnitStore.Missed why) => compile (" (" ^ why ^ ")")
+                  | NONE => compile ""]
+        end
+      val runtime = CoreRuntime.program strings
+      val units = ("rhc-runtime", CoreText.show runtime, runtime)
+                  :: List.map (fn f => let val (text, p) = one f in (OS.Path.base (OS.Path.file f), text, p) end) (#readCore opts)
     in RhcUnits.link (List.foldl build [] units, out); 0 end
     handle RhcUnits.Error msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
          | CoreToMid.Unsupported msg =>

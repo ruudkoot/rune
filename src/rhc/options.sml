@@ -14,6 +14,9 @@ struct
      generate : int option,           (* --generate-core=SEED: print a generated program *)
      output : string option,          (* -o FILE: compile to bytecode, through Mid, in place of running *)
      units : bool,                    (* --units: with -o, each --read-core file a unit, compiled apart and linked *)
+     store : string option,           (* --store DIR: with --units, the store a unit is kept in and taken from *)
+     layers : string list,            (* --layer DIR: a store a unit is taken from and never kept in *)
+     showUnits : bool,                (* --show-units: say of each unit whether it was compiled or taken *)
      fault : CoreToMid.fault option,  (* --fault=NAME: a fault of Core to Mid made on purpose, for its tests *)
      strings : CoreRuntime.strings,   (* --strings=lazy|whole: how a string literal becomes its list (D24) *)
      help : bool,
@@ -79,6 +82,10 @@ struct
     \  -o FILE               compile to bytecode, through Mid, in place of running\n\
     \  --units               with -o, each --read-core file a unit, after rhc's runtime's,\n\
     \                        compiled apart and linked\n\
+    \  --store DIR           with --units, keep each unit in the store DIR and take it\n\
+    \                        from there where what it read is as it was\n\
+    \  --layer DIR           a store a unit is taken from and never kept in\n\
+    \  --show-units          say of each unit whether it was compiled or taken\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1)\n\
     \  --target=T            the bytecode: registers (default) or stack\n\
     \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
@@ -115,6 +122,9 @@ struct
       val generate = ref NONE
       val output = ref NONE
       val units = ref false
+      val store = ref NONE
+      val layers = ref []
+      val showUnits = ref false
       val fault = ref NONE
       val strings = ref CoreRuntime.Lazy
       val help = ref false
@@ -131,6 +141,11 @@ struct
         | go ("--version" :: rest) = (version := true; go rest)
         | go ("-o" :: file :: rest) = (output := SOME file; go rest)
         | go ("--units" :: rest) = (units := true; go rest)
+        | go ("--store" :: d :: rest) = (store := SOME d; go rest)
+        | go ["--store"] = raise Usage "--store takes a directory"
+        | go ("--layer" :: d :: rest) = (layers := !layers @ [d]; go rest)
+        | go ["--layer"] = raise Usage "--layer takes a directory"
+        | go ("--show-units" :: rest) = (showUnits := true; go rest)
         | go ["-o"] = raise Usage "-o takes a file"
         | go ("-O0" :: rest) = (Pass.level := 0; go rest)
         | go ("-O1" :: rest) = (Pass.level := 1; go rest)
@@ -160,7 +175,8 @@ struct
     in
       go args;
       {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
-       lintRules = !lintRules, generate = !generate, output = !output, units = !units, fault = !fault,
+       lintRules = !lintRules, generate = !generate, output = !output, units = !units, store = !store, layers = !layers,
+       showUnits = !showUnits, fault = !fault,
        strings = !strings, help = !help, version = !version}
     end
 end

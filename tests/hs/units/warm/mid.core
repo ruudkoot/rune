@@ -1,0 +1,3 @@
+; A unit of hs/units/warm, put between lib.core and app.core: its twice is
+; the latest unit's, which app.core takes in place of lib.core's.
+(val twice (-> Int Int) (\ ((n Int)) n))
