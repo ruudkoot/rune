@@ -101,8 +101,8 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (sp, a) => Mark (sp, exp a)
-      and fundef {name, tyvars, params, result, body} =
-        {name = name, tyvars = tyvars, params = params, result = result, body = exp body}
+      and fundef {name, label, tyvars, params, result, body} =
+        {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
     in
       if IntMap.isEmpty direct orelse not (Pass.spend ()) then p
       else

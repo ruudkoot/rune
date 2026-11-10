@@ -5,9 +5,9 @@
    * A-normal form: every operand of a call, a primitive or a constructor is
      an atom, a variable or a constant, and the datatype says so.
    * Join points: `Join (j, params, body, scope)` binds a label that `scope`
-     jumps to, in tail position only, and that no function captures. A Try
-     of Lambda is one without parameters; the rest of an expression that
-     branches, one with.
+     jumps to, in tail position only, and that no function captures. The
+     rest of a match where a rule fails is one without parameters; the rest
+     of an expression that branches, one with.
    * Functions take a list of parameters; the calling convention (M8) makes
      them n-ary, and until then each takes one.
    * The top level is a list of definitions, not one term nested once per
@@ -17,7 +17,10 @@
      position of a Handle's body is no tail call.
    * Explicitly typed, in the manner of System F: every binder says its type,
      a polymorphic one the variables it abstracts over, and every use of it
-     the types it is used at. Variables are stamps, unique in the program. *)
+     the types it is used at. Variables are stamps, unique in the program.
+   * A function may have a label: the name a person knows it by, which the
+     bytecode's function table, a disassembly and a trace show. Every copy of
+     a function a pass makes keeps it; a function without one is `fn`. *)
 structure Mid =
 struct
   type var = int
@@ -38,7 +41,7 @@ struct
   datatype atom =
       Var of var * Ty.ty list             (* a local variable, at these types for its variables *)
     | Global of var * Ty.ty list
-    | Const of Lambda.const * Ty.ty
+    | Const of Literal.const * Ty.ty
     | Con0 of int * Ty.ty                 (* a nullary constructor, by its tag, and its datatype *)
     | Unit
 
@@ -70,7 +73,8 @@ struct
     | Raise of atom
     | Return of rhs                       (* the value of the expression *)
     | Mark of pos * exp                   (* where in the source what follows came from *)
-  withtype fundef = {name : var, tyvars : int list, params : (var * Ty.ty) list, result : Ty.ty, body : exp}
+  withtype fundef = {name : var, label : string option, tyvars : int list, params : (var * Ty.ty) list, result : Ty.ty,
+                     body : exp}
 
   datatype def =
       Val of var * scheme * exp           (* a global, the value of the expression *)
@@ -130,10 +134,10 @@ struct
         | Raise a => Raise (atom s a)
         | Return r => Return (rhs s r)
         | Mark (pos, a) => Mark (pos, exp s a)
-      and fundef s ({name, tyvars, params, result, body} : fundef) : fundef =
+      and fundef s ({name, label, tyvars, params, result, body} : fundef) : fundef =
         let val s = bind (s, tyvars)
-        in {name = name, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty (s, t))) params, result = ty (s, result),
-            body = exp s body}
+        in {name = name, label = label, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty (s, t))) params,
+            result = ty (s, result), body = exp s body}
         end
       val d' =
         case d of

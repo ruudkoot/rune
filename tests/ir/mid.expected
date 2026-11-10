@@ -1,6 +1,6 @@
 (* after mid *)
 (funs
-  (fn g1 ['a 'b] ((v1 : 'a * 'b)) : 'a
+  (fn g1 ['a 'b] ((v1 : 'a * 'b)) : 'a "first"
     (let (v2 : 'a) (select 0 v1)
     (let (v3 : 'a) v2
     (return v3)))))
@@ -16,7 +16,7 @@
   (let (v12 : unit) (setglobal g3 v11)
   (return ())))))))))))
 (funs
-  (fn g4 ['c] ((v13 : 'c list)) : int
+  (fn g4 ['c] ((v13 : 'c list)) : int "len"
     (join j1 ()
       (join j2 ()
         (let (v14 : exncon) (builtinexn 0)
@@ -39,7 +39,7 @@
 (val g5 : exncon
   (return (newexn "E")))
 (funs
-  (fn g6 ((v24 : int)) : int
+  (fn g6 ((v24 : int)) : int "safe"
     (let (v25 : int) v24
     (join j3 ((v26 : int))
       (return (prim int_add 1 v26 : (int * int) -> int))

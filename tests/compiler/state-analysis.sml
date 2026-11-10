@@ -27,7 +27,7 @@ struct
       val b = CompilerState.session ()
       val first = CompilerState.withSession (a,compile)
       val () = CompilerState.withSession (a,fn () =>
-        (Types.tyconCounter := 7000; Elaborate.stampCounter := 9000;
+        (Types.tyconCounter := 7000; Stamp.counter := 9000;
          Source.overlays := StringMap.insert (!Source.overlays,"private.sml","val private = 1");
          IntTable.insert (Vector.sub (UnitBasis.paths,0),123,"private")))
       val second = CompilerState.withSession (b,compile)
@@ -36,7 +36,7 @@ struct
         need (StringMap.find (!Source.overlays,"private.sml") = NONE andalso
               IntTable.find (Vector.sub (UnitBasis.paths,0),123) = NONE,"B sees A roots"))
       val () = CompilerState.withSession (a,fn () =>
-        need (!Types.tyconCounter=7000 andalso !Elaborate.stampCounter=9000 andalso
+        need (!Types.tyconCounter=7000 andalso !Stamp.counter=9000 andalso
           IntTable.find (Vector.sub (UnitBasis.paths,0),123) = SOME "private","A roots lost"))
     in print ("PASS compiler-state integration: " ^ Int.toString (length (CompilerState.names ())) ^ " roots, byte agreement and ownership\n") end
 end

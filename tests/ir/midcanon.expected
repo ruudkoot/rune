@@ -1,7 +1,7 @@
 (* after midcanon *)
 (datatype tree ('a) (0 "Leaf") (1 "Node" : 'a tree * 'a * 'a tree))
 (funs
-  (fn g1 ['b] ((v1 : 'b tree)) : int
+  (fn g1 ['b] ((v1 : 'b tree)) : int "size"
     (join j1 ()
       (join j2 ()
         (let (v2 : exncon) (builtinexn 0)

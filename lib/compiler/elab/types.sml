@@ -112,6 +112,7 @@ struct
 
   val tyconCounter = ref 100
   val () = CompilerState.cellRoot ("Types.tyconCounter", tyconCounter)
+  val () = Pass.counter tyconCounter
   fun freshTycon (name, arity, eq) : tycon =
     let val s = !tyconCounter in tyconCounter := s + 1; mk (name, s, arity, eq) end
 
@@ -120,6 +121,7 @@ struct
 
   val tvarCounter = ref 0
   val () = CompilerState.cellRoot ("Types.tvarCounter", tvarCounter)
+  val () = Pass.counter tvarCounter
   fun freshTvar (level, kind, eq) =
     let val id = !tvarCounter
     in tvarCounter := id + 1; TVar (ref (Unbound {id = id, level = level, kind = kind, eq = eq})) end

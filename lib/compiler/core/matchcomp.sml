@@ -1,15 +1,15 @@
 (* Pattern match compilation, two ways:
-   * rule by rule (backtracking): rules are tried in order; each pattern
-     test that fails executes Fail, which transfers control to the
-     enclosing Try's fallback (the next rule) -- at -O0, for a match of one
-     rule, and where a tree would grow too big;
+   * rule by rule (backtracking): rules are tried in order, each the scope
+     of a join point without parameters that is the rest (the next rule),
+     to which each of its tests that fails jumps (tried) -- at -O0, for a
+     match of one rule, and where a tree would grow too big;
    * as a decision tree (M9, from -O1, the optional pass "trees"): see
      `trees` below. *)
 structure MatchComp =
 struct
   open Ast Lambda
 
-  fun freshVar () = Elaborate.freshStamp ()
+  val freshVar = Stamp.fresh
 
   fun bindVar (stamp, isGlobal, value, k) =
     if isGlobal then Seq (SetGlobal (stamp, value), k) else Let (stamp, value, k)
@@ -73,7 +73,7 @@ struct
                       in
                         if not once then SOME make
                         else
-                          let val g = Elaborate.freshStamp ()
+                          let val g = Stamp.fresh ()
                           in Ty.bindVar (g, rt); hoisted := (g, make) :: !hoisted; SOME (Global g) end
                       end
                   | _ => NONE)
@@ -107,11 +107,27 @@ struct
          | _ => Error.bug ("flexible record pattern did not resolve to a record at " ^ Source.describe sp))
     | NONE => Error.bug "flexible record pattern not annotated"
 
+  (* the join point of the next rule, where a test of a rule compiled rule
+     by rule fails (tried) *)
+  val nextRule = ref ~1
+  val () = CompilerState.cellRoot ("MatchComp.nextRule", nextRule)
+  fun fail () = Jump (!nextRule, [])
+  (* a rule, and the rest if it fails: a join point without parameters *)
+  fun tried (rule : unit -> lexp, rest : unit -> lexp) : lexp =
+    let
+      val j = freshVar ()
+      val outer = !nextRule
+      val () = nextRule := j
+      val a = rule ()
+      val () = nextRule := outer
+      val b = rest ()
+    in Join (j, [], b, a) end
+
   fun eqTy t = Ty.arrow (Ty.tuple [t, t], Ty.bool)
-  fun testEq (a, b, t, k) = If (Prim ("poly_eq", SOME (eqTy t), [a, b]), k, Fail)
+  fun testEq (a, b, t, k) = If (Prim ("poly_eq", SOME (eqTy t), [a, b]), k, fail ())
   fun testTag (v, tag, k) =
-    If (Prim ("poly_eq", SOME (eqTy Ty.int), [ConTag (Var v), Const (CInt (IntInf.fromInt tag), Ty.int)]), k, Fail)
-  fun testExn (v, exncon, k) = If (Prim ("ptr_eq", SOME (eqTy Ty.exnCon), [ExnCon (Var v), exncon]), k, Fail)
+    If (Prim ("poly_eq", SOME (eqTy Ty.int), [ConTag (Var v), Const (CInt (IntInf.fromInt tag), Ty.int)]), k, fail ())
+  fun testExn (v, exncon, k) = If (Prim ("ptr_eq", SOME (eqTy Ty.exnCon), [ExnCon (Var v), exncon]), k, fail ())
 
   (* The type of an exception's payload. *)
   fun exnArgTy (info : exninfo) : Ty.ty =
@@ -215,7 +231,7 @@ struct
     case rules of
       [] => failure
     | (p, body) :: rest =>
-        if refutable p then Try (compilePat (p, v, body), backtrack (v, rest, failure))
+        if refutable p then tried (fn () => compilePat (p, v, body), fn () => backtrack (v, rest, failure))
         else compilePat (p, v, body)
 
   (* Multi-argument clauses (fun declarations): each clause has one pattern
@@ -226,9 +242,9 @@ struct
     | (pats, body) :: rest =>
         let
           val canFail = List.exists refutable pats
-          val matched = ListPair.foldr (fn (p, v, k) => compilePat (p, v, k)) body (pats, vars)
+          fun matched () = ListPair.foldr (fn (p, v, k) => compilePat (p, v, k)) body (pats, vars)
         in
-          if canFail then Try (matched, backtrackClauses (vars, rest, failure)) else matched
+          if canFail then tried (matched, fn () => backtrackClauses (vars, rest, failure)) else matched ()
         end
 
   (* ---- decision trees (docs/plans/middle-end.md, M9) ---- *)
