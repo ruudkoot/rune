@@ -20,9 +20,11 @@ sig
   datatype space = Value | Type
 
   (* An entity: its space, the identity of the module that defines it, and
-     its name. A module's identity is its name for a module of the program,
-     and its library's name, a colon and its name for a library's: a
-     program's `Char` is not the library's. *)
+     its name.
+
+     A module's identity is its name for a module of the program, and its
+     library's name, a colon and its name for a library's: a program's
+     `Char` is not the library's. *)
   type entity = {space : space, home : string, name : string}
 
   (* `key e` is `e` as a string, unique to it, for maps and sets. *)
@@ -42,9 +44,10 @@ sig
     | Synonym    (* a type synonym *)
     | Class      (* a class *)
 
-  (* A top-level definition: the entity, what it is, the type or class it
-     belongs to, for a constructor, a field or a method, the number of
-     arguments a constructor takes, and where it is defined. *)
+  (* A top-level definition: its entity, what it is, and where it is.
+
+     With them, the type or class it belongs to, for a constructor, a field
+     or a method, and the number of arguments a constructor takes. *)
   type def = {entity : entity, sort : sort, parent : entity option, arity : int, span : HsSource.span}
 
   (* `defs (id, m)` is what the module `m` of identity `id` defines at its
@@ -52,8 +55,10 @@ sig
   val defs : string * HsAst.module -> def list
 
   (* A module as resolution reads it: its identity, its name, its tree,
-     and its imports, each with the identity of the module it names, the
-     implicit import of the Prelude among them where the module has one. *)
+     and its imports.
+
+     Each import has the identity of the module it names, the implicit
+     import of the Prelude among them where the module has one. *)
   type unit_ = {id : string, name : string, ast : HsAst.module, imports : (HsAst.import * string) list}
 
   (* What is in scope in a module: the entities a name stands for, by
@@ -78,10 +83,12 @@ sig
 
   (* `solve {group, exportsOf, defOf, universe, fixpoint}` solves the
      exports and the scopes of the strongly connected group of modules
-     `group`, where `exportsOf id` gives the exports of a module outside
-     the group, solved before it, `defOf` gives the definition of every
-     entity of the program, by `key`, and `universe` is every entity of
-     the program, from which the greatest fixpoint starts. The errors are
+     `group`.
+
+     `exportsOf id` gives the exports of a module outside the group,
+     solved before it, `defOf` gives the definition of every entity of the
+     program, by `key`, and `universe` is every entity of the program,
+     from which the greatest fixpoint starts. The errors are
      those of chapter 5: an export of what is not in scope, of a module
      that is not imported, two entities exported under one name, an import
      of what a module does not export. *)
