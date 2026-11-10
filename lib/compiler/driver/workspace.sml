@@ -96,7 +96,7 @@ struct
     in up (P.directory windows (keyOf (windows,here ()) file)) end
 
   (* the directory of the nearest root file above a file, not read: where
-     the workspace's store is (UnitCache.directory) *)
+     the workspace's store is (StorePolicy.directory) *)
   fun rootOf {file : string, windows : bool} : string option =
     Option.map (P.directory windows) (List.find exists (candidates {file=file,windows=windows}))
 

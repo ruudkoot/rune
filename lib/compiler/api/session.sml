@@ -184,7 +184,7 @@ struct
                 val source={file=file,text= #text loaded,mode=Source.Ascii}
                 val ()=UnitBasis.position (!env,!fixity)
                 val key=UnitCache.key {name=name,text= #text loaded,allow=allow,settings=""}
-                val found=case (useCache,UnitCache.frozen ()) of
+                val found=case (useCache,StorePolicy.frozen ()) of
                   (true,SOME directory) => UnitCache.find (directory,UnitCache.configuration (),key)
                 | _ => UnitCache.Missed "cache disabled"
             in

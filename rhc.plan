@@ -234,6 +234,7 @@ program
     unit compiler:backend/prims.sml lib/compiler/backend/prims.sml ascii
     unit compiler:settings.sml lib/compiler/settings.sml ascii
     unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
+    unit compiler:driver/storepolicy.sml lib/compiler/driver/storepolicy.sml ascii
     unit compiler:core/lambda.sml lib/compiler/core/lambda.sml ascii
     unit compiler:core/irrules.sml lib/compiler/core/irrules.sml ascii
     unit compiler:core/mid.sml lib/compiler/core/mid.sml ascii
@@ -280,7 +281,7 @@ program
 end
 provenance
   input rhc.build 5aaf67ce9f69c57bb885a92f07ee325c4216fba4441fcc26dc0f551d935d6a10
-  input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
+  input lib/compiler/mid.build 3457b8d2776d3c493c09d63ea2ee5df01b4dfe1a92dc0195f2922a10ea3587cf
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
   input lib/language/haskell/library.build 9fdd6aea19e1eaa2dd4197b7e14f10084e4a2dbf597bd5acb6bf200dcdcabd08
