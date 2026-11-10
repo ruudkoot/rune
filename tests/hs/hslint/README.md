@@ -33,3 +33,10 @@ them line by line before committing.
 `disagreements.tsv` lists the programs of `tests/hs` on which HsLint and the program's expectation part, and why: a
 reading, a bug of HsLint's, or a program that does not mean what it says. Each is held to still disagreeing, so that a
 fix on either side shows; its line is removed then.
+
+## The two judges
+
+The same jobs run the checker alone (`bin/rhc --typecheck-only --lint=off`) and HsLint's second inference alone
+(`bin/rhc --dump-hslint`) on every program of `tests/hs/accept`, `tests/hs/lang` and the type rows of `tests/hs/errors`,
+and want one verdict, refused or not. `judges.tsv` lists the programs on which they part, each with why: a gap or a bug
+of one of them, or a reading; each is held to still parting, so that a fix shows.

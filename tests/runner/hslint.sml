@@ -34,6 +34,10 @@
      hslint` and `[RULE]`; and the faults are the rules `bin/rhc
      --hslint-rules` names, both ways.
 
+   The same jobs run the checker alone (`--typecheck-only --lint=off`)
+   beside HsLint's second inference alone, and want one verdict of the two
+   judges; tests/hs/hslint/judges.tsv lists where they part, each with why.
+
    A program on which HsLint and its expectation disagree is a finding: a
    reading, a bug of HsLint's, or a program that does not mean what it
    says. tests/hs/hslint/disagreements.tsv lists those not settled yet,
@@ -125,8 +129,17 @@ struct
         (programs "tests/hs/errors")
     end
 
+  (* the judges' disagreements listed: the program, from tests/hs, and why *)
+  fun judgeDisagreements () =
+    List.mapPartial (fn l => case String.fields (fn c => c = #"\t") l of
+                               p :: why :: _ => if String.isPrefix "#" p orelse p = "program" then NONE else SOME (p, why)
+                             | _ => NONE)
+      (lines (read (fromRoot (dir ^ "/judges.tsv"))))
+
   (* `expectOne (kind, name)`: a program of tests/hs/KIND, accept or lang
-     inferred, errors refused *)
+     inferred, errors refused; and the two judges, the checker alone
+     (`--typecheck-only --lint=off`) and HsLint's second inference alone
+     (`--dump-hslint`), of one verdict *)
   fun expectOne (kind, name) =
     case List.find (fn (p : Lang.program) => #name p = name) (programs ("tests/hs/" ^ kind)) of
       NONE => fail ("hs/hslint/" ^ kind ^ "/" ^ name ^ ": no such program")
@@ -140,7 +153,7 @@ struct
           val first = case lines got of l :: _ => l | [] => firstLine (out ^ ".err")
           val disagrees = if kind = "errors" then status = 0 else refused
         in
-          case (disagrees, listed) of
+          (case (disagrees, listed) of
             (false, NONE) =>
               if kind <> "errors" andalso status <> 0 then say ("NOTE " ^ key ^ ": refused before HsLint: " ^ first ^ "\n")
               else ()
@@ -151,8 +164,28 @@ struct
                      else "HsLint refuses: " ^ first) ^ " (" ^ out ^ ")")
           | (false, SOME _) =>
               fail ("hs/hslint/" ^ key ^ ": listed in " ^ dir ^ "/disagreements.tsv, and HsLint and its expectation agree " ^
-                    "now: remove the line")
+                    "now: remove the line"));
+          judges (key, p, status <> 0, out)
         end
+
+  (* the checker's verdict against HsLint's, refused or not *)
+  and judges (key, p : Lang.program, hslintRefuses, out) =
+    let
+      val checkerOut = out ^ ".checker"
+      val (checked, _) = rhc (["--typecheck-only", "--lint=off"], #src p, checkerOut)
+      val checkerRefuses = checked <> 0
+      val listed = List.find (fn (q, _) => q = key) (judgeDisagreements ())
+    in
+      case (checkerRefuses = hslintRefuses, listed) of
+        (true, NONE) => ()
+      | (false, SOME (_, why)) => say ("NOTE " ^ key ^ ": a listed disagreement of the judges: " ^ why ^ "\n")
+      | (false, NONE) =>
+          fail ("hs/hslint/" ^ key ^ ": the judges part: " ^
+                (if checkerRefuses then "the checker refuses (" ^ firstLine (checkerOut ^ ".err") ^ ") and HsLint accepts"
+                 else "HsLint refuses and the checker accepts") ^ " (" ^ out ^ ")")
+      | (true, SOME _) =>
+          fail ("hs/hslint/" ^ key ^ ": listed in " ^ dir ^ "/judges.tsv, and the judges agree now: remove the line")
+    end
 
   (* the K-th shard of N of a directory's programs *)
   val shards = 4

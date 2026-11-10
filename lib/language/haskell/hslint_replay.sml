@@ -173,7 +173,8 @@ struct
     in
       #decls src := (mid, decls) :: !(#decls src);
       List.app decl decls;
-      List.app (fn A.D ({span, ...}, A.DInstance (_, c, _, body)) => #instances src := (span, c, getOpt (body, [])) :: !(#instances src)
+      List.app (fn A.D ({span, ...}, A.DInstance (_, c, _, body)) =>
+                     #instances src := (span, c, getOpt (body, [])) :: !(#instances src)
                  | _ => ())
         decls
     end
@@ -371,8 +372,6 @@ struct
             SOME {ctx, ...} => SOME (List.map (fn {cls, ty} => convPred {cls = cls, ty = H.substGen (tys, ty)}) ctx)
           | NONE => NONE
 
-      fun prelude name = {qual = !E.prelude, name = name} : T.id
-      val idText = fn (q : T.id) => #name q
 
       (* the dictionaries of each record *)
       fun check (key, recs) =
@@ -605,7 +604,8 @@ struct
                        case theirs of
                          SOME th =>
                            if HsLintClaims.canonical (T.showTy th) = HsLintClaims.canonical (T.showTy mine) then ()
-                           else breach (s, "method", "the method `" ^ HsLintInfer.plain id ^ "` of the instance " ^ #name (nameOf cls) ^
+                           else breach (s, "method", "the method `" ^ HsLintInfer.plain id ^ "` of the instance " ^
+                                                     #name (nameOf cls) ^
                                                      " " ^ #name tc ^ " is bound at " ^ T.showTy th ^ ", and its type there is " ^
                                                      T.showTy mine ^ " (a method's slot)")
                        | NONE => ()

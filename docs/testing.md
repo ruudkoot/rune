@@ -717,7 +717,11 @@ program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. The first of
 the four is in `check`, the other three `nightly` (D56; the lead's ruling 45). A program on
 which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
 why, and its job holds the disagreement to still being there, so that a fix
-on either side is seen. HsLint also holds the inference to a record's
+on either side is seen. The same jobs hold the two judges to one verdict on
+every program, the checker alone (`--typecheck-only --lint=off`) and
+HsLint's second inference alone (`--dump-hslint`): where they part, the
+program is listed in `tests/hs/hslint/judges.tsv` with why, and held there
+the same way. HsLint also holds the inference to a record's
 claims of it, in the dump's form (`--hslint-claims=FILE`), each difference
 refused by the rule it breaks, `[rule1] ...` (`bin/rhc --hslint-rules`
 names them); the checker's evidence records are to be its claims (M13).
