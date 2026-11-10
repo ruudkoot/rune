@@ -97,6 +97,8 @@ struct
     \                        or whole, every cell at once, for D24's measurement\n\
     \  --desugar-only        on a program of Haskell: check it, desugar it to Core, CoreLint\n\
     \                        that, and run nothing (with --dump-after=desugar, print it)\n\
+    \  --desugar-units       on a program of Haskell: desugar it a unit at a time, each group of\n\
+    \                        modules after the interfaces of those before, and join the units\n\
     \  --match=M             the order of a match in Haskell: report, the Report's, a clause\n\
     \                        after another (default), or sestoft, decision trees that make no\n\
     \                        test the tests made decide, for D34's measurement\n\

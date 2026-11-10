@@ -84,6 +84,7 @@ struct
         (tycons := M.insert (!tycons, t, {params = ps, shape = NewS (c, f), kind = kindOfParams ps});
          cons := M.insert (!cons, c, {tycon = t, params = ps, fields = [f]}))
     | Core.Val (x, t, _) => values := M.insert (!values, x, t)
+    | Core.Import (x, t) => values := M.insert (!values, x, t)
 
   (* a tuple of n components, its type and its constructor `(,...,)`, of
      arbitrary length (3.8): each declared where it is first wanted *)

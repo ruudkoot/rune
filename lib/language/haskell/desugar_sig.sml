@@ -45,50 +45,85 @@ sig
      resolved, and whether it is the library's. *)
   type module_ = {id : string, ast : HsAst.module, library : bool}
 
-  (* `program {modules, infer, evidence, derived, prelude, entity, runtime,
-     leaves, main}` is the Core program of the checked `modules`.
+  (* `program {modules, groups, infer, evidence, derived, prelude, entity,
+     runtime, leaves, main}` is the Core program of the checked `modules`.
 
      The modules are every module of the program and of the library it
-     reaches, whose checking left the environment `infer`, the records
-     `evidence` and the methods of the derived instances, `derived`, each
-     with its module and its instance's identity (HsDerive, M14), which are
-     desugared as a written instance's.
+     reaches, in `groups`, their strongly connected groups by identity in
+     order, each desugared as a unit after those before it (`unit`). Their
+     checking left the environment `infer`, the records `evidence` and the
+     methods of the derived instances, `derived`, each with its module and
+     its instance's identity (HsDerive, M14), which are desugared as a
+     written instance's.
 
      `prelude` and `entity` find what the translations name (HsDsEnv);
      `runtime` is rhc's runtime in Core, whose types it is written against
      and which it does not repeat; `leaves` are the modules of primitives
      that no file holds, each with what it exports, the runtime's values of
      those names; `main` is the key of the program's `main`. The result
-     holds what `main` reaches, and the data types of the program.
+     holds what `main` reaches, and the data types it names, each body made
+     only where `main` reaches it.
 
      Raises: `Fail` for what the checker should have refused, or a form
      this desugaring does not take, with a message. *)
-  val program : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
-                 derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option, entity : string * string * string -> string,
-                 runtime : Core.program, leaves : (string * string list) list, main : string}
+  val program : {modules : module_ list, groups : string list list, infer : HsInfer.env, evidence : HsEvidence.table,
+                 derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
+                 entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list,
+                 main : string}
                 -> Core.program
 
-  (* ---- The library's part, once ----
+  (* ---- Units (M21) ----
 
-     `program` is the library's part and then the program's: the first
-     declares Core's own types, the leaves' values and every type, class,
-     instance and value of the library's modules, and the second those of
-     the program's modules and main, against the first. So a saved world
-     (D45's B) may make the library's part once, with every body, and each
-     program only its own: a value's Core is the same either way, its names
-     numbered from the first within it (HsDsCore.canonical) and a pattern
-     binding of the top level named after its first variable. *)
+     A unit is a strongly connected group of modules, desugared after the
+     units before it from their interfaces alone: every type, class,
+     instance and value its modules declare, a value's Core the same in
+     every unit and in the whole program, its names numbered from the first
+     within it (HsDsCore.canonical) and a pattern binding of the top level
+     named after its first variable. The first unit also declares Core's
+     own types the desugaring makes (IO's newtype, `()`, `[]`, the tuples
+     to 15), the raisers (HsDsCore.raisers) and the leaves' values. *)
 
-  (* The library's part: what its declarations left known, its types and
-     its values, each value's body made the first time it is wanted. *)
+  (* What a unit's desugaring leaves the units after it.
+
+     `core` is its types and its values as imports (`(import x TYPE)`);
+     `primTypes` each type of the library with no constructor, by key, made
+     Core's own, and `builtinCons` Bool's constructors, Core's; `fields`
+     each constructor's fields' keys (`""` for one with no name), and
+     `constructors` each data type's constructors' keys, in order; `leaves`
+     the keys of the leaves' values, and `defaults` the methods with a
+     default (a `%dm:` value). *)
+  type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,
+                    fields : (string * string list) list, constructors : (string * string list) list,
+                    leaves : string list, defaults : string list}
+
+  (* `unit p` is the Core of the unit of the modules of `p`, after the units
+     of its interfaces, in order, and its interface.
+
+     The Core is its types, a copy of each type of the units before that it
+     names, an import of each of their values that it names, and every
+     value it defines; the runtime's names are left to the runtime's unit.
+     `infer` and `evidence` are a checking that holds the unit's modules and
+     what they import; `leaves` is the first unit's, and `main`, the key of
+     the program's `main`, the unit's that defines it, whose Core then has
+     Core's `main`. The rest is as `program` takes it. *)
+  val unit : {interfaces : interface list, modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
+              derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
+              entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list,
+              main : string option}
+             -> Core.program * interface
+
+  (* ---- The library's units, once ---- *)
+
+  (* The library's units, desugared once (D45's saved world), each value's
+     body made the first time it is wanted. *)
   type library
 
-  (* `library p` is the library's part of the modules of `p` marked
+  (* `library p` is the units of the groups of `p` that hold modules marked
      `library`.
 
      `p` is a checking of the library alone (every instance of its
      environment is the library's), in `program`'s form without `main`. *)
-  val library : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
+  val library : {modules : module_ list, groups : string list list, infer : HsInfer.env, evidence : HsEvidence.table,
                  derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
                  entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list}
                 -> library
@@ -97,14 +132,15 @@ sig
      them; a body that fails is failed again where a program reaches it. *)
   val prepare : library -> unit
 
-  (* `programOn (lib, p)` is `program` of `p` with the library's part
-     `lib`: the modules of `p` not marked `library` desugared against it.
+  (* `programOn (lib, p)` is `program` of `p` with the library's units
+     `lib`: the groups of `p` that hold no module of the library desugared
+     after them.
 
      The modules, environment, records and derived instances of `p` are the
      whole checking's, the library's among them, as `program` takes them;
      a value of the library is `lib`'s. *)
-  val programOn : library * {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
-                             derived : (string * string * HsAst.decl list) list,
+  val programOn : library * {modules : module_ list, groups : string list list, infer : HsInfer.env,
+                             evidence : HsEvidence.table, derived : (string * string * HsAst.decl list) list,
                              prelude : string * string -> string option, entity : string * string * string -> string,
                              main : string}
                   -> Core.program

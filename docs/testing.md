@@ -882,11 +882,15 @@ is none; compiled through Mid and run on the VM the same
 which desugars to the same Core text (`hs/desugar/braces/NAME`, `rhc
 --desugar-only --dump-after=desugar`). Each pair `relations/NAME.hs` and
 `NAME.parens.hs`, the program with every application of an operator in
-parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`). Over
-the run programs of `tests/hs/lang` the two orders agree on what they print
-and on a value or a bottom (`hs/desugar/orders/NAME`), held while the
-program's rows are `Planned`. The programs avoid what M14's deriving and
-the runtime's arrays are still to give, and their expected output is GHC's.
+parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`).
+Desugared a unit at a time, each strongly connected group of modules after
+the interfaces of those before it, and the units joined (`rhc
+--desugar-units`, M21), each prints the same on Core's interpreter
+(`hs/desugar/units/NAME`). Over the run programs of `tests/hs/lang` the two
+orders agree on what they print and on a value or a bottom
+(`hs/desugar/orders/NAME`), held while the program's rows are `Planned`.
+The programs avoid what M14's deriving and the runtime's arrays are still
+to give, and their expected output is GHC's.
 The seeds for desugaring (clause order reversed, `~` made strict, a
 `newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
 that `report/order`, `report/lazy` and `report/newtype` catch.

@@ -10,6 +10,10 @@
    (hs/desugar/braces/NAME). A pair tests/hs/desugar/relations/NAME.hs and
    NAME.parens.hs, the same program with every operator's application in
    parentheses, desugars to the same Core text (hs/desugar/parens/NAME).
+   Desugared a unit at a time, each strongly connected group of modules
+   after the interfaces of those before it, and the units joined
+   (`--desugar-units`, M21), each prints its .expected on Core's
+   interpreter the same (hs/desugar/units/NAME).
 
    Over the run programs of tests/hs/lang, the two orders agree: what one
    prints the other prints, and both end in a value or both in a bottom
@@ -59,6 +63,10 @@ struct
   fun ordered (order, p : Lang.program) () =
     let val w = workFor (order, #name p)
     in judge (order, p, w, interpret (p, ["--match=" ^ order], w, "run")) end
+
+  fun units (p : Lang.program) () =
+    let val w = workFor ("units", #name p)
+    in judge ("units", p, w, interpret (p, ["--desugar-units"], w, "run")) end
 
   fun vm (p : Lang.program) () =
     let
@@ -144,6 +152,7 @@ struct
             ("report", SOME p) => ordered ("report", p) ()
           | ("sestoft", SOME p) => ordered ("sestoft", p) ()
           | ("vm", SOME p) => vm p ()
+          | ("units", SOME p) => units p ()
           | ("braces", SOME p) => braces p ()
           | ("parens", _) => parens name ()
           | ("orders", _) =>
@@ -166,6 +175,7 @@ struct
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "check" (Test.tag "hs" (Test.describe "hs/desugar"
            [family ("report", own), family ("sestoft", own), family ("vm", own), family ("braces", own),
+            family ("units", own),
             Test.describe "parens" (List.map (fn n => job ("parens", n)) (pairs ())),
             Test.describe "orders"
               (List.map (fn (p : Lang.program) =>
