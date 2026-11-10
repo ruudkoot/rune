@@ -381,3 +381,17 @@ follows the prose: both programs exit as error. Rows: `lib.r.array.strict.bounds
 `hIsClosed` answer of a semi-closed handle (E9's R49). The lead's ruling 37: neither, so both are `False`, as **GHC**
 does. Implementation-defined (D53); rhc implements it with M18's IO, and the program that pins it is held until then.
 Rows: `lib.r.io.semi.state`.
+
+### R157. `floatToDigits` at a power of the radix keeps the code's low margin
+> -- Based on "Printing Floating-Point Numbers Quickly and Accurately" by R.G. Burger and R. K. Dybvig (14.4, Numeric)
+> if e >= 0 then let be = b^e in if f == b^(p-1) then (f*be*b*2, 2*b, be*b, b) (14.4, Numeric, floatToDigits)
+
+**What the text says.** At a mantissa that is a power of the radix with `e >= 0`, the code takes the low margin `mDn`
+as `b`, where Burger and Dybvig take `b^e`. Its digits still read back to the number, but they are not always the
+shortest or the closest: `floatToDigits 10 (2^70 :: Double)` ends `...4114`, so `show (2^70 :: Double)` is
+`1.1805916207174114e21`, and `show (2^70 :: Float)` is `1.18059163e21`, nine digits. 14.1 promises only
+`r = 0.d1...dn * b^e` (R151), not the shortest or the closest digits, so the code contradicts no text, and by D38 the
+printed code stands (the lead's ruling, on L's finding). **GHC** and **MicroHs** follow Burger and Dybvig
+(`1.1805916207174113e21`, `1.1805916e21`); **nhc98** keeps the Report's line. Expected output written from GHC at
+such numbers differs from rhc's: a program's expected `show` of a power of two from `2^p` up comes from the code.
+**rhc** follows the code. Rows: `lib.r.numeric.floattodigits.shortest`.

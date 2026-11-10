@@ -438,3 +438,6 @@ mhs | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: MicroHs has no lo
 mhs | hs/lang/lib.r.array.strict.bounds_empty_error::run | SPEC-AMBIGUOUS | exit: R155: MicroHs's array checks no bounds with no association, as 16.4's code; 16.1's prose, which D52's judges take, makes it bottom
 nhc98 | hs/lang/lib.r.io.semi.state_neither::run | HOST-BUG | exit: nhc98's IO has no hIsOpen (21.8)
 mhs | hs/lang/lib.r.io.semi.state_neither::run | SPEC-AMBIGUOUS | diff: R156: implementation-defined (D53): MicroHs takes a semi-closed handle as open
+ghc | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R157: GHC's floatToDigits takes Burger and Dybvig's low margin b^e at a power of the radix, where the printed code takes b: 2^70 is 1.1805916207174113e21 and 1.1805916e21, not the code's ...114e21 and 1.18059163e21
+mhs | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R157: MicroHs's floatToDigits takes Burger and Dybvig's low margin b^e at a power of the radix, where the printed code takes b
+hugs | hs/lang/lib.r.numeric.floattodigits.shortest_power::run | HOST-BUG | diff: R55: Hugs's show of a Double and a Float is %.15g and %.7g, not showFloat's digits (its Numeric follows the code)

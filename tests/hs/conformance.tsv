@@ -2912,7 +2912,7 @@ lib.r.numeric.fromrat	14.3	fromRat converts a Rational into any RealFloat type	l
 lib.r.numeric.showintatbase.neg	14.4	showIntAtBase is an error on a negative number	library	run	exits as error	hand	Planned		
 lib.r.numeric.nan	14.4	NaN and infinities are shown as "NaN", "Infinity", "-Infinity"	library	run	from formatRealFloat	hand	Planned		
 lib.r.numeric.floattodigits.zero	14.4	floatToDigits _ 0 = ([],0)	library	run	exact	hand	Planned		
-lib.r.numeric.floattodigits.shortest	14.4	The code is the shortest-uniquely-identifying digit generation of its citation	library	run	`show 0.1` is "0.1" at Float and Double	hand	Planned		
+lib.r.numeric.floattodigits.shortest	14.4	The code is the shortest-uniquely-identifying digit generation of its citation	library	run	`show 0.1` is "0.1" at Float and Double	hand	Planned	R157	
 lib.r.numeric.readfloat.special	14.4	readFloat reads "NaN" and "Infinity"	library	run	from the code	hand	Planned		
 lib.numeric.fromrat	14.4	fromRat has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.numeric.fromratp	14.4	fromRat' has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
