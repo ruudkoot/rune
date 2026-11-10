@@ -1,5 +1,5 @@
 # The program's PreludeBuiltin and UnicodePrims are its own, imported with no error, beside the library's.
-pairs 532
+pairs 797
 EXPORT	PreludeBuiltin	vPreludeBuiltin primAnswer
 EXPORT	PreludeBuiltin	vPreludeBuiltin primError
 EXPORT	UnicodePrims	vUnicodePrims primUnicodeMaxChar

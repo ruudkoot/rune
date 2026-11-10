@@ -995,7 +995,7 @@ def.cond.numeric	4.3.4	at least one of the classes must be numeric, that is Num 
 def.cond.numeric.each	4.3.4	each of Num, Real, Integral, Fractional, Floating, RealFrac, RealFloat counts as numeric	static	run	an otherwise ambiguous expression at each class defaults and prints	hand	Planned		
 def.cond.standard	4.3.4	all of the classes must be defined in the Prelude or a standard library	static	reject	with a user class C, `c 1` where `c :: (C a, Num a) => a -> Int` is refused	hand	Planned		
 def.cond.standard.library	4.3.4	a class of a standard library counts	static	run	`range (1,3)` needs (Ix a, Num a) and defaults; `Random` likewise	hand	Planned		
-def.pick.first	4.3.4	a defaultable variable is replaced by the first type in the list that is an instance of all its classes	static	run	under `default (Int, Double)`, `show (maxBound - 1)`-like choice of Int, and `show (1/2)` skips Int	hand	Planned		
+def.pick.first	4.3.4	a defaultable variable is replaced by the first type in the list that is an instance of all its classes	static	run	under `default (Int, Double)`, `show (maxBound - 1)`-like choice of Int, and `show (1/2)` skips Int	hand	Planned	R93	
 def.pick.none	4.3.4	it is a static error if no such type is found	static	reject	`default (Int)` with `show 1.5` is refused	hand	Planned		
 def.pick.separate	4.3.4	each defaultable variable is defaulted by itself	static	run	`show (2^10, 1/2)` under the implicit default takes Integer for the integers and Double for the fraction	hand	Planned		
 def.one.permodule	4.3.4	only one default declaration is permitted per module	static	reject	two default declarations are refused	hand	Planned		
@@ -1392,7 +1392,7 @@ mod.inst.qualified	5.4	A qualified import brings the instances	module	run	import
 mod.inst.hidden	5.4	A hiding import brings the instances	module	run	import M hiding (T)	hand	Planned		
 mod.inst.myinstances	5.4	Example: a module whose only purpose is instances can have an empty export list	module	accept	module MyInstances() with instance Show (a -> b) and instance Show (IO a)	hand	Supported		
 mod.inst.myinstances.run	5.4	Importing it makes those instances available	module	run	import MyInstances (); show id gives <<function>>; show (return ()) gives <<IO action>>	hand	Planned		
-mod.inst.recursive	5.4	An import chain may run through a module cycle	module	run	an instance reached only round a cycle of imports	hand	Planned		
+mod.inst.recursive	5.4	An import chain may run through a module cycle	module	run	an instance reached only round a cycle of imports	hand	Planned	R94	
 mod.inst.dup.program	5.4	4.3.2's one instance per class and type holds of the program, so also of modules that do not see each other	static	reject	two unconnected modules define one instance, Main imports both or neither sees the other: see readings.md	hand	Planned	R26	
 mod.qual.toplevel	5.5.1	A top-level declaration brings both the unqualified and the qualified name into scope	module	accept	module M where f x = x; g x = M.f x	hand	Supported		
 mod.qual.def.top	5.5.1	A defining occurrence must use the unqualified name	syntax	reject	M.f x = 1 at top level: refused	hand	Supported		
@@ -2645,7 +2645,7 @@ der.cond.bounded.neither	10	Condition 3: Bounded on neither an enumeration nor a
 der.cond.enum.fields	10	Condition 4: Enum requires an enumeration	static	reject	`data T = A Int deriving Enum` is refused	hand	Planned		
 der.cond.enum.mixed	10	Condition 4: one constructor with a field disqualifies the type	static	reject	`data T = A | B Int deriving Enum` is refused	hand	Planned		
 der.cond.noexplicit	10	Condition 5: no explicit instance elsewhere in the program may make T an instance of C	static	reject	`data T = A deriving Eq; instance Eq T` is refused	hand	Planned		
-der.cond.noexplicit.module	10	Condition 5 reads "elsewhere in the program": an explicit instance in another module also conflicts	module	reject	a second module with `instance Eq T` for the derived T is refused; whole-program check, see readings.md	hand	Planned	R26	
+der.cond.noexplicit.module	10	Condition 5 reads "elsewhere in the program": an explicit instance in another module also conflicts	module	reject	a second module with `instance Eq T` for the derived T is refused; whole-program check, see readings.md	hand	Planned	R26 R91	
 der.newtype.asdata	10	For derived instances a newtype is treated as a data declaration with a single constructor	static	accept	`newtype N = N Int deriving (Eq, Ord, Show, Read)` compiles	hand	Planned		
 der.newtype.show	10	A derived Show of a newtype shows its constructor	dynamic	run	`show (N 1)` is "N 1"	hand	Planned		
 der.newtype.record	10	A newtype with a field label derives Show as record syntax	dynamic	run	`show (Age {unAge = 3})` uses braces	hand	Planned		
@@ -2675,7 +2675,7 @@ der.ord.example.bool	10.1	Example: for Bool, (True > False) == True	dynamic	run	
 der.ord.fields.lexi	10.1	Within one constructor, fields compare lexicographically	dynamic	run	`T 1 9 < T 2 0` is True	hand	Planned		
 der.ord.compare.eq	10.1	compare returns EQ on equal values	dynamic	run	prints EQ	hand	Planned		
 der.ord.maxmin.pair	10.1	max and min of derived Ord are the class's: (min x y, max x y) = (x,y) or (y,x)	dynamic	run	on equal-comparing values	hand	Planned		
-der.ord.partial	10.1	Derived Ord over a field without a total order (Double NaN): the Report's Figure 10.1 form and a compare-based form differ	dynamic	run	`data T = T Double deriving (Eq,Ord)` with NaN: see readings.md	hand	Planned	R45	
+der.ord.partial	10.1	Derived Ord over a field without a total order (Double NaN): the Report's Figure 10.1 form and a compare-based form differ	dynamic	run	`data T = T Double deriving (Eq,Ord)` with NaN: see readings.md	hand	Planned	R45 R90	
 der.eq.lefttoright	10.1	Derived comparisons always traverse constructors from left to right	dynamic	run	a field to the right of a differing one is not evaluated	hand	Planned		
 der.eq.example.1	10.1	Example: (1,undefined) == (2,undefined) is False	dynamic	run	prints False	hand	Planned		
 der.eq.example.2	10.1	Example: (undefined,1) == (undefined,2) is _|_	dynamic	run	exits as error	hand	Planned		
@@ -2729,16 +2729,16 @@ der.show.paren.atomic	10.4	A nullary constructor is atomic	dynamic	run	`showsPre
 der.show.app.prec	10.4	Function application has precedence 10	dynamic	run	parentheses at d = 11 and none at d = 10	hand	Planned		
 der.show.arg.prec	10.4	Arguments of a prefix constructor are shown at precedence 11	dynamic	run	`show (Just (Just 1))` is "Just (Just 1)"	hand	Planned		
 der.show.neg.integer	10.4	A negative Int or Integer argument is parenthesised	dynamic	run	`show (Just (-1))` is "Just (-1)", by showSigned	hand	Planned		
-der.show.neg.float	10.4	A negative Float or Double argument: Report's code ignores the precedence and gives "Just -1.5", which contradicts "syntactically correct"	dynamic	run	see readings.md: expected output depends on the reading	hand	Planned	R42	
+der.show.neg.float	10.4	A negative Float or Double argument: Report's code ignores the precedence and gives "Just -1.5", which contradicts "syntactically correct"	dynamic	run	see readings.md: expected output depends on the reading	hand	Planned	R42 R88	
 der.show.syntactic	10.4	The result of show is a syntactically correct Haskell expression containing only constants, given the fixities in force where the type is declared	dynamic	run	a generated corpus of shown values reparsed as expressions	hand	Planned		
 der.show.only	10.4	The result contains only constructor names, parentheses and spaces, plus the constants of its fields	dynamic	run	exact string comparison	hand	Planned		
-der.show.record.chars	10.4	With labelled fields braces, commas, field names and equal signs are also used	dynamic	run	exact string, spacing a reading: see readings.md	hand	Planned	R41	
-der.show.record.form	10.4	A record constructor is shown in record syntax (6.3.3: the style in which it was declared)	dynamic	run	`C {f = 1, g = 2}` as Figure-less text: the spacing is not specified, see readings.md	hand	Planned	R41	
-der.show.record.prec	10.4	The precedence at which a record value is parenthesised is not given	dynamic	run	`showsPrec 11 (C {f = 1}) ""`: see readings.md	hand	Planned	R41	
-der.show.record.neg	10.4	The precedence of a record field's value is not given; a negative value in a field	dynamic	run	`show (C {f = -1})`: see readings.md	hand	Planned	R41	
-der.show.record.opfield	10.4	A field named by an operator must still give a syntactically correct expression	dynamic	run	`data T = T {(+++) :: Int}` shows "(+++)": see readings.md	hand	Planned	R41	
-der.show.record.opcon	10.4	A record constructor named by an operator must still give a syntactically correct expression	dynamic	run	`data T = (:+:) {f :: Int}`: see readings.md	hand	Planned	R41	
-der.show.record.empty	10.4	A constructor declared with empty braces is shown	dynamic	run	`data T = C {}`: see readings.md	hand	Planned	R41	
+der.show.record.chars	10.4	With labelled fields braces, commas, field names and equal signs are also used	dynamic	run	exact string, spacing a reading: see readings.md	hand	Planned	R41 R87	
+der.show.record.form	10.4	A record constructor is shown in record syntax (6.3.3: the style in which it was declared)	dynamic	run	`C {f = 1, g = 2}` as Figure-less text: the spacing is not specified, see readings.md	hand	Planned	R41 R87	
+der.show.record.prec	10.4	The precedence at which a record value is parenthesised is not given	dynamic	run	`showsPrec 11 (C {f = 1}) ""`: see readings.md	hand	Planned	R41 R87	
+der.show.record.neg	10.4	The precedence of a record field's value is not given; a negative value in a field	dynamic	run	`show (C {f = -1})`: see readings.md	hand	Planned	R41 R87	
+der.show.record.opfield	10.4	A field named by an operator must still give a syntactically correct expression	dynamic	run	`data T = T {(+++) :: Int}` shows "(+++)": see readings.md	hand	Planned	R41 R87	
+der.show.record.opcon	10.4	A record constructor named by an operator must still give a syntactically correct expression	dynamic	run	`data T = (:+:) {f :: Int}`: see readings.md	hand	Planned	R41 R87	
+der.show.record.empty	10.4	A constructor declared with empty braces is shown	dynamic	run	`data T = C {}`: see readings.md	hand	Planned	R41 R87	
 der.show.parens.needed	10.4	Parentheses are added only where needed, ignoring associativity	dynamic	run	exact string comparison	hand	Planned		
 der.show.nolinebreak	10.4	No line breaks are added	dynamic	run	a large value's string has no newline of its own	hand	Planned		
 der.show.assoc.ignored	10.4	Associativity is not used to reduce parentheses, though precedence may be	dynamic	run	`:$` example below	hand	Planned		
@@ -2746,13 +2746,13 @@ der.show.example.fixity	10.4	Example: `infixr 4 :$; data T = Int :$ T | NT`: sho
 der.show.fixity.declared	10.4	The declared fixity of an infix constructor sets its parenthesisation	dynamic	run	`showsPrec (p+1)` parenthesises, `showsPrec p` does not	hand	Planned		
 der.show.fixity.default	10.4	An infix constructor with no fixity declaration is infixl 9	dynamic	run	arguments at 10, parenthesised above 9	hand	Planned		
 der.show.fixity.point	10.4	The fixity used is that in force where the type is declared, not at the use	module	run	a client that defines a same-named local fixity sees no change	hand	Planned		
-der.show.infix.backtick	10.4	A constructor declared infix with backquotes is "defined to be an infix operator"?	dynamic	run	``data T = Int `C` Int``: the Report gives no output: see readings.md	hand	Planned	R41	
-der.show.prefix.opcon	10.4	An operator constructor declared prefix	dynamic	run	`data T = (:+) Int Int`: which style: see readings.md	hand	Planned	R41	
+der.show.infix.backtick	10.4	A constructor declared infix with backquotes is "defined to be an infix operator"?	dynamic	run	``data T = Int `C` Int``: the Report gives no output: see readings.md	hand	Planned	R41 R87	
+der.show.prefix.opcon	10.4	An operator constructor declared prefix	dynamic	run	`data T = (:+) Int Int`: which style: see readings.md	hand	Planned	R41 R87	
 der.show.showlist	10.4	showList of a derived type is the class default, bracketed with commas and no spaces	dynamic	run	`show [A,B]` is "[A,B]"	hand	Planned		
-der.show.readable	10.4	The result of show is readable by read if all component types are readable	dynamic	run	`read (show x) == x` over a sample; fails at negative floats if the Report's code is literal: see readings.md	hand	Planned	R42	
+der.show.readable	10.4	The result of show is readable by read if all component types are readable	dynamic	run	`read (show x) == x` over a sample; fails at negative floats if the Report's code is literal: see readings.md	hand	Planned	R42 R88	
 der.show.userinst	10.4	Readability holds for Prelude instances but may fail for user-defined instances	dynamic	none	no requirement on user instances	hand	Planned		
 der.show.linear	10.4	The extra parameter r lets tree-like structures print in linear rather than quadratic time	dynamic	run	`--count` budget on a deep left-nested tree	hand	Planned		
-der.read.prec.range	10.4	readsPrec d takes a precedence level d from 0 to 10, yet Figure 10.1 calls readsPrec at app_prec+1 = 11	dynamic	run	the derived reader must accept 11: see readings.md	hand	Planned	R41	
+der.read.prec.range	10.4	readsPrec d takes a precedence level d from 0 to 10, yet Figure 10.1 calls readsPrec at app_prec+1 = 11	dynamic	run	the derived reader must accept 11: see readings.md	hand	Planned	R41 R87	
 der.read.result	10.4	readsPrec d s returns a list of (parsed value, remaining string) pairs	dynamic	run	`reads "A rest"`	hand	Planned		
 der.read.empty	10.4	With no successful parse the list is empty	dynamic	run	`reads "?" :: [(T,String)]` is []	hand	Planned		
 der.read.infix.prec	10.4	An unparenthesised infix application parses only if the operator's precedence is >= d	dynamic	run	boundary at d = p and p+1	hand	Planned		
@@ -2765,11 +2765,11 @@ der.read.assoc.paren	10.4	Example: read "1 :$ (2 :$ NT)" succeeds with the obvio
 der.read.assoc.noparen	10.4	Example: read "1 :$ 2 :$ NT" fails	dynamic	run	exits as error: associativity is not used	hand	Planned		
 der.read.record.only	10.4	For a record constructor the derived Read parses only the record-syntax form	dynamic	run	`reads "C 1 2"` is []	hand	Planned		
 der.read.record.order	10.4	The fields must be given in the same order as the declaration	dynamic	run	`reads "C {g = 2, f = 1}"` is []	hand	Planned		
-der.read.record.all	10.4	Whether every field must appear is not stated	dynamic	run	`reads "C {f = 1}"` on a two-field constructor: see readings.md	hand	Planned	R41	
-der.read.record.prec	10.4	The precedence at which an unparenthesised record is read is not given	dynamic	run	`read "Just C {f = 1}"`: see readings.md	hand	Planned	R41	
-der.read.space	10.4	Arbitrary Haskell whitespace between tokens of the input is allowed	dynamic	run	spaces, tabs, newlines; comments are whitespace to the grammar but not to `lex`: see readings.md	hand	Planned	R43	
+der.read.record.all	10.4	Whether every field must appear is not stated	dynamic	run	`reads "C {f = 1}"` on a two-field constructor: see readings.md	hand	Planned	R41 R87	
+der.read.record.prec	10.4	The precedence at which an unparenthesised record is read is not given	dynamic	run	`read "Just C {f = 1}"`: see readings.md	hand	Planned	R41 R87	
+der.read.space	10.4	Arbitrary Haskell whitespace between tokens of the input is allowed	dynamic	run	spaces, tabs, newlines; comments are whitespace to the grammar but not to `lex`: see readings.md	hand	Planned	R43 R89	
 der.read.parens	10.4	Extra parentheses are allowed	dynamic	run	`read "((A))"`	hand	Planned		
-der.read.neg	10.4	A negative number as an argument is read as show writes it	dynamic	run	`read "Just (-1)"`; the Report's readSigned ignores d, so "Just -1" also parses: see readings.md	hand	Planned	R42	
+der.read.neg	10.4	A negative number as an argument is read as show writes it	dynamic	run	`read "Just (-1)"`; the Report's readSigned ignores d, so "Just -1" also parses: see readings.md	hand	Planned	R42 R88	
 der.read.exponential	10.4	The parsing techniques used by the reader are very inefficient	dynamic	none	a warning, not a requirement	hand	Planned		
 der.notes.circular	10.4	Circular structures cannot be printed or read by these instances	dynamic	none	a warning about non-termination, not a requirement	hand	Planned		
 der.notes.sharing	10.4	The printer loses shared substructure	dynamic	none	a warning, not a requirement	hand	Planned		
@@ -2789,12 +2789,12 @@ der.tree.read.node	10.5	readsPrec d for :^: is readParen (d > up_prec) over (u,s
 der.tree.read.leaf	10.5	readsPrec d for Leaf is readParen (d > app_prec) over ("Leaf",s) from lex and m at app_prec+1	dynamic	run	differential	hand	Planned		
 der.tree.read.alternatives	10.5	The two alternatives are appended, :^: first	dynamic	run	result order on a sample	hand	Planned		
 der.tree.read.terminates	10.5	The left-recursive reader terminates, the recursive call at precedence 6 needing parentheses	dynamic	run	`read` at d = 0 returns on a deep tree	hand	Planned		
-der.tree.fixity	10.5	The figure assumes `infixr 5 :^:`, a declaration the text's own datatype leaves out	static	accept	with the declaration the figure's numbers hold; without it they are 9: see readings.md	hand	Planned	R52	
+der.tree.fixity	10.5	The figure assumes `infixr 5 :^:`, a declaration the text's own datatype leaves out	static	accept	with the declaration the figure's numbers hold; without it they are 9: see readings.md	hand	Planned	R52 R92	
 prag.notlanguage	11	Pragmas give hints, do not form part of the language proper and do not change a program's semantics	lex	accept	a program with and without pragmas gives equal output	hand	Planned		
 prag.notrequired	11	An implementation is not required to respect any pragma	lex	none	permission: nothing to observe	hand	Planned		
 prag.unknown	11	A pragma the implementation is not prepared to handle should be ignored	lex	accept	`{-# FROB x #-}` compiles, also where no declaration may stand	hand	Planned		
 prag.lexical	11	Lexically pragmas appear as comments, with the enclosing syntax {-# #-}	lex	accept	no layout tokens arise, and they nest with comments	hand	Planned		
-prag.inline	11.1	decl -> {-# INLINE qvars #-}	syntax	accept	accepted at each decl position; `qvars` is defined nowhere: see readings.md	hand	Planned	R52	
+prag.inline	11.1	decl -> {-# INLINE qvars #-}	syntax	accept	accepted at each decl position; `qvars` is defined nowhere: see readings.md	hand	Planned	R52 R92	
 prag.noinline	11.1	decl -> {-# NOINLINE qvars #-}	syntax	accept	as INLINE	hand	Planned		
 prag.inline.meaning	11.1	INLINE instructs the compiler to inline; NOINLINE may prevent automatic inlining	dynamic	none	a hint, with no observable semantics	hand	Planned		
 prag.specialize	11.2	decl -> {-# SPECIALIZE spec1 , ... , speck #-}, k>=1; spec -> vars :: type	syntax	accept	the Report's factorial example compiles	hand	Planned		
@@ -3005,7 +3005,7 @@ lib.r.array.bounds.lowhigh	16.1	The bounds are the lowest and highest indices, i
 lib.r.array.assoc	16.1	An association (i,x) defines the value at index i to be x	library	run	read back with (!)	hand	Planned		
 lib.r.array.outofbounds	16.1	The array is _|_ if any index in the list is out of bounds	library	run	`seq (array (1,2) [(3,'a')]) ()` exits as error	hand	Planned		
 lib.r.array.duplicate	16.1	If two associations have the same index, the value at that index is _|_	library	run	only that element is bottom	hand	Planned		
-lib.r.array.strict.bounds	16.1	array is strict in the bounds argument	library	run	`seq (array undefined []) ()` exits as error	hand	Planned		
+lib.r.array.strict.bounds	16.1	array is strict in the bounds argument	library	run	bottom bounds with an association exit as error; `seq (array undefined []) ()` is () by the code: see readings.md	hand	Planned	R155	
 lib.r.array.strict.indices	16.1	array is strict in the indices of the association list	library	run	a bottom index makes the array bottom	hand	Planned		
 lib.r.array.strict.values	16.1	array is nonstrict in the values	library	run	`array (1,1) [(1,undefined)] `seq` ()` is ()	hand	Planned		
 lib.r.array.recurrence	16.1	Recurrences are possible: a = array (1,100) ((1,1) : [(i, i * a!(i-1)) | i <- [2..100]])	library	run	`a!100` at Integer	hand	Planned		
@@ -3305,7 +3305,7 @@ lib.r.char.table.lower.lower	19	Lower case alphabetic: isLower True, isUpper Fal
 lib.r.char.table.other.print	19	Other alphabetic: isPrint True	library	run	'A', a title-case letter, a letter with no case	hand	Planned		
 lib.r.char.table.other.alnum	19	Other alphabetic: isAlphaNum True	library	run	as above	hand	Planned		
 lib.r.char.table.other.alpha	19	Other alphabetic: isAlpha True	library	run	as above	hand	Planned		
-lib.r.char.table.other.upper	19	Other alphabetic: isUpper True, isLower False: any alphabetic character not lower case is upper case	library	run	a title-case letter and a CJK ideograph: see readings.md	hand	Planned	R5 R38	
+lib.r.char.table.other.upper	19	Other alphabetic: isUpper True, isLower False: any alphabetic character not lower case is upper case	library	run	a title-case letter and a CJK ideograph: see readings.md	hand	Planned	R5 R38 R153	
 lib.r.char.table.digit.print	19	Digits: isPrint True	library	run	'7' and a non-ASCII digit	hand	Planned		
 lib.r.char.table.digit.alnum	19	Digits: isAlphaNum True, isAlpha False	library	run	as above	hand	Planned		
 lib.r.char.table.printable	19	Other printable: isPrint True, isAlphaNum, isAlpha, isUpper, isLower False	library	run	'+', a non-ASCII symbol	hand	Planned		
@@ -3319,19 +3319,19 @@ lib.r.char.digittoint	19	digitToInt converts a hex digit of either case	library	
 lib.r.char.digittoint.fail	19	digitToInt fails unless its argument satisfies isHexDigit	library	run	exits as error	hand	Planned		
 lib.r.char.inttodigit	19	intToDigit generates lower-case hexadecimal digits	library	run	0 to 15	hand	Planned		
 lib.r.char.inttodigit.fail	19	intToDigit fails unless its argument is in 0..15	library	run	exits as error at -1 and 16	hand	Planned		
-lib.r.char.isspace	19	isSpace recognizes only white characters in the Latin-1 range	library	run	" \t\n\r\f\v\xA0" True, a Unicode space False	hand	Planned		
+lib.r.char.isspace	19	isSpace recognizes only white characters in the Latin-1 range	library	run	" \t\n\r\f\v\xA0" True, a Unicode space False	hand	Planned	R153	
 lib.r.char.showlitchar	19	showLitChar converts a character to a string using only printable characters and source escapes	library	run	every code point below 300 and a high one	hand	Planned		
 lib.r.char.showlitchar.example	19	Example: showLitChar '\n' s = "\\n" ++ s	library	run	exact	hand	Planned		
-lib.r.char.lexlitchar	19	lexLitChar returns the sequence of characters that encode the character	library	run	exact	hand	Planned		
+lib.r.char.lexlitchar	19	lexLitChar returns the sequence of characters that encode the character	library	run	exact	hand	Planned	R154	
 lib.r.char.lexlitchar.example	19	Example: lexLitChar "\\nHello" = [("\\n", "Hello")]	library	run	exact	hand	Planned		
 lib.r.char.readlitchar	19	readLitChar does the same and also converts the string to the character it encodes	library	run	exact; the word erratum March 2003 restores	hand	Planned		
 lib.r.char.readlitchar.example	19	Example: readLitChar "\\nHello" = [('\n', "Hello")]	library	run	exact	hand	Planned		
 lib.r.char.toupper	19	toUpper converts a letter to the corresponding upper case, leaving other characters	library	run	ASCII, a non-ASCII letter, a digit	hand	Planned		
-lib.r.char.toupper.unicode	19	Any Unicode letter with an upper-case equivalent is transformed	library	run	a Greek letter	hand	Planned		
+lib.r.char.toupper.unicode	19	Any Unicode letter with an upper-case equivalent is transformed	library	run	a Greek letter	hand	Planned	R153	
 lib.r.char.tolower	19	toLower converts a letter to the corresponding lower case, leaving other characters	library	run	as for toUpper	hand	Planned		
 lib.r.char.ord	19	ord is fromEnum restricted to Char	library	run	agree on a sample	hand	Planned		
 lib.r.char.chr	19	chr is toEnum restricted to Char, an error out of range	library	run	agree on a sample; `chr (-1)` exits as error	hand	Planned		
-lib.r.char.isalpha	19.1	isAlpha c = isUpper c || isLower c	library	run	property over every code point	hand	Planned		
+lib.r.char.isalpha	19.1	isAlpha c = isUpper c || isLower c	library	run	property over every code point	hand	Planned	R153	
 lib.r.char.protectesc	19.1	showLitChar protects a numeric escape before a digit and \SO before H with \&	library	run	`show "\1234\&5"`, `show "\SO\&H"` round-trip	hand	Planned		
 lib.r.char.iscontrol	19.1	isControl c = c < ' ' || c >= '\DEL' && c <= '\x9f'	library	run	every code point below 256	hand	Planned		
 lib.r.char.isascii	19.1	isAscii and isLatin1 are the ranges below 0x80 and up to 0xFF	library	run	boundary values	hand	Planned		
@@ -3359,7 +3359,7 @@ lib.char.match	19.1	match has its Report type and its Report definition's meanin
 lib.char.showlitchar	19.1	showLitChar has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.char.protectesc.def	19.1	protectEsc (no signature in the Report) has its Report definition's meaning	library	run	differential against the literal definition	generated	Planned		
 lib.char.asciitab.def	19.1	asciiTab (no signature in the Report) has its Report definition's meaning	library	run	differential against the literal definition	generated	Planned		
-lib.char.lexlitchar	19.1	lexLitChar has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
+lib.char.lexlitchar	19.1	lexLitChar has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned	R154	
 lib.char.export.isascii	19.1	module Char exports isAscii	module	accept	import Char (isAscii) compiles and the name is usable	generated	Planned		
 lib.char.export.islatin1	19.1	module Char exports isLatin1	module	accept	import Char (isLatin1) compiles and the name is usable	generated	Planned		
 lib.char.export.iscontrol	19.1	module Char exports isControl	module	accept	import Char (isControl) compiles and the name is usable	generated	Planned		

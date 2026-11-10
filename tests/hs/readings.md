@@ -247,6 +247,49 @@ until M17 states the encoding of I/O (R5 covers the source alone). Rows: `io.int
 **Ruling.** `-O0`'s literal rules against decision trees over the corpus and generated programs: held until rhc
 compiles them. Rows: `tr.case.obligation`.
 
+
+## The lead's rulings on T's M19h list (impl/rulings.md, 2026-11-10, items 14 to 27)
+
+### R87. Derived Show and Read of records
+10.4 says only "the record-syntax form". **Ruling.** R41's seed, Haskell 2010's form, as GHC writes it:
+`C {f = 1, g = 2}`, a field at precedence 0, a record constructor parenthesised at 11, an operator field or constructor
+in parentheses, and derived Read reading that form, every field present and in order. Implementation-defined.
+Rows: `der.show.record.chars`, `.form`, `.prec`, `.neg`, `.opfield`, `.opcon`, `.empty`, `der.show.infix.backtick`,
+`der.show.prefix.opcon`, `der.read.prec.range`, `der.read.record.all`, `der.read.record.prec`.
+
+### R88. Negative floats in derived Show and Read
+**Ruling.** R42's seed, 10.4's text over chapter 8's code: a negative `Float` or `Double` is parenthesised above
+precedence 6, as `showSigned showFloat`, and derived Read takes the parenthesised form, so `read . show` holds.
+Rows: `der.show.neg.float`, `der.show.readable`, `der.read.neg`.
+
+### R89. Comments in read's input
+**Ruling.** R43's seed, the code with the erratum: the Prelude's `lex` skips white space only, so a comment in what
+`read` reads is not skipped, and the read fails. Rows: `der.read.space`.
+
+### R90. Derived Ord over NaN
+**Ruling.** `Double`'s `compare` is Ord's default over IEEE's `==` and `<=`, so `compare NaN x` is `GT`; a derived
+Ord compares fields by `compare`, left to right, and its `<` and the rest by `compare`. Implementation-defined.
+Rows: `der.ord.partial`.
+
+### R91. A derived and an explicit instance in two modules
+**Ruling.** R26's seed: one class-type pair has one instance in a program, checked at link: a derived instance in one
+module and an explicit one in another are refused, an errors program held until rhc links (M21).
+Rows: `der.cond.noexplicit.module`.
+
+### R92. The Report's misprints are not copied
+**Ruling.** R52's: `der.tree.fixity` uses Figure 10.1's `infixr 5 :^:`; `prag.inline`'s program uses
+`factorial 0 = 1`, testing the pragma only. `lit.example.factorial` stays the owner's. Rows: `der.tree.fixity`,
+`prag.inline`.
+
+### R93. `default (Int, Double)` shows Int by its overflow
+**Ruling.** `2^70` at the first type of `default (Int, Double)` is an error by D22's checked `Int` (R81), which shows
+that Int was picked, where Integer would print the value. Implementation-defined; the oracles' wrapping is recorded.
+Rows: `def.pick.first`.
+
+### R94. Recursive modules have no oracle
+**Ruling.** A program whose modules import each other is written by hand, its output from the text alone (D52): none
+of GHC (without its boot files), Hugs or nhc98 compiles it as written. Rows: `mod.inst.recursive`.
+
 ## The readings of the libraries' clause programs (M19, chapters 12 to 27)
 
 These come from the clause programs of the Report's libraries, `tests/hs/lang` and `tests/hs/accept` from `lib.`, put to
@@ -284,3 +327,47 @@ pair among the library's prose against its code. The code is the text, so `fmap`
 **nhc98** and **MicroHs** refuse the first form, as the code does; **GHC**'s instance has no context and takes it.
 **rhc** follows the code; the accepted program uses the form with the context, which both readings take.
 Rows: `lib.r.array.functor.context`.
+
+### R153. `Char`'s classes beyond Latin-1: the table and its rule, on characters that have kept their category
+> For the purposes of Haskell, any alphabetic character which is not lower case is treated as upper case (19)
+> isAlpha c = isUpper c || isLower c (19.1, Char)
+
+**What the text says.** The primitives `isPrint`, `isUpper`, `isLower`, `isAlphaNum`, `toUpper` and `toLower` take
+their meaning from 19's table: lower-case alphabetic; other alphabetic, upper case, title case and letters of no case
+alike, all `isUpper`; digits; other printable; non-printing. `isAlpha` is `isUpper || isLower` by the code, at every
+character, and `isSpace` is true of the seven Latin-1 white characters only. Which version of Unicode is E9's R38, the
+owner's call (2.1 opens the text to any version after 3.0), as is whether `Char` holds the surrogates: the programs use
+only characters whose category and case mapping have stood since Unicode 3.0 (not U+00AA, U+00BA, U+00AD or U+200B,
+which have moved), so that they do not depend on it. **GHC**, **Hugs** and **MicroHs** take a letter of no case as
+neither upper nor lower case, so `isAlpha` is not `isUpper || isLower` (R38 found no oracle that follows the rule);
+GHC and MicroHs take U+2003 and U+3000 as spaces; **nhc98**'s `Char` stops at `'\255'`. **rhc** follows the text.
+Implementation-defined (D53): the Unicode version, on which no program depends. Rows: `lib.r.char.table.other.upper`,
+`lib.r.char.isalpha`, `lib.r.char.isspace`, `lib.r.char.toupper.unicode`.
+
+### R154. `lexLitChar` returns exactly the characters `readLitChar` reads
+> The function lexLitChar does the reverse, returning the sequence of characters that encode the character. The
+> function readLitChar does the same, but in addition converts the to the character that it encodes. (19)
+> -- Very crude approximation to \XYZ. (19.1, Char, lexLitChar)
+
+**What the text says.** The code's clause for a named escape, `span isCharName`, takes every upper-case letter and
+digit that follows: `lexLitChar "\\NUL1"` is `[("\\NUL1","")]`, `lexLitChar "\\Q"` is `[("\\Q","")]` though `\Q`
+encodes nothing, and its numeric clauses take `\o` or `\x` with no digit (`lexLitChar "\\o8"` is `[("\\o","8")]`),
+which `readLitChar` refuses. The code calls its own clause a crude approximation, so it does not claim to define the
+function; the prose does: `lexLitChar` returns the characters that encode the character, those `readLitChar` reads. So
+`lexLitChar s` is `[(the prefix that readLitChar s reads, the rest)]`, and `[]` where `readLitChar s` is `[]`:
+`"\\NUL"` before `"1"`, `"\\SOH"` before `"H"`, nothing for `\Q`, `\o8` or `\x`. **GHC**, **Hugs** and **nhc98** all give
+`"\\NUL"` before `"1"` and nothing for `\Q`; for `\o8` GHC gives nothing and Hugs and nhc98 the code's `"\\o"`. Taken
+as the lead's ruling on R42 took 10.4's text over a code every oracle departs from; for the lead to confirm. **rhc**
+follows the prose; where the code and the prose agree, the differential holds rhc to the code. Rows:
+`lib.r.char.lexlitchar`, `lib.char.lexlitchar`.
+
+### R155. `array` with bottom bounds and no associations is not bottom
+> array is strict in the bounds argument and in the indices of the association list, but nonstrict in the values. (16.1)
+> array b ivs = if and [inRange b i | (i,_) <- ivs] then MkArray b ... (16.4, Array)
+
+**What the text says.** The prose makes `array` strict in its bounds; the code reaches the bounds only through `inRange`
+over the associations, so with none it builds `MkArray b f` without looking at `b`, and `array undefined [] `seq` ()`
+is `()`. With an association to check, both give bottom. **GHC**, **Hugs** and **nhc98** give bottom for the empty
+list, as the prose; **MicroHs** gives `()`, as the code. The lead's ruling 28: the prose would win, by R42's precedent,
+only if all four oracles took it; they split, so the code decides. **rhc** follows the code: the program with an
+association exits as error, the one without prints `()`. Rows: `lib.r.array.strict.bounds`.

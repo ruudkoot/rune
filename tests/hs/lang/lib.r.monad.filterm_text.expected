@@ -1,0 +1,15 @@
+([[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]],Just [2,3],[2,3])
+([1,2,3],Just 'a',Nothing,6)
+(Nothing,Just 'y',Just 'x',Just 'x',Nothing)
+([],[1,2,3],"ab",Just [1,2],[(),()])
+([1,2,3],Just 'j',Nothing)
+join in IO
+(Just ([1,2,3],[1,4,9]),[([1,2],"aa"),([1,2],"ab"),([1,2],"ba"),([1,2],"bb")])
+(Just [2,4],Nothing,["ab","ad","cb","cd"])
+([3,-1,1,-3],Just 10)
+(True,[24,10,20,9,36,13,24,10])
+Debugging
+unless False
+([0,2,1,3],True,Nothing,True)
+(True,True,True)
+(True,True)
