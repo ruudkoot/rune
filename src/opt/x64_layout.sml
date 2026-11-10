@@ -51,6 +51,8 @@ struct
   val K_BOX = 11
   val K_BYTES = 12
   val K_REALS = 13
+  val K_THUNK = 14
+  val K_IND = 15
   fun checkImm line (s, unless) =
     (line ("testb $1, " ^ s ^ "(%r13,%rbp)");
      line ("je " ^ unless))

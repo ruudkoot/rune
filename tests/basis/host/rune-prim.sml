@@ -1572,6 +1572,14 @@ struct
   fun rt_share () = unsupported ~1
   fun repl_printer_add (_ : int -> 'a -> 'b -> 'c) = ()
   fun unsafe_cast (_ : 'a) : 'b = raise Fail "unsafe_cast: Rune's alone"
+  (* a lazy front end's suspensions (docs/ir.md, Suspensions), which no
+     file of the Basis Library makes: Rune's alone *)
+  type 'a susp = 'a option ref
+  fun thunk_make (_ : unit -> 'a) : 'a susp = raise Fail "thunk_make: Rune's alone"
+  fun thunk_force (_ : 'a susp) : 'a = raise Fail "thunk_force: Rune's alone"
+  fun thunk_blackhole () : unit = raise Fail "thunk_blackhole: Rune's alone"
+  fun thunk_self_update (_ : 'a) : unit = raise Fail "thunk_self_update: Rune's alone"
+  fun any_check (x : 'a) : 'a = x
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
   fun rt_raise_mark (_ : int) : int = 0

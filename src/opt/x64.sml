@@ -762,6 +762,24 @@ struct
                    (expectObj (h - 1, "K_EXN", fatalExn); L.loadField line (sd (h - 1), L.RAX, 0))
                  | Opcode.EXNARG =>
                    (expectObj (h - 1, "K_EXN", fatalExn); L.loadField line (sd (h - 1), L.RAX, 1))
+                 (* suspensions (docs/ir.md, Suspensions): FORCE in line --
+                    the value of what is no unevaluated suspension in its
+                    place, what an indirection holds or itself, and a jump to
+                    a; one unevaluated left for the ENTER after it -- and the
+                    rest the glue's, as CALL's slow path is *)
+                 | Opcode.FORCE =>
+                   let val value = lab pc ^ "_value"
+                   in
+                     L.loadObj line (L.RAX, sd (h - 1), "K_IND", value);
+                     L.loadField line (sd (h - 1), L.RAX, 0);
+                     line ("jmp " ^ lab a);
+                     put (value ^ ":\n");
+                     L.loadObj line (L.RAX, sd (h - 1), "K_THUNK", lab a)
+                   end
+                 | Opcode.ENTER =>
+                   (flushSp (); setPc (); callC ("native_enter", ["lea " ^ lab next ^ "(%rip), %rsi"]); line "jmp *%rax")
+                 | Opcode.BLACKHOLE => (flushSp (); setPc (); callC ("native_blackhole", []))
+                 | Opcode.UPDATE => (flushSp (); setPc (); callC ("native_update", []))
                  | Opcode.PRIM =>
                    let
                      fun callPrim () =
