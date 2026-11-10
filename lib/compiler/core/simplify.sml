@@ -56,7 +56,7 @@ struct
   fun censusInto (c as {vars, labels} : census, e : exp) : unit =
     let
       fun atom a = case a of Var (x, _) => bump (vars, x) | _ => ()
-      fun rhs r = List.app atom (atomsOfRhs r)
+      fun rhs r = appAtomsOfRhs atom r
       fun exp e =
         case e of
           Let (_, _, r, b) => (rhs r; exp b)
@@ -937,7 +937,7 @@ struct
       val free : unit IntMap.map ref = ref IntMap.empty
       fun bind x = IntTable.insert (bound, x, ())
       fun atom a = case a of Var (x, _) => if isSome (IntTable.find (bound, x)) then () else free := IntMap.insert (!free, x, ()) | _ => ()
-      fun rhs r = List.app atom (atomsOfRhs r)
+      fun rhs r = appAtomsOfRhs atom r
       fun exp e =
         case e of
           Let (x, _, r, b) => (rhs r; bind x; exp b)
@@ -983,7 +983,7 @@ struct
         | App (Global (g, _), xs) =>
             if g = h then List.all (fn (k, a) => k = i orelse no a) (indexed xs)
             else List.all (fn (k, a) => no a orelse passed (g, k)) (indexed xs)
-        | _ => List.all no (atomsOfRhs r)
+        | _ => allAtomsOfRhs no r
       fun exp e =
         case e of
           Let (_, _, r, b) => rhs r andalso exp b
@@ -1004,7 +1004,7 @@ struct
       fun rhs r =
         case r of
           Select (_, Var _) => true
-        | _ => List.all no (atomsOfRhs r)
+        | _ => allAtomsOfRhs no r
       fun exp e =
         case e of
           Let (_, _, r, b) => rhs r andalso exp b
@@ -1711,7 +1711,7 @@ struct
       fun rhs r =
         case r of
           Select (_, Var (y, _)) => true
-        | _ => List.all atom (atomsOfRhs r)
+        | _ => allAtomsOfRhs atom r
       fun go e =
         case e of
           Let (_, _, r, b) => rhs r andalso go b
@@ -1829,7 +1829,7 @@ struct
       fun rhs r =
         case r of
           SetGlobal (h, a) => h = g orelse atom a
-        | _ => List.exists atom (atomsOfRhs r)
+        | _ => existsAtomOfRhs atom r
       fun go e =
         case e of
           Let (_, _, r, b) => rhs r orelse go b
@@ -1856,7 +1856,7 @@ struct
         case r of
           App (Global (g, _), xs) => (name (g, true); List.app atom xs)
         | SetGlobal (g, a) => (name (g, false); atom a)
-        | _ => List.app atom (atomsOfRhs r)
+        | _ => appAtomsOfRhs atom r
       fun exp e =
         case e of
           Let (_, _, r, b) => (rhs r; exp b)

@@ -1,0 +1,8 @@
+[True,True,True,True,True,True,True,True,True,True]
+(3,2)
+[(-3,2),(-3,2),(3,2)]
+3 % 2
+(-3) % 2
+("1 % 2","(1 % 2)")
+(22 % 7,0 % 1,1 % 1)
+[True,True,True,True,True,True,True]

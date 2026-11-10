@@ -1,0 +1,10 @@
+acquire
+compute
+release 3
+4
+before
+middle
+after
+done
+release on error
+"inside"

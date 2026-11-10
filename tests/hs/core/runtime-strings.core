@@ -1,0 +1,11 @@
+; run: --read-core tests/hs/core/lib/base.core --read-core tests/hs/core/lib/strings.core
+; rhc's runtime (CoreRuntime) on strings, the program of lib/strings.core:
+; a literal, UTF-8 in a Str, unpacked into its characters as the list is
+; read (D24's A, primUnpackString), past ASCII in two, three and four
+; bytes; a byte that starts no sequence of UTF-8 read as the character of
+; its number, as are a sequence cut short and an overlong one; a String
+; packed into a Str again (rtPack, in n log n); putChar of each character
+; (UTF-8 out); the Report's error and userError of a String; and Char's
+; primIntToChar, primCharToInt and primUnicodeMaxChar. The runtime is
+; linked into the program as far as the program reaches it.
+; runtime-strings-whole.core runs the same with every cell made at once.

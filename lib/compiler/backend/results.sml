@@ -88,7 +88,7 @@ struct
   fun usesOf x = case IntTable.find (!useCounts, x) of SOME n => n | NONE => 0
 
   fun countAtom a = case a of M.Var (x, _) => count x | _ => ()
-  fun countRhs r = List.app countAtom (M.atomsOfRhs r)
+  fun countRhs r = M.appAtomsOfRhs countAtom r
 
   fun countExp e =
     case e of
@@ -189,7 +189,7 @@ struct
       fun rhs r =
         case r of
           M.Select (_, M.Var _) => 0
-        | _ => atoms (M.atomsOfRhs r)
+        | _ => M.foldAtomsOfRhs (fn (v, n) => n + a v) 0 r
       fun mentions e = go e > 0
       and go e =
         case e of
@@ -303,7 +303,7 @@ struct
       fun rhs r =
         case r of
           M.App (M.Global _, xs) => List.app atom xs
-        | _ => List.app atom (M.atomsOfRhs r)
+        | _ => M.appAtomsOfRhs atom r
       fun exp e =
         case e of
           M.Let (_, _, r, b) => (rhs r; exp b)

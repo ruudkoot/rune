@@ -35,7 +35,7 @@ struct
         let fun go i = if i = n then NONE else if #1 (Vector.sub (ps, i)) = x then SOME i else go (i + 1)
         in go 0 end
       fun kill a = case a of Var (x, _) => (case index x of SOME i => Array.update (cand, i, false) | NONE => ()) | _ => ()
-      fun killAll r = List.app kill (atomsOfRhs r)
+      fun killAll r = appAtomsOfRhs kill r
       fun killExp e =
         case e of
           Let (_, _, r, b) => (killAll r; killExp b)
@@ -205,14 +205,14 @@ struct
           fun atom a = case a of Var (x, _) => IntTable.bump (t, x) | _ => ()
           fun go e =
             case e of
-              Let (_, _, r, b) => (List.app atom (atomsOfRhs r); go b)
+              Let (_, _, r, b) => (appAtomsOfRhs atom r; go b)
             | Fun (fs, b) => (List.app (fn f => go (#body f)) fs; go b)
             | Join (_, _, jb, sc) => (go jb; go sc)
             | Jump (_, xs) => List.app atom xs
             | If (a, t, f) => (atom a; go t; go f)
             | Handle (a, _, h) => (go a; go h)
             | Raise a => atom a
-            | Return r => List.app atom (atomsOfRhs r)
+            | Return r => appAtomsOfRhs atom r
             | Mark (_, a) => go a
         in go e; t end
       (* a definition's expression, its calls rewritten: fresh holds the

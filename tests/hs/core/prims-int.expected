@@ -1,0 +1,25 @@
+maxBound 4611686018427387903
+minBound -4611686018427387904
+maxBound - 1 + 1 4611686018427387903
+maxBound + 1 raised Overflow
+minBound - 1 raised Overflow
+minBound + maxBound -1
+maxBound * 2 raised Overflow
+1073741824 * 2147483648 2305843009213693952
+2147483648 * 2147483648 raised Overflow
+4294967296 * 4294967296 raised Overflow
+negate minBound raised Overflow
+negate maxBound -4611686018427387903
+minBound quot -1 raised Overflow
+minBound div -1 raised Overflow
+minBound rem -1 0
+minBound mod -1 0
+minBound quot 2 -2305843009213693952
+maxBound div -2 -2305843009213693952
+maxBound mod -2 -1
+1 quot 0 raised Div
+1 mod 0 raised Div
+str_extract hello 1 3 ell
+str_extract hello 0 0 [
+str_extract abc 2 5 raised Subscript
+str_extract abc -1 1 raised Subscript

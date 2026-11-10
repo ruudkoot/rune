@@ -355,6 +355,31 @@ and by `bin/rune-matrix` for the hosts; `tests/basis/law-skips.txt` (lines of
 three fields, of every way) by the engine for the laws
 (`tests/runner/laws.sml`).
 
+## rhc's oracles and corpus
+
+rhc, the Haskell 98 compiler of `docs/plans/language/haskell98.md`, is judged against oracles and a corpus that
+stay outside the tree (M3, D52). The corpus's licences, its manifests and its compat layer are
+`tests/hs/corpus/` (README.md there): the programs are read through `RUNE_HS_CORPUS`, a directory holding the trees
+that `tests/hs/corpus/trees.tsv` pins, and none is vendored until the owner chooses. The oracles are GHC 9.4.7 with
+a strict shim, Hugs, nhc98 and MicroHs (`tests/hs/oracles/README.md`: each oracle's variable, pin and recipe, and
+the shims, which the run builds). The family is `tests/runner/hssource.sml`, `hscorpus.sml`, `hsoracles.sml` and
+`hschecks.sml`:
+
+- `hs-oracles/ORACLE/conformance`, `judge-SET`, `run-SET` and `@stale`, in the tier `nightly`, each requiring its
+  oracle's capability (`hs-ghc`, `hs-hugs`, `hs-nhc98`, `hs-microhs`) and `hs-corpus`: they reproduce E7's 82
+  conformance tests against what their suites expect, and E8's verdicts and run set against what E8 recorded. A
+  difference is a failure unless a line of `tests/hs/oracles.txt` explains it, in the format of *Expectations*
+  with the outcome first in its reason (`hugs | conformance98/layout/do::conformance | HOST-BUG | reject: R56:
+  ...`); `@stale` fails a line that explains no failure of a job that ran. A disagreement on a conformance test
+  cites its reading of the Report (`tests/hs/readings.md` from R55).
+- `hs-corpus/data`, `source` and `faults`, in `check`: the data is whole and agrees with itself and with
+  `oracles.txt`, nothing lands under `tests/hs/corpus/` but its data, each of E7's hard cases has a reading, the
+  source rewrites do what E8's did on planted text, and the harness fails where it must on fake oracles.
+
+A job is also a command: `bin/rune-test hs-oracle conformance hugs`, `hs-oracle judge ghc nofib-2019`,
+`hs-oracle run nhc98 jhc`, `hs-oracle stale ghc`, `hs-oracle ghc-shim`; `RUNE_HS_OUT` moves their output from the
+run's directory.
+
 ## Generated functor programs
 
 `bin/rune-functor-gen` (`tests/runner/functorgen.sml`) draws programs of
@@ -692,7 +717,20 @@ slot, which MidLint refuses at the boundary into Mid (`fault-*.core`). `--accept
 read line by line. At level 3 rhc prints what it read, reads it back and
 prints it again, so print, read, print is the identity on every test.
 `tests/hs/core/lib/base.core` is what the run tests share, read before each
-by its flags.
+by its flags. A run reads `NAME.stdin` as its standard input where there is
+one, and a test with a line `; files: own`, which writes files, runs each
+time in a directory of its own.
+
+rhc's runtime (`CoreRuntime`, the roadmap's M17: the Report's `prim*`,
+written in Core) has `prims-*.core`, Core's primitives on their edges
+(`Int` at 63 bits, `Integer` across the edges of IntInf's small range,
+`Double`, `Float` rounded to binary32), and
+`runtime-*.core`: strings unpacked lazily and at once (D24's A and B, which
+print the same), files, standard input read across the edge of a chunk, and
+the classes and mappings of `Char`. `lib/language/haskell/coreruntime`
+(`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
+`lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
+and the first and the last of each range and run of its data.
 
 E1's eight programs, rewritten in Core (`knot`, `cafs`, `monad`, `classes`,
 `nest`, `nest2`, `letpoly`, `exceptions`), print E1's hand-derived output,

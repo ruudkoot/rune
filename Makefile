@@ -2191,6 +2191,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
                tests/runner/hssyntax.sml tests/runner/hsnames.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
                tests/runner/hsmeta.sml tests/runner/hsgen.sml \
+               tests/runner/hssource.sml tests/runner/hscorpus.sml tests/runner/hsoracles.sml tests/runner/hschecks.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
