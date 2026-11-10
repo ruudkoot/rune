@@ -1002,7 +1002,11 @@ against what is given now, an absent name present now refuses it (H1, H2);
 one checked at a lower level of the lint is refused; a key is over every
 member and its text (H8); the overlay is read before the layers, a layer is
 read and never written, one configuration's entries are not another's; a
-damaged entry is a miss; a head is read back as it was written. Core in
+damaged entry is a miss; a head is read back as it was written.
+`hs/units/named` builds `tests/hs/units/named.build` on Mid's layer of the
+compiler, as rhc is built, and runs it: a unit's Mid text names another
+unit's global, which `MidText.parseWith`'s `named` gives the other's stamp,
+and every other name a fresh one. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
