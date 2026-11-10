@@ -116,6 +116,48 @@ struct
     | ExnArg (_, a) => [a]
     | SetGlobal (_, a) => [a]
 
+  (* The atoms of a step (atomsOfRhs) given to f in order, from z, with no
+     list made of them: what the walkers that run most ask, the census of
+     every round of Simplify among them. *)
+  fun foldAtomsOfRhs (f : atom * 'a -> 'a) (z : 'a) (r : rhs) : 'a =
+    case r of
+      Atom a => f (a, z)
+    | App (g, xs) => List.foldl f (f (g, z)) xs
+    | Prim (_, _, xs) => List.foldl f z xs
+    | Tuple xs => List.foldl f z xs
+    | Select (_, a) => f (a, z)
+    | Con (_, _, a) => f (a, z)
+    | Decon (_, _, a) => f (a, z)
+    | ConTag a => f (a, z)
+    | NewExn _ => z
+    | BuiltinExn _ => z
+    | MkExn (c, a) => f (a, f (c, z))
+    | ExnCon a => f (a, z)
+    | ExnArg (_, a) => f (a, z)
+    | SetGlobal (_, a) => f (a, z)
+
+  (* Each atom of a step given to f, in order. *)
+  fun appAtomsOfRhs (f : atom -> unit) (r : rhs) : unit =
+    case r of
+      Atom a => f a
+    | App (g, xs) => (f g; List.app f xs)
+    | Prim (_, _, xs) => List.app f xs
+    | Tuple xs => List.app f xs
+    | Select (_, a) => f a
+    | Con (_, _, a) => f a
+    | Decon (_, _, a) => f a
+    | ConTag a => f a
+    | NewExn _ => ()
+    | BuiltinExn _ => ()
+    | MkExn (c, a) => (f c; f a)
+    | ExnCon a => f a
+    | ExnArg (_, a) => f a
+    | SetGlobal (_, a) => f a
+
+  (* Whether p holds of every atom of a step, and of some. *)
+  fun allAtomsOfRhs (p : atom -> bool) (r : rhs) : bool = foldAtomsOfRhs (fn (a, ok) => ok andalso p a) true r
+  fun existsAtomOfRhs (p : atom -> bool) (r : rhs) : bool = foldAtomsOfRhs (fn (a, any) => any orelse p a) false r
+
   (* The types a step says, but for those of its atoms: none, or the one it
      names before its atoms. *)
   fun typesOfRhs (r : rhs) : Ty.ty list =
@@ -158,8 +200,24 @@ struct
     | SetGlobal (g, a) => SetGlobal (global g, atom a)
 
   (* The step with each atom what f makes of it, in the order it names
-     them, and its types and globals as they are. *)
-  fun mapRhs (f : atom -> atom) (r : rhs) : rhs = mapRhsWith {ty = fn t => t, atom = f, global = fn g => g} r
+     them, and its types and globals as they are: mapRhsWith, made for the
+     walkers that run most (Simplify's substitution), with no record. *)
+  fun mapRhs (f : atom -> atom) (r : rhs) : rhs =
+    case r of
+      Atom a => Atom (f a)
+    | App (g, xs) => App (f g, List.map f xs)
+    | Prim (p, t, xs) => Prim (p, t, List.map f xs)
+    | Tuple xs => Tuple (List.map f xs)
+    | Select (i, a) => Select (i, f a)
+    | Con (tag, t, a) => Con (tag, t, f a)
+    | Decon (tag, t, a) => Decon (tag, t, f a)
+    | ConTag a => ConTag (f a)
+    | NewExn _ => r
+    | BuiltinExn _ => r
+    | MkExn (c, a) => MkExn (f c, f a)
+    | ExnCon a => ExnCon (f a)
+    | ExnArg (t, a) => ExnArg (t, f a)
+    | SetGlobal (g, a) => SetGlobal (g, f a)
 
   (* What fold gives its members of each part of an expression, with what
      the parts before it have made. *)
