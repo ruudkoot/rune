@@ -21,7 +21,10 @@
    - [super]: an instance's superclasses' dictionaries are one for each of
      its class's direct superclasses, in their order (a superclass path).
    - [method]: an instance's method is bound at its class's type for the
-     method at the instance (a method's slot).
+     method at the instance.
+   - [slot]: a class's methods are, in the checker's classes, in its
+     declaration's order: the slots of its dictionary (D31's layout, which
+     M15 builds), which no type shows.
    - [scc], rhc's own: his rules are per module, and recursive modules
      have none of his (1.3); a group of bindings across a cycle's modules
      is one bindG, whose binders share one context, and a variable
@@ -242,6 +245,7 @@ struct
      ("dict super", "a superclass's dictionary is taken from a subclass's, one step (fig. 28, dict super)"),
      ("super", "an instance's superclass dictionaries are one for each direct superclass, in the class's order"),
      ("method", "an instance's method is bound at its class's type for it at the instance"),
+     ("slot", "a class's dictionary holds its methods in its declaration's order, a slot each (D31's layout)"),
      ("scc", "a group across a cycle's modules has one context, and is defaulted where its predicates arose (D30)")]
 
   (* `replay {modules, records, env, derived, cycleDefault, fault}` holds
@@ -630,11 +634,39 @@ struct
               end
           | _ => ()
         end
+      (* [slot]: a class's methods, in the checker's classes, are its
+         declaration's in order, the slots of its dictionary (D31; M15
+         builds the dictionary and its selectors by them) *)
+      fun slots ({class, decls, ...} : E.classDecl) =
+        let
+          val sigs = List.mapPartial (fn A.D ({span, ...}, A.DSig (vs, _, _)) => SOME (span, List.map nameOf vs)
+                                       | _ => NONE)
+                       decls
+          val declared = List.concat (List.map #2 sigs)
+          val span = case sigs of (s, _) :: _ => s | [] => HsSource.noSpan
+          val key = HsModules.key {space = HsModules.Type, home = #qual class, name = #name class}
+          fun names ids = String.concatWith ", " (List.map (fn {name, ...} : T.id => name) ids)
+        in
+          case HsClasses.findClass (HsInfer.classes env, key) of
+            SOME {methods = ms, ...} =>
+              let
+                val theirs = List.map idOfKey ms
+                val theirs = case theirs of
+                               a :: b :: more => if faulty "slot" then b :: a :: more else theirs
+                             | _ => theirs
+              in
+                if length theirs = length declared andalso ListPair.all T.idEq (theirs, declared) then ()
+                else breach (span, "slot", "the class " ^ #name class ^ "'s dictionary holds its methods as " ^
+                                           names theirs ^ ", and its declaration has them as " ^ names declared)
+              end
+          | NONE => ()
+        end
     in
       List.app check all;
       List.app group (List.rev (!(#decls src)));
       List.app sccGroups groups;
       List.app methods (List.rev (!(#instances src)));
+      List.app slots (!E.classDecls);
       fault := ""
     end
 

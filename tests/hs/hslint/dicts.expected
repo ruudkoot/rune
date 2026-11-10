@@ -1,0 +1,14 @@
+KIND	Main	Named :: *
+KIND	Main	Ranked :: *
+KIND	Main	Colour :: *
+KIND	Main	Label :: *
+DERIVED	Main	Eq Label
+DERIVED	Main	Eq Colour
+DERIVED	Main	Show Label
+DERIVED	Main	Show Colour
+SIGNED	Main	describe :: Named a => a -> a -> [Char]
+SIGNED	Main	sameRanked :: Ranked a => a -> a -> Bool
+SIGNED	Main	eqIntegral :: Integral a => a -> a -> Bool
+SIGNED	Main	ltIntegral :: Integral a => a -> a -> Bool
+SIGNED	Main	twice :: RealFloat a => a -> a
+SIGNED	Main	main :: IO ()

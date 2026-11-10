@@ -716,7 +716,10 @@ the kinds, the derived instances' contexts and the defaults it chose, or
 what it must find: `dump/NAME` each fixture of `tests/hs/hslint` against its
 expected dump, reviewed line by line (under `--cycle-default=scc` and with
 the library's unsigned bindings, `--dump-hslint=library`, where it has those
-files); `accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
+files), then the checker on it at level 2, which must accept what the dump
+infers and refuse what it refuses while HsLint replays its records, so that
+rhc's mutants of the checker (HK01 to HK05) fail a fixture's job;
+`accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
 and `tests/hs/lang` inferred, whatever its rows' status, since the second
 inference waits on no stage of the compile; and `errors/K-of-4`, every
 program of `tests/hs/errors` whose row is of the classes static, prelude or
@@ -739,8 +742,9 @@ Where the checker accepts a program, HsLint replays Faxén's rules on its
 evidence records (D31): Rule 1 by his `bindg` with Definition 2, every
 dictionary by his `dict tuple`, `dict var`, `dict inst` and `dict super`
 against HsLint's own classes and instances, an instance's superclasses'
-dictionaries and its methods' types, and rhc's own rule for a cycle of
-modules (`[scc]`); then holds the records, read as claims, to the second
+dictionaries and its methods' types, a class's methods in its
+declaration's order (`[slot]`, its dictionary's layout), and rhc's own rule
+for a cycle of modules (`[scc]`); then holds the records, read as claims, to the second
 inference. A derived instance, which HsDerive makes as the tree a user would
 write (M14), is checked as any instance is: the second inference types its
 methods at the head and the least context it derived itself (10.1, the data

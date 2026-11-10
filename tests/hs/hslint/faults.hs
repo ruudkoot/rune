@@ -1,8 +1,8 @@
 -- HsLint's comparison and replay (the roadmap's M16, D54): this program's dump, read back as a record's
 -- claims, holds, and so does its checker's evidence; each fault of RHC_HSLINT_FAULT reads the first claim
 -- or record its rule checks corrupted, which that rule refuses: a kind, a derived context, a type,
--- Rule 1, a signature, a default's classes, Rule 2's default at the module's end, a group's default,
--- and Faxen's bindg and dictionaries, an instance's superclasses and methods, and rhc's rule of cycles.
+-- Rule 1, a signature, a default's classes, Rule 2's default at the module's end, a group's default, and
+-- Faxen's bindg and dictionaries, an instance's superclasses and methods, a class's slots, and rhc's rule of cycles.
 module Main (main) where
 
 data T a = T a deriving (Eq, Show)
