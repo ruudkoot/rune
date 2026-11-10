@@ -1,0 +1,1 @@
+expected `->` after the patterns of a lambda, found `:`

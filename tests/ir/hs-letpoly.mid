@@ -1,0 +1,72 @@
+(* run: after hs-rts.mid *)
+(* let-polymorphism, which Mid has in its schemes:
+     empty :: [a]                 -- a polymorphic CAF: one thunk, at every type
+     empty = trace-count `seq` []
+     main = do
+       let pairUp x = (x, x)      -- a local polymorphic function
+           e = []                 -- a let-bound polymorphic value, as a thunk
+       print (fst (pairUp 3)); putStrLn (fst (pairUp "s"))
+       print (length (1 : e)); print (length ("a" : e))
+       print (length (1 : empty)); print (length ("a" : empty))
+       print count  *)
+(datatype pair ('a 'b) (0 "Pair" : 'a susp * 'b susp))
+(val gcount : int ref (return (prim ref_new 0 : int -> int ref)))
+(funs
+  (fn gemptyC ['a] ((veU : unit)) : 'a hlist
+    (let (veN : int) (prim ref_get gcount : int ref -> int)
+    (let (veN1 : int) (prim int_add veN 1 : (int * int) -> int)
+    (let (veS : unit) (prim ref_set gcount veN1 : (int ref * int) -> unit)
+    (return (con0 0 : 'a hlist)))))))
+(val gempty : ['a] 'a hlist susp
+  (return (app gdelay['a hlist] gemptyC['a])))
+(funs
+  (fn glength ['a] ((vlX : 'a hlist susp)) : int
+    (let (vlV : 'a hlist) (app gforce['a hlist] vlX)
+    (let (vlT : int) (tag vlV)
+    (let (vlC : bool) (prim poly_eq vlT 1 : (int * int) -> bool)
+    (if vlC
+      (let (vlP : 'a susp * 'a hlist susp) (decon 1 vlV : 'a hlist)
+      (let (vlR : 'a hlist susp) (select 1 vlP)
+      (let (vlN : int) (app glength['a] vlR)
+      (return (prim int_add vlN 1 : (int * int) -> int)))))
+      (return 0))))))
+  (fn gconsS ['a] ((vcoH : 'a susp) (vcoT : 'a hlist susp)) : 'a hlist susp
+    (let (vcoP : 'a susp * 'a hlist susp) (tuple vcoH vcoT)
+    (let (vcoL : 'a hlist) (con 1 vcoP : 'a hlist)
+    (return (app gdone['a hlist] vcoL))))))
+(do ()
+  (fun
+    (fn vpairUp ['c] ((vpuX : 'c susp)) : ('c, 'c) pair
+      (let (vpuT : 'c susp * 'c susp) (tuple vpuX vpuX)
+      (return (con 0 vpuT : ('c, 'c) pair))))
+    (let (vthree : int susp) (app gdone[int] 3)
+    (let (vs : string susp) (app gdone[string] "s")
+    (let (vp1 : (int, int) pair) (app vpairUp[int] vthree)
+    (let (vp2 : (string, string) pair) (app vpairUp[string] vs)
+    (let (vp1T : int susp * int susp) (decon 0 vp1 : (int, int) pair)
+    (let (vp1F : int susp) (select 0 vp1T)
+    (let (vp1I : int) (app gforce[int] vp1F)
+    (let (vu1 : unit) (app gputInt vp1I)
+    (let (vp2T : string susp * string susp) (decon 0 vp2 : (string, string) pair)
+    (let (vp2F : string susp) (select 0 vp2T)
+    (let (vp2S : string) (app gforce[string] vp2F)
+    (let (vu2 : unit) (app gputs vp2S)
+    (* e: a let of a scheme *)
+    (fun
+      (fn veCode ['d] ((veCU : unit)) : 'd hlist
+        (return (con0 0 : 'd hlist)))
+      (let (ve : ['e] 'e hlist susp) (app gdelay['e hlist] veCode['e])
+      (let (vl1 : int hlist susp) (app gconsS[int] vthree ve[int])
+      (let (vn1 : int) (app glength[int] vl1)
+      (let (vu3 : unit) (app gputInt vn1)
+      (let (vl2 : string hlist susp) (app gconsS[string] vs ve[string])
+      (let (vn2 : int) (app glength[string] vl2)
+      (let (vu4 : unit) (app gputInt vn2)
+      (let (vl3 : int hlist susp) (app gconsS[int] vthree gempty[int])
+      (let (vn3 : int) (app glength[int] vl3)
+      (let (vu5 : unit) (app gputInt vn3)
+      (let (vl4 : string hlist susp) (app gconsS[string] vs gempty[string])
+      (let (vn4 : int) (app glength[string] vl4)
+      (let (vu6 : unit) (app gputInt vn4)
+      (let (vc : int) (prim ref_get gcount : int ref -> int)
+      (return (app gputInt vc)))))))))))))))))))))))))))))))

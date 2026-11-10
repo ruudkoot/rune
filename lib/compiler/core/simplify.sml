@@ -140,25 +140,25 @@ struct
   fun fold (p : string, pty : Ty.ty, xs : atom list) : atom option =
     let
       val result = case Ty.view pty of Ty.Arrow (_, r) => r | _ => Ty.int
-      fun ints () = case xs of [Const (Lambda.CInt a, _), Const (Lambda.CInt b, _)] => SOME (a, b) | _ => NONE
-      fun words () = case xs of [Const (Lambda.CWord a, _), Const (Lambda.CWord b, _)] => SOME (a, b) | _ => NONE
+      fun ints () = case xs of [Const (Literal.CInt a, _), Const (Literal.CInt b, _)] => SOME (a, b) | _ => NONE
+      fun words () = case xs of [Const (Literal.CWord a, _), Const (Literal.CWord b, _)] => SOME (a, b) | _ => NONE
       fun int f = case ints () of
-                    SOME (a, b) => let val r = f (a, b) in if fitsInt r then SOME (Const (Lambda.CInt r, result)) else NONE end
+                    SOME (a, b) => let val r = f (a, b) in if fitsInt r then SOME (Const (Literal.CInt r, result)) else NONE end
                   | NONE => NONE
       (* a division by 0 raises Div, and the least int's div or quot by ~1
          Overflow (its quotient fits no int): those are left to run *)
       fun intDiv f = case ints () of SOME (_, b) => if IntInf.sign b = 0 then NONE else int f | NONE => NONE
       fun intCmp f = case ints () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
-      fun word f = case words () of SOME (a, b) => SOME (Const (Lambda.CWord (wrapWord (f (a, b))), result)) | NONE => NONE
+      fun word f = case words () of SOME (a, b) => SOME (Const (Literal.CWord (wrapWord (f (a, b))), result)) | NONE => NONE
       fun wordDiv f = case words () of SOME (_, b) => if IntInf.sign b = 0 then NONE else word f | NONE => NONE
       fun wordCmp f = case words () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
       fun eqs () =
         case xs of
-          [Const (Lambda.CInt a, _), Const (Lambda.CInt b, _)] => SOME (boolAtom (a = b))
-        | [Const (Lambda.CWord a, _), Const (Lambda.CWord b, _)] => SOME (boolAtom (a = b))
-        | [Const (Lambda.CChar a, _), Const (Lambda.CChar b, _)] => SOME (boolAtom (a = b))
+          [Const (Literal.CInt a, _), Const (Literal.CInt b, _)] => SOME (boolAtom (a = b))
+        | [Const (Literal.CWord a, _), Const (Literal.CWord b, _)] => SOME (boolAtom (a = b))
+        | [Const (Literal.CChar a, _), Const (Literal.CChar b, _)] => SOME (boolAtom (a = b))
         | [Con0 (a, _), Con0 (b, _)] => SOME (boolAtom (a = b))
-        | [Const (Lambda.CString a, _), Const (Lambda.CString b, _)] => SOME (boolAtom (a = b))
+        | [Const (Literal.CString a, _), Const (Literal.CString b, _)] => SOME (boolAtom (a = b))
         | _ => NONE
     in
       case p of
@@ -274,7 +274,7 @@ struct
     else if isString t then SOME "string_eq"
     else NONE
 
-  fun freshStamp () = Elaborate.freshStamp ()
+  val freshStamp = Stamp.fresh
 
   (* a type as a key of a table: its node's number, which is the type's
      (Ty.id) -- a key only looked up, so that the number's order is no
@@ -362,7 +362,6 @@ struct
             val () = eqFuns := StringMap.insert (!eqFuns, key, h)
             val x = freshStamp ()
             val y = freshStamp ()
-            val () = Translate.funNames := IntMap.insert (!Translate.funNames, x, "=")
             val cons = case consAt t of SOME cs => cs | NONE => []
             val withArg = List.filter (fn (_, a) => isSome a) cons
             fun arm (tag, arg) =
@@ -382,7 +381,7 @@ struct
               let val k = freshStamp () val e = freshStamp ()
               in
                 Let (k, ([], Ty.int), ConTag (Var (x, [])),
-                     Let (e, ([], Ty.bool), Prim ("imm_eq", eqTy Ty.int, [Var (k, []), Const (Lambda.CInt (IntInf.fromInt tag), Ty.int)]),
+                     Let (e, ([], Ty.bool), Prim ("imm_eq", eqTy Ty.int, [Var (k, []), Const (Literal.CInt (IntInf.fromInt tag), Ty.int)]),
                           If (Var (e, []), arm c, no)))
               end
             val same = freshStamp ()
@@ -404,13 +403,12 @@ struct
             val w = freshStamp ()
             val a = freshStamp ()
             val b = freshStamp ()
-            val () = Translate.funNames := IntMap.insert (!Translate.funNames, a, "=")
             val wrapper =
-              {name = h, tyvars = [], params = [(a, t), (b, t)], result = Ty.bool,
+              {name = h, label = SOME "=", tyvars = [], params = [(a, t), (b, t)], result = Ty.bool,
                body = Let (same, ([], Ty.bool), Prim ("ptr_eq", eqTy t, [Var (a, []), Var (b, [])]),
                            If (Var (same, []), Return (Atom (boolAtom true)),
                                Return (App (Global (w, []), [Var (a, []), Var (b, [])]))))}
-            val worker = {name = w, tyvars = [], params = [(x, t), (y, t)], result = Ty.bool, body = rest}
+            val worker = {name = w, label = SOME "=", tyvars = [], params = [(x, t), (y, t)], result = Ty.bool, body = rest}
           in
             if !inlining then IntTable.insert (!inlinable, h, wrapper) else ();
             pendingEqs := wrapper :: worker :: !pendingEqs;
@@ -497,9 +495,9 @@ struct
            | _ => r)
       | ConTag a =>
           (case (a, madeOf a) of
-             (Con0 (tag, _), _) => if spend () then Atom (Const (Lambda.CInt (IntInf.fromInt tag), Ty.int)) else r
+             (Con0 (tag, _), _) => if spend () then Atom (Const (Literal.CInt (IntInf.fromInt tag), Ty.int)) else r
            | (_, SOME (Made (Con (tag, _, _)))) =>
-               if spend () then Atom (Const (Lambda.CInt (IntInf.fromInt tag), Ty.int)) else r
+               if spend () then Atom (Const (Literal.CInt (IntInf.fromInt tag), Ty.int)) else r
            | _ => r)
       | Prim (p, t, xs) =>
           (case fold (p, t, xs) of
@@ -526,8 +524,8 @@ struct
         | ExnArg (t, a) => ExnArg (ty t, f a)
         | SetGlobal (g, a) => SetGlobal (g, f a)
         | _ => r
-      fun fundef ({name, tyvars, params, result, body} : fundef) =
-        {name = name, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty t)) params, result = ty result,
+      fun fundef ({name, label, tyvars, params, result, body} : fundef) =
+        {name = name, label = label, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty t)) params, result = ty result,
          body = exp body}
       and exp e =
         case e of
@@ -549,8 +547,8 @@ struct
         case e of
           Let (x, s, r, b) => Let (x, s, f r, go b)
         | Fun (fs, b) =>
-            Fun (List.map (fn {name, tyvars, params, result, body} =>
-                             {name = name, tyvars = tyvars, params = params, result = result, body = go body}) fs,
+            Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                             {name = name, label = label, tyvars = tyvars, params = params, result = result, body = go body}) fs,
                  go b)
         | Join (j, ps, jb, sc) => Join (j, ps, go jb, go sc)
         | If (a, t, e) => If (a, go t, go e)
@@ -605,7 +603,7 @@ struct
 
   (* e with every binder in it bound afresh, and its uses renamed to match:
      a copy that can stand beside the original. A function copied keeps its
-     name for traces (Translate.funNames, by its first parameter). *)
+     name for traces (its label). *)
   fun copy (e : exp) : exp = copyWith (IntMap.empty, e)
 
   (* A copy in which the variables free in e that s0 names are renamed too:
@@ -654,17 +652,11 @@ struct
         | Fun (fs, b) =>
             let
               val () = List.app (fn f => ignore (fresh (#name f))) fs
-              fun fundef ({name = f, tyvars, params = ps, result, body} : fundef) =
+              fun fundef ({name = f, label, tyvars, params = ps, result, body} : fundef) =
                 let
                   val ps' = params ps
                 in
-                  case (ps, ps') of
-                    ((x, _) :: _, (y, _) :: _) =>
-                      (case IntMap.find (!Translate.funNames, x) of
-                         SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, y, n)
-                       | NONE => ())
-                  | _ => ();
-                  {name = name f, tyvars = tyvars, params = ps', result = result, body = exp body}
+                  {name = name f, label = label, tyvars = tyvars, params = ps', result = result, body = exp body}
                 end
             in Fun (List.map fundef fs, exp b) end
         | Join (j, ps, body, sc) =>
@@ -798,10 +790,7 @@ struct
   val inHandler = ref 0
   val () = CompilerState.cellRoot ("Simplify.inHandler", inHandler)
 
-  fun nameOf (f : fundef) : string =
-    case #params f of
-      (x, _) :: _ => (case IntMap.find (!Translate.funNames, x) of SOME n => n | NONE => "fn")
-    | [] => "fn"
+  fun nameOf (f : fundef) : string = getOpt (#label f, "fn")
 
   (* A call of g at ts with args, which may be inlined: g's body, copied,
      its type variables those types, its parameters bound to the
@@ -1133,9 +1122,6 @@ struct
             | NONE => List.map (fn (x, t) => (x, freshStamp (), t)) params
           val s0 = List.foldl (fn ((x, y, _), m) => if x < 0 then m else IntMap.insert (m, x, y)) IntMap.empty (caps' @ ps')
           val params' = List.map (fn (_, y, t) => (y, t)) (caps' @ ps')
-          val () = case params' of
-                     (y, _) :: _ => Translate.funNames := IntMap.insert (!Translate.funNames, y, nameOf f)
-                   | [] => ()
           val body' = copyWith (s0, body)
           val body' =
             case flat of
@@ -1143,7 +1129,7 @@ struct
                 mapRhs (fn r as Select (i, Var (y, _)) => if y = p then Atom (Var (#2 (List.nth (ps', i)), [])) else r
                          | r => r) body'
             | NONE => body'
-          val f' = {name = g, tyvars = [], params = params', result = result, body = body'}
+          val f' = {name = g, label = SOME (nameOf f), tyvars = [], params = params', result = result, body = body'}
           val l = (g, Option.map #2 flat)
         in
           IntTable.insert (!liftedFuns, name, l);
@@ -1156,7 +1142,7 @@ struct
 
   (* f's copy named h', at the types ts, with the static parameters fixed
      given those atoms, and its calls of itself calls of the copy. *)
-  fun makeCopy (f as {name, tyvars, params, result, body} : fundef, h' : var, ts : Ty.ty list,
+  fun makeCopy (f as {name, label, tyvars, params, result, body} : fundef, h' : var, ts : Ty.ty list,
                 fixed : (int * fix) list) : fundef =
     let
       val inst = ListPair.foldl (fn (a, t, s) => IntMap.insert (s, a, t)) IntMap.empty (tyvars, ts)
@@ -1198,8 +1184,8 @@ struct
         case e of
           Let (x, sc, r, b) => call (r, fn r' => Let (x, sc, r', exp b))
         | Fun (fs, b) =>
-            Fun (List.map (fn {name, tyvars, params, result, body} =>
-                             {name = name, tyvars = tyvars, params = params, result = result, body = exp body}) fs,
+            Fun (List.map (fn {name, label, tyvars, params, result, body} =>
+                             {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}) fs,
                  exp b)
         | Join (j, ps, jb, sc) => Join (j, ps, exp jb, exp sc)
         | If (a, t, e) => If (a, exp t, exp e)
@@ -1222,18 +1208,15 @@ struct
                                    let val z = freshStamp () val w = freshStamp ()
                                    in
                                      IntTable.insert (!wrapperFuns, w, ());
-                                     SOME (p, {name = w, tyvars = [], params = [(z, a)], result = b,
+                                     SOME (p, {name = w, label = NONE, tyvars = [], params = [(z, a)], result = b,
                                                body = call (App (Var (p, []), [Var (z, [])]), Return)})
                                    end
                                | _ => NONE
                              end) extra
-      (* named as f, for traces *)
-      val () =
-        case kept of
-          (_, y, _) :: _ => Translate.funNames := IntMap.insert (!Translate.funNames, y, nameOf f)
-        | [] => ()
     in
-      {name = h', tyvars = [], params = List.map (fn (_, y, t) => (y, t)) kept @ extraParams, result = Ty.subst inst result,
+      (* named as f, for traces *)
+      {name = h', label = if null kept then NONE else SOME (nameOf f), tyvars = [],
+       params = List.map (fn (_, y, t) => (y, t)) kept @ extraParams, result = Ty.subst inst result,
        body = List.foldl (fn ((p, w), e) => Fun ([w], substVar (p, Var (#name w, [])) e)) (exp body) wrappers}
     end
 
@@ -1482,8 +1465,8 @@ struct
         let val saved = !inHandler
         in inHandler := 0; let val b = simp (c, env, b) in inHandler := saved; b end end
       val fs =
-        List.map (fn {name, tyvars, params, result, body = b} =>
-                    {name = name, tyvars = tyvars, params = params, result = result, body = inside b}) fs
+        List.map (fn {name, label, tyvars, params, result, body = b} =>
+                    {name = name, label = label, tyvars = tyvars, params = params, result = result, body = inside b}) fs
       (* one alone in its group, which a copy may be specialised on *)
       val () =
         case fs of
@@ -1979,15 +1962,15 @@ struct
      names it so), which is not put where it is called: that is the
      expansion's (functors-units.md, M6), with its budget, and M5's
      applications are calls *)
-  fun functorFun ({params, ...} : fundef) : bool =
-    case params of
-      (x, _) :: _ => (case IntMap.find (!Translate.funNames, x) of SOME n => String.isPrefix "functor " n | NONE => false)
-    | [] => false
+  fun functorFun ({label, ...} : fundef) : bool =
+    case label of SOME n => String.isPrefix "functor " n | NONE => false
 
-  fun program (p : program) : program =
+  (* What simplify does besides shrinking, which its caller says
+     (MidPipeline.simplifyOptions): each is woven into its rounds. *)
+  type options = {inline : bool, specialise : bool, equality : bool}
+
+  fun program ({inline, specialise, equality} : options) (p : program) : program =
     let
-      (* inlining is an optional pass of its own name, which runs here *)
-      val inline = Pass.enabled ("inline", 1)
       val () = inlining := inline
       val uses = globalUses p
       fun calledOnce g = IntTable.find (uses, g) = SOME (1, 1)
@@ -2011,10 +1994,9 @@ struct
                          if calledOnce (#name f) andalso not (names (#name f, #body f)) andalso not (functorFun f)
                          then IntTable.insert (!once, #name f, SOME f) else ()
                      | _ => ()) p
-      val () = equalities := Pass.enabled ("equality", 2)
+      val () = equalities := equality
       val () = eqFuns := StringMap.empty
       val () = pendingEqs := []
-      val specialise = Pass.enabled ("specialise", 1)
       val () = specialisable := IntTable.table 64
       val () = copies := StringMap.empty
       val () = pendingCopies := []
@@ -2033,11 +2015,11 @@ struct
         (roundParams := []; budget := size e + 32; here := (Source.noSpan, []); inHandler := 1; rounds (3, e))
       (* a function is put where it is called as it is simplified, where it
          still may be, and specialised as it is, where it may be *)
-      fun fundef ({name, tyvars, params, result, body} : fundef) =
+      fun fundef ({name, label, tyvars, params, result, body} : fundef) =
         let
           val () = roundParams := params
           val () = currentDepth := (case IntTable.find (!closureDepth, name) of SOME d => d | NONE => 0)
-          val f' = {name = name, tyvars = tyvars, params = params, result = result, body = simplify body}
+          val f' = {name = name, label = label, tyvars = tyvars, params = params, result = result, body = simplify body}
           val () = currentDepth := 0
         in
           if isSome (onceOf name) then IntTable.insert (!once, name, SOME f') else ();

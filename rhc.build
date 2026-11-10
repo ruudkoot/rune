@@ -7,14 +7,9 @@
    (docs/building.md, The compiler's identity), so that an edit of rhc's
    sources changes its identity and not rune's. Rune alone builds it (D42):
    rhc.plan is read by no host. *)
-libraries language/haskell unicode end
+libraries language/haskell unicode json end
 src/rhc/config.sml
-use lib/compiler/util.build
-files
-  lib/compiler/util/source.sml
-  lib/compiler/util/error.sml
-  lib/compiler/util/pass.sml
-end
+use lib/compiler/mid.build
 files
   src/rhc/options.sml
   src/rhc/syntax.sml

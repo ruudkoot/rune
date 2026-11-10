@@ -4,7 +4,7 @@
    that the emitter is cheap when the compiler itself runs on runevm-stack. *)
 structure Emit =
 struct
-  open Lambda Code
+  open Literal Code
 
   val magic = "RUNE"
 

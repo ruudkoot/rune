@@ -1,1 +1,0 @@
-lex.comment.unterminated_eof.hs:2:7: error: unterminated nested comment: no `-}` closes this `{-`

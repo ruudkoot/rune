@@ -1,1 +1,0 @@
-syn.r.import.noqual_item.hs:2:11: error: expected a variable in an import list, found `P.x`

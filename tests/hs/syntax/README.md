@@ -1,8 +1,10 @@
 # The syntax tests of Haskell 98
 
 The tests of the lexer, layout, parser and printers of `lib/language/haskell`
-(`syntax.build`; the haskell98 roadmap's M11). Most run on rhc through the
-runners of `tests/runner` (docs/testing.md, *rhc's tests*):
+(`syntax.build`; the haskell98 roadmap's M11). The clause programs of the
+parser's rows are the conformance table's (`tests/hs/accept`,
+`tests/hs/errors`; docs/testing.md, *rhc's conformance table*); what is here
+and in `tests/hs/roundtrip` is the parser's own:
 
 - `tests/hs/roundtrip/`: files the parser accepts, each held to the round
   trips of `tests/runner/hsroundtrip.sml` (`hs/roundtrip/rhc/...`): the tree
@@ -11,18 +13,14 @@ runners of `tests/runner` (docs/testing.md, *rhc's tests*):
   grammar of the Report's section 9.5 and of its lexical syntax, with
   literate files of both styles, comments and pragmas, a CRLF file, a byte
   order mark and a form feed; `cases/` the cases of E10 that the syntax
-  accepts; `layout/` and `lexical/` a program for each row of the Report's
-  layout (2.7 and 9.3) and of its lexical syntax (chapter 2) that the parser
-  alone decides, named by its row as the conformance table names it
-  (`ID_rest.hs`), with, where the Report or the row gives one, its expansion
-  written by hand beside it (`ID_rest.braces`): the layout's braces and
-  semicolons, or the tokens a lexeme splits into, written apart.
-- `tests/hs/errors/`: files the syntax refuses, each with the text of its
-  first diagnostic in `NAME.expected` (`hs/errors/...`): the lexer's, the
-  literate reader's, layout's and the parser's (`lex-`, `lit-`, `lay-`,
-  `parse-`), the cases of E10 that the syntax refuses (`cases-`), and the
-  rows of the layout, the lexical syntax and the grammar (`syn.r.*`) it
-  refuses that need no fixity.
+  accepts; `layout/` and `lexical/` a file for a row of the Report's layout
+  (2.7 and 9.3) or of its lexical syntax (chapter 2), named by the row, with
+  its expansion written by hand beside it (`NAME.braces`): the layout's
+  braces and semicolons, or the tokens a lexeme splits into, written apart.
+- `errors/`: files the syntax refuses, each with the first line of its first
+  diagnostic in `NAME.expected`: the lexer's, the literate reader's,
+  layout's and the parser's (`lex-`, `lit-`, `lay-`, `parse-`) and the cases
+  of E10 that the syntax refuses (`cases-`).
 
 `cases.tsv` is E10's 46 crafted cases (the roadmap's evidence,
 `results/E10/cases/`): each, whether the syntax of the Report as E10 read it
@@ -35,6 +33,8 @@ fixity resolution (M12) refuses it.
 runners of rhc do not hold it to (`tests/runner/hssyntax.sml`, the jobs
 `hs/syntax/*`, `make test-hs-syntax`):
 
+- `errors DIR`: the first line of each diagnostic of `DIR` contains its
+  `.expected` (`hs/syntax/errors`);
 - `expansions DIR`: the tokens of the Report's L on each file with a
   `.braces` beside it are the tokens of that expansion, brace for brace and
   semicolon for semicolon, with no normalising (`hs/syntax/expansions`);

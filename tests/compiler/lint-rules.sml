@@ -135,14 +135,14 @@ struct
       | NONE => ~1
     end
   fun directed () =
-    (checked ("low reps: an int into an int", fn () => LowLint.check [withReps ([block (0, [Def (1, Const (Lambda.CInt 1))], Return 1)], [RAny, RInt])], "");
-     checked ("low reps: a ptr into an int", fn () => LowLint.check [withReps ([block (0, [Def (1, Const (Lambda.CString "s"))], Return 1)], [RAny, RInt])],
+    (checked ("low reps: an int into an int", fn () => LowLint.check [withReps ([block (0, [Def (1, Const (Literal.CInt 1))], Return 1)], [RAny, RInt])], "");
+     checked ("low reps: a ptr into an int", fn () => LowLint.check [withReps ([block (0, [Def (1, Const (Literal.CString "s"))], Return 1)], [RAny, RInt])],
               "v1 is int where what makes it is ptr");
      checked ("low reps: con0 into con", fn () => LowLint.check [withReps ([block (0, [Def (1, Con0 0)], Return 1)], [RAny, RCon])], "");
      report ("low reps: any into int, a downcast counted",
              downcastsOf ("downcasts-1", [block (0, [Def (1, Global 7)], Return 1)], [RAny, RInt]) = 1, "not counted once");
      report ("low reps: an int into an int, no downcast",
-             downcastsOf ("downcasts-0", [block (0, [Def (1, Const (Lambda.CInt 1))], Return 1)], [RAny, RInt]) = 0, "counted"))
+             downcastsOf ("downcasts-0", [block (0, [Def (1, Const (Literal.CInt 1))], Return 1)], [RAny, RInt]) = 0, "counted"))
 
   fun shapeRules () =
     (* a Select within its tuple *)
@@ -168,7 +168,7 @@ struct
            [block (0, [], Switch (0, [(0, 1)], 2)), block (1, [Def (1, Field (0, 0, 0))], Return 1), block (2, [Def (2, Decon (1, 0))], Return 2)],
            [], "");
      onSt ("a Field after ConTag compared with a constant",
-           [block (0, [Def (1, ConTag 0), Def (2, Const (Lambda.CInt (IntInf.fromInt 0))), Def (3, Prim ("imm_eq", [1, 2]))], If (3, 1, 2)),
+           [block (0, [Def (1, ConTag 0), Def (2, Const (Literal.CInt (IntInf.fromInt 0))), Def (3, Prim ("imm_eq", [1, 2]))], If (3, 1, 2)),
             block (1, [Def (4, Field (0, 0, 0))], Return 4), block (2, [], Return 0)],
            [], "");
      onSt ("a Field of a value whose tag a test says is another's, tested",
@@ -249,7 +249,7 @@ struct
   val dt = 900001
   val () = Ty.bindDatatypeDirect (dt, {params = [], cons = [(0, "A", NONE), (1, "B", SOME Ty.int)]})
   val dty = Ty.con (dt, "t", [])
-  val one = M.Const (Lambda.CInt (IntInf.fromInt 1), Ty.int)
+  val one = M.Const (Literal.CInt (IntInf.fromInt 1), Ty.int)
   (* g1 = let v2 = 1 in let v3 = B v2 in v3; g4 = A *)
   fun prog (g1, v2, v3, g4, c, t) =
     [M.Val (g1, ([], t), M.Let (v2, ([], Ty.int), M.Atom c, M.Let (v3, ([], t), M.Con (1, t, M.Var (v2, [])), M.Return (M.Atom (M.Var (v3, [])))))),
@@ -268,7 +268,7 @@ struct
                                                M.Let (23, ([], dty'), M.Con (1, dty', M.Var (29, [])), M.Return (M.Atom (M.Var (23, [])))))),
                  M.Val (24, ([], dty'), M.Return (M.Atom (M.Con0 (0, dty'))))], "renamed to");
       renaming ("two names renamed one", prog (21, 22, 22, 24, one, dty'), "is the new name of");
-      renaming ("a constant changed", prog (21, 22, 23, 24, M.Const (Lambda.CInt (IntInf.fromInt 2), Ty.int), dty'), "a constant changed");
+      renaming ("a constant changed", prog (21, 22, 23, 24, M.Const (Literal.CInt (IntInf.fromInt 2), Ty.int), dty'), "a constant changed");
       renaming ("a built-in type name renamed",
                 [M.Val (21, ([], dty'), M.Let (22, ([], Ty.con (900002, "int", [])), M.Atom one,
                                                M.Let (23, ([], dty'), M.Con (1, dty', M.Var (22, [])), M.Return (M.Atom (M.Var (23, [])))))),
@@ -391,21 +391,21 @@ struct
   fun midRules () =
     let
       val add = M.Prim ("int_add", pairToInt, [one, one])
-      val two : M.fundef = {name = 43, tyvars = [], params = [(44, Ty.int), (45, Ty.int)], result = Ty.int, body = M.Return add}
+      val two : M.fundef = {name = 43, label = NONE, tyvars = [], params = [(44, Ty.int), (45, Ty.int)], result = Ty.int, body = M.Return add}
       val unitRet = M.Return (M.Atom M.Unit)
       fun setting x = M.Let (x, ([], Ty.unit), M.SetGlobal (48, one), unitRet)
       val raising = M.Let (51, ([], Ty.exnCon), M.BuiltinExn 0,
                            M.Let (52, ([], Ty.exn), M.MkExn (M.Var (51, []), M.Unit), M.Raise (M.Var (52, []))))
       val g48 = [(48, ([], Ty.int))]
       val yes = M.Con0 (1, Ty.bool)
-      val setter : M.fundef = {name = 50, tyvars = [], params = [(54, Ty.unit)], result = Ty.unit, body = setting 55}
-      fun ident f : M.fundef = {name = f, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
+      val setter : M.fundef = {name = 50, label = NONE, tyvars = [], params = [(54, Ty.unit)], result = Ty.unit, body = setting 55}
+      fun ident f : M.fundef = {name = f, label = NONE, tyvars = [77], params = [(f + 1, ga)], result = ga, body = M.Return (M.Atom (M.Var (f + 1, [])))}
       fun castBack t =
         [M.Val (46, ([], t), M.Let (47, ([], Ty.unit), M.Prim ("functor_cast", Ty.arrow (Ty.int, Ty.unit), [one]),
                                     M.Return (M.Prim ("functor_cast", Ty.arrow (Ty.unit, t), [M.Var (47, [])]))))]
     in
       midP ("a global defined twice", [valR (41, Ty.int, M.Atom one), valR (41, Ty.int, M.Atom one)], "is defined twice");
-      midP ("a function of no parameter", [M.Funs [{name = 42, tyvars = [], params = [], result = Ty.int, body = M.Return (M.Atom one)}]],
+      midP ("a function of no parameter", [M.Funs [{name = 42, label = NONE, tyvars = [], params = [], result = Ty.int, body = M.Return (M.Atom one)}]],
             "has no parameter");
       midP ("a function of two parameters given both", [M.Funs [two], valR (46, Ty.int, M.App (M.Global (43, []), [one, one]))], "");
       midP ("a function of two parameters given one argument", [M.Funs [two], valR (46, Ty.int, M.App (M.Global (43, []), [one]))],
@@ -442,7 +442,7 @@ struct
       midP ("a type of a variable no binder binds", [valR (46, Ty.arrow (ga, ga), M.Atom (M.Global (51, [ga]))), M.Funs [ident 51]],
             "names 'a77, which no binder around it binds");
       midP ("a function's variable bound again inside it",
-            [M.Funs [{name = 51, tyvars = [77], params = [(52, ga)], result = ga,
+            [M.Funs [{name = 51, label = NONE, tyvars = [77], params = [(52, ga)], result = ga,
                       body = M.Let (53, ([77], ga), M.Atom (M.Var (52, [])), M.Return (M.Atom (M.Var (53, [ga]))))}]],
             "v53 binds 'a77 again")
     end
@@ -555,7 +555,7 @@ struct
      reps = Vector.tabulate (nvars, fn x => case List.find (fn (y, _) => y = x) reps of SOME (_, r) => r | NONE => RAny),
      result = RAny, captures = List.tabulate (ncaptured, fn _ => RAny)}
   fun lowP (what, q, wanted) = checked ("low: " ^ what, fn () => LowLint.check q, wanted)
-  val c1 = Const (Lambda.CInt (IntInf.fromInt 1))
+  val c1 = Const (Literal.CInt (IntInf.fromInt 1))
   fun top0 instrs = func (0, [block (0, Def (1, Unit) :: instrs, Return 1)])
   fun lowRules () =
     let
@@ -579,7 +579,7 @@ struct
       Pass.whole := saved;
       (* representations *)
       lowP ("an argument of a primitive of another representation",
-            [funcR (0, [0], 10, 0, [block (0, [Def (1, Const (Lambda.CString "s")), Def (2, Prim ("int_add", [1, 1]))], Return 2)],
+            [funcR (0, [0], 10, 0, [block (0, [Def (1, Const (Literal.CString "s")), Def (2, Prim ("int_add", [1, 1]))], Return 2)],
                     [(1, RPtr)])], "argument 0 of int_add");
       lowP ("a field of another representation than its part",
             [funcR (0, [0], 10, 0, [block (0, [Def (1, c1), Def (2, Tuple [1, 1]), Def (3, Select (0, 2))], Return 3)],

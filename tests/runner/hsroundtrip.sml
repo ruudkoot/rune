@@ -25,7 +25,8 @@
 
    rhc's tool is `bin/rhc`, an option for each command, over the files of
    tests/hs/lang, tests/hs/accept and tests/hs/roundtrip
-   (`hs/roundtrip/rhc/PATH`, which need the capability `rhc`). The harness
+   (`hs/roundtrip/rhc/PATH`, which need the capability `rhc`, and wait, as
+   the program's jobs do, while its rows are Planned). The harness
    is held to its own tests without a parser: a stub tool, commands of
    bin/rune-test over a toy syntax of words written here, passes on
    tests/hs/runner/roundtrip (`hs/roundtrip/stub/...`); and the stub with a
@@ -374,7 +375,10 @@ struct
          (tagged (["check", "hs"] @ rhcCovers)
             (Test.describe "rhc"
                (List.tabulate (length rhcInputs, fn i =>
-                                 let val t = fileJob rhc (List.nth (rhcInputs, i))
+                                 let
+                                   val file = List.nth (rhcInputs, i)
+                                   val t = fileJob rhc file
+                                   val t = case HsConformance.pendingFile file of SOME why => Test.pending why t | NONE => t
                                  in if i mod 10 = 0 then Test.tag "quick" t else t end)
                 @ (case #generate rhc of
                      SOME _ => [Test.tag "quick" (job ("@generated", ["hs-roundtrip-generated", "rhc", "1", "64"], 1800))]

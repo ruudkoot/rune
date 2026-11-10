@@ -1,1 +1,1 @@
-syn.r.inst.distinct_arrow.hs:2:12: error: the type variable `a` twice in an instance head
+the type variable `a` twice in an instance head

@@ -3,7 +3,7 @@
 Pass.whole	settings	--units sets it, and every entry is made under it
 Elaborate.inlineFunctors	settings	the configuration's inline and inline-val
 Elaborate.inlineValues	settings	the configuration's inline and inline-val
-Elaborate.stampCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
+Stamp.counter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
 Types.tyconCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
 Types.tvarCounter	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
 Ty.Node.next	names	the supply of names: a basis names its own by place, and a unit after it is given names after those
@@ -22,10 +22,8 @@ Elaborate.dataCons	basis	filled by each unit loaded from its basis, whose identi
 Translate.primAliases	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Lower.knownBefore	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.importedValues	basis	filled by each unit loaded from its basis, whose identity a usage holds
-Expand.importedValueNames	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.anyImported	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.imported	basis	filled by each unit loaded from its basis, whose identity a usage holds
-Expand.importedNames	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.globalAliases	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Expand.primGlobals	basis	filled by each unit loaded from its basis, whose identity a usage holds
 Overload.table	basis	filled by each unit loaded from its basis, whose identity a usage holds

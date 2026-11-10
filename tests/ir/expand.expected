@@ -3,13 +3,13 @@
 (datatype tree () (0 "Leaf") (1 "Node" : tree * t * tree))
 (datatype tree/2 () (0 "Leaf") (1 "Node" : tree/2 * int * tree/2))
 (funs
-  (fn g1 ((v1 : unit * unit)) : unit * unit
+  (fn g1 ((v1 : unit * unit)) : unit * unit "functor Sum"
     (let (v2 : unit) (select 1 v1)
     (let (v3 : t) (prim functor_cast v2 : unit -> t)
     (let (v4 : unit) (select 0 v1)
     (let (v5 : (t * t) -> t) (prim functor_cast v4 : unit -> (t * t) -> t)
     (fun
-      (fn v6 ((v7 : tree)) : t
+      (fn v6 ((v7 : tree)) : t "Sum.sum"
         (join j1 ()
           (join j2 ()
             (let (v8 : exncon) (builtinexn 0)
@@ -40,7 +40,7 @@
     (let (v26 : unit) (prim functor_cast v6 : (tree -> t) -> unit)
     (return (tuple v26 ()))))))))))
 (funs
-  (fn g2 ((v27 : int * int)) : int
+  (fn g2 ((v27 : int * int)) : int "I.add"
     (let (v28 : int) (select 0 v27)
     (let (v29 : int) v28
     (let (v30 : int) (select 1 v27)
@@ -55,7 +55,7 @@
 (val g6 : unit * unit
   (return (tuple g4 g5)))
 (funs
-  (fn g7 ((v32 : tree/2)) : int
+  (fn g7 ((v32 : tree/2)) : int "Sum.sum"
     (join j3 ()
       (join j4 ()
         (let (v33 : exncon) (builtinexn 0)

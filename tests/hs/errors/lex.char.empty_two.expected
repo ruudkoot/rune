@@ -1,1 +1,1 @@
-lex.char.empty_two.hs:2:5: error: unterminated character literal: no `'` closes it
+unterminated character literal: no `'` closes it

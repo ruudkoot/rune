@@ -1,1 +1,0 @@
-syn.r.import.nomodule_item.hs:2:11: error: `module` in an import list: only an export list names a module

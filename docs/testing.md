@@ -153,7 +153,7 @@ A tier or a profile is a tag (`--tier T`, `--profile P`):
 | `windows`, `portability` | `make test-windows`, `test-portability` |
 | `docs` | `make check-docs` and `test-doc` |
 | `nightly` | what `make check` does not run: the profiles' extras, the VMs of other machines, every configuration of the matrix, native code under stress and the sanitizers; once a day in CI (`.github/workflows/nightly.yml`) |
-| `hs` | rhc's tests (*rhc's tests* below): its programs and round trips, and the runner's own checks of that machinery |
+| `hs` | rhc's tests (*rhc's tests* below): its programs, round trips and conformance table, and the runner's own checks of that machinery |
 
 The profiles `vm` and `library` hold what `make check` does not run; the
 others are parts of it, to run alone while iterating.
@@ -201,7 +201,8 @@ generated programs of functors, `functors/*`, below;
 `scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
 `diagnostics/*`, `serve/*`, `repl-protocol/*`, `dap/*`, `kernel/*`,
 `incremental/*`; `tests/runner/protocols.sml`), and rhc's (`hs/*`, *rhc's
-tests* below; `tests/runner/hslang.sml`, `tests/runner/hsroundtrip.sml`). Scenario and protocol policy
+tests* below; `tests/runner/hslang.sml`, `tests/runner/hsroundtrip.sml`,
+`tests/runner/hsconformance.sml`). Scenario and protocol policy
 is Standard ML. Heap, benchmark, native, terminal and low-level checks also
 have individual SML jobs. Make builds prerequisites; the three retained
 compatibility jobs for generated docs, benchmark coverage and ISA checks
@@ -506,30 +507,92 @@ normalisation to examples. The stub's commands run in the runner's process
 in those two checks and its generator's, since a command of
 `bin/rune-test` starts in about half a second.
 
+**The conformance table** (the roadmap's D53 and D38;
+`tests/runner/hsconformance.sml`). `tests/hs/conformance.tsv` has a row for
+each clause of the Haskell 98 Report: E9's 3,901, each with its `id`,
+`section`, `statement`, `class`, `test` (`accept`, `reject`, `run` or
+`none`) and `how`, from a reading of the text that no program has checked
+yet, and three columns of rhc's: `status` (`Supported`, `Partial` or
+`Planned`, the words of [language.md](language.md)), `reading` (the R
+numbers of E9's readings that concern the row, which the roadmap's *What
+the Report says* cites) and `deviation` (empty, or the program that pins it,
+`DIR/NAME` from `tests/hs`). The table lands as data: only errata and
+readings edit it, and no script lands to make it (`runner/migration-inventory`).
+Its text is the December 2002 Report with the published errata applied
+(D38): `tests/hs/errata.tsv` lists the page's 18 errata, each with the rows
+it edits (`rows`), those it adds (`adds`) and, where it touches none, why.
+A program of `tests/hs/lang`, `tests/hs/accept` or `tests/hs/errors` names
+the row of its name's id, the part before its first `_`, as a program of
+`tests/lang` does, and on its first line, `-- rows: ID ...`, the further
+rows it covers (a production's rows, a definition's), the readings it pins
+(`R2`) and `deviation` where it pins one. Each direction is a failure of
+`hs/conformance/table`:
+
+1. a row whose test is `accept`, `reject` or `run` and that is not
+   `Planned` has a program of its class that names it: `tests/hs/accept` or
+   `tests/hs/lang` for `accept`, `tests/hs/lang` for `run`,
+   `tests/hs/errors` for `reject`; or, where it deviates, its pin, which is
+   of the other class (a row the Report accepts and rhc refuses, R1's);
+2. what a program names is a row, of a test its directory serves, but the
+   row whose deviation it pins;
+3. a row whose test is `none` says why in `how`;
+4. a row with a reading, once it is not `Planned`, has a program that names
+   it and pins each of its readings, and a program pins only the readings of
+   the rows it names; a row with a deviation names its pin, a program that
+   names the row and says `deviation`, and has its note in
+   `tests/hs/deviations.tsv` (its ground, one of D38's four -- wrong,
+   contradictory, ambiguous, cannot be implemented -- and why), and a pin
+   and a note are each a row's;
+5. a program of `tests/hs/errors` has an `.expected`, rhc's own message, so
+   that a program refused for another reason fails.
+
+With those, the table's form: its header and the errata list's, no row or id
+twice, the classes, tests, statuses and sources of E9's columns, readings R1
+to R54, every row accounted for (3,901 and what the errata add), and every
+row whose text names an erratum listed by one, and back.
+`hs/conformance/faults` plants each breach in a private tree and wants it
+refused, and a tree that keeps every rule, with a row of each class
+supported and a deviation pinned, accepted. A row leaves `Planned` when its
+program exists and the judges have seen it (roadmap, M19); the roadmap's
+G2 is the state in which none is `Planned`. Until then the program's jobs,
+and its round trips, are listed and held (`SKIP`, not run: a program whose
+every row is `Planned`), so that a program can land with its clause before
+rhc passes it, and a row's leaving `Planned` is what turns them on.
+
+A clause program cites its clause in a comment at its head (`-- Report
+2.4: ...`), after its first line if that names rows, and is a whole program,
+well typed where the clause does not say otherwise, so that it stays judged
+the same as rhc grows from a parser to a compiler. Before it lands it is put
+to the oracles of D52 (GHC with the strict shim, Hugs `+98`, nhc98 `-98`,
+MicroHs as a smoke test); where they part from the Report, rhc follows
+D38's rule and the disagreement is recorded as a reading.
+
 **The syntax of Haskell 98** (`lib/language/haskell`'s `syntax.build`, the
 roadmap's M11; [tests/hs/syntax/README.md](../tests/hs/syntax/README.md)).
 rhc's commands for the round trips are `--print`, `--print-layout`,
 `--print-exact`, `--dump-tokens` and `--dump-ast --no-spans`, and its
 generator is `bin/rune-hs-syntax generate-files`, the syntax generator of
-D55. `tests/hs/roundtrip` holds a file for each part of the grammar and the
-lexical syntax, the crafted cases of the roadmap's E10 that the syntax
-accepts, and a program for each row of the layout rules and the lexical
-syntax that the parser alone decides; `tests/hs/errors` the diagnostics of the lexer, layout and
-the parser and the cases the syntax refuses. What those runners do not
-hold the syntax to is `tests/runner/hssyntax.sml`'s, the jobs `hs/syntax/*`
-(`make test-hs-syntax`) of `bin/rune-hs-syntax`: the tokens of the layout
-algorithm against an expansion written by hand, where a file of
-`tests/hs/roundtrip` has one (`NAME.braces`); 2,500 trees of the syntax
-generator printed both ways and read back in one process; the parser's
-mutants, E10's five, which the tree test cannot see and the token test
-must, and a lexer that drops a comment, which only the exact print sees,
-each built and run over `tests/hs/roundtrip`; the cost of a token in
-`runevm --count`'s instructions, bytes and objects, within
-`tests/hs/syntax/budget`; and, nightly where GHC is installed (the
-capability `ghc`), GHC's dump of each file's parsed tree against its dump of
-the file's explicit print (`hs/syntax/ghc`; E10's 1,662 files of the corpus
-too, with `RUNE_HS_SYNTAX_GHC_LIST` and `RUNE_HS_SYNTAX_GHC_ROOT`), its known differences in
-`tests/hs/syntax/ghc-dump.tsv`.
+D55; `--typecheck-only`, which judges an accept program, checks as far as
+rhc goes, its parse. Besides the clause programs of the parser's rows,
+`tests/hs/roundtrip` holds the parser's own fixtures: a file for each part of
+the grammar and the lexical syntax, the crafted cases of the roadmap's E10
+that the syntax accepts, and, for rows of the layout rules and the lexical
+syntax, a file with its expansion written by hand beside it (`NAME.braces`).
+What those runners do not hold the syntax to is `tests/runner/hssyntax.sml`'s,
+the jobs `hs/syntax/*` (`make test-hs-syntax`) of `bin/rune-hs-syntax`: the
+first line of each diagnostic of the lexer, layout and the parser and of
+the cases the syntax refuses (`tests/hs/syntax/errors`); the tokens of the
+layout algorithm against the expansions; 2,500 trees of the syntax generator
+printed both ways and read back in one process; the parser's mutants, E10's
+five, which the tree test cannot see and the token test must, and a lexer
+that drops a comment, which only the exact print sees, each built and run
+over `tests/hs/roundtrip`; the cost of a token in `runevm --count`'s
+instructions, bytes and objects, within `tests/hs/syntax/budget`; and,
+nightly where GHC is installed (the capability `ghc`), GHC's dump of each
+file's parsed tree against its dump of the file's explicit print
+(`hs/syntax/ghc`; E10's 1,662 files of the corpus too, with
+`RUNE_HS_SYNTAX_GHC_LIST` and `RUNE_HS_SYNTAX_GHC_ROOT`), its known
+differences in `tests/hs/syntax/ghc-dump.tsv`.
 
 ## The three oracles
 

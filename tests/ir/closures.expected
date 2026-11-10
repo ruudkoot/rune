@@ -1,6 +1,6 @@
 (* after simplify *)
 (funs
-  (fn g1 ((v1 : int -> int) (v2 : int list)) : int list
+  (fn g1 ((v1 : int -> int) (v2 : int list)) : int list "map"
     (let (v3 : int) (tag v2)
     (let (v4 : bool) (prim imm_eq v3 0 : (int * int) -> bool)
     (if v4
@@ -19,9 +19,9 @@
         (let (v14 : exn) (mkexn v13 ())
         (raise v14)))))))))))
 (funs
-  (fn g2 ((v15 : int) (v16 : int)) : int
+  (fn g2 ((v15 : int) (v16 : int)) : int "fn"
     (return (prim int_add v16 v15 : (int * int) -> int)))
-  (fn g3 ((v17 : int list) (v18 : int)) : int list
+  (fn g3 ((v17 : int list) (v18 : int)) : int list "map"
     (let (v19 : int) (tag v17)
     (let (v20 : bool) (prim imm_eq v19 0 : (int * int) -> bool)
     (if v20
@@ -40,7 +40,7 @@
         (let (v30 : exn) (mkexn v29 ())
         (raise v30)))))))))))
 (funs
-  (fn g4 ((v31 : int) (v32 : int list)) : int list
+  (fn g4 ((v31 : int) (v32 : int list)) : int list "add"
     (return (app g3 v32 v31))))
 (val g5 : int list
   (let (v33 : int * int list) (tuple 2 (con0 0 : int list))

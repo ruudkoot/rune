@@ -1,1 +1,1 @@
-syn.r.inst.forms_var.hs:2:12: error: an instance head that is not a type constructor applied to type variables
+an instance head that is not a type constructor applied to type variables

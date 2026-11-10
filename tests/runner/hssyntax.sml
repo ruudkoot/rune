@@ -1,9 +1,10 @@
 (* What the round trips of rhc (tests/runner/hsroundtrip.sml) and its
-   refusals (tests/runner/hslang.sml) do not hold the syntax of Haskell 98
-   to (tests/hs/syntax/README.md; the haskell98 roadmap's M11): the parser's
-   mutants, each caught by the test that alone can see it; the layout of
-   the files of tests/hs/roundtrip that have an expansion written by hand
-   beside them; and the cost of a token. Each is a job of bin/rune-test or
+   clause programs (tests/runner/hslang.sml, hsconformance.sml) do not hold
+   the syntax of Haskell 98 to (tests/hs/syntax/README.md; the haskell98
+   roadmap's M11): the diagnostics of tests/hs/syntax/errors, the parser's
+   own; the parser's mutants, each caught by the test that alone can see
+   it; the layout of the files of tests/hs/roundtrip that have an expansion
+   written by hand beside them; and the cost of a token. Each is a job of bin/rune-test or
    of bin/rune-hs-syntax that prints a line FAIL for what it finds. *)
 structure HsSyntax =
 struct
@@ -334,7 +335,8 @@ struct
     Test.describe "hs/syntax"
       [tagged (["check", "hs", "test-hs-syntax"] @ covers)
          (Test.describe ""
-            [tagged ["quick"] (job ("expansions", "bin/rune-hs-syntax expansions tests/hs/roundtrip", 300)),
+            [tagged ["quick"] (job ("errors", "bin/rune-hs-syntax errors " ^ dir ^ "/errors", 300)),
+             tagged ["quick"] (job ("expansions", "bin/rune-hs-syntax expansions tests/hs/roundtrip", 300)),
              tagged ["quick"] (job ("generated", "bin/rune-hs-syntax generate 1 2000 3 && bin/rune-hs-syntax generate 5000 500 4", 600)),
              job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-mutants", 1800),
              job ("budget", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-syntax-budget", 600)]),

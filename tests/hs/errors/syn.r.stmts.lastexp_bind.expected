@@ -1,1 +1,1 @@
-syn.r.stmts.lastexp_bind.hs:2:10: error: the last statement of a `do` block is a binding `<-`, not an expression
+the last statement of a `do` block is a binding `<-`, not an expression

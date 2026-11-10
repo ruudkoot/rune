@@ -14,7 +14,8 @@
      decl    := (type %N TYPE) | (datatype NAME (TYVAR ...) (TAG STRING [: TYPE]) ...) | (abstract NAME ARITY)
      def     := (val GLOBAL : SCHEME EXP) | (funs FUNDEF FUNDEF ...)
               | (do ((GLOBAL : SCHEME) ...) EXP)
-     fundef  := (fn VAR [TYVARS] ((VAR : TYPE) ...) : TYPE EXP)
+     fundef  := (fn VAR [TYVARS] ((VAR : TYPE) ...) : TYPE [STRING] EXP)
+                                             STRING: its label (Mid.fundef)
      exp     := (let (VAR : SCHEME) RHS EXP) | (fun FUNDEF FUNDEF ... EXP)
               | (join LABEL ((VAR : TYPE) ...) EXP EXP) | (jump LABEL ATOM ...)
               | (if ATOM EXP EXP) | (handle VAR EXP EXP) | (raise ATOM)
@@ -42,17 +43,17 @@ struct
   fun isBuiltin stamp = List.exists (fn (s, _) => s = stamp) builtinNames
   val reserved = "unit" :: "exncon" :: List.map #2 builtinNames
 
-  fun defaultTy (c : Lambda.const) : Ty.ty =
+  fun defaultTy (c : Literal.const) : Ty.ty =
     case c of
-      Lambda.CInt _ => Ty.int
-    | Lambda.CWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
+      Literal.CInt _ => Ty.int
+    | Literal.CWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
     (* never the default: a 64-bit constant is written with its type, which
        is what tells it from the int or word of the same digits *)
-    | Lambda.CInt64 _ => Ty.int
-    | Lambda.CWord64 _ => Ty.con (#stamp Types.wordTycon, "word", [])
-    | Lambda.CReal _ => Ty.con (#stamp Types.realTycon, "real", [])
-    | Lambda.CString _ => Ty.string
-    | Lambda.CChar _ => Ty.con (#stamp Types.charTycon, "char", [])
+    | Literal.CInt64 _ => Ty.int
+    | Literal.CWord64 _ => Ty.con (#stamp Types.wordTycon, "word", [])
+    | Literal.CReal _ => Ty.con (#stamp Types.realTycon, "real", [])
+    | Literal.CString _ => Ty.string
+    | Literal.CChar _ => Ty.con (#stamp Types.charTycon, "char", [])
 
   (* A type of more nodes than bigType as a tree is written once, at the
      head, as an abbreviation (type %N TYPE), and as %N where it is: a type
@@ -180,9 +181,9 @@ struct
 
       fun constText c =
         case c of
-          Lambda.CString s => "\"" ^ String.toString s ^ "\""
-        | Lambda.CChar c => "#\"" ^ Char.toString (Char.chr c) ^ "\""
-        | _ => Lambda.constToString c
+          Literal.CString s => "\"" ^ String.toString s ^ "\""
+        | Literal.CChar c => "#\"" ^ Char.toString (Char.chr c) ^ "\""
+        | _ => Literal.toString c
       fun args [] = ""
         | args ts = "[" ^ String.concatWith ", " (List.map ty ts) ^ "]"
       fun atom a =
@@ -236,9 +237,13 @@ struct
                exp (n, a); emit ")")
             else exp (n, a)
       and fundef (n, f) = fundefNamed (n, v, f)
-      and fundefNamed (n, named, {name, tyvars, params = ps, result, body} : fundef) =
+      and fundefNamed (n, named, {name, label, tyvars, params = ps, result, body} : fundef) =
         let val name = named name val tvs = tyvarList tyvars val ps = params ps
-        in nl n; emit ("(fn " ^ name ^ " " ^ tvs ^ ps ^ " : " ^ ty result); exp (n + 2, body); emit ")" end
+        in
+          nl n; emit ("(fn " ^ name ^ " " ^ tvs ^ ps ^ " : " ^ ty result);
+          (case label of SOME l => emit (" \"" ^ String.toString l ^ "\"") | NONE => ());
+          exp (n + 2, body); emit ")"
+        end
 
       fun def d =
         case d of
@@ -494,16 +499,16 @@ struct
           in more [ty ()] end
         else []
 
-      fun const (s : string) : Lambda.const * Ty.ty =
+      fun const (s : string) : Literal.const * Ty.ty =
         if String.isPrefix "0w" s then
           (case IntInf.fromString (String.extract (s, 2, NONE)) of
-             SOME w => (Lambda.CWord w, defaultTy (Lambda.CWord w))
+             SOME w => (Literal.CWord w, defaultTy (Literal.CWord w))
            | NONE => fail "a word")
         else if CharVector.exists (fn c => c = #"." orelse c = #"E" orelse c = #"e") s then
-          (Lambda.CReal s, defaultTy (Lambda.CReal s))
+          (Literal.CReal s, defaultTy (Literal.CReal s))
         else
           (case IntInf.fromString s of
-             SOME i => (Lambda.CInt i, Ty.int)
+             SOME i => (Literal.CInt i, Ty.int)
            | NONE => fail "a number")
 
       fun atom () : atom =
@@ -513,8 +518,8 @@ struct
             else if String.isPrefix "g" s then Global (stampOf s, tyargs ())
             else fail "a variable"
         | NUM s => Const (const s)
-        | STR s => Const (Lambda.CString s, Ty.string)
-        | CHR c => Const (Lambda.CChar c, defaultTy (Lambda.CChar c))
+        | STR s => Const (Literal.CString s, Ty.string)
+        | CHR c => Const (Literal.CChar c, defaultTy (Literal.CChar c))
         | LP =>
             (case next () of
                RP => Unit
@@ -523,12 +528,12 @@ struct
                  let
                    val c = case t of
                              NUM s => #1 (const s)
-                           | STR s => Lambda.CString s
-                           | CHR c => Lambda.CChar c
+                           | STR s => Literal.CString s
+                           | CHR c => Literal.CChar c
                            | _ => fail "a constant"
                    val () = eat COLON
                    val t = ty ()
-                 in eat RP; Const (Lambda.constAt (c, t), t) end)
+                 in eat RP; Const (Ty.constAt (c, t), t) end)
         | _ => fail "an atom"
       fun atomsUntil stop =
         let fun more acc = if peek () = SOME stop then List.rev acc else more (atom () :: acc)
@@ -578,8 +583,9 @@ struct
           val ps = binders ()
           val () = eat COLON
           val result = ty ()
+          val label = case peek () of SOME (STR _) => SOME (str ()) | _ => NONE
           val body = exp ()
-        in eat RP; {name = name, tyvars = tvs, params = ps, result = result, body = body} end
+        in eat RP; {name = name, label = label, tyvars = tvs, params = ps, result = result, body = body} end
 
       and exp () : exp =
         let
@@ -686,7 +692,7 @@ struct
   (* What --read-mid reads: a program whose names are the compiler's own,
      from the elaborator's counters. *)
   fun parse (text : string) : program =
-    parseWith {stamp = Elaborate.freshStamp, tycon = fn () => #stamp (Types.freshTycon ("", 0, true))} text
+    parseWith {stamp = Stamp.fresh, tycon = fn () => #stamp (Types.freshTycon ("", 0, true))} text
 
   (* Whether printing what `parse` reads of the printed program prints it
      again, positions and all: the check of the two against each other
@@ -709,7 +715,7 @@ struct
       val extras = !Ty.extras
       fun restore () = (Ty.datatypes := datatypes; Ty.extras := extras)
       val again =
-        (showAll (parseWith {stamp = counter (ref (!Elaborate.stampCounter)), tycon = counter scratchTycon} text)
+        (showAll (parseWith {stamp = counter (ref (!Stamp.counter)), tycon = counter scratchTycon} text)
          handle Syntax msg => Error.bug ("MidText.parse: " ^ msg))
         handle e => (restore (); raise e)
       val () = restore ()

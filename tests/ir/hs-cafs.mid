@@ -1,0 +1,103 @@
+(* run: after hs-rts.mid *)
+(* ones, twos :: [Int]
+   ones = 1 : twos
+   twos = 2 : ones
+   nums = 0 : map (+1) nums
+   limit, offset, k :: Int
+   limit = length (take 3 ones) + offset         -- a CAF on a later CAF's value
+   offset = 10 * k
+   k = 4
+   bad :: Int
+   bad = error "never forced"
+   main = print (take 5 ones) >> print (take 3 twos) >> print (take 4 nums)
+          >> print limit >> print limit
+
+   The globals are in source order: each is one thunk, built by a Val; a CAF's
+   code reads the others' globals when it runs, not when it is built. *)
+(val gruns : int ref (return (prim ref_new 0 : int -> int ref)))
+(funs
+  (fn glen ['a] ((vlX : 'a hlist susp)) : int
+    (let (vlV : 'a hlist) (app gforce['a hlist] vlX)
+    (let (vlT : int) (tag vlV)
+    (let (vlC : bool) (prim poly_eq vlT 1 : (int * int) -> bool)
+    (if vlC
+      (let (vlP : 'a susp * 'a hlist susp) (decon 1 vlV : 'a hlist)
+      (let (vlR : 'a hlist susp) (select 1 vlP)
+      (let (vlN : int) (app glen['a] vlR)
+      (return (prim int_add vlN 1 : (int * int) -> int)))))
+      (return 0)))))))
+(funs
+  (fn ginc2 ((viA : int susp)) : int
+    (let (viI : int) (app gforce[int] viA)
+    (return (prim int_add viI 1 : (int * int) -> int)))))
+(funs
+  (fn gonesC ((voU : unit)) : int hlist
+    (let (voH : int susp) (app gdone[int] 1)
+    (let (voP : int susp * int hlist susp) (tuple voH gtwos)
+    (return (con 1 voP : int hlist))))))
+(funs
+  (fn gtwosC ((vwU : unit)) : int hlist
+    (let (vwH : int susp) (app gdone[int] 2)
+    (let (vwP : int susp * int hlist susp) (tuple vwH gones)
+    (return (con 1 vwP : int hlist))))))
+(funs
+  (fn gnumsC ((vnuU : unit)) : int hlist
+    (let (vnuH : int susp) (app gdone[int] 0)
+    (fun
+      (fn vnuT ((vnuU2 : unit)) : int hlist
+        (let (vnuF : (int susp -> int) susp) (app gdone[int susp -> int] ginc2)
+        (return (app gmap[int, int] vnuF gnums))))
+      (let (vnuS : int hlist susp) (app gdelay[int hlist] vnuT)
+      (let (vnuP : int susp * int hlist susp) (tuple vnuH vnuS)
+      (return (con 1 vnuP : int hlist))))))))
+(funs
+  (fn glimitC ((vlmU : unit)) : int
+    (let (vlmR : int) (prim ref_get gruns : int ref -> int)
+    (let (vlmR1 : int) (prim int_add vlmR 1 : (int * int) -> int)
+    (let (vlmU2 : unit) (prim ref_set gruns vlmR1 : (int ref * int) -> unit)
+    (let (vlm3 : int susp) (app gdone[int] 3)
+    (let (vlmT : int hlist) (app gtake[int] vlm3 gones)
+    (let (vlmTS : int hlist susp) (app gdone[int hlist] vlmT)
+    (let (vlmL : int) (app glen[int] vlmTS)
+    (let (vlmO : int) (app gforce[int] goffset)
+    (return (prim int_add vlmL vlmO : (int * int) -> int))))))))))))
+(funs
+  (fn goffsetC ((vofU : unit)) : int
+    (let (vofK : int) (app gforce[int] gk)
+    (return (prim int_mul 10 vofK : (int * int) -> int)))))
+(funs
+  (fn gkC ((vkU : unit)) : int
+    (return 4)))
+(funs
+  (fn gbadC ((vbU : unit)) : int
+    (let (vbE : exn) (mkexn gexnError "never forced")
+    (raise vbE))))
+(val gones : int hlist susp (return (app gdelay[int hlist] gonesC)))
+(val gtwos : int hlist susp (return (app gdelay[int hlist] gtwosC)))
+(val gnums : int hlist susp (return (app gdelay[int hlist] gnumsC)))
+(val glimit : int susp (return (app gdelay[int] glimitC)))
+(val goffset : int susp (return (app gdelay[int] goffsetC)))
+(val gk : int susp (return (app gdelay[int] gkC)))
+(val gbad : int susp (return (app gdelay[int] gbadC)))
+(do ()
+  (let (vm5 : int susp) (app gdone[int] 5)
+  (let (vm3 : int susp) (app gdone[int] 3)
+  (let (vm4 : int susp) (app gdone[int] 4)
+  (fun
+    (fn vp1 ((vp1U : unit)) : int hlist (return (app gtake[int] vm5 gones)))
+    (let (vp1S : int hlist susp) (app gdelay[int hlist] vp1)
+    (let (vu1 : unit) (app gputInts vp1S)
+    (fun
+      (fn vp2 ((vp2U : unit)) : int hlist (return (app gtake[int] vm3 gtwos)))
+      (let (vp2S : int hlist susp) (app gdelay[int hlist] vp2)
+      (let (vu2 : unit) (app gputInts vp2S)
+      (fun
+        (fn vp3 ((vp3U : unit)) : int hlist (return (app gtake[int] vm4 gnums)))
+        (let (vp3S : int hlist susp) (app gdelay[int hlist] vp3)
+        (let (vu3 : unit) (app gputInts vp3S)
+        (let (vl1 : int) (app gforce[int] glimit)
+        (let (vu4 : unit) (app gputInt vl1)
+        (let (vl2 : int) (app gforce[int] glimit)
+        (let (vu5 : unit) (app gputInt vl2)
+        (let (vr : int) (prim ref_get gruns : int ref -> int)
+        (return (app gputInt vr))))))))))))))))))))

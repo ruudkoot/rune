@@ -1,0 +1,1 @@
+-- Report 2.2: newline -> return linefeed | return | linefeed | formfeed. Every line of this file ends-- in a return alone, a newline each: layout and line numbers treat it as a line end.module Main (main) wheremain :: IO ()main = do  print x  print y  where    x = 1 :: Int    y = 2 :: Int
