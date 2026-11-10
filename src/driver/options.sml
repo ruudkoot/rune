@@ -191,7 +191,8 @@ struct
     \  --pass-stats=expand  and the functors' applications the expansion copied,\n\
     \                    those it left calls, and the most it copied for one\n\
     \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
-    \                    make and check it as the pass mid would, but no bytecode\n\
+    \                    make and check it as the pass mid would; with -o, its\n\
+    \                    bytecode too, as a whole program's\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
     \  --target=T        the bytecode to make: registers (runevm's, the default,\n\
     \                    from -O1) or stack (runevm-stack's)\n\

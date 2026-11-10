@@ -72,7 +72,7 @@ list in another order is a compiler no test has seen.
 | `--pass-stats=expand` | `--pass-stats`, and after the expansion a line `expand: N applications expanded, M left calls (B past the budget), P copies not all definitions; at most S nodes copied for a top-level application` (*Functors compiled once* below) |
 | `--pass-stats=hash` | `--pass-stats`, and at the end what the compile hashed: a line `hash PHASE:SITE: B bytes, N hashes` for each part of a compile in units (`usages`, `find`, `export`, `load`, `cache`) and place that hashed, and `memo PHASE: H hits, M misses` for the memo of fingerprints (*What a compile in units hashes* below) |
 | `--units` | run the pipeline on one unit, a file, at a time, and link them ([units.md](units.md)): the passes see a unit, with `Pass.whole` false, and `--pass-stats` names each unit before its passes |
-| `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would (there is no bytecode from Mid yet) |
+| `--read-mid FILE` | read a Mid program in the text a dump prints, and make and check it as the pass `mid` would; with `-o`, make its code too, as a whole program's: the passes on Mid, `Lower` and the target, as from `Lambda` |
 | `--mid-roundtrip` | check that Mid printed with its positions, read and printed again is the same, after `mid` (the check `mid-roundtrip`); what it reads is numbered by counters of its own, so that a unit's basis is what it is without it |
 | `--functor-budget=N` | the Mid nodes `expand` may copy for a top-level application and those in its copies (1000000 by default; 0 copies none) |
 
@@ -729,6 +729,10 @@ program written by hand. The grammar is at the head of
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   FRAME ... EXP)`, where a frame is `(in "NAME" "FILE" START STOP)`, or `(in
   "NAME")` for one called in tail position; comments are SML's.
+* A function's label (*What a front end gives Mid*, below) is written after
+  its result's type, `(fn g1 ((v1 : int)) : int "fact" ...)`, so that a
+  function read back keeps its name in the function table and its traces,
+  and a functor's function (a label that begins `functor `) stays one.
 
 ## What a front end gives Mid
 
@@ -753,7 +757,7 @@ said here.
 |---|---|---|
 | Names | every binder's stamp from `Stamp.fresh`, bound once in the program | `MidLint` |
 | Types | Mid is System F (*Mid*, above) | `MidLint` |
-| Calls | a function has a parameter; one of other than one is only called, with an argument for each | `MidLint` |
+| Calls | a function has a parameter; one of other than one is only called, with an argument for each, and is a function of the top level: `Lower` stops at a local one at `-O0`, where no pass lifts it (`Lift` runs from `-O1`) | `MidLint`, and `Lower` for a local one |
 | The top level | `Val`, `Funs` and `Do` in order; a global defined once; a `Do` lists what it sets | `MidLint`, and the VM for a global read before it is set |
 | Recursion | only functions are recursive | `MidLint`, and the datatype's shape |
 | Strictness | `Let` is strict and in order, and a variable of a datatype's type is evaluated: `ConTag` and `Decon` read it as it is, a step nothing uses may go (`Prims.removable`), and tier 2 trusts its representation | nothing: the types alone, by `Lower.repOfTy`, so a value not yet evaluated must have a type that is no datatype |
@@ -1256,7 +1260,14 @@ holds the link to refusing; a unit so made is not stored in the cache.
   (`(* dump: --dump-after=PASS *)`), which is compared with `NAME.expected`
   and reviewed line by line like any `.expected` file, or says with what
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
-  refuse.
+  refuse, or that a program of Mid's text runs (`(* run: alone *)`, or
+  `(* run: after FILE *)` read after another file of `tests/ir`): it is
+  compiled at `-O0`, `-O1` and `-O2` to both bytecodes and run, the register
+  bytecode interpreted and at tier 2, each run printing what `NAME.expected`
+  says and then `status N`, its exit status. The `hs-` programs are the
+  haskell98 roadmap's E1: Haskell lowered to Mid by hand, over a runtime of
+  thunks in Mid (`hs-rts.mid`), each `.expected` worked out from the Haskell
+  in its head.
 * **`make check-levels`** (the oracle `levels` of `tests/runner/oracles.sml`): every program of
   `tests/lang` and `tests/perf` compiled to both bytecodes at `-O0` and at
   `-O2`, whole and whole of its units' Mid (`--units --whole`), and to the

@@ -14,7 +14,8 @@
      decl    := (type %N TYPE) | (datatype NAME (TYVAR ...) (TAG STRING [: TYPE]) ...) | (abstract NAME ARITY)
      def     := (val GLOBAL : SCHEME EXP) | (funs FUNDEF FUNDEF ...)
               | (do ((GLOBAL : SCHEME) ...) EXP)
-     fundef  := (fn VAR [TYVARS] ((VAR : TYPE) ...) : TYPE EXP)
+     fundef  := (fn VAR [TYVARS] ((VAR : TYPE) ...) : TYPE [STRING] EXP)
+                                             STRING: its label (Mid.fundef)
      exp     := (let (VAR : SCHEME) RHS EXP) | (fun FUNDEF FUNDEF ... EXP)
               | (join LABEL ((VAR : TYPE) ...) EXP EXP) | (jump LABEL ATOM ...)
               | (if ATOM EXP EXP) | (handle VAR EXP EXP) | (raise ATOM)
@@ -236,9 +237,13 @@ struct
                exp (n, a); emit ")")
             else exp (n, a)
       and fundef (n, f) = fundefNamed (n, v, f)
-      and fundefNamed (n, named, {name, tyvars, params = ps, result, body, ...} : fundef) =
+      and fundefNamed (n, named, {name, label, tyvars, params = ps, result, body} : fundef) =
         let val name = named name val tvs = tyvarList tyvars val ps = params ps
-        in nl n; emit ("(fn " ^ name ^ " " ^ tvs ^ ps ^ " : " ^ ty result); exp (n + 2, body); emit ")" end
+        in
+          nl n; emit ("(fn " ^ name ^ " " ^ tvs ^ ps ^ " : " ^ ty result);
+          (case label of SOME l => emit (" \"" ^ String.toString l ^ "\"") | NONE => ());
+          exp (n + 2, body); emit ")"
+        end
 
       fun def d =
         case d of
@@ -578,8 +583,9 @@ struct
           val ps = binders ()
           val () = eat COLON
           val result = ty ()
+          val label = case peek () of SOME (STR _) => SOME (str ()) | _ => NONE
           val body = exp ()
-        in eat RP; {name = name, label = NONE, tyvars = tvs, params = ps, result = result, body = body} end
+        in eat RP; {name = name, label = label, tyvars = tvs, params = ps, result = result, body = body} end
 
       and exp () : exp =
         let

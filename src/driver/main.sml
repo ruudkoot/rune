@@ -232,14 +232,11 @@ struct
 
   (* --read-mid: a Mid program from its text, made and checked as the pass
      mid makes and checks one; there is no bytecode from Mid yet. *)
-  fun readMid (file : string) : OS.Process.status =
+  fun readMid (file : string) : Mid.program =
     let
       val text = #text (Source.readFile (Source.Ascii, file)) handle IO.Io _ => raise Options.Usage ("cannot read " ^ file)
       fun parse t = MidText.parse t handle MidText.Syntax msg => raise Options.Usage (file ^ ": " ^ msg)
-    in
-      ignore (Pipeline.midStage NONE parse text);
-      OS.Process.success
-    end
+    in Pipeline.midStage NONE parse text end
 
   (* whether the program being linked keeps its units' exports in its file
      (compileUnits) *)
@@ -1818,13 +1815,26 @@ struct
   and backEnd (_, NONE) = OS.Process.success
     | backEnd (inputs, SOME lam) =
         let val () = refuseDynamic ()
-            val low = Pipeline.lowOf lam
-        in
-          if !Options.target = "registers" then
-            (Code.opcodeNames := RegCodes.names;
-             emitProgramAs (RegCodes.fingerprint, inputs, Pipeline.targetStage low))
-          else emitProgram (inputs, Pipeline.targetStage low)
-        end
+        in emitLow (inputs, Pipeline.lowOf lam) end
+
+  (* a whole program's Low, to the code of --target, in its file *)
+  and emitLow (inputs : string list, low : Low.program) : OS.Process.status =
+    if !Options.target = "registers" then
+      (Code.opcodeNames := RegCodes.names;
+       emitProgramAs (RegCodes.fingerprint, inputs, Pipeline.targetStage low))
+    else emitProgram (inputs, Pipeline.targetStage low)
+
+  (* A program of Mid's text (--read-mid), made and checked as the stage mid
+     would make it; with -o, its code too, as a whole program's: the passes
+     on Mid, Lower and the target, as from Lambda (the haskell98 roadmap's
+     M5) *)
+  and midProgram (file : string) : OS.Process.status =
+    let val mid = readMid file
+    in
+      case !Options.output of
+        NONE => OS.Process.success
+      | SOME _ => emitLow ([file], Pipeline.lowOfMid mid)
+    end
 
   (* A whole program has no units for a dynamic module to link against:
      its units are one (docs/units.md, Dynamic modules) *)
@@ -1980,7 +1990,7 @@ struct
      else if !Options.buildList then buildList ()
      else if !Options.lexCount > 0 then lexCount ()
      else if !Options.dumpTokens then dumpTokens ()
-     else if isSome (!Options.readMid) then diagnosed (fn () => readMid (valOf (!Options.readMid)))
+     else if isSome (!Options.readMid) then diagnosed (fn () => midProgram (valOf (!Options.readMid)))
      else if !Options.cacheTrim then trimCommand ()
      else (diagnosed compiledAgain before trimAfter ()))
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
