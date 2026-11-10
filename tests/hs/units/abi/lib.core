@@ -1,0 +1,8 @@
+; A unit of hs/units/abi: a newtype it gives fewer arguments than its
+; parameters (a field of Holder at N), so that it makes N a box, and a value
+; named Foo; app.core takes both.
+(newtype N (a) MkN a)
+(data Holder ((f (-> * *))) (Holder (f Int)))
+(val held (Holder N) (let (n (N Int) (cast 7 (N Int))) (con Holder @N n)))
+(val wrap (-> Int (N Int)) (\ ((x Int)) (cast x (N Int))))
+(val Foo Int 40)

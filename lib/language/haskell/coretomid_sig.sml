@@ -61,7 +61,9 @@ sig
      unit `p` (the haskell98 roadmap's M21).
 
      Each import of another unit is bound as `imports` says that unit's
-     Core to Mid made it. Its `names` is the name in the text of each value of the top level,
+     Core to Mid made it, and each newtype of another unit is a box where
+     `newtypes` says that unit made it one (an ABI fact, H9); its `boxed`
+     says so of each newtype the unit declares itself. Its `names` is the name in the text of each value of the top level,
      the unit's own and its imports, by its Core name; its `abi` how each
      of its own is made. An import is declared in the text as a global of
      its scheme whose expression is a placeholder, which the client drops
@@ -71,8 +73,9 @@ sig
 
      Raises: `Unsupported` where `p` needs what Mid has not got, or an
      import `imports` does not give. *)
-  val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.program
-             -> {text : string, names : (string * string) list, abi : (string * abi) list}
+  val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool, newtypes : (string * bool) list}
+             * Core.program
+             -> {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list}
 
   (* `shared` is the globals of every text's prelude that have an
      identity, Core's exceptions, which one unit of a program makes.

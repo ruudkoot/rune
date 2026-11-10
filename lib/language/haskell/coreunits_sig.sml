@@ -22,6 +22,14 @@ sig
      in order *)
   val unresolved : Core.program -> string list
 
+  (* `uses d` is what the declaration `d` names of the top level, each once.
+
+     Its values are the variables it names that no binder of it binds; its
+     types the type constructors it names; its constructors those it makes
+     or takes apart. A name may be in more than one, as `:` is a value of
+     the runtime and a constructor of the list. *)
+  val uses : Core.decl -> {values : string list, types : string list, cons : string list}
+
   (* `interface (p, exports)` is what a client of the unit p needs of the
      names it exports, as Core: each type it mentions declared, and each
      value imported.

@@ -237,8 +237,9 @@ struct
 
   (* a program compiled whole (imports NONE), or a unit, each import bound
      as its interface says *)
-  fun compile ({fault : fault option, imports : (string * abi) list option, makesShared : bool}, prog : program)
-              : {text : string, names : (string * string) list, abi : (string * abi) list} =
+  fun compile ({fault : fault option, imports : (string * abi) list option, makesShared : bool,
+                newtypes : (string * bool) list}, prog : program)
+              : {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list} =
     let
       (* a whole program has no import *)
       val () =
@@ -317,7 +318,21 @@ struct
                        | (Import (_, t), acc) => ty (t, acc))
                      [] decls
         end
-      fun boxedNewtype t = recursiveNewtype t orelse member (t, partialNewtypes)
+      (* a newtype is a box where it reaches itself or is given fewer
+         arguments than its parameters; one of another unit is as that unit
+         made it, a fact of its interface (M21), and one it did not box is
+         never given fewer here *)
+      fun boxedNewtype t =
+        case List.find (fn (n, _) => n = t) newtypes of
+          SOME (_, b) => b
+        | NONE => recursiveNewtype t orelse member (t, partialNewtypes)
+      val () =
+        List.app (fn (t, false) => if member (t, partialNewtypes)
+                                   then raise Unsupported ("the newtype " ^ t ^ " of another unit, which that unit does not box, "
+                                                           ^ "given fewer arguments than its parameters")
+                                   else ()
+                   | _ => ())
+                 newtypes
       val usedNames : string list ref = ref []
       fun midName c =
         let
@@ -1455,9 +1470,13 @@ struct
                @ List.map (fn g => (g, g)) shared,
        abi = List.map (fn (x, _, e, _) => (x, if isFunction e then Function
                                                else case e of Atom (Lit _) => Literal | _ => Suspension)) globals
-             @ (if makesShared then List.map (fn g => (g, Literal)) shared else [])}
+             @ (if makesShared then List.map (fn g => (g, Literal)) shared else []),
+       boxed = List.mapPartial (fn Newtype (t, _, _, _) => if List.exists (fn (n, _) => n = t) newtypes then NONE
+                                                          else SOME (t, boxedNewtype t)
+                                 | _ => NONE) prog}
     end
 
-  fun program ({fault}, prog) = #text (compile ({fault = fault, imports = NONE, makesShared = true}, prog))
-  fun unit ({fault, imports, makesShared}, prog) = compile ({fault = fault, imports = SOME imports, makesShared = makesShared}, prog)
+  fun program ({fault}, prog) = #text (compile ({fault = fault, imports = NONE, makesShared = true, newtypes = []}, prog))
+  fun unit ({fault, imports, makesShared, newtypes}, prog) =
+    compile ({fault = fault, imports = SOME imports, makesShared = makesShared, newtypes = newtypes}, prog)
 end

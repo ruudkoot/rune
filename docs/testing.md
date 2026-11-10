@@ -1037,7 +1037,10 @@ links, byte for byte past the header, and prints what it should. Nothing
 edited takes every unit; a body's edit compiles its unit alone; a type's
 edit compiles its users too; a unit put before another that declares a name
 the other takes compiles that other, which takes it from there; and without
-it again the other's first entry is taken. Core in
+it again the other's first entry is taken. `hs/units/abi` holds an
+interface's ABI facts (H9): a newtype its unit makes a box, which a unit
+that gives it all its arguments takes as a box too, and a value of one unit
+named as a constructor of another, taken as the value. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
