@@ -15,7 +15,9 @@
    The ways are O0, O2 (the pedantic rule, the Report's order), O2-ghc
    (D48's D), O2-sestoft and O0-sestoft (D34's B), all of them where none
    is named or where `all` is; and, where named, iO0 and iO2, the program
-   run on Core's interpreter, whose sameness is to iO0's. A program of
+   run on Core's interpreter, whose sameness is to iO0's, and `stats`, a
+   compile at -O2 under each eta rule that runs nothing and counts its eta
+   rewrites (eta, eta-refused, eta-ghc, all, for C then D). A program of
    tests/hs/lang is prepared as tests/runner/hslang.sml runs it, one of the
    corpus as hs-corpus-run, a lazy port as hs-lazy-ports (the first variant
    rhc compiles). *)
@@ -115,9 +117,29 @@ struct
                  nth 0, nth 1, nth 2, thunks, tier2]
               end
         in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
+      (* the eta-expansions under each rule (D48): compiled at -O2 with
+         --simplify-stats, and nothing run; a line `stats` with the counts
+         of eta (both), eta-refused (C's, what D would expand) and eta-ghc
+         (D's), and the rewrites in all *)
+      fun stats () =
+        let
+          fun counts flags tag =
+            let
+              val e = #dir p ^ "/stats." ^ tag ^ ".err"
+              val _ = call ([fromRoot "bin/rhc", #main p, "-O2", "--simplify-stats", "--desugar-only"] @ flags, #dir p, "",
+                            "/dev/null", e, 1800)
+              fun get what = case lineAfter (e, "simplify " ^ what ^ ": ") of SOME n => n | NONE => "0"
+              val all = List.foldl (fn (l, n) => if String.isPrefix "simplify " l
+                                                 then n + getOpt (Int.fromString (firstNumber l), 0) else n)
+                                   0 (lines (read e))
+            in [get "eta", get "eta-refused", get "eta-ghc", Int.toString all] end
+        in
+          append (out, String.concatWith "\t" ([set, id, "stats"] @ counts [] "C" @ counts ["--eta=ghc"] "D") ^ "\n")
+        end
       fun pick ws = List.filter (fn (n, _) => List.exists (fn m => m = n) chosen) ws
-      val selected = if null chosen orelse List.exists (fn m => m = "all") chosen then ways else pick ways
-    in List.app one selected; List.app interp (pick interpreted) end
+      val selected = if null chosen orelse List.exists (fn m => m = "all") chosen then ways
+                     else if chosen = ["stats"] then [] else pick ways
+    in List.app one selected; List.app interp (pick interpreted); if List.exists (fn m => m = "stats") chosen then stats () else () end
 
   (* ---- The sets ---- *)
 

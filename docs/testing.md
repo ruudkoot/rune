@@ -905,12 +905,26 @@ counts (`--fuel=N`), every lint holding and the output the same
 budget, its instructions at the second size given on standard input at
 most 2.2 times those at the first, at `-O0` and `-O2`, so that a thunk
 copied into a lambda or work moved under one by eta shows
-(`hs/simplify/budget/NAME`). `eta.hs` is D48's bottom probe: `seq` of a
+(`hs/simplify/budget/NAME`); one with lines `-- dump: has NAME` or `--
+dump: lacks NAME` has the Core the passes leave held to them, a value of
+the name there or not (a copy at known dictionaries, an overloaded original
+dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`).
+`eta.hs` is D48's bottom probe: `seq` of a
 function whose lambda is behind a case, given bottom, is bottom under the
 pedantic rule, which GHC's default (`--eta=ghc`, built to be measured) breaks.
 Over the run programs of `tests/hs/lang` (nightly, held while their rows
 are `Planned`), the VM prints at `-O2` what it prints at `-O0` and ends
-alike (`hs/simplify/lang/NAME`). The expected outputs are GHC 9.4.7's
+alike (`hs/simplify/lang/NAME`), and so it does over the 188 vendored
+programs of the corpus and the ready lazy ports, prepared as
+`hs-corpus-run` and `hs-lazy-ports` prepare them
+(`tests/runner/hssimplifyfigures.sml`, `hs/simplify/corpus/ID` and
+`hs/simplify/lazy/PORT`, nightly). `bin/rune-test hs-simplify-figures SET
+ID OUT [WAY...]` measures one program of those sets for *Decisions on the
+numbers*: each way's output, and the instructions, bytes and objects of
+`runevm --count`, the suspensions made (`runevm-census`) and the
+instructions:u at tier 2 (`perf`), at `-O0` and `-O2`, with GHC's eta
+(D48's D) and Sestoft's trees (D34's B), on Core's interpreter where asked,
+and the eta rewrites under each rule (`stats`). The expected outputs are GHC 9.4.7's
 (`monad.hs` with the Functor and Applicative instances GHC's Monad wants).
 The seeds for the simplifier (a thunk copied into a lambda, eta through an
 expensive let, eta through a case under the pedantic rule, a specialisation

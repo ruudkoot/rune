@@ -15,7 +15,11 @@
    -O2 and run on the VM with each size as its standard input, the
    instructions at the second at most 2.2 times those at the first, so
    that a thunk copied where it runs once for each element, or eta that
-   moves its work under a lambda, shows as a square (hs/simplify/budget/NAME).
+   moves its work under a lambda, shows as a square (hs/simplify/budget/NAME);
+   one with lines `-- dump: has NAME` or `-- dump: lacks NAME` has its Core
+   at -O2 held to them, a value of that name there or not, what the
+   simplifier must have made of it, which no run shows
+   (hs/simplify/dump/NAME).
 
    Over the run programs of tests/hs/lang (nightly, held while their rows
    are Planned): what the VM prints at -O2 it printed at -O0, and both end
@@ -153,6 +157,54 @@ struct
       | _ => fail (what ^ ": no line -- budget: SIZE1 SIZE2")
     end
 
+  (* the Core the passes leave of p, at -O2, held to its lines `-- dump: has
+     NAME` and `-- dump: lacks NAME`, each a name the Core has or has not:
+     what the simplifier must have made of it, a copy at known
+     dictionaries, a method selected, a literal folded, which no run shows *)
+  fun dumpOne (p : Lang.program) () =
+    let
+      val w = workFor ("dump", #name p)
+      val what = "hs/simplify/dump/" ^ #name p
+      val core = w ^ "/O2.core"
+      val c = exec {cmd = [rhcPath (), "-O2", "--desugar-only", "--dump-after=core-simplify-2", fromRoot (#src p)], dir = SOME w,
+                    stdin = "", stdout = core, stderr = w ^ "/O2.err", timeout = 600}
+      val text = read core
+      (* whether the name n occurs in the text as a word: between white
+         space and parentheses, as Core's text writes a name *)
+      fun occurs n =
+        let
+          fun edge c = Char.isSpace c orelse c = #"(" orelse c = #")"
+          fun from i =
+            case (if i >= size text then NONE else SOME (String.extract (text, i, NONE))) of
+              NONE => false
+            | SOME rest =>
+                let val (lead, after) = Substring.position n (Substring.full rest)
+                in
+                  if Substring.size after = 0 then false
+                  else
+                    let
+                      val at = i + Substring.size lead
+                      val ok = (at = 0 orelse edge (String.sub (text, at - 1)))
+                               andalso (at + size n >= size text orelse edge (String.sub (text, at + size n)))
+                    in ok orelse from (at + 1) end
+                end
+        in n <> "" andalso from 0 end
+      fun check line0 =
+        let val line = Substring.string (Substring.dropl Char.isSpace (Substring.full line0))
+        in
+        case (String.isPrefix "has " line, String.isPrefix "lacks " line) of
+          (true, _) => let val t = String.extract (line, 4, NONE)
+                       in if occurs t then true else (fail (what ^ ": the Core at -O2 has no " ^ t ^ " (" ^ core ^ ")"); false) end
+        | (_, true) => let val t = String.extract (line, 6, NONE)
+                       in if occurs t then (fail (what ^ ": the Core at -O2 still has " ^ t ^ " (" ^ core ^ ")"); false) else true end
+        | _ => (fail (what ^ ": a line -- dump: that is neither has nor lacks: " ^ line); false)
+        end
+    in
+      if c <> 0 then fail (what ^ ": rhc does not desugar and simplify it: " ^ firstNonEmpty (w ^ "/O2.err"))
+      else if List.all check (marked (fromRoot (#src p), "dump")) then rmTree w
+      else ()
+    end
+
   (* a run program of tests/hs/lang at -O0 and -O2 on the VM: the same
      output, and both a value or both a bottom *)
   fun langOne (p : Lang.program) () =
@@ -183,6 +235,7 @@ struct
             ("run", SOME p) => runOne p ()
           | ("fuel", SOME p) => fuelOne p ()
           | ("budget", SOME p) => budgetOne p ()
+          | ("dump", SOME p) => dumpOne p ()
           | ("lang", SOME p) => langOne p ()
           | _ => fail ("hs-simplify: no program " ^ name ^ " for " ^ kind))
     | _ => NONE
@@ -207,7 +260,8 @@ struct
     in
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "hs" (Test.describe "hs/simplify"
-           [family ("run", own), family ("fuel", marking "fuel"), family ("budget", marking "budget"), lang]))
+           [family ("run", own), family ("fuel", marking "fuel"), family ("budget", marking "budget"),
+            family ("dump", marking "dump"), lang]))
         covers
     end
 end

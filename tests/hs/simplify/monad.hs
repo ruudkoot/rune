@@ -2,6 +2,7 @@
 -- constructor classes, default methods (>>) and superclass-free returns,
 -- specialised and simplified at -O2.
 -- fuel: every lint holds and it prints the same whatever rewrite it stops after
+-- dump: has Main.sumM{IO}
 module Main where
 
 newtype State s a = State (s -> (a, s))

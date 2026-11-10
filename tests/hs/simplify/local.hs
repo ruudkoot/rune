@@ -2,6 +2,8 @@
 -- 1993, section 5.4, fig 10): sum' stays overloaded inside a specialised
 -- mySum unless the specialiser copies it too.
 -- fuel: every lint holds and it prints the same whatever rewrite it stops after
+-- dump: has Main.twice{Int}
+-- dump: lacks Main.mySum
 module Main where
 
 mySum :: Num a => [a] -> a

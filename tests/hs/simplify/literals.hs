@@ -1,6 +1,8 @@
 -- fromInteger and fromRational of literals folded where the instance is
 -- known (Augustsson 1993, section 4.3), at -O2, and not otherwise: what a
 -- polymorphic function's literals give at each type.
+-- dump: lacks haskell98:Prelude.fromRational
+-- dump: lacks haskell98:Prelude.fromInteger
 module Main where
 
 half :: Fractional a => a -> a

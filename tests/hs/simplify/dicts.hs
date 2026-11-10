@@ -2,6 +2,10 @@
 -- functions of the Prelude and of the program, at several types, with
 -- superclasses and default methods, each printing what -O0 prints.
 -- fuel: every lint holds and it prints the same whatever rewrite it stops after
+-- dump: has Main.pairUp{Int,Bool}
+-- dump: has Main.total{Double}
+-- dump: lacks Main.total
+-- dump: lacks haskell98:Prelude.fromInteger
 module Main where
 
 class Shape a where
