@@ -1068,9 +1068,12 @@ struct
     | M.Prim ("thunk_force", _, [a]) =>
         let val v = atom (b, cx, a)
         in
-          (* the table holds no variable of any (setRep) *)
-          if isSome (IntTable.find (#reps b, v)) then v
-          else tyOfRhs (b, defAs (b, L.Prim ("thunk_force", [v]), repOfRhs r), r)
+          (* not one of any, which defAny says of a global's field that
+             results return a datatype in: it holds what each constructor
+             leaves there *)
+          case IntTable.find (#reps b, v) of
+            SOME rep => if rep = L.RAny then tyOfRhs (b, defAs (b, L.Prim ("thunk_force", [v]), repOfRhs r), r) else v
+          | NONE => tyOfRhs (b, defAs (b, L.Prim ("thunk_force", [v]), repOfRhs r), r)
         end
     | M.App (M.Global (g, _), xs) =>
         (case IntMap.find (!slotFuns, g) of

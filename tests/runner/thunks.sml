@@ -28,12 +28,15 @@
    the interpreter and tier 1, a suspension read as a ref stops every
    tier, and MidLint refuses each; cast's casts print the same with
    --check-casts, and forget's force forgotten behind a cast stops every
-   engine under it, and the lint refuses it at -O2. *)
+   engine under it, and the lint refuses it at -O2; results' suspensions,
+   read back from where a function's results return a datatype, are
+   forced at every level. *)
 structure Thunks =
 struct
   open Sh
 
-  val kernels = ["chain", "tailchain", "knot", "share", "reenter", "barrier", "image", "last", "leak", "wrongslot", "cast", "forget"]
+  val kernels = ["chain", "tailchain", "knot", "share", "reenter", "barrier", "image", "last", "leak", "wrongslot", "cast", "forget",
+                 "results"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 
