@@ -419,6 +419,22 @@ each mode compiled with and printed; the run goes on with the next seed.
 `bin/rune-functor-gen show --seed 0xHEX --size N` prints the program of a
 failure's replay token `HEX:N`, as it was drawn.
 
+## The syntax of Haskell 98
+
+`make test-hs-syntax` runs the tests of the lexer, layout, parser and
+printers of `lib/language/haskell` (`syntax.build`; the haskell98 roadmap's
+M11), the jobs `hs/syntax/*` of `tests/runner/hssyntax.sml` over the driver
+`bin/rune-hs-syntax` ([tests/hs/syntax/README.md](../tests/hs/syntax/README.md)),
+until the round-trip harness of the roadmap's M2 takes them over: E10's 46
+crafted cases, accepted or refused as they should be; the round trips of
+every file the parser accepts, the tree and the token test for the explicit
+and the implicit print and the exact print, byte for byte; the first line of
+each diagnostic of `tests/hs/syntax/errors`; 2,500 trees of the syntax
+generator from a fixed seed, each printed both ways and read back; the
+parser's mutants, each caught by the test that alone can see it; and the
+cost of a token in `runevm --count`'s instructions, bytes and objects,
+within `tests/hs/syntax/budget`.
+
 ## The three oracles
 
 **The output.** A program under `tests/` runs with `--checked` and its

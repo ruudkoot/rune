@@ -22,4 +22,6 @@ files
   parser.sml
   print_sig.sml
   print.sml
+  dump_sig.sml
+  dump.sml
 end

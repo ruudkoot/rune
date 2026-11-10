@@ -17,3 +17,4 @@ docs/lib/** linguist-generated=true
 # Immutable generated artifacts retain the generator's function separator.
 ffi/win32/generated/** linguist-generated=true
 ffi/win32/generated/**/shims.c whitespace=-blank-at-eof
+tests/hs/syntax/grammar/Crlf.hs -text

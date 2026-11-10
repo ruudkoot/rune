@@ -1,0 +1,17 @@
+# The cost of lexing and parsing the files of tests/hs/syntax/grammar and the
+# cases three times, less that of no time, by runevm --count (bin/rune-test
+# run hs/syntax/budget; RUNE_TEST_ACCEPT=1 writes it again, 10% over the
+# counts). "spans" reads with a span on every node, as a compile does; "full"
+# with every node's tokens and trivia, as the exact print needs. On E10's
+# speed set (nhc98's nofib, 277,048 tokens) the same costs 611.4 and 699.9
+# instructions a token, against the spike's 560.5 with spans as lines and
+# columns (the haskell98 roadmap's E10): names are nodes with spans of their
+# own, and diagnostics cost nothing until an error.
+spans tokens 7692
+spans instructions 4899909
+spans bytes 4637010
+spans objects 167227
+full tokens 7692
+full instructions 5723836
+full bytes 6405467
+full objects 233745

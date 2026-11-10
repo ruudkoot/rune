@@ -8,8 +8,13 @@
      hs-syntax [--hier] implicit FILE        the implicit print
      hs-syntax [--hier] exact FILE           the exact print
      hs-syntax [--hier] tokens FILE          the tokens of L, a line each
+     hs-syntax [--hier] dump FILE            the tree as text, with spans (dump-bare: without)
+     hs-syntax generate-files SEED N DIR     N trees of the generator as DIR/gen-K.hs and DIR/gen-K.tree
      hs-syntax [--hier] speed N FILE...      lex and parse every file N times
      hs-syntax cases DIR                     the crafted cases of DIR/cases.tsv
+     hs-syntax check-roundtrip FILE...       the round trips, a line FAIL for each that fails
+     hs-syntax errors DIR                    the diagnostics of DIR/NAME.hs against DIR/NAME.expected
+     hs-syntax generate SEED N DEPTH         N trees of the generator from SEED on, printed and read back
 
    `--list FILE` stands for the files FILE names, a line each. *)
 structure SyntaxDriver =
@@ -61,6 +66,21 @@ struct
              | _ => semis (r, T.SEMI :: acc))
         | semis (T.RBRACE :: r, T.SEMI :: acc) = semis (T.RBRACE :: r, acc)
         | semis (t :: r, acc) = semis (r, t :: acc)
+      (* `(,)` as the list of an import or of the module's exports, which
+         the tree keeps as an empty list, is `()` *)
+      fun opens t = case t of T.IMPORT => true | T.MODULE => true | _ => false
+      fun word t = case t of T.CONID _ => true | T.QCONID _ => true | T.VARID _ => true | _ => false
+      fun lists ([], acc) = List.rev acc
+        | lists (t :: r, acc) =
+            if opens t then
+              let
+                fun head (T.LPAREN :: T.COMMA :: T.RPAREN :: rest, acc) = lists (rest, T.RPAREN :: T.LPAREN :: acc)
+                  | head (u :: rest, acc) = if word u then head (rest, u :: acc) else lists (u :: rest, acc)
+                  | head ([], acc) = lists ([], acc)
+              in
+                head (r, t :: acc)
+              end
+            else lists (r, t :: acc)
       fun commas ([], acc) = List.rev acc
         | commas (T.COMMA :: T.RPAREN :: r, p :: acc) =
             (case p of
@@ -69,7 +89,7 @@ struct
              | _ => commas (T.RPAREN :: r, p :: acc))
         | commas (t :: r, acc) = commas (r, t :: acc)
     in
-      commas (semis (List.map T.plain ts, []), [])
+      commas (lists (semis (List.map T.plain ts, []), []), [])
     end
 
   fun firstDiff (a, b, k) =
@@ -194,15 +214,156 @@ struct
                   (ignore (P.parse (opts P.Spans, path, tokensOf (path, readFile path))); "accept")
                   handle HsSource.Error _ => "reject"
                 val () = total := !total + 1
+                fun roundTripOk () =
+                  let
+                    val fields = String.fields (fn c => c = #"\t") (roundTrip path)
+                    val bad = List.filter (fn t => not (String.isSuffix "-ok" t orelse String.isSuffix "-ok\n" t))
+                                (List.drop (fields, 3))
+                  in
+                    if null bad then ()
+                    else (failed := !failed + 1;
+                          say ("FAIL cases " ^ name ^ ": its round trips: " ^ String.concatWith "; " (List.map clean bad) ^ "\n"))
+                  end
               in
-                if got = want then ()
-                else (failed := !failed + 1; say ("FAIL\t" ^ name ^ "\twant " ^ want ^ ", got " ^ got ^ "\n"))
+                if got = want then (if got = "accept" then roundTripOk () else ())
+                else (failed := !failed + 1; say ("FAIL cases " ^ name ^ ": wanted " ^ want ^ ", got " ^ got ^ "\n"))
               end
         | _ => ()
     in
       List.app one lines;
-      say ("cases\t" ^ Int.toString (!total) ^ "\tfailed\t" ^ Int.toString (!failed) ^ "\n");
-      if !failed = 0 then () else OS.Process.exit OS.Process.failure
+      say ("cases\t" ^ Int.toString (!total) ^ "\tfailed\t" ^ Int.toString (!failed) ^ "\n")
+    end
+
+  fun sort xs =
+    let
+      fun insert (x, []) = [x]
+        | insert (x, y :: ys) = if String.<= (x, y) then x :: y :: ys else y :: insert (x, ys)
+    in
+      List.foldl insert [] xs
+    end
+
+  (* ---- the checks of make check, which print a line FAIL for what they find ---- *)
+
+  (* the round trips of each file, a line FAIL for each test it fails *)
+  fun checkRoundTrips paths =
+    let
+      val failed = ref 0
+      fun one path =
+        let
+          val fields = String.fields (fn c => c = #"\t") (roundTrip path)
+          val bad =
+            case fields of
+              "OK" :: _ :: _ :: tests => List.filter (fn t => not (String.isSuffix "-ok" t orelse String.isSuffix "-ok\n" t)) tests
+            | _ => ["it does not parse"]
+        in
+          if null bad then ()
+          else (failed := !failed + 1; say ("FAIL roundtrip " ^ path ^ ": " ^ String.concatWith "; " (List.map clean bad) ^ "\n"))
+        end
+        handle e => (failed := !failed + 1; say ("FAIL roundtrip " ^ path ^ ": " ^ clean (failure (path, "", e)) ^ "\n"))
+    in
+      List.app one paths;
+      say ("roundtrip\t" ^ Int.toString (length paths) ^ "\tfailed\t" ^ Int.toString (!failed) ^ "\n")
+    end
+
+  (* Each NAME.hs or NAME.lhs of DIR with NAME.expected: its first error's
+     first line contains what NAME.expected says, as tests/errors holds the
+     compiler's. *)
+  fun errors dir =
+    let
+      fun entries () =
+        let
+          val d = OS.FileSys.openDir dir
+          fun go acc = case OS.FileSys.readDir d of SOME e => go (e :: acc) | NONE => acc
+        in
+          sort (go []) before OS.FileSys.closeDir d
+        end
+      val failed = ref 0
+      val total = ref 0
+      fun one e =
+        if String.isSuffix ".hs" e orelse String.isSuffix ".lhs" e then
+          let
+            val path = dir ^ "/" ^ e
+            val base = String.substring (e, 0, size e - (if String.isSuffix ".hs" e then 3 else 4))
+            val want =
+              case String.tokens (fn c => c = #"\n") (readFile (dir ^ "/" ^ base ^ ".expected")) of
+                l :: _ => l
+              | [] => ""
+            val got =
+              (ignore (P.parseFile (opts P.Spans, e, readFile path)); "accepted")
+              handle e' as HsSource.Error _ => failure (e, readFile path, e')
+          in
+            total := !total + 1;
+            if want <> "" andalso String.isSubstring want got then ()
+            else (failed := !failed + 1; say ("FAIL errors " ^ path ^ ": wanted " ^ want ^ "; got " ^ got ^ "\n"))
+          end
+        else ()
+    in
+      List.app one (entries ());
+      say ("errors\t" ^ Int.toString (!total) ^ "\tfailed\t" ^ Int.toString (!failed) ^ "\n")
+    end
+
+  (* The syntax generator: `count` trees from `seed` on, each printed both
+     ways and read back, a line FAIL for each print whose tree is not the
+     one drawn, and for each tree whose two prints' tokens differ. *)
+  fun generate (seed, count, depth) =
+    let
+      val failed = ref 0
+      fun one k =
+        let
+          val m = SyntaxGen.module (seed + k, depth)
+          fun back (label, printer) =
+            let
+              val text = printer m
+              val name = "generated-" ^ Int.toString (seed + k) ^ "." ^ label
+              val (m2, trace) = P.parseTraced (opts P.Bare, name, tokensOf (name, text))
+            in
+              if m2 = m then SOME trace
+              else
+                let val again = HsPrint.explicit m2
+                in
+                  failed := !failed + 1;
+                  say ("FAIL generated " ^ name ^ ": read back as another tree" ^
+                       (if again = HsPrint.explicit m then ", which prints the same" else "") ^ ":\n" ^ text ^
+                       "-- read back as:\n" ^ again);
+                  NONE
+                end
+            end
+            handle e =>
+              (failed := !failed + 1;
+               say ("FAIL generated " ^ Int.toString (seed + k) ^ "." ^ label ^ ": " ^
+                    clean (failure (label, printer m, e)) ^ "\n" ^ printer m);
+               NONE)
+        in
+          case (back ("explicit", HsPrint.explicit), back ("implicit", HsPrint.implicit)) of
+            (SOME a, SOME b) =>
+              (case firstDiff (normalise a, normalise b, 0) of
+                 NONE => ()
+               | SOME (i, x, y) =>
+                   (failed := !failed + 1;
+                    say ("FAIL generated " ^ Int.toString (seed + k) ^ ": the prints' tokens differ at " ^
+                         Int.toString i ^ ": " ^ x ^ " / " ^ y ^ "\n")))
+          | _ => ()
+        end
+    in
+      List.app one (List.tabulate (count, fn k => k));
+      say ("generated\t" ^ Int.toString count ^ "\tfailed\t" ^ Int.toString (!failed) ^ "\n")
+    end
+
+  (* `count` trees of the generator from `seed` on, each as DIR/gen-K.hs, its
+     explicit print for an even K and its implicit one for an odd, and
+     DIR/gen-K.tree, its dump with no spans, for a harness that reads them
+     back with another program *)
+  fun generateFiles (seed, count, dir) =
+    let
+      fun put (path, text) = let val f = TextIO.openOut path in TextIO.output (f, text); TextIO.closeOut f end
+      fun one k =
+        let val m = SyntaxGen.module (seed + k, 3)
+        in
+          put (dir ^ "/gen-" ^ Int.toString k ^ ".hs", if k mod 2 = 0 then HsPrint.explicit m else HsPrint.implicit m);
+          put (dir ^ "/gen-" ^ Int.toString k ^ ".tree", HsDump.module {spans = false} m)
+        end
+    in
+      List.app one (List.tabulate (count, fn k => k))
     end
 
   fun readList path = String.tokens (fn c => c = #"\n") (readFile path)
@@ -227,8 +388,14 @@ struct
         | ["implicit", f] => printWith (fn (_, m) => HsPrint.implicit m) f
         | ["exact", f] => printWith HsPrint.exact f
         | ["tokens", f] => tokens f
+        | ["dump", f] => printWith (fn (_, m) => HsDump.module {spans = true} m) f
+        | ["dump-bare", f] => printWith (fn (_, m) => HsDump.module {spans = false} m) f
+        | ["generate-files", a, n, d] => generateFiles (valOf (Int.fromString a), valOf (Int.fromString n), d)
         | "speed" :: n :: r => speed (valOf (Int.fromString n), files r)
         | ["cases", d] => cases d
+        | "check-roundtrip" :: r => checkRoundTrips (files r)
+        | ["errors", d] => errors d
+        | ["generate", a, n, d] => generate (valOf (Int.fromString a), valOf (Int.fromString n), valOf (Int.fromString d))
         | _ => (say "usage: hs-syntax [--hier] check|roundtrip|explicit|implicit|exact|tokens|speed|cases ...\n";
                 OS.Process.exit OS.Process.failure)
     in

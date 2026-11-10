@@ -2,4 +2,4 @@
    on the syntax of lib/language/haskell. *)
 libraries unicode end
 use ../../../lib/language/haskell/syntax.build
-files driver.sml end
+files generate.sml driver.sml end

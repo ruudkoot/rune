@@ -113,6 +113,12 @@ struct
       Bare => fail msg
     | _ => raise HsSource.Error (spanOf a, msg)
 
+  (* an error over what was read since the mark `s` *)
+  fun failFrom (s : mark, msg) =
+    case !mode of
+      Bare => fail msg
+    | _ => let val a = startOf s in raise HsSource.Error ({file = !file, start = a, stop = Int.max (a, L.lastStop ())}, msg) end
+
   fun mkE s x = A.E (ann s, x)
   fun mkP s x = A.P (ann s, x)
   fun mkT s x = A.T (ann s, x)
@@ -148,8 +154,8 @@ struct
       T.CONID s => let val m = mark () in advance (); mkName m (q0 s) end
     | T.QCONID (q, s) =>
         if !dotted then let val m = mark () in advance (); mkName m (q0 (q ^ "." ^ s)) end
-        else fail ("a dotted module name, `" ^ q ^ "." ^ s ^ "`, which Haskell 98 does not have" ^
-                   (if ctx = "" then "" else " " ^ ctx))
+        else fail ("a dotted module name" ^ (if ctx = "" then "" else " " ^ ctx) ^ ", `" ^ q ^ "." ^ s ^
+                   "`, which Haskell 98 does not have")
     | _ => expected ("a module name", ctx)
 
   (* var: varid or ( varsym ) *)
@@ -312,12 +318,14 @@ struct
     end
 
   (* Is the type a class assertion? The Report's `class` is `qtycls tyvar`
-     or `qtycls (tyvar atype ...)`; `simpleclass` the first alone. *)
+     or `qtycls (tyvar atype ...)`; `simpleclass` the first alone, in the
+     context of a class or an instance declaration. *)
   fun checkClass simple (A.T (a, x)) =
     case x of
       A.TApp (A.T (_, A.TCon _), A.T (_, A.TVar _)) => ()
     | A.TApp (A.T (_, A.TCon _), A.T (pa, A.TParen t)) =>
-        if simple then failAt (pa, "a class assertion on a type that is not a variable, where a simple class is wanted")
+        if simple then
+          failAt (pa, "a class assertion on other than a type variable, in the context of a class or an instance declaration")
         else
           let
             fun headVar (A.T (_, A.TVar _)) = true
@@ -326,10 +334,14 @@ struct
           in
             case t of
               A.T (_, A.TApp _) =>
-                if headVar t then () else failAt (pa, "a class assertion on a type that a variable does not head")
-            | _ => failAt (pa, "a class assertion on a type that is neither a variable nor one applied")
+                if headVar t then () else failAt (pa, "a class assertion on a type that a type variable does not head")
+            | _ => failAt (pa, "a class assertion on a type that is neither a type variable nor one applied")
           end
-    | _ => failAt (a, "a context of something other than class assertions")
+    | A.TApp (A.T (_, A.TCon _), A.T (pa, _)) =>
+        if simple then
+          failAt (pa, "a class assertion on other than a type variable, in the context of a class or an instance declaration")
+        else failAt (pa, "a class assertion on a type that is neither a type variable nor one applied, in parentheses")
+    | _ => failAt (a, "a context that is not class assertions, a class applied to a type variable")
 
   fun checkContext simple (t as A.T (a, x)) =
     case x of
@@ -337,7 +349,7 @@ struct
     | A.TParen (t' as A.T (_, A.TApp _)) => checkClass simple t'
     | A.TTuple ts => List.app (checkClass simple) ts
     | A.TApp _ => checkClass simple t
-    | _ => failAt (a, "a context of something other than class assertions")
+    | _ => failAt (a, "a context that is not class assertions, a class applied to a type variable")
 
   (* [context =>] type *)
   fun ctype () : A.ty option * A.ty =
@@ -441,7 +453,11 @@ struct
                   T.RPAREN => (advance (); advance (); conPat s (mkName s (q0 ":")))
                 | _ => parenPat s)
            | _ => parenPat s)
-      | _ => let val l = literal "in a pattern" in mkP s (A.PLit l) end
+      | T.INTEGER _ => let val l = literal "" in mkP s (A.PLit l) end
+      | T.FLOAT _ => let val l = literal "" in mkP s (A.PLit l) end
+      | T.CHAR _ => let val l = literal "" in mkP s (A.PLit l) end
+      | T.STRING _ => let val l = literal "" in mkP s (A.PLit l) end
+      | _ => expected ("a pattern", "")
     end
 
   and conPat s n =
@@ -626,7 +642,7 @@ struct
                  if L.closeImplicit () then (noteClose (); xs)
                  else expected ("the end of the layout block", "of " ^ whose)
            end)
-      | _ => expected ("a block", "for " ^ whose)
+      | _ => expected (whose, "")
     end
 
   fun exp () : A.exp =
@@ -712,7 +728,7 @@ struct
              val () = expect (T.OF, "after the scrutinee of `case`")
              val alts = block ("an alternative", "the alternatives of `case`", startsAlt, alt)
            in
-             if null alts then fail "a `case` with no alternatives" else ();
+             if null alts then failFrom (s, "a `case` with no alternatives") else ();
              mkE s (A.ECase (e, alts))
            end)
       | T.DO =>
@@ -721,8 +737,9 @@ struct
            in
              (case List.rev ss of
                 A.S (_, A.SExp _) :: _ => ()
-              | A.S (a, _) :: _ => failAt (a, "the last statement of a `do` block is not an expression")
-              | [] => fail "a `do` block with no statements");
+              | A.S (a, A.SLet _) :: _ => failAt (a, "the last statement of a `do` block is a `let`, not an expression")
+              | A.S (a, A.SBind _) :: _ => failAt (a, "the last statement of a `do` block is a binding `<-`, not an expression")
+              | [] => failFrom (s, "a `do` block with no statements"));
              mkE s (A.EDo ss)
            end)
       | _ => fexp ()
@@ -762,7 +779,7 @@ struct
               case x of
                 A.ECon q => recordSuffix (A.E (absorb (ann s, toksOf ea), A.ERecCon (q, fs)))
               | _ =>
-                  if null fs then fail "a record update with no fields"
+                  if null fs then failFrom (s, "a record update with no fields")
                   else recordSuffix (mkE s (A.ERecUpd (e, fs)))
             end
         | _ => e
@@ -780,7 +797,11 @@ struct
       | T.QCONID (q, c) => (advance (); mkE s (A.ECon (mkName s {qual = q, name = c})))
       | T.LPAREN => (advance (); parenExp s)
       | T.LBRACKET => (advance (); listExp s)
-      | _ => let val l = literal "where an expression goes" in mkE s (A.ELit l) end
+      | T.INTEGER _ => let val l = literal "" in mkE s (A.ELit l) end
+      | T.FLOAT _ => let val l = literal "" in mkE s (A.ELit l) end
+      | T.CHAR _ => let val l = literal "" in mkE s (A.ELit l) end
+      | T.STRING _ => let val l = literal "" in mkE s (A.ELit l) end
+      | _ => expected ("an expression", "")
     end
 
   and parenExp s =
@@ -1468,6 +1489,7 @@ struct
   fun theEnd () =
     case !cur of
       T.EOF => note (T.EOF, fn () => let val a = L.currentStart () in {trivia = L.trivia (), start = a, stop = a} end)
+    | T.RBRACE => fail "a `}` that no `{` opened"
     | _ => expected ("the end of the module", "")
 
   fun moduleTop () : A.module =
