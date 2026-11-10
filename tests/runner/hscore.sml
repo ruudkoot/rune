@@ -9,6 +9,10 @@
                       where there is none. A run that prints nothing fails.
      ; dump: FLAGS    the same, for what is not a run: a dump of a stage
      ; fail: MESSAGE  bin/rhc refuses it, with MESSAGE on standard error.
+     ; forces: N FLAGS  bin/rhc --lint=2 FLAGS --dump-after=coretomid compiles
+                      it, and the dump of Core to Mid holds N thunk_force
+                      nodes, one for each force of Core, which the file
+                      counts (the roadmap's M10)
      ; refuse: FLAGS | MESSAGE
                       bin/rhc --lint=2 FLAGS --read-core FILE -o OUT refuses
                       it, with MESSAGE: a fault of Core to Mid made on
@@ -68,7 +72,7 @@ struct
       | (_, SOME flags, _, _) => SOME ("dump", flags)
       | (_, _, SOME msg, _) => SOME ("fail", String.extract (msg, if String.isPrefix " " msg then 1 else 0, NONE))
       | (_, _, _, SOME both) => SOME ("refuse", both)
-      | _ => NONE
+      | _ => Option.map (fn rest => ("forces", rest)) (after "forces")
     end
 
   (* the status a test wants: NAME.exitcode, or 0 *)
@@ -275,6 +279,23 @@ struct
             else if contains (f ".err", msg) then ()
             else fail ("hs.core." ^ n ^ ": stopped with: " ^ firstLine (f ".err"))
           end
+      | SOME ("forces", rest) =>
+          (* the dump of Core to Mid, its thunk_force nodes counted *)
+          (case String.tokens Char.isSpace rest of
+             want :: flags =>
+               let
+                 val status = exec {cmd = [rhc, "--lint=2"] @ flags @ ["--dump-after=coretomid", "--read-core", src, "-o", f ".rbc"],
+                                    dir = NONE, stdin = "", stdout = f ".out", stderr = f ".err", timeout = 600}
+                 fun count (text, k) =
+                   let val (_, rest) = Substring.position "(prim thunk_force " text
+                   in if Substring.isEmpty rest then k else count (Substring.triml 1 rest, k + 1) end
+                 val found = count (Substring.full (read (f ".out")), 0)
+               in
+                 if status <> 0 then fail ("hs.core." ^ n ^ ": did not compile: " ^ firstLine (f ".err"))
+                 else if SOME found = Int.fromString want then ()
+                 else fail ("hs.core." ^ n ^ ": " ^ Int.toString found ^ " thunk_force in Mid, where Core has " ^ want ^ " forces")
+               end
+           | [] => fail ("hs.core." ^ n ^ ": ; forces: says no number"))
       | SOME ("fail", msg) =>
           if rhcRun [] = 0 then fail ("hs.core." ^ n ^ ": accepted, where it should stop with: " ^ msg)
           else if contains (f ".err", msg) then ()
@@ -296,7 +317,7 @@ struct
             else if same (f ".out", expected) then ()
             else fail ("hs.core." ^ n ^ ": the dump differs from " ^ expected ^ ": " ^ difference (expected, f ".out"))
           end
-      | NONE => fail ("hs.core." ^ n ^ ": its first line is no ; run:, ; dump: or ; fail:")
+      | NONE => fail ("hs.core." ^ n ^ ": its first line is no ; run:, ; dump:, ; forces:, ; fail: or ; refuse:")
     end
 
   (* every rule of CoreLint has its fault, lint-RULE.core, which names it;

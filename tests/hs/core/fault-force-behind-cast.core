@@ -1,0 +1,10 @@
+; refuse: --fault=force-behind-cast --read-core tests/hs/core/lib/base.core | which is no suspension: a force forgotten
+; rhc's mutant of Core to Mid, a force behind a cast (the roadmap's rhc's
+; mutants): each force made a cast from the suspension to its value, so the
+; VM would take a suspension for the value it stands for. Form C's lint
+; (IrRules.leavesSusp, M9) refuses a cast of a suspension to what is none,
+; which is a force forgotten.
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (x Int (prim int_add 1 2))
+      (printInt x w))))

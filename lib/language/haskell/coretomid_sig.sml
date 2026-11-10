@@ -26,14 +26,6 @@
    Area: Languages *)
 signature CORE_TO_MID =
 sig
-  (* How suspensions are made and forced: by form C's primitives, or by
-     functions of E1's runtime in today's Mid.
-
-     `FormC` is the roadmap's M9: `thunk_make`, `thunk_force`,
-     `thunk_blackhole` and `thunk_self_update`, force one primitive node.
-     `Runtime` is for a tree that has not got them. *)
-  datatype form = FormC | Runtime
-
   (* A fault made on purpose, for the tests of what catches it.
 
      They are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a
@@ -41,16 +33,20 @@ sig
      a force made a cast from the suspension to its value. *)
   datatype fault = ThunkInSlot | ForceBehindCast
 
-  (* A construct Core has and the Mid of this tree cannot say yet: what it
-     waits on, and where. *)
+  (* A construct Core has and Core to Mid does not lower: what it is, and
+     where. *)
   exception Unsupported of string
 
-  (* `program ({form, fault}, p)` is the text of Mid of the Core program
-     `p`, which CoreLint passed, with the fault made where it is `SOME`.
+  (* `program ({fault}, p)` is the text of Mid of the Core program `p`,
+     which CoreLint passed, with the fault made where it is `SOME`.
+
+     A suspension is form C's (the roadmap's M9): made by `thunk_make`,
+     forced by one `thunk_force` node, its code saying `thunk_blackhole`
+     first and `thunk_self_update` last.
 
      The text's `do` calls `main`, and prints what an exception no handler
      takes is, as Core's interpreter does, and ends with status 1.
 
      Raises: `Unsupported` where `p` needs what Mid has not got. *)
-  val program : {form : form, fault : fault option} * Core.program -> string
+  val program : {fault : fault option} * Core.program -> string
 end

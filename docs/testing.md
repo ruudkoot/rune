@@ -704,8 +704,12 @@ FLAGS`, the same for a dump of a stage; `; fail: MESSAGE`, refused with
 MESSAGE on standard error; `; refuse: FLAGS | MESSAGE`, refused with MESSAGE
 when compiled through Mid with FLAGS, which make a fault of Core to Mid on
 purpose (`--fault`, the roadmap's *rhc's mutants*): a suspension in a typed
-slot, which MidLint refuses at the boundary into Mid (`fault-*.core`). `--accept` writes the `.expected` files, to be
-read line by line. At level 3 rhc prints what it read, reads it back and
+slot, which MidLint refuses at the boundary into Mid, and a force made a
+cast, which form C's lint refuses as a force forgotten (`fault-*.core`);
+`; forces: N FLAGS`, compiled with the dump of Core to Mid, which holds N
+`thunk_force` nodes, one for each force of Core, which the file counts by
+hand (`forces.core`). `--accept` writes the `.expected` files, to be read
+line by line. At level 3 rhc prints what it read, reads it back and
 prints it again, so print, read, print is the identity on every test.
 `tests/hs/core/lib/base.core` is what the run tests share, read before each
 by its flags. A run reads `NAME.stdin` as its standard input where there is
