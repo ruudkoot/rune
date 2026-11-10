@@ -3,7 +3,7 @@ conformance98	nhc98	tests/conformance98	https://github.com/8l/nhc98.git	b4d41520
 nhc98-nofib	nhc98	tests/nofib	https://github.com/8l/nhc98.git	b4d41520ae51f1db61ff6fb899775200e4cae731	-
 yhc-conformance	yhc	tests/conformance98	https://github.com/haskell-implementations/yhc.git	c669451c1cb60193f61fe897a301de633f674be3	-
 nofib-2019	nofib	.	https://github.com/ghc/nofib.git	f34b90b5a6ce46284693119a06d1133908b11856	-
-ghc-legacy	ghc	testsuite/tests	https://gitlab.haskell.org/ghc/ghc.git	902339d332fb4ce2b3c87dcac1ee6495d41ad886	ghc/LICENSE
+ghc-legacy	ghc	testsuite/tests	https://gitlab.haskell.org/ghc/ghc.git	902339d332fb4ce2b3c87dcac1ee6495d41ad886	ghc/testsuite/LICENSE
 jhc	jhc	regress/tests	https://github.com/jimcrayne/jhc.git	1ff035af3d697f9175f8761c8d08edbffde03b4e	jhc/LICENSE
 helium	helium	test	https://github.com/Helium4Haskell/helium.git	5928bff479e6f151b4ceb6c69bbc15d71e29eb47	helium/LICENSE.txt
 uhc-99	uhc	EHC/test/regress	https://github.com/UU-ComputerScience/uhc.git	f2b94a90d26e2093d84044b3832a9a3e3c36b129	uhc/EHC/LICENSE

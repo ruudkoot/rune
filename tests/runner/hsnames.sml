@@ -255,15 +255,16 @@ struct
   fun tree () =
     Test.describe ""
       [Test.describe "hs/names"
-         [tagged (["check", "hs"] @ covers)
+         [tagged (["hs"] @ covers)
             (Test.describe ""
                (List.concat
                   (List.map (fn (f, ms) =>
-                               List.map (fn m => tagged ["quick"]
+                               List.map (fn m => tagged ["check", "quick"]
                                                    (job (f ^ "/" ^ m, "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-names " ^ f ^ " " ^ m, 600)))
                                  ms)
                      (fixtures ()))
-                @ [job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-names-mutants", 3600)]))],
+                (* the mutants nightly (the roadmap's D56, the lead's ruling 45) *)
+                @ [Test.tag "nightly" (job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-names-mutants", 3600))]))],
        Test.describe "hs/types"
          [tagged (["check", "hs"] @ covers)
             (Test.describe ""

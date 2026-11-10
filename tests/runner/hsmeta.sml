@@ -269,10 +269,16 @@ struct
       fun pair src =
         let val n = OS.Path.base (OS.Path.file src)
         in hold (HsConformance.pendingUntil (rowsOf src), Test.requires ["rhc"] (job ("pairs/" ^ n, ["hs-meta-pair", src]))) end
+      (* make check's: one mechanical relation (braces), the pairs and one
+         relation of names (reorder); the others nightly (the roadmap's D56,
+         the lead's ruling 45) *)
+      fun inCheck (relation, _) = relation = "braces"
+      val checked = List.concat (List.map mech (List.filter inCheck mechanical)) @ List.map pair pairs @ names "reorder"
+      val nightly = List.concat (List.map mech (List.filter (not o inCheck) mechanical)) @ names "split" @ names "rename"
     in
       List.foldl (fn (c, t) => Test.tag c t)
-        (Test.tag "check" (Test.tag "hs" (Test.describe "hs" [Test.describe "meta"
-           (List.concat (List.map mech mechanical) @ List.map pair pairs @ names "reorder" @ names "split" @ names "rename")])))
+        (Test.tag "hs" (Test.describe "hs" [Test.describe "meta"
+           [Test.tag "check" (Test.describe "" checked), Test.tag "nightly" (Test.describe "" nightly)]]))
         covers
     end
 end

@@ -404,7 +404,7 @@ struct
   val covers = ["covers:share/rhc/*", "covers:tests/hs/library/*", "covers:tests/runner/hslibrary.sml",
                 "covers:src/rhc/*", "covers:lib/language/haskell/*"]
 
-  val tree =
+  fun tree () =
     Test.describe "hs/library"
       [tagged (["check", "hs", "quick"] @ covers)
          (Test.describe ""
