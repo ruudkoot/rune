@@ -100,19 +100,57 @@ struct
     let val l = firstLine src
         val l = if String.isPrefix "> " l then String.extract (l, 2, NONE) else l
     in case String.tokens Char.isSpace l of "--" :: "rows:" :: ws => ws | _ => [] end
+  (* the rows a program names: its name's id, then those of its first line *)
+  fun idsOf (p : Lang.program) =
+    hd (String.fields (fn c => c = #"_") (#name p))
+    :: List.filter (fn w => not (isReading w) andalso w <> "deviation") (firstWords (#src p))
   fun programs root : program list =
     List.concat (List.map (fn d =>
       List.map (fn (p : Lang.program) =>
         let
           val ws = firstWords (#src p)
-          val own = hd (String.fields (fn c => c = #"_") (#name p))
-          val ids = own :: List.filter (fn w => not (isReading w) andalso w <> "deviation") ws
+          val ids = idsOf p
         in
           {dir = d, path = d ^ "/" ^ #name p, name = #name p, ids = ids, pins = List.filter isReading ws,
            deviation = member ("deviation", ws), expected = #base p ^ ".expected"}
         end)
         (Lang.programsOf (root ^ "/tests/hs/" ^ d, [".hs", ".lhs"], ["Main.hs", "Main.lhs"])))
       dirs)
+  (* ---- whether a program's jobs run: not while every row it names is
+     Planned (or no row), so that a row leaves Planned with its program's
+     jobs, which rhc then passes (docs/testing.md, rhc's conformance table) *)
+  val statusCache : (string * string) vector option ref = ref NONE
+  fun statusOf id =
+    let
+      val v =
+        case !statusCache of
+          SOME v => v
+        | NONE =>
+            let
+              fun one line = case String.fields (fn c => c = #"\t") line of
+                               fs as _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ => SOME (hd fs, List.nth (fs, 7))
+                             | _ => NONE
+              val lines = String.fields (fn c => c = #"\n") (read (fromRoot "tests/hs/conformance.tsv"))
+              val v = Vector.fromList (sortBy #1 (List.mapPartial one (if null lines then [] else tl lines)))
+            in statusCache := SOME v; v end
+    in case lookup (v, #1) id of (_, status) :: _ => SOME status | [] => NONE end
+  fun planned (p : Lang.program) =
+    List.all (fn id => case statusOf id of SOME "Planned" => true | NONE => true | SOME _ => false) (idsOf p)
+  fun pending p = if planned p then SOME "the rows it tests are Planned (tests/hs/conformance.tsv)" else NONE
+  (* the same of a file of a program of tests/hs/lang or tests/hs/accept,
+     a module of a directory among them *)
+  fun pendingFile file =
+    case List.find (fn d => String.isPrefix (d ^ "/") file) ["tests/hs/lang", "tests/hs/accept"] of
+      NONE => NONE
+    | SOME d =>
+        let val first = hd (String.fields (fn c => c = #"/") (String.extract (file, size d + 1, NONE)))
+        in
+          case List.find (fn (p : Lang.program) => #src p = file orelse String.isPrefix (d ^ "/" ^ first ^ "/") (#src p))
+                         (Lang.programsOf (d, [".hs", ".lhs"], ["Main.hs", "Main.lhs"])) of
+            SOME p => pending p
+          | NONE => NONE
+        end
+
   (* the directories whose programs serve a row's test *)
   fun serves test = case test of "accept" => ["accept", "lang"] | "run" => ["lang"] | "reject" => ["errors"] | _ => []
 

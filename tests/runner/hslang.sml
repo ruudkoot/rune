@@ -13,7 +13,9 @@
    nothing (or what their `.cwarn` says). Their jobs are `hs/compile/...`,
    `hs/errors/...`, `hs/lang/WAY/NAME`, `hs/lang/typecheck/NAME`,
    `hs/errors/typecheck/NAME` and `hs/accept/NAME`, which need the
-   capability `rhc` (bin/rhc). Where no program is there, there is no job.
+   capability `rhc` (bin/rhc). Where no program is there, there is no job,
+   and a program's jobs are pending while every row it tests is Planned in
+   tests/hs/conformance.tsv (HsConformance.pending).
 
    The runner's own check of that machinery, which needs no rhc, is a
    second suite of the same kind over tests/hs/runner: a stub compiler and a
@@ -61,7 +63,7 @@ struct
      compileTags = ["check", "hs"], errorTags = fn _ => ["check", "hs", "quick"], typecheckTags = ["check", "hs"],
      wayTags = fn (w : Lang.way) => ["check", "hs"] @ (if #name w = "register" then ["quick"] else []),
      needs = fn _ => Test.requires ["rhc"], wayNeeds = fn _ => fn t => t,
-     selected = fn _ => fn _ => true}
+     selected = fn _ => fn _ => true, pending = HsConformance.pending}
 
   val capabilities =
     [{name = "rhc", probe = "test -x bin/rhc", hint = "run: make bin/rhc (rhc.build; docs/testing.md, rhc's tests)"}]
@@ -86,7 +88,7 @@ struct
      typecheck = SOME (stubCompile ^ " --typecheck-only"), stackDone = false, covers = runnerCovers,
      compileTags = runnerTags, errorTags = fn _ => runnerTags, typecheckTags = runnerTags,
      wayTags = fn _ => runnerTags, needs = fn _ => fn t => t, wayNeeds = fn _ => fn t => t,
-     selected = fn _ => fn _ => true}
+     selected = fn _ => fn _ => true, pending = fn _ => NONE}
 
   (* a run of the silent VM: it passes only where the run's judge fails it
      for its output, and says so *)
@@ -207,7 +209,9 @@ struct
   (* the oracle jit of Rune's programs (Oracles.jitOneWith) on rhc's:
      interpreted and in each mode of the JIT, the same output, counts and
      errors; nightly, with the ways beyond D56's three *)
-  fun jit (p : Lang.program) = Oracles.jobIn ("", #name p, ["jit-one-with", "bin/rhc", #base p, #src p], [], 1, 600, 3600)
+  fun jit (p : Lang.program) =
+    let val t = Oracles.jobIn ("", #name p, ["jit-one-with", "bin/rhc", #base p, #src p], [], 1, 600, 3600)
+    in case HsConformance.pending p of SOME why => Test.pending why t | NONE => t end
   val tree =
     Test.describe ""
       [Lang.tree rhc,

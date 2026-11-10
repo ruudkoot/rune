@@ -552,7 +552,18 @@ row whose text names an erratum listed by one, and back.
 refused, and a tree that keeps every rule, with a row of each class
 supported and a deviation pinned, accepted. A row leaves `Planned` when its
 program exists and the judges have seen it (roadmap, M19); the roadmap's
-G2 is the state in which none is `Planned`.
+G2 is the state in which none is `Planned`. Until then the program's jobs,
+and its round trips, are listed and held (`SKIP`, not run: a program whose
+every row is `Planned`), so that a program can land with its clause before
+rhc passes it, and a row's leaving `Planned` is what turns them on.
+
+A clause program cites its clause in a comment at its head (`-- Report
+2.4: ...`), after its first line if that names rows, and is a whole program,
+well typed where the clause does not say otherwise, so that it stays judged
+the same as rhc grows from a parser to a compiler. Before it lands it is put
+to the oracles of D52 (GHC with the strict shim, Hugs `+98`, nhc98 `-98`,
+MicroHs as a smoke test); where they part from the Report, rhc follows
+D38's rule and the disagreement is recorded as a reading.
 
 ## The three oracles
 
