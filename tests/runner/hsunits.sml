@@ -100,9 +100,9 @@ struct
      too; a unit put before app.core that declares a name app.core takes
      compiles app.core, which takes it from there (H1: the latest unit's);
      and without it again app.core is taken, its first entry's *)
-  fun warm () =
+  fun warmWith (whole : bool) =
     let
-      val d = out ^ "/warm"
+      val d = out ^ (if whole then "/warm-whole" else "/warm")
       val () = (rmTree d; mkdirs d)
       fun f x = d ^ "/" ^ x
       fun copy (src, dst) = write (f dst, read (fromRoot src))
@@ -121,8 +121,8 @@ struct
       fun bytes p = (let val i = BinIO.openIn p in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
                     handle IO.Io _ => ""
       fun rhc (args, log) =
-        exec {cmd = [fromRoot "bin/rhc", "--lint=2", "--units"] @ args, dir = SOME d, stdin = "", stdout = log, stderr = log,
-              timeout = 600}
+        exec {cmd = [fromRoot "bin/rhc", "--lint=2", "--units"] @ (if whole then ["--link=whole"] else []) @ args, dir = SOME d,
+              stdin = "", stdout = log, stderr = log, timeout = 600}
       fun step (label, files, want : (string * string) list, prints : string) =
         let
           val reads = List.concat (List.map (fn x => ["--read-core", x]) files)
@@ -132,6 +132,10 @@ struct
           val said = List.mapPartial (fn l => if String.isPrefix "rhc: unit " l
                                               then case String.tokens (fn c => c = #" " orelse c = #":") (String.extract (l, 10, NONE)) of
                                                      n :: what :: _ => SOME (n, what)
+                                                   | _ => NONE
+                                              else if String.isPrefix "rhc: link: " l
+                                              then case String.tokens (fn c => c = #" ") (String.extract (l, 11, NONE)) of
+                                                     what :: _ => SOME ("link", what)
                                                    | _ => NONE
                                               else NONE)
                                      (lines (read wlog))
@@ -149,21 +153,45 @@ struct
              (if size w > 12 andalso String.extract (w, 12, NONE) = String.extract (c, 12, NONE) then ()
               else say ("FAIL hs.units.warm: " ^ label ^ ": the program from the store is not the one without it\n"));
              (if read (f (label ^ ".out")) = prints then ()
-              else say ("FAIL hs.units.warm: " ^ label ^ ": printed " ^ firstLine (f (label ^ ".out")) ^ "\n")))
+              else say ("FAIL hs.units.warm: " ^ label ^ ": printed " ^ firstLine (f (label ^ ".out")) ^ "\n"));
+             (* with --link=whole, a whole compile's of the same files *)
+             if not whole then ()
+             else if exec {cmd = [fromRoot "bin/rhc", "--lint=2"] @ reads @ ["-o", "j.rbc"], dir = SOME d, stdin = "",
+                           stdout = f (label ^ ".whole"), stderr = f (label ^ ".whole"), timeout = 600} <> 0
+             then say ("FAIL hs.units.warm: " ^ label ^ ": the files do not compile whole\n")
+             else
+               let val j = bytes (f "j.rbc")
+               in
+                 if size j > 12 andalso String.extract (w, 12, NONE) = String.extract (j, 12, NONE) then ()
+                 else say ("FAIL hs.units.warm: " ^ label ^ ": the program is not the whole compile's of the same files\n")
+               end)
         end
       val three = ["base.core", "lib.core", "app.core"]
-      fun all what = List.map (fn n => (n, what)) ["rhc-runtime", "base", "lib", "app"]
+      (* what a unit compiled says, and the runtime's unit taken: with
+         --link=whole a unit is checked, the runtime's always, and the link
+         compiled or taken from its memo *)
+      val made = if whole then "checked" else "compiled"
+      val rt = if whole then ("rhc-runtime", "checked") else ("rhc-runtime", "taken")
+      fun link what = if whole then [("link", what)] else []
+      fun all what = (if whole andalso what = "taken" then [rt] else [("rhc-runtime", what)])
+                     @ List.map (fn n => (n, what)) ["base", "lib", "app"]
     in
-      step ("cold", three, all "compiled", "18\n");
-      step ("again", three, all "taken", "18\n");
+      step ("cold", three, all made @ link "compiled", "18\n");
+      step ("again", three, all "taken" @ link "taken", "18\n");
       edit ("lib.core", "(prim int_add m m)", "(prim int_mul m 3)");
-      step ("body", three, [("rhc-runtime", "taken"), ("base", "taken"), ("lib", "compiled"), ("app", "taken")], "27\n");
+      step ("body", three, [rt, ("base", "taken"), ("lib", made), ("app", "taken")] @ link "compiled", "27\n");
       edit ("lib.core", "(data Shape () (Square Int) (Rect Int Int))", "(data Shape () (Square Int) (Rect Int Int) (Tri Int))");
-      step ("type", three, [("rhc-runtime", "taken"), ("base", "taken"), ("lib", "compiled"), ("app", "compiled")], "27\n");
-      step ("latest", ["base.core", "lib.core", "mid.core", "app.core"],
-            [("rhc-runtime", "taken"), ("base", "taken"), ("lib", "taken"), ("mid", "compiled"), ("app", "compiled")], "9\n");
-      step ("without", three, all "taken", "27\n")
+      step ("type", three, [rt, ("base", "taken"), ("lib", made), ("app", made)] @ link "compiled", "27\n");
+      (* a name two units define is one no joined program holds: with
+         --link=whole a program's names are a whole program's, as a Haskell
+         program's are, qualified by their modules *)
+      if whole then ()
+      else step ("latest", ["base.core", "lib.core", "mid.core", "app.core"],
+                 [rt, ("base", "taken"), ("lib", "taken"), ("mid", made), ("app", made)] @ link "compiled", "9\n");
+      step ("without", three, all "taken" @ link "taken", "27\n")
     end
+  fun warm () = warmWith false
+  fun warmWhole () = warmWith true
 
   (* the ABI facts of an interface (H9), tests/hs/units/abi: a newtype its
      unit makes a box, which a unit that gives it all its arguments takes as
@@ -191,6 +219,7 @@ struct
   fun command args =
     case args of
       ["hs-units-abi"] => SOME abi
+    | ["hs-units-warm-whole"] => SOME warmWhole
     | ["hs-units-warm"] => SOME warm
     | ["hs-units-store"] => SOME store
     | ["hs-units-named"] => SOME named
@@ -205,7 +234,8 @@ struct
     List.foldl (fn (tag, t) => Test.tag tag t)
       (Test.describe "hs/units"
          ([Tools.job ("store", ["hs-units-store"], [], 300, 600), Tools.job ("named", ["hs-units-named"], [], 500, 1200),
-           Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600)]
+           Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600),
+           Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800)]
           @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())))
       (["check", "test-rhc"] @ covers)
 end

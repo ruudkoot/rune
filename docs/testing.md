@@ -1059,7 +1059,12 @@ the other takes compiles that other, which takes it from there; and without
 it again the other's first entry is taken. `hs/units/abi` holds an
 interface's ABI facts (H9): a newtype its unit makes a box, which a unit
 that gives it all its arguments takes as a box too, and a value of one unit
-named as a constructor of another, taken as the value. Core in
+named as a constructor of another, taken as the value. `hs/units/warm-whole`
+is `hs/units/warm` with `--link=whole`, the roadmap's C (*rhc's units* in
+[units.md](units.md)): each unit is checked or taken, its Core kept, and the
+link joins the units' Core, keeps what `main` reaches and compiles it whole
+or takes it from the link memo; each step's program is also byte for byte
+what a whole compile of the same files gives. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

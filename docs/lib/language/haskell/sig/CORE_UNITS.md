@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 6 of 6 entries documented |
+| Documentation | 7 of 7 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coreunits\_sig.sml](../../../../../lib/language/haskell/coreunits_sig.sml) |
 
@@ -36,6 +36,7 @@ sig
   val <a href="#val-join">join</a> : Core.program list -&gt; Core.program
   val <a href="#val-unresolved">unresolved</a> : Core.program -&gt; string list
   val <a href="#val-uses">uses</a> : Core.decl -&gt; {<a href="#fld-uses.values">values</a> : string list, <a href="#fld-uses.types">types</a> : string list, <a href="#fld-uses.cons">cons</a> : string list}
+  val <a href="#val-reach">reach</a> : Core.program * string list -&gt; Core.program
   val <a href="#val-interface">interface</a> : Core.program * string list -&gt; Core.program
   val <a href="#val-fingerprints">fingerprints</a> : (string -&gt; string) -&gt; Core.program -&gt; (string * string) list
 end
@@ -91,6 +92,19 @@ the runtime and a constructor of the list.
 | <a name="fld-uses.values"></a>`values` | `string list` |  |
 | <a name="fld-uses.types"></a>`types` | `string list` |  |
 | <a name="fld-uses.cons"></a>`cons` | `string list` |  |
+
+### <a name="val-reach"></a>`reach`
+
+```sml
+val reach : Core.program * string list -> Core.program
+```
+
+`reach (p, roots)` is what the values `roots` reach of p, in p's order.
+
+A value reaches the values, types and constructors it names, a
+constructor its type, and a type the types of its fields; an import
+reached is kept, as a whole program has none (the haskell98 roadmap's
+M21: units joined and compiled whole, what main reaches).
 
 ### <a name="val-interface"></a>`interface`
 

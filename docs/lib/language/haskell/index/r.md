@@ -8,6 +8,7 @@
 - `rationalLit` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-rationallit)
 - `RBRACE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rbrace)
 - `RBRACKET` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rbracket)
+- `reach` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-reach)
 - `record` (type): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#type-record)
 - `records` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-records)
 - `Refused` (exn): [HS_LINT](../sig/HS_LINT.md#exn-refused)
