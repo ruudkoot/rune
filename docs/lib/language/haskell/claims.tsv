@@ -4,12 +4,44 @@ CORE_GEN	signature			required	declared	lib/language/haskell/coregen_sig.sml
 CORE_INTERP	signature			required	declared	lib/language/haskell/coreinterp_sig.sml
 CORE_LINT	signature			required	declared	lib/language/haskell/corelint_sig.sml
 CORE_PRIM	signature			required	declared	lib/language/haskell/coreprim_sig.sml
+CORE_RUNTIME	signature			required	declared	lib/language/haskell/coreruntime_sig.sml
 CORE_TEXT	signature			required	declared	lib/language/haskell/coretext_sig.sml
 CORE_TO_MID	signature			required	declared	lib/language/haskell/coretomid_sig.sml
+HS_AST	signature			required	declared	lib/language/haskell/ast_sig.sml
+HS_CHAR	signature			required	declared	lib/language/haskell/char_sig.sml
+HS_DUMP	signature			required	declared	lib/language/haskell/dump_sig.sml
+HS_FIXITY	signature			required	declared	lib/language/haskell/fixity_sig.sml
+HS_LAYOUT	signature			required	declared	lib/language/haskell/layout_sig.sml
+HS_LEXER	signature			required	declared	lib/language/haskell/lexer_sig.sml
+HS_LINT	signature			required	declared	lib/language/haskell/hslint_sig.sml
+HS_LITERATE	signature			required	declared	lib/language/haskell/literate_sig.sml
+HS_MODULES	signature			required	declared	lib/language/haskell/modules_sig.sml
+HS_PARSER	signature			required	declared	lib/language/haskell/parser_sig.sml
+HS_PRINT	signature			required	declared	lib/language/haskell/print_sig.sml
+HS_RENAME	signature			required	declared	lib/language/haskell/rename_sig.sml
+HS_SOURCE	signature			required	declared	lib/language/haskell/source_sig.sml
+HS_STRING_MAP	signature			required	declared	lib/language/haskell/strmap_sig.sml
+HS_TOKEN	signature			required	declared	lib/language/haskell/token_sig.sml
 Core	structure	CORE		required	ascribed	lib/language/haskell/core.sml
 CoreGen	structure	CORE_GEN		required	ascribed	lib/language/haskell/coregen.sml
 CoreInterp	structure	CORE_INTERP		required	ascribed	lib/language/haskell/coreinterp.sml
 CoreLint	structure	CORE_LINT		required	ascribed	lib/language/haskell/corelint.sml
 CorePrim	structure	CORE_PRIM		required	ascribed	lib/language/haskell/coreprim.sml
+CoreRuntime	structure	CORE_RUNTIME		required	ascribed	lib/language/haskell/coreruntime.sml
 CoreText	structure	CORE_TEXT		required	ascribed	lib/language/haskell/coretext.sml
 CoreToMid	structure	CORE_TO_MID		required	ascribed	lib/language/haskell/coretomid.sml
+HsAst	structure	HS_AST		required	claimed	lib/language/haskell/ast.sml
+HsChar	structure	HS_CHAR		required	claimed	lib/language/haskell/char.sml
+HsDump	structure	HS_DUMP		required	claimed	lib/language/haskell/dump.sml
+HsFixity	structure	HS_FIXITY		required	claimed	lib/language/haskell/fixity.sml
+HsLayout	structure	HS_LAYOUT		required	claimed	lib/language/haskell/layout.sml
+HsLexer	structure	HS_LEXER		required	claimed	lib/language/haskell/lexer.sml
+HsLint	structure	HS_LINT		required	claimed	lib/language/haskell/hslint.sml
+HsLiterate	structure	HS_LITERATE		required	claimed	lib/language/haskell/literate.sml
+HsModules	structure	HS_MODULES		required	claimed	lib/language/haskell/modules.sml
+HsParser	structure	HS_PARSER		required	claimed	lib/language/haskell/parser.sml
+HsPrint	structure	HS_PRINT		required	claimed	lib/language/haskell/print.sml
+HsRename	structure	HS_RENAME		required	claimed	lib/language/haskell/rename.sml
+HsSource	structure	HS_SOURCE		required	claimed	lib/language/haskell/source.sml
+HsStringMap	structure	HS_STRING_MAP		required	claimed	lib/language/haskell/strmap.sml
+HsToken	structure	HS_TOKEN		required	claimed	lib/language/haskell/token.sml

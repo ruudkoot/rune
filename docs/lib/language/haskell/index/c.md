@@ -1,11 +1,36 @@
 # Index: C
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [i](i.md) [k](k.md) [l](l.md) [n](n.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
 
+- `C` (con): [HS_AST](../sig/HS_AST.md#con-c)
+- `CASE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-case)
 - `Case` (con): [CORE](../sig/CORE.md#con-case)
 - `Cast` (con): [CORE](../sig/CORE.md#con-cast)
+- `CHAR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-char)
 - `check` (val): [CORE_LINT](../sig/CORE_LINT.md#val-check)
-- `Con` (con): [CORE](../sig/CORE.md#con-con)
+- `CInfix` (con): [HS_AST](../sig/HS_AST.md#con-cinfix)
+- `claims` (type): [HS_LINT](../sig/HS_LINT.md#type-claims)
+- `claims` (val): [HS_LINT](../sig/HS_LINT.md#val-claims)
+- `CLASS` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-class)
+- `Class` (con): [HS_MODULES](../sig/HS_MODULES.md#con-class)
+- `class` (type): [HS_CHAR](../sig/HS_CHAR.md#type-class)
+- `class_` (type): [HS_LINT](../sig/HS_LINT.md#type-class_)
+- `classify` (val): [HS_CHAR](../sig/HS_CHAR.md#val-classify)
+- `closeImplicit` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-closeimplicit)
+- `COLON` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-colon)
+- `Colon` (con): [HS_CHAR](../sig/HS_CHAR.md#con-colon)
+- `COMMA` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-comma)
+- `compare` (val): [HS_LINT](../sig/HS_LINT.md#val-compare)
+- `Con` (con): [CORE](../sig/CORE.md#con-con), [HS_MODULES](../sig/HS_MODULES.md#con-con)
+- `CONID` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-conid)
+- `ConOp` (con): [HS_AST](../sig/HS_AST.md#con-conop)
+- `constr` (type): [HS_AST](../sig/HS_AST.md#type-constr)
+- `constr_` (type): [HS_AST](../sig/HS_AST.md#type-constr_)
+- `CONSYM` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-consym)
+- `CPlain` (con): [HS_AST](../sig/HS_AST.md#con-cplain)
+- `CRec` (con): [HS_AST](../sig/HS_AST.md#con-crec)
+- `current` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-current)
+- `currentStart` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-currentstart)
 
 ---
 

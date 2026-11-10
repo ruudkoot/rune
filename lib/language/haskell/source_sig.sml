@@ -2,8 +2,8 @@
 
    A position is a byte offset of the file everywhere inside the front end,
    as it is inside Rune's compiler (docs/diagnostics.md, Columns), and a
-   span is the compiler's `Source.span`, so that a driver can show a
-   diagnostic of `lib/language/haskell` as it shows its own. A line and a
+   span is the compiler's span, as lib/compiler's Source has it, so that a
+   driver can show a diagnostic of `lib/language/haskell` as it shows its own. A line and a
    column are worked out only where a diagnostic is shown.
 
    Area: Languages *)
@@ -33,9 +33,11 @@ sig
   val bytes : text -> string
 
   (* `position (t, offset)` is the line of the byte `offset`, from 1, and
-     its column, from 1, counting the characters before it on its line: a
-     code point of UTF-8 counts one, and so does a byte that is not UTF-8.
-     A tab counts one, as rustc and Emacs count (docs/diagnostics.md). *)
+     its column, from 1, counting the characters before it on its line.
+
+     A code point of UTF-8 counts one, and so does a byte that is not
+     UTF-8. A tab counts one, as rustc and Emacs count
+     (docs/diagnostics.md). *)
   val position : text * int -> {line : int, column : int}
 
   (* An error of the front end: where, and what, in a message that starts
@@ -43,7 +45,9 @@ sig
   exception Error of span * string
 
   (* `message (t, span, msg)` is the first line of a diagnostic, as Rune's
-     compiler prints it: `FILE:LINE:COL: error: MESSAGE`, where `FILE` has
-     its control characters escaped as `\u{1B}`. *)
+     compiler prints it.
+
+     It is `FILE:LINE:COL: error: MESSAGE`, where `FILE` has its control
+     characters escaped as `\u{1B}`. *)
   val message : text * span * string -> string
 end

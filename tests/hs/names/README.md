@@ -19,6 +19,7 @@ library being `haskell98:` and its name.
 | `report` | The Report's 20 modules and rhc's two of primitives, whole: E16's 663 export pairs, 35 fixities and 164 instances (`results/E16/resolve.txt`), with the 20 pairs of the primitives, 683, and the 10 uses of 8 names that do not resolve as printed (`interact`'s in PreludeIO, Ratio's `numericEnum*`), until M17's overlay |
 | `imp`, `gfp`, `cyc`, `hidden` | E16's fixtures (`results/E16/tests`): 690 pairs at the least fixpoint and 693 at the greatest on `imp`; one solution on `gfp`; least and greatest differ on `cyc`, 5 and 7, under a Prelude of the program's own; `hidden` refused |
 | `char` | A program's own `Char`, which is not the library's |
+| `userprims` | A program's own `PreludeBuiltin` and `UnicodePrims`, which it imports as its own, though the library's of those names are hidden from it |
 | `fixity` | Fixity by entity, after names: a local operator, a qualified one, a local declaration, a constructor's in a pattern |
 | `boot3` | E15's three signed modules, one cycle, which GHC refuses with and without boot files (`results/E15/run/boot3`) |
 | `dotted` | A module `A.B` in `A/B.hs`, under `--dotted-names` (D35) |

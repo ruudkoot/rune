@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 26 requirements between the 14 files become 18 arrows.
+library and not a wall of lines: the 97 requirements between the 46 files become 57 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,45 +23,116 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(14)"]
+  a0["Languages<br>(46)"]
 ```
 
 ## Languages
 
 ```mermaid
 flowchart TD
-  n0(["CORE"])
-  n1["Core"]
-  n2(["CORE_TEXT"])
-  n3["CoreText"]
-  n4(["CORE_PRIM"])
-  n5["CorePrim"]
-  n6(["CORE_LINT"])
-  n7["CoreLint"]
-  n8(["CORE_INTERP"])
-  n9["CoreInterp"]
-  n10(["CORE_GEN"])
-  n11["CoreGen"]
-  n12(["CORE_TO_MID"])
-  n13["CoreToMid"]
+  n0(["HS_SOURCE"])
+  n1["HsSource"]
+  n2(["HS_CHAR"])
+  n3["HsChar"]
+  n4(["HS_TOKEN"])
+  n5["HsToken"]
+  n6(["HS_LITERATE"])
+  n7["HsLiterate"]
+  n8(["HS_LEXER"])
+  n9["HsLexer"]
+  n10(["HS_LAYOUT"])
+  n11["HsLayout"]
+  n12(["HS_AST"])
+  n13["HsAst"]
+  n14(["HS_PARSER"])
+  n15["HsParser"]
+  n16(["HS_PRINT"])
+  n17["HsPrint"]
+  n18(["HS_DUMP"])
+  n19["HsDump"]
+  n20(["HS_STRING_MAP"])
+  n21["HsStringMap"]
+  n22(["HS_MODULES"])
+  n23["HsModules"]
+  n24(["HS_FIXITY"])
+  n25["HsFixity"]
+  n26(["HS_RENAME"])
+  n27["HsRename"]
+  n28(["HS_LINT"])
+  n29["HsLint"]
+  n30(["CORE"])
+  n31["Core"]
+  n32(["CORE_TEXT"])
+  n33["CoreText"]
+  n34(["CORE_PRIM"])
+  n35["CorePrim"]
+  n36(["CORE_RUNTIME"])
+  n37["CoreRuntime"]
+  n38(["CORE_LINT"])
+  n39["CoreLint"]
+  n40(["CORE_INTERP"])
+  n41["CoreInterp"]
+  n42(["CORE_GEN"])
+  n43["CoreGen"]
+  n44(["CORE_TO_MID"])
+  n45["CoreToMid"]
   n1 --> n0
-  n2 --> n1
   n3 --> n2
-  n4 --> n1
   n5 --> n4
-  n5 --> n3
-  n6 --> n1
   n7 --> n6
-  n7 --> n5
-  n8 --> n1
+  n7 --> n1
+  n8 --> n5
   n9 --> n8
-  n9 --> n5
+  n9 --> n3
+  n9 --> n1
   n10 --> n1
+  n10 --> n5
   n11 --> n10
-  n11 --> n3
   n12 --> n1
+  n12 --> n5
   n13 --> n12
-  n13 --> n5
+  n13 --> n3
+  n14 --> n13
+  n14 --> n9
+  n15 --> n14
+  n15 --> n11
+  n15 --> n7
+  n16 --> n13
+  n17 --> n16
+  n18 --> n13
+  n19 --> n18
+  n21 --> n20
+  n22 --> n13
+  n22 --> n21
+  n23 --> n22
+  n24 --> n13
+  n25 --> n24
+  n26 --> n23
+  n27 --> n26
+  n28 --> n13
+  n29 --> n28
+  n29 --> n23
+  n31 --> n30
+  n32 --> n31
+  n33 --> n32
+  n34 --> n31
+  n35 --> n34
+  n35 --> n33
+  n36 --> n31
+  n37 --> n36
+  n37 --> n33
+  n38 --> n31
+  n39 --> n38
+  n39 --> n35
+  n40 --> n31
+  n41 --> n40
+  n41 --> n35
+  n42 --> n31
+  n43 --> n42
+  n43 --> n33
+  n44 --> n31
+  n45 --> n44
+  n45 --> n35
 ```
 
 ---
