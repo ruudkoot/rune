@@ -708,7 +708,20 @@ slot, which MidLint refuses at the boundary into Mid (`fault-*.core`). `--accept
 read line by line. At level 3 rhc prints what it read, reads it back and
 prints it again, so print, read, print is the identity on every test.
 `tests/hs/core/lib/base.core` is what the run tests share, read before each
-by its flags.
+by its flags. A run reads `NAME.stdin` as its standard input where there is
+one, and a test with a line `; files: own`, which writes files, runs each
+time in a directory of its own.
+
+rhc's runtime (`CoreRuntime`, the roadmap's M17: the Report's `prim*`,
+written in Core) has `prims-*.core`, Core's primitives on their edges
+(`Int` at 63 bits, `Integer` across the edges of IntInf's small range,
+`Double`, `Float` rounded to binary32), and
+`runtime-*.core`: strings unpacked lazily and at once (D24's A and B, which
+print the same), files, standard input read across the edge of a chunk, and
+the classes and mappings of `Char`. `lib/language/haskell/coreruntime`
+(`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
+`lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
+and the first and the last of each range and run of its data.
 
 E1's eight programs, rewritten in Core (`knot`, `cafs`, `monad`, `classes`,
 `nest`, `nest2`, `letpoly`, `exceptions`), print E1's hand-derived output,

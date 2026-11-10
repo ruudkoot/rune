@@ -19,6 +19,18 @@ with. `CoreToMid` lowers a program to Mid's text, a lazy position a
 suspension and an evaluated one its value, which rhc gives to the passes of
 `lib/compiler` from Mid on.
 
+`CoreRuntime` is rhc's runtime, written in Core over `CorePrim` (M17, D26's
+A: no SML below Haskell), so that the interpreter and the VM run one text:
+the unit and the list, which are the Report's built-in syntax, and the
+modules the Report imports and never defines, PreludeBuiltin and
+UnicodePrims, each `prim*` of `share/rhc/haskell98` a value of it of the
+same name. An action passes the state token (D25), and `getContents` and
+`readFile` read through `interleave`, the one interleaving primitive; a
+string literal is unpacked as its list is read (D24); a `Char` is a code
+point, classed and mapped by `lib/unicode`'s tables (D21); a `Float` is
+rounded to binary32 after each operation (D23). rhc links into a program
+what it reaches of the runtime.
+
 The syntax (`syntax.build`, the roadmap's M11) reads a file of Haskell 98 to
 a tree that keeps all of it. `HsLiterate` gives a literate file's program
 text, the length of the file; `HsLexer` makes it tokens, each with the

@@ -1,5 +1,4 @@
 ; run: --read-core tests/hs/core/lib/base.core
-; vm: no: Integer waits on M31, IntInf immediate, whose representation it shares (D20)
 ; Integer's primitives past Int's range: 2^100 and its negation, and what
 ; integer_to_int raises of it, Overflow.
 (val showInteger (-> !Integer Str)
