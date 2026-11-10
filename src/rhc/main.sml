@@ -163,6 +163,9 @@ struct
     | a :: rest => a :: world rest
     | [] => []
 
+  (* the library replayed by HsLint, at level 2, when its world is made *)
+  val () = RhcWorld.checkLibrary := (fn (g, r) => RhcLint.check (g, r, false))
+
   fun run (args : string list) : int =
     let val args = world (share args) in
     case args of

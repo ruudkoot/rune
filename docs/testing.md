@@ -712,11 +712,13 @@ any option that changes the library's reading, and `bin/rhc --world` says
 which a check takes. The jobs `hs/world/*` hold the two to printing alike:
 `image` that `bin/rhc` goes from a world this rhc made, newer than every
 file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and `lang/K-of-4`
-every program of the directory checked both ways, with its `.cargs`, to the
-same standard output, standard error and status; the first shard of each in
-make check, the others nightly; `bin/rune-test hs-world-one KIND NAME`
-judges one. A mutant's tree (`hs-mutants`) has no image, so a mutant goes
-the whole way.
+every program of the directory checked both ways at `--lint=2`, with its
+`.cargs`, to the same standard output, standard error and status, so that
+HsLint replays each way the records of the modules the program reaches; the
+first shard of each in make check, the others nightly;
+`bin/rune-test hs-world-one KIND NAME` judges one. The image is made at
+`RUNE_LINT=2`, so that HsLint replays every record of the library once. A
+mutant's tree (`hs-mutants`) has no image, so a mutant goes the whole way.
 
 **HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
 the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
