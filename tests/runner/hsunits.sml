@@ -59,8 +59,9 @@ struct
   fun coreOne src =
     let
       val n = HsCore.nameOf src
-      val () = mkdirs out
-      val o' = out ^ "/core-" ^ n
+      (* named as the test is, which is the program's name on the VM *)
+      val () = mkdirs (out ^ "/core")
+      val o' = out ^ "/core/" ^ n
       val flags = case HsCore.marker src of SOME ("run", f) => String.tokens Char.isSpace f | _ => []
       val (dir, args) = HsCore.whereRuns (src, o', flags @ ["--read-core", src])
       val rbc = o' ^ ".rbc"
