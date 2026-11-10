@@ -165,9 +165,33 @@ struct
       step ("without", three, all "taken", "27\n")
     end
 
+  (* the ABI facts of an interface (H9), tests/hs/units/abi: a newtype its
+     unit makes a box, which a unit that gives it all its arguments takes as
+     a box too, and a value of one unit named as a constructor of another,
+     taken as the value; compiled as units, it prints what Core's
+     interpreter prints *)
+  fun abi () =
+    let
+      val () = mkdirs out
+      val files = ["tests/hs/core/lib/base.core", "tests/hs/units/abi/lib.core", "tests/hs/units/abi/app.core"]
+      val reads = List.concat (List.map (fn f => ["--read-core", fromRoot f]) files)
+      val rbc = out ^ "/abi.rbc"
+    in
+      if exec {cmd = [fromRoot "bin/rhc", "--lint=2", "--units"] @ reads @ ["-o", rbc], dir = NONE, stdin = "",
+               stdout = out ^ "/abi.compile", stderr = out ^ "/abi.compile", timeout = 600} <> 0
+      then say ("FAIL hs.units.abi: does not compile in units: " ^ firstLine (out ^ "/abi.compile") ^ "\n")
+      else
+        (ignore (exec {cmd = [fromRoot "bin/runevm", rbc], dir = NONE, stdin = "", stdout = out ^ "/abi.out",
+                       stderr = out ^ "/abi.err", timeout = 300});
+         if read (out ^ "/abi.out") = "42\n" then ()
+         else say ("FAIL hs.units.abi: printed " ^ firstLine (out ^ "/abi.out") ^ " where 42 is wanted: "
+                   ^ firstLine (out ^ "/abi.err") ^ "\n"))
+    end
+
   fun command args =
     case args of
-      ["hs-units-warm"] => SOME warm
+      ["hs-units-abi"] => SOME abi
+    | ["hs-units-warm"] => SOME warm
     | ["hs-units-store"] => SOME store
     | ["hs-units-named"] => SOME named
     | ["hs-units-core", src] => SOME (fn () => coreOne src)
@@ -181,7 +205,7 @@ struct
     List.foldl (fn (tag, t) => Test.tag tag t)
       (Test.describe "hs/units"
          ([Tools.job ("store", ["hs-units-store"], [], 300, 600), Tools.job ("named", ["hs-units-named"], [], 500, 1200),
-           Tools.job ("warm", ["hs-units-warm"], [], 500, 1800)]
+           Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600)]
           @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())))
       (["check", "test-rhc"] @ covers)
 end

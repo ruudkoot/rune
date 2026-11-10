@@ -34,7 +34,7 @@ struct
      made (CoreToMid.abi), and the values it exports, which are all its
      own *)
   type compiled = {name : string, code : Link.unitCode, abi : (string * CoreToMid.abi) list, exports : string list,
-                   iface : Core.program}
+                   iface : Core.program, newtypes : (string * bool) list}
 
   (* The unit p compiled, named name, against the units compiled before it
      (earlier): each import's owner and making from the latest of them that
@@ -56,7 +56,18 @@ struct
       val importAbi = List.map (fn x => case List.find (fn (y, _) => y = x) (#abi (ownerOf x)) of
                                           SOME (_, a) => (x, a)
                                         | NONE => raise Error ("no making of " ^ x)) imports
-      val {text, names, abi} = CoreToMid.unit ({fault = fault, imports = importAbi, makesShared = makesShared}, p)
+      (* each newtype p copies of another unit, a box where that unit made
+         it one: the latest unit before this one that declares it *)
+      val copied =
+        List.mapPartial (fn Core.Newtype (t, _, _, _) =>
+                              List.foldl (fn (u : compiled, found) =>
+                                            case List.find (fn (n, _) => n = t) (#newtypes u) of
+                                              SOME nb => SOME nb
+                                            | NONE => found)
+                                         NONE earlier
+                          | _ => NONE) p
+      val {text, names, abi, boxed} =
+        CoreToMid.unit ({fault = fault, imports = importAbi, makesShared = makesShared, newtypes = copied}, p)
       val exports = List.map #1 abi
       (* the text's names of the entities, own and imported *)
       val byText = List.foldl (fn ((x, g), m) => StringMap.insert (m, g, x)) StringMap.empty names
@@ -121,7 +132,8 @@ struct
       {name = name, code = u, abi = abi, exports = exports,
        (* its interface: each of its values, and each type it declares *)
        iface = CoreUnits.interface (p, List.mapPartial (fn Core.Val (x, _, _) => SOME x | Core.Data (t, _, _) => SOME t
-                                                         | Core.Newtype (t, _, _, _) => SOME t | _ => NONE) p)}
+                                                         | Core.Newtype (t, _, _, _) => SOME t | _ => NONE) p),
+       newtypes = boxed}
     end
 
   (* ---- a unit kept in the store (RhcStore) ---- *)
@@ -136,8 +148,10 @@ struct
 
   (* its interface's section: each value's making, a line each, then the
      interface's Core *)
-  fun ifaceText ({abi, iface, ...} : compiled) : string =
-    String.concat (List.map (fn (x, a) => "abi " ^ abiName a ^ " " ^ x ^ "\n") abi) ^ "---\n" ^ CoreText.show iface
+  fun ifaceText ({abi, iface, newtypes, ...} : compiled) : string =
+    String.concat (List.map (fn (x, a) => "abi " ^ abiName a ^ " " ^ x ^ "\n") abi)
+    ^ String.concat (List.map (fn (t, b) => "newtype " ^ (if b then "box" else "bare") ^ " " ^ t ^ "\n") newtypes)
+    ^ "---\n" ^ CoreText.show iface
 
   (* its code's section: its unit file's bytes *)
   fun codeBytes ({code, ...} : compiled) : string = String.concat (UnitFile.chunks (MidPipeline.fingerprint (), code))
@@ -150,16 +164,18 @@ struct
         else if String.substring (s, i, 5) = "\n---\n" then (String.substring (s, 0, i + 1), String.extract (s, i + 5, NONE))
         else split (s, i + 1)
       val (head, core) = if String.isPrefix "---\n" iface then ("", String.extract (iface, 4, NONE)) else split (iface, 0)
-      val abi = List.map (fn l => case String.tokens (fn c => c = #" ") l of
-                                    ["abi", a, x] => (x, abiOf a)
-                                  | _ => raise Error ("the entry of " ^ name ^ " has a line " ^ l))
-                         (String.tokens (fn c => c = #"\n") head)
+      val facts = List.map (fn l => String.tokens (fn c => c = #" ") l) (String.tokens (fn c => c = #"\n") head)
+      val abi = List.mapPartial (fn ["abi", a, x] => SOME (x, abiOf a)
+                                  | ["newtype", _, _] => NONE
+                                  | l => raise Error ("the entry of " ^ name ^ " has a line " ^ String.concatWith " " l))
+                                facts
+      val newtypes = List.mapPartial (fn ["newtype", b, t] => SOME (t, b = "box") | _ => NONE) facts
       val program = CoreText.parse core
                     handle CoreText.Error (_, msg) => raise Error ("the entry of " ^ name ^ ": " ^ msg)
       val (fp, u) = UnitFile.read code handle UnitFile.Bad msg => raise Error ("the entry of " ^ name ^ ": " ^ msg)
       val () = if fp = MidPipeline.fingerprint () then ()
                else raise Error ("the entry of " ^ name ^ " is of another instruction set")
-    in {name = name, code = u, abi = abi, exports = List.map #1 abi, iface = program} end
+    in {name = name, code = u, abi = abi, exports = List.map #1 abi, iface = program, newtypes = newtypes} end
 
   (* the units linked into the program in out, in their order, which is
      dependencies first *)

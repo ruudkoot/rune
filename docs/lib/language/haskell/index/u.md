@@ -19,6 +19,7 @@
 - `Unsupported` (exn): [CORE_TO_MID](../sig/CORE_TO_MID.md#exn-unsupported)
 - `Use` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-use)
 - `useOf` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-useof)
+- `uses` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-uses)
 - `UTuple` (con): [CORE](../sig/CORE.md#con-utuple)
 
 ---

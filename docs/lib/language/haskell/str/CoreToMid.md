@@ -35,7 +35,7 @@ What each means is on [`CORE_TO_MID`](../sig/CORE_TO_MID.md); the types are this
 | exception | [`Unsupported`](../sig/CORE_TO_MID.md#exn-unsupported) | `of string` |
 | val | [`program`](../sig/CORE_TO_MID.md#val-program) | `{fault : fault option} * Core.decl list -> string` |
 | val | [`shared`](../sig/CORE_TO_MID.md#val-shared) | `string list` |
-| val | [`unit`](../sig/CORE_TO_MID.md#val-unit) | `{fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.decl list -> {abi : (string * abi) list, names : (string * string) list, text : string}` |
+| val | [`unit`](../sig/CORE_TO_MID.md#val-unit) | `{fault : fault option, imports : (string * abi) list, makesShared : bool, newtypes : (string * bool) list} * Core.decl list -> {abi : (string * abi) list, boxed : (string * bool) list, names : (string * string) list, text : string}` |
 
 ---
 

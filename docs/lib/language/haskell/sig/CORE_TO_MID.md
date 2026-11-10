@@ -55,8 +55,9 @@ sig
   exception <a href="#exn-unsupported">Unsupported</a> of string
   val <a href="#val-program">program</a> : {<a href="#fld-program.fault">fault</a> : fault option} * Core.program -&gt; string
   datatype <a href="#type-abi">abi</a> = <a href="#con-function">Function</a> | <a href="#con-suspension">Suspension</a> | <a href="#con-literal">Literal</a>
-  val <a href="#val-unit">unit</a> : {<a href="#fld-unit.fault">fault</a> : fault option, <a href="#fld-unit.imports">imports</a> : (string * abi) list, <a href="#fld-unit.makesshared">makesShared</a> : bool} * Core.program
-             -&gt; {text : string, names : (string * string) list, abi : (string * abi) list}
+  val <a href="#val-unit">unit</a> : {<a href="#fld-unit.fault">fault</a> : fault option, <a href="#fld-unit.imports">imports</a> : (string * abi) list, <a href="#fld-unit.makesshared">makesShared</a> : bool, <a href="#fld-unit.newtypes">newtypes</a> : (string * bool) list}
+             * Core.program
+             -&gt; {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list}
   val <a href="#val-shared">shared</a> : string list
 end
 </pre>
@@ -130,15 +131,18 @@ suspension in a global (a CAF), or a literal in a global.
 ### <a name="val-unit"></a>`unit`
 
 ```sml
-val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.program
-           -> {text : string, names : (string * string) list, abi : (string * abi) list}
+val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool, newtypes : (string * bool) list}
+           * Core.program
+           -> {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list}
 ```
 
 `unit ({fault, imports, makesShared}, p)` is the text of Mid of the
 unit `p` (the haskell98 roadmap's M21).
 
 Each import of another unit is bound as `imports` says that unit's
-Core to Mid made it. Its `names` is the name in the text of each value of the top level,
+Core to Mid made it, and each newtype of another unit is a box where
+`newtypes` says that unit made it one (an ABI fact, H9); its `boxed`
+says so of each newtype the unit declares itself. Its `names` is the name in the text of each value of the top level,
 the unit's own and its imports, by its Core name; its [`abi`](#type-abi) how each
 of its own is made. An import is declared in the text as a global of
 its scheme whose expression is a placeholder, which the client drops
@@ -154,6 +158,7 @@ import `imports` does not give.
 | <a name="fld-unit.fault"></a>`fault` | `fault option` |  |
 | <a name="fld-unit.imports"></a>`imports` | `(string * abi) list` |  |
 | <a name="fld-unit.makesshared"></a>`makesShared` | `bool` |  |
+| <a name="fld-unit.newtypes"></a>`newtypes` | `(string * bool) list` |  |
 
 ### <a name="val-shared"></a>`shared`
 
