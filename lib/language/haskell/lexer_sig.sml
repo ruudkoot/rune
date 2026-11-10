@@ -16,7 +16,9 @@
      operators by the Report's classes (`HsChar`).
    - R6: ASCII digits only in a numeric literal.
    - R7: `F..` is the operator `.` qualified by `F`; `F.=` is `F` then
-     `.=`; `M.where` is `M`, `.` and `where`.
+     `.=`; `M.where` is `M`, `.` and `where`; and, by the longest lexeme
+     the text gives, `F.--` is `F.-` then `-`, since `--` is dashes and no
+     operator, and `F.->` is `F.-` then `>`.
    - R8: `--:` is an operator; a numeric escape above 0x10FFFF is an
      error.
    - A byte that is not part of a sequence of UTF-8 is read as the code

@@ -150,8 +150,8 @@ lex.qual.sample.fqualdot	2.4	F.. lexes as F.. (qualified .)	lex	accept	token dum
 lex.qual.sample.fdot	2.4	F. lexes as F . (two tokens)	lex	accept	token dump	hand	Supported		
 lex.qual.enum	2.4	By F.., `[False..]` is a qualified operator and not an enumeration	lex	reject	refused (no module False, or a parse error); `[False ..]` is accepted	hand	Supported		
 lex.qual.reservedid	2.4	varid excludes reservedid, so M.where is not a qvarid: maximal munch gives M . where	lex	accept	`M.where` token dump: three tokens	hand	Supported		
-lex.qual.reservedop	2.4	varsym excludes reservedop, so F.= is not a qvarsym	lex	accept	token dump: F then varsym `.=`; likewise `F.|`, `F.->`: longest lexeme at each point; see readings.md	hand	Supported	R7	
-lex.qual.dashes	2.4	F.-- is not a qvarsym since varsym excludes dashes	lex	accept	F then varsym `.--`	hand	Planned		
+lex.qual.reservedop	2.4	varsym excludes reservedop, so F.= is not a qvarsym	lex	accept	token dump: F then varsym `.=`; likewise `F.|`; `F.->` is `F.-` then `>`: longest lexeme at each point; see readings.md	hand	Supported	R7	
+lex.qual.dashes	2.4	F.-- is not a qvarsym since varsym excludes dashes	lex	accept	the longest lexeme: `--` is dashes, no varsym, so `F.--` is the qvarsym `F.-` then `-` (R7); a module whose `-` binds looser than negation shows it	hand	Supported	R7	
 lex.qual.twodots	2.4	modid is one conid: M.N.x is qconid M.N, then . , then x, not a variable x of module M.N	lex	accept	token dump; GHC reads it hierarchically; see readings.md	hand	Supported	R7	
 lex.qual.opsym	2.4	A qualified operator is a lexeme: `Prelude.+`, `Prelude..`, `M.:+`	lex	accept	used infix	hand	Supported		
 lex.qual.backquote	2.4	A qualified variable or constructor may be backquoted	lex	accept	`` x `Prelude.div` y ``	hand	Supported		

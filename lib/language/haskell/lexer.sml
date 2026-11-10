@@ -340,11 +340,27 @@ struct
                   | _ =>
                       if C.isSymbol next then
                         (i := !i + 1; col := !col + 1;
-                         let val s = scanSym ()
+                         let
+                           val (j, c) = (!i, !col)
+                           val s = scanSym ()
+                           (* the longest lexeme: the longest run of the symbols that
+                              is an operator, neither reserved nor dashes, so that
+                              `F.--` is `F.-` then `-`, and `F.->` is `F.-` then `>` *)
+                           fun boundary k = k = 0 orelse k = size s orelse
+                                            let val x = Char.ord (String.sub (s, k)) in x < 128 orelse x >= 192 end
+                           fun chars p = CharVector.foldl (fn (ch, n) => if Char.ord ch < 128 orelse Char.ord ch >= 192 then n + 1 else n) 0 p
+                           fun operator p = not (allDashes p) andalso not (isSome (T.reservedOp p))
+                           fun longest k =
+                             if k = 0 then NONE
+                             else if boundary k andalso operator (String.substring (s, 0, k)) then SOME (String.substring (s, 0, k))
+                             else longest (k - 1)
                          in
-                           if allDashes s orelse isSome (T.reservedOp s) then restore ()
-                           else if String.sub (s, 0) = #":" then emit (T.QCONSYM (modname, s), a, sl, sc, b)
-                           else emit (T.QVARSYM (modname, s), a, sl, sc, b)
+                           case longest (size s) of
+                             NONE => restore ()
+                           | SOME p =>
+                               (i := j + size p; col := c + chars p;
+                                if String.sub (p, 0) = #":" then emit (T.QCONSYM (modname, p), a, sl, sc, b)
+                                else emit (T.QVARSYM (modname, p), a, sl, sc, b))
                          end)
                       else restore ()
                 end
