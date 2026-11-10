@@ -1,6 +1,6 @@
 # Roadmap: rhc, a Haskell 98 compiler on Rune's back end
 
-**The owner decided this roadmap on 2026-11-09. rhc lowers a lazy typed Core of its own to Rune's Mid, where a lazy position has the abstract type `susp T` and force is one node, lowered to form C: a flat `K_THUNK` and four instructions, `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE`, on both bytecodes. Mid's `Ty` gains variable-headed application and a forall, Mid gains a `Case`, and Mid, Low and both instruction sets gain multi-value return, which takes away the pair of `IO`'s state token. `IntInf` takes the immediate representation, which rhc's `Integer` shares. These change Rune more than the recommendations did, and each says by how much under the standing gate. Eight options are still to be measured, and the owner decides them on the figures: D3's `Force` right-hand side, eval/apply, pointer code 11, selector thunks, CAF tables, two forms of string literal, Sestoft-order trees and GHC's eta (*Decisions on the numbers*).**
+**The owner decided this roadmap on 2026-11-09, and answered the lead's questions on 2026-11-10. rhc lowers a lazy typed Core of its own to Rune's Mid, where a lazy position has the abstract type `susp T` and force is one node, lowered to form C: a flat `K_THUNK` and four instructions, `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE`, on both bytecodes. Mid's `Ty` gains variable-headed application and a forall, and Mid gains a `Case`. `IntInf` takes the immediate representation, which rhc's `Integer` shares, and `IO` passes a state token. Mid's pass list becomes data, and rhc links a layer of `lib/compiler` with no front end in it. These change Rune more than the recommendations did, and each says by how much under the standing gate. Nine options are still to be measured, and the owner decides them on the figures: D3's `Force` right-hand side, multi-value return, eval/apply, pointer code 11, selector thunks, CAF tables, two forms of string literal, Sestoft-order trees and GHC's eta. Each is built and measured on the register VM first, and taken to the stack VM, runeopt and the other platforms only once the owner adopts it (*Decisions on the numbers*).**
 - **The hook is Mid,** beneath a lazy typed Core that rhc owns. Hand-written Mid for knot-tied lists, mutually recursive CAFs, monad dictionaries and polymorphic recursion ran on both bytecode VMs and their tiers, not in native code, two of its ten programs only with D5's Simplify fixes (E1).
 - **A thunk is a flat `K_THUNK`, and force is one Mid node lowered to `FORCE`** (D3, D11, D13). Form C is the base of E2's ratios. Rune could have hosted Haskell with no new instruction and no new kind of object: form G, a marked closure with force lowered to a test, a value read and `CALL`, cost 1.05 of form C on 113 lazy programs and 1.02-1.22 on output shaped as rhc's will be (E2, E5). The owner took C as "cleanest and most performant". The stack bytecode takes the instructions too, about 115 lines more [estimate] (D14).
 - **Mid stays strict,** and a lazy position has a type of its own. That is what keeps its passes safe and tier 2 from reading a thunk blind. With casts erased a forgotten force is a fatal rather than a wrong answer, and in a function-typed slot `CALL` stops a `K_THUNK` (D4, D11). With `Ty` extended, `Any` is left for what `Ty` cannot say (D4).
@@ -10,11 +10,11 @@
 - **The Report's own recursive libraries are compiled as they stand (D36).** Its 11-module cycle is mostly scoping: no binding group crosses a module, though one type group needs kind inference across Prelude and Ratio and one expression depends on defaulting. The recursive-module work lands in the front end before the Prelude (M12, M13) and needs no cache, and a mechanical fallback exists: a small tool can derive the merged layout if the joined checker runs late (E16).
 - **Lazy ML works on the same thunks.** All 10 of the spec's programs pass with no line changed in a Mid pass and no Core. It found a collector fault Haskell cannot reach, which would have stayed hidden had this roadmap stopped at Haskell (E14). It ran on form G, so M26 runs the checklist again on form C (D57).
 
-**In what order: build-system-v2 is done.** It landed in origin/master `697724da5`, and implementation starts there. rhc's six questions of it were taken with a second language in view, and rhc uses its store, its friends and its identity per compiler (*What build-system-v2 gave rhc*). What may start at once: M1 to M8, M9 without D3's measured variant, and M31; then M28 to M30 after M6's walkers, and the rest as *The order* gives it.
+**In what order: build-system-v2 is done.** It landed in origin/master `697724da5`, and implementation starts there. rhc's six questions of it were taken with a second language in view, and rhc uses its store, its friends and its identity per compiler (*What build-system-v2 gave rhc*). What may start at once: M1 to M8, M9 without D3's measured variant, and M31; then M28, M29 and M30's build for measurement after M6's walkers, and the rest as *The order* gives it.
 
 This roadmap plans eight tracks:
 - **T, tests:** the conformance table, the runners, the oracles, the corpus.
-- **A, Rune's contract:** E11's patches, Mid to bytecode, walkers and a fold, lints, and the owner's changes to `Ty`, Mid's `Case`, multi-value return and `IntInf`. They stand on their own, whatever becomes of rhc.
+- **A, Rune's contract:** E11's patches, the pass list as data among them, Mid to bytecode, walkers and a fold, lints, and the owner's changes to `Ty`, Mid's `Case` and `IntInf`; multi-value return is built there to be measured. They stand on their own, whatever becomes of rhc.
 - **B, back:** Core, thunks through the engines, Core to Mid.
 - **F, front:** parser, modules, the checker, deriving, desugaring, HsLint.
 - **L, libraries:** the Report's Prelude and libraries.
@@ -36,7 +36,7 @@ This roadmap plans eight tracks:
 - **Blackholing:** not applicable. Form C blackholes at entry, so re-entry is found at once and the captures are released then (D12).
 - **A Rune-only `lib/language/haskell`:** Rune alone is required, other hosts informational, with the exception to the library rule written down (D42).
 
-**What is not established.** No prototype has been through `make check`, or on aarch64, 32-bit, PowerPC or Windows. rhc's compile time and space behaviour are unknown, the front end's 12-20k lines are an estimate, and K rests on three hand-lowered programs and four kernels with no `Read` and no real `IO`. Form C's figures in E2 come from one prototype stage, `bin10`, which V2 reran on G's stage, `bin12`, with `--count` identical; form C never ran on the stack VM or in native code. The lazy ML checklist (D57) ran on form G. None of the owner's changes to Mid's IR, D4, D8, D9 and D10, was built: each is sized by E4's or E12's counts alone.
+**What is not established.** No prototype has been through `make check`, or on aarch64, 32-bit, PowerPC or Windows. rhc's compile time and space behaviour are unknown, the front end's 12-20k lines are an estimate, and K rests on three hand-lowered programs and four kernels with no `Read` and no real `IO`. Form C's figures in E2 come from one prototype stage, `bin10`, which V2 reran on G's stage, `bin12`, with `--count` identical; form C never ran on the stack VM or in native code. The lazy ML checklist (D57) ran on form G. None of the changes to Mid's IR was built, neither D4, D8 and D10, which the owner took, nor D9's multi-value return, which is to be measured: each is sized by E4's or E12's counts alone.
 
 Writing it found 8 defects, two of them live on master and reproduced by hand: `=` on a non-uniform datatype overflows the compiler's stack at `-O2`, and an unknown pass name is silently accepted (*Found while writing*).
 
@@ -57,14 +57,14 @@ What it rests on:
 
 ## Status
 
-Decided on 2026-11-09. Nothing is implemented. The decisions are in the table at the head of *Decisions*, and the eight still to be taken on the figures in *Decisions on the numbers*.
+Decided on 2026-11-09, with the owner's answers of 2026-11-10. Nothing is implemented. The decisions are in the table at the head of *Decisions*, and the nine still to be taken on the figures in *Decisions on the numbers*.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
 | M1. The conformance table and its enforcement | T | M | D38, D53 | not started |
 | M2. Runners generalised; round-trip harness | T | M | D28 | not started |
 | M3. Oracle harness and the corpus imported | T | L | D52 | not started |
-| M4. Rune's contract: E11's patches, as decided | A | M | D7, D39, D40, D41 | not started |
+| M4. Rune's contract: E11's patches, as decided | A | L | D7, D39, D40, D41 | not started |
 | M5. Mid to bytecode, Mid text with labels | A | S | D1, D26 | not started |
 | M6. Walkers and a fold | A | M | D10 | not started |
 | M7. Lints and the two Simplify fixes | A | S | D5 | not started |
@@ -90,7 +90,7 @@ Decided on 2026-11-09. Nothing is implemented. The decisions are in the table at
 | M27. Retire | | S | | not started |
 | M28. `Ty` with application and forall | A | L | D4 | not started |
 | M29. Mid `Case` | A | L | D8 | not started |
-| M30. Multi-value return | A | L | D9 | not started |
+| M30. Multi-value return, built to be measured | A | L | D9 | not started |
 | M31. `IntInf` immediate | A | M | D20 | not started |
 
 Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
@@ -237,6 +237,15 @@ The owner decided on 2026-11-09, in this message:
 > - D57: C (as recommended)
 
 The decisions are recorded in *Decisions*: at the end of each section, and in the table at its head.
+
+The owner answered the lead's questions on 2026-11-10, in this message:
+
+> - D39: change to C
+> - D9: land behind a measurement
+> - "Build and benchmark": build on regisiter  vm only first and the rest only after after adoption
+> - D14: C
+
+These answers are recorded in *Decisions*, in D9, D14, D39 and D41, and in *Decisions on the numbers*.
 
 ## What the brief gets wrong, leaves open, or makes dangerous
 
@@ -5083,19 +5092,20 @@ E1 has 1,063 definition-to-instance edges: 172 true, 891 spurious, and it misses
 - 2026-10-21: designs for code the compiler runs are chosen by speed and correctness on Rune at tier 2, and other hosts are informational. `AGENTS.md`'s library rule has `lib/language/c` running on hosts, so a Rune-only `lib/language/haskell` needs a written exception (D42).
 - 2026-10-10: highly generic, reusable functionality goes into its own well-tested library under `lib/`, which is D21's ground for the Unicode tables.
 
-**From the owner's decisions of 2026-11-09, and the tree they name:**
+**From the owner's decisions of 2026-11-09 and answers of 2026-11-10, and the tree they name:**
 - **Work from origin/master `697724da5`,** where build-system-v2 has landed. The roadmap's citations stay against `b12141ecc`, where it was written; each is checked again on the new tree before its milestone, and a citation of the new tree says so.
 - **v2's friend rule.** A build that names a file or sub-build of a library with a header is refused unless the header names it a friend (v2's M14; `lib/compiler/driver/project.sml:286-313`, origin/master). So `rhc.build` is a friend of `lib/compiler`, as `rune.build` is (D41).
 - **Identity per compiler.** A second compiler links its own `Config`, which `scripts/gen-version.sh --config PLAN FILE` writes over its own plan; through `libraries compiler` it would take Rune's (v2's M11; D41).
 - **Codecs are generated.** Mid's codecs come from `tools/codecs/compiler.sml` by `make codecs`, and `make check-codecs` refuses stale output (`Makefile:677-680`, origin/master). A change to a constructor of Mid, to `fundef` or to `Ty` is a change to that description (M4, M28, M29, M30).
+- **What is measured is built on the register VM first,** its interpreter and JIT, and taken to the stack VM, runeopt and the other platforms only once the owner adopts it (*Decisions on the numbers*).
 
-**The standing gate.** After any change to Rune, SML budgets and bootstrap bytes stay put unless a decision says otherwise, and that decision says by how much. Where a prototype here moved nothing, the milestone must show the same. Exceptions are known. The primitives and form C's instructions of D3, D11 and D13 change both instruction-set fingerprints, so every `.rbc` changes once and the compiler's budgets re-base (deduced, not measured); M9 reports what moved. The owner's D8, D9 and D20 move more, and M29, M30 and M31 say by how much.
+**The standing gate.** After any change to Rune, SML budgets and bootstrap bytes stay put unless a decision says otherwise, and that decision says by how much. Where a prototype here moved nothing, the milestone must show the same. Exceptions are known. The primitives and form C's instructions of D3, D11 and D13 change both instruction-set fingerprints, so every `.rbc` changes once and the compiler's budgets re-base (deduced, not measured); M9 reports what moved. The owner's D8 and D20 move more, and M29 and M31 say by how much. D9's multi-value return would move both fingerprints again, and lands only if the owner adopts it on M30's figures.
 
 **From the Report's licence.** `share/rhc/haskell98` is a modified version of the Report's code: it says so, and does not claim to define Haskell 98 (D37). The corpus has licences of its own, which no experiment surveyed; M3 starts there.
 
 ## The architecture
 
-**A lazy typed Core that rhc owns, lowered to a strict Mid with suspensions explicit in its types.** Everything above Mid is Haskell's. Everything from Mid down is Rune's, and changes there are decisions. D1-D57 are the owner's, decided on 2026-11-09, and this is the design they give; eight options are still measured (*Decisions on the numbers*).
+**A lazy typed Core that rhc owns, lowered to a strict Mid with suspensions explicit in its types.** Everything above Mid is Haskell's. Everything from Mid down is Rune's, and changes there are decisions. D1-D57 are the owner's, decided on 2026-11-09 with the answers of 2026-11-10, and this is the design they give; nine options are still measured, each built on the register VM first (*Decisions on the numbers*).
 
 ```text
 .hs, .lhs     literate source, Unicode
@@ -5115,9 +5125,9 @@ Desugaring, matching   chapter 3's translations                   D34
 Core simplifier        known dictionaries, then strictness        D47-D51   (track P)
    |                                                     CoreLint D2
 Core to Mid            lazy position: susp T; evaluated: T        D3, D4, D5, D6
-   |  Mid              strict; Ty with f a and forall; Case;      D4, D8, D9
-   |                   multi-value return                         MidLint
-Mid's passes           as today, through Pipeline.lowOfMid        D39, D10
+   |  Mid              strict; Ty with f a and forall; Case       D4, D8
+   |                   multi-value return, if adopted             D9; MidLint
+Mid's passes           a list as data, MidPipeline.lowOfMid       D39, D10
    |  Low, bytecode    FORCE ENTER BLACKHOLE UPDATE, K_THUNK      D11, D13, D14
    |                   both bytecodes, every tier
 ```
@@ -5129,7 +5139,7 @@ Mid's passes           as today, through Pipeline.lowOfMid        D39, D10
 | Lexer through Core to Mid | `lib/language/haskell` | rhc's roadmap, freely |
 | rhc's driver: graph discovery, SCCs, the loop | `src/rhc` | rhc's roadmap, freely |
 | The Report's code | `share/rhc/haskell98`, with its `LICENSE` | Report text plus a listed overlay (D37) |
-| Mid and its layer of passes | `lib/compiler/mid.build` if E11-8 lands, else `internal.build`, rhc a friend of `lib/compiler` (D41) | decisions only |
+| Mid and its layer of passes | `lib/compiler/mid.build`, with `driver/midpipeline.sml`, rhc a friend of `lib/compiler` (D39, D41) | decisions only |
 | Low, bytecode, VM, collector | `lib/compiler/backend`, `src/isa`, `runtime` | decisions only |
 | Store (`UnitStore`, landed with build-system-v2), `UnitFile`, `Link`, `MidCodec`, usage recorder | `lib/compiler` | decisions only (D43) |
 
@@ -5155,7 +5165,7 @@ rhc's interface, usages and fingerprints are rhc's own: `Types.ty` holds no clas
 - **A running thunk's free variables are released at entry:** its code reads its captures and says `BLACKHOLE`, and the collector follows none of its fields from there, so re-entry is found at once (D12, not applicable under form C).
 - **Types.** `Ty` gains variable-headed application and a forall (D4), so a higher-kinded position and a dictionary's polymorphic method have Mid types. `Any`, meaning evaluated, is left for what `Ty` cannot say, with a lazy one as `susp Any`, and no type variable is instantiated at `susp T`, as in Strict Core. The common cast, a value into a `susp` slot, 117-124 a program at E5's step `D0` against 0-31 of `any` (E4, `results/E4/casts.out`), stays, erased in `Lower` under a lint (D4).
 - **Recursive values** are patched through a cell, and **CAFs** are thunks in globals (D6). For D3's measured variant, a recursive form in Mid instead.
-- **Matching and returns.** A `case` of Core lowers to Mid's `Case` (D8), and an unboxed product, `IO`'s state and value among them, to multi-value return (D9, D25).
+- **Matching and returns.** A `case` of Core lowers to Mid's `Case` (D8). An unboxed product, `IO`'s state and value among them, lowers to a tuple, or the token is erased; to multi-value return only if the owner adopts it on the numbers (D9, D25).
 
 ### What is shared with lazy ML
 
@@ -5179,21 +5189,23 @@ The brief keeps these in mind and does not build them. For each: which decision 
 - **Haskell 2010.** The brief's future language mode. D35 keeps its dotted names behind a flag, D38's rule names one text so a mode can name another, and D53's table is keyed by clause id, so a second text is a second set of rows. It closes if a Haskell 98 reading is written into the front end with no switch where 2010 differs, as `modid` would be without D35's flag.
 - **Extensions.** D2 keeps these open: Core is typed and rhc's own, so it can move, and D2's reopening names the limit, an extension whose elaboration wants System FC. D25's state token is the form `ST` and Haskell 2010 will want, which is the owner's reason for it, and D12 records the raise repair that a catchable `error` would bring back. Core's text is a contract between tracks, so it closes the door a little with each tool that reads it. E14 shows that lazy ML, the extension the brief names first, needs no Core at all.
 - **A second inference engine.** D31 keeps this open: desugaring and HsLint read evidence records by node, not the inferencer's state, so a second inferencer that writes the same records can sit beside the first. D54's second inference is a working precedent over one renamed AST. It closes if M15 reads the checker's ref cells directly instead of the records. An OutsideIn(X) engine would also want equalities in its evidence, which reopens D2.
-- **Parity with GHC.** The brief's "then later feature parity with current ghc". Nothing here builds towards it, and no decision is taken for it. What keeps it open is what can be added later without moving the boundary, or is taken already: `FORCE` and multi-value return, taken (D13, D9), eval/apply, measured (D15), a Core optimiser that can grow (D47), a state token, taken (D25), and Core itself, since System FC is a later change in a library rhc owns. What would close it is cost and not design: every pass written against Core makes System FC dearer, and parity also means compiling GHC's dialect of the libraries, which the brief puts outside this roadmap.
+- **Parity with GHC.** The brief's "then later feature parity with current ghc". Nothing here builds towards it, and no decision is taken for it. What keeps it open is what can be added later without moving the boundary, or is taken already: `FORCE`, taken (D13), multi-value return and eval/apply, measured (D9, D15), a Core optimiser that can grow (D47), a state token, taken (D25), and Core itself, since System FC is a later change in a library rhc owns. What would close it is cost and not design: every pass written against Core makes System FC dearer, and parity also means compiling GHC's dialect of the libraries, which the brief puts outside this roadmap.
 
 ## Decisions
 
 Fifty-seven decisions, each with its options, the evidence and a recommendation. The owner decided them on 2026-11-09
-(*The request*), and each section ends with the decision. Where the owner chose against the recommendation, the section's
-text stays as the evidence it was written on, and the decision says what was chosen and the owner's reason in the owner's
-words. Eight are taken on the numbers: what is built for them, and how it is measured, is *Decisions on the numbers*,
-after *Gates*. Where a decision reverses something earlier, or something the brief expects, it says so.
+(*The request*), and answered the lead's questions on 2026-11-10: D39 became C, D9 is taken on a measurement, D14's C is
+confirmed, and what is measured is built on the register VM first. Each section ends with the decision. Where the owner
+chose against the recommendation, the section's text stays as the evidence it was written on, and the decision says what
+was chosen and the owner's reason in the owner's words. Nine are taken on the numbers: what is built for them, and how it
+is measured, is *Decisions on the numbers*, after *Gates*. Where a decision reverses something earlier, or something the
+brief expects, it says so.
 
 Every change to Rune is graded on the brief's scale: **large**, optimal for Haskell; **medium**, good for both languages;
 **small**, Haskell can live with it; **none**, rhc works around it. Paths are as in *Where we are*. `tables/` is
 `results/E2/tables/`. Machine instructions are `instructions:u` at tier 2.
 
-| | Decision | Recommended | Status, 2026-11-09 |
+| | Decision | Recommended | Status, 2026-11-10 |
 |---|---|---|---|
 | D1 | Hook point | Mid, beneath a Core that rhc owns | decided: A |
 | D2 | Core | Owned by rhc in `lib/language/haskell`: System F plus `f a`, lazy `let` and `letrec`, forcing `case`; typed, with a text form | decided: C |
@@ -5203,12 +5215,12 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 | D6 | Recursive values and CAFs | Cell-patched recursion, CAFs as thunks in globals, no change to Mid | decided: A; C for D3's measured C |
 | D7 | Lambda | Stays, private to SML; no front end enters there; `Try` and `Fail` may go | decided: B |
 | D8 | Mid `Case` | None in this roadmap; recorded as medium, for clarity and compile time, for a later roadmap | decided: C, now |
-| D9 | Multi-value return | None now | decided: B, now |
+| D9 | Multi-value return | None now | measure B against A |
 | D10 | Walkers | Small: `atomsOfRhs` and `mapRhs` first | decided: C, now |
 | D11 | Thunk object | `K_CLOSURE` with non-zero `contag`, evaluated is `K_IND`; `K_THUNK`'s reservation released | decided: C |
 | D12 | Release, blackholing, raise | Form G, form L the alternative; no raise repair for Haskell 98 | n/a: form C |
 | D13 | Library, prims or instructions | No new instruction; `FORCE` stays additive | decided: C |
-| D14 | Stack bytecode and runeopt parity | Parity by G: force in `stack.sml`, +22 as built in E14, nothing in runeopt | decided: C, by the owner's rule |
+| D14 | Stack bytecode and runeopt parity | Parity by G: force in `stack.sml`, +22 as built in E14, nothing in runeopt | decided: C, by the owner's rule; confirmed |
 | D15 | Eval/apply | Not now: M25, on measurement | measure C against A |
 | D16 | Pointer code 11 | None: force loads the header | measure B against A |
 | D17 | Selector thunks | After leaks are measured on the corpus | measure B against A |
@@ -5233,9 +5245,9 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 | D36 | Library layout | The literal layout: the Report's graph compiled as one unit; the merged form a fallback, built only if the joined checker runs late | decided: A |
 | D37 | Prelude overlay and licence | A listed overlay; `share/rhc/haskell98/LICENSE`, marked modified | decided: code B, licence A |
 | D38 | Which text | The December 2002 text plus the published errata, all listed; rhc follows it unless it is wrong, contradictory, ambiguous or cannot be implemented, and unanimity of implementations alone is no ground | decided: B |
-| D39 | Pipeline as data | E11-4, 6, 8; bytes held | decided: D |
+| D39 | Pipeline as data | E11-4, 6, 8; bytes held | decided: C |
 | D40 | Front-end independence | `Stamp`, `label` on `fundef`, `Literal`, `Target` passed in: E11-1, 2, 3, 5, 9 | decided: B and C |
-| D41 | What `lib/compiler` exports | A third layer, `lib/compiler/mid.build` | decided by the lead: C if E11-8 lands, else D; the owner asked |
+| D41 | What `lib/compiler` exports | A third layer, `lib/compiler/mid.build` | decided by the lead: C |
 | D42 | Which hosts build rhc | Rune alone is required; other hosts informational | decided: C |
 | D43 | Store option | Generalise: +338 -231 in 3 files, Rune byte-identical | decided by the lead: B, as landed |
 | D44 | HsIface | Names, types, classes, instances, fixities, by entity; the Prelude's unfoldings from the start, a program's own later | decided: C |
@@ -5710,9 +5722,9 @@ Core lowers them as tuples [inference].
 **What would reopen it.** rhc's own measurements of unboxed returns, once track P runs. After D10 the price falls and it
 is worth asking again. It may not ride on this review.
 
-**Decided (owner, 2026-11-09).** B, against the recommendation: multi-value return, now. The owner's reason: "let's do it now instead of later". `Return` of several atoms, a `Let` of several variables, `Low.Return` of a list, and `RET` and `RESULT` of several in both instruction sets. The section above stays as the evidence.
+**Decided (owner, 2026-11-10).** To be measured: B, multi-value return, built and measured against A, today's four attacks on tuples; then A or B on the numbers, as for D15. The owner's answer: "land behind a measurement". It supersedes the answer of 2026-11-09, "B (let's do it now instead of later)". Until the owner adopts B, A stands. Built in M30 on the register VM, and landed only if adopted (*Decisions on the numbers*).
 
-*Lead's note.* E12 found that in a whole compile it wins what `results` already wins, and the rest only in units, where `results` does not run. It touches 126 walkers, both bytecodes, the JIT and runeopt, and moves both fingerprints. It lands before D25's state token, whose returned pair it removes. Raised with the owner: whether it lands behind a measurement, as D15 does; until the owner says so, it lands as decided. Lands in M30.
+*Lead's note.* E12 found that in a whole compile it wins what `results` already wins, and the rest only in units, where `results` does not run. Landed, it touches 126 walkers, both bytecodes, the JIT and runeopt, and moves both fingerprints; the build for measurement is Mid, Low and the register set, its interpreter and JIT. D25's state token does not wait on it: until B is adopted the token's returned pair is a tuple, or erased. Since every `IO` action returns that pair, rhc's programs are measured as well as Rune's compiler and benchmarks.
 
 ### D10. Walkers
 
@@ -5955,7 +5967,7 @@ language no one has asked to run natively.
 **What would reopen it.** The Stack lowering failing under Haskell's reading. A wish for fast lazy native code, which
 would want `fastPrim` entries and an owner. Lands in M9.
 
-**Decided (owner, 2026-11-09).** The owner's rule, "B if it doesn't leak into Low; otherwise C", gives C: parity by form C, about 115 lines [estimate, not built], with the instructions on the stack set too, runeopt's templates, `tests/opt/every-opcode.rasm`, `x64.sml`, `native.c` and rows in `docs/bytecode.md`.
+**Decided (owner, 2026-11-09; confirmed 2026-11-10).** The owner's rule, "B if it doesn't leak into Low; otherwise C", gives C: parity by form C, about 115 lines [estimate, not built], with the instructions on the stack set too, runeopt's templates, `tests/opt/every-opcode.rasm`, `x64.sml`, `native.c` and rows in `docs/bytecode.md`. The owner confirmed C on 2026-11-10: "D14: C".
 
 *Lead's note.* Low's datatype does not change between the targets. Force is one primitive there, which the register target expands, and E2's patch adds to `low.sml` only `Low.hoistEnv`, a function over Low's existing operations that both targets call (`patches/E2-all-forms.patch:1-60`). But B as written is parity by form G, and under form C a thunk is a flat `K_THUNK`, which the stack VM's `CALL` cannot enter (`EXPECT (cv, K_CLOSURE, ...)`, `runtime/stack/interp_cases.h:185`), and a C primitive cannot push a frame. So the stack bytecode needs the instructions too, and the rule gives C. Form C never ran on the stack VM in E2. Lands in M9.
 
@@ -6308,7 +6320,7 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 
 **Decided (owner, 2026-11-09).** B, against the recommendation: a state token. The owner's reason: "we will do Haskell2010 in the next roadmap". The section above stays as the evidence.
 
-*Lead's note.* The token's returned pair goes away with D9's multi-value return, which lands first (M30). GHC's "state hack" is an eta-expansion through `IO` that D48's pedantic rule does not allow, so D48's measurement of D includes `IO`-heavy programs. With a token `IO` is ordinary Core, and Core takes on the rules B names above. Lands in M17.
+*Lead's note.* The token does not wait on D9, which the owner put behind a measurement on 2026-11-10: until multi-value return is adopted, the token's returned pair is a tuple, or erased, as B above allows; if it is adopted, the pair goes through M30's multi-value return. Every action returns that pair, so D9's measurement includes rhc's `IO`-heavy programs. GHC's "state hack" is an eta-expansion through `IO` that D48's pedantic rule does not allow, so D48's measurement of D includes `IO`-heavy programs. With a token `IO` is ordinary Core, and Core takes on the rules B names above. Lands in M17.
 
 ### D26. The library boundary
 
@@ -6742,9 +6754,9 @@ E11-7 and E11-11 have no other decision, and land here. E11-11 is needed: the st
 
 **What would reopen it.** A client's order breaking something a lint should have seen, which is the case for B; `make check` or a host refusing a patch; Rune wanting `inline` as a stage for reasons of its own.
 
-**Decided (owner, 2026-11-09).** D, against the recommendation: "D (leave it)". The pipeline stays as it is: E11-4, E11-6 and E11-8 do not land, nor E11-7 and E11-11, which had no other decision. The section above stays as the evidence, and *What remains* stays work for Rune that no milestone holds.
+**Decided (owner, 2026-11-10).** C, as recommended: "D39: change to C". E11-4 (the pass list as data), E11-6 (Simplify and Lower take their options) and E11-8 (`driver/midpipeline.sml`) land in M4, with E11-7 (`backend/results.sml`) and E11-11 (root names after E11-7 and E11-8), as the recommendation says. The owner's answer of 2026-11-09, "D (leave it)", is superseded by this one. *What remains* stays work for Rune that no milestone holds.
 
-*Lead's note.* The lead's objection, on one point: D41's layer needs `driver/midpipeline.sml`, which is E11-8, part of C: without it the Mid half of `pipeline.sml` names the front end, and the layer cannot exist. The owner is asked whether E11-8 alone lands with D41 (D41). Under D rhc calls `Pipeline.lowOfMid` as it is, cannot leave out `expand` at link time, and links Rune's front end. The `--passes` defect stays on master unless it is fixed on its own.
+*Lead's note.* This answers the lead's objection of 2026-11-09, that D41's layer needs E11-8: it lands, so D41 is C without condition. rhc calls `MidPipeline.lowOfMid` with its own list, which leaves out `expand`, and links no front end through `Pipeline`. The `--passes` defect is fixed by the list, in M4 (*With it*, above). The patches were made on `b12141ecc`, and M4 redoes them on origin/master `697724da5`, where none of the five applies as it stands.
 
 ### D40. Front-end independence
 
@@ -6792,9 +6804,9 @@ Sources and bytes as in D39.
 
 **What would reopen it.** The reordering moving bytes; a pass of the layer coming to need the elaborator; v2's D8 decided without views, when the layer stays a build list.
 
-**Decided (owner, 2026-11-09).** The owner asked the lead to decide after reviewing what build-system-v2 changed: "please review what build-system-v2 has changed and you decide based on that". The lead's decision: C, `lib/compiler/mid.build`, with rhc's root build, `rhc.build` (M8), a friend of `lib/compiler` and rhc linking its own `Config` (`scripts/gen-version.sh --config PLAN FILE`). It holds if E11-8 lands; otherwise D. The owner is asked (D39).
+**Decided (owner, 2026-11-09; settled 2026-11-10).** The owner asked the lead to decide after reviewing what build-system-v2 changed: "please review what build-system-v2 has changed and you decide based on that". The lead's decision: C, `lib/compiler/mid.build`, with rhc's root build, `rhc.build` (M8), a friend of `lib/compiler` and rhc linking its own `Config` (`scripts/gen-version.sh --config PLAN FILE`). On 2026-11-09 it was C if E11-8 landed and D otherwise; the owner's change of D39 to C on 2026-11-10 lands E11-8, so it is C without condition.
 
-*Lead's note.* At origin/master `697724da5` reaching into a library with a header is an error unless the reaching build is a friend (v2's M14), and one line in `friends` of `lib/compiler/library.build` lets the `use` through, so C's worry above is gone. A named view, B under v2's D8, must be a subset of the exports, so it would make `lib/compiler` export Mid, Low, `Ty` and the passes to every client, which is A, and through `libraries` it gives rhc Rune's identity, the hole v2's M11 found. v2's own text says the layer "becomes a named view of lib/compiler (D8), not a friend" (`build-system-v2.md:5791`); its M11 contradicts that, and the line should say a friend. The layer exists only if the Mid half of `pipeline.sml` moves out, which is E11-8; under D39's D it falls back to D, `internal.build` through the same friend entry, and rhc links all of Rune's front end. Lands in M4.
+*Lead's note.* At origin/master `697724da5` reaching into a library with a header is an error unless the reaching build is a friend (v2's M14), and one line in `friends` of `lib/compiler/library.build` lets the `use` through, so C's worry above is gone. A named view, B under v2's D8, must be a subset of the exports, so it would make `lib/compiler` export Mid, Low, `Ty` and the passes to every client, which is A, and through `libraries` it gives rhc Rune's identity, the hole v2's M11 found. v2's own text says the layer "becomes a named view of lib/compiler (D8), not a friend" (`build-system-v2.md:5791`); its M11 contradicts that, and the line should say a friend. The layer needs the Mid half of `pipeline.sml` moved out, which is E11-8, and D39's C lands it in M4 beside the layer. Lands in M4.
 
 ### D42. Which hosts build rhc
 
@@ -7218,7 +7230,7 @@ Items 2, 3 and 6 are Haskell's too, and land in M9. Items 1, 4 and 5 are M26's, 
 
 ## The milestones
 
-Each milestone is one commit or a few, and each commit leaves `make check` green. One that touches the compiler's sources also passes the host builds and `make check-cross`; one that touches units or the cache passes `make check-units` and `make test-incremental`; one that touches `runtime/register` also runs `make test-register-asan`, `make test-stress` and the Windows and portability rules (`AGENTS.md:168-170`). rhc's own sources are built by Rune alone (D42).
+Each milestone is one commit or a few, and each commit leaves `make check` green. One that touches the compiler's sources also passes the host builds and `make check-cross`; one that touches units or the cache passes `make check-units` and `make test-incremental`; one that touches `runtime/register` also runs `make test-register-asan`, `make test-stress` and the Windows and portability rules (`AGENTS.md:168-170`). A build made only to be measured is the exception: it is built on the register VM first, and lands with the rest only if the owner adopts it (*Decisions on the numbers*). rhc's own sources are built by Rune alone (D42).
 
 A heading gives the track, the size and the order. **What** says what lands, by file. **Starts from** names the prototype, if there is one. **Rests on** names the decisions, and what changes if the owner decides otherwise. **Gate** appears on every change to Rune, and says what the standing gate asks of that change. **Done when** is what a test can show. Paths under `lib/language/haskell`, `src/rhc`, `share/rhc` and `tests/hs`, and new files in `tests/runner`, are proposals. Line numbers are of `b12141ecc`, where the roadmap was written, and stay so. Implementation starts from origin/master `697724da5`, where build-system-v2 has landed, so each is checked there before its milestone, and a citation of that tree says so.
 
@@ -7235,7 +7247,7 @@ A heading gives the track, the size and the order. **What** says what lands, by 
 | M15 | 1,000 to 2,000 | [estimate] nhc98 `Case*.hs` 839; MicroHs `Desugar.hs` 695; both before the dictionaries |
 | CoreLint in M8, M16 | about 3,000 | [estimate] E10, from AstLint's 1,957 and MidLint's 457 |
 
-These parts sum to 12.5-19.5k, which is E10's range. The range has no line for Core's own definitions or its interpreter [deduced from E10's sum], so M8 adds to it, as M10 does, and D28's exact printer adds to M11, unmeasured. There is no calendar here. The owner's decisions of 2026-11-09 add four milestones, numbered after M27 so that nothing renumbers: M28, `Ty` with application and forall (D4); M29, Mid `Case` (D8); M30, multi-value return (D9); M31, `IntInf` immediate (D20). What is built only to be measured sits in the milestone where it belongs, and *Decisions on the numbers* gathers it. D46 is not applicable: build-system-v2 has landed.
+These parts sum to 12.5-19.5k, which is E10's range. The range has no line for Core's own definitions or its interpreter [deduced from E10's sum], so M8 adds to it, as M10 does, and D28's exact printer adds to M11, unmeasured. There is no calendar here. The owner's decisions of 2026-11-09 add four milestones, numbered after M27 so that nothing renumbers: M28, `Ty` with application and forall (D4); M29, Mid `Case` (D8); M30, multi-value return (D9), which since the owner's answer of 2026-11-10 is built to be measured and lands only if adopted; M31, `IntInf` immediate (D20). What is built only to be measured sits in the milestone where it belongs, and *Decisions on the numbers* gathers it. D46 is not applicable: build-system-v2 has landed.
 
 ### The order
 
@@ -7243,12 +7255,12 @@ These parts sum to 12.5-19.5k, which is E10's range. The range has no line for C
 at once, from origin/master 697724da5; G0 passed on 2026-11-09
   T    M1 table     M2 runners     M3 oracles, corpus
   A    M4 contract -> M5 Mid to bytecode     M7 lints, Simplify
-       M6 walkers -> M28 Ty, M29 Case, M30 multi-value return
+       M6 walkers -> M28 Ty, M29 Case; M30 multi-value return, to be measured
        M31 IntInf immediate, the bignum path first
   B    M8 Core -+-> M10 Core to Mid, after M28
        M9 thunks, form C; D3's measured variant after M6
   F    M11 parser, after M2 -> M12 names, modules -> M13 types, classes -> M14 deriving, M15 desugaring, M16 HsLint
-  L    M17 Prelude, in the Report's layout, after M30 and M31 -> M18 libraries
+  L    M17 Prelude, in the Report's layout, after M31 -> M18 libraries
 
 G1   hello
 
@@ -7263,7 +7275,7 @@ G2   the Report
        M27
 ```
 
-**At once, from origin/master `697724da5`.** build-system-v2 has landed there, and the owner's decisions are taken, so G0 is passed. What may start at once: M1, M2, M3, M4, M5, M6, M7, M8, M9 without D3's variant, and M31. M11 follows M2; M28, M29 and M30 follow M6, since each adds an arm to Mid's walkers, as does D3's variant in M9. M10 follows M28, whose `Ty` it emits. M30 comes before M17, whose state token it serves (D25), and M31 before M17, whose `Integer` shares its representation (D20, D26). E11's patches were made on `b12141ecc`: on origin/master E11-2 applies, and of the rest only E11-10's hunk in `matchcomp.sml` (`git apply --check`), so M4 rewrites them. Mid's codecs are generated now: a change to a constructor of Mid, to `fundef` or to `Ty` is a change to `tools/codecs/compiler.sml` and a run of `make codecs`, which `make check-codecs` holds to (M4, M28, M29, M30). What rhc took from build-system-v2 is *What build-system-v2 gave rhc*.
+**At once, from origin/master `697724da5`.** build-system-v2 has landed there, and the owner's decisions are taken, so G0 is passed. What may start at once: M1, M2, M3, M4, M5, M6, M7, M8, M9 without D3's variant, and M31. M11 follows M2; M28, M29 and M30 follow M6, since each adds an arm to Mid's walkers, as does D3's variant in M9. M10 follows M28, whose `Ty` it emits. M31 comes before M17, whose `Integer` shares its representation (D20, D26). M30 is a build for D9's measurement and gates nothing: until the owner adopts it, M17's state token returns its pair as a tuple, or erased (D25). E11's patches were made on `b12141ecc`: on origin/master E11-2 applies, E11-4 after it, and of the rest only E11-10's hunk in `matchcomp.sml` (`git apply --check`), so M4 redoes them. Mid's codecs are generated now: a change to a constructor of Mid, to `fundef` or to `Ty` is a change to `tools/codecs/compiler.sml` and a run of `make codecs`, which `make check-codecs` holds to (M4, M28, M29, M30). What rhc took from build-system-v2 is *What build-system-v2 gave rhc*.
 
 M5 keeps `--read-mid` to bytecode and the label in Mid's text. Its Mid unit that names SML globals is not needed under D26's A, since no SML lies below Haskell.
 
@@ -7332,22 +7344,25 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - each of the 20 hard cases has a reading, or is one of the two that need none.
 * **Touches:** `tests/hs/`, `tests/runner/`, `LICENSE`, `docs/testing.md`, `Makefile`.
 
-### M4. Rune's contract: E11's patches, as decided (A; M, +391 -390 by the patches' own counts for E11-1, 2, 3, 5, 9 and 10, rewritten on origin/master, and E11-8's +187 -167 if it lands; at once)
+### M4. Rune's contract: E11's patches, as decided (A; L, +1,073 -967 in 42 files for all eleven by `results/E11/sizes.tsv`, measured on `b12141ecc` and redone on origin/master; at once)
 
 * **What:**
   - **Front-end independence (D40):** E11-1 `util/stamp.sml`, E11-2 `Target` passed in, E11-3 counters registered where they live, E11-5 `label` on `fundef`, E11-9 `util/literal.sml`. Mid's codecs are generated since build-system-v2's M5, so E11-5's `label` is a field of `fundef` in `tools/codecs/compiler.sml` (`:234-237` at origin/master `697724da5`) and E11-9's `Literal` changes the type `const` describes there (`:183-188`, `Lambda.const` today), each followed by `make codecs`, in place of E11's hand edits of `core/midcodec.sml` and `driver/unitmid.sml`.
-  - **The pipeline stays as it is (D39's D).** E11-4, E11-6, E11-7 and E11-11 do not land, and neither does E11-8 unless the owner lets it land alone for D41: the lead's objection, in D39.
-  - **What `lib/compiler` exports (D41, the lead's).** If E11-8 lands: `lib/compiler/mid.build`, from the prototype's `tests/compiler/mid-only.build`, with no lexer, parser, elaborator, Translate, ToMid or Expand, `use`d by `internal.build`; `internal.build` and `frontend.build` reordered so that the layer comes first, with `unitstore.sml` and `pickle.sml` moved into it (Y). If not: no layer, and rhc will use `internal.build` (D41's D). Either way a client of the layer is a friend of `lib/compiler`, since at origin/master a build that reaches into a library with a header and is not a friend is refused (v2's M14). rhc's own entry in `friends` comes with `rhc.build` in M8.
+  - **The pipeline as data (D39's C, the owner's answer of 2026-11-10):** E11-4 the pass list, a record `{name, from, gate, run}` that a client edits; E11-6 Simplify's and Lower's options passed in; E11-8 `driver/midpipeline.sml`, everything from Mid down, naming no front end; E11-7 `backend/results.sml`, the analysis of `results` out of `Lower`; E11-11's root names after E11-7 and E11-8.
+  - **What `lib/compiler` exports (D41, the lead's: C):** `lib/compiler/mid.build`, from the prototype's `tests/compiler/mid-only.build`: 48 of the 80 files after the patches (master has 76; four are new), with no lexer, parser, elaborator, Translate, ToMid or Expand, `use`d by `internal.build`. `internal.build` and `frontend.build` are reordered so that the layer comes first, with `unitstore.sml` and `pickle.sml` moved into it (Y). A client of the layer is a friend of `lib/compiler`, since at origin/master a build that reaches into a library with a header and is not a friend is refused (v2's M14). rhc's own entry in `friends` comes with `rhc.build` in M8.
   - **`Try` and `Fail` (D7):** E11-10, with four expected dumps reviewed line by line and the constructors removed, which E11 left in the datatype. Its change to `core/matchcomp.sml` still applies at origin/master.
-  - **The client as a test,** if E11-8 lands: `tests/compiler/mid-client.sml`, Mid text to bytecode through the layer with Rune's pass list. `pipeline-client.sml`, which edits the list, goes with E11-4.
-  - **What E11 left stale:** `docs/ir.md` takes `results/E11/contract.md`, less what D39's D leaves out.
-* **Starts from:** `patches/E11-1-stamps.patch`, `E11-2`, `E11-3`, `E11-5`, `E11-9`, `E11-10`, and `E11-8` if it lands, in that order, rewritten on origin/master. As they stand only E11-2 applies there; E11-10's `matchcomp.sml` hunk applies, and its line in `tests/compiler/mid-only.build`, which E11-9 creates, does not (`git apply --check`, by Y and again while recording the decisions). Each patch is a design and a test; what lands is written on the new tree.
-* **Rests on:** D7, D39, D40, D41, as decided. Under D39's D rhc calls `Pipeline.lowOfMid` as it is, cannot leave out `expand` at link time, and links Rune's front end through `Pipeline` unless E11-8 lands. The `--passes` defect (`results/defects/passes-unknown-name/`) was to be fixed by the list as data; under D it stays on master unless it is fixed on its own.
-* **Gate:** bytes stay put, and budgets stay put. E11 held bytes on every patch on `b12141ecc` (`results/E11/verify-summary.txt`), so the rewritten patches must show the same on origin/master: stage1 equals stage2, and the edited compiler on the sources before the edit gives that tree's `bin/rune.rbc`, at stack, `-O0` and `-O2`, on both targets. `make check-codecs` passes after each change to the description. It also runs what E11 did not: `make check`, the host builds, `make check-units`, `make check-docs`, the compiler mutants.
+  - **The clients as tests:** `tests/compiler/mid-client.sml`, Mid text to bytecode through the layer, and `pipeline-client.sml`, which edits the list.
+  - **What E11 left stale:** `docs/ir.md` takes `results/E11/contract.md`, and says that the list is a seam, not a proof of independence (D39); `tests/runner/compilermutantlist.sml` follows E11-7's move out of `lower.sml`, since a mutant that no longer applies is a FAIL.
+  - **The defect:** a pass list that is data can refuse a name it does not hold, so `--passes=nosuchpass` and `--dump-after=nosuchpass` stop being accepted (`results/defects/passes-unknown-name/`).
+* **Starts from:** `patches/E11-1-stamps.patch` to `E11-11-roots.patch`, in that order, each redone on origin/master. As they stand only E11-2 applies there, and E11-4 once E11-2 has; E11-10's `matchcomp.sml` hunk applies, and its line in `tests/compiler/mid-only.build`, which E11-9 creates, does not; E11-11 names `backend/results.sml` and `driver/midpipeline.sml`, which E11-7 and E11-8 create (`git apply --check`: by Y, again while recording the decisions, and for E11-4, -6, -7, -8 and -11 on 2026-11-10). Each patch is a design and a test; what lands is written on the new tree.
+* **Rests on:** D7, D39, D40, D41, as decided. D39 is C by the owner's answer of 2026-11-10, which supersedes the D of 2026-11-09; D41's layer needs E11-8, so D41 is C without condition.
+* **Gate:** bytes stay put, and budgets stay put. E11 held bytes on every patch on `b12141ecc` (`results/E11/verify-summary.txt`), and the compiler's own compile fell 0.81% in instructions and 0.64% in allocation (`results/E11/compile-cost.txt`, at E11-10), so no budget need move. The redone patches must show the same on origin/master: stage1 equals stage2, and the edited compiler on the sources before the edit gives that tree's `bin/rune.rbc`, at stack, `-O0` and `-O2`, on both targets. `make check-codecs` passes after each change to the description. It also runs what E11 did not: `make check`, the host builds, `make check-units`, `make check-docs`, the compiler mutants.
 * **Done when:**
   - the gate, on each commit;
-  - if E11-8 lands, `tests/compiler/mid-client.sml` built from `lib/compiler/mid.build` writes the same bytes as the client on `internal.build`, at `RUNE_LINT=3`, and a name of the elaborator in it fails to compile.
-* **Touches:** the files of E11-1, 2, 3, 5, 9 and 10 at origin/master, among them `lib/compiler/core/{mid,midtext,simplify,matchcomp}.sml`, `lib/compiler/backend/lower.sml`; new `lib/compiler/util/{stamp,literal}.sml`; `tools/codecs/compiler.sml` and the generated regions of `core/midcodec.sml` and `driver/unitmid.sml`; if E11-8 lands, `lib/compiler/driver/{pipeline,midpipeline}.sml`, `lib/compiler/{mid,internal,frontend}.build`; `tests/compiler/`, `tests/ir/`, `docs/ir.md`, `docs/architecture.md`.
+  - `tests/compiler/mid-client.sml` built from `lib/compiler/mid.build` writes the same bytes as the client on `internal.build`, at `RUNE_LINT=3`, and a name of the elaborator in it fails to compile;
+  - that client, with `workers` and `refs` removed from its list, allocates as E11 saw, 304 bytes against 87,091,544 (`results/E11/client/mo-none.rbc`, `mo-remove.rbc`, by `runevm --count`): the swap is real;
+  - an unknown pass name is refused.
+* **Touches:** the 42 files of `patches/E11-all.patch` at origin/master, among them `lib/compiler/driver/pipeline.sml`, `lib/compiler/core/{mid,midtext,simplify,matchcomp}.sml`, `lib/compiler/backend/lower.sml`, `lib/compiler/{internal,frontend}.build`; new `lib/compiler/util/{stamp,literal}.sml`, `lib/compiler/backend/results.sml`, `lib/compiler/driver/midpipeline.sml`, `lib/compiler/mid.build`; `tools/codecs/compiler.sml` and the generated regions of `core/midcodec.sml` and `driver/unitmid.sml`; `tests/compiler/`, `tests/runner/compilermutantlist.sml`, `tests/ir/`, `docs/ir.md`, `docs/architecture.md`.
 
 ### M5. Mid to bytecode, Mid text with labels (A; S, about 30, from +14 -2 and +14 -2 measured; at once, its second step after E11-5)
 
@@ -7428,7 +7443,7 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - **D57's item 2, which is Haskell's too:** a function given to `thunk_make` is named by nothing else, and `thunk_self_update` appears nowhere else. Without it `inline` can copy a thunk's update into another closure's function with every lint passing (`results/E14/tables/claim-fun-held.txt`, through `_prim`, on form G). `results/E14/scripts/midshape.py` is the rule as a script, for G's names.
   - **Docs:** `docs/ir.md` for `susp` and force, `docs/bytecode.md` for the primitives and the four instructions on both sets, `runtime/register/README.md`.
   - **`susp` in `tests/ir`,** with its documentation D57's item 6, which is Haskell's too.
-  - **D3's measured variant, after M6:** C, a `Force` right-hand side, a fifteenth `rhs` with an arm in every walker, and D6's C with it, a recursive form in Mid for thunks; described in `tools/codecs/compiler.sml` and lowered to the same instructions as B's primitive. It is built on a branch beside B, measured as *Decisions on the numbers* says, and lands only if the owner takes it.
+  - **D3's measured variant, after M6:** C, a `Force` right-hand side, a fifteenth `rhs` with an arm in every walker, and D6's C with it, a recursive form in Mid for thunks; described in `tools/codecs/compiler.sml` and lowered to the same instructions as B's primitive. It is built on a branch beside B, for the register target alone, measured as *Decisions on the numbers* says, and lands, with its lowering in the Stack target, only if the owner takes it.
 * **What does not land:**
   - the other forms' primitives in the same patch: form G's, `thunk_fforce` among them, and those of B, F and L;
   - the raise repair, with `THUNK_FAILED` and the spare field: neither language needs them, so there is no failed state (D12);
@@ -7466,11 +7481,11 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - **types in M28's `Ty`:** a higher-kinded position and a dictionary's polymorphic method have types of their own, and `Any`, meaning evaluated, is left for what `Ty` cannot say, with a lazy one as `susp Any`. A type variable is never instantiated at `susp T`, as Strict Core has it (D4). Value-to-`susp` casts remain, erased in `Lower` under M9's lint;
   - a `case` of Core lowered to M29's `Case` once it has landed, and until then to a tag test in the same function before each `Decon`, as LowShapes demands (`backend/lowshapes.sml:376`);
   - n-ary functions through curried wrappers where they are values (E1), unless D15's C is taken (M25);
-  - several results through M30's multi-value return, where Core returns an unboxed product, among them `IO`'s state and value (D25);
-  - the output handed to `Pipeline.lowOfMid` as it is (D39's D), or to `MidPipeline` if E11-8 lands, as `results/E11/contract.md` says.
+  - several results, where Core returns an unboxed product, among them `IO`'s state and value (D25), as a tuple, or with the token erased; on M30's branch, for D9's measurement, through multi-value return;
+  - the output handed to `MidPipeline.lowOfMid` with rhc's own pass list, which leaves out `expand` (D39's C, M4), as `results/E11/contract.md` says.
   - Two small steps in Rune, if wanted: the built-in tycons out of `Types` when rhc's first type name needs them, about 40 lines [inferred] (D40); `ToMid`'s builder lifted out of `core/tomid.sml:108,130,145`.
 * **Starts from:** no patch. `results/E1/prog/rts.mid` and `monad.mid` are the hand lowering, and `results/E2/delay/Chs/lazy.sml` a thunk's shape under form C.
-* **Rests on:** D3, D4, D5, D6, D8, D9, D25, as decided. If the owner takes D3's C on the numbers, force is the `Force` right-hand side and recursive thunks D6's recursive form.
+* **Rests on:** D3, D4, D5, D6, D8, D25, as decided, and D9 on the numbers. If the owner takes D3's C, force is the `Force` right-hand side and recursive thunks D6's recursive form; if D9's B, an unboxed product is a multi-value return.
 * **Gate:** no change to Rune but the two small steps, each with M4's test. `Ty`, `Case` and multi-value return are M28's, M29's and M30's; the cast erasure and lint M9's. Force stays one Mid node, shown below.
 * **Done when:**
   - E1's programs, through Core text, pass the ways E1's hand-written Mid passed: 45 each, on both targets;
@@ -7585,7 +7600,7 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - every suite is clean under `RUNE_LINT=2`, and a linted build equals a plain one at level 0, as `levelsOne`.
 * **Touches:** `lib/language/haskell/`, `src/rhc/`, `tests/hs/`, `tests/runner/`, `docs/testing.md`.
 
-### M17. The Prelude: primitives, overlay (L; L, 2,436 lines of the Report's Haskell, and about 1,000 of overlay and rhc's runtime [estimate], with `IntInf`'s representation and small path over its primitives; first runs after M10, M15; after M30, M31)
+### M17. The Prelude: primitives, overlay (L; L, 2,436 lines of the Report's Haskell, and about 1,000 of overlay and rhc's runtime [estimate], with `IntInf`'s representation and small path over its primitives; first runs after M10, M15; after M31)
 
 * **What:**
   - **`share/rhc/haskell98/`:** the Report's 11 modules as printed, 525 definitions and 2,436 file lines (E16), plus D38's errata, in the Report's layout: `Prelude`, `PreludeList`, `PreludeText`, `PreludeIO`, `Ratio`, `Numeric`, `Char`, `Ix`, `Array`, `Maybe`, `List`. rhc compiles the 11 as one unit, whole-program, with no merged form (D36).
@@ -7594,8 +7609,8 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - **The primitives, and no SML below Haskell (D26's A):** every `prim*` is a Core constant lowered to Mid's primitives, so all of them run in the Core interpreter too.
     - `Integer` (D20's D, D26's A): M31's representation, an immediate small value and `IntInf`'s signed magnitudes, with its small path, ported to rhc's runtime over the primitives `IntInf` itself uses (`intinf_binary`, `intinf_divmod`, `intinf_shift`, `intinf_power`, `intinf_decimal`, `src/isa/prims.sml:828-847`) and M31's in-line ones; ported as far as rhc needs it.
     - `Char` as Mid `int`, with the case mappings of D21 in `lib/unicode`; `Int` on the checked primitives (D22); `Float` by `real_to_single` (D23).
-    - String literals unpacked lazily (D24's A), and, for D24's measurement, B, the whole list on first force, in rhc's runtime, and D, a primitive that unpacks, as a patch to Rune that lands only if the owner takes it (*Decisions on the numbers*).
-    - `IO` with a state token (D25's B): an action takes the state and returns it with its value through M30's multi-value return, so no pair is built; `getContents` through one interleaving primitive, whose body ends its list on a read error (21.2.2).
+    - String literals unpacked lazily (D24's A), and, for D24's measurement, B, the whole list on first force, in rhc's runtime, and D, a primitive that unpacks, built on the register VM alone as a patch to Rune that lands, with the stack VM, runeopt and native code, only if the owner takes it (*Decisions on the numbers*).
+    - `IO` with a state token (D25's B): an action takes the state and returns it with its value, as a tuple or with the token erased, until the owner adopts D9's multi-value return, which carries both with no pair built (M30); `getContents` through one interleaving primitive, whose body ends its list on a read error (21.2.2).
 * **Starts from:** no patch: `results/E9/report-libs/`, with its `primitives.tsv` and `literal.tsv`, and `results/E16/overlay.py`. E5's kernels and `results/E5/core/`, whose `rts-i1.mid` is the small path with no bignum behind it.
 * **Rests on:** D20 to D26, D36, D37, as decided.
   - D36's fallback, if M13 runs late: the merged form, derived at build time by a small tool in SML under `src/rhc`, since `merge.py` does not land (`tests/runner/migration.sml:2,10`). The tool makes the check `merge.py` claimed and did not make, that no two of the 11 modules define one name, and it needs one rule outside the Report: the internal module has no implicit Prelude. Layered: 59 definitions, 329 lines, move beneath the Prelude, and the bottom layer is 1,720 of 2,436 lines (E16).
@@ -7629,7 +7644,7 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - **D56's tiers:** `quick`, `check`, `nightly`, `test-rhc-mutants`, with the run set in three ways in `check`.
   - **Bottom probes, sharing budgets** in `tests/hs/perf/*.budget`, labelled rhc's policy, **generators** and the reducer, **metamorphic relations,** and **rhc's mutants** in `tests/runner/hsmutants.sml`.
   - **`-lazy` ports:** rhc's output against `examples/benchmarks`' hand-written lazy SML.
-  - **The first measurements on the run set** of *Decisions on the numbers*, once it compiles: D3's variant against B, D24's B and D against A, and D34's B against A at `-O0`, each for the owner to decide before G2.
+  - **The first measurements on the run set** of *Decisions on the numbers*, once it compiles: D3's variant against B, D9's multi-value return against today's attacks on tuples, with `IO`-heavy programs named, D24's B and D against A, and D34's B against A at `-O0`, each for the owner to decide before G2.
 * **On a frozen Prelude:** the saved world (D45's option B) until M21, then the store. Up to 3,781 programs, each carrying the 11-module unit's 14,965 tokens, is what a whole-program compile means, and D45's rough rate makes that a budget matter for `make check`. M20 and M21 run beside this milestone and do not gate it.
 * **Starts from:** no patch. `results/E9/clauses.tsv`, `results/E8/*.tsv`, `results/E8/compat/`.
 * **Rests on:** D52, D55, D56. D56 rests on K, which E5 gives from three programs and four kernels. What binds is the share of `make check`, not a count of programs: M19 measures K and the compile, and programs move to nightly by Rune's rule, with D56's 112 programs the next step down. If the owner drops D55, *The conformance table*'s warning stands: a full table does not show strong tests.
@@ -7702,17 +7717,17 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
 * **Done when:** as M23, with the bottom probes as the first line: a result that is too strict shows there and nowhere else; a mutant that marks a lazy argument strict is caught; a test holds the order of an `error` and an I/O action; E3's L2 step is measured on rhc.
 * **Touches:** `lib/language/haskell/`, `tests/hs/`.
 
-### M25. What measurement justifies: eval/apply, pointer code 11, selector thunks, CAF tables, cheap eagerness (P; not sized; after M24, each built and measured, and landed only if the owner takes it)
+### M25. What measurement justifies: eval/apply, pointer code 11, selector thunks, CAF tables, cheap eagerness (P; not sized; after M24, each built on the register VM and measured, and landed only if the owner takes it)
 
-* **What:** each of the first four is built here, measured on rhc's own output as *Decisions on the numbers* says, and taken or closed by the owner on the figures.
-  - **Eval/apply (D15's C, its measurement):** arity tested by the caller, a partial-application object, over-application by a pushed continuation, on every engine, with `Low.Call`, MidLint's rule and `RegVerify`'s. `CALL` takes one argument today (`src/isa/regs.sml:122-124`), so this is a change to Rune, measured on Rune's programs too.
-  - **Pointer code 11 (D16's B):** set by the copier when it shortcuts an indirection, masked at every pointer read in C, in `masm.c` and in runeopt's templates; measured on Rune's programs too.
+* **What:** each of the first four is built here, on the register VM first, measured on rhc's own output as *Decisions on the numbers* says, and taken or closed by the owner on the figures.
+  - **Eval/apply (D15's C, its measurement):** arity tested by the caller, a partial-application object, over-application by a pushed continuation, on the register VM, its interpreter and JIT, with `Low.Call`, MidLint's rule and `RegVerify`'s; on the stack VM, runeopt and native code only once taken. `CALL` takes one argument today (`src/isa/regs.sml:122-124`), so this is a change to Rune, measured on Rune's programs too.
+  - **Pointer code 11 (D16's B):** set by the copier when it shortcuts an indirection, masked at every pointer read in C and in `masm.c`, measured on the register VM and on Rune's programs too; runeopt's templates and the stack VM only once taken.
   - **Selector thunks (D17's B):** Sparud's desugaring of pattern bindings and `~p` with an impure `updatePat`, whose write skips any sibling not unevaluated, so that D11's pin need not come here; if it must, the pin lands here and not in M26.
   - **CAF tables (D19's B):** a table per function of the CAFs its code reaches, emitted at or below Core to Mid, and a collector that traces from live code.
   - **Cheap eagerness (D51's C):** total operations only, on values Core's types say are evaluated; under D20's D an `Integer` add of two immediates, behind a test of the immediate bit. M25 also settles what stops `inline` copying a thunk held in a `Fun` group, if D3's C put thunks there.
 * **Starts from:** no patch. E5's `results/E5/ncall/` and `stats.jsonl` for eval/apply; E2's `last` and `leak` for residency.
 * **Rests on:** D15, D16, D17, D19, D51. Selector thunks and eval/apply are on the list of what is cut first.
-* **Gate:** any change to the VM, the bytecode or Mid takes M9's list and states its budget; each built variant is measured against the standing gate before the owner decides, and what is not taken does not land.
+* **Gate:** a build for measurement runs on the register VM, its interpreter and JIT, and is measured there against the standing gate before the owner decides. What the owner takes then gets the stack VM, runeopt and native code, and M9's list of checks, Windows and portability among them, before it lands, and states its budget; what is not taken does not land.
 * **Done when:** each item is landed with its test or closed with its figures, and the owner's choice recorded in its decision; the sharing budget for what `inline` could copy passes in every case.
 * **Touches:** as each decision says.
 
@@ -7769,18 +7784,16 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
   - every `tests/ir` dump that shows a match is reviewed by hand.
 * **Touches:** `lib/compiler/core/{mid,midtext,midcanon,midlint,simplify,workers,lift,refs,shake,expand,tomid}.sml`, `lib/compiler/backend/{lower,lowshapes,fault}.sml`, `lib/compiler/driver/unitmid.sml`, `tools/codecs/compiler.sml` and the generated codecs, `tests/ir/`, `docs/ir.md`.
 
-### M30. Multi-value return (A; L, not built or sized: 126 walkers and both instruction sets [E12]; after M6, before M17)
+### M30. Multi-value return, built to be measured (A; L if landed, not built or sized: 126 walkers and both instruction sets [E12]; the build after M6, on the register VM; landed only if the owner adopts it)
 
-* **What:** D9's B. `Return` of several atoms and a `Let` of several variables in Mid; `Low.Return` of a list; `RET` and `RESULT` of several values in both instruction sets: `src/isa/{regs,stack}.sml`, both VMs, the JIT, runeopt's templates and native code, `tests/opt/every-opcode.rasm` and `docs/bytecode.md`; and the codec's description of Mid. It would retire `Slot`, the facts in `Pipeline.lowered` and `LowLint.results` (D9). rhc uses it for `IO`'s state and value (D25's B, M17) and for products Core returns unboxed.
+* **What:** D9's B, built for the owner's measurement (*Decisions on the numbers*). `Return` of several atoms and a `Let` of several variables in Mid; `Low.Return` of a list; `RET` and `RESULT` of several values in the register set, its interpreter and its JIT; and the codec's description of Mid. The stack set and the Stack target, runeopt's templates and native code, `tests/opt/every-opcode.rasm` and `docs/bytecode.md` come only if the owner adopts it, as its landing. It would retire `Slot`, the facts in `lowered` (`Pipeline` at `b12141ecc`, `MidPipeline` after M4) and `LowLint.results` (D9). On its branch rhc uses it for `IO`'s state and value (D25's B) and for products Core returns unboxed; on master those stay tuples, or the token is erased (M10, M17).
 * **Starts from:** no patch. E12: in a whole compile it wins what `results` already wins; in units, where `results` does not run (`backend/lower.sml:849`), about 4.4% of the compiler's allocation [deduced], and nothing in instructions.
-* **Rests on:** D9, decided: B, now: "let's do it now instead of later". Raised with the owner: whether it lands behind a measurement, as D15's C does. Until the owner says so, it lands.
-* **Gate:** both instruction sets' fingerprints and opcode tables move, and every `.rbc` with them. Whether SML's code changes depends on whether `Lower` uses it for SML's products, which this milestone decides and states, with the figures; budgets move only by that. M9's list of checks for a change to the engines applies.
+* **Rests on:** D9, to be measured: the owner's answer of 2026-11-10, "land behind a measurement", which supersedes the B of 2026-11-09. If the owner keeps A, nothing of this lands, and the four attacks on tuples stay as they are.
+* **Gate:** while it is measured, none on master, since the build is a branch; its figures are taken against the standing gate on the register target. Whether SML's code changes depends on whether `Lower` uses it for SML's products, which the build decides and states. If adopted: both instruction sets' fingerprints and opcode tables move, and every `.rbc` with them; budgets move only by what the figures say; M9's list of checks for a change to the engines applies.
 * **Done when:**
-  - the gate, with the figures;
-  - the compiler's allocation in a whole compile and in a unit build is measured before and after, against E12's;
-  - a function returning two values makes no tuple, by `--count`, on both bytecodes and in native code;
-  - each new form of `RET` and `RESULT` has its line in `tests/opt/every-opcode.rasm`.
-* **Touches:** Mid's and Low's walkers, `lib/compiler/backend/{low,lower,lowlint,regs,stack,regverify}.sml`, `lib/compiler/driver/pipeline.sml`, `src/isa/`, `runtime/register/`, `runtime/stack/`, `runtime/native/`, `src/opt/`, `tools/codecs/compiler.sml`, `tests/opt/every-opcode.rasm`, `tests/ir/`, `docs/ir.md`, `docs/bytecode.md`.
+  - the measurement of *Decisions on the numbers* is taken and the owner's choice recorded in D9;
+  - if adopted: the gate, with the figures; a function returning two values makes no tuple, by `--count`, on both bytecodes and in native code; each new form of `RET` and `RESULT` has its line in `tests/opt/every-opcode.rasm`.
+* **Touches:** for the measurement, Mid's and Low's walkers, `lib/compiler/backend/{low,lower,lowlint,regs,regverify}.sml`, `lib/compiler/driver/midpipeline.sml`, `src/isa/regs.sml` and what `make isa` writes, `runtime/register/`, `tools/codecs/compiler.sml`, `tests/ir/`, `docs/ir.md`; if adopted, `lib/compiler/backend/stack.sml`, `src/isa/stack.sml`, `runtime/stack/`, `runtime/native/`, `src/opt/`, `tests/opt/every-opcode.rasm`, `docs/bytecode.md`.
 
 ### M31. `IntInf` immediate (A; M, not sized: `lib/basis/intinf.sml` is 651 lines, and E5's ten primitives are +70 -2 with no bignum path; at once, before M17)
 
@@ -7807,30 +7820,39 @@ G1 stands after M18 in the order. Hello needs less than that: M8 to M10, M11 to 
 - **SML budgets** are `tests/perf/*.budget` under `make perf-check`, counted at level 0 (`docs/testing.md:95-96`). None is re-based to let a change of this roadmap pass unless a decision says so, with the figure.
 - **Bootstrap bytes:** `make bootstrap` and `make check-cross`, and, for a change that means to leave the compiler's output alone, E11's test: the edited compiler on the sources before the edit gives that tree's `bin/rune.rbc`, at stack, `-O0` and `-O2`, on both targets. A compiler's own image differs once its sources do, so a plain comparison of images says nothing.
 - **What moved in the prototypes:** E11's patches and E13's split moved no byte. E1's Simplify fixes moved no byte of the compiler. E2 is the exception, since it was never run against this gate: M9 is where its bytes are shown. Its primitives and form C's instructions move the fingerprint word and the compiler's own budgets, which D3 states.
-- **What the owner's decisions move:** form C's instructions, both opcode tables (M9); multi-value return, both instruction sets and perhaps SML's code (M30); `IntInf`'s representation, SML's programs that use it and the compiler (M31); `Case`, SML's compiled code by `Lower`'s change (M29); `Ty`'s forms, the compiler's own code (M28). M6's walkers should hold bytes. Each of these milestones measures what moved and says by how much, and that is the only room the gate gives it.
+- **What the owner's decisions move:** form C's instructions, both opcode tables (M9); `IntInf`'s representation, SML's programs that use it and the compiler (M31); `Case`, SML's compiled code by `Lower`'s change (M29); `Ty`'s forms, the compiler's own code (M28). M6's walkers should hold bytes. Each of these milestones measures what moved and says by how much, and that is the only room the gate gives it. What is built only to be measured moves nothing on master unless the owner adopts it; multi-value return would then move both instruction sets and perhaps SML's code (M30).
 - **Rune's own rules apply on top,** by what a change touches: `AGENTS.md` for `src/isa`, `runtime/register`, native code and a pass of the compiler. rhc's own code under `lib/language/haskell`, `src/rhc` and `share/rhc` is not under this gate, and any later change a milestone finds it needs in Rune is a decision graded as the brief asks, never a silent edit.
 
 ## Decisions on the numbers
 
-The owner took eight decisions on measurement: build the option, measure it, and decide on the figures. Until then the option the owner kept, or the recommended one, stands. This section says, for each, what is built, against what, on what, in which milestone, what figures the owner sees, and who decides.
+The owner took nine decisions on measurement: build the option, measure it, and decide on the figures; eight on 2026-11-09, and D9 on 2026-11-10. Until then the option the owner kept, or the recommended one, stands. This section says, for each, what is built, against what, on what, in which milestone, what figures the owner sees, and who decides.
 
 **What every one shares.**
-- **On what.** rhc's programs: E5's hand-lowered set, `queens`, `primes` and `exp3_8` and the kernels `sum`, `sumint`, `list` and `showk` (`results/E5/`), until rhc runs; then D56's run set, the 223 run programs, the 188 of `make check` and the 35 nightly. Rune's programs where the owner said "and rune if that applies": D15 and D16, and D17 where it applies. Rune's programs are E2's 113 lazy ports and 12 strict ports, `tests/perf`'s budgeted programs and the compiler's own compile.
+- **Built on the register VM first.** The owner's rule of 2026-11-10 (*The request*): what is measured is built on the register VM only, its interpreter and JIT tiers, and the rest only after the owner adopts it. That holds for D9, D15, D16, D17 and D19, and for D3's variant, D24's B and D, D34's B and D48's D as far as they touch a VM. What is on the compiler's side, D3's `Force` right-hand side, D24's B in rhc's runtime, D34's trees and D48's eta, is built for and measured on the register target. The stack VM and the Stack target, runeopt's templates and native code, `tests/opt/every-opcode.rasm`, and the sanitizers, stress, Windows and portability rules for a change to `runtime/register` (`AGENTS.md:168-170`) come only with adoption, as part of landing it. A build for measurement is a branch, so the rule that each commit leaves `make check` green applies when it lands.
+- **What "register VM only" leaves out.** Shared runtime that an option needs changes with it: pointer code 11 is set by the copier and read through `runtime/value.h`, and a CAF table is the collector's. On a measurement branch the stack VM, runeopt, the other machines and Windows are neither extended nor run, and nothing claims they work; once the owner adopts an option, its milestone brings them to parity and runs them.
+- **On what.** rhc's programs: E5's hand-lowered set, `queens`, `primes` and `exp3_8` and the kernels `sum`, `sumint`, `list` and `showk` (`results/E5/`), until rhc runs; then D56's run set, the 223 run programs, the 188 of `make check` and the 35 nightly. Rune's programs where the owner said "and rune if that applies": D15 and D16, and D17 where it applies; and D9, whose gain E12 found in Rune's compiler. Rune's programs are E2's 113 lazy ports and 12 strict ports, `tests/perf`'s budgeted programs and the compiler's own compile.
 - **What the owner sees.** Instructions at tier 2, `instructions:u`, and `runevm --count`, which are the claims (*Measuring*); per program, with totals, geomeans and medians, and every program that moves the wrong way named. Cycles, best of N with the load stated, where E1's and E2's lessons say instructions mislead: on the ports G ran 13% more bytecodes than C for 5% more machine instructions, so `--count` overstates a gap there; and E5's K is 3.4 to 5.2 in instructions against 5.8 to 7.0 in cycles on the whole programs (`results/E5/k.txt`). D16 is such a case.
 - **Who decides:** the owner, on the figures. Each decision records the choice at its end.
 
 **D3: C, a `Force` right-hand side, against B with form C.**
-- *Built:* a fifteenth `rhs`, `Force`, lowered to the same instructions as B's `thunk_force`, with D6's C for recursive thunks, a recursive form in Mid; on M6's walkers, and described in `tools/codecs/compiler.sml`. M9 builds it on a branch beside the landed B.
+- *Built:* a fifteenth `rhs`, `Force`, lowered to the same instructions as B's `thunk_force`, with D6's C for recursive thunks, a recursive form in Mid; on M6's walkers, and described in `tools/codecs/compiler.sml`. M9 builds it on a branch beside the landed B, for the register target; the Stack target lowers it only once it is taken.
 - *On:* E5's set, lowered by hand to both, in M9; then the run set, with M10 emitting either, in M19.
 - *Figures:* instructions at tier 2 and `--count`, at Rune `-O0` and `-O2`; the compiler's own compile time and bytes, since SML pays an arm in every walker; and whether any pass drops, copies or moves a force under either, with the sharing budget of D51.
 
+**D9: B, multi-value return, against A, today's four attacks on tuples.**
+- *Built:* `Return` of several atoms and a `Let` of several variables in Mid, `Low.Return` of a list, and `RET` and `RESULT` of several values in the register set, its interpreter and JIT; in M30, after M6, on a branch. The build says whether `Lower` uses it for SML's products. The stack set, runeopt and native code take it only once adopted.
+- *Against:* A, the four attacks as they stand on the same tree: virtual tuples and fields, `Workers`, `flattenJoin` and results in globals. E12's figures with each turned off are the scale (*The IRs, reviewed*).
+- *On:* Rune's compiler compiling itself, as a whole compile and as a unit build, since E12 found B's gain only in units, where `results` does not run (`backend/lower.sml:849`); Rune's benchmarks, `tests/perf`'s budgeted programs and the 17 numerical benchmarks E12 ran (`results/E12/bench-summary.tsv`); and rhc's programs, since D25's state token returns a pair with every action: E5's hand-lowered set, which erases `IO`, until rhc runs, then the run set in M19 with `IO`-heavy programs named.
+- *Figures:* instructions at tier 2, `--count` and bytes allocated, per program, in a whole compile and in units. E12's figure for units, about 4.4% of the compiler's allocation and nothing in instructions, is deduced from the whole-program figures; this measures it.
+- *Who:* the owner. If B is taken, M30 lands with the stack set, runeopt and native code, and D25's pair goes through it.
+
 **D15: C, eval/apply proper, against A.**
-- *Built:* arity tested by the caller, a partial-application object, over-application by a pushed continuation, on every engine, with `Low.Call`, MidLint's rule and `RegVerify`'s; in M25.
+- *Built:* arity tested by the caller, a partial-application object, over-application by a pushed continuation, on the register VM, its interpreter and JIT, with `Low.Call`, MidLint's rule and `RegVerify`'s; in M25. The stack VM, runeopt and native code take it only once adopted.
 - *On:* the run set at `-O0` and at the top level after M23 and M24; and Rune's programs, since SML's curried calls take the same `CALL` (D15).
 - *Figures:* instructions at tier 2 and `--count`; chains of two or more arguments and partial applications made, as E5 counted them (`results/E5/stats.jsonl`); bytes allocated. E5 priced a curried call at 116 instructions and 24 bytes against a known call's 43, and guessed an n-ary path at about 55 [N's inference].
 
 **D16: B, pointer code 11, against A.**
-- *Built:* the code set by the copier when it shortcuts an indirection, and masked at every pointer read in C, in `masm.c` and in runeopt's templates; in M25.
+- *Built:* the code set by the copier when it shortcuts an indirection, and masked at every pointer read in C and in `masm.c`, on the register VM; in M25. The stack VM and runeopt's templates take it only once adopted.
 - *On:* the run set, and Rune's programs, since every pointer read moves.
 - *Figures:* instructions at tier 2 and `--count`, and cycles and cache misses, best of N. Code 11 can save only the header load: Rune's `FORCE` has no indirect enter jump for it to spare, unlike GHC's, where Nethercote 2002 §5.4 proposes the bit, unmeasured. On heap-layout's kernels the code was within noise (D16).
 
@@ -7845,7 +7867,7 @@ The owner took eight decisions on measurement: build the option, measure it, and
 - *Figures:* residency and peak RSS; the collector's time; instructions at tier 2; and the bytes promoted that die in the old generation. Rune's nursery promotes every survivor of a minor collection (`runtime/gc/minor.c:1-7`), and Röjemo 1995b measured that policy on sieve at "nearly ten times" the two-space collector's time (§5.1, p 155).
 
 **D24: B and D, against A, for the record.**
-- *Built:* B, the whole list on first force, a loop in rhc's runtime; D, a primitive that unpacks a constant, as nhc98's `STRING`, a change to `src/isa` and every engine that moves the fingerprint, kept as a patch; both in M17.
+- *Built:* B, the whole list on first force, a loop in rhc's runtime; D, a primitive that unpacks a constant, as nhc98's `STRING`, a change to `src/isa` that moves the fingerprint, built on the register VM alone and kept as a patch; both in M17. The other engines take D only if it is adopted.
 - *On:* the run set, in M19, with string-heavy programs named.
 - *Figures:* instructions at tier 2, `--count` and bytes allocated.
 - *Who:* the owner, who said D is unlikely to be taken whatever it shows, "as there is no use in rune". D conforms as B does; what taking it needs is the owner's word for a change to Rune that Rune does not use.
@@ -8198,8 +8220,8 @@ build-system-v2 landed in origin/master `697724da5`, and rhc's implementation st
 **What it leaves to rhc:**
 - **`edge` and `scc` are reserved and refused** in plans of version 1 (`lib/compiler/driver/plan.sml:52-56`), and `Deps` still refuses a cycle (`lib/compiler/driver/deps.sml:394`). So rhc is its own driver: it scans imports, takes SCCs and drives the pipeline, `Link`, `UnitFile`, `UnitStore` and `UnitMemo` itself, setting `UnitStore.stat` and `lstat` as `src/main/rune-main.sml:4-17` does (M21). It uses none of `CompilerPlan`, `LibraryScope`, `LibraryIndex`, `CompilerPrelude` or `Workspace`, which pulls in `CompilerProject`, `Deps` and `Ast` [Y's reading].
 - **A view where a friend is right.** v2's text says rhc's `lib/compiler/mid.build` "becomes a named view of `lib/compiler` (D8), not a friend" (`build-system-v2.md:5791`). A view must be a subset of the exports, so it would make `lib/compiler` export Mid, Low, `Ty` and the passes to every client, which is D41's A, and through `libraries` it would give rhc Rune's identity. v2's own M11 contradicts the line, and it should say a friend (D41).
-- **`pipeline.sml` still names the front end,** essentially as at `b12141ecc`: the elaborator's counters, `Env.inlinedValue`, `Translate.funNames` in `lowOfMid`, `ToMid`, `Ast`, `UnitBasis` and `Fixity`. Under D39's D it stays so, and D41's layer needs E11-8 (D39, D41).
-- **E11's patches no longer apply** but for E11-2, and E11-10's compiler hunk (`git apply --check`): M4 rewrites them on the new tree.
+- **`pipeline.sml` still names the front end,** essentially as at `b12141ecc`: the elaborator's counters, `Env.inlinedValue`, `Translate.funNames` in `lowOfMid`, `ToMid`, `Ast`, `UnitBasis` and `Fixity`. E11-8 moves the Mid half into `driver/midpipeline.sml`, which names none of them, and M4 redoes it on this tree (D39, D41).
+- **E11's patches no longer apply** but for E11-2, E11-4 after it, and E11-10's compiler hunk (`git apply --check`): M4 redoes them on the new tree.
 
 ## Every change to Rune
 
@@ -8213,11 +8235,16 @@ The brief's rule: no silent changes. This is the whole list. Grades are the brie
 | `Stamp`, out of `Elaborate` (E11-1) | small | D40 | M4 | 16 files, +30 -20, rewritten on origin/master | bytes held |
 | `Target` passed in (E11-2) | small | D40 | M4 | 5, +13 -17; applies on origin/master | bytes held |
 | Counters register where they live (E11-3) | small | D40 | M4 | 8, +21 -17, rewritten | bytes held |
+| Pass list as data (E11-4) | small | D39 | M4 | 1, +50 -16; applies on origin/master after E11-2 | bytes held |
 | `label` on `fundef` (E11-5), described in `tools/codecs/compiler.sml` | medium | D40 | M4 | 17, +158 -193, rewritten on the codecs' description | bytes held |
+| Simplify and Lower take options (E11-6) | small | D39 | M4 | 5, +49 -14, rewritten | bytes held |
+| `backend/results.sml` (E11-7) | small | D39 | M4 | 3, +470 -454, a move, rewritten | bytes held |
+| `driver/midpipeline.sml` (E11-8) | small | D39, D41 | M4 | 3, +187 -167, a move, rewritten | bytes held |
 | `Literal`, `Ty.constAt` (E11-9) | small | D40 | M4 | 22, +147 -137, rewritten | bytes held |
 | MatchComp stops making `Try`, `Fail` (E11-10), and the constructors go | small | D7 | M4 | 1, +22 -6; the removal not built | bytes held; four expected dumps change |
-| `driver/midpipeline.sml` (E11-8), only if the owner lets it land for D41 | small | D39, D41 | M4 | 3, +187 -167, a move | bytes held |
-| `lib/compiler/mid.build`, if E11-8 lands | small | D41 | M4 | not built | none expected |
+| Root names after E11-7 and E11-8 (E11-11) | small | D39 | M4 | 2, +17 -17, rewritten | bytes held |
+| `--passes` and `--dump-after` refuse an unknown name | small | D39 | M4 | not prototyped | a CLI change, which fixes a defect on master |
+| `lib/compiler/mid.build` | small | D41 | M4 | not built | none expected |
 | `rhc.build` in `lib/compiler/library.build`'s `friends` | small | D41 | M8 | one line | none |
 | `atomsOfRhs`, `mapRhs`, then `Mid.fold` over `exp` | medium | D10 | M6 | not built | should hold bytes [inferred] |
 | `--read-mid` to bytecode | small | D1 | M5 | 1, +14 -2 | none |
@@ -8234,7 +8261,6 @@ The brief's rule: no silent changes. This is the whole list. Grades are the brie
 | `any_check`, behind a compile-time switch, in checked builds and VMs only | small | D5 | M9 | in `E5-integer-prims.patch` | none on a build without it, shown by bytes and `--count` |
 | `Ty` with variable-headed application and a forall | large | D4 | M28 | 300 to 500 over 12 or more files [E4's estimate], 96 view sites | SML programs' bytes held [deduced: SML makes neither form]; the compiler's own code and budgets move by what M28 states |
 | A `Case` in Mid | medium | D8 | M29 | not built: an arm in at least 88 walkers, and Simplify's rounds | bytes and budgets may move, since `Lower`'s reconstruction gives way; M29 says by how much |
-| Multi-value return in Mid, Low and both instruction sets | large | D9 | M30 | not built: 126 walkers, both sets, the JIT, runeopt | both fingerprints move; SML's code as M30 decides and states |
 | `IntInf` immediate, with in-line primitives and their host versions in `tests/basis/host/rune-prim.sml` | medium | D20 | M31 | E5's ten primitives, +70 -2 with no bignum path; `lib/basis/intinf.sml` is 651 lines | SML programs that use `IntInf` change, the compiler among them; fingerprints move; M31 says by how much |
 | Built-in tycons out of `Types` | small | D40 | M10 | about 40 [inferred] | M4's test, not run |
 | `ToMid`'s builder lifted out | small | D7 | M10 | not sized | M4's test, not run |
@@ -8244,20 +8270,21 @@ The brief's rule: no silent changes. This is the whole list. Grades are the brie
 | Guard on the `K_IND` shortcut, in `minor.c` and `mark.c` | small | D57 | M26 | in E2's patch | Haskell's thunks +0.84% on form G if taken; none on SML |
 | The pin, `gc_pin_running` | small | D57, D17 | M26, or M25 if D17's B needs it | +24 -3 with the flag and loader | ports 1.0003 on form G |
 
-**Built for measurement, landing only if the owner takes it** (*Decisions on the numbers*):
+**Built for measurement on the register VM first, landing with the rest only if the owner takes it** (*Decisions on the numbers*):
 
 | Change | Grade | Decision | Milestone | Size | Effect on SML |
 |---|---|---|---|---|---|
 | A `Force` right-hand side, with a recursive form in Mid | medium | D3, D6 | M9 | not built: an arm in every walker after M6 | measured on the compiler's own compile |
-| Eval/apply proper on every engine | large | D15 | M25 | not built | SML's curried calls take it too; measured on Rune's programs |
+| Multi-value return in Mid, Low and the register set; the stack set, runeopt and native code if taken | large | D9 | M30 | not built: 126 walkers, both sets, the JIT, runeopt | if taken, both fingerprints move; SML's code as the build decides and states, measured on the compiler and benchmarks |
+| Eval/apply proper, every engine if taken | large | D15 | M25 | not built | SML's curried calls take it too; measured on Rune's programs |
 | Pointer code 11 | large | D16 | M25 | not built | every pointer read; measured on Rune's programs |
 | Sparud's `updatePat`, a primitive that updates another thunk | small | D17 | M25 | not built | none [deduced: SML has no lazy pattern binding] |
 | CAF tables and a collector that traces from live code | medium | D19 | M25 | not built | the collector's roots; measured |
 | A primitive that unpacks a string constant | small | D24 | M17 | not built | the fingerprint moves; Rune has no use for it |
 
-**What does not change:** Lambda, but for `Try` and `Fail`; pointer codes, unless D16's B is taken; frames. The rest of what this list once held still moves only by decision, and the owner's decisions move much of it: Mid gains `Case` and multi-value return, `Ty` two forms, Low a `Return` of a list, both instruction sets `FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE` and a multi-value `RET` and `RESULT`, and `K_THUNK` is used. E11-4, E11-6, E11-7 and E11-11 do not land (D39).
+**What does not change:** Lambda, but for `Try` and `Fail`; pointer codes, unless D16's B is taken; frames. The rest of what this list once held still moves only by decision, and the owner's decisions move much of it: Mid gains `Case`, `Ty` two forms, both instruction sets `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE`, and `K_THUNK` is used. Multi-value return, with Low's `Return` of a list and a multi-value `RET` and `RESULT`, comes only if the owner adopts it (D9).
 
-**What does change there, in code and not in output, by test for E11 and by deduction for M6.** E11-5 adds `label` to `fundef` and rewrites `expand`, `lift`, `refs`, `shake`, `simplify`, `workers`, `midcanon`, `midtext` and the codecs' description. E11-9 changes `Mid.Const` and `Low.Const`, `lambda.sml` and `simplify.sml`. M4 removes `Try` and `Fail` from Lambda. M6 rewrites Mid's walkers and adds a fold.
+**What does change there, in code and not in output, by test for E11 and by deduction for M6.** E11-5 adds `label` to `fundef` and rewrites `expand`, `lift`, `refs`, `shake`, `simplify`, `workers`, `midcanon`, `midtext` and the codecs' description. E11-9 changes `Mid.Const` and `Low.Const`, `lambda.sml` and `simplify.sml`. E11-4 and E11-6 make the pass list data and pass Simplify's and Lower's options in; E11-7 and E11-8 move the analysis of `results` and the Mid half of `pipeline.sml` into files of their own. M4 removes `Try` and `Fail` from Lambda. M6 rewrites Mid's walkers and adds a fold.
 
 **The collector and images do change.** D11 and M9 change `obj_scanned_fields`, `K_LAST`, `share.c`, `put_object` and the frame check at `runtime/image.c:906`, and M26 the shortcut in `minor.c` and `mark.c`.
 
@@ -8273,11 +8300,11 @@ The brief's rule: no silent changes. This is the whole list. Grades are the brie
 8. **The budgets.** A rise in the compiler's image from the prims is deduced, not measured. Budgets are ceilings 10% over the count.
 9. **Master has moved.** Every citation is to `b12141ecc`, and implementation starts from origin/master `697724da5`, where v2 has split the store out of `unitcache.sml`, generated `midcodec.sml`'s and `unitmid.sml`'s codecs, and grown `src/driver/main.sml` from 1,309 lines to 1,996. Each milestone checks its citations there.
 10. **The corpus's licences** were not surveyed, and a skip is an error in `make check` (`AGENTS.md:311-313`). M3 starts there.
-11. **The IR changes the owner took at once.** `Ty` with application and forall (300 to 500 lines over 12 or more files, 96 view sites, D4), Mid's `Case` (at least 88 walkers and Simplify's rounds, the riskiest edit E12 found, D8), multi-value return (126 walkers, both instruction sets, the JIT and runeopt, D9) and the fold over `exp` (D10). None was built. Each changes code that SML compiles through, so a fault in one is a fault in Rune's own compiler, and each moves SML's code under the standing gate by what its milestone states. M6's walkers come first, so that a new form cannot fall into a catch-all without a word, and each milestone runs E11's test of bytes before it says what moved.
+11. **The IR changes the owner took at once.** `Ty` with application and forall (300 to 500 lines over 12 or more files, 96 view sites, D4), Mid's `Case` (at least 88 walkers and Simplify's rounds, the riskiest edit E12 found, D8) and the fold over `exp` (D10). None was built. Each changes code that SML compiles through, so a fault in one is a fault in Rune's own compiler, and each moves SML's code under the standing gate by what its milestone states. M6's walkers come first, so that a new form cannot fall into a catch-all without a word, and each milestone runs E11's test of bytes before it says what moved. Multi-value return (126 walkers, both instruction sets, the JIT and runeopt, D9) is no longer among them: since the owner's answer of 2026-11-10 it is built on the register VM to be measured (M30), and it carries this risk only if adopted, with its landing on the stack set, runeopt and native code after the figures.
 
 ## What is cut first
 
-In order: D7's `Try` and `Fail`; the options built for measurement, which land only if the owner takes them; cheap eagerness; then track P as a whole, which leaves a conforming and slow compiler. The owner took D4, D8, D9 and D10 now; cutting one is the owner's call, and M6 can go only with all of M28 to M30.
+In order: D7's `Try` and `Fail`; the options built for measurement, which land only if the owner takes them; cheap eagerness; then track P as a whole, which leaves a conforming and slow compiler. The owner took D4, D8 and D10 now; cutting one is the owner's call, and M6 can go only with M28, M29 and the builds for measurement that add a form to Mid (D3's variant, M30).
 
 **Never cut:** literate Haskell, the Report's libraries, Unicode `Char`. Recursive modules are a decision (D30), expected to be taken for support, and on no list to cut, and under D36's recommendation the Prelude depends on them.
 
