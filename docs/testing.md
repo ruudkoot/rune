@@ -360,7 +360,9 @@ three fields, of every way) by the engine for the laws
 rhc, the Haskell 98 compiler of `docs/plans/language/haskell98.md`, is judged against oracles and a corpus that
 stay outside the tree (M3, D52). The corpus's licences, its manifests and its compat layer are
 `tests/hs/corpus/` (README.md there): the programs are read through `RUNE_HS_CORPUS`, a directory holding the trees
-that `tests/hs/corpus/trees.tsv` pins, and none is vendored until the owner chooses. The oracles are GHC 9.4.7 with
+that `tests/hs/corpus/trees.tsv` pins, but for the 45 of D56's set whose trees grant a licence, vendored in
+`tests/hs/corpus/vendored/` with their trees' licence files (GHC's testsuite's BSD-3, jhc's MIT; the owner's rule:
+code not under CC0 lands with its licence beside it). The oracles are GHC 9.4.7 with
 a strict shim, Hugs, nhc98 and MicroHs (`tests/hs/oracles/README.md`: each oracle's variable, pin and recipe, and
 the shims, which the run builds). The family is `tests/runner/hssource.sml`, `hscorpus.sml`, `hsoracles.sml` and
 `hschecks.sml`:
@@ -398,6 +400,13 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
   the SML port is validated against. The manifest says why each other port is held; a finding is a line of
   `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
+- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc and run in D56's three ways (`test`, `register`,
+  `register-opt`), its output E8's expected one (the same, the same words, or numbers equal to about five digits) and
+  its status 0; the 45 vendored in `check`, the 143 others `nightly` with `hs-corpus`; all held while rhc runs no
+  program (the row `prog.main.value` Planned). `hs-rhc-corpus/vendored`, in `check`, puts the 45 through
+  `--typecheck-only` as the nightly jobs above put the whole corpus. `hs-corpus/vendored` (nightly, with the trees)
+  holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and `hs-corpus/data` to the vendored
+  programs' files and licences and nothing more; `bin/rune-test hs-corpus-vendor` makes it again from the trees.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.

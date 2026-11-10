@@ -1,78 +1,78 @@
 id	set	d56	licence	stated	vendor	note
-conformance98/Emptydecls	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/Enum/succ	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/IO/overwrite	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/Misc/wolfram	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/N+K	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/NewType	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/Queens	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/chr	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/fields/empty	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/infix/infix	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/infix/local	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/infix/operator	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/brace	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/case	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/do	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/tullsen1	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/tullsen2	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/whitespace	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/lex	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/numbers/floatdouble	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/numbers/integerdouble	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/numbers/negliteral	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/numbers/subtract	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/read/readex	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/read/singleconstr	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/self-print	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/semicolon	conformance98	yes	nhc98	nhc98/COPYRIGHT	vendor	
-ghc/deriving/should_run/drvrun001	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun002	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun003	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun004	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun005	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun006	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun007	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun008	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun009	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun010	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun011	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun012	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun013	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun014	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun015	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun016	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun018	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun020	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/deriving/should_run/drvrun021	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/module/mod179	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/rename/should_compile/rn039	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_compile/tc159	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_fail/tcfail149	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun001	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun004	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun005	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun006	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun014	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun015	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun029	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun037	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-ghc/typecheck/should_run/tcrun040	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendor	
-jhc/2_language/Bounds.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/2_language/IrrefutableLambda.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/3_io/Array.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/3_io/HelloWorld.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/3_io/IORef.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/3_io/enum.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/4_rts/HelloWorld.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/5_known_bugs/Defaulting.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/5_known_bugs/Segfault1.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/6_fixed_bugs/StrictNewtype.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/6_fixed_bugs/Tree.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/6_fixed_bugs/UnpackedPoly.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/7_large/fastest_fib.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/8_shootout/SumFile.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
-jhc/9_nofib/spectral/Primes.hs	jhc	yes	MIT	jhc/LICENSE	vendor	
+conformance98/Emptydecls	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/Enum/succ	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/IO/overwrite	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/Misc/wolfram	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/N+K	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/NewType	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/Queens	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/chr	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/fields/empty	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/infix/infix	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/infix/local	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/infix/operator	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/brace	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/case	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/do	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/tullsen1	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/tullsen2	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/whitespace	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/lex	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/numbers/floatdouble	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/numbers/integerdouble	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/numbers/negliteral	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/numbers/subtract	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/read/readex	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/read/singleconstr	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/self-print	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/semicolon	conformance98	yes	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+ghc/deriving/should_run/drvrun001	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun002	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun003	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun004	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun005	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun006	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun007	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun008	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun009	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun010	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun011	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun012	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun013	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun014	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun015	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun016	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun018	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun020	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/deriving/should_run/drvrun021	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/module/mod179	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/rename/should_compile/rn039	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_compile/tc159	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_fail/tcfail149	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun001	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun004	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun005	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun006	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun014	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun015	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun029	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun037	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+ghc/typecheck/should_run/tcrun040	ghc-legacy	yes	GHC-BSD3	ghc/LICENSE	vendored	
+jhc/2_language/Bounds.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/2_language/IrrefutableLambda.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/3_io/Array.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/3_io/HelloWorld.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/3_io/IORef.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/3_io/enum.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/4_rts/HelloWorld.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/5_known_bugs/Defaulting.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/5_known_bugs/Segfault1.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/6_fixed_bugs/StrictNewtype.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/6_fixed_bugs/Tree.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/6_fixed_bugs/UnpackedPoly.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/7_large/fastest_fib.hs	jhc	yes	MIT	jhc/LICENSE	vendored	
+jhc/8_shootout/SumFile.hs	jhc	yes	MIT	jhc/LICENSE	outside	a Computer Language Shootout program contributed by Greg Buchholz, as its header says: its origin's licence is not jhc's to grant (M19-O7)
+jhc/9_nofib/spectral/Primes.hs	jhc	yes	MIT	jhc/LICENSE	outside	a copy of nofib's spectral/primes, which states no licence: not jhc's to grant (M19-O7)
 nhcnofib/UNUSED/nfib	nhc98-nofib	yes	none-stated	-	outside	
 nhcnofib/UNUSED/nfib_overloaded	nhc98-nofib	yes	none-stated	-	outside	
 nhcnofib/imaginary/exp3_8	nhc98-nofib	yes	none-stated	-	outside	
@@ -102,7 +102,7 @@ nhcnofib/spectral/ansi	nhc98-nofib	yes	none-stated	-	outside
 nhcnofib/spectral/atom	nhc98-nofib	yes	none-stated	-	outside	
 nhcnofib/spectral/awards	nhc98-nofib	yes	none-stated	-	outside	
 nhcnofib/spectral/banner	nhc98-nofib	yes	none-stated	-	outside	
-nhcnofib/spectral/boyer	nhc98-nofib	yes	public-domain	nhc98/tests/nofib/spectral/boyer/Main.lhs	owner	every source file carries its own grant (public-domain); read before vendoring
+nhcnofib/spectral/boyer	nhc98-nofib	yes	public-domain	nhc98/tests/nofib/spectral/boyer/Main.lhs	outside	its Status: Public Domain is the Lisp original's line, not a grant for the Haskell text: outside (the lead, M19-O7)
 nhcnofib/spectral/boyer2	nhc98-nofib	yes	none-stated	-	outside	
 nhcnofib/spectral/calendar	nhc98-nofib	yes	none-stated	-	outside	
 nhcnofib/spectral/cichelli	nhc98-nofib	yes	none-stated	-	outside	
@@ -151,7 +151,7 @@ nofib/smp/threads001	nofib-2019	yes	none-stated	-	outside
 nofib/spectral/ansi	nofib-2019	yes	none-stated	-	outside	
 nofib/spectral/atom	nofib-2019	yes	none-stated	-	outside	
 nofib/spectral/awards	nofib-2019	yes	none-stated	-	outside	
-nofib/spectral/boyer	nofib-2019	yes	public-domain	nofib/spectral/boyer/Main.lhs	owner	every source file carries its own grant (public-domain); read before vendoring
+nofib/spectral/boyer	nofib-2019	yes	public-domain	nofib/spectral/boyer/Main.lhs	outside	its Status: Public Domain is the Lisp original's line, not a grant for the Haskell text: outside (the lead, M19-O7)
 nofib/spectral/boyer2	nofib-2019	yes	none-stated	-	outside	
 nofib/spectral/calendar	nofib-2019	yes	none-stated	-	outside	
 nofib/spectral/circsim	nofib-2019	yes	none-stated	-	outside	
@@ -187,46 +187,46 @@ yhc-conformance/infix/derived	yhc-conformance	yes	none-stated	-	outside
 yhc-conformance/iomonad	yhc-conformance	yes	none-stated	-	outside	
 yhc-conformance/layout/tullsen3	yhc-conformance	yes	none-stated	-	outside	
 yhc-conformance/parsing/rational_lits	yhc-conformance	yes	none-stated	-	outside	
-conformance98/Array/timeLargeArray	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/Directory/getDirContents	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/FFI/evalorder	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/FFI/foreignobj	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/FFI/foreignptr	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/FFI/newtype	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/FFI/sizedtypes/Int	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/FFI/sizedtypes/Word	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/IOExtras/IOArray	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/IOExtras/IORef	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/ctxsimpl	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/ctxsimpl/bad	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/fields/operator	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/fields/puns	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/fields/showread	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/fields/type	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/float/show	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/foreign/exportio	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/foreign/testunsafe	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/hmake	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/identifiers/qual	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/identifiers/twiddle	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/import/emptyprelude	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/import/specialchar	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/importas	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/infix/constructor	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/infix/fndecl	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/infix/minus	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/bad	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/indent	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/layout	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/rightbrace	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/layout/tullsen3	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/listindex	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/maintype	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/qualifiers	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/random	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/read/1x23	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/strings/newline	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
-conformance98/underscore	conformance98	no	nhc98	nhc98/COPYRIGHT	vendor	
+conformance98/Array/timeLargeArray	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/Directory/getDirContents	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/FFI/evalorder	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/FFI/foreignobj	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/FFI/foreignptr	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/FFI/newtype	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/FFI/sizedtypes/Int	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/FFI/sizedtypes/Word	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/IOExtras/IOArray	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/IOExtras/IORef	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/ctxsimpl	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/ctxsimpl/bad	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/fields/operator	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/fields/puns	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/fields/showread	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/fields/type	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/float/show	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/foreign/exportio	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/foreign/testunsafe	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/hmake	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/identifiers/qual	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/identifiers/twiddle	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/import/emptyprelude	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/import/specialchar	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/importas	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/infix/constructor	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/infix/fndecl	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/infix/minus	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/bad	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/indent	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/layout	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/rightbrace	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/layout/tullsen3	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/listindex	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/maintype	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/qualifiers	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/random	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/read/1x23	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/strings/newline	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
+conformance98/underscore	conformance98	no	nhc98	nhc98/COPYRIGHT	outside	nhc98's COPYRIGHT names the compiler, its libraries and tools, not the tests, and the tests carry no notice: not plainly covered, so not vendored (M19-O7)
 ghc/deriving/should_compile/drv001	ghc-legacy	no	GHC-BSD3	ghc/LICENSE	vendor	
 ghc/deriving/should_compile/drv002	ghc-legacy	no	GHC-BSD3	ghc/LICENSE	vendor	
 ghc/deriving/should_compile/drv003	ghc-legacy	no	GHC-BSD3	ghc/LICENSE	vendor	

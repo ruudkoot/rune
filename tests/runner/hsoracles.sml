@@ -578,7 +578,8 @@ struct
          Test.describe "hs-corpus"
            [inProcess ("data", ["hs-corpus-data"], ["check", "quick"]),
             inProcess ("source", ["hs-source"], ["check", "quick"]),
-            inProcess ("faults", ["hs-faults"], ["check"])]]))
+            inProcess ("faults", ["hs-faults"], ["check"]),
+            Test.requires ["hs-corpus"] (inProcess ("vendored", ["hs-corpus-vendored"], ["nightly"]))]]))
 
   val capabilities =
     [{name = "hs-ghc",
