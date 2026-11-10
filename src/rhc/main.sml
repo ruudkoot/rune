@@ -210,52 +210,100 @@ struct
       fun say (name, what) = if #showUnits opts then eprint ("rhc: unit " ^ name ^ ": " ^ what ^ "\n") else ()
       (* the unit name of text, read as its program where it is compiled,
          against the units before it: a unit taken is not read *)
-      fun build ((name, text, program), done) =
+      val whole = #linkWhole opts
+      fun lookup key holds =
+        case #store opts of
+          SOME dir => SOME (RhcStore.find {overlay = dir, layers = #layers opts, config = config, key = key, holds = holds})
+        | NONE =>
+            if null (#layers opts) then NONE
+            else SOME (RhcStore.find {overlay = hd (#layers opts), layers = tl (#layers opts), config = config, key = key,
+                                      holds = holds})
+      fun keep (key, usages, sections : RhcStore.sections) =
+        case #store opts of
+          SOME dir =>
+            ignore (RhcStore.store {dir = dir, settings = RhcStoreConfig.settings extra, config = config, key = key,
+                                    entry = {head = {usages = usages, exports = Pickle.hash (#iface sections),
+                                                     level = RhcStoreConfig.level ()},
+                                             sections = sections}})
+        | NONE => ()
+      (* the unit name of text, read as its program where it is compiled,
+         against the units before it: a unit taken is not read. With
+         --link=whole it is checked and its Core kept, joined with the
+         others' at the link; else it is compiled to its unit file *)
+      fun build ((name, text, program), (done, cores)) =
         let
-          val key = RhcStore.key (name, [(name, Pickle.hash text)])
+          val key = RhcStore.key ((if whole then "core:" else "") ^ name, [(name, Pickle.hash text)])
           fun current k =
             if String.isPrefix "v " k orelse String.isPrefix "t " k then gives (done, (String.substring (k, 0, 1), String.extract (k, 2, NONE)))
             else "?"
           val holds = RhcStore.holds {level = RhcStoreConfig.level (), current = current}
-          val found =
-            case #store opts of
-              SOME dir => SOME (RhcStore.find {overlay = dir, layers = #layers opts, config = config, key = key, holds = holds})
-            | NONE =>
-                if null (#layers opts) then NONE
-                else SOME (RhcStore.find {overlay = hd (#layers opts), layers = tl (#layers opts), config = config, key = key,
-                                          holds = holds})
+          (* the runtime's unit, rhc's own, is made anew: it is never kept *)
+          val found = if whole andalso name = "rhc-runtime" then NONE else lookup key holds
           fun compile why =
             let
               val p = program ()
               val usages = List.map (fn (k, n) => (k ^ " " ^ n, gives (done, (k, n)))) (needed (done, p))
               val p' = taken (done, p) @ p
               val () = check (name, p')
-              val c = RhcUnits.compile {name = name, earlier = done, fault = #fault opts} p'
-              val () =
-                case #store opts of
-                  SOME dir =>
-                    let val iface = RhcUnits.ifaceText c
-                    in
-                      ignore (RhcStore.store {dir = dir, settings = RhcStoreConfig.settings extra, config = config, key = key,
-                                              entry = {head = {usages = usages, exports = Pickle.hash iface,
-                                                               level = RhcStoreConfig.level ()},
-                                                       sections = {iface = iface, code = RhcUnits.codeBytes c}}})
-                    end
-                | NONE => ()
-            in say (name, "compiled" ^ why); c end
-        in
-          done @ [case found of
-                    SOME (UnitStore.Found ({sections, ...}, _)) => (say (name, "taken"); RhcUnits.fromEntry (name, sections))
-                  | SOME (UnitStore.FoundBehind ({sections, ...}, _)) => (say (name, "taken"); RhcUnits.fromEntry (name, sections))
-                  | SOME (UnitStore.Missed why) => compile (" (" ^ why ^ ")")
-                  | NONE => compile ""]
-        end
+            in
+              if whole then
+                let val c = RhcUnits.checked (name, p')
+                in
+                  if name = "rhc-runtime" then ()
+                  else keep (key, usages, {iface = RhcUnits.ifaceText c, code = CoreText.show p'});
+                  say (name, "checked" ^ why); (c, p')
+                end
+              else
+                let val c = RhcUnits.compile {name = name, earlier = done, fault = #fault opts} p'
+                in keep (key, usages, {iface = RhcUnits.ifaceText c, code = RhcUnits.codeBytes c}); say (name, "compiled" ^ why); (c, p') end
+            end
+          fun taken' (sections : RhcStore.sections) =
+            (say (name, "taken");
+             if whole then
+               let val p' = CoreText.parse (#code sections)
+                            handle CoreText.Error (_, msg) => raise RhcUnits.Error ("the entry of " ^ name ^ ": " ^ msg)
+               in ({name = name, code = NONE, abi = [], exports = List.mapPartial (fn Core.Val (x, _, _) => SOME x | _ => NONE) p',
+                    newtypes = [], iface = RhcUnits.ifaceOf (name, #iface sections)}, p')
+               end
+             else (RhcUnits.fromEntry (name, sections), []))
+          val (c, p') =
+            case found of
+              SOME (UnitStore.Found ({sections, ...}, _)) => taken' sections
+            | SOME (UnitStore.FoundBehind ({sections, ...}, _)) => taken' sections
+            | SOME (UnitStore.Missed why) => compile (" (" ^ why ^ ")")
+            | NONE => compile ""
+        in (done @ [c], cores @ [p']) end
       (* the runtime's unit: rhc's own, so its key is rhc's identity, which
          the configuration holds, and the strings' form *)
       val units = ("rhc-runtime", "rhc's runtime", fn () => CoreRuntime.program strings)
                   :: List.map (fn f => let val text = readFile f in (OS.Path.base (OS.Path.file f), text, fn () => parsed (f, text)) end)
                               (#readCore opts)
-    in RhcUnits.link (List.foldl build [] units, out); 0 end
+      val (built, cores) = List.foldl build ([], []) units
+      (* M21's C: the units' Core joined, what main reaches compiled whole,
+         its bytecode kept by the hash of that Core (the link memo), which
+         covers all the back end reads *)
+      fun linkWhole () =
+        let
+          val reached = CoreUnits.reach (CoreUnits.join cores, ["main"])
+          val () = case CoreUnits.unresolved reached of
+                     [] => ()
+                   | xs => raise RhcUnits.Error ("imported and defined by no unit: " ^ String.concatWith ", " xs)
+          val () = check ("the program", reached)
+          val key = RhcStore.key ("link", [("core", Pickle.hash (CoreText.show reached))])
+          fun bytesOf f = (let val i = BinIO.openIn f in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
+          fun write (f, b) = let val o' = BinIO.openOut f in BinIO.output (o', Byte.stringToBytes b); BinIO.closeOut o' end
+          fun said what = if #showUnits opts then eprint ("rhc: link: " ^ what ^ "\n") else ()
+        in
+          case lookup key (RhcStore.holds {level = RhcStoreConfig.level (), current = fn _ => "?"}) of
+            SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (out, #code sections); 0)
+          | _ =>
+              let val status = compile (opts, reached, out)
+              in
+                if status = 0 then (keep (key, [], {iface = "", code = bytesOf out}); said "compiled") else ();
+                status
+              end
+        end
+    in if whole then linkWhole () else (RhcUnits.link (built, out); 0) end
     handle RhcUnits.Error msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
          | CoreToMid.Unsupported msg =>
              (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)

@@ -62,11 +62,25 @@ struct
       val g = prints (fn d => if String.isPrefix "(val g" d then "(val g Char 'x')" else d)
       val () = need (not (same (earlier, g, "g")) andalso same (earlier, g, "f"), "a value's type in its own fingerprint alone")
     in () end
+
+  (* what main reaches: values through their bodies, a constructor its
+     type, a type its fields' types; nothing else *)
+  fun reach () =
+    let
+      val p = program (String.concatWith "\n"
+                ["(data T () (A) (B))", "(data U () (U T))", "(data V () (V))", "(data W () (W U))",
+                 "(val f (-> Int U) (\\ ((n Int)) (case (con A) a (_ (con U a)))))", "(val g Int 2)",
+                 "(val h (-> Int Int) (\\ ((n Int)) (f n)))", "(val main (-> World (utuple World Int)) (\\ ((w World)) (case (h 1) r (_ (utuple w 0)))))"])
+      val kept = List.map nameOf (CoreUnits.reach (p, ["main"]))
+      val () = need (kept = ["T", "U", "f", "h", "main"], "main reaches h, f, U and T, in the program's order: "
+                                                           ^ String.concatWith ", " kept)
+    in () end
 end
 
 structure CoreUnitsTestMain = Main (struct
   val name = "language-haskell-coreunits"
   val tests = Test.describe "coreunits"
-                [Test.it "interface" CoreUnitsTests.interface, Test.it "fingerprints" CoreUnitsTests.fingerprints]
+                [Test.it "interface" CoreUnitsTests.interface, Test.it "fingerprints" CoreUnitsTests.fingerprints,
+                 Test.it "reach" CoreUnitsTests.reach]
 end)
 val () = CoreUnitsTestMain.main ()

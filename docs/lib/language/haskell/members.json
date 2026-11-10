@@ -501,6 +501,13 @@
     },
     {
      "kind": "val",
+     "name": "reach",
+     "spec": "val reach : Core.program * string list -> Core.program",
+     "doc": "`reach (p, roots)` is what the values `roots` reach of p, in p's order.\n\nA value reaches the values, types and constructors it names, a\nconstructor its type, and a type the types of its fields; an import\nreached is kept, as a whole program has none (the haskell98 roadmap's\nM21: units joined and compiled whole, what main reaches).\n\n",
+     "page": "sig/CORE_UNITS.md#val-reach"
+    },
+    {
+     "kind": "val",
      "name": "interface",
      "spec": "val interface : Core.program * string list -> Core.program",
      "doc": "`interface (p, exports)` is what a client of the unit p needs of the\nnames it exports, as Core: each type it mentions declared, and each\nvalue imported.\n\nEach exported value is an import at its type, and each exported type\nand every type the exports' types mention, through the types' own\nfields, is declared as p declares it, in p's order; a name p does not\ndeclare is a built-in type's, or another unit's the client has.\n\n",
