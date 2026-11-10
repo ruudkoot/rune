@@ -2889,14 +2889,14 @@ lib.r.numeric.showintatbase	14.1	showIntAtBase shows a non-negative Integral in 
 lib.r.numeric.showint	14.1	showInt shows a non-negative Integral in base 10	library	run	exact	hand	Planned		
 lib.r.numeric.showoct	14.1	showOct shows in base 8	library	run	exact	hand	Planned		
 lib.r.numeric.showhex	14.1	showHex shows in base 16	library	run	lower-case digits, by intToDigit	hand	Planned		
-lib.r.numeric.showffloat	14.1	showFFloat uses standard decimal notation, e.g. 245000, 0.0015	library	run	`showFFloat Nothing 245000 ""`; the code prints "245000.0": see readings.md	hand	Planned	R49	
+lib.r.numeric.showffloat	14.1	showFFloat uses standard decimal notation, e.g. 245000, 0.0015	library	run	`showFFloat Nothing 245000 ""`; the code prints "245000.0": see readings.md	hand	Planned	R49 R150	
 lib.r.numeric.showefloat	14.1	showEFloat uses scientific notation, e.g. 2.45e2, 1.5e-3	library	run	the code's output compared with the text's	hand	Planned		
 lib.r.numeric.showgfloat.mid	14.1	showGFloat uses decimal notation for absolute values from 0.1 to 9,999,999	library	run	boundary values	hand	Planned		
 lib.r.numeric.showgfloat.out	14.1	showGFloat uses scientific notation otherwise	library	run	0.09 and 1.0e7	hand	Planned		
 lib.r.numeric.digs.nothing	14.1	digs = Nothing shows full precision	library	run	for each of the three functions	hand	Planned		
 lib.r.numeric.digs.just	14.1	digs = Just d shows at most d digits after the decimal point	library	run	for each of the three functions, with rounding	hand	Planned		
 lib.r.numeric.signed.float	14.1	The three functions show signed RealFloat values	library	run	negative values and negative zero	hand	Planned		
-lib.r.numeric.floattodigits.value	14.1	floatToDigits b r = ([d1..dn],e) has r = 0.d1...dn * b^e	library	run	reconstruct in Rational on a sample	hand	Planned		
+lib.r.numeric.floattodigits.value	14.1	floatToDigits b r = ([d1..dn],e) has r = 0.d1...dn * b^e	library	run	reconstruct in Rational on a sample	hand	Planned	R151	
 lib.r.numeric.floattodigits.n	14.1	n >= 0	library	run	on a sample with zero	hand	Planned		
 lib.r.numeric.floattodigits.d1	14.1	d1 /= 0 when n > 0	library	run	on a sample	hand	Planned		
 lib.r.numeric.floattodigits.range	14.1	0 <= di <= b-1	library	run	on a sample in bases 2, 10, 16	hand	Planned		
