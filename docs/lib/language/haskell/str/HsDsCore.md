@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DS_CORE`](../sig/HS_DS_CORE.md) |
 | Status | required |
-| Members | 36 |
+| Members | 42 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_core.sml](../../../../../lib/language/haskell/desugar_core.sml) |
 
@@ -22,6 +22,7 @@ What each means is on [`HS_DS_CORE`](../sig/HS_DS_CORE.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
+| type | [`saved`](../sig/HS_DS_CORE.md#type-saved) | *a type of its own* |
 | datatype | [`shape`](../sig/HS_DS_CORE.md#type-shape) | `DataS` &#124; `NewS` &#124; `PrimS` |
 | type | [`texp`](../sig/HS_DS_CORE.md#type-texp) | `Core.exp * Core.ty` |
 | val | [`app`](../sig/HS_DS_CORE.md#val-app) | `texp * Core.arg list -> texp` |
@@ -29,6 +30,7 @@ What each means is on [`HS_DS_CORE`](../sig/HS_DS_CORE.md); the types are this s
 | val | [`applyType`](../sig/HS_DS_CORE.md#val-applytype) | `Core.ty * Core.arg list -> Core.ty` |
 | val | [`atom`](../sig/HS_DS_CORE.md#val-atom) | `texp * (Core.atom * Core.ty -> texp) -> texp` |
 | val | [`atoms`](../sig/HS_DS_CORE.md#val-atoms) | `texp list * ((Core.atom * Core.ty) list -> texp) -> texp` |
+| val | [`canonical`](../sig/HS_DS_CORE.md#val-canonical) | `Core.exp -> Core.exp` |
 | val | [`caseCon`](../sig/HS_DS_CORE.md#val-casecon) | `Core.atom * Core.ty * (string * ((string * Core.ty) list -> texp)) list * texp option -> texp` |
 | val | [`cast`](../sig/HS_DS_CORE.md#val-cast) | `texp * Core.ty -> texp` |
 | val | [`con`](../sig/HS_DS_CORE.md#val-con) | `string * Core.ty list * texp list -> texp` |
@@ -52,6 +54,10 @@ What each means is on [`HS_DS_CORE`](../sig/HS_DS_CORE.md); the types are this s
 | val | [`params`](../sig/HS_DS_CORE.md#val-params) | `Core.ty * int -> Core.ty list * Core.ty` |
 | val | [`raisers`](../sig/HS_DS_CORE.md#val-raisers) | `Core.decl list` |
 | val | [`reset`](../sig/HS_DS_CORE.md#val-reset) | `unit -> unit` |
+| val | [`restore`](../sig/HS_DS_CORE.md#val-restore) | `saved -> unit` |
+| val | [`save`](../sig/HS_DS_CORE.md#val-save) | `unit -> saved` |
+| val | [`tupleArity`](../sig/HS_DS_CORE.md#val-tuplearity) | `string -> int option` |
+| val | [`tupleData`](../sig/HS_DS_CORE.md#val-tupledata) | `int -> Core.decl` |
 | val | [`tycon`](../sig/HS_DS_CORE.md#val-tycon) | `string -> ((string * Core.kind) list * shape) option` |
 | val | [`unfold`](../sig/HS_DS_CORE.md#val-unfold) | `Core.ty -> Core.ty option` |
 | val | [`unitTy`](../sig/HS_DS_CORE.md#val-unitty) | `Core.ty` |

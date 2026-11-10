@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `C` (con): [HS_AST](../sig/HS_AST.md#con-c)
+- `canonical` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonical)
 - `CASE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-case)
 - `Case` (con): [CORE](../sig/CORE.md#con-case)
 - `caseCon` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-casecon)
@@ -38,6 +39,7 @@
 - `constr_` (type): [HS_AST](../sig/HS_AST.md#type-constr_)
 - `CONSYM` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-consym)
 - `contextPreds` (val): [HS_KINDS](../sig/HS_KINDS.md#val-contextpreds)
+- `continue` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-continue)
 - `convert` (val): [HS_KINDS](../sig/HS_KINDS.md#val-convert)
 - `coreName` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-corename)
 - `CPlain` (con): [HS_AST](../sig/HS_AST.md#con-cplain)

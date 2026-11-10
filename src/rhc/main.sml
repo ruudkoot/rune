@@ -69,6 +69,20 @@ struct
     else CoreLint.check p
          handle CoreLint.Error msg => (eprint (String.concatWith ", " files ^ ": error: " ^ msg ^ "\n"); raise Failed)
 
+  (* `-- ARG...`: what follows is the program's own, its arguments where rhc
+     interprets it (getArgs: command_arg_count and command_arg), as runevm
+     takes a program's after its file *)
+  val programArgs : string list ref = ref []
+
+  fun splitArgs args =
+    let
+      fun go (pre, "--" :: rest) = (List.rev pre, rest)
+        | go (pre, a :: rest) = go (a :: pre, rest)
+        | go (pre, []) = (List.rev pre, [])
+    in
+      go ([], args)
+    end
+
   fun flush () = (TextIO.flushOut TextIO.stdOut; TextIO.flushOut TextIO.stdErr)
 
   (* the status of a run of p *)
@@ -77,7 +91,7 @@ struct
       val out = fn s => TextIO.output (TextIO.stdOut, s)
       val err = fn s => (TextIO.flushOut TextIO.stdOut; TextIO.output (TextIO.stdErr, s))
       (* the program's name, command_name's: the file read last (ruling 33) *)
-      val () = case #readCore opts of [] => () | files => CorePrimSys.program := {name = List.last files, args = []}
+      val () = case #readCore opts of [] => () | files => CorePrimSys.program := {name = List.last files, args = !programArgs}
       val {outcome, ...} =
         Pass.stage {name = "interpret", showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0}
                    CoreInterp.run {program = p, steps = #steps opts, depth = #depth opts, out = out, err = err}
@@ -271,7 +285,7 @@ struct
           | NONE =>
               (* the program's name, command_name's: the .hs file (ruling 33),
                  as the VM's is its bytecode's *)
-              (CorePrimSys.program := {name = file, args = []}; interpret (opts, p))
+              (CorePrimSys.program := {name = file, args = !programArgs}; interpret (opts, p))
     in
       Pass.finish (); status
     end
@@ -295,11 +309,17 @@ struct
     | a :: rest => a :: world rest
     | [] => []
 
-  (* the library replayed by HsLint, at level 2, when its world is made *)
-  val () = RhcWorld.checkLibrary := (fn (g, r) => RhcLint.check (g, r, false))
+  (* the library replayed by HsLint, at level 2, when its world is made;
+     what the check keeps for the target check is a program's, not the
+     library's, so the saved image holds none *)
+  val () = RhcWorld.checkLibrary := (fn (g, r) => (RhcLint.check (g, r, false); RhcLint.kept := NONE))
 
   fun run (args : string list) : int =
-    let val args = world (share args) in
+    let
+      val (args, ownArgs) = splitArgs args
+      val () = programArgs := ownArgs
+      val args = world (share args)
+    in
     case args of
       ["--make-world", image] =>
         (* the saved world, made: the world that saves it stops here, and

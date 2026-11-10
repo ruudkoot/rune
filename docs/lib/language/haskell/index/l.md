@@ -22,6 +22,8 @@
 - `LetRec` (con): [CORE](../sig/CORE.md#con-letrec)
 - `letrec` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-letrec)
 - `LFloat` (con): [CORE](../sig/CORE.md#con-lfloat), [HS_AST](../sig/HS_AST.md#con-lfloat)
+- `library` (type): [HS_DESUGAR](../sig/HS_DESUGAR.md#type-library)
+- `library` (val): [HS_DESUGAR](../sig/HS_DESUGAR.md#val-library)
 - `libraryEntity` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-libraryentity)
 - `LineComment` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-linecomment)
 - `Link` (con): [HS_TYPES](../sig/HS_TYPES.md#con-link)

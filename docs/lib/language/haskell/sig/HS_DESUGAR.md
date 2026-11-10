@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 4 of 4 entries documented |
+| Documentation | 8 of 8 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_sig.sml](../../../../../lib/language/haskell/desugar_sig.sml) |
 
@@ -61,6 +61,19 @@ The names a translation uses are the Prelude's entities, whatever a
 program defines (3, E9): [`translationNames`](#val-translationnames) lists them, with Ratio's
 `:%`, for a cache's key (H9).
 
+## Contents
+
+[The library's part, once ----
+
+\`program\` is the library's part and then the program's: the first
+declares Core's own types, the leaves' values and every type, class,
+instance and value of the library's modules, and the second those of
+the program's modules and main, against the first. So a saved world
+(D45's B) may make the library's part once, with every body, and each
+program only its own: a value's Core is the same either way, its names
+numbered from the first within it (HsDsCore.canonical) and a pattern
+binding of the top level named after its first variable.](#the-librarys-part-once-----program-is-the-librarys-part-and-then-the-programs-the-firstdeclares-cores-own-types-the-leaves-values-and-every-type-classinstance-and-value-of-the-librarys-modules-and-the-second-those-ofthe-programs-modules-and-main-against-the-first-so-a-saved-worldd45s-b-may-make-the-librarys-part-once-with-every-body-and-eachprogram-only-its-own-a-values-core-is-the-same-either-way-its-namesnumbered-from-the-first-within-it-hsdscorecanonical-and-a-patternbinding-of-the-top-level-named-after-its-first-variable)
+
 ## Interface
 
 <pre>
@@ -71,6 +84,17 @@ sig
                  <a href="#fld-program.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-program.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-program.entity">entity</a> : string * string * string -&gt; string,
                  <a href="#fld-program.runtime">runtime</a> : Core.program, <a href="#fld-program.leaves">leaves</a> : (string * string list) list, <a href="#fld-program.main">main</a> : string}
                 -&gt; Core.program
+  type <a href="#type-library">library</a>
+  val <a href="#val-library">library</a> : {<a href="#fld-library.modules">modules</a> : module_ list, <a href="#fld-library.infer">infer</a> : HsInfer.env, <a href="#fld-library.evidence">evidence</a> : HsEvidence.table,
+                 <a href="#fld-library.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-library.prelude">prelude</a> : string * string -&gt; string option,
+                 <a href="#fld-library.entity">entity</a> : string * string * string -&gt; string, <a href="#fld-library.runtime">runtime</a> : Core.program, <a href="#fld-library.leaves">leaves</a> : (string * string list) list}
+                -&gt; library
+  val <a href="#val-prepare">prepare</a> : library -&gt; unit
+  val <a href="#val-programon">programOn</a> : library * {<a href="#fld-programon.modules">modules</a> : module_ list, <a href="#fld-programon.infer">infer</a> : HsInfer.env, <a href="#fld-programon.evidence">evidence</a> : HsEvidence.table,
+                             <a href="#fld-programon.derived">derived</a> : (string * string * HsAst.decl list) list,
+                             <a href="#fld-programon.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-programon.entity">entity</a> : string * string * string -&gt; string,
+                             <a href="#fld-programon.main">main</a> : string}
+                  -&gt; Core.program
   val <a href="#val-translationnames">translationNames</a> : (string * string * string) list
   val <a href="#val-missingprimitives">missingPrimitives</a> : unit -&gt; string list
 end
@@ -130,6 +154,88 @@ this desugaring does not take, with a message.
 | <a name="fld-program.leaves"></a>`leaves` | `(string * string list) list` |  |
 | <a name="fld-program.main"></a>`main` | `string` |  |
 
+## The library's part, once ----
+
+\`program\` is the library's part and then the program's: the first
+declares Core's own types, the leaves' values and every type, class,
+instance and value of the library's modules, and the second those of
+the program's modules and main, against the first. So a saved world
+(D45's B) may make the library's part once, with every body, and each
+program only its own: a value's Core is the same either way, its names
+numbered from the first within it (HsDsCore.canonical) and a pattern
+binding of the top level named after its first variable.
+
+### <a name="type-library"></a>`library`
+
+```sml
+type library
+```
+
+The library's part: what its declarations left known, its types and
+its values, each value's body made the first time it is wanted.
+
+### <a name="val-library"></a>`library`
+
+```sml
+val library : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
+               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
+               entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list}
+              -> library
+```
+
+`library p` is the library's part of the modules of `p` marked
+[`library`](#val-library).
+
+`p` is a checking of the library alone (every instance of its
+environment is the library's), in [`program`](#val-program)'s form without `main`.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-library.modules"></a>`modules` | `module_ list` |  |
+| <a name="fld-library.infer"></a>`infer` | `HsInfer.env` |  |
+| <a name="fld-library.evidence"></a>`evidence` | `HsEvidence.table` |  |
+| <a name="fld-library.derived"></a>`derived` | `(string * string * HsAst.decl list) list` |  |
+| <a name="fld-library.prelude"></a>`prelude` | `string * string -> string option` |  |
+| <a name="fld-library.entity"></a>`entity` | `string * string * string -> string` |  |
+| <a name="fld-library.runtime"></a>`runtime` | `Core.program` |  |
+| <a name="fld-library.leaves"></a>`leaves` | `(string * string list) list` |  |
+
+### <a name="val-prepare"></a>`prepare`
+
+```sml
+val prepare : library -> unit
+```
+
+`prepare lib` makes every body of `lib` now, as a saved world keeps
+them; a body that fails is failed again where a program reaches it.
+
+### <a name="val-programon"></a>`programOn`
+
+```sml
+val programOn : library * {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
+                           derived : (string * string * HsAst.decl list) list,
+                           prelude : string * string -> string option, entity : string * string * string -> string,
+                           main : string}
+                -> Core.program
+```
+
+`programOn (lib, p)` is [`program`](#val-program) of `p` with the library's part
+`lib`: the modules of `p` not marked [`library`](#val-library) desugared against it.
+
+The modules, environment, records and derived instances of `p` are the
+whole checking's, the library's among them, as [`program`](#val-program) takes them;
+a value of the library is `lib`'s.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-programon.modules"></a>`modules` | `module_ list` |  |
+| <a name="fld-programon.infer"></a>`infer` | `HsInfer.env` |  |
+| <a name="fld-programon.evidence"></a>`evidence` | `HsEvidence.table` |  |
+| <a name="fld-programon.derived"></a>`derived` | `(string * string * HsAst.decl list) list` |  |
+| <a name="fld-programon.prelude"></a>`prelude` | `string * string -> string option` |  |
+| <a name="fld-programon.entity"></a>`entity` | `string * string * string -> string` |  |
+| <a name="fld-programon.main"></a>`main` | `string` |  |
+
 ### <a name="val-translationnames"></a>`translationNames`
 
 ```sml
@@ -146,7 +252,11 @@ val missingPrimitives : unit -> string list
 ```
 
 `missingPrimitives ()` is each primitive of the library that the last
-[`program`](#val-program) found neither in Core nor in the runtime, or of another type.
+desugaring found neither in Core nor in the runtime, or of another
+type.
+
+It is of the bodies the desugaring made, the library's made once among
+them.
 
 Each is an error where it is used.
 

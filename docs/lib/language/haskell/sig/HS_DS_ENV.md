@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 49 of 49 entries documented |
+| Documentation | 53 of 53 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_env\_sig.sml](../../../../../lib/language/haskell/desugar_env_sig.sml) |
 
@@ -62,6 +62,10 @@ sig
   type <a href="#type-program">program</a> = {<a href="#fld-program.infer">infer</a> : HsInfer.env, <a href="#fld-program.evidence">evidence</a> : HsEvidence.table, <a href="#fld-program.prelude">prelude</a> : string * string -&gt; string option,
                   <a href="#fld-program.library">library</a> : string -&gt; bool, <a href="#fld-program.entity">entity</a> : string * string * string -&gt; string}
   val <a href="#val-start">start</a> : program -&gt; unit
+  val <a href="#val-continue">continue</a> : program -&gt; unit
+  type <a href="#type-saved">saved</a>
+  val <a href="#val-save">save</a> : unit -&gt; saved
+  val <a href="#val-restore">restore</a> : saved -&gt; unit
   val <a href="#val-classes">classes</a> : unit -&gt; HsClasses.env
   val <a href="#val-valuescheme">valueScheme</a> : string -&gt; HsTypes.scheme option
   val <a href="#val-prelude">prelude</a> : string * string -&gt; string
@@ -146,6 +150,39 @@ val start : program -> unit
 ```
 
 `start p` makes `p` the program desugared, forgetting the last.
+
+### <a name="val-continue"></a>`continue`
+
+```sml
+val continue : program -> unit
+```
+
+`continue p` makes `p` the program desugared, keeping what is known of
+its types and constructors: a program's, after its library's.
+
+### <a name="type-saved"></a>`saved`
+
+```sml
+type saved
+```
+
+What is known of the types and constructors, kept.
+
+### <a name="val-save"></a>`save`
+
+```sml
+val save : unit -> saved
+```
+
+`save ()` is what is known now.
+
+### <a name="val-restore"></a>`restore`
+
+```sml
+val restore : saved -> unit
+```
+
+`restore s` makes `s` what is known.
 
 ### <a name="val-classes"></a>`classes`
 
