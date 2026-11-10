@@ -871,7 +871,9 @@ binding's span covers more, as a function binding's head does, is left.
 `hs/interp-vm/NAME`, nightly). Each run program of `tests/hs/lang` through rhc to
 Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
 Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
-`.stdin` and the VM with its `.vmargs` (as `hs/meta`'s runs are): the VM prints what the interpreter printed and ends as it did, every
+`.stdin` and the VM with its `.vmargs` (as `hs/meta`'s runs are), a program of
+one file interpreted as a copy named `prog.hs`, so that `getProgName` is `prog`
+both ways: the VM prints what the interpreter printed and ends as it did, every
 bottom one bottom. A program the interpreter alone can run says so on a line
 `-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
 program's rows are `Planned`; M15's done-when and G1 rest on it.
