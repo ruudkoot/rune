@@ -1,0 +1,1 @@
+parse-instance-repeat.hs:2:12: error: the type variable `a` twice in an instance head

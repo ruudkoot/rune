@@ -8,6 +8,9 @@ struct
   fun version () = print ("rhc " ^ Config.version ^ " (identity " ^ Config.identity ^ ")\n")
 
   fun run (args : string list) : OS.Process.status =
+    case RhcSyntax.command args of
+      SOME syntax => syntax ()
+    | NONE =>
     let val opts = RhcOptions.parse args
     in
       if #help opts then (print RhcOptions.usage; OS.Process.success)
