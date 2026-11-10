@@ -54,10 +54,25 @@ struct
   val hoisted : (int * lexp) list ref = ref []
   val () = CompilerState.cellRoot ("MatchComp.hoisted", hoisted)
 
+  (* An IntInf.int constant that an immediate holds, -2^62 to 2^62 - 1, is
+     the int of the same digits, which the primitive intinf_from_int makes
+     the IntInf.int it is (haskell98 M31): nothing read where it is
+     evaluated. *)
+  val immMin = IntInf.~ (IntInf.pow (IntInf.fromInt 2, 62))
+  val immMax = IntInf.- (IntInf.pow (IntInf.fromInt 2, 62), IntInf.fromInt 1)
+  fun smallIntInf (c : Types.tycon, sc, ty) : lexp option =
+    case sc of
+      SInt i =>
+        if Types.sameTycon (c, Types.intinfTycon) andalso IntInf.>= (i, immMin) andalso IntInf.<= (i, immMax)
+        then SOME (Prim ("intinf_from_int", SOME (Ty.arrow (Ty.int, ty)), [Const (CInt i, Ty.int)]))
+        else NONE
+    | _ => NONE
+
   (* A special constant at the type elaboration found for it: a constant, or
      for a type registered with `_overload ... via f` the application of f to
-     the digits (the text, for a real constant): a global, made once, for a
-     character or string constant (hoisted). *)
+     the digits (the text, for a real constant), but for an IntInf.int that
+     an immediate holds (smallIntInf): a global, made once, for a character
+     or string constant (hoisted). *)
   fun sconExp (sc, slot : Types.ty option ref) : lexp =
     let
       val ty = sconTy (sc, slot)
@@ -67,8 +82,9 @@ struct
           SOME t =>
             (case Types.resolve t of
                rt as Types.TCon (c, _) =>
-                 (case Overload.literalOf c of
-                    SOME (Overload.Via f) =>
+                 (case (Overload.literalOf c, smallIntInf (c, sc, ty)) of
+                    (_, SOME e) => SOME e
+                  | (SOME (Overload.Via f), NONE) =>
                       let val make = App (Inst (Global f, Ty.arrow (Ty.string, ty)), Const (CString digits, Ty.string))
                       in
                         if not once then SOME make
