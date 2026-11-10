@@ -381,9 +381,12 @@ struct
 
   (* A program from its text, as `show` or `showAll` wrote it, whose
      names and type variables are numbered by `stamp` and whose type names
-     by `tycon`. Its datatypes are made anew and registered
-     (Ty.bindDatatypeDirect). *)
-  fun parseWith ({stamp = freshStamp, tycon = freshTycon} : {stamp : unit -> int, tycon : unit -> int}) (text : string)
+     by `tycon`, but for a name `named` gives a stamp of: a global of
+     another unit, which a front end that compiles in units names by its
+     text (the haskell98 roadmap's M21). Its datatypes are made anew and
+     registered (Ty.bindDatatypeDirect). *)
+  fun parseWith ({stamp = freshStamp, tycon = freshTycon, named}
+                 : {stamp : unit -> int, tycon : unit -> int, named : string -> int option}) (text : string)
                 : program =
     let
       val toks = ref (tokens text)
@@ -408,7 +411,9 @@ struct
       fun stampOf s =
         case StringMap.find (!names, s) of
           SOME x => x
-        | NONE => let val x = freshStamp () in names := StringMap.insert (!names, s, x); x end
+        | NONE =>
+            let val x = case named s of SOME x => x | NONE => freshStamp ()
+            in names := StringMap.insert (!names, s, x); x end
       fun var prefix () =
         let val s = id ()
         in if String.isPrefix prefix s then stampOf s else fail ("a name " ^ prefix ^ "N") end
@@ -759,7 +764,7 @@ struct
   (* What --read-mid reads: a program whose names are the compiler's own,
      from the elaborator's counters. *)
   fun parse (text : string) : program =
-    parseWith {stamp = Stamp.fresh, tycon = fn () => #stamp (Types.freshTycon ("", 0, true))} text
+    parseWith {stamp = Stamp.fresh, tycon = fn () => #stamp (Types.freshTycon ("", 0, true)), named = fn _ => NONE} text
 
   (* Whether printing what `parse` reads of the printed program prints it
      again, positions and all: the check of the two against each other
@@ -782,7 +787,7 @@ struct
       val extras = !Ty.extras
       fun restore () = (Ty.datatypes := datatypes; Ty.extras := extras)
       val again =
-        (showAll (parseWith {stamp = counter (ref (!Stamp.counter)), tycon = counter scratchTycon} text)
+        (showAll (parseWith {stamp = counter (ref (!Stamp.counter)), tycon = counter scratchTycon, named = fn _ => NONE} text)
          handle Syntax msg => Error.bug ("MidText.parse: " ^ msg))
         handle e => (restore (); raise e)
       val () = restore ()

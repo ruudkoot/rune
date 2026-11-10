@@ -38,6 +38,12 @@ struct
   (* the library's files of modules as they are now *)
   fun libraryNow () = List.map (fn (_, f) => (f, readBytes f)) (G.libraryFiles ())
 
+  (* the library's check when its world is made, HsLint's at level 2 (RhcMain
+     sets it to RhcLint.check; `make bin/rhc.img` runs at RUNE_LINT=2): every
+     record of the library replayed once, since a program from the world
+     has replayed only those of the modules it reaches *)
+  val checkLibrary : (G.graph * RhcNames.result -> unit) ref = ref (fn _ => ())
+
   (* `make image` reads and checks the library, keeps it as the world and
      saves the running rhc to `image`, and beside it `image.identity`, rhc's
      own identity (Config, a digest of rhc.plan's closure), which bin/rhc
@@ -50,6 +56,7 @@ struct
       val nodes = List.concat (#groups g)
       val s = RhcNames.groups (RhcNames.extend (RhcNames.initial (RhcNames.leavesOf nodes), nodes), #groups g,
                                HsModules.Least, SOME HsInfer.PerModule)
+      val () = !checkLibrary (g, RhcNames.result (s, true))
     in
       world := SOME {share = share, files = libraryNow (), graph = g, state = s};
       TextIO.flushOut TextIO.stdOut; TextIO.flushOut TextIO.stdErr;
@@ -82,6 +89,27 @@ struct
            SOME _ => ""
          | NONE => if !whole then " (unused: --whole)" else " (unused: the library's files or --share differ)")
 
+  (* the file of a record's node, `KIND@FILE:START-STOP` (HsEvidence.node) *)
+  fun nodeFile key =
+    let
+      val from = case CharVector.findi (fn (_, c) => c = #"@") key of SOME (i, _) => i + 1 | NONE => 0
+      fun colon i = if i < from then NONE else if String.sub (key, i) = #":" then SOME i else colon (i - 1)
+    in
+      case colon (String.size key - 1) of
+        SOME i => String.substring (key, from, i - from)
+      | NONE => ""
+    end
+
+  (* the records of `t` at the nodes of the files `keep` holds, each node's
+     in their order *)
+  fun evidenceOf (t : HsEvidence.table, keep : string -> bool) : HsEvidence.table =
+    let val kept = HsEvidence.empty ()
+    in
+      List.app (fn (k, rs) => if keep (nodeFile k) then List.app (fn rc => HsEvidence.add (kept, k, rc)) rs else ())
+        (HsEvidence.all t);
+      kept
+    end
+
   (* `program {roots, dotted, fixpoint, check}` is the graph of the program
      of `roots` and what names (and with `check` the checker) found of it,
      from the saved world where it can, else whole (RhcNames.run) *)
@@ -110,11 +138,15 @@ struct
           fun keeps (n : G.node) = not (#library n) orelse M.member (reached, #id n)
           val libraryFiles = List.foldl (fn (n : G.node, m) => M.insert (m, #file n, keeps n)) M.empty (List.concat libraryGroups)
           val r = RhcNames.result (s, isSome check)
+          fun keepsFile f = getOpt (M.find (libraryFiles, f), true)
         in
           ({groups = List.filter (List.all keeps) libraryGroups @ #groups gp, roots = #roots gp, diags = #diags gp},
            {modules = List.filter (keeps o #1) (#modules r), exports = #exports r,
-            diags = List.filter (fn d => not (#library d) orelse getOpt (M.find (libraryFiles, #file (#span d)), true)) (#diags r),
-            types = #types r, evidence = #evidence r,
+            diags = List.filter (fn d => not (#library d) orelse keepsFile (#file (#span d))) (#diags r),
+            (* the records of the modules kept, which HsLint replays at
+               level 2 against those modules alone, as a whole check has
+               them *)
+            types = #types r, evidence = evidenceOf (#evidence r, keepsFile),
             derived = List.filter (fn (h, _, _) => not (M.member (known, h)) orelse M.member (reached, h)) (#derived r)})
         end
 end

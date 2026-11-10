@@ -35,8 +35,9 @@ renameDirectory d d'    =  kindOf d >>= \k ->
                            if k /= 1 then ioError (primMakeIOError IllegalOperation ("renameDirectory: " ++ d ++ ": not a directory") Nothing (Just d))
                            else primSystemCall "renameDirectory" d (os_rename (primPackString d) (primPackString d'))
 renameFile 		:: FilePath -> FilePath -> IO ()
-renameFile f f'         =  kindOf f >>= \k ->
-                           if k == 1 then ioError (primMakeIOError IllegalOperation ("renameFile: " ++ f ++ ": a directory") Nothing (Just f))
+renameFile f f'         =  kindOf f >>= \k -> kindOf f' >>= \k' ->
+                           if k == 1 || k' == 1   -- neither path a directory (22), a permission refused
+                           then ioError (primMakeIOError Permission ("renameFile: " ++ (if k == 1 then f else f') ++ ": a directory") Nothing (Just (if k == 1 then f else f')))
                            else primSystemCall "renameFile" f (os_rename (primPackString f) (primPackString f'))
 
 -- 0 a file, 1 a directory, 2 a link, 3 other, -1 none

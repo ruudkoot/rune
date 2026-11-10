@@ -10,8 +10,10 @@
      `make bin/rhc.img` holds it to.
    - `hs/world/accept/K-of-N`, `hs/world/errors/K-of-N`,
      `hs/world/lang/K-of-N`: every program of the directory checked both
-     ways, `bin/rhc --typecheck-only` with its `.cargs`, prints the same,
-     standard output and error, and ends with the same status. A program's
+     ways, `bin/rhc --typecheck-only --lint=2` with its `.cargs`, prints
+     the same, standard output and error, and ends with the same status;
+     at level 2, the runner's own (RUNE_LINT=2), HsLint replays each way
+     the records of the modules the program reaches. A program's
      own options that shape the library's reading (`--cycle-default=scc`)
      send both ways whole.
 
@@ -61,8 +63,8 @@ struct
         in
           (status, read (file ^ ".out"), read (file ^ ".err"))
         end
-      val (s1, o1, e1) = check ("world", [])
-      val (s2, o2, e2) = check ("whole", ["--whole"])
+      val (s1, o1, e1) = check ("world", ["--lint=2"])
+      val (s2, o2, e2) = check ("whole", ["--whole", "--lint=2"])
       val what = "hs/world/" ^ kind ^ "/" ^ #name p
     in
       if s1 <> s2 then

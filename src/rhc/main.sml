@@ -139,7 +139,13 @@ struct
       val () = lint ([file], p)
       val status =
         if not (null only) then 0
-        else case #output opts of SOME out => compile (opts, p, out) | NONE => interpret (opts, p)
+        else
+          case #output opts of
+            SOME out => compile (opts, p, out)
+          | NONE =>
+              (* the program's name, command_name's: the .hs file (ruling 33),
+                 as the VM's is its bytecode's *)
+              (CorePrimSys.program := {name = file, args = []}; interpret (opts, p))
     in
       Pass.finish (); status
     end
@@ -162,6 +168,9 @@ struct
       "--whole" :: rest => (RhcWorld.whole := true; world rest)
     | a :: rest => a :: world rest
     | [] => []
+
+  (* the library replayed by HsLint, at level 2, when its world is made *)
+  val () = RhcWorld.checkLibrary := (fn (g, r) => RhcLint.check (g, r, false))
 
   fun run (args : string list) : int =
     let val args = world (share args) in

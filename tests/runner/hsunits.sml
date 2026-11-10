@@ -2,7 +2,8 @@
    units): rhc's entries in the store alone, RhcStore with a client of its
    own and no compiler, compiled with Pickle and UnitStore and nothing else
    (tests/hs/units/store.sml), as Rune's own store is tested
-   (tests/lib/compiler/store.sml). *)
+   (tests/lib/compiler/store.sml); and a unit's Mid text naming another
+   unit's global (tests/hs/units/named.sml). *)
 structure HsUnits =
 struct
   open Sh
@@ -32,15 +33,38 @@ struct
                                                                               (lines (read ran))) ^ "\n")
     end
 
+  (* a unit's Mid text naming another unit's global (MidText.parseWith's
+     named), built on Mid's layer of the compiler as rhc is
+     (tests/hs/units/named.build) *)
+  fun named () =
+    let
+      val () = mkdirs out
+      val rbc = out ^ "/named.rbc"
+      val log = out ^ "/named.compile"
+      val ran = out ^ "/named.out"
+    in
+      if exec {cmd = [fromRoot "bin/rune", "--build", fromRoot "tests/hs/units/named.build", "-o", rbc],
+               dir = NONE, stdin = "", stdout = log, stderr = log, timeout = 900} <> 0
+      then say ("FAIL hs.units.named: the test does not compile: " ^ firstLine log ^ "\n")
+      else if exec {cmd = [fromRoot "bin/runevm", rbc], dir = NONE, stdin = "", stdout = ran, stderr = ran, timeout = 300} = 0
+      then ()
+      else say ("FAIL hs.units.named: " ^ String.concatWith "; " (List.filter (fn l => not (String.isPrefix "PASS " l))
+                                                                              (lines (read ran))) ^ "\n")
+    end
+
   fun command args =
     case args of
       ["hs-units-store"] => SOME store
+    | ["hs-units-named"] => SOME named
     | _ => NONE
 
-  val covers = ["covers:src/rhc/store.sml", "covers:lib/compiler/driver/unitstore.sml", "covers:tests/hs/units/*",
+  val covers = ["covers:src/rhc/store.sml", "covers:lib/compiler/driver/unitstore.sml",
+                "covers:lib/compiler/core/midtext.sml",
+                "covers:tests/hs/units/*",
                 "covers:tests/runner/hsunits.sml"]
   fun tree () =
     List.foldl (fn (tag, t) => Test.tag tag t)
-      (Test.describe "hs/units" [Tools.job ("store", ["hs-units-store"], [], 300, 600)])
+      (Test.describe "hs/units"
+         [Tools.job ("store", ["hs-units-store"], [], 300, 600), Tools.job ("named", ["hs-units-named"], [], 500, 1200)])
       (["check", "test-rhc"] @ covers)
 end

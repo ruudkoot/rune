@@ -1,8 +1,8 @@
 # whole
 # The Report's 20 modules, the overlay written: E16's 663 export pairs, 35 fixities and 164 instances, changed as
 # tests/hs/library/overlay.names says (737 pairs), with rhc's modules: the runtime's PreludeBuiltin and UnicodePrims (20
-# pairs), PreludeRuntime (184) and PreludeEnum (4).
-pairs 945
+# pairs), PreludeRuntime (187) and PreludeEnum (4).
+pairs 948
 EXPORT	haskell98:Array	thaskell98:Array Array
 EXPORT	haskell98:Array	thaskell98:Ix Ix
 EXPORT	haskell98:Array	vhaskell98:Array !
@@ -795,6 +795,7 @@ EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_rename
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_rmdir
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_set_mode
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime os_system
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primAppendFile
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primBindIO
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primExit
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primFailWith
@@ -823,6 +824,7 @@ EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primHandleShow
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primMakeIOError
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primOpenFile
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primPackString
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primReadFile
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primReturnIO
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primSeq
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primStderr
@@ -830,6 +832,7 @@ EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primStdin
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primStdout
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primSystemCall
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primUnpackString
+EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime primWriteFile
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime random_seed
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ref_get
 EXPORT	haskell98:PreludeRuntime	vhaskell98:PreludeRuntime ref_new
