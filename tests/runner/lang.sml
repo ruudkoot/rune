@@ -28,7 +28,15 @@
    bytecode that is those bytes is the stack way's run, and passes with it.
 
    Each way carries the tag of the make target it came from, so that
-   `bin/rune-test run --tier test-gc` is what make test-gc ran. *)
+   `bin/rune-test run --tier test-gc` is what make test-gc ran.
+
+   All of that is one suite, `rune`, of the record `suite`: where its
+   programs are and what their files end with, its compilers, its ways,
+   the command that checks types, its tags. rhc's programs are another
+   (tests/runner/hslang.sml; docs/testing.md, *rhc's tests* there): a
+   program of theirs may also be a directory with a main module in it, and
+   their suite has a third directory, of programs that are only checked
+   (`accept/NAME`). `tree` makes a suite's jobs. *)
 structure Lang =
 struct
   fun env (name, default) = case OS.Process.getEnv name of SOME v => if v = "" then default else v | NONE => default
@@ -58,24 +66,44 @@ struct
       | NONE => ""
     end
 
-  (* the programs of a directory, by name *)
-  fun programs dir =
+  (* a program: its name, the file its compiler is given, and the path its
+     siblings are named from (`.expected`, `.cargs`, ...): `tests/lang/NAME`
+     for the file `tests/lang/NAME.sml`, and for a directory `NAME` with a
+     main module in it, `NAME.expected` beside the directory *)
+  type program = {name : string, src : string, base : string}
+
+  (* the programs of a directory, by name: each file that ends with one of
+     `suffixes`, and each directory with one of the files `mains` in it,
+     the first that is there *)
+  fun programsOf (dir, suffixes, mains) : program list =
     let
       val d = OS.FileSys.openDir dir
+      fun one f =
+        case List.find (fn s => String.isSuffix s f) suffixes of
+          SOME s => let val n = String.substring (f, 0, size f - size s)
+                    in SOME {name = n, src = dir ^ "/" ^ f, base = dir ^ "/" ^ n} end
+        | NONE =>
+            case List.find (fn m => exists (dir ^ "/" ^ f ^ "/" ^ m)) mains of
+              SOME m => SOME {name = f, src = dir ^ "/" ^ f ^ "/" ^ m, base = dir ^ "/" ^ f}
+            | NONE => NONE
       fun go acc = case OS.FileSys.readDir d of
                      NONE => acc
-                   | SOME f => go (if String.isSuffix ".sml" f then String.substring (f, 0, size f - 4) :: acc else acc)
-      val names = go [] before OS.FileSys.closeDir d
+                   | SOME f => go (case one f of SOME p => p :: acc | NONE => acc)
+      val found = go [] before OS.FileSys.closeDir d
       fun merge ([], ys) = ys
         | merge (xs, []) = xs
-        | merge (x :: xs, y :: ys) = if y < x then y :: merge (x :: xs, ys) else x :: merge (xs, y :: ys)
+        | merge (x :: xs, y :: ys : program list) =
+            if #name y < #name x then y :: merge (x :: xs, ys) else x :: merge (xs, y :: ys)
       fun split (x :: y :: rest) = let val (a, b) = split rest in (x :: a, y :: b) end
         | split xs = (xs, [])
       fun sort [] = []
         | sort [x] = [x]
         | sort xs = let val (a, b) = split xs in merge (sort a, sort b) end
-    in sort names end
+    in sort found end
     handle OS.SysErr _ => []
+
+  (* the programs of a directory of Rune's, by name *)
+  fun programs dir = List.map #name (programsOf (dir, [".sml"], []))
 
 
   (* ---- compilers and ways *)
@@ -167,81 +195,133 @@ struct
            skip=case OS.Process.getEnv "RUNE_SUITE_SKIP" of SOME path => if path="" then NONE else SOME path | NONE => NONE}])
 
 
+
+  (* ---- suites *)
+  (* a compiler: its name, the command that compiles, from the root, and
+     the tag of its refused programs *)
+  type compiler = string * string * string
+
+  (* a suite of programs (the header): where they are, who compiles and
+     runs them, and the tags of their jobs.
+     - `group`: the group its jobs are in; "" for Rune's, whose are
+       `compile/...`, `errors/...` and `lang/...`;
+     - `lang`, `errors`, `accept`: the directory of the programs compiled
+       and run, of those refused, and of those only checked, if it has one;
+     - `suffixes`, `mains`: what a program's file ends with, and the main
+       modules a directory may have to be a program (`programsOf`);
+     - `out`: where a compiler's bytecode goes, as the shell names it;
+       `scratch`: where, under the run's directory, the other files go;
+     - `writer`, `writerWay`: the compiler and the way whose output
+       --accept writes;
+     - `typecheck`: the command that checks a program without compiling it;
+     - `stackDone`: whether `compile/stack-done` waits for the stack
+       compiler's bytecode, which test-opt and test-native read;
+     - `covers`, the tags of each part, what a compiler and a way need, and
+       which programs bin/rune-suite selects *)
+  type suite =
+    {group : string, lang : string, errors : string, accept : string option,
+     suffixes : string list, mains : string list, compilers : compiler list, ways : way list,
+     out : string -> string, scratch : string, writer : string, writerWay : string,
+     typecheck : string option, stackDone : bool, covers : string list,
+     compileTags : string list, errorTags : compiler -> string list, typecheckTags : string list,
+     wayTags : way -> string list,
+     needs : string -> Run.command Test.tree -> Run.command Test.tree,
+     wayNeeds : way -> Run.command Test.tree -> Run.command Test.tree,
+     selected : string -> string -> bool}
+
+  (* a job's path in a suite's group *)
+  fun path (s : suite) p = if #group s = "" then p else #group s ^ "/" ^ p
+
   (* ---- the commands *)
   val tz = "TZ='NST3:30NDT,M3.2.0,M11.1.0'; export TZ; "
   fun rbcDir compiler =
     if compiler = stackCompiler then "\"$RUNE_TEST_ROOT\"/tests/out" else "\"$RUNE_TEST_RUN\"/c/" ^ compiler
-  fun rbc (compiler, name) = rbcDir compiler ^ "/" ^ name ^ ".rbc"
+  fun rbc (s : suite) (compiler, name) = #out s compiler ^ "/" ^ name ^ ".rbc"
   (* a sibling's words, as $(cat FILE) gives them, or nothing *)
-  fun words (base, ext) =
-    if exists ("tests/" ^ base ^ ext) then " $(cat \"$RUNE_TEST_ROOT\"/tests/" ^ base ^ ext ^ ")" else ""
+  fun words file =
+    if exists file then " $(cat \"$RUNE_TEST_ROOT\"/" ^ file ^ ")" else ""
 
   fun shell (script, dir, timeout, memory, after, judge) =
     {program = "/bin/sh", args = ["sh", "-c", script], env = NONE, dir = dir, stdin = NONE,
      timeout = Time.fromSeconds timeout, cap = 0, cpus = 1, memory = memory, pools = [], exclusive = false,
      after = after, judge = judge} : Run.command
 
+  (* whether a compiler's output is what --accept writes *)
+  fun writes (s : suite) compiler =
+    compiler = #writer s orelse (compiler="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1")
+
   val compileJudge = LangChecks.compileJudge
 
-  fun compile (compiler, command) name =
-    Test.it name
-      (shell (tz ^ "mkdir -p " ^ rbcDir compiler ^ " && exec " ^ command ^ words ("lang/" ^ name, ".cargs")
-              ^ " tests/lang/" ^ name ^ ".sml -o " ^ rbc (compiler, name),
-              SOME ".", 600, 300, [], compileJudge (compiler = stackCompiler orelse (compiler="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1"), name)))
+  fun compile (s : suite) (compiler, command) (p : program) =
+    Test.it (#name p)
+      (shell (tz ^ "mkdir -p " ^ #out s compiler ^ " && exec " ^ command ^ words (#base p ^ ".cargs")
+              ^ " " ^ #src p ^ " -o " ^ rbc s (compiler, #name p),
+              SOME ".", 600, 300, [], compileJudge (writes s compiler, #base p)))
 
   val errorJudge = LangChecks.errorJudge
 
-  fun error (compiler, command) name =
-    Test.it name
-      (shell (tz ^ "mkdir -p \"$RUNE_TEST_RUN\"/e/" ^ compiler ^ " && exec " ^ command ^ words ("errors/" ^ name, ".cargs")
-              ^ " tests/errors/" ^ name ^ ".sml -o \"$RUNE_TEST_RUN\"/e/" ^ compiler ^ "/" ^ name ^ ".rbc",
-              SOME ".", 600, 300, [], errorJudge (compiler = stackCompiler orelse (compiler="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1"), name)))
+  fun error (s : suite) (compiler, command) (p : program) =
+    let val dir = "\"$RUNE_TEST_RUN\"/" ^ #scratch s ^ "e/" ^ compiler
+    in
+      Test.it (#name p)
+        (shell (tz ^ "mkdir -p " ^ dir ^ " && exec " ^ command ^ words (#base p ^ ".cargs")
+                ^ " " ^ #src p ^ " -o " ^ dir ^ "/" ^ #name p ^ ".rbc",
+                SOME ".", 600, 300, [], errorJudge (writes s compiler, #base p)))
+    end
 
-  (* a program of tests/lang or tests/errors checked by bin/rune with
-     --typecheck-only and its .cargs (`lang/typecheck/NAME`,
-     `errors/typecheck/NAME`; LangChecks.typecheckJudge) *)
-  fun typecheck dir name =
-    Test.it name
-      (shell (tz ^ "exec bin/rune --typecheck-only" ^ words (dir ^ "/" ^ name, ".cargs") ^ " tests/" ^ dir ^ "/" ^ name ^ ".sml",
-              SOME ".", 600, 300, [], LangChecks.typecheckJudge (dir, name)))
+  (* a program checked by the suite's command with its .cargs (for Rune's,
+     bin/rune --typecheck-only: `lang/typecheck/NAME`,
+     `errors/typecheck/NAME`; LangChecks.typecheckJudge), judged as one the
+     compile `accepts` or not *)
+  fun typecheck (command, accepts) (p : program) =
+    Test.it (#name p)
+      (shell (tz ^ "exec " ^ command ^ words (#base p ^ ".cargs") ^ " " ^ #src p,
+              SOME ".", 600, 300, [], LangChecks.typecheckJudge (accepts, #base p)))
 
   (* the expected exit status of a program *)
   val expectedCode = LangChecks.expectedCode
   val runJudge = LangChecks.runJudge
 
-  fun run (w : way) name =
+  fun run (s : suite) (w : way) (p : program) =
     let
-      val base = "lang/" ^ name
+      val name = #name p
+      val base = #base p
       val vm = if #name w="suite" then "\"$RUNE_SUITE_VM\"" else "\"$RUNE_TEST_ROOT\"/" ^ #vm w
-      val program = rbc (#compiler w, name)
-      val runIt = vm ^ " --checked" ^ words (base, ".vmargs") ^ " " ^ program ^ words (base, ".args")
+      val program = rbc s (#compiler w, name)
+      val runIt = vm ^ " --checked" ^ words (base ^ ".vmargs") ^ " " ^ program ^ words (base ^ ".args")
       val restore =
-        if exists ("tests/" ^ base ^ ".restore") then
-          "; code=$?; if [ -f tests/out/" ^ name ^ ".img ]; then " ^ vm ^ words (base, ".restorevmargs")
+        if exists (base ^ ".restore") then
+          "; code=$?; if [ -f tests/out/" ^ name ^ ".img ]; then " ^ vm ^ words (base ^ ".restorevmargs")
           ^ " --restore tests/out/" ^ name ^ ".img"
-          ^ (if exists ("tests/" ^ base ^ ".restoreargs") then " --" ^ words (base, ".restoreargs") else "")
+          ^ (if exists (base ^ ".restoreargs") then " --" ^ words (base ^ ".restoreargs") else "")
           ^ " < /dev/null > restored 2> restored.err; echo $? > restored.code; fi; exit $code"
         else ""
       val asanEnv = if #name w = "native-asan" then
         "RUNEOPT_RUNTIME=\"$RUNE_TEST_ROOT/build/asan\"; RUNEOPT_CC=\"$RUNE_TEST_ROOT/build/asan/cc\"; "
         ^ "RUNEOPT_CACHE=\"$RUNE_TEST_RUN/native-asan-cache\"; export RUNEOPT_RUNTIME RUNEOPT_CC RUNEOPT_CACHE; " else ""
-      val start = tz ^ asanEnv ^ "mkdir -p tests/out && ln -sfn \"$RUNE_TEST_ROOT\"/tests/lang tests/lang && "
+      (* tests/out for what it writes at fixed paths, and the suite's
+         directory for what it reads *)
+      val parent = OS.Path.dir (#lang s)
+      val start = tz ^ asanEnv ^ "mkdir -p tests/out" ^ (if parent = "tests" then "" else " " ^ parent)
+                  ^ " && ln -sfn \"$RUNE_TEST_ROOT\"/" ^ #lang s ^ " " ^ #lang s ^ " && "
       val isHost = List.exists (fn h => h = #compiler w) hosts
       (* the host compilers' bytes that are the stack compiler's: the stack
          way's run, which this one waits for *)
       val same =
-        if isHost then "if cmp -s " ^ program ^ " " ^ rbc (stackCompiler, name) ^ "; then : > same; exit 0; fi; " else ""
+        if isHost then "if cmp -s " ^ program ^ " " ^ rbc s (stackCompiler, name) ^ "; then : > same; exit 0; fi; " else ""
       val script = start ^ same ^ (if restore = "" then "exec " ^ runIt else runIt ^ restore)
-      val stdin = if exists ("tests/" ^ base ^ ".stdin") then SOME ("tests/" ^ base ^ ".stdin") else NONE
-      val after = ("compile/" ^ #compiler w ^ "/" ^ name)
-                  :: (if isHost then ["compile/" ^ stackCompiler ^ "/" ^ name, "lang/test/" ^ name] else [])
+      val stdin = if exists (base ^ ".stdin") then SOME (base ^ ".stdin") else NONE
+      val after = path s ("compile/" ^ #compiler w ^ "/" ^ name)
+                  :: (if isHost then [path s ("compile/" ^ stackCompiler ^ "/" ^ name), path s ("lang/test/" ^ name)] else [])
                   @ (if #tag w = "test-register-asan" then ["native/prepare/asan"]
                      else if #tag w = "test-native-asan" then ["native/prepare/native-asan"] else [])
     in
       Test.it name
         ({program = "/bin/sh", args = ["sh", "-c", script], env = NONE, dir = NONE, stdin = stdin,
           timeout = Time.fromSeconds 900, cap = 0, cpus = 1, memory = if isSome (#skip w) then 300 else 100, pools = [],
-          exclusive = false, after = after, judge = runJudge (#name w = "test" orelse (#name w="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1"), name)} : Run.command)
+          exclusive = false, after = after,
+          judge = runJudge (#name w = #writerWay s orelse (#name w="suite" andalso env ("RUNE_SUITE_UPDATE","0")="1"), base)}
+         : Run.command)
     end
 
   (* ---- the tree *)
@@ -279,39 +359,80 @@ struct
   fun wayNeeds (w : way) t =
     if portable w andalso (String.isSubstring "ppc64" (#vm w) orelse String.isSubstring "aarch64" (#vm w))
     then Test.requires ["qemu"] t else t
+  (* the tags of a compiler's programs of tests/errors *)
+  fun errorTags (c, _, tag) =
+    ["check", tag]
+    @ (if c = stackCompiler then ["test-stress", "test-native-stress", "test-native-asan", "nightly", "vm"]
+       else if c = "register" then ["test-stress", "test-register-asan", "nightly", "vm"] else [])
+    @ extraTags tag
 
-  (* the programs checked with --typecheck-only, by bin/rune; not for a
-     compiler of bin/rune-suite's *)
-  fun typecheckTests dir names =
-    if selectedCompiler <> "" then []
-    else [tagged (["check", "test"] @ covers) (Test.describe "typecheck" (List.map (typecheck dir) names))]
+  (* the jobs of a suite: `compile/COMPILER/NAME`, `errors/COMPILER/NAME`,
+     `lang/WAY/NAME`, with `errors/typecheck/NAME` and `lang/typecheck/NAME`
+     where it has a command that checks types, and `accept/NAME` where it
+     has programs that are only checked *)
+  fun tree (s : suite) =
+    let
+      fun programsIn (dir, kind) =
+        List.filter (fn p => #selected s kind (#name p)) (programsOf (dir, #suffixes s, #mains s))
+      val langPrograms = programsIn (#lang s, "lang")
+      val errorPrograms = programsIn (#errors s, "errors")
+      val covers = #covers s
+      (* the programs checked with the suite's command; not for a compiler
+         of bin/rune-suite's *)
+      fun typecheckTests accepts programs =
+        case #typecheck s of
+          SOME command =>
+            if selectedCompiler <> "" then []
+            else [tagged (#typecheckTags s @ covers) (Test.describe "typecheck" (List.map (typecheck (command, accepts)) programs))]
+        | NONE => []
+      val accepted =
+        case (#accept s, #typecheck s) of
+          (SOME dir, SOME command) =>
+            [tagged (#typecheckTags s @ covers)
+               (Test.describe "accept" (List.map (typecheck (command, true)) (programsIn (dir, "accept"))))]
+        | _ => []
+    in
+      Test.describe (#group s)
+        ([Test.describe "compile"
+            (List.map (fn (c, command, _) =>
+                         #needs s c (tagged (#compileTags s @ covers) (Test.describe c (List.map (compile s (c, command)) langPrograms))))
+                      (#compilers s)
+             @ (if #stackDone s then
+                  [tagged (#compileTags s @ covers)
+                     (Test.it "stack-done"
+                        (shell ("true", SOME ".", 60, 10, List.map (fn p => path s ("compile/" ^ stackCompiler ^ "/" ^ #name p)) langPrograms,
+                                Run.exitZero)))]
+                else [])),
+          Test.describe "errors"
+            (List.map (fn (c as (name, command, _)) =>
+                         #needs s name (tagged (#errorTags s c @ covers)
+                           (Test.describe name (List.map (fn p => if name<>"suite" then error s (name,command) p else
+                                                             case selectedSkip (#name p) of
+                                                               SOME row => Test.pending (Expectations.describe row) (error s (name,command) p)
+                                                             | NONE => error s (name,command) p) errorPrograms))))
+                      (#compilers s)
+             @ typecheckTests false errorPrograms),
+          Test.describe "lang"
+            (List.map (fn w => #wayNeeds s w (#needs s (#compiler w) (tagged (#wayTags s w @ covers)
+                                 (Test.describe (#name w)
+                                    (List.map (fn p =>
+                                                 case (if #name w="suite" then selectedSkip (#name p) else Option.mapPartial (fn f => Expectations.skipped (expectationsOf f, {way = #name w, path = #name p})) (#skip w)) of
+                                                   SOME l => Test.pending (#category l ^ ": " ^ #reason l) (run s w p)
+                                                 | NONE => run s w p)
+                                              langPrograms)))))
+                      (#ways s)
+             @ typecheckTests true langPrograms)]
+         @ accepted)
+    end
 
-  val tests =
-    Test.describe ""
-      [Test.describe "compile"
-         (List.map (fn (c, command, _) => needs c (tagged ("check" :: covers) (Test.describe c (List.map (compile (c, command)) langPrograms))))
-                   compilers
-          @ [tagged ("check" :: covers)
-               (Test.it "stack-done"
-                  (shell ("true", SOME ".", 60, 10, List.map (fn n => "compile/" ^ stackCompiler ^ "/" ^ n) langPrograms,
-                          Run.exitZero)))]),
-       Test.describe "errors"
-         (List.map (fn (c, command, tag) => needs c (tagged (["check", tag]
-                      @ (if c = stackCompiler then ["test-stress", "test-native-stress", "test-native-asan", "nightly", "vm"]
-                         else if c = "register" then ["test-stress", "test-register-asan", "nightly", "vm"] else []) @ extraTags tag @ covers)
-                                                       (Test.describe c (List.map (fn name => if c<>"suite" then error (c,command) name else
-                       case selectedSkip name of SOME row => Test.pending (Expectations.describe row) (error (c,command) name)
-                          | NONE => error (c,command) name) errorPrograms))))
-                   compilers
-          @ typecheckTests "errors" errorPrograms),
-       Test.describe "lang"
-         (List.map (fn w => wayNeeds w (needs (#compiler w) (tagged (wayTags w @ covers)
-                              (Test.describe (#name w)
-                                 (List.map (fn n =>
-                                              case (if #name w="suite" then selectedSkip n else Option.mapPartial (fn f => Expectations.skipped (expectationsOf f, {way = #name w, path = n})) (#skip w)) of
-                                                SOME l => Test.pending (#category l ^ ": " ^ #reason l) (run w n)
-                                              | NONE => run w n)
-                                           langPrograms)))))
-                   ways
-          @ typecheckTests "lang" langPrograms)]
+  (* Rune's programs: tests/lang and tests/errors *)
+  val rune : suite =
+    {group = "", lang = "tests/lang", errors = "tests/errors", accept = NONE,
+     suffixes = [".sml"], mains = [], compilers = compilers, ways = ways,
+     out = rbcDir, scratch = "", writer = stackCompiler, writerWay = "test",
+     typecheck = SOME "bin/rune --typecheck-only", stackDone = true, covers = covers,
+     compileTags = ["check"], errorTags = errorTags, typecheckTags = ["check", "test"],
+     wayTags = wayTags, needs = needs, wayNeeds = wayNeeds, selected = selectedName}
+
+  val tests = tree rune
 end
