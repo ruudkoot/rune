@@ -247,6 +247,49 @@ until M17 states the encoding of I/O (R5 covers the source alone). Rows: `io.int
 **Ruling.** `-O0`'s literal rules against decision trees over the corpus and generated programs: held until rhc
 compiles them. Rows: `tr.case.obligation`.
 
+
+## The lead's rulings on T's M19h list (impl/rulings.md, 2026-11-10, items 14 to 27)
+
+### R87. Derived Show and Read of records
+10.4 says only "the record-syntax form". **Ruling.** R41's seed, Haskell 2010's form, as GHC writes it:
+`C {f = 1, g = 2}`, a field at precedence 0, a record constructor parenthesised at 11, an operator field or constructor
+in parentheses, and derived Read reading that form, every field present and in order. Implementation-defined.
+Rows: `der.show.record.chars`, `.form`, `.prec`, `.neg`, `.opfield`, `.opcon`, `.empty`, `der.show.infix.backtick`,
+`der.show.prefix.opcon`, `der.read.prec.range`, `der.read.record.all`, `der.read.record.prec`.
+
+### R88. Negative floats in derived Show and Read
+**Ruling.** R42's seed, 10.4's text over chapter 8's code: a negative `Float` or `Double` is parenthesised above
+precedence 6, as `showSigned showFloat`, and derived Read takes the parenthesised form, so `read . show` holds.
+Rows: `der.show.neg.float`, `der.show.readable`, `der.read.neg`.
+
+### R89. Comments in read's input
+**Ruling.** R43's seed, the code with the erratum: the Prelude's `lex` skips white space only, so a comment in what
+`read` reads is not skipped, and the read fails. Rows: `der.read.space`.
+
+### R90. Derived Ord over NaN
+**Ruling.** `Double`'s `compare` is Ord's default over IEEE's `==` and `<=`, so `compare NaN x` is `GT`; a derived
+Ord compares fields by `compare`, left to right, and its `<` and the rest by `compare`. Implementation-defined.
+Rows: `der.ord.partial`.
+
+### R91. A derived and an explicit instance in two modules
+**Ruling.** R26's seed: one class-type pair has one instance in a program, checked at link: a derived instance in one
+module and an explicit one in another are refused, an errors program held until rhc links (M21).
+Rows: `der.cond.noexplicit.module`.
+
+### R92. The Report's misprints are not copied
+**Ruling.** R52's: `der.tree.fixity` uses Figure 10.1's `infixr 5 :^:`; `prag.inline`'s program uses
+`factorial 0 = 1`, testing the pragma only. `lit.example.factorial` stays the owner's. Rows: `der.tree.fixity`,
+`prag.inline`.
+
+### R93. `default (Int, Double)` shows Int by its overflow
+**Ruling.** `2^70` at the first type of `default (Int, Double)` is an error by D22's checked `Int` (R81), which shows
+that Int was picked, where Integer would print the value. Implementation-defined; the oracles' wrapping is recorded.
+Rows: `def.pick.first`.
+
+### R94. Recursive modules have no oracle
+**Ruling.** A program whose modules import each other is written by hand, its output from the text alone (D52): none
+of GHC (without its boot files), Hugs or nhc98 compiles it as written. Rows: `mod.inst.recursive`.
+
 ## The readings of the libraries' clause programs (M19, chapters 12 to 27)
 
 These come from the clause programs of the Report's libraries, `tests/hs/lang` and `tests/hs/accept` from `lib.`, put to

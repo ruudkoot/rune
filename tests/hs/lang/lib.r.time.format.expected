@@ -1,0 +1,7 @@
+2000-02-29 13:05:09 Tue Tuesday Feb February 059 PM 00
+fevrier fev
+True
+(True,11,True,Tuesday)
+([("Sunday","Sun"),("Monday","Mon")],[("January","Jan"),("February","Feb")],("AM","PM"))
+("%m/%d/%y","%H:%M:%S","%I:%M:%S %p")
+(0,1,True)
