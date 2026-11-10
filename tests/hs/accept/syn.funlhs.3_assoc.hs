@@ -1,4 +1,4 @@
--- rows: syn.funlhs.4
+-- rows: syn.funlhs.4 R68
 -- Report 9.5: funlhs -> lpat(i) varop(l,i) pat(i+1) | pat(i+1) varop(r,i) rpat(i): an infix definition whose left
 -- argument, of a left-associative operator, is a pattern of a left-associative constructor at its level, and the
 -- same on the right.

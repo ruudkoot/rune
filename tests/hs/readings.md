@@ -1,0 +1,199 @@
+# Readings of the Report from rhc's oracles
+
+Where the oracles disagree on a test, or agree against the Report, the disagreement yields a reading: what the text
+says, what each oracle does, and what rhc follows (D52, D38). E9 wrote R1 to R54 from the text (`results/E9/readings.md`
+in the drafts); these are the ones E7's hard cases yielded that had none, numbered after them. Every `>` line quotes the
+December 2002 text; none of the 18 errata touches these clauses. The oracles' verdicts are in `oracles.txt` beside this
+file, under the reading's number.
+
+### R55. `show` of `Float` and `Double`: the Report's code fixes the digits and the form
+> instance Show Float where showsPrec p = showFloat (8, PreludeText)
+> showGFloat uses standard decimal notation for arguments whose absolute value lies between 0.1 and 9,999,999, and scientific notation otherwise. (14.1)
+> FFGeneric -> doFmt (if e < 0 || e > 7 then FFExponent else FFFixed) (is, e) (14.4, Numeric)
+
+**What the text says.** `show` at `Float` and `Double` is `showFloat`, which is `showGFloat Nothing`: the digits of
+`floatToDigits`, the shortest that identify the number ("Based on Printing Floating-Point Numbers Quickly and
+Accurately", Burger and Dybvig, the code's own comment), in fixed form from 0.1 to 9,999,999 and otherwise as `d.ddde`
+with the exponent unsigned when it is positive. So `show 1.0e20` is `1.0e20`, `show (123456789 :: Double)` is
+`1.23456789e8`, `show (1.0e12 :: Double)` is `1.0e12`, and `show (0.123456789 :: Float)` is `0.12345679`. The text is
+not ambiguous here: the code is normative for the digits, and 14.1 agrees with it on the form.
+**GHC** and **nhc98** print the Report's form. **Hugs** prints with C's `%.7g` for a `Float` and `%.15g` for a
+`Double` (`Hugs/src/prelude.h:451,463`, `src/machdep.c:1724,1791`): 7 and 15 significant digits, the fixed form for
+`123456789.0` and `1000000000000.0`, and `1.0e+20` (E7: `Enum/succ` in both suites,
+`numbers/floatdouble`, `numbers/integerdouble`, `numbers/subtract`, `parsing/rational_lits`). **MicroHs** prints a
+`Double` to 16 digits (`numbers/floatdouble`). So Hugs is no judge of a printed floating number, nor MicroHs of a
+`Double`: their lines are `HOST-BUG`.
+**rhc** follows the Report's code: `floatToDigits` and the `FFGeneric` rule, as R42 leaves them but for the
+parentheses of a negative number. Rows: `pre.text.inst.showfloat`, `lib.numeric.showfloat`, `lib.numeric.showgfloat`,
+`lib.r.numeric.showgfloat.mid`, `lib.r.numeric.showgfloat.out`, `lib.r.numeric.floattodigits.shortest`.
+
+### R56. `do {e}` is `e`, at any type
+> Do expressions satisfy these identities, which may be used as a translation into the kernel, after eliminating empty stmts: do {e} = e (3.14)
+> the functions >>, >>=, and fail are operations in the class Monad (3.14)
+
+**What the text says.** A `do` with one statement, an expression, translates to that expression, and only `>>`,
+`>>=` and `fail` bring `Monad` in. So `f a b = do a == b` is `f a b = a == b`, of type `Eq a => a -> a -> Bool`,
+and `main = print (f () ())` prints `True` (`conformance98/layout/do`, whose expected output that is). Nothing in the
+translation asks the last statement for a monadic type.
+**GHC**, **nhc98** and **MicroHs** accept it and print `True`. **Hugs** refuses it, "Type error in final generator ...
+Type : Bool": it types `do` by a rule of its own that wants a monad. Its line is `HOST-BUG`.
+**rhc** follows the translation: `do {e}` is `e`, typed as `e` is. Rows: `tr.do.last`, `tr.do.last.nomonad`.
+
+## The readings of rhc's clause programs (M19)
+
+These come from the clause programs of `tests/hs/accept` and `tests/hs/errors`, put to the oracles before they landed:
+GHC 9.4.7 with the strict shim (`-XHaskell98`, and for layout `-XNoNondecreasingIndentation`), Hugs `+98`, nhc98 `-98`.
+In each the text is plain, so rhc follows it (D38), and the program pins the reading. A row's `reading` column names it.
+
+### R57. Line ends: a lone return and a formfeed
+> newline  |   ->  |  return linefeed | return | linefeed | formfeed (2.2)
+
+**What the text says.** A return alone ends a line, and so does a formfeed: a line comment ends there, and the lexeme
+after either begins a line, at column 1, for the layout rule. **GHC** ends a line at neither: a file of lone returns
+is one line, its declarations one comment, and a formfeed is white space inside a line. **Hugs** ends a line at a lone
+return and not at a formfeed. **nhc98** at neither. **rhc** follows 2.2. Rows: `lex.white.newline.cr`,
+`lex.white.newline.ff`, `lay.col.newlinechars`.
+
+### R58. No digit separator
+> decimal  |   ->  |  digit{digit} (2.5)
+
+**What the text says.** `1_000` is the literal `1` and the variable `_000`. **GHC** reads a literal with underscores,
+then refuses it for want of `NumericUnderscores`, even under `-XHaskell98`. **Hugs** and **nhc98** read `1` and `_000`.
+**rhc** follows 2.5. Rows: `lex.int.underscore`.
+
+### R59. `@` and `~` are reserved alone
+> reservedop  |   ->  |  .. | : | :: | = | \ | | | <- | -> | @ | ~ | => (2.4)
+
+**What the text says.** Neither `@` nor `~` is a varsym, so `(@) a b = a` and `(~) a b = a` define nothing. **GHC**
+9.4 takes both as operators where they are spaced as infix ones; **Hugs** and **nhc98** refuse them. **rhc** follows
+2.4. Rows: `lex.reservedop.at`, `lex.reservedop.tilde`.
+
+### R60. `:` is no constructor a program declares
+> reservedop  |   ->  |  .. | : | :: | = | \ | | | <- | -> | @ | ~ | => (2.4)
+
+**What the text says.** `:` is reserved for the list constructor, so `data T = Int : Int` is refused. **GHC** refuses
+it; **Hugs** and **nhc98** accept it. **rhc** follows 2.4. Rows: `lex.reservedop.colon`.
+
+### R61. No raw tab in a character or a string
+> char  |   ->  |   ' (graphic<' | \> | space | escape<\&>) ' (2.6)
+
+**What the text says.** Of the white characters only space stands raw in a character or a string literal. **GHC** and
+**nhc98** refuse a raw tab; **Hugs** takes it. **rhc** follows 2.6. Rows: `lex.char.tab`, `lex.string.tab`.
+
+### R62. `foreign` is a variable
+> reservedid  |   ->  |  case | class | data | default | deriving | do | else (2.4)
+
+**What the text says.** The reserved words are those of `reservedid`, and `foreign` is not one. **GHC** and **nhc98**
+take it as a varid; **Hugs** reserves it even under `+98`. **rhc** follows 2.4. Rows: `lex.reserved.notspecial`.
+
+### R63. A record's braces are an explicit context
+> contexts, including labelled construction and update (Section 3.15). (9.3)
+
+**What the text says.** Note 4: every pair of braces is an explicit layout context, so the lines of a record
+construction, update, pattern or declaration may stand left of the block they are in, and get no `;`. **GHC** follows
+it; **Hugs** and **nhc98** apply layout inside the braces and refuse the program. **rhc** follows 9.3. Rows:
+`lay.note4.allbraces`.
+
+### R64. The rest of a `\begin{code}` line
+> Program code begins on the first line following a line that begins \begin{code}. (9.4)
+
+**What the text says.** A line that *begins* `\begin{code}` opens the code on the next line, whatever follows on its
+own; likewise `\end{code}`. **GHC**'s `unlit` fails on text after `\begin{code}`, and **Hugs** and **nhc98** do not see
+the code begin. **rhc** follows 9.4. Rows: `lit.latex.restofline`.
+
+### R65. A guard is an `exp0`
+> gd  |   ->  |   | exp0 (3.13)
+> end with a type signature --- indeed that is why a gd contains (3.13)
+
+**What the text says.** A guard holds no signature at its top, which is what gives 3.13's note its single parse:
+`case x of { (a,_) | let b = not a in b :: Bool -> a }` is `(let b = not a in b :: Bool) -> a`, the let's body being an
+`exp`. **GHC**, **Hugs** and **nhc98** all read `Bool -> a` as the type and refuse the note's program, which the
+Report warns parsers with limited lookahead do; and **GHC** accepts `f x | x :: Bool = 1`, a signature at a guard's top.
+**rhc** follows 3.13: it accepts the first and refuses the second. Rows: `exp.case.note.letsig`, `syn.r.gd.exp0`.
+
+### R66. `forall` is a type variable
+> tyvar  |   ->  |  varid (4.1.2)
+
+**What the text says.** `forall` is no reserved word, so `f :: forall -> forall` is a function of a type variable.
+**GHC** refuses `forall` in a type, wanting `RankNTypes`; **Hugs** and **nhc98** accept it. **rhc** follows 4.1.2.
+Rows: `ty.quant.forall.isvar`.
+
+### R67. A left section's operand may be an infix expression
+> aexp  |   ->  |   ( expi+1 qop(a,i) )         |  (left section) (9.5)
+
+**What the text says.** `(a * b +)`, `(a+b+)` and `(2 - 1 -)` are left sections, the second by `( lexpi qop(l,i) )`, as
+3.5's own example `(a+b+)` says. **GHC** and **nhc98** accept them; **Hugs** refuses every left section whose operand
+is an infix expression. **rhc** follows 3.5 and 9.5. Rows: `exp.sec.ex.aplusb`, `exp.sec.tighter`, `syn.aexp.10`.
+
+### R68. An infix definition whose operand is an infix pattern
+> funlhs  |   ->  |   var apat {apat } (4.4.3)
+
+**What the text says.** `funlhs` has the forms `pati+1 varop(a,i) pati+1`, `lpati varop(l,i) pati+1` and
+`pati+1 varop(r,i) rpati`, so with `infixl 6 +++` and `infixl 7 :*`, `a :* b +++ c = ...` defines `+++`. **GHC**
+accepts it; **Hugs** refuses it ("Illegal pattern syntax"), and **nhc98** too. **rhc** follows 4.4.3. Rows:
+`syn.funlhs.3`, `dec.fun.lhs.prec`.
+
+### R69. No infix type constructor in a declaration
+> simpletype  |   ->  |  tycon tyvar1 ... tyvark	  |  (k>=0) (4.2.1)
+
+**What the text says.** A declared type is `tycon tyvar1 ... tyvark`, so ``data a `T` b = C`` is refused. **GHC**
+accepts it; **Hugs** and **nhc98** refuse it. **rhc** follows 4.1.2 and 4.2.1. Rows: `ty.form.infix.none`.
+
+### R70. No trailing comma in a list of constructors
+> |  |  |   tycon [ (..) | ( cname1 , ... , cnamen )]  |   (n>=0) (5.3)
+
+**What the text says.** An import list may end in a comma; the list of a type's constructors may not, so
+`import Prelude (Maybe(Just,))` is refused. **GHC** and **nhc98** refuse it; **Hugs** accepts it. **rhc** follows 5.3
+and 9.5. Rows: `syn.r.subordinate.trailing`.
+
+### R71. The class or type declared is unqualified
+> |  |  |   class [scontext =>] tycls tyvar [where cdecls] (4.3.1)
+
+**What the text says.** A declaration names its class or type by an unqualified `tycls` or `tycon`, so `class M.C a`
+and `class Main.C a` are refused. **GHC** and **nhc98** refuse them; **Hugs** accepts a qualified name there. **rhc**
+follows 4.3.1 and 5.5.1. Rows: `cls.class.unqualified`, `mod.qual.def.type`.
+
+### R72. A subordinate name of an export
+> The constructor and field names ci in the second form are unqualified; (5.2)
+> is in scope in the module body regardless of whether it is in scope (5.2)
+
+**What the text says.** In `T(c1, ..., cn)` and `C(f1, ..., fn)` each name is unqualified, and is in scope in the
+module. **GHC**, **Hugs** and **nhc98** all accept a qualified subordinate name (`T(Main.C)`, `Eq((Prelude.==))`), and
+**Hugs** accepts one that is not in scope. **rhc** follows 5.2 (and 9.5 with the erratum of September 2004). Rows:
+`mod.exp.sub.scope`, `mod.exp.class.sub.scope`, `syn.r.export.classqvar`, `mod.exp.sub.unqualified`.
+
+### R73. A method's context does not constrain the class variable
+> the cxi may not constrain u. (4.3.1)
+
+**What the text says.** `class C a where m :: Eq a => a -> a` is refused. **GHC** and **nhc98** refuse it; **Hugs**
+accepts it. **rhc** follows 4.3.1. Rows: `cls.method.ctx.notu`.
+
+### R74. A derived instance has a simple context
+> must, like any instance declaration, have a simple context; that is, (4.5.3)
+
+**What the text says.** `data Apply a b = App (a b) deriving Show` would need `Show (a b)`, so it is refused. **GHC**
+accepts it, inferring that context; **Hugs** and **nhc98** refuse it. **rhc** follows 4.5.3. Rows:
+`cls.derive.restrictions`, `dec.ctx.derive.simple`.
+
+### R75. `hiding (C)` hides every C
+> any constructor, class, or type named C is excluded.  In contrast, (5.3.1)
+
+**What the text says.** `import M hiding (C)` hides the type, the class and the constructor called `C`. **GHC** and
+**nhc98** hide the constructor; **Hugs** does not. **rhc** follows 5.3.1. Rows: `mod.imp.hiding.c.all`.
+
+### R76. Only what is in scope, and exported
+> binding for a class method that is not in scope, but the name under (4.3.2)
+> entities exported by the imported module. (5.3.1)
+
+**What the text says.** An instance cannot bind a method that is not in scope, and an import list names only what the
+module exports, subordinate names too. **GHC** refuses both; **Hugs** accepts both. **rhc** follows 4.3.2 and 5.3.1.
+Rows: `cls.inst.body.notinscope`, `mod.imp.list.sub.exported`.
+
+### R77. `F.--` by maximal munch
+> varsym  |   ->  |  ( symbol {symbol | :})<reservedop | dashes> (2.4)
+
+**What the text says.** `dashes` is two or more `-`, so `-` alone is a varsym and `F.-` a qvarsym, while `F.--` is
+none. At `F` the longest lexeme is therefore `F.-`, then `-`: `F.--1` is `F.- - 1`, which 10.6's rule on negation
+refuses. The row's first reading, `F` then the varsym `.--`, overlooks the shorter qualified operator. **GHC**, **Hugs**
+and **nhc98** all read one qualified symbol `F.--` and refuse it as out of scope. **rhc** follows 2.4; the row needs a
+refused program, and stays without one until its test is read again. Rows: `lex.qual.dashes`.
