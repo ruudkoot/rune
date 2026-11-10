@@ -93,6 +93,9 @@ struct
         handle MidText.Syntax msg => raise Error.Bug ("Mid's reader refuses what Core to Mid wrote: " ^ msg)
       val mid = MidPipeline.midStage NONE parse text
       val low = MidPipeline.lowOfMid MidPipeline.standardPasses mid
+      (* the register machine's names in a dump of its code, as rune's
+         driver sets them; the stack machine's are Code's own *)
+      val () = if !CompilerSettings.target = "registers" then Code.opcodeNames := RegCodes.names else ()
       val code = MidPipeline.targetStage low
     in Emit.writeFileAs (MidPipeline.fingerprint (), out, code); 0 end
     handle CoreToMid.Unsupported msg =>
