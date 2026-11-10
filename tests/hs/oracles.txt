@@ -408,9 +408,6 @@ ghc | hs/lang/lib.monad.class.monadplus.mzero_user::run | HOST-BUG | reject: GHC
 mhs | hs/lang/lib.monad.class.monadplus.mzero_user::run | HOST-BUG | reject: MicroHs wants an Applicative instance for a Monad, which Haskell 98 has not
 ghc | hs/lang/lib.monad.class.monadplus.mplus_error::run | HOST-BUG | reject: GHC's base wants an Applicative instance for a Monad, which Haskell 98 has not
 mhs | hs/lang/lib.monad.class.monadplus.mplus_error::run | HOST-BUG | reject: MicroHs wants an Applicative instance for a Monad, which Haskell 98 has not
-ghc | hs/lang/lib.r.array.strict.bounds_empty::run | SPEC-AMBIGUOUS | exit: R155: GHC's array is strict in its bounds with no association, as 16.1's prose; the code, which decides, is not
-hugs | hs/lang/lib.r.array.strict.bounds_empty::run | SPEC-AMBIGUOUS | exit: R155: Hugs's array is strict in its bounds with no association, as 16.1's prose; the code, which decides, is not
-nhc98 | hs/lang/lib.r.array.strict.bounds_empty::run | SPEC-AMBIGUOUS | exit: R155: nhc98's array is strict in its bounds with no association, as 16.1's prose; the code, which decides, is not
 mhs | hs/accept/lib.io.export.handle_imported::judge | HOST-BUG | reject: MicroHs's IO does not export hIsEOF, and lacks others of 21's names (HandlePosn, hGetPosn, hPrint, isEOF)
 ghc | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | reject: GHC's IOMode and SeekMode have no Bounded instance, which 21 derives
 hugs | hs/lang/lib.io.data.iomode_derived::run | HOST-BUG | diff: Hugs shows two handles of different files alike, where 21.2 says the string should identify the handle
@@ -438,3 +435,6 @@ ghc | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: GHC makes a read 
 hugs | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | diff: Hugs has no locking (21.2.3), and its hGetContents's list loses what a failed read on the semi-closed handle touched
 nhc98 | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: nhc98's IO has no hIsClosed (21.8), and no locking
 mhs | hs/lang/lib.r.io.semi.fails_semi::run | HOST-BUG | exit: MicroHs has no locking (21.2.3), and its semi-closed handle still reads
+mhs | hs/lang/lib.r.array.strict.bounds_empty_error::run | SPEC-AMBIGUOUS | exit: R155: MicroHs's array checks no bounds with no association, as 16.4's code; 16.1's prose, which D52's judges take, makes it bottom
+nhc98 | hs/lang/lib.r.io.semi.state_neither::run | HOST-BUG | exit: nhc98's IO has no hIsOpen (21.8)
+mhs | hs/lang/lib.r.io.semi.state_neither::run | SPEC-AMBIGUOUS | diff: R156: implementation-defined (D53): MicroHs takes a semi-closed handle as open

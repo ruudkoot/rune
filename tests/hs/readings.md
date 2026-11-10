@@ -357,17 +357,27 @@ function; the prose does: `lexLitChar` returns the characters that encode the ch
 `lexLitChar s` is `[(the prefix that readLitChar s reads, the rest)]`, and `[]` where `readLitChar s` is `[]`:
 `"\\NUL"` before `"1"`, `"\\SOH"` before `"H"`, nothing for `\Q`, `\o8` or `\x`. **GHC**, **Hugs** and **nhc98** all give
 `"\\NUL"` before `"1"` and nothing for `\Q`; for `\o8` GHC gives nothing and Hugs and nhc98 the code's `"\\o"`. Taken
-as the lead's ruling on R42 took 10.4's text over a code every oracle departs from; for the lead to confirm. **rhc**
+as the lead's ruling on R42 took 10.4's text over a code every oracle departs from; the lead's ruling 36 confirms it. **rhc**
 follows the prose; where the code and the prose agree, the differential holds rhc to the code. Rows:
 `lib.r.char.lexlitchar`, `lib.char.lexlitchar`.
 
-### R155. `array` with bottom bounds and no associations is not bottom
+### R155. `array` is strict in its bounds, with or without associations
 > array is strict in the bounds argument and in the indices of the association list, but nonstrict in the values. (16.1)
 > array b ivs = if and [inRange b i | (i,_) <- ivs] then MkArray b ... (16.4, Array)
 
 **What the text says.** The prose makes `array` strict in its bounds; the code reaches the bounds only through `inRange`
 over the associations, so with none it builds `MkArray b f` without looking at `b`, and `array undefined [] `seq` ()`
-is `()`. With an association to check, both give bottom. **GHC**, **Hugs** and **nhc98** give bottom for the empty
-list, as the prose; **MicroHs** gives `()`, as the code. The lead's ruling 28: the prose would win, by R42's precedent,
-only if all four oracles took it; they split, so the code decides. **rhc** follows the code: the program with an
-association exits as error, the one without prints `()`. Rows: `lib.r.array.strict.bounds`.
+is `()`. With an association to check, both give bottom. D52's judges and third, **GHC**, **Hugs** and **nhc98**, give
+bottom for the empty list, as the prose; **MicroHs**, the smoke oracle, gives `()`, as the code. By R42's precedent the
+prose decides (the lead's ruling 35, correcting 28): an overlay entry (L) makes `array` force its bounds. **rhc**
+follows the prose: both programs exit as error. Rows: `lib.r.array.strict.bounds`.
+
+### R156. A semi-closed handle is neither open nor closed
+> A handle is semi-closed after hGetContents... In this state, hdl is effectively closed, but items are read from hdl on
+> demand (21.2.2)
+> Computation hIsOpen hdl returns True if hdl is open ... hIsClosed hdl returns True if hdl is closed (21.8)
+
+**What the text says.** The text gives no predicate for the semi-closed state and does not say what `hIsOpen` and
+`hIsClosed` answer of a semi-closed handle (E9's R49). The lead's ruling 37: neither, so both are `False`, as **GHC**
+does. Implementation-defined (D53); rhc implements it with M18's IO, and the program that pins it is held until then.
+Rows: `lib.r.io.semi.state`.

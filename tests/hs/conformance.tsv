@@ -3005,7 +3005,7 @@ lib.r.array.bounds.lowhigh	16.1	The bounds are the lowest and highest indices, i
 lib.r.array.assoc	16.1	An association (i,x) defines the value at index i to be x	library	run	read back with (!)	hand	Planned		
 lib.r.array.outofbounds	16.1	The array is _|_ if any index in the list is out of bounds	library	run	`seq (array (1,2) [(3,'a')]) ()` exits as error	hand	Planned		
 lib.r.array.duplicate	16.1	If two associations have the same index, the value at that index is _|_	library	run	only that element is bottom	hand	Planned		
-lib.r.array.strict.bounds	16.1	array is strict in the bounds argument	library	run	bottom bounds with an association exit as error; `seq (array undefined []) ()` is () by the code: see readings.md	hand	Planned	R155	
+lib.r.array.strict.bounds	16.1	array is strict in the bounds argument	library	run	`seq (array undefined []) ()` exits as error, as an association with bottom bounds does: the prose decides by D52's judges: see readings.md	hand	Planned	R155	
 lib.r.array.strict.indices	16.1	array is strict in the indices of the association list	library	run	a bottom index makes the array bottom	hand	Planned		
 lib.r.array.strict.values	16.1	array is nonstrict in the values	library	run	`array (1,1) [(1,undefined)] `seq` ()` is ()	hand	Planned		
 lib.r.array.recurrence	16.1	Recurrences are possible: a = array (1,100) ((1,1) : [(i, i * a!(i-1)) | i <- [2..100]])	library	run	`a!100` at Integer	hand	Planned		
@@ -3591,7 +3591,7 @@ lib.r.io.handle.show	21.2	Handles are in Show; the string is system dependent an
 lib.r.io.handle.eq	21.2	A handle is equal under == only to itself	library	run	two handles on one file are unequal	hand	Planned		
 lib.r.io.std.open	21.2.1	stdin, stdout and stderr are allocated at initialisation and initially open	library	run	hIsOpen on each	hand	Planned		
 lib.r.io.std.channels	21.2.1	They manage the standard input, output and error channels	library	run	output on each channel captured apart	hand	Planned		
-lib.r.io.semi.state	21.2.2	hGetContents puts the handle in the semi-closed state	library	run	hIsClosed and hIsOpen: the Report gives no predicate for semi-closed: see readings.md	hand	Planned	R49	
+lib.r.io.semi.state	21.2.2	hGetContents puts the handle in the semi-closed state	library	run	hIsClosed and hIsOpen: the Report gives no predicate for semi-closed: see readings.md	hand	Planned	R49 R156	
 lib.r.io.semi.fails	21.2.2	Any operation that fails on a closed handle fails on a semi-closed one	library	run	hGetChar after hGetContents fails	hand	Planned		
 lib.r.io.semi.hclose	21.2.2	hClose is the one exception	library	run	hClose of a semi-closed handle succeeds	hand	Planned		
 lib.r.io.semi.close.hclose	21.2.2	A semi-closed handle becomes closed if hClose is applied	library	run	hIsClosed after it	hand	Planned		
