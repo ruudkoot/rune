@@ -37,13 +37,17 @@ struct
       else ()
     end
 
-  (* the program of the files, read in order *)
-  fun readCore (files : string list) : Core.program =
+  (* the program of the files, read in order, after what it reaches of rhc's
+     runtime (CoreRuntime) *)
+  fun readCore (strings, files : string list) : Core.program =
     let
       fun one file =
         CoreText.parse (readFile file)
         handle CoreText.Error (line, msg) => (eprint (file ^ ":" ^ Int.toString line ^ ": error: " ^ msg ^ "\n"); raise Failed)
-      val read = fn () => List.concat (List.map one files)
+      fun runtime p =
+        CoreRuntime.link strings p
+        handle CoreText.Error (line, msg) => raise Error.Bug ("rhc's runtime does not read, at line " ^ Int.toString line ^ ": " ^ msg)
+      val read = fn () => runtime (List.concat (List.map one files))
     in
       Pass.stage {name = "read", showIn = NONE, show = CoreText.show,
                   check = Pass.checkAt ("read", 3) roundTrip, size = List.length} read ()
@@ -117,7 +121,7 @@ struct
             else
               let
                 val () = Pass.startup ()
-                val p = readCore (#readCore opts)
+                val p = readCore (#strings opts, #readCore opts)
                 val () = lint (#readCore opts, p)
                 val () =
                   if #typecheckOnly opts orelse isSome (#output opts)

@@ -1,0 +1,68 @@
+; run: --read-core tests/hs/core/lib/base.core
+; files: own
+; rhc's runtime (CoreRuntime) on IO, an action a function of the state
+; token (D25's B): writeFile, appendFile and readFile, whose list is read a
+; chunk at a time as it is used, through interleave, D25's one
+; interleaving primitive; readFile of a file that is not there, an IOError
+; that catch takes, its message the path and the system's reason; catch
+; taking an IOError and nothing else, so that error passes through it to
+; the harness's try (R36); bind and return; seq; and interleave's action
+; run when its value is first forced and not again. It writes files where
+; it runs, a directory of its own.
+(val putS (-> ([] Char) World (utuple World `()`))
+  (\ ((s ([] Char)) (w World))
+    (case s cs
+      (([]) (let (u `()` (con `()`)) (utuple w u)))
+      ((: c rest) (case (primPutChar c w) o ((utuple w1 _) (putS rest w1)))))))
+
+(val str (-> !Str ([] Char)) (\ ((s !Str)) (primUnpackString s)))
+
+; the handler of the tests: the message of what it is given, on a line
+(val said (-> Exn World (utuple World `()`))
+  (\ ((e Exn) (w World))
+    (case e ev (_ (case (prim exn_message ev) m (_ (case (putStrLn m w) o ((utuple w1 _) (let (u `()` (con `()`)) (utuple w1 u))))))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (path ([] Char) (str "rhc-test-file.tmp"))
+    (let (text ([] Char) (str "line one\nline \206\187\n"))
+    (case (primWriteFile path text w) o1
+      ((utuple w1 _)
+        (let (more ([] Char) (str "appended\n"))
+        (case (primAppendFile path more w1) o2
+          ((utuple w2 _)
+            (case (primReadFile path w2) o3
+              ((utuple w3 back)
+                (case (putS back w3) o4
+                  ((utuple w4 _)
+                    (let (missing ([] Char) (str "/nonexistent/rhc-test"))
+                    (let (rd (-> World (utuple World `()`))
+                           (\ ((v World)) (case (primReadFile missing v) r ((utuple v1 s) (putS s v1)))))
+                    (case (primCatch @`()` rd said w4) o5
+                      ((utuple w5 _)
+                        (let (raiseIt (-> World (utuple World `()`))
+                               (\ ((v World)) (let (msg ([] Char) (str "a user's IOError")) (case (primUserError msg) e (_ (primIOError @`()` e v))))))
+                        (case (primCatch @`()` raiseIt said w5) o6
+                          ((utuple w6 _)
+                            (let (side (-> World (utuple World Int))
+                                   (\ ((v World)) (case (putStrLn "the deferred action runs" v) o ((utuple v1 _) (utuple v1 42)))))
+                            (case (prim interleave @Int side w6) o7
+                              ((utuple w7 x)
+                                (case (putStrLn "before its value is forced" w7) o8
+                                  ((utuple w8 _)
+                                    (case (printInt x w8) o9
+                                      ((utuple w9 _)
+                                        (case (printInt x w9) o10
+                                          ((utuple w10 _)
+                                            (let (k (-> Int World (utuple World Int)) (\ ((n Int) (v World)) (case n m (_ (case (prim int_mul m 2) d (_ (primReturnIO @Int d v)))))))
+                                            (let (m (-> World (utuple World Int)) (\ ((v World)) (primReturnIO @Int 5 v)))
+                                            (case (primBindIO @Int @Int m k w10) o11
+                                              ((utuple w11 r)
+                                                (let (s Int (primSeq @Int @Int x r))
+                                                (case (printInt s w11) o12
+                                                  ((utuple w12 _)
+                                                    (let (boom ([] Char) (str "an error, which catch does not take"))
+                                                    (let (err (-> World (utuple World `()`)) (\ ((v World)) (case (primError @`()` boom) u (_ (utuple v u)))))
+                                                    (let (t (-> World (utuple World Unit))
+                                                          (\ ((v World)) (case (primCatch @`()` err said v) o ((utuple v1 _) (putStrLn "wrong" v1)))))
+                                                      (try t w12))))))))))))))))))))))))))))))))))))))))
