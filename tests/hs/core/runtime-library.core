@@ -5,7 +5,8 @@
 ; IOError's details (exn_io_full and its readers), unsafe_perform_io,
 ; primPackString, the IO-shaped ref_set; the IO family of CorePrimIo:
 ; h_tell, h_seek and h_errno of a file (a seek to a position below 0 failing
-; with -1, on the interpreter as on the VM), os_file_size, sys_errno and the
+; with -1 and EINVAL, on the interpreter as on the VM, whatever failed
+; before), os_file_size, sys_errno and the
 ; name and text of an error's number, primReady on standard input
 ; (runtime-library.stdin); and the kinds of the IOErrors the runtime raises,
 ; a file not there and a directory written. Each line is a label and a
@@ -95,8 +96,12 @@
         ((utuple v1 h)
           (case (prim h_seek h -1 v1) c
             ((utuple v2 z)
-              (case (prim h_close h v2) v3
-                (_ (showInt z)))))))
+              (case (prim h_errno v2) d
+                ((utuple v3 e)
+                  (case (prim h_close h v3) v4
+                    (_ (case (showInt z) zs
+                         (_ (case (prim sys_error_name e) n
+                              (_ (case (prim str_concat zs " ") a (_ (prim str_concat a n)))))))))))))))
       s
       (_ (line "h_seek -1" s v)))))
 (val main (-> World (utuple World Unit))

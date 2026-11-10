@@ -3,7 +3,9 @@
    is there and made where it is not, through one handle -- a read after a
    write and a write after a read, each turned by the runtime (C's streams
    want a seek between the two), a seek, the position -- on every VM. The
-   files are made in the run's directory (RUNE_TEST_RUN), or here. *)
+   files are made in the run's directory (RUNE_TEST_RUN), or here. A seek
+   below 0 fails with EINVAL, not with what a call before it left (the
+   open of a directory, EISDIR). *)
 (datatype option ('a) (0 "NONE") (1 "SOME" : 'a))
 (funs
   (fn gsay ((vsL : string) (vsS : string)) : unit "say"
@@ -45,6 +47,14 @@
   (let (vK2 : int) (prim file_seek vH 6 : (int * int) -> int)
   (let (vS4 : string) (prim file_read_vec vH 100 : (int * int) -> string)
   (let (vU5 : unit) (app gsay "from 6: [" vS4)
+  (let (vHd : int) (app gopen vD 1)
+  (let (vK4 : int) (prim file_seek vH ~1 : (int * int) -> int)
+  (let (vE : int) (prim file_errno () : unit -> int)
+  (let (vEn : string) (prim sys_error_name vE : int -> string)
+  (let (vK4S : string) (prim int_to_string vK4 : int -> string)
+  (let (vK4L : string) (prim string_concat vK4S " " : (string * string) -> string)
+  (let (vK4E : string) (prim string_concat vK4L vEn : (string * string) -> string)
+  (let (vU9 : unit) (app gsay "a seek below 0, after an open that failed: [" vK4E)
   (let (vC2 : unit) (prim file_close vH : int -> unit)
   (let (vH2 : int) (app gopen vP 3)
   (let (vS5 : string) (prim file_read_vec vH2 100 : (int * int) -> string)
@@ -60,4 +70,4 @@
   (let (vC4 : unit) (prim file_close vH3 : int -> unit)
   (let (vR1 : int) (prim os_remove vP : string -> int)
   (let (vR2 : int) (prim os_remove vQ : string -> int)
-  (return ()))))))))))))))))))))))))))))))))))))))))
+  (return ()))))))))))))))))))))))))))))))))))))))))))))))))

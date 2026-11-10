@@ -2097,7 +2097,9 @@ static int p_file_seek(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "file_seek");
     int ok = f && val_imm(ARG(0)) >= 0 && sys_fseek(f, val_imm(ARG(0)), SEEK_SET) == 0;
     if (ok) file_turn(vm, ARG(1), 0);
-    if (!ok) vm->io_errno = f ? errno : EBADF;
+    /* below 0 no seek is tried: EINVAL, which h_errno promises, not what
+       the call before left in errno */
+    if (!ok) vm->io_errno = !f ? EBADF : val_imm(ARG(0)) < 0 ? EINVAL : errno;
     return ret(vm, 2, mk_int(ok ? 0 : -1));
 }
 
