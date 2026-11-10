@@ -140,6 +140,52 @@ struct
   (* what the passes are told of the target --target names *)
   fun targetInfo () : Target.t = if !CompilerSettings.target = "registers" then Regs.info else Stack.info
 
+  (* An optional pass on Mid (docs/ir.md): its name for the options, the
+     level it runs from, what else must hold where it runs, and the pass.
+     Each is linted at level 2 and read back at level 3 as a stage of Mid. *)
+  type midPass = {name : string, from : int, gate : unit -> bool, run : Mid.program -> Mid.program}
+  fun pass (name : string, run : Mid.program -> Mid.program) : midPass =
+    {name = name, from = 1, gate = fn () => true, run = run}
+  (* the program's top level is all there is (Pass.whole): Shake goes by it *)
+  fun wholeOnly (name : string, run : Mid.program -> Mid.program) : midPass =
+    {name = name, from = 1, gate = fn () => !Pass.whole, run = run}
+
+  (* What a compile runs on Mid, in order, each where it is enabled
+     (Pass.enabled, --passes). A client changes this list before it
+     compiles, with the functions below; nothing else names a pass.
+     Expand gives the copies of applications back before anything else is
+     done to them; in a build in units, of the unit's own functors and those
+     marked to be inlined. Shake runs again for what the inliner left of the
+     functions it put in place. *)
+  val standardPasses : midPass list =
+    [pass ("expand", Expand.program),
+     wholeOnly ("shake", Shake.program),
+     pass ("lift", fn m => Lift.program (targetInfo ()) m),
+     pass ("workers", fn m => Workers.program (targetInfo ()) m),
+     pass ("simplify", Simplify.program),
+     pass ("refs", Refs.program),
+     {name = "shake", from = 1, run = Shake.program,
+      gate = fn () => !Pass.whole andalso Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1)}]
+  val midPasses : midPass list ref = ref standardPasses
+  val () = CompilerState.cellRoot ("Pipeline.midPasses", midPasses)
+  fun passNames () : string list = List.map #name (!midPasses)
+  (* every pass of that name goes; the others keep their order *)
+  fun removePass (name : string) : unit = midPasses := List.filter (fn p => #name p <> name) (!midPasses)
+  (* p, before or after the first pass of that name *)
+  fun insertBefore (name : string, p : midPass) : unit =
+    let
+      fun go [] = Error.bug ("no pass " ^ name)
+        | go (q :: rest) = if #name q = name then p :: q :: rest else q :: go rest
+    in midPasses := go (!midPasses) end
+  fun insertAfter (name : string, p : midPass) : unit =
+    let
+      fun go [] = Error.bug ("no pass " ^ name)
+        | go (q :: rest) = if #name q = name then q :: p :: rest else q :: go rest
+    in midPasses := go (!midPasses) end
+  (* p in place of every pass of that name *)
+  fun replacePass (name : string, p : midPass) : unit =
+    midPasses := List.map (fn q => if #name q = name then p else q) (!midPasses)
+
   (* Mid to Low: the optional passes, and Lower. Shake runs on a whole
      program only (Pass.whole), which is renumbered canonically first, as
      one made of its units' Mid is (MidCanon) *)
@@ -156,28 +202,16 @@ struct
          whether one ran, so that the boundary before lower is linted at
          level 1 *)
       val passed = ref false
-      fun optional (name, f) m =
-        if Pass.enabled (name, 1) andalso (name <> "shake" orelse !Pass.whole) then
+      fun optional ({name, from, gate, run} : midPass, m) =
+        if Pass.enabled (name, from) andalso gate () then
           (passed := true;
            Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show,
                        check = fn p => (Pass.lintAt name MidLint.check p; roundTrip name p), size = Mid.size}
-                      (fn m => Fault.mid (name, f m)) m)
+                      (fn m => Fault.mid (name, run m)) m)
         else m
       val () = functorBodies ()
-      (* the copies of applications given back (Expand), before anything
-         else is done to them; in a build in units, of the unit's own
-         functors and those marked to be inlined *)
       val () = Expand.knownFunction := (fn g => IntMap.member (!Lower.knownBefore, g))
-      val mid = optional ("expand", Expand.program) mid
-      val mid = optional ("shake", Shake.program) mid
-      val mid = optional ("lift", Lift.program (targetInfo ())) mid
-      val mid = optional ("workers", Workers.program (targetInfo ())) mid
-      val mid = optional ("simplify", Simplify.program) mid
-      val mid = optional ("refs", Refs.program) mid
-      (* what the inliner left of the functions it put in place goes *)
-      val mid =
-        if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid
-        else mid
+      val mid = List.foldl optional mid (!midPasses)
       (* what Lower is given, at the boundary, where no pass's lint saw it
          (level 1 alone: every pass's lint at 2 did) *)
       val () = if !passed andalso Pass.lintLevel () = 1 then Pass.checkAt ("prelower", 1) MidLint.check mid else ()
