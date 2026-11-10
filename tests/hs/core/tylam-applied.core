@@ -1,0 +1,22 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A type lambda applied where it is written, as M15's desugaring wraps a
+; primitive (D's Core, 2026-11-10):
+;   ((\ (@a (x a) (v World)) (prim ref_new @a x v)) @Int 41 w)
+; Core to Mid binds it to a name, as a let binds it, and applies the name:
+; a function of two types at both, at its types and then its values, and a
+; type lambda of no value binder (a polymorphic suspension).
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case ((\ (@a (x a) (v World)) (prim ref_new @a x v)) @Int 41 w) n
+      ((utuple w1 c)
+        (case ((\ (@a (r !(Ref a)) (v World)) (prim ref_get @a r v)) @Int c w1) g
+          ((utuple w2 x)
+            (case (printInt x w2) o1
+              ((utuple w3 _)
+                (case ((\ (@a @b (p a) (q b)) q) @Int @Str 1 "second") s
+                  (_ (case (putStrLn s w3) o2
+                       ((utuple w4 _)
+                         (let (e (List Int) ((\ (@a) (con Nil @a)) @Int))
+                         (let (l (List Int) (con Cons @Int 7 e))
+                         (let (k Int (length @Int l))
+                         (printInt k w4))))))))))))))))

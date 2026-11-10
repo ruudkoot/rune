@@ -806,6 +806,14 @@ struct
                 else if not (null tys) then unlowered ("the type arguments of " ^ x ^ ", which Mid binds at no type")
                 else atomValue (env, Var x, fn (fv, fty) => applyArgs (fv, fty, vals, c))
               end
+          | Lam (TyBinder _ :: _, _) =>
+              (* a type lambda applied where it is written, as M15 wraps a
+                 primitive: bound to a name, as a let binds it, and that
+                 name applied *)
+              if null tys then raise Fail "CoreToMid: a type lambda applied to no type"
+              else
+                let val x = "lambda " ^ freshVar ()
+                in polyBind (env, x, typeOf env f, f, fn env' => app (env', Atom (Var x), args, c)) end
           | _ =>
               if not (null tys) then unlowered "type arguments to an expression"
               else exp (env, f, {dup = false, want = stripEval (typeOf env f),
