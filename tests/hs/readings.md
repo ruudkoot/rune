@@ -327,3 +327,47 @@ pair among the library's prose against its code. The code is the text, so `fmap`
 **nhc98** and **MicroHs** refuse the first form, as the code does; **GHC**'s instance has no context and takes it.
 **rhc** follows the code; the accepted program uses the form with the context, which both readings take.
 Rows: `lib.r.array.functor.context`.
+
+### R153. `Char`'s classes beyond Latin-1: the table and its rule, on characters that have kept their category
+> For the purposes of Haskell, any alphabetic character which is not lower case is treated as upper case (19)
+> isAlpha c = isUpper c || isLower c (19.1, Char)
+
+**What the text says.** The primitives `isPrint`, `isUpper`, `isLower`, `isAlphaNum`, `toUpper` and `toLower` take
+their meaning from 19's table: lower-case alphabetic; other alphabetic, upper case, title case and letters of no case
+alike, all `isUpper`; digits; other printable; non-printing. `isAlpha` is `isUpper || isLower` by the code, at every
+character, and `isSpace` is true of the seven Latin-1 white characters only. Which version of Unicode is E9's R38, the
+owner's call (2.1 opens the text to any version after 3.0), as is whether `Char` holds the surrogates: the programs use
+only characters whose category and case mapping have stood since Unicode 3.0 (not U+00AA, U+00BA, U+00AD or U+200B,
+which have moved), so that they do not depend on it. **GHC**, **Hugs** and **MicroHs** take a letter of no case as
+neither upper nor lower case, so `isAlpha` is not `isUpper || isLower` (R38 found no oracle that follows the rule);
+GHC and MicroHs take U+2003 and U+3000 as spaces; **nhc98**'s `Char` stops at `'\255'`. **rhc** follows the text.
+Implementation-defined (D53): the Unicode version, on which no program depends. Rows: `lib.r.char.table.other.upper`,
+`lib.r.char.isalpha`, `lib.r.char.isspace`, `lib.r.char.toupper.unicode`.
+
+### R154. `lexLitChar` returns exactly the characters `readLitChar` reads
+> The function lexLitChar does the reverse, returning the sequence of characters that encode the character. The
+> function readLitChar does the same, but in addition converts the to the character that it encodes. (19)
+> -- Very crude approximation to \XYZ. (19.1, Char, lexLitChar)
+
+**What the text says.** The code's clause for a named escape, `span isCharName`, takes every upper-case letter and
+digit that follows: `lexLitChar "\\NUL1"` is `[("\\NUL1","")]`, `lexLitChar "\\Q"` is `[("\\Q","")]` though `\Q`
+encodes nothing, and its numeric clauses take `\o` or `\x` with no digit (`lexLitChar "\\o8"` is `[("\\o","8")]`),
+which `readLitChar` refuses. The code calls its own clause a crude approximation, so it does not claim to define the
+function; the prose does: `lexLitChar` returns the characters that encode the character, those `readLitChar` reads. So
+`lexLitChar s` is `[(the prefix that readLitChar s reads, the rest)]`, and `[]` where `readLitChar s` is `[]`:
+`"\\NUL"` before `"1"`, `"\\SOH"` before `"H"`, nothing for `\Q`, `\o8` or `\x`. **GHC**, **Hugs** and **nhc98** all give
+`"\\NUL"` before `"1"` and nothing for `\Q`; for `\o8` GHC gives nothing and Hugs and nhc98 the code's `"\\o"`. Taken
+as the lead's ruling on R42 took 10.4's text over a code every oracle departs from; for the lead to confirm. **rhc**
+follows the prose; where the code and the prose agree, the differential holds rhc to the code. Rows:
+`lib.r.char.lexlitchar`, `lib.char.lexlitchar`.
+
+### R155. `array` with bottom bounds and no associations is not bottom
+> array is strict in the bounds argument and in the indices of the association list, but nonstrict in the values. (16.1)
+> array b ivs = if and [inRange b i | (i,_) <- ivs] then MkArray b ... (16.4, Array)
+
+**What the text says.** The prose makes `array` strict in its bounds; the code reaches the bounds only through `inRange`
+over the associations, so with none it builds `MkArray b f` without looking at `b`, and `array undefined [] `seq` ()`
+is `()`. With an association to check, both give bottom. **GHC**, **Hugs** and **nhc98** give bottom for the empty
+list, as the prose; **MicroHs** gives `()`, as the code. The lead's ruling 28: the prose would win, by R42's precedent,
+only if all four oracles took it; they split, so the code decides. **rhc** follows the code: the program with an
+association exits as error, the one without prints `()`. Rows: `lib.r.array.strict.bounds`.

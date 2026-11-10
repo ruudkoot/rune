@@ -1,0 +1,3 @@
+(Just 2,Nothing,Just 2,Nothing)
+(Just 'x',Nothing,Just True,Just [1,2],Nothing)
+(Just 5,Just [1,2,3],Nothing,6)

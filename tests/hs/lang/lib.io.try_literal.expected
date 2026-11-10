@@ -1,0 +1,31 @@
+(True,Right 'x')
+(True,Left ("boom",True))
+(True,True)
+acquire
+use
+release 5
+10
+acquire
+use
+release 5
+10
+acquire
+release
+acquire
+release
+(Left ("inside",True),Left ("inside",True))
+before
+middle
+after
+'z'
+before
+middle
+after
+'z'
+before
+after
+before
+after
+(Left ("mid",True),Left ("mid",True))
+(False,False)
+(True,True)

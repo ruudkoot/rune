@@ -3005,7 +3005,7 @@ lib.r.array.bounds.lowhigh	16.1	The bounds are the lowest and highest indices, i
 lib.r.array.assoc	16.1	An association (i,x) defines the value at index i to be x	library	run	read back with (!)	hand	Planned		
 lib.r.array.outofbounds	16.1	The array is _|_ if any index in the list is out of bounds	library	run	`seq (array (1,2) [(3,'a')]) ()` exits as error	hand	Planned		
 lib.r.array.duplicate	16.1	If two associations have the same index, the value at that index is _|_	library	run	only that element is bottom	hand	Planned		
-lib.r.array.strict.bounds	16.1	array is strict in the bounds argument	library	run	`seq (array undefined []) ()` exits as error	hand	Planned		
+lib.r.array.strict.bounds	16.1	array is strict in the bounds argument	library	run	bottom bounds with an association exit as error; `seq (array undefined []) ()` is () by the code: see readings.md	hand	Planned	R155	
 lib.r.array.strict.indices	16.1	array is strict in the indices of the association list	library	run	a bottom index makes the array bottom	hand	Planned		
 lib.r.array.strict.values	16.1	array is nonstrict in the values	library	run	`array (1,1) [(1,undefined)] `seq` ()` is ()	hand	Planned		
 lib.r.array.recurrence	16.1	Recurrences are possible: a = array (1,100) ((1,1) : [(i, i * a!(i-1)) | i <- [2..100]])	library	run	`a!100` at Integer	hand	Planned		
@@ -3305,7 +3305,7 @@ lib.r.char.table.lower.lower	19	Lower case alphabetic: isLower True, isUpper Fal
 lib.r.char.table.other.print	19	Other alphabetic: isPrint True	library	run	'A', a title-case letter, a letter with no case	hand	Planned		
 lib.r.char.table.other.alnum	19	Other alphabetic: isAlphaNum True	library	run	as above	hand	Planned		
 lib.r.char.table.other.alpha	19	Other alphabetic: isAlpha True	library	run	as above	hand	Planned		
-lib.r.char.table.other.upper	19	Other alphabetic: isUpper True, isLower False: any alphabetic character not lower case is upper case	library	run	a title-case letter and a CJK ideograph: see readings.md	hand	Planned	R5 R38	
+lib.r.char.table.other.upper	19	Other alphabetic: isUpper True, isLower False: any alphabetic character not lower case is upper case	library	run	a title-case letter and a CJK ideograph: see readings.md	hand	Planned	R5 R38 R153	
 lib.r.char.table.digit.print	19	Digits: isPrint True	library	run	'7' and a non-ASCII digit	hand	Planned		
 lib.r.char.table.digit.alnum	19	Digits: isAlphaNum True, isAlpha False	library	run	as above	hand	Planned		
 lib.r.char.table.printable	19	Other printable: isPrint True, isAlphaNum, isAlpha, isUpper, isLower False	library	run	'+', a non-ASCII symbol	hand	Planned		
@@ -3319,19 +3319,19 @@ lib.r.char.digittoint	19	digitToInt converts a hex digit of either case	library	
 lib.r.char.digittoint.fail	19	digitToInt fails unless its argument satisfies isHexDigit	library	run	exits as error	hand	Planned		
 lib.r.char.inttodigit	19	intToDigit generates lower-case hexadecimal digits	library	run	0 to 15	hand	Planned		
 lib.r.char.inttodigit.fail	19	intToDigit fails unless its argument is in 0..15	library	run	exits as error at -1 and 16	hand	Planned		
-lib.r.char.isspace	19	isSpace recognizes only white characters in the Latin-1 range	library	run	" \t\n\r\f\v\xA0" True, a Unicode space False	hand	Planned		
+lib.r.char.isspace	19	isSpace recognizes only white characters in the Latin-1 range	library	run	" \t\n\r\f\v\xA0" True, a Unicode space False	hand	Planned	R153	
 lib.r.char.showlitchar	19	showLitChar converts a character to a string using only printable characters and source escapes	library	run	every code point below 300 and a high one	hand	Planned		
 lib.r.char.showlitchar.example	19	Example: showLitChar '\n' s = "\\n" ++ s	library	run	exact	hand	Planned		
-lib.r.char.lexlitchar	19	lexLitChar returns the sequence of characters that encode the character	library	run	exact	hand	Planned		
+lib.r.char.lexlitchar	19	lexLitChar returns the sequence of characters that encode the character	library	run	exact	hand	Planned	R154	
 lib.r.char.lexlitchar.example	19	Example: lexLitChar "\\nHello" = [("\\n", "Hello")]	library	run	exact	hand	Planned		
 lib.r.char.readlitchar	19	readLitChar does the same and also converts the string to the character it encodes	library	run	exact; the word erratum March 2003 restores	hand	Planned		
 lib.r.char.readlitchar.example	19	Example: readLitChar "\\nHello" = [('\n', "Hello")]	library	run	exact	hand	Planned		
 lib.r.char.toupper	19	toUpper converts a letter to the corresponding upper case, leaving other characters	library	run	ASCII, a non-ASCII letter, a digit	hand	Planned		
-lib.r.char.toupper.unicode	19	Any Unicode letter with an upper-case equivalent is transformed	library	run	a Greek letter	hand	Planned		
+lib.r.char.toupper.unicode	19	Any Unicode letter with an upper-case equivalent is transformed	library	run	a Greek letter	hand	Planned	R153	
 lib.r.char.tolower	19	toLower converts a letter to the corresponding lower case, leaving other characters	library	run	as for toUpper	hand	Planned		
 lib.r.char.ord	19	ord is fromEnum restricted to Char	library	run	agree on a sample	hand	Planned		
 lib.r.char.chr	19	chr is toEnum restricted to Char, an error out of range	library	run	agree on a sample; `chr (-1)` exits as error	hand	Planned		
-lib.r.char.isalpha	19.1	isAlpha c = isUpper c || isLower c	library	run	property over every code point	hand	Planned		
+lib.r.char.isalpha	19.1	isAlpha c = isUpper c || isLower c	library	run	property over every code point	hand	Planned	R153	
 lib.r.char.protectesc	19.1	showLitChar protects a numeric escape before a digit and \SO before H with \&	library	run	`show "\1234\&5"`, `show "\SO\&H"` round-trip	hand	Planned		
 lib.r.char.iscontrol	19.1	isControl c = c < ' ' || c >= '\DEL' && c <= '\x9f'	library	run	every code point below 256	hand	Planned		
 lib.r.char.isascii	19.1	isAscii and isLatin1 are the ranges below 0x80 and up to 0xFF	library	run	boundary values	hand	Planned		
@@ -3359,7 +3359,7 @@ lib.char.match	19.1	match has its Report type and its Report definition's meanin
 lib.char.showlitchar	19.1	showLitChar has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
 lib.char.protectesc.def	19.1	protectEsc (no signature in the Report) has its Report definition's meaning	library	run	differential against the literal definition	generated	Planned		
 lib.char.asciitab.def	19.1	asciiTab (no signature in the Report) has its Report definition's meaning	library	run	differential against the literal definition	generated	Planned		
-lib.char.lexlitchar	19.1	lexLitChar has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned		
+lib.char.lexlitchar	19.1	lexLitChar has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Planned	R154	
 lib.char.export.isascii	19.1	module Char exports isAscii	module	accept	import Char (isAscii) compiles and the name is usable	generated	Planned		
 lib.char.export.islatin1	19.1	module Char exports isLatin1	module	accept	import Char (isLatin1) compiles and the name is usable	generated	Planned		
 lib.char.export.iscontrol	19.1	module Char exports isControl	module	accept	import Char (isControl) compiles and the name is usable	generated	Planned		
