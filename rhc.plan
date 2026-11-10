@@ -30,23 +30,31 @@ library language/haskell lib/language/haskell
   export signature HS_AST
   export signature HS_CHAR
   export signature HS_DUMP
+  export signature HS_FIXITY
   export signature HS_LAYOUT
   export signature HS_LEXER
   export signature HS_LITERATE
+  export signature HS_MODULES
   export signature HS_PARSER
   export signature HS_PRINT
+  export signature HS_RENAME
   export signature HS_SOURCE
+  export signature HS_STRING_MAP
   export signature HS_TOKEN
   export structure Core
   export structure HsAst
   export structure HsChar
   export structure HsDump
+  export structure HsFixity
   export structure HsLayout
   export structure HsLexer
   export structure HsLiterate
+  export structure HsModules
   export structure HsParser
   export structure HsPrint
+  export structure HsRename
   export structure HsSource
+  export structure HsStringMap
   export structure HsToken
   friend ../../../rhc.build
   use lib/language/haskell/syntax.build
@@ -70,6 +78,16 @@ library language/haskell lib/language/haskell
     unit language/haskell:print.sml lib/language/haskell/print.sml ascii demand
     unit language/haskell:dump_sig.sml lib/language/haskell/dump_sig.sml ascii demand
     unit language/haskell:dump.sml lib/language/haskell/dump.sml ascii demand
+  end
+  use lib/language/haskell/names.build
+    unit language/haskell:strmap_sig.sml lib/language/haskell/strmap_sig.sml ascii demand
+    unit language/haskell:strmap.sml lib/language/haskell/strmap.sml ascii demand
+    unit language/haskell:modules_sig.sml lib/language/haskell/modules_sig.sml ascii demand
+    unit language/haskell:modules.sml lib/language/haskell/modules.sml ascii demand
+    unit language/haskell:fixity_sig.sml lib/language/haskell/fixity_sig.sml ascii demand
+    unit language/haskell:fixity.sml lib/language/haskell/fixity.sml ascii demand
+    unit language/haskell:rename_sig.sml lib/language/haskell/rename_sig.sml ascii demand
+    unit language/haskell:rename.sml lib/language/haskell/rename.sml ascii demand
   end
   use lib/language/haskell/core.build
     unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
@@ -145,17 +163,21 @@ program
     unit compiler:driver/midpipeline.sml lib/compiler/driver/midpipeline.sml ascii
   end
   unit src/rhc/options.sml src/rhc/options.sml ascii
+  unit src/rhc/library.sml src/rhc/library.sml ascii
+  unit src/rhc/graph.sml src/rhc/graph.sml ascii
+  unit src/rhc/names.sml src/rhc/names.sml ascii
   unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
   unit src/rhc/main.sml src/rhc/main.sml ascii
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build a1df80b66039bc3637a73b823db2b7b52dd971bf05c7a7acf99eaa9c2c7607ed
+  input rhc.build 0d8a9f312ff2e94ffe23fbaac815e2696390e706ab18fba65f986ceb4ec0eeaf
   input lib/compiler/mid.build bd3c073a1e61fea8f906d81aea71b3ee2d9bd69a6c89461cc29543aa571b2d2d
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
-  input lib/language/haskell/library.build 74faf82a11f11c8970b8921d15978c7b374275f1c3dce68dba320ac13987ed08
+  input lib/language/haskell/library.build 41f4e894aa394b8994c916e7a3c77e7424537822a17b520d1527480984c7b959
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
+  input lib/language/haskell/names.build 199feb539750274e742932cc91c94e71e4ae5dc68c4f140a678dee96fd373084
   input lib/language/haskell/core.build 3455d71efcb4494bdd21f81dc8c29d79b640ddb223231ac3cbe92c73b4de2b67
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

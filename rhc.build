@@ -12,6 +12,9 @@ src/rhc/config.sml
 use lib/compiler/mid.build
 files
   src/rhc/options.sml
+  src/rhc/library.sml
+  src/rhc/graph.sml
+  src/rhc/names.sml
   src/rhc/syntax.sml
   src/rhc/main.sml
 end

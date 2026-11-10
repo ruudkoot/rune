@@ -7,7 +7,16 @@ struct
 
   fun version () = print ("rhc " ^ Config.version ^ " (identity " ^ Config.identity ^ ")\n")
 
+  (* --share DIR, where rhc's library is, which the wrapper bin/rhc gives *)
+  fun share args =
+    case args of
+      "--share" :: d :: rest => (RhcLibrary.share := SOME d; share rest)
+    | ["--share"] => raise RhcOptions.Usage "--share takes a directory"
+    | a :: rest => a :: share rest
+    | [] => []
+
   fun run (args : string list) : OS.Process.status =
+    let val args = share args in
     case RhcSyntax.command args of
       SOME syntax => syntax ()
     | NONE =>
@@ -17,6 +26,7 @@ struct
       else if #version opts then (version (); OS.Process.success)
       else if null (#readCore opts) then raise RhcOptions.Usage "nothing to do: give --read-core FILE"
       else raise RhcOptions.Usage "--read-core: Core's reader is not built yet"
+    end
     end
 
   fun main (_ : string, args : string list) : OS.Process.status =
