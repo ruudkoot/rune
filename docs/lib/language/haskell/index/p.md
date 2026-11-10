@@ -1,6 +1,6 @@
 # Index: P
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) **p** [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) **p** [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `P` (con): [HS_AST](../sig/HS_AST.md#con-p)
 - `PA` (con): [HS_AST](../sig/HS_AST.md#con-pa)
@@ -15,6 +15,8 @@
 - `patitem` (type): [HS_AST](../sig/HS_AST.md#type-patitem)
 - `PCon` (con): [HS_AST](../sig/HS_AST.md#con-pcon)
 - `peek` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-peek)
+- `PerGroup` (con): [HS_INFER](../sig/HS_INFER.md#con-pergroup)
+- `PerModule` (con): [HS_INFER](../sig/HS_INFER.md#con-permodule)
 - `PJux` (con): [HS_AST](../sig/HS_AST.md#con-pjux)
 - `Plain` (con): [HS_AST](../sig/HS_AST.md#con-plain)
 - `plain` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-plain)
@@ -28,6 +30,7 @@
 - `PParen` (con): [HS_AST](../sig/HS_AST.md#con-pparen)
 - `Pragma` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-pragma)
 - `PRec` (con): [HS_AST](../sig/HS_AST.md#con-prec)
+- `pred` (type): [HS_TYPES](../sig/HS_TYPES.md#type-pred)
 - `Prim` (con): [CORE](../sig/CORE.md#con-prim)
 - `prim` (type): [CORE_PRIM](../sig/CORE_PRIM.md#type-prim)
 - `prims` (val): [CORE_PRIM](../sig/CORE_PRIM.md#val-prims)

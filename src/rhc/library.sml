@@ -33,6 +33,12 @@
      names of the primitives the library uses, with primElided:
      ov.prelude.imports, ov.preludeio.import, ov.preludeio.prims,
      ov.prelude.error, ov.char.prims.
+   - I8. The tuples' instances at every size to 15 that the code gives
+     for pairs or triples and says are "similar" or "as derived" for the
+     rest, as instances with no body after the module's text (so its
+     lines keep their numbers): ov.tuples.fifteen, ov.ix.derived.
+   - I9. Every primitive has the type `forall a. a` (E16 typed the
+     library so): the overlay's entries of I4, I5 and I7, which type them.
 
    A program's own module of any of these names is the program's: a
    module of the library has the identity `haskell98:` and its name. *)
@@ -168,9 +174,30 @@ struct
               | NONE => getOpt (elidedValue line, line)
     end
 
-  (* `normalise bytes` is a module of the library with its illustrations
-     read as code, line for line *)
-  fun normalise bytes = String.concatWith "\n" (List.map normaliseLine (String.fields (fn c => c = #"\n") bytes))
+  (* I8: the tuples' instances the code gives for pairs or triples, at
+     every size to 15, as instances with no body, after the module's text *)
+  fun tupleInstances m =
+    let
+      fun vars n = List.tabulate (n, fn i => "a" ^ Int.toString (i + 1))
+      fun inst (cls, n) =
+        "instance (" ^ String.concatWith ", " (List.map (fn v => cls ^ " " ^ v) (vars n)) ^ ") => " ^ cls ^ " (" ^
+        String.concatWith ", " (vars n) ^ ")"
+      fun sizes (from, classes) =
+        List.concat (List.map (fn n => List.map (fn c => inst (c, n)) classes) (List.tabulate (16 - from, fn i => i + from)))
+    in
+      case m of
+        "Prelude" => sizes (4, ["Eq", "Ord", "Bounded"])
+      | "PreludeText" => sizes (3, ["Show", "Read"])
+      | "Ix" => sizes (3, ["Ix"])
+      | _ => []
+    end
+
+  (* `normalise (m, bytes, tuples)` is the module `m` of the library with
+     its illustrations read as code, line for line, and with `tuples`
+     I8's instances after, which the checker needs and names do not *)
+  fun normalise (m, bytes, tuples) =
+    String.concatWith "\n" (List.map normaliseLine (String.fields (fn c => c = #"\n") bytes) @
+                            (if tuples then tupleInstances m else []))
 
   fun mentionsElided text = isSome (find (text, "primElided", 0))
 

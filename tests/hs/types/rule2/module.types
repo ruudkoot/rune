@@ -1,0 +1,15 @@
+# rule2 under --cycle-default=module
+tests/hs/types/rule2/B.hs:6:5: error: `x` of A, which its restriction leaves monomorphic (4.5.5), takes its type from a use in B, while Rule 2 closes it at the end of its own module (D30; --cycle-default=scc closes it at the end of the cycle)
+TYPE	A	double	Int
+TYPE	A	x	Int
+TYPE	B	y	Int
+LIBRARY-ERROR	haskell98:PreludeIO:75:19	the variable `hSetBuffering` is not in scope
+LIBRARY-ERROR	haskell98:PreludeIO:75:33	the variable `stdin` is not in scope
+LIBRARY-ERROR	haskell98:PreludeIO:75:40	the constructor `NoBuffering` is not in scope
+LIBRARY-ERROR	haskell98:PreludeIO:76:19	the variable `hSetBuffering` is not in scope
+LIBRARY-ERROR	haskell98:PreludeIO:76:33	the variable `stdout` is not in scope
+LIBRARY-ERROR	haskell98:PreludeIO:76:40	the constructor `NoBuffering` is not in scope
+LIBRARY-ERROR	haskell98:Ratio:71:25	the variable `numericEnumFrom` is not in scope
+LIBRARY-ERROR	haskell98:Ratio:72:25	the variable `numericEnumFromThen` is not in scope
+LIBRARY-ERROR	haskell98:Ratio:73:25	the variable `numericEnumFromTo` is not in scope
+LIBRARY-ERROR	haskell98:Ratio:74:25	the variable `numericEnumFromThenTo` is not in scope

@@ -603,7 +603,7 @@ differences in `tests/hs/syntax/ghc-dump.tsv`.
 which judges an accept program, and a compile, which judges an error program,
 check as far as rhc goes: the program's modules, found from the file given and
 in `share/rhc/haskell98` (the wrapper `bin/rhc` passes `--share`), their
-exports and scopes, every name, and fixity. `tests/runner/hsnames.sml`'s jobs
+exports and scopes, every name, fixity, and (M13) kinds, types and classes. `tests/runner/hsnames.sml`'s jobs
 `hs/names/*` compare `bin/rhc --dump-names` of each fixture of
 `tests/hs/names` with its expected files: the Report's 20 modules whole,
 against E16's export pairs, fixities and instances; E16's fixtures under both
@@ -612,6 +612,15 @@ entity; a cycle of three signed modules; a dotted module name. And
 `hs/names/mutants` builds the dump with one edit at a time, each of which a
 fixture must catch: the greatest fixpoint for the least, a hidden module
 importable, fixity read before names.
+
+**Kinds, types and classes** (`lib/language/haskell`'s `types.build`, the
+roadmap's M13; [tests/hs/types/README.md](../tests/hs/types/README.md)). The
+same runner's jobs `hs/types/*` compare `bin/rhc --dump-types` of each fixture
+of `tests/hs/types` under both settings of `--cycle-default` with its expected
+files: the Report's libraries checked as one unit, a cycle of modules with
+unsigned bindings and a type group across it, and D30's readings of `default`
+and Rule 2 in a cycle. `bin/rhc --dump-evidence` prints a program's evidence
+records (HsEvidence), what desugaring (M15) and HsLint (M16) read.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants

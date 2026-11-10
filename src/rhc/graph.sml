@@ -73,12 +73,14 @@ struct
     A.Import (A.noAnn, {qualified = false, module = A.Name (A.noAnn, {qual = "", name = "Prelude"}), as_ = NONE,
                         hiding = false, spec = NONE})
 
-  (* `load {roots, dotted}` reads the program whose files are `roots`, the
-     first of them beside the program's other modules.
+  (* `load {roots, dotted, types}` reads the program whose files are
+     `roots`, the first of them beside the program's other modules; with
+     `types`, for the checker, the library with its interim instances
+     (RhcLibrary's I8).
 
      Raises: `HsSource.Error` for a file that does not lex or parse, which
      stops rhc. *)
-  fun load {roots : string list, dotted : bool} : graph =
+  fun load {roots : string list, dotted : bool, types : bool} : graph =
     let
       val nodes : node M.map ref = ref M.empty
       val order : string list ref = ref []
@@ -89,7 +91,7 @@ struct
       fun parse (file, library) =
         let
           val raw = readBytes file
-          val bytes = if library then RhcLibrary.normalise raw else raw
+          val bytes = if library then RhcLibrary.normalise (OS.Path.base (OS.Path.file file), raw, types) else raw
           val () = texts := M.insert (!texts, file, HsSource.text {file = file, bytes = bytes})
           val opts : HsParser.options = {lexer = {hierarchical = dotted andalso not library}, annotations = HsParser.Full}
           val ast = HsParser.parseFile (opts, file, bytes)

@@ -1,13 +1,15 @@
 # Index: R
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `Raised` (con): [CORE_INTERP](../sig/CORE_INTERP.md#con-raised)
 - `RARROW` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rarrow)
 - `RBRACE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rbrace)
 - `RBRACKET` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rbracket)
+- `record` (type): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#type-record)
 - `rename` (val): [HS_RENAME](../sig/HS_RENAME.md#val-rename)
 - `renamed` (type): [HS_RENAME](../sig/HS_RENAME.md#type-renamed)
+- `repr` (val): [HS_TYPES](../sig/HS_TYPES.md#val-repr)
 - `reservedId` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-reservedid)
 - `reservedOp` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-reservedop)
 - `resolve` (val): [HS_FIXITY](../sig/HS_FIXITY.md#val-resolve)
@@ -15,6 +17,7 @@
 - `Rhs` (con): [HS_AST](../sig/HS_AST.md#con-rhs)
 - `rhs` (type): [HS_AST](../sig/HS_AST.md#type-rhs)
 - `rhs_` (type): [HS_AST](../sig/HS_AST.md#type-rhs_)
+- `rigid` (type): [HS_TYPES](../sig/HS_TYPES.md#type-rigid)
 - `RPAREN` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rparen)
 - `rules` (val): [CORE_LINT](../sig/CORE_LINT.md#val-rules)
 - `run` (val): [CORE_INTERP](../sig/CORE_INTERP.md#val-run)

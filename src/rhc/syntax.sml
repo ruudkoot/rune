@@ -12,11 +12,12 @@
      rhc --dump-ast [--no-spans] FILE.hs  the tree as text (HsDump)
      rhc --dump-names FILE.hs...       the program's exports, fixities, instances
                                        and errors of names (RhcNames)
+     rhc --dump-types FILE.hs          the types of the program's top-level values
+     rhc --dump-evidence FILE.hs       the checker's evidence records (HsEvidence)
 
    `rhc --typecheck-only FILE.hs` checks the program as far as rhc goes,
-   its names and fixity, until the checker lands (M13), so that a program
-   they accept is accepted; `rhc FILE.hs -o OUT` checks as much and says it
-   can go no further. An error of the program's is a diagnostic,
+   its names, fixity, kinds, types and classes (M13); `rhc FILE.hs -o OUT`
+   checks as much and says it can go no further. An error of the program's is a diagnostic,
    `FILE:LINE:COL: error: MESSAGE`, on standard error, each in the order
    of the source, and status 1. The options of names: `--names=least` or
    `greatest` (D29), `--cycle-default=module` or `scc` (D30, which M13
@@ -25,7 +26,8 @@ structure RhcSyntax =
 struct
   fun eprint s = TextIO.output (TextIO.stdErr, s)
 
-  datatype mode = ParseOnly | Print | PrintLayout | PrintExact | DumpTokens | DumpAst | DumpNames | Check | Compile
+  datatype mode = ParseOnly | Print | PrintLayout | PrintExact | DumpTokens | DumpAst | DumpNames | DumpTypes | DumpEvidence
+                | Check | Compile
 
   fun isSource a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
 
@@ -38,6 +40,8 @@ struct
     | "--dump-tokens" => SOME DumpTokens
     | "--dump-ast" => SOME DumpAst
     | "--dump-names" => SOME DumpNames
+    | "--dump-types" => SOME DumpTypes
+    | "--dump-evidence" => SOME DumpEvidence
     | _ => NONE
 
   (* the options of names, which M13 reads too *)
@@ -64,8 +68,10 @@ struct
      its groups and, in a file, of the source. *)
   fun program (mode, files) =
     let
-      val g = RhcGraph.load {roots = files, dotted = !dotted}
-      val r = RhcNames.run (g, !fixpoint)
+      val g = RhcGraph.load {roots = files, dotted = !dotted, types = mode <> DumpNames}
+      val r = RhcNames.run (g, !fixpoint,
+                            if mode = DumpNames then NONE
+                            else SOME (case !cycleDefault of PerModule => HsInfer.PerModule | PerGroup => HsInfer.PerGroup))
       val fileOrder =
         #2 (List.foldl (fn ({file, ...} : RhcGraph.node, (k, m)) => (k + 1, HsStringMap.insert (m, file, k)))
               (0, HsStringMap.empty) (List.concat (#groups g)))
@@ -93,6 +99,8 @@ struct
     in
       case mode of
         DumpNames => (RhcNames.dump (g, r); OS.Process.success)
+      | DumpTypes => (report (); RhcNames.dumpTypes (g, r); OS.Process.success)
+      | DumpEvidence => (report (); RhcNames.dumpEvidence (g, r); OS.Process.success)
       | _ =>
           if not (null diags) then (report (); OS.Process.failure)
           else
@@ -101,8 +109,8 @@ struct
             | NONE =>
                 if mode = Check then OS.Process.success
                 else
-                  (eprint (root ^ ": error: rhc reads Haskell no further than its names and fixity yet (the haskell98 " ^
-                           "roadmap's M12)\n");
+                  (eprint (root ^ ": error: rhc reads Haskell no further than its type checker yet (the haskell98 " ^
+                           "roadmap's M13)\n");
                    OS.Process.failure)
     end
     handle HsSource.Error (span, msg) => (eprint (message (hd files, span, msg) ^ "\n"); OS.Process.failure)
@@ -173,11 +181,13 @@ struct
                 [] => if List.exists (fn a => a = "--typecheck-only") args then Check else Compile
               | [m] => m
               | _ => raise RhcOptions.Usage
-                       "one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens, --dump-ast and --dump-names"
+                       "one of --parse-only, --print, --print-layout, --print-exact, --dump-tokens, --dump-ast, --dump-names, --dump-types and --dump-evidence"
           in
             case (mode, files) of
               (_, []) => raise RhcOptions.Usage "no file of Haskell to read: give FILE.hs"
             | (DumpNames, _) => program (DumpNames, files)
+            | (DumpTypes, _) => program (DumpTypes, files)
+            | (DumpEvidence, _) => program (DumpEvidence, files)
             | (_, [file]) => go (mode, spans, file)
             | _ => raise RhcOptions.Usage "one file of Haskell at a time, the program's Main, but for --dump-names"
           end)

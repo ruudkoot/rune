@@ -1,17 +1,20 @@
 # Index: C
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `C` (con): [HS_AST](../sig/HS_AST.md#con-c)
 - `CASE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-case)
 - `Case` (con): [CORE](../sig/CORE.md#con-case)
 - `Cast` (con): [CORE](../sig/CORE.md#con-cast)
 - `CHAR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-char)
-- `check` (val): [CORE_LINT](../sig/CORE_LINT.md#val-check)
+- `check` (val): [CORE_LINT](../sig/CORE_LINT.md#val-check), [HS_INFER](../sig/HS_INFER.md#val-check)
+- `checkContext` (val): [HS_KINDS](../sig/HS_KINDS.md#val-checkcontext)
+- `checkType` (val): [HS_KINDS](../sig/HS_KINDS.md#val-checktype)
 - `CInfix` (con): [HS_AST](../sig/HS_AST.md#con-cinfix)
 - `CLASS` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-class)
-- `Class` (con): [HS_MODULES](../sig/HS_MODULES.md#con-class)
-- `class` (type): [HS_CHAR](../sig/HS_CHAR.md#type-class)
+- `Class` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-class), [HS_MODULES](../sig/HS_MODULES.md#con-class)
+- `class` (type): [HS_CHAR](../sig/HS_CHAR.md#type-class), [HS_CLASSES](../sig/HS_CLASSES.md#type-class)
+- `classes` (val): [HS_INFER](../sig/HS_INFER.md#val-classes)
 - `classify` (val): [HS_CHAR](../sig/HS_CHAR.md#val-classify)
 - `closeImplicit` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-closeimplicit)
 - `COLON` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-colon)
@@ -23,10 +26,13 @@
 - `constr` (type): [HS_AST](../sig/HS_AST.md#type-constr)
 - `constr_` (type): [HS_AST](../sig/HS_AST.md#type-constr_)
 - `CONSYM` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-consym)
+- `contextPreds` (val): [HS_KINDS](../sig/HS_KINDS.md#val-contextpreds)
+- `convert` (val): [HS_KINDS](../sig/HS_KINDS.md#val-convert)
 - `CPlain` (con): [HS_AST](../sig/HS_AST.md#con-cplain)
 - `CRec` (con): [HS_AST](../sig/HS_AST.md#con-crec)
 - `current` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-current)
 - `currentStart` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-currentstart)
+- `cycleDefault` (type): [HS_INFER](../sig/HS_INFER.md#type-cycledefault)
 
 ---
 
