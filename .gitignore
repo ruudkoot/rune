@@ -12,3 +12,4 @@ __pycache__/
 .rune/
 /lib/cache/
 /lib/compiler/config.sml
+/src/rhc/config.sml
