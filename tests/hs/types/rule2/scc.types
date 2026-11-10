@@ -1,0 +1,4 @@
+# rule2 under --cycle-default=scc
+TYPE	A	double	Int
+TYPE	A	x	Int
+TYPE	B	y	Int

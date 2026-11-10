@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 102 requirements between the 48 files become 59 arrows.
+library and not a wall of lines: the 142 requirements between the 60 files become 79 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(48)"]
+  a0["Languages<br>(60)"]
 ```
 
 ## Languages
@@ -58,26 +58,38 @@ flowchart TD
   n25["HsFixity"]
   n26(["HS_RENAME"])
   n27["HsRename"]
-  n28(["HS_LINT"])
-  n29["HsLint"]
-  n30(["CORE"])
-  n31["Core"]
-  n32(["CORE_TEXT"])
-  n33["CoreText"]
-  n34(["CORE_PRIM_FAMILY"])
-  n35["CorePrimFamily"]
-  n36(["CORE_PRIM"])
-  n37["CorePrim"]
-  n38(["CORE_RUNTIME"])
-  n39["CoreRuntime"]
-  n40(["CORE_LINT"])
-  n41["CoreLint"]
-  n42(["CORE_INTERP"])
-  n43["CoreInterp"]
-  n44(["CORE_GEN"])
-  n45["CoreGen"]
-  n46(["CORE_TO_MID"])
-  n47["CoreToMid"]
+  n28(["HS_SCC"])
+  n29["HsScc"]
+  n30(["HS_TYPES"])
+  n31["HsTypes"]
+  n32(["HS_CLASSES"])
+  n33["HsClasses"]
+  n34(["HS_EVIDENCE"])
+  n35["HsEvidence"]
+  n36(["HS_KINDS"])
+  n37["HsKinds"]
+  n38(["HS_INFER"])
+  n39["HsInfer"]
+  n40(["HS_LINT"])
+  n41["HsLint"]
+  n42(["CORE"])
+  n43["Core"]
+  n44(["CORE_TEXT"])
+  n45["CoreText"]
+  n46(["CORE_PRIM_FAMILY"])
+  n47["CorePrimFamily"]
+  n48(["CORE_PRIM"])
+  n49["CorePrim"]
+  n50(["CORE_RUNTIME"])
+  n51["CoreRuntime"]
+  n52(["CORE_LINT"])
+  n53["CoreLint"]
+  n54(["CORE_INTERP"])
+  n55["CoreInterp"]
+  n56(["CORE_GEN"])
+  n57["CoreGen"]
+  n58(["CORE_TO_MID"])
+  n59["CoreToMid"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -111,32 +123,52 @@ flowchart TD
   n25 --> n24
   n26 --> n23
   n27 --> n26
-  n28 --> n13
   n29 --> n28
-  n29 --> n23
+  n29 --> n21
   n31 --> n30
   n32 --> n31
   n33 --> n32
+  n33 --> n21
+  n34 --> n1
+  n34 --> n31
   n35 --> n34
+  n35 --> n33
+  n36 --> n13
+  n36 --> n21
   n36 --> n31
-  n36 --> n35
   n37 --> n36
-  n37 --> n33
-  n38 --> n31
+  n37 --> n23
+  n37 --> n29
+  n38 --> n13
+  n38 --> n35
   n39 --> n38
-  n39 --> n33
-  n40 --> n31
+  n39 --> n37
+  n40 --> n13
   n41 --> n40
-  n41 --> n37
-  n42 --> n31
+  n41 --> n23
   n43 --> n42
-  n43 --> n37
-  n44 --> n31
+  n44 --> n43
   n45 --> n44
-  n45 --> n33
-  n46 --> n31
   n47 --> n46
-  n47 --> n37
+  n48 --> n43
+  n48 --> n47
+  n49 --> n48
+  n49 --> n45
+  n50 --> n43
+  n51 --> n50
+  n51 --> n45
+  n52 --> n43
+  n53 --> n52
+  n53 --> n49
+  n54 --> n43
+  n55 --> n54
+  n55 --> n49
+  n56 --> n43
+  n57 --> n56
+  n57 --> n45
+  n58 --> n43
+  n59 --> n58
+  n59 --> n49
 ```
 
 ---

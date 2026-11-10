@@ -49,6 +49,29 @@ struct
      way ("register", "register", "bin/runevm"),
      way ("register-opt", "register", "bin/runevm --jit=all --jit-tier=2")]
 
+  (* The tiers (the roadmap's D56, B; the lead's ruling 45): a program of
+     tests/hs/lang runs in make check in D56's three ways, with its two
+     compiles and its check, unless tests/hs/lang-nightly.txt names it (a
+     program over D56's second, by its measured time), when all its jobs are
+     nightly; tests/hs/errors refused by the register compile in check, and
+     by --typecheck-only nightly; tests/hs/accept checked in check. The
+     register way and the refusals are also quick. *)
+  fun nightlyPrograms () =
+    List.mapPartial (fn l => case String.tokens Char.isSpace l of
+                               n :: _ => if String.isPrefix "#" n then NONE else SOME n
+                             | [] => NONE)
+                    (lines (read (fromRoot "tests/hs/lang-nightly.txt")))
+    handle _ => []
+  val listedNightly = nightlyPrograms ()
+  fun tiers kind (p : Lang.program) =
+    case kind of
+      "errors/typecheck" => ["nightly"]
+    | "accept" => ["check"]
+    | _ =>
+        if String.isPrefix "errors/" kind then ["check", "quick"]
+        else if List.exists (fn n => n = #name p) listedNightly then ["nightly"]
+        else ["check"] @ (if kind = "lang/register" then ["quick"] else [])
+
   val rhc : Lang.suite =
     {group = "hs", lang = "tests/hs/lang", errors = "tests/hs/errors", accept = SOME "tests/hs/accept",
      suffixes = suffixes, mains = mains,
@@ -60,13 +83,13 @@ struct
      out = fn compiler => "\"$RUNE_TEST_RUN\"/hs/c/" ^ compiler, scratch = "hs/",
      writer = "register", writerWay = "register",
      typecheck = SOME "bin/rhc --typecheck-only", stackDone = false, covers = covers,
-     compileTags = ["check", "hs"], errorTags = fn _ => ["check", "hs", "quick"], typecheckTags = ["check", "hs"],
-     wayTags = fn (w : Lang.way) => ["check", "hs"] @ (if #name w = "register" then ["quick"] else []),
+     compileTags = ["hs"], errorTags = fn _ => ["hs"], typecheckTags = ["hs"],
+     wayTags = fn (w : Lang.way) => ["hs"],
      (* a permission refusal (NAME.err.perm) cannot be seen by root: skipped
         there, with that reason (the lead's ruling 32) *)
      needs = fn (n : string) => Test.requires (["rhc"] @ (if String.isSubstring ".err.perm" n then ["unprivileged"] else [])),
      wayNeeds = fn _ => fn t => t,
-     selected = fn _ => fn _ => true, pending = HsConformance.pending}
+     selected = fn _ => fn _ => true, pending = HsConformance.pending, programTags = tiers}
 
   val capabilities =
     [{name = "rhc", probe = "test -x bin/rhc", hint = "run: make bin/rhc (rhc.build; docs/testing.md, rhc's tests)"},
@@ -93,7 +116,7 @@ struct
      typecheck = SOME (stubCompile ^ " --typecheck-only"), stackDone = false, covers = runnerCovers,
      compileTags = runnerTags, errorTags = fn _ => runnerTags, typecheckTags = runnerTags,
      wayTags = fn _ => runnerTags, needs = fn _ => fn t => t, wayNeeds = fn _ => fn t => t,
-     selected = fn _ => fn _ => true, pending = fn _ => NONE}
+     selected = fn _ => fn _ => true, pending = fn _ => NONE, programTags = fn _ => fn _ => []}
 
   (* a run of the silent VM: it passes only where the run's judge fails it
      for its output, and says so *)
@@ -217,7 +240,7 @@ struct
   fun jit (p : Lang.program) =
     let val t = Oracles.jobIn ("", #name p, ["jit-one-with", "bin/rhc", #base p, #src p], [], 1, 600, 3600)
     in case HsConformance.pending p of SOME why => Test.pending why t | NONE => t end
-  val tree =
+  fun tree () =
     Test.describe ""
       [Lang.tree rhc,
        Test.requires ["rhc"] (tagged (["nightly", "hs"] @ covers)

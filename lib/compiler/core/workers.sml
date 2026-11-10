@@ -48,6 +48,7 @@ struct
         | Raise a => ok a
         | Return r => rhs r
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => ok a andalso List.all exp (caseExps (arms, d))
     in exp e end
 
   (* How a flattened parameter's fields are passed: each one as it is, or,
@@ -90,6 +91,7 @@ struct
         | Raise a => ok a
         | Return r => ret r
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => ok a andalso List.all exp (caseExps (arms, d))
     in
       if exp e then SOME (List.rev (!fields)) else NONE
     end
@@ -139,6 +141,7 @@ struct
         | Raise a => atom a
         | Return r => rhs r
         | Mark (_, a) => exp a
+        | Case (a, arms, d) => (atom a; List.app exp (caseExps (arms, d)))
     in exp e end
 
   fun unmark (Mark (_, e)) = unmark e
@@ -221,6 +224,7 @@ struct
             | Raise a => atom a
             | Return r => rhs r
             | Mark (_, a) => exp a
+            | Case (a, arms, d) => (atom a; List.app exp (caseExps (arms, d)))
           and rhs r = appAtomsOfRhs atom r
         in exp e; !any end
       val touched =
@@ -334,6 +338,7 @@ struct
                  else Return r
              | _ => Return r)
         | Mark (sp, a) => Mark (sp, exp a)
+        | Case (a, arms, d) => let val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
         | Jump _ => e
         | Raise _ => e
         | Return _ => e
@@ -384,6 +389,7 @@ struct
                        SOME (PNest ps) => (case List.nth (ps, i) of PLeaf y => Return (Atom (Var (y, []))) | _ => e)
                      | _ => e)
                 | Mark (sp, a) => Mark (sp, sel a)
+                | Case (a, arms, d) => let val (arms, d) = mapCase sel (arms, d) in Case (a, arms, d) end
                 | Jump _ => e
                 | Raise _ => e
                 | Return _ => e

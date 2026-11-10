@@ -121,7 +121,13 @@ struct
      [("stack", []), ("stackchecked", ["--checked"]), ("stackgcstress", ["--gc-stress", "3", "--gc-verify"])])
   fun hasE1Ways src = List.exists (fn l => l = "; ways: E1") (lines (read src))
 
-  fun vmOne (src, family, (regWays, stackWays)) =
+  fun vmOne (src, family, ways) = vmAt (src, family, ways, ["O0", "O1", "O2"], ["O0", "O1", "O2"])
+  (* make check's runs (the roadmap's D56 and the lead's ruling 45): -O0
+     and -O2 on the register engine; nightly's the rest, -O1 on it and every
+     level on the stack's *)
+  and vmCheck src = vmAt (src, "vm", defaultWays, ["O0", "O2"], [])
+  and vmRest src = vmAt (src, "vm-rest", defaultWays, ["O1"], ["O0", "O1", "O2"])
+  and vmAt (src, family, (regWays, stackWays), regLevels, stackLevels) =
     let
       val n = nameOf src
       (* each family its own directory: the three ways and the forty-five of
@@ -157,10 +163,8 @@ struct
           else List.app runOn runs
         end
     in
-      List.app (fn level =>
-                  (one (level, "registers", List.map (fn (w, fl) => ("bin/runevm", fl, w)) regWays);
-                   one (level, "stack", List.map (fn (w, fl) => ("bin/runevm-stack", fl, w)) stackWays)))
-               ["O0", "O1", "O2"]
+      List.app (fn level => one (level, "registers", List.map (fn (w, fl) => ("bin/runevm", fl, w)) regWays)) regLevels;
+      List.app (fn level => one (level, "stack", List.map (fn (w, fl) => ("bin/runevm-stack", fl, w)) stackWays)) stackLevels
     end
 
   (* the two size files of a `; KEY: SIZE1 SIZE2` line of src *)
@@ -384,7 +388,8 @@ struct
   fun command args =
     case args of
       ["hs-core-one", src] => SOME (fn () => one src)
-    | ["hs-core-vm", src] => SOME (fn () => vmOne (src, "vm", defaultWays))
+    | ["hs-core-vm", src] => SOME (fn () => vmCheck src)
+    | ["hs-core-vm-rest", src] => SOME (fn () => vmRest src)
     | ["hs-core-vm45", src] => SOME (fn () => vmOne (src, "vm45", e1Ways))
     | ["hs-core-residency", src] => SOME (fn () => residency src)
     | ["hs-core-budget", src] => SOME (fn () => budget src)
@@ -399,14 +404,18 @@ struct
                 "covers:tests/runner/hscore.sml"]
   (* E1's forty-five ways of E1's programs, nightly (D56: three ways of the
      run set in make check, the rest nightly) *)
-  val nightly =
+  fun nightly () =
     tagged (["nightly", "test-rhc"] @ covers)
       (Test.describe "hs/core"
          (List.mapPartial (fn s => if hasE1Ways s andalso not (isSome (interpreterOnly s))
                                    then SOME (Tools.job ("vm45/" ^ nameOf s, ["hs-core-vm45", s], [], 500, 3600)) else NONE)
-                          (glob (dir, ".core"))))
-  val tree =
-    Test.describe "" [nightly, tagged (["check", "test-rhc"] @ covers)
+                          (glob (dir, ".core"))
+          @ List.mapPartial (fn s => case (marker s, interpreterOnly s) of
+                                       (SOME ("run", _), NONE) => SOME (Tools.job ("vm-rest/" ^ nameOf s, ["hs-core-vm-rest", s], [], 500, 1800))
+                                     | _ => NONE)
+                            (glob (dir, ".core"))))
+  fun tree () =
+    Test.describe "" [nightly (), tagged (["check", "test-rhc"] @ covers)
       (Test.describe "hs/core"
          (List.map (fn s => Tools.job (nameOf s, ["hs-core-one", s], [], 300, 600)) (glob (dir, ".core"))
           @ List.mapPartial (fn s => case (marker s, interpreterOnly s) of

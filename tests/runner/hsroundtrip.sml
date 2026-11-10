@@ -26,7 +26,10 @@
    rhc's tool is `bin/rhc`, an option for each command, over the files of
    tests/hs/lang, tests/hs/accept and tests/hs/roundtrip
    (`hs/roundtrip/rhc/PATH`, which need the capability `rhc`, and wait, as
-   the program's jobs do, while its rows are Planned). The harness
+   the program's jobs do, while its rows are Planned). make check makes the
+   explicit print's two tests (`hs/roundtrip/rhc/PATH`), and nightly the
+   implicit and exact prints' (`hs/roundtrip/rhc-printers/PATH`), the
+   roadmap's D56 as the lead's ruling 45 sets it. The harness
    is held to its own tests without a parser: a stub tool, commands of
    bin/rune-test over a toy syntax of words written here, passes on
    tests/hs/runner/roundtrip (`hs/roundtrip/stub/...`); and the stub with a
@@ -202,8 +205,13 @@ struct
           in if status = 0 then SOME (read out) else (append (err, "exit " ^ Int.toString status ^ "\n"); NONE) end
     end
 
+  (* which prints a job makes: all three, or the explicit one alone (make
+     check's, the roadmap's D56 and the lead's ruling 45), or the implicit
+     and the exact ones (nightly's) *)
+  datatype prints = AllPrints | Explicit | Others
+
   (* the failures of a tool on a file, its files in DIR *)
-  fun one (how, tool : tool, dir, file) : failure list =
+  fun oneOf prints (how, tool : tool, dir, file) : failure list =
     let
       val () = (rmTree dir; mkdirs dir)
       fun f x = dir ^ "/" ^ x
@@ -242,7 +250,7 @@ struct
                               SOME d => [(Token, "the tokens of " ^ what ^ " are not layout's of the file, at " ^ d)]
                             | NONE => []))
               end
-            val exact =
+            fun exact () =
               case #exact tool of
                 NONE => []
               | SOME command =>
@@ -253,11 +261,12 @@ struct
                       else [(Exact, "the exact print is not the file, at "
                                     ^ getOpt (at ("line", lineList (read source), lineList text), "its end"))]
           in
-            trip ("the explicit print", #print tool, "print.hs")
-            @ (case #implicit tool of SOME c => trip ("the implicit print", c, "implicit.hs") | NONE => [])
-            @ exact
+            (if prints = Others then [] else trip ("the explicit print", #print tool, "print.hs"))
+            @ (if prints = Explicit then []
+               else (case #implicit tool of SOME c => trip ("the implicit print", c, "implicit.hs") | NONE => []) @ exact ())
           end
     end
+  val one = oneOf AllPrints
 
   fun toolNamed name =
     case List.find (fn (t : tool) => #name t = name) tools of
@@ -340,6 +349,10 @@ struct
     case args of
       ["hs-roundtrip-one", tool, file] =>
         SOME (fn () => let val t = toolNamed tool in report (one (Shell, t, scratchOf (t, file), file)) end)
+    | ["hs-roundtrip-explicit", tool, file] =>
+        SOME (fn () => let val t = toolNamed tool in report (oneOf Explicit (Shell, t, scratchOf (t, file), file)) end)
+    | ["hs-roundtrip-printers", tool, file] =>
+        SOME (fn () => let val t = toolNamed tool in report (oneOf Others (Shell, t, scratchOf (t, file) ^ "-printers", file)) end)
     | ["hs-roundtrip-generated", tool, seed, count] =>
         SOME (fn () => report (generated (if tool = "stub" then Here else Shell, toolNamed tool, seed, count)))
     | ["hs-roundtrip-faults"] => SOME faultChecks
@@ -354,7 +367,7 @@ struct
                                    in if isDir p then filesUnder p
                                       else if List.exists (fn s => String.isSuffix s n) suffixes then [p] else [] end)
                           (sort (entries dir)))
-  val rhcInputs = List.concat (List.map filesUnder ["tests/hs/lang", "tests/hs/accept", "tests/hs/roundtrip"])
+  fun rhcInputs () = List.concat (List.map filesUnder ["tests/hs/lang", "tests/hs/accept", "tests/hs/roundtrip"])
   fun job (path, args, timeout) =
     Test.it path
       {program = "/bin/sh",
@@ -363,13 +376,17 @@ struct
        pools = [], exclusive = false, after = [], judge = failLines} : Run.command Test.tree
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
   (* a file's job, under its path from tests/hs *)
-  fun fileJob (tool : tool) file =
-    job (if String.isPrefix "tests/hs/" file then String.extract (file, size "tests/hs/", NONE) else file,
-         ["hs-roundtrip-one", #name tool, file], 600)
+  fun relPath file = if String.isPrefix "tests/hs/" file then String.extract (file, size "tests/hs/", NONE) else file
+  fun fileJob (tool : tool) file = job (relPath file, ["hs-roundtrip-one", #name tool, file], 600)
+  fun fileJobOf (command, tool : tool) file = job (relPath file, [command, #name tool, file], 600)
   val rhcCovers = ["covers:tests/hs/lang/*", "covers:tests/hs/accept/*", "covers:tests/hs/roundtrip/*",
                    "covers:lib/language/haskell/*", "covers:src/rhc/*", "covers:tests/runner/hsroundtrip.sml"]
   val stubCovers = ["covers:tests/hs/runner/*", "covers:tests/runner/hsroundtrip.sml"]
-  val tree =
+  (* rhc's files: the explicit print's two tests in make check (a tenth of
+     them quick), the implicit and exact prints' nightly *)
+  fun held file t = case HsConformance.pendingFile file of SOME why => Test.pending why t | NONE => t
+  fun tree () =
+   let val rhcInputs = rhcInputs () in
     Test.describe "hs/roundtrip"
       [Test.requires ["rhc"]
          (tagged (["check", "hs"] @ rhcCovers)
@@ -377,16 +394,20 @@ struct
                (List.tabulate (length rhcInputs, fn i =>
                                  let
                                    val file = List.nth (rhcInputs, i)
-                                   val t = fileJob rhc file
-                                   val t = case HsConformance.pendingFile file of SOME why => Test.pending why t | NONE => t
+                                   val t = held file (fileJobOf ("hs-roundtrip-explicit", rhc) file)
                                  in if i mod 10 = 0 then Test.tag "quick" t else t end)
                 @ (case #generate rhc of
                      SOME _ => [Test.tag "quick" (job ("@generated", ["hs-roundtrip-generated", "rhc", "1", "64"], 1800))]
                    | NONE => [])))),
+       Test.requires ["rhc"]
+         (tagged (["nightly", "hs"] @ rhcCovers)
+            (Test.describe "rhc-printers"
+               (List.map (fn file => held file (fileJobOf ("hs-roundtrip-printers", rhc) file)) rhcInputs))),
        tagged (["check", "hs", "quick"] @ stubCovers)
          (Test.describe ""
             [Test.describe "stub"
                (List.map (fileJob stub) stubInputs @ [job ("@generated", ["hs-roundtrip-generated", "stub", "1", "16"], 600)]),
              job ("@faults", ["hs-roundtrip-faults"], 600),
              job ("@normalise", ["hs-roundtrip-normalise"], 60)])]
+   end
 end

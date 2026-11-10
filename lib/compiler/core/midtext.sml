@@ -20,6 +20,7 @@
               | (join LABEL ((VAR : TYPE) ...) EXP EXP) | (jump LABEL ATOM ...)
               | (if ATOM EXP EXP) | (handle VAR EXP EXP) | (raise ATOM)
               | (return RHS) | (at STRING INT INT FRAME ... EXP)
+              | (case ATOM (TAG EXP) ... [(else EXP)])
      frame   := (in STRING STRING INT INT)   an inlined function's name, and
                                              where it was called from
               | (in STRING)                  one called in tail position
@@ -158,6 +159,7 @@ struct
         | If (c, t, f) => (collectAtom c; collectExp t; collectExp f)
         | Handle (a, _, h) => (collectExp a; collectExp h)
         | Raise a => collectAtom a
+        | Case (a, arms, d) => (collectAtom a; List.app collectExp (caseExps (arms, d)))
         | Return r => collectRhs r
         | Mark (_, a) => collectExp a
       and collectFun ({params, result, body, ...} : fundef) =
@@ -225,6 +227,11 @@ struct
         | Handle (a, x, h) => let val x = v x in nl n; emit ("(handle " ^ x); exp (n + 2, a); exp (n + 2, h); emit ")" end
         | Raise a => (nl n; emit ("(raise " ^ atom a ^ ")"))
         | Return r => (nl n; emit ("(return " ^ rhs r ^ ")"))
+        | Case (a, arms, d) =>
+            (nl n; emit ("(case " ^ atom a);
+             List.app (fn (t, e) => (nl (n + 2); emit ("(" ^ Int.toString t); exp (n + 4, e); emit ")")) arms;
+             Option.app (fn e => (nl (n + 2); emit "(else"; exp (n + 4, e); emit ")")) d;
+             emit ")")
         | Mark (({file, start, stop}, frames), a) =>
             if marks then
               (nl n; emit ("(at \"" ^ String.toString file ^ "\" " ^ Int.toString start ^ " " ^ Int.toString stop);
@@ -656,6 +663,19 @@ struct
             | "join" => let val l = var "j" () val ps = binders () val b = exp () in Join (l, ps, b, exp ()) end
             | "jump" => let val l = var "j" () in Jump (l, atomsUntil RP) end
             | "if" => let val c = atom () val t = exp () in If (c, t, exp ()) end
+            | "case" =>
+                let
+                  val a = atom ()
+                  fun arms acc =
+                    case (peek (), peek2 ()) of
+                      (SOME LP, SOME (NUM _)) => let val () = eat LP val t = int () val e = exp () in eat RP; arms ((t, e) :: acc) end
+                    | _ => List.rev acc
+                  val arms = arms []
+                  val d =
+                    if peek () = SOME LP andalso peek2 () = SOME (ID "else") then
+                      let val () = (eat LP; ignore (next ())) val e = exp () in eat RP; SOME e end
+                    else NONE
+                in Case (a, arms, d) end
             | "handle" => let val x = var "v" () val a = exp () in Handle (a, x, exp ()) end
             | "raise" => Raise (atom ())
             | "return" => Return (rhs ())

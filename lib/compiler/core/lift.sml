@@ -73,6 +73,7 @@ struct
         | Raise a => atom (a, acc)
         | Return r => foldAtomsOfRhs atom acc r
         | Mark (_, a) => go (a, acc)
+        | Case (a, arms, d) => List.foldl go (atom (a, acc)) (caseExps (arms, d))
     in
       go (e, acc)
     end
@@ -116,6 +117,7 @@ struct
       | Raise a => atom (a, acc)
       | Return r => rhs (r, acc)
       | Mark (_, a) => gensOf (a, acc)
+      | Case (a, arms, d) => List.foldl gensOf (atom (a, acc)) (caseExps (arms, d))
     end
   and gensOfFun (f : fundef, acc) =
     let
@@ -136,6 +138,7 @@ struct
     | If (_, t, f) => hasFun t orelse hasFun f
     | Handle (a, _, h) => hasFun a orelse hasFun h
     | Mark (_, a) => hasFun a
+    | Case (_, arms, d) => List.exists hasFun (caseExps (arms, d))
     | Jump _ => false
     | Raise _ => false
     | Return _ => false
@@ -179,6 +182,7 @@ struct
             (appAtomsOfRhs useAtom r;
              case r of App (Var (f, _), _) => bump (calls, f) | _ => ())
         | Mark (_, a) => scan a
+        | Case (a, arms, d) => (useAtom a; List.app scan (caseExps (arms, d)))
       and scanFun (f : fundef) =
         (IntTable.insert (schemes, #name f, (#tyvars f, funTy f));
          List.app (fn (x, t) => IntTable.insert (schemes, x, ([], t))) (#params f);
@@ -248,6 +252,7 @@ struct
         | If (_, t, f) => (find t; find f)
         | Handle (a, _, h) => (find a; find h)
         | Mark (_, a) => find a
+        | Case (_, arms, d) => List.app find (caseExps (arms, d))
         | Jump _ => ()
         | Raise _ => ()
         | Return _ => ()
@@ -309,6 +314,7 @@ struct
             | Raise a => Raise (atom a)
             | Return r => Return (r' r)
             | Mark (sp, a) => Mark (sp, go a)
+            | Case (a, arms, d) => let val a = atom a val (arms, d) = mapCase go (arms, d) in Case (a, arms, d) end
         in go e end
 
       fun exp e =
@@ -327,6 +333,7 @@ struct
         | Raise a => Raise (atom a)
         | Return r => Return (rhs r)
         | Mark (sp, a) => Mark (sp, exp a)
+        | Case (a, arms, d) => let val a = atom a val (arms, d) = mapCase exp (arms, d) in Case (a, arms, d) end
       and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
         {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
 

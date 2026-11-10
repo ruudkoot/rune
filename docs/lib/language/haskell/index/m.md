@@ -1,17 +1,25 @@
 # Index: M
 
-[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) **m** [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) **m** [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `map` (type): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#type-map)
 - `mark` (type): [HS_LAYOUT](../sig/HS_LAYOUT.md#type-mark)
 - `member` (val): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-member)
 - `message` (val): [HS_SOURCE](../sig/HS_SOURCE.md#val-message)
+- `meta` (type): [HS_TYPES](../sig/HS_TYPES.md#type-meta)
+- `metaHome` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metahome)
+- `metaId` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metaid)
+- `metaLevel` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metalevel)
+- `metas` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metas)
 - `Method` (con): [HS_MODULES](../sig/HS_MODULES.md#con-method)
+- `Mismatch` (exn): [HS_TYPES](../sig/HS_TYPES.md#exn-mismatch)
 - `MODULE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-module)
 - `Module` (con): [HS_AST](../sig/HS_AST.md#con-module)
 - `module` (type): [HS_AST](../sig/HS_AST.md#type-module), [HS_LINT](../sig/HS_LINT.md#type-module)
 - `module` (val): [HS_DUMP](../sig/HS_DUMP.md#val-module)
+- `module_` (type): [HS_INFER](../sig/HS_INFER.md#type-module_)
 - `moduleName` (val): [HS_MODULES](../sig/HS_MODULES.md#val-modulename)
+- `Mono` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-mono)
 
 ---
 

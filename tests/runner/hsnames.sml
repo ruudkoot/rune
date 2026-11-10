@@ -2,9 +2,11 @@
    roadmap's M12): for each fixture of tests/hs/names, a directory whose
    All.hs imports the rest, what `bin/rhc --dump-names` prints of it under
    each mode its expected files name, `least.names`, `greatest.names` or
-   `dotted.names` (`--names=least` with `--dotted-names`); and the mutants
-   of names and fixity, each caught by some fixture. Each is a job of
-   bin/rune-test that prints a line FAIL for what it finds. *)
+   `dotted.names` (`--names=least` with `--dotted-names`); the mutants of
+   names and fixity, each caught by some fixture; and for each fixture of
+   tests/hs/types (M13), what `bin/rhc --dump-types` says of it under each
+   setting of `--cycle-default`. Each is a job of bin/rune-test that prints
+   a line FAIL for what it finds. *)
 structure HsNames =
 struct
   open Sh
@@ -169,7 +171,7 @@ struct
         let
           val () = write (target, replaceAll (text, old, new))
           val () = write (out ^ "/driver.build",
-                          "libraries unicode end\nuse lib/syntax.build\nuse lib/names.build\nfiles " ^
+                          "libraries unicode end\nuse lib/syntax.build\nuse lib/names.build\nuse lib/types.build\nfiles " ^
                           String.concatWith " " (List.map (fn f => "src/" ^ f) rhcFiles) ^ " " ^
                           fromRoot (dir ^ "/driver.sml") ^ " end\n")
           val built = exec {cmd = [fromRoot "bin/rune", "--build", out ^ "/driver.build", "-o", out ^ "/driver.rbc"],
@@ -193,6 +195,49 @@ struct
 
   fun mutantsAll () = List.app mutantOne mutants
 
+  (* ---- the types of programs (M13) ---- *)
+
+  (* The fixtures of tests/hs/types, each a directory whose All.hs imports
+     the rest, with what `bin/rhc --dump-types --cycle-default=MODE` says of
+     it, standard error's lines first, in `module.types` and `scc.types`. *)
+  val typesDir = "tests/hs/types"
+  val typeModes = ["module", "scc"]
+
+  fun typeFixtures () =
+    List.filter (fn (_, ms) => not (null ms))
+      (List.map (fn d => (d, List.filter (fn m => exists (fromRoot (typesDir ^ "/" ^ d ^ "/" ^ m ^ ".types"))) typeModes))
+         (List.filter (fn d => exists (fromRoot (typesDir ^ "/" ^ d ^ "/All.hs"))) (sort (entries (fromRoot typesDir)))))
+
+  fun checkTypes (fixture, mode) =
+    let
+      val d = fromRoot (typesDir ^ "/" ^ fixture)
+      val file = d ^ "/" ^ mode ^ ".types"
+      val expected = lines (read file)
+      val comments = List.filter (String.isPrefix "#") expected
+      val out = run ^ "/hs-types"
+      val () = mkdirs out
+      val stdout = out ^ "/" ^ fixture ^ "-" ^ mode ^ ".out"
+      val stderr = out ^ "/" ^ fixture ^ "-" ^ mode ^ ".err"
+      val _ = exec {cmd = [fromRoot "bin/rhc", "--dump-types", "--cycle-default=" ^ mode, d ^ "/All.hs"], dir = NONE, stdin = "",
+                    stdout = stdout, stderr = stderr, timeout = 300}
+      fun relative l = if String.isPrefix (root ^ "/") l then String.extract (l, size root + 1, NONE) else l
+      val got = List.map relative (lines (read stderr)) @ lines (read stdout)
+      val want = List.filter (fn l => not (String.isPrefix "#" l)) expected
+    in
+      if accepting then (write (file, String.concat (List.map (fn l => l ^ "\n") (comments @ got))); say ("ACCEPTED " ^ file ^ "\n"))
+      else if got = want then ()
+      else
+        let
+          fun missing (xs, ys) = List.filter (fn x => not (List.exists (fn y => y = x) ys)) xs
+          fun some xs = String.concatWith "; " (List.take (xs, Int.min (3, length xs)))
+          val (lost, gained) = (missing (want, got), missing (got, want))
+        in
+          fail ("hs/types/" ^ fixture ^ " (" ^ mode ^ "): " ^ Int.toString (length lost) ^ " expected lines not printed" ^
+                (if null lost then "" else " (" ^ some lost ^ ")") ^ ", " ^ Int.toString (length gained) ^ " printed not expected" ^
+                (if null gained then "" else " (" ^ some gained ^ ")") ^ "; the output is " ^ stdout)
+        end
+    end
+
   (* ---- the tree ---- *)
 
   fun job (name, cmd, timeout) =
@@ -204,23 +249,36 @@ struct
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
   val covers = ["covers:lib/language/haskell/*", "covers:src/rhc/*", "covers:share/rhc/*", "covers:tests/hs/names/*",
+                "covers:tests/hs/types/*",
                 "covers:tests/runner/hsnames.sml", "covers:rhc.build", "covers:rhc.plan"]
 
   fun tree () =
-    Test.describe "hs/names"
-      [tagged (["check", "hs"] @ covers)
-         (Test.describe ""
-            (List.concat
-               (List.map (fn (f, ms) =>
-                            List.map (fn m => tagged ["quick"]
-                                                (job (f ^ "/" ^ m, "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-names " ^ f ^ " " ^ m, 600)))
-                              ms)
-                  (fixtures ()))
-             @ [job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-names-mutants", 3600)]))]
+    Test.describe ""
+      [Test.describe "hs/names"
+         [tagged (["hs"] @ covers)
+            (Test.describe ""
+               (List.concat
+                  (List.map (fn (f, ms) =>
+                               List.map (fn m => tagged ["check", "quick"]
+                                                   (job (f ^ "/" ^ m, "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-names " ^ f ^ " " ^ m, 600)))
+                                 ms)
+                     (fixtures ()))
+                (* the mutants nightly (the roadmap's D56, the lead's ruling 45) *)
+                @ [Test.tag "nightly" (job ("mutants", "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-names-mutants", 3600))]))],
+       Test.describe "hs/types"
+         [tagged (["check", "hs"] @ covers)
+            (Test.describe ""
+               (List.concat
+                  (List.map (fn (f, ms) =>
+                               List.map (fn m => tagged ["quick"]
+                                                   (job (f ^ "/" ^ m, "\"$RUNE_TEST_ROOT\"/bin/rune-test hs-types " ^ f ^ " " ^ m, 600)))
+                                 ms)
+                     (typeFixtures ()))))]]
 
   fun command args =
     case args of
       ["hs-names", fixture, mode] => SOME (fn () => one (fixture, mode))
     | ["hs-names-mutants"] => SOME mutantsAll
+    | ["hs-types", fixture, mode] => SOME (fn () => checkTypes (fixture, mode))
     | _ => NONE
 end
