@@ -437,6 +437,7 @@ struct
      ("_word64", nameStr (word64Tycon, [])),
      ("_bytearray", nameStr (bytearrayTycon, [])),
      ("_realarray", nameStr (realarrayTycon, [])),
+     ("_intinf", nameStr (intinfTycon, [])),
      ("unit", TyStr {fcn = TAbbrev ([], unitTy), cons = []})]
 
   (* the initial basis, with the list's tags as Types.tagNames numbers
