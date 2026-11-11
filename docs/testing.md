@@ -963,8 +963,12 @@ lambdas, the list functions and `const e undefined`, each with the output its
 own evaluator gives. `hs/generated/@parse` puts 32 through rhc's parser in
 `make check` now; `hs/generated/@run` (16 from seed 1, `check`) and
 `hs/generated/@nightly` (400, `nightly`) compile and run them, held until
-the rows they need are out of `Planned`. `bin/rune-test hs-generate SEED`
-prints a program and its output; `hs-generated FIRST COUNT` runs a range.
+the rows they need are out of `Planned`; `hs/generated/@orders` (the same
+400, `nightly`) compiles them with `--match=sestoft`, Sestoft's decision trees
+held to the meaning of the Report's top-to-bottom rules (`tr.case.obligation`).
+`bin/rune-test hs-generate SEED` prints a program and its output;
+`hs-generated FIRST COUNT` runs a range, and `hs-generated-orders FIRST
+COUNT` the same with Sestoft's trees.
 
 ## rhc's Core
 

@@ -421,7 +421,7 @@ tr.sec.right	3.5	(op e) = \ x -> x op e, x not free in e	dynamic	run	literal tra
 tr.sec.left	3.5	(e op) = \ x -> e op x, x not free in e	dynamic	run	literal translation differenced; see readings.md: read literally e is unshared and the section is a value, so seq (undefined +) () is ()	hand	Supported	R11	
 tr.sec.fresh	3.5	x does not occur free in e	dynamic	run	source with a variable x in e	hand	Supported		
 tr.sec.whnf	3.5	A section is a lambda, so it is a value whatever op and e are	dynamic	run	seq (+ undefined) () and seq (undefined +) () are (); see readings.md	hand	Supported	R11	
-tr.sec.sharing	3.5	The identities say nothing of sharing; an implementation may share e	dynamic	run	--count budget on map (expensive +) xs; a sharing test is a choice of rhc, not the Report's: see readings.md	hand	Planned	R11	
+tr.sec.sharing	3.5	The identities say nothing of sharing; an implementation may share e	dynamic	run	--count budget on map (expensive +) xs; a sharing test is a choice of rhc, not the Report's: see readings.md	hand	Supported	R11	
 exp.if.form	3.6	if e1 then e2 else e3	syntax	accept	all three present	hand	Supported		
 exp.if.noelse	3.6	else is not optional	syntax	reject	if a then b	hand	Supported		
 exp.if.true	3.6	The value is e2 if e1 is True	dynamic	run	value; e3 not evaluated	hand	Supported		
@@ -448,7 +448,7 @@ exp.tuple.one	3.8	There is no tuple of one: (e) is parenthesised	syntax	run	see 
 exp.tuple.con	3.8	The constructor of an n-tuple is (,...,) with n-1 commas	syntax	accept	(,) (,,) (,,,)	hand	Supported		
 exp.tuple.same	3.8	(a,b,c) and (,,) a b c denote the same value	dynamic	run	equality, and partial application (,,) a	hand	Supported		
 exp.tuple.lazy	3.8	Tuple components are not evaluated by forming the tuple	dynamic	run	fst (1, undefined)	hand	Supported		
-tr.tuple	3.8	(e1, ..., ek) is an instance of a k-tuple as defined in the Prelude and requires no translation	dynamic	accept	primitive in the kernel; see translations.md	hand	Planned		
+tr.tuple	3.8	(e1, ..., ek) is an instance of a k-tuple as defined in the Prelude and requires no translation	dynamic	accept	primitive in the kernel; see translations.md	hand	Supported		
 exp.tuple.type	3.8	If t1 through tk are the types of the ei, the tuple has type (t1, ..., tk)	static	accept	annotated	hand	Supported		
 exp.paren	3.9	(e) is equivalent to e	dynamic	run	value and printer round trip	hand	Supported		
 tr.paren	3.9	(e) is equivalent to e, in fixity resolution too	syntax	run	(a + b) * c, and an operator chain is cut by parentheses	hand	Supported		
@@ -849,11 +849,11 @@ dec.strict.mixed	4.2.1	strict and lazy fields may be mixed	dynamic	run	`data T =
 dec.strict.varsym	4.2.1	`!` is an ordinary varsym, not a reservedop	lex	accept	`a ! b = a + b` and `(!)` as a variable compile	hand	Supported		
 dec.strict.onlydata	4.2.1	`!` has its significance only in the argument types of a data declaration	syntax	reject	`f :: !Int -> Int` and `newtype N = N !Int` are refused	hand	Supported		
 dec.strict.atype	4.2.1	a strictness flag takes an atype	syntax	reject	`data T = C !Maybe Int` means two fields, of which Maybe has the wrong kind, and is refused; `C !(Maybe Int)` compiles	hand	Supported		
-tr.dec.strict.lambda	4.2.1	K in an expression is replaced by \ x1...xn -> (((K op1 x1) op2 x2) ...) opn xn, opi being $ or $!	dynamic	run	the translation literal at -O0, differenced against the compiled form	hand	Planned		
+tr.dec.strict.lambda	4.2.1	K in an expression is replaced by \ x1...xn -> (((K op1 x1) op2 x2) ...) opn xn, opi being $ or $!	dynamic	run	the translation literal at -O0, differenced against the compiled form. Differenced against the compiled form (the lead's word, 2026-11-11): hs/interp-vm runs the literal translation on Core's interpreter against the compiled program on the VM for each program that names the row (dec.newtype.ex.nbot's strict constructor, applied in part), sampled in check and whole nightly (ruling 47).	hand	Supported		
 tr.dec.strict.partial	4.2.1	by that lambda a partial application is a value though an argument so far is ⊥	dynamic	run	`seq (K undefined) 1` is 1 for `data T = K !Int !Int`	hand	Supported		
 tr.dec.strict.pattern	4.2.1	pattern matching on K is not affected by strictness flags	dynamic	run	a match on a value built through the wrapper behaves as on an ordinary constructor	hand	Supported		
 tr.dec.strict.order	4.2.1	the translation forces the flagged arguments last-first	dynamic	run	all ⊥ are one denotation (3.1), so which is forced first shows only in which error is reported; see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/tr.dec.strict.order): of two bottom flagged fields the second's error is reported, by .stderr-head, as the translation forces the last first (R24's literal seed); GHC, Hugs and nhc98 report the first	hand	Supported	R24	
-tr.dec.strict.prelude	4.2.1	the translation's $ and $! are the Prelude's, whatever is in scope	dynamic	accept	a strict constructor under `import Prelude ()`	hand	Planned		
+tr.dec.strict.prelude	4.2.1	the translation's $ and $! are the Prelude's, whatever is in scope	dynamic	accept	a strict constructor under `import Prelude ()`	hand	Supported		
 dec.type.basic	4.2.2	`type T u1...uk = t` introduces T, and (T t1...tk) is equivalent to t[t1/u1,...,tk/uk]	static	accept	a value used at both spellings	hand	Supported		
 dec.type.vars.distinct	4.2.2	the variables u1...uk must be distinct	static	reject	`type T a a = a` is refused	hand	Supported		
 dec.type.vars.scope	4.2.2	no other type variable may appear in t	static	reject	`type T a = b` is refused	hand	Supported		
@@ -1108,7 +1108,7 @@ dec.fun.where.clause	4.4.3.1	they do not scope over other clauses	static	reject	
 dec.fun.where.patvars	4.4.3.1	the where sees the clause's pattern variables	static	accept	`f x = y where y = x`	hand	Supported		
 dec.fun.nomatch	4.4.3.1	a call matching no clause is ⊥	dynamic	run	bottom probe by exit status	hand	Supported		
 dec.fun.shorthand	4.4.3.1	`= e where {decls}` is shorthand for `| True = e where {decls}`	dynamic	run	differential of the two forms	hand	Supported		
-tr.dec.fun	4.4.3.1	a function binding is x = \ x1...xk -> case (x1,...,xk) of (p11,...,p1k) match1 ... (pn1,...,pnk) matchn	dynamic	run	literal at -O0, differenced against decision trees	hand	Planned		
+tr.dec.fun	4.4.3.1	a function binding is x = \ x1...xk -> case (x1,...,xk) of (p11,...,p1k) match1 ... (pn1,...,pnk) matchn	dynamic	run	literal at -O0, differenced against decision trees. Differenced against decision trees (the lead's word, 2026-11-11): hs/desugar/orders runs the Report's top-to-bottom rules against Sestoft's trees, both on Core's interpreter, for each program that names the row (tr.dec.fun.lefttoright, tr.case.obligation_held), sampled in check and whole nightly (ruling 47); hs/interp-vm differences them against the compiled form.	hand	Supported		
 tr.dec.fun.lefttoright	4.4.3.1	by that translation arguments are matched left to right, clause by clause	dynamic	run	`f 0 _ = 1; f _ 0 = 2`: f ⊥ 0 diverges; `g _ 0 = 1; g 0 _ = 2`: g ⊥ 0 is 1	hand	Supported		
 tr.dec.fun.semantic	4.4.3.1	the translation is semantic only: the equation is a simple pattern binding, a function binding is not restricted	static	accept	a function binding stays overloaded though its translation would fall under 4.5.5	hand	Supported		
 tr.dec.fun.seq	4.4.3.1	by the translation a function of k>=1 patterns is a lambda, so its partial application at fewer than k is not ⊥	dynamic	run	`f x 0 = 1`: `seq (f undefined) 1` is 1, and `seq f 1` is 1	hand	Supported	R35	
@@ -1121,7 +1121,7 @@ dec.pat.toplevel	4.4.3.2	a top-level pattern binding is as lazy	dynamic	run	`(a,
 dec.pat.recursive	4.4.3.2	a pattern binding may be recursive	dynamic	run	`(xs, n) = (1 : xs, 2)`: take 2 xs	hand	Supported		
 dec.pat.guarded	4.4.3.2	a pattern binding may have guards and a where	dynamic	run	`(a, b) | c = (1, 2) | otherwise = (3, 4) where c = True`	hand	Supported		
 dec.pat.guarded.var	4.4.3.2	that holds with a single variable	dynamic	run	`x | c = 1 | otherwise = 2`	hand	Supported		
-tr.dec.pat.guards	4.4.3.2	`p | g1 = e1 ... | gm = em where decls` is p = let decls in if g1 then e1 else ... if gm then em else error "Unmatched pattern"	dynamic	run	literal at -O0, differenced against the compiled form	hand	Planned		
+tr.dec.pat.guards	4.4.3.2	`p | g1 = e1 ... | gm = em where decls` is p = let decls in if g1 then e1 else ... if gm then em else error "Unmatched pattern"	dynamic	run	literal at -O0, differenced against the compiled form. Differenced against the compiled form (the lead's word, 2026-11-11): hs/interp-vm on tr.dec.pat.guards's program (guards over a where, tried in order, an unmatched binding an error only where forced), and hs/desugar/orders against decision trees, sampled in check and whole nightly (ruling 47).	hand	Supported		
 tr.dec.pat.nomatch	4.4.3.2	when no guard holds the right-hand side is the error, on demand	dynamic	run	`x | False = 1` unused prints; used diverges	hand	Supported		
 tr.dec.pat.fallthrough	4.4.3.2	a pattern binding has no next clause	dynamic	run	the error above rather than a fall-through	hand	Supported		
 dec.note.funbind.plus	4.4.3.2	`x + 1 = ...` is a function binding that defines (+), as `(+) x 1 = ...`	syntax	run	the local + is applied, with Prelude.+ hidden from the use	hand	Supported		
@@ -3000,7 +3000,7 @@ lib.ix.class.ix.rangesize	15.2	Ix method rangeSize has its Report type; its defa
 lib.ix.export.ixrangecindexcinrangecrangesize	15.2	module Ix exports Ix(range, index, inRange, rangeSize)	module	accept	import Ix (Ix(range, index, inRange, rangeSize)) compiles and the name is usable	generated	Supported		
 lib.r.array.exportsix	16	Array exports module Ix, so importers need not import both	library	accept	`import Array; f = range (1,2)` compiles	hand	Supported		
 lib.r.array.abstract	16	Array is an abstract type: arrays are data, not general functions	library	reject	the constructor MkArray is not exported	hand	Supported		
-lib.r.array.rapid	16	A programmer may reasonably expect rapid access to the components	library	run	`--count` budget: (!) is not linear in the array's size; the Report's MkArray code is a function, not this	hand	Planned		
+lib.r.array.rapid	16	A programmer may reasonably expect rapid access to the components	library	run	`--count` budget: (!) is not linear in the array's size; the Report's MkArray code is a function, not this	hand	Supported		
 lib.r.array.bounds.lowhigh	16.1	The bounds are the lowest and highest indices, in that order	library	run	`bounds (array (1,10) [])`; one-origin 10 by 10 has ((1,1),(10,10))	hand	Supported		
 lib.r.array.assoc	16.1	An association (i,x) defines the value at index i to be x	library	run	read back with (!)	hand	Supported		
 lib.r.array.outofbounds	16.1	The array is _|_ if any index in the list is out of bounds	library	run	`seq (array (1,2) [(3,'a')]) ()` exits as error	hand	Supported		

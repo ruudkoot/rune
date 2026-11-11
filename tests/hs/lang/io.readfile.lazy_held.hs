@@ -1,6 +1,6 @@
 -- rows: R84
--- Report 7.1, readings.md R84: readFile is lazy; this runs now, and waits for a --count budget that bounds what reading the
--- head of a large file costs (tests/hs/perf, rhc's policy).
+-- Report 7.1, readings.md R84: readFile is lazy; the --count budget tests/hs/perf/io.readfile.lazy bounds what reading
+-- the head of a large file costs (hs/perf/io.readfile.lazy, rhc's policy).
 module Main (main) where
 
 main :: IO ()
