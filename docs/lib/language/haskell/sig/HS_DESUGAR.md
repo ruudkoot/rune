@@ -88,7 +88,7 @@ sig
                 -&gt; Core.program
   type <a href="#type-interface">interface</a> = {<a href="#fld-interface.core">core</a> : Core.program, <a href="#fld-interface.primtypes">primTypes</a> : (string * string) list, <a href="#fld-interface.builtincons">builtinCons</a> : (string * string) list,
                     <a href="#fld-interface.fields">fields</a> : (string * string list) list, <a href="#fld-interface.constructors">constructors</a> : (string * string list) list,
-                    <a href="#fld-interface.leaves">leaves</a> : string list, <a href="#fld-interface.defaults">defaults</a> : string list}
+                    <a href="#fld-interface.leaves">leaves</a> : string list, <a href="#fld-interface.defaults">defaults</a> : string list, <a href="#fld-interface.forced">forced</a> : (string * bool list) list}
   val <a href="#val-unit">unit</a> : {<a href="#fld-unit.interfaces">interfaces</a> : interface list, <a href="#fld-unit.modules">modules</a> : module_ list, <a href="#fld-unit.infer">infer</a> : HsInfer.env, <a href="#fld-unit.evidence">evidence</a> : HsEvidence.table,
               <a href="#fld-unit.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-unit.prelude">prelude</a> : string * string -&gt; string option,
               <a href="#fld-unit.entity">entity</a> : string * string * string -&gt; string, <a href="#fld-unit.runtime">runtime</a> : Core.program, <a href="#fld-unit.leaves">leaves</a> : (string * string list) list,
@@ -185,7 +185,7 @@ to 15), the raisers (HsDsCore.raisers) and the leaves' values.
 ```sml
 type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,
                   fields : (string * string list) list, constructors : (string * string list) list,
-                  leaves : string list, defaults : string list}
+                  leaves : string list, defaults : string list, forced : (string * bool list) list}
 ```
 
 What a unit's desugaring leaves the units after it.
@@ -196,7 +196,9 @@ Core's own, and `builtinCons` Bool's constructors, Core's; `fields`
 each constructor's fields' keys (`""` for one with no name), and
 `constructors` each data type's constructors' keys, in order; `leaves`
 the keys of the leaves' values, and `defaults` the methods with a
-default (a `%dm:` value).
+default (a `%dm:` value); `forced` each constructor with a strict field
+of a newtype's type, lazy in Core, by the fields it forces where it is
+applied (HsDsCore.forced).
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -207,6 +209,7 @@ default (a `%dm:` value).
 | <a name="fld-interface.constructors"></a>`constructors` | `(string * string list) list` |  |
 | <a name="fld-interface.leaves"></a>`leaves` | `string list` |  |
 | <a name="fld-interface.defaults"></a>`defaults` | `string list` |  |
+| <a name="fld-interface.forced"></a>`forced` | `(string * bool list) list` |  |
 
 ### <a name="val-unit"></a>`unit`
 

@@ -14,14 +14,19 @@ struct
   val tycons : tyconInfo M.map ref = ref M.empty
   val cons : conInfo_ M.map ref = ref M.empty
   val values : Core.ty M.map ref = ref M.empty
+  (* the fields a constructor forces where it is applied, where they are
+     not its fields' `!`: a strict field of a newtype's type, lazy in Core *)
+  val forcedMap : bool list M.map ref = ref M.empty
 
   fun fresh base = (counter := !counter + 1; "%" ^ base ^ Int.toString (!counter))
 
-  type saved = {counter : int, tycons : tyconInfo M.map, cons : conInfo_ M.map, values : Core.ty M.map}
+  type saved = {counter : int, tycons : tyconInfo M.map, cons : conInfo_ M.map, values : Core.ty M.map,
+                forced : bool list M.map}
 
-  fun save () = {counter = !counter, tycons = !tycons, cons = !cons, values = !values}
+  fun save () = {counter = !counter, tycons = !tycons, cons = !cons, values = !values, forced = !forcedMap}
 
-  fun restore (s : saved) = (counter := #counter s; tycons := #tycons s; cons := #cons s; values := #values s)
+  fun restore (s : saved) =
+    (counter := #counter s; tycons := #tycons s; cons := #cons s; values := #values s; forcedMap := #forced s)
 
   (* a name made here, `%`, a base and a number, and its base *)
   fun made x =
@@ -130,6 +135,7 @@ struct
      tycons := M.empty;
      cons := M.empty;
      values := M.empty;
+     forcedMap := M.empty;
      List.app (fn (c, k) =>
                  let
                    (* Core's built-in types: Ref's parameter, the others none *)
@@ -396,6 +402,29 @@ struct
           (Core.Case (e, b, [Core.AltDefault body]), lazyTy tb)
         end
 
+  (* x's representation evaluated, through every newtype at its head,
+     before k: what a strict field of a newtype's type forces *)
+  fun forceRep ((e, t), k) =
+    let
+      fun rep (e, t, seen) =
+        case dataArgs (lazyTy t) of
+          SOME (c, _) =>
+            if List.exists (fn s => s = c) seen then (e, t)
+            else (case unfold (lazyTy t) of SOME r => rep (Core.Cast (e, r), r, c :: seen) | NONE => (e, t))
+        | NONE => (e, t)
+    in
+      force (rep (e, t, []), fn _ => k ())
+    end
+
+  fun forced k =
+    case M.find (!forcedMap, k) of
+      SOME fl => fl
+    | NONE => (case conInfo k of SOME {fields, ...} => List.map Core.isEval fields | NONE => [])
+
+  fun setForced (k, fl) = forcedMap := M.insert (!forcedMap, k, fl)
+
+  fun forcedOverrides () = M.listItems (!forcedMap)
+
   fun caseCon (x, ty, alts, default) =
     case dataArgs ty of
       NONE => raise Fail ("HsDsCore: a case on " ^ CoreText.showTy ty ^ ", which is no data type")
@@ -437,15 +466,18 @@ struct
         in
           atoms (xs, fn avs =>
                        let
-                         (* a strict field is given its value evaluated *)
-                         fun go ([], [], acc) = (Core.Con (k, tys, List.rev acc), result)
-                           | go ((a, t) :: rest, f :: fs, acc) =
+                         (* a strict field is given its value evaluated; one of a
+                            newtype's type, lazy in Core, its representation *)
+                         fun go ([], [], _, acc) = (Core.Con (k, tys, List.rev acc), result)
+                           | go ((a, t) :: rest, f :: fs, b :: bs, acc) =
                                if Core.isEval f andalso not (Core.isEval t) then
-                                 force ((Core.Atom a, t), fn (v, _) => go (rest, fs, Core.Var v :: acc))
-                               else go (rest, fs, a :: acc)
+                                 force ((Core.Atom a, t), fn (v, _) => go (rest, fs, bs, Core.Var v :: acc))
+                               else if b andalso not (Core.isEval f) andalso not (Core.isEval t) then
+                                 forceRep ((Core.Atom a, t), fn () => go (rest, fs, bs, a :: acc))
+                               else go (rest, fs, bs, a :: acc)
                            | go _ = raise Fail ("HsDsCore: " ^ k ^ " given another number of fields")
                        in
-                         go (avs, fs, [])
+                         go (avs, fs, forced k, [])
                        end)
         end
 

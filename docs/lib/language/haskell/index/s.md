@@ -14,6 +14,7 @@
 - `SEMI` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-semi)
 - `Sestoft` (con): [HS_MATCH](../sig/HS_MATCH.md#con-sestoft)
 - `setFields` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-setfields)
+- `setForced` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-setforced)
 - `setLevel` (val): [HS_TYPES](../sig/HS_TYPES.md#val-setlevel)
 - `setNote` (val): [HS_USAGE](../sig/HS_USAGE.md#val-setnote)
 - `SExp` (con): [HS_AST](../sig/HS_AST.md#con-sexp)

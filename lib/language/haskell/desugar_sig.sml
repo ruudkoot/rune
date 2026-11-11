@@ -91,10 +91,12 @@ sig
      each constructor's fields' keys (`""` for one with no name), and
      `constructors` each data type's constructors' keys, in order; `leaves`
      the keys of the leaves' values, and `defaults` the methods with a
-     default (a `%dm:` value). *)
+     default (a `%dm:` value); `forced` each constructor with a strict field
+     of a newtype's type, lazy in Core, by the fields it forces where it is
+     applied (HsDsCore.forced). *)
   type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,
                     fields : (string * string list) list, constructors : (string * string list) list,
-                    leaves : string list, defaults : string list}
+                    leaves : string list, defaults : string list, forced : (string * bool list) list}
 
   (* `unit p` is the Core of the unit of the modules of `p`, after the units
      of its interfaces, in order, and its interface.

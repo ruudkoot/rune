@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DS_CORE`](../sig/HS_DS_CORE.md) |
 | Status | required |
-| Members | 42 |
+| Members | 46 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_core.sml](../../../../../lib/language/haskell/desugar_core.sml) |
 
@@ -40,6 +40,9 @@ What each means is on [`HS_DS_CORE`](../sig/HS_DS_CORE.md); the types are this s
 | val | [`fail`](../sig/HS_DS_CORE.md#val-fail) | `string * string * Core.ty -> texp` |
 | val | [`fieldsAt`](../sig/HS_DS_CORE.md#val-fieldsat) | `string * Core.ty list -> Core.ty list` |
 | val | [`force`](../sig/HS_DS_CORE.md#val-force) | `texp * (string * Core.ty -> texp) -> texp` |
+| val | [`forceRep`](../sig/HS_DS_CORE.md#val-forcerep) | `texp * (unit -> texp) -> texp` |
+| val | [`forced`](../sig/HS_DS_CORE.md#val-forced) | `string -> bool list` |
+| val | [`forcedOverrides`](../sig/HS_DS_CORE.md#val-forcedoverrides) | `unit -> (string * bool list) list` |
 | val | [`fresh`](../sig/HS_DS_CORE.md#val-fresh) | `string -> string` |
 | val | [`ifBool`](../sig/HS_DS_CORE.md#val-ifbool) | `texp * texp * texp -> texp` |
 | val | [`inferKinds`](../sig/HS_DS_CORE.md#val-inferkinds) | `string list * (string -> Core.kind option) * Core.ty list -> (string * Core.kind) list` |
@@ -56,6 +59,7 @@ What each means is on [`HS_DS_CORE`](../sig/HS_DS_CORE.md); the types are this s
 | val | [`reset`](../sig/HS_DS_CORE.md#val-reset) | `unit -> unit` |
 | val | [`restore`](../sig/HS_DS_CORE.md#val-restore) | `saved -> unit` |
 | val | [`save`](../sig/HS_DS_CORE.md#val-save) | `unit -> saved` |
+| val | [`setForced`](../sig/HS_DS_CORE.md#val-setforced) | `string * bool list -> unit` |
 | val | [`tupleArity`](../sig/HS_DS_CORE.md#val-tuplearity) | `string -> int option` |
 | val | [`tupleData`](../sig/HS_DS_CORE.md#val-tupledata) | `int -> Core.decl` |
 | val | [`tycon`](../sig/HS_DS_CORE.md#val-tycon) | `string -> ((string * Core.kind) list * shape) option` |
