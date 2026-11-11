@@ -386,7 +386,7 @@ int64_t vm_fork(VM *vm) {
     fflush(NULL);
     for (size_t i = 0; i < vm->nfiles; i++) {
         FILE *f = vm->files[i];
-        if (f && vm->file_modes[i] == 0 && sys_ftell(f) >= 0) sys_fseek(f, 0, SEEK_CUR);
+        if (f && ((vm->file_modes[i] & 0x0f) == 0 || (vm->file_modes[i] & 0x0f) == 3) && sys_ftell(f) >= 0) sys_fseek(f, 0, SEEK_CUR);
     }
     FILE *out = sys_fork_start();
     if (!out) return -1;
@@ -855,12 +855,13 @@ static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char 
     vm->files[2] = stderr;
     for (size_t i = 0; i < vm->nfiles && s.ok; i++) {
         int fd = (int)get_u32(&s);
-        vm->file_modes[i] = get_u8(&s);
+        /* the mode of file_open, without what a file of mode 3 did last */
+        vm->file_modes[i] = get_u8(&s) & 0x0f;
         uint8_t mode = vm->file_modes[i];
         if (kind == IMAGE_FORK) {
             /* the descriptors came with the child */
             if (i >= 3 && fd >= 0 && s.ok)
-                vm->files[i] = sys_fdopen(fd, mode == 0 ? "rb" : mode == 1 ? "wb" : "ab");
+                vm->files[i] = sys_fdopen(fd, mode == 0 ? "rb" : mode == 1 ? "wb" : mode == 3 ? "r+b" : "ab");
         } else {
             /* nothing was inherited: open the file again where it was left.
                A file written to is opened for update, not truncated. */
@@ -868,7 +869,7 @@ static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char 
             int64_t at = (int64_t)get_u64(&s);
             if (!s.ok) { free(path); break; }
             if (i >= 3 && path && path[0]) {
-                FILE *f = sys_fopen(path, mode == 0 ? "rb" : mode == 1 ? "r+b" : "ab");
+                FILE *f = sys_fopen(path, mode == 0 ? "rb" : mode == 1 || mode == 3 ? "r+b" : "ab");
                 if (!f) {
                     free(path);
                     return failed(&s, err, errlen, "a file the image was saved with cannot be opened again");

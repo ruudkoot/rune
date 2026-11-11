@@ -1956,11 +1956,24 @@ static FILE *file_of(VM *vm, Value h, const char *prim) {
     if (i < 0 || (uint64_t)i >= vm->nfiles) return NULL;
     return vm->files[i];
 }
+/* A file opened to read and to write (mode 3) goes from writing to
+   reading, or back, through a seek to where it is, as a C stream wants
+   between the two (C17 7.21.5.3): its mode's FILE_READ and FILE_WROTE say
+   which it did last. A seek (file_seek) says neither. */
+enum { FILE_MODE = 0x0f, FILE_READ = 0x10, FILE_WROTE = 0x20 };
+static void file_turn(VM *vm, Value h, int to) {
+    int64_t i = val_imm(h);
+    if (i < 0 || (uint64_t)i >= vm->nfiles || !vm->files[i] || (vm->file_modes[i] & FILE_MODE) != 3) return;
+    uint8_t m = vm->file_modes[i];
+    if (to && (m & (FILE_READ | FILE_WROTE)) && !(m & to)) sys_fseek(vm->files[i], 0, SEEK_CUR);
+    vm->file_modes[i] = (uint8_t)((m & FILE_MODE) | to);
+}
 static int p_file_open(VM *vm) {
     Obj *s = check_obj(vm, ARG(1), K_STRING, "file_open");
     check_tag(vm, ARG(0), T_INT, "file_open");
     int64_t mode = val_imm(ARG(0));
-    const char *m = mode == 0 ? "rb" : mode == 1 ? "wb" : mode == 2 ? "ab" : NULL;
+    /* 3: to read and to write, the file kept (sys_fopen_rw) */
+    const char *m = mode == 0 ? "rb" : mode == 1 ? "wb" : mode == 2 ? "ab" : mode == 3 ? "r+b" : NULL;
     if (!m) vm_fatal(vm, "primitive file_open: bad mode");
     char *path = malloc((size_t)obj_len(s) + 1);
     if (!path) vm_fatal(vm, "out of memory");
@@ -1968,7 +1981,7 @@ static int p_file_open(VM *vm) {
     path[obj_len(s)] = 0;
     FILE *f = NULL;
     if (strlen(path) != obj_len(s)) vm->io_errno = EINVAL;   /* embedded NUL */
-    else { f = sys_fopen(path, m); if (!f) vm->io_errno = errno; }
+    else { f = mode == 3 ? sys_fopen_rw(path) : sys_fopen(path, m); if (!f) vm->io_errno = errno; }
     if (!f) { free(path); return ret(vm, 2, mk_con0(0)); }
     char *kept = path;
     if (vm->nfiles == vm->files_cap) {
@@ -2002,6 +2015,7 @@ static int p_file_write(VM *vm) {
     FILE *f = file_of(vm, ARG(1), "file_write");
     Obj *s = check_obj(vm, ARG(0), K_STRING, "file_write");
     if (!f) { vm->io_errno = EBADF; return ret(vm, 2, mk_bool(0)); }
+    file_turn(vm, ARG(1), FILE_WROTE);
     if (f == stderr) fflush(stdout);
     if (fwrite(obj_bytes(s), 1, obj_len(s), f) != obj_len(s)) { vm->io_errno = errno; return ret(vm, 2, mk_bool(0)); }
     return ret(vm, 2, mk_bool(1));
@@ -2014,11 +2028,13 @@ static int p_file_flush(VM *vm) {
 static int p_file_read_line(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_read_line");
     if (!f) return ret(vm, 1, mk_con0(0));
+    file_turn(vm, ARG(0), FILE_READ);
     return read_line(vm, f, 1);
 }
 static int p_file_read_all(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_read_all");
     if (!f) return ret(vm, 1, mk_ptr(vm_string_from(vm, "", 0)));
+    file_turn(vm, ARG(0), FILE_READ);
     return read_all(vm, f, 1);
 }
 /* Read at most n bytes; the empty string at end of file. */
@@ -2028,6 +2044,7 @@ static int p_file_read_vec(VM *vm) {
     int64_t n = val_imm(ARG(0));
     if (n < 0 || n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
     if (!f) return ret(vm, 2, mk_ptr(vm_string_from(vm, "", 0)));
+    file_turn(vm, ARG(1), FILE_READ);
     char *buf = malloc((size_t)n ? (size_t)n : 1);
     if (!buf) vm_fatal(vm, "out of memory");
     /* at most n bytes, waiting for one (PrimIO's readVec): a file's from
@@ -2079,7 +2096,10 @@ static int p_file_seek(VM *vm) {
     FILE *f = file_of(vm, ARG(1), "file_seek");
     check_tag(vm, ARG(0), T_INT, "file_seek");
     int ok = f && val_imm(ARG(0)) >= 0 && sys_fseek(f, val_imm(ARG(0)), SEEK_SET) == 0;
-    if (!ok) vm->io_errno = f ? errno : EBADF;
+    if (ok) file_turn(vm, ARG(1), 0);
+    /* below 0 no seek is tried: EINVAL, which h_errno promises, not what
+       the call before left in errno */
+    if (!ok) vm->io_errno = !f ? EBADF : val_imm(ARG(0)) < 0 ? EINVAL : errno;
     return ret(vm, 2, mk_int(ok ? 0 : -1));
 }
 
