@@ -373,6 +373,26 @@ Rows: `mod.sep.recursive` (`accept/mod.recursive`), `mod.sep.sigs` (`accept/mod.
 `exitFailure`, its message on standard error, after the handles are flushed and closed, so what was written before
 it is kept. Rows: `exp.err.behaviour` (`lang/exp.err.terminate_stop`).
 
+### R38. Binary I/O, and what a character is on a handle
+**rhc's choice.** A `Char` is any code point (R5's version), and the standard handles carry UTF-8 on every host,
+binary-mode (no newline is translated): `putStrLn ['\233', '\8364']` writes the bytes C3 A9 E2 82 AC and a newline.
+**GHC** and **Hugs** do the same in a UTF-8 locale; **nhc98**'s 8-bit Char writes Latin-1. Rows: `io.binary`
+(`lang/io.binary`).
+
+### R45. Numeric corners: division by zero, `0 ** y`, coercions of NaN and infinities, Ord's totality
+**rhc's choice.** R45's seed: integral division by zero is an error, at `Int` and `Integer` (**GHC** and **Hugs**
+alike; **nhc98** gives -1); IEEE where Rune's real is, so `0 ** y` is IEEE's pow, 0, 1 or an infinity by `y`'s sign
+(**GHC** alike; **Hugs** errs at a negative `y`, **nhc98** gives the largest finite number); `truncate`, `round`,
+`ceiling`, `floor`, `properFraction` and `toRational` of a NaN or an infinity are errors (Domain or Overflow), as the
+Report's code leaves them undefined (**Hugs** errs too; **GHC** and **nhc98** give a number); and Double's `Ord` is
+not total over NaN (R90). Rows: `std.arith.zero` (`lang/std.arith.zero`), `std.pow.undefined`
+(`lang/std.pow.undefined`), `std.coerce.nan` (`lang/std.coerce.nan`), `std.ord.total` (`lang/der.ord.partial_nan`).
+
+### R47. The Prelude's code where it does not compile
+**rhc's choice.** R47's seed: the overlay (`share/rhc/haskell98/overlay.tsv`, `ov.preludeio.interact` for
+`interact`'s names) makes chapter 8's code compile as it means. Rows: `pre.r.interact.scope`
+(`lang/io.interact.example_ascii`).
+
 ## The readings of the libraries' clause programs (M19, chapters 12 to 27)
 
 These come from the clause programs of the Report's libraries, `tests/hs/lang` and `tests/hs/accept` from `lib.`, put to
