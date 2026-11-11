@@ -167,7 +167,7 @@ lex.int.incomplete.hex	2.5	Maximal munch: 0x not followed by a hexit lexes as 0 
 lex.int.incomplete.oct	2.5	0o not followed by an octit lexes as 0 then o...	lex	accept	`0o9` token dump	hand	Supported		
 lex.int.binary	2.5	There is no binary literal	lex	accept	`0b1` lexes as 0 then b1	hand	Supported		
 lex.int.underscore	2.5	There is no digit separator	lex	accept	`1_000` lexes as 1 then _000	hand	Supported	R58	
-lex.int.unidigit	2.5	decimal -> digit{digit} and digit includes uniDigit, yet chapter 19 says digits outside ASCII are not used to represent numbers	lex	reject	contradiction: rhc must pick; see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/lex.int.unidigit): rhc takes chapter 19's side, a numeric literal of ASCII digits only (R6 in readings.md).	hand	Supported	R6	
+lex.int.unidigit	2.5	decimal -> digit{digit} and digit includes uniDigit, yet chapter 19 says digits outside ASCII are not used to represent numbers	lex	reject	contradiction: rhc must pick; see readings.md. E9's test was none; ruling 49 makes it a refusal, ruling 56 a deviation: rhc refuses a numeric literal of other than ASCII digits, which 2.5's grammar admits and no clause gives a value (R6 in readings.md; tests/hs/deviations.tsv).	hand	Supported	R6	errors/lex.int.unidigit
 lex.float.point	2.5	float -> decimal . decimal [exponent]	lex	accept	`1.5`, `1.5e3`	hand	Supported		
 lex.float.exponent	2.5	float -> decimal exponent	lex	accept	`1e3` is a float	hand	Supported		
 lex.float.expform	2.5	exponent -> (e | E) [+ | -] decimal	lex	accept	`1E3`, `1e+3`, `1e-3`	hand	Supported		
@@ -328,7 +328,7 @@ exp.parse.let	3	let { ... } in x + y parses as let { ... } in (x + y)	syntax	run
 exp.parse.oplet	3	z + let { ... } in x + y parses as z + (let { ... } in (x + y))	syntax	run	printer output of the AST	hand	Supported		
 exp.parse.sig	3	f x y :: Int parses as (f x y) :: Int	syntax	run	printer output of the AST	hand	Supported		
 exp.parse.lambdasig	3	\ x -> a+b :: Int parses as \ x -> ((a+b) :: Int)	syntax	run	printer output of the AST	hand	Supported		
-exp.parse.letnonassoc	3	let x = True in x == x == True must parse as (let x = True in (x == x)) == True, since == is non-associative	syntax	run	see readings.md: the Report concedes a post-parse fixity pass gets this wrong; pinned reading or deviation	hand	Planned	R9	
+exp.parse.letnonassoc	3	let x = True in x == x == True must parse as (let x = True in (x == x)) == True, since == is non-associative	syntax	run	see readings.md: the Report concedes a post-parse fixity pass gets this wrong; pinned reading or deviation	hand	Supported	R9	errors/exp.parse.letnonassoc_refused
 exp.parse.advice	3	Programmers are advised to avoid constructs whose parsing involves associativity interacting with the let/lambda meta-rule	syntax	none	advice to programmers, nothing a test can show. Nothing to meet (ruling 49): advice to programmers, which asks nothing of rhc.	hand	Supported		
 exp.err.nontermination	3.1	Errors, denoted ⊥, are indistinguishable by a Haskell program from non-termination	dynamic	none	a negative universal over programs; tests can only pin that catch and error do not meet (exp.err.uncatchable). Met by construction (ruling 49): rhc gives a program no way to tell an error from a loop, since catch takes only an IOError and error raises none (exp.err.uncatchable's program).	hand	Supported		
 exp.err.alltypes	3.1	All Haskell types include ⊥	dynamic	run	undefined bound at a function, data, tuple, list, newtype and Int type, unused, and the program finishes	hand	Supported		
@@ -1562,7 +1562,7 @@ std.class.nocomment	6.3	If there is no such comment all methods must be given to
 std.eq.class	6.3.1	Eq has methods (==), (/=) with mutual defaults	prelude	accept	an instance defining either	hand	Supported		
 std.eq.default.ne	6.3.1	x /= y = not (x == y) by default	prelude	run	instance defining == only	hand	Supported		
 std.eq.default.eq	6.3.1	x == y = not (x /= y) by default	prelude	run	instance defining /= only	hand	Supported		
-std.eq.neither	6.3.1	An instance defining neither loops in both	prelude	run	evaluation runs out its budget; a stack limit or a detected loop is bottom as well	hand	Supported		
+std.eq.neither	6.3.1	An instance defining neither loops in both	prelude	run	evaluation runs out its budget; a stack limit or a detected loop is bottom as well	hand	Supported	R95	
 std.eq.both	6.3.1	If both are defined neither default is used	prelude	run	an instance whose /= is not the negation of ==	hand	Supported		
 std.eq.function	6.3.1	Functions are not in Eq	static	reject	id == id: refused	hand	Supported		
 std.eq.io	6.3.1	IO is not in Eq	static	reject	getChar == getChar: refused	hand	Supported		
@@ -2745,7 +2745,7 @@ der.show.assoc.ignored	10.4	Associativity is not used to reduce parentheses, tho
 der.show.example.fixity	10.4	Example: `infixr 4 :$; data T = Int :$ T | NT`: show (1 :$ 2 :$ NT) produces "1 :$ (2 :$ NT)"	dynamic	run	exact string	hand	Supported		
 der.show.fixity.declared	10.4	The declared fixity of an infix constructor sets its parenthesisation	dynamic	run	`showsPrec (p+1)` parenthesises, `showsPrec p` does not	hand	Supported		
 der.show.fixity.default	10.4	An infix constructor with no fixity declaration is infixl 9	dynamic	run	arguments at 10, parenthesised above 9	hand	Supported		
-der.show.fixity.point	10.4	The fixity used is that in force where the type is declared, not at the use	module	run	a client that defines a same-named local fixity sees no change	hand	Planned		
+der.show.fixity.point	10.4	The fixity used is that in force where the type is declared, not at the use	module	run	a client that defines a same-named local fixity sees no change	hand	Supported		
 der.show.infix.backtick	10.4	A constructor declared infix with backquotes is "defined to be an infix operator"?	dynamic	run	``data T = Int `C` Int``: the Report gives no output: see readings.md	hand	Supported	R41 R87	
 der.show.prefix.opcon	10.4	An operator constructor declared prefix	dynamic	run	`data T = (:+) Int Int`: which style: see readings.md	hand	Supported	R41 R87	
 der.show.showlist	10.4	showList of a derived type is the class default, bracketed with commas and no spaces	dynamic	run	`show [A,B]` is "[A,B]"	hand	Supported		
@@ -3751,7 +3751,7 @@ lib.r.system.exitwith.close	23	Before termination open and semi-closed handles a
 lib.r.system.exitfailure	23	exitFailure = exitWith (ExitFailure exitfail), exitfail implementation-dependent	library	run	a non-zero status	hand	Supported		
 lib.r.system.exitwith.nocatch	23	exitWith bypasses the I/O monad's error handling and cannot be intercepted by catch	library	run	`catch (exitWith ExitSuccess) h`: h does not run	hand	Supported		
 lib.r.system.term.error	23	A program ending by error, or with value _|_, is treated identically to exitFailure	library	run	non-zero status and handles closed, against 3.1's "immediate": see readings.md	hand	Supported	R37	
-lib.r.system.term.loop	23	A value "otherwise determined to be _|_" includes non-termination, detected or not	library	none	only a detected loop or stack exhaustion can be tested	hand	Planned		
+lib.r.system.term.loop	23	A value "otherwise determined to be _|_" includes non-termination, detected or not	library	run	only a detected loop or stack exhaustion can be tested. E9's test was none; ruling 49 makes it a run and ruling 58 its test (tests/hs/lang/lib.r.system.term.loop): a loop rhc determines, the re-entry of a blackholed suspension, ends with status 1 on the interpreter and the VM; the stack's exhaustion is D18's limit, outside the clause.	hand	Planned	R95	
 lib.r.system.term.normal	23	A program p ending without exitWith is treated as (p >> exitWith ExitSuccess) `catch` \ _ -> exitFailure	library	run	status 0 on success	hand	Supported		
 lib.r.system.term.ioerror	23	An uncaught IOError gives exitFailure	library	run	non-zero status, and 7.3's printed value on stderr	hand	Supported		
 lib.system.data.exitcode	23	type ExitCode is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		

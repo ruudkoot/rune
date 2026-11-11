@@ -290,6 +290,19 @@ Rows: `def.pick.first`.
 **Ruling.** A program whose modules import each other is written by hand, its output from the text alone (D52): none
 of GHC (without its boot files), Hugs or nhc98 compiles it as written. Rows: `mod.inst.recursive`.
 
+## The lead's rulings of 2026-11-11 (impl/rulings.md, 56 to 58)
+
+### R95. A bottom rhc determines, and the stack's limit
+> If a program terminates as a result of calling error or because its value is otherwise determined to be _|_, then
+> it is treated identically to the computation exitFailure. (23)
+
+**Ruling 58.** A loop rhc determines, the re-entry of a suspension blackholed while it is evaluated (form C), is
+"determined to be _|_": it ends as exitFailure does, status 1, on Core's interpreter and on the VM alike, what was
+written first flushed. Running out of the stack is D18's limit, an implementation's resource and not a determination
+of _|_ (GHC's own stack overflow exits 2): outside the clause, so the VM's status 2 there stands. **GHC**, **Hugs**
+and **nhc98** give status 1 on the blackholed loop. Rows: `lib.r.system.term.loop` (`lang/lib.r.system.term.loop`,
+which the VM fails today, R's), `std.eq.neither` (`lang/std.eq.neither_loops`, a loop to the stack's limit).
+
 ## The owner's calls on E9's readings (2026-11-10)
 
 E9 left these three to the owner (its readings.md in the drafts; the roadmap records the calls). Each is written here
@@ -337,14 +350,21 @@ the identifier; **Hugs** lexes it, and its Char calls neither letter upper nor l
 `lex.unicode.newversions` (`lang/lex.unicode.encoding`).
 
 ### R6. Unicode digits in a numeric literal
-**rhc's choice.** Chapter 19's side, as R6's seed and **GHC** have it: a numeric literal holds ASCII digits, and `١٢`
-is refused ("a digit above ASCII"), though a Unicode digit may stand in an identifier. R6's seed calls this a
-deviation from 2.5 read literally; the row's test is a refusal of rhc's choice. Rows: `lex.int.unidigit`
-(`errors/lex.int.unidigit`).
+**rhc's choice.** Chapter 19's side, as R6's seed has it: a numeric literal holds ASCII digits, and `١٢` is refused
+("a digit above ASCII"), though a Unicode digit may stand in an identifier. A deviation from 2.5's grammar, on the
+ground that the text contradicts itself (the lead's ruling 56, `tests/hs/deviations.tsv`): 2.5 admits the digit and
+no clause gives it a value. **GHC**, **Hugs**, **nhc98** and **MicroHs** all refuse it. Rows: `lex.int.unidigit`
+(`errors/lex.int.unidigit`, the deviation's pin).
 
 ### R8. A numeric escape's bound
 **rhc's choice.** R8's seed: an escape above `maxBound :: Char`, 0x10FFFF, is a static error, as **GHC** and **Hugs**
 refuse it; **nhc98** accepts it. Rows: `lex.esc.range` (`errors/lex.esc.range`).
+
+### R9. `let` against a non-associative operator
+**rhc's choice.** As R1 for `do` (D27, D38): the parser takes the meta-rule, the `let` extending as far right as it
+can, with operators flat, and fixity resolution refuses `x == x == True`; the parse 3 states, `(let x = True in (x ==
+x)) == True`, needs fixities while parsing, so it cannot be implemented as written: a deviation, pinned. **GHC**,
+**Hugs**, **nhc98** and **MicroHs** all refuse it. Rows: `exp.parse.letnonassoc` (`errors/exp.parse.letnonassoc_refused`).
 
 ### R14. The kernel's literals, and the translations' claim
 **rhc's choice.** R14's seed: an integer literal is the Prelude's `fromInteger` of an Integer, a floating one its
