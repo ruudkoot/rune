@@ -46,6 +46,7 @@ library language/haskell lib/language/haskell
   export signature HS_DUMP
   export signature HS_EVIDENCE
   export signature HS_FIXITY
+  export signature HS_IFACE
   export signature HS_INFER
   export signature HS_KINDS
   export signature HS_LAYOUT
@@ -84,6 +85,7 @@ library language/haskell lib/language/haskell
   export structure HsDump
   export structure HsEvidence
   export structure HsFixity
+  export structure HsIface
   export structure HsInfer
   export structure HsKinds
   export structure HsLayout
@@ -154,6 +156,8 @@ library language/haskell lib/language/haskell
     unit language/haskell:infer.sml lib/language/haskell/infer.sml ascii demand
     unit language/haskell:modiface_sig.sml lib/language/haskell/modiface_sig.sml ascii demand
     unit language/haskell:modiface.sml lib/language/haskell/modiface.sml ascii demand
+    unit language/haskell:hsiface_sig.sml lib/language/haskell/hsiface_sig.sml ascii demand
+    unit language/haskell:hsiface.sml lib/language/haskell/hsiface.sml ascii demand
   end
   use lib/language/haskell/core.build
     unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
@@ -295,10 +299,10 @@ provenance
   input lib/compiler/mid.build 3457b8d2776d3c493c09d63ea2ee5df01b4dfe1a92dc0195f2922a10ea3587cf
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
-  input lib/language/haskell/library.build 49ab305d9b9ba6438fd71ce3c09abad47c6ba3db561d3b275f34922a4b3a3e68
+  input lib/language/haskell/library.build 002172fc0f67a010b5b32ae1e241610b775f9c5199ae923bd2f399a6d2d7d61c
   input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
   input lib/language/haskell/names.build 865f359abc0c0d488bf56afea3d97d8ed86edc3c53b7c39997433996a9119960
-  input lib/language/haskell/types.build 415989611838f3d9649cb05be340ce588c8026fc3ff775e870a1cab0fc36701c
+  input lib/language/haskell/types.build 13df92c0a6b5c865dcaa065fb1b66bfaa90fb492b51b563dc4b7648d0bdd5826
   input lib/language/haskell/core.build af9419b8663fcd975e48babc55f1620ab8ba15d2766b50c395429795d7d03eaf
   input lib/language/haskell/hslint.build 111f509ac8f0072d070441ed422f8dd0b55dfb6dc0f2fbb926c909cf24e8c5a5
   input lib/language/haskell/desugar.build 2f2d4325b72d7b38c53d61974f92d02243122fcd36b98f4a6923b2353266481a

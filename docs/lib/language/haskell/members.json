@@ -1891,6 +1891,54 @@
     }
    ]
   },
+  "HS_IFACE": {
+   "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface), and the desugaring's part, its Core among it, as text the\ndesugaring gives. The unfoldings section is in the format from the\nstart and empty until M23 (D44's C).\n\n",
+   "page": "sig/HS_IFACE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list}",
+     "doc": "A unit's interface: its modules', the desugaring's part, and the\nunfoldings, none yet.\n\n",
+     "page": "sig/HS_IFACE.md#type-t"
+    },
+    {
+     "kind": "exception",
+     "name": "Bad",
+     "spec": "exception Bad of string",
+     "doc": "What makes text no interface: where, and what.\n\n",
+     "page": "sig/HS_IFACE.md#exn-bad"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : t -> string",
+     "doc": "`encode t` is `t` as text, which `decode` reads back.\n\nA kind or a type variable linked is written as what it is linked to;\none left unsolved, which no interface's generalized types hold, raises\n`Bad`.\n\n",
+     "page": "sig/HS_IFACE.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string -> t",
+     "doc": "`decode s` is the interface `encode` wrote as `s`.\n\n**Raises** `Bad` where `s` is not such text.\n\n",
+     "page": "sig/HS_IFACE.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "encodeModule",
+     "spec": "val encodeModule : HsModIface.t -> string",
+     "doc": "`encodeModule m` and `decodeModule s` are one module's interface's\npart of the text, for its tests.\n\n",
+     "page": "sig/HS_IFACE.md#val-encodemodule"
+    },
+    {
+     "kind": "val",
+     "name": "decodeModule",
+     "spec": "val decodeModule : string -> HsModIface.t",
+     "doc": "`encodeModule m` and `decodeModule s` are one module's interface's\npart of the text, for its tests.\n\n",
+     "page": "sig/HS_IFACE.md#val-decodemodule"
+    }
+   ]
+  },
   "HS_INFER": {
    "doc": "Haskell 98's type checker (the haskell98 roadmap's M13, D30, D31, D32,\nD33): one inference over the renamed, fixity-resolved trees of a unit,\nthe modules of one strongly connected group, joined, so that a binding\ngroup or a type group may cross its modules, with what it chose\nrecorded by node in HsEvidence's table.\n\nTypes by first-order unification with levels; kinds by HsKinds;\nclasses, instances and the derived instances' contexts, by the fixpoint\n10\\.1 allows, in HsClasses; each overloaded use leaves a placeholder,\nresolved at generalisation as a dictionary parameter, an instance's\ndictionary, a superclass's, deferred outward, or defaulted. Declaration\ngroups by dependency of bindings alone, a signature cutting none, each\ngroup's explicitly typed bindings apart and its implicitly typed ones\ntyped as one (Typing Haskell in Haskell's split in its conformant form,\nR21(c)), one context for each implicit group (R21(a)),\nthe contexts of a group's signatures identical up to renaming (R21(b)),\na signature on a pattern binding that is not simple refused (R19), and\nthe monomorphism restriction by 4.5.5's simple pattern binding (R18).\nA restricted group's constrained variables stay open, and at the top\nlevel are defaulted at the end of the module (R20), by the `default` of\nthe module their constraints arose in, refused where two modules'\ndiffer, and refused where another module of the cycle fixes one (D30);\nunder `--cycle-default=scc`, by the group's one `default`, and closed at\nthe end of the group (an extension). Defaulting by 4.3.4's conditions\n(R22).\n\n",
    "page": "sig/HS_INFER.md",
@@ -3253,6 +3301,7 @@
   "HsDump": "HS_DUMP",
   "HsEvidence": "HS_EVIDENCE",
   "HsFixity": "HS_FIXITY",
+  "HsIface": "HS_IFACE",
   "HsInfer": "HS_INFER",
   "HsKinds": "HS_KINDS",
   "HsLayout": "HS_LAYOUT",
