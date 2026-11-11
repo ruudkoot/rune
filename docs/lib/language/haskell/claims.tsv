@@ -19,6 +19,7 @@ HS_DS_ENV	signature			required	declared	lib/language/haskell/desugar_env_sig.sml
 HS_DUMP	signature			required	declared	lib/language/haskell/dump_sig.sml
 HS_EVIDENCE	signature			required	declared	lib/language/haskell/evidence_sig.sml
 HS_FIXITY	signature			required	declared	lib/language/haskell/fixity_sig.sml
+HS_IFACE	signature			required	declared	lib/language/haskell/hsiface_sig.sml
 HS_INFER	signature			required	declared	lib/language/haskell/infer_sig.sml
 HS_KINDS	signature			required	declared	lib/language/haskell/kinds_sig.sml
 HS_LAYOUT	signature			required	declared	lib/language/haskell/layout_sig.sml
@@ -57,6 +58,7 @@ HsDsEnv	structure	HS_DS_ENV		required	claimed	lib/language/haskell/desugar_env.s
 HsDump	structure	HS_DUMP		required	claimed	lib/language/haskell/dump.sml
 HsEvidence	structure	HS_EVIDENCE		required	claimed	lib/language/haskell/evidence.sml
 HsFixity	structure	HS_FIXITY		required	claimed	lib/language/haskell/fixity.sml
+HsIface	structure	HS_IFACE		required	ascribed	lib/language/haskell/hsiface.sml
 HsInfer	structure	HS_INFER		required	claimed	lib/language/haskell/infer.sml
 HsKinds	structure	HS_KINDS		required	claimed	lib/language/haskell/kinds.sml
 HsLayout	structure	HS_LAYOUT		required	claimed	lib/language/haskell/layout.sml

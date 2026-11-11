@@ -4,6 +4,7 @@
 
 - `BACKQUOTE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-backquote)
 - `BACKSLASH` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-backslash)
+- `Bad` (exn): [HS_IFACE](../sig/HS_IFACE.md#exn-bad)
 - `BAR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-bar)
 - `Bare` (con): [HS_PARSER](../sig/HS_PARSER.md#con-bare)
 - `bind` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-bind)

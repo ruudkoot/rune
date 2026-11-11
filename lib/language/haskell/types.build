@@ -20,4 +20,6 @@ files
   infer.sml
   modiface_sig.sml
   modiface.sml
+  hsiface_sig.sml
+  hsiface.sml
 end

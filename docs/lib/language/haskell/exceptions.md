@@ -4,6 +4,7 @@
 
 From the **Raises** paragraphs of the documented entries.
 
+- `Bad`: [`decode`](sig/HS_IFACE.md#val-decode) of HS_IFACE
 - `CoreText.Error`: [`program`](sig/CORE_RUNTIME.md#val-program) of CORE_RUNTIME
 - `Error`: [`check`](sig/CORE_LINT.md#val-check) of CORE_LINT, [`parse`](sig/CORE_TEXT.md#val-parse) of CORE_TEXT, [`parseType`](sig/CORE_TEXT.md#val-parsetype) of CORE_TEXT
 - `Fail`: [`program`](sig/HS_DESUGAR.md#val-program) of HS_DESUGAR, [`fieldsAt`](sig/HS_DS_CORE.md#val-fieldsat) of HS_DS_CORE, [`params`](sig/HS_DS_CORE.md#val-params) of HS_DS_CORE, [`caseCon`](sig/HS_DS_CORE.md#val-casecon) of HS_DS_CORE, [`prelude`](sig/HS_DS_ENV.md#val-prelude) of HS_DS_ENV, [`toHaskell`](sig/HS_DS_ENV.md#val-tohaskell) of HS_DS_ENV
