@@ -299,6 +299,42 @@ struct
           SOME (i, _) => (String.substring (key, 0, i), String.extract (key, i + 1, NONE))
         | NONE => (key, "")
       fun recordsAt (kind, span) = V.find (records, V.node (kind, span))
+      (* an instance's context, over its generic variables, in the order
+         of the checker's dictionaries: the checker's own context
+         (HsClasses.findInstance), held to HsLint's, written or least, as
+         the same predicates, since their order is the checker's to choose
+         (a derived instance's is its fixpoint's); NONE where HsLint has no
+         such instance *)
+      fun instanceContext (span, inst : string) : (C.inst * T.pred list) option =
+        let
+          val (cls, tc) = E.ofInstanceId inst
+          val keys = case CharVector.findi (fn (_, ch) => ch = #"@") inst of
+                       SOME (i, _) => SOME (String.substring (inst, 0, i), String.extract (inst, i + 1, NONE))
+                     | NONE => NONE
+        in
+          case List.find (fn ({head = T.IsIn (_, hh), ...} : C.inst) =>
+                            case T.spine hh of (T.TCon {id, ...}, _) => T.idEq (id, tc) | _ => false)
+                 (C.instsOf cls) of
+            SOME (i as {context = mine, ...}) =>
+              let
+                val theirs =
+                  case keys of
+                    SOME (c, t) => (case HsClasses.findInstance (HsInfer.classes env, c, t) of
+                                      SOME {ctx, ...} => List.map convPred ctx
+                                    | NONE => mine)
+                  | NONE => mine
+                fun within (a, b) = List.all (fn p => List.exists (fn q => T.predEq (p, q)) b) a
+              in
+                if length mine = length theirs andalso within (mine, theirs) andalso within (theirs, mine) then
+                  SOME (i, theirs)
+                else
+                  breach (span, "dict inst", "the instance " ^ #name cls ^ " " ^ #name tc ^ " has the context " ^
+                                             String.concatWith ", " (List.map T.showPred theirs) ^ ", and its " ^
+                                             (if #derived i then "least " else "") ^ "context is " ^
+                                             String.concatWith ", " (List.map T.showPred mine))
+              end
+          | NONE => NONE
+        end
       (* the parameters of every abstraction: a binder's, a signature's, an
          instance's context's, a class's (by its class alone) *)
       val params : (string * T.pred option) list ref = ref []
@@ -318,12 +354,10 @@ struct
                      end
                  | V.Instance {inst, vars, params = ps, ...} =>
                      let
-                       val (cls, tc) = E.ofInstanceId inst
+                       val span = spanOfKey (#2 (parse key))
                        val ctx =
-                         case List.find (fn ({head = T.IsIn (_, h), ...} : C.inst) =>
-                                           case T.spine h of (T.TCon {id, ...}, _) => T.idEq (id, tc) | _ => false)
-                                (C.instsOf cls) of
-                           SOME {context, ...} =>
+                         case instanceContext (span, inst) of
+                           SOME (_, context) =>
                              let val ts = Vector.fromList (List.map rigid vars)
                              in List.map (fn p => SOME (T.instPred ts p)) context handle Subscript => [] end
                          | NONE => []
@@ -370,10 +404,8 @@ struct
                                                 String.concatWith " " (List.map (fn t => T.showTyAt (2, t)) tys') ^
                                                 ", other than " ^ T.showPred p ^ "'s types")
               val ctx =
-                case List.find (fn ({head = T.IsIn (_, hh), ...} : C.inst) =>
-                                  case T.spine hh of (T.TCon {id, ...}, _) => T.idEq (id, tc) | _ => false)
-                       (C.instsOf c) of
-                  SOME {context, arity, ...} =>
+                case instanceContext (span, inst) of
+                  SOME ({arity, ...}, context) =>
                     if arity = length targs then List.map (T.instPred (Vector.fromList targs)) context
                     else breach (span, "dict inst", "the instance " ^ #name cls ^ " " ^ #name tc ^ " has another arity")
                 | NONE => breach (span, "dict inst", "no instance " ^ #name cls ^ " " ^ #name tc ^ " is declared or derived")
