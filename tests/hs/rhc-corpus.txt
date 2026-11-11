@@ -35,8 +35,7 @@ rhc | ghc/typecheck/should_fail/tcfail149::run | HOST-BUG | compile: R73: a meth
 # rhc's own faults, each with the milestone it belongs to
 rhc | conformance98/IO/overwrite::run | FAILS | exit: rhc's IO refuses openFile in ReadWriteMode ("ReadWriteMode is not supported"), M18's system primitives
 rhc | yhc-conformance/IO/overwrite::run | FAILS | exit: rhc's IO refuses openFile in ReadWriteMode ("ReadWriteMode is not supported"), M18's system primitives
-rhc | ghc/typecheck/should_run/tcrun001::run | FAILS | compile: rhc's desugaring fails: "HsDsEnv: the function type constructor applied to other than two types" (M15)
-rhc | jhc/6_fixed_bugs/StrictNewtype.hs::run | FAILS | compile: rhc's lint of its Core refuses its desugaring: "[case] in val Main.Foo: a case on Main.TID, a newtype: cast it" (M15)
+rhc | ghc/typecheck/should_run/tcrun001::run | FAILS | compile: rhc's desugaring fails: "HsDsEnv: the function type constructor applied to other than two types": `instance Flob (->)` wants Core's `->` as a type constructor of its own, partly applied, which B's Core is to give (M15, b.md)
 rhc | nhcnofib/real/parser::run | FAILS | compile: HsLint at level 2 (RUNE_LINT=2) refuses the checker's type of paAExpr (Main.hs:920): claimed with a list of a type variable where it is [Char] (M13 or M16)
 
 # performance (the lead's ruling 47): a finding for track P (M23-M25), not chased in M19
