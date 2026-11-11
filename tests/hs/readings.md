@@ -393,6 +393,12 @@ not total over NaN (R90). Rows: `std.arith.zero` (`lang/std.arith.zero`), `std.p
 `interact`'s names) makes chapter 8's code compile as it means. Rows: `pre.r.interact.scope`
 (`lang/io.interact.example_ascii`).
 
+### R53. An unterminated `\begin{code}`
+**rhc's choice.** R53's seed: an error ("a `\begin{code}` that no `\end{code}` closes"), as **GHC**'s unlit refuses
+it; **Hugs** and **nhc98** read to the end of the file. A file that mixes the two styles, which R53's seed would also
+refuse, rhc reads line by line, each line by its own style (`lit.mixed`'s how; no reading names that row). Rows:
+`lit.latex.unterminated` (`errors/lit.latex.unterminated`).
+
 ## The readings of the libraries' clause programs (M19, chapters 12 to 27)
 
 These come from the clause programs of the Report's libraries, `tests/hs/lang` and `tests/hs/accept` from `lib.`, put to

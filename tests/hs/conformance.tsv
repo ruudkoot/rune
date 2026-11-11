@@ -2298,13 +2298,13 @@ pre.io.export.writefile	8.3	module Prelude exports writeFile	module	accept	impor
 pre.io.export.appendfile	8.3	module Prelude exports appendFile	module	accept	import Prelude (appendFile) compiles and the name is usable	generated	Supported		
 pre.io.export.readio	8.3	module Prelude exports readIO	module	accept	import Prelude (readIO) compiles and the name is usable	generated	Supported		
 pre.io.export.readln	8.3	module Prelude exports readLn	module	accept	import Prelude (readLn) compiles and the name is usable	generated	Supported		
-syn.r.notation	9.1	Notation for the grammar, including the difference pat<pat'>	syntax	none	metalanguage; used by the rows below	hand	Planned		
+syn.r.notation	9.1	Notation for the grammar, including the difference pat<pat'>	syntax	none	metalanguage; used by the rows below. Nothing to meet (ruling 49): metalanguage, the grammar's notation; the syntax rows hold rhc to the grammar written in it.	hand	Supported		
 syn.r.family	9.1	Nonterminals are indexed by precedence 0 to 9 and associativity l, r, n; aexp -> ( expi+1 qop(a,i) ) stands for 30 productions	syntax	accept	a section at each of the ten levels and three associativities	hand	Supported		
 syn.r.metarule	9.1	Ambiguities are resolved by making phrases as long as possible, left to right (shift on shift/reduce)	syntax	accept	see the cases below	hand	Supported		
 syn.r.metarule.cond	9.1	Conditionals extend to the right as far as possible	syntax	accept	`if a then b else c + 1` holds the `+ 1` in the else	hand	Supported		
 syn.r.metarule.let	9.1	let-expressions extend to the right as far as possible	syntax	accept	`let x = 1 in x + 1`; but see the fixity interaction in 3	hand	Supported		
 syn.r.metarule.lambda	9.1	Lambda abstractions extend to the right as far as possible	syntax	accept	`\x -> x + 1`	hand	Supported		
-lex.ref.chapter9	9.2	9.2 repeats the lexical syntax of chapter 2	lex	none	the same productions: the lex rows apply; the comment erratum applies to both copies	hand	Planned		
+lex.ref.chapter9	9.2	9.2 repeats the lexical syntax of chapter 2	lex	none	the same productions: the lex rows apply; the comment erratum applies to both copies. Met through named rows' programs (ruling 49): the productions are chapter 2's, which the lex.* rows' programs hold.	hand	Supported		
 lay.brace.after.keyword	9.3	If let, where, do or of is not followed by {, the token {n} is inserted after it, n the indentation of the next lexeme	layout	accept	annotated token dump for each of the four keywords	hand	Supported		
 lay.brace.eof	9.3	If there is no next lexeme, {0} is inserted	layout	accept	a file ending in `where` or `do`; `module M where` then end of file	hand	Supported		
 lay.brace.explicit	9.3	A keyword followed by { gets no {n}	layout	accept	annotated token dump	hand	Supported		
@@ -2328,7 +2328,7 @@ lay.col.tab	9.3	Tab stops are 8 characters apart	layout	accept	a tab from column
 lay.col.tabalign	9.3	A tab inserts enough spaces to align with the next tab stop	layout	accept	spaces then tab mixed: alignment by columns, not by characters	hand	Supported		
 lay.col.vt	9.3	The Report does not say how a vertical tab moves the column	layout	none	silence: rhc chooses, one column, and documents it; see readings.md	hand	Supported	R4	accept/lex.any.linecomment_uniwhite
 lay.col.unicode	9.3	Unicode characters are of the same, fixed width as an ASCII character for the layout rule	layout	accept	a wide CJK or combining character counts one column; code point, not grapheme or byte	hand	Supported		
-lay.col.advice	9.3	Programmers should avoid layout whose meaning depends on the width of non-space characters	layout	none	advice to programmers	hand	Planned		
+lay.col.advice	9.3	Programmers should avoid layout whose meaning depends on the width of non-space characters	layout	none	advice to programmers. Nothing to meet (ruling 49): advice to programmers.	hand	Supported		
 lay.input.application	9.3	L tokens [] delivers the layout-insensitive translation of the annotated lexeme stream of a module	layout	accept	the implementation's output equals a separate executable L written from this section, on the corpus	hand	Supported		
 lay.l.1	9.3	L (<n>:ts) (m:ms) = ; : L ts (m:ms) if m = n	layout	accept	new line at the context's column gives ;	hand	Supported		
 lay.l.2	9.3	L (<n>:ts) (m:ms) = } : L (<n>:ts) ms if n < m	layout	accept	dedent gives } and the same <n> is tried again	hand	Supported		
@@ -2365,7 +2365,7 @@ lay.note6.explicit	9.3	Note 6: it is an error to be within a non-layout context 
 lay.notdetected	9.3	"Some error conditions are not detected by the algorithm, although they could be: for example let }"	layout	reject	the grammar refuses it either way; by equations 4 and 8 L does detect the usual case; see readings.md	hand	Supported	R3	
 lay.parseerror.let	9.3	`let x = e; y = x in e'` is valid and translates to `let { x = e; y = x } in e'`	layout	accept	expansion; the prose calls this Note 1, it is Note 5: see readings.md	hand	Supported	R1	
 lay.parseerror.fixity	9.3	`do a == b == c` has the single parse `(do { a == b }) == c` since (==) is non-associative	layout	accept	taking it needs fixity in the parser; the Report says hard to implement; a post-parse fixity pass gets it wrong; see readings.md	hand	Supported	R1	errors/lay.parseerror.fixity_refused
-lay.parseerror.advice	9.3	Programmers are advised to avoid code needing a closing brace in such situations	layout	none	advice to programmers	hand	Planned		
+lay.parseerror.advice	9.3	Programmers are advised to avoid code needing a closing brace in such situations	layout	none	advice to programmers. Nothing to meet (ruling 49): advice to programmers.	hand	Supported		
 lay.parseerror.doif	9.3	`do { if a ; then b ; else c }` is refused: ; is valid only as a stmt end	layout	reject	the layout-free form of the same mistake; Haskell 2010's DoAndIfThenElse is not Haskell 98	hand	Supported		
 lay.parseerror.multiline	9.3	`if` in a do block with then and else indented more parses	layout	accept	no semicolons arise	hand	Supported		
 lay.parseerror.thensamecol	9.3	`then` at the do block's column gets a ; and is refused	layout	reject	consequence of equation 1	hand	Supported		
@@ -2394,9 +2394,9 @@ lit.latex.end	9.4	Program code ends just before a subsequent line that begins \e
 lit.latex.comment	9.4	Everything outside the delimiters is comment	lex	accept	LaTeX text around code, with no blank lines needed	hand	Supported		
 lit.latex.noblank	9.4	No blank lines are needed before or after the delimiters	lex	accept	text directly adjacent	hand	Supported		
 lit.latex.restofline	9.4	Text after \begin{code} or \end{code} on its line is not program: "a line that begins"	lex	accept	`\begin{code} junk`	hand	Supported	R64	
-lit.latex.unterminated	9.4	The Report does not say what an unterminated \begin{code} means	lex	none	silence: rhc refuses or runs to end of file; see readings.md	hand	Planned	R53	
+lit.latex.unterminated	9.4	The Report does not say what an unterminated \begin{code} means	lex	reject	silence: rhc refuses or runs to end of file; see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/lit.latex.unterminated): rhc refuses a \begin{code} that no \end{code} closes, R53's seed (R53 in readings.md).	hand	Supported	R53	
 lit.latex.sameext	9.4	This style uses the same file extension	lex	accept	.lhs holding the LaTeX style	hand	Supported		
-lit.mixed	9.4	It is not advisable to mix the two styles in one file	lex	none	advice; what a mixed file means is unspecified; rhc chooses and documents it	hand	Planned		
+lit.mixed	9.4	It is not advisable to mix the two styles in one file	lex	none	advice; what a mixed file means is unspecified; rhc chooses and documents it. Met by construction (ruling 49): the passage is advice; rhc reads a file that mixes the two styles line by line, a > line and a \begin{code} block's lines alike program text, as HsLiterate's signature says.	hand	Supported		
 syn.r.body.emptydecls	9.5	topdecls has n>=0 here and n>=1 in 4 and 5.1; the difference is unobservable since a topdecl may be empty	syntax	accept	`module M where {}` and `module M where { ; ; }`	hand	Supported		
 syn.r.impdecl.empty	9.5	An impdecl may be empty	syntax	accept	`module M where { ; import A ; ; x = 1 }`	hand	Supported		
 syn.r.imports.first	9.5	All impdecls precede all topdecls	syntax	reject	an import after a declaration is refused	hand	Supported		
@@ -2750,7 +2750,7 @@ der.show.infix.backtick	10.4	A constructor declared infix with backquotes is "de
 der.show.prefix.opcon	10.4	An operator constructor declared prefix	dynamic	run	`data T = (:+) Int Int`: which style: see readings.md	hand	Supported	R41 R87	
 der.show.showlist	10.4	showList of a derived type is the class default, bracketed with commas and no spaces	dynamic	run	`show [A,B]` is "[A,B]"	hand	Supported		
 der.show.readable	10.4	The result of show is readable by read if all component types are readable	dynamic	run	`read (show x) == x` over a sample; fails at negative floats if the Report's code is literal: see readings.md	hand	Supported	R42 R88	
-der.show.userinst	10.4	Readability holds for Prelude instances but may fail for user-defined instances	dynamic	none	no requirement on user instances	hand	Planned		
+der.show.userinst	10.4	Readability holds for Prelude instances but may fail for user-defined instances	dynamic	none	no requirement on user instances. Nothing to meet (ruling 49): no requirement on a user's instances.	hand	Supported		
 der.show.linear	10.4	The extra parameter r lets tree-like structures print in linear rather than quadratic time	dynamic	run	`--count` budget on a deep left-nested tree	hand	Supported		
 der.read.prec.range	10.4	readsPrec d takes a precedence level d from 0 to 10, yet Figure 10.1 calls readsPrec at app_prec+1 = 11	dynamic	run	the derived reader must accept 11: see readings.md	hand	Supported	R41 R87	
 der.read.result	10.4	readsPrec d s returns a list of (parsed value, remaining string) pairs	dynamic	run	`reads "A rest"`	hand	Supported		
@@ -2770,10 +2770,10 @@ der.read.record.prec	10.4	The precedence at which an unparenthesised record is r
 der.read.space	10.4	Arbitrary Haskell whitespace between tokens of the input is allowed	dynamic	run	spaces, tabs, newlines; comments are whitespace to the grammar but not to `lex`: see readings.md	hand	Supported	R43 R89	
 der.read.parens	10.4	Extra parentheses are allowed	dynamic	run	`read "((A))"`	hand	Supported		
 der.read.neg	10.4	A negative number as an argument is read as show writes it	dynamic	run	`read "Just (-1)"`; the Report's readSigned ignores d, so "Just -1" also parses: see readings.md	hand	Supported	R42 R88	
-der.read.exponential	10.4	The parsing techniques used by the reader are very inefficient	dynamic	none	a warning, not a requirement	hand	Planned		
-der.notes.circular	10.4	Circular structures cannot be printed or read by these instances	dynamic	none	a warning about non-termination, not a requirement	hand	Planned		
-der.notes.sharing	10.4	The printer loses shared substructure	dynamic	none	a warning, not a requirement	hand	Planned		
-der.notes.formatting	10.4	There is no user control over the printing of Prelude types	dynamic	none	a statement of absence	hand	Planned		
+der.read.exponential	10.4	The parsing techniques used by the reader are very inefficient	dynamic	none	a warning, not a requirement. Nothing to meet (ruling 49): a warning on the derived reader's cost, not a requirement.	hand	Supported		
+der.notes.circular	10.4	Circular structures cannot be printed or read by these instances	dynamic	none	a warning about non-termination, not a requirement. Nothing to meet (ruling 49): a warning that showing or reading a circular structure does not end, not a requirement.	hand	Supported		
+der.notes.sharing	10.4	The printer loses shared substructure	dynamic	none	a warning, not a requirement. Nothing to meet (ruling 49): a warning that the printer loses sharing, not a requirement.	hand	Supported		
+der.notes.formatting	10.4	There is no user control over the printing of Prelude types	dynamic	none	a statement of absence. Nothing to meet (ruling 49): a statement of absence.	hand	Supported		
 der.show.infix.args	10.5	Both arguments of an infix constructor are shown at the constructor's precedence plus one	dynamic	run	Figure 10.1	hand	Supported		
 der.show.infix.spaces	10.5	An infix constructor is separated by one space on each side	dynamic	run	Figure 10.1's " :^: "	hand	Supported		
 der.read.ordering.results	10.5	Results of alternatives are concatenated in constructor order	dynamic	run	the order of `reads` on an ambiguous sample	hand	Supported		
@@ -2791,14 +2791,14 @@ der.tree.read.alternatives	10.5	The two alternatives are appended, :^: first	dyn
 der.tree.read.terminates	10.5	The left-recursive reader terminates, the recursive call at precedence 6 needing parentheses	dynamic	run	`read` at d = 0 returns on a deep tree	hand	Supported		
 der.tree.fixity	10.5	The figure assumes `infixr 5 :^:`, a declaration the text's own datatype leaves out	static	accept	with the declaration the figure's numbers hold; without it they are 9: see readings.md	hand	Supported	R52 R92	
 prag.notlanguage	11	Pragmas give hints, do not form part of the language proper and do not change a program's semantics	lex	accept	a program with and without pragmas gives equal output	hand	Supported		
-prag.notrequired	11	An implementation is not required to respect any pragma	lex	none	permission: nothing to observe	hand	Planned		
+prag.notrequired	11	An implementation is not required to respect any pragma	lex	none	permission: nothing to observe. Nothing to meet (ruling 49): a permission; rhc accepts the pragmas (prag.inline's and prag.specialize's programs) and gives them no meaning a program can observe.	hand	Supported		
 prag.unknown	11	A pragma the implementation is not prepared to handle should be ignored	lex	accept	`{-# FROB x #-}` compiles, also where no declaration may stand	hand	Supported		
 prag.lexical	11	Lexically pragmas appear as comments, with the enclosing syntax {-# #-}	lex	accept	no layout tokens arise, and they nest with comments	hand	Supported		
 prag.inline	11.1	decl -> {-# INLINE qvars #-}	syntax	accept	accepted at each decl position; `qvars` is defined nowhere: see readings.md	hand	Supported	R52 R92	
 prag.noinline	11.1	decl -> {-# NOINLINE qvars #-}	syntax	accept	as INLINE	hand	Supported		
-prag.inline.meaning	11.1	INLINE instructs the compiler to inline; NOINLINE may prevent automatic inlining	dynamic	none	a hint, with no observable semantics	hand	Planned		
+prag.inline.meaning	11.1	INLINE instructs the compiler to inline; NOINLINE may prevent automatic inlining	dynamic	none	a hint, with no observable semantics. Nothing to meet (ruling 49): a hint with no observable meaning; rhc accepts the pragma (prag.inline's program).	hand	Supported		
 prag.specialize	11.2	decl -> {-# SPECIALIZE spec1 , ... , speck #-}, k>=1; spec -> vars :: type	syntax	accept	the Report's factorial example compiles	hand	Supported		
-prag.specialize.meaning	11.2	Calls at the given types use specialised versions	dynamic	none	a hint, with no observable semantics	hand	Planned		
+prag.specialize.meaning	11.2	Calls at the given types use specialised versions	dynamic	none	a hint, with no observable semantics. Nothing to meet (ruling 49): a hint with no observable meaning; rhc accepts the pragma (prag.specialize's and prag.specialize.example's programs).	hand	Supported		
 prag.specialize.example	11.2	The example's `factorial 0 = 0` makes every result 0	dynamic	run	a printing error in the Report's example; with the pragma the result is unchanged, which is all that is required	hand	Supported		
 lib.r.ratio.anyintegral	12	For each Integral type t there is a type Ratio t	library	accept	Ratio Int and Ratio Integer used	hand	Supported		
 lib.r.ratio.noninteger	12	Ratio needs an Integral component: the datatype context restricts its constructor	library	reject	`1 % 2 :: Ratio Float` is refused	hand	Supported		
