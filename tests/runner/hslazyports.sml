@@ -10,7 +10,7 @@
 
    A ready port's job prepares its sources as the corpus is prepared
    (HsCorpus.prepare: h98, the import rewrite, then the 2019 nofib's compat
-   layer, the first rhc compiles), with the upstream's other files beside
+   layer, the first rhc compiles; or the variant the manifest records), with the upstream's other files beside
    them, compiles them with bin/rhc, runs the program on bin/runevm with
    nofib's arguments and input, and wants the fixture. A port rhc refuses or
    that prints otherwise is a finding, which tests/hs/rhc-corpus.txt lists
@@ -30,13 +30,16 @@ struct
   val gib = 1024 * 1024 * 1024
   val limits = {addressSpace = SOME (6 * gib), cpuTime = NONE, fileSize = SOME gib, core = SOME 0}
 
-  (* the manifest: port, status, main, args, stdin, expected, reason *)
+  (* the manifest: port, status, main, args, stdin, expected, variant,
+     reason; a variant recorded is the one the port is prepared in (the
+     lead's ruling 54: sphere-lazy's hash over Integer, the compat layer's) *)
   fun ports () =
     let
       val text = read (manifest ())
       val ls = List.filter (fn l => l <> "" andalso not (String.isPrefix "#" l)) (lines text)
       fun row l = case String.fields (fn c => c = #"\t") l of
-                    [p, s, m, a, i, e, r] => SOME {port = p, status = s, main = m, args = a, stdin = i, expected = e, reason = r}
+                    [p, s, m, a, i, e, v, r] => SOME {port = p, status = s, main = m, args = a, stdin = i, expected = e,
+                                                      variant = v, reason = r}
                   | _ => NONE
     in List.mapPartial row (tl ls) end
   fun ready () = List.filter (fn r => #status r = "ready") (ports ())
@@ -45,7 +48,7 @@ struct
 
   (* a ready port through rhc: prepared, compiled and run *)
   fun one (r : {port : string, status : string, main : string, args : string, stdin : string, expected : string,
-                reason : string}) =
+                variant : string, reason : string}) =
     let
       val port = #port r
       val id = "lazy/" ^ port
@@ -55,7 +58,8 @@ struct
       val work = out () ^ "/lazy/" ^ port
       val log = out () ^ "/logs/" ^ id
       val {files, rewritable, ...} = HsCorpus.closureOf c
-      val variants = ["h98"] @ (if null rewritable then [] else ["rewrite"]) @ ["harness"]
+      val variants = if #variant r <> "" then [#variant r]
+                     else ["h98"] @ (if null rewritable then [] else ["rewrite"]) @ ["harness"]
       val want = read (up ^ "/" ^ #expected r)
       fun call (tag, cmd, dir, stdin, timeout) =
         let val () = mkdirs (OS.Path.dir log)

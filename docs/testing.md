@@ -399,15 +399,17 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   refusal of a job that ran.
 - `hs-lazy-ports/PORT`, needing `rhc` and `rhc-compiles` (which compiles and runs hello, so held until rhc
   compiles): the Haskell beside each `-lazy` port of `examples/benchmarks` that `tests/hs/lazy-ports.tsv` marks
-  `ready` (GHC prints nofib's fixture in fast mode, and its imports reach the Report), prepared as the corpus is,
-  compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
+  `ready` (GHC prints nofib's fixture in fast mode, and its imports reach the Report), prepared as the corpus is
+  (or in the variant the manifest records, sphere-lazy's `harness`, its hash over `Integer` as the compat layer's,
+  by the lead's ruling 54), compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
   the SML port is validated against. The manifest says why each other port is held; a finding is a line of
   `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
-- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc (refused, then again under `--dotted-names`, D35's
-  flag for the corpus) and run in D56's three ways (`test`, `register`, `register-opt`), its output E8's expected
-  one (the same, the same words, or numbers equal to about five digits) and its status 0; all 188 vendored and in
-  `check`, but those `tests/hs/corpus-nightly.txt` names, whose run is over D56's second in a way of `check` (the
-  lead's ruling 47), `nightly`; held while the row `prog.main.value` is Planned. Each step's wall time is kept
+- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc once for each target, the stack bytecode for `test`
+  and the register one for `register` and `register-opt` (the lead's ruling 52; refused, in E8's variant, then
+  rewritten, then under `--dotted-names`, D35's flag for the corpus), and run in D56's three ways, its output E8's
+  expected one (the same, the same words, or numbers equal to about five digits) and its status 0; all 188 vendored
+  and in `check`, but those `tests/hs/corpus-nightly.txt` names, whose run is over D56's second in a way of `check`
+  (the lead's ruling 47), `nightly`; held while the row `prog.main.value` is Planned. Each step's wall time is kept
   beside the logs (`LOG.times`). A program both judges ran right (GHC's and Hugs's outputs E8's) that rhc refuses
   (`compile`), ends otherwise (`exit`) or prints otherwise (`diff`) is a finding, and fails its job unless a line of
   `tests/hs/rhc-corpus.txt` gives its cause (`rhc | ID::run | CATEGORY | OUTCOME: ...`); what it does where the
@@ -901,7 +903,8 @@ binding's span covers more, as a function binding's head does, is left.
 **rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
 `hs/interp-vm/NAME`, nightly, and the sample of ruling 47 in `check`). Each run program of `tests/hs/lang` through rhc to
 Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
-Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
+Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, or the bytecode `hs/compile/register/NAME` made in the same run
+where the program has no `.cargs`, compiled once by the lead's ruling 52; `bin/runevm OUT`), with its
 `.stdin` and the VM with its `.vmargs` (as `hs/meta`'s runs are), a program of
 one file interpreted as a copy named `prog.hs`, so that `getProgName` is `prog`
 both ways: the VM prints what the interpreter printed and ends as it did, every

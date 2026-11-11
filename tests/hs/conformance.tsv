@@ -3585,11 +3585,11 @@ lib.r.io.bracket	21.1	bracket runs the deallocation even on an error during comp
 lib.r.io.filename	21.2	File and directory names are Strings of operating-system dependent meaning	library	none	implementation-defined; rhc must pick an encoding: see readings.md	hand	Planned	R38	
 lib.r.io.handle.props	21.2	A handle has at least: input/output, open/closed/semi-closed, seekable, buffering, a buffer	library	none	a description, tested through hIs* and hGetBuffering	hand	Planned		
 lib.r.io.handle.readable	21.2	A handle is readable if it manages input, writable if it manages output	library	run	each IOMode with hIsReadable and hIsWritable	hand	Supported		
-lib.r.io.handle.open	21.2	A handle is open when first allocated	library	run	hIsOpen after openFile	hand	Planned		
-lib.r.io.handle.closed	21.2	Once closed a handle can no longer be used for input or output	library	run	hGetChar and hPutChar fail after hClose	hand	Planned		
+lib.r.io.handle.open	21.2	A handle is open when first allocated	library	run	hIsOpen after openFile	hand	Supported		
+lib.r.io.handle.closed	21.2	Once closed a handle can no longer be used for input or output	library	run	hGetChar and hPutChar fail after hClose	hand	Supported		
 lib.r.io.handle.show	21.2	Handles are in Show; the string is system dependent and should identify the handle	library	run	non-empty, differs between two handles	hand	Supported		
 lib.r.io.handle.eq	21.2	A handle is equal under == only to itself	library	run	two handles on one file are unequal	hand	Supported		
-lib.r.io.std.open	21.2.1	stdin, stdout and stderr are allocated at initialisation and initially open	library	run	hIsOpen on each	hand	Planned		
+lib.r.io.std.open	21.2.1	stdin, stdout and stderr are allocated at initialisation and initially open	library	run	hIsOpen on each	hand	Supported		
 lib.r.io.std.channels	21.2.1	They manage the standard input, output and error channels	library	run	output on each channel captured apart	hand	Supported		
 lib.r.io.semi.state	21.2.2	hGetContents puts the handle in the semi-closed state	library	run	hIsClosed and hIsOpen: the Report gives no predicate for semi-closed: see readings.md	hand	Supported	R49 R156	
 lib.r.io.semi.fails	21.2.2	Any operation that fails on a closed handle fails on a semi-closed one	library	run	hGetChar after hGetContents fails	hand	Supported		
@@ -3605,21 +3605,21 @@ lib.r.io.lock.reader	21.2.3	If a handle manages a file for input new handles may
 lib.r.io.lock.semi	21.2.3	The rule counts open and semi-closed handles	library	run	openFile for output after hGetContents fails	hand	Supported		
 lib.r.io.lock.readfile	21.2.3	readFile holds a semi-closed handle until the contents are consumed; writeFile usually fails with isAlreadyInUseError	library	run	lazily read then write the same file	hand	Supported		
 lib.r.io.lock.same	21.2.3	Whether two files are the same is implementation-dependent	library	none	implementation-defined	hand	Planned		
-lib.r.io.openfile.mode	21.3.1	openFile manages input in ReadMode, output in WriteMode and AppendMode, both in ReadWriteMode	library	run	hIsReadable, hIsWritable	hand	Planned		
-lib.r.io.openfile.create	21.3.1	A missing file opened for output is created	library	run	doesFileExist afterwards	hand	Planned		
-lib.r.io.openfile.truncate	21.3.1	WriteMode truncates an existing file to zero length	library	run	size afterwards	hand	Planned		
-lib.r.io.openfile.append	21.3.1	AppendMode positions at the end of the file	library	run	contents after a write	hand	Planned		
-lib.r.io.openfile.start	21.3.1	Other modes position at the beginning	library	run	first character read	hand	Planned		
+lib.r.io.openfile.mode	21.3.1	openFile manages input in ReadMode, output in WriteMode and AppendMode, both in ReadWriteMode	library	run	hIsReadable, hIsWritable	hand	Supported		
+lib.r.io.openfile.create	21.3.1	A missing file opened for output is created	library	run	doesFileExist afterwards	hand	Supported		
+lib.r.io.openfile.truncate	21.3.1	WriteMode truncates an existing file to zero length	library	run	size afterwards	hand	Supported		
+lib.r.io.openfile.append	21.3.1	AppendMode positions at the end of the file	library	run	contents after a write	hand	Supported		
+lib.r.io.openfile.start	21.3.1	Other modes position at the beginning	library	run	first character read	hand	Supported		
 lib.r.io.openfile.buffer	21.3.1	The initial buffer mode is implementation-dependent	library	none	implementation-defined	hand	Planned		
 lib.r.io.openfile.err.inuse	21.3.1	openFile may fail with isAlreadyInUseError if already open and not reopenable	library	run	as lib.r.io.lock.writer	hand	Supported		
 lib.r.io.openfile.err.notexist	21.3.1	openFile may fail with isDoesNotExistError	library	run	ReadMode on a missing file	hand	Supported		
 lib.r.io.openfile.err.perm	21.3.1	openFile may fail with isPermissionError	library	run	a file without permission, skipped as root	hand	Supported		
-lib.r.io.hclose.flush	21.3.2	hClose flushes a writable handle's buffer before it finishes	library	run	contents on disk after hClose	hand	Planned		
-lib.r.io.hclose.twice	21.3.2	hClose of a closed handle has no effect and is not an error	library	run	succeeds; the verb erratum Nov 2006 restores	hand	Planned		
-lib.r.io.hclose.others	21.3.2	All other operations on a closed handle fail	library	run	each operation of the library	hand	Planned		
+lib.r.io.hclose.flush	21.3.2	hClose flushes a writable handle's buffer before it finishes	library	run	contents on disk after hClose	hand	Supported		
+lib.r.io.hclose.twice	21.3.2	hClose of a closed handle has no effect and is not an error	library	run	succeeds; the verb erratum Nov 2006 restores	hand	Supported		
+lib.r.io.hclose.others	21.3.2	All other operations on a closed handle fail	library	run	each operation of the library	hand	Supported		
 lib.r.io.hclose.failed	21.3.2	After hClose fails, further operations fail as if it had succeeded	library	none	needs an injected close failure	hand	Planned		
-lib.r.io.hfilesize	21.4	hFileSize returns the file's size in 8-bit bytes	library	run	exact, for a file with non-ASCII text too	hand	Planned		
-lib.r.io.hiseof	21.5	hIsEOF is True when no further input can be taken: position equals length	library	run	before and after the last character	hand	Planned		
+lib.r.io.hfilesize	21.4	hFileSize returns the file's size in 8-bit bytes	library	run	exact, for a file with non-ASCII text too	hand	Supported		
+lib.r.io.hiseof	21.5	hIsEOF is True when no further input can be taken: position equals length	library	run	before and after the last character	hand	Supported		
 lib.r.io.iseof	21.5	isEOF is hIsEOF on stdin	library	run	with a piped input	hand	Supported		
 lib.r.io.buffer.line	21.6	Line buffering flushes on newline, overflow, hFlush and close	library	run	a second process observes the output, or a strace-free pipe test	hand	Planned		
 lib.r.io.buffer.block	21.6	Block buffering flushes on overflow, hFlush and close	library	run	as above	hand	Planned		
@@ -3628,46 +3628,46 @@ lib.r.io.buffer.more	21.6	An implementation may flush more often than specified,
 lib.r.io.buffer.input.line	21.6	Line-buffered input reads until a newline or a full buffer	library	none	observable only by timing on a terminal or pipe	hand	Planned		
 lib.r.io.buffer.input.block	21.6	Block-buffered input reads the next block when the buffer empties	library	none	observable only by timing	hand	Planned		
 lib.r.io.buffer.input.none	21.6	No buffering returns the next input item	library	run	an interactive pipe answers character by character	hand	Planned		
-lib.r.io.hsetbuffering	21.6	hSetBuffering sets the mode for subsequent reads and writes	library	run	read back by hGetBuffering	hand	Planned		
-lib.r.io.hsetbuffering.size	21.6	BlockBuffering (Just n) gives n items, Nothing an implementation-dependent size	library	run	read back	hand	Planned		
+lib.r.io.hsetbuffering	21.6	hSetBuffering sets the mode for subsequent reads and writes	library	run	read back by hGetBuffering	hand	Supported		
+lib.r.io.hsetbuffering.size	21.6	BlockBuffering (Just n) gives n items, Nothing an implementation-dependent size	library	run	read back	hand	Supported		
 lib.r.io.hsetbuffering.toflush	21.6	Changing to NoBuffering flushes a writable handle	library	run	output appears at the change	hand	Planned		
 lib.r.io.hsetbuffering.discard	21.6	Changing to NoBuffering discards a non-writable handle's buffer	library	run	the next read skips what was buffered; order of reads shows it	hand	Planned		
 lib.r.io.hsetbuffering.err	21.6	hSetBuffering may fail with isPermissionError if the handle has been used	library	none	a licence to the implementation	hand	Planned		
-lib.r.io.hgetbuffering	21.6	hGetBuffering returns the current mode	library	run	after each hSetBuffering	hand	Planned		
+lib.r.io.hgetbuffering	21.6	hGetBuffering returns the current mode	library	run	after each hSetBuffering	hand	Supported		
 lib.r.io.hflush	21.6.1	hFlush sends buffered items to the operating system at once	library	run	another handle reads them	hand	Planned		
 lib.r.io.hflush.err	21.6.1	hFlush may fail with isFullError or isPermissionError; the buffer's fate is unspecified	library	none	needs a full device	hand	Planned		
-lib.r.io.hgetposn	21.7.1	hSetPosn p restores the position hGetPosn gave	library	run	reads repeat	hand	Planned		
+lib.r.io.hgetposn	21.7.1	hSetPosn p restores the position hGetPosn gave	library	run	reads repeat	hand	Supported		
 lib.r.io.hsetposn.err	21.7.1	hSetPosn may fail with isPermissionError on a resource limit	library	none	needs an injected limit	hand	Planned		
-lib.r.io.hseek.absolute	21.7.2	AbsoluteSeek sets the position to i	library	run	next character read	hand	Planned		
-lib.r.io.hseek.relative	21.7.2	RelativeSeek sets it to offset i from the current position	library	run	next character read	hand	Planned		
-lib.r.io.hseek.end	21.7.2	SeekFromEnd sets it to offset i from the end	library	run	next character read	hand	Planned		
+lib.r.io.hseek.absolute	21.7.2	AbsoluteSeek sets the position to i	library	run	next character read	hand	Supported		
+lib.r.io.hseek.relative	21.7.2	RelativeSeek sets it to offset i from the current position	library	run	next character read	hand	Supported		
+lib.r.io.hseek.end	21.7.2	SeekFromEnd sets it to offset i from the end	library	run	next character read	hand	Supported		
 lib.r.io.hseek.bytes	21.7.2	The offset is in 8-bit bytes	library	run	on a file with multi-byte text: a Char is not a byte here	hand	Planned		
-lib.r.io.hseek.buffer	21.7.2	Seeking outside the buffer writes the output buffer and discards the input buffer	library	run	write, seek, read back	hand	Planned		
-lib.r.io.hseek.negative	21.7.2	A negative I/O position cannot be set	library	run	fails	hand	Planned		
-lib.r.io.hseek.beyond	21.7.2	For a physical file a position beyond end of file cannot be set	library	run	fails; POSIX lseek allows it, so rhc must check	hand	Planned		
+lib.r.io.hseek.buffer	21.7.2	Seeking outside the buffer writes the output buffer and discards the input buffer	library	run	write, seek, read back	hand	Supported		
+lib.r.io.hseek.negative	21.7.2	A negative I/O position cannot be set	library	run	fails	hand	Supported		
+lib.r.io.hseek.beyond	21.7.2	For a physical file a position beyond end of file cannot be set	library	run	fails; POSIX lseek allows it, so rhc must check	hand	Supported		
 lib.r.io.hseek.err	21.7.2	hSeek may fail with isPermissionError on a resource limit	library	none	needs an injected limit	hand	Planned		
-lib.r.io.hisopen	21.8	hIsOpen is True of an open handle	library	run	across its life	hand	Planned		
-lib.r.io.hisclosed	21.8	hIsClosed is True of a closed handle	library	run	across its life	hand	Planned		
-lib.r.io.hisreadable	21.8	hIsReadable is True of a readable handle	library	run	each mode	hand	Planned		
-lib.r.io.hiswritable	21.8	hIsWritable is True of a writable handle	library	run	each mode	hand	Planned		
-lib.r.io.hisseekable	21.8	hIsSeekable is True of a seekable handle	library	run	a file and a pipe	hand	Planned		
+lib.r.io.hisopen	21.8	hIsOpen is True of an open handle	library	run	across its life	hand	Supported		
+lib.r.io.hisclosed	21.8	hIsClosed is True of a closed handle	library	run	across its life	hand	Supported		
+lib.r.io.hisreadable	21.8	hIsReadable is True of a readable handle	library	run	each mode	hand	Supported		
+lib.r.io.hiswritable	21.8	hIsWritable is True of a writable handle	library	run	each mode	hand	Supported		
+lib.r.io.hisseekable	21.8	hIsSeekable is True of a seekable handle	library	run	a file and a pipe	hand	Supported		
 lib.r.io.encoding	21.9	The Report does not say how a Char above 255 is written to or read from a file	library	none	a decision for rhc: see readings.md	hand	Planned	R5	
 lib.r.io.hwaitforinput	21.9.1	hWaitForInput returns True as soon as input is available, False if none within t milliseconds	library	run	a pipe with and without data	hand	Planned		
-lib.r.io.hready	21.9.1	hReady says whether at least one item is available	library	run	a file not at its end	hand	Planned		
-lib.r.io.hready.eof	21.9.1	hWaitForInput and hReady fail with isEOFError at end of file	library	run	on a file at its end	hand	Planned		
+lib.r.io.hready	21.9.1	hReady says whether at least one item is available	library	run	a file not at its end	hand	Supported		
+lib.r.io.hready.eof	21.9.1	hWaitForInput and hReady fail with isEOFError at end of file	library	run	on a file at its end	hand	Supported		
 lib.r.io.hgetchar	21.9.2	hGetChar reads a character	library	run	exact	hand	Supported		
-lib.r.io.hgetchar.eof	21.9.2	hGetChar fails with isEOFError at end of file	library	run	caught and tested	hand	Planned		
-lib.r.io.hgetline	21.9.2	hGetLine reads a line	library	run	the newline is not in the result	hand	Planned		
-lib.r.io.hgetline.eof.first	21.9.2	hGetLine fails with isEOFError at the first character of the line	library	run	caught and tested	hand	Planned		
-lib.r.io.hgetline.eof.mid	21.9.2	End of file later in a line is a line terminator: the partial line is returned	library	run	a file with no final newline	hand	Planned		
+lib.r.io.hgetchar.eof	21.9.2	hGetChar fails with isEOFError at end of file	library	run	caught and tested	hand	Supported		
+lib.r.io.hgetline	21.9.2	hGetLine reads a line	library	run	the newline is not in the result	hand	Supported		
+lib.r.io.hgetline.eof.first	21.9.2	hGetLine fails with isEOFError at the first character of the line	library	run	caught and tested	hand	Supported		
+lib.r.io.hgetline.eof.mid	21.9.2	End of file later in a line is a line terminator: the partial line is returned	library	run	a file with no final newline	hand	Supported		
 lib.r.io.getline.shorthand	21.9.2	The Prelude's getLine is a shorthand for hGetLine stdin, contradicting its definition in 8.3 and 7.2 by getChar	library	run	a stdin with no final newline: see readings.md	hand	Supported	R46	
-lib.r.io.hlookahead	21.9.3	hLookAhead returns the next character without removing it	library	run	two reads see one character	hand	Planned		
-lib.r.io.hlookahead.eof	21.9.3	hLookAhead may fail with isEOFError	library	run	at end of file	hand	Planned		
-lib.r.io.hgetcontents	21.9.4	hGetContents returns the unread portion, the handle semi-closed	library	run	after a partial read	hand	Planned		
-lib.r.io.hgetcontents.eof	21.9.4	hGetContents may fail with isEOFError at end of file	library	run	an empty file: "may" leaves both answers open: see readings.md	hand	Planned	R49	
-lib.r.io.hputchar	21.9.5	hPutChar writes the character, buffered if enabled	library	run	contents after close	hand	Planned		
-lib.r.io.hputstr	21.9.5	hPutStr writes the string	library	run	contents after close	hand	Planned		
-lib.r.io.hprint	21.9.5	hPrint writes shows t and a newline	library	run	contents after close	hand	Planned		
+lib.r.io.hlookahead	21.9.3	hLookAhead returns the next character without removing it	library	run	two reads see one character	hand	Supported		
+lib.r.io.hlookahead.eof	21.9.3	hLookAhead may fail with isEOFError	library	run	at end of file	hand	Supported		
+lib.r.io.hgetcontents	21.9.4	hGetContents returns the unread portion, the handle semi-closed	library	run	after a partial read	hand	Supported		
+lib.r.io.hgetcontents.eof	21.9.4	hGetContents may fail with isEOFError at end of file	library	run	an empty file: "may" leaves both answers open: see readings.md	hand	Supported	R49	
+lib.r.io.hputchar	21.9.5	hPutChar writes the character, buffered if enabled	library	run	contents after close	hand	Supported		
+lib.r.io.hputstr	21.9.5	hPutStr writes the string	library	run	contents after close	hand	Supported		
+lib.r.io.hprint	21.9.5	hPrint writes shows t and a newline	library	run	contents after close	hand	Supported		
 lib.r.io.hput.err	21.9.5	They may fail with isFullError or isPermissionError	library	none	needs a full device	hand	Planned		
 lib.r.io.example.sum	21.10.1	Example: reads and sums two Integers	library	run	exact transcript	hand	Supported		
 lib.r.io.example.copy.char	21.10.2	Example: copies a file to upper case at character level, refusing to copy to itself	library	run	exact, and the error on same file	hand	Supported		

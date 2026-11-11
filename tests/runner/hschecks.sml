@@ -358,6 +358,8 @@ struct
       val () = List.app (fn n => need (member n lazy, "tests/hs/lazy-ports.tsv: no port " ^ n ^ " in examples/benchmarks")) names
       val () = List.app (fn r => need (member (#status r) ["ready", "held"] andalso #reason r <> "",
                                        "tests/hs/lazy-ports.tsv: " ^ #port r ^ " is ready or held, with why")) ports
+      val () = List.app (fn r => need (member (#variant r) ["", "h98", "rewrite", "harness"],
+                                       "tests/hs/lazy-ports.tsv: " ^ #port r ^ "'s variant is none, h98, rewrite or harness")) ports
       val () = List.app (fn r =>
                  let val up = bench ^ "/" ^ #port r ^ "/upstream/"
                  in need (exists (up ^ #main r) andalso exists (up ^ #expected r)
