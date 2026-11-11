@@ -324,6 +324,55 @@ is read with that `k`. Not a deviation: the prose is followed. Rows: `pat.m.npk.
 example as the HTML Report prints it, its blank lines kept, run on the input 5). R92 applies the same to the other
 misprints. Rows: `lit.example.factorial`.
 
+## rhc's choices on E9's readings, for the rows of test `none` (ruling 49)
+
+Where E9's row says rhc must pick, ruling 49 makes it a test whose program pins rhc's choice; E9's reading (its
+readings.md in the drafts) is the problem, and its entry here says what rhc does and which program shows it.
+
+### R5. The source's encoding and Unicode's version
+**rhc's choice.** Source text is UTF-8: `"é"` is one character, 233 (a byte that begins no UTF-8 sequence is read
+as its Latin-1 character, unpinned). The version of Unicode is 18.0.0, lib/unicode's, for the lexer's classes and
+for Char: letters new in Unicode 16.0 (Garay) are letters. **GHC** 9.4 (Unicode 14.0) and **nhc98** (8-bit) refuse
+the identifier; **Hugs** lexes it, and its Char calls neither letter upper nor lower. Rows: `lex.unicode.encoding`,
+`lex.unicode.newversions` (`lang/lex.unicode.encoding`).
+
+### R6. Unicode digits in a numeric literal
+**rhc's choice.** Chapter 19's side, as R6's seed and **GHC** have it: a numeric literal holds ASCII digits, and `١٢`
+is refused ("a digit above ASCII"), though a Unicode digit may stand in an identifier. R6's seed calls this a
+deviation from 2.5 read literally; the row's test is a refusal of rhc's choice. Rows: `lex.int.unidigit`
+(`errors/lex.int.unidigit`).
+
+### R8. A numeric escape's bound
+**rhc's choice.** R8's seed: an escape above `maxBound :: Char`, 0x10FFFF, is a static error, as **GHC** and **Hugs**
+refuse it; **nhc98** accepts it. Rows: `lex.esc.range` (`errors/lex.esc.range`).
+
+### R14. The kernel's literals, and the translations' claim
+**rhc's choice.** R14's seed: an integer literal is the Prelude's `fromInteger` of an Integer, a floating one its
+`fromRational` of a reduced Rational, whatever else is in scope, and a string a list of characters; so the
+translations keep a program's meaning, the claim of chapter 3 (but for `let`), each identity held by its own row.
+Rows: `exp.trans.preserve` (`lang/tr.lit.int`, which pins R14 for the literals' rows too).
+
+### R20. Rule 2 across a cycle of modules
+**rhc's choice.** D30's (owner, 2026-11-09): "an entire module" is the module, `--cycle-default=module` by default,
+so a monomorphic variable is closed at the end of its own module, and a use at another type in a module of its cycle
+is refused; `--cycle-default=scc`, an extension off by default, closes it at the end of the cycle. No oracle compiles
+a cycle as written (R94). Rows: `mr.rule2.mutual` (`errors/mr.rule2.mutual`), `mod.sep.sigs` (`accept/mod.sep.sigs`).
+
+### R29. Separate compilation of a cycle
+**rhc's choice.** R29's seed: rhc compiles a cycle of modules whole, with no annotation, and needs no signature for
+a function exported across it; what D30 asks is only that a restricted variable's type be fixed in its own module.
+Rows: `mod.sep.recursive` (`accept/mod.recursive`), `mod.sep.sigs` (`accept/mod.sep.sigs`).
+
+### R32. The Prelude's parts
+**rhc's choice.** R32's seed: the modules chapter 8 shows the Prelude in "cannot be imported separately", so
+`import PreludeList` is refused; the implicit `import Prelude` is as 5.6.1 says (`mod.prel.*`). Rows:
+`mod.prel.primitive` (`errors/mod.prel.primitive`).
+
+### R37. What an error does
+**rhc's choice.** R37's seed, chapter 23 over 3.1's "immediate": an error ends the program at once, with status 1 as
+`exitFailure`, its message on standard error, after the handles are flushed and closed, so what was written before
+it is kept. Rows: `exp.err.behaviour` (`lang/exp.err.terminate_stop`).
+
 ## The readings of the libraries' clause programs (M19, chapters 12 to 27)
 
 These come from the clause programs of the Report's libraries, `tests/hs/lang` and `tests/hs/accept` from `lib.`, put to
