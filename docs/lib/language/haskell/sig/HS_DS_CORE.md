@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 42 of 42 entries documented |
+| Documentation | 46 of 46 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_core\_sig.sml](../../../../../lib/language/haskell/desugar_core_sig.sml) |
 
@@ -79,6 +79,10 @@ sig
   val <a href="#val-let_">let_</a> : string * Core.ty * texp * texp -&gt; texp
   val <a href="#val-letrec">letrec</a> : (string * Core.ty * texp) list * texp -&gt; texp
   val <a href="#val-force">force</a> : texp * (string * Core.ty -&gt; texp) -&gt; texp
+  val <a href="#val-forcerep">forceRep</a> : texp * (unit -&gt; texp) -&gt; texp
+  val <a href="#val-forced">forced</a> : string -&gt; bool list
+  val <a href="#val-setforced">setForced</a> : string * bool list -&gt; unit
+  val <a href="#val-forcedoverrides">forcedOverrides</a> : unit -&gt; (string * bool list) list
   val <a href="#val-casecon">caseCon</a> : Core.atom * Core.ty * (string * ((string * Core.ty) list -&gt; texp)) list * texp option -&gt; texp
   val <a href="#val-ifbool">ifBool</a> : texp * texp * texp -&gt; texp
   val <a href="#val-con">con</a> : string * Core.ty list * texp list -&gt; texp
@@ -403,6 +407,43 @@ val force : texp * (string * Core.ty -> texp) -> texp
 
 `force (x, k)` evaluates `x` by a `case` and gives `k` the evaluated
 variable and its type.
+
+### <a name="val-forcerep"></a>`forceRep`
+
+```sml
+val forceRep : texp * (unit -> texp) -> texp
+```
+
+`forceRep (x, k)` evaluates `x`'s representation, through every newtype
+at its head, by casts, before `k ()`: what a strict field of a newtype's
+type forces.
+
+### <a name="val-forced"></a>`forced`
+
+```sml
+val forced : string -> bool list
+```
+
+`forced k` is whether each field of the constructor `k` is forced where
+it is applied: its [`!`](../../../basis/sig/GENERAL.md#val-op-bang), or a strict field of a newtype's type, lazy in
+Core ([`setForced`](#val-setforced)).
+
+### <a name="val-setforced"></a>`setForced`
+
+```sml
+val setForced : string * bool list -> unit
+```
+
+`setForced (k, flags)` gives the constructor `k` the fields it forces,
+where they are not its fields' [`!`](../../../basis/sig/GENERAL.md#val-op-bang).
+
+### <a name="val-forcedoverrides"></a>`forcedOverrides`
+
+```sml
+val forcedOverrides : unit -> (string * bool list) list
+```
+
+`forcedOverrides ()` is each constructor [`setForced`](#val-setforced) gave its flags.
 
 ### <a name="val-casecon"></a>`caseCon`
 
