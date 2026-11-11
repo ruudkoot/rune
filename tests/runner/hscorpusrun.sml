@@ -53,9 +53,12 @@ struct
     in (f () before HsCorpus.rootOverride := saved) handle e => (HsCorpus.rootOverride := saved; raise e) end
 
   (* D56's three ways, as rhc's own programs run (tests/runner/hslang.sml) *)
-  val ways = [("test", ["--target=stack"], [fromRoot "bin/runevm-stack"]),
-              ("register", [], [fromRoot "bin/runevm"]),
-              ("register-opt", [], [fromRoot "bin/runevm", "--jit=all", "--jit-tier=2"])]
+  val ways = [("test", "stack", [fromRoot "bin/runevm-stack"]),
+              ("register", "register", [fromRoot "bin/runevm"]),
+              ("register-opt", "register", [fromRoot "bin/runevm", "--jit=all", "--jit-tier=2"])]
+  (* each way's target, compiled once and its bytecode run by every way of
+     it (the lead's ruling 52): register and register-opt take the same *)
+  val targets = [("stack", ["--target=stack"]), ("register", [])]
 
   (* both judges ran it right (D52: GHC and Hugs, E8's run.tsv), so that
      a program rhc does not run right is a finding of rhc's *)
@@ -114,29 +117,32 @@ struct
                        timeout = 600}
             val () = append (log ^ ".times", tag ^ "\t" ^ secs (Time.- (childCpu (), c0)) ^ "\t" ^ secs (Time.- (Time.now (), t0)) ^ "\n")
         in (s, read (log ^ "." ^ tag ^ ".out"), firstNonEmpty (log ^ "." ^ tag ^ ".err")) end
-      fun way (name, flags, vm) =
+      (* a target compiled: (true, the directory and its bytecode), or
+         (false, the first refusal) *)
+      fun compileTarget (target, flags) =
         let
-          val rbc = "main." ^ name ^ ".rbc"
-          (* (true, the directory compiled in), or (false, the first refusal) *)
-          fun compile [] first = (false, first)
+          val rbc = "main." ^ target ^ ".rbc"
+          fun compile [] first = (false, first, "")
             | compile ((v, extra) :: rest) first =
                 let val (p, m) = prepare v
-                    val tag = name ^ ".rhc." ^ v ^ (if null extra then "" else ".dotted")
+                    val tag = target ^ ".rhc." ^ v ^ (if null extra then "" else ".dotted")
                     val (cs, _, cerr) = call (p, tag, [HsRhcCorpus.rhc (), m] @ extra @ flags @ ["-o", rbc], "")
-                in if cs = 0 then (true, p) else compile rest (if first = "" then cerr else first) end
-        in
-          case compile tries "" of
-            (false, cerr) => SOME ("compile", name ^ ": " ^ cerr)
-          | (true, p) =>
-                let val stdin = case HsCorpus.field row "stdin" of "" => "" | f => p ^ "/" ^ OS.Path.file f
-                    val (rs, output, rerr) = call (p, name, vm @ [rbc] @ args, stdin)
-                in
-                  if rs <> 0 then SOME ("exit", name ^ ": " ^ Int.toString rs ^ (if rerr = "" then "" else " " ^ rerr))
-                  else if HsOracles.same (expected, HsSource.universal output) = "diff" then
-                    SOME ("diff", name ^ ": " ^ Int.toString (size output) ^ " bytes, not " ^ HsCorpus.field row "expected")
-                  else NONE
-                end
-        end
+                in if cs = 0 then (true, p, rbc) else compile rest (if first = "" then cerr else first) end
+        in (target, compile tries "") end
+      val compiled = List.map compileTarget targets
+      fun way (name, target, vm) =
+        case List.find (fn (t, _) => t = target) compiled of
+          NONE => SOME ("compile", name ^ ": no target " ^ target)
+        | SOME (_, (false, cerr, _)) => SOME ("compile", name ^ ": " ^ cerr)
+        | SOME (_, (true, p, rbc)) =>
+            let val stdin = case HsCorpus.field row "stdin" of "" => "" | f => p ^ "/" ^ OS.Path.file f
+                val (rs, output, rerr) = call (p, name, vm @ [rbc] @ args, stdin)
+            in
+              if rs <> 0 then SOME ("exit", name ^ ": " ^ Int.toString rs ^ (if rerr = "" then "" else " " ^ rerr))
+              else if HsOracles.same (expected, HsSource.universal output) = "diff" then
+                SOME ("diff", name ^ ": " ^ Int.toString (size output) ^ " bytes, not " ^ HsCorpus.field row "expected")
+              else NONE
+            end
       val fails = List.mapPartial way ways
       val () = rmTree work
       val outcome = {id = id, label = "run", got = case fails of [] => "run" | (g, _) :: _ => g,
