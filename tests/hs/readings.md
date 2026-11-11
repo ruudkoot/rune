@@ -391,7 +391,11 @@ Rows: `mod.sep.recursive` (`accept/mod.recursive`), `mod.sep.sigs` (`accept/mod.
 ### R37. What an error does
 **rhc's choice.** R37's seed, chapter 23 over 3.1's "immediate": an error ends the program at once, with status 1 as
 `exitFailure`, its message on standard error, after the handles are flushed and closed, so what was written before
-it is kept. Rows: `exp.err.behaviour` (`lang/exp.err.terminate_stop`).
+it is kept. And `exitWith (ExitFailure 0)` (the lead's ruling 57): chapter 23 lets a system prohibit 0, as POSIX
+does, and says nothing of what follows; rhc prohibits it, so it raises an IOError, `isIllegalOperation`, which
+`catch` sees and which, uncaught, ends the program as a failure, status 1. **GHC** ("exitWith: invalid argument") and
+**Hugs** (a pattern-match failure) stop with status 1; **nhc98** and **MicroHs** exit 0. Rows: `exp.err.behaviour`
+(`lang/exp.err.terminate_stop`), `lib.r.system.exitcode.prohibited` (`lang/lib.r.system.exitcode.prohibited`).
 
 ### R38. Binary I/O, and what a character is on a handle
 **rhc's choice.** A `Char` is any code point (R5's version), and the standard handles carry UTF-8 on every host,

@@ -3740,7 +3740,7 @@ lib.directory.export.setpermissions	22	module Directory exports setPermissions	m
 lib.directory.export.getmodificationtime	22	module Directory exports getModificationTime	module	accept	import Directory (getModificationTime) compiles and the name is usable	generated	Supported		
 lib.r.system.illegal	23	Any System operation could raise isIllegalOperation, and an unsupported operation must	library	none	a licence to the implementation. Nothing to meet (ruling 49): a licence to the implementation.	hand	Supported		
 lib.r.system.exitcode	23	ExitSuccess is successful termination, ExitFailure code is failure with value code	library	run	the process's status	hand	Supported		
-lib.r.system.exitcode.prohibited	23	Some codes may be prohibited, e.g. 0 on POSIX	library	none	the Report does not say what exitWith (ExitFailure 0) does: see readings.md	hand	Planned	R37	
+lib.r.system.exitcode.prohibited	23	Some codes may be prohibited, e.g. 0 on POSIX	library	run	the Report does not say what exitWith (ExitFailure 0) does: see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/lib.r.system.exitcode.prohibited): by ruling 57, rhc prohibits 0, exitWith (ExitFailure 0) raising an IOError, an illegal operation, a failure of status 1 uncaught (R37 in readings.md).	hand	Supported	R37	
 lib.r.system.getargs	23	getArgs returns the command line arguments, without the program name	library	run	exact	hand	Supported		
 lib.r.system.getprogname	23	getProgName returns the program's name as invoked	library	run	exact	hand	Planned		
 lib.r.system.getenv	23	getEnv var returns the variable's value	library	run	exact	hand	Supported		
