@@ -15,6 +15,7 @@
 - `LBRACKET` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-lbracket)
 - `LChar` (con): [CORE](../sig/CORE.md#con-lchar), [HS_AST](../sig/HS_AST.md#con-lchar)
 - `LDouble` (con): [CORE](../sig/CORE.md#con-ldouble)
+- `learn` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-learn)
 - `Least` (con): [HS_MODULES](../sig/HS_MODULES.md#con-least)
 - `LET` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-let)
 - `Let` (con): [CORE](../sig/CORE.md#con-let)

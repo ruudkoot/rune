@@ -55,6 +55,20 @@ sig
   (* `restore s` makes `s` what is known. *)
   val restore : saved -> unit
 
+  (* What is known of the types and constructors, as lists, for a unit's
+     interface.
+
+     Each type of the library made Core's own, by key, Bool's constructors,
+     and each constructor's fields, by key. *)
+  type known = {primTypes : (string * string) list, builtinCons : (string * string) list,
+                fields : (string * string list) list}
+
+  (* `known ()` is what is known now, each list by key. *)
+  val known : unit -> known
+
+  (* `learn k` adds `k` to what is known. *)
+  val learn : known -> unit
+
   (* `classes ()` is the program's classes and instances. *)
   val classes : unit -> HsClasses.env
 

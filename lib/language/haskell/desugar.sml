@@ -128,25 +128,42 @@ struct
   val defaults : unit M.map ref = ref M.empty
   (* the primitives no Core has, for a message *)
   val missing : string list ref = ref []
+  (* what the units before this one give it, by name: their values' types
+     and their types' declarations, which a unit imports and copies *)
+  val importedValues : Core.ty M.map ref = ref M.empty
+  val importedTypes : Core.decl M.map ref = ref M.empty
 
   (* what a part of a desugaring leaves the next: the library's, a
      program's (HsDsCore's and HsDsEnv's declarations, and these) *)
   type state = {core : C.saved, env : V.saved, leafKeys : unit M.map, tyconCons : string list M.map,
-                defaults : unit M.map, missing : string list}
+                defaults : unit M.map, missing : string list, importedValues : Core.ty M.map,
+                importedTypes : Core.decl M.map}
 
   fun saveState () : state =
     {core = C.save (), env = V.save (), leafKeys = !leafKeys, tyconCons = !tyconCons, defaults = !defaults,
-     missing = !missing}
+     missing = !missing, importedValues = !importedValues, importedTypes = !importedTypes}
 
   fun restoreState (s : state) =
     (C.restore (#core s); V.restore (#env s); leafKeys := #leafKeys s; tyconCons := #tyconCons s;
-     defaults := #defaults s; missing := #missing s)
+     defaults := #defaults s; missing := #missing s; importedValues := #importedValues s;
+     importedTypes := #importedTypes s)
 
   (* a value: its name, its type (`NONE` for the one its body has once
      made) and how its body is made *)
   type value_ = string * Core.ty option * (unit -> C.texp)
 
-  type library = {state : state, types : Core.decl list, values : value_ list}
+  (* What a unit's desugaring leaves the units after it (M21): the Core of
+     its types and of its values as imports, and what desugaring knows
+     beyond Core (HS_DESUGAR) *)
+  type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,
+                    fields : (string * string list) list, constructors : (string * string list) list,
+                    leaves : string list, defaults : string list}
+
+  (* a unit desugared: its types, its values, each body made where it is
+     wanted, and its interface *)
+  type made = {types : Core.decl list, values : value_ list, interface : interface}
+
+  type library = {state : state, units : made list}
 
   (* a body made the first time it is wanted and kept, or what failed in
      its making, raised again *)
@@ -902,10 +919,10 @@ struct
     | Core.UTuple _ => acc
     | Core.Cast (b, t) => t :: typesOf (b, acc)
 
-  (* the data types and newtypes the values name, through the fields of
-     those they name, and a tuple no declaration of `types` has (3.8: of
-     arbitrary length), after them *)
-  fun reachableTypes (types : Core.decl list, vals : Core.decl list) =
+  (* the data types and newtypes the values and `roots` name, through the
+     fields of those they name, and a tuple no declaration of `types` has
+     (3.8: of arbitrary length), after them *)
+  fun reachableTypesFrom (types : Core.decl list, vals : Core.decl list, roots : string list) =
     let
       val table = List.foldl (fn (d as Core.Data (t, _, _), m) => M.insert (m, t, d)
                                | (d as Core.Newtype (t, _, _, _), m) => M.insert (m, t, d)
@@ -932,10 +949,26 @@ struct
                           (C.names e))
                    | _ => ())
           vals
+      val () = List.app visit roots
     in
       List.filter (fn Core.Data (t, _, _) => M.member (!seen, t) | Core.Newtype (t, _, _, _) => M.member (!seen, t) | _ => true)
         types
       @ List.rev (!tuples)
+    end
+
+  fun reachableTypes (types, vals) = reachableTypesFrom (types, vals, [])
+
+  (* a tuple's constructor as a function, of a tuple of no declaration
+     (3.8), made where it is reached *)
+  fun tupleFunction (x, n) =
+    let
+      val ps = List.tabulate (n, fn i => "a" ^ Int.toString (i + 1))
+      val xs = List.tabulate (n, fn i => "%x" ^ Int.toString (i + 1))
+    in
+      Core.Val (x, valOf (C.valueType x),
+                Core.Lam (List.map (fn a => Core.TyBinder (a, Core.Star)) ps
+                          @ ListPair.map (fn (y, a) => Core.ValBinder (y, Core.TVar a)) (xs, ps),
+                          Core.Con (x, List.map Core.TVar ps, List.map Core.Var xs)))
     end
 
   (* what is reached from main: the values, by name, each made when it is
@@ -944,19 +977,8 @@ struct
     let
       val table = List.foldl (fn ((x, t, mk), m) => M.insert (m, x, (t, mk))) M.empty vals
       val made : Core.decl M.map ref = ref M.empty
-      (* a tuple's constructor as a function, of a tuple of no declaration
-         (3.8), made where it is reached *)
+      (* the tuples' constructors as functions made here *)
       val tuples : string list ref = ref []
-      fun tupleFunction (x, n) =
-        let
-          val ps = List.tabulate (n, fn i => "a" ^ Int.toString (i + 1))
-          val xs = List.tabulate (n, fn i => "%x" ^ Int.toString (i + 1))
-        in
-          Core.Val (x, valOf (C.valueType x),
-                    Core.Lam (List.map (fn a => Core.TyBinder (a, Core.Star)) ps
-                              @ ListPair.map (fn (y, a) => Core.ValBinder (y, Core.TVar a)) (xs, ps),
-                              Core.Con (x, List.map Core.TVar ps, List.map Core.Var xs)))
-        end
       fun visit x =
         if M.member (!made, x) then ()
         else
@@ -1518,64 +1540,193 @@ struct
       (List.rev (!types), List.rev (!values))
     end
 
-  (* ---- The library's part, once, and a program's ---- *)
+  (* ---- Units: an SCC of modules at a time (M21) ---- *)
 
   fun idsOf (ms : module_ list) = List.foldl (fn ({id, ...} : module_, m) => M.insert (m, id, ())) M.empty ms
   fun isLibrary (m : module_) = #library m
 
-  (* the library's part, whose instances are those of every module but the
-     program's, `others` *)
-  fun libraryWith ({modules : module_ list, infer, evidence, derived, prelude, entity, runtime, leaves}, others) : library =
+  (* the entries of `now` whose keys `old` has not *)
+  fun added (old : 'a M.map, now : (string * 'b) list) = List.filter (fn (k, _) => not (M.member (old, k))) now
+  fun mapOf (xs : (string * 'a) list) = List.foldl (fn ((k, v), m) => M.insert (m, k, v)) M.empty xs
+
+  (* what a unit's interface tells the units after it, made known *)
+  fun learn (i : interface) =
+    (List.app (fn d =>
+                 (C.declare d;
+                  case d of
+                    Core.Import (x, t) => importedValues := M.insert (!importedValues, x, t)
+                  | Core.Data (t, _, _) => importedTypes := M.insert (!importedTypes, t, d)
+                  | Core.Newtype (t, _, _, _) => importedTypes := M.insert (!importedTypes, t, d)
+                  | Core.Val _ => ()))
+       (#core i);
+     V.learn {primTypes = #primTypes i, builtinCons = #builtinCons i, fields = #fields i};
+     List.app (fn (t, cs) => tyconCons := M.insert (!tyconCons, t, cs)) (#constructors i);
+     List.app (fn k => leafKeys := M.insert (!leafKeys, k, ())) (#leaves i);
+     List.app (fn k => defaults := M.insert (!defaults, k, ())) (#defaults i))
+
+  (* everything a desugaring knows forgotten, and what it is given made the
+     program desugared *)
+  fun begin {modules : module_ list, infer, evidence, prelude, entity, runtime} =
     let
       val () = C.reset ()
       val () = leafKeys := M.empty
       val () = tyconCons := M.empty
       val () = defaults := M.empty
       val () = missing := []
-      val own = List.filter isLibrary modules
-      val ids = idsOf own
-      val () = V.start {infer = infer, evidence = evidence, prelude = prelude, library = fn id => M.member (ids, id),
-                        entity = entity}
-      val () = List.app C.declare runtime
-      val (types, values) =
-        part {first = true, modules = own, derived = derived, leaves = leaves, entity = entity, main = NONE,
-              ownsInstance = fn h => not (M.member (others, h))}
+      val () = importedValues := M.empty
+      val () = importedTypes := M.empty
+      val libraryIds = idsOf (List.filter isLibrary modules)
     in
-      {state = saveState (), types = types, values = List.map (fn (x, t, mk) => (x, t, once mk)) values}
+      V.start {infer = infer, evidence = evidence, prelude = prelude, library = fn id => M.member (libraryIds, id),
+               entity = entity};
+      List.app C.declare runtime
     end
 
-  fun library args = libraryWith (args, M.empty)
+  (* the unit of the modules `ms`, against what the units before it made
+     known: its part (the first's with Core's own types and the leaves'
+     values), and its interface, what it added to what is known; then what
+     is known is what it was and the interface, so that the units after it
+     are desugared as from the interface alone. `others` is whether an
+     instance of a module of no unit is this one's (the first's). *)
+  fun unitOf {first : bool, modules : module_ list, derived, leaves, entity, main : string option,
+              others : string -> bool} : made =
+    let
+      val prior = saveState ()
+      val known = V.known ()
+      val ids = idsOf modules
+      val main = case main of SOME k => if M.member (ids, V.homeOf k) then SOME k else NONE | NONE => NONE
+      val (types, values) =
+        part {first = first, modules = modules, derived = derived, leaves = leaves, entity = entity, main = main,
+              ownsInstance = fn h => M.member (ids, h) orelse others h}
+      val after = V.known ()
+      val interface =
+        {core = types @ List.mapPartial (fn (x, SOME t, _) => SOME (Core.Import (x, t)) | _ => NONE) values,
+         primTypes = added (mapOf (#primTypes known), #primTypes after),
+         builtinCons = added (mapOf (#builtinCons known), #builtinCons after),
+         fields = added (mapOf (#fields known), #fields after),
+         constructors = added (#tyconCons prior, M.listItems (!tyconCons)),
+         leaves = List.map #1 (added (#leafKeys prior, M.listItems (!leafKeys))),
+         defaults = List.map #1 (added (#defaults prior, M.listItems (!defaults)))}
+    in
+      restoreState prior;
+      learn interface;
+      {types = types, values = List.map (fn (x, t, mk) => (x, t, once mk)) values, interface = interface}
+    end
+
+  (* the units of `groups`, in order, each a list of modules' identities;
+     the first, where `first`, with Core's own types and the leaves'
+     values *)
+  fun unitsOf {first : bool, groups : string list list, modules : module_ list, derived, leaves, entity,
+               main : string option} : made list =
+    let
+      val byId = List.foldl (fn (m : module_, acc) => M.insert (acc, #id m, m)) M.empty modules
+      val all = idsOf modules
+      fun go (_, [], acc) = List.rev acc
+        | go (isFirst, g :: gs, acc) =
+            case List.mapPartial (fn id => M.find (byId, id)) g of
+              [] => go (isFirst, gs, acc)
+            | ms =>
+                go (false, gs,
+                    unitOf {first = isFirst, modules = ms, derived = derived, leaves = if isFirst then leaves else [],
+                            entity = entity, main = main,
+                            others = fn h => isFirst andalso not (M.member (all, h))}
+                    :: acc)
+    in
+      go (first, groups, [])
+    end
+
+  (* the program the units make: what main reaches of their values, and
+     the types those name *)
+  fun linked (units : made list) =
+    let val vals = reachable (List.concat (List.map #values units))
+    in reachableTypes (List.concat (List.map #types units), vals) @ vals end
+
+  (* the units' groups that are the library's, and the program's *)
+  fun groupsOf (modules : module_ list, groups : string list list, library : bool) =
+    let val ids = idsOf (List.filter (fn m => isLibrary m = library) modules)
+    in List.filter (fn g => List.exists (fn id => M.member (ids, id)) g) groups end
+
+  fun program {modules : module_ list, groups, infer, evidence, derived, prelude, entity, runtime, leaves, main} =
+    let
+      val () = begin {modules = modules, infer = infer, evidence = evidence, prelude = prelude, entity = entity,
+                      runtime = runtime}
+    in
+      linked (unitsOf {first = true, groups = groups, modules = modules, derived = derived, leaves = leaves,
+                       entity = entity, main = SOME main})
+    end
+
+  (* ---- The library's units, once, and a program's ---- *)
+
+  fun library {modules : module_ list, groups, infer, evidence, derived, prelude, entity, runtime, leaves} : library =
+    let
+      val () = begin {modules = modules, infer = infer, evidence = evidence, prelude = prelude, entity = entity,
+                      runtime = runtime}
+      val units = unitsOf {first = true, groups = groupsOf (modules, groups, true), modules = modules, derived = derived,
+                           leaves = leaves, entity = entity, main = NONE}
+    in
+      {state = saveState (), units = units}
+    end
 
   fun prepare (lib : library) =
     (restoreState (#state lib);
-     List.app (fn (_, _, mk) => ignore (mk ()) handle _ => ()) (#values lib);
+     List.app (fn {values, ...} : made => List.app (fn (_, _, mk) => ignore (mk ()) handle _ => ()) values) (#units lib);
      restoreState (#state lib))
 
-  fun programOn (lib : library, {modules : module_ list, infer, evidence, derived, prelude, entity, main}) =
+  fun programOn (lib : library, {modules : module_ list, groups, infer, evidence, derived, prelude, entity, main}) =
     let
       val () = restoreState (#state lib)
       val libraryIds = idsOf (List.filter isLibrary modules)
       val () = V.continue {infer = infer, evidence = evidence, prelude = prelude, library = fn id => M.member (libraryIds, id),
                            entity = entity}
-      val own = List.filter (not o isLibrary) modules
-      val ids = idsOf own
-      val (types, values) =
-        part {first = false, modules = own, derived = derived, leaves = [], entity = entity, main = SOME main,
-              ownsInstance = fn h => M.member (ids, h)}
-      (* ---- The bodies ---- *)
-      val vals = reachable (#values lib @ values)
+      val units = unitsOf {first = false, groups = groupsOf (modules, groups, false), modules = modules, derived = derived,
+                           leaves = [], entity = entity, main = SOME main}
     in
-      reachableTypes (#types lib @ types, vals) @ vals
+      linked (#units lib @ units)
     end
 
-  fun program {modules : module_ list, infer, evidence, derived, prelude, entity, runtime, leaves, main} =
+  (* ---- A unit made whole, for a unit file (B's driver) ---- *)
+
+  fun unit {interfaces : interface list, modules : module_ list, infer, evidence, derived, prelude, entity, runtime,
+            leaves, main} : Core.program * interface =
     let
-      val lib = libraryWith ({modules = modules, infer = infer, evidence = evidence, derived = derived, prelude = prelude,
-                              entity = entity, runtime = runtime, leaves = leaves},
-                             idsOf (List.filter (not o isLibrary) modules))
+      val () = begin {modules = modules, infer = infer, evidence = evidence, prelude = prelude, entity = entity,
+                      runtime = runtime}
+      val () = List.app learn interfaces
+      val first = null interfaces
+      val m = unitOf {first = first, modules = modules, derived = derived, leaves = if first then leaves else [],
+                      entity = entity, main = main, others = fn _ => false}
+      val own = List.foldl (fn ((x, _, _), s) => M.insert (s, x, ())) M.empty (#values m)
+      val vals = List.map (fn (x, t, mk) =>
+                             let val (e, et) = mk () handle Untyped what => bug ("the type of " ^ what ^ ", in " ^ x)
+                             in Core.Val (x, getOpt (t, C.lazyTy et), e) end)
+                   (#values m)
+      (* what the values name of the units before, imported, and the tuples'
+         constructors as functions they name, made here *)
+      val seen = ref own
+      val imports = ref []
+      val tuples = ref []
+      fun visit x =
+        if M.member (!seen, x) then ()
+        else
+          (seen := M.insert (!seen, x, ());
+           case M.find (!importedValues, x) of
+             SOME t => imports := Core.Import (x, t) :: !imports
+           | NONE =>
+               case C.tupleArity x of
+                 SOME n => if isSome (C.conInfo x) andalso not (M.member (!importedValues, x)) then tuples := tupleFunction (x, n) :: !tuples
+                           else ()
+               | NONE => ())
+      val () = List.app (fn Core.Val (_, _, e) => List.app visit (C.names e) | _ => ()) vals
+      val ownVals = vals @ List.rev (!tuples)
+      (* its own types, and those of the units before that its values, its
+         types and its imports' types name *)
+      val types =
+        reachableTypesFrom (#types m @ List.map #2 (M.listItems (!importedTypes)), ownVals,
+                            List.mapPartial (fn Core.Data (t, _, _) => SOME t | Core.Newtype (t, _, _, _) => SOME t | _ => NONE)
+                              (#types m)
+                            @ List.foldl (fn (Core.Import (_, t), acc) => tycons (t, acc) | (_, acc) => acc) [] (!imports))
     in
-      programOn (lib, {modules = modules, infer = infer, evidence = evidence, derived = derived, prelude = prelude,
-                       entity = entity, main = main})
+      (types @ List.rev (!imports) @ ownVals, #interface m)
     end
 
   fun missingPrimitives () = List.rev (!missing)

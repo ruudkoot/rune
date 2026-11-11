@@ -339,6 +339,11 @@ struct
                           | a => raise RhcOptions.Usage ("--match takes report or sestoft: " ^ a)) orders
       (* --desugar-only: as far as Core and CoreLint, and run nothing *)
       val (only, args) = List.partition (fn a => a = "--desugar-only") args
+      (* --desugar-units: the program desugared a unit at a time, each group
+         of modules after the interfaces of those before, and the units
+         joined (M21f) *)
+      val (byUnits, args) = List.partition (fn a => a = "--desugar-units") args
+      val () = RhcDesugar.byUnits := not (null byUnits)
       val opts = RhcOptions.parse args
       val () = List.app (fn s => if s = "all" orelse List.exists (fn t => t = s) stages then ()
                                  else raise RhcOptions.Usage ("--dump-after: no stage " ^ s ^ " (the stages: "
