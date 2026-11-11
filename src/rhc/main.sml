@@ -411,6 +411,7 @@ struct
     | ["--world"] => (print (RhcWorld.describe () ^ "\n"); 0)
     | ["--identity"] => (print (Config.identity ^ "\n"); 0)
     | _ =>
+    if List.exists (fn a => a = "--units") args andalso List.exists isHaskell args then haskellUnits args else
     case RhcSyntax.command args of
       SOME syntax =>
         let
@@ -462,6 +463,23 @@ struct
               in Pass.finish (); status end
     end
     end
+
+  and isHaskell a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
+
+  (* a program of Haskell in units (M21f): its files, and rhc's options for
+     the rest; each group of its graph a unit, kept in --store and taken
+     from there, the link the roadmap's C (RhcDriver) *)
+  and haskellUnits (args : string list) : int =
+    let
+      val (roots, rest) = List.partition isHaskell args
+      val opts = RhcOptions.parse rest
+      val out = case #output opts of SOME f => f | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
+      val () = Pass.startup ()
+      val status =
+        RhcDriver.compile {roots = roots, out = out, store = #store opts, layers = #layers opts, show = #showUnits opts,
+                           strings = #strings opts, fault = #fault opts, compile = fn (p, f) => compile (opts, p, f)}
+        handle RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
+    in Pass.finish (); status end
 
   fun main (_ : string, args : string list) : int =
     run args

@@ -1136,6 +1136,22 @@ is an entry keyed by the hash of the reached Core's text, which is all the
 back end reads, holding the program's bytecode. No change to Rune's Link
 is needed for it, where a Shake over linked bytecode would be one.
 
+**A program of Haskell.** `rhc --units FILE.hs` (`src/rhc/driver.sml`)
+takes each group of the module graph as a unit: named and checked from the
+interfaces of the units before it (`RhcIface`), desugared alone
+(`RhcDesugar.unit`), its interface (`HsIface`: each module's `HsModIface`
+and the desugaring's part) and its Core kept; its usages are the reads the
+naming, the checking and the desugaring made (`HsUsage`), each answered on
+the state of the units before with the unit's modules named
+(`RhcIface.answer`), an entity of another unit with its fingerprint. The
+first unit, the library's, reads only its own source and rhc's leaves, so
+it keeps none. The link memo is keyed by the units' entries' sums, so a
+link taken reads no Core. Measured on hello, in VM instructions: whole
+145M; through the units cold 796M, warm 182M with nothing edited, 499M with
+hello edited, the program byte for byte the whole one; reading the graph
+(42M), the library's interface (129M) and, at a link compiled, the
+library's Core are what the warm path still pays.
+
 ## The graph
 
 `rune --deps FILE...` puts files in an order where each comes after the

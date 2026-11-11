@@ -1087,7 +1087,14 @@ is `hs/units/warm` with `--link=whole`, the roadmap's C (*rhc's units* in
 [units.md](units.md)): each unit is checked or taken, its Core kept, and the
 link joins the units' Core, keeps what `main` reaches and compiles it whole
 or takes it from the link memo; each step's program is also byte for byte
-what a whole compile of the same files gives. Core in
+what a whole compile of the same files gives. `hs/units/drive` is rhc's
+driver over a program of Haskell (`rhc --units FILE.hs --store DIR
+--show-units`): `tests/hs/units/drive`'s Main and Lib, copies edited, each
+step with the library's unit, Lib's, Main's and the link compiled or taken
+as it should, what it prints, and its program byte for byte `rhc Main.hs`'s
+whole compile; a body's edit of Lib takes Main by its reads' fingerprints,
+an export Main does not read takes Main too, and a type's edit of a value
+Main reads compiles Main. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
