@@ -1157,9 +1157,15 @@ struct
                             List.app (fn k => case M.find (sigs, k) of SOME (s, _, _) => bindVar (k, Poly s) | NONE => ()) (bkeys b)
                           else ())
           bs
+      (* R21(c): a declaration group is made by binding alone (4.5.1), a
+         signature cutting nothing, and its implicitly typed bindings are
+         typed as one, each monomorphic in the group (4.4.1; Typing Haskell
+         in Haskell's conformant form, 11.6.3), not split again by their
+         dependencies on one another *)
       val implicitKeys = List.map bkey (List.filter (not o explicit) bs)
-      fun ideps k = List.filter (fn v => List.exists (fn w => w = v) implicitKeys) (deps k)
-      val groups = HsScc.sccs (implicitKeys, ideps)
+      val groups =
+        List.filter (not o null)
+          (List.map (List.filter (fn k => List.exists (fn w => w = k) implicitKeys)) (HsScc.sccs (keys, deps)))
     in
       List.app (fn g => implicitGroup (List.map (fn k => valOf (M.find (byKey, k))) g, bindVar, sigOf)) groups;
       List.app (fn b => if explicit b then explicitBinding (b, valOf (M.find (sigs, bkey b))) else ()) bs
