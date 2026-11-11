@@ -37,7 +37,6 @@ rhc | conformance98/IO/overwrite::run | FAILS | exit: rhc's IO refuses openFile 
 rhc | yhc-conformance/IO/overwrite::run | FAILS | exit: rhc's IO refuses openFile in ReadWriteMode ("ReadWriteMode is not supported"), M18's system primitives
 rhc | ghc/typecheck/should_run/tcrun001::run | FAILS | compile: rhc's desugaring fails: "HsDsEnv: the function type constructor applied to other than two types" (M15)
 rhc | jhc/6_fixed_bugs/StrictNewtype.hs::run | FAILS | compile: rhc's lint of its Core refuses its desugaring: "[case] in val Main.Foo: a case on Main.TID, a newtype: cast it" (M15)
-rhc | nhcnofib/real/parser::run | FAILS | compile: HsLint at level 2 (RUNE_LINT=2) refuses the checker's type of paAExpr (Main.hs:920): claimed with a list of a type variable where it is [Char] (M13 or M16)
 
 # performance (the lead's ruling 47): a finding for track P (M23-M25), not chased in M19
 rhc | nofib/real/maillist::run | FAILS | exit: killed at the 600 s a way allows, in all three ways (status 124), where GHC -O0 runs it in 0.95 s (E8's run.tsv): rhc's code or its Prelude at -O0, for track P (M23-M25); Hugs timed out on it too (E8), so its run is recorded where the judges do not both run it right

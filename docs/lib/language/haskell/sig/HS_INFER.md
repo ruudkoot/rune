@@ -32,8 +32,10 @@ classes, instances and the derived instances' contexts, by the fixpoint
 10\.1 allows, in HsClasses; each overloaded use leaves a placeholder,
 resolved at generalisation as a dictionary parameter, an instance's
 dictionary, a superclass's, deferred outward, or defaulted. Declaration
-groups by dependency, explicitly typed bindings apart (Typing Haskell in
-Haskell's split, R21(c)), one context for each implicit group (R21(a)),
+groups by dependency of bindings alone, a signature cutting none, each
+group's explicitly typed bindings apart and its implicitly typed ones
+typed as one (Typing Haskell in Haskell's split in its conformant form,
+R21(c)), one context for each implicit group (R21(a)),
 the contexts of a group's signatures identical up to renaming (R21(b)),
 a signature on a pattern binding that is not simple refused (R19), and
 the monomorphism restriction by 4.5.5's simple pattern binding (R18).
