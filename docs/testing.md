@@ -836,9 +836,12 @@ code byte for byte as `pristine/MANIFEST.tsv` records it; `report`,
 `bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
 Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
 instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
-each with its entry; and `compile`, `bin/rhc --whole` compiling
+each with its entry; `compile`, `bin/rhc --whole` compiling
 `tests/hs/library/All20.hs`, a program over a name of each of the 20
-modules, which the VM runs to `All20.expected` (M18: the 20 modules compile).
+modules, which the VM runs to `All20.expected` (M18: the 20 modules compile);
+and `exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
+holds of (ruling 57), caught by `ExitZeroCaught` and uncaught by
+`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
