@@ -1,7 +1,7 @@
 id	section	statement	class	test	how	source	status	reading	deviation
-intro.implementation	1	How programs are manipulated, interpreted or compiled, and the error messages for undefined programs, are implementation dependent	dynamic	none	leaves a choice open, nothing to observe	hand	Planned		
+intro.implementation	1	How programs are manipulated, interpreted or compiled, and the error messages for undefined programs, are implementation dependent	dynamic	none	leaves a choice open, nothing to observe. Nothing to meet (ruling 49): the passage leaves to the implementation how programs are run and what an undefined program's errors say; rhc's are bin/rhc's compile and its interpreter, and messages of its own.	hand	Supported		
 intro.program	1.1	A Haskell program is a set of modules	module	accept	a program of two modules compiles and links	hand	Supported		
-intro.kernel	1.2	Sugar means its translation into a kernel, which "is not formally specified"	dynamic	none	no normative kernel to test against; chapter 3's translations are tested one by one; see translations.md	hand	Planned		
+intro.kernel	1.2	Sugar means its translation into a kernel, which "is not formally specified"	dynamic	none	no normative kernel to test against; chapter 3's translations are tested one by one; see translations.md. Met by construction (ruling 49): rhc's kernel is Core, and HsDesugar gives each construct of the sugar chapter 3's translation, which the tr.* rows' programs check one by one; the Report fixes no kernel beyond that to meet.	hand	Supported		
 intro.values	1.3	Values and types are not mixed	static	reject	a type constructor used as an expression, and a variable used as a type, are refused	hand	Supported		
 intro.typesystem	1.3	Parametric polymorphism (Hindley-Milner) and ad hoc polymorphism by type classes	static	accept	a program using both compiles; detail in chapter 4 rows	hand	Supported		
 intro.errors	1.3	Errors are semantically bottom, not distinguishable from nontermination, and the language has no mechanism for detecting or acting on them	dynamic	run	`catch` does not see `error`; contradicts nothing here but see readings.md on 3.1, 7.3, 23	hand	Supported	R36	
@@ -10,11 +10,11 @@ intro.ns.lower	1.4	Variables and type variables begin with a lowercase letter or
 intro.ns.upper	1.4	The other four kinds of name begin with an uppercase letter	static	reject	`data t = C`, `class c a`, `module m where` are refused	hand	Supported		
 intro.ns.tycls	1.4	An identifier must not name both a type constructor and a class in the same scope	static	reject	`data T = A` with `class T a` in one module is refused; also across an import when used	hand	Supported		
 intro.ns.free	1.4	These are the only constraints: Int may be a module, a class and a constructor in one scope	static	accept	a program doing so, with the Prelude's type Int hidden, compiles	hand	Supported		
-lex.notation	2.1	Notational conventions for the lexical syntax; whitespace explicit, no implicit space between juxtaposed symbols	lex	none	metalanguage; the productions below are the rows	hand	Planned		
+lex.notation	2.1	Notational conventions for the lexical syntax; whitespace explicit, no implicit space between juxtaposed symbols	lex	none	metalanguage; the productions below are the rows. Nothing to meet (ruling 49): metalanguage, the notation of the productions; the lexical rows hold rhc to the productions written in it.	hand	Supported		
 lex.unicode.charset	2.1	Haskell uses the Unicode character set	lex	run	a non-ASCII character in a string literal has its code point at run time	hand	Supported		
 lex.unicode.properties	2.1	The syntax depends on properties of Unicode characters as defined by the Unicode consortium	lex	run	uniSmall, uniLarge, uniSymbol, uniDigit, uniWhite are each decided by the character's general category; one test character per class	hand	Supported		
-lex.unicode.newversions	2.1	Compilers are expected to use new versions of Unicode as they appear	lex	none	an expectation with no version or date; reference [11] says 3.0; rhc must pin one; see readings.md	hand	Planned	R5	
-lex.unicode.encoding	2.1	The Report never says how source text is encoded as bytes	lex	none	a silence, not a clause: rhc must choose; see readings.md	hand	Planned	R5	
+lex.unicode.newversions	2.1	Compilers are expected to use new versions of Unicode as they appear	lex	run	an expectation with no version or date; reference [11] says 3.0; rhc must pin one; see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/lex.unicode.encoding): rhc follows Unicode 18.0.0, lib/unicode's version, so letters new in Unicode 16.0 are letters to the lexer and to Char (R5 in readings.md).	hand	Supported	R5	
+lex.unicode.encoding	2.1	The Report never says how source text is encoded as bytes	lex	run	a silence, not a clause: rhc must choose; see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/lex.unicode.encoding): rhc reads its source text as UTF-8 (R5 in readings.md).	hand	Supported	R5	
 lex.program	2.2	program -> {lexeme | whitespace}	lex	accept	any mix of lexemes and whitespace tokenises	hand	Supported		
 lex.lexeme.qvarid	2.2	A lexeme may be a qvarid	lex	accept	token dump	hand	Supported		
 lex.lexeme.qconid	2.2	A lexeme may be a qconid	lex	accept	token dump	hand	Supported		
@@ -93,7 +93,7 @@ lex.ident.namespaces	2.4	Identifiers are lexically distinguished by initial case
 lex.ident.case	2.4	Identifiers are case sensitive: name, naMe and Name are three distinct identifiers	lex	accept	`name` and `naMe` bound differently; `Name` a constructor	hand	Supported		
 lex.ident.underscore	2.4	_ is treated as a lower-case letter and can occur wherever one can	lex	accept	`_x`, `x_`, `__`, type variable `_a`	hand	Supported		
 lex.ident.wildcard	2.4	_ all by itself is a reserved identifier, used as a wild card in patterns	lex	reject	`x = _` is refused, as is `_` as a type variable; `f _ = 1` holds	hand	Supported		
-lex.ident.unusedwarning	2.4	Compilers offering unused-identifier warnings are encouraged to suppress them for identifiers beginning with underscore	lex	none	encouragement about warnings; rhc's choice	hand	Planned		
+lex.ident.unusedwarning	2.4	Compilers offering unused-identifier warnings are encouraged to suppress them for identifiers beginning with underscore	lex	none	encouragement about warnings; rhc's choice. Nothing to meet (ruling 49): rhc gives no unused-identifier warning, so there is none to suppress.	hand	Supported		
 lex.reserved.case	2.4	case is reserved	lex	reject	refused as a variable name	hand	Supported		
 lex.reserved.class	2.4	class is reserved	lex	reject	refused as a variable name	hand	Supported		
 lex.reserved.data	2.4	data is reserved	lex	reject	refused as a variable name	hand	Supported		
@@ -167,7 +167,7 @@ lex.int.incomplete.hex	2.5	Maximal munch: 0x not followed by a hexit lexes as 0 
 lex.int.incomplete.oct	2.5	0o not followed by an octit lexes as 0 then o...	lex	accept	`0o9` token dump	hand	Supported		
 lex.int.binary	2.5	There is no binary literal	lex	accept	`0b1` lexes as 0 then b1	hand	Supported		
 lex.int.underscore	2.5	There is no digit separator	lex	accept	`1_000` lexes as 1 then _000	hand	Supported	R58	
-lex.int.unidigit	2.5	decimal -> digit{digit} and digit includes uniDigit, yet chapter 19 says digits outside ASCII are not used to represent numbers	lex	none	contradiction: rhc must pick; see readings.md	hand	Planned	R6	
+lex.int.unidigit	2.5	decimal -> digit{digit} and digit includes uniDigit, yet chapter 19 says digits outside ASCII are not used to represent numbers	lex	reject	contradiction: rhc must pick; see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/lex.int.unidigit): rhc takes chapter 19's side, a numeric literal of ASCII digits only (R6 in readings.md).	hand	Supported	R6	
 lex.float.point	2.5	float -> decimal . decimal [exponent]	lex	accept	`1.5`, `1.5e3`	hand	Supported		
 lex.float.exponent	2.5	float -> decimal exponent	lex	accept	`1e3` is a float	hand	Supported		
 lex.float.expform	2.5	exponent -> (e | E) [+ | -] decimal	lex	accept	`1E3`, `1e+3`, `1e-3`	hand	Supported		
@@ -208,7 +208,7 @@ lex.esc.octal	2.6	\o137 is octal	lex	run	ord is 95	hand	Supported
 lex.esc.hex	2.6	\x37 is hexadecimal	lex	run	ord is 55	hand	Supported		
 lex.esc.lowerforms	2.6	Only o and x introduce numeric escapes, in lower case	lex	reject	`'\O17'` and `'\X41'` are refused	hand	Supported		
 lex.esc.munch	2.6	Numeric escapes consist of all consecutive digits and may be of arbitrary length	lex	run	`"\0000000065"` is "A"; `"\1234"` is one character	hand	Supported		
-lex.esc.range	2.6	The Report sets no bound on a numeric escape's value	lex	none	a value above maxBound::Char is unspecified: rhc must refuse or wrap; see readings.md	hand	Planned	R8	
+lex.esc.range	2.6	The Report sets no bound on a numeric escape's value	lex	reject	a value above maxBound::Char is unspecified: rhc must refuse or wrap; see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/lex.esc.range): rhc refuses a numeric escape above 0x10FFFF, maxBound :: Char, statically (R8 in readings.md).	hand	Supported	R8	
 lex.esc.soh	2.6	The one ambiguous ASCII escape "\SOH" parses as a string of length 1	lex	run	`length "\SOH" == 1`	hand	Supported		
 lex.esc.soampersandh	2.6	"\SO\&H" has length two	lex	run	length and elements	hand	Supported		
 lex.esc.numampersand	2.6	"\137\&9" has length two	lex	run	length and elements	hand	Supported		
@@ -283,7 +283,7 @@ lay.parseerror.comma	2.7	A comma closes implicit blocks	layout	accept	`(case x o
 lay.parseerror.bracket	2.7	A closing bracket closes implicit blocks	layout	accept	`[do a]`	hand	Supported		
 lay.parseerror.then	2.7	then, else, of close implicit blocks	layout	accept	`if do a then b else c`, `case do a of x -> x`	hand	Supported		
 lay.parseerror.where	2.7	where closes an implicit do or let block it cannot belong to	layout	accept	`f = do a where a = b`	hand	Supported		
-exp.trans.preserve	3	Except for let, the translations preserve both the static and the dynamic semantics	static	none	a claim about the text and not about one program: the tr rows test each identity, and readings.md lists where the claim fails	hand	Planned	R14	
+exp.trans.preserve	3	Except for let, the translations preserve both the static and the dynamic semantics	static	run	a claim about the text and not about one program: the tr rows test each identity, and readings.md lists where the claim fails. E9's test was none; ruling 49 makes it a run: tr.lit.int's program names it and pins R14, the literals' translations to the Prelude's fromInteger and fromRational over R14's kernel constants keeping a program's meaning, and each identity's own tr.* row tests the rest.	hand	Supported	R14	
 exp.free.prelude	3	Free variables and constructors in a translation always mean the Prelude's entities, whether or not the name is in scope and whatever it is bound to	static	run	covered entity by entity by the exp.free rows	hand	Supported		
 exp.free.concatmap	3	A list comprehension uses the Prelude's concatMap, even with concatMap hidden or rebound	static	run	module hiding concatMap and defining its own that aborts; a comprehension still gives the right list	hand	Supported		
 exp.free.negate	3	Prefix negation uses the Prelude's negate, even with negate hidden or rebound	static	run	import Prelude hiding (negate), own negate aborts, -x still negates	hand	Supported		
@@ -329,8 +329,8 @@ exp.parse.oplet	3	z + let { ... } in x + y parses as z + (let { ... } in (x + y)
 exp.parse.sig	3	f x y :: Int parses as (f x y) :: Int	syntax	run	printer output of the AST	hand	Supported		
 exp.parse.lambdasig	3	\ x -> a+b :: Int parses as \ x -> ((a+b) :: Int)	syntax	run	printer output of the AST	hand	Supported		
 exp.parse.letnonassoc	3	let x = True in x == x == True must parse as (let x = True in (x == x)) == True, since == is non-associative	syntax	run	see readings.md: the Report concedes a post-parse fixity pass gets this wrong; pinned reading or deviation	hand	Planned	R9	
-exp.parse.advice	3	Programmers are advised to avoid constructs whose parsing involves associativity interacting with the let/lambda meta-rule	syntax	none	advice to programmers, nothing a test can show	hand	Planned		
-exp.err.nontermination	3.1	Errors, denoted ⊥, are indistinguishable by a Haskell program from non-termination	dynamic	none	a negative universal over programs; tests can only pin that catch and error do not meet (exp.err.uncatchable)	hand	Planned		
+exp.parse.advice	3	Programmers are advised to avoid constructs whose parsing involves associativity interacting with the let/lambda meta-rule	syntax	none	advice to programmers, nothing a test can show. Nothing to meet (ruling 49): advice to programmers, which asks nothing of rhc.	hand	Supported		
+exp.err.nontermination	3.1	Errors, denoted ⊥, are indistinguishable by a Haskell program from non-termination	dynamic	none	a negative universal over programs; tests can only pin that catch and error do not meet (exp.err.uncatchable). Met by construction (ruling 49): rhc gives a program no way to tell an error from a loop, since catch takes only an IOError and error raises none (exp.err.uncatchable's program).	hand	Supported		
 exp.err.alltypes	3.1	All Haskell types include ⊥	dynamic	run	undefined bound at a function, data, tuple, list, newtype and Int type, unused, and the program finishes	hand	Supported		
 exp.err.lazy	3.1	A value of any type may be bound to a computation that, only when demanded, results in an error	dynamic	run	let x = error "a" in 1 prints 1	hand	Supported		
 exp.err.terminate	3.1	When evaluated, errors cause immediate program termination	dynamic	run	nothing runs after it; whether open handles are flushed: see readings.md (23 says as exitFailure)	hand	Supported	R37	
@@ -341,8 +341,8 @@ exp.err.error.exit	3.1	A call to error terminates the program and returns an app
 exp.err.error.display	3.1	A call to error should display the string in some system-dependent manner	dynamic	run	the string appears on standard error	hand	Supported		
 exp.err.undefined.msg	3.1	When undefined is used, the error message is created by the compiler	dynamic	run	terminates as error does with a non-empty message; the text is not specified	hand	Supported		
 exp.err.trans	3.1	Translations use error and undefined to mark where execution-time errors may occur	dynamic	run	the failing arm of each translation terminates: tr.case.b, tr.field.upd, tr.field.con	hand	Supported		
-exp.err.behaviour	3.1	The actual program behaviour when an error occurs is up to the implementation	dynamic	none	a licence: it weakens exp.err.terminate and has no expected output; see readings.md	hand	Planned	R37	
-exp.err.messages	3.1	The messages passed to error in translations are only suggestions; an implementation may display more or less	dynamic	none	a licence: no message text is required	hand	Planned		
+exp.err.behaviour	3.1	The actual program behaviour when an error occurs is up to the implementation	dynamic	run	a licence: it weakens exp.err.terminate and has no expected output; see readings.md. E9's test was none; ruling 49 makes it a run: exp.err.terminate_stop's program names it and pins R37's choice, an error ending the program at once with status 1, what it wrote before flushed.	hand	Supported	R37	
+exp.err.messages	3.1	The messages passed to error in translations are only suggestions; an implementation may display more or less	dynamic	none	a licence: no message text is required. Nothing to meet (ruling 49): a licence, no message text required; rhc's messages are its own.	hand	Supported		
 exp.var.qualified	3.2	A variable in an expression may be qualified	syntax	accept	Prelude.id x, Prelude.map f xs	hand	Supported		
 exp.var.operator	3.2	var and qvar include a parenthesised symbol	syntax	accept	(+), (Prelude.+)	hand	Supported		
 exp.con.qualified	3.2	qcon is a qualified constructor or a parenthesised gconsym	syntax	accept	M.C, (M.:+), (:)	hand	Supported		
@@ -598,7 +598,7 @@ pat.ctx.binding	3.17	in pattern bindings	syntax	accept	(x,y) = e	hand	Supported
 pat.ctx.comp	3.17	in list comprehensions	syntax	accept	[x | (x,y) <- e]	hand	Supported		
 pat.ctx.do	3.17	in do expressions	syntax	accept	do { (x,y) <- e; ... }	hand	Supported		
 pat.ctx.case	3.17	in case expressions	syntax	accept	case e of (x,y) -> x	hand	Supported		
-pat.ctx.case.only	3.17	The first five ultimately translate to case, so matching needs defining only for case	dynamic	none	a claim about the text; each form's tr row tests its translation	hand	Planned		
+pat.ctx.case.only	3.17	The first five ultimately translate to case, so matching needs defining only for case	dynamic	none	a claim about the text; each form's tr row tests its translation. Met by construction (ruling 49): HsDesugar takes the other five forms to case, through HsMatch.clauses and HsMatch.pattern, as tr.case.base says, so matching is defined once, for case.	hand	Supported		
 pat.npk.toplevel	3.17.1	var + integer is a pat, not a pat0: it appears unparenthesised in a case alternative or generator	syntax	accept	case x of n+1 -> n	hand	Supported		
 pat.npk.nested	3.17.1	As a sub-pattern it needs parentheses	syntax	accept	f (n+1) = n, Just (n+1)	hand	Supported		
 pat.npk.conarg	3.17.1	Unparenthesised it is no argument of a constructor	syntax	reject	f (Just n+1) = n	hand	Supported		
@@ -675,7 +675,7 @@ pat.class.float	3.17.2	A floating literal pattern can only be matched against a 
 pat.class.npk	3.17.2	An n+k pattern can only be matched against a value in class Integral	static	reject	f :: Double -> Double; f (n+1) = n	hand	Supported		
 pat.class.infer.int	3.17.2	The classes appear in inferred contexts	static	accept	f 0 = 1 gets (Num a, Num b) => a -> b, Eq by superclass	hand	Supported		
 pat.class.infer.npk	3.17.2	An n+k pattern gives an Integral context	static	accept	f (n+1) = n gets Integral a => a -> a	hand	Supported		
-pat.npk.opinion	3.17.2	n+k patterns may be removed or changed in future versions	dynamic	none	a remark about the future; rhc's target is Haskell 98, which has them	hand	Planned		
+pat.npk.opinion	3.17.2	n+k patterns may be removed or changed in future versions	dynamic	none	a remark about the future; rhc's target is Haskell 98, which has them. Nothing to meet (ruling 49): a remark about later versions; rhc's language is Haskell 98, which has n+k patterns (the pat.npk rows).	hand	Supported		
 pat.irref.def	3.17.2	Matching an irrefutable pattern is non-strict: it matches even if the value is ⊥	dynamic	run	each of the irrefutable forms below on undefined	hand	Supported		
 pat.ref.def	3.17.2	Matching a refutable pattern is strict: if the value is ⊥ the match diverges	dynamic	run	each refutable form on undefined	hand	Supported		
 pat.irref.var	3.17.2	A variable is irrefutable	dynamic	run	on undefined	hand	Supported		
@@ -751,7 +751,7 @@ dec.idecls.empty	4	an instance body may be empty (n>=0)	syntax	accept	`instance 
 dec.gendecl.empty	4	gendecl may be the empty declaration	syntax	accept	`let {;; x = 1 ;;} in x`	hand	Supported		
 dec.idecl.empty	4	idecl may be empty	syntax	accept	`instance C Int where { ; }`	hand	Supported		
 dec.vars.many	4	vars and ops take n>=1 names	syntax	accept	`x, y :: Int` and `infixl 6 +++, ---`	hand	Supported		
-dec.primitive.types	4	some datatypes (integers, floats) are hard-wired, most built-in datatypes are normal type and data declarations	prelude	none	a description, not a requirement: each type's rows are in 6.1 and chapter 8	hand	Planned		
+dec.primitive.types	4	some datatypes (integers, floats) are hard-wired, most built-in datatypes are normal type and data declarations	prelude	none	a description, not a requirement: each type's rows are in 6.1 and chapter 8. Nothing to meet (ruling 49): a description of how the types are given, not a requirement; each type's behaviour is its rows' in 6.1 and chapter 8.	hand	Supported		
 ty.hm	4.1	the type system is Hindley-Milner polymorphism extended with type classes	static	accept	a let-polymorphic overloaded program with no signatures compiles	hand	Supported		
 ty.class.intro	4.1	a class declaration introduces a class and its overloaded operations; an instance declaration makes a type an instance	static	accept	the simplified Num class of the section, with instances at two user types	hand	Supported		
 ty.class.constructor	4.1	type class includes constructor classes	static	accept	a class over a type constructor of kind *->* with an instance	hand	Supported		
@@ -873,7 +873,7 @@ dec.newtype.onefield	4.2.3	the constructor has exactly one field	syntax	reject	`
 dec.newtype.recursive	4.2.3	newtype may define recursive types	static	accept	`newtype L = L (Maybe (Int, L))`	hand	Supported		
 dec.newtype.context	4.2.3	a newtype may have a context	static	accept	`newtype Eq a => N a = N a` compiles; what the context means is not said, see readings.md	hand	Supported	R23	
 dec.newtype.instance	4.2.3	new instances may be defined for a newtype	static	accept	`instance Show N`, the underlying type having another	hand	Supported		
-dec.newtype.representation	4.2.3	the coercions may be implemented without execution-time overhead	dynamic	none	a permission; what shows is N ⊥ = ⊥, tested below	hand	Planned		
+dec.newtype.representation	4.2.3	the coercions may be implemented without execution-time overhead	dynamic	none	a permission; what shows is N ⊥ = ⊥, tested below. Nothing to meet (ruling 49): a permission, which rhc takes: a newtype's constructor and its pattern are Core casts (HsMatch's rules (k) and (l)), which cost nothing at run time.	hand	Supported		
 dec.newtype.unlifted	4.2.3	N is unlifted: N ⊥ is the same as ⊥	dynamic	run	`seq (N undefined) 1` diverges: bottom probe	hand	Supported		
 dec.newtype.ex.d1bot	4.2.3	`d1 ⊥` is ⊥ for `data D1 = D1 Int; d1 (D1 i) = 42`	dynamic	run	bottom probe by exit status	hand	Supported		
 dec.newtype.ex.d2bot	4.2.3	`d2 ⊥` is ⊥ for `data D2 = D2 !Int; d2 (D2 i) = 42`	dynamic	run	bottom probe by exit status	hand	Supported		
@@ -1145,7 +1145,7 @@ dec.gen.nested.ctx	4.5.2	a let-bound function may be overloaded	static	accept	`f
 dec.gen.group.ctx	4.5.2	all the constraints of a group are collected to form the context of each variable	static	accept	g1 and g2 of the example both have forall a. (Ord a, Show a) => a -> a -> String	hand	Supported		
 dec.gen.group.ctx.g2	4.5.2	g2 is overloaded as g1 is, though the operations are in g1	static	reject	g2 used at a type without Show is refused	hand	Supported		
 dec.gen.group.ambiguous	4.5.2	one context for each variable makes a variable with a constraint its type does not mention ambiguous	static	reject	a group of two functions with type variables of their own and a constraint on one; see readings.md	hand	Supported	R21	
-dec.gen.sig.identical	4.5.2	explicit signatures for several variables of a group must have contexts identical up to renaming	static	reject	`f :: Eq a => a -> Bool; g :: Ord a => a -> Bool`, mutually recursive, is refused; see readings.md	hand	Supported	R21	
+dec.gen.sig.identical	4.5.2	explicit signatures for several variables of a group must have contexts identical up to renaming	static	reject	`f :: Eq a => a -> Bool; g :: Ord a => a -> Bool`, mutually recursive, is refused; see readings.md. A second refusal (ruling 55): f and g one group only through g's where, which uses f, a signature cutting no group by R21(c), tcfail071's shape (errors/dec.gen.sig.identical_where).	hand	Supported	R21	
 dec.gen.sig.renamed	4.5.2	up to renaming of the type variables	static	accept	the same with `Eq a` and `Eq b`	hand	Supported		
 dec.ctx.hnf	4.5.3	a context constrains only a type variable or a variable applied to types, so types from generalization are reduced to head normal form	static	accept	`f xs y = xs == [y]` has type Eq a => [a] -> a -> Bool: accepted at that signature	hand	Supported		
 dec.ctx.hnf.notlist	4.5.3	the type is not Eq [a] => ...	static	reject	`f :: Eq [a] => [a] -> a -> Bool` is refused by 4.1.3	hand	Supported		
@@ -1192,7 +1192,7 @@ mr.rule2.m1.type	4.5.5	in that example len1 gets type Int	module	accept	`len2 = 
 mr.rule2.m1.sig	4.5.5	a signature on len1 solves the problem	module	accept	`len1 :: Num a => a` in M1 makes M2 legal	hand	Supported		
 mr.rule2.notdefaultable	4.5.5	a remaining variable that is not defaultable is an error	static	reject	`x = read "1"; main = print 1` is refused: read's a has no numeric class	hand	Supported		
 mr.rule2.nested	4.5.5	the issue does not arise for nested bindings: their whole scope is visible	static	accept	`f = let x = 1 in x :: Double`	hand	Supported		
-mr.rule2.mutual	4.5.5	for mutually recursive modules the Report does not say what `an entire module` then means	module	none	5.7 leaves separate compilation open: rhc's reading is a decision; see readings.md	hand	Planned	R20	
+mr.rule2.mutual	4.5.5	for mutually recursive modules the Report does not say what `an entire module` then means	module	reject	5.7 leaves separate compilation open: rhc's reading is a decision; see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/mr.rule2.mutual): by D30's default, --cycle-default=module, Rule 2 closes a monomorphic variable at the end of its own module, so a use at another type in a module of its cycle is refused (R20 in readings.md).	hand	Supported	R20	
 mr.rule1.both	4.5.5	rule 1 applies to top-level and nested definitions alike	static	reject	the same program at both levels	hand	Supported		
 mr.conseq.fun	4.5.5	anything defined with function syntax generalizes	static	accept	`f x y = x+y`, overloaded at every use	hand	Supported		
 mr.conseq.lambda	4.5.5	the same function by pattern syntax needs a signature	static	reject	`f = \ x -> \ y -> x+y` at two types is refused	hand	Supported		
@@ -1227,7 +1227,7 @@ prog.main.type.any	5	The t of IO t is any type	static	accept	main :: IO Int; mai
 prog.main.type.poly	5	A main of polymorphic type IO a instantiates to IO t	static	accept	main :: IO a; main = ioError (userError "x"); the exit status shows it ran	hand	Supported		
 prog.main.value	5	The value of a program is main in Main; executing the program performs that computation	dynamic	run	output of a main that prints	hand	Supported		
 prog.main.discard	5	The result of main, of type t, is discarded	dynamic	run	main = return undefined exits with success; nothing forces the result	hand	Supported		
-mod.def.entity	5	An entity is a value, type or class defined in, imported into or exported from a module	module	none	a definition of a term; tested through the rows that use it	hand	Planned		
+mod.def.entity	5	An entity is a value, type or class defined in, imported into or exported from a module	module	none	a definition of a term; tested through the rows that use it. Nothing to meet (ruling 49): the definition of a term; the module rows that use it hold rhc to it.	hand	Supported		
 mod.import.reference	5	Modules reference other modules by explicit import declarations	module	accept	a two-module program	hand	Supported		
 mod.recursive	5	Modules may be mutually recursive	module	accept	two modules importing each other compile as one program and run; see readings.md for what 5.7 allows an implementation to demand	hand	Supported	R28 R29	
 mod.recursive.types	5	Mutual recursion covers types and classes as well as values	module	accept	a data type in A uses a type of B and the reverse	hand	Supported		
@@ -1425,9 +1425,9 @@ mod.closure.class	5.5.3	The classes in a variable's signature need not be import
 mod.closure.t	5.5.3	Example: M1(x) with T not exported, M2 imports x and defines y = x	module	accept	compiles though T does not escape M1	hand	Supported		
 mod.closure.t.sig	5.5.3	There y can be given no signature, as T is not in scope	module	reject	y :: T: refused	hand	Supported		
 mod.closure.synonym	5.5.3	The type of an exported entity is unaffected by non-exported synonyms	module	accept	module M(x) where type T = Int; x :: T; importer uses x + (1 :: Int)	hand	Supported		
-mod.closure.iface	5.5.3	The system silently imports what must accompany an entity	module	none	the means are the compiler's; tested through the rows above	hand	Planned		
-mod.std.fixed	5.6	The semantics of Prelude and library modules, not their implementation, are part of the language	module	none	tested by chapters 6, 8 and 12 to 27	hand	Planned		
-mod.std.optimise	5.6	A compiler may optimise calls to them without consulting their source	module	none	a permission, not a requirement	hand	Planned		
+mod.closure.iface	5.5.3	The system silently imports what must accompany an entity	module	none	the means are the compiler's; tested through the rows above. Met by construction (ruling 49): rhc reads every module a program reaches, and the library from the saved world (D45), so what an entity needs comes with it unasked; 5.5.3's rows are its programs.	hand	Supported		
+mod.std.fixed	5.6	The semantics of Prelude and library modules, not their implementation, are part of the language	module	none	tested by chapters 6, 8 and 12 to 27. Nothing to meet (ruling 49): a statement of what is part of the language; the rows of chapters 6, 8 and 12 to 27 hold rhc to those semantics.	hand	Supported		
+mod.std.optimise	5.6	A compiler may optimise calls to them without consulting their source	module	none	a permission, not a requirement. Nothing to meet (ruling 49): a permission; rhc compiles calls to the library as to any module.	hand	Supported		
 mod.prel.implicit	5.6.1	The Prelude is imported into all modules as if by import Prelude	module	accept	a module uses Prelude.map and map with no import	hand	Supported		
 mod.prel.implicit.qualified	5.6.1	That implicit import gives the qualified names	module	accept	Prelude.map with no import	hand	Supported		
 mod.prel.explicit.list	5.6.1	An explicit import of Prelude replaces the implicit one: list	module	reject	import Prelude (map); a use of filter: refused	hand	Supported		
@@ -1438,9 +1438,9 @@ mod.prel.explicit.qualified.ok	5.6.1	That import gives the qualified names	modul
 mod.prel.explicit.as	5.6.1	Likewise an as clause, which leaves Prelude.x out of scope	module	reject	import Prelude as P; a use of Prelude.map: refused; map and P.map work	hand	Supported		
 mod.prel.explicit.qualas	5.6.1	Likewise qualified with as	module	reject	import qualified Prelude as P; a use of map: refused	hand	Supported		
 mod.prel.explicit.several	5.6.1	Several explicit imports are cumulative	module	accept	import Prelude (map); import qualified Prelude as P	hand	Supported		
-mod.prel.spec	5.6.1	The semantics of the Prelude's entities is specified by the reference implementation of chapter 8	prelude	none	tested row by row through the generated pre.* rows	hand	Planned		
-mod.prel.primitive	5.6.1	Some types and functions cannot be specified in Haskell and are not formally defined in chapter 8	prelude	none	a statement of the text's limit; chapter 6 is all there is for them: see readings.md	hand	Planned	R32	
-mod.prel.tuples	5.6.1	There should be an infinite family of tuples and instances; the reference gives a scheme	prelude	none	tested to the size 6.1.4 requires	hand	Planned		
+mod.prel.spec	5.6.1	The semantics of the Prelude's entities is specified by the reference implementation of chapter 8	prelude	none	tested row by row through the generated pre.* rows. Met through named rows' programs (ruling 49): the pre.* rows, every one of which with a test is Supported, hold each entity to chapter 8's code.	hand	Supported		
+mod.prel.primitive	5.6.1	Some types and functions cannot be specified in Haskell and are not formally defined in chapter 8	prelude	reject	a statement of the text's limit; chapter 6 is all there is for them: see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/mod.prel.primitive): the Prelude's parts, which chapter 8 cannot give wholly in Haskell, cannot be imported separately (R32 in readings.md).	hand	Supported	R32	
+mod.prel.tuples	5.6.1	There should be an infinite family of tuples and instances; the reference gives a scheme	prelude	none	tested to the size 6.1.4 requires. Met through named rows' programs (ruling 49): the std.tuple rows, to the size 15 that 6.1.4 requires, with their instances; rhc's tuples have no bound (std.tuple.nobound).	hand	Supported		
 mod.prel.sub.list	5.6.1	PreludeList cannot be imported separately	module	reject	import PreludeList: refused	hand	Supported		
 mod.prel.sub.text	5.6.1	PreludeText cannot be imported separately	module	reject	import PreludeText: refused	hand	Supported		
 mod.prel.sub.io	5.6.1	PreludeIO cannot be imported separately	module	reject	import PreludeIO: refused	hand	Supported		
@@ -1457,14 +1457,14 @@ mod.shadow.special	5.6.2	Redefining names used by the Prelude does not affect sp
 mod.shadow.special.scope	5.6.2	Those constructs work with none of their names in scope	module	run	import Prelude (); comprehensions, do, literals and [1..] still compile; see readings.md	hand	Supported	R22	
 mod.shadow.instance	5.6.2	Instance declarations in the Prelude cannot be hidden	module	reject	instance Show Char in a user module, under any import form: refused	hand	Supported		
 mod.prel.ordinary	5.6.2	Other than its implicit import the Prelude is an ordinary module	module	accept	it is imported with each import form	hand	Supported		
-mod.sep.undefined	5.7	The precise details of separate compilation are not defined by the Report	module	none	left to the implementation: rhc's own decision	hand	Planned		
-mod.sep.recursive	5.7	Separate compilation of mutually recursive modules may need additional information	module	none	a permission to the implementation; see readings.md, it qualifies 5's unconditional statement	hand	Planned	R29	
-mod.sep.sigs	5.7	Explicit signatures for all exported values may be necessary for mutual recursion	module	none	whether rhc demands them is a decision; see readings.md	hand	Planned	R20 R29	
+mod.sep.undefined	5.7	The precise details of separate compilation are not defined by the Report	module	none	left to the implementation: rhc's own decision. Nothing to meet (ruling 49): separate compilation's details are the implementation's; rhc's are D45's saved world and M21's units.	hand	Supported		
+mod.sep.recursive	5.7	Separate compilation of mutually recursive modules may need additional information	module	accept	a permission to the implementation; see readings.md, it qualifies 5's unconditional statement. E9's test was none; ruling 49 makes it an acceptance: accept/mod.recursive names it and pins R29, a cycle of modules compiled whole with no further information (R29 in readings.md).	hand	Supported	R29	
+mod.sep.sigs	5.7	Explicit signatures for all exported values may be necessary for mutual recursion	module	accept	whether rhc demands them is a decision; see readings.md. E9's test was none; ruling 49 makes it an acceptance (tests/hs/accept/mod.sep.sigs): rhc needs no signature for a function exported across a cycle, only, by D30, a restricted variable's type in its own module (R20 and R29 in readings.md).	hand	Supported	R20 R29	
 mod.adt.data	5.8	Example: module Stack( StkType, push, pop, empty ) exports a datatype without its constructors	module	accept	importer uses push, pop, empty	hand	Supported		
 mod.adt.data.abstract	5.8	Importers cannot construct values through the constructors	module	reject	a use of Stk or EmptyStk: refused	hand	Supported		
 mod.adt.newtype	5.8	Example: the ADT built on a newtype	module	accept	importer uses push, pop, empty	hand	Supported		
 mod.adt.newtype.abstract	5.8	Its constructor is hidden likewise	module	reject	a use of Stk: refused	hand	Supported		
-std.type.syntax	6.1	Some definitions in this chapter are not valid syntax but convey the type's meaning	prelude	none	a remark; each type is tested by its rows	hand	Planned		
+std.type.syntax	6.1	Some definitions in this chapter are not valid syntax but convey the type's meaning	prelude	none	a remark; each type is tested by its rows. Nothing to meet (ruling 49): a remark on the chapter's notation; each type is held to its meaning by its rows.	hand	Supported		
 std.bool.data	6.1.1	Bool is the enumeration False | True in that order	prelude	run	False < True, fromEnum True is 1, minBound is False	hand	Supported		
 std.bool.read	6.1.1	Bool is in Read	prelude	run	read "True"	hand	Supported		
 std.bool.show	6.1.1	Bool is in Show	prelude	run	show False	hand	Supported		
@@ -1514,7 +1514,7 @@ std.tuple.size15.ord	6.1.4	With Ord to size 15	prelude	run	each size 2 to 15	han
 std.tuple.size15.bounded	6.1.4	With Bounded to size 15	prelude	run	each size 2 to 15	hand	Supported		
 std.tuple.size15.read	6.1.4	With Read to size 15	prelude	run	each size 2 to 15	hand	Supported		
 std.tuple.size15.show	6.1.4	With Show to size 15	prelude	run	each size 2 to 15	hand	Supported		
-std.tuple.nobound	6.1.4	There is no upper bound on a tuple's size, though an implementation may restrict it	prelude	none	rhc must state its limit; above 15 is implementation-defined	hand	Planned		
+std.tuple.nobound	6.1.4	There is no upper bound on a tuple's size, though an implementation may restrict it	prelude	none	rhc must state its limit; above 15 is implementation-defined. Met by construction (ruling 49): rhc sets no bound on a tuple's size, a tuple type being declared at each size a program uses (HsDesugar's tuple data; a 64-tuple compiles and runs), and gives the instances to the size 15 that 6.1.4 requires (the std.tuple.size15 rows).	hand	Supported		
 std.tuple.zip7	6.1.4	The Prelude and libraries define tuple functions such as zip up to size 7	library	run	zip3 in the Prelude; zip4 to zip7 in List	hand	Supported		
 std.tuple.con	6.1.4	The constructor is written by omitting the expressions: (x,y) and (,) x y are one value	prelude	run	compared equal	hand	Supported		
 std.tuple.tycon	6.1.4	Likewise for types: (Int,Bool,Int) and (,,) Int Bool Int are one type	static	accept	a signature using each	hand	Supported		
@@ -1527,7 +1527,7 @@ std.unit.bounded	6.1.5	() is in Bounded	prelude	run	maxBound :: ()	hand	Supporte
 std.unit.enum	6.1.5	() is in Enum	prelude	run	[() ..] is [()]	hand	Supported		
 std.unit.read	6.1.5	() is in Read	prelude	run	read "()"	hand	Supported		
 std.unit.show	6.1.5	() is in Show	prelude	run	show ()	hand	Supported		
-std.fun.abstract	6.1.6	Functions are an abstract type: no constructors create them	prelude	none	the absence of a constructor has no program to test it	hand	Planned		
+std.fun.abstract	6.1.6	Functions are an abstract type: no constructors create them	prelude	none	the absence of a constructor has no program to test it. Nothing to meet (ruling 49): the absence of a constructor, which no program can show.	hand	Supported		
 std.fun.simple	6.1.6	id, const, (.), flip, ($) and until are found in the Prelude	prelude	run	each applied	hand	Supported		
 std.io.abstract	6.1.7	IO is abstract: no constructors are visible to the user	static	reject	a Prelude export list has none; a constructor of IO named: refused	hand	Supported		
 std.io.monad	6.1.7	IO is in Monad	prelude	run	do in IO	hand	Supported		
@@ -1558,7 +1558,7 @@ std.apply.lazy	6.2	f $ x = f x	prelude	run	const 1 $ undefined is 1	hand	Support
 std.apply.fixity	6.2	infixr 0 $, $!	prelude	run	f $ g $ h x = f (g (h x))	hand	Supported		
 std.apply.section	6.2	$ works higher-order, map ($ 0) xs and zipWith ($) fs xs	prelude	run	both evaluated	hand	Supported		
 std.class.minimal	6.3	A comment with each class gives the smallest set of methods which with the defaults define all	prelude	run	per class, an instance of exactly that set gives every method a value	hand	Supported		
-std.class.nocomment	6.3	If there is no such comment all methods must be given to fully specify an instance	prelude	none	a statement to the programmer; omitted methods are 4.3.2's undefined	hand	Planned		
+std.class.nocomment	6.3	If there is no such comment all methods must be given to fully specify an instance	prelude	none	a statement to the programmer; omitted methods are 4.3.2's undefined. Met through named rows' programs (ruling 49): a method neither given nor defaulted is 4.3.2's undefined, cls.inst.missing.compile's and cls.inst.missing.undefined's programs.	hand	Supported		
 std.eq.class	6.3.1	Eq has methods (==), (/=) with mutual defaults	prelude	accept	an instance defining either	hand	Supported		
 std.eq.default.ne	6.3.1	x /= y = not (x == y) by default	prelude	run	instance defining == only	hand	Supported		
 std.eq.default.eq	6.3.1	x == y = not (x /= y) by default	prelude	run	instance defining /= only	hand	Supported		
@@ -1578,13 +1578,13 @@ std.ord.default.gt	6.3.2	x > y = compare x y == GT by default	prelude	run	same	h
 std.ord.default.max	6.3.2	max x y is y if x <= y, else x	prelude	run	on values equal but distinguishable	hand	Supported		
 std.ord.default.min	6.3.2	min x y is x if x <= y, else y	prelude	run	same	hand	Supported		
 std.ord.minmax	6.3.2	(min x y, max x y) is (x,y) or (y,x)	prelude	run	on values equal but distinguishable	hand	Supported		
-std.ord.total	6.3.2	Ord is used for totally ordered datatypes	prelude	none	a law on the instance's author, and Float's NaN breaks it: see readings.md	hand	Planned	R45	
+std.ord.total	6.3.2	Ord is used for totally ordered datatypes	prelude	run	a law on the instance's author, and Float's NaN breaks it: see readings.md. E9's test was none; ruling 49 makes it a run: der.ord.partial_nan's program names it and pins R45, Double's Ord over NaN, which is not total, compare NaN x being GT by Ord's default over IEEE's == and <= (R45 and R90 in readings.md).	hand	Supported	R45	
 std.ord.function	6.3.2	Functions are not in Ord	static	reject	id < id: refused	hand	Supported		
 std.ord.io	6.3.2	IO is not in Ord	static	reject	getChar < getChar: refused	hand	Supported		
 std.ord.ioerror	6.3.2	IOError is not in Ord	static	reject	userError "a" < userError "b": refused	hand	Supported		
 std.ord.basic	6.3.2	All other basic datatypes are in Ord	prelude	run	one test per type of the Prelude	hand	Supported		
 std.ord.derive	6.3.2	Ord can be derived where the constituent types are in Ord, and the declared order of constructors determines it	prelude	run	derived on a user type	hand	Supported		
-std.ord.compare.single	6.3.2	Ordering allows a single comparison to determine the order	prelude	none	a remark on efficiency	hand	Planned		
+std.ord.compare.single	6.3.2	Ordering allows a single comparison to determine the order	prelude	none	a remark on efficiency. Nothing to meet (ruling 49): a remark on efficiency.	hand	Supported		
 std.ord.minimal	6.3.2	An Ord instance may give compare alone or == and <=	prelude	run	both forms give all methods	hand	Supported		
 std.text.reads	6.3.3	ReadS a = String -> [(a,String)]	prelude	accept	interchangeable in a signature	hand	Supported		
 std.text.shows	6.3.3	ShowS = String -> String	prelude	accept	interchangeable in a signature	hand	Supported		
@@ -1593,12 +1593,12 @@ std.show.class	6.3.3	Show has showsPrec, show and showList	prelude	accept	instan
 std.show.default.prec	6.3.3	showsPrec _ x s = show x ++ s by default	prelude	run	instance with show alone	hand	Supported		
 std.show.default.show	6.3.3	show x = showsPrec 0 x "" by default	prelude	run	instance with showsPrec alone	hand	Supported		
 std.show.prec.arg	6.3.3	The Int argument gives the precedence of the enclosing context	prelude	run	showsPrec 11 of a compound value has parentheses	hand	Supported		
-std.show.constant.time	6.3.3	showsPrec and showList return functions to allow constant-time concatenation	prelude	none	a remark; a --count budget for a deep tree stands for it	hand	Planned		
+std.show.constant.time	6.3.3	showsPrec and showList return functions to allow constant-time concatenation	prelude	none	a remark; a --count budget for a deep tree stands for it. Nothing to meet (ruling 49): a remark on why showsPrec and showList return functions, which rhc's library keeps from the Report's code.	hand	Supported		
 std.show.show.zero	6.3.3	show uses precedence context zero	prelude	run	show (Just 1) has no outer parentheses	hand	Supported		
 std.show.list	6.3.3	showList gives a specialised way of showing lists	prelude	run	a user instance's showList used by show of a list	hand	Supported		
 std.show.string	6.3.3	Values of type String are shown in double quotes	prelude	run	show "a" is "\"a\""	hand	Supported		
 std.text.derived.style	6.3.3	Derived Read and Show replicate the style of declaration: infix constructors and field names	prelude	run	see chapter 10's rows	hand	Supported		
-std.text.usually	6.3.3	Strings produced by showsPrec are usually readable by readsPrec	prelude	none	usually states no requirement; 10.4 is the requirement	hand	Planned		
+std.text.usually	6.3.3	Strings produced by showsPrec are usually readable by readsPrec	prelude	none	usually states no requirement; 10.4 is the requirement. Nothing to meet (ruling 49): usually states no requirement; 10.4's readability is the requirement, held by the der.show and der.read rows.	hand	Supported		
 std.text.prelude.types	6.3.3	All Prelude types except function and IO types are in Show and Read	prelude	run	one test per type; IOError has no Read in chapter 8 and 6.1.7: see readings.md	hand	Supported	R47	
 std.text.function.show	6.3.3	Functions are not in Show	static	reject	show id: refused	hand	Supported		
 std.text.function.vacuous	6.3.3	A programmer can make functions and IO types instances of Show	static	accept	instance Show (a -> b)	hand	Supported		
@@ -1631,7 +1631,7 @@ std.enum.inst.char	6.3.4	Char's instance is chapter 8's: enumFromTo 'a' 'z' is t
 std.enum.num.succ	6.3.4	For Int, Integer, Float and Double succ adds 1 and pred subtracts 1	prelude	run	on each type	hand	Supported		
 std.enum.num.conv	6.3.4	fromEnum and toEnum convert between the type and Int	prelude	run	on each type	hand	Supported		
 std.enum.num.float.digits	6.3.4	For Float and Double the digits after the point may be lost	prelude	run	fromEnum 2.5 is 2 by chapter 8	hand	Supported		
-std.enum.num.toolarge	6.3.4	What fromEnum returns for a value too large for Int is implementation-dependent	prelude	none	left open: rhc documents its choice	hand	Planned		
+std.enum.num.toolarge	6.3.4	What fromEnum returns for a value too large for Int is implementation-dependent	prelude	none	left open: rhc documents its choice. Met through named rows' programs (ruling 49): rhc's choice is R81's, fromEnum of a value beyond Int an error, std.enum.bounded.fromenum's program.	hand	Supported		
 std.enum.int.from	6.3.4	enumFrom e1 is [e1,e1+1,e1+2,...] for Int and Integer	prelude	run	take 3 [1..]; at Int the bound of enumFrom applies: see readings.md	hand	Supported	R40	
 std.enum.int.then	6.3.4	enumFromThen e1 e2 is [e1,e1+i,e1+2i,...] with i = e2-e1	prelude	run	take 3 [1,3..]	hand	Supported		
 std.enum.int.then.zero	6.3.4	The increment may be zero: all elements are the same	prelude	run	take 3 [1,1..]	hand	Supported		
@@ -1683,13 +1683,13 @@ std.num.super.realfrac	6.4	RealFrac is a subclass of Real and of Fractional	prel
 std.num.super.realfloat	6.4	RealFloat is a subclass of RealFrac and of Floating	prelude	reject	one with no Floating: refused	hand	Supported		
 std.num.types	6.4	The Prelude defines Int, Integer, Float and Double	prelude	accept	all four in signatures	hand	Supported		
 std.num.rational	6.4	Rational is a ratio of two Integer values, defined in Ratio	library	run	with import Ratio	hand	Supported		
-std.num.lia	6.4	The default floating point operations do not conform to LIA standards	prelude	none	a remark, not a requirement	hand	Planned		
+std.num.lia	6.4	The default floating point operations do not conform to LIA standards	prelude	none	a remark, not a requirement. Nothing to meet (ruling 49): a remark that the default operations do not follow LIA.	hand	Supported		
 std.int.range	6.4	Int covers at least [-2^29, 2^29-1]	prelude	run	minBound <= -2^29 and maxBound >= 2^29-1	hand	Supported		
 std.int.bounded	6.4	maxBound and minBound give the exact range of Int	prelude	run	arithmetic reaches them	hand	Supported		
 std.integer.arbitrary	6.4	Integer is arbitrary precision	prelude	run	2^1000 prints exactly	hand	Supported		
 std.float.ieee	6.4	Float is implementation-defined; it is desirable that it be at least IEEE single	prelude	run	floatDigits and floatRange at Float; 'desirable' binds nobody, a choice to record	hand	Supported		
 std.double.ieee	6.4	Double should cover IEEE double	prelude	run	floatDigits and floatRange at Double	hand	Supported		
-std.num.exceptional	6.4	The results of exceptional conditions on fixed-precision types are undefined: error, truncation or a special value	prelude	none	left open: rhc documents its choice, one row per condition in its deviations	hand	Planned		
+std.num.exceptional	6.4	The results of exceptional conditions on fixed-precision types are undefined: error, truncation or a special value	prelude	none	left open: rhc documents its choice, one row per condition in its deviations. Met through named rows' programs (ruling 49): rhc's choices are an error for Int's overflow (D22's checked Int, R81 and R93: std.enum.bounded.fromenum's and def.pick.first's programs) and IEEE's special values for Float and Double (R78: std.sign.abs_ieee's).	hand	Supported		
 std.num.table.integer	6.4	Table 6.1: Integer is in Integral	prelude	run	a use of quot	hand	Supported		
 std.num.table.int	6.4	Int is in Integral	prelude	run	a use of quot	hand	Supported		
 std.num.table.ratio	6.4	(Integral a) => Ratio a is in RealFrac	library	run	truncate of a ratio	hand	Supported		
@@ -1708,7 +1708,7 @@ std.arith.quot	6.4.2	quot truncates toward zero	prelude	run	(-7) `quot` 2 is -3	
 std.arith.div	6.4.2	div truncates toward negative infinity	prelude	run	(-7) `div` 2 is -4	hand	Supported		
 std.arith.quotrem	6.4.2	quotRem x y = (x `quot` y, x `rem` y)	prelude	run	all sign combinations	hand	Supported		
 std.arith.divmod	6.4.2	divMod x y = (x `div` y, x `mod` y)	prelude	run	all sign combinations	hand	Supported		
-std.arith.zero	6.4.2	What division by zero does at an integral type is not stated: the laws hold for non-zero y	prelude	none	6.4's 'exceptional conditions' may cover Int and nothing covers Integer: rhc decides, see readings.md	hand	Planned	R45	
+std.arith.zero	6.4.2	What division by zero does at an integral type is not stated: the laws hold for non-zero y	prelude	run	6.4's 'exceptional conditions' may cover Int and nothing covers Integer: rhc decides, see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/std.arith.zero): integral division by zero is an error at Int and Integer, R45's seed (R45 in readings.md).	hand	Supported	R45	
 std.arith.even	6.4.2	even x = x `rem` 2 == 0	prelude	run	on negative numbers	hand	Supported		
 std.arith.odd	6.4.2	odd = not . even	prelude	run	on negative numbers	hand	Supported		
 std.gcd.def	6.4.2	gcd x y is the greatest positive integer dividing both	prelude	run	gcd 12 18 is 6	hand	Supported		
@@ -1726,7 +1726,7 @@ std.pow.frac	6.4.3	(^^) raises a fractional number to any integer power	prelude	
 std.pow.float	6.4.3	(**) takes two floating-point arguments	prelude	run	2 ** 0.5	hand	Supported		
 std.pow.zero	6.4.3	x^0 is 1 for any x, including zero	prelude	run	0^0 is 1	hand	Supported		
 std.pow.zero.frac	6.4.3	x^^0 is 1 for any x, including zero	prelude	run	0^^0 is 1	hand	Supported		
-std.pow.undefined	6.4.3	0**y is undefined	prelude	none	undefined here means unspecified or bottom? see readings.md	hand	Planned	R45	
+std.pow.undefined	6.4.3	0**y is undefined	prelude	run	undefined here means unspecified or bottom? see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/std.pow.undefined): 0 ** y is IEEE's pow, 0, 1 or an infinity by y's sign, R45's seed (R45 in readings.md).	hand	Supported	R45	
 std.sign.law	6.4.4	abs x * signum x == x	prelude	run	at each numeric type, signs and zero	hand	Supported		
 std.sign.abs	6.4.4	For real numbers abs x is x if x >= 0, -x if x < 0	prelude	run	at each type; -0.0 and NaN under this definition: see readings.md	hand	Supported	R45 R78	
 std.sign.signum	6.4.4	For real numbers signum x is 1, 0 or -1	prelude	run	at each type; -0.0 and NaN: see readings.md	hand	Supported	R45 R78	
@@ -1746,7 +1746,7 @@ std.coerce.proper	6.4.6	properFraction x gives (n,f) with x = n+f	prelude	run	pr
 std.coerce.proper.sign	6.4.6	n is integral, and zero or of the sign of x; f has the type of x and absolute value below 1, and is zero or of the sign of x	prelude	run	properFraction (-3.75) is (-3,-0.75); erratum June 2003's wording	hand	Supported		
 std.coerce.proper.zero	6.4.6	Zero n or f has no sign, which is what the code does	prelude	run	properFraction 0.5 is (0,0.5); erratum June 2003, see readings.md	hand	Supported	R45	
 std.coerce.defined	6.4.6	ceiling, floor, truncate and round can be defined from properFraction	prelude	run	a user RealFrac with properFraction alone	hand	Supported		
-std.coerce.nan	6.4.6	What these return for NaN and infinities is not stated	prelude	none	rhc decides; see readings.md	hand	Planned	R45	
+std.coerce.nan	6.4.6	What these return for NaN and infinities is not stated	prelude	run	rhc decides; see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/std.coerce.nan): truncate, round, ceiling, floor and toRational of a NaN or an infinity are errors (R45 in readings.md).	hand	Supported	R45	
 std.coerce.torational	6.4.6	toRational returns the rational equivalent with full precision	prelude	run	toRational 0.75 is 3 % 4; of a Double exactly	hand	Supported		
 std.coerce.approx	6.4.6	approxRational x e returns the simplest rational within e of x	library	run	with import Ratio; within is the closed interval of erratum Aug 2005; see readings.md	hand	Supported	R44	
 std.coerce.simpler	6.4.6	p/q in reduced form is simpler than p'/q' if |p| <= |p'| and q <= q'	library	run	results checked against the definition	hand	Supported		
@@ -1767,15 +1767,15 @@ std.float.isinfinite	6.4.6	isInfinite likewise	prelude	run	isInfinite (1/0)	hand
 std.float.isdenorm	6.4.6	isDenormalized likewise	prelude	run	on the smallest denormal	hand	Supported		
 std.float.isnegzero	6.4.6	isNegativeZero likewise	prelude	run	isNegativeZero (-0.0): the literal is negate 0.0	hand	Supported		
 std.float.isieee	6.4.6	isIEEE likewise	prelude	run	True on an IEEE host	hand	Supported		
-std.float.nonieee	6.4.6	For non-IEEE numbers these may all return false	prelude	none	rhc's Float and Double decide: no non-IEEE host	hand	Planned		
+std.float.nonieee	6.4.6	For non-IEEE numbers these may all return false	prelude	none	rhc's Float and Double decide: no non-IEEE host. Met by construction (ruling 49): rhc's Float and Double are IEEE single and double on every host, so isIEEE is True (std.float.ieee's program) and no non-IEEE number arises.	hand	Supported		
 std.coerce.fromintegral	6.4.6	fromIntegral :: (Integral a, Num b) => a -> b	prelude	run	Int to Double; chapter 8's definition	hand	Supported		
 std.coerce.realtofrac	6.4.6	realToFrac :: (Real a, Fractional b) => a -> b	prelude	run	Float to Double through Rational; NaN has no Rational: see readings.md	hand	Supported	R45	
 lib.r.ratio.approx.zero	6.4.6	0/1 is the simplest rational of all	library	run	`approxRational 0.1 0.2` is 0 % 1	hand	Supported		
 io.order	7	Actions are ordered: the implementation is obliged to preserve the sequential chaining of actions	dynamic	run	output order of a chain of actions, under every -O level	hand	Supported		
 io.pure	7	Evaluating an action is not performing it	dynamic	run	let a = putStr "x" in a >> a prints twice; seq a () prints nothing	hand	Supported		
-io.eval.order	7	The order of evaluation of expressions is constrained only by data dependencies	dynamic	none	a freedom, not a requirement; a test cannot show the absence of an order	hand	Planned		
-io.newline	7.1	The treatment of the newline character varies between systems	dynamic	none	system dependent; rhc documents it	hand	Planned		
-io.binary	7.1	These functions cannot be used portably for binary I/O	dynamic	none	a warning; 8-bit behaviour is a Char and encoding decision: see readings.md	hand	Planned	R38	
+io.eval.order	7	The order of evaluation of expressions is constrained only by data dependencies	dynamic	none	a freedom, not a requirement; a test cannot show the absence of an order. Nothing to meet (ruling 49): a freedom given to the implementation, not a requirement; no program can show the absence of an order.	hand	Supported		
+io.newline	7.1	The treatment of the newline character varies between systems	dynamic	none	system dependent; rhc documents it. Met by construction (ruling 49): rhc's handles are binary on every host, Windows too (the runtime's _O_BINARY), so a newline is written and read as the byte 10, untranslated; that is rhc's treatment, stated here.	hand	Supported		
+io.binary	7.1	These functions cannot be used portably for binary I/O	dynamic	run	a warning; 8-bit behaviour is a Char and encoding decision: see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/io.binary): a Char is any code point and the standard handles carry UTF-8, so a character above 127 goes out as its UTF-8 bytes (R38 in readings.md).	hand	Supported	R38	
 io.putchar	7.1	putChar writes a character to the standard output device	dynamic	run	output compared	hand	Supported		
 io.putstr	7.1	putStr writes a string	dynamic	run	output compared	hand	Supported		
 io.putstrln	7.1	putStrLn adds a newline	dynamic	run	output compared	hand	Supported		
@@ -1795,7 +1795,7 @@ io.readio.ok	7.1	readIO is like read	dynamic	run	readIO "1" :: IO Int	hand	Suppo
 io.readio.fail	7.1	readIO signals parse failure to the I/O monad instead of ending the program	dynamic	run	caught by catch, isUserError by chapter 8	hand	Supported		
 io.readln	7.1	readLn combines getLine and readIO	dynamic	run	from stdin	hand	Supported		
 io.filepath	7.1	FilePath = String	prelude	accept	interchangeable in a signature	hand	Supported		
-io.filename	7.1	Files are named by strings in some implementation-specific way	dynamic	none	rhc documents the encoding of names	hand	Planned		
+io.filename	7.1	Files are named by strings in some implementation-specific way	dynamic	none	rhc documents the encoding of names. Met by construction (ruling 49): a FilePath names a file by its String's UTF-8 bytes, which the runtime gives the system unchanged; that is rhc's way, stated here.	hand	Supported		
 io.writefile	7.1	writeFile writes the string, its second argument, to the file, its first	dynamic	run	read back	hand	Supported		
 io.appendfile	7.1	appendFile appends the string to the file	dynamic	run	read back	hand	Supported		
 io.readfile	7.1	readFile returns the contents of the file as a string	dynamic	run	read a known file	hand	Supported		
@@ -1811,7 +1811,7 @@ io.exc.any	7.3	Any I/O operation may raise an exception instead of returning a r
 io.exc.type	7.3	Exceptions in the I/O monad are values of type IOError	dynamic	run	a handler receives an IOError	hand	Supported		
 io.exc.abstract	7.3	IOError's constructors are hidden	static	reject	a constructor named: refused	hand	Supported		
 io.exc.usererror	7.3	userError creates an IOError that includes a string	dynamic	run	ioeGetErrorString gives it back	hand	Supported		
-io.exc.usererror.only	7.3	userError is the only Prelude function that creates an IOError	module	none	a statement on an export list, tested by the generated export rows	hand	Planned		
+io.exc.usererror.only	7.3	userError is the only Prelude function that creates an IOError	module	none	a statement on an export list, tested by the generated export rows. Met through named rows' programs (ruling 49): the Prelude's export rows (pre.export.*, pre.io.data.ioerror) hold its export list, in which userError is the only maker of an IOError.	hand	Supported		
 io.exc.ioerror	7.3	ioError raises an exception	dynamic	run	caught	hand	Supported		
 io.exc.catch	7.3	catch establishes a handler receiving any exception raised in the protected action	dynamic	run	the handler's value is the result	hand	Supported		
 io.exc.catch.none	7.3	With no exception the handler does not run	dynamic	run	catch (return 1) h	hand	Supported		
@@ -1824,19 +1824,19 @@ io.exc.error.notcaught	7.3	error is no IOError, so catch does not see it	dynamic
 io.exc.uncaught	7.3	An exception leaving the main program makes the system print the IOError and exit	dynamic	run	stderr has the error's text; 23 gives the status: see readings.md	hand	Supported	R37	
 io.exc.fail	7.3	fail of IO's Monad instance raises a userError: fail s = ioError (userError s)	dynamic	run	isUserError true, the string is s	hand	Supported		
 io.exc.ch21	7.3	The exceptions raised by the Prelude's I/O functions are those of chapter 21	dynamic	run	chapter 21's rows, through the Prelude's names	hand	Planned		
-pre.r.spec	8	The chapter constitutes a specification for the Prelude	prelude	none	tested through the generated pre.* rows	hand	Planned		
-pre.r.notasis	8	It is not required that the specification be implemented as shown	prelude	none	a permission; rhc's overlay is the list of its uses of it	hand	Planned		
-pre.r.default.method	8	A default method definition specifies only the default method, not the method in all instances	prelude	none	a limit on what the code means: no instance's method is tested against a default unless it uses it	hand	Planned		
+pre.r.spec	8	The chapter constitutes a specification for the Prelude	prelude	none	tested through the generated pre.* rows. Met through named rows' programs (ruling 49): the pre.* rows hold each entity to the chapter's code.	hand	Supported		
+pre.r.notasis	8	It is not required that the specification be implemented as shown	prelude	none	a permission; rhc's overlay is the list of its uses of it. Met by construction (ruling 49): rhc's library departs from the code as printed where share/rhc/haskell98/overlay.tsv says, each entry with its reason, and is the code elsewhere.	hand	Supported		
+pre.r.default.method	8	A default method definition specifies only the default method, not the method in all instances	prelude	none	a limit on what the code means: no instance's method is tested against a default unless it uses it. Nothing to meet (ruling 49): a limit on what the code means, which asks nothing of rhc.	hand	Supported		
 pre.r.default.enumfrom	8	Example: the default enumFrom fails for types wider than Int, as fromEnum cannot map them	prelude	run	a user type with only toEnum and fromEnum wider than Int; Integer's instance does not use it	hand	Supported	R81	
-pre.r.structure	8	The organisation into Prelude, PreludeList, PreludeText and PreludeIO is purely presentational	prelude	none	an implementation need not use it	hand	Planned		
+pre.r.structure	8	The organisation into Prelude, PreludeList, PreludeText and PreludeIO is purely presentational	prelude	none	an implementation need not use it. Nothing to meet (ruling 49): the organisation is presentational; rhc keeps the parts as modules of its library that no program can import (mod.prel.primitive).	hand	Supported		
 pre.r.significant	8	Only the exports of module Prelude are significant	module	reject	numericEnumFrom, showLitChar, primError and each other name not exported: refused unqualified and as Prelude.x	hand	Supported		
-pre.r.imports	8	The imports of library modules are not part of the specification: more or fewer may be imported	prelude	none	so no module's names may leak through the Prelude: the row above tests that	hand	Planned		
-pre.r.prim	8	prim names are defined in a system-dependent way in PreludeBuiltin and are not shown	prelude	none	the list is in report-libs/primitives.tsv; each is rhc's to define	hand	Planned		
+pre.r.imports	8	The imports of library modules are not part of the specification: more or fewer may be imported	prelude	none	so no module's names may leak through the Prelude: the row above tests that. Met through named rows' programs (ruling 49): only the Prelude's exports are significant, pre.r.significant's program, so what a library module imports reaches no program.	hand	Supported		
+pre.r.prim	8	prim names are defined in a system-dependent way in PreludeBuiltin and are not shown	prelude	none	the list is in report-libs/primitives.tsv; each is rhc's to define. Met by construction (ruling 49): rhc defines each primitive in its library's PreludeRuntime over the runtime's primitives, and PreludeBuiltin is no part of the language (pre.r.prim.hidden).	hand	Supported		
 pre.r.prim.hidden	8	PreludeBuiltin is no part of the language	module	reject	import PreludeBuiltin: refused	hand	Supported		
 pre.r.inst.omitted	8	Instances that only bind primitives to methods are omitted, but they exist	prelude	run	the instances of Int, Integer, Float and Double, method by method, by chapter 6	hand	Supported		
 pre.r.inst.verbose	8	Some verbose instances are left out for brevity, but they exist	prelude	run	Read and Show for tuples beyond pairs, by the comment 'Other tuples have similar Read and Show instances'	hand	Supported		
-pre.r.special	8	Declarations for special types such as Integer or () may be incomplete or invalid	prelude	none	what they illustrate is tested by 6.1; rhc's overlay replaces them	hand	Planned		
-pre.r.ellipsis	8	An ellipsis marks what cannot be given in Haskell	prelude	none	62 places: report-libs/primitives.tsv	hand	Planned		
+pre.r.special	8	Declarations for special types such as Integer or () may be incomplete or invalid	prelude	none	what they illustrate is tested by 6.1; rhc's overlay replaces them. Met by construction (ruling 49): the overlay (share/rhc/haskell98/overlay.tsv) gives the special types rhc's own declarations, and 6.1's rows test what the printed ones illustrate.	hand	Supported		
+pre.r.ellipsis	8	An ellipsis marks what cannot be given in Haskell	prelude	none	62 places: report-libs/primitives.tsv. Met by construction (ruling 49): the overlay gives rhc's own code at each place an ellipsis marks (share/rhc/haskell98/overlay.tsv).	hand	Supported		
 pre.r.intlist.take	8	take uses Int rather than a more general type	static	reject	take (2 :: Integer) xs: refused	hand	Supported		
 pre.r.intlist.drop	8	drop likewise	static	reject	drop (2 :: Integer) xs: refused	hand	Supported		
 pre.r.intlist.index	8	!! likewise	static	reject	xs !! (2 :: Integer): refused	hand	Supported		
@@ -2258,7 +2258,7 @@ pre.text.export.showchar	8.2	module Prelude exports showChar	module	accept	impor
 pre.text.export.showstring	8.2	module Prelude exports showString	module	accept	import Prelude (showString) compiles and the name is usable	generated	Supported		
 pre.text.export.readparen	8.2	module Prelude exports readParen	module	accept	import Prelude (readParen) compiles and the name is usable	generated	Supported		
 pre.text.export.showparen	8.2	module Prelude exports showParen	module	accept	import Prelude (showParen) compiles and the name is usable	generated	Supported		
-pre.r.interact.scope	8.3	interact is written with hSetBuffering, stdin, stdout and NoBuffering, none of which PreludeIO imports	prelude	none	the code as printed does not compile: see readings.md	hand	Planned	R47	
+pre.r.interact.scope	8.3	interact is written with hSetBuffering, stdin, stdout and NoBuffering, none of which PreludeIO imports	prelude	run	the code as printed does not compile: see readings.md. E9's test was none; ruling 49 makes it a run: io.interact.example_ascii's program names it and pins R47, interact running with the overlay's imports of hSetBuffering, stdin, stdout and NoBuffering (R47 in readings.md).	hand	Supported	R47	
 pre.r.interact.buffering	8.3	interact sets stdin and stdout unbuffered first, for interactive behaviour	prelude	run	output appears before the pipe closes	hand	Supported	R83	
 pre.io.type.filepath	8.3	type synonym FilePath as the Report gives it	prelude	accept	interchangeable with its expansion in a test program	generated	Supported		
 pre.io.data.ioerror	8.3	type IOError is declared as the Report gives it	prelude	accept	constructors, deriving and kinds used by a test program	generated	Supported		
