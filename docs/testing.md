@@ -920,11 +920,16 @@ is none; compiled through Mid and run on the VM the same
 which desugars to the same Core text (`hs/desugar/braces/NAME`, `rhc
 --desugar-only --dump-after=desugar`). Each pair `relations/NAME.hs` and
 `NAME.parens.hs`, the program with every application of an operator in
-parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`). Over
-the run programs of `tests/hs/lang` the two orders agree on what they print
-and on a value or a bottom (`hs/desugar/orders/NAME`: nightly, and the
-sample of ruling 47 in `check`), held while the program's rows are `Planned`. The programs avoid what M14's deriving and
-the runtime's arrays are still to give, and their expected output is GHC's.
+parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`).
+Desugared a unit at a time, each strongly connected group of modules after
+the interfaces of those before it, and the units joined (`rhc
+--desugar-units`, M21), each prints the same on Core's interpreter
+(`hs/desugar/units/NAME`: nightly, and the sample of ruling 47 in `check`).
+Over the run programs of `tests/hs/lang` the two orders agree on what they
+print and on a value or a bottom (`hs/desugar/orders/NAME`: nightly, and
+the sample of ruling 47 in `check`), held while the program's rows are
+`Planned`. The programs avoid what M14's deriving and the runtime's arrays
+are still to give, and their expected output is GHC's.
 The seeds for desugaring (clause order reversed, `~` made strict, a
 `newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
 that `report/order`, `report/lazy` and `report/newtype` catch (HM01 to
@@ -997,7 +1002,9 @@ IO family's positions of files and errors of the system's), and the system's
 family's (`prims-sys`: a command's exit, the environment, the program's name
 and arguments, the clock and the zone; `prims-sys-files`: directories, a
 file's kind, access, mode and time, a listing, renames and the working
-directory). `end-*.core` hold the line an escaping IOError ends a program
+directory); `runtime-rw`, a file opened to read and to write through one
+handle, h_open's mode 3 (ReadWriteMode), its reads and writes turned and
+sought. `end-*.core` hold the line an escaping IOError ends a program
 with to the library's Show IOError, a user's "user error (TEXT)".
 `lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to

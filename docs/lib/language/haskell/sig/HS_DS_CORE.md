@@ -177,7 +177,8 @@ So a value's Core is the same whatever was made before it.
 val declare : Core.decl -> unit
 ```
 
-`declare d` adds the data type, newtype or value `d` to what is known.
+`declare d` adds the data type, newtype, value or import `d` to what is
+known.
 
 A value is known by its type.
 

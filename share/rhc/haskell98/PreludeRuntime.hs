@@ -375,6 +375,7 @@ primHIsSeekable h =  usable h "hIsSeekable" >> return (handleSeeks h)
 primHPutChar      :: Handle -> Char -> IO ()
 primHPutChar h c  = do
     checkOpen h "hPutChar" handleWrites
+    if handleReads h then readBack h else return ()
     ok <- h_write (handleFd h) (str_from_char c)
     if not ok then h_errno >>= primFailWith "hPutChar" (Just h) (Just (handleName h))
       else do
@@ -383,6 +384,24 @@ primHPutChar h c  = do
 
 -- each character as it is evaluated, so that what comes before a bottom is
 -- written
+-- A handle that reads and writes (ReadWriteMode) writes where its reading
+-- has got to: what it read of the file and has not given, the bytes and the
+-- characters ahead, given back, the file put at that place again.
+readBack          :: Handle -> IO ()
+readBack h        = do
+    s <- ref_get (handleBytes h)
+    i <- ref_get (handleIndex h)
+    ahead <- ref_get (handleAhead h)
+    if i >= str_size s && null ahead then return ()
+      else do
+        p <- position h "hPutChar"
+        r <- h_seek (handleFd h) (fromInteger p)
+        if r < 0 then h_errno >>= primFailWith "hPutChar" (Just h) (Just (handleName h))
+          else do
+            ref_set (handleBytes h) (str_extract s 0 0)
+            ref_set (handleIndex h) 0
+            ref_set (handleAhead h) []
+
 primHPutStr       :: Handle -> String -> IO ()
 primHPutStr h s   =  mapM_ (primHPutChar h) s
 
@@ -594,25 +613,22 @@ primHFileSize h   = do
 -- ---- opening ----
 
 -- `primOpenFile f mode` opens the file `f` by IOMode's order: ReadMode (0),
--- WriteMode (1), AppendMode (2), ReadWriteMode (3), which Rune's files do
--- not open, an IOError. A file is open for writing once, or for reading as
--- often as is wanted (21.2.3).
+-- WriteMode (1), AppendMode (2), ReadWriteMode (3) -- h_open's modes, the
+-- last a file read and written through one handle, made where it is not
+-- there and kept where it is. A file is open for writing once, or for
+-- reading as often as is wanted (21.2.3).
 primOpenFile      :: FilePath -> Int -> IO Handle
 primOpenFile f mode = do
     locked f mode
     hs <- ref_get handles
-    if mode == 3
-      then ioError (primMakeIOError IllegalOperation ("openFile: " ++ f ++ ": ReadWriteMode is not supported")
-                                    Nothing (Just f))
+    fd <- h_open (primPackString f) mode
+    if fd < 0 then h_errno >>= primFailWith ("openFile: " ++ f) Nothing (Just f)
       else do
-        fd <- h_open (primPackString f) mode
-        if fd < 0 then h_errno >>= primFailWith ("openFile: " ++ f) Nothing (Just f)
-          else do
-            n <- ref_get handleCount
-            ref_set handleCount (n + 1)
-            h <- newHandle n fd f (mode == 0) (mode /= 0) (mode /= 2) 2   -- AppendMode's writes go to the end
-            ref_set handles (h : hs)
-            return h
+        n <- ref_get handleCount
+        ref_set handleCount (n + 1)
+        h <- newHandle n fd f (mode == 0 || mode == 3) (mode /= 0) (mode /= 2) 2   -- AppendMode's writes go to the end
+        ref_set handles (h : hs)
+        return h
 
 -- readFile, writeFile and appendFile (7.1): the runtime's, which read and
 -- write a chunk at a time, under the locks of 21.2.3. readFile's file is

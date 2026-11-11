@@ -46,7 +46,8 @@ sig
 
   (* ---- The declarations ---- *)
 
-  (* `declare d` adds the data type, newtype or value `d` to what is known.
+  (* `declare d` adds the data type, newtype, value or import `d` to what is
+     known.
 
      A value is known by its type. *)
   val declare : Core.decl -> unit

@@ -196,8 +196,9 @@ struct
      `--lint[=N]` sets the level of the checks, as for Core (HsLint runs
      at 2). The compiler's own options that a compile of a file may have,
      `-o` and its file, `--target=`, `-O`, `--thunks=`, `--dump-after=`,
-     `--pass-stats`, `--strings=`, `--steps=`, `--depth=`, `--match=` and
-     `--desugar-only`, are taken and given to `compile`. *)
+     `--pass-stats`, `--strings=`, `--steps=`, `--depth=`, `--match=`,
+     `--desugar-only` and `--desugar-units`, are taken and given to
+     `compile`. *)
   fun command (args : string list) : (unit -> OS.Process.status) option =
     let
       val modes = List.mapPartial modeOf args
@@ -240,7 +241,7 @@ struct
               orelse String.isPrefix "--target=" a orelse String.isPrefix "-O" a
               orelse String.isPrefix "--thunks=" a orelse String.isPrefix "--dump-after=" a orelse a = "--pass-stats"
               orelse String.isPrefix "--strings=" a orelse String.isPrefix "--steps=" a orelse String.isPrefix "--depth=" a
-              orelse String.isPrefix "--match=" a orelse a = "--desugar-only"
+              orelse String.isPrefix "--match=" a orelse a = "--desugar-only" orelse a = "--desugar-units"
               orelse option a
             fun check [] = ()
               | check ("-o" :: _ :: rest) = check rest
