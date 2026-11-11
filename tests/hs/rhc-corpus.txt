@@ -48,6 +48,3 @@ rhc | ghc/typecheck/should_fail/tcfail071::check | HOST-BUG | reject: R21: f and
 rhc | jhc/1_typecheck/4_fail/ghc/tcfail071.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_fail/tcfail071, jhc's copy
 rhc | ghc/typecheck/should_fail/tcfail144::check | HOST-BUG | reject: R21: f1 and g1 are one declaration group, f1 :: Eq a and g1 :: Ord a, contexts 4.5.2 requires identical
 rhc | jhc/1_typecheck/4_fail/ghc/tcfail144.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_fail/tcfail144, jhc's copy
-
-# HsLint at level 2 (RUNE_LINT=2) refuses a derived instance's dictionaries: H's (M16)
-rhc | ghc/deriving/should_compile/drv003::check | FAILS | crash: HsLint at level 2 on the derived Eq (T a b): "[dict var] the parameter d100000008 is a dictionary of Ping a1_100000006, and Eq a1_100000006 is wanted" (M16, H's)
