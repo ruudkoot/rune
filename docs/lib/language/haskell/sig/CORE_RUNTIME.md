@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 4 of 4 entries documented |
+| Documentation | 6 of 6 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coreruntime\_sig.sml](../../../../../lib/language/haskell/coreruntime_sig.sml) |
 
@@ -71,6 +71,8 @@ sig
   val <a href="#val-reportnames">reportNames</a> : string list
   val <a href="#val-program">program</a> : strings -&gt; Core.program
   val <a href="#val-link">link</a> : strings -&gt; Core.program -&gt; Core.program
+  val <a href="#val-linkunit">linkUnit</a> : strings -&gt; Core.program -&gt; Core.program
+  val <a href="#val-mentions">mentions</a> : Core.decl -&gt; string list
 end
 </pre>
 
@@ -121,6 +123,28 @@ reaches, through the names it mentions and through theirs.
 
 A declaration `p` makes of a name of the runtime is `p`'s own, and the
 runtime's is left out.
+
+### <a name="val-linkunit"></a>`linkUnit`
+
+```sml
+val linkUnit : strings -> Core.program -> Core.program
+```
+
+`linkUnit strings p` is the unit `p` after what it reaches of the
+runtime, each value imported (the haskell98 roadmap's M21).
+
+What [`link`](#val-link) would add is there, but each value an import of the
+runtime's unit, whose program is [`program`](#val-program)'s, and each type a copy of
+the runtime's declaration; an import of the unit's own is kept.
+
+### <a name="val-mentions"></a>`mentions`
+
+```sml
+val mentions : Core.decl -> string list
+```
+
+`mentions d` is the names the declaration `d` mentions: types,
+constructors and values, each as often as it does.
 
 ---
 

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DESUGAR`](../sig/HS_DESUGAR.md) |
 | Status | required |
-| Members | 4 |
+| Members | 8 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar.sml](../../../../../lib/language/haskell/desugar.sml) |
 
@@ -22,9 +22,13 @@ What each means is on [`HS_DESUGAR`](../sig/HS_DESUGAR.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
+| type | [`library`](../sig/HS_DESUGAR.md#type-library) | *a type of its own* |
 | type | [`module_`](../sig/HS_DESUGAR.md#type-module_) | `{ast : HsAst.module, id : string, library : bool}` |
+| val | [`library`](../sig/HS_DESUGAR.md#val-library) | `{derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, infer : HsInfer.env, leaves : (string * string list) list, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> library` |
 | val | [`missingPrimitives`](../sig/HS_DESUGAR.md#val-missingprimitives) | `unit -> string list` |
+| val | [`prepare`](../sig/HS_DESUGAR.md#val-prepare) | `library -> unit` |
 | val | [`program`](../sig/HS_DESUGAR.md#val-program) | `{derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, infer : HsInfer.env, leaves : (string * string list) list, main : string, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> Core.decl list` |
+| val | [`programOn`](../sig/HS_DESUGAR.md#val-programon) | `library * {derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, infer : HsInfer.env, main : string, modules : module_ list, prelude : string * string -> string option} -> Core.decl list` |
 | val | [`translationNames`](../sig/HS_DESUGAR.md#val-translationnames) | `(string * string * string) list` |
 
 ---

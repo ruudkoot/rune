@@ -42,6 +42,19 @@ sig
   (* `start p` makes `p` the program desugared, forgetting the last. *)
   val start : program -> unit
 
+  (* `continue p` makes `p` the program desugared, keeping what is known of
+     its types and constructors: a program's, after its library's. *)
+  val continue : program -> unit
+
+  (* What is known of the types and constructors, kept. *)
+  type saved
+
+  (* `save ()` is what is known now. *)
+  val save : unit -> saved
+
+  (* `restore s` makes `s` what is known. *)
+  val restore : saved -> unit
+
   (* `classes ()` is the program's classes and instances. *)
   val classes : unit -> HsClasses.env
 

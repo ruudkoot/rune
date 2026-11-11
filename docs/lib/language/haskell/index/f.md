@@ -32,6 +32,7 @@
 - `fresh` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-fresh)
 - `fromKey` (val): [HS_USAGE](../sig/HS_USAGE.md#val-fromkey)
 - `Full` (con): [HS_PARSER](../sig/HS_PARSER.md#con-full)
+- `Function` (con): [CORE_TO_MID](../sig/CORE_TO_MID.md#con-function)
 - `funlhs` (type): [HS_AST](../sig/HS_AST.md#type-funlhs)
 - `funlhs_` (type): [HS_AST](../sig/HS_AST.md#type-funlhs_)
 

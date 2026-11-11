@@ -150,9 +150,11 @@ struct
 
   (* a program compiled by rhc and run: its exit and its output, or why not *)
   datatype ran = Ran of int * string | Broke of string
-  fun runOne (src, stdin, work, tag) =
+  fun runOne (src, stdin, vmargs, work, tag) =
     let
-      val rbc = work ^ "/" ^ tag ^ ".rbc"
+      (* prog.rbc, as Lang names it, so that getProgName is prog in both *)
+      val () = mkdirs (work ^ "/" ^ tag)
+      val rbc = work ^ "/" ^ tag ^ "/prog.rbc"
       val err = work ^ "/" ^ tag ^ ".cerr"
       val code = exec {cmd = [fromRoot "bin/rhc", src, "-o", rbc], dir = SOME work, stdin = "", stdout = err, stderr = err, timeout = 600}
     in
@@ -160,17 +162,17 @@ struct
       else
         let
           val out = work ^ "/" ^ tag ^ ".out"
-          val c = exec {cmd = [fromRoot "bin/runevm", rbc], dir = SOME work, stdin = stdin, stdout = out,
+          val c = exec {cmd = [fromRoot "bin/runevm"] @ vmargs @ [rbc], dir = SOME work, stdin = stdin, stdout = out,
                         stderr = work ^ "/" ^ tag ^ ".err", timeout = 600}
         in Ran (c, read out) end
     end
 
-  fun compare (name, a, b, stdin) =
+  fun compare (name, a, b, (stdin, vmargs)) =
     let
       val work = run ^ "/hs-meta/" ^ String.translate (fn #"/" => "_" | c => str c) name
       val () = (rmTree work; mkdirs work)
     in
-      case (runOne (a, stdin, work, "a"), runOne (b, stdin, work, "b")) of
+      case (runOne (a, stdin, vmargs, work, "a"), runOne (b, stdin, vmargs, work, "b")) of
         (Broke why, _) => say ("FAIL " ^ name ^ ": the first program: " ^ why ^ "\n")
       | (_, Broke why) => say ("FAIL " ^ name ^ ": the second program: " ^ why ^ "\n")
       | (Ran (ca, oa), Ran (cb, ob)) =>
@@ -179,8 +181,16 @@ struct
           else rmTree work
     end
 
+  (* the program's standard input and its VM's options, its .stdin and
+     .vmargs (Lang's header) *)
   fun stdinOf src =
-    let val s = String.substring (src, 0, size src - 3) ^ ".stdin" in if exists s then fromRoot s else "" end
+    let
+      val b = String.substring (src, 0, size src - 3)
+      val s = b ^ ".stdin"
+    in
+      (if exists s then fromRoot s else "",
+       if exists (b ^ ".vmargs") then String.tokens Char.isSpace (read (b ^ ".vmargs")) else [])
+    end
 
   fun mechanicalOne (relation, src) () =
     let val work = run ^ "/hs-meta/" ^ relation ^ "-" ^ OS.Path.base (OS.Path.file src) ^ "-made"
@@ -256,12 +266,14 @@ struct
     let
       val progs = glob ("tests/hs/lang", ".hs")
       val pairs = List.filter (fn f => not (String.isSuffix ".pair.hs" f)) (glob (dir, ".hs"))
-      fun mech (relation, rows) =
+      fun mechOf srcs (relation, rows) =
         List.map (fn src =>
                     let val n = OS.Path.base (OS.Path.file src)
                     in hold (case HsConformance.pendingFile src of SOME w => SOME w | NONE => HsConformance.pendingUntil rows,
                              Test.requires ["rhc"] (job (relation ^ "/" ^ n, ["hs-meta", relation, src])))
-                    end) progs
+                    end) srcs
+      val mech = mechOf progs
+      fun base src = OS.Path.base (OS.Path.file src)
       (* rhc's names on an even sample, which runs today *)
       fun names relation =
         List.map (fn src => Test.requires ["rhc"] (job ("names/" ^ relation ^ "/" ^ OS.Path.base (OS.Path.file src), ["hs-meta-names", relation, src])))
@@ -269,12 +281,16 @@ struct
       fun pair src =
         let val n = OS.Path.base (OS.Path.file src)
         in hold (HsConformance.pendingUntil (rowsOf src), Test.requires ["rhc"] (job ("pairs/" ^ n, ["hs-meta-pair", src]))) end
-      (* make check's: one mechanical relation (braces), the pairs and one
-         relation of names (reorder); the others nightly (the roadmap's D56,
-         the lead's ruling 45) *)
+      (* make check's: one mechanical relation (braces) on the sample of
+         ruling 47 (HsLang.sampled, never a program of lang-nightly.txt), the
+         pairs and one relation of names (reorder); nightly every program in
+         every relation (the roadmap's D56, the lead's rulings 45 and 47) *)
       fun inCheck (relation, _) = relation = "braces"
-      val checked = List.concat (List.map mech (List.filter inCheck mechanical)) @ List.map pair pairs @ names "reorder"
-      val nightly = List.concat (List.map mech (List.filter (not o inCheck) mechanical)) @ names "split" @ names "rename"
+      val (inSample, rest) = List.partition (HsLang.sampled o base) progs
+      val checked = List.map (Test.tag "nightly") (List.concat (List.map (mechOf inSample) (List.filter inCheck mechanical)))
+                    @ List.map pair pairs @ names "reorder"
+      val nightly = List.concat (List.map (mechOf rest) (List.filter inCheck mechanical))
+                    @ List.concat (List.map mech (List.filter (not o inCheck) mechanical)) @ names "split" @ names "rename"
     in
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "hs" (Test.describe "hs" [Test.describe "meta"

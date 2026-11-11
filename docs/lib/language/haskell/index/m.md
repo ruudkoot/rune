@@ -7,7 +7,7 @@
 - `mark` (type): [HS_LAYOUT](../sig/HS_LAYOUT.md#type-mark)
 - `matchType` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-matchtype)
 - `member` (val): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-member)
-- `mentions` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-mentions)
+- `mentions` (val): [CORE_RUNTIME](../sig/CORE_RUNTIME.md#val-mentions), [HS_DS_CORE](../sig/HS_DS_CORE.md#val-mentions)
 - `message` (val): [HS_SOURCE](../sig/HS_SOURCE.md#val-message)
 - `meta` (type): [HS_TYPES](../sig/HS_TYPES.md#type-meta)
 - `metaHome` (val): [HS_TYPES](../sig/HS_TYPES.md#val-metahome)

@@ -57,7 +57,7 @@ What it rests on:
 
 ## Status
 
-Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" names the merge on which `make check` last passed; "on X" means `make check` ran on merge X with no failure of that milestone's. On `57a5306a4`, 29,044 tests: 24,274 pass, 4,768 held, one failure (Simplify's tag facts in a closure, M29, fixed since) and one timeout under load (`make/test-lsp-oracle`, which passes alone). G1, hello on the interpreter and the VM, passes on the interim suspension form; under form C it waits for M10. The decisions are in the table at the head of *Decisions*, and the nine still to be taken on the figures in *Decisions on the numbers*.
+Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" names the merge on which `make check` last passed; "on X" means `make check` ran on merge X with no failure of that milestone's. On `0f44dafbe`, 29,938 tests: 24,843 pass, 5,091 held, two timeouts under load (`make/test-lsp-oracle` and SML/NJ's `err.ty_astra-inference-limit`, which pass alone) and two failures: HsLint's dump of the library, whose expected order the next merge fixed, and `kernel/notebook-pipe`, a race in master's Jupyter kernel under load that passes alone and touches nothing of this branch. G1 passed on 2026-11-10 under form C: 546 of the 555 clause programs print the same on Core's interpreter and on the VM, from the saved world and compiled whole alike. The decisions are in the table at the head of *Decisions*, and the six still to be taken on the figures in *Decisions on the numbers* (D3, D9 and D16 were taken on them on 2026-11-10).
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
@@ -70,30 +70,30 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M7. Lints and the two Simplify fixes | A | S | D5 | done; on `57a5306a4` |
 | M8. Core, its text, CoreLint, a Core interpreter | B | L | D2, D41 | done; on `57a5306a4` |
 | M9. Thunks through the engines | B | L | D3-D6, D11-D14, D18, D19, D57 | done: form C on both instruction sets, every engine and tier; 115 of 115 lazy ports; bytes held but the fingerprint. Departure: the stack VM still retains `last`'s dead suspension (the owner's list) |
-| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | under way: Core to Mid on form C, M28's types; G1's programs run on the interim form |
+| M10. Core to Mid | B | L | D3-D6, D8, D9, D25 | done on form C, writing Mid's `Case` and M28's types, by units as well as whole; G1 passed on it. Under way: the rule that no `susp` heads a type argument, checked in Core to Mid at lint level 2 (MidLint cannot hold it, since SML uses polymorphic functions at `T susp`) |
 | M11. Lexer, layout, parser, printers | F | L | D27, D28 | done; on `57a5306a4` |
 | M12. Renamer, modules, fixity, recursive modules | F | L | D29, D30, D35, D36 | done; on `57a5306a4` |
 | M13. Kinds, types, classes | F | L | D30, D31, D32, D33 | done: the Report's 20 modules and the 11-module unit check; 798 of 808 corpus programs; on `57a5306a4` |
-| M14. Deriving | F | M | D33 | done (one fix open: derived `Ord`/`Ix` tags take the module's `default`) |
-| M15. Desugaring to Core | F | L | D17, D34 | done on its branch: `rhc hello.hs` prints hello on Core's interpreter and on the VM; 520 of 555 clause programs agree on both; 80 of 92 `tr.*` rows Supported; merging |
-| M16. HsLint | F | L | D54 | second inference, replay of Faxén's rules, two judges held to one verdict, and M16's five seeds caught; the target check waits for M15 |
-| M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | the Report's libraries as text and the overlay as code over rhc's runtime in Core (CoreRuntime, 25 more primitives); probes held until programs run |
-| M18. The Report's libraries | L | M | D36 | the nine modules' overlay; the system primitives under way |
-| M19. Conformance: the table worked through | T | L | D52, D55, D56 | every row that wants a program has one but the owner's held rows; the harness of D55 (mutants, relations, probes, generator, reducer, budgets) and D56's tiers in place; runs held until rhc compiles each row's programs |
-| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | built; merging |
-| M21. HsIface and rhc's driver | S | L | D43, D44, D45 | not started |
+| M14. Deriving | F | M | D33 | done; on `0f44dafbe` |
+| M15. Desugaring to Core | F | L | D17, D34 | done: 546 of 555 clause programs agree on Core's interpreter and the VM; the library's Core and a program's desugared apart; on `0f44dafbe`. Under way: Core units by binding group |
+| M16. HsLint | F | L | D54 | done: the second inference, replay of Faxén's rules, two judges held to one verdict, and the target check of the Core against the source types, which names the pass that broke it; M16's seeds caught; on `0f44dafbe` |
+| M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | done: the overlay as code over rhc's runtime, the token comparison with the Report, the 15 bottom probes right on the interpreter and the VM; on `0f44dafbe` |
+| M18. The Report's libraries | L | M | D36 | done: the 20 modules compile and run, the 52 examples are programs; on `0f44dafbe`. Under way: `ReadWriteMode`, by the owner's word of 2026-11-10 |
+| M19. Conformance: the table worked through | T | L | D52, D55, D56 | under way: 3,050 of 3,901 rows Supported, 851 Planned; the harness of D55 and D56's tiers in place; the one-second rule per program being applied to every family |
+| M20. The store's policy out of `UnitCache`, optional | S | S | D43 | done; on `0f44dafbe` |
+| M21. HsIface and rhc's driver | S | L | D43, D44, D45 | under way: HsIface, Core by units with a warm path and early cut-off; the library as one frozen unit measured (52 times the bytecode of a whole compile); the link, by the lead's choice within D43 to D45, joins the units' Core, keeps what `main` reaches and compiles it whole, behind a memo |
 | M22. SCC keys | S | M | D30, D36 | not started |
-| M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | not started |
+| M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | built on its branch, to merge after G2 |
 | M24. Strictness | P | M | D50 | not started |
-| M25. What measurement justifies | P | | D15-D17, D19, D51 | not started |
+| M25. What measurement justifies | P | | D15-D17, D19, D51 | under way: D3, D9 and D16 measured and decided; D19's B being measured; D24's and D34's first figures in |
 | M26. Ready for lazy ML | Z | | D57 | not started |
 | M27. Retire | | S | | not started |
 | M28. `Ty` with application and forall | A | L | D4 | done; on `57a5306a4` |
-| M29. Mid `Case` | A | L | D8 | done (a fix of Simplify's tag facts in a closure, made after `57a5306a4`, merging) |
-| M30. Multi-value return, built to be measured | A | L | D9 | to build, on the register VM, to be measured |
+| M29. Mid `Case` | A | L | D8 | done; on `0f44dafbe` |
+| M30. Multi-value return, built to be measured | A | L | D9 | built and measured on `hs-a-m30`; the owner took A (2026-11-10), so it does not land |
 | M31. `IntInf` immediate | A | M | D20 | done; on `57a5306a4` |
 
-Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
+Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM, passed on 2026-11-10; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
 
 ## Found while writing this roadmap
 
@@ -1381,6 +1381,8 @@ nhc98 accept [run: `where-brace-col1`]. `(1 + - 2)` behaves as `3 * -4` [run: `m
 The rest of the 54, by what they are: lexing corners R4, R6, R8; expressions and patterns R9, R11 to R17; declarations
 R19, R23 to R25, R27, R28; modules R26, R29 to R34, below; runtime R35, R39, R40, R43 to R46; library text and smaller
 matters R47 to R54. R15, R21 and part of R38 are marked for the owner's call.
+
+**The owner's calls of 2026-11-10.** R4: as its seed reads it, with each acceptance recorded as a deviation from the grammar taken literally, pinned by a program: a line comment that ends the file without a newline is accepted (end of file ends it); vertical tab and the other Unicode white space in a line comment are accepted, a vertical tab counting one column; an empty file is the module `Main` with no `main`, refused by chapter 5's rule, not by the grammar. R15: `n+0` is refused, as Hugs refuses it, by 3.17.2's "positive integer literal" over the grammar's `integer`; GHC and nhc98 accept it. R52: 9.4's `readLine` is a mistake in the Report, recorded as such; the example is tested with `getLine`, its likely meaning.
 
 ### What the Report does not say and a compiler must decide
 
@@ -5483,6 +5485,8 @@ Lands in M9.
 
 **Decided (owner, 2026-11-09).** B, with form C in place of form G: "B but with form C instead of form G". `susp` is an abstract tycon and force is one node of Mid, lowered to form C's instructions (D11, D13), not to form G's test, value read and `CALL`. In E2's form C that node is the primitive `thunk_force`, beside `thunk_make`, `thunk_blackhole` and `thunk_self_update`, which `Regs` makes into `FORCE`, `ENTER`, `BLACKHOLE` and `UPDATE` (`results/E2/delay/Chs/lazy.sml`, `patches/E2-all-forms.patch`). *SML* above holds for C as for G: C moves the same fingerprints, and the register set's opcode table with them (D13).
 
+**Measured and decided (owner, 2026-11-10): B, as M9 landed it.** C was built on the register VM (branch `hs-r-d3`, `47a9f3c36`): `Force` a fifteenth step of Mid, and D6's C, a `Thunks` group of suspension codes, for recursive ones. On every program measured C gives B's bytecode byte for byte: the 115 lazy ports at `-O0` and `-O2` (`--count` 236.618 G and 469.038 G under both), E2's kernels and E5's four under both lowerings. D6's C saves 7 to 14 instructions and 24 to 64 bytes a recursive binding (30 knots: 420 and 210 instructions at `-O0` and `-O2`). The compiler's image grows by 0.79% and its own compile by 0.03% at tier 2. C is not taken; the branch is kept as the record (`impl/r/d3/` in the drafts).
+
 **To be measured:** C, a `Force` right-hand side, built and benchmarked against B with form C, with D6's C, a recursive form in Mid, for that variant. The owner takes C over B, or not, on the numbers (*Decisions on the numbers*). Lands in M9, and the variant is built there too, after M6's walkers.
 
 ### D4. `Any` against extending `Ty`
@@ -5723,6 +5727,8 @@ Core lowers them as tuples [inference].
 is worth asking again. It may not ride on this review.
 
 **Decided (owner, 2026-11-10).** To be measured: B, multi-value return, built and measured against A, today's four attacks on tuples; then A or B on the numbers, as for D15. The owner's answer: "land behind a measurement". It supersedes the answer of 2026-11-09, "B (let's do it now instead of later)". Until the owner adopts B, A stands. Built in M30 on the register VM, and landed only if adopted (*Decisions on the numbers*).
+
+**Measured and decided (owner, 2026-11-10): A, today's attacks on tuples.** B was built on the register VM (M30, branch `hs-a-m30`, `8ce317123`): Mid's `Values` and `Lets`, the pass `values`, Low's `RetVal` and `ReturnN`, and the instructions `RETN` and `RETV`. On Rune's compiler compiling itself, with `results` on as today, values adds nothing (-0.03% instructions at tier 2, bytes unchanged); in place of `results` it wins back only part of `results`' saving (bytes -0.64% against neither's +4.63%). On 22 numerical benchmarks both together allocate about 2% less on f-arith and the mandelbrot family. In rhc's shapes (E5's kernels, E1's programs) the pass finds nothing, since pairs pass through closures, dictionaries and suspensions. M30 does not land; D25's token keeps its pair as a tuple. The branch is kept as the record (`impl/a/m30/summary.txt`).
 
 *Lead's note.* E12 found that in a whole compile it wins what `results` already wins, and the rest only in units, where `results` does not run. Landed, it touches 126 walkers, both bytecodes, the JIT and runeopt, and moves both fingerprints; the build for measurement is Mid, Low and the register set, its interpreter and JIT. D25's state token does not wait on it: until B is adopted the token's returned pair is a tuple, or erased. Since every `IO` action returns that pair, rhc's programs are measured as well as Rune's compiler and benchmarks.
 
@@ -5969,6 +5975,8 @@ would want `fastPrim` entries and an owner. Lands in M9.
 
 **Decided (owner, 2026-11-09; confirmed 2026-11-10).** The owner's rule, "B if it doesn't leak into Low; otherwise C", gives C: parity by form C, about 115 lines [estimate, not built], with the instructions on the stack set too, runeopt's templates, `tests/opt/every-opcode.rasm`, `x64.sml`, `native.c` and rows in `docs/bytecode.md`. The owner confirmed C on 2026-11-10: "D14: C".
 
+**The owner, 2026-11-10:** the stack VM keeps `last`'s dead suspension alive (48 to 56 bytes an element), because it keeps every local of a waiting frame; the register VM releases it (M9). It is not fixed: the stack VM is for differential testing.
+
 *Lead's note.* Low's datatype does not change between the targets. Force is one primitive there, which the register target expands, and E2's patch adds to `low.sml` only `Low.hoistEnv`, a function over Low's existing operations that both targets call (`patches/E2-all-forms.patch:1-60`). But B as written is parity by form G, and under form C a thunk is a flat `K_THUNK`, which the stack VM's `CALL` cannot enter (`EXPECT (cv, K_CLOSURE, ...)`, `runtime/stack/interp_cases.h:185`), and a C primitive cannot push a frame. So the stack bytecode needs the instructions too, and the rule gives C. Form C never ran on the stack VM in E2. Lands in M9.
 
 ### D15. Eval/apply
@@ -6061,6 +6069,8 @@ from C (D13). Nobody has measured code 11 alone on lazy code.
 bits stay reserved, so nothing is lost by waiting.
 
 **Decided (owner, 2026-11-09).** To be measured: B, pointer code 11, built and benchmarked on rhc's programs and on Rune's; then A or B on the numbers. Until then A stands. Built in M25 (*Decisions on the numbers*).
+
+**Measured and decided (owner, 2026-11-10): A.** B was built on the register VM (branch `hs-w-d16`, `cf6a69552`): code 11 set by the copier where it shortcuts an indirection to an evaluated object, masked at every pointer read in C and `masm.c`, and `FORCE` skipping the header for it. B against A at tier 2 (`instructions:u`; `--count` is equal by construction): Rune's compiler compiling itself 1.111 (cycles 1.073); 32 SML benchmarks, the masks' cost alone, geomean 1.0445 (cycles 1.029), none faster; 24 lazy ports on form C, through `FORCE`'s code-11 path, geomean 1.1215 (cycles 1.110), all slower. The masks are an upper bound, and cache misses were not taken. Code 11 is not used as an evaluated mark; the branch is kept as the record (`impl/w/d16/figures.md`); `heap-layout.md` records the same.
 
 ### D17. Selector thunks
 
@@ -7838,6 +7848,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *Built:* a fifteenth `rhs`, `Force`, lowered to the same instructions as B's `thunk_force`, with D6's C for recursive thunks, a recursive form in Mid; on M6's walkers, and described in `tools/codecs/compiler.sml`. M9 builds it on a branch beside the landed B, for the register target; the Stack target lowers it only once it is taken.
 - *On:* E5's set, lowered by hand to both, in M9; then the run set, with M10 emitting either, in M19.
 - *Figures:* instructions at tier 2 and `--count`, at Rune `-O0` and `-O2`; the compiler's own compile time and bytes, since SML pays an arm in every walker; and whether any pass drops, copies or moves a force under either, with the sharing budget of D51.
+- *Measured, decided (2026-11-10):* B, as landed; C gives the same bytecode on every program measured (D3's section).
 
 **D9: B, multi-value return, against A, today's four attacks on tuples.**
 - *Built:* `Return` of several atoms and a `Let` of several variables in Mid, `Low.Return` of a list, and `RET` and `RESULT` of several values in the register set, its interpreter and JIT; in M30, after M6, on a branch. The build says whether `Lower` uses it for SML's products. The stack set, runeopt and native code take it only once adopted.
@@ -7845,6 +7856,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *On:* Rune's compiler compiling itself, as a whole compile and as a unit build, since E12 found B's gain only in units, where `results` does not run (`backend/lower.sml:849`); Rune's benchmarks, `tests/perf`'s budgeted programs and the 17 numerical benchmarks E12 ran (`results/E12/bench-summary.tsv`); and rhc's programs, since D25's state token returns a pair with every action: E5's hand-lowered set, which erases `IO`, until rhc runs, then the run set in M19 with `IO`-heavy programs named.
 - *Figures:* instructions at tier 2, `--count` and bytes allocated, per program, in a whole compile and in units. E12's figure for units, about 4.4% of the compiler's allocation and nothing in instructions, is deduced from the whole-program figures; this measures it.
 - *Who:* the owner. If B is taken, M30 lands with the stack set, runeopt and native code, and D25's pair goes through it.
+- *Measured, decided (2026-11-10):* A; M30 does not land (D9's section).
 
 **D15: C, eval/apply proper, against A.**
 - *Built:* arity tested by the caller, a partial-application object, over-application by a pushed continuation, on the register VM, its interpreter and JIT, with `Low.Call`, MidLint's rule and `RegVerify`'s; in M25. The stack VM, runeopt and native code take it only once adopted.
@@ -7855,6 +7867,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *Built:* the code set by the copier when it shortcuts an indirection, and masked at every pointer read in C and in `masm.c`, on the register VM; in M25. The stack VM and runeopt's templates take it only once adopted.
 - *On:* the run set, and Rune's programs, since every pointer read moves.
 - *Figures:* instructions at tier 2 and `--count`, and cycles and cache misses, best of N. Code 11 can save only the header load: Rune's `FORCE` has no indirect enter jump for it to spare, unlike GHC's, where Nethercote 2002 §5.4 proposes the bit, unmeasured. On heap-layout's kernels the code was within noise (D16).
+- *Measured, decided (2026-11-10):* A; B costs 4.5% to 12% at tier 2 everywhere measured (D16's section).
 
 **D17: B, Sparud's method, against A.**
 - *Built:* pattern bindings and `~p` desugared to Sparud's tuple form with selectors, his equation (8), plus an impure `updatePat` that overwrites each sibling. It is a desugaring and a primitive, not a Core construct (Sparud 1993, §3.3). Under form C the write skips any sibling that is not unevaluated, and is not a `K_IND` to an unevaluated component: it retargets the sibling's code and capture, or is made only when the component is evaluated. Otherwise the sibling whose force ran the match outlives its own update, E14's case, and D11's pin becomes Haskell's and lands with B, not in M26 [P1's inference]. B changes D34's desugaring. In M25.

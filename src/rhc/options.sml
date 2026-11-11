@@ -13,16 +13,21 @@ struct
      lintRules : bool,                (* --lint-rules: print CoreLint's rules *)
      generate : int option,           (* --generate-core=SEED: print a generated program *)
      output : string option,          (* -o FILE: compile to bytecode, through Mid, in place of running *)
+     units : bool,                    (* --units: with -o, each --read-core file a unit, compiled apart and linked *)
+     store : string option,           (* --store DIR: with --units, the store a unit is kept in and taken from *)
+     layers : string list,            (* --layer DIR: a store a unit is taken from and never kept in *)
+     showUnits : bool,                (* --show-units: say of each unit whether it was compiled or taken *)
+     linkWhole : bool,                (* --link=whole: the units' Core joined, what main reaches compiled whole *)
      fault : CoreToMid.fault option,  (* --fault=NAME: a fault of Core to Mid made on purpose, for its tests *)
      strings : CoreRuntime.strings,   (* --strings=lazy|whole: how a string literal becomes its list (D24) *)
      help : bool,
      version : bool}
 
   val usage =
-    "usage: rhc [OPTION...] --read-core FILE...\n\
+    "usage: rhc [OPTION...] --read-core FILE... [-- ARG...]\n\
     \       rhc [--parse-only | --print | --print-layout | --print-exact | --dump-tokens\n\
     \            | --dump-ast [--no-spans]] FILE.hs\n\
-    \       rhc [--typecheck-only | --desugar-only] [NAME OPTION...] FILE.hs [-o OUT]\n\
+    \       rhc [--typecheck-only | --desugar-only] [NAME OPTION...] FILE.hs [-o OUT | -- ARG...]\n\
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
     \       rhc --dump-types | --dump-evidence | --dump-derived [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
@@ -81,11 +86,22 @@ struct
     \  --depth=N             the deepest the interpreter's stack may go, a bottom past it\n\
     \                        (default: 10000000)\n\
     \  -o FILE               compile to bytecode, through Mid, in place of running\n\
+    \  -- ARG...             the arguments of the program, where rhc runs it on Core's\n\
+    \                        interpreter (getArgs), as runevm takes them after its file\n\
+    \  --units               with -o, each --read-core file a unit, after rhc's runtime's,\n\
+    \                        compiled apart and linked\n\
+    \  --store DIR           with --units, keep each unit in the store DIR and take it\n\
+    \                        from there where what it read is as it was\n\
+    \  --layer DIR           a store a unit is taken from and never kept in\n\
+    \  --show-units          say of each unit whether it was compiled or taken\n\
+    \  --link=whole|units    with --units, join the units' Core and compile what main\n\
+    \                        reaches whole (whole), or link each unit's code (units, the\n\
+    \                        default)\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1)\n\
     \  --target=T            the bytecode: registers (default) or stack\n\
     \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
     \  --fault=F             for the tests of what catches it, a fault of Core to Mid made\n\
-    \                        on purpose: thunk-in-slot or force-behind-cast\n\
+    \                        on purpose: thunk-in-slot, force-behind-cast or susp-type-arg\n\
     \  --strings=S           a string literal's list: lazy, a cell as it is read (default),\n\
     \                        or whole, every cell at once, for D24's measurement\n\
     \  --desugar-only        on a program of Haskell: check it, desugar it to Core, CoreLint\n\
@@ -116,6 +132,11 @@ struct
       val lintRules = ref false
       val generate = ref NONE
       val output = ref NONE
+      val units = ref false
+      val store = ref NONE
+      val layers = ref []
+      val showUnits = ref false
+      val linkWhole = ref false
       val fault = ref NONE
       val strings = ref CoreRuntime.Lazy
       val help = ref false
@@ -131,6 +152,14 @@ struct
         | go ("--help" :: rest) = (help := true; go rest)
         | go ("--version" :: rest) = (version := true; go rest)
         | go ("-o" :: file :: rest) = (output := SOME file; go rest)
+        | go ("--units" :: rest) = (units := true; go rest)
+        | go ("--store" :: d :: rest) = (store := SOME d; go rest)
+        | go ["--store"] = raise Usage "--store takes a directory"
+        | go ("--layer" :: d :: rest) = (layers := !layers @ [d]; go rest)
+        | go ["--layer"] = raise Usage "--layer takes a directory"
+        | go ("--show-units" :: rest) = (showUnits := true; go rest)
+        | go ("--link=whole" :: rest) = (linkWhole := true; go rest)
+        | go ("--link=units" :: rest) = (linkWhole := false; go rest)
         | go ["-o"] = raise Usage "-o takes a file"
         | go ("-O0" :: rest) = (Pass.level := 0; go rest)
         | go ("-O1" :: rest) = (Pass.level := 1; go rest)
@@ -140,6 +169,7 @@ struct
         | go ("--thunks=c" :: rest) = go rest
         | go ("--fault=thunk-in-slot" :: rest) = (fault := SOME CoreToMid.ThunkInSlot; go rest)
         | go ("--fault=force-behind-cast" :: rest) = (fault := SOME CoreToMid.ForceBehindCast; go rest)
+        | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
         | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)
         | go (arg :: rest) =
@@ -160,7 +190,8 @@ struct
     in
       go args;
       {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
-       lintRules = !lintRules, generate = !generate, output = !output, fault = !fault,
+       lintRules = !lintRules, generate = !generate, output = !output, units = !units, store = !store, layers = !layers,
+       showUnits = !showUnits, linkWhole = !linkWhole, fault = !fault,
        strings = !strings, help = !help, version = !version}
     end
 end

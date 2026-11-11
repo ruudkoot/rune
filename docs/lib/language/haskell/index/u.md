@@ -7,7 +7,7 @@
 - `unify` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unify)
 - `unifyKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unifykind)
 - `Unit` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-unit)
-- `unit` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unit)
+- `unit` (val): [CORE_TO_MID](../sig/CORE_TO_MID.md#val-unit), [HS_TYPES](../sig/HS_TYPES.md#val-unit)
 - `unit_` (type): [HS_MODULES](../sig/HS_MODULES.md#type-unit_)
 - `unitCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unitcon)
 - `unitTy` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unitty)
@@ -19,6 +19,7 @@
 - `Unsupported` (exn): [CORE_TO_MID](../sig/CORE_TO_MID.md#exn-unsupported)
 - `Use` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-use)
 - `useOf` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-useof)
+- `uses` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-uses)
 - `UTuple` (con): [CORE](../sig/CORE.md#con-utuple)
 
 ---

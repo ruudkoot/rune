@@ -12,7 +12,7 @@ From the **Raises** paragraphs of the documented entries.
 - `Mismatch`: [`unify`](sig/HS_TYPES.md#val-unify) of HS_TYPES
 - `Refused`: [`infer`](sig/HS_LINT.md#val-infer) of HS_LINT, [`compare`](sig/HS_LINT.md#val-compare) of HS_LINT, [`check`](sig/HS_LINT.md#val-check) of HS_LINT, [`target`](sig/HS_LINT.md#val-target) of HS_LINT
 - `Stuck`: [`run`](sig/CORE_INTERP.md#val-run) of CORE_INTERP
-- `Unsupported`: [`program`](sig/CORE_TO_MID.md#val-program) of CORE_TO_MID
+- `Unsupported`: [`program`](sig/CORE_TO_MID.md#val-program) of CORE_TO_MID, [`unit`](sig/CORE_TO_MID.md#val-unit) of CORE_TO_MID
 
 ---
 

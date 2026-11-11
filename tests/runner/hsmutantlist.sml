@@ -96,5 +96,21 @@ struct
           "                                             (constrs, List.tabulate (length constrs, fn i => i))))),\n" ^
           "                   NONE, intType ()))",
           "fun tag x = ecase (x, ListPair.map (fn (c, i) => alt (pany c, int i)) (constrs, List.tabulate (length constrs, fn i => i)))",
-          ["hs/types/derive/module"])]
+          ["hs/types/derive/module"]),
+     (* D's seeds of M15 (rhc's desugaring, D34): each caught by
+        tests/hs/desugar, the Report's translation run on the interpreter *)
+     one ("HM01", "desugaring", "a match's clauses tried last first: the Report's top-to-bottom order reversed (3.17.2, 4.4.3.1)",
+          "match.sml", "      case rows of\n        [] => raise Fail \"HsMatch: a match of no clause\"",
+          "      case List.rev rows of\n        [] => raise Fail \"HsMatch: a match of no clause\"",
+          ["hs/desugar/report/order", "hs/desugar/report/guards", "hs/desugar/report/patterns"]),
+     one ("HM02", "desugaring", "~p made strict: an irrefutable pattern matched at once (3.17.2's 4, 3.17.3's rule (d))",
+          "match.sml", "    | A.PLazy q =>\n        if lazy q then", "    | A.PLazy q =>\n        if true then",
+          ["hs/desugar/report/lazy"]),
+     one ("HM03", "desugaring", "a newtype's constructor pattern forces its value (3.17.2's 5, 3.17.3's rules (k), (l))",
+          "match.sml",
+          "              SOME rep => C.atom (C.cast ((Core.Atom a, t), rep),\n" ^
+          "                                  fn occ' => pattern (env, occ', hd ps, success, failure))",
+          "              SOME rep => C.atom (C.cast ((Core.Atom a, t), rep),\n" ^
+          "                                  fn occ' => C.force ((Core.Atom (#1 occ'), #2 occ'), fn (v, vt) => pattern (env, (Core.Var v, vt), hd ps, success, failure)))",
+          ["hs/desugar/report/newtype"])]
 end

@@ -1,4 +1,4 @@
--- rows: pat.ctx.function pat.ctx.binding pat.ctx.comp pat.ctx.do pat.ctx.case pat.npk.toplevel pat.npk.nested pat.neg.int pat.neg.float pat.lit.int pat.lit.float pat.lit.char pat.lit.string pat.con.arity.nullary pat.as.form pat.tuple.form pat.list.form pat.paren.form pat.irref.form pat.label.form pat.label.npk pat.guard.toplevel
+-- rows: pat.ctx.function pat.ctx.binding pat.ctx.comp pat.ctx.do pat.ctx.case pat.npk.toplevel pat.npk.nested pat.neg.int pat.neg.float pat.lit.int pat.lit.float pat.lit.char pat.lit.string pat.con.arity.nullary pat.as.form pat.tuple.form pat.list.form pat.paren.form pat.irref.form pat.label.form pat.label.npk pat.guard.toplevel R16
 -- Report 3.17 and 3.17.1: patterns in lambdas, functions, bindings, comprehensions, do and case; n+k at the top and in
 -- parentheses; negative and other literals; constructors of no arity; as, tuple, list, parenthesised, lazy and
 -- labelled patterns, qualified, empty and with an n+k field; guards on case, function and pattern bindings.
