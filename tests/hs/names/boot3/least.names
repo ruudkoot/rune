@@ -1,5 +1,5 @@
 # One cycle of three modules, no error.
-pairs 803
+pairs 806
 EXPORT	A	tA A
 EXPORT	A	vA A
 EXPORT	A	vA a

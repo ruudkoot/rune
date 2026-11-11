@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 8 of 8 entries documented |
+| Documentation | 11 of 11 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/infer\_sig.sml](../../../../../lib/language/haskell/infer_sig.sml) |
 
@@ -59,6 +59,13 @@ sig
                <a href="#fld-check.evidence">evidence</a> : HsEvidence.table}
               -&gt; {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
   val <a href="#val-renumber">renumber</a> : int -&gt; unit
+  type <a href="#type-part">part</a> = {<a href="#fld-part.values">values</a> : (string * HsTypes.scheme) list, <a href="#fld-part.tycons">tycons</a> : HsKinds.tycon list, <a href="#fld-part.classes">classes</a> : HsClasses.class list,
+               <a href="#fld-part.instances">instances</a> : HsClasses.instance list,
+               <a href="#fld-part.cons">cons</a> : (string * {tycon : string, arity : int, fields : string list}) list,
+               <a href="#fld-part.fields">fields</a> : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
+               <a href="#fld-part.methods">methods</a> : (string * {cls : string, scheme : HsTypes.scheme}) list}
+  val <a href="#val-part">part</a> : env * (string -&gt; bool) -&gt; part
+  val <a href="#val-extend">extend</a> : env * part -&gt; env
   val <a href="#val-valuescheme">valueScheme</a> : env * string -&gt; HsTypes.scheme option
   val <a href="#val-classes">classes</a> : env -&gt; HsClasses.env
 end
@@ -155,12 +162,58 @@ val renumber : int -> unit
 ```
 
 `renumber n` makes the checker's next fresh variables, and HsTypes',
-number from `n`.
+number from `n`, where they have not passed it.
 
 A program's are then numbered alike however much of the library was
-checked before it (rhc's saved world).
+checked before them (rhc's saved world, a program checked by
+interfaces), and stay apart from each other and from the library's,
+since a dictionary's name is one of them.
 
-**Raises** [`Fail`](../../../basis/sig/GENERAL.md#exn-fail) where a variable has had `n` already.
+### <a name="type-part"></a>`part`
+
+```sml
+type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,
+             instances : HsClasses.instance list,
+             cons : (string * {tycon : string, arity : int, fields : string list}) list,
+             fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
+             methods : (string * {cls : string, scheme : HsTypes.scheme}) list}
+```
+
+What the environment holds of one module's entities, by key.
+
+That is its values' types (its constructors', fields' and methods'
+among them), its type constructors and synonyms, its classes, the
+instances it declares or derives, and what the checker keeps of its
+constructors, fields and methods. A unit's interface holds its
+modules' parts (HsModIface, the haskell98 roadmap's M21).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-part.values"></a>`values` | `(string * HsTypes.scheme) list` |  |
+| <a name="fld-part.tycons"></a>`tycons` | `HsKinds.tycon list` |  |
+| <a name="fld-part.classes"></a>`classes` | `HsClasses.class list` |  |
+| <a name="fld-part.instances"></a>`instances` | `HsClasses.instance list` |  |
+| <a name="fld-part.cons"></a>`cons` | `(string * {tycon : string, arity : int, fields : string list}) list` |  |
+| <a name="fld-part.fields"></a>`fields` | `(string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list` |  |
+| <a name="fld-part.methods"></a>`methods` | `(string * {cls : string, scheme : HsTypes.scheme}) list` |  |
+
+### <a name="val-part"></a>`part`
+
+```sml
+val part : env * (string -> bool) -> part
+```
+
+`part (env, mine)` is what `env` holds of the entities whose module's
+identity `mine` accepts, and of the instances it declares.
+
+### <a name="val-extend"></a>`extend`
+
+```sml
+val extend : env * part -> env
+```
+
+`extend (env, p)` is `env` with the part `p`, as a client checks
+against a module it has only the interface of.
 
 ### <a name="val-valuescheme"></a>`valueScheme`
 

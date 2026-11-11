@@ -52,4 +52,13 @@ block in braces, by layout, or exactly as its file was (D28), and `HsDump`
 as text. `HsSource` holds spans and the front end's errors, `HsChar` the
 Report's classes of characters.
 
+Desugaring (`desugar.build`, the roadmap's M15) makes a checked program
+the Core it means: `HsDesugar` applies the Report's translations of
+chapters 3 and 4 literally (D34's A), each class a data type of
+dictionaries and each overloaded use its type and dictionary arguments as
+the checker's evidence records give them (D31). `HsMatch` matches patterns
+in the Report's order, or as decision trees in Sestoft's order for D34's
+measurement; `HsDsEnv` is what desugaring knows of the program, its names,
+types and records in Core, and `HsDsCore` builds Core with its types.
+
 The roadmap is `docs/plans/language/haskell98.md`.

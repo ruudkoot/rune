@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; **a** [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
+- `abi` (type): [CORE_TO_MID](../sig/CORE_TO_MID.md#type-abi)
 - `add` (val): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-add)
 - `addClass` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-addclass)
 - `addInstance` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-addinstance)
@@ -16,13 +17,18 @@
 - `ann` (type): [HS_AST](../sig/HS_AST.md#type-ann)
 - `annotations` (type): [HS_PARSER](../sig/HS_PARSER.md#type-annotations)
 - `App` (con): [CORE](../sig/CORE.md#con-app)
+- `app` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-app)
+- `appAtoms` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-appatoms)
 - `apply` (val): [CORE](../sig/CORE.md#val-apply), [HS_TYPES](../sig/HS_TYPES.md#val-apply)
+- `applyType` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-applytype)
 - `arg` (type): [CORE](../sig/CORE.md#type-arg)
 - `Arrow` (con): [CORE](../sig/CORE.md#con-arrow)
 - `arrowCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-arrowcon)
 - `AT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-at)
 - `Atom` (con): [CORE](../sig/CORE.md#con-atom)
 - `atom` (type): [CORE](../sig/CORE.md#type-atom)
+- `atom` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-atom)
+- `atoms` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-atoms)
 
 ---
 

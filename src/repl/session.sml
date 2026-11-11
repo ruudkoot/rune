@@ -279,7 +279,7 @@ struct
       val windows = Workspace.onWindows ()
       val dir = case OS.Process.getEnv "RUNE_CACHE" of
                   SOME d => if d = "" then NONE else SOME d
-                | NONE => SOME (UnitCache.storeIn (case Workspace.rootOf {file = file, windows = windows} of
+                | NONE => SOME (StorePolicy.storeIn (case Workspace.rootOf {file = file, windows = windows} of
                                                      SOME root => Workspace.fromHere (windows, root)
                                                    | NONE => OS.Path.dir file))
     in Option.map (fn d => (d, UnitCache.configuration ())) dir end

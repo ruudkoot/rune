@@ -63,13 +63,27 @@ struct
                     (lines (read (fromRoot "tests/hs/lang-nightly.txt")))
     handle _ => []
   val listedNightly = nightlyPrograms ()
+  fun late name = List.exists (fn n => n = name) listedNightly
+
+  (* The sample (the lead's ruling 47): a family that repeats a program of
+     tests/hs (desugar's orders, meta's relations, the round trip's printers,
+     interp-vm, the world's and HsLint's shards) runs in make check one
+     program in sampleOneIn, the same every run, those whose name's FNV-1a
+     hash is 0 modulo it, and none that lang-nightly.txt names; and nightly
+     every program. `sampleTags name` are the tiers of such a job *)
+  val sampleOneIn = 16
+  fun fnv1a name =
+    CharVector.foldl (fn (c, h) => Word32.* (Word32.xorb (h, Word32.fromInt (ord c)), 0w16777619)) 0w2166136261 name
+  fun sampled name = not (late name) andalso Word32.mod (fnv1a name, Word32.fromInt sampleOneIn) = 0w0
+  fun sampleTags name = if sampled name then ["check", "nightly"] else ["nightly"]
+  fun tagAll tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
   fun tiers kind (p : Lang.program) =
     case kind of
       "errors/typecheck" => ["nightly"]
     | "accept" => ["check"]
     | _ =>
         if String.isPrefix "errors/" kind then ["check", "quick"]
-        else if List.exists (fn n => n = #name p) listedNightly then ["nightly"]
+        else if late (#name p) then ["nightly"]
         else ["check"] @ (if kind = "lang/register" then ["quick"] else [])
 
   val rhc : Lang.suite =
@@ -80,7 +94,10 @@ struct
         judges it *)
      errorCompilers = [("register", "bin/rhc", "hs")],
      ways = rhcWays,
-     out = fn compiler => "\"$RUNE_TEST_RUN\"/hs/c/" ^ compiler, scratch = "hs/",
+     out = fn compiler => "\"$RUNE_TEST_RUN\"/hs/c/" ^ compiler,
+     (* each program in a directory of its own as prog.rbc, so that
+        getProgName, the file's base name (the lead's ruling 33), is prog *)
+     binary = fn name => name ^ "/prog.rbc", scratch = "hs/",
      writer = "register", writerWay = "register",
      typecheck = SOME "bin/rhc --typecheck-only", stackDone = false, covers = covers,
      compileTags = ["hs"], errorTags = fn _ => ["hs"], typecheckTags = ["hs"],
@@ -110,7 +127,8 @@ struct
     {group = "hs/runner", lang = "tests/hs/runner/lang", errors = "tests/hs/runner/errors",
      accept = SOME "tests/hs/runner/accept", suffixes = suffixes, mains = mains,
      compilers = [("stub", stubCompile, "hs")], errorCompilers = [("stub", stubCompile, "hs")], ways = [stubWay],
-     out = fn compiler => "\"$RUNE_TEST_RUN\"/hs-runner/c/" ^ compiler, scratch = "hs-runner/",
+     out = fn compiler => "\"$RUNE_TEST_RUN\"/hs-runner/c/" ^ compiler, binary = fn name => name ^ ".rbc",
+     scratch = "hs-runner/",
      (* --accept writes none of the fixtures *)
      writer = "", writerWay = "",
      typecheck = SOME (stubCompile ^ " --typecheck-only"), stackDone = false, covers = runnerCovers,

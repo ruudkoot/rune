@@ -10,11 +10,13 @@
      `NAME.scc.expected`, with the library's unsigned bindings
      (`--dump-hslint=library`) against `NAME.library.expected`, where
      those are; reviewed line by line, and written again with --accept.
-     Then the checker on it at level 2 (`--typecheck-only --lint=2`),
-     where HsLint replays its records and holds them to the second
-     inference: it accepts what the dump infers and refuses, with its own
+     Then the compile of it at level 2 as far as Core (`--desugar-only
+     --lint=2`), where HsLint replays the checker's records and holds them
+     to the second inference, and holds the Core to it (the target check):
+     it accepts what the dump infers and refuses, with the checker's own
      error, what the dump refuses, so that a bug seeded in the checker
-     that its records show (rhc's mutants HK01 to HK05) fails the job.
+     that its records or its Core show (rhc's mutants HK01 to HK05) fails
+     the job.
    - `hs/hslint/accept/K-of-N`, `hs/hslint/lang/K-of-N`: every program of
      tests/hs/accept and tests/hs/lang infers, whatever its rows' status,
      since the second inference does not wait on the checker; a program
@@ -27,17 +29,24 @@
    taking every N-th program from the K-th, since a job of bin/rune-test
    costs several times what rhc does on one program; each prints a line
    FAIL for each program it fails, and `bin/rune-test hs-hslint-expect
-   KIND NAME` judges one. The first shard of each is make check's, the
-   others nightly (the roadmap's D56, the lead's ruling 45).
+   KIND NAME` judges one. The shards are nightly; make check's job of a
+   directory, `sample`, takes the sample of ruling 47 (HsLang.sampled: one
+   program in HsLang.sampleOneIn, by its name's hash, never one of
+   lang-nightly.txt) (the roadmap's D56, the lead's rulings 45 and 47).
 
-   - `hs/hslint/faults`: each rule of HsLint's comparison and of its replay
-     refuses its fault (as `astlintFaults` holds AstLint's):
-     tests/hs/hslint/faults.hs, its checker's records replayed and held to
-     the second inference, and held by `--hslint-claims` to its own expected
-     dump, is accepted, and with RHC_HSLINT_FAULT=RULE, which reads the
-     first claim or record RULE checks corrupted, refused with `lint after
+   - `hs/hslint/faults`: each rule of HsLint's comparison, of its replay
+     and of its target check refuses its fault (as `astlintFaults` holds
+     AstLint's): tests/hs/hslint/faults.hs, desugared, its checker's
+     records replayed and held to the second inference, its Core held to
+     it, and held by `--hslint-claims` to its own expected dump, is
+     accepted, and with RHC_HSLINT_FAULT=RULE, which reads the first claim,
+     record or Core type RULE checks corrupted, refused with `lint after
      hslint` and `[RULE]`; and the faults are the rules `bin/rhc
      --hslint-rules` names, both ways.
+
+   - `hs/hslint/levels`: each fixture the dump infers, built (`-o`) at
+     level 2, HsLint's checks with it, and at level 0: the same status and
+     bytes, since no check changes what rhc makes.
 
    The same jobs run the checker alone (`--typecheck-only --lint=off`)
    beside HsLint's second inference alone, and want one verdict of the two
@@ -105,15 +114,17 @@ struct
               else fail (job ^ ": the dump differs from " ^ expectedOf (#base p, mode) ^ ": " ^ out)
             end
 
-  (* the checker on a fixture at level 2, where HsLint replays its records
-     and holds them to the second inference (HsLint.check): it accepts what
-     the dump infers, or refuses with its own error what the dump refuses *)
+  (* the compile of a fixture at level 2 as far as Core, where HsLint
+     replays the checker's records and holds them and the Core to the
+     second inference (HsLint.check, HsLint.target): it accepts what the
+     dump infers, or refuses with the checker's error what the dump
+     refuses *)
   and checked (job, p : Lang.program, mode, refused, out) =
     if mode = "library" then ()
     else
       let
         val checkOut = out ^ ".check"
-        val (status, text) = rhc (["--typecheck-only", "--lint=2"] @ (if mode = "scc" then ["--cycle-default=scc"] else []),
+        val (status, text) = rhc (["--desugar-only", "--lint=2"] @ (if mode = "scc" then ["--cycle-default=scc"] else []),
                                   #src p, checkOut)
         val text = text ^ read (checkOut ^ ".err")
         val first = case lines text of l :: _ => l | [] => ""
@@ -228,6 +239,10 @@ struct
     end
 
   fun expectShard (kind, k, n) = List.app (fn (p : Lang.program) => expectOne (kind, #name p)) (shardOf (kind, k, n))
+  fun expectSample kind =
+    List.app (fn (p : Lang.program) => expectOne (kind, #name p))
+             (List.filter (fn (p : Lang.program) => HsLang.sampled (#name p))
+                          (if kind = "errors" then errorPrograms () else programs ("tests/hs/" ^ kind)))
 
   (* ---- the faults of the comparison's rules ---- *)
 
@@ -236,7 +251,8 @@ struct
 
   (* each rule's fault: the rule it must reach *)
   val faults = ["kind", "derive", "binding", "rule1", "type", "numeric", "standard", "rule2", "default",
-                "bindg", "dict tuple", "dict var", "dict inst", "dict super", "super", "method", "slot", "scc"]
+                "bindg", "dict tuple", "dict var", "dict inst", "dict super", "super", "method", "slot", "scc",
+                "target", "dictionary", "dfun"]
 
   fun faultsAll () =
     let
@@ -244,7 +260,7 @@ struct
       val () = mkdirs out
       fun rhcWith (fault, file) =
         execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
-          {cmd = [fromRoot "bin/rhc", "--lint=2", "--typecheck-only", "--hslint-claims=" ^ faultClaims, faultProgram],
+          {cmd = [fromRoot "bin/rhc", "--lint=2", "--desugar-only", "--hslint-claims=" ^ faultClaims, faultProgram],
            dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
       val listed = out ^ "/rules"
       val _ = exec {cmd = [fromRoot "bin/rhc", "--hslint-rules"], dir = SOME root, stdin = "", stdout = listed,
@@ -274,6 +290,50 @@ struct
         faults
     end
 
+  (* ---- a linted build is a plain one ---- *)
+
+  (* each fixture the dump infers, compiled (`-o`) at level 2, HsLint's
+     checks and CoreLint's with it, and at level 0 (RUNE_LINT empty): the
+     same status and the same bytes, since no check changes what rhc
+     makes (the roadmap's M16, as levelsOne holds Rune's) *)
+  fun levelsAll () =
+    let
+      val out = run ^ "/hs-hslint/levels"
+      val () = mkdirs out
+      fun build (level, p : Lang.program) =
+        let
+          val file = out ^ "/" ^ slug (#name p) ^ "." ^ level
+          val log = file ^ ".log"
+          val status =
+            execEnv (fn e => if level = "2" then setEnv ("RUNE_LINT", "2") e else unsetEnv ["RUNE_LINT"] e)
+              {cmd = [fromRoot "bin/rhc", "-o", file, #src p], dir = SOME root, stdin = "", stdout = log, stderr = log,
+               timeout = 600}
+        in
+          (status, file, log)
+        end
+      val inferred =
+        List.filter (fn ((p : Lang.program), ms) =>
+                       List.exists (fn (m, _) => m = "") ms
+                       andalso not (String.isPrefix "REFUSED" (read (fromRoot (expectedOf (#base p, ""))))))
+          (fixtures ())
+    in
+      if null inferred then fail "hs/hslint/levels: no fixture to build" else ();
+      List.app
+        (fn (p : Lang.program, _) =>
+           let
+             val (s2, f2, l2) = build ("2", p)
+             val (s0, f0, l0) = build ("0", p)
+           in
+             if s2 <> s0 then
+               fail ("hs/hslint/levels: " ^ #name p ^ ": built at level 2 with status " ^ Int.toString s2 ^ " (" ^
+                     firstLine l2 ^ ") and at level 0 with " ^ Int.toString s0 ^ " (" ^ firstLine l0 ^ ")")
+             else if s2 = 0 andalso not (same (f2, f0)) then
+               fail ("hs/hslint/levels: " ^ #name p ^ ": the build at level 2 is not the build at level 0: " ^ f2 ^ ", " ^ f0)
+             else ()
+           end)
+        inferred
+    end
+
   (* ---- the tree ---- *)
 
   fun job (name, cmd, timeout) =
@@ -299,20 +359,21 @@ struct
                                         cmd ^ "hs-hslint-dump " ^ quote (#name p) ^ " " ^ quote m, 600))
                          ms)
              (fixtures ()))
-      (* the first shard of a directory in make check, the others nightly
-         (the roadmap's D56, the lead's ruling 45: about 10% of make check
-         for rhc's families) *)
+      (* a directory's sample (ruling 47) in make check, its shards nightly
+         (the roadmap's D56, the lead's rulings 45 and 47: about 10% of make
+         check for rhc's families) *)
       fun expect kind =
-        List.tabulate (shards, fn i =>
-                                 let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
-                                 in Test.tag (if i = 0 then "check" else "nightly")
-                                      (job (kind ^ "/" ^ k, cmd ^ "hs-hslint-expect-shard " ^ kind ^ " " ^ k, 3600)) end)
+        Test.tag "check" (job (kind ^ "/sample", cmd ^ "hs-hslint-expect-shard " ^ kind ^ " sample", 3600))
+        :: List.tabulate (shards, fn i =>
+                                    let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
+                                    in Test.tag "nightly" (job (kind ^ "/" ^ k, cmd ^ "hs-hslint-expect-shard " ^ kind ^ " " ^ k, 3600)) end)
     in
       Test.describe "hs/hslint"
         [tagged (["hs"] @ covers)
            (Test.requires ["rhc"]
               (Test.describe ""
-                 (List.map (Test.tag "check") (dumps @ [job ("faults", cmd ^ "hs-hslint-faults", 1200)])
+                 (List.map (Test.tag "check")
+                    (dumps @ [job ("faults", cmd ^ "hs-hslint-faults", 1200), job ("levels", cmd ^ "hs-hslint-levels", 1800)])
                   @ expect "accept" @ expect "lang" @ expect "errors")))]
     end
 
@@ -320,7 +381,9 @@ struct
     case args of
       ["hs-hslint-dump", name, mode] => SOME (fn () => dumpOne (name, mode))
     | ["hs-hslint-faults"] => SOME faultsAll
+    | ["hs-hslint-levels"] => SOME levelsAll
     | ["hs-hslint-expect", kind, name] => SOME (fn () => expectOne (kind, name))
+    | ["hs-hslint-expect-shard", kind, "sample"] => SOME (fn () => expectSample kind)
     | ["hs-hslint-expect-shard", kind, kn] =>
         (case String.fields (fn c => c = #"-") kn of
            [k, "of", n] =>

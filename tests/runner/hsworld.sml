@@ -10,16 +10,20 @@
      `make bin/rhc.img` holds it to.
    - `hs/world/accept/K-of-N`, `hs/world/errors/K-of-N`,
      `hs/world/lang/K-of-N`: every program of the directory checked both
-     ways, `bin/rhc --typecheck-only` with its `.cargs`, prints the same,
-     standard output and error, and ends with the same status. A program's
+     ways, `bin/rhc --typecheck-only --lint=2` with its `.cargs`, prints
+     the same, standard output and error, and ends with the same status;
+     at level 2, the runner's own (RUNE_LINT=2), HsLint replays each way
+     the records of the modules the program reaches. A program's
      own options that shape the library's reading (`--cycle-default=scc`)
      send both ways whole.
 
    The programs of a directory are judged in `shards` jobs, the K-th
    taking every N-th from the K-th, each a line FAIL for each program
-   that differs; the first shard is make check's, the others nightly (the
-   roadmap's D56, the lead's ruling 45). `bin/rune-test hs-world-one KIND
-   NAME` judges one. *)
+   that differs, all nightly; make check's job of a directory, `sample`,
+   takes the sample of ruling 47 (HsLang.sampled: one program in
+   HsLang.sampleOneIn, by its name's hash, never one of lang-nightly.txt)
+   (the roadmap's D56, the lead's rulings 45 and 47). `bin/rune-test
+   hs-world-one KIND NAME` judges one. *)
 structure HsWorldJobs =
 struct
   open Sh
@@ -35,8 +39,8 @@ struct
 
   fun rhc () = fromRoot "bin/rhc"
 
-  (* the first line where `a` and `b` differ *)
-  fun firstDifference (a, b) =
+  (* the first line where `a` and `b` differ, `a` from `way`, `b` whole *)
+  fun firstDifferenceBy way (a, b) =
     let
       fun go (n, x :: xs, y :: ys) = if x = y then go (n + 1, xs, ys) else (n, x, y)
         | go (n, x :: _, []) = (n, x, "(nothing)")
@@ -44,13 +48,16 @@ struct
         | go (n, [], []) = (n, "", "")
       val (n, x, y) = go (1, String.fields (fn c => c = #"\n") a, String.fields (fn c => c = #"\n") b)
     in
-      "line " ^ Int.toString n ^ ": `" ^ x ^ "` from the saved world, `" ^ y ^ "` whole"
+      "line " ^ Int.toString n ^ ": `" ^ x ^ "` " ^ way ^ ", `" ^ y ^ "` whole"
     end
 
-  (* a program checked both ways *)
-  fun compareOne (kind, p : Lang.program) =
+  val firstDifference = firstDifferenceBy "from the saved world"
+
+  (* a program checked both ways: `way`, with `flags`, and whole; the
+     family's jobs are `family/KIND/...` *)
+  fun compareWith {family : string, way : string, flags : string list} (kind, p : Lang.program) =
     let
-      val out = run ^ "/hs-world/" ^ kind ^ "/" ^ #name p
+      val out = run ^ "/" ^ String.translate (fn #"/" => "-" | c => str c) family ^ "/" ^ kind ^ "/" ^ #name p
       val () = mkdirs out
       val cargs = words (#base p ^ ".cargs")
       fun check (tag, flags) =
@@ -61,16 +68,18 @@ struct
         in
           (status, read (file ^ ".out"), read (file ^ ".err"))
         end
-      val (s1, o1, e1) = check ("world", [])
-      val (s2, o2, e2) = check ("whole", ["--whole"])
-      val what = "hs/world/" ^ kind ^ "/" ^ #name p
+      val (s1, o1, e1) = check ("way", flags @ ["--lint=2"])
+      val (s2, o2, e2) = check ("whole", ["--whole", "--lint=2"])
+      val what = family ^ "/" ^ kind ^ "/" ^ #name p
     in
       if s1 <> s2 then
-        fail (what ^ ": status " ^ Int.toString s1 ^ " from the saved world, " ^ Int.toString s2 ^ " whole")
-      else if o1 <> o2 then fail (what ^ ": standard output: " ^ firstDifference (o1, o2))
-      else if e1 <> e2 then fail (what ^ ": standard error: " ^ firstDifference (e1, e2))
+        fail (what ^ ": status " ^ Int.toString s1 ^ " " ^ way ^ ", " ^ Int.toString s2 ^ " whole")
+      else if o1 <> o2 then fail (what ^ ": standard output: " ^ firstDifferenceBy way (o1, o2))
+      else if e1 <> e2 then fail (what ^ ": standard error: " ^ firstDifferenceBy way (e1, e2))
       else ()
     end
+
+  val compareOne = compareWith {family = "hs/world", way = "from the saved world", flags = []}
 
   fun shardOf (kind, k, n) =
     let
@@ -83,6 +92,7 @@ struct
     end
 
   fun compareShard (kind, k, n) = List.app (fn p => compareOne (kind, p)) (shardOf (kind, k, n))
+  fun compareSample kind = List.app (fn p => compareOne (kind, p)) (List.filter (fn (p : Lang.program) => HsLang.sampled (#name p)) (programs kind))
 
   fun compareNamed (kind, name) =
     case List.find (fn (p : Lang.program) => #name p = name) (programs kind) of
@@ -138,10 +148,10 @@ struct
     let
       val cmd = "\"$RUNE_TEST_ROOT\"/bin/rune-test "
       fun shardJobs kind =
-        List.tabulate (shards, fn i =>
-                                 let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
-                                 in Test.tag (if i = 0 then "check" else "nightly")
-                                      (job (kind ^ "/" ^ k, cmd ^ "hs-world-shard " ^ kind ^ " " ^ k, 3600)) end)
+        Test.tag "check" (job (kind ^ "/sample", cmd ^ "hs-world-shard " ^ kind ^ " sample", 3600))
+        :: List.tabulate (shards, fn i =>
+                                    let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
+                                    in Test.tag "nightly" (job (kind ^ "/" ^ k, cmd ^ "hs-world-shard " ^ kind ^ " " ^ k, 3600)) end)
     in
       Test.describe "hs/world"
         [tagged (["hs"] @ covers)
@@ -155,6 +165,7 @@ struct
     case args of
       ["hs-world-image"] => SOME image
     | ["hs-world-one", kind, name] => SOME (fn () => compareNamed (kind, name))
+    | ["hs-world-shard", kind, "sample"] => SOME (fn () => compareSample kind)
     | ["hs-world-shard", kind, kn] =>
         (case String.fields (fn c => c = #"-") kn of
            [k, "of", n] =>

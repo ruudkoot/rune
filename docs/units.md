@@ -843,6 +843,14 @@ paths are from the root of the filesystem where a compile in another
 directory could mean another file by them (the stat memo, the link memo), so
 that compiles in several directories share it.
 
+**Whose it is.** The store's code (`UnitStore`) knows nothing of SML: an
+entry's format, head and key are its client's. Where the store is, its
+overlay and its layers, and how it is kept small are `StorePolicy`'s
+(`lib/compiler/driver/storepolicy.sml`, in the layer from Mid on), which a
+compiler of another language takes as it is, from `CompilerSettings`, without
+naming `UnitCache`, which keeps SML's units there (the haskell98 roadmap's
+M20). Two compilers that share a store share its budget for trimming.
+
 **Keys and entries.** A unit's key is its logical name, the hash of its
 text and its settings (*The cache*, above); an entry's head is what the
 client judges it by, which the store holds and never reads, and its
@@ -1080,6 +1088,53 @@ date against a touch, an edit, the output removed and overwritten, and a
 (`warm-plan`), which a build after each edit -- of a comment, of a fixity
 directive changed, added, removed, made `nonfix` or put in a `local` -- reads
 as the edit says, and `--verify-cache` holds to the files' texts.
+
+## rhc's units
+
+rhc, the Haskell 98 compiler of the haskell98 roadmap
+([plans/language/haskell98.md](plans/language/haskell98.md), M21), keeps its
+units in the same store as a client of its own (`src/rhc/store.sml`,
+`RhcStore`): its own format, head, `holds`, key and settings, in a
+configuration of rhc's (its `Config.identity`, the instruction set, the
+level and passes, the form of string literals). A unit is an SCC of a
+program's modules; Core in units (`lib/language/haskell/coreunits.sml`)
+names another unit's value by `(import x TYPE)` and its type by a copy of
+the declaration. `rhc --units` takes `--read-core` files as units, after
+rhc's runtime's.
+
+**What a hit must satisfy.** A key is a unit's name and the hash of every
+member's text (H8; a module's `default` is in its text, H4). An entry's
+head holds its usages, one for each name its compile took of another unit,
+a value or a type, and what that gave: the unit it came from, the
+latest that declares it, its fingerprint there (`CoreUnits.fingerprints`,
+by recursive group, a value's over its type and the types it mentions) and
+its ABI facts, or `-` where no unit declared it (H1). An entry stands where
+every usage gives now, from the units of this compile, what it gave (H3);
+an entry checked at a lower level of the lint does not. The ABI facts (H9)
+are how a value is made in Mid (a function, a suspension, a literal) and
+whether a newtype is a box: a newtype is boxed as its own unit boxes it,
+since a unit that gives it fewer arguments than its parameters makes it a
+box, and another that did not would read its values otherwise. H2, H5, H6
+and H7 come with the front end's interfaces (`HsModIface`, `HsUsage`).
+
+**Two links.** `--link=units`, the default over Core, links each unit's own
+code (Link, `UnitFile`): every unit links whole, since Shake runs on a
+whole program alone, so a program carries all of every unit it imports;
+with the library as one unit, hello is 932,791 bytes against 17,773 whole
+and starts in 3,850 instructions against 1,403
+(`~/.cache/claude-rune-drafts/haskell98/impl/b/m21-measure.md`). So rhc's
+programs use `--link=whole`, the roadmap's C: a unit's entry keeps its Core
+and its interface, not code; the link joins the units' Core
+(`CoreUnits.join`), keeps what `main` reaches (`CoreUnits.reach`) and
+compiles that whole, Shake and all, so a program's size and start-up are a
+whole program's and its bytes are a whole compile's of the same Core. What
+the units save is the front end, a module's reading, checking and
+desugaring, which is most of a compile (hello whole is 142M VM
+instructions, hello's own unit's back end about 4.3M); the back end runs
+over what the program reaches at each link that changes it. The link memo
+is an entry keyed by the hash of the reached Core's text, which is all the
+back end reads, holding the program's bytecode. No change to Rune's Link
+is needed for it, where a Shake over linked bytecode would be one.
 
 ## The graph
 

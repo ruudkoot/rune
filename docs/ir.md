@@ -721,6 +721,13 @@ function would take it apart, since a parameter's type is no forall;
   is given no more arguments than its datatype has parameters, and as many
   where it is a value's type -- fewer only where a type is given a type
   variable or a type name. Each type once, by its node.
+* **A use's type arguments, in rhc's Mid** (the haskell98 roadmap's D4 and
+  M10b): a type variable stands for a value, so no use is given a type with
+  `susp` at its head. MidLint does not hold this, since SML uses its
+  polymorphic functions at `T susp` (R's thunk kernels; a `(T susp) ref`'s
+  parameter is no polymorphic use either); Core to Mid holds its own text to
+  it at lint level 2 (`CoreToMid.checking`), and `--fault=susp-type-arg` is
+  its mutant (`tests/hs/core/fault-susp-type-arg.core`).
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
 * **Cases:** the value a `Case` tests is a datatype's; each arm is a
@@ -873,7 +880,11 @@ program written by hand. The grammar is at the head of
   `{int}`.
 * Variables, globals, join points and type variables are numbered afresh in
   the order they appear (`v1`, `g1`, `j1`, `'a`, and `'_a` for a type
-  variable no type was found for).
+  variable no type was found for), but for a name the reader's `named`
+  gives a stamp of (`MidText.parseWith`): a front end that compiles in units
+  names another unit's global by its text, and gives its stamp there (the
+  haskell98 roadmap's M21; `tests/hs/units/named.sml`). `MidText.parse`
+  gives none.
 * A type name is written as it is, with `/N` where two would clash; a
   datatype, or a type without constructors, that is not built in is
   declared at the head, with the arguments it takes, and the reader refuses

@@ -1,0 +1,13 @@
+; refuse: --fault=susp-type-arg --read-core tests/hs/core/lib/base.core | lint after coretomid: internal compiler error: a use of
+; rhc's mutant of Core to Mid, a type argument of a suspension's type (M10b,
+; the lead's ruling of M28's last rule): each use of a polymorphic function
+; at its first type argument's slot type, ('t susp), where a type variable
+; stands for a value (D4). Core to Mid holds its own text to the rule at
+; lint level 2, which MidLint does not, since SML uses its polymorphic
+; functions at T susp.
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (l0 (List Int) (con Nil @Int))
+    (let (l1 (List Int) (con Cons @Int 1 l0))
+    (let (n Int (length @Int l1))
+    (printInt n w))))))

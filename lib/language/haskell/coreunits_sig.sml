@@ -21,4 +21,41 @@ sig
   (* `unresolved p` is the imports of p that no declaration of p defines,
      in order *)
   val unresolved : Core.program -> string list
+
+  (* `uses d` is what the declaration `d` names of the top level, each once.
+
+     Its values are the variables it names that no binder of it binds; its
+     types the type constructors it names; its constructors those it makes
+     or takes apart. A name may be in more than one, as `:` is a value of
+     the runtime and a constructor of the list. *)
+  val uses : Core.decl -> {values : string list, types : string list, cons : string list}
+
+  (* `reach (p, roots)` is what the values `roots` reach of p, in p's order.
+
+     A value reaches the values, types and constructors it names, a
+     constructor its type, and a type the types of its fields; an import
+     reached is kept, as a whole program has none (the haskell98 roadmap's
+     M21: units joined and compiled whole, what main reaches). *)
+  val reach : Core.program * string list -> Core.program
+
+  (* `interface (p, exports)` is what a client of the unit p needs of the
+     names it exports, as Core: each type it mentions declared, and each
+     value imported.
+
+     Each exported value is an import at its type, and each exported type
+     and every type the exports' types mention, through the types' own
+     fields, is declared as p declares it, in p's order; a name p does not
+     declare is a built-in type's, or another unit's the client has. *)
+  val interface : Core.program * string list -> Core.program
+
+  (* `fingerprints hash iface` is each declaration of the interface by its
+     name with its fingerprint, which moves where what a client reads of it
+     moves.
+
+     A type's is its recursive group's: the hash of the group's
+     declarations and of the fingerprints of the types outside it that they
+     mention, so that a group hashes as one. A value's is the hash of its
+     type and of the fingerprints of the types it mentions. A type no
+     declaration of the interface gives is its name. *)
+  val fingerprints : (string -> string) -> Core.program -> (string * string) list
 end

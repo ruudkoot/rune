@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 156 requirements between the 64 files become 84 arrows.
+library and not a wall of lines: the 230 requirements between the 76 files become 103 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(62)"]
+  a0["Languages<br>(74)"]
   a1["Not in an area<br>(2)"]
   a1 -- 2 --> a0
 ```
@@ -52,48 +52,60 @@ flowchart TD
   n17["HsPrint"]
   n18(["HS_DUMP"])
   n19["HsDump"]
-  n20(["HS_STRING_MAP"])
-  n21["HsStringMap"]
-  n22(["HS_MODULES"])
-  n23["HsModules"]
-  n24(["HS_FIXITY"])
-  n25["HsFixity"]
-  n26(["HS_RENAME"])
-  n27["HsRename"]
-  n28(["HS_SCC"])
-  n29["HsScc"]
-  n30(["HS_TYPES"])
-  n31["HsTypes"]
-  n32(["HS_CLASSES"])
-  n33["HsClasses"]
-  n34(["HS_EVIDENCE"])
-  n35["HsEvidence"]
-  n36(["HS_KINDS"])
-  n37["HsKinds"]
-  n38(["HS_DERIVE"])
-  n39["HsDerive"]
-  n40(["HS_INFER"])
-  n41["HsInfer"]
-  n42(["HS_LINT"])
-  n43["HsLint"]
-  n44(["CORE"])
-  n45["Core"]
-  n46(["CORE_TEXT"])
-  n47["CoreText"]
-  n50(["CORE_PRIM_FAMILY"])
-  n51["CorePrimFamily"]
-  n52(["CORE_PRIM"])
-  n53["CorePrim"]
-  n54(["CORE_RUNTIME"])
-  n55["CoreRuntime"]
-  n56(["CORE_LINT"])
-  n57["CoreLint"]
-  n58(["CORE_INTERP"])
-  n59["CoreInterp"]
-  n60(["CORE_GEN"])
-  n61["CoreGen"]
-  n62(["CORE_TO_MID"])
-  n63["CoreToMid"]
+  n20(["HS_USAGE"])
+  n21["HsUsage"]
+  n22(["HS_STRING_MAP"])
+  n23["HsStringMap"]
+  n24(["HS_MODULES"])
+  n25["HsModules"]
+  n26(["HS_FIXITY"])
+  n27["HsFixity"]
+  n28(["HS_RENAME"])
+  n29["HsRename"]
+  n30(["HS_SCC"])
+  n31["HsScc"]
+  n32(["HS_TYPES"])
+  n33["HsTypes"]
+  n34(["HS_CLASSES"])
+  n35["HsClasses"]
+  n36(["HS_EVIDENCE"])
+  n37["HsEvidence"]
+  n38(["HS_KINDS"])
+  n39["HsKinds"]
+  n40(["HS_DERIVE"])
+  n41["HsDerive"]
+  n42(["HS_INFER"])
+  n43["HsInfer"]
+  n44(["HS_MOD_IFACE"])
+  n45["HsModIface"]
+  n46(["CORE"])
+  n47["Core"]
+  n48(["CORE_TEXT"])
+  n49["CoreText"]
+  n52(["CORE_PRIM_FAMILY"])
+  n53["CorePrimFamily"]
+  n54(["CORE_PRIM"])
+  n55["CorePrim"]
+  n56(["CORE_RUNTIME"])
+  n57["CoreRuntime"]
+  n58(["CORE_LINT"])
+  n59["CoreLint"]
+  n60(["CORE_INTERP"])
+  n61["CoreInterp"]
+  n62(["CORE_GEN"])
+  n63["CoreGen"]
+  n64(["CORE_TO_MID"])
+  n65["CoreToMid"]
+  n66(["HS_LINT"])
+  n67["HsLint"]
+  n68(["HS_DS_CORE"])
+  n69["HsDsCore"]
+  n70(["HS_DS_ENV"])
+  n71["HsDsEnv"]
+  n72(["HS_MATCH"])
+  n73["HsMatch"]
+  n74(["HS_DESUGAR"])
+  n75["HsDesugar"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -120,70 +132,89 @@ flowchart TD
   n18 --> n13
   n19 --> n18
   n21 --> n20
-  n22 --> n13
-  n22 --> n21
   n23 --> n22
   n24 --> n13
+  n24 --> n23
   n25 --> n24
-  n26 --> n23
+  n25 --> n21
+  n26 --> n13
   n27 --> n26
+  n28 --> n25
   n29 --> n28
-  n29 --> n21
   n31 --> n30
-  n32 --> n31
+  n31 --> n23
   n33 --> n32
-  n33 --> n21
-  n34 --> n1
-  n34 --> n31
+  n34 --> n33
   n35 --> n34
-  n35 --> n33
-  n36 --> n13
-  n36 --> n21
-  n36 --> n31
+  n35 --> n23
+  n35 --> n21
+  n36 --> n1
+  n36 --> n33
   n37 --> n36
-  n37 --> n23
-  n37 --> n29
+  n37 --> n35
   n38 --> n13
+  n38 --> n23
+  n38 --> n33
   n39 --> n38
+  n39 --> n25
+  n39 --> n31
   n40 --> n13
-  n40 --> n35
   n41 --> n40
-  n41 --> n39
-  n41 --> n37
-  n42 --> n41
+  n42 --> n37
+  n42 --> n39
   n43 --> n42
+  n43 --> n41
+  n44 --> n43
   n45 --> n44
-  n46 --> n45
   n47 --> n46
-  n51 --> n50
-  n52 --> n45
-  n52 --> n51
+  n48 --> n47
+  n49 --> n48
   n53 --> n52
-  n53 --> n47
-  n54 --> n45
+  n54 --> n47
+  n54 --> n53
   n55 --> n54
-  n55 --> n47
-  n56 --> n45
+  n55 --> n49
+  n56 --> n47
   n57 --> n56
-  n57 --> n53
-  n58 --> n45
+  n57 --> n49
+  n58 --> n47
   n59 --> n58
-  n59 --> n53
-  n60 --> n45
+  n59 --> n55
+  n60 --> n47
   n61 --> n60
-  n61 --> n47
-  n62 --> n45
+  n61 --> n55
+  n62 --> n47
   n63 --> n62
-  n63 --> n53
+  n63 --> n49
+  n64 --> n47
+  n65 --> n64
+  n65 --> n55
+  n66 --> n47
+  n66 --> n43
+  n67 --> n66
+  n68 --> n47
+  n69 --> n49
+  n69 --> n68
+  n69 --> n23
+  n70 --> n69
+  n70 --> n43
+  n71 --> n70
+  n72 --> n71
+  n73 --> n72
+  n74 --> n47
+  n74 --> n43
+  n75 --> n55
+  n75 --> n74
+  n75 --> n73
 ```
 
 ## Not in an area
 
 ```mermaid
 flowchart TD
-  n48(["CORE_UNITS"])
-  n49["CoreUnits"]
-  n49 --> n48
+  n50(["CORE_UNITS"])
+  n51["CoreUnits"]
+  n51 --> n50
 ```
 
 It also needs Languages (2).

@@ -4,6 +4,8 @@
    resolution, read after names. It is written on the Basis Library and
    syntax.build alone, and is used by the library's library.build. *)
 files
+  usage_sig.sml
+  usage.sml
   strmap_sig.sml
   strmap.sml
   modules_sig.sml

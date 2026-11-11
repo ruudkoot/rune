@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`CORE_UNITS`](../sig/CORE_UNITS.md) |
 | Status | required |
-| Members | 3 |
+| Members | 7 |
 | Tests | not listed |
 | Source | [lib/language/haskell/coreunits.sml](../../../../../lib/language/haskell/coreunits.sml) |
 
@@ -29,8 +29,12 @@ What each means is on [`CORE_UNITS`](../sig/CORE_UNITS.md); the types are this s
 |  | Member | Is |
 | --- | --- | --- |
 | exception | [`Error`](../sig/CORE_UNITS.md#exn-error) | `of string` |
+| val | [`fingerprints`](../sig/CORE_UNITS.md#val-fingerprints) | `(string -> string) -> Core.decl list -> (string * string) list` |
+| val | [`interface`](../sig/CORE_UNITS.md#val-interface) | `Core.decl list * string list -> Core.decl list` |
 | val | [`join`](../sig/CORE_UNITS.md#val-join) | `Core.decl list list -> Core.decl list` |
+| val | [`reach`](../sig/CORE_UNITS.md#val-reach) | `Core.decl list * string list -> Core.decl list` |
 | val | [`unresolved`](../sig/CORE_UNITS.md#val-unresolved) | `Core.decl list -> string list` |
+| val | [`uses`](../sig/CORE_UNITS.md#val-uses) | `Core.decl -> {cons : string list, types : string list, values : string list}` |
 
 ---
 
