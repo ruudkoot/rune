@@ -665,7 +665,7 @@ pat.m.npk.fail	3.17.2	and fails otherwise	dynamic	run	next clause taken for v < 
 pat.m.npk.overload	3.17.2	>= and - are overloaded on the pattern's type	dynamic	run	user Integral instance logs them	hand	Supported		
 pat.m.npk.diverge	3.17.2	The match diverges if the comparison diverges	dynamic	run	case undefined of n+1 -> n	hand	Supported		
 pat.m.npk.intonly	3.17.2	Only integer literals are allowed for k	syntax	reject	n+1.5	hand	Supported		
-pat.m.npk.positive	3.17.2	k is a positive integer literal	syntax	reject	n+0 refused as the prose has it, though the grammar's integer allows it and rule (s) is silent: see readings.md	hand	Planned	R15	
+pat.m.npk.positive	3.17.2	k is a positive integer literal	syntax	reject	n+0 refused as the prose has it, though the grammar's integer allows it and rule (s) is silent: see readings.md	hand	Supported	R15	
 pat.m.npk.literal	3.17.2	k is interpreted as a numeric literal pattern's is	dynamic	run	user instance logs fromInteger	hand	Supported		
 pat.m.as	3.17.2	Matching var@apat against v is matching apat, augmented with the binding of var to v	dynamic	run	value	hand	Supported		
 pat.m.as.fail	3.17.2	If that match fails or diverges so does the overall match	dynamic	run	x@(Just _) against Nothing and undefined	hand	Supported		
@@ -3584,7 +3584,7 @@ lib.r.io.try	21.1	try returns an error explicitly in Either	library	run	Left on 
 lib.r.io.bracket	21.1	bracket runs the deallocation even on an error during computation	library	run	`after` runs, then the error propagates	hand	Supported		
 lib.r.io.filename	21.2	File and directory names are Strings of operating-system dependent meaning	library	none	implementation-defined; rhc must pick an encoding: see readings.md	hand	Planned	R38	
 lib.r.io.handle.props	21.2	A handle has at least: input/output, open/closed/semi-closed, seekable, buffering, a buffer	library	none	a description, tested through hIs* and hGetBuffering	hand	Planned		
-lib.r.io.handle.readable	21.2	A handle is readable if it manages input, writable if it manages output	library	run	each IOMode with hIsReadable and hIsWritable	hand	Planned		
+lib.r.io.handle.readable	21.2	A handle is readable if it manages input, writable if it manages output	library	run	each IOMode with hIsReadable and hIsWritable	hand	Supported		
 lib.r.io.handle.open	21.2	A handle is open when first allocated	library	run	hIsOpen after openFile	hand	Planned		
 lib.r.io.handle.closed	21.2	Once closed a handle can no longer be used for input or output	library	run	hGetChar and hPutChar fail after hClose	hand	Planned		
 lib.r.io.handle.show	21.2	Handles are in Show; the string is system dependent and should identify the handle	library	run	non-empty, differs between two handles	hand	Supported		
@@ -3655,7 +3655,7 @@ lib.r.io.encoding	21.9	The Report does not say how a Char above 255 is written t
 lib.r.io.hwaitforinput	21.9.1	hWaitForInput returns True as soon as input is available, False if none within t milliseconds	library	run	a pipe with and without data	hand	Planned		
 lib.r.io.hready	21.9.1	hReady says whether at least one item is available	library	run	a file not at its end	hand	Planned		
 lib.r.io.hready.eof	21.9.1	hWaitForInput and hReady fail with isEOFError at end of file	library	run	on a file at its end	hand	Planned		
-lib.r.io.hgetchar	21.9.2	hGetChar reads a character	library	run	exact	hand	Planned		
+lib.r.io.hgetchar	21.9.2	hGetChar reads a character	library	run	exact	hand	Supported		
 lib.r.io.hgetchar.eof	21.9.2	hGetChar fails with isEOFError at end of file	library	run	caught and tested	hand	Planned		
 lib.r.io.hgetline	21.9.2	hGetLine reads a line	library	run	the newline is not in the result	hand	Planned		
 lib.r.io.hgetline.eof.first	21.9.2	hGetLine fails with isEOFError at the first character of the line	library	run	caught and tested	hand	Planned		
