@@ -464,14 +464,15 @@ end
      (App (f, [a1, .., an]), Lower's CallN): of a local curried function,
      its twin's where the arguments are as many as its parameters.
    * A local function every use of which became its twin's goes.
-   A closure given to a primitive stays as it is: thunk_make and the
-   runtime's callbacks enter a closure of one parameter. *)
+   A closure given to thunk_make, to a foreign callback or to the
+   runtime (rt_) stays as it is: each enters a closure of one parameter. *)
 structure Uncurry =
 struct
   open Mid
 
-  val enabled = ref (case OS.Process.getEnv "RUNE_UNCURRY" of SOME "1" => true | _ => false)
-  val () = CompilerState.cellRoot ("Uncurry.enabled", enabled)
+  (* asked where the pass would run, not where the compiler starts: rhc
+     runs from a saved world (bin/rhc), whose cells are the world's *)
+  fun enabled () = case OS.Process.getEnv "RUNE_UNCURRY" of SOME "1" => true | _ => false
   (* the most parameters a twin has *)
   val maxArity = 8
 
@@ -589,7 +590,14 @@ struct
       fun rhs r =
         case r of
           App (h, xs) => App (h, List.map twinAtom xs)
-        | Prim _ => r
+        (* a suspension's code, and what the runtime calls from C with one
+           argument, stay closures of one parameter: thunk_make's, a
+           foreign callback's, the runtime's (rt_); any other primitive's
+           -- thunk_self_update's value, which a force gives after -- the
+           twin *)
+        | Prim (p, t, xs) =>
+            if p = "thunk_make" orelse String.isPrefix "foreign" p orelse String.isPrefix "rt_" p then r
+            else Prim (p, t, List.map twinAtom xs)
         | _ => mapRhs twinAtom r
       (* what a call's head is: a value (through its closure: any number of
          arguments), a local curried function with a twin of n
