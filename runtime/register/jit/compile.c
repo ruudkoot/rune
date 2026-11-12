@@ -230,7 +230,29 @@ static int jit_h_apply(VM *vm) {
     if (n == 1 && (op == ROP_CALL || op == ROP_TAILCALL)) vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 5)]);
     else for (uint32_t i = 0; i < n; i++) vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 9 + 4 * i)]);
     uint32_t ret_pc = vm->pc + rop_length(at);
-    if (reg_apply(vm, n, tail, ret_pc) == REG_APPLY_VALUE) vm->pc = ret_pc;
+    JitProgram *jit = jit_program(vm);
+    if (reg_apply(vm, n, tail, ret_pc) == REG_APPLY_ENTERED) {
+        /* the function entered: into its code where it has some, else the interpreter */
+        const CodeObject *co = &jit->codes[vm->func];
+        if (co->entry) { jit->at = co->entry; return RUN_NATIVE; }
+        return RUN_INTERP;
+    }
+    /* a value, a partial application, for the RESULT after the call: put in
+       its register here, and on in this function's code after it, where a
+       run begins (the RESULT after a call is passed over, compile.c's
+       phantom), else in the interpreter at the RESULT, which takes it */
+    const uint8_t *code = vm->prog.code;
+    if (code[ret_pc] == ROP_RESULT) {
+        const void *on = jit_osr(&jit->codes[vm->func], ret_pc + 5);
+        if (on) {
+            Value v = vm->stack[--vm->sp];
+            vm->stack[vm->fp + (size_t)read_i32(code + ret_pc + 1)] = v;
+            vm->pc = ret_pc + 5;
+            jit->at = on;
+            return RUN_NATIVE;
+        }
+    }
+    vm->pc = ret_pc;
     return RUN_INTERP;
 }
 
