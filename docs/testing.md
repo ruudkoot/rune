@@ -413,16 +413,18 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   beside the logs (`LOG.times`). A program both judges ran right (GHC's and Hugs's outputs E8's) that rhc refuses
   (`compile`), ends otherwise (`exit`) or prints otherwise (`diff`) is a finding, and fails its job unless a line of
   `tests/hs/rhc-corpus.txt` gives its cause (`rhc | ID::run | CATEGORY | OUTCOME: ...`); what it does where the
-  judges do not both run it right is kept in the results. `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line
-  that explains no failure of a job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45
-  under a `LICENSE` through `--typecheck-only` as the nightly jobs above put the whole corpus, and
-  `hs-rhc-corpus/provenance-SET`, nightly, the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in
-  `check`, not a names job, and the nightly jobs above check the 143 too). `hs-corpus/vendored` (nightly, with the
-  trees) holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and `hs-corpus/data` to the
-  vendored programs' files and notices and nothing more: it refuses a file with no `LICENSE` or `PROVENANCE` beside
-  it or above it, or under another notice than its row of `licences.tsv` names, and a `PROVENANCE` that does not
-  name its tree's upstream and commit or quote the owner's rule. `bin/rune-test hs-corpus-vendor` makes it again
-  from the trees, leaving each `PROVENANCE` as written.
+  judges do not both run it right is kept in the results. Nightly, `hs-corpus-run/sestoft/ID` compiles each program
+  whose run in the Report's order no line explains with its matches as Sestoft's decision trees (`--match=sestoft`),
+  runs it on the register VM and holds it to the same judge, its label `sestoft` (the lead's ruling 59,
+  `tr.case.obligation`). `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line that explains no failure of a
+  job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
+  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
+  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
+  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
+  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
+  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
+  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
+  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.

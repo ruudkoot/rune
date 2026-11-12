@@ -336,6 +336,11 @@ struct
               (need (List.exists (fn id => Expectations.glob (#path l, id)) both,
                      what ^ ": names no program of accept.tsv that both judges accept");
                need (member word ["reject", "crash", "timeout", "harness-error"], what ^ ": the outcome is reject, crash or timeout"))
+          | SOME "sestoft" =>
+              (* ruling 59's way of D56's 188 (tests/runner/hscorpusrun.sml) *)
+              (need (List.exists (fn id => Expectations.glob (#path l, id)) (List.map (fn r => HsCorpus.field r "id") (HsCorpusRun.d56 ())),
+                     what ^ ": names no run of D56's 188 (licences.tsv)");
+               need (member word ["compile", "exit", "diff"], what ^ ": the outcome of a corpus run is compile, exit or diff"))
           | SOME "run" =>
               if String.isPrefix "lazy/" (#path l) then
                 (need (List.exists (fn r => Expectations.glob (#path l, "lazy/" ^ #port r)) ready,
@@ -347,7 +352,7 @@ struct
                 (need (List.exists (fn id => Expectations.glob (#path l, id)) (List.map (fn r => HsCorpus.field r "id") (HsCorpusRun.d56 ())),
                        what ^ ": names no run of D56's 188 (licences.tsv) nor a ready -lazy port");
                  need (member word ["compile", "exit", "diff"], what ^ ": the outcome of a corpus run is compile, exit or diff"))
-          | _ => need (false, what ^ ": the label is check or run")
+          | _ => need (false, what ^ ": the label is check, run or sestoft")
         end
       val () = List.app one ls
       val bench = fromRoot "examples/benchmarks"

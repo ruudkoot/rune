@@ -75,7 +75,9 @@ struct
      fails the job unless a line of tests/hs/rhc-corpus.txt gives its cause
      (`rhc | ID::run | CATEGORY | OUTCOME: why`); where they do not, it is
      recorded in the results and judged by nothing *)
-  fun runOne id =
+  (* a program in `ways` from `targets`, its outcome by `label`; the run of
+     make check is runOne, D56's three ways in the Report's order of matches *)
+  fun runWith (id, label, ways, targets, want) =
     let
       val row = case List.find (fn r => HsCorpus.field r "id" = id) (HsCorpus.rows "run.tsv") of
                   SOME r => r | NONE => raise HsOracles.Failed ("no run of " ^ id)
@@ -119,6 +121,7 @@ struct
         in (s, read (log ^ "." ^ tag ^ ".out"), firstNonEmpty (log ^ "." ^ tag ^ ".err")) end
       (* a target compiled: (true, the directory and its bytecode), or
          (false, the first refusal) *)
+      val targets' = targets
       fun compileTarget (target, flags) =
         let
           val rbc = "main." ^ target ^ ".rbc"
@@ -129,7 +132,8 @@ struct
                     val (cs, _, cerr) = call (p, tag, [HsRhcCorpus.rhc (), m] @ extra @ flags @ ["-o", rbc], "")
                 in if cs = 0 then (true, p, rbc) else compile rest (if first = "" then cerr else first) end
         in (target, compile tries "") end
-      val compiled = List.map compileTarget targets
+      val compiled = List.map compileTarget targets'
+      val ways' = ways
       fun way (name, target, vm) =
         case List.find (fn (t, _) => t = target) compiled of
           NONE => SOME ("compile", name ^ ": no target " ^ target)
@@ -143,14 +147,30 @@ struct
                 SOME ("diff", name ^ ": " ^ Int.toString (size output) ^ " bytes, not " ^ HsCorpus.field row "expected")
               else NONE
             end
-      val fails = List.mapPartial way ways
+      val fails = List.mapPartial way ways'
       val () = rmTree work
-      val outcome = {id = id, label = "run", got = case fails of [] => "run" | (g, _) :: _ => g,
+      val outcome = {id = id, label = label, got = case fails of [] => label | (g, _) :: _ => g,
                      said = String.concatWith "; " (List.map #2 fails), passed = null fails, judged = judgesAgree row,
-                     want = "E8's output and status 0 in D56's three ways"} : HsRhcCorpus.outcome
-    in HsRhcCorpus.report ("run-" ^ String.translate (fn #"/" => "_" | ch => str ch) id, [outcome]) end
+                     want = want} : HsRhcCorpus.outcome
+    in HsRhcCorpus.report (label ^ "-" ^ String.translate (fn #"/" => "_" | ch => str ch) id, [outcome]) end
     handle HsOracles.Failed msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
          | HsCorpus.Bad msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
+
+  fun runOne id = runWith (id, "run", ways, targets, "E8's output and status 0 in D56's three ways")
+
+  (* the lead's ruling 59 (tr.case.obligation, R86): a program compiled with
+     its matches as Sestoft's decision trees (`--match=sestoft`) and run on
+     the register VM, held to the judge of the Report's order: E8's output
+     and status 0, its label `sestoft` in rhc-corpus.txt. Nightly; only the
+     programs whose run in the Report's order is right, those no line of
+     rhc-corpus.txt (`ID::run`) explains *)
+  fun sestoftOne id =
+    runWith (id, "sestoft", [("sestoft", "register", [fromRoot "bin/runevm"])], [("register", ["--match=sestoft"])],
+             "E8's output and status 0 with Sestoft's decision trees, as in the Report's order")
+  fun runRight () =
+    let val ls = Expectations.read (HsRhcCorpus.expectations ())
+    in fn id => not (isSome (Expectations.find (ls, {way = "rhc", path = id, label = SOME "run"}))) end
+    handle _ => (fn _ => true)
 
   (* the vendored programs by their notice: under their tree's LICENSE (45),
      whose names jobs are make check's, or under a PROVENANCE (143), whose
@@ -180,6 +200,8 @@ struct
 
   fun command ["hs-corpus-run", id] =
         SOME (fn () => if isVendored id then fromVendored (fn () => runOne id) else runOne id)
+    | command ["hs-corpus-run-sestoft", id] =
+        SOME (fn () => if isVendored id then fromVendored (fn () => sestoftOne id) else sestoftOne id)
     | command ["hs-rhc-corpus-vendored"] = SOME (namesVendored ("vendored", fn _ => true))
     | command ["hs-rhc-corpus-vendored", "licence", set] =
         SOME (namesVendored ("vendored-" ^ set, fn r => ofSet set r andalso underLicence r))
@@ -202,6 +224,12 @@ struct
                  (setsOf (List.filter keep vrows))
       val covers = ["covers:tests/hs/corpus/*", "covers:tests/runner/hscorpusrun.sml", "covers:lib/language/haskell/*",
                     "covers:src/rhc/*"]
+      (* ruling 59's way, nightly: the 188 whose run in the Report's order no
+         line explains, each compiled with Sestoft's decision trees *)
+      val right = runRight ()
+      val trees = List.filter (fn r => HsCorpus.field r "vendor" = "vendored" andalso right (HsCorpus.field r "id")) rows
+      fun sestoftJob r = hold (HsOracles.job ("sestoft/" ^ HsCorpus.field r "id", ["hs-corpus-run-sestoft", HsCorpus.field r "id"],
+                                              [], 3600, 2000))
     in
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.requires ["rhc"]
@@ -215,8 +243,10 @@ struct
                    (Test.describe "" (List.map (fn r => hold (if HsCorpus.field r "vendor" = "vendored" then job (HsCorpus.field r "id")
                                                               else Test.requires ["hs-corpus"] (job (HsCorpus.field r "id"))))
                                                outside
+                                      @ List.map sestoftJob trees
                                       @ [hold (HsOracles.job ("@stale-nightly", ["hs-rhc-corpus", "stale"],
-                                                              List.map (fn r => "hs-corpus-run/" ^ HsCorpus.field r "id") outside,
+                                                              List.map (fn r => "hs-corpus-run/" ^ HsCorpus.field r "id") outside
+                                                              @ List.map (fn r => "hs-corpus-run/sestoft/" ^ HsCorpus.field r "id") trees,
                                                               300, 100))]))],
               Test.describe "hs-rhc-corpus"
                 [Test.tag "check" (Test.describe "" (names ("licence", "vendored-", underLicence))),
