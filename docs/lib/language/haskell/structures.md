@@ -34,6 +34,7 @@ the signature names and no others.
 | [`HsDump`](str/HsDump.md) | :> | [`HS_DUMP`](sig/HS_DUMP.md) |  |  | [lib/language/haskell/dump.sml](../../../../lib/language/haskell/dump.sml) |
 | [`HsEvidence`](str/HsEvidence.md) | :> | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) |  |  | [lib/language/haskell/evidence.sml](../../../../lib/language/haskell/evidence.sml) |
 | [`HsFixity`](str/HsFixity.md) | :> | [`HS_FIXITY`](sig/HS_FIXITY.md) |  |  | [lib/language/haskell/fixity.sml](../../../../lib/language/haskell/fixity.sml) |
+| [`HsIface`](str/HsIface.md) | :> | [`HS_IFACE`](sig/HS_IFACE.md) |  |  | [lib/language/haskell/hsiface.sml](../../../../lib/language/haskell/hsiface.sml) |
 | [`HsInfer`](str/HsInfer.md) | :> | [`HS_INFER`](sig/HS_INFER.md) |  |  | [lib/language/haskell/infer.sml](../../../../lib/language/haskell/infer.sml) |
 | [`HsKinds`](str/HsKinds.md) | :> | [`HS_KINDS`](sig/HS_KINDS.md) |  |  | [lib/language/haskell/kinds.sml](../../../../lib/language/haskell/kinds.sml) |
 | [`HsLayout`](str/HsLayout.md) | :> | [`HS_LAYOUT`](sig/HS_LAYOUT.md) |  |  | [lib/language/haskell/layout.sml](../../../../lib/language/haskell/layout.sml) |

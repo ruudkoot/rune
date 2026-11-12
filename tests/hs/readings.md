@@ -244,8 +244,11 @@ The example needs `import Char`, which the text omits. **Ruling.** The ASCII for
 until M17 states the encoding of I/O (R5 covers the source alone). Rows: `io.interact.example`.
 
 ### R86. The pattern-match obligation is a corpus difference
-**Ruling.** `-O0`'s literal rules against decision trees over the corpus and generated programs: held until rhc
-compiles them. Rows: `tr.case.obligation`.
+**Ruling.** `-O0`'s literal rules against decision trees over the corpus and generated programs. Since rhc compiles
+them: `hs/desugar/orders` holds the Report's order against Sestoft's trees on every program of `tests/hs/lang`
+(`lang/tr.case.obligation_held` among them), `hs/generated/@orders` (nightly) the generated programs compiled with
+Sestoft's trees against the Report's meaning, and `hs/interp-vm` the literal translation against the compiled form;
+the corpus's differential is not built, so the row is held, the lead's to decide. Rows: `tr.case.obligation`.
 
 
 ## The lead's rulings on T's M19h list (impl/rulings.md, 2026-11-10, items 14 to 27)
@@ -290,6 +293,19 @@ Rows: `def.pick.first`.
 **Ruling.** A program whose modules import each other is written by hand, its output from the text alone (D52): none
 of GHC (without its boot files), Hugs or nhc98 compiles it as written. Rows: `mod.inst.recursive`.
 
+## The lead's rulings of 2026-11-11 (impl/rulings.md, 56 to 58)
+
+### R95. A bottom rhc determines, and the stack's limit
+> If a program terminates as a result of calling error or because its value is otherwise determined to be _|_, then
+> it is treated identically to the computation exitFailure. (23)
+
+**Ruling 58.** A loop rhc determines, the re-entry of a suspension blackholed while it is evaluated (form C), is
+"determined to be _|_": it ends as exitFailure does, status 1, on Core's interpreter and on the VM alike, what was
+written first flushed. Running out of the stack is D18's limit, an implementation's resource and not a determination
+of _|_ (GHC's own stack overflow exits 2): outside the clause, so the VM's status 2 there stands. **GHC**, **Hugs**
+and **nhc98** give status 1 on the blackholed loop. Rows: `lib.r.system.term.loop` (`lang/lib.r.system.term.loop`,
+which the VM fails today, R's), `std.eq.neither` (`lang/std.eq.neither_loops`, a loop to the stack's limit).
+
 ## The owner's calls on E9's readings (2026-11-10)
 
 E9 left these three to the owner (its readings.md in the drafts; the roadmap records the calls). Each is written here
@@ -323,6 +339,92 @@ is read with that `k`. Not a deviation: the prose is followed. Rows: `pat.m.npk.
 `readLine`, and the factorial example is tested with `getLine`, its likely meaning (`lang/lit.example.factorial`, the
 example as the HTML Report prints it, its blank lines kept, run on the input 5). R92 applies the same to the other
 misprints. Rows: `lit.example.factorial`.
+
+## rhc's choices on E9's readings, for the rows of test `none` (ruling 49)
+
+Where E9's row says rhc must pick, ruling 49 makes it a test whose program pins rhc's choice; E9's reading (its
+readings.md in the drafts) is the problem, and its entry here says what rhc does and which program shows it.
+
+### R5. The source's encoding and Unicode's version
+**rhc's choice.** Source text is UTF-8: `"é"` is one character, 233 (a byte that begins no UTF-8 sequence is read
+as its Latin-1 character, unpinned). The version of Unicode is 18.0.0, lib/unicode's, for the lexer's classes and
+for Char: letters new in Unicode 16.0 (Garay) are letters. **GHC** 9.4 (Unicode 14.0) and **nhc98** (8-bit) refuse
+the identifier; **Hugs** lexes it, and its Char calls neither letter upper nor lower. Rows: `lex.unicode.encoding`,
+`lex.unicode.newversions` (`lang/lex.unicode.encoding`).
+
+### R6. Unicode digits in a numeric literal
+**rhc's choice.** Chapter 19's side, as R6's seed has it: a numeric literal holds ASCII digits, and `١٢` is refused
+("a digit above ASCII"), though a Unicode digit may stand in an identifier. A deviation from 2.5's grammar, on the
+ground that the text contradicts itself (the lead's ruling 56, `tests/hs/deviations.tsv`): 2.5 admits the digit and
+no clause gives it a value. **GHC**, **Hugs**, **nhc98** and **MicroHs** all refuse it. Rows: `lex.int.unidigit`
+(`errors/lex.int.unidigit`, the deviation's pin).
+
+### R8. A numeric escape's bound
+**rhc's choice.** R8's seed: an escape above `maxBound :: Char`, 0x10FFFF, is a static error, as **GHC** and **Hugs**
+refuse it; **nhc98** accepts it. Rows: `lex.esc.range` (`errors/lex.esc.range`).
+
+### R9. `let` against a non-associative operator
+**rhc's choice.** As R1 for `do` (D27, D38): the parser takes the meta-rule, the `let` extending as far right as it
+can, with operators flat, and fixity resolution refuses `x == x == True`; the parse 3 states, `(let x = True in (x ==
+x)) == True`, needs fixities while parsing, so it cannot be implemented as written: a deviation, pinned. **GHC**,
+**Hugs**, **nhc98** and **MicroHs** all refuse it. Rows: `exp.parse.letnonassoc` (`errors/exp.parse.letnonassoc_refused`).
+
+### R14. The kernel's literals, and the translations' claim
+**rhc's choice.** R14's seed: an integer literal is the Prelude's `fromInteger` of an Integer, a floating one its
+`fromRational` of a reduced Rational, whatever else is in scope, and a string a list of characters; so the
+translations keep a program's meaning, the claim of chapter 3 (but for `let`), each identity held by its own row.
+Rows: `exp.trans.preserve` (`lang/tr.lit.int`, which pins R14 for the literals' rows too).
+
+### R20. Rule 2 across a cycle of modules
+**rhc's choice.** D30's (owner, 2026-11-09): "an entire module" is the module, `--cycle-default=module` by default,
+so a monomorphic variable is closed at the end of its own module, and a use at another type in a module of its cycle
+is refused; `--cycle-default=scc`, an extension off by default, closes it at the end of the cycle. No oracle compiles
+a cycle as written (R94). Rows: `mr.rule2.mutual` (`errors/mr.rule2.mutual`), `mod.sep.sigs` (`accept/mod.sep.sigs`).
+
+### R29. Separate compilation of a cycle
+**rhc's choice.** R29's seed: rhc compiles a cycle of modules whole, with no annotation, and needs no signature for
+a function exported across it; what D30 asks is only that a restricted variable's type be fixed in its own module.
+Rows: `mod.sep.recursive` (`accept/mod.recursive`), `mod.sep.sigs` (`accept/mod.sep.sigs`).
+
+### R32. The Prelude's parts
+**rhc's choice.** R32's seed: the modules chapter 8 shows the Prelude in "cannot be imported separately", so
+`import PreludeList` is refused; the implicit `import Prelude` is as 5.6.1 says (`mod.prel.*`). Rows:
+`mod.prel.primitive` (`errors/mod.prel.primitive`).
+
+### R37. What an error does
+**rhc's choice.** R37's seed, chapter 23 over 3.1's "immediate": an error ends the program at once, with status 1 as
+`exitFailure`, its message on standard error, after the handles are flushed and closed, so what was written before
+it is kept. And `exitWith (ExitFailure 0)` (the lead's ruling 57): chapter 23 lets a system prohibit 0, as POSIX
+does, and says nothing of what follows; rhc prohibits it, so it raises an IOError, `isIllegalOperation`, which
+`catch` sees and which, uncaught, ends the program as a failure, status 1. **GHC** ("exitWith: invalid argument") and
+**Hugs** (a pattern-match failure) stop with status 1; **nhc98** and **MicroHs** exit 0. Rows: `exp.err.behaviour`
+(`lang/exp.err.terminate_stop`), `lib.r.system.exitcode.prohibited` (`lang/lib.r.system.exitcode.prohibited`).
+
+### R38. Binary I/O, and what a character is on a handle
+**rhc's choice.** A `Char` is any code point (R5's version), and the standard handles carry UTF-8 on every host,
+binary-mode (no newline is translated): `putStrLn ['\233', '\8364']` writes the bytes C3 A9 E2 82 AC and a newline.
+**GHC** and **Hugs** do the same in a UTF-8 locale; **nhc98**'s 8-bit Char writes Latin-1. Rows: `io.binary`
+(`lang/io.binary`).
+
+### R45. Numeric corners: division by zero, `0 ** y`, coercions of NaN and infinities, Ord's totality
+**rhc's choice.** R45's seed: integral division by zero is an error, at `Int` and `Integer` (**GHC** and **Hugs**
+alike; **nhc98** gives -1); IEEE where Rune's real is, so `0 ** y` is IEEE's pow, 0, 1 or an infinity by `y`'s sign
+(**GHC** alike; **Hugs** errs at a negative `y`, **nhc98** gives the largest finite number); `truncate`, `round`,
+`ceiling`, `floor`, `properFraction` and `toRational` of a NaN or an infinity are errors (Domain or Overflow), as the
+Report's code leaves them undefined (**Hugs** errs too; **GHC** and **nhc98** give a number); and Double's `Ord` is
+not total over NaN (R90). Rows: `std.arith.zero` (`lang/std.arith.zero`), `std.pow.undefined`
+(`lang/std.pow.undefined`), `std.coerce.nan` (`lang/std.coerce.nan`), `std.ord.total` (`lang/der.ord.partial_nan`).
+
+### R47. The Prelude's code where it does not compile
+**rhc's choice.** R47's seed: the overlay (`share/rhc/haskell98/overlay.tsv`, `ov.preludeio.interact` for
+`interact`'s names) makes chapter 8's code compile as it means. Rows: `pre.r.interact.scope`
+(`lang/io.interact.example_ascii`).
+
+### R53. An unterminated `\begin{code}`
+**rhc's choice.** R53's seed: an error ("a `\begin{code}` that no `\end{code}` closes"), as **GHC**'s unlit refuses
+it; **Hugs** and **nhc98** read to the end of the file. A file that mixes the two styles, which R53's seed would also
+refuse, rhc reads line by line, each line by its own style (`lit.mixed`'s how; no reading names that row). Rows:
+`lit.latex.unterminated` (`errors/lit.latex.unterminated`).
 
 ## The readings of the libraries' clause programs (M19, chapters 12 to 27)
 

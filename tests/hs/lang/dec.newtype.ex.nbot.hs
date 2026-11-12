@@ -1,4 +1,4 @@
--- rows: dec.newtype.ex.nn dec.newtype.ex.d1d1 dec.newtype.ex.s dec.newtype.ex.d1notbot dec.strict.unflagged tr.dec.strict.partial tr.dec.strict.pattern
+-- rows: dec.newtype.ex.nn dec.newtype.ex.d1d1 dec.newtype.ex.s dec.newtype.ex.d1notbot dec.strict.unflagged tr.dec.strict.partial tr.dec.strict.pattern tr.dec.strict.lambda
 -- Report 4.2.3, the Report's examples: n bottom, n (N bottom), d1 (D1 bottom) and s bottom are 42, D1 bottom is a value;
 -- 4.2.1: an unflagged field is lazy, a strict constructor partly applied is a function, and matches as any other.
 module Main (main) where

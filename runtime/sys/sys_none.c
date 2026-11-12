@@ -79,6 +79,11 @@ int sys_close_dir(int dir) { (void)dir; return fail(); }
 
 /* ISO C opens files */
 FILE *sys_fopen(const char *path, const char *mode) { return fopen(path, mode); }
+/* no system to open a file with: an existing one for update, else a new one */
+FILE *sys_fopen_rw(const char *path) {
+    FILE *f = fopen(path, "r+b");
+    return f ? f : fopen(path, "w+b");
+}
 int sys_fileno(FILE *file) { (void)file; return fail(); }
 /* ISO C has only the positions a long can hold. */
 int64_t sys_ftell(FILE *file) { long r = ftell(file); return r < 0 ? -1 : (int64_t)r; }

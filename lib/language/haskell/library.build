@@ -18,12 +18,12 @@ exports (structure Core, signature CORE, structure CoreText, signature CORE_TEXT
          structure HsDsEnv, signature HS_DS_ENV, structure HsMatch, signature HS_MATCH,
          structure HsAst, structure HsChar, structure HsClasses, structure HsDerive, structure HsDump, structure HsEvidence,
          structure HsFixity, structure HsInfer, structure HsKinds, structure HsLayout, structure HsLexer,
-         structure HsLint, structure HsLiterate, structure HsModIface, structure HsModules, structure HsParser,
+         structure HsLint, structure HsLiterate, structure HsModIface, structure HsIface, structure HsModules, structure HsParser,
          structure HsPrint, structure HsRename, structure HsScc, structure HsSource, structure HsStringMap,
          structure HsToken, structure HsTypes, structure HsUsage,
          signature HS_AST, signature HS_CHAR, signature HS_CLASSES, signature HS_DERIVE, signature HS_DUMP, signature HS_EVIDENCE,
          signature HS_FIXITY, signature HS_INFER, signature HS_KINDS, signature HS_LAYOUT, signature HS_LEXER,
-         signature HS_LINT, signature HS_LITERATE, signature HS_MOD_IFACE, signature HS_MODULES, signature HS_PARSER,
+         signature HS_LINT, signature HS_LITERATE, signature HS_MOD_IFACE, signature HS_IFACE, signature HS_MODULES, signature HS_PARSER,
          signature HS_PRINT, signature HS_RENAME, signature HS_SCC, signature HS_SOURCE, signature HS_STRING_MAP,
          signature HS_TOKEN, signature HS_TYPES, signature HS_USAGE)
 friends ../../../rhc.build end

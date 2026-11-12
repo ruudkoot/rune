@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 8 of 8 entries documented |
+| Documentation | 10 of 10 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_sig.sml](../../../../../lib/language/haskell/desugar_sig.sml) |
 
@@ -63,16 +63,17 @@ program defines (3, E9): [`translationNames`](#val-translationnames) lists them,
 
 ## Contents
 
-[The library's part, once ----
+[Units (M21) ----
 
-\`program\` is the library's part and then the program's: the first
-declares Core's own types, the leaves' values and every type, class,
-instance and value of the library's modules, and the second those of
-the program's modules and main, against the first. So a saved world
-(D45's B) may make the library's part once, with every body, and each
-program only its own: a value's Core is the same either way, its names
-numbered from the first within it (HsDsCore.canonical) and a pattern
-binding of the top level named after its first variable.](#the-librarys-part-once-----program-is-the-librarys-part-and-then-the-programs-the-firstdeclares-cores-own-types-the-leaves-values-and-every-type-classinstance-and-value-of-the-librarys-modules-and-the-second-those-ofthe-programs-modules-and-main-against-the-first-so-a-saved-worldd45s-b-may-make-the-librarys-part-once-with-every-body-and-eachprogram-only-its-own-a-values-core-is-the-same-either-way-its-namesnumbered-from-the-first-within-it-hsdscorecanonical-and-a-patternbinding-of-the-top-level-named-after-its-first-variable)
+A unit is a strongly connected group of modules, desugared after the
+units before it from their interfaces alone: every type, class,
+instance and value its modules declare, a value's Core the same in
+every unit and in the whole program, its names numbered from the first
+within it (HsDsCore.canonical) and a pattern binding of the top level
+named after its first variable. The first unit also declares Core's
+own types the desugaring makes (IO's newtype, \`()\`, \`\[\]\`, the tuples
+to 15), the raisers (HsDsCore.raisers) and the leaves' values.](#units-m21-----a-unit-is-a-strongly-connected-group-of-modules-desugared-after-theunits-before-it-from-their-interfaces-alone-every-type-classinstance-and-value-its-modules-declare-a-values-core-the-same-inevery-unit-and-in-the-whole-program-its-names-numbered-from-the-firstwithin-it-hsdscorecanonical-and-a-pattern-binding-of-the-top-levelnamed-after-its-first-variable-the-first-unit-also-declares-coresown-types-the-desugaring-makes-ios-newtype---the-tuplesto-15-the-raisers-hsdscoreraisers-and-the-leaves-values) &middot;
+[The library's units, once](#the-librarys-units-once)
 
 ## Interface
 
@@ -80,18 +81,27 @@ binding of the top level named after its first variable.](#the-librarys-part-onc
 signature HS_DESUGAR =
 sig
   type <a href="#type-module_">module_</a> = {<a href="#fld-module_.id">id</a> : string, <a href="#fld-module_.ast">ast</a> : HsAst.module, <a href="#fld-module_.library">library</a> : bool}
-  val <a href="#val-program">program</a> : {<a href="#fld-program.modules">modules</a> : module_ list, <a href="#fld-program.infer">infer</a> : HsInfer.env, <a href="#fld-program.evidence">evidence</a> : HsEvidence.table,
-                 <a href="#fld-program.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-program.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-program.entity">entity</a> : string * string * string -&gt; string,
-                 <a href="#fld-program.runtime">runtime</a> : Core.program, <a href="#fld-program.leaves">leaves</a> : (string * string list) list, <a href="#fld-program.main">main</a> : string}
+  val <a href="#val-program">program</a> : {<a href="#fld-program.modules">modules</a> : module_ list, <a href="#fld-program.groups">groups</a> : string list list, <a href="#fld-program.infer">infer</a> : HsInfer.env, <a href="#fld-program.evidence">evidence</a> : HsEvidence.table,
+                 <a href="#fld-program.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-program.prelude">prelude</a> : string * string -&gt; string option,
+                 <a href="#fld-program.entity">entity</a> : string * string * string -&gt; string, <a href="#fld-program.runtime">runtime</a> : Core.program, <a href="#fld-program.leaves">leaves</a> : (string * string list) list,
+                 <a href="#fld-program.main">main</a> : string}
                 -&gt; Core.program
+  type <a href="#type-interface">interface</a> = {<a href="#fld-interface.core">core</a> : Core.program, <a href="#fld-interface.primtypes">primTypes</a> : (string * string) list, <a href="#fld-interface.builtincons">builtinCons</a> : (string * string) list,
+                    <a href="#fld-interface.fields">fields</a> : (string * string list) list, <a href="#fld-interface.constructors">constructors</a> : (string * string list) list,
+                    <a href="#fld-interface.leaves">leaves</a> : string list, <a href="#fld-interface.defaults">defaults</a> : string list, <a href="#fld-interface.forced">forced</a> : (string * bool list) list}
+  val <a href="#val-unit">unit</a> : {<a href="#fld-unit.interfaces">interfaces</a> : interface list, <a href="#fld-unit.modules">modules</a> : module_ list, <a href="#fld-unit.infer">infer</a> : HsInfer.env, <a href="#fld-unit.evidence">evidence</a> : HsEvidence.table,
+              <a href="#fld-unit.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-unit.prelude">prelude</a> : string * string -&gt; string option,
+              <a href="#fld-unit.entity">entity</a> : string * string * string -&gt; string, <a href="#fld-unit.runtime">runtime</a> : Core.program, <a href="#fld-unit.leaves">leaves</a> : (string * string list) list,
+              <a href="#fld-unit.main">main</a> : string option}
+             -&gt; Core.program * interface
   type <a href="#type-library">library</a>
-  val <a href="#val-library">library</a> : {<a href="#fld-library.modules">modules</a> : module_ list, <a href="#fld-library.infer">infer</a> : HsInfer.env, <a href="#fld-library.evidence">evidence</a> : HsEvidence.table,
+  val <a href="#val-library">library</a> : {<a href="#fld-library.modules">modules</a> : module_ list, <a href="#fld-library.groups">groups</a> : string list list, <a href="#fld-library.infer">infer</a> : HsInfer.env, <a href="#fld-library.evidence">evidence</a> : HsEvidence.table,
                  <a href="#fld-library.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-library.prelude">prelude</a> : string * string -&gt; string option,
                  <a href="#fld-library.entity">entity</a> : string * string * string -&gt; string, <a href="#fld-library.runtime">runtime</a> : Core.program, <a href="#fld-library.leaves">leaves</a> : (string * string list) list}
                 -&gt; library
   val <a href="#val-prepare">prepare</a> : library -&gt; unit
-  val <a href="#val-programon">programOn</a> : library * {<a href="#fld-programon.modules">modules</a> : module_ list, <a href="#fld-programon.infer">infer</a> : HsInfer.env, <a href="#fld-programon.evidence">evidence</a> : HsEvidence.table,
-                             <a href="#fld-programon.derived">derived</a> : (string * string * HsAst.decl list) list,
+  val <a href="#val-programon">programOn</a> : library * {<a href="#fld-programon.modules">modules</a> : module_ list, <a href="#fld-programon.groups">groups</a> : string list list, <a href="#fld-programon.infer">infer</a> : HsInfer.env,
+                             <a href="#fld-programon.evidence">evidence</a> : HsEvidence.table, <a href="#fld-programon.derived">derived</a> : (string * string * HsAst.decl list) list,
                              <a href="#fld-programon.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-programon.entity">entity</a> : string * string * string -&gt; string,
                              <a href="#fld-programon.main">main</a> : string}
                   -&gt; Core.program
@@ -118,26 +128,30 @@ resolved, and whether it is the library's.
 ### <a name="val-program"></a>`program`
 
 ```sml
-val program : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
-               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option, entity : string * string * string -> string,
-               runtime : Core.program, leaves : (string * string list) list, main : string}
+val program : {modules : module_ list, groups : string list list, infer : HsInfer.env, evidence : HsEvidence.table,
+               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
+               entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list,
+               main : string}
               -> Core.program
 ```
 
-`program {modules, infer, evidence, derived, prelude, entity, runtime, leaves, main}` is the Core program of the checked `modules`.
+`program {modules, groups, infer, evidence, derived, prelude, entity, runtime, leaves, main}` is the Core program of the checked `modules`.
 
 The modules are every module of the program and of the library it
-reaches, whose checking left the environment `infer`, the records
-`evidence` and the methods of the derived instances, `derived`, each
-with its module and its instance's identity (HsDerive, M14), which are
-desugared as a written instance's.
+reaches, in `groups`, their strongly connected groups by identity in
+order, each desugared as a unit after those before it ([`unit`](#val-unit)). Their
+checking left the environment `infer`, the records `evidence` and the
+methods of the derived instances, `derived`, each with its module and
+its instance's identity (HsDerive, M14), which are desugared as a
+written instance's.
 
 `prelude` and `entity` find what the translations name (HsDsEnv);
 `runtime` is rhc's runtime in Core, whose types it is written against
 and which it does not repeat; `leaves` are the modules of primitives
 that no file holds, each with what it exports, the runtime's values of
 those names; `main` is the key of the program's `main`. The result
-holds what `main` reaches, and the data types of the program.
+holds what `main` reaches, and the data types it names, each body made
+only where `main` reaches it.
 
 **Raises** [`Fail`](../../../basis/sig/GENERAL.md#exn-fail) for what the checker should have refused, or a form
 this desugaring does not take, with a message.
@@ -145,6 +159,7 @@ this desugaring does not take, with a message.
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-program.modules"></a>`modules` | `module_ list` |  |
+| <a name="fld-program.groups"></a>`groups` | `string list list` |  |
 | <a name="fld-program.infer"></a>`infer` | `HsInfer.env` |  |
 | <a name="fld-program.evidence"></a>`evidence` | `HsEvidence.table` |  |
 | <a name="fld-program.derived"></a>`derived` | `(string * string * HsAst.decl list) list` |  |
@@ -154,16 +169,83 @@ this desugaring does not take, with a message.
 | <a name="fld-program.leaves"></a>`leaves` | `(string * string list) list` |  |
 | <a name="fld-program.main"></a>`main` | `string` |  |
 
-## The library's part, once ----
+## Units (M21) ----
 
-\`program\` is the library's part and then the program's: the first
-declares Core's own types, the leaves' values and every type, class,
-instance and value of the library's modules, and the second those of
-the program's modules and main, against the first. So a saved world
-(D45's B) may make the library's part once, with every body, and each
-program only its own: a value's Core is the same either way, its names
-numbered from the first within it (HsDsCore.canonical) and a pattern
-binding of the top level named after its first variable.
+A unit is a strongly connected group of modules, desugared after the
+units before it from their interfaces alone: every type, class,
+instance and value its modules declare, a value's Core the same in
+every unit and in the whole program, its names numbered from the first
+within it (HsDsCore.canonical) and a pattern binding of the top level
+named after its first variable. The first unit also declares Core's
+own types the desugaring makes (IO's newtype, \`()\`, \`\[\]\`, the tuples
+to 15), the raisers (HsDsCore.raisers) and the leaves' values.
+
+### <a name="type-interface"></a>`interface`
+
+```sml
+type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,
+                  fields : (string * string list) list, constructors : (string * string list) list,
+                  leaves : string list, defaults : string list, forced : (string * bool list) list}
+```
+
+What a unit's desugaring leaves the units after it.
+
+`core` is its types and its values as imports (`(import x TYPE)`);
+`primTypes` each type of the library with no constructor, by key, made
+Core's own, and `builtinCons` Bool's constructors, Core's; `fields`
+each constructor's fields' keys (`""` for one with no name), and
+`constructors` each data type's constructors' keys, in order; `leaves`
+the keys of the leaves' values, and `defaults` the methods with a
+default (a `%dm:` value); `forced` each constructor with a strict field
+of a newtype's type, lazy in Core, by the fields it forces where it is
+applied (HsDsCore.forced).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-interface.core"></a>`core` | `Core.program` |  |
+| <a name="fld-interface.primtypes"></a>`primTypes` | `(string * string) list` |  |
+| <a name="fld-interface.builtincons"></a>`builtinCons` | `(string * string) list` |  |
+| <a name="fld-interface.fields"></a>`fields` | `(string * string list) list` |  |
+| <a name="fld-interface.constructors"></a>`constructors` | `(string * string list) list` |  |
+| <a name="fld-interface.leaves"></a>`leaves` | `string list` |  |
+| <a name="fld-interface.defaults"></a>`defaults` | `string list` |  |
+| <a name="fld-interface.forced"></a>`forced` | `(string * bool list) list` |  |
+
+### <a name="val-unit"></a>`unit`
+
+```sml
+val unit : {interfaces : interface list, modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
+            derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
+            entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list,
+            main : string option}
+           -> Core.program * interface
+```
+
+`unit p` is the Core of the unit of the modules of `p`, after the units
+of its interfaces, in order, and its interface.
+
+The Core is its types, a copy of each type of the units before that it
+names, an import of each of their values that it names, and every
+value it defines; the runtime's names are left to the runtime's unit.
+`infer` and `evidence` are a checking that holds the unit's modules and
+what they import; `leaves` is the first unit's, and `main`, the key of
+the program's `main`, the unit's that defines it, whose Core then has
+Core's `main`. The rest is as [`program`](#val-program) takes it.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-unit.interfaces"></a>`interfaces` | `interface list` |  |
+| <a name="fld-unit.modules"></a>`modules` | `module_ list` |  |
+| <a name="fld-unit.infer"></a>`infer` | `HsInfer.env` |  |
+| <a name="fld-unit.evidence"></a>`evidence` | `HsEvidence.table` |  |
+| <a name="fld-unit.derived"></a>`derived` | `(string * string * HsAst.decl list) list` |  |
+| <a name="fld-unit.prelude"></a>`prelude` | `string * string -> string option` |  |
+| <a name="fld-unit.entity"></a>`entity` | `string * string * string -> string` |  |
+| <a name="fld-unit.runtime"></a>`runtime` | `Core.program` |  |
+| <a name="fld-unit.leaves"></a>`leaves` | `(string * string list) list` |  |
+| <a name="fld-unit.main"></a>`main` | `string option` |  |
+
+## The library's units, once
 
 ### <a name="type-library"></a>`library`
 
@@ -171,19 +253,19 @@ binding of the top level named after its first variable.
 type library
 ```
 
-The library's part: what its declarations left known, its types and
-its values, each value's body made the first time it is wanted.
+The library's units, desugared once (D45's saved world), each value's
+body made the first time it is wanted.
 
 ### <a name="val-library"></a>`library`
 
 ```sml
-val library : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
+val library : {modules : module_ list, groups : string list list, infer : HsInfer.env, evidence : HsEvidence.table,
                derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,
                entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list}
               -> library
 ```
 
-`library p` is the library's part of the modules of `p` marked
+`library p` is the units of the groups of `p` that hold modules marked
 [`library`](#val-library).
 
 `p` is a checking of the library alone (every instance of its
@@ -192,6 +274,7 @@ environment is the library's), in [`program`](#val-program)'s form without `main
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-library.modules"></a>`modules` | `module_ list` |  |
+| <a name="fld-library.groups"></a>`groups` | `string list list` |  |
 | <a name="fld-library.infer"></a>`infer` | `HsInfer.env` |  |
 | <a name="fld-library.evidence"></a>`evidence` | `HsEvidence.table` |  |
 | <a name="fld-library.derived"></a>`derived` | `(string * string * HsAst.decl list) list` |  |
@@ -212,15 +295,16 @@ them; a body that fails is failed again where a program reaches it.
 ### <a name="val-programon"></a>`programOn`
 
 ```sml
-val programOn : library * {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,
-                           derived : (string * string * HsAst.decl list) list,
+val programOn : library * {modules : module_ list, groups : string list list, infer : HsInfer.env,
+                           evidence : HsEvidence.table, derived : (string * string * HsAst.decl list) list,
                            prelude : string * string -> string option, entity : string * string * string -> string,
                            main : string}
                 -> Core.program
 ```
 
-`programOn (lib, p)` is [`program`](#val-program) of `p` with the library's part
-`lib`: the modules of `p` not marked [`library`](#val-library) desugared against it.
+`programOn (lib, p)` is [`program`](#val-program) of `p` with the library's units
+`lib`: the groups of `p` that hold no module of the library desugared
+after them.
 
 The modules, environment, records and derived instances of `p` are the
 whole checking's, the library's among them, as [`program`](#val-program) takes them;
@@ -229,6 +313,7 @@ a value of the library is `lib`'s.
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-programon.modules"></a>`modules` | `module_ list` |  |
+| <a name="fld-programon.groups"></a>`groups` | `string list list` |  |
 | <a name="fld-programon.infer"></a>`infer` | `HsInfer.env` |  |
 | <a name="fld-programon.evidence"></a>`evidence` | `HsEvidence.table` |  |
 | <a name="fld-programon.derived"></a>`derived` | `(string * string * HsAst.decl list) list` |  |

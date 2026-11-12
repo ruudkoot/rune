@@ -399,15 +399,17 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   refusal of a job that ran.
 - `hs-lazy-ports/PORT`, needing `rhc` and `rhc-compiles` (which compiles and runs hello, so held until rhc
   compiles): the Haskell beside each `-lazy` port of `examples/benchmarks` that `tests/hs/lazy-ports.tsv` marks
-  `ready` (GHC prints nofib's fixture in fast mode, and its imports reach the Report), prepared as the corpus is,
-  compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
+  `ready` (GHC prints nofib's fixture in fast mode, and its imports reach the Report), prepared as the corpus is
+  (or in the variant the manifest records, sphere-lazy's `harness`, its hash over `Integer` as the compat layer's,
+  by the lead's ruling 54), compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
   the SML port is validated against. The manifest says why each other port is held; a finding is a line of
   `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
-- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc (refused, then again under `--dotted-names`, D35's
-  flag for the corpus) and run in D56's three ways (`test`, `register`, `register-opt`), its output E8's expected
-  one (the same, the same words, or numbers equal to about five digits) and its status 0; all 188 vendored and in
-  `check`, but those `tests/hs/corpus-nightly.txt` names, whose run is over D56's second in a way of `check` (the
-  lead's ruling 47), `nightly`; held while the row `prog.main.value` is Planned. Each step's wall time is kept
+- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc once for each target, the stack bytecode for `test`
+  and the register one for `register` and `register-opt` (the lead's ruling 52; refused, in E8's variant, then
+  rewritten, then under `--dotted-names`, D35's flag for the corpus), and run in D56's three ways, its output E8's
+  expected one (the same, the same words, or numbers equal to about five digits) and its status 0; all 188 vendored
+  and in `check`, but those `tests/hs/corpus-nightly.txt` names, whose run is over D56's second in a way of `check`
+  (the lead's ruling 47), `nightly`; held while the row `prog.main.value` is Planned. Each step's wall time is kept
   beside the logs (`LOG.times`). A program both judges ran right (GHC's and Hugs's outputs E8's) that rhc refuses
   (`compile`), ends otherwise (`exit`) or prints otherwise (`diff`) is a finding, and fails its job unless a line of
   `tests/hs/rhc-corpus.txt` gives its cause (`rhc | ID::run | CATEGORY | OUTCOME: ...`); what it does where the
@@ -834,9 +836,12 @@ code byte for byte as `pristine/MANIFEST.tsv` records it; `report`,
 `bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
 Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
 instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
-each with its entry; and `compile`, `bin/rhc --whole` compiling
+each with its entry; `compile`, `bin/rhc --whole` compiling
 `tests/hs/library/All20.hs`, a program over a name of each of the 20
-modules, which the VM runs to `All20.expected` (M18: the 20 modules compile).
+modules, which the VM runs to `All20.expected` (M18: the 20 modules compile);
+and `exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
+holds of (ruling 57), caught by `ExitZeroCaught` and uncaught by
+`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
@@ -901,7 +906,8 @@ binding's span covers more, as a function binding's head does, is left.
 **rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
 `hs/interp-vm/NAME`, nightly, and the sample of ruling 47 in `check`). Each run program of `tests/hs/lang` through rhc to
 Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
-Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
+Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, or the bytecode `hs/compile/register/NAME` made in the same run
+where the program has no `.cargs`, compiled once by the lead's ruling 52; `bin/runevm OUT`), with its
 `.stdin` and the VM with its `.vmargs` (as `hs/meta`'s runs are), a program of
 one file interpreted as a copy named `prog.hs`, so that `getProgName` is `prog`
 both ways: the VM prints what the interpreter printed and ends as it did, every
@@ -920,11 +926,16 @@ is none; compiled through Mid and run on the VM the same
 which desugars to the same Core text (`hs/desugar/braces/NAME`, `rhc
 --desugar-only --dump-after=desugar`). Each pair `relations/NAME.hs` and
 `NAME.parens.hs`, the program with every application of an operator in
-parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`). Over
-the run programs of `tests/hs/lang` the two orders agree on what they print
-and on a value or a bottom (`hs/desugar/orders/NAME`: nightly, and the
-sample of ruling 47 in `check`), held while the program's rows are `Planned`. The programs avoid what M14's deriving and
-the runtime's arrays are still to give, and their expected output is GHC's.
+parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`).
+Desugared a unit at a time, each strongly connected group of modules after
+the interfaces of those before it, and the units joined (`rhc
+--desugar-units`, M21), each prints the same on Core's interpreter
+(`hs/desugar/units/NAME`: nightly, and the sample of ruling 47 in `check`).
+Over the run programs of `tests/hs/lang` the two orders agree on what they
+print and on a value or a bottom (`hs/desugar/orders/NAME`: nightly, and
+the sample of ruling 47 in `check`), held while the program's rows are
+`Planned`. The programs avoid what M14's deriving and the runtime's arrays
+are still to give, and their expected output is GHC's.
 The seeds for desugaring (clause order reversed, `~` made strict, a
 `newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
 that `report/order`, `report/lazy` and `report/newtype` catch (HM01 to
@@ -952,8 +963,12 @@ lambdas, the list functions and `const e undefined`, each with the output its
 own evaluator gives. `hs/generated/@parse` puts 32 through rhc's parser in
 `make check` now; `hs/generated/@run` (16 from seed 1, `check`) and
 `hs/generated/@nightly` (400, `nightly`) compile and run them, held until
-the rows they need are out of `Planned`. `bin/rune-test hs-generate SEED`
-prints a program and its output; `hs-generated FIRST COUNT` runs a range.
+the rows they need are out of `Planned`; `hs/generated/@orders` (the same
+400, `nightly`) compiles them with `--match=sestoft`, Sestoft's decision trees
+held to the meaning of the Report's top-to-bottom rules (`tr.case.obligation`).
+`bin/rune-test hs-generate SEED` prints a program and its output;
+`hs-generated FIRST COUNT` runs a range, and `hs-generated-orders FIRST
+COUNT` the same with Sestoft's trees.
 
 ## rhc's Core
 
@@ -997,7 +1012,9 @@ IO family's positions of files and errors of the system's), and the system's
 family's (`prims-sys`: a command's exit, the environment, the program's name
 and arguments, the clock and the zone; `prims-sys-files`: directories, a
 file's kind, access, mode and time, a listing, renames and the working
-directory). `end-*.core` hold the line an escaping IOError ends a program
+directory); `runtime-rw`, a file opened to read and to write through one
+handle, h_open's mode 3 (ReadWriteMode), its reads and writes turned and
+sought. `end-*.core` hold the line an escaping IOError ends a program
 with to the library's Show IOError, a user's "user error (TEXT)".
 `lib/language/haskell/coreruntime`
 (`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to

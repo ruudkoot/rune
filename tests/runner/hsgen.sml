@@ -19,10 +19,13 @@
    Jobs: hs/generated/@parse (check) puts 32 programs from seed 1 through
    rhc's parser, which runs today; hs/generated/@run (check) compiles and runs
    16 from seed 1 and compares each with its expected output, and
-   hs/generated/@nightly (nightly) 400 from seed 1000, both held until every
-   row the programs need is out of Planned. A failure names its seed:
+   hs/generated/@nightly (nightly) 400 from seed 1000, held until every row
+   the programs need is out of Planned; hs/generated/@orders (nightly) the
+   same 400 compiled with `--match=sestoft`, Sestoft's decision trees held to
+   the meaning of the Report's top-to-bottom rules (tr.case.obligation, R86). A failure names its seed:
    `bin/rune-test hs-generate SEED` prints that program and its output, and
-   `bin/rune-test hs-generated FIRST COUNT` runs any range by hand. *)
+   `bin/rune-test hs-generated FIRST COUNT` runs any range by hand, and
+   `bin/rune-test hs-generated-orders FIRST COUNT` with Sestoft's trees. *)
 structure HsGen =
 struct
   open Sh
@@ -252,8 +255,11 @@ struct
                   end)
                (List.tabulate (count, fn k => first + k))
     end
-  fun runRange (first, count) () =
-    let val d = work ("run-" ^ Int.toString first)
+  (* each program compiled with the flags (none: the Report's order of
+     matching; --match=sestoft: decision trees, D34) and run, its output held
+     to the evaluator's, which is the Report's meaning *)
+  fun runRangeWith flags (first, count) () =
+    let val d = work ((if null flags then "run-" else "orders-") ^ Int.toString first)
     in
       List.app (fn seed =>
                   let
@@ -261,7 +267,7 @@ struct
                     val s = Int.toString seed
                     val f = d ^ "/g" ^ s ^ ".hs"
                     val () = write (f, text)
-                    val code = exec {cmd = [fromRoot "bin/rhc", f, "-o", d ^ "/g.rbc"], dir = SOME d, stdin = "", stdout = d ^ "/cerr",
+                    val code = exec {cmd = [fromRoot "bin/rhc"] @ flags @ [f, "-o", d ^ "/g.rbc"], dir = SOME d, stdin = "", stdout = d ^ "/cerr",
                                      stderr = d ^ "/cerr", timeout = 600}
                     val again = " (bin/rune-test hs-generate " ^ s ^ ")"
                   in
@@ -277,6 +283,7 @@ struct
                   end)
                (List.tabulate (count, fn k => first + k))
     end
+  val runRange = runRangeWith []
   fun printOne seed () = let val (text, expected) = generate seed in say (text ^ "-- expected:\n" ^ expected) end
 
   fun command args =
@@ -285,6 +292,9 @@ struct
     | ["hs-generated", a, b] => (case (Int.fromString a, Int.fromString b) of
                                    (SOME a, SOME b) => SOME (runRange (a, b))
                                  | _ => NONE)
+    | ["hs-generated-orders", a, b] => (case (Int.fromString a, Int.fromString b) of
+                                          (SOME a, SOME b) => SOME (runRangeWith ["--match=sestoft"] (a, b))
+                                        | _ => NONE)
     | ["hs-generated-parse", a, b] => (case (Int.fromString a, Int.fromString b) of
                                          (SOME a, SOME b) => SOME (parseRange (a, b))
                                        | _ => NONE)
@@ -300,7 +310,10 @@ struct
         (Test.tag "hs" (Test.describe "hs/generated"
            [Test.tag "check" (job ("@parse", ["hs-generated-parse", "1", "32"], 900)),
             Test.tag "check" (held (job ("@run", ["hs-generated", "1", "16"], 1800))),
-            Test.tag "nightly" (held (job ("@nightly", ["hs-generated", "1000", "400"], 21600)))]))
+            Test.tag "nightly" (held (job ("@nightly", ["hs-generated", "1000", "400"], 21600))),
+            (* the literal rules against decision trees (tr.case.obligation,
+               R86): the same programs compiled with Sestoft's trees *)
+            Test.tag "nightly" (held (job ("@orders", ["hs-generated-orders", "1000", "400"], 21600)))]))
         covers
     end
 end

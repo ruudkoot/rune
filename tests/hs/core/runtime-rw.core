@@ -1,0 +1,55 @@
+; run: --read-core tests/hs/core/lib/base.core
+; files: own
+; h_open's mode 3, Haskell's ReadWriteMode (21.2): a file opened to read
+; and to write through one handle, kept where it is there and made where it
+; is not -- a read, then a write where the read left it, the position, a
+; read of the rest, a seek and a read of the whole, a write at the end, a
+; seek and a read again; the file opened again as it was left; a new file
+; made empty, written and read back. It writes rw.tmp and rw-new.tmp where
+; it runs, a directory of its own.
+
+(val sayStr (-> !Str !Str World (utuple World Unit))
+  (\ ((l !Str) (v !Str) (w World))
+    (case (prim str_concat l "[") a (_ (case (prim str_concat a v) b (_ (case (prim str_concat b "]") t (_ (putStrLn t w)))))))))
+
+(val sayInt (-> !Str !Int World (utuple World Unit))
+  (\ ((l !Str) (n !Int) (w World))
+    (case (showInt n) s (_ (sayStr l s w)))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (prim h_open "rw.tmp" 1 w) o1 ((utuple w1 h1)
+    (case (prim h_write h1 "hello world" w1) o2 ((utuple w2 _)
+    (case (prim h_close h1 w2) w3 (_
+    (case (prim h_open "rw.tmp" 3 w3) o3 ((utuple w4 h)
+    (case (prim h_read h 5 w4) o4 ((utuple w5 s1)
+    (case (sayStr "read 5: " s1 w5) p1 ((utuple w6 _)
+    (case (prim h_write h "-X-" w6) o5 ((utuple w7 _)
+    (case (prim h_tell h w7) o6 ((utuple w8 t1)
+    (case (sayInt "after the write, at: " t1 w8) p2 ((utuple w9 _)
+    (case (prim h_read h 100 w9) o7 ((utuple w10 s2)
+    (case (sayStr "the rest: " s2 w10) p3 ((utuple w11 _)
+    (case (prim h_seek h 0 w11) o8 ((utuple w12 _)
+    (case (prim h_read h 100 w12) o9 ((utuple w13 s3)
+    (case (sayStr "from the start: " s3 w13) p4 ((utuple w14 _)
+    (case (prim h_write h "!" w14) o10 ((utuple w15 _)
+    (case (prim h_seek h 6 w15) o11 ((utuple w16 _)
+    (case (prim h_read h 100 w16) o12 ((utuple w17 s4)
+    (case (sayStr "from 6: " s4 w17) p5 ((utuple w18 _)
+    (case (prim h_close h w18) w19 (_
+    (case (prim h_open "rw.tmp" 3 w19) o13 ((utuple w20 h2)
+    (case (prim h_read h2 100 w20) o14 ((utuple w21 s5)
+    (case (sayStr "opened again: " s5 w21) p6 ((utuple w22 _)
+    (case (prim h_close h2 w22) w23 (_
+    (case (prim os_remove "rw-new.tmp" w23) o15 ((utuple w24 _)
+    (case (prim h_open "rw-new.tmp" 3 w24) o16 ((utuple w25 h3)
+    (case (prim h_read h3 100 w25) o17 ((utuple w26 s6)
+    (case (sayStr "a new file: " s6 w26) p7 ((utuple w27 _)
+    (case (prim h_write h3 "new" w27) o18 ((utuple w28 _)
+    (case (prim h_seek h3 0 w28) o19 ((utuple w29 _)
+    (case (prim h_read h3 100 w29) o20 ((utuple w30 s7)
+    (case (sayStr "written and read back: " s7 w30) p8 ((utuple w31 _)
+    (case (prim h_close h3 w31) w32 (_
+    (case (prim os_remove "rw.tmp" w32) o21 ((utuple w33 _)
+    (case (prim os_remove "rw-new.tmp" w33) o22 ((utuple w34 _)
+    (let (u Unit (con Unit)) (utuple w34 u))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
