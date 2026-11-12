@@ -531,3 +531,15 @@ printed code stands (the lead's ruling, on L's finding). **GHC** and **MicroHs**
 (`1.1805916207174113e21`, `1.1805916e21`); **nhc98** keeps the Report's line. Expected output written from GHC at
 such numbers differs from rhc's: a program's expected `show` of a power of two from `2^p` up comes from the code.
 **rhc** follows the code. Rows: `lib.r.numeric.floattodigits.shortest`.
+
+### R158. Changing an input handle to NoBuffering keeps the input it has read ahead
+> If the buffer mode is changed from BlockBuffering or LineBuffering to NoBuffering, then if hdl is writable, the
+> buffer is flushed as for hFlush; if hdl is not writable, the contents of the buffer is discarded. (21.6)
+
+**What the text says.** Read to the letter, the characters an input handle has read ahead of the program and not yet
+given are lost at the change, so that the next read skips them (E9's `how`). **GHC**, **Hugs**, **nhc98** and
+**MicroHs** all keep them: after one `hGetChar` of "abcdef" and the change, `hGetContents` gives "bcdef". **rhc**
+keeps them too: a buffer is the implementation's, and the input it holds is the file's next items, which 21.2.2 has
+read on demand and 21.6's "never less frequently" does not ask to lose. A literal discard would be a deviation the
+owner may still prefer (D38's ground: wrong); this reading is rhc's until then. Rows: `lib.r.io.hsetbuffering.discard`
+(`lang/lib.r.io.hsetbuffering.discard_kept`).
