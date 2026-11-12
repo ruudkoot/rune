@@ -109,7 +109,9 @@ struct
 
   (* the exceptions of Core, each with its message, and the functions of
      the primitives that are no primitive of Mid: an exception's kind, name
-     and message, a code point's character, and its bytes in UTF-8 *)
+     and message, a code point's character, and its bytes in UTF-8. The
+     VM's built-in Loop, which ENTER raises of a suspension under evaluation
+     (docs/bytecode.md), is NonTermination, <<loop>> (ruling 58) *)
   val prelude = String.concatWith "\n"
     ["(datatype option ('a) (0 \"NONE\") (1 \"SOME\" : 'a))",
      "(val grtErrorCall : exncon (return (newexn \"ErrorCall\")))",
@@ -128,6 +130,8 @@ struct
      "    (let (vrt3 : bool) (prim ptr_eq vrtC grtNonTermination : (exncon * exncon) -> bool)",
      "    (if vrt3 (return 3)",
      "    (let (vrtN : string) (prim exn_name vrtE : exn -> string)",
+     "    (let (vrtL : bool) (prim poly_eq vrtN \"Loop\" : (string * string) -> bool)",
+     "    (if vrtL (return 3)",
      "    (let (vrt4 : bool) (prim poly_eq vrtN \"Div\" : (string * string) -> bool)",
      "    (if vrt4 (return 4)",
      "    (let (vrt5 : bool) (prim poly_eq vrtN \"Overflow\" : (string * string) -> bool)",
@@ -137,7 +141,7 @@ struct
      "    (let (vrt7 : bool) (prim poly_eq vrtN \"Chr\" : (string * string) -> bool)",
      "    (if vrt7 (return 7)",
      "    (let (vrt8 : bool) (prim poly_eq vrtN \"Domain\" : (string * string) -> bool)",
-     "    (if vrt8 (return 8) (return ~1))))))))))))))))))))))",
+     "    (if vrt8 (return 8) (return ~1))))))))))))))))))))))))",
      "  (fn grtExnName ((vrnE : exn)) : string \"exn_name\"",
      "    (let (vrnK : int) (app grtExnKind vrnE)",
      "    (let (vrn0 : bool) (prim poly_eq vrnK 0 : (int * int) -> bool) (if vrn0 (return \"ErrorCall\")",

@@ -1,6 +1,7 @@
 (* A suspension whose code forces it again: a loop, which ENTER finds at
-   once, since the first entry said BLACKHOLE, and stops as a fatal error
-   (D12; Haskell 98's <<loop>>).
+   once, since the first entry said BLACKHOLE, and raises Loop, which
+   nothing handles here: the program ends as an uncaught
+   exception ends it, status 1 (D12; Haskell 98's <<loop>>; ruling 58).
    The suspension is Haskell's (docs/ir.md, Suspensions): its code says
    BLACKHOLE once it has read what it captured, and UPDATE with its value.
    tests/runner/thunks.sml runs it on every engine. *)

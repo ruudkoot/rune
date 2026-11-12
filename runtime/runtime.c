@@ -315,6 +315,23 @@ int vm_raise_builtin(VM *vm, int k) {
     return vm_raise(vm, mk_ptr(e));
 }
 
+/* ENTER of a suspension under evaluation: Loop raised (vm.h, loop_exn) */
+int vm_raise_loop(VM *vm) {
+    CENSUS_RUNTIME_BEGIN();
+    if (!vm->loop_exn) {
+        Obj *name = vm_string_from(vm, "Loop", 4);
+        vm_push(vm, mk_ptr(name));
+        Obj *con = vm_alloc_fields(vm, K_EXNCON, 0, 1);
+        obj_fill_field(con, 0, vm_pop(vm));
+        vm->loop_exn = con;
+    }
+    Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);
+    obj_fill_field(e, 0, mk_ptr(vm->loop_exn));
+    obj_fill_field(e, 1, mk_unit());
+    CENSUS_RUNTIME_END();
+    return vm_raise(vm, mk_ptr(e));
+}
+
 /* The user's interrupt, taken at a poll where vm_interrupted (D11): the
    flag cleared and the exception rt_interrupt_catch gave raised, as RAISE
    raises it, from the instruction the VM is at. The flag is set by no

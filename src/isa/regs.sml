@@ -514,11 +514,12 @@ struct
         "pc = (uint32_t)c;"],
      (ordered [Then "RESULT"] o implicitly [CallsClosure, Leaves any])
        (rinst ("ENTER", [("f", Reads (Is RPtr)), ("x", Reads any)], Call,
-               "Enter the suspension in register f, as CALL enters a closure, with register x; RESULT takes its value. One under evaluation is a loop, a fatal error.")
+               "Enter the suspension in register f, as CALL enters a closure, with register x; RESULT takes its value. One under evaluation is a loop: the exception Loop is raised.")
           (["POLL(9);",
             "Value arg = R(b);",
             "Obj *c = EXPECT(R(a), K_THUNK, \"suspension\");",
-            "if (obj_contag(c) == THUNK_BLACKHOLE) FATAL(\"<<loop>>: a suspension forced while it is evaluated\");",
+            "/* a loop (D12): Loop raised, from here, as RAISE raises */",
+            "if (obj_contag(c) == THUNK_BLACKHOLE) { SYNC(); vm_raise_loop(vm); RELOAD(); RAISED(); }",
             "int64_t fidx = val_imm(obj_field(c, 0));",
             "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
             "Function *fn = &p->funcs[fidx];",
