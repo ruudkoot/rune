@@ -78,7 +78,7 @@
      "kind": "val",
      "name": "builtinTypes",
      "spec": "val builtinTypes : (string * kind) list",
-     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,\n`Ref` and `Arr`.\n\n",
+     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,\n`Ref`, `Arr` and `->`.\n\n`->` is the function type's constructor, which a type holds given\nfewer than two arguments (Haskell's `(->)` in an instance's head, 4.3.2);\ngiven both it is the function type, `TFun`, which `apply` and\n`substTy` make it.\n\n",
      "page": "sig/CORE.md#val-builtintypes"
     },
     {
@@ -519,6 +519,27 @@
      "spec": "val reach : Core.program * string list -> Core.program",
      "doc": "`reach (p, roots)` is what the values `roots` reach of p, in p's order.\n\nA value reaches the values, types and constructors it names, a\nconstructor its type, and a type the types of its fields; an import\nreached is kept, as a whole program has none (the haskell98 roadmap's\nM21: units joined and compiled whole, what main reaches).\n\n",
      "page": "sig/CORE_UNITS.md#val-reach"
+    },
+    {
+     "kind": "val",
+     "name": "index",
+     "spec": "val index : Core.program -> string * string list",
+     "doc": "`index p` is the unit `p` as an index and its declarations' texts.\n\nThe index says of each declaration, by its number, what it is, its\nname, what it makes and what it names, so that `reachIndexed` reads\nonly the texts of the declarations a program reaches.\n\n",
+     "page": "sig/CORE_UNITS.md#val-index"
+    },
+    {
+     "kind": "datatype",
+     "name": "unitCore",
+     "spec": "datatype unitCore = Indexed of string * (int -> string) | InHand of Core.program",
+     "doc": "A unit's Core as the reach is given it: by its index and a function\nfrom a declaration's number to its text, or in hand.\n\n",
+     "page": "sig/CORE_UNITS.md#type-unitcore"
+    },
+    {
+     "kind": "val",
+     "name": "reachIndexed",
+     "spec": "val reachIndexed : unitCore list * string list -> Core.program",
+     "doc": "`reachIndexed (units, roots)` is `reach (join ps, roots)` where `ps` is\nthe units' programs, a declaration read only where it is reached.\n\nA type is the first unit's that declares it, as `join` keeps it.\nRaises `Error` where an index is no index.\n\n",
+     "page": "sig/CORE_UNITS.md#val-reachindexed"
     },
     {
      "kind": "val",

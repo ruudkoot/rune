@@ -15,7 +15,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) | 6 | 6 | 100% | 4 | 4 |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | 9 | 9 | 100% | 8 | 8 |
 | [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 8 | 8 | 100% | 2 | 2 |
-| [`CORE_UNITS`](sig/CORE_UNITS.md) | 7 | 7 | 100% | 6 | 6 |
+| [`CORE_UNITS`](sig/CORE_UNITS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_AST`](sig/HS_AST.md) | 44 | 44 | 100% | 8 | 8 |
 | [`HS_CHAR`](sig/HS_CHAR.md) | 4 | 4 | 100% | 3 | 3 |
 | [`HS_CLASSES`](sig/HS_CLASSES.md) | 15 | 15 | 100% | 11 | 11 |
@@ -45,7 +45,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 42 | 42 | 100% | 28 | 28 |
 | [`HS_USAGE`](sig/HS_USAGE.md) | 5 | 5 | 100% | 4 | 4 |
-| **all** | 444 | 444 | 100% | 280 | 280 |
+| **all** | 447 | 447 | 100% | 282 | 282 |
 
 ## Members a signature describes
 
@@ -54,7 +54,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-39 structures have a page, with 444 members, of which 444 (100%) are described by a signature.
+39 structures have a page, with 447 members, of which 447 (100%) are described by a signature.
 
 ## Examples that are run
 

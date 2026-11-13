@@ -421,7 +421,10 @@ struct
         | TForall _ => let val (ms, env', body) = forallOf (env, t) in "(forall [" ^ ms ^ "] " ^ valTy env' body ^ ")" end
         | t =>
             case spine t of
-              (TCon "Ref", [a]) => "(" ^ slotTy env a ^ " ref)"
+              (* `->` given fewer than two types, which Mid takes when its Ty
+                 does (ruling 60, the lead's (a)); until then, refused *)
+              (TCon "->", _) => raise Unsupported ("the function type's constructor, ->, given fewer than two types")
+            | (TCon "Ref", [a]) => "(" ^ slotTy env a ^ " ref)"
             | (TCon "Arr", [a]) => "(" ^ slotTy env a ^ " array)"
             | (TCon c, args) =>
                 (case tyconInfo c of

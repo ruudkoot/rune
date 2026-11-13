@@ -76,7 +76,7 @@ struct
   (* a unit made or taken: its name, its members, its modules' interfaces,
      its desugaring's interface, and its Core *)
   type unit_ = {name : string, ids : string list, mods : HsModIface.t list, desugar : unit -> HsDesugar.interface,
-                coreText : string, sum : string, core : unit -> Core.program}
+                sum : string, indexed : unit -> CoreUnits.unitCore}
 
   (* f's value, made once and where it is first asked for *)
   fun once (f : unit -> 'a) : unit -> 'a =
@@ -128,7 +128,7 @@ struct
                             entry = {head = {usages = usages, exports = Pickle.hash (#iface sections),
                                              level = RhcStoreConfig.level ()},
                                      sections = sections}}
-        | NONE => Pickle.hash (#iface sections ^ "\000" ^ #code sections)
+        | NONE => Pickle.hash (String.concatWith "\000" (#iface sections :: List.tabulate (#count sections, #parts sections)))
       (* a state with the interfaces of the units before, as F's turns *)
       fun start (ifaces : HsModIface.t list) : N.state =
         let val s = N.install (N.initial leaves, ifaces)
@@ -175,22 +175,25 @@ struct
                  which its key and the configuration hold *)
               val usages = if null done then [] else List.map (fn r => (HsUsage.key r, answerIn (now ()) r)) reads
               val iface = HsIface.encode {modules = mods, desugar = desugarText desugar, unfoldings = []}
-              val coreText = CoreText.show core
-              val sum = keep (key, usages, {iface = iface, code = coreText})
+              (* its Core by its declarations, so that a link reads only what
+                 it reaches (CoreUnits.indexText) *)
+              val (index, texts) = CoreUnits.index core
+              val texts = Vector.fromList texts
+              val sum = keep (key, usages, {iface = iface, parts = fn 0 => index | i => Vector.sub (texts, i - 1),
+                                            count = 1 + Vector.length texts})
             in
               say (name, "compiled" ^ why);
-              {name = name, ids = ids, mods = mods, desugar = fn () => desugar, coreText = coreText, sum = sum,
-               core = fn () => core}
+              {name = name, ids = ids, mods = mods, desugar = fn () => desugar, sum = sum, indexed = fn () => CoreUnits.InHand core}
             end
-          fun taken ({iface, code} : RhcStore.sections, sum) =
+          fun taken ({iface, parts, ...} : RhcStore.sections, sum) =
             let
               val {modules, desugar, ...} = HsIface.decode iface handle HsIface.Bad msg => raise Failed ("the entry of " ^ name ^ ": " ^ msg)
-              (* its Core read only where the link is compiled *)
-              fun core () = CoreText.parse code handle CoreText.Error (_, msg) => raise Failed ("the entry of " ^ name ^ ": " ^ msg)
+              (* its Core's index read only where the link is compiled, and
+                 each declaration's text only where the link reaches it *)
+              fun indexed () = CoreUnits.Indexed (parts 0, fn i => parts (i + 1))
             in
               say (name, "taken");
-              {name = name, ids = ids, mods = modules, desugar = once (fn () => desugarOf desugar), coreText = code, sum = sum,
-               core = core}
+              {name = name, ids = ids, mods = modules, desugar = once (fn () => desugarOf desugar), sum = sum, indexed = indexed}
             end
         in
           done @ [case lookup (key, holds) of
@@ -207,11 +210,11 @@ struct
       val linkKey = RhcStore.key ("link", List.map (fn (u : unit_) => (#name u, #sum u)) units)
       fun reached () =
         let
-          val p = CoreUnits.reach (CoreUnits.join (CoreRuntime.program (#strings opts) :: List.map (fn (u : unit_) => #core u ()) units),
-                                   ["main"])
-          val () = case CoreUnits.unresolved p of
-                     [] => ()
-                   | xs => raise Failed ("imported and defined by no unit: " ^ String.concatWith ", " xs)
+          (* what main reaches of the units, each read only for what it
+             reaches *)
+          val p = CoreUnits.reachIndexed (CoreUnits.InHand (CoreRuntime.program (#strings opts)) :: List.map (fn (u : unit_) => #indexed u ()) units,
+                                          ["main"])
+                  handle CoreUnits.Error msg => raise Failed msg
           val () = if Pass.linting' 0 then CoreLint.check p handle CoreLint.Error msg => raise Failed msg else ()
         in p end
       fun bytesOf f = (let val i = BinIO.openIn f in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
@@ -219,11 +222,14 @@ struct
       fun said what = if #show opts then TextIO.output (TextIO.stdErr, "rhc: link: " ^ counted what ^ "\n") else ()
     in
       case lookup (linkKey, RhcStore.holds {level = RhcStoreConfig.level (), current = fn _ => "?"}) of
-        SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (#out opts, #code sections); 0)
+        SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (#out opts, #parts sections 0); 0)
       | _ =>
-          let val status = #compile opts (reached (), #out opts)
+          let
+            val p = reached ()
+            val () = said "reached"
+            val status = #compile opts (p, #out opts)
           in
-            if status = 0 then (ignore (keep (linkKey, [], {iface = "", code = bytesOf (#out opts)})); said "compiled") else ();
+            if status = 0 then (ignore (keep (linkKey, [], {iface = "", parts = fn _ => bytesOf (#out opts), count = 1})); said "compiled") else ();
             status
           end
     end

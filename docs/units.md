@@ -1145,12 +1145,17 @@ naming, the checking and the desugaring made (`HsUsage`), each answered on
 the state of the units before with the unit's modules named
 (`RhcIface.answer`), an entity of another unit with its fingerprint. The
 first unit, the library's, reads only its own source and rhc's leaves, so
-it keeps none. The link memo is keyed by the units' entries' sums, so a
-link taken reads no Core. Measured on hello, in VM instructions: whole
-145M; through the units cold 796M, warm 182M with nothing edited, 499M with
-hello edited, the program byte for byte the whole one; reading the graph
-(42M), the library's interface (129M) and, at a link compiled, the
-library's Core are what the warm path still pays.
+it keeps none. A unit's Core is kept by its declarations
+(`CoreUnits.index`): an index of what each is, makes and names, and each
+declaration's text a section of its own, which the store reads and holds
+to its hash only where it is asked for. The link memo is keyed by the
+units' entries' sums, so a link taken reads no Core, and a link compiled
+reads only the declarations main reaches (`CoreUnits.reachIndexed`).
+Measured on hello, in VM instructions: whole 145M; through the units, with
+nothing edited about 65M (the graph read 42M, the library taken 13M, Main
+taken 10M, the link taken), with hello edited about 96M (Main compiled
+26M, the link's reach 6M and its compile 9M), the program byte for byte
+the whole one.
 
 ## The graph
 

@@ -54,7 +54,7 @@ struct
   val builtinTypes =
     [("Int", Star), ("Integer", Star), ("Char", Star), ("Double", Star), ("Float", Star), ("Str", Star),
      ("Exn", Star), ("Bool", Star), ("World", Unlifted), ("Ref", Arrow (Star, Star)),
-     ("Arr", Arrow (Star, Star))]
+     ("Arr", Arrow (Star, Star)), ("->", Arrow (Star, Arrow (Star, Star)))]
 
   val builtinData = [Data ("Bool", [], [("False", []), ("True", [])])]
 
@@ -70,7 +70,11 @@ struct
         | go (h, args) = (h, args)
     in go (t, []) end
 
-  fun apply (t, args) = List.foldl (fn (a, f) => TApp (f, a)) t args
+  (* `f` applied to `a`: the function type where `->` has both its
+     arguments, so that a type holds one form of it *)
+  fun app (TApp (TCon "->", x), a) = TFun (x, a)
+    | app (f, a) = TApp (f, a)
+  fun apply (t, args) = List.foldl (fn (a, f) => app (f, a)) t args
 
   fun member (x, xs) = List.exists (fn y => y = x) xs
 
@@ -99,7 +103,7 @@ struct
         case t of
           TVar a => (case List.find (fn (b, _) => b = a) s of SOME (_, u) => u | NONE => t)
         | TCon _ => t
-        | TApp (f, a) => TApp (substTy (s, f), substTy (s, a))
+        | TApp (f, a) => app (substTy (s, f), substTy (s, a))
         | TFun (a, b) => TFun (substTy (s, a), substTy (s, b))
         | TEval a => TEval (substTy (s, a))
         | TUTuple ts => TUTuple (List.map (fn t => substTy (s, t)) ts)
@@ -122,6 +126,8 @@ struct
                SOME (l, r) => l = x andalso r = y
              | NONE => x = y)
         | eq (_, TCon x, TCon y) = x = y
+        | eq (env, TApp (TApp (TCon "->", p), r), t) = eq (env, TFun (p, r), t)
+        | eq (env, t, TApp (TApp (TCon "->", p), r)) = eq (env, t, TFun (p, r))
         | eq (env, TApp (f, x), TApp (g, y)) = eq (env, f, g) andalso eq (env, x, y)
         | eq (env, TFun (p, r), TFun (q, s)) = eq (env, p, q) andalso eq (env, r, s)
         | eq (env, TForall (x, k, s), TForall (y, l, t)) = k = l andalso eq ((x, y) :: env, s, t)
