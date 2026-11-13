@@ -16,7 +16,9 @@ struct
   val magic = "RHE"
   (* 2: a unit's interface in HsIface's bytes, and the driver's parts the
      desugaring's interface and the fingerprints before its Core *)
-  val version = 2
+  (* 3: the driver's part of HsLint's findings of a unit's modules, made at
+     level 2, before its Core (ruling 66) *)
+  val version = 3
 
   (* what a compile read, by a name of rhc's (H1, H2, H7, H9), and what it
      gave then *)
@@ -26,8 +28,9 @@ struct
   type head = {usages : usage list, exports : string, level : int}
   (* its sections, each hashed apart: the unit's interface (HsIface's
      bytes) and its parts, which the client lays out (rhc's driver: the
-     desugaring's interface, the fingerprints, the Core's index and each of
-     its declarations; a unit of Core: its unit file). Each part is a
+     desugaring's interface, the fingerprints, HsLint's part, the Core's
+     index and each of its declarations; a unit of Core: its unit file).
+     Each part is a
      section of its own, read and held to its hash only where it is asked
      for: a unit taken that no later unit desugars against never reads its
      desugaring's, and a link reads only the declarations it reaches

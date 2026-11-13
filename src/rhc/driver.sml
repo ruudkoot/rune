@@ -1,8 +1,10 @@
 (* rhc's driver over a program of Haskell in units (the haskell98 roadmap's
    M21f): each group of the module graph, an SCC, is a unit, named and
    checked from the interfaces of the units before it (RhcIface, F's),
-   desugared alone (RhcDesugar.unit, D's), its interface (HsIface) and its
-   Core kept in the store (RhcStore) keyed by its members' texts (H8, H4),
+   desugared alone (RhcDesugar.unit, D's), at level 2 checked by HsLint
+   after what it found of the units before (HsLint.check and join, H's; ruling
+   66), its interface (HsIface), HsLint's part and its Core kept in the
+   store (RhcStore) keyed by its members' texts (H8, H4),
    and taken from there where every read its compile made (HsUsage) gives
    now what it gave (H1, H2, H7, H9; H3: from the units of this compile,
    never the entry); and the link of the roadmap's C: the units' Core
@@ -100,18 +102,23 @@ struct
   (* ---- the units ---- *)
 
   (* a unit made or taken: its name, its members, its modules' interfaces
-     and their fingerprints, its desugaring's interface, and its Core *)
+     and their fingerprints, its desugaring's interface, what HsLint found
+     of its modules alone where it was made at level 2, and its Core *)
   type unit_ = {name : string, ids : string list, mods : HsModIface.t list, prints : (string * string) list,
-                desugar : unit -> HsDesugar.interface, sum : string, indexed : unit -> CoreUnits.unitCore}
+                desugar : unit -> HsDesugar.interface, hslint : unit -> HsLint.library option, sum : string,
+                indexed : unit -> CoreUnits.unitCore}
 
   (* An entry's sections: its modules' interfaces (HsIface's), and its
      parts: the desugaring's interface, read only where a unit is
-     desugared after it; its fingerprints; its Core's index; and each of
-     its Core's declarations, read only where a link reaches it *)
+     desugared after it; its fingerprints; HsLint's part of it, made at
+     level 2 (ruling 66; empty below), read only where a unit after it is
+     made at level 2; its Core's index; and each of its Core's
+     declarations, read only where a link reaches it *)
   val desugarPart = 0
   val printsPart = 1
-  val indexPart = 2
-  val declsPart = 3
+  val hslintPart = 2
+  val indexPart = 3
+  val declsPart = 4
 
   (* f's value, made once and where it is first asked for *)
   fun once (f : unit -> 'a) : unit -> 'a =
@@ -275,7 +282,7 @@ struct
           val holds = RhcStore.holds {level = RhcStoreConfig.level (), current = current}
           fun made why =
             let
-              val ((s, (core, desugar)), reads) =
+              val ((s, r, (core, desugar)), reads) =
                 RhcIface.recording (fn () =>
                   let
                     val s = N.groups (N.extend (start ifaces, nodes ()), [nodes ()], fixpoint, check)
@@ -286,7 +293,52 @@ struct
                                         types = SOME (#types s), evidence = evidence, derived = #derived s}
                     (* the graph RhcDesugar.unit reads: the program's roots *)
                     val graph = {groups = [nodes ()], roots = #roots g, diags = []}
-                  in (s, RhcDesugar.unit (List.map (fn (u : unit_) => #desugar u ()) done, ids, graph, r)) end)
+                  in (s, r, RhcDesugar.unit (List.map (fn (u : unit_) => #desugar u ()) done, ids, graph, r)) end)
+              (* HsLint at level 2 (ruling 66), out of the recording (it
+                 reads no interface): the unit's modules inferred after what
+                 it found of the units before, each one's part joined (the
+                 first unit, the library's with the Prelude, from nothing),
+                 their records replayed; what it found of them alone, kept
+                 as a part of the entry; and the target check of the unit's
+                 Core *)
+              val lint =
+                if not (Pass.linting' 2) then NONE
+                else
+                  let
+                    val part = ref NONE
+                    val modules =
+                      List.mapPartial (fn (n : G.node, ast) =>
+                                         if own (#id n) then SOME {id = #id n, ast = ast, library = #library n}
+                                         else NONE)
+                        (#modules r)
+                    fun partsBefore () =
+                      List.map (fn (u : unit_) =>
+                                  case #hslint u () of
+                                    SOME l => l
+                                  | NONE => raise Failed ("the entry of " ^ #name u ^ " keeps no part of HsLint's"))
+                        done
+                  in
+                    Pass.checkAt ("hslint", 2)
+                      (fn () =>
+                         let
+                           val {target, part = mine, ...} =
+                             HsLint.check
+                               {groups = [modules],
+                                main = List.find (fn m => own m andalso HsModules.moduleName m = "Main") (#roots g),
+                                cycleDefault = false,
+                                records = Option.map (fn env => {table = #evidence r, env = env, derived = #derived r})
+                                            (#types r),
+                                claims = Option.map (HsLint.claims o RhcLint.readFile) (!RhcLint.claims),
+                                where_ = fn sp => getOpt (RhcLint.lineColumn sp, "0:0"), fault = RhcLint.fault (),
+                                library = case partsBefore () of [] => NONE | ls => SOME (HsLint.join ls)}
+                             handle HsLint.Refused (span, msg) => raise Error.Bug (RhcLint.place span ^ ": " ^ msg)
+                         in
+                           RhcLint.kept := SOME target; part := SOME mine
+                         end)
+                      ();
+                    !part
+                  end
+              val () = if isSome lint then RhcLint.target core else ()
               val mods = RhcIface.ofModules (s, ids)
               (* the first unit reads its own source and rhc's leaves alone,
                  which its key and the configuration hold *)
@@ -300,13 +352,14 @@ struct
               fun part i =
                 if i = desugarPart then desugarText desugar
                 else if i = printsPart then printsText own
+                else if i = hslintPart then (case lint of SOME l => HsLint.encode l | NONE => "")
                 else if i = indexPart then index
                 else Vector.sub (texts, i - declsPart)
               val sum = keep (key, usages, {iface = iface, parts = part, count = declsPart + Vector.length texts})
             in
               say (name, "compiled" ^ why);
-              {name = name, ids = ids, mods = mods, prints = #prints own, desugar = fn () => desugar, sum = sum,
-               indexed = fn () => CoreUnits.InHand core}
+              {name = name, ids = ids, mods = mods, prints = #prints own, desugar = fn () => desugar,
+               hslint = fn () => lint, sum = sum, indexed = fn () => CoreUnits.InHand core}
             end
           fun taken ({iface, parts, ...} : RhcStore.sections, sum) =
             let
@@ -318,10 +371,16 @@ struct
               (* its Core's index read only where the link is compiled, and
                  each declaration's text only where the link reaches it *)
               fun indexed () = CoreUnits.Indexed (parts indexPart, fn i => parts (i + declsPart))
+              (* HsLint's part, decoded only where a unit after it is made
+                 at level 2; an entry made below level 2 keeps none *)
+              fun hslint () =
+                case parts hslintPart of
+                  "" => NONE
+                | bytes => SOME (HsLint.decode bytes handle HsLint.Decode msg => raise Failed ("the entry of " ^ name ^ ": " ^ msg))
             in
               say (name, "taken");
               {name = name, ids = ids, mods = modules, prints = #prints own, desugar = once (fn () => desugarOf (parts desugarPart)),
-               sum = sum, indexed = indexed}
+               hslint = once hslint, sum = sum, indexed = indexed}
             end
           val u =
             case lookup (key, holds) of

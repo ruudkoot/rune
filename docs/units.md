@@ -1172,7 +1172,13 @@ link's reach 6M and its compile 9M), the program byte for byte the whole
 one. bin/rhc names a snapshot of its own (D45's A, ruling 66):
 `bin/rhc.layer`, the library compiled once at make time from a Main that
 imports every module of it, at `RUNE_LINT=2`, which a compile in units reads
-after any `--layer` (`--snapshot`, which the wrapper gives). Against a
+after any `--layer` (`--snapshot`, which the wrapper gives). At level 2 a
+unit made is checked by HsLint (`HsLint.check`) after what it found of the
+units before it, each unit's part of its entry joined (`HsLint.join`): its
+own modules inferred, their records replayed, its Core held to the
+inference; and what it found of its own modules is kept as a part of its
+entry (`HsLint.encode`), so the library, whose part the snapshot keeps, is
+never inferred again (ruling 66). Against a
 snapshot, with a fresh overlay, hello takes the library's unit from the layer
 unwritten and costs about 44M (the graph read 3M, its headers the layer's),
 then 9M again. A clause program's compile (13 of `tests/hs/lang`'s run
