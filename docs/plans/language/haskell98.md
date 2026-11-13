@@ -1076,7 +1076,7 @@ which are known only after renaming and perhaps from an import. No separate layo
   libraries it fires 8 times, none depending on fixity (E16, `closes.txt`).
 
 **rhc:** the grammar-error rule with operators parsed flat (D27), so `do a == b == c` is refused at fixity resolution:
-a pinned deviation from 9.3's example, on the ground that 9.3 cannot be implemented as written (D38), and the same
+a pinned deviation from 9.3's example, on the ground that the Report concedes it (9.3's own words; D38, the owner's word of 2026-11-13), and the same
 result as every oracle. E10 had no fixity pass, so that refusal is deferred, not run. R9 is the same problem for `let`.
 
 #### R2. An explicit `}` under an implicit context: 2.7 and 9.3 disagree
@@ -5246,7 +5246,7 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 | D35 | Hierarchical names | Refused by default, a documented flag for the corpus | decided: B |
 | D36 | Library layout | The literal layout: the Report's graph compiled as one unit; the merged form a fallback, built only if the joined checker runs late | decided: A |
 | D37 | Prelude overlay and licence | A listed overlay; `share/rhc/haskell98/LICENSE`, marked modified | decided: code B, licence A |
-| D38 | Which text | The December 2002 text plus the published errata, all listed; rhc follows it unless it is wrong, contradictory, ambiguous or cannot be implemented, and unanimity of implementations alone is no ground | decided: B |
+| D38 | Which text | The December 2002 text plus the published errata, all listed; rhc follows it unless it is wrong, contradictory, ambiguous or conceded by the Report (the owner struck "cannot be implemented" for that on 2026-11-13), and unanimity of implementations alone is no ground | decided: B |
 | D39 | Pipeline as data | E11-4, 6, 8; bytes held | decided: C |
 | D40 | Front-end independence | `Stamp`, `label` on `fundef`, `Literal`, `Target` passed in: E11-1, 2, 3, 5, 9 | decided: B and C |
 | D41 | What `lib/compiler` exports | A third layer, `lib/compiler/mid.build` | decided by the lead: C |
@@ -6725,6 +6725,8 @@ The errata do not reach the worst of it. R7's `[LT..]`, R42's `Show Float` and R
 **What would reopen it.** The owner's call on that rule; a further erratum; a mode for Haskell 2010, which has its own text.
 
 **Decided (owner, 2026-11-09).** B, as recommended: the December 2002 text plus the published errata, all listed, with the one rule for departures above; `Just.let`, R21(b) and R38 follow the text, as the recommendation has them.
+
+**The fourth ground, decided (owner, 2026-11-13).** "Cannot be implemented" is struck. Its two departures stay deviations, filed under a ground of the text's own: **conceded by the Report**, where the Report itself says implementations will not meet the passage and advises programmers to avoid the construct. Both are fixity met during parsing: 9.3's `parse-error(t)` ("hard to implement in its full generality, because doing so involves fixities ... Programmers are therefore advised to avoid writing code that requires the parser to insert a closing brace in such situations"; `do a == b == c`, R1) and chapter 3's let/lambda meta-rule ("implementations may well use a post-parsing pass to deal with fixities, so they may well incorrectly deliver the former parse. Programmers are advised to avoid constructs ..."; `let x = True in x == x == True`, R9). rhc refuses both at fixity resolution, as GHC, Hugs, nhc98 and MicroHs do. The grounds are now wrong, contradictory, ambiguous, and conceded by the Report.
 
 ### D39. The pipeline as data
 
