@@ -1164,7 +1164,17 @@ hello, in VM instructions: whole 145M; through the units, with nothing
 edited about 9M (the graph read 1M, the library taken 4.5M, Main taken
 2.3M, the link taken), with hello edited about 41M (Main compiled 20M, the
 link's reach 6M and its compile 9M), the program byte for byte the whole
-one.
+one. Against a snapshot, a store another compile made given as `--layer`
+with a fresh overlay, hello takes the library's unit from the layer
+unwritten and costs about 44M (the graph read 3M, its headers the layer's),
+then 9M again. A clause program's compile (13 of `tests/hs/lang`'s run
+programs of one module, an even sample; a snapshot of every module of the
+library): whole from source 147M to 379M, median 214M; against the
+snapshot with a fresh overlay 46M to 302M, median 118M; again, nothing
+edited, 9M to 26M, median 11M; each program byte for byte the whole
+compile's. Against the snapshot the link's compile is most of it where a
+program reaches much of the library (`Double`'s `show`: 224M of 302M),
+since the link compiles whole what `main` reaches.
 
 ## The graph
 
