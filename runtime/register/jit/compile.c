@@ -253,6 +253,7 @@ static int jit_h_apply(VM *vm) {
             Value v = vm->stack[--vm->sp];
             vm->stack[vm->fp + (size_t)read_i32(code + ret_pc + 1)] = v;
             vm->pc = ret_pc + 5;
+            vm->instructions++;   /* the RESULT, passed over here, which the interpreter runs */
             jit->at = on;
             return RUN_NATIVE;
         }

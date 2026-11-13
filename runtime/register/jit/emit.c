@@ -1655,6 +1655,7 @@ static void apply_fast(Jit *j, int32_t a, uint32_t n, const int32_t *args, AsmLa
     as_bind(A, &make);
     apply_counted(j, 0, R_S6);
     make_pap(j, n, args, general);
+    ms_count(M, 1);   /* the RESULT the interpreter runs after the general path's value, which the landing passes over */
     as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);   /* as the landing finds a callee's base */
     as_jmp(A, after);
     /* a partial application entered: its closure called with what it
@@ -1686,6 +1687,7 @@ static void apply_fast(Jit *j, int32_t a, uint32_t n, const int32_t *args, AsmLa
     as_bind(A, &more);
     apply_counted(j, 5, R_S6);
     more_pap(j, n, args, general);
+    ms_count(M, 1);
     as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);
     as_jmp(A, after);
     /* a closure of one over-applied: its stub, a known function */
@@ -1727,6 +1729,7 @@ static void apply_fast_tail(Jit *j, int32_t a, uint32_t n, const int32_t *args, 
     as_bind(A, &make);
     apply_counted(j, 0, R_S6);
     make_pap(j, n, args, general);
+    ms_count(M, 1);   /* the RET of <apply return>, which the general path enters with it */
     ms_role(M, MR_RET);
     as_jmp_ret(A, BASER, HEADER_AT(0, 1));
     /* a partial application entered in the frame's place: what it holds,
@@ -1768,6 +1771,7 @@ static void apply_fast_tail(Jit *j, int32_t a, uint32_t n, const int32_t *args, 
     as_bind(A, &more);
     apply_counted(j, 5, R_S6);
     more_pap(j, n, args, general);
+    ms_count(M, 1);
     ms_role(M, MR_RET);
     as_jmp_ret(A, BASER, HEADER_AT(0, 1));
     /* a closure of one over-applied: its stub in the frame's place, given
