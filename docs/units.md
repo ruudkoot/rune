@@ -1092,11 +1092,13 @@ as the edit says, and `--verify-cache` holds to the files' texts.
 ## rhc's units
 
 rhc, the Haskell 98 compiler of the haskell98 roadmap
-([plans/language/haskell98.md](plans/language/haskell98.md), M21), keeps its
-units in the same store as a client of its own (`src/rhc/store.sml`,
-`RhcStore`): its own format, head, `holds`, key and settings, in a
-configuration of rhc's (its `Config.identity`, the instruction set, the
-level and passes, the form of string literals). A unit is an SCC of a
+([plans/language/haskell98.md](plans/language/haskell98.md), M21;
+[rhc.md](rhc.md)), keeps its units in the same store as a client of its own
+(`src/rhc/store.sml`, `RhcStore`): its own format, head, `holds`, key and
+settings, in configurations of rhc's (`RhcStoreConfig`): a unit's of its
+`Config.identity` and what changes a unit's Core (the form of string
+literals, the order of matching), a link's of those and the instruction
+set, the level and passes besides. A unit is an SCC of a
 program's modules; Core in units (`lib/language/haskell/coreunits.sml`)
 names another unit's value by `(import x TYPE)` and its type by a copy of
 the declaration. `rhc --units` takes `--read-core` files as units, after
