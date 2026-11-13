@@ -142,12 +142,15 @@ sig
      part's entry of a name wins, and the rest are appended. *)
   val join : library list -> library
 
-  (* `encode part` is `part` as bytes, in Pickle's form, and `decode` the
-     part they are.
+  (* Bytes that are no part of a unit, and why. *)
+  exception Decode of string
+
+  (* `encode part` is `part` as bytes, in Pickle's form. *)
+  val encode : library -> string
+
+  (* `decode bytes` is the part `bytes` are, as `encode` wrote it.
 
      Raises: `Decode` where the bytes are no part. *)
-  exception Decode of string
-  val encode : library -> string
   val decode : string -> library
 
   (* `targetRules` is each rule of the target check with what it holds,

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 20 of 20 entries documented |
+| Documentation | 24 of 24 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint\_sig.sml](../../../../../lib/language/haskell/hslint_sig.sml) |
 
@@ -60,7 +60,11 @@ sig
                <a href="#fld-check.records">records</a> : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
                <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string, <a href="#fld-check.library">library</a> : library option}
-              -&gt; {report : report, target : target, library : library option}
+              -&gt; {report : report, target : target, part : library}
+  val <a href="#val-join">join</a> : library list -&gt; library
+  exception <a href="#exn-decode">Decode</a> of string
+  val <a href="#val-encode">encode</a> : library -&gt; string
+  val <a href="#val-decode">decode</a> : string -&gt; library
   val <a href="#val-targetrules">targetRules</a> : (string * string) list
   val <a href="#val-target">target</a> : target * Core.program * string -&gt; unit
   val <a href="#val-dump">dump</a> : report * (HsSource.span -&gt; string) * bool -&gt; string
@@ -293,10 +297,12 @@ functions, as Core's types.
 type library
 ```
 
-HsLint's inference of a library's modules, as a saved world keeps it.
+HsLint's part of a unit: what one check inferred alone.
 
-It is their environment and what their inference found, from which a
-program's own modules are inferred alone (D45).
+It is the environment's entries of the modules it inferred, what their
+inference found and the target check's data of them: a saved world's
+library, or a unit's in the store, from which the modules after it are
+inferred alone (D45).
 
 ### <a name="val-check"></a>`check`
 
@@ -305,7 +311,7 @@ val check : {groups : module list list, main : string option, cycleDefault : boo
              records : {table : HsEvidence.table, env : HsInfer.env,
                         derived : (string * string * HsAst.decl list) list} option,
              claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}
-            -> {report : report, target : target, library : library option}
+            -> {report : report, target : target, part : library}
 ```
 
 `check {groups, main, cycleDefault, records, claims, where_, fault, library}` is [`infer`](#val-infer)'s report, with the checker's records replayed and
@@ -314,9 +320,8 @@ compared.
 With `library`, the groups of its modules are not inferred again: the
 rest are inferred after its environment and findings, and only the
 records of those modules are replayed, the library's having been
-replayed where the library was inferred. The report is of the modules
-inferred. Where every module of `groups` is the library's, the result
-holds their inference, for a saved world; NONE otherwise.
+replayed where it was inferred. The report is of the modules inferred,
+and `part` what was inferred of them alone, for the units after them.
 
 It gives what the target check reads with the report. With `records`,
 the checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees
@@ -339,6 +344,41 @@ inference as claims ([`compare`](#val-compare)); with `claims`, those are too.
 | <a name="fld-check.where_"></a>`where_` | `HsSource.span -> string` |  |
 | <a name="fld-check.fault"></a>`fault` | `string` |  |
 | <a name="fld-check.library"></a>`library` | `library option` |  |
+
+### <a name="val-join"></a>`join`
+
+```sml
+val join : library list -> library
+```
+
+`join parts` is the parts of units put together, in order: a later
+part's entry of a name wins, and the rest are appended.
+
+### <a name="exn-decode"></a>`Decode`
+
+```sml
+exception Decode of string
+```
+
+Bytes that are no part of a unit, and why.
+
+### <a name="val-encode"></a>`encode`
+
+```sml
+val encode : library -> string
+```
+
+`encode part` is `part` as bytes, in Pickle's form.
+
+### <a name="val-decode"></a>`decode`
+
+```sml
+val decode : string -> library
+```
+
+`decode bytes` is the part `bytes` are, as [`encode`](#val-encode) wrote it.
+
+**Raises** [`Decode`](#exn-decode) where the bytes are no part.
 
 ### <a name="val-targetrules"></a>`targetRules`
 
