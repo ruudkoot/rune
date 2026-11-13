@@ -41,6 +41,12 @@ struct
      fewer; values keep their representation. *)
   val arrowStamp = 18
   val arrowNameText = "(->)"
+  (* And the lazy arrow (ruling 65): rhc's Core lowers a function type
+     `a -> b` to `a susp -> b`, its argument a suspension, so a type variable
+     applied that Core gives (->) is given this name, `(~>)` in Mid's text,
+     which given both is `a susp -> b` *)
+  val lazyArrowStamp = 19
+  val lazyArrowNameText = "(~>)"
 
   structure Node :>
   sig
@@ -218,8 +224,9 @@ struct
     (* the arrow as a type name given both its arguments is the function
        type itself *)
     fun con (s, name, ts) =
-      case (s = arrowStamp, ts) of
-        (true, [a, b]) => arrow (a, b)
+      case (s = arrowStamp, s = lazyArrowStamp, ts) of
+        (true, _, [a, b]) => arrow (a, b)
+      | (_, true, [a, b]) => arrow (con0 (#stamp Types.suspTycon, #name Types.suspTycon, [a]), b)
       | _ => con0 (s, name, ts)
 
     val exnCon = new (final 0w6, 1, [], 0, ExnCon)
@@ -258,6 +265,9 @@ struct
   (* the arrow as a type name, given these arguments: the function type
      where they are two *)
   fun arrowName (ts : ty list) : ty = con (arrowStamp, arrowNameText, ts)
+  (* the lazy arrow as a type name, given these arguments: given two,
+     `a susp -> b` *)
+  fun lazyArrowName (ts : ty list) : ty = con (lazyArrowStamp, lazyArrowNameText, ts)
 
   (* A walk of a type of at most smallType nodes as a tree is one of the
      tree, without a table: as quick, and making nothing *)
@@ -673,8 +683,16 @@ struct
            application, given those before its own *)
         | (App (h, xs), Con (a, n, ys)) => apps (h, xs, fn k => con (a, n, k), ys, s)
         | (App (h, xs), App (g, ys)) => apps (h, xs, fn k => app (g, k), ys, s)
-        (* at a function type: the arrow as a type name, given those before *)
-        | (App (h, xs), Arrow (y1, y2)) => apps (h, xs, fn k => con (arrowStamp, arrowNameText, k), [y1, y2], s)
+        (* at a function type: the arrow as a type name, given those before;
+           the lazy arrow (~>) where the argument is a suspension, given
+           what it suspends (ruling 65) *)
+        | (App (h, xs), Arrow (y1, y2)) =>
+            (case view y1 of
+               Con (st, _, [t]) =>
+                 if st = #stamp Types.suspTycon
+                 then apps (h, xs, fn k => con (lazyArrowStamp, lazyArrowNameText, k), [t, y2], s)
+                 else apps (h, xs, fn k => con (arrowStamp, arrowNameText, k), [y1, y2], s)
+             | _ => apps (h, xs, fn k => con (arrowStamp, arrowNameText, k), [y1, y2], s))
         | (Forall (vs, b), Forall (ws, c)) =>
             if List.length vs <> List.length ws then raise No
             else
