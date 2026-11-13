@@ -447,11 +447,9 @@ struct
 end
 
 (* Uncurrying, for eval/apply proper (the haskell98 roadmap's D15 C;
-   impl/w/d15/design.md): what makes SML's curried functions reach the
-   register VM's calls of n arguments, which test the closure's arity
-   (CALLN; src/isa/regs.sml). A measurement's pass: the register target
-   only, and only where RUNE_UNCURRY=1 says so, so that the same compiler
-   makes A's code and C's.
+   decided 2026-11-13): what makes SML's curried functions reach the calls
+   of n arguments that test the closure's arity, the register set's CALLN
+   and the stack set's (src/isa/regs.sml, src/isa/stack.sml), from -O1.
 
    * A curried function -- one whose body makes a function and returns
      it, n deep (Workers.levels), with nothing between but steps that may
@@ -474,10 +472,8 @@ structure Uncurry =
 struct
   open Mid
 
-  (* asked where the pass would run, not where the compiler starts: rhc
-     runs from a saved world (bin/rhc), whose cells are the world's *)
-  fun enabled () = case OS.Process.getEnv "RUNE_UNCURRY" of SOME "1" => true | _ => false
-  (* the most parameters a twin has *)
+  (* the most parameters a twin has, and the most arguments a call of
+     them all is given *)
   val maxArity = 8
 
   val freshStamp = Stamp.fresh
@@ -631,6 +627,10 @@ struct
   (* the uses as values become the twins', and calls in a row one call *)
   and rewrite (p : program, twins, globalFuns, localFuns) : program =
     let
+      val valGlobals : unit IntTable.table = IntTable.table 256
+      val () = List.app (fn Val (g, _, _) => IntTable.insert (valGlobals, g, ())
+                          | Do (gs, _) => List.app (fn (g, _) => IntTable.insert (valGlobals, g, ())) gs
+                          | Funs _ => ()) p
       val uses = countUses p
       fun usedOnce x = case IntTable.find (uses, x) of SOME 1 => true | _ => false
       fun twinAtom a =
@@ -660,7 +660,10 @@ struct
             (case IntTable.find (twins, x) of
                SOME (x2, n) => Twin (Var (x2, ts), n)
              | NONE => if isSome (IntTable.find (localFuns, x)) then Stays else Value)
-        | Global (g, _) => if isSome (IntTable.find (globalFuns, g)) then Stays else Value
+        (* a global this program declares by a value (Val, Do) holds a
+           closure; one it declares a function, or one of another unit
+           (--units), which may be a function whose calls are known, stays *)
+        | Global (g, _) => if isSome (IntTable.find (valGlobals, g)) then Value else Stays
         | _ => Stays
       (* a step that may go before a call whose result is t: it names,
          makes, takes apart or casts a value, or makes a suspension, and
@@ -684,9 +687,10 @@ struct
             case rest of
               Mark (sp, r) => go (t, s, xs, r, sp :: marks, pre)
             | Let (r, s2, App (Var (t', []), ys), rest2) =>
-                if t' = t andalso usedOnce t then go (r, s2, xs @ ys, rest2, marks, pre) else stop (t, s, xs, rest, marks, pre)
+                if t' = t andalso usedOnce t andalso List.length (xs @ ys) <= maxArity then go (r, s2, xs @ ys, rest2, marks, pre)
+                else stop (t, s, xs, rest, marks, pre)
             | Return (App (Var (t', []), ys)) =>
-                if t' = t andalso usedOnce t
+                if t' = t andalso usedOnce t andalso List.length (xs @ ys) <= maxArity
                 then SOME (fn h => ahead (pre, remark (marks, Return (App (h, List.map twinAtom (xs @ ys))))), List.length (xs @ ys))
                 else stop (t, s, xs, rest, marks, pre)
             | Let (y, s2, r, rest2) =>

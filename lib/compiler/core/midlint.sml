@@ -345,13 +345,15 @@ struct
         | _ => calleeAt (poly, a)
       (* a function of two parameters or more as a value (D15 C): the closure
          a call of as many arguments enters, whose type is the curried
-         arrow of its parameters *)
+         arrow of its parameters, under the forall of a polymorphic field's
+         (instance) *)
       and naryValue (what, x, t) =
         case (naryParams x, Ty.view t) of
           (SOME (_ :: _ :: _), Ty.Arrow (d, res)) =>
             (case Ty.view d of
                Ty.Tuple ds => List.foldr (fn (p, acc) => Ty.arrow (p, acc)) res ds
              | _ => bug (what ^ ", a function of other than one parameter, has type " ^ Ty.toString t))
+        | (SOME (_ :: _ :: _), Ty.Forall (vs, b)) => Ty.forall (vs, naryValue (what, x, b))
         | _ => bug (what ^ ", a function of other than one parameter, used as a value")
 
       and callee (a : atom) : Ty.ty = calleeAt (false, a)
