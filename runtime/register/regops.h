@@ -49,7 +49,7 @@ enum RegOpcode {
   ROP_FORCE = 41,  /* Where register s holds no unevaluated suspension, register d := its value -- what an indirection holds, else what s holds -- and jump to o; else on to the ENTER after it. */
   ROP_ENTER = 42,  /* Enter the suspension in register f, as CALL enters a closure, with register x; RESULT takes its value. One under evaluation is a loop: the exception Loop is raised. */
   ROP_BLACKHOLE = 43,  /* The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. */
-  ROP_UPDATE = 44,  /* The suspension running becomes an indirection to register s. */
+  ROP_UPDATE = 44,  /* The suspension running becomes an indirection to register s; one that is an indirection already, lazy ML's that a force from inside it updated first, holds register s now. */
   ROP__COUNT
 };
 

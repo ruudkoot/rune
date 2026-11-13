@@ -51,4 +51,4 @@ FIELD         t,i     Pop a constructor value that CONN made, of tag t, and push
 FORCE         o       Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to o; else leave it for the ENTER after.
 ENTER         -       Pop argument, pop a suspension, and enter it as CALL enters a closure; one under evaluation is a loop: the exception Loop is raised.
 BLACKHOLE     -       The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows.
-UPDATE        -       Pop a value; the suspension running becomes an indirection to it.
+UPDATE        -       Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now.
