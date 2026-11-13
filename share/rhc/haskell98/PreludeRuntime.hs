@@ -277,26 +277,29 @@ primFailWith what h f errno =
 --   * the characters read ahead, by hLookAhead and hIsEOF;
 --   * its buffering: 0 none, 1 by line, 2 by block (BufferMode's order),
 --     with the size of a block, 0 for the system's;
---   * the bytes read from its file and not yet decoded, from an index.
+--   * the bytes read from its file and not yet decoded, from an index;
+--   * the characters written since the last flush, which BlockBuffering
+--     (Just n) holds to n (21.6).
 data Handle       =  Handle Int Int String Bool Bool Bool
                             (Ref Int) (Ref [Char]) (Ref Int) (Ref Int)
-                            (Ref Str) (Ref Int)
+                            (Ref Str) (Ref Int) (Ref Int)
 
 -- A position: the handle, and the byte from its file's start.
 data HandlePosn   =  HandlePosn Handle Integer
 
-handleId     (Handle n _ _ _ _ _ _ _ _ _ _ _) = n
-handleFd     (Handle _ d _ _ _ _ _ _ _ _ _ _) = d
-handleName   (Handle _ _ f _ _ _ _ _ _ _ _ _) = f
-handleReads  (Handle _ _ _ r _ _ _ _ _ _ _ _) = r
-handleWrites (Handle _ _ _ _ w _ _ _ _ _ _ _) = w
-handleSeeks  (Handle _ _ _ _ _ s _ _ _ _ _ _) = s
-handleState  (Handle _ _ _ _ _ _ st _ _ _ _ _) = st
-handleAhead  (Handle _ _ _ _ _ _ _ a _ _ _ _) = a
-handleMode   (Handle _ _ _ _ _ _ _ _ m _ _ _) = m
-handleSize   (Handle _ _ _ _ _ _ _ _ _ z _ _) = z
-handleBytes  (Handle _ _ _ _ _ _ _ _ _ _ b _) = b
-handleIndex  (Handle _ _ _ _ _ _ _ _ _ _ _ i) = i
+handleId     (Handle n _ _ _ _ _ _ _ _ _ _ _ _) = n
+handleFd     (Handle _ d _ _ _ _ _ _ _ _ _ _ _) = d
+handleName   (Handle _ _ f _ _ _ _ _ _ _ _ _ _) = f
+handleReads  (Handle _ _ _ r _ _ _ _ _ _ _ _ _) = r
+handleWrites (Handle _ _ _ _ w _ _ _ _ _ _ _ _) = w
+handleSeeks  (Handle _ _ _ _ _ s _ _ _ _ _ _ _) = s
+handleState  (Handle _ _ _ _ _ _ st _ _ _ _ _ _) = st
+handleAhead  (Handle _ _ _ _ _ _ _ a _ _ _ _ _) = a
+handleMode   (Handle _ _ _ _ _ _ _ _ m _ _ _ _) = m
+handleSize   (Handle _ _ _ _ _ _ _ _ _ z _ _ _) = z
+handleBytes  (Handle _ _ _ _ _ _ _ _ _ _ b _ _) = b
+handleIndex  (Handle _ _ _ _ _ _ _ _ _ _ _ i _) = i
+handleHeld   (Handle _ _ _ _ _ _ _ _ _ _ _ _ k) = k
 
 -- every handle the program has opened, the standard ones first made, the
 -- newest first, and the number of the next
@@ -318,7 +321,8 @@ newHandle n fd name r w s mode = do
     z <- ref_new 0
     b <- ref_new (str_extract (str_from_char ' ') 0 0)
     i <- ref_new 0
-    return (Handle n fd name r w s st ahead m z b i)
+    k <- ref_new 0
+    return (Handle n fd name r w s st ahead m z b i k)
 
 -- The standard handles. stdin and stdout are buffered by line, as a
 -- terminal's are; stderr is not buffered (21.6 leaves it to the system).
@@ -373,7 +377,8 @@ primHClose h      = do
 -- full device: isFullError)
 flushed           :: Handle -> String -> IO ()
 flushed h what    =  h_flush_ok (handleFd h) >>= \ok ->
-                     if ok then return () else h_errno >>= primFailWith what (Just h) (Just (handleName h))
+                     if ok then ref_set (handleHeld h) 0
+                       else h_errno >>= primFailWith what (Just h) (Just (handleName h))
 
 primHIsOpen, primHIsClosed :: Handle -> IO Bool
 primHIsOpen h     =  ref_get (handleState h) >>= \st -> return (st == 0)
@@ -387,19 +392,32 @@ primHIsSeekable h =  usable h "hIsSeekable" >> return (handleSeeks h)
 -- ---- writing ----
 
 -- a character written, and the buffer flushed as the mode says: none (0),
--- or by line (1) at a newline
+-- by line (1) at a newline, by block (2) where it overflows
 primHPutChar      :: Handle -> Char -> IO ()
 primHPutChar h c  = do
     checkOpen h "hPutChar" handleWrites
     if handleReads h then readBack h else return ()
+    mode <- ref_get (handleMode h)
+    if mode == 2 then overflow h "hPutChar" else return ()
     ok <- h_write (handleFd h) (str_from_char c)
     if not ok then h_errno >>= primFailWith "hPutChar" (Just h) (Just (handleName h))
-      else do
-        mode <- ref_get (handleMode h)
-        if mode == 0 || (mode == 1 && c == '\n') then flushed h "hPutChar" else return ()
+      else if mode == 0 || (mode == 1 && c == '\n') then flushed h "hPutChar"
+      else held h
 
--- each character as it is evaluated, so that what comes before a bottom is
--- written
+-- Under BlockBuffering (Just n) a handle holds n characters: what it holds
+-- is written out when another comes ("whenever it overflows", 21.6; the
+-- lead's ruling 64). Under BlockBuffering Nothing, and to the size of the
+-- system's own buffer, the system's buffer does it (a size above that
+-- writes out more often, which 21.6 allows).
+overflow          :: Handle -> String -> IO ()
+overflow h what   = do
+    n <- ref_get (handleSize h)
+    k <- ref_get (handleHeld h)
+    if n > 0 && k >= n then flushed h what else return ()
+
+held              :: Handle -> IO ()
+held h            =  ref_get (handleHeld h) >>= \k -> ref_set (handleHeld h) (k + 1)
+
 -- A handle that reads and writes (ReadWriteMode) writes where its reading
 -- has got to: what it read of the file and has not given, the bytes and the
 -- characters ahead, given back, the file put at that place again.
@@ -418,17 +436,25 @@ readBack h        = do
             ref_set (handleIndex h) 0
             ref_set (handleAhead h) []
 
--- Under BlockBuffering each character goes to the system's buffer as it
--- is evaluated, with no flush and no more checks than the first.
+-- Each character as it is evaluated, so that what comes before a bottom
+-- is written. Under BlockBuffering Nothing each goes to the system's buffer
+-- with no more checks than the first; under BlockBuffering (Just n) it is
+-- counted, as hPutChar counts it.
 primHPutStr       :: Handle -> String -> IO ()
 primHPutStr h s   = do
     checkOpen h "hPutStr" handleWrites
     mode <- ref_get (handleMode h)
-    if mode /= 2 || handleReads h then mapM_ (primHPutChar h) s else block s
+    size <- ref_get (handleSize h)
+    if mode /= 2 || handleReads h then mapM_ (primHPutChar h) s
+      else if size > 0 then counted s
+      else block s
   where
+    write c k     = h_write (handleFd h) (str_from_char c) >>= \ok ->
+                    if ok then k else h_errno >>= primFailWith "hPutStr" (Just h) (Just (handleName h))
     block []      = return ()
-    block (c:cs)  = h_write (handleFd h) (str_from_char c) >>= \ok ->
-                    if ok then block cs else h_errno >>= primFailWith "hPutStr" (Just h) (Just (handleName h))
+    block (c:cs)  = write c (block cs)
+    counted []    = return ()
+    counted (c:cs) = overflow h "hPutStr" >> write c (held h >> counted cs)
 
 primHFlush        :: Handle -> IO ()
 primHFlush h      =  checkOpen h "hFlush" handleWrites >> flushed h "hFlush"
