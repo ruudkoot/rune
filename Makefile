@@ -809,8 +809,22 @@ bin/rhc.identity: bin/rhc.rbc bin/runevm
 	bin/runevm bin/rhc.rbc --identity > $@
 bin/rhc.img: bin/rhc.rbc bin/runevm $(RHC_SHARE)
 	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --make-world $@ < /dev/null
-bin/rhc: bin/rhc.rbc bin/rhc.identity bin/rhc.img bin/runevm Makefile
-	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\na=; b=\n[ -f "$$d/rhc.identity" ] && read -r a < "$$d/rhc.identity"\n[ -f "$$d/rhc.img.identity" ] && read -r b < "$$d/rhc.img.identity"\nif [ -n "$$a" ] && [ "$$a" = "$$b" ] && [ -f "$$d/rhc.img" ]; then exec "$$d/runevm" --restore "$$d/rhc.img" -- --share "$$d/../share/rhc" "$$@"; fi\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" "$$@"\n' > $@
+# rhc's snapshot (D45's A, ruling 66; docs/units.md, rhc's units): the
+# library of share/rhc compiled once into a store, which bin/rhc names as a
+# layer, read only (--snapshot), so that a compile in units (--units) takes the
+# library's units from it and compiles a program's own modules alone. Made
+# from a Main that imports every module of the library, at RUNE_LINT=2 as
+# bin/rhc.img is, so that its entries stand for a compile at any level. The
+# store is kept between makes: an entry is keyed by rhc's configuration and
+# the library's texts, so a new rhc or library adds entries beside the old.
+RHC_LIBRARY_MODULES := Array Char Complex CPUTime Directory IO Ix List Locale Maybe Monad Numeric Random Ratio System Time
+bin/rhc.layer: bin/rhc.rbc bin/runevm $(RHC_SHARE)
+	mkdir -p build/rhc-layer
+	{ for m in $(RHC_LIBRARY_MODULES); do echo "import $$m"; done; printf 'main :: IO ()\nmain = return ()\n'; } > build/rhc-layer/Main.hs
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --units --store $@ build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	touch $@
+bin/rhc: bin/rhc.rbc bin/rhc.identity bin/rhc.img bin/rhc.layer bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\nl=; [ -d "$$d/rhc.layer" ] && l="--snapshot $$d/rhc.layer"\na=; b=\n[ -f "$$d/rhc.identity" ] && read -r a < "$$d/rhc.identity"\n[ -f "$$d/rhc.img.identity" ] && read -r b < "$$d/rhc.img.identity"\nif [ -n "$$a" ] && [ "$$a" = "$$b" ] && [ -f "$$d/rhc.img" ]; then exec "$$d/runevm" --restore "$$d/rhc.img" -- --share "$$d/../share/rhc" $$l "$$@"; fi\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" $$l "$$@"\n' > $@
 	chmod +x $@
 check-tools: bin/rhc
 

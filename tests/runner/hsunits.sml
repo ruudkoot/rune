@@ -284,7 +284,8 @@ struct
              else say ("FAIL hs.units.drive: " ^ label ^ ": the program is not the whole compile's\n"))
         end
     in
-      step ("cold", [("library", "compiled"), ("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")], "hello\n42\n");
+      (* the library's unit from bin/rhc's snapshot (bin/rhc.layer) *)
+      step ("cold", [("library", "taken"), ("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")], "hello\n42\n");
       step ("again", [("library", "taken"), ("Lib", "taken"), ("Main", "taken"), ("link", "taken")], "hello\n42\n");
       edit ("Lib.hs", "double x = x + x", "double x = 2 * x");
       step ("body", [("library", "taken"), ("Lib", "compiled"), ("Main", "taken"), ("link", "compiled")], "hello\n42\n");
