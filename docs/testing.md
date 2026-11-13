@@ -1048,9 +1048,9 @@ with to the library's Show IOError, a user's "user error (TEXT)".
 `lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
 and the first and the last of each range and run of its data.
 
-`hs/docs/help` (in `tests/runner/hscore.sml`; in `make check-docs` too)
-holds rhc's manual to its help: every option `bin/rhc --help` lists is
-named, in code, in [rhc.md](rhc.md).
+`hs/docs/help` (in `tests/runner/hscore.sml`; in make check, and skipped
+where `bin/rhc` is not built) holds rhc's manual to its help: every option
+`bin/rhc --help` lists is named, in code, in [rhc.md](rhc.md).
 
 E1's eight programs, rewritten in Core (`knot`, `cafs`, `monad`, `classes`,
 `nest`, `nest2`, `letpoly`, `exceptions`), print E1's hand-derived output,
