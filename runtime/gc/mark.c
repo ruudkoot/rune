@@ -164,29 +164,28 @@ static int shortcut_guarded(Value *v) {
 }
 
 /* A field's mark, an indirection shortcut first (D18), through the guard
-   and past the pin where the program has lazy ML's suspensions. In line
-   where the queue's objects are scanned field by field, out of line
-   (mark_value) for the roots, as minor.c's promote_field is. */
+   and past the pin where the program has lazy ML's suspensions (guard). In
+   line where the queue's objects are scanned field by field, a loop of
+   each guard, out of line (mark_value) for the roots, as minor.c's
+   promote_field is. */
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
-static inline void mark_field(VM *vm, Value *v) {
+static inline void mark_field(VM *vm, Value *v, int guard) {
     if (!val_is_ptr(*v)) return;
-    if (obj_kind(val_ptr(*v)) == K_IND) {
-        if (vm->prog.reruns) {
-            if (!shortcut_guarded(v)) return;
-        } else
-            for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
-                *v = obj_fields(val_ptr(*v))[0];
-                if (!val_is_ptr(*v)) return;
-            }
-    }
+    if (guard) {
+        if (obj_kind(val_ptr(*v)) == K_IND && !shortcut_guarded(v)) return;
+    } else
+        for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
+            *v = obj_fields(val_ptr(*v))[0];
+            if (!val_is_ptr(*v)) return;
+        }
     *v = mk_ptr(mark_obj(vm, val_ptr(*v)));
 }
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static void mark_value(VM *vm, Value *v) { mark_field(vm, v); }
+static void mark_value(VM *vm, Value *v) { mark_field(vm, v, vm->prog.reruns); }
 #define MARK_VALUE(v) (vm->gc_counts.other_roots++, mark_value(vm, (v)))
 #define MARK_OBJ(o) (vm->gc_counts.other_roots++, *(o) = mark_obj(vm, *(o)))
 
@@ -247,7 +246,8 @@ void mark_full(VM *vm) {
         Obj *o = vm->gc.queue[--vm->gc.nqueue];
         Value *f = obj_fields(o);
         uint32_t n = obj_scanned_fields(o);   /* every field; of an indirection, the first */
-        for (uint32_t i = 0; i < n; i++) mark_field(vm, &f[i]);
+        if (vm->prog.reruns) for (uint32_t i = 0; i < n; i++) mark_field(vm, &f[i], 1);
+        else for (uint32_t i = 0; i < n; i++) mark_field(vm, &f[i], 0);
     }
 
     switch (vm->gc.old_kind) {
