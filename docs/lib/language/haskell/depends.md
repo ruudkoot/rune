@@ -23,9 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(76)"]
-  a1["Not in an area<br>(2)"]
-  a1 -- 2 --> a0
+  a0["Languages<br>(78)"]
 ```
 
 ## Languages
@@ -84,6 +82,8 @@ flowchart TD
   n49["Core"]
   n50(["CORE_TEXT"])
   n51["CoreText"]
+  n52(["CORE_UNITS"])
+  n53["CoreUnits"]
   n54(["CORE_PRIM_FAMILY"])
   n55["CorePrimFamily"]
   n56(["CORE_PRIM"])
@@ -173,6 +173,9 @@ flowchart TD
   n49 --> n48
   n50 --> n49
   n51 --> n50
+  n52 --> n49
+  n53 --> n52
+  n53 --> n51
   n55 --> n54
   n56 --> n49
   n56 --> n55
@@ -211,17 +214,6 @@ flowchart TD
   n77 --> n76
   n77 --> n75
 ```
-
-## Not in an area
-
-```mermaid
-flowchart TD
-  n52(["CORE_UNITS"])
-  n53["CoreUnits"]
-  n53 --> n52
-```
-
-It also needs Languages (2).
 
 ---
 

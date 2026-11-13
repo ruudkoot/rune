@@ -76,6 +76,7 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) | rhc's runtime, in Core (the haskell98 roadmap, M17; D24 to D26): what the Report's modules name and never define, written in Core over CorePrim's primitives, so that the Core interpreter and Core to Mid run one text and no SML stands below Haskell (D26's A). |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | Core as text, and back (the haskell98 roadmap, D2): the contract between the front end, which writes Core, and Core to Mid, which reads it. `show` prints a program for a dump (rhc --dump-after) or a test (tests/hs/core), and `parse` reads what it prints, so that print, read, print is the identity; rhc checks that at lint level 3. |
 | [`CORE_TO_MID`](sig/CORE_TO_MID.md) | Core to Mid (the haskell98 roadmap, M10): a Core program as a program of Mid's text, which rhc reads with Mid's own reader and gives to the passes from Mid on (MidPipeline), its list without expand. |
+| [`CORE_UNITS`](sig/CORE_UNITS.md) | Core in units (the haskell98 roadmap's M21): a program of several units, each a Core program that names what it takes of the others, a value by an import (`(import x TYPE)`) and a type by a copy of its declaration, joined into one program, which Core's interpreter runs and a compile whole takes. |
 | [`HS_AST`](sig/HS_AST.md) | The abstract syntax of Haskell 98, the Report's chapter 10, before names and fixity are resolved (the haskell98 roadmap's D28). |
 | [`HS_CHAR`](sig/HS_CHAR.md) | The classes of characters of the Haskell 98 Report's lexical syntax (chapter 2, section 9.2), by code point. |
 | [`HS_CLASSES`](sig/HS_CLASSES.md) | The classes and instances of Haskell 98's checker (the haskell98 roadmap's M13; the Report's 4.3): every class and instance of the program, for entailment. Instances are not names: every instance a program declares, or derives, is in force in all of it. |
@@ -105,12 +106,6 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | The lexemes of Haskell 98 (the Report's chapter 2 and section 9.2), with what lies between them. |
 | [`HS_TYPES`](sig/HS_TYPES.md) | The types of Haskell 98's checker (the haskell98 roadmap's M13, D31): kinds, types with unification variables, predicates and schemes, and first-order unification with levels. |
 | [`HS_USAGE`](sig/HS_USAGE.md) | What a compile of a unit reads of the units it imports (the haskell98 roadmap's M21, E13's obligations H1, H2, H7 and H9), noted where the renamer, the checker and the translations read it, so that a store's entry of the unit is used only where each read gives now what it gave then. A read is noted found or not: a name a module looks up and does not find is read too, since an import that comes to export it changes the module (5.5.2). The note is a no-op until a driver sets it (rhc's, src/rhc/iface.sml). |
-
-## Not yet assigned to an area
-
-| Signature |  |
-| --- | --- |
-| [`CORE_UNITS`](sig/CORE_UNITS.md) | Core in units (the haskell98 roadmap's M21): a program of several units, each a Core program that names what it takes of the others, a value by an import (`(import x TYPE)`) and a type by a copy of its declaration, joined into one program, which Core's interpreter runs and a compile whole takes. |
 
 ---
 

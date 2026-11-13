@@ -2,7 +2,9 @@
    each a Core program that names what it takes of the others, a value by
    an import (`(import x TYPE)`) and a type by a copy of its declaration,
    joined into one program, which Core's interpreter runs and a compile
-   whole takes. *)
+   whole takes.
+
+   Area: Languages *)
 signature CORE_UNITS =
 sig
   (* what makes units that do not join: a type two units declare apart, or
