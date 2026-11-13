@@ -86,6 +86,42 @@ struct
       | found => found
     end
 
+  (* A unit's entry in the layers alone, read only, where a compile keeps
+     nothing (no overlay): bin/rhc's compile against its snapshot *)
+  fun findIn ({layers, config, key = k, holds = h}
+              : {layers : string list, config : string, key : string, holds : head -> S.verdict})
+             : (head, sections) S.found =
+    let
+      fun inLayers ([], why) = S.Missed why
+        | inLayers (d :: ds, why) =
+            case S.find (format, h) (d, config, k) of
+              S.Missed w => inLayers (ds, if why = "" then w else why)
+            | found => found
+    in
+      inLayers (layers, "")
+    end
+
+  (* The configurations of the store dir that hold no entry of rhc's
+     identity `identity`: each a directory of dir whose units/about names
+     another identity, its files removed and the directories they leave
+     empty, as the store's trim removes what it removes (UnitStore's
+     filesUnder and prune), so that a layer made at each build of rhc keeps
+     its own entries alone; how many went *)
+  fun dropOthers (dir : string, identity : string) : int =
+    let
+      fun aboutOf d =
+        let val f = S.aboutFile (dir, d)
+        in (let val i = TextIO.openIn f in TextIO.inputAll i before TextIO.closeIn i end) handle IO.Io _ => "" end
+      fun ofIdentity text = List.exists (fn l => l = "identity " ^ identity) (String.fields (fn c => c = #"\n") text)
+      val configs = List.filter (fn d => (OS.FileSys.isDir (S.join (dir, d)) handle OS.SysErr _ => false)) (S.listDir dir)
+      val others = List.filter (fn d => let val a = aboutOf d in a <> "" andalso not (ofIdentity a) end) configs
+      fun drop d =
+        let val files = List.map #1 (S.filesUnder (S.join (dir, d), []))
+        in List.app (fn f => OS.FileSys.remove f handle OS.SysErr _ => ()) files; S.prune (dir, files) end
+    in
+      List.app drop others; length others
+    end
+
   (* A unit's entry kept in dir, the overlay or a layer being made: the sum
      of what it holds, which names its bytes (UnitMemo's link memo) *)
   fun store ({dir, settings, config, key = k, entry}

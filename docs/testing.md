@@ -540,7 +540,7 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `nightly`; `hs/accept/NAME` is `check`. The register way and the refused
   programs are also `quick`. The families that repeat a program
   (`hs/desugar/orders`, `hs/meta`'s relations, `hs/roundtrip/rhc`,
-  `hs/interp-vm`, and the shards of `hs/world` and `hs/hslint`) run in
+  `hs/interp-vm`, and the shards of `hs/snapshot` and `hs/hslint`) run in
   `check` a fixed sample, one program in `HsLang.sampleOneIn` (16), those
   whose name's FNV-1a hash is 0 modulo it, and never one of
   `lang-nightly.txt`; `nightly`, every program (`tests/runner/hslang.sml`,
@@ -727,26 +727,29 @@ checker infers. `bin/rhc --dump-evidence` prints a program's evidence records
 --dump-derived` the methods of its derived instances, which HsDerive makes as
 trees inside the checker (D33's C) and the checker checks as a user's.
 
-**The saved world** (`src/rhc/world.sml`, the roadmap's D45, its B;
-`tests/runner/hsworld.sml`). `bin/rhc` restores `bin/rhc.img`, rhc with its
-library read, named and checked, saved as a VM image as `bin/rune-repl.img`
-is, and reads and checks only a program's own modules against it; `make
-bin/rhc` makes the image again when rhc, the VM or a file of `share/rhc`
-changes, and `bin/rhc` restores it only where `bin/rhc.img.identity`, the
-identity of the rhc that made it, is `bin/rhc.identity`, `bin/rhc.rbc`'s.
-`bin/rhc --whole` reads and checks the library too, the reference, as does
-any option that changes the library's reading, and `bin/rhc --world` says
-which a check takes. The jobs `hs/world/*` hold the two to printing alike:
-`image` that `bin/rhc` goes from a world this rhc made, newer than every
-file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and `lang/K-of-4`
-every program of the directory checked both ways at `--lint=2`, with its
-`.cargs`, to the same standard output, standard error and status, so that
-HsLint replays each way the records of the modules the program reaches; the
-shards nightly, and in make check `accept/sample`, `errors/sample` and
-`lang/sample`, the sample of ruling 47 (*Tiers*);
-`bin/rune-test hs-world-one KIND NAME` judges one. The image is made at
-`RUNE_LINT=2`, so that HsLint replays every record of the library once. A
-mutant's tree (`hs-mutants`) has no image, so a mutant goes the whole way.
+**The snapshot** (`src/rhc/driver.sml`'s `RhcDriver.front`, the roadmap's
+D45, its A; rulings 66 and 67; `tests/runner/hssnapshot.sml`). `bin/rhc`
+takes the library's units from its snapshot, `bin/rhc.layer`, the library
+compiled once by make into a store it reads and never writes, and reads,
+names, checks and desugars only a program's own modules, a unit at a time
+from the interfaces of the units before it; at level 2 HsLint infers each
+unit after the parts of those before, the library's the snapshot's; and its
+Core is what `main` reaches of the units. `make bin/rhc` makes the snapshot
+again when rhc, the VM or a file of `share/rhc` changes, and keeps in it the
+configurations of the rhc that made it alone. `bin/rhc --whole` reads and
+checks the library too, the reference, as does any option that changes the
+library's reading. The jobs `hs/snapshot/*` hold the two to printing alike:
+`layer` that `bin/rhc.layer` holds the units of this rhc and no other's,
+newer than every file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and
+`lang/K-of-8` every program of the directory checked both ways at
+`--lint=2`, with its `.cargs`, to the same standard output, standard error
+and status, so that HsLint replays each way the records of the modules the
+program reaches, and each program of `tests/hs/lang` run both ways on
+Core's interpreter, every eighth with its Core compared too; the shards
+nightly, and in make check `accept/sample`, `errors/sample` and
+`lang/sample`, the sample of ruling 47 (*Tiers*); `bin/rune-test
+hs-snapshot-one KIND NAME` judges one. A mutant's tree (`hs-mutants`) has
+no snapshot, so a mutant makes the library's units itself.
 
 **Interfaces and usages** (`src/rhc/iface.sml`, `lib/language/haskell`'s
 `modiface.sml` and `usage.sml`, the roadmap's M21; `tests/runner/hsiface.sml`).
@@ -826,15 +829,13 @@ superclass is right. `faults` holds each rule to refusing its fault, as
 `astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, desugared,
 with its records, its Core and its own expected dump, is accepted, and with
 `RHC_HSLINT_FAULT=RULE`, which reads the first claim, record or Core type
-RULE checks corrupted, refused with `[RULE]`, from the saved world, with
-`--whole` and in units (`--units`, a store of its own each time). A program
-compiled from the saved world is checked with HsLint's inference of the
-library taken from the world, made once when the world is (`--make-world`,
-at level 2, D45): HsLint infers the program's own modules alone and replays
-only their records. In units each unit made at level 2 is checked so, after
-the parts of the units before it, and keeps what HsLint found of its own
-modules as a part of its entry; the library's comes from the snapshot's
-entry of its unit, made at `RUNE_LINT=2` (ruling 66). `levels` builds each fixture
+RULE checks corrupted, refused with `[RULE]`, against the snapshot, with
+`--whole` and in units with a store (`--units`, one of its own each time).
+Against the snapshot, and in units, each unit made at level 2 is checked
+after the parts of the units before it, HsLint inferring the unit's own
+modules alone and replaying only their records; the library's parts come
+from the snapshot's entries of its units, made once at `RUNE_LINT=2` (D45,
+rulings 66 and 67), and a unit kept in a store keeps its own. `levels` builds each fixture
 the dump infers at level 2 and at level 0, which must be the same bytes, as
 `levelsOne` holds Rune's builds: no check changes what rhc makes.
 `lint-level`, in make check and nightly, fails a run whose `RUNE_LINT` is

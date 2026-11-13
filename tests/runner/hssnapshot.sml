@@ -1,27 +1,28 @@
-(* rhc's saved world against the whole program (the haskell98 roadmap's
-   D45, its B; src/rhc/world.sml): bin/rhc restores bin/rhc.img, rhc with
-   its library read, its names resolved and its modules checked, and reads
-   and checks only a program's own modules; `--whole` reads and checks the
-   library too, the reference. The two must print the same.
+(* bin/rhc against the whole program (the haskell98 roadmap's D45, its A;
+   rulings 66 and 67; src/rhc/driver.sml, RhcDriver.front): bin/rhc takes
+   the library's units from its snapshot, bin/rhc.layer, made by make, and
+   reads, checks and desugars only a program's own modules, a unit at a
+   time; `--whole` reads and checks the library too, the reference. The
+   two must print the same.
 
-   - `hs/world/image`: bin/rhc goes from a saved world (`bin/rhc --world`
-     says so), made by this rhc (bin/rhc.img.identity is bin/rhc.identity,
-     rhc's own identity) and newer than every file of share/rhc, which
-     `make bin/rhc.img` holds it to.
-   - `hs/world/accept/K-of-N`, `hs/world/errors/K-of-N`,
-     `hs/world/lang/K-of-N`: every program of the directory checked both
-     ways, `bin/rhc --typecheck-only --lint=2` with its `.cargs`, prints
-     the same, standard output and error, and ends with the same status;
-     at level 2, the runner's own (RUNE_LINT=2), HsLint replays each way
-     the records of the modules the program reaches. A program's
-     own options that shape the library's reading (`--cycle-default=scc`)
+   - `hs/snapshot/layer`: bin/rhc.layer holds the units of this rhc
+     (`bin/rhc --identity`) and of no other, and is newer than every file
+     of share/rhc, which `make bin/rhc` holds it to.
+   - `hs/snapshot/accept/K-of-N`, `hs/snapshot/errors/K-of-N`,
+     `hs/snapshot/lang/K-of-N`: every program of the directory checked
+     both ways, `bin/rhc --typecheck-only --lint=2` with its `.cargs`,
+     prints the same, standard output and error, and ends with the same
+     status; at level 2, the runner's own (RUNE_LINT=2), HsLint replays
+     each way the records of the modules the program reaches, against the
+     snapshot each unit after the parts of those before. A program's own
+     options that shape the library's reading (`--cycle-default=scc`)
      send both ways whole. A program of tests/hs/lang is also run both
      ways on Core's interpreter, its `.stdin` its standard input, in a
      directory of its own, to the same output and status, and every
      eighth of a shard has its Core compared too (`--desugar-only
-     --dump-after=desugar`): the library desugared once in the image
-     (RhcDesugar.library) and a program on it (`programOn`) give the Core
-     a whole desugaring gives. tests/hs/lang's shards are twice as many.
+     --dump-after=desugar`): what main reaches of the units, the library's
+     taken from the snapshot, is the Core a whole desugaring gives.
+     tests/hs/lang's shards are twice as many.
 
    The programs of a directory are judged in `shards` jobs, the K-th
    taking every N-th from the K-th, each a line FAIL for each program
@@ -29,8 +30,8 @@
    takes the sample of ruling 47 (HsLang.sampled: one program in
    HsLang.sampleOneIn, by its name's hash, never one of lang-nightly.txt)
    (the roadmap's D56, the lead's rulings 45 and 47). `bin/rune-test
-   hs-world-one KIND NAME` judges one. *)
-structure HsWorldJobs =
+   hs-snapshot-one KIND NAME` judges one. *)
+structure HsSnapshotJobs =
 struct
   open Sh
 
@@ -57,7 +58,7 @@ struct
       "line " ^ Int.toString n ^ ": `" ^ x ^ "` " ^ way ^ ", `" ^ y ^ "` whole"
     end
 
-  val firstDifference = firstDifferenceBy "from the saved world"
+  val firstDifference = firstDifferenceBy "against the snapshot"
 
   (* a command of rhc's on a program both ways, `way` with `flags` and
      whole: `stage` names it, `args` are its own, before the program's
@@ -106,14 +107,14 @@ struct
       if core then compareStage way ("core", ["--desugar-only", "--dump-after=desugar"], stdin) (kind, p) else ()
     end
 
-  val world = {family = "hs/world", way = "from the saved world", flags = []}
+  val snapshot = {family = "hs/snapshot", way = "against the snapshot", flags = []}
 
   (* a program of the directory checked both ways *)
-  fun compareOne (kind, p) = compareWith world (kind, p)
+  fun compareOne (kind, p) = compareWith snapshot (kind, p)
 
   (* and for tests/hs/lang run, and its Core compared where `core` *)
   fun compareOneWith core (kind, p) =
-    (compareOne (kind, p); if kind = "lang" then compareRun world core (kind, p) else ())
+    (compareOne (kind, p); if kind = "lang" then compareRun snapshot core (kind, p) else ())
 
   fun shardOf (kind, k, n) =
     let
@@ -135,37 +136,44 @@ struct
   fun compareNamed (kind, name) =
     case List.find (fn (p : Lang.program) => #name p = name) (programs kind) of
       SOME p => compareOne (kind, p)
-    | NONE => fail ("hs/world: no program " ^ name ^ " in tests/hs/" ^ kind)
+    | NONE => fail ("hs/snapshot: no program " ^ name ^ " in tests/hs/" ^ kind)
 
-  (* the image: bin/rhc goes from it, and it is newer than what it is made of *)
-  fun image () =
+  (* the layer: of this rhc alone, and newer than what it is made of *)
+  fun layer () =
     let
-      val out = run ^ "/hs-world"
+      val out = run ^ "/hs-snapshot"
       val () = mkdirs out
-      val said = out ^ "/world.out"
-      val _ = exec {cmd = [rhc (), "--world"], dir = SOME root, stdin = "", stdout = said, stderr = said, timeout = 300}
-      val line = firstLine said
-      val img = fromRoot "bin/rhc.img"
+      val said = out ^ "/identity.out"
+      val _ = exec {cmd = [rhc (), "--identity"], dir = SOME root, stdin = "", stdout = said, stderr = said, timeout = 300}
+      val identity = firstLine said
+      val dir = fromRoot "bin/rhc.layer"
       fun mtime f = OS.FileSys.modTime f
       fun files dir =
         List.concat (List.map (fn e => let val p = dir ^ "/" ^ e in if isDir p then files p else [p] end) (entries dir))
+      (* the configurations of the layer, by the identity their about names *)
+      val identities =
+        if not (isDir dir) then []
+        else List.mapPartial
+          (fn c => case List.find (String.isPrefix "identity ") (lines (read (dir ^ "/" ^ c ^ "/units/about"))) of
+                     SOME l => SOME (String.extract (l, size "identity ", NONE))
+                   | NONE => NONE)
+          (entries dir)
       val stale =
-        if not (exists img) then ["bin/rhc.img is not there"]
-        else
-          List.mapPartial (fn f => if Time.> (mtime f, mtime img) then SOME (f ^ " is newer") else NONE)
-            (files (fromRoot "share/rhc"))
-      val identity = firstLine (fromRoot "bin/rhc.identity")
+        if not (isDir dir) then []
+        else List.mapPartial (fn f => if Time.> (mtime f, mtime dir) then SOME (f ^ " is newer") else NONE)
+               (files (fromRoot "share/rhc"))
     in
-      if not (String.isPrefix "rhc: a saved world" line) orelse String.isSubstring "(unused" line then
-        fail ("hs/world/image: bin/rhc does not go from a saved world: " ^ line)
-      else if identity = "" orelse identity <> firstLine (img ^ ".identity") then
-        fail ("hs/world/image: bin/rhc.img was made by another rhc than bin/rhc.rbc (identity " ^ identity ^ "): make bin/rhc")
-      else if not (String.isSubstring identity line) then
-        fail ("hs/world/image: the world bin/rhc restores is not of rhc " ^ identity ^ ": " ^ line)
-      else ();
+      if not (isDir dir) then fail "hs/snapshot/layer: bin/rhc.layer is not there: make bin/rhc"
+      else if identity = "" then fail ("hs/snapshot/layer: bin/rhc --identity says nothing")
+      else if not (List.exists (fn i => i = identity) identities) then
+        fail ("hs/snapshot/layer: bin/rhc.layer holds no unit of this rhc (identity " ^ identity ^ "): make bin/rhc")
+      else
+        case List.filter (fn i => i <> identity) identities of
+          [] => ()
+        | i :: _ => fail ("hs/snapshot/layer: bin/rhc.layer holds units of another rhc (identity " ^ i ^ ")");
       case stale of
         [] => ()
-      | f :: _ => fail ("hs/world/image: bin/rhc.img is stale, " ^ f ^ ": make bin/rhc")
+      | f :: _ => fail ("hs/snapshot/layer: bin/rhc.layer is stale, " ^ f ^ ": make bin/rhc")
     end
 
   (* ---- the tree ---- *)
@@ -179,7 +187,7 @@ struct
   fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
 
   val covers = ["covers:lib/language/haskell/*", "covers:src/rhc/*", "covers:share/rhc/*", "covers:tests/hs/accept/*",
-                "covers:tests/hs/lang/*", "covers:tests/hs/errors/*", "covers:tests/runner/hsworld.sml",
+                "covers:tests/hs/lang/*", "covers:tests/hs/errors/*", "covers:tests/runner/hssnapshot.sml",
                 "covers:rhc.build", "covers:rhc.plan"]
 
   fun tree () =
@@ -188,25 +196,25 @@ struct
       (* tests/hs/lang's, which run and compare Core too, in twice as many *)
       fun shardsOf kind = if kind = "lang" then 2 * shards else shards
       fun shardJobs kind =
-        Test.tag "check" (job (kind ^ "/sample", cmd ^ "hs-world-shard " ^ kind ^ " sample", 3600))
+        Test.tag "check" (job (kind ^ "/sample", cmd ^ "hs-snapshot-shard " ^ kind ^ " sample", 3600))
         :: List.tabulate (shardsOf kind, fn i =>
                                     let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString (shardsOf kind)
-                                    in Test.tag "nightly" (job (kind ^ "/" ^ k, cmd ^ "hs-world-shard " ^ kind ^ " " ^ k, 3600)) end)
+                                    in Test.tag "nightly" (job (kind ^ "/" ^ k, cmd ^ "hs-snapshot-shard " ^ kind ^ " " ^ k, 3600)) end)
     in
-      Test.describe "hs/world"
+      Test.describe "hs/snapshot"
         [tagged (["hs"] @ covers)
            (Test.requires ["rhc"]
               (Test.describe ""
-                 (Test.tag "check" (job ("image", cmd ^ "hs-world-image", 300))
+                 (Test.tag "check" (job ("layer", cmd ^ "hs-snapshot-layer", 300))
                   :: List.concat (List.map shardJobs kinds))))]
     end
 
   fun command args =
     case args of
-      ["hs-world-image"] => SOME image
-    | ["hs-world-one", kind, name] => SOME (fn () => compareNamed (kind, name))
-    | ["hs-world-shard", kind, "sample"] => SOME (fn () => compareSample kind)
-    | ["hs-world-shard", kind, kn] =>
+      ["hs-snapshot-layer"] => SOME layer
+    | ["hs-snapshot-one", kind, name] => SOME (fn () => compareNamed (kind, name))
+    | ["hs-snapshot-shard", kind, "sample"] => SOME (fn () => compareSample kind)
+    | ["hs-snapshot-shard", kind, kn] =>
         (case String.fields (fn c => c = #"-") kn of
            [k, "of", n] =>
              (case (Int.fromString k, Int.fromString n) of

@@ -10,8 +10,9 @@
    (its tokens, its tree, its check), against what the good rhc says. An
    output that differs exercises the mutant. What must see it are the jobs
    it names, run as they are in a tree of the root's files in which bin/rhc is
-   the mutant's (links but for bin/rhc.rbc, bin/rhc.img and tests/out, so
-   that the mutant goes the whole way, RhcWorld): one of them failing
+   the mutant's (links but for bin/rhc.rbc, bin/rhc.layer and tests/out,
+   so that the mutant goes the whole way, the library's units made by it,
+   not taken from the good rhc's snapshot): one of them failing
    is CAUGHT; none, UNCAUGHT, or UNEXERCISED where no output differs; a
    mutant that does not build is STILLBORN; one that names no job, its note
    arguing that no program tells it from rhc (`equivalent: ...`), is
@@ -89,7 +90,7 @@ struct
         List.app (fn e => if List.exists (fn x => x = e) except then ()
                           else Posix.FileSys.symlink {old = root ^ "/" ^ dir ^ e, new = t ^ "/" ^ dir ^ e})
                  (entries (root ^ "/" ^ dir))
-      val () = (link ("", ["bin", "tests"]); link ("bin/", ["rhc.rbc", "rhc.img"]); link ("tests/", ["out"]))
+      val () = (link ("", ["bin", "tests"]); link ("bin/", ["rhc.rbc", "rhc.layer"]); link ("tests/", ["out"]))
       val code = exec {cmd = ["cp", rbc, t ^ "/bin/rhc.rbc"], dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 60}
     in need (code = 0, "cannot copy " ^ rbc); t end
 

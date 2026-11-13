@@ -73,8 +73,10 @@ struct
     \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
     \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
     \                        names, fixity, kinds, types and classes\n\
-    \  --whole               read and check the library too, not from the saved world that\n\
-    \                        bin/rhc restores (bin/rhc.img, D45); --world says which\n\
+    \  --whole               read, check and desugar the library too, not take its units\n\
+    \                        from the snapshot bin/rhc names (bin/rhc.layer, D45)\n\
+    \  --snapshot DIR        a store the library's units are taken from, read only, by a\n\
+    \                        check and a compile of Haskell (bin/rhc gives it)\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
     \                        2 runs HsLint on a program of Haskell, 3 reads Core's text\n\
     \                        back after every stage (RUNE_LINT too)\n\

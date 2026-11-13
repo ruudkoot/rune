@@ -1169,16 +1169,35 @@ hello, in VM instructions: whole 145M; through the units, with nothing
 edited about 9M (the graph read 1M, the library taken 4.5M, Main taken
 2.3M, the link taken), with hello edited about 41M (Main compiled 20M, the
 link's reach 6M and its compile 9M), the program byte for byte the whole
-one. bin/rhc names a snapshot of its own (D45's A, ruling 66):
+one. bin/rhc names a snapshot of its own (D45's A, rulings 66 and 67):
 `bin/rhc.layer`, the library compiled once at make time from a Main that
-imports every module of it, at `RUNE_LINT=2`, which a compile in units reads
-after any `--layer` (`--snapshot`, which the wrapper gives). At level 2 a
+imports every module of it, at `RUNE_LINT=2`, which every check and compile
+reads (`--snapshot`, which the wrapper gives), after any `--layer` in units.
+`bin/rhc FILE.hs`, with `-o`, `--typecheck-only` or neither (a run on Core's
+interpreter), takes the library's units from it and reads, names, checks
+and desugars the program's own modules a unit at a time, keeping nothing
+(`RhcDriver.front`); `--units --store DIR` keeps them too; `--whole` reads
+the library as well, the reference. A unit's entry is kept in a
+configuration with no setting of the back end (the instruction set, the
+level, the width of int), since it holds no code, so one snapshot serves the
+stack machine and the register machine; the link's entry keeps them. A
+module's header is kept by the name it is read for and its text's hash, not
+its file, and `make` drops from the snapshot every configuration of another
+rhc (`rhc --prune-store`). At level 2 a
 unit made is checked by HsLint (`HsLint.check`) after what it found of the
 units before it, each unit's part of its entry joined (`HsLint.join`): its
 own modules inferred, their records replayed, its Core held to the
 inference; and what it found of its own modules is kept as a part of its
 entry (`HsLint.encode`), so the library, whose part the snapshot keeps, is
-never inferred again (ruling 66). Against a
+never inferred again (ruling 66). As it ships (ruling 67), `bin/rhc hello.hs
+-o OUT` at `RUNE_LINT=2` runs 59M VM instructions (42M at level 0; with
+`--typecheck-only` 20M; with `--whole` 288M), 1.26G of the machine's
+(`perf stat -e instructions:u`, the process whole) against 4.34G whole and
+1.81G from the saved world it replaced; over 51 run programs of
+`tests/hs/lang`, an even sample, its compile at level 2 is a median 0.76 of
+the saved world's (0.78 in all) and 0.46 of a whole one's in all, each
+program byte for byte the whole compile's. Loading `bin/rhc.rbc` is 0.24G of
+it, where restoring the world's image was 0.67G. Against a
 snapshot, with a fresh overlay, hello takes the library's unit from the layer
 unwritten and costs about 44M (the graph read 3M, its headers the layer's),
 then 9M again. A clause program's compile (13 of `tests/hs/lang`'s run

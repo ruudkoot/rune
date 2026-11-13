@@ -36,11 +36,12 @@
 
    - `hs/hslint/faults`: each rule of HsLint's comparison, of its replay
      and of its target check refuses its fault (as `astlintFaults` holds
-     AstLint's), from the saved world, where HsLint takes its inference of
-     the library from the world, whole (`--whole`), where it infers the
-     library too, and in units (`--units`, a store of its own each time),
-     where it takes the library's from the snapshot's entry of its unit
-     (ruling 66): tests/hs/hslint/faults.hs, desugared, its checker's
+     AstLint's), against bin/rhc's snapshot, where HsLint takes its
+     inference of the library from the parts of the snapshot's units,
+     whole (`--whole`), where it infers the library too, and in units with
+     a store (`--units`, one of its own each time), where it takes them
+     from the snapshot's entries too (rulings 66 and 67):
+     tests/hs/hslint/faults.hs, desugared, its checker's
      records replayed and held to the second inference, its Core held to
      it, and held by `--hslint-claims` to its own expected dump, is
      accepted, and with RHC_HSLINT_FAULT=RULE, which reads the first claim,
@@ -265,12 +266,12 @@ struct
     let
       val out = run ^ "/hs-hslint/faults"
       val () = mkdirs out
-      (* from the saved world, HsLint taking its inference of the library
-         from it, whole (`--whole`), inferring the library too, or in units
-         (`--units`), taking the library's part from the snapshot's entry,
-         in a store of its own each time so that the program's unit is
-         made: each fault refused all three ways *)
-      datatype way = World | Whole | Units
+      (* against the snapshot, HsLint taking its inference of the library
+         from the parts of its units, whole (`--whole`), inferring the
+         library too, or in units with a store (`--units`), one of its own
+         each time so that the program's unit is made: each fault refused
+         all three ways *)
+      datatype way = Snapshot | Whole | Units
       fun rhcWith (fault, file, way) =
         let
           val store = file ^ ".store"
@@ -279,14 +280,14 @@ struct
           execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
             {cmd = [fromRoot "bin/rhc"] @
                    (case way of
-                      World => ["--desugar-only"]
+                      Snapshot => ["--desugar-only"]
                     | Whole => ["--whole", "--desugar-only"]
                     | Units => ["--units", "--store", store, "-o", file ^ ".rbc"]) @
                    ["--lint=2", "--hslint-claims=" ^ faultClaims, faultProgram],
              dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
           before rmTree store
         end
-      val ways = [(World, ""), (Whole, ".whole"), (Units, ".units")]
+      val ways = [(Snapshot, ""), (Whole, ".whole"), (Units, ".units")]
       val listed = out ^ "/rules"
       val _ = exec {cmd = [fromRoot "bin/rhc", "--hslint-rules"], dir = SOME root, stdin = "", stdout = listed,
                     stderr = listed ^ ".err", timeout = 300}
