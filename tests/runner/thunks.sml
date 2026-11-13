@@ -251,9 +251,42 @@ struct
     end
 
   (* D18: a chain of 10^7 suspensions forced from its head fits the default stack *)
+  (* thunk_make in line in compiled code (haskell98 M9b), at tier 1 and at
+     tier 2: run with every function compiled, --jit-stats counts the
+     primitives the code called in C, an in-line one's slow path among
+     them. Of chain's 1,001 suspensions only the first, `delay (fn () =>
+     0)`, is of a closure that captures nothing, which the primitive
+     copies; the loop's 1,000 are made in line, so thunk_make is called in
+     C once at most *)
+  fun inLine k =
+    let
+      val dir = run ^ "/thunks/" ^ k ^ "/inline"
+      val () = scratch dir
+    in
+      case compile (k, dir, ("O1", []), false) of
+        SOME rbc =>
+          List.app (fn (w, opts) =>
+                      let val (code, _, err) = runIn (dir, w, "bin/runevm", opts @ ["--jit-stats"], rbc, args k)
+                          val called = List.filter (String.isSubstring "primitives called from code") (lines (read err))
+                          (* the count after the word thunk_make on that line, 0 where it is not there *)
+                          fun countAfter [] = 0
+                            | countAfter ("thunk_make" :: n :: _) = getOpt (Int.fromString n, 0)
+                            | countAfter (_ :: rest) = countAfter rest
+                          val calls = List.foldl (fn (l, a) => a + countAfter (String.tokens Char.isSpace l)) 0 called
+                      in
+                        if code <> 0 then fail (k, "--jit-stats " ^ w ^ ": exit " ^ Int.toString code ^ ": " ^ firstNonEmpty err)
+                        else if calls > 1 then
+                          fail (k, w ^ ": the code calls thunk_make in C " ^ Int.toString calls ^ " times: " ^ String.concatWith " " called)
+                        else ()
+                      end)
+                   [("tier1", ["--jit=all"]), ("tier2", ["--jit=all", "--jit-tier=2"])]
+      | NONE => ()
+    end
+
   fun chain () =
     let
       val () = ordinary "chain"
+      val () = inLine "chain"
       val dir = run ^ "/thunks/chain/deep"
       val () = scratch dir
     in

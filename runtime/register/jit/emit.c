@@ -460,6 +460,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_real_exp: case PRIM_real_ln: case PRIM_real_sin: case PRIM_real_cos: case PRIM_real_tan:
     case PRIM_real_atan: case PRIM_real_sinh: case PRIM_real_cosh: case PRIM_real_tanh:
     case PRIM_real_atan2: case PRIM_real_pow:
+    case PRIM_thunk_make:
         break;
     default:
         return 0;
@@ -778,6 +779,19 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_set_reg(M, d, T_CHAR, R_S1);
         break;
     case PRIM_ref_get: ms_load_obj(M, R_S0, x, K_REF, slow); ms_load_field(M, d, R_S0, 0); break;
+    /* a suspension of a fresh closure that captures, made in place: its
+       kind rewritten, the collector's bits kept (fastprim.h; prims.c,
+       p_thunk_make). One that captures nothing, of a length below 2, may be
+       a constant the program shares, and the primitive copies it: the slow
+       path (haskell98 M9b; E2's prototype had it in line) */
+    case PRIM_thunk_make:
+        ms_load_obj(M, R_S0, x, K_CLOSURE, slow);
+        ms_load_len(M, R_S1, R_S0);
+        as_cmp_ri(A, R_S1, 2);
+        as_jcc(A, CC_B, slow);
+        ms_set_kind(M, R_S0, K_THUNK, R_S1);
+        ms_set_reg(M, d, T_PTR, R_S0);
+        break;
     case PRIM_ref_set:
         ms_need_word(M, y);
         ms_load_obj(M, R_S0, x, K_REF, slow);
