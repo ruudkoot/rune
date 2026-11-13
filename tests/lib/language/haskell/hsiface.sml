@@ -3,8 +3,9 @@
    read back, every form of a module's interface among it: kinds, a kind
    and a type variable linked (written as what they are linked to), types,
    schemes with contexts, a synonym, a class, an instance, a constructor, a
-   field, a method, a definition with its parent, a fixity; and a string
-   with spaces and colons in it. What is read writes the same bytes again,
+   field, a method, a definition with its parent, a fixity, a constructor
+   with a strict field (3.15.2's, which a client's construction is held
+   to); and a string with spaces and colons in it. What is read writes the same bytes again,
    and stands for what a client reads alike (HsModIface.canonical); a
    string named twice is in the table once. *)
 structure HsIfaceTests =
@@ -30,14 +31,18 @@ struct
      fixities = [("v M +++", (HsAst.Infixr, 5)), ("v M <<", (HsAst.Infixl, 9))],
      checked =
        {values = [("v M f", {vars = 1, ctx = [{cls = "t M C", ty = a}], ty = T.TAp (T.TAp (T.TCon "->", a), listOf)}),
-                  ("v M g", {vars = 0, ctx = [], ty = linkedTy})],
+                  ("v M g", {vars = 0, ctx = [], ty = linkedTy}),
+                  ("v M MkU", {vars = 0, ctx = [], ty = T.TAp (T.TAp (T.TCon "->", T.TCon "Int"),
+                                                               T.TAp (T.TAp (T.TCon "->", T.TCon "Int"), T.TCon "t M U"))})],
         tycons = [{key = "t M T", kind = linkedKind, params = 1, synonym = NONE, cons = ["v M MkT"], newtype = true},
                   {key = "t M S", kind = T.KStar, params = 0, synonym = SOME (T.TAp (T.TCon "t M T", T.TCon "Int")),
-                   cons = [], newtype = false}],
+                   cons = [], newtype = false},
+                  {key = "t M U", kind = T.KStar, params = 0, synonym = NONE, cons = ["v M MkU"], newtype = false}],
         classes = [{key = "t M C", supers = ["t Prelude Eq"], methods = ["v M m"], kind = T.KStar}],
         instances = [{id = "t M C@t M T", cls = "t M C", tycon = "t M T", vars = 1, ctx = [{cls = "t M C", ty = a}],
                       derived = false, home = "M"}],
-        cons = [("v M MkT", {tycon = "t M T", arity = 1, fields = ["v M unT"]})],
+        cons = [("v M MkT", {tycon = "t M T", arity = 1, fields = ["v M unT"], strict = [false]}),
+                ("v M MkU", {tycon = "t M U", arity = 2, fields = ["", ""], strict = [true, false]})],
         fields = [("v M unT", {tycon = "t M T", ty = a, cons = [("v M MkT", 0)]})],
         methods = [("v M m", {cls = "t M C", scheme = {vars = 1, ctx = [], ty = T.TAp (T.TAp (T.TCon "->", a), a)}})]}}
 
@@ -49,6 +54,11 @@ struct
       val () = need (HsModIface.canonical back = HsModIface.canonical iface, "and stands for what the interface stood for")
       val () = need (#exports back = #exports iface andalso #defs back = #defs iface andalso #fixities back = #fixities iface,
                      "its exports, definitions and fixities as they were")
+      val () = need (List.map (fn (k, {strict, ...}) => (k, strict)) (#cons (#checked back)) =
+                       List.map (fn (k, {strict, ...}) => (k, strict)) (#cons (#checked iface)),
+                     "a constructor's strict fields read back as written")
+      val () = need (List.exists (fn (k, t) => k = "v M MkU" andalso String.isSubstring " !. " t) (HsModIface.canonical back),
+                     "and a strict field stands in what a client reads of the type")
       val whole = {modules = [iface, back], unfoldings = ["an unfolding\nof two lines"]}
       val again = HsIface.decode (HsIface.encode whole)
       val () = need (HsIface.encode again = HsIface.encode whole andalso #unfoldings again = #unfoldings whole
