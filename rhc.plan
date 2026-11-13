@@ -196,6 +196,7 @@ library language/haskell lib/language/haskell
     unit language/haskell:hslint_claims.sml lib/language/haskell/hslint_claims.sml ascii demand
     unit language/haskell:hslint_replay.sml lib/language/haskell/hslint_replay.sml ascii demand
     unit language/haskell:hslint_target.sml lib/language/haskell/hslint_target.sml ascii demand
+    unit language/haskell:hslint_codec.sml lib/language/haskell/hslint_codec.sml ascii demand
     unit language/haskell:hslint_sig.sml lib/language/haskell/hslint_sig.sml ascii demand
     unit language/haskell:hslint.sml lib/language/haskell/hslint.sml ascii demand
   end
@@ -305,7 +306,7 @@ provenance
   input lib/language/haskell/names.build 865f359abc0c0d488bf56afea3d97d8ed86edc3c53b7c39997433996a9119960
   input lib/language/haskell/types.build 13df92c0a6b5c865dcaa065fb1b66bfaa90fb492b51b563dc4b7648d0bdd5826
   input lib/language/haskell/core.build af9419b8663fcd975e48babc55f1620ab8ba15d2766b50c395429795d7d03eaf
-  input lib/language/haskell/hslint.build 111f509ac8f0072d070441ed422f8dd0b55dfb6dc0f2fbb926c909cf24e8c5a5
+  input lib/language/haskell/hslint.build 7e8f3acbc749b534e692c60e721770baf553a7663faee36f84a769f4af119198
   input lib/language/haskell/desugar.build 2f2d4325b72d7b38c53d61974f92d02243122fcd36b98f4a6923b2353266481a
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
 end

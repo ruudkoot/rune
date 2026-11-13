@@ -31,3 +31,8 @@ ordEq x y = x == y
 
 main :: IO ()
 main = print (T 10 == T 20, m, size, eqList [1] [2], ordEq 'a' 'b', N 1 + 2)
+
+-- a class of two methods, whose dictionary's slots [slot] reads in a program's own module
+class Shape a where
+  area :: a -> Int
+  label :: a -> String
