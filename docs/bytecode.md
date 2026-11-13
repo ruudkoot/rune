@@ -76,12 +76,14 @@ representation of register d of f disagrees with the code at pc").
 
 **The fingerprint** says which instruction set a file is of. `runeisa`
 works it out from the descriptions of `src/isa` -- the instructions' names,
-operands, stack effects and flow, and the primitives' names and arities, in
-order -- and writes it into the generated tables; a VM refuses a file of
+operands, stack effects and flow, and the primitives' names, arities and results'
+representations (what the loader holds a primitive's register to), in order -- and writes it into the generated tables; a VM refuses a file of
 another instruction set with "bytecode of another instruction set", and an
 image of one (whose magic carries the fingerprint) as not an image of this
-`runevm`. So an opcode or a primitive may be added, removed or moved: a file
-made before is refused rather than read with another meaning. The
+`runevm`. So an opcode or a primitive may be added, removed or moved, or a
+primitive's result change its representation (`file_flush` and `file_close`,
+from unit to bool): a file made before is refused rather than read with
+another meaning. The
 instructions of suspensions (`FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE`) and
 the primitives of `IntInf.int` are in both sets' fingerprints, which
 `runtime/stack/opcodes.def` and `runtime/register/regs.def` say at their
