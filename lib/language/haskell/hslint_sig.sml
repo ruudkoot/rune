@@ -104,10 +104,12 @@ sig
      functions, as Core's types. *)
   type target
 
-  (* HsLint's inference of a library's modules, as a saved world keeps it.
+  (* HsLint's part of a unit: what one check inferred alone.
 
-     It is their environment and what their inference found, from which a
-     program's own modules are inferred alone (D45). *)
+     It is the environment's entries of the modules it inferred, what their
+     inference found and the target check's data of them: a saved world's
+     library, or a unit's in the store, from which the modules after it are
+     inferred alone (D45). *)
   type library
 
   (* `check {groups, main, cycleDefault, records, claims, where_, fault,
@@ -117,9 +119,8 @@ sig
      With `library`, the groups of its modules are not inferred again: the
      rest are inferred after its environment and findings, and only the
      records of those modules are replayed, the library's having been
-     replayed where the library was inferred. The report is of the modules
-     inferred. Where every module of `groups` is the library's, the result
-     holds their inference, for a saved world; NONE otherwise.
+     replayed where it was inferred. The report is of the modules inferred,
+     and `part` what was inferred of them alone, for the units after them.
 
      It gives what the target check reads with the report. With `records`,
      the checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees
@@ -135,7 +136,19 @@ sig
                records : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
                claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}
-              -> {report : report, target : target, library : library option}
+              -> {report : report, target : target, part : library}
+
+  (* `join parts` is the parts of units put together, in order: a later
+     part's entry of a name wins, and the rest are appended. *)
+  val join : library list -> library
+
+  (* `encode part` is `part` as bytes, in Pickle's form, and `decode` the
+     part they are.
+
+     Raises: `Decode` where the bytes are no part. *)
+  exception Decode of string
+  val encode : library -> string
+  val decode : string -> library
 
   (* `targetRules` is each rule of the target check with what it holds,
      its name the first word of its breach's message, in brackets:

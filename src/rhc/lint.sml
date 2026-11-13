@@ -94,7 +94,7 @@ struct
     Pass.checkAt ("hslint", 2)
       (fn () =>
          let
-           val {target, library = made, ...} =
+           val {target, part, ...} =
              HsLint.check {groups = groups (g, r), main = mainOf g, cycleDefault = cycleDefault,
                            records = Option.map (fn env => {table = #evidence r, env = env, derived = #derived r}) (#types r),
                            claims = Option.map (HsLint.claims o readFile) (!claims),
@@ -103,7 +103,13 @@ struct
              handle HsLint.Refused (span, msg) => raise Error.Bug (place span ^ ": " ^ msg)
          in
            kept := SOME target;
-           case made of SOME l => library := SOME l | NONE => ()
+           (* the library's check alone, as the saved world is made, keeps its
+              part for the programs from the world: through its bytes, as a
+              unit's entry in the store keeps it (D45), so that every program
+              from the world holds HsLint's codec to the inference too *)
+           if List.all (fn {library, ...} : HsLint.module => library) (List.concat (groups (g, r))) then
+             library := SOME (HsLint.decode (HsLint.encode part))
+           else ()
          end)
       ()
 

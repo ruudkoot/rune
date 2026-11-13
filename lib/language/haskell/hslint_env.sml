@@ -955,6 +955,53 @@ struct
      defaults := #defaults s; instances := #instances s; classDecls := #classDecls s; prelude := #prelude s;
      programModules := #programModules s; C.classes := #classes s; C.insts := #insts s; C.numId := #numId s)
 
+  (* the module of a key, `QUAL NAME` *)
+  fun qualOf (k : string) = case CharVector.findi (fn (_, c) => c = #" ") k of SOME (i, _) => String.substring (k, 0, i)
+                                                                          | NONE => ""
+
+  (* `part (ids, files, fromNothing)`: what the environment holds of the
+     modules `ids`, whose files are `files`: a unit's own, beside the units
+     before it; the unit built from nothing also has the Prelude's identity
+     and HsLint's own instances, of no file *)
+  fun part (ids : string list, files : string list, fromNothing : bool) : saved =
+    let
+      fun mine q = List.exists (fn i => i = q) ids
+      fun filteri f m = M.foldl (fn (k, v, acc) => if f k then M.insert (acc, k, v) else acc) M.empty m
+      fun keyed m = filteri (fn k => mine (qualOf k)) m
+      fun ofFile ({span = {file, ...}, ...} : C.inst) =
+        if file = "" then fromNothing else List.exists (fn f => f = file) files
+    in
+      {tydefs = keyed (!tydefs), cons = keyed (!cons), fields = keyed (!fields), methods = keyed (!methods),
+       classKinds = keyed (!classKinds), defaults = filteri mine (!defaults),
+       instances = List.filter (fn {module, ...} : instance => mine module) (!instances),
+       classDecls = List.filter (fn {module, ...} : classDecl => mine module) (!classDecls),
+       prelude = if fromNothing then !prelude else "",
+       programModules = filteri mine (!programModules),
+       classes = keyed (!C.classes),
+       insts = M.foldl (fn (k, is, acc) => case List.filter ofFile is of [] => acc | xs => M.insert (acc, k, xs))
+                 M.empty (!C.insts),
+       numId = if fromNothing then !C.numId else NONE}
+    end
+
+  (* parts put together, in order: a key of a later part wins, lists are
+     appended, the instances of one class the earlier part's first *)
+  fun join (parts : saved list) : saved =
+    let
+      fun union f = List.foldl (fn (p, m) => M.foldl (fn (k, v, m) => M.insert (m, k, v)) m (f p)) M.empty parts
+      val insts = List.foldl (fn (p, m) => M.foldl (fn (k, is, m) => M.insert (m, k, getOpt (M.find (m, k), []) @ is))
+                                             m (#insts p))
+                    M.empty parts
+      val classes = union #classes
+      val prelude = case List.find (fn p => #prelude p <> "") parts of SOME p => #prelude p | NONE => ""
+    in
+      {tydefs = union #tydefs, cons = union #cons, fields = union #fields, methods = union #methods,
+       classKinds = union #classKinds, defaults = union #defaults,
+       instances = List.concat (List.map #instances parts), classDecls = List.concat (List.map #classDecls parts),
+       prelude = prelude, programModules = union #programModules, classes = classes, insts = insts,
+       numId = let val num = {qual = if prelude = "" then "haskell98:Prelude" else prelude, name = "Num"} : T.id
+               in if M.member (classes, T.idKey num) then SOME num else NONE end}
+    end
+
   (* `build modules` is the environment of `modules`, from nothing;
      `more modules`, of `modules` beside what the environment holds, the
      modules they import among it *)

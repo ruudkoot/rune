@@ -1,4 +1,5 @@
 KIND	Main	N :: *
+KIND	Main	Shape :: *
 KIND	Main	T :: * -> *
 DERIVED	Main	Eq N
 DERIVED	Main	Eq a => Eq (T a)
