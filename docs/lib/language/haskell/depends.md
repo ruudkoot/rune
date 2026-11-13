@@ -23,7 +23,9 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(78)"]
+  a0["Languages<br>(76)"]
+  a1["Collections<br>(2)"]
+  a0 -- 5 --> a1
 ```
 
 ## Languages
@@ -52,8 +54,6 @@ flowchart TD
   n19["HsDump"]
   n20(["HS_USAGE"])
   n21["HsUsage"]
-  n22(["HS_STRING_MAP"])
-  n23["HsStringMap"]
   n24(["HS_MODULES"])
   n25["HsModules"]
   n26(["HS_FIXITY"])
@@ -134,9 +134,7 @@ flowchart TD
   n18 --> n13
   n19 --> n18
   n21 --> n20
-  n23 --> n22
   n24 --> n13
-  n24 --> n23
   n25 --> n24
   n25 --> n21
   n26 --> n13
@@ -144,18 +142,15 @@ flowchart TD
   n28 --> n25
   n29 --> n28
   n31 --> n30
-  n31 --> n23
   n33 --> n32
   n34 --> n33
   n35 --> n34
-  n35 --> n23
   n35 --> n21
   n36 --> n1
   n36 --> n33
   n37 --> n36
   n37 --> n35
   n38 --> n13
-  n38 --> n23
   n38 --> n33
   n39 --> n38
   n39 --> n25
@@ -202,7 +197,6 @@ flowchart TD
   n70 --> n49
   n71 --> n51
   n71 --> n70
-  n71 --> n23
   n72 --> n71
   n72 --> n43
   n73 --> n72
@@ -213,6 +207,17 @@ flowchart TD
   n77 --> n57
   n77 --> n76
   n77 --> n75
+```
+
+It also needs Collections (5).
+
+## Collections
+
+```mermaid
+flowchart TD
+  n22(["HS_STRING_MAP"])
+  n23["HsStringMap"]
+  n23 --> n22
 ```
 
 ---

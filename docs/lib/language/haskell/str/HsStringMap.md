@@ -1,6 +1,6 @@
 # structure HsStringMap
 
-[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; [Structures](../structures.md) &rsaquo; **HsStringMap**
+[Haskell 98 front end](../README.md) &rsaquo; Collections &rsaquo; [Structures](../structures.md) &rsaquo; **HsStringMap**
 
 |  |  |
 | --- | --- |

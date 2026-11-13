@@ -102,10 +102,15 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_RENAME`](sig/HS_RENAME.md) | Haskell 98's renamer (the haskell98 roadmap's M12): every name of a module's tree resolved to what it stands for, in the scope that [`HsModules`](str/HsModules.md) gives the module and the scopes its own bindings make. |
 | [`HS_SCC`](sig/HS_SCC.md) | Strongly connected components, for the dependency analyses of Haskell 98's checker: of type declarations for kinds (4.6), and of bindings for declaration groups (4.5.1). |
 | [`HS_SOURCE`](sig/HS_SOURCE.md) | Haskell source text: spans, positions and the errors of the front end. |
-| [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | Maps keyed by strings, as the front end's scopes, exports and tables need them: persistent, ordered by the keys, and balanced (red-black trees, inserting only), so that a fold visits the keys in order and a result does not depend on the order things were added. |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | The lexemes of Haskell 98 (the Report's chapter 2 and section 9.2), with what lies between them. |
 | [`HS_TYPES`](sig/HS_TYPES.md) | The types of Haskell 98's checker (the haskell98 roadmap's M13, D31): kinds, types with unification variables, predicates and schemes, and first-order unification with levels. |
 | [`HS_USAGE`](sig/HS_USAGE.md) | What a compile of a unit reads of the units it imports (the haskell98 roadmap's M21, E13's obligations H1, H2, H7 and H9), noted where the renamer, the checker and the translations read it, so that a store's entry of the unit is used only where each read gives now what it gave then. A read is noted found or not: a name a module looks up and does not find is read too, since an import that comes to export it changes the module (5.5.2). The note is a no-op until a driver sets it (rhc's, src/rhc/iface.sml). |
+
+## Collections
+
+| Signature |  |
+| --- | --- |
+| [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | Maps keyed by strings, as the front end's scopes, exports and tables need them: persistent, ordered by the keys, and balanced (red-black trees, inserting only), so that a fold visits the keys in order and a result does not depend on the order things were added. |
 
 ---
 
