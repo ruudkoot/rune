@@ -83,8 +83,10 @@ struct
                   SOME r => r | NONE => raise HsOracles.Failed ("no run of " ^ id)
       val c = case List.find (fn (c : HsCorpus.candidate) => #id c = id) (HsCorpus.candidates ()) of
                 SOME c => c | NONE => raise HsOracles.Failed ("no candidate " ^ id)
-      val work = out () ^ "/run/" ^ id
-      val log = out () ^ "/logs/" ^ id
+      (* a directory of each job's own, by its label: a program's run, its
+         Sestoft run and its levels run may go at once *)
+      val work = out () ^ "/run/" ^ label ^ "/" ^ id
+      val log = out () ^ "/logs/" ^ label ^ "/" ^ id
       val variant = case HsCorpus.field row "variant" of "" => "h98" | v => v
       val {files, rewritable, ...} = HsCorpus.closureOf c
       val expected = HsSource.universal (read (HsCorpus.tree (HsCorpus.field row "expected")))
