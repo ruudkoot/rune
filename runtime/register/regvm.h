@@ -53,6 +53,16 @@ void reg_barrier_arm(VM *vm);
 enum { REG_PAP = -1, REG_APPLY_ENTERED = 0, REG_APPLY_VALUE = 1 };
 int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc);
 extern uint64_t reg_apply_counts[4];
+/* The general path's common cases compiled (D15 C tuned; jit/emit.c,
+   apply_fast): the function <apply K R> of a program, or UINT32_MAX; and
+   the compiled uses, counted where RUNE_APPLY_STATS is set
+   (reg_apply_stats): a partial application made, one entered with the
+   arguments it wants by a call and by a tail call, a closure of one
+   over-applied through its stub by a call and by a tail call, and a
+   partial application made of one given fewer than it wants */
+uint32_t reg_apply_stub(const VM *vm, uint32_t k, uint32_t r);
+extern int reg_apply_stats;
+extern uint64_t jit_apply_fast_counts[6];
 
 /* The byte length of the instruction at code, or 0 for an invalid opcode. */
 static inline uint32_t rop_length(const uint8_t *code) {

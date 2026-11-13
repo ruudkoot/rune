@@ -369,6 +369,11 @@ void ms_handback_rax(Masm *m);                                     /* with the a
    takes the bump back first (ms_alloc_undo). */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow);
 void ms_alloc_undo(Masm *m, int kind, uint32_t n);
+/* the same for an object of fields whose number is in register len and
+   whose size (sizeof(Obj) and a word a field) in register size, neither
+   R_S0 nor R_S1 nor kept by it, its contag 0; to slow with the bump undone
+   (D15 C tuned: a partial application of another's held values) */
+void ms_alloc_dynamic(Masm *m, int kind, int len, int size, AsmLabel *slow);
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s) */
 void ms_need_unmarked(Masm *m, AsmLabel *slow);                     /* to slow while the low-pause collector's cycle marks (the barrier's flag; before a store) */
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s);         /* a store into an object that exists, through the barrier: field i of the object in obj := R(s); obj is not kept; R_S2, R_S3 and R_S6 clobbered */

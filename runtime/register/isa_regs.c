@@ -809,7 +809,7 @@ int vm_isa_after_load(VM *vm, char *err, size_t errlen) {
         pc += l;
     }
     { static int once; const char *e = getenv("RUNE_APPLY_STATS");
-      if (e && (*e == '1' || *e == '2') && !once) { once = 1; apply_sites_on = *e == '2'; atexit(apply_stats); } }
+      if (e && (*e == '1' || *e == '2') && !once) { once = 1; apply_sites_on = *e == '2'; reg_apply_stats = 1; atexit(apply_stats); } }
     if (!any) return 1;
     for (uint32_t f = 0; f < p->nfuncs; f++)
         if (p->funcs[f].name && strncmp(p->funcs[f].name, "<apply ", 7) == 0) return 1;   /* there already (an image's program) */
@@ -858,6 +858,13 @@ static void apply_enter(VM *vm, uint32_t f, Value cv, size_t t, size_t from, uin
 }
 
 uint64_t reg_apply_counts[4];   /* the general path's: saturated, partial, over-applied, a partial application's */
+int reg_apply_stats;
+uint64_t jit_apply_fast_counts[6];
+
+uint32_t reg_apply_stub(const VM *vm, uint32_t k, uint32_t r) {
+    if (!vm->apply_stubs || k < 1 || r < 1 || k > vm->apply_kmax || r > vm->apply_rmax) return UINT32_MAX;
+    return vm->apply_stubs[(size_t)(k - 1) * vm->apply_rmax + (r - 1)];
+}
 
 /* with RUNE_APPLY_STATS=2, the general path's uses by site as well: the
    calling function, the function of the closure applied (a partial
@@ -903,6 +910,10 @@ static void apply_stats(void) {
     fprintf(stderr, "runevm: apply: general %llu saturated, %llu partial, %llu over-applied, %llu partial applications applied\n",
             (unsigned long long)reg_apply_counts[0], (unsigned long long)reg_apply_counts[1],
             (unsigned long long)reg_apply_counts[2], (unsigned long long)reg_apply_counts[3]);
+    fprintf(stderr, "runevm: apply: compiled %llu partial, %llu partial applications applied, %llu in tail calls, %llu over-applied, %llu in tail calls, %llu partial of partial\n",
+            (unsigned long long)jit_apply_fast_counts[0], (unsigned long long)jit_apply_fast_counts[1],
+            (unsigned long long)jit_apply_fast_counts[2], (unsigned long long)jit_apply_fast_counts[3],
+            (unsigned long long)jit_apply_fast_counts[4], (unsigned long long)jit_apply_fast_counts[5]);
 }
 
 int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc) {

@@ -1684,6 +1684,38 @@ void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
 void ms_alloc_undo(Masm *m, int kind, uint32_t n) {
     if (m->alloc_reg) as_sub_ri(&m->a, BASEI, (int32_t)obj_size_of(kind, n));
 }
+void ms_alloc_dynamic(Masm *m, int kind, int len, int size, AsmLabel *slow) {
+    int role = ms_role(m, MR_ALLOC);
+    if (m->alloc_reg) {
+        AsmLabel undo, done; as_label_init(&undo); as_label_init(&done);
+        as_mov_rr(&m->a, R_S0, BASEI);
+        as_add_rr(&m->a, BASEI, size);
+        as_cmp_rm(&m->a, BASEI, VMR, OFF(alloc_limit));
+        as_jcc(&m->a, CC_A, &undo);
+        as_add_mi(&m->a, VMR, OFF(objects_allocated), 1);
+        as_jmp(&m->a, &done);
+        as_bind(&m->a, &undo);
+        as_sub_rr(&m->a, BASEI, size);
+        as_jmp(&m->a, slow);
+        as_bind(&m->a, &done);
+        as_label_free(&undo); as_label_free(&done);
+    } else {
+        as_cmp_mi(&m->a, VMR, OFF(gc_stress), 0);
+        as_jcc(&m->a, CC_NE, slow);
+        as_ld64(&m->a, R_S0, VMR, OFF(alloc.used));
+        as_lea(&m->a, R_S1, R_S0, size, 1, 0);
+        as_cmp_rm(&m->a, R_S1, VMR, OFF(alloc.size));
+        as_jcc(&m->a, CC_A, slow);
+        as_st64(&m->a, VMR, OFF(alloc.used), R_S1);
+        as_add_rm_to_mem(&m->a, VMR, OFF(bytes_allocated), size);
+        as_add_mi(&m->a, VMR, OFF(objects_allocated), 1);
+        as_add_rm(&m->a, R_S0, VMR, OFF(alloc.from));
+    }
+    as_st32i(&m->a, R_S0, 0, (int32_t)(uint32_t)kind);
+    as_st32(&m->a, R_S0, 4, len);
+    m->nfields = UINT32_MAX;
+    ms_role(m, role);
+}
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s) {
     if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
     ms_store_value(m, obj, FIELD_OFF(i), s);

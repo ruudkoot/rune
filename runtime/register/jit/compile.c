@@ -231,7 +231,12 @@ static int jit_h_apply(VM *vm) {
     else for (uint32_t i = 0; i < n; i++) vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 9 + 4 * i)]);
     uint32_t ret_pc = vm->pc + rop_length(at);
     JitProgram *jit = jit_program(vm);
-    if (reg_apply(vm, n, tail, ret_pc) == REG_APPLY_ENTERED) {
+    int r = reg_apply(vm, n, tail, ret_pc);
+    /* a frame made, or one replaced at its base by a tail call, or the slot of
+       the RESULT's register written (below): --gc-verify's comparison of
+       the homes C kept with their slots, after this, is not to be made */
+    vm->verify_gc = (size_t)-1;
+    if (r == REG_APPLY_ENTERED) {
         /* the function entered: into its code where it has some, else the interpreter */
         const CodeObject *co = &jit->codes[vm->func];
         if (co->entry) { jit->at = co->entry; return RUN_NATIVE; }
