@@ -132,6 +132,7 @@ struct
   fun fresh prefix = (counter := !counter + 1; prefix ^ Int.toString (!counter))
 
   fun renumber n = (if !counter < n then counter := n else (); T.renumber n)
+  fun numberFrom n = (counter := n; T.numberFrom n)
 
   (* the environment of the unit being checked *)
   val genv : env ref = ref (initial {primitives = []})

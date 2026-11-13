@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_INFER`](../sig/HS_INFER.md) |
 | Status | required |
-| Members | 11 |
+| Members | 12 |
 | Tests | not listed |
 | Source | [lib/language/haskell/infer.sml](../../../../../lib/language/haskell/infer.sml) |
 
@@ -30,6 +30,7 @@ What each means is on [`HS_INFER`](../sig/HS_INFER.md); the types are this struc
 | val | [`classes`](../sig/HS_INFER.md#val-classes) | `env -> HsClasses.env` |
 | val | [`extend`](../sig/HS_INFER.md#val-extend) | `env * part -> env` |
 | val | [`initial`](../sig/HS_INFER.md#val-initial) | `{primitives : string list} -> env` |
+| val | [`numberFrom`](../sig/HS_INFER.md#val-numberfrom) | `int -> unit` |
 | val | [`part`](../sig/HS_INFER.md#val-part) | `env * (string -> bool) -> part` |
 | val | [`renumber`](../sig/HS_INFER.md#val-renumber) | `int -> unit` |
 | val | [`valueScheme`](../sig/HS_INFER.md#val-valuescheme) | `env * string -> {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int} option` |

@@ -27,7 +27,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | 11 | 11 | 100% | 7 | 7 |
 | [`HS_FIXITY`](sig/HS_FIXITY.md) | 4 | 4 | 100% | 2 | 2 |
 | [`HS_IFACE`](sig/HS_IFACE.md) | 6 | 6 | 100% | 4 | 4 |
-| [`HS_INFER`](sig/HS_INFER.md) | 11 | 11 | 100% | 7 | 7 |
+| [`HS_INFER`](sig/HS_INFER.md) | 12 | 12 | 100% | 8 | 8 |
 | [`HS_KINDS`](sig/HS_KINDS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_LAYOUT`](sig/HS_LAYOUT.md) | 13 | 13 | 100% | 11 | 11 |
 | [`HS_LEXER`](sig/HS_LEXER.md) | 3 | 3 | 100% | 1 | 1 |
@@ -43,9 +43,9 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_SOURCE`](sig/HS_SOURCE.md) | 10 | 10 | 100% | 6 | 6 |
 | [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 8 | 8 | 100% | 6 | 6 |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
-| [`HS_TYPES`](sig/HS_TYPES.md) | 42 | 42 | 100% | 28 | 28 |
+| [`HS_TYPES`](sig/HS_TYPES.md) | 43 | 43 | 100% | 29 | 29 |
 | [`HS_USAGE`](sig/HS_USAGE.md) | 5 | 5 | 100% | 4 | 4 |
-| **all** | 444 | 444 | 100% | 280 | 280 |
+| **all** | 446 | 446 | 100% | 282 | 282 |
 
 ## Members a signature describes
 
@@ -54,7 +54,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-39 structures have a page, with 444 members, of which 444 (100%) are described by a signature.
+39 structures have a page, with 446 members, of which 446 (100%) are described by a signature.
 
 ## Examples that are run
 
