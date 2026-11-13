@@ -103,12 +103,9 @@ struct
       val mark = ref (!Pass.instructions ())
       fun since () = let val n = !Pass.instructions () in (n - !mark) before mark := n end
       fun counted what = if #show opts then what ^ ", " ^ Int.toString (since ()) ^ " instructions" else what
-      val g = G.load {roots = #roots opts, dotted = false}
-      val () = if #show opts then TextIO.output (TextIO.stdErr, "rhc: " ^ counted "the graph read" ^ "\n") else ()
       val fixpoint = HsModules.Least
       val check = SOME HsInfer.PerModule
       val evidence = HsEvidence.empty ()
-      val leaves = N.leavesOf (List.concat (#groups g))
       fun say (name, what) =
         if #show opts then TextIO.output (TextIO.stdErr, "rhc: unit " ^ name ^ ": " ^ counted what ^ "\n") else ()
       val extra = [("strings", case #strings opts of CoreRuntime.Lazy => "lazy" | CoreRuntime.Whole => "whole"), ("driver", "hs")]
@@ -129,6 +126,60 @@ struct
                                              level = RhcStoreConfig.level ()},
                                      sections = sections}}
         | NONE => Pickle.hash (String.concatWith "\000" (#iface sections :: List.tabulate (#count sections, #parts sections)))
+      (* The graph read by its modules' headers (RhcGraph.scan): a module's
+         text hashed by the stat memo where the store has one (UnitStore's),
+         its header kept in the store by that hash, so that a module whose
+         unit is taken with no usage asked of its modules is never read
+         past its stat, and none is parsed but where its unit is made or its
+         usages asked *)
+      val memo = Option.map (fn dir => UnitStore.memoAt (dir, config)) (#store opts)
+      fun headerKey {file, mode, hash} = RhcStore.key ("module:" ^ mode, [(file, hash)])
+      (* a header as bytes, and the header of bytes, NONE where they are
+         not one *)
+      fun headerText ({name, at, imports} : G.header) : string =
+        let
+          val w = Pickle.writer ()
+          fun span (w, {file, start, stop} : HsSource.span) = (Pickle.string (w, file); Pickle.int (w, start); Pickle.int (w, stop))
+        in
+          Pickle.string (w, name); span (w, at);
+          Pickle.list (fn (w, (m, s)) => (Pickle.string (w, m); span (w, s))) (w, imports);
+          Pickle.contents w
+        end
+      fun headerOf (s : string) : G.header option =
+        let
+          val r = Pickle.reader s
+          fun span r = let val f = Pickle.rstring r val a = Pickle.rint r in {file = f, start = a, stop = Pickle.rint r} end
+          val name = Pickle.rstring r
+          val at = span r
+          val imports = Pickle.rlist (fn r => let val m = Pickle.rstring r in (m, span r) end) r
+        in
+          if Pickle.atEnd r then SOME {name = name, at = at, imports = imports} else NONE
+        end
+        handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE
+      val reader : G.reader =
+        {hash = fn {file, text, ...} =>
+                  case memo of
+                    SOME m => UnitStore.hashBy m (file, "rhc", text, Pickle.hash)
+                  | NONE => Pickle.hash (text ()),
+         header = fn k =>
+                    case lookup (headerKey k, fn _ => UnitStore.Stands) of
+                      SOME (UnitStore.Found ({sections, ...}, _)) => headerOf (#iface sections)
+                    | SOME (UnitStore.FoundBehind ({sections, ...}, _)) => headerOf (#iface sections)
+                    | _ => NONE,
+         keep = fn (k, h) =>
+                  if isSome (#store opts) then ignore (keep (headerKey k, [], {iface = headerText h, parts = fn _ => "", count = 0}))
+                  else ()}
+      val g = G.scan {roots = #roots opts, dotted = false, known = M.empty, library = false, reader = reader}
+      val () = case List.filter (fn (d : G.diag) => not (#library d)) (#diags g) of
+                 d :: _ => raise Failed (#msg d)
+               | [] => ()
+      val () = if #show opts then TextIO.output (TextIO.stdErr, "rhc: " ^ counted "the graph read" ^ "\n") else ()
+      (* rhc's leaves the program's modules import (RhcNames.leavesOf, of
+         the imports found) *)
+      val leaves =
+        List.filter (fn (l, _) => List.exists (fn (f : G.found) => List.exists (fn t => t = RhcLibrary.identity l) (#imports f))
+                                    (List.concat (#groups g)))
+          RhcLibrary.leaves
       (* a state with the interfaces of the units before, as F's turns *)
       fun start (ifaces : HsModIface.t list) : N.state =
         let val s = N.install (N.initial leaves, ifaces)
@@ -137,12 +188,13 @@ struct
            scopes = #scopes s, diags = #diags s, modules = #modules s, derived = #derived s, evidence = evidence,
            types = #types s}
         end
-      fun textOf (n : G.node) = case G.textOf (#file n) of SOME t => HsSource.bytes t | NONE => ""
-      fun step (group : G.node list, done : unit_ list) : unit_ list =
+      fun step (found : G.found list, done : unit_ list) : unit_ list =
         let
-          val ids = List.map #id group
+          val ids = List.map #id found
           val name = String.concatWith "+" ids
-          val key = RhcStore.key ("hs:" ^ name, List.map (fn n => (#id n, Pickle.hash (textOf n))) group)
+          val key = RhcStore.key ("hs:" ^ name, List.map (fn (f : G.found) => (#id f, #hash f)) found)
+          (* its modules parsed, where they are first asked for *)
+          val nodes = once (fn () => List.map (fn (f : G.found) => #node f ()) found)
           val ifaces = List.concat (List.map #mods done)
           val prints = printsOf done
           fun own home = List.exists (fn i => i = home) ids
@@ -154,7 +206,7 @@ struct
           fun now () =
             case !nowCell of
               SOME s => s
-            | NONE => let val s = N.groups (N.extend (start ifaces, group), [group], fixpoint, NONE)
+            | NONE => let val s = N.groups (N.extend (start ifaces, nodes ()), [nodes ()], fixpoint, NONE)
                       in nowCell := SOME s; s end
           fun current k = case HsUsage.fromKey k of SOME r => answerIn (now ()) r | NONE => "?"
           val holds = RhcStore.holds {level = RhcStoreConfig.level (), current = current}
@@ -163,13 +215,15 @@ struct
               val ((s, (core, desugar)), reads) =
                 RhcIface.recording (fn () =>
                   let
-                    val s = N.groups (N.extend (start ifaces, group), [group], fixpoint, check)
+                    val s = N.groups (N.extend (start ifaces, nodes ()), [nodes ()], fixpoint, check)
                     val () = case List.filter (fn d => not (#library d)) (#diags s) of
                                [] => ()
                              | d :: _ => raise Failed (#msg d)
                     val r : N.result = {modules = List.rev (#modules s), exports = #exports s, diags = #diags s,
                                         types = SOME (#types s), evidence = evidence, derived = #derived s}
-                  in (s, RhcDesugar.unit (List.map (fn (u : unit_) => #desugar u ()) done, ids, g, r)) end)
+                    (* the graph RhcDesugar.unit reads: the program's roots *)
+                    val graph = {groups = [nodes ()], roots = #roots g, diags = []}
+                  in (s, RhcDesugar.unit (List.map (fn (u : unit_) => #desugar u ()) done, ids, graph, r)) end)
               val mods = RhcIface.ofModules (s, ids)
               (* the first unit reads its own source and rhc's leaves alone,
                  which its key and the configuration hold *)
@@ -203,6 +257,16 @@ struct
                   | NONE => made ""]
         end
       val units = List.foldl step [] (#groups g)
+      val () = Option.app UnitStore.memoWrite memo
+      val () =
+        if #show opts then
+          let val parsed = List.filter (fn (f : G.found) => #parsed f ()) (List.concat (#groups g))
+          in
+            TextIO.output (TextIO.stdErr, "rhc: parsed " ^ Int.toString (length parsed) ^ " of " ^
+                                          Int.toString (length (List.concat (#groups g))) ^ " modules" ^
+                                          String.concat (List.map (fn f => " " ^ #id f) parsed) ^ "\n")
+          end
+        else ()
       (* the link, the roadmap's C: its memo keyed by the units' entries,
          by the sum of each, which covers its Core, all the back end reads
          (the runtime's is rhc's own, in the configuration), so that a link

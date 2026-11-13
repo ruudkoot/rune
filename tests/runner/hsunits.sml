@@ -223,7 +223,9 @@ struct
      same files (`rhc Main.hs`): nothing edited takes everything; a body's
      edit of Lib compiles Lib and the link alone, Main taken by its reads'
      fingerprints; an export added to Lib that Main does not read compiles
-     Lib alone too; a type's edit of a value Main reads compiles Main *)
+     Lib alone too; a type's edit of a value Main reads compiles Main. A
+     step that takes the library's unit parses none of its modules (the
+     log's "rhc: parsed" line, RhcGraph.scan) *)
   fun drive () =
     let
       val d = out ^ "/drive"
@@ -263,6 +265,7 @@ struct
                         stderr = f (label ^ ".err"), timeout = 300}
           val w = bytes (f "w.rbc")
           val j = bytes (f "j.rbc")
+          val parsed = List.find (fn l => String.isPrefix "rhc: parsed " l) (lines text)
         in
           if not ok then say ("FAIL hs.units.drive: " ^ label ^ ": does not compile: " ^ firstLine log ^ "\n")
           else if not whole then say ("FAIL hs.units.drive: " ^ label ^ ": does not compile whole\n")
@@ -271,6 +274,12 @@ struct
                                        else say ("FAIL hs.units.drive: " ^ label ^ ": " ^ u ^ " not " ^ what ^ "\n")) want;
              if read (f (label ^ ".out")) = prints then ()
              else say ("FAIL hs.units.drive: " ^ label ^ ": printed " ^ firstLine (f (label ^ ".out")) ^ "\n");
+             if not (List.exists (fn w => w = ("library", "taken")) want) then ()
+             else (case parsed of
+                     NONE => say ("FAIL hs.units.drive: " ^ label ^ ": the log says nothing of what was parsed\n")
+                   | SOME l => if has (l, " haskell98:") then
+                                 say ("FAIL hs.units.drive: " ^ label ^ ": the library's unit is taken, its modules parsed: " ^ l ^ "\n")
+                               else ());
              if size w > 12 andalso String.extract (w, 12, NONE) = String.extract (j, 12, NONE) then ()
              else say ("FAIL hs.units.drive: " ^ label ^ ": the program is not the whole compile's\n"))
         end
