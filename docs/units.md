@@ -1151,11 +1151,16 @@ declaration's text a section of its own, which the store reads and holds
 to its hash only where it is asked for. The link memo is keyed by the
 units' entries' sums, so a link taken reads no Core, and a link compiled
 reads only the declarations main reaches (`CoreUnits.reachIndexed`).
-Measured on hello, in VM instructions: whole 145M; through the units, with
-nothing edited about 65M (the graph read 42M, the library taken 13M, Main
-taken 10M, the link taken), with hello edited about 96M (Main compiled
-26M, the link's reach 6M and its compile 9M), the program byte for byte
-the whole one.
+The graph is read by its modules' headers (`RhcGraph.scan`): a module's
+name and the modules its imports name, kept in the store by the hash of its
+text, which the stat memo gives (`UnitStore.hashBy`), so that a module is
+parsed only where its unit is made or its usages are asked, and the
+library's, whose unit keeps none, never once it is taken. Measured on
+hello, in VM instructions: whole 145M; through the units, with nothing
+edited about 22M (the graph read 1M, the library taken 11M, Main taken
+10M, the link taken), with hello edited about 54M (Main compiled 26M, the
+link's reach 6M and its compile 9M), the program byte for byte the whole
+one.
 
 ## The graph
 
