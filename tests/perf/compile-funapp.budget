@@ -2,6 +2,6 @@ generate funapp 40 80
 compile @gen
 nostack the front end's cost on the module language, the same on both VMs: measured on Rune as shipped alone
 scale funapp 40 320 1.1
-instructions 53352486
-bytes 68443874
-objects 2197588
+instructions 53341165
+bytes 69479907
+objects 2250121

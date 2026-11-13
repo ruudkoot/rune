@@ -2,6 +2,6 @@ generate funnest 8 1 8
 compile @gen
 nostack the expansion's growth with nested functors, the same on both VMs: measured on Rune as shipped alone
 scale funnest 16 1 8 1.1
-instructions 6883482
-bytes 8655002
-objects 262674
+instructions 6868127
+bytes 9280048
+objects 283069
