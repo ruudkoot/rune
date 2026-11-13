@@ -389,10 +389,43 @@ struct
         (statesOf name)
     end
 
+  (* warm equals --whole over random edits (M21's standing tier, nightly,
+     unitsOne's comparison of tests/runner/oracles.sml): of each case of
+     tests/hs/units/holes, a walk of its states drawn at random through one
+     store, each state's modules written over the last's, so that a unit's
+     entry meets every edit and its undoing in any order. The seed is
+     RHC_UNITS_SEED, else the day's, and the log says it and the walk *)
+  val walk = 12
+  fun random name () =
+    let
+      val d = out ^ "/random/" ^ name
+      val () = (rmTree d; mkdirs d)
+      val seed = case Int.fromString (env ("RHC_UNITS_SEED", "")) of
+                   SOME n => n
+                 | NONE => LargeInt.toInt (LargeInt.div (Time.toSeconds (Time.now ()), 86400))
+      val states = Vector.fromList (statesOf name)
+      val r = ref (seed mod 2147483647 + 1)
+      fun next n = (r := (!r * 48271) mod 2147483647; !r mod n)
+      val picks = List.tabulate (walk, fn _ => next (Vector.length states))
+      val () = say ("hs.units.random: " ^ name ^ ", seed " ^ Int.toString seed ^ ", states "
+                    ^ String.concatWith " " (List.map (fn i => #1 (Vector.sub (states, i))) picks) ^ "\n")
+      fun go (_, []) = ()
+        | go (k, i :: rest) =
+            let val (s, files, want) = Vector.sub (states, i)
+            in
+              if stateHolds ("hs.units.random", d, name ^ " seed " ^ Int.toString seed ^ ", walk " ^ Int.toString k
+                                                   ^ ", state " ^ s, files, want)
+              then go (k + 1, rest) else ()
+            end
+    in
+      go (1, picks)
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
     | ["hs-units-hole", c] => SOME (hole c)
+    | ["hs-units-random", c] => SOME (random c)
     | ["hs-units-abi"] => SOME abi
     | ["hs-units-warm-whole"] => SOME warmWhole
     | ["hs-units-warm"] => SOME warm
@@ -414,8 +447,9 @@ struct
          Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800), Tools.job ("drive", ["hs-units-drive"], [], 600, 3600)]
         @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
         @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
+      val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())
     in
       tagged covers
-        (Test.describe "hs/units" (List.map (tagged ["check", "test-rhc"]) checks))
+        (Test.describe "hs/units" (List.map (tagged ["check", "test-rhc"]) checks @ List.map (tagged ["nightly", "test-rhc"]) nightly))
     end
 end

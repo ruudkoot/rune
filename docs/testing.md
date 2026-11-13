@@ -1128,7 +1128,11 @@ H4) and a default declaration edited, a derived instance's context grown
 (H7), a cycle's second member edited (H8); E13's two GHC cases are among
 them. Each hole is a mutant of rhc's (`HU01` to `HU09`, H9's the
 Prelude's names of `hs/iface/usages`), caught by its case; `HU10`, a unit
-taken keeping its fingerprints unasked, is `EQUIVALENT`. Core in
+taken keeping its fingerprints unasked, is `EQUIVALENT`. Nightly,
+`hs/units/random/CASE` walks each case's states (the k-th its steps 1 to
+k) in an order drawn at random, through one store, with the same
+comparison at each, so that an entry meets every edit and its undoing in
+any order (`RHC_UNITS_SEED`, else the day's, which the log says). Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
