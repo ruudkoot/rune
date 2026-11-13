@@ -1132,7 +1132,12 @@ taken keeping its fingerprints unasked, is `EQUIVALENT`. Nightly,
 `hs/units/random/CASE` walks each case's states (the k-th its steps 1 to
 k) in an order drawn at random, through one store, with the same
 comparison at each, so that an entry meets every edit and its undoing in
-any order (`RHC_UNITS_SEED`, else the day's, which the log says). Core in
+any order (`RHC_UNITS_SEED`, else the day's, which the log says).
+`hs/units/snapshot` is hello against the snapshot (D45): a store one compile
+made is a layer, read only; hello compiled with `--layer` and an overlay of
+its own takes the library's unit from it, parses none of its modules and
+compiles Main and the link alone, its program byte for byte the whole
+compile's, and the layer is not written. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

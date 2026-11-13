@@ -421,10 +421,59 @@ struct
       go (1, picks)
     end
 
+  (* hello against the snapshot (M21's done-when, D45): a store made by one
+     compile is a layer, read only, the library's unit frozen in it; hello
+     compiled against it, with an overlay of its own, takes the library's
+     unit from the layer, parses none of its modules and compiles Main and
+     the link alone, its program byte for byte the whole compile's of the
+     same file; and the layer is not written *)
+  fun snapshot () =
+    let
+      val d = out ^ "/snapshot"
+      val () = (rmTree d; mkdirs (d ^ "/make"); mkdirs (d ^ "/hello"))
+      fun f x = d ^ "/" ^ x
+      fun bytes p = (let val i = BinIO.openIn p in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
+                    handle IO.Io _ => ""
+      fun rhc (dir, args, log) =
+        exec {cmd = [fromRoot "bin/rhc"] @ args, dir = SOME (f dir), stdin = "", stdout = f log, stderr = f log, timeout = 900} = 0
+      (* the layer's files, each with its size *)
+      fun listing dir =
+        let
+          fun walk p = if isDir p then List.concat (List.map (fn n => walk (p ^ "/" ^ n)) (sort (entries p)))
+                       else [p ^ " " ^ Int.toString (size (bytes p))]
+        in walk dir end
+      val () = write (f "make/Main.hs", "main :: IO ()\nmain = putStrLn \"made\"\n")
+      val () = write (f "hello/Main.hs", "main :: IO ()\nmain = putStrLn \"hello\"\n")
+      val made = rhc ("make", ["--units", "--store", f "layer", "Main.hs", "-o", "m.rbc"], "make.log")
+      val unwritten = listing (f "layer")
+      val warm = rhc ("hello", ["--units", "--layer", f "layer", "--store", f "overlay", "--show-units", "Main.hs", "-o", "w.rbc"],
+                      "hello.log")
+      val whole = rhc ("hello", ["Main.hs", "-o", "j.rbc"], "whole.log")
+      val text = read (f "hello.log")
+      fun has s = String.isSubstring s text
+      val w = bytes (f "hello/w.rbc")
+      val j = bytes (f "hello/j.rbc")
+      fun no why = say ("FAIL hs.units.snapshot: " ^ why ^ "\n")
+    in
+      if not made then no ("the snapshot is not made: " ^ firstLine (f "make.log"))
+      else if not warm then no ("hello does not compile against it: " ^ firstLine (f "hello.log"))
+      else if not whole then no ("hello does not compile whole: " ^ firstLine (f "whole.log"))
+      else
+        (if List.exists (fn l => String.isPrefix "rhc: unit haskell98:" l andalso String.isSubstring ": taken" l) (lines text) then ()
+         else no "the library's unit is not taken from the snapshot";
+         if has "rhc: unit Main: compiled" then () else no "Main is not compiled";
+         if List.exists (fn l => String.isPrefix "rhc: parsed 1 of " l andalso String.isSuffix " Main" l) (lines text) then ()
+         else no ("a module of the library is parsed: " ^ getOpt (List.find (String.isPrefix "rhc: parsed") (lines text), "?"));
+         if size w > 12 andalso String.extract (w, 12, NONE) = String.extract (j, 12, NONE) then ()
+         else no "the program is not the whole compile's";
+         if listing (f "layer") = unwritten then () else no "the snapshot is written")
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
     | ["hs-units-hole", c] => SOME (hole c)
+    | ["hs-units-snapshot"] => SOME snapshot
     | ["hs-units-random", c] => SOME (random c)
     | ["hs-units-abi"] => SOME abi
     | ["hs-units-warm-whole"] => SOME warmWhole
@@ -444,7 +493,8 @@ struct
       val checks =
         [Tools.job ("store", ["hs-units-store"], [], 300, 600), Tools.job ("named", ["hs-units-named"], [], 500, 1200),
          Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600),
-         Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800), Tools.job ("drive", ["hs-units-drive"], [], 600, 3600)]
+         Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800), Tools.job ("drive", ["hs-units-drive"], [], 600, 3600),
+         Tools.job ("snapshot", ["hs-units-snapshot"], [], 600, 2400)]
         @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
         @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
       val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())

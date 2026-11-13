@@ -1164,7 +1164,10 @@ hello, in VM instructions: whole 145M; through the units, with nothing
 edited about 9M (the graph read 1M, the library taken 4.5M, Main taken
 2.3M, the link taken), with hello edited about 41M (Main compiled 20M, the
 link's reach 6M and its compile 9M), the program byte for byte the whole
-one.
+one. Against a snapshot, a store another compile made given as `--layer`
+with a fresh overlay, hello takes the library's unit from the layer
+unwritten and costs about 44M (the graph read 3M, its headers the layer's),
+then 9M again.
 
 ## The graph
 
