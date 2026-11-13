@@ -926,9 +926,12 @@ on any machine. Held while the row the name gives is `Planned`.
 
 **Renaming, by rhc's names.** `bin/rhc --dump-binders FILE` prints each local
 name of the program's own modules, a line for each binding site (`BIND`) and
-use (`USE`): its renamed name and its bytes. `hs/meta/rename` renames each to
-`x'k` where every occurrence's span is the name itself; a name whose
-binding's span covers more, as a function binding's head does, is left.
+use (`USE`): its renamed name and its bytes. `hs/meta/rename` renames each,
+where every occurrence's span is the name itself, to a name of its own length
+found nowhere in the text and no keyword (the last character changed first),
+so that no column moves and the layout stays the program's; a name whose
+binding's span covers more, as a function binding's head does, or for which
+no such name is found, is left.
 
 **rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
 `hs/interp-vm/NAME`, nightly, and the sample of ruling 47 in `check`). Each run program of `tests/hs/lang` through rhc to
