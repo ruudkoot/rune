@@ -60,7 +60,7 @@ extern uint64_t reg_apply_counts[4];
    arguments it wants by a call and by a tail call, a closure of one
    over-applied through its stub by a call and by a tail call, and a
    partial application made of one given fewer than it wants */
-uint32_t reg_apply_stub(const VM *vm, uint32_t k, uint32_t r);
+uint32_t reg_apply_stub(VM *vm, uint32_t k, uint32_t r);
 extern int reg_apply_stats;
 extern uint64_t jit_apply_fast_counts[6];
 

@@ -94,6 +94,8 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
            the registers where it takes the general path (D15 C, reg_apply) */
         if ((op == ROP_CALL || op == ROP_TAILCALL) && 2 > p->funcs[fi].maxstack) p->funcs[fi].maxstack = 2;
         if ((op == ROP_CALLN || op == ROP_TAILCALLN) && n + 1 > p->funcs[fi].maxstack) p->funcs[fi].maxstack = n + 1;
+        if ((op == ROP_CALLN || op == ROP_TAILCALLN) && n > p->apply_nmax) p->apply_nmax = n;
+        if (op == ROP_CLOSUREN && (uint32_t)read_i32(at + 9) > p->apply_amax) p->apply_amax = (uint32_t)read_i32(at + 9);
         /* what reads the frame's closure (ReadsClosure, src/isa/regs.sml):
            its captures, itself, or the suspension a suspension's code makes
            under evaluation and updates */
@@ -796,18 +798,10 @@ static void apply_table(VM *vm) {
    arguments a call of it gives. 1, or 0 and why. */
 int vm_isa_after_load(VM *vm, char *err, size_t errlen) {
     Program *p = &vm->prog;
-    uint32_t amax = 1, nmax = 1;
-    int any = 0;
-    for (uint32_t pc = 0; pc < p->code_len; ) {
-        const uint8_t *at = p->code + pc;
-        uint8_t op = at[0];
-        if (op == ROP_CLOSUREN) { any = 1; uint32_t k = (uint32_t)read_i32(at + 9); if (k > amax) amax = k; }
-        if (op == ROP_CALLN || op == ROP_TAILCALLN) { any = 1; uint32_t n = (uint32_t)read_i32(at + 5); if (n > nmax) nmax = n; }
-        uint32_t l = rop_length(at);
-        if (!l) break;
-        if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(at + 5);
-        pc += l;
-    }
+    /* what the check of the code found (validate_program_from), not the
+       code read again: every program loaded pays for this */
+    uint32_t amax = p->apply_amax > 1 ? p->apply_amax : 1, nmax = p->apply_nmax > 1 ? p->apply_nmax : 1;
+    int any = p->apply_amax || p->apply_nmax;
     { static int once; const char *e = getenv("RUNE_APPLY_STATS");
       if (e && (*e == '1' || *e == '2') && !once) { once = 1; apply_sites_on = *e == '2'; reg_apply_stats = 1; atexit(apply_stats); } }
     if (!any) return 1;
@@ -861,7 +855,8 @@ uint64_t reg_apply_counts[4];   /* the general path's: saturated, partial, over-
 int reg_apply_stats;
 uint64_t jit_apply_fast_counts[6];
 
-uint32_t reg_apply_stub(const VM *vm, uint32_t k, uint32_t r) {
+uint32_t reg_apply_stub(VM *vm, uint32_t k, uint32_t r) {
+    apply_table(vm);   /* an image's program has its functions, and no table until here */
     if (!vm->apply_stubs || k < 1 || r < 1 || k > vm->apply_kmax || r > vm->apply_rmax) return UINT32_MAX;
     return vm->apply_stubs[(size_t)(k - 1) * vm->apply_rmax + (r - 1)];
 }

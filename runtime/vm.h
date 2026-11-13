@@ -113,6 +113,11 @@ typedef struct Program {
     LineEntry *lines;
     uint32_t ninlines;
     Inlined *inlines;
+    /* the most parameters a CLOSUREN of the code gives a closure, and the
+       most arguments a CALLN or TAILCALLN gives (0: none), which the
+       register VM's check of the code finds (D15 C: the general path's
+       functions it needs, vm_isa_after_load) */
+    uint32_t apply_amax, apply_nmax;
 } Program;
 /* the representations section freed with the program (runtime/loader.c) */
 void program_free_meta(Program *p);
