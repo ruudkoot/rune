@@ -216,21 +216,26 @@ struct
 
   fun workerName f = "%w:" ^ f
 
-  (* f, strict in some of its parameters, a worker of them evaluated and a
-     wrapper that evaluates them; NONE where none is worth it *)
-  fun split (dt : B.datatypes, sigs : strictness CoreMap.map) (f : string, t : ty, e : exp) : decl list option =
-    case CoreMap.find (sigs, f) of
-      NONE => NONE
-    | SOME {params, ...} =>
+  (* f, strict in some of its parameters: its worker's type and lambda, of
+     them evaluated, and a wrapper that evaluates them, of f's type, and
+     which of its value parameters the worker takes evaluated; NONE where
+     none is worth it *)
+  fun splitOf (dt : B.datatypes, sig_ : strictness) (f : string, t : ty, e : exp)
+      : (ty * exp * exp * int * bool list) option =
+    let
+      val {params, ...} = sig_
+      val (bs, body) = peel e
+      val tyBinders = List.mapPartial (fn TyBinder b => SOME b | ValBinder _ => NONE) bs
+      val vps = valueParams bs
+    in
+      if length params <> length vps
+         orelse List.exists (fn TyBinder _ => true | _ => false) (List.drop (bs, length tyBinders))
+      then NONE
+      else
         let
-          val (bs, body) = peel e
-          val tyBinders = List.mapPartial (fn TyBinder b => SOME b | ValBinder _ => NONE) bs
-          val vps = valueParams bs
           val marked = ListPair.map (fn ((x, pt), s) => (x, pt, s andalso isLifted dt pt)) (vps, params)
         in
-          if not (List.exists #3 marked) orelse length params <> length vps
-             orelse List.exists (fn TyBinder _ => true | _ => false) (List.drop (bs, length tyBinders))
-          then NONE
+          if not (List.exists #3 marked) then NONE
           else
             let
               val tvs = List.map #1 tyBinders
@@ -248,9 +253,110 @@ struct
                              call (ys, zs)
               val wrapper = Lam (List.map TyBinder tyBinders @ List.map (fn (y, pt, _) => ValBinder (y, pt)) ys, forced)
             in
-              SOME [Val (workerName f, wty, worker), Val (f, t, wrapper)]
+              SOME (wty, worker, wrapper, length vps, List.map #3 marked)
             end
         end
+    end
+
+  (* e with each call of a function of `split` (its value parameters and
+     those its worker takes evaluated) that gives them all made a call of
+     the worker, the arguments evaluated first: the wrapper inlined, in a
+     group whose functions call each other, where the simplifier inlines
+     no wrapper *)
+  fun callWorkers (split : (int * bool list) CoreMap.map) (e : exp) : exp =
+    let
+      fun go e =
+        case e of
+          App (Atom (Var f), args) =>
+            let val args = List.map (fn a => a) args
+            in
+              case CoreMap.find (split, f) of
+                SOME (n, ss) =>
+                  let
+                    val vals = List.length (List.filter (fn ValArg _ => true | TyArg _ => false) args)
+                  in
+                    if vals < n then App (Atom (Var f), args)
+                    else
+                      let
+                        (* the arguments in order, each value one forced where the worker takes it evaluated *)
+                        fun walk ([], _, acc, wrap) = wrap (App (Atom (Var (workerName f)), List.rev acc))
+                          | walk (TyArg t :: rest, ss, acc, wrap) = walk (rest, ss, TyArg t :: acc, wrap)
+                          | walk (ValArg a :: rest, s :: ss, acc, wrap) =
+                              (case (s, a) of
+                                 (true, Var y) =>
+                                   let val z = B.fresh y
+                                   in walk (rest, ss, ValArg (Var z) :: acc, fn inner => wrap (Case (Atom (Var y), z, [AltDefault inner]))) end
+                               | _ => walk (rest, ss, ValArg a :: acc, wrap))
+                          | walk (ValArg a :: rest, [], acc, wrap) = walk (rest, [], ValArg a :: acc, wrap)
+                      in walk (args, ss, [], fn x => x) end
+                  end
+              | NONE => App (Atom (Var f), args)
+            end
+        | App (f, args) => App (go f, args)
+        | Lam (bs, b) => Lam (bs, go b)
+        | Let (x, t, r, b) => Let (x, t, go r, go b)
+        | LetRec (bs, b) => LetRec (List.map (fn (x, t, r) => (x, t, go r)) bs, go b)
+        | Case (s, b, alts) =>
+            Case (go s, b, List.map (fn AltCon (c, xs, r) => AltCon (c, xs, go r)
+                                      | AltLit (l, r) => AltLit (l, go r)
+                                      | AltUTuple (xs, r) => AltUTuple (xs, go r)
+                                      | AltDefault r => AltDefault (go r)) alts)
+        | Cast (b, t) => Cast (go b, t)
+        | _ => e
+    in go e end
+
+  (* e with each local function strict in a parameter split: a let of one
+     the worker's let and the wrapper's, a letrec's its workers and wrappers
+     in the group, every call inside the group of a function split made of
+     its worker *)
+  fun locals (dt : B.datatypes, fields, sigs : strictness CoreMap.map) (e : exp) : exp =
+    let
+      fun go e =
+        case e of
+          Let (x, t, r, b) =>
+            let
+              val r' = go r
+              val b' = go b
+            in
+              if isFunction r' then
+                case splitOf (dt, signatureOf (fields, sigs) r') (x, t, r') of
+                  SOME (wty, worker, wrapper, _, _) =>
+                    if B.tick "strict-worker-local" then Let (workerName x, wty, worker, Let (x, t, wrapper, b'))
+                    else Let (x, t, r', b')
+                | NONE => Let (x, t, r', b')
+              else Let (x, t, r', b')
+            end
+        | LetRec (bs, b) =>
+            let
+              val bs' = List.map (fn (x, t, r) => (x, t, go r)) bs
+              val b' = go b
+              val gsigs = recursive (fields, sigs) bs'
+              val made =
+                List.map (fn (x, t, r) =>
+                            case (if isFunction r then CoreMap.find (gsigs, x) else NONE) of
+                              SOME s => (case splitOf (dt, s) (x, t, r) of
+                                           SOME sp => if B.tick "strict-worker-local" then (x, t, r, SOME sp) else (x, t, r, NONE)
+                                         | NONE => (x, t, r, NONE))
+                            | NONE => (x, t, r, NONE))
+                  bs'
+              val split = List.foldl (fn ((x, _, _, SOME (_, _, _, n, ss)), m) => CoreMap.insert (m, x, (n, ss)) | (_, m) => m)
+                            CoreMap.empty made
+              val group =
+                List.concat
+                  (List.map (fn (x, t, r, SOME (wty, worker, wrapper, _, _)) =>
+                                  [(workerName x, wty, callWorkers split worker), (x, t, wrapper)]
+                              | (x, t, r, NONE) => [(x, t, callWorkers split r)]) made)
+            in LetRec (group, b') end
+        | App (f, args) => App (go f, args)
+        | Lam (bs, b) => Lam (bs, go b)
+        | Case (s, b, alts) =>
+            Case (go s, b, List.map (fn AltCon (c, xs, r) => AltCon (c, xs, go r)
+                                      | AltLit (l, r) => AltLit (l, go r)
+                                      | AltUTuple (xs, r) => AltUTuple (xs, go r)
+                                      | AltDefault r => AltDefault (go r)) alts)
+        | Cast (b, t) => Cast (go b, t)
+        | _ => e
+    in go e end
 
   fun program (spend : unit -> bool, p : program) : program =
     if not (!enabled) then p
@@ -259,11 +365,17 @@ struct
         val () = B.spendRef := spend
         val sigs = signatures p
         val dt = B.datatypes p
+        val fields = fieldsOf p
         fun one (d as Val (f, t, e)) =
-              if String.isPrefix "%w:" f orelse f = "main" then [d]
-              else (case split (dt, sigs) (f, t, e) of
-                      SOME ds => if B.tick "strict-worker" then ds else [d]
-                    | NONE => [d])
+              let val e = locals (dt, fields, sigs) e
+              in
+                if String.isPrefix "%w:" f orelse f = "main" then [Val (f, t, e)]
+                else
+                  case (case CoreMap.find (sigs, f) of SOME s => splitOf (dt, s) (f, t, e) | NONE => NONE) of
+                    SOME (wty, worker, wrapper, _, _) =>
+                      if B.tick "strict-worker" then [Val (workerName f, wty, worker), Val (f, t, wrapper)] else [Val (f, t, e)]
+                  | NONE => [Val (f, t, e)]
+              end
           | one d = [d]
       in List.concat (List.map one p) end
 
