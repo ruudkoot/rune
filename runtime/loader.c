@@ -360,7 +360,7 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     uint8_t *starts = validate_program(p, err, errlen);
     if (!starts) return 0;
     free(starts);
-    return 1;
+    return vm_isa_after_load(vm, err, errlen);
 }
 
 /* The entry covering pc: the last one that begins at or before it, found by

@@ -187,9 +187,12 @@ struct
      registers made at top -- register 0 is the argument, the others start
      as unit -- and its code entered. A callee's frame begins above the
      caller's registers, with its header (docs/plans/native-frames.md, M4). *)
-  val callee =
+  fun callee tail =
     ["Value arg = R(b);",
      "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
+     "/* D15 C: a closure of more than one parameter, or a partial",
+     "   application, is the general path's (reg_apply, isa_regs.c) */",
+     "if (obj_contag(c) != 0) APPLY(R(a), 1, &R(b), " ^ tail ^ ");",
      "int64_t fidx = val_imm(obj_field(c, 0));",
      "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
      "Function *fn = &p->funcs[fidx];"]
@@ -236,7 +239,7 @@ struct
                "Call the closure in register f with register x; RESULT takes what it returns.")
           (["POLL(9);",
             "CENSUS_CALL(0, R(b), CENSUS_REP(p, vm->func, b));"]   (* the census VM's hook: nothing in the stock build *)
-           @ callee
+           @ callee "0"
            @ ["size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;",
               "ROOM(top, fn);",
               "HEADER(top, pc, mk_ptr(c));",
@@ -251,7 +254,7 @@ struct
        (rinst ("TAILCALL", [("f", Reads (Is RPtr)), ("x", Reads any)], TailCall, "Like CALL, but the current frame is replaced.")
           (["POLL(9);",
             "CENSUS_CALL(1, R(b), CENSUS_REP(p, vm->func, b));"]
-           @ callee
+           @ callee "1"
            @ ["size_t top = vm->fp;",
               "ROOM(top, fn);",
               "/* the frame's header keeps its caller and its return; its closure is the callee's */",
@@ -541,7 +544,74 @@ struct
                "The suspension running becomes an indirection to register s; one that is an indirection already, lazy ML's that a force from inside it updated first, holds register s now.")
           ["Value cv = CLOSURE();",
            "if (!val_is_ptr(cv) || (obj_kind(val_ptr(cv)) != K_THUNK && obj_kind(val_ptr(cv)) != K_IND)) FATAL(\"UPDATE outside a suspension\");",
-           "obj_become_ind(vm, val_ptr(cv), R(a));"])]
+           "obj_become_ind(vm, val_ptr(cv), R(a));"]),
+     (* Eval/apply proper (the haskell98 roadmap's D15 C; impl/w/d15/design.md):
+        a closure of a function of k parameters says k in its contag (0 for
+        one, as every closure CLOSURE makes), and a call of n arguments
+        tests it -- the same, the function entered with them; fewer, a
+        partial application made; more, the function entered with its k
+        under a frame that applies what it returns to the rest. A
+        partial application is a K_CLOSURE too, of the function index
+        REG_PAP, its contag the parameters it still wants, its fields
+        the closure applied and what it was given. The general path is
+        reg_apply's (runtime/register/isa_regs.c). *)
+     implicitly [MakesClosure "f"]
+       (rinst ("CLOSUREN", [("d", Writes (Is RPtr)), ("f", K Function), ("k", K Tag), ("n", K Count), ("env", Registers (3, CapturesOf "f"))], Next,
+               "Register d := a closure of function f, of k parameters (2 or more), capturing the n registers of env: a call of k arguments enters it.")
+          ["if (c < 2) FATAL(\"a closure of %d parameters made by CLOSUREN\", c);",
+           "SYNC();",
+           "Obj *cl = vm_alloc_fields(vm, K_CLOSURE, (uint16_t)c, n + 1);",
+           "Value *f = obj_fields(cl);",
+           "f[0] = mk_int(b);",
+           "for (uint32_t i = 0; i < n; i++) f[i + 1] = R(LIST(i));",
+           "R(a) = mk_ptr(cl);"]),
+     (ordered [Then "RESULT"] o implicitly [CallsClosure, Leaves any])
+       (rinst ("CALLN", [("f", Reads (Is RPtr)), ("n", K Count), ("args", Registers (1, any))], Call,
+               "Call the closure in register f with the n registers of args (2 or more), as many calls of one argument would; RESULT takes what it returns.")
+          ["POLL(9 + 4 * n);",
+           "CENSUS_CALL(5, R(a), CENSUS_REP(p, vm->func, a));",
+           "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
+           "int64_t fidx = val_imm(obj_field(c, 0));",
+           "/* the general path for any other arity, and for a partial application (REG_PAP) */",
+           "if (obj_contag(c) != n || fidx < 0) APPLY_LIST(R(a), n, 0);",
+           "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+           "Function *fn = &p->funcs[fidx];",
+           "size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;",
+           "ROOM(top, fn);",
+           "/* the arguments read before the frame is pushed, which R would read */",
+           "Value *slot = vm->stack + top;",
+           "for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));",
+           "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
+           "HEADER(top, pc, mk_ptr(c));",
+           "vm->fp = top;",
+           "vm->func = (uint32_t)fidx;",
+           "ENTER(slot, fn);",
+           "HANDOVER((uint32_t)fidx);"]),
+     implicitly [CallsClosure]
+       (rinst ("TAILCALLN", [("f", Reads (Is RPtr)), ("n", K Count), ("args", Registers (1, any))], TailCall,
+               "Like CALLN, but the current frame is replaced.")
+          ["POLL(9 + 4 * n);",
+           "CENSUS_CALL(6, R(a), CENSUS_REP(p, vm->func, a));",
+           "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
+           "int64_t fidx = val_imm(obj_field(c, 0));",
+           "if (obj_contag(c) != n || fidx < 0) APPLY_LIST(R(a), n, 1);",
+           "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+           "Function *fn = &p->funcs[fidx];",
+           "size_t top = vm->fp;",
+           "size_t need = (size_t)(sp - vm->stack) + n;",
+           "if (top + fn->nlocals + fn->maxstack > need) need = top + fn->nlocals + fn->maxstack;",
+           "if (need > vm->stack_cap) { SYNC(); vm_grow_stack(vm, need); RELOAD(); c = val_ptr(R(a)); }",
+           "/* the arguments above the frame first, since they are its registers */",
+           "Value *tmp = sp;",
+           "for (uint32_t i = 0; i < n; i++) tmp[i] = R(LIST(i));",
+           "Value *slot = vm->stack + top;",
+           "memmove(slot, tmp, (size_t)n * sizeof(Value));",
+           "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
+           "/* the frame's header keeps its caller and its return; its closure is the callee's */",
+           "CLOSURE() = mk_ptr(c);",
+           "vm->func = (uint32_t)fidx;",
+           "ENTER(slot, fn);",
+           "HANDOVER((uint32_t)fidx);"])]
 
   (* ---- questions about the description ---- *)
 

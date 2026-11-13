@@ -266,6 +266,8 @@ int relocate_code(uint8_t *code, const Relocation *r, char *err, size_t errlen) 
 /* runevm-stack has no debugger (runtime/debug.c) */
 uint32_t debug_function_code(uint8_t *out, uint32_t *nlocals) { (void)out; *nlocals = 0; return 0; }
 
+int vm_isa_after_load(VM *vm, char *err, size_t errlen) { (void)vm; (void)err; (void)errlen; return 1; }
+
 uint32_t return_function_code(uint8_t *out, uint32_t *nlocals) {
     out[0] = OP_LOCAL;
     write_u32(out + 1, 0);

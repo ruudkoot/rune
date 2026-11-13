@@ -214,6 +214,54 @@ Site *jit_site(Jit *j, int kind, uint32_t pc) {
     return s;
 }
 
+/* D15 C (SLOW_APPLY): a call through a closure, at vm->pc, that the code
+   does not make in line -- of a closure of another arity, or a partial
+   application -- made by the interpreter's general path (reg_apply,
+   isa_regs.c): the frame it makes, or the value the RESULT after it takes
+   from the stack, given to the interpreter. The closure and the arguments
+   are read by their registers' places, since a push may move the stack. */
+static int jit_h_apply(VM *vm) {
+    const uint8_t *at = vm->prog.code + vm->pc;
+    uint8_t op = at[0];
+    int tail = op == ROP_TAILCALL || op == ROP_TAILCALLN;
+    size_t fp = vm->fp;
+    uint32_t n = op == ROP_CALL || op == ROP_TAILCALL ? 1 : (uint32_t)read_i32(at + 5);
+    vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 1)]);
+    if (n == 1 && (op == ROP_CALL || op == ROP_TAILCALL)) vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 5)]);
+    else for (uint32_t i = 0; i < n; i++) vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 9 + 4 * i)]);
+    uint32_t ret_pc = vm->pc + rop_length(at);
+    JitProgram *jit = jit_program(vm);
+    int r = reg_apply(vm, n, tail, ret_pc);
+    /* a frame made, or one replaced at its base by a tail call, or the slot of
+       the RESULT's register written (below): --gc-verify's comparison of
+       the homes C kept with their slots, after this, is not to be made */
+    vm->verify_gc = (size_t)-1;
+    if (r == REG_APPLY_ENTERED) {
+        /* the function entered: into its code where it has some, else the interpreter */
+        const CodeObject *co = &jit->codes[vm->func];
+        if (co->entry) { jit->at = co->entry; return RUN_NATIVE; }
+        return RUN_INTERP;
+    }
+    /* a value, a partial application, for the RESULT after the call: put in
+       its register here, and on in this function's code after it, where a
+       run begins (the RESULT after a call is passed over, compile.c's
+       phantom), else in the interpreter at the RESULT, which takes it */
+    const uint8_t *code = vm->prog.code;
+    if (code[ret_pc] == ROP_RESULT) {
+        const void *on = jit_osr(&jit->codes[vm->func], ret_pc + 5);
+        if (on) {
+            Value v = vm->stack[--vm->sp];
+            vm->stack[vm->fp + (size_t)read_i32(code + ret_pc + 1)] = v;
+            vm->pc = ret_pc + 5;
+            vm->instructions++;   /* the RESULT, passed over here, which the interpreter runs */
+            jit->at = on;
+            return RUN_NATIVE;
+        }
+    }
+    vm->pc = ret_pc;
+    return RUN_INTERP;
+}
+
 int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at) {
     const uint8_t *L = vm->prog.code + at;
     JitProgram *jit = jit_program(vm);
@@ -797,6 +845,13 @@ static void emit_slow(Masm *m, Slow *sp) {
         as_bind(&m->a, &hand);
         ms_handback(m, RUN_INTERP);
         as_label_free(&hand);
+    } else if (s.kind == SLOW_APPLY) {
+        /* D15 C: the call from its start in C (jit_h_apply), and on in the
+           interpreter, at the callee or at the RESULT */
+        ms_sync(m, (uint32_t)s.a, 0);
+        ms_call(m, (MsHelper)jit_h_apply);
+        ms_reload(m);
+        ms_handback_rax(m);
     } else if (s.kind == SLOW_CALL_TABLE) {
         /* a known call to function s.a, which had no code when this was
            compiled, through the table of calls (M6) -- until it has some,
@@ -865,14 +920,14 @@ static int scan(Jit *j, Scan *sc) {
            raise): a sync in its middle tells the VM the count less the
            rest of the run (Masm.ahead; performance M6, D9 B) */
         if (rop_flow[op] != FLOW_NEXT) sc->ends[pc - j->from] = 1;
-        if ((op == ROP_CALL || op == ROP_CALLK || op == ROP_ENTER) && pc + l < j->to && code[pc + l] == ROP_RESULT) {
+        if ((op == ROP_CALL || op == ROP_CALLK || op == ROP_ENTER || op == ROP_CALLN) && pc + l < j->to && code[pc + l] == ROP_RESULT) {
             sc->phantom[pc + l - j->from] = 1;
             if (pc + l + 5 < j->to) sc->target[pc + l + 5 - j->from] = 1;
         }
         /* the RESULT after a PRIMPUSH: where an image resumes (M6) */
         if (op == ROP_PRIMPUSH && pc + l < j->to && code[pc + l] == ROP_RESULT) sc->target[pc + l - j->from] = 1;
         /* the sites of the profile (M8) */
-        if (op == ROP_CALL || op == ROP_ENTER || op == ROP_TAILCALL || op == ROP_JUMPIF || op == ROP_JUMPIFNOT
+        if (op == ROP_CALL || op == ROP_ENTER || op == ROP_TAILCALL || op == ROP_CALLN || op == ROP_TAILCALLN || op == ROP_JUMPIF || op == ROP_JUMPIFNOT
             || (op == ROP_JUMP && (uint32_t)read_i32(code + pc + 1) <= pc)) j->sites_cap++;
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL)

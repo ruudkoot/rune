@@ -42,6 +42,10 @@ struct
      taken back, as masks -- and the representations each global is read
      as, by its index. *)
   val ownFuncs : unit IntMap.map ref = ref IntMap.empty
+  (* each function's number of parameters, by its id: a closure of one of
+     more than one is CLOSUREN (D15 C) *)
+  val funcArity : int IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Regs.funcArity", funcArity)
   val () = CompilerState.cellRoot ("Regs.ownFuncs", ownFuncs)
   val importCalls : (int * int list * int) IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Regs.importCalls", importCalls)
@@ -229,6 +233,7 @@ struct
           | L.Env i => op' (R.ENV, [d, i])
           | L.Self => op' (R.SELF, [d])
           | L.Call (fv, a) => (op' (R.CALL, [reg fv, reg a]); op' (R.RESULT, [d]))
+          | L.CallN (fv, vs) => (op' (R.CALLN, reg fv :: List.length vs :: List.map reg vs); op' (R.RESULT, [d]))
           | L.CallK (fid, vs) =>
               (expectCall (fid, List.map repOf vs, regRepOf x);
                op' (R.CALLK, fid :: List.length vs :: List.map reg vs); op' (R.RESULT, [d]))
@@ -266,7 +271,10 @@ struct
               (* a closure of the group not made yet is set after; the
                  scratch holds unit for it *)
               ((if List.exists (fn NONE => true | _ => false) vs then op' (R.UNIT, [scratch]) else ());
-               op' (R.CLOSURE, d :: fid :: List.length vs :: List.map (fn SOME v => reg v | NONE => scratch) vs))
+               (case IntMap.find (!funcArity, fid) of
+                  SOME k => if k >= 2 then op' (R.CLOSUREN, d :: fid :: k :: List.length vs :: List.map (fn SOME v => reg v | NONE => scratch) vs)
+                            else op' (R.CLOSURE, d :: fid :: List.length vs :: List.map (fn SOME v => reg v | NONE => scratch) vs)
+                | NONE => op' (R.CLOSURE, d :: fid :: List.length vs :: List.map (fn SOME v => reg v | NONE => scratch) vs)))
           | L.SetEnv (c, i, v) => (op' (R.SETENV, [reg c, i, reg v]); if usesOf x > 0 then op' (R.UNIT, [d]) else ())
         end
 
@@ -349,6 +357,7 @@ struct
              end
          | L.Return v => op' (R.RET, [reg v])
          | L.TailCall (fv, a) => op' (R.TAILCALL, [reg fv, reg a])
+         | L.TailCallN (fv, vs) => op' (R.TAILCALLN, reg fv :: List.length vs :: List.map reg vs)
          | L.TailCallK (fid, vs) =>
              (expectCall (fid, List.map repOf vs, #result f);
               op' (R.TAILCALLK, fid :: List.length vs :: List.map reg vs))
@@ -393,6 +402,7 @@ struct
       val () = C.reset ()
       val () = Lower.debugRegs := []
       val () = (ownFuncs := List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, ())) IntMap.empty p;
+                funcArity := List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, List.length (#params f))) IntMap.empty p;
                 importCalls := IntMap.empty; globalReads := IntMap.empty)
       val funcs = List.map func p
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
