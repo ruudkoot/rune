@@ -50,7 +50,8 @@
    which grows exponentially, is caught (D6; rhc's policy).
 
    And `hs/docs/help`, of rhc's manual: every option `bin/rhc --help` lists
-   is named in docs/rhc.md, in code (`make check-docs` runs it too). *)
+   is named in docs/rhc.md, in code; in make check, where bin/rhc is built,
+   and skipped where it is not. *)
 structure HsCore =
 struct
   open Sh
@@ -486,7 +487,6 @@ struct
           @ [Tools.job ("@rules", ["hs-core-rules"], [], 100, 120),
              Tools.job ("@generated", ["hs-core-generated", "32"], [], 300, 1200),
              Tools.job ("@silent", ["hs-core-silent"], [], 100, 60)])),
-      tagged (["check", "test-rhc", "docs-consistency", "covers:src/rhc/options.sml", "covers:docs/rhc.md",
-               "covers:tests/runner/hscore.sml"])
-        (Test.describe "hs/docs" [Tools.job ("help", ["hs-docs-help"], [], 100, 120)])]
+      tagged (["check", "test-rhc", "covers:src/rhc/options.sml", "covers:docs/rhc.md", "covers:tests/runner/hscore.sml"])
+        (Test.requires ["rhc"] (Test.describe "hs/docs" [Tools.job ("help", ["hs-docs-help"], [], 100, 120)]))]
 end
