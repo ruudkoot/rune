@@ -113,6 +113,9 @@ typedef struct Program {
     LineEntry *lines;
     uint32_t ninlines;
     Inlined *inlines;
+    /* whether a function of it says UPDATE: what a lazy front end's
+       suspensions do, which the collector pins (gc_pin_running) */
+    int has_update;
 } Program;
 /* the representations section freed with the program (runtime/loader.c) */
 void program_free_meta(Program *p);

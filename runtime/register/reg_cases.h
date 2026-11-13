@@ -645,7 +645,7 @@ CASE(UPDATE) {
     pc += 5;
     count++;
     Value cv = CLOSURE();
-    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL("UPDATE outside a suspension");
+    if (!val_is_ptr(cv) || (obj_kind(val_ptr(cv)) != K_THUNK && obj_kind(val_ptr(cv)) != K_IND)) FATAL("UPDATE outside a suspension");
     obj_become_ind(vm, val_ptr(cv), R(a));
     NEXT;
 }

@@ -152,7 +152,7 @@ static void mark_value(VM *vm, Value *v) {
     if (!val_is_ptr(*v)) return;
     /* an indirection shortcut: the field given what it holds (D18; one
        thread, so no race with the program) */
-    for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
+    for (int hops = 0; hops < IND_HOPS && ind_may_shortcut(*v); hops++) {
         *v = obj_fields(val_ptr(*v))[0];
         if (!val_is_ptr(*v)) return;
     }
@@ -211,6 +211,7 @@ void mark_full(VM *vm) {
         bits_clear(c);
         c->used = 0;
     }
+    gc_pin_running(vm, 0);
     gc_stack_roots(vm, mark_value);
     OTHER_ROOTS(vm, MARK_VALUE, MARK_OBJ);
     while (vm->gc.nqueue) {

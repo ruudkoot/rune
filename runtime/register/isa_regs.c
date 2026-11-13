@@ -68,6 +68,7 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
     uint8_t *starts = calloc(p->code_len - base + 1, 1);
     if (!starts) { fail(err, errlen, "out of memory"); return NULL; }
     for (uint32_t i = first; i < p->nfuncs; i++) { p->funcs[i].maxstack = 1; p->funcs[i].reads_closure = 0; }
+    if (first == 0) p->has_update = 0;
     uint32_t fi = first;
     uint32_t pc = base;
     while (pc < p->code_len) {
@@ -94,6 +95,7 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
            its captures, itself, or the suspension a suspension's code makes
            under evaluation and updates */
         if (op == ROP_ENV || op == ROP_SELF || op == ROP_BLACKHOLE || op == ROP_UPDATE) p->funcs[fi].reads_closure = 1;
+        if (op == ROP_UPDATE) p->has_update = 1;
         starts[pc - base] = 1;
         pc += len;
     }

@@ -209,6 +209,25 @@ static void collect_into(VM *vm, size_t new_size) {
     if (heap_used(vm) > vm->max_live) vm->max_live = heap_used(vm);
 }
 
+/* Lazy ML's suspension does not go under evaluation, so a force of it from
+   inside its own code runs it again, updates it, and returns: the outer
+   run goes on with its frame's closure an indirection, and updates it again
+   (D57, M26; E14's k_outlive). An indirection a frame from low up runs is
+   pinned: no field is given what it holds, the frame's own closure slot
+   among them, so the second update writes it and every holder sees it.
+   Frames below low have not run since the last minor collection, which
+   pinned what they ran; a full collection starts from 0. Nothing where the
+   program says no UPDATE, as no program of SML does. */
+void gc_pin_running(VM *vm, size_t low) {
+    if (!vm->prog.has_update) return;
+    FrameRef *fr = NULL;
+    size_t nf = vm_frames_from(vm, low, &fr);
+    for (size_t k = 0; k < nf; k++) {
+        Obj *c = fr[k].closure;
+        if (c && obj_kind(c) == K_IND) obj_set_contag(c, IND_RUNNING);
+    }
+}
+
 /* A pass of the copier, as --gc-log sees it: timed on the monotonic clock,
    with what it counted, one line of the log each (log.c). A collection
    that grows the heap is two passes, two lines with the same call number.

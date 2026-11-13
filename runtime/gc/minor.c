@@ -148,7 +148,7 @@ static Obj *promote(VM *vm, Obj *o) {
 static int promote_value(VM *vm, Value *v) {
     if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
     /* a young indirection shortcut: the field given what it holds (D18) */
-    for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
+    for (int hops = 0; hops < IND_HOPS && ind_may_shortcut(*v); hops++) {
         *v = obj_fields(val_ptr(*v))[0];
         if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
     }
@@ -296,6 +296,7 @@ static void minor_into(VM *vm) {
     vm->gc.nqueue = 0;
     size_t low = vm_frames_low(vm);
     if (low > vm_frame_id(vm)) low = vm_frame_id(vm);
+    gc_pin_running(vm, low);
     minor_stack(vm, low);
 #define PROMOTE_ROOT_VALUE(v) (vm->gc_counts.other_roots++, promote_value(vm, (v)))
 #define PROMOTE_ROOT_OBJ(o) (vm->gc_counts.other_roots++, promote_obj(vm, (o)))

@@ -49,7 +49,7 @@ enum Opcode {
   OP_FORCE = 41,  /* Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to o; else leave it for the ENTER after. */
   OP_ENTER = 42,  /* Pop argument, pop a suspension, and enter it as CALL enters a closure; one under evaluation is a loop: the exception Loop is raised. */
   OP_BLACKHOLE = 43,  /* The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. */
-  OP_UPDATE = 44,  /* Pop a value; the suspension running becomes an indirection to it. */
+  OP_UPDATE = 44,  /* Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now. */
   OP__COUNT
 };
 
