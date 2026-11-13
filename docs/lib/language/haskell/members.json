@@ -1976,49 +1976,49 @@
    ]
   },
   "HS_IFACE": {
-   "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface), and the desugaring's part, its Core among it, as text the\ndesugaring gives. The unfoldings section is in the format from the\nstart and empty until M23 (D44's C).\n\n",
+   "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface). The unfoldings section is in the format from the start\nand empty until M23 (D44's C). The desugaring's part, its Core among\nit, is the desugaring's own text, which a client keeps beside this one:\nrhc's driver keeps it as a section of its own, read only where a unit\nis desugared after it.\n\n",
    "page": "sig/HS_IFACE.md",
    "members": [
     {
      "kind": "type",
      "name": "t",
-     "spec": "type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list}",
-     "doc": "A unit's interface: its modules', the desugaring's part, and the\nunfoldings, none yet.\n\n",
+     "spec": "type t = {modules : HsModIface.t list, unfoldings : string list}",
+     "doc": "A unit's interface: its modules', and the unfoldings, none yet.\n\n",
      "page": "sig/HS_IFACE.md#type-t"
     },
     {
      "kind": "exception",
      "name": "Bad",
      "spec": "exception Bad of string",
-     "doc": "What makes text no interface: where, and what.\n\n",
+     "doc": "What makes bytes no interface: where, and what.\n\n",
      "page": "sig/HS_IFACE.md#exn-bad"
     },
     {
      "kind": "val",
      "name": "encode",
      "spec": "val encode : t -> string",
-     "doc": "`encode t` is `t` as text, which `decode` reads back.\n\nA kind or a type variable linked is written as what it is linked to;\none left unsolved, which no interface's generalized types hold, raises\n`Bad`.\n\n",
+     "doc": "`encode t` is `t` as bytes, which `decode` reads back: each string\nonce, in a table, and every place it is named a number.\n\nA kind or a type variable linked is written as what it is linked to;\none left unsolved, which no interface's generalized types hold, raises\n`Bad`.\n\n",
      "page": "sig/HS_IFACE.md#val-encode"
     },
     {
      "kind": "val",
      "name": "decode",
      "spec": "val decode : string -> t",
-     "doc": "`decode s` is the interface `encode` wrote as `s`.\n\n**Raises** `Bad` where `s` is not such text.\n\n",
+     "doc": "`decode s` is the interface `encode` wrote as `s`.\n\n**Raises** `Bad` where `s` is not such bytes.\n\n",
      "page": "sig/HS_IFACE.md#val-decode"
     },
     {
      "kind": "val",
      "name": "encodeModule",
      "spec": "val encodeModule : HsModIface.t -> string",
-     "doc": "`encodeModule m` and `decodeModule s` are one module's interface's\npart of the text, for its tests.\n\n",
+     "doc": "`encodeModule m` and `decodeModule s` are one module's interface\nalone, for its tests.\n\n",
      "page": "sig/HS_IFACE.md#val-encodemodule"
     },
     {
      "kind": "val",
      "name": "decodeModule",
      "spec": "val decodeModule : string -> HsModIface.t",
-     "doc": "`encodeModule m` and `decodeModule s` are one module's interface's\npart of the text, for its tests.\n\n",
+     "doc": "`encodeModule m` and `decodeModule s` are one module's interface\nalone, for its tests.\n\n",
      "page": "sig/HS_IFACE.md#val-decodemodule"
     }
    ]

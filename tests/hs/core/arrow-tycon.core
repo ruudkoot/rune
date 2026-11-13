@@ -1,18 +1,25 @@
 ; run: --read-core tests/hs/core/lib/base.core
-; vm: no: Core to Mid refuses -> given fewer than two types until Mid's Ty takes it (ruling 60, the lead's (a))
+; vm: no: Core to Mid refuses -> given fewer than two types: Core's at (a, b) is Mid's (a susp) -> b, and Mid's (->) given a and b is the plain a -> b (ruling 60)
 ; The function type's constructor, ->, given fewer than two types (Haskell's
 ; (->), 4.3.2), as GHC's tcrun001 has it:
 ;   class Flob k where twice :: k a a -> k a a
 ;   instance Flob (->) where twice f = f . f
 ; The dictionary's type is over k of kind * -> * -> *; at k := ->, its
 ; field's type (k a a) is the function type (-> a a), the one form of it
-; (Core.apply, substTy).
+; (Core.apply, substTy). And -> given one type, as `instance Functor
+; ((->) r)` has it: at f := (-> Int), (f a) is (-> Int a).
 (data Flob ((k (-> * * *))) (Flob (forall (a) (-> (k a a) (k a a)))))
+(data Fmap ((f (-> * *))) (Fmap (forall (a b) (-> (-> a b) (-> (f a) (f b))))))
 
 (val flobArrow (Flob (->))
   (let (t (forall (a) (-> (-> a a) (-> a a)))
          (\ (@a (f (-> a a))) (\ ((x a)) (let (y a (f x)) (f y)))))
   (con Flob @(->) t)))
+
+(val fmapInt (Fmap (-> Int))
+  (let (m (forall (a b) (-> (-> a b) (-> (-> Int a) (-> Int b))))
+         (\ (@a @b (g (-> a b))) (\ ((h (-> Int a))) (\ ((n Int)) (let (y a (h n)) (g y))))))
+  (con Fmap @(-> Int) m)))
 
 (val main (-> World (utuple World Unit))
   (\ ((w World))
@@ -21,4 +28,11 @@
         (let (inc (-> Int Int) (\ ((n Int)) (case n m (_ (prim int_add m 1)))))
         (let (g (-> Int Int) (tw @Int inc))
         (let (r Int (g 40))
-        (printInt r w))))))))
+        (case (printInt r w) p
+          ((utuple w1 u)
+            (case fmapInt e
+              ((Fmap fm)
+                (let (same (-> Int Int) (\ ((n Int)) n))
+                (let (h (-> Int Int) (fm @Int @Int inc same))
+                (let (s Int (h 41))
+                (printInt s w1)))))))))))))))

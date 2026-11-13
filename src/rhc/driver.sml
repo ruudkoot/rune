@@ -34,6 +34,32 @@ struct
       String.concat (List.rev (!w))
     end
 
+  (* a reader of put's text: a string, a number (a list's length), and
+     whether it is all read *)
+  fun readerOf (what : string, s : string) =
+    let
+      val pos = ref 0
+      fun bad w = raise Failed (what ^ ": " ^ w ^ " at " ^ Int.toString (!pos))
+      fun upTo c =
+        let fun go i = if i < size s andalso String.sub (s, i) <> c then go (i + 1) else i
+        in go (!pos) end
+      fun number () =
+        let val j = upTo #" "
+        in case Int.fromString (String.substring (s, !pos, j - !pos)) of
+             SOME n => (pos := j + 1; n)
+           | NONE => bad "a number"
+        end
+      fun get () =
+        let
+          val c = upTo #":"
+          val n = case Int.fromString (String.substring (s, !pos, c - !pos)) of SOME n => n | NONE => bad "a length"
+          val v = String.substring (s, c + 1, n) handle Subscript => bad "a string"
+        in pos := c + 1 + n + 1; v end
+      fun atEnd () = !pos = size s
+    in
+      {get = get, number = number, atEnd = atEnd}
+    end
+
   fun desugarOf (s : string) : HsDesugar.interface =
     let
       val pos = ref 0
@@ -73,25 +99,69 @@ struct
 
   (* ---- the units ---- *)
 
-  (* a unit made or taken: its name, its members, its modules' interfaces,
-     its desugaring's interface, and its Core *)
-  type unit_ = {name : string, ids : string list, mods : HsModIface.t list, desugar : unit -> HsDesugar.interface,
-                sum : string, indexed : unit -> CoreUnits.unitCore}
+  (* a unit made or taken: its name, its members, its modules' interfaces
+     and their fingerprints, its desugaring's interface, and its Core *)
+  type unit_ = {name : string, ids : string list, mods : HsModIface.t list, prints : (string * string) list,
+                desugar : unit -> HsDesugar.interface, sum : string, indexed : unit -> CoreUnits.unitCore}
+
+  (* An entry's sections: its modules' interfaces (HsIface's), and its
+     parts: the desugaring's interface, read only where a unit is
+     desugared after it; its fingerprints; its Core's index; and each of
+     its Core's declarations, read only where a link reaches it *)
+  val desugarPart = 0
+  val printsPart = 1
+  val indexPart = 2
+  val declsPart = 3
 
   (* f's value, made once and where it is first asked for *)
   fun once (f : unit -> 'a) : unit -> 'a =
     let val cell = ref NONE
     in fn () => case !cell of SOME v => v | NONE => let val v = f () in cell := SOME v; v end end
 
-  (* the fingerprints of the units' entities and instances, by key or
-     identity, each module's from the units before it (HsModIface's) *)
-  fun printsOf (done : unit_ list) : string M.map =
-    List.foldl (fn (u : unit_, m) =>
-                  List.foldl (fn (i, m) =>
-                                List.foldl (fn ((k, f), m) => M.insert (m, k, f)) m
-                                  (HsModIface.fingerprints Pickle.hash (i, fn k => M.find (m, k))))
-                             m (#mods u))
-               M.empty done
+  (* The fingerprints of a unit's entities and instances, by key or
+     identity, each module's from those before it (HsModIface's), those of
+     the units before it `earlier`'s; and what it asked of those, each key
+     with what it gave, which are all its fingerprints read of anything
+     but its modules' interfaces *)
+  type prints = {prints : (string * string) list, asked : (string * string option) list}
+
+  fun printsFor (mods : HsModIface.t list, earlier : string M.map) : prints =
+    let
+      val own : string M.map ref = ref M.empty
+      val asked : string option M.map ref = ref M.empty
+      fun external k =
+        case M.find (!own, k) of
+          SOME f => SOME f
+        | NONE => let val v = M.find (earlier, k) in asked := M.insert (!asked, k, v); v end
+      fun ofModule i =
+        let val fs = HsModIface.fingerprints Pickle.hash (i, external)
+        in List.app (fn (k, f) => own := M.insert (!own, k, f)) fs; fs end
+      val prints = List.concat (List.map ofModule mods)
+    in
+      {prints = prints, asked = M.listItems (!asked)}
+    end
+
+  (* a unit's fingerprints kept with it, and read back: where every key it
+     asked gives now what it gave, they are what printsFor gives, of the
+     same interfaces (its entry's) and the same answers *)
+  fun printsText ({prints, asked} : prints) : string =
+    let val w = ref []
+    in
+      putList putPair (w, prints);
+      putList (fn (w, (k, v)) => (put (w, k); case v of SOME f => put (w, "s" ^ f) | NONE => put (w, "n"))) (w, asked);
+      String.concat (List.rev (!w))
+    end
+
+  fun printsOfText (s : string) : prints =
+    let
+      fun bad what = raise Failed ("a unit's fingerprints: " ^ what)
+      val {get, number, atEnd} = readerOf ("a unit's fingerprints", s)
+      val prints = List.tabulate (number (), fn _ => let val k = get () in (k, get ()) end)
+      fun answer v = if v = "n" then NONE else if String.isPrefix "s" v then SOME (String.extract (v, 1, NONE)) else bad "s or n"
+      val asked = List.tabulate (number (), fn _ => let val k = get () in (k, answer (get ())) end)
+    in
+      if atEnd () then {prints = prints, asked = asked} else bad "the end"
+    end
 
   type options = {roots : string list, out : string, store : string option, layers : string list, show : bool,
                   strings : CoreRuntime.strings, fault : CoreToMid.fault option,
@@ -188,7 +258,7 @@ struct
            scopes = #scopes s, diags = #diags s, modules = #modules s, derived = #derived s, evidence = evidence,
            types = #types s}
         end
-      fun step (found : G.found list, done : unit_ list) : unit_ list =
+      fun step (found : G.found list, (done : unit_ list, prints : string M.map)) : unit_ list * string M.map =
         let
           val ids = List.map #id found
           val name = String.concatWith "+" ids
@@ -196,7 +266,6 @@ struct
           (* its modules parsed, where they are first asked for *)
           val nodes = once (fn () => List.map (fn (f : G.found) => #node f ()) found)
           val ifaces = List.concat (List.map #mods done)
-          val prints = printsOf done
           fun own home = List.exists (fn i => i = home) ids
           fun answerIn s r = RhcIface.answer {state = s, fingerprint = fn k => M.find (prints, k), own = own} r
           (* what a read gives now: on the state of the units before, the
@@ -228,35 +297,48 @@ struct
               (* the first unit reads its own source and rhc's leaves alone,
                  which its key and the configuration hold *)
               val usages = if null done then [] else List.map (fn r => (HsUsage.key r, answerIn (now ()) r)) reads
-              val iface = HsIface.encode {modules = mods, desugar = desugarText desugar, unfoldings = []}
+              val iface = HsIface.encode {modules = mods, unfoldings = []}
+              val own = printsFor (mods, prints)
               (* its Core by its declarations, so that a link reads only what
-                 it reaches (CoreUnits.indexText) *)
+                 it reaches (CoreUnits.index) *)
               val (index, texts) = CoreUnits.index core
               val texts = Vector.fromList texts
-              val sum = keep (key, usages, {iface = iface, parts = fn 0 => index | i => Vector.sub (texts, i - 1),
-                                            count = 1 + Vector.length texts})
+              fun part i =
+                if i = desugarPart then desugarText desugar
+                else if i = printsPart then printsText own
+                else if i = indexPart then index
+                else Vector.sub (texts, i - declsPart)
+              val sum = keep (key, usages, {iface = iface, parts = part, count = declsPart + Vector.length texts})
             in
               say (name, "compiled" ^ why);
-              {name = name, ids = ids, mods = mods, desugar = fn () => desugar, sum = sum, indexed = fn () => CoreUnits.InHand core}
+              {name = name, ids = ids, mods = mods, prints = #prints own, desugar = fn () => desugar, sum = sum,
+               indexed = fn () => CoreUnits.InHand core}
             end
           fun taken ({iface, parts, ...} : RhcStore.sections, sum) =
             let
-              val {modules, desugar, ...} = HsIface.decode iface handle HsIface.Bad msg => raise Failed ("the entry of " ^ name ^ ": " ^ msg)
+              val {modules, ...} = HsIface.decode iface handle HsIface.Bad msg => raise Failed ("the entry of " ^ name ^ ": " ^ msg)
+              (* its fingerprints as kept, where what it asked of the units
+                 before gives what it gave, else made again *)
+              val kept = printsOfText (parts printsPart)
+              val own = if List.all (fn (k, v) => M.find (prints, k) = v) (#asked kept) then kept else printsFor (modules, prints)
               (* its Core's index read only where the link is compiled, and
                  each declaration's text only where the link reaches it *)
-              fun indexed () = CoreUnits.Indexed (parts 0, fn i => parts (i + 1))
+              fun indexed () = CoreUnits.Indexed (parts indexPart, fn i => parts (i + declsPart))
             in
               say (name, "taken");
-              {name = name, ids = ids, mods = modules, desugar = once (fn () => desugarOf desugar), sum = sum, indexed = indexed}
+              {name = name, ids = ids, mods = modules, prints = #prints own, desugar = once (fn () => desugarOf (parts desugarPart)),
+               sum = sum, indexed = indexed}
             end
+          val u =
+            case lookup (key, holds) of
+              SOME (UnitStore.Found ({sections, ...}, sum)) => taken (sections, sum)
+            | SOME (UnitStore.FoundBehind ({sections, ...}, sum)) => taken (sections, sum)
+            | SOME (UnitStore.Missed why) => made (" (" ^ why ^ ")")
+            | NONE => made ""
         in
-          done @ [case lookup (key, holds) of
-                    SOME (UnitStore.Found ({sections, ...}, sum)) => taken (sections, sum)
-                  | SOME (UnitStore.FoundBehind ({sections, ...}, sum)) => taken (sections, sum)
-                  | SOME (UnitStore.Missed why) => made (" (" ^ why ^ ")")
-                  | NONE => made ""]
+          (done @ [u], List.foldl (fn ((k, f), m) => M.insert (m, k, f)) prints (#prints u))
         end
-      val units = List.foldl step [] (#groups g)
+      val (units, _) = List.foldl step ([], M.empty) (#groups g)
       val () = Option.app UnitStore.memoWrite memo
       val () =
         if #show opts then

@@ -14,7 +14,9 @@ struct
   structure P = Pickle
 
   val magic = "RHE"
-  val version = 1
+  (* 2: a unit's interface in HsIface's bytes, and the driver's parts the
+     desugaring's interface and the fingerprints before its Core *)
+  val version = 2
 
   (* what a compile read, by a name of rhc's (H1, H2, H7, H9), and what it
      gave then *)
@@ -23,12 +25,14 @@ struct
      its clients' usages name; and the level of the lint that checked it *)
   type head = {usages : usage list, exports : string, level : int}
   (* its sections, each hashed apart: the unit's interface (HsIface's
-     bytes) and its code (a unit file's) *)
-  (* the code's parts, each a section of its own, read and held to its hash
-     only where it is asked for: a unit taken whose code no link needs
-     never reads it, and a link reads only the parts it reaches (a unit's
-     Core by its declarations, CoreUnits.index). `count` is the parts a
-     writer gives; a reader asks for those it knows are there *)
+     bytes) and its parts, which the client lays out (rhc's driver: the
+     desugaring's interface, the fingerprints, the Core's index and each of
+     its declarations; a unit of Core: its unit file). Each part is a
+     section of its own, read and held to its hash only where it is asked
+     for: a unit taken that no later unit desugars against never reads its
+     desugaring's, and a link reads only the declarations it reaches
+     (CoreUnits.index). `count` is the parts a writer gives; a reader asks
+     for those it knows are there *)
   type sections = {iface : string, parts : int -> string, count : int}
   type entry = (head, sections) S.entry
 
