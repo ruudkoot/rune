@@ -884,15 +884,16 @@ its own, and forcing one is one step.
   an indirection, and updates it again, its value the one that stands. So `UPDATE` of a
   closure that is an indirection already writes it again; `Low.hoistEnv` reads what
   such code captured at its entry too, since after the inner run's update the collector
-  follows the closure's first field alone; and the collector gives what points to an
-  indirection its value neither where a frame runs that indirection (it is pinned,
-  `IND_RUNNING`, by `gc_pin_running` before each collection that shortcuts, where a
-  function of the program says `UPDATE` and not `BLACKHOLE`, so never in Haskell's)
-  nor where the value is a suspension or an indirection itself, looked at through its
-  forwarding pointer (`ind_may_shortcut`: a field that held the outer of an
-  `'a susp susp` must not come to hold the inner, whose force would run it).
-  `tests/thunks`' kernels `k_outlive`, `k_outlive_int`, `k_outlive_raise`,
-  `k_outlive_three`, `outlive_nullary` and `k_nested` hold each on every engine.
+  follows the closure's first field alone; and where a function of the program says
+  `UPDATE` and not `BLACKHOLE` (`Program`'s `reruns`, so never in SML's or Haskell's),
+  the collector gives what points to an indirection its value neither where a frame
+  runs that indirection (it is pinned, `IND_RUNNING`, by `gc_pin_running` before each
+  collection that shortcuts) nor where the value is a suspension or an indirection
+  itself, looked at through its forwarding pointer (`ind_may_shortcut`: a field that
+  held the outer of an `'a susp susp` must not come to hold the inner, whose force
+  would run it). `tests/thunks`' kernels `k_outlive`, `k_outlive_int`,
+  `k_outlive_raise`, `k_outlive_three`, `outlive_nullary` and `k_nested` hold each on
+  every engine.
 
 ### Mid as text
 

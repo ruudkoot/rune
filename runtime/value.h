@@ -442,7 +442,9 @@ static inline void obj_forward(Obj *o, Obj *to) { o->kind = K_FORWARD; memcpy(OB
    value may be a suspension ('a susp susp, which lazy ML has and Haskell
    cannot make): a field that held the outer must not come to hold the
    inner, whose force would then run it (the haskell98 roadmap's D57, M26;
-   E2's kernels/nested.sml). */
+   E2's kernels/nested.sml). Asked only where a function of the program
+   says UPDATE and not BLACKHOLE (Program's reruns); elsewhere every
+   indirection is shortcut, as before. */
 static inline int ind_may_shortcut(Value v) {
     const Obj *o = val_ptr(v);
     if (obj_kind(o) != K_IND || obj_contag(o) == IND_RUNNING) return 0;

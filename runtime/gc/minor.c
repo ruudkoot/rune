@@ -145,16 +145,52 @@ static Obj *promote(VM *vm, Obj *o) {
     return n;
 }
 
-static int promote_value(VM *vm, Value *v) {
-    if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
-    /* a young indirection shortcut: the field given what it holds (D18) */
+/* The young indirection shortcut where the program has lazy ML's
+   suspensions (Program's reruns): the field given what it holds (D18)
+   where it may be (ind_may_shortcut), along a chain of at most IND_HOPS; 0
+   where the field comes to hold what is not young. Out of line, out of the
+   way of every other program's scan. */
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static int shortcut_guarded(VM *vm, Value *v) {
     for (int hops = 0; hops < IND_HOPS && ind_may_shortcut(*v); hops++) {
         *v = obj_fields(val_ptr(*v))[0];
         if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
     }
+    return 1;
+}
+
+/* A field's promotion: what it holds, where young, copied out of the
+   nursery; an indirection shortcut first, the field given what it holds
+   (D18), through the guard and past the pin where the program has lazy
+   ML's suspensions (shortcut_guarded), which no program of SML or Haskell
+   has. In line where the scan of an object runs it field by field
+   (scan_object, scan_range), out of line (promote_value) elsewhere: as the
+   C compiler chose before M26, which with the guard in line chose
+   otherwise, and every program paid a call a field (+1.3% instructions on
+   SML's queens). */
+#if defined(__GNUC__)
+__attribute__((always_inline))
+#endif
+static inline int promote_field(VM *vm, Value *v) {
+    if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
+    if (obj_kind(val_ptr(*v)) == K_IND) {
+        if (vm->prog.reruns) {
+            if (!shortcut_guarded(vm, v)) return 0;
+        } else
+            for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
+                *v = obj_fields(val_ptr(*v))[0];
+                if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
+            }
+    }
     *v = mk_ptr(promote(vm, val_ptr(*v)));
     return 1;
 }
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static int promote_value(VM *vm, Value *v) { return promote_field(vm, v); }
 /* a global written since the last minor collection (gc.h, MINOR_ROOTS) */
 static void promote_global(VM *vm, Value *v) {
     vm->gc_counts.other_roots++;
@@ -222,7 +258,7 @@ static int scan_range(VM *vm, Obj *o, const char *lo, const char *hi) {
     int young = 0;
     for (size_t i = first; i < end; i++) {
         vm->gc_counts.fields++;
-        young |= promote_value(vm, &f[i]);
+        young |= promote_field(vm, &f[i]);
     }
     return young;
 }
@@ -287,7 +323,7 @@ static void scan_object(VM *vm, Obj *o) {
     if (!obj_has_fields(o)) return;
     Value *f = obj_fields(o);
     uint32_t n = obj_scanned_fields(o);
-    for (uint32_t i = 0; i < n; i++) promote_value(vm, &f[i]);
+    for (uint32_t i = 0; i < n; i++) promote_field(vm, &f[i]);
 }
 
 static void minor_into(VM *vm) {
