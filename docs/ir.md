@@ -1519,7 +1519,7 @@ holds the link to refusing; a unit so made is not stored in the cache.
 
 * **`make test-ir`** (`ir/*` of `tests/runner/tools.sml`): each `tests/ir/NAME.sml`
   is compiled without the Basis Library, and each `tests/ir/NAME.mid` read
-  as Mid, with the lint at level 3, Mid's text read back after every stage. The first line asks for a dump
+  as Mid and compiled as a whole program (`-o`), with the lint at level 3, Mid's text read back after every stage. The first line asks for a dump
   (`(* dump: --dump-after=PASS *)`), which is compared with `NAME.expected`
   and reviewed line by line like any `.expected` file, or says with what
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
