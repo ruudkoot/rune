@@ -193,6 +193,8 @@ struct
                 val () = if List.all #library members then HsInfer.numberFrom (librarySlot members)
                          else HsInfer.renumber unitCounters
                 val resolved = List.filter (fn (n, _) => List.exists (fn (m : G.node) => #id m = #id n) members) (!out)
+                (* 5.4: an instance in scope where imports reach it *)
+                val () = HsInfer.setReaches RhcGraph.reaches
                 val {env, errors, derived} =
                   HsInfer.check {env = !types, cycleDefault = cycleDefault, prelude = prelude, evidence = evidence,
                                  fixity = fn k => M.find (fixTable, k),

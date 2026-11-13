@@ -18,7 +18,7 @@ struct
   exception Refused of HsSource.span * string
 
   (* what the inference kept, let go once it is done *)
-  fun clear () = (HsLintInfer.reset (); HsLintEnv.reset (); T.names := [])
+  fun clear () = (HsLintInfer.reset (); HsLintEnv.reset (); T.names := []; HsLintClasses.inScope := (fn _ => true))
 
   fun zonkScheme (T.Forall (ks, (ps, t))) = T.Forall (ks, (List.map T.zonkPred ps, T.zonk t))
 

@@ -25,7 +25,7 @@ struct
   (* what one check inferred alone *)
   type part = {modules : string list, env : E.saved, infer : I.saved, counter : int, target : G.target}
 
-  val magic = "rhc-hslint-part-1"
+  val magic = "rhc-hslint-part-2"
 
   (* ---- writing ---- *)
 
@@ -79,7 +79,8 @@ struct
     (map tydef (w, #tydefs s); map con (w, #cons s); map field (w, #fields s); map method (w, #methods s);
      map kind (w, #classKinds s); map (list ty) (w, #defaults s); list instance (w, #instances s);
      list classDecl (w, #classDecls s); string (w, #prelude s); map bool (w, #programModules s);
-     map cls (w, #classes s); map (list inst) (w, #insts s); option id (w, #numId s))
+     map cls (w, #classes s); map (list inst) (w, #insts s); option id (w, #numId s);
+     map (list string) (w, #imports s); map string (w, #fileModule s))
 
   fun default (w, {module, span = sp, preds, choice, ruleTwo} : I.default) =
     (string (w, module); span (w, sp); list pred (w, preds); ty (w, choice); bool (w, ruleTwo))
@@ -187,11 +188,12 @@ struct
       val tydefs = rmap rtydef r val cons = rmap rcon r val fields = rmap rfield r val methods = rmap rmethod r
       val classKinds = rmap rkind r val defaults = rmap (rlist rty) r val instances = rlist rinstance r
       val classDecls = rlist rclassDecl r val prelude = rstring r val programModules = rmap rbool r
-      val classes = rmap rcls r val insts = rmap (rlist rinst) r
+      val classes = rmap rcls r val insts = rmap (rlist rinst) r val numId = roption rid r
+      val imports = rmap (rlist rstring) r
     in
       {tydefs = tydefs, cons = cons, fields = fields, methods = methods, classKinds = classKinds, defaults = defaults,
        instances = instances, classDecls = classDecls, prelude = prelude, programModules = programModules,
-       classes = classes, insts = insts, numId = roption rid r}
+       classes = classes, insts = insts, numId = numId, imports = imports, fileModule = rmap rstring r}
     end
 
   fun rdefault r : I.default =

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 12 of 12 entries documented |
+| Documentation | 13 of 13 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/infer\_sig.sml](../../../../../lib/language/haskell/infer_sig.sml) |
 
@@ -69,6 +69,7 @@ sig
                <a href="#fld-part.methods">methods</a> : (string * {cls : string, scheme : HsTypes.scheme}) list}
   val <a href="#val-part">part</a> : env * (string -&gt; bool) -&gt; part
   val <a href="#val-extend">extend</a> : env * part -&gt; env
+  val <a href="#val-setreaches">setReaches</a> : (string * string -&gt; bool) -&gt; unit
   val <a href="#val-valuescheme">valueScheme</a> : env * string -&gt; HsTypes.scheme option
   val <a href="#val-classes">classes</a> : env -&gt; HsClasses.env
 end
@@ -230,6 +231,20 @@ val extend : env * part -> env
 
 `extend (env, p)` is `env` with the part `p`, as a client checks
 against a module it has only the interface of.
+
+### <a name="val-setreaches"></a>`setReaches`
+
+```sml
+val setReaches : (string * string -> bool) -> unit
+```
+
+`setReaches f` makes `f (m, n)` the checker's answer to 5.4's scope.
+
+`f (m, n)` is whether a chain of imports leads from the module `m` to
+`n`, `m` among those it reaches: an instance is in scope in a module
+only where it reaches the instance's (R26). The driver sets it from
+the program's graph; until it does, every instance is in scope
+everywhere.
 
 ### <a name="val-valuescheme"></a>`valueScheme`
 

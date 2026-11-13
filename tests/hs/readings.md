@@ -393,6 +393,19 @@ so a monomorphic variable is closed at the end of its own module, and a use at a
 is refused; `--cycle-default=scc`, an extension off by default, closes it at the end of the cycle. No oracle compiles
 a cycle as written (R94). Rows: `mr.rule2.mutual` (`errors/mr.rule2.mutual`), `mod.sep.sigs` (`accept/mod.sep.sigs`).
 
+### R26. An instance that no chain of imports reaches
+> Thus, an instance declaration is in scope if and only if a chain of import declarations leads to the module
+> containing the instance declaration. (5.4)
+
+**rhc's choice.** The text: an instance solves a predicate, or holds a default, in a module only where that module's
+imports lead, at some depth, to the module declaring the instance; a module of a cycle reaches every module of it.
+So a module of the program that uses an instance its imports do not reach is refused, though another module brings the
+instance into the program. Both of rhc's judges hold it, the checker by the program's graph and HsLint by its own
+reading of each module's imports. **GHC** refuses the program at the use (its instances are visible by the
+modules a module imports, transitively); **Hugs** runs it, its instances global to what it has loaded: Hugs departs
+from 5.4 here. Rows: `mod.inst.nochain` (`errors/mod.inst.nochain`: Main imports Orphan, which declares `Show (a -> b)`,
+and Used, which shows a function and imports nothing that leads to Orphan).
+
 ### R29. Separate compilation of a cycle
 **rhc's choice.** R29's seed: rhc compiles a cycle of modules whole, with no annotation, and needs no signature for
 a function exported across it; what D30 asks is only that a restricted variable's type be fixed in its own module.

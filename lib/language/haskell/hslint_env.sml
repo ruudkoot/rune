@@ -61,9 +61,16 @@ struct
   val prelude = ref ""
   val programModules : bool M.map ref = ref M.empty
 
+  (* each module's imports, the Prelude's implicit one among them, and the
+     module of each file: 5.4's scope of instances (R26) *)
+  val imports : string list M.map ref = ref M.empty
+  val fileModule : string M.map ref = ref M.empty
+  val closures : unit M.map M.map ref = ref M.empty
+
   fun reset () =
     (tydefs := M.empty; cons := M.empty; fields := M.empty; methods := M.empty; classKinds := M.empty;
      defaults := M.empty; instances := []; classDecls := []; prelude := ""; programModules := M.empty;
+     imports := M.empty; fileModule := M.empty; closures := M.empty;
      C.reset ())
 
   fun refuse (span, msg) = raise T.Refuse (span, msg)
@@ -83,6 +90,27 @@ struct
     if M.member (!programModules, "haskell98:" ^ m) then SOME ("haskell98:" ^ m)
     else if M.member (!programModules, m) then SOME m
     else NONE
+
+  (* 5.4: whether a chain of imports leads from module `m` to `n`, `m`
+     among those it reaches; and the module of an instance, by its file,
+     HsLint's own of no file the Prelude's *)
+  fun reaches (m : string, n : string) : bool =
+    m = n orelse
+    M.member (case M.find (!closures, m) of
+                SOME c => c
+              | NONE =>
+                  let
+                    fun go ([], seen) = seen
+                      | go (x :: rest, seen) =
+                          if M.member (seen, x) then go (rest, seen)
+                          else go (getOpt (M.find (!imports, x), []) @ rest, M.insert (seen, x, ()))
+                    val c = go ([m], M.empty)
+                  in
+                    closures := M.insert (!closures, m, c); c
+                  end,
+              n)
+  fun moduleOfInst ({span = {file, ...}, ...} : C.inst) =
+    if file = "" then !prelude else getOpt (M.find (!fileModule, file), !prelude)
 
   fun tyconKind (q : T.id) : T.kind option =
     if #qual q = "" then
@@ -943,17 +971,20 @@ struct
   type saved = {tydefs : tydef M.map, cons : con M.map, fields : field M.map, methods : method M.map,
                 classKinds : T.kind M.map, defaults : T.ty list M.map, instances : instance list,
                 classDecls : classDecl list, prelude : string, programModules : bool M.map,
-                classes : C.class M.map, insts : C.inst list M.map, numId : T.id option}
+                classes : C.class M.map, insts : C.inst list M.map, numId : T.id option,
+                imports : string list M.map, fileModule : string M.map}
 
   fun save () : saved =
     {tydefs = !tydefs, cons = !cons, fields = !fields, methods = !methods, classKinds = !classKinds,
      defaults = !defaults, instances = !instances, classDecls = !classDecls, prelude = !prelude,
-     programModules = !programModules, classes = !C.classes, insts = !C.insts, numId = !C.numId}
+     programModules = !programModules, classes = !C.classes, insts = !C.insts, numId = !C.numId,
+     imports = !imports, fileModule = !fileModule}
 
   fun restore (s : saved) =
     (tydefs := #tydefs s; cons := #cons s; fields := #fields s; methods := #methods s; classKinds := #classKinds s;
      defaults := #defaults s; instances := #instances s; classDecls := #classDecls s; prelude := #prelude s;
-     programModules := #programModules s; C.classes := #classes s; C.insts := #insts s; C.numId := #numId s)
+     programModules := #programModules s; C.classes := #classes s; C.insts := #insts s; C.numId := #numId s;
+     imports := #imports s; fileModule := #fileModule s; closures := M.empty)
 
   (* the module of a key, `QUAL NAME` *)
   fun qualOf (k : string) = case CharVector.findi (fn (_, c) => c = #" ") k of SOME (i, _) => String.substring (k, 0, i)
@@ -980,7 +1011,9 @@ struct
        classes = keyed (!C.classes),
        insts = M.foldl (fn (k, is, acc) => case List.filter ofFile is of [] => acc | xs => M.insert (acc, k, xs))
                  M.empty (!C.insts),
-       numId = if fromNothing then !C.numId else NONE}
+       numId = if fromNothing then !C.numId else NONE,
+       imports = filteri mine (!imports), fileModule = M.foldl (fn (f, m, acc) => if mine m then M.insert (acc, f, m) else acc)
+                                                               M.empty (!fileModule)}
     end
 
   (* parts put together, in order: a key of a later part wins, lists are
@@ -998,6 +1031,7 @@ struct
        classKinds = union #classKinds, defaults = union #defaults,
        instances = List.concat (List.map #instances parts), classDecls = List.concat (List.map #classDecls parts),
        prelude = prelude, programModules = union #programModules, classes = classes, insts = insts,
+       imports = union #imports, fileModule = union #fileModule,
        numId = let val num = {qual = if prelude = "" then "haskell98:Prelude" else prelude, name = "Num"} : T.id
                in if M.member (classes, T.idKey num) then SOME num else NONE end}
     end
@@ -1022,6 +1056,21 @@ struct
   and extend (modules : module list, whole : bool) =
     let
       val () = List.app (fn {id, ...} => programModules := M.insert (!programModules, id, true)) modules
+      (* the modules each imports, by the names it writes, the Prelude's
+         implicit import with them, and each module's file *)
+      val () =
+        List.app
+          (fn {id, ast = A.Module ({span, ...}, {imports = is, ...}), ...} : module =>
+             let
+               val named = List.map (fn A.Import (_, {module = A.Name (_, {name, ...}), ...}) => name) is
+               val ids = List.mapPartial moduleId named
+               val implicit = HsModules.moduleName id <> "Prelude" andalso not (List.exists (fn n => n = "Prelude") named)
+             in
+               imports := M.insert (!imports, id, if implicit then ids @ [!prelude] else ids);
+               closures := M.empty;
+               fileModule := M.insert (!fileModule, #file span, id)
+             end)
+          modules
       val ds = collect modules
       val () = inferKinds (Vector.fromList ds)
       val () = synonyms ds

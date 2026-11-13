@@ -2099,6 +2099,13 @@
     },
     {
      "kind": "val",
+     "name": "setReaches",
+     "spec": "val setReaches : (string * string -> bool) -> unit",
+     "doc": "`setReaches f` makes `f (m, n)` the checker's answer to 5.4's scope.\n\n`f (m, n)` is whether a chain of imports leads from the module `m` to\n`n`, `m` among those it reaches: an instance is in scope in a module\nonly where it reaches the instance's (R26). The driver sets it from\nthe program's graph; until it does, every instance is in scope\neverywhere.\n\n",
+     "page": "sig/HS_INFER.md#val-setreaches"
+    },
+    {
+     "kind": "val",
      "name": "valueScheme",
      "spec": "val valueScheme : env * string -> HsTypes.scheme option",
      "doc": "`valueScheme (env, key)` is the type of the value of `key`.\n\n",

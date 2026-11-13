@@ -100,6 +100,15 @@ sig
      against a module it has only the interface of. *)
   val extend : env * part -> env
 
+  (* `setReaches f` makes `f (m, n)` the checker's answer to 5.4's scope.
+
+     `f (m, n)` is whether a chain of imports leads from the module `m` to
+     `n`, `m` among those it reaches: an instance is in scope in a module
+     only where it reaches the instance's (R26). The driver sets it from
+     the program's graph; until it does, every instance is in scope
+     everywhere. *)
+  val setReaches : (string * string -> bool) -> unit
+
   (* `valueScheme (env, key)` is the type of the value of `key`. *)
   val valueScheme : env * string -> HsTypes.scheme option
 
