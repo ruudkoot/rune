@@ -364,10 +364,21 @@ no clause gives it a value. **GHC**, **Hugs**, **nhc98** and **MicroHs** all ref
 **rhc's choice.** R8's seed: an escape above `maxBound :: Char`, 0x10FFFF, is a static error, as **GHC** and **Hugs**
 refuse it; **nhc98** accepts it. Rows: `lex.esc.range` (`errors/lex.esc.range`).
 
+### R1. `do` against a non-associative operator, and the parse-error rule
+**rhc's choice.** 9.3 gives `do a == b == c` the single parse `(do { a == b }) == c`, and concedes it: "The
+parse-error rule is hard to implement in its full generality, because doing so involves fixities ... Programmers are
+therefore advised to avoid writing code that requires the parser to insert a closing brace in such situations". rhc
+closes blocks by the grammar with operators flat (D27), and fixity resolution refuses the block, as all four oracles
+do: a deviation conceded by the Report (D38's ground, the owner's decision of 2026-11-13), pinned. Rows:
+`lay.parseerror.fixity` (`errors/lay.parseerror.fixity_refused`).
+
 ### R9. `let` against a non-associative operator
 **rhc's choice.** As R1 for `do` (D27, D38): the parser takes the meta-rule, the `let` extending as far right as it
 can, with operators flat, and fixity resolution refuses `x == x == True`; the parse 3 states, `(let x = True in (x ==
-x)) == True`, needs fixities while parsing, so it cannot be implemented as written: a deviation, pinned. **GHC**,
+x)) == True`, needs fixities while parsing, and chapter 3 concedes it ("implementations may well use a post-parsing
+pass to deal with fixities ... Programmers are advised to avoid constructs whose parsing involves an interaction of
+(lack of) associativity with the let/lambda meta-rule"): a deviation conceded by the Report (D38's ground, the
+owner's decision of 2026-11-13), pinned. **GHC**,
 **Hugs**, **nhc98** and **MicroHs** all refuse it. Rows: `exp.parse.letnonassoc` (`errors/exp.parse.letnonassoc_refused`).
 
 ### R14. The kernel's literals, and the translations' claim

@@ -645,7 +645,7 @@ rows it covers (a production's rows, a definition's), the readings it pins
    the rows it names; a row with a deviation names its pin, a program that
    names the row and says `deviation`, and has its note in
    `tests/hs/deviations.tsv` (its ground, one of D38's four -- wrong,
-   contradictory, ambiguous, cannot be implemented -- and why), and a pin
+   contradictory, ambiguous, conceded by the Report -- and why), and a pin
    and a note are each a row's;
 5. a program of `tests/hs/errors` has an `.expected`, rhc's own message, so
    that a program refused for another reason fails.
