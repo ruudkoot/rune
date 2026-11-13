@@ -153,6 +153,23 @@ sig
      variable and its type. *)
   val force : texp * (string * Core.ty -> texp) -> texp
 
+  (* `forceRep (x, k)` evaluates `x`'s representation, through every newtype
+     at its head, by casts, before `k ()`: what a strict field of a newtype's
+     type forces. *)
+  val forceRep : texp * (unit -> texp) -> texp
+
+  (* `forced k` is whether each field of the constructor `k` is forced where
+     it is applied: its `!`, or a strict field of a newtype's type, lazy in
+     Core (`setForced`). *)
+  val forced : string -> bool list
+
+  (* `setForced (k, flags)` gives the constructor `k` the fields it forces,
+     where they are not its fields' `!`. *)
+  val setForced : string * bool list -> unit
+
+  (* `forcedOverrides ()` is each constructor `setForced` gave its flags. *)
+  val forcedOverrides : unit -> (string * bool list) list
+
   (* `caseCon (x, ty, alts, default)` is a `case` on the atom `x` of the
      data type `ty`.
 

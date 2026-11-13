@@ -21,7 +21,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_CLASSES`](sig/HS_CLASSES.md) | 15 | 15 | 100% | 11 | 11 |
 | [`HS_DERIVE`](sig/HS_DERIVE.md) | 2 | 2 | 100% | 1 | 1 |
 | [`HS_DESUGAR`](sig/HS_DESUGAR.md) | 10 | 10 | 100% | 6 | 6 |
-| [`HS_DS_CORE`](sig/HS_DS_CORE.md) | 42 | 42 | 100% | 37 | 37 |
+| [`HS_DS_CORE`](sig/HS_DS_CORE.md) | 46 | 46 | 100% | 41 | 41 |
 | [`HS_DS_ENV`](sig/HS_DS_ENV.md) | 56 | 56 | 100% | 51 | 51 |
 | [`HS_DUMP`](sig/HS_DUMP.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | 11 | 11 | 100% | 7 | 7 |
@@ -45,7 +45,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 42 | 42 | 100% | 28 | 28 |
 | [`HS_USAGE`](sig/HS_USAGE.md) | 5 | 5 | 100% | 4 | 4 |
-| **all** | 443 | 443 | 100% | 278 | 278 |
+| **all** | 447 | 447 | 100% | 282 | 282 |
 
 ## Members a signature describes
 
@@ -54,7 +54,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-39 structures have a page, with 443 members, of which 443 (100%) are described by a signature.
+39 structures have a page, with 447 members, of which 447 (100%) are described by a signature.
 
 ## Examples that are run
 

@@ -796,6 +796,7 @@ static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char 
     for (int i = 0; i < REAL_BOXES; i++) vm->real_boxes[i] = get_obj(&s);
     vm->interrupt_mask = (int)get_u32(&s);
     vm->interrupt_exn = get_obj(&s);
+    vm->loop_exn = NULL;   /* (vm.h) made again at the next loop */
 
     uint64_t sp = get_u64(&s);
     if (!s.ok || !fits(sp, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");

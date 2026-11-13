@@ -1057,8 +1057,8 @@
     {
      "kind": "type",
      "name": "interface",
-     "spec": "type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,\n                  fields : (string * string list) list, constructors : (string * string list) list,\n                  leaves : string list, defaults : string list}",
-     "doc": "What a unit's desugaring leaves the units after it.\n\n`core` is its types and its values as imports (`(import x TYPE)`);\n`primTypes` each type of the library with no constructor, by key, made\nCore's own, and `builtinCons` Bool's constructors, Core's; `fields`\neach constructor's fields' keys (`\"\"` for one with no name), and\n`constructors` each data type's constructors' keys, in order; `leaves`\nthe keys of the leaves' values, and `defaults` the methods with a\ndefault (a `%dm:` value).\n\n",
+     "spec": "type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,\n                  fields : (string * string list) list, constructors : (string * string list) list,\n                  leaves : string list, defaults : string list, forced : (string * bool list) list}",
+     "doc": "What a unit's desugaring leaves the units after it.\n\n`core` is its types and its values as imports (`(import x TYPE)`);\n`primTypes` each type of the library with no constructor, by key, made\nCore's own, and `builtinCons` Bool's constructors, Core's; `fields`\neach constructor's fields' keys (`\"\"` for one with no name), and\n`constructors` each data type's constructors' keys, in order; `leaves`\nthe keys of the leaves' values, and `defaults` the methods with a\ndefault (a `%dm:` value); `forced` each constructor with a strict field\nof a newtype's type, lazy in Core, by the fields it forces where it is\napplied (HsDsCore.forced).\n\n",
      "page": "sig/HS_DESUGAR.md#type-interface"
     },
     {
@@ -1339,6 +1339,34 @@
      "spec": "val force : texp * (string * Core.ty -> texp) -> texp",
      "doc": "`force (x, k)` evaluates `x` by a `case` and gives `k` the evaluated\nvariable and its type.\n\n",
      "page": "sig/HS_DS_CORE.md#val-force"
+    },
+    {
+     "kind": "val",
+     "name": "forceRep",
+     "spec": "val forceRep : texp * (unit -> texp) -> texp",
+     "doc": "`forceRep (x, k)` evaluates `x`'s representation, through every newtype\nat its head, by casts, before `k ()`: what a strict field of a newtype's\ntype forces.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-forcerep"
+    },
+    {
+     "kind": "val",
+     "name": "forced",
+     "spec": "val forced : string -> bool list",
+     "doc": "`forced k` is whether each field of the constructor `k` is forced where\nit is applied: its `!`, or a strict field of a newtype's type, lazy in\nCore (`setForced`).\n\n",
+     "page": "sig/HS_DS_CORE.md#val-forced"
+    },
+    {
+     "kind": "val",
+     "name": "setForced",
+     "spec": "val setForced : string * bool list -> unit",
+     "doc": "`setForced (k, flags)` gives the constructor `k` the fields it forces,\nwhere they are not its fields' `!`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-setforced"
+    },
+    {
+     "kind": "val",
+     "name": "forcedOverrides",
+     "spec": "val forcedOverrides : unit -> (string * bool list) list",
+     "doc": "`forcedOverrides ()` is each constructor `setForced` gave its flags.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-forcedoverrides"
     },
     {
      "kind": "val",

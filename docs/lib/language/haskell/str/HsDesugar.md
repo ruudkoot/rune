@@ -22,7 +22,7 @@ What each means is on [`HS_DESUGAR`](../sig/HS_DESUGAR.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`interface`](../sig/HS_DESUGAR.md#type-interface) | `{builtinCons : (string * string) list, constructors : (string * string list) list, core : Core.decl list, defaults : string list, fields : (string * string list) list, leaves : string list, primTypes : (string * string) list}` |
+| type | [`interface`](../sig/HS_DESUGAR.md#type-interface) | `{builtinCons : (string * string) list, constructors : (string * string list) list, core : Core.decl list, defaults : string list, fields : (string * string list) list, forced : (string * bool list) list, leaves : string list, primTypes : (string * string) list}` |
 | type | [`library`](../sig/HS_DESUGAR.md#type-library) | *a type of its own* |
 | type | [`module_`](../sig/HS_DESUGAR.md#type-module_) | `{ast : HsAst.module, id : string, library : bool}` |
 | val | [`library`](../sig/HS_DESUGAR.md#val-library) | `{derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, groups : string list list, infer : HsInfer.env, leaves : (string * string list) list, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> library` |

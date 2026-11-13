@@ -399,28 +399,32 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   refusal of a job that ran.
 - `hs-lazy-ports/PORT`, needing `rhc` and `rhc-compiles` (which compiles and runs hello, so held until rhc
   compiles): the Haskell beside each `-lazy` port of `examples/benchmarks` that `tests/hs/lazy-ports.tsv` marks
-  `ready` (GHC prints nofib's fixture in fast mode, and its imports reach the Report), prepared as the corpus is,
-  compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
+  `ready` (GHC prints nofib's fixture in fast mode, and its imports reach the Report), prepared as the corpus is
+  (or in the variant the manifest records, sphere-lazy's `harness`, its hash over `Integer` as the compat layer's,
+  by the lead's ruling 54), compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
   the SML port is validated against. The manifest says why each other port is held; a finding is a line of
   `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
-- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc (refused, then again under `--dotted-names`, D35's
-  flag for the corpus) and run in D56's three ways (`test`, `register`, `register-opt`), its output E8's expected
-  one (the same, the same words, or numbers equal to about five digits) and its status 0; all 188 vendored and in
-  `check`, but those `tests/hs/corpus-nightly.txt` names, whose run is over D56's second in a way of `check` (the
-  lead's ruling 47), `nightly`; held while the row `prog.main.value` is Planned. Each step's wall time is kept
+- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc once for each target, the stack bytecode for `test`
+  and the register one for `register` and `register-opt` (the lead's ruling 52; refused, in E8's variant, then
+  rewritten, then under `--dotted-names`, D35's flag for the corpus), and run in D56's three ways, its output E8's
+  expected one (the same, the same words, or numbers equal to about five digits) and its status 0; all 188 vendored
+  and in `check`, but those `tests/hs/corpus-nightly.txt` names, whose run is over D56's second in a way of `check`
+  (the lead's ruling 47), `nightly`; held while the row `prog.main.value` is Planned. Each step's wall time is kept
   beside the logs (`LOG.times`). A program both judges ran right (GHC's and Hugs's outputs E8's) that rhc refuses
   (`compile`), ends otherwise (`exit`) or prints otherwise (`diff`) is a finding, and fails its job unless a line of
   `tests/hs/rhc-corpus.txt` gives its cause (`rhc | ID::run | CATEGORY | OUTCOME: ...`); what it does where the
-  judges do not both run it right is kept in the results. `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line
-  that explains no failure of a job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45
-  under a `LICENSE` through `--typecheck-only` as the nightly jobs above put the whole corpus, and
-  `hs-rhc-corpus/provenance-SET`, nightly, the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in
-  `check`, not a names job, and the nightly jobs above check the 143 too). `hs-corpus/vendored` (nightly, with the
-  trees) holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and `hs-corpus/data` to the
-  vendored programs' files and notices and nothing more: it refuses a file with no `LICENSE` or `PROVENANCE` beside
-  it or above it, or under another notice than its row of `licences.tsv` names, and a `PROVENANCE` that does not
-  name its tree's upstream and commit or quote the owner's rule. `bin/rune-test hs-corpus-vendor` makes it again
-  from the trees, leaving each `PROVENANCE` as written.
+  judges do not both run it right is kept in the results. Nightly, `hs-corpus-run/sestoft/ID` compiles each program
+  whose run in the Report's order no line explains with its matches as Sestoft's decision trees (`--match=sestoft`),
+  runs it on the register VM and holds it to the same judge, its label `sestoft` (the lead's ruling 59,
+  `tr.case.obligation`). `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line that explains no failure of a
+  job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
+  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
+  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
+  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
+  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
+  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
+  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
+  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.
@@ -834,9 +838,12 @@ code byte for byte as `pristine/MANIFEST.tsv` records it; `report`,
 `bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
 Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
 instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
-each with its entry; and `compile`, `bin/rhc --whole` compiling
+each with its entry; `compile`, `bin/rhc --whole` compiling
 `tests/hs/library/All20.hs`, a program over a name of each of the 20
-modules, which the VM runs to `All20.expected` (M18: the 20 modules compile).
+modules, which the VM runs to `All20.expected` (M18: the 20 modules compile);
+and `exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
+holds of (ruling 57), caught by `ExitZeroCaught` and uncaught by
+`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
@@ -870,11 +877,18 @@ added (`hs/meta/import`, 5.3.1); and the pairs written by hand in
 `tests/hs/meta`, `NAME.hs` and `NAME.pair.hs`, the relation first in NAME:
 `rename` (bound variables renamed, 3.3, 3.12) and `reorder` (declarations
 reordered, 4.5.1 and the top level). Two more are made from each program:
-`hs/meta/reorder`, its top-level blocks (runs of lines between blank ones) in
-the reverse order, and `hs/meta/split`, the program split into a module
+`hs/meta/reorder`, its top-level blocks in the reverse order, and
+`hs/meta/split`, the program split into a module
 `Lib` holding every block but `main`'s and a `Main` that imports it (5, the
 multi-module form of a joined program; none is made where a `default`
-declaration or a name qualified by `Main` would change the program). A pair
+declaration or a name qualified by `Main` would change the program). A block
+is a run of lines that a blank line ends only before a line at column 1, so
+that a class's, an instance's or a `where`'s lines stay together, and the
+blocks that define one name, a function's clauses or a signature and its
+binding, are one; the header, the module line and the imports with their
+comments and continuation lines, ends at the first declaration, the comments
+right above it going with it, and `Lib` takes the header's imports. Their own
+texts, no rhc needed, are `hs/meta/@self` (`check`). A pair
 is held while its program's rows, or the rows its relation cites, are
 `Planned`; what runs today is rhc's names on both programs of the two new
 relations, on an even sample of 30 (`hs/meta/names/*`; `reorder` in `check`, the others
@@ -901,7 +915,8 @@ binding's span covers more, as a function binding's head does, is left.
 **rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
 `hs/interp-vm/NAME`, nightly, and the sample of ruling 47 in `check`). Each run program of `tests/hs/lang` through rhc to
 Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
-Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, `bin/runevm OUT`), with its
+Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, or the bytecode `hs/compile/register/NAME` made in the same run
+where the program has no `.cargs`, compiled once by the lead's ruling 52; `bin/runevm OUT`), with its
 `.stdin` and the VM with its `.vmargs` (as `hs/meta`'s runs are), a program of
 one file interpreted as a copy named `prog.hs`, so that `getProgName` is `prog`
 both ways: the VM prints what the interpreter printed and ends as it did, every
@@ -957,8 +972,12 @@ lambdas, the list functions and `const e undefined`, each with the output its
 own evaluator gives. `hs/generated/@parse` puts 32 through rhc's parser in
 `make check` now; `hs/generated/@run` (16 from seed 1, `check`) and
 `hs/generated/@nightly` (400, `nightly`) compile and run them, held until
-the rows they need are out of `Planned`. `bin/rune-test hs-generate SEED`
-prints a program and its output; `hs-generated FIRST COUNT` runs a range.
+the rows they need are out of `Planned`; `hs/generated/@orders` (the same
+400, `nightly`) compiles them with `--match=sestoft`, Sestoft's decision trees
+held to the meaning of the Report's top-to-bottom rules (`tr.case.obligation`).
+`bin/rune-test hs-generate SEED` prints a program and its output;
+`hs-generated FIRST COUNT` runs a range, and `hs-generated-orders FIRST
+COUNT` the same with Sestoft's trees.
 
 ## rhc's Core
 

@@ -49,6 +49,6 @@ SWITCH        s,n             Jump to the target of the JUMP of the tag of the c
 CONN          d,t,n,fields... Register d := constructor t made of the n registers of fields: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11).
 FIELD         d,s,t,i         Register d := field i of the constructor value that CONN made, of tag t, in register s; --checked stops where the tag is another.
 FORCE         d,s,o           Where register s holds no unevaluated suspension, register d := its value -- what an indirection holds, else what s holds -- and jump to o; else on to the ENTER after it.
-ENTER         f,x             Enter the suspension in register f, as CALL enters a closure, with register x; RESULT takes its value. One under evaluation is a loop, a fatal error.
+ENTER         f,x             Enter the suspension in register f, as CALL enters a closure, with register x; RESULT takes its value. One under evaluation is a loop: the exception Loop is raised.
 BLACKHOLE     -               The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows.
 UPDATE        s               The suspension running becomes an indirection to register s.

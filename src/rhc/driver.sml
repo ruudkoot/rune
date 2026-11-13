@@ -23,12 +23,14 @@ struct
   fun putList f (w, xs) = (w := (Int.toString (length xs) ^ " ") :: !w; List.app (fn x => f (w, x)) xs)
   fun putPair (w, (a, b)) = (put (w, a); put (w, b))
   fun putNamed (w, (a, bs)) = (put (w, a); putList put (w, bs))
+  fun putForced (w, (a, bs)) = (put (w, a); putList (fn (w, b) => put (w, if b then "1" else "0")) (w, bs))
 
-  fun desugarText ({core, primTypes, builtinCons, fields, constructors, leaves, defaults} : HsDesugar.interface) : string =
+  fun desugarText ({core, primTypes, builtinCons, fields, constructors, leaves, defaults, forced} : HsDesugar.interface) : string =
     let val w = ref []
     in
       put (w, CoreText.show core); putList putPair (w, primTypes); putList putPair (w, builtinCons);
       putList putNamed (w, fields); putList putNamed (w, constructors); putList put (w, leaves); putList put (w, defaults);
+      putList putForced (w, forced);
       String.concat (List.rev (!w))
     end
 
@@ -54,6 +56,8 @@ struct
       fun getList f = List.tabulate (number (), fn _ => f ())
       fun getPair () = let val a = get () in (a, get ()) end
       fun getNamed () = let val a = get () in (a, getList get) end
+      fun getBool () = case get () of "1" => true | "0" => false | _ => bad "a flag"
+      fun getForced () = let val a = get () in (a, getList getBool) end
       val core = CoreText.parse (get ()) handle CoreText.Error (_, msg) => bad msg
       val primTypes = getList getPair
       val builtinCons = getList getPair
@@ -61,9 +65,10 @@ struct
       val constructors = getList getNamed
       val leaves = getList get
       val defaults = getList get
+      val forced = getList getForced
     in
       {core = core, primTypes = primTypes, builtinCons = builtinCons, fields = fields, constructors = constructors,
-       leaves = leaves, defaults = defaults}
+       leaves = leaves, defaults = defaults, forced = forced}
     end
 
   (* ---- the units ---- *)

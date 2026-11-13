@@ -1,7 +1,7 @@
 id	section	statement	class	test	how	source	status	reading	deviation
-intro.implementation	1	How programs are manipulated, interpreted or compiled, and the error messages for undefined programs, are implementation dependent	dynamic	none	leaves a choice open, nothing to observe	hand	Planned		
+intro.implementation	1	How programs are manipulated, interpreted or compiled, and the error messages for undefined programs, are implementation dependent	dynamic	none	leaves a choice open, nothing to observe. Nothing to meet (ruling 49): the passage leaves to the implementation how programs are run and what an undefined program's errors say; rhc's are bin/rhc's compile and its interpreter, and messages of its own.	hand	Supported		
 intro.program	1.1	A Haskell program is a set of modules	module	accept	a program of two modules compiles and links	hand	Supported		
-intro.kernel	1.2	Sugar means its translation into a kernel, which "is not formally specified"	dynamic	none	no normative kernel to test against; chapter 3's translations are tested one by one; see translations.md	hand	Planned		
+intro.kernel	1.2	Sugar means its translation into a kernel, which "is not formally specified"	dynamic	none	no normative kernel to test against; chapter 3's translations are tested one by one; see translations.md. Met by construction (ruling 49): rhc's kernel is Core, and HsDesugar gives each construct of the sugar chapter 3's translation, which the tr.* rows' programs check one by one; the Report fixes no kernel beyond that to meet.	hand	Supported		
 intro.values	1.3	Values and types are not mixed	static	reject	a type constructor used as an expression, and a variable used as a type, are refused	hand	Supported		
 intro.typesystem	1.3	Parametric polymorphism (Hindley-Milner) and ad hoc polymorphism by type classes	static	accept	a program using both compiles; detail in chapter 4 rows	hand	Supported		
 intro.errors	1.3	Errors are semantically bottom, not distinguishable from nontermination, and the language has no mechanism for detecting or acting on them	dynamic	run	`catch` does not see `error`; contradicts nothing here but see readings.md on 3.1, 7.3, 23	hand	Supported	R36	
@@ -10,11 +10,11 @@ intro.ns.lower	1.4	Variables and type variables begin with a lowercase letter or
 intro.ns.upper	1.4	The other four kinds of name begin with an uppercase letter	static	reject	`data t = C`, `class c a`, `module m where` are refused	hand	Supported		
 intro.ns.tycls	1.4	An identifier must not name both a type constructor and a class in the same scope	static	reject	`data T = A` with `class T a` in one module is refused; also across an import when used	hand	Supported		
 intro.ns.free	1.4	These are the only constraints: Int may be a module, a class and a constructor in one scope	static	accept	a program doing so, with the Prelude's type Int hidden, compiles	hand	Supported		
-lex.notation	2.1	Notational conventions for the lexical syntax; whitespace explicit, no implicit space between juxtaposed symbols	lex	none	metalanguage; the productions below are the rows	hand	Planned		
+lex.notation	2.1	Notational conventions for the lexical syntax; whitespace explicit, no implicit space between juxtaposed symbols	lex	none	metalanguage; the productions below are the rows. Nothing to meet (ruling 49): metalanguage, the notation of the productions; the lexical rows hold rhc to the productions written in it.	hand	Supported		
 lex.unicode.charset	2.1	Haskell uses the Unicode character set	lex	run	a non-ASCII character in a string literal has its code point at run time	hand	Supported		
 lex.unicode.properties	2.1	The syntax depends on properties of Unicode characters as defined by the Unicode consortium	lex	run	uniSmall, uniLarge, uniSymbol, uniDigit, uniWhite are each decided by the character's general category; one test character per class	hand	Supported		
-lex.unicode.newversions	2.1	Compilers are expected to use new versions of Unicode as they appear	lex	none	an expectation with no version or date; reference [11] says 3.0; rhc must pin one; see readings.md	hand	Planned	R5	
-lex.unicode.encoding	2.1	The Report never says how source text is encoded as bytes	lex	none	a silence, not a clause: rhc must choose; see readings.md	hand	Planned	R5	
+lex.unicode.newversions	2.1	Compilers are expected to use new versions of Unicode as they appear	lex	run	an expectation with no version or date; reference [11] says 3.0; rhc must pin one; see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/lex.unicode.encoding): rhc follows Unicode 18.0.0, lib/unicode's version, so letters new in Unicode 16.0 are letters to the lexer and to Char (R5 in readings.md).	hand	Supported	R5	
+lex.unicode.encoding	2.1	The Report never says how source text is encoded as bytes	lex	run	a silence, not a clause: rhc must choose; see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/lex.unicode.encoding): rhc reads its source text as UTF-8 (R5 in readings.md).	hand	Supported	R5	
 lex.program	2.2	program -> {lexeme | whitespace}	lex	accept	any mix of lexemes and whitespace tokenises	hand	Supported		
 lex.lexeme.qvarid	2.2	A lexeme may be a qvarid	lex	accept	token dump	hand	Supported		
 lex.lexeme.qconid	2.2	A lexeme may be a qconid	lex	accept	token dump	hand	Supported		
@@ -93,7 +93,7 @@ lex.ident.namespaces	2.4	Identifiers are lexically distinguished by initial case
 lex.ident.case	2.4	Identifiers are case sensitive: name, naMe and Name are three distinct identifiers	lex	accept	`name` and `naMe` bound differently; `Name` a constructor	hand	Supported		
 lex.ident.underscore	2.4	_ is treated as a lower-case letter and can occur wherever one can	lex	accept	`_x`, `x_`, `__`, type variable `_a`	hand	Supported		
 lex.ident.wildcard	2.4	_ all by itself is a reserved identifier, used as a wild card in patterns	lex	reject	`x = _` is refused, as is `_` as a type variable; `f _ = 1` holds	hand	Supported		
-lex.ident.unusedwarning	2.4	Compilers offering unused-identifier warnings are encouraged to suppress them for identifiers beginning with underscore	lex	none	encouragement about warnings; rhc's choice	hand	Planned		
+lex.ident.unusedwarning	2.4	Compilers offering unused-identifier warnings are encouraged to suppress them for identifiers beginning with underscore	lex	none	encouragement about warnings; rhc's choice. Nothing to meet (ruling 49): rhc gives no unused-identifier warning, so there is none to suppress.	hand	Supported		
 lex.reserved.case	2.4	case is reserved	lex	reject	refused as a variable name	hand	Supported		
 lex.reserved.class	2.4	class is reserved	lex	reject	refused as a variable name	hand	Supported		
 lex.reserved.data	2.4	data is reserved	lex	reject	refused as a variable name	hand	Supported		
@@ -167,7 +167,7 @@ lex.int.incomplete.hex	2.5	Maximal munch: 0x not followed by a hexit lexes as 0 
 lex.int.incomplete.oct	2.5	0o not followed by an octit lexes as 0 then o...	lex	accept	`0o9` token dump	hand	Supported		
 lex.int.binary	2.5	There is no binary literal	lex	accept	`0b1` lexes as 0 then b1	hand	Supported		
 lex.int.underscore	2.5	There is no digit separator	lex	accept	`1_000` lexes as 1 then _000	hand	Supported	R58	
-lex.int.unidigit	2.5	decimal -> digit{digit} and digit includes uniDigit, yet chapter 19 says digits outside ASCII are not used to represent numbers	lex	none	contradiction: rhc must pick; see readings.md	hand	Planned	R6	
+lex.int.unidigit	2.5	decimal -> digit{digit} and digit includes uniDigit, yet chapter 19 says digits outside ASCII are not used to represent numbers	lex	reject	contradiction: rhc must pick; see readings.md. E9's test was none; ruling 49 makes it a refusal, ruling 56 a deviation: rhc refuses a numeric literal of other than ASCII digits, which 2.5's grammar admits and no clause gives a value (R6 in readings.md; tests/hs/deviations.tsv).	hand	Supported	R6	errors/lex.int.unidigit
 lex.float.point	2.5	float -> decimal . decimal [exponent]	lex	accept	`1.5`, `1.5e3`	hand	Supported		
 lex.float.exponent	2.5	float -> decimal exponent	lex	accept	`1e3` is a float	hand	Supported		
 lex.float.expform	2.5	exponent -> (e | E) [+ | -] decimal	lex	accept	`1E3`, `1e+3`, `1e-3`	hand	Supported		
@@ -208,7 +208,7 @@ lex.esc.octal	2.6	\o137 is octal	lex	run	ord is 95	hand	Supported
 lex.esc.hex	2.6	\x37 is hexadecimal	lex	run	ord is 55	hand	Supported		
 lex.esc.lowerforms	2.6	Only o and x introduce numeric escapes, in lower case	lex	reject	`'\O17'` and `'\X41'` are refused	hand	Supported		
 lex.esc.munch	2.6	Numeric escapes consist of all consecutive digits and may be of arbitrary length	lex	run	`"\0000000065"` is "A"; `"\1234"` is one character	hand	Supported		
-lex.esc.range	2.6	The Report sets no bound on a numeric escape's value	lex	none	a value above maxBound::Char is unspecified: rhc must refuse or wrap; see readings.md	hand	Planned	R8	
+lex.esc.range	2.6	The Report sets no bound on a numeric escape's value	lex	reject	a value above maxBound::Char is unspecified: rhc must refuse or wrap; see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/lex.esc.range): rhc refuses a numeric escape above 0x10FFFF, maxBound :: Char, statically (R8 in readings.md).	hand	Supported	R8	
 lex.esc.soh	2.6	The one ambiguous ASCII escape "\SOH" parses as a string of length 1	lex	run	`length "\SOH" == 1`	hand	Supported		
 lex.esc.soampersandh	2.6	"\SO\&H" has length two	lex	run	length and elements	hand	Supported		
 lex.esc.numampersand	2.6	"\137\&9" has length two	lex	run	length and elements	hand	Supported		
@@ -283,7 +283,7 @@ lay.parseerror.comma	2.7	A comma closes implicit blocks	layout	accept	`(case x o
 lay.parseerror.bracket	2.7	A closing bracket closes implicit blocks	layout	accept	`[do a]`	hand	Supported		
 lay.parseerror.then	2.7	then, else, of close implicit blocks	layout	accept	`if do a then b else c`, `case do a of x -> x`	hand	Supported		
 lay.parseerror.where	2.7	where closes an implicit do or let block it cannot belong to	layout	accept	`f = do a where a = b`	hand	Supported		
-exp.trans.preserve	3	Except for let, the translations preserve both the static and the dynamic semantics	static	none	a claim about the text and not about one program: the tr rows test each identity, and readings.md lists where the claim fails	hand	Planned	R14	
+exp.trans.preserve	3	Except for let, the translations preserve both the static and the dynamic semantics	static	run	a claim about the text and not about one program: the tr rows test each identity, and readings.md lists where the claim fails. E9's test was none; ruling 49 makes it a run: tr.lit.int's program names it and pins R14, the literals' translations to the Prelude's fromInteger and fromRational over R14's kernel constants keeping a program's meaning, and each identity's own tr.* row tests the rest.	hand	Supported	R14	
 exp.free.prelude	3	Free variables and constructors in a translation always mean the Prelude's entities, whether or not the name is in scope and whatever it is bound to	static	run	covered entity by entity by the exp.free rows	hand	Supported		
 exp.free.concatmap	3	A list comprehension uses the Prelude's concatMap, even with concatMap hidden or rebound	static	run	module hiding concatMap and defining its own that aborts; a comprehension still gives the right list	hand	Supported		
 exp.free.negate	3	Prefix negation uses the Prelude's negate, even with negate hidden or rebound	static	run	import Prelude hiding (negate), own negate aborts, -x still negates	hand	Supported		
@@ -328,9 +328,9 @@ exp.parse.let	3	let { ... } in x + y parses as let { ... } in (x + y)	syntax	run
 exp.parse.oplet	3	z + let { ... } in x + y parses as z + (let { ... } in (x + y))	syntax	run	printer output of the AST	hand	Supported		
 exp.parse.sig	3	f x y :: Int parses as (f x y) :: Int	syntax	run	printer output of the AST	hand	Supported		
 exp.parse.lambdasig	3	\ x -> a+b :: Int parses as \ x -> ((a+b) :: Int)	syntax	run	printer output of the AST	hand	Supported		
-exp.parse.letnonassoc	3	let x = True in x == x == True must parse as (let x = True in (x == x)) == True, since == is non-associative	syntax	run	see readings.md: the Report concedes a post-parse fixity pass gets this wrong; pinned reading or deviation	hand	Planned	R9	
-exp.parse.advice	3	Programmers are advised to avoid constructs whose parsing involves associativity interacting with the let/lambda meta-rule	syntax	none	advice to programmers, nothing a test can show	hand	Planned		
-exp.err.nontermination	3.1	Errors, denoted ⊥, are indistinguishable by a Haskell program from non-termination	dynamic	none	a negative universal over programs; tests can only pin that catch and error do not meet (exp.err.uncatchable)	hand	Planned		
+exp.parse.letnonassoc	3	let x = True in x == x == True must parse as (let x = True in (x == x)) == True, since == is non-associative	syntax	run	see readings.md: the Report concedes a post-parse fixity pass gets this wrong; pinned reading or deviation	hand	Supported	R9	errors/exp.parse.letnonassoc_refused
+exp.parse.advice	3	Programmers are advised to avoid constructs whose parsing involves associativity interacting with the let/lambda meta-rule	syntax	none	advice to programmers, nothing a test can show. Nothing to meet (ruling 49): advice to programmers, which asks nothing of rhc.	hand	Supported		
+exp.err.nontermination	3.1	Errors, denoted ⊥, are indistinguishable by a Haskell program from non-termination	dynamic	none	a negative universal over programs; tests can only pin that catch and error do not meet (exp.err.uncatchable). Met by construction (ruling 49): rhc gives a program no way to tell an error from a loop, since catch takes only an IOError and error raises none (exp.err.uncatchable's program).	hand	Supported		
 exp.err.alltypes	3.1	All Haskell types include ⊥	dynamic	run	undefined bound at a function, data, tuple, list, newtype and Int type, unused, and the program finishes	hand	Supported		
 exp.err.lazy	3.1	A value of any type may be bound to a computation that, only when demanded, results in an error	dynamic	run	let x = error "a" in 1 prints 1	hand	Supported		
 exp.err.terminate	3.1	When evaluated, errors cause immediate program termination	dynamic	run	nothing runs after it; whether open handles are flushed: see readings.md (23 says as exitFailure)	hand	Supported	R37	
@@ -341,8 +341,8 @@ exp.err.error.exit	3.1	A call to error terminates the program and returns an app
 exp.err.error.display	3.1	A call to error should display the string in some system-dependent manner	dynamic	run	the string appears on standard error	hand	Supported		
 exp.err.undefined.msg	3.1	When undefined is used, the error message is created by the compiler	dynamic	run	terminates as error does with a non-empty message; the text is not specified	hand	Supported		
 exp.err.trans	3.1	Translations use error and undefined to mark where execution-time errors may occur	dynamic	run	the failing arm of each translation terminates: tr.case.b, tr.field.upd, tr.field.con	hand	Supported		
-exp.err.behaviour	3.1	The actual program behaviour when an error occurs is up to the implementation	dynamic	none	a licence: it weakens exp.err.terminate and has no expected output; see readings.md	hand	Planned	R37	
-exp.err.messages	3.1	The messages passed to error in translations are only suggestions; an implementation may display more or less	dynamic	none	a licence: no message text is required	hand	Planned		
+exp.err.behaviour	3.1	The actual program behaviour when an error occurs is up to the implementation	dynamic	run	a licence: it weakens exp.err.terminate and has no expected output; see readings.md. E9's test was none; ruling 49 makes it a run: exp.err.terminate_stop's program names it and pins R37's choice, an error ending the program at once with status 1, what it wrote before flushed.	hand	Supported	R37	
+exp.err.messages	3.1	The messages passed to error in translations are only suggestions; an implementation may display more or less	dynamic	none	a licence: no message text is required. Nothing to meet (ruling 49): a licence, no message text required; rhc's messages are its own.	hand	Supported		
 exp.var.qualified	3.2	A variable in an expression may be qualified	syntax	accept	Prelude.id x, Prelude.map f xs	hand	Supported		
 exp.var.operator	3.2	var and qvar include a parenthesised symbol	syntax	accept	(+), (Prelude.+)	hand	Supported		
 exp.con.qualified	3.2	qcon is a qualified constructor or a parenthesised gconsym	syntax	accept	M.C, (M.:+), (:)	hand	Supported		
@@ -421,7 +421,7 @@ tr.sec.right	3.5	(op e) = \ x -> x op e, x not free in e	dynamic	run	literal tra
 tr.sec.left	3.5	(e op) = \ x -> e op x, x not free in e	dynamic	run	literal translation differenced; see readings.md: read literally e is unshared and the section is a value, so seq (undefined +) () is ()	hand	Supported	R11	
 tr.sec.fresh	3.5	x does not occur free in e	dynamic	run	source with a variable x in e	hand	Supported		
 tr.sec.whnf	3.5	A section is a lambda, so it is a value whatever op and e are	dynamic	run	seq (+ undefined) () and seq (undefined +) () are (); see readings.md	hand	Supported	R11	
-tr.sec.sharing	3.5	The identities say nothing of sharing; an implementation may share e	dynamic	run	--count budget on map (expensive +) xs; a sharing test is a choice of rhc, not the Report's: see readings.md	hand	Planned	R11	
+tr.sec.sharing	3.5	The identities say nothing of sharing; an implementation may share e	dynamic	run	--count budget on map (expensive +) xs; a sharing test is a choice of rhc, not the Report's: see readings.md	hand	Supported	R11	
 exp.if.form	3.6	if e1 then e2 else e3	syntax	accept	all three present	hand	Supported		
 exp.if.noelse	3.6	else is not optional	syntax	reject	if a then b	hand	Supported		
 exp.if.true	3.6	The value is e2 if e1 is True	dynamic	run	value; e3 not evaluated	hand	Supported		
@@ -448,7 +448,7 @@ exp.tuple.one	3.8	There is no tuple of one: (e) is parenthesised	syntax	run	see 
 exp.tuple.con	3.8	The constructor of an n-tuple is (,...,) with n-1 commas	syntax	accept	(,) (,,) (,,,)	hand	Supported		
 exp.tuple.same	3.8	(a,b,c) and (,,) a b c denote the same value	dynamic	run	equality, and partial application (,,) a	hand	Supported		
 exp.tuple.lazy	3.8	Tuple components are not evaluated by forming the tuple	dynamic	run	fst (1, undefined)	hand	Supported		
-tr.tuple	3.8	(e1, ..., ek) is an instance of a k-tuple as defined in the Prelude and requires no translation	dynamic	accept	primitive in the kernel; see translations.md	hand	Planned		
+tr.tuple	3.8	(e1, ..., ek) is an instance of a k-tuple as defined in the Prelude and requires no translation	dynamic	accept	primitive in the kernel; see translations.md	hand	Supported		
 exp.tuple.type	3.8	If t1 through tk are the types of the ei, the tuple has type (t1, ..., tk)	static	accept	annotated	hand	Supported		
 exp.paren	3.9	(e) is equivalent to e	dynamic	run	value and printer round trip	hand	Supported		
 tr.paren	3.9	(e) is equivalent to e, in fixity resolution too	syntax	run	(a + b) * c, and an operator chain is cut by parentheses	hand	Supported		
@@ -598,7 +598,7 @@ pat.ctx.binding	3.17	in pattern bindings	syntax	accept	(x,y) = e	hand	Supported
 pat.ctx.comp	3.17	in list comprehensions	syntax	accept	[x | (x,y) <- e]	hand	Supported		
 pat.ctx.do	3.17	in do expressions	syntax	accept	do { (x,y) <- e; ... }	hand	Supported		
 pat.ctx.case	3.17	in case expressions	syntax	accept	case e of (x,y) -> x	hand	Supported		
-pat.ctx.case.only	3.17	The first five ultimately translate to case, so matching needs defining only for case	dynamic	none	a claim about the text; each form's tr row tests its translation	hand	Planned		
+pat.ctx.case.only	3.17	The first five ultimately translate to case, so matching needs defining only for case	dynamic	none	a claim about the text; each form's tr row tests its translation. Met by construction (ruling 49): HsDesugar takes the other five forms to case, through HsMatch.clauses and HsMatch.pattern, as tr.case.base says, so matching is defined once, for case.	hand	Supported		
 pat.npk.toplevel	3.17.1	var + integer is a pat, not a pat0: it appears unparenthesised in a case alternative or generator	syntax	accept	case x of n+1 -> n	hand	Supported		
 pat.npk.nested	3.17.1	As a sub-pattern it needs parentheses	syntax	accept	f (n+1) = n, Just (n+1)	hand	Supported		
 pat.npk.conarg	3.17.1	Unparenthesised it is no argument of a constructor	syntax	reject	f (Just n+1) = n	hand	Supported		
@@ -675,7 +675,7 @@ pat.class.float	3.17.2	A floating literal pattern can only be matched against a 
 pat.class.npk	3.17.2	An n+k pattern can only be matched against a value in class Integral	static	reject	f :: Double -> Double; f (n+1) = n	hand	Supported		
 pat.class.infer.int	3.17.2	The classes appear in inferred contexts	static	accept	f 0 = 1 gets (Num a, Num b) => a -> b, Eq by superclass	hand	Supported		
 pat.class.infer.npk	3.17.2	An n+k pattern gives an Integral context	static	accept	f (n+1) = n gets Integral a => a -> a	hand	Supported		
-pat.npk.opinion	3.17.2	n+k patterns may be removed or changed in future versions	dynamic	none	a remark about the future; rhc's target is Haskell 98, which has them	hand	Planned		
+pat.npk.opinion	3.17.2	n+k patterns may be removed or changed in future versions	dynamic	none	a remark about the future; rhc's target is Haskell 98, which has them. Nothing to meet (ruling 49): a remark about later versions; rhc's language is Haskell 98, which has n+k patterns (the pat.npk rows).	hand	Supported		
 pat.irref.def	3.17.2	Matching an irrefutable pattern is non-strict: it matches even if the value is ⊥	dynamic	run	each of the irrefutable forms below on undefined	hand	Supported		
 pat.ref.def	3.17.2	Matching a refutable pattern is strict: if the value is ⊥ the match diverges	dynamic	run	each refutable form on undefined	hand	Supported		
 pat.irref.var	3.17.2	A variable is irrefutable	dynamic	run	on undefined	hand	Supported		
@@ -704,7 +704,7 @@ pat.guard.after	3.17.2	A guard is evaluated only after all arguments have matche
 pat.guard.true	3.17.2	It must be true for the overall match to succeed	dynamic	run	False guard falls to the next clause	hand	Supported		
 pat.guard.env	3.17.2	The guard's environment is that of the right-hand side	static	run	guard uses the where bindings and the pattern variables	hand	Supported		
 pat.guard.strict	3.17.2	An otherwise irrefutable pattern may be evaluated because of a guard	dynamic	run	f ~(x,y,z) [a] | (a == y) = 1 evaluates a and y: f undefined [1] terminates as error does, the Report's example	hand	Supported		
-tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs	hand	Planned	R86	
+tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs. Held by four jobs (ruling 59): hs/desugar/orders, the Report's rules against Sestoft's trees on every program of tests/hs/lang; hs/generated/@orders, the generated programs on Sestoft's trees against the Report's meaning; hs-corpus-run/sestoft, the corpus on Sestoft's trees against E8's output (nightly); and hs/interp-vm, the literal translation against the compiled form.	hand	Supported	R86	
 tr.case.base	3.17.3	All pattern-matching constructs other than case are defined by identities to case, and case by a series of identities	dynamic	none	a statement of method; the rules' completeness is in translations.md. Met by construction (ruling 49): HsMatch compiles case by 3.17.3's identities, in the Report's order by default (D34 A), and HsDesugar takes every other matching construct to it, function clauses, lambdas, pattern bindings, do and comprehensions (desugar.sml's HsMatch.clauses and HsMatch.pattern); the tr.case.* rows' programs and tests/hs/desugar's hs/desugar/report jobs run them	hand	Supported		
 tr.case.a	3.17.3	(a) case e of { alts } = (\v -> case v of { alts }) e, v new	dynamic	run	literal rule differenced; e evaluated at most once, sharing kept by the lambda	hand	Supported		
 tr.case.b	3.17.3	(b) case v of { p1 match1; ... ; pn matchn } = case v of { p1 match1 ; _ -> ... case v of { pn matchn ; _ -> error "No match" }...}	dynamic	run	literal rule differenced, for one to many alternatives	hand	Supported		
@@ -751,7 +751,7 @@ dec.idecls.empty	4	an instance body may be empty (n>=0)	syntax	accept	`instance 
 dec.gendecl.empty	4	gendecl may be the empty declaration	syntax	accept	`let {;; x = 1 ;;} in x`	hand	Supported		
 dec.idecl.empty	4	idecl may be empty	syntax	accept	`instance C Int where { ; }`	hand	Supported		
 dec.vars.many	4	vars and ops take n>=1 names	syntax	accept	`x, y :: Int` and `infixl 6 +++, ---`	hand	Supported		
-dec.primitive.types	4	some datatypes (integers, floats) are hard-wired, most built-in datatypes are normal type and data declarations	prelude	none	a description, not a requirement: each type's rows are in 6.1 and chapter 8	hand	Planned		
+dec.primitive.types	4	some datatypes (integers, floats) are hard-wired, most built-in datatypes are normal type and data declarations	prelude	none	a description, not a requirement: each type's rows are in 6.1 and chapter 8. Nothing to meet (ruling 49): a description of how the types are given, not a requirement; each type's behaviour is its rows' in 6.1 and chapter 8.	hand	Supported		
 ty.hm	4.1	the type system is Hindley-Milner polymorphism extended with type classes	static	accept	a let-polymorphic overloaded program with no signatures compiles	hand	Supported		
 ty.class.intro	4.1	a class declaration introduces a class and its overloaded operations; an instance declaration makes a type an instance	static	accept	the simplified Num class of the section, with instances at two user types	hand	Supported		
 ty.class.constructor	4.1	type class includes constructor classes	static	accept	a class over a type constructor of kind *->* with an instance	hand	Supported		
@@ -849,11 +849,11 @@ dec.strict.mixed	4.2.1	strict and lazy fields may be mixed	dynamic	run	`data T =
 dec.strict.varsym	4.2.1	`!` is an ordinary varsym, not a reservedop	lex	accept	`a ! b = a + b` and `(!)` as a variable compile	hand	Supported		
 dec.strict.onlydata	4.2.1	`!` has its significance only in the argument types of a data declaration	syntax	reject	`f :: !Int -> Int` and `newtype N = N !Int` are refused	hand	Supported		
 dec.strict.atype	4.2.1	a strictness flag takes an atype	syntax	reject	`data T = C !Maybe Int` means two fields, of which Maybe has the wrong kind, and is refused; `C !(Maybe Int)` compiles	hand	Supported		
-tr.dec.strict.lambda	4.2.1	K in an expression is replaced by \ x1...xn -> (((K op1 x1) op2 x2) ...) opn xn, opi being $ or $!	dynamic	run	the translation literal at -O0, differenced against the compiled form	hand	Planned		
+tr.dec.strict.lambda	4.2.1	K in an expression is replaced by \ x1...xn -> (((K op1 x1) op2 x2) ...) opn xn, opi being $ or $!	dynamic	run	the translation literal at -O0, differenced against the compiled form. Differenced against the compiled form (the lead's word, 2026-11-11): hs/interp-vm runs the literal translation on Core's interpreter against the compiled program on the VM for each program that names the row (dec.newtype.ex.nbot's strict constructor, applied in part), sampled in check and whole nightly (ruling 47).	hand	Supported		
 tr.dec.strict.partial	4.2.1	by that lambda a partial application is a value though an argument so far is ⊥	dynamic	run	`seq (K undefined) 1` is 1 for `data T = K !Int !Int`	hand	Supported		
 tr.dec.strict.pattern	4.2.1	pattern matching on K is not affected by strictness flags	dynamic	run	a match on a value built through the wrapper behaves as on an ordinary constructor	hand	Supported		
 tr.dec.strict.order	4.2.1	the translation forces the flagged arguments last-first	dynamic	run	all ⊥ are one denotation (3.1), so which is forced first shows only in which error is reported; see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/tr.dec.strict.order): of two bottom flagged fields the second's error is reported, by .stderr-head, as the translation forces the last first (R24's literal seed); GHC, Hugs and nhc98 report the first	hand	Supported	R24	
-tr.dec.strict.prelude	4.2.1	the translation's $ and $! are the Prelude's, whatever is in scope	dynamic	accept	a strict constructor under `import Prelude ()`	hand	Planned		
+tr.dec.strict.prelude	4.2.1	the translation's $ and $! are the Prelude's, whatever is in scope	dynamic	accept	a strict constructor under `import Prelude ()`	hand	Supported		
 dec.type.basic	4.2.2	`type T u1...uk = t` introduces T, and (T t1...tk) is equivalent to t[t1/u1,...,tk/uk]	static	accept	a value used at both spellings	hand	Supported		
 dec.type.vars.distinct	4.2.2	the variables u1...uk must be distinct	static	reject	`type T a a = a` is refused	hand	Supported		
 dec.type.vars.scope	4.2.2	no other type variable may appear in t	static	reject	`type T a = b` is refused	hand	Supported		
@@ -873,7 +873,7 @@ dec.newtype.onefield	4.2.3	the constructor has exactly one field	syntax	reject	`
 dec.newtype.recursive	4.2.3	newtype may define recursive types	static	accept	`newtype L = L (Maybe (Int, L))`	hand	Supported		
 dec.newtype.context	4.2.3	a newtype may have a context	static	accept	`newtype Eq a => N a = N a` compiles; what the context means is not said, see readings.md	hand	Supported	R23	
 dec.newtype.instance	4.2.3	new instances may be defined for a newtype	static	accept	`instance Show N`, the underlying type having another	hand	Supported		
-dec.newtype.representation	4.2.3	the coercions may be implemented without execution-time overhead	dynamic	none	a permission; what shows is N ⊥ = ⊥, tested below	hand	Planned		
+dec.newtype.representation	4.2.3	the coercions may be implemented without execution-time overhead	dynamic	none	a permission; what shows is N ⊥ = ⊥, tested below. Nothing to meet (ruling 49): a permission, which rhc takes: a newtype's constructor and its pattern are Core casts (HsMatch's rules (k) and (l)), which cost nothing at run time.	hand	Supported		
 dec.newtype.unlifted	4.2.3	N is unlifted: N ⊥ is the same as ⊥	dynamic	run	`seq (N undefined) 1` diverges: bottom probe	hand	Supported		
 dec.newtype.ex.d1bot	4.2.3	`d1 ⊥` is ⊥ for `data D1 = D1 Int; d1 (D1 i) = 42`	dynamic	run	bottom probe by exit status	hand	Supported		
 dec.newtype.ex.d2bot	4.2.3	`d2 ⊥` is ⊥ for `data D2 = D2 !Int; d2 (D2 i) = 42`	dynamic	run	bottom probe by exit status	hand	Supported		
@@ -1108,7 +1108,7 @@ dec.fun.where.clause	4.4.3.1	they do not scope over other clauses	static	reject	
 dec.fun.where.patvars	4.4.3.1	the where sees the clause's pattern variables	static	accept	`f x = y where y = x`	hand	Supported		
 dec.fun.nomatch	4.4.3.1	a call matching no clause is ⊥	dynamic	run	bottom probe by exit status	hand	Supported		
 dec.fun.shorthand	4.4.3.1	`= e where {decls}` is shorthand for `| True = e where {decls}`	dynamic	run	differential of the two forms	hand	Supported		
-tr.dec.fun	4.4.3.1	a function binding is x = \ x1...xk -> case (x1,...,xk) of (p11,...,p1k) match1 ... (pn1,...,pnk) matchn	dynamic	run	literal at -O0, differenced against decision trees	hand	Planned		
+tr.dec.fun	4.4.3.1	a function binding is x = \ x1...xk -> case (x1,...,xk) of (p11,...,p1k) match1 ... (pn1,...,pnk) matchn	dynamic	run	literal at -O0, differenced against decision trees. Differenced against decision trees (the lead's word, 2026-11-11): hs/desugar/orders runs the Report's top-to-bottom rules against Sestoft's trees, both on Core's interpreter, for each program that names the row (tr.dec.fun.lefttoright, tr.case.obligation_held), sampled in check and whole nightly (ruling 47); hs/interp-vm differences them against the compiled form.	hand	Supported		
 tr.dec.fun.lefttoright	4.4.3.1	by that translation arguments are matched left to right, clause by clause	dynamic	run	`f 0 _ = 1; f _ 0 = 2`: f ⊥ 0 diverges; `g _ 0 = 1; g 0 _ = 2`: g ⊥ 0 is 1	hand	Supported		
 tr.dec.fun.semantic	4.4.3.1	the translation is semantic only: the equation is a simple pattern binding, a function binding is not restricted	static	accept	a function binding stays overloaded though its translation would fall under 4.5.5	hand	Supported		
 tr.dec.fun.seq	4.4.3.1	by the translation a function of k>=1 patterns is a lambda, so its partial application at fewer than k is not ⊥	dynamic	run	`f x 0 = 1`: `seq (f undefined) 1` is 1, and `seq f 1` is 1	hand	Supported	R35	
@@ -1121,7 +1121,7 @@ dec.pat.toplevel	4.4.3.2	a top-level pattern binding is as lazy	dynamic	run	`(a,
 dec.pat.recursive	4.4.3.2	a pattern binding may be recursive	dynamic	run	`(xs, n) = (1 : xs, 2)`: take 2 xs	hand	Supported		
 dec.pat.guarded	4.4.3.2	a pattern binding may have guards and a where	dynamic	run	`(a, b) | c = (1, 2) | otherwise = (3, 4) where c = True`	hand	Supported		
 dec.pat.guarded.var	4.4.3.2	that holds with a single variable	dynamic	run	`x | c = 1 | otherwise = 2`	hand	Supported		
-tr.dec.pat.guards	4.4.3.2	`p | g1 = e1 ... | gm = em where decls` is p = let decls in if g1 then e1 else ... if gm then em else error "Unmatched pattern"	dynamic	run	literal at -O0, differenced against the compiled form	hand	Planned		
+tr.dec.pat.guards	4.4.3.2	`p | g1 = e1 ... | gm = em where decls` is p = let decls in if g1 then e1 else ... if gm then em else error "Unmatched pattern"	dynamic	run	literal at -O0, differenced against the compiled form. Differenced against the compiled form (the lead's word, 2026-11-11): hs/interp-vm on tr.dec.pat.guards's program (guards over a where, tried in order, an unmatched binding an error only where forced), and hs/desugar/orders against decision trees, sampled in check and whole nightly (ruling 47).	hand	Supported		
 tr.dec.pat.nomatch	4.4.3.2	when no guard holds the right-hand side is the error, on demand	dynamic	run	`x | False = 1` unused prints; used diverges	hand	Supported		
 tr.dec.pat.fallthrough	4.4.3.2	a pattern binding has no next clause	dynamic	run	the error above rather than a fall-through	hand	Supported		
 dec.note.funbind.plus	4.4.3.2	`x + 1 = ...` is a function binding that defines (+), as `(+) x 1 = ...`	syntax	run	the local + is applied, with Prelude.+ hidden from the use	hand	Supported		
@@ -1145,7 +1145,7 @@ dec.gen.nested.ctx	4.5.2	a let-bound function may be overloaded	static	accept	`f
 dec.gen.group.ctx	4.5.2	all the constraints of a group are collected to form the context of each variable	static	accept	g1 and g2 of the example both have forall a. (Ord a, Show a) => a -> a -> String	hand	Supported		
 dec.gen.group.ctx.g2	4.5.2	g2 is overloaded as g1 is, though the operations are in g1	static	reject	g2 used at a type without Show is refused	hand	Supported		
 dec.gen.group.ambiguous	4.5.2	one context for each variable makes a variable with a constraint its type does not mention ambiguous	static	reject	a group of two functions with type variables of their own and a constraint on one; see readings.md	hand	Supported	R21	
-dec.gen.sig.identical	4.5.2	explicit signatures for several variables of a group must have contexts identical up to renaming	static	reject	`f :: Eq a => a -> Bool; g :: Ord a => a -> Bool`, mutually recursive, is refused; see readings.md	hand	Supported	R21	
+dec.gen.sig.identical	4.5.2	explicit signatures for several variables of a group must have contexts identical up to renaming	static	reject	`f :: Eq a => a -> Bool; g :: Ord a => a -> Bool`, mutually recursive, is refused; see readings.md. A second refusal (ruling 55): f and g one group only through g's where, which uses f, a signature cutting no group by R21(c), tcfail071's shape (errors/dec.gen.sig.identical_where).	hand	Supported	R21	
 dec.gen.sig.renamed	4.5.2	up to renaming of the type variables	static	accept	the same with `Eq a` and `Eq b`	hand	Supported		
 dec.ctx.hnf	4.5.3	a context constrains only a type variable or a variable applied to types, so types from generalization are reduced to head normal form	static	accept	`f xs y = xs == [y]` has type Eq a => [a] -> a -> Bool: accepted at that signature	hand	Supported		
 dec.ctx.hnf.notlist	4.5.3	the type is not Eq [a] => ...	static	reject	`f :: Eq [a] => [a] -> a -> Bool` is refused by 4.1.3	hand	Supported		
@@ -1192,7 +1192,7 @@ mr.rule2.m1.type	4.5.5	in that example len1 gets type Int	module	accept	`len2 = 
 mr.rule2.m1.sig	4.5.5	a signature on len1 solves the problem	module	accept	`len1 :: Num a => a` in M1 makes M2 legal	hand	Supported		
 mr.rule2.notdefaultable	4.5.5	a remaining variable that is not defaultable is an error	static	reject	`x = read "1"; main = print 1` is refused: read's a has no numeric class	hand	Supported		
 mr.rule2.nested	4.5.5	the issue does not arise for nested bindings: their whole scope is visible	static	accept	`f = let x = 1 in x :: Double`	hand	Supported		
-mr.rule2.mutual	4.5.5	for mutually recursive modules the Report does not say what `an entire module` then means	module	none	5.7 leaves separate compilation open: rhc's reading is a decision; see readings.md	hand	Planned	R20	
+mr.rule2.mutual	4.5.5	for mutually recursive modules the Report does not say what `an entire module` then means	module	reject	5.7 leaves separate compilation open: rhc's reading is a decision; see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/mr.rule2.mutual): by D30's default, --cycle-default=module, Rule 2 closes a monomorphic variable at the end of its own module, so a use at another type in a module of its cycle is refused (R20 in readings.md).	hand	Supported	R20	
 mr.rule1.both	4.5.5	rule 1 applies to top-level and nested definitions alike	static	reject	the same program at both levels	hand	Supported		
 mr.conseq.fun	4.5.5	anything defined with function syntax generalizes	static	accept	`f x y = x+y`, overloaded at every use	hand	Supported		
 mr.conseq.lambda	4.5.5	the same function by pattern syntax needs a signature	static	reject	`f = \ x -> \ y -> x+y` at two types is refused	hand	Supported		
@@ -1227,7 +1227,7 @@ prog.main.type.any	5	The t of IO t is any type	static	accept	main :: IO Int; mai
 prog.main.type.poly	5	A main of polymorphic type IO a instantiates to IO t	static	accept	main :: IO a; main = ioError (userError "x"); the exit status shows it ran	hand	Supported		
 prog.main.value	5	The value of a program is main in Main; executing the program performs that computation	dynamic	run	output of a main that prints	hand	Supported		
 prog.main.discard	5	The result of main, of type t, is discarded	dynamic	run	main = return undefined exits with success; nothing forces the result	hand	Supported		
-mod.def.entity	5	An entity is a value, type or class defined in, imported into or exported from a module	module	none	a definition of a term; tested through the rows that use it	hand	Planned		
+mod.def.entity	5	An entity is a value, type or class defined in, imported into or exported from a module	module	none	a definition of a term; tested through the rows that use it. Nothing to meet (ruling 49): the definition of a term; the module rows that use it hold rhc to it.	hand	Supported		
 mod.import.reference	5	Modules reference other modules by explicit import declarations	module	accept	a two-module program	hand	Supported		
 mod.recursive	5	Modules may be mutually recursive	module	accept	two modules importing each other compile as one program and run; see readings.md for what 5.7 allows an implementation to demand	hand	Supported	R28 R29	
 mod.recursive.types	5	Mutual recursion covers types and classes as well as values	module	accept	a data type in A uses a type of B and the reverse	hand	Supported		
@@ -1425,9 +1425,9 @@ mod.closure.class	5.5.3	The classes in a variable's signature need not be import
 mod.closure.t	5.5.3	Example: M1(x) with T not exported, M2 imports x and defines y = x	module	accept	compiles though T does not escape M1	hand	Supported		
 mod.closure.t.sig	5.5.3	There y can be given no signature, as T is not in scope	module	reject	y :: T: refused	hand	Supported		
 mod.closure.synonym	5.5.3	The type of an exported entity is unaffected by non-exported synonyms	module	accept	module M(x) where type T = Int; x :: T; importer uses x + (1 :: Int)	hand	Supported		
-mod.closure.iface	5.5.3	The system silently imports what must accompany an entity	module	none	the means are the compiler's; tested through the rows above	hand	Planned		
-mod.std.fixed	5.6	The semantics of Prelude and library modules, not their implementation, are part of the language	module	none	tested by chapters 6, 8 and 12 to 27	hand	Planned		
-mod.std.optimise	5.6	A compiler may optimise calls to them without consulting their source	module	none	a permission, not a requirement	hand	Planned		
+mod.closure.iface	5.5.3	The system silently imports what must accompany an entity	module	none	the means are the compiler's; tested through the rows above. Met by construction (ruling 49): rhc reads every module a program reaches, and the library from the saved world (D45), so what an entity needs comes with it unasked; 5.5.3's rows are its programs.	hand	Supported		
+mod.std.fixed	5.6	The semantics of Prelude and library modules, not their implementation, are part of the language	module	none	tested by chapters 6, 8 and 12 to 27. Nothing to meet (ruling 49): a statement of what is part of the language; the rows of chapters 6, 8 and 12 to 27 hold rhc to those semantics.	hand	Supported		
+mod.std.optimise	5.6	A compiler may optimise calls to them without consulting their source	module	none	a permission, not a requirement. Nothing to meet (ruling 49): a permission; rhc compiles calls to the library as to any module.	hand	Supported		
 mod.prel.implicit	5.6.1	The Prelude is imported into all modules as if by import Prelude	module	accept	a module uses Prelude.map and map with no import	hand	Supported		
 mod.prel.implicit.qualified	5.6.1	That implicit import gives the qualified names	module	accept	Prelude.map with no import	hand	Supported		
 mod.prel.explicit.list	5.6.1	An explicit import of Prelude replaces the implicit one: list	module	reject	import Prelude (map); a use of filter: refused	hand	Supported		
@@ -1438,9 +1438,9 @@ mod.prel.explicit.qualified.ok	5.6.1	That import gives the qualified names	modul
 mod.prel.explicit.as	5.6.1	Likewise an as clause, which leaves Prelude.x out of scope	module	reject	import Prelude as P; a use of Prelude.map: refused; map and P.map work	hand	Supported		
 mod.prel.explicit.qualas	5.6.1	Likewise qualified with as	module	reject	import qualified Prelude as P; a use of map: refused	hand	Supported		
 mod.prel.explicit.several	5.6.1	Several explicit imports are cumulative	module	accept	import Prelude (map); import qualified Prelude as P	hand	Supported		
-mod.prel.spec	5.6.1	The semantics of the Prelude's entities is specified by the reference implementation of chapter 8	prelude	none	tested row by row through the generated pre.* rows	hand	Planned		
-mod.prel.primitive	5.6.1	Some types and functions cannot be specified in Haskell and are not formally defined in chapter 8	prelude	none	a statement of the text's limit; chapter 6 is all there is for them: see readings.md	hand	Planned	R32	
-mod.prel.tuples	5.6.1	There should be an infinite family of tuples and instances; the reference gives a scheme	prelude	none	tested to the size 6.1.4 requires	hand	Planned		
+mod.prel.spec	5.6.1	The semantics of the Prelude's entities is specified by the reference implementation of chapter 8	prelude	none	tested row by row through the generated pre.* rows. Met through named rows' programs (ruling 49): the pre.* rows, every one of which with a test is Supported, hold each entity to chapter 8's code.	hand	Supported		
+mod.prel.primitive	5.6.1	Some types and functions cannot be specified in Haskell and are not formally defined in chapter 8	prelude	reject	a statement of the text's limit; chapter 6 is all there is for them: see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/mod.prel.primitive): the Prelude's parts, which chapter 8 cannot give wholly in Haskell, cannot be imported separately (R32 in readings.md).	hand	Supported	R32	
+mod.prel.tuples	5.6.1	There should be an infinite family of tuples and instances; the reference gives a scheme	prelude	none	tested to the size 6.1.4 requires. Met through named rows' programs (ruling 49): the std.tuple rows, to the size 15 that 6.1.4 requires, with their instances; rhc's tuples have no bound (std.tuple.nobound).	hand	Supported		
 mod.prel.sub.list	5.6.1	PreludeList cannot be imported separately	module	reject	import PreludeList: refused	hand	Supported		
 mod.prel.sub.text	5.6.1	PreludeText cannot be imported separately	module	reject	import PreludeText: refused	hand	Supported		
 mod.prel.sub.io	5.6.1	PreludeIO cannot be imported separately	module	reject	import PreludeIO: refused	hand	Supported		
@@ -1457,14 +1457,14 @@ mod.shadow.special	5.6.2	Redefining names used by the Prelude does not affect sp
 mod.shadow.special.scope	5.6.2	Those constructs work with none of their names in scope	module	run	import Prelude (); comprehensions, do, literals and [1..] still compile; see readings.md	hand	Supported	R22	
 mod.shadow.instance	5.6.2	Instance declarations in the Prelude cannot be hidden	module	reject	instance Show Char in a user module, under any import form: refused	hand	Supported		
 mod.prel.ordinary	5.6.2	Other than its implicit import the Prelude is an ordinary module	module	accept	it is imported with each import form	hand	Supported		
-mod.sep.undefined	5.7	The precise details of separate compilation are not defined by the Report	module	none	left to the implementation: rhc's own decision	hand	Planned		
-mod.sep.recursive	5.7	Separate compilation of mutually recursive modules may need additional information	module	none	a permission to the implementation; see readings.md, it qualifies 5's unconditional statement	hand	Planned	R29	
-mod.sep.sigs	5.7	Explicit signatures for all exported values may be necessary for mutual recursion	module	none	whether rhc demands them is a decision; see readings.md	hand	Planned	R20 R29	
+mod.sep.undefined	5.7	The precise details of separate compilation are not defined by the Report	module	none	left to the implementation: rhc's own decision. Nothing to meet (ruling 49): separate compilation's details are the implementation's; rhc's are D45's saved world and M21's units.	hand	Supported		
+mod.sep.recursive	5.7	Separate compilation of mutually recursive modules may need additional information	module	accept	a permission to the implementation; see readings.md, it qualifies 5's unconditional statement. E9's test was none; ruling 49 makes it an acceptance: accept/mod.recursive names it and pins R29, a cycle of modules compiled whole with no further information (R29 in readings.md).	hand	Supported	R29	
+mod.sep.sigs	5.7	Explicit signatures for all exported values may be necessary for mutual recursion	module	accept	whether rhc demands them is a decision; see readings.md. E9's test was none; ruling 49 makes it an acceptance (tests/hs/accept/mod.sep.sigs): rhc needs no signature for a function exported across a cycle, only, by D30, a restricted variable's type in its own module (R20 and R29 in readings.md).	hand	Supported	R20 R29	
 mod.adt.data	5.8	Example: module Stack( StkType, push, pop, empty ) exports a datatype without its constructors	module	accept	importer uses push, pop, empty	hand	Supported		
 mod.adt.data.abstract	5.8	Importers cannot construct values through the constructors	module	reject	a use of Stk or EmptyStk: refused	hand	Supported		
 mod.adt.newtype	5.8	Example: the ADT built on a newtype	module	accept	importer uses push, pop, empty	hand	Supported		
 mod.adt.newtype.abstract	5.8	Its constructor is hidden likewise	module	reject	a use of Stk: refused	hand	Supported		
-std.type.syntax	6.1	Some definitions in this chapter are not valid syntax but convey the type's meaning	prelude	none	a remark; each type is tested by its rows	hand	Planned		
+std.type.syntax	6.1	Some definitions in this chapter are not valid syntax but convey the type's meaning	prelude	none	a remark; each type is tested by its rows. Nothing to meet (ruling 49): a remark on the chapter's notation; each type is held to its meaning by its rows.	hand	Supported		
 std.bool.data	6.1.1	Bool is the enumeration False | True in that order	prelude	run	False < True, fromEnum True is 1, minBound is False	hand	Supported		
 std.bool.read	6.1.1	Bool is in Read	prelude	run	read "True"	hand	Supported		
 std.bool.show	6.1.1	Bool is in Show	prelude	run	show False	hand	Supported		
@@ -1514,7 +1514,7 @@ std.tuple.size15.ord	6.1.4	With Ord to size 15	prelude	run	each size 2 to 15	han
 std.tuple.size15.bounded	6.1.4	With Bounded to size 15	prelude	run	each size 2 to 15	hand	Supported		
 std.tuple.size15.read	6.1.4	With Read to size 15	prelude	run	each size 2 to 15	hand	Supported		
 std.tuple.size15.show	6.1.4	With Show to size 15	prelude	run	each size 2 to 15	hand	Supported		
-std.tuple.nobound	6.1.4	There is no upper bound on a tuple's size, though an implementation may restrict it	prelude	none	rhc must state its limit; above 15 is implementation-defined	hand	Planned		
+std.tuple.nobound	6.1.4	There is no upper bound on a tuple's size, though an implementation may restrict it	prelude	none	rhc must state its limit; above 15 is implementation-defined. Met by construction (ruling 49): rhc sets no bound on a tuple's size, a tuple type being declared at each size a program uses (HsDesugar's tuple data; a 64-tuple compiles and runs), and gives the instances to the size 15 that 6.1.4 requires (the std.tuple.size15 rows).	hand	Supported		
 std.tuple.zip7	6.1.4	The Prelude and libraries define tuple functions such as zip up to size 7	library	run	zip3 in the Prelude; zip4 to zip7 in List	hand	Supported		
 std.tuple.con	6.1.4	The constructor is written by omitting the expressions: (x,y) and (,) x y are one value	prelude	run	compared equal	hand	Supported		
 std.tuple.tycon	6.1.4	Likewise for types: (Int,Bool,Int) and (,,) Int Bool Int are one type	static	accept	a signature using each	hand	Supported		
@@ -1527,7 +1527,7 @@ std.unit.bounded	6.1.5	() is in Bounded	prelude	run	maxBound :: ()	hand	Supporte
 std.unit.enum	6.1.5	() is in Enum	prelude	run	[() ..] is [()]	hand	Supported		
 std.unit.read	6.1.5	() is in Read	prelude	run	read "()"	hand	Supported		
 std.unit.show	6.1.5	() is in Show	prelude	run	show ()	hand	Supported		
-std.fun.abstract	6.1.6	Functions are an abstract type: no constructors create them	prelude	none	the absence of a constructor has no program to test it	hand	Planned		
+std.fun.abstract	6.1.6	Functions are an abstract type: no constructors create them	prelude	none	the absence of a constructor has no program to test it. Nothing to meet (ruling 49): the absence of a constructor, which no program can show.	hand	Supported		
 std.fun.simple	6.1.6	id, const, (.), flip, ($) and until are found in the Prelude	prelude	run	each applied	hand	Supported		
 std.io.abstract	6.1.7	IO is abstract: no constructors are visible to the user	static	reject	a Prelude export list has none; a constructor of IO named: refused	hand	Supported		
 std.io.monad	6.1.7	IO is in Monad	prelude	run	do in IO	hand	Supported		
@@ -1558,11 +1558,11 @@ std.apply.lazy	6.2	f $ x = f x	prelude	run	const 1 $ undefined is 1	hand	Support
 std.apply.fixity	6.2	infixr 0 $, $!	prelude	run	f $ g $ h x = f (g (h x))	hand	Supported		
 std.apply.section	6.2	$ works higher-order, map ($ 0) xs and zipWith ($) fs xs	prelude	run	both evaluated	hand	Supported		
 std.class.minimal	6.3	A comment with each class gives the smallest set of methods which with the defaults define all	prelude	run	per class, an instance of exactly that set gives every method a value	hand	Supported		
-std.class.nocomment	6.3	If there is no such comment all methods must be given to fully specify an instance	prelude	none	a statement to the programmer; omitted methods are 4.3.2's undefined	hand	Planned		
+std.class.nocomment	6.3	If there is no such comment all methods must be given to fully specify an instance	prelude	none	a statement to the programmer; omitted methods are 4.3.2's undefined. Met through named rows' programs (ruling 49): a method neither given nor defaulted is 4.3.2's undefined, cls.inst.missing.compile's and cls.inst.missing.undefined's programs.	hand	Supported		
 std.eq.class	6.3.1	Eq has methods (==), (/=) with mutual defaults	prelude	accept	an instance defining either	hand	Supported		
 std.eq.default.ne	6.3.1	x /= y = not (x == y) by default	prelude	run	instance defining == only	hand	Supported		
 std.eq.default.eq	6.3.1	x == y = not (x /= y) by default	prelude	run	instance defining /= only	hand	Supported		
-std.eq.neither	6.3.1	An instance defining neither loops in both	prelude	run	evaluation runs out its budget; a stack limit or a detected loop is bottom as well	hand	Supported		
+std.eq.neither	6.3.1	An instance defining neither loops in both	prelude	run	evaluation runs out its budget; a stack limit or a detected loop is bottom as well	hand	Supported	R95	
 std.eq.both	6.3.1	If both are defined neither default is used	prelude	run	an instance whose /= is not the negation of ==	hand	Supported		
 std.eq.function	6.3.1	Functions are not in Eq	static	reject	id == id: refused	hand	Supported		
 std.eq.io	6.3.1	IO is not in Eq	static	reject	getChar == getChar: refused	hand	Supported		
@@ -1578,13 +1578,13 @@ std.ord.default.gt	6.3.2	x > y = compare x y == GT by default	prelude	run	same	h
 std.ord.default.max	6.3.2	max x y is y if x <= y, else x	prelude	run	on values equal but distinguishable	hand	Supported		
 std.ord.default.min	6.3.2	min x y is x if x <= y, else y	prelude	run	same	hand	Supported		
 std.ord.minmax	6.3.2	(min x y, max x y) is (x,y) or (y,x)	prelude	run	on values equal but distinguishable	hand	Supported		
-std.ord.total	6.3.2	Ord is used for totally ordered datatypes	prelude	none	a law on the instance's author, and Float's NaN breaks it: see readings.md	hand	Planned	R45	
+std.ord.total	6.3.2	Ord is used for totally ordered datatypes	prelude	run	a law on the instance's author, and Float's NaN breaks it: see readings.md. E9's test was none; ruling 49 makes it a run: der.ord.partial_nan's program names it and pins R45, Double's Ord over NaN, which is not total, compare NaN x being GT by Ord's default over IEEE's == and <= (R45 and R90 in readings.md).	hand	Supported	R45	
 std.ord.function	6.3.2	Functions are not in Ord	static	reject	id < id: refused	hand	Supported		
 std.ord.io	6.3.2	IO is not in Ord	static	reject	getChar < getChar: refused	hand	Supported		
 std.ord.ioerror	6.3.2	IOError is not in Ord	static	reject	userError "a" < userError "b": refused	hand	Supported		
 std.ord.basic	6.3.2	All other basic datatypes are in Ord	prelude	run	one test per type of the Prelude	hand	Supported		
 std.ord.derive	6.3.2	Ord can be derived where the constituent types are in Ord, and the declared order of constructors determines it	prelude	run	derived on a user type	hand	Supported		
-std.ord.compare.single	6.3.2	Ordering allows a single comparison to determine the order	prelude	none	a remark on efficiency	hand	Planned		
+std.ord.compare.single	6.3.2	Ordering allows a single comparison to determine the order	prelude	none	a remark on efficiency. Nothing to meet (ruling 49): a remark on efficiency.	hand	Supported		
 std.ord.minimal	6.3.2	An Ord instance may give compare alone or == and <=	prelude	run	both forms give all methods	hand	Supported		
 std.text.reads	6.3.3	ReadS a = String -> [(a,String)]	prelude	accept	interchangeable in a signature	hand	Supported		
 std.text.shows	6.3.3	ShowS = String -> String	prelude	accept	interchangeable in a signature	hand	Supported		
@@ -1593,12 +1593,12 @@ std.show.class	6.3.3	Show has showsPrec, show and showList	prelude	accept	instan
 std.show.default.prec	6.3.3	showsPrec _ x s = show x ++ s by default	prelude	run	instance with show alone	hand	Supported		
 std.show.default.show	6.3.3	show x = showsPrec 0 x "" by default	prelude	run	instance with showsPrec alone	hand	Supported		
 std.show.prec.arg	6.3.3	The Int argument gives the precedence of the enclosing context	prelude	run	showsPrec 11 of a compound value has parentheses	hand	Supported		
-std.show.constant.time	6.3.3	showsPrec and showList return functions to allow constant-time concatenation	prelude	none	a remark; a --count budget for a deep tree stands for it	hand	Planned		
+std.show.constant.time	6.3.3	showsPrec and showList return functions to allow constant-time concatenation	prelude	none	a remark; a --count budget for a deep tree stands for it. Nothing to meet (ruling 49): a remark on why showsPrec and showList return functions, which rhc's library keeps from the Report's code.	hand	Supported		
 std.show.show.zero	6.3.3	show uses precedence context zero	prelude	run	show (Just 1) has no outer parentheses	hand	Supported		
 std.show.list	6.3.3	showList gives a specialised way of showing lists	prelude	run	a user instance's showList used by show of a list	hand	Supported		
 std.show.string	6.3.3	Values of type String are shown in double quotes	prelude	run	show "a" is "\"a\""	hand	Supported		
 std.text.derived.style	6.3.3	Derived Read and Show replicate the style of declaration: infix constructors and field names	prelude	run	see chapter 10's rows	hand	Supported		
-std.text.usually	6.3.3	Strings produced by showsPrec are usually readable by readsPrec	prelude	none	usually states no requirement; 10.4 is the requirement	hand	Planned		
+std.text.usually	6.3.3	Strings produced by showsPrec are usually readable by readsPrec	prelude	none	usually states no requirement; 10.4 is the requirement. Nothing to meet (ruling 49): usually states no requirement; 10.4's readability is the requirement, held by the der.show and der.read rows.	hand	Supported		
 std.text.prelude.types	6.3.3	All Prelude types except function and IO types are in Show and Read	prelude	run	one test per type; IOError has no Read in chapter 8 and 6.1.7: see readings.md	hand	Supported	R47	
 std.text.function.show	6.3.3	Functions are not in Show	static	reject	show id: refused	hand	Supported		
 std.text.function.vacuous	6.3.3	A programmer can make functions and IO types instances of Show	static	accept	instance Show (a -> b)	hand	Supported		
@@ -1631,7 +1631,7 @@ std.enum.inst.char	6.3.4	Char's instance is chapter 8's: enumFromTo 'a' 'z' is t
 std.enum.num.succ	6.3.4	For Int, Integer, Float and Double succ adds 1 and pred subtracts 1	prelude	run	on each type	hand	Supported		
 std.enum.num.conv	6.3.4	fromEnum and toEnum convert between the type and Int	prelude	run	on each type	hand	Supported		
 std.enum.num.float.digits	6.3.4	For Float and Double the digits after the point may be lost	prelude	run	fromEnum 2.5 is 2 by chapter 8	hand	Supported		
-std.enum.num.toolarge	6.3.4	What fromEnum returns for a value too large for Int is implementation-dependent	prelude	none	left open: rhc documents its choice	hand	Planned		
+std.enum.num.toolarge	6.3.4	What fromEnum returns for a value too large for Int is implementation-dependent	prelude	none	left open: rhc documents its choice. Met through named rows' programs (ruling 49): rhc's choice is R81's, fromEnum of a value beyond Int an error, std.enum.bounded.fromenum's program.	hand	Supported		
 std.enum.int.from	6.3.4	enumFrom e1 is [e1,e1+1,e1+2,...] for Int and Integer	prelude	run	take 3 [1..]; at Int the bound of enumFrom applies: see readings.md	hand	Supported	R40	
 std.enum.int.then	6.3.4	enumFromThen e1 e2 is [e1,e1+i,e1+2i,...] with i = e2-e1	prelude	run	take 3 [1,3..]	hand	Supported		
 std.enum.int.then.zero	6.3.4	The increment may be zero: all elements are the same	prelude	run	take 3 [1,1..]	hand	Supported		
@@ -1683,13 +1683,13 @@ std.num.super.realfrac	6.4	RealFrac is a subclass of Real and of Fractional	prel
 std.num.super.realfloat	6.4	RealFloat is a subclass of RealFrac and of Floating	prelude	reject	one with no Floating: refused	hand	Supported		
 std.num.types	6.4	The Prelude defines Int, Integer, Float and Double	prelude	accept	all four in signatures	hand	Supported		
 std.num.rational	6.4	Rational is a ratio of two Integer values, defined in Ratio	library	run	with import Ratio	hand	Supported		
-std.num.lia	6.4	The default floating point operations do not conform to LIA standards	prelude	none	a remark, not a requirement	hand	Planned		
+std.num.lia	6.4	The default floating point operations do not conform to LIA standards	prelude	none	a remark, not a requirement. Nothing to meet (ruling 49): a remark that the default operations do not follow LIA.	hand	Supported		
 std.int.range	6.4	Int covers at least [-2^29, 2^29-1]	prelude	run	minBound <= -2^29 and maxBound >= 2^29-1	hand	Supported		
 std.int.bounded	6.4	maxBound and minBound give the exact range of Int	prelude	run	arithmetic reaches them	hand	Supported		
 std.integer.arbitrary	6.4	Integer is arbitrary precision	prelude	run	2^1000 prints exactly	hand	Supported		
 std.float.ieee	6.4	Float is implementation-defined; it is desirable that it be at least IEEE single	prelude	run	floatDigits and floatRange at Float; 'desirable' binds nobody, a choice to record	hand	Supported		
 std.double.ieee	6.4	Double should cover IEEE double	prelude	run	floatDigits and floatRange at Double	hand	Supported		
-std.num.exceptional	6.4	The results of exceptional conditions on fixed-precision types are undefined: error, truncation or a special value	prelude	none	left open: rhc documents its choice, one row per condition in its deviations	hand	Planned		
+std.num.exceptional	6.4	The results of exceptional conditions on fixed-precision types are undefined: error, truncation or a special value	prelude	none	left open: rhc documents its choice, one row per condition in its deviations. Met through named rows' programs (ruling 49): rhc's choices are an error for Int's overflow (D22's checked Int, R81 and R93: std.enum.bounded.fromenum's and def.pick.first's programs) and IEEE's special values for Float and Double (R78: std.sign.abs_ieee's).	hand	Supported		
 std.num.table.integer	6.4	Table 6.1: Integer is in Integral	prelude	run	a use of quot	hand	Supported		
 std.num.table.int	6.4	Int is in Integral	prelude	run	a use of quot	hand	Supported		
 std.num.table.ratio	6.4	(Integral a) => Ratio a is in RealFrac	library	run	truncate of a ratio	hand	Supported		
@@ -1708,7 +1708,7 @@ std.arith.quot	6.4.2	quot truncates toward zero	prelude	run	(-7) `quot` 2 is -3	
 std.arith.div	6.4.2	div truncates toward negative infinity	prelude	run	(-7) `div` 2 is -4	hand	Supported		
 std.arith.quotrem	6.4.2	quotRem x y = (x `quot` y, x `rem` y)	prelude	run	all sign combinations	hand	Supported		
 std.arith.divmod	6.4.2	divMod x y = (x `div` y, x `mod` y)	prelude	run	all sign combinations	hand	Supported		
-std.arith.zero	6.4.2	What division by zero does at an integral type is not stated: the laws hold for non-zero y	prelude	none	6.4's 'exceptional conditions' may cover Int and nothing covers Integer: rhc decides, see readings.md	hand	Planned	R45	
+std.arith.zero	6.4.2	What division by zero does at an integral type is not stated: the laws hold for non-zero y	prelude	run	6.4's 'exceptional conditions' may cover Int and nothing covers Integer: rhc decides, see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/std.arith.zero): integral division by zero is an error at Int and Integer, R45's seed (R45 in readings.md).	hand	Supported	R45	
 std.arith.even	6.4.2	even x = x `rem` 2 == 0	prelude	run	on negative numbers	hand	Supported		
 std.arith.odd	6.4.2	odd = not . even	prelude	run	on negative numbers	hand	Supported		
 std.gcd.def	6.4.2	gcd x y is the greatest positive integer dividing both	prelude	run	gcd 12 18 is 6	hand	Supported		
@@ -1726,7 +1726,7 @@ std.pow.frac	6.4.3	(^^) raises a fractional number to any integer power	prelude	
 std.pow.float	6.4.3	(**) takes two floating-point arguments	prelude	run	2 ** 0.5	hand	Supported		
 std.pow.zero	6.4.3	x^0 is 1 for any x, including zero	prelude	run	0^0 is 1	hand	Supported		
 std.pow.zero.frac	6.4.3	x^^0 is 1 for any x, including zero	prelude	run	0^^0 is 1	hand	Supported		
-std.pow.undefined	6.4.3	0**y is undefined	prelude	none	undefined here means unspecified or bottom? see readings.md	hand	Planned	R45	
+std.pow.undefined	6.4.3	0**y is undefined	prelude	run	undefined here means unspecified or bottom? see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/std.pow.undefined): 0 ** y is IEEE's pow, 0, 1 or an infinity by y's sign, R45's seed (R45 in readings.md).	hand	Supported	R45	
 std.sign.law	6.4.4	abs x * signum x == x	prelude	run	at each numeric type, signs and zero	hand	Supported		
 std.sign.abs	6.4.4	For real numbers abs x is x if x >= 0, -x if x < 0	prelude	run	at each type; -0.0 and NaN under this definition: see readings.md	hand	Supported	R45 R78	
 std.sign.signum	6.4.4	For real numbers signum x is 1, 0 or -1	prelude	run	at each type; -0.0 and NaN: see readings.md	hand	Supported	R45 R78	
@@ -1746,7 +1746,7 @@ std.coerce.proper	6.4.6	properFraction x gives (n,f) with x = n+f	prelude	run	pr
 std.coerce.proper.sign	6.4.6	n is integral, and zero or of the sign of x; f has the type of x and absolute value below 1, and is zero or of the sign of x	prelude	run	properFraction (-3.75) is (-3,-0.75); erratum June 2003's wording	hand	Supported		
 std.coerce.proper.zero	6.4.6	Zero n or f has no sign, which is what the code does	prelude	run	properFraction 0.5 is (0,0.5); erratum June 2003, see readings.md	hand	Supported	R45	
 std.coerce.defined	6.4.6	ceiling, floor, truncate and round can be defined from properFraction	prelude	run	a user RealFrac with properFraction alone	hand	Supported		
-std.coerce.nan	6.4.6	What these return for NaN and infinities is not stated	prelude	none	rhc decides; see readings.md	hand	Planned	R45	
+std.coerce.nan	6.4.6	What these return for NaN and infinities is not stated	prelude	run	rhc decides; see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/std.coerce.nan): truncate, round, ceiling, floor and toRational of a NaN or an infinity are errors (R45 in readings.md).	hand	Supported	R45	
 std.coerce.torational	6.4.6	toRational returns the rational equivalent with full precision	prelude	run	toRational 0.75 is 3 % 4; of a Double exactly	hand	Supported		
 std.coerce.approx	6.4.6	approxRational x e returns the simplest rational within e of x	library	run	with import Ratio; within is the closed interval of erratum Aug 2005; see readings.md	hand	Supported	R44	
 std.coerce.simpler	6.4.6	p/q in reduced form is simpler than p'/q' if |p| <= |p'| and q <= q'	library	run	results checked against the definition	hand	Supported		
@@ -1767,15 +1767,15 @@ std.float.isinfinite	6.4.6	isInfinite likewise	prelude	run	isInfinite (1/0)	hand
 std.float.isdenorm	6.4.6	isDenormalized likewise	prelude	run	on the smallest denormal	hand	Supported		
 std.float.isnegzero	6.4.6	isNegativeZero likewise	prelude	run	isNegativeZero (-0.0): the literal is negate 0.0	hand	Supported		
 std.float.isieee	6.4.6	isIEEE likewise	prelude	run	True on an IEEE host	hand	Supported		
-std.float.nonieee	6.4.6	For non-IEEE numbers these may all return false	prelude	none	rhc's Float and Double decide: no non-IEEE host	hand	Planned		
+std.float.nonieee	6.4.6	For non-IEEE numbers these may all return false	prelude	none	rhc's Float and Double decide: no non-IEEE host. Met by construction (ruling 49): rhc's Float and Double are IEEE single and double on every host, so isIEEE is True (std.float.ieee's program) and no non-IEEE number arises.	hand	Supported		
 std.coerce.fromintegral	6.4.6	fromIntegral :: (Integral a, Num b) => a -> b	prelude	run	Int to Double; chapter 8's definition	hand	Supported		
 std.coerce.realtofrac	6.4.6	realToFrac :: (Real a, Fractional b) => a -> b	prelude	run	Float to Double through Rational; NaN has no Rational: see readings.md	hand	Supported	R45	
 lib.r.ratio.approx.zero	6.4.6	0/1 is the simplest rational of all	library	run	`approxRational 0.1 0.2` is 0 % 1	hand	Supported		
 io.order	7	Actions are ordered: the implementation is obliged to preserve the sequential chaining of actions	dynamic	run	output order of a chain of actions, under every -O level	hand	Supported		
 io.pure	7	Evaluating an action is not performing it	dynamic	run	let a = putStr "x" in a >> a prints twice; seq a () prints nothing	hand	Supported		
-io.eval.order	7	The order of evaluation of expressions is constrained only by data dependencies	dynamic	none	a freedom, not a requirement; a test cannot show the absence of an order	hand	Planned		
-io.newline	7.1	The treatment of the newline character varies between systems	dynamic	none	system dependent; rhc documents it	hand	Planned		
-io.binary	7.1	These functions cannot be used portably for binary I/O	dynamic	none	a warning; 8-bit behaviour is a Char and encoding decision: see readings.md	hand	Planned	R38	
+io.eval.order	7	The order of evaluation of expressions is constrained only by data dependencies	dynamic	none	a freedom, not a requirement; a test cannot show the absence of an order. Nothing to meet (ruling 49): a freedom given to the implementation, not a requirement; no program can show the absence of an order.	hand	Supported		
+io.newline	7.1	The treatment of the newline character varies between systems	dynamic	none	system dependent; rhc documents it. Met by construction (ruling 49): rhc's handles are binary on every host, Windows too (the runtime's _O_BINARY), so a newline is written and read as the byte 10, untranslated; that is rhc's treatment, stated here.	hand	Supported		
+io.binary	7.1	These functions cannot be used portably for binary I/O	dynamic	run	a warning; 8-bit behaviour is a Char and encoding decision: see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/io.binary): a Char is any code point and the standard handles carry UTF-8, so a character above 127 goes out as its UTF-8 bytes (R38 in readings.md).	hand	Supported	R38	
 io.putchar	7.1	putChar writes a character to the standard output device	dynamic	run	output compared	hand	Supported		
 io.putstr	7.1	putStr writes a string	dynamic	run	output compared	hand	Supported		
 io.putstrln	7.1	putStrLn adds a newline	dynamic	run	output compared	hand	Supported		
@@ -1795,7 +1795,7 @@ io.readio.ok	7.1	readIO is like read	dynamic	run	readIO "1" :: IO Int	hand	Suppo
 io.readio.fail	7.1	readIO signals parse failure to the I/O monad instead of ending the program	dynamic	run	caught by catch, isUserError by chapter 8	hand	Supported		
 io.readln	7.1	readLn combines getLine and readIO	dynamic	run	from stdin	hand	Supported		
 io.filepath	7.1	FilePath = String	prelude	accept	interchangeable in a signature	hand	Supported		
-io.filename	7.1	Files are named by strings in some implementation-specific way	dynamic	none	rhc documents the encoding of names	hand	Planned		
+io.filename	7.1	Files are named by strings in some implementation-specific way	dynamic	none	rhc documents the encoding of names. Met by construction (ruling 49): a FilePath names a file by its String's UTF-8 bytes, which the runtime gives the system unchanged; that is rhc's way, stated here.	hand	Supported		
 io.writefile	7.1	writeFile writes the string, its second argument, to the file, its first	dynamic	run	read back	hand	Supported		
 io.appendfile	7.1	appendFile appends the string to the file	dynamic	run	read back	hand	Supported		
 io.readfile	7.1	readFile returns the contents of the file as a string	dynamic	run	read a known file	hand	Supported		
@@ -1811,7 +1811,7 @@ io.exc.any	7.3	Any I/O operation may raise an exception instead of returning a r
 io.exc.type	7.3	Exceptions in the I/O monad are values of type IOError	dynamic	run	a handler receives an IOError	hand	Supported		
 io.exc.abstract	7.3	IOError's constructors are hidden	static	reject	a constructor named: refused	hand	Supported		
 io.exc.usererror	7.3	userError creates an IOError that includes a string	dynamic	run	ioeGetErrorString gives it back	hand	Supported		
-io.exc.usererror.only	7.3	userError is the only Prelude function that creates an IOError	module	none	a statement on an export list, tested by the generated export rows	hand	Planned		
+io.exc.usererror.only	7.3	userError is the only Prelude function that creates an IOError	module	none	a statement on an export list, tested by the generated export rows. Met through named rows' programs (ruling 49): the Prelude's export rows (pre.export.*, pre.io.data.ioerror) hold its export list, in which userError is the only maker of an IOError.	hand	Supported		
 io.exc.ioerror	7.3	ioError raises an exception	dynamic	run	caught	hand	Supported		
 io.exc.catch	7.3	catch establishes a handler receiving any exception raised in the protected action	dynamic	run	the handler's value is the result	hand	Supported		
 io.exc.catch.none	7.3	With no exception the handler does not run	dynamic	run	catch (return 1) h	hand	Supported		
@@ -1823,20 +1823,20 @@ io.exc.handlerraises	7.3	An exception in a handler goes to the next outer handle
 io.exc.error.notcaught	7.3	error is no IOError, so catch does not see it	dynamic	run	catch (error "x") h ends the program, by 1.3, 3.1 and 7.3 together: see readings.md	hand	Supported	R36	
 io.exc.uncaught	7.3	An exception leaving the main program makes the system print the IOError and exit	dynamic	run	stderr has the error's text; 23 gives the status: see readings.md	hand	Supported	R37	
 io.exc.fail	7.3	fail of IO's Monad instance raises a userError: fail s = ioError (userError s)	dynamic	run	isUserError true, the string is s	hand	Supported		
-io.exc.ch21	7.3	The exceptions raised by the Prelude's I/O functions are those of chapter 21	dynamic	run	chapter 21's rows, through the Prelude's names	hand	Planned		
-pre.r.spec	8	The chapter constitutes a specification for the Prelude	prelude	none	tested through the generated pre.* rows	hand	Planned		
-pre.r.notasis	8	It is not required that the specification be implemented as shown	prelude	none	a permission; rhc's overlay is the list of its uses of it	hand	Planned		
-pre.r.default.method	8	A default method definition specifies only the default method, not the method in all instances	prelude	none	a limit on what the code means: no instance's method is tested against a default unless it uses it	hand	Planned		
+io.exc.ch21	7.3	The exceptions raised by the Prelude's I/O functions are those of chapter 21	dynamic	run	chapter 21's rows, through the Prelude's names	hand	Supported		
+pre.r.spec	8	The chapter constitutes a specification for the Prelude	prelude	none	tested through the generated pre.* rows. Met through named rows' programs (ruling 49): the pre.* rows hold each entity to the chapter's code.	hand	Supported		
+pre.r.notasis	8	It is not required that the specification be implemented as shown	prelude	none	a permission; rhc's overlay is the list of its uses of it. Met by construction (ruling 49): rhc's library departs from the code as printed where share/rhc/haskell98/overlay.tsv says, each entry with its reason, and is the code elsewhere.	hand	Supported		
+pre.r.default.method	8	A default method definition specifies only the default method, not the method in all instances	prelude	none	a limit on what the code means: no instance's method is tested against a default unless it uses it. Nothing to meet (ruling 49): a limit on what the code means, which asks nothing of rhc.	hand	Supported		
 pre.r.default.enumfrom	8	Example: the default enumFrom fails for types wider than Int, as fromEnum cannot map them	prelude	run	a user type with only toEnum and fromEnum wider than Int; Integer's instance does not use it	hand	Supported	R81	
-pre.r.structure	8	The organisation into Prelude, PreludeList, PreludeText and PreludeIO is purely presentational	prelude	none	an implementation need not use it	hand	Planned		
+pre.r.structure	8	The organisation into Prelude, PreludeList, PreludeText and PreludeIO is purely presentational	prelude	none	an implementation need not use it. Nothing to meet (ruling 49): the organisation is presentational; rhc keeps the parts as modules of its library that no program can import (mod.prel.primitive).	hand	Supported		
 pre.r.significant	8	Only the exports of module Prelude are significant	module	reject	numericEnumFrom, showLitChar, primError and each other name not exported: refused unqualified and as Prelude.x	hand	Supported		
-pre.r.imports	8	The imports of library modules are not part of the specification: more or fewer may be imported	prelude	none	so no module's names may leak through the Prelude: the row above tests that	hand	Planned		
-pre.r.prim	8	prim names are defined in a system-dependent way in PreludeBuiltin and are not shown	prelude	none	the list is in report-libs/primitives.tsv; each is rhc's to define	hand	Planned		
+pre.r.imports	8	The imports of library modules are not part of the specification: more or fewer may be imported	prelude	none	so no module's names may leak through the Prelude: the row above tests that. Met through named rows' programs (ruling 49): only the Prelude's exports are significant, pre.r.significant's program, so what a library module imports reaches no program.	hand	Supported		
+pre.r.prim	8	prim names are defined in a system-dependent way in PreludeBuiltin and are not shown	prelude	none	the list is in report-libs/primitives.tsv; each is rhc's to define. Met by construction (ruling 49): rhc defines each primitive in its library's PreludeRuntime over the runtime's primitives, and PreludeBuiltin is no part of the language (pre.r.prim.hidden).	hand	Supported		
 pre.r.prim.hidden	8	PreludeBuiltin is no part of the language	module	reject	import PreludeBuiltin: refused	hand	Supported		
 pre.r.inst.omitted	8	Instances that only bind primitives to methods are omitted, but they exist	prelude	run	the instances of Int, Integer, Float and Double, method by method, by chapter 6	hand	Supported		
 pre.r.inst.verbose	8	Some verbose instances are left out for brevity, but they exist	prelude	run	Read and Show for tuples beyond pairs, by the comment 'Other tuples have similar Read and Show instances'	hand	Supported		
-pre.r.special	8	Declarations for special types such as Integer or () may be incomplete or invalid	prelude	none	what they illustrate is tested by 6.1; rhc's overlay replaces them	hand	Planned		
-pre.r.ellipsis	8	An ellipsis marks what cannot be given in Haskell	prelude	none	62 places: report-libs/primitives.tsv	hand	Planned		
+pre.r.special	8	Declarations for special types such as Integer or () may be incomplete or invalid	prelude	none	what they illustrate is tested by 6.1; rhc's overlay replaces them. Met by construction (ruling 49): the overlay (share/rhc/haskell98/overlay.tsv) gives the special types rhc's own declarations, and 6.1's rows test what the printed ones illustrate.	hand	Supported		
+pre.r.ellipsis	8	An ellipsis marks what cannot be given in Haskell	prelude	none	62 places: report-libs/primitives.tsv. Met by construction (ruling 49): the overlay gives rhc's own code at each place an ellipsis marks (share/rhc/haskell98/overlay.tsv).	hand	Supported		
 pre.r.intlist.take	8	take uses Int rather than a more general type	static	reject	take (2 :: Integer) xs: refused	hand	Supported		
 pre.r.intlist.drop	8	drop likewise	static	reject	drop (2 :: Integer) xs: refused	hand	Supported		
 pre.r.intlist.index	8	!! likewise	static	reject	xs !! (2 :: Integer): refused	hand	Supported		
@@ -2258,7 +2258,7 @@ pre.text.export.showchar	8.2	module Prelude exports showChar	module	accept	impor
 pre.text.export.showstring	8.2	module Prelude exports showString	module	accept	import Prelude (showString) compiles and the name is usable	generated	Supported		
 pre.text.export.readparen	8.2	module Prelude exports readParen	module	accept	import Prelude (readParen) compiles and the name is usable	generated	Supported		
 pre.text.export.showparen	8.2	module Prelude exports showParen	module	accept	import Prelude (showParen) compiles and the name is usable	generated	Supported		
-pre.r.interact.scope	8.3	interact is written with hSetBuffering, stdin, stdout and NoBuffering, none of which PreludeIO imports	prelude	none	the code as printed does not compile: see readings.md	hand	Planned	R47	
+pre.r.interact.scope	8.3	interact is written with hSetBuffering, stdin, stdout and NoBuffering, none of which PreludeIO imports	prelude	run	the code as printed does not compile: see readings.md. E9's test was none; ruling 49 makes it a run: io.interact.example_ascii's program names it and pins R47, interact running with the overlay's imports of hSetBuffering, stdin, stdout and NoBuffering (R47 in readings.md).	hand	Supported	R47	
 pre.r.interact.buffering	8.3	interact sets stdin and stdout unbuffered first, for interactive behaviour	prelude	run	output appears before the pipe closes	hand	Supported	R83	
 pre.io.type.filepath	8.3	type synonym FilePath as the Report gives it	prelude	accept	interchangeable with its expansion in a test program	generated	Supported		
 pre.io.data.ioerror	8.3	type IOError is declared as the Report gives it	prelude	accept	constructors, deriving and kinds used by a test program	generated	Supported		
@@ -2298,13 +2298,13 @@ pre.io.export.writefile	8.3	module Prelude exports writeFile	module	accept	impor
 pre.io.export.appendfile	8.3	module Prelude exports appendFile	module	accept	import Prelude (appendFile) compiles and the name is usable	generated	Supported		
 pre.io.export.readio	8.3	module Prelude exports readIO	module	accept	import Prelude (readIO) compiles and the name is usable	generated	Supported		
 pre.io.export.readln	8.3	module Prelude exports readLn	module	accept	import Prelude (readLn) compiles and the name is usable	generated	Supported		
-syn.r.notation	9.1	Notation for the grammar, including the difference pat<pat'>	syntax	none	metalanguage; used by the rows below	hand	Planned		
+syn.r.notation	9.1	Notation for the grammar, including the difference pat<pat'>	syntax	none	metalanguage; used by the rows below. Nothing to meet (ruling 49): metalanguage, the grammar's notation; the syntax rows hold rhc to the grammar written in it.	hand	Supported		
 syn.r.family	9.1	Nonterminals are indexed by precedence 0 to 9 and associativity l, r, n; aexp -> ( expi+1 qop(a,i) ) stands for 30 productions	syntax	accept	a section at each of the ten levels and three associativities	hand	Supported		
 syn.r.metarule	9.1	Ambiguities are resolved by making phrases as long as possible, left to right (shift on shift/reduce)	syntax	accept	see the cases below	hand	Supported		
 syn.r.metarule.cond	9.1	Conditionals extend to the right as far as possible	syntax	accept	`if a then b else c + 1` holds the `+ 1` in the else	hand	Supported		
 syn.r.metarule.let	9.1	let-expressions extend to the right as far as possible	syntax	accept	`let x = 1 in x + 1`; but see the fixity interaction in 3	hand	Supported		
 syn.r.metarule.lambda	9.1	Lambda abstractions extend to the right as far as possible	syntax	accept	`\x -> x + 1`	hand	Supported		
-lex.ref.chapter9	9.2	9.2 repeats the lexical syntax of chapter 2	lex	none	the same productions: the lex rows apply; the comment erratum applies to both copies	hand	Planned		
+lex.ref.chapter9	9.2	9.2 repeats the lexical syntax of chapter 2	lex	none	the same productions: the lex rows apply; the comment erratum applies to both copies. Met through named rows' programs (ruling 49): the productions are chapter 2's, which the lex.* rows' programs hold.	hand	Supported		
 lay.brace.after.keyword	9.3	If let, where, do or of is not followed by {, the token {n} is inserted after it, n the indentation of the next lexeme	layout	accept	annotated token dump for each of the four keywords	hand	Supported		
 lay.brace.eof	9.3	If there is no next lexeme, {0} is inserted	layout	accept	a file ending in `where` or `do`; `module M where` then end of file	hand	Supported		
 lay.brace.explicit	9.3	A keyword followed by { gets no {n}	layout	accept	annotated token dump	hand	Supported		
@@ -2328,7 +2328,7 @@ lay.col.tab	9.3	Tab stops are 8 characters apart	layout	accept	a tab from column
 lay.col.tabalign	9.3	A tab inserts enough spaces to align with the next tab stop	layout	accept	spaces then tab mixed: alignment by columns, not by characters	hand	Supported		
 lay.col.vt	9.3	The Report does not say how a vertical tab moves the column	layout	none	silence: rhc chooses, one column, and documents it; see readings.md	hand	Supported	R4	accept/lex.any.linecomment_uniwhite
 lay.col.unicode	9.3	Unicode characters are of the same, fixed width as an ASCII character for the layout rule	layout	accept	a wide CJK or combining character counts one column; code point, not grapheme or byte	hand	Supported		
-lay.col.advice	9.3	Programmers should avoid layout whose meaning depends on the width of non-space characters	layout	none	advice to programmers	hand	Planned		
+lay.col.advice	9.3	Programmers should avoid layout whose meaning depends on the width of non-space characters	layout	none	advice to programmers. Nothing to meet (ruling 49): advice to programmers.	hand	Supported		
 lay.input.application	9.3	L tokens [] delivers the layout-insensitive translation of the annotated lexeme stream of a module	layout	accept	the implementation's output equals a separate executable L written from this section, on the corpus	hand	Supported		
 lay.l.1	9.3	L (<n>:ts) (m:ms) = ; : L ts (m:ms) if m = n	layout	accept	new line at the context's column gives ;	hand	Supported		
 lay.l.2	9.3	L (<n>:ts) (m:ms) = } : L (<n>:ts) ms if n < m	layout	accept	dedent gives } and the same <n> is tried again	hand	Supported		
@@ -2365,7 +2365,7 @@ lay.note6.explicit	9.3	Note 6: it is an error to be within a non-layout context 
 lay.notdetected	9.3	"Some error conditions are not detected by the algorithm, although they could be: for example let }"	layout	reject	the grammar refuses it either way; by equations 4 and 8 L does detect the usual case; see readings.md	hand	Supported	R3	
 lay.parseerror.let	9.3	`let x = e; y = x in e'` is valid and translates to `let { x = e; y = x } in e'`	layout	accept	expansion; the prose calls this Note 1, it is Note 5: see readings.md	hand	Supported	R1	
 lay.parseerror.fixity	9.3	`do a == b == c` has the single parse `(do { a == b }) == c` since (==) is non-associative	layout	accept	taking it needs fixity in the parser; the Report says hard to implement; a post-parse fixity pass gets it wrong; see readings.md	hand	Supported	R1	errors/lay.parseerror.fixity_refused
-lay.parseerror.advice	9.3	Programmers are advised to avoid code needing a closing brace in such situations	layout	none	advice to programmers	hand	Planned		
+lay.parseerror.advice	9.3	Programmers are advised to avoid code needing a closing brace in such situations	layout	none	advice to programmers. Nothing to meet (ruling 49): advice to programmers.	hand	Supported		
 lay.parseerror.doif	9.3	`do { if a ; then b ; else c }` is refused: ; is valid only as a stmt end	layout	reject	the layout-free form of the same mistake; Haskell 2010's DoAndIfThenElse is not Haskell 98	hand	Supported		
 lay.parseerror.multiline	9.3	`if` in a do block with then and else indented more parses	layout	accept	no semicolons arise	hand	Supported		
 lay.parseerror.thensamecol	9.3	`then` at the do block's column gets a ; and is refused	layout	reject	consequence of equation 1	hand	Supported		
@@ -2394,9 +2394,9 @@ lit.latex.end	9.4	Program code ends just before a subsequent line that begins \e
 lit.latex.comment	9.4	Everything outside the delimiters is comment	lex	accept	LaTeX text around code, with no blank lines needed	hand	Supported		
 lit.latex.noblank	9.4	No blank lines are needed before or after the delimiters	lex	accept	text directly adjacent	hand	Supported		
 lit.latex.restofline	9.4	Text after \begin{code} or \end{code} on its line is not program: "a line that begins"	lex	accept	`\begin{code} junk`	hand	Supported	R64	
-lit.latex.unterminated	9.4	The Report does not say what an unterminated \begin{code} means	lex	none	silence: rhc refuses or runs to end of file; see readings.md	hand	Planned	R53	
+lit.latex.unterminated	9.4	The Report does not say what an unterminated \begin{code} means	lex	reject	silence: rhc refuses or runs to end of file; see readings.md. E9's test was none; ruling 49 makes it a refusal (tests/hs/errors/lit.latex.unterminated): rhc refuses a \begin{code} that no \end{code} closes, R53's seed (R53 in readings.md).	hand	Supported	R53	
 lit.latex.sameext	9.4	This style uses the same file extension	lex	accept	.lhs holding the LaTeX style	hand	Supported		
-lit.mixed	9.4	It is not advisable to mix the two styles in one file	lex	none	advice; what a mixed file means is unspecified; rhc chooses and documents it	hand	Planned		
+lit.mixed	9.4	It is not advisable to mix the two styles in one file	lex	none	advice; what a mixed file means is unspecified; rhc chooses and documents it. Met by construction (ruling 49): the passage is advice; rhc reads a file that mixes the two styles line by line, a > line and a \begin{code} block's lines alike program text, as HsLiterate's signature says.	hand	Supported		
 syn.r.body.emptydecls	9.5	topdecls has n>=0 here and n>=1 in 4 and 5.1; the difference is unobservable since a topdecl may be empty	syntax	accept	`module M where {}` and `module M where { ; ; }`	hand	Supported		
 syn.r.impdecl.empty	9.5	An impdecl may be empty	syntax	accept	`module M where { ; import A ; ; x = 1 }`	hand	Supported		
 syn.r.imports.first	9.5	All impdecls precede all topdecls	syntax	reject	an import after a declaration is refused	hand	Supported		
@@ -2745,12 +2745,12 @@ der.show.assoc.ignored	10.4	Associativity is not used to reduce parentheses, tho
 der.show.example.fixity	10.4	Example: `infixr 4 :$; data T = Int :$ T | NT`: show (1 :$ 2 :$ NT) produces "1 :$ (2 :$ NT)"	dynamic	run	exact string	hand	Supported		
 der.show.fixity.declared	10.4	The declared fixity of an infix constructor sets its parenthesisation	dynamic	run	`showsPrec (p+1)` parenthesises, `showsPrec p` does not	hand	Supported		
 der.show.fixity.default	10.4	An infix constructor with no fixity declaration is infixl 9	dynamic	run	arguments at 10, parenthesised above 9	hand	Supported		
-der.show.fixity.point	10.4	The fixity used is that in force where the type is declared, not at the use	module	run	a client that defines a same-named local fixity sees no change	hand	Planned		
+der.show.fixity.point	10.4	The fixity used is that in force where the type is declared, not at the use	module	run	a client that defines a same-named local fixity sees no change	hand	Supported		
 der.show.infix.backtick	10.4	A constructor declared infix with backquotes is "defined to be an infix operator"?	dynamic	run	``data T = Int `C` Int``: the Report gives no output: see readings.md	hand	Supported	R41 R87	
 der.show.prefix.opcon	10.4	An operator constructor declared prefix	dynamic	run	`data T = (:+) Int Int`: which style: see readings.md	hand	Supported	R41 R87	
 der.show.showlist	10.4	showList of a derived type is the class default, bracketed with commas and no spaces	dynamic	run	`show [A,B]` is "[A,B]"	hand	Supported		
 der.show.readable	10.4	The result of show is readable by read if all component types are readable	dynamic	run	`read (show x) == x` over a sample; fails at negative floats if the Report's code is literal: see readings.md	hand	Supported	R42 R88	
-der.show.userinst	10.4	Readability holds for Prelude instances but may fail for user-defined instances	dynamic	none	no requirement on user instances	hand	Planned		
+der.show.userinst	10.4	Readability holds for Prelude instances but may fail for user-defined instances	dynamic	none	no requirement on user instances. Nothing to meet (ruling 49): no requirement on a user's instances.	hand	Supported		
 der.show.linear	10.4	The extra parameter r lets tree-like structures print in linear rather than quadratic time	dynamic	run	`--count` budget on a deep left-nested tree	hand	Supported		
 der.read.prec.range	10.4	readsPrec d takes a precedence level d from 0 to 10, yet Figure 10.1 calls readsPrec at app_prec+1 = 11	dynamic	run	the derived reader must accept 11: see readings.md	hand	Supported	R41 R87	
 der.read.result	10.4	readsPrec d s returns a list of (parsed value, remaining string) pairs	dynamic	run	`reads "A rest"`	hand	Supported		
@@ -2770,10 +2770,10 @@ der.read.record.prec	10.4	The precedence at which an unparenthesised record is r
 der.read.space	10.4	Arbitrary Haskell whitespace between tokens of the input is allowed	dynamic	run	spaces, tabs, newlines; comments are whitespace to the grammar but not to `lex`: see readings.md	hand	Supported	R43 R89	
 der.read.parens	10.4	Extra parentheses are allowed	dynamic	run	`read "((A))"`	hand	Supported		
 der.read.neg	10.4	A negative number as an argument is read as show writes it	dynamic	run	`read "Just (-1)"`; the Report's readSigned ignores d, so "Just -1" also parses: see readings.md	hand	Supported	R42 R88	
-der.read.exponential	10.4	The parsing techniques used by the reader are very inefficient	dynamic	none	a warning, not a requirement	hand	Planned		
-der.notes.circular	10.4	Circular structures cannot be printed or read by these instances	dynamic	none	a warning about non-termination, not a requirement	hand	Planned		
-der.notes.sharing	10.4	The printer loses shared substructure	dynamic	none	a warning, not a requirement	hand	Planned		
-der.notes.formatting	10.4	There is no user control over the printing of Prelude types	dynamic	none	a statement of absence	hand	Planned		
+der.read.exponential	10.4	The parsing techniques used by the reader are very inefficient	dynamic	none	a warning, not a requirement. Nothing to meet (ruling 49): a warning on the derived reader's cost, not a requirement.	hand	Supported		
+der.notes.circular	10.4	Circular structures cannot be printed or read by these instances	dynamic	none	a warning about non-termination, not a requirement. Nothing to meet (ruling 49): a warning that showing or reading a circular structure does not end, not a requirement.	hand	Supported		
+der.notes.sharing	10.4	The printer loses shared substructure	dynamic	none	a warning, not a requirement. Nothing to meet (ruling 49): a warning that the printer loses sharing, not a requirement.	hand	Supported		
+der.notes.formatting	10.4	There is no user control over the printing of Prelude types	dynamic	none	a statement of absence. Nothing to meet (ruling 49): a statement of absence.	hand	Supported		
 der.show.infix.args	10.5	Both arguments of an infix constructor are shown at the constructor's precedence plus one	dynamic	run	Figure 10.1	hand	Supported		
 der.show.infix.spaces	10.5	An infix constructor is separated by one space on each side	dynamic	run	Figure 10.1's " :^: "	hand	Supported		
 der.read.ordering.results	10.5	Results of alternatives are concatenated in constructor order	dynamic	run	the order of `reads` on an ambiguous sample	hand	Supported		
@@ -2791,20 +2791,20 @@ der.tree.read.alternatives	10.5	The two alternatives are appended, :^: first	dyn
 der.tree.read.terminates	10.5	The left-recursive reader terminates, the recursive call at precedence 6 needing parentheses	dynamic	run	`read` at d = 0 returns on a deep tree	hand	Supported		
 der.tree.fixity	10.5	The figure assumes `infixr 5 :^:`, a declaration the text's own datatype leaves out	static	accept	with the declaration the figure's numbers hold; without it they are 9: see readings.md	hand	Supported	R52 R92	
 prag.notlanguage	11	Pragmas give hints, do not form part of the language proper and do not change a program's semantics	lex	accept	a program with and without pragmas gives equal output	hand	Supported		
-prag.notrequired	11	An implementation is not required to respect any pragma	lex	none	permission: nothing to observe	hand	Planned		
+prag.notrequired	11	An implementation is not required to respect any pragma	lex	none	permission: nothing to observe. Nothing to meet (ruling 49): a permission; rhc accepts the pragmas (prag.inline's and prag.specialize's programs) and gives them no meaning a program can observe.	hand	Supported		
 prag.unknown	11	A pragma the implementation is not prepared to handle should be ignored	lex	accept	`{-# FROB x #-}` compiles, also where no declaration may stand	hand	Supported		
 prag.lexical	11	Lexically pragmas appear as comments, with the enclosing syntax {-# #-}	lex	accept	no layout tokens arise, and they nest with comments	hand	Supported		
 prag.inline	11.1	decl -> {-# INLINE qvars #-}	syntax	accept	accepted at each decl position; `qvars` is defined nowhere: see readings.md	hand	Supported	R52 R92	
 prag.noinline	11.1	decl -> {-# NOINLINE qvars #-}	syntax	accept	as INLINE	hand	Supported		
-prag.inline.meaning	11.1	INLINE instructs the compiler to inline; NOINLINE may prevent automatic inlining	dynamic	none	a hint, with no observable semantics	hand	Planned		
+prag.inline.meaning	11.1	INLINE instructs the compiler to inline; NOINLINE may prevent automatic inlining	dynamic	none	a hint, with no observable semantics. Nothing to meet (ruling 49): a hint with no observable meaning; rhc accepts the pragma (prag.inline's program).	hand	Supported		
 prag.specialize	11.2	decl -> {-# SPECIALIZE spec1 , ... , speck #-}, k>=1; spec -> vars :: type	syntax	accept	the Report's factorial example compiles	hand	Supported		
-prag.specialize.meaning	11.2	Calls at the given types use specialised versions	dynamic	none	a hint, with no observable semantics	hand	Planned		
+prag.specialize.meaning	11.2	Calls at the given types use specialised versions	dynamic	none	a hint, with no observable semantics. Nothing to meet (ruling 49): a hint with no observable meaning; rhc accepts the pragma (prag.specialize's and prag.specialize.example's programs).	hand	Supported		
 prag.specialize.example	11.2	The example's `factorial 0 = 0` makes every result 0	dynamic	run	a printing error in the Report's example; with the pragma the result is unchanged, which is all that is required	hand	Supported		
 lib.r.ratio.anyintegral	12	For each Integral type t there is a type Ratio t	library	accept	Ratio Int and Ratio Integer used	hand	Supported		
 lib.r.ratio.noninteger	12	Ratio needs an Integral component: the datatype context restricts its constructor	library	reject	`1 % 2 :: Ratio Float` is refused	hand	Supported		
 lib.r.ratio.rational	12	Rational is a synonym for Ratio Integer	library	accept	interchangeable in signatures	hand	Supported		
 lib.r.ratio.lift	12	Each instance of Ratio t lifts the operations over t	library	run	instances Eq Ord Num Real Fractional RealFrac Enum Read Show on samples	hand	Supported		
-lib.r.ratio.bounded	12	If t is bounded results may be unpredictable, e.g. overflow of Ratio Int	library	none	a licence, not a requirement	hand	Planned		
+lib.r.ratio.bounded	12	If t is bounded results may be unpredictable, e.g. overflow of Ratio Int	library	none	a licence, not a requirement. Nothing to meet (ruling 49): a licence, not a requirement.	hand	Supported		
 lib.r.ratio.percent.reduce	12	(%) reduces to terms with no common factor	library	run	`numerator (12 % 8)` is 3	hand	Supported		
 lib.r.ratio.percent.sign	12	(%) gives a positive denominator	library	run	`denominator (1 % (-2))` is 2	hand	Supported		
 lib.r.ratio.components	12	numerator and denominator are in reduced form with a positive denominator	library	run	on negative inputs	hand	Supported		
@@ -2813,8 +2813,8 @@ lib.r.ratio.example.1	12	Example: 12 % 8 is reduced to 3/2	library	run	prints "3
 lib.r.ratio.example.2	12	Example: 12 % (-8) is reduced to (-3)/2	library	run	prints "(-3) % 2"	hand	Supported		
 lib.r.ratio.approx.simplest	12	approxRational x eps returns the simplest rational in the interval around x	library	run	`approxRational 3.14 0.01` as the code gives	hand	Supported		
 lib.r.ratio.approx.interval	12	The interval is the closed [x-epsilon, x+epsilon], as the code has it	library	run	an endpoint that is simplest; the interval of erratum Aug 2005; see readings.md	hand	Supported	R44	
-lib.r.ratio.simpler	12	n/d is simpler than n'/d' if |n| <= |n'| and d <= d'	library	none	a definition, tested through approxRational	hand	Planned		
-lib.r.ratio.unique	12	Any real interval contains a unique simplest rational	library	none	a theorem about the definition	hand	Planned		
+lib.r.ratio.simpler	12	n/d is simpler than n'/d' if |n| <= |n'| and d <= d'	library	none	a definition, tested through approxRational. Met through named rows' programs (ruling 49): a definition, held by approxRational's rows (lib.ratio.approxrational).	hand	Supported		
+lib.r.ratio.unique	12	Any real interval contains a unique simplest rational	library	none	a theorem about the definition. Nothing to meet (ruling 49): a theorem about the definition.	hand	Supported		
 lib.r.ratio.percent.zero	12.1	x % 0 is an error	library	run	exits as error "Ratio.% : zero denominator"	hand	Supported		
 lib.r.ratio.show.prec	12.1	show of a ratio is at precedence 7, its parts at 8	library	run	`showsPrec 8 (1 % 2) ""` is parenthesised, the numerator's sign too	hand	Supported		
 lib.ratio.fixity.7percent	12.1	fixity declaration `7 %` holds for the operators it names	library	run	parse of an unparenthesised mix of the operators, shown by evaluation	generated	Supported		
@@ -2907,7 +2907,7 @@ lib.r.numeric.readdec	14.2	readDec reads an unsigned decimal number	library	run	
 lib.r.numeric.readoct	14.2	readOct reads an unsigned octal number	library	run	exact	hand	Supported		
 lib.r.numeric.readhex	14.2	readHex reads hexadecimal, upper or lower case	library	run	"ff" and "FF"	hand	Supported		
 lib.r.numeric.lexdigits	14.2	lexDigits reads a non-empty string of decimal digits	library	run	`lexDigits "x"` is []	hand	Supported		
-lib.r.numeric.dual	14.2	readInt is the dual of showIntAtBase and readDec of showInt; the naming is a historical accident	library	none	a remark	hand	Planned		
+lib.r.numeric.dual	14.2	readInt is the dual of showIntAtBase and readDec of showInt; the naming is a historical accident	library	none	a remark. Nothing to meet (ruling 49): a remark on the names.	hand	Supported		
 lib.r.numeric.fromrat	14.3	fromRat converts a Rational into any RealFloat type	library	run	correctly rounded on a sample at both types	hand	Supported		
 lib.r.numeric.showintatbase.neg	14.4	showIntAtBase is an error on a negative number	library	run	exits as error	hand	Supported		
 lib.r.numeric.nan	14.4	NaN and infinities are shown as "NaN", "Infinity", "-Infinity"	library	run	from formatRealFloat	hand	Supported		
@@ -2967,7 +2967,7 @@ lib.r.ix.inrange	15	inRange tells whether a subscript lies in the bounding pair'
 lib.r.ix.law.index	15	Law: range (l,u) !! index (l,u) i == i when i is in range	library	run	property over each instance	hand	Supported		
 lib.r.ix.law.inrange	15	Law: inRange (l,u) i == i `elem` range (l,u)	library	run	property over each instance	hand	Supported		
 lib.r.ix.law.map	15	Law: map (index (l,u)) (range (l,u)) == [0 .. rangeSize (l,u) - 1]	library	run	property over each instance; the law of erratum March 2003, for the printed one, which is ill-typed	hand	Supported		
-lib.r.ix.assume	15	An implementation is entitled to assume the laws	library	none	a licence: a user instance that breaks them has no defined behaviour	hand	Planned		
+lib.r.ix.assume	15	An implementation is entitled to assume the laws	library	none	a licence: a user instance that breaks them has no defined behaviour. Nothing to meet (ruling 49): a licence: a user instance that breaks the laws has no defined behaviour.	hand	Supported		
 lib.r.ix.tuples	15.1	Ix instances for tuples up to at least size 15	library	run	size 15 used; 6.1.4's list of size-15 instances leaves Ix out	hand	Supported		
 lib.r.ix.derive.enum	15.1	Ix is derivable for enumerations	static	accept	`data C = R | G deriving (Eq, Ord, Ix)` compiles	hand	Supported		
 lib.r.ix.derive.single	15.1	Ix is derivable for single-constructor datatypes whose constituents are instances of Ix	static	accept	`data P = P Int Int deriving (Eq, Ord, Ix)` compiles	hand	Supported		
@@ -3000,7 +3000,7 @@ lib.ix.class.ix.rangesize	15.2	Ix method rangeSize has its Report type; its defa
 lib.ix.export.ixrangecindexcinrangecrangesize	15.2	module Ix exports Ix(range, index, inRange, rangeSize)	module	accept	import Ix (Ix(range, index, inRange, rangeSize)) compiles and the name is usable	generated	Supported		
 lib.r.array.exportsix	16	Array exports module Ix, so importers need not import both	library	accept	`import Array; f = range (1,2)` compiles	hand	Supported		
 lib.r.array.abstract	16	Array is an abstract type: arrays are data, not general functions	library	reject	the constructor MkArray is not exported	hand	Supported		
-lib.r.array.rapid	16	A programmer may reasonably expect rapid access to the components	library	run	`--count` budget: (!) is not linear in the array's size; the Report's MkArray code is a function, not this	hand	Planned		
+lib.r.array.rapid	16	A programmer may reasonably expect rapid access to the components	library	run	`--count` budget: (!) is not linear in the array's size; the Report's MkArray code is a function, not this	hand	Supported		
 lib.r.array.bounds.lowhigh	16.1	The bounds are the lowest and highest indices, in that order	library	run	`bounds (array (1,10) [])`; one-origin 10 by 10 has ((1,1),(10,10))	hand	Supported		
 lib.r.array.assoc	16.1	An association (i,x) defines the value at index i to be x	library	run	read back with (!)	hand	Supported		
 lib.r.array.outofbounds	16.1	The array is _|_ if any index in the list is out of bounds	library	run	`seq (array (1,2) [(3,'a')]) ()` exits as error	hand	Supported		
@@ -3107,7 +3107,7 @@ lib.r.list.by.sort	17.6	sortBy is the By variant of sort	library	run	exact	hand	
 lib.r.list.by.insert	17.6	insertBy is the By variant of insert	library	run	exact	hand	Supported		
 lib.r.list.by.maximum	17.6	maximumBy is the By variant of maximum; the empty list is an error	library	run	exact and an error exit	hand	Supported		
 lib.r.list.by.minimum	17.6	minimumBy is the By variant of minimum; the empty list is an error	library	run	exact and an error exit	hand	Supported		
-lib.r.list.by.assume	17.6	A By predicate is assumed to define an equivalence, or a total ordering	library	none	an assumption on the caller	hand	Planned		
+lib.r.list.by.assume	17.6	A By predicate is assumed to define an equivalence, or a total ordering	library	none	an assumption on the caller. Nothing to meet (ruling 49): an assumption on the caller.	hand	Supported		
 lib.r.list.noelemby	17.6	The library does not provide elemBy, nor By variants of elemIndex, elemIndices, isPrefixOf, isSuffixOf	library	reject	`import List (elemBy)` is refused	hand	Supported		
 lib.r.list.generic.length	17.7	genericLength is a generalised length, typed Integral a => [b] -> a here though 4.5.5 types it Num a	library	run	at Integer and Int: see readings.md	hand	Supported	R48	
 lib.r.list.generic.take	17.7	genericTake generalises take, and takes a negative count as 0	library	run	the definition of erratum September 2008, an entry of the overlay (D37); see readings.md	hand	Supported	R48	
@@ -3116,7 +3116,7 @@ lib.r.list.generic.splitat	17.7	genericSplitAt generalises splitAt, and takes a 
 lib.r.list.generic.index	17.7	genericIndex generalises (!!), with its errors	library	run	exact and error exits	hand	Supported		
 lib.r.list.generic.replicate	17.7	genericReplicate generalises replicate	library	run	exact	hand	Supported		
 lib.r.list.zip	17.8	zip, zipWith and unzip for 4, 5, 6 and 7 arguments	library	run	size 7 of each	hand	Supported		
-lib.r.list.zip.text	17.8	The text says "these same three operations" of a list of six names	library	none	a slip in the prose: the export list decides	hand	Planned		
+lib.r.list.zip.text	17.8	The text says "these same three operations" of a list of six names	library	none	a slip in the prose: the export list decides. Met through named rows' programs (ruling 49): a slip in the prose, where the export list decides, which the lib.list.export rows hold.	hand	Supported		
 lib.r.list.difference.nonassoc	17.9	(\\) is non-associative: `infix 5 \\`	library	reject	`a \\ b \\ c` is refused	hand	Supported		
 lib.list.fixity.5bsbs	17.9	fixity declaration `5 \\` holds for the operators it names	library	run	parse of an unparenthesised mix of the operators, shown by evaluation	generated	Supported		
 lib.list.elemindex	17.9	elemIndex has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Supported		
@@ -3274,7 +3274,7 @@ lib.list.export.zipwith	17.9	module List exports zipWith	module	accept	import Li
 lib.list.export.zipwith3	17.9	module List exports zipWith3	module	accept	import List (zipWith3) compiles and the name is usable	generated	Supported		
 lib.list.export.unzip	17.9	module List exports unzip	module	accept	import List (unzip) compiles and the name is usable	generated	Supported		
 lib.list.export.unzip3	17.9	module List exports unzip3	module	accept	import List (unzip3) compiles and the name is usable	generated	Supported		
-lib.r.maybe.purpose	18	Maybe deals with illegal or optional values without terminating and without IOError	library	none	a statement of purpose	hand	Planned		
+lib.r.maybe.purpose	18	Maybe deals with illegal or optional values without terminating and without IOError	library	none	a statement of purpose. Nothing to meet (ruling 49): a statement of purpose.	hand	Supported		
 lib.r.maybe.monadic	18	Other operations on Maybe are part of the Prelude's monadic classes	library	run	fmap and >>= on Maybe need no import	hand	Supported		
 lib.r.maybe.fromjust	18.1	fromJust Nothing is an error	library	run	exits as error "Maybe.fromJust: Nothing"	hand	Supported		
 lib.maybe.isjust	18.1	isJust has its Report type and its Report definition's meaning	library	run	differential against the literal definition on sample values, with bottom probes for its strictness	generated	Supported		
@@ -3297,7 +3297,7 @@ lib.maybe.export.maybenothingcjust	18.1	module Maybe exports Maybe(Nothing, Just
 lib.maybe.export.maybe	18.1	module Maybe exports maybe	module	accept	import Maybe (maybe) compiles and the name is usable	generated	Supported		
 lib.r.char.ascii	19	The first 128 entries of the character set are ASCII	library	run	`fromEnum 'A'` is 65	hand	Supported		
 lib.r.char.latin1	19	The next 128 entries complete Latin-1	library	run	`fromEnum '\xE9'` is 233	hand	Supported		
-lib.r.char.limited	19	The library offers a limited view: the full Unicode attributes are not accessible	library	none	a statement of absence	hand	Planned		
+lib.r.char.limited	19	The library offers a limited view: the full Unicode attributes are not accessible	library	none	a statement of absence. Nothing to meet (ruling 49): a statement of absence.	hand	Supported		
 lib.r.char.table.lower.print	19	Lower case alphabetic: isPrint True	library	run	'a' and a non-ASCII lower-case letter	hand	Supported		
 lib.r.char.table.lower.alnum	19	Lower case alphabetic: isAlphaNum True	library	run	as above	hand	Supported		
 lib.r.char.table.lower.alpha	19	Lower case alphabetic: isAlpha True	library	run	as above	hand	Supported		
@@ -3383,11 +3383,11 @@ lib.char.export.showlitchar	19.1	module Char exports showLitChar	module	accept	i
 lib.char.export.lexlitchar	19.1	module Char exports lexLitChar	module	accept	import Char (lexLitChar) compiles and the name is usable	generated	Supported		
 lib.char.export.char	19.1	module Char exports Char	module	accept	import Char (Char) compiles and the name is usable	generated	Supported		
 lib.char.export.string	19.1	module Char exports String	module	accept	import Char (String) compiles and the name is usable	generated	Supported		
-lib.r.monad.naming	20.1	Naming conventions: postfix M, postfix _, prefix m	library	none	a convention	hand	Planned		
+lib.r.monad.naming	20.1	Naming conventions: postfix M, postfix _, prefix m	library	none	a convention. Nothing to meet (ruling 49): a convention of names, which the library's names keep.	hand	Supported		
 lib.r.monad.filterm	20.1	filterM has the type shown, generalising filter	library	run	the list monad's powerset behaviour	hand	Supported		
 lib.r.monad.msum	20.1	msum generalises sum to MonadPlus	library	run	on list and Maybe	hand	Supported		
 lib.r.monad.monadplus.class	20.2	class Monad m => MonadPlus m with mzero and mplus	library	accept	a user instance compiles	hand	Supported		
-lib.r.monad.monadplus.zero	20.2	mzero and mplus are the zero and plus of the monad	library	none	a law on user instances; tested on the Report's two	hand	Planned		
+lib.r.monad.monadplus.zero	20.2	mzero and mplus are the zero and plus of the monad	library	none	a law on user instances; tested on the Report's two. Met through named rows' programs (ruling 49): a law on instances, held on the Report's two by lib.monad.inst.monadplusmaybe's and lib.monad.inst.monadpluslist's programs.	hand	Supported		
 lib.r.monad.monadplus.maybe	20.2	instance MonadPlus Maybe: mzero = Nothing; Nothing `mplus` ys = ys; xs `mplus` ys = xs	library	run	exact	hand	Supported		
 lib.r.monad.monadplus.list	20.2	instance MonadPlus []: mzero = []; mplus = (++)	library	run	exact	hand	Supported		
 lib.r.monad.join	20.3	join removes one level of monadic structure	library	run	on list, Maybe and IO	hand	Supported		
@@ -3574,100 +3574,100 @@ lib.r.io.iserror.illegal	21.1	isIllegalOperation: the operation is not possible	
 lib.r.io.iserror.perm	21.1	isPermissionError: insufficient privilege	library	run	a file without read permission, skipped as root	hand	Supported		
 lib.r.io.iserror.user	21.1	isUserError: a programmer-defined error raised with fail	library	run	`fail "x"` caught	hand	Supported		
 lib.r.io.iserror.bool	21.1	Each predicate is True of its kind and False otherwise	library	run	each predicate on each kind of error	hand	Supported		
-lib.r.io.illegal.any	21.1	Any computation returning an IO result may fail with isIllegalOperation	library	none	a licence to the implementation	hand	Planned		
-lib.r.io.illegal.fallback	21.1	When causes cannot be distinguished an implementation should return isIllegalOperation	library	none	a licence to the implementation	hand	Planned		
+lib.r.io.illegal.any	21.1	Any computation returning an IO result may fail with isIllegalOperation	library	none	nothing to meet, a licence to the implementation; rhc takes it where a handle cannot do the operation (closed, semi-closed, or not opened for it: checkOpen) and for a system error of no other kind	hand	Supported		
+lib.r.io.illegal.fallback	21.1	When causes cannot be distinguished an implementation should return isIllegalOperation	library	none	by construction: a system error of no kind the Report names is isIllegalOperation (PreludeRuntime.primErrnoKind's last case)	hand	Supported		
 lib.r.io.ioegethandle	21.1	ioeGetHandle gives Just hdl if the error refers to hdl, otherwise Nothing	library	run	hGetChar at EOF; a file-name error	hand	Supported		
 lib.r.io.ioegetfilename	21.1	ioeGetFileName gives Just name if the error refers to name, otherwise Nothing	library	run	openFile of a missing file	hand	Supported		
 lib.r.io.ioegeterrorstring.user	21.1	For user errors ioeGetErrorString returns the argument passed to fail	library	run	exact	hand	Supported		
-lib.r.io.ioegeterrorstring.other	21.1	For other errors the string is implementation-dependent	library	none	implementation-defined	hand	Planned		
+lib.r.io.ioegeterrorstring.other	21.1	For other errors the string is implementation-dependent	library	none	nothing to meet: rhc's string is the operation and the system's message (PreludeRuntime.primFailWith)	hand	Supported		
 lib.r.io.try	21.1	try returns an error explicitly in Either	library	run	Left on failure, Right on success	hand	Supported		
 lib.r.io.bracket	21.1	bracket runs the deallocation even on an error during computation	library	run	`after` runs, then the error propagates	hand	Supported		
-lib.r.io.filename	21.2	File and directory names are Strings of operating-system dependent meaning	library	none	implementation-defined; rhc must pick an encoding: see readings.md	hand	Planned	R38	
-lib.r.io.handle.props	21.2	A handle has at least: input/output, open/closed/semi-closed, seekable, buffering, a buffer	library	none	a description, tested through hIs* and hGetBuffering	hand	Planned		
+lib.r.io.filename	21.2	File and directory names are Strings of operating-system dependent meaning	library	run	a run since ruling 49, E9's column none: rhc's choice (R38), a name's characters its UTF-8 bytes, shown by the system's ls	hand	Supported	R38	
+lib.r.io.handle.props	21.2	A handle has at least: input/output, open/closed/semi-closed, seekable, buffering, a buffer	library	none	through named rows: lib.r.io.handle.open, .closed, .readable, lib.r.io.hisopen, .hisclosed, .hisreadable, lib.r.io.hgetbuffering, and R156's semi-closed state	hand	Supported		
 lib.r.io.handle.readable	21.2	A handle is readable if it manages input, writable if it manages output	library	run	each IOMode with hIsReadable and hIsWritable	hand	Supported		
-lib.r.io.handle.open	21.2	A handle is open when first allocated	library	run	hIsOpen after openFile	hand	Planned		
-lib.r.io.handle.closed	21.2	Once closed a handle can no longer be used for input or output	library	run	hGetChar and hPutChar fail after hClose	hand	Planned		
+lib.r.io.handle.open	21.2	A handle is open when first allocated	library	run	hIsOpen after openFile	hand	Supported		
+lib.r.io.handle.closed	21.2	Once closed a handle can no longer be used for input or output	library	run	hGetChar and hPutChar fail after hClose	hand	Supported		
 lib.r.io.handle.show	21.2	Handles are in Show; the string is system dependent and should identify the handle	library	run	non-empty, differs between two handles	hand	Supported		
 lib.r.io.handle.eq	21.2	A handle is equal under == only to itself	library	run	two handles on one file are unequal	hand	Supported		
-lib.r.io.std.open	21.2.1	stdin, stdout and stderr are allocated at initialisation and initially open	library	run	hIsOpen on each	hand	Planned		
+lib.r.io.std.open	21.2.1	stdin, stdout and stderr are allocated at initialisation and initially open	library	run	hIsOpen on each	hand	Supported		
 lib.r.io.std.channels	21.2.1	They manage the standard input, output and error channels	library	run	output on each channel captured apart	hand	Supported		
 lib.r.io.semi.state	21.2.2	hGetContents puts the handle in the semi-closed state	library	run	hIsClosed and hIsOpen: the Report gives no predicate for semi-closed: see readings.md	hand	Supported	R49 R156	
 lib.r.io.semi.fails	21.2.2	Any operation that fails on a closed handle fails on a semi-closed one	library	run	hGetChar after hGetContents fails	hand	Supported		
 lib.r.io.semi.hclose	21.2.2	hClose is the one exception	library	run	hClose of a semi-closed handle succeeds	hand	Supported		
 lib.r.io.semi.close.hclose	21.2.2	A semi-closed handle becomes closed if hClose is applied	library	run	hIsClosed after it	hand	Supported		
 lib.r.io.semi.close.end	21.2.2	It becomes closed once the entire contents have been read	library	run	hIsClosed after forcing the list	hand	Supported		
-lib.r.io.semi.close.error	21.2.2	It becomes closed if an I/O error occurs reading an item	library	none	needs an injected read error	hand	Planned		
+lib.r.io.semi.close.error	21.2.2	It becomes closed if an I/O error occurs reading an item	library	none	by construction: a read that fails ends hGetContents's list, which closes the handle at its end (PreludeRuntime.fileByte's catch, primHGetContents)	hand	Supported		
 lib.r.io.semi.fixed	21.2.2	Once closed the list's contents are fixed, holding at least what was evaluated before	library	run	hClose then force: the evaluated prefix is present, the rest may be cut	hand	Supported		
-lib.r.io.semi.discard	21.2.2	I/O errors while semi-closed are simply discarded	library	none	needs an injected read error	hand	Planned		
-lib.r.io.hgetcontents.lazy	21.2.2	Items are read on demand	library	run	an interactive pipe answers before the input ends	hand	Planned		
+lib.r.io.semi.discard	21.2.2	I/O errors while semi-closed are simply discarded	library	none	by construction: a failed read's IOError is caught where the semi-closed handle reads (PreludeRuntime.fileByte) and raised by nothing	hand	Supported		
+lib.r.io.hgetcontents.lazy	21.2.2	Items are read on demand	library	run	an interactive pipe answers before the input ends	hand	Supported		
 lib.r.io.lock.writer	21.2.3	If a handle manages a file for output no new handle can be allocated for it	library	run	second openFile fails with isAlreadyInUseError	hand	Supported		
 lib.r.io.lock.reader	21.2.3	If a handle manages a file for input new handles may only manage input	library	run	a second reader succeeds, a writer fails	hand	Supported		
 lib.r.io.lock.semi	21.2.3	The rule counts open and semi-closed handles	library	run	openFile for output after hGetContents fails	hand	Supported		
 lib.r.io.lock.readfile	21.2.3	readFile holds a semi-closed handle until the contents are consumed; writeFile usually fails with isAlreadyInUseError	library	run	lazily read then write the same file	hand	Supported		
-lib.r.io.lock.same	21.2.3	Whether two files are the same is implementation-dependent	library	none	implementation-defined	hand	Planned		
-lib.r.io.openfile.mode	21.3.1	openFile manages input in ReadMode, output in WriteMode and AppendMode, both in ReadWriteMode	library	run	hIsReadable, hIsWritable	hand	Planned		
-lib.r.io.openfile.create	21.3.1	A missing file opened for output is created	library	run	doesFileExist afterwards	hand	Planned		
-lib.r.io.openfile.truncate	21.3.1	WriteMode truncates an existing file to zero length	library	run	size afterwards	hand	Planned		
-lib.r.io.openfile.append	21.3.1	AppendMode positions at the end of the file	library	run	contents after a write	hand	Planned		
-lib.r.io.openfile.start	21.3.1	Other modes position at the beginning	library	run	first character read	hand	Planned		
-lib.r.io.openfile.buffer	21.3.1	The initial buffer mode is implementation-dependent	library	none	implementation-defined	hand	Planned		
+lib.r.io.lock.same	21.2.3	Whether two files are the same is implementation-dependent	library	none	nothing to meet: rhc takes two files as the same where their names are the same String (PreludeRuntime.locked)	hand	Supported		
+lib.r.io.openfile.mode	21.3.1	openFile manages input in ReadMode, output in WriteMode and AppendMode, both in ReadWriteMode	library	run	hIsReadable, hIsWritable	hand	Supported		
+lib.r.io.openfile.create	21.3.1	A missing file opened for output is created	library	run	doesFileExist afterwards	hand	Supported		
+lib.r.io.openfile.truncate	21.3.1	WriteMode truncates an existing file to zero length	library	run	size afterwards	hand	Supported		
+lib.r.io.openfile.append	21.3.1	AppendMode positions at the end of the file	library	run	contents after a write	hand	Supported		
+lib.r.io.openfile.start	21.3.1	Other modes position at the beginning	library	run	first character read	hand	Supported		
+lib.r.io.openfile.buffer	21.3.1	The initial buffer mode is implementation-dependent	library	none	nothing to meet: rhc's choice is block buffering for a file openFile opens, by line for stdin and stdout, none for stderr	hand	Supported		
 lib.r.io.openfile.err.inuse	21.3.1	openFile may fail with isAlreadyInUseError if already open and not reopenable	library	run	as lib.r.io.lock.writer	hand	Supported		
 lib.r.io.openfile.err.notexist	21.3.1	openFile may fail with isDoesNotExistError	library	run	ReadMode on a missing file	hand	Supported		
 lib.r.io.openfile.err.perm	21.3.1	openFile may fail with isPermissionError	library	run	a file without permission, skipped as root	hand	Supported		
-lib.r.io.hclose.flush	21.3.2	hClose flushes a writable handle's buffer before it finishes	library	run	contents on disk after hClose	hand	Planned		
-lib.r.io.hclose.twice	21.3.2	hClose of a closed handle has no effect and is not an error	library	run	succeeds; the verb erratum Nov 2006 restores	hand	Planned		
-lib.r.io.hclose.others	21.3.2	All other operations on a closed handle fail	library	run	each operation of the library	hand	Planned		
+lib.r.io.hclose.flush	21.3.2	hClose flushes a writable handle's buffer before it finishes	library	run	contents on disk after hClose	hand	Supported		
+lib.r.io.hclose.twice	21.3.2	hClose of a closed handle has no effect and is not an error	library	run	succeeds; the verb erratum Nov 2006 restores	hand	Supported		
+lib.r.io.hclose.others	21.3.2	All other operations on a closed handle fail	library	run	each operation of the library	hand	Supported		
 lib.r.io.hclose.failed	21.3.2	After hClose fails, further operations fail as if it had succeeded	library	none	needs an injected close failure	hand	Planned		
-lib.r.io.hfilesize	21.4	hFileSize returns the file's size in 8-bit bytes	library	run	exact, for a file with non-ASCII text too	hand	Planned		
-lib.r.io.hiseof	21.5	hIsEOF is True when no further input can be taken: position equals length	library	run	before and after the last character	hand	Planned		
+lib.r.io.hfilesize	21.4	hFileSize returns the file's size in 8-bit bytes	library	run	exact, for a file with non-ASCII text too	hand	Supported		
+lib.r.io.hiseof	21.5	hIsEOF is True when no further input can be taken: position equals length	library	run	before and after the last character	hand	Supported		
 lib.r.io.iseof	21.5	isEOF is hIsEOF on stdin	library	run	with a piped input	hand	Supported		
-lib.r.io.buffer.line	21.6	Line buffering flushes on newline, overflow, hFlush and close	library	run	a second process observes the output, or a strace-free pipe test	hand	Planned		
-lib.r.io.buffer.block	21.6	Block buffering flushes on overflow, hFlush and close	library	run	as above	hand	Planned		
-lib.r.io.buffer.none	21.6	No buffering writes immediately	library	run	as above	hand	Planned		
-lib.r.io.buffer.more	21.6	An implementation may flush more often than specified, never less	library	none	the licence half; the bound is tested by the rows above	hand	Planned		
-lib.r.io.buffer.input.line	21.6	Line-buffered input reads until a newline or a full buffer	library	none	observable only by timing on a terminal or pipe	hand	Planned		
-lib.r.io.buffer.input.block	21.6	Block-buffered input reads the next block when the buffer empties	library	none	observable only by timing	hand	Planned		
-lib.r.io.buffer.input.none	21.6	No buffering returns the next input item	library	run	an interactive pipe answers character by character	hand	Planned		
-lib.r.io.hsetbuffering	21.6	hSetBuffering sets the mode for subsequent reads and writes	library	run	read back by hGetBuffering	hand	Planned		
-lib.r.io.hsetbuffering.size	21.6	BlockBuffering (Just n) gives n items, Nothing an implementation-dependent size	library	run	read back	hand	Planned		
-lib.r.io.hsetbuffering.toflush	21.6	Changing to NoBuffering flushes a writable handle	library	run	output appears at the change	hand	Planned		
-lib.r.io.hsetbuffering.discard	21.6	Changing to NoBuffering discards a non-writable handle's buffer	library	run	the next read skips what was buffered; order of reads shows it	hand	Planned		
-lib.r.io.hsetbuffering.err	21.6	hSetBuffering may fail with isPermissionError if the handle has been used	library	none	a licence to the implementation	hand	Planned		
-lib.r.io.hgetbuffering	21.6	hGetBuffering returns the current mode	library	run	after each hSetBuffering	hand	Planned		
-lib.r.io.hflush	21.6.1	hFlush sends buffered items to the operating system at once	library	run	another handle reads them	hand	Planned		
+lib.r.io.buffer.line	21.6	Line buffering flushes on newline, overflow, hFlush and close	library	run	a second process observes the output, or a strace-free pipe test	hand	Supported		
+lib.r.io.buffer.block	21.6	Block buffering flushes on overflow, hFlush and close	library	run	as above. Planned by ruling 64: rhc flushes on hFlush and close, and on overflow only of the runtime's own buffer: BlockBuffering (Just n)'s n is stored by PreludeRuntime.primHSetBuffering and used by nothing, so at BlockBuffering (Just 4) ten characters written leave the file empty, where 21.6 has written eight (lib.r.io.buffer.more's case); L's fix to come, then a program that shows the flushes.	hand	Planned		
+lib.r.io.buffer.none	21.6	No buffering writes immediately	library	run	as above	hand	Supported		
+lib.r.io.buffer.more	21.6	An implementation may flush more often than specified, never less	library	none	a licence to flush more often, and a bound: never less often. rhc flushes no more often than 21.6 says (lang/lib.r.io.buffer.line_shown), but less often for BlockBuffering (Just n): the size is kept (PreludeRuntime.primHSetBuffering) and not used, the writes held in the runtime's own buffer, so a handle at BlockBuffering (Just 4) has written nothing after ten characters, where 21.6 has written eight; Planned until it does	hand	Planned		
+lib.r.io.buffer.input.line	21.6	Line-buffered input reads until a newline or a full buffer	library	none	by construction: a read gives what the system has, up to 4096 bytes (PreludeRuntime.fileByte): a terminal gives a line at a time, and a file a block, more than a line, which no program of its own can tell from a line	hand	Supported		
+lib.r.io.buffer.input.block	21.6	Block-buffered input reads the next block when the buffer empties	library	none	by construction: the next 4096 bytes are read when the handle's are used up (PreludeRuntime.fileByte)	hand	Supported		
+lib.r.io.buffer.input.none	21.6	No buffering returns the next input item	library	run	an interactive pipe answers character by character	hand	Supported		
+lib.r.io.hsetbuffering	21.6	hSetBuffering sets the mode for subsequent reads and writes	library	run	read back by hGetBuffering	hand	Supported		
+lib.r.io.hsetbuffering.size	21.6	BlockBuffering (Just n) gives n items, Nothing an implementation-dependent size	library	run	read back	hand	Supported		
+lib.r.io.hsetbuffering.toflush	21.6	Changing to NoBuffering flushes a writable handle	library	run	output appears at the change	hand	Supported		
+lib.r.io.hsetbuffering.discard	21.6	Changing to NoBuffering discards a non-writable handle's buffer	library	run	the next read skips what was buffered; order of reads shows it	hand	Supported	R158	
+lib.r.io.hsetbuffering.err	21.6	hSetBuffering may fail with isPermissionError if the handle has been used	library	none	nothing to meet, a licence: rhc changes a handle's buffering whenever it is open (PreludeRuntime.primHSetBuffering)	hand	Supported		
+lib.r.io.hgetbuffering	21.6	hGetBuffering returns the current mode	library	run	after each hSetBuffering	hand	Supported		
+lib.r.io.hflush	21.6.1	hFlush sends buffered items to the operating system at once	library	run	another handle reads them	hand	Supported		
 lib.r.io.hflush.err	21.6.1	hFlush may fail with isFullError or isPermissionError; the buffer's fate is unspecified	library	none	needs a full device	hand	Planned		
-lib.r.io.hgetposn	21.7.1	hSetPosn p restores the position hGetPosn gave	library	run	reads repeat	hand	Planned		
-lib.r.io.hsetposn.err	21.7.1	hSetPosn may fail with isPermissionError on a resource limit	library	none	needs an injected limit	hand	Planned		
-lib.r.io.hseek.absolute	21.7.2	AbsoluteSeek sets the position to i	library	run	next character read	hand	Planned		
-lib.r.io.hseek.relative	21.7.2	RelativeSeek sets it to offset i from the current position	library	run	next character read	hand	Planned		
-lib.r.io.hseek.end	21.7.2	SeekFromEnd sets it to offset i from the end	library	run	next character read	hand	Planned		
-lib.r.io.hseek.bytes	21.7.2	The offset is in 8-bit bytes	library	run	on a file with multi-byte text: a Char is not a byte here	hand	Planned		
-lib.r.io.hseek.buffer	21.7.2	Seeking outside the buffer writes the output buffer and discards the input buffer	library	run	write, seek, read back	hand	Planned		
-lib.r.io.hseek.negative	21.7.2	A negative I/O position cannot be set	library	run	fails	hand	Planned		
-lib.r.io.hseek.beyond	21.7.2	For a physical file a position beyond end of file cannot be set	library	run	fails; POSIX lseek allows it, so rhc must check	hand	Planned		
-lib.r.io.hseek.err	21.7.2	hSeek may fail with isPermissionError on a resource limit	library	none	needs an injected limit	hand	Planned		
-lib.r.io.hisopen	21.8	hIsOpen is True of an open handle	library	run	across its life	hand	Planned		
-lib.r.io.hisclosed	21.8	hIsClosed is True of a closed handle	library	run	across its life	hand	Planned		
-lib.r.io.hisreadable	21.8	hIsReadable is True of a readable handle	library	run	each mode	hand	Planned		
-lib.r.io.hiswritable	21.8	hIsWritable is True of a writable handle	library	run	each mode	hand	Planned		
-lib.r.io.hisseekable	21.8	hIsSeekable is True of a seekable handle	library	run	a file and a pipe	hand	Planned		
-lib.r.io.encoding	21.9	The Report does not say how a Char above 255 is written to or read from a file	library	none	a decision for rhc: see readings.md	hand	Planned	R5	
-lib.r.io.hwaitforinput	21.9.1	hWaitForInput returns True as soon as input is available, False if none within t milliseconds	library	run	a pipe with and without data	hand	Planned		
-lib.r.io.hready	21.9.1	hReady says whether at least one item is available	library	run	a file not at its end	hand	Planned		
-lib.r.io.hready.eof	21.9.1	hWaitForInput and hReady fail with isEOFError at end of file	library	run	on a file at its end	hand	Planned		
+lib.r.io.hgetposn	21.7.1	hSetPosn p restores the position hGetPosn gave	library	run	reads repeat	hand	Supported		
+lib.r.io.hsetposn.err	21.7.1	hSetPosn may fail with isPermissionError on a resource limit	library	none	nothing to meet, a licence: rhc raises the system's error of a seek that fails, by its kind (PreludeRuntime.primHSeek)	hand	Supported		
+lib.r.io.hseek.absolute	21.7.2	AbsoluteSeek sets the position to i	library	run	next character read	hand	Supported		
+lib.r.io.hseek.relative	21.7.2	RelativeSeek sets it to offset i from the current position	library	run	next character read	hand	Supported		
+lib.r.io.hseek.end	21.7.2	SeekFromEnd sets it to offset i from the end	library	run	next character read	hand	Supported		
+lib.r.io.hseek.bytes	21.7.2	The offset is in 8-bit bytes	library	run	on a file with multi-byte text: a Char is not a byte here	hand	Supported		
+lib.r.io.hseek.buffer	21.7.2	Seeking outside the buffer writes the output buffer and discards the input buffer	library	run	write, seek, read back	hand	Supported		
+lib.r.io.hseek.negative	21.7.2	A negative I/O position cannot be set	library	run	fails	hand	Supported		
+lib.r.io.hseek.beyond	21.7.2	For a physical file a position beyond end of file cannot be set	library	run	fails; POSIX lseek allows it, so rhc must check	hand	Supported		
+lib.r.io.hseek.err	21.7.2	hSeek may fail with isPermissionError on a resource limit	library	none	nothing to meet, a licence: rhc raises the system's error of a seek that fails, by its kind (PreludeRuntime.primHSeek)	hand	Supported		
+lib.r.io.hisopen	21.8	hIsOpen is True of an open handle	library	run	across its life	hand	Supported		
+lib.r.io.hisclosed	21.8	hIsClosed is True of a closed handle	library	run	across its life	hand	Supported		
+lib.r.io.hisreadable	21.8	hIsReadable is True of a readable handle	library	run	each mode	hand	Supported		
+lib.r.io.hiswritable	21.8	hIsWritable is True of a writable handle	library	run	each mode	hand	Supported		
+lib.r.io.hisseekable	21.8	hIsSeekable is True of a seekable handle	library	run	a file and a pipe	hand	Supported		
+lib.r.io.encoding	21.9	The Report does not say how a Char above 255 is written to or read from a file	library	run	a run since ruling 49, E9's column none: rhc's choice (R5), UTF-8 on every host, a byte that begins no sequence read as its own value	hand	Supported	R5	
+lib.r.io.hwaitforinput	21.9.1	hWaitForInput returns True as soon as input is available, False if none within t milliseconds	library	run	a pipe with and without data	hand	Supported		
+lib.r.io.hready	21.9.1	hReady says whether at least one item is available	library	run	a file not at its end	hand	Supported		
+lib.r.io.hready.eof	21.9.1	hWaitForInput and hReady fail with isEOFError at end of file	library	run	on a file at its end	hand	Supported		
 lib.r.io.hgetchar	21.9.2	hGetChar reads a character	library	run	exact	hand	Supported		
-lib.r.io.hgetchar.eof	21.9.2	hGetChar fails with isEOFError at end of file	library	run	caught and tested	hand	Planned		
-lib.r.io.hgetline	21.9.2	hGetLine reads a line	library	run	the newline is not in the result	hand	Planned		
-lib.r.io.hgetline.eof.first	21.9.2	hGetLine fails with isEOFError at the first character of the line	library	run	caught and tested	hand	Planned		
-lib.r.io.hgetline.eof.mid	21.9.2	End of file later in a line is a line terminator: the partial line is returned	library	run	a file with no final newline	hand	Planned		
+lib.r.io.hgetchar.eof	21.9.2	hGetChar fails with isEOFError at end of file	library	run	caught and tested	hand	Supported		
+lib.r.io.hgetline	21.9.2	hGetLine reads a line	library	run	the newline is not in the result	hand	Supported		
+lib.r.io.hgetline.eof.first	21.9.2	hGetLine fails with isEOFError at the first character of the line	library	run	caught and tested	hand	Supported		
+lib.r.io.hgetline.eof.mid	21.9.2	End of file later in a line is a line terminator: the partial line is returned	library	run	a file with no final newline	hand	Supported		
 lib.r.io.getline.shorthand	21.9.2	The Prelude's getLine is a shorthand for hGetLine stdin, contradicting its definition in 8.3 and 7.2 by getChar	library	run	a stdin with no final newline: see readings.md	hand	Supported	R46	
-lib.r.io.hlookahead	21.9.3	hLookAhead returns the next character without removing it	library	run	two reads see one character	hand	Planned		
-lib.r.io.hlookahead.eof	21.9.3	hLookAhead may fail with isEOFError	library	run	at end of file	hand	Planned		
-lib.r.io.hgetcontents	21.9.4	hGetContents returns the unread portion, the handle semi-closed	library	run	after a partial read	hand	Planned		
-lib.r.io.hgetcontents.eof	21.9.4	hGetContents may fail with isEOFError at end of file	library	run	an empty file: "may" leaves both answers open: see readings.md	hand	Planned	R49	
-lib.r.io.hputchar	21.9.5	hPutChar writes the character, buffered if enabled	library	run	contents after close	hand	Planned		
-lib.r.io.hputstr	21.9.5	hPutStr writes the string	library	run	contents after close	hand	Planned		
-lib.r.io.hprint	21.9.5	hPrint writes shows t and a newline	library	run	contents after close	hand	Planned		
+lib.r.io.hlookahead	21.9.3	hLookAhead returns the next character without removing it	library	run	two reads see one character	hand	Supported		
+lib.r.io.hlookahead.eof	21.9.3	hLookAhead may fail with isEOFError	library	run	at end of file	hand	Supported		
+lib.r.io.hgetcontents	21.9.4	hGetContents returns the unread portion, the handle semi-closed	library	run	after a partial read	hand	Supported		
+lib.r.io.hgetcontents.eof	21.9.4	hGetContents may fail with isEOFError at end of file	library	run	an empty file: "may" leaves both answers open: see readings.md	hand	Supported	R49	
+lib.r.io.hputchar	21.9.5	hPutChar writes the character, buffered if enabled	library	run	contents after close	hand	Supported		
+lib.r.io.hputstr	21.9.5	hPutStr writes the string	library	run	contents after close	hand	Supported		
+lib.r.io.hprint	21.9.5	hPrint writes shows t and a newline	library	run	contents after close	hand	Supported		
 lib.r.io.hput.err	21.9.5	They may fail with isFullError or isPermissionError	library	none	needs a full device	hand	Planned		
 lib.r.io.example.sum	21.10.1	Example: reads and sums two Integers	library	run	exact transcript	hand	Supported		
 lib.r.io.example.copy.char	21.10.2	Example: copies a file to upper case at character level, refusing to copy to itself	library	run	exact, and the error on same file	hand	Supported		
@@ -3675,7 +3675,7 @@ lib.r.io.example.copy.string	21.10.2	Example: the shorter version by string I/O	
 lib.r.io.bracket.normal	21.11	bracket's result is the computation's result, after `after`	library	run	order of effects	hand	Supported		
 lib.r.io.bracket.underscore	21.11	bracket_ is bracket where the middle computation does not want x	library	run	order of effects	hand	Supported		
 lib.r.io.bracket.error	21.11	bracket is built on try, so only IOErrors reach `after`: an `error` inside skips it	library	run	see readings.md	hand	Supported	R36	
-lib.r.directory.illegal	22	Any Directory operation could raise isIllegalOperation, and an unsupported operation should	library	none	a licence to the implementation	hand	Planned		
+lib.r.directory.illegal	22	Any Directory operation could raise isIllegalOperation, and an unsupported operation should	library	none	a licence to the implementation. Nothing to meet (ruling 49): a licence to the implementation.	hand	Supported		
 lib.r.directory.create	22	createDirectory dir creates a new, initially empty directory	library	run	getDirectoryContents afterwards	hand	Supported		
 lib.r.directory.create.err.perm	22	createDirectory may fail with isPermissionError	library	run	in a read-only directory, skipped as root	hand	Supported		
 lib.r.directory.create.err.exists	22	createDirectory may fail with isAlreadyExistsError	library	run	on an existing directory	hand	Supported		
@@ -3686,9 +3686,9 @@ lib.r.directory.removefile.dir	22	removeFile on a directory is outside its contr
 lib.r.directory.remove.err.perm	22	removeDirectory and removeFile may fail with isPermissionError	library	run	skipped as root	hand	Supported		
 lib.r.directory.remove.err.notexist	22	They may fail with isDoesNotExistError	library	run	a missing path	hand	Supported		
 lib.r.directory.renamedir	22	renameDirectory changes an existing directory's name; an existing target is atomically replaced	library	run	with and without a target	hand	Supported		
-lib.r.directory.renamedir.partial	22	A conformant implementation need not support all cases, but the constraints must be documented	library	none	a documentation duty on rhc	hand	Planned		
+lib.r.directory.renamedir.partial	22	A conformant implementation need not support all cases, but the constraints must be documented	library	none	a documentation duty on rhc. Met by construction (ruling 49): rhc's renameDirectory is POSIX rename(2) of two directory names on every host (the runtime's sys_rename, emulated on Windows), so it supports what rename supports and fails as it fails, across file systems among them; that is rhc's statement of its constraints.	hand	Supported		
 lib.r.directory.renamefile	22	renameFile changes an existing object's name; an existing target is atomically replaced	library	run	with and without a target	hand	Supported		
-lib.r.directory.renamefile.nodir	22	Neither path of renameFile may refer to an existing directory	library	run	fails with isPermissionError	hand	Planned		
+lib.r.directory.renamefile.nodir	22	Neither path of renameFile may refer to an existing directory	library	run	fails with isPermissionError	hand	Supported		
 lib.r.directory.rename.err.perm	22	Renames may fail with isPermissionError	library	run	skipped as root	hand	Supported		
 lib.r.directory.rename.err.notexist	22	Renames may fail with isDoesNotExistError	library	run	a missing source	hand	Supported		
 lib.r.directory.contents	22	getDirectoryContents lists all entries, "." and ".." included under POSIX	library	run	both appear	hand	Supported		
@@ -3699,8 +3699,8 @@ lib.r.directory.contents.err	22	They may fail with isPermissionError or isDoesNo
 lib.r.directory.setcurrent	22	setCurrentDirectory changes the process's current directory	library	run	getCurrentDirectory afterwards	hand	Supported		
 lib.r.directory.setcurrent.err	22	It may fail with isPermissionError or isDoesNotExistError	library	run	a missing directory	hand	Supported		
 lib.r.directory.permissions	22	getPermissions and setPermissions get and set Permissions	library	run	a round trip on a file	hand	Supported		
-lib.r.directory.permissions.exec	22	For directories executable is False	library	run	on a directory	hand	Planned		
-lib.r.directory.permissions.search	22	For files searchable is False	library	run	on a file	hand	Planned		
+lib.r.directory.permissions.exec	22	For directories executable is False	library	run	on a directory	hand	Supported		
+lib.r.directory.permissions.search	22	For files searchable is False	library	run	on a file	hand	Supported		
 lib.r.directory.permissions.example	22	Example: makeReadable updates one field with record update	library	run	Permissions' fields are exported	hand	Supported		
 lib.r.directory.doesdirectoryexist	22	doesDirectoryExist is True if the file exists and is a directory	library	run	a file, a directory, nothing	hand	Supported		
 lib.r.directory.doesfileexist	22	doesFileExist is True if the file exists and is not a directory	library	run	a file, a directory, nothing	hand	Supported		
@@ -3738,11 +3738,11 @@ lib.directory.export.doesdirectoryexist	22	module Directory exports doesDirector
 lib.directory.export.getpermissions	22	module Directory exports getPermissions	module	accept	import Directory (getPermissions) compiles and the name is usable	generated	Supported		
 lib.directory.export.setpermissions	22	module Directory exports setPermissions	module	accept	import Directory (setPermissions) compiles and the name is usable	generated	Supported		
 lib.directory.export.getmodificationtime	22	module Directory exports getModificationTime	module	accept	import Directory (getModificationTime) compiles and the name is usable	generated	Supported		
-lib.r.system.illegal	23	Any System operation could raise isIllegalOperation, and an unsupported operation must	library	none	a licence to the implementation	hand	Planned		
+lib.r.system.illegal	23	Any System operation could raise isIllegalOperation, and an unsupported operation must	library	none	a licence to the implementation. Nothing to meet (ruling 49): a licence to the implementation.	hand	Supported		
 lib.r.system.exitcode	23	ExitSuccess is successful termination, ExitFailure code is failure with value code	library	run	the process's status	hand	Supported		
-lib.r.system.exitcode.prohibited	23	Some codes may be prohibited, e.g. 0 on POSIX	library	none	the Report does not say what exitWith (ExitFailure 0) does: see readings.md	hand	Planned	R37	
+lib.r.system.exitcode.prohibited	23	Some codes may be prohibited, e.g. 0 on POSIX	library	run	the Report does not say what exitWith (ExitFailure 0) does: see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/lib.r.system.exitcode.prohibited): by ruling 57, rhc prohibits 0, exitWith (ExitFailure 0) raising an IOError, an illegal operation, a failure of status 1 uncaught (R37 in readings.md).	hand	Supported	R37	
 lib.r.system.getargs	23	getArgs returns the command line arguments, without the program name	library	run	exact	hand	Supported		
-lib.r.system.getprogname	23	getProgName returns the program's name as invoked	library	run	exact	hand	Planned		
+lib.r.system.getprogname	23	getProgName returns the program's name as invoked	library	run	exact	hand	Supported		
 lib.r.system.getenv	23	getEnv var returns the variable's value	library	run	exact	hand	Supported		
 lib.r.system.getenv.err	23	An undefined variable raises isDoesNotExistError	library	run	caught and tested	hand	Supported		
 lib.r.system.system	23	system cmd returns the exit code of the command	library	run	`true` and `false`	hand	Supported		
@@ -3751,7 +3751,7 @@ lib.r.system.exitwith.close	23	Before termination open and semi-closed handles a
 lib.r.system.exitfailure	23	exitFailure = exitWith (ExitFailure exitfail), exitfail implementation-dependent	library	run	a non-zero status	hand	Supported		
 lib.r.system.exitwith.nocatch	23	exitWith bypasses the I/O monad's error handling and cannot be intercepted by catch	library	run	`catch (exitWith ExitSuccess) h`: h does not run	hand	Supported		
 lib.r.system.term.error	23	A program ending by error, or with value _|_, is treated identically to exitFailure	library	run	non-zero status and handles closed, against 3.1's "immediate": see readings.md	hand	Supported	R37	
-lib.r.system.term.loop	23	A value "otherwise determined to be _|_" includes non-termination, detected or not	library	none	only a detected loop or stack exhaustion can be tested	hand	Planned		
+lib.r.system.term.loop	23	A value "otherwise determined to be _|_" includes non-termination, detected or not	library	run	only a detected loop or stack exhaustion can be tested. E9's test was none; ruling 49 makes it a run and ruling 58 its test (tests/hs/lang/lib.r.system.term.loop): a loop rhc determines, the re-entry of a blackholed suspension, ends with status 1 on the interpreter and the VM; the stack's exhaustion is D18's limit, outside the clause.	hand	Supported	R95	
 lib.r.system.term.normal	23	A program p ending without exitWith is treated as (p >> exitWith ExitSuccess) `catch` \ _ -> exitFailure	library	run	status 0 on success	hand	Supported		
 lib.r.system.term.ioerror	23	An uncaught IOError gives exitFailure	library	run	non-zero status, and 7.3's printed value on stderr	hand	Supported		
 lib.system.data.exitcode	23	type ExitCode is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		
@@ -3768,7 +3768,7 @@ lib.system.export.getenv	23	module System exports getEnv	module	accept	import Sy
 lib.system.export.system	23	module System exports system	module	accept	import System (system) compiles and the name is usable	generated	Supported		
 lib.system.export.exitwith	23	module System exports exitWith	module	accept	import System (exitWith) compiles and the name is usable	generated	Supported		
 lib.system.export.exitfailure	23	module System exports exitFailure	module	accept	import System (exitFailure) compiles and the name is usable	generated	Supported		
-lib.r.time.utc	24	The library follows RFC 1129 in its use of UTC	library	none	a reference, tested through toUTCTime	hand	Planned		
+lib.r.time.utc	24	The library follows RFC 1129 in its use of UTC	library	none	a reference, tested through toUTCTime. Met through named rows' programs (ruling 49): a reference, which toUTCTime's and toCalendarTime's rows hold (lib.r.time.toutctime, lib.r.time.tocalendartime).	hand	Supported		
 lib.r.time.clocktime	24	ClockTime is abstract; clock times may be compared directly	library	run	Eq and Ord on two readings	hand	Supported		
 lib.r.time.clocktime.abstract	24	ClockTime's representation is not visible	library	reject	`import Time(ClockTime(..))` gives no constructor	hand	Supported		
 lib.r.time.range.day	24	ctDay is in 1..31	library	run	conversion results on a sample	hand	Supported		
@@ -3778,7 +3778,7 @@ lib.r.time.range.sec	24	ctSec is in 0..61, allowing two leap seconds	library	run
 lib.r.time.range.picosec	24	ctPicosec is in 0..(10^12)-1	library	run	as above	hand	Supported		
 lib.r.time.range.yday	24	ctYDay is in 0..365, 364 in non-leap years	library	run	31 December of both kinds of year	hand	Supported		
 lib.r.time.range.tz	24	ctTZ is in -89999..89999, the variation from UTC in seconds	library	run	as above	hand	Supported		
-lib.r.time.range.year	24	ctYear ranges over -maxInt..maxInt; pre-Gregorian dates are inaccurate	library	none	a range note; a ClockTime cannot reach the extremes	hand	Planned		
+lib.r.time.range.year	24	ctYear ranges over -maxInt..maxInt; pre-Gregorian dates are inaccurate	library	none	a range note; a ClockTime cannot reach the extremes. Nothing to meet (ruling 49): a note on the range; no ClockTime reaches its ends.	hand	Supported		
 lib.r.time.tzname	24	ctTZName names the time zone	library	run	"UTC" from toUTCTime	hand	Supported		
 lib.r.time.isdst	24	ctIsDST is True if daylight saving would be in effect	library	run	under a fixed TZ setting	hand	Supported		
 lib.r.time.timediff	24	TimeDiff records a difference in a user-readable way	library	run	all fields	hand	Supported		
@@ -3823,7 +3823,7 @@ lib.time.export.toutctime	24.1	module Time exports toUTCTime	module	accept	impor
 lib.time.export.toclocktime	24.1	module Time exports toClockTime	module	accept	import Time (toClockTime) compiles and the name is usable	generated	Supported		
 lib.time.export.calendartimetostring	24.1	module Time exports calendarTimeToString	module	accept	import Time (calendarTimeToString) compiles and the name is usable	generated	Supported		
 lib.time.export.formatcalendartime	24.1	module Time exports formatCalendarTime	module	accept	import Time (formatCalendarTime) compiles and the name is usable	generated	Supported		
-lib.r.locale.purpose	25	The library adapts to local conventions, at present time and date only	library	none	a statement of purpose	hand	Planned		
+lib.r.locale.purpose	25	The library adapts to local conventions, at present time and date only	library	none	a statement of purpose. Nothing to meet (ruling 49): a statement of purpose.	hand	Supported		
 lib.r.locale.used	25	It is used by calendarTimeToString	library	run	a user TimeLocale through formatCalendarTime changes month names	hand	Supported		
 lib.r.locale.default	25.1	defaultTimeLocale has the values listed	library	run	each field, exact	hand	Supported		
 lib.locale.data.timelocale	25.1	type TimeLocale is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		
@@ -3836,7 +3836,7 @@ lib.cputime.getcputime	26	getCPUTime is provided at its Report type (no definiti
 lib.cputime.cputimeprecision	26	cpuTimePrecision is provided at its Report type (no definition given: see the chapter's prose)	library	run	type by a signature check; behaviour by the prose rows of this chapter	generated	Supported		
 lib.cputime.export.getcputime	26	module CPUTime exports getCPUTime	module	accept	import CPUTime (getCPUTime) compiles and the name is usable	generated	Supported		
 lib.cputime.export.cputimeprecision	26	module CPUTime exports cpuTimePrecision	module	accept	import CPUTime (cpuTimePrecision) compiles and the name is usable	generated	Supported		
-lib.r.random.layers	27	Two layers: RandomGen supplies bits, Random extracts values	library	none	a description	hand	Planned		
+lib.r.random.layers	27	Two layers: RandomGen supplies bits, Random extracts values	library	none	a description. Nothing to meet (ruling 49): a description of the library's design.	hand	Supported		
 lib.random.class.randomgen	27	class RandomGen is declared as the Report gives it: superclasses, methods, defaults	library	accept	instance with the minimal complete definition compiles and every default behaves as written	generated	Supported		
 lib.random.data.stdgen	27	type StdGen is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		
 lib.random.inst.randomgenstdgen	27	instance RandomGen StdGen exists and behaves as the Report gives it	library	run	each method on sample values, differential where the Report gives code; `...` instances by chapter 6	generated	Supported		
@@ -3879,7 +3879,7 @@ lib.r.random.split	27.1	split gives two generators, not identical and independen
 lib.r.random.split.warning	27.1	split g = (g, variantOf g) does not meet the specification	library	run	`snd (split g)` and `snd (split (fst (split g)))` differ	hand	Supported		
 lib.r.random.stdgen.instance	27.1	StdGen is an abstract instance of RandomGen	library	accept	`next (mkStdGen 1)` compiles	hand	Supported		
 lib.r.random.stdgen.range	27.1	StdGen has a genRange of at least 30 bits	library	run	b - a >= 2^30 - 1; the text says "StgGen"	hand	Supported		
-lib.r.random.stdgen.robust	27.1	next is at least as robust as the Minimal Standard generator	library	none	a statistical claim beyond a unit test	hand	Planned		
+lib.r.random.stdgen.robust	27.1	next is at least as robust as the Minimal Standard generator	library	none	a statistical claim beyond a unit test. Nothing to meet (ruling 49): a statistical claim beyond any unit test.	hand	Supported		
 lib.r.random.readshow	27.1	read (show g) == g, which needs Eq StdGen, not an instance the Report lists	library	run	compare the generators' sequences: see readings.md	hand	Supported	R49	
 lib.r.random.read.any	27.1	read on StdGen succeeds on any string	library	run	the empty string, and arbitrary text	hand	Supported		
 lib.r.random.read.finite	27.1	It consumes only a finite portion of the string	library	run	an infinite string	hand	Supported		
@@ -3887,8 +3887,8 @@ lib.r.random.read.distinct	27.1	Different strings are likely to give different r
 lib.r.random.mkstdgen	27.1	mkStdGen maps an Int into a generator; distinct arguments likely give distinct generators	library	run	a small sample	hand	Supported		
 lib.r.random.userinstance	27.1	Programmers may supply their own RandomGen instances	library	accept	a user instance works with Random's methods	hand	Supported		
 lib.r.random.randomr	27.2	randomR (lo,hi) g is uniform on [lo,hi], with a new generator	library	run	values in range at each instance	hand	Supported		
-lib.r.random.randomr.inverted	27.2	What happens if lo > hi is unspecified	library	none	unspecified	hand	Planned		
-lib.r.random.randomr.continuous	27.2	For continuous types lo and hi need not ever be produced	library	none	a licence	hand	Planned		
+lib.r.random.randomr.inverted	27.2	What happens if lo > hi is unspecified	library	none	unspecified. Nothing to meet (ruling 49): unspecified, so any result meets it.	hand	Supported		
+lib.r.random.randomr.continuous	27.2	For continuous types lo and hi need not ever be produced	library	none	a licence. Nothing to meet (ruling 49): a licence.	hand	Supported		
 lib.r.random.random.bounded	27.2	For bounded types the range of random is normally the whole type	library	run	Bool and Char at both ends	hand	Supported		
 lib.r.random.random.fractional	27.2	For fractional types the range is normally [0,1)	library	run	Float and Double on a sample	hand	Supported		
 lib.r.random.random.integer	27.2	For Integer the range is the range of Int	library	run	on a sample	hand	Supported		

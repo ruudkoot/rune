@@ -157,7 +157,7 @@ struct
      beyond Core (HS_DESUGAR) *)
   type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,
                     fields : (string * string list) list, constructors : (string * string list) list,
-                    leaves : string list, defaults : string list}
+                    leaves : string list, defaults : string list, forced : (string * bool list) list}
 
   (* a unit desugared: its types, its values, each body made where it is
      wanted, and its interface *)
@@ -425,7 +425,7 @@ struct
           in
             if newtype andalso length args = 1 then
               C.cast (exp (env, SOME (hd fts)) (hd args), Core.apply (Core.TCon tycon, ctys))
-            else if length args = length fields andalso not (List.exists Core.isEval fields) then
+            else if length args = length fields andalso not (List.exists (fn b => b) (C.forced cname)) then
               C.con (cname, ctys, ListPair.map (fn (a, f) => exp (env, SOME (C.lazyTy f)) a) (args, fts))
             else applyTo (env, constructor (env, c), args)
           end
@@ -569,7 +569,7 @@ struct
       case C.tycon tycon of
         SOME (_, C.NewS _) => C.cast (hd values, Core.apply (Core.TCon tycon, ctys))
       | _ =>
-          if List.exists Core.isEval (#fields (valOf (C.conInfo cname))) then C.appAtoms (constructor (env, c), values)
+          if List.exists (fn b => b) (C.forced cname) then C.appAtoms (constructor (env, c), values)
           else C.con (cname, ctys, values)
     end
 
@@ -1148,9 +1148,23 @@ struct
       fun kinds 0 = ()
         | kinds n = if kindRound () then kinds (n - 1) else ()
       val () = kinds 20
+      (* a strict field of a newtype's type is lazy in Core, which has no
+         evaluated newtype, and its constructor forces its representation
+         (C.forced), as GHC's wrapper does *)
+      fun relaxed cs =
+        List.map (fn (key, c, fs) =>
+                    let
+                      val fs' = List.map (fn Core.TEval t => if isSome (C.unfold t) then t else Core.TEval t | f => f) fs
+                    in
+                      if fs' = fs then () else C.setForced (c, List.map Core.isEval fs);
+                      (key, c, fs')
+                    end)
+          cs
       val () =
         List.app (fn (t, _, cs, n) => case C.tycon t of
-                                         SOME (ks, _) => types := dataDecl (t, cs, n, ks) :: !types
+                                         SOME (ks, _) =>
+                                           let val d = dataDecl (t, relaxed cs, n, ks)
+                                           in C.declare d; types := d :: !types end
                                        | NONE => ())
           dataDecls
 
@@ -1331,10 +1345,12 @@ struct
                      | _ =>
                          let
                            fun go ([], acc) = C.con (k, List.map (Core.TVar o #1) params, List.map C.var acc)
-                             | go ((x, f, t) :: rest, acc) =
+                             | go ((x, (f, b), t) :: rest, acc) =
                                  if Core.isEval f then C.force (C.var (x, t), fn (v, vt) => go (rest, (v, vt) :: acc))
+                                 else if b then C.forceRep (C.var (x, t), fn () => go (rest, (x, t) :: acc))
                                  else go (rest, (x, t) :: acc)
-                           val triples = ListPair.map (fn ((x, f), t) => (x, f, t)) (ListPair.zip (xs, fields), ft)
+                           val triples =
+                             ListPair.map (fn ((x, f), t) => (x, f, t)) (ListPair.zip (xs, ListPair.zip (fields, C.forced k)), ft)
                          in
                            go (List.rev triples, [])
                          end
@@ -1562,7 +1578,8 @@ struct
      V.learn {primTypes = #primTypes i, builtinCons = #builtinCons i, fields = #fields i};
      List.app (fn (t, cs) => tyconCons := M.insert (!tyconCons, t, cs)) (#constructors i);
      List.app (fn k => leafKeys := M.insert (!leafKeys, k, ())) (#leaves i);
-     List.app (fn k => defaults := M.insert (!defaults, k, ())) (#defaults i))
+     List.app (fn k => defaults := M.insert (!defaults, k, ())) (#defaults i);
+     List.app C.setForced (#forced i))
 
   (* everything a desugaring knows forgotten, and what it is given made the
      program desugared *)
@@ -1593,6 +1610,7 @@ struct
     let
       val prior = saveState ()
       val known = V.known ()
+      val forcedBefore = mapOf (C.forcedOverrides ())
       val ids = idsOf modules
       val main = case main of SOME k => if M.member (ids, V.homeOf k) then SOME k else NONE | NONE => NONE
       val (types, values) =
@@ -1606,7 +1624,8 @@ struct
          fields = added (mapOf (#fields known), #fields after),
          constructors = added (#tyconCons prior, M.listItems (!tyconCons)),
          leaves = List.map #1 (added (#leafKeys prior, M.listItems (!leafKeys))),
-         defaults = List.map #1 (added (#defaults prior, M.listItems (!defaults)))}
+         defaults = List.map #1 (added (#defaults prior, M.listItems (!defaults))),
+         forced = added (forcedBefore, C.forcedOverrides ())}
     in
       restoreState prior;
       learn interface;

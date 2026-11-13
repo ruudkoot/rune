@@ -866,8 +866,11 @@ its own, and forcing one is one step.
   given, made a `K_THUNK` in place (or a copy of one that captures nothing, which may
   be shared); `UPDATE` makes it an indirection to its value (`K_IND`), which a force
   reads and the collector shortcuts. A suspension forced while its code runs is a loop,
-  a fatal error (`<<loop>>`), and so is one that code left by a raise: Haskell 98's
-  errors end the program (the roadmap's D12).
+  and so is one that code left by a raise: `ENTER` raises the builtin exception `Loop`
+  on every engine, which a program may handle, and which rhc's top level takes for an
+  uncaught `NonTermination` (`<<loop>>`): status 1, the handles flushed (chapter 23;
+  the roadmap's ruling 58). Haskell 98's errors end the program (the roadmap's D12),
+  so no suspension is put back.
 
 ### Mid as text
 

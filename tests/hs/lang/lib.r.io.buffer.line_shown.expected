@@ -1,0 +1,16 @@
+line, a part line: ||
+line, after a newline: |abc
+|
+line, after hFlush: |abc
+d|
+block, a short line: |abc
+d|
+changed to none: |abc
+def
+|
+none: |abc
+def
+g|
+after hClose: |abc
+def
+gh|
