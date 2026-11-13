@@ -119,24 +119,18 @@ struct
     in fn () => case !cell of SOME v => v | NONE => let val v = f () in cell := SOME v; v end end
 
   (* The fingerprints of a unit's entities and instances, by key or
-     identity, each module's from those before it (HsModIface's), those of
-     the units before it `earlier`'s; and what it asked of those, each key
-     with what it gave, which are all its fingerprints read of anything
-     but its modules' interfaces *)
+     identity, by recursive group over all its modules (HsModIface's: a
+     group that spans the members of a cycle is one, H8), those of the
+     units before it `earlier`'s; and what it asked of those, each key with
+     what it gave, which are all its fingerprints read of anything but its
+     modules' interfaces *)
   type prints = {prints : (string * string) list, asked : (string * string option) list}
 
   fun printsFor (mods : HsModIface.t list, earlier : string M.map) : prints =
     let
-      val own : string M.map ref = ref M.empty
       val asked : string option M.map ref = ref M.empty
-      fun external k =
-        case M.find (!own, k) of
-          SOME f => SOME f
-        | NONE => let val v = M.find (earlier, k) in asked := M.insert (!asked, k, v); v end
-      fun ofModule i =
-        let val fs = HsModIface.fingerprints Pickle.hash (i, external)
-        in List.app (fn (k, f) => own := M.insert (!own, k, f)) fs; fs end
-      val prints = List.concat (List.map ofModule mods)
+      fun external k = let val v = M.find (earlier, k) in asked := M.insert (!asked, k, v); v end
+      val prints = HsModIface.fingerprints Pickle.hash (mods, external)
     in
       {prints = prints, asked = M.listItems (!asked)}
     end

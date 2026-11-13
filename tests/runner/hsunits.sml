@@ -299,18 +299,26 @@ struct
      H1 to H8; E13's two GHC cases among them): each case of
      tests/hs/units/holes a program and its steps, each step a directory of
      modules written over the last step's and `want`, what the program
-     prints or `refused`. At each step the units' compile through one store
+     prints or `refused`, and `units`, if there, what the units' compile
+     must say of a unit, a line each: `NAME compiled` or `NAME taken`
+     (`link` the link). At each step the units' compile through one store
      (`--units --store`) and the whole compile of the same files both give
      what is wanted, and where they compile, the same program byte for
-     byte. A hole planted (tests/runner/hsmutantlist.sml, HU01 to HU09)
-     takes a unit whose compile would now refuse or make another program,
-     and its case fails *)
+     byte. A hole planted (tests/runner/hsmutantlist.sml, HU01 to HU09,
+     HU11) takes a unit whose compile would now refuse or make another
+     program, or one a step's `units` says is compiled, and its case
+     fails. M22's SCC keys: h8-group (a type group across a cycle's
+     members hashed as one; a body edited in a cycle compiles no client)
+     and h8-split (a cycle split, its client taken: a usage names no unit
+     under the link of C) *)
   val holesDir = "tests/hs/units/holes"
   fun holeCases () = sort (List.filter (fn n => isDir (fromRoot (holesDir ^ "/" ^ n))) (entries (fromRoot holesDir)))
 
   (* a case's states: the k-th its steps 1 to k's modules, the later a
-     module's text the one it has, and the k-th step's want *)
-  fun statesOf name : (string * (string * string) list * string) list =
+     module's text the one it has, the k-th step's want, and what its
+     `units` says of the units, a line each, `NAME compiled` or `NAME
+     taken` (`link` the link), which holds in the order of the steps *)
+  fun statesOf name : (string * (string * string) list * string * string list) list =
     let
       val src = fromRoot (holesDir ^ "/" ^ name)
       val steps = sort (List.filter (fn n => isDir (src ^ "/" ^ n)) (entries src))
@@ -319,14 +327,14 @@ struct
             let
               val mine = List.map (fn p => (OS.Path.file p, read p)) (glob (src ^ "/" ^ s, ".hs"))
               val files' = mine @ List.filter (fn (n, _) => not (List.exists (fn (m, _) => m = n) mine)) files
-            in go (rest, files', (s, files', read (src ^ "/" ^ s ^ "/want")) :: acc) end
+            in go (rest, files', (s, files', read (src ^ "/" ^ s ^ "/want"), lines (read (src ^ "/" ^ s ^ "/units"))) :: acc) end
     in go (steps, [], []) end
 
   (* one state in d, through the store d/st: the units' compile and the
      whole compile give its want, a refusal for the same reason, and where
      they compile, the same program byte for byte; false where they do
      not, said *)
-  fun stateHolds (family, d, label, files, want) =
+  fun stateHolds (family, d, label, files, want, units) =
     let
       fun f x = d ^ "/" ^ x
       val () = List.app (fn n => if String.isSuffix ".hs" n andalso not (List.exists (fn (m, _) => m = n) files)
@@ -337,7 +345,14 @@ struct
       fun compiles (cmd, log) = exec {cmd = cmd, dir = SOME d, stdin = "", stdout = f log, stderr = f log, timeout = 900} = 0
       val warm = compiles ([fromRoot "bin/rhc", "--units", "--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"], "warm.log")
       val whole = compiles ([fromRoot "bin/rhc", "Main.hs", "-o", "j.rbc"], "whole.log")
-      fun units () = String.concatWith "; " (List.filter (String.isPrefix "rhc: unit") (lines (read (f "warm.log"))))
+      fun units' () = String.concatWith "; " (List.filter (fn l => String.isPrefix "rhc: unit" l orelse String.isPrefix "rhc: link" l)
+                                                         (lines (read (f "warm.log"))))
+      (* a line of a step's `units`: NAME and what its log says of it *)
+      fun says (u, log) =
+        case String.tokens Char.isSpace u of
+          ["link", what] => String.isSubstring ("rhc: link: " ^ what) log
+        | [name, what] => String.isSubstring ("rhc: unit " ^ name ^ ": " ^ what) log
+        | _ => false
       fun no why = (say ("FAIL " ^ family ^ ": " ^ label ^ ": " ^ why ^ "\n"); false)
       (* the units' refusal, which the whole compile's must say too: a unit
          taken that should not be may make a link that does not check *)
@@ -349,10 +364,10 @@ struct
       if want = "refused\n" then
         if warm then no ("the units' compile takes what the whole compile "
                          ^ (if whole then "takes too, where a refusal is wanted" else "refuses: " ^ firstLine (f "whole.log"))
-                         ^ " (" ^ units () ^ ")")
+                         ^ " (" ^ units' () ^ ")")
         else if whole then no "the whole compile takes it, where a refusal is wanted"
         else if String.isSubstring (refusal ()) (read (f "whole.log")) then true
-        else no ("the units' compile refuses it otherwise than the whole compile: " ^ refusal () ^ " (" ^ units () ^ ")")
+        else no ("the units' compile refuses it otherwise than the whole compile: " ^ refusal () ^ " (" ^ units' () ^ ")")
       else if not whole then no ("the whole compile refuses it: " ^ firstLine (f "whole.log"))
       else if not warm then no ("the units' compile refuses it: " ^ firstLine (f "warm.log"))
       else
@@ -364,29 +379,24 @@ struct
           val printed = read (f "w.out")
         in
           if not (size w > 12 andalso String.extract (w, 12, NONE) = String.extract (j, 12, NONE)) then
-            no ("the units' program is not the whole compile's (" ^ units () ^ ")")
+            no ("the units' program is not the whole compile's (" ^ units' () ^ ")")
           else if printed <> want then no ("printed " ^ firstLine (f "w.out") ^ ", where " ^ firstLine' want ^ " is wanted")
-          else true
+          else
+            case List.filter (fn u => not (says (u, read (f "warm.log")))) units of
+              [] => true
+            | u :: _ => no ("the units' compile does not say " ^ u ^ " (" ^ units' () ^ ")")
         end
     end
   and firstLine' s = case String.fields (fn c => c = #"\n") s of l :: _ => l | [] => ""
 
-  (* E13's holes (the haskell98 roadmap's *What a cache hit must satisfy*,
-     H1 to H8; E13's two GHC cases among them): each case of
-     tests/hs/units/holes a program and its steps, each step a directory of
-     modules written over the last step's and `want`, what the program
-     prints or `refused`. At each step the units' compile through one store
-     (`--units --store`) and the whole compile of the same files both give
-     what is wanted, and where they compile, the same program byte for
-     byte. A hole planted (tests/runner/hsmutantlist.sml, HU01 to HU09)
-     takes a unit whose compile would now refuse or make another program,
-     and its case fails *)
+  (* a case of E13's holes, its steps in order through one store, as
+     holesDir's comment says *)
   fun hole name () =
     let
       val d = out ^ "/holes/" ^ name
       val () = (rmTree d; mkdirs d)
     in
-      List.app (fn (s, files, want) => ignore (stateHolds ("hs.units.holes", d, name ^ " step " ^ s, files, want)))
+      List.app (fn (s, files, want, units) => ignore (stateHolds ("hs.units.holes", d, name ^ " step " ^ s, files, want, units)))
         (statesOf name)
     end
 
@@ -412,10 +422,10 @@ struct
                     ^ String.concatWith " " (List.map (fn i => #1 (Vector.sub (states, i))) picks) ^ "\n")
       fun go (_, []) = ()
         | go (k, i :: rest) =
-            let val (s, files, want) = Vector.sub (states, i)
+            let val (s, files, want, _) = Vector.sub (states, i)
             in
               if stateHolds ("hs.units.random", d, name ^ " seed " ^ Int.toString seed ^ ", walk " ^ Int.toString k
-                                                   ^ ", state " ^ s, files, want)
+                                                   ^ ", state " ^ s, files, want, [])
               then go (k + 1, rest) else ()
             end
     in

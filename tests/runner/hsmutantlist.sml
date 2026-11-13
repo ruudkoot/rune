@@ -149,5 +149,11 @@ struct
           "what it was. Not seen by any program: the fingerprints a unit asked of another are of what its interface mentions, " ^
           "which its compile read, so a usage of it refuses the entry first wherever an answer moved (M21's fingerprint reuse)",
           "driver.sml", "if List.all (fn (k, v) => M.find (prints, k) = v) (#asked kept) then kept else printsFor (modules, prints)",
-          "kept", [])]
+          "kept", []),
+     rhc ("HU11", "units", "H8: a unit's fingerprints module by module, not by recursive group over its members: a type " ^
+                   "group that spans a cycle's modules hashed apart, so a client of one of its types does not see an edit " ^
+                   "of another",
+          "driver.sml", "HsModIface.fingerprints Pickle.hash (mods, external)",
+          "List.concat (List.map (fn i => HsModIface.fingerprints Pickle.hash ([i], external)) mods)",
+          [holes ^ "h8-group"])]
 end

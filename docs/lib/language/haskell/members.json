@@ -2673,8 +2673,8 @@
     {
      "kind": "val",
      "name": "fingerprints",
-     "spec": "val fingerprints : (string -> string) -> t * (string -> string option) -> (string * string) list",
-     "doc": "`fingerprints hash (t, external)` is the fingerprint of each entity\nand instance of `t`, by its key or identity.\n\nA type's constructors and fields and a class's methods have their\nparent's.\n\nItems are taken in recursive groups (one mentions another, through a\ntype, a class, a superclass, an instance's class, type or context): a\ngroup's fingerprint is `hash` of its members' canonical text and of\nthe fingerprints of the entities outside the module they mention,\n`external key` (the key itself where that is NONE: a built-in type),\nso that it moves where what a client reads of it moves, and with what\nit mentions.\n\n",
+     "spec": "val fingerprints : (string -> string) -> t list * (string -> string option) -> (string * string) list",
+     "doc": "`fingerprints hash (ts, external)` is the fingerprint of each entity\nand instance of the modules `ts`, by its key or identity.\n\nThe modules are those of one unit, an SCC of the module graph, taken\ntogether. A type's constructors and fields and a class's methods have their\nparent's.\n\nItems are taken in recursive groups (one mentions another, through a\ntype, a class, a superclass, an instance's class, type or context),\nover all of `ts`, so that a group that spans the modules of a cycle is\none (H8): a group's fingerprint is `hash` of its members' canonical\ntext and of the fingerprints of the entities outside `ts` they\nmention, `external key` (the key itself where that is NONE: a\nbuilt-in type), so that it moves where what a client reads of it\nmoves, and with what it mentions.\n\n",
      "page": "sig/HS_MOD_IFACE.md#val-fingerprints"
     }
    ]

@@ -1131,16 +1131,25 @@ Main reads compiles Main; and a step that takes the library's unit parses
 none of its modules. `hs/units/holes/CASE` holds E13's holes (H1 to H8,
 the roadmap's *What a cache hit must satisfy*), each case of
 `tests/hs/units/holes` a program and its steps, each step's modules written
-over the last's with `want`, what it prints or `refused`: at each step the
+over the last's with `want`, what it prints or `refused`, and `units`, if
+there, a line for each unit the step's compile must say it compiled or took
+(`NAME compiled`, `NAME taken`, `link` for the link): at each step the
 units' compile through one store and the whole compile both give it, and
 where they compile, the same program byte for byte. A name an import comes
 to clash with (H1), an instance two imports away that moves a default (H2,
 H4) and a default declaration edited, a derived instance's context grown
 (H5), a fixity changed (H6), a module's exports grown under `module M`
-(H7), a cycle's second member edited (H8); E13's two GHC cases are among
-them. Each hole is a mutant of rhc's (`HU01` to `HU09`, H9's the
-Prelude's names of `hs/iface/usages`), caught by its case; `HU10`, a unit
-taken keeping its fingerprints unasked, is `EQUIVALENT`. Nightly,
+(H7), a cycle's second member edited (H8), its unit compiled and its client
+taken; E13's two GHC cases are among them. M22's SCC keys: `h8-group`, a
+recursive type group across a cycle's two modules, which an edit of either
+type moves as one, so that a client of the other is compiled, and a body
+edited in the cycle, which compiles its unit and no client; `h8-split`, a
+cycle split in two units of new names whose client is taken, since under
+the link of the roadmap's C a usage names no unit, and taken again after a
+body's edit. Each hole is a mutant of rhc's (`HU01` to `HU09` and `HU11`,
+H9's the Prelude's names of `hs/iface/usages`, `HU11` a unit fingerprinted
+module by module), caught by its case; `HU10`, a unit taken keeping its
+fingerprints unasked, is `EQUIVALENT`. Nightly,
 `hs/units/random/CASE` walks each case's states (the k-th its steps 1 to
 k) in an order drawn at random, through one store, with the same
 comparison at each, so that an entry meets every edit and its undoing in
