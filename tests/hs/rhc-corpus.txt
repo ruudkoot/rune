@@ -45,3 +45,9 @@ rhc | ghc/typecheck/should_fail/tcfail071::check | HOST-BUG | reject: R21: f and
 rhc | jhc/1_typecheck/4_fail/ghc/tcfail071.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_fail/tcfail071, jhc's copy
 rhc | ghc/typecheck/should_fail/tcfail144::check | HOST-BUG | reject: R21: f1 and g1 are one declaration group, f1 :: Eq a and g1 :: Ord a, contexts 4.5.2 requires identical
 rhc | jhc/1_typecheck/4_fail/ghc/tcfail144.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_fail/tcfail144, jhc's copy
+
+# G2's runs of the nofib run set GHC ran right, at rhc's -O0 and -O2 (hs-corpus-run/levels/ID, nightly; label `levels`)
+rhc | nofib/real/maillist::levels | FAILS | exit: killed at the 600 s a way allows at -O0 and at -O2 (status 124), where GHC -O0 runs it in 0.95 s: rhc's code or its Prelude, track P's (M23-M25; ruling 53)
+rhc | nofib/smp/threads001::levels | HOST-BUG | compile: Control.Concurrent, outside the Report's libraries (D35)
+rhc | nofib/spectral/eliza::levels | HOST-BUG | compile: `import Prelude hiding (Word)` hides what the Prelude does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
+rhc | nofib/spectral/last-piece::levels | HOST-BUG | compile: Data.Maybe, Text.PrettyPrint and Data.Map; the last two are outside the Report's libraries (D35)

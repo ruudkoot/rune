@@ -376,7 +376,10 @@ the shims, which the run builds). The family is `tests/runner/hssource.sml`, `hs
   difference is a failure unless a line of `tests/hs/oracles.txt` explains it, in the format of *Expectations*
   with the outcome first in its reason (`hugs | conformance98/layout/do::conformance | HOST-BUG | reject: R56:
   ...`); `@stale` fails a line that explains no failure of a job that ran. A disagreement on a conformance test
-  cites its reading of the Report (`tests/hs/readings.md` from R55).
+  cites its reading of the Report (`tests/hs/readings.md` from R55). `hs-oracles/rhc/conformance` and its
+  `@stale`, needing `rhc` and `hs-corpus`, judge rhc on the same 82 the same way (a module but Main checked with
+  `--typecheck-only`, a program compiled and run on the register VM), its lines of way `rhc` (G2's line
+  "conformance98 green, or each failure a recorded reading").
 - `hs-corpus/data`, `source` and `faults`, in `check`: the data is whole and agrees with itself and with
   `oracles.txt`, nothing lands under `tests/hs/corpus/` but its data, each of E7's hard cases has a reading, the
   source rewrites do what E8's did on planted text, and the harness fails where it must on fake oracles.
@@ -416,15 +419,18 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   judges do not both run it right is kept in the results. Nightly, `hs-corpus-run/sestoft/ID` compiles each program
   whose run in the Report's order no line explains with its matches as Sestoft's decision trees (`--match=sestoft`),
   runs it on the register VM and holds it to the same judge, its label `sestoft` (the lead's ruling 59,
-  `tr.case.obligation`). `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line that explains no failure of a
-  job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
-  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
-  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
-  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
-  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
-  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
-  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
-  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
+  `tr.case.obligation`). Nightly too, `hs-corpus-run/levels/ID` compiles each program of the run set's two nofib
+  trees that GHC -O0 ran right (E8: 56 and 82) at rhc's `-O0` and `-O2` and holds both runs on the register VM to
+  E8's output, its label `levels` (G2's line on the clean nofib programs). `hs-corpus-run/@stale` (and
+  `@stale-nightly`) fails a line that explains no failure of a job that ran. `hs-rhc-corpus/vendored-SET`, in
+  `check`, a job a set, puts the 45 under a `LICENSE` through `--typecheck-only` as the nightly jobs above put the
+  whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly, the 143 under a `PROVENANCE` (ruling 46: D56 puts the
+  188's runs in `check`, not a names job, and the nightly jobs above check the 143 too). `hs-corpus/vendored`
+  (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and
+  `hs-corpus/data` to the vendored programs' files and notices and nothing more: it refuses a file with no `LICENSE`
+  or `PROVENANCE` beside it or above it, or under another notice than its row of `licences.tsv` names, and a
+  `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's rule. `bin/rune-test
+  hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.
