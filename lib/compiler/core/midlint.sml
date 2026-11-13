@@ -182,7 +182,7 @@ struct
       val formed : unit IntTable.table = IntTable.table 256
       val formedArg : unit IntTable.table = IntTable.table 64
       val arities : int IntTable.table = IntTable.table 16
-      fun params s = Option.map (List.length o #params) (Ty.datatypeOf s)
+      fun params s = if s = Ty.arrowStamp then SOME 2 else Option.map (List.length o #params) (Ty.datatypeOf s)
       fun given (what, t, s, name, args, exact) =
         case params s of
           SOME n =>

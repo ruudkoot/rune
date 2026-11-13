@@ -1,0 +1,20 @@
+(* run: alone *)
+(* The arrow as a type name (ruling 60): a type variable applied, instantiated at it given one type, int (->),
+   and alone, (->), as tcrun001's `instance Flob (->)` gives a class at a type name of two parameters, is the
+   function type; given both, (int, int) (->), it is the function type itself. *)
+(datatype box ('m) (0 "Box" : (int, int) 'm))
+(funs
+  (fn ginc ((vn : int)) : int
+    (return (prim int_add vn 1 : (int * int) -> int))))
+(funs
+  (fn gsame ['m] ((vf : int 'm)) : int 'm
+    (return vf)))
+(val gmain : unit
+  (let (vg : int -> int) (app gsame[int (->)] ginc)
+  (let (vh : (int, int) (->)) vg
+  (let (vb : (->) box) (con 0 vh : (->) box)
+  (let (vk : int -> int) (decon 0 vb : (->) box)
+  (let (vr : int) (app vk 41)
+  (let (vs : string) (prim int_to_string vr : int -> string)
+  (let (vt : string) (prim string_concat vs "\n" : (string * string) -> string)
+  (return (prim print vt : string -> unit))))))))))
