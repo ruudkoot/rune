@@ -401,6 +401,8 @@ struct
      what the check keeps for the target check is a program's, not the
      library's, so the saved image holds none *)
   val () = RhcWorld.checkLibrary := (fn (g, r) => (RhcLint.check (g, r, false); RhcLint.kept := NONE))
+  (* and desugared, its every body made, in the Report's order of matching *)
+  val () = RhcWorld.desugarLibrary := (fn (g, r) => SOME (RhcDesugar.library (g, r)))
 
   fun run (args : string list) : int =
     let
@@ -414,7 +416,7 @@ struct
            one bin/rhc restores goes on with its own command line *)
         (case RhcWorld.make image of
            Runtime.Saved => 0
-         | Runtime.Restored => run (CommandLine.arguments ()))
+         | Runtime.Restored => counted (CommandLine.arguments ()))
     | ["--world"] => (print (RhcWorld.describe () ^ "\n"); 0)
     | ["--identity"] => (print (Config.identity ^ "\n"); 0)
     | _ =>
@@ -471,6 +473,21 @@ struct
     end
     end
 
+  (* With RHC_INSTRUCTIONS set, the bytecode instructions a command took
+     (Pass.instructions), on standard error: from the saved world, those of
+     the command alone, the world's own made before it (D45's B, measured) *)
+  and counted (args : string list) : int =
+    let
+      val i0 = !Pass.instructions ()
+      val status = run args
+    in
+      (case (OS.Process.getEnv "RHC_INSTRUCTIONS", args) of
+         (SOME _, [_, _, "--make-world", _]) => ()
+       | (SOME _, _) => eprint ("rhc: " ^ Int.toString (!Pass.instructions () - i0) ^ " instructions\n")
+       | (NONE, _) => ());
+      status
+    end
+
   and isHaskell a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
 
   (* a program of Haskell in units (M21f): its files, and rhc's options for
@@ -494,7 +511,7 @@ struct
     in Pass.finish (); status end
 
   fun main (_ : string, args : string list) : int =
-    run args
+    counted args
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
          | Error.Bug msg => (eprint ("rhc: " ^ msg ^ "\n"); 1)

@@ -15,7 +15,13 @@
      at level 2, the runner's own (RUNE_LINT=2), HsLint replays each way
      the records of the modules the program reaches. A program's
      own options that shape the library's reading (`--cycle-default=scc`)
-     send both ways whole.
+     send both ways whole. A program of tests/hs/lang is also run both
+     ways on Core's interpreter, its `.stdin` its standard input, in a
+     directory of its own, to the same output and status, and every
+     eighth of a shard has its Core compared too (`--desugar-only
+     --dump-after=desugar`): the library desugared once in the image
+     (RhcDesugar.library) and a program on it (`programOn`) give the Core
+     a whole desugaring gives. tests/hs/lang's shards are twice as many.
 
    The programs of a directory are judged in `shards` jobs, the K-th
    taking every N-th from the K-th, each a line FAIL for each program
@@ -53,24 +59,31 @@ struct
 
   val firstDifference = firstDifferenceBy "from the saved world"
 
-  (* a program checked both ways: `way`, with `flags`, and whole; the
-     family's jobs are `family/KIND/...` *)
-  fun compareWith {family : string, way : string, flags : string list} (kind, p : Lang.program) =
+  (* a command of rhc's on a program both ways, `way` with `flags` and
+     whole: `stage` names it, `args` are its own, before the program's
+     `.cargs` and file; its standard output, error and status alike *)
+  fun compareStage {family : string, way : string, flags : string list} (stage, args, stdin) (kind, p : Lang.program) =
     let
       val out = run ^ "/" ^ String.translate (fn #"/" => "-" | c => str c) family ^ "/" ^ kind ^ "/" ^ #name p
       val () = mkdirs out
       val cargs = words (#base p ^ ".cargs")
-      fun check (tag, flags) =
+      fun one (tag, flags) =
         let
-          val file = out ^ "/" ^ tag
-          val status = exec {cmd = [rhc ()] @ flags @ cargs @ ["--typecheck-only", #src p], dir = SOME root, stdin = "",
+          val file = out ^ "/" ^ stage ^ "-" ^ tag
+          (* in a directory of its own, where a program writes its files *)
+          val here = out ^ "/" ^ stage ^ "-" ^ tag ^ ".dir"
+          val () = (rmTree here; mkdirs here)
+          val status = exec {cmd = [rhc ()] @ flags @ args @ cargs @ [fromRoot (#src p)], dir = SOME here, stdin = stdin,
                              stdout = file ^ ".out", stderr = file ^ ".err", timeout = 600}
         in
           (status, read (file ^ ".out"), read (file ^ ".err"))
         end
-      val (s1, o1, e1) = check ("way", flags @ ["--lint=2"])
-      val (s2, o2, e2) = check ("whole", ["--whole", "--lint=2"])
-      val what = family ^ "/" ^ kind ^ "/" ^ #name p
+      (* a check at level 2, where HsLint replays the records each way
+         gives; a run and its Core at level 0, what they print the point *)
+      val lint = if stage = "check" then "--lint=2" else "--lint=0"
+      val (s1, o1, e1) = one ("way", flags @ [lint])
+      val (s2, o2, e2) = one ("whole", ["--whole", lint])
+      val what = family ^ "/" ^ kind ^ "/" ^ #name p ^ (if stage = "check" then "" else " (" ^ stage ^ ")")
     in
       if s1 <> s2 then
         fail (what ^ ": status " ^ Int.toString s1 ^ " " ^ way ^ ", " ^ Int.toString s2 ^ " whole")
@@ -79,7 +92,28 @@ struct
       else ()
     end
 
-  val compareOne = compareWith {family = "hs/world", way = "from the saved world", flags = []}
+  (* a program checked both ways: `way`, with `flags`, and whole; the
+     family's jobs are `family/KIND/...` *)
+  fun compareWith way (kind, p) = compareStage way ("check", ["--typecheck-only"], "") (kind, p)
+
+  (* a run program of tests/hs/lang run both ways, on Core's interpreter,
+     its `.stdin` file its standard input; with `core`, its Core too, as
+     desugaring leaves it (`--desugar-only --dump-after=desugar`) *)
+  fun compareRun way core (kind, p : Lang.program) =
+    let val stdin = if exists (#base p ^ ".stdin") then #base p ^ ".stdin" else ""
+    in
+      compareStage way ("run", [], stdin) (kind, p);
+      if core then compareStage way ("core", ["--desugar-only", "--dump-after=desugar"], stdin) (kind, p) else ()
+    end
+
+  val world = {family = "hs/world", way = "from the saved world", flags = []}
+
+  (* a program of the directory checked both ways *)
+  fun compareOne (kind, p) = compareWith world (kind, p)
+
+  (* and for tests/hs/lang run, and its Core compared where `core` *)
+  fun compareOneWith core (kind, p) =
+    (compareOne (kind, p); if kind = "lang" then compareRun world core (kind, p) else ())
 
   fun shardOf (kind, k, n) =
     let
@@ -91,7 +125,11 @@ struct
         (ListPair.zip (List.tabulate (length sorted, fn i => i), sorted))
     end
 
-  fun compareShard (kind, k, n) = List.app (fn p => compareOne (kind, p)) (shardOf (kind, k, n))
+  (* a shard, every eighth program's Core compared too *)
+  fun compareShard (kind, k, n) =
+    List.app (fn (i, p) => compareOneWith (i mod 8 = 0) (kind, p))
+      (let val ps = shardOf (kind, k, n) in ListPair.zip (List.tabulate (length ps, fn i => i), ps) end)
+  (* make check's sample, checked both ways *)
   fun compareSample kind = List.app (fn p => compareOne (kind, p)) (List.filter (fn (p : Lang.program) => HsLang.sampled (#name p)) (programs kind))
 
   fun compareNamed (kind, name) =
@@ -147,10 +185,12 @@ struct
   fun tree () =
     let
       val cmd = "\"$RUNE_TEST_ROOT\"/bin/rune-test "
+      (* tests/hs/lang's, which run and compare Core too, in twice as many *)
+      fun shardsOf kind = if kind = "lang" then 2 * shards else shards
       fun shardJobs kind =
         Test.tag "check" (job (kind ^ "/sample", cmd ^ "hs-world-shard " ^ kind ^ " sample", 3600))
-        :: List.tabulate (shards, fn i =>
-                                    let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
+        :: List.tabulate (shardsOf kind, fn i =>
+                                    let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString (shardsOf kind)
                                     in Test.tag "nightly" (job (kind ^ "/" ^ k, cmd ^ "hs-world-shard " ^ kind ^ " " ^ k, 3600)) end)
     in
       Test.describe "hs/world"

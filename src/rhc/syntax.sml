@@ -162,7 +162,13 @@ struct
                    checker accepted (RhcLint; its records are #evidence r) *)
                 (RhcLint.check (g, r, perGroup);
                  if mode = Check then OS.Process.success
-                 else (!compile) (rest, fn strings => RhcDesugar.program (g, r, strings)))
+                 else (!compile) (rest, fn strings =>
+                                   (* the library's desugaring of the world the program went
+                                      from, made in the Report's order of matching, where the
+                                      program is desugared in it (D45's B) *)
+                                   case (!RhcWorld.desugared, !HsMatch.order) of
+                                     (SOME lib, HsMatch.Report) => RhcDesugar.programOn (lib, g, r, strings)
+                                   | _ => RhcDesugar.program (g, r, strings)))
     end
     handle HsSource.Error (span, msg) => (eprint (message (hd files, span, msg) ^ "\n"); OS.Process.failure)
 

@@ -109,6 +109,25 @@ struct
      that no two dictionaries of a program have one name *)
   val unitCounters = 100000000
 
+  (* The first number a unit of the library's fresh variables take: a range
+     of its own, a million wide, by the place of its first module among the
+     library's files, so that each of its units is numbered alike whether
+     the saved world checks them all or a whole program the ones it
+     reaches; and the names of dictionaries apart *)
+  val libraryOrder : string list option ref = ref NONE
+  fun librarySlot (members : G.node list) =
+    let
+      val order =
+        case !libraryOrder of
+          SOME o_ => o_
+        | NONE => let val o_ = List.map #1 (G.libraryFiles ()) in libraryOrder := SOME o_; o_ end
+      fun index (name, i, []) = i
+        | index (name, i, x :: xs) = if x = name then i else index (name, i + 1, xs)
+      val least = List.foldl (fn (n : G.node, m) => Int.min (index (#name n, 0, order), m)) (length order) members
+    in
+      1000000 * (1 + least)
+    end
+
   (* `groups (s, gs, fixpoint, check)`: each group of `gs` solved for its
      exports and scopes, its modules renamed and resolved, and with
      `check`, each group checked too, its types, classes and instances
@@ -171,7 +190,8 @@ struct
           | (_, true) => ()
           | (SOME cycleDefault, false) =>
               let
-                val () = if List.all #library members then () else HsInfer.renumber unitCounters
+                val () = if List.all #library members then HsInfer.numberFrom (librarySlot members)
+                         else HsInfer.renumber unitCounters
                 val resolved = List.filter (fn (n, _) => List.exists (fn (m : G.node) => #id m = #id n) members) (!out)
                 val {env, errors, derived} =
                   HsInfer.check {env = !types, cycleDefault = cycleDefault, prelude = prelude, evidence = evidence,
