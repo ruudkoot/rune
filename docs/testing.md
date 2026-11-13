@@ -544,7 +544,10 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `check` a fixed sample, one program in `HsLang.sampleOneIn` (16), those
   whose name's FNV-1a hash is 0 modulo it, and never one of
   `lang-nightly.txt`; `nightly`, every program (`tests/runner/hslang.sml`,
-  `HsLang.sampled`).
+  `HsLang.sampled`). The families that are the conformance's evidence,
+  each a program of its own, are never sampled (the lead's ruling 52):
+  `hs/compile`, `hs/lang`'s ways and checks, `hs/accept`, `hs/errors` and
+  the corpus's runs, whose tiers are *rhc's oracles and corpus*'s.
 * **What they cover.** `covers:` tags for `tests/hs`, `lib/language/haskell`,
   `src/rhc`, `share/rhc` and `rhc.build`, so that `--affected` runs rhc's
   tests alone for a change there, and everything for a change to the
@@ -871,7 +874,9 @@ rhc never compiles itself. Each names the jobs that must fail on it, jobs
 that run (rows out of `Planned`). Its job builds it, says how many of rhc's
 outputs (tokens, tree, check) on an even sample of `tests/hs`'s programs
 differ from the good rhc's, and runs the jobs it names in a tree of links to
-the root in which `bin/rhc.rbc` is the mutant's: `CAUGHT` by the first that
+the root in which `bin/rhc.rbc` is the mutant's and there is no
+`bin/rhc.layer`, so that the mutant makes the library's units itself rather
+than take the good rhc's snapshot: `CAUGHT` by the first that
 fails, else `UNCAUGHT`, or `UNEXERCISED` where no output differs, or
 `STILLBORN`, each but the first a failure, as is a named job that does not
 run. A mutant that names no job is `EQUIVALENT` once it builds, its note
@@ -883,7 +888,8 @@ mutant's tree for a job to be run against it by hand). The first fourteen
 seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
 Core's interpreter and Core's text reader, these last seen by `hs/core`'s
 jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
-deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s. F's parser
+deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU11
+the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*). F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
 
 **rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of
