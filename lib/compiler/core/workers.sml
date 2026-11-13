@@ -453,16 +453,20 @@ end
    only, and only where RUNE_UNCURRY=1 says so, so that the same compiler
    makes A's code and C's.
 
-   * A curried function -- one whose body only makes a function and
-     returns it, n deep (Workers.levels) -- gets an n-ary twin, of every
-     level's parameter and the innermost body (for a global one Workers
-     gave a worker, the worker itself), and its uses as a value become the
-     twin's: a closure of n parameters, which a call of n arguments enters
-     at once.
+   * A curried function -- one whose body makes a function and returns
+     it, n deep (Workers.levels), with nothing between but steps that may
+     be done later and again (levels below) -- gets an n-ary twin, of
+     every level's parameter and the innermost body after those steps (for
+     a global one Workers gave a worker, the worker itself), and its uses
+     as a value become the twin's: a closure of n parameters, which a call
+     of n arguments enters at once. Each function's twin is made before
+     those of the functions inside it.
    * A call through a closure whose result, used once, is applied at once
      to another argument, and so on, becomes one call of them all
      (App (f, [a1, .., an]), Lower's CallN): of a local curried function,
-     its twin's where the arguments are as many as its parameters.
+     its twin's where the arguments are as many as its parameters. A step
+     between the calls that makes or takes apart a value, of what the
+     calls do not give, goes before the first.
    * A local function every use of which became its twin's goes.
    A closure given to thunk_make, to a foreign callback or to the
    runtime (rt_) stays as it is: each enters a closure of one parameter. *)
@@ -477,6 +481,47 @@ struct
   val maxArity = 8
 
   val freshStamp = Stamp.fresh
+
+  (* The levels of a curried function, as Workers.levels gives them, and
+     on past steps between a level and the function of the next that may
+     be done later, and again, with nothing seen: a value named, made or
+     taken apart, or cast (unsafe_cast), a suspension forced (thunk_force:
+     the same value each time, its work done once; a suspension made is not
+     one, whose work a partial application applied twice would do twice),
+     of no global (a global's value may come later than the step). The innermost body has
+     those steps before it, in order: the twin does them once it has every
+     argument. *)
+  datatype step = Step of var * scheme * rhs | At of pos
+  fun ofNoGlobal r = let val g = ref false in appAtomsOfRhs (fn Global _ => g := true | _ => ()) r; not (!g) end
+  fun later r =
+    (case r of
+       Atom _ => true | Tuple _ => true | Select _ => true | Con _ => true | Decon _ => true
+     | Prim ("thunk_force", _, _) => true | Prim ("unsafe_cast", _, _) => true
+     | _ => false)
+    andalso ofNoGlobal r
+  fun levels (f : fundef) : ((var * Ty.ty) list * Ty.ty * string option) list * exp =
+    let
+      fun mentions (x, e) = let val t = IntTable.table 16 in Workers.count t e; isSome (IntTable.find (t, x)) end
+      fun wrap (steps, e) = List.foldr (fn (Step (x, s, r), e) => Let (x, s, r, e) | (At sp, e) => Mark (sp, e)) e steps
+      (* acc the levels, the last first; done the steps after the levels
+         before the last, start the body of the last; pending the steps
+         passed since (the last first), e where they end *)
+      fun go (acc, done, start, pending, e) =
+        case e of
+          Mark (sp, e') => go (acc, done, start, At sp :: pending, e')
+        | Let (x, s, r, e') => if later r then go (acc, done, start, Step (x, s, r) :: pending, e') else stop (acc, done, start)
+        | Fun ([{name, label, tyvars = [], params = [p], result, body}], scope) =>
+            (case Workers.unmark scope of
+               Return (Atom (Var (n, []))) =>
+                 if n = name andalso not (mentions (name, body))
+                 then go (([p], result, label) :: acc, done @ List.rev pending, body, [], body)
+                 else stop (acc, done, start)
+             | _ => stop (acc, done, start))
+        | _ => stop (acc, done, start)
+      and stop (acc, done, start) = (List.rev acc, wrap (done, start))
+    in
+      go ([(#params f, #result f, #label f)], [], #body f, [], #body f)
+    end
 
   (* how many times each variable and global is named, as an atom *)
   fun countUses (p : program) : int IntTable.table =
@@ -512,7 +557,7 @@ struct
       (* the twin of f, where f is curried: an existing worker, or a new
          function made of its innermost body *)
       fun twinOf (f : fundef) : fundef option option =
-        case Workers.levels f of
+        case levels f of
           (ls as _ :: _ :: _, inner) =>
             if List.length ls > maxArity orelse not (List.all (fn (ps, _, _) => List.length ps = 1) ls) then NONE
             else
@@ -547,16 +592,22 @@ struct
               end
         | _ => NONE
 
-      (* the twins made in a group, after it *)
+      (* a group with its twins after it: each function's made of it as it
+         is, before the functions inside it get theirs (beside a level's
+         function, its twin would end the levels there); then each given
+         the twins inside it *)
       fun group (fs : fundef list) : fundef list =
-        fs @ List.mapPartial (fn f => case twinOf f of SOME (SOME t) => SOME t | _ => NONE) fs
+        let val ts = List.mapPartial (fn f => case twinOf f of SOME (SOME t) => SOME t | _ => NONE) fs
+        in List.map (fn f => withBody (f, twinsIn (#body f))) (fs @ ts) end
 
       (* the program with every curried function's twin beside it *)
-      fun twinsIn e =
+      and twinsIn e =
         case e of
           Let (x, s, r, b) => Let (x, s, r, twinsIn b)
         | Fun (fs, b) =>
-            let val fs' = group (List.map (fn f => (IntTable.insert (localFuns, #name f, ()); withBody (f, twinsIn (#body f)))) fs)
+            let
+              val () = List.app (fn f => IntTable.insert (localFuns, #name f, ())) fs
+              val fs' = group fs
             in List.app (fn f => IntTable.insert (localFuns, #name f, ())) fs'; Fun (fs', twinsIn b) end
         | Join (j, ps, body, s) => Join (j, ps, twinsIn body, twinsIn s)
         | If (c, a, b) => If (c, twinsIn a, twinsIn b)
@@ -570,7 +621,7 @@ struct
         {name = name, label = label, tyvars = tyvars, params = params, result = result, body = body}
       val p =
         List.map (fn Val (g, s, e) => Val (g, s, twinsIn e)
-                   | Funs fs => Funs (group (List.map (fn f => withBody (f, twinsIn (#body f))) fs))
+                   | Funs fs => Funs (group fs)
                    | Do (gs, e) => Do (gs, twinsIn e)) p
       val () = List.app (fn Funs fs => List.app (fn f => IntTable.insert (globalFuns, #name f, f)) fs | _ => ()) p
     in
@@ -611,25 +662,45 @@ struct
              | NONE => if isSome (IntTable.find (localFuns, x)) then Stays else Value)
         | Global (g, _) => if isSome (IntTable.find (globalFuns, g)) then Stays else Value
         | _ => Stays
+      (* a step that may go before a call whose result is t: it names,
+         makes, takes apart or casts a value, or makes a suspension, and
+         names neither t nor a global; or functions that do not name t *)
+      datatype moved = Moved of var * scheme * rhs | MovedFuns of fundef list
+      fun names (t, r) = let val n = ref false in appAtomsOfRhs (fn Var (x, _) => if x = t then n := true else () | _ => ()) r; !n end
+      fun early (t, r) =
+        (case r of
+           Atom _ => true | Tuple _ => true | Select _ => true | Con _ => true | Decon _ => true
+         | Prim ("unsafe_cast", _, _) => true | Prim ("thunk_make", _, _) => true
+         | _ => false)
+        andalso ofNoGlobal r andalso not (names (t, r))
+      fun earlyFuns (t, fs : fundef list) =
+        let val u = IntTable.table 64 in List.app (fn f => Workers.count u (#body f)) fs; not (isSome (IntTable.find (u, t))) end
       (* a call, h applied to xs, its result t; and the calls after it that
-         apply what it gives, used once, at once *)
+         apply what it gives, used once, at once, with the steps between
+         them that may go before the first (pre, the last first) *)
       fun chain (t, s, h, xs, rest) =
         let
-          fun go (t, s, xs, rest, marks) =
+          fun go (t, s, xs, rest, marks, pre) =
             case rest of
-              Mark (sp, r) => go (t, s, xs, r, sp :: marks)
+              Mark (sp, r) => go (t, s, xs, r, sp :: marks, pre)
             | Let (r, s2, App (Var (t', []), ys), rest2) =>
-                if t' = t andalso usedOnce t then go (r, s2, xs @ ys, rest2, marks) else stop (t, s, xs, rest, marks)
+                if t' = t andalso usedOnce t then go (r, s2, xs @ ys, rest2, marks, pre) else stop (t, s, xs, rest, marks, pre)
             | Return (App (Var (t', []), ys)) =>
-                if t' = t andalso usedOnce t then SOME (fn h => remark (marks, Return (App (h, List.map twinAtom (xs @ ys)))), List.length (xs @ ys))
-                else stop (t, s, xs, rest, marks)
-            | _ => stop (t, s, xs, rest, marks)
-          and stop (t, s, xs, rest, marks) =
+                if t' = t andalso usedOnce t
+                then SOME (fn h => ahead (pre, remark (marks, Return (App (h, List.map twinAtom (xs @ ys))))), List.length (xs @ ys))
+                else stop (t, s, xs, rest, marks, pre)
+            | Let (y, s2, r, rest2) =>
+                if early (t, r) then go (t, s, xs, rest2, marks, Moved (y, s2, r) :: pre) else stop (t, s, xs, rest, marks, pre)
+            | Fun (fs, rest2) =>
+                if earlyFuns (t, fs) then go (t, s, xs, rest2, marks, MovedFuns fs :: pre) else stop (t, s, xs, rest, marks, pre)
+            | _ => stop (t, s, xs, rest, marks, pre)
+          and stop (t, s, xs, rest, marks, pre) =
             if List.length xs < 2 then NONE
-            else SOME (fn h => Let (t, s, App (h, List.map twinAtom xs), remark (marks, exp rest)), List.length xs)
+            else SOME (fn h => ahead (pre, Let (t, s, App (h, List.map twinAtom xs), remark (marks, exp rest))), List.length xs)
           and remark (marks, e) = List.foldl (fn (sp, e) => Mark (sp, e)) e marks
+          and ahead (pre, e) = List.foldl (fn (Moved (y, s, r), e) => Let (y, s, rhs r, e) | (MovedFuns fs, e) => Fun (List.map fundef fs, e)) e pre
         in
-          case (headOf h, go (t, s, xs, rest, [])) of
+          case (headOf h, go (t, s, xs, rest, [], [])) of
             (Value, SOME (k, _)) => k h
           | (Twin (h2, n), SOME (k, m)) => if m = n then k h2 else Let (t, s, rhs (App (h, xs)), exp rest)
           | _ => Let (t, s, rhs (App (h, xs)), exp rest)
