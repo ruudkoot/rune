@@ -32,7 +32,8 @@ struct
 
   (* rename: every local name of the program's own module, as rhc's names
      resolve it (bin/rhc --dump-binders: BIND and USE, its renamed name x#k
-     and its bytes), renamed x'k at each occurrence; a symbolic one is kept *)
+     and its bytes), renamed at each occurrence to a fresh name of its own
+     length, so that the layout is kept; a symbolic one is kept *)
   fun rename (src, text) =
     let
       val out = run ^ "/hs-meta/binders-" ^ OS.Path.base (OS.Path.file src)
@@ -46,7 +47,7 @@ struct
                  (case String.fields (fn c => c = #"-") range of
                     [a, b] => (case (Int.fromString a, Int.fromString b) of
                                  (SOME a, SOME b) => if size orig > 0 andalso Char.isAlpha (String.sub (orig, 0))
-                                                     then SOME (a, b, orig, orig ^ "'" ^ k, name) else NONE
+                                                     then SOME (a, b, orig, "", name) else NONE
                                | _ => NONE)
                   | _ => NONE)
              | _ => NONE)
@@ -57,8 +58,38 @@ struct
          binding's head does, is left, and with it every occurrence of the name *)
       fun exact (a, b, orig, _, _) = b - a = size orig orelse b - a = size orig + 2
       val inexact = List.map #5 (List.filter (not o exact) all)
-      val edits = List.map (fn (a, b, orig, new, _) => (a, b, orig, new))
-                    (List.filter (fn e => not (List.exists (fn n => n = #5 e) inexact)) all)
+      val kept = List.filter (fn e => not (List.exists (fn n => n = #5 e) inexact)) all
+      (* each binder's new name is as long as its old one, so that no column
+         moves and the layout is the program's (a longer name on a line
+         before a do block's first statement moved the block's column:
+         lib.io.try_literal); fresh in the whole text, and no keyword; a
+         binder for which no such name is found keeps its own *)
+      fun idChar c = Char.isAlphaNum c orelse c = #"_" orelse c = #"'"
+      val used = ref (String.tokens (not o idChar) text
+                      @ ["case", "class", "data", "default", "deriving", "do", "else", "if", "import", "in", "infix",
+                         "infixl", "infixr", "instance", "let", "module", "newtype", "of", "then", "type", "where",
+                         "as", "qualified", "hiding"])
+      fun isUsed n = List.exists (fn u => u = n) (!used)
+      val letters = "abcdefghijklmnopqrstuvwxyz"
+      val tail = letters ^ "0123456789"
+      fun fresh orig =
+        let
+          val n = size orig
+          (* orig with its character at i replaced, from the last *)
+          fun at (i, cs) = List.map (fn c => String.substring (orig, 0, i) ^ str c ^ String.extract (orig, i + 1, NONE))
+                                    (String.explode cs)
+          val cands = List.concat (List.tabulate (n, fn j => let val i = n - 1 - j in at (i, if i = 0 then letters else tail) end))
+        in
+          case List.find (fn c => c <> orig andalso not (isUsed c)) cands of
+            SOME c => (used := c :: !used; SOME c)
+          | NONE => NONE
+        end
+      val keys = List.foldl (fn ((_, _, orig, _, key), acc) => if List.exists (fn (k, _) => k = key) acc then acc
+                                                               else (key, fresh orig) :: acc) [] kept
+      val edits = List.mapPartial (fn (a, b, orig, _, key) =>
+                                     case List.find (fn (k, _) => k = key) keys of
+                                       SOME (_, SOME new) => SOME (a, b, orig, new)
+                                     | _ => NONE) kept
       (* each at its span, where the name stands in it, from the last *)
       fun apply ((a, b, orig, new), t) =
         if b > size t then t

@@ -28,9 +28,6 @@ rhc | ghc/typecheck/should_run/tcrun040::run | HOST-BUG | compile: Foreign, of t
 rhc | ghc/typecheck/should_run/tcrun037::run | HOST-BUG | compile: R73: a method's context constrains its class's variable (4.3.1)
 rhc | ghc/typecheck/should_fail/tcfail149::run | HOST-BUG | compile: R73: a method's context constrains its class's variable (4.3.1)
 
-# performance (the lead's ruling 47): a finding for track P (M23-M25), not chased in M19
-rhc | nofib/real/maillist::run | FAILS | exit: killed at the 600 s a way allows, in all three ways (status 124), where GHC -O0 runs it in 0.95 s (E8's run.tsv): rhc's code or its Prelude at -O0, track P's (M23-M25; ruling 53); Hugs timed out on it too (E8), so its run is recorded where the judges do not both run it right
-
 # the -lazy ports (tests/runner/hslazyports.sml, `hs-lazy-ports/PORT`, nightly): the Haskell beside a port that rhc
 # does not run to nofib's output
 rhc | lazy/eliza-lazy::run | HOST-BUG | reject: Main.hs's `import Prelude hiding (Word)` hides what the Prelude does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
@@ -45,3 +42,8 @@ rhc | ghc/typecheck/should_fail/tcfail071::check | HOST-BUG | reject: R21: f and
 rhc | jhc/1_typecheck/4_fail/ghc/tcfail071.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_fail/tcfail071, jhc's copy
 rhc | ghc/typecheck/should_fail/tcfail144::check | HOST-BUG | reject: R21: f1 and g1 are one declaration group, f1 :: Eq a and g1 :: Ord a, contexts 4.5.2 requires identical
 rhc | jhc/1_typecheck/4_fail/ghc/tcfail144.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_fail/tcfail144, jhc's copy
+
+# G2's runs of the nofib run set GHC ran right, at rhc's -O0 and -O2 (hs-corpus-run/levels/ID, nightly; label `levels`)
+rhc | nofib/smp/threads001::levels | HOST-BUG | compile: Control.Concurrent, outside the Report's libraries (D35)
+rhc | nofib/spectral/eliza::levels | HOST-BUG | compile: `import Prelude hiding (Word)` hides what the Prelude does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
+rhc | nofib/spectral/last-piece::levels | HOST-BUG | compile: Data.Maybe, Text.PrettyPrint and Data.Map; the last two are outside the Report's libraries (D35)
