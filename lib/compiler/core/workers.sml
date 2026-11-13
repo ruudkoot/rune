@@ -543,8 +543,10 @@ struct
 
   fun program (p : program) : program =
     let
-      (* the twins, by the curried function's name: the twin's and its arity *)
-      val twins : (var * int) IntTable.table = IntTable.table 64
+      (* the twins, by the curried function's name: the twin's, its arity,
+         and whether it is a global (a worker Workers gave a global
+         function, which a local one may call: the twin of both) *)
+      val twins : (var * int * bool) IntTable.table = IntTable.table 64
       (* the global functions, by name, and the local ones *)
       val globalFuns : fundef IntTable.table = IntTable.table 256
       val () = List.app (fn Funs fs => List.app (fn f => IntTable.insert (globalFuns, #name f, f)) fs | _ => ()) p
@@ -573,7 +575,7 @@ struct
                   | _ => NONE
               in
                 case worker of
-                  SOME w => (IntTable.insert (twins, #name f, (w, n)); SOME NONE)
+                  SOME w => (IntTable.insert (twins, #name f, (w, n, true)); SOME NONE)
                 | NONE =>
                     let
                       val ps' = List.map (fn (x, t) => (freshStamp (), t)) ps
@@ -582,7 +584,7 @@ struct
                       val twin = {name = name, label = #label f, tyvars = #tyvars f, params = ps', result = #2 (List.last ls),
                                   body = Simplify.copyWith (s, inner)}
                     in
-                      IntTable.insert (twins, #name f, (name, n));
+                      IntTable.insert (twins, #name f, (name, n, isSome (IntTable.find (globalFuns, #name f))));
                       SOME (SOME twin)
                     end
               end
@@ -633,10 +635,11 @@ struct
                           | Funs _ => ()) p
       val uses = countUses p
       fun usedOnce x = case IntTable.find (uses, x) of SOME 1 => true | _ => false
+      fun twinNamed (x2, ts, global) = if global then Global (x2, ts) else Var (x2, ts)
       fun twinAtom a =
         case a of
-          Global (g, ts) => (case IntTable.find (twins, g) of SOME (g2, _) => Global (g2, ts) | NONE => a)
-        | Var (x, ts) => (case IntTable.find (twins, x) of SOME (x2, _) => Var (x2, ts) | NONE => a)
+          Global (g, ts) => (case IntTable.find (twins, g) of SOME (g2, _, _) => Global (g2, ts) | NONE => a)
+        | Var (x, ts) => (case IntTable.find (twins, x) of SOME (x2, _, global) => twinNamed (x2, ts, global) | NONE => a)
         | _ => a
       fun rhs r =
         case r of
@@ -658,7 +661,7 @@ struct
         case h of
           Var (x, ts) =>
             (case IntTable.find (twins, x) of
-               SOME (x2, n) => Twin (Var (x2, ts), n)
+               SOME (x2, n, global) => Twin (twinNamed (x2, ts, global), n)
              | NONE => if isSome (IntTable.find (localFuns, x)) then Stays else Value)
         (* a global this program declares by a value (Val, Do) holds a
            closure; one it declares a function, or one of another unit
@@ -732,9 +735,12 @@ struct
         case e of
           Let (x, s, r, b) => Let (x, s, r, drop b)
         | Fun (fs, b) =>
-            let val fs' = List.filter (fn f => named (#name f) orelse not (isSome (IntTable.find (twins, #name f)))) fs
-            in Fun (List.map (fn f => {name = #name f, label = #label f, tyvars = #tyvars f, params = #params f, result = #result f,
-                                       body = drop (#body f)}) fs', drop b) end
+            (* a group left empty, its functions' twins global workers,
+               goes *)
+            (case List.filter (fn f => named (#name f) orelse not (isSome (IntTable.find (twins, #name f)))) fs of
+               [] => drop b
+             | fs' => Fun (List.map (fn f => {name = #name f, label = #label f, tyvars = #tyvars f, params = #params f,
+                                              result = #result f, body = drop (#body f)}) fs', drop b))
         | Join (j, ps, body, s) => Join (j, ps, drop body, drop s)
         | If (c, a, b) => If (c, drop a, drop b)
         | Handle (a, x, h) => Handle (drop a, x, drop h)

@@ -1070,7 +1070,9 @@ does.
   the other at every use, at the types the use gives it (M12), so that
   the passes that know a function of the top level know it through the
   alias: `List.foldl f b l` is then a call of the worker, which
-  `specialise` copies for `f`.
+  `specialise` copies for `f`. An alias of a function of other than one
+  parameter, a twin `uncurry` left as a value, stays: a call through it is
+  a call through a closure (`tests/ir/shake-nary-alias.mid`).
 * **`lift`** (lambda lifting): a group of local functions none of which
   escapes -- each is only ever called, by name -- becomes a group of the
   top level. What the group captured it is given instead, as parameters
@@ -1163,6 +1165,18 @@ does.
   and the refs are not made; the copies' own calls are rewritten so in
   turn. A ref used under a handler is left, since a raise would leave its
   value where the handler cannot see it.
+* **`uncurry`** (eval/apply proper, the haskell98 roadmap's D15 C, from
+  `-O1`): a curried function -- one that makes a function and returns it,
+  n deep, with nothing between but steps that may be done later and again
+  -- gets a twin of all n levels' parameters (or, where its innermost
+  body calls a worker of the top level with them all, in order, that
+  worker), and its uses as a value become the twin's, a closure of n
+  parameters; calls through a closure in a row, each applying what
+  the last gave, at once, become one call of them all, eight at most. A
+  closure given to `thunk_make`, a foreign callback or the runtime stays
+  one of one parameter. How the engines call through such a closure is
+  *Calls through a closure* of [bytecode.md](bytecode.md)
+  (`tests/ir/uncurry.sml`, `tests/ir/uncurry-worker.mid`).
 * **`inline`** (in `simplify`, M10): a call of a function of the top level
   of no more than 12 nodes that does not call itself, and does not always
   raise -- a call on the way to an error costs nothing worth saving -- is

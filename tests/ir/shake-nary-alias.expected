@@ -1,0 +1,14 @@
+(* after shake *)
+(funs
+  (fn g1 ((v1 : int) (v2 : int)) : int "add"
+    (return (prim int_add v1 v2 : (int * int) -> int))))
+(val g2 : int -> int -> int
+  (return g1))
+(funs
+  (fn g3 ((v3 : int)) : int "double"
+    (return (prim int_add v3 v3 : (int * int) -> int))))
+(val g4 : int -> int
+  (return (app g2 1)))
+(val g5 : int
+  (let (v4 : int) (app g4 2)
+  (return (app g3 v4))))
