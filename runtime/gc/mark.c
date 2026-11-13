@@ -203,8 +203,10 @@ static inline void caf_late_value(VM *vm, Value *v, int guard) {
         if (caf_only_take(o) && caf_code_due(o)) caf_code(vm, o, caf_late_global);
     }
 }
-static void mark_with_tables(VM *vm) {
-    int guard = vm->prog.reruns;
+#if defined(__GNUC__)
+__attribute__((always_inline))
+#endif
+static inline void mark_with_tables_as(VM *vm, int guard) {
     while (vm->gc.nqueue) {
         Obj *o = vm->gc.queue[--vm->gc.nqueue];
         if (caf_runs(o) && caf_code_due(o)) caf_code(vm, o, mark_value);
@@ -228,6 +230,11 @@ static void mark_with_tables(VM *vm) {
         for (uint32_t i = 0; i < n; i++) caf_late_value(vm, &f[i], guard);
     }
     caf_end(vm);
+}
+/* a loop of its own for each guard, as mark_full's (reruns: lazy ML's) */
+static void mark_with_tables(VM *vm) {
+    if (vm->prog.reruns) mark_with_tables_as(vm, 1);
+    else mark_with_tables_as(vm, 0);
 }
 
 /* Whether a full collection compacts the old space: where --heap-limit is
