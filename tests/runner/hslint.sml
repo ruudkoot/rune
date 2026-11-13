@@ -36,7 +36,9 @@
 
    - `hs/hslint/faults`: each rule of HsLint's comparison, of its replay
      and of its target check refuses its fault (as `astlintFaults` holds
-     AstLint's): tests/hs/hslint/faults.hs, desugared, its checker's
+     AstLint's), from the saved world, where HsLint takes its inference of
+     the library from the world, and whole (`--whole`), where it infers the
+     library too: tests/hs/hslint/faults.hs, desugared, its checker's
      records replayed and held to the second inference, its Core held to
      it, and held by `--hslint-claims` to its own expected dump, is
      accepted, and with RHC_HSLINT_FAULT=RULE, which reads the first claim,
@@ -258,10 +260,15 @@ struct
     let
       val out = run ^ "/hs-hslint/faults"
       val () = mkdirs out
-      fun rhcWith (fault, file) =
+      (* from the saved world, HsLint taking its inference of the library
+         from it, or whole (`--whole`), inferring the library too: each fault
+         refused both ways *)
+      fun rhcWith (fault, file, whole) =
         execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
-          {cmd = [fromRoot "bin/rhc", "--lint=2", "--desugar-only", "--hslint-claims=" ^ faultClaims, faultProgram],
+          {cmd = [fromRoot "bin/rhc"] @ (if whole then ["--whole"] else []) @
+                 ["--lint=2", "--desugar-only", "--hslint-claims=" ^ faultClaims, faultProgram],
            dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
+      val ways = [(false, ""), (true, ".whole")]
       val listed = out ^ "/rules"
       val _ = exec {cmd = [fromRoot "bin/rhc", "--hslint-rules"], dir = SOME root, stdin = "", stdout = listed,
                     stderr = listed ^ ".err", timeout = 300}
@@ -274,20 +281,23 @@ struct
                         else fail ("hs/hslint/faults: the rule " ^ r ^ " has no fault")) rules;
       List.app (fn f => if List.exists (fn r => r = f) rules then ()
                         else fail ("hs/hslint/faults: the fault " ^ f ^ " is no rule of bin/rhc --hslint-rules")) faults;
-      if rhcWith ("", clean) = 0 then ()
-      else fail ("hs/hslint/faults: the program is refused with its own claims: " ^ firstLine clean);
       List.app
-        (fn f =>
-           let
-             val file = out ^ "/" ^ f ^ ".out"
-             val status = rhcWith (f, file)
-             val text = read file
-           in
-             if status = 0 then fail ("hs/hslint/faults: " ^ f ^ ": accepted")
-             else if String.isSubstring "lint after hslint" text andalso String.isSubstring ("[" ^ f ^ "]") text then ()
-             else fail ("hs/hslint/faults: " ^ f ^ ": not refused by [" ^ f ^ "]: " ^ firstLine file)
-           end)
-        faults
+        (fn (whole, way) =>
+           (if rhcWith ("", clean ^ way, whole) = 0 then ()
+            else fail ("hs/hslint/faults: the program is refused with its own claims" ^ way ^ ": " ^ firstLine (clean ^ way));
+            List.app
+              (fn f =>
+                 let
+                   val file = out ^ "/" ^ f ^ way ^ ".out"
+                   val status = rhcWith (f, file, whole)
+                   val text = read file
+                 in
+                   if status = 0 then fail ("hs/hslint/faults: " ^ f ^ way ^ ": accepted")
+                   else if String.isSubstring "lint after hslint" text andalso String.isSubstring ("[" ^ f ^ "]") text then ()
+                   else fail ("hs/hslint/faults: " ^ f ^ way ^ ": not refused by [" ^ f ^ "]: " ^ firstLine file)
+                 end)
+              faults))
+        ways
     end
 
   (* ---- a linted build is a plain one ---- *)
