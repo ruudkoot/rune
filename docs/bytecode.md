@@ -81,7 +81,11 @@ order -- and writes it into the generated tables; a VM refuses a file of
 another instruction set with "bytecode of another instruction set", and an
 image of one (whose magic carries the fingerprint) as not an image of this
 `runevm`. So an opcode or a primitive may be added, removed or moved: a file
-made before is refused rather than read with another meaning.
+made before is refused rather than read with another meaning. The
+instructions of suspensions (`FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE`) and
+the primitives of `IntInf.int` are in both sets' fingerprints, which
+`runtime/stack/opcodes.def` and `runtime/register/regs.def` say at their
+head, so a file made before them is refused.
 
 **The line table** says where each instruction came from, which is what
 `--disasm` prints beside it and what a stack trace reads. Its entries are in
@@ -437,6 +441,19 @@ exponent allows it -- or a pointer to a heap object. Heap objects:
 | BOX | 8 raw bytes | an `Int64.int` or a `Word64.word` that needs its 64th bit |
 | THUNK | function index, captured fields; its state in the tag | a suspension of a lazy front end ([ir.md](ir.md), *Suspensions*): unevaluated (0), or under evaluation (1) once its code has said `BLACKHOLE`, when the collector follows none of its fields |
 | IND | its value, then dead fields | a suspension that has its value, made in place by `UPDATE`; a force reads it, and the collector gives what points to one its value, but where a frame runs it (lazy ML's, pinned: contag `IND_RUNNING`) or its value is a suspension or an indirection itself ([ir.md](ir.md), *Suspensions*) |
+
+A `THUNK` is the closure `thunk_make` was given, its kind changed in place
+(a copy of one that captures nothing, which may be shared), and `UPDATE`
+makes it an `IND`. As it loads a program the VM notes whether any function
+says `UPDATE` and not `BLACKHOLE` (`Program`'s `reruns`, in
+`runtime/register/isa_regs.c` and `runtime/stack/isa_stack.c`): a
+suspension in lazy ML's reading, which a force from inside its own code
+runs again while it runs. Only then does the collector pin the indirections
+a frame still runs (`gc_pin_running`, `IND_RUNNING`) and guard its shortcut
+of an indirection (`ind_may_shortcut`); a program of SML's or Haskell's,
+whose suspensions say `BLACKHOLE` at their entry, never pays for either
+([ir.md](ir.md), *Suspensions*; D57 and M26 of
+[plans/language/haskell98.md](plans/language/haskell98.md)).
 
 Booleans are `CON0 0` (`false`) and `CON0 1` (`true`). Records store their
 fields sorted by label (numeric labels first, in numeric order, then

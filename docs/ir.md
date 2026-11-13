@@ -898,6 +898,15 @@ its own, and forcing one is one step.
   would run it). `tests/thunks`' kernels `k_outlive`, `k_outlive_int`,
   `k_outlive_raise`, `k_outlive_three`, `outlive_nullary` and `k_nested` hold each on
   every engine.
+* **What holds it** (the roadmap's D57, M26, whose checklist of six this is):
+  the pin and the shortcut's guard, by those kernels; the rules `MidLint` adds,
+  above; force on both targets, `tests/ir/susp.sml` at `-O2` on the register
+  target and `susp-stack.sml` at `-O0` on the stack target, each a dump of every
+  stage; a program with no primitive of suspensions keeps its bytes, `susp`
+  bound only where `--allow-prim` names it; and this section. The rest of
+  `tests/thunks`, run by `tests/runner/thunks.sml` on every engine and tier, are
+  E2's kernels under `--allow-prim` (`knot`, `chain`, `cast`, `image` with
+  suspensions in a saved image, and the rest).
 
 ### Mid as text
 
@@ -982,6 +991,25 @@ which primitives make, are numbered as `runtime/value.h` numbers them.
 `MidPipeline.midStage`, which makes Mid with the lint at the boundary;
 `MidPipeline.lowOfMid` with its list of passes; `MidPipeline.targetStage`;
 and `Emit.writeFileAs` with `MidPipeline.fingerprint ()`.
+
+**rhc's Core**, the language above Mid of the second front end that uses
+this layer ([rhc.md](rhc.md); D1 and D2 of
+[plans/language/haskell98.md](plans/language/haskell98.md)), is rhc's own,
+in `lib/language/haskell` and documented with that library: what it is
+([CORE](lib/language/haskell/sig/CORE.md): System F with a type variable
+applied, lazy `let` and `letrec`, and `case` the one place a value is
+forced), its text ([CORE_TEXT](lib/language/haskell/sig/CORE_TEXT.md)),
+its lint's rules ([CORE_LINT](lib/language/haskell/sig/CORE_LINT.md)), its
+interpreter ([CORE_INTERP](lib/language/haskell/sig/CORE_INTERP.md)), its
+units ([CORE_UNITS](lib/language/haskell/sig/CORE_UNITS.md)) and Core to
+Mid ([CORE_TO_MID](lib/language/haskell/sig/CORE_TO_MID.md)), which writes
+Mid's text, which rhc reads with `MidText.parse` and hands to
+`MidPipeline.midStage`. Its stages are `read` or `desugar` (Core,
+CoreLint at every level, and its text read back at level 3) and
+`coretomid` (Mid's text), names `--dump-after` takes as it takes Mid's
+passes'. What rhc's Mid has that SML's does not -- suspensions, `Case`
+from every match, a type variable applied and the arrows as type names, a
+forall in a dictionary's field -- is in *Mid* and *Suspensions* above.
 
 ## Matches
 
