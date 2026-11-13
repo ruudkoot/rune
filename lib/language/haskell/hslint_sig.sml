@@ -163,6 +163,8 @@ sig
      binding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE
      PREDS -> TYPE`, where `where_` gives a span's place: of the program's
      modules, and of the library's too where `library` is set, but its
-     signed bindings. *)
+     signed bindings, and its defaults at no place, `*`. The lines of each
+     kind are sorted by module, then name, instance or place, so that only
+     a change of what one says moves the dump. *)
   val dump : report * (HsSource.span -> string) * bool -> string
 end

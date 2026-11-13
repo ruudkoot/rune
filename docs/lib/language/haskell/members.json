@@ -2454,7 +2454,7 @@
      "kind": "val",
      "name": "dump",
      "spec": "val dump : report * (HsSource.span -> string) * bool -> string",
-     "doc": "`dump (report, where_, library)` is the report as text, a line each.\n\nThe lines are `KIND MODULE NAME :: KIND` for a type constructor or a\nclass, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a\nbinding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's\nmodules, and of the library's too where `library` is set, but its\nsigned bindings.\n\n",
+     "doc": "`dump (report, where_, library)` is the report as text, a line each.\n\nThe lines are `KIND MODULE NAME :: KIND` for a type constructor or a\nclass, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a\nbinding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's\nmodules, and of the library's too where `library` is set, but its\nsigned bindings, and its defaults at no place, `*`. The lines of each\nkind are sorted by module, then name, instance or place, so that only\na change of what one says moves the dump.\n\n",
      "page": "sig/HS_LINT.md#val-dump"
     }
    ]

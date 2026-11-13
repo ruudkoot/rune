@@ -4,12 +4,12 @@ DERIVED	Main	Eq N
 DERIVED	Main	Eq a => Eq (T a)
 DERIVED	Main	Show N
 DERIVED	Main	Show a => Show (T a)
-TYPE	Main	n :: Double
-TYPE	Main	m :: Double
-SIGNED	Main	size :: Int
 SIGNED	Main	eqList :: Eq a => [a] -> [a] -> Bool
-SIGNED	Main	ordEq :: Ord a => a -> a -> Bool
+TYPE	Main	m :: Double
 SIGNED	Main	main :: IO ()
-DEFAULT	Main	33:1	Num a -> Integer
-DEFAULT	Main	33:1	Num a -> Integer
+TYPE	Main	n :: Double
+SIGNED	Main	ordEq :: Ord a => a -> a -> Bool
+SIGNED	Main	size :: Int
 DEFAULT	Main	20:1	Fractional a -> Double
+DEFAULT	Main	33:1	Num a -> Integer
+DEFAULT	Main	33:1	Num a -> Integer
