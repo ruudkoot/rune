@@ -6043,6 +6043,8 @@ out of reach before track P starts. A built path that gains SML enough to pay fo
 
 **Decided (owner, 2026-11-09).** To be measured: C, eval/apply proper, built and benchmarked on rhc's programs "and rune if that applies", which it does, since SML's curried calls would take the same path [inferred]; then A or C on the numbers. Until then A stands. Built in M25 (*Decisions on the numbers*).
 
+**Measured and decided (owner, 2026-11-13): C.** C was built on the register VM (branch `hs-i-d15`, `8d6d9d40a`): arity tested by the caller, a partial-application object, over-application by a continuation, and uncurrying. As first built it lost on lazy code at tier 2, the general path leaving compiled code twice a use (530 to 890 instructions each); at the owner's word it was tuned (`8ff2c6002`), four of the general path's cases kept in compiled code at both JIT tiers. Against A at tier 2: the 45 lazy ports 0.9625 by geomean (C at or below A on 42), the 19 heaviest 0.9638 (`ansi` 1.01, `lift` 0.98), with bytecodes 0.919, bytes 0.855 and objects 0.827; Rune's 32 benchmarks 0.9975; the compiler compiling itself 1.0078; rhc's run set 0.9446 summed, 1.0513 by geomean on programs that are mostly loading. C is taken: it lands on every engine, the stack VM, runeopt and native code, Windows and the other machines, under the standing gate, its bytes and budgets moved by what its milestone states (`impl/i/d15/` in the drafts).
+
 ### D16. Pointer code 11
 
 The two bits beside a pointer's immediate bit are reserved for a code meaning "a headered object, known to be evaluated"
@@ -6174,6 +6176,8 @@ collector" (§5.1, p 155).
 Lands in M9.
 
 **Decided (owner, 2026-11-09).** To be measured: B, a table of the CAFs a function's code reaches and a collector that uses it, built and benchmarked on rhc's programs; then A or B on the numbers. Until then A stands, and CAFs are roots. The barrier stays as recommended: nothing new. Built in M25 (*Decisions on the numbers*), whose figures include the promoted bytes that die in the old generation (Röjemo 1995b, §5.1).
+
+**Measured and decided (owner, 2026-11-13): B, on condition that SML pays nothing.** B was built on the register VM (branch `hs-r-d19`, `1eb400072`, tuned at the owner's word to `5c3f7a3df`): a table per call-graph group of the globals its code reaches, and a full collection that keeps a global only through code that may still run. On the 45 lazy ports, against A: most live 0.995, mean live after a full collection on a fixed schedule 0.977 (`integrate` 0.663, a growing top-level list); tuned, full collections' CPU 1.28 by geomean, all collections' 1.05, instructions 1.0052. Output and status identical everywhere. The condition: the slower full collection is for lazy programs only, shown on SML's programs. The landed form is to weigh GHC's newer static reference tables (Marlow, "New SRTs", 2018, simonmar.github.io/posts/2018-06-22-New-SRTs.html), and lands on every collector and engine (`impl/r/d19/` in the drafts).
 
 ### D20. `Integer`
 
@@ -6308,6 +6312,8 @@ Under B, C and D big values keep `IntInf`'s signed magnitudes and its arithmetic
 **What would reopen it.** `--count` on string-heavy corpus programs showing the unpacking dominate: then chunks.
 
 **Decided (owner, 2026-11-09).** A, as recommended: a constant, lazily unpacked. To be measured for the record: B and D, built and benchmarked; the owner: "we are unlikely to take D even if it wins as there is no use in rune. just for the record." Built in M17, measured as *Decisions on the numbers* says.
+
+**Measured, and A kept (owner, 2026-11-13).** B (the whole list on first force) and D (a primitive that unpacks a constant, the VM's own) were built on the register VM (branch `hs-r-d24`, `85f5ba626`) and measured against A on the run set: on `tests/hs/lang` (587 programs) B +0.4% instructions and -3.9% bytes by geomean, D -3.8% instructions, -12.2% bytecodes and -4.0% bytes; on the corpus (175) B +0.4%, D -2.3% instructions. No program's cost is dominated by unpacking, which would have reopened this; the string-heaviest, derived `Show` and hello, save 15 to 20% of bytecodes under D. A stands, as decided (`impl/i/d24/` in the drafts).
 
 ### D25. `IO` and lazy I/O
 
@@ -7864,6 +7870,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *Built:* arity tested by the caller, a partial-application object, over-application by a pushed continuation, on the register VM, its interpreter and JIT, with `Low.Call`, MidLint's rule and `RegVerify`'s; in M25. The stack VM, runeopt and native code take it only once adopted.
 - *On:* the run set at `-O0` and at the top level after M23 and M24; and Rune's programs, since SML's curried calls take the same `CALL` (D15).
 - *Figures:* instructions at tier 2 and `--count`; chains of two or more arguments and partial applications made, as E5 counted them (`results/E5/stats.jsonl`); bytes allocated. E5 priced a curried call at 116 instructions and 24 bytes against a known call's 43, and guessed an n-ary path at about 55 [N's inference].
+- *Measured, decided (2026-11-13):* C, after tuning; it lands on every engine (D15's section).
 
 **D16: B, pointer code 11, against A.**
 - *Built:* the code set by the copier when it shortcuts an indirection, and masked at every pointer read in C and in `masm.c`, on the register VM; in M25. The stack VM and runeopt's templates take it only once adopted.
@@ -7880,12 +7887,14 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *Built:* a table per function of the CAFs its code reaches, emitted at or below Core to Mid, and a collector that traces from live code; in M25.
 - *On:* the run set, with the programs whose residency is a CAF named.
 - *Figures:* residency and peak RSS; the collector's time; instructions at tier 2; and the bytes promoted that die in the old generation. Rune's nursery promotes every survivor of a minor collection (`runtime/gc/minor.c:1-7`), and Röjemo 1995b measured that policy on sieve at "nearly ten times" the two-space collector's time (§5.1, p 155).
+- *Measured, decided (2026-11-13):* B, if SML's collections pay nothing; the landed form weighs GHC's new SRTs (D19's section).
 
 **D24: B and D, against A, for the record.**
 - *Built:* B, the whole list on first force, a loop in rhc's runtime; D, a primitive that unpacks a constant, as nhc98's `STRING`, a change to `src/isa` that moves the fingerprint, built on the register VM alone and kept as a patch; both in M17. The other engines take D only if it is adopted.
 - *On:* the run set, in M19, with string-heavy programs named.
 - *Figures:* instructions at tier 2, `--count` and bytes allocated.
 - *Who:* the owner, who said D is unlikely to be taken whatever it shows, "as there is no use in rune". D conforms as B does; what taking it needs is the owner's word for a change to Rune that Rune does not use.
+- *Measured, recorded (2026-11-13):* A kept; B no better, D's gain small (D24's section).
 
 **D34: B, Sestoft-order decision trees, against A.**
 - *Built:* an option of M15's match compiler, off at `-O0` and differenced against it.
