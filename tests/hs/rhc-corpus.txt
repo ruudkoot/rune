@@ -29,7 +29,7 @@ rhc | ghc/typecheck/should_run/tcrun037::run | HOST-BUG | compile: R73: a method
 rhc | ghc/typecheck/should_fail/tcfail149::run | HOST-BUG | compile: R73: a method's context constrains its class's variable (4.3.1)
 
 # rhc's own faults, each with the milestone it belongs to
-rhc | ghc/typecheck/should_run/tcrun001::run | FAILS | compile: rhc's desugaring fails: "HsDsEnv: the function type constructor applied to other than two types": `instance Flob (->)` wants Core's `->` as a type constructor of its own, partly applied, which B's Core is to give (M15; B's by ruling 53, asked in b.md)
+rhc | ghc/typecheck/should_run/tcrun001::run | FAILS | compile: rhc's desugaring fails: "HsDsEnv: the function type constructor applied to other than two types": `instance Flob (->)` wants the type translation to give Core's `->` given fewer than two types (D's, M15), which Core takes (B, 4b886b378); past it, Core to Mid refuses that `->` on the VM, since Mid's `(->)` (A's M28b) is the plain arrow and Core's is `(a susp) -> b` (ruling 60, asked of the lead)
 
 # performance (the lead's ruling 47): a finding for track P (M23-M25), not chased in M19
 rhc | nofib/real/maillist::run | FAILS | exit: killed at the 600 s a way allows, in all three ways (status 124), where GHC -O0 runs it in 0.95 s (E8's run.tsv): rhc's code or its Prelude at -O0, track P's (M23-M25; ruling 53); Hugs timed out on it too (E8), so its run is recorded where the judges do not both run it right
