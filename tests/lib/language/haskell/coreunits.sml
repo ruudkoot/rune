@@ -74,6 +74,20 @@ struct
       val kept = List.map nameOf (CoreUnits.reach (p, ["main"]))
       val () = need (kept = ["T", "U", "f", "h", "main"], "main reaches h, f, U and T, in the program's order: "
                                                            ^ String.concatWith ", " kept)
+      (* by an index, the same; a declaration read only where it is reached *)
+      val (index, texts) = CoreUnits.index p
+      val texts = Vector.fromList texts
+      val read = ref ([] : int list)
+      fun textOf i = (read := i :: !read; Vector.sub (texts, i))
+      val byIndex = CoreUnits.reachIndexed ([CoreUnits.Indexed (index, textOf)], ["main"])
+      val () = need (List.map nameOf byIndex = kept, "an index reaches what the program reaches")
+      val () = need (CoreText.show byIndex = CoreText.show (CoreUnits.reach (p, ["main"])), "and the same declarations")
+      val () = need (length (!read) = length kept, "reading only the declarations it reaches")
+      (* two units, one indexed and one in hand, a type of both the first's *)
+      val q = program "(data U () (U T))\n(val k (-> Int U) (\\ ((n Int)) (f n)))"
+      val two = CoreUnits.reachIndexed ([CoreUnits.Indexed (index, fn i => Vector.sub (texts, i)), CoreUnits.InHand q], ["k"])
+      val () = need (List.map nameOf two = ["T", "U", "f", "k"], "units joined: a type the first's, a value by its definition: "
+                                                                ^ String.concatWith ", " (List.map nameOf two))
     in () end
 end
 

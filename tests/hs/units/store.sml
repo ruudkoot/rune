@@ -44,7 +44,7 @@ struct
   fun judge (level, table) = R.holds {level = level, current = now table}
 
   fun entry (usages, iface, level) : R.entry =
-    {head = {usages = usages, exports = "exports of " ^ iface, level = level}, sections = {iface = iface, code = fn () => "code"}}
+    {head = {usages = usages, exports = "exports of " ^ iface, level = level}, sections = {iface = iface, parts = fn _ => "code", count = 1}}
 
   fun put (dir, k, e) = ignore (R.store {dir = dir, settings = settings, config = config, key = k, entry = e})
 
@@ -125,8 +125,8 @@ struct
       val () = put (dir, k, entry (us, "m", 2))
       val () =
         case look (dir, [], k, judge (2, us)) of
-          S.Found ({head = {usages, exports, level}, sections = {iface, code = codeOf}}, _) =>
-            need (usages = us andalso exports = "exports of m" andalso level = 2 andalso iface = "m" andalso codeOf () = "code",
+          S.Found ({head = {usages, exports, level}, sections = {iface, parts, ...}}, _) =>
+            need (usages = us andalso exports = "exports of m" andalso level = 2 andalso iface = "m" andalso parts 0 = "code",
                   "a head and its sections are read back as written")
         | _ => need (false, "the entry is found")
       val entries = List.filter (fn (p, _) => not (String.isSubstring "/units/" p)) (files dir)
@@ -140,8 +140,8 @@ struct
          asked for: refused there *)
       val () =
         case look (dir, [], k, judge (2, us)) of
-          S.Found ({sections = {code = codeOf, ...}, ...}, _) =>
-            need ((ignore (codeOf ()); false) handle _ => true, "a damaged code section is refused where it is read")
+          S.Found ({sections = {parts, ...}, ...}, _) =>
+            need ((ignore (parts 0); false) handle _ => true, "a damaged code section is refused where it is read")
         | _ => need (false, "an entry whose code alone is damaged is found, its code not yet read")
     in removeTree dir end
 end

@@ -24,9 +24,12 @@ struct
   type head = {usages : usage list, exports : string, level : int}
   (* its sections, each hashed apart: the unit's interface (HsIface's
      bytes) and its code (a unit file's) *)
-  (* the code's section read, and held to its hash, only where it is asked
-     for: a unit taken whose code no link needs never reads it *)
-  type sections = {iface : string, code : unit -> string}
+  (* the code's parts, each a section of its own, read and held to its hash
+     only where it is asked for: a unit taken whose code no link needs
+     never reads it, and a link reads only the parts it reaches (a unit's
+     Core by its declarations, CoreUnits.index). `count` is the parts a
+     writer gives; a reader asks for those it knows are there *)
+  type sections = {iface : string, parts : int -> string, count : int}
   type entry = (head, sections) S.entry
 
   fun hash (_ : string, text : string) : string = P.hash text
@@ -38,8 +41,8 @@ struct
     {magic = magic, version = version, hash = hash,
      writeHead = fn (w, {usages, exports, level}) => (wusages (w, usages); P.string (w, exports); P.int (w, level)),
      readHead = fn r => let val us = rusages r val e = P.rstring r in {usages = us, exports = e, level = P.rint r} end,
-     sections = fn {iface, code} => [iface, code ()],
-     ofSections = fn get => {iface = get 0, code = fn () => get 1}}
+     sections = fn {iface, parts, count} => iface :: List.tabulate (count, parts),
+     ofSections = fn get => {iface = get 0, parts = fn i => get (i + 1), count = ~1}}
 
   (* A unit's key: its name, and each member with the hash of its text, in
      the graph's order: over every member of an SCC (H8), and a module's

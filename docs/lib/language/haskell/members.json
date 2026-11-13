@@ -522,6 +522,27 @@
     },
     {
      "kind": "val",
+     "name": "index",
+     "spec": "val index : Core.program -> string * string list",
+     "doc": "`index p` is the unit `p` as an index and its declarations' texts.\n\nThe index says of each declaration, by its number, what it is, its\nname, what it makes and what it names, so that `reachIndexed` reads\nonly the texts of the declarations a program reaches.\n\n",
+     "page": "sig/CORE_UNITS.md#val-index"
+    },
+    {
+     "kind": "datatype",
+     "name": "unitCore",
+     "spec": "datatype unitCore = Indexed of string * (int -> string) | InHand of Core.program",
+     "doc": "A unit's Core as the reach is given it: by its index and a function\nfrom a declaration's number to its text, or in hand.\n\n",
+     "page": "sig/CORE_UNITS.md#type-unitcore"
+    },
+    {
+     "kind": "val",
+     "name": "reachIndexed",
+     "spec": "val reachIndexed : unitCore list * string list -> Core.program",
+     "doc": "`reachIndexed (units, roots)` is `reach (join ps, roots)` where `ps` is\nthe units' programs, a declaration read only where it is reached.\n\nA type is the first unit's that declares it, as `join` keeps it.\nRaises `Error` where an index is no index.\n\n",
+     "page": "sig/CORE_UNITS.md#val-reachindexed"
+    },
+    {
+     "kind": "val",
      "name": "interface",
      "spec": "val interface : Core.program * string list -> Core.program",
      "doc": "`interface (p, exports)` is what a client of the unit p needs of the\nnames it exports, as Core: each type it mentions declared, and each\nvalue imported.\n\nEach exported value is an import at its type, and each exported type\nand every type the exports' types mention, through the types' own\nfields, is declared as p declares it, in p's order; a name p does not\ndeclare is a built-in type's, or another unit's the client has.\n\n",
