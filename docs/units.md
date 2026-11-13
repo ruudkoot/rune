@@ -1189,7 +1189,15 @@ units before it, each unit's part of its entry joined (`HsLint.join`): its
 own modules inferred, their records replayed, its Core held to the
 inference; and what it found of its own modules is kept as a part of its
 entry (`HsLint.encode`), so the library, whose part the snapshot keeps, is
-never inferred again (ruling 66). Against a
+never inferred again (ruling 66). As it ships (ruling 67), `bin/rhc hello.hs
+-o OUT` at `RUNE_LINT=2` runs 59M VM instructions (42M at level 0; with
+`--typecheck-only` 20M; with `--whole` 288M), 1.26G of the machine's
+(`perf stat -e instructions:u`, the process whole) against 4.34G whole and
+1.81G from the saved world it replaced; over 51 run programs of
+`tests/hs/lang`, an even sample, its compile at level 2 is a median 0.76 of
+the saved world's (0.78 in all) and 0.46 of a whole one's in all, each
+program byte for byte the whole compile's. Loading `bin/rhc.rbc` is 0.24G of
+it, where restoring the world's image was 0.67G. Against a
 snapshot, with a fresh overlay, hello takes the library's unit from the layer
 unwritten and costs about 44M (the graph read 3M, its headers the layer's),
 then 9M again. A clause program's compile (13 of `tests/hs/lang`'s run
