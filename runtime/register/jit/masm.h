@@ -41,7 +41,7 @@ enum { VMR = R_VM, BASEI = R_BASEI, BASER = R_BASER, COUNTR = R_COUNT };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE, SLOW_THUNK };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE, SLOW_THUNK, SLOW_LOOP };
 /* the words of a frame's header below its registers (vm.h, isa_frame_header) */
 #define MS_HEADER 3
 typedef struct Slow {
