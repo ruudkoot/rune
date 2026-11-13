@@ -2079,7 +2079,7 @@
     {
      "kind": "type",
      "name": "part",
-     "spec": "type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,\n             instances : HsClasses.instance list,\n             cons : (string * {tycon : string, arity : int, fields : string list}) list,\n             fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,\n             methods : (string * {cls : string, scheme : HsTypes.scheme}) list}",
+     "spec": "type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,\n             instances : HsClasses.instance list,\n             cons : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,\n             fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,\n             methods : (string * {cls : string, scheme : HsTypes.scheme}) list}",
      "doc": "What the environment holds of one module's entities, by key.\n\nThat is its values' types (its constructors', fields' and methods'\namong them), its type constructors and synonyms, its classes, the\ninstances it declares or derives, and what the checker keeps of its\nconstructors, fields and methods. A unit's interface holds its\nmodules' parts (HsModIface, the haskell98 roadmap's M21).\n\n",
      "page": "sig/HS_INFER.md#type-part"
     },

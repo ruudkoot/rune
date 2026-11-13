@@ -14,7 +14,7 @@ struct
   type module_ = {id : string, ast : A.module, library : bool}
 
   (* a constructor: its type, its fields by position ("" for none) *)
-  type coninfo = {tycon : string, arity : int, fields : string list}
+  type coninfo = {tycon : string, arity : int, fields : string list, strict : bool list}
 
   (* a field: its type, the constructors it is in, at which position *)
   type fieldinfo = {tycon : string, ty : T.ty, cons : (string * int) list}
@@ -79,11 +79,12 @@ struct
     else NONE
 
   fun builtinConInfo name : coninfo option =
-    if name = "()" then SOME {tycon = "()", arity = 0, fields = []}
-    else if name = "[]" then SOME {tycon = "[]", arity = 0, fields = []}
-    else if name = ":" then SOME {tycon = "[]", arity = 2, fields = ["", ""]}
+    if name = "()" then SOME {tycon = "()", arity = 0, fields = [], strict = []}
+    else if name = "[]" then SOME {tycon = "[]", arity = 0, fields = [], strict = []}
+    else if name = ":" then SOME {tycon = "[]", arity = 2, fields = ["", ""], strict = [false, false]}
     else if size name >= 3 andalso String.isPrefix "(," name then
-      SOME {tycon = name, arity = size name - 1, fields = List.tabulate (size name - 1, fn _ => "")}
+      SOME {tycon = name, arity = size name - 1, fields = List.tabulate (size name - 1, fn _ => ""),
+            strict = List.tabulate (size name - 1, fn _ => false)}
     else NONE
 
   fun initial {primitives} : env =
@@ -966,12 +967,39 @@ struct
                   | NONE => ()
                 end)
              fs;
+           (* 3.15.2: a strict field left out of a construction is an error *)
+           (case info of
+              SOME {fields, strict, ...} =>
+                let
+                  val given = List.map (fn (f, _) => nameKey f) fs
+                  val missing = List.filter (fn (fk, s) => s andalso not (List.exists (fn g => g = fk) given))
+                                  (ListPair.zip (fields, strict))
+                in
+                  case missing of
+                    [] => ()
+                  | (fk, _) :: _ =>
+                      if fk = "" then
+                        err (span, "the construction `" ^ nameText c ^ " {}` leaves out a strict field of `" ^ nameText c ^
+                                   "`, where a strict field must be given (3.15.2)")
+                      else
+                        err (span, "the construction of `" ^ nameText c ^ "` leaves out its strict field `" ^ T.nameOfKey fk ^
+                                   "` (3.15.2)")
+                end
+            | NONE => ());
            res
          end
      | A.ERecUpd (e, fs) =>
          let
            val te = exp e
          in
+           (* 3.15.3: no field twice in one update *)
+           ignore (List.foldl (fn ((f, _), seen) =>
+                                 let val k = nameKey f
+                                 in
+                                   if List.exists (fn s => s = k) seen then
+                                     (err (nameSpan f, "the update names the field `" ^ nameText f ^ "` twice (3.15.3)"); seen)
+                                   else k :: seen
+                                 end) [] fs);
            case fs of
              [] => te
            | (f0, _) :: _ =>
@@ -999,6 +1027,15 @@ struct
                                    else []
                                | _ => [])
                             cons)
+                     (* 3.15.3: a constructor of the type has every field the update names *)
+                     val () =
+                       if List.exists (fn ck =>
+                                         case M.find (#cons (!genv), ck) of
+                                           SOME {fields, ...} => List.all (fn u => List.exists (fn f => f = u) fields) updated
+                                         | NONE => false) cons
+                       then ()
+                       else err (span, "no constructor of `" ^ T.nameOfKey tycon ^ "` has every field this update names: " ^
+                                       String.concatWith ", " (List.map (fn (f, _) => "`" ^ nameText f ^ "`") fs) ^ " (3.15.3)")
                      val tin = List.tabulate (params, fn _ => newMeta ())
                      val tout = List.tabulate (params, fn i => if List.exists (fn k => k = i) kept then List.nth (tin, i) else newMeta ())
                    in
@@ -1500,6 +1537,13 @@ struct
         let val each = List.concat (List.map (fn A.Field (_, vs, _, t) => List.map (fn v => (v, t)) vs) fs)
         in (n, List.map #2 each, List.map (SOME o #1) each) end
 
+  (* which of a constructor's fields are strict, `!` *)
+  fun constrStrict (A.C (_, x)) =
+    case x of
+      A.CPlain (_, args) => List.map #1 args
+    | A.CInfix ((l, _), _, (r, _)) => [l, r]
+    | A.CRec (_, fs) => List.concat (List.map (fn A.Field (_, vs, b, _) => List.map (fn _ => b) vs) fs)
+
   (* the constructors and fields of `data` and `newtype` *)
   fun dataDecl (h, A.D ({span, ...}, x)) =
     let
@@ -1541,7 +1585,8 @@ struct
               (M.insert (values, ckey, scheme)) (fieldNames, fts)
         in
           genv := {values = values', tycons = tycons, classes = classes,
-                   cons = M.insert (cons, ckey, {tycon = tycon, arity = length fts, fields = fields}), fields = fs', methods = methods}
+                   cons = M.insert (cons, ckey, {tycon = tycon, arity = length fts, fields = fields, strict = constrStrict k}),
+                   fields = fs', methods = methods}
         end
     in
       List.app one cs
@@ -1575,6 +1620,12 @@ struct
                          val () = (K.checkContext kenv mc; K.checkType kenv (mt, T.KStar)) handle HsSource.Error e => err e
                          val own = {vars = length names, ctx = K.contextPreds (#tycons (!genv), varIndex names) mc,
                                     ty = K.convert (#tycons (!genv), varIndex names) mt}
+                         (* 4.3.1: a method's type mentions its class's variable *)
+                         val () =
+                           if List.exists (fn n => n = vname) (K.tyVars mt) then ()
+                           else List.app (fn m => err (nameSpan m, "the type of the method `" ^ nameText m ^
+                                                                   "` does not mention the class's variable `" ^ vname ^ "` (4.3.1)"))
+                                  ms
                          val () =
                            if List.exists (fn {ty, ...} => (case T.repr ty of T.TGen 0 => true | _ => false)) (#ctx own) then
                              err (span, "a method's context constrains its class's variable `" ^ vname ^ "` (4.3.1)")

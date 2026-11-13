@@ -69,7 +69,11 @@ struct
             List.map (fn c =>
                         let val arity = case M.find (cons, c) of SOME {arity, ...} => Int.toString arity | NONE => "?"
                             val fields = case M.find (cons, c) of SOME {fields, ...} => String.concatWith "," fields | NONE => ""
-                        in "  con " ^ c ^ " " ^ arity ^ " [" ^ fields ^ "] " ^ valueText c ^ fixOf c end)
+                            val strict =
+                              case M.find (cons, c) of
+                                SOME {strict, ...} => String.concat (List.map (fn true => "!" | false => ".") strict)
+                              | NONE => ""
+                        in "  con " ^ c ^ " " ^ arity ^ " [" ^ fields ^ "] " ^ strict ^ " " ^ valueText c ^ fixOf c end)
               (#cons tc)
           val fieldLines =
             List.map (fn (f, {ty = t, cons = cs, ...}) =>

@@ -64,7 +64,7 @@ sig
   val <a href="#val-numberfrom">numberFrom</a> : int -&gt; unit
   type <a href="#type-part">part</a> = {<a href="#fld-part.values">values</a> : (string * HsTypes.scheme) list, <a href="#fld-part.tycons">tycons</a> : HsKinds.tycon list, <a href="#fld-part.classes">classes</a> : HsClasses.class list,
                <a href="#fld-part.instances">instances</a> : HsClasses.instance list,
-               <a href="#fld-part.cons">cons</a> : (string * {tycon : string, arity : int, fields : string list}) list,
+               <a href="#fld-part.cons">cons</a> : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,
                <a href="#fld-part.fields">fields</a> : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
                <a href="#fld-part.methods">methods</a> : (string * {cls : string, scheme : HsTypes.scheme}) list}
   val <a href="#val-part">part</a> : env * (string -&gt; bool) -&gt; part
@@ -191,7 +191,7 @@ whole program check in different numbers.
 ```sml
 type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,
              instances : HsClasses.instance list,
-             cons : (string * {tycon : string, arity : int, fields : string list}) list,
+             cons : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,
              fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
              methods : (string * {cls : string, scheme : HsTypes.scheme}) list}
 ```
@@ -210,7 +210,7 @@ modules' parts (HsModIface, the haskell98 roadmap's M21).
 | <a name="fld-part.tycons"></a>`tycons` | `HsKinds.tycon list` |  |
 | <a name="fld-part.classes"></a>`classes` | `HsClasses.class list` |  |
 | <a name="fld-part.instances"></a>`instances` | `HsClasses.instance list` |  |
-| <a name="fld-part.cons"></a>`cons` | `(string * {tycon : string, arity : int, fields : string list}) list` |  |
+| <a name="fld-part.cons"></a>`cons` | `(string * {tycon : string, arity : int, fields : string list, strict : bool list}) list` |  |
 | <a name="fld-part.fields"></a>`fields` | `(string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list` |  |
 | <a name="fld-part.methods"></a>`methods` | `(string * {cls : string, scheme : HsTypes.scheme}) list` |  |
 
