@@ -5,8 +5,9 @@
    what it says (H3); one checked at a lower level of the lint is refused;
    a key is over every member and its text, in the graph's order (H8); the
    overlay is read before the layers, a layer is read and never written,
-   and one configuration's entries are not another's; a damaged entry is
-   not there; a head is read back as it was written. *)
+   and one configuration's entries are not another's; a damaged code
+   section is refused where it is read, which is where it is asked for; a
+   head is read back as it was written. *)
 structure RhcStoreTests =
 struct
   structure R = RhcStore
@@ -43,7 +44,7 @@ struct
   fun judge (level, table) = R.holds {level = level, current = now table}
 
   fun entry (usages, iface, level) : R.entry =
-    {head = {usages = usages, exports = "exports of " ^ iface, level = level}, sections = {iface = iface, code = "code"}}
+    {head = {usages = usages, exports = "exports of " ^ iface, level = level}, sections = {iface = iface, parts = fn _ => "code", count = 1}}
 
   fun put (dir, k, e) = ignore (R.store {dir = dir, settings = settings, config = config, key = k, entry = e})
 
@@ -124,8 +125,8 @@ struct
       val () = put (dir, k, entry (us, "m", 2))
       val () =
         case look (dir, [], k, judge (2, us)) of
-          S.Found ({head = {usages, exports, level}, sections = {iface, code}}, _) =>
-            need (usages = us andalso exports = "exports of m" andalso level = 2 andalso iface = "m" andalso code = "code",
+          S.Found ({head = {usages, exports, level}, sections = {iface, parts, ...}}, _) =>
+            need (usages = us andalso exports = "exports of m" andalso level = 2 andalso iface = "m" andalso parts 0 = "code",
                   "a head and its sections are read back as written")
         | _ => need (false, "the entry is found")
       val entries = List.filter (fn (p, _) => not (String.isSubstring "/units/" p)) (files dir)
@@ -135,7 +136,13 @@ struct
       val bad = String.substring (bytes, 0, last) ^ String.str (Char.chr ((Char.ord (String.sub (bytes, last)) + 1) mod 256))
       val out = BinIO.openOut p
       val () = (BinIO.output (out, Byte.stringToBytes bad); BinIO.closeOut out)
-      val () = need (ifaceOf (look (dir, [], k, judge (2, us))) = NONE, "a damaged entry is not there")
+      (* the last byte is the code's, a section read only where it is
+         asked for: refused there *)
+      val () =
+        case look (dir, [], k, judge (2, us)) of
+          S.Found ({sections = {parts, ...}, ...}, _) =>
+            need ((ignore (parts 0); false) handle _ => true, "a damaged code section is refused where it is read")
+        | _ => need (false, "an entry whose code alone is damaged is found, its code not yet read")
     in removeTree dir end
 end
 

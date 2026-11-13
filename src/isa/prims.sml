@@ -232,7 +232,7 @@ struct
           doc = "The bytecode file name."}],
        group "files (handles: 0 stdin, 1 stdout, 2 stderr, others from file_open)"
         [{name = "file_open", arity = 2, ty = "string * int -> int option", effects = anything,
-          doc = "Open a file (mode 0 read, 1 write/truncate, 2 append); NONE on failure."},
+          doc = "Open a file (mode 0 read, 1 write/truncate, 2 append, 3 read and write: made where it is not there, kept where it is); NONE on failure."},
          {name = "file_close", arity = 1, ty = "int -> unit", effects = anything,
           doc = "Close a handle (no-op for 0-2 and already closed handles)."},
          {name = "file_write", arity = 2, ty = "int * string -> bool", effects = anything,

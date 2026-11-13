@@ -197,7 +197,8 @@ struct
       val unsigned = if String.isPrefix "-" body then String.extract (body, 1, NONE) else body
       fun integer () = case IntInf.fromString (if String.isPrefix "-" body then "~" ^ unsigned else unsigned) of
                          SOME i => i | NONE => bad ()
-      (* digits [. digits] [e [-] digits], with a point or an exponent *)
+      (* digits [. digits] [e [+-] digits], with a point or an exponent, as
+         Haskell writes one (2.5's float) *)
       fun floating s =
         let
           val (mant, ex) = case String.fields (fn c => c = #"e" orelse c = #"E") s of
@@ -206,7 +207,8 @@ struct
                          [a] => digitsOnly a | [a, b] => digitsOnly a andalso digitsOnly b | _ => false
           val okEx = case ex of
                        NONE => true
-                     | SOME e => digitsOnly (if String.isPrefix "-" e then String.extract (e, 1, NONE) else e)
+                     | SOME e => digitsOnly (if String.isPrefix "-" e orelse String.isPrefix "+" e then String.extract (e, 1, NONE)
+                                             else e)
         in okMant andalso okEx andalso (isSome ex orelse CharVector.exists (fn c => c = #".") mant) end
     in
       if suffix = "I" then if digitsOnly unsigned then LInteger (integer ()) else bad ()
@@ -247,13 +249,17 @@ struct
   (* a type, in the scope of the type variables `scope` *)
   fun tyOf scope f =
     case f of
-      FWord _ => let val x = nameOf f in if member (x, scope) then TVar x else TCon x end
+      FWord ("->", _) => TCon "->"
+    | FWord _ => let val x = nameOf f in if member (x, scope) then TVar x else TCon x end
     | FName (x, _) => if member (x, scope) then TVar x else TCon x
     | FBang (t, _) => TEval (tyOf scope t)
-    | FList (FWord ("->", l) :: ts, _) =>
-        if length ts < 2 then fail (l, "a function type is (-> TYPE TYPE ...)")
-        else let val ts = List.map (tyOf scope) ts
-             in List.foldr TFun (List.last ts) (List.take (ts, length ts - 1)) end
+    | FList ([FWord ("->", _)], _) => TCon "->"
+    | FList ([FWord ("->", _), t], _) => TApp (TCon "->", tyOf scope t)
+    | FList (FWord ("->", _) :: ts, _) =>
+        (* the function type; `->` given fewer than two types, its
+           constructor (Haskell's `(->)`) *)
+        let val ts = List.map (tyOf scope) ts
+        in List.foldr TFun (List.last ts) (List.take (ts, length ts - 1)) end
     | FList ([FWord ("forall", _), FList (ps, _), body], _) =>
         let val ps = List.map typaram ps
         in List.foldr (fn ((a, k), t) => TForall (a, k, t)) (tyOf (List.map #1 ps @ scope) body) ps end
@@ -394,6 +400,7 @@ struct
   fun tyForm t =
     case t of
       TVar a => name a
+    | TCon "->" => w "->"
     | TCon c => name c
     | TApp _ => let val (h, args) = spine t in list (tyForm h :: List.map tyForm args) end
     | TFun _ =>

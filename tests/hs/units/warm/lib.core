@@ -1,0 +1,10 @@
+; A unit of hs/units/warm (rhc --units --store): a type, a function of it
+; and a function of Int, which app.core takes; the job edits a copy of it.
+(data Shape () (Square Int) (Rect Int Int))
+(val area (-> Shape Int)
+  (\ ((s Shape))
+    (case s t
+      ((Square n) (case n m (_ (prim int_mul m m))))
+      ((Rect w h) (case w a (_ (case h b (_ (prim int_mul a b))))))
+      (_ 0))))
+(val twice (-> Int Int) (\ ((n Int)) (case n m (_ (prim int_add m m)))))

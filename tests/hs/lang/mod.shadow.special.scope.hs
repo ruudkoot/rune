@@ -1,3 +1,4 @@
+-- rows: R22
 -- Report 5.6.2, 3 (readings.md R22): comprehensions, do, literals and [1..] work with none of their names in scope.
 module Main (main) where
 

@@ -32,6 +32,9 @@ system c                =  os_system (primPackString c) >>= \n ->
                            else return (if n == 0 then ExitSuccess else ExitFailure n)
 exitWith   		:: ExitCode -> IO a
 exitWith ExitSuccess    =  primExit 0
-exitWith (ExitFailure n) = primExit n
+exitWith (ExitFailure n)
+  | n == 0              =  ioError (primMakeIOError IllegalOperation   -- 0 is no failure's status (ruling 57)
+                                      "exitWith: ExitFailure 0: a failure's status is not 0" Nothing Nothing)
+  | otherwise           =  primExit n
 exitFailure		:: IO a
 exitFailure             =  exitWith (ExitFailure 1)   -- exitfail is 1 (23)

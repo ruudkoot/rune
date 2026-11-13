@@ -9,7 +9,18 @@ structure CoreToMid : CORE_TO_MID =
 struct
   open Core
 
-  datatype fault = ThunkInSlot | ForceBehindCast
+  datatype fault = ThunkInSlot | ForceBehindCast | SuspTypeArg
+
+  (* whether Core to Mid holds what it writes to its rules, which rhc sets
+     at lint level 2; and what a breach of one is *)
+  val checking = ref false
+  exception Breach of string
+
+  (* a type of Mid's text with susp at its head: a slot's, which no type
+     argument is (D4: a type variable stands for a value; the lead's ruling
+     of M28's last rule, which lives here, not in MidLint, since SML uses its
+     polymorphic functions at T susp) *)
+  fun isSuspType (t : string) : bool = String.isSuffix " susp" t orelse String.isSuffix " susp)" t
 
   exception Unsupported of string
 
@@ -53,6 +64,17 @@ struct
   fun concat xs = String.concat xs
   fun commas xs = String.concatWith ", " xs
 
+  (* the type arguments of a use, each a value's type: at lint level 2 one
+     with susp at its head is a breach (M10b) *)
+  fun typeArgs (use : string, ts : string list) : string =
+    (if !checking then
+       case List.find isSuspType ts of
+         SOME t => raise Breach ("a use of " ^ use ^ " is given the type argument " ^ t
+                                 ^ ", a suspension's, where a type variable stands for a value (D4)")
+       | NONE => ()
+     else ();
+     "[" ^ commas ts ^ "]")
+
   fun isWorld t = case stripEval t of TCon "World" => true | _ => false
   fun isUnlifted t = case stripEval t of TCon "World" => true | TUTuple _ => true | _ => false
 
@@ -87,7 +109,9 @@ struct
 
   (* the exceptions of Core, each with its message, and the functions of
      the primitives that are no primitive of Mid: an exception's kind, name
-     and message, a code point's character, and its bytes in UTF-8 *)
+     and message, a code point's character, and its bytes in UTF-8. The
+     VM's built-in Loop, which ENTER raises of a suspension under evaluation
+     (docs/bytecode.md), is NonTermination, <<loop>> (ruling 58) *)
   val prelude = String.concatWith "\n"
     ["(datatype option ('a) (0 \"NONE\") (1 \"SOME\" : 'a))",
      "(val grtErrorCall : exncon (return (newexn \"ErrorCall\")))",
@@ -106,6 +130,8 @@ struct
      "    (let (vrt3 : bool) (prim ptr_eq vrtC grtNonTermination : (exncon * exncon) -> bool)",
      "    (if vrt3 (return 3)",
      "    (let (vrtN : string) (prim exn_name vrtE : exn -> string)",
+     "    (let (vrtL : bool) (prim poly_eq vrtN \"Loop\" : (string * string) -> bool)",
+     "    (if vrtL (return 3)",
      "    (let (vrt4 : bool) (prim poly_eq vrtN \"Div\" : (string * string) -> bool)",
      "    (if vrt4 (return 4)",
      "    (let (vrt5 : bool) (prim poly_eq vrtN \"Overflow\" : (string * string) -> bool)",
@@ -115,7 +141,7 @@ struct
      "    (let (vrt7 : bool) (prim poly_eq vrtN \"Chr\" : (string * string) -> bool)",
      "    (if vrt7 (return 7)",
      "    (let (vrt8 : bool) (prim poly_eq vrtN \"Domain\" : (string * string) -> bool)",
-     "    (if vrt8 (return 8) (return ~1))))))))))))))))))))))",
+     "    (if vrt8 (return 8) (return ~1))))))))))))))))))))))))",
      "  (fn grtExnName ((vrnE : exn)) : string \"exn_name\"",
      "    (let (vrnK : int) (app grtExnKind vrnE)",
      "    (let (vrn0 : bool) (prim poly_eq vrnK 0 : (int * int) -> bool) (if vrn0 (return \"ErrorCall\")",
@@ -237,8 +263,9 @@ struct
 
   (* a program compiled whole (imports NONE), or a unit, each import bound
      as its interface says *)
-  fun compile ({fault : fault option, imports : (string * abi) list option, makesShared : bool}, prog : program)
-              : {text : string, names : (string * string) list, abi : (string * abi) list} =
+  fun compile ({fault : fault option, imports : (string * abi) list option, makesShared : bool,
+                newtypes : (string * bool) list}, prog : program)
+              : {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list} =
     let
       (* a whole program has no import *)
       val () =
@@ -317,7 +344,21 @@ struct
                        | (Import (_, t), acc) => ty (t, acc))
                      [] decls
         end
-      fun boxedNewtype t = recursiveNewtype t orelse member (t, partialNewtypes)
+      (* a newtype is a box where it reaches itself or is given fewer
+         arguments than its parameters; one of another unit is as that unit
+         made it, a fact of its interface (M21), and one it did not box is
+         never given fewer here *)
+      fun boxedNewtype t =
+        case List.find (fn (n, _) => n = t) newtypes of
+          SOME (_, b) => b
+        | NONE => recursiveNewtype t orelse member (t, partialNewtypes)
+      val () =
+        List.app (fn (t, false) => if member (t, partialNewtypes)
+                                   then raise Unsupported ("the newtype " ^ t ^ " of another unit, which that unit does not box, "
+                                                           ^ "given fewer arguments than its parameters")
+                                   else ()
+                   | _ => ())
+                 newtypes
       val usedNames : string list ref = ref []
       fun midName c =
         let
@@ -380,7 +421,10 @@ struct
         | TForall _ => let val (ms, env', body) = forallOf (env, t) in "(forall [" ^ ms ^ "] " ^ valTy env' body ^ ")" end
         | t =>
             case spine t of
-              (TCon "Ref", [a]) => "(" ^ slotTy env a ^ " ref)"
+              (* `->` given fewer than two types, which Mid takes when its Ty
+                 does (ruling 60, the lead's (a)); until then, refused *)
+              (TCon "->", _) => raise Unsupported ("the function type's constructor, ->, given fewer than two types")
+            | (TCon "Ref", [a]) => "(" ^ slotTy env a ^ " ref)"
             | (TCon "Arr", [a]) => "(" ^ slotTy env a ^ " array)"
             | (TCon c, args) =>
                 (case tyconInfo c of
@@ -433,7 +477,7 @@ struct
         case fault of
           SOME ThunkInSlot => s
         | SOME ForceBehindCast => "(prim unsafe_cast " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
-        | NONE => "(prim thunk_force " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
+        | _ => "(prim thunk_force " ^ s ^ " : (" ^ V ^ " susp) -> " ^ V ^ ")"
       fun valueToSusp (V, a) = "(prim unsafe_cast " ^ a ^ " : " ^ V ^ " -> (" ^ V ^ " susp))"
       (* the code of a suspension: what it does first, and with its value *)
       fun thunkEntry body = "(let (" ^ freshVar () ^ " : unit) (prim thunk_blackhole () : unit -> unit) " ^ body ^ ")"
@@ -472,7 +516,7 @@ struct
         case l of
           LInt i => IntInf.toString i
         | LChar c => Int.toString c
-        | LDouble s => String.translate (fn #"-" => "~" | #"e" => "E" | c => String.str c) s
+        | LDouble s => String.translate (fn #"-" => "~" | #"e" => "E" | #"+" => "" | c => String.str c) s
         | LFloat s => Real.fmt (StringCvt.SCI (SOME 16)) (Real32.toLarge (valOf (Real32.fromString s)))
         | LStr s => quote s
         | LInteger i => integerGlobal i
@@ -603,7 +647,7 @@ struct
           val {rep, arity, ...} = lookup (env, x)
           val (ms, env', body) = forallOf (env, p)
           val vars = String.tokens Char.isSpace ms
-          fun at (v, pre) = v ^ "[" ^ commas (pre @ vars) ^ "]"
+          fun at (v, pre) = v ^ typeArgs (x, pre @ vars)
           fun suspended inst =
             let val V = valTy env' body
             in letv ("[" ^ ms ^ "] (" ^ V ^ " susp)", valueToSusp (V, inst), k) end
@@ -756,14 +800,18 @@ struct
                                                           ^ " of its " ^ Int.toString arity ^ " types")
                   else
                     let
-                      val inst = "[" ^ commas (List.map (valTy env) tys) ^ "]"
+                      (* rhc's mutant SuspTypeArg: the first a slot's type *)
+                      val args = case (fault, tys) of
+                                   (SOME SuspTypeArg, t :: ts) => slotTy env t :: List.map (valTy env) ts
+                                 | _ => List.map (valTy env) tys
+                      val inst = typeArgs (x, args)
                       val fty = applyTy (ty, List.map TyArg tys)
                       val V = valTy env fty
                     in
                       case rep of
                         Value v => applyArgs (v ^ inst, fty, vals, c)
                       | Lazy s => letv (V, forceSusp (V, s ^ inst), fn fv => applyArgs (fv, stripEval fty, vals, c))
-                      | Partial (v, pre) => applyArgs (v ^ "[" ^ commas (pre @ List.map (valTy env) tys) ^ "]", fty, vals, c)
+                      | Partial (v, pre) => applyArgs (v ^ typeArgs (x, pre @ args), fty, vals, c)
                       | _ => raise Fail "CoreToMid: a polymorphic cell"
                     end
                 else if not (null tys) then unlowered ("the type arguments of " ^ x ^ ", which Mid binds at no type")
@@ -1466,9 +1514,13 @@ struct
                @ List.map (fn g => (g, g)) shared,
        abi = List.map (fn (x, _, e, _) => (x, if isFunction e then Function
                                                else case e of Atom (Lit _) => Literal | _ => Suspension)) globals
-             @ (if makesShared then List.map (fn g => (g, Literal)) shared else [])}
+             @ (if makesShared then List.map (fn g => (g, Literal)) shared else []),
+       boxed = List.mapPartial (fn Newtype (t, _, _, _) => if List.exists (fn (n, _) => n = t) newtypes then NONE
+                                                          else SOME (t, boxedNewtype t)
+                                 | _ => NONE) prog}
     end
 
-  fun program ({fault}, prog) = #text (compile ({fault = fault, imports = NONE, makesShared = true}, prog))
-  fun unit ({fault, imports, makesShared}, prog) = compile ({fault = fault, imports = SOME imports, makesShared = makesShared}, prog)
+  fun program ({fault}, prog) = #text (compile ({fault = fault, imports = NONE, makesShared = true, newtypes = []}, prog))
+  fun unit ({fault, imports, makesShared, newtypes}, prog) =
+    compile ({fault = fault, imports = SOME imports, makesShared = makesShared, newtypes = newtypes}, prog)
 end

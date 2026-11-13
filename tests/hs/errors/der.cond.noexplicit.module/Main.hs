@@ -1,4 +1,4 @@
--- rows: R91
+-- rows: R91 R26
 -- Report 10, readings.md R91: a derived Eq T in one module and an explicit Eq T in another are refused, at link.
 module Main (main) where
 

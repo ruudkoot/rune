@@ -28,12 +28,40 @@ sig
   (* `fresh base` is a new name, `%base` and a number. *)
   val fresh : string -> string
 
+  (* What is known of the declarations, kept: so that a desugaring of the
+     library's modules, made once, is where each program's starts. *)
+  type saved
+
+  (* `save ()` is what is known now. *)
+  val save : unit -> saved
+
+  (* `restore s` makes `s` what is known. *)
+  val restore : saved -> unit
+
+  (* `canonical e` is `e` with each name made here that it binds numbered
+     again, from 1 in the order they are bound, its base kept.
+
+     So a value's Core is the same whatever was made before it. *)
+  val canonical : Core.exp -> Core.exp
+
   (* ---- The declarations ---- *)
 
-  (* `declare d` adds the data type, newtype or value `d` to what is known.
+  (* `declare d` adds the data type, newtype, value or import `d` to what is
+     known.
 
      A value is known by its type. *)
   val declare : Core.decl -> unit
+
+  (* `tupleArity c` is the number of components of the tuple whose type and
+     constructor are named `c`, `(,...,)`.
+
+     A tuple is of arbitrary length (3.8): one not declared is declared
+     where it is first wanted, by `tycon`, `conInfo` and the other lookups,
+     and `valueType` gives its constructor as a function its type. *)
+  val tupleArity : string -> int option
+
+  (* `tupleData n` is the declaration of the tuple of `n` components. *)
+  val tupleData : int -> Core.decl
 
   (* `tycon c` is the parameters and the shape of the type constructor `c`,
      Core's built-in ones among them. *)
@@ -124,6 +152,23 @@ sig
   (* `force (x, k)` evaluates `x` by a `case` and gives `k` the evaluated
      variable and its type. *)
   val force : texp * (string * Core.ty -> texp) -> texp
+
+  (* `forceRep (x, k)` evaluates `x`'s representation, through every newtype
+     at its head, by casts, before `k ()`: what a strict field of a newtype's
+     type forces. *)
+  val forceRep : texp * (unit -> texp) -> texp
+
+  (* `forced k` is whether each field of the constructor `k` is forced where
+     it is applied: its `!`, or a strict field of a newtype's type, lazy in
+     Core (`setForced`). *)
+  val forced : string -> bool list
+
+  (* `setForced (k, flags)` gives the constructor `k` the fields it forces,
+     where they are not its fields' `!`. *)
+  val setForced : string * bool list -> unit
+
+  (* `forcedOverrides ()` is each constructor `setForced` gave its flags. *)
+  val forcedOverrides : unit -> (string * bool list) list
 
   (* `caseCon (x, ty, alts, default)` is a `case` on the atom `x` of the
      data type `ty`.

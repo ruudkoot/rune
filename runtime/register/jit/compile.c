@@ -352,6 +352,14 @@ const void *jit_h_raise(VM *vm, int32_t s) {
     vm_raise(vm, v);
     return native;
 }
+/* ENTER of a suspension under evaluation (SLOW_LOOP): the handler's native
+   code to go on at, or NULL for the interpreter, as jit_h_raise; Loop
+   raised (vm_raise_loop) */
+const void *jit_h_loop(VM *vm) {
+    const void *native = handler_native(vm);
+    vm_raise_loop(vm);
+    return native;
+}
 /* what a poll found in the interrupt's flag (SLOW_INTERRUPT): JIT_LEAVE
    where the debugger wants the debug loop (runtime/debug.c), JIT_BACK
    where the mask holds the user's interrupt, else the interrupt raised as
@@ -773,6 +781,22 @@ static void emit_slow(Masm *m, Slow *sp) {
         else ms_call(m, (MsHelper)jit_h_blackhole);
         ms_reload(m);
         as_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_LOOP) {
+        /* ENTER of a suspension under evaluation: Loop raised from the
+           instruction, the VM exact, as RAISE raises (jit_h_loop), and on
+           in the handler's code where it has some, else in the interpreter */
+        ms_sync(m, s.pc, 0);
+        ms_call(m, (MsHelper)jit_h_loop);
+        ms_reload(m);
+        AsmLabel hand;
+        as_label_init(&hand);
+        as_test_rr(&m->a, R_S0, R_S0);
+        as_jcc(&m->a, CC_E, &hand);
+        as_ld64(&m->a, COUNTR, VMR, (int32_t)offsetof(VM, instructions));   /* the count the sync gave (D9 B) */
+        as_jmp_r(&m->a, R_S0);
+        as_bind(&m->a, &hand);
+        ms_handback(m, RUN_INTERP);
+        as_label_free(&hand);
     } else if (s.kind == SLOW_CALL_TABLE) {
         /* a known call to function s.a, which had no code when this was
            compiled, through the table of calls (M6) -- until it has some,
@@ -1003,7 +1027,7 @@ static int emit_function(Jit *j, Scan *sc) {
    way (ms_call). */
 static const MsHelper helpers[] = {
     (MsHelper)jit_h_prim, (MsHelper)jit_h_alloc, (MsHelper)jit_h_return, (MsHelper)jit_h_grow,
-    (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
+    (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_loop, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
     (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called, (MsHelper)jit_h_enter_interp
 };
 /* The region: the stubs that enter and leave compiled code, the stub of

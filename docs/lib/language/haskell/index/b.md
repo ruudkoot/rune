@@ -4,6 +4,7 @@
 
 - `BACKQUOTE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-backquote)
 - `BACKSLASH` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-backslash)
+- `Bad` (exn): [HS_IFACE](../sig/HS_IFACE.md#exn-bad)
 - `BAR` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-bar)
 - `Bare` (con): [HS_PARSER](../sig/HS_PARSER.md#con-bare)
 - `bind` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-bind)
@@ -14,6 +15,7 @@
 - `bindTypes` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-bindtypes)
 - `BlockComment` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-blockcomment)
 - `Bool` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-bool)
+- `Breach` (exn): [CORE_TO_MID](../sig/CORE_TO_MID.md#exn-breach)
 - `builtinCon` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-builtincon)
 - `builtinData` (val): [CORE](../sig/CORE.md#val-builtindata)
 - `builtinKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-builtinkind)

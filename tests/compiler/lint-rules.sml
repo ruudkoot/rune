@@ -593,7 +593,34 @@ struct
             "gives type name list 0 arguments, of its 1");
       midP ("a type name given more arguments than it has parameters",
             [M.Funs [over], valR (66, Ty.list Ty.int, M.App (M.Global (63, [Ty.con (#stamp Types.listTycon, "list", [Ty.int, Ty.int]), Ty.int]), [nilInt]))],
-            "gives type name list 2 arguments, of its 1")
+            "gives type name list 2 arguments, of its 1");
+      (* the arrow as a type name (ruling 60): a type variable applied at it
+         given one type, the function type given both *)
+      midP ("a type variable applied, at the arrow given one type",
+            [M.Funs [ident 51], M.Funs [over],
+             valR (66, Ty.arrow (Ty.int, Ty.int), M.App (M.Global (63, [Ty.arrowName [Ty.int], Ty.int]), [M.Global (51, [Ty.int])]))],
+            "");
+      midP ("the arrow given one type where a value's type is wanted", [valR (67, Ty.arrowName [Ty.int], M.Atom M.Unit)],
+            "gives type name (->) 1 arguments, of its 2");
+      report ("forms: the arrow given both is the function type",
+              Ty.equal (Ty.arrowName [Ty.int, Ty.string], Ty.arrow (Ty.int, Ty.string))
+              andalso Ty.equal (Ty.subst (IntMap.insert (IntMap.empty, 78, Ty.arrowName [Ty.int])) (Ty.app (gm, [Ty.string])),
+                                Ty.arrow (Ty.int, Ty.string))
+              andalso Ty.equal (Ty.subst (IntMap.insert (IntMap.empty, 78, Ty.arrowName [])) (Ty.app (gm, [Ty.int, Ty.string])),
+                                Ty.arrow (Ty.int, Ty.string)), "");
+      report ("forms: a type variable applied matches a function type at the arrow given those before",
+              case Ty.match (Ty.app (gm, [ga]), Ty.arrow (Ty.int, Ty.string)) of
+                SOME m => (case (IntMap.find (m, 78), IntMap.find (m, 77)) of
+                             (SOME t, SOME u) => Ty.equal (t, Ty.arrowName [Ty.int]) andalso Ty.equal (u, Ty.string)
+                           | _ => false)
+              | NONE => false, "");
+      sameThrough ("the arrow given one type",
+                   {name = 84, label = NONE, tyvars = [], params = [(85, Ty.arrow (Ty.int, Ty.int))], result = Ty.arrow (Ty.int, Ty.int),
+                    body = M.Return (M.App (M.Global (63, [Ty.arrowName [Ty.int], Ty.int]), [M.Var (85, [])]))});
+      checked ("forms: the arrow as a type name through Mid's text",
+               fn () => MidText.roundTrip [M.Funs [ident 51], M.Funs [over],
+                                           valR (66, Ty.arrow (Ty.int, Ty.int),
+                                                 M.App (M.Global (63, [Ty.arrowName [Ty.int], Ty.int]), [M.Global (51, [Ty.int])]))], "")
     end
 
   (* ---- MidText's reader (the haskell98 roadmap's M7): a type takes the
@@ -603,6 +630,9 @@ struct
     handle MidText.Syntax m => report ("mid text: " ^ what, wanted <> "" andalso String.isSubstring wanted m, "refused: " ^ m)
   fun textRules () =
     (textP ("an abstract type at its arity", "(abstract box 1)\n(val g1 : int box box (return (prim unsafe_cast 1 : int -> int box box)))", "");
+     textP ("the arrow given one type where a value's type is wanted", "(val g1 : int (->) (return (prim unsafe_cast 1 : int -> int (->))))",
+            "the type (->) takes 2 arguments, not 1");
+     textP ("the arrow given both, the function type", "(val g1 : (int, int) (->) (return (prim unsafe_cast 1 : int -> int -> int)))", "");
      textP ("an abstract type given two arguments for one",
             "(abstract box 1)\n(val g1 : (int, int) box (return (prim unsafe_cast 1 : int -> (int, int) box)))",
             "the type box takes 1 argument, not 2");

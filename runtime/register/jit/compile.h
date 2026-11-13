@@ -133,6 +133,7 @@ MsHelper jit_libm_of(int32_t prim);   /* emit.c: the C library's function a prim
 void jit_h_grow(VM *vm, const Value *at);
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
 const void *jit_h_raise(VM *vm, int32_t s);
+const void *jit_h_loop(VM *vm);
 /* what jit_h_interrupt answers beside a handler's native code or NULL:
    the code goes on, or leaves for the debug loop at the instruction */
 #define JIT_LEAVE ((const void *)1)

@@ -18,7 +18,11 @@
      with the entry of overlay.tsv it is of.
    - hs/library/compile: the 20 modules compile (M18): bin/rhc --whole
      compiles tests/hs/library/All20.hs, which uses a name of each, and
-     the VM runs it to All20.expected and the status 3 of its exitWith. *)
+     the VM runs it to All20.expected and the status 3 of its exitWith.
+   - hs/library/exitzero: exitWith (ExitFailure 0) is an IOError
+     isIllegalOperation holds of (ov.system.exitzero, ruling 57): on
+     Core's interpreter and on the VM, ExitZeroCaught catches it and goes
+     on, status 0; ExitZeroUncaught ends with status 1, its output written. *)
 structure HsLibrary =
 struct
   open Sh
@@ -417,6 +421,39 @@ struct
         end
     end
 
+  (* `both (name, status)`: tests/hs/library/NAME.hs through bin/rhc --whole
+     on Core's interpreter and compiled to the VM, each printing NAME.expected
+     and ending with the status *)
+  fun both (name, status) =
+    let
+      val out = run ^ "/hs-library/" ^ name
+      val () = mkdirs out
+      fun f x = out ^ "/" ^ x
+      val src = fromRoot ("tests/hs/library/" ^ name ^ ".hs")
+      val want = read (fromRoot ("tests/hs/library/" ^ name ^ ".expected"))
+      fun judge (way, st, stdout, stderr) =
+        if st <> status then fail ("hs/library/exitzero: " ^ name ^ " ends with status " ^ Int.toString st ^ " on " ^ way ^ ", not " ^
+                                   Int.toString status ^ ": " ^ firstLine stderr)
+        else if read stdout <> want then fail ("hs/library/exitzero: " ^ name ^ " prints otherwise than its .expected on " ^ way ^
+                                              " (" ^ stdout ^ ")")
+        else ()
+      val ist = exec {cmd = [fromRoot "bin/rhc", "--whole", "--lint=3", src], dir = SOME out, stdin = "", stdout = f "i.out",
+                      stderr = f "i.err", timeout = 600}
+      val () = judge ("Core's interpreter", ist, f "i.out", f "i.err")
+      val cst = exec {cmd = [fromRoot "bin/rhc", "--whole", "--lint=2", src, "-o", f "p.rbc"], dir = NONE, stdin = "",
+                      stdout = f "c.err", stderr = f "c.err", timeout = 600}
+    in
+      if cst <> 0 then fail ("hs/library/exitzero: bin/rhc does not compile " ^ name ^ ": " ^ firstLine (f "c.err"))
+      else
+        judge ("the VM", exec {cmd = [fromRoot "bin/runevm", f "p.rbc"], dir = SOME out, stdin = "", stdout = f "v.out",
+                               stderr = f "v.err", timeout = 300},
+               f "v.out", f "v.err")
+    end
+
+  fun exitzero () =
+    (both ("ExitZeroCaught", 0); both ("ExitZeroUncaught", 1);
+     say "hs/library/exitzero: exitWith (ExitFailure 0) an IOError, caught and uncaught, on the interpreter and the VM\n")
+
   fun job (name, cmd) =
     Test.it name
       {program = "/bin/sh", args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ cmd],
@@ -433,7 +470,8 @@ struct
       [tagged (["check", "hs", "quick"] @ covers)
          (Test.describe ""
             [job ("overlay", "hs-library-overlay"), job ("pristine", "hs-library-pristine"),
-             job ("report", "hs-library-report"), job ("compile", "hs-library-compile")])]
+             job ("report", "hs-library-report"), job ("compile", "hs-library-compile"),
+             job ("exitzero", "hs-library-exitzero")])]
 
   fun command args =
     case args of
@@ -441,5 +479,6 @@ struct
     | ["hs-library-pristine"] => SOME pristine
     | ["hs-library-report"] => SOME report
     | ["hs-library-compile"] => SOME compile
+    | ["hs-library-exitzero"] => SOME exitzero
     | _ => NONE
 end

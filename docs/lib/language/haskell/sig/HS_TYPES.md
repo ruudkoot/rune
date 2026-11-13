@@ -352,12 +352,10 @@ val renumber : int -> unit
 ```
 
 `renumber n` makes the next fresh unification and kind variables
-number from `n`.
+number from `n`, where they have not passed it.
 
-What follows is then numbered alike however much came before (rhc's
-saved world).
-
-**Raises** [`Fail`](../../../basis/sig/GENERAL.md#exn-fail) where a variable has had `n` already.
+What follows is then numbered alike however much came before it below
+`n` (rhc's saved world, a program checked by interfaces).
 
 ### <a name="val-repr"></a>`repr`
 

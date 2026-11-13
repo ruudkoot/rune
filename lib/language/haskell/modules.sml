@@ -139,7 +139,9 @@ struct
       (* What an import's list selects of what the module exports. *)
       fun select (from, exported : entity list, items, hiding) =
         let
-          fun named (space, n) = List.filter (fn (e : entity) => #space e = space andalso #name e = n) exported
+          fun named (space, n) =
+            (HsUsage.read (HsUsage.Item {from = from, space = spaceChar space, name = n});
+             List.filter (fn (e : entity) => #space e = space andalso #name e = n) exported)
           fun subsOf t = List.filter (isSubOf t) exported
           fun missing (sp, what) =
             report (sp, (if hiding then "a hiding list names " else "an import list names ") ^ what ^
@@ -206,7 +208,9 @@ struct
           val A.Module (_, {exports, ...}) = #ast u
           val inScope = M.foldl (fn (_, es, s) => List.foldl (fn (e, s) => M.insert (s, key e, e)) s es) M.empty sc
           fun subsInScope t = List.filter (isSubOf t) (itemsOf inScope)
-          fun look (space, A.Name (_, {qual, name})) = lookup (sc, space, qual, name)
+          fun look (space, A.Name (_, {qual, name})) =
+            (HsUsage.read (HsUsage.Name {within = #id u, space = spaceChar space, qual = qual, name = name});
+             lookup (sc, space, qual, name))
           fun one (A.Ent ({span, ...}, x)) =
             case x of
               A.EntVar n =>
@@ -260,6 +264,12 @@ struct
                   val () =
                     if known then ()
                     else report (span, "an export list names the module `" ^ q ^ "`, which the module does not import")
+                  (* all of what each module imported as q exports (H7) *)
+                  val () =
+                    List.app (fn (A.Import (_, {module = im, as_, ...}), target) =>
+                                if (case as_ of SOME n => nameOf n | NONE => nameOf im) = q then HsUsage.read (HsUsage.Exports target)
+                                else ())
+                      (#imports u)
                 in
                   (* every entity in scope both unqualified and qualified by q *)
                   M.foldl

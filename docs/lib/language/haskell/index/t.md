@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) **t** [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `T` (con): [HS_AST](../sig/HS_AST.md#con-t)
+- `t` (type): [HS_IFACE](../sig/HS_IFACE.md#type-t), [HS_MOD_IFACE](../sig/HS_MOD_IFACE.md#type-t)
 - `table` (type): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#type-table)
 - `TAp` (con): [HS_TYPES](../sig/HS_TYPES.md#con-tap)
 - `TApp` (con): [CORE](../sig/CORE.md#con-tapp), [HS_AST](../sig/HS_AST.md#con-tapp)
@@ -36,7 +37,9 @@
 - `trivium` (type): [HS_TOKEN](../sig/HS_TOKEN.md#type-trivium)
 - `TTuple` (con): [HS_AST](../sig/HS_AST.md#con-ttuple)
 - `tuple` (val): [HS_TYPES](../sig/HS_TYPES.md#val-tuple)
+- `tupleArity` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-tuplearity)
 - `tupleCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-tuplecon)
+- `tupleData` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-tupledata)
 - `TUTuple` (con): [CORE](../sig/CORE.md#con-tutuple)
 - `TVar` (con): [CORE](../sig/CORE.md#con-tvar), [HS_AST](../sig/HS_AST.md#con-tvar)
 - `ty` (type): [CORE](../sig/CORE.md#type-ty), [HS_AST](../sig/HS_AST.md#type-ty), [HS_TYPES](../sig/HS_TYPES.md#type-ty)

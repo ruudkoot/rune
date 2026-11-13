@@ -271,9 +271,27 @@ struct
                                       then List.map (fn A.D ({span, ...}, _) => #file span) decls
                                       else [])
                             derived))
+      (* whether a node's key, `KIND@FILE:START-STOP`, is of one of those
+         files: read in place, since a world's table holds some 16,000
+         nodes of which a program's are a few *)
+      val fileList = M.foldl (fn (f, (), acc) => f :: acc) [] files
       fun given key =
         case CharVector.findi (fn (_, c) => c = #"@") key of
-          SOME (i, _) => M.member (files, #file (spanOfKey (String.extract (key, i + 1, NONE))))
+          SOME (i, _) =>
+            let
+              val n = size key
+              fun digits j = j >= n orelse ((Char.isDigit (String.sub (key, j)) orelse String.sub (key, j) = #"-")
+                                            andalso digits (j + 1))
+              fun at f =
+                let
+                  val m = size f
+                  fun same j = j >= m orelse (String.sub (key, i + 1 + j) = String.sub (f, j) andalso same (j + 1))
+                in
+                  i + 1 + m < n andalso String.sub (key, i + 1 + m) = #":" andalso same 0 andalso digits (i + 2 + m)
+                end
+            in
+              List.exists at fileList
+            end
         | NONE => false
       val all = List.filter (fn (key, _) => given key) (V.all records)
       (* a derived instance's methods, made as a user's would be (D54): its
@@ -299,6 +317,42 @@ struct
           SOME (i, _) => (String.substring (key, 0, i), String.extract (key, i + 1, NONE))
         | NONE => (key, "")
       fun recordsAt (kind, span) = V.find (records, V.node (kind, span))
+      (* an instance's context, over its generic variables, in the order
+         of the checker's dictionaries: the checker's own context
+         (HsClasses.findInstance), held to HsLint's, written or least, as
+         the same predicates, since their order is the checker's to choose
+         (a derived instance's is its fixpoint's); NONE where HsLint has no
+         such instance *)
+      fun instanceContext (span, inst : string) : (C.inst * T.pred list) option =
+        let
+          val (cls, tc) = E.ofInstanceId inst
+          val keys = case CharVector.findi (fn (_, ch) => ch = #"@") inst of
+                       SOME (i, _) => SOME (String.substring (inst, 0, i), String.extract (inst, i + 1, NONE))
+                     | NONE => NONE
+        in
+          case List.find (fn ({head = T.IsIn (_, hh), ...} : C.inst) =>
+                            case T.spine hh of (T.TCon {id, ...}, _) => T.idEq (id, tc) | _ => false)
+                 (C.instsOf cls) of
+            SOME (i as {context = mine, ...}) =>
+              let
+                val theirs =
+                  case keys of
+                    SOME (c, t) => (case HsClasses.findInstance (HsInfer.classes env, c, t) of
+                                      SOME {ctx, ...} => List.map convPred ctx
+                                    | NONE => mine)
+                  | NONE => mine
+                fun within (a, b) = List.all (fn p => List.exists (fn q => T.predEq (p, q)) b) a
+              in
+                if length mine = length theirs andalso within (mine, theirs) andalso within (theirs, mine) then
+                  SOME (i, theirs)
+                else
+                  breach (span, "dict inst", "the instance " ^ #name cls ^ " " ^ #name tc ^ " has the context " ^
+                                             String.concatWith ", " (List.map T.showPred theirs) ^ ", and its " ^
+                                             (if #derived i then "least " else "") ^ "context is " ^
+                                             String.concatWith ", " (List.map T.showPred mine))
+              end
+          | NONE => NONE
+        end
       (* the parameters of every abstraction: a binder's, a signature's, an
          instance's context's, a class's (by its class alone) *)
       val params : (string * T.pred option) list ref = ref []
@@ -318,12 +372,10 @@ struct
                      end
                  | V.Instance {inst, vars, params = ps, ...} =>
                      let
-                       val (cls, tc) = E.ofInstanceId inst
+                       val span = spanOfKey (#2 (parse key))
                        val ctx =
-                         case List.find (fn ({head = T.IsIn (_, h), ...} : C.inst) =>
-                                           case T.spine h of (T.TCon {id, ...}, _) => T.idEq (id, tc) | _ => false)
-                                (C.instsOf cls) of
-                           SOME {context, ...} =>
+                         case instanceContext (span, inst) of
+                           SOME (_, context) =>
                              let val ts = Vector.fromList (List.map rigid vars)
                              in List.map (fn p => SOME (T.instPred ts p)) context handle Subscript => [] end
                          | NONE => []
@@ -370,10 +422,8 @@ struct
                                                 String.concatWith " " (List.map (fn t => T.showTyAt (2, t)) tys') ^
                                                 ", other than " ^ T.showPred p ^ "'s types")
               val ctx =
-                case List.find (fn ({head = T.IsIn (_, hh), ...} : C.inst) =>
-                                  case T.spine hh of (T.TCon {id, ...}, _) => T.idEq (id, tc) | _ => false)
-                       (C.instsOf c) of
-                  SOME {context, arity, ...} =>
+                case instanceContext (span, inst) of
+                  SOME ({arity, ...}, context) =>
                     if arity = length targs then List.map (T.instPred (Vector.fromList targs)) context
                     else breach (span, "dict inst", "the instance " ^ #name cls ^ " " ^ #name tc ^ " has another arity")
                 | NONE => breach (span, "dict inst", "no instance " ^ #name cls ^ " " ^ #name tc ^ " is declared or derived")

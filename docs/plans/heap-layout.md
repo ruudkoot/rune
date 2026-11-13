@@ -5059,6 +5059,19 @@ thunk, and a `case` loads the header to find out. Two ways:
   2007, whose mispredictions were "much of" the 14%. It is unmeasured;
   M4's harness measures it.
 
+**Measured for a lazy front end, and not taken (2026-11-10).** The haskell98
+roadmap built the evaluated mark of code 11 on the register VM (its D16,
+branch `hs-w-d16`): the copier sets 11 where it shortcuts an indirection
+to an evaluated object, every pointer read in C and `masm.c` masks it,
+and `FORCE` skips the header for it. Against no mark, at tier 2: Rune's
+compiler compiling itself 1.111 in instructions (1.073 in cycles); 32 SML
+benchmarks, the masks' cost alone, 1.0445 geomean, none faster; 24 lazy
+ports through `FORCE`'s code-11 path, 1.1215 geomean, all slower. The
+masks are an upper bound and cache misses were not taken. The owner kept
+A there: code 11 is not used as an evaluated mark. The reservation
+above, and its choice against a third shape, are this roadmap's and are
+not changed by it.
+
 A side finding for D4 C itself. The simulator's `LV_PAIRS`
 (`vm/layouts.h:31, 81`) makes every two-field constructor headerless
 whatever its tag, which three codes cannot do: 5.3% of the bootstrap's

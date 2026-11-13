@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) **m** [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
+- `make` (val): [HS_MOD_IFACE](../sig/HS_MOD_IFACE.md#val-make)
 - `map` (type): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#type-map)
 - `mark` (type): [HS_LAYOUT](../sig/HS_LAYOUT.md#type-mark)
 - `matchType` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-matchtype)

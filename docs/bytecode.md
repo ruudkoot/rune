@@ -456,7 +456,10 @@ is more than half full after a full collection, or the share `runevm-stack
 * frame stack: `{function, return pc, base, closure}`; local `l` is `stack[base + l]`,
 * handler stack: `{handler pc, saved sp, saved frame}`,
 * globals, constants, and eight builtin exception constructors:
-  `0 Match, 1 Bind, 2 Overflow, 3 Div, 4 Subscript, 5 Size, 6 Chr, 7 Domain`.
+  `0 Match, 1 Bind, 2 Overflow, 3 Div, 4 Subscript, 5 Size, 6 Chr, 7 Domain`;
+  and `Loop`, a constructor of the VM's own that no program names, made at the first
+  loop, which `ENTER` raises of a suspension under evaluation ([ir.md](ir.md),
+  *Suspensions*).
 
 Calling convention: push the closure, push the argument, `CALL`. The callee's
 frame has the argument in local 0 and the remaining locals initialised to
@@ -516,7 +519,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `EXNCON` / `EXNARG` | | Pop an exception value, push its constructor / payload. |
 | `PRIM p` | primitive | Invoke primitive `p`: pops its arguments (first pushed is the first argument) and pushes the result, or raises. |
 | `FORCE o` | offset | Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to `o`; else leave it for the `ENTER` after ([ir.md](ir.md), *Suspensions*). |
-| `ENTER` | | Pop argument, pop a suspension, and enter it as `CALL` enters a closure; one under evaluation is a loop, a fatal error (`<<loop>>`). |
+| `ENTER` | | Pop argument, pop a suspension, and enter it as `CALL` enters a closure; one under evaluation is a loop, and the exception `Loop` is raised from here. |
 | `BLACKHOLE` | | The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. |
 | `UPDATE` | | Pop a value; the suspension running becomes an indirection to it. |
 
@@ -655,7 +658,7 @@ refuses the other's file and image.
 | `CATCH d` | register | `d :=` the exception a raise left for the handler this begins. |
 | `RAISE s` | register | Raise the exception in `s`. |
 | `FORCE d s o` | registers, offset | Where `s` holds no unevaluated suspension, `d :=` its value -- what an indirection holds, else what `s` holds -- and jump to `o`; else on to the `ENTER` after it ([ir.md](ir.md), *Suspensions*). |
-| `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, a fatal error (`<<loop>>`). |
+| `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, and the exception `Loop` is raised from here. |
 | `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`. |
 
 ## Primitives
@@ -692,7 +695,7 @@ raised as noted.
 | Arrays of reals (`RealArray`, `RealVector`; the doubles themselves side by side) | `reals_new reals_length reals_sub reals_update reals_blit` — `reals_new` raises `Size` for a length that is negative or above 100000000; indexing and a run that leaves the array raise `Subscript` |
 | Suspensions of a lazy front end ([ir.md](ir.md), *Suspensions*) | `thunk_make` makes a suspension of a fresh closure, the closure itself retagged in place (a copy of one that captures nothing, which may be shared), and is done in the register loop and by the JIT in line; `thunk_force`, `thunk_blackhole` and `thunk_self_update` are what each target makes `FORCE` with `ENTER`, `BLACKHOLE` and `UPDATE` of, and as primitives stop the program; `any_check` gives its argument, and stops the program where it is a suspension or an indirection (`rune --check-casts`) |
 | I/O and system | `print print_err flush_out input_line input_all exit command_args command_name` — `input_line` returns `string option`; `exit` terminates the process |
-| Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
+| Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append, 3 read and write -- the file made where it is not there and kept where it is, a stream that a read after a write, or a write after a read, turns with a seek to where it is; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
 
 ## Tools
 

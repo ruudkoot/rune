@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 14 of 14 entries documented |
+| Documentation | 15 of 15 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/classes\_sig.sml](../../../../../lib/language/haskell/classes_sig.sml) |
 
@@ -42,6 +42,7 @@ sig
   val <a href="#val-findclass">findClass</a> : env * string -&gt; class option
   val <a href="#val-findinstance">findInstance</a> : env * string * string -&gt; instance option
   val <a href="#val-instances">instances</a> : env -&gt; instance list
+  val <a href="#val-classlist">classList</a> : env -&gt; class list
   val <a href="#val-instanceid">instanceId</a> : string * string -&gt; string
   val <a href="#val-showinstance">showInstance</a> : string -&gt; string
   val <a href="#val-superpath">superPath</a> : env * string * string -&gt; string list option
@@ -143,7 +144,8 @@ val findClass : env * string -> class option
 val findInstance : env * string * string -> instance option
 ```
 
-`findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`.
+`findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`,
+a read of the instance's, found or not (HsUsage, H2).
 
 ### <a name="val-instances"></a>`instances`
 
@@ -152,6 +154,14 @@ val instances : env -> instance list
 ```
 
 `instances env` is every instance of `env`.
+
+### <a name="val-classlist"></a>`classList`
+
+```sml
+val classList : env -> class list
+```
+
+`classList env` is every class of `env`.
 
 ### <a name="val-instanceid"></a>`instanceId`
 

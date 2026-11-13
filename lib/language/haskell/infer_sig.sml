@@ -9,8 +9,10 @@
    10.1 allows, in HsClasses; each overloaded use leaves a placeholder,
    resolved at generalisation as a dictionary parameter, an instance's
    dictionary, a superclass's, deferred outward, or defaulted. Declaration
-   groups by dependency, explicitly typed bindings apart (Typing Haskell in
-   Haskell's split, R21(c)), one context for each implicit group (R21(a)),
+   groups by dependency of bindings alone, a signature cutting none, each
+   group's explicitly typed bindings apart and its implicitly typed ones
+   typed as one (Typing Haskell in Haskell's split in its conformant form,
+   R21(c)), one context for each implicit group (R21(a)),
    the contexts of a group's signatures identical up to renaming (R21(b)),
    a signature on a pattern binding that is not simple refused (R19), and
    the monomorphism restriction by 4.5.5's simple pattern binding (R18).
@@ -61,13 +63,34 @@ sig
               -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
 
   (* `renumber n` makes the checker's next fresh variables, and HsTypes',
-     number from `n`.
+     number from `n`, where they have not passed it.
 
      A program's are then numbered alike however much of the library was
-     checked before it (rhc's saved world).
-
-     Raises: `Fail` where a variable has had `n` already. *)
+     checked before them (rhc's saved world, a program checked by
+     interfaces), and stay apart from each other and from the library's,
+     since a dictionary's name is one of them. *)
   val renumber : int -> unit
+
+  (* What the environment holds of one module's entities, by key.
+
+     That is its values' types (its constructors', fields' and methods'
+     among them), its type constructors and synonyms, its classes, the
+     instances it declares or derives, and what the checker keeps of its
+     constructors, fields and methods. A unit's interface holds its
+     modules' parts (HsModIface, the haskell98 roadmap's M21). *)
+  type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,
+               instances : HsClasses.instance list,
+               cons : (string * {tycon : string, arity : int, fields : string list}) list,
+               fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
+               methods : (string * {cls : string, scheme : HsTypes.scheme}) list}
+
+  (* `part (env, mine)` is what `env` holds of the entities whose module's
+     identity `mine` accepts, and of the instances it declares. *)
+  val part : env * (string -> bool) -> part
+
+  (* `extend (env, p)` is `env` with the part `p`, as a client checks
+     against a module it has only the interface of. *)
+  val extend : env * part -> env
 
   (* `valueScheme (env, key)` is the type of the value of `key`. *)
   val valueScheme : env * string -> HsTypes.scheme option

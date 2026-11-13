@@ -34,10 +34,14 @@ sig
 
   (* `findClass (env, key)` is the class of `key`. *)
   val findClass : env * string -> class option
-  (* `findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`. *)
+  (* `findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`,
+     a read of the instance's, found or not (HsUsage, H2). *)
   val findInstance : env * string * string -> instance option
   (* `instances env` is every instance of `env`. *)
   val instances : env -> instance list
+
+  (* `classList env` is every class of `env`. *)
+  val classList : env -> class list
 
   (* `instanceId (cls, tycon)` is the identity of the instance of `cls`
      at `tycon`. *)

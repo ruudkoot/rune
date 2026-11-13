@@ -777,7 +777,8 @@ struct
                      L.loadObj line (L.RAX, sd (h - 1), "K_THUNK", lab a)
                    end
                  | Opcode.ENTER =>
-                   (flushSp (); setPc (); callC ("native_enter", ["lea " ^ lab next ^ "(%rip), %rsi"]); line "jmp *%rax")
+                   (* the count too: a loop raises Loop from here, as RAISE raises *)
+                   (flushCount (); flushSp (); setPc (); callC ("native_enter", ["lea " ^ lab next ^ "(%rip), %rsi"]); line "jmp *%rax")
                  | Opcode.BLACKHOLE => (flushSp (); setPc (); callC ("native_blackhole", []))
                  | Opcode.UPDATE => (flushSp (); setPc (); callC ("native_update", []))
                  | Opcode.PRIM =>

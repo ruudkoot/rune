@@ -15,26 +15,28 @@ documented when a comment describes it, alone or together with the entry before 
 | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) | 6 | 6 | 100% | 4 | 4 |
 | [`CORE_SIMPLIFY`](sig/CORE_SIMPLIFY.md) | 9 | 9 | 100% | 7 | 7 |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | 9 | 9 | 100% | 8 | 8 |
-| [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 6 | 6 | 100% | 2 | 2 |
-| [`CORE_UNITS`](sig/CORE_UNITS.md) | 5 | 5 | 100% | 4 | 4 |
+| [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 8 | 8 | 100% | 2 | 2 |
+| [`CORE_UNITS`](sig/CORE_UNITS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_AST`](sig/HS_AST.md) | 44 | 44 | 100% | 8 | 8 |
 | [`HS_CHAR`](sig/HS_CHAR.md) | 4 | 4 | 100% | 3 | 3 |
-| [`HS_CLASSES`](sig/HS_CLASSES.md) | 14 | 14 | 100% | 10 | 10 |
+| [`HS_CLASSES`](sig/HS_CLASSES.md) | 15 | 15 | 100% | 11 | 11 |
 | [`HS_DERIVE`](sig/HS_DERIVE.md) | 2 | 2 | 100% | 1 | 1 |
-| [`HS_DESUGAR`](sig/HS_DESUGAR.md) | 4 | 4 | 100% | 2 | 2 |
-| [`HS_DS_CORE`](sig/HS_DS_CORE.md) | 36 | 36 | 100% | 32 | 32 |
-| [`HS_DS_ENV`](sig/HS_DS_ENV.md) | 49 | 49 | 100% | 46 | 46 |
+| [`HS_DESUGAR`](sig/HS_DESUGAR.md) | 10 | 10 | 100% | 6 | 6 |
+| [`HS_DS_CORE`](sig/HS_DS_CORE.md) | 46 | 46 | 100% | 41 | 41 |
+| [`HS_DS_ENV`](sig/HS_DS_ENV.md) | 56 | 56 | 100% | 51 | 51 |
 | [`HS_DUMP`](sig/HS_DUMP.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | 11 | 11 | 100% | 7 | 7 |
 | [`HS_FIXITY`](sig/HS_FIXITY.md) | 4 | 4 | 100% | 2 | 2 |
-| [`HS_INFER`](sig/HS_INFER.md) | 8 | 8 | 100% | 5 | 5 |
+| [`HS_IFACE`](sig/HS_IFACE.md) | 6 | 6 | 100% | 4 | 4 |
+| [`HS_INFER`](sig/HS_INFER.md) | 11 | 11 | 100% | 7 | 7 |
 | [`HS_KINDS`](sig/HS_KINDS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_LAYOUT`](sig/HS_LAYOUT.md) | 13 | 13 | 100% | 11 | 11 |
 | [`HS_LEXER`](sig/HS_LEXER.md) | 3 | 3 | 100% | 1 | 1 |
-| [`HS_LINT`](sig/HS_LINT.md) | 19 | 19 | 100% | 6 | 6 |
+| [`HS_LINT`](sig/HS_LINT.md) | 20 | 20 | 100% | 6 | 6 |
 | [`HS_LITERATE`](sig/HS_LITERATE.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_MATCH`](sig/HS_MATCH.md) | 8 | 8 | 100% | 4 | 4 |
 | [`HS_MODULES`](sig/HS_MODULES.md) | 14 | 14 | 100% | 6 | 6 |
+| [`HS_MOD_IFACE`](sig/HS_MOD_IFACE.md) | 4 | 4 | 100% | 3 | 3 |
 | [`HS_PARSER`](sig/HS_PARSER.md) | 6 | 6 | 100% | 3 | 3 |
 | [`HS_PRINT`](sig/HS_PRINT.md) | 7 | 7 | 100% | 7 | 7 |
 | [`HS_RENAME`](sig/HS_RENAME.md) | 4 | 4 | 100% | 2 | 2 |
@@ -43,7 +45,8 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 8 | 8 | 100% | 6 | 6 |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 42 | 42 | 100% | 28 | 28 |
-| **all** | 407 | 407 | 100% | 253 | 253 |
+| [`HS_USAGE`](sig/HS_USAGE.md) | 5 | 5 | 100% | 4 | 4 |
+| **all** | 457 | 457 | 100% | 289 | 289 |
 
 ## Members a signature describes
 
@@ -52,7 +55,12 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-37 structures have a page, with 407 members, of which 407 (100%) are described by a signature.
+40 structures have a page, with 457 members, of which 457 (100%) are described by a signature.
+
+## Examples that are run
+
+Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 1 of them, in [`HS_USAGE`](sig/HS_USAGE.md) (1).
 
 ---
 

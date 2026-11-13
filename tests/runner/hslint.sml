@@ -29,12 +29,16 @@
    taking every N-th program from the K-th, since a job of bin/rune-test
    costs several times what rhc does on one program; each prints a line
    FAIL for each program it fails, and `bin/rune-test hs-hslint-expect
-   KIND NAME` judges one. The first shard of each is make check's, the
-   others nightly (the roadmap's D56, the lead's ruling 45).
+   KIND NAME` judges one. The shards are nightly; make check's job of a
+   directory, `sample`, takes the sample of ruling 47 (HsLang.sampled: one
+   program in HsLang.sampleOneIn, by its name's hash, never one of
+   lang-nightly.txt) (the roadmap's D56, the lead's rulings 45 and 47).
 
    - `hs/hslint/faults`: each rule of HsLint's comparison, of its replay
      and of its target check refuses its fault (as `astlintFaults` holds
-     AstLint's): tests/hs/hslint/faults.hs, desugared, its checker's
+     AstLint's), from the saved world, where HsLint takes its inference of
+     the library from the world, and whole (`--whole`), where it infers the
+     library too: tests/hs/hslint/faults.hs, desugared, its checker's
      records replayed and held to the second inference, its Core held to
      it, and held by `--hslint-claims` to its own expected dump, is
      accepted, and with RHC_HSLINT_FAULT=RULE, which reads the first claim,
@@ -237,6 +241,10 @@ struct
     end
 
   fun expectShard (kind, k, n) = List.app (fn (p : Lang.program) => expectOne (kind, #name p)) (shardOf (kind, k, n))
+  fun expectSample kind =
+    List.app (fn (p : Lang.program) => expectOne (kind, #name p))
+             (List.filter (fn (p : Lang.program) => HsLang.sampled (#name p))
+                          (if kind = "errors" then errorPrograms () else programs ("tests/hs/" ^ kind)))
 
   (* ---- the faults of the comparison's rules ---- *)
 
@@ -252,10 +260,15 @@ struct
     let
       val out = run ^ "/hs-hslint/faults"
       val () = mkdirs out
-      fun rhcWith (fault, file) =
+      (* from the saved world, HsLint taking its inference of the library
+         from it, or whole (`--whole`), inferring the library too: each fault
+         refused both ways *)
+      fun rhcWith (fault, file, whole) =
         execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
-          {cmd = [fromRoot "bin/rhc", "--lint=2", "--desugar-only", "--hslint-claims=" ^ faultClaims, faultProgram],
+          {cmd = [fromRoot "bin/rhc"] @ (if whole then ["--whole"] else []) @
+                 ["--lint=2", "--desugar-only", "--hslint-claims=" ^ faultClaims, faultProgram],
            dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
+      val ways = [(false, ""), (true, ".whole")]
       val listed = out ^ "/rules"
       val _ = exec {cmd = [fromRoot "bin/rhc", "--hslint-rules"], dir = SOME root, stdin = "", stdout = listed,
                     stderr = listed ^ ".err", timeout = 300}
@@ -268,20 +281,23 @@ struct
                         else fail ("hs/hslint/faults: the rule " ^ r ^ " has no fault")) rules;
       List.app (fn f => if List.exists (fn r => r = f) rules then ()
                         else fail ("hs/hslint/faults: the fault " ^ f ^ " is no rule of bin/rhc --hslint-rules")) faults;
-      if rhcWith ("", clean) = 0 then ()
-      else fail ("hs/hslint/faults: the program is refused with its own claims: " ^ firstLine clean);
       List.app
-        (fn f =>
-           let
-             val file = out ^ "/" ^ f ^ ".out"
-             val status = rhcWith (f, file)
-             val text = read file
-           in
-             if status = 0 then fail ("hs/hslint/faults: " ^ f ^ ": accepted")
-             else if String.isSubstring "lint after hslint" text andalso String.isSubstring ("[" ^ f ^ "]") text then ()
-             else fail ("hs/hslint/faults: " ^ f ^ ": not refused by [" ^ f ^ "]: " ^ firstLine file)
-           end)
-        faults
+        (fn (whole, way) =>
+           (if rhcWith ("", clean ^ way, whole) = 0 then ()
+            else fail ("hs/hslint/faults: the program is refused with its own claims" ^ way ^ ": " ^ firstLine (clean ^ way));
+            List.app
+              (fn f =>
+                 let
+                   val file = out ^ "/" ^ f ^ way ^ ".out"
+                   val status = rhcWith (f, file, whole)
+                   val text = read file
+                 in
+                   if status = 0 then fail ("hs/hslint/faults: " ^ f ^ way ^ ": accepted")
+                   else if String.isSubstring "lint after hslint" text andalso String.isSubstring ("[" ^ f ^ "]") text then ()
+                   else fail ("hs/hslint/faults: " ^ f ^ way ^ ": not refused by [" ^ f ^ "]: " ^ firstLine file)
+                 end)
+              faults))
+        ways
     end
 
   (* ---- a linted build is a plain one ---- *)
@@ -353,14 +369,14 @@ struct
                                         cmd ^ "hs-hslint-dump " ^ quote (#name p) ^ " " ^ quote m, 600))
                          ms)
              (fixtures ()))
-      (* the first shard of a directory in make check, the others nightly
-         (the roadmap's D56, the lead's ruling 45: about 10% of make check
-         for rhc's families) *)
+      (* a directory's sample (ruling 47) in make check, its shards nightly
+         (the roadmap's D56, the lead's rulings 45 and 47: about 10% of make
+         check for rhc's families) *)
       fun expect kind =
-        List.tabulate (shards, fn i =>
-                                 let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
-                                 in Test.tag (if i = 0 then "check" else "nightly")
-                                      (job (kind ^ "/" ^ k, cmd ^ "hs-hslint-expect-shard " ^ kind ^ " " ^ k, 3600)) end)
+        Test.tag "check" (job (kind ^ "/sample", cmd ^ "hs-hslint-expect-shard " ^ kind ^ " sample", 3600))
+        :: List.tabulate (shards, fn i =>
+                                    let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString shards
+                                    in Test.tag "nightly" (job (kind ^ "/" ^ k, cmd ^ "hs-hslint-expect-shard " ^ kind ^ " " ^ k, 3600)) end)
     in
       Test.describe "hs/hslint"
         [tagged (["hs"] @ covers)
@@ -377,6 +393,7 @@ struct
     | ["hs-hslint-faults"] => SOME faultsAll
     | ["hs-hslint-levels"] => SOME levelsAll
     | ["hs-hslint-expect", kind, name] => SOME (fn () => expectOne (kind, name))
+    | ["hs-hslint-expect-shard", kind, "sample"] => SOME (fn () => expectSample kind)
     | ["hs-hslint-expect-shard", kind, kn] =>
         (case String.fields (fn c => c = #"-") kn of
            [k, "of", n] =>

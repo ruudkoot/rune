@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 19 of 19 entries documented |
+| Documentation | 20 of 20 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint\_sig.sml](../../../../../lib/language/haskell/hslint_sig.sml) |
 
@@ -55,10 +55,12 @@ sig
   val <a href="#val-compare">compare</a> : report * claims * (HsSource.span -&gt; string) * string -&gt; unit
   val <a href="#val-replayrules">replayRules</a> : (string * string) list
   type <a href="#type-target">target</a>
+  type <a href="#type-library">library</a>
   val <a href="#val-check">check</a> : {<a href="#fld-check.groups">groups</a> : module list list, <a href="#fld-check.main">main</a> : string option, <a href="#fld-check.cycledefault">cycleDefault</a> : bool,
                <a href="#fld-check.records">records</a> : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
-               <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string} -&gt; report * target
+               <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string, <a href="#fld-check.library">library</a> : library option}
+              -&gt; {report : report, target : target, library : library option}
   val <a href="#val-targetrules">targetRules</a> : (string * string) list
   val <a href="#val-target">target</a> : target * Core.program * string -&gt; unit
   val <a href="#val-dump">dump</a> : report * (HsSource.span -&gt; string) * bool -&gt; string
@@ -285,20 +287,39 @@ They are the types of the top level, the selectors and default
 methods, the classes' dictionaries and the instances' dictionary
 functions, as Core's types.
 
+### <a name="type-library"></a>`library`
+
+```sml
+type library
+```
+
+HsLint's inference of a library's modules, as a saved world keeps it.
+
+It is their environment and what their inference found, from which a
+program's own modules are inferred alone (D45).
+
 ### <a name="val-check"></a>`check`
 
 ```sml
 val check : {groups : module list list, main : string option, cycleDefault : bool,
              records : {table : HsEvidence.table, env : HsInfer.env,
                         derived : (string * string * HsAst.decl list) list} option,
-             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report * target
+             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}
+            -> {report : report, target : target, library : library option}
 ```
 
-`check {groups, main, cycleDefault, records, claims, where_, fault}`
-is [`infer`](#val-infer)'s report, with the checker's records replayed and compared.
+`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is [`infer`](#val-infer)'s report, with the checker's records replayed and
+compared.
 
-It gives what the target check reads with the report. With `records`, the checker's evidence records and environment
-(HsEvidence, HsInfer) and the derived instances it made as trees
+With `library`, the groups of its modules are not inferred again: the
+rest are inferred after its environment and findings, and only the
+records of those modules are replayed, the library's having been
+replayed where the library was inferred. The report is of the modules
+inferred. Where every module of `groups` is the library's, the result
+holds their inference, for a saved world; NONE otherwise.
+
+It gives what the target check reads with the report. With `records`,
+the checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees
 (HsDerive: each one's module, identity and methods), the second
 inference checks those instances' methods as any instance's, each
 record is replayed by Faxén's rules and rhc's ([`replayRules`](#val-replayrules)), the
@@ -317,6 +338,7 @@ inference as claims ([`compare`](#val-compare)); with `claims`, those are too.
 | <a name="fld-check.claims"></a>`claims` | `claims option` |  |
 | <a name="fld-check.where_"></a>`where_` | `HsSource.span -> string` |  |
 | <a name="fld-check.fault"></a>`fault` | `string` |  |
+| <a name="fld-check.library"></a>`library` | `library option` |  |
 
 ### <a name="val-targetrules"></a>`targetRules`
 

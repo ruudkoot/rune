@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 49 of 49 entries documented |
+| Documentation | 56 of 56 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_env\_sig.sml](../../../../../lib/language/haskell/desugar_env_sig.sml) |
 
@@ -62,6 +62,14 @@ sig
   type <a href="#type-program">program</a> = {<a href="#fld-program.infer">infer</a> : HsInfer.env, <a href="#fld-program.evidence">evidence</a> : HsEvidence.table, <a href="#fld-program.prelude">prelude</a> : string * string -&gt; string option,
                   <a href="#fld-program.library">library</a> : string -&gt; bool, <a href="#fld-program.entity">entity</a> : string * string * string -&gt; string}
   val <a href="#val-start">start</a> : program -&gt; unit
+  val <a href="#val-continue">continue</a> : program -&gt; unit
+  type <a href="#type-saved">saved</a>
+  val <a href="#val-save">save</a> : unit -&gt; saved
+  val <a href="#val-restore">restore</a> : saved -&gt; unit
+  type <a href="#type-known">known</a> = {<a href="#fld-known.primtypes">primTypes</a> : (string * string) list, <a href="#fld-known.builtincons">builtinCons</a> : (string * string) list,
+                <a href="#fld-known.fields">fields</a> : (string * string list) list}
+  val <a href="#val-known">known</a> : unit -&gt; known
+  val <a href="#val-learn">learn</a> : known -&gt; unit
   val <a href="#val-classes">classes</a> : unit -&gt; HsClasses.env
   val <a href="#val-valuescheme">valueScheme</a> : string -&gt; HsTypes.scheme option
   val <a href="#val-prelude">prelude</a> : string * string -&gt; string
@@ -146,6 +154,74 @@ val start : program -> unit
 ```
 
 `start p` makes `p` the program desugared, forgetting the last.
+
+### <a name="val-continue"></a>`continue`
+
+```sml
+val continue : program -> unit
+```
+
+`continue p` makes `p` the program desugared, keeping what is known of
+its types and constructors: a program's, after its library's.
+
+### <a name="type-saved"></a>`saved`
+
+```sml
+type saved
+```
+
+What is known of the types and constructors, kept.
+
+### <a name="val-save"></a>`save`
+
+```sml
+val save : unit -> saved
+```
+
+`save ()` is what is known now.
+
+### <a name="val-restore"></a>`restore`
+
+```sml
+val restore : saved -> unit
+```
+
+`restore s` makes `s` what is known.
+
+### <a name="type-known"></a>`known`
+
+```sml
+type known = {primTypes : (string * string) list, builtinCons : (string * string) list,
+              fields : (string * string list) list}
+```
+
+What is known of the types and constructors, as lists, for a unit's
+interface.
+
+Each type of the library made Core's own, by key, Bool's constructors,
+and each constructor's fields, by key.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-known.primtypes"></a>`primTypes` | `(string * string) list` |  |
+| <a name="fld-known.builtincons"></a>`builtinCons` | `(string * string) list` |  |
+| <a name="fld-known.fields"></a>`fields` | `(string * string list) list` |  |
+
+### <a name="val-known"></a>`known`
+
+```sml
+val known : unit -> known
+```
+
+`known ()` is what is known now, each list by key.
+
+### <a name="val-learn"></a>`learn`
+
+```sml
+val learn : known -> unit
+```
+
+`learn k` adds `k` to what is known.
 
 ### <a name="val-classes"></a>`classes`
 

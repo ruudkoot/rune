@@ -41,7 +41,7 @@ struct
   (* ---- printing ---- *)
 
   val builtinNames = List.map (fn (c : Types.tycon) => (#stamp c, #name c)) Types.builtinTycons
-  fun isBuiltin stamp = List.exists (fn (s, _) => s = stamp) builtinNames
+  fun isBuiltin stamp = stamp = Ty.arrowStamp orelse List.exists (fn (s, _) => s = stamp) builtinNames
   val reserved = "unit" :: "exncon" :: List.map #2 builtinNames
 
   fun defaultTy (c : Literal.const) : Ty.ty =
@@ -483,6 +483,9 @@ struct
       and postfix args =
         case peek () of
           SOME (ID n) => (ignore (next ()); postfix [named (n, args)])
+        (* the arrow as a type name, (->), after the types it is given *)
+        | SOME LP => if peek2 () = SOME ARROW then (ignore (next ()); ignore (next ()); eat RP; postfix [arrowNamed args])
+                     else (case args of [t] => t | _ => fail "a type name after a list of types")
         | SOME (TYVAR s) =>
             (ignore (next ()); postfix [Ty.app (if String.isPrefix "'_" s then Ty.var (tyvarId s) else Ty.gen (tyvarId s), args)])
         | _ => (case args of [t] => t | _ => fail "a type name after a list of types")
@@ -504,6 +507,18 @@ struct
                    else t
                  end
              | NONE => raise Syntax ("an undeclared type " ^ n ^ where' ()))
+      (* the arrow as a type name: given both, the function type; given
+         fewer, a type only as an argument, as another name given fewer *)
+      and arrowNamed args =
+        let
+          val k = List.length args
+          val msg = "the type (->) takes 2 arguments, not " ^ Int.toString k ^ where' ()
+          val t = Ty.arrowName args
+        in
+          if k > 2 then raise Syntax msg
+          else if k < 2 then (IntTable.insert (partials, Ty.id t, msg); t)
+          else t
+        end
       and atomic () : Ty.ty list =
         case next () of
           TYVAR s => [if String.isPrefix "'_" s then Ty.var (tyvarId s) else Ty.gen (tyvarId s)]
@@ -516,7 +531,8 @@ struct
         (* a field's polymorphic type (Ty.Forall), which no type name
            followed by [ is *)
         | LP =>
-            if peek () = SOME (ID "forall") andalso peek2 () = SOME LB then
+            if peek () = SOME ARROW then (ignore (next ()); eat RP; [arrowNamed []])
+            else if peek () = SOME (ID "forall") andalso peek2 () = SOME LB then
               let
                 val () = ignore (next ())
                 val () = eat LB

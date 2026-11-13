@@ -30,8 +30,10 @@ struct
     | NONE => env
 
   fun findClass ({classes, ...} : env, k) = M.find (classes, k)
-  fun findInstance ({instances, ...} : env, cls, tycon) = M.find (instances, instanceId (cls, tycon))
+  fun findInstance ({instances, ...} : env, cls, tycon) =
+    (HsUsage.read (HsUsage.Instance {cls = cls, tycon = tycon}); M.find (instances, instanceId (cls, tycon)))
   fun instances ({instances, ...} : env) = List.map #2 (M.listItems instances)
+  fun classList ({classes, ...} : env) = List.map #2 (M.listItems classes)
 
   fun superPath (env, c, s) =
     if c = s then SOME [c]

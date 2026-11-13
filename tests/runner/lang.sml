@@ -212,6 +212,8 @@ struct
      - `compilers`, `errorCompilers`: who compiles the programs, and who
        the refused ones;
      - `out`: where a compiler's bytecode goes, as the shell names it;
+       `binary`: a program's file there, by its name (NAME.rbc for Rune's;
+       NAME/prog.rbc for rhc's, whose getProgName is the file's base name);
        `scratch`: where, under the run's directory, the other files go;
      - `writer`, `writerWay`: the compiler and the way whose output
        --accept writes;
@@ -226,7 +228,7 @@ struct
     {group : string, lang : string, errors : string, accept : string option,
      suffixes : string list, mains : string list, compilers : compiler list, errorCompilers : compiler list,
      ways : way list,
-     out : string -> string, scratch : string, writer : string, writerWay : string,
+     out : string -> string, binary : string -> string, scratch : string, writer : string, writerWay : string,
      typecheck : string option, stackDone : bool, covers : string list,
      compileTags : string list, errorTags : compiler -> string list, typecheckTags : string list,
      wayTags : way -> string list,
@@ -242,7 +244,10 @@ struct
   val tz = "TZ='NST3:30NDT,M3.2.0,M11.1.0'; export TZ; "
   fun rbcDir compiler =
     if compiler = stackCompiler then "\"$RUNE_TEST_ROOT\"/tests/out" else "\"$RUNE_TEST_RUN\"/c/" ^ compiler
-  fun rbc (s : suite) (compiler, name) = #out s compiler ^ "/" ^ name ^ ".rbc"
+  fun rbc (s : suite) (compiler, name) = #out s compiler ^ "/" ^ #binary s name
+  (* the directory rbc's file is in, which a compile makes *)
+  fun rbcIn (s : suite) (compiler, name) =
+    case OS.Path.dir (#binary s name) of "" => #out s compiler | d => #out s compiler ^ "/" ^ d
   (* a sibling's words, as $(cat FILE) gives them, or nothing *)
   fun words file =
     if exists file then " $(cat \"$RUNE_TEST_ROOT\"/" ^ file ^ ")" else ""
@@ -260,7 +265,7 @@ struct
 
   fun compile (s : suite) (compiler, command) (p : program) =
     Test.it (#name p)
-      (shell (tz ^ "mkdir -p " ^ #out s compiler ^ " && exec " ^ command ^ words (#base p ^ ".cargs")
+      (shell (tz ^ "mkdir -p " ^ rbcIn s (compiler, #name p) ^ " && exec " ^ command ^ words (#base p ^ ".cargs")
               ^ " " ^ #src p ^ " -o " ^ rbc s (compiler, #name p),
               SOME ".", 600, 300, [], compileJudge (writes s compiler, #base p)))
 
@@ -443,7 +448,7 @@ struct
   val rune : suite =
     {group = "", lang = "tests/lang", errors = "tests/errors", accept = NONE,
      suffixes = [".sml"], mains = [], compilers = compilers, errorCompilers = compilers, ways = ways,
-     out = rbcDir, scratch = "", writer = stackCompiler, writerWay = "test",
+     out = rbcDir, binary = fn name => name ^ ".rbc", scratch = "", writer = stackCompiler, writerWay = "test",
      typecheck = SOME "bin/rune --typecheck-only", stackDone = true, covers = covers,
      compileTags = ["check"], errorTags = errorTags, typecheckTags = ["check", "test"],
      wayTags = wayTags, needs = needs, wayNeeds = wayNeeds, selected = selectedName, pending = fn _ => NONE,

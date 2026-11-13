@@ -18,4 +18,8 @@ files
   derive.sml
   infer_sig.sml
   infer.sml
+  modiface_sig.sml
+  modiface.sml
+  hsiface_sig.sml
+  hsiface.sml
 end

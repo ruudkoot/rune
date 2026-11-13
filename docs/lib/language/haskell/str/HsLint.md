@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_LINT`](../sig/HS_LINT.md) |
 | Status | required |
-| Members | 19 |
+| Members | 20 |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint.sml](../../../../../lib/language/haskell/hslint.sml) |
 
@@ -28,11 +28,12 @@ What each means is on [`HS_LINT`](../sig/HS_LINT.md); the types are this structu
 | type | [`default`](../sig/HS_LINT.md#type-default) | `{choice : string, module : string, preds : string, ruleTwo : bool, span : {file : string, start : int, stop : int}}` |
 | type | [`derived`](../sig/HS_LINT.md#type-derived) | `{instance : string, module : string}` |
 | type | [`kind`](../sig/HS_LINT.md#type-kind) | `{kind : string, module : string, name : string}` |
+| type | [`library`](../sig/HS_LINT.md#type-library) | *a type of its own* |
 | type | [`module`](../sig/HS_LINT.md#type-module) | `{ast : HsAst.module, id : string, library : bool}` |
 | type | [`report`](../sig/HS_LINT.md#type-report) | `{bindings : binding list, classes : class_ list, defaults : default list, derived : derived list, kinds : kind list}` |
 | type | [`target`](../sig/HS_LINT.md#type-target) | *a type of its own* |
 | exception | [`Refused`](../sig/HS_LINT.md#exn-refused) | `of {file : string, start : int, stop : int} * string` |
-| val | [`check`](../sig/HS_LINT.md#val-check) | `{claims : claims option, cycleDefault : bool, fault : string, groups : module list list, main : string option, records : {derived : (string * string * HsAst.decl list) list, env : HsInfer.env, table : HsEvidence.table} option, where_ : {file : string, start : int, stop : int} -> string} -> report * target` |
+| val | [`check`](../sig/HS_LINT.md#val-check) | `{claims : claims option, cycleDefault : bool, fault : string, groups : module list list, library : library option, main : string option, records : {derived : (string * string * HsAst.decl list) list, env : HsInfer.env, table : HsEvidence.table} option, where_ : {file : string, start : int, stop : int} -> string} -> {library : library option, report : report, target : target}` |
 | val | [`claims`](../sig/HS_LINT.md#val-claims) | `string -> claims` |
 | val | [`compare`](../sig/HS_LINT.md#val-compare) | `report * claims * ({file : string, start : int, stop : int} -> string) * string -> unit` |
 | val | [`dump`](../sig/HS_LINT.md#val-dump) | `report * ({file : string, start : int, stop : int} -> string) * bool -> string` |

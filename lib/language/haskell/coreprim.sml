@@ -84,7 +84,7 @@ struct
        ("print_err", "(-> !Str World World)", "writes the bytes to standard error"),
        ("exit", "(-> !Int World World)", "ends the program with a status, standard output written"),
        ("h_open", "(-> !Str !Int World (utuple World !Int))",
-        "opens a file, to read (mode 0), to write from empty (1) or to append (2): its handle, or ~1, h_error saying why"),
+        "opens a file, to read (mode 0), to write from empty (1), to append (2), or to read and write, made where it is not there and kept where it is (3): its handle, or ~1, h_error saying why"),
        ("h_close", "(-> !Int World World)", "closes a handle; nothing for 0 to 2, standard input, output and error"),
        ("h_read", "(-> !Int !Int World (utuple World !Str))",
         "at most so many bytes, waiting for one, and \"\" at the end; an IOError where the read fails"),

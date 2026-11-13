@@ -1,0 +1,4 @@
+# groups under --cycle-default=module
+TYPE	All	atom	Int -> (Bool, [Char])
+TYPE	All	atomOrOp	Int -> (Bool, [Char])
+TYPE	All	expr	Int -> (Bool, [Char])

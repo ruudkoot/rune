@@ -382,22 +382,24 @@ struct
   val rhcCovers = ["covers:tests/hs/lang/*", "covers:tests/hs/accept/*", "covers:tests/hs/roundtrip/*",
                    "covers:lib/language/haskell/*", "covers:src/rhc/*", "covers:tests/runner/hsroundtrip.sml"]
   val stubCovers = ["covers:tests/hs/runner/*", "covers:tests/runner/hsroundtrip.sml"]
-  (* rhc's files: the explicit print's two tests in make check (a tenth of
-     them quick), the implicit and exact prints' nightly *)
+  (* rhc's files: the explicit print's two tests in make check for the
+     sample of ruling 47 (HsLang.sampled, by the file's base name, never a
+     program of lang-nightly.txt; those also quick) and nightly for every
+     file; the implicit and exact prints' nightly *)
   fun held file t = case HsConformance.pendingFile file of SOME why => Test.pending why t | NONE => t
   fun tree () =
    let val rhcInputs = rhcInputs () in
     Test.describe "hs/roundtrip"
       [Test.requires ["rhc"]
-         (tagged (["check", "hs"] @ rhcCovers)
+         (tagged (["hs"] @ rhcCovers)
             (Test.describe "rhc"
-               (List.tabulate (length rhcInputs, fn i =>
-                                 let
-                                   val file = List.nth (rhcInputs, i)
-                                   val t = held file (fileJobOf ("hs-roundtrip-explicit", rhc) file)
-                                 in if i mod 10 = 0 then Test.tag "quick" t else t end)
+               (List.map (fn file =>
+                            let val base = OS.Path.base (OS.Path.file file)
+                                val tags = if HsLang.sampled base then ["check", "nightly", "quick"] else ["nightly"]
+                            in HsLang.tagAll tags (held file (fileJobOf ("hs-roundtrip-explicit", rhc) file)) end)
+                         rhcInputs
                 @ (case #generate rhc of
-                     SOME _ => [Test.tag "quick" (job ("@generated", ["hs-roundtrip-generated", "rhc", "1", "64"], 1800))]
+                     SOME _ => [tagged ["check", "quick"] (job ("@generated", ["hs-roundtrip-generated", "rhc", "1", "64"], 1800))]
                    | NONE => [])))),
        Test.requires ["rhc"]
          (tagged (["nightly", "hs"] @ rhcCovers)

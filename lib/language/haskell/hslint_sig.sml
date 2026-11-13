@@ -104,11 +104,25 @@ sig
      functions, as Core's types. *)
   type target
 
-  (* `check {groups, main, cycleDefault, records, claims, where_, fault}`
-     is `infer`'s report, with the checker's records replayed and compared.
+  (* HsLint's inference of a library's modules, as a saved world keeps it.
 
-     It gives what the target check reads with the report. With `records`, the checker's evidence records and environment
-     (HsEvidence, HsInfer) and the derived instances it made as trees
+     It is their environment and what their inference found, from which a
+     program's own modules are inferred alone (D45). *)
+  type library
+
+  (* `check {groups, main, cycleDefault, records, claims, where_, fault,
+     library}` is `infer`'s report, with the checker's records replayed and
+     compared.
+
+     With `library`, the groups of its modules are not inferred again: the
+     rest are inferred after its environment and findings, and only the
+     records of those modules are replayed, the library's having been
+     replayed where the library was inferred. The report is of the modules
+     inferred. Where every module of `groups` is the library's, the result
+     holds their inference, for a saved world; NONE otherwise.
+
+     It gives what the target check reads with the report. With `records`,
+     the checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees
      (HsDerive: each one's module, identity and methods), the second
      inference checks those instances' methods as any instance's, each
      record is replayed by Faxén's rules and rhc's (`replayRules`), the
@@ -120,7 +134,8 @@ sig
   val check : {groups : module list list, main : string option, cycleDefault : bool,
                records : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
-               claims : claims option, where_ : HsSource.span -> string, fault : string} -> report * target
+               claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}
+              -> {report : report, target : target, library : library option}
 
   (* `targetRules` is each rule of the target check with what it holds,
      its name the first word of its breach's message, in brackets:

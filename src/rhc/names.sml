@@ -40,7 +40,7 @@ struct
      library's, and what names and the checker have found so far. The
      saved world (RhcWorld) is the state the library's groups leave. *)
   type state = {defs : Mo.def M.map, universe : Mo.entity list, fixities : (A.fixity * int) M.map,
-                library : bool M.map, exports : Mo.entity list M.map, diags : G.diag list,
+                library : bool M.map, exports : Mo.entity list M.map, scopes : Mo.scope M.map, diags : G.diag list,
                 modules : (G.node * A.module) list, derived : (string * string * A.decl list) list,
                 evidence : HsEvidence.table, types : HsInfer.env}
 
@@ -67,9 +67,23 @@ struct
        fixities = List.foldl (fn ((k, f), t) => M.insert (t, k, f)) (#fixities s)
                     (List.concat (List.map (fn (n : G.node) => HsRename.topFixities (#id n, #ast n)) nodes)),
        library = List.foldl (fn (n : G.node, t) => M.insert (t, #file n, #library n)) (#library s) nodes,
-       exports = #exports s, diags = #diags s, modules = #modules s, derived = #derived s, evidence = #evidence s,
-       types = #types s}
+       exports = #exports s, scopes = #scopes s, diags = #diags s, modules = #modules s, derived = #derived s,
+       evidence = #evidence s, types = #types s}
     end
+
+  (* `install (s, ifaces)` is `s` with modules present by their interfaces
+     (HsModIface, M21) and not their source: their exports, definitions and
+     fixities, and their parts of the checker's environment, so that a unit
+     is named and checked against them *)
+  fun install (s : state, ifaces : HsModIface.t list) : state =
+    List.foldl
+      (fn ({id, exports, defs, fixities, checked} : HsModIface.t, s : state) =>
+         {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) (#defs s) defs,
+          universe = #universe s @ List.map #entity defs,
+          fixities = List.foldl (fn ((k, f), t) => M.insert (t, k, f)) (#fixities s) fixities,
+          library = #library s, exports = M.insert (#exports s, id, exports), scopes = #scopes s, diags = #diags s,
+          modules = #modules s, derived = #derived s, evidence = #evidence s, types = HsInfer.extend (#types s, checked)})
+      s ifaces
 
   (* the state before any group: rhc's modules of primitives `leaves`,
      which no file holds, and nothing found *)
@@ -84,14 +98,16 @@ struct
                                M.insert (m, RhcLibrary.identity l,
                                          List.map (fn n => {space = Mo.Value, home = RhcLibrary.identity l, name = n}) names))
                    M.empty leaves,
-       diags = [], modules = [], derived = [], evidence = HsEvidence.empty (),
+       scopes = M.empty, diags = [], modules = [], derived = [], evidence = HsEvidence.empty (),
        types = HsInfer.initial {primitives = List.map Mo.key (leafEntities leaves)}}
     end
 
-  (* The first number a program's own fresh type variables and kinds take,
-     past any the library's checking takes, so that they are numbered alike
-     whether the library was checked now or restored (RhcWorld). *)
-  val programCounters = 100000000
+  (* The first number a program's fresh type variables and kinds take, past
+     any the library's checking takes, so that they are numbered alike
+     whether the library was checked now or restored (RhcWorld), or its
+     groups by interface (RhcIface); the program's units go on from it, so
+     that no two dictionaries of a program have one name *)
+  val unitCounters = 100000000
 
   (* `groups (s, gs, fixpoint, check)`: each group of `gs` solved for its
      exports and scopes, its modules renamed and resolved, and with
@@ -105,6 +121,7 @@ struct
       val fixTable = #fixities s
       fun isLibrary (span : HsSource.span) = getOpt (M.find (#library s, #file span), false)
       val exports = ref (#exports s)
+      val scopes = ref (#scopes s)
       fun exportsOf id = getOpt (M.find (!exports, id), [])
       val diags = ref (#diags s)
       fun add errs = diags := !diags @ List.map (fn (sp, msg) => {span = sp, msg = msg, library = isLibrary sp}) errs
@@ -120,15 +137,16 @@ struct
             else RhcLibrary.identity "Prelude"
           val sp = if space = "t" then Mo.Type else Mo.Value
         in
+          HsUsage.read (HsUsage.Standard {space = space, name = name});
           Option.map Mo.key (List.find (fn (e : Mo.entity) => #space e = sp andalso #name e = name) (exportsOf from))
         end
-      val programStarted = ref false
       fun group members =
         let
           val units = List.map (fn (n : G.node) => {id = #id n, name = #name n, ast = #ast n, imports = #imports n}) members
           val solved = Mo.solve {group = units, exportsOf = exportsOf, defOf = defOf, universe = universe,
                                  fixpoint = fixpoint}
           val () = exports := M.foldl (fn (id, es, m) => M.insert (m, id, es)) (!exports) (#exports solved)
+          val () = scopes := M.foldl (fn (id, sc, m) => M.insert (m, id, sc)) (!scopes) (#scopes solved)
           val () = add (#errors solved)
           fun one (n : G.node) =
             let
@@ -153,10 +171,7 @@ struct
           | (_, true) => ()
           | (SOME cycleDefault, false) =>
               let
-                val () =
-                  if !programStarted orelse List.all #library members then ()
-                  else
-                    (HsInfer.renumber programCounters; programStarted := true)
+                val () = if List.all #library members then () else HsInfer.renumber unitCounters
                 val resolved = List.filter (fn (n, _) => List.exists (fn (m : G.node) => #id m = #id n) members) (!out)
                 val {env, errors, derived} =
                   HsInfer.check {env = !types, cycleDefault = cycleDefault, prelude = prelude, evidence = evidence,
@@ -170,8 +185,8 @@ struct
         end
     in
       List.app group gs;
-      {defs = defTable, universe = universe, fixities = fixTable, library = #library s, exports = !exports, diags = !diags,
-       modules = !out, derived = !derivedOut, evidence = evidence, types = !types}
+      {defs = defTable, universe = universe, fixities = fixTable, library = #library s, exports = !exports,
+       scopes = !scopes, diags = !diags, modules = !out, derived = !derivedOut, evidence = evidence, types = !types}
     end
 
   (* the result of a state, for a check (`checked`) or not *)

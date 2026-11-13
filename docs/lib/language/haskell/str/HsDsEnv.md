@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DS_ENV`](../sig/HS_DS_ENV.md) |
 | Status | required |
-| Members | 49 |
+| Members | 56 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_env.sml](../../../../../lib/language/haskell/desugar_env.sml) |
 
@@ -23,13 +23,16 @@ What each means is on [`HS_DS_ENV`](../sig/HS_DS_ENV.md); the types are this str
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`env`](../sig/HS_DS_ENV.md#type-env) | *a type of its own* |
+| type | [`known`](../sig/HS_DS_ENV.md#type-known) | `{builtinCons : (string * string) list, fields : (string * string list) list, primTypes : (string * string) list}` |
 | type | [`program`](../sig/HS_DS_ENV.md#type-program) | `{entity : string * string * string -> string, evidence : HsEvidence.table, infer : HsInfer.env, library : string -> bool, prelude : string * string -> string option}` |
+| type | [`saved`](../sig/HS_DS_ENV.md#type-saved) | *a type of its own* |
 | val | [`bind`](../sig/HS_DS_ENV.md#val-bind) | `env * string * Core.atom * Core.ty -> env` |
 | val | [`bindOf`](../sig/HS_DS_ENV.md#val-bindof) | `{file : string, start : int, stop : int} -> HsEvidence.record option` |
 | val | [`bindTypes`](../sig/HS_DS_ENV.md#val-bindtypes) | `env * (string * Core.kind) list -> env` |
 | val | [`builtinCon`](../sig/HS_DS_ENV.md#val-builtincon) | `string * string -> unit` |
 | val | [`classes`](../sig/HS_DS_ENV.md#val-classes) | `unit -> HsClasses.env` |
 | val | [`conName`](../sig/HS_DS_ENV.md#val-conname) | `string -> string` |
+| val | [`continue`](../sig/HS_DS_ENV.md#val-continue) | `program -> unit` |
 | val | [`coreName`](../sig/HS_DS_ENV.md#val-corename) | `string -> string` |
 | val | [`defaultName`](../sig/HS_DS_ENV.md#val-defaultname) | `string -> string` |
 | val | [`dfunName`](../sig/HS_DS_ENV.md#val-dfunname) | `string -> string` |
@@ -46,6 +49,8 @@ What each means is on [`HS_DS_ENV`](../sig/HS_DS_ENV.md); the types are this str
 | val | [`ioTy`](../sig/HS_DS_ENV.md#val-ioty) | `Core.ty -> Core.ty` |
 | val | [`isLibrary`](../sig/HS_DS_ENV.md#val-islibrary) | `string -> bool` |
 | val | [`isPrimType`](../sig/HS_DS_ENV.md#val-isprimtype) | `string -> bool` |
+| val | [`known`](../sig/HS_DS_ENV.md#val-known) | `unit -> known` |
+| val | [`learn`](../sig/HS_DS_ENV.md#val-learn) | `known -> unit` |
 | val | [`libraryEntity`](../sig/HS_DS_ENV.md#val-libraryentity) | `string * string * string -> string` |
 | val | [`lookup`](../sig/HS_DS_ENV.md#val-lookup) | `env * string -> (Core.atom * Core.ty) option` |
 | val | [`matchType`](../sig/HS_DS_ENV.md#val-matchtype) | `Core.ty * string list * Core.ty -> Core.ty list option` |
@@ -57,6 +62,8 @@ What each means is on [`HS_DS_ENV`](../sig/HS_DS_ENV.md); the types are this str
 | val | [`primType`](../sig/HS_DS_ENV.md#val-primtype) | `string * string -> unit` |
 | val | [`rationalLit`](../sig/HS_DS_ENV.md#val-rationallit) | `env -> string * HsTypes.ty * HsEvidence.dict -> Core.exp * Core.ty` |
 | val | [`records`](../sig/HS_DS_ENV.md#val-records) | `string * {file : string, start : int, stop : int} -> HsEvidence.record list` |
+| val | [`restore`](../sig/HS_DS_ENV.md#val-restore) | `saved -> unit` |
+| val | [`save`](../sig/HS_DS_ENV.md#val-save) | `unit -> saved` |
 | val | [`scheme`](../sig/HS_DS_ENV.md#val-scheme) | `env -> {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : string list} -> Core.ty * (string * Core.kind) list` |
 | val | [`setFields`](../sig/HS_DS_ENV.md#val-setfields) | `string * string list -> unit` |
 | val | [`start`](../sig/HS_DS_ENV.md#val-start) | `program -> unit` |

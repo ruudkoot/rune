@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 6 of 6 entries documented |
+| Documentation | 8 of 8 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid\_sig.sml](../../../../../lib/language/haskell/coretomid_sig.sml) |
 
@@ -51,12 +51,15 @@ parameters is a box, as one that reaches itself is.
 <pre>
 signature CORE_TO_MID =
 sig
-  datatype <a href="#type-fault">fault</a> = <a href="#con-thunkinslot">ThunkInSlot</a> | <a href="#con-forcebehindcast">ForceBehindCast</a>
+  datatype <a href="#type-fault">fault</a> = <a href="#con-thunkinslot">ThunkInSlot</a> | <a href="#con-forcebehindcast">ForceBehindCast</a> | <a href="#con-susptypearg">SuspTypeArg</a>
+  val <a href="#val-checking">checking</a> : bool ref
+  exception <a href="#exn-breach">Breach</a> of string
   exception <a href="#exn-unsupported">Unsupported</a> of string
   val <a href="#val-program">program</a> : {<a href="#fld-program.fault">fault</a> : fault option} * Core.program -&gt; string
   datatype <a href="#type-abi">abi</a> = <a href="#con-function">Function</a> | <a href="#con-suspension">Suspension</a> | <a href="#con-literal">Literal</a>
-  val <a href="#val-unit">unit</a> : {<a href="#fld-unit.fault">fault</a> : fault option, <a href="#fld-unit.imports">imports</a> : (string * abi) list, <a href="#fld-unit.makesshared">makesShared</a> : bool} * Core.program
-             -&gt; {text : string, names : (string * string) list, abi : (string * abi) list}
+  val <a href="#val-unit">unit</a> : {<a href="#fld-unit.fault">fault</a> : fault option, <a href="#fld-unit.imports">imports</a> : (string * abi) list, <a href="#fld-unit.makesshared">makesShared</a> : bool, <a href="#fld-unit.newtypes">newtypes</a> : (string * bool) list}
+             * Core.program
+             -&gt; {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list}
   val <a href="#val-shared">shared</a> : string list
 end
 </pre>
@@ -64,19 +67,42 @@ end
 ### <a name="type-fault"></a>`fault`
 
 ```sml
-datatype fault = ThunkInSlot | ForceBehindCast
+datatype fault = ThunkInSlot | ForceBehindCast | SuspTypeArg
 ```
 
 A fault made on purpose, for the tests of what catches it.
 
 They are the roadmap's rhc's mutants of Core to Mid: [`ThunkInSlot`](#con-thunkinslot), a
 suspension used where its value is wanted, unforced; [`ForceBehindCast`](#con-forcebehindcast),
-a force made a cast from the suspension to its value.
+a force made a cast from the suspension to its value; [`SuspTypeArg`](#con-susptypearg), a
+use's first type argument a slot's type, a suspension's.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
 | <a name="con-thunkinslot"></a>`ThunkInSlot` |  |  |
 | <a name="con-forcebehindcast"></a>`ForceBehindCast` |  |  |
+| <a name="con-susptypearg"></a>`SuspTypeArg` |  |  |
+
+### <a name="val-checking"></a>`checking`
+
+```sml
+val checking : bool ref
+```
+
+Whether Core to Mid holds what it writes to its own rules, which rhc
+sets at lint level 2 (M10b).
+
+A use's type argument is a value's type, never one with `susp` at its
+head (D4); the rule is Core to Mid's and not MidLint's, since SML uses
+its polymorphic functions at `T susp`.
+
+### <a name="exn-breach"></a>`Breach`
+
+```sml
+exception Breach of string
+```
+
+A breach of Core to Mid's rules, where [`checking`](#val-checking) holds: what it is.
 
 ### <a name="exn-unsupported"></a>`Unsupported`
 
@@ -130,15 +156,18 @@ suspension in a global (a CAF), or a literal in a global.
 ### <a name="val-unit"></a>`unit`
 
 ```sml
-val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.program
-           -> {text : string, names : (string * string) list, abi : (string * abi) list}
+val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool, newtypes : (string * bool) list}
+           * Core.program
+           -> {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list}
 ```
 
 `unit ({fault, imports, makesShared}, p)` is the text of Mid of the
 unit `p` (the haskell98 roadmap's M21).
 
 Each import of another unit is bound as `imports` says that unit's
-Core to Mid made it. Its `names` is the name in the text of each value of the top level,
+Core to Mid made it, and each newtype of another unit is a box where
+`newtypes` says that unit made it one (an ABI fact, H9); its `boxed`
+says so of each newtype the unit declares itself. Its `names` is the name in the text of each value of the top level,
 the unit's own and its imports, by its Core name; its [`abi`](#type-abi) how each
 of its own is made. An import is declared in the text as a global of
 its scheme whose expression is a placeholder, which the client drops
@@ -154,6 +183,7 @@ import `imports` does not give.
 | <a name="fld-unit.fault"></a>`fault` | `fault option` |  |
 | <a name="fld-unit.imports"></a>`imports` | `(string * abi) list` |  |
 | <a name="fld-unit.makesshared"></a>`makesShared` | `bool` |  |
+| <a name="fld-unit.newtypes"></a>`newtypes` | `(string * bool) list` |  |
 
 ### <a name="val-shared"></a>`shared`
 

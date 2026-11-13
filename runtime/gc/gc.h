@@ -372,6 +372,7 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
             if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
         if ((vm)->interrupt_exn) O(&(vm)->interrupt_exn); \
+        if ((vm)->loop_exn) O(&(vm)->loop_exn); \
         for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
     } while (0)
 #define OTHER_ROOTS_FROM(vm, V, O, frame0) \
@@ -387,6 +388,7 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
             if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
         if ((vm)->interrupt_exn) O(&(vm)->interrupt_exn); \
+        if ((vm)->loop_exn) O(&(vm)->loop_exn); \
         for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
     } while (0)
 

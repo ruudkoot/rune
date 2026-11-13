@@ -1,0 +1,24 @@
+; run: --read-core tests/hs/core/lib/base.core
+; vm: no: Core to Mid refuses -> given fewer than two types until Mid's Ty takes it (ruling 60, the lead's (a))
+; The function type's constructor, ->, given fewer than two types (Haskell's
+; (->), 4.3.2), as GHC's tcrun001 has it:
+;   class Flob k where twice :: k a a -> k a a
+;   instance Flob (->) where twice f = f . f
+; The dictionary's type is over k of kind * -> * -> *; at k := ->, its
+; field's type (k a a) is the function type (-> a a), the one form of it
+; (Core.apply, substTy).
+(data Flob ((k (-> * * *))) (Flob (forall (a) (-> (k a a) (k a a)))))
+
+(val flobArrow (Flob (->))
+  (let (t (forall (a) (-> (-> a a) (-> a a)))
+         (\ (@a (f (-> a a))) (\ ((x a)) (let (y a (f x)) (f y)))))
+  (con Flob @(->) t)))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case flobArrow d
+      ((Flob tw)
+        (let (inc (-> Int Int) (\ ((n Int)) (case n m (_ (prim int_add m 1)))))
+        (let (g (-> Int Int) (tw @Int inc))
+        (let (r Int (g 40))
+        (printInt r w))))))))

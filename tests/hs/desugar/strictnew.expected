@@ -1,0 +1,4 @@
+Foo (TID 3) 'x' 4
+(TID 5,'y',6)
+[Foo (TID 7) 'w' 1,Foo (TID 7) 'w' 2]
+True

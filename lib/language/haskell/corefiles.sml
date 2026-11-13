@@ -40,8 +40,9 @@ struct
       0 => SOME Posix.FileSys.stdin
     | _ => (case List.find (fn (k, _) => k = h) (!files) of SOME (_, Open fd) => SOME fd | _ => NONE)
 
-  (* a file opened to read (mode 0), to write from empty (1) or to append
-     (2): its handle, or ~1, the failure kept *)
+  (* a file opened to read (mode 0), to write from empty (1), to append (2),
+     or to read and write, made or kept (3): its handle, or ~1, the failure
+     kept *)
   fun openFile (path, mode) =
     let
       val perms = Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.irgrp,
@@ -50,6 +51,7 @@ struct
         case mode of
           0 => Posix.FileSys.openf (path, Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags [])
         | 1 => Posix.FileSys.createf (path, Posix.FileSys.O_WRONLY, Posix.FileSys.O.trunc, perms)
+        | 3 => Posix.FileSys.createf (path, Posix.FileSys.O_RDWR, Posix.FileSys.O.flags [], perms)   (* made, or kept *)
         | _ => Posix.FileSys.createf (path, Posix.FileSys.O_WRONLY, Posix.FileSys.O.append, perms)
       val h = !next
     in

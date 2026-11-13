@@ -78,7 +78,7 @@
      "kind": "val",
      "name": "builtinTypes",
      "spec": "val builtinTypes : (string * kind) list",
-     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,\n`Ref` and `Arr`.\n\n",
+     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,\n`Ref`, `Arr` and `->`.\n\n`->` is the function type's constructor, which a type holds given\nfewer than two arguments (Haskell's `(->)` in an instance's head, 4.3.2);\ngiven both it is the function type, `TFun`, which `apply` and\n`substTy` make it.\n\n",
      "page": "sig/CORE.md#val-builtintypes"
     },
     {
@@ -495,9 +495,23 @@
     {
      "kind": "datatype",
      "name": "fault",
-     "spec": "datatype fault = ThunkInSlot | ForceBehindCast",
-     "doc": "A fault made on purpose, for the tests of what catches it.\n\nThey are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a\nsuspension used where its value is wanted, unforced; `ForceBehindCast`,\na force made a cast from the suspension to its value.\n\n",
+     "spec": "datatype fault = ThunkInSlot | ForceBehindCast | SuspTypeArg",
+     "doc": "A fault made on purpose, for the tests of what catches it.\n\nThey are the roadmap's rhc's mutants of Core to Mid: `ThunkInSlot`, a\nsuspension used where its value is wanted, unforced; `ForceBehindCast`,\na force made a cast from the suspension to its value; `SuspTypeArg`, a\nuse's first type argument a slot's type, a suspension's.\n\n",
      "page": "sig/CORE_TO_MID.md#type-fault"
+    },
+    {
+     "kind": "val",
+     "name": "checking",
+     "spec": "val checking : bool ref",
+     "doc": "Whether Core to Mid holds what it writes to its own rules, which rhc\nsets at lint level 2 (M10b).\n\nA use's type argument is a value's type, never one with `susp` at its\nhead (D4); the rule is Core to Mid's and not MidLint's, since SML uses\nits polymorphic functions at `T susp`.\n\n",
+     "page": "sig/CORE_TO_MID.md#val-checking"
+    },
+    {
+     "kind": "exception",
+     "name": "Breach",
+     "spec": "exception Breach of string",
+     "doc": "A breach of Core to Mid's rules, where `checking` holds: what it is.\n\n",
+     "page": "sig/CORE_TO_MID.md#exn-breach"
     },
     {
      "kind": "exception",
@@ -523,8 +537,8 @@
     {
      "kind": "val",
      "name": "unit",
-     "spec": "val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool} * Core.program\n           -> {text : string, names : (string * string) list, abi : (string * abi) list}",
-     "doc": "`unit ({fault, imports, makesShared}, p)` is the text of Mid of the\nunit `p` (the haskell98 roadmap's M21).\n\nEach import of another unit is bound as `imports` says that unit's\nCore to Mid made it. Its `names` is the name in the text of each value of the top level,\nthe unit's own and its imports, by its Core name; its `abi` how each\nof its own is made. An import is declared in the text as a global of\nits scheme whose expression is a placeholder, which the client drops\nafter reading the text, its scheme MidLint's for the import\n(MidLint.importedScheme). The text calls `main` where the unit\ndefines it, as `program`'s does.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got, or an\nimport `imports` does not give.\n\n",
+     "spec": "val unit : {fault : fault option, imports : (string * abi) list, makesShared : bool, newtypes : (string * bool) list}\n           * Core.program\n           -> {text : string, names : (string * string) list, abi : (string * abi) list, boxed : (string * bool) list}",
+     "doc": "`unit ({fault, imports, makesShared}, p)` is the text of Mid of the\nunit `p` (the haskell98 roadmap's M21).\n\nEach import of another unit is bound as `imports` says that unit's\nCore to Mid made it, and each newtype of another unit is a box where\n`newtypes` says that unit made it one (an ABI fact, H9); its `boxed`\nsays so of each newtype the unit declares itself. Its `names` is the name in the text of each value of the top level,\nthe unit's own and its imports, by its Core name; its `abi` how each\nof its own is made. An import is declared in the text as a global of\nits scheme whose expression is a placeholder, which the client drops\nafter reading the text, its scheme MidLint's for the import\n(MidLint.importedScheme). The text calls `main` where the unit\ndefines it, as `program`'s does.\n\n**Raises** `Unsupported` where `p` needs what Mid has not got, or an\nimport `imports` does not give.\n\n",
      "page": "sig/CORE_TO_MID.md#val-unit"
     },
     {
@@ -560,6 +574,41 @@
      "spec": "val unresolved : Core.program -> string list",
      "doc": "`unresolved p` is the imports of p that no declaration of p defines,\nin order\n\n",
      "page": "sig/CORE_UNITS.md#val-unresolved"
+    },
+    {
+     "kind": "val",
+     "name": "uses",
+     "spec": "val uses : Core.decl -> {values : string list, types : string list, cons : string list}",
+     "doc": "`uses d` is what the declaration `d` names of the top level, each once.\n\nIts values are the variables it names that no binder of it binds; its\ntypes the type constructors it names; its constructors those it makes\nor takes apart. A name may be in more than one, as `:` is a value of\nthe runtime and a constructor of the list.\n\n",
+     "page": "sig/CORE_UNITS.md#val-uses"
+    },
+    {
+     "kind": "val",
+     "name": "reach",
+     "spec": "val reach : Core.program * string list -> Core.program",
+     "doc": "`reach (p, roots)` is what the values `roots` reach of p, in p's order.\n\nA value reaches the values, types and constructors it names, a\nconstructor its type, and a type the types of its fields; an import\nreached is kept, as a whole program has none (the haskell98 roadmap's\nM21: units joined and compiled whole, what main reaches).\n\n",
+     "page": "sig/CORE_UNITS.md#val-reach"
+    },
+    {
+     "kind": "val",
+     "name": "index",
+     "spec": "val index : Core.program -> string * string list",
+     "doc": "`index p` is the unit `p` as an index and its declarations' texts.\n\nThe index says of each declaration, by its number, what it is, its\nname, what it makes and what it names, so that `reachIndexed` reads\nonly the texts of the declarations a program reaches.\n\n",
+     "page": "sig/CORE_UNITS.md#val-index"
+    },
+    {
+     "kind": "datatype",
+     "name": "unitCore",
+     "spec": "datatype unitCore = Indexed of string * (int -> string) | InHand of Core.program",
+     "doc": "A unit's Core as the reach is given it: by its index and a function\nfrom a declaration's number to its text, or in hand.\n\n",
+     "page": "sig/CORE_UNITS.md#type-unitcore"
+    },
+    {
+     "kind": "val",
+     "name": "reachIndexed",
+     "spec": "val reachIndexed : unitCore list * string list -> Core.program",
+     "doc": "`reachIndexed (units, roots)` is `reach (join ps, roots)` where `ps` is\nthe units' programs, a declaration read only where it is reached.\n\nA type is the first unit's that declares it, as `join` keeps it.\nRaises `Error` where an index is no index.\n\n",
+     "page": "sig/CORE_UNITS.md#val-reachindexed"
     },
     {
      "kind": "val",
@@ -989,7 +1038,7 @@
      "kind": "val",
      "name": "findInstance",
      "spec": "val findInstance : env * string * string -> instance option",
-     "doc": "`findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`.\n\n",
+     "doc": "`findInstance (env, cls, tycon)` is the instance of `cls` at `tycon`,\na read of the instance's, found or not (HsUsage, H2).\n\n",
      "page": "sig/HS_CLASSES.md#val-findinstance"
     },
     {
@@ -998,6 +1047,13 @@
      "spec": "val instances : env -> instance list",
      "doc": "`instances env` is every instance of `env`.\n\n",
      "page": "sig/HS_CLASSES.md#val-instances"
+    },
+    {
+     "kind": "val",
+     "name": "classList",
+     "spec": "val classList : env -> class list",
+     "doc": "`classList env` is every class of `env`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-classlist"
     },
     {
      "kind": "val",
@@ -1063,9 +1119,51 @@
     {
      "kind": "val",
      "name": "program",
-     "spec": "val program : {modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,\n               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option, entity : string * string * string -> string,\n               runtime : Core.program, leaves : (string * string list) list, main : string}\n              -> Core.program",
-     "doc": "`program {modules, infer, evidence, derived, prelude, entity, runtime, leaves, main}` is the Core program of the checked `modules`.\n\nThe modules are every module of the program and of the library it\nreaches, whose checking left the environment `infer`, the records\n`evidence` and the methods of the derived instances, `derived`, each\nwith its module and its instance's identity (HsDerive, M14), which are\ndesugared as a written instance's.\n\n`prelude` and `entity` find what the translations name (HsDsEnv);\n`runtime` is rhc's runtime in Core, whose types it is written against\nand which it does not repeat; `leaves` are the modules of primitives\nthat no file holds, each with what it exports, the runtime's values of\nthose names; `main` is the key of the program's `main`. The result\nholds what `main` reaches, and the data types of the program.\n\n**Raises** `Fail` for what the checker should have refused, or a form\nthis desugaring does not take, with a message.\n\n",
+     "spec": "val program : {modules : module_ list, groups : string list list, infer : HsInfer.env, evidence : HsEvidence.table,\n               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,\n               entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list,\n               main : string}\n              -> Core.program",
+     "doc": "`program {modules, groups, infer, evidence, derived, prelude, entity, runtime, leaves, main}` is the Core program of the checked `modules`.\n\nThe modules are every module of the program and of the library it\nreaches, in `groups`, their strongly connected groups by identity in\norder, each desugared as a unit after those before it (`unit`). Their\nchecking left the environment `infer`, the records `evidence` and the\nmethods of the derived instances, `derived`, each with its module and\nits instance's identity (HsDerive, M14), which are desugared as a\nwritten instance's.\n\n`prelude` and `entity` find what the translations name (HsDsEnv);\n`runtime` is rhc's runtime in Core, whose types it is written against\nand which it does not repeat; `leaves` are the modules of primitives\nthat no file holds, each with what it exports, the runtime's values of\nthose names; `main` is the key of the program's `main`. The result\nholds what `main` reaches, and the data types it names, each body made\nonly where `main` reaches it.\n\n**Raises** `Fail` for what the checker should have refused, or a form\nthis desugaring does not take, with a message.\n\n",
      "page": "sig/HS_DESUGAR.md#val-program"
+    },
+    {
+     "kind": "type",
+     "name": "interface",
+     "spec": "type interface = {core : Core.program, primTypes : (string * string) list, builtinCons : (string * string) list,\n                  fields : (string * string list) list, constructors : (string * string list) list,\n                  leaves : string list, defaults : string list, forced : (string * bool list) list}",
+     "doc": "What a unit's desugaring leaves the units after it.\n\n`core` is its types and its values as imports (`(import x TYPE)`);\n`primTypes` each type of the library with no constructor, by key, made\nCore's own, and `builtinCons` Bool's constructors, Core's; `fields`\neach constructor's fields' keys (`\"\"` for one with no name), and\n`constructors` each data type's constructors' keys, in order; `leaves`\nthe keys of the leaves' values, and `defaults` the methods with a\ndefault (a `%dm:` value); `forced` each constructor with a strict field\nof a newtype's type, lazy in Core, by the fields it forces where it is\napplied (HsDsCore.forced).\n\n",
+     "page": "sig/HS_DESUGAR.md#type-interface"
+    },
+    {
+     "kind": "val",
+     "name": "unit",
+     "spec": "val unit : {interfaces : interface list, modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,\n            derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,\n            entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list,\n            main : string option}\n           -> Core.program * interface",
+     "doc": "`unit p` is the Core of the unit of the modules of `p`, after the units\nof its interfaces, in order, and its interface.\n\nThe Core is its types, a copy of each type of the units before that it\nnames, an import of each of their values that it names, and every\nvalue it defines; the runtime's names are left to the runtime's unit.\n`infer` and `evidence` are a checking that holds the unit's modules and\nwhat they import; `leaves` is the first unit's, and `main`, the key of\nthe program's `main`, the unit's that defines it, whose Core then has\nCore's `main`. The rest is as `program` takes it.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-unit"
+    },
+    {
+     "kind": "type",
+     "name": "library",
+     "spec": "type library",
+     "doc": "The library's units, desugared once (D45's saved world), each value's\nbody made the first time it is wanted.\n\n",
+     "page": "sig/HS_DESUGAR.md#type-library"
+    },
+    {
+     "kind": "val",
+     "name": "library",
+     "spec": "val library : {modules : module_ list, groups : string list list, infer : HsInfer.env, evidence : HsEvidence.table,\n               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,\n               entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list}\n              -> library",
+     "doc": "`library p` is the units of the groups of `p` that hold modules marked\n`library`.\n\n`p` is a checking of the library alone (every instance of its\nenvironment is the library's), in `program`'s form without `main`.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-library"
+    },
+    {
+     "kind": "val",
+     "name": "prepare",
+     "spec": "val prepare : library -> unit",
+     "doc": "`prepare lib` makes every body of `lib` now, as a saved world keeps\nthem; a body that fails is failed again where a program reaches it.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-prepare"
+    },
+    {
+     "kind": "val",
+     "name": "programOn",
+     "spec": "val programOn : library * {modules : module_ list, groups : string list list, infer : HsInfer.env,\n                           evidence : HsEvidence.table, derived : (string * string * HsAst.decl list) list,\n                           prelude : string * string -> string option, entity : string * string * string -> string,\n                           main : string}\n                -> Core.program",
+     "doc": "`programOn (lib, p)` is `program` of `p` with the library's units\n`lib`: the groups of `p` that hold no module of the library desugared\nafter them.\n\nThe modules, environment, records and derived instances of `p` are the\nwhole checking's, the library's among them, as `program` takes them;\na value of the library is `lib`'s.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-programon"
     },
     {
      "kind": "val",
@@ -1078,7 +1176,7 @@
      "kind": "val",
      "name": "missingPrimitives",
      "spec": "val missingPrimitives : unit -> string list",
-     "doc": "`missingPrimitives ()` is each primitive of the library that the last\n`program` found neither in Core nor in the runtime, or of another type.\n\nEach is an error where it is used.\n\n",
+     "doc": "`missingPrimitives ()` is each primitive of the library that the last\ndesugaring found neither in Core nor in the runtime, or of another\ntype.\n\nIt is of the bodies the desugaring made, the library's made once among\nthem.\n\nEach is an error where it is used.\n\n",
      "page": "sig/HS_DESUGAR.md#val-missingprimitives"
     }
    ]
@@ -1116,11 +1214,53 @@
      "page": "sig/HS_DS_CORE.md#val-fresh"
     },
     {
+     "kind": "type",
+     "name": "saved",
+     "spec": "type saved",
+     "doc": "What is known of the declarations, kept: so that a desugaring of the\nlibrary's modules, made once, is where each program's starts.\n\n",
+     "page": "sig/HS_DS_CORE.md#type-saved"
+    },
+    {
+     "kind": "val",
+     "name": "save",
+     "spec": "val save : unit -> saved",
+     "doc": "`save ()` is what is known now.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-save"
+    },
+    {
+     "kind": "val",
+     "name": "restore",
+     "spec": "val restore : saved -> unit",
+     "doc": "`restore s` makes `s` what is known.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-restore"
+    },
+    {
+     "kind": "val",
+     "name": "canonical",
+     "spec": "val canonical : Core.exp -> Core.exp",
+     "doc": "`canonical e` is `e` with each name made here that it binds numbered\nagain, from 1 in the order they are bound, its base kept.\n\nSo a value's Core is the same whatever was made before it.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-canonical"
+    },
+    {
      "kind": "val",
      "name": "declare",
      "spec": "val declare : Core.decl -> unit",
-     "doc": "`declare d` adds the data type, newtype or value `d` to what is known.\n\nA value is known by its type.\n\n",
+     "doc": "`declare d` adds the data type, newtype, value or import `d` to what is\nknown.\n\nA value is known by its type.\n\n",
      "page": "sig/HS_DS_CORE.md#val-declare"
+    },
+    {
+     "kind": "val",
+     "name": "tupleArity",
+     "spec": "val tupleArity : string -> int option",
+     "doc": "`tupleArity c` is the number of components of the tuple whose type and\nconstructor are named `c`, `(,...,)`.\n\nA tuple is of arbitrary length (3.8): one not declared is declared\nwhere it is first wanted, by `tycon`, `conInfo` and the other lookups,\nand `valueType` gives its constructor as a function its type.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-tuplearity"
+    },
+    {
+     "kind": "val",
+     "name": "tupleData",
+     "spec": "val tupleData : int -> Core.decl",
+     "doc": "`tupleData n` is the declaration of the tuple of `n` components.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-tupledata"
     },
     {
      "kind": "val",
@@ -1271,6 +1411,34 @@
     },
     {
      "kind": "val",
+     "name": "forceRep",
+     "spec": "val forceRep : texp * (unit -> texp) -> texp",
+     "doc": "`forceRep (x, k)` evaluates `x`'s representation, through every newtype\nat its head, by casts, before `k ()`: what a strict field of a newtype's\ntype forces.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-forcerep"
+    },
+    {
+     "kind": "val",
+     "name": "forced",
+     "spec": "val forced : string -> bool list",
+     "doc": "`forced k` is whether each field of the constructor `k` is forced where\nit is applied: its `!`, or a strict field of a newtype's type, lazy in\nCore (`setForced`).\n\n",
+     "page": "sig/HS_DS_CORE.md#val-forced"
+    },
+    {
+     "kind": "val",
+     "name": "setForced",
+     "spec": "val setForced : string * bool list -> unit",
+     "doc": "`setForced (k, flags)` gives the constructor `k` the fields it forces,\nwhere they are not its fields' `!`.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-setforced"
+    },
+    {
+     "kind": "val",
+     "name": "forcedOverrides",
+     "spec": "val forcedOverrides : unit -> (string * bool list) list",
+     "doc": "`forcedOverrides ()` is each constructor `setForced` gave its flags.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-forcedoverrides"
+    },
+    {
+     "kind": "val",
      "name": "caseCon",
      "spec": "val caseCon : Core.atom * Core.ty * (string * ((string * Core.ty) list -> texp)) list * texp option -> texp",
      "doc": "`caseCon (x, ty, alts, default)` is a `case` on the atom `x` of the\ndata type `ty`.\n\nIt has an alternative for each constructor of `alts`, made of its\nfields' names and types, and `default` for the others, left out where\n`alts` covers them all.\n\n**Raises** `Fail` where `ty` is not a data type.\n\n",
@@ -1358,6 +1526,55 @@
      "spec": "val start : program -> unit",
      "doc": "`start p` makes `p` the program desugared, forgetting the last.\n\n",
      "page": "sig/HS_DS_ENV.md#val-start"
+    },
+    {
+     "kind": "val",
+     "name": "continue",
+     "spec": "val continue : program -> unit",
+     "doc": "`continue p` makes `p` the program desugared, keeping what is known of\nits types and constructors: a program's, after its library's.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-continue"
+    },
+    {
+     "kind": "type",
+     "name": "saved",
+     "spec": "type saved",
+     "doc": "What is known of the types and constructors, kept.\n\n",
+     "page": "sig/HS_DS_ENV.md#type-saved"
+    },
+    {
+     "kind": "val",
+     "name": "save",
+     "spec": "val save : unit -> saved",
+     "doc": "`save ()` is what is known now.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-save"
+    },
+    {
+     "kind": "val",
+     "name": "restore",
+     "spec": "val restore : saved -> unit",
+     "doc": "`restore s` makes `s` what is known.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-restore"
+    },
+    {
+     "kind": "type",
+     "name": "known",
+     "spec": "type known = {primTypes : (string * string) list, builtinCons : (string * string) list,\n              fields : (string * string list) list}",
+     "doc": "What is known of the types and constructors, as lists, for a unit's\ninterface.\n\nEach type of the library made Core's own, by key, Bool's constructors,\nand each constructor's fields, by key.\n\n",
+     "page": "sig/HS_DS_ENV.md#type-known"
+    },
+    {
+     "kind": "val",
+     "name": "known",
+     "spec": "val known : unit -> known",
+     "doc": "`known ()` is what is known now, each list by key.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-known"
+    },
+    {
+     "kind": "val",
+     "name": "learn",
+     "spec": "val learn : known -> unit",
+     "doc": "`learn k` adds `k` to what is known.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-learn"
     },
     {
      "kind": "val",
@@ -1827,8 +2044,56 @@
     }
    ]
   },
+  "HS_IFACE": {
+   "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface), and the desugaring's part, its Core among it, as text the\ndesugaring gives. The unfoldings section is in the format from the\nstart and empty until M23 (D44's C).\n\n",
+   "page": "sig/HS_IFACE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list}",
+     "doc": "A unit's interface: its modules', the desugaring's part, and the\nunfoldings, none yet.\n\n",
+     "page": "sig/HS_IFACE.md#type-t"
+    },
+    {
+     "kind": "exception",
+     "name": "Bad",
+     "spec": "exception Bad of string",
+     "doc": "What makes text no interface: where, and what.\n\n",
+     "page": "sig/HS_IFACE.md#exn-bad"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : t -> string",
+     "doc": "`encode t` is `t` as text, which `decode` reads back.\n\nA kind or a type variable linked is written as what it is linked to;\none left unsolved, which no interface's generalized types hold, raises\n`Bad`.\n\n",
+     "page": "sig/HS_IFACE.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string -> t",
+     "doc": "`decode s` is the interface `encode` wrote as `s`.\n\n**Raises** `Bad` where `s` is not such text.\n\n",
+     "page": "sig/HS_IFACE.md#val-decode"
+    },
+    {
+     "kind": "val",
+     "name": "encodeModule",
+     "spec": "val encodeModule : HsModIface.t -> string",
+     "doc": "`encodeModule m` and `decodeModule s` are one module's interface's\npart of the text, for its tests.\n\n",
+     "page": "sig/HS_IFACE.md#val-encodemodule"
+    },
+    {
+     "kind": "val",
+     "name": "decodeModule",
+     "spec": "val decodeModule : string -> HsModIface.t",
+     "doc": "`encodeModule m` and `decodeModule s` are one module's interface's\npart of the text, for its tests.\n\n",
+     "page": "sig/HS_IFACE.md#val-decodemodule"
+    }
+   ]
+  },
   "HS_INFER": {
-   "doc": "Haskell 98's type checker (the haskell98 roadmap's M13, D30, D31, D32,\nD33): one inference over the renamed, fixity-resolved trees of a unit,\nthe modules of one strongly connected group, joined, so that a binding\ngroup or a type group may cross its modules, with what it chose\nrecorded by node in HsEvidence's table.\n\nTypes by first-order unification with levels; kinds by HsKinds;\nclasses, instances and the derived instances' contexts, by the fixpoint\n10\\.1 allows, in HsClasses; each overloaded use leaves a placeholder,\nresolved at generalisation as a dictionary parameter, an instance's\ndictionary, a superclass's, deferred outward, or defaulted. Declaration\ngroups by dependency, explicitly typed bindings apart (Typing Haskell in\nHaskell's split, R21(c)), one context for each implicit group (R21(a)),\nthe contexts of a group's signatures identical up to renaming (R21(b)),\na signature on a pattern binding that is not simple refused (R19), and\nthe monomorphism restriction by 4.5.5's simple pattern binding (R18).\nA restricted group's constrained variables stay open, and at the top\nlevel are defaulted at the end of the module (R20), by the `default` of\nthe module their constraints arose in, refused where two modules'\ndiffer, and refused where another module of the cycle fixes one (D30);\nunder `--cycle-default=scc`, by the group's one `default`, and closed at\nthe end of the group (an extension). Defaulting by 4.3.4's conditions\n(R22).\n\n",
+   "doc": "Haskell 98's type checker (the haskell98 roadmap's M13, D30, D31, D32,\nD33): one inference over the renamed, fixity-resolved trees of a unit,\nthe modules of one strongly connected group, joined, so that a binding\ngroup or a type group may cross its modules, with what it chose\nrecorded by node in HsEvidence's table.\n\nTypes by first-order unification with levels; kinds by HsKinds;\nclasses, instances and the derived instances' contexts, by the fixpoint\n10\\.1 allows, in HsClasses; each overloaded use leaves a placeholder,\nresolved at generalisation as a dictionary parameter, an instance's\ndictionary, a superclass's, deferred outward, or defaulted. Declaration\ngroups by dependency of bindings alone, a signature cutting none, each\ngroup's explicitly typed bindings apart and its implicitly typed ones\ntyped as one (Typing Haskell in Haskell's split in its conformant form,\nR21(c)), one context for each implicit group (R21(a)),\nthe contexts of a group's signatures identical up to renaming (R21(b)),\na signature on a pattern binding that is not simple refused (R19), and\nthe monomorphism restriction by 4.5.5's simple pattern binding (R18).\nA restricted group's constrained variables stay open, and at the top\nlevel are defaulted at the end of the module (R20), by the `default` of\nthe module their constraints arose in, refused where two modules'\ndiffer, and refused where another module of the cycle fixes one (D30);\nunder `--cycle-default=scc`, by the group's one `default`, and closed at\nthe end of the group (an extension). Defaulting by 4.3.4's conditions\n(R22).\n\n",
    "page": "sig/HS_INFER.md",
    "members": [
     {
@@ -1870,8 +2135,29 @@
      "kind": "val",
      "name": "renumber",
      "spec": "val renumber : int -> unit",
-     "doc": "`renumber n` makes the checker's next fresh variables, and HsTypes',\nnumber from `n`.\n\nA program's are then numbered alike however much of the library was\nchecked before it (rhc's saved world).\n\n**Raises** `Fail` where a variable has had `n` already.\n\n",
+     "doc": "`renumber n` makes the checker's next fresh variables, and HsTypes',\nnumber from `n`, where they have not passed it.\n\nA program's are then numbered alike however much of the library was\nchecked before them (rhc's saved world, a program checked by\ninterfaces), and stay apart from each other and from the library's,\nsince a dictionary's name is one of them.\n\n",
      "page": "sig/HS_INFER.md#val-renumber"
+    },
+    {
+     "kind": "type",
+     "name": "part",
+     "spec": "type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,\n             instances : HsClasses.instance list,\n             cons : (string * {tycon : string, arity : int, fields : string list}) list,\n             fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,\n             methods : (string * {cls : string, scheme : HsTypes.scheme}) list}",
+     "doc": "What the environment holds of one module's entities, by key.\n\nThat is its values' types (its constructors', fields' and methods'\namong them), its type constructors and synonyms, its classes, the\ninstances it declares or derives, and what the checker keeps of its\nconstructors, fields and methods. A unit's interface holds its\nmodules' parts (HsModIface, the haskell98 roadmap's M21).\n\n",
+     "page": "sig/HS_INFER.md#type-part"
+    },
+    {
+     "kind": "val",
+     "name": "part",
+     "spec": "val part : env * (string -> bool) -> part",
+     "doc": "`part (env, mine)` is what `env` holds of the entities whose module's\nidentity `mine` accepts, and of the instances it declares.\n\n",
+     "page": "sig/HS_INFER.md#val-part"
+    },
+    {
+     "kind": "val",
+     "name": "extend",
+     "spec": "val extend : env * part -> env",
+     "doc": "`extend (env, p)` is `env` with the part `p`, as a client checks\nagainst a module it has only the interface of.\n\n",
+     "page": "sig/HS_INFER.md#val-extend"
     },
     {
      "kind": "val",
@@ -2199,10 +2485,17 @@
      "page": "sig/HS_LINT.md#type-target"
     },
     {
+     "kind": "type",
+     "name": "library",
+     "spec": "type library",
+     "doc": "HsLint's inference of a library's modules, as a saved world keeps it.\n\nIt is their environment and what their inference found, from which a\nprogram's own modules are inferred alone (D45).\n\n",
+     "page": "sig/HS_LINT.md#type-library"
+    },
+    {
      "kind": "val",
      "name": "check",
-     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report * target",
-     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault}`\nis `infer`'s report, with the checker's records replayed and compared.\n\nIt gives what the target check reads with the report. With `records`, the checker's evidence records and environment\n(HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
+     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}\n            -> {report : report, target : target, library : library option}",
+     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is `infer`'s report, with the checker's records replayed and\ncompared.\n\nWith `library`, the groups of its modules are not inferred again: the\nrest are inferred after its environment and findings, and only the\nrecords of those modules are replayed, the library's having been\nreplayed where the library was inferred. The report is of the modules\ninferred. Where every module of `groups` is the library's, the result\nholds their inference, for a saved world; NONE otherwise.\n\nIt gives what the target check reads with the report. With `records`,\nthe checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
      "page": "sig/HS_LINT.md#val-check"
     },
     {
@@ -2411,6 +2704,40 @@
      "spec": "val solve : {group : unit_ list, exportsOf : string -> entity list, defOf : string -> def option,\n             universe : entity list, fixpoint : fixpoint} -> solved",
      "doc": "`solve {group, exportsOf, defOf, universe, fixpoint}` solves the\nexports and the scopes of the strongly connected group of modules\n`group`.\n\n`exportsOf id` gives the exports of a module outside the group,\nsolved before it, `defOf` gives the definition of every entity of the\nprogram, by `key`, and `universe` is every entity of the program,\nfrom which the greatest fixpoint starts. The errors are\nthose of chapter 5: an export of what is not in scope, of a module\nthat is not imported, two entities exported under one name, an import\nof what a module does not export.\n\n",
      "page": "sig/HS_MODULES.md#val-solve"
+    }
+   ]
+  },
+  "HS_MOD_IFACE": {
+   "doc": "A module's interface as the renamer and the checker make it (the\nhaskell98 roadmap's M21, D44): what a client of the module needs of it\nto be named and checked against it in place of its source, by entity,\nand the fingerprints a store's usages compare (E13's H5, H6). HsIface,\nrhc's interface of a unit, holds one for each of its modules beside its\nCore, and codes them.\n\n",
+   "page": "sig/HS_MOD_IFACE.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t = {id : string, exports : HsModules.entity list, defs : HsModules.def list,\n          fixities : (string * (HsAst.fixity * int)) list, checked : HsInfer.part}",
+     "doc": "A module's interface, what a client is named and checked by.\n\nIt holds the module's identity; what it exports, by entity, as\nHsModules solved them; what it defines at its top level, with its\nsort, parent and arity, which an import of `T(..)` reads; the\nfixities of its operators, by entity key; and its part of the\nchecker's environment.\n\n",
+     "page": "sig/HS_MOD_IFACE.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "make",
+     "spec": "val make : {id : string, exports : HsModules.entity list, defs : HsModules.def list,\n            fixity : string -> (HsAst.fixity * int) option, env : HsInfer.env} -> t",
+     "doc": "`make {id, exports, defs, fixity, env}` is the interface of the module\n`id`, from the program's tables after its unit is checked.\n\n`fixity key` is the fixity of an operator, and `env` the checker's\nenvironment.\n\n",
+     "page": "sig/HS_MOD_IFACE.md#val-make"
+    },
+    {
+     "kind": "val",
+     "name": "canonical",
+     "spec": "val canonical : t -> (string * string) list",
+     "doc": "`canonical t` is each item of the interface by its key, with the text\nthat stands for what a client reads of it.\n\nAn item is a type with its constructors and fields, a class with its\nmethods, a value, or an instance by its identity; its text holds keys,\nkinds, schemes over `TGen` numbers, contexts, and the fixities of its\nnames. Two interfaces that a client reads alike have the same text.\n\n",
+     "page": "sig/HS_MOD_IFACE.md#val-canonical"
+    },
+    {
+     "kind": "val",
+     "name": "fingerprints",
+     "spec": "val fingerprints : (string -> string) -> t * (string -> string option) -> (string * string) list",
+     "doc": "`fingerprints hash (t, external)` is the fingerprint of each entity\nand instance of `t`, by its key or identity.\n\nA type's constructors and fields and a class's methods have their\nparent's.\n\nItems are taken in recursive groups (one mentions another, through a\ntype, a class, a superclass, an instance's class, type or context): a\ngroup's fingerprint is `hash` of its members' canonical text and of\nthe fingerprints of the entities outside the module they mention,\n`external key` (the key itself where that is NONE: a built-in type),\nso that it moves where what a client reads of it moves, and with what\nit mentions.\n\n",
+     "page": "sig/HS_MOD_IFACE.md#val-fingerprints"
     }
    ]
   },
@@ -2954,7 +3281,7 @@
      "kind": "val",
      "name": "renumber",
      "spec": "val renumber : int -> unit",
-     "doc": "`renumber n` makes the next fresh unification and kind variables\nnumber from `n`.\n\nWhat follows is then numbered alike however much came before (rhc's\nsaved world).\n\n**Raises** `Fail` where a variable has had `n` already.\n\n",
+     "doc": "`renumber n` makes the next fresh unification and kind variables\nnumber from `n`, where they have not passed it.\n\nWhat follows is then numbered alike however much came before it below\n`n` (rhc's saved world, a program checked by interfaces).\n\n",
      "page": "sig/HS_TYPES.md#val-renumber"
     },
     {
@@ -3070,6 +3397,47 @@
      "page": "sig/HS_TYPES.md#val-showscheme"
     }
    ]
+  },
+  "HS_USAGE": {
+   "doc": "What a compile of a unit reads of the units it imports (the haskell98\nroadmap's M21, E13's obligations H1, H2, H7 and H9), noted where the\nrenamer, the checker and the translations read it, so that a store's\nentry of the unit is used only where each read gives now what it gave\nthen. A read is noted found or not: a name a module looks up and does\nnot find is read too, since an import that comes to export it changes\nthe module (5.5.2). The note is a no-op until a driver sets it (rhc's,\nsrc/rhc/iface.sml).\n\n",
+   "page": "sig/HS_USAGE.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "read",
+     "spec": "datatype read =\n    Name of {within : string, space : string, qual : string, name : string}\n  | Item of {from : string, space : string, name : string}\n  | Exports of string\n  | Instance of {cls : string, tycon : string}\n  | Standard of {space : string, name : string}\n  | Entity of string",
+     "doc": "A read. Spaces are `\"v\"` for a value and `\"t\"` for a type or class,\nand entities, classes and type constructors are by their keys\n(HsModules.key).\n\n",
+     "page": "sig/HS_USAGE.md#type-read"
+    },
+    {
+     "kind": "val",
+     "name": "setNote",
+     "spec": "val setNote : (read -> unit) -> (read -> unit)",
+     "doc": "`setNote f` makes `f` the recorder, called with each read as it is\nmade, and is the recorder before it: until a driver sets one, a no-op.\n\n",
+     "page": "sig/HS_USAGE.md#val-setnote"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : read -> unit",
+     "doc": "`read r` notes `r`.\n\n",
+     "page": "sig/HS_USAGE.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "key",
+     "spec": "val key : read -> string",
+     "doc": "`key r` is `r` as one line of text, its fields apart by spaces, the\nname of a store's usage.\n\n**Example** `key (Exports \"M\") = \"exports M\"`\n\n",
+     "page": "sig/HS_USAGE.md#val-key"
+    },
+    {
+     "kind": "val",
+     "name": "fromKey",
+     "spec": "val fromKey : string -> read option",
+     "doc": "`fromKey s` is the read whose key is `s`, NONE for none.\n\n",
+     "page": "sig/HS_USAGE.md#val-fromkey"
+    }
+   ]
   }
  },
  "structures": {
@@ -3094,6 +3462,7 @@
   "HsDump": "HS_DUMP",
   "HsEvidence": "HS_EVIDENCE",
   "HsFixity": "HS_FIXITY",
+  "HsIface": "HS_IFACE",
   "HsInfer": "HS_INFER",
   "HsKinds": "HS_KINDS",
   "HsLayout": "HS_LAYOUT",
@@ -3101,6 +3470,7 @@
   "HsLint": "HS_LINT",
   "HsLiterate": "HS_LITERATE",
   "HsMatch": "HS_MATCH",
+  "HsModIface": "HS_MOD_IFACE",
   "HsModules": "HS_MODULES",
   "HsParser": "HS_PARSER",
   "HsPrint": "HS_PRINT",
@@ -3109,6 +3479,7 @@
   "HsSource": "HS_SOURCE",
   "HsStringMap": "HS_STRING_MAP",
   "HsToken": "HS_TOKEN",
-  "HsTypes": "HS_TYPES"
+  "HsTypes": "HS_TYPES",
+  "HsUsage": "HS_USAGE"
  }
 }

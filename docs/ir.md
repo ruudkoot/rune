@@ -681,7 +681,12 @@ forms that SML's elaborator never makes, for a front end whose types say
 more: `App`, a type variable applied to types (Haskell's `m a`, in the
 text `'a 'm`), whose variable stands for a type name given fewer arguments
 than its datatype has parameters (`list`, of `'a list`), so that its
-instance at `list` and `int` is `int list`; and `Forall`, the polymorphic
+instance at `list` and `int` is `int list` -- or for the arrow given fewer
+than two (Haskell's `(->)`, which an instance head may name: ruling 60),
+in the text `(->)` and `int (->)`, so that `int 'm` at `int (->)` is `int ->
+int`, the arrow given both being the function type itself (`Ty.arrowName`,
+`Ty.arrowStamp`; MidLint holds it to two, as a type name to its
+parameters); and `Forall`, the polymorphic
 type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
 'b)`), which binds its own variables. A forall is the same type as one that
 differs from it only in the names it binds (`Ty.equal`), and a
@@ -721,6 +726,13 @@ function would take it apart, since a parameter's type is no forall;
   is given no more arguments than its datatype has parameters, and as many
   where it is a value's type -- fewer only where a type is given a type
   variable or a type name. Each type once, by its node.
+* **A use's type arguments, in rhc's Mid** (the haskell98 roadmap's D4 and
+  M10b): a type variable stands for a value, so no use is given a type with
+  `susp` at its head. MidLint does not hold this, since SML uses its
+  polymorphic functions at `T susp` (R's thunk kernels; a `(T susp) ref`'s
+  parameter is no polymorphic use either); Core to Mid holds its own text to
+  it at lint level 2 (`CoreToMid.checking`), and `--fault=susp-type-arg` is
+  its mutant (`tests/hs/core/fault-susp-type-arg.core`).
 * **Calls:** a function of other than one parameter is only called, with
   an argument for each, and never used as a value.
 * **Cases:** the value a `Case` tests is a datatype's; each arm is a
@@ -859,8 +871,11 @@ its own, and forcing one is one step.
   given, made a `K_THUNK` in place (or a copy of one that captures nothing, which may
   be shared); `UPDATE` makes it an indirection to its value (`K_IND`), which a force
   reads and the collector shortcuts. A suspension forced while its code runs is a loop,
-  a fatal error (`<<loop>>`), and so is one that code left by a raise: Haskell 98's
-  errors end the program (the roadmap's D12).
+  and so is one that code left by a raise: `ENTER` raises the builtin exception `Loop`
+  on every engine, which a program may handle, and which rhc's top level takes for an
+  uncaught `NonTermination` (`<<loop>>`): status 1, the handles flushed (chapter 23;
+  the roadmap's ruling 58). Haskell 98's errors end the program (the roadmap's D12),
+  so no suspension is put back.
 
 ### Above Mid: rhc's Core simplifier
 

@@ -200,10 +200,14 @@ struct
                        decls)
     | NONE => []
 
-  fun collect (bindings : {id : T.id, scheme : T.scheme} list) : target =
+  (* `collect {bindings, classes, insts}`: of the bindings given, and of
+     the classes and instances `classes` and `insts` take; `join` puts two
+     together, a saved world's library's and a program's *)
+  fun collect {bindings : {id : T.id, scheme : T.scheme} list, classes = takeClass : C.class -> bool,
+               insts = takeInst : C.inst -> bool} : target =
     let
       val values = List.map (fn {id, scheme} => let val (t, n) = schemeTy [] scheme in (coreName id, t, n) end) bindings
-      val classList = M.foldl (fn (_, c, acc) => c :: acc) [] (!C.classes)
+      val classList = M.foldl (fn (_, c, acc) => if takeClass c then c :: acc else acc) [] (!C.classes)
       val selectors =
         List.concat
           (List.map
@@ -245,7 +249,9 @@ struct
         M.foldl
           (fn (_, is, acc) =>
              List.mapPartial
-               (fn {head = T.IsIn (cls, h), context, arity, ...} : C.inst =>
+               (fn i as {head = T.IsIn (cls, h), context, arity, ...} : C.inst =>
+                  if not (takeInst i) then NONE
+                  else
                   case E.headTycon (T.IsIn (cls, h)) of
                     SOME tc =>
                       let
@@ -262,6 +268,9 @@ struct
     in
       {values = values @ selectors, classes = classes, dfuns = dfuns}
     end
+
+  fun join (a : target, b : target) : target =
+    {values = #values a @ #values b, classes = #classes a @ #classes b, dfuns = #dfuns a @ #dfuns b}
 
   (* ---- the check ---- *)
 

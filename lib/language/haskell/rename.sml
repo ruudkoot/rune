@@ -27,6 +27,10 @@ struct
 
   fun builtin name = A.isSpecial {qual = "", name = name} orelse name = ":"
 
+  (* a space as a read names it (HsUsage) *)
+  fun spaceText Mo.Value = "v"
+    | spaceText Mo.Type = "t"
+
   fun isConName name =
     size name > 0 andalso (Char.isUpper (String.sub (name, 0)) orelse String.sub (name, 0) = #":")
 
@@ -57,7 +61,8 @@ struct
       case (if qual = "" andalso space = Mo.Value then M.find (env, name) else NONE) of
         SOME u => (A.Name (a, {qual = "", name = u}), NONE)
       | NONE =>
-          case Mo.lookup (!theScope, space, qual, name) of
+          case (HsUsage.read (HsUsage.Name {within = !home, space = spaceText space, qual = qual, name = name});
+                Mo.lookup (!theScope, space, qual, name)) of
             [e] => (A.Name (a, {qual = #home e, name = #name e}), SOME e)
           | [] => (err (#span a, what (space, name) ^ " `" ^ A.nameText q ^ "` is not in scope"); (n, NONE))
           | es =>

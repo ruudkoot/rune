@@ -1,4 +1,4 @@
--- rows: tr.lit.float exp.lit.int.anybase pat.m.lit.interp R14
+-- rows: tr.lit.float exp.lit.int.anybase pat.m.lit.interp R14 exp.trans.preserve
 -- Report 3.2: an integer literal is fromInteger applied to an Integer, octal and hexadecimal ones too, and a floating
 -- literal fromRational applied to a Rational; 3.17.2: in a pattern as well.
 module Main (main) where

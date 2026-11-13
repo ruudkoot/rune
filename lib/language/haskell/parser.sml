@@ -560,9 +560,11 @@ struct
         failAt (na, "in a pattern, the variable `" ^ name ^ "` applied to arguments: only a constructor can be")
     | A.PJux _ => failAt (sp, "in a pattern, arguments applied to something other than a constructor")
     | A.PSeq [A.PA (A.P (va, A.PVar v)), A.PO (A.VarOp (A.Name (pa, {qual = "", name = "+"}))),
-              A.PA (A.P (ka, A.PLit (k as A.Lit (_, A.LInt _))))] =>
-        if nk then A.P (absorb (sp, mergeToks (toksOf va, mergeToks (toksOf pa, toksOf ka))), A.PNPlusK (v, k))
-        else failAt (sp, "an n+k pattern where only an atomic pattern or a constructor's may stand")
+              A.PA (A.P (ka, A.PLit (k as A.Lit (_, A.LInt (kv, _)))))] =>
+        if not nk then failAt (sp, "an n+k pattern where only an atomic pattern or a constructor's may stand")
+        (* 3.17.2's positive integer literal, over the grammar's integer (R15, as Hugs) *)
+        else if kv = IntInf.fromInt 0 then failAt (ka, "an n+k pattern's k is a positive integer literal (3.17.2), and 0 is not")
+        else A.P (absorb (sp, mergeToks (toksOf va, mergeToks (toksOf pa, toksOf ka))), A.PNPlusK (v, k))
     | A.PSeq items =>
         A.P (sp, A.PSeq (List.map
           (fn A.PA p => A.PA (toPat false p)

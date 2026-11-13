@@ -1,3 +1,4 @@
+-- rows: R3
 -- Report 9.3, Note 1: "A nested context must be further indented than the enclosing context (n>m)": the Report's
 -- example, whose p z = z stands left of h y, is refused.
 module Main (main) where

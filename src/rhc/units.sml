@@ -33,10 +33,11 @@ struct
   (* what a unit compiled is: its name, its code, how each of its values is
      made (CoreToMid.abi), and the values it exports, which are all its
      own *)
-  type compiled = {name : string, code : Link.unitCode, abi : (string * CoreToMid.abi) list, exports : string list}
+  type compiled = {name : string, code : Link.unitCode option, abi : (string * CoreToMid.abi) list, exports : string list,
+                   iface : Core.program, newtypes : (string * bool) list}
 
   (* The unit p compiled, named name, against the units compiled before it
-     (earlier): each import's owner and making from the first of them that
+     (earlier): each import's owner and making from the latest of them that
      exports it *)
   fun compile ({name, earlier, fault} : {name : string, earlier : compiled list, fault : CoreToMid.fault option})
               (p : Core.program) : compiled =
@@ -46,14 +47,27 @@ struct
       val makesShared = null earlier
       val imports = List.mapPartial (fn Core.Import (x, _) => SOME x | _ => NONE) p
                     @ (if makesShared then [] else CoreToMid.shared)
+      (* the latest unit before this one that exports x, as the driver takes
+         a name from *)
       fun ownerOf x =
-        case List.find (fn (u : compiled) => List.exists (fn y => y = x) (#exports u)) earlier of
+        case List.find (fn (u : compiled) => List.exists (fn y => y = x) (#exports u)) (List.rev earlier) of
           SOME u => u
         | NONE => raise Error ("the unit " ^ name ^ " imports " ^ x ^ ", which no unit before it exports")
       val importAbi = List.map (fn x => case List.find (fn (y, _) => y = x) (#abi (ownerOf x)) of
                                           SOME (_, a) => (x, a)
                                         | NONE => raise Error ("no making of " ^ x)) imports
-      val {text, names, abi} = CoreToMid.unit ({fault = fault, imports = importAbi, makesShared = makesShared}, p)
+      (* each newtype p copies of another unit, a box where that unit made
+         it one: the latest unit before this one that declares it *)
+      val copied =
+        List.mapPartial (fn Core.Newtype (t, _, _, _) =>
+                              List.foldl (fn (u : compiled, found) =>
+                                            case List.find (fn (n, _) => n = t) (#newtypes u) of
+                                              SOME nb => SOME nb
+                                            | NONE => found)
+                                         NONE earlier
+                          | _ => NONE) p
+      val {text, names, abi, boxed} =
+        CoreToMid.unit ({fault = fault, imports = importAbi, makesShared = makesShared, newtypes = copied}, p)
       val exports = List.map #1 abi
       (* the text's names of the entities, own and imported *)
       val byText = List.foldl (fn ((x, g), m) => StringMap.insert (m, g, x)) StringMap.empty names
@@ -114,14 +128,82 @@ struct
          globals = byPlace #2 (List.map (fn (s, ix) => (key s, ix)) (#globals sc)),
          imports = byPlace #1 (List.map (fn (ix, s) => (ix, key s)) (#imports sc)),
          exports = byPlace #1 (List.map (fn (s, ix) => (#number (key s), ix)) (#exports sc))}
-    in {name = name, code = u, abi = abi, exports = exports} end
+    in
+      {name = name, code = SOME u, abi = abi, exports = exports,
+       (* its interface: each of its values, and each type it declares *)
+       iface = CoreUnits.interface (p, List.mapPartial (fn Core.Val (x, _, _) => SOME x | Core.Data (t, _, _) => SOME t
+                                                         | Core.Newtype (t, _, _, _) => SOME t | _ => NONE) p),
+       newtypes = boxed}
+    end
+
+  (* ---- a unit kept in the store (RhcStore) ---- *)
+
+  fun abiName a = case a of CoreToMid.Function => "Function" | CoreToMid.Suspension => "Suspension" | CoreToMid.Literal => "Literal"
+  fun abiOf s =
+    case s of
+      "Function" => CoreToMid.Function
+    | "Suspension" => CoreToMid.Suspension
+    | "Literal" => CoreToMid.Literal
+    | _ => raise Error ("a unit's entry names no making " ^ s)
+
+  (* its interface's section: each value's making, a line each, then the
+     interface's Core *)
+  fun ifaceText ({abi, iface, newtypes, ...} : compiled) : string =
+    String.concat (List.map (fn (x, a) => "abi " ^ abiName a ^ " " ^ x ^ "\n") abi)
+    ^ String.concat (List.map (fn (t, b) => "newtype " ^ (if b then "box" else "bare") ^ " " ^ t ^ "\n") newtypes)
+    ^ "---\n" ^ CoreText.show iface
+
+  (* its code's section: its unit file's bytes *)
+  fun codeBytes ({code, ...} : compiled) : string = String.concat (UnitFile.chunks (MidPipeline.fingerprint (), valOf code))
+
+  (* the unit an entry keeps, named name *)
+  fun fromEntry (name : string, {iface, parts, ...} : RhcStore.sections) : compiled =
+    let
+      fun split (s, i) =
+        if i + 5 > String.size s then raise Error ("the entry of " ^ name ^ " has no interface")
+        else if String.substring (s, i, 5) = "\n---\n" then (String.substring (s, 0, i + 1), String.extract (s, i + 5, NONE))
+        else split (s, i + 1)
+      val (head, core) = if String.isPrefix "---\n" iface then ("", String.extract (iface, 4, NONE)) else split (iface, 0)
+      val facts = List.map (fn l => String.tokens (fn c => c = #" ") l) (String.tokens (fn c => c = #"\n") head)
+      val abi = List.mapPartial (fn ["abi", a, x] => SOME (x, abiOf a)
+                                  | ["newtype", _, _] => NONE
+                                  | l => raise Error ("the entry of " ^ name ^ " has a line " ^ String.concatWith " " l))
+                                facts
+      val newtypes = List.mapPartial (fn ["newtype", b, t] => SOME (t, b = "box") | _ => NONE) facts
+      val program = CoreText.parse core
+                    handle CoreText.Error (_, msg) => raise Error ("the entry of " ^ name ^ ": " ^ msg)
+      val (fp, u) = UnitFile.read (parts 0) handle UnitFile.Bad msg => raise Error ("the entry of " ^ name ^ ": " ^ msg)
+      val () = if fp = MidPipeline.fingerprint () then ()
+               else raise Error ("the entry of " ^ name ^ " is of another instruction set")
+    in {name = name, code = SOME u, abi = abi, exports = List.map #1 abi, iface = program, newtypes = newtypes} end
+
+  (* A unit checked and not compiled, its Core kept for a link that joins
+     the units' Core and compiles what main reaches whole (M21's C): its
+     interface, and its values' names; no making, no code *)
+  fun checked (name : string, p : Core.program) : compiled =
+    let val values = List.mapPartial (fn Core.Val (x, _, _) => SOME x | _ => NONE) p
+    in
+      {name = name, code = NONE, abi = [], exports = values, newtypes = [],
+       iface = CoreUnits.interface (p, values @ List.mapPartial (fn Core.Data (t, _, _) => SOME t
+                                                                  | Core.Newtype (t, _, _, _) => SOME t | _ => NONE) p)}
+    end
+
+  (* Its entry's interface section, as ifaceText gives it, read back *)
+  fun ifaceOf (name : string, iface : string) : Core.program =
+    let
+      fun split (s, i) =
+        if i + 5 > String.size s then raise Error ("the entry of " ^ name ^ " has no interface")
+        else if String.substring (s, i, 5) = "\n---\n" then String.extract (s, i + 5, NONE)
+        else split (s, i + 1)
+      val core = if String.isPrefix "---\n" iface then String.extract (iface, 4, NONE) else split (iface, 0)
+    in CoreText.parse core handle CoreText.Error (_, msg) => raise Error ("the entry of " ^ name ^ ": " ^ msg) end
 
   (* the units linked into the program in out, in their order, which is
      dependencies first *)
   fun link (units : compiled list, out : string) : unit =
     let
       val registers = !CompilerSettings.target = "registers"
-      val prog = if registers then Link.program (Regs.program, RegCodes.linked, List.map #code units)
-                 else Link.program (Stack.program, Opcodes.linked, List.map #code units)
+      val prog = if registers then Link.program (Regs.program, RegCodes.linked, List.map (valOf o #code) units)
+                 else Link.program (Stack.program, Opcodes.linked, List.map (valOf o #code) units)
     in Emit.writeFileAs (MidPipeline.fingerprint (), out, prog) end
 end
