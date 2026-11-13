@@ -46,6 +46,9 @@
      hslint` and `[RULE]`; and the faults are the rules `bin/rhc
      --hslint-rules` names, both ways.
 
+   - `hs/hslint/lint-level`: the run's RUNE_LINT is 2, in make check and
+     nightly, so that G2's line (HsLint, CoreLint and MidLint clean at level
+     2 over every suite) is not passed by a run that does not look.
    - `hs/hslint/levels`: each fixture the dump infers, built (`-o`) at
      level 2, HsLint's checks with it, and at level 0: the same status and
      bytes, since no check changes what rhc makes.
@@ -344,6 +347,19 @@ struct
         inferred
     end
 
+  (* ---- G2's line: every suite under RUNE_LINT=2 ---- *)
+
+  (* the run's lint level: the roadmap's G2 holds HsLint, CoreLint and
+     MidLint clean at level 2 over every suite, which bin/rune-test's own
+     RUNE_LINT=2 gives every job; a run that sets it otherwise checks less,
+     and says so here rather than pass G2's line by not looking *)
+  fun lintLevel () =
+    case env ("RUNE_LINT", "") of
+      "2" => ()
+    | v => fail ("hs/hslint/lint-level: this run's RUNE_LINT is " ^ (if v = "" then "unset" else v) ^
+                 ", and G2 holds HsLint, CoreLint and MidLint clean at level 2 over every suite " ^
+                 "(bin/rune-test sets RUNE_LINT=2 unless told otherwise)")
+
   (* ---- the tree ---- *)
 
   fun job (name, cmd, timeout) =
@@ -384,6 +400,7 @@ struct
               (Test.describe ""
                  (List.map (Test.tag "check")
                     (dumps @ [job ("faults", cmd ^ "hs-hslint-faults", 1200), job ("levels", cmd ^ "hs-hslint-levels", 1800)])
+                  @ [Test.tag "check" (Test.tag "nightly" (job ("lint-level", cmd ^ "hs-hslint-lint-level", 60)))]
                   @ expect "accept" @ expect "lang" @ expect "errors")))]
     end
 
@@ -392,6 +409,7 @@ struct
       ["hs-hslint-dump", name, mode] => SOME (fn () => dumpOne (name, mode))
     | ["hs-hslint-faults"] => SOME faultsAll
     | ["hs-hslint-levels"] => SOME levelsAll
+    | ["hs-hslint-lint-level"] => SOME lintLevel
     | ["hs-hslint-expect", kind, name] => SOME (fn () => expectOne (kind, name))
     | ["hs-hslint-expect-shard", kind, "sample"] => SOME (fn () => expectSample kind)
     | ["hs-hslint-expect-shard", kind, kn] =>

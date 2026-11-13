@@ -827,6 +827,10 @@ inference of the library taken from the world, made once when the world is
 alone and replays only their records. `levels` builds each fixture
 the dump infers at level 2 and at level 0, which must be the same bytes, as
 `levelsOne` holds Rune's builds: no check changes what rhc makes.
+`lint-level`, in make check and nightly, fails a run whose `RUNE_LINT` is
+not 2: G2 holds HsLint, CoreLint and MidLint clean at level 2 over every
+suite, which `bin/rune-test`'s own `RUNE_LINT=2` gives every job, and the
+nightly tier, every program of every family, is where that line stands.
 
 **rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
 Report's 20 modules in its own layout, its errata and rhc's overlay applied,
